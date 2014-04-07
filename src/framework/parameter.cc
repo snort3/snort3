@@ -1,0 +1,343 @@
+/*
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// parameter.cc author Russ Combs <rucombs@cisco.com>
+
+#include "module.h"
+
+#include <assert.h>
+#include <string.h>
+#include <dnet.h>
+
+#include <string>
+#include <iomanip>
+#include <sstream>
+#include <vector>
+using namespace std;
+
+static bool valid_bool(Value& v, const char*)
+{
+    return v.get_type() == Value::VT_BOOL;
+}
+
+// FIXIT allow multiple , separated ranges
+static bool valid_int(Value& v, const char* r)
+{
+    if ( !r )
+        return true;
+
+    long d = v.get_long();
+
+    // require no leading or trailing whitespace
+    // and either # | #: | :# | #:#
+    // where # is a valid pos or neg dec, hex, or octal number
+
+    if ( *r != ':' )
+    {
+        long low = strtol(r, nullptr, 0);
+
+        if ( d < low )
+            return false;
+    }
+
+    const char* t = strchr(r, ':');
+
+    if ( t && *++t )
+    {
+        long hi = strtol(t, nullptr, 0);
+
+        if ( d > hi )
+            return false;
+    }
+    return true;
+}
+
+// FIXIT allow multiple , separated ranges
+static bool valid_real(Value& v, const char* r)
+{
+    if ( !r )
+        return true;
+
+    double d = v.get_real();
+
+    // require no leading or trailing whitespace
+    // and either # | #: | :# | #:#
+    // where # is a valid pos or neg dec, hex, or octal number
+
+    if ( *r != ':' )
+    {
+        double low = strtod(r, nullptr);
+
+        if ( d < low )
+            return false;
+    }
+
+    const char* t = strchr(r, ':');
+
+    if ( t && *++t )
+    {
+        double hi = strtod(t, nullptr);
+
+        if ( d > hi )
+            return false;
+    }
+    return true;
+}
+
+static bool valid_string(Value& v, const char* r)
+{
+    unsigned len = strlen(v.get_string());
+
+    if ( !r )
+        return len > 0;
+
+    unsigned max = strtol(r, nullptr, 0);
+    return len <= max;
+}
+
+static bool valid_select(Value& v, const char* r)
+{
+    if ( !r )
+        return false;
+
+    const char* s = v.get_string();
+    const char* t = strstr(r, s);
+
+    if ( !t )
+        return false;
+
+    return true;
+}
+
+static unsigned get_index(const char* r, const char* t)
+{
+    unsigned idx = 0;
+    const char* p = strchr(r, '|');
+
+    while ( p && p < t )
+    {
+        ++idx;
+        p = strchr(p+1, '|');
+    }
+    return idx;
+}
+
+static bool valid_enum(Value& v, const char* r)
+{
+    if ( !r )
+        return false;
+
+    const char* s = v.get_string();
+    const char* t = strstr(r, s);
+
+    if ( !t )
+        return false;
+
+    unsigned idx = get_index(r, t);
+
+    v.set((double)idx);
+    return true;
+}
+
+static unsigned split(const string& txt, vector<string>& strs)
+{
+    static const char* delim = " \t\n";
+    size_t last = txt.find_first_not_of(delim);
+    size_t pos = txt.find_first_of(delim, last);
+    strs.clear();
+
+    while ( pos != string::npos )
+    {
+        if ( last != pos )
+            strs.push_back(txt.substr(last, pos - last));
+
+        last = txt.find_first_not_of(delim, pos + 1);
+        pos = txt.find_first_of(delim, last);
+    }
+
+    // add the last one
+    if ( last != string::npos )
+        strs.push_back(txt.substr(last, min(pos, txt.size()) - last));
+
+    return strs.size();
+}
+
+static bool valid_multi(Value& v, const char* r)
+{
+    if ( !r )
+        return false;
+
+    string s = v.get_string();
+    vector<string> list;
+    split(s, list);
+
+    unsigned mask = 0;
+
+    for ( auto p : list )
+    {
+        const char* t = strstr(r, p.c_str());
+        if ( !t )
+            return false;
+
+        unsigned idx = get_index(r, t);
+
+        if ( idx < Value::mask_bits )
+            mask |= (1 << idx);
+    }
+    v.set_aux(mask);
+    return true;
+}
+
+static bool valid_mac(Value& v, const char*)
+{
+    struct addr a;
+
+    if ( addr_pton(v.get_string(), &a) )
+        return false;
+
+    if ( a.addr_type == ADDR_TYPE_ETH )
+        v.set(a.addr_data8, 6);
+
+    else
+        return false;
+
+    return true;
+}
+
+static bool valid_ip4(Value& v, const char*)
+{
+    uint32_t ip4 = inet_addr(v.get_string());
+
+    if ( ip4 == INADDR_NONE )
+        return false;
+
+    v.set((double)ip4);
+    return true;
+}
+
+static bool valid_addr(Value& v, const char*)
+{
+    struct addr a;
+
+    if ( addr_pton(v.get_string(), &a) )
+        return false;
+    
+    if ( a.addr_type == ADDR_TYPE_IP )
+        v.set(a.addr_data8, 4);
+
+    else if ( a.addr_type == ADDR_TYPE_IP6 )
+        v.set(a.addr_data8, 16);
+
+    else
+        return false;
+
+    return true;
+}
+
+static bool valid_bit_list(Value& v, const char* r)
+{
+    string pl = v.get_string();
+    stringstream ss(pl);
+    ss >> setbase(0);
+
+    int max = r ? strtol(r, nullptr, 0) : 0;
+    assert(max > 0);
+
+    string bs;
+    bs.assign(max+1, '0');
+
+    int bit;
+
+    while ( ss >> bit )
+    {
+        if ( bit < 0 || bit > max )
+            return false;
+
+        bs[bit] = '1';
+    }
+    if ( !ss.eof() )
+        return false;
+
+    v.set(bs.c_str());
+    return true;
+}
+
+bool Parameter::validate(Value& v) const
+{
+    switch ( type )
+    {
+    // bool values
+    case PT_BOOL:
+        return valid_bool(v, range);
+
+    // num values
+    case PT_PORT:
+        if ( !range )
+            return valid_int(v, "0:65535");
+        // if a range was given fall thru
+    case PT_INT:
+        return valid_int(v, range);
+    case PT_REAL:
+        return valid_real(v, range);
+
+    // string values
+    case PT_STRING:
+        return valid_string(v, range);
+    case PT_SELECT:
+        return valid_select(v, range);
+    case PT_MULTI:
+        return valid_multi(v, range);
+    case PT_ENUM:
+        return valid_enum(v, range);
+
+    // address values
+    case PT_MAC:
+        return valid_mac(v, range);
+    case PT_IP4:
+        return valid_ip4(v, range);
+    case PT_ADDR:
+        return valid_addr(v, range);
+
+    // list values
+    case PT_BIT_LIST:
+        return valid_bit_list(v, range);
+
+    case PT_ADDR_LIST:
+        return true;
+
+    default:
+        break;
+    }
+    return false;
+}
+
+const char* pt2str[] =
+{
+    "table", "list",
+    "bool", "int", "real", "port",
+    "string", "select", "multi", "enum",
+    "mac", "ip4", "addr",
+    "bit_list", "addr_list"
+};
+
+const char* Parameter::get_type() const
+{
+    assert(type < Parameter::PT_MAX);
+    return pt2str[type];
+}
+

@@ -1,0 +1,36 @@
+image::snort.png["Snorty",width="480"]
+
+== Some tips to get started with Snort++
+
+include::tips.txt[]
+
+== Changes from Snort to Snort++
+
+include::differences.txt[]
+
+== Command Line Options
+
+include::options.txt[]
+
+== Configuration
+
+include::config.txt[]
+
+== Builtin Rules
+
+The following generators are available:
+
+include::gids.txt[]
+
+These rules are from the decoders and inspectors:
+
+include::builtin.txt[]
+
+== Command Set
+
+include::commands.txt[]
+
+== Coding Style
+
+include::style.txt[]
+

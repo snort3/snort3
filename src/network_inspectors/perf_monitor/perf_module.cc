@@ -1,0 +1,173 @@
+/*
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+// perf_module.cc author Russ Combs <rucombs@cisco.com>
+
+#include "perf_module.h"
+#include "utils/util.h"
+
+//-------------------------------------------------------------------------
+// perf attributes
+//-------------------------------------------------------------------------
+
+static const Parameter perf_params[] =
+{
+    { "packets", Parameter::PT_INT, "0:", "10000",
+      "minim packets to report" },
+
+    { "seconds", Parameter::PT_INT, "0:", "60",
+      "report interval; 0 means report at exit only" },
+
+    { "flow_ip_memcap", Parameter::PT_INT, "0:", "52428800",
+      "maximum memory for flow tracking" },
+
+    { "max_file_size", Parameter::PT_INT, "4096:", "0",
+      "files will be rolled over if they exceed this size" },
+
+    { "flow_ports", Parameter::PT_INT, "0:", "1023",
+      "maximum ports to track" },
+
+    { "reset", Parameter::PT_BOOL, nullptr, "true",
+      "reset (clear) statistics after each reporting interval" },
+
+    { "max", Parameter::PT_BOOL, nullptr, "false",
+      "calculate theoretical maximum performance" },
+
+    { "console", Parameter::PT_BOOL, nullptr, "false",
+      "output to console" },
+
+    { "events", Parameter::PT_BOOL, nullptr, "false",
+      "report on qualified vs non-qualified events" },
+
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "otuput base stats to a csv file" },
+
+    { "flow", Parameter::PT_BOOL, nullptr, "false",
+      "enable traffic statistics" },
+
+    { "flow_file", Parameter::PT_BOOL, nullptr, "false",
+      "output traffic statistics to a csv file" },
+
+    { "flow_ip", Parameter::PT_BOOL, nullptr, "false",
+      "enable statistics on host pairs" },
+
+    { "flow_ip_file", Parameter::PT_BOOL, nullptr, "false",
+      "output host pair statistics to csv file" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+//-------------------------------------------------------------------------
+// perf attributes
+//-------------------------------------------------------------------------
+
+PerfMonModule::PerfMonModule() :
+    Module("perf_monitor", perf_params)
+{ }
+
+bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("packets") )
+        config.pkt_cnt = v.get_long();
+
+    else if ( v.is("seconds") )
+        config.sample_interval = v.get_long();
+
+    else if ( v.is("flow_ip_memcap") )
+    {
+        config.flowip_memcap = v.get_long();
+        config.perf_flags |= SFPERF_FLOWIP;
+    }
+    else if ( v.is("max_file_size") )
+        config.max_file_size = v.get_long() - ROLLOVER_THRESH;
+
+    else if ( v.is("flow_ports") )
+    {
+        config.flow_max_port_to_track = v.get_long();
+        config.perf_flags |= SFPERF_FLOW;
+    }
+    else if ( v.is("reset") )
+        config.base_reset = v.get_bool();
+
+#ifndef LINUX_SMP
+    else if ( v.is("max") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= SFPERF_MAX_BASE_STATS;
+    }
+#endif
+    else if ( v.is("console") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= SFPERF_CONSOLE;
+    }
+    else if ( v.is("events") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= SFPERF_EVENT;
+    }
+    else if ( v.is("file") )
+    {
+        if ( v.get_bool() )
+            config.file = SnortStrdup("perf_monitor.csv");
+    }
+    else if ( v.is("flow") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= SFPERF_FLOW;
+    }
+    else if ( v.is("flow_file") )
+    {
+        if ( v.get_bool() )
+        {
+            config.perf_flags |= SFPERF_FLOW;
+            config.flow_file = SnortStrdup("perf_monitor_flow.csv");
+        }
+    }
+    else if ( v.is("flow_ip") )
+    {
+        if ( v.get_bool() )
+            config.perf_flags |= SFPERF_FLOWIP;
+    }
+    else if ( v.is("flow_ip_file") )
+    {
+        if ( v.get_bool() )
+        {
+            config.perf_flags |= SFPERF_FLOWIP;
+            config.flowip_file = SnortStrdup("perf_monitor_flow_ip.csv");
+        }
+    }
+    else
+        return false;
+
+    return true;
+}
+
+bool PerfMonModule::begin(const char*, int, SnortConfig*)
+{
+    sfInitPerformanceStatistics(&config);
+    return true;
+}
+
+void PerfMonModule::get_config(SFPERF& cfg)
+{
+    cfg = config;
+    memset(&config, 0, sizeof(config));
+}
+

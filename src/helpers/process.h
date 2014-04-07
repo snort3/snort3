@@ -1,0 +1,71 @@
+/*
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+#ifndef PROCESS_H
+#define PROCESS_H
+
+#include <signal.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <stdint.h>
+
+// FIXIT these should be encapsulated in process.cc
+// sfcontrol.cc and sidechannel.cc are using them
+#ifndef SIGNAL_SNORT_RELOAD
+#define SIGNAL_SNORT_RELOAD         SIGHUP
+#endif
+
+#ifndef SIGNAL_SNORT_DUMP_STATS
+#define SIGNAL_SNORT_DUMP_STATS     SIGUSR1
+#endif
+
+#ifndef SIGNAL_SNORT_ROTATE_STATS
+#define SIGNAL_SNORT_ROTATE_STATS   SIGUSR2
+#endif
+
+// this one should not be changed by user
+#define SIGNAL_SNORT_CHILD_READY    SIGCHLD
+
+#ifndef SIGNAL_SNORT_READ_ATTR_TBL
+#define SIGNAL_SNORT_READ_ATTR_TBL SIGURG
+#endif
+
+enum PigSignal {
+    PIG_SIG_NONE,
+    PIG_SIG_QUIT,
+    PIG_SIG_TERM,
+    PIG_SIG_INT,
+    PIG_SIG_RELOAD_CONFIG,
+    PIG_SIG_RELOAD_ATTRIBUTES,
+    PIG_SIG_DUMP_STATS,
+    PIG_SIG_ROTATE_STATS,
+    PIG_SIG_MAX
+};
+
+PigSignal get_pending_signal();
+const char* get_signal_name(PigSignal);
+
+void init_signals();
+void daemonize();
+void set_quick_exit(bool);
+
+#endif
+

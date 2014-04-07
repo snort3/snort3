@@ -1,0 +1,122 @@
+All new code should try to follow these style guidelines.  These are not
+yet firm so feedback is welcome to get something we can live with.
+
+=== General
+
+* Generally try to follow
+  http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml, 
+  but there are a few differences.
+
+=== Naming
+
+* Use camel case for types like WhizBangPdfChecker.
+
+* Use lower case identifiers with underscore separators, eg some_function()
+  and my_var.
+
+* Use lower case filenames with underscores.
+
+=== Comments
+
+* Write comments sparingly with a mind towards future proofing.  Often the
+  comments can be obviated with better code.  Clear code is better than a
+  comment.
+
+* Function comment blocks are generally just noise that quickly becomes
+  obsolete.  If you absolutely must comment on parameters, put each on a
+  separate line along with the comment.  That way changing the signature
+  will cause a change to the comments too.
+
+==== Types
+
+* Use logical types to make the code clearer and to help the compiler catch
+  problems.  typedef uint16_t Port; bool foo(Port) is way better than
+  int foo(int port).
+
+* Use forward declarations (eg struct SnortConfig;) instead of void*.
+
+* Don't use extern data unless absolutely necessary and then put the extern in
+  an appropriate header.
+
+* Use const liberally.
+
+==== Formatting
+
+* Indent 4 space chars ... no tabs!
+
+* If you need to indent many times, something could be rewritten or
+  restructured to make it clearer.  Fewer indents is generally easier to
+  write, easier to read, and overall better code.
+
+* Use consistent spacing and linebreaks.  Always indent 4 spaces from the
+  breaking line.  Try to keep lines less than 80 chars; it greatly helps
+  readability.
+
+    No:
+        calling_a_func_with_a_long_name(arg1,
+                                        arg2,
+                                        arg3);
+
+    Yes:
+        calling_a_func_with_a_long_name(
+            arg1, arg2, arg3);
+
+=== Headers
+
+* Don't hesitate to create a new header if it is needed.  Don't lump
+  unrelated stuff into a header because it is convenient.
+
+* Write header guards like this (leading underscores are reserved for
+  system stuff):
+
+    #ifndef MY_HEADER_H
+    #define MY_HEADER_H
+    // ...
+    #endif
+
+* Includes from a different directory should specify parent directory.
+  This makes it clear exactly what is included and avoids the primordial
+  soup that results from using -I this -I that -I the-other-thing ... .
+
+    // given:
+    src/foo/foo.cc
+    src/bar/bar.cc
+    src/bar/baz.cc
+
+    // in baz.cc
+    #include "bar.h"
+
+    // in foo.cc
+    #include "bar/bar.h"
+
+* Just because it is a #define doesn't mean it goes in a header.
+  Everything should be scoped as tightly as possible.  Shared
+  implementation declarations should go in a separate header from the
+  interface.  And so on.
+
+* A .cc should include its own .h before any others (including
+  system headers).  This ensures that the header stands on its own and can
+  be used by clients without include prerequisites.
+
+* Include required headers, all required headers, and nothing but required
+  headers.  Don't just clone a bunch of headers because it is convenient.
+
+* Any file depending of #ifdefs should include config.h as shown below.  A
+  .h should include it before any other includes, and a .cc should include
+  it immediately after the include of its own .h.
+
+    #ifdef HAVE_CONFIG_H
+    #include "config.h"
+    #endif
+
+* Do not put using statements in headers.
+
+=== Warnings
+
+* With g++, use at least these compiler flags:
+
+    -Wall -Wextra -pedantic -Wformat -Wformat-security
+    -Wunused-but-set-variable -Wno-deprecated-declarations
+
+* Then Fix All Warnings.  None Allowed.
+

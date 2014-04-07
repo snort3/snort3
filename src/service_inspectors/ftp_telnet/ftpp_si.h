@@ -1,0 +1,275 @@
+/*
+ * ftpp_si.h
+ *
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2004-2013 Sourcefire, Inc.
+ * Steven A. Sturges <ssturges@sourcefire.com>
+ * Daniel J. Roelker <droelker@sourcefire.com>
+ * Marc A. Norton <mnorton@sourcefire.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 2 as
+ * published by the Free Software Foundation.  You may not use, modify or
+ * distribute this program under any other version of the GNU General
+ * Public License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * Description:
+ *
+ * This file contains structures and functions for the
+ * session Inspection Module.
+ *
+ * The session Inspection Module has several data structures that are
+ * very important to the functionality of the module.  The two major
+ * structures are the FTPP_SESSION and the FTPP_SI_INPUT.
+ *
+ * NOTES:
+ * - 20.09.04:  Initial Development.  SAS
+ *
+ */
+#ifndef FTPP_SI_H
+#define FTPP_SI_H
+
+#include <stdint.h>
+
+#include "ftpp_include.h"
+#include "ftpp_ui_config.h"
+#include "ftp_client.h"
+#include "ftp_server.h"
+#include "decode.h"
+#include "file_api/file_api.h"
+#include "stream5/stream_api.h"
+#include "flow/flow.h"
+
+/*
+ * These are the defines for the different types of
+ * inspection modes.  We have a server mode and a client mode.
+ */
+#define FTPP_SI_NO_MODE     0
+#define FTPP_SI_CLIENT_MODE 1
+#define FTPP_SI_SERVER_MODE 2
+
+#define FTPP_SI_PROTO_UNKNOWN   0
+#define FTPP_SI_PROTO_TELNET    1
+#define FTPP_SI_PROTO_FTP       2
+#define FTPP_SI_PROTO_FTP_DATA  3
+
+#define FTPP_FILE_IGNORE    -1
+#define FTPP_FILE_UNKNOWN    0
+
+/* Macros for testing the type of FTP_TELNET_SESSION */
+#define FTPP_SI_IS_PROTO(Ssn, Pro)      ((Ssn) && ((Ssn)->ft_ssn.proto == (Pro)))
+#define PROTO_IS_FTP(ssn)               FTPP_SI_IS_PROTO(ssn, FTPP_SI_PROTO_FTP)
+#define PROTO_IS_FTP_DATA(ssn)          FTPP_SI_IS_PROTO(ssn, FTPP_SI_PROTO_FTP_DATA)
+#define PROTO_IS_TELNET(ssn)            FTPP_SI_IS_PROTO(ssn, FTPP_SI_PROTO_TELNET)
+
+typedef struct s_FTP_TELNET_SESSION
+{
+    int proto;
+
+} FTP_TELNET_SESSION;
+
+/*
+ * The TELNET_SESSION structure contains the complete TELNET session.
+ * This structure is the structure that is saved per session in the
+ * Stream Interface Module.  This structure gets sent through the
+ * detection engine process (Normalization, Detection).
+ */
+typedef struct s_TELNET_SESSION
+{
+    FTP_TELNET_SESSION ft_ssn;
+
+    /* The client configuration for this session if its FTP */
+    TELNET_PROTO_CONF *telnet_conf;
+
+    /* Number of consecutive are-you-there commands seen. */
+    int consec_ayt;
+
+    int encr_state;
+
+} TELNET_SESSION;
+
+class TelnetFlowData : public FlowData
+{
+public:
+    TelnetFlowData() : FlowData(flow_id)
+    { memset(&session, 0, sizeof(session)); };
+
+    ~TelnetFlowData() { }
+
+    static void init()
+    { flow_id = FlowData::get_flow_id(); };
+
+public:
+    static unsigned flow_id;
+    TELNET_SESSION session;
+};
+
+/*
+ * These are the state values for determining the FTP data channel.
+ */
+#define NO_STATE                  0x00
+#define LOST_STATE                0xFFFFFFFF
+
+#define DATA_CHAN_PORT_CMD_ISSUED 0x01
+#define DATA_CHAN_PORT_CMD_ACCEPT 0x02
+#define DATA_CHAN_PASV_CMD_ISSUED 0x04
+#define DATA_CHAN_PASV_CMD_ACCEPT 0x08
+#define DATA_CHAN_XFER_CMD_ISSUED 0x10
+#define DATA_CHAN_XFER_STARTED    0x20
+
+#define AUTH_TLS_CMD_ISSUED       0x01
+#define AUTH_SSL_CMD_ISSUED       0x02
+#define AUTH_UNKNOWN_CMD_ISSUED   0x04
+#define AUTH_TLS_ENCRYPTED        0x08
+#define AUTH_SSL_ENCRYPTED        0x10
+#define AUTH_UNKNOWN_ENCRYPTED    0x20
+
+/*
+ * The FTP_SESSION structure contains the complete FTP session, both the
+ * client and the server constructs.  This structure is the structure that
+ * is saved per session in the Stream Interface Module.  This structure
+ * gets sent through the detection engine process (Normalization,
+ * Detection).
+ */
+typedef struct s_FTP_SESSION
+{
+    FTP_TELNET_SESSION ft_ssn;
+
+    /* The client construct contains all the info associated with a
+     * client request. */
+    FTP_CLIENT client;
+
+    /* The server construct contains all the info associated with a
+     * server response. */
+    FTP_SERVER server;
+
+    /* The client configuration for this session if its FTP */
+    FTP_CLIENT_PROTO_CONF *client_conf;
+
+    /* The server configuration for this session if its FTP */
+    FTP_SERVER_PROTO_CONF *server_conf;
+
+    /* The data channel info */
+    int data_chan_state;
+    int data_chan_index;
+    int data_xfer_index;
+    int data_xfer_dir;
+    snort_ip      clientIP;
+    uint16_t clientPort;
+    snort_ip      serverIP;
+    uint16_t serverPort;
+
+    /* A file is being transfered on ftp-data channel */
+    char *filename;
+    int file_xfer_info; /* -1: ignore, 0: unknown, >0: filename length */
+
+    /* Command/data channel encryption */
+    int encr_state;
+
+} FTP_SESSION;
+
+void FTPFreesession(FTP_SESSION*);
+
+class FtpFlowData : public FlowData
+{
+public:
+    FtpFlowData() : FlowData(flow_id)
+    { memset(&session, 0, sizeof(session)); };
+
+    ~FtpFlowData()
+    { FTPFreesession(&session); };
+
+    // FIXIT telnet, ftp, and ftp-data all share the same flow_id
+    static void init()
+    { flow_id = TelnetFlowData::flow_id; };
+
+public:
+    static unsigned flow_id;
+    FTP_SESSION session;
+};
+
+/* FTP-Data Transfer Modes */
+enum {
+    FTPP_XFER_PASSIVE = 0,
+    FTPP_XFER_ACTIVE  = 1
+};
+
+typedef struct s_FTP_DATA_SESSION
+{
+    FTP_TELNET_SESSION ft_ssn;
+    FlowKey ftp_key;
+    char *filename;
+    int data_chan;
+    int file_xfer_info;
+    FilePosition position;
+    unsigned char direction;
+    unsigned char mode;
+    unsigned char packet_flags;
+} FTP_DATA_SESSION;
+
+class FtpDataFlowData : public FlowData
+{
+public:
+    FtpDataFlowData(Packet*);
+    ~FtpDataFlowData();
+
+    // FIXIT telnet, ftp, and ftp-data all share the same flow_id
+    static void init()
+    { flow_id = TelnetFlowData::flow_id; };
+
+public:
+    static unsigned flow_id;
+    FTP_DATA_SESSION session;
+};
+
+#define FTPDATA_FLG_REASSEMBLY_SET  (1<<0)
+#define FTPDATA_FLG_CLIENT_EOF      (1<<1)
+#define FTPDATA_FLG_SERVER_EOF      (1<<2)
+#define FTPDATA_FLG_FILENAME_SET    (1<<3)
+
+/*
+ * The FTPP_SI_INPUT structure holds the information that the session
+ * Inspection Module needs to determine the type of inspection mode
+ * (client, server, neither) and to retrieve the appropriate server
+ * configuration.
+ *
+ * The input is the source and destination IP addresses, and the
+ * source and destination ports (since this should always be a
+ * TCP packet).
+ */
+typedef struct s_FTPP_SI_INPUT
+{
+    snort_ip sip;
+    snort_ip dip;
+    unsigned short sport;
+    unsigned short dport;
+    unsigned char pdir;
+    unsigned char pproto;
+
+} FTPP_SI_INPUT;
+
+int ftpp_si_determine_proto(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
+        FTP_TELNET_SESSION **, FTPP_SI_INPUT *SiInput, int *piInspectMode);
+int FTPGetPacketDir(Packet *);
+
+/* FTP-Data file processing */
+FTP_DATA_SESSION * FTPDatasessionNew(Packet *p);
+void FTPDatasessionFree(void *p_ssn);
+
+void SetFTPDataEOFDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
+
+bool FTPDataDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
+bool FTPDataEOFDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
+bool FTPDataEOF(FTP_DATA_SESSION *ftpdata);
+
+#endif /* ! FTPP_SI_H */
+

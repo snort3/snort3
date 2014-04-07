@@ -1,0 +1,174 @@
+/****************************************************************************
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2008-2013 Sourcefire, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 2 as
+ * published by the Free Software Foundation.  You may not use, modify or
+ * distribute this program under any other version of the GNU General
+ * Public License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ ****************************************************************************/
+
+#ifndef TREENODES_H
+#define TREENODES_H
+
+#include "snort_types.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include "sfip/ipv6_port.h"
+#include "detection/rule_option_types.h"
+#include "detection/rules.h"
+#include "detection/signature.h"
+#include "utils/sfportobject.h"
+
+class IpsOption;
+struct Packet;
+struct RuleTreeNode;
+
+/* same as the rule header FP list */
+struct OptFpList
+{
+    /* context data for this test */
+    void *context;
+    
+    int (*OptTestFunc)(void *option_data, Packet *p);
+    
+    OptFpList *next;
+
+    unsigned char isRelative;
+    option_type_t type;
+};
+
+struct OtnState
+{
+    // profiling
+#ifdef PERF_PROFILING
+    uint64_t ticks;
+    uint64_t ticks_match;
+    uint64_t ticks_no_match;
+    uint64_t checks;
+    uint64_t matches;
+    uint8_t noalerts;
+    uint64_t alerts;
+#endif
+
+    // ppm
+    uint64_t ppm_suspend_time;
+    uint64_t ppm_disable_cnt;
+};
+
+struct OptTreeNode
+{
+    /* plugin/detection functions go here */
+    OptFpList *opt_func;
+    OutputSet *outputFuncs; /* per sid enabled output functions */
+    IpsOption* agent;
+
+    /* metadata about signature */
+    SigInfo sigInfo;
+    char* soid;
+
+    void* detection_filter; /* if present, evaluated last, after header checks */
+    TagData *tag;
+
+    OptTreeNode *next;
+
+    /* ptr to list of RTNs (head part) */
+    RuleTreeNode **proto_nodes;
+
+    OtnState* state;
+
+    int chain_node_number;
+    int evalIndex;       /* where this rule sits in the evaluation sets */
+    int proto;           /* protocol, added for integrity checks 
+                            during rule parsing */
+
+    int session_flag;    /* record session data */
+
+    // unique index generated in ruleIndexMap
+    int ruleIndex;
+
+    bool enabled;
+
+    uint32_t num_detection_opts;
+    uint32_t plugins;
+
+    /**number of proto_nodes. */
+    unsigned short proto_node_num;
+
+    uint16_t longestPatternLen;
+
+    uint8_t stateless;  /* this rule can fire regardless of session state */
+    uint8_t established; /* this rule can only fire if it is established */
+    uint8_t unestablished;
+
+    char generated;
+};
+
+/* function pointer list for rule head nodes */
+typedef struct _RuleFpList
+{
+    /* context data for this test */
+    void *context;
+
+    /* rule check function pointer */
+    int (*RuleHeadFunc)(Packet *, RuleTreeNode *, struct _RuleFpList *, int);
+
+    /* pointer to the next rule function node */
+    struct _RuleFpList *next;
+} RuleFpList;
+
+struct RuleTreeNode
+{
+    RuleFpList *rule_func; /* match functions.. (Bidirectional etc.. ) */
+
+    IpAddrSet *sip;
+    IpAddrSet *dip;
+
+    PortObject * src_portobject;
+    PortObject * dst_portobject;
+
+    struct _ListHead *listhead;
+
+    int proto;
+    int head_node_number;
+
+    uint32_t flags;     /* control flags */
+
+    RuleType type;
+
+    /**reference count from otn. Multiple OTNs can reference this RTN with the same
+     * policy.
+     */
+    unsigned int otnRefCount;
+};
+
+typedef int (*RuleOptEvalFunc)(void *, Packet *);
+OptFpList * AddOptFuncToList(RuleOptEvalFunc, OptTreeNode *);
+        
+void* get_rule_type_data(OptTreeNode*, option_type_t);
+            
+static inline bool otn_has_plugin(OptTreeNode* otn, int id)
+{ return (otn->plugins & (0x1 << id)) != 0; }
+    
+static inline void otn_set_plugin(OptTreeNode* otn, int id)
+{ otn->plugins |= (0x1 << id); }
+
+bool otn_set_agent(OptTreeNode*, IpsOption*);
+
+void otn_trigger_actions(OptTreeNode*, Packet*);
+
+#endif
+

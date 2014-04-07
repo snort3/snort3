@@ -1,0 +1,24 @@
+u2boat - Unified2 Binary Output & Alert Tool
+--------------------------------------------
+
+About
+-----
+
+   The current version of SnortSP lacks support for some output formats that
+were present in Snort 2.8.X. u2boat aims to fill these gaps by converting
+Unified2 logs to other formats.
+
+Installation
+------------
+
+   u2boat is made and installed along with snortsp in the same bin directory.
+
+Usage
+-----
+
+   $ u2boat [-t type] <infile> <outfile>
+
+"type" specifies the type of output u2boat should create. Valid options are:
+
+ - pcap: Tcpdump format (default)
+

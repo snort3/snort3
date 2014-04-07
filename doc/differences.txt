@@ -1,0 +1,81 @@
+Snort++ differs from Snort in the following ways:
+
+* no ; separated content suboptions
+* fastpattern:1 2;
+* replaced "unknown args are bpf" with --bpf
+* added -z <#> and --max-packet-threads <#>
+* sid == 0 not allowed
+* all rules must have a sid
+* deleted log_ascii
+* deleted activate / dynamic rules
+* changed default logging mode to -K none
+* deleted layer2resets and flexresp2_*
+* deleted config threshold and ips rule threshold (-> event_filter)
+* deleted --disable-attribute-table-reload-thread
+* deleted config decode_*_{alerts,drops} (use rules only)
+* deleted --no-interface-pidfile
+* replaced --dynamic-*-lib[-dir] with --plugin-path (with : separators)
+* changed search-method names for consistency
+* eliminated ac-split; must use ac-full-q split-any-any
+* removed --search-method
+* lowmem* search methods are now in snort_examples
+* deleted config dump-dynamic-rules-path
+* deleted config ipv6_frag (not actually used)
+* deleted metadata engine shared
+* soid is now a non-metadata option
+* rule option sequence: <stub> soid <hidden>
+* added --script-path
+* switched to lua path
+* config autogenerate_preprocessor_decoder_rules:
+   only with 1 packet thread (should probably delete this)
+   renamed to autogenerate_builtin_rules
+* deleting command line options which will be available with --lua or some
+   such including:  -I, -h, -F, -p, --disable-inline-init-failopen
+* delete config include_vlan_in_alerts (not used in code)
+* delete config so_rule_memcap (not used in code)
+* delete --enable-mpls-multicast, --enable-mpls-overlapping-ip,
+   --max-mpls-labelchain-len, --mpls-payload-type
+* lua field names are (lower) case sensitive; snort.conf largely wasn't
+* renamed type and print config suboptions to avoid confusion with lua 
+   functions (not strictly necessary)
+* deleted unused rule_state.action
+* general output guideline: don't print zero counts
+* because the Lua conf is live code, we lose file:line locations in
+   app error messages (syntax errors from Lua have file:line)
+* added --help-config prefix to dump all matching settings
+* hardened -n < 0
+* removed various run modes - now just one
+* added -K text; -K text/pcap is old dump/log mode
+* -T is assumed if no input given
+* --require-rule-sid is hardened
+* --shell enables interactive Lua shell
+* --pause loads config and waits for resume before processing packets
+* no positional parameters; all name = value
+* alert_fast includes packet data by default
+* all text mode outputs default to stdout
+* limits like "1234K" are now "limit = 1234, units = 'K'"
+* Snort++ queues decoder and inspector events to the main event queue
+  before ips policy is selected; since some events may not be enabled,
+  the queue needs to be sized larger than with Snort which used an
+  intermediate queue for decoder events.
+* deleted metadata: rule-flushing (with PDU flushing rule flushing can
+  cause missed attacks, the opposite of its intent)
+* configure --with-lib{pcap,pcre}-* -> --with-{pcap,pcre}-*
+* control socket, cs_dir, and users were deleted
+* frag3 default policy is linux not bsd
+* frag3 -> defrag, arpspoof -> arp_spoof, sfportscan -> port_scan,
+  perfmonitor -> perf_monitor, bo -> back_orifice
+* portscan.detect_ack_scans deleted (exact same as include_midstream)
+* address list syntax changes: [[ and ]] must be [ [ and ] ] to avoid Lua
+  string parsing errors (unless in quoted string)
+* module filenames are not configurable:
+  always <log-dir>/<module-name><suffix>
+  (suffix is determined by module)
+* perf_monitor configuration was simplified
+* Snort++ will not enforce an upper bound on memcaps and the like within 64
+  bits
+* Snort++ will supply a default *_global config if not specified
+  (Snort would fatal; eg http_inspect_server w/o http_inspect_global)
+* Snort++ has a default unicode.map
+* deleted the intermediate http and ftp_telnet event queues
+

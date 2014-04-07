@@ -1,0 +1,68 @@
+/*
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// event_manager.h author Russ Combs <rucombs@cisco.com>
+
+#ifndef EVENT_MANAGER_H
+#define EVENT_MANAGER_H
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#include "snort_types.h"
+#include "framework/base_api.h"
+
+#define OUTPUT_TYPE_FLAG__NONE  0x0
+#define OUTPUT_TYPE_FLAG__ALERT 0x1
+#define OUTPUT_TYPE_FLAG__LOG   0x2
+
+struct Packet;
+struct _Event;
+struct OutputSet;
+struct SnortConfig;
+struct LogApi;
+
+//-------------------------------------------------------------------------
+
+class EventManager
+{
+public:
+    static void add_plugin(const LogApi*);
+    static void dump_plugins();
+    static void release_plugins();
+
+    static void instantiate(const char*, SnortConfig*);
+    static void instantiate(const LogApi*, Module*, SnortConfig*);
+
+    static unsigned get_output_type_flags(char*);
+    static void configure_outputs(SnortConfig*);
+
+    static void add_output(OutputSet**, class Logger*);
+    static void copy_outputs(OutputSet* dst, OutputSet* src);
+    static void release_outputs(OutputSet*);
+
+    static void open_outputs();
+    static void close_outputs();
+
+    static void call_alerters(OutputSet*, Packet*, const char* message, struct _Event*);
+    static void call_loggers(OutputSet*, Packet*, const char* message, struct _Event*);
+};
+
+#endif
+

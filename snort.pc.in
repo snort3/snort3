@@ -1,0 +1,17 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+mandir=@infodir@
+infodir=@infodir@
+
+Name: Snort
+Description: Snort dynamic plugins/detection/rules
+URL: www.snort.org
+Version: @VERSION@
+Libs: -L${libdir} -lcurl @LDFLAGS@ @LIBS@
+Cflags: @CFLAGS@ @CPPFLAGS@
+
