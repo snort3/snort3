@@ -2921,7 +2921,6 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
 
 int hi_client_inspection(Packet *p, void *S, HttpsessionData *hsd, int stream_ins)
 {
-    HTTPINSPECT_GLOBAL_CONF *GlobalConf;
     HI_SESSION *session;
 
     int iRet;
@@ -2938,20 +2937,6 @@ int hi_client_inspection(Packet *p, void *S, HttpsessionData *hsd, int stream_in
         return HI_INVALID_ARG;
     }
 
-    GlobalConf = session->global_conf;
-
-    /*
-    **  We inspect the HTTP protocol in either stateful mode or
-    **  stateless mode.
-    */
-    if(GlobalConf->inspection_type == HI_UI_CONFIG_STATEFUL)
-    {
-        /*
-        **  This is where we do stateful inspection.
-        */
-        return HI_NONFATAL_ERR;
-    }
-    else
     {
         /*
         **  Otherwise we assume stateless inspection
@@ -2980,17 +2965,10 @@ int hi_client_inspection(Packet *p, void *S, HttpsessionData *hsd, int stream_in
 **
 **  @retval HI_SUCCESS function successful.
 */
-int hi_client_init(HTTPINSPECT_GLOBAL_CONF *GlobalConf)
+int hi_client_init(HTTPINSPECT_GLOBAL_CONF*)
 {
     int iCtr;
 
-    if(GlobalConf->inspection_type == HI_UI_CONFIG_STATEFUL)
-    {
-        /*
-        **  We don't have to do anything here yet.
-        */
-    }
-    else
     {
         memset(lookup_table, 0x00, sizeof(lookup_table));
 

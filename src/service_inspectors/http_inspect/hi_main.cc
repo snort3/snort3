@@ -352,21 +352,8 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
 int PrintGlobalConf(HTTPINSPECT_GLOBAL_CONF *GlobalConf)
 {
     LogMessage("HttpInspect Config:\n");
-
     LogMessage("    GLOBAL CONFIG\n");
-    if(GlobalConf->disabled)
-    {
-        LogMessage("      Http Inspect: INACTIVE\n");
-        LogMessage("      Max Gzip Memory: %d\n",
-                                GlobalConf->max_gzip_mem);
-        LogMessage("      Memcap used for logging URI and Hostname: %u\n",
-                                GlobalConf->memcap);
-        return 0;
-    }
-    LogMessage("      Max Pipeline Requests:    %d\n",
-               GlobalConf->max_pipeline_requests);
-    LogMessage("      Inspection Type:          %s\n",
-               GlobalConf->inspection_type ? "STATEFUL" : "STATELESS");
+
     LogMessage("      Detect Proxy Usage:       %s\n",
                GlobalConf->proxy_alert ? "YES" : "NO");
     LogMessage("      IIS Unicode Map Filename: %s\n",

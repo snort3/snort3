@@ -82,28 +82,8 @@ HTTPINSPECT_CONF::~HTTPINSPECT_CONF()
     http_cmd_lookup_cleanup(&cmd_lookup);
 }
 
-/*
-**  NAME
-**    hi_ui_config_init_global_conf::
-*/
-/**
-**  Initialize the HttpInspect global configuration.
-**
-**  The main point of this function is to initialize the server
-**  lookup type.  We also do things like memset, etc.
-**
-**  @param GlobalConf pointer to the global configuration
-**
-**  @return integer
-**
-**  @retval HI_SUCCESS function successful
-**  @retval HI_MEM_ALLOC_FAIL could not allocate memory
-*/
-int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF *GlobalConf)
+int hi_ui_config_init_global_conf(HTTPINSPECT_GLOBAL_CONF*)
 {
-    /* Set Global Configurations */
-    GlobalConf->inspection_type = HI_UI_CONFIG_STATELESS;
-
     return HI_SUCCESS;
 }
 
@@ -190,7 +170,6 @@ int hi_ui_config_default(HTTPINSPECT_CONF *global_server)
 */
 int hi_ui_config_reset_global(HTTPINSPECT_GLOBAL_CONF *GlobalConf)
 {
-    GlobalConf->inspection_type = 0;
     GlobalConf->iis_unicode_map = 0;
 
     return HI_SUCCESS;

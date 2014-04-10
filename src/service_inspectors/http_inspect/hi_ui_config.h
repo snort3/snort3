@@ -48,10 +48,6 @@
 /*
 **  Defines
 */
-#define HI_UI_CONFIG_STATELESS 0
-#define HI_UI_CONFIG_STATEFUL  1
-#define HI_UI_CONFIG_MAX_PIPE  20
-
 #define HI_UI_CONFIG_MAX_HDR_DEFAULT 0
 #define HI_UI_CONFIG_MAX_HEADERS_DEFAULT 0
 #define HI_UI_CONFIG_MAX_SPACES_DEFAULT 200 
@@ -103,11 +99,8 @@ typedef struct _HISmallChunkLength
 
 struct HTTPINSPECT_GLOBAL_CONF
 {
-    int              disabled;
-    int              max_pipeline_requests;
-    int              inspection_type;
-    int              anomalous_servers;
-    int              proxy_alert;
+    int anomalous_servers;
+    int proxy_alert;
 
     /*
     **  These variables are for tracking the IIS
