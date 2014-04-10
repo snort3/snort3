@@ -57,8 +57,6 @@
 #include "stream5/stream_api.h"
 #include "ft_main.h"
 
-static THREAD_LOCAL FTP_SESSION Staticsession;
-
 unsigned FtpFlowData::flow_id = 0;
 unsigned TelnetFlowData::flow_id = 0;
 
@@ -156,50 +154,6 @@ static int TelnetStatefulsessionInspection(Packet *p,
 }
 
 /*
- * Function: TelnetStatelesssessionInspection(Packet *p,
- *                              FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                              TELNET_SESSION **Telnetsession,
- *                              FTPP_SI_INPUT *SiInput)
- *
- * Purpose: Initialize the session and server configurations for this
- *          packet/stream.  It is important to note in stateless mode that
- *          we assume no knowledge of the state of a connection, other
- *          than the knowledge that we can glean from an individual packet.
- *          So in essence, each packet is it's own session and there
- *          is no knowledge retained from one packet to another.  If you
- *          want to track a telnet session for real, use stateful mode.
- *
- *          In this function, we set the session pointer (which includes
- *          the correct server configuration).  The actual processing to
- *          find which IP is the server and which is the client, is done in
- *          the InitServerConf() function.
- *
- * Arguments: p             => pointer to the packet/stream
- *            GlobalConf    => pointer to the global configuration
- *            session       => double pointer to the session structure
- *            SiInput       => pointer to the session information
- *
- * Returns: int => return code indicating error or success
- *
- */
-static int TelnetStatelesssessionInspection(
-    Packet*, FTPTELNET_GLOBAL_CONF *GlobalConf,
-    TELNET_SESSION **session, FTPP_SI_INPUT *SiInput)
-{
-    static THREAD_LOCAL TELNET_SESSION TelnetStaticsession;
-
-    TelnetResetsession(&TelnetStaticsession);
-
-    SiInput->pproto = FTPP_SI_PROTO_TELNET;
-    TelnetStaticsession.telnet_conf = GlobalConf->telnet_config;
-
-    *session = &TelnetStaticsession;
-
-    return FTPP_SUCCESS;
-}
-
-
-/*
  * Function: TelnetsessionInspection(Packet *p,
  *                          FTPTELNET_GLOBAL_CONF *GlobalConf,
  *                          FTPP_SI_INPUT *SiInput,
@@ -281,23 +235,10 @@ int TelnetsessionInspection(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
      * Reassembly module (which includes the server configuration) or the
      * structure will be allocated and added to the stream pointer for the
      * rest of the session.
-     *
-     * In stateless mode, we just use a static variable that is contained in
-     * the function here.
      */
-    if(GlobalConf->inspection_type == FTPP_UI_CONFIG_STATEFUL)
-    {
-        iRet = TelnetStatefulsessionInspection(p, GlobalConf, Telnetsession, SiInput);
-        if (iRet)
-            return iRet;
-    }
-    else
-    {
-        /* Assume stateless processing otherwise */
-        iRet = TelnetStatelesssessionInspection(p, GlobalConf, Telnetsession, SiInput);
-        if (iRet)
-            return iRet;
-    }
+    iRet = TelnetStatefulsessionInspection(p, GlobalConf, Telnetsession, SiInput);
+    if (iRet)
+        return iRet;
 
     return FTPP_SUCCESS;
 }
@@ -739,60 +680,6 @@ static int FTPStatefulsessionInspection(Packet *p,
 }
 
 /*
- * Function: FTPStatelesssessionInspection(Packet *p,
- *                          FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                          FTP_SESSION **Ftpsession,
- *                          FTPP_SI_INPUT *SiInput, int *piInspectMode)
- *
- * Purpose: Initialize the session and server configurations for this
- *          packet/stream.  It is important to note in stateless mode that
- *          we assume no knowledge of the state of a connection, other than
- *          the knowledge that we can glean from an individual packet.  So
- *          in essence, each packet is it's own session and there is no
- *          knowledge retained from one packet to another.  If you want to
- *          track an FTP session for real, use stateful mode.
- *
- *          In this function, we set the session pointer (which includes
- *          the correct server configuration).  The actual processing to find
- *          which IP is the server and which is the client, is done in the
- *          InitServerConf() function.
- *
- * Arguments: p                 => pointer to the Packet/session
- *            GlobalConf        => pointer to the global configuration
- *            session           => double pointer to the session structure
- *            SiInput           => pointer to the session information
- *            piInspectMode     => pointer so the inspection mode can be set
- *
- * Returns: int => return code indicating error or success
- *
- */
-static int FTPStatelesssessionInspection(Packet *p,
-        FTPTELNET_GLOBAL_CONF *GlobalConf,
-        FTP_SESSION **Ftpsession,
-        FTPP_SI_INPUT *SiInput, int *piInspectMode)
-{
-    FTP_CLIENT_PROTO_CONF *ClientConf;
-    FTP_SERVER_PROTO_CONF *ServerConf;
-    int iRet;
-
-    FTPResetsession(&Staticsession);
-
-    iRet = FTPInitConf(p, GlobalConf, &ClientConf, &ServerConf, SiInput, piInspectMode);
-    if (iRet)
-        return iRet;
-
-    Staticsession.ft_ssn.proto = FTPP_SI_PROTO_FTP;
-    Staticsession.client_conf = ClientConf;
-    Staticsession.server_conf = ServerConf;
-
-    SiInput->pproto = FTPP_SI_PROTO_FTP;
-    *Ftpsession = &Staticsession;
-
-    return FTPP_SUCCESS;
-}
-
-
-/*
  * Function: FTPsessionInspection(Packet *p,
  *                          FTPTELNET_GLOBAL_CONF *GlobalConf,
  *                          FTPP_SI_INPUT *SiInput, int *piInspectMode)
@@ -832,23 +719,10 @@ int FTPsessionInspection(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
      * Reassembly module (which includes the server configuration) or the
      * structure will be allocated and added to the stream pointer for the
      * rest of the session.
-     *
-     * In stateless mode, we just use a static variable that is contained in
-     * the function here.
      */
-    if(GlobalConf->inspection_type == FTPP_UI_CONFIG_STATEFUL)
-    {
-        iRet = FTPStatefulsessionInspection(p, GlobalConf, Ftpsession, SiInput, piInspectMode);
-        if (iRet)
-            return iRet;
-    }
-    else
-    {
-        /* Assume stateless processing otherwise */
-        iRet = FTPStatelesssessionInspection(p, GlobalConf, Ftpsession, SiInput, piInspectMode);
-        if (iRet)
-            return iRet;
-    }
+    iRet = FTPStatefulsessionInspection(p, GlobalConf, Ftpsession, SiInput, piInspectMode);
+    if (iRet)
+        return iRet;
 
     return FTPP_SUCCESS;
 }

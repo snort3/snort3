@@ -64,6 +64,7 @@ Snort++ differs from Snort in the following ways:
 * frag3 default policy is linux not bsd
 * lowmem* search methods are now in snort_examples
 * deleted unused http_inspect stateful mode
+* deleted stateless inspection from ftp and telnet
 
 === Rules
 

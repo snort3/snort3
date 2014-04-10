@@ -90,7 +90,6 @@ static THREAD_LOCAL PreprocStats ftppDetectPerfStats;
  */
 #define ENCRYPTED_TRAFFIC "encrypted_traffic"
 #define CHECK_ENCRYPTED   "check_encrypted"
-#define INSPECT_TYPE      "inspection_type"
 #define INSPECT_TYPE_STATELESS "stateless"
 #define INSPECT_TYPE_STATEFUL  "stateful"
 
@@ -420,56 +419,6 @@ static int PrintConfOpt(FTPTELNET_CONF_OPT *ConfOpt, const char* Option)
 }
 
 /*
- * Function: ProcessInspectType(FTPTELNET_CONF_OPT *ConfOpt,
- *                          char *ErrorString, int ErrStrLen)
- *
- * Purpose: Process the type of inspection.
- *          This sets the type of inspection for FTPTelnet to do.
- *
- * Arguments: GlobalConf    => pointer to the global configuration
- *            ErrorString   => error string buffer
- *            ErrStrLen     => the length of the error string buffer
- *
- * Returns: int     => an error code integer (0 = success,
- *                     >0 = non-fatal error, <0 = fatal error)
- *
- */
-static int ProcessInspectType(FTPTELNET_GLOBAL_CONF *GlobalConf,
-                              char *ErrorString, int ErrStrLen)
-{
-    char *pcToken;
-
-    pcToken = NextToken(CONF_SEPARATORS);
-    if(pcToken == NULL)
-    {
-        snprintf(ErrorString, ErrStrLen,
-                "No argument to token '%s'.", INSPECT_TYPE);
-
-        return FTPP_FATAL_ERR;
-    }
-
-    if(!strcmp(INSPECT_TYPE_STATEFUL, pcToken))
-    {
-        GlobalConf->inspection_type = FTPP_UI_CONFIG_STATEFUL;
-    }
-    else if(!strcmp(INSPECT_TYPE_STATELESS, pcToken))
-    {
-        GlobalConf->inspection_type = FTPP_UI_CONFIG_STATELESS;
-    }
-    else
-    {
-        snprintf(ErrorString, ErrStrLen,
-                "Invalid argument to token '%s'.  Must be either "
-                "'%s' or '%s'.", INSPECT_TYPE, INSPECT_TYPE_STATEFUL,
-                INSPECT_TYPE_STATELESS);
-
-        return FTPP_FATAL_ERR;
-    }
-
-    return FTPP_SUCCESS;
-}
-
-/*
  * Function: ProcessFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
  *                          char *ErrorString, int ErrStrLen)
  *
@@ -481,8 +430,6 @@ static int ProcessInspectType(FTPTELNET_GLOBAL_CONF *GlobalConf,
  *          non-fatal.
  *
  *          The configuration options that are dealt with here are:
- *          - inspection_type
- *              Indicate whether to operate in stateful stateless mode
  *          - encrypted_traffic
  *              Detect and alert on encrypted sessions
  *          - check_after_encrypted
@@ -524,14 +471,6 @@ int ProcessFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
         {
             ConfOpt = &GlobalConf->encrypted;
             iRet = ProcessConfOpt(ConfOpt, ENCRYPTED_TRAFFIC, ErrorString, ErrStrLen);
-            if (iRet)
-            {
-                return iRet;
-            }
-        }
-        else if(!strcmp(INSPECT_TYPE, pcToken))
-        {
-            iRet = ProcessInspectType(GlobalConf, ErrorString, ErrStrLen);
             if (iRet)
             {
                 return iRet;
@@ -3066,9 +3005,6 @@ int PrintFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf)
     LogMessage("FTPTelnet Config:\n");
 
     LogMessage("    GLOBAL CONFIG\n");
-    LogMessage("      Inspection Type: %s\n",
-        GlobalConf->inspection_type == FTPP_UI_CONFIG_STATELESS ?
-        "stateless" : "stateful");
     PrintConfOpt(&GlobalConf->encrypted, "Check for Encrypted Traffic");
     LogMessage("      Continue to check encrypted data: %s\n",
         GlobalConf->check_encrypted_data ? "YES" : "NO");
@@ -3374,14 +3310,7 @@ int SnortTelnet(FTPTELNET_GLOBAL_CONF *GlobalConf, TELNET_SESSION *Telnetsession
 
     if (!Telnetsession)
     {
-        if (GlobalConf->inspection_type == FTPP_UI_CONFIG_STATEFUL)
-        {
-            return FTPP_NONFATAL_ERR;
-        }
-        else
-        {
-            return FTPP_INVALID_SESSION;
-        }
+        return FTPP_NONFATAL_ERR;
     }
 
     if (Telnetsession->encr_state && !GlobalConf->check_encrypted_data)

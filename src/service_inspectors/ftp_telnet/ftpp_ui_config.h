@@ -292,7 +292,6 @@ typedef struct s_TELNET_PROTO_CONF
  */
 typedef struct s_FTPTELNET_GLOBAL_CONF
 {
-    int inspection_type;
     int check_encrypted_data;
     FTPTELNET_CONF_OPT encrypted;
 

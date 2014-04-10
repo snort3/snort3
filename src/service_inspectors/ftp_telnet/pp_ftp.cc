@@ -1745,8 +1745,6 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 iRet = FTPP_ALERT;
             }
 
-            if (global_conf->inspection_type ==
-                FTPP_UI_CONFIG_STATEFUL)
             {
                 int newRet = do_stateful_checks(ftpssn, p, req, rsp_code);
                 if (newRet != FTPP_SUCCESS)
