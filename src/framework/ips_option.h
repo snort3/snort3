@@ -86,8 +86,8 @@ typedef enum _RuleOptType
 
 } RuleOptType;
 
-struct
-IpsApi {
+struct IpsApi
+{
     BaseApi base;
     RuleOptType type;
     unsigned max_per_rule;

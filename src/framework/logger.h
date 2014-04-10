@@ -67,8 +67,8 @@ typedef Logger* (*eh_new)(struct SnortConfig*, class Module*);
 typedef void (*eh_del)(Logger*);
 
 // FIXIT ensure all eh provide stats
-struct
-LogApi {
+struct LogApi
+{
     BaseApi base;
     unsigned flags;
     eh_new ctor;

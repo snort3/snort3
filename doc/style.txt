@@ -16,6 +16,8 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use lower case filenames with underscores.
 
+* Use lower case namespaces (preferably short, w/o underscores).
+
 === Comments
 
 * Write comments sparingly with a mind towards future proofing.  Often the
@@ -60,6 +62,18 @@ yet firm so feedback is welcome to get something we can live with.
     Yes:
         calling_a_func_with_a_long_name(
             arg1, arg2, arg3);
+
+* Put function signature on one line, except when breaking for the arg
+  list:
+
+    No:
+        inline
+        bool foo()
+        { // ...
+
+    Yes:
+        inline bool foo()
+        { // ...
 
 === Headers
 

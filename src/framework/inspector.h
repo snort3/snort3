@@ -97,8 +97,8 @@ typedef Inspector* (*PreprocCtorFunc)(Module*);
 typedef void (*PreprocDtorFunc)(Inspector*);
 
 // FIXIT ensure all pp's provide stats
-struct
-InspectApi {
+struct InspectApi
+{
     BaseApi base;
     Priority priority;
     uint16_t proto_bits;

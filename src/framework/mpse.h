@@ -127,8 +127,8 @@ typedef Mpse* (*mpse_new_f)(
 
 typedef void (*mpse_del_f)(Mpse*);
 
-struct
-MpseApi {
+struct MpseApi
+{
     BaseApi base;
     bool trim;
 

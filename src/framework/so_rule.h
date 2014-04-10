@@ -46,8 +46,8 @@ typedef so_eval_f (*so_new_f)(const char* key, void**);
 typedef void (*so_del_f)(void*);
 typedef void (*so_aux_f)();
 
-struct
-SoApi {
+struct SoApi
+{
     BaseApi base;
 
     const uint8_t* rule;

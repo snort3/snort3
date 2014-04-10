@@ -596,7 +596,7 @@ const DAQ_Stats_t* DAQ_GetStats (void)
 
 //--------------------------------------------------------------------
 
-int DAQ_ModifyFlow(const void* /*h*/, uint32_t /*id*/)
+int DAQ_ModifyFlow(const void* h, uint32_t id)
 {
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
     const DAQ_PktHdr_t *hdr = (DAQ_PktHdr_t*) h;
@@ -605,6 +605,8 @@ int DAQ_ModifyFlow(const void* /*h*/, uint32_t /*id*/)
     mod.opaque = id;
     return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
 #else
+    UNUSED(h);
+    UNUSED(id);
     return -1;
 #endif
 }
