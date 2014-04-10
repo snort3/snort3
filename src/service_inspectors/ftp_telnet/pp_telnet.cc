@@ -131,11 +131,7 @@ int normalize_telnet(FTPTELNET_GLOBAL_CONF *GlobalConf,
                     if (tnssn)
                     {
                         tnssn->encr_state = 1;
-                        if (GlobalConf->encrypted.alert)
-                        {
-                            /* Alert on encrypted channel */
-                            SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
-                        }
+                        SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
 
                         if (!GlobalConf->check_encrypted_data)
                         {
@@ -332,11 +328,7 @@ int normalize_telnet(FTPTELNET_GLOBAL_CONF *GlobalConf,
                         if (tnssn)
                         {
                             tnssn->encr_state = 1;
-                            if (GlobalConf->encrypted.alert)
-                            {
-                                /* Alert on encrypted channel */
-                                SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
-                            }
+                            SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
 
                             if (!GlobalConf->check_encrypted_data)
                             {

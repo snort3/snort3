@@ -328,64 +328,6 @@ char *NextToken(const char *delimiters)
 }
 
 /*
- * Function: ProcessConfOpt(FTPTELNET_CONF_OPT *ConfOpt,
- *                          char *Option,
- *                          char *ErrorString, int ErrStrLen)
- *
- * Purpose: Set the CONF_OPT on and alert fields.
- *
- *          We check to make sure of valid parameters and then set
- *          the appropriate fields.
- *
- * Arguments: ConfOpt       => pointer to the configuration option
- *            Option        => character pointer to the option being configured
- *            ErrorString   => error string buffer
- *            ErrStrLen     => the length of the error string buffer
- *
- * Returns: int     => an error code integer (0 = success,
- *                     >0 = non-fatal error, <0 = fatal error)
- *
- */
-static int ProcessConfOpt(
-    FTPTELNET_CONF_OPT *ConfOpt, const char *Option,
-    char *ErrorString, int ErrStrLen)
-{
-    char *pcToken;
-
-    pcToken = NextToken(CONF_SEPARATORS);
-    if(pcToken == NULL)
-    {
-        snprintf(ErrorString, ErrStrLen,
-                "No argument to token '%s'.", Option);
-
-        return FTPP_FATAL_ERR;
-    }
-
-    /*
-     * Check for the alert value
-      */
-    if(!strcmp(BOOL_YES, pcToken))
-    {
-        ConfOpt->alert = 1;
-    }
-    else if(!strcmp(BOOL_NO, pcToken))
-    {
-        ConfOpt->alert = 0;
-    }
-    else
-    {
-        snprintf(ErrorString, ErrStrLen,
-                "Invalid argument to token '%s'.", Option);
-
-        return FTPP_FATAL_ERR;
-    }
-
-    ConfOpt->on = 1;
-
-    return FTPP_SUCCESS;
-}
-
-/*
  * Function: PrintConfOpt(FTPTELNET_CONF_OPT *ConfOpt,
  *                          char *Option)
  *
@@ -406,14 +348,9 @@ static int PrintConfOpt(FTPTELNET_CONF_OPT *ConfOpt, const char* Option)
     }
 
     if(ConfOpt->on)
-    {
-        LogMessage("      %s: YES alert: %s\n", Option,
-               ConfOpt->alert ? "YES" : "NO");
-    }
+        LogMessage("      %s: ON\n", Option);
     else
-    {
         LogMessage("      %s: OFF\n", Option);
-    }
 
     return FTPP_SUCCESS;
 }
@@ -449,7 +386,6 @@ int ProcessFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
                       char *ErrorString, int ErrStrLen)
 {
     FTPTELNET_CONF_OPT *ConfOpt;
-    int  iRet = 0;
     char *pcToken;
     int  iTokens = 0;
 
@@ -470,11 +406,7 @@ int ProcessFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
         else if (!strcmp(pcToken, ENCRYPTED_TRAFFIC))
         {
             ConfOpt = &GlobalConf->encrypted;
-            iRet = ProcessConfOpt(ConfOpt, ENCRYPTED_TRAFFIC, ErrorString, ErrStrLen);
-            if (iRet)
-            {
-                return iRet;
-            }
+            ConfOpt->on = 1;
         }
         else
         {
@@ -2435,29 +2367,17 @@ int ProcessFTPClientOptions(FTP_CLIENT_PROTO_CONF *ClientConf,
         else if(!strcmp(BOUNCE, pcToken))
         {
             ConfOpt = &ClientConf->bounce;
-            iRet = ProcessConfOpt(ConfOpt, BOUNCE, ErrorString, ErrStrLen);
-            if (iRet)
-            {
-                return iRet;
-            }
+            ConfOpt->on = 1;
         }
         else if(!strcmp(TELNET_CMDS, pcToken))
         {
             ConfOpt = &ClientConf->telnet_cmds;
-            iRet = ProcessConfOpt(ConfOpt, TELNET_CMDS, ErrorString, ErrStrLen);
-            if (iRet)
-            {
-                return iRet;
-            }
+            ConfOpt->on = 1;
         }
         else if(!strcmp(IGNORE_TELNET_CMDS, pcToken))
         {
             ConfOpt = &ClientConf->ignore_telnet_erase_cmds;
-            iRet = ProcessConfOpt(ConfOpt, IGNORE_TELNET_CMDS, ErrorString, ErrStrLen);
-            if (iRet)
-            {
-                return iRet;
-            }
+            ConfOpt->on = 1;
         }
         else
         {
@@ -2831,20 +2751,12 @@ int ProcessFTPServerOptions(FTP_SERVER_PROTO_CONF *ServerConf,
         else if(!strcmp(TELNET_CMDS, pcToken))
         {
             ConfOpt = &ServerConf->telnet_cmds;
-            iRet = ProcessConfOpt(ConfOpt, TELNET_CMDS, ErrorString, ErrStrLen);
-            if (iRet)
-            {
-                return iRet;
-            }
+            ConfOpt->on = 1;
         }
         else if(!strcmp(IGNORE_TELNET_CMDS, pcToken))
         {
             ConfOpt = &ServerConf->ignore_telnet_erase_cmds;
-            iRet = ProcessConfOpt(ConfOpt, IGNORE_TELNET_CMDS, ErrorString, ErrStrLen);
-            if (iRet)
-            {
-                return iRet;
-            }
+            ConfOpt->on = 1;
         }
         else
         {
@@ -3179,7 +3091,7 @@ int FTPTelnetCheckConfigs(SnortConfig* sc, void* pData)
                  "AreYouThere threshold requires telnet normalization to be "
                  "turned on.\n");
     }
-    if ((pPolicyConfig->encrypted.alert != 0) &&
+    if ((pPolicyConfig->encrypted.on != 0) &&
             !pPolicyConfig->telnet_config->normalize)
     {
         ErrorMessage("WARNING: Telnet Configuration Check: checking for "

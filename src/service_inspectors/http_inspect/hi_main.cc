@@ -171,14 +171,9 @@ static int PrintConfOpt(HTTPINSPECT_CONF_OPT *ConfOpt, const char *Option)
     }
 
     if(ConfOpt->on)
-    {
-        LogMessage("      %s: YES alert: %s\n", Option,
-               ConfOpt->alert ? "YES" : "NO");
-    }
+        LogMessage("      %s: ON\n", Option);
     else
-    {
         LogMessage("      %s: OFF\n", Option);
-    }
 
     return 0;
 }
@@ -239,8 +234,6 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
                ServerConf->non_strict ? "NO" : "YES");
     LogMessage("      Allow Proxy Usage: %s\n",
                ServerConf->allow_proxy ? "YES" : "NO");
-    LogMessage("      Disable Alerting: %s\n",
-               ServerConf->no_alerts ? "YES":"NO");
     LogMessage("      Oversize Dir Length: %d\n",
                ServerConf->long_dir);
     LogMessage("      Only inspect URI: %s\n",

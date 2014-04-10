@@ -133,7 +133,6 @@ int hi_ui_config_default(HTTPINSPECT_CONF *global_server)
     global_server->directory.on = 1;
 
     global_server->webroot.on = 1;
-    global_server->webroot.alert = 1;
 
     global_server->apache_whitespace.on = 1;
 
@@ -211,7 +210,6 @@ int hi_ui_config_set_profile_apache(HTTPINSPECT_CONF *ServerConf)
     ServerConf->directory.on = 1;
 
     ServerConf->webroot.on = 1;
-    ServerConf->webroot.alert = 1;
 
     ServerConf->apache_whitespace.on = 1;
 
@@ -275,19 +273,14 @@ int hi_ui_config_set_profile_iis(HTTPINSPECT_CONF *ServerConf,
     ServerConf->directory.on = 1;
 
     ServerConf->webroot.on = 1;
-    ServerConf->webroot.alert = 1;
 
     ServerConf->double_decoding.on    = 0;
-    ServerConf->double_decoding.alert = 0;
 
     ServerConf->u_encoding.on         = 1;
-    ServerConf->u_encoding.alert      = 1;
 
     ServerConf->bare_byte.on          = 1;
-    ServerConf->bare_byte.alert       = 1;
 
     ServerConf->iis_unicode.on        = 1;
-    ServerConf->iis_unicode.alert     = 1;
 
     ServerConf->iis_backslash.on      = 1;
 
@@ -333,7 +326,6 @@ int hi_ui_config_set_profile_iis_4or5(HTTPINSPECT_CONF *ServerConf,
     ret = hi_ui_config_set_profile_iis(ServerConf, iis_unicode_map);
 
     ServerConf->double_decoding.on = 1;
-    ServerConf->double_decoding.alert = 1;
 
     return ret;
 }
@@ -378,19 +370,14 @@ int hi_ui_config_set_profile_all(HTTPINSPECT_CONF *ServerConf,
     ServerConf->directory.on = 1;
 
     ServerConf->webroot.on = 1;
-    ServerConf->webroot.alert = 1;
 
     ServerConf->double_decoding.on    = 1;
-    ServerConf->double_decoding.alert = 1;
 
     ServerConf->u_encoding.on         = 1;
-    ServerConf->u_encoding.alert      = 1;
 
     ServerConf->bare_byte.on          = 1;
-    ServerConf->bare_byte.alert       = 1;
 
     ServerConf->iis_unicode.on        = 1;
-    ServerConf->iis_unicode.alert     = 1;
 
     ServerConf->iis_backslash.on      = 1;
 

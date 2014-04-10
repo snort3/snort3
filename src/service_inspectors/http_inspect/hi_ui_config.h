@@ -67,7 +67,6 @@ typedef struct s_HTTPINSPECT_CONF_OPT
 {
 
     int on;     /**< if true, configuration option is on */
-    int alert;  /**< if true, alert if option is found */
 
 }  HTTPINSPECT_CONF_OPT;
 
@@ -156,7 +155,6 @@ struct HTTPINSPECT_CONF
     HISmallChunkLength small_chunk_length;
 
     char uri_only;
-    char no_alerts;
     char enable_cookie;
     char inspect_response;
     char enable_xff;

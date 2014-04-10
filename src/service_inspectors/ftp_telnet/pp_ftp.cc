@@ -791,8 +791,7 @@ static int validate_param(Packet *p,
                 // understood to be server address, so we set that here
                 ipAddr = *GET_SRC_IP(p);
             }
-            if ((session->client_conf->bounce.on) &&
-                (session->client_conf->bounce.alert))
+            if ( session->client_conf->bounce.on )
             {
                 if (!IP_EQUALITY(&ipAddr, GET_SRC_IP(p)))
                 {
@@ -1021,12 +1020,9 @@ int initialize_ftp(FTP_SESSION *session, Packet *p, int iMode)
     if (Is_DetectFlag(FLAG_ALT_DECODE))
     {
         /* Normalized data will always be in decode buffer */
-        if ( ((session->client_conf->telnet_cmds.alert) &&
-              (iMode == FTPP_SI_CLIENT_MODE)) ||
-             ((session->server_conf->telnet_cmds.alert) &&
-              (iMode == FTPP_SI_SERVER_MODE)) )
+        if ( (iMode == FTPP_SI_CLIENT_MODE) ||
+              (iMode == FTPP_SI_SERVER_MODE) )
         {
-            /* alert -- FTP channel with telnet commands */
             SnortEventqAdd(GID_FTP, FTP_TELNET_CMD);
             return FTPP_ALERT; /* Nothing else to do since we alerted */
         }
@@ -1282,11 +1278,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
             {
                 /* Could check that response msg includes "TLS" */
                 session->encr_state = AUTH_TLS_ENCRYPTED;
-                if (global_conf->encrypted.alert)
-                {
-                    /* Alert on encrypted channel */
-                    SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                }
+                SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
                 DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
                     "FTP stream is now TLS encrypted\n"););
             }
@@ -1296,11 +1288,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
             {
                 /* Could check that response msg includes "SSL" */
                 session->encr_state = AUTH_SSL_ENCRYPTED;
-                if (global_conf->encrypted.alert)
-                {
-                    /* Alert on encrypted channel */
-                    SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                }
+                SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
                 DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
                     "FTP stream is now SSL encrypted\n"););
             }
@@ -1309,11 +1297,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
             if (rsp_code == 234)
             {
                 session->encr_state = AUTH_UNKNOWN_ENCRYPTED;
-                if (global_conf->encrypted.alert)
-                {
-                    /* Alert on encrypted channel */
-                    SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                }
+                SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
                 DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
                     "FTP stream is now encrypted\n"););
             }
@@ -1472,11 +1456,8 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 if (ftpssn->encr_state == 0)
                 {
                     ftpssn->encr_state = AUTH_UNKNOWN_ENCRYPTED;
-                    if (global_conf->encrypted.alert)
-                    {
-                        /* Alert on encrypted channel */
-                        SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                    }
+                    SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
+
                     if (!global_conf->check_encrypted_data)
                     {
                         /* Mark this session & packet as one to ignore */
@@ -1554,11 +1535,8 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 if (ftpssn->encr_state == 0)
                 {
                     ftpssn->encr_state = AUTH_UNKNOWN_ENCRYPTED;
-                    if (global_conf->encrypted.alert)
-                    {
-                        /* Alert on encrypted channel */
-                        SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
-                    }
+                    SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
+
                     if (!global_conf->check_encrypted_data)
                     {
                         /* Mark this session & packet as one to ignore */

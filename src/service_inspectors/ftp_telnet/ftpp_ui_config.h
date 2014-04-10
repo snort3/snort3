@@ -69,15 +69,10 @@ typedef KMAP BOUNCE_LOOKUP;
  */
 typedef KMAP CMD_LOOKUP;
 
-/*
- * This structure simply holds a value for on/off and whether
- * alert is on/off.  Should be used for many configure options.
- */
 typedef struct s_FTPTELNET_CONF_OPT
 {
 
     int on;     /*< if true, configuration option is on */
-    int alert;  /*< if true, alert if option is found */
 
 }  FTPTELNET_CONF_OPT;
 

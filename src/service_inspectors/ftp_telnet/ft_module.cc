@@ -35,9 +35,6 @@ static const Parameter ft_global_params[] =
     { "encrypted_traffic", Parameter::PT_BOOL, nullptr, "false",
       "check for encrypted telnet and ftp" },
 
-    { "stateful_inspection", Parameter::PT_BOOL, nullptr, "true",
-      "use session-based state for inspection" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -73,8 +70,14 @@ static const Parameter telnet_params[] =
     { "ayt_attack_thresh", Parameter::PT_INT, "-1:", "-1",
       "alert on this number of consecutive telnet AYT commands" },
 
+    { "check_encrypted", Parameter::PT_BOOL, nullptr, "false",
+      "check for end of encryption" },
+
     { "detect_anomalies", Parameter::PT_BOOL, nullptr, "false",
       "help" },
+
+    { "encrypted_traffic", Parameter::PT_BOOL, nullptr, "false",
+      "check for encrypted telnet and ftp" },
 
     { "normalize", Parameter::PT_BOOL, nullptr, "false",
       "eliminate escape sequences" },
