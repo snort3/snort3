@@ -1,4 +1,14 @@
+= Snort++ User Manual
+:author: The Snort Team
+:toc:
+:toc-placement: manual
+:toc-title: Contents
+
 image::snort.png["Snorty",width="480"]
+
+include::version.txt[]
+
+toc::[]
 
 == Some tips to get started with Snort++
 

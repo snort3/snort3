@@ -7,7 +7,8 @@ builtin.txt \
 commands.txt \
 config.txt \
 gids.txt \
-options.txt
+options.txt \
+version.txt
 
 unbuilt_sources = \
 snort_manual.txt \
@@ -37,20 +38,25 @@ endif
 
 dist_doc_DATA += $(EXTRA_DIST)
 
-options.txt: $(top_srcdir)/src/snort
-	../src/snort --markup --help > $@
+snort = $(top_srcdir)/src/snort
 
-config.txt: $(top_srcdir)/src/snort
-	../src/snort --markup --help-config > $@
+builtin.txt: $(snort)
+	$(snort) --markup --help-builtin > $@
 
-builtin.txt: $(top_srcdir)/src/snort
-	../src/snort --markup --help-builtin > $@
+commands.txt: $(snort)
+	$(snort) --markup --help-commands > $@
 
-gids.txt: $(top_srcdir)/src/snort
-	../src/snort --markup --help-gids > $@
+config.txt: $(snort)
+	$(snort) --markup --help-config > $@
 
-commands.txt: $(top_srcdir)/src/snort
-	../src/snort --markup --help-commands > $@
+gids.txt: $(snort)
+	$(snort) --markup --help-gids > $@
+
+options.txt: $(snort)
+	$(snort) --markup --help > $@
+
+version.txt: $(snort)
+	$(snort) -V 2>&1 | grep -v Using > $@
 
 pdf_args = \
     --icons --icons-dir=./images/icons \
@@ -61,8 +67,15 @@ html_args = \
     --attribute disable-javascript --attribute quirks! \
 	$(pdf_args)
 
+# this is the docbook approach to html
+#snort_manual.html: snort_manual.txt $(all_sources)
+#	a2x -f xhtml $(html_args) $<
+
+# this is the asciidoc direct approach to hmtl
+# FIXIT no fuschia for visited; all should be sans serif
+# extracted asciidoc.css doesn't seem to work with -a linkcss
 snort_manual.html: snort_manual.txt $(all_sources)
-	a2x -f xhtml $(html_args) $<
+	asciidoc -b xhtml11 -a toc2 -a icons -a imagesdir=./images $<
 
 snort_manual.pdf: snort_manual.txt $(all_sources)
 	a2x -f pdf $(pdf_args) $<

@@ -125,10 +125,12 @@ int DisplayBanner(void)
     zlib_ver = zlib_version;
 
     LogMessage("\n");
-    LogMessage("   ,,_     -*> Snort! <*-\n");
+    LogMessage("   ,,_     -*> Snort++ <*-\n");
     LogMessage("  o\"  )~   Version %s (Build %s) %s\n",
                VERSION, BUILD, info);
-    LogMessage("   ''''    By Martin Roesch & The Snort Team: http://www.snort.org/snort/snort-team\n");
+    LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
+    LogMessage("           http://snort.org/snort/snort-team\n");
+    LogMessage("           Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
 #ifdef HAVE_PCAP_LIB_VERSION
     LogMessage("           Using %s\n", pcap_lib_version());
