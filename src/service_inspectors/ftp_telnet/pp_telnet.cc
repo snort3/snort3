@@ -133,7 +133,7 @@ int normalize_telnet(FTPTELNET_GLOBAL_CONF *GlobalConf,
                         tnssn->encr_state = 1;
                         SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
 
-                        if (!GlobalConf->check_encrypted_data)
+                        if (!tnssn->telnet_conf->check_encrypted_data)
                         {
                             /* Mark this session & packet as one to ignore */
                             stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
@@ -330,7 +330,7 @@ int normalize_telnet(FTPTELNET_GLOBAL_CONF *GlobalConf,
                             tnssn->encr_state = 1;
                             SnortEventqAdd(GID_TELNET, TELNET_ENCRYPTED);
 
-                            if (!GlobalConf->check_encrypted_data)
+                            if (!tnssn->telnet_conf->check_encrypted_data)
                             {
                                 /* Mark this session & packet as one to ignore */
                                 stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);

@@ -62,6 +62,7 @@
 #include "managers/inspector_manager.h"
 #include "managers/event_manager.h"
 #include "target_based/sftarget_protocol_reference.h"
+#include "detection_defines.h"
 
 #ifdef PORTLISTS
 #include "utils/sfportobject.h"

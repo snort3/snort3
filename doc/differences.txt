@@ -65,6 +65,7 @@ Snort++ differs from Snort in the following ways:
 * lowmem* search methods are now in snort_examples
 * deleted unused http_inspect stateful mode
 * deleted stateless inspection from ftp and telnet
+* deleted http and ftp alert options (now strictly rule based)
 
 === Rules
 

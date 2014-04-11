@@ -356,85 +356,6 @@ static int PrintConfOpt(FTPTELNET_CONF_OPT *ConfOpt, const char* Option)
 }
 
 /*
- * Function: ProcessFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                          char *ErrorString, int ErrStrLen)
- *
- * Purpose: This is where we process the global configuration for FTPTelnet.
- *
- *          We set the values of the global configuraiton here.  Any errors
- *          that are encountered are specified in the error string and the
- *          type of error is returned through the return code, i.e. fatal,
- *          non-fatal.
- *
- *          The configuration options that are dealt with here are:
- *          - encrypted_traffic
- *              Detect and alert on encrypted sessions
- *          - check_after_encrypted
- *              Instructs the preprocessor to continue checking a data stream
- *              after it is encrypted, looking for an eventual
- *              non-ecrypted data.
- *
- * Arguments: GlobalConf    => pointer to the global configuration
- *            ErrorString   => error string buffer
- *            ErrStrLen     => the length of the error string buffer
- *
- * Returns: int     => an error code integer (0 = success,
- *                     >0 = non-fatal error, <0 = fatal error)
- *
- */
-int ProcessFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
-                      char *ErrorString, int ErrStrLen)
-{
-    FTPTELNET_CONF_OPT *ConfOpt;
-    char *pcToken;
-    int  iTokens = 0;
-
-    while ((pcToken = NextToken(CONF_SEPARATORS)) != NULL)
-    {
-        /*
-         * Show that we at least got one token
-         */
-        iTokens = 1;
-
-        /*
-         * Search for configuration keywords
-         */
-        if (!strcmp(pcToken, CHECK_ENCRYPTED))
-        {
-            GlobalConf->check_encrypted_data = 1;
-        }
-        else if (!strcmp(pcToken, ENCRYPTED_TRAFFIC))
-        {
-            ConfOpt = &GlobalConf->encrypted;
-            ConfOpt->on = 1;
-        }
-        else
-        {
-            snprintf(ErrorString, ErrStrLen,
-                    "Invalid keyword '%s' for '%s' configuration.",
-                     pcToken, GLOBAL);
-
-            return FTPP_FATAL_ERR;
-        }
-    }
-
-    /*
-     * If there are not any tokens to the configuration, then
-     * we let the user know and log the error.  return non-fatal
-     * error.
-     */
-    if(!iTokens)
-    {
-        snprintf(ErrorString, ErrStrLen,
-                "No tokens to '%s' configuration.", GLOBAL);
-
-        return FTPP_NONFATAL_ERR;
-    }
-
-    return FTPP_SUCCESS;
-}
-
-/*
  * Function: ProcessPorts(PROTO_CONF *protocol,
  *                        char *ErrorString, int ErrStrLen)
  *
@@ -622,6 +543,9 @@ static int PrintTelnetConf(TELNET_PROTO_CONF *TelnetConf)
     LogMessage("      Normalize: %s\n", TelnetConf->normalize ? "YES" : "NO");
     LogMessage("      Detect Anomalies: %s\n",
             TelnetConf->detect_anomalies ? "YES" : "NO");
+    PrintConfOpt(&TelnetConf->detect_encrypted, "Check for Encrypted Traffic");
+    LogMessage("      Continue to check encrypted data: %s\n",
+        TelnetConf->check_encrypted_data ? "YES" : "NO");
 
     return FTPP_SUCCESS;
 }
@@ -719,6 +643,16 @@ int ProcessTelnetConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
         else if(!strcmp(DETECT_ANOMALIES, pcToken))
         {
             GlobalConf->telnet_config->detect_anomalies = 1;
+        }
+        else if (!strcmp(pcToken, CHECK_ENCRYPTED))
+        {
+            GlobalConf->telnet_config->check_encrypted_data = 1;
+        }
+        else if (!strcmp(pcToken, ENCRYPTED_TRAFFIC))
+        {
+            FTPTELNET_CONF_OPT* ConfOpt;
+            ConfOpt = &GlobalConf->telnet_config->detect_encrypted;
+            ConfOpt->on = 1;
         }
         /*
          * Start the CONF_OPT configurations.
@@ -2536,6 +2470,9 @@ static int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
     PrintConfOpt(&ServerConf->ignore_telnet_erase_cmds, "  Ignore Telnet Cmd Operations");
     LogMessage("        Identify open data channels: %s\n",
         ServerConf->data_chan ? "YES" : "NO");
+    PrintConfOpt(&ServerConf->detect_encrypted, "Check for Encrypted Traffic");
+    LogMessage("      Continue to check encrypted data: %s\n",
+        ServerConf->check_encrypted_data ? "YES" : "NO");
 
     if (ServerConf->print_commands)
     {
@@ -2735,6 +2672,10 @@ int ProcessFTPServerOptions(FTP_SERVER_PROTO_CONF *ServerConf,
         {
             ServerConf->print_commands = 1;
         }
+        else if (!strcmp(pcToken, CHECK_ENCRYPTED))
+        {
+            ServerConf->check_encrypted_data = 1;
+        }
         else if (!strcmp(IGNORE_DATA_CHAN, pcToken))
         {
             iRet = ProcessFTPIgnoreDataChan(ServerConf, pcToken, ErrorString, ErrStrLen);
@@ -2748,6 +2689,11 @@ int ProcessFTPServerOptions(FTP_SERVER_PROTO_CONF *ServerConf,
         /*
          * Start the CONF_OPT configurations.
          */
+        else if (!strcmp(pcToken, ENCRYPTED_TRAFFIC))
+        {
+            ConfOpt = &ServerConf->detect_encrypted;
+            ConfOpt->on = 1;
+        }
         else if(!strcmp(TELNET_CMDS, pcToken))
         {
             ConfOpt = &ServerConf->telnet_cmds;
@@ -2899,29 +2845,6 @@ int ProcessFTPServerConf(FTPTELNET_GLOBAL_CONF *GlobalConf,
     }
 
     return 0;
-}
-
-/*
- * Function: PrintFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf)
- *
- * Purpose: Prints the FTPTelnet preprocessor global configuration
- *
- * Arguments: GlobalConf    => pointer to the global configuration
- *
- * Returns: int     => an error code integer (0 = success,
- *                     >0 = non-fatal error, <0 = fatal error)
- *
- */
-int PrintFTPGlobalConf(FTPTELNET_GLOBAL_CONF *GlobalConf)
-{
-    LogMessage("FTPTelnet Config:\n");
-
-    LogMessage("    GLOBAL CONFIG\n");
-    PrintConfOpt(&GlobalConf->encrypted, "Check for Encrypted Traffic");
-    LogMessage("      Continue to check encrypted data: %s\n",
-        GlobalConf->check_encrypted_data ? "YES" : "NO");
-
-    return FTPP_SUCCESS;
 }
 
 void FTPTelnetCleanupFTPCMDConf(void *ftpCmd)
@@ -3091,7 +3014,7 @@ int FTPTelnetCheckConfigs(SnortConfig* sc, void* pData)
                  "AreYouThere threshold requires telnet normalization to be "
                  "turned on.\n");
     }
-    if ((pPolicyConfig->encrypted.on != 0) &&
+    if ((pPolicyConfig->telnet_config->detect_encrypted.on != 0) &&
             !pPolicyConfig->telnet_config->normalize)
     {
         ErrorMessage("WARNING: Telnet Configuration Check: checking for "
@@ -3225,7 +3148,7 @@ int SnortTelnet(FTPTELNET_GLOBAL_CONF *GlobalConf, TELNET_SESSION *Telnetsession
         return FTPP_NONFATAL_ERR;
     }
 
-    if (Telnetsession->encr_state && !GlobalConf->check_encrypted_data)
+    if (Telnetsession->encr_state && !Telnetsession->telnet_conf->check_encrypted_data)
     {
         return FTPP_SUCCESS;
     }
@@ -3283,7 +3206,7 @@ static inline int InspectClientPacket (Packet* p)
  *                     >0 = non-fatal error, <0 = fatal error)
  *
  */
-int SnortFTP(FTPTELNET_GLOBAL_CONF *GlobalConf, FTP_SESSION *FTPsession,
+int SnortFTP(FTPTELNET_GLOBAL_CONF*, FTP_SESSION *FTPsession,
              Packet *p, int iInspectMode)
 {
     int iRet;
@@ -3296,7 +3219,7 @@ int SnortFTP(FTPTELNET_GLOBAL_CONF *GlobalConf, FTP_SESSION *FTPsession,
         return FTPP_INVALID_SESSION;
     }
 
-    if (!GlobalConf->check_encrypted_data &&
+    if (!FTPsession->server_conf->check_encrypted_data &&
         ((FTPsession->encr_state == AUTH_TLS_ENCRYPTED) ||
          (FTPsession->encr_state == AUTH_SSL_ENCRYPTED) ||
          (FTPsession->encr_state == AUTH_UNKNOWN_ENCRYPTED)) )
@@ -3895,9 +3818,6 @@ void FtpTelnetConfig(
 
         if (iRet == 0)
         {
-            iRet = ProcessFTPGlobalConf(config,
-                                     ErrorString, iErrStrLen);
-
             if (iRet == 0)
             {
 #if 0
@@ -3986,9 +3906,7 @@ void FtpTelnetConfig(
 
 void PrintFtpTelnetConfig(FTPTELNET_GLOBAL_CONF* config)
 {
-    PrintFTPGlobalConf(config);
     PrintTelnetConf(config->telnet_config);
-
     PrintFTPClientConf(config->ftp_client);
     PrintFTPServerConf(config->ftp_server);
 }

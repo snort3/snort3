@@ -1068,7 +1068,6 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                        FTP_CLIENT_REQ *req, int rsp_code)
 {
     int iRet = FTPP_SUCCESS;
-    FTPTELNET_GLOBAL_CONF *global_conf = ftp_telnet_config;
 
     //if (session->server_conf->data_chan)
     {
@@ -1269,7 +1268,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
         }
     } /* if (session->server_conf->data_chan) */
 
-    if (global_conf->encrypted.on)
+    if (session->server_conf->detect_encrypted.on)
     {
         switch(session->encr_state)
         {
@@ -1303,7 +1302,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
             }
             break;
         }
-    } /* if (global_conf->encrypted.on) */
+    }
 
     return iRet;
 }
@@ -1344,7 +1343,6 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
     int space = 0;
     long state = FTP_CMD_OK;
     int rsp_code = 0;
-    FTPTELNET_GLOBAL_CONF *global_conf = ftp_telnet_config;
     FTP_CLIENT_REQ *req;
     FTP_CMD_CONF *CmdConf = NULL;
 
@@ -1458,7 +1456,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                     ftpssn->encr_state = AUTH_UNKNOWN_ENCRYPTED;
                     SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
 
-                    if (!global_conf->check_encrypted_data)
+                    if (!ftpssn->server_conf->check_encrypted_data)
                     {
                         /* Mark this session & packet as one to ignore */
                         stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);
@@ -1537,7 +1535,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                     ftpssn->encr_state = AUTH_UNKNOWN_ENCRYPTED;
                     SnortEventqAdd(GID_FTP, FTP_ENCRYPTED);
 
-                    if (!global_conf->check_encrypted_data)
+                    if (!ftpssn->server_conf->check_encrypted_data)
                     {
                         /* Mark this session & packet as one to ignore */
                         stream.stop_inspection(p->flow, p, SSN_DIR_BOTH, -1, 0);

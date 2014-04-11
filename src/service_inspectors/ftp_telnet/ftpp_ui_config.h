@@ -197,32 +197,25 @@ typedef struct s_PROTO_CONF
  * structure and there is a global structure for servers that
  * don't have a unique configuration.
  */
-typedef struct s_FTP_SERVER_PROTO_CONF
+struct FTP_SERVER_PROTO_CONF
 {
     /* Ports must be first */
     PROTO_CONF proto_ports;
-
     char *serverAddr;
 
     unsigned int def_max_param_len;
     unsigned int max_cmd_len;
 
     int print_commands;
+    int data_chan;
+    int check_encrypted_data;
 
     CMD_LOOKUP    *cmd_lookup;
 
     FTPTELNET_CONF_OPT telnet_cmds;
     FTPTELNET_CONF_OPT ignore_telnet_erase_cmds;
-    int data_chan;
-
-    /**Counts references to this allocated data structure. Each additional
-     * reference should increment referenceCount. Each attempted free should
-     * decrement it. When reference count reaches 0, then this
-     * data structure should be freed.
-     */
-    int referenceCount;
-
-}  FTP_SERVER_PROTO_CONF;
+    FTPTELNET_CONF_OPT detect_encrypted;
+};
 
 typedef struct s_FTP_BOUNCE_TO
 {
@@ -238,7 +231,7 @@ typedef struct s_FTP_BOUNCE_TO
  * structure and there is a global structure for clients that
  * don't have a unique configuration.
  */
-typedef struct s_FTP_CLIENT_PROTO_CONF
+struct FTP_CLIENT_PROTO_CONF
 {
     char *clientAddr;
     unsigned int  max_resp_len;
@@ -251,15 +244,7 @@ typedef struct s_FTP_CLIENT_PROTO_CONF
     /* allow_bounce to IP/mask port|port-range */
     /* TODO: change this to use a quick find of IP/mask */
     BOUNCE_LOOKUP    *bounce_lookup;
-
-    /**Counts references to this allocated data structure. Each additional
-     * reference should increment referenceCount. Each attempted free should
-     * decrement it. When reference count reaches 0, then this
-     * data structure should be freed.
-     */
-    int referenceCount;
-
-}  FTP_CLIENT_PROTO_CONF;
+};
 
 /*
  * This is the configuration construct that holds the specific
@@ -272,8 +257,10 @@ typedef struct s_TELNET_PROTO_CONF
     PROTO_CONF proto_ports;
 
     int normalize;
-
     int ayt_threshold;
+    int check_encrypted_data;
+
+    FTPTELNET_CONF_OPT detect_encrypted;
 
     char detect_anomalies;
 
@@ -285,19 +272,12 @@ typedef struct s_TELNET_PROTO_CONF
  * configuration, a standard global default configuration,
  * and client configurations.
  */
-typedef struct s_FTPTELNET_GLOBAL_CONF
+struct FTPTELNET_GLOBAL_CONF
 {
-    int check_encrypted_data;
-    FTPTELNET_CONF_OPT encrypted;
-
-    FTP_CLIENT_PROTO_CONF *ftp_client;
-    FTP_SERVER_PROTO_CONF *ftp_server;
-    TELNET_PROTO_CONF *telnet_config;
-
-    uint32_t xtra_filename_id;
-
-}  FTPTELNET_GLOBAL_CONF;
-
+    FTP_CLIENT_PROTO_CONF* ftp_client;
+    FTP_SERVER_PROTO_CONF* ftp_server;
+    TELNET_PROTO_CONF* telnet_config;
+};
 
 /*
  * Functions
