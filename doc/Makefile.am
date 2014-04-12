@@ -41,19 +41,19 @@ dist_doc_DATA += $(EXTRA_DIST)
 snort = $(top_srcdir)/src/snort
 
 builtin.txt: $(snort)
-	$(snort) --markup --help-builtin > $@
+	$(snort) --markup --help-builtin | sort -n -t : -k 1.4 -k 2 > $@
 
 commands.txt: $(snort)
-	$(snort) --markup --help-commands > $@
+	$(snort) --markup --help-commands | sort > $@
 
 config.txt: $(snort)
-	$(snort) --markup --help-config > $@
+	$(snort) --markup --help-config | sort -k 3 > $@
 
 gids.txt: $(snort)
-	$(snort) --markup --help-gids > $@
+	$(snort) --markup --help-gids | sort -n  -k 1.4 > $@
 
 options.txt: $(snort)
-	$(snort) --markup --help > $@
+	$(snort) --markup --help-options | sort > $@
 
 version.txt: $(snort)
 	$(snort) -V 2>&1 | grep -v Using > $@

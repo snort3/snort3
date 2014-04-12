@@ -26,13 +26,11 @@ include::options.txt[]
 
 include::config.txt[]
 
-== Builtin Rules
-
-The following generators are available:
+== Generators
 
 include::gids.txt[]
 
-These rules are from the decoders and inspectors:
+== Builtin Rules
 
 include::builtin.txt[]
 

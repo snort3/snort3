@@ -857,6 +857,9 @@ static ConfigFunc basic_opts[] =
     { "help-module", config_help_module,
       "output config, commands, and builtin rules for given module" },
 
+    { "help-options", config_help_options,
+      "<option prefix> (same as --help)" },
+
     { "lua", config_lua,
       "<chunk> extend/override conf with chunk; may be repeated" },
 
