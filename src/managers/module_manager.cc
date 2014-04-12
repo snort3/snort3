@@ -400,6 +400,20 @@ bool set_string(const char* fqn, const char* s)
     return set_value(fqn, v);
 }
 
+static bool comp_mods(const ModHook* l, const ModHook* r)
+{
+    const Module* lm = l->mod;
+    const Module* rm = r->mod;
+    return strcmp(lm->get_name(), rm->get_name()) < 0;
+}
+
+static bool comp_gids(const ModHook* l, const ModHook* r)
+{
+    const Module* lm = l->mod;
+    const Module* rm = r->mod;
+    return ( lm->get_gid() < rm->get_gid() );
+}
+
 //-------------------------------------------------------------------------
 // public methods
 //-------------------------------------------------------------------------
@@ -456,6 +470,7 @@ unsigned ModuleManager::get_errors()
 
 void ModuleManager::dump_modules()
 {
+    s_modules.sort(comp_mods);
     Dumper d("Modules");
 
     for ( auto* p : s_modules )
@@ -465,6 +480,7 @@ void ModuleManager::dump_modules()
 
 void ModuleManager::show_configs(bool markup, const char* pfx)
 {
+    s_modules.sort(comp_mods);
     s_markup = markup;
 
     for ( auto p : s_modules )
@@ -497,6 +513,7 @@ void ModuleManager::show_configs(bool markup, const char* pfx)
 
 void ModuleManager::show_commands(bool markup, const char* pfx)
 {
+    s_modules.sort(comp_mods);
     s_markup = markup;
     unsigned len = pfx ? strlen(pfx) : 0;
 
@@ -528,6 +545,7 @@ void ModuleManager::show_commands(bool markup, const char* pfx)
 
 void ModuleManager::show_gids(bool markup, const char* pfx)
 {
+    s_modules.sort(comp_gids);
     s_markup = markup;
     unsigned len = pfx ? strlen(pfx) : 0;
 
@@ -553,9 +571,9 @@ void ModuleManager::show_gids(bool markup, const char* pfx)
     }    
 }
 
-
 void ModuleManager::show_rules(bool markup, const char* pfx)
 {
+    s_modules.sort(comp_gids);
     s_markup = markup;
     unsigned len = pfx ? strlen(pfx) : 0;
 
