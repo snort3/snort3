@@ -29,13 +29,10 @@ struct SnortConfig;
 class ModuleManager
 {
 public:
-    typedef void (*NewHook_f)();
-
     static void init();
     static void term();
 
-    static void add_module(class Module*, NewHook_f = nullptr);
-    static void add_module(class Module*, const struct BaseApi*);
+    static void add_module(class Module*, const struct BaseApi* = nullptr);
     static Module* get_module(const char*);
 
     static void dump_modules();

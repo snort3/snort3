@@ -42,10 +42,8 @@ struct ModHook
 {
     Module* mod;
     const BaseApi* api;
-    ModuleManager::NewHook_f hook;  // FIXIT forgot what i was gonna do with this!
     luaL_reg* reg;
 
-    ModHook(Module*, ModuleManager::NewHook_f);
     ModHook(Module*, const BaseApi*);
     ~ModHook();
 
@@ -88,20 +86,10 @@ static const string& emphasis(const string& s)
 // ModHook foo
 //-------------------------------------------------------------------------
 
-ModHook::ModHook(Module* m, ModuleManager::NewHook_f f)
-{
-    mod = m;
-    hook = f;
-    reg = nullptr;
-    api = nullptr;
-    init();
-}
-
 ModHook::ModHook(Module* m, const BaseApi* b)
 {
     mod = m;
     api = b;
-    hook = nullptr;
     reg = nullptr;
     init();
 }
@@ -429,15 +417,6 @@ void ModuleManager::term()
         delete p;
 
     s_modules.clear();
-}
-
-void ModuleManager::add_module(Module* m, NewHook_f f)
-{
-    ModHook* mh = new ModHook(m, f);
-    s_modules.push_back(mh);
-
-    if ( mh->reg )
-        Shell::install(m->get_name(), mh->reg);
 }
 
 void ModuleManager::add_module(Module* m, const BaseApi* b)
