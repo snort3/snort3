@@ -38,6 +38,10 @@ include::builtin.txt[]
 
 include::commands.txt[]
 
+== Plugins
+
+include::plugins.txt[]
+
 == Coding Style
 
 include::style.txt[]

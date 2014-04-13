@@ -282,12 +282,12 @@ const char* IpsManager::get_so_options(const char* soid)
     if ( !rule )
         return nullptr;
 
-    // FIXIT this approach won't tolerate spaces and might get fooled by
-    // matching content (should it precede this)
-    // FIXIT need to deobfuscate here
+    // FIXIT this approach won't tolerate spaces and might get
+    // fooled by matching content (should it precede this)
     char opt[32];
     snprintf(opt, sizeof(opt), "; soid:%s", soid);
     const char* s = strstr(rule, opt);
+
     return s ? s + strlen(opt) : nullptr;
 }
 

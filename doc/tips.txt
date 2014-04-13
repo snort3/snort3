@@ -27,6 +27,23 @@ The following pointers will help you get started:
 * if you want to build the documentation, you will need to install
   asciidoc.  you will also need dblatex to build the pdf manual.
 
+* to build with cmake and make, first create a separate directory for the
+  build and cd into that directory.  then:
+
+    cd Snort++
+    mkdir Cbuild
+    cd Cbuild
+    ccmake
+    cmake ..
+
+* build with Xcode, do this:
+
+    cd Snort++
+    mkdir Xcode
+    cd Xcode
+    cmake .. -G Xcode -DCMAKE_INSTALL_PREFIX=/path/to/install
+    open snort.xcodeproj
+
 === Using Lua
 
 * Snort++ needs a lua conf.  use $install_dir/conf/snort.lua, like -c

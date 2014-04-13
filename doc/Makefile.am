@@ -13,6 +13,7 @@ version.txt
 unbuilt_sources = \
 snort_manual.txt \
 differences.txt \
+plugins.txt \
 style.txt \
 tips.txt \
 images/snort.png

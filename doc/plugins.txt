@@ -1,0 +1,61 @@
+Snort++ uses a variety of plugins to accomplish much of its processing
+objectives, including:
+
+* Codec - to decode and encode packets
+* Inspector - like the prior preprocessors, for normalization, etc.
+* IpsOption - for detection in Snort++ rules
+* Logger - for handling events
+* Mpse - for fast pattern matching
+* So - for dynamic rules
+
+Additional plugins, like rule actions, are planned.
+
+Plugins have an associated API defined for each type, all of which share a
+common 'header', called the BaseApi.  A dynamic library makes its plugins
+available by exporting the snort_plugins symbol, which is a null terminated
+array of BaseApi pointers.
+
+The BaseApi includes type, name, API version, plugin version, and function
+pointers for constructing and destructing a Module.  The specific API add
+various other data and functions for their given roles.
+
+The Module is pervasive in Snort\+\+.  It is how everything, including
+plugins, are configured.  It also provides access to builtin rules.  And as
+the glue that binds functionality to Snort++, the capabilities of a Module
+are expected to grow to include statistics support, etc.
+
+Module configuration is handled by a list of Parameters.  Most parameters
+can be validated by the framework, which means that conversion from string
+to number is done in exactly one place.  Providing the builtin rules allows
+the documenation to include them automatically and it allows for
+autogenerating the rules at startup.
+
+If we are defining a new Inspector called gadget, it might be configured in
+snort.lua like this:
+
+gadget =
+{
+    brain = true,
+    claw = 3
+}
+
+When the gadget table is processed, Snort++ will look for a module called
+gadget.  If that Module has an associated API, it will be used to configure
+a new instance of the plugin.  In this case, a GadgetModule would be
+instantiated, brain and claw would be set, and the Module instance would be
+passed to the GadgetInspector constructor.
+
+The user may have configured gadget like this:
+
+gadget = { }
+
+among other ways.  The Module::begin() and ::end() methods are used to
+allocate required data structures and properly initialize defaults and to
+do integrity checks of related parameters.  The working paradigm is that
+Module hands the configured data to the plugin instance which takes
+ownership.
+
+Note that there is at most one instance of a given Module, even if multiple
+plugin instances are created which use that Module.  (Multiple instances
+require Snort++ binding configurations not yet implemented.)
+
