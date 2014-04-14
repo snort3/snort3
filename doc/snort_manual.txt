@@ -10,11 +10,11 @@ include::version.txt[]
 
 toc::[]
 
-== Some tips to get started with Snort++
+== Getting Started
 
 include::tips.txt[]
 
-== Changes from Snort to Snort++
+== Snort++ vs Snort
 
 include::differences.txt[]
 
