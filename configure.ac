@@ -26,7 +26,7 @@
 #--------------------------------------------------------------------------
 
 AC_INIT([snort], [2.10.071])
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/snort.cc])
 AC_CONFIG_MACRO_DIR([m4])
@@ -166,7 +166,7 @@ CC_VISIBILITY()
 # Checks for typedefs, structures, and compiler characteristics.
 #--------------------------------------------------------------------------
 
-AC_CHECK_HEADER_STDBOOL
+#AC_CHECK_HEADER_STDBOOL
 AC_TYPE_UID_T
 AC_C_INLINE
 AC_TYPE_INT16_T
