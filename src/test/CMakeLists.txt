@@ -1,5 +1,3 @@
-message("\ttest")
-
 
 if ( TESTING_ENABLED )
 

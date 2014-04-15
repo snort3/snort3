@@ -11,7 +11,7 @@
 # Variables defined by this module:
 #
 #  PCAP_FOUND                System has libpcap, include and library dirs found
-#  PCAP_INCLUDE_DIRS          The libpcap include directories.
+#  PCAP_INCLUDE_DIR          The libpcap include directories.
 #  PCAP_LIBRARIES            The libpcap library (possibly includes a thread
 #                            library e.g. required by pf_ring's libpcap)
 #  HAVE_LIBPFRING              If a found version of libpcap supports PF_RING
@@ -26,53 +26,22 @@ set(ERROR_MESSAGE
     shared library that may be installed in an unusual place"
 )
 
-find_program(PCAP_CONFIG 
-    NAMES pcap-config
-    HINTS ENV PCAP_DIR
+
+
+find_path(PCAP_INCLUDE_DIR
+    NAMES pcap.h
 )
 
-if(NOT PCAP_INCLUDE_DIRS)
-    if (PCAP_CONFIG)
-        EXECUTE_PROCESS(COMMAND ${PCAP_CONFIG} --cflags
-            OUTPUT_VARIABLE PCAP_INCLUDE_DIRS
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-
-    else()   
-        find_path(PCAP_INCLUDE_DIRS
-            NAMES pcap.h
-        )
-
-    endif()
-endif()
-
-
-if(NOT PCAP_LIBRARIES)
-    if (PCAP_CONFIG)
-        EXECUTE_PROCESS(
-            COMMAND pcap-config --libs
-            RESULT_VARIABLE exit_code
-            OUTPUT_VARIABLE PCAP_LIBRARIES
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-
-    else()
-
-        find_library(PCAP_LIBRARIES 
-            NAMES pcap
-        )
-    endif()
-
-
-    set (PCAP_LIBRARIES "${PCAP_LIBRARIES}" CACHE PATH "libpcap library directory")
-endif()
+find_library(PCAP_LIBRARIES 
+    NAMES pcap
+)
 
 
 #  foo to ensure PCAP compiles
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PCAP
-    REQUIRED_VARS PCAP_LIBRARIES PCAP_INCLUDE_DIRS
+    REQUIRED_VARS PCAP_LIBRARIES PCAP_INCLUDE_DIR
     FAIL_MESSAGE ${ERROR_MESSAGE}
 )
 
@@ -107,7 +76,7 @@ check_function_exists(pcap_get_pfring_id HAVE_LIBPFRING)
 set(CMAKE_REQUIRED_LIBRARIES)
 
 mark_as_advanced(
-    PCAP_INCLUDE_DIRS
+    PCAP_INCLUDE_DIR
     PCAP_LIBRARIES
 )
 unset(PCAP_CONFIG CACHE)

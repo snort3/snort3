@@ -2,11 +2,11 @@
 # ... include everything because I'm not correcting 
 # every files include
 
-include_directories(${DAQ_INCLUDE_DIRS})
-include_directories(${LUA_INCLUDE_DIRS})
-include_directories(${PCAP_INCLUDES})
-include_directories(${PCRE_INCLUDE_DIRS})
-include_directories(${LUAJIT_INCLUDE_DIRS})
+include_directories(${DAQ_INCLUDE_DIR})
+include_directories(${PCAP_INCLUDE_DIR})
+include_directories(${PCRE_INCLUDE_DIR})
+include_directories(${LUAJIT_INCLUDE_DIR})
+include_directories(${DNET_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(control)
 include_directories(detection)
@@ -129,6 +129,7 @@ target_link_libraries(snort
     ${OPENSSL_CRYPTO_LIBRARY}
     ${LUAJIT_LIBRARIES}
     ${DAQ_LIBRARIES}
+    ${DNET_LIBRARIES}
 )
 
 
@@ -182,71 +183,76 @@ install(TARGETS snort
 #
 ##############################################################################
 
-set(TARGET_DIR ${CMAKE_BINARY_DIR})
 
 
-set(file builtin.txt)
-
-set(output ${TARGET_DIR}/${file})
-add_custom_command(
-    OUTPUT ${output}
-    COMMAND snort --markup --help-builtin > ${output}
-    MAIN_DEPENDENCY snort
-    COMMENT "Documents: building ${output}"
-)
-get_filename_component(file_name "${file}" NAME_WE)
-add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
+if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
 
-set(file commands.txt)
-
-set(output ${TARGET_DIR}/${file})
-add_custom_command(
-    OUTPUT ${output}
-    COMMAND snort  --markup --help-commands > ${output}
-    MAIN_DEPENDENCY snort
-    COMMENT "Documents: building ${output}"
-)
-get_filename_component(file_name "${file}" NAME_WE)
-add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
+    set(TARGET_DIR ${CMAKE_BINARY_DIR})
 
 
+    set(file builtin.txt)
 
-set(file config.txt)
-
-set(output ${TARGET_DIR}/${file})
-add_custom_command(
-    OUTPUT ${output}
-    COMMAND snort --markup --help-config > ${output}
-    MAIN_DEPENDENCY snort
-    COMMENT "Documents: building ${output}"
-)
-get_filename_component(file_name "${file}" NAME_WE)
-add_custom_target(doc_${file_name} ALL DEPENDS ${output})
-
-
-set(file options.txt)
-
-set(output ${TARGET_DIR}/${file})
-add_custom_command(
-    OUTPUT ${output}
-    COMMAND snort --markup --help > ${output}
-    MAIN_DEPENDENCY snort
-    COMMENT "Documents: building ${output}"
-)
-get_filename_component(file_name "${file}" NAME_WE)
-add_custom_target(doc_${file_name} ALL DEPENDS ${output})
+    set(output ${TARGET_DIR}/${file})
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND snort --markup --help-builtin > ${output}
+        MAIN_DEPENDENCY snort
+        COMMENT "Documents: building ${output}"
+    )
+    get_filename_component(file_name "${file}" NAME_WE)
+    add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
 
 
-set(file gids.txt)
+    set(file commands.txt)
 
-set(output ${TARGET_DIR}/${file})
-add_custom_command(
-    OUTPUT ${output}
-    COMMAND snort --markup --help-gids > ${output}
-    MAIN_DEPENDENCY snort
-    COMMENT "Documents: building ${output}"
-)
-get_filename_component(file_name "${file}" NAME_WE)
-add_custom_target(doc_${file_name} ALL DEPENDS ${output})
+    set(output ${TARGET_DIR}/${file})
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND snort  --markup --help-commands > ${output}
+        MAIN_DEPENDENCY snort
+        COMMENT "Documents: building ${output}"
+    )
+    get_filename_component(file_name "${file}" NAME_WE)
+    add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
 
+
+
+    set(file config.txt)
+
+    set(output ${TARGET_DIR}/${file})
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND snort --markup --help-config > ${output}
+        MAIN_DEPENDENCY snort
+        COMMENT "Documents: building ${output}"
+    )
+    get_filename_component(file_name "${file}" NAME_WE)
+    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
+
+
+    set(file options.txt)
+
+    set(output ${TARGET_DIR}/${file})
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND snort --markup --help > ${output}
+        MAIN_DEPENDENCY snort
+        COMMENT "Documents: building ${output}"
+    )
+    get_filename_component(file_name "${file}" NAME_WE)
+    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
+
+
+    set(file gids.txt)
+
+    set(output ${TARGET_DIR}/${file})
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND snort --markup --help-gids > ${output}
+        MAIN_DEPENDENCY snort
+        COMMENT "Documents: building ${output}"
+    )
+    get_filename_component(file_name "${file}" NAME_WE)
+    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
+endif()

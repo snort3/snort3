@@ -1,5 +1,5 @@
 
-include_directories(${LUAJIT_INCLUDE_DIRS})
+include_directories(${LUAJIT_INCLUDE_DIR})
 
 set (LUA_INCLUDES
     snort_config.lua

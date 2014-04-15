@@ -6,7 +6,8 @@ set (LUA_SCRIPTS
     reference.lua
 )
 
-install (FILES ${EXTRA_DIST_BINARY_PATH}
+install (FILES ${LUA_SCRIPTS}
     DESTINATION "conf"
 )
 
+set(ENV{LUA_PATH} "${CMAKE_INSTALL_PREFIX}/include/snort/lua/?.lua\;\;")

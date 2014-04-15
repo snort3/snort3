@@ -5,7 +5,7 @@
 # This module defines
 #  LUAJIT_FOUND, if false, do not try to link to Lua
 #  LUAJIT_LIBRARIES
-#  LUAJIT_INCLUDE_DIRS, where to find lua.h
+#  LUAJIT_INCLUDE_DIR, where to find lua.h
 #  LUAJIT_VERSION_STRING, the version of Lua found (since CMake 2.8.8)
 
 ## Copied from default CMake FindLua51.cmake
@@ -26,7 +26,7 @@ set(ERROR_MESSAGE
 )
 
 
-find_path(LUAJIT_INCLUDE_DIRS 
+find_path(LUAJIT_INCLUDE_DIR 
     NAMES luajit.h
     HINTS ENV LUA_DIR
     PATH_SUFFIXES include include/luajit-2.0
@@ -56,8 +56,8 @@ if(LUAJIT_LIBRARIES)
 endif()
 
 
-if(LUAJIT_INCLUDE_DIRS AND EXISTS "${LUAJIT_INCLUDE_DIRS}/luajit.h")
-    file(STRINGS "${LUAJIT_INCLUDE_DIRS}/luajit.h" luajit_version_str REGEX "^#define[ \t]+LUAJIT_VERSION[ \t]+\"LuaJIT .+\"")
+if(LUAJIT_INCLUDE_DIR AND EXISTS "${LUAJIT_INCLUDE_DIR}/luajit.h")
+    file(STRINGS "${LUAJIT_INCLUDE_DIR}/luajit.h" luajit_version_str REGEX "^#define[ \t]+LUAJIT_VERSION[ \t]+\"LuaJIT .+\"")
 
     string(REGEX REPLACE "^#define[ \t]+LUAJIT_VERSION[ \t]+\"LuaJIT ([^\"]+)\".*" "\\1" LUAJIT_VERSION_STRING "${luajit_version_str}")
     unset(luajit_version_str)
@@ -67,13 +67,13 @@ include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set LUA_FOUND to TRUE if
 # all listed variables are TRUE
 find_package_handle_standard_args(LuaJIT
-    REQUIRED_VARS LUAJIT_LIBRARIES LUAJIT_INCLUDE_DIRS
+    REQUIRED_VARS LUAJIT_LIBRARIES LUAJIT_INCLUDE_DIR
     VERSION_VAR LUAJIT_VERSION_STRING
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
 
 mark_as_advanced(
-    LUAJIT_INCLUDE_DIRS 
+    LUAJIT_INCLUDE_DIR 
     LUAJIT_LIBRARIES 
     MATH_LIBRARY
 )

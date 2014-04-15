@@ -5,7 +5,7 @@
 #  DAQ_FOUND, if false, do not try to link to Lua
 # 
 #  DAQ_FOUND - system has the daq
-#  DAQ_INCLUDE_DIRS - the daqs include directory
+#  DAQ_INCLUDE_DIR - the daqs include directory
 #  DAQ_LIBRARIES - the libraries needed to use the daq
 #
 ## Copied from default CMake FindLua51.cmake
@@ -22,7 +22,7 @@ set (ERROR_MESSAGE
 
 
 
-find_path(DAQ_INCLUDE_DIRS
+find_path(DAQ_INCLUDE_DIR
     NAMES  daq.h 
     HINTS  ENV DAQ_DIR
     PATH_SUFFIXES daq
@@ -66,11 +66,11 @@ find_library(DAQ_LIBRARIES
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(DAQ
-    REQUIRED_VARS DAQ_LIBRARIES DAQ_INCLUDE_DIRS
+    REQUIRED_VARS DAQ_LIBRARIES DAQ_INCLUDE_DIR
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
 
 mark_as_advanced(
-    DAQ_INCLUDE_DIRS 
+    DAQ_INCLUDE_DIR 
     DAQ_LIBRARIES 
 )
