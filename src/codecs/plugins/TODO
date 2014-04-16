@@ -1,0 +1,96 @@
+
+
+--  Remove all DECODE_IP_MULTIPLE_ENCAPSULATION errors
+--  Remove all DECODE_GTP_MULTIPLE_ENCAPSULATION errors
+
+
+--  Remove p->encapsulated
+
+
+--  Rename PacketClass to be packet.  Remove packet struct
+
+
+--- How serious is this platform independance?  It seems like we really want encoders to be tightly tied to decoders. If I use inheritance, I can enforce that 
+        --  Are encoders required?
+        --  Are formate and update encoders a requirement?
+
+
+--  Uncomment 
+        >>  int Active_IsUNRCandidate(const Packet* p)''
+    in active.cc
+
+-- norm.cc.  Currently broken due othe the removed of lyr.proto
+
+-- DELETE
+File:    snort.c
+Change:  InitSynToMulticastDstIp() / SynToMulticastDstIpDestroy() 
+
+-- DELETE
+File:   layer.h
+Change: Remove the IP_PROTO fields
+
+-- DELETE
+File:  prot_icmp.cc
+Change:  Remove using statements for enum types
+
+-- CHANGE
+File:  All decoders
+Change:  throwing away const keyword
+
+CHANGE:
+File: ips_icode.
+Change: Undo conversion to ints
+
+DELETE
+File: ipv4.h
+Change: remove the ETHENET_TYPE_IP macro.
+Change:  Change constantant name C_ETHERNET_TYPE_IP to ETHERNET_TYPE_IP
+
+CHANGE:
+File: ips_ipopts.cc
+Change: Confirm enum change "any" from zero to enum still works correctly
+
+CHANGE:
+File:  Every time SC_TUNNEL_BYPASS_ENABLED...add something to stats
+
+CHANGE:
+File: prot_ipv6.cc
+Change: Remove every PushLayer
+
+CHANGE:
+File: Packet.h
+Change:  make everythign const.
+
+Change:
+File: icmp6.h
+Change:  enum ICMP6_BIG --> remove when other macro changes
+*****************************************************************************
+********************************  *******************************************
+****************************          ***************************************
+************************  R E F A C T O R ***********************************
+****************************          ***************************************
+********************************  *******************************************
+*****************************************************************************
+
+File:   log_text.cc
+Change: Remove PROTO_IP4 and PROTO_IP6
+Change: 
+
+
+
+RuleTreeNode
+Change:  Reset so it checks flags for the current protocols, and does NOT check datatypes!
+__________________________________________________________________________________________________________
+
+RUSS
+
+
+-- Do we change the typedef factor for structs?
+__________________________________________________________________________________________________________
+
+
+
+ChangeLog
+
+
+Packet_Manager::set_grinder() is now the packet_manager initializer
