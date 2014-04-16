@@ -1,23 +1,13 @@
 
-set (PROTOCOL_HEADERS
+add_library (protocols
+    ipv4.h
+    tcp.h
     packet.h
-    sf_protocols.h
+    packet.cc
+    ipv6.h
+    udp.h
+    eth.h
+    icmp4.h
+    icmp6.h
 )
-
-add_library (protocols STATIC
-    checksum.h
-    decode.cc 
-    decode.h 
-    encode.cc 
-    encode.h 
-    decode_module.cc
-    decode_module.h
-    sf_protocols.h
-    ${PROTOCOL_HEADERS}
-)
-
-install (FILES ${PROTOCOL_HEADERS}
-    DESTINATION "${CMAKE_PROJECT_NAME}/protocols"
-)
-
 

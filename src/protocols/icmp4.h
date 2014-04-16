@@ -1,0 +1,291 @@
+/*
+** Copyright (C) 2002-2013 Sourcefire, Inc.
+** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+
+#ifndef ICMP4_H
+#define ICMP4_H
+
+#include <cstdint>
+#include "snort_types.h"
+
+namespace icmp4
+{
+
+    // class to hold any data which should be hidden
+    namespace detail
+    {
+
+
+
+
+    }
+
+
+// do NOT add 'ICMP_' to the begining of these const because they 
+// will overlap with dnet macros
+
+
+enum class IcmpType : std::uint8_t {
+    ECHOREPLY = 0, 
+    DEST_UNREACH = 3, 
+    SOURCE_QUENCH = 4,  
+    REDIRECT = 5,  
+    ECHO = 8, 
+    ROUTER_ADVERTISE = 9,  
+    ROUTER_SOLICIT = 10, 
+    TIME_EXCEEDED = 11, 
+    PARAMETERPROB = 12, 
+    TIMESTAMP = 13, 
+    TIMESTAMPREPLY = 14, 
+    INFO_REQUEST = 15, 
+    INFO_REPLY = 16, 
+    ADDRESS = 17,  
+    ADDRESSREPLY = 18,  
+//      NR_ICMP_TYPES = 18,
+};
+
+
+enum class IcmpCode : std::uint8_t {
+    /* Codes for ICMP UNREACHABLES (3) */
+    NET_UNREACH = 0,  
+    HOST_UNREACH = 1, 
+    PROT_UNREACH = 2,   
+    PORT_UNREACH = 3, 
+    FRAG_NEEDED = 4, 
+    SR_FAILED = 5, 
+    NET_UNKNOWN = 6,
+    HOST_UNKNOWN = 7,
+    HOST_ISOLATED = 8,
+    PKT_FILTERED_NET = 9,
+    PKT_FILTERED_HOST = 10,
+    NET_UNR_TOS = 11,
+    HOST_UNR_TOS = 12,
+    PKT_FILTERED = 13, 
+    PREC_VIOLATION = 14, 
+    PREC_CUTOFF = 15, 
+    
+    /* Code for ICMP Source Quence (4) */
+    SOURCE_QUENCH = 0,
+
+    /* Codes for an ICMP Redirect (5) */
+    REDIR_NET = 0,
+    REDIR_HOST = 1,
+    REDIR_TOS_NET = 2,
+    REDIR_TOS_HOST = 3,
+
+    /* Codes for ICMP Echo (8) */
+    ECHO = 0, 
+
+    /* Codes for ICMP time excceeded (11) */
+    TIMEOUT_TRANSIT = 0,
+    TIMEOUT_REASSY = 1,
+
+    /* code for ICMP Parameter Problem (12) */
+    PARAM_BADIPHDR = 0,
+    PARAM_OPTMISSING = 1,
+    PARAM_BAD_LENGTH = 2,
+};
+
+struct ICMPbaseHdr
+{
+    IcmpType type;
+    IcmpCode code;
+
+};
+
+struct ICMPHdr
+{
+    IcmpType type;
+//    union {
+//        uint8_t type;
+//        _IcmpType enum_type;
+//    };
+    IcmpCode code;
+    uint16_t csum;
+
+    union
+    {
+        struct
+        {
+            uint8_t pptr;
+            uint8_t pres1;
+            uint16_t pres2;
+        } param;
+
+        struct in_addr gwaddr;
+
+        struct idseq
+        {
+            uint16_t id;
+            uint16_t seq;
+        } idseq;
+
+        uint32_t sih_void;
+
+        struct pmtu
+        {
+            uint16_t ipm_void;
+            uint16_t nextmtu;
+        } pmtu;
+
+        struct rtradv
+        {
+            uint8_t num_addrs;
+            uint8_t wpa;
+            uint16_t lifetime;
+        } rtradv;
+    } icmp_hun;
+
+#define s_icmp_pptr       icmp_hun.param.pptr
+#define s_icmp_gwaddr     icmp_hun.gwaddr
+#define s_icmp_id         icmp_hun.idseq.id
+#define s_icmp_seq        icmp_hun.idseq.seq
+#define s_icmp_void       icmp_hun.sih_void
+#define s_icmp_pmvoid     icmp_hun.pmtu.ipm_void
+#define s_icmp_nextmtu    icmp_hun.pmtu.nextmtu
+#define s_icmp_num_addrs  icmp_hun.rtradv.num_addrs
+#define s_icmp_wpa        icmp_hun.rtradv.wpa
+#define s_icmp_lifetime   icmp_hun.rtradv.lifetime
+
+    union
+    {
+        /* timestamp */
+        struct ts
+        {
+            uint32_t otime;
+            uint32_t rtime;
+            uint32_t ttime;
+        } ts;
+
+        /* IP header for unreach */
+        struct ih_ip
+        {
+            IPHdr *ip;
+            /* options and then 64 bits of data */
+        } ip;
+
+        struct ra_addr
+        {
+            uint32_t addr;
+            uint32_t preference;
+        } radv;
+
+        uint32_t mask;
+
+        char    data[1];
+
+    } icmp_dun;
+#define s_icmp_otime      icmp_dun.ts.otime
+#define s_icmp_rtime      icmp_dun.ts.rtime
+#define s_icmp_ttime      icmp_dun.ts.ttime
+#define s_icmp_ip         icmp_dun.ih_ip
+#define s_icmp_radv       icmp_dun.radv
+#define s_icmp_mask       icmp_dun.mask
+#define s_icmp_data       icmp_dun.data
+    
+} ;
+
+
+
+
+inline bool is_echo_reply(uint32_t type)
+{
+    return (type == (uint32_t) IcmpType::ECHOREPLY);
+}
+
+inline bool is_echo(uint32_t type)
+{
+    return (type == (uint32_t) IcmpType::ECHO);
+}
+
+
+
+/*
+ * CHECKSUM 
+ */
+
+/*
+*  checksum icmp
+*/
+static uint16_t in_chksum_icmp( unsigned short * w, int blen )
+{
+  unsigned  short answer=0;
+  unsigned int cksum = 0;
+
+  while(blen >=32)
+  {
+     cksum += w[0];
+     cksum += w[1];
+     cksum += w[2];
+     cksum += w[3];
+     cksum += w[4];
+     cksum += w[5];
+     cksum += w[6];
+     cksum += w[7];
+     cksum += w[8];
+     cksum += w[9];
+     cksum += w[10];
+     cksum += w[11];
+     cksum += w[12];
+     cksum += w[13];
+     cksum += w[14];
+     cksum += w[15];
+     w     += 16;
+     blen  -= 32;
+  }
+
+  while(blen >=8)
+  {
+     cksum += w[0];
+     cksum += w[1];
+     cksum += w[2];
+     cksum += w[3];
+     w     += 4;
+     blen  -= 8;
+  }
+
+  while(blen > 1)
+  {
+     cksum += *w++;
+     blen  -= 2;
+  }
+
+  if( blen == 1 )
+  {
+    *(unsigned char*)(&answer) = (*(unsigned char*)w);
+    cksum += answer;
+  }
+
+  cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
+  cksum += (cksum >> 16);
+
+
+  return (unsigned short)(~cksum);
+}
+
+} //namespace icmp4
+
+
+
+typedef icmp4::ICMPbaseHdr ICMPbaseHdr;
+typedef icmp4::ICMPHdr ICMPHdr;
+
+
+#endif /* ICMP4_H */
