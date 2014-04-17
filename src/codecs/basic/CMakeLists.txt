@@ -1,7 +1,7 @@
 
 
 
-add_library( essential
+add_library( basic_codecs
     cd_icmp4.cc
     cd_icmp6.cc
     cd_ipv4.cc
@@ -11,6 +11,6 @@ add_library( essential
     cd_eth.cc
 )
 
-target_link_libraries( essential
+target_link_libraries( basic_codecs
     protocols
 )

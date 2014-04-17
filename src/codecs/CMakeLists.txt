@@ -1,6 +1,6 @@
 
 
-add_subdirectory(essential)
+add_subdirectory(basic)
 add_subdirectory(plugins)
 add_subdirectory(chained)
 
@@ -32,7 +32,7 @@ add_library( codecs STATIC
 
 
 target_link_libraries( codecs
-    essential
+    basic_codecs
     codec_plugins
     protocols
     sfip

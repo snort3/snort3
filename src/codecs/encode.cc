@@ -105,7 +105,8 @@ typedef struct {
 
 // PKT_MAX is sized to ensure that any reassembled packet
 // can accommodate a full datagram at innermost layer
-#define PKT_MAX (ETHERNET_HEADER_LEN + VLAN_HEADER_LEN + ETHERNET_MTU + IP_MAXPACKET)
+// 4 == VLAN_HEADER
+#define PKT_MAX (ETHERNET_HEADER_LEN + 4 + ETHERNET_MTU + IP_MAXPACKET)
 
 // all layer encoders look like this:
 typedef ENC_STATUS (*Encoder)(EncState*, Buffer* in, Buffer* out);

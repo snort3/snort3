@@ -95,7 +95,6 @@
 #include "snort_debug.h"
 #include "parser.h"
 #include "mstring.h"
-//#include "checksum.h"
 #include "perf_monitor/perf.h"
 #include "timersub.h"
 #include "fpcreate.h"
