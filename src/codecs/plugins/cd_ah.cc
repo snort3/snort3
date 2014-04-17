@@ -25,51 +25,61 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if 0
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-#endif
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-
+#include "protocols/ipv4.h"
 
 namespace
 {
 
-class NameCodec : public Codec
+class AhCodec : public Codec
 {
 public:
-    NameCodec() : Codec("NAME"){};
-    ~NameCodec();
+    AhCodec() : Codec("ah"){};
+    ~AhCodec();
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
     
 };
+
+static const uint16_t AH_PROT_ID = 51; // RFC 4302
 
 } // anonymous namespace
 
 
-
-
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
+bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    v.push_back(ipv6::ethertype());
-    v.push_back(IPPROTO_IPV6);
+
+    IP6Extension *ah = (IP6Extension *)raw_pkt;
+    p_hdr_len = sizeof(*ah) + (ah->ip6e_len << 2);
+
+    if (p_hdr_len > len)
+    {
+        return false;
+    }
+
+    next_prot_id = ah->ip6e_nxt;
+    return true;
+}
+
+
+
+
+void AhCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(AH_PROT_ID);
 }
 
 static Codec* ctor()
 {
-    return new NameCodec();
+    return new AhCodec();
 }
 
 static void dtor(Codec *cd)
@@ -77,9 +87,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "name_codec";
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
 
-static const CodecApi ipv6_api =
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
+
+
+
+static const char* name = "ah_decode";
+
+static const CodecApi ah_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -88,5 +112,8 @@ static const CodecApi ipv6_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    sum, // sum
+    stats  // stats
 };
+
 
