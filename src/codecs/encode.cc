@@ -44,8 +44,6 @@
 #include "stream5/stream_api.h"
 #include "encode.h"
 #include "sf_protocols.h"
-
-#include "codecs/tmp/prot_vlan.h"
  
 #include "protocols/ipv6.h"
 #include "protocols/udp.h"
