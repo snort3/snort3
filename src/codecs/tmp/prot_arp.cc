@@ -87,6 +87,8 @@ static const CodecApi arp_api =
     NULL, // ctor
     NULL, // dtor
     ARP::Decode,
+    NULL,
+    NULL
 };
 
 

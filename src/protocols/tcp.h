@@ -86,7 +86,7 @@ const uint8_t TCP_HEADER_LEN = 20;
 const int OPT_TRUNC = -1;
 const int OPT_BADLEN = -2;
 
-inline uint8_t header_length()
+inline uint8_t hdr_len()
 {
     return detail::TCP_HEADER_LEN;
 }
@@ -231,5 +231,6 @@ enum TcpOpt{
 #define TCPOPT_AUTH   29  /* [RFC5925] - The TCP Authentication Option
                              Intended to replace MD5 Signature Option [RFC2385] */
 
+#define TCP_HEADER_LEN tcp::hdr_len()
 
 #endif /* TCP_H */

@@ -28,8 +28,8 @@
 
 
 #include "snort.h"
-#include "generators.h"
-#include "codec_events.h"
+#include "codecs/decode_module.h"
+#include "codecs/codec_events.h"
 
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
@@ -77,7 +77,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
             "WARNING: Truncated ICMP6 header (%d bytes).\n", len););
 
         if ( Event_Enabled(DECODE_ICMP6_HDR_TRUNC) )
-            DecoderEvent(p, EVARGS(ICMP6_HDR_TRUNC));
+            DecoderEvent(p, DECODE_ICMP6_HDR_TRUNC);
 
 //        dc.discards++;
         return false;
@@ -141,7 +141,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
                 if ( Event_Enabled(DECODE_ICMP6_DST_MULTICAST) )
                     if ( ipv6::is_multicast(p->ip6h->ip_dst.ip.u6_addr8[0]) )
-                        DecoderEvent(p, EVARGS(ICMP6_DST_MULTICAST));
+                        DecoderEvent(p, DECODE_ICMP6_DST_MULTICAST);
 
 //                PushLayer(PROTO_ICMP6, p, pkt, ICMP_NORMAL_LEN);
             }
@@ -150,8 +150,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                     "WARNING: Truncated ICMP Echo header (%d bytes).\n", len););
 
-                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR,
-                                DECODE_ICMP_DGRAM_LT_ICMPHDR_STR);
+                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
@@ -172,8 +171,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
                 if (ntohl(too_big->mtu) < 1280)
                 {
-                    DecoderEvent(p, DECODE_ICMPV6_TOO_BIG_BAD_MTU,
-                                 DECODE_ICMPV6_TOO_BIG_BAD_MTU_STR);
+                    DecoderEvent(p, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
                 }
                 p_hdr_len = icmp6::hdr_normal_len();
                 DecodeICMPEmbeddedIP6(p->data, p->dsize, p);
@@ -183,8 +181,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                     "WARNING: Truncated ICMP header (%d bytes).\n", len););
 
-                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR,
-                                DECODE_ICMP_DGRAM_LT_ICMPHDR_STR);
+                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
@@ -207,13 +204,11 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 {
                     if (p->icmp6h->code == 2)
                     {
-                        DecoderEvent(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE,
-                                DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE_STR);
+                        DecoderEvent(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE);
                     }
                     else if (p->icmp6h->code > 6)
                     {
-                        DecoderEvent(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE,
-                                DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE_STR);
+                        DecoderEvent(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
                     }
                 }
                 p_hdr_len = icmp6::hdr_normal_len();
@@ -224,8 +219,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                     "WARNING: Truncated ICMP header (%d bytes).\n", len););
 
-                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR,
-                                DECODE_ICMP_DGRAM_LT_ICMPHDR_STR);
+                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
@@ -241,13 +235,11 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 ICMP6RouterAdvertisement *ra = (ICMP6RouterAdvertisement *)raw_pkt;
                 if (p->icmp6h->code != 0)
                 {
-                    DecoderEvent(p, DECODE_ICMPV6_ADVERT_BAD_CODE,
-                                 DECODE_ICMPV6_ADVERT_BAD_CODE_STR);
+                    DecoderEvent(p, DECODE_ICMPV6_ADVERT_BAD_CODE);
                 }
                 if (ntohl(ra->reachable_time) > 3600000)
                 {
-                    DecoderEvent(p, DECODE_ICMPV6_ADVERT_BAD_REACHABLE,
-                                 DECODE_ICMPV6_ADVERT_BAD_REACHABLE_STR);
+                    DecoderEvent(p, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
                 }
                 p_hdr_len = icmp6::hdr_min_len();
             }
@@ -256,8 +248,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                     "WARNING: Truncated ICMP header (%d bytes).\n", len););
 
-                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR,
-                                DECODE_ICMP_DGRAM_LT_ICMPHDR_STR);
+                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
@@ -273,13 +264,11 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 ICMP6RouterSolicitation *rs = (ICMP6RouterSolicitation *)raw_pkt;
                 if (rs->code != 0)
                 {
-                    DecoderEvent(p, DECODE_ICMPV6_SOLICITATION_BAD_CODE,
-                                 DECODE_ICMPV6_SOLICITATION_BAD_CODE_STR);
+                    DecoderEvent(p, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
                 }
                 if (ntohl(rs->reserved) != 0)
                 {
-                    DecoderEvent(p, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED,
-                                 DECODE_ICMPV6_SOLICITATION_BAD_RESERVED_STR);
+                    DecoderEvent(p, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
                 }
                 p_hdr_len = icmp6::hdr_min_len();
             }
@@ -288,8 +277,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                     "WARNING: Truncated ICMP header (%d bytes).\n", len););
 
-                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR,
-                                DECODE_ICMP_DGRAM_LT_ICMPHDR_STR);
+                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
@@ -306,8 +294,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 ICMP6NodeInfo *ni = (ICMP6NodeInfo *)raw_pkt;
                 if (ni->code > 2)
                 {
-                    DecoderEvent(p, DECODE_ICMPV6_NODE_INFO_BAD_CODE,
-                                 DECODE_ICMPV6_NODE_INFO_BAD_CODE_STR);
+                    DecoderEvent(p, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
                 }
                 /* TODO: Add alert for INFO Response, code == 1 || code == 2)
                  * and there is data.
@@ -319,8 +306,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                     "WARNING: Truncated ICMP header (%d bytes).\n", len););
 
-                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR,
-                                DECODE_ICMP_DGRAM_LT_ICMPHDR_STR);
+                DecoderEvent(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
@@ -332,7 +318,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         default:
             if ( Event_Enabled(DECODE_ICMP6_TYPE_OTHER) )
-                DecoderEvent(p, EVARGS(ICMP6_TYPE_OTHER));
+                DecoderEvent(p, DECODE_ICMP6_TYPE_OTHER);
 
             p_hdr_len = icmp6::hdr_min_len();
             break;
@@ -369,13 +355,12 @@ void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
                     (unsigned long) len););
 
     /* do a little validation */
-    if ( len < ipv6::header_length() )
+    if ( len < ipv6::hdr_len() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP short header (%d bytes)\n", len););
 
-        DecoderEvent(p, DECODE_ICMP_ORIG_IP_TRUNCATED,
-                        DECODE_ICMP_ORIG_IP_TRUNCATED_STR);
+        DecoderEvent(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
 
 //        dc.discards++;
         return;
@@ -391,21 +376,19 @@ void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
             "ICMP: not IPv6 datagram ([ver: 0x%x][len: 0x%x])\n",
             IPRAW_HDR_VER(hdr), len););
 
-        DecoderEvent(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH,
-                        DECODE_ICMP_ORIG_IP_VER_MISMATCH_STR);
+        DecoderEvent(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
 
 //        dc.discards++;
         return;
     }
 
-    if ( len < ipv6::header_length() )
+    if ( len < ipv6::hdr_len() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP6 len (%d bytes) < IP6 hdr len (%d bytes), packet discarded\n",
-            len, ipv6::header_length()););
+            len, ipv6::hdr_len()););
 
-        DecoderEvent(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP,
-                        DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP_STR);
+        DecoderEvent(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
 
 //        dc.discards++;
         return;
@@ -418,12 +401,12 @@ void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
     // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP6 Unreachable IP6 header length: "
-                            "%lu\n", (unsigned long)ipv6::header_length()););
+                            "%lu\n", (unsigned long)ipv6::hdr_len()););
 
     switch(GET_ORIG_IPH_PROTO(p))
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->orig_tcph = (TCPHdr *)(pkt + ipv6::header_length());
+            p->orig_tcph = (TCPHdr *)(pkt + ipv6::hdr_len());
 
             /* stuff more data into the printout data struct */
             p->orig_sp = ntohs(p->orig_tcph->th_sport);
@@ -432,7 +415,7 @@ void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
             break;
 
         case IPPROTO_UDP:
-            p->orig_udph = (udp::UDPHdr *)(pkt + ipv6::header_length());
+            p->orig_udph = (udp::UDPHdr *)(pkt + ipv6::hdr_len());
 
             /* fill in the printout data structs */
             p->orig_sp = ntohs(p->orig_udph->uh_sport);
@@ -441,7 +424,7 @@ void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
             break;
 
         case IPPROTO_ICMP:
-            p->orig_icmph = (ICMPHdr *)(pkt + ipv6::header_length());
+            p->orig_icmph = (ICMPHdr *)(pkt + ipv6::hdr_len());
             break;
     }
 
@@ -647,5 +630,7 @@ static const CodecApi ipv6_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
 

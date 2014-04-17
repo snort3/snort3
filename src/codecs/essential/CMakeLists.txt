@@ -13,5 +13,4 @@ add_library( essential
 
 target_link_libraries( essential
     protocols
-    chained_codecs
 )

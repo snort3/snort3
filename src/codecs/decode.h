@@ -49,6 +49,7 @@ extern "C" {
 #include "snort_types.h"
 #include "protocols/packet.h"
 #include "profiler.h"
+#include "codecs/tmp/prot_mpls.h"
 
 
 
@@ -70,6 +71,8 @@ extern "C" {
 #define ETHERNET_MAX_LEN_ENCAP          1518    /* 802.3 (+LLC) or ether II ? */
 
 
+#define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
+#define DEFAULT_LABELCHAIN_LENGTH    -1
 
 
 #define MAX_PORTS 65536
@@ -147,11 +150,6 @@ struct enc_header {
 
 // chained decoders
 
-// FUNCTIONS!
-void DecoderAlertEncapsulated(Packet *, int, const char *, const uint8_t *, uint32_t);
-
-
-
 
 void BsdFragHashInit(int max);
 void BsdFragHashCleanup(void);
@@ -165,6 +163,7 @@ uint32_t EXTRACT_32BITS (u_char *);
 extern void DecodePolicySpecific(Packet *);
 
 /* XXX not sure where this guy needs to live at the moment */
+#if 0
 typedef struct _PortList
 {
     int ports[32];   /* 32 is kind of arbitrary */
@@ -172,9 +171,7 @@ typedef struct _PortList
     int num_entries;
 
 } PortList;
-
-void InitSynToMulticastDstIp( struct _SnortConfig * );
-void SynToMulticastDstIpDestroy( void );
+#endif
 
 #define SFTARGET_UNKNOWN_PROTOCOL -1
 

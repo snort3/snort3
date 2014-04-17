@@ -59,6 +59,7 @@ extern "C" {
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
+#include "protocols/arp.h"
 
 
 /*  D E F I N E S  ************************************************************/
@@ -516,9 +517,6 @@ typedef struct _WifiHdr
   #pragma warning( disable : 4214 )
 #endif
 
-#ifndef IPPROTO_IPIP
-#define IPPROTO_IPIP 4
-#endif
 
 /* GRE related stuff */
 typedef struct _GREHdr
@@ -614,27 +612,6 @@ typedef struct _TCPHdr
 
 
 
-typedef struct _ARPHdr
-{
-    uint16_t ar_hrd;       /* format of hardware address   */
-    uint16_t ar_pro;       /* format of protocol address   */
-    uint8_t ar_hln;        /* length of hardware address   */
-    uint8_t ar_pln;        /* length of protocol address   */
-    uint16_t ar_op;        /* ARP opcode (command)         */
-}       ARPHdr;
-
-
-
-typedef struct _EtherARP
-{
-    ARPHdr ea_hdr;      /* fixed-size header */
-    uint8_t arp_sha[6];    /* sender hardware address */
-    uint8_t arp_spa[4];    /* sender protocol address */
-    uint8_t arp_tha[6];    /* target hardware address */
-    uint8_t arp_tpa[4];    /* target protocol address */
-}         EtherARP;
-
-
 #ifndef NO_NON_ETHER_DECODER
 typedef struct _EtherEapol
 {
@@ -669,12 +646,6 @@ typedef struct _Options
 } Options;
 
 
-typedef struct _IpOptions
-{
-    ipv4::IPOptionCodes code;
-    uint8_t len; /* length of the data section */
-    const uint8_t *data;
-} IpOptions;
 
 
 /* PPPoEHdr Header; eth::EtherHdr plus the PPPoE Header */
@@ -742,14 +713,6 @@ typedef struct _PGM_HEADER
     PGM_NAK  nak;
 } PGM_HEADER;
 
-/* GTP basic Header  */
-typedef struct _GTPHdr
-{
-    uint8_t  flag;              /* flag: version (bit 6-8), PT (5), E (3), S (2), PN (1) */
-    uint8_t  type;              /* message type */
-    uint16_t length;            /* length */
-
-} GTPHdr;
 
 #define LAYER_MAX  32
 
@@ -876,7 +839,7 @@ struct Packet
 #endif
 
     // nothing after this point is zeroed ...
-    IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
+    ipv4::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
     IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
 

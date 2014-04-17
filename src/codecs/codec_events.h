@@ -21,14 +21,11 @@
 #ifndef CODEC_EVENTS_H
 #define CODEC_EVENTS_H
 
-
-#define EVARGS(ID) DECODE_ ## ID, DECODE_ ## ID ## _STR
-
 #include <array>
 
 // included for DECODE_INDEX_MAX
 #include "detection/generators.h"
-#include "utils/sfActionQueue.h"
+//#include "utils/sfActionQueue.h"
 #include "network_inspectors/normalize/normalize.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"
@@ -42,23 +39,28 @@ class CodecEvents
 {
 public:
 
-    static void decoder_event (Packet *p, int sid, const char *str);
-    static void DecoderAlertEncapsulated(
-        Packet *p, int type, const char *str, const uint8_t *pkt, uint32_t len);
+
+    static void exec_ip_chksm_drop(Packet*);
+    static void exec_udp_chksm_drop (Packet *);
+    static void execTcpChksmDrop (Packet*);
+    static void exec_hop_drop(Packet* p, int sid);
+    static void exec_ttl_drop (Packet *data, int sid);
+
+
+
+    static void decoder_event (Packet *p, int sid);
+    static void decoder_alert_encapsulated(
+        Packet *p, int sid, const uint8_t *pkt, uint32_t len);
 
 
     static void decoder_init(unsigned max);
     static void decoder_term(void);
     static void decoder_exec(void);
-    static void EnableDecodeRules();
-    static void DisableDecodeRules();
-    static void UpdateDecodeRule(uint32_t sid, bool on);
     static void queue_exec_drop(void_callback_f, Packet* p);
 
     static void DecoderOptEvent (
         Packet *p, int sid, const char *str, void_callback_f );
 
-    static bool event_enabled(int sid);
     static void execIcmpChksmDrop (void*);
 
     static void queueDecoderEvent(
@@ -72,24 +74,22 @@ public:
 
 
     static int ScNormalDrop (NormFlags nf);
-    static void execHopDrop (void *data);
-    static void execTtlDrop (void *data);
-    static void execDecoderEvent(void *data);
+    static void execDecoderEvent(Packet *p);
+
+
+    static bool event_enabled(int sid);
 private:
 
 
 
 
-//static std::array<bool, DECODE_INDEX_MAX> decodeRuleEnabled;
 };
 
-static inline
-void DecoderEvent(Packet *p, int sid, const char *str){
-    CodecEvents::decoder_event(p, sid, str);
+static inline void DecoderEvent(Packet *p, int sid){
+    CodecEvents::decoder_event(p, sid);
 };
 
-static inline
-bool Event_Enabled(int sid){
+static inline bool Event_Enabled(int sid){
     CodecEvents::event_enabled(sid);
 }
 

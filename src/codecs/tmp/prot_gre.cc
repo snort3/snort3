@@ -65,8 +65,7 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
 
     if (len < GRE_HEADER_LEN)
     {
-        DecoderAlertEncapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
-                        DECODE_GRE_DGRAM_LT_GREHDR_STR,
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
                         pkt, len);
         return;
     }
@@ -75,8 +74,7 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
     {
         /* discard packet - multiple GRE encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
-        DecoderAlertEncapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        DECODE_IP_MULTIPLE_ENCAPSULATION_STR,
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                         pkt, len);
         return;
     }
@@ -95,8 +93,7 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
             /* these must not be set */
             if (GRE_RECUR(p->greh) || GRE_FLAGS(p->greh))
             {
-                DecoderAlertEncapsulated(p, DECODE_GRE_INVALID_HEADER,
-                                DECODE_GRE_INVALID_HEADER_STR,
+                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_HEADER,
                                 pkt, len);
                 return;
             }
@@ -152,8 +149,7 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
             if (GRE_CHKSUM(p->greh) || GRE_ROUTE(p->greh) || GRE_SSR(p->greh) ||
                 GRE_RECUR(p->greh) || GRE_V1_FLAGS(p->greh))
             {
-                DecoderAlertEncapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                DECODE_GRE_V1_INVALID_HEADER_STR,
+                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 pkt, len);
                 return;
             }
@@ -161,8 +157,7 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
             /* protocol must be 0x880B - PPP */
             if (GRE_PROTO(p->greh) != GRE_TYPE_PPP)
             {
-                DecoderAlertEncapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                DECODE_GRE_V1_INVALID_HEADER_STR,
+                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 pkt, len);
                 return;
             }
@@ -170,8 +165,7 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
             /* this flag should always be present */
             if (!(GRE_KEY(p->greh)))
             {
-                DecoderAlertEncapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                DECODE_GRE_V1_INVALID_HEADER_STR,
+                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 pkt, len);
                 return;
             }
@@ -187,16 +181,14 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
             break;
 
         default:
-            DecoderAlertEncapsulated(p, DECODE_GRE_INVALID_VERSION,
-                            DECODE_GRE_INVALID_VERSION_STR,
+            CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_VERSION,
                             pkt, len);
             return;
     }
 
     if (hlen > len)
     {
-        DecoderAlertEncapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
-                        DECODE_GRE_DGRAM_LT_GREHDR_STR,
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
                         pkt, len);
         return;
     }
@@ -250,5 +242,7 @@ static const CodecApi udp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
 

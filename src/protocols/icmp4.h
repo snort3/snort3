@@ -42,7 +42,8 @@ namespace icmp4
 // will overlap with dnet macros
 
 
-enum class IcmpType : std::uint8_t {
+//enum class IcmpType : std::uint8_t {
+enum IcmpType : std::uint8_t {
     ECHOREPLY = 0, 
     DEST_UNREACH = 3, 
     SOURCE_QUENCH = 4,  
@@ -62,7 +63,8 @@ enum class IcmpType : std::uint8_t {
 };
 
 
-enum class IcmpCode : std::uint8_t {
+//enum class IcmpCode : std::uint8_t {
+enum IcmpCode : std::uint8_t {
     /* Codes for ICMP UNREACHABLES (3) */
     NET_UNREACH = 0,  
     HOST_UNREACH = 1, 
@@ -82,7 +84,7 @@ enum class IcmpCode : std::uint8_t {
     PREC_CUTOFF = 15, 
     
     /* Code for ICMP Source Quence (4) */
-    SOURCE_QUENCH = 0,
+    SOURCE_QUENCH_CODE = 0,
 
     /* Codes for an ICMP Redirect (5) */
     REDIR_NET = 0,
@@ -91,7 +93,7 @@ enum class IcmpCode : std::uint8_t {
     REDIR_TOS_HOST = 3,
 
     /* Codes for ICMP Echo (8) */
-    ECHO = 0, 
+    ECHO_CODE = 0, 
 
     /* Codes for ICMP time excceeded (11) */
     TIMEOUT_TRANSIT = 0,
@@ -287,5 +289,60 @@ static uint16_t in_chksum_icmp( unsigned short * w, int blen )
 typedef icmp4::ICMPbaseHdr ICMPbaseHdr;
 typedef icmp4::ICMPHdr ICMPHdr;
 
+#ifndef ICMP_ECHOREPLY
+const uint8_t ICMP_ECHOREPLY = 0;    /* Echo Reply                   */
+#endif
+
+const uint8_t ICMP_DEST_UNREACH = 3;    /* Destination Unreachable      */
+const uint8_t  ICMP_SOURCE_QUENCH = 4;    /* Source Quench                */
+#ifndef ICMP_REDIRECT
+const uint8_t ICMP_REDIRECT = 5;    /* Redirect (change route)      */
+#endif
+#ifndef ICMP_ECHO
+const uint8_t ICMP_ECHO = 8;    /* Echo Request                 */
+#endif
+const uint8_t  ICMP_ROUTER_ADVERTISE = 9;    /* Router Advertisement         */
+const uint8_t  ICMP_ROUTER_SOLICIT = 10;    /* Router Solicitation          */
+const uint8_t ICMP_TIME_EXCEEDED = 11;    /* Time Exceeded                */
+const uint8_t ICMP_PARAMETERPROB = 12;    /* Parameter Problem            */
+const uint8_t ICMP_TIMESTAMP = 13;    /* Timestamp Request            */
+const uint8_t  ICMP_TIMESTAMPREPLY = 14;    /* Timestamp Reply              */
+const uint8_t  ICMP_INFO_REQUEST = 15;    /* Information Request          */
+const uint8_t ICMP_INFO_REPLY = 16;    /* Information Reply            */
+const uint8_t ICMP_ADDRESS = 17;    /* Address Mask Request         */
+const uint8_t ICMP_ADDRESSREPLY = 18;    /* Address Mask Reply           */
+const uint8_t  NR_ICMP_TYPES = 18;
+
+/* Codes for ICMP UNREACHABLES */
+const uint8_t  ICMP_NET_UNREACH = 0;    /* Network Unreachable          */
+const uint8_t ICMP_HOST_UNREACH = 1;    /* Host Unreachable             */
+const uint8_t  ICMP_PROT_UNREACH = 2;    /* Protocol Unreachable         */
+const uint8_t ICMP_PORT_UNREACH = 3;    /* Port Unreachable             */
+const uint8_t ICMP_FRAG_NEEDED = 4;    /* Fragmentation Needed/DF set  */
+const uint8_t ICMP_SR_FAILED = 5;    /* Source Route failed          */
+const uint8_t ICMP_NET_UNKNOWN = 6;
+const uint8_t  ICMP_HOST_UNKNOWN = 7;
+const uint8_t ICMP_HOST_ISOLATED = 8;
+const uint8_t  ICMP_PKT_FILTERED_NET = 9;
+const uint8_t ICMP_PKT_FILTERED_HOST = 10;
+const uint8_t ICMP_NET_UNR_TOS = 11;
+const uint8_t ICMP_HOST_UNR_TOS = 12;
+const uint8_t ICMP_PKT_FILTERED = 13;    /* Packet filtered */
+const uint8_t ICMP_PREC_VIOLATION = 14;    /* Precedence violation */
+const uint8_t  ICMP_PREC_CUTOFF = 15;    /* Precedence cut off */
+const uint8_t NR_ICMP_UNREACH = 15;   /* instead of hardcoding immediate
+                                       * value */
+
+const uint8_t ICMP_REDIR_NET = 0;
+const uint8_t ICMP_REDIR_HOST = 1;
+const uint8_t ICMP_REDIR_TOS_NET = 2;
+const uint8_t ICMP_REDIR_TOS_HOST = 3;
+
+const uint8_t ICMP_TIMEOUT_TRANSIT = 0;
+const uint8_t ICMP_TIMEOUT_REASSY = 1;
+
+const uint8_t ICMP_PARAM_BADIPHDR = 0;
+const uint8_t ICMP_PARAM_OPTMISSING = 1;
+const uint8_t ICMP_PARAM_BAD_LENGTH = 2;
 
 #endif /* ICMP4_H */

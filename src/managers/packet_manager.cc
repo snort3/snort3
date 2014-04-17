@@ -1,52 +1,68 @@
-/*
-**  Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-**
-*/
-// packet_manager.cc author Russ Combs <rucombs@cisco.com>
-
-#include "packet_manager.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <list>
 using namespace std;
 
-#include "framework/codec.h"
+#include "packet_manager.h"
+#include "codec.h"
 #include "snort.h"
 #include "thread.h"
 #include "log/messages.h"
 #include "packet_io/sfdaq.h"
-#include "protocols/decode.h"
 
-static list<const CodecApi*> s_codecs;
+#include "protocols/packet.h"
 
-typedef void (*grinder_t)(Packet *, const DAQ_PktHdr_t*, const uint8_t *);
+#if 0
+#include "codecs/decode.h"
+#include "codecs/essential/root_eth.h"
+#include "codecs/root/root_raw4.h"
+#include "codecs/root/root_raw6.h"
+#include "codecs/root/root_null.h"
+#endif
 
-static THREAD_LOCAL grinder_t grinder;
+#include "time/profiler.h"
+
+
+//static list<const CodecApi*> s_codecs;
+//static THREAD_LOCAL decode_f grinder;
+
+#ifdef PERF_PROFILING
+THREAD_LOCAL PreprocStats decodePerfStats;
+#endif
+
+
+namespace
+{
+
+    static THREAD_LOCAL Codec *grinder = 0;
+    static const uint16_t max_protocol_id = 65535;
+    static std::array<Codec *, max_protocol_id> s_protocols;
+    static list<const CodecApi*> s_codecs;
+
+} // namespace
 
 //-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
 
+
+/*
+ *  THIS NEEDS TO GO INTO A README!!
+ *
+ *  PROTOCOL ID'S By Range
+ *   0    (0x0000) -   255  (0x00FF)  --> Ip protocols
+ *   256  (0x0100) -  1535  (0x05FF)  -->  random protocols (teredo, gtp)
+ *  1536  (0x6000) -  65536 (0xFFFF)  --> Ethertypes
+ */
 void PacketManager::add_plugin(const CodecApi* api)
 {
+    if (!api->ctor)
+        FatalError("Codec %s: ctor() must be implemented.  Look at the example code for an example.\n",
+                        api->base.name);      
+
+    if (!api->dtor)
+        FatalError("Codec %s: dtor() must be implemented.  Look at the example code for an example.\n",
+                        api->base.name);  
+
     s_codecs.push_back(api);
 }
 
@@ -70,163 +86,135 @@ void PacketManager::dump_plugins()
 void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
-    grinder(p, pkthdr, pkt);
+    PROFILE_VARS;
+    int curr_prot_id, next_prot_id;
+    uint16_t len, p_hdr_len;
+
+    PREPROC_PROFILE_START(decodePerfStats);
+
+    memset(p, 0, PKT_ZERO_LEN);
+    p->pkth = pkthdr;
+    p->pkt = pkt;
+
+    bool success = grinder->decode(pkt, len, p, p_hdr_len, next_prot_id);
+    len = pkthdr->caplen;
+
+
+    // The boolean check in this order so 
+    while(curr_prot_id  >= 0 && 
+            s_protocols[curr_prot_id] != 0 &&
+            s_protocols[curr_prot_id]->decode(pkt, len, p, p_hdr_len, next_prot_id))
+    {
+
+
+        // if we have succesfully decoded this layer, push the layer
+        PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, p_hdr_len);
+        curr_prot_id = next_prot_id;
+        len -= p_hdr_len;
+        pkt += p_hdr_len;
+
+    }
+
+    p->dsize = len;
+    p->data = pkt;
+
+    PREPROC_PROFILE_END(decodePerfStats);
 }
 
-int PacketManager::set_grinder(void)
+#if 0
+const CodecApi *PacketManager::get_data_link_type(int dlt)
+{
+    vector<int> dlt_vec;
+
+    for ( auto* p : s_codecs )
+    {
+            dlt_vec.clear();
+//            p->get_dlt(dlt_vec);
+
+            for (auto *it = dlt_vec.begin(); it != dlt_vec.end(); ++it)
+            {
+                if (*it == dlt)
+                    return p;
+            }
+    }
+
+    return nullptr;
+}
+
+void PacketManager::set_grinder(void)
 {
     const char* slink = NULL;
     const char* extra = NULL;
+
+    // initialize values
+
     int dlt = DAQ_GetBaseProtocol();
+    const CodecApi *cd_api = get_data_link_type(dlt);
 
-    switch ( dlt )
+    if(cd_api != nullptr)
     {
-        case DLT_EN10MB:
-            slink = "Ethernet";
-            grinder = DecodeEthPkt;
-            break;
+        grinder = cd_api->ctor();
 
-#ifdef DLT_LOOP
-        case DLT_LOOP:
-#endif
-        case DLT_NULL:
-            /* loopback and stuff.. you wouldn't perform intrusion detection
-             * on it, but it's ok for testing. */
-            slink = "LoopBack";
-            extra = "Data link layer header parsing for this network type "
-                    "isn't implemented yet";
-            grinder = DecodeNullPkt;
-            break;
-
-        case DLT_RAW:
-        case DLT_IPV4:
-            slink = "Raw IP4";
-            extra = "There's no second layer header available for this datalink";
-            grinder = DecodeRawPkt;
-            break;
-
-        case DLT_IPV6:
-            slink = "Raw IP6";
-            extra = "There's no second layer header available for this datalink";
-            grinder = DecodeRawPkt6;
-            break;
-
-#ifdef DLT_I4L_IP
-        case DLT_I4L_IP:
-            slink = "I4L-ip";
-            grinder = DecodeEthPkt;
-            break;
-#endif
-
-#ifndef NO_NON_ETHER_DECODER
-#ifdef DLT_I4L_CISCOHDLC
-        case DLT_I4L_CISCOHDLC:
-            slink = "I4L-cisco-h";
-            grinder = DecodeI4LCiscoIPPkt;
-            break;
-#endif
-
-        case DLT_PPP:
-            slink = "PPP";
-            extra = "Second layer header parsing for this datalink "
-                    "isn't implemented yet";
-            grinder = DecodePppPkt;
-            break;
-
-#ifdef DLT_I4L_RAWIP
-        case DLT_I4L_RAWIP:
-            // you need the I4L modified version of libpcap to get this stuff
-            // working
-            slink = "I4L-rawip";
-            grinder = DecodeI4LRawIPPkt;
-            break;
-#endif
-
-#ifdef DLT_IEEE802_11
-        case DLT_IEEE802_11:
-            slink = "IEEE 802.11";
-            grinder = DecodeIEEE80211Pkt;
-            break;
-#endif
-#ifdef DLT_ENC
-        case DLT_ENC:
-            slink = "Encapsulated data";
-            grinder = DecodeEncPkt;
-            break;
-
-#else
-        case 13:
-#endif /* DLT_ENC */
-        case DLT_IEEE802:
-            slink = "Token Ring";
-            grinder = DecodeTRPkt;
-            break;
-
-        case DLT_FDDI:
-            slink = "FDDI";
-            grinder = DecodeFDDIPkt;
-            break;
-
-#ifdef DLT_CHDLC
-        case DLT_CHDLC:
-            slink = "Cisco HDLC";
-            grinder = DecodeChdlcPkt;
-            break;
-#endif
-
-        case DLT_SLIP:
-            slink = "SLIP";
-            extra = "Second layer header parsing for this datalink "
-                    "isn't implemented yet\n";
-            grinder = DecodeSlipPkt;
-            break;
-
-#ifdef DLT_PPP_SERIAL
-        case DLT_PPP_SERIAL:         /* PPP with full HDLC header*/
-            slink = "PPP Serial";
-            extra = "Second layer header parsing for this datalink "
-                    " isn't implemented yet";
-            grinder = DecodePppSerialPkt;
-            break;
-#endif
-
-#ifdef DLT_LINUX_SLL
-        case DLT_LINUX_SLL:
-            slink = "Linux SLL";
-            grinder = DecodeLinuxSLLPkt;
-            break;
-#endif
-
-#ifdef DLT_PFLOG
-        case DLT_PFLOG:
-            slink = "OpenBSD PF log";
-            grinder = DecodePflog;
-            break;
-#endif
-
-#ifdef DLT_OLDPFLOG
-        case DLT_OLDPFLOG:
-            slink = "Old OpenBSD PF log";
-            grinder = DecodeOldPflog;
-            break;
-#endif
-#endif  // NO_NON_ETHER_DECODER
-
-        default:
-            /* oops, don't know how to handle this one */
-            FatalError("Cannot decode data link type %d\n", dlt);
-            break;
+        if ( !ScReadMode() || ScPcapShow() )
+            LogMessage("Decoding %s\n", slink);        
     }
 
-    if ( !ScReadMode() || ScPcapShow() )
+
+    FatalError("%s(%d) Could not find codec for Data Link Type %d.\n",
+                     __FILE__, __LINE__, dlt);
+}
+#endif
+
+void PacketManager::set_grinder(void)
+{
+    vector<uint16_t> proto;
+    vector<int> dlt;
+    bool codec_registered;
+
+    int daq_dlt = DAQ_GetBaseProtocol();
+
+    for ( auto* p : s_codecs )
     {
-        LogMessage("Decoding %s\n", slink);
+        codec_registered = false;
+
+        if (p->ginit)
+            p->ginit();
+
+        if (p->tinit)
+            p->tinit();
+
+        // TODO:  add module
+        // null check performed when plugin added.
+        Codec *cd = p->ctor();
+
+
+        proto.clear();
+        cd->get_protocol_ids(proto);
+        // add protocols to the array
+
+
+        dlt.clear();
+        cd->get_data_link_type(dlt);
+        // set the grinder if the data link types match
+
+        for (auto curr_dlt : dlt )
+        {
+           if (curr_dlt == daq_dlt)
+                grinder = cd;
+        }
+
+        // ERRRO:  If multiple correct grinders found.
+
     }
-    if (extra && ScOutputDataLink())
-    {
-        LogMessage("%s\n", extra);
-        snort_conf->output_flags &= ~OUTPUT_FLAG__SHOW_DATA_LINK;
-    }
-    return 0;
+}
+
+    static void init_codecs();
+    static void dump_stats();
+
+
+void PacketManager::dump_stats()
+{
+//    for ( auto* cd : s_codecs )
+//        cd->sum();
 }
 

@@ -45,6 +45,7 @@
 #include <arpa/inet.h>
 
 #include "thread.h"
+#include "protocols/ipv6.h"
 
 #if 0
 /* Support function .. but could see some external uses */

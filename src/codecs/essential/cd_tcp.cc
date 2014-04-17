@@ -34,10 +34,10 @@
 #endif
 
 
-#include "generators.h"
+#include "codecs/decode_module.h"
 #include "packet_io/sfdaq.h"
-#include "parser/IpAddrSet.h" /* #define IpAddrSet */
-#include "codec_events.h"
+#include "sfip/ipv6_port.h" /* #define IpAddrSet */
+#include "codecs/codec_events.h"
 
 
 #include "snort.h"
@@ -101,13 +101,12 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 {
     uint32_t hlen;            /* TCP header length */
 
-    if(len < tcp::header_length())
+    if(len < tcp::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "TCP packet (len = %d) cannot contain " "20 byte header\n", len););
 
-        DecoderEvent(p, DECODE_TCP_DGRAM_LT_TCPHDR,
-                        DECODE_TCP_DGRAM_LT_TCPHDR_STR);
+        DecoderEvent(p, DECODE_TCP_DGRAM_LT_TCPHDR);
 
         p->tcph = NULL;
 //        dc.discards++;
@@ -125,14 +124,13 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP th_off is %d, passed len is %lu\n",
                 TCP_OFFSET(p->tcph), (unsigned long)len););
 
-    if(hlen < tcp::header_length())
+    if(hlen < tcp::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "TCP Data Offset (%d) < hlen (%d) \n",
             TCP_OFFSET(p->tcph), hlen););
 
-        DecoderEvent(p, DECODE_TCP_INVALID_OFFSET,
-                        DECODE_TCP_INVALID_OFFSET_STR);
+        DecoderEvent(p, DECODE_TCP_INVALID_OFFSET);
 
         p->tcph = NULL;
 //        dc.discards++;
@@ -147,8 +145,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             "TCP Data Offset(%d) < longer than payload(%d)!\n",
             TCP_OFFSET(p->tcph) << 2, len););
 
-        DecoderEvent(p, DECODE_TCP_LARGE_OFFSET,
-                            DECODE_TCP_LARGE_OFFSET_STR);
+        DecoderEvent(p, DECODE_TCP_LARGE_OFFSET);
 
         p->tcph = NULL;
 //        dc.discards++;
@@ -221,11 +218,11 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             if(TCP_ISFLAGSET(p->tcph, (TH_SYN|TH_ACK|TH_RST)))
             {
-                DecoderEvent(p, DECODE_TCP_XMAS, DECODE_TCP_XMAS_STR);
+                DecoderEvent(p, DECODE_TCP_XMAS);
             }
             else
             {
-                DecoderEvent(p, DECODE_TCP_NMAP_XMAS, DECODE_TCP_NMAP_XMAS_STR);
+                DecoderEvent(p, DECODE_TCP_NMAP_XMAS);
             }
             // Allowing this packet for further processing
             // (in case there is a valid data inside it).
@@ -247,8 +244,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 {
                     if( GET_IPH_ID(p) == 413 )
                     {
-                        DecoderEvent(p, DECODE_DOS_NAPTHA,
-                                        DECODE_DOS_NAPTHA_STR);
+                        DecoderEvent(p, DECODE_DOS_NAPTHA);
                     }
                 }
             }
@@ -258,29 +254,28 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             if( IpAddrSetContains(SynToMulticastDstIp, GET_DST_ADDR(p)) )
             {
-                DecoderEvent(p, DECODE_SYN_TO_MULTICAST,
-                                DECODE_SYN_TO_MULTICAST_STR);
+                DecoderEvent(p, DECODE_SYN_TO_MULTICAST);
             }
         }
         if ( Event_Enabled(DECODE_TCP_SYN_RST) )
             if ( (p->tcph->th_flags & TH_RST) )
-                DecoderEvent(p, EVARGS(TCP_SYN_RST));
+                DecoderEvent(p, DECODE_TCP_SYN_RST);
 
         if ( Event_Enabled(DECODE_TCP_SYN_FIN) )
             if ( (p->tcph->th_flags & TH_FIN) )
-                DecoderEvent(p, EVARGS(TCP_SYN_FIN));
+                DecoderEvent(p, DECODE_TCP_SYN_FIN);
     }
     else
     {   // we already know there is no SYN
         if ( Event_Enabled(DECODE_TCP_NO_SYN_ACK_RST) )
             if ( !(p->tcph->th_flags & (TH_ACK|TH_RST)) )
-                DecoderEvent(p, EVARGS(TCP_NO_SYN_ACK_RST));
+                DecoderEvent(p, DECODE_TCP_NO_SYN_ACK_RST);
     }
 
     if ( Event_Enabled(DECODE_TCP_MUST_ACK) )
         if ( (p->tcph->th_flags & (TH_FIN|TH_PUSH|TH_URG)) &&
             !(p->tcph->th_flags & TH_ACK) )
-            DecoderEvent(p, EVARGS(TCP_MUST_ACK));
+            DecoderEvent(p, DECODE_TCP_MUST_ACK);
 
     /* stuff more data into the printout data struct */
     p->sp = ntohs(p->tcph->th_sport);
@@ -293,15 +288,15 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     next_prot_id = -1;
 
     /* if options are present, decode them */
-    p->tcp_options_len = (uint16_t)(hlen - tcp::header_length());
+    p->tcp_options_len = (uint16_t)(hlen - tcp::hdr_len());
 
     if(p->tcp_options_len > 0)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "%lu bytes of tcp options....\n",
                     (unsigned long)(p->tcp_options_len)););
 
-        p->tcp_options_data = raw_pkt + tcp::header_length();
-        DecodeTCPOptions((uint8_t *) (raw_pkt + tcp::header_length()), p->tcp_options_len, p);
+        p->tcp_options_data = raw_pkt + tcp::hdr_len();
+        DecodeTCPOptions((uint8_t *) (raw_pkt + tcp::hdr_len()), p->tcp_options_len, p);
     }
     else
     {
@@ -323,7 +318,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if ( Event_Enabled(DECODE_TCP_BAD_URP) )
         if ( (p->tcph->th_flags & TH_URG) &&
             (!p->dsize || ntohs(p->tcph->th_urp) > p->dsize) )
-            DecoderEvent(p, EVARGS(TCP_BAD_URP));
+            DecoderEvent(p, DECODE_TCP_BAD_URP);
 
     p->proto_bits |= PROTO_BIT__TCP;
 
@@ -409,7 +404,7 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
      * 4) increment option code ptr
      *
      * TCP_OPTLENMAX = 40 because of
-     *        (((2^4) - 1) * 4  - tcp::header_length)
+     *        (((2^4) - 1) * 4  - tcp::hdr_len)
      *
      */
 
@@ -464,8 +459,7 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
                     ((uint16_t) p->tcp_options[opt_count].data[0] > 14))
                 {
                     /* LOG INVALID WINDOWSCALE alert */
-                    DecoderEvent(p, DECODE_TCPOPT_WSCALE_INVALID,
-                                    DECODE_TCPOPT_WSCALE_INVALID_STR);
+                    DecoderEvent(p, DECODE_TCPOPT_WSCALE_INVALID);
                 }
             }
             break;
@@ -541,13 +535,11 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
         {
             if(code == tcp::OPT_BADLEN)
             {
-                DecoderEvent(p, DECODE_TCPOPT_BADLEN,
-                                DECODE_TCPOPT_BADLEN_STR);
+                DecoderEvent(p, DECODE_TCPOPT_BADLEN);
             }
             else if(code == tcp::OPT_TRUNC)
             {
-                DecoderEvent(p, DECODE_TCPOPT_TRUNCATED,
-                                DECODE_TCPOPT_TRUNCATED_STR);
+                DecoderEvent(p, DECODE_TCPOPT_TRUNCATED);
             }
 
             /* set the option count to the number of valid
@@ -568,17 +560,15 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
 
     if (experimental_option_found)
     {
-        DecoderEvent(p, DECODE_TCPOPT_EXPERIMENT,
-                        DECODE_TCPOPT_EXPERIMENT_STR);
+        DecoderEvent(p, DECODE_TCPOPT_EXPERIMENTAL);
     }
     else if (obsolete_option_found)
     {
-        DecoderEvent(p, DECODE_TCPOPT_OBSOLETE, DECODE_TCPOPT_OBSOLETE_STR);
+        DecoderEvent(p, DECODE_TCPOPT_OBSOLETE);
     }
     else if (ttcp_found)
     {
-        DecoderEvent(p, DECODE_TCPOPT_TTCP,
-                        DECODE_TCPOPT_TTCP_STR);
+        DecoderEvent(p, DECODE_TCPOPT_TTCP);
     }
 
     return;
@@ -593,13 +583,13 @@ static inline void TCPMiscTests(Packet *p)
     {
         if ( ((p->tcph->th_flags & TH_NORESERVED) == TH_SYN ) &&
              (p->tcph->th_seq == htonl(674711609)) )
-            DecoderEvent(p, EVARGS(TCP_SHAFT_SYNFLOOD));
+            DecoderEvent(p, DECODE_TCP_SHAFT_SYNFLOOD);
     }
 
     if ( Event_Enabled(DECODE_TCP_PORT_ZERO) )
     {
         if (p->sp == 0 || p->dp == 0)
-            DecoderEvent(p, EVARGS(TCP_PORT_ZERO));
+            DecoderEvent(p, DECODE_TCP_PORT_ZERO);
     }
 }
 

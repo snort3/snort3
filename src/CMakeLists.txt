@@ -118,6 +118,7 @@ target_link_libraries(snort
     stream_api
     actions
     managers
+    codecs
     ${SIDE_CHANNEL_LIBRARIES}
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
@@ -135,6 +136,7 @@ target_link_libraries(snort
 
 
 add_subdirectory(actions)
+add_subdirectory(codecs)
 add_subdirectory(control)
 add_subdirectory(detection)
 add_subdirectory(events)

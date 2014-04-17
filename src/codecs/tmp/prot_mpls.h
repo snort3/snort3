@@ -31,8 +31,6 @@
 #define MPLS_PAYLOADTYPE_IPV4         2
 #define MPLS_PAYLOADTYPE_IPV6         3
 #define MPLS_PAYLOADTYPE_ERROR       -1
-#define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
-#define DEFAULT_LABELCHAIN_LENGTH    -1
 
 void DecodeMPLS(const uint8_t*, const uint32_t, Packet*);
 

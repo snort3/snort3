@@ -24,7 +24,7 @@
 #include "config.h"
 #endif
 
-#include "codec_events.h"
+#include "codecs/codec_events.h"
 #include "time/profiler.h"
 #include "mempool/mempool.h"
 #include "events/event_queue.h"
@@ -32,16 +32,19 @@
 #include "snort.h"
 #include "packet_io/active.h"
 #include "utils/stats.h"
+#include "codecs/decode_module.h"
 
+#if 0
     // the empty bracket initializes the array to false
 //static std::array<bool, DECODE_INDEX_MAX> CodecEvents::decodeRuleEnabled() = {};
-static std::array<bool, DECODE_INDEX_MAX> decodeRuleEnabled = {};
+static const uint16_t DECODE_INDEX_MAX = 0xFFFF; // == 2^16 - 1
 
 THREAD_LOCAL tSfActionQueue* decoderActionQ;
 THREAD_LOCAL MemPool decoderAlertMemPool;
 
-
 static THREAD_LOCAL PegCount bad_ttl = 0;
+
+
 
 void CodecEvents::queueDecoderEvent(
     unsigned int gid,
@@ -78,41 +81,6 @@ void CodecEvents::queueDecoderEvent(
 }
 
 
-int CodecEvents::ScNormalDrop (NormFlags nf)
-{
-    return !Normalize_IsEnabled(snort_conf, nf);
-}
-
-
-
-void CodecEvents::execTtlDrop (void *data)
-{
-    if ( ScNormalDrop(NORM_IP4_TTL) )
-    {
-        Packet* p = (Packet*)data;
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-           "Dropping bad packet (IP4 TTL)\n"););
-        p->error_flags |= PKT_ERR_BAD_TTL;
-        Active_DropPacket();
-        bad_ttl++;
-    }
-}
-
-void CodecEvents::execHopDrop (void *data)
-{
-    if ( ScNormalDrop(NORM_IP6_TTL) )
-    {
-        Packet* p = (Packet*)data;
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-           "Dropping bad packet (IP6 hop limit)\n"););
-        p->error_flags |= PKT_ERR_BAD_TTL;
-        Active_DropPacket();
-        bad_ttl++;
-    }
-}
-
-
-
 void CodecEvents::execDecoderEvent(void *data)
 {
     MemBucket *alertBucket = (MemBucket *)data;
@@ -127,17 +95,6 @@ void CodecEvents::execDecoderEvent(void *data)
 }
 
 
-void CodecEvents::decoder_event (Packet *p, int sid, const char *str)
-{
-    if ( p->packet_flags & PKT_REBUILT_STREAM )
-        return;
-
-    if ( ScLogVerbose() )
-        ErrorMessage("%s\n", str);
-
-    queueDecoderEvent(GENERATOR_SNORT_DECODE, sid, 1,
-        DECODE_CLASS, 3, str, 0);
-}
 
 
 void CodecEvents::DecoderOptEvent (
@@ -156,33 +113,14 @@ void CodecEvents::DecoderOptEvent (
 }
 
 
-void CodecEvents::DecoderAlertEncapsulated(
-    Packet *p, int type, const char *str, const uint8_t *pkt, uint32_t len)
-{
-    DecoderEvent(p, type, (char*)str);
-
-    p->data = pkt;
-    p->dsize = (uint16_t)len;
-
-    p->greh = NULL;
-}
 
 
 bool CodecEvents::event_enabled(int sid)
 {
-    return decodeRuleEnabled[sid];
+    return true;
 }
 
 
-void CodecEvents::execIcmpChksmDrop (void*)
-{
-    if( ScInlineMode() && ScIcmpChecksumDrops() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Dropping bad packet (ICMP checksum)\n"););
-        Active_DropPacket();
-    }
-}
 
 void CodecEvents::queue_exec_drop(
     void_callback_f callback, Packet* p)
@@ -193,7 +131,6 @@ void CodecEvents::queue_exec_drop(
         ErrorMessage("Could not add drop event to decoderActionQ\n");
     }
 }
-
 
 
 void CodecEvents::decoder_init(unsigned max)
@@ -222,20 +159,130 @@ void CodecEvents::decoder_exec()
     sfActionQueueExecAll(decoderActionQ);
 }
 
-void CodecEvents::EnableDecodeRules()
+#endif
+
+
+
+
+//****************************************************************************************************88
+
+
+
+
+void CodecEvents::decoder_event (Packet *p, int sid)
 {
-    decodeRuleEnabled.fill(true);
+    if ( p->packet_flags & PKT_REBUILT_STREAM )
+        return;
+
+    if ( ScLogVerbose() )
+        ErrorMessage("%d:%d\n", GID_DECODE, sid);
+
+    SnortEventqAdd(GID_DECODE, sid);
 }
 
-void CodecEvents::DisableDecodeRules()
+void CodecEvents::execTcpChksmDrop (Packet*)
 {
-    decodeRuleEnabled.fill(false);
+    if( ScInlineMode() && ScTcpChecksumDrops() )
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+            "Dropping bad packet (TCP checksum)\n"););
+        Active_DropPacket();
+    }
 }
 
-/* This function enables or disables the decoder rule. value can only be 0 or 1*/
-void CodecEvents::UpdateDecodeRule(uint32_t sid, bool set)
+void CodecEvents::exec_udp_chksm_drop (Packet *)
 {
-    decodeRuleEnabled[sid] = set;
+    if( ScInlineMode() && ScUdpChecksumDrops() )
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+            "Dropping bad packet (UDP checksum)\n"););
+        Active_DropPacket();
+    }
+}
+
+
+void CodecEvents::exec_ip_chksm_drop (Packet*)
+{
+    // TBD only set policy csum drop if policy inline
+    // and delete this inline mode check
+    if( ScInlineMode() && ScIpChecksumDrops() )
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+            "Dropping bad packet (IP checksum)\n"););
+        Active_DropPacket();
+    }
+}
+
+void CodecEvents::exec_hop_drop (Packet* p, int sid)
+{
+    if ( p->packet_flags & PKT_REBUILT_STREAM )
+        return;
+
+    if ( ScLogVerbose() )
+        ErrorMessage("%d:%d\n", GID_DECODE, sid);
+
+    SnortEventqAdd(GID_DECODE, sid);
+
+    if ( ScNormalDrop(NORM_IP6_TTL) )
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+           "Dropping bad packet (IP6 hop limit)\n"););
+        p->error_flags |= PKT_ERR_BAD_TTL;
+        Active_DropPacket();
+//        dc.bad_ttl++;
+    }
+}
+
+
+
+void CodecEvents::exec_ttl_drop (Packet *p, int sid)
+{
+    if ( p->packet_flags & PKT_REBUILT_STREAM )
+        return;
+
+    if ( ScLogVerbose() )
+        ErrorMessage("%d:%d\n", GID_DECODE, sid);
+
+    SnortEventqAdd(GID_DECODE, sid);
+
+    if ( ScNormalDrop(NORM_IP4_TTL) )
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+           "Dropping bad packet (IP4 TTL)\n"););
+        p->error_flags |= PKT_ERR_BAD_TTL;
+        Active_DropPacket();
+//        dc.bad_ttl++;
+    }
+}
+
+
+void CodecEvents::execIcmpChksmDrop (void*)
+{
+    if( ScInlineMode() && ScIcmpChecksumDrops() )
+    {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+            "Dropping bad packet (ICMP checksum)\n"););
+        Active_DropPacket();
+    }
+}
+
+void CodecEvents::decoder_alert_encapsulated(
+    Packet *p, int sid, const uint8_t *pkt, uint32_t len)
+{
+    DecoderEvent(p, sid);
+
+    p->data = pkt;
+    p->dsize = (uint16_t)len;
+
+    p->greh = NULL;
+}
+
+
+//-----------------
+
+int CodecEvents::ScNormalDrop (NormFlags nf)
+{
+    return !Normalize_IsEnabled(snort_conf, nf);
 }
 
 

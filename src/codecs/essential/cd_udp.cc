@@ -33,7 +33,7 @@
 #include <dnet.h>
 #endif
 
-#include "generators.h"
+#include "codecs/decode_module.h"
 
 #include "protocols/ipv6.h"
 #include "protocols/udp.h"
@@ -41,7 +41,7 @@
 #include "protocols/gtp.h"
 
 #include "framework/codec.h"
-#include "codec_events.h"
+#include "codecs/codec_events.h"
 #include "packet_io/active.h"
 
 
@@ -71,7 +71,6 @@ public:
 
 static inline void PopUdp (Packet* p);
 static inline void UDPMiscTests(Packet *p);
-static inline void execUdpChksmDrop (void*);
 static inline unsigned short in_chksum_udp6(pseudoheader6 *, unsigned short *, int);
 static inline unsigned short in_chksum_udp(pseudoheader *, unsigned short *, int);
 
@@ -92,8 +91,7 @@ bool decode(const uint8_t *raw_pkt, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                 "Truncated UDP header (%d bytes)\n", len););
 
-        DecoderEvent(p, DECODE_UDP_DGRAM_LT_UDPHDR,
-                        DECODE_UDP_DGRAM_LT_UDPHDR_STR);
+        DecoderEvent(p, DECODE_UDP_DGRAM_LT_UDPHDR);
 
         PopUdp(p);
         return false;
@@ -127,8 +125,7 @@ bool decode(const uint8_t *raw_pkt, const uint32_t len,
     /* verify that the header len is a valid value */
     if(uhlen < UDP_HEADER_LEN)
     {
-        DecoderEvent(p, DECODE_UDP_DGRAM_INVALID_LENGTH,
-                        DECODE_UDP_DGRAM_INVALID_LENGTH_STR);
+        DecoderEvent(p, DECODE_UDP_DGRAM_INVALID_LENGTH);
 
         PopUdp(p);
         return false;
@@ -137,16 +134,14 @@ bool decode(const uint8_t *raw_pkt, const uint32_t len,
     /* make sure there are enough bytes as designated by length field */
     if(uhlen > len)
     {
-        DecoderEvent(p, DECODE_UDP_DGRAM_SHORT_PACKET,
-                         DECODE_UDP_DGRAM_SHORT_PACKET_STR);
+        DecoderEvent(p, DECODE_UDP_DGRAM_SHORT_PACKET);
 
         PopUdp(p);
         return false;
     }
     else if(uhlen < len)
     {
-        DecoderEvent(p, DECODE_UDP_DGRAM_LONG_PACKET,
-                     DECODE_UDP_DGRAM_LONG_PACKET_STR);
+        DecoderEvent(p, DECODE_UDP_DGRAM_LONG_PACKET);
 
         PopUdp(p);
         return false;
@@ -191,8 +186,7 @@ bool decode(const uint8_t *raw_pkt, const uint32_t len,
             if(!p->udph->uh_chk)
             {
                 csum = 1;
-                DecoderEvent(p, DECODE_UDP_IPV6_ZERO_CHECKSUM,
-                                DECODE_UDP_IPV6_ZERO_CHECKSUM_STR);
+                DecoderEvent(p, DECODE_UDP_IPV6_ZERO_CHECKSUM);
             }
             /* Don't do checksum calculation if
              * 1) Fragmented
@@ -220,7 +214,7 @@ bool decode(const uint8_t *raw_pkt, const uint32_t len,
 
             p->error_flags |= PKT_ERR_CKSUM_UDP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad UDP Checksum\n"););
-            CodecEvents::queue_exec_drop(execUdpChksmDrop, p);
+            CodecEvents::exec_udp_chksm_drop(p);
 //            dc.invalid_checksums++;
         }
         else
@@ -279,13 +273,13 @@ static inline void UDPMiscTests(Packet *p)
     if ( Event_Enabled(DECODE_UDP_LARGE_PACKET) )
     {
         if (p->dsize > 4000)
-            DecoderEvent(p, EVARGS(UDP_LARGE_PACKET));
+            DecoderEvent(p, DECODE_UDP_LARGE_PACKET);
     }
 
     if ( Event_Enabled(DECODE_UDP_PORT_ZERO) )
     {
         if (p->sp == 0 || p->dp == 0)
-            DecoderEvent(p, EVARGS(UDP_PORT_ZERO));
+            DecoderEvent(p, DECODE_UDP_PORT_ZERO);
     }
 }
 
@@ -312,16 +306,6 @@ static inline void PopUdp (Packet* p)
         p->dsize = p->ip_dsize;
 }
 
-
-static inline void execUdpChksmDrop (void*)
-{
-    if( ScInlineMode() && ScUdpChecksumDrops() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Dropping bad packet (UDP checksum)\n"););
-        Active_DropPacket();
-    }
-}
 
 /*
  * ENCODER

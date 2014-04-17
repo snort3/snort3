@@ -24,7 +24,10 @@ add_library( codecs STATIC
     codec_events.h
     encode.h
     encode.cc
+    decode.h
     decode.cc
+    decode_module.h
+    decode_module.cc
 )
 
 
@@ -32,7 +35,7 @@ target_link_libraries( codecs
     essential
     codec_plugins
     protocols
-    chained_codecs
+    sfip
 )
 
 

@@ -61,8 +61,7 @@ bool TransBridging::Decode(const uint8_t *pkt, const uint32_t len,
 
     if(len < ETHERNET_HEADER_LEN)
     {
-        DecoderAlertEncapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
-                        DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR_STR,
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
                         pkt, len);
         return;
     }

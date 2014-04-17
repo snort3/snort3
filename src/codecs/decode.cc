@@ -48,17 +48,15 @@
 #include "packet_io/active.h"
 #include "sfxhash.h"
 #include "snort_bounds.h"
-#include "strlcpyu.h"
 #include "sf_iph.h"
 #include "fpdetect.h"
 #include "profiler.h"
-#include "sfActionQueue.h"
 #include "mempool/mempool.h"
 #include "normalize/normalize.h"
-#include "perfmonitor/perf.h"
 #include "packet_io/sfdaq.h"
 
-#include "codec_events.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
 
 
 void decoder_sum()
@@ -97,6 +95,7 @@ uint32_t EXTRACT_32BITS (u_char *p)
 #endif /* WORDS_MUSTALIGN && !__GNUC__ */
 
 
+
 static inline void CheckIPv4_MinTTL(Packet *p, uint8_t ttl)
 {
 
@@ -104,18 +103,18 @@ static inline void CheckIPv4_MinTTL(Packet *p, uint8_t ttl)
     // the packet ttl is >= the configured min (the default is 1)
     if( ttl < ScMinTTL() )
     {
-        if ( CodecEvents::event_enabled(DECODE_ZERO_TTL) && (ttl == 0) )
+        if ( ttl == 0 )
         {
-            CodecEvents::DecoderOptEvent(p, DECODE_ZERO_TTL, DECODE_ZERO_TTL_STR,
-                    CodecEvents::execTtlDrop);
+            CodecEvents::exec_ttl_drop(p, DECODE_ZERO_TTL);
         }
-        else if ( Event_Enabled(DECODE_IP4_MIN_TTL) )
+        else
         {
-            CodecEvents::DecoderOptEvent(p, DECODE_IP4_MIN_TTL, DECODE_IP4_MIN_TTL_STR,
-                    CodecEvents::execTtlDrop);
+            CodecEvents::exec_ttl_drop(p, DECODE_IP4_MIN_TTL);
         }
     }
 }
+
+
 
 static inline void CheckIPv6_MinTTL(Packet *p, uint8_t hop_limit)
 {
@@ -123,21 +122,20 @@ static inline void CheckIPv6_MinTTL(Packet *p, uint8_t hop_limit)
     // the packet ttl is >= the configured min (the default is 1)
     if( hop_limit < ScMinTTL() )
     {
-        if ( CodecEvents::event_enabled(DECODE_IP6_ZERO_HOP_LIMIT) && (hop_limit == 0) )
+        if ( hop_limit == 0 )
         {
-            CodecEvents::DecoderOptEvent(p, DECODE_IP6_ZERO_HOP_LIMIT,
-                   DECODE_IP6_ZERO_HOP_LIMIT_STR, CodecEvents::execHopDrop);
+            CodecEvents::exec_hop_drop(p, DECODE_IP6_ZERO_HOP_LIMIT);
         }
-        else if ( CodecEvents::event_enabled(DECODE_IPV6_MIN_TTL) )
+        else
         {
-            CodecEvents::DecoderOptEvent(p, DECODE_IPV6_MIN_TTL,
-                    DECODE_IPV6_MIN_TTL_STR, CodecEvents::execHopDrop);
+             CodecEvents::exec_hop_drop(p, DECODE_IPV6_MIN_TTL);
         }
     }
 }
 
 
-/* Any policy specific decoding should be done in this function which is called by ProcessPacket*/
+
+/* Decoding of ttl/hop_limit is based on the policy min_ttl */
 void DecodePolicySpecific(Packet *p)
 {
     switch(p->outer_family)
@@ -168,6 +166,4 @@ void DecodePolicySpecific(Packet *p)
             break;
     }
 }
-
-
 

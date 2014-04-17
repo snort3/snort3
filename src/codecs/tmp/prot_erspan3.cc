@@ -56,8 +56,7 @@ void DecodeERSPANType3(const uint8_t *pkt, const uint32_t len, Packet *p)
 
     if (len < sizeof(ERSpanType3Hdr))
     {
-        DecoderAlertEncapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
-                        DECODE_ERSPAN3_DGRAM_LT_HDR_STR,
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
                         pkt, len);
         return;
     }
@@ -66,8 +65,7 @@ void DecodeERSPANType3(const uint8_t *pkt, const uint32_t len, Packet *p)
     {
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
-        DecoderAlertEncapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        DECODE_IP_MULTIPLE_ENCAPSULATION_STR,
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                         pkt, len);
         return;
     }
@@ -76,8 +74,7 @@ void DecodeERSPANType3(const uint8_t *pkt, const uint32_t len, Packet *p)
      */
     if (ERSPAN_VERSION(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
     {
-        DecoderAlertEncapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        DECODE_ERSPAN_HDR_VERSION_MISMATCH_STR,
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
                         pkt, len);
         return;
     }
@@ -105,8 +102,9 @@ static const CodecApi erspan3_api =
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
-    ErspanType2::DecodeTCP,
+    ctor, // ctor
+    dtor, // dtor
+    NULL,
+    NULL
 };
 

@@ -46,11 +46,11 @@
 #include "sf_protocols.h"
 
 #include "codecs/tmp/prot_vlan.h"
-#include "codecs/chained/cd_gtp.h"
  
 #include "protocols/ipv6.h"
 #include "protocols/udp.h"
 #include "protocols/eth.h"
+#include "protocols/gtp.h"
  
 
 
@@ -1376,10 +1376,10 @@ static ENC_STATUS update_GTP_length(GTPHdr* h, int gtp_total_len )
     switch (version)
     {
     case 0: /*GTP v0*/
-        h->length = htons((uint16_t)(gtp_total_len - GTP_V0_HEADER_LEN));
+        h->length = htons((uint16_t)(gtp_total_len - gtp::v0_hdr_len()));
         break;
     case 1: /*GTP v1*/
-        h->length = htons((uint16_t)(gtp_total_len - GTP_MIN_LEN));
+        h->length = htons((uint16_t)(gtp_total_len - gtp::min_hdr_len()));
         break;
     default:
         return ENC_BAD_PROTO;

@@ -26,11 +26,16 @@
 #include "config.h"
 #endif
 
-
+#include "snort_debug.h"
 #include "codec.h"
 #include "protocols/gtp.h"
-
-
+#include "codecs/decode_module.h"
+#include "packet.h"
+#include "codecs/codec_events.h"
+#include "snort.h"
+#include "protocols/ipv4.h"
+#include "protocols/ipv6.h"
+#include "packet_io/active.h"
 
 namespace
 {
@@ -61,7 +66,8 @@ public:
  *
  */
 
-void DecodeGTP(const uint8_t *pkt, uint32_t len, Packet *p)
+bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
     uint32_t header_len;
     uint8_t  next_hdr_type;
@@ -71,28 +77,27 @@ void DecodeGTP(const uint8_t *pkt, uint32_t len, Packet *p)
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Start GTP decoding.\n"););
 
-    hdr = (GTPHdr *) pkt;
+    hdr = (GTPHdr *) raw_pkt;
 
     if (p->GTPencapsulated)
     {
-        DecoderAlertEncapsulated(p, DECODE_GTP_MULTIPLE_ENCAPSULATION,
-                DECODE_GTP_MULTIPLE_ENCAPSULATION_STR,
-                pkt, len);
-        return;
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_GTP_MULTIPLE_ENCAPSULATION,
+                raw_pkt, len);
+        return false;
     }
     else
     {
         p->GTPencapsulated = 1;
     }
     /*Check the length*/
-    if (len < GTP_MIN_LEN)
-       return;
+    if (len < gtp::min_hdr_len())
+       return false;
     /* We only care about PDU*/
     if ( hdr->type != 255)
-       return;
+       return false;
     /*Check whether this is GTP or GTP', Exit if GTP'*/
     if (!(hdr->flag & 0x10))
-       return;
+       return false;
 
     /*The first 3 bits are version number*/
     version = (hdr->flag & 0xE0) >> 5;
@@ -101,23 +106,23 @@ void DecodeGTP(const uint8_t *pkt, uint32_t len, Packet *p)
     case 0: /*GTP v0*/
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "GTP v0 packets.\n"););
 
-        header_len = GTP_V0_HEADER_LEN;
+        p_hdr_len = gtp::v0_hdr_len();
         /*Check header fields*/
-        if (len < header_len)
+        if (len < p_hdr_len)
         {
-            DecoderEvent(p, EVARGS(GTP_BAD_LEN));
-            return;
+            DecoderEvent(p, DECODE_GTP_BAD_LEN);
+            return false;
         }
 
         p->proto_bits |= PROTO_BIT__GTP;
 
         /*Check the length field. */
-        if (len != ((unsigned int)ntohs(hdr->length) + header_len))
+        if (len != ((unsigned int)ntohs(hdr->length) + p_hdr_len))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
-                    len - header_len, ntohs(hdr->length)););
-            DecoderEvent(p, EVARGS(GTP_BAD_LEN));
-            return;
+                    len - p_hdr_len, ntohs(hdr->length)););
+            DecoderEvent(p, DECODE_GTP_BAD_LEN);
+            return false;
         }
 
         break;
@@ -128,64 +133,64 @@ void DecodeGTP(const uint8_t *pkt, uint32_t len, Packet *p)
         if (hdr->flag & 0x07)
         {
 
-            header_len = GTP_V1_HEADER_LEN;
+            p_hdr_len =  gtp::v1_hdr_len();
 
             /*Check optional fields*/
-            if (len < header_len)
+            if (len < p_hdr_len)
             {
-                DecoderEvent(p, EVARGS(GTP_BAD_LEN));
-                return;
+                DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                return false;
             }
-            next_hdr_type = *(pkt + header_len - 1);
+            next_hdr_type = *(raw_pkt + p_hdr_len - 1);
 
             /*Check extension headers*/
             while (next_hdr_type)
             {
                 uint16_t ext_hdr_len;
                 /*check length before reading data*/
-                if (len < header_len + 4)
+                if (len < p_hdr_len + 4)
                 {
-                    DecoderEvent(p, EVARGS(GTP_BAD_LEN));
-                    return;
+                    DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                    return false;
                 }
 
-                ext_hdr_len = *(pkt + header_len);
+                ext_hdr_len = *(raw_pkt + p_hdr_len);
 
                 if (!ext_hdr_len)
                 {
-                    DecoderEvent(p, EVARGS(GTP_BAD_LEN));
-                    return;
+                    DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                    return false;
                 }
                 /*Extension header length is a unit of 4 octets*/
-                header_len += ext_hdr_len * 4;
+                p_hdr_len += ext_hdr_len * 4;
 
                 /*check length before reading data*/
-                if (len < header_len)
+                if (len < p_hdr_len)
                 {
-                    DecoderEvent(p, EVARGS(GTP_BAD_LEN));
-                    return;
+                    DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                    return false;
                 }
-                next_hdr_type = *(pkt + header_len - 1);
+                next_hdr_type = *(raw_pkt + p_hdr_len - 1);
             }
         }
         else
-            header_len = GTP_MIN_LEN;
+            p_hdr_len = gtp::min_hdr_len();
 
         p->proto_bits |= PROTO_BIT__GTP;
 
         /*Check the length field. */
-        if (len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
+        if (len != ((unsigned int)ntohs(hdr->length) + gtp::min_hdr_len()))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
-                    len - GTP_MIN_LEN, ntohs(hdr->length)););
-            DecoderEvent(p, EVARGS(GTP_BAD_LEN));
-            return;
+                    len - gtp::min_hdr_len(), ntohs(hdr->length)););
+            DecoderEvent(p, DECODE_GTP_BAD_LEN);
+            return false;
         }
 
         break;
     default:
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Unknown protocol version.\n"););
-        return;
+        return false;
 
     }
 
@@ -194,15 +199,17 @@ void DecodeGTP(const uint8_t *pkt, uint32_t len, Packet *p)
     if ( ScTunnelBypassEnabled(TUNNEL_GTP) )
         Active_SetTunnelBypass();
 
-    len -=  header_len;
+
     if (len > 0)
     {
-        ip_ver = *(pkt+header_len) & 0xF0;
+        p->packet_flags |= PKT_UNSURE_ENCAP;
+
+        ip_ver = *(raw_pkt + gtp::min_hdr_len()) & 0xF0;
         if (ip_ver == 0x40)
-            DecodeIP(pkt+header_len, len, p);
+            next_prot_id = ipv4::prot_id(); 
         else if (ip_ver == 0x60)
-            DecodeIPV6(pkt+header_len, len, p);
-        p->packet_flags &= ~PKT_UNSURE_ENCAP;
+            next_prot_id = ipv6::prot_id();
+
     }
 }
 
@@ -265,9 +272,9 @@ EncStatus GTP_Update (Packet*, Layer* lyr, uint32_t* len)
 
 #endif
 
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(gtp::get_id());
+    v.push_back(gtp::gtp_id());
 }
 
 static Codec* ctor()
@@ -291,4 +298,6 @@ static const CodecApi ipv6_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL, // sum
+    NULL  // stats
 };

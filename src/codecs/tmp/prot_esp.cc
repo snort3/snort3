@@ -35,7 +35,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codec_events.h"
+#include "codecs/codec_events.h"
 
 
 namespace
@@ -96,7 +96,7 @@ virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
     if (len < (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN))
     {
         /* Truncated ESP traffic. Bail out here and inspect the rest as payload. */
-        DecoderEvent(p, EVARGS(ESP_HEADER_TRUNC));
+        DecoderEvent(p, DECODE_ESP_HEADER_TRUNC);
         p->data = pkt;
         p->dsize = (uint16_t) len;
         return;

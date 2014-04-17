@@ -33,7 +33,8 @@
 #include <dnet.h>
 #endif
 
-#include "codec_events.h"
+#include "codecs/decode_module.h"
+#include "codecs/codec_events.h"
 
 namespace{
 
@@ -60,7 +61,7 @@ bool CodecSwipe::decode(const uint8_t* raw_packet, const uint32_t raw_len,
 {
 
     if ( CodecEvents::event_enabled(DECODE_IP_BAD_PROTO) )
-        CodecEvents::decoder_event(p, EVARGS(IP_BAD_PROTO));
+        CodecEvents::decoder_event(p, DECODE_IP_BAD_PROTO);
 //            dc.other++;
     p->data = raw_packet;
     p->dsize = (uint16_t)raw_len;

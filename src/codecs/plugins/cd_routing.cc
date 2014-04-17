@@ -35,7 +35,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codec_events.h"
+#include "codecs/codec_events.h"
 
 
 namespace

@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
+#include "codecs/decode_module.h"
 #include "framework/codec.h"
 #include "time/profiler.h"
 #include "protocols/packet.h"
@@ -96,7 +96,7 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             "WARNING: Truncated eth header (%d bytes).\n", len););
 
         if ( Event_Enabled(DECODE_ETH_HDR_TRUNC) )
-            DecoderEvent(p, EVARGS(ETH_HDR_TRUNC));
+            DecoderEvent(p, DECODE_ETH_HDR_TRUNC);
 
 //        dc.discards++;
 //        dc.ethdisc++;
@@ -122,83 +122,6 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     next_prot_id = ntohs(p->eh->ether_type);
     p_hdr_len = eth::hdr_len();
-
-#if 0
-    /* grab out the network type */
-    switch(ntohs(p->eh->ether_type))
-    {
-        case ETHERNET_TYPE_IP:
-            DEBUG_WRAP(
-                    DebugMessage(DEBUG_DECODE,
-                        "IP datagram size calculated to be %lu bytes\n",
-                        (unsigned long)(cap_len - ETHERNET_HEADER_LEN));
-                    );
-
-            DecodeIP(p->pkt + ETHERNET_HEADER_LEN,
-                    cap_len - ETHERNET_HEADER_LEN, p);
-
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        case ETHERNET_TYPE_ARP:
-        case ETHERNET_TYPE_REVARP:
-            DecodeARP(p->pkt + ETHERNET_HEADER_LEN,
-                    cap_len - ETHERNET_HEADER_LEN, p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        case ETHERNET_TYPE_IPV6:
-            DecodeIPV6(p->pkt + ETHERNET_HEADER_LEN,
-                    (cap_len - ETHERNET_HEADER_LEN), p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        case ETHERNET_TYPE_PPPoE_DISC:
-        case ETHERNET_TYPE_PPPoE_SESS:
-            DecodePPPoEPkt(p->pkt + ETHERNET_HEADER_LEN,
-                    (cap_len - ETHERNET_HEADER_LEN), p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-#ifndef NO_NON_ETHER_DECODER
-        case ETHERNET_TYPE_IPX:
-            DecodeIPX(p->pkt + ETHERNET_HEADER_LEN,
-                    (cap_len - ETHERNET_HEADER_LEN), p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-#endif
-
-        case ETHERNET_TYPE_LOOP:
-            DecodeEthLoopback(p->pkt + ETHERNET_HEADER_LEN,
-                    (cap_len - ETHERNET_HEADER_LEN), p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        case ETHERNET_TYPE_8021Q:
-            DecodeVlan(p->pkt + ETHERNET_HEADER_LEN,
-                    cap_len - ETHERNET_HEADER_LEN, p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        case ETHERNET_TYPE_MPLS_MULTICAST:
-            if(!ScMplsMulticast())
-            {
-                //additional check for DecoderAlerts will be done now.
-            	DecoderEvent(p, DECODE_BAD_MPLS, DECODE_MULTICAST_MPLS_STR);
-            }
-        case ETHERNET_TYPE_MPLS_UNICAST:
-                DecodeMPLS(p->pkt + ETHERNET_HEADER_LEN,
-                    cap_len - ETHERNET_HEADER_LEN, p);
-                PREPROC_PROFILE_END(decodePerfStats);
-                return;
-
-        default:
-            // TBD add decoder drop event for unknown eth type
-            dc.other++;
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-    }
-#endif 
 
     return true;
 }
@@ -315,5 +238,7 @@ static const CodecApi ipv6_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
 

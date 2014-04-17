@@ -32,6 +32,7 @@ namespace ipv6
 namespace detail
 {
 const uint16_t ETHERNET_TYPE_IPV6 = 0x86dd;
+const uint16_t IPV6_PROT_ID = 41;
 const uint8_t IP6_HEADER_LEN = 40;
 const uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
 } // namespace
@@ -92,40 +93,40 @@ struct IP6Option
 };
 
 /* Generic Extension Header */
-typedef struct _IP6Extension
+struct IP6Extension
 {
     uint8_t ip6e_nxt;
     uint8_t ip6e_len;
     /* options follow */
     uint8_t ip6e_pad[6];
-} IP6Extension;
+} ;
 
-typedef struct _IP6HopByHop
+struct IP6HopByHop
 {
     uint8_t ip6hbh_nxt;
     uint8_t ip6hbh_len;
     /* options follow */
     uint8_t ip6hbh_pad[6];
-} IP6HopByHop;
+};
 
-typedef struct _IP6Dest
+struct IP6Dest
 {
     uint8_t ip6dest_nxt;
     uint8_t ip6dest_len;
     /* options follow */
     uint8_t ip6dest_pad[6];
-} IP6Dest;
+} ;
 
-typedef struct _IP6Route
+struct IP6Route
 {
     uint8_t ip6rte_nxt;
     uint8_t ip6rte_len;
     uint8_t ip6rte_type;
     uint8_t ip6rte_seg_left;
     /* type specific data follows */
-} IP6Route;
+} ;
 
-typedef struct _IP6Route0
+struct IP6Route0
 {
     uint8_t ip6rte0_nxt;
     uint8_t ip6rte0_len;
@@ -134,16 +135,16 @@ typedef struct _IP6Route0
     uint8_t ip6rte0_reserved;
     uint8_t ip6rte0_bitmap[3];
     struct in6_addr ip6rte0_addr[1];  /* Up to 23 IP6 addresses */
-} IP6Route0;
+} ;
 
 /* Fragment header */
-typedef struct _IP6Frag
+struct IP6Frag
 {
     uint8_t   ip6f_nxt;     /* next header */
     uint8_t   ip6f_reserved;    /* reserved field */
     uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
     uint32_t  ip6f_ident;   /* identification */
-} IP6Frag;
+} ;
 
 
 struct IP6RawHdr
@@ -196,7 +197,7 @@ enum class HopByHopOptions : uint8_t
 
 
 
-inline uint8_t header_length()
+inline uint8_t hdr_len()
 {
     return detail::IP6_HEADER_LEN;
 }
@@ -204,6 +205,11 @@ inline uint8_t header_length()
 inline uint16_t ethertype()
 {
     return detail::ETHERNET_TYPE_IPV6;
+}
+
+inline uint16_t prot_id()
+{
+    return detail::IPV6_PROT_ID;
 }
 
 inline bool is_multicast(uint8_t addr)
@@ -254,6 +260,7 @@ inline bool is_ip6_hdr_ver(IP6RawHdr *hdr)
 
 
 // TODO --> delete EVERYTHING below this line!
+typedef ipv6::IP6Hdr IP6Hdr;
 typedef ipv6::IP6Option IP6Option;
 typedef ipv6::IP6Frag IP6Frag;
 typedef ipv6::IP6Route IP6Route;
