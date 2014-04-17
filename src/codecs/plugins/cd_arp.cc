@@ -22,14 +22,39 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
-#include "prot_arp.h"
+
+
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
+
+
+namespace
+{
+
+class ArpCodec : public Codec
+{
+public:
+    ArpCodec() : Codec("NAME"){};
+    ~ArpCodec();
+
+
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual void get_data_link_type(std::vector<int>&){};
+    
+};
+
+
+static const uint16_t ETHERNET_TYPE_REVARP = 0x8035;
+static const uint16_t ETHERNET_TYPE_ARP = 0x0806;
+} // anonymous namespace
+
+
+
 
 //--------------------------------------------------------------------
 // decode.c::ARP
@@ -46,27 +71,25 @@
  *
  * Returns: void function
  */
-bool ARP::Decode(const uint8_t *pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int32_t &next_prot_id)
+bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    dc.arp++;
+//    dc.arp++;
 
-    if (p->greh != NULL)
-        dc.gre_arp++;
+//    if (p->greh != NULL)
+//        dc.gre_arp++;
 
-    p->ah = (EtherARP *) pkt;
+    p->ah = (EtherARP *) raw_pkt;
 
     if(len < sizeof(EtherARP))
     {
-        DecoderEvent(p, DECODE_ARP_TRUNCATED,
-                        DECODE_ARP_TRUNCATED_STR);
+        DecoderEvent(p, DECODE_ARP_TRUNCATED);
 
-        dc.discards++;
+//        dc.discards++;
         return false;
     }
 
     p->proto_bits |= PROTO_BIT__ARP;
-//    PushLayer(PROTO_ARP, p, pkt, sizeof(*p->ah));
     p_hdr_len = sizeof(*p->ah);
     next_prot_id = -1;
 
@@ -74,21 +97,51 @@ bool ARP::Decode(const uint8_t *pkt, const uint32_t len,
 }
 
 
-static const char* name = "arp_decode";
 
-static const CodecApi arp_api =
+
+void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_ARP);
+    v.push_back(ETHERNET_TYPE_REVARP);
+}
+
+static Codec* ctor()
+{
+    return new ArpCodec();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
+
+
+
+static const char* name = "arp_codec";
+
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    {ETHERNET_TYPE_ARP, ETHERNET_TYPE_REVARP},  
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
-    ARP::Decode,
-    NULL,
-    NULL
+    ctor, // ctor
+    dtor, // dtor
+    sum, // sum
+    stats  // stats
 };
 
 
