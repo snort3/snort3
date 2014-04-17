@@ -480,9 +480,6 @@ typedef struct _WifiHdr
    Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
 #define MIN_UNASSIGNED_IP_PROTO 143
 
-#ifndef IPPROTO_SWIPE
-#define IPPROTO_SWIPE           53
-#endif
 #ifndef IPPROTO_IP_MOBILITY
 #define IPPROTO_IP_MOBILITY     55
 #endif

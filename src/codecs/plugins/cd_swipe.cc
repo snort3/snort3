@@ -27,12 +27,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 
@@ -40,13 +34,13 @@ namespace{
 
 const uint32_t ICMP_HEADER_LEN = 4;
 const uint32_t ICMP_NORMAL_LEN = 8;
+const uint16_t SWIPE_PROT_ID = 53;
 
-
-class CodecSwipe : public Codec{
+class SwipeCodec : public Codec{
 
 public:
-    CodecSwipe() : Codec("swipe"){};
-    virtual ~CodecSwipe();
+    SwipeCodec() : Codec("swipe"){};
+    virtual ~SwipeCodec();
     
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &p_hdr_len, int &next_prot_id);
@@ -56,7 +50,7 @@ public:
 
 } // namespace
 
-bool CodecSwipe::decode(const uint8_t* raw_packet, const uint32_t raw_len, 
+bool SwipeCodec::decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
 
@@ -71,9 +65,9 @@ bool CodecSwipe::decode(const uint8_t* raw_packet, const uint32_t raw_len,
     return true;
 }
 
-void CodecSwipe::get_protocol_ids(std::vector<uint16_t> &proto_ids)
+void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
 {
-    proto_ids.push_back(IPPROTO_SWIPE);
+    proto_ids.push_back(SWIPE_PROT_ID);
 }
 
 
@@ -81,7 +75,7 @@ static const char* name = "swipe";
 
 static Codec *ctor()
 {
-    return new CodecSwipe();
+    return new SwipeCodec();
 }
 
 static void dtor(Codec *cd)
@@ -98,6 +92,8 @@ static const CodecApi udp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
 
 
