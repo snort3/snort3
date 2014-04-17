@@ -59,6 +59,7 @@ bool EthLoopbackCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 //    if (p->greh != NULL)
 //        dc.gre_loopback++;
 
+    next_prot_id = -1;
     return true;
 }
 
