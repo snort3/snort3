@@ -22,24 +22,58 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
 
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
+namespace
+{
+
+class PPPoEPkt : public Codec
+{
+public:
+    PPPoEPkt() : Codec("PPP_over_Eth"){};
+    ~PPPoEPkt();
 
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
-#include "prot_pppoepkt.h"
-#include "prot_pppencap.h"
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual void get_data_link_type(std::vector<int>&){};
+    
+};
+
+
+const uint16_t PPPOE_HEADER_LEN = 6;
+
+const uint16_t ETHERNET_TYPE_PPPoE_DISC =  0x8863; /* discovery stage */
+const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
+
+/* PPPoE types */
+const uint16_t PPPoE_CODE_SESS = 0x00; /* PPPoE session */
+const uint16_t PPPoE_CODE_PADI = 0x09; /* PPPoE Active Discovery Initiation */
+const uint16_t PPPoE_CODE_PADO = 0x07; /* PPPoE Active Discovery Offer */
+const uint16_t PPPoE_CODE_PADR = 0x19; /* PPPoE Active Discovery Request */
+const uint16_t PPPoE_CODE_PADS = 0x65; /* PPPoE Active Discovery Session-confirmation */
+const uint16_t PPPoE_CODE_PADT = 0xa7; /* PPPoE Active Discovery Terminate */
+
+/* PPPoE tag types */
+const uint16_t PPPoE_TAG_END_OF_LIST = 0x0000;
+const uint16_t PPPoE_TAG_SERVICE_NAME = 0x0101;
+const uint16_t PPPoE_TAG_AC_NAME = 0x0102;
+const uint16_t PPPoE_TAG_HOST_UNIQ = 0x0103;
+const uint16_t PPPoE_TAG_AC_COOKIE = 0x0104;
+const uint16_t PPPoE_TAG_VENDOR_SPECIFIC = 0x0105;
+const uint16_t PPPoE_TAG_RELAY_SESSION_ID = 0x0110;
+const uint16_t PPPoE_TAG_SERVICE_NAME_ERROR = 0x0201;
+const uint16_t PPPoE_TAG_AC_SYSTEM_ERROR = 0x0202;
+const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
+
+
+} // anonymous namespace
+
 
 //--------------------------------------------------------------------
 // decode.c::PPP related
@@ -60,8 +94,8 @@
  * see http://www.faqs.org/rfcs/rfc2516.html
  *
  */
-bool PPPoEPkt::Decode(const uint8_t *pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, uint16_t &next_prot_id)
+bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
     //PPPoE_Tag *ppppoe_tag=0;
     //PPPoE_Tag tag;  /* needed to avoid alignment problems */
@@ -76,16 +110,16 @@ bool PPPoEPkt::Decode(const uint8_t *pkt, const uint32_t len,
             "Captured data length < PPPoE header length! "
             "(%d bytes)\n", len););
 
-        DecoderEvent(p, DECODE_BAD_PPPOE, DECODE_BAD_PPPOE_STR);
+        DecoderEvent(p, DECODE_BAD_PPPOE);
 
-        return;
+        return false;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "%X   %X\n",
                 *p->eh->ether_src, *p->eh->ether_dst););
 
     /* lay the PPP over ethernet structure over the packet data */
-    p->pppoeh = (PPPoEHdr *)pkt;
+    p->pppoeh = (PPPoEHdr *)raw_pkt;
 
     /* grab out the network type */
     switch(ntohs(p->eh->ether_type))
@@ -99,7 +133,7 @@ bool PPPoEPkt::Decode(const uint8_t *pkt, const uint32_t len,
             break;
 
         default:
-            return;
+            return false;
     }
 
 #ifdef DEBUG_MSGS
@@ -221,6 +255,7 @@ bool PPPoEPkt::Decode(const uint8_t *pkt, const uint32_t len,
     return false;
 }
 
+#if 0
 
 EncStatus PPPoE_Encode (EncState* enc, Buffer* in, Buffer* out)
 {
@@ -248,19 +283,50 @@ EncStatus PPPoE_Encode (EncState* enc, Buffer* in, Buffer* out)
 
     return EncStatus::ENC_OK;
 }
+#endif
+
+void PPPoEPkt::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_PPPoE_DISC);
+    v.push_back(ETHERNET_TYPE_PPPoE_SESS);
+}
+
+static Codec* ctor()
+{
+    return new PPPoEPkt();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
 
 
-static const char* name = "pppoe_decode";
 
-static const CodecApi pppoe_api =
+static const char* name = "pppoe_codec";
+
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    {ETHERNET_TYPE_PPPoE_DISC, ETHERNET_TYPE_PPPoE_SESS},  
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
-    IPV6::Decode,
+    ctor, // ctor
+    dtor, // dtor
+    sum, // sum
+    stats  // stats
 };
+

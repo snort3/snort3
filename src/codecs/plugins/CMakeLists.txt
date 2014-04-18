@@ -13,6 +13,7 @@ add_library( codec_plugins STATIC
     cd_erspan2.cc
     cd_erspan3.cc
     cd_pppencap.cc
+    cd_pppoepkt.cc
 )
 
 
