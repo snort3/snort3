@@ -2,7 +2,6 @@
 
 add_subdirectory(basic)
 add_subdirectory(plugins)
-add_subdirectory(chained)
 
 
 if (ENABLE_NON_ETHER_DECODERS)
