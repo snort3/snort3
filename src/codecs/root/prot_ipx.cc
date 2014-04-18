@@ -31,6 +31,10 @@
 #include "static_include.h"
 #include "decoder_includes.h"
 
+
+
+#define ETHERNET_TYPE_IPX             0x8137
+
 /*
  * Function: DecodeIPX(uint8_t *, uint32_t)
  *
