@@ -21,54 +21,45 @@
 */
 
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
 
-#include "decoder_includes.h"
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
+#include "protocols/ethertypes.h"
+#include "snort.h"
+#include "protocols/ipv4.h"
 
-class RpcFlowData : public FlowData
+namespace
 {
-public:
-    RpcFlowData();
-    ~RpcFlowData();
-
-    static void init()
-    { flow_id = FlowData::get_flow_id(); };
-
-public:
-    static unsigned flow_id;
-    RpcSsnData session;
-};
-
 
 class PppEncap : public Codec
 {
 public:
-    PppEncap();
+    PppEncap() : Codec("PPPEncapsulation"){};
     ~PppEncap();
 
-    static bool Decode(const uint8_t *, const DAQ_PktHdr_t*, 
-        Packet *p, uint16_t &p_hdr_len, uint16_t &next_prot_id);
 
-private:
-    #define PPP_IP         0x0021        /* Internet Protocol */
-    #define PPP_IPV6       0x0057        /* Internet Protocol v6 */
-    #define PPP_VJ_COMP    0x002d        /* VJ compressed TCP/IP */
-    #define PPP_VJ_UCOMP   0x002f        /* VJ uncompressed TCP/IP */
-    #define PPP_IPX        0x002b        /* Novell IPX Protocol */
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual void get_data_link_type(std::vector<int>&){};
+    
 };
 
+const static uint16_t PPP_IP = 0x0021;       /* Internet Protocol */
+const static uint16_t PPP_IPV6 = 0x0057;        /* Internet Protocol v6 */
+const static uint16_t PPP_VJ_COMP = 0x002d;        /* VJ compressed TCP/IP */
+const static uint16_t PPP_VJ_UCOMP = 0x002f;        /* VJ uncompressed TCP/IP */
+const static uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
+
+} // anonymous namespace
 
 
-
-void DecodePppPktEncapsulated(const uint8_t *, const uint32_t, Packet *);
 
 
 
@@ -83,12 +74,11 @@ void DecodePppPktEncapsulated(const uint8_t *, const uint32_t, Packet *);
  *
  * Returns: void function
  */
-bool PppEncap::Decode(const uint8_t *pkt, uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, uint16_t &next_prot_id);
+bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    static THREAD_LOCAL int had_vj = 0;
+    static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;
-    uint32_t hlen = 1; /* HEADER - try 1 then 2 */
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "PPP Packet!\n"););
 
@@ -98,13 +88,14 @@ bool PppEncap::Decode(const uint8_t *pkt, uint32_t len,
                             "alignment on this architecture when decoding IP, "
                             "causing a bus error - stop decoding packet.\n"););
 
-    p->data = pkt;
+    p->data = raw_pkt;
     p->dsize = (uint16_t)len;
-    return;
+    next_prot_id = -1;
+    return true;
 #endif  /* WORDS_MUSTALIGN */
 
-    if (p->greh != NULL)
-        dc.gre_ppp++;
+//    if (p->greh != NULL)
+//        dc.gre_ppp++;
 
     /* do a little validation:
      *
@@ -116,22 +107,22 @@ bool PppEncap::Decode(const uint8_t *pkt, uint32_t len,
             ErrorMessage("Length not big enough for even a single "
                          "header or a one byte payload\n");
         }
-        return;
+        return false;
     }
 
 
-    if(pkt[0] & 0x01)
+    if(raw_pkt[0] & 0x01)
     {
         /* Check for protocol compression rfc1661 section 5
          *
          */
-        hlen = 1;
-        protocol = pkt[0];
+        p_hdr_len = 1;
+        protocol = raw_pkt[0];
     }
     else
     {
-        protocol = ntohs(*((uint16_t *)pkt));
-        hlen = 2;
+        protocol = ntohs(*((uint16_t *)raw_pkt));
+        p_hdr_len = 2;
     }
 
     /*
@@ -144,61 +135,86 @@ bool PppEncap::Decode(const uint8_t *pkt, uint32_t len,
             if (!had_vj)
                 ErrorMessage("PPP link seems to use VJ compression, "
                         "cannot handle compressed packets!\n");
-            had_vj = 1;
+            had_vj = true;
             return false;
         case PPP_VJ_UCOMP:
             /* VJ compression modifies the protocol field. It must be set
              * to tcp (only TCP packets can be VJ compressed) */
-            if(len < (hlen + ipv4::ip_hdr_len()))
+            if(len < (p_hdr_len + ipv4::hdr_len()))
             {
                 if (ScLogVerbose())
                     ErrorMessage("PPP VJ min packet length > captured len! "
                                  "(%d bytes)\n", len);
-                return;
+                return false;
             }
 
-            ((IPHdr *)(pkt + hlen))->ip_proto = IPPROTO_TCP;
+            ((IPHdr *)(raw_pkt + p_hdr_len))->ip_proto = IPPROTO_TCP;
             /* fall through */
 
         case PPP_IP:
-//            PushLayer(PROTO_PPP_ENCAP, p, pkt, hlen);
-            next_prot_id = ETHERNET_TYPE_IP;
-//            DecodeIP(pkt + hlen, len - hlen, p);
+            next_prot_id = ETHERTYPE_IPV4;
             break;
 
         case PPP_IPV6:
-//            PushLayer(PROTO_PPP_ENCAP, p, pkt, hlen);
-            next_prot_id = ETHERNET_TYPE_IPV6;
-//            DecodeIPV6(pkt + hlen, len - hlen, p);
+            next_prot_id = ETHERTYPE_IPV6;
             break;
 
-#ifndef NO_NON_ETHER_DECODER
         case PPP_IPX:
-//            PushLayer(PROTO_PPP_ENCAP, p, pkt, hlen);
-            next_prot_id = ETHERNET_TYPE_IPX;
-//            DecodeIPX(pkt + hlen, len - hlen, p);
+            next_prot_id = ETHERTYPE_IPX;
             break;
-#endif
+
+        default:
+            next_prot_id = -1;
+            break;
     }
-    p_hdr_len = hlen;
     return true;
 }
 
 
 
-static const char* name = "pppencap_decode";
 
-static const CodecApi pppencap_api =
+void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERTYPE_PPP);
+}
+
+static Codec* ctor()
+{
+    return new PppEncap();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
+
+
+
+static const char* name = "pppencap_codec";
+
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    {GRE_TYPE_PPP},  
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
-    PppEncap::Decode,
+    ctor, // ctor
+    dtor, // dtor
+    sum, // sum
+    stats  // stats
 };
 
 

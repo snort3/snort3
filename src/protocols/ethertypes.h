@@ -38,5 +38,6 @@ const uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
 const uint16_t ETHERTYPE_IPV4 = 0x0800;
 const uint16_t ETHERTYPE_IPV6 = 0x86dd;
 const uint16_t ETHERTYPE_PPP = 0x880B;
+const uint16_t ETHERTYPE_IPX = 0x8137;
 
 #endif
