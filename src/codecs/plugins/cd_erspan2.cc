@@ -21,18 +21,42 @@
 */
 
 
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
+#include "protocols/ethertypes.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+namespace
+{
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
-#include "prot_erspan2.h"
+class Erspan2Codec : public Codec
+{
+public:
+    Erspan2Codec() : Codec("ERSPAN_2"){};
+    ~Erspan2Codec();
 
 
-#include "decoder_includes.h"
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual void get_data_link_type(std::vector<int>&){};
+    
+};
+
+
+struct ERSpanType2Hdr
+{
+    uint16_t ver_vlan;
+    uint16_t flags_spanId;
+    uint32_t pad;
+} ;
+
+const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
+} // anonymous namespace
+
+
+
 
 /*
  * Function: DecodeERSPANType2(uint8_t *, uint32_t, Packet *)
@@ -47,17 +71,17 @@
  * Returns: void function
  *
  */
-bool ERSPANType2::Decode(const uint8_t *pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, uint16_t &next_prot_id)
+bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    uint32_t hlen = sizeof(ERSpanType2Hdr);
+    p_hdr_len = sizeof(ERSpanType2Hdr);
     uint32_t payload_len;
-    ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)pkt;
+    ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType2Hdr))
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR, pkt, len);
-        return;
+        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR, raw_pkt, len);
+        return false;
     }
 
     if (p->encapsulated)
@@ -65,8 +89,8 @@ bool ERSPANType2::Decode(const uint8_t *pkt, const uint32_t len,
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
         CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
     /* Check that this is in fact ERSpan Type 2.
@@ -74,34 +98,57 @@ bool ERSPANType2::Decode(const uint8_t *pkt, const uint32_t len,
     if (ERSPAN_VERSION(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
     {
         CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
-//    PushLayer(PROTO_ERSPAN, p, pkt, hlen);
-    payload_len = len - hlen;
 
-    // TODO: Is this actually statis or possible changable?
-//    DecodeTransBridging(pkt + hlen, payload_len, p);
-
-    next_prot_id = GRE_TYPE_TRANS_BRIDGING; // huh?
-    p_hdr_len = hlen;
+    next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING; // huh?
     return true;
 }
 
-static const char* name = "erspan2_decode";
 
-static const CodecApi erspan2_api =
+
+void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERTYPE_ERSPAN_TYPE2);
+}
+
+static Codec* ctor()
+{
+    return new Erspan2Codec();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
+
+
+
+static const char* name = "erspan2_codec";
+
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    {ETHERNET_TYPE_ERSPAN_TYPE2},  
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    NULL,
+    sum, // sum
+    stats  // stats
 };
-

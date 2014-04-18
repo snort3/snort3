@@ -10,6 +10,8 @@ add_library( codec_plugins STATIC
     cd_gre.cc
     cd_mpls.cc
     cd_transbridge.cc
+    cd_erspan2.cc
+    cd_erspan3.cc
 )
 
 

@@ -22,18 +22,44 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
+#include "protocols/ethertypes.h"
 
 
-#include "decoder_includes.h"
-#include "prot_erspan3.h"
+namespace
+{
 
+class Erspan3Codec : public Codec
+{
+public:
+    Erspan3Codec() : Codec("ERSPAN_3"){};
+    ~Erspan3Codec();
+
+
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual void get_data_link_type(std::vector<int>&){};
+    
+};
+
+
+struct ERSpanType3Hdr
+{
+    uint16_t ver_vlan;
+    uint16_t flags_spanId;
+    uint32_t timestamp;
+    uint16_t pad0;
+    uint16_t pad1;
+    uint32_t pad2;
+    uint32_t pad3;
+};
+
+const uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
+} // anonymous namespace
 
 /*
  * Function: DecodeERSPANType3(uint8_t *, uint32_t, Packet *)
@@ -48,17 +74,18 @@
  * Returns: void function
  *
  */
-void DecodeERSPANType3(const uint8_t *pkt, const uint32_t len, Packet *p)
+bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    uint32_t hlen = sizeof(ERSpanType3Hdr);
+    p_hdr_len= sizeof(ERSpanType3Hdr);
     uint32_t payload_len;
-    ERSpanType3Hdr *erSpan3Hdr = (ERSpanType3Hdr *)pkt;
+    ERSpanType3Hdr *erSpan3Hdr = (ERSpanType3Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType3Hdr))
     {
         CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
     if (p->encapsulated)
@@ -66,8 +93,8 @@ void DecodeERSPANType3(const uint8_t *pkt, const uint32_t len, Packet *p)
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
         CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
     /* Check that this is in fact ERSpan Type 3.
@@ -75,36 +102,57 @@ void DecodeERSPANType3(const uint8_t *pkt, const uint32_t len, Packet *p)
     if (ERSPAN_VERSION(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
     {
         CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
-//    PushLayer(PROTO_ERSPAN, p, pkt, hlen);
-//    payload_len = len - hlen;
 
-//      TODO:  Is this the only next protocol which can be called?
-//    DecodeTransBridging(pkt + hlen, payload_len, p);
-
-
-    next_prot_id = GRE_TYPE_TRANS_BRIDGING; // huh?
-    p_hdr_len = hlen;
+    next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
     return true;
 }
 
 
-static const char* name = "erspan3_decode";
+void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERTYPE_ERSPAN_TYPE3);
+}
 
-static const CodecApi erspan3_api =
+static Codec* ctor()
+{
+    return new Erspan3Codec();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
+
+
+
+static const char* name = "erspan3_codec";
+
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    {ETHERNET_TYPE_ERSPAN_TYPE3},  
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    NULL
+    sum, // sum
+    stats  // stats
 };
 

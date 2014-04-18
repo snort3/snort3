@@ -516,23 +516,6 @@ typedef struct _WifiHdr
 #endif
 
 
-typedef struct _ERSpanType2Hdr
-{
-    uint16_t ver_vlan;
-    uint16_t flags_spanId;
-    uint32_t pad;
-} ERSpanType2Hdr;
-
-typedef struct _ERSpanType3Hdr
-{
-    uint16_t ver_vlan;
-    uint16_t flags_spanId;
-    uint32_t timestamp;
-    uint16_t pad0;
-    uint16_t pad1;
-    uint32_t pad2;
-    uint32_t pad3;
-} ERSpanType3Hdr;
 
 #define ERSPAN_VERSION(x) ((ntohs(x->ver_vlan) & 0xf000) >> 12)
 #define ERSPAN_VLAN(x) (ntohs(x->ver_vlan) & 0x0fff)
