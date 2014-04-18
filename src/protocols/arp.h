@@ -26,7 +26,7 @@ namespace arp{
 
 namespace detail{
 
-} // namespace detial
+} // namespace detail
 
 
 

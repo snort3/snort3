@@ -9,5 +9,10 @@ add_library (protocols
     eth.h
     icmp4.h
     icmp6.h
+    gre.h
+    gtp.h
+    arp.h
+    wlan.h
+    teredo.h
 )
 

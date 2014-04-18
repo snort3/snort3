@@ -19,8 +19,35 @@
 */
 
 
-#ifndef PROT_GRE_H
-#define PROT_GRE_H
+#ifndef GRE_H
+#define GRE_H
 
+namespace gre{
+
+namespace detail{
+
+} // namespace detail
+
+/* GRE related stuff */
+struct GREHdr
+{
+    uint8_t flags;
+    uint8_t version;
+    uint16_t ether_type;
+
+};
+
+
+} // namespace gre
+
+typedef gre::GREHdr GREHdr;
+
+
+#define GRE_TYPE_TRANS_BRIDGING 0x6558
+#define GRE_TYPE_PPP            0x880B
+
+
+#define GRE_VERSION(x) (x->version & 0x07)
+#define GRE_PROTO(x)   ntohs(x->ether_type)
 
 #endif

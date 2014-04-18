@@ -60,6 +60,7 @@ extern "C" {
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "protocols/arp.h"
+#include "protocols/gre.h"
 
 
 /*  D E F I N E S  ************************************************************/
@@ -514,45 +515,6 @@ typedef struct _WifiHdr
   #pragma warning( disable : 4214 )
 #endif
 
-
-/* GRE related stuff */
-typedef struct _GREHdr
-{
-    uint8_t flags;
-    uint8_t version;
-    uint16_t ether_type;
-
-} GREHdr;
-
-#ifndef IPPROTO_GRE
-#define IPPROTO_GRE 47
-#endif
-
-#define GRE_TYPE_TRANS_BRIDGING 0x6558
-#define GRE_TYPE_PPP            0x880B
-
-#define GRE_HEADER_LEN 4
-#define GRE_CHKSUM_LEN 2
-#define GRE_OFFSET_LEN 2
-#define GRE_KEY_LEN 4
-#define GRE_SEQ_LEN 4
-#define GRE_SRE_HEADER_LEN 4
-
-#define GRE_CHKSUM(x)  (x->flags & 0x80)
-#define GRE_ROUTE(x)   (x->flags & 0x40)
-#define GRE_KEY(x)     (x->flags & 0x20)
-#define GRE_SEQ(x)     (x->flags & 0x10)
-#define GRE_SSR(x)     (x->flags & 0x08)
-#define GRE_RECUR(x)   (x->flags & 0x07)
-#define GRE_VERSION(x) (x->version & 0x07)
-#define GRE_FLAGS(x)   (x->version & 0xF8)
-#define GRE_PROTO(x)   ntohs(x->ether_type)
-
-/* GRE version 1 used with PPTP */
-#define GRE_V1_HEADER_LEN 8
-#define GRE_V1_ACK_LEN    4
-#define GRE_V1_FLAGS(x)   (x->version & 0x78)
-#define GRE_V1_ACK(x)     (x->version & 0x80)
 
 typedef struct _ERSpanType2Hdr
 {

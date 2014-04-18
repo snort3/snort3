@@ -21,21 +21,61 @@
 */
 
 
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
+#include "protocols/packet.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+namespace
+{
+
+class GreCodec : public Codec
+{
+public:
+    GreCodec() : Codec("GRE"){};
+    ~GreCodec();
+
+
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual void get_data_link_type(std::vector<int>&){};
+    
+};
+
+static const uint16_t GRE_PROT_ID = 47;
+static const uint32_t GRE_HEADER_LEN = 4;
+static const uint32_t GRE_CHKSUM_LEN = 2;
+static const uint32_t GRE_OFFSET_LEN = 2;
+static const uint32_t GRE_KEY_LEN = 4;
+static const uint32_t GRE_SEQ_LEN = 4;
+static const uint32_t GRE_SRE_HEADER_LEN = 4;
+
+/* GRE version 1 used with PPTP */
+static const uint32_t GRE_V1_HEADER_LEN =8;
+static const uint32_t GRE_V1_ACK_LEN = 4;
+
+#define GRE_V1_FLAGS(x)   (x->version & 0x78)
+#define GRE_V1_ACK(x)     (x->version & 0x80)
+#define GRE_CHKSUM(x)  (x->flags & 0x80)
+#define GRE_ROUTE(x)   (x->flags & 0x40)
+#define GRE_KEY(x)     (x->flags & 0x20)
+#define GRE_SEQ(x)     (x->flags & 0x10)
+#define GRE_SSR(x)     (x->flags & 0x08)
+#define GRE_RECUR(x)   (x->flags & 0x07)
+#define GRE_FLAGS(x)   (x->version & 0xF8)
+
+#if 0
+#define GRE_HEADER_LEN 4
+#define GRE_CHKSUM_LEN 2
+#define GRE_OFFSET_LEN 2
+#define GRE_KEY_LEN 4
+#define GRE_SEQ_LEN 4
+#define GRE_SRE_HEADER_LEN 4
 #endif
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
-#include "prot_gre.h"
-
-// other decoders
-#include "decoder_includes.h"
-#include "prot_arp.h"
-#include "prot_ethloopback.h"
-#include "prot_pppencap.h"
+} // anonymous namespace
 
 
 
@@ -57,17 +97,14 @@
  *
  * Notes: see RFCs 1701, 2784 and 2637
  */
-bool GRE::Decode(const uint8_t *pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, uint16_t &next_prot_id)
+bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    uint32_t hlen;    /* GRE header length */
-    uint32_t payload_len;
-
     if (len < GRE_HEADER_LEN)
     {
         CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
     if (p->encapsulated)
@@ -75,8 +112,8 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
         /* discard packet - multiple GRE encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
         CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
     /* Note: Since GRE doesn't have a field to indicate header length and
@@ -84,8 +121,8 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
      * figure out the length
      */
 
-    p->greh = (GREHdr *)pkt;
-    hlen = GRE_HEADER_LEN;
+    p->greh = (GREHdr *)raw_pkt;
+    p_hdr_len = GRE_HEADER_LEN;
 
     switch (GRE_VERSION(p->greh))
     {
@@ -94,18 +131,18 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
             if (GRE_RECUR(p->greh) || GRE_FLAGS(p->greh))
             {
                 CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_HEADER,
-                                pkt, len);
-                return;
+                                raw_pkt, len);
+                return false;
             }
 
             if (GRE_CHKSUM(p->greh) || GRE_ROUTE(p->greh))
-                hlen += GRE_CHKSUM_LEN + GRE_OFFSET_LEN;
+                p_hdr_len += GRE_CHKSUM_LEN + GRE_OFFSET_LEN;
 
             if (GRE_KEY(p->greh))
-                hlen += GRE_KEY_LEN;
+                p_hdr_len += GRE_KEY_LEN;
 
             if (GRE_SEQ(p->greh))
-                hlen += GRE_SEQ_LEN;
+                p_hdr_len += GRE_SEQ_LEN;
 
             /* if this flag is set, we need to walk through all of the
              * Source Route Entries */
@@ -116,12 +153,12 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
                 uint8_t sre_length;
                 const uint8_t *sre_ptr;
 
-                sre_ptr = pkt + hlen;
+                sre_ptr = raw_pkt + p_hdr_len;
 
                 while (1)
                 {
-                    hlen += GRE_SRE_HEADER_LEN;
-                    if (hlen > len)
+                    p_hdr_len += GRE_SRE_HEADER_LEN;
+                    if (p_hdr_len > len)
                         break;
 
                     sre_addrfamily = ntohs(*((uint16_t *)sre_ptr));
@@ -136,7 +173,7 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
                     if ((sre_addrfamily == 0) && (sre_length == 0))
                         break;
 
-                    hlen += sre_length;
+                    p_hdr_len += sre_length;
                     sre_ptr += sre_length;
                 }
             }
@@ -150,57 +187,54 @@ bool GRE::Decode(const uint8_t *pkt, const uint32_t len,
                 GRE_RECUR(p->greh) || GRE_V1_FLAGS(p->greh))
             {
                 CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                pkt, len);
-                return;
+                                raw_pkt, len);
+                return false;
             }
 
             /* protocol must be 0x880B - PPP */
             if (GRE_PROTO(p->greh) != GRE_TYPE_PPP)
             {
                 CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                pkt, len);
-                return;
+                                raw_pkt, len);
+                return false;
             }
 
             /* this flag should always be present */
             if (!(GRE_KEY(p->greh)))
             {
                 CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                pkt, len);
-                return;
+                                raw_pkt, len);
+                return false;
             }
 
-            hlen += GRE_KEY_LEN;
+            p_hdr_len += GRE_KEY_LEN;
 
             if (GRE_SEQ(p->greh))
-                hlen += GRE_SEQ_LEN;
+                p_hdr_len += GRE_SEQ_LEN;
 
             if (GRE_V1_ACK(p->greh))
-                hlen += GRE_V1_ACK_LEN;
+                p_hdr_len += GRE_V1_ACK_LEN;
 
             break;
 
         default:
             CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_VERSION,
-                            pkt, len);
-            return;
+                            raw_pkt, len);
+            return false;
     }
 
-    if (hlen > len)
+    if (p_hdr_len > len)
     {
         CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
-    PushLayer(PROTO_GRE, p, pkt, hlen);
-    payload_len = len - hlen;
-
-    p_hdr_len = hlen;
     next_prot_id = GRE_PROTO(p->greh);
     return true;
 }
 
+#if 0
 /*
  * ENCODER
  */
@@ -208,14 +242,13 @@ void GRE_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 {
     c->greh = (GREHdr*)lyr->start;
 }
-
-
+#endif
 
 
 
 void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_GRE);
+    v.push_back(GRE_PROT_ID);
 }
 
 static Codec* ctor()
@@ -228,12 +261,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
 
 
 
-static const char* name = "gre_decode";
+static const char* name = "gre_codec";
 
-static const CodecApi udp_api =
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -242,7 +286,8 @@ static const CodecApi udp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    NULL
+    sum, // sum
+    stats  // stats
 };
+
 
