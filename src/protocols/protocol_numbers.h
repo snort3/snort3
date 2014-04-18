@@ -19,11 +19,14 @@
 */
 
 
-#ifndef PROT_TRANSBRIDING_H
-#define PROT_TRANSBRIDING_H
+#ifndef PROTOCOL_NUMBERS_H
+#define PROTOCOL_NUMBERS_H
 
-void DecodeTransBridging(const uint8_t *, const uint32_t, Packet *);
+/*
+ * this file contained the protocol numbers for all of the various protocols.
+ *  Defined at:
+ * http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
+ */
 
 
-#endif
 

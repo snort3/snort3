@@ -22,21 +22,39 @@
 
 
 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
 
-#include "prot_transbridge.h"
-#include "prot_arp.h"
-#include "prot_vlan.h"
-#include "prot_ipv6.h"
-#include "prot_ipv4.h"
-#include "prot_ethloopback.h"
-#include "prot_ipx.h"
+#include "protocols/eth.h"
+#include "protocols/ethertypes.h"
+
+namespace
+{
+
+class TransbridgeCodec : public Codec
+{
+public:
+    TransbridgeCodec() : Codec("Transbridge"){};
+    ~TransbridgeCodec();
+
+
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    
+};
+
+} // anonymous namespace
+
+
+
 
 /*
  * Function: DecodeTransBridging(uint8_t *, const uint32_t, Packet)
@@ -54,45 +72,75 @@
  * convention needed to be changed and the stuff at the beginning
  * wasn't needed since we are already deep into the packet
  */
-bool TransBridging::Decode(const uint8_t *pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, uint16_t &next_prot_id)
+bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    dc.gre_eth++;
+//    dc.gre_eth++;
 
-    if(len < ETHERNET_HEADER_LEN)
+    if(len < eth::hdr_len())
     {
         CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
-                        pkt, len);
-        return;
+                        raw_pkt, len);
+        return false;
     }
 
     /* The Packet struct's ethernet header will now point to the inner ethernet
      * header of the packet
      */
-    p->eh = (eth::EtherHdr *)pkt;
-//    PushLayer(PROTO_ETH, p, pkt, sizeof(*p->eh));
+    p->eh = (eth::EtherHdr *)raw_pkt;
 
-    p_hdr_len = ETHERNET_HEADER_LEN;
+    p_hdr_len = eth::hdr_len();
     next_prot_id = ntohs(p->eh->ether_type);
 
     return true;
 }
 
 
-static const char* name = "transbridge_decode";
+
+void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(TRANS_ETHER_BRIDGING_ETHERTYPE); // defined in ethertypes.h"
+}
+
+static Codec* ctor()
+{
+    return new TransbridgeCodec();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
+
+
+
+static const char* name = "transbridge_codec";
 
 static const CodecApi transbridge_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    {GRE_TYPE_TRANS_BRIDGING},  
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
-    GRE::Decode,
+    ctor, // ctor
+    dtor, // dtor
+    sum, // sum
+    stats  // stats
 };
+
 
 
 

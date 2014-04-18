@@ -14,5 +14,7 @@ add_library (protocols
     arp.h
     wlan.h
     teredo.h
+    ethertypes.h
+    protocol_numbers.h
 )
 

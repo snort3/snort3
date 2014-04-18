@@ -25,17 +25,10 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if 0
-
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-#endif
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
 
 
 namespace

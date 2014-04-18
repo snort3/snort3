@@ -26,6 +26,8 @@
 #include "codecs/decode_module.h"
 #include "protocols/packet.h"
 
+#include "protocols/ethertypes.h"
+
 namespace
 {
 
@@ -192,7 +194,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             }
 
             /* protocol must be 0x880B - PPP */
-            if (GRE_PROTO(p->greh) != GRE_TYPE_PPP)
+            if (GRE_PROTO(p->greh) != PPP_ETHERTYPE)
             {
                 CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);

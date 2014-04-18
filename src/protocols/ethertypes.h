@@ -19,33 +19,22 @@
 */
 
 
-#ifndef GRE_H
-#define GRE_H
+#ifndef ETHERTYPES_H
+#define ETHERTYPES_H
 
-namespace gre{
-
-namespace detail{
-
-} // namespace detail
-
-/* GRE related stuff */
-struct GREHdr
-{
-    uint8_t flags;
-    uint8_t version;
-    uint16_t ether_type;
-
-};
+/*
+ * this file contained the ethertypes for all of the various protocols.
+ * 
+ * This is ONLY useful when protocols are chained and specificy the next
+ * protocol by name rather than by an ID.  MOST protocols do NOT need to
+ * entered into this file.
+ *
+ *  Defined at:
+ * http://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
+ */
 
 
-} // namespace gre
-
-typedef gre::GREHdr GREHdr;
-
-
-
-
-#define GRE_VERSION(x) (x->version & 0x07)
-#define GRE_PROTO(x)   ntohs(x->ether_type)
+const uint16_t TRANS_ETHER_BRIDGING_ETHERTYPE = 0x6558;
+const uint16_t PPP_ETHERTYPE = 0x880B;
 
 #endif
