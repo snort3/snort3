@@ -25,8 +25,6 @@
 namespace gtp{
 
 namespace detail{
-
-const uint32_t GTP_ID = 0x0101;
 const uint32_t GTP_MIN_LEN = 8;
 const uint32_t GTP_V0_HEADER_LEN = 20;
 const uint32_t GTP_V1_HEADER_LEN = 12;
@@ -44,11 +42,6 @@ struct GTPHdr
     uint16_t length;            /* length */
 
 };
-
-inline uint16_t gtp_id()
-{
-    return detail::GTP_ID;
-}
 
 inline uint32_t min_hdr_len()
 {

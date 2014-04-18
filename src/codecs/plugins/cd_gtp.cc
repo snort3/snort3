@@ -37,13 +37,15 @@
 #include "protocols/ipv6.h"
 #include "packet_io/active.h"
 
+#include "protocols/undefined_protocols.h"
+
 namespace
 {
 
 class GtpCodec : public Codec
 {
 public:
-    GtpCodec() : Codec("gtp"){};
+    GtpCodec() : Codec("GTP"){};
     ~GtpCodec();
 
 
@@ -274,7 +276,7 @@ EncStatus GTP_Update (Packet*, Layer* lyr, uint32_t* len)
 
 void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(gtp::gtp_id());
+    v.push_back(PROTOCOL_GTP);
 }
 
 static Codec* ctor()

@@ -19,20 +19,16 @@
 */
 
 
-#ifndef PROT_MPLS_H
-#define PROT_MPLS_H
+#ifndef UNDEFINED_PROTOCOLS_H
+#define UNDEFINED_PROTOCOLS_H
 
-
-#define ETHERNET_TYPE_MPLS_UNICAST    0x8847
-#define ETHERNET_TYPE_MPLS_MULTICAST  0x8848
-
-
-#define MPLS_PAYLOADTYPE_ETHERNET     1
-#define MPLS_PAYLOADTYPE_IPV4         2
-#define MPLS_PAYLOADTYPE_IPV6         3
-#define MPLS_PAYLOADTYPE_ERROR       -1
-
-void DecodeMPLS(const uint8_t*, const uint32_t, Packet*);
-
+/*
+ *  PROTOCOL ID'S By Range
+ *   0    (0x0000) -   255  (0x00FF)  --> Ip protocols
+ *   256  (0x0100) -  1535  (0x05FF)  -->  random protocols (teredo, gtp)
+ *  1536  (0x6000) -  65536 (0xFFFF)  --> Ethertypes
+ */
+const uint16_t PROTOCOL_TEREDO = 0x0100;
+const uint16_t PROTOCOL_GTP = 0x0101;
 
 #endif

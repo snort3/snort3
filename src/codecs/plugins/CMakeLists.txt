@@ -8,6 +8,8 @@ add_library( codec_plugins STATIC
     cd_arp.cc
     cd_ethloopback.cc
     cd_gre.cc
+    cd_mpls.cc
+    cd_transbridge.cc
 )
 
 

@@ -49,7 +49,7 @@ extern "C" {
 #include "snort_types.h"
 #include "protocols/packet.h"
 #include "profiler.h"
-#include "codecs/tmp/prot_mpls.h"
+#include "protocols/mpls.h"
 
 
 

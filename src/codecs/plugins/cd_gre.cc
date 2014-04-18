@@ -194,7 +194,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             }
 
             /* protocol must be 0x880B - PPP */
-            if (GRE_PROTO(p->greh) != PPP_ETHERTYPE)
+            if (GRE_PROTO(p->greh) != ETHERTYPE_PPP)
             {
                 CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);

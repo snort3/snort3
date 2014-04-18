@@ -61,7 +61,7 @@ extern "C" {
 #include "protocols/icmp6.h"
 #include "protocols/arp.h"
 #include "protocols/gre.h"
-
+#include "protocols/mpls.h"
 
 /*  D E F I N E S  ************************************************************/
 
@@ -625,16 +625,6 @@ typedef struct _PPPoE_Tag
                             /* payload follows */
 } PPPoE_Tag;
 
-#define MPLS_HEADER_LEN    4
-#define NUM_RESERVED_LABELS    16
-
-typedef struct _MplsHdr
-{
-    uint32_t label;
-    uint8_t  exp;
-    uint8_t  bos;
-    uint8_t  ttl;
-} MplsHdr;
 
 #define PGM_NAK_ERR -1
 #define PGM_NAK_OK 0

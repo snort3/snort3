@@ -39,6 +39,7 @@
 #include "packet_io/active.h"
 #include "protocols/ipv6.h"
 #include "protocols/teredo.h"
+#include "protocols/undefined_protocols.h"
 
 namespace
 {
@@ -118,7 +119,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(teredo::teredo_id());
+    v.push_back(PROTOCOL_TEREDO);
 }
 
 static Codec* ctor()

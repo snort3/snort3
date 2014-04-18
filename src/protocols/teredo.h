@@ -32,7 +32,6 @@ namespace teredo
 namespace detail
 {
 
-const uint16_t TEREDO_ID = 0x0100;
 const uint32_t TEREDO_PORT = 3544;
 const uint32_t TEREDO_INDICATOR_ORIGIN = 0x00;
 const uint32_t TEREDO_INDICATOR_ORIGIN_LEN = 8;
@@ -44,10 +43,6 @@ const uint32_t TEREDO_MIN_LEN = 2;
 } // namespace detail
 
 
-inline uint16_t teredo_id()
-{
-    return detail::TEREDO_ID;
-}
 
 inline bool is_teredo_port(uint16_t port)
 {

@@ -99,7 +99,7 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(TRANS_ETHER_BRIDGING_ETHERTYPE); // defined in ethertypes.h"
+    v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); // defined in ethertypes.h"
 }
 
 static Codec* ctor()

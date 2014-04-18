@@ -6,6 +6,15 @@ REMOVE:
     "protocols/encode.h"
 
 
+MPLS:
+    "Remove protocols/mpls.h"
+    Pull in default_mpls to cd_mpls.  Remove it from the snort_config.
+    Create MPLS module which creates the default mpls
+
+Trans Bridge:
+    Is no longer solely GRE.  Switcht he docer name?
+
+
 *****************************************************************************
 ********************************  *******************************************
 ****************************          ***************************************
@@ -99,8 +108,6 @@ ________________________________________________________________________________
 
 RUSS
 
-
--- Do we change the typedef factor for structs?
 __________________________________________________________________________________________________________
 
 

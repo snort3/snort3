@@ -15,38 +15,64 @@
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
 **
-** You should have received a copy of the GNU General Public License
+** You should have received a copy of the GNU General Public LicenseUpdateMPLSStats
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
+#include "network_inspectors/perf_monitor/perf_base.h"
+#include "network_inspectors/perf_monitor/perf.h"
+#include "snort.h"
+#include "protocols/mpls.h"
+#include "protocols/undefined_protocols.h"
+#include "codecs/codec_events.h"
+#include "packet_io/active.h"
+#include "protocols/ethertypes.h"
+#include "protocols/mpls.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+namespace
+{
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
+class MplsCodec : public Codec
+{
+public:
+    MplsCodec() : Codec("MPLS"){};
+    ~MplsCodec();
 
-#include "network_inspectors/perfmonitor/perf.h"
-#include  "network_inspectors/perfmonitor/perf_base.h"
 
-#include "prot_mpls.h"
-#include "prot_ipv6.h"
-#include "prot_ipv4.h"
-#include "prot_ethloopback.h"
-#include "prot_ethovermpls.h"
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    
+};
+
+
+const uint16_t ETHERNET_TYPE_MPLS_UNICAST = 0x8847;
+const uint16_t ETHERNET_TYPE_MPLS_MULTICAST = 0x8848;
+
+const static uint32_t MPLS_HEADER_LEN = 4;
+const static uint32_t NUM_RESERVED_LABELS = 16;
+
+} // anonymous namespace
+
+
 
 static int checkMplsHdr(uint32_t, uint8_t, uint8_t, uint8_t, Packet *);
 
-void DecodeMPLS(const uint8_t* pkt, const uint32_t len, Packet* p)
+
+
+bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
     uint32_t* tmpMplsHdr;
     uint32_t mpls_h;
     uint32_t label;
-    uint32_t mlen = 0;
+    p_hdr_len= 0;
 
     uint8_t exp;
     uint8_t bos = 0;
@@ -56,30 +82,21 @@ void DecodeMPLS(const uint8_t* pkt, const uint32_t len, Packet* p)
 
     int iRet = 0;
 
-
-    if(!ScMplsMulticast())
-    {
-        DecoderEvent(p, DECODE_BAD_MPLS,
-                        DECODE_MULTICAST_MPLS_STR);
-//        SnortEventqAdd(GENERATOR_SNORT_DECODE, DECODE_BAD_MPLS, 1, DECODE_CLASS, 3, DECODE_MULTICAST_MPLS_STR, 0);
-    }
-
-
-    dc.mpls++;
+//    dc.mpls++;
     UpdateMPLSStats(&sfBase, len, Active_PacketWasDropped());
-    tmpMplsHdr = (uint32_t *) pkt;
+    tmpMplsHdr = (uint32_t *) raw_pkt;
     p->mpls = NULL;
 
     while (!bos)
     {
         if(stack_len < MPLS_HEADER_LEN)
         {
-            DecoderEvent(p, DECODE_BAD_MPLS, DECODE_BAD_MPLS_STR);
+            DecoderEvent(p, DECODE_BAD_MPLS);
 
-            dc.discards++;
+//            dc.discards++;
             p->iph = NULL;
             p->family = NO_IP;
-            return;
+            return false;
         }
 
         mpls_h  = ntohl(*tmpMplsHdr);
@@ -90,7 +107,7 @@ void DecodeMPLS(const uint8_t* pkt, const uint32_t len, Packet* p)
         label = (mpls_h>>4) & 0x000FFFFF;
 
         if((label<NUM_RESERVED_LABELS)&&((iRet = checkMplsHdr(label, exp, bos, ttl, p)) < 0))
-            return;
+            return false;
 
         if( bos )
         {
@@ -100,7 +117,7 @@ void DecodeMPLS(const uint8_t* pkt, const uint32_t len, Packet* p)
             p->mplsHdr.ttl = ttl;
             /**
             p->mpls = &(p->mplsHdr);
-			**/
+      **/
             p->mpls = tmpMplsHdr;
             if(!iRet)
             {
@@ -112,38 +129,37 @@ void DecodeMPLS(const uint8_t* pkt, const uint32_t len, Packet* p)
 
         if ((ScMplsStackDepth() != -1) && (chainLen++ >= ScMplsStackDepth()))
         {
-            DecoderEvent(p, DECODE_MPLS_LABEL_STACK,
-                            DECODE_MPLS_LABEL_STACK_STR);
+            DecoderEvent(p, DECODE_MPLS_LABEL_STACK);
 
-            dc.discards++;
+//            dc.discards++;
             p->iph = NULL;
             p->family = NO_IP;
-            return;
+            return false;
         }
     }   /* while bos not 1, peel off more labels */
 
-    mlen = (uint8_t*)tmpMplsHdr - pkt;
-    PushLayer(PROTO_MPLS, p, pkt, mlen);
-    mlen = len - mlen;
+    p_hdr_len = (uint8_t*)tmpMplsHdr - raw_pkt;
 
     switch (iRet)
     {
         case MPLS_PAYLOADTYPE_IPV4:
-            DecodeIP((uint8_t *)tmpMplsHdr, mlen, p);
+            next_prot_id = ETHERTYPE_IPV4;
             break;
 
         case MPLS_PAYLOADTYPE_IPV6:
-            DecodeIPV6((uint8_t *)tmpMplsHdr, mlen, p);
+            next_prot_id = ETHERTYPE_IPV6;
             break;
 
         case MPLS_PAYLOADTYPE_ETHERNET:
-            DecodeEthOverMPLS((uint8_t *)tmpMplsHdr, mlen, p);
+            next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
             break;
 
         default:
+            next_prot_id = -1;
             break;
     }
-    return;
+
+    return true;
 }
 
 
@@ -173,11 +189,9 @@ static int checkMplsHdr(
                        ||((!label)&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV4)))
                    {
                         if( !label )
-                            DecoderEvent(p, DECODE_BAD_MPLS_LABEL0,
-                                            DECODE_BAD_MPLS_LABEL0_STR);
+                            DecoderEvent(p, DECODE_BAD_MPLS_LABEL0);
                         else
-                            DecoderEvent(p, DECODE_BAD_MPLS_LABEL2,
-                                            DECODE_BAD_MPLS_LABEL2_STR);
+                            DecoderEvent(p, DECODE_BAD_MPLS_LABEL2);
                    }
                    break;
                }
@@ -187,11 +201,9 @@ static int checkMplsHdr(
                 * and move on to the next one.
                 */
                if( !label )
-                   DecoderEvent(p, DECODE_BAD_MPLS_LABEL0,
-                                   DECODE_BAD_MPLS_LABEL0_STR);
+                   DecoderEvent(p, DECODE_BAD_MPLS_LABEL0);
                else
-                   DecoderEvent(p, DECODE_BAD_MPLS_LABEL2,
-                                   DECODE_BAD_MPLS_LABEL2_STR);
+                   DecoderEvent(p, DECODE_BAD_MPLS_LABEL2);
 
                dc.discards++;
                p->iph = NULL;
@@ -202,20 +214,18 @@ static int checkMplsHdr(
         case 1:
                if(!bos) break;
 
-       	       DecoderEvent(p, DECODE_BAD_MPLS_LABEL1,
-                               DECODE_BAD_MPLS_LABEL1_STR);
+               DecoderEvent(p, DECODE_BAD_MPLS_LABEL1);
 
-               dc.discards++;
+//               dc.discards++;
                p->iph = NULL;
                p->family = NO_IP;
                iRet = MPLS_PAYLOADTYPE_ERROR;
                break;
 
-	    case 3:
-               DecoderEvent(p, DECODE_BAD_MPLS_LABEL3,
-                               DECODE_BAD_MPLS_LABEL3_STR);
+      case 3:
+               DecoderEvent(p, DECODE_BAD_MPLS_LABEL3);
 
-               dc.discards++;
+//               dc.discards++;
                p->iph = NULL;
                p->family = NO_IP;
                iRet = MPLS_PAYLOADTYPE_ERROR;
@@ -232,8 +242,7 @@ static int checkMplsHdr(
         case 13:
         case 14:
         case 15:
-                DecoderEvent(p, DECODE_MPLS_RESERVED_LABEL,
-                                DECODE_MPLS_RESERVEDLABEL_STR);
+                DecoderEvent(p, DECODE_MPLS_RESERVED_LABEL);
                 break;
         default:
                 break;
@@ -246,20 +255,51 @@ static int checkMplsHdr(
 }
 
 
-static const char* name = "mpls_decode";
+void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_MPLS_UNICAST);
+    v.push_back(ETHERNET_TYPE_MPLS_MULTICAST);
+}
 
-static const CodecApi mpls_api =
+static Codec* ctor()
+{
+    return new MplsCodec();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
+
+
+
+static const char* name = "mpls_codec";
+
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    {ETHERNET_TYPE_MPLS_UNICAST, ETHERNET_TYPE_MPLS_MULTICAST},  
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
-    ErspanType2::DecodeTCP,
+    ctor, // ctor
+    dtor, // dtor
+    sum, // sum
+    stats  // stats
 };
+
 
 
 

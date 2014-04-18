@@ -39,6 +39,7 @@
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
 #include "protocols/gtp.h"
+#include "protocols/undefined_protocols.h"
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
@@ -253,14 +254,14 @@ bool decode(const uint8_t *raw_pkt, const uint32_t len,
         ScDeepTeredoInspection())
     {
         if ( !p->frag_flag )
-            next_prot_id = teredo::teredo_id();
+            next_prot_id = PROTOCOL_TEREDO;
     }
 
     if (ScGTPDecoding() &&
          (ScIsGTPPort(p->sp)||ScIsGTPPort(p->dp)))
     {
         if ( !p->frag_flag )
-            next_prot_id = gtp::gtp_id();
+            next_prot_id = PROTOCOL_GTP;
     }
     
     return true;

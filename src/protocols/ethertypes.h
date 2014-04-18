@@ -25,7 +25,7 @@
 /*
  * this file contained the ethertypes for all of the various protocols.
  * 
- * This is ONLY useful when protocols are chained and specificy the next
+ * This is ONLY used when protocols are chained and specificy the next
  * protocol by name rather than by an ID.  MOST protocols do NOT need to
  * entered into this file.
  *
@@ -34,7 +34,9 @@
  */
 
 
-const uint16_t TRANS_ETHER_BRIDGING_ETHERTYPE = 0x6558;
-const uint16_t PPP_ETHERTYPE = 0x880B;
+const uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
+const uint16_t ETHERTYPE_IPV4 = 0x0800;
+const uint16_t ETHERTYPE_IPV6 = 0x86dd;
+const uint16_t ETHERTYPE_PPP = 0x880B;
 
 #endif

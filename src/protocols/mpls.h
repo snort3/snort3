@@ -19,10 +19,36 @@
 */
 
 
-#ifndef PROT_ETHOVERMPLS_H
-#define PROT_ETHOVERMPLS_H
+#ifndef MPLS_H
+#define MPLS_H
 
-void DecodeEthOverMPLS(const uint8_t*, const uint32_t, Packet*);
+namespace mpls{
+
+namespace detail{
+
+} // namespace detail
+
+
+struct MplsHdr
+{
+    uint32_t label;
+    uint8_t  exp;
+    uint8_t  bos;
+    uint8_t  ttl;
+} ;
+
+
+
+
+
+} // namespace mpls
+
+typedef mpls::MplsHdr MplsHdr;
+
+#define MPLS_PAYLOADTYPE_ETHERNET     1
+#define MPLS_PAYLOADTYPE_IPV4         2
+#define MPLS_PAYLOADTYPE_IPV6         3
+#define MPLS_PAYLOADTYPE_ERROR       -1
 
 
 #endif
