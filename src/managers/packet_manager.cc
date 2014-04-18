@@ -218,3 +218,8 @@ void PacketManager::dump_stats()
 //        cd->sum();
 }
 
+inline bool PacketManager::has_codec(uint16_t cd_id)
+{
+    return s_protocols[cd_id] != 0;
+}
+

@@ -36,6 +36,9 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
+#include "snort.h"
+#include "codecs/decode_module.h"
+#include "managers/packet_manager.h"
 
 
 namespace
@@ -55,6 +58,13 @@ public:
     virtual void get_data_link_type(std::vector<int>&){};
     
 };
+
+
+/* ESP constants */
+const uint16_t ESP_PROT_ID = 50;
+const uint32_t ESP_HEADER_LEN = 8;
+const uint32_t ESP_AUTH_DATA_LEN = 12;
+const uint32_t ESP_TRAILER_LEN = 2;
 
 } // anonymous namespace
 
@@ -79,11 +89,10 @@ public:
  *
  * Returns: void function
  */
-virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *, uint16_t &p_hdr_len, int &next_prot_id)
+bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+    Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
     const uint8_t *esp_payload;
-    uint8_t next_header;
     uint8_t pad_length;
     uint8_t save_layer = p->next_layer;
 
@@ -97,11 +106,11 @@ virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         /* Truncated ESP traffic. Bail out here and inspect the rest as payload. */
         DecoderEvent(p, DECODE_ESP_HEADER_TRUNC);
-        p->data = pkt;
+        p->data = raw_pkt;
         p->dsize = (uint16_t) len;
-        return;
+        return false;
     }
-    esp_payload = pkt + ESP_HEADER_LEN;
+    esp_payload = raw_pkt + ESP_HEADER_LEN;
 
     /* The Authentication Data at the end of the packet is variable-length.
        RFC 2406 says that Encryption and Authentication algorithms MUST NOT
@@ -109,87 +118,49 @@ virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
 
        The mandatory algorithms for Authentication are HMAC-MD5-96 and
        HMAC-SHA-1-96, so we assume a 12-byte authentication data at the end. */
-    len -= (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
+    p_hdr_len = (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
-    pad_length = *(esp_payload + len);
-    next_header = *(esp_payload + len + 1);
+    pad_length = *(esp_payload + len - p_hdr_len);
+    next_prot_id = *(esp_payload + len + 1 - p_hdr_len);
 
     /* Adjust the packet length to account for the padding.
        If the padding length is too big, this is probably encrypted traffic. */
     if (pad_length < len)
     {
-        len -= (pad_length);
+        p_hdr_len += (pad_length);
     }
     else
     {
         p->packet_flags |= PKT_TRUST;
         p->data = esp_payload;
-        p->dsize = (u_short) len;
-        return;
+        p->dsize = (u_short) len - p_hdr_len;
+        next_prot_id = -1;
+        return true;
     }
 
-    /* Attempt to decode the inner payload.
-       There is a small chance that an encrypted next_header would become a
-       different valid next_header. The PKT_UNSURE_ENCAP flag tells the next
-       decoder stage to silently ignore invalid headers. */
 
-    p->packet_flags |= PKT_UNSURE_ENCAP;
-    switch (next_header)
+
+    // If we cant' decode the pakcer anymore, this is probably encrypted.
+    // set the data pointers and pretend this is an ip datagram.
+    if (!PacketManager::has_codec(next_prot_id))
     {
-       case IPPROTO_IPIP:
-            DecodeIP(esp_payload, len, p);
-            p->packet_flags &= ~PKT_UNSURE_ENCAP;
-            break;
-
-        case IPPROTO_IPV6:
-            DecodeIPV6(esp_payload, len, p);
-            p->packet_flags &= ~PKT_UNSURE_ENCAP;
-            break;
-
-       case IPPROTO_TCP:
-            dc.tcp++;
-            DecodeTCP(esp_payload, len, p);
-            p->packet_flags &= ~PKT_UNSURE_ENCAP;
-            break;
-
-        case IPPROTO_UDP:
-            dc.udp++;
-            DecodeUDP(esp_payload, len, p);
-            p->packet_flags &= ~PKT_UNSURE_ENCAP;
-            break;
-
-        case IPPROTO_ICMP:
-            dc.icmp++;
-            DecodeICMP(esp_payload, len, p);
-            p->packet_flags &= ~PKT_UNSURE_ENCAP;
-            break;
-
-        case IPPROTO_GRE:
-            dc.gre++;
-            DecodeGRE(esp_payload, len, p);
-            p->packet_flags &= ~PKT_UNSURE_ENCAP;
-            break;
-
-        default:
-            /* If we didn't get a valid next_header, this packet is probably
-               encrypted. Start data here and treat it as an IP datagram. */
-            p->data = esp_payload;
-            p->dsize = (u_short) len;
-            p->packet_flags &= ~PKT_UNSURE_ENCAP;
-            p->packet_flags |= PKT_TRUST;
-            return;
+        p->packet_flags |= PKT_TRUST;
+        p->data = esp_payload;
+        p->dsize = (u_short) len - p_hdr_len;
+    }
+    else 
+    {
+        p->packet_flags |= PKT_UNSURE_ENCAP;
     }
 
-    /* If no protocol was added to the stack, than we assume its'
-     * encrypted. */
-    if (save_layer == p->next_layer)
-        p->packet_flags |= PKT_TRUST;
+    return true;
 }
+
 
 
 void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_ESP);
+    v.push_back(ESP_PROT_ID);
 }
 
 static Codec* ctor()
@@ -202,19 +173,32 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
+static void sum()
+{
+//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
+//    memset(&dc, 0, sizeof(dc));
+}
+
+static void stats()
+{
+//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
+//        "decoder");
+}
 
 
 
-static const char* name = "esp_decode";
+static const char* name = "esp_codec";
 
-static const CodecApi esp_api =
+static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
+    ctor, // ctor
+    dtor, // dtor
+    sum, // sum
+    stats  // stats
 };
 

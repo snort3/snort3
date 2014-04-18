@@ -50,6 +50,9 @@ public:
     static void init_codecs();
     static void dump_stats();
 
+
+    static bool has_codec(uint16_t);
+
 //    static void encode_update(Packet *);
 //    static void encode_format(Packet *);
 
