@@ -44,7 +44,7 @@ namespace
 class NameCodec : public Codec
 {
 public:
-    NameCodec() : Codec("NAME"){};
+    NameCodec() : Codec("dstopts"){};
     ~NameCodec();
 
 

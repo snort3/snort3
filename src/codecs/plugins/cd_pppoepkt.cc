@@ -34,14 +34,13 @@ class PPPoEPkt : public Codec
 {
 public:
     PPPoEPkt() : Codec("PPP_over_Eth"){};
-    ~PPPoEPkt();
+    ~PPPoEPkt(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
@@ -317,7 +316,7 @@ static void stats()
 
 static const char* name = "pppoe_codec";
 
-static const CodecApi codec_api =
+static const CodecApi pppoe_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -329,4 +328,17 @@ static const CodecApi codec_api =
     sum, // sum
     stats  // stats
 };
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &pppoe_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_pppoe = &pppoe_api.base;
+#endif
+
+
 

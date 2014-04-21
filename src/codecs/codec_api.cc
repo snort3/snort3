@@ -38,8 +38,23 @@ const BaseApi* codecs[] =
     cd_esp,
 
 #ifdef STATIC_DECODERS
+    cd_ah,
+    cd_arp,
+    cd_erspan2,
+    cd_erspan3,
+    cd_ethloopback,
+    cd_gre,
+    cd_gtp,
+    cd_mpls,
+    cd_pppencap,
+    cd_pppoe,
+    cd_swipe,
+    cd_teredo,
+    cd_transbridge,
+    cd_vlan,
 
 #endif
+
     nullptr
 };
 

@@ -48,7 +48,7 @@ class VlanCodec : public Codec
 {
 public:
     VlanCodec() : Codec("vlan"){};
-    ~VlanCodec();
+    ~VlanCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -201,7 +201,7 @@ static void stats()
 
 
 
-static const char* name = "VLAN";
+static const char* name = "vlan";
 
 static const CodecApi vlan_api =
 {
@@ -215,4 +215,15 @@ static const CodecApi vlan_api =
     sum, // sum
     stats  // stats
 };
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &vlan_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_vlan = &vlan_api.base;
+#endif
 

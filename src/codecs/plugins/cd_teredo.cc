@@ -48,7 +48,7 @@ class TeredoCodec : public Codec
 {
 public:
     TeredoCodec() : Codec("teredo"){};
-    ~TeredoCodec();
+    ~TeredoCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -132,9 +132,9 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "teredo_codec";
+static const char* name = "teredo";
 
-static const CodecApi ipv6_api =
+static const CodecApi teredo_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -143,6 +143,22 @@ static const CodecApi ipv6_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &teredo_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_teredo = &teredo_api.base;
+#endif
+
+
+
 
 

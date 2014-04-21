@@ -38,7 +38,7 @@ class AhCodec : public Codec
 {
 public:
     AhCodec() : Codec("ah"){};
-    ~AhCodec();
+    ~AhCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -101,7 +101,7 @@ static void stats()
 
 
 
-static const char* name = "ah_decode";
+static const char* name = "ah_codec";
 
 static const CodecApi ah_api =
 {
@@ -115,5 +115,17 @@ static const CodecApi ah_api =
     sum, // sum
     stats  // stats
 };
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &ah_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_ah = &ah_api.base;
+#endif
+
 
 

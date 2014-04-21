@@ -36,15 +36,14 @@ namespace
 class ArpCodec : public Codec
 {
 public:
-    ArpCodec() : Codec("NAME"){};
-    ~ArpCodec();
+    ArpCodec() : Codec("Arp"){};
+    ~ArpCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
@@ -131,7 +130,7 @@ static void stats()
 
 static const char* name = "arp_codec";
 
-static const CodecApi codec_api =
+static const CodecApi arp_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -143,5 +142,17 @@ static const CodecApi codec_api =
     sum, // sum
     stats  // stats
 };
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &arp_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_arp = &arp_api.base;
+#endif
+
+
 
 

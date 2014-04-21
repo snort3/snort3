@@ -46,15 +46,13 @@ class GtpCodec : public Codec
 {
 public:
     GtpCodec() : Codec("GTP"){};
-    ~GtpCodec();
+    ~GtpCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
-    
+    virtual void get_protocol_ids(std::vector<uint16_t>&);    
 };
 
 } // anonymous namespace
@@ -68,7 +66,7 @@ public:
  *
  */
 
-bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
     Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
     uint32_t header_len;
@@ -291,7 +289,7 @@ static void dtor(Codec *cd)
 
 static const char* name = "gtp_codec";
 
-static const CodecApi ipv6_api =
+static const CodecApi gtp_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -303,3 +301,14 @@ static const CodecApi ipv6_api =
     NULL, // sum
     NULL  // stats
 };
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &gtp_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_gtp = &gtp_api.base;
+#endif
+

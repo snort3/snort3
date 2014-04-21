@@ -41,7 +41,7 @@ class TransbridgeCodec : public Codec
 {
 public:
     TransbridgeCodec() : Codec("Transbridge"){};
-    ~TransbridgeCodec();
+    ~TransbridgeCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -126,7 +126,7 @@ static void stats()
 
 
 
-static const char* name = "transbridge_codec";
+static const char* name = "transbridge";
 
 static const CodecApi transbridge_api =
 {
@@ -140,6 +140,17 @@ static const CodecApi transbridge_api =
     sum, // sum
     stats  // stats
 };
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &transbridge_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_transbridge = &transbridge_api.base;
+#endif
 
 
 

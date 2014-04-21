@@ -40,7 +40,7 @@ class SwipeCodec : public Codec{
 
 public:
     SwipeCodec() : Codec("swipe"){};
-    virtual ~SwipeCodec();
+    virtual ~SwipeCodec(){};
     
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &p_hdr_len, int &next_prot_id);
@@ -82,7 +82,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const CodecApi udp_api =
+static const CodecApi swipe_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -94,5 +94,17 @@ static const CodecApi udp_api =
     NULL,
     NULL
 };
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &swipe_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_swipe = &swipe_api.base;
+#endif
+
 
 

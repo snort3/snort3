@@ -41,7 +41,7 @@ class MplsCodec : public Codec
 {
 public:
     MplsCodec() : Codec("MPLS"){};
-    ~MplsCodec();
+    ~MplsCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -287,7 +287,7 @@ static void stats()
 
 static const char* name = "mpls_codec";
 
-static const CodecApi codec_api =
+static const CodecApi mpls_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -299,6 +299,17 @@ static const CodecApi codec_api =
     sum, // sum
     stats  // stats
 };
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &mpls_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_mpls = &mpls_api.base;
+#endif
+
 
 
 

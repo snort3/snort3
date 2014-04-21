@@ -35,7 +35,7 @@ class GreCodec : public Codec
 {
 public:
     GreCodec() : Codec("GRE"){};
-    ~GreCodec();
+    ~GreCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -279,7 +279,7 @@ static void stats()
 
 static const char* name = "gre_codec";
 
-static const CodecApi codec_api =
+static const CodecApi gre_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -291,5 +291,15 @@ static const CodecApi codec_api =
     sum, // sum
     stats  // stats
 };
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &gre_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_gre = &gre_api.base;
+#endif
 
 
