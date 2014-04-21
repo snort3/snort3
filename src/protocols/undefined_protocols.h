@@ -28,7 +28,8 @@
  *   256  (0x0100) -  1535  (0x05FF)  -->  random protocols (teredo, gtp)
  *  1536  (0x6000) -  65536 (0xFFFF)  --> Ethertypes
  */
-const uint16_t PROTOCOL_TEREDO = 0x0100;
-const uint16_t PROTOCOL_GTP = 0x0101;
+const uint16_t GRINDER_ID = 0x0100;
+const uint16_t PROTOCOL_TEREDO = 0x0101;
+const uint16_t PROTOCOL_GTP = 0x0102;
 
 #endif

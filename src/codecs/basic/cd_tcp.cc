@@ -127,11 +127,11 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP th_off is %d, passed len is %lu\n",
                 TCP_OFFSET(p->tcph), (unsigned long)len););
 
-    if(hlen < tcp::hdr_len())
+    if(p_hdr_len < tcp::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "TCP Data Offset (%d) < hlen (%d) \n",
-            TCP_OFFSET(p->tcph), hlen););
+            "TCP Data Offset (%d) < p_hdr_len (%d) \n",
+            TCP_OFFSET(p->tcph), p_hdr_len););
 
         DecoderEvent(p, DECODE_TCP_INVALID_OFFSET);
 
@@ -142,7 +142,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         return false;
     }
 
-    if(hlen > len)
+    if(p_hdr_len > len)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "TCP Data Offset(%d) < longer than payload(%d)!\n",
@@ -274,11 +274,11 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "tcp header starts at: %p\n", p->tcph););
 
-//    PushLayer(PROTO_TCP, p, pkt, hlen);
+//    PushLayer(PROTO_TCP, p, pkt, p_hdr_len);
     next_prot_id = -1;
 
     /* if options are present, decode them */
-    p->tcp_options_len = (uint16_t)(hlen - tcp::hdr_len());
+    p->tcp_options_len = (uint16_t)(p_hdr_len - tcp::hdr_len());
 
     if(p->tcp_options_len > 0)
     {
@@ -294,11 +294,11 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     /* set the data pointer and size */
-    p->data = (uint8_t *) (raw_pkt + hlen);
+    p->data = (uint8_t *) (raw_pkt + p_hdr_len);
 
-    if(hlen < len)
+    if(p_hdr_len < len)
     {
-        p->dsize = (u_short)(len - hlen);
+        p->dsize = (u_short)(len - p_hdr_len);
     }
     else
     {

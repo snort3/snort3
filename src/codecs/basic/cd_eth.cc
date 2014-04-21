@@ -213,8 +213,6 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
 
 void EthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ipv6::ethertype());
-    v.push_back(IPPROTO_IPV6);
 }
 
 static Codec* ctor()

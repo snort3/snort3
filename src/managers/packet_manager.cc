@@ -10,6 +10,7 @@ using namespace std;
 #include "packet_io/sfdaq.h"
 
 #include "protocols/packet.h"
+#include "protocols/undefined_protocols.h"
 
 #if 0
 #include "codecs/decode.h"
@@ -30,15 +31,13 @@ THREAD_LOCAL PreprocStats decodePerfStats;
 #endif
 
 
-namespace
-{
-
-    static THREAD_LOCAL Codec *grinder = 0;
+//namespace
+//{
     static const uint16_t max_protocol_id = 65535;
     static std::array<Codec *, max_protocol_id> s_protocols;
     static list<const CodecApi*> s_codecs;
 
-} // namespace
+//} // namespace
 
 //-------------------------------------------------------------------------
 // plugins
@@ -92,13 +91,12 @@ void PacketManager::decode(
 
     PREPROC_PROFILE_START(decodePerfStats);
 
+    // initialize all of the relevent data to decode this packet
     memset(p, 0, PKT_ZERO_LEN);
     p->pkth = pkthdr;
     p->pkt = pkt;
-
-    bool success = grinder->decode(pkt, len, p, p_hdr_len, next_prot_id);
     len = pkthdr->caplen;
-
+    curr_prot_id = GRINDER_ID;
 
     // The boolean check in this order so 
     while(curr_prot_id  >= 0 && 
@@ -170,7 +168,6 @@ void PacketManager::set_grinder(void)
     vector<uint16_t> proto;
     vector<int> dlt;
     bool codec_registered;
-    grinder = 0;
 
     int daq_dlt = DAQ_GetBaseProtocol();
 
@@ -191,32 +188,48 @@ void PacketManager::set_grinder(void)
 
         proto.clear();
         cd->get_protocol_ids(proto);
+        for (auto proto_id : proto)
+        {
+            if(s_protocols[proto_id] != NULL)
+                WarningMessage("The Codecs %s and %s have both been registered "
+                    "for protocol_id %d. Codec %s will be used\n",
+                    s_protocols[proto_id]->get_name(), cd->get_name(), 
+                    proto_id, cd->get_name());
+            s_protocols[proto_id] = cd;
+            codec_registered = true;
+        }
         // add protocols to the array
 
 
         dlt.clear();
         cd->get_data_link_type(dlt);
         // set the grinder if the data link types match
-
         for (auto curr_dlt : dlt )
         {
            if (curr_dlt == daq_dlt)
-                grinder = cd;
+           {
+                if (s_protocols[GRINDER_ID] != NULL)
+                    WarningMessage("The Codecs %s and %s have both been registered "
+                        "as the raw decoder. Codec %s will be used\n",
+                        s_protocols[GRINDER_ID]->get_name(), cd->get_name(), 
+                        cd->get_name());
+
+                s_protocols[GRINDER_ID] = cd;
+                codec_registered = true;
+            }
         }
 
+        if (!codec_registered)
+            WarningMessage("The Codec %s is never used\n", cd->get_name());
         // ERRRO:  If multiple correct grinders found.
-
     }
 
-    if (!grinder)
-        FatalError("Raw packet decoder not found!!");
 
 
-        FatalError("Codec installation checking!!");
+//        FatalError("Codec installation checking!!");
 }
 
     static void init_codecs();
-    static void dump_stats();
 
 
 void PacketManager::dump_stats()

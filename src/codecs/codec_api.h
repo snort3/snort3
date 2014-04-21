@@ -31,24 +31,8 @@ extern const BaseApi* cd_icmp6;
 extern const BaseApi* cd_tcp;
 extern const BaseApi* cd_udp;
 extern const BaseApi* cd_esp;
-#if 0
 
-#if STATIC_DECODERS
-
-#endif
-extern const BaseApi* se_ac_banded;
-extern const BaseApi* se_ac_bnfa;
-extern const BaseApi* se_ac_bnfa_q;
-extern const BaseApi* se_ac_full;
-extern const BaseApi* se_ac_full_q;
-extern const BaseApi* se_ac_sparse;
-extern const BaseApi* se_ac_sparse_bands;
-extern const BaseApi* se_ac_std;
-
-
-extern const BaseApi* search_engines[];
-
-
+#ifdef STATIC_DECODERS
 
 #endif
 

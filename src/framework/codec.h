@@ -56,7 +56,7 @@ public:
 
     virtual inline bool is_ipv4(){ return false; };
     virtual inline bool is_ipv6(){ return false; };
-
+    virtual inline const char* get_name(){return name; };
 
 
 protected:

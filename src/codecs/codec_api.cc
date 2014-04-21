@@ -36,6 +36,10 @@ const BaseApi* codecs[] =
     cd_tcp,
     cd_udp,
     cd_esp,
+
+#ifdef STATIC_DECODERS
+
+#endif
     nullptr
 };
 
