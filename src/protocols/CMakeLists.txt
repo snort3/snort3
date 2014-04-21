@@ -1,5 +1,5 @@
 
-add_library (protocols
+set (protocols
     ipv4.h
     tcp.h
     packet.h
