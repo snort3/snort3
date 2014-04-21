@@ -239,8 +239,9 @@ void FlowControl::process(
 
         else
         {
-            if ( Stream::get_filter_status(config, p) )
-                return;
+            // FIXIT stream port filter broken?
+            //if ( Stream::get_filter_status(config, p) )
+            //    return;
 
             // FIXIT these are separate from init; will be moved out of preproc
             // into external NAP lookup encapsulated here
