@@ -1,23 +1,30 @@
 
-set (PROTOCOL_HEADERS
+set (protocols
+    ipv4.h
+    tcp.h
     packet.h
-    sf_protocols.h
+    ipv6.h
+    udp.h
+    eth.h
+    icmp4.h
+    icmp6.h
+    gre.h
+    gtp.h
+    arp.h
+    wlan.h
+    teredo.h
+    mpls.h
+    ethertypes.h
+    protocol_numbers.h
+    undefined_protocols.h
 )
 
 add_library (protocols STATIC
-    checksum.h
-    decode.cc 
-    decode.h 
-    encode.cc 
-    encode.h 
-    decode_module.cc
-    decode_module.h
-    sf_protocols.h
+    packet.cc
     ${PROTOCOL_HEADERS}
 )
 
 install (FILES ${PROTOCOL_HEADERS}
     DESTINATION "${INCLUDE_INSTALL_PATH}/protocols"
 )
-
 

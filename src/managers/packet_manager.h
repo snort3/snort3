@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -16,30 +16,50 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// mpse_manager.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef PACKET_MANAGER_H
 #define PACKET_MANAGER_H
 
 #include "snort_types.h"
-#include "framework/base_api.h"
+#include "framework/codec.h"
+#include "time/profiler.h"
+
+#include <array>
+#include <list>
 
 struct Packet;
-struct SnortConfig;
-struct CodecApi;
+struct _SnortConfig;
 
 //-------------------------------------------------------------------------
+
+
+// TODO --> delete this!!
+#ifdef PERF_PROFILING
+extern THREAD_LOCAL PreprocStats decodePerfStats;
+#endif
 
 class PacketManager
 {
 public:
-    static void add_plugin(const CodecApi*);
+    static void add_plugin(const struct CodecApi*);
     static void dump_plugins();
     static void release_plugins();
 
-    static void instantiate(const CodecApi*, Module*, SnortConfig*);
-    static int set_grinder();
+    static void set_grinder();
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
+    static void init_codecs();
+    static void dump_stats();
+
+
+    static bool has_codec(uint16_t);
+
+//    static void encode_update(Packet *);
+//    static void encode_format(Packet *);
+
+private:
+    static const CodecApi *get_data_link_type(int dlt);
+
+
 };
 
 #endif

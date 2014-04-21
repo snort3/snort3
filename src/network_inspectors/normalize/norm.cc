@@ -35,6 +35,8 @@
 
 #include "perf_monitor/perf.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/ipv4.h"
+#include "protocols/tcp.h"
 
 typedef enum {
     PC_IP4_TRIM,
@@ -243,9 +245,9 @@ static int Norm_ICMP4 (
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
 
     if ( (h->type == ICMP_ECHO || h->type == ICMP_ECHOREPLY) &&
-         (h->code != 0) )
+         (h->code != icmp4::IcmpCode::ECHO_CODE) )
     {
-        h->code = 0;
+        h->code =  icmp4::IcmpCode::ECHO_CODE;
         normStats[PC_ICMP4_ECHO]++;
         sfBase.iPegs[PERF_COUNT_ICMP4_ECHO]++;
         changes++;
@@ -258,7 +260,7 @@ static int Norm_ICMP4 (
 static int Norm_IP6 (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    IP6RawHdr* h = (IP6RawHdr*)(p->layers[layer].start);
+    ipv6::IP6RawHdr* h = (ipv6::IP6RawHdr*)(p->layers[layer].start);
 
     if ( Norm_IsEnabled(c, NORM_IP6_TTL) )
     {
@@ -284,7 +286,7 @@ static int Norm_ICMP6 (
     if ( (h->type == ICMP6_ECHO || h->type == ICMP6_REPLY) &&
          (h->code != 0) )
     {
-        h->code = 0;
+        h->code = static_cast<icmp4::IcmpCode>(0);
         normStats[PC_ICMP6_ECHO]++;
         sfBase.iPegs[PERF_COUNT_ICMP6_ECHO]++;
         changes++;

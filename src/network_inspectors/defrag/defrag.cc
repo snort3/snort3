@@ -95,7 +95,6 @@
 #include "snort_debug.h"
 #include "parser.h"
 #include "mstring.h"
-#include "checksum.h"
 #include "perf_monitor/perf.h"
 #include "timersub.h"
 #include "fpcreate.h"
@@ -1580,7 +1579,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     }
     else /* Inner/only is IP6 */
     {
-        IP6RawHdr* rawHdr = (IP6RawHdr*)dpkt->raw_ip6h;
+        ipv6::IP6RawHdr* rawHdr = (ipv6::IP6RawHdr*)dpkt->raw_ip6h;
 
         if ( !rawHdr )
         {

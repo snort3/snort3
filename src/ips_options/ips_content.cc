@@ -38,7 +38,6 @@
 #include "mstring.h"
 #include "util.h"
 #include "parser.h"
-#include "checksum.h"
 #include "sfhashfcn.h"
 #include "framework/ips_option.h"
 #include "snort.h"

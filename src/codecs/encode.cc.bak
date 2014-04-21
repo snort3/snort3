@@ -1,0 +1,482 @@
+/* $Id: encode.c,v 1.70 2013-07-10 19:27:54 twease Exp $ */
+/****************************************************************************
+ *
+ * Copyright (C) 2005-2013 Sourcefire, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 2 as
+ * published by the Free Software Foundation.  You may not use, modify or
+ * distribute this program under any other version of the GNU General
+ * Public License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ ****************************************************************************/
+
+// @file    encode.c
+// @author  Russ Combs <rcombs@sourcefire.com>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <string.h>
+#ifdef HAVE_DUMBNET_H
+#include <dumbnet.h>
+#else
+#include <dnet.h>
+#endif
+
+#include "assert.h"
+#include "encode.h"
+#include "packet_io/sfdaq.h"
+#include "sf_iph.h"
+#include "snort.h"
+#include "stream5/stream_api.h"
+
+#include "decoder_includes.h"
+
+
+static THREAD_LOCAL uint8_t* dst_mac = NULL;
+Packet* encode_pkt = NULL;
+uint64_t total_rebuilt_pkts = 0;
+
+static inline int IsIcmp (int type)
+{
+    static constexpr int s_icmp[(int)EncodeType::ENC_MAX] = { 0, 0, 1, 1, 1 };
+    return ( s_icmp[type] );
+}
+
+
+
+// PKT_MAX is sized to ensure that any reassembled packet
+// can accommodate a full datagram at innermost layer
+#define PKT_MAX (ETHERNET_HEADER_LEN + VLAN_HEADER_LEN + ETHERNET_MTU + IP_MAXPACKET)
+
+
+
+static const uint8_t* Encode_Packet(
+    EncState* enc, const Packet* p, uint32_t* len);
+
+//-------------------------------------------------------------------------
+
+PROTO_ID NextEncoder (EncState* enc)
+{
+    if ( enc->layer < enc->p->next_layer )
+    {
+        PROTO_ID next = enc->p->layers[enc->layer++].proto;
+        if ( next < PROTO_MAX )
+        {
+            if ( encoders[next].fencode ) return next;
+        }
+    }
+    return PROTO_MAX;
+}
+
+//-------------------------------------------------------------------------
+// basic setup stuff
+//-------------------------------------------------------------------------
+
+
+//-------------------------------------------------------------------------
+// encoders:
+// - raw pkt data only, no need for Packet stuff except to facilitate
+//   encoding
+// - don't include original options
+// - inner layer differs from original (eg tcp data segment becomes rst)
+// - must ensure proper ttl/hop limit for reverse direction
+// - sparc twiddle must be factored in packet start for transmission
+//
+// iterate over decoded layers and encode the response packet.  actually
+// make nested calls.  on the way in we setup invariant stuff and as we
+// unwind the stack we finish up encoding in a more normal fashion (now
+// the outer layer knows the length of the inner layer, etc.).
+//
+// when multiple responses are sent, both forwards and backwards directions,
+// or multiple ICMP types (unreachable port, host, net), it may be possible
+// to reuse the 1st encoding and just tweak it.  optimization for later
+// consideration.
+
+// pci is copied from in to out
+// * addresses / ports are swapped if !fwd
+// * options, etc. are stripped
+// * checksums etc. are set
+// * if next layer is udp, it is set to icmp unreachable w/udp
+// * if next layer is tcp, it becomes a tcp rst or tcp fin w/opt data
+//-------------------------------------------------------------------------
+
+SO_PUBLIC const uint8_t* Encode_Reject(
+    EncodeType type, EncodeFlags flags, const Packet* p, uint32_t* len)
+{
+    EncState enc;
+
+    enc.type = type;
+    enc.flags = flags;
+
+    enc.payLoad = NULL;
+    enc.payLen = 0;
+
+    enc.ip_hdr = NULL;
+    enc.ip_len = 0;
+    enc.proto = 0;
+
+    if ( encode_pkt )
+        p = encode_pkt;
+
+    return Encode_Packet(&enc, p, len);
+}
+
+SO_PUBLIC const uint8_t* Encode_Response(
+    EncodeType type, EncodeFlags flags, const Packet* p, uint32_t* len,
+    const uint8_t* payLoad, uint32_t payLen
+) {
+    EncState enc;
+
+    enc.type = type;
+    enc.flags = flags;
+
+    enc.payLoad = payLoad;
+    enc.payLen = payLen;
+
+    enc.ip_hdr = NULL;
+    enc.ip_len = 0;
+    enc.proto = 0;
+
+    if ( encode_pkt )
+        p = encode_pkt;
+
+    return Encode_Packet(&enc, p, len);
+}
+
+//-------------------------------------------------------------------------
+// formatters:
+// - these packets undergo detection
+// - need to set Packet stuff except for frag3 which calls grinder
+// - include original options except for frag3 inner ip
+// - inner layer header is very similar but payload differs
+// - original ttl is always used
+//-------------------------------------------------------------------------
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+SO_PUBLIC int Encode_Format_With_DAQ_Info (
+    EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
+    const DAQ_PktHdr_t* phdr, uint32_t opaque)
+
+#elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
+SO_PUBLIC int Encode_Format_With_DAQ_Info (
+    EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
+    uint32_t opaque)
+#else
+SO_PUBLIC int Encode_Format (EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
+#endif
+{
+    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
+    uint8_t* pkt = (uint8_t*)c->pkt;
+
+    int i, next_layer = p->next_layer;
+    Layer* lyr;
+    size_t len;
+
+    if ( next_layer < 1 ) return -1;
+
+    memset(c, 0, PKT_ZERO_LEN);
+    c->raw_ip6h = NULL;
+
+    c->pkth = pkth;
+    c->pkt = pkt;
+
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    pkth->ingress_index = phdr->ingress_index;
+    pkth->ingress_group = phdr->ingress_group;
+    pkth->egress_index = phdr->egress_index;
+    pkth->egress_group = phdr->egress_group;
+    pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
+    pkth->address_space_id = phdr->address_space_id;
+    pkth->opaque = opaque;
+#elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
+    pkth->opaque = opaque;
+#endif
+
+    if ( f & ENC_FLAG_NET )
+    {
+        for ( i = next_layer-1; i >= 0; i-- )
+            if ( p->layers[i].proto == PROTO_IP4
+              || p->layers[i].proto == PROTO_IP6
+            )
+                break;
+         if ( i < next_layer ) next_layer = i + 1;
+    }
+    // copy raw packet data to clone
+    lyr = (Layer*)p->layers + next_layer - 1;
+    len = lyr->start - p->pkt + lyr->length;
+
+    memcpy((void*)c->pkt, p->pkt, len);
+
+    // set up layers
+    for ( i = 0; i < next_layer; i++ )
+    {
+        const uint8_t* b = c->pkt + (p->layers[i].start - p->pkt);
+        lyr = c->layers + i;
+
+        lyr->proto = p->layers[i].proto;
+        lyr->length = p->layers[i].length;
+        lyr->start = (uint8_t*)b;
+
+        if ( lyr->proto < PROTO_MAX )
+            encoders[lyr->proto].fformat(f, p, c, lyr);
+
+#ifdef DEBUG
+        else
+            FatalError("Encode_New() => unsupported proto = %d\n",
+                lyr->proto);
+#endif
+    }
+    c->next_layer = next_layer;
+
+    // setup payload info
+    c->data = lyr->start + lyr->length;
+    len = c->data - c->pkt;
+    assert(len < PKT_MAX - IP_MAXPACKET);
+    c->max_dsize = IP_MAXPACKET - len;
+
+    c->proto_bits = p->proto_bits;
+    c->packet_flags |= PKT_PSEUDO;
+    c->pseudo_type = type;
+    UpdateRebuiltPktCount();
+
+    switch ( type )
+    {
+        case PSEUDO_PKT_SMB_SEG:
+        case PSEUDO_PKT_DCE_SEG:
+        case PSEUDO_PKT_DCE_FRAG:
+        case PSEUDO_PKT_SMB_TRANS:
+            c->packet_flags |= PKT_REASSEMBLED_OLD;
+            break;
+        default:
+            break;
+    }
+
+    // setup pkt capture header
+    pkth->caplen = pkth->pktlen = len;
+    pkth->ts = p->pkth->ts;
+
+    // cooked packet gets same policy as raw
+    c->configPolicyId = p->configPolicyId;
+
+    if ( !c->max_dsize )
+        return -1;
+
+    return 0;
+}
+
+//-------------------------------------------------------------------------
+// formatters:
+// - these packets undergo detection
+// - need to set Packet stuff except for frag3 which calls grinder
+// - include original options except for frag3 inner ip
+// - inner layer header is very similar but payload differs
+// - original ttl is always used
+//-------------------------------------------------------------------------
+
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+SO_PUBLIC int Encode_Format (EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
+{
+    return Encode_Format_With_DAQ_Info(f, p, c, type, p->pkth, p->pkth->opaque);
+}
+#elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
+SO_PUBLIC int Encode_Format (EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
+{
+    return Encode_Format_With_DAQ_Info(f, p, c, type, p->pkth->opaque);
+}
+#endif
+
+//-------------------------------------------------------------------------
+// updaters:  these functions set length and checksum fields, only needed
+// when a packet is modified.  some packets only have replacements so only
+// the checksums need to be updated.  we always set the length rather than
+// checking each time if needed.
+//-------------------------------------------------------------------------
+
+SO_PUBLIC void Encode_Update (Packet* p)
+{
+    int i;
+    uint32_t len = 0;
+    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)p->pkth;
+
+    p->actual_ip_len = 0;
+
+    for ( i = p->next_layer - 1; i >= 0; i-- )
+    {
+        Layer* lyr = p->layers + i;
+        encoders[lyr->proto].fupdate(p, lyr, &len);
+    }
+    // see IP6_Update() for an explanation of this ...
+    if ( !(p->packet_flags & PKT_MODIFIED)
+        || (p->packet_flags & PKT_RESIZED)
+    )
+        pkth->caplen = pkth->pktlen = len;
+
+    p->packet_flags &= ~PKT_LOGGED;
+}
+
+//-------------------------------------------------------------------------
+// internal packet support
+//-------------------------------------------------------------------------
+
+SO_PUBLIC Packet* Encode_New ()
+{
+    Packet* p = (Packet*)SnortAlloc(sizeof(*p));
+    uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + PKT_MAX + SPARC_TWIDDLE);
+
+    if ( !p || !b )
+        FatalError("Encode_New() => Failed to allocate packet\n");
+
+    p->pkth = (DAQ_PktHdr_t*)b;
+    b += sizeof(*p->pkth);
+    b += SPARC_TWIDDLE;
+    p->pkt = b;
+
+    return p;
+}
+
+SO_PUBLIC void Encode_Delete (Packet* p)
+{
+    free((void*)p->pkth);  // cast away const!
+    free(p);
+}
+
+/* Set the destination MAC address*/
+SO_PUBLIC void Encode_SetDstMAC(uint8_t *mac)
+{
+   dst_mac = mac;
+}
+
+SO_PUBLIC uint8_t *Encode_GetDstMAC()
+{
+   return dst_mac;
+}
+
+//-------------------------------------------------------------------------
+// private implementation stuff
+//-------------------------------------------------------------------------
+
+static THREAD_LOCAL uint8_t s_pkt[PKT_MAX];
+
+static const uint8_t* Encode_Packet(
+    EncState* enc, const Packet* p, uint32_t* len)
+{
+    Buffer ibuf, obuf;
+    EncStatus status = EncStatus::ENC_BAD_PROTO;
+    PROTO_ID next;
+
+    ibuf.base = (uint8_t*)p->pkt;
+    ibuf.off = ibuf.end = 0;
+    ibuf.size = p->pkth->caplen;
+
+    obuf.base = s_pkt;
+    obuf.off = obuf.end = 0;
+    obuf.size = sizeof(s_pkt);
+
+    enc->layer = 0;
+    enc->p = p;
+
+    next = NextEncoder(enc);
+
+    if ( next < PROTO_MAX )
+    {
+        Encoder e = encoders[next].fencode;
+        status = (*e)(enc, &ibuf, &obuf);
+    }
+    if ( status != EncStatus::ENC_OK || enc->layer != p->next_layer )
+    {
+        *len = 0;
+        return NULL;
+    }
+    *len = (uint32_t)obuf.end;
+    return obuf.base + obuf.off;
+}
+
+//-------------------------------------------------------------------------
+// XXX (generic) functions
+//-------------------------------------------------------------------------
+
+#if 0
+
+static EncStatus XXX_Encode (EncState* enc, Buffer* in, Buffer* out)
+{
+    int n = enc->p->layers[enc->layer-1].length;
+
+    uint8_t* hi = enc->p->layers[enc->layer-1].start;
+    uint8_t* ho = (uint8_t*)(out->base + out->end);
+    PROTO_ID next = NextEncoder(enc);
+
+    UPDATE_BOUND(out, n);
+    memcpy(ho, hi, n);
+
+    if ( next < PROTO_MAX )
+    {
+        EncStatus err = encoders[next].fencode(enc, in, out);
+        if (EncStatus::ENC_OK != err ) return err;
+    }
+    return EncStatus::ENC_OK;
+}
+
+// for general cases, may need to move dsize out of top, tcp, and
+// udp and put in Encode_Update() (then this can be eliminated and
+// xxx called instead).  (another thought is to add data as a "layer").
+
+#if 0
+static EncStatus Top_Update (Packet* p, Layer* lyr, uint32_t* len)
+{
+    *len += lyr->length + p->dsize;
+    return EncStatus::ENC_OK;
+}
+#endif
+
+static EncStatus XXX_Update (Packet*, Layer* lyr, uint32_t* len)
+{
+    *len += lyr->length;
+    return EncStatus::ENC_OK;
+}
+
+static void XXX_Format (EncodeFlags, const Packet*, Packet*, Layer*)
+{
+    // nop
+}
+
+//-------------------------------------------------------------------------
+// function table:
+// these must be in the same order PROTO_IDs are defined!
+// all entries must have a function
+//-------------------------------------------------------------------------
+
+EncoderFunctions encoders[PROTO_MAX] = {  // FIXIT should be static
+    { Eth_Encode,  Eth_Update,   Eth_Format   },
+    { IP4_Encode,  IP4_Update,   IP4_Format   },
+    { UN4_Encode,  ICMP4_Update, ICMP4_Format },
+    { XXX_Encode,  XXX_Update,   XXX_Format,  },  // ICMP_IP4
+    { UDP_Encode,  UDP_Update,   UDP_Format   },
+    { TCP_Encode,  TCP_Update,   TCP_Format   },
+    { IP6_Encode,  IP6_Update,   IP6_Format   },
+    { Opt6_Encode, Opt6_Update,  XXX_Format   },  // IP6 Hop Opts
+    { Opt6_Encode, Opt6_Update,  XXX_Format   },  // IP6 Dst Opts
+    { UN6_Encode,  ICMP6_Update, ICMP6_Format },
+    { XXX_Encode,  XXX_Update,   XXX_Format,  },  // ICMP_IP6
+    { XXX_Encode,  XXX_Update,   VLAN_Format  },
+    { XXX_Encode,  XXX_Update,   GRE_Format   },
+    { XXX_Encode,  XXX_Update,   XXX_Format   },  // ERSPAN
+    { PPPoE_Encode,XXX_Update,   XXX_Format   },
+    { XXX_Encode,  XXX_Update,   XXX_Format   },  // PPP Encap
+    { XXX_Encode,  XXX_Update,   XXX_Format   },  // MPLS
+    { XXX_Encode,  XXX_Update,   XXX_Format,  },  // ARP
+    { GTP_Encode,  GTP_Update,   XXX_Format,  },  // GTP
+    { XXX_Encode,  XXX_Update,   XXX_Format,  }   // Auth Header
+};
+
+#endif

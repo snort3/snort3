@@ -3560,7 +3560,7 @@ static inline int _flush_to_seq (
         }
         else
         {
-            IP6RawHdr* ip6h = (IP6RawHdr*)s5_pkt->raw_ip6h;
+            ipv6::IP6RawHdr* ip6h = (ipv6::IP6RawHdr*)s5_pkt->raw_ip6h;
             if ( ip6h ) s5_pkt->inner_ip6h.len = ip6h->ip6plen;
         }
 

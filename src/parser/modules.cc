@@ -46,7 +46,7 @@ using namespace std;
 #include "filters/sfthd.h"
 #include "filters/sfrf.h"
 #include "filters/rate_filter.h"
-#include "protocols/decode_module.h"
+#include "codecs/decode_module.h"
 #include "time/ppm_module.h"
 
 // FIXIT delete these includes after inpsectors are modularized

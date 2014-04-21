@@ -38,6 +38,7 @@ find_library(LUAJIT_LIBRARIES
     HINTS ENV LUA_DIR
     PATH_SUFFIXES luajit-5.1
     PATHS ${LUA_PATHS}
+    DOC "Lua Libraries"
 )
 
 if (APPLE)
@@ -49,9 +50,6 @@ if(LUAJIT_LIBRARIES)
     if(UNIX AND NOT APPLE)
         find_library(MATH_LIBRARY m)
         list(APPEND LUAJIT_LIBRARIES "${MATH_LIBRARY}")
-    # For Windows and Mac, don't need to explicitly include the math library
-    else()
-        set( LUAJIT_LIBRARIES "${LUAJIT_LIBRARIES}" CACHE STRING "Lua Libraries")
     endif()
 endif()
 

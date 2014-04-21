@@ -1,5 +1,4 @@
 /*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
@@ -31,14 +30,16 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#ifndef WIN32
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#else /* !WIN32 */
 #include <netinet/in_systm.h>
-
 #ifndef IFNAMSIZ
 #define IFNAMESIZ MAX_ADAPTER_NAME
-#endif
+#endif /* !IFNAMSIZ */
+#endif /* !WIN32 */
 
 extern "C" {
 #include <daq.h>
@@ -46,10 +47,21 @@ extern "C" {
 }
 
 #include "snort_types.h"
-#include "protocols/sf_protocols.h"
 #include "sfip/ipv6_port.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_iph.h"
+
+#include "codecs/layer.h"
+#include "protocols/ipv4.h"
+#include "protocols/ipv6.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/eth.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
+#include "protocols/arp.h"
+#include "protocols/gre.h"
+#include "protocols/mpls.h"
 
 /*  D E F I N E S  ************************************************************/
 
@@ -200,6 +212,10 @@ typedef struct _Trh_hdr
     uint8_t saddr[TR_ALEN];    /* dst address */
 }        Trh_hdr;
 
+#ifdef WIN32
+    /* Visual C++ pragma to enable warning messages about nonstandard bit field type */
+    #pragma warning( default : 4214 )
+#endif
 /* End Token Ring Data Structures */
 
 
@@ -424,18 +440,6 @@ typedef struct _EthLlcOther
 #define SPARC_TWIDDLE       0
 #endif
 
-/*
- * Ethernet header
- */
-
-typedef struct _EtherHdr
-{
-    uint8_t ether_dst[6];
-    uint8_t ether_src[6];
-    uint16_t ether_type;
-
-} EtherHdr;
-
 
 #ifndef NO_NON_ETHER_DECODER
 /*
@@ -477,9 +481,6 @@ typedef struct _WifiHdr
    Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
 #define MIN_UNASSIGNED_IP_PROTO 143
 
-#ifndef IPPROTO_SWIPE
-#define IPPROTO_SWIPE           53
-#endif
 #ifndef IPPROTO_IP_MOBILITY
 #define IPPROTO_IP_MOBILITY     55
 #endif
@@ -497,225 +498,7 @@ typedef struct _WifiHdr
 #define IP6_EXTMAX               8
 #define TCP_OPTLENMAX           40 /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 
-typedef struct _IPHdr
-{
-    uint8_t ip_verhl;      /* version & header length */
-    uint8_t ip_tos;        /* type of service */
-    uint16_t ip_len;       /* datagram length */
-    uint16_t ip_id;        /* identification  */
-    uint16_t ip_off;       /* fragment offset */
-    uint8_t ip_ttl;        /* time to live field */
-    uint8_t ip_proto;      /* datagram protocol */
-    uint16_t ip_csum;      /* checksum */
-    struct in_addr ip_src;  /* source IP */
-    struct in_addr ip_dst;  /* dest IP */
-} IPHdr;
 
-typedef struct _IPv4Hdr
-{
-    uint8_t ip_verhl;      /* version & header length */
-    uint8_t ip_tos;        /* type of service */
-    uint16_t ip_len;       /* datagram length */
-    uint16_t ip_id;        /* identification  */
-    uint16_t ip_off;       /* fragment offset */
-    uint8_t ip_ttl;        /* time to live field */
-    uint8_t ip_proto;      /* datagram protocol */
-    uint16_t ip_csum;      /* checksum */
-    sfip_t ip_src;          /* source IP */
-    sfip_t ip_dst;          /* dest IP */
-} IP4Hdr;
-
-typedef struct _IPv6Hdr
-{
-    uint32_t vcl;      /* version, class, and label */
-    uint16_t len;      /* length of the payload */
-    uint8_t  next;     /* next header
-                         * Uses the same flags as
-                         * the IPv4 protocol field */
-    uint8_t  hop_lmt;  /* hop limit */
-    sfip_t ip_src;
-    sfip_t ip_dst;
-} IP6Hdr;
-
-/* IPv6 address */
-#ifndef s6_addr
-struct in6_addr
-{
-    union
-    {
-        uint8_t u6_addr8[16];
-        uint16_t u6_addr16[8];
-        uint32_t u6_addr32[4];
-    } in6_u;
-#define s6_addr         in6_u.u6_addr8
-#define s6_addr16       in6_u.u6_addr16
-#define s6_addr32       in6_u.u6_addr32
-};
-#endif
-
-typedef struct _IP6RawHdr
-{
-    uint32_t ip6_vtf;               /* 4 bits version, 8 bits TC,
-                                        20 bits flow-ID */
-    uint16_t ip6_payload_len;               /* payload length */
-    uint8_t  ip6_next;                /* next header */
-    uint8_t  ip6_hoplim;               /* hop limit */
-
-    struct in6_addr ip6_src;      /* source address */
-    struct in6_addr ip6_dst;      /* destination address */
-} IP6RawHdr;
-
-#define ip6flow  ip6_vtf
-#define ip6plen  ip6_payload_len
-#define ip6nxt   ip6_next
-#define ip6hlim  ip6_hoplim
-#define ip6hops  ip6_hoplim
-
-#define IPRAW_HDR_VER(p_rawiph) \
-   (ntohl(p_rawiph->ip6_vtf) >> 28)
-
-#define IP6_HDR_LEN 40
-
-#ifndef IP_PROTO_HOPOPTS
-# define IP_PROTO_HOPOPTS    0
-#endif
-
-#define IP_PROTO_NONE       59
-#define IP_PROTO_ROUTING    43
-#define IP_PROTO_FRAGMENT   44
-#define IP_PROTO_AH         51
-#define IP_PROTO_DSTOPTS    60
-#define IP_PROTO_ICMPV6     58
-#define IP_PROTO_IPV6       41
-#define IP_PROTO_IPIP       4
-
-#define IP6F_OFFSET_MASK    0xfff8  /* mask out offset from _offlg */
-#define IP6F_MF_MASK        0x0001  /* more-fragments flag */
-
-#define IP6F_OFFSET(fh) ((ntohs((fh)->ip6f_offlg) & IP6F_OFFSET_MASK) >> 3)
-#define IP6F_RES(fh) (fh)->ip6f_reserved
-#define IP6F_MF(fh) (ntohs((fh)->ip6f_offlg) & IP6F_MF_MASK )
-
-/* to store references to IP6 Extension Headers */
-typedef struct _IP6Option
-{
-    uint8_t type;
-    const uint8_t *data;
-} IP6Option;
-
-/* Generic Extension Header */
-typedef struct _IP6Extension
-{
-    uint8_t ip6e_nxt;
-    uint8_t ip6e_len;
-    /* options follow */
-    uint8_t ip6e_pad[6];
-} IP6Extension;
-
-typedef struct _IP6HopByHop
-{
-    uint8_t ip6hbh_nxt;
-    uint8_t ip6hbh_len;
-    /* options follow */
-    uint8_t ip6hbh_pad[6];
-} IP6HopByHop;
-
-typedef struct _IP6Dest
-{
-    uint8_t ip6dest_nxt;
-    uint8_t ip6dest_len;
-    /* options follow */
-    uint8_t ip6dest_pad[6];
-} IP6Dest;
-
-typedef struct _IP6Route
-{
-    uint8_t ip6rte_nxt;
-    uint8_t ip6rte_len;
-    uint8_t ip6rte_type;
-    uint8_t ip6rte_seg_left;
-    /* type specific data follows */
-} IP6Route;
-
-typedef struct _IP6Route0
-{
-    uint8_t ip6rte0_nxt;
-    uint8_t ip6rte0_len;
-    uint8_t ip6rte0_type;
-    uint8_t ip6rte0_seg_left;
-    uint8_t ip6rte0_reserved;
-    uint8_t ip6rte0_bitmap[3];
-    struct in6_addr ip6rte0_addr[1];  /* Up to 23 IP6 addresses */
-} IP6Route0;
-
-/* Fragment header */
-typedef struct _IP6Frag
-{
-    uint8_t   ip6f_nxt;     /* next header */
-    uint8_t   ip6f_reserved;    /* reserved field */
-    uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
-    uint32_t  ip6f_ident;   /* identification */
-} IP6Frag;
-
-typedef struct _ICMP6
-{
-    uint8_t type;
-    uint8_t code;
-    uint16_t csum;
-
-} ICMP6Hdr;
-
-typedef struct _ICMP6TooBig
-{
-    uint8_t type;
-    uint8_t code;
-    uint16_t csum;
-    uint32_t mtu;
-} ICMP6TooBig;
-
-typedef struct _ICMP6RouterAdvertisement
-{
-    uint8_t type;
-    uint8_t code;
-    uint16_t csum;
-    uint8_t num_addrs;
-    uint8_t addr_entry_size;
-    uint16_t lifetime;
-    uint32_t reachable_time;
-    uint32_t retrans_time;
-} ICMP6RouterAdvertisement;
-
-typedef struct _ICMP6RouterSolicitation
-{
-    uint8_t type;
-    uint8_t code;
-    uint16_t csum;
-    uint32_t reserved;
-} ICMP6RouterSolicitation;
-
-typedef struct _ICMP6NodeInfo
-{
-    uint8_t type;
-    uint8_t code;
-    uint16_t csum;
-    uint16_t qtype;
-    uint16_t flags;
-    uint64_t nonce;
-} ICMP6NodeInfo;
-
-#define ICMP6_UNREACH 1
-#define ICMP6_BIG    2
-#define ICMP6_TIME   3
-#define ICMP6_PARAMS 4
-#define ICMP6_ECHO   128
-#define ICMP6_REPLY  129
-#define ICMP6_SOLICITATION 133
-#define ICMP6_ADVERTISEMENT 134
-#define ICMP6_NODE_INFO_QUERY 139
-#define ICMP6_NODE_INFO_RESPONSE 140
-
-/* Minus 1 due to the 'body' field  */
-#define ICMP6_MIN_HEADER_LEN (sizeof(ICMP6Hdr) )
 
 #ifdef _MSC_VER
   /* Visual C++ pragma to enable warning messages about nonstandard bit field type */
@@ -732,66 +515,7 @@ typedef struct _ICMP6NodeInfo
   #pragma warning( disable : 4214 )
 #endif
 
-#ifndef IPPROTO_IPIP
-#define IPPROTO_IPIP 4
-#endif
 
-/* GRE related stuff */
-typedef struct _GREHdr
-{
-    uint8_t flags;
-    uint8_t version;
-    uint16_t ether_type;
-
-} GREHdr;
-
-#ifndef IPPROTO_GRE
-#define IPPROTO_GRE 47
-#endif
-
-#define GRE_TYPE_TRANS_BRIDGING 0x6558
-#define GRE_TYPE_PPP            0x880B
-
-#define GRE_HEADER_LEN 4
-#define GRE_CHKSUM_LEN 2
-#define GRE_OFFSET_LEN 2
-#define GRE_KEY_LEN 4
-#define GRE_SEQ_LEN 4
-#define GRE_SRE_HEADER_LEN 4
-
-#define GRE_CHKSUM(x)  (x->flags & 0x80)
-#define GRE_ROUTE(x)   (x->flags & 0x40)
-#define GRE_KEY(x)     (x->flags & 0x20)
-#define GRE_SEQ(x)     (x->flags & 0x10)
-#define GRE_SSR(x)     (x->flags & 0x08)
-#define GRE_RECUR(x)   (x->flags & 0x07)
-#define GRE_VERSION(x) (x->version & 0x07)
-#define GRE_FLAGS(x)   (x->version & 0xF8)
-#define GRE_PROTO(x)   ntohs(x->ether_type)
-
-/* GRE version 1 used with PPTP */
-#define GRE_V1_HEADER_LEN 8
-#define GRE_V1_ACK_LEN    4
-#define GRE_V1_FLAGS(x)   (x->version & 0x78)
-#define GRE_V1_ACK(x)     (x->version & 0x80)
-
-typedef struct _ERSpanType2Hdr
-{
-    uint16_t ver_vlan;
-    uint16_t flags_spanId;
-    uint32_t pad;
-} ERSpanType2Hdr;
-
-typedef struct _ERSpanType3Hdr
-{
-    uint16_t ver_vlan;
-    uint16_t flags_spanId;
-    uint32_t timestamp;
-    uint16_t pad0;
-    uint16_t pad1;
-    uint32_t pad2;
-    uint32_t pad3;
-} ERSpanType3Hdr;
 
 #define ERSPAN_VERSION(x) ((ntohs(x->ver_vlan) & 0xf000) >> 12)
 #define ERSPAN_VLAN(x) (ntohs(x->ver_vlan) & 0x0fff)
@@ -829,124 +553,6 @@ typedef struct _TCPHdr
 #endif
 
 
-typedef struct _UDPHdr
-{
-    uint16_t uh_sport;
-    uint16_t uh_dport;
-    uint16_t uh_len;
-    uint16_t uh_chk;
-
-}       UDPHdr;
-
-
-typedef struct _ICMPHdr
-{
-    uint8_t type;
-    uint8_t code;
-    uint16_t csum;
-    union
-    {
-        struct
-        {
-            uint8_t pptr;
-            uint8_t pres1;
-            uint16_t pres2;
-        } param;
-
-        struct in_addr gwaddr;
-
-        struct idseq
-        {
-            uint16_t id;
-            uint16_t seq;
-        } idseq;
-
-        uint32_t sih_void;
-
-        struct pmtu
-        {
-            uint16_t ipm_void;
-            uint16_t nextmtu;
-        } pmtu;
-
-        struct rtradv
-        {
-            uint8_t num_addrs;
-            uint8_t wpa;
-            uint16_t lifetime;
-        } rtradv;
-    } icmp_hun;
-
-#define s_icmp_pptr       icmp_hun.param.pptr
-#define s_icmp_gwaddr     icmp_hun.gwaddr
-#define s_icmp_id         icmp_hun.idseq.id
-#define s_icmp_seq        icmp_hun.idseq.seq
-#define s_icmp_void       icmp_hun.sih_void
-#define s_icmp_pmvoid     icmp_hun.pmtu.ipm_void
-#define s_icmp_nextmtu    icmp_hun.pmtu.nextmtu
-#define s_icmp_num_addrs  icmp_hun.rtradv.num_addrs
-#define s_icmp_wpa        icmp_hun.rtradv.wpa
-#define s_icmp_lifetime   icmp_hun.rtradv.lifetime
-
-    union
-    {
-        /* timestamp */
-        struct ts
-        {
-            uint32_t otime;
-            uint32_t rtime;
-            uint32_t ttime;
-        } ts;
-
-        /* IP header for unreach */
-        struct ih_ip
-        {
-            IPHdr *ip;
-            /* options and then 64 bits of data */
-        } ip;
-
-        struct ra_addr
-        {
-            uint32_t addr;
-            uint32_t preference;
-        } radv;
-
-        uint32_t mask;
-
-        char    data[1];
-
-    } icmp_dun;
-#define s_icmp_otime      icmp_dun.ts.otime
-#define s_icmp_rtime      icmp_dun.ts.rtime
-#define s_icmp_ttime      icmp_dun.ts.ttime
-#define s_icmp_ip         icmp_dun.ih_ip
-#define s_icmp_radv       icmp_dun.radv
-#define s_icmp_mask       icmp_dun.mask
-#define s_icmp_data       icmp_dun.data
-
-}        ICMPHdr;
-
-
-typedef struct _ARPHdr
-{
-    uint16_t ar_hrd;       /* format of hardware address   */
-    uint16_t ar_pro;       /* format of protocol address   */
-    uint8_t ar_hln;        /* length of hardware address   */
-    uint8_t ar_pln;        /* length of protocol address   */
-    uint16_t ar_op;        /* ARP opcode (command)         */
-}       ARPHdr;
-
-
-
-typedef struct _EtherARP
-{
-    ARPHdr ea_hdr;      /* fixed-size header */
-    uint8_t arp_sha[6];    /* sender hardware address */
-    uint8_t arp_spa[4];    /* sender protocol address */
-    uint8_t arp_tha[6];    /* target hardware address */
-    uint8_t arp_tpa[4];    /* target protocol address */
-}         EtherARP;
-
 
 #ifndef NO_NON_ETHER_DECODER
 typedef struct _EtherEapol
@@ -981,7 +587,10 @@ typedef struct _Options
     const uint8_t *data;
 } Options;
 
-/* PPPoEHdr Header; EtherHdr plus the PPPoE Header */
+
+
+
+/* PPPoEHdr Header; eth::EtherHdr plus the PPPoE Header */
 typedef struct _PPPoEHdr
 {
     unsigned char ver_type;     /* pppoe version/type */
@@ -999,16 +608,6 @@ typedef struct _PPPoE_Tag
                             /* payload follows */
 } PPPoE_Tag;
 
-#define MPLS_HEADER_LEN    4
-#define NUM_RESERVED_LABELS    16
-
-typedef struct _MplsHdr
-{
-    uint32_t label;
-    uint8_t  exp;
-    uint8_t  bos;
-    uint8_t  ttl;
-} MplsHdr;
 
 #define PGM_NAK_ERR -1
 #define PGM_NAK_OK 0
@@ -1046,14 +645,6 @@ typedef struct _PGM_HEADER
     PGM_NAK  nak;
 } PGM_HEADER;
 
-/* GTP basic Header  */
-typedef struct _GTPHdr
-{
-    uint8_t  flag;              /* flag: version (bit 6-8), PT (5), E (3), S (2), PN (1) */
-    uint8_t  type;              /* message type */
-    uint16_t length;            /* length */
-
-} GTPHdr;
 
 #define LAYER_MAX  32
 
@@ -1068,7 +659,7 @@ struct Packet
 
     //vvv-----------------------------
     EtherARP *ah;
-    const EtherHdr *eh;         /* standard TCP/IP/Ethernet/ARP headers */
+    const eth::EtherHdr *eh;         /* standard TCP/IP/Ethernet/ARP headers */
     const VlanTagHdr *vh;
     EthLlc *ehllc;
     EthLlcOther *ehllcother;
@@ -1080,9 +671,9 @@ struct Packet
     const IPHdr *inner_iph;     /* if IP-in-IP, this will be the inner IP header */
     const IPHdr *outer_iph;     /* if IP-in-IP, this will be the outer IP header */
     const TCPHdr *tcph, *orig_tcph;
-    const UDPHdr *udph, *orig_udph;
-    const UDPHdr *inner_udph;   /* if Teredo + UDP, this will be the inner UDP header */
-    const UDPHdr *outer_udph;   /* if Teredo + UDP, this will be the outer UDP header */
+    const udp::UDPHdr *udph, *orig_udph;
+    const udp::UDPHdr *inner_udph;   /* if Teredo + UDP, this will be the inner UDP header */
+    const udp::UDPHdr *outer_udph;   /* if Teredo + UDP, this will be the outer UDP header */
     const ICMPHdr *icmph, *orig_icmph;
 
     const uint8_t *data;        /* packet payload pointer */
@@ -1094,9 +685,9 @@ struct Packet
     void *fragtracker;          /* for ip fragmentation tracking info... */
 
     //vvv-----------------------------
-    IP4Hdr *ip4h, *orig_ip4h;
-    IP6Hdr *ip6h, *orig_ip6h;
-    ICMP6Hdr *icmp6h, *orig_icmp6h;
+    ipv4::IP4Hdr *ip4h, *orig_ip4h;
+    ipv6::IP6Hdr *ip6h, *orig_ip6h;
+    icmp6::ICMP6Hdr *icmp6h, *orig_icmp6h;
 
     IPH_API* iph_api;
     IPH_API* orig_iph_api;
@@ -1180,7 +771,7 @@ struct Packet
 #endif
 
     // nothing after this point is zeroed ...
-    Options ip_options[IP_OPTMAX];         /* ip options decode structure */
+    ipv4::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
     IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
 
@@ -1188,13 +779,13 @@ struct Packet
     const uint8_t *ip_options_data;
     const uint8_t *tcp_options_data;
 
-    const IP6RawHdr* raw_ip6h;  // innermost raw ip6 header
+    const ipv6::IP6RawHdr* raw_ip6h;  // innermost raw ip6 header
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
-    IP4Hdr inner_ip4h, inner_orig_ip4h;
-    IP6Hdr inner_ip6h, inner_orig_ip6h;
-    IP4Hdr outer_ip4h, outer_orig_ip4h;
-    IP6Hdr outer_ip6h, outer_orig_ip6h;
+    ipv4::IP4Hdr inner_ip4h, inner_orig_ip4h;
+    ipv6::IP6Hdr inner_ip6h, inner_orig_ip6h;
+    ipv4::IP4Hdr outer_ip4h, outer_orig_ip4h;
+    ipv6::IP6Hdr outer_ip6h, outer_orig_ip6h;
 
     MplsHdr mplsHdr;
 
@@ -1204,6 +795,7 @@ struct Packet
     /**policyId provided in configuration file. Used for correlating configuration
      * with event output
      */
+    uint16_t configPolicyId;
     uint16_t user_policy_id;
 
     uint32_t iplist_id;
@@ -1228,7 +820,6 @@ struct Packet
 
 #define IsIP(p) (IPH_IS_VALID(p))
 #define IsTCP(p) (IsIP(p) && p->tcph)
-#define IsUDP(p) (IsIP(p) && p->udph)
 #define IsICMP(p) (IsIP(p) && p->icmph)
 #define GET_PKT_SEQ(p) (ntohl(p->tcph->th_seq))
 
@@ -1282,6 +873,39 @@ static inline void SetExtraData (Packet* p, uint32_t xid)
 {
     p->xtradata_mask |= BIT(xid);
 }
+
+
+// Encoder && Decoder general structs
+
+typedef struct
+{
+    uint32_t sip[4], dip[4];
+    uint8_t  zero;
+    uint8_t  protocol;
+    uint16_t len;
+} pseudoheader6;
+
+
+typedef struct
+{
+    uint32_t sip, dip;
+    uint8_t  zero;
+    uint8_t  protocol;
+    uint16_t len;
+} pseudoheader;
+
+
+class PacketClass{
+
+public:
+    static void PushLayer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len);
+
+
+private:
+
+
+
+};
 
 #endif
 
