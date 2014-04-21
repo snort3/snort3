@@ -80,7 +80,7 @@ endif (STATIC_SEARCH_ENGINES)
 
 
 install(FILES ${SEARCH_ENGINE_INCLUDES}
-    DESTINATION ${CMAKE_PROJECT_NAME}/search_engines
+    DESTINATION "${INCLUDE_INSTALL_PATH}/search_engines"
 )
 
 

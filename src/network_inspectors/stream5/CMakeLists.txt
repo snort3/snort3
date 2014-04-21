@@ -40,7 +40,7 @@ add_library( stream_api STATIC
 set_default_visibility_compile_flag( stream_api )
 
 install(FILES ${STREAM_INCLUDES}
-    DESTINATION ${CMAKE_PROJECT_NAME}/stream
+    DESTINATION "${INCLUDE_INSTALL_PATH}/stream"
 )
 
 target_link_libraries( stream

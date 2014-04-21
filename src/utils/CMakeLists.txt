@@ -75,7 +75,7 @@ set_target_properties( utils PROPERTIES
 )
 
 install (FILES ${UTIL_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/utils"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
 )
 
 

@@ -3,7 +3,6 @@ add_library (protocols
     ipv4.h
     tcp.h
     packet.h
-    packet.cc
     ipv6.h
     udp.h
     eth.h
@@ -18,5 +17,14 @@ add_library (protocols
     ethertypes.h
     protocol_numbers.h
     undefined_protocols.h
+)
+
+add_library (protocols STATIC
+    packet.cc
+    ${PROTOCOL_HEADERS}
+)
+
+install (FILES ${PROTOCOL_HEADERS}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/protocols"
 )
 
