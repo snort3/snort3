@@ -56,18 +56,18 @@ else()
 endif()
 
 
-find_library(DAQ_LIBRARIES
+find_library(DAQ_LIBRARY
     NAMES  ${DAQ_LIB}
     HINTS  ENV DAQ_DIR
     PATH_SUFFIXES daq
     DOC "DAQ library directory"
 )
 
-list(APPEND DAQ_LIBRARIES "${DAQ_STATIC_LIBRARIES}")
+set(DAQ_LIBRARIES ${DAQ_LIBRARY} ${DAQ_STATIC_LIBRARIES} CACHE STRING "Daq libraries")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(DAQ
-    REQUIRED_VARS DAQ_LIBRARIES DAQ_INCLUDE_DIR
+    REQUIRED_VARS DAQ_LIBRARY DAQ_LIBRARIES DAQ_INCLUDE_DIR
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
 
