@@ -14,4 +14,5 @@ add_library( basic_codecs STATIC
 
 target_link_libraries( basic_codecs
     protocols
+    framework
 )

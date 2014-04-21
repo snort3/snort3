@@ -170,6 +170,7 @@ void PacketManager::set_grinder(void)
     vector<uint16_t> proto;
     vector<int> dlt;
     bool codec_registered;
+    grinder = 0;
 
     int daq_dlt = DAQ_GetBaseProtocol();
 
@@ -206,6 +207,12 @@ void PacketManager::set_grinder(void)
         // ERRRO:  If multiple correct grinders found.
 
     }
+
+    if (!grinder)
+        FatalError("Raw packet decoder not found!!");
+
+
+        FatalError("Codec installation checking!!");
 }
 
     static void init_codecs();
@@ -218,7 +225,7 @@ void PacketManager::dump_stats()
 //        cd->sum();
 }
 
-inline bool PacketManager::has_codec(uint16_t cd_id)
+bool PacketManager::has_codec(uint16_t cd_id)
 {
     return s_protocols[cd_id] != 0;
 }

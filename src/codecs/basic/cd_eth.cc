@@ -46,7 +46,7 @@ class EthCodec : public Codec
 {
 public:
     EthCodec() : Codec("Eth"){};
-    ~EthCodec();
+    ~EthCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -95,8 +95,8 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated eth header (%d bytes).\n", len););
 
-        if ( Event_Enabled(DECODE_ETH_HDR_TRUNC) )
-            DecoderEvent(p, DECODE_ETH_HDR_TRUNC);
+        // TODO --> UNCOMMENT!!
+//        DecoderEvent(p, DECODE_ETH_HDR_TRUNC);
 
 //        dc.discards++;
 //        dc.ethdisc++;
@@ -229,7 +229,7 @@ static void dtor(Codec *cd)
 
 static const char* name = "eth_codec";
 
-static const CodecApi ipv6_api =
+static const CodecApi eth_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -242,3 +242,4 @@ static const CodecApi ipv6_api =
     NULL
 };
 
+const BaseApi* cd_eth = &eth_api.base;

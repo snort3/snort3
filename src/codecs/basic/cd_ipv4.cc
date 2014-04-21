@@ -53,7 +53,7 @@ class Ipv4Codec : public Codec
 {
 public:
     Ipv4Codec() : Codec("ipv4"){};
-    ~Ipv4Codec();
+    ~Ipv4Codec(){};
 
     virtual bool decode(const uint8_t *raw_packet, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
@@ -100,7 +100,7 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
 
 
 
-void get_protocol_ids(std::vector<uint16_t>& v)
+void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ipv4::ethertype_ip());
     v.push_back(ipv4::prot_id());
@@ -141,7 +141,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated IP4 header (%d bytes).\n", len););
 
-        if ( CodecEvents::event_enabled(DECODE_IP4_HDR_TRUNC) && ((p->packet_flags & PKT_UNSURE_ENCAP) == 0))
+        if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
             DecoderEvent(p, DECODE_IP4_HDR_TRUNC);
 
         p->iph = NULL;
@@ -336,17 +336,15 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     /* mask off the high bits in the fragment offset field */
     p->frag_offset &= 0x1FFF;
 
-    if ( Event_Enabled(DECODE_IP4_DF_OFFSET) )
-        if ( p->df && p->frag_offset )
-            DecoderEvent(p, DECODE_IP4_DF_OFFSET);
+    if ( p->df && p->frag_offset )
+        DecoderEvent(p, DECODE_IP4_DF_OFFSET);
 
-    if ( Event_Enabled(DECODE_IP4_LEN_OFFSET) )
-        if ( p->frag_offset + p->actual_ip_len > IP_MAXPACKET )
-            DecoderEvent(p, DECODE_IP4_LEN_OFFSET);
+    if ( p->frag_offset + p->actual_ip_len > IP_MAXPACKET )
+        DecoderEvent(p, DECODE_IP4_LEN_OFFSET);
 
     if(p->frag_offset || p->mf)
     {
-        if ( !ip_len && Event_Enabled(DECODE_ZERO_LENGTH_FRAG) )
+        if ( !ip_len)
         {
             DecoderEvent(p, DECODE_ZERO_LENGTH_FRAG);
             p->frag_flag = 0;
@@ -365,13 +363,9 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         p->frag_flag = 0;
     }
 
-    if(Event_Enabled(DECODE_BAD_FRAGBITS))
+    if( p->mf && p->df )
     {
-
-        if( p->mf && p->df )
-        {
-            DecoderEvent(p, DECODE_BAD_FRAGBITS);
-        }
+        DecoderEvent(p, DECODE_BAD_FRAGBITS);
     }
 
     /* Set some convienience pointers */
@@ -464,11 +458,9 @@ inline void DecodeIPv4Proto(const uint8_t proto,
             return;
 #endif
         default:
-            if ( Event_Enabled(DECODE_IP_UNASSIGNED_PROTO) )
-            {
-                if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
-                    DecoderEvent(p, DECODE_IP_UNASSIGNED_PROTO);
-            }
+            if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
+                DecoderEvent(p, DECODE_IP_UNASSIGNED_PROTO);
+
 //            dc.other++;
             p->data = pkt;
             p->dsize = (uint16_t)len;
@@ -588,13 +580,11 @@ static inline void IP4AddrTests (Packet* p)
     }
 
     // check all 32 bits ...
-    if ( Event_Enabled(DECODE_IP4_SRC_BROADCAST ) )
-        if ( ipv4::is_broadcast(p->iph->ip_src.s_addr)  )
-            DecoderEvent(p, DECODE_IP4_SRC_BROADCAST);
+    if ( ipv4::is_broadcast(p->iph->ip_src.s_addr)  )
+        DecoderEvent(p, DECODE_IP4_SRC_BROADCAST);
 
-    if ( Event_Enabled(DECODE_IP4_DST_BROADCAST ) )
-        if ( ipv4::is_broadcast(p->iph->ip_dst.s_addr)  )
-            DecoderEvent(p, DECODE_IP4_DST_BROADCAST);
+    if ( ipv4::is_broadcast(p->iph->ip_dst.s_addr)  )
+        DecoderEvent(p, DECODE_IP4_DST_BROADCAST);
 
     /* Loopback traffic  - don't use htonl for speed reasons -
      * s_addr is always in network order */
@@ -611,98 +601,80 @@ static inline void IP4AddrTests (Packet* p)
         DecoderEvent(p, DECODE_BAD_TRAFFIC_LOOPBACK);
     }
     // check the msb ...
-    if ( Event_Enabled(DECODE_IP4_SRC_THIS_NET ) )
-        if ( ipv4::is_this_net(msb_src) )
-            DecoderEvent(p, DECODE_IP4_SRC_THIS_NET);
+    if ( ipv4::is_this_net(msb_src) )
+        DecoderEvent(p, DECODE_IP4_SRC_THIS_NET);
 
-    if ( Event_Enabled(DECODE_IP4_DST_THIS_NET ) )
-        if ( ipv4::is_this_net(msb_dst) )
-            DecoderEvent(p, DECODE_IP4_DST_THIS_NET);
+    if ( ipv4::is_this_net(msb_dst) )
+        DecoderEvent(p, DECODE_IP4_DST_THIS_NET);
 
     // check the 'msn' (most significant nibble) ...
     msb_src >>= 4;
     msb_dst >>= 4;
 
-    if ( Event_Enabled(DECODE_IP4_SRC_MULTICAST) )
-        if ( ipv4::is_multicast(msb_src) )
-            DecoderEvent(p, DECODE_IP4_SRC_MULTICAST);
+    if ( ipv4::is_multicast(msb_src) )
+        DecoderEvent(p, DECODE_IP4_SRC_MULTICAST);
 
-    if ( Event_Enabled(DECODE_IP4_SRC_RESERVED) )
-        if ( ipv4::is_reserved(msb_src) )
-            DecoderEvent(p, DECODE_IP4_SRC_RESERVED);
+    if ( ipv4::is_reserved(msb_src) )
+        DecoderEvent(p, DECODE_IP4_SRC_RESERVED);
 
-    if ( Event_Enabled(DECODE_IP4_DST_RESERVED) )
-        if ( ipv4::is_reserved(msb_dst))
-            DecoderEvent(p, DECODE_IP4_DST_RESERVED);
+    if ( ipv4::is_reserved(msb_dst))
+        DecoderEvent(p, DECODE_IP4_DST_RESERVED);
 }
 
 
 /* IPv4-layer decoder rules */
 static inline void IPMiscTests(Packet *p)
 {
-    if ( Event_Enabled(DECODE_ICMP_DOS_ATTEMPT) )
-    {
-        /* Yes, it's an ICMP-related vuln in IP options. */
-        uint8_t i, length, pointer;
 
-        /* Alert on IP packets with either 0x07 (Record Route) or 0x44 (Timestamp)
-           options that are specially crafted. */
-        for (i = 0; i < p->ip_option_count; i++)
+    /* Yes, it's an ICMP-related vuln in IP options. */
+    uint8_t i, length, pointer;
+
+    /* Alert on IP packets with either 0x07 (Record Route) or 0x44 (Timestamp)
+       options that are specially crafted. */
+    for (i = 0; i < p->ip_option_count; i++)
+    {
+        if (p->ip_options[i].data == NULL)
+            continue;
+
+        if (ipv4::is_opt_rr(p->ip_options[i].code))
         {
-            if (p->ip_options[i].data == NULL)
+            length = p->ip_options[i].len;
+            if (length < 1)
                 continue;
 
-            if (ipv4::is_opt_rr(p->ip_options[i].code))
-            {
-                length = p->ip_options[i].len;
-                if (length < 1)
-                    continue;
+            pointer = p->ip_options[i].data[0];
 
-                pointer = p->ip_options[i].data[0];
-
-                /* If the pointer goes past the end of the data, then the data
-                   is full. That's okay. */
-                if (pointer >= length + 2)
-                    continue;
-                /* If the remaining space in the option isn't a multiple of 4
-                   bytes, alert. */
-                if (((length + 3) - pointer) % 4)
-                    DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
-            }
-            else if (ipv4::is_opt_ts(p->ip_options[i].code))
-            {
-                length = p->ip_options[i].len;
-                if (length < 2)
-                    continue;
-
-                pointer = p->ip_options[i].data[0];
-
-                /* If the pointer goes past the end of the data, then the data
-                   is full. That's okay. */
-                if (pointer >= length + 2)
-                    continue;
-                /* If the remaining space in the option isn't a multiple of 4
-                   bytes, alert. */
-                if (((length + 3) - pointer) % 4)
-                    DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
-                /* If there is a timestamp + address, we need a multiple of 8
-                   bytes instead. */
-                if ((p->ip_options[i].data[1] & 0x01) && /* address flag */
-                   (((length + 3) - pointer) % 8))
-                    DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
-            }
+            /* If the pointer goes past the end of the data, then the data
+               is full. That's okay. */
+            if (pointer >= length + 2)
+                continue;
+            /* If the remaining space in the option isn't a multiple of 4
+               bytes, alert. */
+            if (((length + 3) - pointer) % 4)
+                DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
         }
-    }
-    if ( Event_Enabled(DECODE_IP_OPTION_SET) )
-    {
-        if (p->ip_option_count > 0)
-            DecoderEvent(p, DECODE_IP_OPTION_SET);
-    }
+        else if (ipv4::is_opt_ts(p->ip_options[i].code))
+        {
+            length = p->ip_options[i].len;
+            if (length < 2)
+                continue;
 
-    if ( Event_Enabled(DECODE_IP_RESERVED_FRAG_BIT) )
-    {
-        if (p->rf)
-            DecoderEvent(p, DECODE_IP_RESERVED_FRAG_BIT);
+            pointer = p->ip_options[i].data[0];
+
+            /* If the pointer goes past the end of the data, then the data
+               is full. That's okay. */
+            if (pointer >= length + 2)
+                continue;
+            /* If the remaining space in the option isn't a multiple of 4
+               bytes, alert. */
+            if (((length + 3) - pointer) % 4)
+                DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
+            /* If there is a timestamp + address, we need a multiple of 8
+               bytes instead. */
+            if ((p->ip_options[i].data[1] & 0x01) && /* address flag */
+               (((length + 3) - pointer) % 8))
+                DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
+        }
     }
 }
 
@@ -1044,3 +1016,5 @@ static const CodecApi ipv4_api =
     NULL  // stats
 };
 
+
+const BaseApi* cd_ipv4 = &ipv4_api.base;

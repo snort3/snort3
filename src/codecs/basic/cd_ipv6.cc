@@ -51,8 +51,7 @@ class Ipv6Codec : public Codec
 {
 public:
     Ipv6Codec() : Codec("ipv6"){};
-    ~Ipv6Codec();
-
+    ~Ipv6Codec(){};
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
@@ -387,9 +386,7 @@ void DecodeIPV6Options(int type, const uint8_t *pkt, uint32_t len, Packet *p)
                 {
                     DecoderEvent(p, DECODE_IPV6_BAD_FRAG_PKT);
                 }
-                if (
-                    !(p->frag_offset) &&
-                    Event_Enabled(DECODE_IPV6_UNORDERED_EXTENSIONS) )
+                if (!(p->frag_offset))
                 {
                     // check header ordering of fragged (next) header
                     if ( IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
@@ -514,34 +511,31 @@ static inline void CheckIPv6ExtensionOrder(Packet *p)
     int routing_seen = 0;
     int current_type_order, next_type_order, i;
 
-    if (Event_Enabled(DECODE_IPV6_UNORDERED_EXTENSIONS))
+    if (p->ip6_extension_count > 0)
+        current_type_order = IPV6ExtensionOrder(p->ip6_extensions[0].type);
+
+    for (i = 1; i < (p->ip6_extension_count); i++)
     {
-        if (p->ip6_extension_count > 0)
-            current_type_order = IPV6ExtensionOrder(p->ip6_extensions[0].type);
+        next_type_order = IPV6ExtensionOrder(p->ip6_extensions[i].type);
 
-        for (i = 1; i < (p->ip6_extension_count); i++)
+        if (p->ip6_extensions[i].type == IPPROTO_ROUTING)
+            routing_seen = 1;
+
+        if (next_type_order <= current_type_order)
         {
-            next_type_order = IPV6ExtensionOrder(p->ip6_extensions[i].type);
-
-            if (p->ip6_extensions[i].type == IPPROTO_ROUTING)
-                routing_seen = 1;
-
-            if (next_type_order <= current_type_order)
+            /* A second "Destination Options" header is allowed iff:
+               1) A routing header was already seen, and
+               2) The second destination header is the last one before the upper layer.
+            */
+            if (!routing_seen ||
+                !(p->ip6_extensions[i].type == IPPROTO_DSTOPTS) ||
+                !(i+1 == p->ip6_extension_count))
             {
-                /* A second "Destination Options" header is allowed iff:
-                   1) A routing header was already seen, and
-                   2) The second destination header is the last one before the upper layer.
-                */
-                if (!routing_seen ||
-                    !(p->ip6_extensions[i].type == IPPROTO_DSTOPTS) ||
-                    !(i+1 == p->ip6_extension_count))
-                {
-                    DecoderEvent(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
-                }
+                DecoderEvent(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
             }
-
-            current_type_order = next_type_order;
         }
+
+        current_type_order = next_type_order;
     }
 }
 
@@ -585,20 +579,17 @@ static inline void IPV6MiscTests(Packet *p)
 
     CheckIPV6Multicast(p);
 
-    if ( Event_Enabled(DECODE_IPV6_ISATAP_SPOOF) )
+    /* Only check for IPv6 over IPv4 */
+    if (p->ip4h && p->ip4h->ip_proto == IPPROTO_IPV6)
     {
-        /* Only check for IPv6 over IPv4 */
-        if (p->ip4h && p->ip4h->ip_proto == IPPROTO_IPV6)
-        {
-            uint32_t isatap_interface_id = ntohl(p->ip6h->ip_src.ip.u6_addr32[2]) & 0xFCFFFFFF;
+        uint32_t isatap_interface_id = ntohl(p->ip6h->ip_src.ip.u6_addr32[2]) & 0xFCFFFFFF;
 
-            /* ISATAP uses address with prefix fe80:0000:0000:0000:0200:5efe or
-               fe80:0000:0000:0000:0000:5efe, followed by the IPv4 address. */
-            if (isatap_interface_id == 0x00005EFE)
-            {
-                if (p->ip4h->ip_src.ip.u6_addr32[0] != p->ip6h->ip_src.ip.u6_addr32[3])
-                    DecoderEvent(p, DECODE_IPV6_ISATAP_SPOOF);
-            }
+        /* ISATAP uses address with prefix fe80:0000:0000:0000:0200:5efe or
+           fe80:0000:0000:0000:0000:5efe, followed by the IPv4 address. */
+        if (isatap_interface_id == 0x00005EFE)
+        {
+            if (p->ip4h->ip_src.ip.u6_addr32[0] != p->ip6h->ip_src.ip.u6_addr32[3])
+                DecoderEvent(p, DECODE_IPV6_ISATAP_SPOOF);
         }
     }
 }
@@ -1029,7 +1020,11 @@ static const CodecApi ipv6_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
 
+
+const BaseApi* cd_ipv6 = &ipv6_api.base;
 
 

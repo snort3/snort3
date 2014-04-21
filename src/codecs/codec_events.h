@@ -42,9 +42,10 @@ public:
 
     static void exec_ip_chksm_drop(Packet*);
     static void exec_udp_chksm_drop (Packet *);
-    static void execTcpChksmDrop (Packet*);
+    static void exec_tcp_chksm_drop (Packet*);
     static void exec_hop_drop(Packet* p, int sid);
     static void exec_ttl_drop (Packet *data, int sid);
+    static void exec_icmp_chksm_drop (Packet*);
 
 
 
@@ -56,12 +57,10 @@ public:
     static void decoder_init(unsigned max);
     static void decoder_term(void);
     static void decoder_exec(void);
-    static void queue_exec_drop(void_callback_f, Packet* p);
 
     static void DecoderOptEvent (
         Packet *p, int sid, const char *str, void_callback_f );
 
-    static void execIcmpChksmDrop (void*);
 
     static void queueDecoderEvent(
                     unsigned int gid, 
@@ -76,8 +75,6 @@ public:
     static int ScNormalDrop (NormFlags nf);
     static void execDecoderEvent(Packet *p);
 
-
-    static bool event_enabled(int sid);
 private:
 
 
@@ -89,9 +86,6 @@ static inline void DecoderEvent(Packet *p, int sid){
     CodecEvents::decoder_event(p, sid);
 };
 
-static inline bool Event_Enabled(int sid){
-    CodecEvents::event_enabled(sid);
-}
 
 
 #endif /* CODEC_EVENTS_H */

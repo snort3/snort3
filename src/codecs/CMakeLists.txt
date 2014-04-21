@@ -27,6 +27,8 @@ add_library( codecs STATIC
     decode.cc
     decode_module.h
     decode_module.cc
+    codec_api.h
+    codec_api.cc
 )
 
 
@@ -35,6 +37,7 @@ target_link_libraries( codecs
     codec_plugins
     protocols
     sfip
+    framework
 )
 
 

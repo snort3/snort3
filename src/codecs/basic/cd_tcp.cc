@@ -44,6 +44,7 @@
 #include "packet_io/active.h"
 #include "protocols/ipv6.h"
 #include "protocols/tcp.h"
+#include "framework/codec.h"
 
 
 namespace
@@ -52,15 +53,17 @@ namespace
 class TcpCodec : public Codec
 {
 public:
-    TcpCodec() : Codec("Tcp"){};
-    ~TcpCodec();
+    TcpCodec() : Codec("Tcp")
+    {
+
+    };
+    virtual ~TcpCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    
 };
 
 static IpAddrSet *SynToMulticastDstIp = NULL;
@@ -203,7 +206,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                                     "0x%x versus 0x%x\n", csum,
                                     ntohs(p->tcph->th_sum)););
 
-            CodecEvents::queue_exec_drop(execTcpChksmDrop, p);
+            CodecEvents::exec_tcp_chksm_drop(p);
 //            dc.invalid_checksums++;
         }
         else
@@ -212,25 +215,22 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         }
     }
 
-    if(Event_Enabled(DECODE_TCP_XMAS) || Event_Enabled(DECODE_TCP_NMAP_XMAS))
+    if(TCP_ISFLAGSET(p->tcph, (TH_FIN|TH_PUSH|TH_URG)))
     {
-        if(TCP_ISFLAGSET(p->tcph, (TH_FIN|TH_PUSH|TH_URG)))
+        if(TCP_ISFLAGSET(p->tcph, (TH_SYN|TH_ACK|TH_RST)))
         {
-            if(TCP_ISFLAGSET(p->tcph, (TH_SYN|TH_ACK|TH_RST)))
-            {
-                DecoderEvent(p, DECODE_TCP_XMAS);
-            }
-            else
-            {
-                DecoderEvent(p, DECODE_TCP_NMAP_XMAS);
-            }
-            // Allowing this packet for further processing
-            // (in case there is a valid data inside it).
-            /*p->tcph = NULL;
-            dc.discards++;
-            dc.tdisc++;
-            return;*/
+            DecoderEvent(p, DECODE_TCP_XMAS);
         }
+        else
+        {
+            DecoderEvent(p, DECODE_TCP_NMAP_XMAS);
+        }
+        // Allowing this packet for further processing
+        // (in case there is a valid data inside it).
+        /*p->tcph = NULL;
+        dc.discards++;
+        dc.tdisc++;
+        return;*/
     }
 
     if(TCP_ISFLAGSET(p->tcph, (TH_SYN)))
@@ -238,44 +238,34 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         /* check if only SYN is set */
         if( p->tcph->th_flags == TH_SYN )
         {
-            if( Event_Enabled(DECODE_DOS_NAPTHA) )
+            if( p->tcph->th_seq == 6060842 )
             {
-                if( p->tcph->th_seq == 6060842 )
+                if( GET_IPH_ID(p) == 413 )
                 {
-                    if( GET_IPH_ID(p) == 413 )
-                    {
-                        DecoderEvent(p, DECODE_DOS_NAPTHA);
-                    }
+                    DecoderEvent(p, DECODE_DOS_NAPTHA);
                 }
             }
         }
 
-        if( Event_Enabled(DECODE_SYN_TO_MULTICAST) )
+        if( IpAddrSetContains(SynToMulticastDstIp, GET_DST_ADDR(p)) )
         {
-            if( IpAddrSetContains(SynToMulticastDstIp, GET_DST_ADDR(p)) )
-            {
-                DecoderEvent(p, DECODE_SYN_TO_MULTICAST);
-            }
+            DecoderEvent(p, DECODE_SYN_TO_MULTICAST);
         }
-        if ( Event_Enabled(DECODE_TCP_SYN_RST) )
-            if ( (p->tcph->th_flags & TH_RST) )
-                DecoderEvent(p, DECODE_TCP_SYN_RST);
+        if ( (p->tcph->th_flags & TH_RST) )
+            DecoderEvent(p, DECODE_TCP_SYN_RST);
 
-        if ( Event_Enabled(DECODE_TCP_SYN_FIN) )
-            if ( (p->tcph->th_flags & TH_FIN) )
-                DecoderEvent(p, DECODE_TCP_SYN_FIN);
+        if ( (p->tcph->th_flags & TH_FIN) )
+            DecoderEvent(p, DECODE_TCP_SYN_FIN);
     }
     else
     {   // we already know there is no SYN
-        if ( Event_Enabled(DECODE_TCP_NO_SYN_ACK_RST) )
-            if ( !(p->tcph->th_flags & (TH_ACK|TH_RST)) )
-                DecoderEvent(p, DECODE_TCP_NO_SYN_ACK_RST);
+        if ( !(p->tcph->th_flags & (TH_ACK|TH_RST)) )
+            DecoderEvent(p, DECODE_TCP_NO_SYN_ACK_RST);
     }
 
-    if ( Event_Enabled(DECODE_TCP_MUST_ACK) )
-        if ( (p->tcph->th_flags & (TH_FIN|TH_PUSH|TH_URG)) &&
-            !(p->tcph->th_flags & TH_ACK) )
-            DecoderEvent(p, DECODE_TCP_MUST_ACK);
+    if ( (p->tcph->th_flags & (TH_FIN|TH_PUSH|TH_URG)) &&
+        !(p->tcph->th_flags & TH_ACK) )
+        DecoderEvent(p, DECODE_TCP_MUST_ACK);
 
     /* stuff more data into the printout data struct */
     p->sp = ntohs(p->tcph->th_sport);
@@ -315,10 +305,9 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         p->dsize = 0;
     }
 
-    if ( Event_Enabled(DECODE_TCP_BAD_URP) )
-        if ( (p->tcph->th_flags & TH_URG) &&
-            (!p->dsize || ntohs(p->tcph->th_urp) > p->dsize) )
-            DecoderEvent(p, DECODE_TCP_BAD_URP);
+    if ( (p->tcph->th_flags & TH_URG) &&
+        (!p->dsize || ntohs(p->tcph->th_urp) > p->dsize) )
+        DecoderEvent(p, DECODE_TCP_BAD_URP);
 
     p->proto_bits |= PROTO_BIT__TCP;
 
@@ -579,18 +568,12 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
 /* TCP-layer decoder alerts */
 static inline void TCPMiscTests(Packet *p)
 {
-    if ( Event_Enabled(DECODE_TCP_SHAFT_SYNFLOOD) )
-    {
-        if ( ((p->tcph->th_flags & TH_NORESERVED) == TH_SYN ) &&
-             (p->tcph->th_seq == htonl(674711609)) )
-            DecoderEvent(p, DECODE_TCP_SHAFT_SYNFLOOD);
-    }
+    if ( ((p->tcph->th_flags & TH_NORESERVED) == TH_SYN ) &&
+         (p->tcph->th_seq == htonl(674711609)) )
+        DecoderEvent(p, DECODE_TCP_SHAFT_SYNFLOOD);
 
-    if ( Event_Enabled(DECODE_TCP_PORT_ZERO) )
-    {
-        if (p->sp == 0 || p->dp == 0)
-            DecoderEvent(p, DECODE_TCP_PORT_ZERO);
-    }
+    if (p->sp == 0 || p->dp == 0)
+        DecoderEvent(p, DECODE_TCP_PORT_ZERO);
 }
 
 
@@ -1081,7 +1064,9 @@ static const CodecApi tcp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
 
-
+const BaseApi* cd_tcp = &tcp_api.base;
 

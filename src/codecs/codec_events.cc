@@ -115,24 +115,6 @@ void CodecEvents::DecoderOptEvent (
 
 
 
-bool CodecEvents::event_enabled(int sid)
-{
-    return true;
-}
-
-
-
-void CodecEvents::queue_exec_drop(
-    void_callback_f callback, Packet* p)
-{
-    int ret = sfActionQueueAdd( decoderActionQ, callback, (void*)p);
-    if (ret == -1)
-    {
-        ErrorMessage("Could not add drop event to decoderActionQ\n");
-    }
-}
-
-
 void CodecEvents::decoder_init(unsigned max)
 {
     decoderActionQ = sfActionQueueInit(max);
@@ -180,7 +162,7 @@ void CodecEvents::decoder_event (Packet *p, int sid)
     SnortEventqAdd(GID_DECODE, sid);
 }
 
-void CodecEvents::execTcpChksmDrop (Packet*)
+void CodecEvents::exec_tcp_chksm_drop (Packet*)
 {
     if( ScInlineMode() && ScTcpChecksumDrops() )
     {
@@ -256,7 +238,7 @@ void CodecEvents::exec_ttl_drop (Packet *p, int sid)
 }
 
 
-void CodecEvents::execIcmpChksmDrop (void*)
+void CodecEvents::exec_icmp_chksm_drop (Packet*)
 {
     if( ScInlineMode() && ScIcmpChecksumDrops() )
     {

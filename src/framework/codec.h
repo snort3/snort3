@@ -64,7 +64,6 @@ protected:
 
 
 
-
 private:
     const char* name;
 };

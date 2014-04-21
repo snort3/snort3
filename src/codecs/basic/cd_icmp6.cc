@@ -42,24 +42,23 @@ class Icmp6Codec : public Codec
 {
 public:
     Icmp6Codec() : Codec("Icmp6"){};
-    ~Icmp6Codec();
+    ~Icmp6Codec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
 
-void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p);
 
 } // anonymous namespace
 
 
 
+static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p);
 static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
 
 
@@ -76,10 +75,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated ICMP6 header (%d bytes).\n", len););
 
-        if ( Event_Enabled(DECODE_ICMP6_HDR_TRUNC) )
-            DecoderEvent(p, DECODE_ICMP6_HDR_TRUNC);
-
-//        dc.discards++;
+        DecoderEvent(p, DECODE_ICMP6_HDR_TRUNC);
         return false;
     }
 
@@ -112,7 +108,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             p->error_flags |= PKT_ERR_CKSUM_ICMP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad ICMP Checksum\n"););
-            CodecEvents::queue_exec_drop(CodecEvents::execIcmpChksmDrop, p);
+            CodecEvents::exec_icmp_chksm_drop(p);
 //            dc.invalid_checksums++;
         }
         else
@@ -139,11 +135,8 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 p->dsize -= sizeof(ICMPHdr::icmp_hun.idseq);
                 p->data += sizeof(ICMPHdr::icmp_hun.idseq);
 
-                if ( Event_Enabled(DECODE_ICMP6_DST_MULTICAST) )
-                    if ( ipv6::is_multicast(p->ip6h->ip_dst.ip.u6_addr8[0]) )
-                        DecoderEvent(p, DECODE_ICMP6_DST_MULTICAST);
-
-//                PushLayer(PROTO_ICMP6, p, pkt, ICMP_NORMAL_LEN);
+                if ( ipv6::is_multicast(p->ip6h->ip_dst.ip.u6_addr8[0]) )
+                    DecoderEvent(p, DECODE_ICMP6_DST_MULTICAST);
             }
             else
             {
@@ -317,8 +310,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
             break;
 
         default:
-            if ( Event_Enabled(DECODE_ICMP6_TYPE_OTHER) )
-                DecoderEvent(p, DECODE_ICMP6_TYPE_OTHER);
+            DecoderEvent(p, DECODE_ICMP6_TYPE_OTHER);
 
             p_hdr_len = icmp6::hdr_min_len();
             break;
@@ -342,7 +334,7 @@ bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
  *
  * Returns: void function
  */
-void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
+static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
 {
     uint16_t orig_frag_offset;
 
@@ -634,3 +626,5 @@ static const CodecApi ipv6_api =
     NULL
 };
 
+
+const BaseApi* cd_icmp6 = &ipv6_api.base;

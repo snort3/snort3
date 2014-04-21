@@ -54,8 +54,7 @@ bool SwipeCodec::decode(const uint8_t* raw_packet, const uint32_t raw_len,
         Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
 
-    if ( CodecEvents::event_enabled(DECODE_IP_BAD_PROTO) )
-        CodecEvents::decoder_event(p, DECODE_IP_BAD_PROTO);
+    CodecEvents::decoder_event(p, DECODE_IP_BAD_PROTO);
 //            dc.other++;
     p->data = raw_packet;
     p->dsize = (uint16_t)raw_len;

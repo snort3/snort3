@@ -53,14 +53,13 @@ class UdpCodec : public Codec
 {
 public:
     UdpCodec() : Codec("Udp"){};
-    ~UdpCodec();
+    ~UdpCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
@@ -78,7 +77,7 @@ static inline unsigned short in_chksum_udp(pseudoheader *, unsigned short *, int
 
 
 
-bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
     Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
     uint16_t uhlen;
@@ -271,17 +270,11 @@ bool decode(const uint8_t *raw_pkt, const uint32_t len,
 /* UDP-layer decoder alerts */
 static inline void UDPMiscTests(Packet *p)
 {
-    if ( Event_Enabled(DECODE_UDP_LARGE_PACKET) )
-    {
-        if (p->dsize > 4000)
-            DecoderEvent(p, DECODE_UDP_LARGE_PACKET);
-    }
+    if (p->dsize > 4000)
+        DecoderEvent(p, DECODE_UDP_LARGE_PACKET);
 
-    if ( Event_Enabled(DECODE_UDP_PORT_ZERO) )
-    {
-        if (p->sp == 0 || p->dp == 0)
-            DecoderEvent(p, DECODE_UDP_PORT_ZERO);
-    }
+    if (p->sp == 0 || p->dp == 0)
+        DecoderEvent(p, DECODE_UDP_PORT_ZERO);
 }
 
 /*
@@ -633,6 +626,10 @@ static const CodecApi udp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    NULL
 };
 
+
+const BaseApi* cd_udp = &udp_api.base;
 

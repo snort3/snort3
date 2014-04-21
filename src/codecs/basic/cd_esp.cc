@@ -48,14 +48,13 @@ class EspCodec : public Codec
 {
 public:
     EspCodec() : Codec("ESP"){};
-    ~EspCodec();
+    ~EspCodec(){};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
@@ -189,7 +188,7 @@ static void stats()
 
 static const char* name = "esp_codec";
 
-static const CodecApi codec_api =
+static const CodecApi esp_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
     NULL, // pinit
@@ -201,4 +200,7 @@ static const CodecApi codec_api =
     sum, // sum
     stats  // stats
 };
+
+
+const BaseApi* cd_esp = &esp_api.base;
 

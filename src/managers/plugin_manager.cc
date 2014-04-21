@@ -57,6 +57,7 @@ using namespace std;
 #include "network_inspectors/network_inspectors.h"
 #include "search_engines/search_engines.h"
 #include "service_inspectors/service_inspectors.h"
+#include "codecs/codec_api.h"
 #include "helpers/directory.h"
 #include "parser/parser.h"
 
@@ -209,6 +210,7 @@ static void add_plugin(Plugin& p)
         break;
 
     case PT_CODEC:
+        PacketManager::add_plugin((CodecApi*)p.api);
         break;
 
     case PT_LOGGER:
@@ -294,6 +296,7 @@ void PluginManager::load_plugins(const char* paths)
     load_list(network_inspectors);
     load_list(service_inspectors);
     load_list(search_engines);
+    load_list(codecs);
     ::load_plugins(paths);
     load_list(ScriptManager::get_ips_options());
     add_plugins();
