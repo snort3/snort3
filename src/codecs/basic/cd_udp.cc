@@ -60,6 +60,11 @@ public:
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
+
+    // DELETE
+    #include "codecs/sf_protocols.h"
+    virtual inline PROTO_ID get_proto_id() { return PROTO_UDP; };
+
     
 };
 
@@ -234,8 +239,9 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 //    PushLayer(PROTO_UDP, p, raw_pkt, udp::header_len());
 
 
-    p->data = (uint8_t *) (raw_pkt + udp::header_len());
-    p->dsize = uhlen - udp::header_len(); // length validated above
+    // set in packet manager
+//    p->data = (uint8_t *) (raw_pkt + udp::header_len());
+//    p->dsize = uhlen - udp::header_len(); // length validated above
     p->proto_bits |= PROTO_BIT__UDP;
 
     /*  Drop packet if we ignore this port  */

@@ -26,6 +26,10 @@
 #include "framework/base_api.h"
 
 
+// REMOVE WHEN POSSIBLE!!!
+#include "codecs/sf_protocols.h"
+
+
 struct Packet;
 
 // this is the current version of the api
@@ -53,10 +57,10 @@ public:
     // ONE OF THESE METHODS MUST BE IMPLEMENTED!!
     virtual void get_protocol_ids(std::vector<uint16_t>&){};
     virtual void get_data_link_type(std::vector<int>&){};
-
-    virtual inline bool is_ipv4(){ return false; };
-    virtual inline bool is_ipv6(){ return false; };
     virtual inline const char* get_name(){return name; };
+
+
+    virtual inline PROTO_ID get_proto_id() { return PROTO_MAX; };
 
 
 protected:

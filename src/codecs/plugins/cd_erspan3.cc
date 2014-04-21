@@ -43,6 +43,9 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     
+    // DELETE from here and below
+    #include "codecs/sf_protocols.h"
+    virtual inline PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
 };
 
 

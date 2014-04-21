@@ -62,7 +62,10 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 
     // used in random classes throughout Snort++
-    virtual inline bool is_ipv4(){ return true; };
+
+    // DELETE from here and below
+    #include "codecs/sf_protocols.h"
+    virtual inline PROTO_ID get_proto_id() { return PROTO_IP4; };
 
 private:
 
@@ -126,7 +129,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
-    uint32_t hlen;   /* ip header length */
 
 //    dc.ip++;
 
@@ -197,14 +199,13 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     ip_len = ntohs(p->iph->ip_len);
 
     /* get the IP header length */
-    hlen = ipv4::get_pkt_hdr_len(p->iph) << 2;
-    p_hdr_len = hlen;
+    p_hdr_len = ipv4::get_pkt_hdr_len(p->iph) << 2;
 
     /* header length sanity check */
-    if(hlen < ipv4::hdr_len())
+    if(p_hdr_len < ipv4::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Bogus IP header length of %i bytes\n", hlen););
+            "Bogus IP header length of %i bytes\n", p_hdr_len););
 
         DecoderEvent(p, DECODE_IPV4_INVALID_HEADER_LEN);
 
@@ -247,11 +248,11 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 #endif
 
-    if(ip_len < hlen)
+    if(ip_len < p_hdr_len)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "IP dgm len (%d bytes) < IP hdr "
-            "len (%d bytes), packet discarded\n", ip_len, hlen););
+            "len (%d bytes), packet discarded\n", ip_len, p_hdr_len););
 
         DecoderEvent(p, DECODE_IPV4_DGRAM_LT_IPHDR);
 
@@ -274,7 +275,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
          * need to check them (should make this a command line/config
          * option
          */
-        int16_t csum = in_chksum_ip((u_short *)p->iph, hlen);
+        int16_t csum = in_chksum_ip((u_short *)p->iph, p_hdr_len);
 
         if(csum)
         {
@@ -293,7 +294,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 
     /* test for IP options */
-    p->ip_options_len = (uint16_t)(hlen - ipv4::hdr_len());
+    p->ip_options_len = (uint16_t)(p_hdr_len - ipv4::hdr_len());
 
     if(p->ip_options_len > 0)
     {
@@ -320,7 +321,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     p->actual_ip_len = (uint16_t) ip_len;
 
     /* set the remaining packet length */
-    ip_len -= hlen;
+    ip_len -= p_hdr_len;
 
     /* check for fragmented packets */
     p->frag_offset = ntohs(p->iph->ip_off);
@@ -353,7 +354,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         {
             /* set the packet fragment flag */
             p->frag_flag = 1;
-            p->ip_frag_start = raw_packet + hlen;
+            p->ip_frag_start = raw_packet + p_hdr_len;
             p->ip_frag_len = (uint16_t)ip_len;
 //            dc.frags++;
         }
@@ -369,7 +370,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 
     /* Set some convienience pointers */
-    p->ip_data = raw_packet + hlen;
+    p->ip_data = raw_packet + p_hdr_len;
     p->ip_dsize = (u_short) ip_len;
 
     /* See if there are any ip_proto only rules that match */
@@ -386,20 +387,18 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
             (p->iph->ip_proto == IPPROTO_UDP)))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP header length: %lu\n",
-                    (unsigned long)hlen););
+                    (unsigned long)p_hdr_len););
 
         next_prot_id = p->iph->ip_proto;
-        p_hdr_len = hlen;
         return true;
     }
     else
     {
         /* set the payload pointer and payload size */
-        p->data = raw_packet + hlen;
+        p->data = raw_packet + p_hdr_len;
         p->dsize = (u_short) ip_len;
     }
 
-    p_hdr_len = hlen;
     return true;
 }
 

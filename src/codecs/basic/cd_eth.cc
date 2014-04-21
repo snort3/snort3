@@ -54,6 +54,9 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
+    // DELETE
+    #include "codecs/sf_protocols.h"
+    virtual inline PROTO_ID get_proto_id() { return PROTO_ETH; };
     
 };
 

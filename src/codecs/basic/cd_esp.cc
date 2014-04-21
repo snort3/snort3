@@ -93,7 +93,6 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 {
     const uint8_t *esp_payload;
     uint8_t pad_length;
-    uint8_t save_layer = p->next_layer;
 
     if (!ScESPDecoding())
         return false;
@@ -143,13 +142,13 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     // set the data pointers and pretend this is an ip datagram.
     if (!PacketManager::has_codec(next_prot_id))
     {
-        p->packet_flags |= PKT_TRUST;
-        p->data = esp_payload;
-        p->dsize = (u_short) len - p_hdr_len;
+        p->packet_flags |= PKT_UNSURE_ENCAP;
     }
     else 
     {
-        p->packet_flags |= PKT_UNSURE_ENCAP;
+        p->packet_flags |= PKT_TRUST;
+        p->data = esp_payload;
+        p->dsize = (u_short) len - p_hdr_len;
     }
 
     return true;

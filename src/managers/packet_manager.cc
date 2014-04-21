@@ -34,7 +34,7 @@ THREAD_LOCAL PreprocStats decodePerfStats;
 //namespace
 //{
     static const uint16_t max_protocol_id = 65535;
-    static std::array<Codec *, max_protocol_id> s_protocols;
+    static std::array<Codec*, max_protocol_id> s_protocols;
     static list<const CodecApi*> s_codecs;
 
 //} // namespace
@@ -100,6 +100,7 @@ void PacketManager::decode(
 
     // The boolean check in this order so 
     while(curr_prot_id  >= 0 && 
+            curr_prot_id < max_protocol_id &&
             s_protocols[curr_prot_id] != 0 &&
             s_protocols[curr_prot_id]->decode(pkt, len, p, p_hdr_len, next_prot_id))
     {
@@ -228,8 +229,6 @@ void PacketManager::set_grinder(void)
 
 //        FatalError("Codec installation checking!!");
 }
-
-    static void init_codecs();
 
 
 void PacketManager::dump_stats()

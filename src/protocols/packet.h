@@ -898,8 +898,7 @@ typedef struct
 class PacketClass{
 
 public:
-    static 
-    void PushLayer(Packet *p, const Codec *cd, const uint8_t *hdr_start, uint32_t len);
+    static void PushLayer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len);
 
 
 private:

@@ -24,15 +24,15 @@
 #include "codecs/sf_protocols.h"
 #include "log/messages.h"
 
-void PacketClass::PushLayer(Packet *p, const Codec *cd, const uint8_t *hdr_start, uint32_t len)
+void PacketClass::PushLayer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len)
 {
     if ( p->next_layer < LAYER_MAX )
     {
-        Layer* lyr = p->layers + p->next_layer++;
-        lyr->proto = PROTO_TCP;
-        lyr->cd = cd;
-        lyr->start = (uint8_t*)hdr_start;
-        lyr->length = (uint16_t)len;
+        Layer lyr = p->layers[p->next_layer];
+        lyr.proto = cd->get_proto_id();
+        lyr.cd = cd;
+        lyr.start = (uint8_t*)hdr_start;
+        lyr.length = (uint16_t)len;
     }
     else
     {
@@ -40,3 +40,4 @@ void PacketClass::PushLayer(Packet *p, const Codec *cd, const uint8_t *hdr_start
             " next proto is something.\n");
     }
 }
+

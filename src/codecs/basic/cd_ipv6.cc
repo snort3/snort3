@@ -58,10 +58,10 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 
 
-    // used in random classes throughout Snort++
-    virtual inline bool is_ipv6(){ return true; };
+    // DELETE from here and below
+    #include "codecs/sf_protocols.h"
+    virtual inline PROTO_ID get_proto_id() { return PROTO_IP6; };
 
-    
 };
 
 
@@ -484,8 +484,8 @@ void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, 
             DecoderEvent(p, DECODE_IPV6_BAD_NEXT_HEADER);
 
 //            dc.other++;
-            p->data = pkt;
-            p->dsize = (uint16_t)len;
+//            p->data = pkt;
+//            p->dsize = (uint16_t)len;
             break;
     };
 }
