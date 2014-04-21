@@ -39,13 +39,12 @@
 #ifndef FTPP_UI_CONFIG_H
 #define FTPP_UI_CONFIG_H
 
-//#include "decode.h"
-
 #include "ftpp_include.h"
 #include "hi_util_kmap.h"
 #include "ipv6_port.h"
 #include "sfrt/sfrt.h"
 #include "snort_bounds.h"
+#include "framework/bits.h"
 
 /*
  * Defines
@@ -68,13 +67,6 @@ typedef KMAP BOUNCE_LOOKUP;
  * it easily if we change the search type.
  */
 typedef KMAP CMD_LOOKUP;
-
-typedef struct s_FTPTELNET_CONF_OPT
-{
-
-    int on;     /*< if true, configuration option is on */
-
-}  FTPTELNET_CONF_OPT;
 
 typedef enum s_FTP_PARAM_TYPE
 {
@@ -185,12 +177,6 @@ typedef struct s_FTP_CMD_CONF
 
 }  FTP_CMD_CONF;
 
-typedef struct s_PROTO_CONF
-{
-    unsigned int port_count;
-    char ports[MAXPORTS];
-}  PROTO_CONF;
-
 /*
  * This is the configuration construct that holds the specific
  * options for a FTP server.  Each unique server has it's own
@@ -199,22 +185,20 @@ typedef struct s_PROTO_CONF
  */
 struct FTP_SERVER_PROTO_CONF
 {
-    /* Ports must be first */
-    PROTO_CONF proto_ports;
-    char *serverAddr;
-
     unsigned int def_max_param_len;
     unsigned int max_cmd_len;
 
-    int print_commands;
-    int data_chan;
-    int check_encrypted_data;
+    bool print_commands;
+    bool data_chan;
+    bool check_encrypted_data;
+    bool telnet_cmds;
+    bool ignore_telnet_erase_cmds;
+    bool detect_encrypted;
 
-    CMD_LOOKUP    *cmd_lookup;
+    CMD_LOOKUP* cmd_lookup;
+    PortList ports;
 
-    FTPTELNET_CONF_OPT telnet_cmds;
-    FTPTELNET_CONF_OPT ignore_telnet_erase_cmds;
-    FTPTELNET_CONF_OPT detect_encrypted;
+    FTP_SERVER_PROTO_CONF();
 };
 
 typedef struct s_FTP_BOUNCE_TO
@@ -233,17 +217,18 @@ typedef struct s_FTP_BOUNCE_TO
  */
 struct FTP_CLIENT_PROTO_CONF
 {
-    char *clientAddr;
     unsigned int  max_resp_len;
-    int data_chan;
 
-    FTPTELNET_CONF_OPT bounce;
-    FTPTELNET_CONF_OPT telnet_cmds;
-    FTPTELNET_CONF_OPT ignore_telnet_erase_cmds;
+    bool data_chan;
+    bool bounce;
+    bool telnet_cmds;
+    bool ignore_telnet_erase_cmds;
 
     /* allow_bounce to IP/mask port|port-range */
     /* TODO: change this to use a quick find of IP/mask */
-    BOUNCE_LOOKUP    *bounce_lookup;
+    BOUNCE_LOOKUP* bounce_lookup;
+
+    FTP_CLIENT_PROTO_CONF();
 };
 
 /*
@@ -251,40 +236,20 @@ struct FTP_CLIENT_PROTO_CONF
  * options for telnet.  There is a global structure for all telnet
  * connections.
  */
-typedef struct s_TELNET_PROTO_CONF
+struct TELNET_PROTO_CONF
 {
-    /* Ports must be first */
-    PROTO_CONF proto_ports;
-
-    int normalize;
     int ayt_threshold;
-    int check_encrypted_data;
 
-    FTPTELNET_CONF_OPT detect_encrypted;
+    bool normalize;
+    bool check_encrypted_data;
+    bool detect_encrypted;
+    bool detect_anomalies;
 
-    char detect_anomalies;
+    PortList ports;
 
-}  TELNET_PROTO_CONF;
-
-/*
- * This is the configuration for the global FTPTelnet
- * configuration.  It contains the global aspects of the
- * configuration, a standard global default configuration,
- * and client configurations.
- */
-struct FTPTELNET_GLOBAL_CONF
-{
-    FTP_CLIENT_PROTO_CONF* ftp_client;
-    FTP_SERVER_PROTO_CONF* ftp_server;
-    TELNET_PROTO_CONF* telnet_config;
+    TELNET_PROTO_CONF();
 };
 
-/*
- * Functions
- */
-int ftpp_ui_config_init_global_conf(FTPTELNET_GLOBAL_CONF *GlobalConf);
-int ftpp_ui_config_default(FTPTELNET_GLOBAL_CONF *GlobalConf);
-int ftpp_ui_config_reset_global(FTPTELNET_GLOBAL_CONF *GlobalConf);
 int ftpp_ui_config_reset_ftp_client(FTP_CLIENT_PROTO_CONF *ClientConf,
                                     char first);
 int ftpp_ui_config_reset_ftp_server(FTP_SERVER_PROTO_CONF *ServerConf,

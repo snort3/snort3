@@ -76,7 +76,6 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
     if ((args == NULL) || (strlen(args) == 0))
         return;
 
-    S5Common* common = s5->common;
     Stream5GlobalConfig* config = s5->global_config;
 
     toks = mSplit(args, ",", 0, &num_toks, 0);
@@ -95,7 +94,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
         {
             if (stoks[1])
             {
-                common->tcp_mem_cap = strtoul(stoks[1], &endPtr, 10);
+                config->tcp_mem_cap = strtoul(stoks[1], &endPtr, 10);
             }
 
             if (!stoks[1] || (endPtr == &stoks[1][0]))
@@ -103,8 +102,8 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                 ParseError("Invalid memcap in config file.  Requires integer parameter.");
             }
 
-            if ((common->tcp_mem_cap > S5_RIDICULOUS_HI_MEMCAP) ||
-                (common->tcp_mem_cap < S5_RIDICULOUS_LOW_MEMCAP))
+            if ((config->tcp_mem_cap > S5_RIDICULOUS_HI_MEMCAP) ||
+                (config->tcp_mem_cap < S5_RIDICULOUS_LOW_MEMCAP))
             {
                 ParseError("'memcap %s' invalid: value must be "
                            "between %d and %d bytes",
@@ -116,17 +115,14 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
         {
             if (stoks[1])
             {
-                common->max_tcp_sessions = strtoul(stoks[1], &endPtr, 10);
-                if (config->track_tcp_sessions == S5_TRACK_YES)
+                config->max_tcp_sessions = strtoul(stoks[1], &endPtr, 10);
+                if ((config->max_tcp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
+                    (config->max_tcp_sessions == 0))
                 {
-                    if ((common->max_tcp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                        (common->max_tcp_sessions == 0))
-                    {
-                        ParseError("'max_tcp %d' invalid: value must be "
-                                   "between 1 and %d sessions",
-                                   common->max_tcp_sessions,
-                                   S5_RIDICULOUS_MAX_SESSIONS);
-                    }
+                    ParseError("'max_tcp %d' invalid: value must be "
+                               "between 1 and %d sessions",
+                               config->max_tcp_sessions,
+                               S5_RIDICULOUS_MAX_SESSIONS);
                 }
             }
 
@@ -143,7 +139,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
             {
                 unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
 
-                if (config->track_tcp_sessions == S5_TRACK_YES)
+                if ( config->max_tcp_sessions )
                 {
                     if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
                     {
@@ -152,7 +148,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                             stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
                     }
                 }
-                common->tcp_cache_pruning_timeout = (uint16_t)timeout;
+                config->tcp_cache_pruning_timeout = (uint16_t)timeout;
             }
 
             if (!stoks[1] || (endPtr == &stoks[1][0]))
@@ -167,7 +163,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
             {
                 unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
 
-                if (config->track_tcp_sessions == S5_TRACK_YES)
+                if ( config->max_tcp_sessions )
                 {
                     if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
                     {
@@ -176,7 +172,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                             stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
                     }
                 }
-                common->tcp_cache_nominal_timeout = (uint16_t)timeout;
+                config->tcp_cache_nominal_timeout = (uint16_t)timeout;
             }
 
             if (!stoks[1] || (endPtr == &stoks[1][0]))
@@ -185,34 +181,18 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                            stoks[0]);
             }
         }
-        else if(!strcasecmp(stoks[0], "track_tcp"))
-        {
-            if (stoks[1])
-            {
-                if(!strcasecmp(stoks[1], "no"))
-                    config->track_tcp_sessions = S5_TRACK_NO;
-                else
-                    config->track_tcp_sessions = S5_TRACK_YES;
-            }
-            else
-            {
-                ParseError("'track_tcp' missing option");
-            }
-        }
         else if(!strcasecmp(stoks[0], "max_udp"))
         {
             if (stoks[1])
             {
-                common->max_udp_sessions = strtoul(stoks[1], &endPtr, 10);
-                if (config->track_udp_sessions == S5_TRACK_YES)
+                config->max_udp_sessions = strtoul(stoks[1], &endPtr, 10);
+
+                if ((config->max_udp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
+                    (config->max_udp_sessions == 0))
                 {
-                    if ((common->max_udp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                        (common->max_udp_sessions == 0))
-                    {
-                        ParseError(
-                            "'max_udp %d' invalid: value must be between 1 and %d sessions",
-                            common->max_udp_sessions, S5_RIDICULOUS_MAX_SESSIONS);
-                    }
+                    ParseError(
+                        "'max_udp %d' invalid: value must be between 1 and %d sessions",
+                        config->max_udp_sessions, S5_RIDICULOUS_MAX_SESSIONS);
                 }
             }
 
@@ -228,7 +208,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
             {
                 unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
 
-                if (config->track_udp_sessions == S5_TRACK_YES)
+                if ( config->max_udp_sessions )
                 {
                     if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
                     {
@@ -237,7 +217,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                             stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
                     }
                 }
-                common->udp_cache_pruning_timeout = (uint16_t)timeout;
+                config->udp_cache_pruning_timeout = (uint16_t)timeout;
             }
 
             if (!stoks[1] || (endPtr == &stoks[1][0]))
@@ -252,7 +232,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
             {
                 unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
 
-                if (config->track_udp_sessions == S5_TRACK_YES)
+                if ( config->max_udp_sessions )
                 {
                     if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
                     {
@@ -261,7 +241,7 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                             stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
                     }
                 }
-                common->udp_cache_nominal_timeout = (uint16_t)timeout;
+                config->udp_cache_nominal_timeout = (uint16_t)timeout;
             }
 
             if (!stoks[1] || (endPtr == &stoks[1][0]))
@@ -270,36 +250,19 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                            stoks[0]);
             }
         }
-        else if(!strcasecmp(stoks[0], "track_udp"))
-        {
-            if (stoks[1])
-            {
-                if(!strcasecmp(stoks[1], "no"))
-                    config->track_udp_sessions = S5_TRACK_NO;
-                else
-                    config->track_udp_sessions = S5_TRACK_YES;
-            }
-            else
-            {
-                ParseError("'track_udp' missing option");
-            }
-        }
         else if(!strcasecmp(stoks[0], "max_icmp"))
         {
             if (stoks[1])
             {
-                common->max_icmp_sessions = strtoul(stoks[1], &endPtr, 10);
+                config->max_icmp_sessions = strtoul(stoks[1], &endPtr, 10);
 
-                if (config->track_icmp_sessions == S5_TRACK_YES)
+                if ((config->max_icmp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
+                    (config->max_icmp_sessions == 0))
                 {
-                    if ((common->max_icmp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                        (common->max_icmp_sessions == 0))
-                    {
-                        ParseError(
-                            "'max_icmp %d' invalid: value must be "
-                            "between 1 and %d sessions",
-                            common->max_icmp_sessions, S5_RIDICULOUS_MAX_SESSIONS);
-                    }
+                    ParseError(
+                        "'max_icmp %d' invalid: value must be "
+                        "between 1 and %d sessions",
+                        config->max_icmp_sessions, S5_RIDICULOUS_MAX_SESSIONS);
                 }
             }
 
@@ -309,36 +272,19 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
             }
             max_set |= MAX_ICMP;
         }
-        else if(!strcasecmp(stoks[0], "track_icmp"))
-        {
-            if (stoks[1])
-            {
-                if(!strcasecmp(stoks[1], "no"))
-                    config->track_icmp_sessions = S5_TRACK_NO;
-                else
-                    config->track_icmp_sessions = S5_TRACK_YES;
-            }
-            else
-            {
-                ParseError("'track_icmp' missing option");
-            }
-        }
         else if(!strcasecmp(stoks[0], "max_ip"))
         {
             if (stoks[1])
             {
-                common->max_ip_sessions = strtoul(stoks[1], &endPtr, 10);
+                config->max_ip_sessions = strtoul(stoks[1], &endPtr, 10);
 
-                if (config->track_ip_sessions == S5_TRACK_YES)
+                if ((config->max_ip_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
+                    (config->max_ip_sessions == 0))
                 {
-                    if ((common->max_ip_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                        (common->max_ip_sessions == 0))
-                    {
-                        ParseError(
-                            "'max_ip %d' invalid: value must be "
-                            "between 1 and %d sessions",
-                            common->max_ip_sessions, S5_RIDICULOUS_MAX_SESSIONS);
-                    }
+                    ParseError(
+                        "'max_ip %d' invalid: value must be "
+                        "between 1 and %d sessions",
+                        config->max_ip_sessions, S5_RIDICULOUS_MAX_SESSIONS);
                 }
             }
 
@@ -347,20 +293,6 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                 ParseError("Invalid max_ip in config file.  Requires integer parameter.");
             }
             max_set |= MAX_IP;
-        }
-        else if(!strcasecmp(stoks[0], "track_ip"))
-        {
-            if (stoks[1])
-            {
-                if(!strcasecmp(stoks[1], "no"))
-                    config->track_ip_sessions = S5_TRACK_NO;
-                else
-                    config->track_ip_sessions = S5_TRACK_YES;
-            }
-            else
-            {
-                ParseError("'track_ip' missing option");
-            }
         }
         else if(!strcasecmp(stoks[0], "flush_on_alert"))
         {
@@ -441,10 +373,6 @@ static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
                     config->min_response_seconds, S5_MIN_RESPONSE_SECONDS_MAX);
             }
         }
-        else if(!strcasecmp(stoks[0], "disabled"))
-        {
-            config->disabled = 1;
-        }
         else
         {
             ParseError("Unknown Stream5 global option (%s)", toks[i]);
@@ -461,11 +389,10 @@ static void Stream5InitGlobal(
 {
     Stream5ParseGlobalArgs(pc, args);
 
-    if ((!pc->global_config->disabled) &&
-        (pc->global_config->track_tcp_sessions == S5_TRACK_NO) &&
-        (pc->global_config->track_udp_sessions == S5_TRACK_NO) &&
-        (pc->global_config->track_icmp_sessions == S5_TRACK_NO) &&
-        (pc->global_config->track_ip_sessions == S5_TRACK_NO))
+    if (!pc->global_config->max_tcp_sessions &&
+        !pc->global_config->max_udp_sessions &&
+        !pc->global_config->max_icmp_sessions &&
+        !pc->global_config->max_ip_sessions)
     {
         ParseError("Stream5 enabled, but not configured to track "
                    "TCP, UDP, ICMP, or IP.");
@@ -491,10 +418,6 @@ void Stream5ConfigGlobal(
     pc = (Stream5GlobalConfig*)SnortAlloc(sizeof(*pc));
     config->global_config = pc;
 
-    pc->track_tcp_sessions = S5_TRACK_YES;
-    pc->track_udp_sessions = S5_TRACK_YES;
-    pc->track_icmp_sessions = S5_TRACK_NO;
-    pc->track_ip_sessions = S5_TRACK_NO;
     pc->prune_log_max = S5_DEFAULT_PRUNE_LOG_MAX;
     pc->max_active_responses = S5_DEFAULT_MAX_ACTIVE_RESPONSES;
     pc->min_response_seconds = S5_DEFAULT_MIN_RESPONSE_SECONDS;
@@ -505,41 +428,26 @@ void Stream5ConfigGlobal(
 
 void Stream5PrintGlobalConfig(Stream5Config* s5)
 {
-    S5Common* common = s5->common;
     Stream5GlobalConfig* config = s5->global_config;
 
     LogMessage("Stream5 global config:\n");
-    LogMessage("    Track TCP sessions: %s\n",
-        config->track_tcp_sessions == S5_TRACK_YES ?
-        "ACTIVE" : "INACTIVE");
-    if (config->track_tcp_sessions == S5_TRACK_YES)
+    LogMessage("Max TCP sessions: %u\n", config->max_tcp_sessions);
+
+    if ( config->max_tcp_sessions )
     {
-        LogMessage("    Max TCP sessions: %u\n", common->max_tcp_sessions);
-        LogMessage("    TCP cache pruning timeout: %u seconds\n", common->tcp_cache_pruning_timeout);
-        LogMessage("    TCP cache nominal timeout: %u seconds\n", common->tcp_cache_nominal_timeout);
+        LogMessage("    TCP cache pruning timeout: %u seconds\n", config->tcp_cache_pruning_timeout);
+        LogMessage("    TCP cache nominal timeout: %u seconds\n", config->tcp_cache_nominal_timeout);
+        LogMessage("    Memcap (for reassembly packet storage): %d\n", config->tcp_mem_cap);
     }
-    LogMessage("    Memcap (for reassembly packet storage): %d\n", common->tcp_mem_cap);
-    LogMessage("    Track UDP sessions: %s\n",
-        config->track_udp_sessions == S5_TRACK_YES ?
-        "ACTIVE" : "INACTIVE");
-    if (config->track_udp_sessions == S5_TRACK_YES)
+    LogMessage("Max UDP sessions: %u\n", config->max_udp_sessions);
+    if (config->max_udp_sessions == S5_TRACK_YES)
     {
-        LogMessage("    Max UDP sessions: %u\n", common->max_udp_sessions);
-        LogMessage("    UDP cache pruning timeout: %u seconds\n", common->udp_cache_pruning_timeout);
-        LogMessage("    UDP cache nominal timeout: %u seconds\n", common->udp_cache_nominal_timeout);
+        LogMessage("    UDP cache pruning timeout: %u seconds\n", config->udp_cache_pruning_timeout);
+        LogMessage("    UDP cache nominal timeout: %u seconds\n", config->udp_cache_nominal_timeout);
     }
-    LogMessage("    Track ICMP sessions: %s\n",
-        config->track_icmp_sessions == S5_TRACK_YES ?
-        "ACTIVE" : "INACTIVE");
-    if (config->track_icmp_sessions == S5_TRACK_YES)
-        LogMessage("    Max ICMP sessions: %u\n",
-            common->max_icmp_sessions);
-    LogMessage("    Track IP sessions: %s\n",
-        config->track_ip_sessions == S5_TRACK_YES ?
-        "ACTIVE" : "INACTIVE");
-    if (config->track_ip_sessions == S5_TRACK_YES)
-        LogMessage("    Max IP sessions: %u\n",
-            common->max_ip_sessions);
+    LogMessage("Max ICMP sessions: %u\n", config->max_icmp_sessions);
+    LogMessage("Max IP sessions: %u\n", config->max_ip_sessions);
+
     if (config->prune_log_max)
     {
         LogMessage("    Log info if session memory consumption exceeds %d\n",
@@ -560,7 +468,7 @@ void Stream5PrintGlobalConfig(Stream5Config* s5)
     // FIXIT need global->enable_ha?
 #ifdef ENABLE_HA
     LogMessage("    High Availability: %s\n",
-        common->ha_config ? "ENABLED" : "DISABLED");
+        config->ha_config ? "ENABLED" : "DISABLED");
 #endif
 #endif
 #ifdef REG_TEST

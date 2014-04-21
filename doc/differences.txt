@@ -6,6 +6,7 @@ Snort++ differs from Snort in the following ways:
   (eg: no upper bounds on memcaps)
 * assume the simplest mode of operation
   (eg: never assume input from or output to some hardcoded filename)
+* all Snort config options are grouped into Snort++ modules
 
 === Build Options
 
@@ -66,6 +67,7 @@ Snort++ differs from Snort in the following ways:
 * deleted unused http_inspect stateful mode
 * deleted stateless inspection from ftp and telnet
 * deleted http and ftp alert options (now strictly rule based)
+* preprocessor disabled settings deleted since no longer relevant
 
 === Rules
 

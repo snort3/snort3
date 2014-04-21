@@ -823,7 +823,7 @@ static const InspectApi hs_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &hg_api,
+    &hg_api.base,
     &hs_api.base,
     nullptr
 };

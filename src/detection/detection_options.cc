@@ -1070,7 +1070,9 @@ void free_detection_option_root(void **existing_tree)
 
     root = (detection_option_tree_root_t*)*existing_tree; 
     free(root->children);
+#ifdef PPM_MGR
     free(root->state);
+#endif
     free(root);
     *existing_tree = NULL;
 }

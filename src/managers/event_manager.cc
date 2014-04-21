@@ -73,6 +73,9 @@ static OutputSet s_alerters;
 static OutputSet s_loggers;
 static OutputSet s_unified;
 
+bool EventManager::alert_enabled = true;
+bool EventManager::log_enabled = true;
+
 //-------------------------------------------------------------------------
 // output plugins
 //-------------------------------------------------------------------------
@@ -148,21 +151,28 @@ void EventManager::copy_outputs(OutputSet* dst, OutputSet* src)
 //-------------------------------------------------------------------------
 // configuration
 
-static void instantiate(
+void EventManager::instantiate(
     Output* p, Module* mod, SnortConfig* sc)
 {
     p->handler = p->api->ctor(sc, mod);
 
     if ( (p->api->flags & OUTPUT_TYPE_FLAG__ALERT) &&
         (p->api->flags & OUTPUT_TYPE_FLAG__LOG) )
-        s_unified.outputs.push_back(p->handler);
-
+    {
+        if ( alert_enabled && log_enabled )
+            s_unified.outputs.push_back(p->handler);
+    }
     else if ( p->api->flags & OUTPUT_TYPE_FLAG__ALERT )
-        s_alerters.outputs.push_back(p->handler);
+    {
+        if ( alert_enabled )
+            s_alerters.outputs.push_back(p->handler);
+    }
 
     else if ( p->api->flags & OUTPUT_TYPE_FLAG__LOG )
-        s_loggers.outputs.push_back(p->handler);
-
+    {
+        if ( log_enabled )
+            s_loggers.outputs.push_back(p->handler);
+    }
     else
         FatalError("logger has no type %s\n", p->api->base.name);
 }
@@ -187,7 +197,7 @@ void EventManager::instantiate(
     s_loggers.outputs.clear();
     s_unified.outputs.clear();
 
-    ::instantiate(p, mod, sc);
+    instantiate(p, mod, sc);
 }
 
 // conf outputs
@@ -195,7 +205,7 @@ void EventManager::instantiate(
     const LogApi* api, Module* mod, SnortConfig* sc)
 {
     Output* p = get_out(api->base.name);
-    ::instantiate(p, mod, sc);
+    instantiate(p, mod, sc);
 }
 
 void EventManager::configure_outputs(SnortConfig*)

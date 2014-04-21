@@ -57,6 +57,8 @@ class SnortConfig;
 // stream_global module
 //-------------------------------------------------------------------------
 
+struct Stream5GlobalConfig;
+
 class StreamGlobalModule : public Module
 {
 public:
@@ -64,11 +66,18 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
+
+    Stream5GlobalConfig* get_data();
+
+private:
+    Stream5GlobalConfig* config;
 };
 
 //-------------------------------------------------------------------------
 // stream_ip module
 //-------------------------------------------------------------------------
+
+struct Stream5IpConfig;
 
 class StreamIpModule : public Module
 {
@@ -77,11 +86,18 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
+
+    Stream5IpConfig* get_data();
+
+private:
+    Stream5IpConfig* config;
 };
 
 //-------------------------------------------------------------------------
 // stream_icmp module
 //-------------------------------------------------------------------------
+
+struct Stream5IcmpConfig;
 
 class StreamIcmpModule : public Module
 {
@@ -90,11 +106,18 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
+
+    Stream5IcmpConfig* get_data();
+
+private:
+    Stream5IcmpConfig* config;
 };
 
 //-------------------------------------------------------------------------
 // stream_udp module
 //-------------------------------------------------------------------------
+
+struct Stream5UdpConfig;
 
 class StreamUdpModule : public Module
 {
@@ -103,11 +126,18 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
+
+    Stream5UdpConfig* get_data();
+
+private:
+    Stream5UdpConfig* config;
 };
 
 //-------------------------------------------------------------------------
 // stream_tcp module
 //-------------------------------------------------------------------------
+
+struct Stream5TcpConfig;
 
 class StreamTcpModule : public Module
 {
@@ -119,6 +149,11 @@ public:
 
     unsigned get_gid() const
     { return GID_STREAM_TCP; };
+
+    Stream5TcpConfig* get_data();
+
+private:
+    Stream5TcpConfig* config;
 };
 
 #endif

@@ -29,6 +29,8 @@
 #include "config.h"
 #endif
 
+typedef uint16_t Port;
+
 /* if PRIu64 isn't in <inttypes.h>
  * we define it and similar here */
 #ifndef PRIu64

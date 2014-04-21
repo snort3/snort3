@@ -27,6 +27,31 @@
 // stream_global module
 //-------------------------------------------------------------------------
 
+static const Parameter stream_cache_params[] =
+{
+    { "idle_timeout", Parameter::PT_INT, "1:", nullptr,
+      "maximum inactive time before retiring session tracker" },
+
+    { "pruning_timeout", Parameter::PT_INT, "1:", nullptr,
+      "minimum inactive time before being eligible for pruning" },
+
+    { "max_sessions", Parameter::PT_INT, "0:", "262144",
+      "maximum simultaneous tcp sessions tracked before pruning" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter stream_response_params[] =
+{
+    { "max_responses", Parameter::PT_INT, "0:", nullptr,
+      "maximum inactive time before retiring session tracker" },
+
+    { "min_interval", Parameter::PT_INT, "1:", nullptr,
+      "minimum inactive time before being eligible for pruning" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter stream_global_params[] =
 {
     { "memcap", Parameter::PT_INT, "32768", "deflt",
@@ -41,29 +66,20 @@ static const Parameter stream_global_params[] =
     { "paf_max", Parameter::PT_INT, "1460:63780", "16384",
       "help" },
 
-    { "track_tcp", Parameter::PT_BOOL, nullptr, "true",
-      "track tcp sessions" },
+    { "tcp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
+      "configure tcp cache limits" },
 
-    { "max_tcp", Parameter::PT_INT, "1:", "262144",
-      "maximum simultaneous tcp sessions tracked before pruning" },
+    { "udp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
+      "configure udp cache limits" },
 
-    { "track_udp", Parameter::PT_BOOL, nullptr, "true",
-      "track udp sessions" },
+    { "icmp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
+      "configure icmp cache limits" },
 
-    { "max_udp", Parameter::PT_INT, "1:", "131072",
-      "maximum simultaneous udp sessions tracked before pruning" },
+    { "ip_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
+      "configure ip cache limits" },
 
-    { "track_icmp", Parameter::PT_BOOL, nullptr, "false",
-      "track icmp sessions" },
-
-    { "max_icmp", Parameter::PT_INT, "1:", "65536",
-      "maximum simultaneous icmp sessions tracked before pruning" },
-
-    { "track_ip", Parameter::PT_BOOL, nullptr, "false",
-      "track ip sessions" },
-
-    { "max_ip", Parameter::PT_INT, "1:", "16384",
-      "maximum simultaneous ip sessions tracked before pruning" },
+    { "active_response", Parameter::PT_TABLE, nullptr, stream_response_params,
+      "configure tcp resets and icmp unreachables" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -75,6 +91,13 @@ static const RuleMap stream_global_rules[] =
 
 StreamGlobalModule::StreamGlobalModule() :
     Module("stream_global", stream_global_params, stream_global_rules) { }
+
+Stream5GlobalConfig* StreamGlobalModule::get_data()
+{
+    Stream5GlobalConfig* temp = config;
+    config = nullptr;
+    return temp;
+}
 
 bool StreamGlobalModule::set(const char*, Value&, SnortConfig*)
 {
@@ -118,6 +141,13 @@ static const RuleMap stream_ip_rules[] =
 StreamIpModule::StreamIpModule() :
     Module("stream_ip", stream_ip_params, stream_ip_rules) { }
 
+Stream5IpConfig* StreamIpModule::get_data()
+{
+    Stream5IpConfig* temp = config;
+    config = nullptr;
+    return temp;
+}
+
 bool StreamIpModule::set(const char*, Value&, SnortConfig*)
 {
     return true;
@@ -152,6 +182,13 @@ static const RuleMap stream_icmp_rules[] =
 
 StreamIcmpModule::StreamIcmpModule() :
     Module("stream_icmp", stream_icmp_params, stream_icmp_rules) { }
+
+Stream5IcmpConfig* StreamIcmpModule::get_data()
+{
+    Stream5IcmpConfig* temp = config;
+    config = nullptr;
+    return temp;
+}
 
 bool StreamIcmpModule::set(const char*, Value&, SnortConfig*)
 {
@@ -190,6 +227,13 @@ static const RuleMap stream_udp_rules[] =
 
 StreamUdpModule::StreamUdpModule() :
     Module("stream_udp", stream_udp_params, stream_udp_rules) { }
+
+Stream5UdpConfig* StreamUdpModule::get_data()
+{
+    Stream5UdpConfig* temp = config;
+    config = nullptr;
+    return temp;
+}
 
 bool StreamUdpModule::set(const char*, Value&, SnortConfig*)
 {
@@ -373,6 +417,13 @@ static const RuleMap stream_tcp_rules[] =
 
 StreamTcpModule::StreamTcpModule() :
     Module("stream_tcp", stream_tcp_params, stream_tcp_rules) { }
+
+Stream5TcpConfig* StreamTcpModule::get_data()
+{
+    Stream5TcpConfig* temp = config;
+    config = nullptr;
+    return temp;
+}
 
 bool StreamTcpModule::set(const char*, Value&, SnortConfig*)
 {

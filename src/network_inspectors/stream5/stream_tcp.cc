@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@
  */
 
 #include "stream_tcp.h"
+#include "tcp_config.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -366,86 +367,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define tcp_server_port flow->server_port
 
 /*  D A T A  S T R U C T U R E S  ***********************************/
-
-typedef struct _FlushMgr
-{
-    uint32_t   flush_pt;
-    uint16_t   last_count;
-    uint16_t   last_size;
-    uint8_t    flush_policy;
-    uint8_t    flush_type;
-    uint8_t    auto_disable;
-    //uint8_t    spare;
-
-} FlushMgr;
-
-typedef struct _FlushConfig
-{
-    FlushMgr client;
-    FlushMgr server;
-    //SF_LIST *dynamic_policy;
-    uint8_t configured;
-} FlushConfig;
-
-#ifndef DYNAMIC_RANDOM_FLUSH_POINTS
-typedef struct _FlushPointList
-{
-    uint8_t    current;
-    uint8_t    initialized;
-
-    uint32_t   flush_range;
-    uint32_t   flush_base;  /* Set as value - range/2 */
-    /* flush_pt is split evently on either side of flush_value, within
-     * the flush_range.  flush_pt can be from:
-     * (flush_value - flush_range/2) to (flush_value + flush_range/2)
-     *
-     * For example:
-     * flush_value = 192
-     * flush_range = 128
-     * flush_pt will vary from 128 to 256
-     */
-    uint32_t *flush_points;
-
-} FlushPointList;
-#endif
-
-typedef struct _Stream5TcpPolicy
-{
-    uint16_t   policy;
-    uint16_t   reassembly_policy;
-    uint16_t   flags;
-    uint16_t   flush_factor;
-
-    uint32_t   session_timeout;
-    uint32_t   max_window;
-    uint32_t   overlap_limit;
-    uint32_t   hs_timeout;
-
-    uint32_t   max_queued_bytes;
-    uint32_t   max_queued_segs;
-
-    uint32_t   max_consec_small_segs;
-    uint32_t   max_consec_small_seg_size;
-
-    FlushConfig flush_config[MAX_PORTS];
-    FlushConfig flush_config_protocol[MAX_PROTOCOL_ORDINAL];
-#ifndef DYNAMIC_RANDOM_FLUSH_POINTS
-    FlushPointList flush_point_list;
-#endif
-
-    char       small_seg_ignore[MAX_PORTS/8];
-
-    struct _Stream5TcpConfig* config;
-} Stream5TcpPolicy;
-
-struct Stream5TcpConfig
-{
-    Stream5TcpPolicy* policy;
-    void* paf_config;
-
-    uint16_t session_on_syn;
-    uint16_t port_filter[MAX_PORTS + 1];
-};
 
 typedef struct _TcpDataBlock
 {
@@ -1453,10 +1374,6 @@ static void Stream5ParseTcpArgs(
                 }
                 max_s_toks = 2;
             }
-            else if(!strcasecmp(stoks[0], "detect_anomalies"))
-            {
-                s5TcpPolicy->flags |=  STREAM5_CONFIG_ENABLE_ALERTS;
-            }
             else if(!strcasecmp(stoks[0], "policy"))
             {
                 s5TcpPolicy->policy = StreamPolicyIdFromName(stoks[1]);
@@ -1545,14 +1462,6 @@ static void Stream5ParseTcpArgs(
                         s5TcpPolicy->flush_factor, S5_MAX_FLUSH_FACTOR);
                 }
                 max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "dont_store_large_packets"))
-            {
-                s5TcpPolicy->flags |= STREAM5_CONFIG_PERFORMANCE;
-            }
-            else if(!strcasecmp(stoks[0], "check_session_hijacking"))
-            {
-                s5TcpPolicy->flags |= STREAM5_CONFIG_CHECK_SESSION_HIJACKING;
             }
             else if(!strcasecmp(stoks[0], "ignore_any_rules"))
             {
@@ -2047,21 +1956,9 @@ static void Stream5PrintTcpConfig(Stream5TcpPolicy *s5TcpPolicy)
                     s5TcpPolicy->hs_timeout);
             }
         }
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS)
-        {
-            LogMessage("        Detect Anomalies: YES\n");
-        }
         if (s5TcpPolicy->flags & STREAM5_CONFIG_STATIC_FLUSHPOINTS)
         {
             LogMessage("        Static Flushpoint Sizes: YES\n");
-        }
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_PERFORMANCE)
-        {
-            LogMessage("        Don't Queue Large Packets for Reassembly: YES\n");
-        }
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_CHECK_SESSION_HIJACKING)
-        {
-            LogMessage("        Check for TCP Session Hijacking: YES\n");
         }
         if (s5TcpPolicy->flags & STREAM5_CONFIG_IGNORE_ANY)
         {
@@ -2295,183 +2192,111 @@ static inline void Discard ()
     ssnStats.discards++;
 }
 
-static inline void EventSynOnEst(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventSynOnEst(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SYN_ON_EST);
+    ssnStats.events++;
 }
 
-static inline void EventExcessiveOverlap(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventExcessiveOverlap(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS);
+    ssnStats.events++;
 }
 
-static inline void EventBadTimestamp(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventBadTimestamp(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_TIMESTAMP);
+    ssnStats.events++;
 }
 
-static inline void EventWindowTooLarge(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventWindowTooLarge(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_TOO_LARGE);
+    ssnStats.events++;
 }
 
-static inline void EventDataOnSyn(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventDataOnSyn(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_SYN);
+    ssnStats.events++;
 }
 
-static inline void EventDataOnClosed(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventDataOnClosed(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_CLOSED);
+    ssnStats.events++;
 }
 
-static inline void EventDataAfterReset(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventDataAfterReset(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RESET);
+    ssnStats.events++;
 }
 
-static inline void EventBadSegment(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventBadSegment(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_SEGMENT);
+    ssnStats.events++;
 }
 
-static inline void EventSessionHijackedClient(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventSessionHijackedClient(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_CLIENT);
-}
-static inline void EventSessionHijackedServer(Stream5TcpPolicy *s5TcpPolicy)
-{
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
     ssnStats.events++;
-
+}
+static inline void EventSessionHijackedServer(Stream5TcpPolicy*)
+{
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_SERVER);
+    ssnStats.events++;
 }
 
-static inline void EventDataWithoutFlags(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventDataWithoutFlags(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_WITHOUT_FLAGS);
+    ssnStats.events++;
 }
 
-static inline void EventMaxSmallSegsExceeded(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventMaxSmallSegsExceeded(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SMALL_SEGMENT);
+    ssnStats.events++;
 }
 
-static inline void Event4whs(Stream5TcpPolicy *s5TcpPolicy)
+static inline void Event4whs(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_4WAY_HANDSHAKE);
+    ssnStats.events++;
 }
 
-static inline void EventNoTimestamp(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventNoTimestamp(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_TIMESTAMP);
+    ssnStats.events++;
 }
 
-static inline void EventBadReset(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventBadReset(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_RST);
+    ssnStats.events++;
 }
 
-static inline void EventBadFin(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventBadFin(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_FIN);
+    ssnStats.events++;
 }
 
-static inline void EventBadAck(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventBadAck(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_ACK);
+    ssnStats.events++;
 }
 
-static inline void EventDataAfterRstRcvd(Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventDataAfterRstRcvd(Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RST_RCVD);
+    ssnStats.events++;
 }
 
 static inline void EventInternal (uint32_t eventSid)
@@ -2487,24 +2312,16 @@ static inline void EventInternal (uint32_t eventSid)
     SnortEventqAdd(GENERATOR_INTERNAL, eventSid);
 }
 
-static inline void EventWindowSlam (Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventWindowSlam (Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_SLAM);
+    ssnStats.events++;
 }
 
-static inline void EventNo3whs (Stream5TcpPolicy *s5TcpPolicy)
+static inline void EventNo3whs (Stream5TcpPolicy*)
 {
-    if(!(s5TcpPolicy->flags & STREAM5_CONFIG_ENABLE_ALERTS))
-        return;
-
-    ssnStats.events++;
-
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_3WHS);
+    ssnStats.events++;
 }
 
 /*
@@ -3190,10 +3007,10 @@ void tcp_sinit(Stream5Config* s5)
 {
     s5_pkt = Encode_New();
 
-    if ( !s5->common->tcp_mem_cap )
-        s5->common->tcp_mem_cap = S5_DEFAULT_MEMCAP;
+    if ( !s5->global_config->tcp_mem_cap )
+        s5->global_config->tcp_mem_cap = S5_DEFAULT_MEMCAP;
 
-    tcp_memcap = new Memcap(s5->common->tcp_mem_cap);
+    tcp_memcap = new Memcap(s5->global_config->tcp_mem_cap);
 }
 
 void tcp_sterm()
@@ -4504,27 +4321,6 @@ static void FinishServerInit(Packet *p, TcpDataBlock *tdb, TcpSession *ssn)
 #endif
 }
 
-static inline int IgnoreLargePkt(StreamTracker *st, Packet *p, TcpDataBlock*)
-{
-    if((st->flush_mgr.flush_policy == STREAM_FLPOLICY_FOOTPRINT) &&
-       (st->tcp_policy->flags & STREAM5_CONFIG_PERFORMANCE))
-    {
-        if ((p->dsize > st->flush_mgr.flush_pt * 2) &&
-            (st->seg_count == 0))
-        {
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "WARNING: Data larger than twice flushpoint.  Not "
-                "inserting for reassembly: size %d!\n"
-                "This is a tradeoff of performance versus the remote "
-                "possibility of catching an exploit that spans two or "
-                "more consecuvitve large packets.\n",
-                p->dsize););
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static void NewQueue(
     StreamTracker *st, Packet *p, TcpDataBlock *tdb)
 {
@@ -4540,12 +4336,6 @@ static void NewQueue(
     if(st->flush_mgr.flush_policy != STREAM_FLPOLICY_IGNORE)
     {
         uint32_t seq = tdb->seq;
-
-        /* Check if we should not insert a large packet */
-        if (IgnoreLargePkt(st, p, tdb))
-        {
-            return;
-        }
 
         if ( p->tcph->th_flags & TH_SYN )
             seq++;
@@ -4894,14 +4684,6 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                 "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"););
 
     PREPROC_PROFILE_START(s5TcpInsertPerfStats);
-
-    /* Check if we should not insert a large packet */
-    if (IgnoreLargePkt(st, p, tdb))
-    {
-        // NORM should ignore large pkt be disabled for stream normalization?
-        // if not, how to normalize ignored large packets?
-        return ret;
-    }
 
     // NORM fast tracks are in sequence - no norms
     if(st->seglist_tail && SegmentFastTrack(st->seglist_tail, tdb))
@@ -5805,45 +5587,49 @@ static void SetOSPolicy(TcpSession *tcpssn)
     }
 }
 
-static inline int ValidMacAddress(StreamTracker *talker,
-                                  StreamTracker *listener,
-                                  Packet *p)
+/* Use a for loop and byte comparison, which has proven to be
+ * faster on pipelined architectures compared to a memcmp (setup
+ * for memcmp is slow).  Not using a 4 byte and 2 byte long because
+ * there is no guarantee of memory alignment (and thus performance
+ * issues similar to memcmp). */
+static inline int ValidMacAddress(
+    StreamTracker *talker, StreamTracker *listener, Packet *p)
 {
-    int i;
-    int ret = 0;
+    int i, j, ret = 0;
 
     if (p->eh == NULL)
         return 0;
 
-    /* Use a for loop and byte comparison, which has proven to be
-     * faster on pipelined architectures compared to a memcmp (setup
-     * for memcmp is slow).  Not using a 4 byte and 2 byte long because
-     * there is no guaranttee of memory alignment (and thus performance
-     * issues similar to memcmp). */
-    for (i=0;i<6;i++)
+    for ( i = 0; i < 6; ++i )
     {
         if ((talker->mac_addr[i] != p->eh->ether_src[i]))
-        {
-            if (p->packet_flags & PKT_FROM_CLIENT)
-                ret |= EVENT_SESSION_HIJACK_CLIENT;
-            else
-                ret |= EVENT_SESSION_HIJACK_SERVER;
-        }
+            break;
+    }
+    for ( j = 0; j < 6; ++j )
+    {
+        if (listener->mac_addr[j] != p->eh->ether_dst[j])
+            break;
+    }
 
-        if (listener->mac_addr[i] != p->eh->ether_dst[i])
-        {
-            if (p->packet_flags & PKT_FROM_CLIENT)
-                ret |= EVENT_SESSION_HIJACK_SERVER;
-            else
-                ret |= EVENT_SESSION_HIJACK_CLIENT;
-        }
+    if ( i < 6 )
+    {
+        if (p->packet_flags & PKT_FROM_CLIENT)
+            ret |= EVENT_SESSION_HIJACK_CLIENT;
+        else
+            ret |= EVENT_SESSION_HIJACK_SERVER;
+    }
+    if ( j < 6 )
+    {
+        if (p->packet_flags & PKT_FROM_CLIENT)
+            ret |= EVENT_SESSION_HIJACK_SERVER;
+        else
+            ret |= EVENT_SESSION_HIJACK_CLIENT;
     }
     return ret;
 }
 
-static inline void CopyMacAddr(Packet *p,
-                                 TcpSession *tcpssn,
-                                 int dir)
+static inline void CopyMacAddr(
+    Packet *p, TcpSession *tcpssn, int dir)
 {
     int i;
 
@@ -6894,10 +6680,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
      * that were recorded at session startup.
      */
 #ifdef DAQ_PKT_FLAG_PRE_ROUTING
-    if (!(p->pkth->flags & DAQ_PKT_FLAG_PRE_ROUTING) &&
-        listener->tcp_policy->flags & STREAM5_CONFIG_CHECK_SESSION_HIJACKING)
-#else
-    if (listener->tcp_policy->flags & STREAM5_CONFIG_CHECK_SESSION_HIJACKING)
+    if ( !(p->pkth->flags & DAQ_PKT_FLAG_PRE_ROUTING) )
 #endif
     {
         eventcode |= ValidMacAddress(talker, listener, p);

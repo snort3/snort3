@@ -274,16 +274,16 @@ void FlowControl::process(
 //-------------------------------------------------------------------------
 
 #ifdef ENABLE_HA
-#define enable_ha(pc) pc->ha_config
+#define enable_ha(s5) s5->ha_config
 #else
-#define enable_ha(pc) false
+#define enable_ha(s5) false
 #endif
 
 void FlowControl::init_tcp(const Stream5Config* s5)
 {
-    const S5Common* pc = s5->common;
+    const Stream5GlobalConfig* pc = s5->global_config;
 
-    if ( !s5->global_config->track_tcp_sessions )
+    if ( !pc->max_tcp_sessions )
     {
         tcp_cache = nullptr;
         return;
@@ -294,7 +294,7 @@ void FlowControl::init_tcp(const Stream5Config* s5)
 
     for ( unsigned i = 0; i < pc->max_tcp_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_TCP, enable_ha(pc));
+        Flow* flow = new Flow(IPPROTO_TCP, enable_ha(s5));
         flow->session = get_tcp_session(flow);
         tcp_cache->push(flow);
     }
@@ -314,9 +314,9 @@ void FlowControl::process_tcp(Stream5Config* config, Packet* p)
 
 void FlowControl::init_udp(const Stream5Config* s5)
 {
-    const S5Common* pc = s5->common;
+    const Stream5GlobalConfig* pc = s5->global_config;
 
-    if ( !s5->global_config->track_udp_sessions )
+    if ( !pc->max_udp_sessions )
     {
         udp_cache = nullptr;
         return;
@@ -327,7 +327,7 @@ void FlowControl::init_udp(const Stream5Config* s5)
 
     for ( unsigned i = 0; i < pc->max_udp_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_UDP, enable_ha(pc));
+        Flow* flow = new Flow(IPPROTO_UDP, enable_ha(s5));
         flow->session = get_udp_session(flow);
         udp_cache->push(flow);
     }
@@ -347,9 +347,9 @@ void FlowControl::process_udp(Stream5Config* config, Packet* p)
 
 void FlowControl::init_icmp(const Stream5Config* s5)
 {
-    const S5Common* pc = s5->common;
+    const Stream5GlobalConfig* pc = s5->global_config;
 
-    if ( !s5->global_config->track_icmp_sessions )
+    if ( !pc->max_icmp_sessions )
     {
         icmp_cache = nullptr;
         return;
@@ -358,7 +358,7 @@ void FlowControl::init_icmp(const Stream5Config* s5)
 
     for ( unsigned i = 0; i < pc->max_icmp_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_ICMP, enable_ha(pc));
+        Flow* flow = new Flow(IPPROTO_ICMP, enable_ha(s5));
         flow->session = get_icmp_session(flow);
         icmp_cache->push(flow);
     }
@@ -369,7 +369,7 @@ void FlowControl::process_icmp(Stream5Config* config, Packet* p)
     if ( !p->icmph )
         return;
 
-    if ( config->global_config->track_icmp_sessions )
+    if ( config->global_config->max_icmp_sessions )
         process(icmp_cache, config, config->icmp_config, p);
 
     else
@@ -382,9 +382,9 @@ void FlowControl::process_icmp(Stream5Config* config, Packet* p)
 
 void FlowControl::init_ip(const Stream5Config* s5)
 {
-    const S5Common* pc = s5->common;
+    const Stream5GlobalConfig* pc = s5->global_config;
 
-    if ( !s5->global_config->track_ip_sessions )
+    if ( !pc->max_ip_sessions )
     {
         ip_cache = nullptr;
         return;
@@ -393,7 +393,7 @@ void FlowControl::init_ip(const Stream5Config* s5)
 
     for ( unsigned i = 0; i < pc->max_ip_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_IP, enable_ha(pc));
+        Flow* flow = new Flow(IPPROTO_IP, enable_ha(s5));
         flow->session = get_ip_session(flow);
         ip_cache->push(flow);
     }
@@ -414,8 +414,8 @@ void FlowControl::process_ip(Stream5Config* config, Packet* p)
 void FlowControl::init_exp(const Stream5Config* config)
 {
     uint32_t max =
-        config->common->max_tcp_sessions +
-        config->common->max_udp_sessions;
+        config->global_config->max_tcp_sessions +
+        config->global_config->max_udp_sessions;
 
     max >>= 9;
     if ( !max )

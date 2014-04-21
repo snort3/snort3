@@ -45,7 +45,7 @@
 
 #include "ftpp_include.h"
 
-typedef struct s_FTP_CLIENT_REQ
+struct FTP_CLIENT_REQ
 {
     const char *cmd_line;
     unsigned int  cmd_line_size;
@@ -60,14 +60,13 @@ typedef struct s_FTP_CLIENT_REQ
 
     const char *pipeline_req;
 
-}  FTP_CLIENT_REQ;
+};
 
-typedef struct s_FTP_CLIENT
+struct FTP_CLIENT
 {
     FTP_CLIENT_REQ request;
     int (*state)(void *, unsigned char, int);
-
-}  FTP_CLIENT;
+};
 
 int ftp_client_inspection(void *session, unsigned char *data, int dsize);
 

@@ -62,6 +62,15 @@ public:
 
     static void call_alerters(OutputSet*, Packet*, const char* message, struct _Event*);
     static void call_loggers(OutputSet*, Packet*, const char* message, struct _Event*);
+
+    static void enable_alerts(bool b) { alert_enabled = b; };
+    static void enable_logs(bool b) { log_enabled = b; };
+
+private:
+    static void instantiate(struct Output*, Module*, SnortConfig*);
+
+    static bool alert_enabled;
+    static bool log_enabled;
 };
 
 #endif

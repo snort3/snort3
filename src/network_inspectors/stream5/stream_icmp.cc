@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  ****************************************************************************/
+
 #include "stream_icmp.h"
+#include "icmp_config.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -57,17 +59,6 @@ static PreprocStats* icmp_get_profile(const char* key)
 
 static SessionStats gicmpStats;
 static THREAD_LOCAL SessionStats icmpStats;
-
-typedef struct _Stream5IcmpPolicy
-{
-    uint32_t   session_timeout;
-
-} Stream5IcmpPolicy;
-
-struct Stream5IcmpConfig
-{
-    Stream5IcmpPolicy default_policy;
-};
 
 class IcmpSession : public Session
 {

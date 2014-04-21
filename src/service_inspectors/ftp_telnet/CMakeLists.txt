@@ -2,32 +2,44 @@
 
 
 set (FILE_LIST
-    ft_module.cc
-    ft_module.h
-    ftp_telnet.cc
-    ftp_bounce_lookup.cc 
+    ft_main.cc
+    ft_main.h
+    ftp.cc
+    ftp_bounce_lookup.cc
     ftp_bounce_lookup.h
     ftp_client.h
     ftp_cmd_lookup.cc
     ftp_cmd_lookup.h
+    ftp_module.cc
+    ftp_module.h
+    ftp_parse.cc
+    ftp_parse.h
+    ftp_print.cc
+    ftp_print.h
+    ftp_server.h
     ftpp_include.h
     ftpp_return_codes.h
-    ftpp_si.cc 
+    ftpp_si.cc
     ftpp_si.h
+    ftpp_ui_client_lookup.cc
+    ftpp_ui_client_lookup.h
     ftpp_ui_config.cc
     ftpp_ui_config.h
-    ftp_server.h
+    ftpp_ui_server_lookup.cc
+    ftpp_ui_server_lookup.h
+    ftpp_util_kmap.h
     hi_util_kmap.cc
     hi_util_kmap.h
     hi_util_xmalloc.cc
     hi_util_xmalloc.h
-    pp_ftp.cc 
+    pp_ftp.cc
     pp_ftp.h
-    pp_telnet.cc 
+    pp_telnet.cc
     pp_telnet.h
-    ftpp_util_kmap.h
-    ft_main.h
-    ft_main.cc
+    telnet.cc
+    telnet.h
+    telnet_module.cc
+    telnet_module.h
 )
 
 

@@ -8,6 +8,10 @@ x_include_HEADERS = \
 stream_api.h
 
 libstream_a_SOURCES = \
+icmp_config.h \
+ip_config.h \
+tcp_config.h \
+tcp_config.h \
 stream.cc \
 stream_common.h \
 stream_global.cc stream_global.h \

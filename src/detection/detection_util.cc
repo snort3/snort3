@@ -52,10 +52,10 @@ const char* http_buffer_name[HTTP_BUFFER_MAX] =
     "http_method",
     "http_cookie",
     "http_stat_code",
-    "http_stat_msg"
+    "http_stat_msg",
     "http_raw_uri",
     "http_raw_header",
-    "http_raw_cookie",
+    "http_raw_cookie"
 };
 
 #define LOG_CHARS 16

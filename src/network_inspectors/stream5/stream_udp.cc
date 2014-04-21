@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
  ****************************************************************************/
 
 #include "stream_udp.h"
+#include "udp_config.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -70,19 +71,6 @@ static THREAD_LOCAL SessionStats udpStats;
 #define udp_sender_port flow->client_port
 #define udp_responder_ip flow->server_ip
 #define udp_responder_port flow->server_port
-
-typedef struct _Stream5UdpPolicy
-{
-    uint32_t   session_timeout;
-    uint16_t   flags;
-
-} Stream5UdpPolicy;
-
-struct Stream5UdpConfig
-{
-    Stream5UdpPolicy* policy;
-    uint16_t port_filter[MAX_PORTS + 1];
-};
 
 class UdpSession : public Session
 {
