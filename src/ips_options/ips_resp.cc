@@ -56,7 +56,6 @@
 
 #include "snort_types.h"
 #include "snort_bounds.h"
-#include "checksum.h"
 #include "snort_debug.h"
 #include "decode.h"
 #include "encode.h"

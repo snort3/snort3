@@ -28,5 +28,6 @@ target_link_libraries(parser
     protocols
     time
     stream
+    codecs
 )
 

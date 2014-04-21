@@ -20,7 +20,7 @@ add_library( time  STATIC
 
 
 install (FILES ${TIME_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/time"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/time"
 )
 
 

@@ -60,7 +60,6 @@
 #include "event_wrapper.h"
 #include "util.h"
 #include "ipobj.h"
-#include "checksum.h"
 #include "packet_time.h"
 #include "snort.h"
 #include "filters/sfthreshold.h"
@@ -403,7 +402,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     else
     {
         if ( g_tmp_pkt->raw_ip6h )
-            ((IP6RawHdr*)g_tmp_pkt->raw_ip6h)->ip6nxt = IPPROTO_PS;
+            ((ipv6::IP6RawHdr*)g_tmp_pkt->raw_ip6h)->ip6nxt = IPPROTO_PS;
         g_tmp_pkt->inner_ip6h.next = IPPROTO_PS;
         g_tmp_pkt->ip6h = &g_tmp_pkt->inner_ip6h;
     }

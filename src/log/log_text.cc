@@ -51,6 +51,18 @@
 
 #include "sfip/sf_ip.h"
 
+#include "protocols/ipv4.h"
+#include "protocols/ipv6.h"
+#include "protocols/icmp6.h"
+#include "protocols/icmp4.h"
+#include "protocols/wlan.h"
+
+#ifdef HAVE_DUMBNET_H
+#include <dumbnet.h>
+#else
+#include <dnet.h>
+#endif
+
 /*--------------------------------------------------------------------
  * utility functions
  *--------------------------------------------------------------------
@@ -771,14 +783,14 @@ static void LogTcpOptions(TextLog*  log, Packet * p)
                 TextLog_Print(log, "CC %u ", EXTRACT_32BITS(tmp));
                 break;
 
-            case TCPOPT_CCNEW:
+            case TCPOPT_CC_NEW:
                 memset((char*)tmp, 0, sizeof(tmp));
                 if (p->tcp_options[i].data)
                     memcpy(tmp, p->tcp_options[i].data, 4);
                 TextLog_Print(log, "CCNEW: %u ", EXTRACT_32BITS(tmp));
                 break;
 
-            case TCPOPT_CCECHO:
+            case TCPOPT_CC_ECHO:
                 memset((char*)tmp, 0, sizeof(tmp));
                 if (p->tcp_options[i].data)
                     memcpy(tmp, p->tcp_options[i].data, 4);

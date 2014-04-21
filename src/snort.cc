@@ -89,6 +89,7 @@ using namespace std;
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/mpse_manager.h"
+#include "managers/packet_manager.h"
 #include "detection/sfrim.h"
 #include "ppm.h"
 #include "profiler.h"
@@ -351,8 +352,6 @@ static void SnortInit(int argc, char **argv)
 
     if ( snort_conf->output )
         EventManager::instantiate(snort_conf->output, sc);
-
-    InitSynToMulticastDstIp(snort_conf);
 
     {
         // FIXIT AttributeTable::end() is where this should go
@@ -635,7 +634,6 @@ static void SnortCleanup()
 #endif
 
     CleanupProtoNames();
-    SynToMulticastDstIpDestroy();
     cmd_line_term();
     ModuleManager::term();
     PluginManager::release_plugins();

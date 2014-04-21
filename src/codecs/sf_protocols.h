@@ -1,6 +1,6 @@
+/* $Id: sf_protocols.h,v 1.10 2013-02-07 17:51:29 ssturges Exp $ */
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,10 +22,6 @@
 
 #ifndef SF_PROTOCOLS_H
 #define SF_PROTOCOLS_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 typedef enum {
     PROTO_ETH,        // DecodeEthPkt
@@ -99,11 +95,6 @@ typedef enum {
                       // there is nothing to do
                       // DecodeNullPkt - same as DecodeRawPkt
 
-typedef struct {
-    PROTO_ID proto;
-    uint16_t length;
-    uint8_t* start;
-} Layer;
 
 #endif // __PROTOCOLS_H__
 

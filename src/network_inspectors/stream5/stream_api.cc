@@ -44,7 +44,6 @@
 #include "stream_udp.h"
 #include "stream_icmp.h"
 #include "stream_ip.h"
-#include "checksum.h"
 #include "mstring.h"
 #include "parser/ip_addr_set.h"
 #include "decode.h"

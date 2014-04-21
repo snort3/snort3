@@ -1481,7 +1481,7 @@ int fpEvalPacket(Packet *p)
     {
         uint16_t tmp_sp = p->sp;
         uint16_t tmp_dp = p->dp;
-        const UDPHdr *tmp_udph = p->udph;
+        const udp::UDPHdr *tmp_udph = p->udph;
         const uint8_t *tmp_data = p->data;
         int tmp_do_detect_content = do_detect_content;
         uint16_t tmp_dsize = p->dsize;

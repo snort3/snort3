@@ -9,5 +9,5 @@ add_library(actions STATIC
 )
 
 install (FILES ${ACTIONS_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/actions"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/actions"
 )

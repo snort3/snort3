@@ -30,7 +30,7 @@
 
 #define FAILURE -1
 #define SUCCESS 0
-#define IP6_HEADER_LEN 40
+#define IP6_HDR_LEN 40
 
 /* Version is the first four bits of the uint32_t passed in */
 #define IP6_VER(x) \
@@ -403,7 +403,7 @@ void set_callbacks(Packet* p, int family, char orig)
 
 void sfiph_build(Packet *p, const void *hdr, int family)
 {
-    IP6RawHdr *hdr6;
+    ipv6::IP6RawHdr *hdr6;
     IPHdr *hdr4;
 
     if(!p || !hdr)
@@ -439,12 +439,12 @@ void sfiph_build(Packet *p, const void *hdr, int family)
     }
     else
     {
-        hdr6 = (IP6RawHdr*)hdr;
+        hdr6 = (ipv6::IP6RawHdr*)hdr;
 
         /* The struct Snort uses is identical to the actual IP6 struct,
          * with the exception of the IP addresses. Copy over everything but
          * the IPs*/
-        memcpy(&p->inner_ip6h, hdr6, sizeof(IP6RawHdr) - 32);
+        memcpy(&p->inner_ip6h, hdr6, sizeof(ipv6::IP6RawHdr) - 32);
         sfip_set_raw(&p->inner_ip6h.ip_src, &hdr6->ip6_src, family);
         sfip_set_raw(&p->inner_ip6h.ip_dst, &hdr6->ip6_dst, family);
         p->actual_ip_len = ntohs(p->inner_ip6h.len) + IP6_HDR_LEN;
@@ -454,7 +454,7 @@ void sfiph_build(Packet *p, const void *hdr, int family)
 
 void sfiph_orig_build(Packet *p, const void *hdr, int family)
 {
-    IP6RawHdr *hdr6;
+    ipv6::IP6RawHdr *hdr6;
     IPHdr *hdr4;
 
     if(!p || !hdr)
@@ -490,12 +490,12 @@ void sfiph_orig_build(Packet *p, const void *hdr, int family)
     }
     else
     {
-        hdr6 = (IP6RawHdr*)hdr;
+        hdr6 = (ipv6::IP6RawHdr*)hdr;
 
         /* The struct Snort uses is identical to the actual IP6 struct,
          * with the exception of the IP addresses. Copy over everything but
          * the IPs*/
-        memcpy(&p->inner_orig_ip6h, hdr6, sizeof(IP6RawHdr) - 32);
+        memcpy(&p->inner_orig_ip6h, hdr6, sizeof(ipv6::IP6RawHdr) - 32);
         sfip_set_raw(&p->inner_orig_ip6h.ip_src, &hdr6->ip6_src, family);
         sfip_set_raw(&p->inner_orig_ip6h.ip_dst, &hdr6->ip6_dst, family);
         p->actual_ip_len = ntohs(p->inner_orig_ip6h.len) + IP6_HDR_LEN;

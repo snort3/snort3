@@ -1,0 +1,470 @@
+
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+
+/*****************************************************************************/
+/**                                                                         **/
+/** If you want to change any of these options, go to your build directory, **/
+/** and type `ccmake ${PATH_TO_SOURCE}`".  Change your options in the GUI.  **/
+/** Make sure to compile and regenerate the Makefiles when you are done by  **/
+/** either exiting the GUI by typing `c` following by `g`, or by typing     **/
+/** `cmake ${PATH_TO_SOURCE}` from your build directory.                    **/  
+/**                                                                         **/
+/*****************************************************************************/
+
+
+/*  User configured options */
+
+/* include internal inspectors in binary */
+#cmakedefine STATIC_INSPECTORS 1
+
+/* include internal loggers in binary */
+#cmakedefine STATIC_LOGGERS 1
+
+/* include internal ips options in binary */
+#cmakedefine STATIC_IPS_OPTIONS 1
+
+/* include internal inspectors in binary */
+#cmakedefine STATIC_SEARCH_ENGINES 1
+
+/* include internal decoders in binary */
+#cmakedefine STATIC_DECODERS 1
+
+/* built control socket */ 
+#cmakedefine CONTROL_SOCKET 1
+
+/* build side channel */
+#cmakedefine SIDE_CHANNEL 1
+
+/* Workarounds for valgrind testing */
+#cmakedefine VALGRIND_TESTING 1
+
+/* build ppm manager */
+#cmakedefine PPM_MGR 1
+
+/* build ppm manager for readback */
+#cmakedefine PPM_TEST 1
+
+/* enable profiling */
+#cmakedefine PERF_PROFILING 1
+
+/* enable proc stats */
+#cmakedefine LINUX_SMP 1
+
+/* pass packet during initialization */
+#cmakedefine INLINE_FAILOPEN 1
+
+/* enalbe debug messages */
+#cmakedefine DEBUG_MSGS 1
+
+/* enable debug build */
+#cmakedefine DEBUG 1
+
+/* disable assertions */
+#cmakedefine NDEBUG 1
+
+/* enable profiling */
+#cmakedefine PROFILE 1
+
+/* enable sourcefire tweaks */
+#cmakedefine SOURCEFIRE 1
+
+/* do not generate a core file on segfault etc */
+#cmakedefine NOCOREFILE 1
+
+/* enable ha capable build */
+#cmakedefine ENABLE_HA 1
+
+/* do not build non-ethernet decoders */
+#cmakedefine NO_NON_ETHER_DECODER 1
+
+/* enable intel cpm support in build */
+#cmakedefine INTEL_SOFT_CPM 1
+
+/* enable unit tests in build */
+#cmakedefine UNIT_TEST 1
+
+
+/* platform specific foo */
+
+
+
+/*  Header file definitions */
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#cmakedefine HAVE_DLFCN_H
+
+/* Define to 1 if you have the <dnet.h> header file. */
+#cmakedefine HAVE_DNET_H
+
+/* Define to 1 if you have the <dumbnet.h> header file. */
+#cmakedefine HAVE_DUMBNET_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <math.h> header file. */
+#cmakedefine HAVE_MATH_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine HAVE_MEMORY_H
+
+/* Define to 1 if you have the <openssl/sha.h> header file. */
+#cmakedefine HAVE_OPENSSL_SHA_H 1
+
+/* Define to 1 if you have the <paths.h> header file. */
+#cmakedefine HAVE_PATHS_H
+
+/* Define to 1 if you have the <pcre.h> header file. */
+#cmakedefine HAVE_PCRE_H
+
+/* Define to 1 if you have the <pfring.h> header file. */
+#cmakedefine HAVE_PFRING_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/sockio.h> header file. */
+#cmakedefine HAVE_SYS_SOCKIO_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H
+
+/* Define to 1 if you have the <uuid/uuid.h> header file. */
+#cmakedefine HAVE_UUID_UUID_H
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#cmakedefine HAVE_WCHAR_H
+
+/* Define to 1 if you have the <zlib.h> header file. */
+#cmakedefine HAVE_ZLIB_H
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#cmakedefine HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the <libintl.h> header file. */
+#cmakedefine HAVE_LIBINTL_H
+
+/* Define to 1 if you have the <limits.h> header file. */
+#cmakedefine HAVE_LIMITS_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#cmakedefine HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#cmakedefine HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#cmakedefine HAVE_STDDEF_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#cmakedefine HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#cmakedefine HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <syslog.h> header file. */
+#cmakedefine HAVE_SYSLOG_H
+
+
+
+
+/*  Print available system types and their sizes */
+
+
+/* Define to 1 if the system has the type `int16_t'. */
+#cmakedefine HAVE_INT16_T
+
+/* Define to 1 if the system has the type `int32_t'. */
+#cmakedefine HAVE_INT32_T
+
+/* Define to 1 if the system has the type `int64_t'. */
+#cmakedefine HAVE_INT64_T
+
+/* Define to 1 if the system has the type `int8_t'. */
+#cmakedefine HAVE_INT8_T
+
+/* Define to 1 if the system has the type `uint16_t'. */
+#cmakedefine HAVE_UINT16_T
+
+/* Define to 1 if the system has the type `uint32_t'. */
+#cmakedefine HAVE_UINT32_T
+
+/* Define to 1 if the system has the type `uint64_t'. */
+#cmakedefine HAVE_UINT64_T
+
+/* Define to 1 if the system has the type `uint8_t'. */
+#cmakedefine HAVE_UINT8_T
+
+/* Define to 1 if the system has the type `u_int16_t'. */
+#cmakedefine HAVE_U_INT16_T
+
+/* Define to 1 if the system has the type `u_int32_t'. */
+#cmakedefine HAVE_U_INT32_T
+
+/* Define to 1 if the system has the type `u_int64_t'. */
+#cmakedefine HAVE_U_INT64_T
+
+/* Define to 1 if the system has the type `u_int8_t'. */
+#cmakedefine HAVE_U_INT8_T
+
+/* The size of `char', as computed by sizeof. */
+#cmakedefine SIZEOF_CHAR @SIZEOF_CHAR@
+
+/* The size of `int', as computed by sizeof. */
+#cmakedefine SIZEOF_INT @SIZEOF_INT@
+
+/* The size of `long int', as computed by sizeof. */
+#cmakedefine SIZEOF_LONG_INT @SIZEOF_LONG_INT@
+
+/* The size of `long long int', as computed by sizeof. */
+#cmakedefine SIZEOF_LONG_LONG_INT @SIZEOF_LONG_LONG_INT@
+
+/* The size of `short', as computed by sizeof. */
+#cmakedefine SIZEOF_SHORT @SIZEOF_SHORT@
+
+/* The size of `unsigned int', as computed by sizeof. */
+#cmakedefine SIZEOF_UNSIGNED_INT @SIZEOF_UNSIGNED_INT@
+
+/* The size of `unsigned long int', as computed by sizeof. */
+#cmakedefine SIZEOF_UNSIGNED_LONG_INT @SIZEOF_UNSIGNED_LONG_INT@
+
+/* The size of `unsigned long long int', as computed by sizeof. */
+#cmakedefine SIZEOF_UNSIGNED_LONG_LONG_INT @SIZEOF_UNSIGNED_LONG_LONG_INT@
+
+
+
+
+/*  Define available functions */
+
+/*  Define available libraries */
+
+
+/****************************************************************************************/
+
+
+
+
+
+/* Define if building universal (internal helper macro) */
+#cmakedefine01 AC_APPLE_UNIVERSAL_BUILD
+
+/* Define if AIX */
+#cmakedefine01 AIX
+
+/* Define if broken SIOCGIFMTU */
+#cmakedefine01 BROKEN_SIOCGIFMTU
+
+/* Define if BSDi */
+#cmakedefine01 BSDI
+
+/* Define if errlist is predefined */
+#cmakedefine01 ERRLIST_PREDEFINED
+
+/* Define if FreeBSD */
+#cmakedefine01 FREEBSD
+
+/* Define to 1 if you have the `daq_acquire_with_meta' function. */
+#cmakedefine01 HAVE_DAQ_ACQUIRE_WITH_META
+
+/* DAQ version supports address space ID in header. */
+#cmakedefine01 HAVE_DAQ_ADDRESS_SPACE_ID
+
+/* Define to 1 if you have the `daq_hup_apply' function. */
+#cmakedefine01 HAVE_DAQ_HUP_APPLY
+
+
+/* Define to 1 if you have the `inet_ntop' function. */
+#cmakedefine HAVE_INET_NTOP
+
+/* Define to 1 if you have the `crypto' library (-lcrypto). */
+#cmakedefine HAVE_LIBCRYPTO
+
+/* Define to 1 if you have the `dnet' library (-ldnet). */
+#cmakedefine HAVE_LIBDNET
+
+/* Define to 1 if you have the `dumbnet' library (-ldumbnet). */
+#cmakedefine HAVE_LIBDUMBNET
+
+/* Define to 1 if you have the `m' library (-lm). */
+#cmakedefine HAVE_LIBM
+
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#cmakedefine HAVE_LIBNSL
+
+/* Define to 1 if you have the `pcap' library (-lpcap). */
+#cmakedefine HAVE_LIBPCAP
+
+/* Define to 1 if you have the `pcre' library (-lpcre). */
+#cmakedefine HAVE_LIBPCRE
+
+/* Define to 1 if you have the `pfring' library (-lpfring). */
+#cmakedefine HAVE_LIBPFRING
+
+/* Define to 1 if you have the `rt' library (-lrt). */
+#cmakedefine HAVE_LIBRT
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#cmakedefine HAVE_LIBSOCKET
+
+/* Define to 1 if you have the `uuid' library (-luuid). */
+#cmakedefine HAVE_LIBUUID
+
+/* Define to 1 if you have the `z' library (-lz). */
+#cmakedefine HAVE_LIBZ
+
+/* Define whether linuxthreads is being used */
+#cmakedefine HAVE_LINUXTHREADS
+
+
+/* Define to 1 if you have the `memrchr' function. */
+#cmakedefine HAVE_MEMRCHR
+
+/* openssl SHA available */
+#cmakedefine HAVE_OPENSSL_SHA 1
+
+/* Can cleanup lex buffer stack created by pcap bpf filter */
+#cmakedefine HAVE_PCAP_LEX_DESTROY 1
+
+/* Can output the library version. */
+#cmakedefine HAVE_PCAP_LIB_VERSION 1
+
+/* Define to 1 if you have the `sigaction' function. */
+#cmakedefine HAVE_SIGACTION
+
+/* snprintf function is available */
+#cmakedefine HAVE_SNPRINTF
+
+/* Define to 1 if you have the `strlcat' function. */
+#cmakedefine HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#cmakedefine HAVE_STRLCPY
+
+/* Define if the compiler supports visibility declarations. */
+#cmakedefine HAVE_VISIBILITY
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#cmakedefine HAVE_VSNPRINTF
+
+/* Define to 1 if you have the `vswprintf' function. */
+#cmakedefine HAVE_VSWPRINTF
+
+/* Define to 1 if you have the `wprintf' function. */
+#cmakedefine HAVE_WPRINTF
+
+/* Define whether yylex_destroy is supported in flex version */
+#cmakedefine HAVE_YYLEX_DESTROY
+
+/* Define if the compiler understands __FUNCTION__. */
+#cmakedefine HAVE___FUNCTION__
+
+/* Define if the compiler understands __func__. */
+#cmakedefine HAVE___func__
+
+/* Define if HP-UX 10 or 11 */
+#cmakedefine HPUX
+
+/* For INADDR_NONE definition */
+#cmakedefine INADDR_NONE
+
+/* Define if Irix 6 */
+#cmakedefine IRIX
+
+/* Define if Linux */
+#cmakedefine LINUX
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#cmakedefine LT_OBJDIR
+
+/* Define if MacOS */
+#cmakedefine MACOS
+
+/* Define if OpenBSD < 2.3 */
+#cmakedefine OPENBSD
+
+/* Define if Tru64 */
+#cmakedefine OSF1
+
+/* Name of package */
+#define PACKAGE @PACKAGE@
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT @PACKAGE_BUGREPORT@
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME @PACKAGE_NAME@
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING @PACKAGE_STRING@
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME @PACKAGE_TARNAME@
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL @PACKAGE_URL@
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION @PACKAGE_VERSION@
+
+/* Set by user */
+#cmakedefine SIGNAL_SNORT_DUMP_STATS @SIGNAL_SNORT_DUMP_STATS@
+
+/* Set by user */
+#cmakedefine SIGNAL_SNORT_READ_ATTR_TBL @SIGNAL_SNORT_READ_ATTR_TBL@
+
+/* Set by user */
+#cmakedefine SIGNAL_SNORT_RELOAD @SIGNAL_SNORT_RELOAD@
+
+/* Set by user */
+#cmakedefine SIGNAL_SNORT_ROTATE_STATS @SIGNAL_SNORT_ROTATE_STATS@
+
+/* Define if Solaris */
+#cmakedefine SOLARIS
+
+/* For sparc v9 with %time register */
+#cmakedefine SPARCV9
+
+/* Define to 1 if you have the ANSI C header files. */
+#cmakedefine STDC_HEADERS
+
+/* Define if SunOS */
+#cmakedefine SUNOS
+
+/* Version number of package */
+#define VERSION "${SNORT_VERSION_MAJOR}.${SNORT_VERSION_MINOR}.${SNORT_VERSION_BUILD}"
+
+/* Define if words are big endian */
+#define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
+
+/* Define if words must align */
+#cmakedefine WORDS_MUSTALIGN
+
+/* Define __FUNCTION__ as required. */
+#undef __FUNCTION__
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#cmakedefine inline
+#endif
+
+
+#endif

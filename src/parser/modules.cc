@@ -46,7 +46,7 @@ using namespace std;
 #include "filters/sfthd.h"
 #include "filters/sfrf.h"
 #include "filters/rate_filter.h"
-#include "protocols/decode_module.h"
+#include "codecs/decode_module.h"
 #include "time/ppm_module.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)

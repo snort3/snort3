@@ -32,8 +32,8 @@ option (HAVE_INTEL_SOFT_CPM "Enable Intel Soft CPM support" OFF)
 option (ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF)
 option (BUILD_SIDE_CHANNEL "Build the side channel library" OFF)
 option (BUILD_UNIT_TESTS "Build snort++ unit tests" OFF)
-option (MAKE_HTML_DOC "Create the HTML documentation" ON)
-option (MAKE_PDF_DOC "Create the PDF documentation" ON)
+option (MAKE_HTML_DOC "Create the HTML documentation" OFF)
+option (MAKE_PDF_DOC "Create the PDF documentation" OFF)
 
 
 set (SIGNAL_SNORT_RELOAD "" CACHE STRING "set the SIGNAL_SNORT_RELOAD value.  THIS NUMBER MUST BE AN INTEGER!!")

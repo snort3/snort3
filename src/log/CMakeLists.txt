@@ -21,7 +21,7 @@ set_default_visibility_compile_flag( log )
 
 
 install(FILES ${LOG_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/log"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/log"
 )
 
 target_link_libraries(log

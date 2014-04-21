@@ -103,7 +103,7 @@ inline void FlowKey::init4(
         port_h = sport;
     }
     if (ScMplsOverlappingIp() &&
-        isPrivateIP(*src) && isPrivateIP(*dst))
+        ipv4::isPrivateIP(*src) && ipv4::isPrivateIP(*dst))
         mplsLabel = mplsId;
     else
     	mplsLabel = 0;

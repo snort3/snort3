@@ -23,5 +23,5 @@ set_target_properties(flow
 )
 
 install(FILES ${FLOW_INCLUDES}
-    DESTINATION ${CMAKE_PROJECT_NAME}/flow
+    DESTINATION ${INCLUDE_INSTALL_PATH}/flow
 )
