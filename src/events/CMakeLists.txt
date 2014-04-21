@@ -15,5 +15,5 @@ add_library (events STATIC
 )
 
 install (FILES ${INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/events"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/events"
 )

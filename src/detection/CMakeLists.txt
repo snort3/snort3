@@ -31,5 +31,5 @@ add_library (detection STATIC
 )
 
 install(FILES ${DETECTION_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/detection"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/detection"
 )

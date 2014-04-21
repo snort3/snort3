@@ -17,7 +17,7 @@ add_library (protocols STATIC
 )
 
 install (FILES ${PROTOCOL_HEADERS}
-    DESTINATION "${CMAKE_PROJECT_NAME}/protocols"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/protocols"
 )
 
 

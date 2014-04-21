@@ -32,6 +32,6 @@ target_link_libraries( framework
 
 
 install (FILES ${FRAMEWORK_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/framework"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/framework"
 )
 

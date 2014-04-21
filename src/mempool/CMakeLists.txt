@@ -12,6 +12,6 @@ add_library ( mempool STATIC
 
 
 install(FILES ${MEMPOOL_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/mempool"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/mempool"
 )
 

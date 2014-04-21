@@ -17,7 +17,7 @@ add_library( hash STATIC
 )
 
 install(FILES ${HASH_INCLUDES}
-    DESTINATION "${CMAKE_PROJECT_NAME}/hash"
+    DESTINATION "${INCLUDE_INSTALL_PATH}/hash"
 )
 
 

@@ -49,11 +49,10 @@ if (ENABLE_STATIC_DAQ)
         ")
     endif()
 
-    
-    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${DAQ_STATIC_LIBRARIES}")
     set(DAQ_LIB daq_static)
 else()
     set(DAQ_LIB daq)
+    set(DAQ_STATIC_LIBRARIES)
 endif()
 
 
@@ -63,6 +62,8 @@ find_library(DAQ_LIBRARIES
     PATH_SUFFIXES daq
     DOC "DAQ library directory"
 )
+
+list(APPEND DAQ_LIBRARIES "${DAQ_STATIC_LIBRARIES}")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(DAQ
