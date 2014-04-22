@@ -35,6 +35,12 @@ find_path(LUAJIT_INCLUDE_DIR
 
 find_library(LUAJIT_LIBRARIES
     NAMES luajit-5.1
+    ${LUAJIT_LIBRARIES_DIR}
+    DOC "Lua Libraries"
+    NO_DEFAULT_PATH
+)
+find_library(LUAJIT_LIBRARIES
+    NAMES luajit-5.1
     HINTS ENV LUA_DIR
     PATH_SUFFIXES luajit-5.1
     PATHS ${LUA_PATHS}

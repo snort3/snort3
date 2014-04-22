@@ -32,6 +32,12 @@ find_path(PCAP_INCLUDE_DIR
     NAMES pcap.h
 )
 
+# call find_library twice. First search custom path, then search standard paths
+find_library(PCAP_LIBRARIES 
+    NAMES pcap
+    PATHS ${PCAP_LIBRARIES_DIR}
+    NO_DEFAULT_PATH
+)
 find_library(PCAP_LIBRARIES 
     NAMES pcap
 )

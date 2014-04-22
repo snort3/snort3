@@ -58,6 +58,12 @@ endif()
 
 find_library(DAQ_LIBRARY
     NAMES  ${DAQ_LIB}
+    PATHS ${DAQ_LIBRARIES_DIR}
+    DOC "DAQ library directory"
+    NO_DEFAULT_PATH
+)
+find_library(DAQ_LIBRARY
+    NAMES  ${DAQ_LIB}
     HINTS  ENV DAQ_DIR
     PATH_SUFFIXES daq
     DOC "DAQ library directory"
@@ -72,6 +78,7 @@ find_package_handle_standard_args(DAQ
 )
 
 mark_as_advanced(
-    DAQ_INCLUDE_DIR 
+    DAQ_INCLUDE_DIR
+    DAQ_LIBRARY 
     DAQ_LIBRARIES 
 )
