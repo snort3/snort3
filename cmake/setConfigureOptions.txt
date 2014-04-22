@@ -122,6 +122,15 @@ if ("${CMAKE_GENERATOR}" MATCHES "Xcode")
 endif()
 
 
-
-#add_definitions(-DHAVE_DAQ_ADDRESS_SPACE_ID)
+# This code resets the DAQ libraries so cmake will now search for the static/shared DAQ library
+if(DEFINED STATIC_DAQ_PRREVIOUSLY_ENABLED)
+    if(NOT (ENABLE-STATIC_DAQ STREQUAL STATIC_DAQ_PRREVIOUSLY_ENABLED))
+        unset(DAQ_FOUND CACHE)
+        unset(DAQ_LIBRARY CACHE)
+        unset(DAQ_LIBRARIES CACHE)
+        set(STATIC_DAQ_PRREVIOUSLY_ENABLED "${ENABLE_STATIC_DAQ}" CACHE INTERNAL "save daq link type" FORCE)
+    endif()
+else()
+    set(STATIC_DAQ_PRREVIOUSLY_ENABLED "${ENABLE_STATIC_DAQ}" CACHE INTERNAL "save daq link type" FORCE)
+endif()
 
