@@ -226,7 +226,7 @@ inline bool is_echo(uint32_t type)
 /*
 *  checksum icmp
 */
-static uint16_t in_chksum_icmp( unsigned short * w, int blen )
+static inline uint16_t in_chksum_icmp( unsigned short * w, int blen )
 {
   unsigned  short answer=0;
   unsigned int cksum = 0;

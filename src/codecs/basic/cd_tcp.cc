@@ -105,8 +105,6 @@ static inline unsigned short in_chksum_tcp6(pseudoheader6 *, unsigned short *, i
 bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
 {
-    uint32_t hlen;            /* TCP header length */
-
     if(len < tcp::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
@@ -1060,7 +1058,7 @@ static const char* name = "tcp_decode";
 
 static const CodecApi tcp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     tcp_codec_ginit, // pinit
     tcp_codec_gterm, // pterm
     NULL, // tinit

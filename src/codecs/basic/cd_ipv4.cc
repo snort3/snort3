@@ -77,11 +77,13 @@ private:
 
 uint16_t const IP_ID_COUNT = 8192;
 THREAD_LOCAL rand_t* s_rand = 0;
+
+#if 0
 THREAD_LOCAL uint16_t s_id_index = 0;
+#endif
 
 // this should be changed to type array
 THREAD_LOCAL uint16_t s_id_pool[IP_ID_COUNT] = {};
-
 
 }  // namespace
 
@@ -93,15 +95,7 @@ static inline void IP4AddrTests (Packet* );
 static inline void IPMiscTests(Packet *);
 static inline unsigned short in_chksum_ip( unsigned short *, int);
 
-static void IpId_Init (void);
-static void IpId_Term (void);
-
 static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
-
-
-
-
-
 
 void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -112,7 +106,6 @@ void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
 //--------------------------------------------------------------------
 // prot_ipv4.cc::IP4 decoder
 //--------------------------------------------------------------------
-
 
 /*
  * Function: DecodeIP(uint8_t *, const uint32_t, Packet *)
@@ -771,7 +764,6 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
 }
 
 #if 0
-
 static inline uint16_t IpId_Next ()
 {
     uint16_t s_id_index = Get_s_id_index();
@@ -791,7 +783,6 @@ static inline uint16_t IpId_Next ()
 #endif
     return id;
 }
-
 
 /*
  * ENCODER
@@ -976,7 +967,7 @@ static void ipv4_codec_ginit()
     s_rand = rand_open();
 
     if ( !s_rand )
-        FatalError("encode::IpId_Init: rand_open() failed.\n");
+        FatalError("rand_open() failed.\n");
 
     rand_get(s_rand, s_id_pool, sizeof(s_id_pool));
 #endif
@@ -1004,7 +995,7 @@ static const char* name = "ipv4_decode";
 
 static const CodecApi ipv4_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     ipv4_codec_ginit, // pinit
     ipv4_codec_gterm, // pterm
     NULL, // tinit

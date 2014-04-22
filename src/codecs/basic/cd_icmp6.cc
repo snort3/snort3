@@ -70,8 +70,8 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
 // decode.c::ICMP6
 //--------------------------------------------------------------------
 
-bool Icmp6Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len, 
+    Packet* p, uint16_t& p_hdr_len, int&)
 {
     if(len < icmp6::hdr_min_len())
     {
@@ -618,7 +618,7 @@ static const char* name = "icmp6_codec";
 
 static const CodecApi ipv6_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit

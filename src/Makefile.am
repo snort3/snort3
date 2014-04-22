@@ -35,14 +35,16 @@ file_api/libs/libfile.a \
 managers/libmanagers.a \
 parser/libparser.a \
 loggers/libloggers.a \
+codecs/libcodecs.a \
+codecs/basic/libbasic_codecs.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/defrag/libdefrag.a \
 network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
 network_inspectors/stream5/libstream.a \
 network_inspectors/stream5/libstream_api.a \
-service_inspectors/http_inspect/libhttp_inspect.a \
 service_inspectors/libservice_inspectors.a \
+service_inspectors/http_inspect/libhttp_inspect.a \
 $(lib_list) \
 ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
@@ -66,6 +68,7 @@ utils/libutils.a
 
 SUBDIRS = \
 actions \
+codecs \
 control \
 detection \
 events \

@@ -860,6 +860,8 @@ snort.pc \
 Makefile \
 src/Makefile \
 src/actions/Makefile \
+src/codecs/Makefile \
+src/codecs/basic/Makefile \
 src/control/Makefile \
 src/detection/Makefile \
 src/events/Makefile \

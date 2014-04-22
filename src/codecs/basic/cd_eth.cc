@@ -214,7 +214,7 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
     v.push_back(DLT_EN10MB);
 }
 
-void EthCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void EthCodec::get_protocol_ids(std::vector<uint16_t>&)
 {
 }
 
@@ -232,7 +232,7 @@ static const char* name = "eth_codec";
 
 static const CodecApi eth_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
