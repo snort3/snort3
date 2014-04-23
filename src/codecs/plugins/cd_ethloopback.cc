@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -38,8 +36,6 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
@@ -69,7 +65,7 @@ bool EthLoopbackCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 //-------------------------------------------------------------------------
 
 
-void EthLoopbackCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERNET_TYPE_LOOP);
 }
@@ -109,6 +105,8 @@ static const CodecApi ethloopback_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    nullptr, // get_dlt
+    get_protocol_ids,
     sum, // sum
     stats  // stats
 };

@@ -23,6 +23,7 @@
 #include "snort_types.h"
 #include "framework/codec.h"
 #include "time/profiler.h"
+#include "utils/stats.h"
 
 #include <array>
 #include <list>
@@ -50,15 +51,12 @@ public:
     static void init_codecs();
     static void dump_stats();
 
-
     static bool has_codec(uint16_t);
 
 //    static void encode_update(Packet *);
 //    static void encode_format(Packet *);
 
 private:
-    static const CodecApi *get_data_link_type(int dlt);
-
 
 };
 

@@ -29,6 +29,8 @@ add_library( codecs STATIC
     decode_module.cc
     codec_api.h
     codec_api.cc
+    cd_stats.h
+    cd_stats.cc
 )
 
 

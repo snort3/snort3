@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -46,8 +44,6 @@ public:
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
     
 };
 
@@ -97,7 +93,7 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 
 
-void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); // defined in ethertypes.h"
 }
@@ -137,6 +133,8 @@ static const CodecApi transbridge_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    nullptr,
+    get_protocol_ids,
     sum, // sum
     stats  // stats
 };

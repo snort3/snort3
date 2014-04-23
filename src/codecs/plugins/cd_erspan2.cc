@@ -38,8 +38,6 @@ public:
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -111,7 +109,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 
 
-void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_ERSPAN_TYPE2);
 }
@@ -151,6 +149,8 @@ static const CodecApi erspan2_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    nullptr,
+    get_protocol_ids,
     sum, // sum
     stats  // stats
 };

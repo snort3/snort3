@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -52,8 +50,6 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &p_hdr_len, int &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&);
     // DELETE
     #include "codecs/sf_protocols.h"
     virtual inline PROTO_ID get_proto_id() { return PROTO_ETH; };
@@ -61,7 +57,6 @@ public:
 };
 
 } // anonymous namespace
-
 
 
 //--------------------------------------------------------------------
@@ -209,14 +204,11 @@ void Eth_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 #endif
 
 
-void EthCodec::get_data_link_type(std::vector<int>&v)
+static void get_data_link_type(std::vector<int>&v)
 {
     v.push_back(DLT_EN10MB);
 }
 
-void EthCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-}
 
 static Codec* ctor()
 {
@@ -239,8 +231,10 @@ static const CodecApi eth_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    get_data_link_type,
     NULL,
-    NULL
+    NULL,
+    NULL,
 };
 
 const BaseApi* cd_eth = &eth_api.base;

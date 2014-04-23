@@ -42,7 +42,6 @@ public:
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
     
 
     // DELETE from here and below
@@ -101,7 +100,7 @@ bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 
 
-void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERNET_TYPE_ARP);
     v.push_back(ETHERNET_TYPE_REVARP);
@@ -142,6 +141,8 @@ static const CodecApi arp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    nullptr, // get_dlt
+    get_protocol_ids,
     sum, // sum
     stats  // stats
 };

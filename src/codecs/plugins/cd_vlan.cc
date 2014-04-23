@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -53,9 +51,6 @@ public:
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
 
     
     // DELETE from here and below
@@ -176,7 +171,7 @@ void VLAN_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 
 
 
-void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERNET_TYPE_8021Q);
 }
@@ -216,6 +211,8 @@ static const CodecApi vlan_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL, // get_dlt
+    get_protocol_ids,
     sum, // sum
     stats  // stats
 };

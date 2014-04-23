@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -25,14 +23,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if 0
-
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-#endif
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
@@ -53,8 +43,6 @@ public:
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
     
 };
 
@@ -154,9 +142,7 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     return true;
 }
 
-
-
-void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ESP_PROT_ID);
 }
@@ -196,6 +182,8 @@ static const CodecApi esp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL, // get_dlt()
+    get_protocol_ids,
     sum, // sum
     stats  // stats
 };

@@ -41,10 +41,6 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &p_hdr_len, int &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
-
-
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
     virtual inline PROTO_ID get_proto_id() { return PROTO_GRE; };
@@ -253,7 +249,7 @@ void GRE_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 
 
 
-void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(GRE_PROT_ID);
 }
@@ -293,6 +289,8 @@ static const CodecApi gre_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    nullptr,
+    get_protocol_ids,
     sum, // sum
     stats  // stats
 };

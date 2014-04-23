@@ -55,8 +55,6 @@ public:
 
     // do nothing unless methods overridden.
     // ONE OF THESE METHODS MUST BE IMPLEMENTED!!
-    virtual void get_protocol_ids(std::vector<uint16_t>&){};
-    virtual void get_data_link_type(std::vector<int>&){};
     virtual inline const char* get_name(){return name; };
 
 
@@ -80,10 +78,9 @@ typedef Codec* (*cd_new_f)();
 
 typedef void (*cd_del_f)(Codec *);
 typedef void (*cd_aux_f)();
-typedef void (*cd_get_protos)(std::vector<uint16_t>&);
-typedef void (*cd_get_dlt)(std::vector<int>&);
 typedef bool (*decode_f)(const uint8_t *, const uint32_t, Packet *, uint16_t &, uint16_t &);
-
+typedef void (*cd_dlt_f)(std::vector<int>&v);
+typedef void (*cd_prot_id_f)(std::vector<uint16_t>&);
 
     // add every protocol id, included IP protocols and 
     // ethertypes, to the passed in vector
@@ -106,6 +103,9 @@ struct CodecApi
     // these must be set
     cd_new_f ctor;   // get eval optional instance data
     cd_del_f dtor;   // clean up instance data
+
+    cd_dlt_f dlt;   // get the data link type
+    cd_prot_id_f proto_id;  // get the protocol ids
 
     cd_aux_f sum;
     cd_aux_f stats;
