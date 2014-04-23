@@ -153,7 +153,6 @@ struct SnortConfig
     uint8_t mpls_payload_type;  /* --mpls_payload_type */
     long int mpls_stack_depth;  /* --max_mpls_labelchain_len */
 
-    uint32_t paf_max;          /* config paf_max */
     uint8_t enable_teredo; /* config enable_deep_teredo_inspection */
     uint8_t enable_gtp; /* config enable_gtp */
     char *gtp_ports;
@@ -192,6 +191,8 @@ struct SnortConfig
     FastPatternConfig *fast_pattern_config;
     EventQueueConfig *event_queue_config;
     void *file_config;
+
+    uint32_t paf_max;
 
     /* XXX XXX policy specific? */
     ThresholdConfig *threshold_config;

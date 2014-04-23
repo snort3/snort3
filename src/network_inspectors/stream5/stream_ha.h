@@ -119,7 +119,7 @@ static inline void ha_notify_deletion(Flow* flow)
     if ( !flow->ha_state )
         return;
 
-    Stream5HaConfig* ha_config = flow->s5_config->common->ha_config;
+    Stream5HaConfig* ha_config = flow->s5_config->ha_config;
 
     if ( !ha_config )
         return;
@@ -161,7 +161,7 @@ static inline void ha_process(Flow* flow)
     if ( !flow->ha_state->ha_pending_mask && !(flow->ha_state->ha_flags & HA_FLAG_MODIFIED) )
         return;
 
-    Stream5HaConfig* ha_config = flow->s5_config->common->ha_config;
+    Stream5HaConfig* ha_config = flow->s5_config->ha_config;
 
     if ( !ha_config )
         return;

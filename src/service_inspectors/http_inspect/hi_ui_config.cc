@@ -69,6 +69,7 @@ HTTPINSPECT_CONF::HTTPINSPECT_CONF()
     uint8_t* end = (uint8_t*)&ports;
     unsigned len = end - (uint8_t*)this;
     memset(this, 0, len);
+    ports.set(80);
 
     http_cmd_lookup_init(&cmd_lookup);
 }

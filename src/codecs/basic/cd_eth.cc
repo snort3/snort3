@@ -1,3 +1,5 @@
+/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
+
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -224,7 +226,7 @@ static const char* name = "eth_codec";
 
 static const CodecApi eth_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit

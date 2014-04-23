@@ -67,6 +67,7 @@
 #include "ppm.h"
 #include "generators.h"
 #include "detection_util.h"
+#include "detection_options.h"
 #include "actions/actions.h"
 
 /*
@@ -88,8 +89,9 @@ THREAD_LOCAL PreprocStats rulePerfStats;
 THREAD_LOCAL PreprocStats ncrulePerfStats;
 THREAD_LOCAL PreprocStats ruleRTNEvalPerfStats;
 THREAD_LOCAL PreprocStats ruleOTNEvalPerfStats;
-THREAD_LOCAL OTNX_MATCH_DATA t_omd;
 #endif
+
+THREAD_LOCAL OTNX_MATCH_DATA t_omd;
 
 /* initialize the global OTNX_MATCH_DATA variable */
 void otnx_match_data_init(int num_rule_types)
@@ -410,7 +412,9 @@ int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports)
     return 1;
 }
 
-static int detection_option_tree_evaluate(detection_option_tree_root_t *root, detection_option_eval_data_t *eval_data)
+static int detection_option_tree_evaluate(
+    detection_option_tree_root_t *root,
+    detection_option_eval_data_t *eval_data)
 {
     int i, rval = 0;
     PROFILE_VARS;

@@ -1,7 +1,5 @@
 /*
- * ftpp_eo_log.h
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2004-2013 Sourcefire, Inc.
  * Steven A. Sturges <ssturges@sourcefire.com>
  * Daniel J. Roelker <droelker@sourcefire.com>
@@ -21,28 +19,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- * Description:
- *
- * Defines the functions for logging within the FTP Telnet preprocessor.
- *
- * NOTES:
- * - 20.09.04:  Initial Development.  SAS
- *
  */
-#ifndef FTPP_EO_LOG_H
-#define FTPP_EO_LOG_H
+#ifndef FTP_PRINT_H
+#define FTP_PRINT_H
 
-#include "ftpp_include.h"
-#include "ftpp_si.h"
-#include "ftpp_return_codes.h"
+#include "ftpp_ui_config.h"
 
-void ftpp_eo_event_log_init(void);
-
-int telnet_eo_event_log(TELNET_SESSION *session, int iEvent, void *data,
-        void (*free_data)(void *));
-
-int ftp_eo_event_log(FTP_SESSION *session, int iEvent, void *data,
-        void (*free_data)(void *));
+int PrintConfOpt(bool on, const char* Option);
+int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF*);
+int PrintFTPServerConf(FTP_SERVER_PROTO_CONF*);
 
 #endif
+

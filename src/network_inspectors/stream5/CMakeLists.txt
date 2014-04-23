@@ -29,6 +29,10 @@ add_library( stream STATIC
     stream_common.h
     stream_module.cc
     stream_module.h
+    icmp_config.h
+    ip_config.h
+    tcp_config.h
+    udp_config.h
     ${HA_SOURCES}
 )
 

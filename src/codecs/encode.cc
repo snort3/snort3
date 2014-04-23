@@ -917,6 +917,7 @@ static ENC_STATUS UDP_Encode (EncState* enc, Buffer* in, Buffer* out)
 
         ho->uh_chk = 0;
 
+#if 0  // FIXIT - unused pseudo headers
         if (IP_VER((IPHdr *)enc->ip_hdr) == 4) {
             pseudoheader ps;
             ps.sip = ((IPHdr *)enc->ip_hdr)->ip_src.s_addr;
@@ -933,6 +934,7 @@ static ENC_STATUS UDP_Encode (EncState* enc, Buffer* in, Buffer* out)
             ps6.protocol = IPPROTO_UDP;
             ps6.len = ho->uh_len;
         }
+#endif
 
         return ENC_OK;
     }
@@ -953,6 +955,7 @@ static ENC_STATUS UDP_Update (Packet* p, Layer* lyr, uint32_t* len)
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
         h->uh_chk = 0;
 
+#if 0  // FIXIT - unused pseudo headers
         if (IS_IP4(p)) {
             pseudoheader ps;
             ps.sip = ((IPHdr *)(lyr-1)->start)->ip_src.s_addr;
@@ -968,6 +971,7 @@ static ENC_STATUS UDP_Update (Packet* p, Layer* lyr, uint32_t* len)
             ps6.protocol = IPPROTO_UDP;
             ps6.len = htons((uint16_t)*len);
         }
+#endif
     }
 
     return ENC_OK;
@@ -1078,6 +1082,7 @@ static ENC_STATUS TCP_Encode (EncState* enc, Buffer* in, Buffer* out)
 
     ho->th_sum = 0;
 
+#if 0  // FIXIT - unused pseudo headers
     if (IP_VER((IPHdr *)enc->ip_hdr) == 4) {
         pseudoheader ps;
         int len = BUFF_DIFF(out, ho);
@@ -1097,6 +1102,7 @@ static ENC_STATUS TCP_Encode (EncState* enc, Buffer* in, Buffer* out)
         ps6.protocol = IPPROTO_TCP;
         ps6.len = htons((uint16_t)len);
     }
+#endif
 
     return ENC_OK;
 }
@@ -1110,6 +1116,7 @@ static ENC_STATUS TCP_Update (Packet* p, Layer* lyr, uint32_t* len)
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
         h->th_sum = 0;
 
+#if 0  // FIXIT - unused pseudo headers
         if (IS_IP4(p)) {
             pseudoheader ps;
             ps.sip = ((IPHdr *)(lyr-1)->start)->ip_src.s_addr;
@@ -1125,6 +1132,7 @@ static ENC_STATUS TCP_Update (Packet* p, Layer* lyr, uint32_t* len)
             ps6.protocol = IPPROTO_TCP;
             ps6.len = htons((uint16_t)*len);
         }
+#endif
     }
 
     return ENC_OK;

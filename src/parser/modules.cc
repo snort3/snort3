@@ -49,10 +49,6 @@ using namespace std;
 #include "codecs/decode_module.h"
 #include "time/ppm_module.h"
 
-// FIXIT delete these includes after inpsectors are modularized
-#include "ftp_telnet/ft_module.h"
-#include "stream5/stream_module.h"
-
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
 #endif
@@ -1912,17 +1908,5 @@ void module_init()
 
     // and this one ties it all together
     ModuleManager::add_module(new BindingsModule);
-
-    // FIXIT delete these after service inspectors are modularized
-    ModuleManager::add_module(new FtGlobalModule);
-    ModuleManager::add_module(new TelnetModule);
-    ModuleManager::add_module(new FtpServerModule);
-    ModuleManager::add_module(new FtpClientModule);
-
-    ModuleManager::add_module(new StreamGlobalModule);
-    ModuleManager::add_module(new StreamTcpModule);
-    ModuleManager::add_module(new StreamUdpModule);
-    ModuleManager::add_module(new StreamIcmpModule);
-    ModuleManager::add_module(new StreamIpModule);
 }
 

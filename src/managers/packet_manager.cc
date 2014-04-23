@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2013-2013 Sourcefire, Inc.
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -16,13 +16,15 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// packet_manager.cc author Josh Rosenbaum <jorosenba@cisco.com>
+
+#include "packet_manager.h"
 
 #include <list>
 #include <vector>
 using namespace std;
 
-#include "packet_manager.h"
-#include "codec.h"
+#include "framework/codec.h"
 #include "snort.h"
 #include "thread.h"
 #include "log/messages.h"
@@ -90,12 +92,6 @@ void PacketManager::add_plugin(const CodecApi* api)
 
 void PacketManager::release_plugins()
 {
-    for ( auto* p : s_codecs )
-    {
-        p->gterm();
-        p->tterm();
-//        p->dtor();
-    }
     s_codecs.clear();
 }
 
@@ -126,7 +122,6 @@ void PacketManager::decode(
     p->pkt = pkt;
     len = pkthdr->caplen;
     curr_prot_id = GRINDER_ID;
-    pkt_cnt.total_processed++;
 
     // loop until the protocol id is no longer valid
     while(curr_prot_id  >= 0 && curr_prot_id < max_protocol_id)
@@ -142,17 +137,64 @@ void PacketManager::decode(
             break;
         }           
 
+
+        // if we have succesfully decoded this layer, push the layer
         PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, p_hdr_len);
         curr_prot_id = next_prot_id;
         len -= p_hdr_len;
         pkt += p_hdr_len;
+
     }
 
     p->dsize = len;
     p->data = pkt;
+
     PREPROC_PROFILE_END(decodePerfStats);
 }
 
+#if 0
+const CodecApi *PacketManager::get_data_link_type(int dlt)
+{
+    vector<int> dlt_vec;
+
+    for ( auto* p : s_codecs )
+    {
+            dlt_vec.clear();
+//            p->get_dlt(dlt_vec);
+
+            for (auto *it = dlt_vec.begin(); it != dlt_vec.end(); ++it)
+            {
+                if (*it == dlt)
+                    return p;
+            }
+    }
+
+    return nullptr;
+}
+
+void PacketManager::set_grinder(void)
+{
+    const char* slink = NULL;
+    const char* extra = NULL;
+
+    // initialize values
+
+    int dlt = DAQ_GetBaseProtocol();
+    const CodecApi *cd_api = get_data_link_type(dlt);
+
+    if(cd_api != nullptr)
+    {
+        grinder = cd_api->ctor();
+
+        if ( !ScReadMode() || ScPcapShow() )
+            LogMessage("Decoding %s\n", slink);        
+    }
+
+
+    FatalError("%s(%d) Could not find codec for Data Link Type %d.\n",
+                     __FILE__, __LINE__, dlt);
+}
+#endif
 
 void PacketManager::set_grinder(void)
 {
@@ -212,23 +254,14 @@ void PacketManager::set_grinder(void)
 
         if (!codec_registered)
             WarningMessage("The Codec %s is never used\n", cd->get_name());
+        // ERRRO:  If multiple correct grinders found.
     }
+
+
+
+//        FatalError("Codec installation checking!!");
 }
 
-
-void PacketManager::dump_stats()
-{
-    sum_stats((PegCount*)&gpkt_cnt, (PegCount*)&pkt_cnt, array_size(CdGenPegNames));
-
-    for ( auto* cd : s_codecs )
-        if (cd->sum != nullptr)
-            cd->sum();
-
-    std::vector<const char*> pegNames(CdGenPegNames);
-    std::vector<PegCount> pegs;
-    pegs.push_back(gpkt_cnt.total_processed);
-    pegs.push_back(gpkt_cnt.other_codecs);
-    pegs.push_back(gpkt_cnt.discards);
 
     // using two temporary vectors to ensure codecs cannot
     // see any other codecs statistics
@@ -259,7 +292,6 @@ void PacketManager::dump_stats()
     show_percent_stats(&pegs[0], &pegNames[0], pegNames.size(),
         "codecs");
 }
-
 
 bool PacketManager::has_codec(uint16_t cd_id)
 {

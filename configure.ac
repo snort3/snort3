@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.073])
+AC_INIT([snort], [2.10.074])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/snort.cc])
@@ -860,6 +860,8 @@ snort.pc \
 Makefile \
 src/Makefile \
 src/actions/Makefile \
+src/codecs/Makefile \
+src/codecs/basic/Makefile \
 src/control/Makefile \
 src/detection/Makefile \
 src/events/Makefile \

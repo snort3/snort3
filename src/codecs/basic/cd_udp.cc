@@ -625,7 +625,7 @@ static const char* name = "udp_decode";
 
 static const CodecApi udp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit

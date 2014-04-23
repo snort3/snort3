@@ -61,7 +61,7 @@
  */
 int ftp_cmd_lookup_init(CMD_LOOKUP **CmdLookup)
 {
-    KMAP *km = KMapNew((KMapUserFreeFunc)FTPTelnetCleanupFTPCMDConf);
+    KMAP *km = KMapNew((KMapUserFreeFunc)CleanupFTPCMDConf);
     *CmdLookup = km;
     if(*CmdLookup == NULL)
     {
@@ -123,7 +123,7 @@ int ftp_cmd_lookup_cleanup(CMD_LOOKUP **CmdLookup)
  * Returns: int => return code indicating error or success
  *
  */
-int ftp_cmd_lookup_add(CMD_LOOKUP *CmdLookup, char *cmd, int len,
+int ftp_cmd_lookup_add(CMD_LOOKUP *CmdLookup, const char *cmd, int len,
                             FTP_CMD_CONF *FTPCmd)
 {
     int iRet;

@@ -11,6 +11,7 @@ examples
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
 EXTRA_DIST = \
+ChangeLog \
 snort.pc.in
 
 DISTCLEANFILES = \

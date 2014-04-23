@@ -52,7 +52,6 @@
 #define S5_TRACK_NO             0
 
 #define STREAM5_CONFIG_STATEFUL_INSPECTION      0x00000001
-#define STREAM5_CONFIG_ENABLE_ALERTS            0x00000002
 #define STREAM5_CONFIG_LOG_STREAMS              0x00000004
 #define STREAM5_CONFIG_REASS_CLIENT             0x00000008
 #define STREAM5_CONFIG_REASS_SERVER             0x00000010
@@ -62,10 +61,8 @@
 #define STREAM5_CONFIG_REQUIRE_3WHS             0x00000100
 #define STREAM5_CONFIG_MIDSTREAM_DROP_NOALERT   0x00000200
 #define STREAM5_CONFIG_IGNORE_ANY               0x00000400
-#define STREAM5_CONFIG_PERFORMANCE              0x00000800
 #define STREAM5_CONFIG_STATIC_FLUSHPOINTS       0x00001000
 #define STREAM5_CONFIG_IPS                      0x00002000
-#define STREAM5_CONFIG_CHECK_SESSION_HIJACKING  0x00004000
 #define STREAM5_CONFIG_NO_ASYNC_REASSEMBLY      0x00008000
 
 /* traffic direction identification */
@@ -91,13 +88,14 @@ private:
 };
 
 /*  D A T A   S T R U C T U R E S  **********************************/
-// FIXIT split between common and global is to match
-// actual Snort usage but that means that common 
-// fields are parsed and output for each policy when
-// there is really only one copy.
-struct S5Common
+
+struct Stream5GlobalConfig
 {
-    unsigned tcp_mem_cap;
+    uint64_t tcp_mem_cap;
+
+    uint32_t prune_log_max;
+    uint32_t flags;
+
     uint32_t max_tcp_sessions;
     uint32_t max_udp_sessions;
     uint32_t max_icmp_sessions;
@@ -105,41 +103,38 @@ struct S5Common
 
     uint16_t tcp_cache_pruning_timeout;
     uint16_t tcp_cache_nominal_timeout;
+
     uint16_t udp_cache_pruning_timeout;
     uint16_t udp_cache_nominal_timeout;
 
-#ifdef ENABLE_HA
-    struct Stream5HaConfig* ha_config;
-#endif
-    class FlowControl* fc;
-    class Stream* stream;
-};
+    uint16_t icmp_cache_pruning_timeout;
+    uint16_t icmp_cache_nominal_timeout;
 
-struct Stream5GlobalConfig
-{
-    char       disabled;
-    char       track_tcp_sessions;
-    char       track_udp_sessions;
-    char       track_icmp_sessions;
-    char       track_ip_sessions;
+    uint16_t ip_cache_pruning_timeout;
+    uint16_t ip_cache_nominal_timeout;
 
-    uint32_t   prune_log_max;
-    uint32_t   flags;
+    uint16_t min_response_seconds;
+    uint16_t max_active_responses;
 
-    uint32_t   min_response_seconds;
-    uint8_t    max_active_responses;
+    Stream5GlobalConfig();
 };
 
 struct Stream5Config
 {
     class Inspector* handler;
-    S5Common* common;
+
+    class FlowControl* fc;
+    class Stream* stream;
 
     struct Stream5GlobalConfig *global_config;
     struct Stream5TcpConfig *tcp_config;
     struct Stream5UdpConfig *udp_config;
     struct Stream5IcmpConfig *icmp_config;
     struct Stream5IpConfig *ip_config;
+
+#ifdef ENABLE_HA
+    struct Stream5HaConfig* ha_config;
+#endif
 
     uint8_t service_filter[MAX_PROTOCOL_ORDINAL];
 };

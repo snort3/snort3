@@ -345,7 +345,7 @@ static int Stream5DebugHA(
 
 void ha_reset (Flow* flow)
 {
-    Stream5HaConfig* ha_config = flow->s5_config->common->ha_config;
+    Stream5HaConfig* ha_config = flow->s5_config->ha_config;
 
     if (ha_config->enable_ha)
     {

@@ -30,7 +30,6 @@ struct Stream5TcpConfig;
 
 Stream5TcpConfig* Stream5ConfigTcp(SnortConfig* sc, char *args);void Stream5TcpConfigFree(Stream5TcpConfig *);
 
-void Stream5ConfigTcp(Stream5TcpConfig*, SnortConfig*, char *args);
 int Stream5VerifyTcpConfig(SnortConfig*, Stream5TcpConfig *);
 void Stream5ResetTcp();
 

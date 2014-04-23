@@ -1185,6 +1185,9 @@ void LogICMPHeader(TextLog*  log, Packet * p)
                 case ICMP_REDIR_TOS_HOST:
                     TextLog_Puts(log, " TOS HOST");
                     break;
+
+                default:
+                    break;
             }
 
 /* written this way since inet_ntoa was typedef'ed to use sfip_ntoa
@@ -1230,6 +1233,9 @@ void LogICMPHeader(TextLog*  log, Packet * p)
                 case ICMP_TIMEOUT_REASSY:
                     TextLog_Puts(log, " TIME EXCEEDED IN FRAG REASSEMBLY");
                     break;
+
+                default:
+                    break;
             }
 
             LogICMPEmbeddedIP(log, p);
@@ -1251,6 +1257,9 @@ void LogICMPHeader(TextLog*  log, Packet * p)
 
                 case ICMP_PARAM_BAD_LENGTH:
                     TextLog_Puts(log, ": BAD LENGTH");
+                    break;
+
+                default:
                     break;
             }
 

@@ -2576,11 +2576,8 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     const unsigned char *data = p->data;
     int dsize = p->dsize;
 
-    if ( ScPafEnabled() )
-    {
-        if ( stream_ins && (p->packet_flags & PKT_STREAM_INSERT) )
-            return HI_INVALID_ARG;
-    }
+    if ( stream_ins && (p->packet_flags & PKT_STREAM_INSERT) )
+        return HI_INVALID_ARG;
 
     ServerConf = session->server_conf;
     if(!ServerConf)
@@ -2656,16 +2653,6 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
             method_end = mthd++;
             break;
         }
-        if ( !ScPafEnabled() )
-        {
-            /* isascii returns non-zero if it is ascii */
-            if (isascii((int)*mthd) == 0)
-            {
-                /* Possible post data or something else strange... */
-                method_end = mthd++;
-                break;
-            }
-        }
         mthd++;
     }
     if (method_end)
@@ -2704,7 +2691,6 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     }
     else
     {
-        if( ScPafEnabled() )
         {
             /* Might have gotten non-ascii characters, hence no method, but if
              * PAF is in use, checking "!stream_ins" equates to PacketHasStartOfPDU()
@@ -2712,13 +2698,6 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
              * the body or somewhere else because we found a non-ascii character */
             if ( !stream_ins )
                 SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
-            Client->request.method = HI_UNKNOWN_METHOD;
-        }
-        else
-        {
-            if ( !stream_ins )
-                SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_UNKNOWN_METHOD);
-            sans_uri = 1;
             Client->request.method = HI_UNKNOWN_METHOD;
         }
     }

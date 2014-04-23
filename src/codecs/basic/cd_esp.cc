@@ -175,7 +175,7 @@ static const char* name = "esp_codec";
 
 static const CodecApi esp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit

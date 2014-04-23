@@ -47,7 +47,7 @@
 #include <sys/types.h>
 
 #include "pp_telnet.h"
-#include "ft_module.h"
+#include "ftp_module.h"
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
 #include "ftp_cmd_lookup.h"
@@ -791,7 +791,7 @@ static int validate_param(Packet *p,
                 // understood to be server address, so we set that here
                 ipAddr = *GET_SRC_IP(p);
             }
-            if ( session->client_conf->bounce.on )
+            if ( session->client_conf->bounce )
             {
                 if (!IP_EQUALITY(&ipAddr, GET_SRC_IP(p)))
                 {
@@ -995,25 +995,21 @@ int initialize_ftp(FTP_SESSION *session, Packet *p, int iMode)
     const unsigned char *read_ptr = p->data;
     FTP_CLIENT_REQ *req;
     char ignoreTelnetErase = FTPP_APPLY_TNC_ERASE_CMDS;
-    FTPTELNET_GLOBAL_CONF *global_conf = ftp_telnet_config;
 
     /* Normalize this packet ala telnet */
     if (((iMode == FTPP_SI_CLIENT_MODE) &&
-         (session->client_conf->ignore_telnet_erase_cmds.on == 1)) ||
+         session->client_conf->ignore_telnet_erase_cmds) ||
         ((iMode == FTPP_SI_SERVER_MODE) &&
-         (session->server_conf->ignore_telnet_erase_cmds.on == 1)) )
+         session->server_conf->ignore_telnet_erase_cmds) )
         ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
 
-    iRet = normalize_telnet(global_conf, NULL, p, iMode, ignoreTelnetErase);
+    iRet = normalize_telnet(NULL, p, iMode, ignoreTelnetErase);
 
     if (iRet != FTPP_SUCCESS && iRet != FTPP_NORMALIZED)
     {
         if (iRet == FTPP_ALERT)
-        {
-            if (global_conf->telnet_config->detect_anomalies)
-            {
-                SnortEventqAdd(GID_FTP, FTP_EVASIVE_TELNET_CMD);
-        }   }
+            SnortEventqAdd(GID_FTP, FTP_EVASIVE_TELNET_CMD);
+
         return iRet;
     }
 
@@ -1268,7 +1264,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
         }
     } /* if (session->server_conf->data_chan) */
 
-    if (session->server_conf->detect_encrypted.on)
+    if (session->server_conf->detect_encrypted)
     {
         switch(session->encr_state)
         {
@@ -1759,14 +1755,17 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
                 req->param_size, req->param_size, req->param_begin));
             if (CmdConf)
             {
-                if ((req->param_size > CmdConf->max_param_len))
+                unsigned max = CmdConf->max_param_len;
+                if ( !max )
+                    max = ftpssn->server_conf->def_max_param_len;
+
+                if ( req->param_size > max )
                 {
                     /* Alert on param length overrun */
                     SnortEventqAdd(GID_FTP, FTP_PARAMETER_LENGTH_OVERFLOW);
                     DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET, "FTP command: %.*s"
                         "parameter length overrun %d > %d \n",
-                        req->cmd_size, req->cmd_begin, req->param_size,
-                        CmdConf->max_param_len));
+                        req->cmd_size, req->cmd_begin, req->param_size, max));
                     iRet = FTPP_ALERT;
                     break;
                 }

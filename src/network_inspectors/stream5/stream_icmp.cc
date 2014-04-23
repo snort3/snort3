@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  ****************************************************************************/
+
 #include "stream_icmp.h"
+#include "icmp_config.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -58,22 +60,12 @@ static PreprocStats* icmp_get_profile(const char* key)
 static SessionStats gicmpStats;
 static THREAD_LOCAL SessionStats icmpStats;
 
-typedef struct _Stream5IcmpPolicy
-{
-    uint32_t   session_timeout;
-
-} Stream5IcmpPolicy;
-
-struct Stream5IcmpConfig
-{
-    Stream5IcmpPolicy default_policy;
-};
-
 class IcmpSession : public Session
 {
 public:
     IcmpSession(Flow*);
 
+    void* get_policy(void*, Packet*);
     bool setup(Packet*);
     void update_direction(char dir, snort_ip*, uint16_t port);
     int process(Packet*);
@@ -89,76 +81,19 @@ Session* get_icmp_session(Flow* lws)
     return new IcmpSession(lws);
 }
 
+Stream5IcmpConfig::Stream5IcmpConfig()
+{
+    session_timeout = 30;
+}
+
 //------------------------------------------------------------------------
 // private functions
 //------------------------------------------------------------------------
 
-static void Stream5ParseIcmpArgs(char *args, Stream5IcmpPolicy *s5IcmpPolicy)
+static void Stream5PrintIcmpConfig(Stream5IcmpConfig* pc)
 {
-    char **toks;
-    int num_toks;
-    int i;
-    char **stoks = NULL;
-    int s_toks;
-    char *endPtr = NULL;
-
-    s5IcmpPolicy->session_timeout = S5_DEFAULT_SSN_TIMEOUT;
-    //s5IcmpPolicy->flags = 0;
-
-    if(args != NULL && strlen(args) != 0)
-    {
-        toks = mSplit(args, ",", 0, &num_toks, 0);
-
-        for (i = 0; i < num_toks; i++)
-        {
-            stoks = mSplit(toks[i], " ", 2, &s_toks, 0);
-
-            if (s_toks == 0)
-            {
-                ParseError("Missing parameter in Stream5 ICMP config.");
-            }
-
-            if(!strcasecmp(stoks[0], "timeout"))
-            {
-                if(stoks[1])
-                {
-                    s5IcmpPolicy->session_timeout = strtoul(stoks[1], &endPtr, 10);
-                }
-
-                if (!stoks[1] || (endPtr == &stoks[1][0]))
-                {
-                    ParseError("Invalid timeout in config file.  Integer parameter required.");
-                }
-
-                if ((s5IcmpPolicy->session_timeout > S5_MAX_SSN_TIMEOUT) ||
-                    (s5IcmpPolicy->session_timeout < S5_MIN_SSN_TIMEOUT))
-                {
-                    ParseError("Invalid timeout in config file.  "
-                        "Must be between %d and %d",
-                        S5_MIN_SSN_TIMEOUT, S5_MAX_SSN_TIMEOUT);
-                }
-                if (s_toks > 2)
-                {
-                    ParseError("Invalid Stream5 ICMP Policy option.  Missing comma?");
-                }
-            }
-            else
-            {
-                ParseError("Invalid Stream5 ICMP policy option");
-            }
-
-            mSplitFree(&stoks, s_toks);
-        }
-
-        mSplitFree(&toks, num_toks);
-    }
-}
-
-static void Stream5PrintIcmpConfig(Stream5IcmpPolicy *s5IcmpPolicy)
-{
-    LogMessage("Stream5 ICMP Policy config:\n");
-    LogMessage("    Timeout: %d seconds\n", s5IcmpPolicy->session_timeout);
-    //LogMessage("    Flags: 0x%X\n", s5UdpPolicy->flags);
+    LogMessage("Stream5 ICMP config:\n");
+    LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 }
 
 static void IcmpSessionCleanup(Flow *ssn)
@@ -274,15 +209,13 @@ static int ProcessIcmpUnreach(Packet *p)
 // public functions
 //------------------------------------------------------------------------
 
-Stream5IcmpConfig* Stream5ConfigIcmp(SnortConfig*, char *args)
+Stream5IcmpConfig* Stream5ConfigIcmp(SnortConfig*, char*)
 {
     RegisterPreprocessorProfile(
         "icmp", &s5IcmpPerfStats, 0, &totalPerfStats, icmp_get_profile);
 
     Stream5IcmpConfig* icmp_config = 
         (Stream5IcmpConfig*)SnortAlloc(sizeof(*icmp_config));
-
-    Stream5ParseIcmpArgs(args, &icmp_config->default_policy);
 
     return icmp_config;
 }
@@ -323,6 +256,11 @@ bool IcmpSession::setup(Packet*)
 void IcmpSession::clear()
 {
     IcmpSessionCleanup(flow);
+}
+
+void* IcmpSession::get_policy(void* pv, Packet*)
+{
+    return pv;
 }
 
 int IcmpSession::process(Packet* p)
@@ -374,7 +312,7 @@ void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
 
 void icmp_show(Stream5IcmpConfig* icmp_config)
 {
-    Stream5PrintIcmpConfig(&icmp_config->default_policy);
+    Stream5PrintIcmpConfig(icmp_config);
 }
 
 void icmp_sum()

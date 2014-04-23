@@ -56,31 +56,14 @@
 #include "snort.h"
 #include "stream5/stream_api.h"
 #include "ft_main.h"
+#include "telnet.h"
 
 unsigned FtpFlowData::flow_id = 0;
 unsigned TelnetFlowData::flow_id = 0;
 
-/*
- * Function: PortMatch(PROTO_CONF *Conf, unsigned short port)
- *
- * Purpose: Given a configuration and a port number, we decide if
- *          the port is in the port list.
- *
- * Arguments: PROTO_CONF    => pointer to the client or server configuration
- *            port          => the port number to check for
- *
- * Returns: int => 0 indicates the port is not a client/server port.
- *                 1 indicates the port is one of the client/server ports.
- *
- */
-static int PortMatch(PROTO_CONF *Conf, unsigned short port)
+static bool PortMatch(PortList& ports, unsigned short port)
 {
-    if(Conf->ports[port])
-    {
-        return 1;
-    }
-
-    return 0;
+    return ports[port] != 0;
 }
 
 /*
@@ -108,27 +91,14 @@ static inline int TelnetResetsession(TELNET_SESSION *session)
 }
 
 /*
- * Function: TelnetStatefulsessionInspection(Packet *p,
- *                              FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                              TELNET_SESSION **Telnetsession,
- *                              FTPP_SI_INPUT *SiInput)
- *
  * Purpose: Initialize the session and server configurations for
  *          this packet/stream.  In this function, we set the session
  *          pointer (which includes the correct server configuration).
  *          The actual processing to find which IP is the server and
  *          which is the client, is done in the InitServerConf() function.
- *
- * Arguments: p             => pointer to the packet/stream
- *            GlobalConf    => pointer to the global configuration
- *            session       => double pointer to the session structure
- *            SiInput       => pointer to the session information
- *
- * Returns: int => return code indicating error or success
- *
  */
 static int TelnetStatefulsessionInspection(Packet *p,
-        FTPTELNET_GLOBAL_CONF *GlobalConf,
+        TELNET_PROTO_CONF* GlobalConf,
         TELNET_SESSION **Telnetsession,
         FTPP_SI_INPUT *SiInput)
 {
@@ -140,7 +110,7 @@ static int TelnetStatefulsessionInspection(Packet *p,
         // FIXIT lots of redundancy; clean up and move to ctor
         TelnetResetsession(Newsession);
         Newsession->ft_ssn.proto = FTPP_SI_PROTO_TELNET;
-        Newsession->telnet_conf = GlobalConf->telnet_config;
+        Newsession->telnet_conf = GlobalConf;
 
         SiInput->pproto = FTPP_SI_PROTO_TELNET;
 
@@ -154,11 +124,6 @@ static int TelnetStatefulsessionInspection(Packet *p,
 }
 
 /*
- * Function: TelnetsessionInspection(Packet *p,
- *                          FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                          FTPP_SI_INPUT *SiInput,
- *                          int *piInspectMode)
- *
  * Purpose: The session Inspection module selects the appropriate
  *          configuration for the session, and the type of inspection
  *          to be performed (client or server.)
@@ -183,7 +148,7 @@ static int TelnetStatefulsessionInspection(Packet *p,
  * Returns: int => return code indicating error or success
  *
  */
-int TelnetsessionInspection(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
+int TelnetsessionInspection(Packet *p, TELNET_PROTO_CONF* GlobalConf,
         TELNET_SESSION **Telnetsession, FTPP_SI_INPUT *SiInput, int *piInspectMode)
 {
     int iRet;
@@ -209,10 +174,8 @@ int TelnetsessionInspection(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
     }
     else
     {
-        iTelnetSip = PortMatch((PROTO_CONF*)GlobalConf->telnet_config,
-                               SiInput->sport);
-        iTelnetDip = PortMatch((PROTO_CONF*)GlobalConf->telnet_config,
-                               SiInput->dport);
+        iTelnetSip = PortMatch(GlobalConf->ports, SiInput->sport);
+        iTelnetDip = PortMatch(GlobalConf->ports, SiInput->dport);
 
         if (iTelnetSip)
         {
@@ -274,11 +237,7 @@ int FTPGetPacketDir(Packet *p)
 }
 
 /*
- * Function: FTPInitConf(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                       FTP_CLIENT_PROTO_CONF **ClientConf,
- *                       FTP_SERVER_PROTO_CONF **ServerConf,
- *                       FTPP_SI_INPUT *SiInput, int *piInspectMode)
- *
+ * // FIXIT this goes away when bindings are implemented
  * Purpose: When a session is initialized, we must select the appropriate
  *          server configuration and select the type of inspection based
  *          on the source and destination ports.
@@ -287,41 +246,25 @@ int FTPGetPacketDir(Packet *p)
  *   We should check to make sure that there are some unique configurations,
  *   otherwise we can just default to the global default and work some magic
  *   that way.
- *
- * Arguments: p                 => pointer to the Packet/session
- *            GlobalConf        => pointer to the global configuration
- *            ClientConf        => pointer to the address of the client
- *                                 config so we can set it.
- *            ServerConf        => pointer to the address of the server
- *                                 config so we can set it.
- *            SiInput           => pointer to the packet info
- *            piInspectMode     => pointer so we can set the inspection mode
- *
- * Returns: int => return code indicating error or success
- *
  */
-static int FTPInitConf(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
-                          FTP_CLIENT_PROTO_CONF **ClientConf,
-                          FTP_SERVER_PROTO_CONF **ServerConf,
-                          FTPP_SI_INPUT *SiInput, int *piInspectMode)
+static int FTPInitConf(
+    Packet *p, 
+    FTP_CLIENT_PROTO_CONF **ClientConf,
+    FTP_SERVER_PROTO_CONF **ServerConf,
+    FTPP_SI_INPUT *SiInput, int *piInspectMode)
 {
-    FTP_CLIENT_PROTO_CONF *ClientConfSip;
-    FTP_CLIENT_PROTO_CONF *ClientConfDip;
+    // FIXIT BINDING ftp client and server must set by external bindings
+    // at that point these get deleted
+    FTP_CLIENT_PROTO_CONF *ClientConfSip = get_default_ftp_client();
+    FTP_CLIENT_PROTO_CONF *ClientConfDip = get_default_ftp_client();
 
-    FTP_SERVER_PROTO_CONF *ServerConfSip;
-    FTP_SERVER_PROTO_CONF *ServerConfDip;
+    FTP_SERVER_PROTO_CONF *ServerConfSip = get_default_ftp_server();
+    FTP_SERVER_PROTO_CONF *ServerConfDip = get_default_ftp_server();
 
     int iServerSip;
     int iServerDip;
     int iRet = FTPP_SUCCESS;
     int16_t app_id = 0;
-
-    // FIXIT BINDING ftp client and server must set by external bindings
-    ClientConfDip = GlobalConf->ftp_client;
-    ClientConfSip = GlobalConf->ftp_client;
-
-    ServerConfDip = GlobalConf->ftp_server;
-    ServerConfSip = GlobalConf->ftp_server;
 
     /*
      * We check the IP and the port to see if the FTP client is talking in
@@ -335,8 +278,8 @@ static int FTPInitConf(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
      * talking.
      */
     // FIXIT BINDING should be greatly simplified with external bindings
-    iServerDip = PortMatch((PROTO_CONF*)ServerConfDip, SiInput->dport);
-    iServerSip = PortMatch((PROTO_CONF*)ServerConfSip, SiInput->sport);
+    iServerDip = PortMatch(ServerConfDip->ports, SiInput->dport);
+    iServerSip = PortMatch(ServerConfSip->ports, SiInput->sport);
 
     /*
      * We default to the no FTP traffic case
@@ -622,30 +565,16 @@ static inline int FTPResetsession(FTP_SESSION *Ftpsession)
 }
 
 /*
- * Function: FTPStatefulsessionInspection(Packet *p,
- *                          FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                          FTP_SESSION **Ftpsession,
- *                          FTPP_SI_INPUT *SiInput, int *piInspectMode)
- *
  * Purpose: Initialize the session and server configurations for this
  *          packet/stream.  In this function, we set the session pointer
  *          (which includes the correct server configuration).  The actual
  *          processing to find which IP is the server and which is the
  *          client, is done in the InitServerConf() function.
- *
- * Arguments: p                 => pointer to the Packet/session
- *            GlobalConf        => pointer to the global configuration
- *            session           => double pointer to the session structure
- *            SiInput           => pointer to the session information
- *            piInspectMode     => pointer so the inspection mode can be set
- *
- * Returns: int => return code indicating error or success
- *
  */
-static int FTPStatefulsessionInspection(Packet *p,
-        FTPTELNET_GLOBAL_CONF *GlobalConf,
-        FTP_SESSION **Ftpsession,
-        FTPP_SI_INPUT *SiInput, int *piInspectMode)
+static int FTPStatefulsessionInspection(
+    Packet *p,
+    FTP_SESSION **Ftpsession,
+    FTPP_SI_INPUT *SiInput, int *piInspectMode)
 {
     if (p->flow)
     {
@@ -653,7 +582,7 @@ static int FTPStatefulsessionInspection(Packet *p,
         FTP_SERVER_PROTO_CONF *ServerConf;
         int iRet;
 
-        iRet = FTPInitConf(p, GlobalConf, &ClientConf, &ServerConf, SiInput, piInspectMode);
+        iRet = FTPInitConf(p, &ClientConf, &ServerConf, SiInput, piInspectMode);
         if (iRet)
             return iRet;
 
@@ -680,10 +609,6 @@ static int FTPStatefulsessionInspection(Packet *p,
 }
 
 /*
- * Function: FTPsessionInspection(Packet *p,
- *                          FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                          FTPP_SI_INPUT *SiInput, int *piInspectMode)
- *
  * Purpose: The session Inspection module selects the appropriate client
  *          configuration for the session, and the type of inspection to
  *          be performed (client or server.)
@@ -698,17 +623,10 @@ static int FTPStatefulsessionInspection(Packet *p,
  *          packets to reduce the allocation overhead.
  *
  *          The inspection mode can be either client or server.
- *
- * Arguments: p                 => pointer to the Packet/session
- *            GlobalConf        => pointer to the global configuration
- *            SiInput           => pointer to the session information
- *            piInspectMode     => pointer so the inspection mode can be set
- *
- * Returns: int => return code indicating error or success
- *
  */
-int FTPsessionInspection(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
-        FTP_SESSION **Ftpsession, FTPP_SI_INPUT *SiInput, int *piInspectMode)
+int FTPsessionInspection(
+    Packet *p, FTP_SESSION **Ftpsession,
+    FTPP_SI_INPUT *SiInput, int *piInspectMode)
 {
     int iRet;
 
@@ -720,7 +638,7 @@ int FTPsessionInspection(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
      * structure will be allocated and added to the stream pointer for the
      * rest of the session.
      */
-    iRet = FTPStatefulsessionInspection(p, GlobalConf, Ftpsession, SiInput, piInspectMode);
+    iRet = FTPStatefulsessionInspection(p, Ftpsession, SiInput, piInspectMode);
     if (iRet)
         return iRet;
 
@@ -728,38 +646,47 @@ int FTPsessionInspection(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
 }
 
 /*
- * Function: ftpp_si_determine_proto(Packet *p,
- *                          FTPTELNET_GLOBAL_CONF *GlobalConf,
- *                          FTPP_SI_INPUT *SiInput, int *piInspectMode)
+ * Function: SetSiInput(FTPP_SI_INPUT *SiInput, Packet *p)
+ *      
+ * Purpose: This is the routine sets the source and destination IP
+ *          address and port pairs so as to determine the direction
+ *          of the FTP or telnet connection.
  *
- * Purpose: The Protocol Determination module determines whether this is
- *          an FTP or telnet request.  If this is an FTP request, it sets
- *          the FTP session data and inspection mode.
- *
- *          The inspection mode can be either client or server.
- *
- * Arguments: p                 => pointer to the Packet/session
- *            GlobalConf        => pointer to the global configuration
- *            SiInput           => pointer to the session information
- *            piInspectMode     => pointer so the inspection mode can be set
- *
- * Returns: int => return code indicating error or success
- *
+ * Arguments: SiInput       => pointer the session input structure
+ *            p             => pointer to the packet structure
+ *      
+ * Returns: int     => an error code integer (0 = success,
+ *                     >0 = non-fatal error, <0 = fatal error)
+ *  
  */
-int ftpp_si_determine_proto(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
-        FTP_TELNET_SESSION **ft_ssn, FTPP_SI_INPUT *SiInput, int *piInspectMode)
-{
-    /* Default to no FTP or Telnet case */
-    SiInput->pproto = FTPP_SI_PROTO_UNKNOWN;
-    *piInspectMode = FTPP_SI_NO_MODE;
+int SetSiInput(FTPP_SI_INPUT *SiInput, Packet *p)
+{   
+    IP_COPY_VALUE(SiInput->sip, GET_SRC_IP(p));
+    IP_COPY_VALUE(SiInput->dip, GET_DST_IP(p));
+    SiInput->sport = p->sp;
+    SiInput->dport = p->dp;
+        
+    /* 
+     * We now set the packet direction
+     */
+    if(p->flow && stream.is_midstream(p->flow))
+    {
+        SiInput->pdir = FTPP_SI_NO_MODE;
+    }
+    else if(p->packet_flags & PKT_FROM_SERVER)
+    {
+        SiInput->pdir = FTPP_SI_SERVER_MODE;
+    }
+    else if(p->packet_flags & PKT_FROM_CLIENT)
+    {
+        SiInput->pdir = FTPP_SI_CLIENT_MODE;
+    }
+    else
+    {       
+        SiInput->pdir = FTPP_SI_NO_MODE;
+    }
 
-    TelnetsessionInspection(p, GlobalConf, (TELNET_SESSION **)ft_ssn, SiInput, piInspectMode);
-    if (SiInput->pproto == FTPP_SI_PROTO_TELNET)
-        return FTPP_SUCCESS;
+    return FTPP_SUCCESS;
 
-    FTPsessionInspection(p, GlobalConf, (FTP_SESSION **)ft_ssn, SiInput, piInspectMode);
-    if (SiInput->pproto == FTPP_SI_PROTO_FTP)
-        return FTPP_SUCCESS;
-
-    return FTPP_INVALID_PROTO;
 }
+

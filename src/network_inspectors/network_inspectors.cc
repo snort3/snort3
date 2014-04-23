@@ -30,6 +30,10 @@ extern const BaseApi* nin_defrag_engine;
 extern const BaseApi* nin_normalize;
 extern const BaseApi* nin_perf_monitor;
 extern const BaseApi* nin_stream;
+extern const BaseApi* nin_stream_ip;
+extern const BaseApi* nin_stream_icmp;
+extern const BaseApi* nin_stream_tcp;
+extern const BaseApi* nin_stream_udp;
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* nin_arp_spoof;
@@ -44,6 +48,10 @@ const BaseApi* network_inspectors[] =
     nin_normalize,
     nin_perf_monitor,
     nin_stream,
+    nin_stream_ip,
+    nin_stream_icmp,
+    nin_stream_tcp,
+    nin_stream_udp,
 #ifdef STATIC_INSPECTORS
     nin_arp_spoof,
     nin_port_scan_global,

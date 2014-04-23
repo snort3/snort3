@@ -183,7 +183,6 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
     char buf[STD_BUF+1];
     int iCtr;
     int iChar = 0;
-    const char* paf = "";
     PROFILES prof;
 
     if(!ServerConf)
@@ -201,10 +200,7 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
 
     memset(buf, 0, STD_BUF+1);
 
-    if ( ScPafEnabled() )
-        paf = " (PAF)";
-
-    SnortSnprintf(buf, STD_BUF + 1, "      Ports%s: ", paf);
+    SnortSnprintf(buf, STD_BUF + 1, "      Ports: (PAF)");
 
     /*
     **  Print out all the applicable ports.
@@ -435,17 +431,14 @@ static inline FilePosition getFilePoistion(Packet *p)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
 
-    if(ScPafEnabled())
-    {
-        if (PacketHasFullPDU(p))
-            position = SNORT_FILE_FULL;
-        else if (PacketHasStartOfPDU(p))
-            position = SNORT_FILE_START;
-        else if (p->packet_flags & PKT_PDU_TAIL)
-            position = SNORT_FILE_END;
-        else if (file_api->get_file_processed_size(p->flow))
-            position = SNORT_FILE_MIDDLE;
-    }
+    if (PacketHasFullPDU(p))
+        position = SNORT_FILE_FULL;
+    else if (PacketHasStartOfPDU(p))
+        position = SNORT_FILE_START;
+    else if (p->packet_flags & PKT_PDU_TAIL)
+        position = SNORT_FILE_END;
+    else if (file_api->get_file_processed_size(p->flow))
+        position = SNORT_FILE_MIDDLE;
 
     return position;
 }
@@ -605,8 +598,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
 
     hsd = get_session_data(p->flow);
 
-    if ( ScPafEnabled() &&
-        (p->packet_flags & PKT_STREAM_INSERT) &&
+    if ( (p->packet_flags & PKT_STREAM_INSERT) &&
         !PacketHasFullPDU(p) )
     {
         int flow_depth;
@@ -1043,8 +1035,8 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
 
                  setFileDataPtr((uint8_t *)session->server.response.body, (uint16_t)detect_data_size);
 
-                 if (ScPafEnabled() && PacketHasPAFPayload(p)
-                         && file_api->file_process(p,(uint8_t *)session->server.response.body, (uint16_t)session->server.response.body_size,
+                 if (PacketHasPAFPayload(p)
+                     && file_api->file_process(p,(uint8_t *)session->server.response.body, (uint16_t)session->server.response.body_size,
                          getFilePoistion(p), false, false))
                  {
                      setFileName(p);

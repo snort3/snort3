@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
  ****************************************************************************/
 
 #include "stream_udp.h"
+#include "udp_config.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -71,19 +72,6 @@ static THREAD_LOCAL SessionStats udpStats;
 #define udp_responder_ip flow->server_ip
 #define udp_responder_port flow->server_port
 
-typedef struct _Stream5UdpPolicy
-{
-    uint32_t   session_timeout;
-    uint16_t   flags;
-
-} Stream5UdpPolicy;
-
-struct Stream5UdpConfig
-{
-    Stream5UdpPolicy* policy;
-    uint16_t port_filter[MAX_PORTS + 1];
-};
-
 class UdpSession : public Session
 {
 public:
@@ -104,112 +92,21 @@ Session* get_udp_session(Flow* lws)
     return new UdpSession(lws);
 }
 
+Stream5UdpConfig::Stream5UdpConfig()
+{
+    session_timeout = 30;
+    flags = 0;
+}
+
 //-------------------------------------------------------------------------
 
-static void Stream5ParseUdpArgs(Stream5UdpConfig *config, char *args, Stream5UdpPolicy *s5UdpPolicy)
+static void Stream5PrintUdpConfig(Stream5UdpConfig*pc)
 {
-    char **toks;
-    int num_toks;
-    int i;
-    char *index;
-    char **stoks = NULL;
-    int s_toks;
-    char *endPtr = NULL;
+    LogMessage("Stream5 UDP config:\n");
+    LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 
-    if (s5UdpPolicy == NULL)
-        return;
-
-    s5UdpPolicy->session_timeout = S5_DEFAULT_SSN_TIMEOUT;
-    s5UdpPolicy->flags = 0;
-
-    if(args != NULL && strlen(args) != 0)
-    {
-        toks = mSplit(args, ",", 6, &num_toks, 0);
-
-        i=0;
-
-        while(i < num_toks)
-        {
-            index = toks[i];
-
-            while(isspace((int)*index)) index++;
-
-            stoks = mSplit(index, " ", 3, &s_toks, 0);
-
-            if (s_toks == 0)
-            {
-                ParseError("Missing parameter in Stream5 UDP config.");
-            }
-
-            if(!strcasecmp(stoks[0], "timeout"))
-            {
-                if(stoks[1])
-                {
-                    s5UdpPolicy->session_timeout = strtoul(stoks[1], &endPtr, 10);
-                }
-
-                if (!stoks[1] || (endPtr == &stoks[1][0]))
-                {
-                    ParseError("Invalid timeout in config file.  Integer parameter required.");
-                }
-
-                if ((s5UdpPolicy->session_timeout > S5_MAX_SSN_TIMEOUT) ||
-                    (s5UdpPolicy->session_timeout < S5_MIN_SSN_TIMEOUT))
-                {
-                    ParseError("Invalid timeout in config file.  "
-                        "Must be between %d and %d",
-                        S5_MIN_SSN_TIMEOUT, S5_MAX_SSN_TIMEOUT);
-                }
-
-                if (s_toks > 2)
-                {
-                    ParseError("Invalid Stream5 UDP Policy option.  Missing comma?");
-                }
-            }
-            else if (!strcasecmp(stoks[0], "ignore_any_rules"))
-            {
-                s5UdpPolicy->flags |= STREAM5_CONFIG_IGNORE_ANY;
-
-                if (s_toks > 1)
-                {
-                    ParseError("Invalid Stream5 UDP Policy option.  Missing comma?");
-                }
-            }
-            else
-            {
-                ParseError("Invalid Stream5 UDP Policy option");
-            }
-
-            mSplitFree(&stoks, s_toks);
-            i++;
-        }
-
-        mSplitFree(&toks, num_toks);
-    }
-
-    config->policy = s5UdpPolicy;
-}
-
-int Stream5VerifyUdpConfig(SnortConfig*, Stream5UdpConfig *config)
-{
-    if (config == NULL)
-        return -1;
-
-    return 0;
-}
-
-static void Stream5PrintUdpConfig(Stream5UdpPolicy *s5UdpPolicy)
-{
-    LogMessage("Stream5 UDP Policy config:\n");
-    LogMessage("    Timeout: %d seconds\n", s5UdpPolicy->session_timeout);
-    if (s5UdpPolicy->flags)
-    {
-        LogMessage("    Options:\n");
-        if (s5UdpPolicy->flags & STREAM5_CONFIG_IGNORE_ANY)
-        {
-            LogMessage("        Ignore Any -> Any Rules: YES\n");
-        }
-    }
+    const char* opt = (pc->flags & STREAM5_CONFIG_IGNORE_ANY) ? "YES" : "NO";
+    LogMessage("    Ignore Any -> Any Rules: %s\n", opt);
 
 #ifdef REG_TEST
     LogMessage("    UDP Session Size: %lu\n",sizeof(UdpSession));
@@ -252,7 +149,7 @@ void UdpSessionCleanup(Flow *lwssn)
 }
 
 static int ProcessUdp(
-    Flow *lwssn, Packet *p, Stream5UdpPolicy*, SFXHASH_NODE*)
+    Flow *lwssn, Packet *p, Stream5UdpConfig*, SFXHASH_NODE*)
 {
     if (lwssn->protocol != IPPROTO_UDP)  // FIXIT checked by tcp, icmp, and ip too?
     // FIXIT need to free lwssn and get a new one
@@ -304,7 +201,7 @@ uint16_t* Stream5GetUdpPortList(void* pv, int& ignore_any)
     Stream5Config* pc = (Stream5Config*)pv;
     if ( !pc->udp_config )
         return NULL;
-    ignore_any = pc->udp_config->policy->flags & STREAM5_CONFIG_IGNORE_ANY;
+    ignore_any = pc->udp_config->flags & STREAM5_CONFIG_IGNORE_ANY;
     return pc->udp_config->port_filter;
 }
 
@@ -328,7 +225,7 @@ int s5UdpGetPortFilterStatus(
 
 bool s5UdpIgnoreAny(Stream5UdpConfig* udp_config)
 {
-    return ( udp_config->policy->flags & STREAM5_CONFIG_IGNORE_ANY );
+    return ( udp_config->flags & STREAM5_CONFIG_IGNORE_ANY );
 }
 
 void Stream5UdpConfigFree(Stream5UdpConfig *config)
@@ -348,23 +245,11 @@ static HA_Api ha_udp_api = {
 };
 #endif
 
-void Stream5ConfigUdp(Stream5UdpConfig *config, char *args)
+Stream5UdpConfig* Stream5ConfigUdp(SnortConfig*, char*)
 {
-    Stream5UdpPolicy *s5UdpPolicy;
-
-    if (config == NULL)
-        return;
-
     RegisterPreprocessorProfile(
         "udp", &s5UdpPerfStats, 0, &totalPerfStats, udp_get_profile);
 
-    s5UdpPolicy = (Stream5UdpPolicy *)SnortAlloc(sizeof(Stream5UdpPolicy));
-
-    Stream5ParseUdpArgs(config, args, s5UdpPolicy);
-}
-
-Stream5UdpConfig* Stream5ConfigUdp(SnortConfig*, char *args)
-{
     Stream5UdpConfig* udp_config =
         (Stream5UdpConfig*)SnortAlloc(sizeof(*udp_config));
 
@@ -372,9 +257,15 @@ Stream5UdpConfig* Stream5ConfigUdp(SnortConfig*, char *args)
     ha_set_api(IPPROTO_UDP, &ha_udp_api);
 #endif
 
-    Stream5ConfigUdp(udp_config, args);
-
     return udp_config;
+}
+
+int Stream5VerifyUdpConfig(SnortConfig*, Stream5UdpConfig* config)
+{
+    if (config == NULL)
+        return -1; 
+
+    return 0;
 }
 
 //-------------------------------------------------------------------------
@@ -389,8 +280,7 @@ UdpSession::UdpSession(Flow* flow) : Session(flow)
 
 void* UdpSession::get_policy (void* pv, Packet*)
 {
-    Stream5UdpConfig* udp_config = (Stream5UdpConfig*)pv;
-    return udp_config->policy;
+    return pv;
 }
 
 bool UdpSession::setup(Packet* p)
@@ -405,8 +295,8 @@ bool UdpSession::setup(Packet* p)
 #ifdef DEBUG_STREAM5
     PrintUdpSession(this);
 #endif
-    Stream5UdpPolicy *s5UdpPolicy = (Stream5UdpPolicy*)flow->policy;
-    flow->set_expire(p, s5UdpPolicy->session_timeout);
+    Stream5UdpConfig* pc = (Stream5UdpConfig*)flow->policy;
+    flow->set_expire(p, pc->session_timeout);
 
     udpStats.created++;
     AddUDPSession(&sfBase);
@@ -467,7 +357,7 @@ void UdpSession::update_direction(
 
 int UdpSession::process(Packet *p)
 {
-    Stream5UdpPolicy *s5UdpPolicy = (Stream5UdpPolicy*)flow->policy;
+    Stream5UdpConfig* pc = (Stream5UdpConfig*)flow->policy;
     SFXHASH_NODE *hash_node = NULL;
 
     PROFILE_VARS;
@@ -481,9 +371,9 @@ int UdpSession::process(Packet *p)
         UdpSessionCleanup(flow);
         udpStats.timeouts++;
     }
-    ProcessUdp(flow, p, s5UdpPolicy, hash_node);
+    ProcessUdp(flow, p, pc, hash_node);
     flow->markup_packet_flags(p);
-    flow->set_expire(p, s5UdpPolicy->session_timeout);
+    flow->set_expire(p, pc->session_timeout);
 
     PREPROC_PROFILE_END(s5UdpPerfStats);
     return 0;
@@ -497,7 +387,7 @@ void udp_sum()
 
 void udp_show(Stream5UdpConfig* config)
 {
-    Stream5PrintUdpConfig(config->policy);
+    Stream5PrintUdpConfig(config);
 }
 
 void udp_stats()
