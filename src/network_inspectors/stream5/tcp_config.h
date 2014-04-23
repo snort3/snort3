@@ -25,8 +25,9 @@
 
 #include "decode.h"
 #include "target_based/sftarget_protocol_reference.h"
+#include "framework/bits.h"
 
-typedef struct _FlushMgr
+struct FlushMgr
 {
     uint32_t   flush_pt;
     uint16_t   last_count;
@@ -36,21 +37,20 @@ typedef struct _FlushMgr
     uint8_t    auto_disable;
     //uint8_t    spare;
 
-} FlushMgr;
+};
 
-typedef struct _FlushConfig
+struct FlushConfig
 {
     FlushMgr client;
     FlushMgr server;
-    //SF_LIST *dynamic_policy;
     uint8_t configured;
-} FlushConfig;
+
+};
 
 #ifndef DYNAMIC_RANDOM_FLUSH_POINTS
-typedef struct _FlushPointList
+struct FlushPointList
 {
     uint8_t    current;
-    uint8_t    initialized;
 
     uint32_t   flush_range;
     uint32_t   flush_base;  /* Set as value - range/2 */
@@ -64,27 +64,26 @@ typedef struct _FlushPointList
      * flush_pt will vary from 128 to 256
      */
     uint32_t *flush_points;
-
-} FlushPointList;
+};
 #endif
 
-typedef struct _Stream5TcpPolicy
+struct Stream5TcpConfig
 {
-    uint16_t   policy;
-    uint16_t   reassembly_policy;
-    uint16_t   flags;
-    uint16_t   flush_factor;
+    uint16_t policy;
+    uint16_t reassembly_policy;
+    uint16_t flags;
+    uint16_t flush_factor;
 
-    uint32_t   session_timeout;
-    uint32_t   max_window;
-    uint32_t   overlap_limit;
-    uint32_t   hs_timeout;
+    uint32_t session_timeout;
+    uint32_t max_window;
+    uint32_t overlap_limit;
+    uint32_t hs_timeout;
 
-    uint32_t   max_queued_bytes;
-    uint32_t   max_queued_segs;
+    uint32_t max_queued_bytes;
+    uint32_t max_queued_segs;
 
-    uint32_t   max_consec_small_segs;
-    uint32_t   max_consec_small_seg_size;
+    uint32_t max_consec_small_segs;
+    uint32_t max_consec_small_seg_size;
 
     FlushConfig flush_config[MAX_PORTS];
     FlushConfig flush_config_protocol[MAX_PROTOCOL_ORDINAL];
@@ -92,18 +91,19 @@ typedef struct _Stream5TcpPolicy
     FlushPointList flush_point_list;
 #endif
 
-    char       small_seg_ignore[MAX_PORTS/8];
+    PortList small_seg_ignore;
 
-    struct _Stream5TcpConfig* config;
-} Stream5TcpPolicy;
-
-struct Stream5TcpConfig
-{
-    Stream5TcpPolicy* policy;
     void* paf_config;
 
+    int footprint;
     uint16_t session_on_syn;
     uint16_t port_filter[MAX_PORTS + 1];
+
+    Stream5TcpConfig();
+
+    void set_port(Port port, bool c2s, bool s2c);
+    void set_proto(unsigned proto_ordinal, bool c2s, bool s2c);
+    void add_proto(const char* svc, bool c2s, bool s2c);
 };
 
 #endif

@@ -237,7 +237,6 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF *ClientConf)
 
 int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
 {
-    const char* spaf = "";
     char buf[BUF_SIZE+1];
     int iCtr;
     int iRet;
@@ -250,11 +249,8 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
 
     LogMessage("ftp_server:\n");
 
-    if ( ScPafEnabled() )
-        spaf = " (PAF)";
-
     memset(buf, 0, BUF_SIZE+1);
-    snprintf(buf, BUF_SIZE, "    Ports%s: ", spaf);
+    snprintf(buf, BUF_SIZE, "    Ports: (PAF)");
 
     /*
      * Print out all the applicable ports.

@@ -23,15 +23,11 @@
 #ifndef ICMP_CONFIG_H
 #define ICMP_CONFIG_H
 
-typedef struct _Stream5IcmpPolicy
-{
-    uint32_t   session_timeout;
-
-} Stream5IcmpPolicy;
-
 struct Stream5IcmpConfig
 {
-    Stream5IcmpPolicy default_policy;
+    uint32_t session_timeout;
+
+    Stream5IcmpConfig();
 };
 
 #endif

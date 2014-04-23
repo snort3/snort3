@@ -56,357 +56,25 @@
 // global stuff
 //-------------------------------------------------------------------------
 
-static void Stream5ParseGlobalArgs(Stream5Config* s5, char *args)
-{
-    char **toks;
-    int num_toks;
-    int i;
-    char **stoks;
-    int s_toks;
-    char *endPtr = NULL;
-#define MAX_TCP 0x01
-#define MAX_UDP 0x02
-#define MAX_ICMP 0x04
-#define MAX_IP 0x08
-    char max_set = 0;
-
-    if (s5 == NULL)
-        return;
-
-    if ((args == NULL) || (strlen(args) == 0))
-        return;
-
-    Stream5GlobalConfig* config = s5->global_config;
-
-    toks = mSplit(args, ",", 0, &num_toks, 0);
-    i = 0;
-
-    for (i = 0; i < num_toks; i++)
-    {
-        stoks = mSplit(toks[i], " ", 4, &s_toks, 0);
-
-        if (s_toks == 0)
-        {
-            ParseError("Missing parameter in Stream5 Global config.");
-        }
-
-        if(!strcasecmp(stoks[0], "memcap"))
-        {
-            if (stoks[1])
-            {
-                config->tcp_mem_cap = strtoul(stoks[1], &endPtr, 10);
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid memcap in config file.  Requires integer parameter.");
-            }
-
-            if ((config->tcp_mem_cap > S5_RIDICULOUS_HI_MEMCAP) ||
-                (config->tcp_mem_cap < S5_RIDICULOUS_LOW_MEMCAP))
-            {
-                ParseError("'memcap %s' invalid: value must be "
-                           "between %d and %d bytes",
-                           stoks[1], S5_RIDICULOUS_LOW_MEMCAP,
-                           S5_RIDICULOUS_HI_MEMCAP);
-            }
-        }
-        else if(!strcasecmp(stoks[0], "max_tcp"))
-        {
-            if (stoks[1])
-            {
-                config->max_tcp_sessions = strtoul(stoks[1], &endPtr, 10);
-                if ((config->max_tcp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                    (config->max_tcp_sessions == 0))
-                {
-                    ParseError("'max_tcp %d' invalid: value must be "
-                               "between 1 and %d sessions",
-                               config->max_tcp_sessions,
-                               S5_RIDICULOUS_MAX_SESSIONS);
-                }
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid max_tcp in config file.  Requires integer parameter.");
-            }
-
-            max_set |= MAX_TCP;
-        }
-        else if(!strcasecmp(stoks[0], "tcp_cache_pruning_timeout"))
-        {
-            if (stoks[1])
-            {
-                unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
-
-                if ( config->max_tcp_sessions )
-                {
-                    if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
-                    {
-                        ParseError(
-                            "'%s %lu' invalid: value must be between 1 and %d seconds",
-                            stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
-                    }
-                }
-                config->tcp_cache_pruning_timeout = (uint16_t)timeout;
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid %s in config file.  Requires integer parameter.",
-                           stoks[0]);
-            }
-        }
-        else if(!strcasecmp(stoks[0], "tcp_cache_nominal_timeout"))
-        {
-            if (stoks[1])
-            {
-                unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
-
-                if ( config->max_tcp_sessions )
-                {
-                    if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
-                    {
-                        ParseError(
-                            "'%s %lu' invalid: value must be between 1 and %d seconds",
-                            stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
-                    }
-                }
-                config->tcp_cache_nominal_timeout = (uint16_t)timeout;
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid %s in config file.  Requires integer parameter.",
-                           stoks[0]);
-            }
-        }
-        else if(!strcasecmp(stoks[0], "max_udp"))
-        {
-            if (stoks[1])
-            {
-                config->max_udp_sessions = strtoul(stoks[1], &endPtr, 10);
-
-                if ((config->max_udp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                    (config->max_udp_sessions == 0))
-                {
-                    ParseError(
-                        "'max_udp %d' invalid: value must be between 1 and %d sessions",
-                        config->max_udp_sessions, S5_RIDICULOUS_MAX_SESSIONS);
-                }
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid max_udp in config file.  Requires integer parameter.");
-            }
-            max_set |= MAX_UDP;
-        }
-        else if(!strcasecmp(stoks[0], "udp_cache_pruning_timeout"))
-        {
-            if (stoks[1])
-            {
-                unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
-
-                if ( config->max_udp_sessions )
-                {
-                    if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
-                    {
-                        ParseError(
-                            "'%s %lu' invalid: value must be between 1 and %d seconds",
-                            stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
-                    }
-                }
-                config->udp_cache_pruning_timeout = (uint16_t)timeout;
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid %s in config file.  Requires integer parameter.",
-                           stoks[0]);
-            }
-        }
-        else if(!strcasecmp(stoks[0], "udp_cache_nominal_timeout"))
-        {
-            if (stoks[1])
-            {
-                unsigned long timeout = strtoul(stoks[1], &endPtr, 10);
-
-                if ( config->max_udp_sessions )
-                {
-                    if ( !timeout || (timeout > S5_MAX_CACHE_TIMEOUT) )
-                    {
-                        ParseError(
-                            "'%s %lu' invalid: value must be between 1 and %d seconds",
-                            stoks[0], timeout, S5_MAX_CACHE_TIMEOUT);
-                    }
-                }
-                config->udp_cache_nominal_timeout = (uint16_t)timeout;
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid %s in config file.  Requires integer parameter.",
-                           stoks[0]);
-            }
-        }
-        else if(!strcasecmp(stoks[0], "max_icmp"))
-        {
-            if (stoks[1])
-            {
-                config->max_icmp_sessions = strtoul(stoks[1], &endPtr, 10);
-
-                if ((config->max_icmp_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                    (config->max_icmp_sessions == 0))
-                {
-                    ParseError(
-                        "'max_icmp %d' invalid: value must be "
-                        "between 1 and %d sessions",
-                        config->max_icmp_sessions, S5_RIDICULOUS_MAX_SESSIONS);
-                }
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid max_icmp in config file.  Requires integer parameter.");
-            }
-            max_set |= MAX_ICMP;
-        }
-        else if(!strcasecmp(stoks[0], "max_ip"))
-        {
-            if (stoks[1])
-            {
-                config->max_ip_sessions = strtoul(stoks[1], &endPtr, 10);
-
-                if ((config->max_ip_sessions > S5_RIDICULOUS_MAX_SESSIONS) ||
-                    (config->max_ip_sessions == 0))
-                {
-                    ParseError(
-                        "'max_ip %d' invalid: value must be "
-                        "between 1 and %d sessions",
-                        config->max_ip_sessions, S5_RIDICULOUS_MAX_SESSIONS);
-                }
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid max_ip in config file.  Requires integer parameter.");
-            }
-            max_set |= MAX_IP;
-        }
-        else if(!strcasecmp(stoks[0], "flush_on_alert"))
-        {
-            config->flags |= STREAM5_CONFIG_FLUSH_ON_ALERT;
-        }
-        else if(!strcasecmp(stoks[0], "show_rebuilt_packets"))
-        {
-            config->flags |= STREAM5_CONFIG_SHOW_PACKETS;
-        }
-        else if(!strcasecmp(stoks[0], "prune_log_max"))
-        {
-            if (stoks[1])
-            {
-                config->prune_log_max = strtoul(stoks[1], &endPtr, 10);
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid prune_log_max in config file.  "
-                        "Requires integer parameter.");
-            }
-
-            if (((config->prune_log_max > S5_MAX_PRUNE_LOG_MAX) ||
-                 (config->prune_log_max < S5_MIN_PRUNE_LOG_MAX)) &&
-                (config->prune_log_max != 0))
-            {
-                ParseError(
-                    "Invalid Prune Log Max.  Must be 0 (disabled) or between %d and %d",
-                    S5_MIN_PRUNE_LOG_MAX, S5_MAX_PRUNE_LOG_MAX);
-            }
-        }
-#ifdef TBD
-        else if(!strcasecmp(stoks[0], "no_midstream_drop_alerts"))
-        {
-            /*
-             * FIXTHIS: Do we want to not alert on drops for sessions picked
-             * up midstream ?  If we're inline, and get a session midstream,
-             * its because it was picked up during startup.  In inline
-             * mode, we should ALWAYS be requiring TCP 3WHS.
-             */
-            config->flags |= STREAM5_CONFIG_MIDSTREAM_DROP_NOALERT;
-        }
-#endif
+#if 0 // FIXIT do this in configure:
         else if(!strcasecmp(stoks[0], "max_active_responses"))
         {
-            if (stoks[1])
-            {
-                config->max_active_responses = (uint8_t)SnortStrtoulRange(stoks[1], &endPtr, 10, 0, S5_MAX_ACTIVE_RESPONSES_MAX);
-            }
-            if ((!stoks[1] || (endPtr == &stoks[1][0])) || (config->max_active_responses > S5_MAX_ACTIVE_RESPONSES_MAX))
-            {
-                ParseError("'max_active_responses %d' invalid: "
-                    "value must be between 0 and %d responses.",
-                    config->max_active_responses, S5_MAX_ACTIVE_RESPONSES_MAX);
-            }
             if ( config->max_active_responses > 0 )
             {
                 Active_SetEnabled(2);
             }
         }
-        else if(!strcasecmp(stoks[0], "min_response_seconds"))
-        {
-            if (stoks[1])
-            {
-                config->min_response_seconds = strtoul(stoks[1], &endPtr, 10);
-            }
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid min_response_seconds in config file. "
-                    " Requires integer parameter." );
-            }
-            else if (
-                (config->min_response_seconds > S5_MIN_RESPONSE_SECONDS_MAX) ||
-                (config->min_response_seconds < 1))
-            {
-                ParseError("'min_response_seconds %d' invalid: "
-                    "value must be between 1 and %d seconds.",
-                    config->min_response_seconds, S5_MIN_RESPONSE_SECONDS_MAX);
-            }
-        }
-        else
-        {
-            ParseError("Unknown Stream5 global option (%s)", toks[i]);
-        }
 
-        mSplitFree(&stoks, s_toks);
-    }
-
-    mSplitFree(&toks, num_toks);
-}
-
-static void Stream5InitGlobal(
-    Stream5Config* pc, SnortConfig* sc, char *args)
-{
-    Stream5ParseGlobalArgs(pc, args);
-
-    if (!pc->global_config->max_tcp_sessions &&
-        !pc->global_config->max_udp_sessions &&
-        !pc->global_config->max_icmp_sessions &&
-        !pc->global_config->max_ip_sessions)
-    {
-        ParseError("Stream5 enabled, but not configured to track "
-                   "TCP, UDP, ICMP, or IP.");
-    }
-
+    // FIXIT do this if any max_sessions > 0:
     sc->run_flags |= RUN_FLAG__STATEFUL;
-}
+#endif
 
 //-------------------------------------------------------------------------
 // public stuff
 //-------------------------------------------------------------------------
 
 void Stream5ConfigGlobal(
-    Stream5Config* config, SnortConfig* sc, char *args)
+    Stream5Config* config, SnortConfig*, char*)
 {
     Stream5GlobalConfig* pc = config->global_config;
 
@@ -422,7 +90,6 @@ void Stream5ConfigGlobal(
     pc->max_active_responses = S5_DEFAULT_MAX_ACTIVE_RESPONSES;
     pc->min_response_seconds = S5_DEFAULT_MIN_RESPONSE_SECONDS;
 
-    Stream5InitGlobal(config, sc, args);
     get_inspection_policy()->s5_config = config;
 }
 
@@ -437,7 +104,8 @@ void Stream5PrintGlobalConfig(Stream5Config* s5)
     {
         LogMessage("    TCP cache pruning timeout: %u seconds\n", config->tcp_cache_pruning_timeout);
         LogMessage("    TCP cache nominal timeout: %u seconds\n", config->tcp_cache_nominal_timeout);
-        LogMessage("    Memcap (for reassembly packet storage): %d\n", config->tcp_mem_cap);
+        LogMessage("    Memcap (for reassembly packet storage): " STDu64 "\n",
+            config->tcp_mem_cap);
     }
     LogMessage("Max UDP sessions: %u\n", config->max_udp_sessions);
     if (config->max_udp_sessions == S5_TRACK_YES)
@@ -461,9 +129,7 @@ void Stream5PrintGlobalConfig(Stream5Config* s5)
         LogMessage("    Wait at least %d seconds between responses\n",
             config->min_response_seconds);
     }
-    LogMessage("    Protocol Aware Flushing: %s\n",
-        ScPafEnabled() ? "ACTIVE" : "INACTIVE");
-    LogMessage("        Maximum Flush Point: %u\n", ScPafMax());
+    LogMessage("Maximum Flush Point: %u\n", ScPafMax());
 #if 0
     // FIXIT need global->enable_ha?
 #ifdef ENABLE_HA

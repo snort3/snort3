@@ -23,14 +23,11 @@
 #ifndef IP_CONFIG_H
 #define IP_CONFIG_H
 
-struct Stream5IpPolicy
-{
-    uint32_t   session_timeout;
-};
-
 struct Stream5IpConfig
 {
-    Stream5IpPolicy default_policy;
+    uint32_t session_timeout;
+
+    Stream5IpConfig();
 };
 
 #endif

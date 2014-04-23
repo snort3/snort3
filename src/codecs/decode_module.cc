@@ -58,10 +58,6 @@ static const Parameter decode_params[] =
     { "mpls_payload_type", Parameter::PT_ENUM, "eth | ip4 | ip6", "ip4",
       "set encapsulated payload type" },
 
-    // see stream_paf.c for max
-    { "paf_max", Parameter::PT_INT, "2048:63780", "16384",
-      "set maximum number of TCP payload octets to reassemble at one time" },
-
     { "snap_len", Parameter::PT_INT, "0:65535", "deflt",
       "set snap length (same as -P)" },
 
@@ -287,9 +283,6 @@ bool DecodeModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("mpls_payload_type") )
         sc->mpls_payload_type = v.get_long() + 1;
-
-    else if ( v.is("paf_max") )
-        sc->paf_max = v.get_long();
 
     else if ( v.is("snaplen") )
         ConfigPacketSnaplen(sc, v.get_string());

@@ -91,7 +91,11 @@ private:
 
 struct Stream5GlobalConfig
 {
-    unsigned tcp_mem_cap;
+    uint64_t tcp_mem_cap;
+
+    uint32_t prune_log_max;
+    uint32_t flags;
+
     uint32_t max_tcp_sessions;
     uint32_t max_udp_sessions;
     uint32_t max_icmp_sessions;
@@ -99,14 +103,20 @@ struct Stream5GlobalConfig
 
     uint16_t tcp_cache_pruning_timeout;
     uint16_t tcp_cache_nominal_timeout;
+
     uint16_t udp_cache_pruning_timeout;
     uint16_t udp_cache_nominal_timeout;
 
-    uint32_t   prune_log_max;
-    uint32_t   flags;
+    uint16_t icmp_cache_pruning_timeout;
+    uint16_t icmp_cache_nominal_timeout;
 
-    uint32_t   min_response_seconds;
-    uint8_t    max_active_responses;
+    uint16_t ip_cache_pruning_timeout;
+    uint16_t ip_cache_nominal_timeout;
+
+    uint16_t min_response_seconds;
+    uint16_t max_active_responses;
+
+    Stream5GlobalConfig();
 };
 
 struct Stream5Config

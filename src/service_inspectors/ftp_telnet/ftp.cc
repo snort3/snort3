@@ -229,10 +229,7 @@ static int SnortFTPData(Packet *p)
 
 static inline int InspectClientPacket (Packet* p)
 {
-    if ( ScPafEnabled() )
-        return PacketHasPAFPayload(p);
-
-    return !(p->packet_flags & PKT_STREAM_INSERT);
+    return PacketHasPAFPayload(p);
 }
 
 static int SnortFTP(

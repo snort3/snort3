@@ -125,6 +125,32 @@ static inline bool is_eligible(Packet* p)
     return true;
 }
 
+Stream5GlobalConfig::Stream5GlobalConfig()
+{
+    tcp_mem_cap = S5_DEFAULT_MEMCAP;
+    tcp_cache_pruning_timeout = S5_DEFAULT_PRUNING_TIMEOUT;
+    tcp_cache_nominal_timeout = S5_DEFAULT_NOMINAL_TIMEOUT;
+    max_tcp_sessions = S5_DEFAULT_MAX_TCP_SESSIONS;
+
+    udp_cache_pruning_timeout = S5_DEFAULT_PRUNING_TIMEOUT;
+    udp_cache_nominal_timeout = S5_DEFAULT_NOMINAL_TIMEOUT;
+    max_udp_sessions = S5_DEFAULT_MAX_UDP_SESSIONS;
+
+    icmp_cache_pruning_timeout = S5_DEFAULT_PRUNING_TIMEOUT;
+    icmp_cache_nominal_timeout = S5_DEFAULT_NOMINAL_TIMEOUT;
+    max_icmp_sessions = S5_DEFAULT_MAX_ICMP_SESSIONS;
+
+    ip_cache_pruning_timeout = S5_DEFAULT_PRUNING_TIMEOUT;
+    ip_cache_nominal_timeout = S5_DEFAULT_NOMINAL_TIMEOUT;
+    max_ip_sessions = S5_DEFAULT_MAX_IP_SESSIONS;
+
+    flags = 0;
+    prune_log_max = 1048576;
+
+    min_response_seconds = 0;
+    max_active_responses = 0;
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -425,8 +451,18 @@ static PlugData* tcp_ctor(Module* m)
 {
     StreamTcpModule* mod = (StreamTcpModule*)m;
     Stream5TcpConfig* c = mod->get_data();
-    StreamTcpData* p = new StreamTcpData(c);
-    return p;
+    unsigned i = 0;
+
+    while ( const ServiceReassembly* sr = mod->get_proto(i++) )
+        c->add_proto(sr->name.c_str(), sr->c2s, sr->s2c);
+
+    for ( i = 0; i < 65536; i++ )
+    {
+        bool c2s, s2c;
+        mod->get_port(i, c2s, s2c);
+        c->set_port(i, c2s, s2c);
+    }
+    return new StreamTcpData(c);
 }
 
 // this can be used for all plug data
@@ -545,28 +581,6 @@ static void s5_init()
 #endif
 }
 
-// FIXIT move to ctor
-#if 0
-static S5Common* s5_hack()
-{
-    S5Common* pc = (S5Common*)SnortAlloc(sizeof(*pc));
-
-    pc->tcp_mem_cap = S5_DEFAULT_MEMCAP;
-    pc->max_tcp_sessions = S5_DEFAULT_MAX_TCP_SESSIONS;
-    pc->max_udp_sessions = S5_DEFAULT_MAX_UDP_SESSIONS;
-    pc->max_icmp_sessions = S5_DEFAULT_MAX_ICMP_SESSIONS;
-    pc->max_ip_sessions = S5_DEFAULT_MAX_IP_SESSIONS;
-
-    pc->tcp_cache_pruning_timeout = S5_DEFAULT_PRUNING_TIMEOUT;
-    pc->tcp_cache_nominal_timeout = S5_DEFAULT_NOMINAL_TIMEOUT;
-
-    pc->udp_cache_pruning_timeout = S5_DEFAULT_PRUNING_TIMEOUT;
-    pc->udp_cache_nominal_timeout = S5_DEFAULT_NOMINAL_TIMEOUT;
-
-    return pc;
-}
-#endif
-
 #if 0
 static void s5_term(void* pv)
 {
@@ -667,14 +681,13 @@ static const InspectApi s5_api =
 {
     {
         PT_INSPECTOR,
-        "stream5",
+        "stream_global",
         INSAPI_PLUGIN_V0,
         0,
         glob_mod_ctor,
         mod_dtor
     },
     PRIORITY_TRANSPORT,
-    // FIXIT break up into separate preproc instances?
     PROTO_BIT__TCP|PROTO_BIT__UDP|PROTO_BIT__ICMP|PROTO_BIT__IP, // FIXIT based on config
     s5_init,
     nullptr, // term
@@ -688,4 +701,8 @@ static const InspectApi s5_api =
 };
 
 const BaseApi* nin_stream = &s5_api.base;
+const BaseApi* nin_stream_ip = &ip_api.base;
+const BaseApi* nin_stream_icmp = &icmp_api.base;
+const BaseApi* nin_stream_tcp = &tcp_api.base;
+const BaseApi* nin_stream_udp = &udp_api.base;
 

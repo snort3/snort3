@@ -66,7 +66,6 @@
 // may be from command line (a-b) or from config file (a_b)
 // option should be passed into all parser function for error
 // messages
-#define CONFIG_OPT__PAF_MAX                         "paf_max"
 #define CONFIG_OPT__POLICY_VERSION                  "policy_version"
 #ifdef PERF_PROFILING
 # define CONFIG_OPT__PROFILE_PREPROCS               "profile_preprocs"

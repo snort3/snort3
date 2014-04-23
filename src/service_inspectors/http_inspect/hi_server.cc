@@ -1222,7 +1222,6 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
 
     seq_num = GET_PKT_SEQ(p);
 
-    if ( ScPafEnabled() )
     {
         expected_pkt = !PacketHasStartOfPDU(p);
         parse_cont_encoding = !expected_pkt;
@@ -1270,7 +1269,7 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
         }
     }
     // when PAF is hardened, the following can be removed
-    else if ( (sd != NULL) )
+    if ( (sd != NULL) )
     {
         /* If the previously inspected packet in this session identified as a body
          * and if the packets are stream inserted wait for reassembled */
@@ -1533,21 +1532,8 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
 
                         if (p->packet_flags & PKT_STREAM_INSERT)
                         {
-                            if ( ScPafEnabled() )
-                            {
-                                if ( PacketHasFullPDU(p) )
-                                    expected_pkt = 1;
-                                else
-                                    sd->resp_state.inspect_reassembled = 1;
-                            }
-                            else if (
-                                header_ptr.content_len.cont_len_start &&
-                                ((uint32_t)(end - (header_ptr.header.uri_end)) >= header_ptr.content_len.len))
-                            {
-                                /* change this when the api is fixed to flush correctly */
-                                //stream.response_flush_stream(p);
+                            if ( PacketHasFullPDU(p) )
                                 expected_pkt = 1;
-                            }
                             else
                                 sd->resp_state.inspect_reassembled = 1;
                         }

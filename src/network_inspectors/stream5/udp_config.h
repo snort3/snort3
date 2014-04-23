@@ -25,17 +25,13 @@
 
 #include "decode.h"
 
-typedef struct _Stream5UdpPolicy
-{
-    uint32_t   session_timeout;
-    uint16_t   flags;
-
-} Stream5UdpPolicy;
-
 struct Stream5UdpConfig
 {
-    Stream5UdpPolicy* policy;
+    uint32_t session_timeout;
+    uint16_t flags;
     uint16_t port_filter[MAX_PORTS + 1];
+
+    Stream5UdpConfig();
 };
 
 #endif

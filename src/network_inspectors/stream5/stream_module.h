@@ -22,6 +22,10 @@
 #ifndef STREAM_MODULE_H
 #define STREAM_MODULE_H
 
+#include <string>
+#include <vector>
+
+#include "snort_types.h"
 #include "framework/module.h"
 
 class SnortConfig;
@@ -139,6 +143,15 @@ private:
 
 struct Stream5TcpConfig;
 
+struct ServiceReassembly
+{
+    std::string name;
+    bool c2s;
+    bool s2c;
+
+    ServiceReassembly(std::string&, bool, bool);
+};
+
 class StreamTcpModule : public Module
 {
 public:
@@ -152,8 +165,21 @@ public:
 
     Stream5TcpConfig* get_data();
 
+    void get_port(Port, bool& c2s, bool& s2c);
+    const ServiceReassembly* get_proto(unsigned);
+
+private:
+    void add_protos(Value&, bool, bool);
+
 private:
     Stream5TcpConfig* config;
+
+    PortList ports_client;
+    PortList ports_server;
+    PortList ports_both;
+
+    std::vector<ServiceReassembly*> protos;
+    bool client_protos_set;
 };
 
 #endif

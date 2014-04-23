@@ -21,7 +21,16 @@
 
 #include "stream_module.h"
 
+#include <string>
+using namespace std;
+
 #include "snort_config.h"
+#include "stream_common.h"
+
+#include "ip_config.h"
+#include "icmp_config.h"
+#include "tcp_config.h"
+#include "udp_config.h"
 
 //-------------------------------------------------------------------------
 // stream_global module
@@ -43,10 +52,10 @@ static const Parameter stream_cache_params[] =
 
 static const Parameter stream_response_params[] =
 {
-    { "max_responses", Parameter::PT_INT, "0:", nullptr,
+    { "max_responses", Parameter::PT_INT, "0:", "0",
       "maximum inactive time before retiring session tracker" },
 
-    { "min_interval", Parameter::PT_INT, "1:", nullptr,
+    { "min_interval", Parameter::PT_INT, "1:", "1",
       "minimum inactive time before being eligible for pruning" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -54,23 +63,8 @@ static const Parameter stream_response_params[] =
 
 static const Parameter stream_global_params[] =
 {
-    { "memcap", Parameter::PT_INT, "32768", "deflt",
-      "8388608" },
-
-    { "show_rebuilt_packets", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
-    { "prune_log_max", Parameter::PT_INT, "0:", "1048576",
-      "help" },
-
-    { "paf_max", Parameter::PT_INT, "1460:63780", "16384",
-      "help" },
-
-    { "tcp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
-      "configure tcp cache limits" },
-
-    { "udp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
-      "configure udp cache limits" },
+    { "active_response", Parameter::PT_TABLE, nullptr, stream_response_params,
+      "configure tcp resets and icmp unreachables" },
 
     { "icmp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
       "configure icmp cache limits" },
@@ -78,8 +72,23 @@ static const Parameter stream_global_params[] =
     { "ip_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
       "configure ip cache limits" },
 
-    { "active_response", Parameter::PT_TABLE, nullptr, stream_response_params,
-      "configure tcp resets and icmp unreachables" },
+    { "show_rebuilt_packets", Parameter::PT_BOOL, nullptr, "false",
+      "help" },
+
+    { "paf_max", Parameter::PT_INT, "1460:63780", "16384",
+      "help" },
+
+    { "prune_log_max", Parameter::PT_INT, "0:", "1048576",
+      "help" },
+
+    { "tcp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
+      "configure tcp cache limits" },
+
+    { "tcp_memcap", Parameter::PT_INT, "32768", "8388608",
+      "help" },
+
+    { "udp_cache", Parameter::PT_TABLE, nullptr, stream_cache_params,
+      "configure udp cache limits" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -90,7 +99,10 @@ static const RuleMap stream_global_rules[] =
 };
 
 StreamGlobalModule::StreamGlobalModule() :
-    Module("stream_global", stream_global_params, stream_global_rules) { }
+    Module("stream_global", stream_global_params, stream_global_rules)
+{
+    config = nullptr;
+}
 
 Stream5GlobalConfig* StreamGlobalModule::get_data()
 {
@@ -99,20 +111,77 @@ Stream5GlobalConfig* StreamGlobalModule::get_data()
     return temp;
 }
 
-bool StreamGlobalModule::set(const char*, Value&, SnortConfig*)
+bool StreamGlobalModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
-#if 0
-    if ( v.is("name") )
-        sc->pkt_cnt = v.get_long();
+    if ( !strcmp(fqn, "stream_global.tcp_cache.max_sessions") )
+        config->max_tcp_sessions = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.udp_cache.max_sessions") )
+        config->max_udp_sessions = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.icmp_cache.max_sessions") )
+        config->max_icmp_sessions = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.ip_cache.max_sessions") )
+        config->max_ip_sessions = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.tcp_cache.pruning_timeout") )
+        config->tcp_cache_pruning_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.udp_cache.pruning_timeout") )
+        config->udp_cache_pruning_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.icmp_cache.pruning_timeout") )
+        config->icmp_cache_pruning_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.ip_cache.pruning_timeout") )
+        config->ip_cache_pruning_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.tcp_cache.idle_timeout") )
+        config->tcp_cache_nominal_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.udp_cache.idle_timeout") )
+        config->udp_cache_nominal_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.icmp_cache.idle_timeout") )
+        config->icmp_cache_nominal_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.ip_cache.idle_timeout") )
+        config->ip_cache_nominal_timeout = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.active_response.max_responses") )
+        config->max_active_responses = v.get_long();
+
+    else if ( !strcmp(fqn, "stream_global.active_response.min_interval") )
+        config->min_response_seconds = v.get_long();
+
+    else if ( v.is("tcp_memcap") )
+        config->tcp_mem_cap = v.get_long();
+
+    else if ( v.is("show_rebuilt_packets") )
+    {
+        if ( v.get_bool() )
+            config->flags |= STREAM5_CONFIG_SHOW_PACKETS;
+        else
+            config->flags &= ~STREAM5_CONFIG_SHOW_PACKETS;
+    }
+    else if ( v.is("prune_log_max") )
+        config->prune_log_max = v.get_long();
+
+    else if ( v.is("paf_max") )
+        sc->paf_max = v.get_long();
 
     else
         return false;
-#endif
+
     return true;
 }
 
 bool StreamGlobalModule::begin(const char*, int, SnortConfig*)
 {
+    if ( !config )
+        config = new Stream5GlobalConfig;
+
     return true;
 }
 
@@ -127,7 +196,7 @@ bool StreamGlobalModule::end(const char*, int, SnortConfig*)
 
 static const Parameter stream_ip_params[] =
 {
-    { "timeout", Parameter::PT_INT, "1:86400", "30",
+    { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -148,13 +217,22 @@ Stream5IpConfig* StreamIpModule::get_data()
     return temp;
 }
 
-bool StreamIpModule::set(const char*, Value&, SnortConfig*)
+bool StreamIpModule::set(const char*, Value& v, SnortConfig*)
 {
+    if ( v.is("session_timeout") )
+        config->session_timeout = v.get_long();
+
+    else
+        return false;
+
     return true;
 }
 
 bool StreamIpModule::begin(const char*, int, SnortConfig*)
 {
+    if ( !config )
+        config = new Stream5IpConfig;
+
     return true;
 }
 
@@ -169,7 +247,7 @@ bool StreamIpModule::end(const char*, int, SnortConfig*)
 
 static const Parameter stream_icmp_params[] =
 {
-    { "timeout", Parameter::PT_INT, "1:86400", "30",
+    { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -190,13 +268,22 @@ Stream5IcmpConfig* StreamIcmpModule::get_data()
     return temp;
 }
 
-bool StreamIcmpModule::set(const char*, Value&, SnortConfig*)
+bool StreamIcmpModule::set(const char*, Value& v, SnortConfig*)
 {
+    if ( v.is("session_timeout") )
+        config->session_timeout = v.get_long();
+
+    else
+        return false;
+
     return true;
 }
 
 bool StreamIcmpModule::begin(const char*, int, SnortConfig*)
 {
+    if ( !config )
+        config = new Stream5IcmpConfig;
+
     return true;
 }
 
@@ -211,7 +298,7 @@ bool StreamIcmpModule::end(const char*, int, SnortConfig*)
 
 static const Parameter stream_udp_params[] =
 {
-    { "timeout", Parameter::PT_INT, "1:86400", "30",
+    { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
 
     { "ignore_any_rules", Parameter::PT_BOOL, nullptr, "false",
@@ -235,13 +322,25 @@ Stream5UdpConfig* StreamUdpModule::get_data()
     return temp;
 }
 
-bool StreamUdpModule::set(const char*, Value&, SnortConfig*)
+bool StreamUdpModule::set(const char*, Value& v, SnortConfig*)
 {
+    if ( v.is("session_timeout") )
+        config->session_timeout = v.get_long();
+
+    else if ( v.is("ignore_any_rules") )
+        config->flags |= STREAM5_CONFIG_IGNORE_ANY;
+
+    else
+        return false;
+
     return true;
 }
 
 bool StreamUdpModule::begin(const char*, int, SnortConfig*)
 {
+    if ( !config )
+        config = new Stream5UdpConfig;
+
     return true;
 }
 
@@ -303,7 +402,7 @@ static const char* client_ports =
     "21 23 25 42 53 80 110 111 135 136 137 139 143 445 513 514 1433 1521 "
     "2401 3306";
 
-static const char* client_protocols =
+static const char* client_protos =
     "ftp telnet smtp nameserver dns http pop3 sunrpc dcerpc netbios-ssn imap "
     "login shell mssql oracle cvs mysql";
 
@@ -321,6 +420,17 @@ static const Parameter stream_tcp_small_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter stream_queue_limit_params[] =
+{
+    { "max_bytes", Parameter::PT_INT, "0:", "1048576",
+      "don't queue more than given bytes per session and direction" },
+
+    { "max_segments", Parameter::PT_INT, "0:", "2621",
+      "don't queue more than given segments per session and direction" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter stream_tcp_params[] =
 {
     { "both_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
@@ -329,35 +439,17 @@ static const Parameter stream_tcp_params[] =
     { "both_protocols", Parameter::PT_STRING, nullptr, nullptr,
       "reassemble data in both directions for given services" },
 
-    { "check_session_hijacking", Parameter::PT_BOOL, nullptr, "false",
-      "for ethernet, verify that segments following the syn have the same mac address" },
-
     { "client_ports", Parameter::PT_BIT_LIST, "65535", client_ports,
       "reassemble data from client to given server ports" },
 
-    { "client_protocols", Parameter::PT_STRING, nullptr, client_protocols,
+    { "client_protocols", Parameter::PT_STRING, nullptr, client_protos,
       "reassemble data from client for given services" },
-
-    { "detect_anomalies", Parameter::PT_BOOL, nullptr, "false",
-      "detect tcp anomalies" },
-
-    { "dont_reassemble_async", Parameter::PT_BOOL, nullptr, "false",
-      "don't queue for reassembly unless traffic is seen in both directions" },
-
-    { "dont_store_large_packets", Parameter::PT_BOOL, nullptr, "false",
-      "don't queue large packets for reassembly" },
 
     { "flush_factor", Parameter::PT_INT, "0:", "0",
       "flush upon seeing a drop in segment size after given number of non-decreasing segments" },
 
     { "ignore_any_rules", Parameter::PT_BOOL, nullptr, "false",
       "process tcp content rules w/o ports only if rules with ports are present" },
-
-    { "max_queued_bytes", Parameter::PT_INT, "0:", "1048576",
-      "don't queue more than given bytes per session and direction" },
-
-    { "max_queued_segs", Parameter::PT_INT, "0:", "2621",
-      "don't queue more than given segments per session and direction" },
 
     { "max_window", Parameter::PT_INT, "0:1073725440", "0",
       "maximum allowed tcp window" },
@@ -366,7 +458,10 @@ static const Parameter stream_tcp_params[] =
       "maximum number of allowed overlapping segments per session" },
 
     { "policy", Parameter::PT_ENUM, policies, "linux",
-      "session tracking timeout" },
+      "determines operating system characteristics like reassembly" },
+
+    { "reassemble_async", Parameter::PT_BOOL, nullptr, "true",
+      "queue data for reassembly before traffic is seen in both directions" },
 
     { "require_3whs", Parameter::PT_INT, "0:86400", "0",
       "don't track midstream sessions after given seconds from start up" },
@@ -377,14 +472,17 @@ static const Parameter stream_tcp_params[] =
     { "server_protocols", Parameter::PT_STRING, nullptr, nullptr,
       "reassemble data from server for given services" },
 
+    { "queue_limit", Parameter::PT_TABLE, nullptr, stream_queue_limit_params,
+      "limit amount of segment data queued" },
+
     { "small_segments", Parameter::PT_TABLE, nullptr, stream_tcp_small_params,
       "limit number of small segments queued" },
 
-    { "timeout", Parameter::PT_INT, "1:86400", "30",
+    { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
 
-    { "use_static_footprint_sizes", Parameter::PT_BOOL, nullptr, "false",
-      "for repeatable testing; not for production" },
+    { "footprint", Parameter::PT_INT, "0:", "false",
+      "use zero for production, non-zero for testing at given size" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -416,7 +514,9 @@ static const RuleMap stream_tcp_rules[] =
 };
 
 StreamTcpModule::StreamTcpModule() :
-    Module("stream_tcp", stream_tcp_params, stream_tcp_rules) { }
+    Module("stream_tcp", stream_tcp_params, stream_tcp_rules)
+{
+}
 
 Stream5TcpConfig* StreamTcpModule::get_data()
 {
@@ -425,18 +525,155 @@ Stream5TcpConfig* StreamTcpModule::get_data()
     return temp;
 }
 
-bool StreamTcpModule::set(const char*, Value&, SnortConfig*)
+ServiceReassembly::ServiceReassembly(string& s, bool cs, bool sc)
 {
+    name = s;
+    c2s = cs;
+    s2c = sc;
+}
+
+void StreamTcpModule::add_protos(Value& v, bool c2s, bool s2c)
+{
+    string tok;
+    v.set_first_token();
+
+    while ( v.get_next_token(tok) )
+        protos.push_back(new ServiceReassembly(tok, c2s, s2c));
+}
+
+const ServiceReassembly* StreamTcpModule::get_proto(unsigned idx)
+{
+    if ( idx < protos.size() )
+        return protos[idx];
+    else
+        return nullptr;
+}
+
+void StreamTcpModule::get_port(
+    Port p, bool& c2s, bool& s2c)
+{
+    c2s = ports_client[p] || ports_both[p];
+    s2c = ports_server[p] || ports_both[p];
+}
+
+bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("count") )
+        config->max_consec_small_segs = v.get_long();
+
+    else if ( v.is("maximum_size") )
+        config->max_consec_small_seg_size = v.get_long();
+
+    else if ( v.is("ignore_ports") )
+        v.get_bits(config->small_seg_ignore);
+
+    else if ( v.is("flush_factor") )
+        config->flush_factor = v.get_long();
+
+    else if ( v.is("footprint") )
+        config->footprint = v.get_long();
+
+    else if ( v.is("ignore_any_rules") )
+        config->flags |= STREAM5_CONFIG_IGNORE_ANY;
+
+    else if ( v.is("max_bytes") )
+        config->max_queued_bytes = v.get_long();
+
+    else if ( v.is("max_segments") )
+        config->max_queued_segs = v.get_long();
+
+    else if ( v.is("max_window") )
+        config->max_window = v.get_long();
+
+    else if ( v.is("policy") )
+        config->policy = v.get_long() + 1;
+
+    else if ( v.is("overlap_limit") )
+        config->overlap_limit = v.get_long();
+
+    else if ( v.is("session_timeout") )
+        config->session_timeout = v.get_long();
+
+    else if ( v.is("client_ports") )
+        v.get_bits(ports_client);
+
+    else if ( v.is("server_ports") )
+        v.get_bits(ports_server);
+
+    else if ( v.is("both_ports") )
+        v.get_bits(ports_both);
+
+    else if ( v.is("client_protocols") )
+    {
+        add_protos(v, true, false);
+        client_protos_set = true;
+    }
+    else if ( v.is("server_protocols") )
+        add_protos(v, false, true);
+
+    else if ( v.is("both_protocols") )
+        add_protos(v, true, true);
+
+    else if ( v.is("reassemble_async") )
+    {
+        if ( v.get_bool() )
+            config->flags &= ~STREAM5_CONFIG_NO_ASYNC_REASSEMBLY;
+        else
+            config->flags |= STREAM5_CONFIG_NO_ASYNC_REASSEMBLY;
+    }
+    else if ( v.is("require_3whs") )
+    {
+        config->flags |= STREAM5_CONFIG_REQUIRE_3WHS;
+        config->hs_timeout = v.get_long();
+    }
+
+    else
+        return false;
+
     return true;
 }
 
 bool StreamTcpModule::begin(const char*, int, SnortConfig*)
 {
+    if ( config )
+        return false;
+
+    config = new Stream5TcpConfig;
+
+    ports_client.reset();
+    ports_server.reset();
+    ports_both.reset();
+
+    for ( auto p : protos )
+        delete p;
+
+    protos.clear();
+    client_protos_set = false;
+
+    // set default ports here
+    // if set by user, these are cleared
+    Value v(client_ports);
+    v.get_bits(ports_client);
+
     return true;
 }
 
 bool StreamTcpModule::end(const char*, int, SnortConfig*)
 {
+    // these cases are all handled properly
+    // (stream_tcp handles protos == 'all'):
+    //
+    // ports client none -> client_ports = ''
+    // ports client all -> client_ports = '1:65535'
+    // protocol server none -> server_protocols = ''
+    // protocol server all -> server_protocols = 'all'
+
+    // set default protos here if not set by user
+    if ( !client_protos_set )
+    {
+        Value v(client_protos);
+        add_protos(v, true, false);
+    }
     return true;
 }
 

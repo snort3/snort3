@@ -194,11 +194,8 @@ static void _FTPTelnetAddPortsOfInterest(
 
 static void _FTPTelnetAddService (SnortConfig* sc, int16_t app)
 {
-    if ( ScPafEnabled() )
-    {
-        stream.register_paf_service(sc, app, true, ftp_paf, false);
-        stream.register_paf_service(sc, app, false, ftp_paf, false);
-    }
+    stream.register_paf_service(sc, app, true, ftp_paf, false);
+    stream.register_paf_service(sc, app, false, ftp_paf, false);
 }
 
 /*
@@ -439,7 +436,7 @@ void _addPortsToStream5(SnortConfig* sc, PortList& ports, int ftp)
             stream.set_port_filter_status(
                 sc, IPPROTO_TCP, (uint16_t)i, PORT_MONITOR_SESSION);
 
-            if ( ftp && ScPafEnabled() )
+            if ( ftp )
             {
                 stream.register_paf_port(sc, (uint16_t)i, true, ftp_paf, false);
                 stream.register_paf_port(sc, (uint16_t)i, false, ftp_paf, false);

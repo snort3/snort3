@@ -1,5 +1,4 @@
 /****************************************************************************
- *
  * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
@@ -480,7 +479,7 @@ typedef struct _StreamTracker
 
     Stream5AlertInfo alerts[MAX_SESSION_ALERTS]; /* history of alerts */
 
-    Stream5TcpPolicy *tcp_policy;
+    Stream5TcpConfig* config;
     StreamSegment *seglist;       /* first queued segment */
     StreamSegment *seglist_tail;  /* last queued segment */
 
@@ -612,28 +611,15 @@ static inline bool DataToFlush (const StreamTracker* st)
     return ( SegsToFlush(st, 2) > 1 );
 }
 
-int default_ports[] =
-{
-    21, 23, 25, 42, 53, 80, 110, 111, 135, 136, 137, 139, 143, 445,
-    513, 514, 1433, 1521, 2401, 3306
-};
-
-static const char *default_protocols[] =
-{
-    "ftp", "telnet", "smtp", "nameserver", "dns", "http", "pop3", "sunrpc",
-    "dcerpc", "netbios-ssn", "imap", "login", "shell", "mssql", "oracle", "cvs",
-    "mysql"
-};
-
-static THREAD_LOCAL FlushConfig ignore_flush_policy[MAX_PORTS];
-static THREAD_LOCAL FlushConfig ignore_flush_policy_protocol[MAX_PROTOCOL_ORDINAL];
+static FlushConfig ignore_flush_policy[MAX_PORTS];
+static FlushConfig ignore_flush_policy_protocol[MAX_PROTOCOL_ORDINAL];
 
 /*  P R O T O T Y P E S  ********************************************/
-static void Stream5ParseTcpArgs(SnortConfig*, Stream5TcpConfig *, char *, Stream5TcpPolicy *);static void Stream5PrintTcpConfig(Stream5TcpPolicy *);
+static void Stream5PrintTcpConfig(Stream5TcpConfig*);
 
 static inline void SetupTcpDataBlock(TcpDataBlock *, Packet *);
 static int ProcessTcp(Flow *, Packet *, TcpDataBlock *,
-        Stream5TcpPolicy *);
+        Stream5TcpConfig *);
 static inline int CheckFlushPolicyOnData(
     TcpSession *, StreamTracker *, StreamTracker *,
     TcpDataBlock *, Packet *);
@@ -732,14 +718,16 @@ static const char *flush_policy_names[] = {
 static THREAD_LOCAL int s5_tcp_cleanup = 0;
 
 static const uint32_t g_static_points[RAND_FLUSH_POINTS] =
-                         { 128, 217, 189, 130, 240, 221, 134, 129,
-                           250, 232, 141, 131, 144, 177, 201, 130,
-                           230, 190, 177, 142, 130, 200, 173, 129,
-                           250, 244, 174, 151, 201, 190, 180, 198,
-                           220, 201, 142, 185, 219, 129, 194, 140,
-                           145, 191, 197, 183, 199, 220, 231, 245,
-                           233, 135, 143, 158, 174, 194, 200, 180,
-                           201, 142, 153, 187, 173, 199, 143, 201 };
+{
+    128, 217, 189, 130, 240, 221, 134, 129,
+    250, 232, 141, 131, 144, 177, 201, 130,
+    230, 190, 177, 142, 130, 200, 173, 129,
+    250, 244, 174, 151, 201, 190, 180, 198,
+    220, 201, 142, 185, 219, 129, 194, 140,
+    145, 191, 197, 183, 199, 220, 231, 245,
+    233, 135, 143, 158, 174, 194, 200, 180,
+    201, 142, 153, 187, 173, 199, 143, 201
+};
 
 /*  F U N C T I O N S  **********************************************/
 static inline uint32_t GenerateFlushPoint(FlushPointList *flush_point_list)
@@ -747,55 +735,45 @@ static inline uint32_t GenerateFlushPoint(FlushPointList *flush_point_list)
     return (rand() % flush_point_list->flush_range) + flush_point_list->flush_base;
 }
 
-static inline void InitFlushPointList(FlushPointList *flush_point_list, uint32_t value, uint32_t range, int use_static)
+static void InitFlushPointList(
+    FlushPointList *flush_point_list, uint32_t value, uint32_t range, int footprint)
 {
     uint32_t i;
     uint32_t flush_range = range;
     uint32_t flush_base = value - range/2;
 
-    if (!flush_point_list)
-        return;
+    const uint32_t cfp = footprint ? footprint : 192;
 
-    if (!flush_point_list->initialized)
-    {
-#ifdef REG_TEST
-        const char* sfp = getenv("S5_FPT");
-        // no error checking required - atoi() is sufficient
-        uint32_t cfp = sfp ? atoi(sfp) : 0;
-        if ( cfp < 128 || cfp > 255 ) cfp = 192;
-#else
-        const uint32_t cfp = 192;
-#endif
+    flush_point_list->flush_range = flush_range;
+    flush_point_list->flush_base = flush_base;
 
-        flush_point_list->flush_range = flush_range;
-        flush_point_list->flush_base = flush_base;
 #ifndef DYNAMIC_RANDOM_FLUSH_POINTS
-        flush_point_list->current = 0;
+    flush_point_list->current = 0;
 
-        flush_point_list->flush_points = (uint32_t*)SnortAlloc(sizeof(uint32_t) * RAND_FLUSH_POINTS);
-        for (i=0;i<RAND_FLUSH_POINTS;i++)
+    flush_point_list->flush_points = 
+        (uint32_t*)SnortAlloc(sizeof(uint32_t) * RAND_FLUSH_POINTS);
+
+    for (i=0;i<RAND_FLUSH_POINTS;i++)
+    {
+        if (snort_conf->run_flags & RUN_FLAG__STATIC_HASH)
         {
-            if (snort_conf->run_flags & RUN_FLAG__STATIC_HASH)
-            {
-                if ( i == 0 )
-                    LogMessage("WARNING:  using constant flush point = %u!\n", cfp);
-                flush_point_list->flush_points[i] = cfp;
+            if ( i == 0 )
+                LogMessage("WARNING:  using constant flush point = %u!\n", cfp);
 
-            }
-            else if (use_static)
-            {
-                if ( i == 0 )
-                    LogMessage("WARNING: using static flush points.\n");
-                flush_point_list->flush_points[i] = g_static_points[i];
-            }
-            else
-            {
-                flush_point_list->flush_points[i] = GenerateFlushPoint(flush_point_list);
-            }
+            flush_point_list->flush_points[i] = cfp;
         }
-#endif
-        flush_point_list->initialized = 1;
+        else if ( !footprint )
+        {
+            if ( i == 0 )
+                LogMessage("WARNING: using static flush points.\n");
+            flush_point_list->flush_points[i] = g_static_points[i];
+        }
+        else
+        {
+            flush_point_list->flush_points[i] = GenerateFlushPoint(flush_point_list);
+        }
     }
+#endif
 }
 
 static inline void UpdateFlushMgr(
@@ -837,16 +815,8 @@ static inline void UpdateFlushMgr(
 #ifdef DYNAMIC_RANDOM_FLUSH_POINTS
     mgr->flush_pt = GenerateFlushPoint();
 #else
-    if (flush_point_list)
-    {
-        /* Handle case where it wasn't initialized... */
-        if (flush_point_list->initialized == 0)
-        {
-            InitFlushPointList(flush_point_list, 192, 128, 0);
-        }
-        mgr->flush_pt = flush_point_list->flush_points[flush_point_list->current];
-        flush_point_list->current = (flush_point_list->current+1) % RAND_FLUSH_POINTS;
-    }
+    mgr->flush_pt = flush_point_list->flush_points[flush_point_list->current];
+    flush_point_list->current = (flush_point_list->current+1) % RAND_FLUSH_POINTS;
 #endif
     mgr->last_size = 0;
     mgr->last_count = 0;
@@ -898,7 +868,7 @@ static inline void InitFlushMgrByPort (
         auto_disable = !flush;
     }   
     InitFlushMgr(&pst->flush_mgr,
-        &pst->tcp_policy->flush_point_list, flush_policy, auto_disable);
+        &pst->config->flush_point_list, flush_policy, auto_disable);
 }
 
 static inline void InitFlushMgrByService (
@@ -924,18 +894,17 @@ static inline void InitFlushMgrByService (
         auto_disable = !flush;
     }   
     InitFlushMgr(&pst->flush_mgr,
-        &pst->tcp_policy->flush_point_list, flush_policy, auto_disable);
+        &pst->config->flush_point_list, flush_policy, auto_disable);
 }
 
-static int ResetFlushMgrsPolicy(Stream5TcpConfig* tcp_config)
+static int ResetFlushMgrsPolicy(Stream5TcpConfig* config)
 {
-    if (tcp_config == NULL)
+    if (config == NULL)
         return 0;
 
     {
         int j;
-        Stream5TcpPolicy *policy = tcp_config->policy;
-        FlushPointList *fpl = &policy->flush_point_list;
+        FlushPointList *fpl = &config->flush_point_list;
         FlushMgr *client, *server;
         uint8_t flush_policy;
 
@@ -943,23 +912,23 @@ static int ResetFlushMgrsPolicy(Stream5TcpConfig* tcp_config)
 
         for (j = 0; j < MAX_PORTS; j++)
         {
-            client = &policy->flush_config[j].client;
-            flush_policy = policy->flush_config[j].client.flush_policy;
+            client = &config->flush_config[j].client;
+            flush_policy = config->flush_config[j].client.flush_policy;
             InitFlushMgr(client, fpl, flush_policy, 0);
 
-            server = &policy->flush_config[j].server;
-            flush_policy = policy->flush_config[j].server.flush_policy;
+            server = &config->flush_config[j].server;
+            flush_policy = config->flush_config[j].server.flush_policy;
             InitFlushMgr(server, fpl, flush_policy, 0);
         }
         /* protocol 0 is the unknown case. skip it */
         for (j = 1; j < MAX_PROTOCOL_ORDINAL; j++)
         {
-            client = &policy->flush_config_protocol[j].client;
-            flush_policy = policy->flush_config_protocol[j].client.flush_policy;
+            client = &config->flush_config_protocol[j].client;
+            flush_policy = config->flush_config_protocol[j].client.flush_policy;
             InitFlushMgr(client, fpl, flush_policy, 0);
 
-            server = &policy->flush_config_protocol[j].server;
-            flush_policy = policy->flush_config_protocol[j].server.flush_policy;
+            server = &config->flush_config_protocol[j].server;
+            flush_policy = config->flush_config_protocol[j].server.flush_policy;
             InitFlushMgr(server, fpl, flush_policy, 0);
         }
     }
@@ -1007,7 +976,7 @@ bool Stream5ActivatePafTcp (Flow* lwssn, bool to_server)
     switch ( fm->flush_policy)
     {
     case STREAM_FLPOLICY_IGNORE:
-        InitFlushMgr(fm, &trk->tcp_policy->flush_point_list, STREAM_FLPOLICY_PROTOCOL, 0);
+        InitFlushMgr(fm, &trk->config->flush_point_list, STREAM_FLPOLICY_PROTOCOL, 0);
         break;
 
     case STREAM_FLPOLICY_FOOTPRINT:
@@ -1156,12 +1125,16 @@ static void Stream5TcpRegisterRuleOptions(SnortConfig*)
 #endif
 }
 
+//-------------------------------------------------------------------------
+// policy translation
+//-------------------------------------------------------------------------
+
 static void Stream5TcpInitFlushPoints(void)
 {
     int i;
 
     /* Seed the flushpoint random generator */
-    srand( (unsigned int) sizeof(default_ports) + (unsigned int) time(NULL) );
+    srand( (unsigned int) sizeof(TcpSession) + (unsigned int) time(NULL) );
 
     /* Default is to ignore, for all ports */
     for(i=0;i<MAX_PORTS;i++)
@@ -1175,6 +1148,10 @@ static void Stream5TcpInitFlushPoints(void)
         ignore_flush_policy_protocol[i].server.flush_policy = STREAM_FLPOLICY_IGNORE;
     }
 }
+
+//-------------------------------------------------------------------------
+// policy translation
+//-------------------------------------------------------------------------
 
 static inline uint16_t StreamPolicyIdFromName(char *name)
 {
@@ -1276,695 +1253,133 @@ static inline uint16_t GetTcpReassemblyPolicy(int os_policy)
     }
 }
 
-#define STATIC_FP ((s5TcpPolicy->flags & STREAM5_CONFIG_STATIC_FLUSHPOINTS)?1:0)
+//-------------------------------------------------------------------------
+// config methods
+//-------------------------------------------------------------------------
 
-static void Stream5ParseTcpArgs(
-    SnortConfig*, Stream5TcpConfig *config, char *args,
-    Stream5TcpPolicy *s5TcpPolicy)
+Stream5TcpConfig::Stream5TcpConfig()
 {
-    char **toks;
-    int num_toks;
-    int i;
-    char **stoks = NULL;
-    int s_toks;
-    char *endPtr = NULL;
-    char set_flush_policy = 0;
-    char set_target_flush_policy = 0;
-    int reassembly_direction = SSN_DIR_CLIENT;
-    int32_t long_val = 0;
+    policy = STREAM_POLICY_DEFAULT;
+    reassembly_policy = REASSEMBLY_POLICY_DEFAULT;
+    session_timeout = S5_DEFAULT_SSN_TIMEOUT;
+    max_window = 0;
+    flags = 0;
 
-    s5TcpPolicy->policy = STREAM_POLICY_DEFAULT;
-    s5TcpPolicy->reassembly_policy = REASSEMBLY_POLICY_DEFAULT;
-    s5TcpPolicy->session_timeout = S5_DEFAULT_SSN_TIMEOUT;
-    s5TcpPolicy->max_window = 0;
-    s5TcpPolicy->flags = 0;
-    s5TcpPolicy->max_queued_bytes = S5_DEFAULT_MAX_QUEUED_BYTES;
-    s5TcpPolicy->max_queued_segs = S5_DEFAULT_MAX_QUEUED_SEGS;
+    max_queued_bytes = S5_DEFAULT_MAX_QUEUED_BYTES;
+    max_queued_segs = S5_DEFAULT_MAX_QUEUED_SEGS;
 
-    s5TcpPolicy->max_consec_small_segs = S5_DEFAULT_CONSEC_SMALL_SEGS;
-    s5TcpPolicy->max_consec_small_seg_size = S5_DEFAULT_MAX_SMALL_SEG_SIZE;
+    max_consec_small_segs = S5_DEFAULT_CONSEC_SMALL_SEGS;
+    max_consec_small_seg_size = S5_DEFAULT_MAX_SMALL_SEG_SIZE;
 
-    if(args != NULL && strlen(args) != 0)
+    InitFlushPointList(&flush_point_list, 192, 128, footprint);
+}
+
+//-------------------------------------------------------------------------
+// FIXIT directionality must be fixed per 297 bug fixes
+//
+// when client ports are configured, that means c2s and is stored on the
+// client side; when the session starts, the server policy is obtained from
+// the client side because segments are stored on the receiving side.
+//
+// this could be improved further beyond the 297 bug fixes by storing the
+// c2s policy on the server side and then obtaining server policy from the
+// server on session startup.  
+//
+// either way, this client / server distinction must be kept in mind to
+// make sense of the code in this file.
+//-------------------------------------------------------------------------
+void Stream5TcpConfig::set_port(
+    Port port, bool c2s, bool s2c)
+{
+    if ( c2s )
     {
-        toks = mSplit(args, ",", 0, &num_toks, 0);
-
-        for (i = 0; i < num_toks; i++)
-        {
-            if(!strcasecmp(toks[i], "use_static_footprint_sizes"))
-                s5TcpPolicy->flags |= STREAM5_CONFIG_STATIC_FLUSHPOINTS;
-        }
-
-        for (i = 0; i < num_toks; i++)
-        {
-            int max_s_toks = 1;  // set to 0 to disable check
-            stoks = mSplit(toks[i], " ", 3, &s_toks, 0);
-
-            if (s_toks == 0)
-            {
-                ParseError("Missing parameter in Stream5 TCP config.");
-            }
-
-            if(!strcasecmp(stoks[0], "timeout"))
-            {
-                if(stoks[1])
-                {
-                    s5TcpPolicy->session_timeout = strtoul(stoks[1], &endPtr, 10);
-                }
-
-                if (!stoks[1] || (endPtr == &stoks[1][0]))
-                {
-                    ParseError("Invalid timeout in config file.  "
-                        "Integer parameter required.");
-                }
-
-                if ((s5TcpPolicy->session_timeout > S5_MAX_SSN_TIMEOUT) ||
-                    (s5TcpPolicy->session_timeout < S5_MIN_SSN_TIMEOUT))
-                {
-                    ParseError("Invalid timeout in config file.  "
-                        "Must be between %d and %d",
-                        S5_MIN_SSN_TIMEOUT, S5_MAX_SSN_TIMEOUT);
-                }
-                max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "overlap_limit"))
-            {
-                if(stoks[1])
-                {
-                    long_val = SnortStrtol(stoks[1], &endPtr, 10);
-                    if (errno == ERANGE)
-                    {
-                        errno = 0;
-                        long_val = -1;
-                    }
-                    s5TcpPolicy->overlap_limit = (uint8_t)long_val;
-                }
-
-                if (!stoks[1] || (endPtr == &stoks[1][0]))
-                {
-                    ParseError("Invalid overlap limit in config file."
-                            "Integer parameter required");
-                }
-
-                if ((long_val > S5_MAX_OVERLAP_LIMIT) ||
-                    (long_val < S5_MIN_OVERLAP_LIMIT))
-                {
-                    ParseError("Invalid overlap limit in config file."
-                        "  Must be between %d and %d",
-                        S5_MIN_OVERLAP_LIMIT, S5_MAX_OVERLAP_LIMIT);
-                }
-                max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "policy"))
-            {
-                s5TcpPolicy->policy = StreamPolicyIdFromName(stoks[1]);
-
-                if ((s5TcpPolicy->policy == STREAM_POLICY_DEFAULT) &&
-                    (strcasecmp(stoks[1], "bsd")))
-                {
-                    /* Default is BSD.  If we don't have "bsd", its
-                     * the default and invalid.
-                     */
-                    ParseError("Bad policy name '%s'", stoks[1]);
-                }
-                s5TcpPolicy->reassembly_policy =
-                    GetTcpReassemblyPolicy(s5TcpPolicy->policy);
-
-                max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "require_3whs"))
-            {
-                s5TcpPolicy->flags |= STREAM5_CONFIG_REQUIRE_3WHS;
-
-                if (s_toks > 1)
-                {
-                    s5TcpPolicy->hs_timeout = SnortStrtoul(stoks[1], &endPtr, 10);
-
-                    if ((endPtr == &stoks[1][0]) || (*endPtr != '\0') || (errno == ERANGE))
-                    {
-                        ParseError(
-                            "Invalid 3Way Handshake allowable.  Integer parameter required.");
-                    }
-
-                    if (s5TcpPolicy->hs_timeout > S5_MAX_SSN_TIMEOUT)
-                    {
-                        ParseError("Invalid handshake timeout in "
-                                   "config file.  Must be between %d and %d",
-                                   S5_MIN_ALT_HS_TIMEOUT, S5_MAX_SSN_TIMEOUT);
-                    }
-                }
-
-                max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "max_window"))
-            {
-                if(stoks[1])
-                {
-                    long_val = SnortStrtol(stoks[1], &endPtr, 10);
-                    if (errno == ERANGE)
-                    {
-                        errno = 0;
-                        ParseError("Invalid Max Window size.  Integer parameter required.");
-                    }
-                    s5TcpPolicy->max_window = (uint32_t)long_val;
-                }
-
-                if (!stoks[1] || (endPtr == &stoks[1][0]))
-                {
-                    ParseError("Invalid Max Window size.  Integer parameter required.");
-                }
-
-                if ((long_val > S5_MAX_MAX_WINDOW) ||
-                    (long_val < S5_MIN_MAX_WINDOW))
-                {
-                    ParseError("Invalid Max Window size."
-                        "  Must be between %d and %d",
-                        S5_MIN_MAX_WINDOW, S5_MAX_MAX_WINDOW);
-                }
-                max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "use_static_footprint_sizes"))
-            {
-                // we already handled this one above
-            }
-            else if(!strcasecmp(stoks[0], "flush_factor"))
-            {
-                if (stoks[1])
-                {
-                    s5TcpPolicy->flush_factor = (uint16_t)SnortStrtoulRange(
-                        stoks[1], &endPtr, 10, 0, S5_MAX_FLUSH_FACTOR);
-                }
-                if (
-                    (!stoks[1] || (endPtr == &stoks[1][0])) ||
-                    (s5TcpPolicy->flush_factor > S5_MAX_FLUSH_FACTOR))
-                {
-                    ParseError("'flush_factor %d' invalid: "
-                        "value must be between 0 and %d segments.",
-                        s5TcpPolicy->flush_factor, S5_MAX_FLUSH_FACTOR);
-                }
-                max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "ignore_any_rules"))
-            {
-                s5TcpPolicy->flags |= STREAM5_CONFIG_IGNORE_ANY;
-            }
-            else if(!strcasecmp(stoks[0], "dont_reassemble_async"))
-            {
-                s5TcpPolicy->flags |= STREAM5_CONFIG_NO_ASYNC_REASSEMBLY;
-            }
-            else if(!strcasecmp(stoks[0], "max_queued_bytes"))
-            {
-                if(stoks[1])
-                {
-                    long_val = SnortStrtol(stoks[1], &endPtr, 10);
-                    if (errno == ERANGE)
-                    {
-                        errno = 0;
-                        ParseError("Invalid Max Queued Bytes.  Integer parameter required.");
-                    }
-                    s5TcpPolicy->max_queued_bytes = (uint32_t)long_val;
-                }
-
-                if (!stoks[1] || (endPtr == &stoks[1][0]))
-                {
-                    ParseError("Invalid Max Queued Bytes.  Integer parameter required.");
-                }
-                if (((long_val > S5_MAX_MAX_QUEUED_BYTES) ||
-                     (long_val < S5_MIN_MAX_QUEUED_BYTES)) &&
-                    (long_val != 0))
-                {
-                    ParseError("Invalid Max Queued Bytes."
-                        "  Must be 0 (disabled) or between %d and %d",
-                        S5_MIN_MAX_QUEUED_BYTES, S5_MAX_MAX_QUEUED_BYTES);
-                }
-                max_s_toks = 2;
-            }
-            else if(!strcasecmp(stoks[0], "max_queued_segs"))
-            {
-                if(stoks[1])
-                {
-                    long_val = SnortStrtol(stoks[1], &endPtr, 10);
-                    if (errno == ERANGE)
-                    {
-                        errno = 0;
-                        ParseError("Invalid Max Queued Bytes.  Integer parameter required.");
-                    }
-                    s5TcpPolicy->max_queued_segs = (uint32_t)long_val;
-                }
-
-                if (!stoks[1] || (endPtr == &stoks[1][0]))
-                {
-                    ParseError("Invalid Max Queued Bytes.  Integer parameter required.");
-                }
-
-                if (((long_val > S5_MAX_MAX_QUEUED_SEGS) ||
-                     (long_val < S5_MIN_MAX_QUEUED_SEGS)) &&
-                    (long_val != 0))
-                {
-                    ParseError("Invalid Max Queued Bytes."
-                        "  Must be 0 (disabled) or between %d and %d",
-                        S5_MIN_MAX_QUEUED_SEGS, S5_MAX_MAX_QUEUED_SEGS);
-                }
-                max_s_toks = 2;
-            }
-            else if (!strcasecmp(stoks[0], "small_segments"))
-            {
-                char **ptoks;
-                int num_ptoks;
-
-                /* Small segments takes at least 3 parameters... */
-                if (s_toks < 3)
-                {
-                    ParseError("Insufficient parameters to small "
-                        "segments configuration.  Syntax is: "
-                        "<number> bytes <number> ignore_ports p1 p2, "
-                        "with ignore_ports being an optional parameter");
-                }
-
-                /* first the number of consecutive segments */
-                long_val = SnortStrtol(stoks[1], &endPtr, 10);
-                if (errno == ERANGE)
-                {
-                    errno = 0;
-                    ParseError("Invalid Small Segment number.  Integer parameter required.");
-                }
-                s5TcpPolicy->max_consec_small_segs = (uint32_t)long_val;
-
-                if ((long_val > S5_MAX_CONSEC_SMALL_SEGS) ||
-                    (long_val < S5_MIN_CONSEC_SMALL_SEGS))
-                {
-                    ParseError("Invalid Small Segments."
-                        "  Must be integer between %d and %d, inclusive",
-                        S5_MIN_CONSEC_SMALL_SEGS, S5_MAX_CONSEC_SMALL_SEGS);
-                }
-
-                ptoks = mSplit(stoks[2], " ", MAX_PORTS + 3, &num_ptoks, 0);
-
-                /* the bytes keyword */
-                if (strcasecmp(ptoks[0], "bytes") || (num_ptoks < 2))
-                {
-                    ParseError("Insufficient parameters to small "
-                        "segments configuration.  Syntax is: "
-                        "<number> bytes <number> ignore_ports p1 p2, "
-                        "with ignore_ports being an optional parameter");
-                }
-
-                /* the minimum bytes for a segment to be considered "small" */
-                long_val = SnortStrtol(ptoks[1], &endPtr, 10);
-                if (errno == ERANGE)
-                {
-                    errno = 0;
-                    ParseError("Invalid Small Segment bytes.  Integer parameter required.");
-                }
-                s5TcpPolicy->max_consec_small_seg_size = (uint32_t)long_val;
-
-                if ((long_val > S5_MAX_MAX_SMALL_SEG_SIZE) ||
-                    (long_val < S5_MIN_MAX_SMALL_SEG_SIZE))
-                {
-                    ParseError("Invalid Small Segments bytes."
-                        "  Must be integer between %d and %d, inclusive",
-                        S5_MIN_MAX_SMALL_SEG_SIZE, S5_MAX_MAX_SMALL_SEG_SIZE);
-                }
-
-                /* and the optional ignore_ports */
-                if (num_ptoks > 2)
-                {
-                    int j;
-                    unsigned short port = 0;
-                    long long_port = 0;
-                    if (strcasecmp(ptoks[2], "ignore_ports") || (num_ptoks < 4))
-                    {
-                        ParseError("Insufficient parameters to small "
-                            "segments configuration.  Syntax is: "
-                            "<number> bytes <number> ignore_ports p1 p2, "
-                            "with ignore_ports being an optional parameter");
-                    }
-
-                    for (j=3; j<num_ptoks;j++)
-                    {
-                        if (ptoks[j])
-                        {
-                            long_port = strtol(ptoks[j], &endPtr, 10);
-                        }
-                        if (!ptoks[j] || (endPtr == &ptoks[j][0]))
-                        {
-                            ParseError(
-                                "Invalid Port for small segments ignore_ports parameter.  "
-                                "Integer parameter required.");
-                        }
-
-                        if ((long_port < 0) || (long_port > MAX_PORTS-1))
-                        {
-                            ParseError(
-                                "Invalid port %ld for small segments ignore_ports "
-                                "parameter, must be between 0 and %d, inclusive",
-                                long_port, MAX_PORTS-1);
-                        }
-                        port = (unsigned short)long_port;
-
-                        s5TcpPolicy->small_seg_ignore[port/8] |= (1 << (port %8));
-                    }
-                }
-                max_s_toks = 0; // we already checked all tokens
-                mSplitFree(&ptoks, num_ptoks);
-            }
-            else if (!strcasecmp(stoks[0], "ports"))
-            {
-                if (s_toks > 1)
-                {
-                    if(!strcasecmp(stoks[1], "client"))
-                    {
-                        reassembly_direction = SSN_DIR_CLIENT;
-                    }
-                    else if(!strcasecmp(stoks[1], "server"))
-                    {
-                        reassembly_direction = SSN_DIR_SERVER;
-                    }
-                    else
-                    {
-                        reassembly_direction = SSN_DIR_BOTH;
-                    }
-                }
-
-                if (s_toks > 2)
-                {
-                    char **ptoks;
-                    int num_ptoks;
-                    int j;
-                    unsigned short port = 0;
-                    long long_port = 0;
-
-                    /* Initialize it if not already... */
-                    InitFlushPointList(&s5TcpPolicy->flush_point_list, 192, 128, STATIC_FP);
-
-                    if (!strcasecmp(stoks[2], "all"))
-                    {
-                        for (j=0; j<MAX_PORTS; j++)
-                        {
-                            if (reassembly_direction & SSN_DIR_CLIENT)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[j].client;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                            if (reassembly_direction & SSN_DIR_SERVER)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[j].server;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                        }
-                    }
-                    else if (!strcasecmp(stoks[2], "none"))
-                    {
-                        for (j=0; j<MAX_PORTS; j++)
-                        {
-                            if (reassembly_direction & SSN_DIR_CLIENT)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[j].client;
-                                flush_mgr->flush_policy = STREAM_FLPOLICY_IGNORE;
-                            }
-                            if (reassembly_direction & SSN_DIR_SERVER)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[j].server;
-                                flush_mgr->flush_policy = STREAM_FLPOLICY_IGNORE;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ptoks = mSplit(stoks[2], " ", MAX_PORTS, &num_ptoks, 0);
-
-                        for (j=0;j<num_ptoks;j++)
-                        {
-                            if (ptoks[j])
-                            {
-                                long_port = strtol(ptoks[j], &endPtr, 10);
-                            }
-                            if (!ptoks[j] || (endPtr == &ptoks[j][0]))
-                            {
-                                ParseError("Invalid Port list.  Integer parameter required.");
-                            }
-
-                            if ((long_port < 0) || (long_port > MAX_PORTS-1))
-                            {
-                                ParseError(
-                                    "Invalid port %ld, must be between 0 and %d, "
-                                    "inclusive", long_port, MAX_PORTS-1);
-                            }
-                            port = (unsigned short)long_port;
-
-                            if (reassembly_direction & SSN_DIR_CLIENT)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[port].client;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                            if (reassembly_direction & SSN_DIR_SERVER)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[port].server;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                        }
-                        mSplitFree(&ptoks, num_ptoks);
-                    }
-                    set_flush_policy = 1;
-                }
-                max_s_toks = 0;  // we already checked all tokens
-            }
-            else if (!strcasecmp(stoks[0], "protocol"))
-            {
-                if (s_toks > 1)
-                {
-                    if(!strcasecmp(stoks[1], "client"))
-                    {
-                        reassembly_direction = SSN_DIR_CLIENT;
-                    }
-                    else if(!strcasecmp(stoks[1], "server"))
-                    {
-                        reassembly_direction = SSN_DIR_SERVER;
-                    }
-                    else
-                    {
-                        reassembly_direction = SSN_DIR_BOTH;
-                    }
-                }
-
-                if (s_toks > 2)
-                {
-                    char **ptoks;
-                    int num_ptoks;
-                    int j;
-
-                    /* Initialize it if not already... */
-                    InitFlushPointList(&s5TcpPolicy->flush_point_list, 192, 128, STATIC_FP);
-
-                    if (!strcasecmp(stoks[2], "all"))
-                    {
-                        for (j=1; j<MAX_PROTOCOL_ORDINAL; j++)
-                        {
-                            if (reassembly_direction & SSN_DIR_CLIENT)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[j].client;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                            if (reassembly_direction & SSN_DIR_SERVER)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[j].server;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                            s5TcpPolicy->flush_config_protocol[j].configured = 1;
-                        }
-                    }
-                    else if (!strcasecmp(stoks[2], "none"))
-                    {
-                        for (j=1; j<MAX_PROTOCOL_ORDINAL; j++)
-                        {
-                            if (reassembly_direction & SSN_DIR_CLIENT)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[j].client;
-                                flush_mgr->flush_policy = STREAM_FLPOLICY_IGNORE;
-                            }
-                            if (reassembly_direction & SSN_DIR_SERVER)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[j].server;
-                                flush_mgr->flush_policy = STREAM_FLPOLICY_IGNORE;
-                            }
-                            s5TcpPolicy->flush_config_protocol[j].configured = 1;
-                        }
-                    }
-                    else
-                    {
-                        ptoks = mSplit(stoks[2], " ", MAX_PROTOCOL_ORDINAL, &num_ptoks, 0);
-
-                        for (j=0;j<num_ptoks;j++)
-                        {
-                            int16_t proto_ordinal;
-                            if (!ptoks[j])
-                            {
-                                ParseError(
-                                    "Invalid Protocol Name.  Protocol name must be specified.");
-                            }
-                            /* First look it up */
-                            proto_ordinal = FindProtocolReference(ptoks[j]);
-                            if (proto_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
-                            {
-                                /* Not known -- add it */
-                                proto_ordinal = AddProtocolReference(ptoks[j]);
-                                if (proto_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
-                                {
-                                    ParseError("Failed to find protocol reference for '%s'",
-                                        ptoks[j]);
-                                }
-                            }
-
-                            if (reassembly_direction & SSN_DIR_CLIENT)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[proto_ordinal].client;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                            if (reassembly_direction & SSN_DIR_SERVER)
-                            {
-                                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[proto_ordinal].server;
-                                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-                            }
-                            s5TcpPolicy->flush_config_protocol[proto_ordinal].configured = 1;
-                        }
-                        mSplitFree(&ptoks, num_ptoks);
-                    }
-                    set_target_flush_policy = 1;
-                }
-                max_s_toks = 0;  // we already checked all tokens
-            }
-            else
-            {
-                ParseError("Invalid Stream5 TCP policy option");
-            }
-
-            if ( max_s_toks && (s_toks > max_s_toks) )
-            {
-                ParseError("Invalid Stream5 TCP Policy option.  Missing comma?");
-            }
-            mSplitFree(&stoks, s_toks);
-        }
-
-        mSplitFree(&toks, num_toks);
+        FlushMgr *flush_mgr = &flush_config[port].client;
+        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
     }
-
-    config->policy = s5TcpPolicy;
-
+    if ( s2c )
     {
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_IGNORE_ANY)
-        {
-            ParseError("'ignore_any_rules' option can be used only"
-                   " with Default Stream5 TCP Policy");
-        }
-    }
-
-    if (!set_flush_policy)
-    {
-        /* Initialize it if not already... */
-        InitFlushPointList(&s5TcpPolicy->flush_point_list, 192, 128, STATIC_FP);
-        for (i=0;i<(int)(sizeof(default_ports)/sizeof(int)); i++)
-        {
-            if (reassembly_direction & SSN_DIR_CLIENT)
-            {
-                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[default_ports[i]].client;
-                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-            }
-            if (reassembly_direction & SSN_DIR_SERVER)
-            {
-                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config[default_ports[i]].server;
-                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-            }
-        }
-    }
-
-    if (!set_target_flush_policy)
-    {
-        int app_id;
-        /* Initialize it if not already... */
-        InitFlushPointList(&s5TcpPolicy->flush_point_list, 192, 128, STATIC_FP);
-        for (i=0; i<(int)(sizeof(default_protocols)/sizeof(char *)); i++)
-        {
-            /* Look up the protocol by name. Add it if it doesn't exist. */
-            app_id = FindProtocolReference(default_protocols[i]);
-            if (app_id == SFTARGET_UNKNOWN_PROTOCOL)
-            {
-                app_id = AddProtocolReference(default_protocols[i]);
-            }
-
-            /* While this should never happen, I don't feel guilty adding this
-             * logic as it executes at parse time. */
-            if (app_id == SFTARGET_UNKNOWN_PROTOCOL)
-                continue;
-
-            /* Set flush managers. */
-            if (reassembly_direction & SSN_DIR_CLIENT)
-            {
-                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[app_id].client;
-                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-            }
-            if (reassembly_direction & SSN_DIR_SERVER)
-            {
-                FlushMgr *flush_mgr = &s5TcpPolicy->flush_config_protocol[app_id].server;
-                FlushPointList *flush_point_list = &s5TcpPolicy->flush_point_list;
-                InitFlushMgr(flush_mgr, flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
-            }
-            s5TcpPolicy->flush_config_protocol[app_id].configured = 1;
-        }
+        FlushMgr* flush_mgr = &flush_config[port].server;
+        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
     }
 }
 
-static void Stream5PrintTcpConfig(Stream5TcpPolicy *s5TcpPolicy)
+void Stream5TcpConfig::set_proto(
+    unsigned proto_ordinal, bool c2s, bool s2c)
+{
+    if ( c2s )
+    {
+        FlushMgr *flush_mgr = &flush_config_protocol[proto_ordinal].client;
+        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
+    }
+    if ( s2c )
+    {
+        FlushMgr* flush_mgr = &flush_config_protocol[proto_ordinal].server;
+        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0);
+    }
+    flush_config_protocol[proto_ordinal].configured = 1;
+}
+
+void Stream5TcpConfig::add_proto(
+    const char* svc, bool c2s, bool s2c)
+{
+    if ( !strcmp(svc, "all") )
+    {
+        for ( unsigned ord = 0; ord < MAX_PROTOCOL_ORDINAL; ord++ )
+            set_proto(ord, c2s, s2c);
+        return;
+    }
+    /* First look it up */
+    int16_t proto_ordinal = FindProtocolReference(svc);
+
+    if (proto_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
+    {
+        /* Not known -- add it */
+        proto_ordinal = AddProtocolReference(svc);
+
+        if (proto_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
+            ParseError("Failed to find protocol reference for '%s'", svc);
+    }
+    set_proto(proto_ordinal, c2s, s2c);
+}
+
+static void Stream5PrintTcpConfig(Stream5TcpConfig* config)
 {
     int i=0, j=0;
     LogMessage("Stream5 TCP Policy config:\n");
     LogMessage("    Reassembly Policy: %s\n",
-        reassembly_policy_names[s5TcpPolicy->reassembly_policy]);
-    LogMessage("    Timeout: %d seconds\n", s5TcpPolicy->session_timeout);
-    if (s5TcpPolicy->max_window != 0)
-        LogMessage("    Max TCP Window: %u\n", s5TcpPolicy->max_window);
-    if (s5TcpPolicy->overlap_limit)
-        LogMessage("    Limit on TCP Overlaps: %d\n", s5TcpPolicy->overlap_limit);
-    if (s5TcpPolicy->max_queued_bytes != 0)
+        reassembly_policy_names[config->reassembly_policy]);
+    LogMessage("    Timeout: %d seconds\n", config->session_timeout);
+    if (config->max_window != 0)
+        LogMessage("    Max TCP Window: %u\n", config->max_window);
+    if (config->overlap_limit)
+        LogMessage("    Limit on TCP Overlaps: %d\n", config->overlap_limit);
+    if (config->max_queued_bytes != 0)
     {
         LogMessage("    Maximum number of bytes to queue per session: %d\n",
-            s5TcpPolicy->max_queued_bytes);
+            config->max_queued_bytes);
     }
-    if (s5TcpPolicy->max_queued_segs != 0)
+    if (config->max_queued_segs != 0)
     {
         LogMessage("    Maximum number of segs to queue per session: %d\n",
-            s5TcpPolicy->max_queued_segs);
+            config->max_queued_segs);
     }
-    if (s5TcpPolicy->flags)
+    if (config->flags)
     {
         LogMessage("    Options:\n");
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_REQUIRE_3WHS)
+        if (config->flags & STREAM5_CONFIG_REQUIRE_3WHS)
         {
             LogMessage("        Require 3-Way Handshake: YES\n");
-            if (s5TcpPolicy->hs_timeout != 0)
+            if (config->hs_timeout != 0)
             {
                 LogMessage("        3-Way Handshake Timeout: %d\n",
-                    s5TcpPolicy->hs_timeout);
+                    config->hs_timeout);
             }
         }
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_STATIC_FLUSHPOINTS)
-        {
-            LogMessage("        Static Flushpoint Sizes: YES\n");
-        }
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_IGNORE_ANY)
+        if (config->flags & STREAM5_CONFIG_IGNORE_ANY)
         {
             LogMessage("        Ignore Any -> Any Rules: YES\n");
         }
-        if (s5TcpPolicy->flags & STREAM5_CONFIG_NO_ASYNC_REASSEMBLY)
+        if (config->flags & STREAM5_CONFIG_NO_ASYNC_REASSEMBLY)
         {
             LogMessage("        Don't queue packets on one-sided sessions: YES\n");
         }
@@ -1973,8 +1388,8 @@ static void Stream5PrintTcpConfig(Stream5TcpPolicy *s5TcpPolicy)
     for (i=0; i<MAX_PORTS; i++)
     {
         int direction = 0;
-        int client_flushpolicy = s5TcpPolicy->flush_config[i].client.flush_policy;
-        int server_flushpolicy = s5TcpPolicy->flush_config[i].server.flush_policy;
+        int client_flushpolicy = config->flush_config[i].client.flush_policy;
+        int server_flushpolicy = config->flush_config[i].server.flush_policy;
         char client_policy_str[STD_BUF];
         char server_policy_str[STD_BUF];
         client_policy_str[0] = server_policy_str[0] = '\0';
@@ -2016,12 +1431,18 @@ static void Stream5PrintTcpConfig(Stream5TcpPolicy *s5TcpPolicy)
 #endif
 }
 
+//-------------------------------------------------------------------------
+// attribute table foo
+//-------------------------------------------------------------------------
+
 int StreamPolicyIdFromHostAttributeEntry(HostAttributeEntry *host_entry)
 {
     if (!host_entry)
         return 0;
 
-    host_entry->hostInfo.streamPolicy = StreamPolicyIdFromName(host_entry->hostInfo.streamPolicyName);
+    host_entry->hostInfo.streamPolicy = 
+        StreamPolicyIdFromName(host_entry->hostInfo.streamPolicyName);
+
     host_entry->hostInfo.streamPolicySet = 1;
 
     STREAM5_DEBUG_WRAP(
@@ -2063,12 +1484,7 @@ void Stream5TcpConfigFree(Stream5TcpConfig *config)
     if (config == NULL)
         return;
 
-    {
-        Stream5TcpPolicy *policy = config->policy;
-
-        free(policy->flush_point_list.flush_points);
-        free(policy);
-    }
+    free(config->flush_point_list.flush_points);
 
     if ( config->paf_config )
         s5_paf_delete(config->paf_config);
@@ -2192,108 +1608,108 @@ static inline void Discard ()
     ssnStats.discards++;
 }
 
-static inline void EventSynOnEst(Stream5TcpPolicy*)
+static inline void EventSynOnEst()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SYN_ON_EST);
     ssnStats.events++;
 }
 
-static inline void EventExcessiveOverlap(Stream5TcpPolicy*)
+static inline void EventExcessiveOverlap()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS);
     ssnStats.events++;
 }
 
-static inline void EventBadTimestamp(Stream5TcpPolicy*)
+static inline void EventBadTimestamp()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_TIMESTAMP);
     ssnStats.events++;
 }
 
-static inline void EventWindowTooLarge(Stream5TcpPolicy*)
+static inline void EventWindowTooLarge()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_TOO_LARGE);
     ssnStats.events++;
 }
 
-static inline void EventDataOnSyn(Stream5TcpPolicy*)
+static inline void EventDataOnSyn()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_SYN);
     ssnStats.events++;
 }
 
-static inline void EventDataOnClosed(Stream5TcpPolicy*)
+static inline void EventDataOnClosed()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_CLOSED);
     ssnStats.events++;
 }
 
-static inline void EventDataAfterReset(Stream5TcpPolicy*)
+static inline void EventDataAfterReset()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RESET);
     ssnStats.events++;
 }
 
-static inline void EventBadSegment(Stream5TcpPolicy*)
+static inline void EventBadSegment()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_SEGMENT);
     ssnStats.events++;
 }
 
-static inline void EventSessionHijackedClient(Stream5TcpPolicy*)
+static inline void EventSessionHijackedClient()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_CLIENT);
     ssnStats.events++;
 }
-static inline void EventSessionHijackedServer(Stream5TcpPolicy*)
+static inline void EventSessionHijackedServer()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_SERVER);
     ssnStats.events++;
 }
 
-static inline void EventDataWithoutFlags(Stream5TcpPolicy*)
+static inline void EventDataWithoutFlags()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_WITHOUT_FLAGS);
     ssnStats.events++;
 }
 
-static inline void EventMaxSmallSegsExceeded(Stream5TcpPolicy*)
+static inline void EventMaxSmallSegsExceeded()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SMALL_SEGMENT);
     ssnStats.events++;
 }
 
-static inline void Event4whs(Stream5TcpPolicy*)
+static inline void Event4whs()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_4WAY_HANDSHAKE);
     ssnStats.events++;
 }
 
-static inline void EventNoTimestamp(Stream5TcpPolicy*)
+static inline void EventNoTimestamp()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_TIMESTAMP);
     ssnStats.events++;
 }
 
-static inline void EventBadReset(Stream5TcpPolicy*)
+static inline void EventBadReset()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_RST);
     ssnStats.events++;
 }
 
-static inline void EventBadFin(Stream5TcpPolicy*)
+static inline void EventBadFin()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_FIN);
     ssnStats.events++;
 }
 
-static inline void EventBadAck(Stream5TcpPolicy*)
+static inline void EventBadAck()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_ACK);
     ssnStats.events++;
 }
 
-static inline void EventDataAfterRstRcvd(Stream5TcpPolicy*)
+static inline void EventDataAfterRstRcvd()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RST_RCVD);
     ssnStats.events++;
@@ -2312,13 +1728,13 @@ static inline void EventInternal (uint32_t eventSid)
     SnortEventqAdd(GENERATOR_INTERNAL, eventSid);
 }
 
-static inline void EventWindowSlam (Stream5TcpPolicy*)
+static inline void EventWindowSlam ()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_SLAM);
     ssnStats.events++;
 }
 
-static inline void EventNo3whs (Stream5TcpPolicy*)
+static inline void EventNo3whs()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_3WHS);
     ssnStats.events++;
@@ -2685,7 +2101,7 @@ static inline int ValidTimestamp(StreamTracker *talker,
 
         if (*got_ts)
         {
-            if (listener->tcp_policy->policy == STREAM_POLICY_HPUX11)
+            if (listener->config->policy == STREAM_POLICY_HPUX11)
             {
                 /* HPUX 11 ignores timestamps for out of order segments */
                 if ((listener->flags & TF_MISSING_PKT) ||
@@ -2699,8 +2115,8 @@ static inline int ValidTimestamp(StreamTracker *talker,
             {
                 /* Handle the case where the 3whs used a 0 timestamp.  Next packet
                  * from that endpoint should have a valid timestamp... */
-                if ((listener->tcp_policy->policy == STREAM_POLICY_LINUX) ||
-                    (listener->tcp_policy->policy == STREAM_POLICY_WINDOWS2K3))
+                if ((listener->config->policy == STREAM_POLICY_LINUX) ||
+                    (listener->config->policy == STREAM_POLICY_WINDOWS2K3))
                 {
                     /* Linux, Win2k3 et al.  do not support timestamps if
                      * the 3whs used a 0 timestamp. */
@@ -2708,9 +2124,9 @@ static inline int ValidTimestamp(StreamTracker *talker,
                     listener->flags &= ~TF_TSTAMP;
                     validate_timestamp = 0;
                 }
-                else if ((listener->tcp_policy->policy == STREAM_POLICY_OLD_LINUX) ||
-                         (listener->tcp_policy->policy == STREAM_POLICY_WINDOWS) ||
-                         (listener->tcp_policy->policy == STREAM_POLICY_VISTA))
+                else if ((listener->config->policy == STREAM_POLICY_OLD_LINUX) ||
+                         (listener->config->policy == STREAM_POLICY_WINDOWS) ||
+                         (listener->config->policy == STREAM_POLICY_VISTA))
                 {
                     /* Older Linux (2.2 kernel & earlier), Win32 (non 2K3)
                      * allow the 3whs to use a 0 timestamp. */
@@ -2728,7 +2144,7 @@ static inline int ValidTimestamp(StreamTracker *talker,
             if (validate_timestamp)
             {
                 int result = 0;
-                if (listener->tcp_policy->policy == STREAM_POLICY_LINUX)
+                if (listener->config->policy == STREAM_POLICY_LINUX)
                 {
                     /* Linux 2.6 accepts timestamp values that are off
                      * by one. */
@@ -2780,7 +2196,7 @@ static inline int ValidTimestamp(StreamTracker *talker,
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "packet no timestamp, had one earlier from this side...ok for now...\n"););
 
-            if (listener->tcp_policy->policy == STREAM_POLICY_SOLARIS)
+            if (listener->config->policy == STREAM_POLICY_SOLARIS)
             {
                 /* Solaris stops using timestamps if it receives a packet
                  * without a timestamp and there were timestamps in use.
@@ -3011,6 +2427,7 @@ void tcp_sinit(Stream5Config* s5)
         s5->global_config->tcp_mem_cap = S5_DEFAULT_MEMCAP;
 
     tcp_memcap = new Memcap(s5->global_config->tcp_mem_cap);
+    Stream5TcpInitFlushPoints();
 }
 
 void tcp_sterm()
@@ -3410,8 +2827,8 @@ static inline int _flush_to_seq (
         // recovery may be possible in some cases
     } while ( !(st->flags & TF_MISSING_PKT) && DataToFlush(st) );
 
-    if ( st->tcp_policy )
-        UpdateFlushMgr(&st->flush_mgr, &st->tcp_policy->flush_point_list, st->flags);
+    if ( st->config )
+        UpdateFlushMgr(&st->flush_mgr, &st->config->flush_point_list, st->flags);
 
     /* tell them how many bytes we processed */
     PREPROC_PROFILE_END(s5TcpFlushPerfStats);
@@ -4858,7 +4275,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                          * houston, we have a problem
                          */
                         /* flag an anomaly */
-                        EventBadSegment(st->tcp_policy);
+                        EventBadSegment();
                         Discard();
                         PREPROC_PROFILE_END(s5TcpInsertPerfStats);
                         return STREAM_INSERT_ANOMALY;
@@ -4882,7 +4299,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                              * houston, we have a problem
                              */
                             /* flag an anomaly */
-                            EventBadSegment(st->tcp_policy);
+                            EventBadSegment();
                             Discard();
                             PREPROC_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
@@ -4943,7 +4360,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                  * houston, we have a problem
                  */
                 /* flag an anomaly */
-                EventBadSegment(st->tcp_policy);
+                EventBadSegment();
                 Discard();
                 PREPROC_PROFILE_END(s5TcpInsertPerfStats);
                 return STREAM_INSERT_ANOMALY;
@@ -5151,7 +4568,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                                         "resulting seq too high, bad segment "
                                         "(seq: %X  seq_end: %X overlap: %lu\n",
                                         seq, seq_end, overlap););
-                            EventBadSegment(st->tcp_policy);
+                            EventBadSegment();
                             Discard();
                             PREPROC_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
@@ -5210,7 +4627,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                                 "resulting seq too high, bad segment "
                                 "(seq: %X  seq_end: %X overlap: %lu\n",
                                 seq, seq_end, overlap););
-                            EventBadSegment(st->tcp_policy);
+                            EventBadSegment();
                             Discard();
                             PREPROC_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
@@ -5253,7 +4670,7 @@ right_overlap_last:
 
 static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
                              Packet *p, TcpDataBlock *tdb,
-                             Stream5TcpPolicy *s5TcpPolicy)
+                             Stream5TcpConfig* config)
 {
 
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -5266,27 +4683,27 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
     SetPacketHeaderFoo(tcpssn, p);
 #endif
 
-    if ((s5TcpPolicy->flags & STREAM5_CONFIG_NO_ASYNC_REASSEMBLY) &&
+    if ((config->flags & STREAM5_CONFIG_NO_ASYNC_REASSEMBLY) &&
         !TwoWayTraffic(tcpssn->flow))
     {
         return;
     }
 
-    if (s5TcpPolicy->max_consec_small_segs)
+    if (config->max_consec_small_segs)
     {
-        if (p->dsize < s5TcpPolicy->max_consec_small_seg_size)
+        if (p->dsize < config->max_consec_small_seg_size)
         {
             /* check ignore_ports */
-            if (!(s5TcpPolicy->small_seg_ignore[p->dp/8] & (1 << (p->dp %8))))
+            if (!(config->small_seg_ignore[p->dp/8] & (1 << (p->dp %8))))
             {
                 rcv->small_seg_count++;
 
-                if (rcv->small_seg_count > s5TcpPolicy->max_consec_small_segs)
+                if (rcv->small_seg_count > config->max_consec_small_segs)
                 {
                     /* Above threshold, log it... requires detect_anomalies be
                     * on in this TCP policy, action controlled by preprocessor
                     * rule. */
-                    EventMaxSmallSegsExceeded(s5TcpPolicy);
+                    EventMaxSmallSegsExceeded();
 
                     /* Reset counter, so we're not too noisy */
                     rcv->small_seg_count = 0;
@@ -5295,8 +4712,8 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
         }
     }
 
-    if (s5TcpPolicy->max_queued_bytes &&
-        (rcv->seg_bytes_total > s5TcpPolicy->max_queued_bytes))
+    if (config->max_queued_bytes &&
+        (rcv->seg_bytes_total > config->max_queued_bytes))
     {
         if (!(tcpssn->flow->s5_state.session_flags & SSNFLAG_LOGGED_QUEUE_FULL))
         {
@@ -5308,8 +4725,8 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
         return;
     }
 
-    if (s5TcpPolicy->max_queued_segs &&
-        (rcv->seg_count+1 > s5TcpPolicy->max_queued_segs))
+    if (config->max_queued_segs &&
+        (rcv->seg_count+1 > config->max_queued_segs))
     {
         if (!(tcpssn->flow->s5_state.session_flags & SSNFLAG_LOGGED_QUEUE_FULL))
         {
@@ -5354,8 +4771,8 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
             else
                 StreamQueue(rcv, p, tdb, tcpssn);
 
-            if ((rcv->tcp_policy->overlap_limit) &&
-                (rcv->overlap_count > rcv->tcp_policy->overlap_limit))
+            if ((rcv->config->overlap_limit) &&
+                (rcv->overlap_count > rcv->config->overlap_limit))
             {
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Reached the overlap limit.  Flush the data "
@@ -5392,7 +4809,7 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
                 purge_all(&tcpssn->server);
 
                 /* Alert on overlap limit and reset counter */
-                EventExcessiveOverlap(rcv->tcp_policy);
+                EventExcessiveOverlap();
                 rcv->overlap_count = 0;
             }
         }
@@ -5416,8 +4833,9 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
     return;
 }
 
-static int ProcessTcpData(Packet *p, StreamTracker *listener, TcpSession *tcpssn,
-        TcpDataBlock *tdb, Stream5TcpPolicy *s5TcpPolicy)
+static int ProcessTcpData(
+    Packet *p, StreamTracker *listener, TcpSession *tcpssn,
+    TcpDataBlock *tdb, Stream5TcpConfig *config)
 {
     PROFILE_VARS;
 
@@ -5457,7 +4875,7 @@ static int ProcessTcpData(Packet *p, StreamTracker *listener, TcpSession *tcpssn
             if ( !(tcpssn->flow->s5_state.session_flags & SSNFLAG_STREAM_ORDER_BAD) )
                 p->packet_flags |= PKT_STREAM_ORDER_OK;
 
-            ProcessTcpStream(listener, tcpssn, p, tdb, s5TcpPolicy);
+            ProcessTcpStream(listener, tcpssn, p, tdb, config);
             /* set flags to session flags */
 
             PREPROC_PROFILE_END(s5TcpDataPerfStats);
@@ -5512,7 +4930,7 @@ static int ProcessTcpData(Packet *p, StreamTracker *listener, TcpSession *tcpssn
                 if ( !SEQ_LEQ((tdb->seq + p->dsize), listener->r_nxt_ack) )
                     tcpssn->flow->s5_state.session_flags |= SSNFLAG_STREAM_ORDER_BAD;
             }
-            ProcessTcpStream(listener, tcpssn, p, tdb, s5TcpPolicy);
+            ProcessTcpStream(listener, tcpssn, p, tdb, config);
         }
     }
 
@@ -5520,8 +4938,8 @@ static int ProcessTcpData(Packet *p, StreamTracker *listener, TcpSession *tcpssn
     return S5_UNALIGNED;
 }
 
-uint16_t StreamGetPolicy(Flow *lwssn, Stream5TcpPolicy *s5TcpPolicy,
-              int direction)
+uint16_t StreamGetPolicy(
+    Flow *lwssn, Stream5TcpConfig *config, int direction)
 {
     uint16_t policy_id;
     /* Not caching this host_entry in the frag tracker so we can
@@ -5531,7 +4949,7 @@ uint16_t StreamGetPolicy(Flow *lwssn, Stream5TcpPolicy *s5TcpPolicy,
     int ssn_dir;
 
     if (!IsAdaptiveConfigured())
-        return s5TcpPolicy->policy;
+        return config->policy;
 
     if (direction == FROM_CLIENT)
     {
@@ -5562,9 +4980,9 @@ uint16_t StreamGetPolicy(Flow *lwssn, Stream5TcpPolicy *s5TcpPolicy,
 
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "StreamGetPolicy: Using configured default %d(%s)\n",
-        s5TcpPolicy->policy, reassembly_policy_names[s5TcpPolicy->policy]););
+        config->policy, reassembly_policy_names[config->policy]););
 
-    return s5TcpPolicy->policy;
+    return config->policy;
 }
 
 void SetTcpReassemblyPolicy(StreamTracker *st)
@@ -5576,13 +4994,13 @@ static void SetOSPolicy(TcpSession *tcpssn)
 {
     if (tcpssn->client.os_policy == 0)
     {
-        tcpssn->client.os_policy = StreamGetPolicy(tcpssn->flow, tcpssn->client.tcp_policy, FROM_SERVER);
+        tcpssn->client.os_policy = StreamGetPolicy(tcpssn->flow, tcpssn->client.config, FROM_SERVER);
         SetTcpReassemblyPolicy(&tcpssn->client);
     }
 
     if (tcpssn->server.os_policy == 0)
     {
-        tcpssn->server.os_policy = StreamGetPolicy(tcpssn->flow, tcpssn->server.tcp_policy, FROM_CLIENT);
+        tcpssn->server.os_policy = StreamGetPolicy(tcpssn->flow, tcpssn->server.config, FROM_CLIENT);
         SetTcpReassemblyPolicy(&tcpssn->server);
     }
 }
@@ -5659,7 +5077,7 @@ static inline void CopyMacAddr(
 
 static int NewTcpSession(
     Packet *p, Flow *lwssn,
-    TcpDataBlock *tdb, Stream5TcpPolicy *dstPolicy)
+    TcpDataBlock *tdb, Stream5TcpConfig *dstPolicy)
 {
     TcpSession *tmp = NULL;
     uint16_t server_port = 0;
@@ -5708,9 +5126,9 @@ static int NewTcpSession(
         tmp->client.flags |= Stream5GetWscale(p, &tmp->client.wscale);
 
 
-        /* Set the Stream5TcpPolicy for each direction (pkt from client) */
-        tmp->client.tcp_policy = dstPolicy;  // FIXIT BINDING use external for both dirs
-        tmp->server.tcp_policy = dstPolicy;
+        /* Set the Stream5TcpConfig for each direction (pkt from client) */
+        tmp->client.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+        tmp->server.config = dstPolicy;
 
         /* Server is destination */
         server_port = p->dp;
@@ -5761,10 +5179,10 @@ static int NewTcpSession(
         tmp->server.flags |= Stream5GetMss(p, &tmp->server.mss);
         tmp->server.flags |= Stream5GetWscale(p, &tmp->server.wscale);
 
-        /* Set the Stream5TcpPolicy for each direction (pkt from server) */
-        tmp->server.tcp_policy = dstPolicy;  // FIXIT BINDING use external for both dirs
-        tmp->client.tcp_policy = dstPolicy;
-        lwssn->policy = tmp->server.tcp_policy;
+        /* Set the config for each direction (pkt from server) */
+        tmp->server.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+        tmp->client.config = dstPolicy;
+        lwssn->policy = tmp->server.config;
 
         /* Client is destination */
         server_port = p->sp;
@@ -5812,9 +5230,9 @@ static int NewTcpSession(
         tmp->client.flags |= Stream5GetMss(p, &tmp->client.mss);
         tmp->client.flags |= Stream5GetWscale(p, &tmp->client.wscale);
 
-        /* Set the Stream5TcpPolicy for each direction (pkt from client) */
-        tmp->client.tcp_policy = dstPolicy;  // FIXIT BINDING use external for both dirs
-        tmp->server.tcp_policy = dstPolicy;
+        /* Set the config for each direction (pkt from client) */
+        tmp->client.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+        tmp->server.config = dstPolicy;
 
         /* Server is destination */
         server_port = p->dp;
@@ -5871,9 +5289,9 @@ static int NewTcpSession(
             tmp->client.flags |= Stream5GetMss(p, &tmp->client.mss);
             tmp->client.flags |= Stream5GetWscale(p, &tmp->client.wscale);
 
-            /* Set the Stream5TcpPolicy for each direction (pkt from client) */
-            tmp->client.tcp_policy = dstPolicy;  // FIXIT BINDING use external for both dirs
-            tmp->server.tcp_policy = dstPolicy;
+            /* Set the config for each direction (pkt from client) */
+            tmp->client.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+            tmp->server.config = dstPolicy;
 
             /* Server is destination */
             server_port = p->dp;
@@ -5916,10 +5334,10 @@ static int NewTcpSession(
             tmp->server.flags |= Stream5GetMss(p, &tmp->server.mss);
             tmp->server.flags |= Stream5GetWscale(p, &tmp->server.wscale);
 
-            /* Set the Stream5TcpPolicy for each direction (pkt from server) */
-            tmp->server.tcp_policy = dstPolicy;  // FIXIT BINDING use external for both dirs
-            tmp->client.tcp_policy = dstPolicy;
-            lwssn->policy = tmp->server.tcp_policy;
+            /* Set the config for each direction (pkt from server) */
+            tmp->server.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+            tmp->client.config = dstPolicy;
+            lwssn->policy = tmp->server.config;
 
             /* Client is destination */
             server_port = p->sp;
@@ -5986,33 +5404,33 @@ static int NewTcpSession(
          * the server port and we're reassembling the client side.
          * That should make this almost as clear as opaque mud!
          */
-        if (tmp->server.tcp_policy->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
+        if (tmp->server.config->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
         {
             StreamTracker* pst = &tmp->server;
             uint8_t flush_policy =
-                pst->tcp_policy->flush_config_protocol[lwssn->s5_state.application_protocol].client.flush_policy;
+                pst->config->flush_config_protocol[lwssn->s5_state.application_protocol].client.flush_policy;
             InitFlushMgrByService(lwssn, pst, lwssn->s5_state.application_protocol, true, flush_policy);
         }
         else
         {
             StreamTracker* pst = &tmp->server;
             uint8_t flush_policy =
-                pst->tcp_policy->flush_config[server_port].client.flush_policy;
+                pst->config->flush_config[server_port].client.flush_policy;
             InitFlushMgrByPort(lwssn, pst, server_port, true, flush_policy);
         }
 
-        if (tmp->client.tcp_policy->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
+        if (tmp->client.config->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
         {
             StreamTracker* pst = &tmp->client;
             uint8_t flush_policy =
-                pst->tcp_policy->flush_config_protocol[lwssn->s5_state.application_protocol].server.flush_policy;
+                pst->config->flush_config_protocol[lwssn->s5_state.application_protocol].server.flush_policy;
             InitFlushMgrByService(lwssn, pst, lwssn->s5_state.application_protocol, false, flush_policy);
         }
         else
         {
             StreamTracker* pst = &tmp->client;
             uint8_t flush_policy =
-                pst->tcp_policy->flush_config[server_port].server.flush_policy;
+                pst->config->flush_config[server_port].server.flush_policy;
             InitFlushMgrByPort(lwssn, pst, server_port, false, flush_policy);
         }
 
@@ -6110,68 +5528,69 @@ static int RepeatedSyn(
     return ACTION_NOTHING;
 }
 
-static void LogTcpEvents(Stream5TcpPolicy *s5TcpPolicy, int eventcode)
+static void LogTcpEvents(int eventcode)
 {
     if ( !eventcode )
         return;
 
     if (eventcode & EVENT_SYN_ON_EST)
-        EventSynOnEst(s5TcpPolicy);
+        EventSynOnEst();
 
     if (eventcode & EVENT_DATA_ON_SYN)
-        EventDataOnSyn(s5TcpPolicy);
+        EventDataOnSyn();
 
     if (eventcode & EVENT_DATA_ON_CLOSED)
-        EventDataOnClosed(s5TcpPolicy);
+        EventDataOnClosed();
 
     if (eventcode & EVENT_BAD_TIMESTAMP)
-        EventBadTimestamp(s5TcpPolicy);
+        EventBadTimestamp();
 
     if (eventcode & EVENT_BAD_SEGMENT)
-        EventBadSegment(s5TcpPolicy);
+        EventBadSegment();
 
     if (eventcode & EVENT_WINDOW_TOO_LARGE)
-        EventWindowTooLarge(s5TcpPolicy);
+        EventWindowTooLarge();
 
     if (eventcode & EVENT_EXCESSIVE_TCP_OVERLAPS)
-        EventExcessiveOverlap(s5TcpPolicy);
+        EventExcessiveOverlap();
 
     if (eventcode & EVENT_DATA_AFTER_RESET)
-        EventDataAfterReset(s5TcpPolicy);
+        EventDataAfterReset();
 
     if (eventcode & EVENT_SESSION_HIJACK_CLIENT)
-        EventSessionHijackedClient(s5TcpPolicy);
+        EventSessionHijackedClient();
 
     if (eventcode & EVENT_SESSION_HIJACK_SERVER)
-        EventSessionHijackedServer(s5TcpPolicy);
+        EventSessionHijackedServer();
 
     if (eventcode & EVENT_DATA_WITHOUT_FLAGS)
-        EventDataWithoutFlags(s5TcpPolicy);
+        EventDataWithoutFlags();
 
     if (eventcode & EVENT_4WHS)
-        Event4whs(s5TcpPolicy);
+        Event4whs();
 
     if (eventcode & EVENT_NO_TIMESTAMP)
-        EventNoTimestamp(s5TcpPolicy);
+        EventNoTimestamp();
 
     if (eventcode & EVENT_BAD_RST)
-        EventBadReset(s5TcpPolicy);
+        EventBadReset();
 
     if (eventcode & EVENT_BAD_FIN)
-        EventBadFin(s5TcpPolicy);
+        EventBadFin();
 
     if (eventcode & EVENT_BAD_ACK)
-        EventBadAck(s5TcpPolicy);
+        EventBadAck();
 
     if (eventcode & EVENT_DATA_AFTER_RST_RCVD)
-        EventDataAfterRstRcvd(s5TcpPolicy);
+        EventDataAfterRstRcvd();
 
     if (eventcode & EVENT_WINDOW_SLAM)
-        EventWindowSlam(s5TcpPolicy);
+        EventWindowSlam();
 }
 
-static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
-        Stream5TcpPolicy *s5TcpPolicy)
+static int ProcessTcp(
+    Flow *lwssn, Packet *p, TcpDataBlock *tdb,
+    Stream5TcpConfig* config)
 {
     int retcode = ACTION_NOTHING;
     int eventcode = 0;
@@ -6181,7 +5600,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
     TcpSession *tcpssn = NULL;
     StreamTracker *talker = NULL;
     StreamTracker *listener = NULL;
-    uint32_t require3Way = true; // FIXIT (s5TcpPolicy->flags & STREAM5_CONFIG_REQUIRE_3WHS);
+    uint32_t require3Way = true; // FIXIT (config->flags & STREAM5_CONFIG_REQUIRE_3WHS);
     STREAM5_DEBUG_WRAP(char *t = NULL; char *l = NULL;)
     PROFILE_VARS;
 
@@ -6198,7 +5617,6 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
 
     if ( !tcpssn->tcp_init )
     {
-        if ( ScPafEnabled() )
         {
             char ignore = flow_con->expected_flow(lwssn, p);
 
@@ -6227,7 +5645,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
 
             if (require3Way || (Stream5PacketHasWscale(p) & TF_WSCALE) ||
                 ((p->dsize > 0) &&
-                 (StreamGetPolicy(lwssn, s5TcpPolicy, FROM_CLIENT) ==
+                 (StreamGetPolicy(lwssn, config, FROM_CLIENT) ==
                      STREAM_POLICY_MACOS)))
             {
                 /* Create TCP session if we
@@ -6237,7 +5655,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                  *    is the only one that accepts data on SYN
                  *    (and thus requires a TCP session at this point)
                  */
-                NewTcpSession(p, lwssn, tdb, s5TcpPolicy);
+                NewTcpSession(p, lwssn, tdb, config);
                 new_ssn = 1;
                 NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
             }
@@ -6260,7 +5678,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                 lwssn->server_port = p->tcph->th_sport;
             }
             lwssn->session_state |= STREAM5_STATE_SYN_ACK;
-            NewTcpSession(p, lwssn, tdb, s5TcpPolicy);
+            NewTcpSession(p, lwssn, tdb, config);
             new_ssn = 1;
             NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
             /* Nothing left todo here */
@@ -6273,7 +5691,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
 
             /* 3-way Handshake complete, create TCP session */
             lwssn->session_state |= STREAM5_STATE_ACK | STREAM5_STATE_ESTABLISHED;
-            NewTcpSession(p, lwssn, tdb, s5TcpPolicy);
+            NewTcpSession(p, lwssn, tdb, config);
             new_ssn = 1;
             NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
             Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
@@ -6301,7 +5719,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
             lwssn->session_state |= STREAM5_STATE_MIDSTREAM;
             lwssn->s5_state.session_flags |= SSNFLAG_MIDSTREAM;
 
-            NewTcpSession(p, lwssn, tdb, s5TcpPolicy);
+            NewTcpSession(p, lwssn, tdb, config);
             new_ssn = 1;
             NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
 
@@ -6446,7 +5864,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                 lwssn->server_port = p->tcph->th_dport;
                 lwssn->session_state = STREAM5_STATE_SYN;
                 lwssn->set_ttl(p, true);
-                NewTcpSession(p, lwssn, tdb, s5TcpPolicy);
+                NewTcpSession(p, lwssn, tdb, config);
                 tcpssn = (TcpSession *)lwssn->session;
                 new_ssn = 1;
                 NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
@@ -6467,7 +5885,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                 lwssn->server_port = p->tcph->th_sport;
                 lwssn->session_state = STREAM5_STATE_SYN_ACK;
                 lwssn->set_ttl(p, false);
-                NewTcpSession(p, lwssn, tdb, s5TcpPolicy);
+                NewTcpSession(p, lwssn, tdb, config);
                 tcpssn = (TcpSession *)lwssn->session;
                 new_ssn = 1;
                 NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
@@ -6502,25 +5920,11 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
         retcode |= ACTION_DISABLE_INSPECTION;
     }
 
-    /* Check if the session is to be ignored */
-    if ( !ScPafEnabled() )
-    {
-        char ignore = flow_con->expected_flow(lwssn, p);
-
-        if ( ignore )
-        {
-            Stream5SetReassemblyTcp(
-                lwssn, STREAM_FLPOLICY_IGNORE, ignore, STREAM_FLPOLICY_SET_ABSOLUTE);
-            PREPROC_PROFILE_END(s5TcpStatePerfStats);
-            return retcode;
-        }
-    }
-
     /* Handle data on SYN */
     if ((p->dsize) && TCP_ISFLAGSET(p->tcph, TH_SYN))
     {
         /* MacOS accepts data on SYN, so don't alert if policy is MACOS */
-        if (StreamGetPolicy(lwssn, s5TcpPolicy, FROM_CLIENT) !=
+        if (StreamGetPolicy(lwssn, config, FROM_CLIENT) !=
             STREAM_POLICY_MACOS)
         {
             if ( Normalize_IsEnabled(snort_conf, NORM_TCP_TRIM) )
@@ -6531,7 +5935,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
             {
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Got data on SYN packet, not processing it\n"););
-                //EventDataOnSyn(s5TcpPolicy);
+                //EventDataOnSyn(config);
                 eventcode |= EVENT_DATA_ON_SYN;
                 retcode |= ACTION_BAD_PKT;
             }
@@ -6540,7 +5944,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
 
     if (!tcpssn)
     {
-        LogTcpEvents(s5TcpPolicy, eventcode);
+        LogTcpEvents(eventcode);
         PREPROC_PROFILE_END(s5TcpStatePerfStats);
         return retcode;
     }
@@ -6578,7 +5982,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                             "Pkt ack is out of bounds, bailing!\n"););
                 Discard();
                 NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
-                LogTcpEvents(listener->tcp_policy, eventcode);
+                LogTcpEvents(eventcode);
                 PREPROC_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_BAD_PKT;
             }
@@ -6614,7 +6018,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                 talker->s_mgr.state = TCP_STATE_CLOSED;
                 Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_CLOSING);
                 /* Leave listener open, data may be in transit */
-                LogTcpEvents(listener->tcp_policy, eventcode);
+                LogTcpEvents(eventcode);
                 PREPROC_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_RST;
             }
@@ -6624,7 +6028,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
             Discard();
             eventcode |= EVENT_BAD_RST;
             NormalDropPacketIf(p, NORM_TCP);
-            LogTcpEvents(listener->tcp_policy, eventcode);
+            LogTcpEvents(eventcode);
             PREPROC_PROFILE_END(s5TcpStatePerfStats);
             return retcode;
         }
@@ -6661,7 +6065,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
         listener->s_mgr.state = TCP_STATE_SYN_SENT;
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Accepted SYN ACK\n"););
-        LogTcpEvents(listener->tcp_policy, eventcode);
+        LogTcpEvents(eventcode);
         PREPROC_PROFILE_END(s5TcpStatePerfStats);
         return retcode;
     }
@@ -6721,7 +6125,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
             /* else for ids:
                 leave listener open, data may be in transit */
 
-            LogTcpEvents(listener->tcp_policy, eventcode);
+            LogTcpEvents(eventcode);
             PREPROC_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ACTION_RST;
         }
@@ -6731,7 +6135,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
         Discard();
         eventcode |= EVENT_BAD_RST;
         NormalDropPacketIf(p, NORM_TCP);
-        LogTcpEvents(listener->tcp_policy, eventcode);
+        LogTcpEvents(eventcode);
         PREPROC_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
     }
@@ -6745,7 +6149,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                         "bad sequence number, bailing\n"););
             Discard();
             NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
-            LogTcpEvents(listener->tcp_policy, eventcode);
+            LogTcpEvents(eventcode);
             PREPROC_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ts_action;
         }
@@ -6757,7 +6161,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                     "bad timestamp, bailing\n"););
         Discard();
         // this packet was normalized elsewhere
-        LogTcpEvents(listener->tcp_policy, eventcode);
+        LogTcpEvents(eventcode);
         PREPROC_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
     }
@@ -6805,7 +6209,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
         {
             /* got a bad SYN on the session, alert! */
             eventcode |= EVENT_SYN_ON_EST;
-            LogTcpEvents(listener->tcp_policy, eventcode);
+            LogTcpEvents(eventcode);
             PREPROC_PROFILE_END(s5TcpStatePerfStats);
             return retcode | action;
         }
@@ -6814,7 +6218,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
     /*
      * Check that the window is within the limits
      */
-    if (listener->tcp_policy->max_window && (tdb->win > listener->tcp_policy->max_window))
+    if (listener->config->max_window && (tdb->win > listener->config->max_window))
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Got window that was beyond the allowed policy value, bailing\n"););
@@ -6822,7 +6226,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
         eventcode |= EVENT_WINDOW_TOO_LARGE;
         Discard();
         NormalDropPacketIf(p, NORM_TCP);
-        LogTcpEvents(listener->tcp_policy, eventcode);
+        LogTcpEvents(eventcode);
         PREPROC_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_BAD_PKT;
     }
@@ -6839,7 +6243,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
 
         if ( NormalDropPacketIf(p, NORM_TCP) )
         {
-            LogTcpEvents(listener->tcp_policy, eventcode);
+            LogTcpEvents(eventcode);
             PREPROC_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ACTION_BAD_PKT;
         }
@@ -6920,7 +6324,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
 
                         if ( NormalDropPacketIf(p, NORM_TCP) )
                         {
-                            LogTcpEvents(listener->tcp_policy, eventcode);
+                            LogTcpEvents(eventcode);
                             PREPROC_PROFILE_END(s5TcpStatePerfStats);
                             return retcode | ACTION_BAD_PKT;
                         }
@@ -6965,7 +6369,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                 if ( SEQ_GT(tdb->ack, listener->l_nxt_seq) )
                 {
                     eventcode |= EVENT_BAD_ACK;
-                    LogTcpEvents(talker->tcp_policy, eventcode);
+                    LogTcpEvents(eventcode);
                     NormalDropPacketIf(p, NORM_TCP);
                     PREPROC_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
@@ -7012,7 +6416,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
         {
             /* data on a segment when we're not accepting data any more */
             /* alert! */
-            //EventDataOnClosed(talker->tcp_policy);
+            //EventDataOnClosed(talker->config);
             eventcode |= EVENT_DATA_ON_CLOSED;
             retcode |= ACTION_BAD_PKT;
             NormalDropPacketIf(p, NORM_TCP);
@@ -7023,7 +6427,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
             /* alert! */
             if (lwssn->s5_state.session_flags & SSNFLAG_RESET)
             {
-                //EventDataAfterReset(listener->tcp_policy);
+                //EventDataAfterReset(listener->config);
                 if ( talker->s_mgr.sub_state & SUB_RST_SENT )
                     eventcode |= EVENT_DATA_AFTER_RESET;
                 else
@@ -7031,7 +6435,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
             }
             else
             {
-                //EventDataOnClosed(listener->tcp_policy);
+                //EventDataOnClosed(listener->config);
                 eventcode |= EVENT_DATA_ON_CLOSED;
             }
             retcode |= ACTION_BAD_PKT;
@@ -7073,9 +6477,9 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
              * for the record, I've seen FTP data sessions that send
              * data packets with no tcp flags set
              */
-            if ((p->tcph->th_flags != 0) || (s5TcpPolicy->policy == STREAM_POLICY_LINUX))
+            if ((p->tcph->th_flags != 0) || (config->policy == STREAM_POLICY_LINUX))
             {
-                ProcessTcpData(p, listener, tcpssn, tdb, s5TcpPolicy);
+                ProcessTcpData(p, listener, tcpssn, tdb, config);
             }
             else
             {
@@ -7156,7 +6560,7 @@ static int ProcessTcp(Flow *lwssn, Packet *p, TcpDataBlock *tdb,
                     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "FIN beyond previous, ignoring\n"););
                     eventcode |= EVENT_BAD_FIN;
-                    LogTcpEvents(talker->tcp_policy, eventcode);
+                    LogTcpEvents(eventcode);
                     NormalDropPacketIf(p, NORM_TCP);
                     PREPROC_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
@@ -7271,7 +6675,7 @@ dupfin:
                 }
             }
         }
-        LogTcpEvents(listener->tcp_policy, eventcode);
+        LogTcpEvents(eventcode);
         /* The last ACK is a part of the session.  Delete the session after processing is complete. */
         TcpSessionCleanup(lwssn, 0);
         lwssn->session_state |= STREAM5_STATE_CLOSED;
@@ -7284,7 +6688,7 @@ dupfin:
            !(p->tcph->th_flags & TH_ACK) &&
            !(p->tcph->th_flags & TH_RST))
         {
-            lwssn->set_expire(p, s5TcpPolicy->session_timeout);
+            lwssn->set_expire(p, config->session_timeout);
         }
     }
 
@@ -7294,7 +6698,7 @@ dupfin:
     if ( p->tcph->th_flags & TH_ACK )
         CheckFlushPolicyOnAck(tcpssn, talker, listener, tdb, p);
 
-    LogTcpEvents(listener->tcp_policy, eventcode);
+    LogTcpEvents(eventcode);
     PREPROC_PROFILE_END(s5TcpStatePerfStats);
     return retcode;
 }
@@ -7450,7 +6854,7 @@ static inline int CheckFlushPolicyOnData(
 
             avail = get_q_sequenced(listener);
             coerce = CheckFlushCoercion(
-                p, &listener->flush_mgr, listener->tcp_policy->flush_factor);
+                p, &listener->flush_mgr, listener->config->flush_factor);
 
             if (
                 (avail > 0) &&
@@ -8207,7 +7611,7 @@ char Stream5SetReassemblyTcp(
             else
             {
                 InitFlushMgr(&tcpssn->client.flush_mgr,
-                    &tcpssn->client.tcp_policy->flush_point_list,
+                    &tcpssn->client.config->flush_point_list,
                     flush_policy, 0);
             }
         }
@@ -8224,7 +7628,7 @@ char Stream5SetReassemblyTcp(
             else
             {
                 InitFlushMgr(&tcpssn->server.flush_mgr,
-                    &tcpssn->server.tcp_policy->flush_point_list,
+                    &tcpssn->server.config->flush_point_list,
                     flush_policy, 0);
             }
         }
@@ -8235,14 +7639,14 @@ char Stream5SetReassemblyTcp(
         if (dir & SSN_DIR_CLIENT)
         {
             InitFlushMgr(&tcpssn->client.flush_mgr,
-                &tcpssn->client.tcp_policy->flush_point_list,
+                &tcpssn->client.config->flush_point_list,
                 flush_policy, 0);
         }
 
         if (dir & SSN_DIR_SERVER)
         {
             InitFlushMgr(&tcpssn->server.flush_mgr,
-                &tcpssn->server.tcp_policy->flush_point_list,
+                &tcpssn->server.config->flush_point_list,
                 flush_policy, 0);
         }
     }
@@ -8745,7 +8149,7 @@ uint16_t* Stream5GetTcpPortList(void* pv, int& ignore_any)
     Stream5Config* pc = (Stream5Config*)pv;
     if ( !pc->tcp_config )
         return NULL;
-    ignore_any = pc->tcp_config->policy->flags & STREAM5_CONFIG_IGNORE_ANY;
+    ignore_any = pc->tcp_config->flags & STREAM5_CONFIG_IGNORE_ANY;
     return pc->tcp_config->port_filter;
 }
 
@@ -8769,7 +8173,7 @@ int s5TcpGetPortFilterStatus(
 
 bool s5TcpIgnoreAny(Stream5TcpConfig* tcp_config)
 {
-    return ( tcp_config->policy->flags & STREAM5_CONFIG_IGNORE_ANY );
+    return ( tcp_config->flags & STREAM5_CONFIG_IGNORE_ANY );
 }
 
 void s5TcpSetSynSessionStatus(
@@ -8834,27 +8238,15 @@ void Stream5ResetTcp()
     s5_tcp_cleanup = 0;
 }
 
-void Stream5ConfigTcp(Stream5TcpConfig *config, SnortConfig* sc, char *args)
+static void Stream5ConfigTcp(Stream5TcpConfig *config, SnortConfig*, char*)
 {
-    Stream5TcpPolicy *s5TcpPolicy;
-
-    if (config == NULL)
-        return;
-
-    s5TcpPolicy = (Stream5TcpPolicy *) SnortAlloc(sizeof(Stream5TcpPolicy));
-
     /* Initialize flush policy to Ignore */
-    memcpy(&s5TcpPolicy->flush_config, ignore_flush_policy,
+    memcpy(&config->flush_config, ignore_flush_policy,
             sizeof(FlushConfig) * MAX_PORTS);
-    memcpy(&s5TcpPolicy->flush_config_protocol, ignore_flush_policy_protocol,
+    memcpy(&config->flush_config_protocol, ignore_flush_policy_protocol,
             sizeof(FlushConfig) * MAX_PROTOCOL_ORDINAL);
 
-    Stream5ParseTcpArgs(sc, config, args, s5TcpPolicy);
-
-    config->policy = s5TcpPolicy;
-
-    if ( ScPafEnabled() && !config->paf_config )
-        config->paf_config = s5_paf_new();
+    config->paf_config = s5_paf_new();
 }
 
 Stream5TcpConfig* Stream5ConfigTcp(SnortConfig* sc, char *args)
@@ -8862,7 +8254,6 @@ Stream5TcpConfig* Stream5ConfigTcp(SnortConfig* sc, char *args)
     Stream5TcpConfig* tcp_config =
         (Stream5TcpConfig*)SnortAlloc(sizeof(*tcp_config));
 
-    Stream5TcpInitFlushPoints();
     Stream5TcpRegisterPreprocProfiles();
     Stream5TcpRegisterRuleOptions(sc);
 
@@ -8899,21 +8290,9 @@ void TcpSession::reset()
     lws_init = tcp_init = false;
 }
 
-void* TcpSession::get_policy (void* pv, Packet* p)
+void* TcpSession::get_policy (void* pv, Packet*)
 {
-    Stream5TcpConfig* tcp_config = (Stream5TcpConfig*)pv;
-    Stream5TcpPolicy* s5TcpPolicy = tcp_config->policy;
-
-#ifdef REG_TEST
-    if ( !s5TcpPolicy )
-    {
-        // FIXIT should be deleted or moved?
-        TcpDataBlock tdb;
-        SetupTcpDataBlock(&tdb, p);
-        S5TraceTCP(p, NULL, &tdb, 0);
-    }
-#endif
-    return s5TcpPolicy;
+    return pv;
 }
 
 bool TcpSession::setup (Packet* p)
@@ -9013,7 +8392,7 @@ int TcpSession::process(Packet *p)
     }
     SetupTcpDataBlock(&tdb, p);
 
-    Stream5TcpPolicy* s5TcpPolicy = (Stream5TcpPolicy*)flow->policy;
+    Stream5TcpConfig* config = (Stream5TcpConfig*)flow->policy;
     TcpSession* tcpssn = (TcpSession*)flow->session;
 
     if ( !tcpssn->lws_init )
@@ -9030,7 +8409,7 @@ int TcpSession::process(Packet *p)
             // If we're within the "startup" window, try to handle
             // this packet as midstream pickup -- allows for
             // connections that already existed before snort started.
-            if (p->pkth->ts.tv_sec - packet_first_time() >= s5TcpPolicy->hs_timeout)
+            if (p->pkth->ts.tv_sec - packet_first_time() >= config->hs_timeout)
             {
                  // Do nothing with this packet since we require a 3-way ;)
                 DEBUG_WRAP(
@@ -9038,7 +8417,7 @@ int TcpSession::process(Packet *p)
                     "Handshake, but failed to retrieve session object "
                     "for non SYN packet.\n"););
 
-                EventNo3whs(s5TcpPolicy);
+                EventNo3whs();
                 PREPROC_PROFILE_END(s5TcpPerfStats);
                 S5TraceTCP(p, flow, &tdb, 1);
                 return 0;
@@ -9080,7 +8459,7 @@ int TcpSession::process(Packet *p)
         }
         ssnStats.timeouts++;
     }
-    status = ProcessTcp(flow, p, &tdb, s5TcpPolicy);
+    status = ProcessTcp(flow, p, &tdb, config);
 
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "Finished Stream5 TCP cleanly!\n"
@@ -9094,7 +8473,7 @@ int TcpSession::process(Packet *p)
     else
     {
         flow->markup_packet_flags(p);
-        flow->set_expire(p, s5TcpPolicy->session_timeout);
+        flow->set_expire(p, config->session_timeout);
     }
     if ( status & ACTION_DISABLE_INSPECTION )
     {
@@ -9109,6 +8488,10 @@ int TcpSession::process(Packet *p)
     S5TraceTCP(p, flow, &tdb, 0);
     return 0;
 }
+
+//-------------------------------------------------------------------------
+// tcp module stuff
+//-------------------------------------------------------------------------
 
 void tcp_sum()
 {
@@ -9140,6 +8523,6 @@ void tcp_reset_stats()
 
 void tcp_show(Stream5TcpConfig* tcp_config)
 {
-    Stream5PrintTcpConfig(tcp_config->policy);
+    Stream5PrintTcpConfig(tcp_config);
 }
 

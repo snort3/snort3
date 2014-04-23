@@ -504,9 +504,6 @@ SnortConfig * SnortConfNew(void)
     sc->max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
     sc->mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
-#ifndef REG_TEST
-    sc->paf_max = DEFAULT_PAF_MAX;
-#endif
     sc->max_threads = 1;
     InspectorManager::new_config(sc);
 

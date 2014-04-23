@@ -63,73 +63,19 @@ static PreprocStats* ip_get_profile(const char* key)
 static SessionStats gipStats;
 static THREAD_LOCAL SessionStats ipStats;
 
+Stream5IpConfig::Stream5IpConfig()
+{
+    session_timeout = 30;
+}
+
 //-------------------------------------------------------------------------
 // private methods
 //-------------------------------------------------------------------------
 
-static void Stream5PrintIpConfig (Stream5IpPolicy* policy)
+static void Stream5PrintIpConfig (Stream5IpConfig* pc)
 {
-    LogMessage("Stream5 IP Policy config:\n");
-    LogMessage("    Timeout: %d seconds\n", policy->session_timeout);
-}
-
-static void Stream5ParseIpArgs (char* args, Stream5IpPolicy* policy)
-{
-    char* *toks;
-    int num_toks;
-    int i;
-
-    policy->session_timeout = S5_DEFAULT_SSN_TIMEOUT;
-
-    if ( !args || !*args )
-        return;
-
-    toks = mSplit(args, ",", 0, &num_toks, 0);
-
-    for (i = 0; i < num_toks; i++)
-    {
-        int s_toks;
-        char* *stoks = mSplit(toks[i], " ", 2, &s_toks, 0);
-
-        if (s_toks == 0)
-        {
-            ParseError("Missing parameter in Stream5 IP config.");
-        }
-
-        if(!strcasecmp(stoks[0], "timeout"))
-        {
-            char* endPtr = NULL;
-
-            if(stoks[1])
-            {
-                policy->session_timeout = strtoul(stoks[1], &endPtr, 10);
-            }
-
-            if (!stoks[1] || (endPtr == &stoks[1][0]))
-            {
-                ParseError("Invalid timeout in config file.  Integer parameter required.");
-            }
-
-            if ((policy->session_timeout > S5_MAX_SSN_TIMEOUT) ||
-                (policy->session_timeout < S5_MIN_SSN_TIMEOUT))
-            {
-                ParseError("Invalid timeout in config file.  Must be between %d and %d",
-                    S5_MIN_SSN_TIMEOUT, S5_MAX_SSN_TIMEOUT);
-            }
-            if (s_toks > 2)
-            {
-                ParseError("Invalid Stream5 IP Policy option.  Missing comma?");
-            }
-        }
-        else
-        {
-            ParseError("Invalid Stream5 IP policy option");
-        }
-
-        mSplitFree(&stoks, s_toks);
-    }
-
-    mSplitFree(&toks, num_toks);
+    LogMessage("Stream5 IP config:\n");
+    LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
 }
 
 void IpSessionCleanup (Flow* lws)
@@ -226,9 +172,8 @@ static inline void UpdateSession (Packet* p, Flow* lws)
 
     // Reset the session timeout.
     {
-        Stream5IpPolicy* policy;
-        policy = (Stream5IpPolicy*)lws->policy;
-        lws->set_expire(p, policy->session_timeout);
+        Stream5IpConfig* pc = (Stream5IpConfig*)lws->policy;
+        lws->set_expire(p, pc->session_timeout);
     }
 }
 
@@ -246,7 +191,7 @@ static HA_Api ha_ip_api = {
 };
 #endif
 
-Stream5IpConfig* Stream5ConfigIp(SnortConfig*, char *args)
+Stream5IpConfig* Stream5ConfigIp(SnortConfig*, char*)
 {
     RegisterPreprocessorProfile(
         "ip", &s5IpPerfStats, 0, &totalPerfStats, ip_get_profile);
@@ -257,8 +202,6 @@ Stream5IpConfig* Stream5ConfigIp(SnortConfig*, char *args)
 #ifdef ENABLE_HA
     ha_set_api(IPPROTO_IP, &ha_ip_api);
 #endif
-
-    Stream5ParseIpArgs(args, &ip_config->default_policy);
 
     return ip_config;
 }
@@ -334,7 +277,7 @@ int IpSession::process(Packet* p)
 
 void ip_show(Stream5IpConfig* ip_config)
 {
-    Stream5PrintIpConfig(&ip_config->default_policy);
+    Stream5PrintIpConfig(ip_config);
 }
 
 void ip_sum()
