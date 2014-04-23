@@ -1,6 +1,5 @@
 
 
-
 set (FILE_LIST
     ft_main.cc
     ft_main.h
@@ -21,12 +20,8 @@ set (FILE_LIST
     ftpp_return_codes.h
     ftpp_si.cc
     ftpp_si.h
-    ftpp_ui_client_lookup.cc
-    ftpp_ui_client_lookup.h
     ftpp_ui_config.cc
     ftpp_ui_config.h
-    ftpp_ui_server_lookup.cc
-    ftpp_ui_server_lookup.h
     ftpp_util_kmap.h
     hi_util_kmap.cc
     hi_util_kmap.h
