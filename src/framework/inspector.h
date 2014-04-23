@@ -44,9 +44,8 @@ class Inspector
 public:
     virtual ~Inspector();
 
-    virtual void configure(SnortConfig*, const char* keyword, char *args) = 0;
+    virtual void configure(SnortConfig*) { };
     virtual int verify(SnortConfig*) { return 0; };
-    virtual bool enabled() { return true; }
 
     virtual void setup(SnortConfig*) { };  // unprivileged init, stream_api etc.
     virtual void show(SnortConfig*) { };

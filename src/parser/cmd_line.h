@@ -26,10 +26,7 @@
 void set_daemon_args(int argc, char* argv[]);
 void cmd_line_term();
 
-void set_legacy_conf(const char*);
-
 const char* get_snort_conf();
-const char* get_legacy_conf();
 const char* get_snort_conf_dir();
 
 SnortConfig* ParseCmdLine(int argc, char* argv[]);

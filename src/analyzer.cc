@@ -70,6 +70,14 @@ static MainHook_f main_hook = Analyzer::ignore;
 void Analyzer::set_main_hook(MainHook_f f)
 { main_hook = f; }
 
+typedef DAQ_Verdict 
+    (*PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);
+
+static DAQ_Verdict fail_open(void*, const DAQ_PktHdr_t*, const uint8_t*);
+static DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
+
+static THREAD_LOCAL PacketCallback main_func = fail_open;
+
 //-------------------------------------------------------------------------
 
 Packet* get_current_packet()
@@ -205,7 +213,15 @@ DAQ_Verdict ProcessPacket(
     return verdict;
 }
 
-DAQ_Verdict PacketCallback(
+// FIXIT need to call fail open from a different thread
+static DAQ_Verdict fail_open(
+    void*, const DAQ_PktHdr_t*, const uint8_t*)
+{
+    pc.total_fail_open++;
+    return DAQ_VERDICT_PASS;
+}
+
+static DAQ_Verdict packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     int inject = 0;
@@ -430,6 +446,8 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     snort_thread_init(source);
     InspectorManager::thread_init(snort_conf, instance_id);
 
+    main_func = packet_callback;
+
     analyze();
 
     InspectorManager::thread_term(snort_conf);
@@ -490,7 +508,7 @@ void Analyzer::analyze()
 
             command = AC_NONE;
         }
-        if ( DAQ_Acquire(1, PacketCallback, NULL) )
+        if ( DAQ_Acquire(1, main_func, NULL) )
             break;
 
         ++count;

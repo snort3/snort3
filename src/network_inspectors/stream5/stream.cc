@@ -165,18 +165,20 @@ public:
     Stream5(Stream5GlobalConfig*);
     ~Stream5();
 
-    void configure(SnortConfig*, const char*, char *args);
+    void configure(SnortConfig*);
     int verify_config(SnortConfig*);
     int verify(SnortConfig*);
     void setup(SnortConfig*);
     void show(SnortConfig*);
+
     void eval(Packet*);
+
     void init();
     void term();
     void reset();
 
 private:
-    Stream5Config* config;
+    Stream5Config config;
 
     // FIXIT proto specific *_data moves out
     // of s5 config when bindings are added
@@ -188,16 +190,18 @@ private:
 
 Stream5::Stream5 (Stream5GlobalConfig* pc)
 {
-    config = (Stream5Config*)SnortAlloc(sizeof(*config));
-    config->global_config = pc;
-    config->handler = this;
+    memset(&config, 0, sizeof(config));
+    config.global_config = pc;
+    config.handler = this;
+
+    tcp_data = nullptr;
+    udp_data = nullptr;
+    icmp_data = nullptr;
+    ip_data = nullptr;
 }
 
 Stream5::~Stream5()
 {
-    if ( config )
-        delete config;
-
     if ( tcp_data )
         Share::release(tcp_data);
 
@@ -211,28 +215,27 @@ Stream5::~Stream5()
         Share::release(ip_data);
 }
 
-void Stream5::configure(
-    SnortConfig*, const char*, char*)
+void Stream5::configure(SnortConfig*)
 {
-    if ( config->global_config->max_tcp_sessions )
+    if ( config.global_config->max_tcp_sessions )
     {
         tcp_data = (StreamTcpData*)Share::acquire("stream_tcp");
-        config->tcp_config = tcp_data->data;
+        config.tcp_config = tcp_data->data;
     }
-    if ( config->global_config->max_udp_sessions )
+    if ( config.global_config->max_udp_sessions )
     {
         udp_data = (StreamUdpData*)Share::acquire("stream_udp");
-        config->udp_config = udp_data->data;
+        config.udp_config = udp_data->data;
     }
-    if ( config->global_config->max_icmp_sessions )
+    if ( config.global_config->max_icmp_sessions )
     {
         icmp_data = (StreamIcmpData*)Share::acquire("stream_icmp");
-        config->icmp_config = icmp_data->data;
+        config.icmp_config = icmp_data->data;
     }
-    if ( config->global_config->max_ip_sessions )
+    if ( config.global_config->max_ip_sessions )
     {
         ip_data = (StreamIpData*)Share::acquire("stream_ip");
-        config->ip_config = ip_data->data;
+        config.ip_config = ip_data->data;
     }
 }
 
@@ -240,53 +243,49 @@ int Stream5::verify_config(SnortConfig* sc)
 {
     int status = 0;
 
-    if ( config->global_config == NULL )
+    if ( !config.global_config )
     {
         WarningMessage("%s(%d) Stream5 global config is NULL.\n",
                 __FILE__, __LINE__);
         return -1;
     }
 
-    if (config->global_config->max_tcp_sessions)
+    if (config.global_config->max_tcp_sessions)
     {
-        if ( !config->global_config->max_tcp_sessions ||
-             // FIXIT are these checks actually useful?
-             // not valid now with thread local flow_con instantiated later
-             //!flow_con->max_flows(IPPROTO_TCP) ||
-             Stream5VerifyTcpConfig(sc, config->tcp_config) )
+         // FIXIT are these checks actually useful?
+         // not valid now with thread local flow_con instantiated later
+        if ( //!flow_con->max_flows(IPPROTO_TCP) ||
+             Stream5VerifyTcpConfig(sc, config.tcp_config) )
         {
             ErrorMessage("WARNING: Stream5 TCP misconfigured.\n");
             status = -1;
         }
     }
 
-    if (config->global_config->max_udp_sessions)
+    if (config.global_config->max_udp_sessions)
     {
-        if ( !config->global_config->max_udp_sessions || 
-             //!flow_con->max_flows(IPPROTO_UDP) ||
-             Stream5VerifyUdpConfig(sc, config->udp_config) )
+        if ( //!flow_con->max_flows(IPPROTO_UDP) ||
+             Stream5VerifyUdpConfig(sc, config.udp_config) )
         {
             ErrorMessage("WARNING: Stream5 UDP misconfigured.\n");
             status = -1;
         }
     }
 
-    if (config->global_config->max_icmp_sessions)
+    if (config.global_config->max_icmp_sessions)
     {
-        if ( !config->global_config->max_icmp_sessions || 
-             //!flow_con->max_flows(IPPROTO_ICMP) ||
-             Stream5VerifyIcmpConfig(sc, config->icmp_config) )
+        if ( //!flow_con->max_flows(IPPROTO_ICMP) ||
+             Stream5VerifyIcmpConfig(sc, config.icmp_config) )
         {
             ErrorMessage("WARNING: Stream5 ICMP misconfigured.\n");
             status = -1;
         }
     }
 
-    if (config->global_config->max_ip_sessions)
+    if (config.global_config->max_ip_sessions)
     {
-        if ( !config->global_config->max_ip_sessions || 
-             //!flow_con->max_flows(IPPROTO_IP) ||
-             Stream5VerifyIpConfig(sc, config->ip_config) )
+        if ( //!flow_con->max_flows(IPPROTO_IP) ||
+             Stream5VerifyIpConfig(sc, config.ip_config) )
         {
             ErrorMessage("WARNING: Stream5 IP misconfigured.\n");
             status = -1;
@@ -320,25 +319,25 @@ int Stream5::verify(SnortConfig* sc)
     if ( !total_sessions )
         return 0;
 
-    if ( (config->global_config->max_tcp_sessions > 0)
+    if ( (config.global_config->max_tcp_sessions > 0)
         && (max_tcp == 0) )
     {
         LogMessage("TCP tracking disabled, no TCP sessions allocated\n");
     }
 
-    if ( (config->global_config->max_udp_sessions > 0)
+    if ( (config.global_config->max_udp_sessions > 0)
         && (max_udp == 0) )
     {
         LogMessage("UDP tracking disabled, no UDP sessions allocated\n");
     }
 
-    if ( (config->global_config->max_icmp_sessions > 0)
+    if ( (config.global_config->max_icmp_sessions > 0)
         && (max_icmp == 0) )
     {
         LogMessage("ICMP tracking disabled, no ICMP sessions allocated\n");
     }
 
-    if ( (config->global_config->max_ip_sessions > 0)
+    if ( (config.global_config->max_ip_sessions > 0)
         && (max_ip == 0) )
     {
         LogMessage("IP tracking disabled, no IP sessions allocated\n");
@@ -353,9 +352,9 @@ int Stream5::verify(SnortConfig* sc)
 void Stream5::init()
 {
     assert(!flow_con);
-    flow_con = new FlowControl(config);
+    flow_con = new FlowControl(&config);
 
-    tcp_sinit(config);
+    tcp_sinit(&config);
 }
 
 void Stream5::term()
@@ -373,30 +372,30 @@ void Stream5::term()
 void Stream5::setup(SnortConfig*)
 {
 #ifdef ENABLE_HA
-    if ( config->ha_config )
-        ha_setup(config->ha_config);
+    if ( config.ha_config )
+        ha_setup(config.ha_config);
 #endif
 }
 
 void Stream5::show(SnortConfig*)
 {
-    Stream5PrintGlobalConfig(config);
+    Stream5PrintGlobalConfig(&config);
 
-    if ( config->tcp_config )
-        tcp_show(config->tcp_config);
+    if ( config.tcp_config )
+        tcp_show(config.tcp_config);
 
-    if ( config->udp_config )
-        udp_show(config->udp_config);
+    if ( config.udp_config )
+        udp_show(config.udp_config);
 
-    if ( config->icmp_config )
-        icmp_show(config->icmp_config);
+    if ( config.icmp_config )
+        icmp_show(config.icmp_config);
 
-    if ( config->ip_config )
-        ip_show(config->ip_config);
+    if ( config.ip_config )
+        ip_show(config.ip_config);
 
 #ifdef ENABLE_HA
-    if ( config->ha_config )
-        ha_show(config->ha_config);
+    if ( config.ha_config )
+        ha_show(config.ha_config);
 #endif
 }
 
@@ -412,19 +411,19 @@ void Stream5::eval(Packet *p)
     switch ( GET_IPH_PROTO(p) )
     {
         case IPPROTO_TCP:
-            flow_con->process_tcp(config, p);
+            flow_con->process_tcp(&config, p);
             break;
 
         case IPPROTO_UDP:
-            flow_con->process_udp(config, p);
+            flow_con->process_udp(&config, p);
             break;
 
         case IPPROTO_ICMP:
-            flow_con->process_icmp(config, p);
+            flow_con->process_icmp(&config, p);
             break;
 
         default:
-            flow_con->process_ip(config, p);
+            flow_con->process_ip(&config, p);
             break;
     }
 
@@ -433,7 +432,7 @@ void Stream5::eval(Packet *p)
 
 void Stream5::reset()
 {
-    Stream5ResetTcpInstance(config->tcp_config);
+    Stream5ResetTcpInstance(config.tcp_config);
 }
 
 //-------------------------------------------------------------------------
