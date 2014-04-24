@@ -2,10 +2,11 @@
 -- This file contains a sample snort configuration.  You should follow
 -- the steps to create your own custom configuration.
 --
--- if you configured Snort++ wiht --prefix /install_dir then do:
+-- let install_dir be a variable indicating where you installed Snort++.
+-- then do:
 --
--- export LUA_PATH=/install_dir/include/snort/lua/?.lua\;\;
--- export SNORT_LUA_PATH=/install_dir/conf/
+-- export LUA_PATH=$install_dir/include/snort/lua/?.lua\;\;
+-- export SNORT_LUA_PATH=$install_dir/conf/
 ---------------------------------------------------------------------------
 
 require('snort_config')
@@ -142,6 +143,7 @@ tcp_client_ports = SSH_PORTS .. FTP_PORTS .. MAIL_PORTS .. RPC_PORTS ..
     23 25 42 53 79 109 113 119 135 136 137 139 161 445 513 514 587 593 691
     1433 1521 1741 3306 6070 6665 6666 6667 6668 6669 7000 8181 
 ]]
+tcp_server_ports = ''
 tcp_both_ports = HTTP_PORTS ..
 [[
     443 465 563 636 989 992 993 994 995 7907 7802 7801 7900 7901 7902 7903
@@ -304,14 +306,14 @@ perf_monitor =
     max_file_size = 2147483648,
 
     --max = true, -- max data output only to console?
-    console = true,
+    --console = true,
 
     -- everything should go to fixed name file in instance dir
     -- remove _file options and keep prefix to enable file or not
     --file = true,
     --events = true,
     flow = true,
-    --flow_file = true,
+    flow_file = true,
     --flow_ip = true,
     --flow_ip_file = true,
     --flow_ip_memcap = 52428800
@@ -328,7 +330,6 @@ http_global =
         map_file = '/etc/unicode.map',
         code_page = 1252
     },
-    --]]
     compress_depth = 65535,
     decompress_depth = 65535
 }
@@ -382,109 +383,23 @@ http_server =
 }
 
 ---------------------------------------------------------------------------
--- put legacy preprocessors only in this inlcude
--- (stream and ftp)
--- this is temporary and will be deleted once migrated to Lua
----------------------------------------------------------------------------
-
---legacy = '../preproc.conf'
-
----------------------------------------------------------------------------
--- the following inspector configs are just prototypes
--- they are nominally validated but they are not actually loaded
----------------------------------------------------------------------------
----------------------------------------------------------------------------
--- Target-Based stateful inspection/stream reassembly.
----------------------------------------------------------------------------
-
-stream_global =
-{
-    memcap = 123456,
-    show_rebuilt_packets = false,
-    prune_log_max = 0,
-    paf_max = 16000,
-    
-    track_tcp = true,
-    max_tcp = 256 * K,
-
-    track_udp = true,
-    max_udp = 128 * K,
-
-    track_icmp = true,
-    max_icmp = 128 * K,
-
-    track_ip = true,
-    max_ip = 128 * K,
-}
-
-stream_tcp =
-{
-    policy = 'windows',
-
-    timeout = 180,
-    overlap_limit = 10,
-    max_window = 10,
-    require_3whs = 180,
-    max_queued_bytes = 3,
-    max_queued_segs = 1300,
-    flush_factor = 0,
-
-    small_segments = 
-    {
-        count = 10,
-        maximum_size = 128,
-        ignore_ports = '1 2 3'
-    },
-
-    use_static_footprint_sizes = false,
-    detect_anomalies = true,
-    check_session_hijacking = true,
-    dont_store_large_packets = false,
-    dont_reassemble_async = false,
-    ignore_any_rules = false,
-
-    client_ports = tcp_client_ports,
-    server_ports = tcp_client_ports,
-    both_ports = tcp_both_ports,
-
-    client_protocols = tcp_client_ports,
-    server_protocols = tcp_client_ports,
-    both_protocols = tcp_both_ports
-}
-
-stream_udp =
-{
-    timeout = 180,
-    ignore_any_rules = false,
-}
-
-stream_icmp =
-{
-    timeout = 180,
-}
-
-stream_ip =
-{
-    timeout = 180,
-}
-
----------------------------------------------------------------------------
 -- FTP / Telnet normalization and anomaly detection.
 ---------------------------------------------------------------------------
 
-ftp_telnet_global =
-{
-    stateful_inspection = true,
-    encrypted_traffic = false,
-    check_encrypted = true,
-}
-
 telnet =
 {
+    encrypted_traffic = false,
+    check_encrypted = true,
     ayt_attack_thresh = 20,
     normalize = true,
     ports = '23',
     detect_anomalies = true
+}
+
+ftp_global =
+{
+    encrypted_traffic = false,
+    check_encrypted = true,
 }
 
 ftp_default_commands =
@@ -508,16 +423,19 @@ ftp_format_commands =
 
 ftp_server =
 {
-    def_max_param_len = 100,
     ports = FTP_PORTS,
+    def_max_param_len = 100,
+
+    encrypted_traffic = false,
+    check_encrypted = true,
     print_cmds = false,
     telnet_cmds = true,
     ignore_telnet_erase_cmds = true,
-    ftp_cmds = ftp_default_commands,
-    chk_str_fmt = ftp_format_commands,
     ignore_data_chan = true,
 
-    def_max_param_len = 256,
+    ftp_cmds = ftp_default_commands,
+    chk_str_fmt = ftp_format_commands,
+
     alt_max_param =
     {
         { length = 0, 
@@ -543,7 +461,7 @@ ftp_server =
         { command = 'PROT', format = '< char CSEP >' },
         { command = 'STRU', format = '< char FRPO [ string ] >' },
         { command = 'TYPE', format = '< { char AE [ char NTC ] | char I | char L [ number ] } >' }
-    }
+    },
 }
 
 ftp_client =
@@ -551,8 +469,92 @@ ftp_client =
     max_resp_len = 256,
     bounce = true,
     ignore_telnet_erase_cmds = true,
-    telnet_cmds = true
+    telnet_cmds = true,
+
+--[[
+    bounce_to =
+    {
+        { address = '192.168.1.1', port = 12345 },
+        { address = '192.168.144.120', port = 50010, last_port = 50020 }
+    }
+--]]
 }
+
+---------------------------------------------------------------------------
+-- the following inspector configs are just prototypes
+-- they are nominally validated but they are not actually loaded
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Target-Based stateful inspection/stream reassembly.
+---------------------------------------------------------------------------
+
+stream_global =
+{
+    tcp_memcap = 123456789,
+    show_rebuilt_packets = false,
+    prune_log_max = 0,
+    paf_max = 16384,
+    
+    tcp_cache = { max_sessions = 256 * K, idle_timeout = 60 },
+    udp_cache = { max_sessions = 128 * K, pruning_timeout = 30 },
+    ip_cache = { max_sessions = 64 * K },
+    icmp_cache = { max_sessions = 32 * K },
+
+    active_response = 
+    {
+        max_responses = 0,
+        min_interval = 1
+    }
+}
+
+stream_tcp =
+{
+    policy = 'windows',
+
+    session_timeout = 180,
+    max_window = 10,
+    require_3whs = 180,
+    flush_factor = 0,
+
+    overlap_limit = 10,
+
+    queue_limit =
+    {
+        max_bytes = 3,
+        max_segments = 1300,
+    },
+    small_segments = 
+    {
+        count = 10,
+        maximum_size = 128,
+        ignore_ports = '1 2 3'
+    },
+
+    footprint = 0,
+    reassemble_async = false,
+    ignore_any_rules = false,
+
+    client_ports = tcp_client_ports,
+    server_ports = tcp_server_ports,
+    both_ports = tcp_both_ports,
+}
+
+stream_udp =
+{
+    session_timeout = 180,
+    ignore_any_rules = false,
+}
+
+stream_icmp =
+{
+    session_timeout = 180,
+}
+
+stream_ip =
+{
+    session_timeout = 180,
+}
+
 ---------------------------------------------------------------------------
 -- Step #4: Configure loggers
 ---------------------------------------------------------------------------
@@ -603,8 +605,9 @@ event_filter =
 --
 suppress =
 {
-    { gid = 1, sid = 2 },
-    { gid = 1, sid = 1 }
+    { gid = 116, sid = 408 },
+    { gid = 116, sid = 412 },
+    { gid = 116, sid = 414 },
 }
 
 default_rules =
@@ -629,8 +632,8 @@ default_rules =
 #include $PLUGIN_RULE_PATH/chat.rules
 #include $PLUGIN_RULE_PATH/dos.rules
 
-#alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
-#alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
+alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
+alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
 ]]
 
 network =
@@ -641,8 +644,8 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    --include = '../active.rules',
-    rules = default_rules,
+    include = '../active.rules',
+    --rules = default_rules,
     enable_builtin_rules = true
 }
 

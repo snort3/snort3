@@ -1065,36 +1065,6 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
-// inspectors module  FIXIT this is temporary until inspectors are Luaified
-//-------------------------------------------------------------------------
-
-static const Parameter legacy_param =
-{
-    "legacy", Parameter::PT_STRING, nullptr, nullptr,
-    "snort-classic preprocessors"
-};
-
-class LegacyModule : public Module
-{
-public:
-    LegacyModule() : 
-        Module(nullptr, &legacy_param) { };
-
-    bool set(const char*, Value&, SnortConfig*);
-};
-
-bool LegacyModule::set(const char*, Value& v, SnortConfig*)
-{
-    if ( v.is("legacy") )
-        set_legacy_conf(v.get_string());
-
-    else
-        return false;
-
-    return true;
-}
-
-//-------------------------------------------------------------------------
 // detection policy module
 //-------------------------------------------------------------------------
 
@@ -1883,9 +1853,6 @@ void module_init()
     ModuleManager::add_module(new AlertsModule);
     ModuleManager::add_module(new EventQueueModule);
     ModuleManager::add_module(new OutputModule);
-
-    // this module will be replaced with various inspector modules
-    ModuleManager::add_module(new LegacyModule);
 
     // these modules could be in traffic policy
     ModuleManager::add_module(new ActiveModule);

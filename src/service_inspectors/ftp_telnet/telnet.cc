@@ -271,7 +271,7 @@ public:
     Telnet(TELNET_PROTO_CONF*);
     ~Telnet();
 
-    void configure(SnortConfig*, const char*, char*);
+    void configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
@@ -291,7 +291,7 @@ Telnet::~Telnet()
         delete config;
 }
 
-void Telnet::configure(SnortConfig* sc, const char*, char*)
+void Telnet::configure(SnortConfig* sc)
 {
     stream.set_service_filter_status(
         sc, telnet_app_id, PORT_MONITOR_SESSION);

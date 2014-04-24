@@ -529,7 +529,7 @@ public:
     HttpInspect(HTTPINSPECT_CONF*);
     ~HttpInspect();
 
-    void configure(SnortConfig*, const char*, char *args);
+    void configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
@@ -556,8 +556,7 @@ HttpInspect::~HttpInspect ()
         Share::release(global);
 }
 
-void HttpInspect::configure (
-    SnortConfig* sc, const char*, char*)
+void HttpInspect::configure (SnortConfig* sc)
 {
     global = (HttpData*)Share::acquire(GLOBAL_KEYWORD);
     config->global = global->data;

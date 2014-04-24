@@ -98,6 +98,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
         /* IPv6 traffic */
         else
         {
+#if 0
             pseudoheader6 ph6;
             COPY4(ph6.sip, p->ip6h->ip_src.ip32);
             COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
@@ -106,6 +107,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
             ph6.len = htons((u_short)len);
 
             csum = in_chksum_icmp6(&ph6, (uint16_t *)(p->icmp6h), len);
+#endif
         }
         if(csum)
         {

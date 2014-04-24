@@ -53,29 +53,8 @@ NetworkPolicy::~NetworkPolicy()
 // inspection policy
 //-------------------------------------------------------------------------
 
-static void FreePreprocConfigs(PreprocConfig* head)
-{
-    while (head != NULL)
-    {
-        PreprocConfig *tmp = head;
-        head = head->next;
-
-        if (tmp->keyword != NULL)
-            free(tmp->keyword);
-
-        if (tmp->opts != NULL)
-            free(tmp->opts);
-
-        if (tmp->file_name != NULL)
-            free(tmp->file_name);
-
-        free(tmp);
-    }
-}
-
 InspectionPolicy::InspectionPolicy()
 {
-    preproc_configs = nullptr;
     framework_policy = nullptr;
     s5_config = nullptr;
 
@@ -87,7 +66,6 @@ InspectionPolicy::InspectionPolicy()
 
 InspectionPolicy::~InspectionPolicy()
 {
-    FreePreprocConfigs(preproc_configs);
     InspectorManager::delete_policy(this);
 }
 

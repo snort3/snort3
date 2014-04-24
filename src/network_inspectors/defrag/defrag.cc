@@ -2103,7 +2103,7 @@ public:
     Defrag(DefragEngineModule*);
     ~Defrag();
 
-    void configure(SnortConfig*, const char*, char*);
+    void configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);
 
@@ -2147,7 +2147,7 @@ Defrag::~Defrag()
         Share::release(global);
 }
 
-void Defrag::configure(SnortConfig*, const char*, char*)
+void Defrag::configure(SnortConfig*)
 {
     global = (FragData*)Share::acquire(GLOBAL_KEYWORD);
     config.common = global->data;

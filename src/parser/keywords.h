@@ -31,13 +31,10 @@
 /* Rest of the keywords */
 // FIXIT config_* keywords were config * but moved here temporarily
 // until they are properly modularized
-#define SNORT_CONF_KEYWORD__RULE_TYPE            "ruletype"
 #ifdef SIDE_CHANNEL
 #define SNORT_CONF_KEYWORD__CFG_SIDE_CHANNEL     "config_sidechannel"
 #define SNORT_CONF_KEYWORD__SIDE_CHANNEL         "sidechannel"
 #endif
-#define SNORT_CONF_KEYWORD__OUTPUT               "output"
-#define SNORT_CONF_KEYWORD__PREPROCESSOR         "preprocessor"
 
 /* Macros *********************************************************************/
 #define ENABLE_ALL_RULES    1

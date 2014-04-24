@@ -176,7 +176,7 @@ class Normalizer : public Inspector
 public:
     Normalizer(NormalizeModule*);
 
-    void configure(SnortConfig*, const char*, char *args);
+    void configure(SnortConfig*);
     void setup(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
@@ -198,8 +198,7 @@ bool Normalizer::enabled ()
     return !disabled;
 }
 
-void Normalizer::configure(
-    SnortConfig*, const char*, char*)
+void Normalizer::configure(SnortConfig*)
 {
     // FIXIT detection policy can't be used by normalizer
     // (not set until after normalizer runs)
