@@ -50,7 +50,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *p, uint16_t &hdr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
@@ -62,6 +62,8 @@ public:
 
 } // anonymous namespace
 
+static const uint16_t MAX_LENGTH = 1500;
+static const uint16_t MIN_ETHERTYPE = 1536;
 
 
 //--------------------------------------------------------------------
@@ -81,7 +83,7 @@ public:
  * Returns: void function
  */
 bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &hdr_len, int &next_prot_id)
 {
 
 //    dc.eth++;
@@ -108,7 +110,6 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     /* lay the ethernet structure over the packet data */
     p->eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
-//    PushLayer(PROTO_ETH, p, pkt, sizeof(*p->eh));
 
     DEBUG_WRAP(
             DebugMessage(DEBUG_DECODE, "%X:%X:%X:%X:%X:%X -> %X:%X:%X:%X:%X:%X\n",
@@ -123,10 +124,20 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 ntohs(p->eh->ether_type), p->pkth->pktlen)
             );
 
-    next_prot_id = ntohs(p->eh->ether_type);
-    p_hdr_len = eth::hdr_len();
 
-    return true;
+    if (len > MIN_ETHERTYPE )
+    {
+        next_prot_id = ntohs(p->eh->ether_type);
+        hdr_len = eth::hdr_len();
+        return true;
+    }
+
+//   add this alert type
+//    if(len > MAX_LENGTH) {
+//        CodecEvents::decoder_event(p, DECODE_ETH_INVALID_FRAME);
+
+
+    return false;
 }
 
 

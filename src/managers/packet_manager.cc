@@ -32,13 +32,6 @@ using namespace std;
 #include "protocols/packet.h"
 #include "protocols/undefined_protocols.h"
 
-#if 0
-#include "codecs/decode.h"
-#include "codecs/essential/root_eth.h"
-#include "codecs/root/root_raw4.h"
-#include "codecs/root/root_raw6.h"
-#include "codecs/root/root_null.h"
-#endif
 
 #include "time/profiler.h"
 
@@ -50,14 +43,9 @@ using namespace std;
 THREAD_LOCAL PreprocStats decodePerfStats;
 #endif
 
-
-//namespace
-//{
-    static const uint16_t max_protocol_id = 65535;
-    static std::array<Codec*, max_protocol_id> s_protocols;
-    static list<const CodecApi*> s_codecs;
-
-//} // namespace
+static const uint16_t max_protocol_id = 65535;
+static std::array<Codec*, max_protocol_id> s_protocols;
+static list<const CodecApi*> s_codecs;
 
 //-------------------------------------------------------------------------
 // plugins
@@ -107,7 +95,7 @@ void PacketManager::decode(
 {
     PROFILE_VARS;
     int curr_prot_id, next_prot_id;
-    uint16_t len, p_hdr_len;
+    uint16_t len, lyr_len;
 
     PREPROC_PROFILE_START(decodePerfStats);
 
@@ -122,16 +110,17 @@ void PacketManager::decode(
     while(curr_prot_id  >= 0 && 
             curr_prot_id < max_protocol_id &&
             s_protocols[curr_prot_id] != 0 &&
-            s_protocols[curr_prot_id]->decode(pkt, len, p, p_hdr_len, next_prot_id))
+            s_protocols[curr_prot_id]->decode(pkt, len, p, lyr_len, next_prot_id))
     {
 
 
         // if we have succesfully decoded this layer, push the layer
-        PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, p_hdr_len);
+        PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, lyr_len);
         curr_prot_id = next_prot_id;
-        len -= p_hdr_len;
-        pkt += p_hdr_len;
-
+        next_prot_id = -1;
+        len -= lyr_len;
+        pkt += lyr_len;
+        lyr_len = 0;
     }
 
     p->dsize = len;

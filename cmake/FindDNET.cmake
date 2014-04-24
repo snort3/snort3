@@ -26,11 +26,16 @@ find_path(DNET_INCLUDE_DIR
   HINTS ENV DNETDIR
 )
 
+# Search for library twice.  The first time using the custom path, second time
+# using standard paths
 find_library(DNET_LIBRARIES
     NAMES dnet dumbnet
-    HINTS ENV DNETDIR
+    PATHS ${DNET_LIBRARIES_DIR}
+    NO_DEFAULT_PATH
 )
-
+find_library(DNET_LIBRARIES
+    NAMES dnet dumbnet
+)
 
 
 

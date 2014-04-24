@@ -26,7 +26,7 @@ void PacketClass::PushLayer(Packet *p, Codec* const cd, const uint8_t *hdr_start
 {
     if ( p->next_layer < LAYER_MAX )
     {
-        Layer& lyr = p->layers[p->next_layer];
+        Layer& lyr = p->layers[p->next_layer++];
         lyr.proto = cd->get_proto_id();
         lyr.cd = cd;
         lyr.start = (uint8_t*)hdr_start;
