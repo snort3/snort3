@@ -131,9 +131,9 @@ check_and_append_cache_entry() {
         append_cache_entry $1 $2 $3
     else 
         echo ""
-        echo "the --with-*-libraries options requires an absolute path to"
-        echo "the library.  Could not find the library:"
-        echo ""
+        echo "the $1 variable, which is specified using a --with-* options,"
+        echo "requires an absolute path to the library.  Could not stat the"
+        echo "the library:"
         echo "    $3"
         echo ""
         exit 1
@@ -344,38 +344,38 @@ while [ $# -ne 0 ]; do
             append_cache_entry PCAP_INCLUDE_DIR PATH $optarg
             ;;
         --with-pcap-libraries=*)
-            check_and_append_cache_entry PCAP_LIBRARIES FILEPATH $optarg
+            append_cache_entry PCAP_LIBRARIES_DIR PATH $optarg
             ;;
         --with-luajit-includes=*)
             append_cache_entry LUAJIT_INCLUDE_DIR PATH $optarg
             ;;
         --with-luajit-libraries=*)
-            check_and_append_cache_entry LUAJIT_LIBRARIES FILEPATH $optarg
+            append_cache_entry LUAJIT_LIBRARIES_DIR PATH $optarg
             ;;
         --with-pcre-includes=*)
             append_cache_entry PCRE_INCLUDE_DIR PATH $optarg
             ;;
         --with-pcre-libraries=*)
-            check_and_append_cache_entry PCRE_LIBRARIES FILEPATH $optarg
+            append_cache_entry PCRE_LIBRARIES_DIR PATH $optarg
             ;;
         --with-dnet-includes=*)
             append_cache_entry DNET_INCLUDE_DIR PATH $optarg
             ;;
         --with-dnet-libraries=*)
-            check_and_append_cache_entry DNET_LIBRARIES FILEPATH $optarg
+            append_cache_entry DNET_LIBRARIES_DIR PATH $optarg
             ;;
         --with-daq-includes=*)
             append_cache_entry DAQ_INCLUDE_DIR PATH $optarg
             ;;
         --with-daq-libraries=*)
-            check_and_append_cache_entry DAQ_LIBRARIES FILEPATH $optarg
+            append_cache_entry DAQ_LIBRARIES_DIR PATH $optarg
             ;;
 #  Currently unsupported
 #        --with-intel-soft-cpm-includes=*)
 #            append_cache_entry INTEL_SOFT_CPM_INCLUDE_DIR PATH $optarg
 #            ;;
 #        --with-intel-soft-cpm-libraries=*)
-#            append_cache_entry INTEL_SOFT_CPM_LIBRARIES PATH $optarg
+#            append_cache_entry INTEL_SOFT_CPM_LIBRARIES_DIR PATH $optarg
 #            ;;
         --with-flex=*)
             append_cache_entry FLEX_EXECUTABLE PATH $optarg
