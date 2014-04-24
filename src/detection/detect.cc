@@ -122,14 +122,14 @@ void Inspect(Packet* p)
     }
     else
     {
-        /* Not a completely ideal place for this since any entries added on the
-         * PacketCallback -> ProcessPacket -> Inspect trail will get
-         * obliterated - right now there isn't anything adding entries there.
-         * Really need it here for stream5 clean exit, since all of the
-         * flushed, reassembled packets are going to be injected directly into
-         * this function and there may be enough that the obfuscation entry
-         * table will overflow if we don't reset it.  Putting it here does
-         * have the advantage of fewer entries per logging cycle */
+        /* Not a completely ideal place for this since any entries added on
+         * the packet callback trail will get obliterated - right now there
+         * isn't anything adding entries there.  Really need it here for
+         * stream5 clean exit, since all of the flushed, reassembled
+         * packets are going to be injected directly into this function and
+         * there may be enough that the obfuscation entry table will
+         * overflow if we don't reset it.  Putting it here does have the
+         * advantage of fewer entries per logging cycle */
         obApi->resetObfuscationEntries();
 
         do_detect = do_detect_content = 1;

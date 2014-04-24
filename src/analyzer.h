@@ -31,7 +31,6 @@ void DetectRebuiltPacket (Packet*);
 void LogRebuiltPacket (Packet*);
 
 DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, void* ft);
-DAQ_Verdict PacketCallback(void* user, const DAQ_PktHdr_t*, const uint8_t* pkt);
 
 void set_default_policy();
 

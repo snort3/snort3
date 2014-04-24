@@ -1051,7 +1051,7 @@ class RpcDecode : public Inspector {
 public:
     RpcDecode(RpcModule*);
 
-    void configure(SnortConfig*, const char*, char*);
+    void configure(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
 
@@ -1064,7 +1064,7 @@ RpcDecode::RpcDecode(RpcModule* mod)
     mod->get_ports(config.ports);
 }
 
-void RpcDecode::configure(SnortConfig *sc, const char*, char*)
+void RpcDecode::configure(SnortConfig* sc)
 {
     _addPortsToStream5Filter(sc, &config);
     _addServicesToStream5Filter(sc);

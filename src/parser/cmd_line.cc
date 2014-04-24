@@ -59,14 +59,9 @@ using namespace std;
 #define OUTPUT_PCAP "log_tcpdump"
 
 static char* lua_conf = nullptr;
-static char* legacy_conf = nullptr;
 static char* snort_conf_dir = nullptr;
 
-void set_legacy_conf(const char* s)
-{ legacy_conf = SnortStrdup(s); }
-
 const char* get_snort_conf() { return lua_conf; }
-const char* get_legacy_conf() { return legacy_conf; }
 const char* get_snort_conf_dir() { return snort_conf_dir; }
 
 static bool s_markup = false;
@@ -1075,9 +1070,6 @@ void cmd_line_term()
 {
     if (lua_conf != NULL)
         free(lua_conf);
-
-    if (legacy_conf != NULL)
-        free(legacy_conf);
 
     if (snort_conf_dir != NULL)
         free(snort_conf_dir);

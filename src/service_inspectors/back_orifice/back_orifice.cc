@@ -456,7 +456,6 @@ class BoPH : public Inspector {
 public:
     BoPH();
 
-    void configure(SnortConfig*, const char*, char*) { };
     void show(SnortConfig*);
     void eval(Packet*);
 };

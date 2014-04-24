@@ -78,19 +78,6 @@ public:
 // inspection stuff
 //-------------------------------------------------------------------------
 
-struct PreprocConfig
-{
-    PreprocConfig* next;
-
-    char *keyword;
-    char *opts;
-    char *file_name;
-
-    int file_line;
-    int configured;
-
-};
-
 // just one instance in SnortConfig for now
 // this stuff will get replaced with InspectorManager tracking
 struct InspectionPolicy
@@ -100,7 +87,6 @@ public:
     ~InspectionPolicy();
 
 public:
-    PreprocConfig *preproc_configs;
     struct FrameworkPolicy* framework_policy;
     void* s5_config;
 

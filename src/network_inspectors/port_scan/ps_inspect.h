@@ -41,7 +41,7 @@ public:
     PortScan(class PortScanModule*);
     ~PortScan();
 
-    void configure(SnortConfig*, const char*, char *args);
+    void configure(SnortConfig*);
     void setup(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);

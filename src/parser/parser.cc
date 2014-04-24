@@ -583,14 +583,8 @@ SnortConfig * ParseSnortConf(VarNode* tmp)
 {
     SnortConfig *sc = SnortConfNew();
 
-    // FIXIT temporary support for legacy preprocessors
-    // cmd line: -c snort.lua -> get_snort_conf()
-    // lua file: legacy = 'snort.conf' -> get_legacy_conf()
-    // we start with fname = snort conf and parse new lua foo
-    // then we set fname = legacy conf and parse legacy foo
-    // snort.conf will be migrated to snort.lua
-    // eventually the legacy include will be deleted
     const char* fname = get_snort_conf();
+
     if ( !fname )
         fname = "";
 
@@ -631,9 +625,6 @@ SnortConfig * ParseSnortConf(VarNode* tmp)
 
     if ( *fname )
         Shell::configure(sc, fname);
-
-    fname = get_legacy_conf();
-    ParseConfigFile(sc, fname, false);
 
     pop_parse_location();
     return sc;

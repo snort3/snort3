@@ -214,7 +214,6 @@ public:
     PerfMonitor(PerfMonModule*);
     ~PerfMonitor();
 
-    void configure(SnortConfig*, const char*, char *args);
     void setup(SnortConfig*);
     void show(SnortConfig*);
 
@@ -243,10 +242,6 @@ PerfMonitor::~PerfMonitor ()
 
     if ( config.flowip_file )
         free(config.flowip_file);
-}
-
-void PerfMonitor::configure(SnortConfig*, const char*, char*)
-{
 }
 
 void PerfMonitor::show(SnortConfig*)

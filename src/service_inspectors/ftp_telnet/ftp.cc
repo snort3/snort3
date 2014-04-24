@@ -525,7 +525,7 @@ public:
     FtpServer(FTP_SERVER_PROTO_CONF*);
     ~FtpServer();
 
-    void configure(SnortConfig*, const char*, char *args);
+    void configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
@@ -552,8 +552,7 @@ FtpServer::~FtpServer ()
         Share::release(ftp_client);
 }
 
-void FtpServer::configure (
-    SnortConfig* sc, const char*, char*)
+void FtpServer::configure (SnortConfig* sc)
 {
     ftp_client = (ClientData*)Share::acquire(client_key);
 

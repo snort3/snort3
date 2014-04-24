@@ -872,7 +872,7 @@ PortScan::~PortScan()
         Share::release(global);
 }
 
-void PortScan::configure(SnortConfig* sc, const char*, char*)
+void PortScan::configure(SnortConfig* sc)
 {
     // FIXIT use fixed base file name
     config->logfile = SnortStrdup("portscan.log");

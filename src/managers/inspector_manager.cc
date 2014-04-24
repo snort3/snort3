@@ -66,11 +66,9 @@ struct PHGlobal {
 struct PHClass {
     const InspectApi& api;
     void* data;
-    int initialized;  // FIXIT should go away now
 
     PHClass(const InspectApi& p) : api(p)
     {
-        initialized = 0;
         // FIXIT this should be Module* and data
         data = nullptr;
     };
@@ -84,7 +82,6 @@ struct PHClass {
 struct PHInstance {
     PHClass& pp_class;
     Inspector* handler;
-    bool old; // FIXIT temporary until all inspectors are modularized
 
     PHInstance(PHClass&);
     ~PHInstance() { };
@@ -97,7 +94,6 @@ PHInstance::PHInstance(PHClass& p) : pp_class(p)
 {
     Module* mod = ModuleManager::get_module(p.api.base.name);
     handler = p.api.ctor(mod);
-    old = !mod;
 }
 
 typedef list<PHGlobal*> PHGlobalList;
@@ -146,16 +142,15 @@ struct FrameworkPolicy
         generic.alloc(ph_list.size());
 
         for ( auto* p : ph_list )
-            if ( p->handler->enabled() )
-            {
-                if ( p->pp_class.api.priority <= PRIORITY_TRANSPORT )
-                    network.add(p);
-                else if ( p->pp_class.api.priority < PRIORITY_APPLICATION )
-                    generic.add(p);
-                else
-                    service.add(p);
-            }
-    }
+        {
+            if ( p->pp_class.api.priority <= PRIORITY_TRANSPORT )
+                network.add(p);
+            else if ( p->pp_class.api.priority < PRIORITY_APPLICATION )
+                generic.add(p);
+            else
+                service.add(p);
+        }
+    };
 };
 
 //-------------------------------------------------------------------------
@@ -304,7 +299,7 @@ static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
 void InspectorManager::dump_stats (SnortConfig* sc)
 {
     for ( auto* p : sc->framework_config->ph_list )
-        if ( p->initialized && p->api.stats )
+        if ( p->api.stats )
             p->api.stats(p->data);
 }
 
@@ -314,7 +309,7 @@ void InspectorManager::accumulate (SnortConfig* sc)
     stats_mutex.lock();
 
     for ( auto* p : sc->framework_config->ph_list )
-        if ( p->initialized && p->api.sum )
+        if ( p->api.sum )
             p->api.sum(p->data);
 
     pc_sum();
@@ -324,7 +319,7 @@ void InspectorManager::accumulate (SnortConfig* sc)
 void InspectorManager::reset_stats (SnortConfig* sc)
 {
     for ( auto* p : sc->framework_config->ph_list )
-        if ( p->initialized && p->api.reset )
+        if ( p->api.reset )
             p->api.reset(p->data);
 }
 
@@ -393,7 +388,7 @@ void InspectorManager::reset (SnortConfig* sc)
 {
     for ( auto* p : sc->framework_config->ph_list )
     {
-        if ( p->initialized && p->api.purge )
+        if ( p->api.purge )
             p->api.purge(p->data);
     }
     InspectionPolicy* pi = get_inspection_policy();
@@ -413,7 +408,7 @@ void InspectorManager::shutdown (SnortConfig* sc)
 
     for ( auto* p : sc->framework_config->ph_list )
     {
-        if ( p->initialized && p->api.stop )
+        if ( p->api.stop )
             p->api.stop(p->data);
     }
 }
@@ -446,85 +441,23 @@ void InspectorManager::instantiate(
 
         if ( !ppi )
             ParseError("Can't instantiate inspector: '%s'.", keyword);
-#if 0
-        if ( ppi )
-        {
-            ppi->handler->configure(sc, keyword, nullptr);
-            ppc->initialized = 1;
-        }
-#endif
     }
 }
 
-// iterate over all policies in the snort config
-// for each, iterate over all parser-stored preproc text configs
-// for each, find the associated preproc config func and configure it
 void InspectorManager::configure(SnortConfig *sc)
 {
     Inspector::max_slots = sc->max_threads;
     s_handlers.sort(PHGlobal::comp);
 
-    // FIXIT legacy configuration - to be deleted
-    {
-        FrameworkConfig* fc = sc->framework_config;
-        FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
-        PreprocConfig* config = sc->policy_map->inspection_policy[0]->preproc_configs;
+    // FIXIT use FrameworkConfig or FrameworkPolicy ?
+    //FrameworkConfig* fc = sc->framework_config;
+    FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
 
-        for (; config != NULL; config = config->next)
-        {
-            if (config->configured)  // FIXIT should be deleted
-                continue;
+    for ( auto* p : fp->ph_list )
+        p->handler->configure(sc);
 
-            push_parse_location(config->file_name, config->file_line);
-            PHClass* ppc = GetClass(config->keyword, fc);
-
-            if ( !ppc )
-                ParseError("Unknown preprocessor: '%s'.", config->keyword);
-
-            else
-            {
-                PHInstance* ppi = GetInstance(ppc, fp, config->keyword);
-
-                if ( !ppi )
-                    ParseError("Can't instantiate inspector: '%s'.", config->keyword);
-
-                else
-                {
-                    ppi->handler->configure(sc, config->keyword, config->opts);
-                    config->configured = 1;
-                }
-            }
-            pop_parse_location();
-        }
-    }
-
-    {
-        FrameworkConfig* fc = sc->framework_config;
-        FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
-        PreprocConfig* config = sc->policy_map->inspection_policy[0]->preproc_configs;
-
-        for ( auto* p : fp->ph_list )
-        {
-            if ( !p->old )
-                p->handler->configure(sc, nullptr, nullptr);
-        }
-
-        fp->ph_list.sort(PHInstance::comp);
-        fp->Vectorize();
-
-        /* Set all configured preprocessors to intialized */
-        for (; config != NULL; config = config->next)
-        {
-            if (config->configured)
-            {
-                // FIXIT should become just iteration over pp class list
-                PHClass* ppc = GetClass(config->keyword, fc);
-
-                if ( ppc )
-                    ppc->initialized = 1;
-            }
-        }
-    }
+    fp->ph_list.sort(PHInstance::comp);
+    fp->Vectorize();
 }
 
 void InspectorManager::print_config(SnortConfig *sc)

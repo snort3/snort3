@@ -222,15 +222,6 @@ static void ParseSdrop(SnortConfig *sc, const char *args)
 void ParseInclude(SnortConfig *sc, const char *arg)
 {
     struct stat file_stat;  /* for include path testing */
-    const char* snort_conf_file = get_legacy_conf();
-
-    /* Including top level snort conf file */
-    if ( snort_conf_file && !strcmp(arg, snort_conf_file) )
-    {
-        ParseError("Cannot include \"%s\" in an include directive.",
-                   snort_conf_file);
-    }
-
     char* fname = SnortStrdup(arg);
 
     /* Stat the file.  If that fails, stat it relative to the directory
@@ -290,77 +281,6 @@ void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
                 ParseError("Failed to parse the IP address: %s.", val);
         }
     }
-}
-
-/****************************************************************************
- * Function: ParsePreprocessor()
- *
- * Saves the preprocessor configuration for loading later after dynamic
- * preprocessor keywords and configuration functions have been registered.
- * Configuration is also used later for configuration reload to check if
- * configuration has changed.
- *
- * Arguments:
- *  SnortConfig *
- *      Snort configuration to attach preprocessor configuration to.
- *  char *
- *      The preprocessor arguments.
- *
- * Returns: void function
- *
- ***************************************************************************/
-static void ParsePreprocessor(SnortConfig*, const char *args)
-{
-    char **toks;
-    int num_toks;
-    char *keyword;
-    char *opts = NULL;
-    PreprocConfig *config;
-
-    if ( !args )
-        return;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "Preprocessor\n"););
-
-    /* break out the arguments from the keywords */
-    toks = mSplit(args, ":", 2, &num_toks, '\\');
-    keyword = toks[0];
-
-    if (num_toks > 1)
-        opts = toks[1];
-
-    /* Save the configuration and load later */
-    config = (PreprocConfig *)SnortAlloc(sizeof(PreprocConfig));
-    InspectionPolicy* p = get_inspection_policy();
-
-    if (p->preproc_configs == NULL)
-    {
-        p->preproc_configs = config;
-    }
-    else
-    {
-        PreprocConfig *tmp = p->preproc_configs;
-
-        while (tmp->next != NULL)
-            tmp = tmp->next;
-
-        tmp->next = config;
-    }
-
-    const char* fname;
-    unsigned fline;
-    get_parse_location(fname, fline);
-
-    config->keyword = SnortStrdup(keyword);
-    config->file_name = SnortStrdup(fname);
-    config->file_line = fline;
-
-    if (opts != NULL)
-        config->opts = SnortStrdup(opts);
-    else
-        config->opts = NULL;
-
-    mSplitFree(&toks, num_toks);
 }
 
 // FIXIT find this a better home
@@ -480,8 +400,6 @@ static const KeywordFunc snort_conf_keywords[] =
     { SNORT_CONF_KEYWORD__CFG_SIDE_CHANNEL,  KEYWORD_TYPE__MAIN, 1, 1, ConfigSideChannel },
     { SNORT_CONF_KEYWORD__SIDE_CHANNEL,      KEYWORD_TYPE__MAIN, 1, 1, ParseSideChannelModule },
 #endif
-    // this stuff needs to be migrated to an appropriate module
-    { SNORT_CONF_KEYWORD__PREPROCESSOR,      KEYWORD_TYPE__MAIN, 1, 0, ParsePreprocessor },
 
     { NULL, KEYWORD_TYPE__ALL, 0, 0, NULL }   /* Marks end of array */
 };
