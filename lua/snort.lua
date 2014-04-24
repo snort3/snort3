@@ -512,7 +512,6 @@ stream_tcp =
     policy = 'windows',
 
     session_timeout = 180,
-    max_window = 10,
     require_3whs = 180,
     flush_factor = 0,
 
@@ -644,7 +643,7 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    include = '../active.rules',
+    --include = '../active.rules',
     --rules = default_rules,
     enable_builtin_rules = true
 }
