@@ -1,6 +1,7 @@
 *.[oac]
+*.rej
 *.swp
-*.~
+*~
 aclocal.m4
 auto.out
 autom4te.cache/
