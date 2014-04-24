@@ -124,10 +124,10 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 ntohs(p->eh->ether_type), p->pkth->pktlen)
             );
 
+    next_prot_id = ntohs(p->eh->ether_type);
 
-    if (len > MIN_ETHERTYPE )
+    if (next_prot_id > MIN_ETHERTYPE )
     {
-        next_prot_id = ntohs(p->eh->ether_type);
         hdr_len = eth::hdr_len();
         return true;
     }
