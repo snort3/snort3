@@ -1005,8 +1005,6 @@ static const CodecApi ipv4_api =
     dtor, // dtor
     NULL, 
     get_protocol_ids,
-    NULL, // sum 
-    NULL  // stats
 };
 
 

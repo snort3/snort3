@@ -29,8 +29,6 @@
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/decode.h"
-#include <cstring>
-
 
 
 
@@ -185,6 +183,10 @@ void VLAN_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 }
 #endif
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
 
 
 static void get_protocol_ids(std::vector<uint16_t>& v)
@@ -202,19 +204,6 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-    sum_stats((PegCount*)&gcounts, (PegCount*)&counts, peg_names.size());
-    memset(&counts, 0, sizeof(counts));
-}
-
-static void stats(std::vector<PegCount> g_peg_counts, std::vector<const char*> g_peg_names)
-{
-    std::memcpy(&g_peg_counts, &counts, sizeof(CdPegs));
-    g_peg_names.insert(g_peg_names.end(), peg_names.begin(), peg_names.end());
-}
-
-
 static const char* name = "vlan_codec";
 static const CodecApi vlan_api =
 {
@@ -227,8 +216,6 @@ static const CodecApi vlan_api =
     dtor, // dtor
     NULL, // get_dlt
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
 };
 
 

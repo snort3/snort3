@@ -68,7 +68,7 @@ public:
 
 static IpAddrSet *SynToMulticastDstIp = NULL;
 
-} // anonymous namespace
+} // namespace
 
 
 
@@ -1037,7 +1037,7 @@ void get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_TCP);
 }
 
-static const char* name = "tcp_decode";
+static const char* name = "tcp_codec";
 
 static const CodecApi tcp_api =
 {
@@ -1050,8 +1050,6 @@ static const CodecApi tcp_api =
     dtor, // dtor
     NULL, 
     get_protocol_ids,
-    NULL,
-    NULL
 };
 
 const BaseApi* cd_tcp = &tcp_api.base;

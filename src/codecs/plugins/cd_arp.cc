@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_vlan.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cd_arp.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -130,7 +130,6 @@ static void stats()
 
 
 static const char* name = "arp_codec";
-
 static const CodecApi arp_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -142,8 +141,6 @@ static const CodecApi arp_api =
     dtor, // dtor
     NULL, // get_dlt
     get_protocol_ids,
-    NULL, // sum
-    NULL  // stats
 };
 
 #ifdef BUILDING_SO

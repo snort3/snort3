@@ -25,22 +25,11 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if 0
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-#endif
-
-#include "generators.h"
 #include "detection/fpdetect.h"
 
 #include "protocols/ipv6.h"
 #include "codecs/codec_events.h"
-
-// TODO --> remove if possible
 #include "snort.h"
 #include "codecs/decode_module.h"
 
@@ -63,7 +52,7 @@ public:
 };
 
 
-} // anonymous namespace
+} // namespace
 
 static inline void CheckIPv6ExtensionOrder(Packet *p);
 static void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, Packet *p);
@@ -1010,8 +999,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ipv6_decode";
-
+static const char* name = "ipv6_codec";
 static const CodecApi ipv6_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
@@ -1023,8 +1011,6 @@ static const CodecApi ipv6_api =
     dtor, // dtor
     NULL,
     get_protocol_ids,
-    NULL,
-    NULL
 };
 
 

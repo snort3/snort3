@@ -28,8 +28,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-#include "protocols/ipv4.h"
-#include <cstring>
 
 namespace
 {
@@ -54,22 +52,7 @@ public:
 static const uint16_t AH_PROT_ID = 51; // RFC 4302
 
 
-struct CdPegs{
-    PegCount processed = 0;
-    PegCount discards = 0;
-};
-
-std::vector<const char*> peg_names =
-{
-    "NameCodec_processed",
-    "NameCodec_discards",
-};
-
-
 } // anonymous namespace
-
-static THREAD_LOCAL CdPegs counts;
-static CdPegs gcounts;
 
 
 bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -90,6 +73,9 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 static void get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -106,18 +92,6 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-    sum_stats((PegCount*)&gcounts, (PegCount*)&counts, peg_names.size());
-    memset(&counts, 0, sizeof(counts));
-}
-
-static void stats(std::vector<PegCount> g_peg_counts, std::vector<const char*> g_peg_names)
-{
-    std::memcpy(&g_peg_counts, &counts, sizeof(CdPegs));
-    g_peg_names.insert(g_peg_names.end(), peg_names.begin(), peg_names.end());
-}
-
 static const char* name = "ah_codec";
 static const CodecApi ah_api =
 {
@@ -130,8 +104,6 @@ static const CodecApi ah_api =
     dtor, // dtor
     nullptr, 
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
 };
 
 

@@ -92,8 +92,10 @@ void PacketManager::release_plugins()
 {
     for ( auto* p : s_codecs )
     {
-        p->gterm();
-        p->tterm();
+        if(p->gterm)
+            p->gterm();
+        if(p->tterm)
+            p->tterm();
 //        p->dtor();
     }
     s_codecs.clear();
@@ -180,7 +182,8 @@ void PacketManager::set_grinder(void)
 
 
         proto.clear();
-        p->proto_id(proto);
+        if(p->proto_id)
+            p->proto_id(proto);
         for (auto proto_id : proto)
         {
             if(s_protocols[proto_id] != NULL)
@@ -195,7 +198,8 @@ void PacketManager::set_grinder(void)
 
 
         dlt.clear();
-        p->dlt(dlt);
+        if(p->dlt)
+            p->dlt(dlt);
         // set the grinder if the data link types match
         for (auto curr_dlt : dlt )
         {
@@ -219,50 +223,8 @@ void PacketManager::set_grinder(void)
 
 void PacketManager::dump_stats()
 {
-    sum_stats((PegCount*)&gpkt_cnt, (PegCount*)&pkt_cnt, array_size(CdGenPegNames));
-
-    for ( auto* cd : s_codecs )
-        if (cd->sum != nullptr)
-            cd->sum();
-
-    std::vector<const char*> pegNames(CdGenPegNames);
-    std::vector<PegCount> pegs;
-
-    std::memcpy(&pegs[0], &gpkt_cnt, sizeof(gpkt_cnt));
-
-//    pegs.push_back(gpkt_cnt.total_processed);
-//    pegs.push_back(gpkt_cnt.other_codecs);
-//    pegs.push_back(gpkt_cnt.discards);
-
-    // using two temporary vectors to ensure codecs cannot
-    // see any other codecs statistics
-    std::vector<const char*> tmpNames;
-    std::vector<PegCount> tmpPegs;
-
-    for ( auto* cd : s_codecs )
-    {
-        if (cd->stats != nullptr)
-        {
-            tmpPegs.clear();
-            tmpNames.clear();
-            if(cd->stats)
-                cd->stats(tmpPegs, tmpNames);
-            if (tmpNames.size() == tmpPegs.size())
-            {
-                pegs.insert(pegs.end(), tmpPegs.begin(), tmpPegs.end());
-                pegNames.insert(pegNames.end(), tmpNames.begin(), tmpNames.end());
-            } 
-            else
-            {
-                WarningMessage("The %s Codecs stats function returned a "
-                    "different %d PegCounts and %d PegNames.  the two "
-                    "values must be equal\n",
-                    cd->base.name, pegs.size(), pegNames.size());
-            }
-        }
-    }
-    show_percent_stats(&pegs[0], &pegNames[0], pegNames.size(),
-        "codecs");
+//    show_percent_stats(&pegs[0], &pegNames[0], pegNames.size(),
+//        "codecs");
 }
 
 bool PacketManager::has_codec(uint16_t cd_id)

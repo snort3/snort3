@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_icmp4.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -24,7 +25,6 @@
 #include "config.h"
 #endif
 
-#include <string.h>
 #ifdef HAVE_DUMBNET_H
 #include <dumbnet.h>
 #else
@@ -33,17 +33,8 @@
 
 #include "snort.h"
 #include "codecs/decode_module.h"
-
 #include "codecs/codec_events.h"
-#include "utils/stats.h"
-
-
-//#include "prot_icmp4.h"
-//#include "codecs/encode.h"
-#include "protocols/ipv4.h"
 #include "protocols/icmp4.h"
-#include "protocols/ipv6.h"
-#include "protocols/udp.h"
 
 
 namespace{
@@ -67,9 +58,6 @@ public:
     virtual inline PROTO_ID get_proto_id() { return PROTO_ICMP4; };
 
 private:
-    PegCount packets;
-    PegCount discards;
-
 
     void DecodeICMPEmbeddedIP(const uint8_t *pkt, const uint32_t len, Packet *p);
     void ICMP4AddrTests (Packet* );
@@ -583,7 +571,7 @@ static const CodecApi icmp4_api =
     ctor, // ctor
     dtor, // dtor
     NULL,
-    NULL
+    get_protocol_ids,
 };
 
 

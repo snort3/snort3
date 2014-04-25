@@ -82,7 +82,6 @@ typedef bool (*decode_f)(const uint8_t *, const uint32_t, Packet *, uint16_t &, 
 typedef void (*cd_dlt_f)(std::vector<int>&v);
 typedef void (*cd_prot_id_f)(std::vector<uint16_t>&);
 
-typedef void (*cd_stat_f)(std::vector<PegCount>, std::vector<const char*>);
     // add every protocol id, included IP protocols and 
     // ethertypes, to the passed in vector
 //    cd_get_protos get_protos; 
@@ -107,9 +106,6 @@ struct CodecApi
 
     cd_dlt_f dlt;   // get the data link type
     cd_prot_id_f proto_id;  // get the protocol ids
-
-    cd_aux_f sum;
-    cd_stat_f stats;
 };
 
 #endif

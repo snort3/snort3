@@ -300,22 +300,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
-
-static const char* name = "pppoe_codec";
-
+static const char* name = "pppoepkt_codec";
 static const CodecApi pppoe_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -327,8 +312,6 @@ static const CodecApi pppoe_api =
     dtor, // dtor
     nullptr,
     get_protocol_ids,
-    NULL, // sum
-    NULL  // stats
 };
 
 

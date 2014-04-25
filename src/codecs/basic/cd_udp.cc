@@ -32,11 +32,8 @@
 #endif
 
 #include "codecs/decode_module.h"
-
-#include "protocols/ipv6.h"
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
-#include "protocols/gtp.h"
 #include "protocols/undefined_protocols.h"
 
 #include "framework/codec.h"
@@ -619,7 +616,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "udp_decode";
+static const char* name = "udp_codec";
 
 static const CodecApi udp_api =
 {
@@ -632,8 +629,6 @@ static const CodecApi udp_api =
     dtor, // dtor
     NULL,
     get_protocol_ids,
-    NULL,
-    NULL
 };
 
 

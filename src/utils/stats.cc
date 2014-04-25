@@ -33,6 +33,7 @@
 #include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
 #include "managers/inspector_manager.h"
+#include "managers/packet_manager.h"
 
 #ifdef SIDE_CHANNEL
 #include "side_channel/sidechannel.h"
@@ -301,7 +302,7 @@ void DropStats()
         show_stats((PegCount*)&daq_verdicts, verdict_names, array_size(verdict_names));
     }
 
-    decoder_stats();
+    PacketManager::dump_stats();
     //mpse_print_qinfo();
 
     InspectorManager::dump_stats(snort_conf);
