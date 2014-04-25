@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_vlan.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 #include "framework/codec.h"
@@ -34,7 +35,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     
 };
@@ -45,7 +46,7 @@ const uint16_t ETHERNET_TYPE_LOOP = 0x9000;
 } // anonymous namespace
 
 bool EthLoopbackCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "EthLoopback is not supported.\n"););
@@ -107,8 +108,8 @@ static const CodecApi ethloopback_api =
     dtor, // dtor
     nullptr, // get_dlt
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 

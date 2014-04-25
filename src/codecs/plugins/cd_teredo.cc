@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,6 +17,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_teredo.cc author Josh Rosenbaum <jorosenba@cisco.com>
+
 
 
 
@@ -52,7 +52,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     
@@ -61,7 +61,7 @@ public:
 } // anonymous namespace
 
 bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 
 
@@ -82,7 +82,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if (len < (uint32_t)(teredo::min_indicator_auth_len() + client_id_length + auth_data_length))
             return false;
 
-        p_hdr_len = (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
+        lyr_len = (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
     }
 
     if (ntohs(*(uint16_t *)raw_pkt) == teredo::indicator_origin())
@@ -90,7 +90,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if (len < teredo::indicator_origin_len())
             return false;
 
-        p_hdr_len += teredo::indicator_origin_len();
+        lyr_len += teredo::indicator_origin_len();
     }
 
     /* If this is an IPv6 datagram, the first 4 bits will be the number 6. */

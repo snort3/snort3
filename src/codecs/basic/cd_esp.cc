@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_esp.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -29,6 +30,7 @@
 #include "snort.h"
 #include "codecs/decode_module.h"
 #include "managers/packet_manager.h"
+#include <cstring>
 
 
 namespace
@@ -42,7 +44,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
 };
 
@@ -53,11 +55,22 @@ const uint32_t ESP_HEADER_LEN = 8;
 const uint32_t ESP_AUTH_DATA_LEN = 12;
 const uint32_t ESP_TRAILER_LEN = 2;
 
+struct CdPegs{
+    PegCount processed = 0;
+    PegCount discards = 0;
+};
+
+std::vector<const char*> peg_names =
+{
+    "NameCodec_processed",
+    "NameCodec_discards",
+};
+
+
 } // anonymous namespace
 
-
-
-
+static THREAD_LOCAL CdPegs counts;
+static CdPegs gcounts;
 
 
 
@@ -77,7 +90,7 @@ const uint32_t ESP_TRAILER_LEN = 2;
  * Returns: void function
  */
 bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     const uint8_t *esp_payload;
     uint8_t pad_length;
@@ -91,7 +104,7 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if (len < (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN))
     {
         /* Truncated ESP traffic. Bail out here and inspect the rest as payload. */
-        DecoderEvent(p, DECODE_ESP_HEADER_TRUNC);
+        codec_events::decoder_event(p, DECODE_ESP_HEADER_TRUNC);
         p->data = raw_pkt;
         p->dsize = (uint16_t) len;
         return false;
@@ -104,22 +117,22 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
        The mandatory algorithms for Authentication are HMAC-MD5-96 and
        HMAC-SHA-1-96, so we assume a 12-byte authentication data at the end. */
-    p_hdr_len = (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
+    lyr_len = (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
-    pad_length = *(esp_payload + len - p_hdr_len);
-    next_prot_id = *(esp_payload + len + 1 - p_hdr_len);
+    pad_length = *(esp_payload + len - lyr_len);
+    next_prot_id = *(esp_payload + len + 1 - lyr_len);
 
     /* Adjust the packet length to account for the padding.
        If the padding length is too big, this is probably encrypted traffic. */
     if (pad_length < len)
     {
-        p_hdr_len += (pad_length);
+        lyr_len += (pad_length);
     }
     else
     {
         p->packet_flags |= PKT_TRUST;
         p->data = esp_payload;
-        p->dsize = (u_short) len - p_hdr_len;
+        p->dsize = (u_short) len - lyr_len;
         next_prot_id = -1;
         return true;
     }
@@ -136,7 +149,7 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         p->packet_flags |= PKT_TRUST;
         p->data = esp_payload;
-        p->dsize = (u_short) len - p_hdr_len;
+        p->dsize = (u_short) len - lyr_len;
     }
 
     return true;
@@ -159,14 +172,14 @@ static void dtor(Codec *cd)
 
 static void sum()
 {
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
+    sum_stats((PegCount*)&gcounts, (PegCount*)&counts, peg_names.size());
+    memset(&counts, 0, sizeof(counts));
 }
 
-static void stats()
+static void stats(std::vector<PegCount> g_peg_counts, std::vector<const char*> g_peg_names)
 {
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
+    std::memcpy(&g_peg_counts, &counts, sizeof(CdPegs));
+    g_peg_names.insert(g_peg_names.end(), peg_names.begin(), peg_names.end());
 }
 
 

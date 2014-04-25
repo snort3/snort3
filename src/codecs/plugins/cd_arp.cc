@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_vlan.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -41,7 +40,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
 
     // DELETE from here and below
@@ -73,7 +72,7 @@ static const uint16_t ETHERNET_TYPE_ARP = 0x0806;
  * Returns: void function
  */
 bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 //    dc.arp++;
 
@@ -84,14 +83,14 @@ bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     if(len < sizeof(EtherARP))
     {
-        DecoderEvent(p, DECODE_ARP_TRUNCATED);
+        codec_events::decoder_event(p, DECODE_ARP_TRUNCATED);
 
 //        dc.discards++;
         return false;
     }
 
     p->proto_bits |= PROTO_BIT__ARP;
-    p_hdr_len = sizeof(*p->ah);
+    lyr_len = sizeof(*p->ah);
     next_prot_id = -1;
 
     return true;
@@ -141,10 +140,10 @@ static const CodecApi arp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr, // get_dlt
+    NULL, // get_dlt
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 #ifdef BUILDING_SO

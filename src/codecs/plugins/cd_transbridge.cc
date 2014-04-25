@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_transbridge.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -43,7 +44,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
 };
 
@@ -69,13 +70,13 @@ public:
  * wasn't needed since we are already deep into the packet
  */
 bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 //    dc.gre_eth++;
 
     if(len < eth::hdr_len())
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
+        codec_events::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
                         raw_pkt, len);
         return false;
     }
@@ -85,7 +86,7 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
      */
     p->eh = (eth::EtherHdr *)raw_pkt;
 
-    p_hdr_len = eth::hdr_len();
+    lyr_len = eth::hdr_len();
     next_prot_id = ntohs(p->eh->ether_type);
 
     return true;
@@ -135,8 +136,8 @@ static const CodecApi transbridge_api =
     dtor, // dtor
     nullptr,
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 

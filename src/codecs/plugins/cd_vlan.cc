@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_vlan.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -28,14 +29,9 @@
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/decode.h"
+#include <cstring>
 
 
-
-
-#define LEN_VLAN_LLC_OTHER (sizeof(VlanTagHdr) + sizeof(EthLlc) + sizeof(EthLlcOther))
-
-
-const uint16_t ETHERNET_TYPE_8021Q = 0x8100;
 
 
 
@@ -50,7 +46,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     
     // DELETE from here and below
@@ -58,12 +54,32 @@ public:
     virtual inline PROTO_ID get_proto_id() { return PROTO_VLAN; };
 };
 
+struct CdPegs{
+    PegCount processed = 0;
+    PegCount discards = 0;
+};
+
+std::vector<const char*> peg_names =
+{
+    "NameCodec_processed",
+    "NameCodec_discards",
+};
+
+
 } // anonymous namespace
 
+static THREAD_LOCAL CdPegs counts;
+static CdPegs gcounts;
+static const uint16_t ETHERNET_TYPE_8021Q = 0x8100;
+
+static inline uint32_t len_vlan_llc_other()
+{
+    return (sizeof(VlanTagHdr) + sizeof(EthLlc) + sizeof(EthLlcOther));
+}
 
 
 bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 //    dc.vlan++;
 
@@ -72,7 +88,7 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     if(len < sizeof(VlanTagHdr))
     {
-        DecoderEvent(p, DECODE_BAD_VLAN);
+        codec_events::decoder_event(p, DECODE_BAD_VLAN);
 
         // TBD add decoder drop event for VLAN hdr len issue
 //        dc.discards++;
@@ -100,7 +116,7 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         if(len < sizeof(VlanTagHdr) + sizeof(EthLlc))
         {
-            DecoderEvent(p, DECODE_BAD_VLAN_ETHLLC);
+            codec_events::decoder_event(p, DECODE_BAD_VLAN_ETHLLC);
 
 //            dc.discards++;
             p->iph = NULL;
@@ -118,9 +134,9 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         if(p->ehllc->dsap == ETH_DSAP_IP && p->ehllc->ssap == ETH_SSAP_IP)
         {
-            if ( len < LEN_VLAN_LLC_OTHER )
+            if ( len < len_vlan_llc_other() )
             {
-                DecoderEvent(p, DECODE_BAD_VLAN_OTHER);
+                codec_events::decoder_event(p, DECODE_BAD_VLAN_OTHER);
 
 //                dc.discards++;
                 p->iph = NULL;
@@ -144,13 +160,13 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 //            PushLayer(PROTO_VLAN, p, pkt, sizeof(*p->vh));
 
-            p_hdr_len = LEN_VLAN_LLC_OTHER;
+            lyr_len = len_vlan_llc_other();
             next_prot_id = ntohs(p->ehllcother->proto_id);
         }
     }
     else
     {
-        p_hdr_len = sizeof(VlanTagHdr);
+        lyr_len = sizeof(VlanTagHdr);
         next_prot_id = ntohs(p->vh->vth_proto);
 
     }
@@ -188,20 +204,18 @@ static void dtor(Codec *cd)
 
 static void sum()
 {
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
+    sum_stats((PegCount*)&gcounts, (PegCount*)&counts, peg_names.size());
+    memset(&counts, 0, sizeof(counts));
 }
 
-static void stats()
+static void stats(std::vector<PegCount> g_peg_counts, std::vector<const char*> g_peg_names)
 {
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
+    std::memcpy(&g_peg_counts, &counts, sizeof(CdPegs));
+    g_peg_names.insert(g_peg_names.end(), peg_names.begin(), peg_names.end());
 }
 
 
-
-static const char* name = "vlan";
-
+static const char* name = "vlan_codec";
 static const CodecApi vlan_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },

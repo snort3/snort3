@@ -50,7 +50,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 
 
@@ -71,7 +71,7 @@ public:
  */
 
 bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     uint32_t header_len;
     uint8_t  next_hdr_type;
@@ -85,7 +85,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     if (p->GTPencapsulated)
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_GTP_MULTIPLE_ENCAPSULATION,
+        codec_events::decoder_alert_encapsulated(p, DECODE_GTP_MULTIPLE_ENCAPSULATION,
                 raw_pkt, len);
         return false;
     }
@@ -110,22 +110,22 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     case 0: /*GTP v0*/
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "GTP v0 packets.\n"););
 
-        p_hdr_len = gtp::v0_hdr_len();
+        lyr_len = gtp::v0_hdr_len();
         /*Check header fields*/
-        if (len < p_hdr_len)
+        if (len < lyr_len)
         {
-            DecoderEvent(p, DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
             return false;
         }
 
         p->proto_bits |= PROTO_BIT__GTP;
 
         /*Check the length field. */
-        if (len != ((unsigned int)ntohs(hdr->length) + p_hdr_len))
+        if (len != ((unsigned int)ntohs(hdr->length) + lyr_len))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
-                    len - p_hdr_len, ntohs(hdr->length)););
-            DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                    len - lyr_len, ntohs(hdr->length)););
+            codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -137,48 +137,48 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if (hdr->flag & 0x07)
         {
 
-            p_hdr_len =  gtp::v1_hdr_len();
+            lyr_len =  gtp::v1_hdr_len();
 
             /*Check optional fields*/
-            if (len < p_hdr_len)
+            if (len < lyr_len)
             {
-                DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                 return false;
             }
-            next_hdr_type = *(raw_pkt + p_hdr_len - 1);
+            next_hdr_type = *(raw_pkt + lyr_len - 1);
 
             /*Check extension headers*/
             while (next_hdr_type)
             {
                 uint16_t ext_hdr_len;
                 /*check length before reading data*/
-                if (len < p_hdr_len + 4)
+                if (len < lyr_len + 4)
                 {
-                    DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                     return false;
                 }
 
-                ext_hdr_len = *(raw_pkt + p_hdr_len);
+                ext_hdr_len = *(raw_pkt + lyr_len);
 
                 if (!ext_hdr_len)
                 {
-                    DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                     return false;
                 }
                 /*Extension header length is a unit of 4 octets*/
-                p_hdr_len += ext_hdr_len * 4;
+                lyr_len += ext_hdr_len * 4;
 
                 /*check length before reading data*/
-                if (len < p_hdr_len)
+                if (len < lyr_len)
                 {
-                    DecoderEvent(p, DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                     return false;
                 }
-                next_hdr_type = *(raw_pkt + p_hdr_len - 1);
+                next_hdr_type = *(raw_pkt + lyr_len - 1);
             }
         }
         else
-            p_hdr_len = gtp::min_hdr_len();
+            lyr_len = gtp::min_hdr_len();
 
         p->proto_bits |= PROTO_BIT__GTP;
 
@@ -187,7 +187,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
                     len - gtp::min_hdr_len(), ntohs(hdr->length)););
-            DecoderEvent(p, DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
             return false;
         }
 

@@ -34,124 +34,28 @@
 #include "utils/stats.h"
 #include "codecs/decode_module.h"
 
-#if 0
-    // the empty bracket initializes the array to false
-//static std::array<bool, DECODE_INDEX_MAX> CodecEvents::decodeRuleEnabled() = {};
-static const uint16_t DECODE_INDEX_MAX = 0xFFFF; // == 2^16 - 1
 
-THREAD_LOCAL tSfActionQueue* decoderActionQ;
-THREAD_LOCAL MemPool decoderAlertMemPool;
-
-static THREAD_LOCAL PegCount bad_ttl = 0;
-
-
-
-void CodecEvents::queueDecoderEvent(
-    unsigned int gid,
-    unsigned int sid,
-    unsigned int rev,
-    unsigned int classification,
-    unsigned int pri,
-    const char *msg,
-    void *rule_info)
+void codec_events::exec_udp_chksm_drop (Packet *)
 {
-    MemBucket *alertBucket;
-    EventNode *en;
-    int ret;
-
-    alertBucket = (MemBucket *)mempool_alloc(&decoderAlertMemPool);
-    if(!alertBucket)
-        return;
-
-    en = (EventNode *)alertBucket->data;
-    en->gid = gid;
-    en->sid = sid;
-    en->rev = rev;
-    en->classification = classification;
-    en->priority = pri;
-    en->msg = msg;
-    en->rule_info = rule_info;
-
-    ret = sfActionQueueAdd( decoderActionQ, execDecoderEvent, alertBucket);
-    if (ret == -1)
+    if( ScInlineMode() && ScUdpChecksumDrops() )
     {
-        ErrorMessage("Could not add event to decoderActionQ\n");
-        mempool_free(&decoderAlertMemPool, alertBucket);
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+            "Dropping bad packet (UDP checksum)\n"););
+        Active_DropPacket();
     }
 }
 
-
-void CodecEvents::execDecoderEvent(void *data)
+void codec_events::exec_tcp_chksm_drop (Packet*)
 {
-    MemBucket *alertBucket = (MemBucket *)data;
-    EventNode *en = (EventNode *)alertBucket->data;
-
-    if ( ScDecoderAlerts() )
+    if( ScInlineMode() && ScTcpChecksumDrops() )
     {
-        SnortEventqAdd(en->gid, en->sid, en->rev, en->classification,
-            en->priority, en->msg, en->rule_info);
-    }
-    mempool_free(&decoderAlertMemPool, alertBucket);
-}
-
-
-
-
-void CodecEvents::DecoderOptEvent (
-    Packet *p, int sid, const char *str, void_callback_f callback )
-{
-    if ( p->packet_flags & PKT_REBUILT_STREAM )
-        return;
-
-    if ( ScLogVerbose() )
-        ErrorMessage("%s\n", str);
-
-    queueDecoderEvent(GENERATOR_SNORT_DECODE, sid, 1,
-        DECODE_CLASS, 3, str, 0);
-
-    queue_exec_drop(callback, p);
-}
-
-
-
-
-void CodecEvents::decoder_init(unsigned max)
-{
-    decoderActionQ = sfActionQueueInit(max);
-
-    if (mempool_init(&decoderAlertMemPool, max, sizeof(EventNode)) != 0)
-    {
-        FatalError("Could not initialize decoder action queue memory pool.\n");
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+            "Dropping bad packet (TCP checksum)\n"););
+        Active_DropPacket();
     }
 }
 
-void CodecEvents::decoder_term()
-{
-    if (decoderActionQ != NULL)
-    {
-        sfActionQueueDestroy (decoderActionQ);
-        mempool_destroy (&decoderAlertMemPool);
-        decoderActionQ = NULL;
-        memset(&decoderAlertMemPool, 0, sizeof(decoderAlertMemPool));
-    }
-}
-
-void CodecEvents::decoder_exec()
-{
-    sfActionQueueExecAll(decoderActionQ);
-}
-
-#endif
-
-
-
-
-//****************************************************************************************************88
-
-
-
-
-void CodecEvents::decoder_event (Packet *p, int sid)
+void codec_events::decoder_event(Packet *p, int sid)
 {
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
@@ -162,28 +66,7 @@ void CodecEvents::decoder_event (Packet *p, int sid)
     SnortEventqAdd(GID_DECODE, sid);
 }
 
-void CodecEvents::exec_tcp_chksm_drop (Packet*)
-{
-    if( ScInlineMode() && ScTcpChecksumDrops() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Dropping bad packet (TCP checksum)\n"););
-        Active_DropPacket();
-    }
-}
-
-void CodecEvents::exec_udp_chksm_drop (Packet *)
-{
-    if( ScInlineMode() && ScUdpChecksumDrops() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Dropping bad packet (UDP checksum)\n"););
-        Active_DropPacket();
-    }
-}
-
-
-void CodecEvents::exec_ip_chksm_drop (Packet*)
+void codec_events::exec_ip_chksm_drop (Packet*)
 {
     // TBD only set policy csum drop if policy inline
     // and delete this inline mode check
@@ -195,7 +78,7 @@ void CodecEvents::exec_ip_chksm_drop (Packet*)
     }
 }
 
-void CodecEvents::exec_hop_drop (Packet* p, int sid)
+void codec_events::exec_hop_drop (Packet* p, int sid)
 {
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
@@ -215,9 +98,7 @@ void CodecEvents::exec_hop_drop (Packet* p, int sid)
     }
 }
 
-
-
-void CodecEvents::exec_ttl_drop (Packet *p, int sid)
+void codec_events::exec_ttl_drop (Packet *p, int sid)
 {
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
@@ -237,8 +118,7 @@ void CodecEvents::exec_ttl_drop (Packet *p, int sid)
     }
 }
 
-
-void CodecEvents::exec_icmp_chksm_drop (Packet*)
+void codec_events::exec_icmp_chksm_drop (Packet*)
 {
     if( ScInlineMode() && ScIcmpChecksumDrops() )
     {
@@ -248,10 +128,10 @@ void CodecEvents::exec_icmp_chksm_drop (Packet*)
     }
 }
 
-void CodecEvents::decoder_alert_encapsulated(
+void codec_events::decoder_alert_encapsulated(
     Packet *p, int sid, const uint8_t *pkt, uint32_t len)
 {
-    DecoderEvent(p, sid);
+    decoder_event(p, sid);
 
     p->data = pkt;
     p->dsize = (uint16_t)len;
@@ -259,10 +139,7 @@ void CodecEvents::decoder_alert_encapsulated(
     p->greh = NULL;
 }
 
-
-//-----------------
-
-int CodecEvents::ScNormalDrop (NormFlags nf)
+int codec_events::ScNormalDrop (NormFlags nf)
 {
     return !Normalize_IsEnabled(snort_conf, nf);
 }

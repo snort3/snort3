@@ -71,7 +71,7 @@ void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             "Captured data length < Token Ring header length! "
             "(%d < %d bytes)\n", cap_len, TR_HLEN););
 
-        DecoderEvent(p, DECODE_BAD_TRH, DECODE_BAD_TRH_STR);
+        codec_events::decoder_event(p, DECODE_BAD_TRH, DECODE_BAD_TRH_STR);
 
         PREPROC_PROFILE_END(decodePerfStats);
         return;
@@ -104,7 +104,7 @@ void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             "(%d < %d bytes)\n", cap_len,
             (sizeof(Trh_hdr) + sizeof(Trh_llc))););
 
-        DecoderEvent(p, DECODE_BAD_TR_ETHLLC, DECODE_BAD_TR_ETHLLC_STR);
+        codec_events::decoder_event(p, DECODE_BAD_TR_ETHLLC, DECODE_BAD_TR_ETHLLC_STR);
 
         PREPROC_PROFILE_END(decodePerfStats);
         return;
@@ -128,7 +128,7 @@ void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
                 "(%d < %d bytes)\n", cap_len,
                 (sizeof(Trh_hdr) + sizeof(Trh_llc) + sizeof(Trh_mr))););
 
-            DecoderEvent(p, DECODE_BAD_TRHMR, DECODE_BAD_TRHMR_STR);
+            codec_events::decoder_event(p, DECODE_BAD_TRHMR, DECODE_BAD_TRHMR_STR);
 
             PREPROC_PROFILE_END(decodePerfStats);
             return;
@@ -145,7 +145,7 @@ void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
                 "(%d < %d bytes)\n", cap_len,
                 (sizeof(Trh_hdr) + sizeof(Trh_llc) + sizeof(Trh_mr))););
 
-            DecoderEvent(p, DECODE_BAD_TR_MR_LEN, DECODE_BAD_TR_MR_LEN_STR);
+            codec_events::decoder_event(p, DECODE_BAD_TR_MR_LEN, DECODE_BAD_TR_MR_LEN_STR);
 
             PREPROC_PROFILE_END(decodePerfStats);
             return;

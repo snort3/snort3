@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_esp.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 #include "framework/codec.h"
@@ -37,7 +36,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -72,15 +71,15 @@ const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
  *
  */
 bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
-    p_hdr_len = sizeof(ERSpanType2Hdr);
+    lyr_len = sizeof(ERSpanType2Hdr);
     uint32_t payload_len;
     ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType2Hdr))
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR, raw_pkt, len);
+        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR, raw_pkt, len);
         return false;
     }
 
@@ -88,7 +87,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
+        codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                         raw_pkt, len);
         return false;
     }
@@ -97,7 +96,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
      */
     if (ERSPAN_VERSION(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
+        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
                         raw_pkt, len);
         return false;
     }
@@ -151,8 +150,8 @@ static const CodecApi erspan2_api =
     dtor, // dtor
     nullptr,
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 #ifdef BUILDING_SO

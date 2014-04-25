@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_pppencap.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +43,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -74,7 +75,7 @@ const static uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
  * Returns: void function
  */
 bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;
@@ -115,13 +116,13 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
         /* Check for protocol compression rfc1661 section 5
          *
          */
-        p_hdr_len = 1;
+        lyr_len = 1;
         protocol = raw_pkt[0];
     }
     else
     {
         protocol = ntohs(*((uint16_t *)raw_pkt));
-        p_hdr_len = 2;
+        lyr_len = 2;
     }
 
     /*
@@ -139,7 +140,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
         case PPP_VJ_UCOMP:
             /* VJ compression modifies the protocol field. It must be set
              * to tcp (only TCP packets can be VJ compressed) */
-            if(len < (p_hdr_len + ipv4::hdr_len()))
+            if(len < (lyr_len + ipv4::hdr_len()))
             {
                 if (ScLogVerbose())
                     ErrorMessage("PPP VJ min packet length > captured len! "
@@ -147,7 +148,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
                 return false;
             }
 
-            ((IPHdr *)(raw_pkt + p_hdr_len))->ip_proto = IPPROTO_TCP;
+            ((IPHdr *)(raw_pkt + lyr_len))->ip_proto = IPPROTO_TCP;
             /* fall through */
 
         case PPP_IP:
@@ -211,8 +212,8 @@ static const CodecApi pppencap_api =
     dtor, // dtor
     nullptr, // get_dlt
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 

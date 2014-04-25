@@ -24,7 +24,7 @@
 
 #include "snort_types.h"
 #include "framework/base_api.h"
-
+#include "utils/stats.h"
 
 // REMOVE WHEN POSSIBLE!!!
 #include "codecs/sf_protocols.h"
@@ -51,7 +51,7 @@ public:
     virtual ~Codec() { };
 
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id) = 0;
+        Packet *p, uint16_t &lyr_len, int &next_prot_id) = 0;
 
     // do nothing unless methods overridden.
     // ONE OF THESE METHODS MUST BE IMPLEMENTED!!
@@ -82,6 +82,7 @@ typedef bool (*decode_f)(const uint8_t *, const uint32_t, Packet *, uint16_t &, 
 typedef void (*cd_dlt_f)(std::vector<int>&v);
 typedef void (*cd_prot_id_f)(std::vector<uint16_t>&);
 
+typedef void (*cd_stat_f)(std::vector<PegCount>, std::vector<const char*>);
     // add every protocol id, included IP protocols and 
     // ethertypes, to the passed in vector
 //    cd_get_protos get_protos; 
@@ -108,7 +109,7 @@ struct CodecApi
     cd_prot_id_f proto_id;  // get the protocol ids
 
     cd_aux_f sum;
-    cd_aux_f stats;
+    cd_stat_f stats;
 };
 
 #endif

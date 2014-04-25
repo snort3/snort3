@@ -17,6 +17,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_mpls.cc author Josh Rosenbaum <jorosenba@cisco.com>
+
 
 
 #include "framework/codec.h"
@@ -43,7 +45,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);    
+        Packet *, uint16_t &lyr_len, int &next_prot_id);    
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -66,12 +68,12 @@ static int checkMplsHdr(uint32_t, uint8_t, uint8_t, uint8_t, Packet *);
 
 
 bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     uint32_t* tmpMplsHdr;
     uint32_t mpls_h;
     uint32_t label;
-    p_hdr_len= 0;
+    lyr_len= 0;
 
     uint8_t exp;
     uint8_t bos = 0;
@@ -90,7 +92,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         if(stack_len < MPLS_HEADER_LEN)
         {
-            DecoderEvent(p, DECODE_BAD_MPLS);
+            codec_events::decoder_event(p, DECODE_BAD_MPLS);
 
 //            dc.discards++;
             p->iph = NULL;
@@ -128,7 +130,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         if ((ScMplsStackDepth() != -1) && (chainLen++ >= ScMplsStackDepth()))
         {
-            DecoderEvent(p, DECODE_MPLS_LABEL_STACK);
+            codec_events::decoder_event(p, DECODE_MPLS_LABEL_STACK);
 
 //            dc.discards++;
             p->iph = NULL;
@@ -137,7 +139,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         }
     }   /* while bos not 1, peel off more labels */
 
-    p_hdr_len = (uint8_t*)tmpMplsHdr - raw_pkt;
+    lyr_len = (uint8_t*)tmpMplsHdr - raw_pkt;
 
     switch (iRet)
     {
@@ -188,9 +190,9 @@ static int checkMplsHdr(
                        ||((!label)&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV4)))
                    {
                         if( !label )
-                            DecoderEvent(p, DECODE_BAD_MPLS_LABEL0);
+                            codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL0);
                         else
-                            DecoderEvent(p, DECODE_BAD_MPLS_LABEL2);
+                            codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL2);
                    }
                    break;
                }
@@ -200,9 +202,9 @@ static int checkMplsHdr(
                 * and move on to the next one.
                 */
                if( !label )
-                   DecoderEvent(p, DECODE_BAD_MPLS_LABEL0);
+                   codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL0);
                else
-                   DecoderEvent(p, DECODE_BAD_MPLS_LABEL2);
+                   codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL2);
 
                dc.discards++;
                p->iph = NULL;
@@ -213,7 +215,7 @@ static int checkMplsHdr(
         case 1:
                if(!bos) break;
 
-               DecoderEvent(p, DECODE_BAD_MPLS_LABEL1);
+               codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL1);
 
 //               dc.discards++;
                p->iph = NULL;
@@ -222,7 +224,7 @@ static int checkMplsHdr(
                break;
 
       case 3:
-               DecoderEvent(p, DECODE_BAD_MPLS_LABEL3);
+               codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL3);
 
 //               dc.discards++;
                p->iph = NULL;
@@ -241,7 +243,7 @@ static int checkMplsHdr(
         case 13:
         case 14:
         case 15:
-                DecoderEvent(p, DECODE_MPLS_RESERVED_LABEL);
+                codec_events::decoder_event(p, DECODE_MPLS_RESERVED_LABEL);
                 break;
         default:
                 break;
@@ -297,8 +299,8 @@ static const CodecApi mpls_api =
     dtor, // dtor
     nullptr, // get_dlt
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 #ifdef BUILDING_SO

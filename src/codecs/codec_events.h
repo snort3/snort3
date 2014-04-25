@@ -29,48 +29,26 @@
 #include "network_inspectors/normalize/normalize.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"
+#include "codecs/decode_module.h"
 
-// forward declarations
-typedef void (*void_callback_f)(void*);
-
-class CodecEvents
+namespace codec_events
 {
-public:
-    static void exec_ip_chksm_drop(Packet*);
-    static void exec_udp_chksm_drop (Packet *);
-    static void exec_tcp_chksm_drop (Packet*);
-    static void exec_hop_drop(Packet* p, int sid);
-    static void exec_ttl_drop (Packet *data, int sid);
-    static void exec_icmp_chksm_drop (Packet*);
 
-    static void decoder_event (Packet *p, int sid);
-    static void decoder_alert_encapsulated(
+    void exec_ip_chksm_drop(Packet*);
+    void exec_udp_chksm_drop (Packet *);
+    void exec_tcp_chksm_drop (Packet*);
+    void exec_hop_drop(Packet* p, int sid);
+    void exec_ttl_drop (Packet *data, int sid);
+    void exec_icmp_chksm_drop (Packet*);
+
+    void decoder_event (Packet *, int);
+    void decoder_alert_encapsulated(
         Packet *p, int sid, const uint8_t *pkt, uint32_t len);
 
-    static void decoder_init(unsigned max);
-    static void decoder_term(void);
-    static void decoder_exec(void);
+    int ScNormalDrop (NormFlags nf);
 
-    static void DecoderOptEvent (
-        Packet *p, int sid, const char *str, void_callback_f );
+} //namespace codec_events
 
-    static void queueDecoderEvent(
-        unsigned int gid, 
-        unsigned int sid,
-        unsigned int rev,
-        unsigned int classification,
-        unsigned int pri,
-        const char *msg,
-        void *rule_info);
-
-    static int ScNormalDrop (NormFlags nf);
-    static void execDecoderEvent(Packet *p);
-};
-
-static inline void DecoderEvent(Packet *p, int sid)
-{
-    CodecEvents::decoder_event(p, sid);
-}
 
 #endif
 

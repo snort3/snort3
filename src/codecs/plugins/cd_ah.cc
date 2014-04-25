@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_ah.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -30,6 +29,7 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv4.h"
+#include <cstring>
 
 namespace
 {
@@ -42,7 +42,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
 
     // DELETE from here and below
@@ -53,17 +53,33 @@ public:
 
 static const uint16_t AH_PROT_ID = 51; // RFC 4302
 
+
+struct CdPegs{
+    PegCount processed = 0;
+    PegCount discards = 0;
+};
+
+std::vector<const char*> peg_names =
+{
+    "NameCodec_processed",
+    "NameCodec_discards",
+};
+
+
 } // anonymous namespace
+
+static THREAD_LOCAL CdPegs counts;
+static CdPegs gcounts;
 
 
 bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 
     IP6Extension *ah = (IP6Extension *)raw_pkt;
-    p_hdr_len = sizeof(*ah) + (ah->ip6e_len << 2);
+    lyr_len = sizeof(*ah) + (ah->ip6e_len << 2);
 
-    if (p_hdr_len > len)
+    if (lyr_len > len)
     {
         return false;
     }
@@ -92,20 +108,17 @@ static void dtor(Codec *cd)
 
 static void sum()
 {
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
+    sum_stats((PegCount*)&gcounts, (PegCount*)&counts, peg_names.size());
+    memset(&counts, 0, sizeof(counts));
 }
 
-static void stats()
+static void stats(std::vector<PegCount> g_peg_counts, std::vector<const char*> g_peg_names)
 {
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
+    std::memcpy(&g_peg_counts, &counts, sizeof(CdPegs));
+    g_peg_names.insert(g_peg_names.end(), peg_names.begin(), peg_names.end());
 }
-
-
 
 static const char* name = "ah_codec";
-
 static const CodecApi ah_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },

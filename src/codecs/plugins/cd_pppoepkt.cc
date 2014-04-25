@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_pppoepkt.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -36,7 +37,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -93,7 +94,7 @@ const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
  *
  */
 bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     //PPPoE_Tag *ppppoe_tag=0;
     //PPPoE_Tag tag;  /* needed to avoid alignment problems */
@@ -108,7 +109,7 @@ bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len,
             "Captured data length < PPPoE header length! "
             "(%d bytes)\n", len););
 
-        DecoderEvent(p, DECODE_BAD_PPPOE);
+        codec_events::decoder_event(p, DECODE_BAD_PPPOE);
 
         return false;
     }
@@ -244,7 +245,7 @@ bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len,
 //        DecodePppPktEncapsulated(pkt + PPPOE_HEADER_LEN, len - PPPOE_HEADER_LEN, p);
 
         // TODO:  Why is this specifically PppPktEncapsulated?
-        p_hdr_len = PPPOE_HEADER_LEN;
+        lyr_len = PPPOE_HEADER_LEN;
         next_prot_id = ntohs(p->eh->ether_type);
         return true;
     }
@@ -326,8 +327,8 @@ static const CodecApi pppoe_api =
     dtor, // dtor
     nullptr,
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 

@@ -26,17 +26,12 @@
 #include "config.h"
 #endif
 
+#include <pcap.h>
 #include "codecs/decode_module.h"
 #include "framework/codec.h"
 #include "time/profiler.h"
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
-
-
-
-
-#include <pcap.h>
-
 
 
 namespace
@@ -50,7 +45,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *p, uint16_t &lyr_len, int &next_prot_id);
 
     // DELETE
     #include "codecs/sf_protocols.h"
@@ -58,7 +53,7 @@ public:
     
 };
 
-} // anonymous namespace
+} // namespace
 
 
 //--------------------------------------------------------------------
@@ -78,7 +73,7 @@ public:
  * Returns: void function
  */
 bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 
 //    dc.eth++;
@@ -95,8 +90,7 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated eth header (%d bytes).\n", len););
 
-        // TODO --> UNCOMMENT!!
-//        DecoderEvent(p, DECODE_ETH_HDR_TRUNC);
+        codec_events::decoder_event(p, DECODE_ETH_HDR_TRUNC);
 
 //        dc.discards++;
 //        dc.ethdisc++;
@@ -105,7 +99,6 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     /* lay the ethernet structure over the packet data */
     p->eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
-//    PushLayer(PROTO_ETH, p, pkt, sizeof(*p->eh));
 
     DEBUG_WRAP(
             DebugMessage(DEBUG_DECODE, "%X:%X:%X:%X:%X:%X -> %X:%X:%X:%X:%X:%X\n",
@@ -121,7 +114,7 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             );
 
     next_prot_id = ntohs(p->eh->ether_type);
-    p_hdr_len = eth::hdr_len();
+    lyr_len = eth::hdr_len();
 
     return true;
 }
@@ -205,6 +198,9 @@ void Eth_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 
 #endif
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 static void get_data_link_type(std::vector<int>&v)
 {

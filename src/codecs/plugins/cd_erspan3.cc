@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_erspan3.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -37,7 +38,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -73,15 +74,15 @@ const uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
  *
  */
 bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
-    p_hdr_len= sizeof(ERSpanType3Hdr);
+    lyr_len= sizeof(ERSpanType3Hdr);
     uint32_t payload_len;
     ERSpanType3Hdr *erSpan3Hdr = (ERSpanType3Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType3Hdr))
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
+        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
                         raw_pkt, len);
         return false;
     }
@@ -90,7 +91,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
+        codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                         raw_pkt, len);
         return false;
     }
@@ -99,7 +100,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
      */
     if (ERSPAN_VERSION(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
+        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
                         raw_pkt, len);
         return false;
     }
@@ -152,8 +153,8 @@ static const CodecApi erspan3_api =
     dtor, // dtor
     nullptr, // get_dlt
     get_protocol_ids,
-    sum, // sum
-    stats  // stats
+    NULL, // sum
+    NULL  // stats
 };
 
 

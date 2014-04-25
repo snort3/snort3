@@ -22,6 +22,7 @@
 #include "packet_manager.h"
 #include <list>
 #include <vector>
+#include <cstring>
 #include "framework/codec.h"
 #include "packet_manager.h"
 #include "snort.h"
@@ -86,6 +87,8 @@ void PacketManager::add_plugin(const CodecApi* api)
         FatalError("Codec %s: dtor() must be implemented.  Look at the example code for an example.\n",
                         api->base.name);  
 
+
+    WarningMessage("The size of a Codec* is %d\n", sizeof(Codec));
     s_codecs.push_back(api);
 }
 
@@ -117,7 +120,7 @@ void PacketManager::decode(
 {
     PROFILE_VARS;
     int curr_prot_id, next_prot_id;
-    uint16_t len, p_hdr_len;
+    uint16_t len, lyr_len;
 
     PREPROC_PROFILE_START(decodePerfStats);
 
@@ -137,16 +140,18 @@ void PacketManager::decode(
             pkt_cnt.other_codecs++;
             break;
         }
-        else if( !s_protocols[curr_prot_id]->decode(pkt, len, p, p_hdr_len, next_prot_id))
+        else if( !s_protocols[curr_prot_id]->decode(pkt, len, p, lyr_len, next_prot_id))
         {
             pkt_cnt.discards++;
             break;
         }           
 
-        PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, p_hdr_len);
+        PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, lyr_len);
         curr_prot_id = next_prot_id;
-        len -= p_hdr_len;
-        pkt += p_hdr_len;
+        len -= lyr_len;
+        pkt += lyr_len;
+        next_prot_id = -1;
+        lyr_len = 0;
     }
 
     p->dsize = len;
@@ -227,9 +232,12 @@ void PacketManager::dump_stats()
 
     std::vector<const char*> pegNames(CdGenPegNames);
     std::vector<PegCount> pegs;
-    pegs.push_back(gpkt_cnt.total_processed);
-    pegs.push_back(gpkt_cnt.other_codecs);
-    pegs.push_back(gpkt_cnt.discards);
+
+    std::memcpy(&pegs[0], &gpkt_cnt, sizeof(gpkt_cnt));
+
+//    pegs.push_back(gpkt_cnt.total_processed);
+//    pegs.push_back(gpkt_cnt.other_codecs);
+//    pegs.push_back(gpkt_cnt.discards);
 
     // using two temporary vectors to ensure codecs cannot
     // see any other codecs statistics
@@ -242,7 +250,8 @@ void PacketManager::dump_stats()
         {
             tmpPegs.clear();
             tmpNames.clear();
-//            cd->stats(tmpPegs, tmpNames);
+            if(cd->stats)
+                cd->stats(tmpPegs, tmpNames);
             if (tmpNames.size() == tmpPegs.size())
             {
                 pegs.insert(pegs.end(), tmpPegs.begin(), tmpPegs.end());
@@ -260,7 +269,6 @@ void PacketManager::dump_stats()
     show_percent_stats(&pegs[0], &pegNames[0], pegNames.size(),
         "codecs");
 }
-
 
 bool PacketManager::has_codec(uint16_t cd_id)
 {

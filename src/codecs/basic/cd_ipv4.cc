@@ -54,10 +54,7 @@ public:
     ~Ipv4Codec(){};
 
     virtual bool decode(const uint8_t *raw_packet, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     // used in random classes throughout Snort++
 
@@ -95,11 +92,6 @@ static inline unsigned short in_chksum_ip( unsigned short *, int);
 
 static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
 
-void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ipv4::ethertype_ip());
-    v.push_back(ipv4::prot_id());
-}
 
 //--------------------------------------------------------------------
 // prot_ipv4.cc::IP4 decoder
@@ -117,7 +109,7 @@ void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  */
 bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
 
@@ -135,7 +127,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
             "WARNING: Truncated IP4 header (%d bytes).\n", len););
 
         if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
-            DecoderEvent(p, DECODE_IP4_HDR_TRUNC);
+            codec_events::decoder_event(p, DECODE_IP4_HDR_TRUNC);
 
         p->iph = NULL;
         p->family = NO_IP;
@@ -149,7 +141,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     {
         if (p->encapsulated)
         {
-            CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
+            codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                 raw_packet, len);
 
             return false;
@@ -174,7 +166,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     if(IP_VER((IPHdr*)raw_packet) != 4)
     {
         if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
-            DecoderEvent(p, DECODE_NOT_IPV4_DGRAM);
+            codec_events::decoder_event(p, DECODE_NOT_IPV4_DGRAM);
 
         p->iph = NULL;
         p->family = NO_IP;
@@ -190,15 +182,15 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     ip_len = ntohs(p->iph->ip_len);
 
     /* get the IP header length */
-    p_hdr_len = ipv4::get_pkt_hdr_len(p->iph) << 2;
+    lyr_len = ipv4::get_pkt_hdr_len(p->iph) << 2;
 
     /* header length sanity check */
-    if(p_hdr_len < ipv4::hdr_len())
+    if(lyr_len < ipv4::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Bogus IP header length of %i bytes\n", p_hdr_len););
+            "Bogus IP header length of %i bytes\n", lyr_len););
 
-        DecoderEvent(p, DECODE_IPV4_INVALID_HEADER_LEN);
+        codec_events::decoder_event(p, DECODE_IPV4_INVALID_HEADER_LEN);
 
         p->iph = NULL;
         p->family = NO_IP;
@@ -215,7 +207,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
             "    (ip.len: %lu, cap.len: %lu)\n",
             ip_len - len, ip_len, len););
 
-        DecoderEvent(p, DECODE_IPV4_DGRAM_GT_CAPLEN);
+        codec_events::decoder_event(p, DECODE_IPV4_DGRAM_GT_CAPLEN);
 
         p->iph = NULL;
         p->family = NO_IP;
@@ -239,13 +231,13 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 #endif
 
-    if(ip_len < p_hdr_len)
+    if(ip_len < lyr_len)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "IP dgm len (%d bytes) < IP hdr "
-            "len (%d bytes), packet discarded\n", ip_len, p_hdr_len););
+            "len (%d bytes), packet discarded\n", ip_len, lyr_len););
 
-        DecoderEvent(p, DECODE_IPV4_DGRAM_LT_IPHDR);
+        codec_events::decoder_event(p, DECODE_IPV4_DGRAM_LT_IPHDR);
 
         p->iph = NULL;
         p->family = NO_IP;
@@ -266,14 +258,14 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
          * need to check them (should make this a command line/config
          * option
          */
-        int16_t csum = in_chksum_ip((u_short *)p->iph, p_hdr_len);
+        int16_t csum = in_chksum_ip((u_short *)p->iph, lyr_len);
 
         if(csum)
         {
             p->error_flags |= PKT_ERR_CKSUM_IP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad IP checksum\n"););
 
-            CodecEvents::exec_ip_chksm_drop(p);
+            codec_events::exec_ip_chksm_drop(p);
 //            dc.invalid_checksums++;
         }
 #ifdef DEBUG_MSGS
@@ -285,7 +277,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 
     /* test for IP options */
-    p->ip_options_len = (uint16_t)(p_hdr_len - ipv4::hdr_len());
+    p->ip_options_len = (uint16_t)(lyr_len - ipv4::hdr_len());
 
     if(p->ip_options_len > 0)
     {
@@ -312,7 +304,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     p->actual_ip_len = (uint16_t) ip_len;
 
     /* set the remaining packet length */
-    ip_len -= p_hdr_len;
+    ip_len -= lyr_len;
 
     /* check for fragmented packets */
     p->frag_offset = ntohs(p->iph->ip_off);
@@ -329,23 +321,23 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     p->frag_offset &= 0x1FFF;
 
     if ( p->df && p->frag_offset )
-        DecoderEvent(p, DECODE_IP4_DF_OFFSET);
+        codec_events::decoder_event(p, DECODE_IP4_DF_OFFSET);
 
     if ( p->frag_offset + p->actual_ip_len > IP_MAXPACKET )
-        DecoderEvent(p, DECODE_IP4_LEN_OFFSET);
+        codec_events::decoder_event(p, DECODE_IP4_LEN_OFFSET);
 
     if(p->frag_offset || p->mf)
     {
         if ( !ip_len)
         {
-            DecoderEvent(p, DECODE_ZERO_LENGTH_FRAG);
+            codec_events::decoder_event(p, DECODE_ZERO_LENGTH_FRAG);
             p->frag_flag = 0;
         }
         else
         {
             /* set the packet fragment flag */
             p->frag_flag = 1;
-            p->ip_frag_start = raw_packet + p_hdr_len;
+            p->ip_frag_start = raw_packet + lyr_len;
             p->ip_frag_len = (uint16_t)ip_len;
 //            dc.frags++;
         }
@@ -357,11 +349,11 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
 
     if( p->mf && p->df )
     {
-        DecoderEvent(p, DECODE_BAD_FRAGBITS);
+        codec_events::decoder_event(p, DECODE_BAD_FRAGBITS);
     }
 
     /* Set some convienience pointers */
-    p->ip_data = raw_packet + p_hdr_len;
+    p->ip_data = raw_packet + lyr_len;
     p->ip_dsize = (u_short) ip_len;
 
     /* See if there are any ip_proto only rules that match */
@@ -378,7 +370,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
             (p->iph->ip_proto == IPPROTO_UDP)))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP header length: %lu\n",
-                    (unsigned long)p_hdr_len););
+                    (unsigned long)lyr_len););
 
         next_prot_id = p->iph->ip_proto;
         return true;
@@ -386,7 +378,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     else
     {
         /* set the payload pointer and payload size */
-        p->data = raw_packet + p_hdr_len;
+        p->data = raw_packet + lyr_len;
         p->dsize = (u_short) ip_len;
     }
 
@@ -423,7 +415,7 @@ inline void DecodeIPv4Proto(const uint8_t proto,
         case IPPROTO_SUN_ND:
         case IPPROTO_PIM:
             if ( Event_Enabled(DECODE_IP_BAD_PROTO) )
-                DecoderEvent(p, DECODE_IP_BAD_PROTO));
+                codec_events::decoder_event(p, DECODE_IP_BAD_PROTO));
 //            dc.other++;
             p->data = pkt;
             p->dsize = (uint16_t)len;
@@ -449,7 +441,7 @@ inline void DecodeIPv4Proto(const uint8_t proto,
 #endif
         default:
             if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
-                DecoderEvent(p, DECODE_IP_UNASSIGNED_PROTO);
+                codec_events::decoder_event(p, DECODE_IP_UNASSIGNED_PROTO);
 
 //            dc.other++;
             p->data = pkt;
@@ -461,7 +453,7 @@ inline void DecodeIPv4Proto(const uint8_t proto,
 static inline void CheckPGMVuln(Packet *p)
 {
     if ( pgm_nak_detect((uint8_t *)p->data, p->dsize) == PGM_NAK_VULN )
-        DecoderEvent(p, DECODE_PGM_NAK_OVERFLOW);
+        codec_events::decoder_event(p, DECODE_PGM_NAK_OVERFLOW);
 }
 
 
@@ -529,7 +521,7 @@ static inline void CheckIGMPVuln(Packet *p)
             if (p->ip_options_len >= 2) {
                 if (*(p->ip_options_data) == 0 && *(p->ip_options_data+1) == 0)
                 {
-                    DecoderEvent(p, DECODE_IGMP_OPTIONS_DOS);
+                    codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
                     return;
                 }
             }
@@ -548,7 +540,7 @@ static inline void CheckIGMPVuln(Packet *p)
         }
 
         if (alert > 0)
-            DecoderEvent(p, DECODE_IGMP_OPTIONS_DOS);
+            codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
     }
 }
 
@@ -565,16 +557,16 @@ static inline void IP4AddrTests (Packet* p)
     // check all 32 bits ...
     if( p->iph->ip_src.s_addr == p->iph->ip_dst.s_addr )
     {
-        DecoderEvent(p, DECODE_BAD_TRAFFIC_SAME_SRCDST);
+        codec_events::decoder_event(p, DECODE_BAD_TRAFFIC_SAME_SRCDST);
 
     }
 
     // check all 32 bits ...
     if ( ipv4::is_broadcast(p->iph->ip_src.s_addr)  )
-        DecoderEvent(p, DECODE_IP4_SRC_BROADCAST);
+        codec_events::decoder_event(p, DECODE_IP4_SRC_BROADCAST);
 
     if ( ipv4::is_broadcast(p->iph->ip_dst.s_addr)  )
-        DecoderEvent(p, DECODE_IP4_DST_BROADCAST);
+        codec_events::decoder_event(p, DECODE_IP4_DST_BROADCAST);
 
     /* Loopback traffic  - don't use htonl for speed reasons -
      * s_addr is always in network order */
@@ -588,27 +580,27 @@ static inline void IP4AddrTests (Packet* p)
     // check the msb ...
     if ( ipv4::is_loopback(msb_src) || ipv4::is_loopback(msb_dst) )
     {
-        DecoderEvent(p, DECODE_BAD_TRAFFIC_LOOPBACK);
+        codec_events::decoder_event(p, DECODE_BAD_TRAFFIC_LOOPBACK);
     }
     // check the msb ...
     if ( ipv4::is_this_net(msb_src) )
-        DecoderEvent(p, DECODE_IP4_SRC_THIS_NET);
+        codec_events::decoder_event(p, DECODE_IP4_SRC_THIS_NET);
 
     if ( ipv4::is_this_net(msb_dst) )
-        DecoderEvent(p, DECODE_IP4_DST_THIS_NET);
+        codec_events::decoder_event(p, DECODE_IP4_DST_THIS_NET);
 
     // check the 'msn' (most significant nibble) ...
     msb_src >>= 4;
     msb_dst >>= 4;
 
     if ( ipv4::is_multicast(msb_src) )
-        DecoderEvent(p, DECODE_IP4_SRC_MULTICAST);
+        codec_events::decoder_event(p, DECODE_IP4_SRC_MULTICAST);
 
     if ( ipv4::is_reserved(msb_src) )
-        DecoderEvent(p, DECODE_IP4_SRC_RESERVED);
+        codec_events::decoder_event(p, DECODE_IP4_SRC_RESERVED);
 
     if ( ipv4::is_reserved(msb_dst))
-        DecoderEvent(p, DECODE_IP4_DST_RESERVED);
+        codec_events::decoder_event(p, DECODE_IP4_DST_RESERVED);
 }
 
 
@@ -641,7 +633,7 @@ static inline void IPMiscTests(Packet *p)
             /* If the remaining space in the option isn't a multiple of 4
                bytes, alert. */
             if (((length + 3) - pointer) % 4)
-                DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
+                codec_events::decoder_event(p, DECODE_ICMP_DOS_ATTEMPT);
         }
         else if (ipv4::is_opt_ts(p->ip_options[i].code))
         {
@@ -658,12 +650,12 @@ static inline void IPMiscTests(Packet *p)
             /* If the remaining space in the option isn't a multiple of 4
                bytes, alert. */
             if (((length + 3) - pointer) % 4)
-                DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
+                codec_events::decoder_event(p, DECODE_ICMP_DOS_ATTEMPT);
             /* If there is a timestamp + address, we need a multiple of 8
                bytes instead. */
             if ((p->ip_options[i].data[1] & 0x01) && /* address flag */
                (((length + 3) - pointer) % 8))
-                DecoderEvent(p, DECODE_ICMP_DOS_ATTEMPT);
+                codec_events::decoder_event(p, DECODE_ICMP_DOS_ATTEMPT);
         }
     }
 }
@@ -741,11 +733,11 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
             */
             if(code == tcp::OPT_BADLEN)
             {
-                DecoderEvent(p, DECODE_IPV4OPT_BADLEN);
+                codec_events::decoder_event(p, DECODE_IPV4OPT_BADLEN);
             }
             else if(code == tcp::OPT_TRUNC)
             {
-                DecoderEvent(p, DECODE_IPV4OPT_TRUNCATED);
+                codec_events::decoder_event(p, DECODE_IPV4OPT_TRUNCATED);
             }
             return;
         }
@@ -947,13 +939,17 @@ static inline unsigned short in_chksum_ip( unsigned short * w, int blen )
 
 
 //-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
+
+//-------------------------------------------------------------------------
 // ip id considerations:
 //
 // we use dnet's rand services to generate a vector of random 16-bit values and
 // iterate over the vector as IDs are assigned.  when we wrap to the beginning,
 // the vector is randomly reordered.
 //-------------------------------------------------------------------------
-
 static void ipv4_codec_ginit()
 {
 #ifndef VALGRIND_TESTING
@@ -989,6 +985,13 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
+
+static void get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ipv4::ethertype_ip());
+    v.push_back(ipv4::prot_id());
+}
+
 static const char* name = "ipv4_decode";
 
 static const CodecApi ipv4_api =
@@ -1000,6 +1003,8 @@ static const CodecApi ipv4_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL, 
+    get_protocol_ids,
     NULL, // sum 
     NULL  // stats
 };

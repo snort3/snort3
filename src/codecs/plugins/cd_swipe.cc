@@ -43,7 +43,7 @@ public:
     virtual ~SwipeCodec(){};
     
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *p, uint16_t &lyr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 };
@@ -51,15 +51,15 @@ public:
 } // namespace
 
 bool SwipeCodec::decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 
-    CodecEvents::decoder_event(p, DECODE_IP_BAD_PROTO);
+    codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
 //            dc.other++;
     p->data = raw_packet;
     p->dsize = (uint16_t)raw_len;
 
-    p_hdr_len = 0;
+    lyr_len = 0;
     next_prot_id = -1;
     return true;
 }
