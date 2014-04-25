@@ -53,7 +53,10 @@ public:
     
 };
 
-} // namespace
+} // anonymous
+
+static const uint16_t MAX_LENGTH = 1500;
+static const uint16_t MIN_ETHERTYPE = 1536;
 
 
 //--------------------------------------------------------------------
@@ -114,9 +117,18 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             );
 
     next_prot_id = ntohs(p->eh->ether_type);
-    lyr_len = eth::hdr_len();
+    if (next_prot_id > MIN_ETHERTYPE )
+    {
+        lyr_len = eth::hdr_len();
+        return true;
+    }
 
-    return true;
+//   add this alert type
+//    if(len > MAX_LENGTH) {
+//        CodecEvents::decoder_event(p, DECODE_ETH_INVALID_FRAME);
+
+
+    return false;
 }
 
 

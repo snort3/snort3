@@ -73,7 +73,7 @@ static THREAD_LOCAL PreprocStats s5PerfStats;
 
 static PreprocStats* s5_get_profile(const char* key)
 {
-    if ( !strcmp(key, "stream5") )
+    if ( !strcmp(key, "stream") )
         return &s5PerfStats;
 
     return nullptr;

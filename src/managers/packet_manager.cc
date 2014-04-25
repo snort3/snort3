@@ -16,15 +16,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
 // packet_manager.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "packet_manager.h"
 #include <list>
 #include <vector>
 #include <cstring>
-#include "framework/codec.h"
 #include "packet_manager.h"
+#include "framework/codec.h"
 #include "snort.h"
 #include "thread.h"
 #include "log/messages.h"
@@ -50,7 +48,7 @@ std::vector<const char*> CdGenPegNames =
     "discards"
 };
 
-} // anonymous namespace
+} // anonymous
 
 
 #ifdef PERF_PROFILING
@@ -87,8 +85,6 @@ void PacketManager::add_plugin(const CodecApi* api)
         FatalError("Codec %s: dtor() must be implemented.  Look at the example code for an example.\n",
                         api->base.name);  
 
-
-    WarningMessage("The size of a Codec* is %d\n", sizeof(Codec));
     s_codecs.push_back(api);
 }
 
@@ -148,9 +144,9 @@ void PacketManager::decode(
 
         PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, lyr_len);
         curr_prot_id = next_prot_id;
+        next_prot_id = -1;
         len -= lyr_len;
         pkt += lyr_len;
-        next_prot_id = -1;
         lyr_len = 0;
     }
 
@@ -220,7 +216,6 @@ void PacketManager::set_grinder(void)
             WarningMessage("The Codec %s is never used\n", cd->get_name());
     }
 }
-
 
 void PacketManager::dump_stats()
 {
