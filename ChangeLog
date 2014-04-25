@@ -1,0 +1,15 @@
+75
+-- added back InspectApi.pinit() and InspectApi.pterm()
+-- eliminated InspectApi.stop()
+-- changed signature to Inspector::configure()
+-- Inspector::init() and term() are now pinit() and pterm()!  beware!
+   (for consistency with naming scheme)
+-- other changes to InspectApi / Inspector per comments in header
+
+74
+-- started this ChangeLog for internal use only
+-- fixed -A none and -K none
+-- more refactoring of ftp/telnet and modularization
+-- changed lua/*.lua to EXTRA_DIST to avoid installation overwrites
+-- updated snort.lua wrt the legacy include - read comments therein
+

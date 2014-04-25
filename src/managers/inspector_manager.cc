@@ -65,16 +65,10 @@ struct PHGlobal {
 
 struct PHClass {
     const InspectApi& api;
-    void* data;
 
-    PHClass(const InspectApi& p) : api(p)
-    {
-        // FIXIT this should be Module* and data
-        data = nullptr;
-    };
-    ~PHClass()
-    {
-    }
+    PHClass(const InspectApi& p) : api(p) { };
+    ~PHClass() { };
+
     static bool comp (PHClass* a, PHClass* b)
     { return ( a->api.priority < b->api.priority ); };
 };
@@ -300,7 +294,7 @@ void InspectorManager::dump_stats (SnortConfig* sc)
 {
     for ( auto* p : sc->framework_config->ph_list )
         if ( p->api.stats )
-            p->api.stats(p->data);
+            p->api.stats();
 }
 
 void InspectorManager::accumulate (SnortConfig* sc)
@@ -310,7 +304,7 @@ void InspectorManager::accumulate (SnortConfig* sc)
 
     for ( auto* p : sc->framework_config->ph_list )
         if ( p->api.sum )
-            p->api.sum(p->data);
+            p->api.sum();
 
     pc_sum();
     stats_mutex.unlock();
@@ -320,96 +314,56 @@ void InspectorManager::reset_stats (SnortConfig* sc)
 {
     for ( auto* p : sc->framework_config->ph_list )
         if ( p->api.reset )
-            p->api.reset(p->data);
-}
-
-int InspectorManager::check_config(SnortConfig* sc)
-{
-    InspectionPolicy* pi = get_inspection_policy();
-
-    for ( auto* p : pi->framework_policy->ph_list )
-    {
-        if ( int rval = p->handler->verify(sc) )
-            return rval;
-    }
-    return 0;
+            p->api.reset();
 }
 
 // this is per thread
-void InspectorManager::post_config(SnortConfig* sc)
-{
-    InspectionPolicy* pi = get_inspection_policy();
-
-    if ( !pi->framework_policy )
-        return;
-
-    for ( auto* p : pi->framework_policy->ph_list )
-    {
-        p->handler->setup(sc);
-    }
-}
-
-void InspectorManager::thread_init(SnortConfig*, unsigned slot)
+void InspectorManager::thread_init(SnortConfig* sc, unsigned slot)
 {
     EventManager::open_outputs();
     IpsManager::setup_options();
 
     Inspector::slot = slot;
+
+    for ( auto* p : sc->framework_config->ph_list )
+        if ( p->api.pinit )
+            p->api.pinit();
+
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( !pi->framework_policy )
         return;
 
     for ( auto* p : pi->framework_policy->ph_list )
-        p->handler->init();
+        p->handler->pinit();
 }
 
 void InspectorManager::thread_term(SnortConfig* sc)
 {
-    shutdown(sc);
-
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return;
 
     for ( auto* p : pi->framework_policy->ph_list )
-        p->handler->term();
+        p->handler->pterm();
+
+    for ( auto* p : sc->framework_config->ph_list )
+        if ( p->api.pterm )
+            p->api.pterm();
 
     accumulate(sc);
     IpsManager::clear_options();
     EventManager::close_outputs();
 }
 
-// FIXIT this does 2 things due to the convolution of class and global data
-// first it purges all preprocs - this operates on global data like session caches
-// then it resets all instances
+// purges all inspector plugins - eg global session caches
 void InspectorManager::reset (SnortConfig* sc)
 {
     for ( auto* p : sc->framework_config->ph_list )
     {
         if ( p->api.purge )
-            p->api.purge(p->data);
-    }
-    InspectionPolicy* pi = get_inspection_policy();
-
-    if ( !pi->framework_policy )
-        return;
-
-    for ( auto* p : pi->framework_policy->ph_list )
-        p->handler->reset();
-}
-
-// this is the last chance to process data - interact with other modules
-// after this preprocs are being freed and can't be used to process data
-void InspectorManager::shutdown (SnortConfig* sc)
-{
-    Active_Suspend();
-
-    for ( auto* p : sc->framework_config->ph_list )
-    {
-        if ( p->api.stop )
-            p->api.stop(p->data);
+            p->api.purge();
     }
 }
 
@@ -444,7 +398,7 @@ void InspectorManager::instantiate(
     }
 }
 
-void InspectorManager::configure(SnortConfig *sc)
+bool InspectorManager::configure(SnortConfig *sc)
 {
     Inspector::max_slots = sc->max_threads;
     s_handlers.sort(PHGlobal::comp);
@@ -452,12 +406,15 @@ void InspectorManager::configure(SnortConfig *sc)
     // FIXIT use FrameworkConfig or FrameworkPolicy ?
     //FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
+    bool ok = true;
 
     for ( auto* p : fp->ph_list )
-        p->handler->configure(sc);
+        ok = p->handler->configure(sc) && ok;
 
     fp->ph_list.sort(PHInstance::comp);
     fp->Vectorize();
+
+    return ok;
 }
 
 void InspectorManager::print_config(SnortConfig *sc)

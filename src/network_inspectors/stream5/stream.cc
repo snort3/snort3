@@ -165,17 +165,15 @@ public:
     Stream5(Stream5GlobalConfig*);
     ~Stream5();
 
-    void configure(SnortConfig*);
+    bool configure(SnortConfig*);
     int verify_config(SnortConfig*);
-    int verify(SnortConfig*);
-    void setup(SnortConfig*);
     void show(SnortConfig*);
 
     void eval(Packet*);
 
-    void init();
-    void term();
-    void reset();
+    void pinit();
+    void pterm();
+    void reset();  // FIXIT delete if not used
 
 private:
     Stream5Config config;
@@ -215,7 +213,7 @@ Stream5::~Stream5()
         Share::release(ip_data);
 }
 
-void Stream5::configure(SnortConfig*)
+bool Stream5::configure(SnortConfig* sc)
 {
     if ( config.global_config->max_tcp_sessions )
     {
@@ -237,6 +235,13 @@ void Stream5::configure(SnortConfig*)
         ip_data = (StreamIpData*)Share::acquire("stream_ip");
         config.ip_config = ip_data->data;
     }
+
+#ifdef ENABLE_HA
+    if ( config.ha_config )
+        ha_setup(config.ha_config);
+#endif
+
+    return !verify_config(sc);
 }
 
 int Stream5::verify_config(SnortConfig* sc)
@@ -298,58 +303,7 @@ int Stream5::verify_config(SnortConfig* sc)
     return status;
 }
 
-int Stream5::verify(SnortConfig* sc)
-{
-    int rval;
-
-    if ( (rval = verify_config(sc)) )
-        return rval;
-
-#if 0
-    // FIXIT no longer valid with thread local flow_con instantiated later
-    // also, how is this possible?
-    // if just due to failed alloc, then delete
-    uint32_t max_tcp = flow_con->max_flows(IPPROTO_TCP);
-    uint32_t max_udp = flow_con->max_flows(IPPROTO_UDP);
-    uint32_t max_icmp = flow_con->max_flows(IPPROTO_ICMP);
-    uint32_t max_ip = flow_con->max_flows(IPPROTO_IP);
-
-    uint32_t total_sessions = max_tcp + max_udp + max_icmp + max_ip;
-
-    if ( !total_sessions )
-        return 0;
-
-    if ( (config.global_config->max_tcp_sessions > 0)
-        && (max_tcp == 0) )
-    {
-        LogMessage("TCP tracking disabled, no TCP sessions allocated\n");
-    }
-
-    if ( (config.global_config->max_udp_sessions > 0)
-        && (max_udp == 0) )
-    {
-        LogMessage("UDP tracking disabled, no UDP sessions allocated\n");
-    }
-
-    if ( (config.global_config->max_icmp_sessions > 0)
-        && (max_icmp == 0) )
-    {
-        LogMessage("ICMP tracking disabled, no ICMP sessions allocated\n");
-    }
-
-    if ( (config.global_config->max_ip_sessions > 0)
-        && (max_ip == 0) )
-    {
-        LogMessage("IP tracking disabled, no IP sessions allocated\n");
-    }
-
-    // FIXIT need to get max or set it here for use by init_exp
-    //LogMessage("      Max Expected Streams: %u\n", max);
-#endif
-    return 0;
-}
-
-void Stream5::init()
+void Stream5::pinit()
 {
     assert(!flow_con);
     flow_con = new FlowControl(&config);
@@ -357,7 +311,7 @@ void Stream5::init()
     tcp_sinit(&config);
 }
 
-void Stream5::term()
+void Stream5::pterm()
 {
 #ifdef ENABLE_HA
     Stream5CleanHA();
@@ -367,14 +321,6 @@ void Stream5::term()
     flow_con = nullptr;
 
     tcp_sterm();
-}
-
-void Stream5::setup(SnortConfig*)
-{
-#ifdef ENABLE_HA
-    if ( config.ha_config )
-        ha_setup(config.ha_config);
-#endif
 }
 
 void Stream5::show(SnortConfig*)
@@ -594,7 +540,7 @@ static void s5_term(void* pv)
 }
 #endif
 
-static void s5_purge(void*)
+static void s5_purge()
 {
     flow_con->purge_flows(IPPROTO_TCP);
     flow_con->purge_flows(IPPROTO_UDP);
@@ -602,12 +548,7 @@ static void s5_purge(void*)
     flow_con->purge_flows(IPPROTO_IP);
 }
 
-static void s5_stop(void* pv)
-{
-    s5_purge(pv);
-}
-
-static void s5_sum(void*)
+static void s5_sum()
 {
     sum_stats((PegCount*)&gs5stats.tcp_port_filter,
         (PegCount*)&s5stats.tcp_port_filter, array_size(filter_pegs));
@@ -621,7 +562,7 @@ static void s5_sum(void*)
     ip_sum();
 }
 
-static void s5_stats(void*)
+static void s5_stats()
 {
     tcp_stats();
 
@@ -649,7 +590,7 @@ static void s5_stats(void*)
 #endif
 }
 
-static void s5_reset(void*)
+static void s5_reset()
 {
     tcp_reset_stats();
     udp_reset_stats();
@@ -692,7 +633,8 @@ static const InspectApi s5_api =
     nullptr, // term
     s5_ctor,
     s5_dtor,
-    s5_stop,
+    nullptr, // pinit
+    nullptr, // pterm
     s5_purge,
     s5_sum,
     s5_stats,

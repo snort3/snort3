@@ -525,8 +525,7 @@ public:
     FtpServer(FTP_SERVER_PROTO_CONF*);
     ~FtpServer();
 
-    void configure(SnortConfig*);
-    int verify(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
     void eval_alt(Packet*);
@@ -552,7 +551,7 @@ FtpServer::~FtpServer ()
         Share::release(ftp_client);
 }
 
-void FtpServer::configure (SnortConfig* sc)
+bool FtpServer::configure (SnortConfig* sc)
 {
     ftp_client = (ClientData*)Share::acquire(client_key);
 
@@ -561,11 +560,8 @@ void FtpServer::configure (SnortConfig* sc)
 
     bind_server = ftp_server;
     bind_client = ftp_client->data;
-}
 
-int FtpServer::verify(SnortConfig* sc)
-{
-    return FTPCheckConfigs(sc, ftp_server);
+    return !FTPCheckConfigs(sc, ftp_server);
 }
 
 void FtpServer::show(SnortConfig*)
@@ -695,17 +691,17 @@ static void fs_dtor(Inspector* p)
     delete p;
 }
 
-static void fs_sum(void*)
+static void fs_sum()
 {
     sum_stats(&gftstats, &ftstats);
 }
 
-static void fs_stats(void*)
+static void fs_stats()
 {
     show_stats(&gftstats, server_key);
 }
 
-static void fs_reset(void*)
+static void fs_reset()
 {
     memset(&gftstats, 0, sizeof(gftstats));
 }
@@ -726,7 +722,8 @@ static const InspectApi fs_api =
     nullptr, // term
     fs_ctor,
     fs_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     fs_sum,
     fs_stats,

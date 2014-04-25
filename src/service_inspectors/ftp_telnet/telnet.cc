@@ -271,8 +271,7 @@ public:
     Telnet(TELNET_PROTO_CONF*);
     ~Telnet();
 
-    void configure(SnortConfig*);
-    int verify(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
 
@@ -291,15 +290,12 @@ Telnet::~Telnet()
         delete config;
 }
 
-void Telnet::configure(SnortConfig* sc)
+bool Telnet::configure(SnortConfig* sc)
 {
     stream.set_service_filter_status(
         sc, telnet_app_id, PORT_MONITOR_SESSION);
-}
 
-int Telnet::verify(SnortConfig* sc)
-{
-    return TelnetCheckConfigs(sc, config);
+    return !TelnetCheckConfigs(sc, config);
 }
 
 void Telnet::show(SnortConfig*)
@@ -342,17 +338,17 @@ static void tn_dtor(Inspector* p)
     delete p;
 }
 
-static void tn_sum(void*)
+static void tn_sum()
 {
     sum_stats(&gtnstats, &tnstats);
 }
 
-static void tn_stats(void*)
+static void tn_stats()
 {
     show_stats(&gtnstats, tn_name);
 }
 
-static void tn_reset(void*)
+static void tn_reset()
 {
     memset(&gtnstats, 0, sizeof(gtnstats));
 }
@@ -374,7 +370,8 @@ const InspectApi tn_api =
     nullptr, // term
     tn_ctor,
     tn_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     tn_sum,
     tn_stats,

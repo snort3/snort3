@@ -1051,7 +1051,7 @@ class RpcDecode : public Inspector {
 public:
     RpcDecode(RpcModule*);
 
-    void configure(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
 
@@ -1064,10 +1064,11 @@ RpcDecode::RpcDecode(RpcModule* mod)
     mod->get_ports(config.ports);
 }
 
-void RpcDecode::configure(SnortConfig* sc)
+bool RpcDecode::configure(SnortConfig* sc)
 {
     _addPortsToStream5Filter(sc, &config);
     _addServicesToStream5Filter(sc);
+    return true;
 }
 
 void RpcDecode::show(SnortConfig*)
@@ -1185,17 +1186,17 @@ static void rd_dtor(Inspector* p)
     delete p;
 }
 
-static void rd_sum(void*)
+static void rd_sum()
 {
     sum_stats(&grdstats, &rdstats);
 }
 
-static void rd_stats(void*)
+static void rd_stats()
 {
     show_stats(&grdstats, mod_name);
 }
 
-static void rd_reset(void*)
+static void rd_reset()
 {
     memset(&grdstats, 0, sizeof(grdstats));
 }
@@ -1216,7 +1217,8 @@ static const InspectApi rd_api =
     nullptr, // term
     rd_ctor,
     rd_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     rd_sum,
     rd_stats,
