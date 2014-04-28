@@ -28,7 +28,7 @@
 #endif
 
 #include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
+#include "events/codec_events.h"
 
 namespace{
 

@@ -26,11 +26,10 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "snort.h"
 #include "codecs/decode_module.h"
 #include "managers/packet_manager.h"
-
+#include "events/codec_events.h"
 
 namespace
 {

@@ -14,7 +14,9 @@ event_queue.cc \
 event_wrapper.cc \
 event_wrapper.h \
 sfeventq.cc \
-sfeventq.h
+sfeventq.h \
+codec_events.cc \
+codec_events.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

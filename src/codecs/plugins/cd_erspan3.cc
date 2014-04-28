@@ -22,8 +22,8 @@
 
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+#include "events/codec_events.h"
 #include "protocols/ethertypes.h"
 
 

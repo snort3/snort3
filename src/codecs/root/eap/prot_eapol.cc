@@ -31,8 +31,7 @@
 #include "static_include.h"
 #include "prot_eapol.h"
 
-#include "codecs/codec_events.h"
-
+#include "events/codec_events.h"
 
 /*
  * Function: DecodeEapol(uint8_t *, uint32_t, Packet *)

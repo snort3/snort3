@@ -9,14 +9,12 @@ yet firm so feedback is welcome to get something we can live with.
 
 === Naming
 
-* Use camel case for types like WhizBangPdfChecker.
+* Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
 
 * Use lower case identifiers with underscore separators, eg some_function()
   and my_var.
 
 * Use lower case filenames with underscores.
-
-* Use lower case namespaces (preferably short, w/o underscores).
 
 === Comments
 

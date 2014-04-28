@@ -5,8 +5,6 @@ noinst_LIBRARIES = libcodecs.a
 libcodecs_a_SOURCES = \
 codec_api.cc \
 codec_api.h \
-codec_events.cc \
-codec_events.h \
 decode.cc \
 decode.h \
 decode_module.cc \

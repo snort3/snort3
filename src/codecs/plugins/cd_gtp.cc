@@ -30,7 +30,7 @@
 #include "protocols/gtp.h"
 #include "codecs/decode_module.h"
 #include "packet.h"
-#include "codecs/codec_events.h"
+#include "events/codec_events.h"
 #include "snort.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"

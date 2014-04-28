@@ -37,9 +37,8 @@
 #include "protocols/undefined_protocols.h"
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "packet_io/active.h"
-
+#include "events/codec_events.h"
 
 namespace
 {
