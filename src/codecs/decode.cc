@@ -55,9 +55,8 @@
 #include "normalize/normalize.h"
 #include "packet_io/sfdaq.h"
 
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
-
+#include "events/codec_events.h"
 
 void decoder_sum()
 {

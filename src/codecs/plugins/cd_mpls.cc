@@ -22,14 +22,13 @@
 
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
 #include "network_inspectors/perf_monitor/perf_base.h"
 #include "network_inspectors/perf_monitor/perf.h"
 #include "snort.h"
 #include "protocols/mpls.h"
 #include "protocols/undefined_protocols.h"
-#include "codecs/codec_events.h"
+#include "events/codec_events.h"
 #include "packet_io/active.h"
 #include "protocols/ethertypes.h"
 #include "protocols/mpls.h"
