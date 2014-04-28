@@ -42,11 +42,19 @@ public:
     SwipeCodec() : Codec("swipe"){};
     virtual ~SwipeCodec(){};
     
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, int &next_prot_id);
 };
 
 } // namespace
+
+
+void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
+{
+    proto_ids.push_back(SWIPE_PROT_ID);
+}
+
 
 bool SwipeCodec::decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, int &next_prot_id)
@@ -66,12 +74,6 @@ bool SwipeCodec::decode(const uint8_t* raw_packet, const uint32_t raw_len,
 // api
 //-------------------------------------------------------------------------
 
-
-static void get_protocol_ids(std::vector<uint16_t> &proto_ids)
-{
-    proto_ids.push_back(SWIPE_PROT_ID);
-}
-
 static Codec *ctor()
 {
     return new SwipeCodec();
@@ -82,18 +84,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "swipe_codec";
+static const char* name = "swipe";
 static const CodecApi swipe_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids,
 };
 
 
