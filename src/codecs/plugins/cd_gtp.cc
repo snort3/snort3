@@ -296,6 +296,8 @@ static const CodecApi gtp_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    get_protocol_ids,
 };
 
 #ifdef BUILDING_SO

@@ -21,6 +21,7 @@
 #include <list>
 #include <vector>
 #include <cstring>
+#include <mutex>
 #include "packet_manager.h"
 #include "framework/codec.h"
 #include "snort.h"
@@ -41,12 +42,15 @@ struct CdGenPegs{
     PegCount discards = 0;
 };
 
-std::vector<const char*> CdGenPegNames =
+std::vector<const char*> gen_peg_names =
 {
     "total",
     "other",
     "discards"
 };
+
+const uint8_t gen_peg_size = 3;
+const uint8_t stat_offset = gen_peg_size;
 
 } // anonymous
 
@@ -56,10 +60,13 @@ THREAD_LOCAL PreprocStats decodePerfStats;
 #endif
 
 static const uint16_t max_protocol_id = 65535;
-static std::array<Codec*, max_protocol_id> s_protocols;
 static std::list<const CodecApi*> s_codecs;
+static std::array<Codec*, max_protocol_id> s_protocols;
+
+// statistics information
+static THREAD_LOCAL std::array<PegCount, max_protocol_id + gen_peg_size> s_stats;
+static std::array<PegCount, max_protocol_id + gen_peg_size> g_stats;
 static THREAD_LOCAL CdGenPegs pkt_cnt;
-static CdGenPegs gpkt_cnt;
 
 
 //-------------------------------------------------------------------------
@@ -94,8 +101,6 @@ void PacketManager::release_plugins()
     {
         if(p->gterm)
             p->gterm();
-        if(p->tterm)
-            p->tterm();
 //        p->dtor();
     }
     s_codecs.clear();
@@ -144,6 +149,7 @@ void PacketManager::decode(
             break;
         }           
 
+        s_stats[curr_prot_id + stat_offset]++;
         PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, lyr_len);
         curr_prot_id = next_prot_id;
         next_prot_id = -1;
@@ -221,10 +227,46 @@ void PacketManager::set_grinder(void)
     }
 }
 
+void PacketManager::thread_term()
+{
+    for ( auto* p : s_codecs )
+    {
+        if(p->tterm)
+            p->tterm();
+    }
+
+    accumulate();
+}
+
 void PacketManager::dump_stats()
 {
-//    show_percent_stats(&pegs[0], &pegNames[0], pegNames.size(),
-//        "codecs");
+    std::vector<const char*> pkt_names;
+    pkt_names.resize(max_protocol_id + stat_offset);
+
+    for(int i = 0; i < gen_peg_names.size(); i++)
+        pkt_names[i] = gen_peg_names[i];
+
+
+    for (int i = 0; i < max_protocol_id; i++)
+        if(s_protocols[i])
+            pkt_names[i + stat_offset] = s_protocols[i]->get_name();
+
+    show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
+        "codecs");
+}
+
+void PacketManager::accumulate()
+{
+    static std::mutex stats_mutex;
+    stats_mutex.lock();
+
+    s_stats[0] = pkt_cnt.total_processed;
+    s_stats[1] = pkt_cnt.other_codecs;
+    s_stats[2] = pkt_cnt.discards;
+
+    sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
+
+    stats_mutex.unlock();
 }
 
 bool PacketManager::has_codec(uint16_t cd_id)

@@ -30,6 +30,7 @@
 #include "time/profiler.h"
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
+#include "protocols/eth.h"
 
 
 namespace
@@ -53,8 +54,6 @@ public:
 
 } // anonymous
 
-static const uint16_t MAX_LENGTH = 1500;
-static const uint16_t MIN_ETHERTYPE = 1536;
 
 
 //--------------------------------------------------------------------
@@ -115,7 +114,7 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             );
 
     next_prot_id = ntohs(p->eh->ether_type);
-    if (next_prot_id > MIN_ETHERTYPE )
+    if (next_prot_id > eth::min_ethertype() )
     {
         lyr_len = eth::hdr_len();
         return true;

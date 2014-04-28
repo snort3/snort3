@@ -51,6 +51,7 @@ public:
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
     static void init_codecs();
     static void dump_stats();
+    static void thread_term();
 
     static bool has_codec(uint16_t);
 
@@ -58,6 +59,7 @@ public:
 //    static void encode_format(Packet *);
 
 private:
+    static void accumulate();
 
 };
 

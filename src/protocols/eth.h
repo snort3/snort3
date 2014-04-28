@@ -33,9 +33,10 @@ namespace eth
 
 namespace detail
 {
-    const uint16_t HEADER_LEN = 14;
-    const uint16_t MTU_LEN = 1500;
-
+const uint16_t HEADER_LEN = 14;
+const uint16_t MTU_LEN = 1500;
+const uint16_t MAX_FRAME_LENGTH = 1500;
+const uint16_t MIN_ETHERTYPE = 1536;
 } // namespace detail
 
 struct EtherHdr
@@ -54,6 +55,16 @@ inline uint16_t hdr_len()
 inline uint16_t mtu_len()
 {
     return detail::MTU_LEN;
+}
+
+inline uint16_t min_ethertype()
+{
+    return detail::MIN_ETHERTYPE;
+}
+
+inline uint16_t max_frame_length()
+{   
+    return detail::MAX_FRAME_LENGTH;
 }
 
 } // namespace eth

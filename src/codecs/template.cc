@@ -66,12 +66,12 @@ bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 //-------------------------------------------------------------------------
 
 
-void NameCodec::get_data_link_type(std::vector<int>&)
+static void get_data_link_type(std::vector<int>&)
 {
 //    v.push_back(DLT_ID);
 }
 
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
 //    v.push_back(PROTO_TYPE);
 }

@@ -33,21 +33,16 @@ namespace ipv4
 
 namespace detail
 {
-    /* ip option type codes */
-
+/* ip option type codes */
 const uint32_t IP4_THIS_NET  = 0x00;  // msb
 const uint32_t IP4_MULTICAST = 0x0E;  // ms nibble
 const uint32_t IP4_RESERVED = 0x0F;  // ms nibble
 const uint32_t IP4_LOOPBACK = 0x7F;  // msb
 const uint32_t IP4_BROADCAST = 0xffffffff;
-
-
 const uint16_t C_ETHERNET_TYPE_IP = 0x0800;
 const uint16_t IPIP_PROT_ID = 4;
-
-
 const uint8_t IP_HEADER_LEN = 20;
-} /* detail */
+} // namespace detail
 
 
 
@@ -229,7 +224,6 @@ inline uint16_t prot_id()
     return detail::IPIP_PROT_ID;
 }
 
-
 } /* namespace ipv4 */
 
 
@@ -240,30 +234,17 @@ typedef ipv4::IP4Hdr IP4Hdr;
 
 
 const uint8_t IPOPT_EOL = 0x00;
- const uint8_t    IPOPT_NOP = 0x01;
- const uint8_t    IPOPT_RR = 0x07;
- const uint8_t    IPOPT_TS = 0x44;
- const uint8_t    IPOPT_SECURITY = 0x82;
-const uint8_t     IPOPT_LSRR = 0x83;
-const uint8_t     IPOPT_LSRR_E = 0x84;
-const uint8_t     IPOPT_ESEC = 0x85;
-const uint8_t     IPOPT_SATID = 0x88;
- const uint8_t    IPOPT_SSRR = 0x89;
-const uint8_t     IPOPT_RTRALT = 0x94;
-const uint8_t     IPOPT_ANY = 0xff;
-#if 0
-#define IPOPT_RR ipv4::IPOptionCodes::IPOPT_RR
-#define IPOPT_EOL ipv4::IPOptionCodes::IPOPT_EOL
-#define IPOPT_NOP ipv4::IPOptionCodes::IPOPT_NOP
-#define IPOPT_TS ipv4::IPOptionCodes::IPOPT_TS
-#define IPOPT_ESEC ipv4::IPOptionCodes::IPOPT_ESEC
-#define IPOPT_SECURITY ipv4::IPOptionCodes::IPOPT_SECURITY
-#define IPOPT_LSRR ipv4::IPOptionCodes::IPOPT_LSRR
-#define IPOPT_LSRR_E ipv4::IPOptionCodes::IPOPT_LSRR_E
-#define IPOPT_SSRR ipv4::IPOptionCodes::IPOPT_SSRR
-#define IPOPT_SATID ipv4::IPOptionCodes::IPOPT_SATID
-#define IPOPT_RTRALT ipv4::IPOptionCodes::IPOPT_RTRALT
-#endif
+const uint8_t IPOPT_NOP = 0x01;
+const uint8_t IPOPT_RR = 0x07;
+const uint8_t IPOPT_TS = 0x44;
+const uint8_t IPOPT_SECURITY = 0x82;
+const uint8_t IPOPT_LSRR = 0x83;
+const uint8_t IPOPT_LSRR_E = 0x84;
+const uint8_t IPOPT_ESEC = 0x85;
+const uint8_t IPOPT_SATID = 0x88;
+const uint8_t IPOPT_SSRR = 0x89;
+const uint8_t IPOPT_RTRALT = 0x94;
+const uint8_t IPOPT_ANY = 0xff;
 
 #define IP_HEADER_LEN ipv4::hdr_len()
 
