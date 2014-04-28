@@ -465,7 +465,7 @@ void ConfigIgnorePorts(SnortConfig *sc, int protocol, const char *ports)
     uint16_t hi_port = 0, lo_port = 0;
     int     not_flag;
 
-    if ((ports == NULL))
+    if (ports == NULL)
         return;
 
     toks = mSplit(ports, " \t", 0, &num_toks, 0);

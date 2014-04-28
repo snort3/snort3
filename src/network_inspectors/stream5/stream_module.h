@@ -28,7 +28,7 @@
 #include "snort_types.h"
 #include "framework/module.h"
 
-class SnortConfig;
+struct SnortConfig;
 
 //-------------------------------------------------------------------------
 // stream_global module

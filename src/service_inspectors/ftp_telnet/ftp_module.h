@@ -39,7 +39,7 @@
 #define FTP_BOUNCE                       8
 #define FTP_EVASIVE_TELNET_CMD           9
 
-class SnortConfig;
+struct SnortConfig;
 
 //-------------------------------------------------------------------------
 
