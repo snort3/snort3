@@ -352,7 +352,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_CODEC:
-        //PacketManager::instantiate((IpsApi*)api, mod, sc);
+        PacketManager::instantiate((CodecApi*)api, mod, sc);
         break;
 
     case PT_LOGGER:

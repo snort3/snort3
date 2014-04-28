@@ -32,6 +32,7 @@
 #include "protocols/packet.h"
 #include "protocols/undefined_protocols.h"
 #include "time/profiler.h"
+#include "parser/parser.h"
 
 
 namespace
@@ -61,12 +62,35 @@ THREAD_LOCAL PreprocStats decodePerfStats;
 
 static const uint16_t max_protocol_id = 65535;
 static std::list<const CodecApi*> s_codecs;
-static std::array<Codec*, max_protocol_id> s_protocols;
+//static std::array<Codec*, max_protocol_id> s_protocols;
 
 // statistics information
 static THREAD_LOCAL std::array<PegCount, max_protocol_id + gen_peg_size> s_stats;
 static std::array<PegCount, max_protocol_id + gen_peg_size> g_stats;
 static THREAD_LOCAL CdGenPegs pkt_cnt;
+
+static std::array<uint8_t, max_protocol_id> s_proto_map;
+static std::array<Codec*, 256> s_protocols;
+
+extern const BaseApi* cd_unimplemented;
+static THREAD_LOCAL uint8_t grinder;
+static bool initial_instatiation = true;
+
+//-------------------------------------------------------------------------
+// helper functions
+//-------------------------------------------------------------------------
+
+// note that we now have multiple preproc configs saved by parser
+// (s5-global, s5-tcp, ..., etc.) but just one ppapi.  that means
+// we must call the config func multiple times but add only the 1st
+// instance to the policy list.
+static inline const CodecApi* GetApi(const char* keyword)
+{
+    for ( auto* p : s_codecs )
+        if ( !strncasecmp(p->base.name, keyword, strlen(p->base.name)) )
+            return p;
+    return NULL;
+}
 
 
 //-------------------------------------------------------------------------
@@ -93,15 +117,23 @@ void PacketManager::add_plugin(const CodecApi* api)
                         api->base.name);  
 
     s_codecs.push_back(api);
+
+    if (api->ginit)
+        api->ginit();
 }
 
 void PacketManager::release_plugins()
 {
+    // loop through classes
+    // find corresponding api
+    // delete class using api and module
+    // delete class from codecs_array
+    // remove api pointer
     for ( auto* p : s_codecs )
     {
+//        p->dtor();
         if(p->gterm)
             p->gterm();
-//        p->dtor();
     }
     s_codecs.clear();
 }
@@ -113,6 +145,22 @@ void PacketManager::dump_plugins()
     for ( auto* p : s_codecs )
         d.dump(p->base.name, p->base.version);
 }
+
+void PacketManager::instantiate(const CodecApi* cd_api, Module* m, SnortConfig* sc)
+{
+    const CodecApi *p = GetApi(cd_api->base.name);
+
+    if(!p)
+    {
+        ParseError("Unknown codec: '%s'.", cd_api->base.name);
+    }
+    else
+    {
+        p->ctor();
+    }
+}
+
+
 
 //-------------------------------------------------------------------------
 // grinder
@@ -169,6 +217,8 @@ void PacketManager::set_grinder(void)
     std::vector<uint16_t> proto;
     std::vector<int> dlt;
     bool codec_registered;
+    uint16_t cd_cnt = 0;
+
 
     int daq_dlt = DAQ_GetBaseProtocol();
 
@@ -176,11 +226,6 @@ void PacketManager::set_grinder(void)
     {
         codec_registered = false;
 
-        if (p->ginit)
-            p->ginit();
-
-        if (p->tinit)
-            p->tinit();
 
         // TODO:  add module
         // null check performed when plugin added.
@@ -224,6 +269,10 @@ void PacketManager::set_grinder(void)
 
         if (!codec_registered)
             WarningMessage("The Codec %s is never used\n", cd->get_name());
+
+
+        if (p->tinit)
+            p->tinit();
     }
 }
 

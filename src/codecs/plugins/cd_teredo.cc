@@ -53,9 +53,6 @@ public:
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    
 };
 
 } // anonymous namespace
@@ -117,7 +114,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 
 
-void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(PROTOCOL_TEREDO);
 }
@@ -144,7 +141,7 @@ static const CodecApi teredo_api =
     ctor, // ctor
     dtor, // dtor
     NULL,
-    NULL
+    get_protocol_ids
 };
 
 
