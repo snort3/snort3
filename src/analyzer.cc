@@ -382,6 +382,7 @@ static void snort_thread_term()
 
     SnortEventqFree();
     Active_Term();
+    PacketManager::thread_term();
     Encode_Term();
 }
 

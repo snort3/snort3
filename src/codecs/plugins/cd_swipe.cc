@@ -92,6 +92,8 @@ static const CodecApi swipe_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    NULL,
+    get_protocol_ids,
 };
 
 

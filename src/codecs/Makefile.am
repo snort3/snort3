@@ -11,7 +11,6 @@ decode.cc \
 decode.h \
 decode_module.cc \
 decode_module.h \
-decode_stats.h \
 encode.cc \
 encode.h \
 layer.h \
