@@ -119,6 +119,7 @@ void Flow::clear(bool freeAppData)
 int Flow::set_application_data(FlowData* fd)
 {
     FlowData *appData = get_application_data(fd->get_id());
+    assert(appData != fd);
 
     if (appData)
         free_application_data(appData);

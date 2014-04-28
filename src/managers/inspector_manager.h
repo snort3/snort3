@@ -49,15 +49,12 @@ public:
     static void accumulate(SnortConfig*);
     static void reset_stats(SnortConfig*);
     static void reset(SnortConfig*);
-    static void shutdown(SnortConfig*);
 
     static void instantiate(const InspectApi*, Module*, SnortConfig*);
 
-    static void configure(SnortConfig*);
-    static int check_config(SnortConfig*);
+    static bool configure(SnortConfig*);
     static void print_config(SnortConfig*);
 
-    static void post_config(SnortConfig*);
     static void thread_init(SnortConfig*, unsigned);
     static void thread_term(SnortConfig*);
 

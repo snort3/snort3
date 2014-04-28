@@ -381,7 +381,9 @@ static void SnortInit(int argc, char **argv)
     {
         OrderRuleLists(snort_conf, "activation dynamic drop sdrop reject alert pass log");
     }
-    InspectorManager::configure(snort_conf);
+    if ( !InspectorManager::configure(snort_conf) )
+        SnortFatalExit();
+
     InspectorManager::print_config(snort_conf); // FIXIT make optional
 
     ParseRules(snort_conf);
@@ -397,10 +399,6 @@ static void SnortInit(int argc, char **argv)
      * and err on 'special' GID without OTN.
      */
     SetRuleStates(snort_conf);
-
-    /* Verify the preprocessors are configured properly */
-    if (InspectorManager::check_config(snort_conf))
-        SnortFatalExit();
 
     SetPortFilterLists(snort_conf);  // FIXIT need to do these on reload?
     InitServiceFilterStatus(snort_conf);
@@ -682,7 +680,11 @@ static SnortConfig * get_reload_config(void)
         sc->thiszone = gmt2local(0);
 #endif
 
-    InspectorManager::configure(sc);
+    if ( !InspectorManager::configure(sc) )
+    {
+        SnortConfFree(sc);
+        return NULL;
+    }
 
     FlowbitResetCounts();
     ParseRules(sc);
@@ -694,15 +696,7 @@ static SnortConfig * get_reload_config(void)
     //PrintRuleOrder(sc->rule_lists);
 
     SetRuleStates(sc);
-
-    if (InspectorManager::check_config(sc))
-    {
-        SnortConfFree(sc);
-        return NULL;
-    }
-
     SetPortFilterLists(sc);
-    InspectorManager::post_config(sc);
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify();

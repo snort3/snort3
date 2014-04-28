@@ -344,9 +344,6 @@ static void snort_thread_init(const char* intf)
 
     PacketManager::set_grinder();
 
-    // perfmon, for one, opens a log file for writing here
-    InspectorManager::post_config(snort_conf);
-
     FileAPIPostInit();
     Encode_Init();
 
