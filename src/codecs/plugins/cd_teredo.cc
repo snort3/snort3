@@ -50,12 +50,19 @@ public:
     TeredoCodec() : Codec("teredo"){};
     ~TeredoCodec(){};
 
-
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, int &next_prot_id);
 };
 
 } // anonymous namespace
+
+
+void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(PROTOCOL_TEREDO);
+}
+
 
 bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, int &next_prot_id)
@@ -114,10 +121,9 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(PROTOCOL_TEREDO);
-}
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 static Codec* ctor()
 {
@@ -130,18 +136,22 @@ static void dtor(Codec *cd)
 }
 
 static const char* name = "teredo";
-
 static const CodecApi teredo_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids
 };
 
 

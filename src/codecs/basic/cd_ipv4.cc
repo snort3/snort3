@@ -51,6 +51,7 @@ public:
     Ipv4Codec() : Codec("ipv4"){};
     ~Ipv4Codec(){};
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_packet, const uint32_t len, 
         Packet *, uint16_t &lyr_len, int &next_prot_id);
 
@@ -90,6 +91,12 @@ static inline unsigned short in_chksum_ip( unsigned short *, int);
 
 static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
 
+
+void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ipv4::ethertype_ip());
+    v.push_back(ipv4::prot_id());
+}
 
 //--------------------------------------------------------------------
 // prot_ipv4.cc::IP4 decoder
@@ -984,25 +991,23 @@ static void dtor(Codec *cd)
 }
 
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ipv4::ethertype_ip());
-    v.push_back(ipv4::prot_id());
-}
-
-static const char* name = "ipv4_decode";
-
+static const char* name = "ipv4";
 static const CodecApi ipv4_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    { 
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr
+    },
     ipv4_codec_ginit, // pinit
     ipv4_codec_gterm, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL, 
-    get_protocol_ids,
 };
 
 

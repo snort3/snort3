@@ -39,12 +39,14 @@ namespace
 class Icmp6Codec : public Codec
 {
 public:
-    Icmp6Codec() : Codec("Icmp6"){};
+    Icmp6Codec() : Codec("icmp6"){};
     ~Icmp6Codec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, int &next_prot_id);
+
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -55,6 +57,12 @@ public:
 
 
 } // anonymous namespace
+
+
+void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(IPPROTO_ICMPV6);
+}
 
 
 
@@ -597,11 +605,6 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *ph,
 }
 
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ICMPV6);
-}
-
 static Codec* ctor()
 {
     return new Icmp6Codec();
@@ -612,19 +615,24 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "icmp6_codec";
+static const char* name = "icmp6";
 
 static const CodecApi ipv6_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids
 };
 
 

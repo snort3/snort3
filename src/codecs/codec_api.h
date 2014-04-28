@@ -21,35 +21,7 @@
 #ifndef CODECS_H
 #define CODECS_H
 
-struct BaseApi;
 
-extern const BaseApi* cd_eth;
-extern const BaseApi* cd_ipv4;
-extern const BaseApi* cd_ipv6;
-extern const BaseApi* cd_icmp4;
-extern const BaseApi* cd_icmp6;
-extern const BaseApi* cd_tcp;
-extern const BaseApi* cd_udp;
-extern const BaseApi* cd_esp;
-
-#ifdef STATIC_DECODERS
-extern const BaseApi* cd_ah;
-extern const BaseApi* cd_arp;
-extern const BaseApi* cd_erspan2;
-extern const BaseApi* cd_erspan3; 
-extern const BaseApi* cd_ethloopback; 
-extern const BaseApi* cd_gre;
-extern const BaseApi* cd_gtp;
-extern const BaseApi* cd_mpls;
-extern const BaseApi* cd_pppencap;
-extern const BaseApi* cd_pppoe;
-extern const BaseApi* cd_swipe;
-extern const BaseApi* cd_teredo;
-extern const BaseApi* cd_transbridge;
-extern const BaseApi* cd_vlan;
-
-#endif
-
-extern const BaseApi* codecs[];
+extern const struct BaseApi* codecs[];
 
 #endif

@@ -40,6 +40,7 @@ public:
     ~VlanCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, int &next_prot_id);
 
@@ -49,27 +50,20 @@ public:
     virtual inline PROTO_ID get_proto_id() { return PROTO_VLAN; };
 };
 
-struct CdPegs{
-    PegCount processed = 0;
-    PegCount discards = 0;
-};
+} // namespace
 
-std::vector<const char*> peg_names =
-{
-    "NameCodec_processed",
-    "NameCodec_discards",
-};
-
-
-} // anonymous namespace
-
-static THREAD_LOCAL CdPegs counts;
-static CdPegs gcounts;
 static const uint16_t ETHERNET_TYPE_8021Q = 0x8100;
+
 
 static inline uint32_t len_vlan_llc_other()
 {
     return (sizeof(VlanTagHdr) + sizeof(EthLlc) + sizeof(EthLlcOther));
+}
+
+
+void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_8021Q);
 }
 
 
@@ -184,13 +178,6 @@ void VLAN_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 // api
 //-------------------------------------------------------------------------
 
-
-
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_8021Q);
-}
-
 static Codec* ctor()
 {
     return new VlanCodec();
@@ -201,18 +188,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "vlan_codec";
+static const char* name = "vlan";
 static const CodecApi vlan_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL, // get_dlt
-    get_protocol_ids,
 };
 
 

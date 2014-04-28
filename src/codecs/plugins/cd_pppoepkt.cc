@@ -31,10 +31,11 @@ namespace
 class PPPoEPkt : public Codec
 {
 public:
-    PPPoEPkt() : Codec("PPP_over_Eth"){};
+    PPPoEPkt() : Codec("ppp_over_eth"){};
     ~PPPoEPkt(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, int &next_prot_id);
     
@@ -70,7 +71,14 @@ const uint16_t PPPoE_TAG_AC_SYSTEM_ERROR = 0x0202;
 const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
 
 
-} // anonymous namespace
+} // namespace
+
+
+void PPPoEPkt::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_PPPoE_DISC);
+    v.push_back(ETHERNET_TYPE_PPPoE_SESS);
+}
 
 
 //--------------------------------------------------------------------
@@ -283,11 +291,9 @@ EncStatus PPPoE_Encode (EncState* enc, Buffer* in, Buffer* out)
 }
 #endif
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_PPPoE_DISC);
-    v.push_back(ETHERNET_TYPE_PPPoE_SESS);
-}
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 static Codec* ctor()
 {
@@ -299,18 +305,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "pppoepkt_codec";
+static const char* name = "ppp_over_eth";
 static const CodecApi pppoe_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC, 
+        name, 
+        CDAPI_PLUGIN_V0, 
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr,
-    get_protocol_ids,
 };
 
 

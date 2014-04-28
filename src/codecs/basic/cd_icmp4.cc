@@ -49,6 +49,7 @@ public:
     Icmp4Codec() : Codec("icmp4"){};
     ~Icmp4Codec() {};
     
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, int &next_prot_id);
 
@@ -67,6 +68,11 @@ private:
 
 } // namespace
 
+
+void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
+{
+    v.push_back(IPPROTO_ICMP);
+}
 
 
 
@@ -554,24 +560,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void get_protocol_ids(std::vector<uint16_t> &proto_ids)
-{
-    proto_ids.push_back(IPPROTO_ICMP);
-}
-
-static const char* name = "icmp4_codec";
-
+static const char* name = "icmp4";
 static const CodecApi icmp4_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    { 
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids,
 };
 
 

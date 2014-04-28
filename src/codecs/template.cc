@@ -36,7 +36,7 @@ class NameCodec : public Codec
 {
 public:
     NameCodec() : Codec("NAME"){};
-    ~NameCodec();
+    ~NameCodec() {};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 

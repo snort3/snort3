@@ -53,9 +53,6 @@ public:
     static void set_grinder();  // thread_init
     static void thread_term();
 
-    static void init_codecs();
-    static void term_codecs();
-
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
     static void dump_stats();
 

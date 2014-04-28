@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,56 +17,53 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_null.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if 0
-
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-#endif
 
 #include "framework/codec.h"
 #include "events/codec_events.h"
+#include "codecs/decode_module.h"
+
 
 namespace
 {
 
-class NameCodec : public Codec
+class NullCodec : public Codec
 {
 public:
-    NameCodec() : Codec("NAME"){};
-    ~NameCodec();
+    NullCodec() : Codec("null"){};
+    ~NullCodec(){};
 
-
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
-    
+        Packet *, uint16_t &lyr_len, int &next_prot_id) { return false; };
+    virtual inline bool is_default_codec() { return true; };
 };
 
-} // anonymous namespace
+} // namespace
 
 
 
 
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
+
+
+void NullCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ipv6::ethertype());
-    v.push_back(IPPROTO_IPV6);
+    // placeholder to avoid error
 }
 
 static Codec* ctor()
 {
-    return new NameCodec();
+    return new NullCodec();
 }
 
 static void dtor(Codec *cd)
@@ -76,11 +71,18 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "name_codec";
 
-static const CodecApi ipv6_api =
+static const char* name = "null";
+static const CodecApi null_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
@@ -89,3 +91,4 @@ static const CodecApi ipv6_api =
     dtor, // dtor
 };
 
+const BaseApi* cd_null = &null_api.base;

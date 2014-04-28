@@ -39,11 +39,6 @@ struct Packet;
 // to be useful, these must be explicit (*_V0, *_V1, ...)
 #define CDAPI_PLUGIN_V0 0
 
-//-------------------------------------------------------------------------
-// FIXIT just starting points for Codec and CodecApi
-
-
-
 
 
 class Codec {
@@ -52,33 +47,33 @@ public:
 
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, int &next_prot_id) = 0;
-
-    // do nothing unless methods overridden.
-    // ONE OF THESE METHODS MUST BE IMPLEMENTED!!
+    // Get the codec's name
     virtual inline const char* get_name(){return name; };
+    // Registers this Codec's data link type (as defined by libpcap)
+    virtual void get_data_link_type(std::vector<int>&) {};
+    // Register the code's protocol ID's and Ethertypes
+    virtual void get_protocol_ids(std::vector<uint16_t>&) = 0;
+    // used by packet manager to determine the default/null codec
+    virtual inline bool is_default_codec() { return false; };
 
 
+    // DELETE
     virtual inline PROTO_ID get_proto_id() { return PROTO_MAX; };
 
 
 protected:
     Codec(const char* s) { name = s; };
 
-
-
 private:
     const char* name;
 };
 
-struct _daq_pkthdr;
 
-typedef int (*cd_eval_f)(void*, Packet*);
 //typedef cd_eval_f (*cd_new_f)(const char* key, void**);
 typedef Codec* (*cd_new_f)();
 
 typedef void (*cd_del_f)(Codec *);
 typedef void (*cd_aux_f)();
-typedef bool (*decode_f)(const uint8_t *, const uint32_t, Packet *, uint16_t &, uint16_t &);
 typedef void (*cd_dlt_f)(std::vector<int>&v);
 typedef void (*cd_prot_id_f)(std::vector<uint16_t>&);
 
@@ -92,7 +87,6 @@ struct CodecApi
 {
     BaseApi base;
 
-
     // these may be nullptr
     cd_aux_f ginit;  // initialize global plugin data
     cd_aux_f gterm;  // clean-up pinit()
@@ -103,9 +97,6 @@ struct CodecApi
     // these must be set
     cd_new_f ctor;   // get eval optional instance data
     cd_del_f dtor;   // clean up instance data
-
-    cd_dlt_f dlt;   // get the data link type
-    cd_prot_id_f proto_id;  // get the protocol ids
 };
 
 #endif

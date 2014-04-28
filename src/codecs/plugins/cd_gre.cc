@@ -33,10 +33,11 @@ namespace
 class GreCodec : public Codec
 {
 public:
-    GreCodec() : Codec("GRE"){};
+    GreCodec() : Codec("gre"){};
     ~GreCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, int &next_prot_id);
 
@@ -68,22 +69,14 @@ static const uint32_t GRE_V1_ACK_LEN = 4;
 #define GRE_RECUR(x)   (x->flags & 0x07)
 #define GRE_FLAGS(x)   (x->version & 0xF8)
 
-#if 0
-#define GRE_HEADER_LEN 4
-#define GRE_CHKSUM_LEN 2
-#define GRE_OFFSET_LEN 2
-#define GRE_KEY_LEN 4
-#define GRE_SEQ_LEN 4
-#define GRE_SRE_HEADER_LEN 4
-#endif
-
 } // anonymous namespace
 
 
+void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(GRE_PROT_ID);
+}
 
-//--------------------------------------------------------------------
-// decode.c::GRE
-//--------------------------------------------------------------------
 
 /*
  * Function: DecodeGRE(uint8_t *, uint32_t, Packet *)
@@ -251,10 +244,6 @@ void GRE_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 // api
 //-------------------------------------------------------------------------
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(GRE_PROT_ID);
-}
 
 static Codec* ctor()
 {
@@ -266,18 +255,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "gre_codec";
+static const char* name = "gre";
 static const CodecApi gre_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr,
-    get_protocol_ids,
 };
 
 #ifdef BUILDING_SO

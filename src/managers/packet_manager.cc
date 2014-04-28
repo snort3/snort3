@@ -69,12 +69,9 @@ static THREAD_LOCAL std::array<PegCount, max_protocol_id + gen_peg_size> s_stats
 static std::array<PegCount, max_protocol_id + gen_peg_size> g_stats;
 static THREAD_LOCAL CdGenPegs pkt_cnt;
 
-static std::array<uint8_t, max_protocol_id> s_proto_map;
-static std::array<Codec*, 256> s_protocols;
-
-extern const BaseApi* cd_unimplemented;
-static THREAD_LOCAL uint8_t grinder;
-static bool initial_instatiation = true;
+static std::array<uint8_t, max_protocol_id> s_proto_map{};
+static std::array<Codec*, 256> s_protocols{};
+static THREAD_LOCAL uint8_t grinder = 0;
 
 //-------------------------------------------------------------------------
 // helper functions
@@ -117,9 +114,6 @@ void PacketManager::add_plugin(const CodecApi* api)
                         api->base.name);  
 
     s_codecs.push_back(api);
-
-    if (api->ginit)
-        api->ginit();
 }
 
 void PacketManager::release_plugins()
@@ -148,19 +142,118 @@ void PacketManager::dump_plugins()
 
 void PacketManager::instantiate(const CodecApi* cd_api, Module* m, SnortConfig* sc)
 {
+    static uint16_t codec_id = 1;
+    std::vector<uint16_t> ids;
+
     const CodecApi *p = GetApi(cd_api->base.name);
 
     if(!p)
-    {
         ParseError("Unknown codec: '%s'.", cd_api->base.name);
-    }
-    else
+
+    // global init here to ensure the global policy has already been configured
+    if (p->ginit)
+        p->ginit();
+
+    Codec *cd = p->ctor();
+    cd->get_protocol_ids(ids);
+    for (auto id : ids)
     {
-        p->ctor();
+        if(s_proto_map[id] != 0)
+            WarningMessage("The Codecs %s and %s have both been registered "
+                "for protocol_id %d. Codec %s will be used\n",
+                s_protocols[s_proto_map[id]]->get_name(), cd->get_name(), 
+                id, cd->get_name());
+
+        s_proto_map[id] = codec_id;
     }
+
+    if(cd->is_default_codec())
+    {
+        if(s_protocols[0])
+            s_protocols[0] = cd;
+        else
+            FatalError("Only one Codec may be the registered as default, "
+                "but both the %s and %s return 'true' when "
+                " the function default_codec().\n",
+                s_protocols[0]->get_name(), cd->get_name());
+    }
+
+    s_protocols[codec_id++] = cd;
 }
 
+void PacketManager::set_grinder(void)
+{
+    for ( auto* p : s_codecs )
+        if (p->tinit)
+            p->tinit();
 
+    int daq_dlt = DAQ_GetBaseProtocol();
+    for(int i = 0; i < s_protocols.size(); i++)
+    {
+        Codec *cd = s_protocols[i];
+        std::vector<int> data_link_types;
+
+        cd->get_data_link_type(data_link_types);
+        for (auto curr_dlt : data_link_types)
+        {
+           if (curr_dlt == daq_dlt)
+           {
+                if (grinder != 0)
+                    WarningMessage("The Codecs %s and %s have both been registered "
+                        "as the raw decoder. Codec %s will be used\n",
+                        s_protocols[GRINDER_ID]->get_name(), cd->get_name(), 
+                        cd->get_name());
+
+                grinder = i;
+            }
+        }
+    }
+
+    if(!grinder)
+        FatalError("Unable to find a Codec with data link type %d!!\n", daq_dlt);
+}
+
+void PacketManager::thread_term()
+{
+    for ( auto* p : s_codecs )
+    {
+        if(p->tterm)
+            p->tterm();
+    }
+
+    accumulate();
+}
+
+void PacketManager::dump_stats()
+{
+    std::vector<const char*> pkt_names;
+    pkt_names.resize(max_protocol_id + stat_offset);
+
+    for(int i = 0; i < gen_peg_names.size(); i++)
+        pkt_names[i] = gen_peg_names[i];
+
+
+    for (int i = 0; i < max_protocol_id; i++)
+        if(s_protocols[i])
+            pkt_names[i + stat_offset] = s_protocols[i]->get_name();
+
+    show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
+        "codecs");
+}
+
+void PacketManager::accumulate()
+{
+    static std::mutex stats_mutex;
+    stats_mutex.lock();
+
+    s_stats[0] = pkt_cnt.total_processed;
+    s_stats[1] = pkt_cnt.other_codecs;
+    s_stats[2] = pkt_cnt.discards;
+
+    sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
+
+    stats_mutex.unlock();
+}
 
 //-------------------------------------------------------------------------
 // grinder
@@ -209,113 +302,6 @@ void PacketManager::decode(
     p->dsize = len;
     p->data = pkt;
     PREPROC_PROFILE_END(decodePerfStats);
-}
-
-
-void PacketManager::set_grinder(void)
-{
-    std::vector<uint16_t> proto;
-    std::vector<int> dlt;
-    bool codec_registered;
-    uint16_t cd_cnt = 0;
-
-
-    int daq_dlt = DAQ_GetBaseProtocol();
-
-    for ( auto* p : s_codecs )
-    {
-        codec_registered = false;
-
-
-        // TODO:  add module
-        // null check performed when plugin added.
-        Codec *cd = p->ctor();
-
-
-        proto.clear();
-        if(p->proto_id)
-            p->proto_id(proto);
-        for (auto proto_id : proto)
-        {
-            if(s_protocols[proto_id] != NULL)
-                WarningMessage("The Codecs %s and %s have both been registered "
-                    "for protocol_id %d. Codec %s will be used\n",
-                    s_protocols[proto_id]->get_name(), cd->get_name(), 
-                    proto_id, cd->get_name());
-            s_protocols[proto_id] = cd;
-            codec_registered = true;
-        }
-        // add protocols to the array
-
-
-        dlt.clear();
-        if(p->dlt)
-            p->dlt(dlt);
-        // set the grinder if the data link types match
-        for (auto curr_dlt : dlt )
-        {
-           if (curr_dlt == daq_dlt)
-           {
-                if (s_protocols[GRINDER_ID] != NULL)
-                    WarningMessage("The Codecs %s and %s have both been registered "
-                        "as the raw decoder. Codec %s will be used\n",
-                        s_protocols[GRINDER_ID]->get_name(), cd->get_name(), 
-                        cd->get_name());
-
-                s_protocols[GRINDER_ID] = cd;
-                codec_registered = true;
-            }
-        }
-
-        if (!codec_registered)
-            WarningMessage("The Codec %s is never used\n", cd->get_name());
-
-
-        if (p->tinit)
-            p->tinit();
-    }
-}
-
-void PacketManager::thread_term()
-{
-    for ( auto* p : s_codecs )
-    {
-        if(p->tterm)
-            p->tterm();
-    }
-
-    accumulate();
-}
-
-void PacketManager::dump_stats()
-{
-    std::vector<const char*> pkt_names;
-    pkt_names.resize(max_protocol_id + stat_offset);
-
-    for(int i = 0; i < gen_peg_names.size(); i++)
-        pkt_names[i] = gen_peg_names[i];
-
-
-    for (int i = 0; i < max_protocol_id; i++)
-        if(s_protocols[i])
-            pkt_names[i + stat_offset] = s_protocols[i]->get_name();
-
-    show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
-        "codecs");
-}
-
-void PacketManager::accumulate()
-{
-    static std::mutex stats_mutex;
-    stats_mutex.lock();
-
-    s_stats[0] = pkt_cnt.total_processed;
-    s_stats[1] = pkt_cnt.other_codecs;
-    s_stats[2] = pkt_cnt.discards;
-
-    sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
-
-    stats_mutex.unlock();
 }
 
 bool PacketManager::has_codec(uint16_t cd_id)
