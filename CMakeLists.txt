@@ -14,6 +14,7 @@ include (cmake/macros.cmake)
 include (cmake/createCommandLineOptions.txt) 
 include (cmake/setConfigureOptions.txt) 
 include (cmake/includePredefinedPackages.txt)
+include (cmake/platforms.txt)
 include (cmake/sanityChecks.txt)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}")
