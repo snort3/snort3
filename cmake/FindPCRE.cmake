@@ -33,10 +33,26 @@ find_package_handle_standard_args(PCRE
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
 
-message(STATUS "MUST BE AT LEAST VERSION SIX")
+set(bindir "${CMAKE_CURRENT_BINARY_DIR}/pcre_version")
+set(srcfile "${CMAKE_CURRENT_LIST_DIR}/Pcre/check_pcre_version.cpp")
 
-message(STATUS "Create test to check PCRE version")
+try_compile(VALID_PCRE_VERSION "${bindir}" "${srcfile}"
+    CMAKE_FLAGS
+        "-DLINK_LIBRARIES:STRING=${PCRE_LIBRARIES}"
+        "-DINCLUDE_DIRECTORIES:STRING=${PCRE_INCLUDE_DIR}"
+)
 
+
+if(NOT VALID_PCRE_VERSION)
+    # unset these variables to ensure we search for PCRE again
+    unset(PCRE_FOUND CACHE)
+    unset(PCRE_INCLUDE_DIR CACHE)
+    unset(PCRE_LIBRARIES CACHE)
+    message(FATAL_ERROR
+        "\nERROR!  Libpcre library version >= 6.0 not found."
+        " Get it from http://www.pcre.org\n\n"
+    )
+endif()
 
 
 mark_as_advanced(

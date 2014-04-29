@@ -11,13 +11,13 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 
 include (cmake/macros.cmake)  
-include (cmake/createCommandLineOptions.txt) 
-include (cmake/setConfigureOptions.txt) 
-include (cmake/includePredefinedPackages.txt)
-include (cmake/platforms.txt)
-include (cmake/sanityChecks.txt)
+include (cmake/createCommandLineOptions.cmake) 
+include (cmake/setConfigureOptions.cmake) 
+include (cmake/includePredefinedPackages.cmake)
+include (cmake/platforms.cmake)
+include (cmake/sanityChecks.cmake)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS} -stdlib=libc++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}")
 
 # include this directory for the config.h file
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

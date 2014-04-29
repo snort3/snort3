@@ -12,9 +12,19 @@
 #
 #case "$host" in
 
+#if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    
+  # using Clang
+#elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+#  # using GCC
+#elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+#  # using Intel C++
+#elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+#  # using Visual Studio C++
+#endif()
 
 
-if (${CMAKE_SYSTEM_NAME} EQUAL "openbsd")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "openbsd")
     set(OPENBSD "YES")
 #    so_with_static_lib="no"
 
@@ -23,25 +33,28 @@ if (${CMAKE_SYSTEM_NAME} EQUAL "openbsd")
     endif(CMAKE_SYSTEM_VERSION VERSION_GREATER "2.3")
 
 
-elseif (${CMAKE_SYSTEM_NAME} EQUAL "openbsd")
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "openbsd")
 
 
-endif(${CMAKE_SYSTEM_NAME} EQUAL "openbsd")
+endif(${CMAKE_SYSTEM_NAME} STREQUAL "openbsd")
 
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set (LINUX 1)
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+endif ()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Solaris")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Solaris")
     set (Solaris 1)
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Solaris")
+endif ()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
     set (SUNOS 1)
-endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+endif ()
 
 
+if (APPLE)
+    set(MACOS 1)
+endif()
   
 #/* Define if building universal (internal helper macro) */
 #cmakedefine AC_APPLE_UNIVERSAL_BUILD
@@ -143,3 +156,14 @@ endif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 #    AC_DEFINE([BROKEN_SIOCGIFMTU],[1],[Define if broken SIOCGIFMTU])
 #esac
 
+
+# the Clang compiler on MacOS X may need the c++ library explicityly specified
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+
+        find_library(CLANG_CXX_LIBRARY 
+            NAMES c++
+        )
+    endif()
+endif()
