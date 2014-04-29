@@ -275,15 +275,14 @@ void PacketManager::thread_term()
 void PacketManager::dump_stats()
 {
     std::vector<const char*> pkt_names;
-    pkt_names.resize(max_protocol_id + stat_offset);
 
     for(int i = 0; i < gen_peg_names.size(); i++)
-        pkt_names[i] = gen_peg_names[i];
+        pkt_names.push_back(gen_peg_names[i]);
 
 
-    for (int i = 0; i < max_protocol_id; i++)
+    for(int i = 0; s_protocols[i] != 0; i++)
         if(s_protocols[i])
-            pkt_names[i + stat_offset] = s_protocols[i]->get_name();
+            pkt_names.push_back(s_protocols[i]->get_name());
 
     show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
         "codecs");
@@ -297,6 +296,7 @@ void PacketManager::accumulate()
     s_stats[0] = pkt_cnt.total_processed;
     s_stats[1] = pkt_cnt.other_codecs;
     s_stats[2] = pkt_cnt.discards;
+    s_stats[3] = 0; // zeroing out the 'null' codec.
 
     sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
 
@@ -311,8 +311,10 @@ void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     PROFILE_VARS;
-    uint16_t mapped_prot, next_prot_id;
+    uint16_t mapped_prot, prot_id;
+    uint16_t prev_prot_id = FINISHED_DECODE;
     uint16_t len, lyr_len;
+    bool valid;
 
     PREPROC_PROFILE_START(decodePerfStats);
 
@@ -325,17 +327,27 @@ void PacketManager::decode(
     pkt_cnt.total_processed++;
 
     // loop until the protocol id is no longer valid
-    while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, next_prot_id))
+    while((valid = s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id)))
     {
-        mapped_prot =  s_proto_map[next_prot_id];
         PacketClass::PushLayer(p, s_protocols[mapped_prot], pkt, lyr_len);
         s_stats[mapped_prot + stat_offset]++;
+        prev_prot_id = prot_id; // used for 'other_codecs' statistics
+        mapped_prot =  s_proto_map[prot_id];
+        prot_id = FINISHED_DECODE;
         len -= lyr_len;
         pkt += lyr_len;
-        next_prot_id = FINISHED_DECODE; // necessary in case decode returns true an
         lyr_len = 0;
     }
 
+    // if the final codec returned false && is not the null codec
+    if (!valid && mapped_prot)
+        pkt_cnt.discards++;
+
+    // If a codec attempted to decode another layer but we couldn't find it
+    if (prev_prot_id != FINISHED_DECODE)
+        pkt_cnt.other_codecs++;
+
+    s_stats[mapped_prot + stat_offset]++;
     p->dsize = len;
     p->data = pkt;
     PREPROC_PROFILE_END(decodePerfStats);
