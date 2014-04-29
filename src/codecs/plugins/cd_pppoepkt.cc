@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,13 +17,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_pppoepkt.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
-
+#include "events/codec_events.h"
 
 namespace
 {
@@ -38,8 +36,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -96,7 +93,7 @@ const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
  *
  */
 bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     //PPPoE_Tag *ppppoe_tag=0;
     //PPPoE_Tag tag;  /* needed to avoid alignment problems */
@@ -111,7 +108,7 @@ bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len,
             "Captured data length < PPPoE header length! "
             "(%d bytes)\n", len););
 
-        DecoderEvent(p, DECODE_BAD_PPPOE);
+        codec_events::decoder_event(p, DECODE_BAD_PPPOE);
 
         return false;
     }
@@ -247,7 +244,7 @@ bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len,
 //        DecodePppPktEncapsulated(pkt + PPPOE_HEADER_LEN, len - PPPOE_HEADER_LEN, p);
 
         // TODO:  Why is this specifically PppPktEncapsulated?
-        p_hdr_len = PPPOE_HEADER_LEN;
+        lyr_len = PPPOE_HEADER_LEN;
         next_prot_id = ntohs(p->eh->ether_type);
         return true;
     }
@@ -286,7 +283,7 @@ EncStatus PPPoE_Encode (EncState* enc, Buffer* in, Buffer* out)
 }
 #endif
 
-void PPPoEPkt::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERNET_TYPE_PPPoE_DISC);
     v.push_back(ETHERNET_TYPE_PPPoE_SESS);
@@ -302,22 +299,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
-
-static const char* name = "pppoe_codec";
-
+static const char* name = "pppoepkt_codec";
 static const CodecApi pppoe_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -327,8 +309,8 @@ static const CodecApi pppoe_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    sum, // sum
-    stats  // stats
+    nullptr,
+    get_protocol_ids,
 };
 
 

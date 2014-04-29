@@ -305,16 +305,6 @@ static inline int ScMplsMulticast(void)
     return snort_conf->run_flags & RUN_FLAG__MPLS_MULTICAST;
 }
 
-static inline uint32_t ScPafMax (void)
-{
-    return snort_conf->paf_max;
-}
-
-static inline bool ScPafEnabled (void)
-{
-    return ( ScPafMax() > 0 );
-}
-
 static inline uint32_t ScEventLogId(void)
 {
     return snort_conf->event_log_id;
@@ -334,6 +324,11 @@ static inline int ScAssureEstablished(void)
 static inline int ScStateful(void)
 {
     return snort_conf->run_flags & RUN_FLAG__STATEFUL;
+}
+
+static inline unsigned ScPafMax(void)
+{
+    return snort_conf->paf_max;
 }
 
 static inline long int ScPcreMatchLimit(void)

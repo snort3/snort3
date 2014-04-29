@@ -1079,9 +1079,6 @@ static PAF_Status hi_paf (
 int hi_paf_register_port (
     SnortConfig* sc, uint16_t port, bool client, bool server, bool auto_on)
 {
-    if ( !ScPafEnabled() )
-        return 0;
-
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: port %u\n", __FUNCTION__, port);)
 
@@ -1097,9 +1094,6 @@ int hi_paf_register_port (
 int hi_paf_register_service (
     SnortConfig* sc, uint16_t service, bool client, bool server, bool auto_on)
 {
-    if ( !ScPafEnabled() )
-        return 0;
-
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: service %u\n", __FUNCTION__, service);)
 

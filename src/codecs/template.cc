@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -27,8 +25,8 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+#include "events/codec_events.h"
 
 
 namespace
@@ -42,28 +40,40 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
-} // anonymous namespace
+
+} // namespace
+
+static THREAD_LOCAL CdPegs counts;
+static CdPegs gcounts;
+
 
 bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 
 }
 
 
-void NameCodec::get_data_link_type(std::vector<int>&){};
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
+
+static void get_data_link_type(std::vector<int>&)
 {
-    v.push_back(ipv6::ethertype());
-    v.push_back(IPPROTO_IPV6);
+//    v.push_back(DLT_ID);
+}
+
+static void get_protocol_ids(std::vector<uint16_t>& v)
+{
+//    v.push_back(PROTO_TYPE);
 }
 
 static Codec* ctor()
@@ -76,22 +86,8 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
 
 static const char* name = "name_codec";
-
 static const CodecApi codec_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -101,7 +97,5 @@ static const CodecApi codec_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    sum, // sum
-    stats  // stats
 };
 

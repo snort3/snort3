@@ -50,7 +50,7 @@
 
 #include <sys/types.h>
 
-#include "ft_module.h"
+#include "telnet_module.h"
 #include "ftpp_return_codes.h"
 #include "snort_debug.h"
 #include "stream5/stream_api.h"
@@ -79,9 +79,9 @@
  * Returns: void function
  *
  */
-int normalize_telnet(FTPTELNET_GLOBAL_CONF *GlobalConf,
-                     TELNET_SESSION *tnssn, Packet *p,
-                     int iMode, char ignoreEraseCmds)
+int normalize_telnet(
+    TELNET_SESSION *tnssn, Packet *p,
+    int iMode, char ignoreEraseCmds)
 {
     int ret = FTPP_NORMALIZED;
     const unsigned char *read_ptr, *sb_start = NULL;
@@ -371,7 +371,7 @@ int normalize_telnet(FTPTELNET_GLOBAL_CONF *GlobalConf,
                     /* Its an FTP session */
                     ret = FTPP_ALERT;
                 }
-                else if (GlobalConf->telnet_config->detect_anomalies)
+                else
                 {
                     /* Alert on SB without SE */
                     SnortEventqAdd(GID_TELNET, TELNET_SB_NO_SE);

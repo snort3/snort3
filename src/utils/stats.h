@@ -44,6 +44,7 @@ typedef uint64_t PegCount;
 struct PacketCount
 {
     PegCount total_from_daq;
+    PegCount total_fail_open;
     PegCount alert_pkts;
     PegCount total_alert_pkts;
     PegCount log_pkts;

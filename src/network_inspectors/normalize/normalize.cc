@@ -176,11 +176,9 @@ class Normalizer : public Inspector
 public:
     Normalizer(NormalizeModule*);
 
-    void configure(SnortConfig*, const char*, char *args);
-    void setup(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
-    bool enabled();
 
 private:
     NormalizerConfig config;
@@ -193,13 +191,7 @@ Normalizer::Normalizer(NormalizeModule* mod)
     disabled = false;
 }
 
-bool Normalizer::enabled ()
-{
-    return !disabled;
-}
-
-void Normalizer::configure(
-    SnortConfig*, const char*, char*)
+bool Normalizer::configure(SnortConfig*)
 {
     // FIXIT detection policy can't be used by normalizer
     // (not set until after normalizer runs)
@@ -207,23 +199,21 @@ void Normalizer::configure(
     {
         LogMessage("WARNING: normalizations disabled because not inline.\n");
         disabled = true;
-        return;
+        return true;
     }
 
-    InspectionPolicy* policy = get_inspection_policy();
-    policy->normal_mask = config.normalizer_flags;
-}
+    InspectionPolicy* ips = get_inspection_policy();
+    ips->normal_mask = config.normalizer_flags;
 
-void Normalizer::setup(SnortConfig*)
-{
-    NetworkPolicy* policy = get_network_policy();
+    NetworkPolicy* nap = get_network_policy();
 
-    if ( policy->new_ttl && policy->new_ttl < policy->min_ttl )
+    if ( nap->new_ttl && nap->new_ttl < nap->min_ttl )
     {
-        policy->new_ttl = policy->min_ttl;
+        nap->new_ttl = nap->min_ttl;
     }
 
     Norm_SetConfig(&config);
+    return true;
 }
 
 void Normalizer::show(SnortConfig* sc)
@@ -274,19 +264,19 @@ static void no_init()
 #endif
 }
 
-static void no_sum(void*)
+static void no_sum()
 {
     Norm_SumStats();
     Stream_SumNormalizationStats();
 }
 
-static void no_stats(void*)
+static void no_stats()
 {
     Norm_PrintStats(name);
     Stream_PrintNormalizationStats();
 }
 
-static void no_reset(void*)
+static void no_reset()
 {
     Norm_ResetStats();
     Stream_ResetNormalizationStats();
@@ -318,7 +308,8 @@ static const InspectApi no_api =
     nullptr, // term
     no_ctor,
     no_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     no_sum,
     no_stats,

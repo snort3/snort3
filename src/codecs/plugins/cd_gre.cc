@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,11 +17,12 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_gre.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+#include "events/codec_events.h"
 #include "protocols/packet.h"
 
 #include "protocols/ethertypes.h"
@@ -39,11 +38,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
-
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -105,11 +100,11 @@ static const uint32_t GRE_V1_ACK_LEN = 4;
  * Notes: see RFCs 1701, 2784 and 2637
  */
 bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     if (len < GRE_HEADER_LEN)
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
+        codec_events::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
                         raw_pkt, len);
         return false;
     }
@@ -118,7 +113,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         /* discard packet - multiple GRE encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
+        codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                         raw_pkt, len);
         return false;
     }
@@ -129,7 +124,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
      */
 
     p->greh = (GREHdr *)raw_pkt;
-    p_hdr_len = GRE_HEADER_LEN;
+    lyr_len = GRE_HEADER_LEN;
 
     switch (GRE_VERSION(p->greh))
     {
@@ -137,19 +132,19 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /* these must not be set */
             if (GRE_RECUR(p->greh) || GRE_FLAGS(p->greh))
             {
-                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_HEADER,
+                codec_events::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_HEADER,
                                 raw_pkt, len);
                 return false;
             }
 
             if (GRE_CHKSUM(p->greh) || GRE_ROUTE(p->greh))
-                p_hdr_len += GRE_CHKSUM_LEN + GRE_OFFSET_LEN;
+                lyr_len += GRE_CHKSUM_LEN + GRE_OFFSET_LEN;
 
             if (GRE_KEY(p->greh))
-                p_hdr_len += GRE_KEY_LEN;
+                lyr_len += GRE_KEY_LEN;
 
             if (GRE_SEQ(p->greh))
-                p_hdr_len += GRE_SEQ_LEN;
+                lyr_len += GRE_SEQ_LEN;
 
             /* if this flag is set, we need to walk through all of the
              * Source Route Entries */
@@ -160,12 +155,12 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 uint8_t sre_length;
                 const uint8_t *sre_ptr;
 
-                sre_ptr = raw_pkt + p_hdr_len;
+                sre_ptr = raw_pkt + lyr_len;
 
                 while (1)
                 {
-                    p_hdr_len += GRE_SRE_HEADER_LEN;
-                    if (p_hdr_len > len)
+                    lyr_len += GRE_SRE_HEADER_LEN;
+                    if (lyr_len > len)
                         break;
 
                     sre_addrfamily = ntohs(*((uint16_t *)sre_ptr));
@@ -180,7 +175,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                     if ((sre_addrfamily == 0) && (sre_length == 0))
                         break;
 
-                    p_hdr_len += sre_length;
+                    lyr_len += sre_length;
                     sre_ptr += sre_length;
                 }
             }
@@ -193,7 +188,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             if (GRE_CHKSUM(p->greh) || GRE_ROUTE(p->greh) || GRE_SSR(p->greh) ||
                 GRE_RECUR(p->greh) || GRE_V1_FLAGS(p->greh))
             {
-                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
+                codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);
                 return false;
             }
@@ -201,7 +196,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /* protocol must be 0x880B - PPP */
             if (GRE_PROTO(p->greh) != ETHERTYPE_PPP)
             {
-                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
+                codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);
                 return false;
             }
@@ -209,30 +204,30 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /* this flag should always be present */
             if (!(GRE_KEY(p->greh)))
             {
-                CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
+                codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);
                 return false;
             }
 
-            p_hdr_len += GRE_KEY_LEN;
+            lyr_len += GRE_KEY_LEN;
 
             if (GRE_SEQ(p->greh))
-                p_hdr_len += GRE_SEQ_LEN;
+                lyr_len += GRE_SEQ_LEN;
 
             if (GRE_V1_ACK(p->greh))
-                p_hdr_len += GRE_V1_ACK_LEN;
+                lyr_len += GRE_V1_ACK_LEN;
 
             break;
 
         default:
-            CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_VERSION,
+            codec_events::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_VERSION,
                             raw_pkt, len);
             return false;
     }
 
-    if (p_hdr_len > len)
+    if (lyr_len > len)
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
+        codec_events::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
                         raw_pkt, len);
         return false;
     }
@@ -252,8 +247,11 @@ void GRE_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 #endif
 
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(GRE_PROT_ID);
 }
@@ -268,22 +266,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
-
 static const char* name = "gre_codec";
-
 static const CodecApi gre_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -293,8 +276,8 @@ static const CodecApi gre_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    sum, // sum
-    stats  // stats
+    nullptr,
+    get_protocol_ids,
 };
 
 #ifdef BUILDING_SO

@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,12 +17,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_erspan3.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+#include "events/codec_events.h"
 #include "protocols/ethertypes.h"
 
 
@@ -39,9 +38,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -77,15 +74,15 @@ const uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
  *
  */
 bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
-    p_hdr_len= sizeof(ERSpanType3Hdr);
+    lyr_len= sizeof(ERSpanType3Hdr);
     uint32_t payload_len;
     ERSpanType3Hdr *erSpan3Hdr = (ERSpanType3Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType3Hdr))
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
+        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
                         raw_pkt, len);
         return false;
     }
@@ -94,7 +91,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
+        codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                         raw_pkt, len);
         return false;
     }
@@ -103,7 +100,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
      */
     if (ERSPAN_VERSION(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
+        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
                         raw_pkt, len);
         return false;
     }
@@ -113,8 +110,11 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     return true;
 }
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_ERSPAN_TYPE3);
 }
@@ -129,22 +129,8 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
 
 static const char* name = "erspan3_codec";
-
 static const CodecApi erspan3_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -154,8 +140,8 @@ static const CodecApi erspan3_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    sum, // sum
-    stats  // stats
+    nullptr, // get_dlt
+    get_protocol_ids,
 };
 
 

@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -26,18 +24,13 @@
 #include "config.h"
 #endif
 
+#include <pcap.h>
 #include "codecs/decode_module.h"
 #include "framework/codec.h"
 #include "time/profiler.h"
 #include "protocols/packet.h"
-#include "codecs/codec_events.h"
-
-
-
-
-#include <pcap.h>
-
-
+#include "protocols/eth.h"
+#include "events/codec_events.h"
 
 namespace
 {
@@ -50,17 +43,15 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *p, uint16_t &lyr_len, int &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&);
     // DELETE
     #include "codecs/sf_protocols.h"
     virtual inline PROTO_ID get_proto_id() { return PROTO_ETH; };
     
 };
 
-} // anonymous namespace
+} // anonymous
 
 
 
@@ -81,7 +72,7 @@ public:
  * Returns: void function
  */
 bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 
 //    dc.eth++;
@@ -98,8 +89,7 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated eth header (%d bytes).\n", len););
 
-        // TODO --> UNCOMMENT!!
-//        DecoderEvent(p, DECODE_ETH_HDR_TRUNC);
+        codec_events::decoder_event(p, DECODE_ETH_HDR_TRUNC);
 
 //        dc.discards++;
 //        dc.ethdisc++;
@@ -108,7 +98,6 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     /* lay the ethernet structure over the packet data */
     p->eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
-//    PushLayer(PROTO_ETH, p, pkt, sizeof(*p->eh));
 
     DEBUG_WRAP(
             DebugMessage(DEBUG_DECODE, "%X:%X:%X:%X:%X:%X -> %X:%X:%X:%X:%X:%X\n",
@@ -124,9 +113,18 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             );
 
     next_prot_id = ntohs(p->eh->ether_type);
-    p_hdr_len = eth::hdr_len();
+    if (next_prot_id > eth::min_ethertype() )
+    {
+        lyr_len = eth::hdr_len();
+        return true;
+    }
 
-    return true;
+//   add this alert type
+//    if(len > MAX_LENGTH) {
+//        CodecEvents::decoder_event(p, DECODE_ETH_INVALID_FRAME);
+
+
+    return false;
 }
 
 
@@ -208,15 +206,15 @@ void Eth_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 
 #endif
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-void EthCodec::get_data_link_type(std::vector<int>&v)
+static void get_data_link_type(std::vector<int>&v)
 {
     v.push_back(DLT_EN10MB);
 }
 
-void EthCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-}
 
 static Codec* ctor()
 {
@@ -232,15 +230,15 @@ static const char* name = "eth_codec";
 
 static const CodecApi eth_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
+    get_data_link_type,
     NULL,
-    NULL
 };
 
 const BaseApi* cd_eth = &eth_api.base;

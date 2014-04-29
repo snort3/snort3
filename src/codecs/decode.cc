@@ -55,9 +55,8 @@
 #include "normalize/normalize.h"
 #include "packet_io/sfdaq.h"
 
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
-
+#include "events/codec_events.h"
 
 void decoder_sum()
 {
@@ -105,11 +104,11 @@ static inline void CheckIPv4_MinTTL(Packet *p, uint8_t ttl)
     {
         if ( ttl == 0 )
         {
-            CodecEvents::exec_ttl_drop(p, DECODE_ZERO_TTL);
+            codec_events::exec_ttl_drop(p, DECODE_ZERO_TTL);
         }
         else
         {
-            CodecEvents::exec_ttl_drop(p, DECODE_IP4_MIN_TTL);
+            codec_events::exec_ttl_drop(p, DECODE_IP4_MIN_TTL);
         }
     }
 }
@@ -124,11 +123,11 @@ static inline void CheckIPv6_MinTTL(Packet *p, uint8_t hop_limit)
     {
         if ( hop_limit == 0 )
         {
-            CodecEvents::exec_hop_drop(p, DECODE_IP6_ZERO_HOP_LIMIT);
+            codec_events::exec_hop_drop(p, DECODE_IP6_ZERO_HOP_LIMIT);
         }
         else
         {
-             CodecEvents::exec_hop_drop(p, DECODE_IPV6_MIN_TTL);
+             codec_events::exec_hop_drop(p, DECODE_IPV6_MIN_TTL);
         }
     }
 }

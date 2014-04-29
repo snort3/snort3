@@ -31,8 +31,7 @@
 #include "static_include.h"
 #include "prot_eapol.h"
 
-#include "decoder_includes.h"
-
+#include "events/codec_events.h"
 
 /*
  * Function: DecodeEapol(uint8_t *, uint32_t, Packet *)
@@ -51,7 +50,7 @@ void DecodeEapol(const uint8_t * pkt, uint32_t len, Packet * p)
     dc.eapol++;
     if(len < sizeof(EtherEapol))
     {
-        DecoderEvent(p, DECODE_EAPOL_TRUNCATED,
+        codec_events::decoder_event(p, DECODE_EAPOL_TRUNCATED,
                         DECODE_EAPOL_TRUNCATED_STR);
 
         dc.discards++;

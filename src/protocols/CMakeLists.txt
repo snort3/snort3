@@ -1,5 +1,5 @@
 
-set (protocols
+set (PROTOCOL_HEADERS
     ipv4.h
     tcp.h
     packet.h
@@ -27,4 +27,3 @@ add_library (protocols STATIC
 install (FILES ${PROTOCOL_HEADERS}
     DESTINATION "${INCLUDE_INSTALL_PATH}/protocols"
 )
-

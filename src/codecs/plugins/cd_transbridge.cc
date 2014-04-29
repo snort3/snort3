@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_transbridge.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -28,8 +27,8 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+#include "events/codec_events.h"
 
 #include "protocols/eth.h"
 #include "protocols/ethertypes.h"
@@ -45,9 +44,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
     
 };
 
@@ -73,13 +70,13 @@ public:
  * wasn't needed since we are already deep into the packet
  */
 bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
 //    dc.gre_eth++;
 
     if(len < eth::hdr_len())
     {
-        CodecEvents::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
+        codec_events::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
                         raw_pkt, len);
         return false;
     }
@@ -89,15 +86,18 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
      */
     p->eh = (eth::EtherHdr *)raw_pkt;
 
-    p_hdr_len = eth::hdr_len();
+    lyr_len = eth::hdr_len();
     next_prot_id = ntohs(p->eh->ether_type);
 
     return true;
 }
 
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_TRANS_ETHER_BRIDGING); // defined in ethertypes.h"
 }
@@ -112,22 +112,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
-
-static const char* name = "transbridge";
-
+static const char* name = "transbridge_codec";
 static const CodecApi transbridge_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -137,8 +122,8 @@ static const CodecApi transbridge_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    sum, // sum
-    stats  // stats
+    nullptr,
+    get_protocol_ids,
 };
 
 

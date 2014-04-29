@@ -42,22 +42,22 @@ struct SnortConfig;
 class Inspector
 {
 public:
+    // main thread functions
     virtual ~Inspector();
 
-    virtual void configure(SnortConfig*, const char* keyword, char *args) = 0;
-    virtual int verify(SnortConfig*) { return 0; };
-    virtual bool enabled() { return true; }
-
-    virtual void setup(SnortConfig*) { };  // unprivileged init, stream_api etc.
+    // access external dependencies here
+    // return verification status
+    virtual bool configure(SnortConfig*) { return true; };
     virtual void show(SnortConfig*) { };
+
+    // packet thread functions
+    virtual void pinit() { };
+    virtual void pterm() { };
 
     virtual void eval(Packet*) = 0;
     virtual void meta(int, const uint8_t*) { };
 
-    virtual void init() { };   // allocate thread local runtime data based on config
-    virtual void term() { };   // release thread local runtime data
-    virtual void reset() { };  // 
-
+    // framework support
     unsigned get_ref(unsigned i) { return ref_count[i]; };
     void set_ref(unsigned i, unsigned r) { ref_count[i] = r; };
 
@@ -70,7 +70,8 @@ public:
     static THREAD_LOCAL unsigned slot;
 
 protected:
-    Inspector();
+    // main thread functions
+    Inspector();  // internal init only at this point
 
 private:
     unsigned* ref_count;
@@ -87,16 +88,11 @@ enum Priority {
     PRIORITY_MAX
 };
 
-typedef void (*PreprocFunc)();
-typedef void* (*PreprocInitFunc)(void*);
-
-// FIXIT these should take no arg now
-typedef void (*PreprocClassFunc)(void*);
-
-typedef Inspector* (*PreprocCtorFunc)(Module*);
+typedef Inspector* (*PreprocCtor)(Module*);
 typedef void (*PreprocDtorFunc)(Inspector*);
+typedef void (*PreprocFunc)();
 
-// FIXIT ensure all pp's provide stats
+// FIXIT ensure all provide stats
 struct InspectApi
 {
     BaseApi base;
@@ -104,18 +100,18 @@ struct InspectApi
     uint16_t proto_bits;
 
     // main thread funcs - parse time data only
-    PreprocFunc init;        // allocate process static data
-    PreprocFunc term;        // release init() data
-
-    PreprocCtorFunc ctor;
-    PreprocDtorFunc dtor;
+    PreprocFunc init;      // allocate process static data
+    PreprocFunc term;      // release init() data
+    PreprocCtor ctor;      // instantiate inspector from Module data
+    PreprocDtorFunc dtor;  // release inspector instance
 
     // packet thread funcs - runtime data only
-    PreprocClassFunc stop;   // stop packet processing  // FIXIT same as purge?
-    PreprocClassFunc purge;  // purge caches
-    PreprocClassFunc sum;    // accumulate stats
-    PreprocClassFunc stats;  // output stats
-    PreprocClassFunc reset;  // clear stats
+    PreprocFunc pinit;  // plugin thread local allocation
+    PreprocFunc pterm;  // plugin thread local cleanup
+    PreprocFunc purge;  // purge caches
+    PreprocFunc sum;    // accumulate stats
+    PreprocFunc stats;  // output stats
+    PreprocFunc reset;  // clear stats
 };
 
 #endif

@@ -127,7 +127,7 @@ void DecodeIEEE80211Pkt(Packet * p, const DAQ_PktHdr_t * pkthdr,
 
             if(cap_len < IEEE802_11_DATA_HDR_LEN + sizeof(EthLlc))
             {
-                DecoderEvent(p, DECODE_BAD_80211_ETHLLC,
+                codec_events::decoder_event(p, DECODE_BAD_80211_ETHLLC,
                                 DECODE_BAD_80211_ETHLLC_STR);
 
                 PREPROC_PROFILE_END(decodePerfStats);
@@ -149,7 +149,7 @@ void DecodeIEEE80211Pkt(Packet * p, const DAQ_PktHdr_t * pkthdr,
                 if(cap_len < IEEE802_11_DATA_HDR_LEN +
                    sizeof(EthLlc) + sizeof(EthLlcOther))
                 {
-                    DecoderEvent(p, DECODE_BAD_80211_OTHER,
+                    codec_events::decoder_event(p, DECODE_BAD_80211_OTHER,
                                     DECODE_BAD_80211_OTHER_STR);
 
                     PREPROC_PROFILE_END(decodePerfStats);

@@ -214,14 +214,13 @@ public:
     PerfMonitor(PerfMonModule*);
     ~PerfMonitor();
 
-    void configure(SnortConfig*, const char*, char *args);
-    void setup(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
 
     void eval(Packet*);
 
-    void init();
-    void term();
+    void pinit();
+    void pterm();
     void reset();
 
 private:
@@ -245,10 +244,6 @@ PerfMonitor::~PerfMonitor ()
         free(config.flowip_file);
 }
 
-void PerfMonitor::configure(SnortConfig*, const char*, char*)
-{
-}
-
 void PerfMonitor::show(SnortConfig*)
 {
     PrintConfig(&config);
@@ -257,7 +252,7 @@ void PerfMonitor::show(SnortConfig*)
 // FIXIT perfmonitor should be logging to one file and writing record type and
 // version fields immediately after timestamp like
 // seconds, usec, type, version#, data1, data2, ...
-void PerfMonitor::setup(SnortConfig*)
+bool PerfMonitor::configure(SnortConfig*)
 {
     PerfMonitorChangeLogFilesPermission();
     std::string name;
@@ -285,9 +280,10 @@ void PerfMonitor::setup(SnortConfig*)
         if ( (config.flowip_fh = sfOpenFlowIPStatsFile(file)) == NULL )
             ParseError("Perfmonitor: Cannot open flow-ip stats file '%s'.", file);
     }
+    return true;
 }
 
-void PerfMonitor::init()
+void PerfMonitor::pinit()
 {
     InitPerfStats(&config);
 }
@@ -330,7 +326,7 @@ void PerfMonitor::eval(Packet *p)
     PREPROC_PROFILE_END(perfmonStats);
 }
 
-void PerfMonitor::term()
+void PerfMonitor::pterm()
 {
     if ( config.perf_flags & SFPERF_SUMMARY )
         sfPerfStatsSummary(&config);
@@ -378,17 +374,17 @@ static Inspector* pm_ctor(Module* m)
     return new PerfMonitor((PerfMonModule*)m);
 }
 
-static void pm_sum(void*)
+static void pm_sum()
 {
     sum_stats(&gpmstats, &pmstats);
 }
 
-static void pm_stats(void*)
+static void pm_stats()
 {
     show_stats(&gpmstats, mod_name);
 }
 
-static void pm_reset(void*)
+static void pm_reset()
 {
     memset(&gpmstats, 0, sizeof(gpmstats));
 }
@@ -414,7 +410,8 @@ static const InspectApi pm_api =
     nullptr, // term
     pm_ctor,
     pm_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     pm_sum,
     pm_stats,

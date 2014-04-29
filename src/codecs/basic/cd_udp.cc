@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -34,17 +32,13 @@
 #endif
 
 #include "codecs/decode_module.h"
-
-#include "protocols/ipv6.h"
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
-#include "protocols/gtp.h"
 #include "protocols/undefined_protocols.h"
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "packet_io/active.h"
-
+#include "events/codec_events.h"
 
 namespace
 {
@@ -57,9 +51,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     // DELETE
     #include "codecs/sf_protocols.h"
@@ -83,7 +75,7 @@ static inline unsigned short in_chksum_udp(pseudoheader *, unsigned short *, int
 
 
 bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     uint16_t uhlen;
     u_char fragmented_udp_flag = 0;
@@ -96,7 +88,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                 "Truncated UDP header (%d bytes)\n", len););
 
-        DecoderEvent(p, DECODE_UDP_DGRAM_LT_UDPHDR);
+        codec_events::decoder_event(p, DECODE_UDP_DGRAM_LT_UDPHDR);
 
         PopUdp(p);
         return false;
@@ -130,7 +122,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     /* verify that the header len is a valid value */
     if(uhlen < UDP_HEADER_LEN)
     {
-        DecoderEvent(p, DECODE_UDP_DGRAM_INVALID_LENGTH);
+        codec_events::decoder_event(p, DECODE_UDP_DGRAM_INVALID_LENGTH);
 
         PopUdp(p);
         return false;
@@ -139,14 +131,14 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     /* make sure there are enough bytes as designated by length field */
     if(uhlen > len)
     {
-        DecoderEvent(p, DECODE_UDP_DGRAM_SHORT_PACKET);
+        codec_events::decoder_event(p, DECODE_UDP_DGRAM_SHORT_PACKET);
 
         PopUdp(p);
         return false;
     }
     else if(uhlen < len)
     {
-        DecoderEvent(p, DECODE_UDP_DGRAM_LONG_PACKET);
+        codec_events::decoder_event(p, DECODE_UDP_DGRAM_LONG_PACKET);
 
         PopUdp(p);
         return false;
@@ -191,7 +183,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             if(!p->udph->uh_chk)
             {
                 csum = 1;
-                DecoderEvent(p, DECODE_UDP_IPV6_ZERO_CHECKSUM);
+                codec_events::decoder_event(p, DECODE_UDP_IPV6_ZERO_CHECKSUM);
             }
             /* Don't do checksum calculation if
              * 1) Fragmented
@@ -219,7 +211,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
             p->error_flags |= PKT_ERR_CKSUM_UDP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad UDP Checksum\n"););
-            CodecEvents::exec_udp_chksm_drop(p);
+            codec_events::exec_udp_chksm_drop(p);
 //            dc.invalid_checksums++;
         }
         else
@@ -234,7 +226,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "UDP header starts at: %p\n", p->udph););
 
-    p_hdr_len = udp::header_len();
+    lyr_len = udp::header_len();
     next_prot_id = -1;
 //    PushLayer(PROTO_UDP, p, raw_pkt, udp::header_len());
 
@@ -277,10 +269,10 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 static inline void UDPMiscTests(Packet *p)
 {
     if (p->dsize > 4000)
-        DecoderEvent(p, DECODE_UDP_LARGE_PACKET);
+        codec_events::decoder_event(p, DECODE_UDP_LARGE_PACKET);
 
     if (p->sp == 0 || p->dp == 0)
-        DecoderEvent(p, DECODE_UDP_PORT_ZERO);
+        codec_events::decoder_event(p, DECODE_UDP_PORT_ZERO);
 }
 
 /*
@@ -603,10 +595,12 @@ static inline unsigned short in_chksum_udp(pseudoheader *ph,
    return (unsigned short)(~cksum);
 }
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 
-
-void UdpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IPPROTO_UDP);
 }
@@ -621,11 +615,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "udp_decode";
+static const char* name = "udp_codec";
 
 static const CodecApi udp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
@@ -633,7 +627,7 @@ static const CodecApi udp_api =
     ctor, // ctor
     dtor, // dtor
     NULL,
-    NULL
+    get_protocol_ids,
 };
 
 

@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -19,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_pppencap.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 #ifdef HAVE_CONFIG_H
@@ -27,11 +26,10 @@
 
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+#include "events/codec_events.h"
 #include "protocols/ethertypes.h"
 #include "snort.h"
-#include "protocols/ipv4.h"
 
 namespace
 {
@@ -44,9 +42,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -78,7 +74,7 @@ const static uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
  * Returns: void function
  */
 bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &p_hdr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, int &next_prot_id)
 {
     static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;
@@ -119,13 +115,13 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
         /* Check for protocol compression rfc1661 section 5
          *
          */
-        p_hdr_len = 1;
+        lyr_len = 1;
         protocol = raw_pkt[0];
     }
     else
     {
         protocol = ntohs(*((uint16_t *)raw_pkt));
-        p_hdr_len = 2;
+        lyr_len = 2;
     }
 
     /*
@@ -143,7 +139,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
         case PPP_VJ_UCOMP:
             /* VJ compression modifies the protocol field. It must be set
              * to tcp (only TCP packets can be VJ compressed) */
-            if(len < (p_hdr_len + ipv4::hdr_len()))
+            if(len < (lyr_len + ipv4::hdr_len()))
             {
                 if (ScLogVerbose())
                     ErrorMessage("PPP VJ min packet length > captured len! "
@@ -151,7 +147,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
                 return false;
             }
 
-            ((IPHdr *)(raw_pkt + p_hdr_len))->ip_proto = IPPROTO_TCP;
+            ((IPHdr *)(raw_pkt + lyr_len))->ip_proto = IPPROTO_TCP;
             /* fall through */
 
         case PPP_IP:
@@ -174,9 +170,11 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
 }
 
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-
-void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
+static void get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERTYPE_PPP);
 }
@@ -191,22 +189,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
-
 static const char* name = "pppencap_codec";
-
 static const CodecApi pppencap_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -216,10 +199,9 @@ static const CodecApi pppencap_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    sum, // sum
-    stats  // stats
+    nullptr, // get_dlt
+    get_protocol_ids,
 };
-
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =

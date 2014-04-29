@@ -41,12 +41,13 @@ public:
     PortScan(class PortScanModule*);
     ~PortScan();
 
-    void configure(SnortConfig*, const char*, char *args);
-    void setup(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
+
     void eval(Packet*);
-    void init();
-    void term();
+
+    void pinit();
+    void pterm();
 
 private:
     void ps_parse(SnortConfig*, char *);

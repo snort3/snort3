@@ -19,8 +19,6 @@ endif(ENABLE_NON_ETHER_DECODERS)
 
 
 add_library( codecs STATIC
-    codec_events.cc
-    codec_events.h
     encode.h
     encode.cc
     decode.h

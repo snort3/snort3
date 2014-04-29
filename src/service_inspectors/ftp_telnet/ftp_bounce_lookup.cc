@@ -61,7 +61,7 @@
  */
 int ftp_bounce_lookup_init(BOUNCE_LOOKUP **BounceLookup)
 {
-    KMAP *km = KMapNew((KMapUserFreeFunc)FTPTelnetCleanupFTPBounceTo);
+    KMAP *km = KMapNew((KMapUserFreeFunc)CleanupFTPBounceTo);
     *BounceLookup = km;
     if(*BounceLookup == NULL)
     {

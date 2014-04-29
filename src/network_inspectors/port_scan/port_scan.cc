@@ -872,7 +872,7 @@ PortScan::~PortScan()
         Share::release(global);
 }
 
-void PortScan::configure(SnortConfig* sc, const char*, char*)
+bool PortScan::configure(SnortConfig* sc)
 {
     // FIXIT use fixed base file name
     config->logfile = SnortStrdup("portscan.log");
@@ -881,17 +881,15 @@ void PortScan::configure(SnortConfig* sc, const char*, char*)
     config->common = global->data;
 
     ScSetScannedProtocols(sc, config->detect_scans);
+    return true;
 }
 
-// FIXIT why setup() vs init()?
-void PortScan::setup(SnortConfig*)
+void PortScan::pinit()
 {
-    if ( !config->logfile )
-        return;
+    g_tmp_pkt = Encode_New();
 
     std::string name;
     get_instance_file(name, config->logfile);
-    
     g_logfile = fopen(name.c_str(), "a+");
 
     if (g_logfile == NULL)
@@ -899,16 +897,10 @@ void PortScan::setup(SnortConfig*)
         FatalError("Portscan log file '%s' could not be opened: %s.\n",
             config->logfile, get_error(errno));
     }
-}
-
-void PortScan::init()
-{
-    g_tmp_pkt = Encode_New();
-
     ps_init_hash(config->common->memcap);
 }
 
-void PortScan::term()
+void PortScan::pterm()
 {
     fclose(g_logfile);
     ps_cleanup();
@@ -1013,17 +1005,17 @@ static void sp_dtor(Inspector* p)
     delete p;
 }
 
-static void sp_sum(void*)
+static void sp_sum()
 {
     sum_stats(&gspstats, &spstats);
 }
 
-static void sp_stats(void*)
+static void sp_stats()
 {
     show_stats(&gspstats, PS_MODULE);
 }
 
-static void sp_reset(void*)
+static void sp_reset()
 {
     ps_reset();
     memset(&gspstats, 0, sizeof(gspstats));
@@ -1045,7 +1037,8 @@ static const InspectApi sp_api =
     nullptr, // term
     sp_ctor,
     sp_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     sp_sum,
     sp_stats,

@@ -35,8 +35,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
-
+#include "events/codec_events.h"
 
 namespace
 {
@@ -49,7 +48,7 @@ public:
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &p_hdr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, int &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     

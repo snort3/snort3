@@ -66,7 +66,6 @@
 // may be from command line (a-b) or from config file (a_b)
 // option should be passed into all parser function for error
 // messages
-#define CONFIG_OPT__PAF_MAX                         "paf_max"
 #define CONFIG_OPT__POLICY_VERSION                  "policy_version"
 #ifdef PERF_PROFILING
 # define CONFIG_OPT__PROFILE_PREPROCS               "profile_preprocs"
@@ -466,7 +465,7 @@ void ConfigIgnorePorts(SnortConfig *sc, int protocol, const char *ports)
     uint16_t hi_port = 0, lo_port = 0;
     int     not_flag;
 
-    if ((ports == NULL))
+    if (ports == NULL)
         return;
 
     toks = mSplit(ports, " \t", 0, &num_toks, 0);

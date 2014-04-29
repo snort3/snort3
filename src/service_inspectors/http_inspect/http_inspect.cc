@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -529,12 +529,13 @@ public:
     HttpInspect(HTTPINSPECT_CONF*);
     ~HttpInspect();
 
-    void configure(SnortConfig*, const char*, char *args);
-    int verify(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
+
     void eval(Packet*);
-    void init();
-    void term();
+
+    void pinit();
+    void pterm();
 
 private:
     HTTPINSPECT_CONF* config;
@@ -556,8 +557,7 @@ HttpInspect::~HttpInspect ()
         Share::release(global);
 }
 
-void HttpInspect::configure (
-    SnortConfig* sc, const char*, char*)
+bool HttpInspect::configure (SnortConfig* sc)
 {
     global = (HttpData*)Share::acquire(GLOBAL_KEYWORD);
     config->global = global->data;
@@ -570,14 +570,11 @@ void HttpInspect::configure (
     // FIXIT must load default unicode map from const char*
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
+
+    return !HttpInspectVerifyPolicy(sc, config);
 }
 
-int HttpInspect::verify(SnortConfig* sc)
-{
-    return HttpInspectVerifyPolicy(sc, config);
-}
-
-void HttpInspect::init()
+void HttpInspect::pinit()
 {
     memset(&hi_stats, 0, sizeof(HIStats));
 
@@ -634,7 +631,7 @@ void HttpInspect::init()
     }
 }
 
-void HttpInspect::term()
+void HttpInspect::pterm()
 {
     // FIXIT this is off-balance; not allocated by sinit()
     if ( hi_gzip_mempool && !mempool_destroy(hi_gzip_mempool) )
@@ -779,18 +776,18 @@ static void hs_dtor(Inspector* p)
     delete p;
 }
 
-static void hs_sum(void*)
+static void hs_sum()
 {
     sum_stats((PegCount*)&ghi_stats, (PegCount*)&hi_stats, array_size(peg_names));
 }
 
-static void hs_stats(void*)
+static void hs_stats()
 {
     show_stats((PegCount*)&ghi_stats, peg_names, array_size(peg_names),
         SERVER_KEYWORD);
 }
 
-static void hs_reset(void*)
+static void hs_reset()
 {
     memset(&ghi_stats, 0, sizeof(ghi_stats));
 }
@@ -813,7 +810,8 @@ static const InspectApi hs_api =
     hs_term,
     hs_ctor,
     hs_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     hs_sum,
     hs_stats,
@@ -823,7 +821,7 @@ static const InspectApi hs_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &hg_api,
+    &hg_api.base,
     &hs_api.base,
     nullptr
 };

@@ -484,7 +484,7 @@ uint8_t s5_paf_service_registration (void* pv, uint16_t service, bool c2s, bool 
 
 //--------------------------------------------------------------------
 
-void* s5_paf_new (void)
+void* s5_paf_new ()
 {
     PAF_Config* pc = (PAF_Config*)SnortAlloc(sizeof(*pc));
     assert( pc );

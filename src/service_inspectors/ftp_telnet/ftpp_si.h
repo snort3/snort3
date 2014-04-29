@@ -188,9 +188,8 @@ public:
     ~FtpFlowData()
     { FTPFreesession(&session); };
 
-    // FIXIT telnet, ftp, and ftp-data all share the same flow_id
     static void init()
-    { flow_id = TelnetFlowData::flow_id; };
+    { flow_id = FlowData::get_flow_id(); };
 
 public:
     static unsigned flow_id;
@@ -222,9 +221,8 @@ public:
     FtpDataFlowData(Packet*);
     ~FtpDataFlowData();
 
-    // FIXIT telnet, ftp, and ftp-data all share the same flow_id
     static void init()
-    { flow_id = TelnetFlowData::flow_id; };
+    { flow_id = FlowData::get_flow_id(); };
 
 public:
     static unsigned flow_id;
@@ -246,7 +244,7 @@ public:
  * source and destination ports (since this should always be a
  * TCP packet).
  */
-typedef struct s_FTPP_SI_INPUT
+struct FTPP_SI_INPUT
 {
     snort_ip sip;
     snort_ip dip;
@@ -255,10 +253,8 @@ typedef struct s_FTPP_SI_INPUT
     unsigned char pdir;
     unsigned char pproto;
 
-} FTPP_SI_INPUT;
+};
 
-int ftpp_si_determine_proto(Packet *p, FTPTELNET_GLOBAL_CONF *GlobalConf,
-        FTP_TELNET_SESSION **, FTPP_SI_INPUT *SiInput, int *piInspectMode);
 int FTPGetPacketDir(Packet *);
 
 /* FTP-Data file processing */
@@ -271,5 +267,13 @@ bool FTPDataDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
 bool FTPDataEOFDirection(Packet *p, FTP_DATA_SESSION *ftpdata);
 bool FTPDataEOF(FTP_DATA_SESSION *ftpdata);
 
-#endif /* ! FTPP_SI_H */
+int TelnetsessionInspection(
+    Packet*, TELNET_PROTO_CONF*, TELNET_SESSION**, FTPP_SI_INPUT*, int *piInspectMode);
+
+int FTPsessionInspection(
+    Packet*, FTP_SESSION**, FTPP_SI_INPUT*, int *piInspectMode);
+
+int SetSiInput(FTPP_SI_INPUT*, Packet*);
+
+#endif
 

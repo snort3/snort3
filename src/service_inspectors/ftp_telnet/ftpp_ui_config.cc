@@ -44,76 +44,34 @@
 #include "ftp_cmd_lookup.h"
 #include "ftp_bounce_lookup.h"
 
-/*
- * Function: ftpp_ui_config_default(FTPTELNET_GLOBAL_CONF *GlobalConf)
- *
- * Purpose: This function sets the global and the global_client default
- *          configuration.  In order to change the default configuration
- *          of FTPTelnet, you must change this function.
- *
- * Arguments: GlobalConf    => pointer to the global configuration structure
- *
- * Returns: int => return code indicating error or success
- *
- */
-int ftpp_ui_config_default(FTPTELNET_GLOBAL_CONF *GlobalConf)
+FTP_CLIENT_PROTO_CONF::FTP_CLIENT_PROTO_CONF()
 {
-    if(GlobalConf == NULL)
-    {
-        return FTPP_INVALID_ARG;
-    }
-
-    /*
-     * Set Global Client Configurations
-     */
-    ftpp_ui_config_reset_ftp_client(GlobalConf->ftp_client, 0);
-    ftpp_ui_config_reset_ftp_server(GlobalConf->ftp_server, 0);
-    ftpp_ui_config_reset_telnet_proto(GlobalConf->telnet_config);
-
-    return FTPP_SUCCESS;
+    memset(this, 0, sizeof(*this));
+    ftp_bounce_lookup_init(&bounce_lookup);
+    max_resp_len = FTPP_UI_CONFIG_FTP_DEF_RESP_MSG_MAX;
 }
 
-/*
- * Function: ftpp_ui_config_reset_global(FTPTELNET_GLOBAL_CONF *GlobalConf)
- *
- * Purpose: This function resets the global parameters.
- *          THIS IS NOT THE GLOBAL FTP CLIENT CONFIGURATION.
- *
- * Arguments: GlobalConf    => pointer to the global configuration structure
- *
- * Returns: int => return code indicating error or success
- *
- */
-int ftpp_ui_config_reset_global(FTPTELNET_GLOBAL_CONF *GlobalConf)
+FTP_SERVER_PROTO_CONF::FTP_SERVER_PROTO_CONF()
 {
-    ftp_bounce_lookup_cleanup(&GlobalConf->ftp_client->bounce_lookup);
-    ftp_cmd_lookup_cleanup(&(GlobalConf->ftp_server->cmd_lookup));
+    ftp_cmd_lookup_init(&cmd_lookup);
+    ports[21] = 1;
 
-    memset(GlobalConf, 0x00, sizeof(FTPTELNET_GLOBAL_CONF));
-
-    return FTPP_SUCCESS;
+    def_max_param_len = FTPP_UI_CONFIG_FTP_DEF_CMD_PARAM_MAX;
+    max_cmd_len = MAX_CMD;
+    
+    print_commands = data_chan = check_encrypted_data = false;
+    telnet_cmds = ignore_telnet_erase_cmds = detect_encrypted = false;
 }
 
-/*
- * Function: ftpp_ui_config_reset_telnet_proto(TELNET_PROTO_CONF *TelnetConf)
- *
- * Purpose: This function resets a telnet construct.
- *
- * Arguments: TelnetConf    => pointer to the TELNET_PROTO_CONF structure
- *
- * Returns: int => return code indicating error or success
- *
- */
-int ftpp_ui_config_reset_telnet_proto(TELNET_PROTO_CONF *TelnetConf)
+TELNET_PROTO_CONF::TELNET_PROTO_CONF()
 {
-    memset(TelnetConf, 0x00, sizeof(TELNET_PROTO_CONF));
+    normalize = check_encrypted_data = 0;
+    ayt_threshold = FTPP_UI_CONFIG_TELNET_DEF_AYT_THRESHOLD;
 
-    TelnetConf->ayt_threshold = FTPP_UI_CONFIG_TELNET_DEF_AYT_THRESHOLD;
+    detect_encrypted = 0;
+    detect_anomalies = 0;
 
-    TelnetConf->proto_ports.port_count = 1;
-    TelnetConf->proto_ports.ports[23] = 1;
-
-    return FTPP_SUCCESS;
+    ports[23] = 1;
 }
 
 /*
@@ -213,81 +171,5 @@ int ftpp_ui_config_reset_ftp_cmd(FTP_CMD_CONF *FTPCmd)
     }
 
     return FTPP_SUCCESS;
-}
-
-/*
- * Function: ftpp_ui_config_reset_ftp_server(FTP_SERVER_PROTO_CONF *ServerConf,
- *                                  char first)
- *
- * Purpose: This function resets a ftp server construct.
- *
- * Arguments: ServerConf    => pointer to the FTP_SERVER_PROTO_CONF structure
- *            first         => indicator whether this is a new conf
- *
- * Returns: int => return code indicating error or success
- *
- */
-int ftpp_ui_config_reset_ftp_server(FTP_SERVER_PROTO_CONF *ServerConf,
-                                    char first)
-{
-    int iRet = FTPP_SUCCESS;
-
-    if (first == 0)
-    {
-        ftp_cmd_lookup_cleanup(&ServerConf->cmd_lookup);
-    }
-    if (ServerConf->serverAddr)
-    {
-        free(ServerConf->serverAddr);
-    }
-
-    memset(ServerConf, 0x00, sizeof(FTP_SERVER_PROTO_CONF));
-
-    ServerConf->proto_ports.port_count = 1;
-    ServerConf->proto_ports.ports[21] = 1;
-
-    ftp_cmd_lookup_init(&ServerConf->cmd_lookup);
-
-    ServerConf->def_max_param_len = FTPP_UI_CONFIG_FTP_DEF_CMD_PARAM_MAX;
-    ServerConf->max_cmd_len = MAX_CMD;
-
-    return iRet;
-}
-
-/*
- * Function: ftpp_ui_config_reset_ftp_client(FTP_CLIENT_PROTO_CONF *ClientConf,
- *                                  char first)
- *
- * Purpose: This function resets a ftp client construct.
- *
- * Arguments: ClientConf    => pointer to the FTP_CLIENT_PROTO_CONF structure
- *            first         => indicator whether this is a new conf
- *
- *
- * Returns: int => return code indicating error or success
- *
- */
-int ftpp_ui_config_reset_ftp_client(FTP_CLIENT_PROTO_CONF *ClientConf,
-                                    char first)
-{
-    int iRet = FTPP_SUCCESS;
-    //FTP_BOUNCE_TO *NextBounceTo = NULL;
-
-    if (first == 0)
-    {
-        ftp_bounce_lookup_cleanup(&ClientConf->bounce_lookup);
-    }
-    if (ClientConf->clientAddr)
-    {
-        free(ClientConf->clientAddr);
-    }
-
-    memset(ClientConf, 0x00, sizeof(FTP_CLIENT_PROTO_CONF));
-
-    ftp_bounce_lookup_init(&ClientConf->bounce_lookup);
-
-    ClientConf->max_resp_len = (unsigned int)FTPP_UI_CONFIG_FTP_DEF_RESP_MSG_MAX;
-
-    return iRet;
 }
 

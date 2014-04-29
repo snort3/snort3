@@ -2103,14 +2103,13 @@ public:
     Defrag(DefragEngineModule*);
     ~Defrag();
 
-    void configure(SnortConfig*, const char*, char*);
-    int verify(SnortConfig*);
+    bool configure(SnortConfig*);
     void show(SnortConfig*);
 
     void eval(Packet*);
 
-    void init();
-    void term();
+    void pinit();
+    void pterm();
 
 private:
     int insert(Packet*, FragTracker*, FRAGKEY*, FragEngine*);
@@ -2147,13 +2146,15 @@ Defrag::~Defrag()
         Share::release(global);
 }
 
-void Defrag::configure(SnortConfig*, const char*, char*)
+bool Defrag::configure(SnortConfig*)
 {
     global = (FragData*)Share::acquire(GLOBAL_KEYWORD);
     config.common = global->data;
+    SFAT_SetPolicyIds(FragPolicyIdFromHostAttributeEntry);
+    return true;
 }
 
-void Defrag::init()
+void Defrag::pinit()
 {
     FragInitCache(&config);
 
@@ -2162,7 +2163,7 @@ void Defrag::init()
     pkt_snaplen = DAQ_GetSnapLen();
 }
 
-void Defrag::term()
+void Defrag::pterm()
 {
     sfxhash_delete(f_cache);
     f_cache = NULL;
@@ -2179,12 +2180,6 @@ void Defrag::term()
 
     Encode_Delete(encap_defrag_pkt);
     encap_defrag_pkt = NULL;
-}
-
-int Defrag::verify(SnortConfig*)
-{
-    SFAT_SetPolicyIds(FragPolicyIdFromHostAttributeEntry);
-    return 0;
 }
 
 void Defrag::show(SnortConfig*)
@@ -3960,17 +3955,17 @@ static void de_init()
 #endif
 }
 
-static void de_sum(void*)
+static void de_sum()
 {
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats, array_size(peg_names));
 }
 
-static void de_stats(void*)
+static void de_stats()
 {
     show_stats((PegCount*)&g_stats, peg_names, array_size(peg_names), ENGINE_KEYWORD);
 }
 
-static void de_reset(void*)
+static void de_reset()
 {
     if (f_cache != NULL)
         sfxhash_make_empty(f_cache);
@@ -4004,7 +3999,8 @@ static const InspectApi de_api =
     nullptr, // term
     de_ctor,
     de_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     de_sum,
     de_stats,

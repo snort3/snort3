@@ -1,8 +1,11 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 file_list = \
-ft_module.cc ft_module.h \
-ftp_telnet.cc \
+ftp_module.cc ftp_module.h \
+telnet_module.cc telnet_module.h \
+ftp_parse.cc ftp_parse.h \
+ftp_print.cc ftp_print.h \
+ftp.cc \
 ftp_bounce_lookup.cc ftp_bounce_lookup.h \
 ftp_client.h \
 ftp_cmd_lookup.cc ftp_cmd_lookup.h \
@@ -16,7 +19,8 @@ hi_util_xmalloc.cc hi_util_xmalloc.h \
 pp_ftp.cc pp_ftp.h \
 pp_telnet.cc pp_telnet.h \
 ft_main.cc ft_main.h \
-ftpp_util_kmap.h
+ftpp_util_kmap.h \
+telnet.cc
 
 if STATIC_INSPECTORS
 noinst_LIBRARIES = libftp_telnet.a

@@ -1121,9 +1121,6 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
             finalFilePosition(&position);
         }
         /*Process file type/file signature*/
-       /* if (ScPafEnabled() && PacketHasPAFPayload(p))
-            position = getFilePoistion(p);*/
-
         if (file_api->file_process(p,(uint8_t *)((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr,
                 (uint16_t)((Email_DecodeState *)(mime_ssn->decode_state))->decoded_bytes, position, upload, false)
                 && (isFileStart(position))&& mime_ssn->log_state)

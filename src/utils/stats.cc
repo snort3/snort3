@@ -33,6 +33,7 @@
 #include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
 #include "managers/inspector_manager.h"
+#include "managers/packet_manager.h"
 
 #ifdef SIDE_CHANNEL
 #include "side_channel/sidechannel.h"
@@ -198,7 +199,8 @@ const char* verdict_names[] =
 
 static const char* pc_names[] =
 {
-    "packets",
+    "fail open",
+    "analyzed",
     "alerts",
     "total alerts",
     "logged",
@@ -241,7 +243,7 @@ void pc_sum()
     sum_stats((PegCount*)&gpc, (PegCount*)&pc, array_size(pc_names));
     memset(&pc, 0, sizeof(pc));
 
-    decoder_sum();
+    //decoder_sum();  FIXIT must be moved
 }
 
 //-------------------------------------------------------------------------
@@ -300,7 +302,7 @@ void DropStats()
         show_stats((PegCount*)&daq_verdicts, verdict_names, array_size(verdict_names));
     }
 
-    decoder_stats();
+    PacketManager::dump_stats();
     //mpse_print_qinfo();
 
     InspectorManager::dump_stats(snort_conf);

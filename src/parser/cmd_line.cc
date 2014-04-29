@@ -33,20 +33,25 @@ using namespace std;
 #include "vars.h"
 #include "analyzer.h"
 #include "managers/shell.h"
+#include "managers/event_manager.h"
+#include "managers/ips_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
-#include "managers/ips_manager.h"
 #include "packet_io/trough.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 #include "utils/util.h"
 
-#define ALERT_MODE_OPT__NONE    "none"
-#define ALERT_MODE_OPT__PKT_CNT "packet-count"
-#define ALERT_MODE_OPT__CMG     "cmg"
-#define ALERT_MODE_OPT__JH      "jh"
-#define ALERT_MODE_OPT__DJR     "djr"
-#define ALERT_MODE_OPT__AJK     "ajk"
+#define LOG_NONE  "none"
+#define LOG_TEXT  "text"
+#define LOG_PCAP  "pcap"
+
+#define ALERT_NONE    "none"
+#define ALERT_PKT_CNT "packet-count"
+#define ALERT_CMG     "cmg"
+#define ALERT_JH      "jh"
+#define ALERT_DJR     "djr"
+#define ALERT_AJK     "ajk"
 
 #define OUTPUT_AJK  "unified2"
 #define OUTPUT_CMG  "alert_fast"
@@ -54,14 +59,9 @@ using namespace std;
 #define OUTPUT_PCAP "log_tcpdump"
 
 static char* lua_conf = nullptr;
-static char* legacy_conf = nullptr;
 static char* snort_conf_dir = nullptr;
 
-void set_legacy_conf(const char* s)
-{ legacy_conf = SnortStrdup(s); }
-
 const char* get_snort_conf() { return lua_conf; }
-const char* get_legacy_conf() { return legacy_conf; }
 const char* get_snort_conf_dir() { return snort_conf_dir; }
 
 static bool s_markup = false;
@@ -366,23 +366,24 @@ static void config_pause(SnortConfig* sc, const char*)
 
 static void config_alert_mode(SnortConfig* sc, const char* val)
 {
-    if (strcasecmp(val, ALERT_MODE_OPT__NONE) == 0)
+    if (strcasecmp(val, ALERT_NONE) == 0)
     {
         sc->output_flags |= OUTPUT_FLAG__NO_ALERT;
+        EventManager::enable_alerts(false);
     }
-    else if (strcasecmp(val, ALERT_MODE_OPT__PKT_CNT) == 0)
+    else if (strcasecmp(val, ALERT_PKT_CNT) == 0)
     {
         sc->output_flags |= OUTPUT_FLAG__ALERT_PKT_CNT;
     }
-    else if ((strcasecmp(val, ALERT_MODE_OPT__CMG) == 0) ||
-             (strcasecmp(val, ALERT_MODE_OPT__JH) == 0) ||
-             (strcasecmp(val, ALERT_MODE_OPT__DJR) == 0))
+    else if ((strcasecmp(val, ALERT_CMG) == 0) ||
+             (strcasecmp(val, ALERT_JH) == 0) ||
+             (strcasecmp(val, ALERT_DJR) == 0))
     {
         sc->output = OUTPUT_CMG;
         sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
         sc->output_flags |= OUTPUT_FLAG__APP_DATA;
     }
-    else if (strcasecmp(val, ALERT_MODE_OPT__AJK) == 0)
+    else if (strcasecmp(val, ALERT_AJK) == 0)
     {
         sc->output = OUTPUT_AJK;
     }
@@ -446,16 +447,17 @@ static void config_iface(SnortConfig*, const char* val)
 
 static void config_log_mode(SnortConfig* sc, const char* val)
 {
-    if (strcasecmp(val, "none") == 0)
+    if (strcasecmp(val, LOG_NONE) == 0)
     {
         sc->output_flags |= OUTPUT_FLAG__NO_LOG;
         Analyzer::set_main_hook(Analyzer::ignore);
+        EventManager::enable_logs(false);
     }
-    else if (strcasecmp(val, "text") == 0)
+    else if (strcasecmp(val, LOG_TEXT) == 0)
     {
         Analyzer::set_main_hook(Analyzer::print);
     }
-    else if (strcasecmp(val, "pcap") == 0)
+    else if (strcasecmp(val, LOG_PCAP) == 0)
     {
         sc->output = OUTPUT_PCAP;
         Analyzer::set_main_hook(Analyzer::log);
@@ -1068,9 +1070,6 @@ void cmd_line_term()
 {
     if (lua_conf != NULL)
         free(lua_conf);
-
-    if (legacy_conf != NULL)
-        free(legacy_conf);
 
     if (snort_conf_dir != NULL)
         free(snort_conf_dir);

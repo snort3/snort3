@@ -78,9 +78,6 @@
 #define FTPP_IGNORE_TNC_ERASE_CMDS 1
 
 /* list of function prototypes for this preprocessor */
-extern int normalize_telnet(FTPTELNET_GLOBAL_CONF *GlobalConf,
-                            TELNET_SESSION *session, Packet *p,
-                            int iMode,
-                            char ignoreEraseCmd);
+extern int normalize_telnet(TELNET_SESSION*, Packet*, int iMode, char ignoreEraseCmd);
 
 #endif 

@@ -139,7 +139,7 @@ typedef enum {
 #define PKT_ERR_BAD_TTL      0x10
 
 /*  D A T A  S T R U C T U R E S  *********************************************/
-struct Flow;
+class Flow;
 
 #ifndef NO_NON_ETHER_DECODER
 /* Start Token Ring Data Structures */

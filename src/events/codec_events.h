@@ -18,41 +18,37 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PROT_STATISTICS_H
-#define PROT_STATISTICS_H
+#ifndef CODEC_EVENTS_H
+#define CODEC_EVENTS_H
 
-#include "layer.h"
+#include <array>
 
-class DecodeStatistics
+// included for DECODE_INDEX_MAX
+#include "detection/generators.h"
+//#include "utils/sfActionQueue.h"
+#include "network_inspectors/normalize/normalize.h"
+#include "protocols/packet.h"
+#include "time/profiler.h"
+#include "codecs/decode_module.h"
+
+namespace codec_events
 {
-public:
-    DecodeStatistics();
-    ~DecodeStatistics();
 
-    static void reset()
-    {
-        protocol = TunnelType::NONE;
-        curr_layer = Layer::INVALID_LAYER;
-    }
+    void exec_ip_chksm_drop(Packet*);
+    void exec_udp_chksm_drop (Packet *);
+    void exec_tcp_chksm_drop (Packet*);
+    void exec_hop_drop(Packet* p, int sid);
+    void exec_ttl_drop (Packet *data, int sid);
+    void exec_icmp_chksm_drop (Packet*);
 
-protected:
-    
-    typedef enum class {
-        NONE, GRE, IPV4, IPV6, VLAN
-    } TunnelType;
+    void decoder_event (Packet *, int);
+    void decoder_alert_encapsulated(
+        Packet *p, int sid, const uint8_t *pkt, uint32_t len);
 
-    static void set_protocol(Tunneltype t, uint8_t layer)
-    {
-        protocol = t;
-        curr_layer = layer;
-    };
+    int ScNormalDrop (NormFlags nf);
 
-private:
+} //namespace codec_events
 
-    THREAD_LOCAL TunnelType protocol;
-    THREAD_LOCAL uint8_t curr_layer;
-
-};
 
 #endif
 

@@ -17,18 +17,20 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+// packet_manager.h author Josh Rosenbaum <jorosenba@cisco.com>
+
 #ifndef PACKET_MANAGER_H
 #define PACKET_MANAGER_H
 
 #include "snort_types.h"
 #include "framework/codec.h"
 #include "time/profiler.h"
+#include "utils/stats.h"
 
 #include <array>
 #include <list>
 
 struct Packet;
-struct _SnortConfig;
 
 //-------------------------------------------------------------------------
 
@@ -49,7 +51,7 @@ public:
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
     static void init_codecs();
     static void dump_stats();
-
+    static void thread_term();
 
     static bool has_codec(uint16_t);
 
@@ -57,8 +59,7 @@ public:
 //    static void encode_format(Packet *);
 
 private:
-    static const CodecApi *get_data_link_type(int dlt);
-
+    static void accumulate();
 
 };
 

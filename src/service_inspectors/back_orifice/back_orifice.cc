@@ -454,16 +454,11 @@ static int BoGetDirection(Packet *p, char *pkt_data)
 
 class BoPH : public Inspector {
 public:
-    BoPH();
+    BoPH() { };
 
-    void configure(SnortConfig*, const char*, char*) { };
     void show(SnortConfig*);
     void eval(Packet*);
 };
-
-BoPH::BoPH()
-{
-}
 
 void BoPH::show(SnortConfig*)
 {
@@ -605,17 +600,17 @@ static void bo_dtor(Inspector* p)
     delete p;
 }
 
-static void bo_sum(void*)
+static void bo_sum()
 {
     sum_stats(&gbostats, &bostats);
 }
 
-static void bo_stats(void*)
+static void bo_stats()
 {
     show_stats(&gbostats, mod_name);
 }
 
-static void bo_reset(void*)
+static void bo_reset()
 {
     memset(&gbostats, 0, sizeof(gbostats));
 }
@@ -636,7 +631,8 @@ static const InspectApi bo_api =
     nullptr, // term
     bo_ctor,
     bo_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     bo_sum,
     bo_stats,

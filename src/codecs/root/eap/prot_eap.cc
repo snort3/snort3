@@ -31,8 +31,7 @@
 #include "static_include.h"
 #include "prot_eap.h"
 
-#include "decoder_includes.h"
-
+#include "events/codec_events.h"
 
 /*
  * Function: DecodeEAP(uint8_t *, uint32_t, Packet *)
@@ -50,7 +49,7 @@ void DecodeEAP(const uint8_t * pkt, const uint32_t len, Packet * p)
     p->eaph = (EAPHdr *) pkt;
     if(len < sizeof(EAPHdr))
     {
-        DecoderEvent(p, DECODE_EAP_TRUNCATED,
+        codec_events::decoder_event(p, DECODE_EAP_TRUNCATED,
                         DECODE_EAP_TRUNCATED_STR);
 
         dc.discards++;

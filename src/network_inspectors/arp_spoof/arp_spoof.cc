@@ -160,7 +160,6 @@ public:
     ArpSpoof(ArpSpoofModule*);
     ~ArpSpoof();
 
-    void configure(SnortConfig*, const char*, char*) { };
     void show(SnortConfig*);
     void eval(Packet*);
 
@@ -311,13 +310,13 @@ static Inspector* as_ctor(Module* m)
 static void as_dtor(Inspector* p)
 { delete p; }
 
-static void as_sum(void*)
+static void as_sum()
 { sum_stats(&gasstats, &asstats); }
 
-static void as_stats(void*)
+static void as_stats()
 { show_stats(&gasstats, MOD_NAME); }
 
-static void as_reset(void*)
+static void as_reset()
 { memset(&gasstats, 0, sizeof(gasstats)); }
 
 static const InspectApi as_api =
@@ -336,7 +335,8 @@ static const InspectApi as_api =
     nullptr, // term
     as_ctor,
     as_dtor,
-    nullptr, // stop
+    nullptr, // pinit
+    nullptr, // pterm
     nullptr, // purge
     as_sum,
     as_stats,

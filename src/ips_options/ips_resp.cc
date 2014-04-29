@@ -209,7 +209,7 @@ static int resp_parse(char* type)
 {
     char* *toks;
     uint32_t flags = 0;
-    int num_toks, i;
+    int num_toks = 0, i;
 
     if ( type )
         toks = mSplit(type, ",", 6, &num_toks, 0);

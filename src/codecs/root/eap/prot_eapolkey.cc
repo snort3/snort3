@@ -26,12 +26,9 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
 #include "prot_eapolkey.h"
 
-#include "decoder_includes.h"
+#include "codecs/codev_events.h"
 
 
 /*
@@ -50,7 +47,7 @@ void DecodeEapolKey(const uint8_t * pkt, uint32_t len, Packet * p)
     p->eapolk = (EapolKey *) pkt;
     if(len < sizeof(EapolKey))
     {
-        DecoderEvent(p, DECODE_EAPKEY_TRUNCATED,
+        codec_events::decoder_event(p, DECODE_EAPKEY_TRUNCATED,
                         DECODE_EAPKEY_TRUNCATED_STR);
 
         dc.discards++;
