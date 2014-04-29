@@ -46,7 +46,7 @@ public:
     virtual ~Codec() { };
 
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id) = 0;
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id) = 0;
     // Get the codec's name
     virtual inline const char* get_name(){return name; };
     // Registers this Codec's data link type (as defined by libpcap)

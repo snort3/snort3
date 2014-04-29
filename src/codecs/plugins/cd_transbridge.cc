@@ -45,7 +45,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
 };
 
@@ -75,7 +75,7 @@ void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
  * wasn't needed since we are already deep into the packet
  */
 bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 //    dc.gre_eth++;
 

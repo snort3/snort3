@@ -51,7 +51,7 @@ public:
     
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id);
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
 
 
     // DELETE from here and below
@@ -93,7 +93,7 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
  * Returns: void function
  */
 bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     if(raw_len < ICMP_HEADER_LEN)
     {

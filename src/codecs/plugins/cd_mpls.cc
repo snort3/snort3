@@ -44,7 +44,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);    
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);    
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -71,7 +71,7 @@ void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 
 bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint32_t* tmpMplsHdr;
     uint32_t mpls_h;
