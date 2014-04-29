@@ -72,7 +72,7 @@ typedef enum {
 #define STREAM_FLPOLICY_SET_ABSOLUTE    0x01
 #define STREAM_FLPOLICY_SET_APPEND      0x02
 
-struct Flow;
+class Flow;
 
 typedef int (*LogFunction)(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
 typedef void (*LogExtraData)(Flow*, void *config, LogFunction *funcs,

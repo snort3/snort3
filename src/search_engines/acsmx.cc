@@ -798,10 +798,8 @@ static void Print_DFA( ACSM_STRUCT * acsm )
 */
 
 
-int acsmPrintDetailInfo(ACSM_STRUCT * p)
+int acsmPrintDetailInfo(ACSM_STRUCT*)
 {
-    if(p)
-        p = p;
     return 0;
 }
 

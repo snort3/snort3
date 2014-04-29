@@ -103,6 +103,6 @@ void Value::set_first_token()
 
 bool Value::get_next_token(string& tok)
 {
-    return ss ? ( *ss >> tok ) : false;
+    return ss && ( *ss >> tok );
 }
 

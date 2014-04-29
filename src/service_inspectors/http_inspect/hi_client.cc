@@ -2960,38 +2960,38 @@ int hi_client_init(HTTPINSPECT_GLOBAL_CONF*)
         }
         lookup_table[0x00] = SetBinaryNorm;
 
-        lookup_table[' ']  = NextNonWhiteSpace;
-        lookup_table['\r'] = find_rfc_delimiter;
-        lookup_table['\n'] = find_non_rfc_delimiter;
+        lookup_table[(uint8_t)' ']  = NextNonWhiteSpace;
+        lookup_table[(uint8_t)'\r'] = find_rfc_delimiter;
+        lookup_table[(uint8_t)'\n'] = find_non_rfc_delimiter;
 
         /*
         **  ASCII encoding
         */
-        lookup_table['%']  = SetPercentNorm;
+        lookup_table[(uint8_t)'%']  = SetPercentNorm;
 
         /*
         **  Looking for multiple slashes
         */
-        lookup_table['/']  = SetSlashNorm;
+        lookup_table[(uint8_t)'/']  = SetSlashNorm;
 
         /*
         **  Looking for backslashs
         */
-        lookup_table['\\'] = SetBackSlashNorm;
+        lookup_table[(uint8_t)'\\'] = SetBackSlashNorm;
 
-        lookup_table['+'] = SetPlusNorm;
+        lookup_table[(uint8_t)'+'] = SetPlusNorm;
 
 
         /*
         **  Look up parameter field, so we don't alert on long directory
         **  strings, when the next slash in the parameter field.
         */
-        lookup_table['?'] = SetParamField;
+        lookup_table[(uint8_t)'?'] = SetParamField;
 
         /*
         **  Look for absolute URI and proxy communication.
         */
-        lookup_table[':'] = SetProxy;
+        lookup_table[(uint8_t)':'] = SetProxy;
 
     }
 

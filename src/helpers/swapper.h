@@ -22,7 +22,7 @@
 #define SWAPPER_H
 
 struct SnortConfig;
-class tTargetBasedConfig;
+struct tTargetBasedConfig;
 
 class Swapper
 {
