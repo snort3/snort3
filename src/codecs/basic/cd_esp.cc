@@ -43,7 +43,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
 };
 
@@ -81,7 +81,7 @@ void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  */
 bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &lyr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     const uint8_t *esp_payload;
     uint8_t pad_length;

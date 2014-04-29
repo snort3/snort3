@@ -28,6 +28,7 @@
 #include "framework/codec.h"
 #include "events/codec_events.h"
 #include "codecs/decode_module.h"
+#include "protocols/undefined_protocols.h"
 
 
 namespace
@@ -41,7 +42,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id) { return false; };
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id) { return false; };
     virtual inline bool is_default_codec() { return true; };
 };
 
@@ -58,6 +59,7 @@ public:
 
 void NullCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
+    v.push_back(FINISHED_DECODE);
     // placeholder to avoid error
 }
 

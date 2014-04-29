@@ -64,14 +64,15 @@ static const uint16_t max_protocol_id = 65535;
 static std::list<const CodecApi*> s_codecs;
 //static std::array<Codec*, max_protocol_id> s_protocols;
 
-// statistics information
-static THREAD_LOCAL std::array<PegCount, max_protocol_id + gen_peg_size> s_stats;
-static std::array<PegCount, max_protocol_id + gen_peg_size> g_stats;
-static THREAD_LOCAL CdGenPegs pkt_cnt;
 
 static std::array<uint8_t, max_protocol_id> s_proto_map{};
 static std::array<Codec*, 256> s_protocols{};
 static THREAD_LOCAL uint8_t grinder = 0;
+
+// statistics information
+static THREAD_LOCAL std::array<PegCount, 256 + gen_peg_size> s_stats;
+static std::array<PegCount, 256 + gen_peg_size> g_stats;
+static THREAD_LOCAL CdGenPegs pkt_cnt;
 
 //-------------------------------------------------------------------------
 // helper functions
@@ -248,7 +249,7 @@ void PacketManager::set_grinder(void)
                 if (grinder != 0)
                     WarningMessage("The Codecs %s and %s have both been registered "
                         "as the raw decoder. Codec %s will be used\n",
-                        s_protocols[GRINDER_ID]->get_name(), cd->get_name(), 
+                        s_protocols[grinder]->get_name(), cd->get_name(), 
                         cd->get_name());
 
                 grinder = i;
@@ -310,7 +311,7 @@ void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     PROFILE_VARS;
-    int curr_prot_id, next_prot_id;
+    uint16_t mapped_prot, next_prot_id;
     uint16_t len, lyr_len;
 
     PREPROC_PROFILE_START(decodePerfStats);
@@ -320,29 +321,18 @@ void PacketManager::decode(
     p->pkth = pkthdr;
     p->pkt = pkt;
     len = pkthdr->caplen;
-    curr_prot_id = GRINDER_ID;
+    mapped_prot = grinder;
     pkt_cnt.total_processed++;
 
     // loop until the protocol id is no longer valid
-    while(curr_prot_id  >= 0 && curr_prot_id < max_protocol_id)
+    while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, next_prot_id))
     {
-        if (s_protocols[curr_prot_id] == 0)
-        {
-            pkt_cnt.other_codecs++;
-            break;
-        }
-        else if( !s_protocols[curr_prot_id]->decode(pkt, len, p, lyr_len, next_prot_id))
-        {
-            pkt_cnt.discards++;
-            break;
-        }           
-
-        s_stats[curr_prot_id + stat_offset]++;
-        PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, lyr_len);
-        curr_prot_id = next_prot_id;
-        next_prot_id = -1;
+        mapped_prot =  s_proto_map[next_prot_id];
+        PacketClass::PushLayer(p, s_protocols[mapped_prot], pkt, lyr_len);
+        s_stats[mapped_prot + stat_offset]++;
         len -= lyr_len;
         pkt += lyr_len;
+        next_prot_id = FINISHED_DECODE; // necessary in case decode returns true an
         lyr_len = 0;
     }
 
