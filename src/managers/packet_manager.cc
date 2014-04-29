@@ -142,9 +142,9 @@ void PacketManager::dump_plugins()
 
 void PacketManager::instantiate(const CodecApi* cd_api, Module* m, SnortConfig* sc)
 {
+#if 0
     static uint16_t codec_id = 1;
     std::vector<uint16_t> ids;
-
     const CodecApi *p = GetApi(cd_api->base.name);
 
     if(!p)
@@ -161,7 +161,7 @@ void PacketManager::instantiate(const CodecApi* cd_api, Module* m, SnortConfig* 
         if(s_proto_map[id] != 0)
             WarningMessage("The Codecs %s and %s have both been registered "
                 "for protocol_id %d. Codec %s will be used\n",
-                s_protocols[s_proto_map[id]]->get_name(), cd->get_name(), 
+                s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
                 id, cd->get_name());
 
         s_proto_map[id] = codec_id;
@@ -170,25 +170,72 @@ void PacketManager::instantiate(const CodecApi* cd_api, Module* m, SnortConfig* 
     if(cd->is_default_codec())
     {
         if(s_protocols[0])
-            s_protocols[0] = cd;
-        else
             FatalError("Only one Codec may be the registered as default, "
                 "but both the %s and %s return 'true' when "
                 " the function default_codec().\n",
                 s_protocols[0]->get_name(), cd->get_name());
+        else
+            s_protocols[0] = cd;
     }
 
     s_protocols[codec_id++] = cd;
+#endif
+}
+
+void PacketManager::instantiate()
+{
+    static uint16_t codec_id = 1;
+
+    for (auto p : s_codecs)
+    {
+        std::vector<uint16_t> ids;
+
+        // global init here to ensure the global policy has already been configured
+        if (p->ginit)
+            p->ginit();
+
+        Codec *cd = p->ctor();
+        cd->get_protocol_ids(ids);
+        for (auto id : ids)
+        {
+            if(s_proto_map[id] != 0)
+                WarningMessage("The Codecs %s and %s have both been registered "
+                    "for protocol_id %d. Codec %s will be used\n",
+                    s_protocols[s_proto_map[id]]->get_name(), cd->get_name(), 
+                    id, cd->get_name());
+
+            s_proto_map[id] = codec_id;
+        }
+
+        if(cd->is_default_codec())
+        {
+            if(s_protocols[0])
+                FatalError("Only one Codec may be the registered as default, "
+                           "but both the %s and %s return 'true' when "
+                           " the function default_codec().\n",
+                           s_protocols[0]->get_name(), cd->get_name());
+            else
+                s_protocols[0] = cd;
+        }
+
+        s_protocols[codec_id++] = cd;
+    }
 }
 
 void PacketManager::set_grinder(void)
 {
+    static std::mutex init_mutex;
+    init_mutex.lock();
+    instantiate();
+    init_mutex.unlock();
+
+
     for ( auto* p : s_codecs )
         if (p->tinit)
             p->tinit();
 
     int daq_dlt = DAQ_GetBaseProtocol();
-    for(int i = 0; i < s_protocols.size(); i++)
+    for(int i = 0; s_protocols[i] != 0; i++)
     {
         Codec *cd = s_protocols[i];
         std::vector<int> data_link_types;
