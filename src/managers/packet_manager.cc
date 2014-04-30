@@ -78,10 +78,8 @@ static THREAD_LOCAL CdGenPegs pkt_cnt;
 // helper functions
 //-------------------------------------------------------------------------
 
-// note that we now have multiple preproc configs saved by parser
-// (s5-global, s5-tcp, ..., etc.) but just one ppapi.  that means
-// we must call the config func multiple times but add only the 1st
-// instance to the policy list.
+#if 0
+// not need until instatiate && codec modules implemented
 static inline const CodecApi* GetApi(const char* keyword)
 {
     for ( auto* p : s_codecs )
@@ -89,6 +87,7 @@ static inline const CodecApi* GetApi(const char* keyword)
             return p;
     return NULL;
 }
+#endif
 
 
 //-------------------------------------------------------------------------
@@ -345,9 +344,9 @@ void PacketManager::decode(
     if (prev_prot_id != FINISHED_DECODE)
     {
         if(s_proto_map[prev_prot_id])
-            pkt_cnt.other_codecs++;
-        else
             pkt_cnt.discards++;
+        else
+            pkt_cnt.other_codecs++;
     }
 
     s_stats[mapped_prot + stat_offset]++;

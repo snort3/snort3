@@ -39,9 +39,6 @@
 
 namespace{
 
-const uint32_t ICMP_HEADER_LEN = 4;
-const uint32_t ICMP_NORMAL_LEN = 8;
-
 
 class Icmp4Codec : public Codec{
 
@@ -95,7 +92,7 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
 bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    if(raw_len < ICMP_HEADER_LEN)
+    if(raw_len < icmp4::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated ICMP4 header (%d bytes).\n", raw_len););
@@ -200,10 +197,7 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
         }
     }
 
-    lyr_len = ICMP_HEADER_LEN;
-
-    p->dsize = (u_short)(raw_len - ICMP_HEADER_LEN);
-    p->data = raw_pkt + ICMP_HEADER_LEN;
+    lyr_len =  icmp4::hdr_len();
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP type: %d   code: %d\n",
                 p->icmph->type, p->icmph->code););
@@ -245,14 +239,11 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
 
 
     /* Run a bunch of ICMP decoder rules */
-    p->dsize = (u_short)(raw_len - lyr_len);
-    p->data = raw_pkt + lyr_len;
+    p->dsize = (u_short)(raw_len - lyr_len); // setting for use in ICMP4MiscTests
     ICMP4MiscTests(p);
 
     p->proto_bits |= PROTO_BIT__ICMP;
     p->proto_bits &= ~(PROTO_BIT__UDP | PROTO_BIT__TCP);
-
-    next_prot_id = -1;
     return true;
 }
 

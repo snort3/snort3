@@ -58,7 +58,9 @@ const uint16_t PPPoE_CODE_PADR = 0x19; /* PPPoE Active Discovery Request */
 const uint16_t PPPoE_CODE_PADS = 0x65; /* PPPoE Active Discovery Session-confirmation */
 const uint16_t PPPoE_CODE_PADT = 0xa7; /* PPPoE Active Discovery Terminate */
 
-/* PPPoE tag types */
+#if 0
+/* PPPoE tag types  -  currently not used*/
+
 const uint16_t PPPoE_TAG_END_OF_LIST = 0x0000;
 const uint16_t PPPoE_TAG_SERVICE_NAME = 0x0101;
 const uint16_t PPPoE_TAG_AC_NAME = 0x0102;
@@ -69,7 +71,7 @@ const uint16_t PPPoE_TAG_RELAY_SESSION_ID = 0x0110;
 const uint16_t PPPoE_TAG_SERVICE_NAME_ERROR = 0x0201;
 const uint16_t PPPoE_TAG_AC_SYSTEM_ERROR = 0x0202;
 const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
-
+#endif
 
 } // namespace
 

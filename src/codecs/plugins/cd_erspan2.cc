@@ -77,7 +77,6 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     lyr_len = sizeof(ERSpanType2Hdr);
-    uint32_t payload_len;
     ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType2Hdr))

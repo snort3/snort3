@@ -321,6 +321,8 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
             break;
 
         default:
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                    "WARNING: ICMP6_TYPE (type %d).\n", p->icmp6h->type););
             codec_events::decoder_event(p, DECODE_ICMP6_TYPE_OTHER);
 
             lyr_len = icmp6::hdr_min_len();
@@ -516,7 +518,6 @@ void ICMP6_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
     c->icmp6h = (ICMP6Hdr*)lyr->start;
 }
 
-#endif
 
 /*
  * CHECKSUM
@@ -605,6 +606,7 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *ph,
   return (unsigned short)(~cksum);
 }
 
+#endif
 
 static Codec* ctor()
 {

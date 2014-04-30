@@ -56,7 +56,7 @@ static const uint32_t GRE_SEQ_LEN = 4;
 static const uint32_t GRE_SRE_HEADER_LEN = 4;
 
 /* GRE version 1 used with PPTP */
-static const uint32_t GRE_V1_HEADER_LEN =8;
+/* static const uint32_t GRE_V1_HEADER_LEN == GRE_HEADER_LEN + GRE_KEY_LEN; */
 static const uint32_t GRE_V1_ACK_LEN = 4;
 
 #define GRE_V1_FLAGS(x)   (x->version & 0x78)

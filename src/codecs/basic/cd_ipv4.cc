@@ -117,6 +117,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
+    uint16_t hlen;  /* ip header length */
 
 //    dc.ip++;
 
@@ -187,13 +188,13 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     ip_len = ntohs(p->iph->ip_len);
 
     /* get the IP header length */
-    lyr_len = ipv4::get_pkt_hdr_len(p->iph) << 2;
+    hlen = ipv4::get_pkt_hdr_len(p->iph) << 2;
 
     /* header length sanity check */
-    if(lyr_len < ipv4::hdr_len())
+    if(hlen < ipv4::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Bogus IP header length of %i bytes\n", lyr_len););
+            "Bogus IP header length of %i bytes\n", hlen););
 
         codec_events::decoder_event(p, DECODE_IPV4_INVALID_HEADER_LEN);
 
@@ -236,11 +237,11 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 #endif
 
-    if(ip_len < lyr_len)
+    if(ip_len < hlen)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "IP dgm len (%d bytes) < IP hdr "
-            "len (%d bytes), packet discarded\n", ip_len, lyr_len););
+            "len (%d bytes), packet discarded\n", ip_len, hlen););
 
         codec_events::decoder_event(p, DECODE_IPV4_DGRAM_LT_IPHDR);
 
@@ -263,7 +264,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
          * need to check them (should make this a command line/config
          * option
          */
-        int16_t csum = in_chksum_ip((u_short *)p->iph, lyr_len);
+        int16_t csum = in_chksum_ip((u_short *)p->iph, hlen);
 
         if(csum)
         {
@@ -282,7 +283,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 
     /* test for IP options */
-    p->ip_options_len = (uint16_t)(lyr_len - ipv4::hdr_len());
+    p->ip_options_len = (uint16_t)(hlen - ipv4::hdr_len());
 
     if(p->ip_options_len > 0)
     {
@@ -309,7 +310,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     p->actual_ip_len = (uint16_t) ip_len;
 
     /* set the remaining packet length */
-    ip_len -= lyr_len;
+    ip_len -= hlen;
 
     /* check for fragmented packets */
     p->frag_offset = ntohs(p->iph->ip_off);
@@ -342,7 +343,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         {
             /* set the packet fragment flag */
             p->frag_flag = 1;
-            p->ip_frag_start = raw_packet + lyr_len;
+            p->ip_frag_start = raw_packet + hlen;
             p->ip_frag_len = (uint16_t)ip_len;
 //            dc.frags++;
         }
@@ -358,7 +359,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 
     /* Set some convienience pointers */
-    p->ip_data = raw_packet + lyr_len;
+    p->ip_data = raw_packet + hlen;
     p->ip_dsize = (u_short) ip_len;
 
     /* See if there are any ip_proto only rules that match */
@@ -367,6 +368,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     p->proto_bits |= PROTO_BIT__IP;
 
     IPMiscTests(p);
+    lyr_len = hlen;
 
     /* if this packet isn't a fragment
      * or if it is, its a UDP packet and offset is 0 */
@@ -375,15 +377,14 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
             (p->iph->ip_proto == IPPROTO_UDP)))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP header length: %lu\n",
-                    (unsigned long)lyr_len););
+                    (unsigned long)hlen););
 
         next_prot_id = p->iph->ip_proto;
-        return true;
     }
     else
     {
         /* set the payload pointer and payload size */
-        p->data = raw_packet + lyr_len;
+        p->data = raw_packet + hlen;
         p->dsize = (u_short) ip_len;
     }
 
@@ -416,39 +417,32 @@ inline void DecodeIPv4Proto(const uint8_t proto,
 
 #if 0
 
+#endif
         case IPPROTO_IP_MOBILITY:
         case IPPROTO_SUN_ND:
         case IPPROTO_PIM:
-            if ( Event_Enabled(DECODE_IP_BAD_PROTO) )
-                codec_events::decoder_event(p, DECODE_IP_BAD_PROTO));
-//            dc.other++;
+            codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
             p->data = pkt;
             p->dsize = (uint16_t)len;
             return;
 
         case IPPROTO_PGM:
-//            dc.other++;
             p->data = pkt;
             p->dsize = (uint16_t)len;
 
-            if ( Event_Enabled(DECODE_PGM_NAK_OVERFLOW) )
                 CheckPGMVuln(p);
             return;
 
         case IPPROTO_IGMP:
-//            dc.other++;
             p->data = pkt;
             p->dsize = (uint16_t)len;
-
-            if ( Event_Enabled(DECODE_IGMP_OPTIONS_DOS) )
-                CheckIGMPVuln(p);
+            CheckIGMPVuln(p);
             return;
-#endif
+
         default:
             if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
                 codec_events::decoder_event(p, DECODE_IP_UNASSIGNED_PROTO);
 
-//            dc.other++;
             p->data = pkt;
             p->dsize = (uint16_t)len;
             return;

@@ -75,7 +75,6 @@ void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
     Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    uint32_t header_len;
     uint8_t  next_hdr_type;
     uint8_t  version;
     uint8_t  ip_ver;
@@ -214,6 +213,8 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         else if (ip_ver == 0x60)
             next_prot_id = ipv6::prot_id();
     }
+    
+    return true;
 }
 
 
