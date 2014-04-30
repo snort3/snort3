@@ -31,7 +31,7 @@ using namespace std;
 #include "config_file.h"
 #include "parser.h"
 #include "vars.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "managers/shell.h"
 #include "managers/event_manager.h"
 #include "managers/ips_manager.h"

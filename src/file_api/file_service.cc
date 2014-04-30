@@ -48,7 +48,7 @@
 
 #include "file_mime_process.h"
 #include "file_resume_block.h"
-#include "http_inspect/hi_main.h"  // FIXIT bad dependency
+#include "service_inspectors/http_inspect/hi_main.h"  // FIXIT bad dependency
 #include "detection_util.h"
 
 #include "target_based/sftarget_protocol_reference.h"

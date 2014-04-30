@@ -30,7 +30,7 @@
 #endif
 
 #include "snort_types.h"
-#include "thread.h"
+#include "main/thread.h"
 
 extern THREAD_LOCAL uint16_t event_id;
 

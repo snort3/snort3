@@ -47,7 +47,7 @@ extern "C" {
 #include "snort_debug.h"
 #include "util.h"
 #include "snort.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "packet_io/sfdaq.h"
 #include "stream5/stream_api.h"
 

@@ -24,7 +24,7 @@
 #include <string>
 using namespace std;
 
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "stream_common.h"
 
 #include "ip_config.h"

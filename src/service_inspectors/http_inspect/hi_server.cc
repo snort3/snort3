@@ -43,7 +43,7 @@
 
 #include "mempool/mempool.h"
 #include "hi_paf.h"
-#include "thread.h"
+#include "main/thread.h"
 
 static THREAD_LOCAL bool simple_response = false;
 

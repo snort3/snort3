@@ -44,7 +44,7 @@
 #include <unistd.h>
 #include <string>
 
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "util.h"
 #include "snort_types.h"
 #include "decode.h"

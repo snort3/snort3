@@ -16,16 +16,49 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// bits.h author Russ Combs <rucombs@cisco.com>
+// binder.cc author Russ Combs <rucombs@cisco.com>
 
-#ifndef BITS_H
-#define BITS_H
+#ifndef BINDER_H
+#define BINDER_H
 
-#include <bitset>
+#include <string>
 
-typedef std::bitset<65536> PortList;
-typedef std::bitset<4096> VlanList;
-typedef std::bitset<256> ByteList;
+#include "framework/bits.h"
+
+enum BindRole
+{
+    BR_EITHER,
+    BR_CLIENT,
+    BR_SERVER
+};
+
+enum BindAction
+{
+    BA_INSPECT,
+    BA_ALLOW,
+    BA_BLOCK
+};
+
+struct Binding
+{
+    // when
+    std::string id;
+    VlanList vlans;
+    std::string nets;
+    ByteList protos;
+    PortList ports;
+    BindRole role;
+
+    // use
+    std::string type;
+    std::string name;
+
+    // action
+    BindAction action;
+
+    Binding()
+    { role = BR_EITHER; action = BA_INSPECT; };
+};
 
 #endif
 

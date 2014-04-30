@@ -38,7 +38,7 @@
 #include "sflsq.h"
 #include "sfghash.h"
 #include "sfxhash.h"
-#include "policy.h"
+#include "main/policy.h"
 #include "detection/rules.h"
 
 // define to use over rate threshold

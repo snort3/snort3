@@ -37,7 +37,7 @@
 #include <dnet.h>
 #endif
 
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "decode.h"
 #include "snort.h"
 #include "snort_debug.h"

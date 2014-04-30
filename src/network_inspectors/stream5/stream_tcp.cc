@@ -54,7 +54,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "perf_monitor/perf.h"
 #include "snort_types.h"
 #include "snort_debug.h"

@@ -84,7 +84,7 @@
 #include <errno.h>
 
 #include "defrag_module.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "snort_bounds.h"
 #include "log_text.h"
 #include "detect.h"

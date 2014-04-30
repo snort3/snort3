@@ -27,7 +27,9 @@
 
 #include <assert.h>
 #include <string.h>
+
 #include <string>
+#include <vector>
 using namespace std;
 
 #include "framework/module.h"
@@ -36,6 +38,7 @@ using namespace std;
 #include "main.h"
 #include "snort.h"
 #include "snort_config.h"
+#include "binder.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/config_file.h"
@@ -1003,6 +1006,7 @@ bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // network module
 //-------------------------------------------------------------------------
+
 static const Parameter network_params[] =
 {
     { "checksum_drop", Parameter::PT_MULTI,
@@ -1665,27 +1669,30 @@ public:
 // bindings module
 //-------------------------------------------------------------------------
 
-static const Parameter bindings_match_params[] =
+static const Parameter bindings_when_params[] =
 {
-    { "id", Parameter::PT_INT, "1:", nullptr,
+    { "id", Parameter::PT_STRING, nullptr, nullptr,
       "unique ID for selection of this config by external logic" },
 
     { "vlans", Parameter::PT_STRING, nullptr, nullptr,
       "list of VLAN IDs" },
 
-    { "networks", Parameter::PT_ADDR_LIST, nullptr, nullptr,
-      "list of CIDRs" },
+    { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
+      "list of networks" },
+
+    { "protos", Parameter::PT_SELECT, "ip | icmp | tcp | udp", nullptr,
+      "list of protocols" },
 
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of ports" },
 
-    { "protocol", Parameter::PT_SELECT, "ip | icmp | tcp | udp", nullptr,
-      "list of protocols" },
+    { "role", Parameter::PT_ENUM, "client | server | any", "any",
+      "use the given configuration on one or any end of a session" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter bindings_config_params[] =
+static const Parameter bindings_use_params[] =
 {
     { "type", Parameter::PT_STRING, nullptr, nullptr,
       "select module for binding" },
@@ -1693,22 +1700,19 @@ static const Parameter bindings_config_params[] =
     { "name", Parameter::PT_STRING, nullptr, "defaults to type",
       "symbol name" },
 
-    { "direction", Parameter::PT_SELECT, "to_client | to_server | any", nullptr,
-      "direction" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const Parameter bindings_params[] =
 {
-    { "match", Parameter::PT_TABLE, nullptr, bindings_match_params,
+    { "when", Parameter::PT_TABLE, nullptr, bindings_when_params,
       "match criteria" },
 
-    { "config", Parameter::PT_TABLE, nullptr, bindings_config_params,
+    { "use", Parameter::PT_TABLE, nullptr, bindings_use_params,
       "target configuration" },
 
-    { "action", Parameter::PT_ENUM, "inspect | allow | block", "block",
-      "what to do with matching traffic (no config needed for allow and block)" },
+    { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
+      "what to do with matching traffic (use not needed for allow and block)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1716,44 +1720,45 @@ static const Parameter bindings_params[] =
 class BindingsModule : public Module
 {
 public:
-    BindingsModule() : Module("bindings", bindings_params) { };
+    BindingsModule() : Module("bindings", bindings_params) { work = nullptr; };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
 
 private:
-    string type;
-    string name;
-    unsigned ignore; // FIXIT only using type and name for now
+    vector<Binding*> bindings;
+    Binding* work;
 };
 
 bool BindingsModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("type") )
-        type = v.get_string();
-
-    else if ( v.is("name") )
-        name = v.get_string();
-
-    else if ( v.is("direction") )
-        ignore++;
+    if ( v.is("role") )
+        work->role = (BindRole)v.get_long();
 
     else if ( v.is("id") )
-        ignore++;
+        work->id = v.get_string();
 
     else if ( v.is("vlans") )
-        ignore++;
+        v.get_bits(work->vlans);
 
-    else if ( v.is("networks") )
-        ignore++;
+    else if ( v.is("nets") )
+        work->nets = v.get_string();
 
+    else if ( v.is("protos") )
+    {
+        //v.get_bits(work->protos); FIXIT ?
+    }
     else if ( v.is("ports") )
-        ignore++;
+        v.get_bits(work->ports);
 
-    else if ( v.is("protocol") )
-        ignore++;
+    else if ( v.is("type") )
+        work->type = v.get_string();
+
+    else if ( v.is("name") )
+        work->name = v.get_string();
 
     else if ( v.is("action") )
-        ignore++;
+        work->action = (BindAction)v.get_long();
 
     else
         return false;
@@ -1761,11 +1766,21 @@ bool BindingsModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool BindingsModule::begin(const char*, int, SnortConfig*)
+bool BindingsModule::begin(const char* fqn, int, SnortConfig*)
 {
-    type.clear();
-    name.clear();
-    ignore = 0;
+    if ( !strcmp(fqn, "bindings") )
+        work = new Binding;
+
+    return true;
+}
+
+bool BindingsModule::end(const char* fqn, int, SnortConfig*)
+{
+    if ( !strcmp(fqn, "bindings") )
+    {
+        bindings.push_back(work);
+        work = nullptr;
+    }
     return true;
 }
 

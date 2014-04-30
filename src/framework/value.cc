@@ -20,6 +20,7 @@
 
 #include "value.h"
 
+#include <assert.h>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -73,6 +74,20 @@ void Value::get_bits(PortList& list) const
 {
     list.reset();
     unsigned len = str.size();
+    assert(len == list.size());
+
+    for ( unsigned n = 0; n < len; ++n )
+    {   
+        if ( str[n] == '1' )
+            list.set(n);
+    }
+}
+
+void Value::get_bits(VlanList& list) const
+{
+    list.reset();
+    unsigned len = str.size();
+    assert(len == list.size());
 
     for ( unsigned n = 0; n < len; ++n )
     {   
@@ -85,6 +100,7 @@ void Value::get_bits(ByteList& list) const
 {
     list.reset();
     unsigned len = str.size();
+    assert(len == list.size());
 
     for ( unsigned n = 0; n < len; ++n )
     {   

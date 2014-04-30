@@ -28,7 +28,7 @@
 #endif
 
 #include "utils/util.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "snort.h"
 #include "utils/ring.h"
 

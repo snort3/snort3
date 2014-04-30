@@ -33,7 +33,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "thread.h"
+#include "main/thread.h"
 
 //#define MDEBUG
 

@@ -55,7 +55,7 @@
 #include "profiler.h"
 #include "filters/detection_filter.h"
 #include "encode.h"
-#include "thread.h"
+#include "main/thread.h"
 #include "framework/ips_option.h"
 #include "managers/ips_manager.h"
 

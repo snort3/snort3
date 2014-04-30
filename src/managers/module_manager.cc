@@ -30,10 +30,10 @@
 #include "framework/base_api.h"
 #include "framework/module.h"
 #include "managers/plugin_manager.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
+#include "main/modules.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
-#include "parser/modules.h"
 #include "parser/vars.h"
 
 using namespace std;

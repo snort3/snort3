@@ -2,21 +2,9 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 bin_PROGRAMS = snort
 
-snort_includedir = $(pkgincludedir)
-
-snort_include_HEADERS = \
-thread.h \
-snort_debug.h \
-snort_types.h
-
 snort_SOURCES = \
-snort.cc snort.h \
-snort_debug.cc \
-snort_config.cc snort_config.h \
-analyzer.cc analyzer.h \
-policy.cc policy.h \
-main.cc main.h \
-build.h
+main.cc \
+main.h
 
 if STATIC_INSPECTORS
 lib_list = \
@@ -28,7 +16,9 @@ service_inspectors/rpc_decode/librpc_decode.a
 endif
 
 # order libs to avoid undefined symbols
+# from gnu linker
 snort_LDADD = \
+main/libmain.a \
 target_based/libtarget_based.a \
 file_api/libfile_api.a \
 file_api/libs/libfile.a \
@@ -81,6 +71,7 @@ helpers \
 ips_options \
 log \
 loggers \
+main \
 managers \
 mempool \
 network_inspectors \

@@ -44,7 +44,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
-#include "thread.h"
+#include "main/thread.h"
 #include "protocols/ipv6.h"
 
 #if 0

@@ -36,7 +36,7 @@
 #include "sflsq.h"
 #include "sfghash.h"
 #include "sfxhash.h"
-#include "policy.h"
+#include "main/policy.h"
 
 /*!
     Max GEN_ID value - Set this to the Max Used by Snort, this is used for the

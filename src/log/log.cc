@@ -36,7 +36,7 @@
 using namespace std;
 
 #include "log_text.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "snort.h"
 
 #define DEFAULT_DAEMON_ALERT_FILE  "alert"

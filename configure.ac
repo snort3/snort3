@@ -28,7 +28,7 @@
 AC_INIT([snort], [2.10.075])
 AC_PREREQ([2.68])
 
-AC_CONFIG_SRCDIR([src/snort.cc])
+AC_CONFIG_SRCDIR([src/main.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 
@@ -236,6 +236,8 @@ fi
 #--------------------------------------------------------------------------
 # enables
 #--------------------------------------------------------------------------
+
+AM_CONDITIONAL(LINUX, [test "x$linux" = "xyes"])
 
 AC_ARG_ENABLE(static-inspectors,
     [  --disable-static-inspectors    do not include inspectors in binary ],
@@ -847,7 +849,7 @@ CXXFLAGS="$CFLAGS"
 echo "$AM_CFLAGS $CFLAGS" > cflags.out
 echo "$AM_CPPFLAGS $CPPFLAGS" > cppflags.out
 
-AM_CPPFLAGS='-I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/parser -I$(top_srcdir)/src/utils -I$(top_srcdir)/src/loggers -I$(top_srcdir)/src/network_inspectors -I$(top_srcdir)/src/service_inspectors -I$(top_srcdir)/src/time -I$(top_srcdir)/src/protocols -I$(top_srcdir)/src/log -I$(top_srcdir)/src/events -I$(top_srcdir)/src/sfip -I$(top_srcdir)/src/rules -I$(top_srcdir)/src/detection -I$(top_srcdir)/src/hash' 
+AM_CPPFLAGS='-I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/main -I$(top_srcdir)/src/parser -I$(top_srcdir)/src/utils -I$(top_srcdir)/src/loggers -I$(top_srcdir)/src/time -I$(top_srcdir)/src/protocols -I$(top_srcdir)/src/network_inspectors -I$(top_srcdir)/src/log -I$(top_srcdir)/src/events -I$(top_srcdir)/src/sfip -I$(top_srcdir)/src/rules -I$(top_srcdir)/src/detection -I$(top_srcdir)/src/hash' 
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CXXFLAGS)
@@ -875,6 +877,7 @@ src/helpers/Makefile \
 src/ips_options/Makefile \
 src/log/Makefile \
 src/loggers/Makefile    \
+src/main/Makefile \
 src/managers/Makefile \
 src/mempool/Makefile \
 src/network_inspectors/Makefile \

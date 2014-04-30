@@ -19,8 +19,6 @@
 
 // modules.cc author Russ Combs <rucombs@cisco.com>
 
-// prototype of parsing approach
-
 #ifndef MODULES_H
 #define MODULES_H
 

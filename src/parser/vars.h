@@ -21,7 +21,7 @@
 #ifndef VARS_H
 #define VARS_H
 
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "sfip/sf_vartable.h"
 
 //-------------------------------------------------------------------------

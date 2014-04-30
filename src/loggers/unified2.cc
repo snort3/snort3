@@ -45,7 +45,7 @@
 #include "framework/module.h"
 #include "decode.h" /* for struct in6_addr -- maybe move to snort_types.h? */
 #include "snort_types.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "decode.h"
 #include "rules.h"
 #include "treenodes.h"

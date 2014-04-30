@@ -46,7 +46,7 @@
 #include <fcntl.h>
 
 #include "snort.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "time/packet_time.h"
 

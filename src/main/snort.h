@@ -34,7 +34,7 @@
 #include "snort_types.h"
 #include "protocols/decode.h"
 #include "sfip/sf_ipvar.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
 
 SnortConfig* reload_config();
 void snort_setup(int argc, char *argv[]);

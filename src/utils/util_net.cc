@@ -32,7 +32,7 @@
 /* for inet_ntoa */
 #include <arpa/inet.h>
 
-#include "thread.h"
+#include "main/thread.h"
 #include "util.h"
 
 /** 

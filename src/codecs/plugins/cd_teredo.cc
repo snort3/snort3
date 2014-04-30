@@ -35,7 +35,7 @@
 #include "snort_types.h"
 #include "protocols/packet.h"
 #include "snort.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "protocols/ipv6.h"
 #include "protocols/teredo.h"

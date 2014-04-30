@@ -22,7 +22,7 @@
 #define INSPECTOR_H
 
 #include "snort_types.h"
-#include "thread.h"
+#include "main/thread.h"
 #include "framework/base_api.h"
 
 struct Packet;

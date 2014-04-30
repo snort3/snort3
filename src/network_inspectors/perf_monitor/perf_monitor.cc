@@ -42,7 +42,7 @@
 #include "perf.h"
 #include "perf_base.h"
 #include "perf_module.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "snort_types.h"
 #include "mstring.h"
 #include "util.h"
