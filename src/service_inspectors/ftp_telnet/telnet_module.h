@@ -31,7 +31,7 @@
 #define TELNET_ENCRYPTED      2
 #define TELNET_SB_NO_SE       3
 
-class SnortConfig;
+struct SnortConfig;
 
 class TelnetModule : public Module
 {

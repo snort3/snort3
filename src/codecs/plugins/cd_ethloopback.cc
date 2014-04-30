@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_vlan.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cd_ethloopback.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 #include "framework/codec.h"
@@ -30,12 +30,13 @@ namespace
 class EthLoopbackCodec : public Codec
 {
 public:
-    EthLoopbackCodec() : Codec("Ethloopback"){};
+    EthLoopbackCodec() : Codec("ethloopback"){};
     ~EthLoopbackCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     
 };
@@ -45,8 +46,14 @@ const uint16_t ETHERNET_TYPE_LOOP = 0x9000;
 
 } // anonymous namespace
 
+
+void EthLoopbackCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_LOOP);
+}
+
 bool EthLoopbackCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "EthLoopback is not supported.\n"););
@@ -56,7 +63,6 @@ bool EthLoopbackCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 //    if (p->greh != NULL)
 //        dc.gre_loopback++;
 
-    next_prot_id = -1;
     return true;
 }
 
@@ -66,10 +72,6 @@ bool EthLoopbackCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 //-------------------------------------------------------------------------
 
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_LOOP);
-}
 
 static Codec* ctor()
 {
@@ -81,18 +83,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ethloopback_codec";
+static const char* name = "ethloopback";
 static const CodecApi ethloopback_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr, // get_dlt
-    get_protocol_ids,
 };
 
 

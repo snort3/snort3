@@ -17,14 +17,43 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// packet_manager.cc author Josh Rosenbaum <jorosenba@cisco.com>
+
+#include "codec_api.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "codec_api.h"
 #include "framework/codec.h"
 
+
+extern const BaseApi* cd_eth;
+extern const BaseApi* cd_ipv4;
+extern const BaseApi* cd_ipv6;
+extern const BaseApi* cd_icmp4;
+extern const BaseApi* cd_icmp6;
+extern const BaseApi* cd_tcp;
+extern const BaseApi* cd_udp;
+extern const BaseApi* cd_esp;
+extern const BaseApi* cd_null;
+
+#ifdef STATIC_DECODERS
+extern const BaseApi* cd_ah;
+extern const BaseApi* cd_arp;
+extern const BaseApi* cd_erspan2;
+extern const BaseApi* cd_erspan3; 
+extern const BaseApi* cd_ethloopback; 
+extern const BaseApi* cd_gre;
+extern const BaseApi* cd_gtp;
+extern const BaseApi* cd_mpls;
+extern const BaseApi* cd_pppencap;
+extern const BaseApi* cd_pppoe;
+extern const BaseApi* cd_swipe;
+extern const BaseApi* cd_teredo;
+extern const BaseApi* cd_transbridge;
+extern const BaseApi* cd_vlan;
+#endif
 
 const BaseApi* codecs[] =
 {
@@ -36,6 +65,7 @@ const BaseApi* codecs[] =
     cd_tcp,
     cd_udp,
     cd_esp,
+    cd_null,
 
 #ifdef STATIC_DECODERS
     cd_ah,

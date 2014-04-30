@@ -33,12 +33,13 @@ namespace
 class Erspan3Codec : public Codec
 {
 public:
-    Erspan3Codec() : Codec("ERSPAN_3"){};
+    Erspan3Codec() : Codec("erspan3"){};
     ~Erspan3Codec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -60,6 +61,13 @@ struct ERSpanType3Hdr
 const uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
 } // anonymous namespace
 
+
+void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERTYPE_ERSPAN_TYPE3);
+}
+
+
 /*
  * Function: DecodeERSPANType3(uint8_t *, uint32_t, Packet *)
  *
@@ -74,10 +82,9 @@ const uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
  *
  */
 bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    lyr_len= sizeof(ERSpanType3Hdr);
-    uint32_t payload_len;
+    lyr_len = sizeof(ERSpanType3Hdr);
     ERSpanType3Hdr *erSpan3Hdr = (ERSpanType3Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType3Hdr))
@@ -114,11 +121,6 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 // api
 //-------------------------------------------------------------------------
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERTYPE_ERSPAN_TYPE3);
-}
-
 static Codec* ctor()
 {
     return new Erspan3Codec();
@@ -130,18 +132,23 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "erspan3_codec";
+static const char* name = "erspan3";
 static const CodecApi erspan3_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr, // get_dlt
-    get_protocol_ids,
 };
 
 

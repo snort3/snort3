@@ -215,9 +215,8 @@
 
    return values memcmp style
 */
-static int PortObject_keycmp( const void *a , const void *b, size_t n )
+static int PortObject_keycmp(const void *a , const void *b, size_t)
 {
-    n = n;
     return !PortObjectEqual( *(PortObject**)a, *(PortObject**)b );
 }
 
@@ -273,13 +272,11 @@ static void plx_print(plx_t * p)
 /*
  *   hash function for plx_t types
  */
-static unsigned plx_hash( SFHASHFCN * p, unsigned char *d, int n )
+static unsigned plx_hash(SFHASHFCN * p, unsigned char *d, int)
 {
     unsigned k, hash = p->seed;
     int i;
     plx_t* plx;
-
-    n = n;  /* To silence a Win32 warning */
 
     plx = *(plx_t**)d;
 
@@ -315,13 +312,11 @@ static inline int p_keycmp( const void *a , const void *b )
    -1, and +1 are not strictly needed, they could both return
    a non zero value for the purposes of hashing and searching.
 */
-static int plx_keycmp( const void *a , const void *b, size_t n )
+static int plx_keycmp( const void *a , const void *b, size_t )
 {
     int i, cmp;
     plx_t * pla = *(plx_t**)a;
     plx_t * plb = *(plx_t**)b;
-
-    n = n;  /* To silence a Win32 warning */
 
     if( pla->n < plb->n ) return -1;
 
@@ -1771,14 +1766,12 @@ int PortTableAddObject( PortTable *p, PortObject * po )
 
    Don't use this for type=ANY port objects
 */
-static unsigned PortObject_hash( SFHASHFCN * p, unsigned char *d, int n )
+static unsigned PortObject_hash( SFHASHFCN * p, unsigned char *d, int )
 {
     unsigned hash = p->seed;
     PortObjectItem * poi;
     PortObject     * po;
     SF_LNODE       * pos;
-
-    n = n; /* This quiets a Win32 warning */
 
     po = *(PortObject**) d;
 

@@ -5,7 +5,7 @@
 include_directories(${DAQ_INCLUDE_DIR})
 include_directories(${PCAP_INCLUDE_DIR})
 include_directories(${PCRE_INCLUDE_DIR})
-include_directories(${LUAJIT_INCLUDE_DIR})
+include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
 include_directories(${DNET_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(control)
@@ -131,6 +131,7 @@ target_link_libraries(snort
     ${LUAJIT_LIBRARIES}
     ${DAQ_LIBRARIES}
     ${DNET_LIBRARIES}
+    ${CLANG_CXX_LIBRARY}
 )
 
 

@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_esp.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cd_erspan2.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 #include "framework/codec.h"
@@ -31,11 +31,12 @@ namespace
 class Erspan2Codec : public Codec
 {
 public:
-    Erspan2Codec() : Codec("ERSPAN_2"){};
+    Erspan2Codec() : Codec("erspan2"){};
     ~Erspan2Codec(){};
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -53,7 +54,10 @@ struct ERSpanType2Hdr
 const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
 } // namespace
 
-
+void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERTYPE_ERSPAN_TYPE2);
+}
 
 
 /*
@@ -70,10 +74,9 @@ const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
  *
  */
 bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     lyr_len = sizeof(ERSpanType2Hdr);
-    uint32_t payload_len;
     ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)raw_pkt;
 
     if (len < sizeof(ERSpanType2Hdr))
@@ -100,17 +103,15 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         return false;
     }
 
-
-    next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING; // huh?
+    next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
     return true;
 }
 
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERTYPE_ERSPAN_TYPE2);
-}
 
 static Codec* ctor()
 {
@@ -123,7 +124,7 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "erspan2_codec";
+static const char* name = "erspan2";
 static const CodecApi erspan2_api =
 {
     { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
@@ -133,8 +134,6 @@ static const CodecApi erspan2_api =
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr,
-    get_protocol_ids,
 };
 
 #ifdef BUILDING_SO

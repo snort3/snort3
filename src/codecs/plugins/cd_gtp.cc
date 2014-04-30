@@ -44,12 +44,12 @@ namespace
 class GtpCodec : public Codec
 {
 public:
-    GtpCodec() : Codec("GTP"){};
+    GtpCodec() : Codec("gtp"){};
     ~GtpCodec(){};
 
-
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
 
     // DELETE from here and below
@@ -60,6 +60,10 @@ public:
 } // anonymous namespace
 
 
+void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(PROTOCOL_GTP);
+}
 
 /* Function: DecodeGTP(uint8_t *, uint32_t, Packet *)
  *
@@ -69,9 +73,8 @@ public:
  */
 
 bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &lyr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    uint32_t header_len;
     uint8_t  next_hdr_type;
     uint8_t  version;
     uint8_t  ip_ver;
@@ -210,6 +213,8 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         else if (ip_ver == 0x60)
             next_prot_id = ipv6::prot_id();
     }
+    
+    return true;
 }
 
 
@@ -271,10 +276,9 @@ EncStatus GTP_Update (Packet*, Layer* lyr, uint32_t* len)
 
 #endif
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(PROTOCOL_GTP);
-}
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 static Codec* ctor()
 {
@@ -286,18 +290,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "gtp_codec";
+static const char* name = "gtp";
 static const CodecApi gtp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids,
 };
 
 #ifdef BUILDING_SO

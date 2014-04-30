@@ -66,12 +66,6 @@ static THREAD_LOCAL uint8_t* dst_mac = NULL;
 Packet* encode_pkt = NULL;
 uint64_t total_rebuilt_pkts = 0;
 
-static inline int IsIcmp (int type)
-{
-    static constexpr int s_icmp[ENC_MAX] = { 0, 0, 1, 1, 1 };
-    return ( s_icmp[type] );
-}
-
 //-------------------------------------------------------------------------
 // encoders operate layer by layer:
 // * base+off is start of packet

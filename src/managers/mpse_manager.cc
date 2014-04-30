@@ -20,9 +20,9 @@
 // mpse_manager.cc author Russ Combs <rucombs@cisco.com>
 
 #include "mpse_manager.h"
-using namespace std;
 
 #include <list>
+using namespace std;
 
 #include "snort_types.h"
 #include "snort.h"

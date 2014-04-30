@@ -39,9 +39,6 @@
 
 namespace{
 
-const uint32_t ICMP_HEADER_LEN = 4;
-const uint32_t ICMP_NORMAL_LEN = 8;
-
 
 class Icmp4Codec : public Codec{
 
@@ -49,8 +46,9 @@ public:
     Icmp4Codec() : Codec("icmp4"){};
     ~Icmp4Codec() {};
     
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id);
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
 
 
     // DELETE from here and below
@@ -67,6 +65,11 @@ private:
 
 } // namespace
 
+
+void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
+{
+    v.push_back(IPPROTO_ICMP);
+}
 
 
 
@@ -87,9 +90,9 @@ private:
  * Returns: void function
  */
 bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    if(raw_len < ICMP_HEADER_LEN)
+    if(raw_len < icmp4::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated ICMP4 header (%d bytes).\n", raw_len););
@@ -194,10 +197,7 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
         }
     }
 
-    lyr_len = ICMP_HEADER_LEN;
-
-    p->dsize = (u_short)(raw_len - ICMP_HEADER_LEN);
-    p->data = raw_pkt + ICMP_HEADER_LEN;
+    lyr_len =  icmp4::hdr_len();
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP type: %d   code: %d\n",
                 p->icmph->type, p->icmph->code););
@@ -239,14 +239,11 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
 
 
     /* Run a bunch of ICMP decoder rules */
-    p->dsize = (u_short)(raw_len - lyr_len);
-    p->data = raw_pkt + lyr_len;
+    p->dsize = (u_short)(raw_len - lyr_len); // setting for use in ICMP4MiscTests
     ICMP4MiscTests(p);
 
     p->proto_bits |= PROTO_BIT__ICMP;
     p->proto_bits &= ~(PROTO_BIT__UDP | PROTO_BIT__TCP);
-
-    next_prot_id = -1;
     return true;
 }
 
@@ -554,24 +551,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void get_protocol_ids(std::vector<uint16_t> &proto_ids)
-{
-    proto_ids.push_back(IPPROTO_ICMP);
-}
-
-static const char* name = "icmp4_codec";
-
+static const char* name = "icmp4";
 static const CodecApi icmp4_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    { 
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids,
 };
 
 

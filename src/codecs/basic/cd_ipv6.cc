@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -42,8 +40,9 @@ public:
     Ipv6Codec() : Codec("ipv6"){};
     ~Ipv6Codec(){};
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -62,13 +61,18 @@ static inline int IPV6ExtensionOrder(uint8_t type);
 static void CheckIPV6Multicast(Packet *p);
 static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr);
 
+void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ipv6::ethertype());
+    v.push_back(ipv6::prot_id());
+}
 
 //--------------------------------------------------------------------
 // decode.c::IP6 decoder
 //--------------------------------------------------------------------
 
 bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &lyr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     ipv6::IP6RawHdr *hdr;
     uint32_t payload_len;
@@ -983,11 +987,6 @@ EncStatus Opt6_Update (Packet* p, Layer* lyr, uint32_t* len)
 // api
 //-------------------------------------------------------------------------
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ipv6::ethertype());
-    v.push_back(ipv6::prot_id());
-}
 
 static Codec* ctor()
 {
@@ -999,18 +998,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ipv6_codec";
+static const char* name = "ipv6";
 static const CodecApi ipv6_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids,
 };
 
 

@@ -39,12 +39,12 @@ namespace
 class MplsCodec : public Codec
 {
 public:
-    MplsCodec() : Codec("MPLS"){};
+    MplsCodec() : Codec("mpls"){};
     ~MplsCodec(){};
 
-
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);    
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);    
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -63,8 +63,15 @@ const static uint32_t NUM_RESERVED_LABELS = 16;
 static int checkMplsHdr(uint32_t, uint8_t, uint8_t, uint8_t, Packet *);
 
 
+void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_MPLS_UNICAST);
+    v.push_back(ETHERNET_TYPE_MPLS_MULTICAST);
+}
+
+
 bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint32_t* tmpMplsHdr;
     uint32_t mpls_h;
@@ -152,7 +159,6 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             break;
 
         default:
-            next_prot_id = -1;
             break;
     }
 
@@ -251,12 +257,9 @@ static int checkMplsHdr(
     return iRet;
 }
 
-
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_MPLS_UNICAST);
-    v.push_back(ETHERNET_TYPE_MPLS_MULTICAST);
-}
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 static Codec* ctor()
 {
@@ -268,18 +271,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "mpls_codec";
+static const char* name = "mpls";
 static const CodecApi mpls_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    { 
+        PT_CODEC, 
+        name, 
+        CDAPI_PLUGIN_V0, 
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr, // get_dlt
-    get_protocol_ids,
 };
 
 #ifdef BUILDING_SO

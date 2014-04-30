@@ -38,12 +38,14 @@ namespace
 class EthCodec : public Codec
 {
 public:
-    EthCodec() : Codec("Eth"){};
+    EthCodec() : Codec("eth"){};
     ~EthCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) {};
+    virtual void get_data_link_type(std::vector<int>&);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id);
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     // DELETE
     #include "codecs/sf_protocols.h"
@@ -53,6 +55,11 @@ public:
 
 } // anonymous
 
+
+void EthCodec::get_data_link_type(std::vector<int>&v)
+{
+    v.push_back(DLT_EN10MB);
+}
 
 
 //--------------------------------------------------------------------
@@ -72,7 +79,7 @@ public:
  * Returns: void function
  */
 bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 
 //    dc.eth++;
@@ -210,12 +217,6 @@ void Eth_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 // api
 //-------------------------------------------------------------------------
 
-static void get_data_link_type(std::vector<int>&v)
-{
-    v.push_back(DLT_EN10MB);
-}
-
-
 static Codec* ctor()
 {
     return new EthCodec();
@@ -226,19 +227,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "eth_codec";
-
+static const char* name = "eth";
 static const CodecApi eth_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    { 
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    get_data_link_type,
-    NULL,
 };
 
 const BaseApi* cd_eth = &eth_api.base;
