@@ -132,97 +132,97 @@
 /*  Header file definitions */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#cmakedefine HAVE_DLFCN_H
+#cmakedefine HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the <dnet.h> header file. */
-#cmakedefine HAVE_DNET_H
+#cmakedefine HAVE_DNET_H 1
 
 /* Define to 1 if you have the <dumbnet.h> header file. */
-#cmakedefine HAVE_DUMBNET_H
+#cmakedefine HAVE_DUMBNET_H 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#cmakedefine HAVE_INTTYPES_H
+#cmakedefine HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <math.h> header file. */
-#cmakedefine HAVE_MATH_H
+#cmakedefine HAVE_MATH_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#cmakedefine HAVE_MEMORY_H
+#cmakedefine HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the <openssl/sha.h> header file. */
 #cmakedefine HAVE_OPENSSL_SHA_H 1
 
 /* Define to 1 if you have the <paths.h> header file. */
-#cmakedefine HAVE_PATHS_H
+#cmakedefine HAVE_PATHS_H 1
 
 /* Define to 1 if you have the <pcre.h> header file. */
-#cmakedefine HAVE_PCRE_H
+#cmakedefine HAVE_PCRE_H 1
 
 /* Define to 1 if you have the <pfring.h> header file. */
-#cmakedefine HAVE_PFRING_H
+#cmakedefine HAVE_PFRING_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#cmakedefine HAVE_STDINT_H
+#cmakedefine HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#cmakedefine HAVE_STDLIB_H
+#cmakedefine HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-#cmakedefine HAVE_STRINGS_H
+#cmakedefine HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#cmakedefine HAVE_STRING_H
+#cmakedefine HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/sockio.h> header file. */
-#cmakedefine HAVE_SYS_SOCKIO_H
+#cmakedefine HAVE_SYS_SOCKIO_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#cmakedefine HAVE_SYS_STAT_H
+#cmakedefine HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#cmakedefine HAVE_SYS_TYPES_H
+#cmakedefine HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#cmakedefine HAVE_UNISTD_H
+#cmakedefine HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the <uuid/uuid.h> header file. */
-#cmakedefine HAVE_UUID_UUID_H
+#cmakedefine HAVE_UUID_UUID_H 1
 
 /* Define to 1 if you have the <wchar.h> header file. */
-#cmakedefine HAVE_WCHAR_H
+#cmakedefine HAVE_WCHAR_H 1
 
 /* Define to 1 if you have the <zlib.h> header file. */
-#cmakedefine HAVE_ZLIB_H
+#cmakedefine HAVE_ZLIB_H 1
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
-#cmakedefine HAVE_ARPA_INET_H
+#cmakedefine HAVE_ARPA_INET_H 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
-#cmakedefine HAVE_LIBINTL_H
+#cmakedefine HAVE_LIBINTL_H 1
 
 /* Define to 1 if you have the <limits.h> header file. */
-#cmakedefine HAVE_LIMITS_H
+#cmakedefine HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the <netdb.h> header file. */
-#cmakedefine HAVE_NETDB_H
+#cmakedefine HAVE_NETDB_H 1
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
-#cmakedefine HAVE_NETINET_IN_H
+#cmakedefine HAVE_NETINET_IN_H 1
 
 /* Define to 1 if you have the <stddef.h> header file. */
-#cmakedefine HAVE_STDDEF_H
+#cmakedefine HAVE_STDDEF_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
-#cmakedefine HAVE_SYS_SOCKET_H
+#cmakedefine HAVE_SYS_SOCKET_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-#cmakedefine HAVE_SYS_TIME_H
+#cmakedefine HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <syslog.h> header file. */
-#cmakedefine HAVE_SYSLOG_H
+#cmakedefine HAVE_SYSLOG_H 1
 
 /* Define to 1 if you have the ANSI C header files. */
-#cmakedefine STDC_HEADERS
+#cmakedefine STDC_HEADERS 1
 
 
 
@@ -231,40 +231,40 @@
 
 
 /* Define to 1 if the system has the type `int16_t'. */
-#cmakedefine HAVE_INT16_T
+#cmakedefine HAVE_INT16_T 1
 
 /* Define to 1 if the system has the type `int32_t'. */
-#cmakedefine HAVE_INT32_T
+#cmakedefine HAVE_INT32_T 1
 
 /* Define to 1 if the system has the type `int64_t'. */
-#cmakedefine HAVE_INT64_T
+#cmakedefine HAVE_INT64_T 1
 
 /* Define to 1 if the system has the type `int8_t'. */
-#cmakedefine HAVE_INT8_T
+#cmakedefine HAVE_INT8_T 1
 
 /* Define to 1 if the system has the type `uint16_t'. */
-#cmakedefine HAVE_UINT16_T
+#cmakedefine HAVE_UINT16_T 1
 
 /* Define to 1 if the system has the type `uint32_t'. */
-#cmakedefine HAVE_UINT32_T
+#cmakedefine HAVE_UINT32_T 1
 
 /* Define to 1 if the system has the type `uint64_t'. */
-#cmakedefine HAVE_UINT64_T
+#cmakedefine HAVE_UINT64_T 1
 
 /* Define to 1 if the system has the type `uint8_t'. */
-#cmakedefine HAVE_UINT8_T
+#cmakedefine HAVE_UINT8_T 1
 
 /* Define to 1 if the system has the type `u_int16_t'. */
-#cmakedefine HAVE_U_INT16_T
+#cmakedefine HAVE_U_INT16_T 1
 
 /* Define to 1 if the system has the type `u_int32_t'. */
-#cmakedefine HAVE_U_INT32_T
+#cmakedefine HAVE_U_INT32_T 1
 
 /* Define to 1 if the system has the type `u_int64_t'. */
-#cmakedefine HAVE_U_INT64_T
+#cmakedefine HAVE_U_INT64_T 1
 
 /* Define to 1 if the system has the type `u_int8_t'. */
-#cmakedefine HAVE_U_INT8_T
+#cmakedefine HAVE_U_INT8_T 1
 
 /* The size of `char', as computed by sizeof. */
 #cmakedefine SIZEOF_CHAR @SIZEOF_CHAR@
@@ -291,10 +291,10 @@
 #cmakedefine SIZEOF_UNSIGNED_LONG_LONG_INT @SIZEOF_UNSIGNED_LONG_LONG_INT@
 
 /* Define if words are big endian */
-#define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
+#cmakedefine WORDS_BIGENDIAN 1
 
 /* Define if words must align */
-#cmakedefine WORDS_MUSTALIGN
+#cmakedefine WORDS_MUSTALIGN 1
 
 
 
@@ -326,31 +326,31 @@
 /* general functions */
 
 /* Define to 1 if you have the `sigaction' function. */
-#cmakedefine HAVE_SIGACTION
+#cmakedefine HAVE_SIGACTION 1
 
 /* snprintf function is available */
-#cmakedefine HAVE_SNPRINTF
+#cmakedefine HAVE_SNPRINTF 1
 
 /* Define to 1 if you have the `strlcat' function. */
-#cmakedefine HAVE_STRLCAT
+#cmakedefine HAVE_STRLCAT 1
 
 /* Define to 1 if you have the `strlcpy' function. */
-#cmakedefine HAVE_STRLCPY
+#cmakedefine HAVE_STRLCPY 1
 
 /* Define to 1 if you have the `vsnprintf' function. */
-#cmakedefine HAVE_VSNPRINTF
+#cmakedefine HAVE_VSNPRINTF 1
 
 /* Define to 1 if you have the `vswprintf' function. */
-#cmakedefine HAVE_VSWPRINTF
+#cmakedefine HAVE_VSWPRINTF 1
 
 /* Define to 1 if you have the `wprintf' function. */
-#cmakedefine HAVE_WPRINTF
+#cmakedefine HAVE_WPRINTF 1
 
 /* Define to 1 if you have the `memrchr' function. */
-#cmakedefine HAVE_MEMRCHR
+#cmakedefine HAVE_MEMRCHR 1
 
 /* Define to 1 if you have the `inet_ntop' function. */
-#cmakedefine HAVE_INET_NTOP
+#cmakedefine HAVE_INET_NTOP 1
 
 
 
@@ -359,40 +359,40 @@
 /*  Available libraries */
 
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
-#cmakedefine HAVE_LIBCRYPTO
+#cmakedefine HAVE_LIBCRYPTO 1
 
 /* Define to 1 if you have the `dnet' library (-ldnet). */
-#cmakedefine HAVE_LIBDNET
+#cmakedefine HAVE_LIBDNET 1
 
 /* Define to 1 if you have the `dumbnet' library (-ldumbnet). */
-#cmakedefine HAVE_LIBDUMBNET
+#cmakedefine HAVE_LIBDUMBNET 1
 
 /* Define to 1 if you have the `m' library (-lm). */
-#cmakedefine HAVE_LIBM
+#cmakedefine HAVE_LIBM 1
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
-#cmakedefine HAVE_LIBNSL
+#cmakedefine HAVE_LIBNSL 1
 
 /* Define to 1 if you have the `pcap' library (-lpcap). */
-#cmakedefine HAVE_LIBPCAP
+#cmakedefine HAVE_LIBPCAP 1
 
 /* Define to 1 if you have the `pcre' library (-lpcre). */
-#cmakedefine HAVE_LIBPCRE
+#cmakedefine HAVE_LIBPCRE 1
 
 /* Define to 1 if you have the `pfring' library (-lpfring). */
-#cmakedefine HAVE_LIBPFRING
+#cmakedefine HAVE_LIBPFRING 1
 
 /* Define to 1 if you have the `rt' library (-lrt). */
-#cmakedefine HAVE_LIBRT
+#cmakedefine HAVE_LIBRT 1
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
-#cmakedefine HAVE_LIBSOCKET
+#cmakedefine HAVE_LIBSOCKET 1
 
 /* Define to 1 if you have the `uuid' library (-luuid). */
-#cmakedefine HAVE_LIBUUID
+#cmakedefine HAVE_LIBUUID 1
 
 /* Define to 1 if you have the `z' library (-lz). */
-#cmakedefine HAVE_LIBZ
+#cmakedefine HAVE_LIBZ 1
 
 /* openssl SHA available */
 #cmakedefine HAVE_OPENSSL_SHA 1
@@ -407,16 +407,16 @@
 #cmakedefine HAVE_PCAP_LIB_VERSION 1
 
 /* Define to 1 if you have the `daq_acquire_with_meta' function. */
-#cmakedefine01 HAVE_DAQ_ACQUIRE_WITH_META
+#cmakedefine HAVE_DAQ_ACQUIRE_WITH_META 1
 
 /* DAQ version supports address space ID in header. */
-#cmakedefine01 HAVE_DAQ_ADDRESS_SPACE_ID
+#cmakedefine HAVE_DAQ_ADDRESS_SPACE_ID 1
 
 /* Define to 1 if you have the `daq_hup_apply' function. */
-#cmakedefine01 HAVE_DAQ_HUP_APPLY
+#cmakedefine HAVE_DAQ_HUP_APPLY 1
 
 /* Define whether yylex_destroy is supported in flex version */
-#cmakedefine HAVE_YYLEX_DESTROY
+#cmakedefine HAVE_YYLEX_DESTROY 1
 
 
 
@@ -463,13 +463,13 @@
 
 
 /* Define if building universal (internal helper macro) */
-#cmakedefine01 AC_APPLE_UNIVERSAL_BUILD
+#cmakedefine AC_APPLE_UNIVERSAL_BUILD 1
 
 /* Define if errlist is predefined */
-#cmakedefine01 ERRLIST_PREDEFINED
+#cmakedefine ERRLIST_PREDEFINED 1
 
 /* For INADDR_NONE definition */
-#cmakedefine INADDR_NONE
+#cmakedefine INADDR_NONE 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

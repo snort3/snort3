@@ -314,7 +314,6 @@ void PacketManager::decode(
     uint16_t mapped_prot, prot_id;
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint16_t len, lyr_len;
-    bool valid;
 
     PREPROC_PROFILE_START(decodePerfStats);
 
@@ -327,7 +326,7 @@ void PacketManager::decode(
     pkt_cnt.total_processed++;
 
     // loop until the protocol id is no longer valid
-    while((valid = s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id)))
+    while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
     {
         PacketClass::PushLayer(p, s_protocols[mapped_prot], pkt, lyr_len);
         s_stats[mapped_prot + stat_offset]++;
@@ -339,8 +338,8 @@ void PacketManager::decode(
         lyr_len = 0;
     }
 
-    // if the final codec returned false && is not the null codec
-    if (!valid && (mapped_prot != FINISHED_DECODE))
+    // if the final protocol ID is not the null codec
+    if ((prot_id != FINISHED_DECODE))
         pkt_cnt.discards++;
 
     // If a codec attempted to decode another layer but we couldn't find it
