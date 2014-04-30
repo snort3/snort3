@@ -59,7 +59,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &);
 
 
     // DELETE
@@ -106,7 +106,7 @@ void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  */
 bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
 {
     if(len < tcp::hdr_len())
     {
@@ -116,9 +116,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         codec_events::decoder_event(p, DECODE_TCP_DGRAM_LT_TCPHDR);
 
         p->tcph = NULL;
-//        dc.discards++;
-//        dc.tdisc++;
-
         return false;
     }
 

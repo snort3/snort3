@@ -65,6 +65,9 @@ struct in6_addr
 #define IPRAW_HDR_VER(p_rawiph) \
    (ntohl(p_rawiph->ip6_vtf) >> 28)
 
+#if 0
+// defined in dnet.h and currently unused.
+
 #ifndef IP_PROTO_HOPOPTS
 # define IP_PROTO_HOPOPTS    0
 #endif
@@ -77,6 +80,7 @@ struct in6_addr
 #define IP_PROTO_ICMPV6     58
 #define IP_PROTO_IPV6       41
 #define IP_PROTO_IPIP       4
+#endif
 
 #define IP6F_OFFSET_MASK    0xfff8  /* mask out offset from _offlg */
 #define IP6F_MF_MASK        0x0001  /* more-fragments flag */

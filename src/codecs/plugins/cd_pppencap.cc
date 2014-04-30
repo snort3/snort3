@@ -93,7 +93,6 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     p->data = raw_pkt;
     p->dsize = (uint16_t)len;
-    next_prot_id = -1;
     return true;
 #endif  /* WORDS_MUSTALIGN */
 
@@ -167,7 +166,6 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
             break;
 
         default:
-            next_prot_id = -1;
             break;
     }
     return true;

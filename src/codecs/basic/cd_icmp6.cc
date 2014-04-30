@@ -67,8 +67,10 @@ void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 
 
 static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p);
-static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
 
+#if 0
+static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
+#endif
 
 
 //--------------------------------------------------------------------
@@ -76,7 +78,7 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
 //--------------------------------------------------------------------
 
 bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len, 
-    Packet* p, uint16_t &lyr_len, uint16_t &next_prot_id)
+    Packet* p, uint16_t &lyr_len, uint16_t & /* next_prot_id */)
 {
     if(len < icmp6::hdr_min_len())
     {
@@ -331,7 +333,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
     p->proto_bits |= PROTO_BIT__ICMP;
     p->proto_bits &= ~(PROTO_BIT__UDP | PROTO_BIT__TCP);
-    next_prot_id = -1;
     return true;
 }
 

@@ -30,6 +30,7 @@
 #include "codecs/decode_module.h"
 #include "managers/packet_manager.h"
 #include "events/codec_events.h"
+#include "protocols/undefined_protocols.h"
 
 namespace
 {
@@ -122,9 +123,7 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     else
     {
         p->packet_flags |= PKT_TRUST;
-        p->data = esp_payload;
-        p->dsize = (u_short) len - lyr_len;
-        next_prot_id = -1;
+        next_prot_id = FINISHED_DECODE;
         return true;
     }
 

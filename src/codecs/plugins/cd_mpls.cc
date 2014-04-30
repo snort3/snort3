@@ -159,7 +159,6 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             break;
 
         default:
-            next_prot_id = -1;
             break;
     }
 
