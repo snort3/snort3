@@ -340,7 +340,7 @@ void PacketManager::decode(
     }
 
     // if the final codec returned false && is not the null codec
-    if (!valid && mapped_prot)
+    if (!valid && (mapped_prot != FINISHED_DECODE))
         pkt_cnt.discards++;
 
     // If a codec attempted to decode another layer but we couldn't find it

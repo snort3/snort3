@@ -46,7 +46,7 @@ namespace
 class UdpCodec : public Codec
 {
 public:
-    UdpCodec() : Codec("Udp"){};
+    UdpCodec() : Codec("udp"){};
     ~UdpCodec(){};
 
 
@@ -102,7 +102,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     /* set the ptr to the start of the UDP header */
-    p->inner_udph = p->udph = reinterpret_cast<udp::UDPHdr*>(const_cast<uint8_t*>(raw_pkt));
+    p->inner_udph = p->udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
 
     if (!p->frag_flag)
     {
