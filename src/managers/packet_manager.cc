@@ -296,7 +296,10 @@ void PacketManager::accumulate()
     s_stats[0] = pkt_cnt.total_processed;
     s_stats[1] = pkt_cnt.other_codecs;
     s_stats[2] = pkt_cnt.discards;
-    s_stats[3] = 0; // zeroing out the 'null' codec.
+
+    // zeroing out the null codecs ... these     
+    s_stats[3] = 0;
+    s_stats[s_proto_map[FINISHED_DECODE] + stat_offset] = 0;
 
     sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
 
@@ -330,8 +333,8 @@ void PacketManager::decode(
     {
         PacketClass::PushLayer(p, s_protocols[mapped_prot], pkt, lyr_len);
         s_stats[mapped_prot + stat_offset]++;
+        mapped_prot = s_proto_map[prot_id];
         prev_prot_id = prot_id; // used for 'other_codecs' statistics
-        mapped_prot =  s_proto_map[prot_id];
         prot_id = FINISHED_DECODE;
         len -= lyr_len;
         pkt += lyr_len;
@@ -339,12 +342,13 @@ void PacketManager::decode(
     }
 
     // if the final protocol ID is not the null codec
-    if ((prot_id != FINISHED_DECODE))
-        pkt_cnt.discards++;
-
-    // If a codec attempted to decode another layer but we couldn't find it
     if (prev_prot_id != FINISHED_DECODE)
-        pkt_cnt.other_codecs++;
+    {
+        if(s_proto_map[prev_prot_id])
+            pkt_cnt.other_codecs++;
+        else
+            pkt_cnt.discards++;
+    }
 
     s_stats[mapped_prot + stat_offset]++;
     p->dsize = len;

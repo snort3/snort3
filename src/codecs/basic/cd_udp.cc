@@ -234,7 +234,6 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "UDP header starts at: %p\n", p->udph););
 
     lyr_len = udp::header_len();
-    next_prot_id = -1;
 //    PushLayer(PROTO_UDP, p, raw_pkt, udp::header_len());
 
 
