@@ -36,6 +36,7 @@ target_link_libraries( codecs
     protocols
     sfip
     framework
+    main
 )
 
 

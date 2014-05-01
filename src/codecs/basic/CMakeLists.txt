@@ -17,4 +17,5 @@ target_link_libraries( basic_codecs
     protocols
     framework
     events
+    main
 )

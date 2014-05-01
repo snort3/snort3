@@ -20,6 +20,13 @@ add_library (main STATIC
     snort_config.cc 
 )
 
+
+target_link_libraries(main
+    time
+    codecs
+    detection
+)
+
 install (FILES ${INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/main"
 )

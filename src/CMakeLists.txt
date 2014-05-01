@@ -222,4 +222,17 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
     )
     get_filename_component(file_name "${file}" NAME_WE)
     add_custom_target(doc_${file_name} ALL DEPENDS ${output})
+
+
+    set(file version.txt)
+
+    set(output ${TARGET_DIR}/${file})
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND snort -V 2>&1 | grep -v Using > ${output}
+        MAIN_DEPENDENCY snort
+        COMMENT "Documents: building ${output}"
+    )
+    get_filename_component(file_name "${file}" NAME_WE)
+    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
 endif()

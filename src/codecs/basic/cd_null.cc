@@ -27,6 +27,7 @@
 
 #include "framework/codec.h"
 #include "events/codec_events.h"
+#include "undefined_protocols.h"
 
 namespace
 {
@@ -90,3 +91,4 @@ static const CodecApi null_api =
     dtor, // dtor
 };
 
+const BaseApi* cd_null = &null_api.base;

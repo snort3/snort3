@@ -18,11 +18,9 @@ endif
 # order libs to avoid undefined symbols
 # from gnu linker
 snort_LDADD = \
-main/libmain.a \
 target_based/libtarget_based.a \
-file_api/libfile_api.a \
-file_api/libs/libfile.a \
 managers/libmanagers.a \
+main/libmain.a \
 parser/libparser.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
@@ -35,6 +33,8 @@ network_inspectors/stream5/libstream.a \
 network_inspectors/stream5/libstream_api.a \
 service_inspectors/libservice_inspectors.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
+file_api/libfile_api.a \
+file_api/libs/libfile.a \
 $(lib_list) \
 ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
