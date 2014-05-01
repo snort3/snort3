@@ -26,7 +26,7 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "ipv6_port.h"
-#include "thread.h"
+#include "main/thread.h"
 #include "utils/stats.h"
 
 #define HI_UNKNOWN_METHOD 1

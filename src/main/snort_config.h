@@ -43,7 +43,7 @@
 #include "hash/sfxhash.h"
 #include "utils/sfportobject.h"
 #include "hash/sfghash.h"
-#include "policy.h"
+#include "main/policy.h"
 
 #define MAX_PIDFILE_SUFFIX 11 /* uniqueness extension to PID file, see '-R' */
 

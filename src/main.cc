@@ -41,7 +41,7 @@ using namespace std;
 
 #include "snort.h"
 #include "helpers/process.h"
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "framework/module.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -54,7 +54,7 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "target_based/sftarget_reader.h"
 #include "flow/flow_control.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "helpers/swapper.h"
 #include "time/periodic.h"
 

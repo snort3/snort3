@@ -14,8 +14,6 @@ add_library (parser STATIC
     config_file.cc 
     config_file.h 
     keywords.h 
-    modules.cc
-    modules.h
     ip_addr_set.cc
     ip_addr_set.h
     mstring.cc 

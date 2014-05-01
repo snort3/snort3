@@ -86,6 +86,7 @@ public:
     { return str.c_str(); };
 
     void get_bits(PortList&) const;
+    void get_bits(VlanList&) const;
     void get_bits(ByteList&) const;
 
     void lower()

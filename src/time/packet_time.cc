@@ -31,7 +31,7 @@
  */
 
 #include "packet_time.h"
-#include "thread.h"
+#include "main/thread.h"
 
 static THREAD_LOCAL struct timeval s_recent_packet = { 0, 0 };
 static THREAD_LOCAL uint32_t s_first_packet = 0;

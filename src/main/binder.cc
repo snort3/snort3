@@ -16,16 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// bits.h author Russ Combs <rucombs@cisco.com>
+// binder.cc author Russ Combs <rucombs@cisco.com>
 
-#ifndef BITS_H
-#define BITS_H
-
-#include <bitset>
-
-typedef std::bitset<65536> PortList;
-typedef std::bitset<4096> VlanList;
-typedef std::bitset<256> ByteList;
-
-#endif
+#include "binder.h"
 

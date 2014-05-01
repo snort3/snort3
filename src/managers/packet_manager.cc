@@ -25,7 +25,7 @@
 #include "packet_manager.h"
 #include "framework/codec.h"
 #include "snort.h"
-#include "thread.h"
+#include "main/thread.h"
 #include "log/messages.h"
 #include "packet_io/sfdaq.h"
 

@@ -66,7 +66,7 @@
 #include "fpdetect.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "framework/ips_option.h"
 
 #define SESSION_PRINTABLE    1

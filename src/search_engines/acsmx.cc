@@ -66,7 +66,7 @@
 
 #include "snort_debug.h"
 #include "util.h"
-#include "thread.h"
+#include "main/thread.h"
 
 #define MEMASSERT(p,s) if(!p){fprintf(stderr,"ACSM-No Memory: %s!\n",s);exit(0);}
 

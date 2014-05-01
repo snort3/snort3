@@ -24,7 +24,7 @@
 #include <string>
 using namespace std;
 
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "stream_common.h"
 
 #include "ip_config.h"
@@ -652,8 +652,8 @@ bool StreamTcpModule::begin(const char*, int, SnortConfig*)
 
     // set default ports here
     // if set by user, these are cleared
-    Value v(client_ports);
-    v.get_bits(ports_client);
+    //Value v(client_ports);     // FIXIT need to convert to bit string
+    //v.get_bits(ports_client);  // before converting to bitset
 
     return true;
 }

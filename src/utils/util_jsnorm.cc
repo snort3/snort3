@@ -21,7 +21,7 @@
  */
 
 #include"util_jsnorm.h"
-#include"thread.h"
+#include"main/thread.h"
 
 #define INVALID_HEX_VAL -1
 #define MAX_BUF 8

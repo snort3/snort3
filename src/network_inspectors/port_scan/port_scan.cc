@@ -54,7 +54,7 @@
 #include "ps_inspect.h"
 #include "ps_module.h"
 
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "decode.h"
 #include "encode.h"
 #include "event_wrapper.h"

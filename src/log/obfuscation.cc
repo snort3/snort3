@@ -34,7 +34,7 @@ extern "C" {
 #include "decode.h"
 #include "stream5/stream_api.h"
 #include "snort_bounds.h"
-#include "thread.h"
+#include "main/thread.h"
 #include "util.h"
 
 #ifdef OBFUSCATION_TEST_STANDALONE

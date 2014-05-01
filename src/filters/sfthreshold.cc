@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "mstring.h"
 #include "util.h"
 #include "parser.h"

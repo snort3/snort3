@@ -38,7 +38,7 @@
 
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "analyzer.h"
+#include "main/analyzer.h"
 #include "snort.h"
 #include "util.h"
 #include "mstring.h"

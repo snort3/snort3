@@ -32,7 +32,7 @@
 using namespace std;
 
 #include "tag.h"
-#include "thread.h"
+#include "main/thread.h"
 #include "helpers/swapper.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"

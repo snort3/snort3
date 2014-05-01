@@ -93,6 +93,7 @@ images.tgz: images/
         .
 
 clean-local:
+	rm -f $(BUILT_SOURCES)
 	rm -f *.tgz
 	rm -f snort_manual.{fo,xml,html,pdf}
 	rm -rf snort_manual.chunked/

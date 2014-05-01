@@ -28,7 +28,7 @@
 #endif
 
 #ifdef PERF_PROFILING
-#include "thread.h"
+#include "main/thread.h"
 #include "time/cpuclock.h"
 
 /* Sort preferences for rule profiling */

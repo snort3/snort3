@@ -52,9 +52,8 @@ enum DecodeEventFlag
     DECODE_EVENT_FLAG__DEFAULT = 0x00000001
 };
 
-// this is the nap post ac-split
-// really it is a decoder policy
-// similar to inspector policy
+// Snort ac-split creates the nap
+// Snort++ breaks that into network and inspection
 struct NetworkPolicy
 {
 public:

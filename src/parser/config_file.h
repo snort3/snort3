@@ -25,7 +25,7 @@
 # include "config.h"
 #endif
 
-#include "snort_config.h"
+#include "main/snort_config.h"
 #include "snort_types.h"
 #include "snort.h"
 

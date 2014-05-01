@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "thread.h"
+#include "main/thread.h"
 #include "framework/mpse.h"
 #include "managers/mpse_manager.h"
 

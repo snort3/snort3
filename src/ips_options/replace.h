@@ -24,7 +24,7 @@
 
 #include <assert.h>
 #include "ips_content.h"
-#include "thread.h"
+#include "main/thread.h"
 
 void PayloadReplaceInit(PatternMatchData*, char*, OptTreeNode*);
 
