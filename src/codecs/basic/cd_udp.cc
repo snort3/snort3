@@ -46,12 +46,13 @@ namespace
 class UdpCodec : public Codec
 {
 public:
-    UdpCodec() : Codec("Udp"){};
+    UdpCodec() : Codec("udp"){};
     ~UdpCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     // DELETE
     #include "codecs/sf_protocols.h"
@@ -74,8 +75,14 @@ static inline unsigned short in_chksum_udp(pseudoheader *, unsigned short *, int
 
 
 
+void UdpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(IPPROTO_UDP);
+}
+
+
 bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &lyr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint16_t uhlen;
     u_char fragmented_udp_flag = 0;
@@ -95,7 +102,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     /* set the ptr to the start of the UDP header */
-    p->inner_udph = p->udph = reinterpret_cast<udp::UDPHdr*>(const_cast<uint8_t*>(raw_pkt));
+    p->inner_udph = p->udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
 
     if (!p->frag_flag)
     {
@@ -227,7 +234,6 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "UDP header starts at: %p\n", p->udph););
 
     lyr_len = udp::header_len();
-    next_prot_id = -1;
 //    PushLayer(PROTO_UDP, p, raw_pkt, udp::header_len());
 
 
@@ -599,12 +605,6 @@ static inline unsigned short in_chksum_udp(pseudoheader *ph,
 // api
 //-------------------------------------------------------------------------
 
-
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_UDP);
-}
-
 static Codec* ctor()
 {
     return new UdpCodec();
@@ -615,19 +615,24 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "udp_codec";
+static const char* name = "udp";
 
 static const CodecApi udp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    { 
+        PT_CODEC, 
+        name, 
+        CDAPI_PLUGIN_V0, 
+        0, 
+        nullptr, 
+        nullptr 
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids,
 };
 
 

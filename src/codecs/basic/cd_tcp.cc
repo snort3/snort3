@@ -50,15 +50,17 @@ namespace
 class TcpCodec : public Codec
 {
 public:
-    TcpCodec() : Codec("Tcp")
+    TcpCodec() : Codec("tcp")
     {
 
     };
     virtual ~TcpCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &);
+
 
     // DELETE
     #include "codecs/sf_protocols.h"
@@ -86,6 +88,12 @@ static inline unsigned short in_chksum_tcp(pseudoheader *, unsigned short *, int
 static inline unsigned short in_chksum_tcp6(pseudoheader6 *, unsigned short *, int);
 
 
+void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(IPPROTO_TCP);
+}
+
+
 /*
  * Function: DecodeTCP(uint8_t *, const uint32_t, Packet *)
  *
@@ -98,7 +106,7 @@ static inline unsigned short in_chksum_tcp6(pseudoheader6 *, unsigned short *, i
  * Returns: void function
  */
 bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
 {
     if(len < tcp::hdr_len())
     {
@@ -108,9 +116,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         codec_events::decoder_event(p, DECODE_TCP_DGRAM_LT_TCPHDR);
 
         p->tcph = NULL;
-//        dc.discards++;
-//        dc.tdisc++;
-
         return false;
     }
 
@@ -1005,7 +1010,6 @@ static void tcp_codec_ginit()
 {
     SynToMulticastDstIp = IpAddrSetParse(snort_conf, "[232.0.0.0/8,233.0.0.0/8,239.0.0.0/8]");
 
-
     if( SynToMulticastDstIp == NULL )
         FatalError("Could not initialize SynToMulticastDstIp\n");
 
@@ -1031,24 +1035,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_TCP);
-}
-
-static const char* name = "tcp_codec";
-
+static const char* name = "tcp";
 static const CodecApi tcp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     tcp_codec_ginit, // pinit
     tcp_codec_gterm, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL, 
-    get_protocol_ids,
 };
 
 const BaseApi* cd_tcp = &tcp_api.base;

@@ -96,7 +96,7 @@ target_link_libraries(snort
     ${LUAJIT_LIBRARIES}
     ${DAQ_LIBRARIES}
     ${DNET_LIBRARIES}
-    c++
+    ${CLANG_CXX_LIBRARY}
 )
 
 add_subdirectory(actions)

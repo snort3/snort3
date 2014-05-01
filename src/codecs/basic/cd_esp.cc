@@ -30,6 +30,7 @@
 #include "codecs/decode_module.h"
 #include "managers/packet_manager.h"
 #include "events/codec_events.h"
+#include "protocols/undefined_protocols.h"
 
 namespace
 {
@@ -37,12 +38,13 @@ namespace
 class EspCodec : public Codec
 {
 public:
-    EspCodec() : Codec("ESP"){};
+    EspCodec() : Codec("esp"){};
     ~EspCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
 };
 
@@ -53,22 +55,14 @@ const uint32_t ESP_HEADER_LEN = 8;
 const uint32_t ESP_AUTH_DATA_LEN = 12;
 const uint32_t ESP_TRAILER_LEN = 2;
 
-struct CdPegs{
-    PegCount processed = 0;
-    PegCount discards = 0;
-};
-
-std::vector<const char*> peg_names =
-{
-    "NameCodec_processed",
-    "NameCodec_discards",
-};
-
-
 } // anonymous namespace
 
-static THREAD_LOCAL CdPegs counts;
-static CdPegs gcounts;
+
+
+void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ESP_PROT_ID);
+}
 
 
 
@@ -88,7 +82,7 @@ static CdPegs gcounts;
  * Returns: void function
  */
 bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-    Packet *p, uint16_t &lyr_len, int &next_prot_id)
+    Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     const uint8_t *esp_payload;
     uint8_t pad_length;
@@ -129,9 +123,7 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     else
     {
         p->packet_flags |= PKT_TRUST;
-        p->data = esp_payload;
-        p->dsize = (u_short) len - lyr_len;
-        next_prot_id = -1;
+        next_prot_id = FINISHED_DECODE;
         return true;
     }
 
@@ -153,11 +145,6 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     return true;
 }
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ESP_PROT_ID);
-}
-
 static Codec* ctor()
 {
     return new EspCodec();
@@ -168,18 +155,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "esp_codec";
+static const char* name = "esp";
 static const CodecApi esp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    { 
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL, // get_dlt()
-    get_protocol_ids,
 };
 
 

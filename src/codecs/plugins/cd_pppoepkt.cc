@@ -31,12 +31,13 @@ namespace
 class PPPoEPkt : public Codec
 {
 public:
-    PPPoEPkt() : Codec("PPP_over_Eth"){};
+    PPPoEPkt() : Codec("ppp_over_eth"){};
     ~PPPoEPkt(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -57,7 +58,9 @@ const uint16_t PPPoE_CODE_PADR = 0x19; /* PPPoE Active Discovery Request */
 const uint16_t PPPoE_CODE_PADS = 0x65; /* PPPoE Active Discovery Session-confirmation */
 const uint16_t PPPoE_CODE_PADT = 0xa7; /* PPPoE Active Discovery Terminate */
 
-/* PPPoE tag types */
+#if 0
+/* PPPoE tag types  -  currently not used*/
+
 const uint16_t PPPoE_TAG_END_OF_LIST = 0x0000;
 const uint16_t PPPoE_TAG_SERVICE_NAME = 0x0101;
 const uint16_t PPPoE_TAG_AC_NAME = 0x0102;
@@ -68,9 +71,16 @@ const uint16_t PPPoE_TAG_RELAY_SESSION_ID = 0x0110;
 const uint16_t PPPoE_TAG_SERVICE_NAME_ERROR = 0x0201;
 const uint16_t PPPoE_TAG_AC_SYSTEM_ERROR = 0x0202;
 const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
+#endif
+
+} // namespace
 
 
-} // anonymous namespace
+void PPPoEPkt::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_PPPoE_DISC);
+    v.push_back(ETHERNET_TYPE_PPPoE_SESS);
+}
 
 
 //--------------------------------------------------------------------
@@ -93,7 +103,7 @@ const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
  *
  */
 bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     //PPPoE_Tag *ppppoe_tag=0;
     //PPPoE_Tag tag;  /* needed to avoid alignment problems */
@@ -283,11 +293,9 @@ EncStatus PPPoE_Encode (EncState* enc, Buffer* in, Buffer* out)
 }
 #endif
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_PPPoE_DISC);
-    v.push_back(ETHERNET_TYPE_PPPoE_SESS);
-}
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
 static Codec* ctor()
 {
@@ -299,18 +307,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "pppoepkt_codec";
+static const char* name = "ppp_over_eth";
 static const CodecApi pppoe_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC, 
+        name, 
+        CDAPI_PLUGIN_V0, 
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    nullptr,
-    get_protocol_ids,
 };
 
 

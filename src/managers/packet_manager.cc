@@ -32,6 +32,7 @@
 #include "protocols/packet.h"
 #include "protocols/undefined_protocols.h"
 #include "time/profiler.h"
+#include "parser/parser.h"
 
 
 namespace
@@ -61,12 +62,32 @@ THREAD_LOCAL PreprocStats decodePerfStats;
 
 static const uint16_t max_protocol_id = 65535;
 static std::list<const CodecApi*> s_codecs;
-static std::array<Codec*, max_protocol_id> s_protocols;
+//static std::array<Codec*, max_protocol_id> s_protocols;
+
+
+static std::array<uint8_t, max_protocol_id> s_proto_map{};
+static std::array<Codec*, 256> s_protocols{};
+static THREAD_LOCAL uint8_t grinder = 0;
 
 // statistics information
-static THREAD_LOCAL std::array<PegCount, max_protocol_id + gen_peg_size> s_stats;
-static std::array<PegCount, max_protocol_id + gen_peg_size> g_stats;
+static THREAD_LOCAL std::array<PegCount, 256 + gen_peg_size> s_stats;
+static std::array<PegCount, 256 + gen_peg_size> g_stats;
 static THREAD_LOCAL CdGenPegs pkt_cnt;
+
+//-------------------------------------------------------------------------
+// helper functions
+//-------------------------------------------------------------------------
+
+#if 0
+// not need until instatiate && codec modules implemented
+static inline const CodecApi* GetApi(const char* keyword)
+{
+    for ( auto* p : s_codecs )
+        if ( !strncasecmp(p->base.name, keyword, strlen(p->base.name)) )
+            return p;
+    return NULL;
+}
+#endif
 
 
 //-------------------------------------------------------------------------
@@ -97,11 +118,16 @@ void PacketManager::add_plugin(const CodecApi* api)
 
 void PacketManager::release_plugins()
 {
+    // loop through classes
+    // find corresponding api
+    // delete class using api and module
+    // delete class from codecs_array
+    // remove api pointer
     for ( auto* p : s_codecs )
     {
+//        p->dtor();
         if(p->gterm)
             p->gterm();
-//        p->dtor();
     }
     s_codecs.clear();
 }
@@ -114,117 +140,124 @@ void PacketManager::dump_plugins()
         d.dump(p->base.name, p->base.version);
 }
 
-//-------------------------------------------------------------------------
-// grinder
-//-------------------------------------------------------------------------
-
-void PacketManager::decode(
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
+void PacketManager::instantiate(const CodecApi* cd_api, Module* m, SnortConfig* sc)
 {
-    PROFILE_VARS;
-    int curr_prot_id, next_prot_id;
-    uint16_t len, lyr_len;
+#if 0
+    static uint16_t codec_id = 1;
+    std::vector<uint16_t> ids;
+    const CodecApi *p = GetApi(cd_api->base.name);
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    if(!p)
+        ParseError("Unknown codec: '%s'.", cd_api->base.name);
 
-    // initialize all of the relevent data to decode this packet
-    memset(p, 0, PKT_ZERO_LEN);
-    p->pkth = pkthdr;
-    p->pkt = pkt;
-    len = pkthdr->caplen;
-    curr_prot_id = GRINDER_ID;
-    pkt_cnt.total_processed++;
+    // global init here to ensure the global policy has already been configured
+    if (p->ginit)
+        p->ginit();
 
-    // loop until the protocol id is no longer valid
-    while(curr_prot_id  >= 0 && curr_prot_id < max_protocol_id)
+    Codec *cd = p->ctor();
+    cd->get_protocol_ids(ids);
+    for (auto id : ids)
     {
-        if (s_protocols[curr_prot_id] == 0)
-        {
-            pkt_cnt.other_codecs++;
-            break;
-        }
-        else if( !s_protocols[curr_prot_id]->decode(pkt, len, p, lyr_len, next_prot_id))
-        {
-            pkt_cnt.discards++;
-            break;
-        }           
+        if(s_proto_map[id] != 0)
+            WarningMessage("The Codecs %s and %s have both been registered "
+                "for protocol_id %d. Codec %s will be used\n",
+                s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
+                id, cd->get_name());
 
-        s_stats[curr_prot_id + stat_offset]++;
-        PacketClass::PushLayer(p, s_protocols[curr_prot_id], pkt, lyr_len);
-        curr_prot_id = next_prot_id;
-        next_prot_id = -1;
-        len -= lyr_len;
-        pkt += lyr_len;
-        lyr_len = 0;
+        s_proto_map[id] = codec_id;
     }
 
-    p->dsize = len;
-    p->data = pkt;
-    PREPROC_PROFILE_END(decodePerfStats);
+    if(cd->is_default_codec())
+    {
+        if(s_protocols[0])
+            FatalError("Only one Codec may be the registered as default, "
+                "but both the %s and %s return 'true' when "
+                " the function default_codec().\n",
+                s_protocols[0]->get_name(), cd->get_name());
+        else
+            s_protocols[0] = cd;
+    }
+
+    s_protocols[codec_id++] = cd;
+#endif
 }
 
-
-void PacketManager::set_grinder(void)
+void PacketManager::instantiate()
 {
-    std::vector<uint16_t> proto;
-    std::vector<int> dlt;
-    bool codec_registered;
+    static uint16_t codec_id = 1;
 
-    int daq_dlt = DAQ_GetBaseProtocol();
-
-    for ( auto* p : s_codecs )
+    for (auto p : s_codecs)
     {
-        codec_registered = false;
+        std::vector<uint16_t> ids;
 
+        // global init here to ensure the global policy has already been configured
         if (p->ginit)
             p->ginit();
 
+        Codec *cd = p->ctor();
+        cd->get_protocol_ids(ids);
+        for (auto id : ids)
+        {
+            if(s_proto_map[id] != 0)
+                WarningMessage("The Codecs %s and %s have both been registered "
+                    "for protocol_id %d. Codec %s will be used\n",
+                    s_protocols[s_proto_map[id]]->get_name(), cd->get_name(), 
+                    id, cd->get_name());
+
+            s_proto_map[id] = codec_id;
+        }
+
+        if(cd->is_default_codec())
+        {
+            if(s_protocols[0])
+                FatalError("Only one Codec may be the registered as default, "
+                           "but both the %s and %s return 'true' when "
+                           " the function default_codec().\n",
+                           s_protocols[0]->get_name(), cd->get_name());
+            else
+                s_protocols[0] = cd;
+        }
+
+        s_protocols[codec_id++] = cd;
+    }
+}
+
+void PacketManager::set_grinder(void)
+{
+    static std::mutex init_mutex;
+    init_mutex.lock();
+    instantiate();
+    init_mutex.unlock();
+
+
+    for ( auto* p : s_codecs )
         if (p->tinit)
             p->tinit();
 
-        // TODO:  add module
-        // null check performed when plugin added.
-        Codec *cd = p->ctor();
+    int daq_dlt = DAQ_GetBaseProtocol();
+    for(int i = 0; s_protocols[i] != 0; i++)
+    {
+        Codec *cd = s_protocols[i];
+        std::vector<int> data_link_types;
 
-
-        proto.clear();
-        if(p->proto_id)
-            p->proto_id(proto);
-        for (auto proto_id : proto)
-        {
-            if(s_protocols[proto_id] != NULL)
-                WarningMessage("The Codecs %s and %s have both been registered "
-                    "for protocol_id %d. Codec %s will be used\n",
-                    s_protocols[proto_id]->get_name(), cd->get_name(), 
-                    proto_id, cd->get_name());
-            s_protocols[proto_id] = cd;
-            codec_registered = true;
-        }
-        // add protocols to the array
-
-
-        dlt.clear();
-        if(p->dlt)
-            p->dlt(dlt);
-        // set the grinder if the data link types match
-        for (auto curr_dlt : dlt )
+        cd->get_data_link_type(data_link_types);
+        for (auto curr_dlt : data_link_types)
         {
            if (curr_dlt == daq_dlt)
            {
-                if (s_protocols[GRINDER_ID] != NULL)
+                if (grinder != 0)
                     WarningMessage("The Codecs %s and %s have both been registered "
                         "as the raw decoder. Codec %s will be used\n",
-                        s_protocols[GRINDER_ID]->get_name(), cd->get_name(), 
+                        s_protocols[grinder]->get_name(), cd->get_name(),
                         cd->get_name());
 
-                s_protocols[GRINDER_ID] = cd;
-                codec_registered = true;
+                grinder = i;
             }
         }
-
-        if (!codec_registered)
-            WarningMessage("The Codec %s is never used\n", cd->get_name());
     }
+
+    if(!grinder)
+        FatalError("Unable to find a Codec with data link type %d!!\n", daq_dlt);
 }
 
 void PacketManager::thread_term()
@@ -241,15 +274,14 @@ void PacketManager::thread_term()
 void PacketManager::dump_stats()
 {
     std::vector<const char*> pkt_names;
-    pkt_names.resize(max_protocol_id + stat_offset);
 
     for(int i = 0; i < gen_peg_names.size(); i++)
-        pkt_names[i] = gen_peg_names[i];
+        pkt_names.push_back(gen_peg_names[i]);
 
 
-    for (int i = 0; i < max_protocol_id; i++)
+    for(int i = 0; s_protocols[i] != 0; i++)
         if(s_protocols[i])
-            pkt_names[i + stat_offset] = s_protocols[i]->get_name();
+            pkt_names.push_back(s_protocols[i]->get_name());
 
     show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
         "codecs");
@@ -264,9 +296,63 @@ void PacketManager::accumulate()
     s_stats[1] = pkt_cnt.other_codecs;
     s_stats[2] = pkt_cnt.discards;
 
+    // zeroing out the null codecs ... these     
+    s_stats[3] = 0;
+    s_stats[s_proto_map[FINISHED_DECODE] + stat_offset] = 0;
+
     sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
 
     stats_mutex.unlock();
+}
+
+//-------------------------------------------------------------------------
+// grinder
+//-------------------------------------------------------------------------
+
+void PacketManager::decode(
+    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
+{
+    PROFILE_VARS;
+    uint16_t mapped_prot, prot_id;
+    uint16_t prev_prot_id = FINISHED_DECODE;
+    uint16_t len, lyr_len;
+
+    PREPROC_PROFILE_START(decodePerfStats);
+
+    // initialize all of the relevent data to decode this packet
+    memset(p, 0, PKT_ZERO_LEN);
+    p->pkth = pkthdr;
+    p->pkt = pkt;
+    len = pkthdr->caplen;
+    mapped_prot = grinder;
+    pkt_cnt.total_processed++;
+
+    // loop until the protocol id is no longer valid
+    while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
+    {
+        PacketClass::PushLayer(p, s_protocols[mapped_prot], pkt, lyr_len);
+        s_stats[mapped_prot + stat_offset]++;
+        mapped_prot = s_proto_map[prot_id];
+        prev_prot_id = prot_id; // used for 'other_codecs' statistics
+        prot_id = FINISHED_DECODE;
+        len -= lyr_len;
+        pkt += lyr_len;
+        lyr_len = 0;
+    }
+
+    // if the final protocol ID is not the null codec
+    if (prev_prot_id != FINISHED_DECODE)
+    {
+        if(s_proto_map[prev_prot_id])
+            pkt_cnt.discards++;
+        else
+            pkt_cnt.other_codecs++;
+    }
+
+    s_stats[mapped_prot + stat_offset]++;
+    p->dsize = len;
+    p->data = pkt;
+    PREPROC_PROFILE_END(decodePerfStats);
 }
 
 bool PacketManager::has_codec(uint16_t cd_id)

@@ -1,5 +1,44 @@
 The following pointers will help you get started:
 
+=== Using git
+
+* create a git repo called Snort++ in your working directory:
+
+    git clone /nfs/home/rcombs/Snort++
+
+* check the status of your repo and files:
+
+    git status
+
+* add a remote repo:
+
+    git remote add <name> <username>@<host>:/nfs/home/rcombs/Snort++
+
+* check the status of your remotes:
+
+    git remote -v
+
+* add new files to the repo:
+
+    git add <files>
+
+* stage changed file for commit:
+
+    git add -u 
+
+* commit staged files:
+
+    git commit -m 'description'
+
+* pull changes from a remote:
+
+    git pull <name>
+
+* push changes to remote:
+
+    git push <name>
+    git push <username>@<host>:Snort++
+
 === Building
 
 * you need luajit from luajit.org; build from source.

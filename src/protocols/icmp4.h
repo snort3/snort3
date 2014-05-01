@@ -28,14 +28,12 @@
 namespace icmp4
 {
 
-    // class to hold any data which should be hidden
-    namespace detail
-    {
+namespace detail
+{
 
+const uint32_t ICMP_HEADER_LEN = 4;
 
-
-
-    }
+} // namespace
 
 
 // do NOT add 'ICMP_' to the begining of these const because they 
@@ -217,7 +215,10 @@ inline bool is_echo(uint32_t type)
     return (type == (uint32_t) IcmpType::ECHO);
 }
 
-
+inline uint32_t hdr_len()
+{
+  return detail::ICMP_HEADER_LEN;
+}
 
 /*
  * CHECKSUM 

@@ -39,12 +39,14 @@ namespace
 class Icmp6Codec : public Codec
 {
 public:
-    Icmp6Codec() : Codec("Icmp6"){};
+    Icmp6Codec() : Codec("icmp6"){};
     ~Icmp6Codec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -57,10 +59,18 @@ public:
 } // anonymous namespace
 
 
+void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(IPPROTO_ICMPV6);
+}
+
+
 
 static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p);
-static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
 
+#if 0
+static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
+#endif
 
 
 //--------------------------------------------------------------------
@@ -68,7 +78,7 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
 //--------------------------------------------------------------------
 
 bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len, 
-    Packet* p, uint16_t &lyr_len, int&next_prot_id)
+    Packet* p, uint16_t &lyr_len, uint16_t & /* next_prot_id */)
 {
     if(len < icmp6::hdr_min_len())
     {
@@ -313,6 +323,8 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
             break;
 
         default:
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                    "WARNING: ICMP6_TYPE (type %d).\n", p->icmp6h->type););
             codec_events::decoder_event(p, DECODE_ICMP6_TYPE_OTHER);
 
             lyr_len = icmp6::hdr_min_len();
@@ -321,7 +333,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
     p->proto_bits |= PROTO_BIT__ICMP;
     p->proto_bits &= ~(PROTO_BIT__UDP | PROTO_BIT__TCP);
-    next_prot_id = -1;
     return true;
 }
 
@@ -508,7 +519,6 @@ void ICMP6_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
     c->icmp6h = (ICMP6Hdr*)lyr->start;
 }
 
-#endif
 
 /*
  * CHECKSUM
@@ -597,11 +607,7 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *ph,
   return (unsigned short)(~cksum);
 }
 
-
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ICMPV6);
-}
+#endif
 
 static Codec* ctor()
 {
@@ -613,19 +619,24 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "icmp6_codec";
+static const char* name = "icmp6";
 
 static const CodecApi ipv6_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0, nullptr, nullptr },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     NULL, // pinit
     NULL, // pterm
     NULL, // tinit
     NULL, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL,
-    get_protocol_ids
 };
 
 

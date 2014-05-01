@@ -16,4 +16,7 @@ add_library( codec_plugins STATIC
     cd_pppoepkt.cc
 )
 
+target_link_libraries( codec_plugins
+    events
+)
 

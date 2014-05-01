@@ -145,7 +145,7 @@ int IcmpSeqOption::eval(Packet *p)
     PREPROC_PROFILE_START(icmpSeqPerfStats);
 
     if( (p->icmph->type == ICMP_ECHO || p->icmph->type == ICMP_ECHOREPLY)
-        || (p->icmph->type == ICMP6_ECHO || p->icmph->type == ICMP6_REPLY)
+        || ((uint16_t)p->icmph->type == ICMP6_ECHO || (uint16_t)p->icmph->type == ICMP6_REPLY)
       )
     {
         /* test the rule ID value against the ICMP extension ID field */

@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -43,12 +41,14 @@ namespace
 class NameCodec : public Codec
 {
 public:
-    NameCodec() : Codec("NAME"){};
+    NameCodec() : Codec("hopopts"){};
     ~NameCodec();
 
 
+
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&){};

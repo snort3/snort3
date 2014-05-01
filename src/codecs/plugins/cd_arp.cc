@@ -34,12 +34,13 @@ namespace
 class ArpCodec : public Codec
 {
 public:
-    ArpCodec() : Codec("Arp"){};
+    ArpCodec() : Codec("arp"){};
     ~ArpCodec(){};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, int &next_prot_id);
+        Packet *, uint16_t &lyr_len, uint16_t &);
     
 
     // DELETE from here and below
@@ -53,6 +54,12 @@ static const uint16_t ETHERNET_TYPE_ARP = 0x0806;
 } // anonymous namespace
 
 
+
+void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(ETHERNET_TYPE_ARP);
+    v.push_back(ETHERNET_TYPE_REVARP);
+}
 
 
 //--------------------------------------------------------------------
@@ -71,10 +78,8 @@ static const uint16_t ETHERNET_TYPE_ARP = 0x0806;
  * Returns: void function
  */
 bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, int &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t& /* next_prot_id */)
 {
-//    dc.arp++;
-
 //    if (p->greh != NULL)
 //        dc.gre_arp++;
 
@@ -83,26 +88,21 @@ bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if(len < sizeof(EtherARP))
     {
         codec_events::decoder_event(p, DECODE_ARP_TRUNCATED);
-
-//        dc.discards++;
         return false;
     }
 
     p->proto_bits |= PROTO_BIT__ARP;
     lyr_len = sizeof(*p->ah);
-    next_prot_id = -1;
-
+    
     return true;
 }
 
 
 
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
 
-static void get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_ARP);
-    v.push_back(ETHERNET_TYPE_REVARP);
-}
 
 static Codec* ctor()
 {
@@ -114,32 +114,23 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static void sum()
-{
-//    sum_stats((PegCount*)&gdc, (PegCount*)&dc, array_size(dc_pegs));
-//    memset(&dc, 0, sizeof(dc));
-}
-
-static void stats()
-{
-//    show_percent_stats((PegCount*)&gdc, dc_pegs, array_size(dc_pegs),
-//        "decoder");
-}
-
-
-
-static const char* name = "arp_codec";
+static const char* name = "arp";
 static const CodecApi arp_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
-    NULL, // get_dlt
-    get_protocol_ids,
 };
 
 #ifdef BUILDING_SO
