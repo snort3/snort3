@@ -169,6 +169,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->actual_ip_len = ntohs(p->ip6h->len);
     p->ip_data = raw_pkt + ipv6::hdr_len();
     p->ip_dsize = ntohs(p->ip6h->len);
+    p->packet_flags |= PKT_NEW_IP_LEN;
 
 
     lyr_len = sizeof(*hdr);

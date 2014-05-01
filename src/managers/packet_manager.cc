@@ -330,7 +330,15 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
     {
-        PacketClass::PushLayer(p, s_protocols[mapped_prot], pkt, lyr_len);
+        PacketClass::push_layer(p, s_protocols[mapped_prot], pkt, lyr_len);
+
+        // since the IP length and the packet length may not be equal.
+        if (p->packet_flags & PKT_NEW_IP_LEN)
+        {
+            len = p->actual_ip_len;
+            p->packet_flags &= ~PKT_NEW_IP_LEN;
+        }
+
         s_stats[mapped_prot + stat_offset]++;
         mapped_prot = s_proto_map[prot_id];
         prev_prot_id = prot_id; // used for 'other_codecs' statistics

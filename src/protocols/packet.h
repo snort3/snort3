@@ -111,6 +111,7 @@ extern "C" {
 #define PKT_IPREP_SOURCE_TRIGGERED  0x08000000
 #define PKT_IPREP_DATA_SET          0x10000000
 #define PKT_FILE_EVENT_SET          0x20000000
+#define PKT_NEW_IP_LEN              0X40000000 /* For Codecs to tell PacketManger a new length should be set */
 // 0x40000000 are available
 
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
@@ -861,7 +862,7 @@ typedef struct
 class PacketClass{
 
 public:
-    static void PushLayer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len);
+    static void push_layer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len);
 
 
 private:

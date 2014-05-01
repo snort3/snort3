@@ -68,13 +68,9 @@ private:
     
 };
 
-
 uint16_t const IP_ID_COUNT = 8192;
 THREAD_LOCAL rand_t* s_rand = 0;
 
-#if 0
-THREAD_LOCAL uint16_t s_id_index = 0;
-#endif
 
 // this should be changed to type array
 THREAD_LOCAL uint16_t s_id_pool[IP_ID_COUNT] = {};
@@ -82,13 +78,8 @@ THREAD_LOCAL uint16_t s_id_pool[IP_ID_COUNT] = {};
 }  // namespace
 
 
-static inline void CheckPGMVuln(Packet *);
-static inline void CheckIGMPVuln(Packet *);
-static inline int pgm_nak_detect (uint8_t *, uint16_t );
 static inline void IP4AddrTests (Packet* );
 static inline void IPMiscTests(Packet *);
-static inline unsigned short in_chksum_ip( unsigned short *, int);
-
 static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
 
 
@@ -308,6 +299,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
 
     /* set the real IP length for logging */
     p->actual_ip_len = (uint16_t) ip_len;
+    p->packet_flags |= PKT_NEW_IP_LEN;
 
     /* set the remaining packet length */
     ip_len -= hlen;
