@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -25,14 +23,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#if 0
-
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-#endif
 
 #include "framework/codec.h"
 #include "events/codec_events.h"
@@ -55,7 +45,7 @@ public:
     
 };
 
-} // anonymous namespace
+} // namespace
 
 
 
