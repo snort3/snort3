@@ -41,8 +41,8 @@ public:
     ~NullCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id) { return false; };
+    virtual bool decode(const uint8_t *, const uint32_t,
+         Packet*, uint16_t &, uint16_t &) { return false; };
     virtual inline bool is_default_codec() { return true; };
 };
 
