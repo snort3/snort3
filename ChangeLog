@@ -1,3 +1,8 @@
+76
+-- moved all src/*.{h,cc} except main.{h,cc} to src/main/
+-- updated prototype bindings
+-- Xcode warnings cleanup
+
 75
 -- added back InspectApi.pinit() and InspectApi.pterm()
 -- eliminated InspectApi.stop()
