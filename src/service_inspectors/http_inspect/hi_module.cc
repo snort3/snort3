@@ -136,26 +136,26 @@ static const RuleMap hi_global_rules[] =
     { 0, nullptr }
 };
 
-HttpGlobalModule::HttpGlobalModule() :
+HttpInspectModule::HttpInspectModule() :
     Module(GLOBAL_KEYWORD, hi_global_params, hi_global_rules)
 {
     config = nullptr;
 }
 
-HttpGlobalModule::~HttpGlobalModule()
+HttpInspectModule::~HttpInspectModule()
 {
     if ( config )
         delete config;
 }
 
-HTTPINSPECT_GLOBAL_CONF* HttpGlobalModule::get_data()
+HTTPINSPECT_GLOBAL_CONF* HttpInspectModule::get_data()
 {
     HTTPINSPECT_GLOBAL_CONF* tmp = config;
     config = nullptr;
     return tmp;
 }
 
-bool HttpGlobalModule::set(const char*, Value& v, SnortConfig*)
+bool HttpInspectModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("b64_decode_depth") )
         config->decode_conf.b64_depth = v.get_long();
@@ -202,7 +202,7 @@ bool HttpGlobalModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool HttpGlobalModule::begin(const char*, int, SnortConfig*)
+bool HttpInspectModule::begin(const char*, int, SnortConfig*)
 {
     if ( !config )
         config = new HTTPINSPECT_GLOBAL_CONF;
@@ -210,7 +210,7 @@ bool HttpGlobalModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool HttpGlobalModule::end(const char* fqn, int, SnortConfig*)
+bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
 {
     if ( strcmp(fqn, GLOBAL_KEYWORD) )
         return true;

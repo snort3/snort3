@@ -512,7 +512,7 @@ static const DataApi ip_api =
 //-------------------------------------------------------------------------
 
 static Module* glob_mod_ctor()
-{ return new StreamGlobalModule; }
+{ return new StreamModule; }
 
 static void s5_init()
 {
@@ -608,7 +608,7 @@ static void s5_reset()
 
 static Inspector* s5_ctor(Module* m)
 {
-    StreamGlobalModule* mod = (StreamGlobalModule*)m;
+    StreamModule* mod = (StreamModule*)m;
     return new Stream5(mod->get_data());
 }
 
@@ -621,7 +621,7 @@ static const InspectApi s5_api =
 {
     {
         PT_INSPECTOR,
-        "stream_global",
+        "stream",
         INSAPI_PLUGIN_V0,
         0,
         glob_mod_ctor,

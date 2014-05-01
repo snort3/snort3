@@ -26,14 +26,14 @@
 #include "hi_ui_config.h"
 #include "hi_events.h"
 
-#define GLOBAL_KEYWORD "http_global"
+#define GLOBAL_KEYWORD "http_inspect"
 #define SERVER_KEYWORD "http_server"
 
-class HttpGlobalModule : public Module
+class HttpInspectModule : public Module
 {
 public:
-    HttpGlobalModule();
-    ~HttpGlobalModule();
+    HttpInspectModule();
+    ~HttpInspectModule();
 
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);

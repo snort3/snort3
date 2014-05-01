@@ -704,7 +704,7 @@ void HttpInspect::eval (Packet* p)
 //-------------------------------------------------------------------------
 
 static Module* hg_mod_ctor()
-{ return new HttpGlobalModule; }
+{ return new HttpInspectModule; }
 
 // this can be used for both modules
 static void mod_dtor(Module* m)
@@ -712,7 +712,7 @@ static void mod_dtor(Module* m)
 
 static PlugData* hg_ctor(Module* m)
 {
-    HttpGlobalModule* mod = (HttpGlobalModule*)m;
+    HttpInspectModule* mod = (HttpInspectModule*)m;
     HTTPINSPECT_GLOBAL_CONF* gc = mod->get_data();
     HttpData* p = new HttpData(gc);
     return p;

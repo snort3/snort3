@@ -96,19 +96,19 @@ static const Parameter defrag_global_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-DefragGlobalModule::DefragGlobalModule() :
+DefragModule::DefragModule() :
     Module(GLOBAL_KEYWORD, defrag_global_params)
 {
     common = nullptr;
 }
 
-DefragGlobalModule::~DefragGlobalModule()
+DefragModule::~DefragModule()
 {
     if ( common )
         delete common;
 }
 
-bool DefragGlobalModule::set(const char*, Value& v, SnortConfig*)
+bool DefragModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("memcap") )
         common->memcap = v.get_long();
@@ -130,13 +130,13 @@ bool DefragGlobalModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool DefragGlobalModule::begin(const char*, int, SnortConfig*)
+bool DefragModule::begin(const char*, int, SnortConfig*)
 {
     common = new FragCommon;
     return true;
 }
 
-FragCommon* DefragGlobalModule::get_data()
+FragCommon* DefragModule::get_data()
 {
     FragCommon* tmp = common;
     common = nullptr;

@@ -498,7 +498,7 @@ static void FragPrintGlobalConfig(FragConfig *gconfig)
     if (gconfig == NULL)
         return;
 
-    LogMessage("Defrag global config:\n");
+    LogMessage("Defrag config:\n");
     LogMessage("    Max frags: %d\n", gconfig->common->max_frags);
 
     if(!gconfig->common->use_prealloc)
@@ -3906,14 +3906,14 @@ inline int Defrag::expire(Packet*, FragTracker *ft, FragEngine *engine)
 //-------------------------------------------------------------------------
 
 static Module* dg_mod_ctor()
-{ return new DefragGlobalModule; }
+{ return new DefragModule; }
 
 static void mod_dtor(Module* m)
 { delete m; }
 
 static PlugData* dg_ctor(Module* m)
 {
-    DefragGlobalModule* mod = (DefragGlobalModule*)m;
+    DefragModule* mod = (DefragModule*)m;
     FragCommon* fc = mod->get_data();
     FragData* fd = new FragData(fc);
     return fd;

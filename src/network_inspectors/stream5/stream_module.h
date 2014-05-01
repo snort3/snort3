@@ -63,10 +63,10 @@ struct SnortConfig;
 
 struct Stream5GlobalConfig;
 
-class StreamGlobalModule : public Module
+class StreamModule : public Module
 {
 public:
-    StreamGlobalModule();
+    StreamModule();
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);

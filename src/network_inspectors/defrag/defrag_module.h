@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include "framework/module.h"
 
-#define GLOBAL_KEYWORD "defrag_global"
+#define GLOBAL_KEYWORD "defrag"
 #define ENGINE_KEYWORD "defrag_engine"
 
 #define GID_DEFRAG     123
@@ -85,11 +85,11 @@ struct FragEngine
     FragEngine();
 };
 
-class DefragGlobalModule : public Module
+class DefragModule : public Module
 {
 public:
-    DefragGlobalModule();
-    ~DefragGlobalModule();
+    DefragModule();
+    ~DefragModule();
 
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);

@@ -256,7 +256,7 @@ normalize =
     icmp6 = true
 }
 
---defrag_global = { max_frags = 65536 }
+defrag = { max_frags = 65536 }
 
 defrag_engine =
 {
@@ -323,7 +323,7 @@ perf_monitor =
 -- HTTP normalization and anomaly detection.
 ---------------------------------------------------------------------------
 
-http_global =
+http_inspect =
 {
     unicode_map =
     {
@@ -394,12 +394,6 @@ telnet =
     normalize = true,
     ports = '23',
     detect_anomalies = true
-}
-
-ftp_global =
-{
-    encrypted_traffic = false,
-    check_encrypted = true,
 }
 
 ftp_default_commands =
@@ -488,7 +482,7 @@ ftp_client =
 -- Target-Based stateful inspection/stream reassembly.
 ---------------------------------------------------------------------------
 
-stream_global =
+stream =
 {
     tcp_memcap = 123456789,
     show_rebuilt_packets = false,
@@ -643,7 +637,7 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    --include = '../active.rules',
+    include = '../active.rules',
     --rules = default_rules,
     enable_builtin_rules = true
 }

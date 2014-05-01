@@ -33,7 +33,7 @@ using namespace std;
 #include "udp_config.h"
 
 //-------------------------------------------------------------------------
-// stream_global module
+// stream module
 //-------------------------------------------------------------------------
 
 static const Parameter stream_cache_params[] =
@@ -61,7 +61,7 @@ static const Parameter stream_response_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter stream_global_params[] =
+static const Parameter stream_params[] =
 {
     { "active_response", Parameter::PT_TABLE, nullptr, stream_response_params,
       "configure tcp resets and icmp unreachables" },
@@ -93,66 +93,66 @@ static const Parameter stream_global_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap stream_global_rules[] =
+static const RuleMap stream_rules[] =
 {
     { 0, nullptr }
 };
 
-StreamGlobalModule::StreamGlobalModule() :
-    Module("stream_global", stream_global_params, stream_global_rules)
+StreamModule::StreamModule() :
+    Module("stream", stream_params, stream_rules)
 {
     config = nullptr;
 }
 
-Stream5GlobalConfig* StreamGlobalModule::get_data()
+Stream5GlobalConfig* StreamModule::get_data()
 {
     Stream5GlobalConfig* temp = config;
     config = nullptr;
     return temp;
 }
 
-bool StreamGlobalModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool StreamModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
-    if ( !strcmp(fqn, "stream_global.tcp_cache.max_sessions") )
+    if ( !strcmp(fqn, "stream.tcp_cache.max_sessions") )
         config->max_tcp_sessions = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.udp_cache.max_sessions") )
+    else if ( !strcmp(fqn, "stream.udp_cache.max_sessions") )
         config->max_udp_sessions = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.icmp_cache.max_sessions") )
+    else if ( !strcmp(fqn, "stream.icmp_cache.max_sessions") )
         config->max_icmp_sessions = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.ip_cache.max_sessions") )
+    else if ( !strcmp(fqn, "stream.ip_cache.max_sessions") )
         config->max_ip_sessions = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.tcp_cache.pruning_timeout") )
+    else if ( !strcmp(fqn, "stream.tcp_cache.pruning_timeout") )
         config->tcp_cache_pruning_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.udp_cache.pruning_timeout") )
+    else if ( !strcmp(fqn, "stream.udp_cache.pruning_timeout") )
         config->udp_cache_pruning_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.icmp_cache.pruning_timeout") )
+    else if ( !strcmp(fqn, "stream.icmp_cache.pruning_timeout") )
         config->icmp_cache_pruning_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.ip_cache.pruning_timeout") )
+    else if ( !strcmp(fqn, "stream.ip_cache.pruning_timeout") )
         config->ip_cache_pruning_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.tcp_cache.idle_timeout") )
+    else if ( !strcmp(fqn, "stream.tcp_cache.idle_timeout") )
         config->tcp_cache_nominal_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.udp_cache.idle_timeout") )
+    else if ( !strcmp(fqn, "stream.udp_cache.idle_timeout") )
         config->udp_cache_nominal_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.icmp_cache.idle_timeout") )
+    else if ( !strcmp(fqn, "stream.icmp_cache.idle_timeout") )
         config->icmp_cache_nominal_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.ip_cache.idle_timeout") )
+    else if ( !strcmp(fqn, "stream.ip_cache.idle_timeout") )
         config->ip_cache_nominal_timeout = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.active_response.max_responses") )
+    else if ( !strcmp(fqn, "stream.active_response.max_responses") )
         config->max_active_responses = v.get_long();
 
-    else if ( !strcmp(fqn, "stream_global.active_response.min_interval") )
+    else if ( !strcmp(fqn, "stream.active_response.min_interval") )
         config->min_response_seconds = v.get_long();
 
     else if ( v.is("tcp_memcap") )
@@ -177,7 +177,7 @@ bool StreamGlobalModule::set(const char* fqn, Value& v, SnortConfig* sc)
     return true;
 }
 
-bool StreamGlobalModule::begin(const char*, int, SnortConfig*)
+bool StreamModule::begin(const char*, int, SnortConfig*)
 {
     if ( !config )
         config = new Stream5GlobalConfig;
@@ -185,7 +185,7 @@ bool StreamGlobalModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool StreamGlobalModule::end(const char*, int, SnortConfig*)
+bool StreamModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
