@@ -16,7 +16,8 @@ include (cmake/setConfigureOptions.txt)
 include (cmake/includePredefinedPackages.txt)
 include (cmake/sanityChecks.txt)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS} -stdlib=libc++")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS} -stdlib=libc++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}")
 
 # include this directory for the config.h file
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

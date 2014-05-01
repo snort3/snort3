@@ -1,6 +1,5 @@
 
-# ... include everything because I'm not correcting 
-# every files include
+# include directories should match configure.ac::AM_CPPFLAGS
 
 include_directories(${DAQ_INCLUDE_DIR})
 include_directories(${PCAP_INCLUDE_DIR})
@@ -8,59 +7,25 @@ include_directories(${PCRE_INCLUDE_DIR})
 include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
 include_directories(${DNET_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(control)
 include_directories(detection)
-include_directories(event_handlers)
 include_directories(events)
-include_directories(file_api)
-include_directories(filters)
-include_directories(flow)
 include_directories(framework)
 include_directories(hash)
 include_directories(log)
-include_directories(mempool)
-include_directories(packet_io)
+include_directories(loggers)
+include_directories(main)
+include_directories(network_inspectors)
 include_directories(parser)
 include_directories(protocols)
-include_directories(service_handlers)
 include_directories(sfip)
-include_directories(sfrt)
-include_directories(side_channel)
 include_directories(target_based)
 include_directories(time)
 include_directories(utils)
-include_directories(helpers)
-include_directories(ips_options)
-include_directories(loggers)
-include_directories(network_inspectors)
-include_directories(search_engines)
-include_directories(service_inspectors)
-include_directories(http_inspect)
-
-
-set (SNORT_INCLUDES
-    thread.h
-    snort_debug.h
-    snort_types.h
-)
-
 
 add_executable(snort
-    ${SNORT_INCLUDES}
-    snort.h
-    snort.cc 
-    snort_debug.cc 
-    snort_config.h
-    snort_config.cc 
-    policy.h
-    policy.cc 
-    analyzer.h
-    analyzer.cc 
     main.h
     main.cc
-    build.h
 )
-
 
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
@@ -82,9 +47,9 @@ if (BUILD_SIDE_CHANNEL)
     add_subdirectory(side_channel)
 endif (BUILD_SIDE_CHANNEL)
 
-
 set_default_visibility_compile_flag(snort)
 target_link_libraries(snort
+    main
     target_based
     log
     protocols
@@ -134,8 +99,6 @@ target_link_libraries(snort
     c++
 )
 
-
-
 add_subdirectory(actions)
 add_subdirectory(codecs)
 add_subdirectory(control)
@@ -147,6 +110,7 @@ add_subdirectory(flow)
 add_subdirectory(framework)
 add_subdirectory(hash)
 add_subdirectory(log)
+add_subdirectory(main)
 add_subdirectory(managers)
 add_subdirectory(mempool)
 add_subdirectory(packet_io)
