@@ -651,51 +651,20 @@ ips =
 -- prototype bindings:
 -- nets and ports move out of inspector configurations
 -- only need to specify non-default bindings
--- match = id | ((vlans | networks) [protocol [ports]])
--- config = type [name [direction]]
--- type = module | 'file'
--- name = type (default) | instance | filename
--- action = block | allow | inspect (default)
--- direction = from client | from server | any (default) | none
 
 bindings =
 {
     {
-        match = { id = 5 },
-        config = { type = 'bo', name = 'bo2' }
+        when =
+        {
+            id = 'uuid', vlans = '123', nets = '1.2.3.0/24',
+            protos = 'tcp', ports = '80', role = 'any'
+        },
+        use = { type = 'http_inspect', name = 'hi2' }
     },
-
     {
-        match = { id = 4 },
-        config = { type = 'file', name = '4.lua' }
-    },
-
-    {
-        match = { vlans = '123' },
-        config = { type = 'detect', name = '123.detect' }
-    },
-
-    {
-        match = { networks = '1.2.3.0/24', protocol = 'tcp' },
-        config = { type = 'stream_tcp', name = 'last', direction = 'any' }
-    },
-
-    {
-        match = { networks = '1.2.3.4', protocol = 'tcp', ports = '80 8080' },
-        config = { type = 'http_inspect' },
-        action = 'inspect'
-    },
-
-    {
-        match = { networks = '1.2.3.4', protocol = 'tcp', ports = '88 8088' },
-        config = { type = 'http', name = 'iis' },
-    },
-
-    {
-        match = { networks = '192.168.1.0/24', protocol = 'udp', ports = '53' },
+        when = { nets = '1.2.3.4', protos = 'tcp', ports = '80 8080' },
         action = 'block'
-    }
+    },
 }
  
--- lowmem_q = { var = "test" }
-

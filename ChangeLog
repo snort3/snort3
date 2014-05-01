@@ -1,3 +1,7 @@
+77
+-- pulled in josh's changes to make on Linux
+-- updated snort.lua for bindings
+
 76
 -- moved all src/*.{h,cc} except main.{h,cc} to src/main/
 -- updated prototype bindings
