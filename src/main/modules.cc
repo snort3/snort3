@@ -1674,7 +1674,7 @@ static const Parameter bindings_when_params[] =
     { "id", Parameter::PT_STRING, nullptr, nullptr,
       "unique ID for selection of this config by external logic" },
 
-    { "vlans", Parameter::PT_STRING, nullptr, nullptr,
+    { "vlans", Parameter::PT_BIT_LIST, "4095", nullptr,
       "list of VLAN IDs" },
 
     { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
