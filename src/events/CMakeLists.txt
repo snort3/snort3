@@ -15,6 +15,7 @@ add_library (events STATIC
     sfeventq.cc 
     sfeventq.h
     codec_events.cc
+    ${INCLUDES}
 )
 
 install (FILES ${INCLUDES}

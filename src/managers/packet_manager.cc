@@ -65,8 +65,8 @@ static std::list<const CodecApi*> s_codecs;
 //static std::array<Codec*, max_protocol_id> s_protocols;
 
 
-static std::array<uint8_t, max_protocol_id> s_proto_map{};
-static std::array<Codec*, 256> s_protocols{};
+static std::array<uint8_t, max_protocol_id> s_proto_map = {};
+static std::array<Codec*, 256> s_protocols = {};
 static THREAD_LOCAL uint8_t grinder = 0;
 
 // statistics information
@@ -140,7 +140,7 @@ void PacketManager::dump_plugins()
         d.dump(p->base.name, p->base.version);
 }
 
-void PacketManager::instantiate(const CodecApi* cd_api, Module* m, SnortConfig* sc)
+void PacketManager::instantiate(const CodecApi* /*cd_api */, Module* /*m*/, SnortConfig* /*sc*/)
 {
 #if 0
     static uint16_t codec_id = 1;
@@ -275,7 +275,7 @@ void PacketManager::dump_stats()
 {
     std::vector<const char*> pkt_names;
 
-    for(int i = 0; i < gen_peg_names.size(); i++)
+    for(unsigned int i = 0; i < gen_peg_names.size(); i++)
         pkt_names.push_back(gen_peg_names[i]);
 
 

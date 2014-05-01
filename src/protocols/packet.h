@@ -609,43 +609,6 @@ typedef struct _PPPoE_Tag
 } PPPoE_Tag;
 
 
-#define PGM_NAK_ERR -1
-#define PGM_NAK_OK 0
-#define PGM_NAK_VULN 1
-
-typedef struct _PGM_NAK_OPT
-{
-    uint8_t type;     /* 02 = vuln */
-    uint8_t len;
-    uint8_t res[2];
-    uint32_t seq[1];    /* could be many many more, but 1 is sufficient */
-} PGM_NAK_OPT;
-
-typedef struct _PGM_NAK
-{
-    uint32_t  seqnum;
-    uint16_t  afil1;
-    uint16_t  res1;
-    uint32_t  src;
-    uint16_t  afi2;
-    uint16_t  res2;
-    uint32_t  multi;
-    PGM_NAK_OPT opt;
-} PGM_NAK;
-
-typedef struct _PGM_HEADER
-{
-    uint16_t srcport;
-    uint16_t dstport;
-    uint8_t  type;
-    uint8_t  opt;
-    uint16_t checksum;
-    uint8_t  gsd[6];
-    uint16_t length;
-    PGM_NAK  nak;
-} PGM_HEADER;
-
-
 #define LAYER_MAX  32
 
 struct Packet

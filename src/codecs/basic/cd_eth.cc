@@ -42,7 +42,7 @@ public:
     ~EthCodec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) {};
+    virtual void get_protocol_ids(std::vector<uint16_t>&) {};
     virtual void get_data_link_type(std::vector<int>&);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
@@ -79,7 +79,7 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
  * Returns: void function
  */
 bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+        Packet *p, uint16_t &lyr_len, uint16_t& next_prot_id)
 {
 
 //    dc.eth++;

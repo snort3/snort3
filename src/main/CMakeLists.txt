@@ -20,6 +20,7 @@ add_library (main STATIC
     snort_debug.cc 
     snort_config.h
     snort_config.cc 
+	${INCLUDES}
 )
 
 
@@ -32,4 +33,3 @@ target_link_libraries(main
 install (FILES ${INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/main"
 )
-

@@ -32,18 +32,18 @@
 namespace
 {
 
-class NameCodec : public Codec
+class IgmpCodec : public Codec
 {
 public:
-    NameCodec() : Codec("NAME"){};
-    ~NameCodec() {};
+    IgmpCodec() : Codec("igmp"){};
+    ~IgmpCodec() {};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&);
+    virtual void get_data_link_type(std::vector<int>&){};
     
 };
 
@@ -51,20 +51,47 @@ public:
 } // namespace
 
 
-bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
-{
 
+
+
+bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+{
+    int i, alert = 0;
+
+    if (len >= 1 && raw_pkt[0] == 0x11)
+    {
+        if (p->ip_options_data != NULL) {
+            if (p->ip_options_len >= 2) {
+                if (*(p->ip_options_data) == 0 && *(p->ip_options_data+1) == 0)
+                {
+                    codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
+                    return false;
+                }
+            }
+        }
+
+        for(i=0; i< (int) p->ip_option_count; i++) {
+            /* All IGMPv2 packets contain IP option code 148 (router alert).
+               This vulnerability only applies to IGMPv3, so return early. */
+            if (ipv4::is_opt_rtralt(p->ip_options[i].code)) {
+                return true; /* No alert. */
+            }
+
+            if (p->ip_options[i].len == 1) {
+                alert++;
+            }
+        }
+
+        if (alert > 0)
+            codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
+    }
+    return true;
 }
 
-void NameCodec::get_data_link_type(std::vector<int>&)
+void IgmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-//    v.push_back(DLT_ID);
-}
-
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-//    v.push_back(PROTO_TYPE);
+    v.push_back(IPPROTO_IGMP);
 }
 
 
@@ -75,7 +102,7 @@ void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 static Codec* ctor()
 {
-    return new NameCodec();
+    return new IgmpCodec();
 }
 
 static void dtor(Codec *cd)
@@ -84,8 +111,8 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "name";
-static const CodecApi name_api =
+static const char* name = "igmp";
+static const CodecApi igmp_api =
 {
     { 
         PT_CODEC, 
@@ -103,5 +130,4 @@ static const CodecApi name_api =
     dtor, // dtor
 };
 
-
-const BaseApi* cd_name = &name_api.base;
+const BaseApi* cd_igmp = &igmp_api.base;

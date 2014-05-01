@@ -14,6 +14,8 @@ add_library( codec_plugins STATIC
     cd_erspan3.cc
     cd_pppencap.cc
     cd_pppoepkt.cc
+    cd_igmp.cc
+    cd_pgm.cc
 )
 
 target_link_libraries( codec_plugins

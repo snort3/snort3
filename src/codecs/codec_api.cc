@@ -53,6 +53,8 @@ extern const BaseApi* cd_swipe;
 extern const BaseApi* cd_teredo;
 extern const BaseApi* cd_transbridge;
 extern const BaseApi* cd_vlan;
+extern const BaseApi* cd_igmp;
+extern const BaseApi* cd_pgm;
 #endif
 
 const BaseApi* codecs[] =

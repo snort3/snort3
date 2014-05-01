@@ -426,6 +426,7 @@ inline void DecodeIPv4Proto(const uint8_t proto,
             p->dsize = (uint16_t)len;
             return;
 
+#if 0
         case IPPROTO_PGM:
             p->data = pkt;
             p->dsize = (uint16_t)len;
@@ -438,6 +439,7 @@ inline void DecodeIPv4Proto(const uint8_t proto,
             p->dsize = (uint16_t)len;
             CheckIGMPVuln(p);
             return;
+#endif
 
         default:
             if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
@@ -449,102 +451,8 @@ inline void DecodeIPv4Proto(const uint8_t proto,
     }
 }
 
-static inline void CheckPGMVuln(Packet *p)
-{
-    if ( pgm_nak_detect((uint8_t *)p->data, p->dsize) == PGM_NAK_VULN )
-        codec_events::decoder_event(p, DECODE_PGM_NAK_OVERFLOW);
-}
 
-
-//--------------------------------------------------------------------
-//  IP4 vulnerabilities
-//--------------------------------------------------------------------
-
-/* This PGM NAK function started off as an SO rule, sid 8351. */
-static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
-    uint16_t data_left;
-    uint16_t  checksum;
-    PGM_HEADER *header;
-
-    if (NULL == data) {
-        return PGM_NAK_ERR;
-    }
-
-    /* request must be bigger than 44 bytes to cause vuln */
-    if (length <= sizeof(PGM_HEADER)) {
-        return PGM_NAK_ERR;
-    }
-
-    header = (PGM_HEADER *) data;
-
-    if (8 != header->type) {
-        return PGM_NAK_ERR;
-    }
-
-    if (2 != header->nak.opt.type) {
-        return PGM_NAK_ERR;
-    }
-
-
-    /*
-     * alert if the amount of data after the options is more than the length
-     * specified.
-     */
-
-
-    data_left = length - 36;
-    if (data_left > header->nak.opt.len) {
-
-        /* checksum is expensive... do that only if the length is bad */
-        if (header->checksum != 0) {
-            checksum = in_chksum_ip((unsigned short*)data, (int)length);
-            if (checksum != 0)
-                return PGM_NAK_ERR;
-        }
-
-        return PGM_NAK_VULN;
-    }
-
-    return PGM_NAK_OK;
-}
-
-
-/* This function is a port of an old .so rule, sid 3:8092. */
-static inline void CheckIGMPVuln(Packet *p)
-{
-    int i, alert = 0;
-
-    if (p->dsize >= 1 && p->data[0] == 0x11)
-    {
-        if (p->ip_options_data != NULL) {
-            if (p->ip_options_len >= 2) {
-                if (*(p->ip_options_data) == 0 && *(p->ip_options_data+1) == 0)
-                {
-                    codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
-                    return;
-                }
-            }
-        }
-
-        for(i=0; i< (int) p->ip_option_count; i++) {
-            /* All IGMPv2 packets contain IP option code 148 (router alert).
-               This vulnerability only applies to IGMPv3, so return early. */
-            if (ipv4::is_opt_rtralt(p->ip_options[i].code)) {
-                return; /* No alert. */
-            }
-
-            if (p->ip_options[i].len == 1) {
-                alert++;
-            }
-        }
-
-        if (alert > 0)
-            codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
-    }
-}
-
-
-//--------------------------------------------------------------------
+//------------------------------------------------------------------
 // decode.c::IP4 misc
 //--------------------------------------------------------------------
 
@@ -902,39 +810,6 @@ void IP4_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 *  blen - byte length
 *
 */
-static inline unsigned short in_chksum_ip( unsigned short * w, int blen )
-{
-   unsigned int cksum;
-
-   /* IP must be >= 20 bytes */
-   cksum  = w[0];
-   cksum += w[1];
-   cksum += w[2];
-   cksum += w[3];
-   cksum += w[4];
-   cksum += w[5];
-   cksum += w[6];
-   cksum += w[7];
-   cksum += w[8];
-   cksum += w[9];
-
-   blen  -= 20;
-   w     += 10;
-
-   while( blen ) /* IP-hdr must be an integral number of 4 byte words */
-   {
-     cksum += w[0];
-     cksum += w[1];
-     w     += 2;
-     blen  -= 4;
-   }
-
-   cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
-   cksum += (cksum >> 16);
-
-   return (unsigned short) (~cksum);
-}
-
 
 
 //-------------------------------------------------------------------------
