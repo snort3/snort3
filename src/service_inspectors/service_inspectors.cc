@@ -34,6 +34,7 @@ extern const BaseApi* sin_ftp_client;
 extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_rpc_decode;
 extern const BaseApi* sin_telnet;
+extern const BaseApi* sin_nhttp;
 #endif
 
 const BaseApi* service_inspectors[] =
@@ -46,6 +47,7 @@ const BaseApi* service_inspectors[] =
     sin_ftp_server,
     sin_rpc_decode,
     sin_telnet,
+    sin_nhttp,
 #endif
     nullptr,
 };

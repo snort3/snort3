@@ -18,6 +18,7 @@ SUBDIRS = \
 back_orifice \
 ftp_telnet \
 http_inspect \
+nhttp_inspect \
 rpc_decode
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
