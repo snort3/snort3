@@ -44,7 +44,7 @@
 #include <string.h>
 #include <netinet/in.h>
 
-#include "parser/ip_addr_set.h"
+#include "sfip/ipv6_port.h"
 #include "sflsq.h"
 #include "sfghash.h"
 #include "sfxhash.h"
@@ -175,7 +175,7 @@ static void sfthd_node_free(void *node)
 
     if (sfthd_node->ip_address != NULL)
     {
-        IpAddrSetDestroy(sfthd_node->ip_address);
+        sfvar_free(sfthd_node->ip_address);
     }
 
     free(sfthd_node);
@@ -636,7 +636,7 @@ int sfthd_create_threshold(SnortConfig *sc,
                            int priority,
                            int count,
                            int seconds,
-                           IpAddrSet* ip_address)
+                           sfip_var_t* ip_address)
 {
     //allocate memory fpr sfthd_array if needed.
     PolicyId policyId = get_network_policy()->policy_id;
@@ -704,7 +704,7 @@ static inline int sfthd_test_suppress (
     snort_ip_p ip)
 {
     if ( !sfthd_node->ip_address ||
-         IpAddrSetContains(sfthd_node->ip_address, ip) )
+         sfvar_ip_in(sfthd_node->ip_address, ip) )
     {
 #ifdef THD_DEBUG
         printf("THD_DEBUG: SUPPRESS NODE, do not log events with this IP\n");

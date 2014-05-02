@@ -45,7 +45,6 @@
 #include "stream_icmp.h"
 #include "stream_ip.h"
 #include "mstring.h"
-#include "parser/ip_addr_set.h"
 #include "decode.h"
 #include "detect.h"
 #include "generators.h"

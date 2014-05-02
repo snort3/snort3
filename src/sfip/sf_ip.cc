@@ -398,7 +398,7 @@ SFIP_RET sfip_contains(const sfip_t *net, const sfip_t *ip) {
     int net_fam, ip_fam;
     const unsigned int *p1, *p2;
 
-    /* SFIP_CONTAINS is returned here due to how IpAddrSetContains
+    /* SFIP_CONTAINS is returned here due to how sfvar_ip_in
      * handles zero'ed IPs" */
     ARG_CHECK2(net, ip, SFIP_CONTAINS);
 

@@ -134,8 +134,8 @@ struct RuleTreeNode
 {
     RuleFpList *rule_func; /* match functions.. (Bidirectional etc.. ) */
 
-    IpAddrSet *sip;
-    IpAddrSet *dip;
+    sfip_var_t *sip;
+    sfip_var_t *dip;
 
     PortObject * src_portobject;
     PortObject * dst_portobject;

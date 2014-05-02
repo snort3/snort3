@@ -505,43 +505,6 @@ bail:
 
 }
 
-/****************************************************************************
- *
- * Function: DumpList(IpAddrNode*)
- *
- * Purpose: print out the chain lists by header block node group
- *
- * Arguments: node => the head node
- *
- * Returns: void function
- *
- ***************************************************************************/
-void DumpList(IpAddrNode *idx, int negated)
-{
-    DEBUG_WRAP(int i=0;);
-    if(!idx)
-        return;
-
-    while(idx != NULL)
-    {
-       DEBUG_WRAP(DebugMessage(DEBUG_RULES,
-                        "[%d]    %s",
-                        i++, sfip_ntoa(idx->ip)););
-
-       if(negated)
-       {
-           DEBUG_WRAP(DebugMessage(DEBUG_RULES,
-                       "    (EXCEPTION_FLAG Active)\n"););
-       }
-       else
-       {
-           DEBUG_WRAP(DebugMessage(DEBUG_RULES, "\n"););
-       }
-
-       idx = idx->next;
-    }
-}
-
 #define CHECK_ADDR_SRC_ARGS(x) (x)->src_portobject
 #define CHECK_ADDR_DST_ARGS(x) (x)->dst_portobject
 

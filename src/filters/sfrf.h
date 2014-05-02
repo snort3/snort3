@@ -33,8 +33,6 @@
  */
 
 #include "ipv6_port.h"
-#include "parser/ip_addr_set.h"
-
 #include "sflsq.h"
 #include "sfghash.h"
 #include "sfxhash.h"
@@ -104,7 +102,7 @@ typedef struct
     unsigned timeout;
 
     // ip set to restrict rate_filter
-    IpAddrSet* applyTo;
+    sfip_var_t* applyTo;
 
 } tSFRFConfigNode;
 

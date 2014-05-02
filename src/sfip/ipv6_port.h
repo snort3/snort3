@@ -34,11 +34,6 @@
 typedef sfip_t snort_ip;
 typedef sfip_t *snort_ip_p;
 
-#define IpAddrNode sfip_node_t
-#define IpAddrSet sfip_var_t
-#define IpAddrSetContains(x,y) sfvar_ip_in(x, y)
-#define IpAddrSetPrint sfvar_print
-
 #ifdef inet_ntoa
 #undef inet_ntoa
 #endif

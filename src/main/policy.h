@@ -105,7 +105,7 @@ typedef struct _VarEntry
     unsigned char flags;
     uint32_t id;
 
-    IpAddrSet *addrset;
+    sfip_var_t *addrset;
     struct _VarEntry *prev;
     struct _VarEntry *next;
 

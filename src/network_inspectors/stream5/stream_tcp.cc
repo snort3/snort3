@@ -66,7 +66,6 @@
 #include "snort_bounds.h"
 #include "generators.h"
 #include "snort.h"
-#include "parser/ip_addr_set.h"
 #include "time/packet_time.h"
 #include "decode.h"
 #include "encode.h"

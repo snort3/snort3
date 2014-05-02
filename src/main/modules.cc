@@ -51,6 +51,7 @@ using namespace std;
 #include "filters/rate_filter.h"
 #include "codecs/decode_module.h"
 #include "time/ppm_module.h"
+#include "parser/parse_ip.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
@@ -1369,7 +1370,7 @@ bool SuppressModule::set(const char*, Value& v, SnortConfig* sc)
         thdx.tracking = v.get_long() + 1;
 
     else if ( v.is("ip") )
-        thdx.ip_address = IpAddrSetParse(sc, v.get_string());
+        thdx.ip_address = sfip_var_from_string(v.get_string());
 
     else
         return false;
@@ -1448,7 +1449,7 @@ bool EventFilterModule::set(const char*, Value& v, SnortConfig* sc)
         thdx.tracking = v.get_long() + 1;
 
     else if ( v.is("ip") )
-        thdx.ip_address = IpAddrSetParse(sc, v.get_string());
+        thdx.ip_address = sfip_var_from_string(v.get_string());
 
     else if ( v.is("count") )
         thdx.count = v.get_long();
@@ -1549,7 +1550,7 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig* sc)
         thdx.timeout = v.get_long();
 
     else if ( v.is("apply_to") )
-        thdx.applyTo = IpAddrSetParse(sc, v.get_string());
+        thdx.applyTo = sfip_var_from_string(v.get_string());
 
     else if ( v.is("new_action") )
         thdx.newAction = (RuleType)(v.get_long() + 1);

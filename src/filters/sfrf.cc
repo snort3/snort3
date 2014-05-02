@@ -42,7 +42,7 @@
 #include <arpa/inet.h>
 
 #include "snort.h"
-#include "parser/ip_addr_set.h"
+#include "sfip/ipv6_port.h"
 #include "generators.h"
 #include "rules.h"
 #include "treenodes.h"
@@ -193,7 +193,7 @@ static void SFRF_ConfigNodeFree(void *item)
 
     if (node->applyTo != NULL)
     {
-        IpAddrSetDestroy(node->applyTo);
+        sfvar_free(node->applyTo);
     }
 
     free(node);
@@ -451,7 +451,7 @@ static int SFRF_TestObject(
 
 static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, snort_ip_p ip)
 {
-    return ( !pCfg->applyTo || IpAddrSetContains(pCfg->applyTo, ip) );
+    return ( !pCfg->applyTo || sfvar_ip_in(pCfg->applyTo, ip) );
 }
 
 /* Test a an event against the threshold database. Events without thresholding
