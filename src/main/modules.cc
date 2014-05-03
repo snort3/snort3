@@ -800,18 +800,6 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 // packets module
 //-------------------------------------------------------------------------
 
-static const Parameter ignore_params[] =
-{
-    { "protocol", Parameter::PT_ENUM, "TCP | UDP", "TCP",
-      "ports are for this protocol only" },
-
-    // FIXIT use PT_BIT_LIST
-    { "ports", Parameter::PT_STRING, nullptr, nullptr,
-      "list of ports and port ranges" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter packets_params[] =
 {
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
@@ -821,8 +809,6 @@ static const Parameter packets_params[] =
     { "enable_inline_init_failopen", Parameter::PT_BOOL, nullptr, "true",
       "whether to pass traffic during later stage of initialization to avoid drops" },
 #endif
-    { "ignore", Parameter::PT_TABLE, nullptr, ignore_params,
-      "" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
       "maximum number of packets to process before stopping (0 is unlimited)" },
@@ -841,31 +827,7 @@ class PacketsModule : public Module
 public:
     PacketsModule() : Module("packets", packets_params) { };
     bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
-
-private:
-    int proto;
-    string ports;
 };
-
-bool PacketsModule::begin(const char*, int, SnortConfig*)
-{
-    proto = 0;
-    ports.erase();
-    return true;
-}
-
-bool PacketsModule::end(const char*, int, SnortConfig* sc)
-{
-    // FIXIT check for end of ignore
-    if ( proto && ports.size() )
-    {
-        ConfigIgnorePorts(sc, proto, ports.c_str());
-        return true;
-    }
-    return false;
-}
 
 bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
 {
@@ -1358,7 +1320,7 @@ private:
     THDX_STRUCT thdx;
 };
 
-bool SuppressModule::set(const char*, Value& v, SnortConfig* sc)
+bool SuppressModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("gid") )
         thdx.gen_id = v.get_long();
@@ -1437,7 +1399,7 @@ private:
     THDX_STRUCT thdx;
 };
 
-bool EventFilterModule::set(const char*, Value& v, SnortConfig* sc)
+bool EventFilterModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("gid") )
         thdx.gen_id = v.get_long();
@@ -1529,7 +1491,7 @@ private:
     tSFRFConfigNode thdx;
 };
 
-bool RateFilterModule::set(const char*, Value& v, SnortConfig* sc)
+bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("gid") )
         thdx.gid = v.get_long();
@@ -1672,7 +1634,13 @@ public:
 
 static const Parameter bindings_when_params[] =
 {
-    { "id", Parameter::PT_STRING, nullptr, nullptr,
+    { "ingress_index", Parameter::PT_INT, "0:", "0",
+      "DAQ id where packet entered sensor" },
+
+    { "egress_index", Parameter::PT_INT, "0:", "0",
+      "DAQ id where packet exited sensor" },
+
+    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
       "unique ID for selection of this config by external logic" },
 
     { "vlans", Parameter::PT_BIT_LIST, "4095", nullptr,

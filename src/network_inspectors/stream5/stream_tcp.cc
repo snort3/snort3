@@ -4693,7 +4693,7 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
         if (p->dsize < config->max_consec_small_seg_size)
         {
             /* check ignore_ports */
-            if (!(config->small_seg_ignore[p->dp/8] & (1 << (p->dp %8))))
+            if ( !config->small_seg_ignore[p->dp] )
             {
                 rcv->small_seg_count++;
 
