@@ -36,7 +36,7 @@
 #include "packet_io/sfdaq.h"
 #include "sfip/ipv6_port.h" /* #define IpAddrSet */
 #include "events/codec_events.h"
-#include "codecs/checksum.h"
+#include "protocols/checksum.h"
 
 #include "snort.h"
 #include "packet_io/active.h"

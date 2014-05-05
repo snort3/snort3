@@ -65,13 +65,13 @@ static std::list<const CodecApi*> s_codecs;
 //static std::array<Codec*, max_protocol_id> s_protocols;
 
 
-static std::array<uint8_t, max_protocol_id> s_proto_map = {};
-static std::array<Codec*, 256> s_protocols = {};
+static std::array<uint8_t, max_protocol_id> s_proto_map{};
+static std::array<Codec*, 256> s_protocols{};
 static THREAD_LOCAL uint8_t grinder = 0;
 
 // statistics information
-static THREAD_LOCAL std::array<PegCount, 256 + gen_peg_size> s_stats;
-static std::array<PegCount, 256 + gen_peg_size> g_stats;
+static THREAD_LOCAL std::array<PegCount, 256 + gen_peg_size> s_stats{};
+static std::array<PegCount, 256 + gen_peg_size> g_stats{};
 static THREAD_LOCAL CdGenPegs pkt_cnt;
 
 //-------------------------------------------------------------------------

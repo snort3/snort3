@@ -35,7 +35,7 @@
 #include "codecs/decode_module.h"
 #include "protocols/icmp4.h"
 #include "events/codec_events.h"
-#include "codecs/checksum.h"
+#include "protocols/checksum.h"
 
 
 namespace{

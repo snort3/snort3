@@ -21,6 +21,8 @@ set (PROTOCOL_HEADERS
 
 add_library (protocols STATIC
     packet.cc
+    checksum.h
+    checksum.cc
     ${PROTOCOL_HEADERS}
 )
 

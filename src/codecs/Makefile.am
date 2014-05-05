@@ -9,8 +9,6 @@ decode.cc \
 decode.h \
 decode_module.cc \
 decode_module.h \
-checksum.h \
-checksum.cc \
 encode.cc \
 encode.h \
 layer.h \

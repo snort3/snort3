@@ -28,7 +28,7 @@
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
 #include "protocols/ipv4.h"
-#include "codecs/checksum.h"
+#include "protocols/checksum.h"
 
 namespace
 {

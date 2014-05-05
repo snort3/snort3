@@ -26,7 +26,9 @@ tcp.h \
 teredo.h \
 udp.h \
 undefined_protocols.h \
-wlan.h
+wlan.h \
+checksum.h \
+checksum.cc
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

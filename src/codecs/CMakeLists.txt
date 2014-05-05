@@ -27,8 +27,6 @@ add_library( codecs STATIC
     decode_module.cc
     codec_api.h
     codec_api.cc
-    checksum.h
-    checksum.cc
 )
 
 
