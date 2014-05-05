@@ -159,7 +159,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                     sre_addrfamily = ntohs(*((uint16_t *)sre_ptr));
                     sre_ptr += sizeof(sre_addrfamily);
 
-                    sre_offset = *((uint8_t *)sre_ptr);
+//                    sre_offset = *((uint8_t *)sre_ptr);
                     sre_ptr += sizeof(sre_offset);
 
                     sre_length = *((uint8_t *)sre_ptr);

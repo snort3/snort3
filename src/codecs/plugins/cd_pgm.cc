@@ -28,6 +28,7 @@
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
 #include "protocols/ipv4.h"
+#include "codecs/checksum.h"
 
 namespace
 {
@@ -46,9 +47,11 @@ public:
     
 };
 
-#define PGM_NAK_ERR -1
-#define PGM_NAK_OK 0
-#define PGM_NAK_VULN 1
+
+static const uint16_t IPPROTO_ID_PGM = 113;
+static const int PGM_NAK_ERR = -1;
+static const int PGM_NAK_OK = 0;
+static const int PGM_NAK_VULN = 1;
 
 typedef struct _PGM_NAK_OPT
 {
@@ -122,7 +125,7 @@ static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
 
         /* checksum is expensive... do that only if the length is bad */
         if (header->checksum != 0) {
-            checksum = in_chksum_ip((unsigned short*)data, (int)length);
+            checksum = checksum::cksum_add((unsigned short*)data, (int)length);
             if (checksum != 0)
                 return PGM_NAK_ERR;
         }
@@ -148,7 +151,7 @@ bool PgmCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 void PgmCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_PGM);
+    v.push_back(IPPROTO_ID_PGM);
 }
 
 

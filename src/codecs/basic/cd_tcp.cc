@@ -36,11 +36,13 @@
 #include "packet_io/sfdaq.h"
 #include "sfip/ipv6_port.h" /* #define IpAddrSet */
 #include "events/codec_events.h"
+#include "codecs/checksum.h"
 
 #include "snort.h"
 #include "packet_io/active.h"
 #include "protocols/ipv6.h"
 #include "protocols/tcp.h"
+#include "protocols/packet.h"
 #include "framework/codec.h"
 
 
@@ -84,9 +86,10 @@ int OptLenValidate(const uint8_t *option_ptr,
 static void DecodeTCPOptions(const uint8_t *, uint32_t, Packet *);
 static inline void TCPMiscTests(Packet *p);
 
+#if 0
 static inline unsigned short in_chksum_tcp(pseudoheader *, unsigned short *, int);
 static inline unsigned short in_chksum_tcp6(pseudoheader6 *, unsigned short *, int);
-
+#endif
 
 void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -166,7 +169,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         uint16_t csum;
         if(IS_IP4(p))
         {
-            pseudoheader ph;
+            checksum::Pseudoheader ph;
             ph.sip = *p->ip4h->ip_src.ip32;
             ph.dip = *p->ip4h->ip_dst.ip32;
             /* setup the pseudo header for checksum calculation */
@@ -177,19 +180,47 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /* if we're being "stateless" we probably don't care about the TCP
              * checksum, but it's not bad to keep around for shits and giggles */
             /* calculate the checksum */
+            csum = checksum::tcp_cksum((uint16_t *)(p->tcph), len, &ph);
+
+#if 0
             csum = in_chksum_tcp(&ph, (uint16_t *)(p->tcph), len);
+            uint16_t csum2 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph);
+
+            if(csum != csum2)
+            {
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP_CHECKSUM_ERROR!!! -> the two checksum are not equal %hu != %hu\n",
+                                        csum, csum2););
+                uint16_t csum3 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph);
+            }
+#endif
+
         }
         /* IPv6 traffic */
         else
         {
-            pseudoheader6 ph6;
+            checksum::Pseudoheader6 ph6;
             COPY4(ph6.sip, p->ip6h->ip_src.ip32);
             COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
             ph6.zero = 0;
             ph6.protocol = GET_IPH_PROTO(p);
             ph6.len = htons((u_short)len);
 
+
+            csum = checksum::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
+        // TODO::DELETE
+        #if 0
             csum = in_chksum_tcp6(&ph6, (uint16_t *)(p->tcph), len);
+            uint16_t csum2 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "HELLO!! -> the two checksum are not equal %hu != %hu\n",
+                                        csum, csum2););
+
+            if(csum != csum2)
+            {
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP_CHECKSUM_ERROR!!! -> the two checksum are not equal %hu != %hu\n",
+                                        csum, csum2););
+                uint16_t csum3 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
+            }
+            #endif
         }
 
         if(csum)
@@ -797,6 +828,10 @@ int OptLenValidate(const uint8_t *option_ptr,
 }
 
 
+// KEEPING FOR TESTING AND PROFILING
+#if 0
+
+
 /*
  * Checksum Functions
  */
@@ -996,6 +1031,7 @@ static inline unsigned short in_chksum_tcp6(pseudoheader6 *ph,
    return (unsigned short)(~cksum);
 }
 
+#endif
 
 //-------------------------------------------------------------------------
 // api

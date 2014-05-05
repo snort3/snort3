@@ -491,9 +491,6 @@ typedef struct _WifiHdr
 #ifndef IPPROTO_PIM
 #define IPPROTO_PIM             103
 #endif
-#ifndef IPPROTO_PGM
-#define IPPROTO_PGM             113
-#endif
 
 #define IP_OPTMAX               40
 #define IP6_EXTMAX               8
@@ -841,29 +838,11 @@ static inline void SetExtraData (Packet* p, uint32_t xid)
 
 // Encoder && Decoder general structs
 
-typedef struct
-{
-    uint32_t sip[4], dip[4];
-    uint8_t  zero;
-    uint8_t  protocol;
-    uint16_t len;
-} pseudoheader6;
-
-
-typedef struct
-{
-    uint32_t sip, dip;
-    uint8_t  zero;
-    uint8_t  protocol;
-    uint16_t len;
-} pseudoheader;
-
 
 class PacketClass{
 
 public:
     static void push_layer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len);
-
 
 private:
 

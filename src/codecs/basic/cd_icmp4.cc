@@ -35,6 +35,7 @@
 #include "codecs/decode_module.h"
 #include "protocols/icmp4.h"
 #include "events/codec_events.h"
+#include "codecs/checksum.h"
 
 
 namespace{
@@ -182,7 +183,7 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
 
     if (ScIcmpChecksums())
     {
-        uint16_t csum = icmp4::in_chksum_icmp((uint16_t *)p->icmph, raw_len);
+        uint16_t csum = checksum::cksum_add((uint16_t *)p->icmph, raw_len);
 
         if(csum)
         {

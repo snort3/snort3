@@ -42,6 +42,7 @@
 #include "packet_io/active.h"
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
+#include "codecs/checksum.h"
 
 namespace{
 
@@ -154,7 +155,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
 
     /* lay the IP struct over the raw data */
     p->inner_iph = p->iph = reinterpret_cast<IPHdr*>(const_cast<uint8_t *>(raw_packet));
-//    p->inner_iph = p->iph = reinterpret_cast<ipv4::IP4Hdr*>(const_cast<uint8_t *>(raw_packet));
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -255,7 +255,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
          * need to check them (should make this a command line/config
          * option
          */
-        int16_t csum = in_chksum_ip((u_short *)p->iph, hlen);
+        int16_t csum = checksum::cksum_add( (u_short *)p->iph, hlen);
 
         if(csum)
         {
@@ -561,7 +561,7 @@ static inline void IPMiscTests(Packet *p)
 
 
 
-// TODO :: delete
+// TODO :: delete.  IN TCP
 int OptLenValidate(const uint8_t *option_ptr,
                                  const uint8_t *end,
                                  const uint8_t *len_ptr,
@@ -865,8 +865,8 @@ static const CodecApi ipv4_api =
     },
     ipv4_codec_ginit, // pinit
     ipv4_codec_gterm, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

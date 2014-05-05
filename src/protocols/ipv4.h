@@ -249,39 +249,5 @@ const uint8_t IPOPT_ANY = 0xff;
 #define IP_HEADER_LEN ipv4::hdr_len()
 
 
-static inline unsigned short in_chksum_ip( unsigned short * w, int blen )
-{
-   unsigned int cksum;
-
-   /* IP must be >= 20 bytes */
-   cksum  = w[0];
-   cksum += w[1];
-   cksum += w[2];
-   cksum += w[3];
-   cksum += w[4];
-   cksum += w[5];
-   cksum += w[6];
-   cksum += w[7];
-   cksum += w[8];
-   cksum += w[9];
-
-   blen  -= 20;
-   w     += 10;
-
-   while( blen ) /* IP-hdr must be an integral number of 4 byte words */
-   {
-     cksum += w[0];
-     cksum += w[1];
-     w     += 2;
-     blen  -= 4;
-   }
-
-   cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
-   cksum += (cksum >> 16);
-
-   return (unsigned short) (~cksum);
-}
-
-
 #endif
 

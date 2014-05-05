@@ -28,6 +28,7 @@
 #include "snort.h"
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
+#include "codecs/checksum.h"
 
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
@@ -100,22 +101,19 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
         if(IS_IP4(p))
         {
-            csum = icmp4::in_chksum_icmp((uint16_t *)(p->icmp6h), len);
+            csum = checksum::cksum_add((uint16_t *)(p->icmp6h), len);
         }
         /* IPv6 traffic */
         else
         {
-#if 0  // FIXIT 
-            pseudoheader6 ph6;
+            checksum::Pseudoheader6 ph6;
             COPY4(ph6.sip, p->ip6h->ip_src.ip32);
             COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
             ph6.zero = 0;
             ph6.protocol = GET_IPH_PROTO(p);
             ph6.len = htons((u_short)len);
 
-            csum = in_chksum_icmp6(&ph6, (uint16_t *)(p->icmp6h), len);
-#endif
-            csum = 0;
+            csum = checksum::icmp_cksum((uint16_t *)(p->icmp6h), len, &ph6);
         }
         if(csum)
         {
@@ -351,7 +349,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
  */
 static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
 {
-    uint16_t orig_frag_offset;
+//    uint16_t orig_frag_offset;
 
     /* lay the IP struct over the raw data */
     ipv6::IP6RawHdr* hdr = (ipv6::IP6RawHdr*)pkt;
@@ -402,8 +400,8 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
     }
     sfiph_orig_build(p, pkt, AF_INET6);
 
-    orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
-    orig_frag_offset &= 0x1FFF;
+//    orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
+//    orig_frag_offset &= 0x1FFF;
 
     // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
 

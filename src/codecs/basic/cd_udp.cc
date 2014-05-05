@@ -35,6 +35,7 @@
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
 #include "protocols/undefined_protocols.h"
+#include "codecs/checksum.h"
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
@@ -69,8 +70,6 @@ public:
 
 static inline void PopUdp (Packet* p);
 static inline void UDPMiscTests(Packet *p);
-static inline unsigned short in_chksum_udp6(pseudoheader6 *, unsigned short *, int);
-static inline unsigned short in_chksum_udp(pseudoheader *, unsigned short *, int);
 
 
 
@@ -157,7 +156,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         uint16_t csum;
         if(IS_IP4(p))
         {
-            pseudoheader ph;
+            checksum::Pseudoheader ph;
             ph.sip = *p->ip4h->ip_src.ip32;
             ph.dip = *p->ip4h->ip_dst.ip32;
             ph.zero = 0;
@@ -169,8 +168,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
              */
             if( !fragmented_udp_flag && p->udph->uh_chk )
             {
-                csum = in_chksum_udp(&ph,
-                    (uint16_t *)(p->udph), uhlen);
+                csum = checksum::udp_cksum((uint16_t *)(p->udph), uhlen, &ph);
             }
             else
             {
@@ -179,7 +177,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         }
         else
         {
-            pseudoheader6 ph6;
+            checksum::Pseudoheader6 ph6;
             COPY4(ph6.sip, p->ip6h->ip_src.ip32);
             COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
             ph6.zero = 0;
@@ -198,8 +196,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
              */
             else if( !fragmented_udp_flag )
             {
-                csum = in_chksum_udp6(&ph6,
-                    (uint16_t *)(p->udph), uhlen);
+                csum = checksum::udp_cksum((uint16_t *)(p->udph), uhlen, &ph6);
             }
             else
             {
@@ -425,10 +422,9 @@ void UDP_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     c->dp = ntohs(ch->uh_dport);
 }
 
-#endif
 
 /*
- * CHECKSUMS
+ * CHECKSUMS  -- TODO::  delete
  */
 
 /*
@@ -600,6 +596,7 @@ static inline unsigned short in_chksum_udp(pseudoheader *ph,
 
    return (unsigned short)(~cksum);
 }
+#endif
 
 //-------------------------------------------------------------------------
 // api

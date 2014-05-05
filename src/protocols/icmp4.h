@@ -220,69 +220,6 @@ inline uint32_t hdr_len()
   return detail::ICMP_HEADER_LEN;
 }
 
-/*
- * CHECKSUM 
- */
-
-/*
-*  checksum icmp
-*/
-static inline uint16_t in_chksum_icmp( unsigned short * w, int blen )
-{
-  unsigned  short answer=0;
-  unsigned int cksum = 0;
-
-  while(blen >=32)
-  {
-     cksum += w[0];
-     cksum += w[1];
-     cksum += w[2];
-     cksum += w[3];
-     cksum += w[4];
-     cksum += w[5];
-     cksum += w[6];
-     cksum += w[7];
-     cksum += w[8];
-     cksum += w[9];
-     cksum += w[10];
-     cksum += w[11];
-     cksum += w[12];
-     cksum += w[13];
-     cksum += w[14];
-     cksum += w[15];
-     w     += 16;
-     blen  -= 32;
-  }
-
-  while(blen >=8)
-  {
-     cksum += w[0];
-     cksum += w[1];
-     cksum += w[2];
-     cksum += w[3];
-     w     += 4;
-     blen  -= 8;
-  }
-
-  while(blen > 1)
-  {
-     cksum += *w++;
-     blen  -= 2;
-  }
-
-  if( blen == 1 )
-  {
-    *(unsigned char*)(&answer) = (*(unsigned char*)w);
-    cksum += answer;
-  }
-
-  cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
-  cksum += (cksum >> 16);
-
-
-  return (unsigned short)(~cksum);
-}
-
 } //namespace icmp4
 
 

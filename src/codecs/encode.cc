@@ -49,6 +49,7 @@
 #include "protocols/udp.h"
 #include "protocols/eth.h"
 #include "protocols/gtp.h"
+#include "codecs/checksum.h"
  
 
 
@@ -1296,7 +1297,7 @@ static ENC_STATUS UN6_Encode (EncState* enc, Buffer*, Buffer* out)
     uint8_t* p;
     uint8_t* hi = enc->p->layers[enc->layer-1].start;
     IcmpHdr* ho = (IcmpHdr*)(out->base + out->end);
-    pseudoheader6 ps6;
+    checksum::Pseudoheader6 ps6;
     int len;
 
 #ifdef DEBUG
@@ -1347,7 +1348,7 @@ static ENC_STATUS ICMP6_Update (Packet* p, Layer* lyr, uint32_t* len)
     *len += sizeof(*h) + p->dsize;
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
-        pseudoheader6 ps6;
+        checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
         memcpy(ps6.sip, &p->ip6h->ip_src.ip32, sizeof(ps6.sip));
