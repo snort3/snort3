@@ -6806,7 +6806,7 @@ static inline uint32_t flush_pdu_ips (
 
         flush_pt = s5_paf_check(
             ssn->flow->s5_config->tcp_config->paf_config,
-	    &trk->paf_state, ssn->flow,
+	        &trk->paf_state, ssn->flow,
             seg->payload, size, total, seg->seq, srv_port, flags,
             trk->flush_mgr.flush_pt);
 

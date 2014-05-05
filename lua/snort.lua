@@ -632,7 +632,7 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    --include = '../active.rules',
+    include = '../active.rules',
     --rules = default_rules,
     enable_builtin_rules = true
 }
@@ -640,26 +640,26 @@ ips =
 -- prototype bindings:
 -- nets and ports move out of inspector configurations
 -- only need to specify non-default bindings
--- when: days, times, policy_id, vlans, nets, proto, ports, roles
--- use: type, name
--- use.type = action | service | <inspector> | policy_id | nap | ips
+-- when: policy_id, vlans, nets, proto, ports, roles, service
+-- use: action | file | type,name | policy_id [,service]
+-- when: days, times are tbd
 
 bindings =
 {
-    -- product policy lookup is done elsewhere
+    -- define / load a policy only
     {
         when = { policy_id = 'uuid' },
-        use = { type = 'file', name = 'uuid.lua' }
+        use = { file = 'uuid.lua' }
     },
     -- open source policy based on vlan
     {
         when = { vlans = '123' },
-        use = { type = 'file', name = 'vlan.lua' }
+        use = { file = 'vlan.lua' }
     },
     -- open source policy based on cidr
     {
         when = { nets = '1.2.3.0/24' },
-        use = { type = 'file', name = 'net.lua' }
+        use = { file = 'net.lua' }
     },
     -- targeted inspector config
     {
@@ -669,17 +669,17 @@ bindings =
     -- auto service id override
     {
         when = { nets = '3.4.5.0/24', proto = 'tcp', ports = '80', role = 'any' },
-        use = { type = 'service', name = 'http' }
+        use = { service = 'http' }
     },
-    -- allow rule
+    -- allow rule - replaces config ignore_ports
     {
         when = { nets = '4.5.6.7', proto = 'udp', ports = '53' },
-        use = { type = 'action', name = 'allow' }
+        use = { action = 'allow' }
     },
     -- block rule
     {
         when = { nets = '5.6.7.8', proto = 'tcp', ports = '8' },
-        use = { type = 'action', name = 'block' }
+        use = { action = 'block' }
     },
 }
  

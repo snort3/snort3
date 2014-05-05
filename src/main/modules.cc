@@ -1652,11 +1652,26 @@ static const Parameter bindings_when_params[] =
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
       "use the given configuration on one or any end of a session" },
 
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "override default configuration" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const Parameter bindings_use_params[] =
 {
+    { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
+      "what to do with matching traffic" },
+
+    { "file", Parameter::PT_STRING, nullptr, nullptr,
+      "use configuration in given file" },
+
+    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
+      "use configuration in given policy" },
+
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "override automatic service identification" },
+
     { "type", Parameter::PT_STRING, nullptr, nullptr,
       "select module for binding" },
 
@@ -1674,9 +1689,6 @@ static const Parameter bindings_params[] =
     { "use", Parameter::PT_TABLE, nullptr, bindings_use_params,
       "target configuration" },
 
-    { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
-      "what to do with matching traffic (use not needed for allow and block)" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1693,17 +1705,24 @@ private:
     Binding* work;
 };
 
-bool BindingsModule::set(const char*, Value& v, SnortConfig*)
+bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
 {
-    if ( v.is("role") )
-        work->role = (BindRole)v.get_long();
-
-    else if ( v.is("policy_id") )
-        work->id = v.get_string();
-
-    else if ( v.is("vlans") )
-        v.get_bits(work->vlans);
-
+    // both
+    if ( v.is("policy_id") )
+    {
+        if ( !strcmp(fqn, "bindings.when") )
+            work->when_id = v.get_string();
+        else
+            work->use_id = v.get_string();
+    }
+    else if ( v.is("service") )
+    {
+        if ( !strcmp(fqn, "bindings.when") )
+            work->when_svc = v.get_string();
+        else
+            work->use_svc = v.get_string();
+    }
+    // when
     else if ( v.is("nets") )
         work->nets = v.get_string();
 
@@ -1714,14 +1733,24 @@ bool BindingsModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("ports") )
         v.get_bits(work->ports);
 
-    else if ( v.is("type") )
-        work->type = v.get_string();
+    else if ( v.is("role") )
+        work->role = (BindRole)v.get_long();
+
+    else if ( v.is("vlans") )
+        v.get_bits(work->vlans);
+
+    // use
+    else if ( v.is("action") )
+        work->action = (BindAction)v.get_long();
+
+    else if ( v.is("file") )
+        work->file = v.get_string();
 
     else if ( v.is("name") )
         work->name = v.get_string();
 
-    else if ( v.is("action") )
-        work->action = (BindAction)v.get_long();
+    else if ( v.is("type") )
+        work->type = v.get_string();
 
     else
         return false;
