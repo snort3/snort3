@@ -1300,10 +1300,10 @@ static const Parameter suppress_params[] =
       "rule signature ID" },
 
     { "track", Parameter::PT_ENUM, "by_src | by_dst", nullptr,
-      "given ip must match source or destination address" },
+      "suppress only matching source or destination addresses" },
 
     { "ip", Parameter::PT_STRING, nullptr, nullptr,
-      "help" },
+      "restrict suppression to these addresses according to track" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1373,7 +1373,7 @@ static const Parameter event_filter_params[] =
       "1st count events | every count events | once after count events" },
 
     { "track", Parameter::PT_ENUM, "by_src | by_dst", nullptr,
-      "given ip must match source or destination address" },
+      "filter only matching source or destination addresses" },
 
     { "count", Parameter::PT_INT, "0:", "0",
       "number of events in interval before tripping" },
@@ -1382,7 +1382,7 @@ static const Parameter event_filter_params[] =
       "count interval" },
 
     { "ip", Parameter::PT_STRING, nullptr, nullptr,
-      "help" },
+      "restrict filter to these addresses according to track" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1460,7 +1460,7 @@ static const Parameter rate_filter_params[] =
       "rule signature ID" },
 
     { "track", Parameter::PT_ENUM, "by_src | by_dst | by_rule", nullptr,
-      "given ip must match source or destination address" },
+      "filter only matching source or destination addresses" },
 
     { "count", Parameter::PT_INT, "0:", "0",
       "number of events in interval before tripping" },
@@ -1471,7 +1471,7 @@ static const Parameter rate_filter_params[] =
     { "new_action", Parameter::PT_SELECT,
       // FIXIT range based on available action plugins
       "alert | drop | log | pass | | reject | sdrop", "alert",
-      "help" },
+      "restrict filter to these addresses according to track" },
 
     { "timeout", Parameter::PT_INT, "0:", "1",
       "count interval" },
@@ -1634,12 +1634,6 @@ public:
 
 static const Parameter bindings_when_params[] =
 {
-    { "ingress_index", Parameter::PT_INT, "0:", "0",
-      "DAQ id where packet entered sensor" },
-
-    { "egress_index", Parameter::PT_INT, "0:", "0",
-      "DAQ id where packet exited sensor" },
-
     { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
       "unique ID for selection of this config by external logic" },
 
@@ -1649,8 +1643,8 @@ static const Parameter bindings_when_params[] =
     { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "list of networks" },
 
-    { "protos", Parameter::PT_SELECT, "ip | icmp | tcp | udp", nullptr,
-      "list of protocols" },
+    { "proto", Parameter::PT_SELECT, "ip | icmp | tcp | udp", nullptr,
+      "protocol" },
 
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of ports" },
@@ -1704,7 +1698,7 @@ bool BindingsModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("role") )
         work->role = (BindRole)v.get_long();
 
-    else if ( v.is("id") )
+    else if ( v.is("policy_id") )
         work->id = v.get_string();
 
     else if ( v.is("vlans") )
@@ -1713,9 +1707,9 @@ bool BindingsModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("nets") )
         work->nets = v.get_string();
 
-    else if ( v.is("protos") )
+    else if ( v.is("proto") )
     {
-        //v.get_bits(work->protos); FIXIT ?
+        //v.get_bits(work->proto); FIXIT ?
     }
     else if ( v.is("ports") )
         v.get_bits(work->ports);
