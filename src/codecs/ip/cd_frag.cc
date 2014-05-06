@@ -31,7 +31,7 @@
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "codecs/basic/ipv6/ipv6_util.h"
+#include "codecs/ipv6_util.h"
 #include "protocols/packet.h"
 
 

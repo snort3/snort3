@@ -1,4 +1,8 @@
 
+
+include_directories(${PCAP_INCLUDE_DIR})
+
+
 if (ENABLE_NON_ETHER_DECODERS)
     set(NON_ETHER_DECODERS
         root_trk.h
@@ -31,19 +35,17 @@ if (ENABLE_NON_ETHER_DECODERS)
 endif (ENABLE_NON_ETHER_DECODERS)
 
 
-add_library(root_decoders STATIC
-    root_eth.cc
-    root_eth.h
-    root_null.h
-    root_null.cc
-    root_raw4.h
-    root_raw4.cc
-    root_raw6.h
-    root_raw6.cc
+add_library(root_codecs STATIC
+    cd_eth.cc
+    cd_raw4.cc
+    cd_raw6.cc
+    cd_null_root.cc
     ${NON_ETHER_DECODERS}
-    ../decoder_includes.h  #REMOVE!!!
+    ${PCAP_INCLUDE_DIR}/pcap.h  # rebuild if a new libpcap is installed
 )
 
-target_link_libraries(root_decoders
+target_link_libraries(root_codecs
     protocols
+    managers
+    ${PCAP_LIBRARIES}
 )

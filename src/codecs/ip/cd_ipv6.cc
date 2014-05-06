@@ -31,7 +31,7 @@
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
 #include "packet_io/active.h"
-#include "codecs/basic/ipv6/ipv6_util.h"
+#include "codecs/ipv6_util.h"
 
 namespace
 {

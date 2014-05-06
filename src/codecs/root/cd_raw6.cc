@@ -17,7 +17,6 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_swipe.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -25,48 +24,55 @@
 #include "config.h"
 #endif
 
+#include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
+#include "protocols/protocol_ids.h"
+#include <pcap.h>
 
-namespace{
 
-const uint16_t SWIPE_PROT_ID = 53;
+namespace
+{
 
-class SwipeCodec : public Codec{
-
+class Raw6Codec : public Codec
+{
 public:
-    SwipeCodec() : Codec("swipe"){};
-    virtual ~SwipeCodec(){};
-    
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &);
+    Raw6Codec() : Codec("raw6"){};
+    ~Raw6Codec() {};
+
+
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual void get_data_link_type(std::vector<int>&);
+
 };
+
 
 } // namespace
 
 
-void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
+// raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
+bool Raw6Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    proto_ids.push_back(SWIPE_PROT_ID);
+    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP6 Packet!\n"););
+    next_prot_id = ETHERTYPE_IPV6;
+    return true;
 }
 
 
-bool SwipeCodec::decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
+void Raw6Codec::get_data_link_type(std::vector<int>&v)
 {
-    // currently unsupported
-    codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
-    return true;
+    v.push_back(DLT_IPV6);
 }
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-static Codec *ctor()
+static Codec* ctor()
 {
-    return new SwipeCodec();
+    return new Raw6Codec();
 }
 
 static void dtor(Codec *cd)
@@ -74,8 +80,9 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "swipe";
-static const CodecApi swipe_api =
+
+static const char* name = "raw6";
+static const CodecApi raw6_api =
 {
     {
         PT_CODEC,
@@ -85,10 +92,10 @@ static const CodecApi swipe_api =
         nullptr,
         nullptr,
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };
@@ -97,12 +104,13 @@ static const CodecApi swipe_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &swipe_api.base,
+    &raw6_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_swipe = &swipe_api.base;
+const BaseApi* cd_raw6 = &raw6_api.base;
 #endif
+
 
 
 

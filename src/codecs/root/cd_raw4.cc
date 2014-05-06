@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_raw4.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -27,22 +28,23 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
+#include "protocols/protocol_ids.h"
+#include <pcap.h>
 
 
 namespace
 {
 
-class NameCodec : public Codec
+class Raw4Codec : public Codec
 {
 public:
-    NameCodec() : Codec("NAME"){};
-    ~NameCodec() {};
+    Raw4Codec() : Codec("raw4"){};
+    ~Raw4Codec() {};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
 
 };
@@ -51,22 +53,38 @@ public:
 } // namespace
 
 
-bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+
+//--------------------------------------------------------------------
+// decode.c::Raw packets
+//--------------------------------------------------------------------
+
+/*
+ * Function: DecodeRawPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
+ *
+ * Purpose: Decodes packets coming in raw on layer 2, like PPP.  Coded and
+ *          in by Jed Pickle (thanks Jed!) and modified for a few little tweaks
+ *          by me.
+ *
+ * Arguments: p => pointer to decoded packet struct
+ *            pkthdr => ptr to the packet header
+ *            pkt => pointer to the real live packet data
+ *
+ * Returns: void function
+ */
+bool Raw4Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-
+    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP4 Packet!\n"););
+    next_prot_id = ETHERTYPE_IPV4;
+    return true;
 }
 
-void NameCodec::get_data_link_type(std::vector<int>&v)
+
+void Raw4Codec::get_data_link_type(std::vector<int>&v)
 {
-//    v.push_back(DLT_ID);
+    v.push_back(DLT_RAW);
+    v.push_back(DLT_IPV4);
 }
-
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-//    v.push_back(PROTO_TYPE);
-}
-
 
 
 //-------------------------------------------------------------------------
@@ -75,7 +93,7 @@ void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 static Codec* ctor()
 {
-    return new NameCodec();
+    return new Raw4Codec();
 }
 
 static void dtor(Codec *cd)
@@ -84,8 +102,8 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "name";
-static const CodecApi name_api =
+static const char* name = "raw4";
+static const CodecApi raw4_api =
 {
     {
         PT_CODEC,
@@ -107,9 +125,10 @@ static const CodecApi name_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &name_api.base,
+    &raw4_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_name = &name_api.base;
+const BaseApi* cd_raw4 = &raw4_api.base;
 #endif
+

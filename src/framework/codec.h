@@ -52,7 +52,7 @@ public:
     // Registers this Codec's data link type (as defined by libpcap)
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes
-    virtual void get_protocol_ids(std::vector<uint16_t>&) = 0;
+    virtual void get_protocol_ids(std::vector<uint16_t>&) {};
     // used by packet manager to determine the default/null codec
     virtual inline bool is_default_codec() { return false; };
 

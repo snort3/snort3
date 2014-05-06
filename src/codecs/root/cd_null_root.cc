@@ -27,22 +27,24 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
+#include "protocols/protocol_ids.h"
+#include "main/snort.h"
+#include <pcap.h>
 
 
 namespace
 {
 
-class NameCodec : public Codec
+class NullRootCodec : public Codec
 {
 public:
-    NameCodec() : Codec("NAME"){};
-    ~NameCodec() {};
+    NullRootCodec() : Codec("null_root"){};
+    ~NullRootCodec() {};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
 
 };
@@ -51,20 +53,44 @@ public:
 } // namespace
 
 
-bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+static const uint16_t NULL_HDRLEN = 4;
+
+/*
+ * Function: DecodeNullPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
+ *
+ * Purpose: Decoding on loopback devices.
+ *
+ * Arguments: p => pointer to decoded packet struct
+ *            user => Utility pointer, unused
+ *            pkthdr => ptr to the packet header
+ *            pkt => pointer to the real live packet data
+ *
+ * Returns: void function
+ */
+bool NullRootCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
+    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "NULL Packet!\n"); );
 
+    /* do a little validation */
+    if(len < NULL_HDRLEN)
+    {
+        if (ScLogVerbose())
+        {
+            ErrorMessage("NULL header length < captured len! (%d bytes)\n",
+                    len);
+        }
+        return false;
+    }
+
+    lyr_len = NULL_HDRLEN;
+    next_prot_id = ETHERTYPE_IPV4;
+    return true;
 }
 
-void NameCodec::get_data_link_type(std::vector<int>&v)
+void NullRootCodec::get_data_link_type(std::vector<int>&v)
 {
-//    v.push_back(DLT_ID);
-}
-
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-//    v.push_back(PROTO_TYPE);
+    v.push_back(DLT_NULL);
 }
 
 
@@ -75,7 +101,7 @@ void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 static Codec* ctor()
 {
-    return new NameCodec();
+    return new NullRootCodec();
 }
 
 static void dtor(Codec *cd)
@@ -84,13 +110,13 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "name";
-static const CodecApi name_api =
+static const char* name = "null_root";
+static const CodecApi null_root_api =
 {
-    {
-        PT_CODEC,
-        name,
-        CDAPI_PLUGIN_V0,
+    { 
+        PT_CODEC, 
+        name, 
+        CDAPI_PLUGIN_V0, 
         0,
         nullptr,
         nullptr,
@@ -107,9 +133,9 @@ static const CodecApi name_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &name_api.base,
+    &null_root_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_name = &name_api.base;
+const BaseApi* cd_null_root = &null_root_api.base;
 #endif

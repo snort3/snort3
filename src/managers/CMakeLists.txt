@@ -39,7 +39,6 @@ target_link_libraries(managers
     search_engines
     parser
     codecs
-    basic_codecs
 )
 
 install (FILES ${LUA_INCLUDES}

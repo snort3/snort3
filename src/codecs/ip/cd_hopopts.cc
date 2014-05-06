@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_routing.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cd_hopopts.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -26,128 +26,97 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
 #include "events/codec_events.h"
+#include "protocols/ipv6.h"
+#include "codecs/ipv6_util.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "protocols/ipv6.h"
-#include "codecs/basic/ipv6/ipv6_util.h"
 
 namespace
 {
 
-class Ipv6RoutingCodec : public Codec
+class Ipv6HopOptsCodec : public Codec
 {
 public:
-    Ipv6RoutingCodec() : Codec("ipv6_routing"){};
-    ~Ipv6RoutingCodec() {};
+    Ipv6HopOptsCodec() : Codec("ipv6_hopopts") {};
+    ~Ipv6HopOptsCodec() {};
 
-
+    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);    
 };
 
-struct IP6Route
+
+struct IP6HopByHop
 {
-    uint8_t ip6rte_nxt;
-    uint8_t ip6rte_len;
-    uint8_t ip6rte_type;
-    uint8_t ip6rte_seg_left;
-    /* type specific data follows */
-} ;
-
-#if 0
-// Keeping this around for future development
-struct IP6Route0
-{
-    uint8_t ip6rte0_nxt;
-    uint8_t ip6rte0_len;
-    uint8_t ip6rte0_type;
-    uint8_t ip6rte0_seg_left;
-    uint8_t ip6rte0_reserved;
-    uint8_t ip6rte0_bitmap[3];
-    struct in6_addr ip6rte0_addr[1];  /* Up to 23 IP6 addresses */
-} ;
-#endif
-
-} // namespace
+    uint8_t ip6hbh_nxt;
+    uint8_t ip6hbh_len;
+    /* options follow */
+    uint8_t ip6hbh_pad[6];
+};
 
 
-bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+} // anonymous namespace
+
+
+
+
+/*
+ * Class functions
+ */
+
+bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    const IP6Route *rte = reinterpret_cast<const IP6Route *>(raw_pkt);
-
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_ROUTING);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    const IP6HopByHop *hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw_pkt);
 
 
-    if(len < ipv6::min_ext_len())
+    if (len < sizeof(IP6HopByHop))
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    if ( p->ip6_extension_count >= IP6_EXTMAX)
+    if ( p->ip6_extension_count >= IP6_EXTMAX )
     {
         codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
-    if (len < sizeof(IP6Route))
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-        return false;
-    }
+    /* See if there are any ip_proto only rules that match */
+    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_HOPOPTS);
+    ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    /* Routing type 0 extension headers are evil creatures. */
-    if (rte->ip6rte_type == 0)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_ROUTE_ZERO);
-    }
+    lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
+    next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
 
-    if (rte->ip6rte_nxt == IPPROTO_ID_HOPOPTS)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
-    }
-    if (rte->ip6rte_nxt == IPPROTO_ID_ROUTING)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_TWO_ROUTE_HEADERS);
-    }
-    
-    lyr_len = ipv6::min_ext_len() + (rte->ip6rte_len << 3);
     if(lyr_len > len)
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_ROUTING;
+    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_HOPOPTS;
     p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
-    next_prot_id = rte->ip6rte_nxt;
-
     return true;
 }
 
-void Ipv6RoutingCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_ID_ROUTING);
+    v.push_back(IPPROTO_ID_HOPOPTS);
 }
-
 
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
+
 static Codec* ctor()
 {
-    return new Ipv6RoutingCodec();
+    return new Ipv6HopOptsCodec();
 }
 
 static void dtor(Codec *cd)
@@ -155,9 +124,9 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
+static const char* name = "ipv6_hopopts";
 
-static const char* name = "ipv6_routing";
-static const CodecApi ipv6_routing_api =
+static const CodecApi ipv6_hopopts_api =
 {
     { 
         PT_CODEC, 
@@ -175,13 +144,15 @@ static const CodecApi ipv6_routing_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &ipv6_routing_api.base,
+    &ipv6_hopopts_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_routing = &ipv6_routing_api.base;
+const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
 #endif
+
+
+

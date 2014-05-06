@@ -17,7 +17,6 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_hopopts.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -26,97 +25,61 @@
 #endif
 
 #include "framework/codec.h"
+#include "codecs/decode_module.h"
 #include "events/codec_events.h"
 #include "protocols/ipv6.h"
-#include "codecs/basic/ipv6/ipv6_util.h"
+#include "codecs/ipv6_util.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
 
+
 namespace
 {
 
-class Ipv6HopOptsCodec : public Codec
+class Ipv6NoNextCodec : public Codec
 {
 public:
-    Ipv6HopOptsCodec() : Codec("ipv6_hopopts") {};
-    ~Ipv6HopOptsCodec() {};
+    Ipv6NoNextCodec() : Codec("ipv6_no_next"){};
+    ~Ipv6NoNextCodec() {};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
+
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual void get_protocol_ids(std::vector<uint16_t>&);    
 };
 
 
-struct IP6HopByHop
-{
-    uint8_t ip6hbh_nxt;
-    uint8_t ip6hbh_len;
-    /* options follow */
-    uint8_t ip6hbh_pad[6];
-};
+} // namespace
 
 
-} // anonymous namespace
-
-
-
-
-/*
- * Class functions
- */
-
-bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6NoNextCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    const IP6HopByHop *hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw_pkt);
-
-
-    if (len < sizeof(IP6HopByHop))
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-        return false;
-    }
-
-    if ( p->ip6_extension_count >= IP6_EXTMAX )
-    {
-        codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
-        return false;
-    }
-
     /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_HOPOPTS);
+    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_NONEXT);
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
-    next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
-
-    if(lyr_len > len)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-        return false;
-    }
-
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_HOPOPTS;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
-    p->ip6_extension_count++;
+    p->dsize = 0;
+    lyr_len = ipv6::min_ext_len();
     return true;
 }
 
-void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
+
+void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_ID_HOPOPTS);
+    v.push_back(IPPROTO_ID_NONEXT);
 }
+
 
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-
 static Codec* ctor()
 {
-    return new Ipv6HopOptsCodec();
+    return new Ipv6NoNextCodec();
 }
 
 static void dtor(Codec *cd)
@@ -124,9 +87,9 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ipv6_hopopts";
 
-static const CodecApi ipv6_hopopts_api =
+static const char* name = "ipv6_no_next";
+static const CodecApi no_next_api =
 {
     { 
         PT_CODEC, 
@@ -144,15 +107,13 @@ static const CodecApi ipv6_hopopts_api =
     dtor, // dtor
 };
 
+
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &ipv6_hopopts_api.base,
+    &no_next_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
+const BaseApi* cd_no_next = &no_next_api.base;
 #endif
-
-
-
