@@ -1643,7 +1643,7 @@ static const Parameter bindings_when_params[] =
     { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "list of networks" },
 
-    { "proto", Parameter::PT_SELECT, "ip | icmp | tcp | udp", nullptr,
+    { "proto", Parameter::PT_ENUM, "ip | icmp | tcp | udp", nullptr,
       "protocol" },
 
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
@@ -1708,28 +1708,25 @@ private:
 bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     // both
-    if ( v.is("policy_id") )
-    {
-        if ( !strcmp(fqn, "bindings.when") )
-            work->when_id = v.get_string();
-        else
-            work->use_id = v.get_string();
-    }
-    else if ( v.is("service") )
-    {
-        if ( !strcmp(fqn, "bindings.when") )
-            work->when_svc = v.get_string();
-        else
-            work->use_svc = v.get_string();
-    }
+    if ( !strcmp(fqn, "bindings.when.policy_id") )
+        work->when_id = v.get_string();
+
+    else if ( !strcmp(fqn, "bindings.use.policy_id") )
+        work->use_id = v.get_string();
+
+    else if ( !strcmp(fqn, "bindings.when.service") )
+        work->when_svc = v.get_string();
+
+    else if ( !strcmp(fqn, "bindings.use.service") )
+        work->use_svc = v.get_string();
+
     // when
     else if ( v.is("nets") )
         work->nets = v.get_string();
 
     else if ( v.is("proto") )
-    {
-        //v.get_bits(work->proto); FIXIT ?
-    }
+        work->proto = (BindProto)v.get_long();
+
     else if ( v.is("ports") )
         v.get_bits(work->ports);
 

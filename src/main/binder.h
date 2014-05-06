@@ -39,6 +39,14 @@ enum BindAction
     BA_BLOCK
 };
 
+enum BindProto
+{
+    BP_IP,
+    BP_ICMP,
+    BP_TCP,
+    BP_UDP
+};
+
 struct Binding
 {
     // when
@@ -46,7 +54,7 @@ struct Binding
     std::string when_svc;
     VlanList vlans;
     std::string nets;
-    ByteList protos;
+    BindProto proto;
     PortList ports;
     BindRole role;
 
