@@ -14,9 +14,7 @@ set (PROTOCOL_HEADERS
     wlan.h
     teredo.h
     mpls.h
-    ethertypes.h
-    protocol_numbers.h
-    undefined_protocols.h
+    protocol_ids.h
 )
 
 add_library (protocols STATIC

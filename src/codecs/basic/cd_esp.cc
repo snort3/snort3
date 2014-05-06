@@ -30,7 +30,7 @@
 #include "codecs/decode_module.h"
 #include "managers/packet_manager.h"
 #include "events/codec_events.h"
-#include "protocols/undefined_protocols.h"
+#include "protocols/protocol_ids.h"
 
 namespace
 {

@@ -183,33 +183,33 @@ uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum1)
         case 15:
             cksum2 += sp[14];
         case 14:
-            cksum1 += sp[13];
+            cksum3 += sp[13];
         case 13:
-            cksum2 += sp[12];
+            cksum4 += sp[12];
         case 12:
             cksum1 += sp[11];
         case 11:
             cksum2 += sp[10];
         case 10:
-            cksum1 += sp[9];
+            cksum3 += sp[9];
         case 9:
-            cksum2 += sp[8];
+            cksum4 += sp[8];
         case 8:
             cksum1  += sp[7];
         case 7:
             cksum2 += sp[6];
         case 6:
-            cksum1 += sp[5];
+            cksum3 += sp[5];
         case 5:
-            cksum2 += sp[4];
+            cksum4 += sp[4];
         case 4:
             cksum1 += sp[3];
         case 3:
             cksum2 += sp[2];
         case 2:
-            cksum1 += sp[1];
+            cksum3 += sp[1];
         case 1:
-            cksum2 += sp[0];
+            cksum4 += sp[0];
         }
         sp += sn;
 
@@ -218,26 +218,26 @@ uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum1)
         while (--n > 0) {
             cksum1 += sp[15];
             cksum2 += sp[14];
-            cksum1 += sp[13];
-            cksum2 += sp[12];
+            cksum3 += sp[13];
+            cksum4 += sp[12];
             cksum1 += sp[11];
             cksum2 += sp[10];
-            cksum1 += sp[9];
-            cksum2 += sp[8];
+            cksum3 += sp[9];
+            cksum4 += sp[8];
             cksum1 += sp[7];
             cksum2 += sp[6];
-            cksum1 += sp[5];
-            cksum2 += sp[4];
+            cksum3 += sp[5];
+            cksum4 += sp[4];
             cksum1 += sp[3];
             cksum2 += sp[2];
-            cksum1 += sp[1];
-            cksum2 += sp[0];
+            cksum3 += sp[1];
+            cksum4 += sp[0];
             sp += 16;
         };
 
         cksum1 += cksum2;
+        cksum3 += cksum4;
         cksum1 += cksum3;
-        cksum1 += cksum4;
     }
     
     if (len & 1)

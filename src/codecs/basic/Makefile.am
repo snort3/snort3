@@ -14,5 +14,8 @@ cd_tcp.cc \
 cd_udp.cc \
 cd_null.cc
 
+SUBDIRS = \
+ipv6
+
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

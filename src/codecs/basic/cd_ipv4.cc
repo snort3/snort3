@@ -69,6 +69,10 @@ private:
     
 };
 
+/* Last updated 5/2/2014.
+   Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
+uint16_t const MIN_UNASSIGNED_IP_PROTO = 143;
+
 uint16_t const IP_ID_COUNT = 8192;
 THREAD_LOCAL rand_t* s_rand = 0;
 
@@ -371,6 +375,9 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP header length: %lu\n",
                     (unsigned long)hlen););
 
+        if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
+            codec_events::decoder_event(p, DECODE_IP_UNASSIGNED_PROTO);
+
         next_prot_id = p->iph->ip_proto;
     }
     else
@@ -418,20 +425,6 @@ inline void DecodeIPv4Proto(const uint8_t proto,
             p->dsize = (uint16_t)len;
             return;
 
-#if 0
-        case IPPROTO_PGM:
-            p->data = pkt;
-            p->dsize = (uint16_t)len;
-
-                CheckPGMVuln(p);
-            return;
-
-        case IPPROTO_IGMP:
-            p->data = pkt;
-            p->dsize = (uint16_t)len;
-            CheckIGMPVuln(p);
-            return;
-#endif
 
         default:
             if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)

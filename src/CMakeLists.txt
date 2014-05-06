@@ -84,6 +84,8 @@ target_link_libraries(snort
     actions
     managers
     codecs
+    ipv6_codecs
+    basic_codecs
     ${SIDE_CHANNEL_LIBRARIES}
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}

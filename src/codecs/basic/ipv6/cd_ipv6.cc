@@ -30,6 +30,8 @@
 #include "snort.h"
 #include "codecs/decode_module.h"
 #include "events/codec_events.h"
+#include "packet_io/active.h"
+#include "codecs/basic/ipv6/ipv6_util.h"
 
 namespace
 {
@@ -44,6 +46,7 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
+
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
     virtual inline PROTO_ID get_proto_id() { return PROTO_IP6; };
@@ -53,11 +56,8 @@ public:
 
 } // namespace
 
-static inline void CheckIPv6ExtensionOrder(Packet *p);
 static void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, Packet *p);
-static inline int CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
 static inline void IPV6MiscTests(Packet *p);
-static inline int IPV6ExtensionOrder(uint8_t type);
 static void CheckIPV6Multicast(Packet *p);
 static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr);
 
@@ -170,6 +170,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->ip_data = raw_pkt + ipv6::hdr_len();
     p->ip_dsize = ntohs(p->ip6h->len);
     p->packet_flags |= PKT_NEW_IP_LEN;
+    p->proto_bits |= PROTO_BIT__IP;
 
 
     lyr_len = sizeof(*hdr);
@@ -177,7 +178,6 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     next_prot_id = GET_IPH_PROTO(p);
     lyr_len = ipv6::hdr_len();
-    // write down ip6 header len!!
 
 //    DecodeIPV6Extensions(GET_IPH_PROTO(p), raw_pkt + ipv6::hdr_len(), ntohs(p->ip6h->len), p);
     return true;
@@ -186,31 +186,20 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 decodeipv6_fail:
     /* If this was Teredo, back up and treat the packet as normal UDP. */
 
-#if 0
     if (p->proto_bits & PROTO_BIT__TEREDO)
     {
-        dc.ipv6--;
-        dc.teredo--;
         p->proto_bits &= ~PROTO_BIT__TEREDO;
-
-        if (p->greh != NULL)
-            dc.gre_ipv6--;
 
         if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
             Active_ClearTunnelBypass();
-        return;
     }
-
-    dc.discards++;
-    dc.ipv6disc++;
-#endif
 
     return false;
 }
 
 
 
-static inline int CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
+int CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
 {
     IP6Extension *exthdr = (IP6Extension *)pkt;
     uint32_t total_octets = (exthdr->ip6e_len * 8) + 8;
@@ -290,20 +279,8 @@ void DecodeIPV6Options(int type, const uint8_t *pkt, uint32_t len, Packet *p)
     // TBD add layers for other ip6 ext headers
     switch (type)
     {
-        case IPPROTO_HOPOPTS:
-            if (len < sizeof(IP6HopByHop))
-            {
-                codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-                return;
-            }
-            hdrlen = sizeof(IP6Extension) + (exthdr->ip6e_len << 3);
-
-            if ( CheckIPV6HopOptions(pkt, len, p) == 0 )
-                // TODO:  REMOVE THIS PUSHLAYER!
-//                PushLayer(PROTO_IP6_HOP_OPTS, p, pkt, hdrlen);
-            break;
-
         case IPPROTO_DSTOPTS:
+#if 0
             if (len < sizeof(IP6Dest))
             {
                 codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
@@ -381,12 +358,12 @@ void DecodeIPV6Options(int type, const uint8_t *pkt, uint32_t len, Packet *p)
                 if (!(p->frag_offset))
                 {
                     // check header ordering of fragged (next) header
-                    if ( IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
-                         IPV6ExtensionOrder(IPPROTO_FRAGMENT) )
+                    if ( ipv6_util::IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
+                         ipv6_util::IPV6ExtensionOrder(IPPROTO_FRAGMENT) )
                         codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
                 }
                 // check header ordering up thru frag header
-                CheckIPv6ExtensionOrder(p);
+                ipv6_util::CheckIPv6ExtensionOrder(p);
             }
             hdrlen = sizeof(IP6Frag);
             p->ip_frag_len = (uint16_t)(len - hdrlen);
@@ -413,6 +390,7 @@ void DecodeIPV6Options(int type, const uint8_t *pkt, uint32_t len, Packet *p)
 //               if (hdrlen <= len)
 //                PushLayer(PROTO_AH, p, pkt, hdrlen);
             break;
+#endif
 
         default:
             hdrlen = sizeof(IP6Extension) + (exthdr->ip6e_len << 3);
@@ -451,9 +429,7 @@ void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, 
 
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p);
-    p->proto_bits |= PROTO_BIT__IP;
-
-    CheckIPv6ExtensionOrder(p);
+    ipv6_util::CheckIPv6ExtensionOrder(p);
 
     switch(next) {
         case IPPROTO_NONE:
@@ -482,54 +458,6 @@ void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, 
     };
 }
 
-
-static inline int IPV6ExtensionOrder(uint8_t type)
-{
-    switch (type)
-    {
-        case IPPROTO_HOPOPTS:   return 1;
-        case IPPROTO_DSTOPTS:   return 2;
-        case IPPROTO_ROUTING:   return 3;
-        case IPPROTO_FRAGMENT:  return 4;
-        case IPPROTO_AH:        return 5;
-        case IPPROTO_ESP:       return 6;
-        default:                return 7;
-    }
-}
-
-/* Check for out-of-order IPv6 Extension Headers */
-static inline void CheckIPv6ExtensionOrder(Packet *p)
-{
-    int routing_seen = 0;
-    int current_type_order, next_type_order, i;
-
-    if (p->ip6_extension_count > 0)
-        current_type_order = IPV6ExtensionOrder(p->ip6_extensions[0].type);
-
-    for (i = 1; i < (p->ip6_extension_count); i++)
-    {
-        next_type_order = IPV6ExtensionOrder(p->ip6_extensions[i].type);
-
-        if (p->ip6_extensions[i].type == IPPROTO_ROUTING)
-            routing_seen = 1;
-
-        if (next_type_order <= current_type_order)
-        {
-            /* A second "Destination Options" header is allowed iff:
-               1) A routing header was already seen, and
-               2) The second destination header is the last one before the upper layer.
-            */
-            if (!routing_seen ||
-                !(p->ip6_extensions[i].type == IPPROTO_DSTOPTS) ||
-                !(i+1 == p->ip6_extension_count))
-            {
-                codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
-            }
-        }
-
-        current_type_order = next_type_order;
-    }
-}
 
 
 /* Function: IPV6MiscTests(Packet *p)

@@ -104,4 +104,12 @@ static const CodecApi name_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &name_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_name = &name_api.base;
+#endif

@@ -27,7 +27,7 @@
 
 #include "framework/codec.h"
 #include "events/codec_events.h"
-#include "undefined_protocols.h"
+#include "protocols/protocol_ids.h"
 
 namespace
 {

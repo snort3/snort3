@@ -25,7 +25,7 @@
 #include "events/codec_events.h"
 #include "protocols/packet.h"
 
-#include "protocols/ethertypes.h"
+#include "protocols/protocol_ids.h"
 
 namespace
 {

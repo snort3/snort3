@@ -25,6 +25,7 @@ parser/libparser.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
 codecs/basic/libbasic_codecs.a \
+codecs/basic/ipv6/libipv6_codecs.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/defrag/libdefrag.a \
 network_inspectors/normalize/libnormalize.a \

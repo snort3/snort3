@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_ah.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cd_dstopts.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -25,64 +25,91 @@
 #include "config.h"
 #endif
 
-
 #include "framework/codec.h"
 #include "events/codec_events.h"
 #include "protocols/protocol_ids.h"
-#include "protocols/ipv6.h"
+#include "protocols/packet.h"
+#include "main/snort.h"
+#include "detection/fpdetect.h"
+#include "codecs/basic/ipv6/ipv6_util.h"
 
 namespace
 {
 
-class AhCodec : public Codec
+class Ipv6DSTOptsCodec : public Codec
 {
 public:
-    AhCodec() : Codec("ah"){};
-    ~AhCodec(){};
+    Ipv6DSTOptsCodec() : Codec("ipv6_dstopts"){};
+    ~Ipv6DSTOptsCodec() {};
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_AH; };
-    
 };
 
-
+struct IP6Dest
+{
+    uint8_t ip6dest_nxt;
+    uint8_t ip6dest_len;
+    /* options follow */
+    uint8_t ip6dest_pad[6];
+} ;
 
 } // anonymous namespace
 
-void AhCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_AH);
-}
 
-bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
+    const IP6Dest *dsthdr = reinterpret_cast<const IP6Dest *>(raw_pkt);
 
-    IP6Extension *ah = (IP6Extension *)raw_pkt;
+    /* See if there are any ip_proto only rules that match */
+    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_DSTOPTS);
+    ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    if (len < ipv6::min_ext_len())
+
+    if(len < sizeof(IP6Dest))
     {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_TRUNC);
+        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    lyr_len = sizeof(*ah) + (ah->ip6e_len << 2);
-
-    if (lyr_len > len)
+    if ( p->ip6_extension_count >= IP6_EXTMAX )
     {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_BAD_LEN);
+        codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
-    next_prot_id = ah->ip6e_nxt;
+    if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
+    {
+        codec_events::decoder_event(p, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
+    }
+
+    if ( !ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
+        return false;
+
+    lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
+    if(lyr_len > len)
+    {
+        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        return false;
+    }
+
+
+    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_DSTOPTS;
+    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
+    p->ip6_extension_count++;
+    next_prot_id = dsthdr->ip6dest_nxt;
+
     return true;
+}
+
+
+void Ipv6DSTOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(IPPROTO_ID_DSTOPTS);
 }
 
 
@@ -93,7 +120,7 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 static Codec* ctor()
 {
-    return new AhCodec();
+    return new Ipv6DSTOptsCodec();
 }
 
 static void dtor(Codec *cd)
@@ -101,13 +128,14 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ah";
-static const CodecApi ah_api =
+static const char* name = "ipv6_dstopts";
+
+static const CodecApi ipv6_dstopts_api =
 {
     {
         PT_CODEC,
-        name, 
-        CDAPI_PLUGIN_V0, 
+        name,
+        CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,
@@ -120,16 +148,12 @@ static const CodecApi ah_api =
     dtor, // dtor
 };
 
-
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &ah_api.base,
+    &ipv6_dstopts_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_ah = &ah_api.base;
+const BaseApi* cd_dstopts = &ipv6_dstopts_api.base;
 #endif
-
-
-

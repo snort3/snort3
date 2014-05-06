@@ -31,7 +31,7 @@
 #include "events/codec_events.h"
 
 #include "protocols/eth.h"
-#include "protocols/ethertypes.h"
+#include "protocols/protocol_ids.h"
 
 namespace
 {

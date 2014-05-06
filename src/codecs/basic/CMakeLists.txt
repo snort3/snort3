@@ -5,7 +5,6 @@ add_library( basic_codecs STATIC
     cd_icmp4.cc
     cd_icmp6.cc
     cd_ipv4.cc
-    cd_ipv6.cc
     cd_tcp.cc
     cd_udp.cc
     cd_eth.cc
@@ -19,3 +18,5 @@ target_link_libraries( basic_codecs
     events
     main
 )
+
+add_subdirectory(ipv6)

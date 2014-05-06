@@ -39,7 +39,7 @@
 #include "packet_io/active.h"
 #include "protocols/ipv6.h"
 #include "protocols/teredo.h"
-#include "protocols/undefined_protocols.h"
+#include "protocols/protocol_ids.h"
 
 namespace
 {

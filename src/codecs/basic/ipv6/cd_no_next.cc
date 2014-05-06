@@ -17,7 +17,6 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_ah.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
 
@@ -25,64 +24,51 @@
 #include "config.h"
 #endif
 
-
 #include "framework/codec.h"
+#include "codecs/decode_module.h"
 #include "events/codec_events.h"
-#include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
+#include "codecs/basic/ipv6/ipv6_util.h"
+#include "protocols/protocol_ids.h"
+#include "main/snort.h"
+#include "detection/fpdetect.h"
+
 
 namespace
 {
 
-class AhCodec : public Codec
+class Ipv6NoNextCodec : public Codec
 {
 public:
-    AhCodec() : Codec("ah"){};
-    ~AhCodec(){};
+    Ipv6NoNextCodec() : Codec("ipv6_no_next"){};
+    ~Ipv6NoNextCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_AH; };
-    
+    virtual void get_protocol_ids(std::vector<uint16_t>&);    
 };
 
 
+} // namespace
 
-} // anonymous namespace
 
-void AhCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_AH);
-}
-
-bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6NoNextCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
+    /* See if there are any ip_proto only rules that match */
+    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_NONEXT);
+    ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    IP6Extension *ah = (IP6Extension *)raw_pkt;
-
-    if (len < ipv6::min_ext_len())
-    {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_TRUNC);
-        return false;
-    }
-
-    lyr_len = sizeof(*ah) + (ah->ip6e_len << 2);
-
-    if (lyr_len > len)
-    {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_BAD_LEN);
-        return false;
-    }
-
-    next_prot_id = ah->ip6e_nxt;
+    p->dsize = 0;
+    lyr_len = ipv6::min_ext_len();
     return true;
+}
+
+
+void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(IPPROTO_ID_NONEXT);
 }
 
 
@@ -93,7 +79,7 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 static Codec* ctor()
 {
-    return new AhCodec();
+    return new Ipv6NoNextCodec();
 }
 
 static void dtor(Codec *cd)
@@ -101,11 +87,12 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ah";
-static const CodecApi ah_api =
+
+static const char* name = "ipv6_no_next";
+static const CodecApi no_next_api =
 {
-    {
-        PT_CODEC,
+    { 
+        PT_CODEC, 
         name, 
         CDAPI_PLUGIN_V0, 
         0,
@@ -124,12 +111,9 @@ static const CodecApi ah_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &ah_api.base,
+    &no_next_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_ah = &ah_api.base;
+const BaseApi* cd_no_next = &no_next_api.base;
 #endif
-
-
-

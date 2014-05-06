@@ -478,9 +478,6 @@ typedef struct _WifiHdr
 
 #define NUM_IP_PROTOS 256
 
-/* Last updated 6/2/2010.
-   Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
-#define MIN_UNASSIGNED_IP_PROTO 143
 
 #ifndef IPPROTO_IP_MOBILITY
 #define IPPROTO_IP_MOBILITY     55
@@ -493,8 +490,8 @@ typedef struct _WifiHdr
 #endif
 
 #define IP_OPTMAX               40
-#define IP6_EXTMAX               8
 #define TCP_OPTLENMAX           40 /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
+const uint32_t IP6_EXTMAX = 8;
 
 
 

@@ -30,7 +30,7 @@
 #include "packet_io/sfdaq.h"
 
 #include "protocols/packet.h"
-#include "protocols/undefined_protocols.h"
+#include "protocols/protocol_ids.h"
 #include "time/profiler.h"
 #include "parser/parser.h"
 
@@ -184,6 +184,7 @@ void PacketManager::instantiate(const CodecApi* /*cd_api */, Module* /*m*/, Snor
 
 void PacketManager::instantiate()
 {
+    // saving 0 for the default/null codec
     static uint16_t codec_id = 1;
 
     for (auto p : s_codecs)
@@ -330,22 +331,24 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
     {
+        // internal statistics and record keeping
         PacketClass::push_layer(p, s_protocols[mapped_prot], pkt, lyr_len);
-
-        // since the IP length and the packet length may not be equal.
-        if (p->packet_flags & PKT_NEW_IP_LEN)
-        {
-            len = p->actual_ip_len;
-            p->packet_flags &= ~PKT_NEW_IP_LEN;
-        }
-
         s_stats[mapped_prot + stat_offset]++;
         mapped_prot = s_proto_map[prot_id];
-        prev_prot_id = prot_id; // used for 'other_codecs' statistics
+        prev_prot_id = prot_id;
+
+        // reset for next call
         prot_id = FINISHED_DECODE;
         len -= lyr_len;
         pkt += lyr_len;
         lyr_len = 0;
+
+        // since the IP length and the packet length may not be equal.
+        if (p->packet_flags & PKT_NEW_IP_LEN)
+        {
+            len = p->ip_dsize;
+            p->packet_flags &= ~PKT_NEW_IP_LEN;
+        }
     }
 
     // if the final protocol ID is not the null codec

@@ -17,16 +17,31 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ipv6_util.h author Josh Rosenbaum <jorosenba@cisco.com>
 
 
-#ifndef PROTOCOL_NUMBERS_H
-#define PROTOCOL_NUMBERS_H
+#include "protocols/ipv6.h"
+#include "protocols/protocol_ids.h"
+#include "protocols/packet.h"
 
-/*
- * this file contained the protocol numbers for all of the various protocols.
- *  Defined at:
- * http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
- */
+namespace ipv6_util
+{
 
+bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
+void CheckIPv6ExtensionOrder(Packet *p);
 
+static inline int IPV6ExtensionOrder(uint8_t type)
+{
+    switch (type)
+    {
+        case IPPROTO_ID_HOPOPTS:   return 1;
+        case IPPROTO_ID_DSTOPTS:   return 2;
+        case IPPROTO_ID_ROUTING:   return 3;
+        case IPPROTO_ID_FRAGMENT:  return 4;
+        case IPPROTO_ID_AH:        return 5;
+        case IPPROTO_ID_ESP:       return 6;
+        default:                   return 7;
+    }
+}
 
+} // namespace ipv6_util

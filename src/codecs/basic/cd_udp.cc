@@ -34,7 +34,7 @@
 #include "codecs/decode_module.h"
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
-#include "protocols/undefined_protocols.h"
+#include "protocols/protocol_ids.h"
 #include "protocols/checksum.h"
 
 #include "framework/codec.h"
