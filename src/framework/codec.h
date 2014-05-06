@@ -58,7 +58,7 @@ public:
 
 
     // DELETE
-    virtual inline PROTO_ID get_proto_id() { return PROTO_MAX; };
+    virtual inline PROTO_ID get_proto_id() { return PROTO_AH; };
 
 
 protected:
