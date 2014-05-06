@@ -56,7 +56,9 @@ public:
 
 } // namespace
 
+#if 0
 static void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, Packet *p);
+#endif
 static inline void IPV6MiscTests(Packet *p);
 static void CheckIPV6Multicast(Packet *p);
 static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr);
@@ -198,7 +200,7 @@ decodeipv6_fail:
 }
 
 
-
+#if 0
 int CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
 {
     IP6Extension *exthdr = (IP6Extension *)pkt;
@@ -280,7 +282,6 @@ void DecodeIPV6Options(int type, const uint8_t *pkt, uint32_t len, Packet *p)
     switch (type)
     {
         case IPPROTO_DSTOPTS:
-#if 0
             if (len < sizeof(IP6Dest))
             {
                 codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
@@ -390,7 +391,6 @@ void DecodeIPV6Options(int type, const uint8_t *pkt, uint32_t len, Packet *p)
 //               if (hdrlen <= len)
 //                PushLayer(PROTO_AH, p, pkt, hdrlen);
             break;
-#endif
 
         default:
             hdrlen = sizeof(IP6Extension) + (exthdr->ip6e_len << 3);
@@ -459,6 +459,7 @@ void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, 
 }
 
 
+#endif
 
 /* Function: IPV6MiscTests(Packet *p)
  *

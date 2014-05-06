@@ -91,10 +91,6 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
     next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
 
-
-    if (!ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
-        return false;
-
     if(lyr_len > len)
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);

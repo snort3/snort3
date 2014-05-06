@@ -27,6 +27,7 @@ namespace ipv6_util
 {
 
 
+#if 0
 bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
 {
     IP6Extension *exthdr = (IP6Extension *)pkt;
@@ -74,7 +75,7 @@ bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
     return true;
 }
 
-
+#endif
 
 /* Check for out-of-order IPv6 Extension Headers */
 void CheckIPv6ExtensionOrder(Packet *p)

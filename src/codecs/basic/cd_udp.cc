@@ -156,18 +156,19 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         uint16_t csum;
         if(IS_IP4(p))
         {
-            checksum::Pseudoheader ph;
-            ph.sip = *p->ip4h->ip_src.ip32;
-            ph.dip = *p->ip4h->ip_dst.ip32;
-            ph.zero = 0;
-            ph.protocol = GET_IPH_PROTO(p);
-            ph.len = p->udph->uh_len;
             /* Don't do checksum calculation if
              * 1) Fragmented, OR
              * 2) UDP header chksum value is 0.
              */
             if( !fragmented_udp_flag && p->udph->uh_chk )
             {
+                checksum::Pseudoheader ph;
+                ph.sip = *p->ip4h->ip_src.ip32;
+                ph.dip = *p->ip4h->ip_dst.ip32;
+                ph.zero = 0;
+                ph.protocol = GET_IPH_PROTO(p);
+                ph.len = p->udph->uh_len;
+                
                 csum = checksum::udp_cksum((uint16_t *)(p->udph), uhlen, &ph);
             }
             else
@@ -177,13 +178,6 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         }
         else
         {
-            checksum::Pseudoheader6 ph6;
-            COPY4(ph6.sip, p->ip6h->ip_src.ip32);
-            COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
-            ph6.zero = 0;
-            ph6.protocol = GET_IPH_PROTO(p);
-            ph6.len = htons((u_short)len);
-
             /* Alert on checksum value 0 for ipv6 packets */
             if(!p->udph->uh_chk)
             {
@@ -196,6 +190,13 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
              */
             else if( !fragmented_udp_flag )
             {
+                checksum::Pseudoheader6 ph6;
+                COPY4(ph6.sip, p->ip6h->ip_src.ip32);
+                COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
+                ph6.zero = 0;
+                ph6.protocol = GET_IPH_PROTO(p);
+                ph6.len = htons((u_short)len);
+
                 csum = checksum::udp_cksum((uint16_t *)(p->udph), uhlen, &ph6);
             }
             else
@@ -216,7 +217,6 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             p->error_flags |= PKT_ERR_CKSUM_UDP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad UDP Checksum\n"););
             codec_events::exec_udp_chksm_drop(p);
-//            dc.invalid_checksums++;
         }
         else
         {

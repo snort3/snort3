@@ -87,9 +87,6 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         codec_events::decoder_event(p, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
     }
 
-    if ( !ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
-        return false;
-
     lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
     if(lyr_len > len)
     {
