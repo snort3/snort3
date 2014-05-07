@@ -19,6 +19,8 @@ add_library( codecs STATIC
     ipv6_util.cc
     codec_events.cc
     codec_events.h
+    checksum.h
+    checksum.cc
 )
 
 

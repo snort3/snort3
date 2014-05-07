@@ -28,7 +28,7 @@
 #include "snort.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "protocols/checksum.h"
+#include "codecs/checksum.h"
 
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"

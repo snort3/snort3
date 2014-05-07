@@ -19,7 +19,9 @@ libcodec_utils_a_SOURCES = \
 codec_events.cc \
 codec_events.h \
 ipv6_util.h \
-ipv6_util.cc
+ipv6_util.cc  \
+checksum.h \
+checksum.cc
 
 
 SUBDIRS = \

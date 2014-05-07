@@ -36,7 +36,7 @@
 #include "packet_io/sfdaq.h"
 #include "parser/parse_ip.h"
 #include "codecs/codec_events.h"
-#include "protocols/checksum.h"
+#include "codecs/checksum.h"
 
 #include "snort.h"
 #include "packet_io/active.h"
@@ -175,7 +175,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /* setup the pseudo header for checksum calculation */
             ph.zero = 0;
             ph.protocol = GET_IPH_PROTO(p);
-            ph.len = htons((u_short)len);
+            ph.len = htons((uint16_t)len);
 
             /* if we're being "stateless" we probably don't care about the TCP
              * checksum, but it's not bad to keep around for shits and giggles */
@@ -203,7 +203,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
             ph6.zero = 0;
             ph6.protocol = GET_IPH_PROTO(p);
-            ph6.len = htons((u_short)len);
+            ph6.len = htons((uint16_t)len);
 
 
             csum = checksum::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
@@ -327,7 +327,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     if(lyr_len < len)
     {
-        p->dsize = (u_short)(len - lyr_len);
+        p->dsize = (uint16_t)(len - lyr_len);
     }
     else
     {

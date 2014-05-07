@@ -42,7 +42,7 @@
 #include "packet_io/active.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "protocols/checksum.h"
+#include "codecs/checksum.h"
 
 namespace{
 
@@ -259,7 +259,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
          * need to check them (should make this a command line/config
          * option
          */
-        int16_t csum = checksum::cksum_add( (u_short *)p->iph, hlen);
+        int16_t csum = checksum::ip_cksum((uint16_t *)p->iph, hlen);
 
         if(csum)
         {

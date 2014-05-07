@@ -66,6 +66,7 @@ uint16_t tcp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph );
 uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader*);
 uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader6*);
 uint16_t icmp_cksum(const uint16_t *buf, size_t len, Pseudoheader6*);
+uint16_t ip_cksum(const uint16_t *buf, size_t len);
 
 
 static inline int16_t icmp_cksum(const uint16_t *buf, size_t len)

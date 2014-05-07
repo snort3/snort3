@@ -35,7 +35,7 @@
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
 #include "protocols/protocol_ids.h"
-#include "protocols/checksum.h"
+#include "codecs/checksum.h"
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
