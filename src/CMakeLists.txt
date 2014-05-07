@@ -59,6 +59,7 @@ target_link_libraries(snort
     perf_monitor
     stream
     http_inspect
+    nhttp_inspect
     flow
     parser
     file_api
