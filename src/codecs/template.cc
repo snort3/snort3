@@ -39,7 +39,7 @@ public:
     ~NameCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
@@ -51,7 +51,7 @@ public:
 } // namespace
 
 
-bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 

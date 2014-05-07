@@ -52,7 +52,6 @@ extern const BaseApi* cd_null;
 extern const BaseApi* cd_ah;
 extern const BaseApi* cd_arp;
 extern const BaseApi* cd_dstopts;
-extern const BaseApi* cd_eapol;
 extern const BaseApi* cd_erspan2;
 extern const BaseApi* cd_erspan3; 
 extern const BaseApi* cd_ethloopback; 
@@ -71,6 +70,12 @@ extern const BaseApi* cd_swipe;
 extern const BaseApi* cd_teredo;
 extern const BaseApi* cd_transbridge;
 extern const BaseApi* cd_vlan;
+
+#ifndef NO_NON_ETHER_DECODER
+extern const BaseApi* cd_eapol;
+
+#endif
+
 #endif
 
 

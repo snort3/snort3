@@ -67,18 +67,18 @@ static const uint16_t NULL_HDRLEN = 4;
  *
  * Returns: void function
  */
-bool NullRootCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool NullRootCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t raw_len, 
+        Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "NULL Packet!\n"); );
 
     /* do a little validation */
-    if(len < NULL_HDRLEN)
+    if(raw_len < NULL_HDRLEN)
     {
         if (ScLogVerbose())
         {
             ErrorMessage("NULL header length < captured len! (%d bytes)\n",
-                    len);
+                    raw_len);
         }
         return false;
     }

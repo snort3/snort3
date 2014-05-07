@@ -53,8 +53,8 @@ public:
 } // namespace
 
 
-bool Ipv6NoNextCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Ipv6NoNextCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*len*/, 
+        Packet *p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
 {
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_NONEXT);

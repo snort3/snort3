@@ -141,8 +141,8 @@ static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
 // private functions
 //-------------------------------------------------------------------------
 
-bool PgmCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool PgmCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*len*/, 
+        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
 {
     if ( pgm_nak_detect((uint8_t *)p->data, p->dsize) == PGM_NAK_VULN )
         codec_events::decoder_event(p, DECODE_PGM_NAK_OVERFLOW);

@@ -51,8 +51,8 @@ void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
 }
 
 
-bool SwipeCodec::decode(const uint8_t* raw_packet, const uint32_t raw_len, 
-        Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
+bool SwipeCodec::decode(const uint8_t* /*raw_packet*/, const uint32_t /*raw_len*/,  
+        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
 {
     // currently unsupported
     codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);

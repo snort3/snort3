@@ -52,8 +52,8 @@ public:
 
 
 // raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
-bool Raw6Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Raw6Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*raw_len*/,
+        Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& next_prot_id)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP6 Packet!\n"););
     next_prot_id = ETHERTYPE_IPV6;

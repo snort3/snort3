@@ -52,8 +52,8 @@ void EthLoopbackCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(ETHERNET_TYPE_LOOP);
 }
 
-bool EthLoopbackCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool EthLoopbackCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*raw_len*/, 
+        Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
 {
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "EthLoopback is not supported.\n"););

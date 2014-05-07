@@ -30,6 +30,7 @@
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "snort.h"
+#include "main/snort_types.h"
 
 namespace
 {
@@ -94,6 +95,10 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->data = raw_pkt;
     p->dsize = (uint16_t)len;
     return true;
+
+#else  /* WORDS_MUSTALIGN */
+    UNUSED(p);
+
 #endif  /* WORDS_MUSTALIGN */
 
 //    if (p->greh != NULL)
