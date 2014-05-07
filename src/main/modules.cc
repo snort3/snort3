@@ -51,6 +51,7 @@ using namespace std;
 #include "filters/rate_filter.h"
 #include "codecs/decode_module.h"
 #include "time/ppm_module.h"
+#include "parser/parse_ip.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
@@ -799,18 +800,6 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 // packets module
 //-------------------------------------------------------------------------
 
-static const Parameter ignore_params[] =
-{
-    { "protocol", Parameter::PT_ENUM, "TCP | UDP", "TCP",
-      "ports are for this protocol only" },
-
-    // FIXIT use PT_BIT_LIST
-    { "ports", Parameter::PT_STRING, nullptr, nullptr,
-      "list of ports and port ranges" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter packets_params[] =
 {
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
@@ -820,8 +809,6 @@ static const Parameter packets_params[] =
     { "enable_inline_init_failopen", Parameter::PT_BOOL, nullptr, "true",
       "whether to pass traffic during later stage of initialization to avoid drops" },
 #endif
-    { "ignore", Parameter::PT_TABLE, nullptr, ignore_params,
-      "" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
       "maximum number of packets to process before stopping (0 is unlimited)" },
@@ -840,31 +827,7 @@ class PacketsModule : public Module
 public:
     PacketsModule() : Module("packets", packets_params) { };
     bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
-
-private:
-    int proto;
-    string ports;
 };
-
-bool PacketsModule::begin(const char*, int, SnortConfig*)
-{
-    proto = 0;
-    ports.erase();
-    return true;
-}
-
-bool PacketsModule::end(const char*, int, SnortConfig* sc)
-{
-    // FIXIT check for end of ignore
-    if ( proto && ports.size() )
-    {
-        ConfigIgnorePorts(sc, proto, ports.c_str());
-        return true;
-    }
-    return false;
-}
 
 bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
 {
@@ -1337,10 +1300,10 @@ static const Parameter suppress_params[] =
       "rule signature ID" },
 
     { "track", Parameter::PT_ENUM, "by_src | by_dst", nullptr,
-      "given ip must match source or destination address" },
+      "suppress only matching source or destination addresses" },
 
     { "ip", Parameter::PT_STRING, nullptr, nullptr,
-      "help" },
+      "restrict suppression to these addresses according to track" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1357,7 +1320,7 @@ private:
     THDX_STRUCT thdx;
 };
 
-bool SuppressModule::set(const char*, Value& v, SnortConfig* sc)
+bool SuppressModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("gid") )
         thdx.gen_id = v.get_long();
@@ -1369,7 +1332,7 @@ bool SuppressModule::set(const char*, Value& v, SnortConfig* sc)
         thdx.tracking = v.get_long() + 1;
 
     else if ( v.is("ip") )
-        thdx.ip_address = IpAddrSetParse(sc, v.get_string());
+        thdx.ip_address = sfip_var_from_string(v.get_string());
 
     else
         return false;
@@ -1410,7 +1373,7 @@ static const Parameter event_filter_params[] =
       "1st count events | every count events | once after count events" },
 
     { "track", Parameter::PT_ENUM, "by_src | by_dst", nullptr,
-      "given ip must match source or destination address" },
+      "filter only matching source or destination addresses" },
 
     { "count", Parameter::PT_INT, "0:", "0",
       "number of events in interval before tripping" },
@@ -1419,7 +1382,7 @@ static const Parameter event_filter_params[] =
       "count interval" },
 
     { "ip", Parameter::PT_STRING, nullptr, nullptr,
-      "help" },
+      "restrict filter to these addresses according to track" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1436,7 +1399,7 @@ private:
     THDX_STRUCT thdx;
 };
 
-bool EventFilterModule::set(const char*, Value& v, SnortConfig* sc)
+bool EventFilterModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("gid") )
         thdx.gen_id = v.get_long();
@@ -1448,7 +1411,7 @@ bool EventFilterModule::set(const char*, Value& v, SnortConfig* sc)
         thdx.tracking = v.get_long() + 1;
 
     else if ( v.is("ip") )
-        thdx.ip_address = IpAddrSetParse(sc, v.get_string());
+        thdx.ip_address = sfip_var_from_string(v.get_string());
 
     else if ( v.is("count") )
         thdx.count = v.get_long();
@@ -1497,7 +1460,7 @@ static const Parameter rate_filter_params[] =
       "rule signature ID" },
 
     { "track", Parameter::PT_ENUM, "by_src | by_dst | by_rule", nullptr,
-      "given ip must match source or destination address" },
+      "filter only matching source or destination addresses" },
 
     { "count", Parameter::PT_INT, "0:", "0",
       "number of events in interval before tripping" },
@@ -1508,7 +1471,7 @@ static const Parameter rate_filter_params[] =
     { "new_action", Parameter::PT_SELECT,
       // FIXIT range based on available action plugins
       "alert | drop | log | pass | | reject | sdrop", "alert",
-      "help" },
+      "restrict filter to these addresses according to track" },
 
     { "timeout", Parameter::PT_INT, "0:", "1",
       "count interval" },
@@ -1528,7 +1491,7 @@ private:
     tSFRFConfigNode thdx;
 };
 
-bool RateFilterModule::set(const char*, Value& v, SnortConfig* sc)
+bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("gid") )
         thdx.gid = v.get_long();
@@ -1549,7 +1512,7 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig* sc)
         thdx.timeout = v.get_long();
 
     else if ( v.is("apply_to") )
-        thdx.applyTo = IpAddrSetParse(sc, v.get_string());
+        thdx.applyTo = sfip_var_from_string(v.get_string());
 
     else if ( v.is("new_action") )
         thdx.newAction = (RuleType)(v.get_long() + 1);
@@ -1671,7 +1634,7 @@ public:
 
 static const Parameter bindings_when_params[] =
 {
-    { "id", Parameter::PT_STRING, nullptr, nullptr,
+    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
       "unique ID for selection of this config by external logic" },
 
     { "vlans", Parameter::PT_BIT_LIST, "4095", nullptr,
@@ -1680,8 +1643,8 @@ static const Parameter bindings_when_params[] =
     { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "list of networks" },
 
-    { "protos", Parameter::PT_SELECT, "ip | icmp | tcp | udp", nullptr,
-      "list of protocols" },
+    { "proto", Parameter::PT_ENUM, "ip | icmp | tcp | udp", nullptr,
+      "protocol" },
 
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of ports" },
@@ -1689,11 +1652,26 @@ static const Parameter bindings_when_params[] =
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
       "use the given configuration on one or any end of a session" },
 
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "override default configuration" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const Parameter bindings_use_params[] =
 {
+    { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
+      "what to do with matching traffic" },
+
+    { "file", Parameter::PT_STRING, nullptr, nullptr,
+      "use configuration in given file" },
+
+    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
+      "use configuration in given policy" },
+
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "override automatic service identification" },
+
     { "type", Parameter::PT_STRING, nullptr, nullptr,
       "select module for binding" },
 
@@ -1711,9 +1689,6 @@ static const Parameter bindings_params[] =
     { "use", Parameter::PT_TABLE, nullptr, bindings_use_params,
       "target configuration" },
 
-    { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
-      "what to do with matching traffic (use not needed for allow and block)" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1730,35 +1705,49 @@ private:
     Binding* work;
 };
 
-bool BindingsModule::set(const char*, Value& v, SnortConfig*)
+bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
 {
-    if ( v.is("role") )
-        work->role = (BindRole)v.get_long();
+    // both
+    if ( !strcmp(fqn, "bindings.when.policy_id") )
+        work->when_id = v.get_string();
 
-    else if ( v.is("id") )
-        work->id = v.get_string();
+    else if ( !strcmp(fqn, "bindings.use.policy_id") )
+        work->use_id = v.get_string();
+
+    else if ( !strcmp(fqn, "bindings.when.service") )
+        work->when_svc = v.get_string();
+
+    else if ( !strcmp(fqn, "bindings.use.service") )
+        work->use_svc = v.get_string();
+
+    // when
+    else if ( v.is("nets") )
+        work->nets = v.get_string();
+
+    else if ( v.is("proto") )
+        work->proto = (BindProto)v.get_long();
+
+    else if ( v.is("ports") )
+        v.get_bits(work->ports);
+
+    else if ( v.is("role") )
+        work->role = (BindRole)v.get_long();
 
     else if ( v.is("vlans") )
         v.get_bits(work->vlans);
 
-    else if ( v.is("nets") )
-        work->nets = v.get_string();
+    // use
+    else if ( v.is("action") )
+        work->action = (BindAction)v.get_long();
 
-    else if ( v.is("protos") )
-    {
-        //v.get_bits(work->protos); FIXIT ?
-    }
-    else if ( v.is("ports") )
-        v.get_bits(work->ports);
-
-    else if ( v.is("type") )
-        work->type = v.get_string();
+    else if ( v.is("file") )
+        work->file = v.get_string();
 
     else if ( v.is("name") )
         work->name = v.get_string();
 
-    else if ( v.is("action") )
-        work->action = (BindAction)v.get_long();
+    else if ( v.is("type") )
+        work->type = v.get_string();
 
     else
         return false;

@@ -28,6 +28,7 @@
 
 #include "snort.h"
 #include "sfip/sf_ip.h"
+#include "parser/parse_ip.h"
 #include "filters/sfthd.h"
 #include "utils/util.h"
 
@@ -737,7 +738,7 @@ static void Init (ThreshData* base, int max) {
 
         if ( p->type != THD_TYPE_DETECT )
         {
-            IpAddrSet* set = p->ip ? IpAddrSetParse(snort_conf, p->ip) : NULL;
+            sfip_var_t* set = p->ip ? sfip_var_from_string(p->ip) : NULL;
 
             p->create = sfthd_create_threshold(snort_conf,
                 pThdObjs, p->gid, p->sid, p->tracking, p->type, PRIORITY,

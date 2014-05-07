@@ -1,9 +1,5 @@
 /*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * Author(s):  Andrew R. Baker <andrewb@snort.org>
- *             Martin Roesch   <roesch@sourcefire.com>
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -19,12 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
  */
 
-/* includes */
-
-#include "ip_addr_set.h"
+#include "parse_ip.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -46,9 +39,9 @@
 #include "ipv6_port.h"
 #include "sfip/sf_vartable.h"
 
-IpAddrSet *IpAddrSetParse(SnortConfig*, const char *addr)
+sfip_var_t* sfip_var_from_string(const char *addr)
 {
-    IpAddrSet *ret;
+    sfip_var_t *ret;
     int ret_code;
     vartable_t *ip_vartable;
 
@@ -57,7 +50,7 @@ IpAddrSet *IpAddrSetParse(SnortConfig*, const char *addr)
     DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Got address string: %s\n",
                 addr););
 
-    ret = (IpAddrSet*)SnortAlloc(sizeof(IpAddrSet));
+    ret = (sfip_var_t*)SnortAlloc(sizeof(sfip_var_t));
 
     if((ret_code = sfvt_add_to_var(ip_vartable, ret, addr)) != SFIP_SUCCESS)
     {
@@ -72,14 +65,5 @@ IpAddrSet *IpAddrSetParse(SnortConfig*, const char *addr)
     }
 
     return ret;
-}
-
-void IpAddrSetDestroy(IpAddrSet *ipAddrSet)
-{
-
-    if(!ipAddrSet)
-        return;
-
-    sfvar_free(ipAddrSet);
 }
 

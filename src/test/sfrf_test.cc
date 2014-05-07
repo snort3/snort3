@@ -34,6 +34,7 @@
 #include "detection/rules.h"
 #include "detection/treenodes.h"
 #include "sfip/sf_ip.h"
+#include "parser/parse_ip.h"
 #include "filters/sfrf.h"
 #include "utils/util.h"
 
@@ -903,7 +904,7 @@ static void Init (unsigned cap) {
         cfg.seconds = p->seconds;
         cfg.newAction = (RuleType)RULE_NEW;
         cfg.timeout = p->timeout;
-        cfg.applyTo = p->ip ? IpAddrSetParse(snort_conf, p->ip) : NULL;
+        cfg.applyTo = p->ip ? sfip_var_from_string(p->ip) : NULL;
 
         p->create = SFRF_ConfigAdd(snort_conf, &rfc, &cfg);
     }

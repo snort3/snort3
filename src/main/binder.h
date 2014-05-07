@@ -39,22 +39,32 @@ enum BindAction
     BA_BLOCK
 };
 
+enum BindProto
+{
+    BP_IP,
+    BP_ICMP,
+    BP_TCP,
+    BP_UDP
+};
+
 struct Binding
 {
     // when
-    std::string id;
+    std::string when_id;
+    std::string when_svc;
     VlanList vlans;
     std::string nets;
-    ByteList protos;
+    BindProto proto;
     PortList ports;
     BindRole role;
 
     // use
+    BindAction action;
+    std::string use_id;
+    std::string use_svc;
     std::string type;
     std::string name;
-
-    // action
-    BindAction action;
+    std::string file;
 
     Binding()
     { role = BR_EITHER; action = BA_INSPECT; };

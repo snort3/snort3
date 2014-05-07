@@ -2,6 +2,11 @@ The following pointers will help you get started:
 
 === Using git
 
+* for help do:
+
+    git --help
+    git <command> --help
+
 * create a git repo called Snort++ in your working directory:
 
     git clone /nfs/home/rcombs/Snort++

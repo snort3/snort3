@@ -182,7 +182,8 @@ void Request::respond(const char* s) const
         LogMessage("%s", s);
         return;
     }
-    write(fd, s, strlen(s));
+    if ( write(fd, s, strlen(s)) )
+        return;  // FIXIT count errors?
 }
 
 void Request::show_prompt() const

@@ -686,7 +686,7 @@ void DeleteVars(VarEntry *var_table)
             free(p->value);
         if (p->addrset)
         {
-            IpAddrSetDestroy(p->addrset);
+            sfvar_free(p->addrset);
         }
         free(p);
         p = q;

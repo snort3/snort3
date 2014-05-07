@@ -5,6 +5,8 @@ add_library (parser STATIC
     parser.h 
     parse_conf.cc 
     parse_conf.h 
+    parse_ip.cc 
+    parse_ip.h 
     parse_rule.cc 
     parse_rule.h 
     parse_otn.cc 
@@ -14,8 +16,6 @@ add_library (parser STATIC
     config_file.cc 
     config_file.h 
     keywords.h 
-    ip_addr_set.cc
-    ip_addr_set.h
     mstring.cc 
     mstring.h 
     vars.cc 

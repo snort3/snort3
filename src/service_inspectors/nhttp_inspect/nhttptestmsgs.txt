@@ -1,0 +1,66 @@
+# A message section is the unit of data passed to the inspector and may by headers, body, a chunk, or trailing headers. 
+# Blank lines separate message sections. Extra blank lines don't have any effect.
+# Lines beginning with '@' are control commands.
+# You cannot put comments or control commands in the middle of a message section.
+# If a message section begins with # or @ (presumably a very rare situation) you must escape it: \# or \@
+# Control commands:
+#    @request or @response sets the message direction. Applies to subsequent sections until changed.
+#    @tcpclose specifies that the section ends with a TCP close. Applies only to the very next section.
+#    @<decimal number> sets the test number and hence the test output file name. Applies to subsequent sections until changed. Don't reuse numbers.
+#    Commands must be all lower case with no white space.
+# The escape character is \ and it is used only within message sections.
+# \# and \@ are only necessary for the very first character of a message section. \r, \n, \t, \x, \X, and \\ may appear anywhere in a section.
+# \x and \X are identical and signify the beginning of an arbitrary two-digit hexadecimal escape value. Examples: 0x3A, 0X27, 0xeE. Case a-f or A-F
+# does not matter.
+
+@1
+@response
+HTTP/1.1 200 OK\r\n\r\n
+
+@2
+@response
+HTTP/1.0 315 Redirection test with spaces\r\n\r\n
+
+@3
+@request
+MKREDIRECTREF / HTTP/2.0\r\n\r\n
+
+@4
+@request
+BIND 1234567890?abcdef HTTP/3.8\r\n\r\n
+
+@5
+@response
+HTTP/2.0 600 Bogus-status-code\r\n\r\n
+
+@6
+@response
+HTTP/1.9 26 Short?status++co\nde\r\n\r\n
+
+@7
+@response
+HTTP/1.F 502 abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghij
+klmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstu
+vwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890\r\n\r\n
+
+@8
+@request
+GET /test/hi-there.txt HTTP/1.0\r\n\r\n
+
+@9
+@request
+GET /test/hi-there.htm HTTP/1.1\r\nAccept: text/*\r\nAccept-Language: en,fr\r\n\r\n
+
+@10
+@request
+GET /test/trigger/hi-there.htm HTTP/1.1\r\nAccept: text/*\r\nAccept-Language: en,fr\r\n\r\n
+
+@11
+@request
+@tcpclose
+GET /test/trigger/hi-there.htm HTTP/1.1\r\nAccept: text/*\r\nAccept-Language: en,fr\r\n\r\n
+
+@12
+@response
+HTTP/2.0 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
+

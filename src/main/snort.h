@@ -275,16 +275,6 @@ static inline int ScAdapterInlineMode(void)
    return snort_conf->run_flags & RUN_FLAG__INLINE;
 }
 
-static inline int ScIgnoreTcpPort(uint16_t port)
-{
-    return snort_conf->ignore_ports[port] & PROTO_BIT__TCP;
-}
-
-static inline int ScIgnoreUdpPort(uint16_t port)
-{
-    return snort_conf->ignore_ports[port] & PROTO_BIT__UDP;
-}
-
 static inline long int ScMplsStackDepth(void)
 {
     return snort_conf->mpls_stack_depth;

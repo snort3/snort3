@@ -227,8 +227,6 @@ struct SnortConfig
 
     int thiszone;
 
-    uint8_t ignore_ports[UINT16_MAX];        /* config ignore_ports */
-
     RuleState *rule_state_list;
     ClassType *classifications;
     ReferenceSystemNode *references;

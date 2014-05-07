@@ -34,7 +34,7 @@
 
 #include "codecs/decode_module.h"
 #include "packet_io/sfdaq.h"
-#include "sfip/ipv6_port.h" /* #define IpAddrSet */
+#include "parser/parse_ip.h"
 #include "events/codec_events.h"
 #include "protocols/checksum.h"
 
@@ -69,7 +69,7 @@ public:
     virtual inline PROTO_ID get_proto_id() { return PROTO_TCP; };
 };
 
-static IpAddrSet *SynToMulticastDstIp = NULL;
+static sfip_var_t *SynToMulticastDstIp = NULL;
 
 } // namespace
 
@@ -279,7 +279,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             }
         }
 
-        if( IpAddrSetContains(SynToMulticastDstIp, GET_DST_ADDR(p)) )
+        if( sfvar_ip_in(SynToMulticastDstIp, GET_DST_ADDR(p)) )
         {
             codec_events::decoder_event(p, DECODE_SYN_TO_MULTICAST);
         }
@@ -339,11 +339,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         codec_events::decoder_event(p, DECODE_TCP_BAD_URP);
 
     p->proto_bits |= PROTO_BIT__TCP;
-
-    if (ScIgnoreTcpPort(p->sp) || ScIgnoreTcpPort(p->dp))
-        p->packet_flags |= PKT_IGNORE;
-    else
-        TCPMiscTests(p);
+    TCPMiscTests(p);
     
     return true;
 }
@@ -1044,7 +1040,8 @@ static inline unsigned short in_chksum_tcp6(pseudoheader6 *ph,
 
 static void tcp_codec_ginit()
 {
-    SynToMulticastDstIp = IpAddrSetParse(snort_conf, "[232.0.0.0/8,233.0.0.0/8,239.0.0.0/8]");
+    SynToMulticastDstIp = sfip_var_from_string(
+        "[232.0.0.0/8,233.0.0.0/8,239.0.0.0/8]");
 
     if( SynToMulticastDstIp == NULL )
         FatalError("Could not initialize SynToMulticastDstIp\n");
@@ -1056,7 +1053,7 @@ static void tcp_codec_ginit()
 static void tcp_codec_gterm()
 {
     if( SynToMulticastDstIp )
-        IpAddrSetDestroy(SynToMulticastDstIp);
+        sfvar_free(SynToMulticastDstIp);
 }
 
 

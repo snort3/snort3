@@ -31,7 +31,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "parser/ip_addr_set.h"
 
 #include "sflsq.h"
 #include "sfghash.h"
@@ -139,7 +138,7 @@ typedef struct {
     int      count;
     unsigned seconds;
     uint64_t filtered;
-    IpAddrSet* ip_address;
+    sfip_var_t* ip_address;
 
 } THD_NODE;
 
@@ -178,7 +177,7 @@ typedef struct _THDX_STRUCT
     int  priority;
     int  count;
     unsigned int  seconds;
-    IpAddrSet* ip_address;
+    sfip_var_t* ip_address;
 
 } THDX_STRUCT;
 
@@ -256,7 +255,7 @@ int sfthd_create_threshold(
     int          priority,
     int          count,
     int          seconds,
-    IpAddrSet*   ip_address
+    sfip_var_t*   ip_address
 );
 
 //  1: don't log due to event_filter

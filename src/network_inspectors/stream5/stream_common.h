@@ -31,7 +31,7 @@
 #include <netinet/in.h>
 
 #include "utils/bitop_funcs.h"
-#include "parser/ip_addr_set.h"
+#include "sfip/ipv6_port.h"
 #include "framework/inspector.h"
 
 #include "mempool/mempool.h"

@@ -66,7 +66,6 @@
 #include "snort_bounds.h"
 #include "generators.h"
 #include "snort.h"
-#include "parser/ip_addr_set.h"
 #include "time/packet_time.h"
 #include "decode.h"
 #include "encode.h"
@@ -4694,7 +4693,7 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
         if (p->dsize < config->max_consec_small_seg_size)
         {
             /* check ignore_ports */
-            if (!(config->small_seg_ignore[p->dp/8] & (1 << (p->dp %8))))
+            if ( !config->small_seg_ignore[p->dp] )
             {
                 rcv->small_seg_count++;
 
@@ -6807,7 +6806,7 @@ static inline uint32_t flush_pdu_ips (
 
         flush_pt = s5_paf_check(
             ssn->flow->s5_config->tcp_config->paf_config,
-	    &trk->paf_state, ssn->flow,
+	        &trk->paf_state, ssn->flow,
             seg->payload, size, total, seg->seq, srv_port, flags,
             trk->flush_mgr.flush_pt);
 

@@ -500,7 +500,7 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
     return 0;
 }
 
-static int ValidateIPList(IpAddrSet *addrset, const char *token)
+static int ValidateIPList(sfip_var_t *addrset, const char *token)
 {
     if(!addrset || !(addrset->head||addrset->neg_head))
     {

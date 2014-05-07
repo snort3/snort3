@@ -475,10 +475,6 @@ ftp_client =
 }
 
 ---------------------------------------------------------------------------
--- the following inspector configs are just prototypes
--- they are nominally validated but they are not actually loaded
----------------------------------------------------------------------------
----------------------------------------------------------------------------
 -- Target-Based stateful inspection/stream reassembly.
 ---------------------------------------------------------------------------
 
@@ -605,7 +601,6 @@ suppress =
 
 default_rules =
 [[
-#output unified2: filename snort.alert, limit 128, nostamp
 # snort-classic comments, includes, and rules with $VARIABLES
 # (rules files support the same syntax)
 
@@ -645,20 +640,46 @@ ips =
 -- prototype bindings:
 -- nets and ports move out of inspector configurations
 -- only need to specify non-default bindings
+-- when: policy_id, vlans, nets, proto, ports, roles, service
+-- use: action | file | type,name | policy_id [,service]
+-- when: days, times are tbd
 
 bindings =
 {
+    -- define / load a policy only
     {
-        when =
-        {
-            id = 'uuid', vlans = '123', nets = '1.2.3.0/24',
-            protos = 'tcp', ports = '80', role = 'any'
-        },
+        when = { policy_id = 'uuid' },
+        use = { file = 'uuid.lua' }
+    },
+    -- open source policy based on vlan
+    {
+        when = { vlans = '123' },
+        use = { file = 'vlan.lua' }
+    },
+    -- open source policy based on cidr
+    {
+        when = { nets = '1.2.3.0/24' },
+        use = { file = 'net.lua' }
+    },
+    -- targeted inspector config
+    {
+        when = { nets = '2.3.4.0/24', proto = 'tcp', ports = '80', role = 'any' },
         use = { type = 'http_inspect', name = 'hi2' }
     },
+    -- auto service id override
     {
-        when = { nets = '1.2.3.4', protos = 'tcp', ports = '80 8080' },
-        action = 'block'
+        when = { nets = '3.4.5.0/24', proto = 'tcp', ports = '80', role = 'any' },
+        use = { service = 'http' }
+    },
+    -- allow rule - replaces config ignore_ports
+    {
+        when = { nets = '4.5.6.7', proto = 'udp', ports = '53' },
+        use = { action = 'allow' }
+    },
+    -- block rule
+    {
+        when = { nets = '5.6.7.8', proto = 'tcp', ports = '8' },
+        use = { action = 'block' }
     },
 }
  

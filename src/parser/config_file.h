@@ -42,7 +42,6 @@ void ConfigDumpCharsOnly(SnortConfig*, const char*);
 void ConfigDumpPayload(SnortConfig*, const char*);
 void ConfigDumpPayloadVerbose(SnortConfig*, const char*);
 void ConfigGTPDecoding(SnortConfig*sc, const char*args);
-void ConfigIgnorePorts(SnortConfig*, const char*);
 void ConfigLogDir(SnortConfig*, const char*);
 void ConfigDaqType(SnortConfig*, const char*);
 void ConfigDaqMode(SnortConfig*, const char*);

@@ -238,15 +238,6 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 //    p->data = (uint8_t *) (raw_pkt + udp::header_len());
 //    p->dsize = uhlen - udp::header_len(); // length validated above
     p->proto_bits |= PROTO_BIT__UDP;
-
-    /*  Drop packet if we ignore this port  */
-    if (ScIgnoreUdpPort(p->sp) || ScIgnoreUdpPort(p->dp))
-    {
-        /*  Ignore all preprocessors for this packet */
-        p->packet_flags |= PKT_IGNORE;
-        return true;
-    }
-
     UDPMiscTests(p);
 
     if (teredo::is_teredo_port(p->sp) ||
