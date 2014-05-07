@@ -3,7 +3,6 @@
 
 if( STATIC_DECODERS )
     set( PLUGIN_SOURCES
-        cd_eapol.cc
         cd_erspan2.cc
         cd_erspan3.cc
         cd_ethloopback.cc
@@ -22,7 +21,6 @@ if( STATIC_DECODERS )
     endif()
 
 else()
-    add_shared_library(cd_eapol codecs cd_eapol.cc)
     add_shared_library(cd_erspan2 codecs cd_erspan2.cc)
     add_shared_library(cd_erspan3 codecs cd_erspan3.cc)
     add_shared_library(cd_ethloopback codecs cd_ethloopback.cc)

@@ -26,7 +26,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "events/codec_events.h"
+#include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
 #include "codecs/ipv6_util.h"
 #include "protocols/protocol_ids.h"

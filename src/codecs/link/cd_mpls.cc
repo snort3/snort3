@@ -27,7 +27,7 @@
 #include "network_inspectors/perf_monitor/perf.h"
 #include "snort.h"
 #include "protocols/mpls.h"
-#include "events/codec_events.h"
+#include "codecs/codec_events.h"
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/mpls.h"

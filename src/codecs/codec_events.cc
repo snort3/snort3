@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "events/codec_events.h"
+#include "codecs/codec_events.h"
 #include "time/profiler.h"
 #include "mempool/mempool.h"
 #include "events/event_queue.h"

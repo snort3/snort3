@@ -6,20 +6,6 @@ add_subdirectory(ip)
 add_subdirectory(misc)
 
 
-if (ENABLE_NON_ETHER_DECODERS)
-    set( NON_ETHER_DECODERS
-        prot_eap.h
-        prot_eap.cc
-        prot_eapol.h
-        prot_eapol.cc
-        prot_eapolkey.h
-        prot_eapolkey.cc
-        prot_ipx.h
-        prot_ipx.cc
-    )
-endif(ENABLE_NON_ETHER_DECODERS)
-
-
 add_library( codecs STATIC
     encode.h
     encode.cc
@@ -31,6 +17,8 @@ add_library( codecs STATIC
     codec_api.cc
     ipv6_util.h
     ipv6_util.cc
+    codec_events.cc
+    codec_events.h
 )
 
 

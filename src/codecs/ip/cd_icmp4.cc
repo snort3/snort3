@@ -34,7 +34,7 @@
 #include "snort.h"
 #include "codecs/decode_module.h"
 #include "protocols/icmp4.h"
-#include "events/codec_events.h"
+#include "codecs/codec_events.h"
 #include "protocols/checksum.h"
 
 

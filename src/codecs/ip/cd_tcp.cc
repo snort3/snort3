@@ -35,7 +35,7 @@
 #include "codecs/decode_module.h"
 #include "packet_io/sfdaq.h"
 #include "sfip/ipv6_port.h" /* #define IpAddrSet */
-#include "events/codec_events.h"
+#include "codecs/codec_events.h"
 #include "protocols/checksum.h"
 
 #include "snort.h"
