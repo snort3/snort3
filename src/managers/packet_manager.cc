@@ -67,13 +67,13 @@ static std::list<const CodecApi*> s_codecs;
 
 // when initialization arrays, although the zero is not required
 // the compiler complains about a missing-field-initiliezers
-static std::array<uint8_t, max_protocol_id> s_proto_map{0};
-static std::array<Codec*, 256> s_protocols{0};
+static std::array<uint8_t, max_protocol_id> s_proto_map{{0}};
+static std::array<Codec*, 256> s_protocols{{0}};
 static THREAD_LOCAL uint8_t grinder = 0;
 
 // statistics information
-static THREAD_LOCAL std::array<PegCount, 256 + gen_peg_size> s_stats{0};
-static std::array<PegCount, 256 + gen_peg_size> g_stats{0};
+static THREAD_LOCAL std::array<PegCount, 256 + gen_peg_size> s_stats{{0}};
+static std::array<PegCount, 256 + gen_peg_size> g_stats{{0}};
 static THREAD_LOCAL CdGenPegs pkt_cnt;
 
 //-------------------------------------------------------------------------

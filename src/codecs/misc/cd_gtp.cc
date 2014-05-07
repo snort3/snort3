@@ -153,7 +153,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             {
                 uint16_t ext_hdr_len;
                 /*check length before reading data*/
-                if (len < lyr_len + 4)
+                if (len < (uint32_t)(lyr_len + 4))
                 {
                     codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                     return false;
