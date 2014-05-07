@@ -25,6 +25,18 @@
 #include <cstdint>
 #include "sfip/sfip_t.h"
 
+#ifndef WIN32
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#else /* !WIN32 */
+#include <netinet/in_systm.h>
+#ifndef IFNAMSIZ
+#define IFNAMESIZ MAX_ADAPTER_NAME
+#endif /* !IFNAMSIZ */
+#endif /* !WIN32 */
+
+
 namespace ipv6
 {
 
@@ -35,6 +47,7 @@ const uint16_t ETHERNET_TYPE_IPV6 = 0x86dd;
 const uint16_t IPV6_PROT_ID = 41;
 const uint8_t IP6_HEADER_LEN = 40;
 const uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
+const uint32_t MIN_EXT_LEN = 8;
 } // namespace
 
 
@@ -65,22 +78,6 @@ struct in6_addr
 #define IPRAW_HDR_VER(p_rawiph) \
    (ntohl(p_rawiph->ip6_vtf) >> 28)
 
-#if 0
-// defined in dnet.h and currently unused.
-
-#ifndef IP_PROTO_HOPOPTS
-# define IP_PROTO_HOPOPTS    0
-#endif
-
-#define IP_PROTO_NONE       59
-#define IP_PROTO_ROUTING    43
-#define IP_PROTO_FRAGMENT   44
-#define IP_PROTO_AH         51
-#define IP_PROTO_DSTOPTS    60
-#define IP_PROTO_ICMPV6     58
-#define IP_PROTO_IPV6       41
-#define IP_PROTO_IPIP       4
-#endif
 
 #define IP6F_OFFSET_MASK    0xfff8  /* mask out offset from _offlg */
 #define IP6F_MF_MASK        0x0001  /* more-fragments flag */
@@ -105,41 +102,6 @@ struct IP6Extension
     uint8_t ip6e_pad[6];
 } ;
 
-struct IP6HopByHop
-{
-    uint8_t ip6hbh_nxt;
-    uint8_t ip6hbh_len;
-    /* options follow */
-    uint8_t ip6hbh_pad[6];
-};
-
-struct IP6Dest
-{
-    uint8_t ip6dest_nxt;
-    uint8_t ip6dest_len;
-    /* options follow */
-    uint8_t ip6dest_pad[6];
-} ;
-
-struct IP6Route
-{
-    uint8_t ip6rte_nxt;
-    uint8_t ip6rte_len;
-    uint8_t ip6rte_type;
-    uint8_t ip6rte_seg_left;
-    /* type specific data follows */
-} ;
-
-struct IP6Route0
-{
-    uint8_t ip6rte0_nxt;
-    uint8_t ip6rte0_len;
-    uint8_t ip6rte0_type;
-    uint8_t ip6rte0_seg_left;
-    uint8_t ip6rte0_reserved;
-    uint8_t ip6rte0_bitmap[3];
-    struct in6_addr ip6rte0_addr[1];  /* Up to 23 IP6 addresses */
-} ;
 
 /* Fragment header */
 struct IP6Frag
@@ -256,6 +218,10 @@ inline bool is_ip6_hdr_ver(IP6RawHdr *hdr)
     return ((ntohl(hdr->ip6_vtf) >> 28) == 6);
 }
 
+inline size_t min_ext_len()
+{
+    return detail::MIN_EXT_LEN;
+}
 
 } // namespace
 
@@ -266,10 +232,7 @@ inline bool is_ip6_hdr_ver(IP6RawHdr *hdr)
 // TODO --> delete EVERYTHING below this line!
 typedef ipv6::IP6Hdr IP6Hdr;
 typedef ipv6::IP6Option IP6Option;
-typedef ipv6::IP6Frag IP6Frag;
-typedef ipv6::IP6Route IP6Route;
-typedef ipv6::IP6HopByHop IP6HopByHop;
-typedef ipv6::IP6Dest IP6Dest;
 typedef ipv6::IP6Extension IP6Extension;
+typedef ipv6::IP6Frag IP6Frag;
 
 #endif

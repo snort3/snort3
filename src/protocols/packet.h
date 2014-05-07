@@ -456,6 +456,33 @@ typedef struct _WifiHdr
   uint16_t seq_control;
   uint8_t  addr4[6];
 } WifiHdr;
+
+
+struct EtherEapol
+{
+    uint8_t  version;  /* EAPOL proto version */
+    uint8_t  eaptype;  /* EAPOL Packet type */
+    uint16_t len;  /* Packet body length */
+};
+
+struct EAPHdr
+{
+    uint8_t code;
+    uint8_t id;
+    uint16_t len;
+};
+
+struct EapolKey
+{
+  uint8_t type;
+  uint8_t length[2];
+  uint8_t counter[8];
+  uint8_t iv[16];
+  uint8_t index;
+  uint8_t sig[16];
+};
+
+
 #endif  // NO_NON_ETHER_DECODER
 
 
@@ -478,9 +505,6 @@ typedef struct _WifiHdr
 
 #define NUM_IP_PROTOS 256
 
-/* Last updated 6/2/2010.
-   Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
-#define MIN_UNASSIGNED_IP_PROTO 143
 
 #ifndef IPPROTO_IP_MOBILITY
 #define IPPROTO_IP_MOBILITY     55
@@ -493,8 +517,8 @@ typedef struct _WifiHdr
 #endif
 
 #define IP_OPTMAX               40
-#define IP6_EXTMAX               8
 #define TCP_OPTLENMAX           40 /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
+const uint32_t IP6_EXTMAX = 8;
 
 
 
@@ -551,32 +575,6 @@ typedef struct _TCPHdr
 #endif
 
 
-
-#ifndef NO_NON_ETHER_DECODER
-typedef struct _EtherEapol
-{
-    uint8_t  version;  /* EAPOL proto version */
-    uint8_t  eaptype;  /* EAPOL Packet type */
-    uint16_t len;  /* Packet body length */
-}         EtherEapol;
-
-typedef struct _EAPHdr
-{
-    uint8_t code;
-    uint8_t id;
-    uint16_t len;
-}         EAPHdr;
-
-typedef struct _EapolKey
-{
-  uint8_t type;
-  uint8_t length[2];
-  uint8_t counter[8];
-  uint8_t iv[16];
-  uint8_t index;
-  uint8_t sig[16];
-}       EapolKey;
-#endif  // NO_NON_ETHER_DECODER
 
 typedef struct _Options
 {

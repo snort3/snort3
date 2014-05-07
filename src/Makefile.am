@@ -25,7 +25,11 @@ main/libmain.a \
 parser/libparser.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
-codecs/basic/libbasic_codecs.a \
+codecs/ip/libip_codecs.a \
+codecs/link/liblink_codecs.a \
+codecs/misc/libmisc_codecs.a \
+codecs/root/libroot_codecs.a \
+codecs/libcodec_utils.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/defrag/libdefrag.a \
 network_inspectors/normalize/libnormalize.a \

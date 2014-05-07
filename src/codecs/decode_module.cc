@@ -236,6 +236,8 @@ static const RuleMap decode_rules[] =
     { DECODE_BAD_MPLS_LABEL3, "(decode) MPLS Label 3 Appears in Header" },
     { DECODE_MPLS_RESERVED_LABEL, "(decode) MPLS Label 4, 5,.. or 15 Appears in Header" },
     { DECODE_MPLS_LABEL_STACK, "(decode) Too Many MPLS headers" },
+    { DECODE_AUTH_HDR_TRUNC, "(decode) Truncated authentication header"},
+    { DECODE_AUTH_HDR_BAD_LEN, "(decode) Bad authentication header length"},
 
     { 0, nullptr }
 };

@@ -26,7 +26,7 @@
 
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
-#include "events/codec_events.h"
+#include "codecs/codec_events.h"
 
 
 namespace
@@ -39,25 +39,25 @@ public:
     ~NameCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
-    
+
 };
 
 
 } // namespace
 
 
-bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 
 }
 
-void NameCodec::get_data_link_type(std::vector<int>&)
+void NameCodec::get_data_link_type(std::vector<int>&v)
 {
 //    v.push_back(DLT_ID);
 }
@@ -87,10 +87,10 @@ static void dtor(Codec *cd)
 static const char* name = "name";
 static const CodecApi name_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,
@@ -104,4 +104,12 @@ static const CodecApi name_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &name_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_name = &name_api.base;
+#endif

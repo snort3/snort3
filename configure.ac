@@ -281,6 +281,17 @@ if test "x$static_search_engines" = "xyes"; then
                                       binary])
 fi
 
+AC_ARG_ENABLE(static-decoders,
+    [  --disable-static-decoders    do not include decoders binary ],
+       static_decoders="$enableval", static_decoders="yes")
+
+AM_CONDITIONAL(STATIC_DECODERS, [test "x$static_decoders" = "xyes"])
+
+if test "x$static_decoders" = "xyes"; then
+    AC_DEFINE(STATIC_DECODERS, [1], [include internal decoders in
+                                      binary])
+fi
+
 AC_ARG_ENABLE(side_channel,
 [  --enable-side-channel    Enable the side channel (Linux only)],
        enable_side_channel="$enableval", enable_side_channel="no")
@@ -439,6 +450,8 @@ if test "x$enable_non_ether_decoders" = "xno"; then
     CPPFLAGS="$CPPFLAGS -DNO_NON_ETHER_DECODER"
     AC_DEFINE(NO_NON_ETHER_DECODER, [1], [do not build non-ethernet decoders])
 fi
+  
+AM_CONDITIONAL(ENABLE_NON_ETHER_DECODER, test "x$enable_non_ether_decoders" = "xyes")
 
 AC_ARG_ENABLE(intel_soft_cpm,
 [  --enable-intel-soft-cpm  Enable Intel Soft CPM support],
@@ -863,7 +876,10 @@ Makefile \
 src/Makefile \
 src/actions/Makefile \
 src/codecs/Makefile \
-src/codecs/basic/Makefile \
+src/codecs/root/Makefile \
+src/codecs/link/Makefile \
+src/codecs/ip/Makefile \
+src/codecs/misc/Makefile \
 src/control/Makefile \
 src/detection/Makefile \
 src/events/Makefile \

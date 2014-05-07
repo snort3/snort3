@@ -30,27 +30,30 @@
 namespace checksum
 {
 
-static inline void add_ipv4_pseudoheader(const uint16_t *h, 
-                                    uint32_t &cksum1, 
-                                    uint32_t &cksum2)
+static inline uint32_t add_ipv4_pseudoheader(const uint16_t *h)
 {
+    uint32_t cksum1;
+
     /* ipv4 pseudo header must have 12 bytes */
     cksum1  = h[0];
-    cksum2 += h[1];
+    cksum1 = h[1];
     cksum1 += h[2];
-    cksum2 += h[3];
+    cksum1 += h[3];
     cksum1 += h[4];
-    cksum2 += h[5];
+    cksum1 += h[5];
+
+    return cksum1;
 }
 
 
-static inline void add_ipv6_pseudoheader(const uint16_t *h, 
-                                    uint32_t &cksum1, 
-                                    uint32_t &cksum2)
+static inline uint32_t add_ipv6_pseudoheader(const uint16_t *h)
 {
+    uint32_t cksum1;
+    uint32_t cksum2;
+
    /* PseudoHeader must have 36 bytes */
-   cksum1 += h[0];
-   cksum2 += h[1];
+   cksum1 = h[0];
+   cksum2 = h[1];
    cksum1 += h[2];
    cksum2 += h[3];
    cksum1 += h[4];
@@ -67,96 +70,97 @@ static inline void add_ipv6_pseudoheader(const uint16_t *h,
    cksum2 += h[15];
    cksum1 += h[16];
    cksum2 += h[17];
+
+   return cksum1 + cksum2;
 }
 
 
-static inline void add_tcp_header(const uint16_t* &d,
-                                    size_t &len,
-                                    uint32_t &cksum1, 
-                                    uint32_t &cksum2)
+static inline uint32_t add_tcp_header(const uint16_t* &d,
+                                    size_t &len)
 {
+    uint32_t cksum1;
+    uint32_t cksum2;
 
     /* TCP hdr must have 20 hdr bytes */
-    cksum1 += d[9];
-    cksum2 += d[8];
-    cksum1 += d[7];
-    cksum2 += d[6];
-    cksum1 += d[5];
-    cksum2 += d[4];
-    cksum1 += d[3];
-    cksum2 += d[2];
-    cksum1 += d[1];
-    cksum2 += d[0];
+    cksum1 = d[0];
+    cksum2 = d[1];
+    cksum1 += d[2];
+    cksum2 += d[3];
+    cksum1 += d[4];
+    cksum2 += d[5];
+    cksum1 += d[6];
+    cksum2 += d[7];
+    cksum1 += d[8];
+    cksum2 += d[9];
     d += 10;
     len -= 20;
+
+    return cksum1 + cksum2;
 }
 
-static inline void add_udp_header(const uint16_t* &d,
-                                    size_t &len,    
-                                    uint32_t &cksum1, 
-                                    uint32_t &cksum2)
+static inline uint32_t add_udp_header(const uint16_t* &d,
+                                    size_t &len)
 {
+    uint32_t cksum1;
+
    /* UDP must have 8 hdr bytes */
-   cksum1 += d[0];
-   cksum2 += d[1];
+   cksum1 = d[0];
+   cksum1 += d[1];
    cksum1 += d[2];
-   cksum2 += d[3];
+   cksum1 += d[3];
    len -= 8;
    d += 4;
+
+   return cksum1;
 }
 
  
 uint16_t icmp_cksum(const uint16_t *buf, size_t len, Pseudoheader6* ph)
 {
-    uint32_t cksum1 = 0;
-    uint32_t cksum2 = 0;
+    uint32_t cksum;
 
 
-    add_ipv6_pseudoheader((uint16_t *)ph, cksum1, cksum2);
-    return cksum_add(buf, len, cksum1 + cksum2);
+    cksum = add_ipv6_pseudoheader((uint16_t *)ph);
+    return cksum_add(buf, len, cksum);
 }
 
 uint16_t tcp_cksum(const uint16_t *h, size_t len, Pseudoheader *ph )
 {
-    uint32_t cksum1 = 0;
-    uint32_t cksum2 = 0;
+    uint32_t cksum;
 
-    add_ipv4_pseudoheader((uint16_t *)ph, cksum1, cksum2);
-    add_tcp_header(h, len, cksum1, cksum2);
-    return cksum_add(h, len, cksum1 + cksum2);
+    cksum = add_ipv4_pseudoheader((uint16_t *)ph);
+    cksum += add_tcp_header(h, len);
+    return cksum_add(h, len, cksum);
 }
 
 
 uint16_t tcp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph )
 {
-    uint32_t cksum1 = 0;
-    uint32_t cksum2 = 0;
+    uint32_t cksum;
 
-    add_ipv6_pseudoheader((uint16_t *)ph, cksum1, cksum2);
-    add_tcp_header(buf, len, cksum1, cksum2);
-    return cksum_add(buf, len, cksum1 + cksum2);
+    cksum = add_ipv6_pseudoheader((uint16_t *)ph);
+    cksum += add_tcp_header(buf, len);
+    return cksum_add(buf, len, cksum);
 }
 
 
 uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader *ph )
 {
-    uint32_t cksum1 = 0;
-    uint32_t cksum2 = 0;
+    uint32_t cksum;
 
-    add_ipv4_pseudoheader((uint16_t *)ph, cksum1, cksum2);
-    add_udp_header(buf, len, cksum1, cksum2);
-    return cksum_add(buf, len, cksum1 + cksum2); 
+    cksum = add_ipv4_pseudoheader((uint16_t *)ph);
+    cksum += add_udp_header(buf, len);
+    return cksum_add(buf, len, cksum);
 }
 
 
 uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph )
 {
-    uint32_t cksum1 = 0;
-    uint32_t cksum2 = 0;
+    uint32_t cksum;
 
-    add_ipv6_pseudoheader((uint16_t *)ph, cksum1, cksum2);
-    add_udp_header(buf, len, cksum1, cksum2);
-    return cksum_add(buf, len, cksum1 + cksum2);
+    cksum = add_ipv6_pseudoheader((uint16_t *)ph);
+    cksum += add_udp_header(buf, len);
+    return cksum_add(buf, len, cksum);
 }
 
 
@@ -183,61 +187,61 @@ uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum1)
         case 15:
             cksum2 += sp[14];
         case 14:
-            cksum1 += sp[13];
+            cksum3 += sp[13];
         case 13:
-            cksum2 += sp[12];
+            cksum4 += sp[12];
         case 12:
             cksum1 += sp[11];
         case 11:
             cksum2 += sp[10];
         case 10:
-            cksum1 += sp[9];
+            cksum3 += sp[9];
         case 9:
-            cksum2 += sp[8];
+            cksum4 += sp[8];
         case 8:
             cksum1  += sp[7];
         case 7:
             cksum2 += sp[6];
         case 6:
-            cksum1 += sp[5];
+            cksum3 += sp[5];
         case 5:
-            cksum2 += sp[4];
+            cksum4 += sp[4];
         case 4:
             cksum1 += sp[3];
         case 3:
             cksum2 += sp[2];
         case 2:
-            cksum1 += sp[1];
+            cksum3 += sp[1];
         case 1:
-            cksum2 += sp[0];
+            cksum4 += sp[0];
         }
         sp += sn;
 
 
         /* XXX - unroll loop using Duff's device. */
         while (--n > 0) {
-            cksum1 += sp[15];
-            cksum2 += sp[14];
-            cksum1 += sp[13];
-            cksum2 += sp[12];
-            cksum1 += sp[11];
-            cksum2 += sp[10];
-            cksum1 += sp[9];
-            cksum2 += sp[8];
-            cksum1 += sp[7];
-            cksum2 += sp[6];
-            cksum1 += sp[5];
-            cksum2 += sp[4];
-            cksum1 += sp[3];
-            cksum2 += sp[2];
-            cksum1 += sp[1];
-            cksum2 += sp[0];
+            cksum1 += sp[0];
+            cksum2 += sp[1];
+            cksum3 += sp[2];
+            cksum4 += sp[3];
+            cksum1 += sp[4];
+            cksum2 += sp[5];
+            cksum3 += sp[6];
+            cksum4 += sp[7];
+            cksum1 += sp[8];
+            cksum2 += sp[9];
+            cksum3 += sp[10];
+            cksum4 += sp[11];
+            cksum1 += sp[12];
+            cksum2 += sp[13];
+            cksum3 += sp[14];
+            cksum4 += sp[15];
             sp += 16;
         };
 
         cksum1 += cksum2;
+        cksum3 += cksum4;
         cksum1 += cksum3;
-        cksum1 += cksum4;
     }
     
     if (len & 1)

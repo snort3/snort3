@@ -98,9 +98,6 @@ struct ppp_header {
     #define PPP_MTU                 1500
 #endif
 
-/* NULL aka LoopBack interfaces */
-#define NULL_HDRLEN             4
-
 /* enc interface */
 struct enc_header {
     uint32_t af;

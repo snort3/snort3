@@ -1,21 +1,9 @@
 
 
-add_subdirectory(basic)
-add_subdirectory(plugins)
-
-
-if (ENABLE_NON_ETHER_DECODERS)
-    set( NON_ETHER_DECODERS
-        prot_eap.h
-        prot_eap.cc
-        prot_eapol.h
-        prot_eapol.cc
-        prot_eapolkey.h
-        prot_eapolkey.cc
-        prot_ipx.h
-        prot_ipx.cc
-    )
-endif(ENABLE_NON_ETHER_DECODERS)
+add_subdirectory(root)
+add_subdirectory(link)
+add_subdirectory(ip)
+add_subdirectory(misc)
 
 
 add_library( codecs STATIC
@@ -27,12 +15,18 @@ add_library( codecs STATIC
     decode_module.cc
     codec_api.h
     codec_api.cc
+    ipv6_util.h
+    ipv6_util.cc
+    codec_events.cc
+    codec_events.h
 )
 
 
 target_link_libraries( codecs
-    basic_codecs
-    codec_plugins
+    root_codecs
+    link_codecs
+    ip_codecs
+    misc_codecs
     protocols
     sfip
     framework
