@@ -21,7 +21,7 @@
 
 
 
-#include "protocols/checksum.h"
+#include "codecs/checksum.h"
 
 /************************************************************
  ***********  Checksum information  *************************
