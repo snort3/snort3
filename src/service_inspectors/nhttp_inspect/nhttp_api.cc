@@ -89,11 +89,6 @@ void NHttpApi::nhttp_pterm()
     delete NHttpInspect::msgHead;
 }
 
-void NHttpApi::nhttp_purge()
-{
-    printf("nhttp_purge()\n");
-}
-
 void NHttpApi::nhttp_sum()
 {
     printf("nhttp_sum()\n");
@@ -119,7 +114,7 @@ const InspectApi NHttpApi::nhttp_api =
         NHttpApi::nhttp_mod_ctor,
         NHttpApi::nhttp_mod_dtor
     },
-    PRIORITY_APPLICATION,
+    IT_SERVICE,
     PROTO_BIT__TCP,
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,
@@ -127,7 +122,7 @@ const InspectApi NHttpApi::nhttp_api =
     NHttpApi::nhttp_dtor,
     NHttpApi::nhttp_pinit,
     NHttpApi::nhttp_pterm,
-    NHttpApi::nhttp_purge,
+    nullptr, // ssn
     NHttpApi::nhttp_sum,
     NHttpApi::nhttp_stats,
     NHttpApi::nhttp_reset

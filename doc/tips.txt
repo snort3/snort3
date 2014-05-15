@@ -44,6 +44,18 @@ The following pointers will help you get started:
     git push <name>
     git push <username>@<host>:Snort++
 
+* create a branch and switch to it:
+
+    git branch -a brname
+    git checkout brname
+
+* commit branch and then merge branch into head:
+
+    git add -u
+    git commit -m 'why'
+    git checkout master
+    git merge brname
+
 === Building
 
 * you need luajit from luajit.org; build from source.
