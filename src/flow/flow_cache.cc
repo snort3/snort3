@@ -28,8 +28,7 @@
 #include "packet_io/active.h"
 #include "packet_time.h"
 #include "ips_options/ips_flowbits.h"
-#include "stream5/stream_common.h"
-#include "stream5/stream_ha.h"
+#include "stream/stream.h"
 #include "zhash.h"
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
@@ -96,7 +95,7 @@ int FlowCache::get_count()
     return hash_table ? hash_table->get_count() : 0;
 }
 
-Flow* FlowCache::get(const FlowKey *key)
+Flow* FlowCache::find(const FlowKey *key)
 {
     Flow* flow = (Flow*)hash_table->find(key);
 
@@ -136,47 +135,36 @@ void FlowCache::unlink_uni (Flow* flow)
     flow->next = flow->prev = nullptr;
 }
 
-Flow* FlowCache::get(Stream5Config* s5, const FlowKey* key, bool& init)
+Flow* FlowCache::get(const FlowKey* key)
 {
     time_t timestamp = packet_time();
-    Flow* flow = (Flow*)hash_table->get(key, init);
+    Flow* flow = (Flow*)hash_table->get(key);
 
     if ( !flow )
     {
-        if ( !init )
-            return NULL;
-
-        if ( !prune_stale(timestamp, NULL) )
+        if ( !prune_stale(timestamp, nullptr) )
+        {
             if ( !prune_unis() )
-                prune_excess(false, NULL);
+                prune_excess(false, nullptr);
+        }
+        flow = (Flow*)hash_table->get(key);
 
-        flow = (Flow*)hash_table->get(key, init);
         assert(flow);
-    }
-    if (flow && init)
-    {
         flow->reset();
-        flow->s5_config = s5;
-        s5->handler->add_ref();
         link_uni(flow);
-        flow->last_data_seen = timestamp;
-#ifdef HA_ENABLE
-        ha_reset(flow);
-#endif
     }
+    flow->last_data_seen = timestamp;
 
     return flow;
 }
 
 int FlowCache::release(Flow* flow, const char*)
 {
-    if (!(flags & SESSION_CACHE_FLAG_PURGING))
-    {
-        ha_notify_deletion(flow);
-    }
     flow->reset();
     flow->free_application_data();
-    flow->s5_config->handler->rem_ref();
+    flow->client->rem_ref();
+    flow->server->rem_ref();
+    flow->client = flow->server = nullptr;
 
     return remove(flow);
 }
@@ -315,9 +303,6 @@ void FlowCache::timeout(uint32_t flowCount, time_t cur_time)
            break;
 
         flowExaminedCount++;
-
-        if ( ha_is_standby(flow) )
-            continue;
 
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM, "retiring stale flow\n"););
         flow->s5_state.session_flags |= SSNFLAG_TIMEDOUT;

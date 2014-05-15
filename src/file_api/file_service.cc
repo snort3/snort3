@@ -40,7 +40,7 @@
 #include "libs/file_config.h"
 #include "file_mime_config.h"
 
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "mstring.h"
 #include "detect.h"
 #include "fpdetect.h"

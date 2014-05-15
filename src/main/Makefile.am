@@ -23,6 +23,7 @@ snort.cc \
 snort.h \
 snort_config.cc \
 snort_config.h \
-snort_debug.cc
+snort_debug.cc \
+thread.cc
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

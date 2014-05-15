@@ -34,6 +34,7 @@
 // possibly due to dynamic initialization requirements 
 //#define THREAD_LOCAL thread_local
 
+void set_instance_id(unsigned);
 unsigned get_instance_id();
 unsigned get_instance_max();
 const char* get_instance_file(std::string&, const char* name);

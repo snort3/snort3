@@ -305,19 +305,13 @@ void* ZHash::pop()
     return pv;
 }
 
-void* ZHash::get(const void* key, bool& init)
+void* ZHash::get(const void* key)
 {
     int index;
     ZHashNode* node = find_node_row(key, &index);
 
     if ( node )
-    {
-        init = false;
         return node->data;
-    }
-
-    if ( !init )
-        return nullptr;
 
     node = get_free_node();
 

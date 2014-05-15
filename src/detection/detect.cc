@@ -51,7 +51,7 @@
 #include "event_queue.h"
 #include "obfuscation.h"
 #include "profiler.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "packet_io/active.h"
 #include "signature.h"
 #include "ipv6_port.h"
@@ -86,7 +86,9 @@ static THREAD_LOCAL char check_tags_flag;
 
 static int CheckTagging(Packet*);
 
-void Inspect(Packet* p)
+void snort_ignore(Packet*) { }
+
+void snort_inspect(Packet* p)
 {
 #ifdef PPM_MGR
     uint64_t pktcnt=0;
@@ -125,7 +127,7 @@ void Inspect(Packet* p)
         /* Not a completely ideal place for this since any entries added on
          * the packet callback trail will get obliterated - right now there
          * isn't anything adding entries there.  Really need it here for
-         * stream5 clean exit, since all of the flushed, reassembled
+         * stream clean exit, since all of the flushed, reassembled
          * packets are going to be injected directly into this function and
          * there may be enough that the obfuscation entry table will
          * overflow if we don't reset it.  Putting it here does have the
@@ -192,7 +194,7 @@ void Inspect(Packet* p)
 #endif
 }
 
-void LogPacket(Packet *p)
+void snort_log(Packet *p)
 {
     pc.log_pkts++;
     EventManager::call_loggers(NULL, p, NULL, NULL);

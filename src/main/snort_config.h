@@ -163,6 +163,8 @@ struct SnortConfig
     //------------------------------------------------------
     // active stuff
     uint8_t respond_attempts;    /* config respond */
+    uint8_t max_responses;
+    uint8_t min_interval;
     char* respond_device;
     uint8_t *eth_dst;        /* config destination MAC address */
 
@@ -191,8 +193,6 @@ struct SnortConfig
     FastPatternConfig *fast_pattern_config;
     EventQueueConfig *event_queue_config;
     void *file_config;
-
-    uint32_t paf_max;
 
     /* XXX XXX policy specific? */
     ThresholdConfig *threshold_config;
@@ -314,9 +314,6 @@ SnortConfig* SnortConfNew(void);
 void SnortConfFree(SnortConfig*);
 SnortConfig * MergeSnortConfs(SnortConfig* cmd_line, SnortConfig* config_file);
 int VerifyReload(SnortConfig*);
-
-void SetPortFilterLists(SnortConfig*);
-void InitServiceFilterStatus(SnortConfig*);
 
 #endif
 

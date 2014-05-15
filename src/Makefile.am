@@ -26,12 +26,15 @@ parser/libparser.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
 codecs/basic/libbasic_codecs.a \
+stream/libstream.a \
+stream/base/libstream_base.a \
+stream/ip/libstream_ip.a \
+stream/icmp/libstream_icmp.a \
+stream/tcp/libstream_tcp.a \
+stream/udp/libstream_udp.a \
 network_inspectors/libnetwork_inspectors.a \
-network_inspectors/defrag/libdefrag.a \
 network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
-network_inspectors/stream5/libstream.a \
-network_inspectors/stream5/libstream_api.a \
 service_inspectors/libservice_inspectors.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
 file_api/libfile_api.a \
@@ -83,6 +86,7 @@ search_engines \
 service_inspectors \
 sfip \
 sfrt \
+stream \
 target_based \
 time \
 utils

@@ -23,12 +23,12 @@
 
 #include "snort_types.h"
 #include "framework/base_api.h"
+#include "framework/inspector.h"
 
 struct Packet;
 struct FrameworkPolicy;
 struct SnortConfig;
 struct InspectionPolicy;
-struct InspectApi;
 
 //-------------------------------------------------------------------------
 
@@ -48,14 +48,14 @@ public:
     static void dump_stats(SnortConfig*);
     static void accumulate(SnortConfig*);
     static void reset_stats(SnortConfig*);
-    static void reset(SnortConfig*);
 
     static void instantiate(const InspectApi*, Module*, SnortConfig*);
+    static Inspector* get_inspector(const char* key, InspectSsnFunc&);
 
     static bool configure(SnortConfig*);
     static void print_config(SnortConfig*);
 
-    static void thread_init(SnortConfig*, unsigned);
+    static void thread_init(SnortConfig*);
     static void thread_term(SnortConfig*);
 
     static void release_policy(FrameworkPolicy*);

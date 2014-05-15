@@ -43,7 +43,7 @@
 #include "ftpp_si.h"
 #include "pp_telnet.h"
 #include "pp_ftp.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "profiler.h"
 #include "detection_util.h"
 #include "parser.h"

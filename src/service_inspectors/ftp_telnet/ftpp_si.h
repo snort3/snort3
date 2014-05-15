@@ -46,7 +46,7 @@
 #include "ftp_server.h"
 #include "decode.h"
 #include "file_api/file_api.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "flow/flow.h"
 
 /*

@@ -28,8 +28,7 @@
 #include "hash/sfghash.h"
 #include "util.h"
 #include "snort_debug.h"
-#include "stream5/stream_api.h"
-#include "defrag/defrag.h"
+#include "stream/stream_api.h"
 #include "sftarget_reader.h"
 #include "sftarget_hostentry.h"
 
@@ -195,16 +194,6 @@ int16_t GetProtocolReference(Packet *p)
         {
             /* Use session information via Stream API */
             protocol = stream.get_application_protocol_id(p->flow);
-            if (protocol != 0)
-            {
-                break;
-            }
-        }
-
-        if (p->fragtracker)
-        {
-            protocol = fragGetApplicationProtocolId(p);
-            /* Use information from frag tracker */
             if (protocol != 0)
             {
                 break;

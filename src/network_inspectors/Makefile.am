@@ -10,19 +10,15 @@ network_inspectors.h
 # FIXIT LIBADD here causes undefineds
 #libnetwork_inspectors_a_LIBADD = \
 #arp_spoof/libarp_spoof.a \
-#defrag/libdefrag.a \
 #normalize/libnormalize.a \
 #perf_monitor/libperf_monitor.a \
-#port_scan/libport_scan.a \
-#stream5/libstream5.a
+#port_scan/libport_scan.a
 
 SUBDIRS = \
 arp_spoof \
-defrag \
 normalize \
 perf_monitor \
-port_scan \
-stream5
+port_scan
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

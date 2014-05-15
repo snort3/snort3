@@ -329,7 +329,7 @@ static const InspectApi as_api =
         mod_ctor,
         mod_dtor
     },
-    PRIORITY_NETWORK, 
+    IT_PROTOCOL, 
     PROTO_BIT__ARP,
     as_init,
     nullptr, // term
@@ -337,7 +337,7 @@ static const InspectApi as_api =
     as_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     as_sum,
     as_stats,
     as_reset

@@ -57,6 +57,7 @@
 #include "main/analyzer.h"
 #include "decode.h"
 #include "encode.h"
+#include "event.h"
 #include "event_wrapper.h"
 #include "util.h"
 #include "ipobj.h"
@@ -69,6 +70,7 @@
 #include "framework/share.h"
 #include "framework/plug_data.h"
 #include "profiler.h"
+#include "detection/detect.h"
 
 #define DELIMITERS " \t\n"
 #define TOKEN_ARG_BEGIN "{"
@@ -116,9 +118,8 @@ static SimpleStats gspstats;
 */
 static int MakeProtoInfo(PS_PROTO *proto, u_char *buffer, u_int *total_size)
 {
-    int             dsize;
-    sfip_t          *ip1, *ip2;
-
+    int dsize;
+    sfip_t *ip1, *ip2;
 
     if(!total_size || !buffer)
         return -1;
@@ -1031,7 +1032,7 @@ static const InspectApi sp_api =
         mod_ctor,
         mod_dtor
     },
-    PRIORITY_SCANNER,
+    IT_PROTOCOL,
     PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT dynamic assign
     sp_init,
     nullptr, // term
@@ -1039,7 +1040,7 @@ static const InspectApi sp_api =
     sp_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     sp_sum,
     sp_stats,
     sp_reset

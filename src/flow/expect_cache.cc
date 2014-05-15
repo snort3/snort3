@@ -23,8 +23,7 @@
 #include <assert.h>
 
 #include "time/packet_time.h"
-#include "stream5/stream_ha.h"  // FIXIT bad dependency; externalize call to ha_modify()
-#include "stream5/stream_api.h"  // FIXIT bad dependency
+#include "stream/stream_api.h"  // FIXIT bad dependency
 #include "zhash.h"
 
 /* Reasonably small, and prime */
@@ -189,13 +188,16 @@ inline ExpectNode* ExpectCache::get_node(ExpectKey& key, bool& init)
     if ( !list )
         node = nullptr;
     else
-        node = (ExpectNode*)hash_table->get(&key, init);
+        node = (ExpectNode*)hash_table->get(&key);
 
-    if ( !node )
+    if ( node )
+        init = false;
+
+    else
     {
         prune();
 
-        node = (ExpectNode*)hash_table->get(&key, init);
+        node = (ExpectNode*)hash_table->get(&key);
 
         if ( !node )
         {
@@ -478,7 +480,6 @@ char ExpectCache::process_expected(Packet*, Flow* lws)
     else if ( lws->s5_state.application_protocol != node->appId )
     {
         lws->s5_state.application_protocol = node->appId;
-        ha_modify(lws);
     }
 
     if ( !node->count )

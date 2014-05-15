@@ -29,10 +29,8 @@
 #include "snort_types.h"
 #include "detection/treenodes.h"
 #include "events/event_queue.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "port_scan/ps_detect.h"  // FIXIT for PS_PROTO_*
-#include "stream5/stream_tcp.h"
-#include "stream5/stream_udp.h"
 #include "utils/strvec.h"
 #include "file_api/file_service.h"
 #include "target_based/sftarget_reader.h"
@@ -43,8 +41,6 @@
 #include "filters/rate_filter.h"
 #include "managers/mpse_manager.h"
 #include "managers/inspector_manager.h"
-
-#define DEFAULT_PAF_MAX 16384
 
 //-------------------------------------------------------------------------
 // private implementation
@@ -1119,85 +1115,5 @@ int VerifyReload(SnortConfig *sc)
 #endif
 
     return 0;
-}
-
-void SetPortFilterLists(SnortConfig*)
-{
-#if 0
-    // FIXIT this doesn't look correct; in any case it depends on bindings
-    // because port filter lists are being pulled from s5
-    // iterate over all rules and call into s5 to update port filter list
-    for (unsigned pid = 0; pid < sc->num_policies_allocated; pid++)
-    {
-        SnortPolicy* sp = sc->targeted_policies[pid];
-
-        if ( !sp )
-            continue;
-
-        setCurrentPolicy(sc, pid);
-        int ignore_any;
-        uint16_t* portList;
-
-        /* Post-process TCP rules to establish TCP ports to inspect. */
-        if ( sp->s5_config )
-            portList = Stream5GetTcpPortList(sp->s5_config, ignore_any);
-        else
-            portList = NULL;
-    
-        if ( portList )
-            setPortFilterList(sc, portList, IPPROTO_TCP, ignore_any, pid);
-    
-        /* Post-process UDP rules to establish UDP ports to inspect. */
-        if ( sp->s5_config )
-            portList = Stream5GetUdpPortList(sp->s5_config, ignore_any);
-        else
-            portList = NULL;
-
-        if ( portList )
-            setPortFilterList(sc, portList, IPPROTO_UDP, ignore_any, pid);
-    }
-#endif
-}
-
-void InitServiceFilterStatus(SnortConfig* sc)
-{
-    SFGHASH_NODE *hashNode;
-    PolicyId policyId = 0;
-
-    if (sc == NULL)
-    {
-        FatalError("%s(%d) Snort config for parsing is NULL.\n",
-                   __FILE__, __LINE__);
-    }
-
-    for (hashNode = sfghash_findfirst(sc->otn_map);
-         hashNode;
-         hashNode = sfghash_findnext(sc->otn_map))
-    {
-        OptTreeNode *otn = (OptTreeNode *)hashNode->data;
-
-        for ( policyId = 0;
-              policyId < otn->proto_node_num;
-              policyId++)
-        {
-            RuleTreeNode *rtn = getRtnFromOtn(otn, policyId);
-
-            if (rtn && (rtn->proto == IPPROTO_TCP))
-            {
-                unsigned int svc_idx;
-                // FIXIT setCurrentPolicy(sc, policyId);
-
-                for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
-                {
-                    if (otn->sigInfo.services[svc_idx].service_ordinal)
-                    {
-                        stream.set_service_filter_status(
-                            sc, otn->sigInfo.services[svc_idx].service_ordinal,
-                            PORT_MONITOR_SESSION);
-                    }
-                }
-            }
-        }
-    }
 }
 

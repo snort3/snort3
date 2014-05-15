@@ -77,41 +77,41 @@ private:
     unsigned* ref_count;
 };
 
-enum Priority {
-    PRIORITY_PACKET,
-    PRIORITY_NETWORK,
-    PRIORITY_TRANSPORT,
-    PRIORITY_TUNNEL,
-    PRIORITY_SCANNER,
-    PRIORITY_SESSION,
-    PRIORITY_APPLICATION,
-    PRIORITY_MAX
+enum InspectorType
+{
+    IT_PACKET,
+    IT_PROTOCOL,
+    IT_STREAM,
+    IT_SESSION,
+    IT_SERVICE,
+    IT_MAX
 };
 
-typedef Inspector* (*PreprocCtor)(Module*);
-typedef void (*PreprocDtorFunc)(Inspector*);
-typedef void (*PreprocFunc)();
+typedef Inspector* (*InspectCtor)(Module*);
+typedef void (*InspectDtorFunc)(Inspector*);
+typedef void (*InspectFunc)();
+typedef class Session* (*InspectSsnFunc)(class Flow*);
 
 // FIXIT ensure all provide stats
 struct InspectApi
 {
     BaseApi base;
-    Priority priority;
+    InspectorType type;
     uint16_t proto_bits;
 
     // main thread funcs - parse time data only
-    PreprocFunc init;      // allocate process static data
-    PreprocFunc term;      // release init() data
-    PreprocCtor ctor;      // instantiate inspector from Module data
-    PreprocDtorFunc dtor;  // release inspector instance
+    InspectFunc init;      // allocate process static data
+    InspectFunc term;      // release init() data
+    InspectCtor ctor;      // instantiate inspector from Module data
+    InspectDtorFunc dtor;  // release inspector instance
 
     // packet thread funcs - runtime data only
-    PreprocFunc pinit;  // plugin thread local allocation
-    PreprocFunc pterm;  // plugin thread local cleanup
-    PreprocFunc purge;  // purge caches
-    PreprocFunc sum;    // accumulate stats
-    PreprocFunc stats;  // output stats
-    PreprocFunc reset;  // clear stats
+    InspectFunc pinit;     // plugin thread local allocation
+    InspectFunc pterm;     // plugin thread local cleanup
+    InspectSsnFunc ssn;    // purge caches
+    InspectFunc sum;       // accumulate stats
+    InspectFunc stats;     // output stats
+    InspectFunc reset;     // clear stats
 };
 
 #endif

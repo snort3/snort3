@@ -35,10 +35,8 @@
 #include <dnet.h>
 #endif
 
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "snort.h"
-
-#include "defrag/defrag.h"
 
 #include "encode.h"
 #include "packet_io/sfdaq.h"
@@ -385,9 +383,6 @@ static uint32_t Strafe (int i, uint32_t flags, const Packet* p)
 static inline void _Active_ForceIgnoreSession(Packet *p)
 {
     stream.drop_packet(p);
-
-    //drop this and all following fragments
-    drop_all_fragments(p);
 }
 
 static inline void _Active_DoIgnoreSession(Packet *p)

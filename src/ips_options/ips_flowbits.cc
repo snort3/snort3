@@ -60,7 +60,7 @@
 #include "sfghash.h"
 #include "snort_types.h"
 #include "mstring.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "snort.h"
 #include "profiler.h"
 #include "detection/fpdetect.h"

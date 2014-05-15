@@ -61,12 +61,11 @@
 #include "packet_io/active.h"
 #include "packet_time.h"
 #include "target_based/sftarget_reader.h"
+#include "stream/stream.h"
 
 #ifdef SIDE_CHANNEL
 #include "side_channel/sidechannel.h"
 #endif
-
-#include "stream5/stream_common.h"
 
 #ifdef PATH_MAX
 #define PATH_MAX_UTIL PATH_MAX

@@ -31,6 +31,7 @@ using namespace std;
 #include "config_file.h"
 #include "parser.h"
 #include "vars.h"
+#include "detection/detect.h"
 #include "main/analyzer.h"
 #include "managers/shell.h"
 #include "managers/event_manager.h"
@@ -400,7 +401,7 @@ static void config_conf(SnortConfig*, const char* val)
 {
     lua_conf = SnortStrdup(val);
     SetSnortConfDir(lua_conf);
-    Analyzer::set_main_hook(Analyzer::inspect);
+    set_main_hook(snort_inspect);
 }
 
 static void config_log_alerts(SnortConfig* sc, const char*)
@@ -450,17 +451,17 @@ static void config_log_mode(SnortConfig* sc, const char* val)
     if (strcasecmp(val, LOG_NONE) == 0)
     {
         sc->output_flags |= OUTPUT_FLAG__NO_LOG;
-        Analyzer::set_main_hook(Analyzer::ignore);
+        set_main_hook(snort_ignore);
         EventManager::enable_logs(false);
     }
     else if (strcasecmp(val, LOG_TEXT) == 0)
     {
-        Analyzer::set_main_hook(Analyzer::print);
+        set_main_hook(snort_print);
     }
     else if (strcasecmp(val, LOG_PCAP) == 0)
     {
         sc->output = OUTPUT_PCAP;
-        Analyzer::set_main_hook(Analyzer::log);
+        set_main_hook(snort_log);
     }
     else
     {

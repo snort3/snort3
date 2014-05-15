@@ -56,8 +56,6 @@ NetworkPolicy::~NetworkPolicy()
 InspectionPolicy::InspectionPolicy()
 {
     framework_policy = nullptr;
-    s5_config = nullptr;
-
     normal_mask = 0;
     scanned_proto_mask = 0;
 

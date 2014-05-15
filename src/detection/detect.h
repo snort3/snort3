@@ -47,7 +47,8 @@ extern THREAD_LOCAL PreprocStats detectPerfStats;
 #endif
 
 /* detection/manipulation funcs */
-void Inspect(Packet*);
+void snort_ignore(Packet*);
+void snort_inspect(Packet*);
 int Detect(Packet *);
 void CallOutputPlugins(Packet *);
 int EvalPacket(ListHead *, int, Packet * );
@@ -71,7 +72,7 @@ int CheckDstPortNotEq(Packet *, RuleTreeNode *, RuleFpList *, int);
 int RuleListEnd(Packet *, RuleTreeNode *, RuleFpList *, int);
 int OptListEnd(void *option_data, Packet *p);
 
-void LogPacket(Packet*);
+void snort_log(Packet*);
 void CallLogFuncs(Packet*, Event*, const char*);
 void CallLogFuncs(Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);

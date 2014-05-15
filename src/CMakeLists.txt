@@ -18,6 +18,7 @@ include_directories(network_inspectors)
 include_directories(parser)
 include_directories(protocols)
 include_directories(sfip)
+include_directories(stream)
 include_directories(target_based)
 include_directories(time)
 include_directories(utils)
@@ -54,10 +55,14 @@ target_link_libraries(snort
     log
     protocols
     framework
-    defrag
     normalize
     perf_monitor
     stream
+    stream_base
+    stream_ip
+    stream_icmp
+    stream_tcp
+    stream_udp
     http_inspect
     flow
     parser
@@ -80,7 +85,7 @@ target_link_libraries(snort
     ips_options
     loggers
     service_inspectors
-    stream_api
+    stream
     actions
     managers
     codecs
@@ -119,6 +124,7 @@ add_subdirectory(protocols)
 add_subdirectory(sfip)
 add_subdirectory(sfrt)
 add_subdirectory(service_inspectors)
+add_subdirectory(stream)
 add_subdirectory(target_based)
 add_subdirectory(time)
 add_subdirectory(utils)

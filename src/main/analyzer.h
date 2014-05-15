@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,24 +16,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// analyzer.h author Russ Combs <rucombs@cisco.com>
+
+#ifndef ANALYZER_H
+#define ANALYZER_H
 
 #include "snort_types.h"
 #include "decode.h"
-#include "log/log.h"
-#include "detection/detect.h"
-
-typedef void (*log_func_t)(Packet*);
-
-void CapturePacket();
-void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
-void DetectRebuiltPacket (Packet*);
-void LogRebuiltPacket (Packet*);
-
-DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, void* ft);
-
-void set_default_policy();
-
-typedef void (*MainHook_f)(Packet*);
 
 enum AnalyzerCommand
 {
@@ -64,12 +52,6 @@ public:
     void set_config(Swapper* ps) { swap = ps; };
     bool swap_pending() { return swap != nullptr; };
 
-    static void set_main_hook(MainHook_f);
-    static void ignore(Packet*) { };
-    static void print(Packet* p) { PrintPacket(p); };
-    static void log(Packet* p) { LogPacket(p); };
-    static void inspect(Packet* p) { Inspect(p); };
-
 private:
     void analyze();
     bool handle(AnalyzerCommand);
@@ -81,4 +63,6 @@ private:
     AnalyzerCommand command;
     Swapper* swap;
 };
+
+#endif
 

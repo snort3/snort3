@@ -54,7 +54,7 @@
 #include "ftpp_return_codes.h"
 #include "ftpp_ui_config.h"
 #include "snort.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "ft_main.h"
 #include "telnet.h"
 

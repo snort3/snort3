@@ -26,11 +26,7 @@
 #include <mutex>
 
 #include "module_manager.h"
-#include "event_manager.h"
-#include "ips_manager.h"
 #include "framework/inspector.h"
-#include "network_inspectors/network_inspectors.h"
-#include "service_inspectors/service_inspectors.h"
 #include "detection/detection_util.h"
 #include "obfuscation.h"
 #include "packet_io/active.h"
@@ -60,7 +56,7 @@ struct PHGlobal {
     { init = true; };
 
     static bool comp (const PHGlobal* a, const PHGlobal* b)
-    { return ( a->api.priority < b->api.priority ); };
+    { return ( a->api.type < b->api.type ); };
 };
 
 struct PHClass {
@@ -70,7 +66,7 @@ struct PHClass {
     ~PHClass() { };
 
     static bool comp (PHClass* a, PHClass* b)
-    { return ( a->api.priority < b->api.priority ); };
+    { return ( a->api.type < b->api.type ); };
 };
 
 struct PHInstance {
@@ -81,7 +77,7 @@ struct PHInstance {
     ~PHInstance() { };
 
     static bool comp (PHInstance* a, PHInstance* b)
-    { return ( a->pp_class.api.priority < b->pp_class.api.priority ); };
+    { return ( a->pp_class.api.type < b->pp_class.api.type ); };
 };
 
 PHInstance::PHInstance(PHClass& p) : pp_class(p)
@@ -125,21 +121,27 @@ struct FrameworkPolicy
 {
     PHInstanceList ph_list;
 
+    PHVector session;
     PHVector network;
     PHVector generic;
     PHVector service;
 
     void Vectorize()
     {
+        session.alloc(ph_list.size());
         network.alloc(ph_list.size());
         service.alloc(ph_list.size());
         generic.alloc(ph_list.size());
 
         for ( auto* p : ph_list )
         {
-            if ( p->pp_class.api.priority <= PRIORITY_TRANSPORT )
+            if ( p->pp_class.api.ssn )
+                continue;
+            else if ( p->pp_class.api.type == IT_STREAM )
+                session.add(p);
+            else if ( p->pp_class.api.type < IT_STREAM )
                 network.add(p);
-            else if ( p->pp_class.api.priority < PRIORITY_APPLICATION )
+            else if ( p->pp_class.api.type < IT_SERVICE )
                 generic.add(p);
             else
                 service.add(p);
@@ -219,15 +221,27 @@ void InspectorManager::delete_policy (InspectionPolicy* pi)
     pi->framework_policy = nullptr;
 }
 
+static PHInstance* get_instance(
+    FrameworkPolicy* fp, const char* keyword)
+{
+    for ( auto* p : fp->ph_list )
+        //if ( !strncasecmp(p->pp_class.api.base.name, keyword, 
+        //    strlen(p->pp_class.api.base.name)) )
+        if ( !strcasecmp(p->pp_class.api.base.name, keyword) )
+            return p;
+
+    return nullptr;
+}
+
 static PHInstance* GetInstance(
     PHClass* ppc, FrameworkPolicy* fp, const char* keyword)
 {
-    for ( auto* p : fp->ph_list )
-        if ( !strncasecmp(p->pp_class.api.base.name, keyword, 
-            strlen(p->pp_class.api.base.name)) )
-            return p;
+    PHInstance* p = get_instance(fp, keyword);
 
-    PHInstance* p = new PHInstance(*ppc);
+    if ( p )
+        return p;
+
+    p = new PHInstance(*ppc);
 
     if ( !p->handler )  // FIXIT is this even possible?
     {
@@ -245,6 +259,23 @@ void InspectorManager::dispatch_meta (FrameworkPolicy* fp, int type, const uint8
     for ( auto* p : fp->ph_list )
         p->handler->meta(type, data);
 }
+
+Inspector* InspectorManager::get_inspector(
+    const char* key, InspectSsnFunc& f)
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi || !pi->framework_policy )
+        return nullptr;
+
+    PHInstance* p = get_instance(pi->framework_policy, key);
+
+    if ( !p )
+        return nullptr;
+
+    f = p->pp_class.api.ssn;
+    return p->handler;
+} 
 
 //-------------------------------------------------------------------------
 // config stuff
@@ -271,11 +302,13 @@ void InspectorManager::delete_config (SnortConfig* sc)
 static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
 {
     for ( auto* p : fc->ph_list )
-        if ( !strncasecmp(p->api.base.name, keyword, strlen(p->api.base.name)) )
+        //if ( !strncasecmp(p->api.base.name, keyword, strlen(p->api.base.name)) )
+        if ( !strcasecmp(p->api.base.name, keyword) )
             return p;
 
     for ( auto* p : s_handlers )
-        if ( !strncasecmp(p->api.base.name, keyword, strlen(p->api.base.name)) )
+        //if ( !strncasecmp(p->api.base.name, keyword, strlen(p->api.base.name)) )
+        if ( !strcasecmp(p->api.base.name, keyword) )
         {
             if ( p->init )
             {
@@ -318,12 +351,10 @@ void InspectorManager::reset_stats (SnortConfig* sc)
 }
 
 // this is per thread
-void InspectorManager::thread_init(SnortConfig* sc, unsigned slot)
+void InspectorManager::thread_init(SnortConfig* sc)
 {
-    EventManager::open_outputs();
-    IpsManager::setup_options();
-
-    Inspector::slot = slot;
+    // FIXIT BIND the policy related logic herein moves to binder
+    Inspector::slot = get_instance_id();
 
     for ( auto* p : sc->framework_config->ph_list )
         if ( p->api.pinit )
@@ -353,18 +384,6 @@ void InspectorManager::thread_term(SnortConfig* sc)
             p->api.pterm();
 
     accumulate(sc);
-    IpsManager::clear_options();
-    EventManager::close_outputs();
-}
-
-// purges all inspector plugins - eg global session caches
-void InspectorManager::reset (SnortConfig* sc)
-{
-    for ( auto* p : sc->framework_config->ph_list )
-    {
-        if ( p->api.purge )
-            p->api.purge();
-    }
 }
 
 //-------------------------------------------------------------------------
@@ -445,7 +464,7 @@ static inline void execute(
         // FIXIT these checks can eventually be optimized
 	    // but they are required to ensure that session and app
 	    // handlers aren't called w/o a session pointer
-        if ( !p->flow && (ppc.api.priority >= PRIORITY_SESSION) )
+        if ( !p->flow && (ppc.api.type >= IT_SESSION) )
             break;
 
         if ( (p->proto_bits & ppc.api.proto_bits) )
@@ -459,6 +478,7 @@ void InspectorManager::execute (Packet* p)
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
+    ::execute(p, fp->session.vec, fp->session.num);
     ::execute(p, fp->network.vec, fp->network.num);
     ::execute(p, fp->generic.vec, fp->generic.num);
 

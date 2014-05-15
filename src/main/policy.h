@@ -77,8 +77,6 @@ public:
 // inspection stuff
 //-------------------------------------------------------------------------
 
-// just one instance in SnortConfig for now
-// this stuff will get replaced with InspectorManager tracking
 struct InspectionPolicy
 {
 public:
@@ -87,7 +85,6 @@ public:
 
 public:
     struct FrameworkPolicy* framework_policy;
-    void* s5_config;
 
     uint32_t normal_mask;
     int scanned_proto_mask;

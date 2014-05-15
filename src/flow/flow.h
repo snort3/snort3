@@ -80,6 +80,8 @@
 #define STREAM5_STATE_CLOSED            0x0800
 
 struct Packet;
+class Inspector;
+
 typedef void (*StreamAppDataFree)(void*);
 
 typedef struct _StreamFlowData
@@ -110,7 +112,7 @@ private:
     unsigned id;
 };
 
-typedef struct _Stream5State
+struct FlowState
 {
     uint32_t   session_flags;
 
@@ -120,16 +122,7 @@ typedef struct _Stream5State
     char       direction;
     char       ignore_direction; /* flag to ignore traffic on this session */
 
-} Stream5State;
-
-#ifdef ENABLE_HA
-struct HA_State
-{
-    struct timeval ha_next_update;
-    uint8_t ha_pending_mask;
-    uint8_t ha_flags;
 };
-#endif
 
 typedef enum {
     SE_REXMIT,
@@ -142,7 +135,7 @@ class Flow
 {
 public:
     Flow();
-    Flow(int proto, bool ha);
+    Flow(int proto);
     ~Flow();
 
     void reset();
@@ -173,20 +166,17 @@ public:  // FIXIT privatize if possible
     StreamFlowData* flowdata;
     uint8_t protocol;
 
-#ifdef ENABLE_HA
-    struct HA_State* ha_state;
-#endif
-
     // these fields are always set; not zeroed
     Flow* prev, * next;
-    struct Stream5Config* s5_config;
+    Inspector* client;
+    Inspector* server;
     long last_data_seen;
+    bool init;
 
     // everything from here down is zeroed
-    void *policy;
     FlowData* appDataList;
 
-    Stream5State s5_state;
+    FlowState s5_state;  // FIXIT rename this (s5 not appropriate)
 
     snort_ip client_ip; // FIXTHIS family and bits should be changed to uint16_t
     snort_ip server_ip; // or uint8_t to reduce sizeof from 24 to 20

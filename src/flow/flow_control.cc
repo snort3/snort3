@@ -1,7 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2013-2013 Sourcefire, Inc.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -31,22 +30,16 @@
 #include "flow/flow_cache.h"
 #include "flow/expect_cache.h"
 #include "flow/session.h"
-
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "stream5/stream_tcp.h"
-#include "stream5/stream_udp.h"
-#include "stream5/stream_icmp.h"
-#include "stream5/stream_ip.h"
-#include "stream5/stream_ha.h"
 
-FlowControl::FlowControl(const Stream5Config* s5)
+FlowControl::FlowControl()
 {
-    init_tcp(s5);
-    init_udp(s5);
-    init_icmp(s5);
-    init_ip(s5);
-    init_exp(s5);
+    ip_cache = nullptr;
+    icmp_cache = nullptr;
+    tcp_cache = nullptr;
+    udp_cache = nullptr;
+    exp_cache = nullptr;
 }
 
 FlowControl::~FlowControl()
@@ -73,26 +66,24 @@ inline FlowCache* FlowControl::get_cache (int proto)
     return NULL;
 }
 
-Flow* FlowControl::get_flow (const FlowKey* key)
+Flow* FlowControl::find_flow (const FlowKey* key)
 {
     FlowCache* cache = get_cache(key->protocol);
 
     if ( cache )
-        return cache->get(key);
+        return cache->find(key);
 
     return NULL;
 }
 
 Flow* FlowControl::new_flow (const FlowKey* key)
 {
-    Stream5Config* s5 = (Stream5Config*)get_inspection_policy()->s5_config;
     FlowCache* cache = get_cache(key->protocol);
 
-    if ( !s5 || !cache )
+    if ( !cache )
         return NULL;
 
-    bool init = true;
-    return cache->get(s5, key, init);
+    return cache->get(key);
 }
 
 // FIXIT cache* can be put in flow so that lookups by
@@ -104,7 +95,7 @@ void FlowControl::delete_flow (const FlowKey* key)
     if ( !cache )
         return;
 
-    Flow* flow = cache->get(key);
+    Flow* flow = cache->find(key);
 
     if ( flow )
         cache->release(flow, "ha sync");
@@ -189,29 +180,41 @@ void FlowControl::reset_prunes (int proto)
 void FlowControl::set_key(FlowKey* key, const Packet* p)
 {
     char proto = GET_IPH_PROTO(p);
-    uint32_t mplsId = 0;
-    uint16_t vlanId = 0;
-    uint16_t sport = p->sp;
-    uint16_t addressSpaceId = 0;
+    uint32_t mplsId;
+    uint16_t vlanId;
+    uint16_t addressSpaceId;
 
-    if (ScMplsOverlappingIp() && (p->mpls != NULL))
-    {
+    if ( p->vh )
+        vlanId = (uint16_t)VTH_VLAN(p->vh);
+    else
+        vlanId = 0;
+
+    if ( p->mpls )
         mplsId = p->mplsHdr.label;
-    }
+    else
+        mplsId = 0;
+
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     addressSpaceId = DAQ_GetAddressSpaceID(p->pkth);
+#else
+    addressSpaceId = 0;
 #endif
 
-    if (p->vh && !ScVlanAgnostic())
-        vlanId = (uint16_t)VTH_VLAN(p->vh);
-    if ((proto == IPPROTO_ICMP) || (proto == IPPROTO_ICMPV6))
+    if ( p->frag_flag )
     {
-        /* ICMP */
-        sport = p->icmph->type;
+        key->init(GET_SRC_IP(p), GET_DST_IP(p), GET_IPH_ID(p),
+            proto, vlanId, mplsId, addressSpaceId);
     }
-    key->init(GET_SRC_IP(p), sport,
-        GET_DST_IP(p), p->dp,
-        proto, vlanId, mplsId, addressSpaceId);
+    else if ((proto == IPPROTO_ICMP) || (proto == IPPROTO_ICMPV6))
+    {
+        key->init(GET_SRC_IP(p), p->icmph->type, GET_DST_IP(p), 0,
+            proto, vlanId, mplsId, addressSpaceId);
+    }
+    else
+    {
+        key->init(GET_SRC_IP(p), p->sp, GET_DST_IP(p), p->dp,
+            proto, vlanId, mplsId, addressSpaceId);
+    }
 }
 
 static bool is_bidirectional(Flow* flow)
@@ -220,205 +223,193 @@ static bool is_bidirectional(Flow* flow)
     return (flow->s5_state.session_flags & bidir) == bidir;
 }
 
-void FlowControl::process(
-    FlowCache* cache, Stream5Config* config, void* pv, Packet* p)
+void FlowControl::process(FlowCache* cache, Inspector* ins, Packet* p)
 {
     FlowKey key;
     set_key(&key, p);
 
-    bool init = true;
-    Flow* flow = cache->get(config, &key, init);
+    Flow* flow = cache->get(&key);
 
     if ( !flow )
         return;
 
-    if ( !flow->policy )
+    if ( flow->init )
     {
-        if ( !init )
+#if 0
+        // FIXIT BIND this is where bindings are used to set
+        // inspectors on session:
+        if ( bindings )
+        {
+            // -- must set client and server session inspectors
+            // -- must set all bound service inspectors 
+            //    (service inspectors also set later by auto id)
+        }
+        else
+#endif
+        {
+            // default case
+            flow->client = ins;
+            flow->server = ins;
+        }
+        // -- all inspectors must be ref counted when set
+        flow->client->add_ref();
+        flow->server->add_ref();
+
+        if ( !flow->session->setup(p) )
             return;
 
-        else
-        {
-            // FIXIT stream port filter broken?
-            //if ( Stream::get_filter_status(config, p) )
-            //    return;
-
-            // FIXIT these are separate from init; will be moved out of preproc
-            // into external NAP lookup encapsulated here
-            flow->policy = flow->session->get_policy(pv, p);
-
-            if ( !flow->policy )
-                return;
-
-            if ( !flow->session->setup(p) )
-            {
-                flow->policy = NULL;
-                return;
-            }
-        }
+        flow->init = false;
     }
 
-#ifdef ENABLE_HA
-    Stream5State old_s5_state = flow->s5_state;
-#endif
     p->flow = flow;
     flow->session->process(p);
 
-    if ( init && is_bidirectional(flow) )
+    if ( flow->init && is_bidirectional(flow) )
         cache->unlink_uni(flow);
-
-    ha_state_diff(flow, &old_s5_state);
 }
 
 //-------------------------------------------------------------------------
 // tcp
 //-------------------------------------------------------------------------
 
-#ifdef ENABLE_HA
-#define enable_ha(s5) s5->ha_config
-#else
-#define enable_ha(s5) false
-#endif
-
-void FlowControl::init_tcp(const Stream5Config* s5)
+void FlowControl::init_tcp(
+    const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    const Stream5GlobalConfig* pc = s5->global_config;
-
-    if ( !pc->max_tcp_sessions )
+    if ( !fc.max_sessions )
     {
         tcp_cache = nullptr;
         return;
     }
     tcp_cache = new FlowCache(
-        pc->max_tcp_sessions, pc->tcp_cache_pruning_timeout,
-        pc->tcp_cache_nominal_timeout, 5, 0);
+        fc.max_sessions, fc.cache_pruning_timeout,
+        fc.cache_nominal_timeout, 5, 0);
 
-    for ( unsigned i = 0; i < pc->max_tcp_sessions; ++i )
+    for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_TCP, enable_ha(s5));
-        flow->session = get_tcp_session(flow);
+        Flow* flow = new Flow(IPPROTO_TCP);
+        flow->session = get_ssn(flow);
         tcp_cache->push(flow);
     }
 }
 
-void FlowControl::process_tcp(Stream5Config* config, Packet* p)
+void FlowControl::process_tcp(Inspector* user, Packet* p)
 {
     if( !p->tcph || !tcp_cache )
         return;
 
-    process(tcp_cache, config, config->tcp_config, p);
+    process(tcp_cache, user, p);
 }
 
 //-------------------------------------------------------------------------
 // udp
 //-------------------------------------------------------------------------
 
-void FlowControl::init_udp(const Stream5Config* s5)
+void FlowControl::init_udp(
+    const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    const Stream5GlobalConfig* pc = s5->global_config;
-
-    if ( !pc->max_udp_sessions )
+    if ( !fc.max_sessions )
     {
         udp_cache = nullptr;
         return;
     }
     udp_cache = new FlowCache(
-        pc->max_udp_sessions, pc->udp_cache_pruning_timeout,
-        pc->udp_cache_nominal_timeout, 5, 0);
+        fc.max_sessions, fc.cache_pruning_timeout,
+        fc.cache_nominal_timeout, 5, 0);
 
-    for ( unsigned i = 0; i < pc->max_udp_sessions; ++i )
+    for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_UDP, enable_ha(s5));
-        flow->session = get_udp_session(flow);
+        Flow* flow = new Flow(IPPROTO_UDP);
+        flow->session = get_ssn(flow);
         udp_cache->push(flow);
     }
 }
 
-void FlowControl::process_udp(Stream5Config* config, Packet* p)
+void FlowControl::process_udp(Inspector* user, Packet* p)
 {
     if( !p->udph || !udp_cache )
         return;
 
-    process(udp_cache, config, config->udp_config, p);
+    process(udp_cache, user, p);
 }
 
 //-------------------------------------------------------------------------
 // icmp
 //-------------------------------------------------------------------------
 
-void FlowControl::init_icmp(const Stream5Config* s5)
+void FlowControl::init_icmp(
+    const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    const Stream5GlobalConfig* pc = s5->global_config;
-
-    if ( !pc->max_icmp_sessions )
+    if ( !fc.max_sessions )
     {
         icmp_cache = nullptr;
         return;
     }
-    icmp_cache = new FlowCache(pc->max_icmp_sessions, 30, 30, 5, 0);
+    icmp_cache = new FlowCache(
+        fc.max_sessions, fc.cache_pruning_timeout,
+        fc.cache_nominal_timeout, 5, 0);
 
-    for ( unsigned i = 0; i < pc->max_icmp_sessions; ++i )
+    for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_ICMP, enable_ha(s5));
-        flow->session = get_icmp_session(flow);
+        Flow* flow = new Flow(IPPROTO_ICMP);
+        flow->session = get_ssn(flow);
         icmp_cache->push(flow);
     }
 }
 
-void FlowControl::process_icmp(Stream5Config* config, Packet* p)
+void FlowControl::process_icmp(Inspector* user, Packet* p)
 {
     if ( !p->icmph )
         return;
 
-    if ( config->global_config->max_icmp_sessions )
-        process(icmp_cache, config, config->icmp_config, p);
+    if ( icmp_cache )
+        process(icmp_cache, user, p);
 
     else
-        process_ip(config, p);
+        process_ip(user, p);
 }
 
 //-------------------------------------------------------------------------
 // ip
 //-------------------------------------------------------------------------
 
-void FlowControl::init_ip(const Stream5Config* s5)
+void FlowControl::init_ip(
+    const FlowConfig& fc, InspectSsnFunc get_ssn)
 {
-    const Stream5GlobalConfig* pc = s5->global_config;
-
-    if ( !pc->max_ip_sessions )
+    if ( !fc.max_sessions )
     {
         ip_cache = nullptr;
         return;
     }
-    ip_cache = new FlowCache(pc->max_ip_sessions, 30, 30, 5, 0);
+    ip_cache = new FlowCache(
+        fc.max_sessions, fc.cache_pruning_timeout,
+        fc.cache_nominal_timeout, 5, 0);
 
-    for ( unsigned i = 0; i < pc->max_ip_sessions; ++i )
+    for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_IP, enable_ha(s5));
-        flow->session = get_ip_session(flow);
+        Flow* flow = new Flow(IPPROTO_IP);
+        flow->session = get_ssn(flow);
         ip_cache->push(flow);
     }
 }
 
-void FlowControl::process_ip(Stream5Config* config, Packet* p)
+void FlowControl::process_ip(Inspector* user, Packet* p)
 {
     if ( !p->iph || !ip_cache )
         return;
 
-    process(ip_cache, config, config->ip_config, p);
+    process(ip_cache, user, p);
 }
 
 //-------------------------------------------------------------------------
 // expected
 //-------------------------------------------------------------------------
 
-void FlowControl::init_exp(const Stream5Config* config)
+void FlowControl::init_exp(
+    const FlowConfig& tcp, const FlowConfig& udp)
 {
-    uint32_t max =
-        config->global_config->max_tcp_sessions +
-        config->global_config->max_udp_sessions;
-
+    uint32_t max = tcp.max_sessions + udp.max_sessions;
     max >>= 9;
+
     if ( !max )
         max = 2;
 

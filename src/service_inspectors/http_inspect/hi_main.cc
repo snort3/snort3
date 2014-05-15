@@ -67,7 +67,7 @@
 #include "generators.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "sfsnprintfappend.h"
 #include "hi_return_codes.h"
 #include "hi_ui_config.h"

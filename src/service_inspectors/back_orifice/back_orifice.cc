@@ -625,7 +625,7 @@ static const InspectApi bo_api =
         mod_ctor,
         mod_dtor
     },
-    PRIORITY_APPLICATION, 
+    IT_SERVICE, 
     PROTO_BIT__UDP,
     bo_init,
     nullptr, // term
@@ -633,7 +633,7 @@ static const InspectApi bo_api =
     bo_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     bo_sum,
     bo_stats,
     bo_reset
