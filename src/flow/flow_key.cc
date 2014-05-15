@@ -37,70 +37,56 @@
 inline void FlowKey::init4(
     snort_ip_p srcIP, uint16_t srcPort,
     snort_ip_p dstIP, uint16_t dstPort,
-    char proto, uint32_t mplsId)
+    char proto, uint32_t mplsId, bool order)
 {
-    uint16_t sport;
-    uint16_t dport;
-
     uint32_t *src;
     uint32_t *dst;
 
-    switch (proto)
+    if ( proto == IPPROTO_ICMP )
     {
-        case IPPROTO_TCP:
-        case IPPROTO_UDP:
-            sport = srcPort;
-            dport = dstPort;
-            break;
-        case IPPROTO_ICMP:
-            if (srcPort == ICMP_ECHOREPLY)
-            {
-                dport = ICMP_ECHO; /* Treat ICMP echo reply the same as request */
-                sport = 0;
-            }
-            else /* otherwise, every ICMP type gets different key */
-            {
-                sport = srcPort;
-                dport = 0;
-            }
-            break;
-        default:
-            sport = dport = 0;
-            break;
+        if (srcPort == ICMP_ECHOREPLY)
+        {
+            dstPort = ICMP_ECHO; /* Treat ICMP echo reply the same as request */
+            srcPort = 0;
+        }
+        else /* otherwise, every ICMP type gets different key */
+        {
+            dstPort = 0;
+        }
     }
 
     src = srcIP->ip32;
     dst = dstIP->ip32;
 
     /* These comparisons are done in this fashion for performance reasons */
-    if (*src < *dst)
+    if ( !order || *src < *dst)
     {
         COPY4(ip_l, src);
         COPY4(ip_h, dst);
-        port_l = sport;
-        port_h = dport;
+        port_l = srcPort;
+        port_h = dstPort;
     }
     else if (*src == *dst)
     {
         COPY4(ip_l, src);
         COPY4(ip_h, dst);
-        if (sport < dport)
+        if (srcPort < dstPort)
         {
-            port_l = sport;
-            port_h = dport;
+            port_l = srcPort;
+            port_h = dstPort;
         }
         else
         {
-            port_l = dport;
-            port_h = sport;
+            port_l = dstPort;
+            port_h = srcPort;
         }
     }
     else
     {
         COPY4(ip_l, dst);
-        port_l = dport;
+        port_l = dstPort;
         COPY4(ip_h, src);
-        port_h = sport;
+        port_h = srcPort;
     }
     if (ScMplsOverlappingIp() &&
         ipv4::isPrivateIP(*src) && ipv4::isPrivateIP(*dst))
@@ -112,81 +98,67 @@ inline void FlowKey::init4(
 inline void FlowKey::init6(
     snort_ip_p srcIP, uint16_t srcPort,
     snort_ip_p dstIP, uint16_t dstPort,
-    char proto, uint32_t mplsId)
+    char proto, uint32_t mplsId, bool order)
 {
-    uint16_t sport;
-    uint16_t dport;
-
     sfip_t *src;
     sfip_t *dst;
 
-    switch (proto)
+    if ( proto == IPPROTO_ICMP )
     {
-        case IPPROTO_TCP:
-        case IPPROTO_UDP:
-            sport = srcPort;
-            dport = dstPort;
-            break;
-        case IPPROTO_ICMP:
             if (srcPort == ICMP_ECHOREPLY)
             {
-                dport = ICMP_ECHO; /* Treat ICMP echo reply the same as request */
-                sport = 0;
+                dstPort = ICMP_ECHO; /* Treat ICMP echo reply the same as request */
+                srcPort = 0;
             }
             else /* otherwise, every ICMP type gets different key */
             {
-                sport = srcPort;
-                dport = 0;
+                dstPort = 0;
             }
-            break;
-        case IPPROTO_ICMPV6:
-            if (srcPort == ICMP6_REPLY)
-            {
-                dport = ICMP6_ECHO; /* Treat ICMPv6 echo reply the same as request */
-                sport = 0;
-            }
-            else /* otherwise, every ICMP type gets different key */
-            {
-                sport = srcPort;
-                dport = 0;
-            }
-            break;
-        default:
-            sport = dport = 0;
-            break;
+    }
+    else if ( proto == IPPROTO_ICMPV6 )
+    {
+        if (srcPort == ICMP6_REPLY)
+        {
+            dstPort = ICMP6_ECHO; /* Treat ICMPv6 echo reply the same as request */
+            srcPort = 0;
+        }
+        else /* otherwise, every ICMP type gets different key */
+        {
+            dstPort = 0;
+        }
     }
 
     src = srcIP;
     dst = dstIP;
 
-    if (sfip_fast_lt6(src, dst))
+    if ( !order || sfip_fast_lt6(src, dst))
     {
         COPY4(ip_l, src->ip32);
-        port_l = sport;
+        port_l = srcPort;
         COPY4(ip_h, dst->ip32);
-        port_h = dport;
+        port_h = dstPort;
     }
     else if (sfip_fast_eq6(src, dst))
     {
         COPY4(ip_l, src->ip32);
         COPY4(ip_h, dst->ip32);
-        if (sport < dport)
+        if (srcPort < dstPort)
         {
-            port_l = sport;
-            port_h = dport;
+            port_l = srcPort;
+            port_h = dstPort;
         }
         else
         {
-            port_l = dport;
-            port_h = sport;
+            port_l = dstPort;
+            port_h = srcPort;
         }
     }
     else
     {
         COPY4(ip_l, dst->ip32);
-        port_l = dport;
+        port_l = dstPort;
         COPY4(ip_h, src->ip32);
-        port_h = sport;
+        port_h = srcPort;
     }
 
     if (ScMplsOverlappingIp())
@@ -198,8 +170,8 @@ inline void FlowKey::init6(
 void FlowKey::init(
     snort_ip_p srcIP, uint16_t srcPort,
     snort_ip_p dstIP, uint16_t dstPort,
-    char proto, uint16_t vlan, uint32_t mplsId,
-    uint16_t addrSpaceId)
+    char proto, uint16_t vlan, 
+    uint32_t mplsId, uint16_t addrSpaceId)
 {
     /* Because the key is going to be used for hash lookups,
      * the lower of the values of the IP address field is
@@ -213,13 +185,53 @@ void FlowKey::init(
         init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
 
     protocol = proto;
+    version = 0;
 
     if (!ScVlanAgnostic())
         vlan_tag = vlan;
     else
         vlan_tag = 0;
 
-    pad = 0;
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    if (!ScAddressSpaceAgnostic())
+        addressSpaceId = addrSpaceId;
+    else
+        addressSpaceId = 0;
+#else
+    addressSpaceId = 0;
+    UNUSED(addrSpaceId);
+#endif
+    addressSpaceIdPad1 = 0;
+}
+
+void FlowKey::init(
+    snort_ip_p srcIP, snort_ip_p dstIP, 
+    uint32_t id, char proto, uint16_t vlan, 
+    uint32_t mplsId, uint16_t addrSpaceId)
+{
+    // to avoid confusing 2 different datagrams or confusing a datagram
+    // with a session, we don't order the addresses and we set version
+    uint16_t srcPort = id & 0xFFFF;
+    uint16_t dstPort = id >> 16;
+
+    if (IS_IP4(srcIP))
+    {
+        version = 4;
+        protocol = proto;
+        init4(srcIP, srcPort, dstIP, dstPort, proto, mplsId, false);
+    }
+    else
+    {
+        version = 6;
+        protocol = 0;
+        init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId, false);
+    }
+
+    if (!ScVlanAgnostic())
+        vlan_tag = vlan;
+    else
+        vlan_tag = 0;
+
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     if (!ScAddressSpaceAgnostic())
         addressSpaceId = addrSpaceId;
@@ -264,7 +276,7 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char *d, int)
     mix(a,b,c);
 
     offset=36;
-    a += *(uint32_t*)(d+offset);   /* vlan, protocol, & pad */
+    a += *(uint32_t*)(d+offset);   /* vlan, protocol, & version */
     tmp = *(uint32_t *)(d+offset+4);
     if( tmp )
     {
@@ -292,7 +304,7 @@ int FlowKey::compare(const void *s1, const void *s2, size_t)
 
     a++;
     b++;
-    if(*a - *b) return 1;       /* Compares port lo/hi, vlan, protocol, pad */
+    if(*a - *b) return 1;       /* Compares port lo/hi, vlan, protocol, version */
                                 /* Compares IPv6 low[2,3] */
 
     a++;
@@ -305,7 +317,7 @@ int FlowKey::compare(const void *s1, const void *s2, size_t)
 
     a++;
     b++;
-    if(*a - *b) return 1;       /* Compares port lo/hi, vlan, protocol, pad */
+    if(*a - *b) return 1;       /* Compares port lo/hi, vlan, protocol, version */
 
     a++;
     b++;
@@ -332,7 +344,7 @@ int FlowKey::compare(const void *s1, const void *s2, size_t)
 
     a+=2;
     b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares port lo/hi, vlan, protocol, pad */
+    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares port lo/hi, vlan, protocol, version */
                                 /* Compares IPv6 low[2,3] */
 
     a+=2;
@@ -345,7 +357,7 @@ int FlowKey::compare(const void *s1, const void *s2, size_t)
 
     a+=2;
     b+=2;
-    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares port lo/hi, vlan, protocol, pad */
+    if ((*a - *b) || (*(a+1) - *(b+1))) return 1;       /* Compares port lo/hi, vlan, protocol, version */
 
     a+=2;
     b+=2;

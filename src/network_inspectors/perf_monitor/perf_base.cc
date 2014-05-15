@@ -63,7 +63,7 @@
 #include "snort_types.h"
 #include "snort_bounds.h"
 #include "perf.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 
 static void GetPktDropStats(SFBASE *, SFBASE_STATS *);
 static void DisplayBasePerfStatsConsole(SFBASE_STATS *, int);

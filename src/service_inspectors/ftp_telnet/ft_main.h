@@ -52,8 +52,6 @@ void CleanupFTPBounceTo(void *ftpBounce);
 int CheckFTPServerConfigs(SnortConfig*, FTP_SERVER_PROTO_CONF*);
 int FTPCheckConfigs(SnortConfig*, void* );
 
-void _addPortsToStream5(SnortConfig* sc, PortList& ports, int ftp);
-
 FTP_CLIENT_PROTO_CONF* get_default_ftp_client();
 FTP_SERVER_PROTO_CONF* get_default_ftp_server();
 

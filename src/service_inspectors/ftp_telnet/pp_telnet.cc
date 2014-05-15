@@ -53,7 +53,7 @@
 #include "telnet_module.h"
 #include "ftpp_return_codes.h"
 #include "snort_debug.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "detection_util.h"
 
 #define NUL 0x00

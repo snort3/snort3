@@ -80,7 +80,7 @@ The following pointers will help you get started:
     cd Snort++
     mkdir Xcode
     cd Xcode
-    cmake .. -G Xcode -DCMAKE_INSTALL_PREFIX=/path/to/install
+    cmake .. -G Xcode
     open snort.xcodeproj
 
 === Using Lua

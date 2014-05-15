@@ -24,7 +24,7 @@
 #define FLOW_CACHE_H
 
 #include "flow/flow_key.h"
-#include "stream5/stream_common.h"
+#include "stream/stream.h"
 
 class FlowCache {
 public:
@@ -39,10 +39,8 @@ public:
 
     void push(Flow*);
 
+    Flow* find(const FlowKey*);
     Flow* get(const FlowKey*);
-
-    // FIXIT Stream5Config should not be required here
-    Flow* get(Stream5Config*, const FlowKey*, bool& init);
 
     int release(Flow *, const char *reason);
 

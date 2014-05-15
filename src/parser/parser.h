@@ -27,12 +27,12 @@
 
 #include <stdio.h>
 
+#include "snort.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "decode.h"
 #include "main/policy.h"
 #include "sflsq.h"
-#include "snort.h"
 #include "util.h"
 #include "parser/cmd_line.h"
 #include "detection/sfrim.h"
@@ -113,5 +113,5 @@ void DestroyRuleTreeNode(RuleTreeNode*);
 
 void rule_index_map_print_index(int index, char* buf, int);
 
-#endif /* PARSER_H */
+#endif
 

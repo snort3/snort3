@@ -62,7 +62,7 @@
 #include "detection_util.h"
 #include "detect.h"
 #include "snort.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 
 using namespace std;
 

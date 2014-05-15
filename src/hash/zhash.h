@@ -41,7 +41,7 @@ public:
     bool touch();
 
     void* find(const void* key);
-    void* get(const void* key, bool& init);
+    void* get(const void* key);
 
     bool remove(const void* key);
     bool remove();

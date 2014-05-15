@@ -36,7 +36,7 @@
 #include "util.h"
 #include "snort.h"
 #include "sfhashfcn.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "fpdetect.h"
 #include "snort.h"
 #include "profiler.h"
@@ -143,7 +143,6 @@ int FlowCheckOption::eval(Packet *p)
     PREPROC_PROFILE_START(flowCheckPerfStats);
 
     /* Check established/unestablished first */
-    if (ScStateful())
     {
         if ((fcd->established == 1) && !(p->packet_flags & PKT_STREAM_EST))
         {
@@ -168,7 +167,6 @@ int FlowCheckOption::eval(Packet *p)
     /* Now check from client */
     if (fcd->from_client)
     {
-        if (ScStateful())
         {
             if (!(p->packet_flags & PKT_FROM_CLIENT) &&
                 (p->packet_flags & PKT_FROM_SERVER))
@@ -183,7 +181,6 @@ int FlowCheckOption::eval(Packet *p)
     /* And from server */
     if (fcd->from_server)
     {
-        if (ScStateful())
         {
             if (!(p->packet_flags & PKT_FROM_SERVER) &&
                 (p->packet_flags & PKT_FROM_CLIENT))

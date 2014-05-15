@@ -35,7 +35,7 @@ struct FlowKey
     uint16_t   port_h; /* High Port - 0 if ICMP */
     uint16_t   vlan_tag;
     uint8_t    protocol;
-    char       pad;
+    uint8_t    version;
     uint32_t   mplsLabel; /* MPLS label */
     uint16_t   addressSpaceId;
     uint16_t   addressSpaceIdPad1;
@@ -43,8 +43,13 @@ struct FlowKey
     void init(
         snort_ip_p srcIP, uint16_t srcPort,
         snort_ip_p dstIP, uint16_t dstPort,
-        char proto, uint16_t vlan, uint32_t mplsId,
-        uint16_t addrSpaceId);
+        char proto, uint16_t vlan, 
+        uint32_t mplsId, uint16_t addrSpaceId);
+
+    void init(
+        snort_ip_p srcIP, snort_ip_p dstIP, 
+        uint32_t id, char proto, uint16_t vlan, 
+        uint32_t mplsId, uint16_t addrSpaceId);
 
     // XXX If this data structure changes size, compare must be updated!
     static uint32_t hash(SFHASHFCN *p, unsigned char *d, int);
@@ -54,12 +59,12 @@ private:
     void init4(
         snort_ip_p srcIP, uint16_t srcPort,
         snort_ip_p dstIP, uint16_t dstPort,
-        char proto, uint32_t mplsId);
+        char proto, uint32_t mplsId, bool order = true);
 
     void init6(
         snort_ip_p srcIP, uint16_t srcPort,
         snort_ip_p dstIP, uint16_t dstPort,
-        char proto, uint32_t mplsId);
+        char proto, uint32_t mplsId, bool order = true);
 };
 
 #endif

@@ -32,7 +32,7 @@
 #include "profiler.h"
 #include "snort_types.h"
 #include "snort.h"
-#include "stream5/stream_tcp.h"
+#include "stream/stream.h"
 #include "framework/inspector.h"
 
 #ifdef PERF_PROFILING
@@ -302,7 +302,7 @@ static const InspectApi no_api =
         mod_ctor,
         mod_dtor
     },
-    PRIORITY_PACKET,
+    IT_PACKET,
     PROTO_BITS,
     no_init,
     nullptr, // term
@@ -310,7 +310,7 @@ static const InspectApi no_api =
     no_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     no_sum,
     no_stats,
     no_reset

@@ -36,7 +36,7 @@
 #include <sys/types.h>
 
 #include "libs/file_lib.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 
 #define     ENABLE_FILE_TYPE_IDENTIFICATION      0x1
 #define     ENABLE_FILE_SIGNATURE_SHA256         0x2

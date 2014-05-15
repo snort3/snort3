@@ -25,11 +25,8 @@
 #endif
 #include "framework/inspector.h"
 
-extern const BaseApi* nin_defrag_global;
-extern const BaseApi* nin_defrag_engine;
 extern const BaseApi* nin_normalize;
 extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_stream;
 extern const BaseApi* nin_stream_ip;
 extern const BaseApi* nin_stream_icmp;
 extern const BaseApi* nin_stream_tcp;
@@ -43,11 +40,8 @@ extern const BaseApi* nin_port_scan;
 
 const BaseApi* network_inspectors[] =
 {
-    nin_defrag_global,
-    nin_defrag_engine,
     nin_normalize,
     nin_perf_monitor,
-    nin_stream,
     nin_stream_ip,
     nin_stream_icmp,
     nin_stream_tcp,

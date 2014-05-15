@@ -645,8 +645,7 @@ struct Packet
     const uint8_t *outer_ip_data;  /* Outer IP payload pointer */
     //^^^-----------------------------
 
-    Flow* flow;   /* for tcp session tracking info... */
-    void *fragtracker;          /* for ip fragmentation tracking info... */
+    Flow* flow;   /* for session tracking */
 
     //vvv-----------------------------
     ipv4::IP4Hdr *ip4h, *orig_ip4h;

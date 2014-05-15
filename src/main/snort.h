@@ -35,10 +35,18 @@
 #include "protocols/decode.h"
 #include "sfip/sf_ipvar.h"
 #include "main/snort_config.h"
+#include "snort_types.h"
+#include "decode.h"
+#include "log/log.h"
 
 SnortConfig* reload_config();
 void snort_setup(int argc, char *argv[]);
 void snort_cleanup();
+
+void snort_thread_init(const char* intf);
+void snort_thread_term();
+
+void snort_rotate();
 
 // FIXIT may be inlined at some point; on lockdown for now
 NetworkPolicy* get_network_policy();
@@ -49,7 +57,24 @@ void set_network_policy(NetworkPolicy*);
 void set_inspection_policy(InspectionPolicy*);
 void set_ips_policy(IpsPolicy*);
 
+void CapturePacket();
+void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
+void DetectRebuiltPacket (Packet*);
+void LogRebuiltPacket (Packet*);
+
+DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, void* ft);
+
+DAQ_Verdict fail_open(void*, const DAQ_PktHdr_t*, const uint8_t*);
+DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
+
+void set_default_policy();
+
+typedef void (*MainHook_f)(Packet*);
+void set_main_hook(MainHook_f);
+
+//-------------------------------------------------------------------------
 // FIXIT most of what follows belongs in snort_config.h
+//-------------------------------------------------------------------------
 
 /*  D E F I N E S  ************************************************************/
 
@@ -82,8 +107,7 @@ typedef enum _RunFlag
 
     RUN_FLAG__MPLS_OVERLAPPING_IP = 0x00001000,     /* --enable_mpls_overlapping_ip */
     RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00002000,
-    RUN_FLAG__STATEFUL            = 0x00004000,     /* set if stream5 configured */
-    RUN_FLAG__INLINE_TEST         = 0x00008000,     /* --enable-inline-test*/
+    RUN_FLAG__INLINE_TEST         = 0x00004000,     /* --enable-inline-test*/
 
 #ifdef INLINE_FAILOPEN
     RUN_FLAG__DISABLE_FAILOPEN    = 0x00100000,     /* --disable-inline-init-failopen */
@@ -308,17 +332,6 @@ static inline int ScConfErrorOut(void)
 static inline int ScAssureEstablished(void)
 {
     return snort_conf->run_flags & RUN_FLAG__ASSURE_EST;
-}
-
-/* Set if stream5 is configured */
-static inline int ScStateful(void)
-{
-    return snort_conf->run_flags & RUN_FLAG__STATEFUL;
-}
-
-static inline unsigned ScPafMax(void)
-{
-    return snort_conf->paf_max;
 }
 
 static inline long int ScPcreMatchLimit(void)
@@ -573,5 +586,5 @@ static inline bool ScTunnelBypassEnabled (uint8_t proto)
     return !(snort_conf->tunnel_mask & proto);
 }
 
-#endif  /* SNORT_H */
+#endif
 

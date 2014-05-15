@@ -420,17 +420,6 @@ fi
 
 LIBS="$LIBS -lpthread"
 
-AC_ARG_ENABLE(ha,
-[  --enable-ha              Enable high-availability state sharing],
-       enable_ha="$enableval", enable_ha="no")
-
-AM_CONDITIONAL(BUILD_HA, test "x$enable_ha" = "xyes")
-
-if test "x$enable_ha" = "xyes"; then
-    CPPFLAGS="$CPPFLAGS -DENABLE_HA"
-    AC_DEFINE(ENABLE_HA, [1], [enable ha capable build])
-fi
-
 AC_ARG_ENABLE(non-ether-decoders,
 [  --enable-non-ether-decoders  Enable non Ethernet decoders.],
        enable_non_ether_decoders="$enableval", enable_non_ether_decoders="no")
@@ -880,13 +869,17 @@ src/loggers/Makefile    \
 src/main/Makefile \
 src/managers/Makefile \
 src/mempool/Makefile \
+src/stream/Makefile \
+src/stream/base/Makefile \
+src/stream/ip/Makefile \
+src/stream/icmp/Makefile \
+src/stream/tcp/Makefile \
+src/stream/udp/Makefile \
 src/network_inspectors/Makefile \
 src/network_inspectors/arp_spoof/Makefile \
-src/network_inspectors/defrag/Makefile \
 src/network_inspectors/normalize/Makefile \
 src/network_inspectors/perf_monitor/Makefile \
 src/network_inspectors/port_scan/Makefile \
-src/network_inspectors/stream5/Makefile \
 src/packet_io/Makefile \
 src/parser/Makefile \
 src/service_inspectors/Makefile     \

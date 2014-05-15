@@ -404,7 +404,7 @@ static const InspectApi pm_api =
         mod_ctor,
         mod_dtor
     },
-    PRIORITY_SCANNER,
+    IT_PACKET,
     PROTO_BIT__ALL,
     pm_init,
     nullptr, // term
@@ -412,7 +412,7 @@ static const InspectApi pm_api =
     pm_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     pm_sum,
     pm_stats,
     pm_reset

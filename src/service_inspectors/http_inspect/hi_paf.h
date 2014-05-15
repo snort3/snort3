@@ -31,12 +31,12 @@
 #define HI_PAF_H
 
 #include "snort_types.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 
 bool hi_paf_init(uint32_t cap);
 void hi_paf_term(void);
 
-int hi_paf_register_port(SnortConfig* sc, uint16_t port, bool client, bool server, bool auto_on);int hi_paf_register_service(SnortConfig*, uint16_t service, bool client, bool server, bool auto_on);
+int hi_paf_register_service(SnortConfig*, uint16_t service, bool client, bool server, bool auto_on);
 bool hi_paf_simple_request(Flow*);
 
 #endif

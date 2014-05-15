@@ -45,7 +45,7 @@
 #include "pp_ftp.h"
 #include "ft_main.h"
 #include "ftp_parse.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "profiler.h"
 #include "detection_util.h"
 #include "parser.h"

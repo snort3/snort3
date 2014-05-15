@@ -49,7 +49,7 @@ extern "C" {
 #include "snort.h"
 #include "main/analyzer.h"
 #include "packet_io/sfdaq.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 
 /*
  * <pcap file> ::= <pcap file hdr> [<pcap pkt hdr> <packet>]*

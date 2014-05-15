@@ -39,7 +39,7 @@
 #include "ftp_print.h"
 #include "telnet_module.h"
 #include "profiler.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "parser.h"
 #include "framework/inspector.h"
@@ -68,7 +68,7 @@ static SimpleStats gtnstats;
 // implementation
 //-------------------------------------------------------------------------
 
-static int TelnetCheckConfigs(SnortConfig* sc, void* pData)
+static int TelnetCheckConfigs(SnortConfig*, void* pData)
 {
     TELNET_PROTO_CONF* telnet_config = (TELNET_PROTO_CONF*)pData;
 
@@ -86,8 +86,6 @@ static int TelnetCheckConfigs(SnortConfig* sc, void* pData)
                 "encrypted traffic requires telnet normalization to be turned "
                 "on.\n");
     }
-
-    _addPortsToStream5(sc, telnet_config->ports, 0);
 
     return 0;
 }
@@ -292,9 +290,6 @@ Telnet::~Telnet()
 
 bool Telnet::configure(SnortConfig* sc)
 {
-    stream.set_service_filter_status(
-        sc, telnet_app_id, PORT_MONITOR_SESSION);
-
     return !TelnetCheckConfigs(sc, config);
 }
 
@@ -364,7 +359,7 @@ const InspectApi tn_api =
         nullptr,
         nullptr
     },
-    PRIORITY_APPLICATION,
+    IT_SERVICE,
     PROTO_BIT__TCP,
     tn_init,
     nullptr, // term
@@ -372,7 +367,7 @@ const InspectApi tn_api =
     tn_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     tn_sum,
     tn_stats,
     tn_reset

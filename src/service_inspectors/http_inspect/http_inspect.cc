@@ -78,7 +78,7 @@ Undefined symbols for architecture x86_64:
 #include "mstring.h"
 #include "detection_util.h"
 
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "mempool/mempool.h"
 #include "file_api/file_api.h"
@@ -220,49 +220,12 @@ static void updateConfigFromFileProcessing (HTTPINSPECT_CONF* ServerConf)
 
 }
 
-/**Add server ports from http_inspect preprocessor from snort.comf file to pass through
- * port filtering.
- */
-static void addServerConfPortsToStream5(SnortConfig* sc, void *pData)
-{
-    unsigned int i;
-
-    HTTPINSPECT_CONF *pConf = (HTTPINSPECT_CONF *)pData;
-    if (pConf)
-    {
-        for (i = 0; i < MAXPORTS; i++)
-        {
-            if (pConf->ports[i/8] & (1 << (i % 8) ))
-            {
-                bool client = (pConf->client_flow_depth > -1);
-                bool server = (pConf->server_extract_size > -1);
-                int64_t fileDepth = file_api->get_max_file_depth();
-
-                //Add port the port
-                stream.set_port_filter_status
-                    (sc, IPPROTO_TCP, (uint16_t)i, PORT_MONITOR_SESSION);
-
-                // there is a fundamental issue here in that both hi and s5
-                // can configure ports per ip independently of each other.
-                // as is, we enable paf for all http servers if any server
-                // has a flow depth enabled (per direction).  still, if eg
-                // all server_flow_depths are -1, we will only enable client.
-                if (fileDepth > 0)
-                    hi_paf_register_port(sc, (uint16_t)i, client, server, true);
-                else
-                    hi_paf_register_port(sc, (uint16_t)i, client, server, false);
-            }
-        }
-    }
-}
-
 static int HttpInspectVerifyPolicy(SnortConfig* sc, HTTPINSPECT_CONF* pData)
 {
     HttpInspectRegisterXtraDataFuncs();  // FIXIT must be done once
 
     HttpInspectAddServicesOfInterest(sc);
     updateConfigFromFileProcessing(pData);
-    addServerConfPortsToStream5(sc, pData);
     return 0;
 }
 
@@ -271,11 +234,8 @@ static int HttpInspectVerifyPolicy(SnortConfig* sc, HTTPINSPECT_CONF* pData)
  */
 static void HttpInspectAddServicesOfInterest(SnortConfig* sc)
 {
-    /* Add ordinal number for the service into stream5 */
     if (hi_app_protocol_id != SFTARGET_UNKNOWN_PROTOCOL)
     {
-        stream.set_service_filter_status(sc, hi_app_protocol_id, PORT_MONITOR_SESSION);
-
         if (file_api->get_max_file_depth() > 0)
             hi_paf_register_service(sc, hi_app_protocol_id, true, true, true);
         else
@@ -804,7 +764,7 @@ static const InspectApi hs_api =
         hs_mod_ctor,
         mod_dtor
     },
-    PRIORITY_APPLICATION,
+    IT_SERVICE,
     PROTO_BIT__TCP,
     hs_init,
     hs_term,
@@ -812,7 +772,7 @@ static const InspectApi hs_api =
     hs_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     hs_sum,
     hs_stats,
     hs_reset

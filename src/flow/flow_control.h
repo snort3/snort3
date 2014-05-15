@@ -24,21 +24,37 @@
 #define FLOW_CONTROL_H
 
 #include "flow/flow.h"
-#include "stream5/stream_common.h"
+#include "utils/stats.h"
 
-class FlowControl {
+struct FlowConfig
+{   
+    uint64_t mem_cap;
+    uint32_t max_sessions;
+    uint16_t cache_pruning_timeout;
+    uint16_t cache_nominal_timeout;
+};
+
+class FlowControl
+{
 public:
-    FlowControl(const Stream5Config*);
+    FlowControl();
     ~FlowControl();
 
 public:
-    void process_tcp(Stream5Config*, Packet*);
-    void process_udp(Stream5Config*, Packet*);
-    void process_icmp(Stream5Config*, Packet*);
-    void process_ip(Stream5Config*, Packet*);
+    // FIXIT BIND supply default inspectors until bindings are in place
+    void process_ip(Inspector*, Packet*);
+    void process_icmp(Inspector*, Packet*);
+    void process_tcp(Inspector*, Packet*);
+    void process_udp(Inspector*, Packet*);
 
-    Flow* get_flow(const FlowKey*);
+    Flow* find_flow(const FlowKey*);
     Flow* new_flow(const FlowKey*);
+
+    void init_tcp(const FlowConfig&, InspectSsnFunc);
+    void init_udp(const FlowConfig&, InspectSsnFunc);
+    void init_icmp(const FlowConfig&, InspectSsnFunc);
+    void init_ip(const FlowConfig&, InspectSsnFunc);
+    void init_exp(const FlowConfig& tcp, const FlowConfig& udp);
 
     void delete_flow(const FlowKey*);
     void delete_flow(Flow*, const char* why);
@@ -66,16 +82,10 @@ public:
     void reset_prunes(int proto);
 
 private:
-    void init_tcp(const Stream5Config*);
-    void init_udp(const Stream5Config*);
-    void init_icmp(const Stream5Config*);
-    void init_ip(const Stream5Config*);
-    void init_exp(const Stream5Config*);
-
     class FlowCache* get_cache(int proto);
     void set_key(FlowKey*, const Packet*);
 
-    void process(FlowCache*, Stream5Config*, void*, Packet*);
+    void process(FlowCache*, Inspector*, Packet*);
 
 private:
     FlowCache* tcp_cache;

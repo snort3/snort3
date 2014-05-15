@@ -114,7 +114,7 @@
 #include "packet_time.h"
 #include "sfxhash.h"
 #include "ipobj.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 
 # define CLEARED &cleared
 

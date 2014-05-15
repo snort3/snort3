@@ -12,6 +12,7 @@ Snort++ differs from Snort in the following ways:
 
 * configure --with-lib{pcap,pcre}-* -> --with-{pcap,pcre}-*
 * control socket, cs_dir, and users were deleted
+* POLICY_BY_ID_ONLY code was deleted
 
 === Command Line
 
@@ -68,6 +69,10 @@ Snort++ differs from Snort in the following ways:
 * deleted stateless inspection from ftp and telnet
 * deleted http and ftp alert options (now strictly rule based)
 * preprocessor disabled settings deleted since no longer relevant
+* sessions are always created; snort config stateful checks eliminated
+* stream5_tcp: prune_log_max deleted; to be replaced with histogram
+* stream5_tcp: max_active_responses, min_response_seconds moved to 
+  active.max_responses, min_interval
 
 === Rules
 

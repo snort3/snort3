@@ -20,6 +20,7 @@ add_library (main STATIC
     snort_debug.cc 
     snort_config.h
     snort_config.cc 
+    thread.cc 
 	${INCLUDES}
 )
 

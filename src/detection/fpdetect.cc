@@ -60,8 +60,7 @@
 #include "event_wrapper.h"
 #include "packet_io/active.h"
 #include "ips_options/ips_content.h"
-#include "defrag/defrag.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_reader.h"
 #include "ppm.h"
@@ -776,8 +775,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
                     }
                 }
 
-                if( otn && !fpSessionAlerted(p, otn) &&
-                   !fpFragAlerted(p, otn))
+                if ( otn && !fpSessionAlerted(p, otn) )
                 {
                     /*
                     **  QueueEvent
@@ -795,9 +793,6 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
                 {
                     if ( p->flow )
                         fpAddSessionAlert(p, otn);
-
-                    if ( p->fragtracker )
-                        fpAddFragAlert(p, otn);
                 }
 
                 if (tcnt >= eq->max_events)
@@ -836,6 +831,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
 **          1 if flagged
 **
 */
+// FIXIT this should include frags now that they are in session
 static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
 {
     if ( !p->flow )
@@ -866,6 +862,7 @@ static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
 **          1 if alert previously generated
 **
 */
+// FIXIT this should include frags now that they are in session
 static inline int fpSessionAlerted(Packet *p, OptTreeNode *otn)
 {
     SigInfo *si = &otn->sigInfo;

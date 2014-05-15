@@ -65,7 +65,7 @@
 #include "hi_events.h"
 #include "decode.h"
 #include "snort.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "snort_debug.h"
 
 #ifdef DEBUG_MSGS
@@ -1075,21 +1075,6 @@ static PAF_Status hi_paf (
 //--------------------------------------------------------------------
 // public stuff
 //--------------------------------------------------------------------
-
-int hi_paf_register_port (
-    SnortConfig* sc, uint16_t port, bool client, bool server, bool auto_on)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: port %u\n", __FUNCTION__, port);)
-
-    if ( client )
-        stream.register_paf_port(sc, port, true, hi_paf, auto_on);
-
-    if ( server )
-        stream.register_paf_port(sc, port, false, hi_paf, auto_on);
-
-    return 0;
-}
 
 int hi_paf_register_service (
     SnortConfig* sc, uint16_t service, bool client, bool server, bool auto_on)

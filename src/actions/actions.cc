@@ -29,7 +29,7 @@
 #include "util.h"
 #include "obfuscation.h"
 #include "signature.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "packet_io/active.h"
 #include "detection/detect.h"
 #include "detection_util.h"

@@ -1,3 +1,8 @@
+78
+-- deleted ha code; too much churn to support now
+-- refactored session and related
+-- changed inspector api (priority -> type, purge -> get ssn)
+
 77
 -- pulled in josh's changes to make on Linux
 -- updated snort.lua for bindings

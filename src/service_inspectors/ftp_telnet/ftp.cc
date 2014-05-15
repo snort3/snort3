@@ -42,7 +42,7 @@
 #include "profiler.h"
 #include "telnet.h"
 
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "file_api/file_api.h"
 #include "parser.h"
 #include "framework/inspector.h"
@@ -555,9 +555,6 @@ bool FtpServer::configure (SnortConfig* sc)
 {
     ftp_client = (ClientData*)Share::acquire(client_key);
 
-    stream.set_service_filter_status(
-        sc, ftp_app_id, PORT_MONITOR_SESSION);
-
     bind_server = ftp_server;
     bind_client = ftp_client->data;
 
@@ -716,7 +713,7 @@ static const InspectApi fs_api =
         fs_mod_ctor,
         mod_dtor
     },
-    PRIORITY_SESSION, // or PRIORITY_APPLICATION
+    IT_SESSION, // or IT_SERVICE
     PROTO_BIT__TCP,
     fs_init,
     nullptr, // term
@@ -724,7 +721,7 @@ static const InspectApi fs_api =
     fs_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     fs_sum,
     fs_stats,
     fs_reset

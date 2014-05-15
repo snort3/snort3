@@ -28,7 +28,7 @@
 #endif
 
 #include "decode.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "hi_ui_config.h"
 #include "util_utf.h"
 #include "detection_util.h"

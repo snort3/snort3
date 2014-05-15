@@ -153,7 +153,7 @@ void LogIPPkt(int type, Packet* p)
     log_mutex.unlock();
 }
 
-void PrintPacket(Packet* p)
+void snort_print(Packet* p)
 {
     if (p->iph != NULL)
     {

@@ -41,7 +41,7 @@
 #include "packet_io/sfdaq.h"
 #include "sf_iph.h"
 #include "snort.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "encode.h"
 #include "sf_protocols.h"
  

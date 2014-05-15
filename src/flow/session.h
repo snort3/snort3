@@ -23,15 +23,15 @@
 #ifndef SESSION_H
 #define SESSION_H
 
+#include "sfip/ipv6_port.h"
+
 struct Packet;
 class Flow;
 
-class Session {
+class Session
+{
 public:
     virtual ~Session() { };
-
-    // FIXIT get_policy() to be moved out of packet handlers
-    virtual void* get_policy(void*, Packet*) { return nullptr; };
 
     virtual bool setup(Packet*) { return true; };
     virtual void update_direction(char /*dir*/, snort_ip*, uint16_t /*port*/) { };

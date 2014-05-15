@@ -308,11 +308,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         codec_events::decoder_event(p, DECODE_TCP_BAD_URP);
 
     p->proto_bits |= PROTO_BIT__TCP;
-
-    if (ScIgnoreTcpPort(p->sp) || ScIgnoreTcpPort(p->dp))
-        p->packet_flags |= PKT_IGNORE;
-    else
-        TCPMiscTests(p);
+    TCPMiscTests(p);
     
     return true;
 }

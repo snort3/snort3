@@ -766,6 +766,12 @@ static const Parameter active_params[] =
     { "dst_mac", Parameter::PT_STRING, nullptr, nullptr,
       "use format '01:23:45:67:89:ab'" },
 
+    { "max_responses", Parameter::PT_INT, "0:", "255",
+      "maximum number of responses" },
+
+    { "min_interval", Parameter::PT_INT, "1:", "255",
+      "minimum number of seconds between responses" },
+
     { "react", Parameter::PT_STRING, nullptr, nullptr,
       "file containing HTTP reponse (headers and body)" },
 
@@ -789,6 +795,12 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("dst_mac") )
         ConfigDstMac(sc, v.get_string());
+
+    else if ( v.is("max_responses") )
+        sc->max_responses = v.get_long();
+
+    else if ( v.is("min_interval") )
+        sc->min_interval = v.get_long();
 
     else if ( v.is("react") )
         sc->react_page = SnortStrdup(v.get_string());
@@ -1064,7 +1076,7 @@ public:
 
 bool IpsModule::set(const char*, Value& v, SnortConfig*)
 {
-    IpsPolicy* p = get_ips_policy();
+    IpsPolicy* p = snort_conf->get_ips_policy();
 
     if ( v.is("enable_builtin_rules") )
         p->enable_builtin_rules = v.get_bool();

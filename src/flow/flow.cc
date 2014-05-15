@@ -56,7 +56,7 @@ Flow::Flow ()
     memset(this, 0, sizeof(*this));
 }
 
-Flow::Flow (int proto, bool ha)
+Flow::Flow (int proto)
 {
     memset(this, 0, sizeof(*this));
     protocol = proto;
@@ -67,12 +67,7 @@ Flow::Flow (int proto, bool ha)
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
     flowdata = (StreamFlowData*)SnortAlloc(sz);
 
-#ifdef ENABLE_HA
-    if ( ha )
-        ha_state = (HA_State*)SnortAlloc(sizeof(*ha_state));
-#else
-    UNUSED(ha);
-#endif
+    init = true;
 }
 
 Flow::~Flow ()
@@ -84,22 +79,20 @@ Flow::~Flow ()
 
     if ( session )
         delete session;
-
-#ifdef ENABLE_HA
-    if ( ha_state )
-        free(ha_state);
-#endif
 }
 
 void Flow::reset()
 {
-    session->cleanup();
+    if ( !init )
+        session->cleanup();
 
-    constexpr size_t offset = offsetof(Flow, policy);
+    constexpr size_t offset = offsetof(Flow, appDataList);
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
     boInitStaticBITOP(
         &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
+
+    init = true;
 }
 
 void Flow::clear(bool freeAppData)

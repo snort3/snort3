@@ -53,7 +53,7 @@
 #include "ftp_cmd_lookup.h"
 #include "ftp_bounce_lookup.h"
 #include "snort_debug.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "detection_util.h"
 
 #ifndef MAXHOSTNAMELEN /* Why doesn't Windows define this? */

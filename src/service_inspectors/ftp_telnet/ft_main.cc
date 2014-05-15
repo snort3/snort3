@@ -59,7 +59,7 @@
 #include "ftpp_si.h"
 #include "pp_telnet.h"
 #include "pp_ftp.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "profiler.h"
 #include "detection_util.h"
 #include "parser.h"
@@ -186,12 +186,6 @@ int CheckFTPServerConfigs(
     return 0;
 }
 
-static void _FTPTelnetAddPortsOfInterest(
-    SnortConfig* sc, FTP_SERVER_PROTO_CONF* config)
-{
-    _addPortsToStream5(sc, config->ports, 1);
-}
-
 static void _FTPTelnetAddService (SnortConfig* sc, int16_t app)
 {
     stream.register_paf_service(sc, app, true, ftp_paf, false);
@@ -223,7 +217,7 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
 #if 0
     if ( file_api->get_max_file_depth() < 0 )
     {
-        // FIXIT need to change to PRIORITY_APPLICATION and FTPTelnetChecks
+        // FIXIT need to change to IT_SERVICE and FTPTelnetChecks
         // for optimization
     }
 #endif
@@ -231,7 +225,6 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
     if ((rval = CheckFTPServerConfigs(sc, config)))
         return rval;
 
-    _FTPTelnetAddPortsOfInterest(sc, config);
     _FTPTelnetAddService(sc, ftp_app_id);
 
     return 0;
@@ -423,25 +416,5 @@ static PAF_Status ftp_paf (
 
     *fp = lf - data + 1;
     return PAF_FLUSH;
-}
-
-void _addPortsToStream5(SnortConfig* sc, PortList& ports, int ftp)
-{
-    unsigned int i;
-
-    for (i = 0; i < MAXPORTS; i++)
-    {
-        if (ports[i])
-        {
-            stream.set_port_filter_status(
-                sc, IPPROTO_TCP, (uint16_t)i, PORT_MONITOR_SESSION);
-
-            if ( ftp )
-            {
-                stream.register_paf_port(sc, (uint16_t)i, true, ftp_paf, false);
-                stream.register_paf_port(sc, (uint16_t)i, false, ftp_paf, false);
-            }
-        }
-    }
 }
 

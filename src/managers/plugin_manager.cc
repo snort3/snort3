@@ -54,9 +54,10 @@ using namespace std;
 #include "loggers/loggers.h"
 #include "ips_options/ips_options.h"
 #include "log/messages.h"
+#include "stream/stream_inspectors.h"
 #include "network_inspectors/network_inspectors.h"
-#include "search_engines/search_engines.h"
 #include "service_inspectors/service_inspectors.h"
+#include "search_engines/search_engines.h"
 #include "codecs/codec_api.h"
 #include "helpers/directory.h"
 #include "parser/parser.h"
@@ -293,6 +294,7 @@ void PluginManager::load_plugins(const char* paths)
 {
     load_list(loggers);
     load_list(ips_options);
+    load_list(stream_inspectors);
     load_list(network_inspectors);
     load_list(service_inspectors);
     load_list(search_engines);

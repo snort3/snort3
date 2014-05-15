@@ -67,7 +67,7 @@
 #include "snort_bounds.h"
 #include "detection_util.h"
 #include "framework/inspector.h"
-#include "stream5/stream_api.h"
+#include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 
 #define RPC_MAX_BUF_SIZE   256
@@ -148,8 +148,6 @@ static THREAD_LOCAL SimpleStats rdstats;
 static SimpleStats grdstats;
 
 static int ConvertRPC(RpcDecodeConfig *, RpcSsnData *, Packet *);
-static void _addPortsToStream5Filter(SnortConfig*, RpcDecodeConfig*);
-static void _addServicesToStream5Filter(SnortConfig*);
 static int RpcDecodeIsEligible(RpcDecodeConfig *, Packet *);
 
 static RpcSsnData * RpcSsnDataNew(Packet *);
@@ -232,13 +230,8 @@ static int RpcDecodeIsEligible(RpcDecodeConfig *rconfig, Packet *p)
 
         if (p->packet_flags & PKT_FROM_CLIENT)
             check_port = p->dp;
-        else if (p->packet_flags & PKT_FROM_SERVER)
-            check_port = p->sp;
-        /* The below are for the case where stream5 is not configured */
-        else if (p->sp < p->dp)
-            check_port = p->sp;
         else
-            check_port = p->dp;
+            check_port = p->sp;
 
         if ( !rconfig->ports.test(check_port) )
             return 0;
@@ -1022,27 +1015,6 @@ static int ConvertRPC(RpcDecodeConfig *rconfig, RpcSsnData *rsdata, Packet *p)
     return 0;
 }
 
-static void _addPortsToStream5Filter(
-    SnortConfig* sc, RpcDecodeConfig *rpc)
-{
-    for ( unsigned port = 0; port < rpc->ports.size(); port++ )
-    {
-        if ( rpc->ports.test(port) )
-        {
-            //Add port the port
-            stream.set_port_filter_status
-                (sc, IPPROTO_TCP, port, PORT_MONITOR_SESSION);
-        }
-    }
-}
-
-static void _addServicesToStream5Filter(
-    SnortConfig* sc)
-{
-    stream.set_service_filter_status
-        (sc, rpc_decode_app_protocol_id, PORT_MONITOR_SESSION);
-}
-
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -1051,7 +1023,6 @@ class RpcDecode : public Inspector {
 public:
     RpcDecode(RpcModule*);
 
-    bool configure(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
 
@@ -1062,13 +1033,6 @@ private:
 RpcDecode::RpcDecode(RpcModule* mod)
 {
     mod->get_ports(config.ports);
-}
-
-bool RpcDecode::configure(SnortConfig* sc)
-{
-    _addPortsToStream5Filter(sc, &config);
-    _addServicesToStream5Filter(sc);
-    return true;
 }
 
 void RpcDecode::show(SnortConfig*)
@@ -1101,9 +1065,7 @@ void RpcDecode::eval(Packet *p)
      * There is the case were stream5 configuration requires a 3 way handshake.
      * If no 3 way, then the packet flags won't be set, so don't look at it
      * since we won't be able to determeine who's the client and who's the server. */
-    if (ScStateful()
-        && ((p->packet_flags & PKT_FROM_SERVER)
-            || (!(p->packet_flags & PKT_FROM_CLIENT))))
+    if ( !(p->packet_flags & PKT_FROM_CLIENT) )
     {
         return;
     }
@@ -1211,7 +1173,7 @@ static const InspectApi rd_api =
         mod_ctor,
         mod_dtor
     },
-    PRIORITY_APPLICATION,
+    IT_SERVICE,
     PROTO_BIT__TCP,
     rd_init,
     nullptr, // term
@@ -1219,7 +1181,7 @@ static const InspectApi rd_api =
     rd_dtor,
     nullptr, // pinit
     nullptr, // pterm
-    nullptr, // purge
+    nullptr, // ssn
     rd_sum,
     rd_stats,
     rd_reset
