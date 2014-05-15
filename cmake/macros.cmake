@@ -102,9 +102,9 @@ macro( set_project_compiler_defines_if_true var flag)
 endmacro( set_project_compiler_defines_if_true )
 
 macro( set_project_compiler_defines_if_false var flag)
-    if (${var})
+    if (NOT ${var})
         add_definitions("-D${flag}")
-    endif(${var})
+    endif()
 endmacro( set_project_compiler_defines_if_false )
 
 macro( set_if_true value var)

@@ -33,7 +33,7 @@
 
 
 
-#define ETHERNET_TYPE_IPX             0x8137
+static const uint16_t ETHERNET_TYPE_IPX = 0x8137;
 
 /*
  * Function: DecodeIPX(uint8_t *, uint32_t)

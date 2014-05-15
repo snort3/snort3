@@ -456,6 +456,33 @@ typedef struct _WifiHdr
   uint16_t seq_control;
   uint8_t  addr4[6];
 } WifiHdr;
+
+
+struct EtherEapol
+{
+    uint8_t  version;  /* EAPOL proto version */
+    uint8_t  eaptype;  /* EAPOL Packet type */
+    uint16_t len;  /* Packet body length */
+};
+
+struct EAPHdr
+{
+    uint8_t code;
+    uint8_t id;
+    uint16_t len;
+};
+
+struct EapolKey
+{
+  uint8_t type;
+  uint8_t length[2];
+  uint8_t counter[8];
+  uint8_t iv[16];
+  uint8_t index;
+  uint8_t sig[16];
+};
+
+
 #endif  // NO_NON_ETHER_DECODER
 
 
@@ -478,9 +505,6 @@ typedef struct _WifiHdr
 
 #define NUM_IP_PROTOS 256
 
-/* Last updated 6/2/2010.
-   Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
-#define MIN_UNASSIGNED_IP_PROTO 143
 
 #ifndef IPPROTO_IP_MOBILITY
 #define IPPROTO_IP_MOBILITY     55
@@ -491,13 +515,10 @@ typedef struct _WifiHdr
 #ifndef IPPROTO_PIM
 #define IPPROTO_PIM             103
 #endif
-#ifndef IPPROTO_PGM
-#define IPPROTO_PGM             113
-#endif
 
 #define IP_OPTMAX               40
-#define IP6_EXTMAX               8
 #define TCP_OPTLENMAX           40 /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
+const uint32_t IP6_EXTMAX = 8;
 
 
 
@@ -554,32 +575,6 @@ typedef struct _TCPHdr
 #endif
 
 
-
-#ifndef NO_NON_ETHER_DECODER
-typedef struct _EtherEapol
-{
-    uint8_t  version;  /* EAPOL proto version */
-    uint8_t  eaptype;  /* EAPOL Packet type */
-    uint16_t len;  /* Packet body length */
-}         EtherEapol;
-
-typedef struct _EAPHdr
-{
-    uint8_t code;
-    uint8_t id;
-    uint16_t len;
-}         EAPHdr;
-
-typedef struct _EapolKey
-{
-  uint8_t type;
-  uint8_t length[2];
-  uint8_t counter[8];
-  uint8_t iv[16];
-  uint8_t index;
-  uint8_t sig[16];
-}       EapolKey;
-#endif  // NO_NON_ETHER_DECODER
 
 typedef struct _Options
 {
@@ -840,29 +835,11 @@ static inline void SetExtraData (Packet* p, uint32_t xid)
 
 // Encoder && Decoder general structs
 
-typedef struct
-{
-    uint32_t sip[4], dip[4];
-    uint8_t  zero;
-    uint8_t  protocol;
-    uint16_t len;
-} pseudoheader6;
-
-
-typedef struct
-{
-    uint32_t sip, dip;
-    uint8_t  zero;
-    uint8_t  protocol;
-    uint16_t len;
-} pseudoheader;
-
 
 class PacketClass{
 
 public:
     static void push_layer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len);
-
 
 private:
 

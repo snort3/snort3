@@ -25,7 +25,11 @@ main/libmain.a \
 parser/libparser.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
-codecs/basic/libbasic_codecs.a \
+codecs/ip/libip_codecs.a \
+codecs/link/liblink_codecs.a \
+codecs/misc/libmisc_codecs.a \
+codecs/root/libroot_codecs.a \
+codecs/libcodec_utils.a \
 stream/libstream.a \
 stream/base/libstream_base.a \
 stream/ip/libstream_ip.a \

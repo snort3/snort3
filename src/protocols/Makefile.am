@@ -12,7 +12,6 @@ arp.h \
 decode.h \
 encode.h \
 eth.h \
-ethertypes.h \
 gre.h \
 gtp.h \
 icmp4.h \
@@ -21,11 +20,10 @@ ipv4.h \
 ipv6.h \
 mpls.h \
 packet.cc \
-protocol_numbers.h \
+protocol_ids.h \
 tcp.h \
 teredo.h \
 udp.h \
-undefined_protocols.h \
 wlan.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

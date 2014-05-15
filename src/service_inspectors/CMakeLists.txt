@@ -2,6 +2,7 @@
 add_subdirectory(back_orifice)
 add_subdirectory(ftp_telnet)
 add_subdirectory(http_inspect)
+add_subdirectory(nhttp_inspect)
 add_subdirectory(rpc_decode)
 
 add_library( service_inspectors STATIC
@@ -13,5 +14,6 @@ target_link_libraries( service_inspectors
     back_orifice
     ftp_telnet
     http_inspect
+    nhttp_inspect
     rpc_decode
 )

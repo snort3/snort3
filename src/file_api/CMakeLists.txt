@@ -1,5 +1,5 @@
 
-add_subdirectory("libs")
+add_subdirectory(libs)
 
 add_library ( file_api STATIC
     file_api.h 
