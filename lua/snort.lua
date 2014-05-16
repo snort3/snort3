@@ -160,8 +160,8 @@ active =
 {
     device = 'eth0',
     attempts = 2,
-    --max_active_responses = 2,
-    --min_response_seconds = 5
+    max_responses = 0,
+    min_interval = 1
 }
 
 -- Configure DAQ related options for inline operation.
@@ -254,17 +254,6 @@ normalize =
     ip6 = true,
     icmp4 = true,
     icmp6 = true
-}
-
-defrag = { max_frags = 65536 }
-
-defrag_engine =
-{
-    policy = 'windows', 
-    detect_anomalies = true,
-    overlap_limit = 10,
-    min_frag_length = 100,
-    timeout = 180
 }
 
 arp_spoof =
@@ -480,26 +469,16 @@ ftp_client =
 
 stream =
 {
-    tcp_memcap = 123456789,
-    show_rebuilt_packets = false,
-    prune_log_max = 0,
-    paf_max = 16384,
-    
     tcp_cache = { max_sessions = 256 * K, idle_timeout = 60 },
     udp_cache = { max_sessions = 128 * K, pruning_timeout = 30 },
     ip_cache = { max_sessions = 64 * K },
     icmp_cache = { max_sessions = 32 * K },
-
-    active_response = 
-    {
-        max_responses = 0,
-        min_interval = 1
-    }
 }
 
 stream_tcp =
 {
     policy = 'windows',
+    paf_max = 16384,
 
     session_timeout = 180,
     require_3whs = 180,
@@ -542,6 +521,10 @@ stream_icmp =
 stream_ip =
 {
     session_timeout = 180,
+    policy = 'windows', 
+    max_overlaps = 10,
+    max_frags = 8191,
+    min_frag_length = 100
 }
 
 ---------------------------------------------------------------------------
