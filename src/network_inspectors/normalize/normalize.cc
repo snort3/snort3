@@ -202,9 +202,6 @@ bool Normalizer::configure(SnortConfig*)
         return true;
     }
 
-    InspectionPolicy* ips = get_inspection_policy();
-    ips->normal_mask = config.normalizer_flags;
-
     NetworkPolicy* nap = get_network_policy();
 
     if ( nap->new_ttl && nap->new_ttl < nap->min_ttl )
@@ -249,12 +246,6 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static const char* name = "normalize";
-
-int Normalize_IsEnabled (SnortConfig*, NormFlags nf)
-{
-    uint32_t mask = get_inspection_policy()->normal_mask;
-    return ( (mask & nf) != 0 );
-}
 
 static void no_init()
 {

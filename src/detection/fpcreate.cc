@@ -766,7 +766,6 @@ void fpSetDetectSearchOpt(FastPatternConfig *fp, int flag)
     fp->search_opt = flag;
 }
 
-// config detect: search-method <method>
 int fpSetDetectSearchMethod(FastPatternConfig* fp, const char* method)
 {
     fp->search_api = MpseManager::get_search_api(method);

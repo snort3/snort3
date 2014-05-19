@@ -582,6 +582,7 @@ static void IntegrityCheckRules(SnortConfig *sc)
 SnortConfig * ParseSnortConf(VarNode* tmp)
 {
     SnortConfig *sc = SnortConfNew();
+    snort_conf = sc;
 
     const char* fname = get_snort_conf();
 

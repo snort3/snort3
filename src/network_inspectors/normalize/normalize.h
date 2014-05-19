@@ -48,7 +48,10 @@ typedef enum {
     NORM_ALL             = 0x0003FFFF  // all normalizations on
 } NormFlags;
 
-int Normalize_IsEnabled(struct SnortConfig*, NormFlags);
+static inline int Normalize_IsEnabled(uint32_t mask, NormFlags nf)
+{
+    return ( (mask & nf) != 0 );
+}
 
 #endif
 

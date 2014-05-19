@@ -213,18 +213,6 @@ static inline int ScLogQuiet(void)
 }
 
 //-------------------------------------------------------------------------
-// FIXIT should be calling InspectionPolicy methods
-static inline void ScSetScannedProtocols(SnortConfig* sc, int mask)
-{
-    sc->get_inspection_policy()->scanned_proto_mask = mask;
-}
-
-static inline int ScGetScannedProtocols(SnortConfig* sc)
-{
-    return sc->get_inspection_policy()->scanned_proto_mask;
-}
-
-//-------------------------------------------------------------------------
 // FIXIT should be calling NetworkPolicy methods
 
 static inline int ScIpChecksums(void)

@@ -361,15 +361,6 @@ StreamFlowData *Stream::get_flow_data(Packet *p)
     return flow->flowdata;
 }
 
-uint16_t Stream::get_preprocessor_status_bit(void)
-{
-    static uint16_t preproc_filter_status_bit = PORT_MONITOR_SESSION;  // FIXIT bad joojoo
-
-    preproc_filter_status_bit <<= 1;
-
-    return preproc_filter_status_bit;
-}
-
 void Stream::init_active_response(Packet* p, Flow* flow)
 {
     if ( !flow ) return;

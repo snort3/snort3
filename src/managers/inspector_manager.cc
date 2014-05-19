@@ -48,7 +48,8 @@ using namespace std;
 // this distinction should be more precise when policy foo is ripped out of
 // the instances.
 
-struct PHGlobal {
+struct PHGlobal
+{
     const InspectApi& api;
     bool init;
 
@@ -59,7 +60,8 @@ struct PHGlobal {
     { return ( a->api.type < b->api.type ); };
 };
 
-struct PHClass {
+struct PHClass
+{
     const InspectApi& api;
 
     PHClass(const InspectApi& p) : api(p) { };
@@ -69,7 +71,8 @@ struct PHClass {
     { return ( a->api.type < b->api.type ); };
 };
 
-struct PHInstance {
+struct PHInstance
+{
     PHClass& pp_class;
     Inspector* handler;
 
@@ -157,6 +160,15 @@ void InspectorManager::add_plugin(const InspectApi* api)
 {
     PHGlobal* g = new PHGlobal(*api);
     s_handlers.push_back(g);
+}
+
+static const InspectApi* get_plugin(const char* keyword)
+{
+    for ( auto* p : s_handlers )
+        if ( !strcasecmp(p->api.base.name, keyword) )
+            return &p->api;
+
+    return nullptr;
 }
 
 void InspectorManager::dump_plugins()
@@ -260,8 +272,7 @@ void InspectorManager::dispatch_meta (FrameworkPolicy* fp, int type, const uint8
         p->handler->meta(type, data);
 }
 
-Inspector* InspectorManager::get_inspector(
-    const char* key, InspectSsnFunc& f)
+Inspector* InspectorManager::get_inspector(const char* key)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
@@ -273,8 +284,13 @@ Inspector* InspectorManager::get_inspector(
     if ( !p )
         return nullptr;
 
-    f = p->pp_class.api.ssn;
     return p->handler;
+} 
+
+InspectSsnFunc InspectorManager::get_session(const char* key)
+{
+    const InspectApi* api = get_plugin(key);
+    return api ? api->ssn : nullptr;
 } 
 
 //-------------------------------------------------------------------------

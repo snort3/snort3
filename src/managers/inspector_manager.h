@@ -50,7 +50,8 @@ public:
     static void reset_stats(SnortConfig*);
 
     static void instantiate(const InspectApi*, Module*, SnortConfig*);
-    static Inspector* get_inspector(const char* key, InspectSsnFunc&);
+    static Inspector* get_inspector(const char* key);
+    static InspectSsnFunc get_session(const char* key);
 
     static bool configure(SnortConfig*);
     static void print_config(SnortConfig*);

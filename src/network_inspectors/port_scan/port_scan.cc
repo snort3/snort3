@@ -873,15 +873,13 @@ PortScan::~PortScan()
         Share::release(global);
 }
 
-bool PortScan::configure(SnortConfig* sc)
+bool PortScan::configure(SnortConfig*)
 {
     // FIXIT use fixed base file name
     config->logfile = SnortStrdup("portscan.log");
 
     global = (PsData*)Share::acquire(PS_GLOBAL);
     config->common = global->data;
-
-    ScSetScannedProtocols(sc, config->detect_scans);
     return true;
 }
 

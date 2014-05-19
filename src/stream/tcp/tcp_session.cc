@@ -647,8 +647,15 @@ static inline void InitFlushMgr(
     mgr->auto_disable = auto_disable;
 
     UpdateFlushMgr(mgr, flush_point_list, 0, paf_max);
+}
 
-    if ( Normalize_IsEnabled(snort_conf, NORM_TCP_IPS) )
+static inline void pInitFlushMgr(
+    Flow* flow, FlushMgr *mgr, FlushPointList *flush_point_list,
+    uint8_t policy, uint8_t auto_disable, unsigned paf_max)
+{
+    InitFlushMgr(mgr, flush_point_list, policy, auto_disable, paf_max);
+
+    if ( Normalize_IsEnabled(flow->normal_mask, NORM_TCP_IPS) )
     {
         if ( policy == STREAM_FLPOLICY_FOOTPRINT )
             mgr->flush_policy = STREAM_FLPOLICY_FOOTPRINT_IPS;
@@ -659,7 +666,7 @@ static inline void InitFlushMgr(
 }
 
 static inline void InitFlushMgrByService (
-    StreamTracker* pst, int16_t service, bool c2s, uint8_t flush_policy)
+    Flow* flow, StreamTracker* pst, int16_t service, bool c2s, uint8_t flush_policy)
 {
     uint8_t registration, auto_disable = 0;
     bool flush = (flush_policy != STREAM_FLPOLICY_IGNORE);
@@ -678,7 +685,7 @@ static inline void InitFlushMgrByService (
         s5_paf_setup(&pst->paf_state, registration);
         auto_disable = !flush;
     }   
-    InitFlushMgr(&pst->flush_mgr, &pst->config->flush_point_list,
+    pInitFlushMgr(flow, &pst->flush_mgr, &pst->config->flush_point_list,
         flush_policy, auto_disable, pst->config->paf_max);
 }
 
@@ -761,7 +768,7 @@ bool Stream5ActivatePafTcp (Flow* lwssn, bool to_server)
     switch ( fm->flush_policy)
     {
     case STREAM_FLPOLICY_IGNORE:
-        InitFlushMgr(fm, &trk->config->flush_point_list,
+        pInitFlushMgr(lwssn, fm, &trk->config->flush_point_list,
             STREAM_FLPOLICY_PROTOCOL, 0, trk->config->paf_max);
         break;
 
@@ -1571,9 +1578,14 @@ static inline void NormalDropPacket (Packet*)
     Active_DropPacket();
 }
 
+static inline bool Normalize_IsEnabled(Packet* p, NormFlags f)
+{
+    return p->flow->norm_is_enabled(f);
+}
+
 static inline int NormalDropPacketIf (Packet* p, NormFlags f)
 {
-    if ( Normalize_IsEnabled(snort_conf, f) )
+    if ( Normalize_IsEnabled(p, f) )
     {
         NormalDropPacket(p);
         normStats[PC_TCP_BLOCK]++;
@@ -1627,7 +1639,7 @@ static inline int NormalTrimPayloadIf (
     Packet* p, NormFlags f, uint16_t max, TcpDataBlock* tdb
 ) {
     if (
-        Normalize_IsEnabled(snort_conf, f) &&
+        Normalize_IsEnabled(p, f) &&
         p->dsize > max )
     {
         NormalTrimPayload(p, max, tdb);
@@ -1862,7 +1874,7 @@ static inline int ValidTimestamp(StreamTracker *talker,
 
 #if 0
     if ( p->tcph->th_flags & TH_ACK &&
-        Normalize_IsEnabled(snort_conf, NORM_TCP_OPT) )
+        Normalize_IsEnabled(p, NORM_TCP_OPT) )
     {
         // FIXTHIS validate tsecr here (check that it was previously sent)
         // checking for the most recent ts is easy enough must check if
@@ -2146,7 +2158,7 @@ static inline void UpdateSsn(
          // forces seq-- on ACK of FIN.  :(
          rcv->s_mgr.state == TCP_STATE_ESTABLISHED &&
          rcv->s_mgr.state_queue == TCP_STATE_NONE &&
-         Normalize_IsEnabled(snort_conf, NORM_TCP_IPS) )
+         Normalize_IsEnabled(p, NORM_TCP_IPS) )
     {
         // walk the seglist until a gap or tdb->ack whichever is first
         // if a gap exists prior to ack, move ack back to start of gap
@@ -2743,7 +2755,7 @@ static inline int flush_stream(
     TcpSession *tcpssn, StreamTracker *st, Packet *p,
     snort_ip_p sip, snort_ip_p dip, uint16_t sp, uint16_t dp, uint32_t dir)
 {
-    if ( Normalize_IsEnabled(snort_conf, NORM_TCP_IPS) )
+    if ( Normalize_IsEnabled(p, NORM_TCP_IPS) )
     {
         uint32_t bytes = get_q_sequenced(st);
         return flush_to_seq(tcpssn, st, bytes, p, sip, dip, sp, dp, dir);
@@ -3367,7 +3379,7 @@ static uint32_t Stream5GetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
     {
         if(p->tcp_options[i].code == TCPOPT_TIMESTAMP)
         {
-            if ( strip && Normalize_IsEnabled(snort_conf, NORM_TCP_OPT) )
+            if ( strip && Normalize_IsEnabled(p, NORM_TCP_OPT) )
             {
                 NormalStripTimeStamp(p, i);
             }
@@ -3861,7 +3873,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
         int last = 0;
     );
 
-    ips_data = Normalize_IsEnabled(snort_conf, NORM_TCP_IPS);
+    ips_data = Normalize_IsEnabled(p, NORM_TCP_IPS);
     if ( ips_data )
         reassembly_policy = REASSEMBLY_POLICY_FIRST;
     else
@@ -5165,12 +5177,16 @@ static int NewTcpSession(
          * the server port and we're reassembling the client side.
          * That should make this almost as clear as opaque mud!
          */
+        // FIXIT these used to fall back to port configs which were deleted
+        // need to ensure that we can track a session w/o doing reassembly
+        // is else init flush to ignore needed?
         if (tmp->server.config->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
         {
             StreamTracker* pst = &tmp->server;
             uint8_t flush_policy =
                 pst->config->flush_config_protocol[lwssn->s5_state.application_protocol].client.flush_policy;
-            InitFlushMgrByService(pst, lwssn->s5_state.application_protocol, true, flush_policy);
+            InitFlushMgrByService(
+                lwssn, pst, lwssn->s5_state.application_protocol, true, flush_policy);
         }
 
         if (tmp->client.config->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
@@ -5178,7 +5194,8 @@ static int NewTcpSession(
             StreamTracker* pst = &tmp->client;
             uint8_t flush_policy =
                 pst->config->flush_config_protocol[lwssn->s5_state.application_protocol].server.flush_policy;
-            InitFlushMgrByService(pst, lwssn->s5_state.application_protocol, false, flush_policy);
+            InitFlushMgrByService(
+                lwssn, pst, lwssn->s5_state.application_protocol, false, flush_policy);
         }
 
 #ifdef DEBUG_STREAM5
@@ -5673,7 +5690,7 @@ static int ProcessTcp(
         if (StreamGetPolicy(lwssn, config, FROM_CLIENT) !=
             STREAM_POLICY_MACOS)
         {
-            if ( Normalize_IsEnabled(snort_conf, NORM_TCP_TRIM) )
+            if ( Normalize_IsEnabled(p, NORM_TCP_TRIM) )
             {
                 NormalTrimPayload(p, 0, tdb); // remove data on SYN
             }
@@ -5866,7 +5883,7 @@ static int ProcessTcp(
             talker->s_mgr.sub_state |= SUB_RST_SENT;
             Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_CLOSING);
 
-            if ( Normalize_IsEnabled(snort_conf, NORM_TCP_IPS) )
+            if ( Normalize_IsEnabled(p, NORM_TCP_IPS) )
                 listener->s_mgr.state = TCP_STATE_CLOSED;
             /* else for ids:
                 leave listener open, data may be in transit */
@@ -6198,7 +6215,7 @@ static int ProcessTcp(
             // window is zero in one direction until we've seen both sides.
             if ( !(lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM) )
             {
-                if ( Normalize_IsEnabled(snort_conf, NORM_TCP_TRIM) )
+                if ( Normalize_IsEnabled(p, NORM_TCP_TRIM) )
                 {
                     // sender of syn w/mss limits payloads from peer
                     // since we store mss on sender side, use listener mss
@@ -6215,7 +6232,7 @@ static int ProcessTcp(
 
                     NormalTrimPayload(p, max, tdb);
                 }
-                if ( Normalize_IsEnabled(snort_conf, NORM_TCP_ECN_STR) )
+                if ( Normalize_IsEnabled(p, NORM_TCP_ECN_STR) )
                     NormalCheckECN(tcpssn, p);
             }
             /*
@@ -6265,7 +6282,7 @@ static int ProcessTcp(
 
                 if ((listener->flush_mgr.flush_policy != STREAM_FLPOLICY_PROTOCOL) &&
                     (listener->flush_mgr.flush_policy != STREAM_FLPOLICY_PROTOCOL_IPS) &&
-                    Normalize_IsEnabled(snort_conf, NORM_TCP_IPS))
+                    Normalize_IsEnabled(p, NORM_TCP_IPS))
                 {
                     p->packet_flags |= PKT_PDU_TAIL;
                 }
@@ -7354,7 +7371,7 @@ char Stream5SetReassemblyTcp(
             }
             else
             {
-                InitFlushMgr(&tcpssn->client.flush_mgr,
+                pInitFlushMgr(lwssn, &tcpssn->client.flush_mgr,
                     &tcpssn->client.config->flush_point_list,
                     flush_policy, 0, tcpssn->client.config->paf_max);
             }
@@ -7371,7 +7388,7 @@ char Stream5SetReassemblyTcp(
             }
             else
             {
-                InitFlushMgr(&tcpssn->server.flush_mgr,
+                pInitFlushMgr(lwssn, &tcpssn->server.flush_mgr,
                     &tcpssn->server.config->flush_point_list,
                     flush_policy, 0, tcpssn->server.config->paf_max);
             }
@@ -7382,14 +7399,14 @@ char Stream5SetReassemblyTcp(
     {
         if (dir & SSN_DIR_CLIENT)
         {
-            InitFlushMgr(&tcpssn->client.flush_mgr,
+            pInitFlushMgr(lwssn, &tcpssn->client.flush_mgr,
                 &tcpssn->client.config->flush_point_list,
                 flush_policy, 0, tcpssn->client.config->paf_max);
         }
 
         if (dir & SSN_DIR_SERVER)
         {
-            InitFlushMgr(&tcpssn->server.flush_mgr,
+            pInitFlushMgr(lwssn, &tcpssn->server.flush_mgr,
                 &tcpssn->server.config->flush_point_list,
                 flush_policy, 0, tcpssn->server.config->paf_max);
         }

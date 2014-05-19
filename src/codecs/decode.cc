@@ -91,11 +91,8 @@ uint32_t EXTRACT_32BITS (u_char *p)
 }
 #endif /* WORDS_MUSTALIGN && !__GNUC__ */
 
-
-
 static inline void CheckIPv4_MinTTL(Packet *p, uint8_t ttl)
 {
-
     // this sequence of tests is best for the "normal" case where
     // the packet ttl is >= the configured min (the default is 1)
     if( ttl < ScMinTTL() )
@@ -110,8 +107,6 @@ static inline void CheckIPv4_MinTTL(Packet *p, uint8_t ttl)
         }
     }
 }
-
-
 
 static inline void CheckIPv6_MinTTL(Packet *p, uint8_t hop_limit)
 {
@@ -129,8 +124,6 @@ static inline void CheckIPv6_MinTTL(Packet *p, uint8_t hop_limit)
         }
     }
 }
-
-
 
 /* Decoding of ttl/hop_limit is based on the policy min_ttl */
 void DecodePolicySpecific(Packet *p)

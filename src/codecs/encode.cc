@@ -41,6 +41,7 @@
 #include "packet_io/sfdaq.h"
 #include "sf_iph.h"
 #include "snort.h"
+#include "stream/stream.h"
 #include "stream/stream_api.h"
 #include "encode.h"
 #include "sf_protocols.h"
@@ -50,8 +51,6 @@
 #include "protocols/eth.h"
 #include "protocols/gtp.h"
 #include "codecs/checksum.h"
- 
-
 
 #define GET_IP_HDR_LEN(h) (((h)->ip_verhl & 0x0f) << 2)
 #define GET_TCP_HDR_LEN(h) (((h)->th_offx2 & 0xf0) >> 2)

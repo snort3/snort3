@@ -85,15 +85,6 @@ void codec_events::exec_hop_drop (Packet* p, int sid)
         ErrorMessage("%d:%d\n", GID_DECODE, sid);
 
     SnortEventqAdd(GID_DECODE, sid);
-
-    if ( ScNormalDrop(NORM_IP6_TTL) )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-           "Dropping bad packet (IP6 hop limit)\n"););
-        p->error_flags |= PKT_ERR_BAD_TTL;
-        Active_DropPacket();
-//        dc.bad_ttl++;
-    }
 }
 
 void codec_events::exec_ttl_drop (Packet *p, int sid)
@@ -105,15 +96,6 @@ void codec_events::exec_ttl_drop (Packet *p, int sid)
         ErrorMessage("%d:%d\n", GID_DECODE, sid);
 
     SnortEventqAdd(GID_DECODE, sid);
-
-    if ( ScNormalDrop(NORM_IP4_TTL) )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-           "Dropping bad packet (IP4 TTL)\n"););
-        p->error_flags |= PKT_ERR_BAD_TTL;
-        Active_DropPacket();
-//        dc.bad_ttl++;
-    }
 }
 
 void codec_events::exec_icmp_chksm_drop (Packet*)
@@ -136,10 +118,4 @@ void codec_events::decoder_alert_encapsulated(
 
     p->greh = NULL;
 }
-
-int codec_events::ScNormalDrop (NormFlags nf)
-{
-    return !Normalize_IsEnabled(snort_conf, nf);
-}
-
 

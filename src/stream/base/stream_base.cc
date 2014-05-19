@@ -119,16 +119,6 @@ Stream5GlobalConfig::Stream5GlobalConfig()
 }
 
 //-------------------------------------------------------------------------
-// class stuff
-//-------------------------------------------------------------------------
-
-// FIXIT BIND replace these with binder 
-static Inspector* ip_hand = nullptr;
-static Inspector* icmp_hand = nullptr;
-static Inspector* tcp_hand = nullptr;
-static Inspector* udp_hand = nullptr;
-
-//-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
 
@@ -161,22 +151,22 @@ void StreamBase::pinit()
 
     if ( config->tcp_cfg.max_sessions )
     {
-        tcp_hand = InspectorManager::get_inspector("stream_tcp", f);
+        f = InspectorManager::get_session("stream_tcp");
         flow_con->init_tcp(config->tcp_cfg, f);
     }
     if ( config->udp_cfg.max_sessions )
     {
-        udp_hand = InspectorManager::get_inspector("stream_udp", f);
+        f = InspectorManager::get_session("stream_udp");
         flow_con->init_udp(config->udp_cfg, f);
     }
     if ( config->ip_cfg.max_sessions )
     {
-        ip_hand = InspectorManager::get_inspector("stream_ip", f);
+        f = InspectorManager::get_session("stream_ip");
         flow_con->init_ip(config->ip_cfg, f);
     }
     if ( config->icmp_cfg.max_sessions )
     {
-        icmp_hand = InspectorManager::get_inspector("stream_icmp", f);
+        f = InspectorManager::get_session("stream_icmp");
         flow_con->init_icmp(config->icmp_cfg, f);
     }
     if ( config->tcp_cfg.max_sessions || config->udp_cfg.max_sessions )
@@ -214,22 +204,22 @@ void StreamBase::eval(Packet *p)
     switch ( GET_IPH_PROTO(p) )
     {
     case IPPROTO_TCP:
-        flow_con->process_tcp(tcp_hand, p);
+        flow_con->process_tcp(p);
         t_stats.tcp++;
         break;
 
     case IPPROTO_UDP:
-        flow_con->process_udp(udp_hand, p);
+        flow_con->process_udp(p);
         t_stats.udp++;
         break;
 
     case IPPROTO_ICMP:
-        flow_con->process_icmp(icmp_hand, p);
+        flow_con->process_icmp(p);
         t_stats.icmp++;
         break;
 
     case IPPROTO_IP:
-        flow_con->process_ip(ip_hand, p);
+        flow_con->process_ip(p);
         t_stats.ip++;
         break;
 

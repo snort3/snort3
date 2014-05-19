@@ -276,14 +276,6 @@ public:
      */
     static int16_t set_application_protocol_id(Flow*, int16_t appId);
 
-    /*  Get an independent bit to allow an entity to enable and
-     *  disable port session tracking and syn session creation
-     *  without affecting the status of set by other entities.
-     *  Returns a bitmask (with the bit range 3-15) or 0, if no bits
-     *  are available.
-     */
-    static uint16_t get_preprocessor_status_bit(void);
-
     // initialize response count and expiration time
     static void init_active_response(Packet*, Flow*);
 
@@ -307,20 +299,6 @@ public:
     static bool is_paf_active(Flow*, bool toServer);
     static bool activate_paf(Flow*, bool toServer);
 
-    /*  Set flag to force sessions to be created on SYN packets.
-     *  This function can only be used with independent bits
-     *  acquired from get_preprocessor_status_bit. If this is called
-     *  during parsing a preprocessor configuration, make sure to
-     *  set the parsing argument to 1.
-     */
-    static void set_tcp_syn_session_status(SnortConfig* sc, uint16_t status);
-    /*  Unset flag that forces sessions to be created on SYN
-     *  packets. This function can only be used with independent
-     *  bits acquired from get_preprocessor_status_bit. If this is
-     *  called during parsing a preprocessor configuration, make
-     *  sure to set the parsing argument to 1.
-     */
-    static void unset_tcp_syn_session_status(SnortConfig* sc, uint16_t status);
     /* Turn off inspection for potential session.
      * Adds session identifiers to a hash table.
      * TCP only.
@@ -430,24 +408,7 @@ private:
     uint8_t s5_cb_idx;
 };
 
-/**Port Inspection States. Port can be either ignored,
- * or inspected or session tracked. The values are bitmasks.
- */
-typedef enum {
-    /**Dont monitor the port. */
-    PORT_MONITOR_NONE = 0x00,
-
-    /**Inspect the port. */
-    PORT_MONITOR_INSPECT = 0x01,
-
-    /**perform session tracking on the port. */
-    PORT_MONITOR_SESSION = 0x02
-
-} PortMonitorStates;
-
 extern Stream stream;
-
-#define PORT_MONITOR_SESSION_BITS   0xFFFE
 
 #endif
 

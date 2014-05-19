@@ -32,6 +32,7 @@
 #include "flow/session.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
+#include "main/binder.h"
 
 FlowControl::FlowControl()
 {
@@ -223,7 +224,7 @@ static bool is_bidirectional(Flow* flow)
     return (flow->s5_state.session_flags & bidir) == bidir;
 }
 
-void FlowControl::process(FlowCache* cache, Inspector* ins, Packet* p)
+void FlowControl::process(FlowCache* cache, Packet* p)
 {
     FlowKey key;
     set_key(&key, p);
@@ -235,25 +236,7 @@ void FlowControl::process(FlowCache* cache, Inspector* ins, Packet* p)
 
     if ( flow->init )
     {
-#if 0
-        // FIXIT BIND this is where bindings are used to set
-        // inspectors on session:
-        if ( bindings )
-        {
-            // -- must set client and server session inspectors
-            // -- must set all bound service inspectors 
-            //    (service inspectors also set later by auto id)
-        }
-        else
-#endif
-        {
-            // default case
-            flow->client = ins;
-            flow->server = ins;
-        }
-        // -- all inspectors must be ref counted when set
-        flow->client->add_ref();
-        flow->server->add_ref();
+        Binder::init_flow(flow);
 
         if ( !flow->session->setup(p) )
             return;
@@ -292,12 +275,12 @@ void FlowControl::init_tcp(
     }
 }
 
-void FlowControl::process_tcp(Inspector* user, Packet* p)
+void FlowControl::process_tcp(Packet* p)
 {
     if( !p->tcph || !tcp_cache )
         return;
 
-    process(tcp_cache, user, p);
+    process(tcp_cache, p);
 }
 
 //-------------------------------------------------------------------------
@@ -324,12 +307,12 @@ void FlowControl::init_udp(
     }
 }
 
-void FlowControl::process_udp(Inspector* user, Packet* p)
+void FlowControl::process_udp(Packet* p)
 {
     if( !p->udph || !udp_cache )
         return;
 
-    process(udp_cache, user, p);
+    process(udp_cache, p);
 }
 
 //-------------------------------------------------------------------------
@@ -356,16 +339,16 @@ void FlowControl::init_icmp(
     }
 }
 
-void FlowControl::process_icmp(Inspector* user, Packet* p)
+void FlowControl::process_icmp(Packet* p)
 {
     if ( !p->icmph )
         return;
 
     if ( icmp_cache )
-        process(icmp_cache, user, p);
+        process(icmp_cache, p);
 
     else
-        process_ip(user, p);
+        process_ip(p);
 }
 
 //-------------------------------------------------------------------------
@@ -392,12 +375,12 @@ void FlowControl::init_ip(
     }
 }
 
-void FlowControl::process_ip(Inspector* user, Packet* p)
+void FlowControl::process_ip(Packet* p)
 {
     if ( !p->iph || !ip_cache )
         return;
 
-    process(ip_cache, user, p);
+    process(ip_cache, p);
 }
 
 //-------------------------------------------------------------------------

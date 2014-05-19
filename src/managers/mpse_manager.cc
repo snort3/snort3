@@ -87,7 +87,8 @@ const MpseApi* MpseManager::get_search_api(const char* name)
 }
 
 Mpse* MpseManager::get_search_engine(
-    SnortConfig* sc,const MpseApi* api,
+    SnortConfig* sc,
+    const MpseApi* api,
     bool use_gc,
     void (*user_free)(void*),
     void (*tree_free)(void**),

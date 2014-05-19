@@ -70,5 +70,12 @@ struct Binding
     { role = BR_EITHER; action = BA_INSPECT; };
 };
 
+class Binder
+{
+public:
+    static void init();
+    static void init_flow(class Flow*);
+};
+
 #endif
 

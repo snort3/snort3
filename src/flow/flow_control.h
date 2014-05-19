@@ -41,11 +41,10 @@ public:
     ~FlowControl();
 
 public:
-    // FIXIT BIND supply default inspectors until bindings are in place
-    void process_ip(Inspector*, Packet*);
-    void process_icmp(Inspector*, Packet*);
-    void process_tcp(Inspector*, Packet*);
-    void process_udp(Inspector*, Packet*);
+    void process_ip(Packet*);
+    void process_icmp(Packet*);
+    void process_tcp(Packet*);
+    void process_udp(Packet*);
 
     Flow* find_flow(const FlowKey*);
     Flow* new_flow(const FlowKey*);
@@ -85,7 +84,7 @@ private:
     class FlowCache* get_cache(int proto);
     void set_key(FlowKey*, const Packet*);
 
-    void process(FlowCache*, Inspector*, Packet*);
+    void process(FlowCache*, Packet*);
 
 private:
     FlowCache* tcp_cache;

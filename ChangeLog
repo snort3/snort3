@@ -1,3 +1,8 @@
+80
+-- deleted port monitor foo; will be obviated by binder
+-- removed ttl norm checks from codecs; made no sense; drop iff rule is drop
+-- moved stream_* bindings to binder
+
 79
 -- pulled in latest codecs
 

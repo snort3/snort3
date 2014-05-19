@@ -45,8 +45,6 @@ namespace codec_events
     void decoder_alert_encapsulated(
         Packet *p, int sid, const uint8_t *pkt, uint32_t len);
 
-    int ScNormalDrop (NormFlags nf);
-
 } //namespace codec_events
 
 

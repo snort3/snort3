@@ -33,6 +33,7 @@
 #include "sfip/ipv6_port.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
+#include "normalize/normalize.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
@@ -150,6 +151,12 @@ public:
     void markup_packet_flags(Packet*);
     void set_direction(Packet*);
 
+    void set_normalizations(uint32_t m)
+    { normal_mask = m; };
+
+    bool norm_is_enabled(uint32_t b)
+    { return Normalize_IsEnabled(normal_mask, (NormFlags)b); };
+
     void set_expire(Packet*, uint32_t timeout);
     int get_expire(Packet*);
     bool expired(Packet*);
@@ -182,6 +189,7 @@ public:  // FIXIT privatize if possible
     snort_ip server_ip; // or uint8_t to reduce sizeof from 24 to 20
 
     uint64_t expire_time;
+    uint32_t normal_mask;
 
     uint16_t client_port;
     uint16_t server_port;

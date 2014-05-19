@@ -100,6 +100,7 @@ using namespace std;
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
 #include "main/analyzer.h"
+#include "main/binder.h"
 #include "log/sf_textlog.h"
 #include "log/log_text.h"
 #include "time/periodic.h"
@@ -120,8 +121,8 @@ using namespace std;
 
 //-------------------------------------------------------------------------
 
-THREAD_LOCAL SnortConfig* snort_conf = NULL;
-static SnortConfig* snort_cmd_line_conf = NULL;
+THREAD_LOCAL SnortConfig* snort_conf = nullptr;
+static SnortConfig* snort_cmd_line_conf = nullptr;
 
 static bool snort_initializing = true;
 static int snort_exiting = 0;
@@ -403,6 +404,7 @@ static void SnortInit(int argc, char **argv)
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify();
+    Binder::init();
 
     if (snort_conf->file_mask != 0)
         umask(snort_conf->file_mask);
