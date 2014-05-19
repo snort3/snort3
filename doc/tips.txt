@@ -30,6 +30,7 @@ The following pointers will help you get started:
 * stage changed file for commit:
 
     git add -u 
+    git add -p
 
 * commit staged files:
 
@@ -38,11 +39,13 @@ The following pointers will help you get started:
 * pull changes from a remote:
 
     git pull <name>
+    git pull <name> <branch>
 
 * push changes to remote:
 
     git push <name>
     git push <username>@<host>:Snort++
+    git push <name> <branch>
 
 * create a branch and switch to it:
 
@@ -92,6 +95,12 @@ The following pointers will help you get started:
     ccmake
     cmake ..
 
+* An alternate method for building with cmake and make is to run the
+  configure_cmake.sh script.  It will automatically create and populate
+  a new directory named 'build'.
+
+    ./configure_cmake.sh --prefix=/home/rcombs/install
+
 * build with Xcode, do this:
 
     cd Snort++
@@ -99,6 +108,14 @@ The following pointers will help you get started:
     cd Xcode
     cmake .. -G Xcode
     open snort.xcodeproj
+
+*
+ An alternate method for building with xcode is to run the
+  configure_cmake.sh script.  It will automatically create and populate
+  a new durectory named 'build'.
+
+    ./configure_cmake --generator=Xcode --prefix=/home/rcombs/install
+
 
 === Using Lua
 

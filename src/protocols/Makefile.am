@@ -13,13 +13,11 @@ decode.h \
 encode.h \
 eth.h \
 gre.h \
-gtp.h \
 icmp4.h \
 icmp6.h \
 ipv4.h \
 ipv6.h \
 mpls.h \
-packet.cc \
 protocol_ids.h \
 tcp.h \
 teredo.h \

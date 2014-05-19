@@ -26,6 +26,7 @@
 
 
 #include "snort.h"
+#include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/checksum.h"
@@ -47,6 +48,9 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
 
     // DELETE from here and below
@@ -437,47 +441,69 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
 }
 
 
+/******************************************************************
+ ******************** E N C O D E R  ******************************
+ ******************************************************************/
 
-#if 0
 
-EncStatus UN6_Encode (EncState* enc, Buffer*, Buffer* out)
+namespace
 {
-    uint8_t* p;
-    uint8_t* hi = enc->p->layers[enc->layer-1].start;
-    IcmpHdr* ho = (IcmpHdr*)(out->base + out->end);
-    pseudoheader6 ps6;
-    int len;
 
-#ifdef DEBUG
-    if ( (int)enc->type < (int) EncodeType::ENC_UNR_NET )
-        return EncStatus::ENC_BAD_OPT;
-#endif
+typedef struct {
+    uint8_t type;
+    uint8_t code;
+    uint16_t cksum;
+    uint32_t unused;
+} IcmpHdr;
 
-    enc->proto = IPPROTO_ICMPV6;
+} // namespace
 
-    UPDATE_BOUND(out, sizeof(*ho));
+
+bool Icmp6Codec::encode (EncState* enc, Buffer* out, const uint8_t *raw_in)
+{
+    checksum::Pseudoheader6 ps6;
+    IcmpHdr* ho;
+
+    // ip + udp headers are copied separately because there
+    // may be intervening extension headers which aren't copied
+
+
+    // copy first 8 octets of original ip data (ie udp header)
+    // TBD: copy up to minimum MTU worth of data
+    if (!update_buffer(out, icmp4::unreach_data()))
+        return false;
+    memcpy(out->base, raw_in, icmp4::unreach_data());
+
+
+    // copy original ip header
+    if (!update_buffer(out, enc->ip_len))
+        return false;
+
+    // TBD should be able to elminate enc->ip_hdr by using layer-2
+    memcpy(out->base, enc->ip_hdr, enc->ip_len);
+    ((ipv6::IP6RawHdr*)out->base)->ip6nxt = IPPROTO_UDP;
+
+
+    if (!update_buffer(out, sizeof(*ho)))
+        return false;
+
+    ho = reinterpret_cast<IcmpHdr*>(out->base);
     ho->type = 1;   // dest unreachable
     ho->code = 4;   // port unreachable
     ho->cksum = 0;
     ho->unused = 0;
 
-    // ip + udp headers are copied separately because there
-    // may be intervening extension headers which aren't copied
+    int len;
 
-    // copy original ip header
-    p = out->base + out->end;
-    UPDATE_BOUND(out, enc->ip_len);
-    // TBD should be able to elminate enc->ip_hdr by using layer-2
-    memcpy(p, enc->ip_hdr, enc->ip_len);
-    ((ipv6::IP6RawHdr*)p)->ip6nxt = IPPROTO_UDP;
+#ifdef DEBUG
+    if ( (int)enc->type < (int) EncodeType::ENC_UNR_NET )
+        return false;
+#endif
 
-    // copy first 8 octets of original ip data (ie udp header)
-    // TBD: copy up to minimum MTU worth of data
-    p = out->base + out->end;
-    UPDATE_BOUND(out, ICMP_UNREACH_DATA);
-    memcpy(p, hi, ICMP_UNREACH_DATA);
+    enc->proto = IPPROTO_ICMPV6;
 
-    len = BUFF_DIFF(out, ho);
+
+    len = buff_diff(out, (uint8_t *)ho);
 
     memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.s6_addr, sizeof(ps6.sip));
     memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.s6_addr, sizeof(ps6.dip));
@@ -485,19 +511,19 @@ EncStatus UN6_Encode (EncState* enc, Buffer*, Buffer* out)
     ps6.protocol = IPPROTO_ICMPV6;
     ps6.len = htons((uint16_t)(len));
 
-    ho->cksum = in_chksum_icmp6(&ps6, (uint16_t *)ho, len);
+    ho->cksum = checksum::icmp_cksum((uint16_t *)ho, len, &ps6);
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-EncStatus ICMP6_Update (Packet* p, Layer* lyr, uint32_t* len)
+bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
 {
     IcmpHdr* h = (IcmpHdr*)(lyr->start);
 
     *len += sizeof(*h) + p->dsize;
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
-        pseudoheader6 ps6;
+        checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
         memcpy(ps6.sip, &p->ip6h->ip_src.ip32, sizeof(ps6.sip));
@@ -505,18 +531,19 @@ EncStatus ICMP6_Update (Packet* p, Layer* lyr, uint32_t* len)
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)*len);
-        h->cksum = in_chksum_icmp6(&ps6, (uint16_t *)h, *len);
+        h->cksum = checksum::icmp_cksum((uint16_t *)h, *len, &ps6);
     }
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-void ICMP6_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+void Icmp6Codec::format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 {
     // TBD handle nested icmp6 layers
     c->icmp6h = (ICMP6Hdr*)lyr->start;
 }
 
+#if 0
 
 /*
  * CHECKSUM
@@ -604,8 +631,13 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *ph,
 
   return (unsigned short)(~cksum);
 }
-
 #endif
+
+
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
 
 static Codec* ctor()
 {

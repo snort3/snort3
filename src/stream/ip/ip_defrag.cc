@@ -86,7 +86,7 @@
 #include "log_text.h"
 #include "detect.h"
 #include "decode.h"
-#include "encode.h"
+#include "managers/packet_manager.h"
 #include "event.h"
 #include "util.h"
 #include "snort_debug.h"
@@ -929,7 +929,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     else
         dpkt = defrag_pkt;
 
-    Encode_Format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
+    PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
     /*
      * set the pointer to the end of the rebuild packet
      */
@@ -951,7 +951,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
             DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                     "Adjusting IP Header to %d bytes\n",
                     new_ip_hlen););
-            SET_IP_HLEN((IPHdr *)dpkt->iph, new_ip_hlen>>2);
+            ipv4::set_hlen((IPHdr *)dpkt->iph, new_ip_hlen>>2);
 
             ret = SafeMemcpy(rebuild_ptr, ft->ip_options_data,
                 ft->ip_options_len, rebuild_ptr, rebuild_end);
@@ -1029,7 +1029,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         dpkt->frag_flag = 0;
         dpkt->dsize = (uint16_t)ft->calculated_size;
 
-        Encode_Update(dpkt);
+        PacketManager::encode_update(dpkt);
     }
     else /* Inner/only is IP6 */
     {
@@ -1058,7 +1058,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
             rawHdr->ip6nxt = ft->protocol;
         }
         dpkt->dsize = (uint16_t)ft->calculated_size;
-        Encode_Update(dpkt);
+        PacketManager::encode_update(dpkt);
     }
 
     sfBase.iFragFlushes++;
@@ -1325,17 +1325,17 @@ bool Defrag::configure(SnortConfig*)
 
 void Defrag::pinit()
 {
-    defrag_pkt = Encode_New();
-    encap_defrag_pkt = Encode_New();
+    defrag_pkt = PacketManager::encode_new();
+    encap_defrag_pkt = PacketManager::encode_new();
     pkt_snaplen = DAQ_GetSnapLen();
 }
 
 void Defrag::pterm()
 {
-    Encode_Delete(defrag_pkt);
+    PacketManager::encode_delete(defrag_pkt);
     defrag_pkt = NULL;
 
-    Encode_Delete(encap_defrag_pkt);
+    PacketManager::encode_delete(encap_defrag_pkt);
     encap_defrag_pkt = NULL;
 }
 

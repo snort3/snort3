@@ -14,12 +14,12 @@ add_library (main STATIC
     modules.cc
     modules.h
     policy.h
-    policy.cc 
+    policy.cc
     snort.h
-    snort.cc 
-    snort_debug.cc 
+    snort.cc
+    snort_debug.cc
     snort_config.h
-    snort_config.cc 
+    snort_config.cc
     thread.cc 
 	${INCLUDES}
 )

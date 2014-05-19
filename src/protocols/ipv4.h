@@ -23,9 +23,14 @@
 #define IPV4_H
 
 #include <cstdint>
-
+#include "sfip/sfip_t.h"
+#include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 
 #define ETHERNET_TYPE_IP 0x0800
+
+#ifndef IP_MAXPACKET
+#define IP_MAXPACKET    65535        /* maximum packet size */
+#endif /* IP_MAXPACKET */
 
 
 namespace ipv4
@@ -39,8 +44,6 @@ const uint32_t IP4_MULTICAST = 0x0E;  // ms nibble
 const uint32_t IP4_RESERVED = 0x0F;  // ms nibble
 const uint32_t IP4_LOOPBACK = 0x7F;  // msb
 const uint32_t IP4_BROADCAST = 0xffffffff;
-const uint16_t C_ETHERNET_TYPE_IP = 0x0800;
-const uint16_t IPIP_PROT_ID = 4;
 const uint8_t IP_HEADER_LEN = 20;
 } // namespace detail
 
@@ -102,7 +105,7 @@ struct IP4Hdr
 
 
 
-inline bool isPrivateIP(uint32_t addr)
+static inline bool isPrivateIP(uint32_t addr)
 {
     switch (addr & 0xff)
     {
@@ -121,112 +124,142 @@ inline bool isPrivateIP(uint32_t addr)
     return false;
 }
 
-inline bool is_broadcast(uint32_t addr) 
+
+static inline uint16_t prot_id()
+{
+    return IPPROTO_ID_IPIP;
+}
+
+static inline int ethertype_ip()
+{
+    return ETHERTYPE_IPV4;
+}
+
+static inline bool is_broadcast(uint32_t addr)
 { 
     return (addr == detail::IP4_BROADCAST);
 }
 
-inline bool is_multicast(uint8_t addr)    
+static inline bool is_multicast(uint8_t addr)
 {
     return (addr == detail::IP4_MULTICAST);
 }
 
-inline bool is_opt_rr(IPOptionCodes code)
+static inline bool is_opt_rr(IPOptionCodes code)
 {
     return (code == IPOptionCodes::RR);
 }
 
-inline bool is_opt_rr(uint8_t code)
+static inline bool is_opt_rr(uint8_t code)
 {
     return (static_cast<IPOptionCodes>(code) == IPOptionCodes::RR);
 }
 
-inline bool is_opt_rtralt(IPOptionCodes code)
+static inline bool is_opt_rtralt(IPOptionCodes code)
 {
     return (code == IPOptionCodes::RTRALT);
 }
 
-inline bool is_opt_rtralt(uint8_t code)
+static inline bool is_opt_rtralt(uint8_t code)
 {
     return (static_cast<IPOptionCodes>(code) == IPOptionCodes::RTRALT);
 }
 
-inline bool is_opt_ts(IPOptionCodes code)
+static inline bool is_opt_ts(IPOptionCodes code)
 {
     return (code == IPOptionCodes::TS);
 }
 
-inline bool is_opt_ts(uint8_t code)
+static inline bool is_opt_ts(uint8_t code)
 {
     return (static_cast<IPOptionCodes>(code) == IPOptionCodes::TS);
 }
 
-
-inline bool is_ethertype_ip(int proto)
+static inline bool is_ethertype_ip(int proto)
 {
-    return (proto == detail::C_ETHERNET_TYPE_IP);
+    return (proto == ETHERTYPE_IPV4);
 }
 
-inline int ethertype_ip()
+static inline bool is_ipv4(IPHdr* p)
 {
-    return detail::C_ETHERNET_TYPE_IP;
+    return (p->ip_verhl >> 4) == 4;
 }
 
-
-inline bool is_ipv4(struct _IPHdr* p)
+static inline bool is_ipv4(const IP4Hdr* p)
 {
-    return (((reinterpret_cast<IP4Hdr*>(p)->ip_verhl & 0xf0) >> 4) == 4);
+    return (p->ip_verhl >> 4)  == 4;
 }
 
-
-inline bool is_ipv4(IP4Hdr* p)
+static inline bool is_ipv4(uint8_t ch)
 {
-    return ((((p->ip_verhl & 0xf0) >> 4) ) == 4);
+    return (ch >> 4)  == 4;
 }
 
-inline uint8_t get_pkt_hdr_len(IP4Hdr* p)
+static inline uint8_t get_pkt_len(const IP4Hdr* p)
 {
-    return p->ip_verhl & 0x0f;
+    return (p->ip_verhl & 0x0f) << 2;
 }
 
-inline uint8_t get_pkt_hdr_len(IPHdr* p)
+static inline uint8_t get_pkt_len(const IPHdr* p)
 {
-    return (reinterpret_cast<IP4Hdr*>(p)->ip_verhl & 0x0f);
+    return (p->ip_verhl & 0x0f) << 2;
 }
 
-inline uint8_t get_pkt_hdr_len(const IPHdr* p)
+static inline uint8_t get_version(IPHdr* p)
 {
-    return (reinterpret_cast<const IP4Hdr*>(p)->ip_verhl & 0x0f);
+    return (p->ip_verhl & 0xf0) >> 4;
 }
 
-inline  uint8_t hdr_len()
+static inline uint8_t get_version(IP4Hdr* p)
+{
+    return (p->ip_verhl & 0xf0) >> 4;
+}
+
+static inline uint8_t hdr_len()
 {
     return detail::IP_HEADER_LEN;
 }
 
-inline bool is_loopback(uint8_t addr)
+static inline bool is_loopback(uint8_t addr)
 {
     return addr == detail::IP4_LOOPBACK;
 }
 
-inline bool is_this_net(uint8_t addr)
+static inline bool is_this_net(uint8_t addr)
 {
     return addr == detail::IP4_THIS_NET;
 }
 
-inline bool is_reserved(uint8_t addr)
+static inline bool is_reserved(uint8_t addr)
 {
     return addr == detail::IP4_RESERVED;
 }
 
-inline uint16_t prot_id()
+static inline void set_version(IPHdr* p, uint8_t value)
 {
-    return detail::IPIP_PROT_ID;
+    p->ip_verhl = (unsigned char)((p->ip_verhl & 0x0f) | (value << 4));
+}
+
+static inline void set_version(IP4Hdr* p, uint8_t value)
+{
+    p->ip_verhl = (unsigned char)((p->ip_verhl & 0x0f) | (value << 4));
+}
+
+static inline void set_hlen(IPHdr* p, uint8_t value)
+{
+    p->ip_verhl = (unsigned char)(((p)->ip_verhl & 0xf0) | (value & 0x0f));
+}
+
+static inline void set_hlen(IP4Hdr* p, uint8_t value)
+{
+    p->ip_verhl = (unsigned char)(((p)->ip_verhl & 0xf0) | (value & 0x0f));
 }
 
 } /* namespace ipv4 */
 
+/* tcpdump shows us the way to cross platform compatibility */
 
+/* we need to change them as well as get them */
 // TYPEDEF WHICH NEED TO BE DELETED
 
 typedef ipv4::IPHdr IPHdr;

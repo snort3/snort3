@@ -111,15 +111,12 @@ struct enc_header {
 #define IP6_EXTMAX               8
 #define TCP_OPTLENMAX           40 /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 
-#ifndef IP_MAXPACKET
-#define IP_MAXPACKET    65535        /* maximum packet size */
-#endif /* IP_MAXPACKET */
 
 
 
 
 
-#define EXTRACT_16BITS(p) ((u_short) ntohs (*(u_short *)(p)))
+#define EXTRACT_16BITS(p) ((uint16_t) ntohs (*(uint16_t *)(p)))
 
 #ifdef WORDS_MUSTALIGN
 

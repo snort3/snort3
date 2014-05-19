@@ -495,13 +495,6 @@ struct EapolKey
   #pragma warning( disable : 4214 )
 #endif
 
-/* tcpdump shows us the way to cross platform compatibility */
-#define IP_VER(iph)    (((iph)->ip_verhl & 0xf0) >> 4)
-#define IP_HLEN(iph)   ((iph)->ip_verhl & 0x0f)
-
-/* we need to change them as well as get them */
-#define SET_IP_VER(iph, value)  ((iph)->ip_verhl = (unsigned char)(((iph)->ip_verhl & 0x0f) | (value << 4)))
-#define SET_IP_HLEN(iph, value)  ((iph)->ip_verhl = (unsigned char)(((iph)->ip_verhl & 0xf0) | (value & 0x0f)))
 
 #define NUM_IP_PROTOS 256
 
@@ -544,29 +537,8 @@ const uint32_t IP6_EXTMAX = 8;
 #define ERSPAN_SPAN_ID(x) (ntohs(x->flags_spanId) & 0x03ff)
 #define ERSPAN3_TIMESTAMP(x) (x->timestamp)
 
-/* more macros for TCP offset */
-#define TCP_OFFSET(tcph)        (((tcph)->th_offx2 & 0xf0) >> 4)
-#define TCP_X2(tcph)            ((tcph)->th_offx2 & 0x0f)
 
-#define TCP_ISFLAGSET(tcph, flags) (((tcph)->th_flags & (flags)) == (flags))
 
-/* we need to change them as well as get them */
-#define SET_TCP_OFFSET(tcph, value)  ((tcph)->th_offx2 = (unsigned char)(((tcph)->th_offx2 & 0x0f) | (value << 4)))
-#define SET_TCP_X2(tcph, value)  ((tcph)->th_offx2 = (unsigned char)(((tcph)->th_offx2 & 0xf0) | (value & 0x0f)))
-
-typedef struct _TCPHdr
-{
-    uint16_t th_sport;     /* source port */
-    uint16_t th_dport;     /* destination port */
-    uint32_t th_seq;       /* sequence number */
-    uint32_t th_ack;       /* acknowledgement number */
-    uint8_t th_offx2;      /* offset and reserved */
-    uint8_t th_flags;
-    uint16_t th_win;       /* window */
-    uint16_t th_sum;       /* checksum */
-    uint16_t th_urp;       /* urgent pointer */
-
-}       TCPHdr;
 #ifdef _MSC_VER
   /* Visual C++ pragma to enable warning messages
    * about nonstandard bit field type
@@ -832,20 +804,15 @@ static inline void SetExtraData (Packet* p, uint32_t xid)
     p->xtradata_mask |= BIT(xid);
 }
 
+static inline bool is_ip4(const Packet *p)
+{
+  return p->family == AF_INET;
+}
 
-// Encoder && Decoder general structs
-
-
-class PacketClass{
-
-public:
-    static void push_layer(Packet *p, Codec* const cd, const uint8_t *hdr_start, uint32_t len);
-
-private:
-
-
-
-};
+static inline bool is_ip6(const Packet *p)
+{
+  return p->family == AF_INET6;
+}
 
 #endif
 

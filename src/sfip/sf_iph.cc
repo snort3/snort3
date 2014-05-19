@@ -291,22 +291,22 @@ uint16_t orig_ip4_ret_off(const Packet *p)
 
 uint8_t ip4_ret_ver(const Packet *p)
 {
-    return IP_VER(p->iph);
+    return (p->iph->ip_verhl & 0xf0) >> 4;
 }
 
 uint8_t orig_ip4_ret_ver(const Packet *p)
 {
-    return IP_VER(p->orig_iph);
+    return (p->orig_iph->ip_verhl & 0xf0) >> 4;
 }
 
 uint8_t ip4_ret_hlen(const Packet *p)
 {
-    return IP_HLEN(p->iph);
+    return p->iph->ip_verhl & 0x0f;
 }
 
 uint8_t orig_ip4_ret_hlen(const Packet *p)
 {
-    return IP_HLEN(p->orig_iph);
+    return p->orig_iph->ip_verhl & 0x0f;
 }
 
 uint8_t ip6_ret_hlen(const Packet*)

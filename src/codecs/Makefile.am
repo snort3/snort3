@@ -10,8 +10,6 @@ decode.cc \
 decode.h \
 decode_module.cc \
 decode_module.h \
-encode.cc \
-encode.h \
 layer.h \
 sf_protocols.h
 

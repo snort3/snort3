@@ -19,10 +19,13 @@
 */
 // ipv6_util.h author Josh Rosenbaum <jorosenba@cisco.com>
 
+#ifndef IPV6_UTIL_H
+#define IPV6_UTIL_H
 
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
+
 
 namespace ipv6_util
 {
@@ -45,3 +48,5 @@ static inline int IPV6ExtensionOrder(uint8_t type)
 }
 
 } // namespace ipv6_util
+
+#endif

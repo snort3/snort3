@@ -9,7 +9,6 @@ set (PROTOCOL_HEADERS
     icmp4.h
     icmp6.h
     gre.h
-    gtp.h
     arp.h
     wlan.h
     teredo.h
@@ -18,8 +17,8 @@ set (PROTOCOL_HEADERS
 )
 
 add_library (protocols STATIC
-    packet.cc
     ${PROTOCOL_HEADERS}
+    ../codecs/template.cc  # CMake complains if we don't compile any files.  so use dummy file.  Linux will remove all of the symbols anyways.
 )
 
 install (FILES ${PROTOCOL_HEADERS}

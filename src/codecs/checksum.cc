@@ -30,6 +30,86 @@
 namespace checksum
 {
 
+uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum)
+{
+    uint16_t *sp = (uint16_t *)buf;
+    int n, sn;
+
+    if (len > 1 )
+    {
+        sn = ((len / 2) & 0xF);  // len divided by two mod 16 == len/2 % 16
+        n = (((len / 2) + 15) / 16) ;  // ceiling of (len / 2) / 16
+
+        switch (sn) {
+        case 0:
+            sn = 16;
+            cksum += sp[15];
+        case 15:
+            cksum += sp[14];
+        case 14:
+            cksum += sp[13];
+        case 13:
+            cksum += sp[12];
+        case 12:
+            cksum += sp[11];
+        case 11:
+            cksum += sp[10];
+        case 10:
+            cksum += sp[9];
+        case 9:
+            cksum += sp[8];
+        case 8:
+            cksum  += sp[7];
+        case 7:
+            cksum += sp[6];
+        case 6:
+            cksum += sp[5];
+        case 5:
+            cksum += sp[4];
+        case 4:
+            cksum += sp[3];
+        case 3:
+            cksum += sp[2];
+        case 2:
+            cksum += sp[1];
+        case 1:
+            cksum += sp[0];
+        }
+        sp += sn;
+
+
+        /* XXX - unroll loop using Duff's device. */
+        while (--n > 0) {
+            cksum += sp[0];
+            cksum += sp[1];
+            cksum += sp[2];
+            cksum += sp[3];
+            cksum += sp[4];
+            cksum += sp[5];
+            cksum += sp[6];
+            cksum += sp[7];
+            cksum += sp[8];
+            cksum += sp[9];
+            cksum += sp[10];
+            cksum += sp[11];
+            cksum += sp[12];
+            cksum += sp[13];
+            cksum += sp[14];
+            cksum += sp[15];
+            sp += 16;
+        };
+    }
+
+    if (len & 1)
+        cksum += (*(unsigned char*)sp);
+
+    cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
+    cksum += (cksum >> 16);
+
+    return (uint16_t)(~cksum);
+}
+
+
 static inline void add_ipv4_pseudoheader(const uint16_t *h, uint32_t &cksum)
 {
     /* ipv4 pseudo header must have 12 bytes */
@@ -126,6 +206,12 @@ uint16_t icmp_cksum(const uint16_t *buf, size_t len, Pseudoheader6* ph)
     return cksum_add(buf, len, cksum);
 }
 
+uint16_t icmp_cksum(const uint16_t *buf, size_t len)
+{
+    return cksum_add(buf, len, 0);
+}
+
+
 uint16_t tcp_cksum(const uint16_t *h, size_t len, Pseudoheader *ph )
 {
     uint32_t cksum = 0;
@@ -173,86 +259,9 @@ uint16_t ip_cksum(const uint16_t *buf, size_t len)
     return cksum_add(buf, len, cksum);
 }
 
-
-// credit belong to dnet.h.  copied directrly from their source code
-// src/ip-util.cc
-uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum)
+uint16_t cksum_add(const uint16_t *buf, size_t len)
 {
-    uint16_t *sp = (uint16_t *)buf;
-    int n, sn;
-
-    if (len > 1 )
-    {
-        sn = ((len / 2) & 0xF);  // len divided by two mod 16 == len/2 % 16
-        n = (((len / 2) + 15) / 16) ;  // ceiling of (len / 2) / 16
-
-        switch (sn) {
-        case 0:
-            sn = 16;
-            cksum += sp[15];
-        case 15:
-            cksum += sp[14];
-        case 14:
-            cksum += sp[13];
-        case 13:
-            cksum += sp[12];
-        case 12:
-            cksum += sp[11];
-        case 11:
-            cksum += sp[10];
-        case 10:
-            cksum += sp[9];
-        case 9:
-            cksum += sp[8];
-        case 8:
-            cksum  += sp[7];
-        case 7:
-            cksum += sp[6];
-        case 6:
-            cksum += sp[5];
-        case 5:
-            cksum += sp[4];
-        case 4:
-            cksum += sp[3];
-        case 3:
-            cksum += sp[2];
-        case 2:
-            cksum += sp[1];
-        case 1:
-            cksum += sp[0];
-        }
-        sp += sn;
-
-
-        /* XXX - unroll loop using Duff's device. */
-        while (--n > 0) {
-            cksum += sp[0];
-            cksum += sp[1];
-            cksum += sp[2];
-            cksum += sp[3];
-            cksum += sp[4];
-            cksum += sp[5];
-            cksum += sp[6];
-            cksum += sp[7];
-            cksum += sp[8];
-            cksum += sp[9];
-            cksum += sp[10];
-            cksum += sp[11];
-            cksum += sp[12];
-            cksum += sp[13];
-            cksum += sp[14];
-            cksum += sp[15];
-            sp += 16;
-        };
-    }
-    
-    if (len & 1)
-        cksum += (*(unsigned char*)sp);
-    
-    cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
-    cksum += (cksum >> 16);
-
-    return (uint16_t)(~cksum);
+    return cksum_add(buf, len, 0);
 }
 
 } // namespace checksum

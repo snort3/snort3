@@ -38,7 +38,7 @@
 #include "stream/stream_api.h"
 #include "snort.h"
 
-#include "encode.h"
+#include "managers/packet_manager.h"
 #include "packet_io/sfdaq.h"
 
 #define MAX_ATTEMPTS 20
@@ -197,7 +197,7 @@ int Active_Init (SnortConfig* sc)
         }
 
         if (NULL != sc->eth_dst)
-            Encode_SetDstMAC(sc->eth_dst);
+            PacketManager::encode_set_dst_mac(sc->eth_dst);
     }
     return 0;
 }
@@ -240,7 +240,7 @@ void Active_SendReset(Packet* p, EncodeFlags ef)
 
         value = Strafe(i, value, p);
 
-        rej = Encode_Reject(ENC_TCP_RST, flags|value, p, &len);
+        rej = PacketManager::encode_reject(ENC_TCP_RST, flags|value, p, &len);
         if ( !rej ) return;
 
         s_send(p->pkth, !(ef & ENC_FLAG_FWD), rej, len);
@@ -256,7 +256,7 @@ void Active_SendUnreach(Packet* p, EncodeType type)
     if ( !s_attempts )
         return;
 
-    rej = Encode_Reject(type, flags, p, &len);
+    rej = PacketManager::encode_reject(type, flags, p, &len);
     if ( !rej ) return;
 
     s_send(p->pkth, 1, rej, len);
@@ -276,7 +276,7 @@ void Active_SendData (
         flags &= ~ENC_FLAG_VAL;
         flags |= (i & ENC_FLAG_VAL);
 
-        seg = Encode_Response(ENC_TCP_FIN, flags, p, &plen, buf, blen);
+        seg = PacketManager::encode_response(ENC_TCP_FIN, flags, p, &plen, buf, blen);
 
         if ( !seg ) return;
         s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
@@ -295,7 +295,7 @@ void Active_InjectData (
     flags |= GetFlags();
     flags &= ~ENC_FLAG_VAL;
 
-    seg = Encode_Response(ENC_TCP_PUSH, flags, p, &plen, buf, blen);
+    seg = PacketManager::encode_response(ENC_TCP_PUSH, flags, p, &plen, buf, blen);
     if ( !seg )
         return;
 

@@ -59,7 +59,7 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "decode.h"
-#include "encode.h"
+#include "managers/packet_manager.h"
 #include "detection/detection_defines.h"
 #include "parser.h"
 #include "profiler.h"

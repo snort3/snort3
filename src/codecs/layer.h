@@ -21,16 +21,15 @@
 #ifndef LAYER_H 
 #define LAYER_H
 
-#include "framework/codec.h"
 #include "codecs/sf_protocols.h"
 
 
-typedef struct _Layer {
-    const Codec *cd;
+struct Layer {
+    uint16_t prot_id;
     PROTO_ID proto;
     uint16_t length;
     uint8_t* start;
-} Layer;
+};
 
 
 #endif

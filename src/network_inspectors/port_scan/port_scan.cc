@@ -56,7 +56,7 @@
 
 #include "main/analyzer.h"
 #include "decode.h"
-#include "encode.h"
+#include "managers/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"
 #include "util.h"
@@ -371,7 +371,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
 
     if (p != g_tmp_pkt)
     {
-        Encode_Format(flags, p, g_tmp_pkt, PSEUDO_PKT_PS);
+        PacketManager::encode_format(flags, p, g_tmp_pkt, PSEUDO_PKT_PS);
     }
 
     switch (proto_type)
@@ -432,7 +432,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     /*
     **  Let's finish up the IP header and checksum.
     */
-    Encode_Update(g_tmp_pkt);
+    PacketManager::encode_update(g_tmp_pkt);
 
     if(IS_IP4(g_tmp_pkt))
     {
@@ -887,7 +887,7 @@ bool PortScan::configure(SnortConfig* sc)
 
 void PortScan::pinit()
 {
-    g_tmp_pkt = Encode_New();
+    g_tmp_pkt = PacketManager::encode_new();
 
     std::string name;
     get_instance_file(name, config->logfile);
@@ -905,7 +905,7 @@ void PortScan::pterm()
 {
     fclose(g_logfile);
     ps_cleanup();
-    Encode_Delete(g_tmp_pkt);
+    PacketManager::encode_delete(g_tmp_pkt);
     g_tmp_pkt = NULL;
 }
 

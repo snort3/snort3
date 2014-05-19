@@ -26,6 +26,7 @@
 #endif
 
 #include "protocols/packet.h"
+#include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/decode.h"

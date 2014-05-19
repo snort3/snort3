@@ -27,11 +27,13 @@
 #include "detection/fpdetect.h"
 
 #include "protocols/ipv6.h"
-#include "snort.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "packet_io/active.h"
 #include "codecs/ipv6_util.h"
+#include "framework/codec.h"
+#include "stream/stream_api.h"
+#include "main/snort.h"
+#include "packet_io/active.h"
 
 namespace
 {
@@ -45,6 +47,9 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
 
     // DELETE from here and below
@@ -56,12 +61,63 @@ public:
 
 } // namespace
 
-#if 0
-static void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, Packet *p);
-#endif
 static inline void IPV6MiscTests(Packet *p);
 static void CheckIPV6Multicast(Packet *p);
 static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr);
+
+/********************************************************************
+ *************************   PRIVATE FUNCTIONS **********************
+ ********************************************************************/
+
+static inline uint8_t GetTTL (const EncState* enc)
+{
+    char dir;
+    uint8_t ttl;
+    int outer = !enc->ip_hdr;
+
+    if ( !enc->p->flow )
+        return 0;
+
+    if ( enc->p->packet_flags & PKT_FROM_CLIENT )
+        dir = forward(enc) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
+    else
+        dir = forward(enc) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
+
+    // outermost ip is considered to be outer here,
+    // even if it is the only ip layer ...
+    ttl = stream.get_session_ttl(enc->p->flow, dir, outer);
+
+    // so if we don't get outer, we use inner
+    if ( 0 == ttl && outer )
+        ttl = stream.get_session_ttl(enc->p->flow, dir, 0);
+
+    return ttl;
+}
+
+static inline uint8_t FwdTTL (const EncState* enc, uint8_t ttl)
+{
+    uint8_t new_ttl = GetTTL(enc);
+    if ( !new_ttl )
+        new_ttl = ttl;
+    return new_ttl;
+}
+
+static inline uint8_t RevTTL (const EncState* enc, uint8_t ttl)
+{
+    uint8_t new_ttl = GetTTL(enc);
+    if ( !new_ttl )
+        new_ttl = ( MAX_TTL - ttl );
+    if ( new_ttl < MIN_TTL )
+        new_ttl = MIN_TTL;
+    return new_ttl;
+}
+
+
+
+
+/********************************************************************
+ *************************   CLASS FUNCTIONS ************************
+ ********************************************************************/
 
 void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -69,9 +125,6 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(ipv6::prot_id());
 }
 
-//--------------------------------------------------------------------
-// decode.c::IP6 decoder
-//--------------------------------------------------------------------
 
 bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
     Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
@@ -198,268 +251,6 @@ decodeipv6_fail:
 
     return false;
 }
-
-
-#if 0
-int CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
-{
-    IP6Extension *exthdr = (IP6Extension *)pkt;
-    uint32_t total_octets = (exthdr->ip6e_len * 8) + 8;
-    const uint8_t *hdr_end = pkt + total_octets;
-    uint8_t oplen;
-
-    if (len < total_octets)
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-
-    /* Skip to the options */
-    pkt += 2;
-
-    /* Iterate through the options, check for bad ones */
-    while (pkt < hdr_end)
-    {
-        const ipv6::HopByHopOptions type = static_cast<ipv6::HopByHopOptions>(*pkt);
-        switch (type)
-        {
-            case ipv6::HopByHopOptions::PAD1:
-                pkt++;
-                break;
-            case ipv6::HopByHopOptions::PADN:
-            case ipv6::HopByHopOptions::JUMBO:
-            case ipv6::HopByHopOptions::RTALERT:
-            case ipv6::HopByHopOptions::TUNNEL_ENCAP:
-            case ipv6::HopByHopOptions::QUICK_START:
-            case ipv6::HopByHopOptions::CALIPSO:
-            case ipv6::HopByHopOptions::HOME_ADDRESS:
-            case ipv6::HopByHopOptions::ENDPOINT_IDENT:
-                oplen = *(++pkt);
-                if ((pkt + oplen + 1) > hdr_end)
-                {
-                    codec_events::decoder_event(p, DECODE_IPV6_BAD_OPT_LEN);
-                    return -1;
-                }
-                pkt += oplen + 1;
-                break;
-            default:
-                codec_events::decoder_event(p, DECODE_IPV6_BAD_OPT_TYPE);
-                return -1;
-        }
-    }
-
-    return 0;
-}
-
-void DecodeIPV6Options(int type, const uint8_t *pkt, uint32_t len, Packet *p)
-{
-    IP6Extension *exthdr;
-    uint32_t hdrlen = 0;
-
-    /* This should only be called by DecodeIPV6 or DecodeIPV6Extensions
-     * so no validation performed.  Otherwise, uncomment the following: */
-    /* if(IPH_IS_VALID(p)) return */
-
-//    dc.ipv6opts++;
-
-    /* Need at least two bytes, one for next header, one for len. */
-    /* But size is an integer multiple of 8 octets, so 8 is min.  */
-    if(len < sizeof(IP6Extension))
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-        return;
-    }
-
-    if ( p->ip6_extension_count >= IP6_EXTMAX )
-    {
-        codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
-        return;
-    }
-
-    exthdr = (IP6Extension *)pkt;
-
-    p->ip6_extensions[p->ip6_extension_count].type = type;
-    p->ip6_extensions[p->ip6_extension_count].data = pkt;
-
-    // TBD add layers for other ip6 ext headers
-    switch (type)
-    {
-        case IPPROTO_DSTOPTS:
-            if (len < sizeof(IP6Dest))
-            {
-                codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-                return;
-            }
-            if (exthdr->ip6e_nxt == IPPROTO_ROUTING)
-            {
-                codec_events::decoder_event(p, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
-            }
-            hdrlen = sizeof(IP6Extension) + (exthdr->ip6e_len << 3);
-
-            if ( CheckIPV6HopOptions(pkt, len, p) == 0 )
-                // TODO:  REMOVE THIS PUSHLAYER!
-//                   PushLayer(PROTO_IP6_DST_OPTS, p, pkt, hdrlen);
-            break;
-
-        case IPPROTO_ROUTING:
-            if (len < sizeof(IP6Route))
-            {
-                codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-                return;
-            }
-
-            /* Routing type 0 extension headers are evil creatures. */
-            {
-                IP6Route *rte = (IP6Route *)exthdr;
-
-                if (rte->ip6rte_type == 0)
-                {
-                    codec_events::decoder_event(p, DECODE_IPV6_ROUTE_ZERO);
-                }
-            }
-
-            if (exthdr->ip6e_nxt == IPPROTO_HOPOPTS)
-            {
-                codec_events::decoder_event(p, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
-            }
-            if (exthdr->ip6e_nxt == IPPROTO_ROUTING)
-            {
-                codec_events::decoder_event(p, DECODE_IPV6_TWO_ROUTE_HEADERS);
-            }
-            hdrlen = sizeof(IP6Extension) + (exthdr->ip6e_len << 3);
-            break;
-
-        case IPPROTO_FRAGMENT:
-            if (len <= sizeof(IP6Frag))
-            {
-                if ( len < sizeof(IP6Frag) )
-                    codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-                else
-                    codec_events::decoder_event(p, DECODE_ZERO_LENGTH_FRAG);
-                return;
-            }
-            else
-            {
-                IP6Frag *ip6frag_hdr = (IP6Frag *)pkt;
-                /* If this is an IP Fragment, set some data... */
-                p->ip6_frag_index = p->ip6_extension_count;
-                p->ip_frag_start = pkt + sizeof(IP6Frag);
-
-                p->df = 0;
-                p->rf = IP6F_RES(ip6frag_hdr);
-                p->mf = IP6F_MF(ip6frag_hdr);
-                p->frag_offset = IP6F_OFFSET(ip6frag_hdr);
-
-                if ( p->frag_offset || p->mf )
-                {
-                    p->frag_flag = 1;
-//                    dc.frag6++;
-                }
-                else
-                {
-                    codec_events::decoder_event(p, DECODE_IPV6_BAD_FRAG_PKT);
-                }
-                if (!(p->frag_offset))
-                {
-                    // check header ordering of fragged (next) header
-                    if ( ipv6_util::IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
-                         ipv6_util::IPV6ExtensionOrder(IPPROTO_FRAGMENT) )
-                        codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
-                }
-                // check header ordering up thru frag header
-                ipv6_util::CheckIPv6ExtensionOrder(p);
-            }
-            hdrlen = sizeof(IP6Frag);
-            p->ip_frag_len = (uint16_t)(len - hdrlen);
-
-            if ( p->frag_flag && ((p->frag_offset > 0) ||
-                 (exthdr->ip6e_nxt != IPPROTO_UDP)) )
-            {
-                /* For non-zero offset frags, we stop decoding after the
-                   Frag header. According to RFC 2460, the "Next Header"
-                   value may differ from that of the offset zero frag,
-                   but only the Next Header of the original frag is used. */
-                // check DecodeIP(); we handle frags the same way here
-                p->ip6_extension_count++;
-                return;
-            }
-            break;
-
-        case IPPROTO_AH:
-            /* Auth Headers work in both IPv4 & IPv6, and their lengths are
-               given in 4-octet increments instead of 8-octet increments. */
-            hdrlen = sizeof(IP6Extension) + (exthdr->ip6e_len << 2);
-
-                // TODO:  REMOVE THIS PUSHLAYER!
-//               if (hdrlen <= len)
-//                PushLayer(PROTO_AH, p, pkt, hdrlen);
-            break;
-
-        default:
-            hdrlen = sizeof(IP6Extension) + (exthdr->ip6e_len << 3);
-            break;
-    }
-
-    p->ip6_extension_count++;
-
-    if(hdrlen > len)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
-        return;
-    }
-
-    if ( hdrlen > 0 )
-    {
-        DecodeIPV6Extensions(*pkt, pkt + hdrlen, len - hdrlen, p);
-    }
-#ifdef DEBUG_MSGS
-    else
-    {
-        DebugMessage(DEBUG_DECODE, "WARNING - no next ip6 header decoded\n");
-    }
-#endif
-}
-
-void DecodeIPV6Extensions(uint8_t next, const uint8_t *pkt, const uint32_t len, Packet *p)
-{
-//    dc.ip6ext++;
-
-//    if (p->greh != NULL)
-//        dc.gre_ipv6ext++;
-
-    /* XXX might this introduce an issue if the "next" field is invalid? */
-    p->ip6h->next = next;
-
-    /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
-
-    switch(next) {
-        case IPPROTO_NONE:
-            p->dsize = 0;
-            return;
-        case IPPROTO_HOPOPTS:
-        case IPPROTO_DSTOPTS:
-        case IPPROTO_ROUTING:
-        case IPPROTO_FRAGMENT:
-        case IPPROTO_AH:
-            DecodeIPV6Options(next, pkt, len, p);
-            // Anything special to do here?  just return?
-            return;
-
-        default:
-            // There may be valid headers after this unsupported one,
-            // need to decode this header, set "next" and continue
-            // looping.
-
-            codec_events::decoder_event(p, DECODE_IPV6_BAD_NEXT_HEADER);
-
-//            dc.other++;
-//            p->data = pkt;
-//            p->dsize = (uint16_t)len;
-            break;
-    };
-}
-
-
-#endif
 
 /* Function: IPV6MiscTests(Packet *p)
  *
@@ -774,27 +565,23 @@ static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr)
     return 0;
 }
 
-#if 0
-
 /*
  * Encoders
  */
 
-EncStatus IP6_Encode (EncState* enc, Buffer* in, Buffer* out)
+bool Ipv6Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
-    int len;
-    uint32_t start = out->end;
+    if (!update_buffer(out, sizeof(ipv6::IP6RawHdr)))
+        return false;
 
-    IP6RawHdr* hi = (IP6RawHdr*)enc->p->layers[enc->layer-1].start;
-    IP6RawHdr* ho = (IP6RawHdr*)(out->base + out->end);
-    PROTO_ID next = NextEncoder(enc);
+    const ipv6::IP6RawHdr* hi = reinterpret_cast<const ipv6::IP6RawHdr*>(raw_in);
+    ipv6::IP6RawHdr* ho = (ipv6::IP6RawHdr*)(out->base);
 
-    UPDATE_BOUND(out, sizeof(*ho));
 
     ho->ip6flow = htonl(ntohl(hi->ip6flow) & 0xFFF00000);
     ho->ip6nxt = hi->ip6nxt;
 
-    if ( FORWARD(enc) )
+    if ( forward(enc) )
     {
         memcpy(ho->ip6_src.s6_addr, hi->ip6_src.s6_addr, sizeof(ho->ip6_src.s6_addr));
         memcpy(ho->ip6_dst.s6_addr, hi->ip6_dst.s6_addr, sizeof(ho->ip6_dst.s6_addr));
@@ -809,28 +596,19 @@ EncStatus IP6_Encode (EncState* enc, Buffer* in, Buffer* out)
         ho->ip6hops = RevTTL(enc, hi->ip6hops);
     }
 
-    enc->ip_hdr = (uint8_t*)hi;
-    enc->ip_len = sizeof(*hi);
-
-    if ( next < PROTO_MAX )
-    {
-        EncStatus err = encoders[next].fencode(enc, in, out);
-        if ( EncStatus::ENC_OK != err ) return err;
-    }
     if ( enc->proto )
     {
         ho->ip6nxt = enc->proto;
         enc->proto = 0;
     }
-    len = out->end - start;
-    ho->ip6plen = htons((uint16_t)(len - sizeof(*ho)));
-
-    return EncStatus::ENC_OK;
+    
+    ho->ip6plen = htons((uint16_t)(out->end - sizeof(*ho)));
+    return true;
 }
 
-EncStatus IP6_Update (Packet* p, Layer* lyr, uint32_t* len)
+bool Ipv6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
 {
-    IP6RawHdr* h = (IP6RawHdr*)(lyr->start);
+    ipv6::IP6RawHdr* h = (ipv6::IP6RawHdr*)(lyr->start);
     int i = lyr - p->layers;
 
     // if we didn't trim payload or format this packet,
@@ -856,17 +634,17 @@ EncStatus IP6_Update (Packet* p, Layer* lyr, uint32_t* len)
         h->ip6plen = htons((uint16_t)(*len - sizeof(*h)));
     }
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-void IP6_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
-    IP6RawHdr* ch = (IP6RawHdr*)lyr->start;
+    ipv6::IP6RawHdr* ch = (ipv6::IP6RawHdr*)lyr->start;
 
-    if ( REVERSE(f) )
+    if ( reverse(f) )
     {
         int i = lyr - c->layers;
-        IP6RawHdr* ph = (IP6RawHdr*)p->layers[i].start;
+        ipv6::IP6RawHdr* ph = (ipv6::IP6RawHdr*)p->layers[i].start;
 
         memcpy(ch->ip6_src.s6_addr, ph->ip6_dst.s6_addr, sizeof(ch->ip6_src.s6_addr));
         memcpy(ch->ip6_dst.s6_addr, ph->ip6_src.s6_addr, sizeof(ch->ip6_dst.s6_addr));
@@ -885,33 +663,6 @@ void IP6_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     // set outer to inner so this will always wind pointing to inner
     c->raw_ip6h = ch;
 }
-
-
-EncStatus Opt6_Encode (EncState* enc, Buffer* in, Buffer* out)
-{
-    // we don't encode ext headers
-    PROTO_ID next = NextEncoder(enc);
-
-    if ( next < PROTO_MAX )
-    {
-        EncStatus err = encoders[next].fencode(enc, in, out);
-        if ( EncStatus::ENC_OK != err ) return err;
-    }
-    return EncStatus::ENC_OK;
-}
-
-EncStatus Opt6_Update (Packet* p, Layer* lyr, uint32_t* len)
-{
-    int i = lyr - p->layers;
-    *len += lyr->length;
-
-    if ( i + 1 == p->next_layer )
-        *len += p->dsize;
-
-    return EncStatus::ENC_OK;
-}
-
-#endif
 
 //-------------------------------------------------------------------------
 // api
@@ -939,10 +690,10 @@ static const CodecApi ipv6_api =
         nullptr,
         nullptr,
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

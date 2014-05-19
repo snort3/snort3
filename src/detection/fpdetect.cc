@@ -68,6 +68,8 @@
 #include "detection_util.h"
 #include "detection_options.h"
 #include "actions/actions.h"
+#include "managers/packet_manager.h"
+
 
 /*
 **  Static function prototypes
@@ -509,7 +511,7 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
 
         last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
         last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
-        last_check->packet_number = (rule_eval_pkt_count + (GetRebuiltPktCount()));
+        last_check->packet_number = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
         last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
     }
 
