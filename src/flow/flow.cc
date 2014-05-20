@@ -241,7 +241,7 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
             }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP)
+            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
             {
                 if (p->udph->uh_sport == client_port)
                 {
@@ -270,7 +270,7 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
             }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP)
+            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
             {
                 if (p->udph->uh_dport == client_port)
                 {
@@ -302,7 +302,7 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
             }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP)
+            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
             {
                 if (p->udph->uh_sport == client_port)
                 {
@@ -331,7 +331,7 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
             }
-            else if (GET_IPH_PROTO(p) == IPPROTO_UDP)
+            else if (GET_IPH_PROTO(p) == IPPROTO_UDP && p->udph )
             {
                 if (p->udph->uh_dport == client_port)
                 {

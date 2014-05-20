@@ -344,8 +344,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 
 #define SLAM_MAX 4
 
-#define S5_MIN_ALT_HS_TIMEOUT   0         /* min timeout (0 seconds) */
-
 //#define DEBUG_STREAM5
 #ifdef DEBUG_STREAM5
 #define STREAM5_DEBUG_WRAP(x) DEBUG_WRAP(x)
@@ -1055,7 +1053,9 @@ StreamTcpConfig::StreamTcpConfig()
     policy = STREAM_POLICY_DEFAULT;
     reassembly_policy = REASSEMBLY_POLICY_DEFAULT;
     session_timeout = S5_DEFAULT_SSN_TIMEOUT;
+
     max_window = 0;
+    hs_timeout = -1;
     flags = 0;
 
     max_queued_bytes = S5_DEFAULT_MAX_QUEUED_BYTES;
@@ -1167,15 +1167,6 @@ static void Stream5PrintTcpConfig(StreamTcpConfig* config)
     if (config->flags)
     {
         LogMessage("    Options:\n");
-        if (config->flags & STREAM5_CONFIG_REQUIRE_3WHS)
-        {
-            LogMessage("        Require 3-Way Handshake: YES\n");
-            if (config->hs_timeout != 0)
-            {
-                LogMessage("        3-Way Handshake Timeout: %d\n",
-                    config->hs_timeout);
-            }
-        }
         if (config->flags & STREAM5_CONFIG_IGNORE_ANY)
         {
             LogMessage("        Ignore Any -> Any Rules: YES\n");
@@ -1185,7 +1176,14 @@ static void Stream5PrintTcpConfig(StreamTcpConfig* config)
             LogMessage("        Don't queue packets on one-sided sessions: YES\n");
         }
     }
+    if (config->hs_timeout < 0)
+        LogMessage("    Require 3-Way Handshake: NO\n");
+    else
+        LogMessage("    Require 3-Way Handshake: after %d seconds\n",
+            config->hs_timeout);
+
     LogMessage("    Reassembly Ports:\n");
+
     for (i=0; i<MAX_PORTS; i++)
     {
         int direction = 0;
@@ -3064,7 +3062,9 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
                 "server has %d segs queued\n", tcpssn->server.seg_count););
 
     // update stats
-    tcpStats.trackers_released++;
+    if ( tcpssn->tcp_init )
+        tcpStats.trackers_released++;
+
     Stream5UpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSED);
     RemoveStreamSession(&sfBase);
 
@@ -3096,6 +3096,8 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
 
     STREAM5_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
                 "After cleaning, %lu bytes in use\n", tcp_memcap->used()););
+
+    tcpssn->lws_init = tcpssn->tcp_init = false;
 }
 
 static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
@@ -5188,6 +5190,16 @@ static int NewTcpSession(
             InitFlushMgrByService(
                 lwssn, pst, lwssn->s5_state.application_protocol, true, flush_policy);
         }
+        else
+        {
+            // FIXIT hack until bindings get service from port assignments
+            // and auto service id
+            StreamTracker* pst = &tmp->server;
+            uint8_t flush_policy = STREAM_FLPOLICY_FOOTPRINT;
+
+            pInitFlushMgr(lwssn, &pst->flush_mgr, &pst->config->flush_point_list,
+                flush_policy, true, pst->config->paf_max);
+        }
 
         if (tmp->client.config->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
         {
@@ -5196,6 +5208,16 @@ static int NewTcpSession(
                 pst->config->flush_config_protocol[lwssn->s5_state.application_protocol].server.flush_policy;
             InitFlushMgrByService(
                 lwssn, pst, lwssn->s5_state.application_protocol, false, flush_policy);
+        }
+        else
+        {
+            // FIXIT hack until bindings get service from port assignments
+            // and auto service id
+            StreamTracker* pst = &tmp->client;
+            uint8_t flush_policy = STREAM_FLPOLICY_FOOTPRINT;
+
+            pInitFlushMgr(lwssn, &pst->flush_mgr, &pst->config->flush_point_list,
+                flush_policy, true, pst->config->paf_max);
         }
 
 #ifdef DEBUG_STREAM5
@@ -5351,6 +5373,11 @@ static void LogTcpEvents(int eventcode)
         EventWindowSlam();
 }
 
+static inline bool midstream_allowed(StreamTcpConfig* config, Packet* p)
+{
+    return ( (p->pkth->ts.tv_sec - packet_first_time() >= config->hs_timeout) );
+}
+
 static int ProcessTcp(
     Flow *lwssn, Packet *p, TcpDataBlock *tdb,
     StreamTcpConfig* config)
@@ -5363,7 +5390,7 @@ static int ProcessTcp(
     TcpSession *tcpssn = NULL;
     StreamTracker *talker = NULL;
     StreamTracker *listener = NULL;
-    uint32_t require3Way = true; // FIXIT (config->flags & STREAM5_CONFIG_REQUIRE_3WHS);
+    bool require3Way = config->hs_timeout >= 0;
     STREAM5_DEBUG_WRAP(char *t = NULL; char *l = NULL;)
     PROFILE_VARS;
 
@@ -5381,6 +5408,8 @@ static int ProcessTcp(
     if ( !tcpssn->tcp_init )
     {
         {
+            // FIXIT expected flow should be checked by flow_con before we
+            // get here
             char ignore = flow_con->expected_flow(lwssn, p);
 
             if ( ignore )
@@ -5441,8 +5470,12 @@ static int ProcessTcp(
                 lwssn->server_port = p->tcph->th_sport;
             }
             lwssn->session_state |= STREAM5_STATE_SYN_ACK;
-            NewTcpSession(p, lwssn, tdb, config);
-            new_ssn = 1;
+
+            if ( midstream_allowed(config, p) )
+            {
+                NewTcpSession(p, lwssn, tdb, config);
+                new_ssn = 1;
+            }
             NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
             /* Nothing left todo here */
         }
@@ -5459,7 +5492,7 @@ static int ProcessTcp(
             NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
             Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
         }
-        else
+        else if ((p->dsize > 0) && midstream_allowed(config, p))
         {
             /* create session on data, need to figure out direction, etc */
             /* Assume from client, can update later */
@@ -5489,11 +5522,22 @@ static int ProcessTcp(
             if (lwssn->session_state & STREAM5_STATE_ESTABLISHED)
                 Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
         }
+        else if (p->dsize == 0)
+        {
+            /* Already have a lwssn, but no tcp session.
+             * Probably just an ACK of already sent data (that
+             * we missed).
+             */
+            /* Do nothing. */
+            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+            return retcode;
+        }
     }
     else
     {
         /* If session is already marked as established */
-        if ( !(lwssn->session_state & STREAM5_STATE_ESTABLISHED) )
+        if ( !(lwssn->session_state & STREAM5_STATE_ESTABLISHED) &&
+            midstream_allowed(config, p) )
         {
             /* If not requiring 3-way Handshake... */
 
@@ -5528,7 +5572,7 @@ static int ProcessTcp(
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Stream5: Updating on packet from server\n"););
         lwssn->s5_state.session_flags |= SSNFLAG_SEEN_SERVER;
-        if (tcpssn)
+        if (tcpssn->tcp_init)
         {
             talker = &tcpssn->server;
             listener = &tcpssn->client;
@@ -5571,7 +5615,7 @@ static int ProcessTcp(
                     "Stream5: Updating on packet from client\n"););
         /* if we got here we had to see the SYN already... */
         lwssn->s5_state.session_flags |= SSNFLAG_SEEN_CLIENT;
-        if (tcpssn)
+        if (tcpssn->tcp_init)
         {
             talker = &tcpssn->client;
             listener = &tcpssn->server;
@@ -5601,9 +5645,9 @@ static int ProcessTcp(
     if ((lwssn->s5_state.session_flags & SSNFLAG_RESET) &&
         (p->tcph->th_flags & TH_SYN))
     {
-        if ((!tcpssn) ||
-            ((listener->s_mgr.state == TCP_STATE_CLOSED) ||
-             (talker->s_mgr.state == TCP_STATE_CLOSED)))
+        if ( !tcpssn->tcp_init ||
+            (listener->s_mgr.state == TCP_STATE_CLOSED) ||
+            (talker->s_mgr.state == TCP_STATE_CLOSED) )
         {
             /* Listener previously issued a reset */
             /* Talker is re-SYN-ing */
@@ -5613,7 +5657,6 @@ static int ProcessTcp(
             {
                 /* Got SYN/RST.  We're done. */
                 NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
-                tcpssn = NULL;
                 PREPROC_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_RST;
             }
@@ -5628,11 +5671,9 @@ static int ProcessTcp(
                 lwssn->session_state = STREAM5_STATE_SYN;
                 lwssn->set_ttl(p, true);
                 NewTcpSession(p, lwssn, tdb, config);
-                tcpssn = (TcpSession *)lwssn->session;
                 new_ssn = 1;
                 NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
 
-                if (tcpssn)
                 {
                     listener = &tcpssn->server;
                     talker = &tcpssn->client;
@@ -5653,7 +5694,6 @@ static int ProcessTcp(
                 new_ssn = 1;
                 NormalTrackECN(tcpssn, (TCPHdr*)p->tcph, require3Way);
 
-                if (tcpssn)
                 {
                     listener = &tcpssn->client;
                     talker = &tcpssn->server;
@@ -5705,7 +5745,7 @@ static int ProcessTcp(
         }
     }
 
-    if (!tcpssn)
+    if (!tcpssn->tcp_init)
     {
         LogTcpEvents(eventcode);
         PREPROC_PROFILE_END(s5TcpStatePerfStats);
@@ -8072,14 +8112,13 @@ int TcpSession::process(Packet *p)
         {
             /* SYN only */
             flow->session_state = STREAM5_STATE_SYN;  // FIXIT same as line 4511
-            tcpssn->lws_init = true;
         }
         else
         {
             // If we're within the "startup" window, try to handle
             // this packet as midstream pickup -- allows for
             // connections that already existed before snort started.
-            if (p->pkth->ts.tv_sec - packet_first_time() >= config->hs_timeout)
+            if ( !midstream_allowed(config, p) )
             {
                  // Do nothing with this packet since we require a 3-way ;)
                 DEBUG_WRAP(
@@ -8089,21 +8128,9 @@ int TcpSession::process(Packet *p)
 
                 EventNo3whs();
                 PREPROC_PROFILE_END(s5TcpPerfStats);
-                S5TraceTCP(p, flow, &tdb, 1);
-                return 0;
-            }
-            if ( TCP_ISFLAGSET(p->tcph, TH_SYN) || p->dsize )
-            {
-                tcpssn->lws_init = true;
-            }
-            else
-            {
-                // No data, don't bother to track yet
-                PREPROC_PROFILE_END(s5TcpPerfStats);
-                S5TraceTCP(p, flow, &tdb, 1);
-                return 0;
             }
         }
+        tcpssn->lws_init = true;
     }
     /*
      * Check if the session is expired.

@@ -72,11 +72,10 @@ const unsigned session_peg_count = array_size(session_pegs);
 
 struct BaseStats
 {
-    PegCount ip;
-    PegCount icmp;
     PegCount tcp;
     PegCount udp;
-    PegCount other;
+    PegCount icmp;
+    PegCount ip;
 };
 
 static BaseStats g_stats;
@@ -84,11 +83,10 @@ static THREAD_LOCAL BaseStats t_stats;
 
 static const char* base_pegs[] =
 {
-    "ip packets",
-    "icmp packets",
-    "tcp packets",
-    "udp packets",
-    "other packets",
+    "tcp flows",
+    "udp flows",
+    "icmp flows",
+    "ip flows"
 };
 
 //-------------------------------------------------------------------------
@@ -97,9 +95,6 @@ static const char* base_pegs[] =
 
 static inline bool is_eligible(Packet* p)
 {
-    if ( p->frag_flag )
-        return false;
-
     if ( p->error_flags & PKT_ERR_CKSUM_IP )
         return false;
 
@@ -205,26 +200,21 @@ void StreamBase::eval(Packet *p)
     {
     case IPPROTO_TCP:
         flow_con->process_tcp(p);
-        t_stats.tcp++;
         break;
 
     case IPPROTO_UDP:
+        if ( p->frag_flag )
+            flow_con->process_ip(p);
+
         flow_con->process_udp(p);
-        t_stats.udp++;
         break;
 
     case IPPROTO_ICMP:
         flow_con->process_icmp(p);
-        t_stats.icmp++;
         break;
 
     case IPPROTO_IP:
         flow_con->process_ip(p);
-        t_stats.ip++;
-        break;
-
-    default:
-        t_stats.other++;
         break;
     }
 
@@ -271,6 +261,11 @@ static void base_init()
 
 void base_sum()
 {   
+    t_stats.tcp = flow_con->get_flow_count(IPPROTO_TCP);
+    t_stats.udp = flow_con->get_flow_count(IPPROTO_UDP);
+    t_stats.icmp = flow_con->get_flow_count(IPPROTO_ICMP);
+    t_stats.ip = flow_con->get_flow_count(IPPROTO_IP);
+
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
         array_size(base_pegs));
 }   
@@ -283,6 +278,7 @@ void base_stats()
 
 void base_reset()
 {
+    flow_con->clear_flow_counts();
     memset(&t_stats, 0, sizeof(t_stats));
 }
 

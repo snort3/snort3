@@ -176,6 +176,9 @@ struct StreamTracker
 
 };
 
+// FIXIT ideally, session tracking would be split from reassembly 
+// into a separate module a la ip_session.cc and ip_defrag.cc
+// (of course defrag should also be cleaned up)
 class TcpSession : public Session
 {
 public:

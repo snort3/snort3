@@ -82,9 +82,10 @@ static const RuleMap stream_rules[] =
 };
 
 StreamModule::StreamModule() :
-    Module(MOD_NAME, stream_params, stream_rules),
-    proto(stream_cfg.ip_cfg)
-{ }
+    Module(MOD_NAME, stream_params, stream_rules)
+{
+    proto = &stream_cfg.ip_cfg;
+}
 
 const StreamConfig* StreamModule::get_data()
 {
@@ -94,16 +95,16 @@ const StreamConfig* StreamModule::get_data()
 bool StreamModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("memcap") )
-        proto.mem_cap = v.get_long();
+        proto->mem_cap = v.get_long();
 
     else if ( v.is("max_sessions") )
-        proto.max_sessions = v.get_long();
+        proto->max_sessions = v.get_long();
 
     else if ( v.is("pruning_timeout") )
-        proto.cache_pruning_timeout = v.get_long();
+        proto->cache_pruning_timeout = v.get_long();
 
     else if ( v.is("idle_timeout") )
-        proto.cache_nominal_timeout = v.get_long();
+        proto->cache_nominal_timeout = v.get_long();
 
     else
         return false;
@@ -114,18 +115,18 @@ bool StreamModule::set(const char*, Value& v, SnortConfig*)
 bool StreamModule::begin(const char* fqn, int, SnortConfig*)
 {
     if ( !strcmp(fqn, "stream.tcp_cache") )
-        proto = stream_cfg.tcp_cfg;
+        proto = &stream_cfg.tcp_cfg;
 
     else if ( !strcmp(fqn, "stream.udp_cache") )
-        proto = stream_cfg.udp_cfg;
+        proto = &stream_cfg.udp_cfg;
 
     else if ( !strcmp(fqn, "stream.icmp_cache") )
-        proto = stream_cfg.icmp_cfg;
+        proto = &stream_cfg.icmp_cfg;
 
     else if ( !strcmp(fqn, "stream.ip_cache") )
-        proto = stream_cfg.ip_cfg;
+        proto = &stream_cfg.ip_cfg;
 
-    else
+    else if ( strcmp(fqn, "stream") )
         return false;
 
     return true;

@@ -53,7 +53,7 @@ public:
     const StreamConfig* get_data();
 
 private:
-    FlowConfig& proto;
+    FlowConfig* proto;
 };
 
 #endif

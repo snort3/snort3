@@ -80,11 +80,14 @@ public:
     void get_prunes(int proto, PegCount&);
     void reset_prunes(int proto);
 
+    PegCount get_flow_count(int proto);
+    void clear_flow_counts();
+
 private:
     class FlowCache* get_cache(int proto);
     void set_key(FlowKey*, const Packet*);
 
-    void process(FlowCache*, Packet*);
+    unsigned process(FlowCache*, Packet*);
 
 private:
     FlowCache* tcp_cache;

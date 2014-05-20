@@ -43,6 +43,7 @@ public:
     void show(SnortConfig*);
 
     void process(Packet*, FragTracker*);
+    void cleanup(FragTracker*);
 
     void pinit();
     void pterm();

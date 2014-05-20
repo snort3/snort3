@@ -85,9 +85,9 @@ StreamIp::~StreamIp()
     delete config;
 }
 
-bool StreamIp::configure(SnortConfig*)
+bool StreamIp::configure(SnortConfig* sc)
 {
-    // FIXIT needed for defrag?
+    defrag->configure(sc);
     return true;
 }
 
@@ -99,18 +99,18 @@ int StreamIp::verify_config(SnortConfig*)
 
 void StreamIp::pinit()
 {
-    // FIXIT needed for defrag?
+    defrag->pinit();
 }
 
 void StreamIp::pterm()
 {
-    // FIXIT needed for defrag?
+    defrag->pterm();
 }
 
-void StreamIp::show(SnortConfig*)
+void StreamIp::show(SnortConfig* sc)
 {
-    if ( config )
-        ip_show(config);
+    ip_show(config);
+    defrag->show(sc);
 }
 
 void StreamIp::eval(Packet*)

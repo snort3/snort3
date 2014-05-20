@@ -145,8 +145,8 @@ static const Parameter stream_tcp_params[] =
     { "reassemble_async", Parameter::PT_BOOL, nullptr, "true",
       "queue data for reassembly before traffic is seen in both directions" },
 
-    { "require_3whs", Parameter::PT_INT, "0:86400", "0",
-      "don't track midstream sessions after given seconds from start up" },
+    { "require_3whs", Parameter::PT_INT, "-1:86400", "-1",
+      "don't track midstream sessions after given seconds from start up; -1 tracks all" },
 
     { "server_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "reassemble data from server for given server ports" },
@@ -312,7 +312,6 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("require_3whs") )
     {
-        config->flags |= STREAM5_CONFIG_REQUIRE_3WHS;
         config->hs_timeout = v.get_long();
     }
     else if ( v.is("show_rebuilt_packets") )

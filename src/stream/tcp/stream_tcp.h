@@ -75,17 +75,21 @@ struct StreamTcpConfig
     uint16_t reassembly_policy;
     uint16_t flags;
     uint16_t flush_factor;
+    uint16_t session_on_syn;
 
     uint32_t session_timeout;
     uint32_t max_window;
     uint32_t overlap_limit;
-    uint32_t hs_timeout;
 
     uint32_t max_queued_bytes;
     uint32_t max_queued_segs;
 
     uint32_t max_consec_small_segs;
     uint32_t max_consec_small_seg_size;
+
+    int hs_timeout;
+    int footprint;
+    unsigned paf_max;
 
     FlushConfig flush_config[MAX_PORTS];
     FlushConfig flush_config_protocol[MAX_PROTOCOL_ORDINAL];
@@ -95,11 +99,7 @@ struct StreamTcpConfig
 
     PortList small_seg_ignore;
 
-    unsigned paf_max;
     void* paf_config;
-
-    int footprint;
-    uint16_t session_on_syn;
 
     StreamTcpConfig();
 

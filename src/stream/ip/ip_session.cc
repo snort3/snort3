@@ -52,8 +52,11 @@ static PreprocStats* ip_get_profile(const char* key)
 // private methods
 //-------------------------------------------------------------------------
 
-void IpSessionCleanup (Flow* lws)
+void IpSessionCleanup (Flow* lws, FragTracker* tracker)
 {
+    Defrag* d = get_defrag(lws->ssn_server);
+    d->cleanup(tracker);
+
     if (lws->s5_state.session_flags & SSNFLAG_PRUNED)
     {
         CloseStreamSession(&sfBase, SESSION_CLOSED_PRUNED);
@@ -126,7 +129,7 @@ IpSession::IpSession(Flow* flow) : Session(flow)
 
 void IpSession::clear()
 {
-    IpSessionCleanup(flow);
+    IpSessionCleanup(flow, &tracker);
 }
 
 bool IpSession::setup (Packet* p)
@@ -156,7 +159,7 @@ int IpSession::process(Packet* p)
 
     if ( stream.expired_session(flow, p) )
     {
-        IpSessionCleanup(flow);
+        IpSessionCleanup(flow, &tracker);
         ipStats.timeouts++;
 
 #ifdef ENABLE_EXPECTED_IP

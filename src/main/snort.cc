@@ -847,7 +847,7 @@ void LogRebuiltPacket (Packet* p)
 }
 
 DAQ_Verdict ProcessPacket(
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, void* ft)
+    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
 
@@ -856,17 +856,10 @@ DAQ_Verdict ProcessPacket(
     PacketManager::decode(p, pkthdr, pkt);
     assert(p->pkth && p->pkt);
 
-    if (ft)
-    {
-        // FIXIT FRAG
-        p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
-        p->pseudo_type = PSEUDO_PKT_IP;
-        Encode_SetPkt(p);
-    }
     if ( !p->proto_bits )
         p->proto_bits = PROTO_BIT__OTHER;
 
-    // required until decoders are fixed
+    // FIXIT required until decoders are fixed
     else if ( !p->family && (p->proto_bits & PROTO_BIT__IP) )
         p->proto_bits &= ~PROTO_BIT__IP;
 
@@ -940,7 +933,7 @@ DAQ_Verdict packet_callback(
     Active_ResetQueue();
     PREPROC_PROFILE_END(eventqPerfStats);
 
-    verdict = ProcessPacket(&s_packet, pkthdr, pkt, NULL);
+    verdict = ProcessPacket(&s_packet, pkthdr, pkt);
 
     if ( Active_ResponseQueued() )
     {

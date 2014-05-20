@@ -33,6 +33,7 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "main/binder.h"
+#include "utils/stats.h"
 
 FlowControl::FlowControl()
 {
@@ -50,6 +51,32 @@ FlowControl::~FlowControl()
     delete icmp_cache;
     delete ip_cache;
     delete exp_cache;
+}
+
+//-------------------------------------------------------------------------
+// count foo
+//-------------------------------------------------------------------------
+
+static THREAD_LOCAL PegCount tcp_count = 0;
+static THREAD_LOCAL PegCount udp_count = 0;
+static THREAD_LOCAL PegCount icmp_count = 0;
+static THREAD_LOCAL PegCount ip_count = 0;
+
+PegCount FlowControl::get_flow_count(int proto)
+{
+    switch ( proto ) {
+    case IPPROTO_TCP:  return tcp_count;
+    case IPPROTO_UDP:  return udp_count;
+    case IPPROTO_ICMP: return icmp_count;
+    case IPPROTO_IP:   return ip_count;
+    }
+    return 0;
+}
+
+void FlowControl::clear_flow_counts()
+{
+    tcp_count = udp_count = 0;
+    icmp_count = ip_count = 0;
 }
 
 //-------------------------------------------------------------------------
@@ -224,22 +251,25 @@ static bool is_bidirectional(Flow* flow)
     return (flow->s5_state.session_flags & bidir) == bidir;
 }
 
-void FlowControl::process(FlowCache* cache, Packet* p)
+unsigned FlowControl::process(FlowCache* cache, Packet* p)
 {
+    unsigned news = 0;
     FlowKey key;
     set_key(&key, p);
 
     Flow* flow = cache->get(&key);
 
     if ( !flow )
-        return;
+        return 0;
 
     if ( !flow->ssn_client )
     {
         Binder::init_flow(flow);
 
         if ( !flow->session->setup(p) )
-            return;
+            return 0;
+
+        news = 1;
     }
 
     p->flow = flow;
@@ -247,6 +277,8 @@ void FlowControl::process(FlowCache* cache, Packet* p)
 
     if ( flow->next && is_bidirectional(flow) )
         cache->unlink_uni(flow);
+
+    return news;
 }
 
 //-------------------------------------------------------------------------
@@ -278,7 +310,7 @@ void FlowControl::process_tcp(Packet* p)
     if( !p->tcph || !tcp_cache )
         return;
 
-    process(tcp_cache, p);
+    tcp_count += process(tcp_cache, p);
 }
 
 //-------------------------------------------------------------------------
@@ -310,7 +342,7 @@ void FlowControl::process_udp(Packet* p)
     if( !p->udph || !udp_cache )
         return;
 
-    process(udp_cache, p);
+    udp_count += process(udp_cache, p);
 }
 
 //-------------------------------------------------------------------------
@@ -343,7 +375,7 @@ void FlowControl::process_icmp(Packet* p)
         return;
 
     if ( icmp_cache )
-        process(icmp_cache, p);
+        icmp_count += process(icmp_cache, p);
 
     else
         process_ip(p);
@@ -378,7 +410,7 @@ void FlowControl::process_ip(Packet* p)
     if ( !p->iph || !ip_cache )
         return;
 
-    process(ip_cache, p);
+    ip_count += process(ip_cache, p);
 }
 
 //-------------------------------------------------------------------------

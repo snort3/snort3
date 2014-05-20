@@ -203,11 +203,10 @@ struct FragStats
     PegCount  anomalies;
     PegCount  alerts;
     PegCount  drops;
-    PegCount  fragtrackers_created;
-    PegCount  fragtrackers_released;
-    PegCount  fragtrackers_autoreleased;
-    PegCount  fragnodes_created;
-    PegCount  fragnodes_released;
+    PegCount  trackers_created;
+    PegCount  trackers_released;
+    PegCount  nodes_created;
+    PegCount  nodes_released;
 
 };
 
@@ -224,7 +223,6 @@ static const char* peg_names[] =
     "drops",
     "trackers added",
     "trackers freed",
-    "trackers auto freed",
     "nodes inserted",
     "nodes deleted"
 };
@@ -1086,7 +1084,10 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
 #endif
     SnortEventqPush();
-    ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt, ft);
+    p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
+    p->pseudo_type = PSEUDO_PKT_IP;
+    Encode_SetPkt(p);
+    ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt);
     SnortEventqPop();
 
     DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
@@ -1154,7 +1155,7 @@ static void delete_frag(Fragment *frag)
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.fragnodes_released++;
+    t_stats.nodes_released++;
 }
 
 /**
@@ -1231,10 +1232,11 @@ static void delete_tracker(FragTracker *ft)
 static void release_tracker(FragTracker* ft)
 {
     delete_tracker(ft);
+    ft->engine = nullptr;
 
     sfBase.iFragDeletes++;
     sfBase.iCurrentFrags--;
-    t_stats.fragtrackers_released++;
+    t_stats.trackers_released++;
 }
 
 int fragGetApplicationProtocolId(Packet *p)
@@ -1344,6 +1346,14 @@ void Defrag::show(SnortConfig*)
     FragPrintEngineConfig(&engine);
 }
 
+void Defrag::cleanup(FragTracker* ft)
+{
+    if ( !ft->engine )
+        return;
+
+    release_tracker(ft);
+}
+
 void Defrag::process(Packet* p, FragTracker* ft)
 {
     FragEngine *fe = &engine;
@@ -1418,18 +1428,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
          * the entire set of frags show up later. */
 
         ft->ttl = GET_IPH_TTL(p); /* store the first ttl we got */
-        ft->calculated_size = 0;
-        ft->alerted = 0;
-        ft->frag_flags = 0;
-        ft->frag_bytes = 0;
-        ft->frag_pkts = 0;
-        ft->ip_options_len = 0;
-        ft->ip_option_count = 0;
-        ft->ip_options_data = NULL;
-        ft->copied_ip_options_len = 0;
-        ft->copied_ip_option_count = 0;
-        ft->engine = fe;
-        ft->ordinal = 0;
+        ft->engine = nullptr;
     }
 
     // Update frag time when we get a frag associated with this tracker
@@ -2371,7 +2370,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.fragnodes_created++;
+    t_stats.nodes_created++;
     sfBase.iFragCreates++;
     sfBase.iCurrentFrags++;
     if (sfBase.iCurrentFrags > sfBase.iMaxFrags)
@@ -2434,7 +2433,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
 
     FragHandleIPOptions(ft, p);
 
-    t_stats.fragtrackers_created++;
+    t_stats.trackers_created++;
     return 1;
 }
 
@@ -2526,7 +2525,7 @@ int Defrag::add_frag_node(FragTracker *ft,
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.fragnodes_created++;
+    t_stats.nodes_created++;
 
     newfrag->flen = fragLength;
     memcpy(newfrag->fptr, fragStart, fragLength);
@@ -2613,7 +2612,7 @@ int Defrag::dup_frag_node(
         sfBase.frag3_mem_in_use = mem_in_use;
     }
 
-    t_stats.fragnodes_created++;
+    t_stats.nodes_created++;
 
     newfrag->ord = ft->ordinal++;
     /*
