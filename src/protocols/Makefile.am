@@ -1,13 +1,11 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-noinst_LIBRARIES = libprotocols.a
-
 x_includedir = $(pkgincludedir)/protocols
 
 x_include_HEADERS = \
 packet.h
 
-libprotocols_a_SOURCES = \
+EXTRA_DIST = \
 arp.h \
 decode.h \
 encode.h \

@@ -47,7 +47,6 @@ $(lib_list) \
 ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
 framework/libframework.a \
-protocols/libprotocols.a \
 flow/libflow.a \
 control/libcontrol.a \
 filters/libfilter.a \
