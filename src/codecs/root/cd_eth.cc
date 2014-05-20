@@ -1,3 +1,4 @@
+
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -31,6 +32,7 @@
 #include "protocols/packet.h"
 #include "protocols/eth.h"
 #include "codecs/codec_events.h"
+#include "managers/packet_manager.h"
 
 namespace
 {
@@ -46,6 +48,9 @@ public:
     virtual void get_data_link_type(std::vector<int>&);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
     // DELETE
     #include "codecs/sf_protocols.h"
@@ -81,10 +86,6 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
 bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t& next_prot_id)
 {
-
-//    dc.eth++;
-//    dc.total_processed++;
-
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
             DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
                 (unsigned long)len, (unsigned long)p->pkth->pktlen);
@@ -135,19 +136,16 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 }
 
 
-#if 0
-
 //-------------------------------------------------------------------------
 // ethernet
 //-------------------------------------------------------------------------
 
-EncStatus Eth_Encode (EncState* enc, Buffer* in, Buffer* out)
+bool EthCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
     // not raw ip -> encode layer 2
     int raw = ( enc->flags & ENC_FLAG_RAW );
-
-    eth::EtherHdr* hi = (eth::EtherHdr*)enc->p->layers[enc->layer-1].start;
-    PROTO_ID next = NextEncoder(enc);
+    const eth::EtherHdr* hi = reinterpret_cast<const eth::EtherHdr*>(raw_in);
+    eth::EtherHdr* ho;
 
     // if not raw ip AND out buf is empty
     if ( !raw && (out->off == out->end) )
@@ -155,21 +153,24 @@ EncStatus Eth_Encode (EncState* enc, Buffer* in, Buffer* out)
         // for alignment
         out->off = out->end = SPARC_TWIDDLE;
     }
+
     // if not raw ip OR out buf is not empty
     if ( !raw || (out->off != out->end) )
     {
         // we get here for outer-most layer when not raw ip
         // we also get here for any encapsulated ethernet layer.
-        eth::EtherHdr* ho = (eth::EtherHdr*)(out->base + out->end);
-        UPDATE_BOUND(out, sizeof(*ho));
-        uint8_t *dst_mac = Encode_GetDstMAC();
+        if (!update_buffer(out, sizeof(*ho)))
+            return false;
 
+        ho = reinterpret_cast<eth::EtherHdr*>(out->base);
         ho->ether_type = hi->ether_type;
-        if ( FORWARD(enc) )
+        uint8_t *dst_mac = PacketManager::encode_get_dst_mac();
+        
+        if ( forward(enc) )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
             /*If user configured remote MAC address, use it*/
-            if (NULL != dst_mac)
+            if (nullptr != dst_mac)
                 memcpy(ho->ether_dst, dst_mac, sizeof(ho->ether_dst));
             else
                 memcpy(ho->ether_dst, hi->ether_dst, sizeof(ho->ether_dst));
@@ -178,30 +179,28 @@ EncStatus Eth_Encode (EncState* enc, Buffer* in, Buffer* out)
         {
             memcpy(ho->ether_src, hi->ether_dst, sizeof(ho->ether_src));
             /*If user configured remote MAC address, use it*/
-            if (NULL != dst_mac)
+            if (nullptr != dst_mac)
                 memcpy(ho->ether_dst, dst_mac, sizeof(ho->ether_dst));
             else
                 memcpy(ho->ether_dst, hi->ether_src, sizeof(ho->ether_dst));
         }
     }
-    if ( next < PROTO_MAX )
-        return encoders[next].fencode(enc, in, out);
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-EncStatus Eth_Update (Packet*, Layer* lyr, uint32_t* len)
+bool EthCodec::update (Packet*, Layer* lyr, uint32_t* len)
 {
     *len += lyr->length;
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-void Eth_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void EthCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
     eth::EtherHdr* ch = (eth::EtherHdr*)lyr->start;
     c->eh = ch;
 
-    if ( REVERSE(f) )
+    if ( reverse(f) )
     {
         int i = lyr - c->layers;
         eth::EtherHdr* ph = (eth::EtherHdr*)p->layers[i].start;
@@ -211,7 +210,6 @@ void Eth_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     }
 }
 
-#endif
 
 //-------------------------------------------------------------------------
 // api

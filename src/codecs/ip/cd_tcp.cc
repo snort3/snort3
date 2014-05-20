@@ -62,6 +62,9 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &);
+    virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
+    virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
 
     // DELETE
@@ -602,11 +605,9 @@ static inline void TCPMiscTests(Packet *p)
 }
 
 
-/*
- *  ENCODER
- */
-
-#if 0
+/******************************************************************
+ ******************** E N C O D E R  ******************************
+ ******************************************************************/
 
 //-------------------------------------------------------------------------
 // TCP
@@ -621,20 +622,28 @@ static inline void TCPMiscTests(Packet *p)
 // acknowledges the SYN.
 //-------------------------------------------------------------------------
 
-EncStatus TCP_Encode (EncState* enc, Buffer* in, Buffer* out)
+bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
-    int len, ctl;
+    int ctl;
+    const TCPHdr* hi = reinterpret_cast<const TCPHdr*>(raw_in);
+    bool attach_payload = (enc->type == EncodeType::ENC_TCP_FIN || 
+        enc->type == EncodeType::ENC_TCP_PUSH);
 
-    TCPHdr* hi = (TCPHdr*)enc->p->layers[enc->layer-1].start;
-    TCPHdr* ho = (TCPHdr*)(out->base + out->end);
+    // working our way backwards throught he packet. First, attach a payload
+    if ( attach_payload && enc->payLoad && enc->payLen > 0 )
+    {
+        if (!update_buffer(out, enc->payLen))
+            return false;
+        memcpy(out->base, enc->payLoad, enc->payLen);
+    }
 
-    UPDATE_BOUND(out, sizeof(*ho));
+    if (!update_buffer(out, tcp::get_tcp_hdr_len(hi)))
+        return false;
 
-    len = GET_TCP_HDR_LEN(hi) - sizeof(*hi);
-    UPDATE_BOUND(in, len);
+    TCPHdr* ho = reinterpret_cast<TCPHdr*>(out->base);
     ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
 
-    if ( FORWARD(enc) )
+    if ( forward(enc) )
     {
         ho->th_sport = hi->th_sport;
         ho->th_dport = hi->th_dport;
@@ -662,20 +671,13 @@ EncStatus TCP_Encode (EncState* enc, Buffer* in, Buffer* out)
         seq += (enc->flags & ENC_FLAG_VAL);
         ho->th_seq = htonl(seq);
     }
+
     ho->th_offx2 = 0;
-    SET_TCP_OFFSET(ho, (TCP_HDR_LEN >> 2));
+    tcp::set_tcp_offset(ho, (TCP_HDR_LEN >> 2));
     ho->th_win = ho->th_urp = 0;
 
-    if ( enc->type == EncodeType::ENC_TCP_FIN || 
-        enc->type == EncodeType::ENC_TCP_PUSH )
+    if ( attach_payload )
     {
-        if ( enc->payLoad && enc->payLen > 0 )
-        {
-            uint8_t* pdu = out->base + out->end;
-            UPDATE_BOUND(out, enc->payLen);
-            memcpy(pdu, enc->payLoad, enc->payLen);
-        }
-
         ho->th_flags = TH_ACK;
         if ( enc->type == EncodeType::ENC_TCP_PUSH )
         {
@@ -697,68 +699,68 @@ EncStatus TCP_Encode (EncState* enc, Buffer* in, Buffer* out)
 
     ho->th_sum = 0;
 
-    if (IP_VER((IPHdr *)enc->ip_hdr) == 4) {
-        pseudoheader ps;
-        int len = BUFF_DIFF(out, ho);
+    if (ipv4::get_version((IPHdr *)enc->ip_hdr) == 4) {
+        checksum::Pseudoheader ps;
+        int len = buff_diff(out, (uint8_t*)ho);
 
         ps.sip = ((IPHdr *)(enc->ip_hdr))->ip_src.s_addr;
         ps.dip = ((IPHdr *)(enc->ip_hdr))->ip_dst.s_addr;
         ps.zero = 0;
         ps.protocol = IPPROTO_TCP;
         ps.len = htons((uint16_t)len);
-        ho->th_sum = in_chksum_tcp(&ps, (uint16_t *)ho, len);
+        ho->th_sum = checksum::tcp_cksum((uint16_t *)ho, len, &ps);
     } else {
-        pseudoheader6 ps6;
-        int len = BUFF_DIFF(out, ho);
+        checksum::Pseudoheader6 ps6;
+        int len = buff_diff(out, (uint8_t*) ho);
 
         memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.s6_addr, sizeof(ps6.sip));
         memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.s6_addr, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_TCP;
         ps6.len = htons((uint16_t)len);
-        ho->th_sum = in_chksum_tcp6(&ps6, (uint16_t *)ho, len);
+        ho->th_sum = checksum::tcp_cksum((uint16_t *)ho, len, &ps6);
     }
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-EncStatus TCP_Update (Packet* p, Layer* lyr, uint32_t* len)
+bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     TCPHdr* h = (TCPHdr*)(lyr->start);
 
-    *len += GET_TCP_HDR_LEN(h) + p->dsize;
+    *len += tcp::get_tcp_hdr_len(h) + p->dsize;
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
         h->th_sum = 0;
 
         if (IS_IP4(p)) {
-            pseudoheader ps;
+            checksum::Pseudoheader ps;
             ps.sip = ((IPHdr *)(lyr-1)->start)->ip_src.s_addr;
             ps.dip = ((IPHdr *)(lyr-1)->start)->ip_dst.s_addr;
             ps.zero = 0;
             ps.protocol = IPPROTO_TCP;
             ps.len = htons((uint16_t)*len);
-            h->th_sum = in_chksum_tcp(&ps, (uint16_t *)h, *len);
+            h->th_sum = checksum::tcp_cksum((uint16_t *)h, *len, &ps);
         } else {
-            pseudoheader6 ps6;
+            checksum::Pseudoheader6 ps6;
             memcpy(ps6.sip, &p->ip6h->ip_src.ip32, sizeof(ps6.sip));
             memcpy(ps6.dip, &p->ip6h->ip_dst.ip32, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_TCP;
             ps6.len = htons((uint16_t)*len);
-            h->th_sum = in_chksum_tcp6(&ps6, (uint16_t *)h, *len);
+            h->th_sum = checksum::tcp_cksum((uint16_t *)h, *len, &ps6);
         }
     }
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-void TCP_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void TcpCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
     TCPHdr* ch = (TCPHdr*)lyr->start;
     c->tcph = ch;
 
-    if ( REVERSE(f) )
+    if ( reverse(f) )
     {
         int i = lyr - c->layers;
         TCPHdr* ph = (TCPHdr*)p->layers[i].start;
@@ -769,9 +771,6 @@ void TCP_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     c->sp = ntohs(ch->th_sport);
     c->dp = ntohs(ch->th_dport);
 }
-
-
-#endif 
 
 
 int OptLenValidate(const uint8_t *option_ptr,

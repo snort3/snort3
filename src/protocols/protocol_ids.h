@@ -48,6 +48,7 @@
  */
 
 const uint16_t IPPROTO_ID_HOPOPTS = 0;
+const uint16_t IPPROTO_ID_ICMPV4 = 1;
 const uint16_t IPPROTO_ID_IPIP = 4;
 const uint16_t IPPROTO_ID_IPV6 = 41;
 const uint16_t IPPROTO_ID_ROUTING = 43;

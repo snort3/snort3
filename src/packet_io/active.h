@@ -28,7 +28,7 @@
 
 #include "decode.h"
 #include "snort.h"
-#include "encode.h"
+#include "managers/packet_manager.h"
 
 int Active_Init(SnortConfig*);
 int Active_Term(void);

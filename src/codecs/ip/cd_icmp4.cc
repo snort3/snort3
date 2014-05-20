@@ -31,11 +31,13 @@
 #include <dnet.h>
 #endif
 
+#include "framework/codec.h"
 #include "snort.h"
 #include "codecs/decode_module.h"
 #include "protocols/icmp4.h"
 #include "codecs/codec_events.h"
 #include "codecs/checksum.h"
+#include "protocols/protocol_ids.h"
 
 
 namespace{
@@ -50,7 +52,9 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
-
+    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -66,10 +70,9 @@ private:
 
 } // namespace
 
-
 void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
 {
-    v.push_back(IPPROTO_ICMP);
+    v.push_back(IPPROTO_ID_ICMPV4);
 }
 
 
@@ -99,11 +102,7 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
             "WARNING: Truncated ICMP4 header (%d bytes).\n", raw_len););
 
         codec_events::decoder_event(p, DECODE_ICMP4_HDR_TRUNC);
-
-//        p->icmph = NULL;
-//        dc.discards++;
-//        dc.icmpdisc++;
-
+        p->icmph = NULL;
         return false;
     }
 
@@ -133,9 +132,6 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
-
                 return false;
             }
             break;
@@ -150,9 +146,6 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR);
 
                 p->icmph = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
-
                 return false;
             }
             break;
@@ -164,13 +157,8 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                     "Truncated ICMP header(%d bytes)\n", raw_len););
 
-
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ADDRHDR);
-
                 p->icmph = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
-
                 return false;
             }
             break;
@@ -462,60 +450,61 @@ void Icmp4Codec::ICMP4MiscTests (Packet *p)
         codec_events::decoder_event(p, DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED);
 }
 
-/*
- * ENCODER
- */
+/******************************************************************
+ ******************** E N C O D E R  ******************************
+ ******************************************************************/
 
-#if 0
+namespace
+{
 
-static inline int IcmpCode (EncodeType et) {
-    switch ( et ) {
-    case EncodeType::ENC_UNR_NET:  return ICMP_UNREACH_NET;
-    case EncodeType::ENC_UNR_HOST: return ICMP_UNREACH_HOST;
-    case EncodeType::ENC_UNR_PORT: return ICMP_UNREACH_PORT;
-    case EncodeType::ENC_UNR_FW:   return ICMP_UNREACH_FILTER_PROHIB;
-    default: break;
-    }
-    return ICMP_UNREACH_PORT;
-}
+typedef struct {
+    uint8_t type;
+    uint8_t code;
+    uint16_t cksum;
+    uint32_t unused;
+} IcmpHdr;
+
+} // namespace
 
 
-EncStatus UN4_Encode (EncState* enc, Buffer*, Buffer* out)
+
+bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
     uint8_t* p;
+    IcmpHdr* ho;
 
-    uint8_t* hi = enc->p->layers[enc->layer-1].start;
-    IcmpHdr* ho = (IcmpHdr*)(out->base + out->end);
+    if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp4::unreach_data()))
+        return false;
+
+
+    const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
+    ho = reinterpret_cast<IcmpHdr*>(out->base);
 
 #ifdef DEBUG
     if ( (int)enc->type < (int)EncodeType::ENC_UNR_NET )
-        return EncStatus::ENC_BAD_OPT;
+        return false;
 #endif
 
-    enc->proto = IPPROTO_ICMP;
-
-    UPDATE_BOUND(out, sizeof(*ho));
-    ho->type = ICMP_UNREACH;
-    ho->code = IcmpCode(enc->type);
+    enc->proto = IPPROTO_ID_ICMPV4;
+    ho->type = icmp4::IcmpType::DEST_UNREACH;
+    ho->code = get_icmp_code(enc->type);
     ho->cksum = 0;
     ho->unused = 0;
 
     // copy original ip header
-    p = out->base + out->end;
-    UPDATE_BOUND(out, enc->ip_len);
+    p = out->base + sizeof(IcmpHdr);
     memcpy(p, enc->ip_hdr, enc->ip_len);
 
     // copy first 8 octets of original ip data (ie udp header)
-    p = out->base + out->end;
-    UPDATE_BOUND(out, ICMP_UNREACH_DATA);
-    memcpy(p, hi, ICMP_UNREACH_DATA);
+    p += enc->ip_len;
+    memcpy(p, hi, icmp4::unreach_data());
 
-    ho->cksum = icmp4::in_chksum_icmp((uint16_t *)ho, BUFF_DIFF(out, ho));
+    ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-EncStatus ICMP4_Update (Packet* p, Layer* lyr, uint32_t* len)
+bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     IcmpHdr* h = (IcmpHdr*)(lyr->start);
 
@@ -524,18 +513,17 @@ EncStatus ICMP4_Update (Packet* p, Layer* lyr, uint32_t* len)
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
         h->cksum = 0;
-        h->cksum = icmp4::in_chksum_icmp((uint16_t *)h, *len);
+        h->cksum = checksum::icmp_cksum((uint16_t *)h, *len);
     }
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-void ICMP4_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 {
     // TBD handle nested icmp4 layers
     c->icmph = (ICMPHdr*)lyr->start;
 }
-#endif
 
 
 //-------------------------------------------------------------------------

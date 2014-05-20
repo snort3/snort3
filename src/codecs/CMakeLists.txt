@@ -7,8 +7,6 @@ add_subdirectory(misc)
 
 
 add_library( codecs STATIC
-    encode.h
-    encode.cc
     decode.h
     decode.cc
     decode_module.h

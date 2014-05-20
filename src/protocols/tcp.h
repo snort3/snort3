@@ -83,6 +83,20 @@ const uint8_t TCP_HEADER_LEN = 20;
 
 } // namespace detail
 
+
+struct TCPHdr
+{
+    uint16_t th_sport;     /* source port */
+    uint16_t th_dport;     /* destination port */
+    uint32_t th_seq;       /* sequence number */
+    uint32_t th_ack;       /* acknowledgement number */
+    uint8_t th_offx2;      /* offset and reserved */
+    uint8_t th_flags;
+    uint16_t th_win;       /* window */
+    uint16_t th_sum;       /* checksum */
+    uint16_t th_urp;       /* urgent pointer */
+};
+
 const int OPT_TRUNC = -1;
 const int OPT_BADLEN = -2;
 
@@ -91,7 +105,10 @@ inline uint8_t hdr_len()
     return detail::TCP_HEADER_LEN;
 }
 
-
+inline uint8_t get_tcp_hdr_len(const TCPHdr *h)
+{
+    return ((h->th_offx2 & 0xf0) >> 2);
+}
 
 /* http://www.iana.org/assignments/tcp-parameters
  *
@@ -137,6 +154,15 @@ enum TcpOpt{
                              Intended to replace MD5 Signature Option [RFC2385] */
 };
 
+inline void set_tcp_offset(TCPHdr *tcph, uint8_t value)
+{
+    tcph->th_offx2 = (tcph->th_offx2 & 0x0f) | (value << 4);
+}
+
+inline void set_tcp_x2(TCPHdr* tcph, uint8_t value)
+{
+    tcph->th_offx2 = (tcph->th_offx2 & 0xf0) | (value & 0x0f);
+}
 
 #define TCPOLEN_EOL             1   /* Always one byte */
 #define TCPOLEN_NOP             1   /* Always one byte */
@@ -156,9 +182,11 @@ enum TcpOpt{
 #define TCPOLEN_TRAILER_CSUM  3
 #define TCPOLEN_MD5SIG        18
 
+/* more macros for TCP offset */
+#define TCP_OFFSET(tcph)        (((tcph)->th_offx2 & 0xf0) >> 4)
+#define TCP_X2(tcph)            ((tcph)->th_offx2 & 0x0f)
 
-
-
+#define TCP_ISFLAGSET(tcph, flags) (((tcph)->th_flags & (flags)) == (flags))
 
 
 }  // namespace Tcp
@@ -232,5 +260,8 @@ enum TcpOpt{
                              Intended to replace MD5 Signature Option [RFC2385] */
 
 #define TCP_HEADER_LEN tcp::hdr_len()
+
+#define TCPHdr tcp::TCPHdr
+
 
 #endif /* TCP_H */

@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 
@@ -73,7 +74,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "swipe";
+static const char* const name = "swipe";
 static const CodecApi swipe_api =
 {
     {
@@ -84,10 +85,10 @@ static const CodecApi swipe_api =
         nullptr,
         nullptr,
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

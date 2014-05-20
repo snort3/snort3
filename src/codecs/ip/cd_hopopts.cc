@@ -45,6 +45,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool update(Packet*, Layer*, uint32_t* len);
 };
 
 
@@ -108,6 +109,14 @@ void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_HOPOPTS);
 }
 
+bool Ipv6HopOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
+{
+    if ( lyr == (p->layers + p->next_layer - 1) )
+        *len += p->dsize;
+
+    *len += lyr->length;
+    return true;
+}
 
 //-------------------------------------------------------------------------
 // api

@@ -69,7 +69,7 @@
 #include "snort.h"
 #include "time/packet_time.h"
 #include "decode.h"
-#include "encode.h"
+#include "managers/packet_manager.h"
 #include "log_text.h"
 #include "packet_io/active.h"
 #include "normalize/normalize.h"
@@ -1065,14 +1065,6 @@ StreamTcpConfig::StreamTcpConfig()
     max_consec_small_seg_size = S5_DEFAULT_MAX_SMALL_SEG_SIZE;
 
     InitFlushPointList(&flush_point_list, 192, 128, footprint);
-
-    /* Initialize flush policy to Ignore */
-    memcpy(&flush_config, ignore_flush_policy,
-            sizeof(FlushConfig) * MAX_PORTS);
-    memcpy(&flush_config_protocol, ignore_flush_policy_protocol,
-            sizeof(FlushConfig) * MAX_PROTOCOL_ORDINAL);
-
-    paf_config = s5_paf_new(paf_max);
 }
 
 //-------------------------------------------------------------------------
@@ -2212,7 +2204,7 @@ static inline void UpdateSsn(
 
 void tcp_sinit()
 {
-    s5_pkt = Encode_New();
+    s5_pkt = PacketManager::encode_new();
     tcp_memcap = new Memcap(262144); // FIXIT replace with session memcap
     Stream5TcpInitFlushPoints();
 }
@@ -2221,7 +2213,7 @@ void tcp_sterm()
 {
     if (s5_pkt)
     {
-        Encode_Delete(s5_pkt);
+        PacketManager::encode_delete(s5_pkt);
         s5_pkt = NULL;
     }
     delete tcp_memcap;
@@ -2486,11 +2478,11 @@ static inline int _flush_to_seq (
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     GetPacketHeaderFoo(tcpssn, &pkth, dir);
-    Encode_Format_With_DAQ_Info(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, 0);
+    PacketManager::encode_format_with_daq_info(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, &pkth, 0);
 #elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
-    Encode_Format_With_DAQ_Info(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, 0);
+    PacketManager::encode_format_with_daq_info(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP, 0);
 #else
-    Encode_Format(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP);
+    PacketManager::encode_format(enc_flags, p, s5_pkt, PSEUDO_PKT_TCP);
 #endif
 
     // TBD in ips mode, these should be coming from current packet (tdb)
@@ -2574,7 +2566,7 @@ static inline int _flush_to_seq (
         if ((p->packet_flags & PKT_PDU_TAIL))
             s5_pkt->packet_flags |= PKT_PDU_TAIL;
 
-        Encode_Update(s5_pkt);
+        PacketManager::encode_update(s5_pkt);
 
         if(sfip_family(sip) == AF_INET)
         {

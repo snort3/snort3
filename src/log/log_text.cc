@@ -1004,7 +1004,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
     {
         TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
         LogIPHeader(log, orig_p);
-        orig_ip_hlen = IP_HLEN(p->orig_iph) << 2;
+        orig_ip_hlen = ipv4::get_pkt_len(p->orig_iph) << 2;
 
         switch(GET_IPH_PROTO(orig_p))
         {

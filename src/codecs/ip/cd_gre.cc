@@ -40,6 +40,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -229,15 +230,14 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     return true;
 }
 
-#if 0
-/*
- * ENCODER
- */
-void GRE_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+/******************************************************************
+ ******************** E N C O D E R  ******************************
+ ******************************************************************/
+
+void GreCodec::format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 {
     c->greh = (GREHdr*)lyr->start;
 }
-#endif
 
 
 //-------------------------------------------------------------------------

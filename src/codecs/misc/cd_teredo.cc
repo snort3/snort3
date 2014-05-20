@@ -26,10 +26,6 @@
 #include "config.h"
 #endif
 
-//#include "generators.h"
-//#include "decode.h"  
-//#include "static_include.h"
-
 //#include "prot_ipv6.h"
 
 #include "snort_types.h"
@@ -63,12 +59,9 @@ void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROTOCOL_TEREDO);
 }
 
-
 bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-
-
     if (len < teredo::min_hdr_len())
         return false;
 
@@ -86,6 +79,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if (len < (uint32_t)(teredo::min_indicator_auth_len() + client_id_length + auth_data_length))
             return false;
 
+        raw_pkt += (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
         lyr_len = (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
     }
 
@@ -94,6 +88,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if (len < teredo::indicator_origin_len())
             return false;
 
+        raw_pkt += teredo::indicator_origin_len();
         lyr_len += teredo::indicator_origin_len();
     }
 
@@ -101,7 +96,6 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if (( (*raw_pkt & 0xF0) >> 4) == 6)
     {
         p->proto_bits |= PROTO_BIT__TEREDO;
-//        dc.teredo++;
 
         if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
             Active_SetTunnelBypass();
@@ -110,12 +104,9 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             p->packet_flags |= PKT_UNSURE_ENCAP;
 
         next_prot_id = IPPROTO_IPV6;
-//        DecodeIPV6(pkt, len, p);
-//        p->packet_flags &= ~PKT_UNSURE_ENCAP;
         return true;
     }
 
-    /* Otherwise, we treat this as normal UDP traffic. */
     return false;
 }
 

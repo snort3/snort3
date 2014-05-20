@@ -30,6 +30,7 @@
 #include <dnet.h>
 #endif
 
+#include <array>
 #include "snort.h"
 #include "generators.h"
 #include "fpdetect.h"
@@ -43,6 +44,8 @@
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/checksum.h"
+#include "main/thread.h"
+#include "stream/stream_api.h"
 
 namespace{
 
@@ -53,8 +56,11 @@ public:
     ~Ipv4Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_packet, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
     // used in random classes throughout Snort++
 
@@ -65,20 +71,17 @@ public:
 private:
 
 
-
     
 };
 
 /* Last updated 5/2/2014.
    Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
-uint16_t const MIN_UNASSIGNED_IP_PROTO = 143;
+const uint16_t MIN_UNASSIGNED_IP_PROTO = 143;
 
-uint16_t const IP_ID_COUNT = 8192;
-THREAD_LOCAL rand_t* s_rand = 0;
-
-
-// this should be changed to type array
-THREAD_LOCAL uint16_t s_id_pool[IP_ID_COUNT] = {};
+const uint16_t IP_ID_COUNT = 8192;
+static THREAD_LOCAL rand_t* s_rand = 0;
+static THREAD_LOCAL uint16_t s_id_index = 0;
+static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 
 }  // namespace
 
@@ -88,10 +91,59 @@ static inline void IPMiscTests(Packet *);
 static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
 
 
+/*******************************************
+ ************  PRIVATE FUNCTIONS ***********
+ *******************************************/
+
+static inline uint8_t GetTTL (const EncState* enc)
+{
+    char dir;
+    uint8_t ttl;
+    int outer = !enc->ip_hdr;
+
+    if ( !enc->p->flow )
+        return 0;
+
+    if ( enc->p->packet_flags & PKT_FROM_CLIENT )
+        dir = forward(enc) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
+    else
+        dir = forward(enc) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
+
+    // outermost ip is considered to be outer here,
+    // even if it is the only ip layer ...
+    ttl = stream.get_session_ttl(enc->p->flow, dir, outer);
+
+    // so if we don't get outer, we use inner
+    if ( 0 == ttl && outer )
+        ttl = stream.get_session_ttl(enc->p->flow, dir, 0);
+
+    return ttl;
+}
+
+static inline uint8_t FwdTTL (const EncState* enc, uint8_t ttl)
+{
+    uint8_t new_ttl = GetTTL(enc);
+    if ( !new_ttl )
+        new_ttl = ttl;
+    return new_ttl;
+}
+
+static inline uint8_t RevTTL (const EncState* enc, uint8_t ttl)
+{
+    uint8_t new_ttl = GetTTL(enc);
+    if ( !new_ttl )
+        new_ttl = ( MAX_TTL - ttl );
+    if ( new_ttl < MIN_TTL )
+        new_ttl = MIN_TTL;
+    return new_ttl;
+}
+
+
+
 void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ipv4::ethertype_ip());
-    v.push_back(ipv4::prot_id());
+    v.push_back(ETHERTYPE_IPV4);
+    v.push_back(IPPROTO_ID_IPIP);
 }
 
 //--------------------------------------------------------------------
@@ -109,7 +161,7 @@ void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len, 
+bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
@@ -144,7 +196,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         if (p->encapsulated)
         {
             codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                raw_packet, len);
+                raw_pkt, len);
 
             return false;
         }
@@ -158,13 +210,13 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 
     /* lay the IP struct over the raw data */
-    p->inner_iph = p->iph = reinterpret_cast<IPHdr*>(const_cast<uint8_t *>(raw_packet));
+    p->inner_iph = p->iph = reinterpret_cast<IPHdr*>(const_cast<uint8_t *>(raw_pkt));
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if(IP_VER((IPHdr*)raw_packet) != 4)
+    if(ipv4::get_version((IPHdr*)raw_pkt) != 4)
     {
         if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_NOT_IPV4_DGRAM);
@@ -181,9 +233,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
 
     /* get the IP datagram length */
     ip_len = ntohs(p->iph->ip_len);
-
-    /* get the IP header length */
-    hlen = ipv4::get_pkt_hdr_len(p->iph) << 2;
+    hlen = ipv4::get_pkt_len(p->iph);
 
     /* header length sanity check */
     if(hlen < ipv4::hdr_len())
@@ -282,8 +332,8 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
 
     if(p->ip_options_len > 0)
     {
-        p->ip_options_data = raw_packet + ipv4::hdr_len();
-        DecodeIPOptions((raw_packet + ipv4::hdr_len()), p->ip_options_len, p);
+        p->ip_options_data = raw_pkt + ipv4::hdr_len();
+        DecodeIPOptions((raw_pkt + ipv4::hdr_len()), p->ip_options_len, p);
     }
     else
     {
@@ -339,7 +389,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
         {
             /* set the packet fragment flag */
             p->frag_flag = 1;
-            p->ip_frag_start = raw_packet + hlen;
+            p->ip_frag_start = raw_pkt + hlen;
             p->ip_frag_len = (uint16_t)ip_len;
 //            dc.frags++;
         }
@@ -355,7 +405,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     }
 
     /* Set some convienience pointers */
-    p->ip_data = raw_packet + hlen;
+    p->ip_data = raw_pkt + hlen;
     p->ip_dsize = (u_short) ip_len;
 
     /* See if there are any ip_proto only rules that match */
@@ -383,7 +433,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_packet, const uint32_t len,
     else
     {
         /* set the payload pointer and payload size */
-        p->data = raw_packet + hlen;
+        p->data = raw_pkt + hlen;
         p->dsize = (u_short) ip_len;
     }
 
@@ -414,9 +464,6 @@ inline void DecodeIPv4Proto(const uint8_t proto,
 //                Active_SetTunnelBypass();
             return;
 
-#if 0
-
-#endif
         case IPPROTO_IP_MOBILITY:
         case IPPROTO_SUN_ND:
         case IPPROTO_PIM:
@@ -645,13 +692,12 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
     return;
 }
 
-#if 0
+/******************************************************************
+ ******************** E N C O D E R  ******************************
+*******************************************************************/
+
 static inline uint16_t IpId_Next ()
 {
-    uint16_t s_id_index = Get_s_id_index();
-    uint16_t *s_id_pool = Get_s_id_pool();
-    rand_t *s_rand = Get_s_rand();
-
 #if defined(REG_TEST) || defined(VALGRIND_TESTING)
     uint16_t id = htons(s_id_index + 1);
 #else
@@ -661,83 +707,67 @@ static inline uint16_t IpId_Next ()
 
 #ifndef VALGRIND_TESTING
     if ( !s_id_index )
-        rand_shuffle(s_rand, s_id_pool, sizeof(s_id_pool), 1);
+        rand_shuffle(s_rand, &s_id_pool[0], sizeof(s_id_pool), 1);
 #endif
     return id;
 }
 
-/*
- * ENCODER
- */
+/******************************************************************
+ ******************** E N C O D E R  ******************************
+ ******************************************************************/
 
-EncStatus IP4_Encode (EncState* enc, Buffer* in, Buffer* out)
+bool Ipv4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
-    int len;
-    uint32_t start = out->end;
-    uint16_t s_id_index = Get_s_id_index();
-    uint16_t *s_id_pool = Get_s_id_pool();
-    rand_t *s_rand = Get_s_rand();
+    IPHdr *ho;
 
-    IPHdr* hi = (IPHdr*)enc->p->layers[enc->layer-1].start;
-    IPHdr* ho = (IPHdr*)(out->base + out->end);
-    PROTO_ID next = NextEncoder(enc);
-    UPDATE_BOUND(out, sizeof(*ho));
+    if (!update_buffer(out, sizeof(*ho)))
+        return false;
+
+
+    const IPHdr *hi = reinterpret_cast<const IPHdr*>(raw_in);
+    ho = reinterpret_cast<IPHdr*>(out->base);
 
     /* IPv4 encoded header is hardcoded 20 bytes */
     ho->ip_verhl = 0x45;
     ho->ip_off = 0;
-
     ho->ip_id = IpId_Next();
     ho->ip_tos = hi->ip_tos;
     ho->ip_proto = hi->ip_proto;
+    ho->ip_len = htons((uint16_t)out->end);
+    ho->ip_csum = 0;
 
-    if ( FORWARD(enc) )
+    if ( forward(enc) )
     {
         ho->ip_src.s_addr = hi->ip_src.s_addr;
         ho->ip_dst.s_addr = hi->ip_dst.s_addr;
-
         ho->ip_ttl = FwdTTL(enc, hi->ip_ttl);
     }
     else
     {
         ho->ip_src.s_addr = hi->ip_dst.s_addr;
         ho->ip_dst.s_addr = hi->ip_src.s_addr;
-
         ho->ip_ttl = RevTTL(enc, hi->ip_ttl);
     }
 
-    enc->ip_hdr = (uint8_t*)hi;
-    enc->ip_len = IP_HLEN(hi) << 2;
-
-    if ( next < PROTO_MAX )
-    {
-        EncStatus err = encoders[next].fencode(enc, in, out);
-        if ( EncStatus::ENC_OK != err ) return err;
-    }
     if ( enc->proto )
     {
         ho->ip_proto = enc->proto;
         enc->proto = 0;
     }
 
-    len = out->end - start;
-    ho->ip_len = htons((uint16_t)len);
-
-    ho->ip_csum = 0;
 
     /* IPv4 encoded header is hardcoded 20 bytes, we save some
      * cycles and use the literal header size for checksum */
-    ho->ip_csum = in_chksum_ip((uint16_t *)ho, sizeof *ho);
-
-    return EncStatus::ENC_OK;
+    ho->ip_csum = checksum::ip_cksum((uint16_t *)ho, ipv4::hdr_len());
+    return true;
 }
 
-EncStatus IP4_Update (Packet* p, Layer* lyr, uint32_t* len)
+bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     IPHdr* h = (IPHdr*)(lyr->start);
     int i = lyr - p->layers;
 
-    *len += GET_IP_HDR_LEN(h);
+    *len += ipv4::get_pkt_len(h);
 
     if ( i + 1 == p->next_layer )
     {
@@ -748,19 +778,19 @@ EncStatus IP4_Update (Packet* p, Layer* lyr, uint32_t* len)
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
     {
         h->ip_csum = 0;
-        h->ip_csum = in_chksum_ip((uint16_t *)h, GET_IP_HDR_LEN(h));
+        h->ip_csum = checksum::ip_cksum((uint16_t *)h, ipv4::get_pkt_len(h));
     }
 
-    return EncStatus::ENC_OK;
+    return true;
 }
 
-void IP4_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
+void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
     // TBD handle nested ip layers
     IPHdr* ch = (IPHdr*)lyr->start;
     c->iph = ch;
 
-    if ( REVERSE(f) )
+    if ( reverse(f) )
     {
         int i = lyr - c->layers;
         IPHdr* ph = (IPHdr*)p->layers[i].start;
@@ -775,13 +805,11 @@ void IP4_Format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
         {
             lyr->length = sizeof(*ch);
             ch->ip_len = htons(lyr->length);
-            SET_IP_HLEN(ch, lyr->length >> 2);
+            ipv4::set_hlen(ch, lyr->length >> 2);
         }
     }
     sfiph_build(c, c->iph, AF_INET);
 }
-
-#endif
 
 /*
  * CHECKSUM
@@ -822,7 +850,7 @@ static void ipv4_codec_ginit()
     if ( !s_rand )
         FatalError("rand_open() failed.\n");
 
-    rand_get(s_rand, s_id_pool, sizeof(s_id_pool));
+    rand_get(s_rand, &s_id_pool[0], sizeof(s_id_pool));
 #endif
 }
 

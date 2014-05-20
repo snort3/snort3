@@ -54,10 +54,10 @@
 #include "ppm.h"
 #include "profiler.h"
 #include "filters/detection_filter.h"
-#include "encode.h"
 #include "main/thread.h"
 #include "framework/ips_option.h"
 #include "managers/ips_manager.h"
+#include "managers/packet_manager.h"
 
 typedef struct _detection_option_key
 {
@@ -402,7 +402,7 @@ int detection_option_node_evaluate(
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
     uint16_t save_dflags = 0;
-    uint64_t cur_eval_pkt_count = (rule_eval_pkt_count + (GetRebuiltPktCount()));
+    uint64_t cur_eval_pkt_count = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
     NODE_PROFILE_VARS;
 
     if (!node || !eval_data || !eval_data->p || !eval_data->pomd)

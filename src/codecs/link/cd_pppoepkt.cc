@@ -24,20 +24,22 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
+#include "protocols/packet.h"
 
 namespace
 {
 
-class PPPoEPkt : public Codec
+class PPPoEPktCodec : public Codec
 {
 public:
-    PPPoEPkt() : Codec("ppp_over_eth"){};
-    ~PPPoEPkt(){};
+    PPPoEPktCodec() : Codec("ppp_over_eth"){};
+    ~PPPoEPktCodec(){};
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     
     // DELETE from here and below
     #include "codecs/sf_protocols.h"
@@ -76,7 +78,7 @@ const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
 } // namespace
 
 
-void PPPoEPkt::get_protocol_ids(std::vector<uint16_t>& v)
+void PPPoEPktCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(ETHERNET_TYPE_PPPoE_DISC);
     v.push_back(ETHERNET_TYPE_PPPoE_SESS);
@@ -102,7 +104,7 @@ void PPPoEPkt::get_protocol_ids(std::vector<uint16_t>& v)
  * see http://www.faqs.org/rfcs/rfc2516.html
  *
  */
-bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool PPPoEPktCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     //PPPoE_Tag *ppppoe_tag=0;
@@ -263,35 +265,29 @@ bool PPPoEPkt::decode(const uint8_t *raw_pkt, const uint32_t len,
     return false;
 }
 
-#if 0
 
-EncStatus PPPoE_Encode (EncState* enc, Buffer* in, Buffer* out)
+/******************************************************************
+ ******************** E N C O D E R  ******************************
+ ******************************************************************/
+
+bool PPPoEPktCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
-    int n = enc->p->layers[enc->layer-1].length;
-    int len;
+    int lyr_len = enc->p->layers[enc->layer-1].length;
 
-    PPPoEHdr* hi = (PPPoEHdr*)(enc->p->layers[enc->layer-1].start);
-    PPPoEHdr* ho = (PPPoEHdr*)(out->base + out->end);
+    if (!update_buffer(out, lyr_len))
+        return false;
 
-    uint32_t start;
-    PROTO_ID next = NextEncoder(enc);
+    const PPPoEHdr* hi = reinterpret_cast<const PPPoEHdr*>(raw_in);
+    PPPoEHdr* ho = reinterpret_cast<PPPoEHdr*>(out->base);
 
-    UPDATE_BOUND(out, n);
-    memcpy(ho, hi, n);
+    memcpy(ho, hi, lyr_len);
+    ho->length = htons((uint16_t)out->end);
 
-    start = out->end;
-
-    if ( next < PROTO_MAX )
-    {
-        EncStatus err = encoders[next].fencode(enc, in, out);
-        if (EncStatus::ENC_OK != err ) return err;
-    }
-    len = out->end - start;
-    ho->length = htons((uint16_t)len);
-
-    return EncStatus::ENC_OK;
+    return true;
 }
-#endif
+
+
+
 
 //-------------------------------------------------------------------------
 // api
@@ -299,7 +295,7 @@ EncStatus PPPoE_Encode (EncState* enc, Buffer* in, Buffer* out)
 
 static Codec* ctor()
 {
-    return new PPPoEPkt();
+    return new PPPoEPktCodec();
 }
 
 static void dtor(Codec *cd)

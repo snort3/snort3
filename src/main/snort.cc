@@ -55,7 +55,7 @@ using namespace std;
 
 #include "helpers/process.h"
 #include "decode.h"
-#include "encode.h"
+#include "managers/packet_manager.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 #include "rules.h"
@@ -415,6 +415,7 @@ static void SnortInit(int argc, char **argv)
 
     fpCreateFastPacketDetection(snort_conf);
     MpseManager::activate_search_engine(snort_conf);
+    PacketManager::instantiate();
 
 #ifdef PPM_MGR
     PPM_PRINT_CFG(&snort_conf->ppm_cfg);
@@ -951,7 +952,7 @@ DAQ_Verdict packet_callback(
         if ( s_packet.packet_flags & PKT_MODIFIED )
         {
             // this packet was normalized and/or has replacements
-            Encode_Update(&s_packet);
+            PacketManager::encode_update(&s_packet);
             verdict = DAQ_VERDICT_REPLACE;
         }
         else if ( s_packet.packet_flags & PKT_RESIZED )
@@ -995,7 +996,7 @@ DAQ_Verdict packet_callback(
     /* Collect some "on the wire" stats about packet size, etc */
     UpdateWireStats(&sfBase, pkthdr->caplen, Active_PacketWasDropped(), inject);
     Active_Reset();
-    Encode_Reset();
+    PacketManager::encode_reset();
 
     if ( flow_con )  // FIXIT always instantiate
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
@@ -1023,10 +1024,8 @@ void snort_thread_init(const char* intf)
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 
-    PacketManager::set_grinder();
-
+    PacketManager::thread_init();
     FileAPIPostInit();
-    Encode_Init();
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of SnortInit()
@@ -1072,6 +1071,5 @@ void snort_thread_term()
     SnortEventqFree();
     Active_Term();
     PacketManager::thread_term();
-    Encode_Term();
 }
 
