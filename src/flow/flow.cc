@@ -66,8 +66,6 @@ Flow::Flow (int proto)
     * StreamFlowData structure */
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
     flowdata = (StreamFlowData*)SnortAlloc(sz);
-
-    init = true;
 }
 
 Flow::~Flow ()
@@ -83,22 +81,45 @@ Flow::~Flow ()
 
 void Flow::reset()
 {
-    if ( !init )
+    if ( ssn_client )
+    {
         session->cleanup();
+        free_application_data();
+    }
+    // FIXIT cleanup() winds up calling clear()
+    if ( ssn_client )
+    {
+        ssn_client->rem_ref();
+        ssn_client = nullptr;
+    }
+    if ( ssn_server )
+    {
+        ssn_server->rem_ref();
+        ssn_server = nullptr;
+    }
 
     constexpr size_t offset = offsetof(Flow, appDataList);
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
     boInitStaticBITOP(
         &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
-
-    init = true;
 }
 
 void Flow::clear(bool freeAppData)
 {
     if ( freeAppData )
         free_application_data();
+
+    if ( ssn_client )
+    {
+        ssn_client->rem_ref();
+        ssn_client = nullptr;
+    }
+    if ( ssn_server )
+    {
+        ssn_server->rem_ref();
+        ssn_server = nullptr;
+    }
 
     boResetBITOP(&(flowdata->boFlowbits));
 

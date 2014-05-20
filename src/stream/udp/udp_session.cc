@@ -156,7 +156,7 @@ bool UdpSession::setup(Packet* p)
     flow->protocol = GET_IPH_PROTO(p);
     flow->s5_state.direction = FROM_SENDER;
 
-    StreamUdpConfig* pc = get_udp_cfg(flow->server);
+    StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_expire(p, pc->session_timeout);
 
     udpStats.created++;
@@ -218,7 +218,7 @@ void UdpSession::update_direction(
 
 int UdpSession::process(Packet *p)
 {
-    StreamUdpConfig* pc = get_udp_cfg(flow->server);
+    StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     SFXHASH_NODE *hash_node = NULL;
 
     PROFILE_VARS;

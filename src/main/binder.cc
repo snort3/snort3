@@ -46,6 +46,7 @@ void Binder::init()
     if ( !icmp_hand )
         icmp_hand = ip_hand;
 
+    // FIXIT need to instantiate if not set?
     assert(tcp_hand);
     assert(udp_hand);
     assert(ip_hand);
@@ -57,29 +58,24 @@ void Binder::init_flow(Flow* flow)
     switch ( flow->protocol )
     {
     case IPPROTO_TCP:
-        flow->client = tcp_hand;
-        flow->server = tcp_hand;
+        flow->set_client(tcp_hand);
+        flow->set_server(tcp_hand);
         break;
 
     case IPPROTO_UDP:
-        flow->client = udp_hand;
-        flow->server = udp_hand;
+        flow->set_client(udp_hand);
+        flow->set_server(udp_hand);
         break;
 
     case IPPROTO_ICMP:
-        flow->client = icmp_hand;
-        flow->server = icmp_hand;
+        flow->set_client(icmp_hand);
+        flow->set_server(icmp_hand);
         break;
 
     case IPPROTO_IP:
-        flow->client = ip_hand;
-        flow->server = ip_hand;
+        flow->set_client(ip_hand);
+        flow->set_server(ip_hand);
         break;
     }
-    if ( flow->client )
-        flow->client->add_ref();
-
-    if ( flow->server )
-        flow->server->add_ref();
 }
 

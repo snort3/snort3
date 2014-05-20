@@ -110,7 +110,7 @@ static inline void UpdateSession (Packet* p, Flow* lws)
 
     // Reset the session timeout.
     {
-        StreamIpConfig* pc = get_ip_cfg(lws->server);
+        StreamIpConfig* pc = get_ip_cfg(lws->ssn_server);
         lws->set_expire(p, pc->session_timeout);
     }
 }
@@ -178,7 +178,7 @@ int IpSession::process(Packet* p)
 
     if ( p->frag_flag )
     {
-        Defrag* d = get_defrag(flow->server);
+        Defrag* d = get_defrag(flow->ssn_server);
         d->process(p, &tracker);
     }
 

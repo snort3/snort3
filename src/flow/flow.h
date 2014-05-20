@@ -166,6 +166,17 @@ public:
     bool was_blocked()
     { return (s5_state.session_flags & SSNFLAG_BLOCK) != 0; };
 
+    void set_client(Inspector* ins)
+    {
+        ssn_client = ins;
+        ssn_client->add_ref();
+    };
+    void set_server(Inspector* ins)
+    {
+        ssn_server = ins;
+        ssn_server->add_ref();
+    };
+
 public:  // FIXIT privatize if possible
     // these fields are const after initialization
     const FlowKey* key;
@@ -175,10 +186,9 @@ public:  // FIXIT privatize if possible
 
     // these fields are always set; not zeroed
     Flow* prev, * next;
-    Inspector* client;
-    Inspector* server;
+    Inspector* ssn_client;
+    Inspector* ssn_server;
     long last_data_seen;
-    bool init;
 
     // everything from here down is zeroed
     FlowData* appDataList;

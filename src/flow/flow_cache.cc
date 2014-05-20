@@ -161,11 +161,6 @@ Flow* FlowCache::get(const FlowKey* key)
 int FlowCache::release(Flow* flow, const char*)
 {
     flow->reset();
-    flow->free_application_data();
-    flow->client->rem_ref();
-    flow->server->rem_ref();
-    flow->client = flow->server = nullptr;
-
     return remove(flow);
 }
 

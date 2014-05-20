@@ -234,20 +234,18 @@ void FlowControl::process(FlowCache* cache, Packet* p)
     if ( !flow )
         return;
 
-    if ( flow->init )
+    if ( !flow->ssn_client )
     {
         Binder::init_flow(flow);
 
         if ( !flow->session->setup(p) )
             return;
-
-        flow->init = false;
     }
 
     p->flow = flow;
     flow->session->process(p);
 
-    if ( flow->init && is_bidirectional(flow) )
+    if ( flow->next && is_bidirectional(flow) )
         cache->unlink_uni(flow);
 }
 

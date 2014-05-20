@@ -8062,7 +8062,7 @@ int TcpSession::process(Packet *p)
     }
     SetupTcpDataBlock(&tdb, p);
 
-    StreamTcpConfig* config = get_tcp_cfg(flow->server);
+    StreamTcpConfig* config = get_tcp_cfg(flow->ssn_server);
     TcpSession* tcpssn = (TcpSession*)flow->session;
 
     if ( !tcpssn->lws_init )
