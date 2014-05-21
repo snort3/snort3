@@ -471,8 +471,6 @@ static void targetPolicyIterate(void (*callback)(int));
 #endif
 
 /*  G L O B A L S  **************************************************/
-// FIXIT eliminate these globals
-static THREAD_LOCAL Packet *s5_pkt = NULL;
 
 /* enum for policy names */
 static const char *reassembly_policy_names[] = {
@@ -525,8 +523,6 @@ static const char *flush_policy_names[] = {
     "Protocol-IPS"
 };
 
-static THREAD_LOCAL int s5_tcp_cleanup = 0;
-
 static const uint32_t g_static_points[RAND_FLUSH_POINTS] =
 {
     128, 217, 189, 130, 240, 221, 134, 129,
@@ -538,6 +534,8 @@ static const uint32_t g_static_points[RAND_FLUSH_POINTS] =
     233, 135, 143, 158, 174, 194, 200, 180,
     201, 142, 153, 187, 173, 199, 143, 201
 };
+
+static THREAD_LOCAL Packet *s5_pkt = NULL;
 
 /*  F U N C T I O N S  **********************************************/
 static inline uint32_t GenerateFlushPoint(FlushPointList *flush_point_list)
@@ -7963,15 +7961,6 @@ static void targetPolicyIterate(void (*callback)(int))
     }
 }
 #endif
-
-//-------------------------------------------------------------------------
-
-void Stream5ResetTcp()
-{
-    s5_tcp_cleanup = 1;
-    flow_con->purge_flows(IPPROTO_TCP);
-    s5_tcp_cleanup = 0;
-}
 
 //-------------------------------------------------------------------------
 // TcpSession methods

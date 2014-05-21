@@ -26,6 +26,7 @@
 #include <mutex>
 
 #include "module_manager.h"
+#include "main/binder.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
 #include "obfuscation.h"
@@ -139,13 +140,17 @@ struct FrameworkPolicy
         for ( auto* p : ph_list )
         {
             if ( p->pp_class.api.ssn )
-                continue;
+                Binder::set(p->handler, p->pp_class.api.proto_bits);
+
             else if ( p->pp_class.api.type == IT_STREAM )
                 session.add(p);
+
             else if ( p->pp_class.api.type < IT_STREAM )
                 network.add(p);
+
             else if ( p->pp_class.api.type < IT_SERVICE )
                 generic.add(p);
+
             else
                 service.add(p);
         }

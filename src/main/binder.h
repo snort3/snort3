@@ -74,6 +74,7 @@ class Binder
 {
 public:
     static void init();
+    static void set(class Inspector*, unsigned proto);
     static void init_flow(class Flow*);
 };
 

@@ -199,22 +199,26 @@ void StreamBase::eval(Packet *p)
     switch ( GET_IPH_PROTO(p) )
     {
     case IPPROTO_TCP:
-        flow_con->process_tcp(p);
+        if ( p->tcph )
+            flow_con->process_tcp(p);
         break;
 
     case IPPROTO_UDP:
         if ( p->frag_flag )
             flow_con->process_ip(p);
 
-        flow_con->process_udp(p);
+        if ( p->udph )
+            flow_con->process_udp(p);
         break;
 
     case IPPROTO_ICMP:
-        flow_con->process_icmp(p);
+        if ( p->icmph )
+            flow_con->process_icmp(p);
         break;
 
     case IPPROTO_IP:
-        flow_con->process_ip(p);
+        if ( p->iph )
+            flow_con->process_ip(p);
         break;
     }
 

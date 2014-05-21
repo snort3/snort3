@@ -81,7 +81,6 @@
 #define STREAM5_STATE_CLOSED            0x0800
 
 struct Packet;
-class Inspector;
 
 typedef void (*StreamAppDataFree)(void*);
 

@@ -110,18 +110,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-#if 0
-static void tcp_stats()
-{
-    // FIXIT add method to get exp cache?
-    LogMessage("            Expected Flows\n");
-    LogMessage("                  Expected: %lu\n", exp_cache->get_expects());
-    LogMessage("                  Realized: %lu\n", exp_cache->get_realized());
-    LogMessage("                    Pruned: %lu\n", exp_cache->get_prunes());
-    LogMessage("                 Overflows: %lu\n", exp_cache->get_overflows());
-}
-#endif
-
 static Inspector* tcp_ctor(Module* m)
 {
     StreamTcpModule* mod = (StreamTcpModule*)m;

@@ -21,36 +21,33 @@
 #include "binder.h"
 
 #include "flow/flow.h"
+#include "framework/inspector.h"
 #include "managers/inspector_manager.h"
-
-class Inspector;
+#include "protocols/packet.h"
 
 // FIXIT these will move into bindings lookup structures
 // these are for defaults but lookups will support default
-// and non-defaults
-static Inspector* tcp_hand;
-static Inspector* udp_hand;
-static Inspector* icmp_hand;
-static Inspector* ip_hand;
+// and non-defaults (and client and server may differ)
+static Inspector* pin_tcp = nullptr;
+static Inspector* pin_udp = nullptr;
+static Inspector* pin_icmp = nullptr;
+static Inspector* pin_ip = nullptr;
+
+void Binder::set(Inspector* pin, unsigned proto)
+{
+    switch ( proto )
+    {
+    case PROTO_BIT__TCP: pin_tcp = pin; break;
+    case PROTO_BIT__UDP: pin_udp = pin; break;
+    case PROTO_BIT__ICMP: pin_icmp = pin; break;
+    case PROTO_BIT__IP: pin_ip = pin; break;
+    }
+}
 
 void Binder::init()
 {
-    // FIXIT this is backwards; InspectorManager must call
-    // binder to set the various default inspectors since
-    // binder doesn't know what inspectors are available
-    tcp_hand = InspectorManager::get_inspector("stream_tcp");
-    udp_hand = InspectorManager::get_inspector("stream_udp");
-    ip_hand = InspectorManager::get_inspector("stream_ip");
-    icmp_hand = InspectorManager::get_inspector("stream_icmp");
-
-    if ( !icmp_hand )
-        icmp_hand = ip_hand;
-
-    // FIXIT need to instantiate if not set?
-    assert(tcp_hand);
-    assert(udp_hand);
-    assert(ip_hand);
-    assert(icmp_hand);
+    if ( !pin_icmp )
+        pin_icmp = pin_ip;
 }
 
 void Binder::init_flow(Flow* flow)
@@ -58,23 +55,23 @@ void Binder::init_flow(Flow* flow)
     switch ( flow->protocol )
     {
     case IPPROTO_TCP:
-        flow->set_client(tcp_hand);
-        flow->set_server(tcp_hand);
+        flow->set_client(pin_tcp);
+        flow->set_server(pin_tcp);
         break;
 
     case IPPROTO_UDP:
-        flow->set_client(udp_hand);
-        flow->set_server(udp_hand);
+        flow->set_client(pin_udp);
+        flow->set_server(pin_udp);
         break;
 
     case IPPROTO_ICMP:
-        flow->set_client(icmp_hand);
-        flow->set_server(icmp_hand);
+        flow->set_client(pin_icmp);
+        flow->set_server(pin_icmp);
         break;
 
     case IPPROTO_IP:
-        flow->set_client(ip_hand);
-        flow->set_server(ip_hand);
+        flow->set_client(pin_ip);
+        flow->set_server(pin_ip);
         break;
     }
 }

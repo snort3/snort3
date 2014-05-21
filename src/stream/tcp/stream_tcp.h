@@ -108,13 +108,12 @@ struct StreamTcpConfig
     void add_proto(const char* svc, bool c2s, bool s2c);
 };
 
+// misc stuff
 int Stream5VerifyTcpConfig(SnortConfig*, StreamTcpConfig *);
-void Stream5ResetTcp();
+void Stream5ResetTcpInstance(StreamTcpConfig*);
 
 Session* get_tcp_session(Flow*);
-
-// misc stuff
-void Stream5ResetTcpInstance(StreamTcpConfig*);
+StreamTcpConfig* get_tcp_cfg(Inspector*);
 
 void tcp_sinit();
 void tcp_sterm();
@@ -122,8 +121,6 @@ void tcp_sum();
 void tcp_stats();
 void tcp_reset_stats();
 void tcp_show(StreamTcpConfig*);
-
-StreamTcpConfig* get_tcp_cfg(Inspector*);
 
 // Stream support
 int Stream5FlushListener(Packet*, Flow*);

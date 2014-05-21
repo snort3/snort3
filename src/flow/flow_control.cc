@@ -307,7 +307,7 @@ void FlowControl::init_tcp(
 
 void FlowControl::process_tcp(Packet* p)
 {
-    if( !p->tcph || !tcp_cache )
+    if ( !tcp_cache )
         return;
 
     tcp_count += process(tcp_cache, p);
@@ -339,7 +339,7 @@ void FlowControl::init_udp(
 
 void FlowControl::process_udp(Packet* p)
 {
-    if( !p->udph || !udp_cache )
+    if ( !udp_cache )
         return;
 
     udp_count += process(udp_cache, p);
@@ -371,9 +371,6 @@ void FlowControl::init_icmp(
 
 void FlowControl::process_icmp(Packet* p)
 {
-    if ( !p->icmph )
-        return;
-
     if ( icmp_cache )
         icmp_count += process(icmp_cache, p);
 
@@ -407,7 +404,7 @@ void FlowControl::init_ip(
 
 void FlowControl::process_ip(Packet* p)
 {
-    if ( !p->iph || !ip_cache )
+    if ( !ip_cache )
         return;
 
     ip_count += process(ip_cache, p);

@@ -138,19 +138,6 @@ ignore_ports =
 }
 --]]
 
-tcp_client_ports = SSH_PORTS .. FTP_PORTS .. MAIL_PORTS .. RPC_PORTS ..
-[[
-    23 25 42 53 79 109 113 119 135 136 137 139 161 445 513 514 587 593 691
-    1433 1521 1741 3306 6070 6665 6666 6667 6668 6669 7000 8181 
-]]
-tcp_server_ports = ''
-tcp_both_ports = HTTP_PORTS ..
-[[
-    443 465 563 636 989 992 993 994 995 7907 7802 7801 7900 7901 7902 7903
-    7904 7905 7906 7908 7909 7910 7911 7912 7913 7914 7915 7916 7917 7918
-    7919 7920
-]]
-
 ---------------------------------------------------------------------------
 -- Step #2: configure builtin features
 ---------------------------------------------------------------------------
@@ -469,10 +456,10 @@ ftp_client =
 
 stream =
 {
-    tcp_cache = { max_sessions = 256 * K, idle_timeout = 60 },
-    udp_cache = { max_sessions = 128 * K, pruning_timeout = 30 },
-    ip_cache = { max_sessions = 64 * K },
-    icmp_cache = { max_sessions = 32 * K },
+    tcp_cache = { max_sessions = 256000, idle_timeout = 60 },
+    udp_cache = { max_sessions = 128000, pruning_timeout = 30 },
+    ip_cache = { max_sessions = 64000 },
+    icmp_cache = { max_sessions = 0 },
 }
 
 stream_tcp =
@@ -481,30 +468,14 @@ stream_tcp =
     paf_max = 16384,
 
     session_timeout = 180,
-    require_3whs = 180,
-    flush_factor = 0,
+    --require_3whs = -1,
 
+    flush_factor = 0,
     overlap_limit = 10,
 
-    queue_limit =
-    {
-        max_bytes = 3,
-        max_segments = 1300,
-    },
-    small_segments = 
-    {
-        count = 10,
-        maximum_size = 128,
-        ignore_ports = '1 2 3'
-    },
-
     footprint = 0,
-    reassemble_async = false,
+    reassemble_async = true,
     ignore_any_rules = false,
-
-    client_ports = tcp_client_ports,
-    server_ports = tcp_server_ports,
-    both_ports = tcp_both_ports,
 }
 
 stream_udp =
@@ -520,7 +491,7 @@ stream_icmp =
 
 stream_ip =
 {
-    session_timeout = 180,
+    session_timeout = 980,
     policy = 'windows', 
     max_overlaps = 10,
     max_frags = 8191,
@@ -603,8 +574,9 @@ default_rules =
 #include $PLUGIN_RULE_PATH/chat.rules
 #include $PLUGIN_RULE_PATH/dos.rules
 
-alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
-alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
+#alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
+#alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
+alert ( gid:129; sid:20; )
 ]]
 
 network =
@@ -615,9 +587,9 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    include = '../active.rules',
+    --include = '../active.rules',
     --rules = default_rules,
-    enable_builtin_rules = true
+    --enable_builtin_rules = true
 }
 
 -- prototype bindings:
@@ -627,28 +599,29 @@ ips =
 -- use: action | file | type,name | policy_id [,service]
 -- when: days, times are tbd
 
+targetX = { nets = HTTP_SERVERS, proto = 'tcp', ports = HTTP_PORTS } 
+
 bindings =
 {
-    -- define / load a policy only
+    -- product define / load a policy only to be selected by firewall
     {
         when = { policy_id = 'uuid' },
         use = { file = 'uuid.lua' }
     },
-    -- open source policy based on vlan
+    -- classic open source policy based on vlan
     {
         when = { vlans = '123' },
         use = { file = 'vlan.lua' }
     },
-    -- open source policy based on cidr
+    -- classic open source policy based on cidr
     {
-        when = { nets = '1.2.3.0/24' },
+        when = { nets = HOME_NET },
         use = { file = 'net.lua' }
     },
     -- targeted inspector config
-    {
-        when = { nets = '2.3.4.0/24', proto = 'tcp', ports = '80', role = 'any' },
-        use = { type = 'http_inspect', name = 'hi2' }
-    },
+    { when = targetX, use = { type = 'stream_tcp', name = 'tcpX' } },
+    { when = targetX, use = { type = 'http_inspect', name = 'hiX' } },
+
     -- auto service id override
     {
         when = { nets = '3.4.5.0/24', proto = 'tcp', ports = '80', role = 'any' },
