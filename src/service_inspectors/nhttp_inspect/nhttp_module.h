@@ -32,7 +32,7 @@
 class NHttpModule : public Module
 {
 public:
-    NHttpModule() : Module("nhttp_inspect", nhttpParams) { printf("NHttpModule constructor()\n"); };
+    NHttpModule() : Module("nhttp_inspect", nhttpParams) { };
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

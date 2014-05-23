@@ -112,7 +112,8 @@ static inline bool update_buffer(Buffer* buf, size_t n)
 
 
 
-class Codec {
+class Codec
+{
 public:
     virtual ~Codec() { };
 

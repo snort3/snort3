@@ -48,7 +48,8 @@ struct Packet;
 // other methods are packet thread specific
 //-------------------------------------------------------------------------
 
-class Logger {
+class Logger
+{
 public:
     virtual ~Logger() { };
 

@@ -41,7 +41,8 @@ struct Packet;
 
 struct SnortConfig;
 
-class IpsOption {
+class IpsOption
+{
 public:
     virtual ~IpsOption() { };
 

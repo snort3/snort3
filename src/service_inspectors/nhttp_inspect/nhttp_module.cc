@@ -60,7 +60,6 @@ bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
 }
 
 unsigned NHttpModule::get_gid() const {
-    printf("NHttpModule get_gid()\n");
     return GID_HTTP_CLIENT;
 }
 

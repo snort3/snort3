@@ -452,20 +452,20 @@ static int BoGetDirection(Packet *p, char *pkt_data)
 // class stuff
 //-------------------------------------------------------------------------
 
-class BoPH : public Inspector {
+class BackOrifice : public Inspector {
 public:
-    BoPH() { };
+    BackOrifice() { };
 
     void show(SnortConfig*);
     void eval(Packet*);
 };
 
-void BoPH::show(SnortConfig*)
+void BackOrifice::show(SnortConfig*)
 {
     LogMessage("%s\n", mod_name);
 }
 
-void BoPH::eval(Packet *p)
+void BackOrifice::eval(Packet *p)
 {
     uint16_t cyphertext_referent;
     uint16_t cyphertext_suffix;
@@ -592,7 +592,7 @@ void bo_init()
 
 static Inspector* bo_ctor(Module*)
 {
-    return new BoPH;
+    return new BackOrifice;
 }
 
 static void bo_dtor(Inspector* p)
