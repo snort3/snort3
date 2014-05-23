@@ -13,6 +13,7 @@ Snort++ differs from Snort in the following ways:
 * configure --with-lib{pcap,pcre}-* -> --with-{pcap,pcre}-*
 * control socket, cs_dir, and users were deleted
 * POLICY_BY_ID_ONLY code was deleted
+* hardened --enable-inline-init-failopen / INLINE_FAILOPEN
 
 === Command Line
 

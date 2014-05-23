@@ -109,9 +109,7 @@ typedef enum _RunFlag
     RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00002000,
     RUN_FLAG__INLINE_TEST         = 0x00004000,     /* --enable-inline-test*/
 
-#ifdef INLINE_FAILOPEN
     RUN_FLAG__DISABLE_FAILOPEN    = 0x00100000,     /* --disable-inline-init-failopen */
-#endif
     RUN_FLAG__PCAP_RESET          = 0x00200000,
     RUN_FLAG__PCAP_SHOW           = 0x00400000,
     RUN_FLAG__PAUSE               = 0x00800000,     // --pause
@@ -414,12 +412,10 @@ static inline int ScDefaultRuleState(void)
     return snort_conf->default_rule_state;
 }
 
-#ifdef INLINE_FAILOPEN
 static inline int ScDisableInlineFailopen(void)
 {
     return snort_conf->run_flags & RUN_FLAG__DISABLE_FAILOPEN;
 }
-#endif
 
 static inline int ScNoLockPidFile(void)
 {

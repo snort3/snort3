@@ -817,10 +817,8 @@ static const Parameter packets_params[] =
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
       "file with BPF to select traffic for Snort" },
 
-#ifdef INLINE_FAILOPEN
     { "enable_inline_init_failopen", Parameter::PT_BOOL, nullptr, "true",
       "whether to pass traffic during later stage of initialization to avoid drops" },
-#endif
 
     { "limit", Parameter::PT_INT, "0:", "0",
       "maximum number of packets to process before stopping (0 is unlimited)" },
@@ -849,13 +847,11 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("bpf_file") )
         sc->bpf_file = SnortStrdup(v.get_string());
 
-#ifdef INLINE_FAILOPEN
     else if ( v.is("enable_inline_init_failopen") )
     {
         if ( !v.get_bool() )
             sc->run_flags |= RUN_FLAG__DISABLE_FAILOPEN;
     }
-#endif
     else if ( v.is("limit") )
         sc->pkt_cnt = v.get_long();
 

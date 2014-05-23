@@ -352,23 +352,6 @@ if test "x$enable_linux_smp_stats" = "xyes"; then
     AC_DEFINE(LINUX_SMP, [1], [enable proc stats])
 fi
 
-AC_ARG_ENABLE(inline-init-failopen,
-[  --enable-inline-init-failopen  Enable Fail Open during initialization for Inline Mode (adds pthread support implicitly)],
-       enable_inline_init_failopen="$enableval", enable_inline_init_failopen="no")
-
-if test "x$enable_inline_init_failopen" = "xyes"; then
-    AC_DEFINE(INLINE_FAILOPEN, [1], [pass packet during initialization])
-    LIBS="$LIBS -lpthread"
-fi
-
-AC_ARG_ENABLE(pthread,
-[  --disable-pthread        Disable pthread support],
-       enable_pthread="$enableval", enable_pthread="yes")
-
-if test "x$enable_pthread" = "xyes"; then
-    LIBS="$LIBS -lpthread"
-fi
-
 AC_ARG_ENABLE(debug-msgs,
 [  --enable-debug-msgs      Enable debug printing options (bugreports and developers only)],
        enable_debug_msgs="$enableval", enable_debug_msgs="no")
@@ -428,8 +411,6 @@ AC_ARG_ENABLE(corefiles,
 if test "x$enable_corefiles" = "xno"; then
     AC_DEFINE(NOCOREFILE, [1], [do not generate a core file on segfault etc.])
 fi
-
-LIBS="$LIBS -lpthread"
 
 AC_ARG_ENABLE(non-ether-decoders,
 [  --enable-non-ether-decoders  Enable non Ethernet decoders.],
