@@ -43,11 +43,6 @@ if (BUILD_UNIT_TESTS)
     add_subdirectory(test)
 endif( BUILD_UNIT_TESTS)
 
-if (BUILD_SIDE_CHANNEL)
-    set( SIDE_CHANNEL_LIBRARIES sidechannel sscm)
-    add_subdirectory(side_channel)
-endif (BUILD_SIDE_CHANNEL)
-
 set_default_visibility_compile_flag(snort)
 target_link_libraries(snort
     main
@@ -94,7 +89,6 @@ target_link_libraries(snort
     link_codecs
     ip_codecs
     misc_codecs
-    ${SIDE_CHANNEL_LIBRARIES}
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
     ${PCRE_LIBRARIES}

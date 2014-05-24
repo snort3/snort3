@@ -49,7 +49,6 @@ set_if_true( ENABLE_PPM_TEST PPM_TEST )
 set_if_true( ENABLE_PERFPROFILING PERF_PROFILING )
 set_if_true( BUILD_HA ENABLE_HA )
 set_if_true( ENABLE_LINUX_SMP_STATS LINUX_SMP )
-set_if_true( ENABLE_INLINE_INIT_FAILOPEN INLINE_FAILOPEN )
 set_if_true( ENABLE_DEBUG DEBUG )
 set_if_false(ENABLE_DEBUG NDEBUG )
 set_if_true( ENABLE_SOURCEFIRE SOURCEFIRE )
@@ -86,20 +85,6 @@ if(ENABLE_PROFILE AND CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 endif()
 
-
-# convert cmake options into linker flags
-if (ENABLE_INLINE_INIT_FAILOPEN AND NOT CMAKE_USE_PTHREADS_INIT)
-    message(FATAL_ERROR "If Inline-init-failopen is enabled, Pthreads is required!")
-
-elseif(ENABLE_INLINE_INIT_FAILOPEN)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS -lpthread")
-
-endif()
-
-
-if (ENABLE_PTHREAD)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
-endif()
 
 # sanity checks to re-check and set all necesssary variables
 

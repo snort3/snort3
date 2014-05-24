@@ -214,7 +214,7 @@ void tcp_init();
 void tcp_sum();
 void tcp_stats();
 void tcp_reset();
-void tcp_show(class StreamTcpConfig*);
+void tcp_show(StreamTcpConfig*);
 
 #endif
 

@@ -292,23 +292,6 @@ if test "x$static_decoders" = "xyes"; then
                                       binary])
 fi
 
-AC_ARG_ENABLE(side_channel,
-[  --enable-side-channel    Enable the side channel (Linux only)],
-       enable_side_channel="$enableval", enable_side_channel="no")
-
-if test "x$linux" != "xyes"; then
-    if test "x$enable_side_channel" = "xyes"; then
-        AC_MSG_WARN([[The side channel is only supported on Linux systems.]])
-        enable_side_channel="no"
-    fi
-fi
-
-AM_CONDITIONAL(BUILD_SIDE_CHANNEL, test "x$enable_side_channel" = "xyes")
-
-if test "x$enable_side_channel" = "xyes"; then
-    AC_DEFINE(SIDE_CHANNEL, [1], [build side channel])
-fi
-
 AC_ARG_ENABLE(valgrind,
 [  --enable-valgrind        Only use if you are testing with valgrind.],
        enable_valgrind="$enableval", enable_valgrind="no")
@@ -889,8 +872,6 @@ src/protocols/Makefile \
 src/search_engines/Makefile \
 src/sfip/Makefile \
 src/sfrt/Makefile \
-src/side_channel/Makefile \
-src/side_channel/plugins/Makefile \
 src/target_based/Makefile \
 src/test/Makefile \
 src/time/Makefile \
