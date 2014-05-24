@@ -28,14 +28,6 @@
 #define SNORT_CONF_KEYWORD__FILE     "file"
 #define SNORT_CONF_KEYWORD__INCLUDE  "include"
 
-/* Rest of the keywords */
-// FIXIT config_* keywords were config * but moved here temporarily
-// until they are properly modularized
-#ifdef SIDE_CHANNEL
-#define SNORT_CONF_KEYWORD__CFG_SIDE_CHANNEL     "config_sidechannel"
-#define SNORT_CONF_KEYWORD__SIDE_CHANNEL         "sidechannel"
-#endif
-
 /* Macros *********************************************************************/
 #define ENABLE_ALL_RULES    1
 #define ENABLE_RULE         1

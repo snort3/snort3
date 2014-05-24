@@ -35,7 +35,6 @@
 #include <unistd.h>
 #include <pcap.h>
 #include <timersub.h>
-#include <pthread.h>
 #include <string.h>
 #include <grp.h>
 #include <pwd.h>
@@ -63,15 +62,11 @@
 #include "target_based/sftarget_reader.h"
 #include "stream/stream.h"
 
-#ifdef SIDE_CHANNEL
-#include "side_channel/sidechannel.h"
-#endif
-
 #ifdef PATH_MAX
 #define PATH_MAX_UTIL PATH_MAX
 #else
 #define PATH_MAX_UTIL 1024
-#endif /* PATH_MAX */
+#endif
 
 // You may need to adjust this on the systems which don't have standard paths
 // defined.

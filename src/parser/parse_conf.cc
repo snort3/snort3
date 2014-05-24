@@ -76,10 +76,6 @@ using namespace std;
 #include "keywords.h"
 #include "vars.h"
 
-#ifdef SIDE_CHANNEL
-# include "side_channel/sidechannel.h"
-#endif
-
 struct Location
 {
     string file;
@@ -303,63 +299,6 @@ void AddRuleState(SnortConfig* sc, const RuleState& rs)
     }
 }
 
-#ifdef SIDE_CHANNEL
-static void ConfigSideChannel(SnortConfig *sc, const char *args)
-{
-    if (sc == NULL)
-        return;
-    sc->side_channel_config.enabled = true;
-    if (args != NULL)
-        sc->side_channel_config.opts = SnortStrdup(args);
-}
-
-static void ParseSideChannelModule(SnortConfig *sc, const char *args)
-{
-    char **toks;
-    int num_toks;
-    char *opts = NULL;
-    SideChannelModuleConfig *config;
-
-    toks = mSplit(args, ":", 2, &num_toks, '\\');
-
-    if (num_toks > 1)
-        opts = toks[1];
-
-    config = (SideChannelModuleConfig *) SnortAlloc(sizeof(SideChannelModuleConfig));
-
-    if (sc->side_channel_config.module_configs == NULL)
-    {
-        sc->side_channel_config.module_configs = config;
-    }
-    else
-    {
-        SideChannelModuleConfig *tmp = sc->side_channel_config.module_configs;
-
-        while (tmp->next != NULL)
-            tmp = tmp->next;
-
-        tmp->next = config;
-    }
-
-    config->keyword = SnortStrdup(toks[0]);
-    if (opts != NULL)
-        config->opts = SnortStrdup(opts);
-
-    /* This could come from parsing the command line (No, actually, I don't think that it could...) */
-    const char* fname;
-    unsigned fline;
-    get_parse_location(fname, fline);
-
-    if ( fname )
-    {
-        config->file_name = SnortStrdup(fname);
-        config->file_line = fline;
-    }
-
-    mSplitFree(&toks, num_toks);
-}
-#endif /* SIDE_CHANNEL */
-
 static void ParseFile(SnortConfig *sc, const char *args)
 {
     parse_file_rule(args, &(sc->file_config));
@@ -393,12 +332,6 @@ static const KeywordFunc snort_conf_keywords[] =
      * it can parse what's between '{' and '}' which can span multiple
      * lines without a line continuation character */
     { SNORT_CONF_KEYWORD__RULE_TYPE, KEYWORD_TYPE__ALL,  1, 0, ParseRuleTypeDeclaration },
-#endif
-
-    // this stuff needs to be rewritten as a proper plugin
-#ifdef SIDE_CHANNEL
-    { SNORT_CONF_KEYWORD__CFG_SIDE_CHANNEL,  KEYWORD_TYPE__MAIN, 1, 1, ConfigSideChannel },
-    { SNORT_CONF_KEYWORD__SIDE_CHANNEL,      KEYWORD_TYPE__MAIN, 1, 1, ParseSideChannelModule },
 #endif
 
     { NULL, KEYWORD_TYPE__ALL, 0, 0, NULL }   /* Marks end of array */

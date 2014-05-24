@@ -86,11 +86,6 @@
 #include "parse_conf.h"
 #include "parse_rule.h"
 #include "vars.h"
-
-#ifdef SIDE_CHANNEL
-# include "side_channel/sidechannel.h"
-#endif
-
 #include "target_based/sftarget_reader.h"
 
 rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
@@ -630,26 +625,6 @@ SnortConfig * ParseSnortConf(VarNode* tmp)
     pop_parse_location();
     return sc;
 }
-
-#ifdef SIDE_CHANNEL
-void ConfigureSideChannelModules(SnortConfig *sc)
-{
-    SideChannelModuleConfig *config;
-    int rval;
-
-    for (config = sc->side_channel_config.module_configs; config != NULL; config = config->next)
-    {
-        push_parse_location(config->file_name, config->file_line);
-
-        rval = ConfigureSideChannelModule(config->keyword, config->opts);
-        if (rval == -ENOENT)
-            ParseError("Unknown side channel plugin: '%s'", config->keyword);
-
-        pop_parse_location();
-    }
-}
-
-#endif /* SIDE_CHANNEL */
 
 void FreeRuleTreeNode(RuleTreeNode *rtn)
 {

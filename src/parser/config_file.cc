@@ -56,10 +56,6 @@
 #include "file_api/file_service_config.h"
 #include "packet_io/sfdaq.h"
 
-#ifdef SIDE_CHANNEL
-# include "side_channel/sidechannel.h"
-#endif
-
 #include "target_based/sftarget_reader.h"
 
 // FIXIT defines should be avoided here - the actual option

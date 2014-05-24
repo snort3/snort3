@@ -82,11 +82,6 @@
 #include "managers/ips_manager.h"
 #include "config_file.h"
 #include "keywords.h"
-
-#ifdef SIDE_CHANNEL
-# include "side_channel/sidechannel.h"
-#endif
-
 #include "target_based/sftarget_reader.h"
 
 #define SRC  0

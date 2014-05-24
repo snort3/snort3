@@ -37,7 +37,6 @@
 #include <unistd.h>
 #include <pcap.h>
 #include <timersub.h>
-#include <pthread.h>
 #include <string.h>
 #include <grp.h>
 #include <pwd.h>
@@ -210,44 +209,6 @@ void ErrorMessageThrottled(ThrottleInfo *throttleInfo, const char *format,...)
 }
 
 /*
- * Function: SnortFatalExit(void)
- *
- * Purpose: When a fatal error occurs, this function cleanly
- *          shuts down the program
- *
- * Arguments: none
- *
- * Returns: void function
- */
-NORETURN void SnortFatalExit(void)
-{
-    // -----------------------------
-    // bail now if we are reentering
-    if ( already_fatal )
-        exit(1);
-    else
-        already_fatal = 1;
-
-    if (!snort_conf || (!ScDaemonMode() && !ScLogSyslog()))
-        fprintf(stderr,"Fatal Error, Quitting..\n");
-
-#if 0
-    // FIXIT need to stop analyzers / workers 
-    // and they should handle the DAQ break / abort
-    if ( SnortIsInitializing() )
-    {
-        DAQ_Abort();
-        exit(1);
-    }
-    else
-#endif
-    {
-        DAQ_BreakLoop(1);
-        pthread_exit(NULL);
-    }
-}
-
-/*
  * Function: FatalError(const char *, ...)
  *
  * Purpose: When a fatal error occurs, this function prints the error message
@@ -299,8 +260,6 @@ NORETURN void FatalError(const char *format,...)
 #endif
     {
         // FIXIT this makes no sense from main thread
-        //DAQ_BreakLoop(1);
-        // FIXIT pthread_exit() segfaults; use c++11 <thread> instead of pthread_*()
         // FIXIT exit() segfaults too; looks like something borked in dylib
         exit(EXIT_FAILURE);
     }

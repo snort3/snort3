@@ -35,10 +35,6 @@
 #include "managers/inspector_manager.h"
 #include "managers/packet_manager.h"
 
-#ifdef SIDE_CHANNEL
-#include "side_channel/sidechannel.h"
-#endif
-
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
 
@@ -315,10 +311,6 @@ void DropStats()
         gpc.total_alert_pkts = 0;
 
     show_stats((PegCount*)&gpc, pc_names, array_size(pc_names), "detection");
-
-#ifdef SIDE_CHANNEL
-    SideChannelStats(STATS_SEPARATOR);
-#endif
 
     proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names), "process");

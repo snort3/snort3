@@ -61,24 +61,6 @@ typedef enum _PathType
 
 } PathType;
 
-#ifdef SIDE_CHANNEL
-typedef struct _SideChannelModuleConfig
-{
-    char *keyword;
-    char *opts;
-    char *file_name;
-    int file_line;
-    struct _SideChannelModuleConfig *next;
-} SideChannelModuleConfig;
-
-typedef struct _SideChannelConfig
-{
-    bool enabled;
-    char *opts;
-    SideChannelModuleConfig *module_configs;
-} SideChannelConfig;
-#endif
-
 // SnortState members are updated during runtime
 // an array in SnortConfig is used instead of thread_locals because these
 // must get changed on reload
@@ -216,10 +198,6 @@ struct SnortConfig
     //------------------------------------------------------
     // FIXIT non-module stuff - separate config from derived state?
 
-#ifdef SIDE_CHANNEL
-    DynamicLibInfo *dyn_side_channels;  // FIXIT needs redoing
-#endif
-
     char pid_filename[STD_BUF];  /* used with pid_path */  // FIXIT delete these
     char pidfile_suffix[MAX_PIDFILE_SUFFIX + 1];  /* -R */
 
@@ -287,9 +265,6 @@ struct SnortConfig
     char *output_dir;
 
     struct VarNode* var_list;
-#ifdef SIDE_CHANNEL
-    SideChannelConfig side_channel_config;
-#endif
 
     int max_threads;
     unsigned remote_control;

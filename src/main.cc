@@ -62,10 +62,6 @@ using namespace std;
 #include "test/unit_test.h"
 #endif
 
-#ifdef SIDE_CHANNEL
-#include "side_channel/sidechannel.h"
-#endif
-
 #include "framework/so_rule.h"
 
 //-------------------------------------------------------------------------
@@ -76,11 +72,6 @@ static int exit_logged = 0;
 static bool paused = false;
 
 const struct timespec main_sleep = { 0, 100000000 }; // 0.1 sec
-
-#ifdef SIDE_CHANNEL
-pthread_mutex_t snort_process_lock;
-static bool snort_process_lock_held = false;
-#endif
 
 static const char* prompt = "o\")~ ";
 
@@ -434,19 +425,8 @@ static int signal_check()
 // FIXIT return true if something was done to avoid sleeping
 static bool house_keeping()
 {
-#ifdef SIDE_CHANNEL
-    if (ScSideChannelEnabled() && !snort_process_lock_held)
-    {
-        pthread_mutex_lock(&snort_process_lock);
-        snort_process_lock_held = true;
-    }
-#endif
-
     signal_check();
 
-#ifdef SIDE_CHANNEL
-    SideChannelDrainRX(0);
-#endif
     IdleProcessingExecute();
 
     periodic_check();

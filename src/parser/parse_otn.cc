@@ -80,11 +80,6 @@
 #include "keywords.h"
 #include "vars.h"
 #include "managers/ips_manager.h"
-
-#ifdef SIDE_CHANNEL
-# include "side_channel/sidechannel.h"
-#endif
-
 #include "target_based/sftarget_reader.h"
 
 typedef void (*ParseRuleOptFunc)(SnortConfig *, RuleTreeNode *, OptTreeNode *, const char *);

@@ -34,7 +34,6 @@
 #include "utils/strvec.h"
 #include "file_api/file_service.h"
 #include "target_based/sftarget_reader.h"
-#include "side_channel/sidechannel.h"
 #include "parser/parser.h"
 #include "parser/config_file.h"
 #include "parser/vars.h"
@@ -45,29 +44,6 @@
 //-------------------------------------------------------------------------
 // private implementation
 //-------------------------------------------------------------------------
-
-#ifdef SIDE_CHANNEL
-static void FreeSideChannelModuleConfigs(SideChannelModuleConfig *head)
-{
-    while (head != NULL)
-    {
-        SideChannelModuleConfig *tmp = head;
-
-        head = head->next;
-
-        if (tmp->keyword != NULL)
-            free(tmp->keyword);
-
-        if (tmp->opts != NULL)
-            free(tmp->opts);
-
-        if (tmp->file_name != NULL)
-            free(tmp->file_name);
-
-        free(tmp);
-    }
-}
-#endif
 
 static void FreeRuleStateList(RuleState *head)
 {
@@ -263,10 +239,6 @@ void SnortConfFree(SnortConfig *sc)
         free(sc->profile_preprocs.filename);
 #endif
 
-#ifdef SIDE_CHANNEL
-    FreeSideChannelModuleConfigs(sc->side_channel_config.module_configs);
-#endif
-
     if (sc->base_version != NULL)
         free(sc->base_version);
 
@@ -333,11 +305,6 @@ void SnortConfFree(SnortConfig *sc)
 #endif
 
     free_file_config(sc->file_config);
-
-#ifdef SIDE_CHANNEL
-    if (sc->side_channel_config.opts)
-        free(sc->side_channel_config.opts);
-#endif
 
     if ( sc->var_list )
         FreeVarList(sc->var_list);
@@ -811,14 +778,6 @@ int VerifyReload(SnortConfig *sc)
                      "configuration requires a restart.\n");
         return -1;
     }
-
-#ifdef SIDE_CHANNEL
-    if (SideChannelVerifyConfig(sc) != 0)
-    {
-        ErrorMessage("Snort Reload: Changing the side channel configuration requires a restart.\n");
-        return -1;
-    }
-#endif
 
     return 0;
 }

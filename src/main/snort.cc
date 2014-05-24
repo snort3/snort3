@@ -111,10 +111,6 @@ using namespace std;
 #include "stream/stream.h"
 #include "ips_options/replace.h"
 
-#ifdef SIDE_CHANNEL
-#include "side_channel/sidechannel.h"
-#endif
-
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"
 #endif
@@ -128,7 +124,6 @@ static bool snort_initializing = true;
 static int snort_exiting = 0;
 
 static pid_t snort_main_thread_pid = 0;
-static pthread_t snort_main_thread_id = 0;
 
 static int snort_argc = 0;
 static char** snort_argv = NULL;
@@ -308,9 +303,6 @@ static void SnortInit(int argc, char **argv)
 #endif
 
     InitProtoNames();
-#ifdef SIDE_CHANNEL
-    pthread_mutex_init(&snort_process_lock, NULL);
-#endif
 
     if (snort_cmd_line_conf != NULL)  // FIXIT can this be deleted?
     {
@@ -384,7 +376,7 @@ static void SnortInit(int argc, char **argv)
         OrderRuleLists(snort_conf, "activation dynamic drop sdrop reject alert pass log");
     }
     if ( !InspectorManager::configure(snort_conf) )
-        SnortFatalExit();
+        FatalError("can't initialize inspectors\n");
 
     InspectorManager::print_config(snort_conf); // FIXIT make optional
 
@@ -440,14 +432,6 @@ static void SnortInit(int argc, char **argv)
 #endif
 
     EventManager::configure_outputs(snort_conf);
-
-#ifdef SIDE_CHANNEL
-    RegisterSideChannelModules();
-    ConfigureSideChannelModules(snort_conf);
-    SideChannelConfigure(snort_conf);
-    SideChannelInit();
-    SideChannelStartTXThread();
-#endif
 }
 
 // this function should only include initialization that must be done as a
@@ -484,10 +468,6 @@ static void SnortUnprivilegedInit(void)
     /* Drop privileges if requested, when initialization is done */
     SetUidGid(ScUid(), ScGid());
 
-#ifdef SIDE_CHANNEL
-    SideChannelPostInit();
-#endif
-
     snort_initializing = false;
 }
 
@@ -496,9 +476,6 @@ void snort_setup(int argc, char *argv[])
     snort_argc = argc;
     snort_argv = argv;
 
-    // must be done now in case of fatal error
-    // and again after daemonization
-    snort_main_thread_id = pthread_self();
     OpenLogger();
 
     SnortInit(argc, argv);
@@ -511,7 +488,6 @@ void snort_setup(int argc, char *argv[])
 
     // this must follow daemonization
     snort_main_thread_pid = gettid();
-    snort_main_thread_id = pthread_self();
 
     /* Change groups */
     InitGroups(ScUid(), ScGid());
@@ -577,10 +553,6 @@ static void SnortCleanup()
     snort_exiting = 1;
     snort_initializing = false;  /* just in case we cut out early */
 
-#ifdef SIDE_CHANNEL
-    SideChannelStopTXThread();
-    SideChannelCleanUp();
-#endif
     IdleProcessingCleanUp();
 
     IpsManager::global_term(snort_conf);

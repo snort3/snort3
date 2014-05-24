@@ -169,10 +169,6 @@ typedef enum {
 /*  E X T E R N S  ************************************************************/
 extern THREAD_LOCAL SnortConfig* snort_conf;
 
-#ifdef SIDE_CHANNEL
-extern pthread_mutex_t snort_process_lock;
-#endif
-
 /*  P R O T O T Y P E S  ******************************************************/
 
 static inline int ScTestMode(void)
@@ -498,13 +494,6 @@ static inline char * ScPcapLogFile(void)
 {
     return snort_conf->pcap_log_file;
 }
-
-#ifdef SIDE_CHANNEL
-static inline int ScSideChannelEnabled(void)
-{
-    return snort_conf->side_channel_config.enabled;
-}
-#endif
 
 // use of macro avoids depending on generators.h
 #define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)

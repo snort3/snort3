@@ -101,10 +101,3 @@ snort_LDADD += test/libtest.a
 SUBDIRS += test
 endif
 
-if BUILD_SIDE_CHANNEL
-snort_LDADD += \
-side_channel/libsidechannel.a \
-side_channel/plugins/libsscm.a
-SUBDIRS += side_channel
-endif
-
