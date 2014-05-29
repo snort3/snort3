@@ -1,3 +1,6 @@
+83
+-- fixed linux linker ordering
+
 82
 -- fixed atom splitter instantiation for fallback in tcp_session.cc
 
