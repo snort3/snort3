@@ -6217,7 +6217,7 @@ static inline int CheckFlushPolicyOnData(
                 //    return 0;
 
                 delete listener->splitter;
-                listener->splitter = new AtomSplitter(listener->config->paf_max);
+                listener->splitter = new AtomSplitter(true, listener->config->paf_max);
 
                 return CheckFlushPolicyOnData(tcpssn, talker, listener, tdb, p);
             }
@@ -6349,7 +6349,7 @@ int CheckFlushPolicyOnAck(
                 //    return 0;
 
                 delete talker->splitter;
-                talker->splitter = new AtomSplitter(listener->config->paf_max);
+                talker->splitter = new AtomSplitter(false, talker->config->paf_max);
 
                 return CheckFlushPolicyOnAck(tcpssn, talker, listener, tdb, p);
             }

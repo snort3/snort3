@@ -1,3 +1,6 @@
+82
+-- fixed atom splitter instantiation for fallback in tcp_session.cc
+
 81
 -- deleted service registration for paf
 -- added StreamSplitter to Inspector
