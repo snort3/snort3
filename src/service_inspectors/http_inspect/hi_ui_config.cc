@@ -66,10 +66,9 @@ HTTPINSPECT_CONF::HTTPINSPECT_CONF()
     // can't just zero the whole thing because of embedded objects
     // FIXIT really need explicit assignments or refactor into substruct(s)
     // that can simply be zeroed
-    uint8_t* end = (uint8_t*)&ports;
+    uint8_t* end = (uint8_t*)&whitespace;
     unsigned len = end - (uint8_t*)this;
     memset(this, 0, len);
-    ports.set(80);
 
     http_cmd_lookup_init(&cmd_lookup);
 }
@@ -115,9 +114,6 @@ int hi_ui_config_default(HTTPINSPECT_CONF *global_server)
     /*
     **  Set Global Server Configurations
     */
-    global_server->port_count = 1;
-    global_server->ports[10] = 1; /* sets port 80 */
-
     global_server->server_flow_depth = 300;
     global_server->client_flow_depth = 300;
 

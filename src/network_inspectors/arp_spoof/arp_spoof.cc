@@ -330,6 +330,7 @@ static const InspectApi as_api =
         mod_dtor
     },
     IT_PROTOCOL, 
+    nullptr, // service
     PROTO_BIT__ARP,
     as_init,
     nullptr, // term

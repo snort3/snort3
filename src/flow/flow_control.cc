@@ -275,6 +275,9 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
     p->flow = flow;
     flow->session->process(p);
 
+    if ( news )
+        Binder::init_flow(flow, p);
+
     if ( flow->next && is_bidirectional(flow) )
         cache->unlink_uni(flow);
 

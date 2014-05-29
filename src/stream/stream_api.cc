@@ -70,7 +70,6 @@ Stream::Stream()
     extra_data_log = NULL;
     extra_data_config = NULL;
     stream_cb_idx = 1;
-    s5_cb_idx = 0;
 }
 
 Stream::~Stream() { }
@@ -504,55 +503,22 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
 }
 
 //-------------------------------------------------------------------------
-// paf foo
+// splitter foo
 //-------------------------------------------------------------------------
-
-int Stream::set_paf_callback (PAF_Callback cb)
-{
-    int i;
-
-    for ( i = 0; i < s5_cb_idx; i++ )
-    {
-        if ( s5_cb[i] == cb )
-            break;
-    }
-    if ( i == MAX_PAF_CB )
-        return -1;
-
-    if ( i == s5_cb_idx )
-    {
-        s5_cb[i] = cb;
-        s5_cb_idx++;
-    }
-    return i;
-}
-
-PAF_Callback Stream::get_paf_callback (unsigned i)
-{
-    assert(i < MAX_PAF_CB);
-    return s5_cb[i];
-}
-
-bool Stream::register_paf_service(
-    SnortConfig* sc,uint16_t service, bool to_server,
-    PAF_Callback cb, bool autoEnable)
-{
-    return s5_paf_register_service(sc, service, to_server, cb, autoEnable);
-}
-
-void** Stream::get_paf_user_data(Flow* flow, bool to_server)
-{
-    return Stream5GetPAFUserDataTcp(flow, to_server);
-}
 
 bool Stream::is_paf_active(Flow* flow, bool to_server)
 {
     return Stream5IsPafActiveTcp(flow, to_server);
 }
 
-bool Stream::activate_paf(Flow* flow, bool to_server)
+void Stream::set_splitter(Flow* flow, bool to_server, StreamSplitter* ss)
 {
-    return Stream5ActivatePafTcp(flow, to_server);
+    return Stream5SetSplitterTcp(flow, to_server, ss);
+}
+
+StreamSplitter* Stream::get_splitter(Flow* flow, bool to_server)
+{
+    return Stream5GetSplitterTcp(flow, to_server);
 }
 
 //-------------------------------------------------------------------------
@@ -923,40 +889,6 @@ char Stream::get_reassembly_direction(Flow* flow)
         return SSN_DIR_NONE;
 
     return Stream5GetReassemblyDirectionTcp(flow);
-}
-
-uint32_t Stream::get_flush_point(Flow* flow, char dir)
-{
-    if ((flow == NULL) || (flow->protocol != IPPROTO_TCP))
-        return 0;
-
-    return Stream5GetFlushPointTcp(flow, dir);
-}
-
-void Stream::set_flush_point(
-    Flow* flow, char dir, uint32_t flush_point)
-{
-    if ((flow == NULL) || (flow->protocol != IPPROTO_TCP))
-        return;
-
-    Stream5SetFlushPointTcp(flow, dir, flush_point);
-}
-
-char Stream::set_reassembly(
-    Flow* flow, FlushPolicy flush_policy, char dir, char flags)
-{
-    if (!flow || flow->protocol != IPPROTO_TCP)
-        return 0;
-
-    return Stream5SetReassemblyTcp(flow, flush_policy, dir, flags);
-}
-
-char Stream::get_reassembly_flush_policy(Flow* flow, char dir)
-{
-    if (!flow || flow->protocol != IPPROTO_TCP)
-        return STREAM_FLPOLICY_NONE;
-
-    return Stream5GetReassemblyFlushPolicyTcp(flow, dir);
 }
 
 char Stream::is_stream_sequenced(Flow* flow, char dir)

@@ -196,7 +196,6 @@ struct FTP_SERVER_PROTO_CONF
     bool detect_encrypted;
 
     CMD_LOOKUP* cmd_lookup;
-    PortList ports;
 
     FTP_SERVER_PROTO_CONF();
 };
@@ -244,8 +243,6 @@ struct TELNET_PROTO_CONF
     bool check_encrypted_data;
     bool detect_encrypted;
     bool detect_anomalies;
-
-    PortList ports;
 
     TELNET_PROTO_CONF();
 };

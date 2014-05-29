@@ -154,21 +154,17 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
 
             if (ft_ssn->proto == FTPP_SI_PROTO_TELNET)
             {
-                TELNET_SESSION *telnet_ssn = (TELNET_SESSION *)ft_ssn;
-
                 if (SiInput.pdir != FTPP_SI_NO_MODE)
                 {
                     iInspectMode = SiInput.pdir;
                 }
                 else
                 {
-                    if ((telnet_ssn->telnet_conf != NULL) &&
-                        (telnet_ssn->telnet_conf->ports[SiInput.sport]))
+                    if ( p->packet_flags & PKT_FROM_SERVER )
                     {
                         iInspectMode = FTPP_SI_SERVER_MODE;
                     }
-                    else if ((telnet_ssn->telnet_conf != NULL) &&
-                             (telnet_ssn->telnet_conf->ports[SiInput.dport]))
+                    else if ( p->packet_flags & PKT_FROM_CLIENT )
                     {
                         iInspectMode = FTPP_SI_CLIENT_MODE;
                     }
@@ -224,30 +220,12 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
  */
 static int PrintTelnetConf(TELNET_PROTO_CONF *TelnetConf)
 {
-    char buf[BUF_SIZE+1];
-    int iCtr;
-
     if(!TelnetConf)
     {
         return FTPP_INVALID_ARG;
     }
 
     LogMessage("    TELNET CONFIG:\n");
-    memset(buf, 0, BUF_SIZE+1);
-    snprintf(buf, BUF_SIZE, "      Ports: ");
-
-    /*
-     * Print out all the applicable ports.
-     */
-    for(iCtr = 0; iCtr < MAXPORTS; iCtr++)
-    {
-        if(TelnetConf->ports[iCtr])
-        {
-            sfsnprintfappend(buf, BUF_SIZE, "%d ", iCtr);
-        }
-    }
-
-    LogMessage("%s\n", buf);
     LogMessage("      Are You There Threshold: %d\n",
         TelnetConf->ayt_threshold);
     LogMessage("      Normalize: %s\n", TelnetConf->normalize ? "YES" : "NO");
@@ -311,6 +289,12 @@ void Telnet::eval(Packet* p)
 // api stuff
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{ return new TelnetModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
+
 static void tn_init()
 {
 #ifdef PERF_PROFILING
@@ -356,10 +340,11 @@ const InspectApi tn_api =
         tn_name,
         INSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     IT_SERVICE,
+    "telnet",
     PROTO_BIT__TCP,
     tn_init,
     nullptr, // term

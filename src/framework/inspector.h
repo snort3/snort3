@@ -28,6 +28,8 @@
 struct Packet;
 struct SnortConfig;
 
+typedef int16_t ServiceId;
+
 // this is the current version of the api
 #define INSAPI_VERSION 0
 
@@ -66,6 +68,14 @@ public:
 
     bool is_inactive();
 
+    void set_service(ServiceId id) { srv_id = id; };
+    ServiceId get_service() { return srv_id; };
+
+    // IT_SERVICE only
+    virtual class StreamSplitter* get_splitter(bool /*to_server*/)
+    { return nullptr; };
+
+public:
     static unsigned max_slots;
     static THREAD_LOCAL unsigned slot;
 
@@ -75,6 +85,7 @@ protected:
 
 private:
     unsigned* ref_count;
+    ServiceId srv_id;
 };
 
 enum InspectorType
@@ -97,6 +108,7 @@ struct InspectApi
 {
     BaseApi base;
     InspectorType type;
+    const char* service;   // nullptr when type != IT_SERVICE
     uint16_t proto_bits;
 
     // main thread funcs - parse time data only

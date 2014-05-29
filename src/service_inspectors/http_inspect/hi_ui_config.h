@@ -235,7 +235,6 @@ struct HTTPINSPECT_CONF
     PROFILES profile;
     CMD_LOOKUP    *cmd_lookup;
 
-    PortList ports;
     ByteList whitespace;
     ByteList non_rfc_chars;
 

@@ -1,7 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2005-2013 Sourcefire, Inc.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -29,46 +28,6 @@
 #include "target_based/sftarget_protocol_reference.h"
 #include "framework/bits.h"
 
-struct FlushMgr
-{
-    uint32_t   flush_pt;
-    uint16_t   last_count;
-    uint16_t   last_size;
-    uint8_t    flush_policy;
-    uint8_t    flush_type;
-    uint8_t    auto_disable;
-    //uint8_t    spare;
-
-};
-
-struct FlushConfig
-{
-    FlushMgr client;
-    FlushMgr server;
-    uint8_t configured;
-
-};
-
-#ifndef DYNAMIC_RANDOM_FLUSH_POINTS
-struct FlushPointList
-{
-    uint8_t    current;
-
-    uint32_t   flush_range;
-    uint32_t   flush_base;  /* Set as value - range/2 */
-    /* flush_pt is split evently on either side of flush_value, within
-     * the flush_range.  flush_pt can be from:
-     * (flush_value - flush_range/2) to (flush_value + flush_range/2)
-     *
-     * For example:
-     * flush_value = 192
-     * flush_range = 128
-     * flush_pt will vary from 128 to 256
-     */
-    uint32_t *flush_points;
-};
-#endif
-
 struct StreamTcpConfig
 {
     uint16_t policy;
@@ -91,15 +50,7 @@ struct StreamTcpConfig
     int footprint;
     unsigned paf_max;
 
-    FlushConfig flush_config[MAX_PORTS];
-    FlushConfig flush_config_protocol[MAX_PROTOCOL_ORDINAL];
-#ifndef DYNAMIC_RANDOM_FLUSH_POINTS
-    FlushPointList flush_point_list;
-#endif
-
     PortList small_seg_ignore;
-
-    void* paf_config;
 
     StreamTcpConfig();
 
@@ -110,7 +61,6 @@ struct StreamTcpConfig
 
 // misc stuff
 int Stream5VerifyTcpConfig(SnortConfig*, StreamTcpConfig *);
-void Stream5ResetTcpInstance(StreamTcpConfig*);
 
 Session* get_tcp_session(Flow*);
 StreamTcpConfig* get_tcp_cfg(Inspector*);
@@ -141,8 +91,7 @@ void Stream5ClearExtraDataTcp(Flow*, Packet*, uint32_t flag);
 uint32_t Stream5GetFlushPointTcp(Flow*, char dir);
 void Stream5SetFlushPointTcp(Flow*, char dir, uint32_t flush_point);
 
-char Stream5SetReassemblyTcp(Flow*, FlushPolicy, char dir, char flags);
-char Stream5GetReassemblyFlushPolicyTcp(Flow*, char dir);
+bool Stream5GetReassemblyFlushPolicyTcp(Flow*, char dir);
 
 char Stream5IsStreamSequencedTcp(Flow*, char dir);
 int Stream5MissingInReassembledTcp(Flow*, char dir);
@@ -151,7 +100,9 @@ char Stream5PacketsMissingTcp(Flow*, char dir);
 void* get_paf_config(StreamTcpConfig*);
 void** Stream5GetPAFUserDataTcp(Flow*, bool to_server);
 bool Stream5IsPafActiveTcp(Flow*, bool to_server);
-bool Stream5ActivatePafTcp(Flow*, bool to_server);
+
+void Stream5SetSplitterTcp(Flow*, bool c2s, StreamSplitter*);
+StreamSplitter* Stream5GetSplitterTcp(Flow*, bool c2s);
 
 int GetTcpRebuiltPackets(Packet*, Flow*, PacketIterator, void *userdata);
 int GetTcpStreamSegments(Packet*, Flow*, StreamSegmentIterator, void *userdata);

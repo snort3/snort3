@@ -1,7 +1,15 @@
+81
+-- deleted service registration for paf
+-- added StreamSplitter to Inspector
+-- added service name to InspectApi
+-- deleted ports configs from inspector
+-- added port-based bindings lookups
+
 80
 -- deleted port monitor foo; will be obviated by binder
 -- removed ttl norm checks from codecs; made no sense; drop iff rule is drop
 -- moved stream_* bindings to binder
+-- removed --enable-inline-init-failopen, --enable-pthread, --enable-ha
 
 79
 -- pulled in latest codecs

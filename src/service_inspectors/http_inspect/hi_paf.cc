@@ -86,14 +86,6 @@
 #define HIF_PST 0x0800  // post (requires content-length or chunks)
 #define HIF_EOL 0x1000  // already saw at least one eol (for v09)
 
-typedef struct {
-    uint32_t len;
-    uint16_t flags;
-    uint8_t msg;
-    uint8_t fsm;
-    uint32_t pipe;
-} Hi5State;
-
 // config stuff
 static uint32_t hi_cap = 0;
 
@@ -731,6 +723,23 @@ static inline PAF_Status hi_exec (Hi5State* s, Action a, int c)
 }
 
 //--------------------------------------------------------------------
+
+static inline Hi5State* get_state(Flow* flow, bool c2s)
+{
+    if ( !flow )
+        return nullptr;
+
+    HttpSplitter* s = (HttpSplitter*)stream.get_splitter(flow, c2s);
+    return s ? &s->state : nullptr;
+}
+
+bool hi_paf_simple_request (Flow* ssn)
+{
+    Hi5State* ps = get_state(ssn, true);
+    return ( ps && (ps->flags & HIF_V09) );
+}
+
+//--------------------------------------------------------------------
 // pipeline
 //--------------------------------------------------------------------
 
@@ -763,18 +772,13 @@ static void hi_pipe_push (Hi5State* s_req, Flow* ssn)
 
 static void hi_pipe_pop (Hi5State* s_rsp, Flow* ssn)
 {
-    Hi5State* s_req;
-    uint32_t nreq, pipe;
+    Hi5State* s_req = get_state(ssn, true);
 
-    void** pv = stream.get_paf_user_data(ssn, 1);
-
-    if ( !*pv )
+    if ( !s_req )
         return;
 
-    s_req = (Hi5State*)(*pv);
-
-    nreq = s_req->pipe & 0xFF;
-    pipe = s_req->pipe >> 8;
+    uint32_t nreq = s_req->pipe & 0xFF;
+    uint32_t pipe = s_req->pipe >> 8;
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: nreq=%d, pipe=0x%X\n", __FUNCTION__, nreq, pipe);)
@@ -997,29 +1001,27 @@ static void hi_reset (Hi5State* s, uint32_t flags)
 // callback for stateful scanning of in-order raw payload
 //--------------------------------------------------------------------
 
-static PAF_Status hi_paf (
-    Flow* ssn, void** pv, const uint8_t* data, uint32_t len,
+HttpSplitter::HttpSplitter(bool c2s) : StreamSplitter(c2s)
+{
+    memset(&state, 0, sizeof(state));
+
+    if ( c2s )
+        state.fsm = REQ_START_STATE;
+    else
+        state.fsm = REQ_START_STATE;
+}
+
+HttpSplitter::~HttpSplitter() { }
+
+PAF_Status HttpSplitter::scan(
+    Flow* ssn, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
 {
-    Hi5State* hip = (Hi5State*)(*pv);
+    Hi5State* hip = &state;
     PAF_Status paf = PAF_SEARCH;
 
     uint32_t n = 0;
     *fp = 0;
-
-    if ( !hip )
-    {
-        // beware - we allocate here but s5 calls free() directly
-        // so no pointers allowed
-        hip = (Hi5State*)calloc(1, sizeof(Hi5State));
-
-        if ( !hip )
-            return PAF_ABORT;
-
-        *pv = hip;
-
-        hi_reset(hip, flags);
-    }
 
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: len=%u\n", __FUNCTION__, len);)
@@ -1076,23 +1078,6 @@ static PAF_Status hi_paf (
 // public stuff
 //--------------------------------------------------------------------
 
-int hi_paf_register_service (
-    SnortConfig* sc, uint16_t service, bool client, bool server, bool auto_on)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: service %u\n", __FUNCTION__, service);)
-
-    if ( client )
-        stream.register_paf_service(sc, service, true, hi_paf, auto_on);
-
-    if ( server )
-        stream.register_paf_service(sc, service, false, hi_paf, auto_on);
-
-    return 0;
-}
-
-//--------------------------------------------------------------------
-
 bool hi_paf_init (uint32_t cap)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
@@ -1119,19 +1104,5 @@ void hi_paf_term (void)
 
     hi_fsm = NULL;
     hi_fsm_size = 0;
-}
-
-//--------------------------------------------------------------------
-
-bool hi_paf_simple_request (Flow* ssn)
-{
-    if ( ssn )
-    {
-        Hi5State** s = (Hi5State **)stream.get_paf_user_data(ssn, 1);
-
-        if ( s && *s )
-            return ( (*s)->flags & HIF_V09 );
-    }
-    return false;
 }
 

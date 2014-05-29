@@ -29,18 +29,10 @@
  * trying to stealth themselves from IDSs by fragmenting the request so the
  * string 0186A0 is broken up.
  *
- * Arguments:
- *
- * This plugin takes a list of integers representing the TCP ports that the
- * user is interested in having normalized
- *
  * Effect:
  *
  * Changes the data in the packet payload and changes
  * p->dsize to reflect the new (smaller) payload size.
- *
- * Comments:
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -68,6 +60,7 @@
 #include "detection_util.h"
 #include "framework/inspector.h"
 #include "stream/stream_api.h"
+#include "stream/stream_splitter.h"
 #include "target_based/sftarget_protocol_reference.h"
 
 #define RPC_MAX_BUF_SIZE   256
@@ -78,7 +71,7 @@ using namespace std;
 
 struct RpcDecodeConfig
 {
-    PortList ports;
+    int dummy;
 };
 
 struct RpcBuffer
@@ -95,7 +88,6 @@ struct RpcSsnData
     uint32_t frag_len;
     uint32_t ignore;
     uint32_t nseq;
-    uint32_t ofp;
     RpcBuffer seg;
     RpcBuffer frag;
 };
@@ -211,7 +203,7 @@ static inline void RpcPreprocEvent(
     }
 }
 
-static int RpcDecodeIsEligible(RpcDecodeConfig *rconfig, Packet *p)
+static int RpcDecodeIsEligible(RpcDecodeConfig*, Packet *p)
 {
     int valid_app_id = 0;
     int16_t app_id = stream.get_application_protocol_id(p->flow);
@@ -223,19 +215,6 @@ static int RpcDecodeIsEligible(RpcDecodeConfig *rconfig, Packet *p)
 
     if (valid_app_id && app_id != rpc_decode_app_protocol_id)
         return 0;
-
-    if (!valid_app_id)
-    {
-        uint16_t check_port;
-
-        if (p->packet_flags & PKT_FROM_CLIENT)
-            check_port = p->dp;
-        else
-            check_port = p->sp;
-
-        if ( !rconfig->ports.test(check_port) )
-            return 0;
-    }
 
     return 1;
 }
@@ -710,7 +689,7 @@ static inline void RpcFree(void *data, uint32_t size)
     free(data);
 }
 
-static inline void RpcSsnSetInactive(RpcSsnData *rsdata, Packet *p)
+static inline void RpcSsnSetInactive(RpcSsnData *rsdata, Packet*)
 {
     if (rsdata == NULL)
         return;
@@ -718,7 +697,6 @@ static inline void RpcSsnSetInactive(RpcSsnData *rsdata, Packet *p)
     DEBUG_WRAP(DebugMessage(DEBUG_RPC, "STATEFUL: Deactivating session: %p\n",
                 rsdata););
 
-    stream.set_flush_point(p->flow, SSN_DIR_SERVER, rsdata->ofp);
     RpcSsnClean(rsdata);
 }
 
@@ -755,25 +733,11 @@ static RpcSsnData * RpcSsnDataNew(Packet *p)
 {
     RpcFlowData* fd = new RpcFlowData;
     RpcSsnData* rsdata = &fd->session;
+    rsdata->active = 1;
 
-        char rdir = stream.get_reassembly_direction(p->flow);
+    p->flow->set_application_data(fd);
 
-        if (!(rdir & SSN_DIR_SERVER))
-        {
-            rdir |= SSN_DIR_SERVER;
-            stream.set_reassembly(p->flow, STREAM_FLPOLICY_FOOTPRINT,
-                    rdir, STREAM_FLPOLICY_SET_ABSOLUTE);
-        }
-
-        rsdata->active = 1;
-        rsdata->ofp = stream.get_flush_point(p->flow, SSN_DIR_SERVER);
-
-        stream.set_flush_point(p->flow, SSN_DIR_SERVER, flush_size);
-
-        p->flow->set_application_data(fd);
-
-        DEBUG_WRAP(DebugMessage(DEBUG_RPC, "STATEFUL: Created new session: " "%p\n", rsdata););
-
+    DEBUG_WRAP(DebugMessage(DEBUG_RPC, "STATEFUL: Created new session: " "%p\n", rsdata););
     return rsdata;
 }
 
@@ -817,6 +781,8 @@ static RpcSsnData * RpcSsnDataNew(Packet *p)
  *        }
  */
 
+#define MIN_CALL_BODY_SZ 32
+
 static int ConvertRPC(RpcDecodeConfig *rconfig, RpcSsnData *rsdata, Packet *p)
 {
     const uint8_t *data = p->data;
@@ -833,7 +799,7 @@ static int ConvertRPC(RpcDecodeConfig *rconfig, RpcSsnData *rsdata, Packet *p)
     uint8_t *decode_buf_start = DecodeBuffer.data;
     uint8_t *decode_buf_end = decode_buf_start + sizeof(DecodeBuffer.data);
 
-    if (psize < 32)
+    if (psize < MIN_CALL_BODY_SZ)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_RPC, "Not enough data to decode: %u\n",
                     psize););
@@ -1016,6 +982,36 @@ static int ConvertRPC(RpcDecodeConfig *rconfig, RpcSsnData *rsdata, Packet *p)
 }
 
 //-------------------------------------------------------------------------
+// splitter stuff:
+//
+// see above commments on MIN_CALL_BODY_SZ
+// why flush_point == 28 instead of 32 IDK
+//
+// we don't set a flush point to flush_point (= 28 above) because that will
+// cause the request to be segmented at that point.
+//
+// by setting max instead, we get the actual tcp segment(s) that total 32
+// or more bytes which is closer to the old set_flush_point() result (2 or
+// more segments totaling at least 28 bytes)
+//
+// obviously, the correct way to do this is to look at the actual data and
+// extract/determine the actual PDU lengths.  TBD
+//-------------------------------------------------------------------------
+
+class RpcSplitter : public StreamSplitter
+{
+public:
+    RpcSplitter(bool c2s) : StreamSplitter(c2s) { };
+    ~RpcSplitter() { };
+
+    PAF_Status scan(Flow*, const uint8_t*, uint32_t,
+        uint32_t, uint32_t*)
+    { return PAF_SEARCH; };
+
+    uint32_t max() { return MIN_CALL_BODY_SZ; };
+};
+
+//-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
@@ -1026,26 +1022,20 @@ public:
     void show(SnortConfig*);
     void eval(Packet*);
 
+    StreamSplitter* get_splitter(bool c2s)
+    { return c2s ? new RpcSplitter(c2s) : nullptr; };
+
 private:
     RpcDecodeConfig config;
 };
 
-RpcDecode::RpcDecode(RpcModule* mod)
+RpcDecode::RpcDecode(RpcModule*)
 {
-    mod->get_ports(config.ports);
 }
 
 void RpcDecode::show(SnortConfig*)
 {
-    LogMessage("rpc_decode arguments:\n");
-    LogMessage("    Ports to decode RPC on: ");
-
-    for ( unsigned n = 0; n < config.ports.size(); ++n )
-    {
-        if ( config.ports.test(n) )
-            LogMessage(" %u", n);
-    }
-    LogMessage("\n");
+    LogMessage("rpc_decode\n");
 }
 
 /*
@@ -1174,6 +1164,7 @@ static const InspectApi rd_api =
         mod_dtor
     },
     IT_SERVICE,
+    "sunrpc",
     PROTO_BIT__TCP,
     rd_init,
     nullptr, // term

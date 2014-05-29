@@ -54,7 +54,6 @@ FTP_CLIENT_PROTO_CONF::FTP_CLIENT_PROTO_CONF()
 FTP_SERVER_PROTO_CONF::FTP_SERVER_PROTO_CONF()
 {
     ftp_cmd_lookup_init(&cmd_lookup);
-    ports[21] = 1;
 
     def_max_param_len = FTPP_UI_CONFIG_FTP_DEF_CMD_PARAM_MAX;
     max_cmd_len = MAX_CMD;
@@ -70,8 +69,6 @@ TELNET_PROTO_CONF::TELNET_PROTO_CONF()
 
     detect_encrypted = 0;
     detect_anomalies = 0;
-
-    ports[23] = 1;
 }
 
 /*

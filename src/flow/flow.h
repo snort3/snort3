@@ -84,11 +84,11 @@ struct Packet;
 
 typedef void (*StreamAppDataFree)(void*);
 
-typedef struct _StreamFlowData
+struct StreamFlowData
 {
     BITOP boFlowbits;
     unsigned char flowb[1];
-} StreamFlowData;
+};
 
 class FlowData
 {
@@ -175,6 +175,11 @@ public:
         ssn_server = ins;
         ssn_server->add_ref();
     };
+    void set_clouseau(Inspector* ins)
+    {
+        clouseau = ins;
+        clouseau->add_ref();
+    };
 
 public:  // FIXIT privatize if possible
     // these fields are const after initialization
@@ -187,6 +192,7 @@ public:  // FIXIT privatize if possible
     Flow* prev, * next;
     Inspector* ssn_client;
     Inspector* ssn_server;
+    Inspector* clouseau;
     long last_data_seen;
 
     // everything from here down is zeroed

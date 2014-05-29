@@ -183,6 +183,7 @@ uint32_t FlowCache::prune_stale(uint32_t thetime, Flow *save_me)
 
     while ( flow )
     {
+        // FIXIT this loops forever if 1 flow in cache
         if(flow == save_me)
             hash_table->touch();
 

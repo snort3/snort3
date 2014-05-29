@@ -33,26 +33,15 @@
 #include <stdint.h>
 #include "snort_types.h"
 #include "stream/stream_api.h"
+#include "stream/stream_splitter.h"
 
 struct SnortConfig;
 
 void* s5_paf_new(unsigned max);     // create new paf config (per policy)
 void s5_paf_delete(void*);  // free config
 
-bool s5_paf_register_service(
-    SnortConfig*,    // snort configuration
-    uint16_t service, // service ordinal
-    bool toServer,   // direction of interest relative to server port
-    PAF_Callback,    // stateful byte scanning function
-    bool autoEnable  // enable PAF reassembly regardless of s5 ports config
-);
-
-// flush indicates s5 port config
-uint8_t s5_paf_service_registration (uint16_t service, bool c2s, bool flush);
-
-typedef struct {
-    void* user;      // arbitrary user data
-
+struct PAF_State     // per session direction
+{
     uint32_t seq;    // stream cursor
     uint32_t pos;    // last flush position
 
@@ -60,11 +49,9 @@ typedef struct {
     uint32_t tot;    // total bytes flushed
 
     PAF_Status paf;  // current scan state
-    uint8_t cb_mask; // callback mask
-} PAF_State;         // per session direction
+};
 
-// called at session start
-void s5_paf_setup(PAF_State*, uint8_t registration);
+void s5_paf_setup(PAF_State*);  // called at session start
 void s5_paf_clear(PAF_State*);  // called at session end
 
 static inline uint32_t s5_paf_position (PAF_State* ps)
@@ -84,9 +71,9 @@ static inline uint32_t s5_paf_active (PAF_State* ps)
 
 // called on each in order segment
 uint32_t s5_paf_check(
-    void* paf_config, PAF_State*, Flow* ssn,
+    StreamSplitter* paf_config, PAF_State*, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
-    uint32_t seq, uint16_t port, uint32_t* flags, uint32_t fuzz);
+    uint32_t seq, uint16_t port, uint32_t* flags);
 
 #endif
 

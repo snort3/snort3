@@ -14,6 +14,7 @@ ftpp_return_codes.h \
 ftpp_si.cc ftpp_si.h \
 ftpp_ui_config.cc ftpp_ui_config.h \
 ftp_server.h \
+ftp_splitter.cc ftp_splitter.h \
 hi_util_kmap.cc hi_util_kmap.h \
 hi_util_xmalloc.cc hi_util_xmalloc.h \
 pp_ftp.cc pp_ftp.h \

@@ -58,40 +58,9 @@
 
 /*
 **  NAME
-**    IsServer::
-*/
-/**
-**  Given a server configuration and a port number, we decide if the port is
-**  in the HTTP server port list.
-**
-**  @param ServerConf pointer to the server configuration
-**  @param port       the port number to compare with the configuration
-**  @param pdir       the packet direction (from client, server, etc.)
-**
-**  @return integer
-**
-**  @retval  0 means that the port is not a server port
-**  @retval !0 means that the port is a server port
-*/
-static int IsServer(HTTPINSPECT_CONF *ServerConf, unsigned short port)
-{
-    if(ServerConf->ports[port/8] & (1 << (port%8) ))
-    {
-        return 1;
-    }
-
-    return 0;
-}
-
-/*
-**  NAME
 **    InitServerConf::
 */
-/**
-**  When a session is initialized, we must select the appropriate server
-**  configuration and select the type of inspection based on the source and
-**  destination ports.
-**
+/*
 **  IMPORTANT NOTE:
 **    We should check to make sure that there are some unique configurations,
 **    otherwise we can just default to the global default and work some magic
@@ -147,8 +116,8 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
     **  session, so we can still assume that the initial packet is the client
     **  talking.
     */
-    iServerSip = IsServer(ServerConfSip, SiInput->sport);
-    iServerDip = IsServer(ServerConfDip, SiInput->dport);
+    iServerSip = (p->packet_flags & PKT_FROM_SERVER);
+    iServerDip = (p->packet_flags & PKT_FROM_CLIENT);
 
     app_id = stream.get_application_protocol_id(p->flow);
     if (app_id == hi_app_protocol_id)
@@ -277,9 +246,9 @@ static inline int Resetsession(HI_SESSION *session)
 **
 **  @retval HI_SUCCESS function successful
 */
-int hi_si_session_inspection(HTTPINSPECT_CONF* conf,
-        HI_SESSION **session, HI_SI_INPUT *SiInput, int *piInspectMode,
-        Packet *p)
+int hi_si_session_inspection(
+    HTTPINSPECT_CONF* conf, HI_SESSION **session,
+    HI_SI_INPUT *SiInput, int *piInspectMode, Packet *p)
 {
     static THREAD_LOCAL HI_SESSION Staticsession;
     HTTPINSPECT_CONF *ServerConf = NULL;

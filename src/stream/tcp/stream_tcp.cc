@@ -91,7 +91,6 @@ void StreamTcp::eval(Packet*)
 
 void StreamTcp::reset()
 {
-    Stream5ResetTcpInstance(config);
 }
 
 StreamTcpConfig* get_tcp_cfg(Inspector* ins)
@@ -137,6 +136,7 @@ static const InspectApi tcp_api =
         mod_dtor
     },
     IT_STREAM,
+    nullptr, // service
     PROTO_BIT__TCP,
     tcp_init,
     nullptr, // term

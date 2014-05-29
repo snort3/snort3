@@ -1,7 +1,5 @@
-/****************************************************************************
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2011-2013 Sourcefire, Inc.
+/*
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -17,50 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+ */
 
-//--------------------------------------------------------------------
-// hi stuff
-//
-// @file    hi_paf.h
-// @author  Russ Combs <rcombs@sourcefire.com>
-//--------------------------------------------------------------------
+#ifndef FTP_SPLITTER_H
+#define FTP_SPLITTER_H
 
-#ifndef HI_PAF_H
-#define HI_PAF_H
-
-#include "snort_types.h"
-#include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 
-bool hi_paf_init(uint32_t cap);
-void hi_paf_term(void);
-
-bool hi_paf_simple_request(Flow*);
-
-struct Hi5State
-{
-    uint32_t len;
-    uint16_t flags;
-    uint8_t msg;
-    uint8_t fsm;
-    uint32_t pipe;
-};
-
-class HttpSplitter : public StreamSplitter
+class FtpSplitter : public StreamSplitter
 {
 public:
-    HttpSplitter(bool c2s);
-    ~HttpSplitter();
+    FtpSplitter(bool c2s);
+    ~FtpSplitter();
 
     PAF_Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp);
 
     virtual bool is_paf() { return true; };
-
-public:
-    Hi5State state;
 };
 
 #endif

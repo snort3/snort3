@@ -29,12 +29,11 @@
 #include <string.h>
 
 #include <string>
-#include <vector>
 using namespace std;
 
 #include "framework/module.h"
 #include "managers/module_manager.h"
-
+#include "main/binder.h"
 #include "main.h"
 #include "snort.h"
 #include "snort_config.h"
@@ -1651,7 +1650,7 @@ static const Parameter bindings_when_params[] =
     { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "list of networks" },
 
-    { "proto", Parameter::PT_ENUM, "ip | icmp | tcp | udp", nullptr,
+    { "proto", Parameter::PT_ENUM, "any | ip | icmp | tcp | udp", nullptr,
       "protocol" },
 
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
@@ -1709,7 +1708,6 @@ public:
     bool end(const char*, int, SnortConfig*);
 
 private:
-    vector<Binding*> bindings;
     Binding* work;
 };
 
@@ -1763,19 +1761,19 @@ bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-bool BindingsModule::begin(const char* fqn, int, SnortConfig*)
+bool BindingsModule::begin(const char* fqn, int idx, SnortConfig*)
 {
-    if ( !strcmp(fqn, "bindings") )
+    if ( idx && !strcmp(fqn, "bindings") )
         work = new Binding;
 
     return true;
 }
 
-bool BindingsModule::end(const char* fqn, int, SnortConfig*)
+bool BindingsModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( !strcmp(fqn, "bindings") )
+    if ( idx && !strcmp(fqn, "bindings") )
     {
-        bindings.push_back(work);
+        Binder::add(work);
         work = nullptr;
     }
     return true;

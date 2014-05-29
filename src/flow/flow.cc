@@ -97,6 +97,11 @@ void Flow::reset()
         ssn_server->rem_ref();
         ssn_server = nullptr;
     }
+    if ( clouseau )
+    {
+        clouseau->rem_ref();
+        clouseau = nullptr;
+    }
 
     constexpr size_t offset = offsetof(Flow, appDataList);
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
@@ -119,6 +124,11 @@ void Flow::clear(bool freeAppData)
     {
         ssn_server->rem_ref();
         ssn_server = nullptr;
+    }
+    if ( clouseau )
+    {
+        clouseau->rem_ref();
+        clouseau = nullptr;
     }
 
     boResetBITOP(&(flowdata->boFlowbits));

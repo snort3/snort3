@@ -53,9 +53,6 @@ static const Parameter telnet_params[] =
     { "normalize", Parameter::PT_BOOL, nullptr, "false",
       "eliminate escape sequences" },
 
-    { "ports", Parameter::PT_BIT_LIST, "65535", "23",
-      "specify known telnet ports" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -97,8 +94,8 @@ bool TelnetModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("normalize") )
         conf->normalize = v.get_bool();
 
-    else if ( v.is("ports") )
-        v.get_bits(conf->ports);
+    else
+        return false;
 
     return true;
 }

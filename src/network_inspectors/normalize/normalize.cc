@@ -294,6 +294,7 @@ static const InspectApi no_api =
         mod_dtor
     },
     IT_PACKET,
+    nullptr, // service
     PROTO_BITS,
     no_init,
     nullptr, // term

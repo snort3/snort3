@@ -85,6 +85,7 @@
 #include "detection_util.h"
 #include "file_api/file_api.h"
 #include "tcp_module.h"
+#include "stream/stream_splitter.h"
 
 #ifdef PERF_PROFILING
 static THREAD_LOCAL PreprocStats s5TcpPerfStats;
@@ -357,7 +358,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define tcp_server_ip flow->server_ip
 #define tcp_server_port flow->server_port
 
-#define RAND_FLUSH_POINTS 64
 #define SL_BUF_FLUSHED 1
 
 struct TcpDataBlock
@@ -368,11 +368,6 @@ struct TcpDataBlock
     uint32_t   end_seq;
     uint32_t   ts;
 };
-
-void* get_paf_config(StreamTcpConfig* tcp_config)
-{
-    return tcp_config->paf_config;
-}
 
 Session* get_tcp_session(Flow* lwssn)
 {
@@ -410,19 +405,11 @@ static inline uint32_t SegsToFlush (const StreamTracker* st, unsigned max)
 
 static inline bool DataToFlush (const StreamTracker* st)
 {
-    if ( st->flush_mgr.flush_policy == STREAM_FLPOLICY_PROTOCOL
-      || st->flush_mgr.flush_policy == STREAM_FLPOLICY_PROTOCOL_IPS
-    )
+    if ( st->flush_policy )
         return ( SegsToFlush(st, 1) > 0 );
 
-    if ( st->flush_mgr.flush_policy == STREAM_FLPOLICY_FOOTPRINT_IPS )
-        return ( SegsToFlush(st, 1) > 1 );
-
-    return ( SegsToFlush(st, 2) > 1 );
+    return ( SegsToFlush(st, 2) > 1 );  // FIXIT return false?
 }
-
-static FlushConfig ignore_flush_policy[MAX_PORTS];
-static FlushConfig ignore_flush_policy_protocol[MAX_PROTOCOL_ORDINAL];
 
 /*  P R O T O T Y P E S  ********************************************/
 static void Stream5PrintTcpConfig(StreamTcpConfig*);
@@ -506,281 +493,76 @@ static const char *state_names[] = {
     "TIME_WAIT",
     "CLOSED"
 };
-#endif
 
-static const char *flush_policy_names[] = {
-    "None",
-    "Footprint",
-    "Logical",
-    "Response",
-    "Sliding Window",
-#if 0
-    "Consumed",
-#endif
-    "Ignore",
-    "Protocol",
-    "Footprint-IPS",
-    "Protocol-IPS"
-};
-
-static const uint32_t g_static_points[RAND_FLUSH_POINTS] =
+static const char* flush_policy_names[] =
 {
-    128, 217, 189, 130, 240, 221, 134, 129,
-    250, 232, 141, 131, 144, 177, 201, 130,
-    230, 190, 177, 142, 130, 200, 173, 129,
-    250, 244, 174, 151, 201, 190, 180, 198,
-    220, 201, 142, 185, 219, 129, 194, 140,
-    145, 191, 197, 183, 199, 220, 231, 245,
-    233, 135, 143, 158, 174, 194, 200, 180,
-    201, 142, 153, 187, 173, 199, 143, 201
+    "ignore",
+    "on-ack",
+    "on-data"
 };
+#endif
 
 static THREAD_LOCAL Packet *s5_pkt = NULL;
 
 /*  F U N C T I O N S  **********************************************/
-static inline uint32_t GenerateFlushPoint(FlushPointList *flush_point_list)
+static inline void init_flush_policy(Flow* flow, StreamTracker* trk)
 {
-    return (rand() % flush_point_list->flush_range) + flush_point_list->flush_base;
-}
+    if ( !trk->splitter )
+        trk->flush_policy = STREAM_FLPOLICY_IGNORE;
 
-static void InitFlushPointList(
-    FlushPointList *flush_point_list, uint32_t value, uint32_t range, int footprint)
-{
-    uint32_t i;
-    uint32_t flush_range = range;
-    uint32_t flush_base = value - range/2;
+    else if ( !Normalize_IsEnabled(flow->normal_mask, NORM_TCP_IPS) )
+        trk->flush_policy = STREAM_FLPOLICY_ON_ACK;
 
-    const uint32_t cfp = footprint ? footprint : 192;
-
-    flush_point_list->flush_range = flush_range;
-    flush_point_list->flush_base = flush_base;
-
-#ifndef DYNAMIC_RANDOM_FLUSH_POINTS
-    flush_point_list->current = 0;
-
-    flush_point_list->flush_points = 
-        (uint32_t*)SnortAlloc(sizeof(uint32_t) * RAND_FLUSH_POINTS);
-
-    for (i=0;i<RAND_FLUSH_POINTS;i++)
-    {
-        if (snort_conf->run_flags & RUN_FLAG__STATIC_HASH)
-        {
-            if ( i == 0 )
-                LogMessage("WARNING:  using constant flush point = %u!\n", cfp);
-
-            flush_point_list->flush_points[i] = cfp;
-        }
-        else if ( !footprint )
-        {
-            if ( i == 0 )
-                LogMessage("WARNING: using static flush points.\n");
-            flush_point_list->flush_points[i] = g_static_points[i];
-        }
-        else
-        {
-            flush_point_list->flush_points[i] = GenerateFlushPoint(flush_point_list);
-        }
-    }
-#endif
-}
-
-static inline void UpdateFlushMgr(
-    FlushMgr *mgr, FlushPointList *flush_point_list,
-    uint32_t flags, unsigned paf_max)
-{
-    if ( mgr->flush_type == S5_FT_EXTERNAL )
-        return;
-
-    switch (mgr->flush_policy)
-    {
-        case STREAM_FLPOLICY_FOOTPRINT:
-        case STREAM_FLPOLICY_LOGICAL:
-            break;
-
-        case STREAM_FLPOLICY_PROTOCOL:
-            if ( flags & TF_PKT_MISSED )
-            {
-                mgr->flush_policy = STREAM_FLPOLICY_FOOTPRINT;
-                mgr->flush_type = S5_FT_PAF_MAX;
-            }
-            break;
-
-        case STREAM_FLPOLICY_FOOTPRINT_IPS:
-            break;
-
-        case STREAM_FLPOLICY_PROTOCOL_IPS:
-            if ( flags & TF_PKT_MISSED )
-            {
-                mgr->flush_policy = STREAM_FLPOLICY_FOOTPRINT_IPS;
-                mgr->flush_type = S5_FT_PAF_MAX;
-            }
-            break;
-
-        default:
-            return;
-    }
-    /* Ideally, we would call rand() each time, but that
-     * is a performance headache waiting to happen. */
-#ifdef DYNAMIC_RANDOM_FLUSH_POINTS
-    mgr->flush_pt = GenerateFlushPoint();
-#else
-    mgr->flush_pt = flush_point_list->flush_points[flush_point_list->current];
-    flush_point_list->current = (flush_point_list->current+1) % RAND_FLUSH_POINTS;
-#endif
-    mgr->last_size = 0;
-    mgr->last_count = 0;
-
-    if ( mgr->flush_type == S5_FT_PAF_MAX )
-        mgr->flush_pt += paf_max;
-}
-
-static inline void InitFlushMgr(
-    FlushMgr *mgr, FlushPointList *flush_point_list,
-    uint8_t policy, uint8_t auto_disable, unsigned paf_max)
-{
-    mgr->flush_policy = policy;
-    mgr->flush_type = S5_FT_INTERNAL;
-    mgr->auto_disable = auto_disable;
-
-    UpdateFlushMgr(mgr, flush_point_list, 0, paf_max);
-}
-
-static inline void pInitFlushMgr(
-    Flow* flow, FlushMgr *mgr, FlushPointList *flush_point_list,
-    uint8_t policy, uint8_t auto_disable, unsigned paf_max)
-{
-    InitFlushMgr(mgr, flush_point_list, policy, auto_disable, paf_max);
-
-    if ( Normalize_IsEnabled(flow->normal_mask, NORM_TCP_IPS) )
-    {
-        if ( policy == STREAM_FLPOLICY_FOOTPRINT )
-            mgr->flush_policy = STREAM_FLPOLICY_FOOTPRINT_IPS;
-
-        else if ( policy == STREAM_FLPOLICY_PROTOCOL )
-            mgr->flush_policy = STREAM_FLPOLICY_PROTOCOL_IPS;
-    }
-}
-
-static inline void InitFlushMgrByService (
-    Flow* flow, StreamTracker* pst, int16_t service, bool c2s, uint8_t flush_policy)
-{
-    uint8_t registration, auto_disable = 0;
-    bool flush = (flush_policy != STREAM_FLPOLICY_IGNORE);
-    
-#if 0
-    // this check required if PAF doesn't abort
-    if ( lwssn->session_state & STREAM5_STATE_MIDSTREAM )
-        registration = 0;
     else
-#endif
-    registration = s5_paf_service_registration(service, c2s, flush);
-    
-    if ( registration )
-    {   
-        flush_policy = STREAM_FLPOLICY_PROTOCOL;
-        s5_paf_setup(&pst->paf_state, registration);
-        auto_disable = !flush;
-    }   
-    pInitFlushMgr(flow, &pst->flush_mgr, &pst->config->flush_point_list,
-        flush_policy, auto_disable, pst->config->paf_max);
+        trk->flush_policy = STREAM_FLPOLICY_ON_DATA;
 }
 
-static int ResetFlushMgrsPolicy(StreamTcpConfig* config)
-{
-    if (config == NULL)
-        return 0;
-
-    {
-        int j;
-        FlushPointList *fpl = &config->flush_point_list;
-        FlushMgr *client, *server;
-        uint8_t flush_policy;
-
-        fpl->current = 0;
-
-        for (j = 0; j < MAX_PORTS; j++)
-        {
-            client = &config->flush_config[j].client;
-            flush_policy = config->flush_config[j].client.flush_policy;
-            InitFlushMgr(client, fpl, flush_policy, 0, config->paf_max);
-
-            server = &config->flush_config[j].server;
-            flush_policy = config->flush_config[j].server.flush_policy;
-            InitFlushMgr(server, fpl, flush_policy, 0, config->paf_max);
-        }
-        /* protocol 0 is the unknown case. skip it */
-        for (j = 1; j < MAX_PROTOCOL_ORDINAL; j++)
-        {
-            client = &config->flush_config_protocol[j].client;
-            flush_policy = config->flush_config_protocol[j].client.flush_policy;
-            InitFlushMgr(client, fpl, flush_policy, 0, config->paf_max);
-
-            server = &config->flush_config_protocol[j].server;
-            flush_policy = config->flush_config_protocol[j].server.flush_policy;
-            InitFlushMgr(server, fpl, flush_policy, 0, config->paf_max);
-        }
-    }
-
-    return 0;
-}
-
-void** Stream5GetPAFUserDataTcp (Flow* lwssn, bool to_server)
+bool Stream5IsPafActiveTcp (Flow* lwssn, bool c2s)
 {
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
+    StreamSplitter* ss = c2s ? tcpssn->server.splitter : tcpssn->client.splitter;
 
-    return to_server ? &tcpssn->server.paf_state.user
-                     : &tcpssn->client.paf_state.user;
+    return ss && ss->is_paf();
 }
 
-bool Stream5IsPafActiveTcp (Flow* lwssn, bool to_server)
-{
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
-    FlushMgr* fm;
-
-    fm = to_server ? &tcpssn->server.flush_mgr : &tcpssn->client.flush_mgr;
-
-    return ( (fm->flush_policy == STREAM_FLPOLICY_PROTOCOL)
-          || (fm->flush_policy == STREAM_FLPOLICY_PROTOCOL_IPS)
-    );
-}
-
-bool Stream5ActivatePafTcp (Flow* lwssn, bool to_server)
+void Stream5SetSplitterTcp (Flow* lwssn, bool c2s, StreamSplitter* ss)
 {
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
     StreamTracker* trk;
-    FlushMgr* fm;
 
-    if ( to_server )
+    if ( c2s )
     {
         trk = &tcpssn->server;
-        fm = &tcpssn->server.flush_mgr;
     }
     else
     {
         trk = &tcpssn->client;
-        fm = &tcpssn->client.flush_mgr;
     }
 
-    switch ( fm->flush_policy)
+    if ( trk->splitter && tcpssn->tcp_init )
+        delete trk->splitter;
+
+    trk->splitter = ss;
+
+    if ( ss && ss->is_paf() )
+        s5_paf_setup(&trk->paf_state);
+}
+
+StreamSplitter* Stream5GetSplitterTcp (Flow* lwssn, bool c2s)
+{
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
+    StreamTracker* trk;
+
+    if ( c2s )
     {
-    case STREAM_FLPOLICY_IGNORE:
-        pInitFlushMgr(lwssn, fm, &trk->config->flush_point_list,
-            STREAM_FLPOLICY_PROTOCOL, 0, trk->config->paf_max);
-        break;
-
-    case STREAM_FLPOLICY_FOOTPRINT:
-        fm->flush_policy = STREAM_FLPOLICY_PROTOCOL;
-        break;
-
-    case STREAM_FLPOLICY_FOOTPRINT_IPS:
-        fm->flush_policy = STREAM_FLPOLICY_PROTOCOL_IPS;
-        break;
-
-    default:
-        return false;
+        trk = &tcpssn->server;
     }
-    s5_paf_setup(&trk->paf_state, trk->paf_state.cb_mask);
-    return true;
+    else
+    {
+        trk = &tcpssn->client;
+    }
+
+    return trk->splitter;
 }
 
 void Stream5UpdatePerfBaseState(SFBASE *sf_base,
@@ -918,30 +700,6 @@ static void Stream5TcpRegisterRuleOptions(SnortConfig*)
 // policy translation
 //-------------------------------------------------------------------------
 
-static void Stream5TcpInitFlushPoints(void)
-{
-    int i;
-
-    /* Seed the flushpoint random generator */
-    srand( (unsigned int) sizeof(TcpSession) + (unsigned int) time(NULL) );
-
-    /* Default is to ignore, for all ports */
-    for(i=0;i<MAX_PORTS;i++)
-    {
-        ignore_flush_policy[i].client.flush_policy = STREAM_FLPOLICY_IGNORE;
-        ignore_flush_policy[i].server.flush_policy = STREAM_FLPOLICY_IGNORE;
-    }
-    for(i=0;i<MAX_PROTOCOL_ORDINAL;i++)
-    {
-        ignore_flush_policy_protocol[i].client.flush_policy = STREAM_FLPOLICY_IGNORE;
-        ignore_flush_policy_protocol[i].server.flush_policy = STREAM_FLPOLICY_IGNORE;
-    }
-}
-
-//-------------------------------------------------------------------------
-// policy translation
-//-------------------------------------------------------------------------
-
 static inline uint16_t StreamPolicyIdFromName(char *name)
 {
     if (!name)
@@ -1061,8 +819,6 @@ StreamTcpConfig::StreamTcpConfig()
 
     max_consec_small_segs = S5_DEFAULT_CONSEC_SMALL_SEGS;
     max_consec_small_seg_size = S5_DEFAULT_MAX_SMALL_SEG_SIZE;
-
-    InitFlushPointList(&flush_point_list, 192, 128, footprint);
 }
 
 //-------------------------------------------------------------------------
@@ -1079,63 +835,9 @@ StreamTcpConfig::StreamTcpConfig()
 // either way, this client / server distinction must be kept in mind to
 // make sense of the code in this file.
 //-------------------------------------------------------------------------
-void StreamTcpConfig::set_port(
-    Port port, bool c2s, bool s2c)
-{
-    if ( c2s )
-    {
-        FlushMgr *flush_mgr = &flush_config[port].client;
-        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0, paf_max);
-    }
-    if ( s2c )
-    {
-        FlushMgr* flush_mgr = &flush_config[port].server;
-        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0, paf_max);
-    }
-}
-
-void StreamTcpConfig::set_proto(
-    unsigned proto_ordinal, bool c2s, bool s2c)
-{
-    if ( c2s )
-    {
-        FlushMgr *flush_mgr = &flush_config_protocol[proto_ordinal].client;
-        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0, paf_max);
-    }
-    if ( s2c )
-    {
-        FlushMgr* flush_mgr = &flush_config_protocol[proto_ordinal].server;
-        InitFlushMgr(flush_mgr, &flush_point_list, STREAM_FLPOLICY_FOOTPRINT, 0, paf_max);
-    }
-    flush_config_protocol[proto_ordinal].configured = 1;
-}
-
-void StreamTcpConfig::add_proto(
-    const char* svc, bool c2s, bool s2c)
-{
-    if ( !strcmp(svc, "all") )
-    {
-        for ( unsigned ord = 0; ord < MAX_PROTOCOL_ORDINAL; ord++ )
-            set_proto(ord, c2s, s2c);
-        return;
-    }
-    /* First look it up */
-    int16_t proto_ordinal = FindProtocolReference(svc);
-
-    if (proto_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
-    {
-        /* Not known -- add it */
-        proto_ordinal = AddProtocolReference(svc);
-
-        if (proto_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
-            ParseError("Failed to find protocol reference for '%s'", svc);
-    }
-    set_proto(proto_ordinal, c2s, s2c);
-}
 
 static void Stream5PrintTcpConfig(StreamTcpConfig* config)
 {
-    int i=0, j=0;
     LogMessage("Stream5 TCP Policy config:\n");
     LogMessage("    Reassembly Policy: %s\n",
         reassembly_policy_names[config->reassembly_policy]);
@@ -1172,49 +874,6 @@ static void Stream5PrintTcpConfig(StreamTcpConfig* config)
         LogMessage("    Require 3-Way Handshake: after %d seconds\n",
             config->hs_timeout);
 
-    LogMessage("    Reassembly Ports:\n");
-
-    for (i=0; i<MAX_PORTS; i++)
-    {
-        int direction = 0;
-        int client_flushpolicy = config->flush_config[i].client.flush_policy;
-        int server_flushpolicy = config->flush_config[i].server.flush_policy;
-        char client_policy_str[STD_BUF];
-        char server_policy_str[STD_BUF];
-        client_policy_str[0] = server_policy_str[0] = '\0';
-
-        if (client_flushpolicy != STREAM_FLPOLICY_IGNORE)
-        {
-            direction |= SSN_DIR_CLIENT;
-
-            if (client_flushpolicy < STREAM_FLPOLICY_MAX)
-                SnortSnprintf(client_policy_str, STD_BUF, "client (%s)",
-                              flush_policy_names[client_flushpolicy]);
-        }
-        if (server_flushpolicy != STREAM_FLPOLICY_IGNORE)
-        {
-            direction |= SSN_DIR_SERVER;
-
-            if (server_flushpolicy < STREAM_FLPOLICY_MAX)
-                SnortSnprintf(server_policy_str, STD_BUF, "server (%s)",
-                              flush_policy_names[server_flushpolicy]);
-        }
-        if (direction)
-        {
-            if (j<MAX_PORTS_TO_PRINT)
-            {
-                LogMessage("      %d %s %s\n", i,
-                    client_policy_str, server_policy_str);
-            }
-            j++;
-        }
-    }
-
-    if (j > MAX_PORTS_TO_PRINT)
-    {
-        LogMessage("      additional ports configured but not printed.\n");
-    }
-
 #ifdef REG_TEST
     LogMessage("    TCP Session Size: %lu\n",sizeof(TcpSession));
 #endif
@@ -1248,24 +907,6 @@ int Stream5VerifyTcpConfig(SnortConfig*, StreamTcpConfig*)
     // FIXIT why is this here?
     SFAT_SetPolicyIds(StreamPolicyIdFromHostAttributeEntry);
     return 0;
-}
-
-void Stream5ResetTcpInstance(StreamTcpConfig* pc)
-{
-    ResetFlushMgrsPolicy(pc);
-}
-
-void StreamTcpConfigFree(StreamTcpConfig *config)
-{
-    if (config == NULL)
-        return;
-
-    free(config->flush_point_list.flush_points);
-
-    if ( config->paf_config )
-        s5_paf_delete(config->paf_config);
-
-    free(config);
 }
 
 #ifdef DEBUG_STREAM5
@@ -1339,40 +980,19 @@ static void PrintFlushMgr(FlushMgr *fm)
 
     switch(fm->flush_policy)
     {
-        case STREAM_FLPOLICY_NONE:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "    NONE\n"););
-            break;
-        case STREAM_FLPOLICY_FOOTPRINT:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "    FOOTPRINT %d\n", fm->flush_pt););
-            break;
-        case STREAM_FLPOLICY_LOGICAL:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "    LOGICAL %d\n", fm->flush_pt););
-            break;
-        case STREAM_FLPOLICY_RESPONSE:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "    RESPONSE\n"););
-            break;
-        case STREAM_FLPOLICY_SLIDING_WINDOW:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "    SLIDING_WINDOW %d\n", fm->flush_pt););
-            break;
-#if 0
-        case STREAM_FLPOLICY_CONSUMED:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "          CONSUMED %d\n", fm->flush_pt););
-            break;
-#endif
         case STREAM_FLPOLICY_IGNORE:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "    IGNORE\n"););
+            STREAM5_DEBUG_WRAP(DebugMessage(
+                DEBUG_STREAM_STATE, "    IGNORE\n"););
             break;
 
-        case STREAM_FLPOLICY_PROTOCOL:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "    PROTOCOL\n"););
+        case STREAM_FLPOLICY_ON_ACK:
+            STREAM5_DEBUG_WRAP(DebugMessage(
+                DEBUG_STREAM_STATE, "    PROTOCOL\n"););
+            break;
+
+        case STREAM_FLPOLICY_ON_DATA:
+            STREAM5_DEBUG_WRAP(DebugMessage(
+                DEBUG_STREAM_STATE, "    PROTOCOL_IPS\n"););
             break;
     }
 }
@@ -2203,8 +1823,8 @@ static inline void UpdateSsn(
 void tcp_sinit()
 {
     s5_pkt = PacketManager::encode_new();
-    tcp_memcap = new Memcap(262144); // FIXIT replace with session memcap
-    Stream5TcpInitFlushPoints();
+    tcp_memcap = new Memcap(26214400); // FIXIT replace with session memcap
+    //AtomSplitter::init();  // FIXIT PAF implement
 }
 
 void tcp_sterm()
@@ -2541,6 +2161,7 @@ static inline int _flush_to_seq (
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "dumping entire seglist!\n"););
                 purge_all(st);
+                st->splitter->reset();
             }
 
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -2605,9 +2226,8 @@ static inline int _flush_to_seq (
         // recovery may be possible in some cases
     } while ( !(st->flags & TF_MISSING_PKT) && DataToFlush(st) );
 
-    if ( st->config )
-        UpdateFlushMgr(&st->flush_mgr, &st->config->flush_point_list,
-            st->flags, st->config->paf_max);
+    if ( st->splitter )
+        st->splitter->update();
 
     /* tell them how many bytes we processed */
     PREPROC_PROFILE_END(s5TcpFlushPerfStats);
@@ -3071,6 +2691,12 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
+    delete tcpssn->client.splitter;
+    delete tcpssn->server.splitter;
+
+    tcpssn->client.splitter = nullptr;
+    tcpssn->server.splitter = nullptr;
+
     // release internal protocol specific state
     purge_all(&tcpssn->client);
     purge_all(&tcpssn->server);
@@ -3292,8 +2918,8 @@ static void TraceState (
         );
     fprintf(stdout, "\n");
     fprintf(stdout,
-        "         FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
-        flushxt[a->flush_mgr.flush_policy], a->flush_mgr.flush_pt,
+        "         FP=%s SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
+        flushxt[a->flush_policy],
         a->seg_count, a->flush_count, a->seg_bytes_logical,
         a->seglist_base_seq - b->isn
     );
@@ -3533,7 +3159,7 @@ static void NewQueue(
 
     PREPROC_PROFILE_START(s5TcpInsertPerfStats);
 
-    if(st->flush_mgr.flush_policy != STREAM_FLPOLICY_IGNORE)
+    if(st->flush_policy != STREAM_FLPOLICY_IGNORE)
     {
         uint32_t seq = tdb->seq;
 
@@ -4523,7 +4149,7 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
 
     if(rcv->seg_count != 0)
     {
-        if(rcv->flush_mgr.flush_policy == STREAM_FLPOLICY_IGNORE)
+        if(rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
         {
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Ignoring segment due to IGNORE flush_policy\n"););
@@ -4599,7 +4225,7 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
     }
     else
     {
-        if(rcv->flush_mgr.flush_policy == STREAM_FLPOLICY_IGNORE)
+        if(rcv->flush_policy == STREAM_FLPOLICY_IGNORE)
         {
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Ignoring segment due to IGNORE flush_policy\n"););
@@ -4694,7 +4320,7 @@ static int ProcessTcpData(
             }
 
             if ((listener->s_mgr.state == TCP_STATE_ESTABLISHED) &&
-                (listener->flush_mgr.flush_policy == STREAM_FLPOLICY_IGNORE))
+                (listener->flush_policy == STREAM_FLPOLICY_IGNORE))
             {
                 if ( SEQ_GT(tdb->end_seq, listener->r_nxt_ack))
                 {
@@ -5156,59 +4782,8 @@ static int NewTcpSession(
             }
             lwssn->s5_state.session_flags |= SSNFLAG_CLIENT_SWAPPED;
         }
-        /* Set up the flush behaviour, based on the configured info
-         * for the server and client ports.
-         */
-        /* Yes, the server flush manager gets the info from the
-         * policy's server port's the flush policy from the client
-         * and visa-versa.
-         *
-         * For example, when policy said 'ports client 80', that means
-         * reassemble packets from the client side (stored in the server's
-         * flush buffer in the session) destined for port 80.  Port 80 is
-         * the server port and we're reassembling the client side.
-         * That should make this almost as clear as opaque mud!
-         */
-        // FIXIT these used to fall back to port configs which were deleted
-        // need to ensure that we can track a session w/o doing reassembly
-        // is else init flush to ignore needed?
-        if (tmp->server.config->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
-        {
-            StreamTracker* pst = &tmp->server;
-            uint8_t flush_policy =
-                pst->config->flush_config_protocol[lwssn->s5_state.application_protocol].client.flush_policy;
-            InitFlushMgrByService(
-                lwssn, pst, lwssn->s5_state.application_protocol, true, flush_policy);
-        }
-        else
-        {
-            // FIXIT hack until bindings get service from port assignments
-            // and auto service id
-            StreamTracker* pst = &tmp->server;
-            uint8_t flush_policy = STREAM_FLPOLICY_FOOTPRINT;
-
-            pInitFlushMgr(lwssn, &pst->flush_mgr, &pst->config->flush_point_list,
-                flush_policy, true, pst->config->paf_max);
-        }
-
-        if (tmp->client.config->flush_config_protocol[lwssn->s5_state.application_protocol].configured == 1)
-        {
-            StreamTracker* pst = &tmp->client;
-            uint8_t flush_policy =
-                pst->config->flush_config_protocol[lwssn->s5_state.application_protocol].server.flush_policy;
-            InitFlushMgrByService(
-                lwssn, pst, lwssn->s5_state.application_protocol, false, flush_policy);
-        }
-        else
-        {
-            // FIXIT hack until bindings get service from port assignments
-            // and auto service id
-            StreamTracker* pst = &tmp->client;
-            uint8_t flush_policy = STREAM_FLPOLICY_FOOTPRINT;
-
-            pInitFlushMgr(lwssn, &pst->flush_mgr, &pst->config->flush_point_list,
-                flush_policy, true, pst->config->paf_max);
-        }
+        init_flush_policy(lwssn, &tmp->server);
+        init_flush_policy(lwssn, &tmp->client);
 
 #ifdef DEBUG_STREAM5
         PrintTcpSession(tmp);
@@ -5404,9 +4979,8 @@ static int ProcessTcp(
 
             if ( ignore )
             {
-                Stream5SetReassemblyTcp(
-                    lwssn, STREAM_FLPOLICY_IGNORE, ignore, STREAM_FLPOLICY_SET_ABSOLUTE);
-                PREPROC_PROFILE_END(s5TcpStatePerfStats);
+                tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
+                tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
                 return retcode;
             }
         }
@@ -5745,12 +5319,10 @@ static int ProcessTcp(
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "   %s [talker] state: %s\n", t,
                 state_names[talker->s_mgr.state]););
-    STREAM5_DEBUG_WRAP(PrintFlushMgr(&talker->flush_mgr););
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "   %s state: %s(%d)\n", l,
                 state_names[listener->s_mgr.state],
                 listener->s_mgr.state););
-    STREAM5_DEBUG_WRAP(PrintFlushMgr(&listener->flush_mgr););
 
     // may find better placement to eliminate redundant flag checks
     if(p->tcph->th_flags & TH_SYN)
@@ -6238,8 +5810,8 @@ static int ProcessTcp(
         {
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Queuing data on listener, t %s, l %s...\n",
-                        flush_policy_names[talker->flush_mgr.flush_policy],
-                        flush_policy_names[listener->flush_mgr.flush_policy]););
+                        flush_policy_names[talker->flush_policy],
+                        flush_policy_names[listener->flush_policy]););
 
             // these normalizations can't be done if we missed setup. and
             // window is zero in one direction until we've seen both sides.
@@ -6310,8 +5882,8 @@ static int ProcessTcp(
                 listener->r_nxt_ack++;
                 talker->s_mgr.sub_state |= SUB_FIN_SENT;
 
-                if ((listener->flush_mgr.flush_policy != STREAM_FLPOLICY_PROTOCOL) &&
-                    (listener->flush_mgr.flush_policy != STREAM_FLPOLICY_PROTOCOL_IPS) &&
+                if ((listener->flush_policy != STREAM_FLPOLICY_ON_ACK) &&
+                    (listener->flush_policy != STREAM_FLPOLICY_ON_DATA) &&
                     Normalize_IsEnabled(p, NORM_TCP_IPS))
                 {
                     p->packet_flags |= PKT_PDU_TAIL;
@@ -6528,44 +6100,6 @@ static inline uint32_t GetForwardDir (const Packet* p)
     return 0;
 }
 
-static inline int CheckFlushCoercion (
-    Packet* p, FlushMgr* fm, uint16_t flush_factor
-) {
-    if ( !flush_factor )
-        return 0;
-
-    if (
-        p->dsize &&
-        (p->dsize < fm->last_size) &&
-        (fm->last_count >= flush_factor) )
-    {
-        fm->last_size = 0;
-        fm->last_count = 0;
-        return 1;
-    }
-    if ( p->dsize > fm->last_size )
-        fm->last_size = p->dsize;
-
-    fm->last_count++;
-    return 0;
-}
-
-static inline bool AutoDisable (StreamTracker* a, StreamTracker* b)
-{
-    if ( !a->flush_mgr.auto_disable )
-        return false;
-
-    a->flush_mgr.flush_policy = STREAM_FLPOLICY_IGNORE;
-    purge_all(a);
-
-    if ( b->flush_mgr.auto_disable )
-    {
-        b->flush_mgr.flush_policy = STREAM_FLPOLICY_IGNORE;
-        purge_all(b);
-    }
-    return true;
-}
-
 // see flush_pdu_ackd() for details
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
@@ -6599,9 +6133,8 @@ static inline uint32_t flush_pdu_ips (
         }
 
         flush_pt = s5_paf_check(
-            trk->config->paf_config, &trk->paf_state, ssn->flow,
-            seg->payload, size, total, seg->seq, srv_port, flags,
-            trk->flush_mgr.flush_pt);
+            trk->splitter, &trk->paf_state, ssn->flow,
+            seg->payload, size, total, seg->seq, srv_port, flags);
 
         if ( flush_pt > 0 )
         {
@@ -6620,53 +6153,28 @@ static inline int CheckFlushPolicyOnData(
     StreamTracker *listener, TcpDataBlock *tdb, Packet *p)
 {
     uint32_t flushed = 0;
-    uint32_t avail;
 
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "In CheckFlushPolicyOnData\n"););
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Talker flush policy: %s\n",
-                flush_policy_names[talker->flush_mgr.flush_policy]););
+                flush_policy_names[talker->flush_policy]););
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Listener flush policy: %s\n",
-                flush_policy_names[listener->flush_mgr.flush_policy]););
+                flush_policy_names[listener->flush_policy]););
 
-    switch(listener->flush_mgr.flush_policy)
+    switch(listener->flush_policy)
     {
         case STREAM_FLPOLICY_IGNORE:
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "STREAM_FLPOLICY_IGNORE\n"););
             return 0;
 
-        case STREAM_FLPOLICY_FOOTPRINT_IPS:
-        {
-            int coerce;
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "STREAM_FLPOLICY_FOOTPRINT-IPS\n"););
 
-            avail = get_q_sequenced(listener);
-            coerce = CheckFlushCoercion(
-                p, &listener->flush_mgr, listener->config->flush_factor);
+        case STREAM_FLPOLICY_ON_ACK:
+            break;
 
-            if (
-                (avail > 0) &&
-                (coerce || (avail >= listener->flush_mgr.flush_pt) ||
-                (avail && talker->s_mgr.state == TCP_STATE_FIN_WAIT_1))
-            ) {
-                uint32_t dir = GetForwardDir(p);
-
-                if ( talker->s_mgr.state == TCP_STATE_FIN_WAIT_1 )
-                    listener->flags |= TF_FORCE_FLUSH;
-
-                flushed = flush_to_seq(
-                    tcpssn, listener, avail, p,
-                    GET_SRC_IP(p), GET_DST_IP(p),
-                    p->tcph->th_sport, p->tcph->th_dport, dir);
-            }
-        }
-        break;
-
-        case STREAM_FLPOLICY_PROTOCOL_IPS:
+        case STREAM_FLPOLICY_ON_DATA:
         {
             uint32_t flags = GetForwardDir(p);
             uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
@@ -6702,14 +6210,14 @@ static inline int CheckFlushPolicyOnData(
                 flags = GetForwardDir(p);
                 flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
             }
-            if ( !flags )
+            if ( !flags && listener->splitter->is_paf() )
             {
-                if ( AutoDisable(listener, talker) )
-                    return 0;
+                // FIXIT PAF auto disable with multipe splitters?
+                //if ( AutoDisable(listener, talker) )
+                //    return 0;
 
-                listener->flush_mgr.flush_policy = STREAM_FLPOLICY_FOOTPRINT_IPS;
-                listener->flush_mgr.flush_pt += listener->config->paf_max;
-                listener->flush_mgr.flush_type = S5_FT_PAF_MAX;
+                delete listener->splitter;
+                listener->splitter = new AtomSplitter(listener->config->paf_max);
 
                 return CheckFlushPolicyOnData(tcpssn, talker, listener, tdb, p);
             }
@@ -6768,9 +6276,8 @@ static inline uint32_t flush_pdu_ackd (
         total += size;
 
         flush_pt = s5_paf_check(
-            trk->config->paf_config, &trk->paf_state, ssn->flow,
-            seg->payload, size, total, seg->seq, srv_port, flags,
-            trk->flush_mgr.flush_pt);
+            trk->splitter, &trk->paf_state, ssn->flow,
+            seg->payload, size, total, seg->seq, srv_port, flags);
 
         if ( flush_pt > 0 )
         {
@@ -6794,136 +6301,19 @@ int CheckFlushPolicyOnAck(
                 "In CheckFlushPolicyOnAck\n"););
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Talker flush policy: %s\n",
-                flush_policy_names[talker->flush_mgr.flush_policy]););
+                flush_policy_names[talker->flush_policy]););
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "Listener flush policy: %s\n",
-                flush_policy_names[listener->flush_mgr.flush_policy]););
+                flush_policy_names[listener->flush_policy]););
 
-    switch(talker->flush_mgr.flush_policy)
+    switch(talker->flush_policy)
     {
         case STREAM_FLPOLICY_IGNORE:
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "STREAM_FLPOLICY_IGNORE\n"););
             return 0;
 
-        case STREAM_FLPOLICY_FOOTPRINT:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "STREAM_FLPOLICY_FOOTPRINT\n"););
-            {
-                if(get_q_footprint(talker) >= talker->flush_mgr.flush_pt)
-                {
-                    uint32_t dir = GetReverseDir(p);
-
-                    flushed = flush_ackd(tcpssn, talker, p,
-                            GET_DST_IP(p), GET_SRC_IP(p),
-                            p->tcph->th_dport, p->tcph->th_sport, dir);
-
-                    if(flushed)
-                        purge_flushed_ackd(tcpssn, talker);
-                }
-            }
-            break;
-
-        case STREAM_FLPOLICY_LOGICAL:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "STREAM_FLPOLICY_LOGICAL\n"););
-            if(talker->seg_bytes_logical > talker->flush_mgr.flush_pt)
-            {
-                uint32_t dir = GetReverseDir(p);
-
-                flushed = flush_ackd(tcpssn, talker, p,
-                        GET_DST_IP(p), GET_SRC_IP(p),
-                        p->tcph->th_dport, p->tcph->th_sport, dir);
-
-                if(flushed)
-                    purge_flushed_ackd(tcpssn, talker);
-            }
-            break;
-
-        case STREAM_FLPOLICY_RESPONSE:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "Running FLPOLICY_RESPONSE\n"););
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "checking l.r_win_base (0x%X) > "
-                        "t.seglist_base_seq (0x%X)\n",
-                        talker->r_win_base, talker->seglist_base_seq););
-
-            if(SEQ_GT(talker->r_win_base, talker->seglist_base_seq) &&
-                    IsWellFormed(p, talker))
-            {
-                uint32_t dir = GetReverseDir(p);
-
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "flushing talker, t->sbl: %d\n",
-                            talker->seg_bytes_logical););
-                //PrintStreamTracker(talker);
-                //PrintStreamTracker(talker);
-
-                flushed = flush_ackd(tcpssn, talker, p,
-                        GET_DST_IP(p), GET_SRC_IP(p),
-                        p->tcph->th_dport, p->tcph->th_sport, dir);
-
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "bye bye data...\n"););
-
-                if(flushed)
-                    purge_flushed_ackd(tcpssn, talker);
-            }
-            break;
-
-        case STREAM_FLPOLICY_SLIDING_WINDOW:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "STREAM_FLPOLICY_SLIDING_WINDOW\n"););
-            if(get_q_footprint(talker) >= talker->flush_mgr.flush_pt)
-            {
-                uint32_t dir = GetReverseDir(p);
-
-                flushed = flush_ackd(tcpssn, talker, p,
-                        GET_DST_IP(p), GET_SRC_IP(p),
-                        p->tcph->th_dport, p->tcph->th_sport, dir);
-
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Deleting head node for sliding window...\n"););
-
-                /* Base sequence for next window'd flush is the end
-                 * of the first packet. */
-                talker->seglist_base_seq = talker->seglist->seq + talker->seglist->size;
-                Stream5SeglistDeleteNode(talker, talker->seglist);
-
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "setting talker->seglist_base_seq to 0x%X\n",
-                            talker->seglist->seq););
-
-            }
-            break;
-
-#if 0
-        case STREAM_FLPOLICY_CONSUMED:
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                        "STREAM_FLPOLICY_CONSUMED\n"););
-            if(get_q_footprint(talker) >= talker->flush_mgr.flush_pt)
-            {
-                uint32_t dir = GetReverseDir(p);
-
-                flushed = flush_ackd(tcpssn, talker, p,
-                        p->iph->ip_dst.s_addr, p->iph->ip_src.s_addr,
-                        p->tcph->th_dport, p->tcph->th_sport, dir);
-
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Deleting head node for sliding window...\n"););
-
-                talker->seglist_base_seq = talker->seglist->seq + talker->seglist->size;
-                /* TODO: Delete up to the consumed bytes */
-                Stream5SeglistDeleteNode(talker, talker->seglist);
-
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "setting talker->seglist_base_seq to 0x%X\n",
-                            talker->seglist->seq););
-
-            }
-            break;
-#endif
-        case STREAM_FLPOLICY_PROTOCOL:
+        case STREAM_FLPOLICY_ON_ACK:
         {
             uint32_t flags = GetReverseDir(p);
             uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
@@ -6952,22 +6342,21 @@ int CheckFlushPolicyOnAck(
                 flags = GetReverseDir(p);
                 flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
             }
-            if ( !flags )
+            if ( !flags && talker->splitter->is_paf() )
             {
-                if ( AutoDisable(talker, listener) )
-                    return 0;
+                // FIXIT PAF auto disable with multipe splitters?
+                //if ( AutoDisable(talker, listener) )
+                //    return 0;
 
-                talker->flush_mgr.flush_policy = STREAM_FLPOLICY_FOOTPRINT;
-                talker->flush_mgr.flush_pt += talker->config->paf_max;
-                talker->flush_mgr.flush_type = S5_FT_PAF_MAX;
+                delete talker->splitter;
+                talker->splitter = new AtomSplitter(listener->config->paf_max);
 
                 return CheckFlushPolicyOnAck(tcpssn, talker, listener, tdb, p);
             }
         }
         break;
 
-        case STREAM_FLPOLICY_FOOTPRINT_IPS:
-        case STREAM_FLPOLICY_PROTOCOL_IPS:
+        case STREAM_FLPOLICY_ON_DATA:
             purge_flushed_ackd(tcpssn, talker);
             break;
     }
@@ -7317,14 +6706,12 @@ char Stream5GetReassemblyDirectionTcp(Flow *lwssn)
 
     tcpssn = (TcpSession*)lwssn->session;
 
-    if ((tcpssn->server.flush_mgr.flush_policy != STREAM_FLPOLICY_NONE) &&
-        (tcpssn->server.flush_mgr.flush_policy != STREAM_FLPOLICY_IGNORE))
+    if ( tcpssn->server.flush_policy != STREAM_FLPOLICY_IGNORE )
     {
         dir |= SSN_DIR_SERVER;
     }
 
-    if ((tcpssn->client.flush_mgr.flush_policy != STREAM_FLPOLICY_NONE) &&
-        (tcpssn->client.flush_mgr.flush_policy != STREAM_FLPOLICY_IGNORE))
+    if ( tcpssn->client.flush_policy != STREAM_FLPOLICY_IGNORE )
     {
         dir |= SSN_DIR_CLIENT;
     }
@@ -7332,138 +6719,25 @@ char Stream5GetReassemblyDirectionTcp(Flow *lwssn)
     return dir;
 }
 
-uint32_t Stream5GetFlushPointTcp(Flow *lwssn, char dir)
-{
-    TcpSession *tcpssn = NULL;
-
-    if (lwssn == NULL)
-        return 0;
-
-    tcpssn = (TcpSession*)lwssn->session;
-
-    if (dir & SSN_DIR_CLIENT)
-        return tcpssn->client.flush_mgr.flush_pt;
-    else if (dir & SSN_DIR_SERVER)
-        return tcpssn->server.flush_mgr.flush_pt;
-
-    return 0;
-}
-
-void Stream5SetFlushPointTcp(Flow *lwssn,
-        char dir, uint32_t flush_point)
-{
-    TcpSession *tcpssn = NULL;
-
-    if (lwssn == NULL)
-        return;
-
-    tcpssn = (TcpSession*)lwssn->session;
-
-    if (flush_point == 0)
-        return;
-
-    if (dir & SSN_DIR_CLIENT)
-    {
-        tcpssn->client.flush_mgr.flush_pt = flush_point;
-        tcpssn->client.flush_mgr.last_size = 0;
-        tcpssn->client.flush_mgr.last_count = 0;
-        tcpssn->client.flush_mgr.flush_type = S5_FT_EXTERNAL;
-    }
-    else if (dir & SSN_DIR_SERVER)
-    {
-        tcpssn->server.flush_mgr.flush_pt = flush_point;
-        tcpssn->server.flush_mgr.last_size = 0;
-        tcpssn->server.flush_mgr.last_count = 0;
-        tcpssn->server.flush_mgr.flush_type = S5_FT_EXTERNAL;
-    }
-}
-
-char Stream5SetReassemblyTcp(
-    Flow *lwssn, FlushPolicy flush_policy, char dir, char flags)
+bool Stream5GetReassemblyFlushPolicyTcp(Flow *lwssn, char dir)
 {
     TcpSession *tcpssn = NULL;
 
     if (!lwssn)
-        return SSN_DIR_NONE;
-
-    tcpssn = (TcpSession*)lwssn->session;
-
-    if (flags & STREAM_FLPOLICY_SET_APPEND)
-    {
-        if (dir & SSN_DIR_CLIENT)
-        {
-            if (tcpssn->client.flush_mgr.flush_policy != STREAM_FLPOLICY_NONE)
-            {
-                /* Changing policy with APPEND, Bad */
-                DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Stream: Changing client flush policy using "
-                            "append is asking for trouble.  Ignored\n"););
-            }
-            else
-            {
-                pInitFlushMgr(lwssn, &tcpssn->client.flush_mgr,
-                    &tcpssn->client.config->flush_point_list,
-                    flush_policy, 0, tcpssn->client.config->paf_max);
-            }
-        }
-
-        if (dir & SSN_DIR_SERVER)
-        {
-            if (tcpssn->server.flush_mgr.flush_policy != STREAM_FLPOLICY_NONE)
-            {
-                /* Changing policy with APPEND, Bad */
-                DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "Stream: Changing server flush policy using "
-                            "append is asking for trouble.  Ignored\n"););
-            }
-            else
-            {
-                pInitFlushMgr(lwssn, &tcpssn->server.flush_mgr,
-                    &tcpssn->server.config->flush_point_list,
-                    flush_policy, 0, tcpssn->server.config->paf_max);
-            }
-        }
-
-    }
-    else if (flags & STREAM_FLPOLICY_SET_ABSOLUTE)
-    {
-        if (dir & SSN_DIR_CLIENT)
-        {
-            pInitFlushMgr(lwssn, &tcpssn->client.flush_mgr,
-                &tcpssn->client.config->flush_point_list,
-                flush_policy, 0, tcpssn->client.config->paf_max);
-        }
-
-        if (dir & SSN_DIR_SERVER)
-        {
-            pInitFlushMgr(lwssn, &tcpssn->server.flush_mgr,
-                &tcpssn->server.config->flush_point_list,
-                flush_policy, 0, tcpssn->server.config->paf_max);
-        }
-    }
-
-    return Stream5GetReassemblyDirectionTcp(lwssn);
-}
-
-char Stream5GetReassemblyFlushPolicyTcp(Flow *lwssn, char dir)
-{
-    TcpSession *tcpssn = NULL;
-
-    if (!lwssn)
-        return STREAM_FLPOLICY_NONE;
+        return false;
 
     tcpssn = (TcpSession*)lwssn->session;
 
     if (dir & SSN_DIR_CLIENT)
     {
-        return (char)tcpssn->client.flush_mgr.flush_policy;
+        return (char)tcpssn->client.flush_policy != STREAM_FLPOLICY_IGNORE;
     }
 
     if (dir & SSN_DIR_SERVER)
     {
-        return (char)tcpssn->server.flush_mgr.flush_policy;
+        return (char)tcpssn->server.flush_policy != STREAM_FLPOLICY_IGNORE;
     }
-    return STREAM_FLPOLICY_NONE;
+    return false;
 }
 
 char Stream5IsStreamSequencedTcp(Flow *lwssn, char dir)
@@ -7901,11 +7175,26 @@ int s5TcpStreamReassembleRuleOptionEval(
 
     PREPROC_PROFILE_START(streamReassembleRuleOptionPerfStats);
     lwssn = (Flow*)pkt->flow;
+    TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     if (!srod->enable) /* Turn it off */
-        Stream5SetReassemblyTcp(lwssn, STREAM_FLPOLICY_IGNORE, srod->direction, STREAM_FLPOLICY_SET_ABSOLUTE);
+    {
+        if ( srod->direction & SSN_DIR_SERVER )
+            tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
+
+        if ( srod->direction & SSN_DIR_CLIENT )
+            tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
+    }
     else
-        Stream5SetReassemblyTcp(lwssn, STREAM_FLPOLICY_FOOTPRINT, srod->direction, STREAM_FLPOLICY_SET_ABSOLUTE);
+    {
+        // FIXIT PAF need to instantiate atom splitter?
+        // FIXIT PAF need to check for ips / on-data
+        if ( srod->direction & SSN_DIR_SERVER )
+            tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
+
+        if ( srod->direction & SSN_DIR_CLIENT )
+            tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
+    }
 
     if (srod->fastpath)
     {
@@ -7993,7 +7282,21 @@ bool TcpSession::setup (Packet* p)
         flow->session_state = STREAM5_STATE_SYN;  // FIXIT same as line 4555
 
     assert(flow->session == this);
+
+    // FIXIT binder sets splitters before we get here
+    StreamSplitter* sc = client.splitter;
+    StreamSplitter* ss = server.splitter;
+
+    PAF_Status pc = client.paf_state.paf;
+    PAF_Status ps = server.paf_state.paf;
+
     reset();
+
+    client.paf_state.paf = pc;
+    server.paf_state.paf = ps;
+
+    client.splitter = sc;
+    server.splitter = ss;
 
     ssnStats.sessions++;
     return true;

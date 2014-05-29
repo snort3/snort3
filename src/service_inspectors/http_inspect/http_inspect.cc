@@ -154,7 +154,6 @@ static void HttpEncodeCleanup(void *);
 #endif
 static void HttpInspectRegisterRuleOptions(SnortConfig*);
 static inline void InitLookupTables(void);
-static void HttpInspectAddServicesOfInterest(SnortConfig*);
 static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF*);
 static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF*);
 
@@ -220,27 +219,12 @@ static void updateConfigFromFileProcessing (HTTPINSPECT_CONF* ServerConf)
 
 }
 
-static int HttpInspectVerifyPolicy(SnortConfig* sc, HTTPINSPECT_CONF* pData)
+static int HttpInspectVerifyPolicy(SnortConfig*, HTTPINSPECT_CONF* pData)
 {
     HttpInspectRegisterXtraDataFuncs();  // FIXIT must be done once
 
-    HttpInspectAddServicesOfInterest(sc);
     updateConfigFromFileProcessing(pData);
     return 0;
-}
-
-/**
- * @param service ordinal number of service.
- */
-static void HttpInspectAddServicesOfInterest(SnortConfig* sc)
-{
-    if (hi_app_protocol_id != SFTARGET_UNKNOWN_PROTOCOL)
-    {
-        if (file_api->get_max_file_depth() > 0)
-            hi_paf_register_service(sc, hi_app_protocol_id, true, true, true);
-        else
-            hi_paf_register_service(sc, hi_app_protocol_id, true, true, false);
-    }
 }
 
 typedef struct _HttpEncodeData
@@ -491,6 +475,9 @@ public:
 
     bool configure(SnortConfig*);
     void show(SnortConfig*);
+
+    StreamSplitter* get_splitter(bool c2s)
+    { return new HttpSplitter(c2s); };
 
     void eval(Packet*);
 
@@ -765,6 +752,7 @@ static const InspectApi hs_api =
         mod_dtor
     },
     IT_SERVICE,
+    "http",
     PROTO_BIT__TCP,
     hs_init,
     hs_term,

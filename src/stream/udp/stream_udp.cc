@@ -136,6 +136,7 @@ static const InspectApi udp_api =
         mod_dtor
     },
     IT_STREAM,
+    nullptr, // service
     PROTO_BIT__UDP,
     udp_init,
     nullptr, // term

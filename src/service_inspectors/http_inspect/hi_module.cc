@@ -76,6 +76,7 @@ static const Parameter hi_global_params[] =
     { "decompress_depth", Parameter::PT_INT, "1:65535", "2920",
       "maximum amount of decompressed data to process" },
 
+    // FIXIT does this work with bindings?
     { "detect_anomalous_servers", Parameter::PT_BOOL, nullptr, "false",
       "inspect non-configured ports for HTTP - bad idea" },
 
@@ -345,9 +346,6 @@ static const Parameter hi_server_params[] =
     { "oversize_dir_length", Parameter::PT_INT, "0:", "0",
       "alert if a URL has a directory longer than this limit" },
 
-    { "ports", Parameter::PT_BIT_LIST, "65535", "80",
-      "ports to inspect" },
-
     { "post_depth", Parameter::PT_INT, "-1:65535", "-1",
       "amount of POST data to inspect" },
 
@@ -536,9 +534,6 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("oversize_dir_length") )
         server->long_dir = v.get_long();
-
-    else if ( v.is("ports") )
-        v.get_bits(server->ports);
 
     else if ( v.is("post_depth") )
         server->post_depth = v.get_long();

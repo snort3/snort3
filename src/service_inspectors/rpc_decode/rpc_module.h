@@ -38,17 +38,11 @@ class RpcModule : public Module
 public:
     RpcModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-
-    void get_ports(PortList& pl) const
-    { pl = ports; };
+    bool set(const char*, Value&, SnortConfig*)
+    { return false; };
 
     unsigned get_gid() const
     { return GID_RPC_DECODE; };
-
-private:
-    PortList ports;
 };
 
 #endif

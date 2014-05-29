@@ -35,9 +35,6 @@
 
 static const Parameter rpc_params[] =
 {
-    { "ports", Parameter::PT_BIT_LIST, "65535", "111 32771",
-      "ports to inspect" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -58,21 +55,4 @@ static const RuleMap rpc_rules[] =
 
 RpcModule::RpcModule() : Module("rpc_decode", rpc_params, rpc_rules)
 { }
-
-bool RpcModule::set(const char*, Value& v, SnortConfig*)
-{
-    if ( v.is("ports") )
-        v.get_bits(ports);
-
-    else
-        return false;
-
-    return true;
-}
-
-bool RpcModule::begin(const char*, int, SnortConfig*)
-{
-    ports.reset();
-    return true;
-}
 

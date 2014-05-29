@@ -38,6 +38,7 @@
 #include "ft_main.h"
 #include "ftp_parse.h"
 #include "ftp_print.h"
+#include "ftp_splitter.h"
 #include "pp_ftp.h"
 #include "profiler.h"
 #include "telnet.h"
@@ -139,10 +140,8 @@ static int SnortFTPData(Packet *p)
         if (!(data_ssn->packet_flags & FTPDATA_FLG_REASSEMBLY_SET))
         {
             /* Enable Reassembly */
-            stream.set_reassembly(
-                p->flow,
-                STREAM_FLPOLICY_FOOTPRINT, SSN_DIR_BOTH,
-                STREAM_FLPOLICY_SET_ABSOLUTE);
+            stream.set_splitter(p->flow, true);
+            stream.set_splitter(p->flow, false);
 
             data_ssn->packet_flags |= FTPDATA_FLG_REASSEMBLY_SET;
         }
@@ -335,21 +334,17 @@ static int snort_ftp(Packet *p)
 
             if (ft_ssn->proto == FTPP_SI_PROTO_FTP)
             {
-                FTP_SESSION *ftp_ssn = (FTP_SESSION *)ft_ssn;
-
                 if (SiInput.pdir != FTPP_SI_NO_MODE)
                 {
                     iInspectMode = SiInput.pdir;
                 }
                 else
                 {
-                    if ((ftp_ssn->server_conf != NULL) &&
-                        ftp_ssn->server_conf->ports[SiInput.sport])
+                    if ( p->packet_flags & PKT_FROM_SERVER )
                     {
                         iInspectMode = FTPP_SI_SERVER_MODE;
                     }
-                    else if ((ftp_ssn->server_conf != NULL) &&
-                        ftp_ssn->server_conf->ports[SiInput.dport])
+                    else if ( p->packet_flags & PKT_FROM_CLIENT )
                     {
                         iInspectMode = FTPP_SI_CLIENT_MODE;
                     }
@@ -529,6 +524,7 @@ public:
     void show(SnortConfig*);
     void eval(Packet*);
     void eval_alt(Packet*);
+    StreamSplitter* get_splitter(bool);
 
 private:
     FTP_SERVER_PROTO_CONF* ftp_server;
@@ -565,6 +561,11 @@ void FtpServer::show(SnortConfig*)
 {
     PrintFTPClientConf(ftp_client->data);
     PrintFTPServerConf(ftp_server);
+}
+
+StreamSplitter* FtpServer::get_splitter(bool c2s)
+{
+    return new FtpSplitter(c2s);
 }
 
 void FtpServer::eval_alt(Packet* p)
@@ -713,7 +714,9 @@ static const InspectApi fs_api =
         fs_mod_ctor,
         mod_dtor
     },
-    IT_SESSION, // or IT_SERVICE
+    //IT_SESSION,  // FIXIT should be service only
+    IT_SERVICE,
+    "ftp", // FIXIT add ftp-data inspector
     PROTO_BIT__TCP,
     fs_init,
     nullptr, // term

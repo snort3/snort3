@@ -53,25 +53,6 @@
 #define SSN_DIR_RESPONDER 0x2
 #define SSN_DIR_BOTH 0x03
 
-typedef enum {
-    STREAM_FLPOLICY_NONE,
-    STREAM_FLPOLICY_FOOTPRINT,       /* size-based footprint flush */
-    STREAM_FLPOLICY_LOGICAL,         /* queued bytes-based flush */
-    STREAM_FLPOLICY_RESPONSE,        /* flush when we see response */
-    STREAM_FLPOLICY_SLIDING_WINDOW,  /* flush on sliding window */
-#if 0
-    STREAM_FLPOLICY_CONSUMED,        /* purge consumed bytes */
-#endif
-    STREAM_FLPOLICY_IGNORE,          /* ignore this traffic */
-    STREAM_FLPOLICY_PROTOCOL,        /* protocol aware flushing (PAF) */
-    STREAM_FLPOLICY_FOOTPRINT_IPS,   /* protocol agnostic ips */
-    STREAM_FLPOLICY_PROTOCOL_IPS,    /* protocol aware ips */
-    STREAM_FLPOLICY_MAX
-} FlushPolicy;
-
-#define STREAM_FLPOLICY_SET_ABSOLUTE    0x01
-#define STREAM_FLPOLICY_SET_APPEND      0x02
-
 class Flow;
 
 typedef int (*LogFunction)(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
@@ -94,33 +75,11 @@ typedef int (*StreamSegmentIterator)
      void *      /* user-defined data pointer */
     );
 
-// for protocol aware flushing (PAF):
-typedef enum {
-    PAF_ABORT,   // non-paf operation
-    PAF_START,   // internal use only
-    PAF_SEARCH,  // searching for next flush point
-    PAF_FLUSH,   // flush at given offset
-    PAF_SKIP     // skip ahead to given offset
-} PAF_Status;
-
-typedef PAF_Status (*PAF_Callback)(  // return your scan state
-    Flow*,     // session pointer
-    void** user,           // arbitrary user data hook
-    const uint8_t* data,   // in order segment data as it arrives
-    uint32_t len,          // length of data
-    uint32_t flags,        // packet flags indicating direction of data
-    uint32_t* fp           // flush point (offset) relative to data
-);
-
 typedef void (*Stream_Callback)(Packet *);
 
-#define MAX_PAF_CB  8  // depends on sizeof(PAF_Map.cb_mask)
 #define MAX_EVT_CB 32
 #define MAX_LOG_FN 32
 
-// FIXIT to remain part of stream5 this should be pure virtual
-// otherwise pull out of stream5 and implement proto specific stuff
-// via calls to virtuals provided by stream5 and stream5 sessions
 class Stream
 {
 public:
@@ -213,27 +172,12 @@ public:
      */
     static StreamFlowData* get_flow_data(Packet*);
 
-    /* Set reassembly flush policy/direction for given session
-     *
-     * Returns
-     *     direction(s) of reassembly for session
-     */
-    /* Do not attempt to set flush policy to PROTOCOL or PROTOCOL_IPS. */
-    static char set_reassembly(Flow*, FlushPolicy, char dir, char flags);
-
     /* Get reassembly direction for given session
      *
      * Returns
      *     direction(s) of reassembly for session
      */
     static char get_reassembly_direction(Flow*);
-
-    /* Get reassembly flush_policy for given session
-     *
-     * Returns
-     *     flush policy for specified direction
-     */
-    static char get_reassembly_flush_policy(Flow*, char dir);
 
     /* Get true/false as to whether stream data is in
      * sequence or packets are missing
@@ -279,25 +223,9 @@ public:
     // initialize response count and expiration time
     static void init_active_response(Packet*, Flow*);
 
-    /* Get the current flush point
-     *
-     * Returns
-     *  Current flush point for session
-     */
-    static uint32_t get_flush_point(Flow*, char dir);
-
-    /* Set the next flush point
-     */
-    static void set_flush_point(Flow*, char dir, uint32_t fpt);
-
-    int set_paf_callback(PAF_Callback);
-    PAF_Callback get_paf_callback(unsigned);
-
-    // get any paf user data stored for this session
-    static void** get_paf_user_data(Flow*, bool toServer);
-
     static bool is_paf_active(Flow*, bool toServer);
-    static bool activate_paf(Flow*, bool toServer);
+    static void set_splitter(Flow*, bool toServer, class StreamSplitter* = nullptr);
+    static StreamSplitter* get_splitter(Flow*, bool toServer);
 
     /* Turn off inspection for potential session.
      * Adds session identifiers to a hash table.
@@ -358,12 +286,6 @@ public:
      */
     static void populate_session_key(Packet*, FlowKey*);
 
-    // register for stateful scanning of in-order payload to determine flush points
-    // autoEnable allows PAF regardless of s5 ports config
-    static bool register_paf_service(
-            SnortConfig*, uint16_t service, bool toServer,
-        PAF_Callback, bool autoEnable);
-
     // register returns a non-zero id for use with set; zero is error
     unsigned register_event_handler(Stream_Callback);
     static bool set_event_handler(Flow*, unsigned id, Stream_Event);
@@ -402,10 +324,7 @@ private:
     void *extra_data_config = NULL;
 
     Stream_Callback stream_cb[MAX_EVT_CB];
-    unsigned stream_cb_idx = 1;
-
-    PAF_Callback s5_cb[MAX_PAF_CB];
-    uint8_t s5_cb_idx;
+    unsigned stream_cb_idx;
 };
 
 extern Stream stream;

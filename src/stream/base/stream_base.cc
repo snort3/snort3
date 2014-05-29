@@ -297,6 +297,7 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
+    nullptr, // service
     PROTO_BIT__IP,
     base_init,
     nullptr, // term

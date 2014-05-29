@@ -115,6 +115,7 @@ const InspectApi NHttpApi::nhttp_api =
         NHttpApi::nhttp_mod_dtor
     },
     IT_SERVICE,
+    "http",
     PROTO_BIT__TCP,
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,

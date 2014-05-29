@@ -112,11 +112,18 @@ struct StreamSegment
 
 };
 
+enum FlushPolicy
+{
+    STREAM_FLPOLICY_IGNORE,     /* ignore this traffic */
+    STREAM_FLPOLICY_ON_ACK,     /* protocol aware flushing (PAF) */
+    STREAM_FLPOLICY_ON_DATA,    /* protocol aware ips */
+};
+
 struct StreamTracker
 {
     StateMgr  s_mgr;        /* state tracking goodies */
-    FlushMgr  flush_mgr;    /* please flush twice, it's a long way to
-                             * the bitbucket... */
+    class StreamSplitter* splitter;
+    FlushPolicy flush_policy;
 
     // this is intended to be private to s5_paf but is included
     // directly to avoid the need for allocation; do not directly

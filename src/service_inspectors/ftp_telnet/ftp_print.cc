@@ -238,7 +238,6 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF *ClientConf)
 int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
 {
     char buf[BUF_SIZE+1];
-    int iCtr;
     int iRet;
     FTP_CMD_CONF *FTPCmd;
 
@@ -248,22 +247,6 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF *ServerConf)
     }
 
     LogMessage("ftp_server:\n");
-
-    memset(buf, 0, BUF_SIZE+1);
-    snprintf(buf, BUF_SIZE, "    Ports: (PAF)");
-
-    /*
-     * Print out all the applicable ports.
-     */
-    for(iCtr = 0; iCtr < MAXPORTS; iCtr++)
-    {
-        if(ServerConf->ports[iCtr])
-        {
-            sfsnprintfappend(buf, BUF_SIZE, "%d ", iCtr);
-        }
-    }
-
-    LogMessage("%s\n", buf);
 
     PrintConfOpt(ServerConf->telnet_cmds, "Check for Telnet Cmds");
     PrintConfOpt(ServerConf->ignore_telnet_erase_cmds, "Ignore Telnet Cmd Operations");

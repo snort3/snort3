@@ -41,6 +41,7 @@ enum BindAction
 
 enum BindProto
 {
+    BP_ANY,
     BP_IP,
     BP_ICMP,
     BP_TCP,
@@ -74,8 +75,10 @@ class Binder
 {
 public:
     static void init();
-    static void set(class Inspector*, unsigned proto);
+    static void term();
+    static void add(Binding*);
     static void init_flow(class Flow*);
+    static void init_flow(class Flow*, struct Packet*);
 };
 
 #endif

@@ -27,6 +27,7 @@
 
 #include "module_manager.h"
 #include "main/binder.h"
+#include "flow/flow.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
 #include "obfuscation.h"
@@ -130,7 +131,7 @@ struct FrameworkPolicy
     PHVector generic;
     PHVector service;
 
-    void Vectorize()
+    void vectorize()
     {
         session.alloc(ph_list.size());
         network.alloc(ph_list.size());
@@ -140,7 +141,7 @@ struct FrameworkPolicy
         for ( auto* p : ph_list )
         {
             if ( p->pp_class.api.ssn )
-                Binder::set(p->handler, p->pp_class.api.proto_bits);
+                continue;
 
             else if ( p->pp_class.api.type == IT_STREAM )
                 session.add(p);
@@ -452,7 +453,7 @@ bool InspectorManager::configure(SnortConfig *sc)
         ok = p->handler->configure(sc) && ok;
 
     fp->ph_list.sort(PHInstance::comp);
-    fp->Vectorize();
+    fp->vectorize();
 
     return ok;
 }
@@ -493,7 +494,6 @@ static inline void execute(
     }
 }
 
-// FIXIT something here threw total counts off a little :(
 void InspectorManager::execute (Packet* p)
 {
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
@@ -504,7 +504,13 @@ void InspectorManager::execute (Packet* p)
     ::execute(p, fp->generic.vec, fp->generic.num);
 
     if ( p->dsize )
-        ::execute(p, fp->service.vec, fp->service.num);
+    {
+        if ( p->flow && p->flow->clouseau )
+            p->flow->clouseau->eval(p);
+
+        // FIXIT BIND need more than one service inspector?
+        //::execute(p, fp->service.vec, fp->service.num);
+    }
     else
         DisableDetect(p);
 }

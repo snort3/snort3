@@ -317,9 +317,6 @@ static const Parameter ftp_server_params[] =
     { "ignore_telnet_erase_cmds", Parameter::PT_BOOL, nullptr, "false",
       "ignore erase character and erase line commands when normalizing" },
 
-    { "ports", Parameter::PT_BIT_LIST, "65535", "21",
-      "specify known ftp ports" },
-
     { "print_cmds", Parameter::PT_BOOL, nullptr, "false",
       "print command configurations on start up" },
 
@@ -435,9 +432,6 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("login_cmds") )
         add_commands(v, CMD_LOGIN);
-
-    else if ( v.is("ports") )
-        v.get_bits(conf->ports);
 
     else if ( v.is("print_cmds") )
         conf->print_commands = v.get_bool();

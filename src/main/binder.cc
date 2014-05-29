@@ -19,60 +19,134 @@
 // binder.cc author Russ Combs <rucombs@cisco.com>
 
 #include "binder.h"
+using namespace std;
 
+#include <vector>
 #include "flow/flow.h"
 #include "framework/inspector.h"
+#include "stream/stream_splitter.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
+#include "stream/stream_api.h"
 
-// FIXIT these will move into bindings lookup structures
-// these are for defaults but lookups will support default
-// and non-defaults (and client and server may differ)
-static Inspector* pin_tcp = nullptr;
-static Inspector* pin_udp = nullptr;
-static Inspector* pin_icmp = nullptr;
-static Inspector* pin_ip = nullptr;
-
-void Binder::set(Inspector* pin, unsigned proto)
-{
-    switch ( proto )
-    {
-    case PROTO_BIT__TCP: pin_tcp = pin; break;
-    case PROTO_BIT__UDP: pin_udp = pin; break;
-    case PROTO_BIT__ICMP: pin_icmp = pin; break;
-    case PROTO_BIT__IP: pin_ip = pin; break;
-    }
-}
+static vector<Binding*> bindings;
 
 void Binder::init()
 {
-    if ( !pin_icmp )
-        pin_icmp = pin_ip;
+}
+
+void Binder::term()
+{
+    for ( auto* p : bindings )
+        delete p;
+}
+
+void Binder::add(Binding* b)
+{
+    bindings.push_back(b);
+}
+
+// FIXIT bind this is a temporary hack. note that both ends must be set
+// independently and that we must ref count inspectors.
+static void set_session(Flow* flow, const char* key)
+{
+    Inspector* pin = InspectorManager::get_inspector(key);
+    flow->set_client(pin);
+    flow->set_server(pin);
+    flow->clouseau = nullptr;
+}
+
+static void set_session(Flow* flow)
+{
+    flow->ssn_client = nullptr;
+    flow->ssn_server = nullptr;
+    flow->clouseau = nullptr;
+}
+
+// FIXIT use IPPROTO_* directly (any == 0)
+static bool check_proto(const Flow* flow, BindProto bp)
+{
+    switch ( bp )
+    {
+    case BP_ANY: return true;
+    case BP_IP:  return flow->protocol == IPPROTO_IP;
+    case BP_ICMP:return flow->protocol == IPPROTO_ICMP;
+    case BP_TCP: return flow->protocol == IPPROTO_TCP;
+    case BP_UDP: return flow->protocol == IPPROTO_UDP;
+    }
+    return false;
+}
+
+// FIXIT bind services - this is a temporary hack that just looks at ports,
+// need to examine all key fields for matching.  ultimately need a routing
+// table, scapegoat tree, magic wand, etc.
+static Inspector* get_clouseau(Flow* flow, Packet* p)
+{
+    Binding* pb;
+    unsigned i, sz = bindings.size();
+
+    Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
+
+    for ( i = 0; i < sz; i++ )
+    {
+        pb = bindings[i];
+
+        if ( !check_proto(flow, pb->proto) )
+            continue;
+
+        if ( pb->ports.test(port) )
+            break;
+    }
+    if ( i == sz || !pb->type.size() )
+        return nullptr;
+
+    Inspector* ins = InspectorManager::get_inspector(pb->type.c_str());
+    return ins;
 }
 
 void Binder::init_flow(Flow* flow)
 {
     switch ( flow->protocol )
     {
-    case IPPROTO_TCP:
-        flow->set_client(pin_tcp);
-        flow->set_server(pin_tcp);
-        break;
-
-    case IPPROTO_UDP:
-        flow->set_client(pin_udp);
-        flow->set_server(pin_udp);
+    case IPPROTO_IP:
+        set_session(flow, "stream_ip");
+        stream.set_splitter(flow, true, nullptr);
+        stream.set_splitter(flow, false, nullptr);
         break;
 
     case IPPROTO_ICMP:
-        flow->set_client(pin_icmp);
-        flow->set_server(pin_icmp);
+        set_session(flow, "stream_icmp");
         break;
 
-    case IPPROTO_IP:
-        flow->set_client(pin_ip);
-        flow->set_server(pin_ip);
+    case IPPROTO_TCP:
+        set_session(flow, "stream_tcp");
         break;
+
+    case IPPROTO_UDP:
+        set_session(flow, "stream_udp");
+        break;
+
+    default:
+        set_session(flow);
     }
+}
+
+void Binder::init_flow(Flow* flow, Packet* p)
+{
+    Inspector* ins = get_clouseau(flow, p);
+
+    if ( !ins )
+        return;
+
+    if ( flow->protocol == IPPROTO_TCP )
+    {
+        StreamSplitter* ss = ins->get_splitter(true);
+        StreamSplitter* cs = ins->get_splitter(false);
+
+        stream.set_splitter(flow, true, ss);
+        stream.set_splitter(flow, false, cs);
+    }
+
+    flow->set_clouseau(ins);
 }
 

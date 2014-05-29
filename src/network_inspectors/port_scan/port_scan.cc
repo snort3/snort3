@@ -1031,6 +1031,7 @@ static const InspectApi sp_api =
         mod_dtor
     },
     IT_PROTOCOL,
+    nullptr, // service
     PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT dynamic assign
     sp_init,
     nullptr, // term

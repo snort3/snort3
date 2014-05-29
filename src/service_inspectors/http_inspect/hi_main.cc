@@ -197,24 +197,6 @@ int PrintServerConf(HTTPINSPECT_CONF *ServerConf)
         prof==HI_IIS?"IIS":
         prof==HI_IIS4?"IIS4":"IIS5");
 
-
-    memset(buf, 0, STD_BUF+1);
-
-    SnortSnprintf(buf, STD_BUF + 1, "      Ports: (PAF)");
-
-    /*
-    **  Print out all the applicable ports.
-    */
-    for(iCtr = 0; iCtr < MAXPORTS; iCtr++)
-    {
-        if(ServerConf->ports[iCtr/8] & (1 << (iCtr % 8) ))
-        {
-            sfsnprintfappend(buf, STD_BUF, "%d ", iCtr);
-        }
-    }
-
-    LogMessage("%s\n", buf);
-
     LogMessage("      Server Flow Depth: %d\n", ServerConf->server_flow_depth);
     LogMessage("      Client Flow Depth: %d\n", ServerConf->client_flow_depth);
     LogMessage("      Max Chunk Length: %d\n", ServerConf->chunk_length);

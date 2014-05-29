@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2011-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,9 +49,8 @@
 #include "snort_bounds.h"
 #include "snort_debug.h"
 #include "snort.h"
-#include "stream/stream_api.h"
 #include "stream/stream.h"
-//#include "stream5/stream_tcp.h"
+#include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 
 //--------------------------------------------------------------------
@@ -62,23 +61,11 @@ typedef enum {
     FT_NOP,  // no flush
     FT_SFP,  // abort paf
     FT_PAF,  // flush to paf pt when len >= paf
-    FT_MAX   // flush len when len >= mfp
+    FT_MAX   // flush len when len >= max
 } FlushType;
 
-typedef struct {
-    uint8_t cb_mask;
-    uint8_t auto_on;
-} PAF_Map;
-
-struct PAF_Config
-{
-    uint32_t mfp;
-
-    uint32_t prep_calls;
-    uint32_t prep_bytes;
-};
-
-static PAF_Map service_map[MAX_PROTOCOL_ORDINAL][2];
+static THREAD_LOCAL uint64_t prep_calls = 0;
+static THREAD_LOCAL uint64_t prep_bytes = 0;
 
 // s5_len and s5_idx are used only during the
 // lifetime of s5_paf_check()
@@ -89,7 +76,7 @@ static THREAD_LOCAL uint32_t s5_idx;  // offset from start of queued bytes
 //--------------------------------------------------------------------
 
 static uint32_t s5_paf_flush (
-    PAF_Config*, PAF_State* ps, FlushType ft, uint32_t* flags)
+    StreamSplitter*, PAF_State* ps, FlushType ft, uint32_t* flags)
 {
     uint32_t at = 0;
     *flags &= ~(PKT_PDU_HEAD | PKT_PDU_TAIL);
@@ -145,54 +132,15 @@ static uint32_t s5_paf_flush (
 }
 
 //--------------------------------------------------------------------
+// FIXIT PAF support multiple scanners
 
 static bool s5_paf_callback (
-    PAF_State* ps, Flow* ssn,
+    StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t flags)
 {
-    PAF_Status paf = PAF_ABORT;
-    uint8_t mask = ps->cb_mask;
-    bool update = false;
-    int i = 0;
+    ps->paf = ss->scan(ssn, data, len, flags, &ps->fpt);
 
-    while ( mask )
-    {
-        uint8_t bit = (1<<i);
-        if ( bit & mask )
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-                "%s: mask=%d, i=%u\n", __FUNCTION__, mask, i);)
-
-            PAF_Callback cb = stream.get_paf_callback(i);
-            paf = cb(ssn, &ps->user, data, len, flags, &ps->fpt);
-
-            if ( paf == PAF_ABORT )
-            {
-                // this one bailed out
-                ps->cb_mask ^= bit;
-            }
-            else if ( paf != PAF_SEARCH )
-            {
-                // this one selected
-                ps->cb_mask = bit;
-                update = true;
-                break;
-            }
-            mask ^= bit;
-        }
-        if ( ++i == MAX_PAF_CB )
-            break;
-    }
-    if ( !ps->cb_mask )
-    {
-        ps->paf = PAF_ABORT;
-        update = true;
-    }
-    else if ( paf != PAF_ABORT )
-    {
-        ps->paf = paf;
-    }
-    if ( update )
+    if ( ps->paf != PAF_SEARCH )
     {
         ps->fpt += s5_idx;
 
@@ -209,20 +157,22 @@ static bool s5_paf_callback (
 //--------------------------------------------------------------------
 
 static inline bool s5_paf_eval (
-    PAF_Config* pc, PAF_State* ps, Flow* ssn,
-    uint16_t, uint32_t flags, uint32_t fuzz,
+    StreamSplitter* ss, PAF_State* ps, Flow* ssn,
+    uint16_t, uint32_t flags, 
     const uint8_t* data, uint32_t len, FlushType* ft)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: paf=%d, idx=%u, len=%u, fpt=%u\n",
         __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt);)
 
+    uint16_t fuzz = 0; // FIXIT PAF add a little zippedy-do-dah
+
     switch ( ps->paf )
     {
     case PAF_SEARCH:
         if ( s5_len > s5_idx )
         {
-            return s5_paf_callback(ps, ssn, data, len, flags);
+            return s5_paf_callback(ss, ps, ssn, data, len, flags);
         }
         return false;
 
@@ -233,7 +183,7 @@ static inline bool s5_paf_eval (
             ps->paf = PAF_SEARCH;
             return true;
         }
-        if ( s5_len >= pc->mfp + fuzz )
+        if ( s5_len >= ss->max() + fuzz )
         {
             *ft = FT_MAX;
             return false;
@@ -252,7 +202,7 @@ static inline bool s5_paf_eval (
                 len -= delta;
             }
             s5_idx = ps->fpt;
-            return s5_paf_callback(ps, ssn, data, len, flags);
+            return s5_paf_callback(ss, ps, ssn, data, len, flags);
         }
         return false;
 
@@ -269,35 +219,25 @@ static inline bool s5_paf_eval (
 // public stuff
 //--------------------------------------------------------------------
 
-void s5_paf_setup (PAF_State* ps, uint8_t mask)
+void s5_paf_setup (PAF_State* ps)
 {
     // this is already cleared when instantiated
     //memset(ps, 0, sizeof(*ps));
     ps->paf = PAF_START;
-    ps->cb_mask = mask;
 }
 
 void s5_paf_clear (PAF_State* ps)
 {
-    // either require pp to manage in other session state
-    // or provide user free func?
-    if ( ps->user )
-    {
-        free(ps->user);
-        ps->user = NULL;
-    }
     ps->paf = PAF_ABORT;
 }
 
 //--------------------------------------------------------------------
 
 uint32_t s5_paf_check (
-    void* pv, PAF_State* ps, Flow* ssn,
+    StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
-    uint32_t seq, uint16_t port, uint32_t* flags, uint32_t fuzz)
+    uint32_t seq, uint16_t port, uint32_t* flags)
 {
-    PAF_Config* pc = (PAF_Config*)pv;
-
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: len=%u, amt=%u, seq=%u, cur=%u, pos=%u, fpt=%u, tot=%u, paf=%d\n",
         __FUNCTION__, len, total, seq, ps->seq, ps->pos, ps->fpt, ps->tot, ps->paf);)
@@ -325,8 +265,8 @@ uint32_t s5_paf_check (
     }
     ps->seq += len;
 
-    pc->prep_calls++;
-    pc->prep_bytes += len;
+    prep_calls++;
+    prep_bytes += len;
 
     s5_len = total;
     s5_idx = total - len;
@@ -336,11 +276,11 @@ uint32_t s5_paf_check (
         uint32_t idx = s5_idx;
         uint32_t shift, fp;
 
-        bool cont = s5_paf_eval(pc, ps, ssn, port, *flags, fuzz, data, len, &ft);
+        bool cont = s5_paf_eval(ss, ps, ssn, port, *flags, data, len, &ft);
 
         if ( ft != FT_NOP )
         {
-            fp = s5_paf_flush(pc, ps, ft, flags);
+            fp = s5_paf_flush(ss, ps, ft, flags);
 
             ps->pos += fp;
             ps->seq = ps->pos;
@@ -361,9 +301,10 @@ uint32_t s5_paf_check (
 
     } while ( 1 );
 
-    if ( (ps->paf != PAF_FLUSH) && (s5_len > pc->mfp+fuzz) )
+    uint16_t fuzz = 0; // FIXIT PAF add a little zippedy-do-dah
+    if ( (ps->paf != PAF_FLUSH) && (s5_len > ss->max()+fuzz) )
     {
-        uint32_t fp = s5_paf_flush(pc, ps, FT_MAX, flags);
+        uint32_t fp = s5_paf_flush(ss, ps, FT_MAX, flags);
 
         ps->pos += fp;
         ps->seq = ps->pos;
@@ -371,69 +312,5 @@ uint32_t s5_paf_check (
         return fp;
     }
     return 0;
-}
-
-//--------------------------------------------------------------------
-// service registration foo
-
-bool s5_paf_register_service (
-    SnortConfig*,uint16_t service, bool c2s, PAF_Callback cb, bool auto_on)
-{
-    int dir = c2s ? 1 : 0;
-    int i = stream.set_paf_callback(cb);
-
-    if ( i < 0 )
-        return false;
-
-    service_map[service][dir].cb_mask |= (1<<i);
-
-    if ( !service_map[service][dir].auto_on )
-        service_map[service][dir].auto_on = (uint8_t)auto_on;
-
-    return true;
-}
-
-uint8_t s5_paf_service_registration (uint16_t service, bool c2s, bool flush)
-{
-    PAF_Map* pm = service_map[service] + (c2s?1:0);
-
-    if ( !pm->cb_mask )
-        return 0;
-
-    if ( pm->auto_on || flush )
-        return pm->cb_mask;
-
-    return 0;
-}
-
-//--------------------------------------------------------------------
-
-void* s5_paf_new (unsigned max)
-{
-    PAF_Config* pc = (PAF_Config*)SnortAlloc(sizeof(*pc));
-    assert( pc );
-
-    pc->mfp = max;
-
-    if ( !pc->mfp )
-        // this ensures max < IP_MAXPACKET
-        pc->mfp = (65535 - 255);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: mfp=%u\n",
-        __FUNCTION__, pc->mfp);)
-
-    return pc;
-}
-
-void s5_paf_delete (void* pv)
-{
-    PAF_Config* pc = (PAF_Config*)pv;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s: prep=%u/%u\n",  __FUNCTION__,
-        pc->prep_calls, pc->prep_bytes);)
-
-    free(pc);
 }
 

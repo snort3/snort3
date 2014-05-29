@@ -168,6 +168,7 @@ static const InspectApi ip_api =
         mod_dtor
     },
     IT_STREAM,
+    nullptr, // service
     PROTO_BIT__IP,
     ip_init,
     nullptr, // term

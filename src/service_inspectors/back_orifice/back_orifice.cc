@@ -626,6 +626,7 @@ static const InspectApi bo_api =
         mod_dtor
     },
     IT_SERVICE, 
+    nullptr, // service
     PROTO_BIT__UDP,
     bo_init,
     nullptr, // term

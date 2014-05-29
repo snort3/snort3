@@ -61,11 +61,6 @@
 unsigned FtpFlowData::flow_id = 0;
 unsigned TelnetFlowData::flow_id = 0;
 
-static bool PortMatch(PortList& ports, unsigned short port)
-{
-    return ports[port] != 0;
-}
-
 /*
  * Function: TelnetResetsession(TELNET_SESSION *session)
  *
@@ -174,8 +169,8 @@ int TelnetsessionInspection(Packet *p, TELNET_PROTO_CONF* GlobalConf,
     }
     else
     {
-        iTelnetSip = PortMatch(GlobalConf->ports, SiInput->sport);
-        iTelnetDip = PortMatch(GlobalConf->ports, SiInput->dport);
+        iTelnetSip = (p->packet_flags & PKT_FROM_SERVER);
+        iTelnetDip = (p->packet_flags & PKT_FROM_SERVER);
 
         if (iTelnetSip)
         {
@@ -277,9 +272,8 @@ static int FTPInitConf(
      * session, so we can still assume that the initial packet is the client
      * talking.
      */
-    // FIXIT BINDING should be greatly simplified with external bindings
-    iServerDip = PortMatch(ServerConfDip->ports, SiInput->dport);
-    iServerSip = PortMatch(ServerConfSip->ports, SiInput->sport);
+    iServerDip = (p->packet_flags & PKT_FROM_CLIENT);
+    iServerSip = (p->packet_flags & PKT_FROM_SERVER);
 
     /*
      * We default to the no FTP traffic case

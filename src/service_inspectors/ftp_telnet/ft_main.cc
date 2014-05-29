@@ -68,10 +68,6 @@
 
 static THREAD_LOCAL int ftppDetectCalled = 0;
 
-static PAF_Status ftp_paf (
-    Flow*, void**, const uint8_t* data, uint32_t len,
-    uint32_t, uint32_t* fp);
-
 #ifdef PERF_PROFILING
 static THREAD_LOCAL PreprocStats ftppDetectPerfStats;
 
@@ -186,12 +182,6 @@ int CheckFTPServerConfigs(
     return 0;
 }
 
-static void _FTPTelnetAddService (SnortConfig* sc, int16_t app)
-{
-    stream.register_paf_service(sc, app, true, ftp_paf, false);
-    stream.register_paf_service(sc, app, false, ftp_paf, false);
-}
-
 /*
  * Function: FTPConfigCheck(void)
  *
@@ -224,8 +214,6 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
     int rval;
     if ((rval = CheckFTPServerConfigs(sc, config)))
         return rval;
-
-    _FTPTelnetAddService(sc, ftp_app_id);
 
     return 0;
 }
@@ -384,37 +372,5 @@ int FTPPBounceEval(Packet* p, const uint8_t **cursor, void*)
 
     /* Never reached */
     return DETECTION_OPTION_NO_MATCH;
-}
-
-/* Add ports configured for ftptelnet preprocessor to stream5 port filtering so that
- * if any_any rules are being ignored then the packet still reaches ftptelnet.
- */
-// flush at last line feed in data
-// preproc will deal with any pipelined commands
-static PAF_Status ftp_paf (
-    Flow*, void**, const uint8_t* data, uint32_t len,
-    uint32_t, uint32_t* fp)
-{
-#ifdef HAVE_MEMRCHR
-    uint8_t* lf =  (uint8_t*)memrchr(data, '\n', len);
-#else
-    uint32_t n = len;
-    uint8_t* lf = NULL, * tmp = (uint8_t*) data;
-
-    while ( (tmp = (uint8_t*)memchr(tmp, '\n', n)) )
-    {
-        lf = tmp++;
-        n = len - (tmp - data);
-    }
-#endif
-
-    DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
-        "%s[%d] '%*.*s'\n", __FUNCTION__, len, len, len, data));
-
-    if ( !lf )
-        return PAF_SEARCH;
-
-    *fp = lf - data + 1;
-    return PAF_FLUSH;
 }
 

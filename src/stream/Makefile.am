@@ -6,13 +6,15 @@ noinst_LIBRARIES = libstream.a
 x_includedir = $(pkgincludedir)/stream
 
 x_include_HEADERS = \
-stream_api.h
+stream_api.h \
+stream_splitter.h
 
 libstream_a_SOURCES = \
 stream.h \
 stream_api.cc \
 stream_inspectors.cc \
-stream_inspectors.h
+stream_inspectors.h \
+stream_splitter.cc
 
 # FIXIT LIBADD here causes undefineds
 #libstream_a_LIBADD = \
