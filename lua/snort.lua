@@ -225,6 +225,7 @@ profile =
 ---------------------------------------------------------------------------
 -- Step #3: Configure inspectors
 ---------------------------------------------------------------------------
+
 normalize =
 { 
     ip4 = 
@@ -255,10 +256,7 @@ arp_spoof =
 
 back_orifice = { }
 
-rpc_decode =
-{
-    ports = RPC_PORTS
-}
+rpc_decode = { }
 
 port_scan_global = { memcap = 10000000 }
 
@@ -336,7 +334,6 @@ http_server =
     max_headers = 100,
     max_spaces = 200,
     small_chunk_length = { size = 10, count = 5 },
-    ports = HTTP_PORTS,
     non_rfc_chars = '0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07',
     enable_cookies = true,
     extended_response_inspection = true,
@@ -368,7 +365,6 @@ telnet =
     check_encrypted = true,
     ayt_attack_thresh = 20,
     normalize = true,
-    ports = '23',
     detect_anomalies = true
 }
 
@@ -393,7 +389,6 @@ ftp_format_commands =
 
 ftp_server =
 {
-    ports = FTP_PORTS,
     def_max_param_len = 100,
 
     encrypted_traffic = false,
@@ -456,10 +451,24 @@ ftp_client =
 
 stream =
 {
-    tcp_cache = { max_sessions = 256000, idle_timeout = 60 },
-    udp_cache = { max_sessions = 128000, pruning_timeout = 30 },
     ip_cache = { max_sessions = 64000 },
     icmp_cache = { max_sessions = 0 },
+    tcp_cache = { max_sessions = 256000, idle_timeout = 60 },
+    udp_cache = { max_sessions = 128000, pruning_timeout = 30 },
+}
+
+stream_ip =
+{
+    session_timeout = 980,
+    policy = 'windows', 
+    max_overlaps = 10,
+    max_frags = 8191,
+    min_frag_length = 100
+}
+
+stream_icmp =
+{
+    session_timeout = 180,
 }
 
 stream_tcp =
@@ -469,6 +478,7 @@ stream_tcp =
 
     session_timeout = 180,
     --require_3whs = -1,
+    show_rebuilt_packets = false,
 
     flush_factor = 0,
     overlap_limit = 10,
@@ -482,20 +492,6 @@ stream_udp =
 {
     session_timeout = 180,
     ignore_any_rules = false,
-}
-
-stream_icmp =
-{
-    session_timeout = 180,
-}
-
-stream_ip =
-{
-    session_timeout = 980,
-    policy = 'windows', 
-    max_overlaps = 10,
-    max_frags = 8191,
-    min_frag_length = 100
 }
 
 ---------------------------------------------------------------------------
@@ -603,7 +599,7 @@ targetX = { nets = HTTP_SERVERS, proto = 'tcp', ports = HTTP_PORTS }
 
 bindings =
 {
-    -- product define / load a policy only to be selected by firewall
+    -- product define / load a policy selected by firewall
     {
         when = { policy_id = 'uuid' },
         use = { file = 'uuid.lua' }
@@ -619,8 +615,13 @@ bindings =
         use = { file = 'net.lua' }
     },
     -- targeted inspector config
-    { when = targetX, use = { type = 'stream_tcp', name = 'tcpX' } },
-    { when = targetX, use = { type = 'http_inspect', name = 'hiX' } },
+    --{ when = targetX, use = { type = 'stream_tcp', name = 'tcpX' } },
+    --{ when = targetX, use = { type = 'http_server', name = 'hiX' } },
+
+    -- classic ports only config
+    { when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
+    { when = { proto = 'tcp', ports = FTP_PORTS }, use = { type = 'ftp_server' } },
+    { when = { proto = 'tcp', ports = RPC_PORTS }, use = { type = 'rpc_decode' } },
 
     -- auto service id override
     {
