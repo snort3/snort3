@@ -25,7 +25,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/ip/cd_igmp_module.h"
 #include "codecs/codec_events.h"
 
 
@@ -35,7 +35,7 @@ namespace
 class IgmpCodec : public Codec
 {
 public:
-    IgmpCodec() : Codec("igmp"){};
+    IgmpCodec() : Codec(CD_IGMP_NAME){};
     ~IgmpCodec() {};
 
 
@@ -100,7 +100,17 @@ void IgmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new IgmpModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new IgmpCodec();
 }
@@ -110,17 +120,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "igmp";
 static const CodecApi igmp_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_IGMP_NAME,
+        CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

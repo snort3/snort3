@@ -18,10 +18,11 @@
 */
 // packet_manager.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <list>
 #include <vector>
 #include <cstring>
 #include <mutex>
+#include <algorithm>
+
 #include "packet_manager.h"
 #include "framework/codec.h"
 #include "snort.h"
@@ -66,9 +67,11 @@ std::vector<const char*> gen_peg_names =
 THREAD_LOCAL PreprocStats decodePerfStats;
 #endif
 
-static const uint16_t max_protocol_id = 65535;
-static std::list<const CodecApi*> s_codecs;
 
+extern const CodecApi* default_codec;
+
+static const uint16_t max_protocol_id = 65535;
+static std::vector<const CodecApi*> s_codecs;
 
 // when initialization arrays, although the zero is not required
 // the compiler complains about a missing-field-initiliezers
@@ -95,6 +98,8 @@ static const uint16_t IP_ID_COUNT = 8192;
 static THREAD_LOCAL rand_t* s_rand = NULL;
 static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt{{0}};
+
+
 
 //-------------------------------------------------------------------------
 // Private helper functions
@@ -264,6 +269,27 @@ static void accumulate()
     stats_mutex.unlock();
 }
 
+static bool api_instantiated(const CodecApi* cd_api)
+{
+    static std::vector<bool> instantiated_api; // all elements initialized to false
+
+    if (instantiated_api.size() != s_codecs.size())
+        instantiated_api.resize(s_codecs.size());
+
+    std::vector<const CodecApi*>::iterator p = std::find(s_codecs.begin(), s_codecs.end(), cd_api);
+
+    if (p == s_codecs.end())
+        FatalError("PacketManager:: should never reach this code!!" \
+                    "Cannot find Codec %s's api", cd_api->base.name);
+
+    int pos = p - s_codecs.begin();
+
+    if(instantiated_api[pos])
+        return true;
+
+    instantiated_api[pos] = true;
+    return false;
+}
 //-------------------------------------------------------------------------
 // Initialization and setup
 //-------------------------------------------------------------------------
@@ -274,7 +300,6 @@ void PacketManager::add_plugin(const CodecApi* api)
     if (!api->ctor)
         FatalError("Codec %s: ctor() must be implemented.  Look at the example code for an example.\n",
                         api->base.name);      
-
     if (!api->dtor)
         FatalError("Codec %s: dtor() must be implemented.  Look at the example code for an example.\n",
                         api->base.name);  
@@ -300,21 +325,22 @@ void PacketManager::release_plugins()
     s_protocols[0] = nullptr;
 }
 
-void PacketManager::instantiate(const CodecApi* /*cd_api */, Module* /*m*/, SnortConfig* /*sc*/)
+void PacketManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig* /*sc*/)
 {
-#if 0
-    static uint16_t codec_id = 1;
+    static int codec_id = 1;
     std::vector<uint16_t> ids;
-    const CodecApi *p = GetApi(cd_api->base.name);
 
-    if(!p)
-        ParseError("Unknown codec: '%s'.", cd_api->base.name);
+    if (api_instantiated(cd_api)) // automatically marks as instantiated
+        return;
+
+    if (codec_id >= UINT8_MAX)
+        FatalError("A maximum of 256 codecs can be registered\n");
 
     // global init here to ensure the global policy has already been configured
-    if (p->ginit)
-        p->ginit();
+    if (cd_api->ginit)
+        cd_api->ginit();
 
-    Codec *cd = p->ctor();
+    Codec *cd = cd_api->ctor(m);
     cd->get_protocol_ids(ids);
     for (auto id : ids)
     {
@@ -327,62 +353,19 @@ void PacketManager::instantiate(const CodecApi* /*cd_api */, Module* /*m*/, Snor
         s_proto_map[id] = codec_id;
     }
 
-    if(cd->is_default_codec())
-    {
-        if(s_protocols[0])
-            FatalError("Only one Codec may be the registered as default, "
-                "but both the %s and %s return 'true' when "
-                " the function default_codec().\n",
-                s_protocols[0]->get_name(), cd->get_name());
-        else
-            s_protocols[0] = cd;
-    }
-
     s_protocols[codec_id++] = cd;
-#endif
 }
 
 void PacketManager::instantiate()
 {
-    static uint16_t codec_id = 1;
+    // hard code the default codec into the zero index
+    add_plugin(default_codec);
+    instantiate(default_codec, nullptr, nullptr);
+    s_protocols[0] = s_protocols[get_codec(default_codec->base.name)];
 
-    if (codec_id >= UINT8_MAX)
-        FatalError("A maximum of 256 codecs can be registered\n");
-
+    // and instantiate every codec which does not have a module
     for (auto p : s_codecs)
-    {
-        std::vector<uint16_t> ids;
-
-        // global init here to ensure the global policy has already been configured
-        if (p->ginit)
-            p->ginit();
-
-        Codec *cd = p->ctor();
-        cd->get_protocol_ids(ids);
-        for (auto id : ids)
-        {
-            if(s_proto_map[id] != 0)
-                WarningMessage("The Codecs %s and %s have both been registered "
-                    "for protocol_id %d. Codec %s will be used\n",
-                    s_protocols[s_proto_map[id]]->get_name(), cd->get_name(), 
-                    id, cd->get_name());
-
-            s_proto_map[id] = codec_id;
-        }
-
-        if(cd->is_default_codec())
-        {
-            if(s_protocols[0])
-                FatalError("Only one Codec may be the registered as default, "
-                           "but both the %s and %s return 'true' for "
-                           " the function is_default_codec().\n",
-                           s_protocols[0]->get_name(), cd->get_name());
-            else
-                s_protocols[0] = cd;
-        }
-
-        s_protocols[codec_id++] = cd;
-    }
+        instantiate(p, nullptr, nullptr);
 }
 
 void PacketManager::thread_init(void)
@@ -414,7 +397,7 @@ void PacketManager::thread_init(void)
     }
 
     if(!grinder)
-        FatalError("Unable to find a Codec with data link type %d!!\n", daq_dlt);
+        FatalError("PacketManager: Unable to find a Codec with data link type %d!!\n", daq_dlt);
 
     // ENCODER initialization
 
@@ -505,7 +488,7 @@ void PacketManager::decode(
         mapped_prot = s_proto_map[prot_id];
         prev_prot_id = prot_id;
 
-        // reset for next call
+        // set for next call
         prot_id = FINISHED_DECODE;
         len -= lyr_len;
         pkt += lyr_len;
@@ -548,11 +531,6 @@ bool PacketManager::has_codec(uint16_t cd_id)
 
 //-------------------------------------------------------------------------
 // encoders operate layer by layer:
-
-
-
-//-------------------------------------------------------------------------
-// basic setup stuff
 //-------------------------------------------------------------------------
 
 

@@ -36,10 +36,12 @@
 namespace
 {
 
+#define CD_HOPOPTS_NAME "codec_ipv6_hopopts"
+
 class Ipv6HopOptsCodec : public Codec
 {
 public:
-    Ipv6HopOptsCodec() : Codec("ipv6_hopopts") {};
+    Ipv6HopOptsCodec() : Codec(CD_HOPOPTS_NAME) {};
     ~Ipv6HopOptsCodec() {};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
@@ -59,8 +61,6 @@ struct IP6HopByHop
 
 
 } // anonymous namespace
-
-
 
 
 /*
@@ -122,8 +122,7 @@ bool Ipv6HopOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 // api
 //-------------------------------------------------------------------------
 
-
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new Ipv6HopOptsCodec();
 }
@@ -133,14 +132,12 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ipv6_hopopts";
-
 static const CodecApi ipv6_hopopts_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_HOPOPTS_NAME,
+        CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,

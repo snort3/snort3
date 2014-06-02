@@ -38,10 +38,12 @@
 namespace
 {
 
+#define CD_IPV6_FRAG_NAME "codec_ipv6_frag"
+
 class Ipv6FragCodec : public Codec
 {
 public:
-    Ipv6FragCodec() : Codec("ipv6_frag"){};
+    Ipv6FragCodec() : Codec(CD_IPV6_FRAG_NAME){};
     ~Ipv6FragCodec() {};
 
 
@@ -148,7 +150,7 @@ void Ipv6FragCodec::get_protocol_ids(std::vector<uint16_t>& v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new Ipv6FragCodec();
 }
@@ -158,14 +160,12 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "ipv6_frag";
 static const CodecApi ipv6_frag_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_IPV6_FRAG_NAME,
+        CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,

@@ -27,7 +27,7 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "codecs/decode_module.h"
+#include "codecs/ip/cd_esp_module.h"
 #include "managers/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
@@ -38,7 +38,7 @@ namespace
 class EspCodec : public Codec
 {
 public:
-    EspCodec() : Codec("esp"){};
+    EspCodec() : Codec(CD_ESP_NAME){};
     ~EspCodec(){};
 
 
@@ -145,7 +145,22 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     return true;
 }
 
-static Codec* ctor()
+
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new EspModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new EspCodec();
 }
@@ -155,21 +170,20 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "esp";
 static const CodecApi esp_api =
 {
-    { 
+    {
         PT_CODEC,
-        name,
+        CD_ESP_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

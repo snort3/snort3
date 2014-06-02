@@ -24,23 +24,20 @@
 #include "config.h"
 #endif
 
-
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "snort.h"
-#include "main/snort_types.h"
 
 namespace
 {
 
+#define CD_PPPENCAP_NAME "codec_ppp_encap"
+
 class PppEncap : public Codec
 {
 public:
-    PppEncap() : Codec("ppp_encap"){};
+    PppEncap() : Codec(CD_PPPENCAP_NAME){};
     ~PppEncap(){};
-
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -101,8 +98,6 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 #endif  /* WORDS_MUSTALIGN */
 
-//    if (p->greh != NULL)
-//        dc.gre_ppp++;
 
     /* do a little validation:
      *
@@ -181,7 +176,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new PppEncap();
 }
@@ -191,12 +186,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ppp_encap";
 static const CodecApi pppencap_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_PPPENCAP_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

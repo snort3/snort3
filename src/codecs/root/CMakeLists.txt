@@ -15,10 +15,14 @@ endif(ENABLE_NON_ETHER_DECODERS)
 
 if (ENABLE_NON_ETHER_DECODERS)
     set(NON_ETHER_DECODERS
-        root_trk.cc
+        cd_trk.cc
+        cd_trk_module.h
+        cd_trk_module.cc
         root_fddi.cc
         root_linuxsll.cc
-        root_ieee80211.cc
+        cd_ieee80211.cc
+        cd_ieee80211_module.h
+        cd_ieee80211_module.cc
         root_slip.cc
         root_i4lrawip.cc
         root_oldpflog.cc
@@ -36,6 +40,8 @@ endif (ENABLE_NON_ETHER_DECODERS)
 
 add_library(root_codecs STATIC
     cd_eth.cc
+    cd_eth_module.h
+    cd_eth_module.cc
     cd_raw4.cc
     cd_raw6.cc
     cd_null_root.cc

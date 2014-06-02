@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -18,19 +17,22 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+// cd_pgm_module.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef ROOT_IEEE80211_H
-#define ROOT_IEEE80211_H
+#ifndef CD_PGM_MODULE_H
+#define CD_PGM_MODULE_H
 
-
-#ifndef NO_NON_ETHER_DECODER
-#define MINIMAL_IEEE80211_HEADER_LEN    10    /* Ack frames and others */
-#define IEEE802_11_DATA_HDR_LEN         24    /* Header for data packets */
-#endif  // NO_NON_ETHER_DECODER
+#include "codecs/decode_module.h"
 
 
+#define CD_PGM_NAME "codec_pgm"
 
-void DecodeIEEE80211Pkt(Packet *, const DAQ_PktHdr_t*, const uint8_t *);
+class PgmModule : public DecodeModule
+{
+public:
+    PgmModule();
 
-#endif /* PROT_TRK_H */
+    bool set(const char*, Value&, SnortConfig*);
+};
 
+#endif

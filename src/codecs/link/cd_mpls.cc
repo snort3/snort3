@@ -31,6 +31,7 @@
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/mpls.h"
+#include "codecs/link/cd_mpls_module.h"
 
 namespace
 {
@@ -38,7 +39,7 @@ namespace
 class MplsCodec : public Codec
 {
 public:
-    MplsCodec() : Codec("mpls"){};
+    MplsCodec() : Codec(CD_MPLS_NAME){};
     ~MplsCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
@@ -51,9 +52,8 @@ public:
 };
 
 
-const uint16_t ETHERNET_TYPE_MPLS_UNICAST = 0x8847;
-const uint16_t ETHERNET_TYPE_MPLS_MULTICAST = 0x8848;
-
+const static uint16_t ETHERNET_TYPE_MPLS_UNICAST = 0x8847;
+const static uint16_t ETHERNET_TYPE_MPLS_MULTICAST = 0x8848;
 const static uint32_t MPLS_HEADER_LEN = 4;
 const static uint32_t NUM_RESERVED_LABELS = 16;
 
@@ -85,7 +85,6 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     int iRet = 0;
 
-//    dc.mpls++;
     UpdateMPLSStats(&sfBase, len, Active_PacketWasDropped());
     tmpMplsHdr = (uint32_t *) raw_pkt;
     p->mpls = NULL;
@@ -96,7 +95,6 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             codec_events::decoder_event(p, DECODE_BAD_MPLS);
 
-//            dc.discards++;
             p->iph = NULL;
             p->family = NO_IP;
             return false;
@@ -134,7 +132,6 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             codec_events::decoder_event(p, DECODE_MPLS_LABEL_STACK);
 
-//            dc.discards++;
             p->iph = NULL;
             p->family = NO_IP;
             return false;
@@ -207,7 +204,6 @@ static int checkMplsHdr(
                else
                    codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL2);
 
-               dc.discards++;
                p->iph = NULL;
                p->family = NO_IP;
                return(-1);
@@ -218,7 +214,6 @@ static int checkMplsHdr(
 
                codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL1);
 
-//               dc.discards++;
                p->iph = NULL;
                p->family = NO_IP;
                iRet = MPLS_PAYLOADTYPE_ERROR;
@@ -227,7 +222,6 @@ static int checkMplsHdr(
       case 3:
                codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL3);
 
-//               dc.discards++;
                p->iph = NULL;
                p->family = NO_IP;
                iRet = MPLS_PAYLOADTYPE_ERROR;
@@ -260,7 +254,17 @@ static int checkMplsHdr(
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new MplsModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new MplsCodec();
 }
@@ -270,16 +274,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "mpls";
 static const CodecApi mpls_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_MPLS_NAME,
+        CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

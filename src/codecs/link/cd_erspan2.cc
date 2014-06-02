@@ -21,7 +21,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/link/cd_erspan2_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 
@@ -31,7 +31,7 @@ namespace
 class Erspan2Codec : public Codec
 {
 public:
-    Erspan2Codec() : Codec("erspan2"){};
+    Erspan2Codec() : Codec(CD_ERSPAN2_NAME){};
     ~Erspan2Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
@@ -112,8 +112,17 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 // api
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new Erspan2Module;
+}
 
-static Codec* ctor()
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new Erspan2Codec();
 }
@@ -124,16 +133,15 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "erspan2";
 static const CodecApi erspan2_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_ERSPAN2_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

@@ -21,10 +21,9 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/ip/cd_gre_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
-
 #include "protocols/protocol_ids.h"
 
 namespace
@@ -33,7 +32,7 @@ namespace
 class GreCodec : public Codec
 {
 public:
-    GreCodec() : Codec("gre"){};
+    GreCodec() : Codec(CD_GRE_NAME){};
     ~GreCodec(){};
 
 
@@ -160,7 +159,6 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                     sre_addrfamily = ntohs(*((uint16_t *)sre_ptr));
                     sre_ptr += sizeof(sre_addrfamily);
 
-//                    sre_offset = *((uint8_t *)sre_ptr);
                     sre_ptr += sizeof(sre_offset);
 
                     sre_length = *((uint8_t *)sre_ptr);
@@ -244,8 +242,17 @@ void GreCodec::format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 // api
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new GreModule;
+}
 
-static Codec* ctor()
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new GreCodec();
 }
@@ -255,16 +262,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "gre";
 static const CodecApi gre_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_GRE_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

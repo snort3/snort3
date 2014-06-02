@@ -890,6 +890,12 @@ static const Parameter daq_params[] =
     { "var", Parameter::PT_STRING, nullptr, nullptr,
       "list of name=value DAQ-specific parameters" },
 
+    { "snaplen", Parameter::PT_INT, "0:65535", "deflt",
+      "set snap length (same as -P)" },
+
+    { "decode_data_link", Parameter::PT_BOOL, nullptr, "false",
+      "display the second layer header info" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -918,6 +924,14 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("var") )
         ConfigDaqVar(sc, v.get_string());
+
+    else if ( v.is("decode_data_link") )
+    {
+        if ( v.get_bool() )
+            ConfigDecodeDataLink(sc, "");
+    }
+    else if ( v.is("snaplen") )
+        ConfigPacketSnaplen(sc, v.get_string());
 
     else
         return false;
@@ -1866,7 +1880,6 @@ void module_init()
 
     // these modules could be in traffic policy
     ModuleManager::add_module(new ActiveModule);
-    ModuleManager::add_module(new DecodeModule);
     ModuleManager::add_module(new FileIdModule);
 
 #ifdef PPM_MGR

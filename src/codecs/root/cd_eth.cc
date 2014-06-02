@@ -26,7 +26,7 @@
 #endif
 
 #include <pcap.h>
-#include "codecs/decode_module.h"
+#include "codecs/root/cd_eth_module.h"
 #include "framework/codec.h"
 #include "time/profiler.h"
 #include "protocols/packet.h"
@@ -40,7 +40,7 @@ namespace
 class EthCodec : public Codec
 {
 public:
-    EthCodec() : Codec("eth"){};
+    EthCodec() : Codec(CD_ETH_NAME){};
     ~EthCodec(){};
 
 
@@ -99,8 +99,6 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         codec_events::decoder_event(p, DECODE_ETH_HDR_TRUNC);
 
-//        dc.discards++;
-//        dc.ethdisc++;
         return false;
     }
 
@@ -126,10 +124,6 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         lyr_len = eth::hdr_len();
         return true;
     }
-
-//   add this alert type
-//    if(len > MAX_LENGTH) {
-//        CodecEvents::decoder_event(p, DECODE_ETH_INVALID_FRAME);
 
 
     return false;
@@ -215,7 +209,17 @@ void EthCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new EthModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new EthCodec();
 }
@@ -225,16 +229,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "eth";
 static const CodecApi eth_api =
 {
     { 
         PT_CODEC,
-        name,
+        CD_ETH_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

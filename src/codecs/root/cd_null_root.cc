@@ -25,8 +25,6 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include <pcap.h>
@@ -35,10 +33,12 @@
 namespace
 {
 
+#define CD_NULL_NAME "codec_null"
+
 class NullRootCodec : public Codec
 {
 public:
-    NullRootCodec() : Codec("null_root"){};
+    NullRootCodec() : Codec(CD_NULL_NAME){};
     ~NullRootCodec() {};
 
 
@@ -93,13 +93,11 @@ void NullRootCodec::get_data_link_type(std::vector<int>&v)
     v.push_back(DLT_NULL);
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new NullRootCodec();
 }
@@ -109,14 +107,12 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "null_root";
 static const CodecApi null_root_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_NULL_NAME,
+        CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,

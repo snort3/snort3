@@ -27,9 +27,8 @@
 
 #include "protocols/packet.h"
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/link/cd_vlan_module.h"
 #include "codecs/codec_events.h"
-#include "codecs/decode.h"
 
 namespace
 {
@@ -37,12 +36,13 @@ namespace
 class VlanCodec : public Codec
 {
 public:
-    VlanCodec() : Codec("vlan"){};
+    VlanCodec() : Codec(CD_VLAN_NAME){};
     ~VlanCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
     
     // DELETE from here and below
@@ -53,6 +53,7 @@ public:
 } // namespace
 
 static const uint16_t ETHERNET_TYPE_8021Q = 0x8100;
+static const unsigned int ETHERNET_MAX_LEN_ENCAP = 1518;    /* 802.3 (+LLC) or ether II ? */
 
 
 static inline uint32_t len_vlan_llc_other()
@@ -70,17 +71,11 @@ void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-//    dc.vlan++;
-
-//    if (p->greh != NULL)
-//        dc.gre_vlan++;
-
     if(len < sizeof(VlanTagHdr))
     {
         codec_events::decoder_event(p, DECODE_BAD_VLAN);
 
         // TBD add decoder drop event for VLAN hdr len issue
-//        dc.discards++;
         p->iph = NULL;
         p->family = NO_IP;
         return false;
@@ -107,7 +102,6 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             codec_events::decoder_event(p, DECODE_BAD_VLAN_ETHLLC);
 
-//            dc.discards++;
             p->iph = NULL;
             p->family = NO_IP;
             return false;
@@ -127,7 +121,6 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             {
                 codec_events::decoder_event(p, DECODE_BAD_VLAN_OTHER);
 
-//                dc.discards++;
                 p->iph = NULL;
                 p->family = NO_IP;
 
@@ -147,8 +140,6 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                         ntohs(p->ehllcother->proto_id));
                     );
 
-//            PushLayer(PROTO_VLAN, p, pkt, sizeof(*p->vh));
-
             lyr_len = len_vlan_llc_other();
             next_prot_id = ntohs(p->ehllcother->proto_id);
         }
@@ -163,22 +154,31 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     return true;
 }
 
-#if 0
 
 /*
  * ENCODER
  */
-void VLAN_Format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+void VlanCodec::format(EncodeFlags, const Packet* /*p*/, Packet* c, Layer*lyr)
 {
     c->vh = (VlanTagHdr*)lyr->start;
 }
-#endif
+
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new VlanModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new VlanCodec();
 }
@@ -188,16 +188,16 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "vlan";
+
 static const CodecApi vlan_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_VLAN_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

@@ -46,13 +46,14 @@
 #include "codecs/checksum.h"
 #include "main/thread.h"
 #include "stream/stream_api.h"
+#include "codecs/ip/cd_ipv4_module.h"
 
 namespace{
 
 class Ipv4Codec : public Codec
 {
 public:
-    Ipv4Codec() : Codec("ipv4"){};
+    Ipv4Codec() : Codec(CD_IPV4_NAME){};
     ~Ipv4Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
@@ -167,11 +168,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
     uint16_t hlen;  /* ip header length */
 
-//    dc.ip++;
-
-//    if (p->greh != NULL)
-//        dc.gre_ip++;
-
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n"););
 
     /* do a little validation */
@@ -185,9 +181,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         p->iph = NULL;
         p->family = NO_IP;
-
-//        dc.discards++;
-//        dc.ipdisc++;
         return false;
     }
 
@@ -223,9 +216,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         p->iph = NULL;
         p->family = NO_IP;
-
-//        dc.discards++;
-//        dc.ipdisc++;
         return false;
     }
 
@@ -245,9 +235,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         p->iph = NULL;
         p->family = NO_IP;
-
-//        dc.discards++;
-//        dc.ipdisc++;
         return false;
     }
 
@@ -262,9 +249,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         p->iph = NULL;
         p->family = NO_IP;
-
-//        dc.discards++;
-//        dc.ipdisc++;
         return false;
     }
 #if 0
@@ -292,9 +276,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         p->iph = NULL;
         p->family = NO_IP;
-
-//        dc.discards++;
-//        dc.ipdisc++;
         return false;
     }
 
@@ -317,7 +298,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad IP checksum\n"););
 
             codec_events::exec_ip_chksm_drop(p);
-//            dc.invalid_checksums++;
         }
 #ifdef DEBUG_MSGS
         else
@@ -391,7 +371,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
             p->frag_flag = 1;
             p->ip_frag_start = raw_pkt + hlen;
             p->ip_frag_len = (uint16_t)ip_len;
-//            dc.frags++;
         }
     }
     else
@@ -457,12 +436,6 @@ inline void DecodeIPv4Proto(const uint8_t proto,
     switch(proto)
     {
 
-
-        case IPPROTO_IPV6:
-//            dc.ip4ip6++;
-//            if ( ScTunnelBypassEnabled(TUNNEL_6IN4) )
-//                Active_SetTunnelBypass();
-            return;
 
         case IPPROTO_IP_MOBILITY:
         case IPPROTO_SUN_ND:
@@ -811,24 +784,20 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     sfiph_build(c, c->iph, AF_INET);
 }
 
-/*
- * CHECKSUM
- */
-
-
-/*
-*  checksum IP  - header=20+ bytes
-*
-*  w - short words of data
-*  blen - byte length
-*
-*/
-
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new Ipv4Module;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
 
 //-------------------------------------------------------------------------
 // ip id considerations:
@@ -862,7 +831,7 @@ static void ipv4_codec_gterm()
 }
 
 
-static Codec *ctor()
+static Codec *ctor(Module*)
 {
     return new Ipv4Codec;
 }
@@ -872,17 +841,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "ipv4";
 static const CodecApi ipv4_api =
 {
     { 
         PT_CODEC,
-        name,
+        CD_IPV4_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     ipv4_codec_ginit, // pinit
     ipv4_codec_gterm, // pterm
