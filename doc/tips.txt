@@ -9,7 +9,7 @@ The following pointers will help you get started:
 
 * create a git repo called Snort++ in your working directory:
 
-    git clone /nfs/home/rcombs/Snort++
+    git clone /nfs/home/rucombs/Snort++
 
 * check the status of your repo and files:
 

@@ -1028,7 +1028,7 @@ static const Parameter u2_params[] =
       "set limit (0 is unlimited)" },
 
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "bytes | KB | MB | GB" },
+      "limit multiplier" },
 
     { "nostamp", Parameter::PT_BOOL, nullptr, "true",
       "append file creation time to name (in Unix Epoch format)" },

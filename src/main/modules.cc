@@ -1636,10 +1636,10 @@ public:
 };
 
 //-------------------------------------------------------------------------
-// bindings module
+// binder module
 //-------------------------------------------------------------------------
 
-static const Parameter bindings_when_params[] =
+static const Parameter binder_when_params[] =
 {
     { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
       "unique ID for selection of this config by external logic" },
@@ -1665,7 +1665,7 @@ static const Parameter bindings_when_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter bindings_use_params[] =
+static const Parameter binder_use_params[] =
 {
     { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
       "what to do with matching traffic" },
@@ -1688,21 +1688,21 @@ static const Parameter bindings_use_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter bindings_params[] =
+static const Parameter binder_params[] =
 {
-    { "when", Parameter::PT_TABLE, nullptr, bindings_when_params,
+    { "when", Parameter::PT_TABLE, nullptr, binder_when_params,
       "match criteria" },
 
-    { "use", Parameter::PT_TABLE, nullptr, bindings_use_params,
+    { "use", Parameter::PT_TABLE, nullptr, binder_use_params,
       "target configuration" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-class BindingsModule : public Module
+class BinderModule : public Module
 {
 public:
-    BindingsModule() : Module("bindings", bindings_params) { work = nullptr; };
+    BinderModule() : Module("binder", binder_params) { work = nullptr; };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1711,19 +1711,19 @@ private:
     Binding* work;
 };
 
-bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
+bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     // both
-    if ( !strcmp(fqn, "bindings.when.policy_id") )
+    if ( !strcmp(fqn, "binder.when.policy_id") )
         work->when_id = v.get_string();
 
-    else if ( !strcmp(fqn, "bindings.use.policy_id") )
+    else if ( !strcmp(fqn, "binder.use.policy_id") )
         work->use_id = v.get_string();
 
-    else if ( !strcmp(fqn, "bindings.when.service") )
+    else if ( !strcmp(fqn, "binder.when.service") )
         work->when_svc = v.get_string();
 
-    else if ( !strcmp(fqn, "bindings.use.service") )
+    else if ( !strcmp(fqn, "binder.use.service") )
         work->use_svc = v.get_string();
 
     // when
@@ -1761,17 +1761,17 @@ bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-bool BindingsModule::begin(const char* fqn, int idx, SnortConfig*)
+bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
 {
-    if ( idx && !strcmp(fqn, "bindings") )
+    if ( idx && !strcmp(fqn, "binder") )
         work = new Binding;
 
     return true;
 }
 
-bool BindingsModule::end(const char* fqn, int idx, SnortConfig*)
+bool BinderModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( idx && !strcmp(fqn, "bindings") )
+    if ( idx && !strcmp(fqn, "binder") )
     {
         Binder::add(work);
         work = nullptr;
@@ -1884,6 +1884,6 @@ void module_init()
     ModuleManager::add_module(new IpsModule);
 
     // and this one ties it all together
-    ModuleManager::add_module(new BindingsModule);
+    ModuleManager::add_module(new BinderModule);
 }
 
