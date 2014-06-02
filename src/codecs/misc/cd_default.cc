@@ -32,20 +32,26 @@
 namespace
 {
 
-class NullCodec : public Codec
+#define CD_DEFAULT_NAME "codec_default"
+
+class DefaultCodec : public Codec
 {
 public:
-    NullCodec() : Codec("null"){};
-    ~NullCodec(){};
+    DefaultCodec() : Codec(CD_DEFAULT_NAME){};
+    ~DefaultCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t*, const uint32_t, 
         Packet*, uint16_t&, uint16_t&) { return false; };
-    virtual bool is_default_codec() { return true; };
 };
 
 } // namespace
 
+
+void DefaultCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{
+    v.push_back(FINISHED_DECODE);
+}
 
 
 
@@ -54,16 +60,9 @@ public:
 //-------------------------------------------------------------------------
 
 
-
-void NullCodec::get_protocol_ids(std::vector<uint16_t>& v)
+static Codec* ctor(Module*)
 {
-    v.push_back(FINISHED_DECODE);
-    // placeholder to avoid error
-}
-
-static Codec* ctor()
-{
-    return new NullCodec();
+    return new DefaultCodec();
 }
 
 static void dtor(Codec *cd)
@@ -72,23 +71,22 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "null";
-static const CodecApi null_api =
+static const CodecApi default_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_DEFAULT_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };
 
-const BaseApi* cd_null = &null_api.base;
+const CodecApi* default_codec = &default_api;

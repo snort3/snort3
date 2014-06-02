@@ -44,4 +44,3 @@ target_link_libraries(managers
 install (FILES ${LUA_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/lua"
 )
-

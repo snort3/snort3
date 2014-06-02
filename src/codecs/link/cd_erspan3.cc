@@ -22,7 +22,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/link/cd_erspan3_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 
@@ -33,7 +33,7 @@ namespace
 class Erspan3Codec : public Codec
 {
 public:
-    Erspan3Codec() : Codec("erspan3"){};
+    Erspan3Codec() : Codec(CD_ERSPAN3_NAME){};
     ~Erspan3Codec(){};
 
 
@@ -121,7 +121,17 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new Erspan3Module;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new Erspan3Codec();
 }
@@ -132,16 +142,15 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "erspan3";
 static const CodecApi erspan3_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_ERSPAN3_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

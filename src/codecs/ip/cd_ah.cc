@@ -28,6 +28,7 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
+#include "codecs/ip/cd_ah_module.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
 
@@ -37,7 +38,7 @@ namespace
 class AhCodec : public Codec
 {
 public:
-    AhCodec() : Codec("ah"){};
+    AhCodec() : Codec(CD_AH_NAME){};
     ~AhCodec(){};
 
 
@@ -91,7 +92,17 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new AhModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new AhCodec();
 }
@@ -101,16 +112,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ah";
 static const CodecApi ah_api =
 {
     {
         PT_CODEC,
-        name, 
+        CD_AH_NAME,
         CDAPI_PLUGIN_V0, 
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

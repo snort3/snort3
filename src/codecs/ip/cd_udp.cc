@@ -44,6 +44,7 @@
 #include "framework/codec.h"
 #include "packet_io/active.h"
 #include "codecs/codec_events.h"
+#include "codecs/ip/cd_udp_module.h"
 
 namespace
 {
@@ -51,7 +52,7 @@ namespace
 class UdpCodec : public Codec
 {
 public:
-    UdpCodec() : Codec("udp"){};
+    UdpCodec() : Codec(CD_UDP_NAME){};
     ~UdpCodec(){};
 
 
@@ -248,7 +249,13 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->proto_bits |= PROTO_BIT__UDP;
     UDPMiscTests(p);
 
-    if (teredo::is_teredo_port(p->sp) ||
+    if (ScGTPDecoding() &&
+         (ScIsGTPPort(p->sp)||ScIsGTPPort(p->dp)))
+    {
+        if ( !p->frag_flag )
+            next_prot_id = PROTOCOL_GTP;
+    }
+    else if (teredo::is_teredo_port(p->sp) ||
         teredo::is_teredo_port(p->dp) ||
         ScDeepTeredoInspection())
     {
@@ -256,12 +263,6 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             next_prot_id = PROTOCOL_TEREDO;
     }
 
-    if (ScGTPDecoding() &&
-         (ScIsGTPPort(p->sp)||ScIsGTPPort(p->dp)))
-    {
-        if ( !p->frag_flag )
-            next_prot_id = PROTOCOL_GTP;
-    }
     
     return true;
 }
@@ -689,7 +690,18 @@ static inline unsigned short in_chksum_udp(pseudoheader *ph,
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+
+static Module* mod_ctor()
+{
+    return new UdpModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new UdpCodec();
 }
@@ -699,17 +711,16 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "udp";
 
 static const CodecApi udp_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
-        0, 
-        nullptr, 
-        nullptr 
+    {
+        PT_CODEC,
+        CD_UDP_NAME,
+        CDAPI_PLUGIN_V0,
+        0,
+        mod_ctor,
+        mod_dtor
     },
     nullptr, // pinit
     nullptr, // pterm

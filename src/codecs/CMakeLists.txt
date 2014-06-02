@@ -8,9 +8,7 @@ add_subdirectory(misc)
 
 add_library( codecs STATIC
     decode.h
-    decode.cc
     decode_module.h
-    decode_module.cc
     codec_api.h
     codec_api.cc
     ipv6_util.h
@@ -32,4 +30,3 @@ target_link_libraries( codecs
     framework
     main
 )
-

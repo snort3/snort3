@@ -238,8 +238,6 @@ void pc_sum()
 
     sum_stats((PegCount*)&gpc, (PegCount*)&pc, array_size(pc_names));
     memset(&pc, 0, sizeof(pc));
-
-    //decoder_sum();  FIXIT must be moved
 }
 
 //-------------------------------------------------------------------------

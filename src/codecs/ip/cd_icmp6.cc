@@ -33,6 +33,7 @@
 
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
+#include "codecs/ip/cd_icmp6_module.h"
 
 
 namespace
@@ -41,7 +42,7 @@ namespace
 class Icmp6Codec : public Codec
 {
 public:
-    Icmp6Codec() : Codec("icmp6"){};
+    Icmp6Codec() : Codec(CD_ICMP6_NAME){};
     ~Icmp6Codec(){};
 
 
@@ -124,7 +125,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
             p->error_flags |= PKT_ERR_CKSUM_ICMP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad ICMP Checksum\n"););
             codec_events::exec_icmp_chksm_drop(p);
-//            dc.invalid_checksums++;
         }
         else
         {
@@ -162,14 +162,11 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
                 return false;
             }
             break;
 
         case ICMP6_BIG:
-//        case icmp6::Icmp6Types::BIG:  --> naming conflict with a different macro in byte_exter.h
             if (p->dsize >= sizeof(ICMP6TooBig))
             {
                 ICMP6TooBig *too_big = (ICMP6TooBig *)raw_pkt;
@@ -193,8 +190,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
                 return false;
             }
             break;
@@ -231,8 +226,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
                 return false;
             }
             break;
@@ -260,8 +253,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
                 return false;
             }
             break;
@@ -289,8 +280,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
                 return false;
             }
             break;
@@ -318,8 +307,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
 
                 p->icmph = NULL;
                 p->icmp6h = NULL;
-//                dc.discards++;
-//                dc.icmpdisc++;
                 return false;
             }
             break;
@@ -357,7 +344,6 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
 
     /* lay the IP struct over the raw data */
     ipv6::IP6RawHdr* hdr = (ipv6::IP6RawHdr*)pkt;
-//    dc.embdip++;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP6: ip header"
                     " starts at: %p, length is %lu\n", hdr,
@@ -371,7 +357,6 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
 
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
 
-//        dc.discards++;
         return;
     }
 
@@ -387,7 +372,6 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
 
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
 
-//        dc.discards++;
         return;
     }
 
@@ -399,7 +383,6 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
 
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
 
-//        dc.discards++;
         return;
     }
     sfiph_orig_build(p, pkt, AF_INET6);
@@ -638,8 +621,17 @@ static unsigned short in_chksum_icmp6(pseudoheader6 *ph,
 // api
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new Icmp6Module;
+}
 
-static Codec* ctor()
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new Icmp6Codec();
 }
@@ -649,22 +641,20 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "icmp6";
-
 static const CodecApi ipv6_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_ICMP6_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

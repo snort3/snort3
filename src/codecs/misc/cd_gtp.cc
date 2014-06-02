@@ -28,7 +28,7 @@
 #include "packet.h"
 #include "snort_debug.h"
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/misc/cd_gtp_module.h"
 #include "codecs/codec_events.h"
 #include "snort.h"
 #include "protocols/ipv4.h"
@@ -43,7 +43,7 @@ namespace
 class GtpCodec : public Codec
 {
 public:
-    GtpCodec() : Codec("gtp"){};
+    GtpCodec() : Codec(CD_GTP_NAME){};
     ~GtpCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
@@ -284,7 +284,17 @@ bool GtpCodec::update (Packet*, Layer* lyr, uint32_t* len)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new GtpModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new GtpCodec();
 }
@@ -294,21 +304,20 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "gtp";
 static const CodecApi gtp_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_GTP_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

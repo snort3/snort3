@@ -24,18 +24,26 @@
 #include "config.h"
 #endif
 
+#include <string.h> // memcpy
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
+#include "codecs/template_module.h"
 
 
 namespace
 {
 
+// yes, macros are necessary. The API and class constructor require different strings.
+//
+// this macros is defined in the module to ensure identical names. However,
+// if you don't want a module, define the name here.
+#ifndef CODEC_NAME
+#define CODEC_NAME "name"
+#endif
+
 class NameCodec : public Codec
 {
 public:
-    NameCodec() : Codec("name"){};
+    NameCodec() : Codec(CODEC_NAME){};
     ~NameCodec() {};
 
 
@@ -127,6 +135,22 @@ void NameCodec::format(EncodeFlags, const Packet* p, Packet* c, Layer*)
 // api
 //-------------------------------------------------------------------------
 
+/*
+ * Modules create custom configuration options which can be used in snort.lua.
+ * If you don't want any configuration options, remove the mod_ctor
+ * and mod_dtor functions from the api below.  See documentation for additional
+ * details regarding Modules
+ */
+static Module* mod_ctor()
+{
+    return new NameModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
 static void ginit()
 {
     // initialize global variables
@@ -147,7 +171,7 @@ static void tterm()
     // cleanup any thread_local variables
 }
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new NameCodec();
 }
@@ -158,23 +182,22 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* const name = "name";
 static const CodecApi name_api =
 {
     {
         PT_CODEC,
-        name,
+        CODEC_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor, // module constructor ( see function for details )
+        mod_dtor  // module destructor  ( see function for details )
     },
-    ginit, // pinit
-    gterm, // pterm
-    tinit, // tinit
-    tterm, // tterm
-    ctor, // ctor
-    dtor, // dtor
+    ginit, // global initializer
+    gterm, // global terminate
+    tinit, // thread local initializer
+    tterm, // thread local terminate
+    ctor,  // constructor --> REQUIRED. return a newly create Codec
+    dtor,  // desctructor --> REQUIRED. destory the Codec.
 };
 
 
