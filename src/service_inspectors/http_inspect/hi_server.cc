@@ -41,14 +41,10 @@
 #include <string.h>
 #include <zlib.h>
 
-#include "mempool/mempool.h"
 #include "hi_paf.h"
 #include "main/thread.h"
 
 static THREAD_LOCAL bool simple_response = false;
-
-// FIXIT eliminate these globals ...
-THREAD_LOCAL MemPool *hi_gzip_mempool = NULL;
 static THREAD_LOCAL uint8_t decompression_buffer[65535];
 static THREAD_LOCAL uint8_t dechunk_buffer[65535];
 
@@ -819,12 +815,10 @@ static void SetGzipBuffers(HttpsessionData *hsd, HI_SESSION *session)
             && (session != NULL) && (session->server_conf != NULL)
             && (session->global_conf != NULL) && session->server_conf->extract_gzip)
     {
-        MemBucket *bkt = mempool_alloc(hi_gzip_mempool);
+        hsd->decomp_state = (DECOMPRESS_STATE*)calloc(1, sizeof(*hsd->decomp_state));
 
-        if (bkt != NULL)
+        if ( hsd->decomp_state )
         {
-            hsd->decomp_state = (DECOMPRESS_STATE*)bkt->data;
-            hsd->decomp_state->bkt = bkt;
             if (session->server_conf->unlimited_decompress)
             {
                 hsd->decomp_state->compr_depth = MAX_GZIP_DEPTH;
@@ -836,10 +830,6 @@ static void SetGzipBuffers(HttpsessionData *hsd, HI_SESSION *session)
                 hsd->decomp_state->decompr_depth = session->global_conf->decompr_depth;
             }
             hsd->decomp_state->inflate_init = 0;
-        }
-        else
-        {
-            mempool_free(hi_gzip_mempool, bkt);
         }
     }
 }

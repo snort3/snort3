@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.083])
+AC_INIT([snort], [2.10.084])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -113,20 +113,6 @@ AM_CONDITIONAL(MAKE_HTML_DOC, [test "x$have_asciidoc" = "xyes"])
 AC_CHECK_PROG(have_dblatex,dblatex,yes,no)
 
 AM_CONDITIONAL(MAKE_PDF_DOC, [test "x$have_dblatex" = "xyes"])
-
-# AC_PROG_YACC defaults to "yacc" when not found
-# this check defaults to "none"
-AC_CHECK_PROGS(YACC,bison yacc,none)
-# AC_PROG_YACC includes the -y arg if bison is found
-
-if test "x$YACC" = "xbison"; then
-    YACC="$YACC -y"
-fi
-
-# AC_PROG_LEX defaults to ":" when not found
-# this check defaults to "none"
-# We're using flex specific options so we don't support lex
-AC_CHECK_PROGS(LEX,flex,none)
 
 #--------------------------------------------------------------------------
 # visibility foo
@@ -848,7 +834,6 @@ src/log/Makefile \
 src/loggers/Makefile    \
 src/main/Makefile \
 src/managers/Makefile \
-src/mempool/Makefile \
 src/stream/Makefile \
 src/stream/base/Makefile \
 src/stream/ip/Makefile \

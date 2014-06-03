@@ -75,7 +75,6 @@ using namespace std;
 #include "packet_time.h"
 #include "perf_monitor/perf_base.h"
 #include "perf_monitor/perf.h"
-#include "mempool/mempool.h"
 #include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
@@ -346,12 +345,6 @@ static void SnortInit(int argc, char **argv)
 
     if ( snort_conf->output )
         EventManager::instantiate(snort_conf->output, sc);
-
-    {
-        // FIXIT AttributeTable::end() is where this should go
-        if ( snort_conf->attribute_file )
-            SFAT_ParseAttributeTable(snort_conf->attribute_file);
-    }
 
     if (snort_conf->asn1_mem != 0)
         asn1_init_mem(snort_conf->asn1_mem);

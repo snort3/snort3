@@ -80,15 +80,12 @@ Undefined symbols for architecture x86_64:
 
 #include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
-#include "mempool/mempool.h"
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
 #include "framework/inspector.h"
 #include "framework/share.h"
 
 #define ERRSTRLEN 1000
-
-static const char *PROTOCOL_NAME = "HTTP";
 
 /* Store the protocol id received from the stream reassembler */
 int16_t hi_app_protocol_id = SFTARGET_UNKNOWN_PROTOCOL;
@@ -138,10 +135,6 @@ static const char* peg_names[] =
 };
 
 THREAD_LOCAL int hiDetectCalled = 0;
-
-THREAD_LOCAL MemPool *http_mempool = NULL;
-THREAD_LOCAL MemPool *mime_decode_mempool = NULL;
-THREAD_LOCAL MemPool *mime_log_mempool = NULL;
 
 /*
 ** Prototypes
@@ -525,83 +518,21 @@ void HttpInspect::pinit()
 {
     memset(&hi_stats, 0, sizeof(HIStats));
 
-    if ( config->extract_gzip && !hi_gzip_mempool )
-    {
-        {
-            hi_gzip_mempool = (MemPool *)SnortAlloc(sizeof(MemPool));
-
-            if (mempool_init(hi_gzip_mempool, config->global->max_gzip_sessions,
-                        sizeof(DECOMPRESS_STATE)) != 0)
-            {
-                if ( config->global->max_gzip_sessions )
-                    FatalError("http_inspect: Error setting the \"max_gzip_mem\" \n");
-                else
-                    FatalError("http_inspect:  Could not allocate gzip mempool.\n");
-            }
-        }
-    }
-    if ( (config->log_uri || config->log_hostname) &&
-        !http_mempool )
-    {
-        uint32_t max_sessions_logged
-            = config->global->memcap / (MAX_URI_EXTRACTED + MAX_HOSTNAME);
-
-        http_mempool = (MemPool *)SnortAlloc(sizeof(MemPool));
-        if (mempool_init(http_mempool, max_sessions_logged, (MAX_URI_EXTRACTED + MAX_HOSTNAME)) != 0)
-        {
-            FatalError("http_inspect:  Could not allocate HTTP mempool.\n");
-        }
-    }
-
     config->global->decode_conf.file_depth = file_api->get_max_file_depth();
 
     if (config->global->decode_conf.file_depth > -1)
         config->global->mime_conf.log_filename = 1;
 
     if ( (config->post_extract_size > -1) &&
-        file_api->is_decoding_enabled(&config->global->decode_conf) &&
-        !mime_decode_mempool )
+        file_api->is_decoding_enabled(&config->global->decode_conf) )
     {
         updateMaxDepth(config->global->decode_conf.file_depth, &config->global->decode_conf.max_depth);
 
-        mime_decode_mempool = (MemPool *)file_api->init_mime_mempool(
-            config->global->decode_conf.max_mime_mem, config->global->decode_conf.max_depth,
-            mime_decode_mempool, PROTOCOL_NAME);
-    }
-
-    if ( (config->post_extract_size > -1) &&
-        file_api->is_mime_log_enabled(&(config->global->mime_conf)) &&
-        !mime_log_mempool )
-    {
-        mime_log_mempool = (MemPool *)file_api->init_log_mempool(0,
-            config->global->mime_conf.memcap, mime_log_mempool, "HTTP");
     }
 }
 
 void HttpInspect::pterm()
 {
-    // FIXIT this is off-balance; not allocated by sinit()
-    if ( hi_gzip_mempool && !mempool_destroy(hi_gzip_mempool) )
-    {
-        free(hi_gzip_mempool);
-        hi_gzip_mempool = NULL;
-    }
-
-    if ( http_mempool && !mempool_destroy(http_mempool) )
-    {
-        free(http_mempool);
-        http_mempool = NULL;
-    }
-    if ( mime_decode_mempool && !mempool_destroy(mime_decode_mempool) )
-    {
-        free(mime_decode_mempool);
-        mime_decode_mempool = NULL;
-    }
-    if ( mime_log_mempool && !mempool_destroy(mime_log_mempool) )
-    {
-        free(mime_log_mempool);
-        mime_log_mempool = NULL;
-    }
 }
 
 void HttpInspect::show(SnortConfig*)

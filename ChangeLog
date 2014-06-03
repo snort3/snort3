@@ -1,3 +1,9 @@
+84
+-- pulled in latest codecs
+-- removed src/mempool/
+-- converted attribute table from xml to lua
+-- removed lex/yacc foo from configure.ac
+
 83
 -- fixed linux linker ordering
 

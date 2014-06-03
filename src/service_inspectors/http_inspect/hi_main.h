@@ -32,7 +32,6 @@
 #include "hi_ui_config.h"
 #include "util_utf.h"
 #include "detection_util.h"
-#include "mempool/mempool.h"
 #include "search_engines/str_search.h"
 #include "util_jsnorm.h"
 #include "profiler.h"
@@ -40,10 +39,6 @@
 #include <zlib.h>
 
 extern int16_t hi_app_protocol_id;
-
-extern THREAD_LOCAL MemPool *http_mempool;
-extern THREAD_LOCAL MemPool *mime_decode_mempool;
-extern THREAD_LOCAL MemPool *mime_log_mempool;
 
 extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
 
@@ -87,7 +82,6 @@ typedef struct s_DECOMPRESS_STATE
     uint16_t compress_fmt;
     uint8_t decompress_data;
     z_stream d_stream;
-    MemBucket *bkt;
     bool deflate_initialized;
 
 } DECOMPRESS_STATE;
@@ -109,9 +103,8 @@ typedef struct s_HTTP_LOG_STATE
 {
     uint32_t uri_bytes;
     uint32_t hostname_bytes;
-    MemBucket *log_bucket;
-    uint8_t *uri_extracted;
-    uint8_t *hostname_extracted;
+    uint8_t uri_extracted[MAX_URI_EXTRACTED];
+    uint8_t hostname_extracted[MAX_HOSTNAME];
 }HTTP_LOG_STATE;
 
 typedef struct _HttpsessionData
@@ -244,31 +237,14 @@ static inline void ResetRespState(HTTP_RESP_STATE *ds)
 static inline int SetLogBuffers(HttpsessionData *hsd)
 {
     int iRet = 0;
+
     if (hsd->log_state == NULL)
     {
-        MemBucket *bkt = mempool_alloc(http_mempool);
+        hsd->log_state = (HTTP_LOG_STATE *)calloc(1, sizeof(HTTP_LOG_STATE));
 
-        if (bkt != NULL)
-        {
-            hsd->log_state = (HTTP_LOG_STATE *)calloc(1, sizeof(HTTP_LOG_STATE));
-            if( hsd->log_state != NULL )
-            {
-                hsd->log_state->log_bucket = bkt;
-                hsd->log_state->uri_bytes = 0;
-                hsd->log_state->hostname_bytes = 0;
-                hsd->log_state->uri_extracted = (uint8_t *)bkt->data;
-                hsd->log_state->hostname_extracted = (uint8_t *)bkt->data + MAX_URI_EXTRACTED;
-            }
-            else
-            {
-                mempool_free(http_mempool, bkt);
-                iRet = -1;
-            }
-        }
-        else
+        if ( !hsd->log_state )
             iRet = -1;
     }
-
     return iRet;
 }
 

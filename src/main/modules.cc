@@ -51,6 +51,7 @@ using namespace std;
 #include "codecs/decode_module.h"
 #include "time/ppm_module.h"
 #include "parser/parse_ip.h"
+#include "target_based/sftarget_data.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
@@ -945,13 +946,10 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter attribute_table_params[] =
 {
-    { "hosts_file", Parameter::PT_STRING, nullptr, nullptr,
-      "name of xml attributes file" },
-
-    { "max_attribute_hosts", Parameter::PT_INT, "32:207551", "0",
+    { "max_hosts", Parameter::PT_INT, "32:207551", "0",
       "maximum number of hosts in attribute table" },
 
-    { "max_attribute_services_per_host", Parameter::PT_INT, "1:65535", "0",
+    { "max_services_per_host", Parameter::PT_INT, "1:65535", "0",
       "maximum number of services per host entry in attribute table" },
 
     { "max_metadata_services", Parameter::PT_INT, "1:256", "0",
@@ -969,13 +967,10 @@ public:
 
 bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("hosts_file") )
-        sc->attribute_file = SnortStrdup(v.get_string());
-
-    else if ( v.is("max_attribute_hosts") )
+    if ( v.is("max_hosts") )
         sc->max_attribute_hosts = v.get_long();
 
-    else if ( v.is("max_attribute_services_per_host") )
+    else if ( v.is("max_services_per_host") )
         sc->max_attribute_services_per_host = v.get_long();
 
     else if ( v.is("max_metadata_services") )
@@ -1332,7 +1327,7 @@ static const Parameter suppress_params[] =
 class SuppressModule : public Module
 {
 public:
-    SuppressModule() : Module("suppress", suppress_params) { };
+    SuppressModule() : Module("suppress", suppress_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1411,7 +1406,7 @@ static const Parameter event_filter_params[] =
 class EventFilterModule : public Module
 {
 public:
-    EventFilterModule() : Module("event_filter", event_filter_params) { };
+    EventFilterModule() : Module("event_filter", event_filter_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1503,7 +1498,7 @@ static const Parameter rate_filter_params[] =
 class RateFilterModule : public Module
 {
 public:
-    RateFilterModule() : Module("rate_filter", rate_filter_params) { };
+    RateFilterModule() : Module("rate_filter", rate_filter_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1793,6 +1788,129 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
+//-------------------------------------------------------------------------
+// hosts module
+//-------------------------------------------------------------------------
+
+// FIXIT these are cloned from ip_module.cc and tcp_module.cc
+
+static const char* ip_policies =
+    "first | linux | bsd | bsd_right |last | windows | solaris";
+
+static const char* tcp_policies =
+    "first | last | bsd | linux | old-linux | windows | win-2003 | vista "
+    "solaris | hpux | hpux10 | irix | macos";
+
+static const Parameter service_params[] =
+{
+    { "name", Parameter::PT_STRING, nullptr, nullptr,
+      "service identifier" },
+
+    { "proto", Parameter::PT_ENUM, "tcp | udp", "tcp",
+      "ip protocol" },
+
+    { "port", Parameter::PT_PORT, nullptr, nullptr,
+      "port number" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter hosts_params[] =
+{
+    { "ip", Parameter::PT_ADDR, nullptr, nullptr,
+      "hosts address / cidr" },
+
+    { "frag_policy", Parameter::PT_ENUM, ip_policies, "linux",
+      "defragmentation policy" },
+
+    { "tcp_policy", Parameter::PT_ENUM, tcp_policies, "linux",
+      "tcp reassembly policy" },
+
+    { "services", Parameter::PT_LIST, nullptr, service_params,
+      "list of service parameters" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class HostsModule : public Module
+{
+public:
+    HostsModule() : Module("hosts", hosts_params, true) { };
+    ~HostsModule() { assert(!host && !app); };
+
+    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
+
+private:
+    ApplicationEntry* app;
+    HostAttributeEntry* host;
+};
+
+bool HostsModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("ip") )
+        v.get_addr(host->ipAddr);
+
+    else if ( v.is("frag_policy") )
+    {
+        strncpy(host->hostInfo.fragPolicyName, v.get_string(),
+            sizeof(host->hostInfo.fragPolicyName));
+        host->hostInfo.fragPolicy = v.get_long() + 1;
+    }
+    else if ( v.is("tcp_policy") )
+    {
+        strncpy(host->hostInfo.streamPolicyName, v.get_string(),
+            sizeof(host->hostInfo.streamPolicyName));
+        host->hostInfo.streamPolicy = v.get_long() + 1;
+    }
+    else if ( v.is("name") )
+        app->protocol = AddProtocolReference(v.get_string());
+
+    else if ( v.is("proto") )
+        app->ipproto = AddProtocolReference(v.get_string());
+
+    else if ( v.is("port") )
+        app->port = v.get_long();
+
+    else
+        return false;
+
+    return true;
+}
+
+bool HostsModule::begin(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "hosts.services") )
+        app = SFAT_CreateApplicationEntry();
+
+    else if ( idx && !strcmp(fqn, "hosts") )
+        host = SFAT_CreateHostEntry();
+
+    else
+        return false;
+
+    return true;
+}
+
+bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "hosts.services") )
+    {
+        SFAT_AddService(host, app);
+        app = nullptr;
+    }
+    else if ( idx && !strcmp(fqn, "hosts") )
+    {
+        SFAT_AddHost(host);
+        host = nullptr;
+    }
+    else
+        return false;
+
+    return true;
+}
+
 #if 0
 //-------------------------------------------------------------------------
 // xxx module - used as copy/paste template
@@ -1861,7 +1979,6 @@ void module_init()
     ModuleManager::add_module(new SnortModule);
 
     // these modules are not policy specific
-    ModuleManager::add_module(new AttributeTableModule);
     ModuleManager::add_module(new ClassificationsModule);
     ModuleManager::add_module(new DaqModule);
     ModuleManager::add_module(new DetectionModule);
@@ -1895,6 +2012,10 @@ void module_init()
     // these are preliminary policies
     ModuleManager::add_module(new NetworkModule);
     ModuleManager::add_module(new IpsModule);
+
+    // these modules replace config and hosts.xml
+    ModuleManager::add_module(new AttributeTableModule);
+    ModuleManager::add_module(new HostsModule);
 
     // and this one ties it all together
     ModuleManager::add_module(new BinderModule);

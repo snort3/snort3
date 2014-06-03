@@ -74,7 +74,6 @@ target_link_libraries(snort
     sfip
     hash
     utils
-    mempool
     network_inspectors
     search_engines
     helpers
@@ -116,7 +115,6 @@ add_subdirectory(hash)
 add_subdirectory(log)
 add_subdirectory(main)
 add_subdirectory(managers)
-add_subdirectory(mempool)
 add_subdirectory(packet_io)
 add_subdirectory(parser)
 add_subdirectory(protocols)

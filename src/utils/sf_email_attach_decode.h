@@ -143,6 +143,26 @@ static inline void SetEmailDecodeState(Email_DecodeState *ds, void *data, int ma
 
 }
 
+static inline Email_DecodeState* NewEmailDecodeState(
+    int max_depth, int b64_depth, int qp_depth, 
+    int uu_depth, int bitenc_depth, int64_t file_depth)
+{
+    Email_DecodeState* ds = (Email_DecodeState*)calloc(1, sizeof(*ds) + (2*max_depth));
+    uint8_t* data = ((uint8_t*)ds) + sizeof(*ds);
+
+    if ( ds )
+        SetEmailDecodeState(
+            ds, data, max_depth, b64_depth, qp_depth, 
+            uu_depth, bitenc_depth, file_depth);
+
+    return ds;
+}
+
+static inline void DeleteEmailDecodeState(Email_DecodeState* ds)
+{
+    free(ds);
+}
+
 static inline void updateMaxDepth(int64_t file_depth, int *max_depth)
 {
     if((!file_depth) || (file_depth > MAX_BUF))
