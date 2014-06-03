@@ -60,7 +60,6 @@
 struct tTargetBasedConfig
 {
     table_t* lookupTable;
-    SFXHASH* mapTable;
 
     tTargetBasedConfig();
     ~tTargetBasedConfig();
@@ -77,22 +76,14 @@ tTargetBasedConfig::tTargetBasedConfig()
     /* Add 1 to max for table purposes
     * We use max_hosts to limit memcap, assume 16k per entry costs*/
     // FIXIT 16k per host is no longer true
-    lookupTable = sfrt_new(
-        DIR_8x16, IPv6, ScMaxAttrHosts() + 1,
-        ((ScMaxAttrHosts())>>6) + 1);
-
-    /* Attribute Table node includes memory for each entry,
-     * as defined by sizeof(MapEntry).
-     */
-    mapTable = sfxhash_new(
-        ATTRIBUTE_MAP_MAX_ROWS,
-        sizeof(int), sizeof(MapEntry),
-        0, 1, NULL, NULL, 1);
+    // FIXIT init before snort_conf; move to filename and load separately
+    // this is a hack to get it going
+    uint32_t max = snort_conf ? ScMaxAttrHosts() : DEFAULT_MAX_ATTRIBUTE_HOSTS;
+    lookupTable = sfrt_new(DIR_8x16, IPv6, max + 1, (max>>6) + 1);
 }
 
 tTargetBasedConfig::~tTargetBasedConfig()
 {
-    sfxhash_delete(mapTable);
     sfrt_cleanup(lookupTable, SFAT_CleanupCallback);
     sfrt_free(lookupTable);
 }
@@ -110,7 +101,6 @@ static char sfat_error_message[SFAT_BUFSZ];
 static char sfat_grammar_error_printed=0;
 static char sfat_insufficient_space_logged=0;
 static char sfat_fatal_error=1;
-static char *sfat_saved_file = NULL;
 
 /*****TODO: cleanup to use config directive *******/
 uint32_t SFAT_NumberOfHosts(void)
@@ -275,7 +265,7 @@ void PrintHostAttributeEntry(HostAttributeEntry *host)
             );
     DebugMessage(DEBUG_ATTRIBUTE, "\tPolicy Information: frag:%s (%s %u) stream: %s (%s %u)\n",
             host->hostInfo.fragPolicyName, host->hostInfo.fragPolicySet ? "set":"unset", host->hostInfo.fragPolicy,
-            host->hostInfo.fragPolicyName, host->hostInfo.streamPolicySet ? "set":"unset", host->hostInfo.streamPolicy);
+            host->hostInfo.streamPolicyName, host->hostInfo.streamPolicySet ? "set":"unset", host->hostInfo.streamPolicy);
     DebugMessage(DEBUG_ATTRIBUTE, "\tServices:\n");
     for (i=0, app = host->services; app; app = app->next,i++)
     {
@@ -406,39 +396,6 @@ void SFAT_Cleanup(void)
     delete next_cfg;
 
     FreeProtoocolReferenceTable();
-
-    if (sfat_saved_file)
-    {
-        free(sfat_saved_file);
-        sfat_saved_file = NULL;
-    }
-}
-
-tTargetBasedConfig* SFAT_Reload()
-{
-    if ( !sfat_saved_file )
-        return nullptr;
-
-// FIXIT parsing done by lua module; just need to set table here
-#if 0
-    // create new table
-    if ( !ParseTargetMap(sfat_saved_file) == SFAT_OK )
-    {
-        /* Failed to parse, clean it up */
-        delete next_cfg;
-        next_cfg = new tTargetBasedConfig; // FIXIT should not need this
-        return nullptr;
-    }
-#endif
-    curr_cfg = next_cfg;
-    next_cfg = new tTargetBasedConfig;
-
-    sfBase.iAttributeHosts = SFAT_NumberOfHosts();
-    sfBase.iAttributeReloads++;
-    proc_stats.attribute_table_reloads++;
-
-    LogMessage("Attribute Table Loaded with " STDu64 " hosts\n", sfBase.iAttributeHosts);
-    return curr_cfg;
 }
 
 void SFAT_SetConfig(tTargetBasedConfig* p)
@@ -456,30 +413,32 @@ void SFAT_Free(tTargetBasedConfig* p)
     delete p;
 }
 
-#if 0
-/**called once during initialization. Reads attribute table for the first time.*/
-int SFAT_ParseAttributeTable(const char *args)
+void SFAT_Init()
 {
-    // FIXIT should only need one of these
-    curr_cfg = new tTargetBasedConfig;
+    curr_cfg = nullptr;
+    next_cfg = new tTargetBasedConfig;
+}
+
+void SFAT_Start()
+{
+    curr_cfg = next_cfg;
+    next_cfg = new tTargetBasedConfig;
+}
+
+tTargetBasedConfig* SFAT_Swap()
+{
+    curr_cfg = next_cfg;
     next_cfg = new tTargetBasedConfig;
 
     sfBase.iAttributeHosts = SFAT_NumberOfHosts();
-    LogMessage("Attribute Table Loaded with " STDu64 " hosts\n", sfBase.iAttributeHosts);
+    sfBase.iAttributeReloads++;
+    proc_stats.attribute_table_reloads++;
 
-    return SFAT_OK;
+    LogMessage("Attribute Table Loaded with " STDu64 " hosts\n", sfBase.iAttributeHosts);
+    return curr_cfg;
 }
-#endif
 
 int IsAdaptiveConfigured()
-{
-    if ( !curr_cfg )
-        return 0;
-
-    return 1;
-}
-
-int IsAdaptiveConfiguredForSnortConfig(SnortConfig* sc)
 {
     if ( !curr_cfg )
         return 0;
@@ -503,8 +462,6 @@ void SFAT_UpdateApplicationProtocol(sfip_t *ipAddr, uint16_t port, uint16_t prot
 
     if (!host_entry)
     {
-        GetPolicyIdsCallbackList *list_entry;
-
         if (sfrt_num_entries(curr_cfg->lookupTable) >= ScMaxAttrHosts())
             return;
 

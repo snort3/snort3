@@ -2519,7 +2519,7 @@ int fpCreateFastPacketDetection(SnortConfig *sc)
     if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))
         LogMessage("Rule Maps Done....\n");
 
-    if (IsAdaptiveConfiguredForSnortConfig(sc)
+    if (IsAdaptiveConfigured()
             || fpDetectGetDebugPrintFastPatterns(fp))
     {
         if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))

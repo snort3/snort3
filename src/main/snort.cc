@@ -302,6 +302,7 @@ static void SnortInit(int argc, char **argv)
 #endif
 
     InitProtoNames();
+    SFAT_Init();
 
     if (snort_cmd_line_conf != NULL)  // FIXIT can this be deleted?
     {
@@ -401,6 +402,7 @@ static void SnortInit(int argc, char **argv)
     fpCreateFastPacketDetection(snort_conf);
     MpseManager::activate_search_engine(snort_conf);
     PacketManager::instantiate();
+    SFAT_Start();
 
 #ifdef PPM_MGR
     PPM_PRINT_CFG(&snort_conf->ppm_cfg);

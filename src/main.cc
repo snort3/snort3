@@ -305,7 +305,7 @@ int main_reload_attributes(lua_State*)
     }
     request.respond(".. reloading attribute table\n");
     tTargetBasedConfig* old = SFAT_GetConfig();
-    tTargetBasedConfig* tc = SFAT_Reload();
+    tTargetBasedConfig* tc = SFAT_Swap();
 
     if ( !tc )
     {
