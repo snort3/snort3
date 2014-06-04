@@ -23,42 +23,25 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Module class for NHttpInspect
+//  @brief     Converts token strings to enum codes
 //
+
 
 #include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_module.h"
+#include "nhttp_str_to_code.h"
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
-}
-
-
-const Parameter NHttpModule::nhttpParams[] =
-    {{ "test_mode", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
-
-bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    test_mode = false;
-    return true;
-}
-
-bool NHttpModule::end(const char*, int, SnortConfig*) {
-    return true;
-}
-
-bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_mode")) {
-        test_mode = val.get_bool();
-        return true;
+// Need to replace this simple algorithm for better performance
+int32_t strToCode(const uint8_t *text, int32_t textLen, const StrCode table[]) {
+    if (textLen <= 0) return NHttpEnums::STAT_PROBLEMATIC;
+    for (int32_t k=0; table[k].name != nullptr; k++) {
+        if ((textLen == (int) strlen(table[k].name)) && (memcmp(text, table[k].name, textLen) == 0)) {
+            return table[k].code;
+        }
     }
-    return false;
-}
-
-unsigned NHttpModule::get_gid() const {
-    return NHTTP_GID;
+    return NHttpEnums::STAT_OTHER;
 }
 

@@ -34,114 +34,125 @@
 #include <stdexcept>
 
 #include "snort.h"
-#include "framework/inspector.h"
-#include "flow/flow.h"
+#include "stream/stream_api.h"
 #include "nhttp_enum.h"
-#include "nhttp_scratchpad.h"
-#include "nhttp_strtocode.h"
-#include "nhttp_headnorm.h"
-#include "nhttp_flowdata.h"
-#include "nhttp_msgheader.h"
-#include "nhttp_testinput.h"
+#include "nhttp_stream_splitter.h"
 #include "nhttp_api.h"
 #include "nhttp_inspect.h"
 
-const char* NHttpInspect::testInputFile = "nhttptestmsgs.txt";
-const char* NHttpInspect::testOutputPrefix = "nhttpresults/testcase";
-THREAD_LOCAL NHttpMsgHeader* NHttpInspect::msgHead;
+using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(bool _test_mode) : test_mode(_test_mode)
+THREAD_LOCAL NHttpMsgHeader* NHttpInspect::msgHead;
+THREAD_LOCAL NHttpMsgBody* NHttpInspect::msgBody;
+THREAD_LOCAL NHttpMsgChunkHead* NHttpInspect::msgChunkHead;
+THREAD_LOCAL NHttpMsgChunkBody* NHttpInspect::msgChunkBody;
+THREAD_LOCAL NHttpMsgTrailer* NHttpInspect::msgTrailer;
+
+NHttpInspect::NHttpInspect(bool test_mode)
 {
-    printf("NHttpInspect constructor()\n");
-    if (test_mode) {
-        testInput = new NHttpTestInput(testInputFile);
+    NHttpTestInput::test_mode = test_mode;
+    if (NHttpTestInput::test_mode) {
+        NHttpTestInput::testInput = new NHttpTestInput(testInputFile);
     }
 }
 
 NHttpInspect::~NHttpInspect ()
 {
-    printf("NHttpInspect destructor()\n");
-    if (test_mode) {
-        delete testInput;
+    if (NHttpTestInput::test_mode) {
+        delete NHttpTestInput::testInput;
         if (testOut) fclose(testOut);
     }
 }
 
 bool NHttpInspect::enabled ()
 {
-    printf("NHttpInspect enabled()\n");
     return true;
 }
 
-void NHttpInspect::configure (SnortConfig *sc, const char*, char *args)
+bool NHttpInspect::configure (SnortConfig *)
 {
-    printf("NHttpInspect configure()\n");
+    return true;
 }
 
-int NHttpInspect::verify(SnortConfig* sc)
+int NHttpInspect::verify(SnortConfig*)
 {
-    printf("NHttpInspect verify()\n");
     return 0; // 0 = good, -1 = bad
 }
 
 void NHttpInspect::pinit()
 {
-    printf("NHttpInspect pinit()\n");
 }
 
 void NHttpInspect::pterm()
 {
-    printf("NHttpInspect pterm()\n");
 }
 
 void NHttpInspect::show(SnortConfig*)
 {
-    printf("NHttpInspect show()\n");
     LogMessage("NHttpInspect\n");
 }
 
 void NHttpInspect::eval (Packet* p)
 {
-    printf("NHttpInspect eval()\n");
+    // Only packets from the StreamSplitter can be processed
+    if (!PacketHasPAFPayload(p)) return;
 
     Flow *flow = p->flow;
     NHttpFlowData* sessionData = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
-    if (sessionData == nullptr) flow->set_application_data(sessionData = new NHttpFlowData);
+    assert(sessionData);
 
-    if (!test_mode) msgHead->loadMessage(p->data, p->dsize, sessionData);
+    NHttpMsgSection *msgSect = nullptr;
+
+    if (!NHttpTestInput::test_mode) {
+        switch (sessionData->sectionType) {
+          case SEC_HEADER: msgSect = msgHead; break;
+          case SEC_BODY: msgSect = msgBody; break;
+          case SEC_CHUNKHEAD: msgSect = msgChunkHead; break;
+          case SEC_CHUNKBODY: msgSect = msgChunkBody; break;
+          case SEC_TRAILER: msgSect = msgTrailer; break;
+          case SEC_DISCARD: return;
+          default: assert(0); return;
+        }
+        msgSect->loadSection(p->data, p->dsize, sessionData);
+    }
     else {
         uint8_t *testBuffer;
-        int32_t testLength;
-        if ((testLength = testInput->ntiGet(&testBuffer, sessionData, testNumber)) > 0) {
-            msgHead->loadMessage(testBuffer, testLength, sessionData);
+        uint16_t testLength;
+        if ((testLength = NHttpTestInput::testInput->toEval(&testBuffer, testNumber)) > 0) {
+            switch (sessionData->sectionType) {
+              case SEC_HEADER: msgSect = msgHead; break;
+              case SEC_BODY: msgSect = msgBody; break;
+              case SEC_CHUNKHEAD: msgSect = msgChunkHead; break;
+              case SEC_CHUNKBODY: msgSect = msgChunkBody; break;
+              case SEC_TRAILER: msgSect = msgTrailer; break;
+              case SEC_DISCARD: return;
+              default: assert(0); return;
+            }
+            msgSect->loadSection(testBuffer, testLength, sessionData);
         }
         else {
-            printf("Out of test data.\n");
+            printf("Zero length test data.\n");
             return;
         }
     }
+    msgSect->initSection();
+    msgSect->analyze();
+    msgSect->updateFlow();
+    msgSect->genEvents();
+    msgSect->legacyClients();
 
-    msgHead->analyze();
-
-    msgHead->genEvents();
-
-    // Interface to the old Snort clients
-    msgHead->oldClients();
-
-    if (!test_mode) msgHead->printMessage(stdout);
+    if (!NHttpTestInput::test_mode) msgSect->printMessage(stdout);
     else {
         if (testNumber != fileTestNumber) {
             if (testOut) fclose (testOut);
             fileTestNumber = testNumber;
             char fileName[100];
-            sprintf(fileName, "%s%d.txt", testOutputPrefix, testNumber);
+            snprintf(fileName, sizeof(fileName), "%s%" PRIi64 ".txt", testOutputPrefix, testNumber);
             if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
         }
-        msgHead->printMessage(testOut);
+        msgSect->printMessage(testOut);
     }
 }
-
-
 
 
 

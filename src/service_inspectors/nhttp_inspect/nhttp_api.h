@@ -29,9 +29,14 @@
 #ifndef NHTTP_API_H
 #define NHTTP_API_H
 
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/inspector.h"
+
 class NHttpApi {
 public:
     static const InspectApi nhttp_api;
+    static int16_t appProtocolId;
 private:
     NHttpApi() = delete;
     static Module* nhttp_mod_ctor();
@@ -43,7 +48,6 @@ private:
     static void nhttp_dtor(Inspector* p);
     static void nhttp_pinit();
     static void nhttp_pterm();
-    static void nhttp_purge();
     static void nhttp_sum();
     static void nhttp_stats();
     static void nhttp_reset();

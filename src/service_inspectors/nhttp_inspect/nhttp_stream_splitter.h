@@ -23,42 +23,43 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Module class for NHttpInspect
+//  @brief      NHTTP Stream Splitter class
 //
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
-#include "nhttp_enum.h"
-#include "nhttp_module.h"
+#ifndef NHTTP_STREAM_SPLITTER_H
+#define NHTTP_STREAM_SPLITTER_H
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
-}
+#include "stream/stream_splitter.h"
+#include "nhttp_flow_data.h"
+
+class NHttpStreamSplitter : public StreamSplitter {
+public:
+    NHttpStreamSplitter(bool isClientToServer) : StreamSplitter(isClientToServer) {};
+    PAF_Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flushOffset);
+    bool is_paf() { return true; };
+    uint32_t max() { return pafMax; };
+private:
+    void prepareFlush(NHttpFlowData* sessionData, uint32_t* flushOffset, NHttpEnums::SourceId sourceId, NHttpEnums::SectionType sectionType, bool tcpClose,
+          uint64_t infractions, uint32_t numOctets);
+
+    int64_t octetsSeen;
+    int numCrlf;
+    uint32_t pafMax = 63780;
+};
+
+#endif
 
 
-const Parameter NHttpModule::nhttpParams[] =
-    {{ "test_mode", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
 
-bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    test_mode = false;
-    return true;
-}
 
-bool NHttpModule::end(const char*, int, SnortConfig*) {
-    return true;
-}
 
-bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_mode")) {
-        test_mode = val.get_bool();
-        return true;
-    }
-    return false;
-}
 
-unsigned NHttpModule::get_gid() const {
-    return NHTTP_GID;
-}
+
+
+
+
+
+
+
+
 

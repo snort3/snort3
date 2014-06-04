@@ -23,21 +23,23 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Static constant tables for converting protocol strings to enum codes. Members of HttpMsgHeader.
+//  @brief      Static constant tables for various conversions and normalizations
 //
-
+//  Note: protocol correctness is not the decisive criterion for inclusion in the following tables. Just because something is "wrong" per RFC does
+//        not mean that it cannot appear here. The goal is to recognize and inspect things that actually happen or might happen regardless of
+//        whether they should happen.
+//
 
 #include <string.h>
 #include <sys/types.h>
 
 #include "snort.h"
-#include "flow/flow.h"
+#include "framework/module.h"
 #include "nhttp_enum.h"
-#include "nhttp_scratchpad.h"
-#include "nhttp_strtocode.h"
-#include "nhttp_headnorm.h"
-#include "nhttp_flowdata.h"
-#include "nhttp_msgheader.h"
+#include "nhttp_str_to_code.h"
+#include "nhttp_head_norm.h"
+#include "nhttp_msg_head.h"
+#include "nhttp_module.h"
 
 using namespace NHttpEnums;
 
@@ -91,7 +93,7 @@ const StrCode NHttpMsgHeader::methodList[] =
     { METH_UPDATEREDIRECTREF,  "UPDATEREDIRECTREF"},
     { 0,                       nullptr} };
 
-const StrCode NHttpMsgHeader::headerList[] =
+const StrCode NHttpMsgSharedHead::headerList[] =
    {{ HEAD_CACHE_CONTROL,        "cache-control"},
     { HEAD_CONNECTION,           "connection"},
     { HEAD_DATE,                 "date"},
@@ -143,7 +145,7 @@ const StrCode NHttpMsgHeader::headerList[] =
     { HEAD_LAST_MODIFIED,        "last-modified"},
     { 0,                         nullptr} };
 
-const StrCode NHttpMsgHeader::transCodeList[] =
+const StrCode NHttpMsgSharedHead::transCodeList[] =
    {{ TRANSCODE_CHUNKED,         "chunked"},
     { TRANSCODE_IDENTITY,        "identity"},
     { TRANSCODE_GZIP,            "gzip"},
@@ -151,14 +153,14 @@ const StrCode NHttpMsgHeader::transCodeList[] =
     { TRANSCODE_DEFLATE,         "deflate"},
     { 0,                         nullptr} };
 
-const HeaderNormalizer NHttpMsgHeader::NORMALIZER_NIL {NORM_NULL, false, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeader::NORMALIZER_BASIC {NORM_FIELD, false, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeader::NORMALIZER_CAT {NORM_FIELD, true, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeader::NORMALIZER_NOREPEAT {NORM_FIELD, false, true, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeader::NORMALIZER_DECIMAL {NORM_INTEGER, false, true, normDecimalInteger, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeader::NORMALIZER_TRANSCODE {NORM_INTEGER, true, false, normSeqStrCode, NHttpMsgHeader::transCodeList, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgSharedHead::NORMALIZER_NIL {NORM_NULL, false, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgSharedHead::NORMALIZER_BASIC {NORM_FIELD, false, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgSharedHead::NORMALIZER_CAT {NORM_FIELD, true, false, normRemoveLws, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgSharedHead::NORMALIZER_NOREPEAT {NORM_FIELD, false, true, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgSharedHead::NORMALIZER_DECIMAL {NORM_INT64, false, true, normDecimalInteger, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgSharedHead::NORMALIZER_TRANSCODE {NORM_ENUM64, true, false, normRemoveLws, nullptr, norm2Lower, nullptr, normSeqStrCode, NHttpMsgSharedHead::transCodeList};
 
-const HeaderNormalizer* const NHttpMsgHeader::headerNorms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
+const HeaderNormalizer* const NHttpMsgSharedHead::headerNorms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
     [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
     [HEAD_CONNECTION] = &NORMALIZER_BASIC,
@@ -173,8 +175,8 @@ const HeaderNormalizer* const NHttpMsgHeader::headerNorms[HEAD__MAXVALUE] = { [0
     [HEAD_WARNING] = &NORMALIZER_BASIC,
     [HEAD_ACCEPT] = &NORMALIZER_BASIC,
     [HEAD_ACCEPT_CHARSET] = &NORMALIZER_BASIC,
-    [HEAD_ACCEPT_ENCODING] = &NORMALIZER_BASIC,
-    [HEAD_ACCEPT_LANGUAGE] = &NORMALIZER_BASIC,
+    [HEAD_ACCEPT_ENCODING] = &NORMALIZER_CAT,
+    [HEAD_ACCEPT_LANGUAGE] = &NORMALIZER_CAT,
     [HEAD_AUTHORIZATION] = &NORMALIZER_BASIC,
     [HEAD_EXPECT] = &NORMALIZER_BASIC,
     [HEAD_FROM] = &NORMALIZER_BASIC,
@@ -211,6 +213,55 @@ const HeaderNormalizer* const NHttpMsgHeader::headerNorms[HEAD__MAXVALUE] = { [0
     [HEAD_LAST_MODIFIED] = &NORMALIZER_BASIC
 };
 
-    const int32_t NHttpMsgHeader::numNorms = HEAD__MAXVALUE-1;
+const int32_t NHttpMsgSharedHead::numNorms = HEAD__MAXVALUE-1;
 
+const RuleMap NHttpModule::nhttpEvents[] =
+{
+    { EVENT_ASCII,                           "(nhttp_inspect) ascii encoding" },
+    { EVENT_DOUBLE_DECODE,                   "(nhttp_inspect) double decoding attack" },
+    { EVENT_U_ENCODE,                        "(nhttp_inspect) u encoding" },
+    { EVENT_BARE_BYTE,                       "(nhttp_inspect) bare byte unicode encoding" },
+    { EVENT_OBSOLETE_1,                      "(nhttp_inspect) obsolete event--should not appear" },
+    { EVENT_UTF_8,                           "(nhttp_inspect) utf-8 encoding" },
+    { EVENT_IIS_UNICODE,                     "(nhttp_inspect) iis unicode codepoint encoding" },
+    { EVENT_MULTI_SLASH,                     "(nhttp_inspect) multi_slash encoding" },
+    { EVENT_IIS_BACKSLASH,                   "(nhttp_inspect) iis backslash evasion" },
+    { EVENT_SELF_DIR_TRAV,                   "(nhttp_inspect) self directory traversal" },
+    { EVENT_DIR_TRAV,                        "(nhttp_inspect) directory traversal" },
+    { EVENT_APACHE_WS,                       "(nhttp_inspect) apache whitespace (tab)" },
+    { EVENT_IIS_DELIMITER,                   "(nhttp_inspect) non-rfc http delimiter" },
+    { EVENT_NON_RFC_CHAR,                    "(nhttp_inspect) non-rfc defined char" },
+    { EVENT_OVERSIZE_DIR,                    "(nhttp_inspect) oversize request-uri directory" },
+    { EVENT_LARGE_CHUNK,                     "(nhttp_inspect) oversize chunk encoding" },
+    { EVENT_PROXY_USE,                       "(nhttp_inspect) unauthorized proxy use detected" },
+    { EVENT_WEBROOT_DIR,                     "(nhttp_inspect) webroot directory traversal" },
+    { EVENT_LONG_HDR,                        "(nhttp_inspect) long header" },
+    { EVENT_MAX_HEADERS,                     "(nhttp_inspect) max header fields" },
+    { EVENT_MULTIPLE_CONTLEN,                "(nhttp_inspect) multiple content length" },
+    { EVENT_CHUNK_SIZE_MISMATCH,             "(nhttp_inspect) chunk size mismatch detected" },
+    { EVENT_INVALID_TRUEIP,                  "(nhttp_inspect) invalid ip in true-client-ip/xff header" },
+    { EVENT_MULTIPLE_HOST_HDRS,              "(nhttp_inspect) multiple host hdrs detected" },
+    { EVENT_LONG_HOSTNAME,                   "(nhttp_inspect) hostname exceeds 255 characters" },
+    { EVENT_EXCEEDS_SPACES,                  "(nhttp_inspect) header parsing space saturation" },
+    { EVENT_CONSECUTIVE_SMALL_CHUNKS,        "(nhttp_inspect) client consecutive small chunk sizes" },
+    { EVENT_UNBOUNDED_POST,                  "(nhttp_inspect) post w/o content-length or chunks" },
+    { EVENT_MULTIPLE_TRUEIP_IN_SESSION,      "(nhttp_inspect) multiple true ips in a session" },
+    { EVENT_BOTH_TRUEIP_XFF_HDRS,            "(nhttp_inspect) both true_client_ip and xff hdrs present" },
+    { EVENT_UNKNOWN_METHOD,                  "(nhttp_inspect) unknown method" },
+    { EVENT_SIMPLE_REQUEST,                  "(nhttp_inspect) simple request" },
+    { EVENT_UNESCAPED_SPACE_URI,             "(nhttp_inspect) unescaped space in http uri" },
+    { EVENT_PIPELINE_MAX,                    "(nhttp_inspect) too many pipelined requests" },
+    { EVENT_ANOM_SERVER,                     "(nhttp_inspect) anomalous http server on undefined http port" },
+    { EVENT_INVALID_STATCODE,                "(nhttp_inspect) invalid status code in http response" },
+    { EVENT_NO_CONTLEN,                      "(nhttp_inspect) no content-length or transfer-encoding in http response" },
+    { EVENT_UTF_NORM_FAIL,                   "(nhttp_inspect) http response has utf charset which failed to normalize" },
+    { EVENT_UTF7,                            "(nhttp_inspect) http response has utf-7 charset" },
+    { EVENT_DECOMPR_FAILED,                  "(nhttp_inspect) http response gzip decompression failed" },
+    { EVENT_CONSECUTIVE_SMALL_CHUNKS_S,      "(nhttp_inspect) server consecutive small chunk sizes" },
+    { EVENT_MSG_SIZE_EXCEPTION,              "(nhttp_inspect) invalid content-length or chunk size" },
+    { EVENT_JS_OBFUSCATION_EXCD,             "(nhttp_inspect) javascript obfuscation levels exceeds 1" },
+    { EVENT_JS_EXCESS_WS,                    "(nhttp_inspect) javascript whitespaces exceeds max allowed" },
+    { EVENT_MIXED_ENCODINGS,                 "(nhttp_inspect) multiple encodings within javascript obfuscated data" },
+    { 0, nullptr }
+};
 

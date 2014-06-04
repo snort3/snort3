@@ -23,42 +23,46 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Module class for NHttpInspect
+//  @brief      NHttpMsgTrailer class declaration
 //
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
-#include "nhttp_enum.h"
-#include "nhttp_module.h"
+#ifndef NHTTP_MSG_TRAILER_H
+#define NHTTP_MSG_TRAILER_H
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
-}
+#include "nhttp_msg_head_shared.h"
+
+//-------------------------------------------------------------------------
+// NHttpMsgTrailer class
+//-------------------------------------------------------------------------
+
+class NHttpMsgTrailer: public NHttpMsgSharedHead {
+public:
+    NHttpMsgTrailer() {};
+    void printMessage(FILE *output) const;
+    void genEvents();
+    void updateFlow() const;
+
+private:
+    void parseWhole();
+};
+
+#endif
 
 
-const Parameter NHttpModule::nhttpParams[] =
-    {{ "test_mode", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
 
-bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    test_mode = false;
-    return true;
-}
 
-bool NHttpModule::end(const char*, int, SnortConfig*) {
-    return true;
-}
 
-bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_mode")) {
-        test_mode = val.get_bool();
-        return true;
-    }
-    return false;
-}
 
-unsigned NHttpModule::get_gid() const {
-    return NHTTP_GID;
-}
+
+
+
+
+
+
+
+
+
+
+
+
 

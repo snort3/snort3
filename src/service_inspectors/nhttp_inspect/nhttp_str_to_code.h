@@ -23,42 +23,18 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Module class for NHttpInspect
+//  @brief      Converts protocol constant string to enum
 //
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
-#include "nhttp_enum.h"
-#include "nhttp_module.h"
+#ifndef NHTTP_STR_TO_CODE_H
+#define NHTTP_STR_TO_CODE_H
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
-}
+struct StrCode {
+    int32_t code;
+    const char *name;
+};
 
+int32_t strToCode(const uint8_t *text, int32_t textLen, const StrCode table[]);
 
-const Parameter NHttpModule::nhttpParams[] =
-    {{ "test_mode", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
-
-bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    test_mode = false;
-    return true;
-}
-
-bool NHttpModule::end(const char*, int, SnortConfig*) {
-    return true;
-}
-
-bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_mode")) {
-        test_mode = val.get_bool();
-        return true;
-    }
-    return false;
-}
-
-unsigned NHttpModule::get_gid() const {
-    return NHTTP_GID;
-}
+#endif
 
