@@ -256,6 +256,8 @@ arp_spoof =
 
 back_orifice = { }
 
+nhttp_inspect = { test_mode = false }
+
 rpc_decode = { }
 
 port_scan_global = { memcap = 10000000 }
@@ -572,6 +574,7 @@ default_rules =
 
 #alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
 #alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
+#alert tcp any any -> any any (msg:"Sample rule for Snort++"; content:"trigger", http_uri; sid:1;)
 alert ( gid:129; sid:20; )
 ]]
 
