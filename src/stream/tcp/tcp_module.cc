@@ -157,10 +157,10 @@ static const Parameter stream_tcp_params[] =
     { "show_rebuilt_packets", Parameter::PT_BOOL, nullptr, "false",
       "enable cmg like output of reassembled packets" },
 
-    { "queue_limit", Parameter::PT_TABLE, nullptr, stream_queue_limit_params,
+    { "queue_limit", Parameter::PT_TABLE, stream_queue_limit_params, nullptr,
       "limit amount of segment data queued" },
 
-    { "small_segments", Parameter::PT_TABLE, nullptr, stream_tcp_small_params,
+    { "small_segments", Parameter::PT_TABLE, stream_tcp_small_params, nullptr,
       "limit number of small segments queued" },
 
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",

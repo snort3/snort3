@@ -51,7 +51,7 @@ static const Parameter ftp_client_params[] =
     { "bounce", Parameter::PT_BOOL, nullptr, "false",
       "check for bounces" },
 
-    { "bounce_to", Parameter::PT_TABLE, nullptr, client_bounce_params,
+    { "bounce_to", Parameter::PT_TABLE, client_bounce_params, nullptr,
       "allow bounces to CIDRs / ports" },
 
     { "ignore_telnet_erase_cmds", Parameter::PT_BOOL, nullptr, "false",
@@ -269,7 +269,7 @@ static const Parameter ftp_directory_params[] =
 
 static const Parameter ftp_server_params[] =
 {
-    { "alt_max_param", Parameter::PT_LIST, nullptr, ftp_server_alt_max_params,
+    { "alt_max_param", Parameter::PT_LIST, ftp_server_alt_max_params, nullptr,
       "specify non-default maximum command lengths" },
 
     { "chk_str_fmt", Parameter::PT_STRING, nullptr, nullptr,
@@ -281,7 +281,7 @@ static const Parameter ftp_server_params[] =
     { "data_xfer_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "check the formatting of the given commands" },
 
-    { "directory_cmds", Parameter::PT_LIST, nullptr, ftp_directory_params,
+    { "directory_cmds", Parameter::PT_LIST, ftp_directory_params, nullptr,
       "specify command-response pairs" },
 
     { "file_put_cmds", Parameter::PT_STRING, nullptr, nullptr,
@@ -299,7 +299,7 @@ static const Parameter ftp_server_params[] =
     { "check_encrypted", Parameter::PT_BOOL, nullptr, "false",
       "check for end of encryption" },
 
-    { "cmd_validity", Parameter::PT_LIST, nullptr, ftp_server_validity_params,
+    { "cmd_validity", Parameter::PT_LIST, ftp_server_validity_params, nullptr,
       "specify command formats" },
 
     { "def_max_param_len", Parameter::PT_INT, "1:", "100",

@@ -325,7 +325,7 @@ static const Parameter profile_rule_params[] =
       "avg_ticks_per_match | avg_ticks_per_no_match",
       "avg_ticks", "sort by given field" },
 
-    { "file", Parameter::PT_TABLE, nullptr, profile_file_params,
+    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
       "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -340,7 +340,7 @@ static const Parameter profile_preproc_params[] =
       "checks | avg_ticks | total_ticks", "avg_ticks",
       "sort by given field" },
 
-    { "file", Parameter::PT_TABLE, nullptr, profile_file_params,
+    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
       "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -348,10 +348,10 @@ static const Parameter profile_preproc_params[] =
 
 static const Parameter profile_params[] =
 {
-    { "rules", Parameter::PT_TABLE, nullptr, profile_rule_params,
+    { "rules", Parameter::PT_TABLE, profile_rule_params, nullptr,
       "" },
 
-    { "preprocs", Parameter::PT_TABLE, nullptr, profile_preproc_params,
+    { "preprocs", Parameter::PT_TABLE, profile_preproc_params, nullptr,
       "" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -652,7 +652,7 @@ static const Parameter output_params[] =
     { "log_ipv6_extra_data", Parameter::PT_BOOL, nullptr, "false",
       "log IPv6 source and destination addresses as unified2 extra data records" },
 
-    { "event_trace", Parameter::PT_TABLE, nullptr, output_event_trace_params,
+    { "event_trace", Parameter::PT_TABLE, output_event_trace_params, nullptr,
       "" },
 
     { "quiet", Parameter::PT_BOOL, nullptr, "false",
@@ -1699,10 +1699,10 @@ static const Parameter binder_use_params[] =
 
 static const Parameter binder_params[] =
 {
-    { "when", Parameter::PT_TABLE, nullptr, binder_when_params,
+    { "when", Parameter::PT_TABLE, binder_when_params, nullptr,
       "match criteria" },
 
-    { "use", Parameter::PT_TABLE, nullptr, binder_use_params,
+    { "use", Parameter::PT_TABLE, binder_use_params, nullptr,
       "target configuration" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -1826,7 +1826,7 @@ static const Parameter hosts_params[] =
     { "tcp_policy", Parameter::PT_ENUM, tcp_policies, "linux",
       "tcp reassembly policy" },
 
-    { "services", Parameter::PT_LIST, nullptr, service_params,
+    { "services", Parameter::PT_LIST, service_params, nullptr,
       "list of service parameters" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

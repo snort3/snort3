@@ -192,7 +192,7 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     // we dump just one list entry
     if ( p->type == Parameter::PT_TABLE ||
          p->type == Parameter::PT_LIST )
-        dump_table(key, pfx, (Parameter*)p->deflt);
+        dump_table(key, pfx, (Parameter*)p->range);
 
     else if ( !pfx || !strncmp(key.c_str(), pfx, strlen(pfx)) )
     {
@@ -243,7 +243,7 @@ static const Parameter* get_params(string& sfx, const Parameter* p)
          p->type != Parameter::PT_LIST )
         return p;
 
-    p = (const Parameter*)p->deflt;
+    p = (const Parameter*)p->range;
     return get_params(sfx,  p);
 }
 

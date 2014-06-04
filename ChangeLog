@@ -1,3 +1,8 @@
+85
+-- swapped use of range and deflt for PT_TABLE and PT_LIST Parameters
+   (Parameter* is now in range so that deflt may be used for tabl/list
+   defaults)
+
 84
 -- pulled in latest codecs
 -- removed src/mempool/

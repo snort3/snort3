@@ -462,6 +462,7 @@ static inline void EventAnomScMinTTL(FragEngine*)
     t_stats.alerts++;
 }
 
+#if 0
 static int FragPolicyIdFromName(char *name)
 {
     if (!name)
@@ -499,6 +500,7 @@ static int FragPolicyIdFromName(char *name)
     }
     return FRAG_POLICY_DEFAULT;
 }
+#endif
 
 /**
  * Check to see if a FragTracker has timed out

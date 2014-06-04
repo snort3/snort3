@@ -283,7 +283,7 @@ bool Parameter::validate(Value& v) const
     {
     // bool values
     case PT_BOOL:
-        return valid_bool(v, range);
+        return valid_bool(v, (const char*)range);
 
     // num values
     case PT_PORT:
@@ -291,31 +291,31 @@ bool Parameter::validate(Value& v) const
             return valid_int(v, "0:65535");
         // if a range was given fall thru
     case PT_INT:
-        return valid_int(v, range);
+        return valid_int(v, (const char*)range);
     case PT_REAL:
-        return valid_real(v, range);
+        return valid_real(v, (const char*)range);
 
     // string values
     case PT_STRING:
-        return valid_string(v, range);
+        return valid_string(v, (const char*)range);
     case PT_SELECT:
-        return valid_select(v, range);
+        return valid_select(v, (const char*)range);
     case PT_MULTI:
-        return valid_multi(v, range);
+        return valid_multi(v, (const char*)range);
     case PT_ENUM:
-        return valid_enum(v, range);
+        return valid_enum(v, (const char*)range);
 
     // address values
     case PT_MAC:
-        return valid_mac(v, range);
+        return valid_mac(v, (const char*)range);
     case PT_IP4:
-        return valid_ip4(v, range);
+        return valid_ip4(v, (const char*)range);
     case PT_ADDR:
-        return valid_addr(v, range);
+        return valid_addr(v, (const char*)range);
 
     // list values
     case PT_BIT_LIST:
-        return valid_bit_list(v, range);
+        return valid_bit_list(v, (const char*)range);
 
     case PT_ADDR_LIST:
         return true;
