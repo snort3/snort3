@@ -71,15 +71,15 @@ public:
     T* data;
 };
 
-typedef PlugData* (*DataCtor)(class Module*);
-typedef void (*DataDtor)(PlugData*);
+typedef PlugData* (*DataNewFunc)(class Module*);
+typedef void (*DataDelFunc)(PlugData*);
 
 struct DataApi
 {
     BaseApi base;
 
-    DataCtor ctor;    // new
-    DataDtor dtor;    // delete
+    DataNewFunc ctor;    // new
+    DataDelFunc dtor;    // delete
 };
 
 #endif

@@ -29,7 +29,7 @@
 class SoOption : public IpsOption
 {
 public:
-    SoOption(const char*, const char*, so_eval_f f, void* v);
+    SoOption(const char*, const char*, SoEvalFunc f, void* v);
     ~SoOption();
 
     uint32_t hash() const;
@@ -41,12 +41,12 @@ public:
 private:
     const char* soid;
     const char* so;
-    so_eval_f func;
+    SoEvalFunc func;
     void* data;
 };
 
 SoOption::SoOption(
-    const char* id, const char* s, so_eval_f f, void* v)
+    const char* id, const char* s, SoEvalFunc f, void* v)
     : IpsOption("so")
 {
     soid = id;
@@ -111,7 +111,7 @@ static IpsOption* so_ctor(
     SnortConfig*, char* args, OptTreeNode* otn)
 {
     void* data;
-    so_eval_f func = IpsManager::get_so_eval(otn->soid, args, &data);
+    SoEvalFunc func = IpsManager::get_so_eval(otn->soid, args, &data);
 
     if ( !func )
     {

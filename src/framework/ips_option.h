@@ -71,21 +71,21 @@ private:
     option_type_t type;
 };
 
-typedef void (*ips_opt_f)(SnortConfig*);
-typedef bool (*ips_chk_f)();
-
-typedef IpsOption* (*ips_new_f)(SnortConfig*, char*, struct OptTreeNode*);
-typedef void (*ips_del_f)(IpsOption*);
-
 // FIXIT is this still useful?
-typedef enum _RuleOptType
+enum RuleOptType
 {
     OPT_TYPE_ACTION = 0,
     OPT_TYPE_LOGGING,
     OPT_TYPE_DETECTION,
     OPT_TYPE_MAX
 
-} RuleOptType;
+};
+
+typedef void (*IpsOptFunc)(SnortConfig*);
+typedef bool (*IpsChkFunc)();
+
+typedef IpsOption* (*IpsNewFunc)(SnortConfig*, char*, struct OptTreeNode*);
+typedef void (*IpsDelFunc)(IpsOption*);
 
 struct IpsApi
 {
@@ -94,13 +94,13 @@ struct IpsApi
     unsigned max_per_rule;
     unsigned protos;
 
-    ips_opt_f ginit;
-    ips_opt_f gterm;
-    ips_opt_f tinit;
-    ips_opt_f tterm;
-    ips_new_f ctor;
-    ips_del_f dtor;
-    ips_chk_f verify;
+    IpsOptFunc ginit;
+    IpsOptFunc gterm;
+    IpsOptFunc tinit;
+    IpsOptFunc tterm;
+    IpsNewFunc ctor;
+    IpsDelFunc dtor;
+    IpsChkFunc verify;
 };
 
 static inline int ips_option_eval(void* v, Packet* p)

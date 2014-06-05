@@ -114,10 +114,10 @@ private:
 extern THREAD_LOCAL PreprocStats mpsePerfStats;
 #endif
 
-typedef void (*mpse_opt_f)(SnortConfig*);
-typedef void (*mpse_exe_f)();
+typedef void (*MpseOptFunc)(SnortConfig*);
+typedef void (*MpseExeFunc)();
 
-typedef Mpse* (*mpse_new_f)(
+typedef Mpse* (*MpseNewFunc)(
     SnortConfig* sc,
     class Module*,
     bool use_gc,
@@ -125,21 +125,21 @@ typedef Mpse* (*mpse_new_f)(
     void (*tree_free)(void**),
     void (*list_free)(void**));
 
-typedef void (*mpse_del_f)(Mpse*);
+typedef void (*MpseDelFunc)(Mpse*);
 
 struct MpseApi
 {
     BaseApi base;
     bool trim;
 
-    mpse_opt_f activate;
-    mpse_opt_f setup;
-    mpse_exe_f start;
-    mpse_exe_f stop;
-    mpse_new_f ctor;
-    mpse_del_f dtor;
-    mpse_exe_f init;
-    mpse_exe_f print;
+    MpseOptFunc activate;
+    MpseOptFunc setup;
+    MpseExeFunc start;
+    MpseExeFunc stop;
+    MpseNewFunc ctor;
+    MpseDelFunc dtor;
+    MpseExeFunc init;
+    MpseExeFunc print;
 };
 
 #endif

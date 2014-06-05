@@ -64,16 +64,16 @@ protected:
     Logger() { };
 };
 
-typedef Logger* (*eh_new)(struct SnortConfig*, class Module*);
-typedef void (*eh_del)(Logger*);
+typedef Logger* (*LogNewFunc)(struct SnortConfig*, class Module*);
+typedef void (*LogDelFunc)(Logger*);
 
 // FIXIT ensure all eh provide stats
 struct LogApi
 {
     BaseApi base;
     unsigned flags;
-    eh_new ctor;
-    eh_del dtor;
+    LogNewFunc ctor;
+    LogDelFunc dtor;
 };
 
 #endif
