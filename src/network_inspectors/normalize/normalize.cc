@@ -294,8 +294,9 @@ static const InspectApi no_api =
         mod_dtor
     },
     IT_PACKET,
-    nullptr, // service
     PROTO_BITS,
+    nullptr, // service
+    nullptr, // contents
     no_init,
     nullptr, // term
     no_ctor,
@@ -305,7 +306,8 @@ static const InspectApi no_api =
     nullptr, // ssn
     no_sum,
     no_stats,
-    no_reset
+    no_reset,
+    nullptr  // getbuf
 };
 
 const BaseApi* nin_normalize = &no_api.base;

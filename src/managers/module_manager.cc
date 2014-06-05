@@ -198,7 +198,7 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
 
     else if ( !pfx || !strncmp(key.c_str(), pfx, strlen(pfx)) )
     {
-#if 0
+#if 1
         cout << item();
         cout << p->get_type();
         cout << " " << emphasis(key);

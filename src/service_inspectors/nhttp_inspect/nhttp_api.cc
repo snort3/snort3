@@ -115,8 +115,9 @@ const InspectApi NHttpApi::nhttp_api =
         NHttpApi::nhttp_mod_dtor
     },
     IT_SERVICE,
-    "http",
     PROTO_BIT__TCP,
+    "http",
+    nullptr, // contents
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,
     NHttpApi::nhttp_ctor,
@@ -126,7 +127,8 @@ const InspectApi NHttpApi::nhttp_api =
     nullptr, // ssn
     NHttpApi::nhttp_sum,
     NHttpApi::nhttp_stats,
-    NHttpApi::nhttp_reset
+    NHttpApi::nhttp_reset,
+    nullptr  // getbuf
 };
 
 #ifdef BUILDING_SO

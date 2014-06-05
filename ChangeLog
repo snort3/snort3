@@ -4,6 +4,7 @@
    defaults)
 -- removed -b, -N, -Z and, --perfmon-file options
 -- removed uricontent ips rule option
+-- added contents and getbuf to InspectApi for content buffers
 
 
 84

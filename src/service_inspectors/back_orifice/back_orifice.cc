@@ -626,8 +626,9 @@ static const InspectApi bo_api =
         mod_dtor
     },
     IT_SERVICE, 
-    nullptr, // service
     PROTO_BIT__UDP,
+    nullptr, // service
+    nullptr, // contents
     bo_init,
     nullptr, // term
     bo_ctor,
@@ -637,7 +638,8 @@ static const InspectApi bo_api =
     nullptr, // ssn
     bo_sum,
     bo_stats,
-    bo_reset
+    bo_reset,
+    nullptr  // getbuf
 };
 
 #ifdef BUILDING_SO
