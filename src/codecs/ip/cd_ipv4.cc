@@ -295,16 +295,8 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if(csum)
         {
             p->error_flags |= PKT_ERR_CKSUM_IP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad IP checksum\n"););
-
             codec_events::exec_ip_chksm_drop(p);
         }
-#ifdef DEBUG_MSGS
-        else
-        {
-            DebugMessage(DEBUG_DECODE, "IP Checksum: OK\n");
-        }
-#endif /* DEBUG */
     }
 
     /* test for IP options */

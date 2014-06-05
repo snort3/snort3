@@ -475,14 +475,8 @@ bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
     if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp4::unreach_data()))
         return false;
 
-
     const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
     ho = reinterpret_cast<IcmpHdr*>(out->base);
-
-#ifdef DEBUG
-    if ( (int)enc->type < (int)EncodeType::ENC_UNR_NET )
-        return false;
-#endif
 
     enc->proto = IPPROTO_ID_ICMPV4;
     ho->type = icmp4::IcmpType::DEST_UNREACH;

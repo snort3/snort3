@@ -476,17 +476,8 @@ bool Icmp6Codec::encode (EncState* enc, Buffer* out, const uint8_t *raw_in)
     ho->cksum = 0;
     ho->unused = 0;
 
-    int len;
-
-#ifdef DEBUG
-    if ( (int)enc->type < (int) EncodeType::ENC_UNR_NET )
-        return false;
-#endif
-
     enc->proto = IPPROTO_ICMPV6;
-
-
-    len = buff_diff(out, (uint8_t *)ho);
+    int len = buff_diff(out, (uint8_t *)ho);
 
     memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.s6_addr, sizeof(ps6.sip));
     memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.s6_addr, sizeof(ps6.dip));
