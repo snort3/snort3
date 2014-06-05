@@ -29,6 +29,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
+#include <string.h>
 
 #ifndef WIN32
 #include <sys/socket.h>
@@ -57,7 +58,7 @@ extern "C" {
 
 /*  D E F I N E S  ************************************************************/
 
-
+#if 0
 #define ETH_DSAP_SNA                  0x08    /* SNA */
 #define ETH_SSAP_SNA                  0x00    /* SNA */
 #define ETH_DSAP_STP                  0x42    /* Spanning Tree Protocol */
@@ -67,8 +68,7 @@ extern "C" {
 
 #define ETH_ORG_CODE_ETHR              0x000000    /* Encapsulated Ethernet */
 #define ETH_ORG_CODE_CDP               0x00000c    /* Cisco Discovery Proto */
-
-#define ETHERNET_MAX_LEN_ENCAP          1518    /* 802.3 (+LLC) or ether II ? */
+#endif
 
 
 #define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
@@ -77,6 +77,7 @@ extern "C" {
 
 #define MAX_PORTS 65536
 
+#if 0
 /* ppp header structure
  *
  * Actually, this is the header for RFC1332 Section 3
@@ -98,13 +99,7 @@ struct ppp_header {
     #define PPP_MTU                 1500
 #endif
 
-/* enc interface */
-struct enc_header {
-    uint32_t af;
-    uint32_t spi;
-    uint32_t flags;
-};
-#define ENC_HEADER_LEN          12
+#endif
 
 
 #define IP_OPTMAX               40
@@ -115,62 +110,36 @@ struct enc_header {
 
 
 
-
-#define EXTRACT_16BITS(p) ((uint16_t) ntohs (*(uint16_t *)(p)))
+static inline uint16_t EXTRACT_16BITS(const uint8_t* p)
+{
+    return ntohs(*(uint16_t*)(p));
+}
 
 #ifdef WORDS_MUSTALIGN
 
 #if defined(__GNUC__)
 /* force word-aligned ntohl parameter */
-    #define EXTRACT_32BITS(p)  ({ uint32_t __tmp; memmove(&__tmp, (p), sizeof(uint32_t)); (uint32_t) ntohl(__tmp);})
+    static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+    {
+        uint32_t tmp;
+        memmove(&tmp, p, sizeof(uint32_t));
+        return ntohl(tmp);
+    }
 #endif /* __GNUC__ */
 
 #else
 
 /* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
-    #define EXTRACT_32BITS(p) ((uint32_t) ntohl (*(uint32_t *)(p)))
-
-#endif                /* WORDS_MUSTALIGN */
-
-
-/* Default classification for decoder alerts */
-#define DECODE_CLASS 25
-
-#define        ALERTMSG_LENGTH 256
-
-/*  P R O T O T Y P E S  ******************************************************/
-
-// root decoders
-
-// chained decoders
+    static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+    {
+        return ntohl(*(uint32_t *)p);
+    }
+#endif /* WORDS_MUSTALIGN */
 
 
-void BsdFragHashInit(int max);
-void BsdFragHashCleanup(void);
-void BsdFragHashReset(void);
 
-#if defined(WORDS_MUSTALIGN) && !defined(__GNUC__)
-uint32_t EXTRACT_32BITS (u_char *);
-#endif /* WORDS_MUSTALIGN && !__GNUC__ */
-
-/*Decode functions that need to be called once the policies are set */
-extern void DecodePolicySpecific(Packet *);
-
-/* XXX not sure where this guy needs to live at the moment */
-#if 0
-typedef struct _PortList
-{
-    int ports[32];   /* 32 is kind of arbitrary */
-
-    int num_entries;
-
-} PortList;
-#endif
-
-#define SFTARGET_UNKNOWN_PROTOCOL -1
-
-void decoder_sum();
-void decoder_stats();
+const unsigned int ALERTMSG_LENGTH = 256;
+const int16_t  SFTARGET_UNKNOWN_PROTOCOL = -1;
 
 
 

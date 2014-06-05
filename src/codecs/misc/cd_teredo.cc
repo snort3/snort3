@@ -40,10 +40,12 @@
 namespace
 {
 
+#define CD_TEREDO_NAME "codec_teredo"
+
 class TeredoCodec : public Codec
 {
 public:
-    TeredoCodec() : Codec("teredo"){};
+    TeredoCodec() : Codec(CD_TEREDO_NAME){};
     ~TeredoCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
@@ -100,7 +102,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )
             Active_SetTunnelBypass();
 
-        if (ScDeepTeredoInspection() && (!teredo::is_teredo_port(p->sp)) && (!teredo::is_teredo_port(p->dp)))
+        if ((!teredo::is_teredo_port(p->sp)) && (!teredo::is_teredo_port(p->dp)))
             p->packet_flags |= PKT_UNSURE_ENCAP;
 
         next_prot_id = IPPROTO_IPV6;
@@ -110,13 +112,11 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     return false;
 }
 
-
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new TeredoCodec();
 }
@@ -126,12 +126,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "teredo";
 static const CodecApi teredo_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_TEREDO_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

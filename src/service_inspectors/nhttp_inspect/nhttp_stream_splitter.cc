@@ -39,7 +39,6 @@ using namespace NHttpEnums;
 // Convenience function. All the housekeeping that must be done before we can return PAF_FLUSH to stream.
 void NHttpStreamSplitter::prepareFlush(NHttpFlowData* sessionData, uint32_t* flushOffset, SourceId sourceId, SectionType sectionType, bool tcpClose,
       uint64_t infractions, uint32_t numOctets) {
-    /* &&& */ printf("prepareFlush\n"); fflush(nullptr);
     sessionData->sourceId = sourceId;
     sessionData->sectionType = sectionType;
     sessionData->tcpClose = tcpClose;
@@ -52,7 +51,6 @@ void NHttpStreamSplitter::prepareFlush(NHttpFlowData* sessionData, uint32_t* flu
 }
 
 PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flushOffset) {
-    /* &&& */ printf("scan\n"); fflush(nullptr);
     // When the system begins providing TCP connection close information this won't always be false. &&&
     bool tcpClose = false;
 

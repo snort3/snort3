@@ -170,9 +170,7 @@ SnortConfig * SnortConfNew(void)
     sc->pcre_match_limit = 1500;
     sc->pcre_match_limit_recursion = 1500;
 
-    memset(sc->pid_path, 0, sizeof(sc->pid_path));
     memset(sc->pid_filename, 0, sizeof(sc->pid_filename));
-    memset(sc->pidfile_suffix, 0, sizeof(sc->pidfile_suffix));
 
     /* Default max size of the attribute table */
     sc->max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
@@ -213,17 +211,11 @@ void SnortConfFree(SnortConfig *sc)
     if (sc->bpf_file != NULL)
         free(sc->bpf_file);
 
-    if (sc->pcap_log_file != NULL)
-        free(sc->pcap_log_file);
-
     if (sc->chroot_dir != NULL)
         free(sc->chroot_dir);
 
     if (sc->alert_file != NULL)
         free(sc->alert_file);
-
-    if (sc->perf_file != NULL)
-        free(sc->perf_file);
 
     if (sc->bpf_filter != NULL)
         free(sc->bpf_filter);
@@ -294,15 +286,6 @@ void SnortConfFree(SnortConfig *sc)
 
     if (sc->gtp_ports)
         free(sc->gtp_ports);
-
-#ifdef REG_TEST
-
-    if(sc->ha_out)
-        free(sc->ha_out);
-
-    if(sc->ha_in)
-        free(sc->ha_in);
-#endif
 
     free_file_config(sc->file_config);
 
@@ -389,9 +372,6 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
             p->checksum_eval = cl_drop;
     }
 
-    if (cmd_line->pid_path[0] != '\0')
-        ConfigPidPath(config_file, cmd_line->pid_path);
-
     if (cmd_line->obfuscation_net.family != 0)
         memcpy(&config_file->obfuscation_net, &cmd_line->obfuscation_net, sizeof(sfip_t));
 
@@ -424,30 +404,14 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
         config_file->user_id = cmd_line->user_id;
 
     /* Only configurable on command line */
-    if (cmd_line->pcap_log_file != NULL)
-        config_file->pcap_log_file = SnortStrdup(cmd_line->pcap_log_file);
-
     if (cmd_line->file_mask != 0)
         config_file->file_mask = cmd_line->file_mask;
-
-    if (cmd_line->pidfile_suffix[0] != '\0')
-    {
-        SnortStrncpy(config_file->pidfile_suffix, cmd_line->pidfile_suffix,
-                     sizeof(config_file->pidfile_suffix));
-    }
 
     if (cmd_line->chroot_dir != NULL)
     {
         if (config_file->chroot_dir != NULL)
             free(config_file->chroot_dir);
         config_file->chroot_dir = SnortStrdup(cmd_line->chroot_dir);
-    }
-
-    if (cmd_line->perf_file != NULL)
-    {
-        if (config_file->perf_file != NULL)
-            free(config_file->perf_file);
-        config_file->perf_file = SnortStrdup(cmd_line->perf_file);
     }
 
     if ( cmd_line->daq_type )
@@ -493,24 +457,6 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 
     if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
         config_file->event_queue_config->process_all_events = 1;
-
-#ifdef REG_TEST
-    config_file->ha_peer = cmd_line->ha_peer;
-
-    if ( cmd_line->ha_out )
-    {
-        if(config_file->ha_out != NULL)
-            free(config_file->ha_out);
-        config_file->ha_out = strdup(cmd_line->ha_out);
-    }
-
-    if ( cmd_line->ha_in )
-    {
-        if(config_file->ha_in != NULL)
-            free(config_file->ha_in);
-        config_file->ha_in = strdup(cmd_line->ha_in);
-    }
-#endif
 
     if ( cmd_line->max_threads )
         config_file->max_threads = cmd_line->max_threads;

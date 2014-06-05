@@ -52,7 +52,7 @@ static const Parameter arp_spoof_params[] =
     { "unicast", Parameter::PT_BOOL, nullptr, "false",
       "help" },
 
-    { "hosts", Parameter::PT_LIST, nullptr, arp_spoof_hosts_params,
+    { "hosts", Parameter::PT_LIST, arp_spoof_hosts_params, nullptr,
       "help" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

@@ -34,6 +34,7 @@
 #include "stream/stream_api.h"
 #include "main/snort.h"
 #include "packet_io/active.h"
+#include "codecs/ip/cd_ipv6_module.h"
 
 namespace
 {
@@ -41,7 +42,7 @@ namespace
 class Ipv6Codec : public Codec
 {
 public:
-    Ipv6Codec() : Codec("ipv6"){};
+    Ipv6Codec() : Codec(CD_IPV6_NAME){};
     ~Ipv6Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
@@ -668,8 +669,17 @@ void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 // api
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new Ipv6Module;
+}
 
-static Codec* ctor()
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new Ipv6Codec();
 }
@@ -679,16 +689,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ipv6";
 static const CodecApi ipv6_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_IPV6_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

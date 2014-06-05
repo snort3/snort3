@@ -55,7 +55,6 @@ time/libtime.a \
 actions/libactions.a \
 events/libevents.a \
 hash/libhash.a \
-mempool/libmempool.a \
 log/liblog.a \
 packet_io/libpacket_io.a \
 helpers/libhelpers.a \
@@ -80,7 +79,6 @@ log \
 loggers \
 main \
 managers \
-mempool \
 network_inspectors \
 packet_io \
 parser \

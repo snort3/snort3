@@ -26,12 +26,32 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
-#include "decode.h"  
-#include "static_include.h"
+#include "decode.h"
 
 
-#include "../decoder_includes.h"
+
+
+
+// THESE ARE NEVER USED!!
+#define MINIMAL_TOKENRING_HEADER_LEN    22
+#define TR_HLEN                         MINIMAL_TOKENRING_HEADER_LEN
+#define TOKENRING_LLC_LEN                8
+// DELETE FIN
+
+#define TR_ALEN             6        /* octets in an Ethernet header */
+#define IPARP_SAP           0xaa
+
+#define AC                  0x10
+#define LLC_FRAME           0x40
+
+#define TRMTU                      2000    /* 2000 bytes            */
+#define TR_RII                     0x80
+#define TR_RCF_DIR_BIT             0x80
+#define TR_RCF_LEN_MASK            0x1f00
+#define TR_RCF_BROADCAST           0x8000    /* all-routes broadcast   */
+#define TR_RCF_LIMITED_BROADCAST   0xC000    /* single-route broadcast */
+#define TR_RCF_FRAME2K             0x20
+#define TR_RCF_BROADCAST_MASK      0xC000
 
 /*
  * Function: DecodeTRPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)

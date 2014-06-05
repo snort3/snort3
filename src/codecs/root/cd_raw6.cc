@@ -25,8 +25,6 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include <pcap.h>
 
@@ -34,12 +32,13 @@
 namespace
 {
 
+#define CD_RAW6_NAME "codec_raw6"
+
 class Raw6Codec : public Codec
 {
 public:
-    Raw6Codec() : Codec("raw6"){};
+    Raw6Codec() : Codec(CD_RAW6_NAME){};
     ~Raw6Codec() {};
-
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
@@ -70,7 +69,7 @@ void Raw6Codec::get_data_link_type(std::vector<int>&v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new Raw6Codec();
 }
@@ -80,13 +79,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "raw6";
 static const CodecApi raw6_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_RAW6_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

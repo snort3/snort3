@@ -40,44 +40,31 @@
 #define MAX_MAX_METADATA_SERVICES 256
 #define MIN_MAX_METADATA_SERVICES 1
 
-/* Callback to set frag & stream policy IDs */
-typedef int (*GetPolicyIdFunc)(HostAttributeEntry *);
-typedef struct _GetPolicyIdsCallbackList
-{
-    GetPolicyIdFunc policyCallback;
-    struct _GetPolicyIdsCallbackList *next;
-} GetPolicyIdsCallbackList;
-void SFAT_SetPolicyIds(GetPolicyIdFunc policyCallback);
-
-/* Cleanup Functions, called by Snort shutdown */
+/* main Functions, called by Snort shutdown */
+void SFAT_Init();
+void SFAT_Start();
 void SFAT_Cleanup(void);
 void FreeHostEntry(HostAttributeEntry *host);
 
-/* Parsing Functions -- to be called by Snort parser */
-int SFAT_ParseAttributeTable(const char *args);
-
-/* Status functions */
+/* status functions */
 uint32_t SFAT_NumberOfHosts(void);
 
 /* API Lookup functions, to be called by Stream & Frag */
 HostAttributeEntry *SFAT_LookupHostEntryByIP(sfip_t *ipAddr);
 HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p);
 HostAttributeEntry *SFAT_LookupHostEntryByDst(Packet *p);
-void SFAT_UpdateApplicationProtocol(sfip_t *ipAddr, uint16_t port, uint16_t protocol, uint16_t id);
+void SFAT_UpdateApplicationProtocol(
+    sfip_t *ipAddr, uint16_t port, uint16_t protocol, uint16_t id);
 
-// reload support
+// reload functions
 struct tTargetBasedConfig;
-tTargetBasedConfig* SFAT_Reload();
+tTargetBasedConfig* SFAT_Swap();
 tTargetBasedConfig* SFAT_GetConfig();
 void SFAT_SetConfig(tTargetBasedConfig*);
 void SFAT_Free(tTargetBasedConfig*);
 
 /* Returns whether this has been configured */
 int IsAdaptiveConfigured();
-int IsAdaptiveConfiguredForSnortConfig(SnortConfig*);
 
-void SFLAT_init(void);
-void SFLAT_fini(void);
-int  SFLAT_isEnabled(PolicyId id, int parsing);
 #endif /* SFTARGET_READER_H */
 

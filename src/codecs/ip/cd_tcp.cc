@@ -44,7 +44,7 @@
 #include "protocols/tcp.h"
 #include "protocols/packet.h"
 #include "framework/codec.h"
-
+#include "codecs/ip/cd_tcp_module.h"
 
 namespace
 {
@@ -52,7 +52,7 @@ namespace
 class TcpCodec : public Codec
 {
 public:
-    TcpCodec() : Codec("tcp")
+    TcpCodec() : Codec(CD_TCP_NAME)
     {
 
     };
@@ -143,9 +143,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         codec_events::decoder_event(p, DECODE_TCP_INVALID_OFFSET);
 
         p->tcph = NULL;
-//        dc.discards++;
-//        dc.tdisc++;
-
         return false;
     }
 
@@ -158,9 +155,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         codec_events::decoder_event(p, DECODE_TCP_LARGE_OFFSET);
 
         p->tcph = NULL;
-//        dc.discards++;
-//        dc.tdisc++;
-
         return false;
     }
 
@@ -242,7 +236,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                                     ntohs(p->tcph->th_sum)););
 
             codec_events::exec_tcp_chksm_drop(p);
-//            dc.invalid_checksums++;
         }
         else
         {
@@ -263,8 +256,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         // Allowing this packet for further processing
         // (in case there is a valid data inside it).
         /*p->tcph = NULL;
-        dc.discards++;
-        dc.tdisc++;
         return;*/
     }
 
@@ -1032,6 +1023,16 @@ static inline unsigned short in_chksum_tcp6(pseudoheader6 *ph,
 // api
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new TcpModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
 /*
  * Static api functions.  there are NOT part of the TCPCodec class,
  * but provide global initializers and/or destructors to the class
@@ -1047,17 +1048,13 @@ static void tcp_codec_ginit()
 
 }
 
-
-
 static void tcp_codec_gterm()
 {
     if( SynToMulticastDstIp )
         sfvar_free(SynToMulticastDstIp);
 }
 
-
-
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new TcpCodec();
 }
@@ -1067,21 +1064,20 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "tcp";
 static const CodecApi tcp_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_TCP_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     tcp_codec_ginit, // pinit
     tcp_codec_gterm, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

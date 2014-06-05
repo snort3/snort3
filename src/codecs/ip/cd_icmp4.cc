@@ -33,11 +33,11 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "codecs/decode_module.h"
 #include "protocols/icmp4.h"
 #include "codecs/codec_events.h"
 #include "codecs/checksum.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/ip/cd_icmp4_module.h"
 
 
 namespace{
@@ -46,7 +46,7 @@ namespace{
 class Icmp4Codec : public Codec{
 
 public:
-    Icmp4Codec() : Codec("icmp4"){};
+    Icmp4Codec() : Codec(CD_ICMP4_NAME){};
     ~Icmp4Codec() {};
     
     virtual void get_protocol_ids(std::vector<uint16_t>&);
@@ -178,7 +178,6 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len,
             p->error_flags |= PKT_ERR_CKSUM_ICMP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad ICMP Checksum\n"););
             codec_events::exec_icmp_chksm_drop(p);
-//            dc.invalid_checksums++;
         }
         else
         {
@@ -476,14 +475,8 @@ bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
     if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp4::unreach_data()))
         return false;
 
-
     const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
     ho = reinterpret_cast<IcmpHdr*>(out->base);
-
-#ifdef DEBUG
-    if ( (int)enc->type < (int)EncodeType::ENC_UNR_NET )
-        return false;
-#endif
 
     enc->proto = IPPROTO_ID_ICMPV4;
     ho->type = icmp4::IcmpType::DEST_UNREACH;
@@ -530,7 +523,18 @@ void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 // api
 //-------------------------------------------------------------------------
 
-static Codec *ctor()
+
+static Module* mod_ctor()
+{
+    return new Icmp4Module;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec *ctor(Module*)
 {
     return new Icmp4Codec();
 }
@@ -540,21 +544,20 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "icmp4";
 static const CodecApi icmp4_api =
 {
-    { 
+    {
         PT_CODEC,
-        name,
+        CD_ICMP4_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor, // ctor
     dtor, // dtor
 };

@@ -74,7 +74,7 @@ struct SnortConfig
     //------------------------------------------------------
     // alert module stuff
     char *alert_file;
-    int default_rule_state;     /* config default_rule_state */
+    int default_rule_state;
 
     uint16_t flowbit_size;
     sfip_t homenet;
@@ -84,9 +84,9 @@ struct SnortConfig
     int output_flags;
     int logging_flags;
 
-    uint8_t log_ipv6_extra; /* config log_ipv6_extra_data */
+    uint8_t log_ipv6_extra;
     uint16_t event_trace_max;
-    long int tagged_packet_limit;            /* config tagged_packet_limit */
+    long int tagged_packet_limit;
 
     char* event_trace_file;
     char *log_dir;           /* -l or config log_dir */
@@ -100,8 +100,8 @@ struct SnortConfig
 
     //------------------------------------------------------
     // detection module stuff
-    long int pcre_match_limit;               /* config pcre_match_limit */
-    long int pcre_match_limit_recursion;     /* config pcre_match_limit_recursion */
+    long int pcre_match_limit;
+    long int pcre_match_limit_recursion;
     int pcre_ovector_size;  // computed from rules
 
     int asn1_mem;
@@ -110,8 +110,8 @@ struct SnortConfig
     //------------------------------------------------------
     // profling module stuff
 #ifdef PERF_PROFILING
-    ProfileConfig profile_rules;     /* config profile_rules */
-    ProfileConfig profile_preprocs;  /* config profile_preprocs */
+    ProfileConfig profile_rules;
+    ProfileConfig profile_preprocs;
 #endif
 
     //------------------------------------------------------
@@ -126,17 +126,15 @@ struct SnortConfig
     char* plugin_path;
     char* script_path;
 
-    char pid_path[STD_BUF];  /* --pid-path or config pidpath */  // FIXIT still used??
-
     mode_t file_mask;
 
     //------------------------------------------------------
     // decode module stuff
-    uint8_t mpls_payload_type;  /* --mpls_payload_type */
-    long int mpls_stack_depth;  /* --max_mpls_labelchain_len */
+    uint8_t mpls_payload_type;
+    long int mpls_stack_depth;
 
-    uint8_t enable_teredo; /* config enable_deep_teredo_inspection */
-    uint8_t enable_gtp; /* config enable_gtp */
+    uint8_t enable_teredo;
+    uint8_t enable_gtp;
     char *gtp_ports;
     uint8_t enable_esp;
 
@@ -144,26 +142,25 @@ struct SnortConfig
 
     //------------------------------------------------------
     // active stuff
-    uint8_t respond_attempts;    /* config respond */
+    uint8_t respond_attempts;
     uint8_t max_responses;
     uint8_t min_interval;
     char* respond_device;
-    uint8_t *eth_dst;        /* config destination MAC address */
+    uint8_t *eth_dst;
 
-    char* react_page;        /* config react */
+    char* react_page;
     const char* output;
 
     //------------------------------------------------------
     // attribute tables stuff
-    const char* attribute_file;
-    uint32_t max_attribute_hosts;    /* config max_attribute_hosts */
-    uint32_t max_attribute_services_per_host;    /* config max_attribute_services_per_host */
-    uint32_t max_metadata_services;  /* config max_metadata_services */
+    uint32_t max_attribute_hosts;
+    uint32_t max_attribute_services_per_host;
+    uint32_t max_metadata_services;
 
     //------------------------------------------------------
     // packet module stuff
-    uint8_t vlan_agnostic; /* config vlan_agnostic */
-    uint8_t addressspace_agnostic; /* config addressspace_agnostic */
+    uint8_t vlan_agnostic;
+    uint8_t addressspace_agnostic;
 
     uint64_t pkt_cnt;           /* -n */
     uint64_t pkt_skip;
@@ -191,16 +188,10 @@ struct SnortConfig
     sfip_t obfuscation_net;  // -B
     char *bpf_filter;        // --bpf
 
-    // FIXIT make sure these are relative to instance dir
-    char *pcap_log_file;     /* -L */
-    char *perf_file;         /* -Z */
-
     //------------------------------------------------------
     // FIXIT non-module stuff - separate config from derived state?
 
-    char pid_filename[STD_BUF];  /* used with pid_path */  // FIXIT delete these
-    char pidfile_suffix[MAX_PIDFILE_SUFFIX + 1];  /* -R */
-
+    char pid_filename[STD_BUF];
     char *orig_log_dir;      /* set in case of chroot */
 
     int thiszone;
@@ -259,9 +250,6 @@ struct SnortConfig
     uint8_t tunnel_mask;
 
     uint32_t so_rule_memcap;
-    bool ha_peer;
-    char *ha_out;
-    char *ha_in;
     char *output_dir;
 
     struct VarNode* var_list;

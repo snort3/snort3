@@ -490,11 +490,6 @@ static inline int ScGid(void)
     return snort_conf->group_id;
 }
 
-static inline char * ScPcapLogFile(void)
-{
-    return snort_conf->pcap_log_file;
-}
-
 // use of macro avoids depending on generators.h
 #define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)
 

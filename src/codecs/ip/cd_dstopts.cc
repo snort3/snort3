@@ -37,10 +37,12 @@
 namespace
 {
 
+#define CD_DSTOPTS_NAME "codec_ipv6_dstopts"
+
 class Ipv6DSTOptsCodec : public Codec
 {
 public:
-    Ipv6DSTOptsCodec() : Codec("ipv6_dstopts"){};
+    Ipv6DSTOptsCodec() : Codec(CD_DSTOPTS_NAME){};
     ~Ipv6DSTOptsCodec() {};
 
 
@@ -124,7 +126,7 @@ bool Ipv6DSTOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new Ipv6DSTOptsCodec();
 }
@@ -134,13 +136,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ipv6_dstopts";
-
 static const CodecApi ipv6_dstopts_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_DSTOPTS_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

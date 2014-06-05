@@ -42,18 +42,15 @@ const Parameter NHttpModule::nhttpParams[] =
      { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
 
 bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    /* &&& */ printf("Module begin\n"); fflush(nullptr);
     test_mode = false;
     return true;
 }
 
 bool NHttpModule::end(const char*, int, SnortConfig*) {
-    /* &&& */ printf("Module end\n"); fflush(nullptr);
     return true;
 }
 
 bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    /* &&& */ printf("Module set\n"); fflush(nullptr);
     if (val.is("test_mode")) {
         test_mode = val.get_bool();
         return true;
@@ -62,7 +59,6 @@ bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
 }
 
 unsigned NHttpModule::get_gid() const {
-    /* &&& */ printf("Module get_gid\n"); fflush(nullptr);
     return NHTTP_GID;
 }
 

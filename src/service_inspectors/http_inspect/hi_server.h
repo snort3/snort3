@@ -71,7 +71,5 @@ typedef struct s_HI_SERVER
 
 int hi_server_inspection(void *, Packet *, HttpsessionData *);
 
-extern THREAD_LOCAL MemPool *hi_gzip_mempool;
-
 #endif
 

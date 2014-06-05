@@ -25,7 +25,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/link/cd_arp_module.h"
 #include "codecs/codec_events.h"
 
 namespace
@@ -34,7 +34,7 @@ namespace
 class ArpCodec : public Codec
 {
 public:
-    ArpCodec() : Codec("arp"){};
+    ArpCodec() : Codec(CD_ARP_NAME){};
     ~ArpCodec(){};
 
 
@@ -80,9 +80,6 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t& /* next_prot_id */)
 {
-//    if (p->greh != NULL)
-//        dc.gre_arp++;
-
     p->ah = (EtherARP *) raw_pkt;
 
     if(len < sizeof(EtherARP))
@@ -103,8 +100,17 @@ bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 // api
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new ArpModule;
+}
 
-static Codec* ctor()
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new ArpCodec();
 }
@@ -114,16 +120,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "arp";
 static const CodecApi arp_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_ARP_NAME,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm
@@ -133,16 +138,4 @@ static const CodecApi arp_api =
     dtor, // dtor
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &arp_api.base,
-    nullptr
-};
-#else
 const BaseApi* cd_arp = &arp_api.base;
-#endif
-
-
-
-

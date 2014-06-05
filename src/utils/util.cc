@@ -68,12 +68,6 @@
 #define PATH_MAX_UTIL 1024
 #endif
 
-// You may need to adjust this on the systems which don't have standard paths
-// defined.
-#ifndef _PATH_VARRUN
-static char _PATH_VARRUN[STD_BUF];  // FIXIT 1 / process
-#endif
-
 char **protocol_names = NULL;
 
 /****************************************************************************
@@ -297,75 +291,9 @@ static FILE *pid_file = NULL;
 
 void CreatePidFile(pid_t pid)
 {
-    struct stat pt;
-
-    if (!ScReadMode())
-    {
-        LogMessage("Checking PID path...\n");
-
-        if (strlen(snort_conf->pid_path) != 0)
-        {
-            if((stat(snort_conf->pid_path, &pt) == -1) ||
-                !S_ISDIR(pt.st_mode) || access(snort_conf->pid_path, W_OK) == -1)
-            {
-                /* Save this just in case it's reset with LogMessage call */
-                int err = errno;
-
-                LogMessage("WARNING: %s is invalid, trying "
-                           "/var/run...\n", snort_conf->pid_path);
-                if (err)
-                {
-                    LogMessage("Previous Error, errno=%d, (%s)\n",
-                               err, get_error(err) == NULL ? "Unknown error" : get_error(err));
-                }
-                memset(snort_conf->pid_path, 0, sizeof(snort_conf->pid_path));
-            }
-            else
-            {
-                LogMessage("PID path stat checked out ok, "
-                           "PID path set to %s\n", snort_conf->pid_path);
-            }
-        }
-
-        if (strlen(snort_conf->pid_path) == 0)
-        {
-#ifndef _PATH_VARRUN
-            SnortStrncpy(_PATH_VARRUN, "/var/run/", sizeof(_PATH_VARRUN));
-#else
-            LogMessage("PATH_VARRUN is set to %s on this operating "
-                       "system\n", _PATH_VARRUN);
-#endif  /* _PATH_VARRUN */
-
-            stat(_PATH_VARRUN, &pt);
-
-            if(!S_ISDIR(pt.st_mode) || access(_PATH_VARRUN, W_OK) == -1)
-            {
-                LogMessage("WARNING: _PATH_VARRUN is invalid, trying "
-                           "/var/log/ ...\n");
-                SnortStrncpy(snort_conf->pid_path, "/var/log/", sizeof(snort_conf->pid_path));
-                stat(snort_conf->pid_path, &pt);
-
-                if(!S_ISDIR(pt.st_mode) || access(snort_conf->pid_path, W_OK) == -1)
-                {
-                    LogMessage("WARNING: %s is invalid, logging Snort "
-                               "PID path to log directory (%s).\n", snort_conf->pid_path,
-                               snort_conf->log_dir);
-                    CheckLogDir();
-                    SnortSnprintf(snort_conf->pid_path, sizeof(snort_conf->pid_path),
-                                  "%s/", snort_conf->log_dir);
-                }
-            }
-            else
-            {
-                LogMessage("PID path stat checked out ok, "
-                           "PID path set to %s\n", _PATH_VARRUN);
-                SnortStrncpy(snort_conf->pid_path, _PATH_VARRUN, sizeof(snort_conf->pid_path));
-            }
-        }
-    }
-
-    SnortSnprintf(snort_conf->pid_filename, sizeof(snort_conf->pid_filename),
-          "%s/snort%s.pid", snort_conf->pid_path, snort_conf->pidfile_suffix);
+    const char* dir = snort_conf->log_dir ? snort_conf->log_dir : ".";
+    SnortSnprintf(snort_conf->pid_filename, 
+        sizeof(snort_conf->pid_filename), "%s/snort.pid", dir);
 
     if (!ScNoLockPidFile())
     {
@@ -373,7 +301,8 @@ void CreatePidFile(pid_t pid)
         int lock_fd;
 
         /* First, lock the PID file */
-        SnortSnprintf(pid_lockfilename, STD_BUF, "%s.lck", snort_conf->pid_filename);
+        SnortSnprintf(pid_lockfilename, STD_BUF, "%s.lck",
+            snort_conf->pid_filename);
         pid_lockfile = fopen(pid_lockfilename, "w");
 
         if (pid_lockfile)
@@ -389,7 +318,8 @@ void CreatePidFile(pid_t pid)
             if (fcntl(lock_fd, F_SETLK, &lock) == -1)
             {
                 ClosePidFile();
-                FatalError("Failed to Lock PID File \"%s\" for PID \"%d\"\n", snort_conf->pid_filename, (int)pid);
+                FatalError("Failed to Lock PID File \"%s\" for PID \"%d\"\n",
+                    snort_conf->pid_filename, (int)pid);
             }
         }
     }
@@ -398,14 +328,16 @@ void CreatePidFile(pid_t pid)
     pid_file = fopen(snort_conf->pid_filename, "w");
     if(pid_file)
     {
-        LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid, snort_conf->pid_filename);
+        LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid,
+            snort_conf->pid_filename);
         fprintf(pid_file, "%d\n", (int)pid);
         fflush(pid_file);
     }
     else
     {
         const char* error = get_error(errno);
-        ErrorMessage("Failed to create pid file %s, Error: %s", snort_conf->pid_filename, error);
+        ErrorMessage("Failed to create pid file %s, Error: %s",
+            snort_conf->pid_filename, error);
         snort_conf->pid_filename[0] = 0;
     }
 }

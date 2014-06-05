@@ -239,40 +239,6 @@ static int GetPcaps(SF_LIST *pol, SF_QUEUE *pcap_queue)
 
         switch (pro->type)
         {
-            case SOURCE_SINGLE:
-                {
-                    char *pcap = NULL;
-                    struct stat stat_buf;
-
-                    /* Don't check file if reading from stdin */
-                    if (ScReadMode() && strcmp(arg, "-") != 0)
-                    {
-                        /* do a quick check to make sure file exists */
-                        if (stat(arg, &stat_buf) == -1)
-                        {
-                            ErrorMessage("Error getting stat on pcap file: %s: %s\n",
-                                         arg, get_error(errno));
-                            //return -1;
-                        }
-                        else if (!(stat_buf.st_mode & (S_IFREG|S_IFIFO)))
-                        {
-                            ErrorMessage("Specified pcap is not a regular file: %s\n", arg);
-                            return -1;
-                        }
-                    }
-
-                    pcap = SnortStrdup(arg);
-                    ret = sfqueue_add(pcap_queue, (NODE_DATA)pcap);
-                    if (ret == -1)
-                    {
-                        ErrorMessage("Could not add pcap to pcap list\n");
-                        free(pcap);
-                        return -1;
-                    }
-                }
-
-                break;
-
             case SOURCE_FILE_LIST:
                 /* arg should be a file with a list of pcaps in it */
                 {

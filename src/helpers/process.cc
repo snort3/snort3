@@ -23,6 +23,9 @@
 #include <stdio.h>
 #include <sys/wait.h>
 
+#include <iostream>
+using namespace std;
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -31,6 +34,25 @@
 #include "main/analyzer.h"
 #include "snort.h"
 #include "utils/ring.h"
+
+#ifndef SIGNAL_SNORT_RELOAD
+#define SIGNAL_SNORT_RELOAD        SIGHUP
+#endif
+
+#ifndef SIGNAL_SNORT_DUMP_STATS
+#define SIGNAL_SNORT_DUMP_STATS    SIGUSR1
+#endif
+
+#ifndef SIGNAL_SNORT_ROTATE_STATS
+#define SIGNAL_SNORT_ROTATE_STATS  SIGUSR2
+#endif
+
+// this one should not be changed by user
+#define SIGNAL_SNORT_CHILD_READY   SIGCHLD
+
+#ifndef SIGNAL_SNORT_READ_ATTR_TBL
+#define SIGNAL_SNORT_READ_ATTR_TBL SIGURG
+#endif
 
 const char* pig_sig_names[PIG_SIG_MAX] =
 {
@@ -66,6 +88,12 @@ static void exit_handler(int signal)
         _exit(0);
 
     sig_ring.put(s);
+}
+
+static void dirty_handler(int signal)
+{
+    snort_conf->dirty_pig = 1;
+    exit_handler(signal);
 }
 
 static void dump_stats_handler(int /*signal*/)
@@ -173,14 +201,13 @@ void init_signals(void)
     sigsetmask(0);
 # endif
 
-
     /* Make this prog behave nicely when signals come along.
      * Windows doesn't like all of these signals, and will
      * set errno for some.  Ignore/reset this error so it
      * doesn't interfere with later checks of errno value.  */
     add_signal(SIGTERM, exit_handler, 1);
     add_signal(SIGINT, exit_handler, 1);
-    add_signal(SIGQUIT, exit_handler, 1);
+    add_signal(SIGQUIT, dirty_handler, 1);
 
     add_signal(SIGNAL_SNORT_DUMP_STATS, dump_stats_handler, 1);
     add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler, 1);
@@ -193,6 +220,18 @@ void init_signals(void)
     add_signal(SIGBUS, oops_handler, 1);
 
     errno = 0;
+}
+
+void help_signals()
+{
+    cout << SIGTERM << "/term: shutdown normally" << endl;
+    cout << SIGINT  << "/int: shutdown normally" << endl;
+    cout << SIGQUIT << "/quit: shutdown as if started with --dirty-pig" << endl;
+
+    cout << SIGNAL_SNORT_DUMP_STATS  << "/stats: dump stats to stdout" << endl;
+    cout << SIGNAL_SNORT_ROTATE_STATS  << "/rotate: rotate stats files" << endl;
+    cout << SIGNAL_SNORT_RELOAD  << "/reload: reload config file" << endl;
+    cout << SIGNAL_SNORT_READ_ATTR_TBL  << "/hosts: reload hosts file" << endl;
 }
 
 //-------------------------------------------------------------------------

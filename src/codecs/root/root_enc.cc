@@ -34,6 +34,16 @@
 #include "../decoder_includes.h"
 
 
+
+/* enc interface */
+struct enc_header {
+    uint32_t af;
+    uint32_t spi;
+    uint32_t flags;
+};
+#define ENC_HEADER_LEN          12
+
+
 #ifdef DLT_ENC
 /* see http://sourceforge.net/mailarchive/message.php?msg_id=1000380 */
 /*

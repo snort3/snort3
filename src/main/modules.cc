@@ -51,6 +51,7 @@ using namespace std;
 #include "codecs/decode_module.h"
 #include "time/ppm_module.h"
 #include "parser/parse_ip.h"
+#include "target_based/sftarget_data.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
@@ -324,7 +325,7 @@ static const Parameter profile_rule_params[] =
       "avg_ticks_per_match | avg_ticks_per_no_match",
       "avg_ticks", "sort by given field" },
 
-    { "file", Parameter::PT_TABLE, nullptr, profile_file_params,
+    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
       "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -339,7 +340,7 @@ static const Parameter profile_preproc_params[] =
       "checks | avg_ticks | total_ticks", "avg_ticks",
       "sort by given field" },
 
-    { "file", Parameter::PT_TABLE, nullptr, profile_file_params,
+    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
       "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -347,10 +348,10 @@ static const Parameter profile_preproc_params[] =
 
 static const Parameter profile_params[] =
 {
-    { "rules", Parameter::PT_TABLE, nullptr, profile_rule_params,
+    { "rules", Parameter::PT_TABLE, profile_rule_params, nullptr,
       "" },
 
-    { "preprocs", Parameter::PT_TABLE, nullptr, profile_preproc_params,
+    { "preprocs", Parameter::PT_TABLE, profile_preproc_params, nullptr,
       "" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -651,7 +652,7 @@ static const Parameter output_params[] =
     { "log_ipv6_extra_data", Parameter::PT_BOOL, nullptr, "false",
       "log IPv6 source and destination addresses as unified2 extra data records" },
 
-    { "event_trace", Parameter::PT_TABLE, nullptr, output_event_trace_params,
+    { "event_trace", Parameter::PT_TABLE, output_event_trace_params, nullptr,
       "" },
 
     { "quiet", Parameter::PT_BOOL, nullptr, "false",
@@ -890,6 +891,12 @@ static const Parameter daq_params[] =
     { "var", Parameter::PT_STRING, nullptr, nullptr,
       "list of name=value DAQ-specific parameters" },
 
+    { "snaplen", Parameter::PT_INT, "0:65535", "deflt",
+      "set snap length (same as -P)" },
+
+    { "decode_data_link", Parameter::PT_BOOL, nullptr, "false",
+      "display the second layer header info" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -919,6 +926,14 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("var") )
         ConfigDaqVar(sc, v.get_string());
 
+    else if ( v.is("decode_data_link") )
+    {
+        if ( v.get_bool() )
+            ConfigDecodeDataLink(sc, "");
+    }
+    else if ( v.is("snaplen") )
+        ConfigPacketSnaplen(sc, v.get_string());
+
     else
         return false;
 
@@ -931,13 +946,10 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter attribute_table_params[] =
 {
-    { "hosts_file", Parameter::PT_STRING, nullptr, nullptr,
-      "name of xml attributes file" },
-
-    { "max_attribute_hosts", Parameter::PT_INT, "32:207551", "0",
+    { "max_hosts", Parameter::PT_INT, "32:207551", "0",
       "maximum number of hosts in attribute table" },
 
-    { "max_attribute_services_per_host", Parameter::PT_INT, "1:65535", "0",
+    { "max_services_per_host", Parameter::PT_INT, "1:65535", "0",
       "maximum number of services per host entry in attribute table" },
 
     { "max_metadata_services", Parameter::PT_INT, "1:256", "0",
@@ -955,13 +967,10 @@ public:
 
 bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("hosts_file") )
-        sc->attribute_file = SnortStrdup(v.get_string());
-
-    else if ( v.is("max_attribute_hosts") )
+    if ( v.is("max_hosts") )
         sc->max_attribute_hosts = v.get_long();
 
-    else if ( v.is("max_attribute_services_per_host") )
+    else if ( v.is("max_services_per_host") )
         sc->max_attribute_services_per_host = v.get_long();
 
     else if ( v.is("max_metadata_services") )
@@ -1127,10 +1136,6 @@ static const Parameter process_params[] =
     { "utc", Parameter::PT_BOOL, nullptr, "false",
       "use UTC instead of local time for timestamps" },
 
-#ifdef NOT_UNTIL_WE_DAEMONIZE_AFTER_READING_CONFFILE
-    { "pid_path", Parameter::PT_STRING, nullptr, nullptr,
-      "set pid directory" },
-#endif
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1176,10 +1181,6 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             ConfigUtc(sc, "");
     }
-#ifdef NOT_UNTIL_WE_DAEMONIZE_AFTER_READING_CONFFILE
-    else if ( v.is("pid_path") )
-        ConfigPidPath(sc, v.get_string());
-#endif
     else
         return false;
 
@@ -1318,7 +1319,7 @@ static const Parameter suppress_params[] =
 class SuppressModule : public Module
 {
 public:
-    SuppressModule() : Module("suppress", suppress_params) { };
+    SuppressModule() : Module("suppress", suppress_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1397,7 +1398,7 @@ static const Parameter event_filter_params[] =
 class EventFilterModule : public Module
 {
 public:
-    EventFilterModule() : Module("event_filter", event_filter_params) { };
+    EventFilterModule() : Module("event_filter", event_filter_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1489,7 +1490,7 @@ static const Parameter rate_filter_params[] =
 class RateFilterModule : public Module
 {
 public:
-    RateFilterModule() : Module("rate_filter", rate_filter_params) { };
+    RateFilterModule() : Module("rate_filter", rate_filter_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1636,10 +1637,10 @@ public:
 };
 
 //-------------------------------------------------------------------------
-// bindings module
+// binder module
 //-------------------------------------------------------------------------
 
-static const Parameter bindings_when_params[] =
+static const Parameter binder_when_params[] =
 {
     { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
       "unique ID for selection of this config by external logic" },
@@ -1665,7 +1666,7 @@ static const Parameter bindings_when_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter bindings_use_params[] =
+static const Parameter binder_use_params[] =
 {
     { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
       "what to do with matching traffic" },
@@ -1688,21 +1689,21 @@ static const Parameter bindings_use_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter bindings_params[] =
+static const Parameter binder_params[] =
 {
-    { "when", Parameter::PT_TABLE, nullptr, bindings_when_params,
+    { "when", Parameter::PT_TABLE, binder_when_params, nullptr,
       "match criteria" },
 
-    { "use", Parameter::PT_TABLE, nullptr, bindings_use_params,
+    { "use", Parameter::PT_TABLE, binder_use_params, nullptr,
       "target configuration" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-class BindingsModule : public Module
+class BinderModule : public Module
 {
 public:
-    BindingsModule() : Module("bindings", bindings_params) { work = nullptr; };
+    BinderModule() : Module("binder", binder_params) { work = nullptr; };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1711,19 +1712,19 @@ private:
     Binding* work;
 };
 
-bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
+bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     // both
-    if ( !strcmp(fqn, "bindings.when.policy_id") )
+    if ( !strcmp(fqn, "binder.when.policy_id") )
         work->when_id = v.get_string();
 
-    else if ( !strcmp(fqn, "bindings.use.policy_id") )
+    else if ( !strcmp(fqn, "binder.use.policy_id") )
         work->use_id = v.get_string();
 
-    else if ( !strcmp(fqn, "bindings.when.service") )
+    else if ( !strcmp(fqn, "binder.when.service") )
         work->when_svc = v.get_string();
 
-    else if ( !strcmp(fqn, "bindings.use.service") )
+    else if ( !strcmp(fqn, "binder.use.service") )
         work->use_svc = v.get_string();
 
     // when
@@ -1761,21 +1762,144 @@ bool BindingsModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-bool BindingsModule::begin(const char* fqn, int idx, SnortConfig*)
+bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
 {
-    if ( idx && !strcmp(fqn, "bindings") )
+    if ( idx && !strcmp(fqn, "binder") )
         work = new Binding;
 
     return true;
 }
 
-bool BindingsModule::end(const char* fqn, int idx, SnortConfig*)
+bool BinderModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( idx && !strcmp(fqn, "bindings") )
+    if ( idx && !strcmp(fqn, "binder") )
     {
         Binder::add(work);
         work = nullptr;
     }
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// hosts module
+//-------------------------------------------------------------------------
+
+// FIXIT these are cloned from ip_module.cc and tcp_module.cc
+
+static const char* ip_policies =
+    "first | linux | bsd | bsd_right |last | windows | solaris";
+
+static const char* tcp_policies =
+    "first | last | bsd | linux | old-linux | windows | win-2003 | vista "
+    "solaris | hpux | hpux10 | irix | macos";
+
+static const Parameter service_params[] =
+{
+    { "name", Parameter::PT_STRING, nullptr, nullptr,
+      "service identifier" },
+
+    { "proto", Parameter::PT_ENUM, "tcp | udp", "tcp",
+      "ip protocol" },
+
+    { "port", Parameter::PT_PORT, nullptr, nullptr,
+      "port number" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter hosts_params[] =
+{
+    { "ip", Parameter::PT_ADDR, nullptr, nullptr,
+      "hosts address / cidr" },
+
+    { "frag_policy", Parameter::PT_ENUM, ip_policies, "linux",
+      "defragmentation policy" },
+
+    { "tcp_policy", Parameter::PT_ENUM, tcp_policies, "linux",
+      "tcp reassembly policy" },
+
+    { "services", Parameter::PT_LIST, service_params, nullptr,
+      "list of service parameters" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class HostsModule : public Module
+{
+public:
+    HostsModule() : Module("hosts", hosts_params, true) { };
+    ~HostsModule() { assert(!host && !app); };
+
+    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
+
+private:
+    ApplicationEntry* app;
+    HostAttributeEntry* host;
+};
+
+bool HostsModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("ip") )
+        v.get_addr(host->ipAddr);
+
+    else if ( v.is("frag_policy") )
+    {
+        strncpy(host->hostInfo.fragPolicyName, v.get_string(),
+            sizeof(host->hostInfo.fragPolicyName));
+        host->hostInfo.fragPolicy = v.get_long() + 1;
+    }
+    else if ( v.is("tcp_policy") )
+    {
+        strncpy(host->hostInfo.streamPolicyName, v.get_string(),
+            sizeof(host->hostInfo.streamPolicyName));
+        host->hostInfo.streamPolicy = v.get_long() + 1;
+    }
+    else if ( v.is("name") )
+        app->protocol = AddProtocolReference(v.get_string());
+
+    else if ( v.is("proto") )
+        app->ipproto = AddProtocolReference(v.get_string());
+
+    else if ( v.is("port") )
+        app->port = v.get_long();
+
+    else
+        return false;
+
+    return true;
+}
+
+bool HostsModule::begin(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "hosts.services") )
+        app = SFAT_CreateApplicationEntry();
+
+    else if ( idx && !strcmp(fqn, "hosts") )
+        host = SFAT_CreateHostEntry();
+
+    else
+        return false;
+
+    return true;
+}
+
+bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, "hosts.services") )
+    {
+        SFAT_AddService(host, app);
+        app = nullptr;
+    }
+    else if ( idx && !strcmp(fqn, "hosts") )
+    {
+        SFAT_AddHost(host);
+        host = nullptr;
+    }
+    else
+        return false;
+
     return true;
 }
 
@@ -1847,7 +1971,6 @@ void module_init()
     ModuleManager::add_module(new SnortModule);
 
     // these modules are not policy specific
-    ModuleManager::add_module(new AttributeTableModule);
     ModuleManager::add_module(new ClassificationsModule);
     ModuleManager::add_module(new DaqModule);
     ModuleManager::add_module(new DetectionModule);
@@ -1866,7 +1989,6 @@ void module_init()
 
     // these modules could be in traffic policy
     ModuleManager::add_module(new ActiveModule);
-    ModuleManager::add_module(new DecodeModule);
     ModuleManager::add_module(new FileIdModule);
 
 #ifdef PPM_MGR
@@ -1883,7 +2005,11 @@ void module_init()
     ModuleManager::add_module(new NetworkModule);
     ModuleManager::add_module(new IpsModule);
 
+    // these modules replace config and hosts.xml
+    ModuleManager::add_module(new AttributeTableModule);
+    ModuleManager::add_module(new HostsModule);
+
     // and this one ties it all together
-    ModuleManager::add_module(new BindingsModule);
+    ModuleManager::add_module(new BinderModule);
 }
 

@@ -36,10 +36,12 @@
 namespace
 {
 
+#define CD_TRANSBRIDGE_NAME "codec_transbridge"
+
 class TransbridgeCodec : public Codec
 {
 public:
-    TransbridgeCodec() : Codec("transbridge"){};
+    TransbridgeCodec() : Codec(CD_TRANSBRIDGE_NAME){};
     ~TransbridgeCodec(){};
 
 
@@ -77,8 +79,6 @@ void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-//    dc.gre_eth++;
-
     if(len < eth::hdr_len())
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
@@ -102,8 +102,7 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 // api
 //-------------------------------------------------------------------------
 
-
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new TransbridgeCodec();
 }
@@ -113,12 +112,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "transbridge";
 static const CodecApi transbridge_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_TRANSBRIDGE_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

@@ -25,7 +25,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/link/cd_eapol_module.h"
 #include "codecs/codec_events.h"
 
 
@@ -35,7 +35,7 @@ namespace
 class EapolCodec : public Codec
 {
 public:
-    EapolCodec() : Codec("eapol"){};
+    EapolCodec() : Codec(CD_EAPOL_NAME){};
     ~EapolCodec() {};
 
 
@@ -94,6 +94,31 @@ static const uint16_t ETHERTYPE_EAPOL = 0x888e;
 
 
 
+struct EtherEapol
+{
+    uint8_t  version;  /* EAPOL proto version */
+    uint8_t  eaptype;  /* EAPOL Packet type */
+    uint16_t len;  /* Packet body length */
+};
+
+struct EAPHdr
+{
+    uint8_t code;
+    uint8_t id;
+    uint16_t len;
+};
+
+struct EapolKey
+{
+  uint8_t type;
+  uint8_t length[2];
+  uint8_t counter[8];
+  uint8_t iv[16];
+  uint8_t index;
+  uint8_t sig[16];
+};
+
+
 } // namespace
 
 /*************************************************
@@ -113,14 +138,15 @@ static const uint16_t ETHERTYPE_EAPOL = 0x888e;
  */
 void DecodeEAP(const uint8_t * pkt, const uint32_t len, Packet * p)
 {
+    const EAPHdr *eaph = reinterpret_cast<const EAPHdr* pkt>(pkt);
     p->eaph = (EAPHdr *) pkt;
     if(len < sizeof(EAPHdr))
     {
         codec_events::decoder_event(p, DECODE_EAP_TRUNCATED);
         return;
     }
-    if (p->eaph->code == EAP_CODE_REQUEST ||
-            p->eaph->code == EAP_CODE_RESPONSE) {
+    if (eaph->code == EAP_CODE_REQUEST ||
+            eaph->code == EAP_CODE_RESPONSE) {
         p->eaptype = pkt + sizeof(EAPHdr);
     }
     return;
@@ -187,7 +213,17 @@ void EapolCodec::get_protocol_ids(std::vector<uint16_t>& v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new EapolModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new EapolCodec();
 }
@@ -198,16 +234,15 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "eapol";
 static const CodecApi eapol_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_NAME_EAPOL,
         CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

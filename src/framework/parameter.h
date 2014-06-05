@@ -29,8 +29,8 @@ struct Parameter
 {
     enum Type
     {
-        PT_TABLE,      // deflt is Parameter*
-        PT_LIST,       // deflt is Parameter*, range is max
+        PT_TABLE,      // range is Parameter*, deflt is TBD
+        PT_LIST,       // range is Parameter*, deflt is TBD
         PT_BOOL,       // if you are reading this, get more coffee
         PT_INT,        // signed 64 bits or less determined by range
         PT_REAL,       // double
@@ -48,8 +48,8 @@ struct Parameter
     };
     const char* name;
     Type type;
-    const char* range;
-    const void* deflt;  // nullptr|const char*|const Parameter*
+    const void* range;  // nullptr|const char*|const Parameter*
+    const char* deflt;
     const char* help;
 
     const char* get_type() const;

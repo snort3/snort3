@@ -61,16 +61,16 @@ static const Parameter proto_params[] =
 
 static const Parameter stream_params[] =
 {
-    { "icmp_cache", Parameter::PT_TABLE, nullptr, proto_params,
+    { "icmp_cache", Parameter::PT_TABLE, proto_params, nullptr,
       "configure icmp cache limits" },
 
-    { "ip_cache", Parameter::PT_TABLE, nullptr, proto_params,
+    { "ip_cache", Parameter::PT_TABLE, proto_params, nullptr,
       "configure ip cache limits" },
 
-    { "tcp_cache", Parameter::PT_TABLE, nullptr, proto_params,
+    { "tcp_cache", Parameter::PT_TABLE, proto_params, nullptr,
       "configure tcp cache limits" },
 
-    { "udp_cache", Parameter::PT_TABLE, nullptr, proto_params,
+    { "udp_cache", Parameter::PT_TABLE, proto_params, nullptr,
       "configure udp cache limits" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

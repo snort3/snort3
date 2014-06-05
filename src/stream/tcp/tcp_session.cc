@@ -76,8 +76,6 @@
 #include "stream/stream.h"
 #include "flow/flow_control.h"
 #include "flow/session.h"
-#include "target_based/sftarget_protocol_reference.h"
-#include "target_based/sftarget_hostentry.h"
 #include "profiler.h"
 #include "ipv6_port.h"
 #include "sf_iph.h"
@@ -883,29 +881,8 @@ static void Stream5PrintTcpConfig(StreamTcpConfig* config)
 // attribute table foo
 //-------------------------------------------------------------------------
 
-int StreamPolicyIdFromHostAttributeEntry(HostAttributeEntry *host_entry)
-{
-    if (!host_entry)
-        return 0;
-
-    host_entry->hostInfo.streamPolicy = 
-        StreamPolicyIdFromName(host_entry->hostInfo.streamPolicyName);
-
-    host_entry->hostInfo.streamPolicySet = 1;
-
-    STREAM5_DEBUG_WRAP(
-        DebugMessage(DEBUG_STREAM_STATE,
-            "STREAM5 INIT: %s(%d) for Entry %s\n",
-            reassembly_policy_names[host_entry->hostInfo.streamPolicy],
-            host_entry->hostInfo.streamPolicy,
-            host_entry->hostInfo.streamPolicyName););
-    return 0;
-}
-
 int Stream5VerifyTcpConfig(SnortConfig*, StreamTcpConfig*)
 {
-    // FIXIT why is this here?
-    SFAT_SetPolicyIds(StreamPolicyIdFromHostAttributeEntry);
     return 0;
 }
 

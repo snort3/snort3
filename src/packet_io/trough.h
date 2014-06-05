@@ -23,7 +23,6 @@
 
 enum SourceType
 {
-    SOURCE_SINGLE,
     SOURCE_FILE_LIST,
     SOURCE_LIST,
     SOURCE_DIR

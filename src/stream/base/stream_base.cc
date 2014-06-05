@@ -297,8 +297,9 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
-    nullptr, // service
     PROTO_BIT__IP,
+    nullptr, // service
+    nullptr, // contents
     base_init,
     nullptr, // term
     base_ctor,
@@ -308,7 +309,8 @@ static const InspectApi base_api =
     nullptr, // ssn
     base_sum,
     base_stats,
-    base_reset
+    base_reset,
+    nullptr  // getbuf
 };
 
 const BaseApi* nin_stream_base = &base_api.base;

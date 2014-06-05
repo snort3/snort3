@@ -21,29 +21,20 @@
 #ifndef CODEC_EVENTS_H
 #define CODEC_EVENTS_H
 
-#include <array>
-
-// included for DECODE_INDEX_MAX
-#include "detection/generators.h"
-//#include "utils/sfActionQueue.h"
-#include "network_inspectors/normalize/normalize.h"
 #include "protocols/packet.h"
-#include "time/profiler.h"
 #include "codecs/decode_module.h"
 
 namespace codec_events
 {
 
     void exec_ip_chksm_drop(Packet*);
-    void exec_udp_chksm_drop (Packet *);
+    void exec_udp_chksm_drop (Packet*);
     void exec_tcp_chksm_drop (Packet*);
-    void exec_hop_drop(Packet* p, int sid);
-    void exec_ttl_drop (Packet *data, int sid);
     void exec_icmp_chksm_drop (Packet*);
-
-    void decoder_event (Packet *, int);
+    void decoder_event(Packet* p, CodecSid);
     void decoder_alert_encapsulated(
-        Packet *p, int sid, const uint8_t *pkt, uint32_t len);
+        Packet*, CodecSid, const uint8_t* pkt, uint32_t len);
+
 
 } //namespace codec_events
 

@@ -34,7 +34,6 @@
 #include "sfip/ipv6_port.h"
 #include "framework/inspector.h"
 
-#include "mempool/mempool.h"
 #include "snort_types.h"
 #include "snort.h"
 #include "detect.h"

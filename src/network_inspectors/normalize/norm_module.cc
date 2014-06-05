@@ -135,10 +135,10 @@ static const Parameter norm_tcp_params[] =
 
 static const Parameter normalize_params[] =
 {
-    { "ip4", Parameter::PT_TABLE, nullptr, norm_ip4_params,
+    { "ip4", Parameter::PT_TABLE, norm_ip4_params, nullptr,
       "set ip4 normalization options" },
 
-    { "tcp", Parameter::PT_TABLE, nullptr, norm_tcp_params,
+    { "tcp", Parameter::PT_TABLE, norm_tcp_params, nullptr,
       "set tcp normalization options" },
 
     { "ip6", Parameter::PT_BOOL, nullptr, "false",

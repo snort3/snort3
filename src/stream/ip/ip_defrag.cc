@@ -102,8 +102,6 @@
 #include "packet_io/sfdaq.h"
 #include "framework/inspector.h"
 #include "framework/share.h"
-#include "target_based/sftarget_hostentry.h"
-#include "target_based/sftarget_protocol_reference.h"
 #include "flow/flow_control.h"
 
 /*  D E F I N E S  **************************************************/
@@ -464,6 +462,7 @@ static inline void EventAnomScMinTTL(FragEngine*)
     t_stats.alerts++;
 }
 
+#if 0
 static int FragPolicyIdFromName(char *name)
 {
     if (!name)
@@ -501,23 +500,7 @@ static int FragPolicyIdFromName(char *name)
     }
     return FRAG_POLICY_DEFAULT;
 }
-
-int FragPolicyIdFromHostAttributeEntry(HostAttributeEntry *host_entry)
-{
-    if (!host_entry)
-        return 0;
-
-    host_entry->hostInfo.fragPolicy = FragPolicyIdFromName(host_entry->hostInfo.fragPolicyName);
-    host_entry->hostInfo.fragPolicySet = 1;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
-        "Frag3 INIT: %s(%d) for Entry %s\n",
-        frag_policy_names[host_entry->hostInfo.fragPolicy],
-        host_entry->hostInfo.fragPolicy,
-        host_entry->hostInfo.fragPolicyName););
-
-    return 0;
-}
+#endif
 
 /**
  * Check to see if a FragTracker has timed out
@@ -1321,7 +1304,6 @@ Defrag::Defrag(FragEngine& e) : engine(e) { }
 
 bool Defrag::configure(SnortConfig*)
 {
-    SFAT_SetPolicyIds(FragPolicyIdFromHostAttributeEntry);
     return true;
 }
 

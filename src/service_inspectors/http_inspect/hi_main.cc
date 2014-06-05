@@ -79,7 +79,6 @@
 #include "profiler.h"
 #include "hi_cmd_lookup.h"
 #include "loggers/unified2_common.h"
-#include "mempool/mempool.h"
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
 
@@ -764,11 +763,9 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                                 return 0;
                             hsd->mime_ssn->log_config = &(conf->global->mime_conf);
                             hsd->mime_ssn->decode_conf = &(conf->global->decode_conf);
-                            hsd->mime_ssn->mime_mempool = mime_decode_mempool;
-                            hsd->mime_ssn->log_mempool = mime_log_mempool;
                             /*Set log buffers per session*/
-                            if (file_api->set_log_buffers(&(hsd->mime_ssn->log_state),
-                                    hsd->mime_ssn->log_config, hsd->mime_ssn->log_mempool) < 0)
+                            if (file_api->set_log_buffers(
+                                    &(hsd->mime_ssn->log_state), hsd->mime_ssn->log_config) < 0)
                             {
                                 return 0;
                             }
@@ -1097,14 +1094,11 @@ void FreeHttpsessionData(void *data)
     if (hsd->decomp_state != NULL)
     {
         inflateEnd(&(hsd->decomp_state->d_stream));
-        mempool_free(hi_gzip_mempool, hsd->decomp_state->bkt);
+        free(hsd->decomp_state);
     }
 
     if (hsd->log_state != NULL)
-    {
-        mempool_free(http_mempool, hsd->log_state->log_bucket);
         free(hsd->log_state);
-    }
 
     if(hsd->true_ip)
         sfip_free(hsd->true_ip);

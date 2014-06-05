@@ -110,7 +110,6 @@ typedef struct _MimeState
     MAIL_LogConfig *log_config;
     MAIL_LogState *log_state;
     void *decode_bkt;
-    void *mime_mempool;
     void *log_mempool;
 } MimeState;
 
@@ -140,10 +139,7 @@ typedef void (*Set_file_action_log_func)(Log_file_action_func);
 
 typedef int  (*Log_file_name_func)(const uint8_t *start, int length, FILE_LogState *log_state, bool *disp_cont);
 typedef void (*Set_file_name_from_log_func)(FILE_LogState *log_state, void *ssn);
-typedef int (*Set_log_buffers_func)(MAIL_LogState **log_state, MAIL_LogConfig *conf, void *mempool);
-typedef void* (*Init_mime_mempool_func)(int max_mime_mem, int max_depth, void *mempool, const char *preproc_name);
-typedef void* (*Init_log_mempool_func)(uint32_t email_hdrs_log_depth, uint32_t memcap,  void *mempool, const char *preproc_name);
-
+typedef int (*Set_log_buffers_func)(MAIL_LogState **log_state, MAIL_LogConfig *conf);
 typedef int (*File_resume_block_add_file_func)(void *pkt, uint32_t file_sig,
         uint32_t timeout, File_Verdict verdict, uint32_t file_type_id, uint8_t *signature);
 typedef File_Verdict (*File_resume_block_check_func)(void *pkt, uint32_t file_sig);
@@ -188,8 +184,6 @@ typedef struct _file_api
     Log_file_name_func log_file_name;
     Set_file_name_from_log_func set_file_name_from_log;
     Set_log_buffers_func set_log_buffers;
-    Init_mime_mempool_func init_mime_mempool;
-    Init_log_mempool_func init_log_mempool;
     File_resume_block_add_file_func file_resume_block_add_file;
     File_resume_block_check_func file_resume_block_check;
     Str_to_hash_func str_to_hash;

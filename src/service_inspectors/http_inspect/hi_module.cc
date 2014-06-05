@@ -70,7 +70,7 @@ static const Parameter hi_global_params[] =
     { "compress_depth", Parameter::PT_INT, "1:65535", "1460",
       "maximum amount of packet payload to decompress" },
 
-    { "decode", Parameter::PT_TABLE, nullptr, hi_decode_params,
+    { "decode", Parameter::PT_TABLE, hi_decode_params, nullptr,
       "help" },
 
     { "decompress_depth", Parameter::PT_INT, "1:65535", "2920",
@@ -86,13 +86,13 @@ static const Parameter hi_global_params[] =
     { "memcap", Parameter::PT_INT, "2304:", "150994944",
       "limit of memory used for logging extra data" },
 
-    //{ "mime", Parameter::PT_TABLE, nullptr, hi_mime_params,
+    //{ "mime", Parameter::PT_TABLE, hi_mime_params, nullptr,
     //  "help" },
 
     { "proxy_alert", Parameter::PT_BOOL, nullptr, "false",
       "alert on proxy usage for servers without allow_proxy_use" },
 
-    { "unicode_map", Parameter::PT_TABLE, nullptr, hi_umap_params,
+    { "unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
       "help" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -292,7 +292,7 @@ static const Parameter hi_server_params[] =
     { "iis_unicode", Parameter::PT_BOOL, nullptr, "false",
       "enable unicode code point mapping using unicode_map settings" },
 
-    { "iis_unicode_map", Parameter::PT_TABLE, nullptr, hi_umap_params,
+    { "iis_unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
       "help" },
 
     { "inspect_gzip", Parameter::PT_BOOL, nullptr, "false",
@@ -367,7 +367,7 @@ static const Parameter hi_server_params[] =
     { "u_encode", Parameter::PT_BOOL, nullptr, "false",
       "decode %uXXXX character sequences" },
 
-    { "unicode_map", Parameter::PT_TABLE, nullptr, hi_umap_params,
+    { "unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
       "help" },
 
     { "unlimited_decompress", Parameter::PT_INT, nullptr, "false",

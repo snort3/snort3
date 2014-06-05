@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -457,7 +457,8 @@ static inline const u_char *FindPipelineReq(HI_SESSION *session,
     {
         if(*p == '\n')
         {
-            if( (p - offset) >= session->server_conf->max_hdr_len )
+            if ( session->server_conf->max_hdr_len &&
+                (p - offset) >= session->server_conf->max_hdr_len )
             {
                 SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
             }
@@ -488,7 +489,8 @@ static inline const u_char *FindPipelineReq(HI_SESSION *session,
     }
 
     /* Never observed an end-of-field.  Maybe it's not there, but the header is long anyway: */
-    if( (p - start) >= session->server_conf->max_hdr_len )
+    if ( session->server_conf->max_hdr_len &&
+        (p - start) >= session->server_conf->max_hdr_len )
     {
         SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
     }
@@ -1811,7 +1813,8 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
             return end;
         }
 
-        if(num_spaces >= session->server_conf->max_spaces)
+        if ( session->server_conf->max_spaces &&
+            num_spaces >= session->server_conf->max_spaces )
         {
             SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
         }
@@ -1919,7 +1922,8 @@ const u_char *extract_http_hostname(HI_SESSION *session, const u_char *p, const 
             return end;
         }
 
-        if(num_spaces >= session->server_conf->max_spaces)
+        if ( session->server_conf->max_spaces &&
+            num_spaces >= session->server_conf->max_spaces )
         {
             SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
         }
@@ -2005,7 +2009,8 @@ const u_char *extract_http_content_length(HI_SESSION *session,
                             }
                             if ( space_present )
                             {
-                                if(num_spaces >= session->server_conf->max_spaces)
+                                if ( session->server_conf->max_spaces &&
+                                    num_spaces >= session->server_conf->max_spaces )
                                 {
                                     SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
                                 }
@@ -2345,9 +2350,10 @@ static inline const u_char *hi_client_extract_header(
                             return p;
                         }
 
-
                         num_spaces =  SkipBlankSpace(start,end,&p);
-                        if(num_spaces >= session->server_conf->max_spaces)
+
+                        if ( session->server_conf->max_spaces &&
+                            num_spaces >= session->server_conf->max_spaces )
                         {
                             SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
                         }
@@ -2400,7 +2406,8 @@ static inline const u_char *hi_client_extract_header(
         {
             header_count++;
 
-            if( (p - offset) >= session->server_conf->max_hdr_len )
+            if ( session->server_conf->max_hdr_len &&
+                (p - offset) >= session->server_conf->max_hdr_len )
             {
                 SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
             }
@@ -2414,7 +2421,9 @@ static inline const u_char *hi_client_extract_header(
             p++;
 
             num_spaces =  SkipBlankSpace(start,end,&p);
-            if(num_spaces >= session->server_conf->max_spaces)
+
+            if ( session->server_conf->max_spaces &&
+                num_spaces >= session->server_conf->max_spaces )
             {
                 SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_EXCEEDS_SPACES);
             }
@@ -2473,7 +2482,8 @@ static inline const u_char *hi_client_extract_header(
     }
 
     /* Never observed an end-of-field.  Maybe it's not there, but the header is long anyway: */
-    if( (p - start) >= session->server_conf->max_hdr_len )
+    if ( session->server_conf->max_hdr_len &&
+        (p - start) >= session->server_conf->max_hdr_len )
     {
         SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);
     }
@@ -2716,7 +2726,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
     /* Check if the URI exceeds the max header field length */
     /* Only check if we succesfully observed a GET or POST method, otherwise,
      * this may very well be a POST body */
-    if ( iRet == URI_END &&
+    if ( iRet == URI_END && ServerConf->max_hdr_len &&
          ((uri_ptr.uri_end - uri_ptr.uri) >= ServerConf->max_hdr_len) )
     {
         SnortEventqAdd(GID_HTTP_CLIENT, HI_CLIENT_LONG_HDR);

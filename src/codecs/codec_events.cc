@@ -23,15 +23,8 @@
 #endif
 
 #include "codecs/codec_events.h"
-#include "time/profiler.h"
-#include "mempool/mempool.h"
-#include "events/event_queue.h"
-#include "log/messages.h"
 #include "snort.h"
 #include "packet_io/active.h"
-#include "utils/stats.h"
-#include "codecs/decode_module.h"
-
 
 void codec_events::exec_udp_chksm_drop (Packet *)
 {
@@ -53,7 +46,7 @@ void codec_events::exec_tcp_chksm_drop (Packet*)
     }
 }
 
-void codec_events::decoder_event(Packet *p, int sid)
+void codec_events::decoder_event(Packet *p, CodecSid sid)
 {
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
@@ -76,28 +69,6 @@ void codec_events::exec_ip_chksm_drop (Packet*)
     }
 }
 
-void codec_events::exec_hop_drop (Packet* p, int sid)
-{
-    if ( p->packet_flags & PKT_REBUILT_STREAM )
-        return;
-
-    if ( ScLogVerbose() )
-        ErrorMessage("%d:%d\n", GID_DECODE, sid);
-
-    SnortEventqAdd(GID_DECODE, sid);
-}
-
-void codec_events::exec_ttl_drop (Packet *p, int sid)
-{
-    if ( p->packet_flags & PKT_REBUILT_STREAM )
-        return;
-
-    if ( ScLogVerbose() )
-        ErrorMessage("%d:%d\n", GID_DECODE, sid);
-
-    SnortEventqAdd(GID_DECODE, sid);
-}
-
 void codec_events::exec_icmp_chksm_drop (Packet*)
 {
     if( ScInlineMode() && ScIcmpChecksumDrops() )
@@ -109,7 +80,7 @@ void codec_events::exec_icmp_chksm_drop (Packet*)
 }
 
 void codec_events::decoder_alert_encapsulated(
-    Packet *p, int sid, const uint8_t *pkt, uint32_t len)
+    Packet *p, CodecSid sid, const uint8_t *pkt, uint32_t len)
 {
     decoder_event(p, sid);
 

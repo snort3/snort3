@@ -131,8 +131,6 @@ public:
 
     // Get the codec's name
     inline const char* get_name(){return name; };
-    // used by packet manager to determine the default/null codec
-    virtual bool is_default_codec() { return false; };
     // Registers this Codec's data link type (as defined by libpcap)
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes
@@ -203,7 +201,7 @@ private:
 // to be useful, these must be explicit (*_V0, *_V1, ...)
 #define CDAPI_PLUGIN_V0 0
 
-typedef Codec* (*cd_new_f)();
+typedef Codec* (*cd_new_f)(Module*);
 typedef void (*cd_del_f)(Codec *);
 typedef void (*cd_aux_f)();
 typedef void (*cd_dlt_f)(std::vector<int>&v);

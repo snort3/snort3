@@ -31,6 +31,11 @@ bool set_number(const char*, double);
 bool set_string(const char*, const char*);
 ]]
 
+function include(file)
+    print('Loading ' .. file)
+    dofile(file)
+end
+
 function snort_traverse(tab, fqn)
     local key, val
 

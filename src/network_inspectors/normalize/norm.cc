@@ -27,11 +27,6 @@
 #endif
 
 #include <string.h>
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
 
 #include "perf_monitor/perf.h"
 #include "packet_io/sfdaq.h"

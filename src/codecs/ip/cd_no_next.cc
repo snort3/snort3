@@ -37,10 +37,12 @@
 namespace
 {
 
+#define CD_NO_NEXT_NAME "codec_ipv6_no_next"
+
 class Ipv6NoNextCodec : public Codec
 {
 public:
-    Ipv6NoNextCodec() : Codec("ipv6_no_next"){};
+    Ipv6NoNextCodec() : Codec(CD_NO_NEXT_NAME){};
     ~Ipv6NoNextCodec() {};
 
 
@@ -77,7 +79,7 @@ void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new Ipv6NoNextCodec();
 }
@@ -87,14 +89,12 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "ipv6_no_next";
 static const CodecApi no_next_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_NO_NEXT_NAME,
+        CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,

@@ -48,32 +48,27 @@ const char* NHttpApi::nhttp_myName = "nhttp_inspect";
 
 void NHttpApi::nhttp_init()
 {
-    /* &&& */ printf("API init\n"); fflush(nullptr);
     NHttpFlowData::init();
     appProtocolId = AddProtocolReference("nhttp");
 }
 
 void NHttpApi::nhttp_term()
 {
-    /* &&& */ printf("API term\n"); fflush(nullptr);
 }
 
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
-    /* &&& */ printf("API ctor\n"); fflush(nullptr);
     const NHttpModule* nhttpMod = (NHttpModule*) mod;
     return new NHttpInspect(nhttpMod->get_test_mode());
 }
 
 void NHttpApi::nhttp_dtor(Inspector* p)
 {
-    /* &&& */ printf("API dtor\n"); fflush(nullptr);
     delete p;
 }
 
 void NHttpApi::nhttp_pinit()
 {
-    /* &&& */ printf("API pinit\n"); fflush(nullptr);
     NHttpInspect::msgHead = new NHttpMsgHeader;
     NHttpInspect::msgBody = new NHttpMsgBody;
     NHttpInspect::msgChunkHead = new NHttpMsgChunkHead;
@@ -83,7 +78,6 @@ void NHttpApi::nhttp_pinit()
 
 void NHttpApi::nhttp_pterm()
 {
-    /* &&& */ printf("API pterm\n"); fflush(nullptr);
     delete NHttpInspect::msgHead;
 }
 
@@ -110,8 +104,9 @@ const InspectApi NHttpApi::nhttp_api =
         NHttpApi::nhttp_mod_dtor
     },
     IT_SERVICE,
-    "http",
     PROTO_BIT__TCP,
+    "http",
+    nullptr, // contents
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,
     NHttpApi::nhttp_ctor,
@@ -121,7 +116,8 @@ const InspectApi NHttpApi::nhttp_api =
     nullptr,
     NHttpApi::nhttp_sum,
     NHttpApi::nhttp_stats,
-    NHttpApi::nhttp_reset
+    NHttpApi::nhttp_reset,
+    nullptr  // getbuf
 };
 
 #ifdef BUILDING_SO

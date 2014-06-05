@@ -30,7 +30,6 @@
 #endif
 
 #include "snort_types.h"
-#include "mempool/mempool.h"
 #include "file_api.h"
 #include "snort_bounds.h"
 #include "util.h"
@@ -219,38 +218,31 @@ int log_file_name(const uint8_t *start, int length, FILE_LogState *log_state, bo
  *         -1: fail
  *
  */
-int set_log_buffers(MAIL_LogState **log_state, MAIL_LogConfig *conf, void *mempool)
+int set_log_buffers(MAIL_LogState **log_state, MAIL_LogConfig *conf)
 {
-    MemPool *log_mempool = (MemPool *)mempool;
-
     if((*log_state == NULL)
             && (conf->log_email_hdrs || conf->log_filename
                     || conf->log_mailfrom || conf->log_rcptto))
     {
-        MemBucket *bkt = mempool_alloc(log_mempool);
+        uint32_t bufsz = (2* MAX_EMAIL) + MAX_FILE + conf->email_hdrs_log_depth;
+        *log_state = (MAIL_LogState *)calloc(1, sizeof(*log_state) + bufsz);
 
-        if(bkt == NULL)
-            return -1;
-
-        *log_state = (MAIL_LogState *)calloc(1, sizeof(MAIL_LogState));
         if((*log_state) != NULL)
         {
-            (*log_state)->log_hdrs_bkt = bkt;
+            uint8_t* buf = ((uint8_t*)(*log_state)) + sizeof(*log_state);
             (*log_state)->log_depth = conf->email_hdrs_log_depth;
-            (*log_state)->recipients = (uint8_t *)bkt->data;
+            (*log_state)->recipients = buf;
             (*log_state)->rcpts_logged = 0;
-            (*log_state)->senders = (uint8_t *)bkt->data + MAX_EMAIL;
+            (*log_state)->senders = buf + MAX_EMAIL;
             (*log_state)->snds_logged = 0;
-            (*log_state)->file_log.filenames = (uint8_t *)bkt->data + (2*MAX_EMAIL);
+            (*log_state)->file_log.filenames = buf + (2*MAX_EMAIL);
             (*log_state)->file_log.file_logged = 0;
             (*log_state)->file_log.file_current = 0;
-            (*log_state)->emailHdrs = (unsigned char *)bkt->data + (2*MAX_EMAIL) + MAX_FILE;
+            (*log_state)->emailHdrs = buf + (2*MAX_EMAIL) + MAX_FILE;
             (*log_state)->hdrs_logged = 0;
         }
         else
         {
-            /*free bkt if calloc fails*/
-            mempool_free(log_mempool, bkt);
             return -1;
         }
 
@@ -262,99 +254,13 @@ static void set_mime_buffers(MimeState *ssn)
 {
     if ((ssn != NULL) && (ssn->decode_state == NULL))
     {
-        MemBucket *bkt = mempool_alloc((MemPool*)ssn->mime_mempool);
-        DecodeConfig *conf= ssn->decode_conf;
+        DecodeConfig* conf = ssn->decode_conf;
 
-        if (bkt != NULL)
-        {
-            ssn->decode_state = calloc(1, sizeof(Email_DecodeState));
-            if((ssn->decode_state) != NULL )
-            {
-                ssn->decode_bkt = bkt;
-                SetEmailDecodeState((Email_DecodeState *)(ssn->decode_state), bkt->data, conf->max_depth,
-                        conf->b64_depth, conf->qp_depth,
-                        conf->uu_depth, conf->bitenc_depth,
+        ssn->decode_state = NewEmailDecodeState(
+            conf->max_depth, conf->b64_depth, conf->qp_depth,
+            conf->uu_depth, conf->bitenc_depth,
                         conf->file_depth);
-            }
-            else
-            {
-                /*free mempool if calloc fails*/
-                mempool_free((MemPool*)ssn->mime_mempool, bkt);
-            }
-        }
-        else
-        {
-            // MIME_GenerateAlert(MIME_MEMCAP_EXCEEDED, "%s", MIME_MEMCAP_EXCEEDED_STR);
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "No memory available for decoding. Memcap exceeded \n"););
-        }
     }
-}
-
-void* init_mime_mempool(int max_mime_mem, int max_depth,
-        void *mempool, const char *preproc_name)
-{
-    int encode_depth;
-    int max_sessions;
-    MemPool *mime_mempool = (MemPool *)mempool;
-
-    if (mime_mempool != NULL)
-        return mime_mempool ;
-
-    if (max_depth <= 0)
-        return NULL;
-
-    encode_depth = max_depth;
-
-    if (encode_depth & 7)
-        encode_depth += (8 - (encode_depth & 7));
-
-    max_sessions = max_mime_mem / ( 2 * encode_depth);
-
-    mime_mempool = (MemPool *)calloc(1, sizeof(MemPool));
-
-    if ((!mime_mempool)||(mempool_init(mime_mempool, max_sessions,
-            (2 * encode_depth)) != 0))
-    {
-        FatalError( "%s:  Could not allocate %s mime mempool.\n",
-                preproc_name, preproc_name);
-    }
-
-    return mime_mempool;
-}
-
-void* init_log_mempool(uint32_t email_hdrs_log_depth, uint32_t memcap,
-        void *mempool, const char *preproc_name)
-{
-    uint32_t max_bkt_size;
-    uint32_t max_sessions_logged;
-    MemPool *log_mempool = (MemPool *) mempool;
-
-    if (log_mempool != NULL)
-        return log_mempool;
-
-    max_bkt_size = ((2* MAX_EMAIL) + MAX_FILE +
-            email_hdrs_log_depth);
-
-    max_sessions_logged = memcap/max_bkt_size;
-
-    log_mempool = (MemPool *)calloc(1, sizeof(*log_mempool));
-
-    if ((!log_mempool)||(mempool_init(log_mempool, max_sessions_logged,
-            max_bkt_size) != 0))
-    {
-        if(!max_sessions_logged)
-        {
-            FatalError(
-                    "%s:  Could not allocate %s mempool.\n", preproc_name, preproc_name);
-        }
-        else
-        {
-            FatalError(
-                    "%s: Error setting the \"memcap\" \n", preproc_name);
-        }
-    }
-
-    return log_mempool;
 }
 
 /*
@@ -1223,12 +1129,10 @@ void free_mime_session(MimeState *mime_ssn)
 
     if(mime_ssn->decode_state != NULL)
     {
-        mempool_free((MemPool*)mime_ssn->mime_mempool, (MemBucket*)mime_ssn->decode_bkt);
-        free((MemBucket*)mime_ssn->decode_state);
+        free(mime_ssn->decode_state);
     }
     if(mime_ssn->log_state != NULL)
     {
-        mempool_free((MemPool*)mime_ssn->log_mempool, (MemBucket*)mime_ssn->log_state->log_hdrs_bkt);
         free(mime_ssn->log_state);
     }
 

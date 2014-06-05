@@ -34,6 +34,10 @@
 #include "../decoder_includes.h"
 
 
+
+#define MINIMAL_IEEE80211_HEADER_LEN    10    /* Ack frames and others */
+#define IEEE802_11_DATA_HDR_LEN         24    /* Header for data packets */
+
 /*
  * Function: DecodeIEEE80211Pkt(Packet *, char *, DAQ_PktHdr_t*,
  *                               uint8_t*)

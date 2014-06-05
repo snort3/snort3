@@ -27,10 +27,13 @@
 namespace
 {
 
+#define CD_ETHLOOPBACK_NAME "codec_ethloopback"
+
+
 class EthLoopbackCodec : public Codec
 {
 public:
-    EthLoopbackCodec() : Codec("ethloopback"){};
+    EthLoopbackCodec() : Codec(CD_ETHLOOPBACK_NAME){};
     ~EthLoopbackCodec(){};
 
 
@@ -57,12 +60,6 @@ bool EthLoopbackCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*raw_l
 {
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "EthLoopback is not supported.\n"););
-
-//    loopbackstats.total_packets++;
-
-//    if (p->greh != NULL)
-//        dc.gre_loopback++;
-
     return true;
 }
 
@@ -71,9 +68,7 @@ bool EthLoopbackCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*raw_l
 // api stuff
 //-------------------------------------------------------------------------
 
-
-
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new EthLoopbackCodec();
 }
@@ -83,12 +78,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ethloopback";
 static const CodecApi ethloopback_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_ETHLOOPBACK_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

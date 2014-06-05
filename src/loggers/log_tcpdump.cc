@@ -144,10 +144,6 @@ bool TcpdumpModule::end(const char*, int, SnortConfig*)
     while ( units-- )
         limit *= 1024;
 
-    // FIXIT this is just silly; delete the option
-    if ( ScPcapLogFile() )
-        file = ScPcapLogFile();
-
     return true;
 }
 

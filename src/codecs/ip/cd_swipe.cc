@@ -26,22 +26,23 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 
 namespace{
 
-class SwipeCodec : public Codec{
+#define CD_SWIPE_NAME "codec_swipe"
 
+
+class SwipeCodec : public Codec
+{
 public:
-    SwipeCodec() : Codec("swipe"){};
+    SwipeCodec() : Codec(CD_SWIPE_NAME){};
     virtual ~SwipeCodec(){};
     
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, uint16_t &);
 };
-
 } // namespace
 
 static const uint16_t SWIPE_PROT_ID = 53;
@@ -64,7 +65,7 @@ bool SwipeCodec::decode(const uint8_t* /*raw_packet*/, const uint32_t /*raw_len*
 // api
 //-------------------------------------------------------------------------
 
-static Codec *ctor()
+static Codec *ctor(Module*)
 {
     return new SwipeCodec();
 }
@@ -74,12 +75,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* const name = "swipe";
 static const CodecApi swipe_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_SWIPE_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

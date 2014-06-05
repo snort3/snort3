@@ -46,7 +46,6 @@ extern const BaseApi* cd_icmp6;
 extern const BaseApi* cd_tcp;
 extern const BaseApi* cd_udp;
 extern const BaseApi* cd_esp;
-extern const BaseApi* cd_null;
 
 #ifdef STATIC_DECODERS
 extern const BaseApi* cd_ah;
@@ -98,7 +97,6 @@ const BaseApi* codecs[] =
     cd_tcp,
     cd_udp,
     cd_esp,
-    cd_null,
 
 #ifdef STATIC_DECODERS
     cd_ah,

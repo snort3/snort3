@@ -20,14 +20,11 @@
 // cd_raw4.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include <pcap.h>
 
@@ -35,10 +32,12 @@
 namespace
 {
 
+#define CD_RAW4_NAME "codec_raw4"
+
 class Raw4Codec : public Codec
 {
 public:
-    Raw4Codec() : Codec("raw4"){};
+    Raw4Codec() : Codec(CD_RAW4_NAME){};
     ~Raw4Codec() {};
 
 
@@ -91,7 +90,7 @@ void Raw4Codec::get_data_link_type(std::vector<int>&v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new Raw4Codec();
 }
@@ -101,13 +100,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "raw4";
 static const CodecApi raw4_api =
 {
     {
         PT_CODEC,
-        name,
+        CD_RAW4_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

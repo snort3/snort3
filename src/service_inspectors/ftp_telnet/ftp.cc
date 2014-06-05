@@ -716,8 +716,9 @@ static const InspectApi fs_api =
     },
     //IT_SESSION,  // FIXIT should be service only
     IT_SERVICE,
-    "ftp", // FIXIT add ftp-data inspector
     PROTO_BIT__TCP,
+    "ftp",   // FIXIT add ftp-data inspector
+    nullptr, // contents
     fs_init,
     nullptr, // term
     fs_ctor,
@@ -727,7 +728,8 @@ static const InspectApi fs_api =
     nullptr, // ssn
     fs_sum,
     fs_stats,
-    fs_reset
+    fs_reset,
+    nullptr  // getbuf
 };
 
 #ifdef BUILDING_SO

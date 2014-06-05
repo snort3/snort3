@@ -75,7 +75,6 @@ using namespace std;
 #include "packet_time.h"
 #include "perf_monitor/perf_base.h"
 #include "perf_monitor/perf.h"
-#include "mempool/mempool.h"
 #include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
@@ -303,6 +302,7 @@ static void SnortInit(int argc, char **argv)
 #endif
 
     InitProtoNames();
+    SFAT_Init();
 
     if (snort_cmd_line_conf != NULL)  // FIXIT can this be deleted?
     {
@@ -346,12 +346,6 @@ static void SnortInit(int argc, char **argv)
 
     if ( snort_conf->output )
         EventManager::instantiate(snort_conf->output, sc);
-
-    {
-        // FIXIT AttributeTable::end() is where this should go
-        if ( snort_conf->attribute_file )
-            SFAT_ParseAttributeTable(snort_conf->attribute_file);
-    }
 
     if (snort_conf->asn1_mem != 0)
         asn1_init_mem(snort_conf->asn1_mem);
@@ -408,6 +402,7 @@ static void SnortInit(int argc, char **argv)
     fpCreateFastPacketDetection(snort_conf);
     MpseManager::activate_search_engine(snort_conf);
     PacketManager::instantiate();
+    SFAT_Start();
 
 #ifdef PPM_MGR
     PPM_PRINT_CFG(&snort_conf->ppm_cfg);
@@ -455,8 +450,7 @@ static void SnortInit(int argc, char **argv)
 static void SnortUnprivilegedInit(void)
 {
     /* create the PID file */
-    if ( !ScReadMode() &&
-        (ScDaemonMode() || *snort_conf->pidfile_suffix || ScCreatePidFile()))
+    if ( !ScReadMode() && (ScDaemonMode() || ScCreatePidFile()))
     {
         CreatePidFile(snort_main_thread_pid);
     }
@@ -561,7 +555,7 @@ static void SnortCleanup()
     ClosePidFile();
 
     /* remove pid file */
-    if (SnortStrnlen(snort_conf->pid_filename, sizeof(snort_conf->pid_filename)) > 0)
+    if ( snort_conf->pid_filename[0] )
     {
         int ret;
 

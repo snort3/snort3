@@ -50,7 +50,6 @@ THREAD_LOCAL NHttpMsgTrailer* NHttpInspect::msgTrailer;
 
 NHttpInspect::NHttpInspect(bool test_mode)
 {
-    /* &&& */ printf("Inspect constructor\n"); fflush(nullptr);
     NHttpTestInput::test_mode = test_mode;
     if (NHttpTestInput::test_mode) {
         NHttpTestInput::testInput = new NHttpTestInput(testInputFile);
@@ -59,7 +58,6 @@ NHttpInspect::NHttpInspect(bool test_mode)
 
 NHttpInspect::~NHttpInspect ()
 {
-    /* &&& */ printf("Inspect destructor\n"); fflush(nullptr);
     if (NHttpTestInput::test_mode) {
         delete NHttpTestInput::testInput;
         if (testOut) fclose(testOut);
@@ -68,44 +66,36 @@ NHttpInspect::~NHttpInspect ()
 
 bool NHttpInspect::enabled ()
 {
-    /* &&& */ printf("Inspect enabled\n"); fflush(nullptr);
     return true;
 }
 
 bool NHttpInspect::configure (SnortConfig *)
 {
-    /* &&& */ printf("Inspect configure\n"); fflush(nullptr);
     return true;
 }
 
 int NHttpInspect::verify(SnortConfig*)
 {
-    /* &&& */ printf("Inspect verify\n"); fflush(nullptr);
     return 0; // 0 = good, -1 = bad
 }
 
 void NHttpInspect::pinit()
 {
-    /* &&& */ printf("Inspect pinit\n"); fflush(nullptr);
 }
 
 void NHttpInspect::pterm()
 {
-    /* &&& */ printf("Inspect pterm\n"); fflush(nullptr);
 }
 
 void NHttpInspect::show(SnortConfig*)
 {
     LogMessage("NHttpInspect\n");
-    /* &&& */ printf("show\n"); fflush(nullptr);
 }
 
 void NHttpInspect::eval (Packet* p)
 {
-    /* &&& */ printf("eval 1\n"); fflush(nullptr);
     // Only packets from the StreamSplitter can be processed
     if (!PacketHasPAFPayload(p)) return;
-    /* &&& */ printf("eval 2\n"); fflush(nullptr);
 
     Flow *flow = p->flow;
     NHttpFlowData* sessionData = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);

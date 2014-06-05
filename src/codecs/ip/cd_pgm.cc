@@ -25,7 +25,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/ip/cd_pgm_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv4.h"
 #include "codecs/checksum.h"
@@ -36,7 +36,7 @@ namespace
 class PgmCodec : public Codec
 {
 public:
-    PgmCodec() : Codec("pgm"){};
+    PgmCodec() : Codec(CD_PGM_NAME){};
     ~PgmCodec() {};
 
 
@@ -160,7 +160,17 @@ void PgmCodec::get_protocol_ids(std::vector<uint16_t>& v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new PgmModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
 {
     return new PgmCodec();
 }
@@ -171,16 +181,15 @@ static void dtor(Codec *cd)
 }
 
 
-static const char* name = "pgm";
 static const CodecApi pgm_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_PGM_NAME,
+        CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

@@ -37,10 +37,12 @@
 namespace
 {
 
+#define CD_IPV6_ROUTING_NAME "codec_ipv6_routing"
+
 class Ipv6RoutingCodec : public Codec
 {
 public:
-    Ipv6RoutingCodec() : Codec("ipv6_routing"){};
+    Ipv6RoutingCodec() : Codec(CD_IPV6_ROUTING_NAME){};
     ~Ipv6RoutingCodec() {};
 
 
@@ -145,7 +147,7 @@ void Ipv6RoutingCodec::get_protocol_ids(std::vector<uint16_t>& v)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Codec* ctor(Module*)
 {
     return new Ipv6RoutingCodec();
 }
@@ -155,14 +157,12 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-
-static const char* name = "ipv6_routing";
 static const CodecApi ipv6_routing_api =
 {
-    { 
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+    {
+        PT_CODEC,
+        CD_IPV6_ROUTING_NAME,
+        CDAPI_PLUGIN_V0,
         0,
         nullptr,
         nullptr,

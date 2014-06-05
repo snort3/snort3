@@ -22,7 +22,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
+#include "codecs/link/cd_pppoepkt_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
 
@@ -32,7 +32,7 @@ namespace
 class PPPoEPktCodec : public Codec
 {
 public:
-    PPPoEPktCodec() : Codec("ppp_over_eth"){};
+    PPPoEPktCodec() : Codec(CD_PPPOEPKT_NAME){};
     ~PPPoEPktCodec(){};
 
 
@@ -293,7 +293,17 @@ bool PPPoEPktCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 // api
 //-------------------------------------------------------------------------
 
-static Codec* ctor()
+static Module* mod_ctor()
+{
+    return new PPPoEPktModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module *)
 {
     return new PPPoEPktCodec();
 }
@@ -303,16 +313,15 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const char* name = "ppp_over_eth";
 static const CodecApi pppoe_api =
 {
     {
-        PT_CODEC, 
-        name, 
-        CDAPI_PLUGIN_V0, 
+        PT_CODEC,
+        CD_PPPOEPKT_NAME,
+        CDAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr,
+        mod_ctor,
+        mod_dtor,
     },
     nullptr, // pinit
     nullptr, // pterm

@@ -25,6 +25,8 @@
 #include <sstream>
 #include <string>
 
+#include "sfip/sf_ip.h"
+
 using namespace std;
 
 Value::~Value()
@@ -68,6 +70,18 @@ void Value::get_addr_ip6(uint8_t (&addr)[16]) const
         str.copy((char*)addr, sizeof(addr));
     else
         memset(addr, 0, sizeof(addr));
+}
+
+void Value::get_addr(sfip_t& addr) const
+{
+    if ( str.size() == 4 )
+        sfip_set_raw(&addr, str.c_str(), AF_INET);
+
+    else if ( str.size() == 16 )
+        sfip_set_raw(&addr, str.c_str(), AF_INET6);
+
+    else
+        memset(&addr, 0, sizeof(addr));
 }
 
 void Value::get_bits(PortList& list) const

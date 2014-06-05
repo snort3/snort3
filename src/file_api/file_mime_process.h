@@ -29,7 +29,6 @@
 #include <pcre.h>
 #include "file_api.h"
 #include "sf_email_attach_decode.h"
-#include "mempool/mempool.h"
 
 #define BOUNDARY     0
 
@@ -63,9 +62,7 @@ typedef struct _MimePcre
 } MimePcre;
 
 int log_file_name(const uint8_t *start, int length, FILE_LogState *log_state, bool *disp_cont);
-int set_log_buffers(MAIL_LogState **log_state, MAIL_LogConfig *conf, void *mempool);
-void* init_mime_mempool(int max_mime_mem, int max_depth, void *mempool, const char *preproc_name);
-void* init_log_mempool(uint32_t email_hdrs_log_depth, uint32_t memcap,  void *mempool, const char *preproc_name);
+int set_log_buffers(MAIL_LogState **log_state, MAIL_LogConfig *conf);
 void init_mime(void);
 void free_mime(void);
 const uint8_t* process_mime_data(void *packet, const uint8_t *start, const uint8_t *end,

@@ -27,13 +27,14 @@ Snort++ differs from Snort in the following ways:
 * added -z <#> and --max-packet-threads <#>
 * delete --enable-mpls-multicast, --enable-mpls-overlapping-ip, 
   --max-mpls-labelchain-len, --mpls-payload-type
-* deleted --no-interface-pidfile
+* deleted --pid-path and --no-interface-pidfile
 * deleting command line options which will be available with --lua or some such including:
   -I, -h, -F, -p, --disable-inline-init-failopen
 * hardened -n < 0
 * removed --search-method
 * replaced "unknown args are bpf" with --bpf
 * replaced --dynamic-*-lib[-dir] with --plugin-path (with : separators)
+* removed -b, -N, -Z and, --perfmon-file options
 
 === Conf File
 
@@ -88,6 +89,7 @@ Snort++ differs from Snort in the following ways:
 * rule option sequence: <stub> soid <hidden>
 * sid == 0 not allowed
 * soid is now a non-metadata option
+* removed uricontent ips rule option
 
 === Output
 

@@ -157,8 +157,6 @@ void FileAPIInit(void)
     fileAPI.log_file_name = &log_file_name;
     fileAPI.set_file_name_from_log = &set_file_name_from_log;
     fileAPI.set_log_buffers = &set_log_buffers;
-    fileAPI.init_mime_mempool = &init_mime_mempool;
-    fileAPI.init_log_mempool=  &init_log_mempool;
     fileAPI.file_resume_block_add_file = &file_resume_block_add_file;
     fileAPI.file_resume_block_check = &file_resume_block_check;
     fileAPI.str_to_hash = &str_to_hash;
