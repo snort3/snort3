@@ -1,6 +1,5 @@
 ---------------------------------------------------------------------------
--- This file contains a sample snort configuration.  You should follow
--- the steps to create your own custom configuration.
+-- Snort++ prototype configuration
 --
 -- let install_dir be a variable indicating where you installed Snort++.
 -- then do:
@@ -9,7 +8,7 @@
 -- export SNORT_LUA_PATH=$install_dir/conf/
 ---------------------------------------------------------------------------
 
-require('snort_config')
+require("snort_config")  -- for loading
 
 -- useful constants
 K = 1024
@@ -17,7 +16,7 @@ M = K * K
 G = M * K
 
 ---------------------------------------------------------------------------
--- Step #1: Set paths, ports, and nets:
+-- Set paths, ports, and nets:
 --
 -- variables with 'PATH' in the name are vars
 -- variables with 'PORT' in the name are portvars
@@ -29,8 +28,6 @@ G = M * K
 -- paths
 ---------------------------------------------------------------------------
 -- Path to your rules files (this can be a relative path)
--- Note for Windows users:  You are advised to make this an absolute path,
--- such as:  c:\snort\rules
 
 RULE_PATH = '../rules'
 BUILTIN_RULE_PATH = '../preproc_rules'
@@ -129,17 +126,8 @@ GTP_PORTS = ' 2123 2152 3386'
 RPC_PORTS = 
     ' 111 32770 32771 32772 32773 32774 32775 32776 32777 32778 32779'
 
--- Configure ports to ignore 
---[[
-ignore_ports =
-{
-    tcp = ' 21 6667:6671 1356'
-    udp = ' 1:17 53'
-}
---]]
-
 ---------------------------------------------------------------------------
--- Step #2: configure builtin features
+-- configure builtin features
 ---------------------------------------------------------------------------
 
 -- Configure active response for non inline operation.
@@ -223,7 +211,7 @@ profile =
 }
 
 ---------------------------------------------------------------------------
--- Step #3: Configure inspectors
+-- configure inspectors
 ---------------------------------------------------------------------------
 
 normalize =
@@ -294,7 +282,7 @@ perf_monitor =
 }
 
 ---------------------------------------------------------------------------
--- HTTP normalization and anomaly detection.
+-- http normalization and anomaly detection
 ---------------------------------------------------------------------------
 
 http_inspect =
@@ -319,44 +307,26 @@ default_http_methods =
 
 http_server =
 {
-    unicode_map =
-    {
-        map_file = '/etc/unicode.map',
-        code_page = 1252
-    },
     http_methods = default_http_methods,
     chunk_length = 500000,
     server_flow_depth = 0,
     client_flow_depth = 0,
     post_depth = 65495,
-    oversize_dir_length = 500,
-    max_header_length = 750,
-    max_headers = 100,
-    max_spaces = 200,
-    small_chunk_length = { size = 10, count = 5 },
-    non_rfc_chars = '0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07',
-    enable_cookies = true,
-    extended_response_inspection = true,
-    inspect_gzip = true,
-    normalize_utf = true,
-    unlimited_decompress = true,
-    normalize_javascript = true,
-    apache_whitespace = false,
-    ascii = false,
-    bare_byte = false,
-    directory = false,
-    double_decode = false,
-    iis_backslash = false,
-    iis_delimiter = false,
-    iis_unicode = false,
-    multi_slash = false,
-    utf_8 = false,
-    u_encode = true,
-    webroot = false
 }
 
+hi_x =
+{
+    http_methods = default_http_methods,
+    chunk_length = 500000,
+    server_flow_depth = 1460,
+    client_flow_depth = 1460,
+    post_depth = 65495,
+}
+
+nhttp_inspect = { }
+
 ---------------------------------------------------------------------------
--- FTP / Telnet normalization and anomaly detection.
+-- ftp / telnet normalization and anomaly detection
 ---------------------------------------------------------------------------
 
 telnet =
@@ -446,7 +416,7 @@ ftp_client =
 }
 
 ---------------------------------------------------------------------------
--- Target-Based stateful inspection/stream reassembly.
+-- stream reassembly and anomaly detection
 ---------------------------------------------------------------------------
 
 stream =
@@ -478,7 +448,7 @@ stream_tcp =
 
     session_timeout = 180,
     --require_3whs = -1,
-    show_rebuilt_packets = false,
+    show_rebuilt_packets = true,
 
     flush_factor = 0,
     overlap_limit = 10,
@@ -488,6 +458,13 @@ stream_tcp =
     ignore_any_rules = false,
 }
 
+tcp_x =
+{
+    policy = 'linux',
+    paf_max = 16384,
+    session_timeout = 180,
+}
+
 stream_udp =
 {
     session_timeout = 180,
@@ -495,15 +472,14 @@ stream_udp =
 }
 
 ---------------------------------------------------------------------------
--- Step #4: Configure loggers
+-- loggers
 ---------------------------------------------------------------------------
 
 -- alerts + packets
 unified2 =
 {
     file = 'u2.log',
-    limit = 128,
-    units = 'M',
+    limit = 128 * M,
     nostamp = true,
     mpls_event_types = true,
     vlan_event_types = true
@@ -520,9 +496,7 @@ alert_full = { }
 log_tcpdump = { file = 'snort++.pcap' }
 
 ---------------------------------------------------------------------------
--- Step #6: Customize your rule set
---
--- NOTE: All categories are enabled in this conf file
+-- ips rules and filters
 ---------------------------------------------------------------------------
 
 dir = os.getenv('SNORT_LUA_PATH')
@@ -531,23 +505,10 @@ if ( not dir ) then
     dir = ''
 end
 
-dofile(dir .. 'classification.lua')
-dofile(dir .. 'reference.lua')
+include '../lua/classification.lua'
 
---[[
-event_filter =
-{
-    { gid = 1, sid = 2, type = 'both', count = 1, seconds = 5 },
-    { gid = 1, sid = 1, type = 'both', count = 1, seconds = 5 }
-}
---]]
---
-suppress =
-{
-    { gid = 116, sid = 408 },
-    { gid = 116, sid = 412 },
-    { gid = 116, sid = 414 },
-}
+print 'Loading references'
+dofile(dir .. 'reference.lua')
 
 default_rules =
 [[
@@ -561,18 +522,20 @@ default_rules =
 
 # text rules
 #include $RULE_PATH/local.rules
-#include $RULE_PATH/app-detect.rules
-#include $RULE_PATH/attack-responses.rules
-#include $RULE_PATH/backdoor.rules
 
 # so rules
-#include $PLUGIN_RULE_PATH/bad-traffic.rules
-#include $PLUGIN_RULE_PATH/chat.rules
 #include $PLUGIN_RULE_PATH/dos.rules
 
-#alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
-#alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
-alert ( gid:129; sid:20; )
+# no metadata:service:
+#alert http ( sid:1; msg:"1"; content:"HTTP"; )
+#alert http any -> 1.2.3.4 ( sid:2; msg:"2"; content:"HTTP"; )
+#alert http any any -> 1.2.3.4 80 ( sid:3; msg:"3"; content:"HTTP"; )
+
+# no ; separated content suboptions
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST URI request for known malicious     URI - /inst.php?fff="; flow:to_server,established; content:"/inst.php?fff=", nocase, http_uri; content:  "coid=", nocase, http_uri; metadata:impact_flag red, policy balanced-ips drop, policy security-ips drop, reference:url,labs.snort.org/docs/16924.html; classtype:trojan-activity; sid:16924; rev:5;)
+
+# fast_pattern:<offset>,<length>; ->
+# fast_pattern:<offset> <length>;
 ]]
 
 network =
@@ -583,43 +546,92 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    --include = '../active.rules',
-    --rules = default_rules,
-    --enable_builtin_rules = true
+    include = '../active.rules',
+    rules = default_rules,
+    enable_builtin_rules = true
 }
 
+--[[
+event_filter =
+{
+    { gid = 1, sid = 2, type = 'both', count = 1, seconds = 5 },
+    { gid = 1, sid = 1, type = 'both', count = 1, seconds = 5 }
+}
+--]]
+
+suppress =
+{
+    { gid = 116, sid = 408 },
+    { gid = 116, sid = 412 },
+    { gid = 116, sid = 414 },
+}
+
+---------------------------------------------------------------------------
+-- net map attributes (replaces attribte table)
+---------------------------------------------------------------------------
+
+hosts = 
+{
+    {
+        ip = '1.2.3.4',
+        frag_policy = 'linux',
+        tcp_policy = 'linux',
+        services =
+        {
+            { name = 'ftp', proto = 'tcp', port = 21 },
+            { name = 'smtp', proto = 'tcp', port = 25 },
+            { name = 'http', proto = 'tcp', port = 80 }
+        }
+    },
+    {
+        ip = '2.4.6.8',
+        frag_policy = 'windows',
+        tcp_policy = 'windows',
+        services =
+        {
+            { name = 'netbios', proto = 'tcp', port = 137 },
+            { name = 'imap', proto = 'tcp', port = 143 },
+        }
+    }
+}
+
+---------------------------------------------------------------------------
 -- prototype bindings:
+--
 -- nets and ports move out of inspector configurations
 -- only need to specify non-default bindings
 -- when: policy_id, vlans, nets, proto, ports, roles, service
 -- use: action | file | type,name | policy_id [,service]
 -- when: days, times are tbd
+---------------------------------------------------------------------------
 
-targetX = { nets = HTTP_SERVERS, proto = 'tcp', ports = HTTP_PORTS } 
+-- define a target selector
+target_x = { nets = HTTP_SERVERS, proto = 'tcp', ports = HTTP_PORTS } 
 
-bindings =
+binder =
 {
-    -- product define / load a policy selected by firewall
+    -- policy selected by firewall
     {
         when = { policy_id = 'uuid' },
         use = { file = 'uuid.lua' }
     },
-    -- classic open source policy based on vlan
+    -- policy based on vlan
     {
         when = { vlans = '123' },
         use = { file = 'vlan.lua' }
     },
-    -- classic open source policy based on cidr
+    -- policy based on cidr
     {
         when = { nets = HOME_NET },
         use = { file = 'net.lua' }
     },
-    -- targeted inspector config
-    --{ when = targetX, use = { type = 'stream_tcp', name = 'tcpX' } },
-    --{ when = targetX, use = { type = 'http_server', name = 'hiX' } },
+    -- targeted config
+    --{ when = target_x, use = { type = 'stream_tcp', name = 'tcp_x' } },
+    --{ when = target_x, use = { type = 'http_server', name = 'hi_x' } },
 
     -- classic ports only config
     { when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
+    --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'nhttp_inspect' } },
     { when = { proto = 'tcp', ports = FTP_PORTS }, use = { type = 'ftp_server' } },
     { when = { proto = 'tcp', ports = RPC_PORTS }, use = { type = 'rpc_decode' } },
 
@@ -640,3 +652,42 @@ bindings =
     },
 }
  
+---------------------------------------------------------------------------
+-- error handling
+---------------------------------------------------------------------------
+
+--[[
+-- parse error handled by lua:
+foo bar
+
+ERROR: can't load ../lua/snort.lua: ../lua/snort.lua:629: '=' expected near 'bar'
+Fatal Error, Quitting..
+
+-- another:
+stream_xyz.foo = 'bar'
+
+ERROR: can't init ../lua/snort.lua: ../lua/snort.lua:635: attempt to index global 'stream_xyz' (a nil value)
+Fatal Error, Quitting..
+
+-- semantic errors handled by Snort++ don't have file / line:
+stream_tcp.foo = 'bar'
+
+ERROR: can't find stream_tcp.foo
+Fatal Error, Quitting..
+
+-- multiple range errors:
+stream_tcp.policy = 'bar'
+stream_tcp.paf_max = 123456
+
+ERROR invalid stream_tcp.policy = bar
+ERROR invalid stream_tcp.paf_max = 123456
+ERROR: see prior configuration errors
+Fatal Error, Quitting..
+
+-- undetected error:
+suppress = { { gid = 116, sid = 408 } }
+-- other foo
+suppress = { { gid = 116, sid = 412 } }
+}
+--]]
+
