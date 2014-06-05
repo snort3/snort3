@@ -126,8 +126,6 @@ struct SnortConfig
     char* plugin_path;
     char* script_path;
 
-    char pid_path[STD_BUF];  /* --pid-path or config pidpath */  // FIXIT still used??
-
     mode_t file_mask;
 
     //------------------------------------------------------
@@ -190,16 +188,10 @@ struct SnortConfig
     sfip_t obfuscation_net;  // -B
     char *bpf_filter;        // --bpf
 
-    // FIXIT make sure these are relative to instance dir
-    char *pcap_log_file;     /* -L */
-    char *perf_file;         /* -Z */
-
     //------------------------------------------------------
     // FIXIT non-module stuff - separate config from derived state?
 
-    char pid_filename[STD_BUF];  /* used with pid_path */  // FIXIT delete these
-    char pidfile_suffix[MAX_PIDFILE_SUFFIX + 1];  /* -R */
-
+    char pid_filename[STD_BUF];
     char *orig_log_dir;      /* set in case of chroot */
 
     int thiszone;
@@ -258,9 +250,6 @@ struct SnortConfig
     uint8_t tunnel_mask;
 
     uint32_t so_rule_memcap;
-    bool ha_peer;
-    char *ha_out;
-    char *ha_in;
     char *output_dir;
 
     struct VarNode* var_list;

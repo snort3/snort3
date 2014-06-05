@@ -190,12 +190,15 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     }
 
     // we dump just one list entry
-    if ( p->type == Parameter::PT_TABLE ||
-         p->type == Parameter::PT_LIST )
+    if ( p->type == Parameter::PT_TABLE )
         dump_table(key, pfx, (Parameter*)p->range);
+
+    else if ( p->type == Parameter::PT_LIST )
+        dump_table(key, pfx, (Parameter*)p->range, true);
 
     else if ( !pfx || !strncmp(key.c_str(), pfx, strlen(pfx)) )
     {
+#if 0
         cout << item();
         cout << p->get_type();
         cout << " " << emphasis(key);
@@ -207,7 +210,24 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
 
         if ( p->range )
             cout << " { " << p->range << " }";
+#else
+        cout << item();
+        cout << p->get_type();
+        cout << "\t" << emphasis(key);
 
+        if ( p->deflt )
+            cout << "\t" << (char*)p->deflt;
+        else
+            cout << "\t";
+
+        cout << "\t" << p->help;
+
+        if ( p->range )
+            cout << "\t" << (const char*)p->range;
+        else
+            cout << "\t";
+
+#endif
         cout << endl;
     }
     key.erase(n);

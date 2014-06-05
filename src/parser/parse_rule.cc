@@ -38,12 +38,6 @@
 #include <pwd.h>
 #include <fnmatch.h>
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-
 #include "snort_bounds.h"
 #include "rules.h"
 #include "treenodes.h"

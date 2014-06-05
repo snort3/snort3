@@ -1136,10 +1136,6 @@ static const Parameter process_params[] =
     { "utc", Parameter::PT_BOOL, nullptr, "false",
       "use UTC instead of local time for timestamps" },
 
-#ifdef NOT_UNTIL_WE_DAEMONIZE_AFTER_READING_CONFFILE
-    { "pid_path", Parameter::PT_STRING, nullptr, nullptr,
-      "set pid directory" },
-#endif
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1185,10 +1181,6 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             ConfigUtc(sc, "");
     }
-#ifdef NOT_UNTIL_WE_DAEMONIZE_AFTER_READING_CONFFILE
-    else if ( v.is("pid_path") )
-        ConfigPidPath(sc, v.get_string());
-#endif
     else
         return false;
 

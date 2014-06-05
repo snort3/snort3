@@ -2,6 +2,9 @@
 -- swapped use of range and deflt for PT_TABLE and PT_LIST Parameters
    (Parameter* is now in range so that deflt may be used for tabl/list
    defaults)
+-- removed -b, -N, -Z and, --perfmon-file options
+-- removed uricontent ips rule option
+
 
 84
 -- pulled in latest codecs

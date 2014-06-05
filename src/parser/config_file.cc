@@ -36,6 +36,7 @@
 #include <pcap.h>
 #include <grp.h>
 #include <pwd.h>
+
 #ifdef HAVE_DUMBNET_H
 #include <dumbnet.h>
 #else
@@ -372,14 +373,6 @@ void ConfigObfuscationMask(SnortConfig *sc, const char *args)
     sfip_pton(args, &sc->obfuscation_net);
 }
 
-void ConfigPerfFile(SnortConfig *sc, const char *args)
-{
-    if ( !args )
-        return;
-
-    sc->perf_file = SnortStrdup(args);
-}
-
 #define MIN_SNAPLEN  68
 #define MAX_SNAPLEN  UINT16_MAX
 
@@ -406,21 +399,6 @@ void ConfigPacketSnaplen(SnortConfig *sc, const char *args)
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,
         "Snap length of packets set to: %d\n", sc->pkt_snaplen););
-}
-
-void ConfigPidPath(SnortConfig *sc, const char *args)
-{
-    if ( !args )
-        return;
-
-    LogMessage("Found pid path directive (%s)\n", args);
-
-    sc->run_flags |= RUN_FLAG__CREATE_PID_FILE;
-    if (SnortStrncpy(sc->pid_path, args, sizeof(sc->pid_path)) != SNORT_STRNCPY_SUCCESS)
-        ParseError("Pid path too long.");
-
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Pid Path directory = %s\n",
-                            sc->pid_path););
 }
 
 PolicyMode GetPolicyMode(PolicyMode mode)

@@ -53,8 +53,6 @@ void ConfigNoLoggingTimestamps(SnortConfig*, const char*);
 void ConfigObfuscate(SnortConfig*, const char*);
 void ConfigObfuscationMask(SnortConfig*, const char*);
 void ConfigPacketSnaplen(SnortConfig*, const char*);
-void ConfigPerfFile(SnortConfig*sc, const char*);
-void ConfigPidPath(SnortConfig*, const char*);
 void ConfigPolicyVersion(SnortConfig*, const char* base, const char* target);
 #ifdef PERF_PROFILING
 void _ConfigProfilePreprocs(SnortConfig*, const char*);

@@ -450,8 +450,7 @@ static void SnortInit(int argc, char **argv)
 static void SnortUnprivilegedInit(void)
 {
     /* create the PID file */
-    if ( !ScReadMode() &&
-        (ScDaemonMode() || *snort_conf->pidfile_suffix || ScCreatePidFile()))
+    if ( !ScReadMode() && (ScDaemonMode() || ScCreatePidFile()))
     {
         CreatePidFile(snort_main_thread_pid);
     }
@@ -556,7 +555,7 @@ static void SnortCleanup()
     ClosePidFile();
 
     /* remove pid file */
-    if (SnortStrnlen(snort_conf->pid_filename, sizeof(snort_conf->pid_filename)) > 0)
+    if ( snort_conf->pid_filename[0] )
     {
         int ret;
 

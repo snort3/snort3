@@ -27,28 +27,8 @@
 #endif
 #include <stdint.h>
 
-// FIXIT these should be encapsulated in process.cc
-// sfcontrol.cc and sidechannel.cc are using them
-#ifndef SIGNAL_SNORT_RELOAD
-#define SIGNAL_SNORT_RELOAD         SIGHUP
-#endif
-
-#ifndef SIGNAL_SNORT_DUMP_STATS
-#define SIGNAL_SNORT_DUMP_STATS     SIGUSR1
-#endif
-
-#ifndef SIGNAL_SNORT_ROTATE_STATS
-#define SIGNAL_SNORT_ROTATE_STATS   SIGUSR2
-#endif
-
-// this one should not be changed by user
-#define SIGNAL_SNORT_CHILD_READY    SIGCHLD
-
-#ifndef SIGNAL_SNORT_READ_ATTR_TBL
-#define SIGNAL_SNORT_READ_ATTR_TBL SIGURG
-#endif
-
-enum PigSignal {
+enum PigSignal
+{
     PIG_SIG_NONE,
     PIG_SIG_QUIT,
     PIG_SIG_TERM,
@@ -64,6 +44,8 @@ PigSignal get_pending_signal();
 const char* get_signal_name(PigSignal);
 
 void init_signals();
+void help_signals();
+
 void daemonize();
 void set_quick_exit(bool);
 

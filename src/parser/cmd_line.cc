@@ -32,6 +32,7 @@ using namespace std;
 #include "parser.h"
 #include "vars.h"
 #include "detection/detect.h"
+#include "helpers/process.h"
 #include "main/analyzer.h"
 #include "managers/shell.h"
 #include "managers/event_manager.h"
@@ -249,6 +250,12 @@ static void config_help_options(SnortConfig*, const char* val)
     exit(0);
 }
 
+static void config_help_signals(SnortConfig*, const char*)
+{
+    help_signals();
+    exit(0);
+}
+
 enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -392,11 +399,6 @@ static void config_alert_mode(SnortConfig* sc, const char* val)
         sc->output = val;
 }
 
-static void config_log_tcpdump(SnortConfig* sc, const char*)
-{
-    sc->output = OUTPUT_PCAP;
-}
-
 static void config_conf(SnortConfig*, const char* val)
 {
     lua_conf = SnortStrdup(val);
@@ -469,12 +471,6 @@ static void config_log_mode(SnortConfig* sc, const char* val)
     }
 }
 
-static void config_bin_log(SnortConfig* sc, const char* val)
-{
-    sc->output = OUTPUT_PCAP;
-    sc->pcap_log_file = SnortStrdup(val);
-}
-
 static void config_inline(SnortConfig* sc, const char*)
 {
     LogMessage("Enabling inline operation\n");
@@ -487,26 +483,6 @@ static void config_inline_test(SnortConfig* sc, const char*)
     sc->run_flags |= RUN_FLAG__INLINE_TEST;
 }
 
-
-static void config_readback(SnortConfig* sc, const char* val)
-{
-    Trough_Multi(SOURCE_LIST, val);
-    sc->run_flags |= RUN_FLAG__READ;
-}
-
-static void config_pidfile_suffix(SnortConfig* sc, const char* val)
-{
-    if ((strlen(val) >= MAX_PIDFILE_SUFFIX) || (strlen(val) <= 0) ||
-        (strstr(val, "..") != NULL) || (strstr(val, "/") != NULL))
-    {
-            FatalError("Invalid pidfile suffix: %s.  Suffix must "
-                       "less than %u characters and not have "
-                       "\"..\" or \"/\" in the name.\n", val,
-                       MAX_PIDFILE_SUFFIX);
-    }
-
-    SnortStrncpy(sc->pidfile_suffix, val, sizeof(sc->pidfile_suffix));
-}
 
 static void config_test_mode(SnortConfig* sc, const char*)
 {
@@ -533,7 +509,7 @@ static void config_max_threads(SnortConfig* sc, const char* val)
 
 static void config_trough_file(SnortConfig* sc, const char* val)
 {
-    Trough_Multi(SOURCE_SINGLE, val);
+    Trough_Multi(SOURCE_FILE_LIST, val);
     sc->run_flags |= RUN_FLAG__READ;
 }
 
@@ -597,23 +573,6 @@ static void config_shell(SnortConfig* sc, const char*)
     sc->run_flags |= RUN_FLAG__SHELL;
 }
 
-#ifdef REG_TEST
-static void config_ha_peer(SnortConfig* sc, const char*)
-{
-    sc->ha_peer = true;
-}
-
-static void config_ha_out(SnortConfig* sc, const char* val)
-{
-    sc->ha_out = SnortStrdup(val);
-}
-
-static void config_ha_in(SnortConfig* sc, const char* val)
-{
-    sc->ha_in = SnortStrdup(val);
-}
-#endif
-
 static void config_bpf(SnortConfig* sc, const char* val)
 {
     sc->bpf_filter = SnortStrdup(val);
@@ -667,9 +626,6 @@ static ConfigFunc basic_opts[] =
     { "B", ConfigObfuscationMask, 
       "<mask> obfuscated IP addresses in alerts and packet dumps using CIDR mask" },
 
-    { "b", config_log_tcpdump, 
-      "log packets in tcpdump format (much faster!)" },
-
     { "C", ConfigDumpCharsOnly, 
       "print out payloads with character data only (no hex)" },
 
@@ -700,7 +656,7 @@ static ConfigFunc basic_opts[] =
       "make hash tables deterministic" },
 
     { "i", config_iface, 
-      "<iface> listen on interface <iface>" },
+      "<iface>... list of interfaces" },
 
     { "j", config_remote_control,
       "set port to listen for telnet connections" },
@@ -711,9 +667,6 @@ static ConfigFunc basic_opts[] =
     { "k", ConfigChecksumMode, 
       "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
 
-    { "L", config_bin_log, 
-      "<file> log to this tcpdump file" },
-
     { "l", ConfigLogDir, 
       "<ld> log to directory <ld>" },
 
@@ -722,9 +675,6 @@ static ConfigFunc basic_opts[] =
 
     { "m", ConfigUmask, 
       "<umask> set umask = <umask>" },
-
-    { "N", ConfigNoLog, 
-      "turn off logging (alerts still work)" },
 
     { "n", config_pkt_count, 
       "stop after n packets" },
@@ -741,11 +691,8 @@ static ConfigFunc basic_opts[] =
     { "q", config_ignore, // spec opt
       "quiet mode - Don't show banner and status report" },
 
-    { "R", config_pidfile_suffix, 
-      "<id> include 'id' in snort_intf<id>.pid file name" },
-
-    { "r", config_readback, 
-      "<pcap> (same as --pcap-single)" },
+    { "r", config_trough_list, 
+      "<pcap>... (same as --pcap-list)" },
 
     { "S", config_set_var, 
       "<n=v> set rules file variable n equal to value v" },
@@ -788,9 +735,6 @@ static ConfigFunc basic_opts[] =
     { "y", ConfigShowYear, 
       "include year in timestamp in the alert and log files" },
 
-    { "Z", ConfigPerfFile, 
-      "<file> (same as --perfmon-file)" },
-
     { "z", config_max_threads,
       "configure maximum number of packet threads (same as --max-packet-threads)" },
 
@@ -831,17 +775,6 @@ static ConfigFunc basic_opts[] =
     { "enable-inline-test", config_inline_test,
       "enable Inline-Test Mode Operation" },
 
-#ifdef REG_TEST
-    { "ha-peer", config_ha_peer,
-      "activate live high-availability state sharing with peer" },
-
-    { "ha-out", config_ha_out,
-      "<file> write high-availability events to this file" },
-
-    { "ha-in", config_ha_in,
-      "<file> read high-availability events from this file on startup (warm-start)" },
-#endif
-
     { "help", config_help_options,
       "<option prefix> output matching command line option quick help" },
 
@@ -863,6 +796,9 @@ static ConfigFunc basic_opts[] =
     { "help-options", config_help_options,
       "<option prefix> (same as --help)" },
 
+    { "help-signals", config_help_signals,
+      "dump available control signals" },
+
     { "lua", config_lua,
       "<chunk> extend/override conf with chunk; may be repeated" },
 
@@ -883,9 +819,6 @@ static ConfigFunc basic_opts[] =
 
     { "pause", config_pause,
       "load config and wait for further commands before processing packets", },
-
-    { "perfmon-file", ConfigPerfFile,
-      "<file> set the performonitor preprocessor file path and name (same as -Z)" },
 
     { "pcap-file", config_trough_file,
       "<file> file that contains a list of pcaps to read - read mode is implied" },
@@ -911,14 +844,8 @@ static ConfigFunc basic_opts[] =
     { "pcap-reset", config_pcap_reset,
       "reset Snort after each pcap" },
 
-    { "pcap-single", config_readback,
-      "<pcap> read and process tcpdump file <pcap> (same as -r)" },
-
     { "pcap-show", config_pcap_show,
       "print a line saying what pcap is currently being read" },
-
-    { "pid-path", ConfigPidPath,
-      "<dir> specify the directory for the Snort PID file" },
 
     { "plugin-path", ConfigPluginPath,
       "where to find plugins" },
