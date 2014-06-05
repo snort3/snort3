@@ -35,17 +35,16 @@
 #include "snort_types.h"
 
 #include "nhttp_enum.h"
-#include "nhttp_scratchpad.h"
-#include "nhttp_strtocode.h"
-#include "nhttp_headnorm.h"
+#include "nhttp_str_to_code.h"
+#include "nhttp_head_norm.h"
 
 using namespace NHttpEnums;
 
-// This derivation removes embedded CRLFs (wrapping), omits leading and trailing white space, and replaces internal strings of <SP> and <LF> with a single <SP>
-int32_t HeaderNormalizer::deriveHeaderContent(const uint8_t *value, int32_t length, uint8_t *buffer) const {
+// This derivation removes embedded CRLFs (wrapping), omits leading and trailing linear white space, and replaces internal strings of <SP> and <LF> with a single <SP>
+int32_t HeaderNormalizer::deriveHeaderContent(const uint8_t *value, int32_t length, uint8_t *buffer) {
     int32_t outLength = 0;
     bool lastWhite = true;
-    for (int k=0; k < length; k++) {
+    for (int32_t k=0; k < length; k++) {
         if ((value[k] == '\r') && (k+1 < length) && (value[k+1] == '\n')) k++;
         else if ((value[k] != ' ') && (value[k] != '\t')) {
             lastWhite = false;
@@ -97,9 +96,11 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
     // is odd or even, the initial placement in the buffer is chosen so that the final normalization leaves the field value at the front of the buffer. The buffer space actually
     // used is locked down in the scratchPad. The remainder of the first half and all of the second half are returned to the scratchPad for future use.
     if (concatenateRepeats) bufferLength += numMatches - 1;    // allow space for concatenation commas
-    bufferLength += (4-bufferLength%4)%4 + 200;  // &&& 200 is a "way too big" fudge factor to allow for modest expansion of field size during normalization. Needs improvement.
-    uint8_t *scratch;
-    if ((scratch = scratchPad.request(2*bufferLength)) == nullptr) {
+    // Round up to multiple of eight so that both halves are 64-bit aligned.
+    // 200 is a "way too big" fudge factor to allow for modest expansion of field size during normalization. Needs improvement.
+    bufferLength += (8-bufferLength%8)%8 + 200;
+    uint8_t * const scratch = scratchPad.request(2*bufferLength);
+    if (scratch == nullptr) {
         resultField.length = STAT_INSUFMEMORY;
         return;
     }
@@ -108,7 +109,6 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
     uint8_t * const backHalf = scratch + bufferLength;
     uint8_t *working = (numNormalizers%2 == 0) ? frontHalf : backHalf;
     int currMatch = firstMatch;
-    int32_t growth;
     int32_t dataLength = 0;
     for (int j=0; j < numMatches; j++) {
         if (j >= 1) {
@@ -116,7 +116,7 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
             dataLength++;
             while (headerNameId[++currMatch] != headId);
         }
-        growth = deriveHeaderContent(headerValue[currMatch].start, headerValue[currMatch].length, working);
+        int32_t growth = deriveHeaderContent(headerValue[currMatch].start, headerValue[currMatch].length, working);
         working += growth;
         dataLength += growth;
         if (!concatenateRepeats) break;
@@ -138,23 +138,29 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
 // Collection of stock normalization functions. This will probably grow throughout the life of the software. New functions must follow the standard signature.
 // The void* at the end is for any special configuration data the function requires.
 
-int32_t normDecimalInteger(const uint8_t* inBuf, int32_t inLength, uint8_t* outBuf, uint64_t& infractions, const void *notUsed) {
-    uint32_t total = 0;
-    int value;
+int32_t normDecimalInteger(const uint8_t* inBuf, int32_t inLength, uint8_t* outBuf, uint64_t& infractions, const void *) {
+    // Limited to 18 decimal digits, not including leading zeros, to fit comfortably into int64_t
+    int64_t total = 0;
+    int nonLeadingZeros = 0;
     for (int32_t k=0; k < inLength; k++) {
-        value = inBuf[k] - '0';
+        int value = inBuf[k] - '0';
+        if (nonLeadingZeros || (value != 0)) nonLeadingZeros++;
+        if (nonLeadingZeros > 18) {
+            infractions |= INF_BADHEADERDATA;
+            return STAT_PROBLEMATIC;
+        }
         if ((value < 0) || (value > 9)) {
             infractions |= INF_BADHEADERDATA;
             return STAT_PROBLEMATIC;
         }
         total = total*10 + value;
     }
-    ((uint32_t*)outBuf)[0] = total;
-    return sizeof(uint32_t);
+    ((int64_t*)outBuf)[0] = total;
+    return sizeof(int64_t);
 }
 
 
-int32_t norm2Lower(const uint8_t* inBuf, int32_t inLength, uint8_t* outBuf, uint64_t& infractions, const void *notUsed) {
+int32_t norm2Lower(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t&, const void *) {
     for (int32_t k=0; k < inLength; k++) {
         outBuf[k] = ((inBuf[k] < 'A') || (inBuf[k] > 'Z')) ? inBuf[k] : inBuf[k] - ('A' - 'a');
     }
@@ -162,24 +168,34 @@ int32_t norm2Lower(const uint8_t* inBuf, int32_t inLength, uint8_t* outBuf, uint
 }
 
 
-int32_t normStrCode(const uint8_t* inBuf, int32_t inLength, uint8_t* outBuf, uint64_t& infractions, const void *table) {
-    ((uint32_t*)outBuf)[0] = strToCode(inBuf, inLength, (const StrCode*)table);
-    return sizeof(uint32_t);
+int32_t normStrCode(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t&, const void *table) {
+    ((int64_t*)outBuf)[0] = strToCode(inBuf, inLength, (const StrCode*)table);
+    return sizeof(int64_t);
 }
 
-int32_t normSeqStrCode(const uint8_t* inBuf, int32_t inLength, uint8_t* outBuf, uint64_t& infractions, const void *table) {
+int32_t normSeqStrCode(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t&, const void *table) {
     int32_t numCodes = 0;
     const uint8_t* start = inBuf;
-    int32_t length = 0;
     while (true) {
-        start += length;
+        int32_t length;
         for (length = 0; (start + length < inBuf + inLength) && (start[length] != ','); length++);
         if (length == 0) ((uint32_t*)outBuf)[numCodes++] = STAT_EMPTYSTRING;
-        else ((uint32_t*)outBuf)[numCodes++] = strToCode(start, length, (const StrCode*)table);
-        if (start + length++ >= inBuf + inLength) break;
+        else ((int64_t*)outBuf)[numCodes++] = strToCode(start, length, (const StrCode*)table);
+        if (start + length >= inBuf + inLength) break;
+        start += length + 1;
     }
-    return numCodes * sizeof(uint32_t);
+    return numCodes * sizeof(int64_t);
 }
+
+// Remove all space and tab characters (known as LWS or linear white space in the RFC)
+int32_t normRemoveLws(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t&, const void *) {
+    int32_t length = 0;
+    for (int32_t k = 0; k < inLength; k++) {
+        if ((inBuf[k] != ' ') && (inBuf[k] != '\t')) outBuf[length++] = inBuf[k];
+    }
+    return length;
+}
+
 
 
 

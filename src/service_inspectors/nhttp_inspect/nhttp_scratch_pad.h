@@ -26,8 +26,8 @@
 //  @brief      ScratchPad class declaration
 //
 
-#ifndef NHTTP_SCRATCHPAD_H
-#define NHTTP_SCRATCHPAD_H
+#ifndef NHTTP_SCRATCH_PAD_H
+#define NHTTP_SCRATCH_PAD_H
 
 
 //-------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 //-------------------------------------------------------------------------
 
 // Working space and storage for all the derived fields
-// Return value of request is 32-bit aligned and may be freely cast to uint32_t*
+// Return value of request is 64-bit aligned and may be freely cast to uint64_t*
 // 1. request the maximum number of bytes you might need
 // 2. use what you need
 // 3. commit() what you actually used if you want to keep it
@@ -44,13 +44,13 @@
 
 class ScratchPad {
 public:
-    ScratchPad(uint32_t *buff, uint32_t length) : buffer(buff), capacity(length*4), used(0) {}; // Careful: length must be number of uint32_ts provided, not octets.
+    ScratchPad(uint64_t *buff, uint32_t length) : buffer(buff), capacity(length*8), used(0) {}; // Careful: length must be number of uint64_ts provided, not octets.
     void reinit() {used = 0;};
     uint8_t *request(uint32_t needed) const {return (needed <= capacity-used) ? (uint8_t*)(buffer+used) : nullptr;};
-    void commit(uint32_t taken) { used += taken + (4-(taken%4))%4; };  // round up to multiple of 4 to preserve alignment
+    void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; };  // round up to multiple of 8 to preserve alignment
 
 private:
-    uint32_t *buffer;
+    uint64_t *buffer;
     uint32_t capacity;
     uint32_t used;
 };

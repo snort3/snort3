@@ -26,9 +26,10 @@
 //  @brief      HeaderNormalizer class declaration
 //
 
-#ifndef NHTTP_HEADNORM_H
-#define NHTTP_HEADNORM_H
+#ifndef NHTTP_HEAD_NORM_H
+#define NHTTP_HEAD_NORM_H
 
+#include "nhttp_scratch_pad.h"
 
 //-------------------------------------------------------------------------
 // HeaderNormalizer class
@@ -56,7 +57,7 @@ public:
     NHttpEnums::NormFormat getFormat() const {return format;};
 
 private:
-    int32_t deriveHeaderContent(const uint8_t *value, int32_t length, uint8_t *buffer) const;
+    static int32_t deriveHeaderContent(const uint8_t *value, int32_t length, uint8_t *buffer);
 
     const NHttpEnums::NormFormat format;
     const bool concatenateRepeats;
@@ -72,6 +73,7 @@ int32_t normDecimalInteger(const uint8_t*, int32_t, uint8_t*, uint64_t&, const v
 int32_t norm2Lower(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
 int32_t normStrCode(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
 int32_t normSeqStrCode(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
+int32_t normRemoveLws(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
 
 #endif
 

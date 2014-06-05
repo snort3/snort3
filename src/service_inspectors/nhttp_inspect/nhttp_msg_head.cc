@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgHeader class analyzes individual HTTP messages.
+//  @brief      NHttpMsgHeader class analyzes individual HTTP message headers.
 //
 
 
@@ -33,41 +33,15 @@
 #include <stdio.h>
 
 #include "snort.h"
-#include "flow/flow.h"
-#include "detection/detection_util.h"
 #include "nhttp_enum.h"
-#include "nhttp_scratchpad.h"
-#include "nhttp_strtocode.h"
-#include "nhttp_headnorm.h"
-#include "nhttp_flowdata.h"
-#include "nhttp_msgheader.h"
+#include "nhttp_test_input.h"  // &&& temporary to support TCP close workaround
+#include "nhttp_msg_head.h"
 
 using namespace NHttpEnums;
 
-// Return the number of octets before the first CRLF. Return length if CRLF not present.
-//
-// wrappable: CRLF does not count in a header field when immediately followed by <SP> or <LF>. These whitespace characters
-// at the beginning of the next line indicate that the previous header has wrapped and is continuing on the next line.
-uint32_t NHttpMsgHeader::findCrlf(const uint8_t* buffer, uint32_t length, bool wrappable) {
-    for (uint32_t k=0; k < length-1; k++) {
-        if ((buffer[k] == '\r') && (buffer[k+1] == '\n'))
-            if (!wrappable || (k+2 >= length) || ((buffer[k+2] != ' ') && (buffer[k+2] != '\t'))) return k;
-    }
-    return length;
-}
-
-// Reinitialize everything and load a new message
-void NHttpMsgHeader::loadMessage(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_) {
-    length = (bufsize <= MAXOCTETS) ? bufsize : MAXOCTETS;
-    memcpy(rawBuf, buffer, length);
-
-    sessionData = sessionData_;
-    infractions = sessionData->infractions;
-    sourceId = sessionData->sourceId;
-    tcpClose = sessionData->tcpClose;
-
-    scratchPad.reinit();
-
+// Reinitialize everything derived in preparation for analyzing a new message
+void NHttpMsgHeader::initSection() {
+    NHttpMsgSharedHead::initSection();
     startLine.length = STAT_NOTCOMPUTE;
     version.length = STAT_NOTCOMPUTE;
     versionId = VERS__NOTCOMPUTE;
@@ -77,22 +51,11 @@ void NHttpMsgHeader::loadMessage(const uint8_t *buffer, const uint16_t bufsize, 
     statusCode.length = STAT_NOTCOMPUTE;
     statusCodeNum = STAT_NOTCOMPUTE;
     reasonPhrase.length = STAT_NOTCOMPUTE;
-    headers.length = STAT_NOTCOMPUTE;
-    numHeaders = STAT_NOTCOMPUTE;
-    for(int k = 0; k < MAXHEADERS; k++) {
-        headerLine[k].length = STAT_NOTCOMPUTE;
-        headerName[k].length = STAT_NOTCOMPUTE;
-        headerNameId[k] = HEAD__NOTCOMPUTE;
-        headerValue[k].length = STAT_NOTCOMPUTE;
-    }
-    for (int k = 1; k < HEAD__MAXVALUE; k++) {
-        headerValueNorm[k].length = STAT_NOTCOMPUTE;
-    }
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgHeader::analyze() {
-    parseWhole();
+    NHttpMsgSharedHead::analyze();
     if (sourceId == SRC_CLIENT) {
         parseRequestLine();
         deriveMethodId();
@@ -102,15 +65,6 @@ void NHttpMsgHeader::analyze() {
         deriveStatusCodeNum();
     }
     deriveVersionId();
-    parseHeaderBlock();
-    parseHeaderLines();
-    for (int j=0; j < MAXHEADERS; j++) {
-        if (headerName[j].length <= 0) break;
-        deriveHeaderNameId(j);
-    }
-    for (int k=1; k <= numNorms; k++) {
-        headerNorms[k]->normalize(scratchPad, infractions, (HeaderId)k, headerNameId, headerValue, MAXHEADERS, headerValueNorm[k]);
-    }
 }
 
 // All we do here is separate the start line from the header fields.
@@ -122,11 +76,22 @@ void NHttpMsgHeader::parseWhole() {
     startLine.length = findCrlf(startLine.start, length, false);
     // findCrtl() guarentees that either the start line is the whole message or there must be at least two more characters and the first two are <CR><LF>.
     assert((length == startLine.length) || ((length >= startLine.length+2) && !memcmp(msgText + startLine.length, "\r\n", 2)));
+
+// &&& The else clause is a workaround for the lack of TCP close notification support in the framework.
+// &&& Eventually the contents of the if clause should become the only code and the if-statement should go away.
+if (NHttpTestInput::test_mode) {
     // We trust PAF. !tcpClose guarentees that either there are exactly four more characters <CR><LF><CR><LF> or there are at least seven more characters
     // with the first two being <CR><LF> and the last four being <CR><LF><CR><LF>.
     assert(tcpClose ||
            ((length == startLine.length+4) && !memcmp(msgText + startLine.length, "\r\n\r\n", 4)) ||
            ((length >= startLine.length+7) && !memcmp(msgText + startLine.length, "\r\n", 2) && !memcmp(msgText + length - 4, "\r\n\r\n", 4)));
+}
+else {
+    // We trust PAF. Therefore if the invariants don't hold it must be because we got the leftovers after a TCP close.
+    // So we kludge the close notification as a workaround.
+    if ( ! ( ((length == startLine.length+4) && !memcmp(msgText + startLine.length, "\r\n\r\n", 4)) ||
+             ((length >= startLine.length+7) && !memcmp(msgText + startLine.length, "\r\n", 2) && !memcmp(msgText + length - 4, "\r\n\r\n", 4)) ) ) tcpClose = true;
+}
 
     // The following if-else ladder puts the extremely common normal cases at the beginning and the rare pathological cases at the end
     // Normal case with header fields
@@ -219,44 +184,14 @@ void NHttpMsgHeader::parseStatusLine() {
     statusCode.length = 3;
     reasonPhrase.start = startLine.start + 13;
     reasonPhrase.length = startLine.length - 13;
+    for (int32_t k = 0; k < reasonPhrase.length; k++) {
+        if ((reasonPhrase.start[k] <= 31) || (reasonPhrase.start[k] >= 127)) {
+            // Illegal character in reason phrase
+            infractions |= INF_BADPHRASE;
+            break;
+        }
+    }
     assert (startLine.length == version.length + statusCode.length + reasonPhrase.length + 2);
-}
-
-// Divide up the block of header fields into individual header field lines.
-void NHttpMsgHeader::parseHeaderBlock() {
-    if (headers.length <= 0) return;
-    int32_t bytesused = 0;
-    numHeaders = 0;
-    while (bytesused < headers.length) {
-        headerLine[numHeaders].start = headers.start + bytesused;
-        headerLine[numHeaders].length = findCrlf(headerLine[numHeaders].start, headers.length - bytesused, true);
-        bytesused += headerLine[numHeaders++].length + 2;
-        if (numHeaders >= MAXHEADERS) {
-             break;
-        }
-    }
-    if (bytesused < headers.length) {
-        infractions |= INF_TOOMANYHEADERS;
-    }
-}
-
-// Divide header field lines into field name and field value
-void NHttpMsgHeader::parseHeaderLines() {
-    int colon;
-    for (int k=0; k < numHeaders; k++) {
-        for (colon=0; colon < headerLine[k].length; colon++) {
-            if (headerLine[k].start[colon] == ':') break;
-        }
-        if (colon < headerLine[k].length) {
-            headerName[k].start = headerLine[k].start;
-            headerName[k].length = colon;
-            headerValue[k].start = headerLine[k].start + colon + 1;
-            headerValue[k].length = headerLine[k].length - colon - 1;
-        }
-        else {
-            infractions |= INF_BADHEADER;
-        }
-    }
 }
 
 void NHttpMsgHeader::deriveStatusCodeNum() {
@@ -308,105 +243,77 @@ void NHttpMsgHeader::deriveMethodId() {
     methodId = (MethodId) strToCode(method.start, method.length, methodList);
 }
 
-void NHttpMsgHeader::deriveHeaderNameId(int index) {
-     if (headerName[index].length <= 0) return;
-    // Normalize header field name to lower case for matching purposes
-    uint8_t *lowerName;
-    if ((lowerName = scratchPad.request(headerName[index].length)) == nullptr) {
-        infractions |= INF_NOSCRATCH;
-        headerNameId[index] = HEAD__INSUFMEMORY;
-        return;
-    }
-    int32_t lowerLength = norm2Lower(headerName[index].start, headerName[index].length, lowerName, infractions, nullptr);
-    headerNameId[index] = (HeaderId) strToCode(lowerName, lowerLength, headerList);
-}
-
 void NHttpMsgHeader::genEvents() {
-    if (infractions != 0) SnortEventqAdd(GID_HTTP_CLIENT, 1); // I'm just an example event (HI_CLIENT_ASCII)
+    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgHeader::printInterval(FILE *output, const char* name, const uint8_t *text, int32_t length, bool intVals) {
-    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE)) return;
-    fprintf(output, "%s, length = %d\n", name, length);
-    if (length <= 0) return;
-    if (text == nullptr) {
-        fprintf(output, "nullptr\n");
-        return;
-    }
-    for (int k=0; k < length; k++) {
-        if ((text[k] >= 0x20) && (text[k] <= 0x7E)) fprintf(output, "%c", (char)text[k]);
-        else if (text[k] == 0x0) fprintf(output, "~");
-        else if (text[k] == 0xD) fprintf(output, "`");
-        else if (text[k] == 0xA) fprintf(output, "'");
-        else fprintf(output, "*");
-        if (k%200 == 199) fprintf(output, "\n");
-    }
+void NHttpMsgHeader::printMessage(FILE *output) const {
+    NHttpMsgSection::printMessageTitle(output, "header");
 
-    if (intVals && (length%4 == 0)) {
-        fprintf(output, "\nInteger values =");
-        for (int j=0; j < length; j+=4) {
-            fprintf(output, " %u", *((const uint32_t*)(text+j)));
-        }
-    }
-    fprintf(output, "\n");
-}
-
-void NHttpMsgHeader::printMessage(FILE *output) {
-    fprintf(output, "Printout of HTTP message structure.\n");
-    printInterval(output, "Raw message", msgText, length);
-    printInterval(output, "Start Line", startLine.start, startLine.length);
     if (sourceId != SRC__NOTCOMPUTE) fprintf(output, "Source Id: %d\n", sourceId);
-    printInterval(output, "Version", version.start, version.length);
     if (versionId != VERS__NOTCOMPUTE) fprintf(output, "Version Id: %d\n", versionId);
-    printInterval(output, "Method", method.start, method.length);
     if (methodId != METH__NOTCOMPUTE) fprintf(output, "Method Id: %d\n", methodId);
-    printInterval(output, "URI", uri.start, uri.length);
-    printInterval(output, "Status Code", statusCode.start, statusCode.length);
     if (statusCodeNum != STAT_NOTCOMPUTE) fprintf(output, "Status Code Num: %d\n", statusCodeNum);
     printInterval(output, "Reason Phrase", reasonPhrase.start, reasonPhrase.length);
-    printInterval(output, "Headers", headers.start, headers.length);
-    if (numHeaders != STAT_NOTCOMPUTE) fprintf(output, "Number of headers: %d\n", numHeaders);
-    for (int j=0; j < numHeaders && j < 200; j++) {
-        printInterval(output, "Header Line", headerLine[j].start, headerLine[j].length);
-        printInterval(output, "Header Name", headerName[j].start, headerName[j].length);
-        fprintf(output, "Header name Id: %d\n", headerNameId[j]);
-        printInterval(output, "Header Value", headerValue[j].start, headerValue[j].length);
-    }
-    for (int k=1; k <= numNorms; k++) {
-        if (headerValueNorm[k].length != STAT_NOTPRESENT) fprintf(output, "Header ID = %d\n", k);
-        printInterval(output, "Header Value Normalized", headerValueNorm[k].start, headerValueNorm[k].length, true);
-    }
-    fprintf(output, "Infractions: %lx\n", infractions);
-    fprintf(output, "TCP Close: %s\n", tcpClose ? "True" : "False");
+    printInterval(output, "URI", uri.start, uri.length);
 
-    fprintf(output, "Interface to old clients. http_mask = %x.\n", http_mask);
-    for (int i=0; i < HTTP_BUFFER_MAX; i++) {
-        if ((1 << i) & http_mask) printInterval(output, http_buffer_name[i], http_buffer[i].buf, http_buffer[i].length);
+    NHttpMsgSharedHead::printMessageHead(output);
+    NHttpMsgSection::printMessageWrapup(output);
+}
+
+
+void NHttpMsgHeader::updateFlow() const {
+    const uint64_t disasterMask = INF_BADREQLINE | INF_BADSTATLINE | INF_BROKENCHUNK | INF_BADCHUNKSIZE;
+
+    // The following logic to determine body type is by no means the last word on this topic.
+    if (tcpClose) {
+        sessionData->typeExpected[sourceId] = SEC_CLOSED;
+        sessionData->halfReset(sourceId);
+    }
+    else if (infractions & disasterMask) {
+        sessionData->typeExpected[sourceId] = SEC_ABORT;
+        sessionData->halfReset(sourceId);
+    }
+    else if ((sourceId == SRC_SERVER) && ((statusCodeNum <= 199) || (statusCodeNum == 204) || (statusCodeNum == 304))) {
+        // No body allowed by RFC for these response codes
+        sessionData->typeExpected[sourceId] = SEC_HEADER;
+        sessionData->halfReset(sourceId);
+    }
+    // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
+    else if ( (headerValueNorm[HEAD_TRANSFER_ENCODING].length > 0) &&
+         ((*(int64_t *)(headerValueNorm[HEAD_TRANSFER_ENCODING].start + (headerValueNorm[HEAD_TRANSFER_ENCODING].length - 8))) == TRANSCODE_CHUNKED) ) {
+        // Chunked body
+        sessionData->typeExpected[sourceId] = SEC_CHUNKHEAD;
+        sessionData->bodySections[sourceId] = 0;
+        sessionData->bodyOctets[sourceId] = 0;
+        sessionData->numChunks[sourceId] = 0;
+    }
+    else if ((headerValueNorm[HEAD_CONTENT_LENGTH].length > 0) && (*(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start > 0)) {
+        // Regular body
+        sessionData->typeExpected[sourceId] = SEC_BODY;
+        sessionData->octetsExpected[sourceId] = *(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start;
+        sessionData->dataLength[sourceId] = *(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start;
+        sessionData->bodySections[sourceId] = 0;
+        sessionData->bodyOctets[sourceId] = 0;
+    }
+    else {
+        // No body
+        sessionData->typeExpected[sourceId] = SEC_HEADER;
+        sessionData->halfReset(sourceId);
     }
 }
 
-// Legacy support function. Puts message fields into the buffers used by old Snort. This should go away.
-void NHttpMsgHeader::oldClients() {
-    ClearHttpBuffers();
-
+// Legacy support function. Puts message fields into the buffers used by old Snort.
+void NHttpMsgHeader::legacyClients() const {
+    NHttpMsgSharedHead::legacyClients();
     if (method.length > 0) SetHttpBuffer(HTTP_BUFFER_METHOD, method.start, (unsigned)method.length);
     if (uri.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_URI, uri.start, (unsigned)uri.length);
     if (uri.length > 0) SetHttpBuffer(HTTP_BUFFER_URI, uri.start, (unsigned)uri.length);
-    if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, headers.start, (unsigned)headers.length);
-    if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_HEADER, headers.start, (unsigned)headers.length);
     if (statusCode.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_CODE, statusCode.start, (unsigned)statusCode.length);
     if (reasonPhrase.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reasonPhrase.start, (unsigned)reasonPhrase.length);
- 
-    for (int k=0; (headerNameId[k] != HEAD__NOTCOMPUTE) && (k < MAXHEADERS); k++) {
-        if (((headerNameId[k] == HEAD_COOKIE) && (sourceId == SRC_CLIENT)) || ((headerNameId[k] == HEAD_SET_COOKIE) && (sourceId == SRC_SERVER))) {
-            if (headerValue[k].length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, headerValue[k].start, (unsigned)headerValue[k].length);
-            break;
-        }
-    }
-
-    if ((sourceId == SRC_CLIENT) && (headerValueNorm[HEAD_COOKIE].length > 0))
-       SetHttpBuffer(HTTP_BUFFER_COOKIE, headerValueNorm[HEAD_COOKIE].start, (unsigned)headerValueNorm[HEAD_COOKIE].length);
-    else if ((sourceId == SRC_SERVER) && (headerValueNorm[HEAD_SET_COOKIE].length > 0))
-       SetHttpBuffer(HTTP_BUFFER_COOKIE, headerValueNorm[HEAD_SET_COOKIE].start, (unsigned)headerValueNorm[HEAD_SET_COOKIE].length);
 }
+
+
+
+
 

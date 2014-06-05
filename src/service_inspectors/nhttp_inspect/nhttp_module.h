@@ -29,10 +29,12 @@
 #ifndef NHTTP_MODULE_H
 #define NHTTP_MODULE_H
 
+#include "framework/module.h"
+
 class NHttpModule : public Module
 {
 public:
-    NHttpModule() : Module("nhttp_inspect", nhttpParams) { };
+    NHttpModule();
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -40,6 +42,7 @@ public:
     bool get_test_mode() const { return test_mode; };
 private:
     static const Parameter nhttpParams[];
+    static const RuleMap nhttpEvents[];
     bool test_mode = false;
 };
 

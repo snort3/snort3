@@ -323,7 +323,7 @@ hi_x =
     post_depth = 65495,
 }
 
-nhttp_inspect = { }
+nhttp_inspect = { test_mode = false }
 
 ---------------------------------------------------------------------------
 -- ftp / telnet normalization and anomaly detection

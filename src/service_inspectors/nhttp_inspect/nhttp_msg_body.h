@@ -23,18 +23,52 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Converts protocol constant string to enum
+//  @brief      NHttpMsgBody class declaration
 //
 
-#ifndef NHTTP_STRTOCODE_H
-#define NHTTP_STRTOCODE_H
+#ifndef NHTTP_MSG_BODY_H
+#define NHTTP_MSG_BODY_H
 
-struct StrCode {
-    int32_t code;
-    const char *name;
+#include "nhttp_msg_section.h"
+
+//-------------------------------------------------------------------------
+// NHttpMsgBody class
+//-------------------------------------------------------------------------
+
+class NHttpMsgBody : public NHttpMsgSection {
+public:
+    NHttpMsgBody() {};
+    void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
+    void initSection();
+    void analyze();
+    void printMessage(FILE *output) const;
+    void genEvents();
+    void updateFlow() const;
+    void legacyClients() const;
+
+protected:
+    int64_t dataLength;
+    int64_t bodySections;
+    int64_t bodyOctets;
+
+    field data;
 };
 
-int32_t strToCode(const uint8_t *text, int32_t textLen, const StrCode table[]);
-
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

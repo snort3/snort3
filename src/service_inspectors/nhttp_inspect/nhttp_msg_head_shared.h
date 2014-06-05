@@ -23,28 +23,28 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgHeader class declaration
+//  @brief      NHttpMsgSharedHead class declaration
 //
 
-#ifndef NHTTP_MSGHEADER_H
-#define NHTTP_MSGHEADER_H
+#ifndef NHTTP_MSG_HEAD_SHARED_H
+#define NHTTP_MSG_HEAD_SHARED_H
 
+#include "nhttp_str_to_code.h"
+#include "nhttp_head_norm.h"
+#include "nhttp_msg_section.h"
 
 //-------------------------------------------------------------------------
-// NHttpMsgHeader class
+// NHttpMsgSharedHead class
 //-------------------------------------------------------------------------
 
-class NHttpMsgHeader {
+class NHttpMsgSharedHead: public NHttpMsgSection {
 public:
-    NHttpMsgHeader() {};
-    void loadMessage(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
+    void initSection();
     void analyze();
-    void printMessage(FILE *output);
     void genEvents();
-    void oldClients();  // I'm a legacy support method and should go away eventually
-    static const uint32_t MAXOCTETS = 65535;
+    void legacyClients() const;
 
-private:
+protected:
     // Header normalization. There should be one of these for every different way we can process a header field value.
     static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;
@@ -58,56 +58,21 @@ private:
     static const int32_t numNorms;
 
     // Code conversion tables are for turning token strings into enums.
-    static const StrCode methodList[];
     static const StrCode headerList[];
     static const StrCode transCodeList[];
 
     // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
     // things into a standard form without changing the underlying format.
-    void parseWhole();
-    void deriveSourceId();
-    void parseRequestLine();
-    void parseStatusLine();
+    virtual void parseWhole() = 0;
     void parseHeaderBlock();
     void parseHeaderLines();
     void deriveHeaderNameId(int index);
-    void deriveStatusCodeNum();
-    void deriveVersionId();
-    void deriveMethodId();
 
-    // Convenience methods
-    uint32_t findCrlf(const uint8_t* buffer, uint32_t length, bool wrappable);
-    void printInterval(FILE *output, const char* name, const uint8_t *text, int32_t length, bool intVals = false);
-
-    // The current strategy is to copy the entire raw message headers into this object. Here it is.
-    uint32_t length;              // Length of the original message headers in octets
-    uint8_t rawBuf[MAXOCTETS];    // The original HTTP message header octets
-    // This pointer is the handle for working with the original message data. It makes it simple to later replace rawBuf with some other form of storage
-    // such as the buffer in the packet structure or something dynamic. Const x 2 because this pointer should never change and people working with the
-    // original message should not be changing it. Only loading a completely new message into rawBuf should do that.
-    const uint8_t * const msgText = rawBuf;
-
-    // Working space and storage for all the derived fields. See scratchPad.h for usage instructions.
-    // Allocation size may be complete overkill. Need to revisit this.
-    uint32_t derivedBuf[MAXOCTETS/4];
-    NHttpFlowData* sessionData;
-    ScratchPad scratchPad {derivedBuf, MAXOCTETS/4};
+    void printMessageHead(FILE *output) const;
 
     // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the original message buffer (raw pieces) or the
+    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
     // scratchPad (normalized pieces).
-    uint64_t infractions;
-    bool tcpClose;
-    field startLine;
-    NHttpEnums::SourceId sourceId;
-    field version;
-    NHttpEnums::VersionId versionId;
-    field method;
-    NHttpEnums::MethodId methodId;
-    field uri;
-    field statusCode;
-    int32_t statusCodeNum;
-    field reasonPhrase;
     field headers;
     static const int MAXHEADERS = 200;  // I'm an arbitrary number. Need to revisit.
     int32_t numHeaders;

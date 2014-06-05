@@ -1,3 +1,6 @@
+86
+-- pulled in tom's latest nhttp_inpsect code
+
 85
 -- swapped use of range and deflt for PT_TABLE and PT_LIST Parameters
    (Parameter* is now in range so that deflt may be used for tabl/list

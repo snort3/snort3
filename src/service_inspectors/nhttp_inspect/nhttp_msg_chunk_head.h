@@ -23,25 +23,56 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief     Converts token strings to enum codes
+//  @brief      NHttpMsgChunkHead class declaration
 //
 
+#ifndef NHTTP_MSG_CHUNK_HEAD_H
+#define NHTTP_MSG_CHUNK_HEAD_H
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
-#include "nhttp_enum.h"
-#include "nhttp_strtocode.h"
+#include "nhttp_msg_section.h"
 
-// Need to replace this simple algorithm for better performance
-int32_t strToCode(const uint8_t *text, int32_t textLen, const StrCode table[]) {
-    if (textLen <= 0) return NHttpEnums::STAT_PROBLEMATIC;
-    for (int32_t k=0; table[k].name != nullptr; k++) {
-        if ((textLen == (int) strlen(table[k].name)) && (memcmp(text, table[k].name, textLen) == 0)) {
-            return table[k].code;
-        }
-    }
-    return NHttpEnums::STAT_OTHER;
-}
+//-------------------------------------------------------------------------
+// NHttpMsgChunkHead class
+//-------------------------------------------------------------------------
+
+class NHttpMsgChunkHead : public NHttpMsgSection {
+public:
+    NHttpMsgChunkHead() {};
+    void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
+    void initSection();
+    void analyze();
+    void printMessage(FILE *output) const;
+    void genEvents();
+    void updateFlow() const;
+    void legacyClients() const;
+
+private:
+    void deriveChunkLength();
+
+    field startLine;
+    field chunkSize;
+    field chunkExtensions;
+
+    int64_t dataLength;
+    int64_t bodySections;
+    int64_t numChunks;
+};
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -23,24 +23,46 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Flow Data object used to store session information with Streams
+//  @brief      NHttpMsgTrailer class declaration
 //
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
-#include "flow/flow.h"
-#include "nhttp_enum.h"
-#include "nhttp_flowdata.h"
+#ifndef NHTTP_MSG_TRAILER_H
+#define NHTTP_MSG_TRAILER_H
 
-unsigned NHttpFlowData::nhttp_flow_id = 0;
+#include "nhttp_msg_head_shared.h"
 
-NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id)
-{
-}
+//-------------------------------------------------------------------------
+// NHttpMsgTrailer class
+//-------------------------------------------------------------------------
 
-NHttpFlowData::~NHttpFlowData()
-{
-}
+class NHttpMsgTrailer: public NHttpMsgSharedHead {
+public:
+    NHttpMsgTrailer() {};
+    void printMessage(FILE *output) const;
+    void genEvents();
+    void updateFlow() const;
+
+private:
+    void parseWhole();
+};
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

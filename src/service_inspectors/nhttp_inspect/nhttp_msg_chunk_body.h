@@ -23,23 +23,49 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Converts protocol constant string to enum
+//  @brief      NHttpMsgChunkBody class declaration
 //
 
-#ifndef NHTTP_TESTINPUT_H
-#define NHTTP_TESTINPUT_H
+#ifndef NHTTP_MSG_CHUNK_BODY_H
+#define NHTTP_MSG_CHUNK_BODY_H
 
-// ntiGet() returns the same static buffer each time.
-// Do not call it again before you are finished with the previous output.
-class NHttpTestInput {
+#include "nhttp_msg_body.h"
+
+//-------------------------------------------------------------------------
+// NHttpMsgChunkBody class
+//-------------------------------------------------------------------------
+
+class NHttpMsgChunkBody : public NHttpMsgBody {
 public:
-    NHttpTestInput(const char *fileName);
-    ~NHttpTestInput();
-    int32_t ntiGet(uint8_t **buffer, NHttpFlowData* sessionData, int64_t &testNumber);
+    NHttpMsgChunkBody() {};
+    void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
+    void initSection();
+    void analyze();
+    void printMessage(FILE *output) const;
+    void genEvents();
+    void updateFlow() const;
+
 private:
-    FILE *msgFile;
-    uint8_t msgBuf[NHttpMsgHeader::MAXOCTETS];
+    int64_t numChunks;
+    int64_t chunkSections;
+    int64_t chunkOctets;
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

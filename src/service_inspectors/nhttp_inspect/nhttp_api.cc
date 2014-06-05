@@ -32,20 +32,13 @@
 #include <sys/types.h>
 
 #include "snort.h"
-#include "framework/parameter.h"
-#include "framework/module.h"
-#include "framework/inspector.h"
-#include "flow/flow.h"
+#include "target_based/sftarget_protocol_reference.h"
 #include "nhttp_enum.h"
-#include "nhttp_flowdata.h"
-#include "nhttp_scratchpad.h"
 #include "nhttp_module.h"
-#include "nhttp_strtocode.h"
-#include "nhttp_headnorm.h"
-#include "nhttp_msgheader.h"
-#include "nhttp_testinput.h"
-#include "nhttp_api.h"
 #include "nhttp_inspect.h"
+#include "nhttp_api.h"
+
+int16_t NHttpApi::appProtocolId;
 
 Module* NHttpApi::nhttp_mod_ctor() { return new NHttpModule; }
 
@@ -55,53 +48,49 @@ const char* NHttpApi::nhttp_myName = "nhttp_inspect";
 
 void NHttpApi::nhttp_init()
 {
-    printf("nhttp_init()\n");
     NHttpFlowData::init();
+    appProtocolId = AddProtocolReference("nhttp");
 }
 
 void NHttpApi::nhttp_term()
 {
-    printf("nhttp_term()\n");
 }
 
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
     const NHttpModule* nhttpMod = (NHttpModule*) mod;
-    printf("nhttp_ctor()\n");
     return new NHttpInspect(nhttpMod->get_test_mode());
 }
 
 void NHttpApi::nhttp_dtor(Inspector* p)
 {
-    printf("nhttp_dtor()\n");
     delete p;
 }
 
 void NHttpApi::nhttp_pinit()
 {
-    printf("nhttp_pinit()\n");
     NHttpInspect::msgHead = new NHttpMsgHeader;
+    NHttpInspect::msgBody = new NHttpMsgBody;
+    NHttpInspect::msgChunkHead = new NHttpMsgChunkHead;
+    NHttpInspect::msgChunkBody = new NHttpMsgChunkBody;
+    NHttpInspect::msgTrailer = new NHttpMsgTrailer;
 }
 
 void NHttpApi::nhttp_pterm()
 {
-    printf("nhttp_pterm()\n");
     delete NHttpInspect::msgHead;
 }
 
 void NHttpApi::nhttp_sum()
 {
-    printf("nhttp_sum()\n");
 }
 
 void NHttpApi::nhttp_stats()
 {
-    printf("nhttp_stats()\n");
 }
 
 void NHttpApi::nhttp_reset()
 {
-    printf("nhttp_reset()\n");
 }
 
 const InspectApi NHttpApi::nhttp_api =
@@ -124,7 +113,7 @@ const InspectApi NHttpApi::nhttp_api =
     NHttpApi::nhttp_dtor,
     NHttpApi::nhttp_pinit,
     NHttpApi::nhttp_pterm,
-    nullptr, // ssn
+    nullptr,
     NHttpApi::nhttp_sum,
     NHttpApi::nhttp_stats,
     NHttpApi::nhttp_reset,

@@ -26,32 +26,15 @@
 //  @brief      Converts protocol constant string to enum
 //
 
-#ifndef NHTTP_FLOWDATA_H
-#define NHTTP_FLOWDATA_H
+#ifndef NHTTP_STR_TO_CODE_H
+#define NHTTP_STR_TO_CODE_H
 
-class NHttpFlowData : public FlowData
-{
-public:
-    NHttpFlowData();
-    ~NHttpFlowData();
-    static unsigned nhttp_flow_id;
-    static void init() { nhttp_flow_id = FlowData::get_flow_id(); };
-
-    // PAF data
-    NHttpEnums::SourceId sourceId = NHttpEnums::SRC_CLIENT;
-    bool tcpClose = false;
-    uint64_t infractions = 0;
-    
-    // Client message data
-    NHttpEnums::SectionType clientTypeExpected = NHttpEnums::SEC_HEADER;
-    int32_t clientOctetsExpected = NHttpEnums::STAT_NOTPRESENT;
-
-    // Server message data
-    NHttpEnums::SectionType serverTypeExpected = NHttpEnums::SEC_HEADER;
-    int32_t serverOctetsExpected = NHttpEnums::STAT_NOTPRESENT;
-
-    // Session data
+struct StrCode {
+    int32_t code;
+    const char *name;
 };
+
+int32_t strToCode(const uint8_t *text, int32_t textLen, const StrCode table[]);
 
 #endif
 

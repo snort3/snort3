@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Module class for NHttpInspect
+//  @brief      Flow Data object used to store session information with Streams
 //
 
 #include <assert.h>
@@ -31,34 +31,23 @@
 #include <sys/types.h>
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_module.h"
+#include "nhttp_flow_data.h"
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
+using namespace NHttpEnums;
+
+unsigned NHttpFlowData::nhttp_flow_id = 0;
+
+NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {}
+
+void NHttpFlowData::halfReset(SourceId sourceId) {
+    assert((sourceId == SRC_CLIENT) || (sourceId == SRC_SERVER));
+    dataLength[sourceId] = STAT_NOTPRESENT;
+    octetsExpected[sourceId] = STAT_NOTPRESENT;
+    bodySections[sourceId] = STAT_NOTPRESENT;
+    bodyOctets[sourceId] = STAT_NOTPRESENT;
+    numChunks[sourceId] = STAT_NOTPRESENT;
+    chunkSections[sourceId] = STAT_NOTPRESENT;
+    chunkOctets[sourceId] = STAT_NOTPRESENT;
 }
 
-
-const Parameter NHttpModule::nhttpParams[] =
-    {{ "test_mode", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
-
-bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    test_mode = false;
-    return true;
-}
-
-bool NHttpModule::end(const char*, int, SnortConfig*) {
-    return true;
-}
-
-bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_mode")) {
-        test_mode = val.get_bool();
-        return true;
-    }
-    return false;
-}
-
-unsigned NHttpModule::get_gid() const {
-    return NHTTP_GID;
-}
 

@@ -27,28 +27,42 @@
 // NHttpInspect class
 //-------------------------------------------------------------------------
 
+#include "framework/inspector.h"
+#include "nhttp_msg_head.h"
+#include "nhttp_msg_body.h"
+#include "nhttp_msg_chunk_head.h"
+#include "nhttp_msg_chunk_body.h"
+#include "nhttp_msg_trailer.h"
+#include "nhttp_stream_splitter.h"
+#include "nhttp_test_input.h"
+
+class NHttpApi;
+
 class NHttpInspect : public Inspector {
 public:
     NHttpInspect(bool _test_mode);
     ~NHttpInspect();
 
-    void configure(SnortConfig*, const char*, char *args);
+    bool configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
     bool enabled();
     void pinit();
     void pterm();
+    NHttpStreamSplitter* get_splitter(bool isClientToServer) { return new NHttpStreamSplitter(isClientToServer); };
 
 private:
     friend NHttpApi;
     static THREAD_LOCAL NHttpMsgHeader *msgHead;
+    static THREAD_LOCAL NHttpMsgBody *msgBody;
+    static THREAD_LOCAL NHttpMsgChunkHead *msgChunkHead;
+    static THREAD_LOCAL NHttpMsgChunkBody *msgChunkBody;
+    static THREAD_LOCAL NHttpMsgTrailer *msgTrailer;
 
     // Test mode
-    bool test_mode;
-    static const char *testInputFile;
-    static const char *testOutputPrefix;
-    NHttpTestInput *testInput = nullptr;
+    const char *testInputFile = "nhttp_test_msgs.txt";
+    const char *testOutputPrefix = "nhttpresults/testcase";
     FILE *testOut = nullptr;
     int64_t testNumber = 0;
     int64_t fileTestNumber = -1;
