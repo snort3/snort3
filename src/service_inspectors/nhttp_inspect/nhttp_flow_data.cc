@@ -23,35 +23,31 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Noninstantiated class to collect static framework API functions and facilitate friendships.
+//  @brief      Flow Data object used to store session information with Streams
 //
 
-#ifndef NHTTP_API_H
-#define NHTTP_API_H
+#include <assert.h>
+#include <string.h>
+#include <sys/types.h>
+#include "snort.h"
+#include "nhttp_enum.h"
+#include "nhttp_flow_data.h"
 
-#include "framework/parameter.h"
-#include "framework/module.h"
-#include "framework/inspector.h"
+using namespace NHttpEnums;
 
-class NHttpApi {
-public:
-    static const InspectApi nhttp_api;
-    static int16_t appProtocolId;
-private:
-    NHttpApi() = delete;
-    static Module* nhttp_mod_ctor();
-    static void nhttp_mod_dtor(Module* m);
-    static const char* nhttp_myName;
-    static void nhttp_init();
-    static void nhttp_term();
-    static Inspector* nhttp_ctor(Module* mod);
-    static void nhttp_dtor(Inspector* p);
-    static void nhttp_pinit();
-    static void nhttp_pterm();
-    static void nhttp_sum();
-    static void nhttp_stats();
-    static void nhttp_reset();
-};
+unsigned NHttpFlowData::nhttp_flow_id = 0;
 
-#endif
+NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {}
+
+void NHttpFlowData::halfReset(SourceId sourceId) {
+    assert((sourceId == SRC_CLIENT) || (sourceId == SRC_SERVER));
+    dataLength[sourceId] = STAT_NOTPRESENT;
+    octetsExpected[sourceId] = STAT_NOTPRESENT;
+    bodySections[sourceId] = STAT_NOTPRESENT;
+    bodyOctets[sourceId] = STAT_NOTPRESENT;
+    numChunks[sourceId] = STAT_NOTPRESENT;
+    chunkSections[sourceId] = STAT_NOTPRESENT;
+    chunkOctets[sourceId] = STAT_NOTPRESENT;
+}
+
 

@@ -20,52 +20,39 @@
  *
  ****************************************************************************/
 
-#ifndef NHTTP_INSPECT_H
-#define NHTTP_INSPECT_H
+//
+//  @author     Tom Peters <thopeter@cisco.com>
+//
+//  @brief      ScratchPad class declaration
+//
+
+#ifndef NHTTP_SCRATCH_PAD_H
+#define NHTTP_SCRATCH_PAD_H
+
 
 //-------------------------------------------------------------------------
-// NHttpInspect class
+// ScratchPad class
+// Memory management for NHttpMsgHeader class
 //-------------------------------------------------------------------------
 
-#include "framework/inspector.h"
-#include "nhttp_msg_head.h"
-#include "nhttp_msg_body.h"
-#include "nhttp_msg_chunk_head.h"
-#include "nhttp_msg_chunk_body.h"
-#include "nhttp_msg_trailer.h"
-#include "nhttp_stream_splitter.h"
-#include "nhttp_test_input.h"
+// Working space and storage for all the derived fields
+// Return value of request is 64-bit aligned and may be freely cast to uint64_t*
+// 1. request the maximum number of bytes you might need
+// 2. use what you need
+// 3. commit() what you actually used if you want to keep it
+// Anything you do not commit will be reused by the next request.
 
-class NHttpApi;
-
-class NHttpInspect : public Inspector {
+class ScratchPad {
 public:
-    NHttpInspect(bool _test_mode);
-    ~NHttpInspect();
-
-    bool configure(SnortConfig*);
-    int verify(SnortConfig*);
-    void show(SnortConfig*);
-    void eval(Packet*);
-    bool enabled();
-    void pinit();
-    void pterm();
-    NHttpStreamSplitter* get_splitter(bool isClientToServer) { return new NHttpStreamSplitter(isClientToServer); };
+    ScratchPad(uint64_t *buff, uint32_t length) : buffer(buff), capacity(length*8), used(0) {}; // Careful: length must be number of uint64_ts provided, not octets.
+    void reinit() {used = 0;};
+    uint8_t *request(uint32_t needed) const {return (needed <= capacity-used) ? (uint8_t*)(buffer+used) : nullptr;};
+    void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; };  // round up to multiple of 8 to preserve alignment
 
 private:
-    friend NHttpApi;
-    static THREAD_LOCAL NHttpMsgHeader *msgHead;
-    static THREAD_LOCAL NHttpMsgBody *msgBody;
-    static THREAD_LOCAL NHttpMsgChunkHead *msgChunkHead;
-    static THREAD_LOCAL NHttpMsgChunkBody *msgChunkBody;
-    static THREAD_LOCAL NHttpMsgTrailer *msgTrailer;
-
-    // Test mode
-    const char *testInputFile = "nhttp_test_msgs.txt";
-    const char *testOutputPrefix = "nhttpresults/testcase";
-    FILE *testOut = nullptr;
-    int64_t testNumber = 0;
-    int64_t fileTestNumber = -1;
+    uint64_t *buffer;
+    uint32_t capacity;
+    uint32_t used;
 };
 
 #endif

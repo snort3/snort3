@@ -23,35 +23,52 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Noninstantiated class to collect static framework API functions and facilitate friendships.
+//  @brief      NHttpMsgBody class declaration
 //
 
-#ifndef NHTTP_API_H
-#define NHTTP_API_H
+#ifndef NHTTP_MSG_BODY_H
+#define NHTTP_MSG_BODY_H
 
-#include "framework/parameter.h"
-#include "framework/module.h"
-#include "framework/inspector.h"
+#include "nhttp_msg_section.h"
 
-class NHttpApi {
+//-------------------------------------------------------------------------
+// NHttpMsgBody class
+//-------------------------------------------------------------------------
+
+class NHttpMsgBody : public NHttpMsgSection {
 public:
-    static const InspectApi nhttp_api;
-    static int16_t appProtocolId;
-private:
-    NHttpApi() = delete;
-    static Module* nhttp_mod_ctor();
-    static void nhttp_mod_dtor(Module* m);
-    static const char* nhttp_myName;
-    static void nhttp_init();
-    static void nhttp_term();
-    static Inspector* nhttp_ctor(Module* mod);
-    static void nhttp_dtor(Inspector* p);
-    static void nhttp_pinit();
-    static void nhttp_pterm();
-    static void nhttp_sum();
-    static void nhttp_stats();
-    static void nhttp_reset();
+    NHttpMsgBody() {};
+    void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
+    void initSection();
+    void analyze();
+    void printMessage(FILE *output) const;
+    void genEvents();
+    void updateFlow() const;
+    void legacyClients() const;
+
+protected:
+    int64_t dataLength;
+    int64_t bodySections;
+    int64_t bodyOctets;
+
+    field data;
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

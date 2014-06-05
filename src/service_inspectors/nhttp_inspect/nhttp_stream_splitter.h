@@ -23,35 +23,43 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Noninstantiated class to collect static framework API functions and facilitate friendships.
+//  @brief      NHTTP Stream Splitter class
 //
 
-#ifndef NHTTP_API_H
-#define NHTTP_API_H
+#ifndef NHTTP_STREAM_SPLITTER_H
+#define NHTTP_STREAM_SPLITTER_H
 
-#include "framework/parameter.h"
-#include "framework/module.h"
-#include "framework/inspector.h"
+#include "stream/stream_splitter.h"
+#include "nhttp_flow_data.h"
 
-class NHttpApi {
+class NHttpStreamSplitter : public StreamSplitter {
 public:
-    static const InspectApi nhttp_api;
-    static int16_t appProtocolId;
+    NHttpStreamSplitter(bool isClientToServer) : StreamSplitter(isClientToServer) {};
+    PAF_Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flushOffset);
+    bool is_paf() { return true; };
+    uint32_t max() { return pafMax; };
 private:
-    NHttpApi() = delete;
-    static Module* nhttp_mod_ctor();
-    static void nhttp_mod_dtor(Module* m);
-    static const char* nhttp_myName;
-    static void nhttp_init();
-    static void nhttp_term();
-    static Inspector* nhttp_ctor(Module* mod);
-    static void nhttp_dtor(Inspector* p);
-    static void nhttp_pinit();
-    static void nhttp_pterm();
-    static void nhttp_sum();
-    static void nhttp_stats();
-    static void nhttp_reset();
+    void prepareFlush(NHttpFlowData* sessionData, uint32_t* flushOffset, NHttpEnums::SourceId sourceId, NHttpEnums::SectionType sectionType, bool tcpClose,
+          uint64_t infractions, uint32_t numOctets);
+
+    int64_t octetsSeen;
+    int numCrlf;
+    uint32_t pafMax = 63780;
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

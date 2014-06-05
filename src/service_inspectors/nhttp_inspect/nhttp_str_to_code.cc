@@ -23,35 +23,25 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Noninstantiated class to collect static framework API functions and facilitate friendships.
+//  @brief     Converts token strings to enum codes
 //
 
-#ifndef NHTTP_API_H
-#define NHTTP_API_H
 
-#include "framework/parameter.h"
-#include "framework/module.h"
-#include "framework/inspector.h"
+#include <assert.h>
+#include <string.h>
+#include <sys/types.h>
+#include "snort.h"
+#include "nhttp_enum.h"
+#include "nhttp_str_to_code.h"
 
-class NHttpApi {
-public:
-    static const InspectApi nhttp_api;
-    static int16_t appProtocolId;
-private:
-    NHttpApi() = delete;
-    static Module* nhttp_mod_ctor();
-    static void nhttp_mod_dtor(Module* m);
-    static const char* nhttp_myName;
-    static void nhttp_init();
-    static void nhttp_term();
-    static Inspector* nhttp_ctor(Module* mod);
-    static void nhttp_dtor(Inspector* p);
-    static void nhttp_pinit();
-    static void nhttp_pterm();
-    static void nhttp_sum();
-    static void nhttp_stats();
-    static void nhttp_reset();
-};
-
-#endif
+// Need to replace this simple algorithm for better performance
+int32_t strToCode(const uint8_t *text, int32_t textLen, const StrCode table[]) {
+    if (textLen <= 0) return NHttpEnums::STAT_PROBLEMATIC;
+    for (int32_t k=0; table[k].name != nullptr; k++) {
+        if ((textLen == (int) strlen(table[k].name)) && (memcmp(text, table[k].name, textLen) == 0)) {
+            return table[k].code;
+        }
+    }
+    return NHttpEnums::STAT_OTHER;
+}
 

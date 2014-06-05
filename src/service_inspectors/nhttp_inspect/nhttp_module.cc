@@ -26,32 +26,34 @@
 //  @brief      Module class for NHttpInspect
 //
 
-
 #include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include "snort.h"
-#include "framework/module.h"
 #include "nhttp_enum.h"
 #include "nhttp_module.h"
+
+NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
+}
+
 
 const Parameter NHttpModule::nhttpParams[] =
     {{ "test_mode", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
      { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
 
 bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    printf("NHttpModule begin()\n");
+    /* &&& */ printf("Module begin\n"); fflush(nullptr);
     test_mode = false;
     return true;
 }
 
 bool NHttpModule::end(const char*, int, SnortConfig*) {
-    printf("NHttpModule end()\n");
+    /* &&& */ printf("Module end\n"); fflush(nullptr);
     return true;
 }
 
 bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    printf("NHttpModule set()\n");
+    /* &&& */ printf("Module set\n"); fflush(nullptr);
     if (val.is("test_mode")) {
         test_mode = val.get_bool();
         return true;
@@ -60,6 +62,7 @@ bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
 }
 
 unsigned NHttpModule::get_gid() const {
-    return GID_HTTP_CLIENT;
+    /* &&& */ printf("Module get_gid\n"); fflush(nullptr);
+    return NHTTP_GID;
 }
 
