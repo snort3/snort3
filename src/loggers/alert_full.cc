@@ -47,7 +47,7 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "event.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort_debug.h"
 #include "parser.h"
 #include "util.h"

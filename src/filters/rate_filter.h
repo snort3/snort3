@@ -32,7 +32,7 @@
 /* @ingroup rate_filter
  * @{
  */
-#include "decode.h"
+#include "protocols/packet.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "filters/sfrf.h"

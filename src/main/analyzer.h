@@ -22,7 +22,7 @@
 #define ANALYZER_H
 
 #include "snort_types.h"
-#include "decode.h"
+#include "protocols/packet.h"
 
 enum AnalyzerCommand
 {

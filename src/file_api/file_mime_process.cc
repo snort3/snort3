@@ -34,7 +34,7 @@
 #include "snort_bounds.h"
 #include "util.h"
 #include "search_engines/str_search.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "detection_util.h"
 
 MimePcre mime_boundary_pcre;

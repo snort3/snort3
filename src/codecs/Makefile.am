@@ -6,9 +6,7 @@ noinst_LIBRARIES += libcodec_utils.a
 libcodecs_a_SOURCES = \
 codec_api.cc \
 codec_api.h \
-decode.h \
 decode_module.h \
-layer.h \
 sf_protocols.h
 
 libcodec_utils_a_SOURCES = \

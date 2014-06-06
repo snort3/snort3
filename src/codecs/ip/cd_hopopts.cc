@@ -36,7 +36,7 @@
 namespace
 {
 
-#define CD_HOPOPTS_NAME "codec_ipv6_hopopts"
+#define CD_HOPOPTS_NAME "cd_ipv6_hopopts"
 
 class Ipv6HopOptsCodec : public Codec
 {

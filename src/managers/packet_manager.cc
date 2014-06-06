@@ -47,18 +47,7 @@
 
 namespace
 {
-struct CdGenPegs{
-    PegCount total_processed = 0;
-    PegCount other_codecs = 0;
-    PegCount discards = 0;
-};
 
-std::vector<const char*> gen_peg_names =
-{
-    "total",
-    "other",
-    "discards"
-};
 
 } // anonymous
 
@@ -67,35 +56,39 @@ std::vector<const char*> gen_peg_names =
 THREAD_LOCAL PreprocStats decodePerfStats;
 #endif
 
-
 extern const CodecApi* default_codec;
-
 static const uint16_t max_protocol_id = 65535;
-static std::vector<const CodecApi*> s_codecs;
+static const uint16_t IP_ID_COUNT = 8192;
 
-// when initialization arrays, although the zero is not required
-// the compiler complains about a missing-field-initiliezers
+// the zero initialization is not required but quiets the compiler
+static std::vector<const CodecApi*> s_codecs;
 static std::array<uint8_t, max_protocol_id> s_proto_map{{0}};
 static std::array<Codec*, UINT8_MAX> s_protocols{{0}};
 static THREAD_LOCAL uint8_t grinder = 0;
 
 // Decoding statistics
-static const uint8_t gen_peg_size = 3;  //  reflects size of CdGenPegs
-static const uint8_t stat_offset = gen_peg_size;  // different name to simplify code
-static THREAD_LOCAL std::array<PegCount, 256 + gen_peg_size> s_stats{{0}};
-static std::array<PegCount, 256 + gen_peg_size> g_stats{{0}};
-static THREAD_LOCAL CdGenPegs pkt_cnt;
 
+// this vector reflects the printed names for the statistics
+// before the stat_offset
+static const std::vector<const char*> stat_names =
+{
+    "total",
+    "other",
+    "discards"
+};
 
+static const uint8_t total_processed = 0;
+static const uint8_t other_codecs = 1;
+static const uint8_t discards = 2;
+static const uint8_t stat_offset = 3;
+static THREAD_LOCAL std::array<PegCount, stat_offset + s_protocols.size()> s_stats{{0}};
+static std::array<PegCount, s_stats.size()> g_stats{{0}};
 
 // Encoder Foo
-static Packet *encode_pkt;
-//static THREAD_LOCAL PegCount g_total_rebuilt_pkts = 0;
+static THREAD_LOCAL rand_t* s_rand = NULL;
+static THREAD_LOCAL Packet *encode_pkt;
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
 static THREAD_LOCAL uint8_t* dst_mac = NULL;
-
-static const uint16_t IP_ID_COUNT = 8192;
-static THREAD_LOCAL rand_t* s_rand = NULL;
 static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt{{0}};
 
@@ -104,26 +97,6 @@ static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt{{0}};
 //-------------------------------------------------------------------------
 // Private helper functions
 //-------------------------------------------------------------------------
-
-
-static inline void push_layer(Packet *p,
-                                uint16_t prot_id,
-                                const uint8_t *hdr_start,
-                                uint32_t len)
-{
-    if ( p->next_layer < LAYER_MAX )
-    {
-        Layer& lyr = p->layers[p->next_layer++];
-        lyr.prot_id = prot_id;
-        lyr.start = (uint8_t*)hdr_start;
-        lyr.length = (uint16_t)len;
-    }
-    else
-    {
-        LogMessage("(snort_decoder) WARNING: decoder got too many layers;"
-            " next proto is something.\n");
-    }
-}
 
 
 static inline void push_layer(Packet *p,
@@ -142,7 +115,7 @@ static inline void push_layer(Packet *p,
     }
     else
     {
-        LogMessage("(snort_decoder) WARNING: decoder got too many layers;"
+        LogMessage("(packet_manager) WARNING: decoder has too many layers;"
             " next proto is something.\n");
     }
 }
@@ -166,7 +139,6 @@ static inline uint8_t* get_inner_ip_hdr(const Packet *p)
     }
     return nullptr;
 }
-
 
 static inline int get_inner_ip_lyr(const Packet *p)
 {
@@ -206,7 +178,6 @@ static inline uint8_t get_codec(const char* keyword)
     }
     return 0;
 }
-
 
 static const uint8_t* encode_packet(
     EncState* enc, const Packet* p, uint32_t* len)
@@ -251,39 +222,28 @@ static const uint8_t* encode_packet(
     return obuf.base + obuf.off;
 }
 
-static void accumulate()
+static inline void accumulate()
 {
     static std::mutex stats_mutex;
+
     stats_mutex.lock();
-
-    s_stats[0] = pkt_cnt.total_processed;
-    s_stats[1] = pkt_cnt.other_codecs;
-    s_stats[2] = pkt_cnt.discards;
-
-    // zeroing out the null/default codecs
-    s_stats[3] = 0;
-    s_stats[s_proto_map[FINISHED_DECODE] + stat_offset] = 0;
-
     sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
-
     stats_mutex.unlock();
 }
 
 static bool api_instantiated(const CodecApi* cd_api)
 {
-    static std::vector<bool> instantiated_api; // all elements initialized to false
+    // all elements initialize to false
+    static std::vector<bool> instantiated_api(s_codecs.size());
 
-    if (instantiated_api.size() != s_codecs.size())
-        instantiated_api.resize(s_codecs.size());
-
-    std::vector<const CodecApi*>::iterator p = std::find(s_codecs.begin(), s_codecs.end(), cd_api);
+    std::vector<const CodecApi*>::iterator p =
+        std::find(s_codecs.begin(), s_codecs.end(), cd_api);
 
     if (p == s_codecs.end())
         FatalError("PacketManager:: should never reach this code!!" \
                     "Cannot find Codec %s's api", cd_api->base.name);
 
     int pos = p - s_codecs.begin();
-
     if(instantiated_api[pos])
         return true;
 
@@ -399,6 +359,9 @@ void PacketManager::thread_init(void)
     if(!grinder)
         FatalError("PacketManager: Unable to find a Codec with data link type %d!!\n", daq_dlt);
 
+    if ( !ScReadMode() || ScPcapShow() )
+        LogMessage("Decoding with %s\n", s_protocols[grinder]->get_name());
+
     // ENCODER initialization
 
 #ifndef VALGRIND_TESTING
@@ -465,7 +428,7 @@ void PacketManager::decode(
 {
     PROFILE_VARS;
     uint16_t prot_id;
-    uint8_t mapped_prot;
+    uint8_t mapped_prot = grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint16_t len, lyr_len;
 
@@ -476,8 +439,8 @@ void PacketManager::decode(
     p->pkth = pkthdr;
     p->pkt = pkt;
     len = pkthdr->caplen;
-    mapped_prot = grinder;
-    pkt_cnt.total_processed++;
+
+    s_stats[total_processed]++;
 
     // loop until the protocol id is no longer valid
     while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
@@ -502,13 +465,14 @@ void PacketManager::decode(
         }
     }
 
-    // if the final protocol ID is not the null codec
+    // if the final protocol ID is not the default codec, a Codec failed
     if (prev_prot_id != FINISHED_DECODE)
     {
+        // if the codec exists, it failed
         if(s_proto_map[prev_prot_id])
-            pkt_cnt.discards++;
+            s_stats[discards]++;
         else
-            pkt_cnt.other_codecs++;
+            s_stats[other_codecs]++;
     }
 
     s_stats[mapped_prot + stat_offset]++;
@@ -521,12 +485,6 @@ bool PacketManager::has_codec(uint16_t cd_id)
 {
     return s_protocols[cd_id] != 0;
 }
-
-
-
-
-
-
 
 
 //-------------------------------------------------------------------------
@@ -756,13 +714,15 @@ void PacketManager::dump_stats()
 {
     std::vector<const char*> pkt_names;
 
-    for(unsigned int i = 0; i < gen_peg_names.size(); i++)
-        pkt_names.push_back(gen_peg_names[i]);
+    // zero out the default codecs
+    g_stats[3] = 0;
+    g_stats[s_proto_map[FINISHED_DECODE] + stat_offset] = 0;
 
+    for(unsigned int i = 0; i < stat_names.size(); i++)
+        pkt_names.push_back(stat_names[i]);
 
     for(int i = 0; s_protocols[i] != 0; i++)
-        if(s_protocols[i])
-            pkt_names.push_back(s_protocols[i]->get_name());
+        pkt_names.push_back(s_protocols[i]->get_name());
 
     show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
         "codecs");

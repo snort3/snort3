@@ -49,7 +49,7 @@
 #include "util.h"
 #include "mstring.h"
 #include "detect.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "fpcreate.h"
 #include "generators.h"
 #include "tag.h"

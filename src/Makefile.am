@@ -60,6 +60,7 @@ packet_io/libpacket_io.a \
 helpers/libhelpers.a \
 sfip/libsfip.a \
 sfrt/libsfrt.a \
+protocols/libprotocols.a \
 utils/libutils.a
 
 SUBDIRS = \

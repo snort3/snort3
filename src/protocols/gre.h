@@ -24,10 +24,6 @@
 
 namespace gre{
 
-namespace detail{
-
-} // namespace detail
-
 /* GRE related stuff */
 struct GREHdr
 {
@@ -39,11 +35,6 @@ struct GREHdr
 
 
 } // namespace gre
-
-typedef gre::GREHdr GREHdr;
-
-
-
 
 #define GRE_VERSION(x) (x->version & 0x07)
 #define GRE_PROTO(x)   ntohs(x->ether_type)

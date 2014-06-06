@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_ARP_NAME "codec_arp"
+#define CD_ARP_NAME "cd_arp"
 
 class ArpModule : public DecodeModule
 {

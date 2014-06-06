@@ -22,11 +22,8 @@
 #ifndef ARP_H
 #define ARP_H
 
-namespace arp{
-
-namespace detail{
-
-} // namespace detail
+namespace arp
+{
 
 
 

@@ -68,7 +68,7 @@
 #include "generators.h"
 #include "snort.h"
 #include "time/packet_time.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "managers/packet_manager.h"
 #include "log_text.h"
 #include "packet_io/active.h"
@@ -4401,17 +4401,20 @@ static inline int ValidMacAddress(
 {
     int i, j, ret = 0;
 
-    if (p->eh == NULL)
+    if (!(p->proto_bits & PROTO_BIT__ETH))
         return 0;
+
+    // if flag is set, gauranteed to have an eth layer
+    const eth::EtherHdr *eh = layer::get_eth_layer(p);
 
     for ( i = 0; i < 6; ++i )
     {
-        if ((talker->mac_addr[i] != p->eh->ether_src[i]))
+        if ((talker->mac_addr[i] != eh->ether_src[i]))
             break;
     }
     for ( j = 0; j < 6; ++j )
     {
-        if (listener->mac_addr[j] != p->eh->ether_dst[j])
+        if (listener->mac_addr[j] != eh->ether_dst[j])
             break;
     }
 
@@ -4438,16 +4441,19 @@ static inline void CopyMacAddr(
     int i;
 
     /* Not ethernet based, nothing to do */
-    if (p->eh == NULL)
+    if (!(p->proto_bits & PROTO_BIT__ETH))
         return;
+
+    // if flag is set, gauranteed to have an eth layer
+    const eth::EtherHdr *eh = layer::get_eth_layer(p);
 
     if (dir == FROM_CLIENT)
     {
         /* Client is SRC */
         for (i=0;i<6;i++)
         {
-            tcpssn->client.mac_addr[i] = p->eh->ether_src[i];
-            tcpssn->server.mac_addr[i] = p->eh->ether_dst[i];
+            tcpssn->client.mac_addr[i] = eh->ether_src[i];
+            tcpssn->server.mac_addr[i] = eh->ether_dst[i];
         }
     }
     else
@@ -4455,8 +4461,8 @@ static inline void CopyMacAddr(
         /* Server is SRC */
         for (i=0;i<6;i++)
         {
-            tcpssn->server.mac_addr[i] = p->eh->ether_src[i];
-            tcpssn->client.mac_addr[i] = p->eh->ether_dst[i];
+            tcpssn->server.mac_addr[i] = eh->ether_src[i];
+            tcpssn->client.mac_addr[i] = eh->ether_dst[i];
         }
     }
 }

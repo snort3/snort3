@@ -26,7 +26,7 @@
 #ifndef SFTARGET_PROTOCOL_REFERENCE_H
 #define SFTARGET_PROTOCOL_REFERENCE_H
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "util.h"
 #include "sftarget_data.h"
 

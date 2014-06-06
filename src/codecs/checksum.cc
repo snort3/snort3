@@ -37,7 +37,7 @@ uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum)
 
     if (len > 1 )
     {
-        sn = ((len / 2) & 0xF);  // len divided by two mod 16 == len/2 % 16
+        sn = ((len / 2) & 0xF);  // == len/2 % 16
         n = (((len / 2) + 15) / 16) ;  // ceiling of (len / 2) / 16
 
         switch (sn) {

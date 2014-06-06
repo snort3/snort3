@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_IGMP_NAME "codec_igmp"
+#define CD_IGMP_NAME "cd_igmp"
 
 class IgmpModule : public DecodeModule
 {

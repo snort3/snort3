@@ -27,7 +27,7 @@
 #endif
 
 #include "generators.h"
-#include "decode.h"  
+#include "protocols/packet.h"  
 #include "static_include.h"
 
 #include "root_i4lciscoip.h"

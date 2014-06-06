@@ -25,7 +25,15 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_PPPOEPKT_NAME "codec_pppoepkt"
+/*
+ * NOTE:  This name reflect the file...NOT the Codec!
+ *
+ * Additionally, this module is used for generator a rule stub ONLY!
+ * If you want to create a module for configuration, you must change the
+ * names of the correct PPPoEpkt codec
+ */
+
+#define CD_PPPOEPKT_NAME "cd_pppoepkt"
 
 class PPPoEPktModule : public DecodeModule
 {

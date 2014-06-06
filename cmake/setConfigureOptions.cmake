@@ -86,6 +86,10 @@ if(ENABLE_PROFILE AND CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 
+if (BUILD_UNIT_TESTS)
+    enable_testing()
+endif()
+
 # sanity checks to re-check and set all necesssary variables
 
 if (NOT ASCIIDOC_FOUND)

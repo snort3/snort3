@@ -44,7 +44,7 @@
 #include "ftpp_ui_config.h"
 #include "ftp_client.h"
 #include "ftp_server.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "file_api/file_api.h"
 #include "stream/stream_api.h"
 #include "flow/flow.h"

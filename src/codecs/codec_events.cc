@@ -86,7 +86,5 @@ void codec_events::decoder_alert_encapsulated(
 
     p->data = pkt;
     p->dsize = (uint16_t)len;
-
-    p->greh = NULL;
 }
 

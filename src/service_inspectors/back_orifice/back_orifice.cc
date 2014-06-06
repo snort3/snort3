@@ -118,7 +118,7 @@
 
 #include "snort_types.h"
 #include "detect.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "event.h"
 #include "parser.h"
 #include "snort_debug.h"

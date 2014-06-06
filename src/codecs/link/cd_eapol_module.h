@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_EAPOL_NAME "codec_eapol"
+#define CD_EAPOL_NAME "cd_eapol"
 
 class EapolModule : public DecodeModule
 {

@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_AH_NAME "codec_ah"
+#define CD_AH_NAME "cd_ah"
 
 class AhModule : public DecodeModule
 {

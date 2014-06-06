@@ -24,7 +24,7 @@
 #define FTP_PARSE_H
 
 #include "ftpp_ui_config.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "framework/bits.h"
 
 /*

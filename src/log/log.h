@@ -22,7 +22,7 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include "decode.h"
+#include "protocols/packet.h"
 
 void CreateTCPFlagString(Packet *, char *);
 

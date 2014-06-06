@@ -35,6 +35,7 @@
 #include "main/snort.h"
 #include "packet_io/active.h"
 #include "codecs/ip/cd_ipv6_module.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -45,6 +46,7 @@ public:
     Ipv6Codec() : Codec(CD_IPV6_NAME){};
     ~Ipv6Codec(){};
 
+    virtual PROTO_ID get_proto_id() { return PROTO_IP6; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
@@ -52,10 +54,11 @@ public:
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
+private:
 
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_IP6; };
+    static uint8_t RevTTL (const EncState* enc, uint8_t ttl);
+    static uint8_t FwdTTL (const EncState* enc, uint8_t ttl);
+    static uint8_t GetTTL (const EncState* enc);
 
 };
 
@@ -70,7 +73,7 @@ static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr);
  *************************   PRIVATE FUNCTIONS **********************
  ********************************************************************/
 
-static inline uint8_t GetTTL (const EncState* enc)
+uint8_t Ipv6Codec::GetTTL (const EncState* enc)
 {
     char dir;
     uint8_t ttl;
@@ -95,7 +98,7 @@ static inline uint8_t GetTTL (const EncState* enc)
     return ttl;
 }
 
-static inline uint8_t FwdTTL (const EncState* enc, uint8_t ttl)
+uint8_t Ipv6Codec::FwdTTL (const EncState* enc, uint8_t ttl)
 {
     uint8_t new_ttl = GetTTL(enc);
     if ( !new_ttl )
@@ -103,7 +106,7 @@ static inline uint8_t FwdTTL (const EncState* enc, uint8_t ttl)
     return new_ttl;
 }
 
-static inline uint8_t RevTTL (const EncState* enc, uint8_t ttl)
+uint8_t Ipv6Codec::RevTTL (const EncState* enc, uint8_t ttl)
 {
     uint8_t new_ttl = GetTTL(enc);
     if ( !new_ttl )
@@ -234,8 +237,6 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     next_prot_id = GET_IPH_PROTO(p);
     lyr_len = ipv6::hdr_len();
-
-//    DecodeIPV6Extensions(GET_IPH_PROTO(p), raw_pkt + ipv6::hdr_len(), ntohs(p->ip6h->len), p);
     return true;
 
 

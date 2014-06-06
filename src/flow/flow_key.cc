@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#include "protocols/decode.h"
+#include "protocols/packet.h"
 #include "snort.h"
 #include "utils/util.h"
 
@@ -117,9 +117,9 @@ inline void FlowKey::init6(
     }
     else if ( proto == IPPROTO_ICMPV6 )
     {
-        if (srcPort == ICMP6_REPLY)
+        if (srcPort == icmp6::Icmp6Types::REPLY)
         {
-            dstPort = ICMP6_ECHO; /* Treat ICMPv6 echo reply the same as request */
+            dstPort = icmp6::Icmp6Types::ECHO; /* Treat ICMPv6 echo reply the same as request */
             srcPort = 0;
         }
         else /* otherwise, every ICMP type gets different key */

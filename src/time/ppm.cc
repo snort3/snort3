@@ -62,7 +62,6 @@
 #include "rules.h"
 #include "treenodes.h"
 #include "treenodes.h"
-#include "decode.h"
 #include "parser.h"
 #include "util.h"
 #include "rules.h"
@@ -74,6 +73,7 @@
 #include "detection/detect.h"
 #include "detection/fpdetect.h"
 #include "actions/actions.h"
+#include "protocols/packet.h"
 
 #ifdef PPM_MGR
 
