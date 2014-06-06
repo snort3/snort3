@@ -27,7 +27,7 @@
 #ifndef FILE_RESUME_BLOCK_H
 #define FILE_RESUME_BLOCK_H
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "file_api.h"
 
 void file_resume_block_init(void);

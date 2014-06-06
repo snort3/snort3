@@ -41,13 +41,14 @@
 #include "snort_debug.h"
 #include "signature.h"
 #include "util_net.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort.h"
 #include "sf_textlog.h"
 #include "snort_bounds.h"
 #include "obfuscation.h"
 #include "detection_util.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/layer.h"
 
 #include "sfip/sf_ip.h"
 
@@ -55,7 +56,11 @@
 #include "protocols/ipv6.h"
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
+#include "protocols/gre.h"
+#include "protocols/token_ring.h"
 #include "protocols/wlan.h"
+#include "protocols/linux_sll.h"
+#include "protocols/eapol.h"
 
 #ifdef HAVE_DUMBNET_H
 #include <dumbnet.h>
@@ -122,33 +127,41 @@ void LogPriorityData(TextLog* log, const Event* e, bool doNewLine)
 
 void LogTrHeader(TextLog* log, Packet* p)
 {
+    const token_ring::Trh_hdr* trh =
+        reinterpret_cast<const token_ring::Trh_hdr*>(layer::get_root_layer(p));
 
-    TextLog_Print(log, "%X:%X:%X:%X:%X:%X -> ", p->trh->saddr[0],
-            p->trh->saddr[1], p->trh->saddr[2], p->trh->saddr[3],
-            p->trh->saddr[4], p->trh->saddr[5]);
-    TextLog_Print(log, "%X:%X:%X:%X:%X:%X\n", p->trh->daddr[0],
-            p->trh->daddr[1], p->trh->daddr[2], p->trh->daddr[3],
-            p->trh->daddr[4], p->trh->daddr[5]);
+    TextLog_Print(log, "%X:%X:%X:%X:%X:%X -> ", trh->saddr[0],
+            trh->saddr[1], trh->saddr[2], trh->saddr[3],
+            trh->saddr[4], trh->saddr[5]);
+    TextLog_Print(log, "%X:%X:%X:%X:%X:%X\n", trh->daddr[0],
+            trh->daddr[1], trh->daddr[2], trh->daddr[3],
+            trh->daddr[4], trh->daddr[5]);
 
-    TextLog_Print(log, "access control:0x%X frame control:0x%X\n", p->trh->ac,
-            p->trh->fc);
-    if(!p->trhllc)
-        return;
+    const token_ring::Trh_llc* trhllc =
+        reinterpret_cast<const token_ring::Trh_llc*>(trh + sizeof(*trh));
+
+    TextLog_Print(log, "access control:0x%X frame control:0x%X\n", trh->ac,
+            trh->fc);
+
     TextLog_Print(log, "DSAP: 0x%X SSAP 0x%X protoID: %X%X%X Ethertype: %X\n",
-            p->trhllc->dsap, p->trhllc->ssap, p->trhllc->protid[0],
-            p->trhllc->protid[1], p->trhllc->protid[2], p->trhllc->ethertype);
-    if(p->trhmr)
+            trhllc->dsap, trhllc->ssap, trhllc->protid[0],
+            trhllc->protid[1], trhllc->protid[2], trhllc->ethertype);
+
+
+    const token_ring::Trh_mr* trhmr = token_ring::get_trhmr(trhllc);
+
+    if(trhmr)
     {
         TextLog_Print(log, "RIF structure is present:\n");
         TextLog_Print(log, "bcast: 0x%X length: 0x%X direction: 0x%X largest"
                 "fr. size: 0x%X res: 0x%X\n",
-                TRH_MR_BCAST(p->trhmr), TRH_MR_LEN(p->trhmr),
-        TRH_MR_DIR(p->trhmr), TRH_MR_LF(p->trhmr),
-                TRH_MR_RES(p->trhmr));
+                TRH_MR_BCAST(trhmr), TRH_MR_LEN(trhmr),
+        TRH_MR_DIR(trhmr), TRH_MR_LF(trhmr),
+                TRH_MR_RES(trhmr));
         TextLog_Print(log, "rseg -> %X:%X:%X:%X:%X:%X:%X:%X\n",
-                p->trhmr->rseg[0], p->trhmr->rseg[1], p->trhmr->rseg[2],
-                p->trhmr->rseg[3], p->trhmr->rseg[4], p->trhmr->rseg[5],
-                p->trhmr->rseg[6], p->trhmr->rseg[7]);
+                trhmr->rseg[0], trhmr->rseg[1], trhmr->rseg[2],
+                trhmr->rseg[3], trhmr->rseg[4], trhmr->rseg[5],
+                trhmr->rseg[6], trhmr->rseg[7]);
     }
 }
 #endif  // NO_NON_ETHER_DECODER
@@ -165,18 +178,20 @@ void LogTrHeader(TextLog* log, Packet* p)
  */
 static void LogEthHeader(TextLog* log, Packet* p)
 {
+    const eth::EtherHdr *eh = layer::get_eth_layer(p);
+
     /* src addr */
-    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", p->eh->ether_src[0],
-        p->eh->ether_src[1], p->eh->ether_src[2], p->eh->ether_src[3],
-        p->eh->ether_src[4], p->eh->ether_src[5]);
+    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
+        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+        eh->ether_src[4], eh->ether_src[5]);
 
     /* dest addr */
-    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X ", p->eh->ether_dst[0],
-        p->eh->ether_dst[1], p->eh->ether_dst[2], p->eh->ether_dst[3],
-        p->eh->ether_dst[4], p->eh->ether_dst[5]);
+    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X ", eh->ether_dst[0],
+        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+        eh->ether_dst[4], eh->ether_dst[5]);
 
     /* protocol and pkt size */
-    TextLog_Print(log, "type:0x%X len:0x%X\n", ntohs(p->eh->ether_type),
+    TextLog_Print(log, "type:0x%X len:0x%X\n", ntohs(eh->ether_type),
         p->pkth->pktlen);
 }
 
@@ -189,11 +204,13 @@ static void LogMPLSHeader(TextLog* log, Packet* p)
 
 static void LogGREHeader(TextLog *log, Packet *p)
 {
-    if (p->greh == NULL)
+    const gre::GREHdr *greh = layer::get_gre_layer(p);
+
+    if (greh == NULL)
         return;
 
     TextLog_Print(log, "GRE version:%u flags:0x%02X ether-type:0x%04X\n",
-            GRE_VERSION(p->greh), p->greh->flags, GRE_PROTO(p->greh));
+            GRE_VERSION(greh), greh->flags, GRE_PROTO(greh));
 }
 
 #ifndef NO_NON_ETHER_DECODER
@@ -211,7 +228,10 @@ static void LogGREHeader(TextLog *log, Packet *p)
 #ifdef DLT_LINUX_SLL
 static void LogSLLHeader(TextLog* log, Packet* p)
 {
-    switch (ntohs(p->sllh->sll_pkttype)) {
+    const linux_sll::SLLHdr* sllh =
+        reinterpret_cast<const linux_sll::SLLHdr*>(layer::get_root_layer(p));
+
+    switch (ntohs(sllh->sll_pkttype)) {
         case LINUX_SLL_HOST:
             TextLog_Puts(log, "< ");
             break;
@@ -234,14 +254,14 @@ static void LogSLLHeader(TextLog* log, Packet* p)
 
     /* mac addr */
     TextLog_Print(log, "l/l len: %i l/l type: 0x%X %02X:%02X:%02X:%02X:%02X:%02X\n",
-        htons(p->sllh->sll_halen), ntohs(p->sllh->sll_hatype),
-        p->sllh->sll_addr[0], p->sllh->sll_addr[1], p->sllh->sll_addr[2],
-        p->sllh->sll_addr[3], p->sllh->sll_addr[4], p->sllh->sll_addr[5]);
+        htons(sllh->sll_halen), ntohs(sllh->sll_hatype),
+        sllh->sll_addr[0], sllh->sll_addr[1], sllh->sll_addr[2],
+        sllh->sll_addr[3], sllh->sll_addr[4], sllh->sll_addr[5]);
 
     /* protocol and pkt size */
     TextLog_Print(log, "pkt type:0x%X proto: 0x%X len:0x%X\n",
-        ntohs(p->sllh->sll_pkttype),
-        ntohs(p->sllh->sll_protocol), p->pkth->pktlen);
+        ntohs(sllh->sll_pkttype),
+        ntohs(sllh->sll_protocol), p->pkth->pktlen);
 }
 #endif
 
@@ -257,36 +277,39 @@ static void LogSLLHeader(TextLog* log, Packet* p)
  */
 static void LogWifiHeader(TextLog* log, Packet * p)
 {
+  const wlan::WifiHdr *wifih =
+      reinterpret_cast< const wlan::WifiHdr *>(layer::get_root_layer(p));
+
   /* This assumes we are printing a data packet, could be changed
      to print other types as well */
   const uint8_t *da = NULL, *sa = NULL, *bssid = NULL, *ra = NULL,
     *ta = NULL;
   /* per table 4, IEEE802.11 section 7.2.2 */
-  if ((p->wifih->frame_control & WLAN_FLAG_TODS) &&
-      (p->wifih->frame_control & WLAN_FLAG_FROMDS)) {
-    ra = p->wifih->addr1;
-    ta = p->wifih->addr2;
-    da = p->wifih->addr3;
-    sa = p->wifih->addr4;
+  if ((wifih->frame_control & WLAN_FLAG_TODS) &&
+      (wifih->frame_control & WLAN_FLAG_FROMDS)) {
+    ra = wifih->addr1;
+    ta = wifih->addr2;
+    da = wifih->addr3;
+    sa = wifih->addr4;
   }
-  else if (p->wifih->frame_control & WLAN_FLAG_TODS) {
-    bssid = p->wifih->addr1;
-    sa = p->wifih->addr2;
-    da = p->wifih->addr3;
+  else if (wifih->frame_control & WLAN_FLAG_TODS) {
+    bssid = wifih->addr1;
+    sa = wifih->addr2;
+    da = wifih->addr3;
   }
-  else if (p->wifih->frame_control & WLAN_FLAG_FROMDS) {
-    da = p->wifih->addr1;
-    bssid = p->wifih->addr2;
-    sa = p->wifih->addr3;
+  else if (wifih->frame_control & WLAN_FLAG_FROMDS) {
+    da = wifih->addr1;
+    bssid = wifih->addr2;
+    sa = wifih->addr3;
   }
   else {
-    da = p->wifih->addr1;
-    sa = p->wifih->addr2;
-    bssid = p->wifih->addr3;
+    da = wifih->addr1;
+    sa = wifih->addr2;
+    bssid = wifih->addr3;
   }
 
   /* DO this switch to provide additional info on the type */
-  switch(p->wifih->frame_control & 0x00ff)
+  switch(wifih->frame_control & 0x00ff)
   {
   case WLAN_TYPE_MGMT_BEACON:
     TextLog_Puts(log, "Beacon ");
@@ -357,14 +380,14 @@ static void LogWifiHeader(TextLog* log, Packet * p)
         ra[1], ra[2], ra[3], ra[4], ra[5]);
   }
   TextLog_Puts(log, " Flags:");
-  if (p->wifih->frame_control & WLAN_FLAG_TODS)    TextLog_Puts(log," ToDs");
-  if (p->wifih->frame_control & WLAN_FLAG_TODS)    TextLog_Puts(log," FrDs");
-  if (p->wifih->frame_control & WLAN_FLAG_FRAG)    TextLog_Puts(log," Frag");
-  if (p->wifih->frame_control & WLAN_FLAG_RETRY)   TextLog_Puts(log," Re");
-  if (p->wifih->frame_control & WLAN_FLAG_PWRMGMT) TextLog_Puts(log," Pwr");
-  if (p->wifih->frame_control & WLAN_FLAG_MOREDAT) TextLog_Puts(log," MD");
-  if (p->wifih->frame_control & WLAN_FLAG_WEP)     TextLog_Puts(log," Wep");
-  if (p->wifih->frame_control & WLAN_FLAG_ORDER)   TextLog_Puts(log," Ord");
+  if (wifih->frame_control & WLAN_FLAG_TODS)    TextLog_Puts(log," ToDs");
+  if (wifih->frame_control & WLAN_FLAG_TODS)    TextLog_Puts(log," FrDs");
+  if (wifih->frame_control & WLAN_FLAG_FRAG)    TextLog_Puts(log," Frag");
+  if (wifih->frame_control & WLAN_FLAG_RETRY)   TextLog_Puts(log," Re");
+  if (wifih->frame_control & WLAN_FLAG_PWRMGMT) TextLog_Puts(log," Pwr");
+  if (wifih->frame_control & WLAN_FLAG_MOREDAT) TextLog_Puts(log," MD");
+  if (wifih->frame_control & WLAN_FLAG_WEP)     TextLog_Puts(log," Wep");
+  if (wifih->frame_control & WLAN_FLAG_ORDER)   TextLog_Puts(log," Ord");
   TextLog_NewLine(log);
 }
 #endif  // NO_NON_ETHER_DECODER
@@ -385,23 +408,23 @@ void Log2ndHeader(TextLog* log, Packet* p)
     switch(DAQ_GetBaseProtocol())
     {
         case DLT_EN10MB:        /* Ethernet */
-            if(p && p->eh)
+            if(p && (p->next_layer > 0))
                 LogEthHeader(log, p);
             break;
 #ifndef NO_NON_ETHER_DECODER
 #ifdef DLT_IEEE802_11
         case DLT_IEEE802_11:
-            if(p && p->wifih)
+            if(p && (p->next_layer > 0))
                 LogWifiHeader(log, p);
             break;
 #endif
         case DLT_IEEE802:                /* Token Ring */
-            if(p && p->trh)
+            if(p && (p->next_layer > 0))
                 LogTrHeader(log, p);
             break;
 #ifdef DLT_LINUX_SLL
         case DLT_LINUX_SLL:
-            if (p && p->sllh)
+            if (p && (p->next_layer > 0))
                 LogSLLHeader(log, p);  /* Linux cooked sockets */
             break;
 #endif
@@ -1442,7 +1465,7 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
     int next_layer, ip_start, ip_ob_start, ip_ob_end, byte_pos, char_pos;
     int i;
 
-    next_layer = ip_start = byte_pos = char_pos = 0;
+    ip_start = byte_pos = char_pos = 0;
 
     ip_ob_start = ip_ob_end = -1;
 
@@ -1500,8 +1523,6 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
     /* loop thru the whole buffer */
     while ( pb < end )
     {
-        i = 0;
-
         if (ScVerboseByteDump())
         {
             TextLog_Print(log, "0x%04X: ", offset);
@@ -1666,7 +1687,7 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
     {
         Log2ndHeader(log, p);
 
-        if ( p->mpls )
+        if ( p->proto_bits & PROTO_BIT__MPLS )
         {
             LogMPLSHeader(log, p);
         }
@@ -1674,8 +1695,7 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
         if ( p->outer_iph )
         {
             LogOuterIPHeader(log, p);
-            if ( p->greh )
-                LogGREHeader(log, p);
+            LogGREHeader(log, p); // checks for valid gre layer before logging
         }
     }
 
@@ -1798,25 +1818,26 @@ void LogArpHeader(TextLog*, Packet*)
  * Returns: void function
  *
  ***************************************************************************/
-static void PrintEapolKey(FILE * fp, Packet * p)
+static void PrintEapolKey(FILE * fp,  const eapol::EapolKey* eapolk)
 {
+
     uint16_t length;
 
-    if(p->eapolk == NULL)
+    if(eapolk == NULL)
     {
         fprintf(fp, "Eapol Key truncated\n");
         return;
     }
     fprintf(fp, "KEY type: ");
-    if (p->eapolk->type == 1) {
+    if (eapolk->type == 1) {
       fprintf(fp, "RC4");
     }
 
-    memcpy(&length, &p->eapolk->length, 2);
+    memcpy(&length, &eapolk->length, 2);
     length = ntohs(length);
     fprintf(fp, " len: %d", length);
-    fprintf(fp, " index: %d ", p->eapolk->index & 0x7F);
-    fprintf(fp, p->eapolk->index & 0x80 ? " unicast\n" : " broadcast\n");
+    fprintf(fp, " index: %d ", eapolk->index & 0x7F);
+    fprintf(fp, eapolk->index & 0x80 ? " unicast\n" : " broadcast\n");
 }
 
 /****************************************************************************
@@ -1830,29 +1851,29 @@ static void PrintEapolKey(FILE * fp, Packet * p)
  * Returns: void function
  *
  ***************************************************************************/
-static void PrintEapolHeader(FILE * fp, Packet * p)
+static void PrintEapolHeader(FILE * fp, const eapol::EtherEapol* eplh)
 {
     fprintf(fp, "EAPOL type: ");
-    switch(p->eplh->eaptype) {
+    switch(eplh->eaptype) {
     case EAPOL_TYPE_EAP:
-      fprintf(fp, "EAP");
-      break;
+        fprintf(fp, "EAP");
+        break;
     case EAPOL_TYPE_START:
-      fprintf(fp, "Start");
-      break;
+        fprintf(fp, "Start");
+        break;
     case EAPOL_TYPE_LOGOFF:
-      fprintf(fp, "Logoff");
-      break;
+        fprintf(fp, "Logoff");
+        break;
     case EAPOL_TYPE_KEY:
-      fprintf(fp, "Key");
-      break;
+        fprintf(fp, "Key");
+        break;
     case EAPOL_TYPE_ASF:
-      fprintf(fp, "ASF Alert");
-      break;
+        fprintf(fp, "ASF Alert");
+        break;
     default:
-      fprintf(fp, "Unknown");
+        fprintf(fp, "Unknown");
     }
-    fprintf(fp, " Len: %d\n", ntohs(p->eplh->len));
+    fprintf(fp, " Len: %d\n", ntohs(eplh->len));
 }
 
 /****************************************************************************
@@ -1866,58 +1887,63 @@ static void PrintEapolHeader(FILE * fp, Packet * p)
  * Returns: void function
  *
  ***************************************************************************/
-static void PrintEAPHeader(FILE * fp, Packet * p)
+static void PrintEAPHeader(FILE * fp, const eapol::EAPHdr* eaph)
 {
+    uint8_t* eaptype = 0;
 
-    if(p->eaph == NULL)
+    if(eaph == NULL)
     {
         fprintf(fp, "EAP header truncated\n");
         return;
     }
     fprintf(fp, "code: ");
-    switch(p->eaph->code) {
+    switch(eaph->code) {
     case EAP_CODE_REQUEST:
-      fprintf(fp, "Req ");
-      break;
+        fprintf(fp, "Req ");
+        eaptype = (uint8_t*) (eaph + sizeof(*eaph));
+        break;
     case EAP_CODE_RESPONSE:
-      fprintf(fp, "Resp");
-      break;
+        fprintf(fp, "Resp");
+        eaptype = (uint8_t*) (eaph + sizeof(*eaph));
+        break;
     case EAP_CODE_SUCCESS:
-      fprintf(fp, "Succ");
-      break;
+        fprintf(fp, "Succ");
+        break;
     case EAP_CODE_FAILURE:
-      fprintf(fp, "Fail");
-      break;
+        fprintf(fp, "Fail");
+        break;
     }
-    fprintf(fp, " id: 0x%x len: %d", p->eaph->id, ntohs(p->eaph->len));
-    if (p->eaptype != NULL) {
-      fprintf(fp, " type: ");
-      switch(*(p->eaptype)) {
-      case EAP_TYPE_IDENTITY:
-    fprintf(fp, "id");
-    break;
-      case EAP_TYPE_NOTIFY:
-    fprintf(fp, "notify");
-    break;
-      case EAP_TYPE_NAK:
-    fprintf(fp, "nak");
-    break;
-      case EAP_TYPE_MD5:
-    fprintf(fp, "md5");
-    break;
-      case EAP_TYPE_OTP:
-    fprintf(fp, "otp");
-    break;
-      case EAP_TYPE_GTC:
-    fprintf(fp, "token");
-    break;
-      case EAP_TYPE_TLS:
-    fprintf(fp, "tls");
-    break;
-      default:
-    fprintf(fp, "undef");
-    break;
-      }
+    fprintf(fp, " id: 0x%x len: %d", eaph->id, ntohs(eaph->len));
+    if (eaptype != NULL)
+    {
+        fprintf(fp, " type: ");
+        switch(*(eaptype))
+        {
+            case EAP_TYPE_IDENTITY:
+            fprintf(fp, "id");
+            break;
+              case EAP_TYPE_NOTIFY:
+            fprintf(fp, "notify");
+            break;
+              case EAP_TYPE_NAK:
+            fprintf(fp, "nak");
+            break;
+              case EAP_TYPE_MD5:
+            fprintf(fp, "md5");
+            break;
+              case EAP_TYPE_OTP:
+            fprintf(fp, "otp");
+            break;
+              case EAP_TYPE_GTC:
+            fprintf(fp, "token");
+            break;
+              case EAP_TYPE_TLS:
+            fprintf(fp, "tls");
+            break;
+              default:
+            fprintf(fp, "undef");
+            break;
+        }
     }
     fprintf(fp, "\n");
 }
@@ -1948,12 +1974,22 @@ void PrintEapolPkt(FILE * fp, Packet * p)
     {
         Print2ndHeader(fp, p);
     }
-    PrintEapolHeader(fp, p);
-    if (p->eplh->eaptype == EAPOL_TYPE_EAP) {
-      PrintEAPHeader(fp, p);
+
+    const eapol::EtherEapol* eplh = layer::get_eapol_layer(p);
+
+    if (eplh)
+    {
+        PrintEapolHeader(fp, eplh);
+        if (eplh->eaptype == EAPOL_TYPE_EAP) {
+            PrintEAPHeader(fp, (const eapol::EAPHdr*) eplh + sizeof(*eplh));
+        }
+        else if (eplh->eaptype == EAPOL_TYPE_KEY) {
+            PrintEapolKey(fp, (const eapol::EapolKey*) eplh + sizeof(*eplh));
+        }
     }
-    else if (p->eplh->eaptype == EAPOL_TYPE_KEY) {
-      PrintEapolKey(fp, p);
+    else
+    {
+        fprintf(fp, "EAP header truncated\n");
     }
 
     /* dump the application layer data */

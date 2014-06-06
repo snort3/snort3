@@ -27,6 +27,8 @@
 #include "framework/codec.h"
 #include "codecs/link/cd_eapol_module.h"
 #include "codecs/codec_events.h"
+#include "protocols/protocol_ids.h"
+#include "protocols/eapol.h"
 
 
 namespace
@@ -45,79 +47,6 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     
 };
-
-static const uint16_t ETHERTYPE_EAPOL = 0x888e;
-
-
-#ifndef NO_NON_ETHER_DECODER
-
-/* IEEE 802.1x eapol types */
-#define EAPOL_TYPE_EAP      0x00      /* EAP packet */
-#define EAPOL_TYPE_START    0x01      /* EAPOL start */
-#define EAPOL_TYPE_LOGOFF   0x02      /* EAPOL Logoff */
-#define EAPOL_TYPE_KEY      0x03      /* EAPOL Key */
-#define EAPOL_TYPE_ASF      0x04      /* EAPOL Encapsulated ASF-Alert */
-
-
-#endif // NO_NON_ETHER_DECODER
-
-
-/* Extensible Authentication Protocol Codes RFC 2284*/
-#define EAP_CODE_REQUEST    0x01
-#define EAP_CODE_RESPONSE   0x02
-#define EAP_CODE_SUCCESS    0x03
-#define EAP_CODE_FAILURE    0x04
-/* EAP Types */
-#define EAP_TYPE_IDENTITY   0x01
-#define EAP_TYPE_NOTIFY     0x02
-#define EAP_TYPE_NAK        0x03
-#define EAP_TYPE_MD5        0x04
-#define EAP_TYPE_OTP        0x05
-#define EAP_TYPE_GTC        0x06
-#define EAP_TYPE_TLS        0x0d
-
-
-
-/* Extensible Authentication Protocol Codes RFC 2284*/
-#define EAP_CODE_REQUEST    0x01
-#define EAP_CODE_RESPONSE   0x02
-#define EAP_CODE_SUCCESS    0x03
-#define EAP_CODE_FAILURE    0x04
-/* EAP Types */
-#define EAP_TYPE_IDENTITY   0x01
-#define EAP_TYPE_NOTIFY     0x02
-#define EAP_TYPE_NAK        0x03
-#define EAP_TYPE_MD5        0x04
-#define EAP_TYPE_OTP        0x05
-#define EAP_TYPE_GTC        0x06
-#define EAP_TYPE_TLS        0x0d
-
-
-
-struct EtherEapol
-{
-    uint8_t  version;  /* EAPOL proto version */
-    uint8_t  eaptype;  /* EAPOL Packet type */
-    uint16_t len;  /* Packet body length */
-};
-
-struct EAPHdr
-{
-    uint8_t code;
-    uint8_t id;
-    uint16_t len;
-};
-
-struct EapolKey
-{
-  uint8_t type;
-  uint8_t length[2];
-  uint8_t counter[8];
-  uint8_t iv[16];
-  uint8_t index;
-  uint8_t sig[16];
-};
-
 
 } // namespace
 
@@ -138,16 +67,15 @@ struct EapolKey
  */
 void DecodeEAP(const uint8_t * pkt, const uint32_t len, Packet * p)
 {
-    const EAPHdr *eaph = reinterpret_cast<const EAPHdr* pkt>(pkt);
-    p->eaph = (EAPHdr *) pkt;
-    if(len < sizeof(EAPHdr))
+    const eapol::EAPHdr *eaph = reinterpret_cast<const eapol::EAPHdr*>(pkt);
+
+    if(len < sizeof(eapol::EAPHdr))
     {
         codec_events::decoder_event(p, DECODE_EAP_TRUNCATED);
         return;
     }
     if (eaph->code == EAP_CODE_REQUEST ||
             eaph->code == EAP_CODE_RESPONSE) {
-        p->eaptype = pkt + sizeof(EAPHdr);
     }
     return;
 }
@@ -164,10 +92,9 @@ void DecodeEAP(const uint8_t * pkt, const uint32_t len, Packet * p)
  *
  * Returns: void function
  */
-void DecodeEapolKey(const uint8_t * pkt, uint32_t len, Packet * p)
+void DecodeEapolKey(const uint8_t* /*pkt*/, uint32_t len, Packet * p)
 {
-    p->eapolk = (EapolKey *) pkt;
-    if(len < sizeof(EapolKey))
+    if(len < sizeof(eapol::EapolKey))
     {
         codec_events::decoder_event(p, DECODE_EAPKEY_TRUNCATED);
     }
@@ -183,19 +110,19 @@ void DecodeEapolKey(const uint8_t * pkt, uint32_t len, Packet * p)
 bool EapolCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t & /*lyr_len*/, uint16_t &/*next_prot_id */)
 {
-    p->eplh = (EtherEapol *) raw_pkt;
+    const eapol::EtherEapol* eplh = reinterpret_cast<const eapol::EtherEapol*>(raw_pkt);
 
-    if(len < sizeof(EtherEapol))
+    if(len < sizeof(eapol::EtherEapol))
     {
         codec_events::decoder_event(p, DECODE_EAPOL_TRUNCATED);
         return false;
     }
 
-    if (p->eplh->eaptype == EAPOL_TYPE_EAP) {
-        DecodeEAP(raw_pkt + sizeof(EtherEapol), len - sizeof(EtherEapol), p);
+    if (eplh->eaptype == EAPOL_TYPE_EAP) {
+        DecodeEAP(raw_pkt + sizeof(eapol::EtherEapol), len - sizeof(eapol::EtherEapol), p);
     }
-    else if(p->eplh->eaptype == EAPOL_TYPE_KEY) {
-        DecodeEapolKey(raw_pkt + sizeof(EtherEapol), len - sizeof(EtherEapol), p);
+    else if(eplh->eaptype == EAPOL_TYPE_KEY) {
+        DecodeEapolKey(raw_pkt + sizeof(eapol::EtherEapol), len - sizeof(eapol::EtherEapol), p);
     }
 
     return true;
@@ -238,7 +165,7 @@ static const CodecApi eapol_api =
 {
     {
         PT_CODEC,
-        CD_NAME_EAPOL,
+        CD_EAPOL_NAME,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

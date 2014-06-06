@@ -160,7 +160,7 @@ void snort_print(Packet* p)
         LogIPPkt(text_log, GET_IPH_PROTO((p)), p);
     }
 #ifndef NO_NON_ETHER_DECODER
-    else if (p->ah != NULL)
+    else if (p->proto_bits & PROTO_BIT__ARP)
     {
         log_mutex.lock();
         LogArpHeader(text_log, p);

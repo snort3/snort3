@@ -1556,30 +1556,6 @@ int fpEvalPacket(Packet *p)
     return fpEvalHeaderIp(p, ip_proto, omd);
 }
 
-void fpEvalIpProtoOnlyRules(SF_LIST **ip_proto_only_lists, Packet *p)
-{
-    if ((p != NULL) && IPH_IS_VALID(p))
-    {
-        SF_LIST *l = ip_proto_only_lists[GET_IPH_PROTO(p)];
-        OptTreeNode *otn;
-
-        /* If list is NULL, sflist_first returns NULL */
-        for (otn = (OptTreeNode *)sflist_first(l);
-             otn != NULL;
-             otn = (OptTreeNode *)sflist_next(l))
-        {
-            if (fpEvalRTN(getRuntimeRtnFromOtn(otn), p, 0))
-            {
-                if ( SnortEventqAdd(otn) )
-                    pc.queue_limit++;
-
-                if ( pass_action(getRuntimeRtnFromOtn(otn)->type) )
-                    p->packet_flags |= PKT_PASS_RULE;
-            }
-        }
-    }
-}
-
 void fpEvalIpProtoOnlyRules(SF_LIST **ip_proto_only_lists, Packet *p, uint8_t proto_id)
 {
     if ((p != NULL) && IPH_IS_VALID(p))

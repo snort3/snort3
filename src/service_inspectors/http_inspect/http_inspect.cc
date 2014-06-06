@@ -58,7 +58,7 @@ Undefined symbols for architecture x86_64:
 #include <string.h>
 #include <sys/types.h>
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort_debug.h"
 #include "util.h"
 #include "parser.h"

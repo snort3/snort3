@@ -31,6 +31,7 @@
 #include "codecs/ip/cd_ah_module.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -42,15 +43,10 @@ public:
     ~AhCodec(){};
 
 
+    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_AH; };
-    
 };
 
 

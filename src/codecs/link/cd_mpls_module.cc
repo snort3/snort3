@@ -57,7 +57,7 @@ static const RuleMap mpls_rules[] =
 };
 
 //-------------------------------------------------------------------------
-// rpc module
+// mpls module
 //-------------------------------------------------------------------------
 
 MplsModule::MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_params, mpls_rules)
@@ -86,5 +86,4 @@ bool MplsModule::set(const char*, Value& v, SnortConfig* sc)
 
     return true;
 }
-
 

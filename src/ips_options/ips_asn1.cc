@@ -64,7 +64,7 @@
 #include "snort_bounds.h"
 #include "snort_debug.h"
 #include "detection/treenodes.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "parser.h"
 #include "util.h"
 #include "asn1.h"

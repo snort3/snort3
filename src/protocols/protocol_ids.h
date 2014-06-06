@@ -53,6 +53,7 @@ const uint16_t IPPROTO_ID_IPIP = 4;
 const uint16_t IPPROTO_ID_IPV6 = 41;
 const uint16_t IPPROTO_ID_ROUTING = 43;
 const uint16_t IPPROTO_ID_FRAGMENT = 44;
+const uint16_t IPPROTO_ID_GRE = 47;
 const uint16_t IPPROTO_ID_ESP = 50;
 const uint16_t IPPROTO_ID_AH = 51; // RFC 4302
 const uint16_t IPPROTO_ID_ICMPV6 = 58;
@@ -82,9 +83,13 @@ const uint16_t PROTOCOL_GTP = 0x0102;
 
 const uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
 const uint16_t ETHERTYPE_IPV4 = 0x0800;
+const uint16_t ETHERTYPE_REVARP = 0x8035;
+const uint16_t ETHERTYPE_ARP = 0x0806;
+const uint16_t ETHERTYPE_8021Q = 0x8100;
+const uint16_t ETHERTYPE_IPX = 0x8137;
 const uint16_t ETHERTYPE_IPV6 = 0x86dd;
 const uint16_t ETHERTYPE_PPP = 0x880B;
-const uint16_t ETHERTYPE_IPX = 0x8137;
+const uint16_t ETHERTYPE_EAPOL = 0x888e;
 
 
 #endif

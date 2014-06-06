@@ -7,7 +7,6 @@ add_subdirectory(misc)
 
 
 add_library( codecs STATIC
-    decode.h
     decode_module.h
     codec_api.h
     codec_api.cc
@@ -17,6 +16,7 @@ add_library( codecs STATIC
     codec_events.h
     checksum.h
     checksum.cc
+    template.cc   # for development purposes.  Keep the template up to date
 )
 
 

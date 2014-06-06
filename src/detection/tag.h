@@ -29,7 +29,7 @@
 #include "rules.h"
 #include "treenodes.h"
 #include "event.h"
-#include "decode.h"
+#include "protocols/packet.h"
 
 
 #define TAG_SESSION   1

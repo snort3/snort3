@@ -36,7 +36,7 @@
 #include "snort_types.h"
 #include "sf_ip.h"
 #include "snort_debug.h"
-#include "decode.h"
+#include "protocols/packet.h"
 
 #define GENERATOR_SPP_FTPP_FTP                     125
 #define GENERATOR_SPP_FTPP_TELNET                  126

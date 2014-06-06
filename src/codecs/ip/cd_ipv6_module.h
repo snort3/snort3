@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_IPV6_NAME "codec_ipv6"
+#define CD_IPV6_NAME "cd_ipv6"
 
 class Ipv6Module : public DecodeModule
 {

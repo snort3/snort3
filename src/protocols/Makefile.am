@@ -2,25 +2,31 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 x_includedir = $(pkgincludedir)/protocols
 
-x_include_HEADERS = \
-packet.h
+noinst_LIBRARIES = libprotocols.a
 
-EXTRA_DIST = \
+x_include_HEADERS = \
 arp.h \
-decode.h \
-encode.h \
+eapol.h \
 eth.h \
-gre.h \
 icmp4.h \
 icmp6.h \
 ipv4.h \
 ipv6.h \
+gre.h \
+layer.h \
+layer.cc \
 mpls.h \
 protocol_ids.h \
 tcp.h \
 teredo.h \
+token_ring.h \
 udp.h \
-wlan.h
+vlan.h \
+wlan.h \
+packet.h
+
+libprotocols_a_SOURCES = \
+layer.cc
+
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
-

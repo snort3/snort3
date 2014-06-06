@@ -22,7 +22,7 @@
 #ifndef NORM_H
 #define NORM_H
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort.h"
 #include "normalize.h"
 

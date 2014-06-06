@@ -33,8 +33,9 @@
 #define FT_MAIN_H
 
 #include "ftpp_ui_config.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "framework/bits.h"
+#include "time/profiler.h"
 
 #define BUF_SIZE 1024
 

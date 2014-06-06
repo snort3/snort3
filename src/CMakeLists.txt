@@ -23,7 +23,7 @@ include_directories(target_based)
 include_directories(time)
 include_directories(utils)
 
-add_executable(snort
+add_executable( snort
     main.h
     main.cc
 )
@@ -39,12 +39,11 @@ if (STATIC_INSPECTORS)
 endif(STATIC_INSPECTORS)
 
 if (BUILD_UNIT_TESTS)
-    set( UNIT_TESTS_LIBRARIES test)
+    set( UNIT_TESTS_LIBRARIES unit_tests)
     add_subdirectory(test)
 endif( BUILD_UNIT_TESTS)
 
-set_default_visibility_compile_flag(snort)
-target_link_libraries(snort
+target_link_libraries( snort
     main
     target_based
     log
@@ -137,105 +136,51 @@ install(TARGETS snort
 )
 
 ##############################################################################
-#
-#  This is the documents seciton of the cmake file.  Yes, I hate that I am 
-#  putting this stuff in the src directory instead of the doc directory,
-#  but these files are dependent on the Snort executable.  Since complete
-#  platform independence is the goal, these command need a file level
-#  dependcy on snort, which means they need to be here
-#
-#  When creating new files, follow these directions
-#       1) Copy an entire segment (include the set, add_custom_command, 
-#           and add_custom_target pieces)
-#       2) Change the ARGS to create the file you want
-#       3) Add the file name to list of BUILT_SOURCES at the top of 
-#           doc/CMakeLists.txt
-#
+#                                                                            #
+#  This is the documents section of the file.  It needs to be in same        #
+#  directory or subdirectory as snort to create a valid file dependency on   #
+#  snort.  To build another .txt file with a dependcy on snort, add the file #
+#  to the BUILT_SOURCES variable located at the top of doc/CMakeLists.txt.   #
+#  If the new file's name is new_file.txt, cmake will automatcially run the  #
+#  command                                                                   #
+#                                                                            #
+#  >>  snort --help-file_name > file_name.txt                                #
+#                                                                            #
+#  to creat the new file. Notice that the extension is missing in the help   #
+#  command. If the command does not exist, the behavior is undefined but     #
+#  will likely lead to error.                                                #
+#                                                                            #
 ##############################################################################
-
 
 
 if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
+    foreach(file ${BUILT_SOURCES})
+        set(TARGET_DIR ${CMAKE_BINARY_DIR})
+        set(output ${TARGET_DIR}/${file})
+        get_filename_component(file_name "${file}" NAME_WE)
 
-    set(TARGET_DIR ${CMAKE_BINARY_DIR})
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND snort --markup --help-${file_name} | sort > ${output}
+            DEPENDS snort
+            COMMENT "Documents: building ${output}"
+        )
+        add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
 
-
-    set(file builtin.txt)
-
-    set(output ${TARGET_DIR}/${file})
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND snort --markup --help-builtin > ${output}
-        MAIN_DEPENDENCY snort
-        COMMENT "Documents: building ${output}"
-    )
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
-
-
-    set(file commands.txt)
-
-    set(output ${TARGET_DIR}/${file})
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND snort  --markup --help-commands > ${output}
-        MAIN_DEPENDENCY snort
-        COMMENT "Documents: building ${output}"
-    )
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
+    endforeach()
 
 
 
-    set(file config.txt)
-
-    set(output ${TARGET_DIR}/${file})
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND snort --markup --help-config > ${output}
-        MAIN_DEPENDENCY snort
-        COMMENT "Documents: building ${output}"
-    )
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
-
-
-    set(file options.txt)
-
-    set(output ${TARGET_DIR}/${file})
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND snort --markup --help > ${output}
-        MAIN_DEPENDENCY snort
-        COMMENT "Documents: building ${output}"
-    )
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
-
-
-    set(file gids.txt)
-
-    set(output ${TARGET_DIR}/${file})
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND snort --markup --help-gids > ${output}
-        MAIN_DEPENDENCY snort
-        COMMENT "Documents: building ${output}"
-    )
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
-
-
+    #  version is different since it outputs to standard out.
     set(file version.txt)
 
     set(output ${TARGET_DIR}/${file})
     add_custom_command(
         OUTPUT ${output}
         COMMAND snort -V 2>&1 | grep -v Using > ${output}
-        MAIN_DEPENDENCY snort
+        DEPENDS snort
         COMMENT "Documents: building ${output}"
     )
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(doc_${file_name} ALL DEPENDS ${output})
+    add_custom_target(doc_version ALL DEPENDS ${output})
 endif()

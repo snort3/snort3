@@ -34,6 +34,7 @@
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
 #include "codecs/ip/cd_icmp6_module.h"
+#include "codecs/sf_protocols.h"
 
 
 namespace
@@ -46,17 +47,13 @@ public:
     ~Icmp6Codec(){};
 
 
+    virtual PROTO_ID get_proto_id() { return PROTO_ICMP6; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_ICMP6; };
     
 };
 
@@ -65,19 +62,13 @@ public:
 } // anonymous namespace
 
 
+static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p);
+
+
 void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IPPROTO_ICMPV6);
 }
-
-
-
-static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p);
-
-#if 0
-static unsigned short in_chksum_icmp6(pseudoheader6 *, unsigned short *, int);
-#endif
-
 
 //--------------------------------------------------------------------
 // decode.c::ICMP6
@@ -166,7 +157,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
             }
             break;
 
-        case ICMP6_BIG:
+        case icmp6::Icmp6Types::BIG:
             if (p->dsize >= sizeof(ICMP6TooBig))
             {
                 ICMP6TooBig *too_big = (ICMP6TooBig *)raw_pkt;
@@ -203,7 +194,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t len,
                 p->data += 4;
                 p->dsize -= 4;
 
-                if (p->icmp6h->type == ICMP6_UNREACH)
+                if (p->icmp6h->type == icmp6::Icmp6Types::UNREACH)
                 {
                     if (p->icmp6h->code == 2)
                     {
@@ -516,97 +507,6 @@ void Icmp6Codec::format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
     // TBD handle nested icmp6 layers
     c->icmp6h = (ICMP6Hdr*)lyr->start;
 }
-
-#if 0
-
-/*
- * CHECKSUM
- */
-
-
-/*
-*  checksum icmp6
-*/
-
-static unsigned short in_chksum_icmp6(pseudoheader6 *ph,
-     unsigned short *w, int blen )
-{
-  uint16_t *h = (uint16_t *)ph;
-  unsigned  short answer=0;
-  unsigned int cksum = 0;
-
-  /* PseudoHeader must have 36 bytes */
-  cksum  = h[0];
-  cksum += h[1];
-  cksum += h[2];
-  cksum += h[3];
-  cksum += h[4];
-  cksum += h[5];
-  cksum += h[6];
-  cksum += h[7];
-  cksum += h[8];
-  cksum += h[9];
-  cksum += h[10];
-  cksum += h[11];
-  cksum += h[12];
-  cksum += h[13];
-  cksum += h[14];
-  cksum += h[15];
-  cksum += h[16];
-  cksum += h[17];
-
-  while(blen >=32)
-  {
-     cksum += w[0];
-     cksum += w[1];
-     cksum += w[2];
-     cksum += w[3];
-     cksum += w[4];
-     cksum += w[5];
-     cksum += w[6];
-     cksum += w[7];
-     cksum += w[8];
-     cksum += w[9];
-     cksum += w[10];
-     cksum += w[11];
-     cksum += w[12];
-     cksum += w[13];
-     cksum += w[14];
-     cksum += w[15];
-     w     += 16;
-     blen  -= 32;
-  }
-
-  while(blen >=8)
-  {
-     cksum += w[0];
-     cksum += w[1];
-     cksum += w[2];
-     cksum += w[3];
-     w     += 4;
-     blen  -= 8;
-  }
-
-  while(blen > 1)
-  {
-     cksum += *w++;
-     blen  -= 2;
-  }
-
-  if( blen == 1 )
-  {
-    *(unsigned char*)(&answer) = (*(unsigned char*)w);
-    cksum += answer;
-  }
-
-  cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
-  cksum += (cksum >> 16);
-
-
-  return (unsigned short)(~cksum);
-}
-#endif
-
 
 //-------------------------------------------------------------------------
 // api

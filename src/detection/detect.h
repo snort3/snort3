@@ -28,7 +28,7 @@
 #endif
 
 #include "snort_debug.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "parser.h"

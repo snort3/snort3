@@ -32,7 +32,7 @@
 
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "parser.h"
 #include "snort_debug.h"
 #include "mstring.h"
@@ -186,8 +186,12 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
     int num;
     char *type;
     char tcpFlags[9];
+    const eth::EtherHdr *eh = nullptr;
 
     assert(p);
+
+    if (p->proto_bits & PROTO_BIT__ETH)
+        eh = layer::get_eth_layer(p);
 
     // TBD an enum would be an improvement here
     for (num = 0; num < numargs; num++)
@@ -239,30 +243,30 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("eth_src", type))
         {
-            if (p->eh != NULL)
+            if (eh)
             {
-                TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", p->eh->ether_src[0],
-                        p->eh->ether_src[1], p->eh->ether_src[2], p->eh->ether_src[3],
-                        p->eh->ether_src[4], p->eh->ether_src[5]);
+                TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_src[0],
+                        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+                        eh->ether_src[4], eh->ether_src[5]);
             }
         }
         else if (!strcasecmp("eth_dst", type))
         {
-            if (p->eh != NULL)
+            if (eh)
             {
-                TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", p->eh->ether_dst[0],
-                        p->eh->ether_dst[1], p->eh->ether_dst[2], p->eh->ether_dst[3],
-                        p->eh->ether_dst[4], p->eh->ether_dst[5]);
+                TextLog_Print(csv_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
+                        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+                        eh->ether_dst[4], eh->ether_dst[5]);
             }
         }
         else if (!strcasecmp("eth_type", type))
         {
-            if (p->eh != NULL)
-                TextLog_Print(csv_log, "0x%X", ntohs(p->eh->ether_type));
+            if (eh != NULL)
+                TextLog_Print(csv_log, "0x%X", ntohs(eh->ether_type));
         }
         else if (!strcasecmp("eth_len", type))
         {
-            if (p->eh != NULL)
+            if (eh != NULL)
                 TextLog_Print(csv_log, "0x%X", p->pkth->pktlen);
         }
         else if (!strcasecmp("udp_len", type))

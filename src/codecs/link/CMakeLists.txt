@@ -23,7 +23,7 @@ if( STATIC_DECODERS )
         cd_vlan_module.cc
     )
 
-    if(ENABLE_NON_ETHER_DECODER)
+    if(ENABLE_NON_ETHER_DECODERS)
         set( PLUGIN_SOURCES
             ${PLUGIN_SOURCES}
             cd_eapol.cc

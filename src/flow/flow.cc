@@ -30,7 +30,7 @@
 #include "ips_options/ips_flowbits.h"
 #include "utils/bitop_funcs.h"
 #include "utils/util.h"
-#include "protocols/decode.h"
+#include "protocols/packet.h"
 
 unsigned FlowData:: flow_id = 0;
 

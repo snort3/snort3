@@ -47,6 +47,7 @@
 #include "main/thread.h"
 #include "stream/stream_api.h"
 #include "codecs/ip/cd_ipv4_module.h"
+#include "codecs/sf_protocols.h"
 
 namespace{
 
@@ -56,6 +57,7 @@ public:
     Ipv4Codec() : Codec(CD_IPV4_NAME){};
     ~Ipv4Codec(){};
 
+    virtual PROTO_ID get_proto_id() { return PROTO_IP4; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
@@ -63,15 +65,11 @@ public:
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
-    // used in random classes throughout Snort++
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_IP4; };
 
 private:
-
-
+    static uint8_t RevTTL (const EncState* enc, uint8_t ttl);
+    static uint8_t FwdTTL (const EncState* enc, uint8_t ttl);
+    static uint8_t GetTTL (const EncState* enc);
     
 };
 
@@ -96,7 +94,7 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
  ************  PRIVATE FUNCTIONS ***********
  *******************************************/
 
-static inline uint8_t GetTTL (const EncState* enc)
+uint8_t Ipv4Codec::GetTTL (const EncState* enc)
 {
     char dir;
     uint8_t ttl;
@@ -121,7 +119,7 @@ static inline uint8_t GetTTL (const EncState* enc)
     return ttl;
 }
 
-static inline uint8_t FwdTTL (const EncState* enc, uint8_t ttl)
+uint8_t Ipv4Codec::FwdTTL (const EncState* enc, uint8_t ttl)
 {
     uint8_t new_ttl = GetTTL(enc);
     if ( !new_ttl )
@@ -129,7 +127,7 @@ static inline uint8_t FwdTTL (const EncState* enc, uint8_t ttl)
     return new_ttl;
 }
 
-static inline uint8_t RevTTL (const EncState* enc, uint8_t ttl)
+uint8_t Ipv4Codec::RevTTL (const EncState* enc, uint8_t ttl)
 {
     uint8_t new_ttl = GetTTL(enc);
     if ( !new_ttl )
@@ -380,7 +378,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->ip_dsize = (u_short) ip_len;
 
     /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p);
+    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, p->iph->ip_proto);
 
     p->proto_bits |= PROTO_BIT__IP;
 
@@ -398,8 +396,8 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
             codec_events::decoder_event(p, DECODE_IP_UNASSIGNED_PROTO);
-
-        next_prot_id = p->iph->ip_proto;
+        else
+            next_prot_id = p->iph->ip_proto;
     }
     else
     {
@@ -410,44 +408,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     return true;
 }
-
-
-/* Function: DecodeIPv4Proto
- *
- * Gernalized IPv4 next protocol decoder dispatching.
- *
- * Arguments: proto => IPPROTO value of the next protocol
- *            pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to the packet decode struct
- *
- */
-inline void DecodeIPv4Proto(const uint8_t proto,
-    const uint8_t *pkt, const uint32_t len, Packet *p)
-{
-    switch(proto)
-    {
-
-
-        case IPPROTO_IP_MOBILITY:
-        case IPPROTO_SUN_ND:
-        case IPPROTO_PIM:
-            codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
-            p->data = pkt;
-            p->dsize = (uint16_t)len;
-            return;
-
-
-        default:
-            if (GET_IPH_PROTO(p) >= MIN_UNASSIGNED_IP_PROTO)
-                codec_events::decoder_event(p, DECODE_IP_UNASSIGNED_PROTO);
-
-            p->data = pkt;
-            p->dsize = (uint16_t)len;
-            return;
-    }
-}
-
 
 //------------------------------------------------------------------
 // decode.c::IP4 misc
@@ -775,7 +735,6 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     }
     sfiph_build(c, c->iph, AF_INET);
 }
-
 
 //-------------------------------------------------------------------------
 // api

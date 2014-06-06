@@ -33,13 +33,13 @@
 namespace
 {
 
-#define CD_NULL_NAME "codec_null"
+#define CD_NULL_NAME "cd_null"
 
-class NullRootCodec : public Codec
+class NullCodec : public Codec
 {
 public:
-    NullRootCodec() : Codec(CD_NULL_NAME){};
-    ~NullRootCodec() {};
+    NullCodec() : Codec(CD_NULL_NAME){};
+    ~NullCodec() {};
 
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
@@ -67,7 +67,7 @@ static const uint16_t NULL_HDRLEN = 4;
  *
  * Returns: void function
  */
-bool NullRootCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t raw_len, 
+bool NullCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t raw_len,
         Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "NULL Packet!\n"); );
@@ -88,7 +88,7 @@ bool NullRootCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t raw_len,
     return true;
 }
 
-void NullRootCodec::get_data_link_type(std::vector<int>&v)
+void NullCodec::get_data_link_type(std::vector<int>&v)
 {
     v.push_back(DLT_NULL);
 }
@@ -99,7 +99,7 @@ void NullRootCodec::get_data_link_type(std::vector<int>&v)
 
 static Codec* ctor(Module*)
 {
-    return new NullRootCodec();
+    return new NullCodec();
 }
 
 static void dtor(Codec *cd)
@@ -107,7 +107,7 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const CodecApi null_root_api =
+static const CodecApi null_api =
 {
     {
         PT_CODEC,
@@ -129,9 +129,9 @@ static const CodecApi null_root_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &null_root_api.base,
+    &null_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_null_root = &null_root_api.base;
+const BaseApi* cd_null = &null_api.base;
 #endif

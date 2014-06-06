@@ -1,4 +1,3 @@
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -20,7 +19,6 @@
 */
 
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,6 +31,7 @@
 #include "protocols/eth.h"
 #include "codecs/codec_events.h"
 #include "managers/packet_manager.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -44,6 +43,7 @@ public:
     ~EthCodec(){};
 
 
+    virtual PROTO_ID get_proto_id() { return PROTO_ETH; };
     virtual void get_protocol_ids(std::vector<uint16_t>&) {};
     virtual void get_data_link_type(std::vector<int>&);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
@@ -51,14 +51,9 @@ public:
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-
-    // DELETE
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_ETH; };
-    
 };
 
-} // anonymous
+} // namespace
 
 
 void EthCodec::get_data_link_type(std::vector<int>&v)
@@ -103,24 +98,25 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     /* lay the ethernet structure over the packet data */
-    p->eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
+    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
 
     DEBUG_WRAP(
             DebugMessage(DEBUG_DECODE, "%X:%X:%X:%X:%X:%X -> %X:%X:%X:%X:%X:%X\n",
-                p->eh->ether_src[0],
-                p->eh->ether_src[1], p->eh->ether_src[2], p->eh->ether_src[3],
-                p->eh->ether_src[4], p->eh->ether_src[5], p->eh->ether_dst[0],
-                p->eh->ether_dst[1], p->eh->ether_dst[2], p->eh->ether_dst[3],
-                p->eh->ether_dst[4], p->eh->ether_dst[5]);
+                eh->ether_src[0],
+                eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+                eh->ether_src[4], eh->ether_src[5], eh->ether_dst[0],
+                eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+                eh->ether_dst[4], eh->ether_dst[5]);
             );
     DEBUG_WRAP(
             DebugMessage(DEBUG_DECODE, "type:0x%X len:0x%X\n",
-                ntohs(p->eh->ether_type), p->pkth->pktlen)
+                ntohs(eh->ether_type), p->pkth->pktlen)
             );
 
-    next_prot_id = ntohs(p->eh->ether_type);
+    next_prot_id = ntohs(eh->ether_type);
     if (next_prot_id > eth::min_ethertype() )
     {
+        p->proto_bits |= PROTO_BIT__ETH;
         lyr_len = eth::hdr_len();
         return true;
     }
@@ -192,7 +188,6 @@ bool EthCodec::update (Packet*, Layer* lyr, uint32_t* len)
 void EthCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
     eth::EtherHdr* ch = (eth::EtherHdr*)lyr->start;
-    c->eh = ch;
 
     if ( reverse(f) )
     {

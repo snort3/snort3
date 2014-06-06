@@ -34,6 +34,8 @@
 #include "packet_io/sfdaq.h"
 #include "main/binder.h"
 #include "utils/stats.h"
+#include "protocols/layer.h"
+#include "protocols/vlan.h"
 
 FlowControl::FlowControl()
 {
@@ -212,12 +214,12 @@ void FlowControl::set_key(FlowKey* key, const Packet* p)
     uint16_t vlanId;
     uint16_t addressSpaceId;
 
-    if ( p->vh )
-        vlanId = (uint16_t)VTH_VLAN(p->vh);
+    if ( p->proto_bits & PROTO_BIT__VLAN )
+        vlanId = vlan::vth_vlan(layer::get_vlan_layer(p));
     else
         vlanId = 0;
 
-    if ( p->mpls )
+    if ( p->proto_bits & PROTO_BIT__MPLS )
         mplsId = p->mplsHdr.label;
     else
         mplsId = 0;

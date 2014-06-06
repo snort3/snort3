@@ -25,7 +25,7 @@
 #include "codecs/link/cd_erspan3_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
-
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -41,9 +41,7 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
+    virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
 };
 
 
@@ -61,6 +59,29 @@ struct ERSpanType3Hdr
 const uint16_t ETHERTYPE_ERSPAN_TYPE3 = 0x22eb;
 } // anonymous namespace
 
+static inline uint16_t erspan_version(ERSpanType3Hdr *hdr)
+{
+    return (ntohs(hdr->ver_vlan) & 0xf000) >> 12;
+}
+
+#if 0
+// keeping these functions around for use in further development
+
+static inline uint16_t erspan_vlan(ERSpanType3Hdr *hdr)
+{
+    return ntohs(hdr->ver_vlan) & 0x0fff;
+}
+
+static inline uint16_t erspan_span_id(ERSpanType3Hdr *hdr)
+{
+    return ntohs(hdr->flags_spanId) & 0x03ff;
+}
+
+static inline uint32_t erspan3_timestamp(ERSpanType3Hdr *hdr)
+{
+    return hdr->timestamp;
+}
+#endif
 
 void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -105,7 +126,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     /* Check that this is in fact ERSpan Type 3.
      */
-    if (ERSPAN_VERSION(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
+    if (erspan_version(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
                         raw_pkt, len);

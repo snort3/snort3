@@ -16,10 +16,13 @@ if( STATIC_DECODERS )
         cd_igmp_module.h
         cd_igmp_module.cc
         cd_no_next.cc
+        cd_mobility.cc
+        cd_pim.cc
         cd_pgm.cc
         cd_pgm_module.h
         cd_pgm_module.cc
         cd_routing.cc
+        cd_sun_nd.cc
         cd_swipe.cc
     )
 
@@ -30,9 +33,12 @@ else()
     add_shared_library(cd_gre codecs cd_gre.cc cd_gre_module.h cd_gre_module.cc)
     add_shared_library(cd_hopopts codecs cd_hopopts.cc)
     add_shared_library(cd_igmp codecs cd_igmp.cc cd_igmp_module.h cd_igmp_module.cc)
+    add_shared_library(cd_mobility codecs cd_mobility.cc)
     add_shared_library(cd_no_next codecs cd_no_next.cc)
+    add_shared_library(cd_pim codecs cd_pim.cc)
     add_shared_library(cd_pgm codecs cd_pgm.cc cd_pgm_module.h cd_pgm_module.cc)
     add_shared_library(cd_routing codecs cd_routing.cc)
+    add_shared_library(cd_sun_nd codecs cd_sun_nd.cc)
     add_shared_library(cd_swipe codecs cd_swipe.cc)
 
 endif()

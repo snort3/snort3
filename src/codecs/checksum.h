@@ -26,17 +26,8 @@
 #include "config.h"
 #endif
 
-#ifndef WIN32
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#else /* !WIN32 */
-#include <netinet/in_systm.h>
-#ifndef IFNAMSIZ
-#define IFNAMESIZ MAX_ADAPTER_NAME
-#endif /* !IFNAMSIZ */
-#endif /* !WIN32 */
-
+#include <stdint.h>
+#include <stdlib.h>
 
 
 namespace checksum

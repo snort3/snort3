@@ -32,7 +32,7 @@
 #include "ipv6_port.h"
 #include "sfxhash.h"
 #include "util.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "packet_io/active.h"
 #include "libs/file_sha256.h"
 
