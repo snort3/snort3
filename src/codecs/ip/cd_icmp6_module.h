@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_ICMP6_NAME "codec_icmp6"
+#define CD_ICMP6_NAME "cd_icmp6"
 
 class Icmp6Module : public DecodeModule
 {

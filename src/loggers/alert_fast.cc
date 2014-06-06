@@ -48,7 +48,7 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "event.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort_debug.h"
 #include "parser.h"
 #include "util.h"
@@ -245,7 +245,7 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
         if(IPH_IS_VALID(p))
             LogIPPkt(fast_log, GET_IPH_PROTO(p), p);
 #ifndef NO_NON_ETHER_DECODER
-        else if(p->ah)
+        else if(p->proto_bits & PROTO_BIT__ARP)
             LogArpHeader(fast_log, p);
 #endif
     }

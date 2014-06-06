@@ -27,6 +27,9 @@
 #include "framework/codec.h"
 #include "codecs/link/cd_arp_module.h"
 #include "codecs/codec_events.h"
+#include "protocols/protocol_ids.h"
+#include "codecs/sf_protocols.h"
+#include "protocols/arp.h"
 
 namespace
 {
@@ -38,27 +41,22 @@ public:
     ~ArpCodec(){};
 
 
+    virtual PROTO_ID get_proto_id() { return PROTO_ARP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &);
     
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_ARP; };
 };
 
 
-static const uint16_t ETHERNET_TYPE_REVARP = 0x8035;
-static const uint16_t ETHERNET_TYPE_ARP = 0x0806;
 } // anonymous namespace
 
 
 
 void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ETHERNET_TYPE_ARP);
-    v.push_back(ETHERNET_TYPE_REVARP);
+    v.push_back(ETHERTYPE_ARP);
+    v.push_back(ETHERTYPE_REVARP);
 }
 
 
@@ -77,11 +75,9 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool ArpCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t len,
         Packet *p, uint16_t &lyr_len, uint16_t& /* next_prot_id */)
 {
-    p->ah = (EtherARP *) raw_pkt;
-
     if(len < sizeof(EtherARP))
     {
         codec_events::decoder_event(p, DECODE_ARP_TRUNCATED);
@@ -89,7 +85,7 @@ bool ArpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     p->proto_bits |= PROTO_BIT__ARP;
-    lyr_len = sizeof(*p->ah);
+    lyr_len = sizeof(EtherARP);
     
     return true;
 }

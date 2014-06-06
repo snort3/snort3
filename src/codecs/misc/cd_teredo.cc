@@ -40,7 +40,7 @@
 namespace
 {
 
-#define CD_TEREDO_NAME "codec_teredo"
+#define CD_TEREDO_NAME "cd_teredo"
 
 class TeredoCodec : public Codec
 {

@@ -27,18 +27,14 @@
 
 #include "framework/codec.h"
 
-// root decoders
+// root codecs
 extern const BaseApi* cd_eth;
 extern const BaseApi* cd_raw4;
 extern const BaseApi* cd_raw6;
-extern const BaseApi* cd_null_root;
+extern const BaseApi* cd_null;
 
 
-#ifndef NO_NON_ETHER_DECODER
-
-#endif
-
-// decoders
+// other codecs
 extern const BaseApi* cd_ipv4;
 extern const BaseApi* cd_ipv6;
 extern const BaseApi* cd_icmp4;
@@ -59,12 +55,16 @@ extern const BaseApi* cd_gre;
 extern const BaseApi* cd_gtp;
 extern const BaseApi* cd_hopopts;
 extern const BaseApi* cd_igmp;
+extern const BaseApi* cd_mobility;
 extern const BaseApi* cd_mpls;
 extern const BaseApi* cd_no_next;
+extern const BaseApi* cd_pim;
 extern const BaseApi* cd_pgm;
 extern const BaseApi* cd_pppencap;
-extern const BaseApi* cd_pppoe;
+extern const BaseApi* cd_pppoepkt_disc;
+extern const BaseApi* cd_pppoepkt_sess;
 extern const BaseApi* cd_routing;
+extern const BaseApi* cd_sun_nd;
 extern const BaseApi* cd_swipe;
 extern const BaseApi* cd_teredo;
 extern const BaseApi* cd_transbridge;
@@ -72,6 +72,9 @@ extern const BaseApi* cd_vlan;
 
 #ifndef NO_NON_ETHER_DECODER
 extern const BaseApi* cd_eapol;
+extern const BaseApi* cd_linux_sll;
+extern const BaseApi* cd_tr;
+extern const BaseApi* cd_wlan;
 
 #endif
 
@@ -83,11 +86,8 @@ const BaseApi* codecs[] =
     cd_eth,
     cd_raw4,
     cd_raw6,
-    cd_null_root,
+    cd_null,
 
-#ifndef NO_NON_ETHER_DECODER
-
-#endif
 
     // non root codeccs
     cd_ipv4,
@@ -110,12 +110,16 @@ const BaseApi* codecs[] =
     cd_gtp,
     cd_hopopts,
     cd_igmp,
+    cd_mobility,
     cd_mpls,
     cd_no_next,
+    cd_pim,
     cd_pgm,
     cd_pppencap,
-    cd_pppoe,
+    cd_pppoepkt_disc,
+    cd_pppoepkt_sess,
     cd_routing,
+    cd_sun_nd,
     cd_swipe,
     cd_teredo,
     cd_transbridge,
@@ -123,6 +127,9 @@ const BaseApi* codecs[] =
 
 #ifndef NO_NON_ETHER_DECODER
     cd_eapol,
+    cd_linux_sll,
+    cd_tr,
+    cd_wlan,
 #endif
 
 #endif

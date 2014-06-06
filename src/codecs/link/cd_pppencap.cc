@@ -27,11 +27,12 @@
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
 #include "snort.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
 
-#define CD_PPPENCAP_NAME "codec_ppp_encap"
+#define CD_PPPENCAP_NAME "cd_pppencap"
 
 class PppEncap : public Codec
 {
@@ -39,13 +40,10 @@ public:
     PppEncap() : Codec(CD_PPPENCAP_NAME){};
     ~PppEncap(){};
 
+    virtual PROTO_ID get_proto_id() { return PROTO_PPP_ENCAP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_PPP_ENCAP; };
     
 };
 

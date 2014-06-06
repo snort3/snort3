@@ -22,7 +22,24 @@
 #ifndef WLAN_H
 #define WLAN_H
 
-#include <cstdint>
+#ifndef NO_NON_ETHER_DECODER
+
+namespace wlan
+{
+
+/*
+ *  Wireless Header (IEEE 802.11)
+ */
+struct WifiHdr
+{
+  uint16_t frame_control;
+  uint16_t duration_id;
+  uint8_t  addr1[6];
+  uint8_t  addr2[6];
+  uint8_t  addr3[6];
+  uint16_t seq_control;
+  uint8_t  addr4[6];
+} ;
 
 
 /* Frame type/subype combinations with version = 0 */
@@ -66,6 +83,9 @@
 #define WLAN_FLAG_WEP       0x4000    /* Wep Enabled  00000010 */
 #define WLAN_FLAG_ORDER     0x8000    /* Strict Order 00000001 */
 
+} // namespace wlan
+
+#endif
 
 #endif
 

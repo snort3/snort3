@@ -1,24 +1,29 @@
 
 set (PROTOCOL_HEADERS
-    ipv4.h
-    tcp.h
-    packet.h
-    ipv6.h
-    udp.h
+    arp.h
+    eapol.h
     eth.h
     icmp4.h
     icmp6.h
+    ipv4.h
+    ipv6.h
     gre.h
-    arp.h
-    wlan.h
-    teredo.h
+    layer.h
+    linux_sll.h
     mpls.h
+    packet.h
     protocol_ids.h
+    tcp.h
+    teredo.h
+    token_ring.h
+    udp.h
+    wlan.h
+    vlan.h
 )
 
 add_library (protocols STATIC
     ${PROTOCOL_HEADERS}
-    ../codecs/template.cc  # CMake complains if we don't compile any files.  so use dummy file.  Linux will remove all of the symbols anyways.
+    layer.cc
 )
 
 install (FILES ${PROTOCOL_HEADERS}

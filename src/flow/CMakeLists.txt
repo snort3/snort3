@@ -17,9 +17,10 @@ add_library ( flow STATIC
     session.h
 )
 
-set_target_properties(flow
-    PROPERTIES
-    COMPILE_FLAGS "-fvisibility=default"
+set_default_visibility_compile_flag(flow)
+
+target_link_libraries(flow
+    protocols
 )
 
 install(FILES ${FLOW_INCLUDES}

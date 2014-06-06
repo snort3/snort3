@@ -24,7 +24,7 @@
 
 #include "flow/flow.h"
 #include "stream/stream_api.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "framework/bits.h"
 

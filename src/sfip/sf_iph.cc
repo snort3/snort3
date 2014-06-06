@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 #include <string.h>
-#include "decode.h"
+#include "protocols/packet.h"
 
 #define FAILURE -1
 #define SUCCESS 0

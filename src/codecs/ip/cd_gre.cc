@@ -20,11 +20,17 @@
 // cd_gre.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "framework/codec.h"
 #include "codecs/ip/cd_gre_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/sf_protocols.h"
+#include "protocols/gre.h"
 
 namespace
 {
@@ -35,19 +41,14 @@ public:
     GreCodec() : Codec(CD_GRE_NAME){};
     ~GreCodec(){};
 
-
+    virtual PROTO_ID get_proto_id() { return PROTO_GRE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_GRE; };
 
 };
 
-static const uint16_t GRE_PROT_ID = 47;
 static const uint32_t GRE_HEADER_LEN = 4;
 static const uint32_t GRE_CHKSUM_LEN = 2;
 static const uint32_t GRE_OFFSET_LEN = 2;
@@ -74,7 +75,7 @@ static const uint32_t GRE_V1_ACK_LEN = 4;
 
 void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(GRE_PROT_ID);
+    v.push_back(IPPROTO_ID_GRE);
 }
 
 
@@ -116,32 +117,32 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
      * figure out the length
      */
 
-    p->greh = (GREHdr *)raw_pkt;
+    const gre::GREHdr *greh = reinterpret_cast<const gre::GREHdr *>(raw_pkt);
     lyr_len = GRE_HEADER_LEN;
 
-    switch (GRE_VERSION(p->greh))
+    switch (GRE_VERSION(greh))
     {
         case 0x00:
             /* these must not be set */
-            if (GRE_RECUR(p->greh) || GRE_FLAGS(p->greh))
+            if (GRE_RECUR(greh) || GRE_FLAGS(greh))
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_HEADER,
                                 raw_pkt, len);
                 return false;
             }
 
-            if (GRE_CHKSUM(p->greh) || GRE_ROUTE(p->greh))
+            if (GRE_CHKSUM(greh) || GRE_ROUTE(greh))
                 lyr_len += GRE_CHKSUM_LEN + GRE_OFFSET_LEN;
 
-            if (GRE_KEY(p->greh))
+            if (GRE_KEY(greh))
                 lyr_len += GRE_KEY_LEN;
 
-            if (GRE_SEQ(p->greh))
+            if (GRE_SEQ(greh))
                 lyr_len += GRE_SEQ_LEN;
 
             /* if this flag is set, we need to walk through all of the
              * Source Route Entries */
-            if (GRE_ROUTE(p->greh))
+            if (GRE_ROUTE(greh))
             {
                 uint16_t sre_addrfamily;
                 uint8_t sre_offset;
@@ -177,8 +178,8 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         /* PPTP */
         case 0x01:
             /* these flags should never be present */
-            if (GRE_CHKSUM(p->greh) || GRE_ROUTE(p->greh) || GRE_SSR(p->greh) ||
-                GRE_RECUR(p->greh) || GRE_V1_FLAGS(p->greh))
+            if (GRE_CHKSUM(greh) || GRE_ROUTE(greh) || GRE_SSR(greh) ||
+                GRE_RECUR(greh) || GRE_V1_FLAGS(greh))
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);
@@ -186,7 +187,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             }
 
             /* protocol must be 0x880B - PPP */
-            if (GRE_PROTO(p->greh) != ETHERTYPE_PPP)
+            if (GRE_PROTO(greh) != ETHERTYPE_PPP)
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);
@@ -194,7 +195,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             }
 
             /* this flag should always be present */
-            if (!(GRE_KEY(p->greh)))
+            if (!(GRE_KEY(greh)))
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, len);
@@ -203,10 +204,10 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
             lyr_len += GRE_KEY_LEN;
 
-            if (GRE_SEQ(p->greh))
+            if (GRE_SEQ(greh))
                 lyr_len += GRE_SEQ_LEN;
 
-            if (GRE_V1_ACK(p->greh))
+            if (GRE_V1_ACK(greh))
                 lyr_len += GRE_V1_ACK_LEN;
 
             break;
@@ -224,18 +225,10 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         return false;
     }
 
-    next_prot_id = GRE_PROTO(p->greh);
+    next_prot_id = GRE_PROTO(greh);
     return true;
 }
 
-/******************************************************************
- ******************** E N C O D E R  ******************************
- ******************************************************************/
-
-void GreCodec::format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
-{
-    c->greh = (GREHdr*)lyr->start;
-}
 
 
 //-------------------------------------------------------------------------

@@ -47,7 +47,7 @@
 #include "util.h"
 #include "mstring.h"
 #include "detect.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "fpcreate.h"
 #include "tag.h"
 #include "signature.h"

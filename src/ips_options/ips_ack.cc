@@ -29,7 +29,7 @@
 
 #include "snort_types.h"
 #include "detection/treenodes.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"

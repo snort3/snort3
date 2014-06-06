@@ -44,7 +44,7 @@
 /* RFC 1184 defines Abort, Suspend, and End of File telnet optinos */
 #define RFC1184
 
-//#include "decode.h"
+//#include "protocols/packet.h"
 #include "ftpp_ui_config.h"
 #include "ftpp_si.h"
 

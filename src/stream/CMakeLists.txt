@@ -24,6 +24,7 @@ target_link_libraries( stream
     stream_icmp
     stream_tcp
     stream_udp
+    protocols
 )
 
 install (FILES ${STREAM_INCLUDES}

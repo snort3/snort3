@@ -36,7 +36,7 @@
 #include "sfprocpidstats.h"
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "decode.h"
+#include "protocols/packet.h"
 
 #include <time.h>
 #include <stdio.h>

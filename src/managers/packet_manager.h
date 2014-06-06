@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2013-2013 Sourcefire, Inc.
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -22,33 +22,18 @@
 #ifndef PACKET_MANAGER_H
 #define PACKET_MANAGER_H
 
-#include "snort_types.h"
+#include <array>
+#include <list>
 #include "framework/codec.h"
 #include "time/profiler.h"
 #include "utils/stats.h"
 #include "snort_config.h"
 
 
-#include <array>
-#include <list>
-
 struct Packet;
 
 //-------------------------------------------------------------------------
 
-/*
- *  E N C O D E R   F O O
- */
-
-// for encodeders
-#include "protocols/packet.h"
-#include "codecs/sf_protocols.h"
-#include "framework/codec.h"
-
-
-
-
-// TODO --> delete this!!
 #ifdef PERF_PROFILING
 extern THREAD_LOCAL PreprocStats decodePerfStats;
 #endif
@@ -57,8 +42,6 @@ extern THREAD_LOCAL PreprocStats decodePerfStats;
 /*
  *  PacketManager class
  */
-
-
 class PacketManager
 {
 public:

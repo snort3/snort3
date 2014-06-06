@@ -45,7 +45,7 @@
 #include "icmp/stream_icmp.h"
 #include "ip/stream_ip.h"
 #include "mstring.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "detect.h"
 #include "generators.h"
 #include "perf_monitor/perf.h"
@@ -54,6 +54,8 @@
 #include "ipv6_port.h"
 #include "ips_options/ips_flowbits.h"
 #include "snort_debug.h"
+#include "protocols/layer.h"
+#include "protocols/vlan.h"
 
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_hostentry.h"
@@ -119,8 +121,9 @@ void Stream::populate_session_key(Packet *p, FlowKey *key)
         GET_SRC_IP(p), p->sp,
         GET_DST_IP(p), p->dp,
         GET_IPH_PROTO(p),
-        p->vh ? VTH_VLAN(p->vh) : 0,
-        p->mpls ? p->mplsHdr.label : 0,
+        // if the vlan protocol bit is defined, vlan layer gauranteed to exist
+        (p->proto_bits & PROTO_BIT__VLAN) ? vlan::vth_vlan(layer::get_vlan_layer(p)) : 0,
+        (p->proto_bits & PROTO_BIT__MPLS) ? p->mplsHdr.label : 0,
         addressSpaceId);
 }
 

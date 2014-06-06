@@ -43,10 +43,9 @@
 
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "decode.h" /* for struct in6_addr -- maybe move to snort_types.h? */
+#include "protocols/packet.h" /* for struct in6_addr -- maybe move to snort_types.h? */
 #include "snort_types.h"
 #include "main/analyzer.h"
-#include "decode.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "util.h"
@@ -63,6 +62,8 @@
 #include "detect.h"
 #include "snort.h"
 #include "stream/stream_api.h"
+#include "protocols/layer.h"
+#include "protocols/vlan.h"
 
 using namespace std;
 
@@ -273,15 +274,15 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
                 alertdata.dport_icode = htons(p->dp);
             }
 
-            if((p->mpls) && (config->mpls_event_types))
+            if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
             {
                 alertdata.mpls_label = htonl(p->mplsHdr.label);
             }
             if(config->vlan_event_types)
             {
-                if(p->vh)
+                if(p->proto_bits & PROTO_BIT__VLAN)
                 {
-                    alertdata.vlanId = htons(VTH_VLAN(p->vh));
+                    alertdata.vlanId = htons(vlan::vth_vlan(layer::get_vlan_layer(p)));
                 }
 
                 alertdata.pad2 = htons(p->user_policy_id);
@@ -376,15 +377,15 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
                 alertdata.dport_icode = htons(p->dp);
             }
 
-            if((p->mpls) && (config->mpls_event_types))
+            if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
             {
                 alertdata.mpls_label = htonl(p->mplsHdr.label);
             }
             if(config->vlan_event_types)
             {
-                if(p->vh)
+                if(p->proto_bits & PROTO_BIT__VLAN)
                 {
-                    alertdata.vlanId = htons(VTH_VLAN(p->vh));
+                    alertdata.vlanId = htons(vlan::vth_vlan(layer::get_vlan_layer(p)));
                 }
 
                 alertdata.pad2 = htons(p->user_policy_id);

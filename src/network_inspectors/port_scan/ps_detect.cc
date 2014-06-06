@@ -110,7 +110,7 @@
 #include <sys/types.h>
 
 #include "snort.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "packet_time.h"
 #include "sfxhash.h"
 #include "ipobj.h"

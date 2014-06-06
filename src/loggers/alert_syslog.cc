@@ -31,7 +31,7 @@
 
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "detect.h"
 #include "event.h"
 #include "rules.h"

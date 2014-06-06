@@ -30,7 +30,7 @@
 #include "icmp_session.h"
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "mstring.h"
 #include "sfxhash.h"
 #include "util.h"
@@ -40,6 +40,8 @@
 #include "flow/session.h"
 #include "perf_monitor/perf.h"
 #include "profiler.h"
+#include "protocols/layer.h"
+#include "protocols/vlan.h"
 
 static SessionStats gicmpStats;
 static THREAD_LOCAL SessionStats icmpStats;
@@ -135,8 +137,8 @@ static int ProcessIcmpUnreach(Packet *p)
         skey.port_h = sport;
     }
 
-    if (p->vh)
-        skey.vlan_tag = (uint16_t)VTH_VLAN(p->vh);
+    if (p->proto_bits & PROTO_BIT__VLAN)
+        skey.vlan_tag = vlan::vth_vlan(layer::get_vlan_layer(p));
     else
         skey.vlan_tag = 0;
 

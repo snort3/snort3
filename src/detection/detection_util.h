@@ -33,7 +33,7 @@
 #endif
 
 #include "snort_types.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "detect.h"
 #include "snort.h"
 #include "snort_debug.h"

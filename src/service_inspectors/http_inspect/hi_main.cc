@@ -62,7 +62,7 @@
 
 #include "snort.h"
 #include "detect.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "event.h"
 #include "generators.h"
 #include "snort_debug.h"

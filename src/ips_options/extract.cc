@@ -57,7 +57,7 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
                  const uint8_t *start, const uint8_t *end,
                  uint32_t *value)
 {
-    if(endianess != LITTLE && endianess != BIG)
+    if(endianess != ENDIAN_LITTLE && endianess != ENDIAN_BIG)
     {
         /* we only support 2 byte formats */
         return -2;
@@ -84,7 +84,7 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
             *value =  (*ptr) & 0xFF;
             break;
         case 2:
-            if(endianess == LITTLE)
+            if(endianess == ENDIAN_LITTLE)
             {
                 *value = (*ptr) & 0xFF;
                 *value |= (*(ptr + 1) & 0xFF) << 8;
@@ -96,7 +96,7 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
             }
             break;
         case 3:
-            if (endianess == LITTLE)
+            if (endianess == ENDIAN_LITTLE)
             {
                 *value = (*ptr) & 0xFF;
                 *value |= ((*(ptr + 1)) & 0xFF) << 8;
@@ -110,7 +110,7 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
             }
             break;
         case 4:
-            if(endianess == LITTLE)
+            if(endianess == ENDIAN_LITTLE)
             {
                 *value = (*ptr) & 0xFF;
                 *value |= ((*(ptr + 1)) & 0xFF) << 8;
@@ -214,7 +214,7 @@ void test_extract(void)
     value3[2] = 0x00;
     value3[3] = 0x00;
 
-    if(byte_extract(BIG, 2, value1, value1, value1 + 2, &ret))
+    if(byte_extract(ENDIAN_BIG, 2, value1, value1, value1 + 2, &ret))
     {
         printf("test 1 failed\n");
     }
@@ -223,7 +223,7 @@ void test_extract(void)
         printf("test 1: value: %x %u\n", ret, ret);
     }
 
-    if(byte_extract(LITTLE, 2, value1, value1, value1 + 2, &ret))
+    if(byte_extract(ENDIAN_LITTLE, 2, value1, value1, value1 + 2, &ret))
     {
         printf("test 2 failed\n");
     }
@@ -233,7 +233,7 @@ void test_extract(void)
     }
 
 
-    if(byte_extract(LITTLE, 2, value1 + 2, value1, value1 + 2, &ret))
+    if(byte_extract(ENDIAN_LITTLE, 2, value1 + 2, value1, value1 + 2, &ret))
     {
         printf("test 3 failed correctly\n");
     }
@@ -243,7 +243,7 @@ void test_extract(void)
     }
 
 
-    if(byte_extract(BIG, 2, value2, value2, value2 + 2, &ret))
+    if(byte_extract(ENDIAN_BIG, 2, value2, value2, value2 + 2, &ret))
     {
         printf("test 1 failed\n");
     }
@@ -252,7 +252,7 @@ void test_extract(void)
         printf("test 1: value: %x %u\n", ret, ret);
     }
 
-    if(byte_extract(LITTLE, 2, value2, value2, value2 + 2, &ret))
+    if(byte_extract(ENDIAN_LITTLE, 2, value2, value2, value2 + 2, &ret))
     {
         printf("test 2 failed\n");
     }
@@ -262,7 +262,7 @@ void test_extract(void)
     }
 
 
-    if(byte_extract(LITTLE, 2, value2 + 2, value2, value2 + 2, &ret))
+    if(byte_extract(ENDIAN_LITTLE, 2, value2 + 2, value2, value2 + 2, &ret))
     {
         printf("test 3 failed correctly\n");
     }
@@ -272,7 +272,7 @@ void test_extract(void)
     }
 
 
-    if(byte_extract(BIG, 4, value3, value3, value3 + 4, &ret))
+    if(byte_extract(ENDIAN_BIG, 4, value3, value3, value3 + 4, &ret))
     {
         printf("test 1 failed\n");
     }
@@ -281,7 +281,7 @@ void test_extract(void)
         printf("test 1: value: %x %u\n", ret, ret);
     }
 
-    if(byte_extract(LITTLE, 4, value3, value3, value3 + 4, &ret))
+    if(byte_extract(ENDIAN_LITTLE, 4, value3, value3, value3 + 4, &ret))
     {
         printf("test 2 failed\n");
     }
@@ -291,7 +291,7 @@ void test_extract(void)
     }
 
 
-    if(byte_extract(LITTLE, 4, value3 + 2, value3, value3 + 4, &ret))
+    if(byte_extract(ENDIAN_LITTLE, 4, value3 + 2, value3, value3 + 4, &ret))
     {
         printf("test 3 failed correctly\n");
     }
@@ -304,7 +304,7 @@ void test_extract(void)
 
     for(i=0;i<10;i++)
     {
-        if(byte_extract(LITTLE, 4, value3 + i, value3, value3 + 4, &ret))
+        if(byte_extract(ENDIAN_LITTLE, 4, value3 + i, value3, value3 + 4, &ret))
         {
             printf("[loop] %d failed correctly\n", i);
         }

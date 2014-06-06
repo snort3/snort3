@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_TCP_NAME "codec_tcp"
+#define CD_TCP_NAME "cd_tcp"
 
 class TcpModule : public DecodeModule
 {
