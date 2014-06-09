@@ -20,7 +20,7 @@
 // keywords_api.h author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <vector>
-#include "../converter.h"
+#include "../conversion_state.h"
 
 extern const std::vector<const ConvertMap*> keywords;
 //extern const ConvertMap* keywords[];

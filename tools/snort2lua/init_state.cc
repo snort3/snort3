@@ -22,16 +22,16 @@
 
 #include <vector>
 #include <sstream>
+#include <iostream>
 #include "init_state.h"
 #include "keyword_states/keywords_api.h"
 
 
-InitState::InitState() : Converter(this) {}
+InitState::InitState(Converter* cv) : ConversionState(cv) {}
 
-bool InitState::convert(std::string& data, std::ofstream& out)
+bool InitState::convert(std::stringstream& data_stream, bool /*last_line*/, std::ofstream& out)
 {
     std::string keyword;
-    std::stringstream data_stream(data);
 
 
     while ( data_stream >> keyword )
@@ -39,8 +39,10 @@ bool InitState::convert(std::string& data, std::ofstream& out)
 
         if( keyword.front() == '#')
         {
-            data.erase(data.begin());
-            out << "-- " << data << std::endl;
+            keyword.erase(keyword.begin());
+            std::ostringstream oss;
+            oss << data_stream.rdbuf();
+            out << "--" << keyword << oss.str();
             return true;
         }
         else
@@ -49,7 +51,7 @@ bool InitState::convert(std::string& data, std::ofstream& out)
             {
                 if (p->keyword.compare(0, p->keyword.size(), keyword) == 0)
                 {
-                    set_state(p->ctor());
+                    converter->set_state(p->ctor(converter));
                     return true;
                 }
             }

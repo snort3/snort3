@@ -23,10 +23,14 @@
 
 
 extern const ConvertMap *portvar_map;
+extern const ConvertMap *ipvar_map;
+extern const ConvertMap *var_map;
 
 const std::vector<const ConvertMap*> keywords = 
 //const ConvertMap* keywords[] = 
 {
     portvar_map,
+    ipvar_map,
+    var_map,
 //    nullptr,
 };

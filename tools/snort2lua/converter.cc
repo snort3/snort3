@@ -21,7 +21,10 @@
 
 #include <iostream>
 #include "converter.h"
+#include "conversion_state.h"
 #include "init_state.h"
+
+ConversionState* Converter::state = nullptr;
 
 #if 0
 Converter::Converter(Converter* c)
@@ -32,21 +35,51 @@ Converter::Converter(Converter* c)
 Converter::~Converter(){} 
 #endif
 
+void Converter::set_state(ConversionState* c)
+{
+    delete state;
+    state = c;
+}
+
 void Converter::reset_state()
-{ 
-    set_state(new InitState); 
+{
+	set_state(new InitState(this));
 }
 
 
-bool Converter::convert_line(std::string& data, std::ofstream& out){ 
+bool Converter::convert_line(std::stringstream& data, bool last_line, std::ofstream& out){
     if ( state )
-        return state->convert(data, out);
-    
-    std::cout << "Converter:: must call reset state first!" << std::endl;
+        return state->convert(data, last_line, out);
     return false;
 }
 
+
+void Converter::print_line(std::stringstream& in)
+{
+    int pos = in.tellg();
+    std::ostringstream oss;
+    oss << in.rdbuf();
+    std::cout << "DEBUG: " << oss.str() << std::endl;
+    in.seekg(pos);
+}
+
+void Converter::print_line(std::ostringstream& in)
+{
+    std::cout << "DEBUG: " << in.str() << std::endl;
+}
+void Converter::print_line(std::string& in)
+{
+    std::cout << "DEBUG: " << in << std::endl;
+}
+
 #if 0
+
+void Converter::inititalize()
+{
+		state = this;
+}
+
+
 
 void Converter::set_state(Converter* c){ 
     delete state;

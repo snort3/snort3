@@ -23,43 +23,28 @@
 #define CONVERTER_H
 
 #include <string>
+#include <fstream>
+#include <sstream>
 
-
+class ConversionState;
 
 class Converter
 {
 
 public:
+    Converter(){}
     virtual ~Converter() {};
     void reset_state();
-    bool convert_line(std::string& data, std::ofstream& out);
-    virtual bool convert(std::string& data, std::ofstream& out)=0;
+    bool convert_line(std::stringstream& data, bool last_line, std::ofstream& out);
+    void set_state(ConversionState* c);
 
-protected:
-    Converter(Converter* c){
-        state = c;
-    }
-    void set_state(Converter* c)
-    {
-        delete state;
-        state = c;
-    }
-
-
+    void print_line(std::stringstream& in);
+    void print_line(std::ostringstream& in);
+    void print_line(std::string& in);
 private:
-    Converter* state;
+    static ConversionState* state;
 
 };
-
-
-typedef Converter* (*conv_new_f)();
-
-struct ConvertMap
-{
-    std::string keyword;
-    conv_new_f ctor;
-};
-
 
 
 

@@ -21,17 +21,18 @@
 
 #include <sstream>
 #include <fstream>
+#include "conversion_state.h"
 #include "converter.h"
 
 #ifndef INIT_STATE_H
 #define INIT_STATE_H
 
-class InitState : public Converter
+class InitState : public ConversionState
 {
 public:
-    InitState();
+    InitState(Converter* cv);
     virtual ~InitState() {};
-    virtual bool convert(std::string& data, std::ofstream&);
+    virtual bool convert(std::stringstream& data, bool last_line, std::ofstream&);
 
 };
 

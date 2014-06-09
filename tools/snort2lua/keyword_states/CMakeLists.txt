@@ -1,6 +1,6 @@
 
 add_library( keyword_states
-    portvar.cc
+    var.cc
     keywords_api.h
     keywords_api.cc
 )
