@@ -45,6 +45,7 @@
 #include "packet_io/active.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/cd_udp_module.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -56,6 +57,7 @@ public:
     ~UdpCodec(){};
 
 
+    virtual PROTO_ID get_proto_id() { return PROTO_UDP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
@@ -63,11 +65,6 @@ public:
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-
-    // DELETE
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_UDP; };
-
     
 };
 
@@ -110,7 +107,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     /* set the ptr to the start of the UDP header */
-    p->inner_udph = p->udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
+    p->udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
 
     if (!p->frag_flag)
     {

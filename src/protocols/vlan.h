@@ -18,18 +18,36 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef LAYER_H 
-#define LAYER_H
 
-#include "codecs/sf_protocols.h"
+#ifndef VLAN_H
+#define VLAN_H
 
-struct Layer
+namespace vlan
 {
-    uint16_t prot_id;
-    PROTO_ID proto;
-    uint16_t length;
-    uint8_t* start;
+
+struct VlanTagHdr
+{
+    uint16_t vth_pri_cfi_vlan;
+    uint16_t vth_proto;  /* protocol field... */
 };
+
+
+static inline uint16_t vth_priority(const VlanTagHdr* vh)
+{
+    return (ntohs((vh)->vth_pri_cfi_vlan) & 0xe000) >> 13;
+}
+
+static inline uint16_t vth_cfi(const VlanTagHdr* vh)
+{
+    return (ntohs((vh)->vth_pri_cfi_vlan) & 0x1000) >> 12;
+}
+
+static inline uint16_t vth_vlan(const VlanTagHdr* vh)
+{
+    return ntohs((vh)->vth_pri_cfi_vlan) & 0x0FFF;
+}
+
+} // namespace vlan
 
 #endif
 

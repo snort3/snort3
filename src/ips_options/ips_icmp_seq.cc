@@ -50,7 +50,7 @@
 
 #include "snort_types.h"
 #include "detection/treenodes.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
@@ -145,7 +145,7 @@ int IcmpSeqOption::eval(Packet *p)
     PREPROC_PROFILE_START(icmpSeqPerfStats);
 
     if( (p->icmph->type == ICMP_ECHO || p->icmph->type == ICMP_ECHOREPLY)
-        || ((uint16_t)p->icmph->type == ICMP6_ECHO || (uint16_t)p->icmph->type == ICMP6_REPLY)
+        || ((uint16_t)p->icmph->type == icmp6::Icmp6Types::ECHO || (uint16_t)p->icmph->type == icmp6::Icmp6Types::REPLY)
       )
     {
         /* test the rule ID value against the ICMP extension ID field */

@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_MPLS_NAME "codec_mpls"
+#define CD_MPLS_NAME "cd_mpls"
 
 class MplsModule : public DecodeModule
 {

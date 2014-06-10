@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -26,10 +24,27 @@
 #include "config.h"
 #endif
 
-#include "decode.h"
+#include <pcap.h>
+#include "protocols/packet.h"
+#include "protocols/token_ring.h"
+#include "framework/codec.h"
+#include "codecs/codec_events.h"
+#include "codecs/root/cd_tr_module.h"
+
+namespace
+{
+
+class TrCodec : public Codec
+{
+public:
+    TrCodec() : Codec(CD_TR_NAME){};
+    ~TrCodec() {};
 
 
-
+    virtual void get_data_link_type(std::vector<int>&);
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+};
 
 
 // THESE ARE NEVER USED!!
@@ -39,7 +54,6 @@
 // DELETE FIN
 
 #define TR_ALEN             6        /* octets in an Ethernet header */
-#define IPARP_SAP           0xaa
 
 #define AC                  0x10
 #define LLC_FRAME           0x40
@@ -53,52 +67,43 @@
 #define TR_RCF_FRAME2K             0x20
 #define TR_RCF_BROADCAST_MASK      0xC000
 
-/*
- * Function: DecodeTRPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
- *
- * Purpose: Decode Token Ring packets!
- *
- * Arguments: p=> pointer to decoded packet struct
- *            user => Utility pointer, unused
- *            pkthdr => ptr to the packet header
- *            pkt => pointer to the real live packet data
- *
- * Returns: void function
- */
-void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
+} // namespace
+
+
+void TrCodec::get_data_link_type(std::vector<int>&v)
 {
-    uint32_t cap_len = pkthdr->caplen;
+#ifdef DLT_IEEE802
+    v.push_back(DLT_IEEE802);
+#endif
+}
+
+
+//void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
+bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+{
+
+    uint32_t cap_len = raw_len;
     uint32_t dataoff;      /* data offset is variable here */
-    PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
-
-    dc.total_processed++;
-
-    memset(p, 0, PKT_ZERO_LEN);
-
-    p->pkth = pkthdr;
-    p->pkt = pkt;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
             DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
-                (unsigned long)cap_len,(unsigned long) pkthdr->pktlen);
+                (unsigned long)cap_len,(unsigned long) raw_len);
             );
 
-    if(cap_len < sizeof(Trh_hdr))
+    if(cap_len < sizeof(token_ring::Trh_hdr))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "Captured data length < Token Ring header length! "
             "(%d < %d bytes)\n", cap_len, TR_HLEN););
 
-        codec_events::decoder_event(p, DECODE_BAD_TRH, DECODE_BAD_TRH_STR);
-
-        PREPROC_PROFILE_END(decodePerfStats);
-        return;
+        codec_events::decoder_event(p, DECODE_BAD_TRH);
+        return false;
     }
 
     /* lay the tokenring header structure over the packet data */
-    p->trh = (Trh_hdr *) pkt;
+    //const token_ring::Trh_hdr *trh = reinterpret_cast<const token_ring::Trh_hdr *>(raw_pkt);
 
     /*
      * according to rfc 1042:
@@ -117,23 +122,21 @@ void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
      * first I assume that we have single-ring network with no RIF
      * information presented in frame
      */
-    if(cap_len < (sizeof(Trh_hdr) + sizeof(Trh_llc)))
+    if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc)))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "Captured data length < Token Ring header length! "
             "(%d < %d bytes)\n", cap_len,
-            (sizeof(Trh_hdr) + sizeof(Trh_llc))););
+            (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc))););
 
-        codec_events::decoder_event(p, DECODE_BAD_TR_ETHLLC, DECODE_BAD_TR_ETHLLC_STR);
-
-        PREPROC_PROFILE_END(decodePerfStats);
-        return;
+        codec_events::decoder_event(p, DECODE_BAD_TR_ETHLLC);
+        return false;
     }
 
+    const token_ring::Trh_llc *trhllc =
+        reinterpret_cast<const token_ring::Trh_llc *>(raw_pkt + sizeof(token_ring::Trh_hdr));
 
-    p->trhllc = (Trh_llc *) (pkt + sizeof(Trh_hdr));
-
-    if(p->trhllc->dsap != IPARP_SAP && p->trhllc->ssap != IPARP_SAP)
+    if(trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
     {
         /*
          * DSAP != SSAP != 0xAA .. either we are having frame which doesn't
@@ -141,44 +144,39 @@ void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
          * lattest ...
          */
 
-        if(cap_len < (sizeof(Trh_hdr) + sizeof(Trh_llc) + sizeof(Trh_mr)))
+        if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr)))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                 "Captured data length < Token Ring header length! "
                 "(%d < %d bytes)\n", cap_len,
-                (sizeof(Trh_hdr) + sizeof(Trh_llc) + sizeof(Trh_mr))););
+                (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr))););
 
-            codec_events::decoder_event(p, DECODE_BAD_TRHMR, DECODE_BAD_TRHMR_STR);
-
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
+            codec_events::decoder_event(p, DECODE_BAD_TRHMR);
+            return false;
         }
 
-        p->trhmr = (Trh_mr *) (pkt + sizeof(Trh_hdr));
+        const token_ring::Trh_mr* trhmr =
+            reinterpret_cast<const token_ring::Trh_mr *>(raw_pkt + sizeof(token_ring::Trh_hdr));
 
 
-        if(cap_len < (sizeof(Trh_hdr) + sizeof(Trh_llc) +
-                      sizeof(Trh_mr) + TRH_MR_LEN(p->trhmr)))
+        if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +
+                      sizeof(token_ring::Trh_mr) + TRH_MR_LEN(trhmr)))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
                 "Captured data length < Token Ring header length! "
                 "(%d < %d bytes)\n", cap_len,
-                (sizeof(Trh_hdr) + sizeof(Trh_llc) + sizeof(Trh_mr))););
+                (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr))););
 
-            codec_events::decoder_event(p, DECODE_BAD_TR_MR_LEN, DECODE_BAD_TR_MR_LEN_STR);
-
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
+            codec_events::decoder_event(p, DECODE_BAD_TR_MR_LEN);
+            return false;
         }
 
-        p->trhllc = (Trh_llc *) (pkt + sizeof(Trh_hdr) + TRH_MR_LEN(p->trhmr));
-        dataoff   = sizeof(Trh_hdr) + TRH_MR_LEN(p->trhmr) + sizeof(Trh_llc);
+        dataoff   = sizeof(token_ring::Trh_hdr) + TRH_MR_LEN(trhmr) + sizeof(token_ring::Trh_llc);
 
     }
     else
     {
-        p->trhllc = (Trh_llc *) (pkt + sizeof(Trh_hdr));
-        dataoff = sizeof(Trh_hdr) + sizeof(Trh_llc);
+        dataoff = sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc);
     }
 
     /*
@@ -191,49 +189,72 @@ void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
      * Assigned Numbers [7] (IP = 2048, ARP = 2054). .. but we would check
      * SSAP and DSAP and assume this would be enough to trust.
      */
-    if(p->trhllc->dsap != IPARP_SAP && p->trhllc->ssap != IPARP_SAP)
+    if(trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
     {
         DEBUG_WRAP(
                    DebugMessage(DEBUG_DECODE, "DSAP and SSAP arent set to SNAP\n");
                 );
-        p->trhllc = NULL;
-        PREPROC_PROFILE_END(decodePerfStats);
-        return;
+        return false;
     }
 
-    switch(htons(p->trhllc->ethertype))
-    {
-        case ETHERNET_TYPE_IP:
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Decoding IP\n"););
-            DecodeIP(p->pkt + dataoff, cap_len - dataoff, p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        case ETHERNET_TYPE_ARP:
-        case ETHERNET_TYPE_REVARP:
-            DEBUG_WRAP(
-                    DebugMessage(DEBUG_DECODE, "Decoding ARP\n");
-                    );
-            dc.arp++;
-
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        case ETHERNET_TYPE_8021Q:
-            DecodeVlan(p->pkt + dataoff, cap_len - dataoff, p);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-
-        default:
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Unknown network protocol: %d\n",
-                        htons(p->trhllc->ethertype)));
-            // TBD add decoder drop event for unknown tr/eth type
-            dc.other++;
-            PREPROC_PROFILE_END(decodePerfStats);
-            return;
-    }
-
-    PREPROC_PROFILE_END(decodePerfStats);
-    return;
+    lyr_len = dataoff;
+    next_prot_id = htons(trhllc->ethertype);
+    return true;
 }
 
+
+
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
+
+static Module* mod_ctor()
+{
+    return new TrCodecModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static Codec* ctor(Module*)
+{
+    return new TrCodec();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+
+static const CodecApi tr_api =
+{
+    {
+        PT_CODEC,
+        CD_TR_NAME,
+        CDAPI_PLUGIN_V0,
+        0,
+        mod_ctor,
+        mod_dtor
+    },
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    ctor,
+    dtor,
+};
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &tr_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_tr = &tr_api.base;
+#endif

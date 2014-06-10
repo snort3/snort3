@@ -75,7 +75,7 @@
 #include "snort_types.h"
 #include "snort_bounds.h"
 #include "detection/treenodes.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
@@ -469,12 +469,12 @@ static void byte_jump_parse(char *data, ByteJumpData *idx)
             }
             else if(!strcasecmp(cptr, "little"))
             {
-                idx->endianess = LITTLE;
+                idx->endianess = ENDIAN_LITTLE;
             }
             else if(!strcasecmp(cptr, "big"))
             {
                 /* this is the default */
-                idx->endianess = BIG;
+                idx->endianess = ENDIAN_BIG;
             }
             else if(!strcasecmp(cptr, "hex"))
             {

@@ -63,7 +63,7 @@
 
 #include "generators.h"
 #include "hi_events.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort.h"
 #include "stream/stream_api.h"
 #include "snort_debug.h"

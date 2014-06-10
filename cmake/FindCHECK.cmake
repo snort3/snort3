@@ -5,26 +5,26 @@ set(ERROR_MESSAGE
      'make check' command"
 )
 
-find_library(CHECK_LIBRARY
-    NAMES check
-)
 
-find_path (CHECK_INCLUDE_DIRS
+find_path (CHECK_INCLUDE_DIR
     NAMES check.h
 )
 
+find_library(CHECK_LIBRARIES
+    NAMES check
+)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CHECK
-    REQUIRED_VARS CHECK_INCLUDE_DIRS CHECK_INCLUDE_DIRS
+    REQUIRED_VARS CHECK_INCLUDE_DIR CHECK_LIBRARIES
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
 
 
 
 mark_as_advanced(
-    CHECK_INCLUDE_DIRS 
-    CHECK_LIBRARIES 
+    CHECK_INCLUDE_DIR
+    CHECK_LIBRARIES
 )
 
 

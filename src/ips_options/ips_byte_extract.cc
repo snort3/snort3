@@ -471,7 +471,7 @@ static int byte_extract_parse(ByteExtractData *data, char *args)
         else if (strcmp(token, "little") == 0)
         {
             if (data->endianess == ENDIAN_NONE)
-                data->endianess = LITTLE;
+                data->endianess = ENDIAN_LITTLE;
             else
                 ParseError("byte_extract rule option specifies the "
                         "byte order twice. Use only one of 'big', 'little', "
@@ -481,7 +481,7 @@ static int byte_extract_parse(ByteExtractData *data, char *args)
         else if (strcmp(token, "big") == 0)
         {
             if (data->endianess == ENDIAN_NONE)
-                data->endianess = BIG;
+                data->endianess = ENDIAN_BIG;
             else
                 ParseError("byte_extract rule option specifies the "
                         "byte order twice. Use only one of 'big', 'little', "
@@ -565,7 +565,7 @@ static int byte_extract_parse(ByteExtractData *data, char *args)
 
     /* Replace sentinels with defaults */
     if (data->endianess == ENDIAN_NONE)
-        data->endianess = BIG;
+        data->endianess = ENDIAN_BIG;
 
     if (data->data_string_convert_flag && (data->base == 0))
         data->base = 10;

@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_ICMP4_NAME "codec_icmp4"
+#define CD_ICMP4_NAME "cd_icmp4"
 
 class Icmp4Module : public DecodeModule
 {

@@ -57,7 +57,7 @@
 #include "snort_types.h"
 #include "snort_bounds.h"
 #include "snort_debug.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "managers/packet_manager.h"
 #include "detection/detection_defines.h"
 #include "mstring.h"

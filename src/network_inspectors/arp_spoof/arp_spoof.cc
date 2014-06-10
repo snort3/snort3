@@ -80,7 +80,7 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "detect.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "event.h"
 #include "parser.h"
 #include "mstring.h"
@@ -91,6 +91,8 @@
 
 #include "arp_module.h"
 #include "framework/inspector.h"
+#include "protocols/layer.h"
+#include "protocols/arp.h"
 
 static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -190,24 +192,29 @@ void ArpSpoof::eval(Packet *p)
 {
     IPMacEntry *ipme;
     PROFILE_VARS;
+    const arp::EtherARP *ah;
+    const eth::EtherHdr *eh;
 
     // preconditions - what we registered for
-    assert(p->eh && p->ah);
+    assert((p->proto_bits & PROTO_BIT__ETH) && (p->proto_bits & PROTO_BIT__ARP));
+
+    ah = layer::get_arp_layer(p);
+    eh = layer::get_eth_layer(p);
 
     /* is the ARP protocol type IP and the ARP hardware type Ethernet? */
-    if ((ntohs(p->ah->ea_hdr.ar_hrd) != 0x0001) ||
-            (ntohs(p->ah->ea_hdr.ar_pro) != ETHERNET_TYPE_IP))
+    if ((ntohs(ah->ea_hdr.ar_hrd) != 0x0001) ||
+            (ntohs(ah->ea_hdr.ar_pro) != ETHERNET_TYPE_IP))
         return;
 
     PREPROC_PROFILE_START(arpPerfStats);
     ++asstats.total_packets;
 
-    switch(ntohs(p->ah->ea_hdr.ar_op))
+    switch(ntohs(ah->ea_hdr.ar_op))
     {
         case ARPOP_REQUEST:
             if (config->check_unicast_arp)
             {
-                if (memcmp((u_char *)p->eh->ether_dst, (u_char *)bcast, 6) != 0)
+                if (memcmp((u_char *)eh->ether_dst, (u_char *)bcast, 6) != 0)
                 {
                     SnortEventqAdd(GID_ARP_SPOOF,
                             ARPSPOOF_UNICAST_ARP_REQUEST);
@@ -216,8 +223,8 @@ void ArpSpoof::eval(Packet *p)
                             "MODNAME: Unicast request\n"););
                 }
             }
-            else if (memcmp((u_char *)p->eh->ether_src,
-                    (u_char *)p->ah->arp_sha, 6) != 0)
+            else if (memcmp((u_char *)eh->ether_src,
+                    (u_char *)ah->arp_sha, 6) != 0)
             {
                 SnortEventqAdd(GID_ARP_SPOOF,
                         ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
@@ -227,8 +234,8 @@ void ArpSpoof::eval(Packet *p)
             }
             break;
         case ARPOP_REPLY:
-            if (memcmp((u_char *)p->eh->ether_src,
-                    (u_char *)p->ah->arp_sha, 6) != 0)
+            if (memcmp((u_char *)eh->ether_src,
+                    (u_char *)ah->arp_sha, 6) != 0)
             {
                 SnortEventqAdd(GID_ARP_SPOOF,
                         ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
@@ -236,8 +243,8 @@ void ArpSpoof::eval(Packet *p)
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
                         "MODNAME: Ethernet/ARP mismatch reply src\n"););
             }
-            else if (memcmp((u_char *)p->eh->ether_dst,
-                    (u_char *)p->ah->arp_tha, 6) != 0)
+            else if (memcmp((u_char *)eh->ether_dst,
+                    (u_char *)ah->arp_tha, 6) != 0)
             {
                 SnortEventqAdd(GID_ARP_SPOOF,
                         ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
@@ -254,7 +261,7 @@ void ArpSpoof::eval(Packet *p)
         return;
 
     if ((ipme = LookupIPMacEntryByIP(config->ipmel,
-                                     *(uint32_t *)&p->ah->arp_spa)) == NULL)
+                                     *(uint32_t *)&ah->arp_spa)) == NULL)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
                 "MODNAME: LookupIPMacEntryByIp returned NULL\n"););
@@ -268,9 +275,9 @@ void ArpSpoof::eval(Packet *p)
         /* If the Ethernet source address or the ARP source hardware address
          * in p doesn't match the MAC address in ipme, then generate an alert
          */
-        if ((memcmp((uint8_t *)p->eh->ether_src,
+        if ((memcmp((uint8_t *)eh->ether_src,
                 (uint8_t *)ipme->mac_addr, 6)) ||
-                (memcmp((uint8_t *)p->ah->arp_sha,
+                (memcmp((uint8_t *)ah->arp_sha,
                 (uint8_t *)ipme->mac_addr, 6)))
         {
             SnortEventqAdd(GID_ARP_SPOOF,

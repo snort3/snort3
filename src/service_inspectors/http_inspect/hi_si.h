@@ -45,7 +45,7 @@
 #include "hi_ad.h"
 
 #include "ipv6_port.h"
-#include "decode.h"
+#include "protocols/packet.h"
 
 /*
 **  These are the defines for the different types of

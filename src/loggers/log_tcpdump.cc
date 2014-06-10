@@ -40,7 +40,7 @@ extern "C" {
 
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "event.h"
 #include "mstring.h"
 #include "parser.h"

@@ -10,7 +10,6 @@ set ( PLUGIN_LIST
     alert_csv.cc
     alert_fast.cc
     alert_full.cc
-    alert_sf_socket.cc
     alert_syslog.cc
     alert_test.cc
     alert_unixsock.cc
@@ -19,6 +18,14 @@ set ( PLUGIN_LIST
     unified2.cc
     unified2_common.h
 )
+
+if( LINUX )
+    set ( PLUGIN_LIST
+        ${PLUGIN_LIST}
+        alert_sf_socket.cc
+    )
+endif()
+
 
 if (STATIC_LOGGERS)
     add_library ( loggers STATIC

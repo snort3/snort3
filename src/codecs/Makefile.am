@@ -6,13 +6,13 @@ noinst_LIBRARIES = libcodecs.a
 noinst_LIBRARIES += libcodec_utils.a
 
 x_include_HEADERS = \
-layer.h \
 sf_protocols.h
 
 libcodecs_a_SOURCES = \
 codec_api.cc \
 codec_api.h \
 decode.h \
+decode_module.h \
 decode_module.h
 
 libcodec_utils_a_SOURCES = \

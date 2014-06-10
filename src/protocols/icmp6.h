@@ -83,7 +83,7 @@ struct ICMP6NodeInfo
 //enum class Icmp6Types : std::uint8_t {
 enum Icmp6Types : std::uint8_t   {
     UNREACH = 1,
-    ICMP6_TYPE_BIG = 2,
+    BIG = 2,
     TIME = 3,
     PARAMS = 4,
     ECHO = 128,
@@ -111,16 +111,10 @@ inline uint16_t hdr_normal_len()
 
 //   Things that should be deleted immediately....which I bet will manage to make it into production
 
-#define ICMP6_UNREACH 1
-#define ICMP6_BIG    2
-#define ICMP6_TIME   3
-#define ICMP6_PARAMS 4
-#define ICMP6_ECHO   128
-#define ICMP6_REPLY  129
-#define ICMP6_SOLICITATION 133
-#define ICMP6_ADVERTISEMENT 134
-#define ICMP6_NODE_INFO_QUERY 139
-#define ICMP6_NODE_INFO_RESPONSE 140
+#if 1
+#define ICMP6_ECHO   icmp6::Icmp6Types::ECHO
+#define ICMP6_REPLY  icmp6::Icmp6Types::REPLY
+#endif
 
 typedef icmp6::ICMP6Hdr ICMP6Hdr;
 typedef icmp6::ICMP6TooBig ICMP6TooBig;

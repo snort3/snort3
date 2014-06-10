@@ -30,7 +30,7 @@
 #include "snort.h"
 #include "rules.h"
 #include "treenodes.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "main/policy.h"
 #include "sflsq.h"
 #include "util.h"

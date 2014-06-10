@@ -24,6 +24,7 @@
 #include "codecs/link/cd_erspan2_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -34,13 +35,11 @@ public:
     Erspan2Codec() : Codec(CD_ERSPAN2_NAME){};
     ~Erspan2Codec(){};
 
+    virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
 };
 
 
@@ -53,6 +52,12 @@ struct ERSpanType2Hdr
 
 const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
 } // namespace
+
+
+static inline uint16_t erspan_version(ERSpanType2Hdr *hdr)
+{
+    return (ntohs(hdr->ver_vlan) & 0xf000) >> 12;
+}
 
 void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -96,7 +101,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     /* Check that this is in fact ERSpan Type 2.
      */
-    if (ERSPAN_VERSION(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
+    if (erspan_version(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
                         raw_pkt, len);

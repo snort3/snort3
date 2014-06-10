@@ -21,39 +21,41 @@
 #define CODEC_H
 
 #include <vector>
+#include <cstdint>
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
-#include "protocols/packet.h"
+#include "codecs/sf_protocols.h"
+#include "protocols/icmp4.h"
+#include "packet.h"
 
-
-// REMOVE WHEN POSSIBLE!!!
-
-
+struct Packet;
 struct Layer;
 
-typedef enum {
-    ENC_TCP_FIN,  ENC_TCP_RST,
-    ENC_UNR_NET,  ENC_UNR_HOST,
-    ENC_UNR_PORT, ENC_UNR_FW,
+enum EncodeType{
+    ENC_TCP_FIN,
+    ENC_TCP_RST,
+    ENC_UNR_NET,
+    ENC_UNR_HOST,
+    ENC_UNR_PORT,
+    ENC_UNR_FW,
     ENC_TCP_PUSH,
     ENC_MAX
-} EncodeType;
+};
 
-#define ENC_FLAG_FWD 0x80000000  // send in forward direction
-#define ENC_FLAG_SEQ 0x40000000  // VAL bits contain seq adj
-#define ENC_FLAG_ID  0x20000000  // use randomized IP ID
-#define ENC_FLAG_NET 0x10000000  // stop after innermost network (ip4/6) layer
-#define ENC_FLAG_DEF 0x08000000  // stop before innermost ip4 opts or ip6 frag header
-#define ENC_FLAG_RAW 0x04000000  // don't encode outer eth header (this is raw ip)
-#define ENC_FLAG_RES 0x03000000  // bits reserved for future use
-#define ENC_FLAG_VAL 0x00FFFFFF  // bits for adjusting seq and/or ack
-const uint8_t MIN_TTL = 64;
-const uint8_t MAX_TTL = 255;
 
 typedef uint32_t EncodeFlags;
+const uint32_t ENC_FLAG_FWD = 0x80000000;  // send in forward direction
+const uint32_t ENC_FLAG_SEQ = 0x40000000;  // VAL bits contain seq adj
+const uint32_t ENC_FLAG_ID  = 0x20000000;  // use randomized IP ID
+const uint32_t ENC_FLAG_NET = 0x10000000;  // stop after innermost network (ip4/6) layer
+const uint32_t ENC_FLAG_DEF = 0x08000000;  // stop before innermost ip4 opts or ip6 frag header
+const uint32_t ENC_FLAG_RAW = 0x04000000;  // don't encode outer eth header (this is raw ip)
+const uint32_t ENC_FLAG_RES = 0x03000000;  // bits reserved for future use
+const uint32_t ENC_FLAG_VAL = 0x00FFFFFF;  // bits for adjusting seq and/or ack
 
-typedef struct {
+
+struct EncState{
     EncodeType type;
     EncodeFlags flags;
 
@@ -65,8 +67,7 @@ typedef struct {
     const uint8_t* payLoad;
     uint32_t payLen;
     uint8_t proto;
-
-} EncState;
+};
 
 
 // Copied from dnet/blob.h
@@ -81,22 +82,7 @@ struct Buffer {
 };
 
 
-static inline bool forward(const EncState *e)
-{
-    return e->flags & ENC_FLAG_FWD;
-}
-
-static inline bool reverse(const EncodeFlags f)
-{
-    return !(f & ENC_FLAG_FWD);
-}
-
-static inline uint16_t get_decoded_length(EncState *enc)
-{
-    return enc->p->layers[enc->layer-1].length;
-}
-
-// Update's the buffer to contain an additional 
+// Update's the buffer to contain an additional
 static inline bool update_buffer(Buffer* buf, size_t n)
 {
     if ( buf->end + n > (unsigned int)buf->size )
@@ -108,8 +94,6 @@ static inline bool update_buffer(Buffer* buf, size_t n)
     buf->base -= n;
     return true;
 }
-
-
 
 
 class Codec
@@ -155,9 +139,8 @@ public:
     virtual bool update(Packet*, Layer*, uint32_t* /*len*/) { return true; };
     // formatter
     virtual void format(EncodeFlags, const Packet* /*orig*/, Packet* /*clone*/, Layer*) {};
-
-    // DELETE
-    virtual inline PROTO_ID get_proto_id() { return PROTO_AH; };
+    // used for backwards compatability.
+    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
 
 
 protected:
@@ -167,12 +150,29 @@ protected:
     };
 
 
-    inline uint8_t buff_diff(Buffer *buf, uint8_t* ho)
+    static inline bool forward(const EncState *e)
+    {
+        return e->flags & ENC_FLAG_FWD;
+    }
+
+    static inline bool reverse(const EncodeFlags f)
+    {
+        return !(f & ENC_FLAG_FWD);
+    }
+
+    static inline uint16_t get_decoded_length(EncState *enc)
+    {
+        return enc->p->layers[enc->layer-1].length;
+    }
+
+
+    static inline uint8_t buff_diff(Buffer *buf, uint8_t* ho)
     {
         return ((uint8_t*)(buf->base+buf->end)-(uint8_t*)ho);
     }
 
-    inline icmp4::IcmpCode get_icmp_code (EncodeType et) {
+    static inline icmp4::IcmpCode get_icmp_code (EncodeType et)
+    {
         switch ( et ) {
             case EncodeType::ENC_UNR_NET:  return icmp4::IcmpCode::NET_UNREACH;
             case EncodeType::ENC_UNR_HOST: return icmp4::IcmpCode::HOST_UNREACH;
@@ -181,6 +181,7 @@ protected:
             default: return icmp4::IcmpCode::PORT_UNREACH;
         }
     }
+
 
 
 private:

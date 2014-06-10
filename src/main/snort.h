@@ -32,11 +32,10 @@
 #include <stdio.h>
 
 #include "snort_types.h"
-#include "protocols/decode.h"
 #include "sfip/sf_ipvar.h"
 #include "main/snort_config.h"
 #include "snort_types.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "log/log.h"
 
 SnortConfig* reload_config();

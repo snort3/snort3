@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -27,7 +25,7 @@
 #endif
 
 #include "generators.h"
-#include "decode.h"  
+#include "protocols/packet.h"  
 #include "static_include.h"
 #include "decoder_includes.h"
 
@@ -49,26 +47,28 @@ static const uint16_t ETHERNET_TYPE_IPX = 0x8137;
 void DecodeIPX(const uint8_t*, uint32_t, Packet *p)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IPX is not supported.\n"););
-
     dc.ipx++;
-
-    if (p->greh != NULL)
-        dc.gre_ipx++;
 }
 
 static const char* name = "ipx_decode";
 
 static const CodecApi ipx_api =
 {
-    { PT_CODEC, name, CDAPI_PLUGIN_V0, 0 },
+    {
+        PT_CODEC,
+        name,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr,
+    },
     {ETHERNET_TYPE_IPX},  
-    NULL, // pinit
-    NULL, // pterm
-    NULL, // tinit
-    NULL, // tterm
-    NULL, // ctor
-    NULL, // dtor
-    Ipx::Decode,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    ctor, // ctor
+    dtor, // dtor
 };
 
 

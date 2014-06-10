@@ -28,7 +28,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "snort_debug.h"
