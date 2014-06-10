@@ -1,0 +1,226 @@
+libips_urg_la-ips_urg.lo: ips_urg.cc ../config.h /usr/include/sys/types.h \
+ /usr/include/sys/appleapiopts.h /usr/include/sys/cdefs.h \
+ /usr/include/sys/_symbol_aliasing.h \
+ /usr/include/sys/_posix_availability.h /usr/include/machine/types.h \
+ /usr/include/i386/types.h /usr/include/i386/_types.h \
+ /usr/include/sys/_types.h /usr/include/machine/_types.h \
+ /usr/include/machine/endian.h /usr/include/i386/endian.h \
+ /usr/include/sys/_endian.h /usr/include/libkern/_OSByteOrder.h \
+ /usr/include/libkern/i386/_OSByteOrder.h /usr/include/sys/_structs.h \
+ /usr/include/stdlib.h /usr/include/Availability.h \
+ /usr/include/AvailabilityInternal.h /usr/include/_types.h \
+ /usr/include/sys/wait.h /usr/include/sys/signal.h \
+ /usr/include/machine/signal.h /usr/include/i386/signal.h \
+ /usr/include/i386/_structs.h /usr/include/machine/_structs.h \
+ /usr/include/mach/i386/_structs.h /usr/include/sys/resource.h \
+ /usr/include/alloca.h /usr/include/ctype.h /usr/include/runetype.h \
+ /Users/rucombs/install/include/snort/snort_types.h \
+ /usr/include/inttypes.h \
+ /opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include/stdint.h \
+ /opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include-fixed/stdint.h \
+ /Users/rucombs/install/include/snort/thread.h \
+ /Users/rucombs/install/include/snort/detection/detection_defines.h \
+ /Users/rucombs/install/include/snort/detection/treenodes.h \
+ /Users/rucombs/install/include/snort/sfip/ipv6_port.h \
+ /Users/rucombs/install/include/snort/sfip/sf_ip.h \
+ /usr/include/netinet/in.h /usr/include/sys/socket.h \
+ /usr/include/machine/_param.h /usr/include/i386/_param.h \
+ /usr/include/netinet6/in6.h /usr/include/arpa/inet.h \
+ /Users/rucombs/install/include/snort/sfip/sfip_t.h \
+ /Users/rucombs/install/include/snort/snort_debug.h /usr/include/wchar.h \
+ /opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include/stdarg.h \
+ /usr/include/stdio.h /usr/include/time.h /usr/include/_structs.h \
+ /usr/include/_wctype.h \
+ /Users/rucombs/install/include/snort/snort_types.h \
+ /Users/rucombs/install/include/snort/sfip/sf_ipvar.h \
+ /Users/rucombs/install/include/snort/detection/rule_option_types.h \
+ /Users/rucombs/install/include/snort/detection/rules.h \
+ /Users/rucombs/install/include/snort/detection/signature.h \
+ /Users/rucombs/install/include/snort/hash/sfghash.h \
+ /usr/include/string.h /usr/include/strings.h \
+ /Users/rucombs/install/include/snort/hash/sfhashfcn.h \
+ /Users/rucombs/install/include/snort/utils/sfportobject.h \
+ /Users/rucombs/install/include/snort/utils/bitop_funcs.h \
+ /Users/rucombs/install/include/snort/utils/bitop.h \
+ /Users/rucombs/install/include/snort/utils/sflsq.h \
+ /Users/rucombs/install/include/snort/framework/ips_option.h \
+ /Users/rucombs/install/include/snort/framework/api_base.h \
+ /Users/rucombs/install/include/snort/protocols/packet.h \
+ /opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include/stddef.h \
+ /usr/include/net/if.h /usr/include/net/if_var.h /usr/include/sys/time.h \
+ /usr/include/sys/_select.h /usr/include/sys/queue.h \
+ /usr/local/include/daq.h /usr/local/include/daq_common.h \
+ /usr/include/unistd.h /usr/include/sys/unistd.h \
+ /usr/include/sys/select.h /usr/local/include/sfbpf_dlt.h \
+ /Users/rucombs/install/include/snort/protocols/sf_protocols.h \
+ /Users/rucombs/install/include/snort/sfip/sf_iph.h
+
+../config.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/sys/appleapiopts.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/sys/_symbol_aliasing.h:
+
+/usr/include/sys/_posix_availability.h:
+
+/usr/include/machine/types.h:
+
+/usr/include/i386/types.h:
+
+/usr/include/i386/_types.h:
+
+/usr/include/sys/_types.h:
+
+/usr/include/machine/_types.h:
+
+/usr/include/machine/endian.h:
+
+/usr/include/i386/endian.h:
+
+/usr/include/sys/_endian.h:
+
+/usr/include/libkern/_OSByteOrder.h:
+
+/usr/include/libkern/i386/_OSByteOrder.h:
+
+/usr/include/sys/_structs.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/Availability.h:
+
+/usr/include/AvailabilityInternal.h:
+
+/usr/include/_types.h:
+
+/usr/include/sys/wait.h:
+
+/usr/include/sys/signal.h:
+
+/usr/include/machine/signal.h:
+
+/usr/include/i386/signal.h:
+
+/usr/include/i386/_structs.h:
+
+/usr/include/machine/_structs.h:
+
+/usr/include/mach/i386/_structs.h:
+
+/usr/include/sys/resource.h:
+
+/usr/include/alloca.h:
+
+/usr/include/ctype.h:
+
+/usr/include/runetype.h:
+
+/Users/rucombs/install/include/snort/snort_types.h:
+
+/usr/include/inttypes.h:
+
+/opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include/stdint.h:
+
+/opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include-fixed/stdint.h:
+
+/Users/rucombs/install/include/snort/thread.h:
+
+/Users/rucombs/install/include/snort/detection/detection_defines.h:
+
+/Users/rucombs/install/include/snort/detection/treenodes.h:
+
+/Users/rucombs/install/include/snort/sfip/ipv6_port.h:
+
+/Users/rucombs/install/include/snort/sfip/sf_ip.h:
+
+/usr/include/netinet/in.h:
+
+/usr/include/sys/socket.h:
+
+/usr/include/machine/_param.h:
+
+/usr/include/i386/_param.h:
+
+/usr/include/netinet6/in6.h:
+
+/usr/include/arpa/inet.h:
+
+/Users/rucombs/install/include/snort/sfip/sfip_t.h:
+
+/Users/rucombs/install/include/snort/snort_debug.h:
+
+/usr/include/wchar.h:
+
+/opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include/stdarg.h:
+
+/usr/include/stdio.h:
+
+/usr/include/time.h:
+
+/usr/include/_structs.h:
+
+/usr/include/_wctype.h:
+
+/Users/rucombs/install/include/snort/snort_types.h:
+
+/Users/rucombs/install/include/snort/sfip/sf_ipvar.h:
+
+/Users/rucombs/install/include/snort/detection/rule_option_types.h:
+
+/Users/rucombs/install/include/snort/detection/rules.h:
+
+/Users/rucombs/install/include/snort/detection/signature.h:
+
+/Users/rucombs/install/include/snort/hash/sfghash.h:
+
+/usr/include/string.h:
+
+/usr/include/strings.h:
+
+/Users/rucombs/install/include/snort/hash/sfhashfcn.h:
+
+/Users/rucombs/install/include/snort/utils/sfportobject.h:
+
+/Users/rucombs/install/include/snort/utils/bitop_funcs.h:
+
+/Users/rucombs/install/include/snort/utils/bitop.h:
+
+/Users/rucombs/install/include/snort/utils/sflsq.h:
+
+/Users/rucombs/install/include/snort/framework/ips_option.h:
+
+/Users/rucombs/install/include/snort/framework/api_base.h:
+
+/Users/rucombs/install/include/snort/protocols/packet.h:
+
+/opt/local/lib/gcc49/gcc/x86_64-apple-darwin12/4.9.0/include/stddef.h:
+
+/usr/include/net/if.h:
+
+/usr/include/net/if_var.h:
+
+/usr/include/sys/time.h:
+
+/usr/include/sys/_select.h:
+
+/usr/include/sys/queue.h:
+
+/usr/local/include/daq.h:
+
+/usr/local/include/daq_common.h:
+
+/usr/include/unistd.h:
+
+/usr/include/sys/unistd.h:
+
+/usr/include/sys/select.h:
+
+/usr/local/include/sfbpf_dlt.h:
+
+/Users/rucombs/install/include/snort/protocols/sf_protocols.h:
+
+/Users/rucombs/install/include/snort/sfip/sf_iph.h:
