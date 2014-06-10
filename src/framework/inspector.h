@@ -21,7 +21,7 @@
 #ifndef INSPECTOR_H
 #define INSPECTOR_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "framework/base_api.h"
 

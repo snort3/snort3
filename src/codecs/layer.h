@@ -23,13 +23,13 @@
 
 #include "codecs/sf_protocols.h"
 
-
-struct Layer {
+struct Layer
+{
     uint16_t prot_id;
     PROTO_ID proto;
     uint16_t length;
     uint8_t* start;
 };
 
-
 #endif
+

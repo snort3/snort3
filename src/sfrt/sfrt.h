@@ -103,7 +103,7 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include "snort_debug.h"
+#include "main/snort_debug.h"
 #include "sfrt/sfrt_trie.h"
 #include "sfip/ipv6_port.h"
 

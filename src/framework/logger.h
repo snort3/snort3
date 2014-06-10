@@ -25,7 +25,7 @@
 # include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "events/event.h"
 #include "framework/base_api.h"
 

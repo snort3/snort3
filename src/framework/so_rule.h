@@ -21,7 +21,7 @@
 #ifndef SO_RULE_H
 #define SO_RULE_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "framework/ips_option.h"
 

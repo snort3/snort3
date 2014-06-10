@@ -21,7 +21,7 @@
 #ifndef IPS_OPTION_H
 #define IPS_OPTION_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "detection/rule_option_types.h"
 

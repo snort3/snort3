@@ -22,9 +22,9 @@
 
 #include <vector>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
-#include "packet.h"
+#include "protocols/packet.h"
 
 
 // REMOVE WHEN POSSIBLE!!!

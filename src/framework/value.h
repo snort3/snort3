@@ -26,8 +26,8 @@
 #include <algorithm>
 #include <string>
 
-#include "bits.h"
-#include "parameter.h"
+#include "framework/bits.h"
+#include "framework/parameter.h"
 #include "sfip/sfip_t.h"
 
 class Value

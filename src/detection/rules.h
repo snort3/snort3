@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "actions/actions.h"
 
 #define EXCEPT_SRC_IP   0x0001

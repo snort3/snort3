@@ -21,7 +21,7 @@
 #ifndef PAT_STATS_H
 #define PAT_STATS_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "utils/stats.h"
 

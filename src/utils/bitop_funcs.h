@@ -41,7 +41,7 @@
 #include "config.h"
 #endif
 
-#include "snort_debug.h"
+#include "main/snort_debug.h"
 #include "utils/bitop.h"
 
 /*

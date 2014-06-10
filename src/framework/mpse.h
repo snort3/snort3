@@ -27,7 +27,7 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "framework/base_api.h"
 #include "time/profiler.h"

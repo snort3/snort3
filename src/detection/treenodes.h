@@ -22,7 +22,7 @@
 #ifndef TREENODES_H
 #define TREENODES_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

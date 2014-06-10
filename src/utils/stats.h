@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "sfip/sf_ipvar.h"
 #include "sfip/ipv6_port.h"
