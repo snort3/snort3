@@ -17,46 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// keywords_api.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef CONVERTER_H
-#define CONVERTER_H
+#ifndef KEYWORDS_API_H
+#define KEYWORDS_API_H
 
-#include <string>
-#include <fstream>
-#include <sstream>
+#include <vector>
+#include "../conversion_state.h"
 
-#include "data/conv_data.h"
-#include "data/conv_var.h"
-
-class ConversionState;
-
-class Converter
-{
-
-public:
-    Converter();
-    virtual ~Converter() {};
-    void reset_state();
-    bool convert_line(std::stringstream& data, bool last_line, std::ofstream& out);
-    void set_state(ConversionState* c);
-    
-    bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
-    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.data; }
-
-    void log_error(std::string);
-
-    void print_line(std::stringstream& in);
-    void print_line(std::ostringstream& in);
-    void print_line(std::string& in);
-
-private:
-    ConversionState* state;
-    ConversionData data;
-
-
-};
-
-
+extern const std::vector<const ConvertMap*> keyword_api;
 
 #endif

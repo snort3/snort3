@@ -24,8 +24,6 @@
 #include "conversion_state.h"
 #include "init_state.h"
 
-ConversionState* Converter::state = nullptr;
-
 #if 0
 Converter::Converter(Converter* c)
 {
@@ -34,6 +32,10 @@ Converter::Converter(Converter* c)
 
 Converter::~Converter(){} 
 #endif
+Converter::Converter()
+{
+    state = nullptr;
+}
 
 void Converter::set_state(ConversionState* c)
 {
@@ -43,7 +45,9 @@ void Converter::set_state(ConversionState* c)
 
 void Converter::reset_state()
 {
-	set_state(new InitState(this));
+    if (state)
+        delete state;
+    state = new InitState(this);
 }
 
 
@@ -53,6 +57,11 @@ bool Converter::convert_line(std::stringstream& data, bool last_line, std::ofstr
     return false;
 }
 
+void Converter::log_error(std::string error_string)
+{
+    std::cout << "ERROR: Failed to convert:\t" << std::endl;
+    std::cout << "\t\t" << error_string << std::endl << std::endl;
+}
 
 void Converter::print_line(std::stringstream& in)
 {

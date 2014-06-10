@@ -17,31 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// conv_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef SNORT2LUA_UTIL_H
-#define SNORT2LUA_UTIL_H
-
-
-#include <string>
-#include <vector>
-
-struct ConvertMap;
-
-namespace util
-{
-
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
-const ConvertMap* find_map(const std::vector<const ConvertMap*>, std::string keyword);
-
-// trim from begining
-std::string &ltrim(std::string &s);
-// trim from end
-std::string &rtrim(std::string &s);
-// trim from both ends
-std::string &trim(std::string &s);
-
-
-} // namespace util
-
-#endif
+#include "data/conv_table.h"

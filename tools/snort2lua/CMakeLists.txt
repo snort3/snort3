@@ -2,7 +2,9 @@
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_subdirectory(keyword_states)
+add_subdirectory(data)
+add_subdirectory(keywords)
+add_subdirectory(output)
 
 add_executable(snort2lua
     snort2lua.cc
@@ -15,7 +17,9 @@ add_executable(snort2lua
 )
 
 target_link_libraries( snort2lua
-    keyword_states
+    data
+    keywords
+    output
 )
 
 

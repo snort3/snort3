@@ -17,46 +17,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
-
-#ifndef CONVERTER_H
-#define CONVERTER_H
+// conv_var.h author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <string>
-#include <fstream>
-#include <sstream>
+#include <vector>
+#include <iostream>
 
-#include "data/conv_data.h"
-#include "data/conv_var.h"
+#ifndef CONV_VAR_H
+#define CONV_VAR_H
 
-class ConversionState;
-
-class Converter
+class Variable
 {
-
 public:
-    Converter();
-    virtual ~Converter() {};
-    void reset_state();
-    bool convert_line(std::stringstream& data, bool last_line, std::ofstream& out);
-    void set_state(ConversionState* c);
-    
-    bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
-    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.data; }
+    Variable(std::string name);
+    virtual ~Variable();
 
-    void log_error(std::string);
+    inline std::string get_name(){ return name; };
+    bool add_value(std::string);
+    friend std::ostream &operator<<( std::ostream&, const Variable &);
 
-    void print_line(std::stringstream& in);
-    void print_line(std::ostringstream& in);
-    void print_line(std::string& in);
 
 private:
-    ConversionState* state;
-    ConversionData data;
-
-
+    std::string name;
+    std::vector<std::string> vars;
+    std::vector<std::string> strs;
+    int count;
+    const int max_line_length = 70; // leave room for additional text
 };
-
 
 
 #endif

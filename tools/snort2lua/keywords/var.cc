@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// portvar.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// output.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -30,53 +30,74 @@
 
 namespace {
 
-class PortVar : public ConversionState
+class Var : public ConversionState
 {
 public:
-    PortVar(Converter* cv);
-    virtual ~PortVar() {};
+    Var(Converter* cv);
+    virtual ~Var() {};
     virtual bool convert(std::stringstream& data, bool last_line, std::ofstream&);
 
 private:
     bool first_line;
+    bool is_port_list;
+    std::string keyword;
 
 };
 
 } // namespace
 
 
-PortVar::PortVar(Converter* cv) : ConversionState(cv)
+Var::Var(Converter* cv) : ConversionState(cv)
 {
     first_line = true;
+    is_port_list = false;
 }
 
-bool PortVar::convert(std::stringstream& data_stream, bool last_line, std::ofstream& out)
+bool Var::convert(std::stringstream& data_stream, bool last_line, std::ofstream& out)
 {
-    std::string keyword;
     std::string ports;//    converter->print_line(data_stream);
 
     if (first_line)
-    {
-        if (data_stream >> keyword)
-        {
-            out << keyword << " = " << std::endl;
-            out << "[[" << std::endl;
-
-            first_line = false;
-        }
-        else
-        {
+        if (!(data_stream >> keyword))
             return false;
-        }
-    }
 
     if(!(data_stream >> ports))
         return false;
 
-    if(ports.front() == '[' && ports.back() == ']')
+    if(is_port_list || ports.front() == '[')
     {
         std::vector<std::string> port_list;
+        is_port_list = true;
+        bool retval = true;
+
+        if(ports.front() == '[')
+            ports.erase(ports.begin());
+        
+        if(ports.back() == ']')
+            ports.pop_back();
+    
+        util::split(ports, ',', port_list);
+
+        for(std::string elem : port_list)
+            retval = converter->add_variable(keyword, elem) && retval;
+
+        return retval;
+    }
+    else
+    {
+        return converter->add_variable(keyword, ports);
+    }
+
+
+#if 0
+    if(is_port_list || (ports.front() == '[' && ports.back() == ']'))
+    {
+        std::vector<std::string> port_list;
+        is_port_list = true;
         int count = 11;
+
+        if (first_line)
+            out << std::endl << "[[" << std::endl;
 
         ports.erase(ports.begin());
         ports.pop_back();
@@ -98,16 +119,33 @@ bool PortVar::convert(std::stringstream& data_stream, bool last_line, std::ofstr
             out << ' ' << std::setw(5) << std::left << elem;
             count++;
         }
+
+
+        if(last_line)
+            out << std::endl << "]]" << std::endl;
     }
     else
     {
-        out << "    " <<  std::setw(5) << std::left << ports;
+        if (first_line)
+            out << "'";
+
+        if(ports.front() == '$')
+        {
+            ports.erase(ports.begin());
+        }
+        else
+        {
+            out <<  std::setw(5) << std::left << ports;
+        }
+
+        if (last_line)
+            out << "'" << std::endl;
     }
 
-    if(last_line)
-        out << std::endl << "]]" << std::endl;
 
+    first_line = false;
     return true;
+#endif
 }
 
 /**************************
@@ -116,7 +154,7 @@ bool PortVar::convert(std::stringstream& data_stream, bool last_line, std::ofstr
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new PortVar(cv);
+    return new Var(cv);
 }
 
 static const ConvertMap keyword_portvar = 

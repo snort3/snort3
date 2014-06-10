@@ -17,20 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// keywords_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// output_api.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "keywords_api.h"
+#ifndef OUTPUT_API_H
+#define OUTPUT_API_H
 
+#include <vector>
+#include "conversion_state.h"
 
-extern const ConvertMap *portvar_map;
-extern const ConvertMap *ipvar_map;
-extern const ConvertMap *var_map;
+extern const std::vector<const ConvertMap*> output_api;
 
-const std::vector<const ConvertMap*> keywords = 
-//const ConvertMap* keywords[] = 
-{
-    portvar_map,
-    ipvar_map,
-    var_map,
-//    nullptr,
-};
+#endif

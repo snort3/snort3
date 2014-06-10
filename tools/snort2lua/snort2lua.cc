@@ -24,30 +24,7 @@
 
 #include "converter.h"
 #include "init_state.h"
-
-
-#if 0
-#include <algorithm>
-#include <functional>
-#include <cctype>
-#include <locale>
-
-static inline std::string *ltrim(std::string *s)
-{
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-}
-
-
-static inline std::string *rtrim(std::string *s)
-{
-    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-};
-
-static inline std::string &trim(std::string &s)
-{
-    return ltrim(rtrim(s));
-}
-#endif
+#include "snort2lua_util.h"
 
 static bool convert(std::ifstream& in, std::ofstream& out)
 {
@@ -62,6 +39,7 @@ static bool convert(std::ifstream& in, std::ofstream& out)
         bool last_line = true;
 
         std::getline(in, next_line);
+        util::trim(next_line);
 
         if (next_line.empty())
         {
@@ -78,18 +56,10 @@ static bool convert(std::ifstream& in, std::ofstream& out)
             std::stringstream data_stream(next_line);
             while(data_stream.tellg() != -1)
             {
-                #if 0
-                std::cout << data_stream.str() << std::endl;
-                std::cout << "size of data_stream: " << data_stream.str().size() << std::endl;
-                std::cout << "size of tellg: " << data_stream.tellg() << std::endl;
-                std::cout << "is empty? " << data_stream.str().empty() << std::endl;
-//                cv.print_line(data_stream);
-#endif
                 if (!cv.convert_line(data_stream, last_line, out))
                 {
-                    std::cout << "ERROR: Failed to convert line: " << std::endl;
-                    std::cout << "\t\t" << next_line << std::endl; 
-                    return false;
+                    cv.log_error(next_line);
+                    data_stream.setstate(std::basic_ios<char>::eofbit);
                 }
             }
         }
@@ -98,6 +68,9 @@ static bool convert(std::ifstream& in, std::ofstream& out)
             cv.reset_state();
 
     }
+
+    // finally, lets print the converter to file
+    out << cv;
     return true;
 }
 

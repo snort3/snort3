@@ -19,11 +19,35 @@
  */
 // snort2lua_util.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "snort2lua_util.h"
 #include <sstream>
+#include <algorithm> 
+#include <functional> 
+#include <cctype>
+#include <locale>
+#include "snort2lua_util.h"
+#include "conversion_state.h"
 
 namespace util
 {
+
+
+// trim from start
+std::string &ltrim(std::string &s) {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+        return s;
+}
+
+// trim from end
+std::string &rtrim(std::string &s) {
+        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+        return s;
+}
+
+// trim from both ends
+std::string &trim(std::string &s) {
+        return ltrim(rtrim(s));
+}
+
 
 std::vector<std::string> &split(const std::string &s, 
                                 char delim, 
@@ -38,5 +62,16 @@ std::vector<std::string> &split(const std::string &s,
 
     return elems;
 }
+
+
+const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string keyword)
+{
+    for (const ConvertMap *p : map)
+        if (p->keyword.compare(0, p->keyword.size(), keyword) == 0)
+            return p;
+
+    return nullptr;
+}
+
 
 } // namespace util

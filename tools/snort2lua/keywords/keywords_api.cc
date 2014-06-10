@@ -17,46 +17,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// keywords_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef CONVERTER_H
-#define CONVERTER_H
+#include "keywords/keywords_api.h"
 
-#include <string>
-#include <fstream>
-#include <sstream>
 
-#include "data/conv_data.h"
-#include "data/conv_var.h"
+extern const ConvertMap *portvar_map;
+extern const ConvertMap *ipvar_map;
+extern const ConvertMap *var_map;
+extern const ConvertMap *output_map;
+extern const ConvertMap *config_map;
+extern const ConvertMap *preprocessor_map;
+extern const ConvertMap *include_map;
 
-class ConversionState;
 
-class Converter
+
+const std::vector<const ConvertMap*> keyword_api = 
+//const ConvertMap* keywords[] = 
 {
-
-public:
-    Converter();
-    virtual ~Converter() {};
-    void reset_state();
-    bool convert_line(std::stringstream& data, bool last_line, std::ofstream& out);
-    void set_state(ConversionState* c);
-    
-    bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
-    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.data; }
-
-    void log_error(std::string);
-
-    void print_line(std::stringstream& in);
-    void print_line(std::ostringstream& in);
-    void print_line(std::string& in);
-
-private:
-    ConversionState* state;
-    ConversionData data;
-
-
+    portvar_map,
+    ipvar_map,
+    var_map,
+    output_map,
+    config_map,
+    preprocessor_map,
+    include_map,
+//    nullptr,
 };
-
-
-
-#endif

@@ -17,46 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// conversion_data.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef CONVERTER_H
-#define CONVERTER_H
+#ifndef CONV_DATA_H
+#define CONV_DATA_H
 
 #include <string>
-#include <fstream>
-#include <sstream>
+#include <iostream>
+#include <vector>
 
-#include "data/conv_data.h"
+#include "data/conv_table.h"
 #include "data/conv_var.h"
 
-class ConversionState;
-
-class Converter
+class ConversionData
 {
 
 public:
-    Converter();
-    virtual ~Converter() {};
-    void reset_state();
-    bool convert_line(std::stringstream& data, bool last_line, std::ofstream& out);
-    void set_state(ConversionState* c);
-    
-    bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
-    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.data; }
+    ConversionData();
+    virtual ~ConversionData();
 
-    void log_error(std::string);
+    friend std::ostream &operator<<( std::ostream&, const ConversionData &);
+    bool add_variable(std::string name, std::string value);
 
-    void print_line(std::stringstream& in);
-    void print_line(std::ostringstream& in);
-    void print_line(std::string& in);
+#if 0
+    bool add_option(std::string name, std::string value);
+    bool add_option(std::string name, long long int value);
+    Table* add_table(std::string name);
+    void reset();
+#endif
 
 private:
-    ConversionState* state;
-    ConversionData data;
-
+    std::vector<Variable*> vars;
+//    std::vector<Table> tables;
 
 };
-
 
 
 #endif
