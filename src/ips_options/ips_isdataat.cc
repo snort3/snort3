@@ -202,7 +202,7 @@ int IsDataAtOption::eval(Packet *p)
         start_ptr = p->data;
     }
 
-    base_ptr = start_ptr;
+    //base_ptr = start_ptr;
     end_ptr = start_ptr + dsize;
 
     if((isdata->flags & ISDATAAT_RELATIVE_FLAG) && doe_ptr)

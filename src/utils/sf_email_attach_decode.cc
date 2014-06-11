@@ -152,7 +152,6 @@ int sf_uudecode(uint8_t *src, uint32_t slen, uint8_t *dst, uint32_t dlen, uint32
     {
         if(*ptr == '\n')
         {
-            length = 0;
             sol = 1;
             ptr++;
             continue;

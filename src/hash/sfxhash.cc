@@ -1059,8 +1059,6 @@ SO_PUBLIC int sfxhash_remove( SFXHASH * t, void * key)
     /* Modulus is slow */
     index   = hashkey & (t->nrows - 1);
 
-    hnode = t->table[index];
-
     for( hnode=t->table[index]; hnode; hnode=hnode->next )
     {
         if( !t->sfhashfcn->keycmp_fcn(hnode->key,key,t->keysize) )

@@ -575,7 +575,7 @@ static int uniSearchReal(const char *data, int dlen, PatternMatchData *pmd, int 
     int success = 0;
     const char *start_ptr = data;
     const char *end_ptr = data + dlen;
-    const char *base_ptr = start_ptr;
+    const char *base_ptr;// = start_ptr;
     uint32_t extract_offset, extract_depth, extract_distance, extract_within;
 
     if(pmd->use_doe != 1)

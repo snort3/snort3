@@ -365,9 +365,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
                         p->pkth->ts.tv_sec);
         }
 
-        if(filterEvent < 0)
-            filterEvent = 0;
-        else
+        if(filterEvent >= 0)
             AlertAction(p, potn);
     }
 
@@ -445,9 +443,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
                                 p->pkth->ts.tv_sec);
                 }
 
-                if(filterEvent < 0)
-                    filterEvent = 0;
-                else
+                if(filterEvent >= 0)
                     AlertAction(p, otn);
             }
         }
@@ -501,9 +497,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
                                 p->pkth->ts.tv_sec);
                 }
 
-                if(filterEvent < 0)
-                    filterEvent = 0;
-                else
+                if(filterEvent >= 0)
                     AlertAction(p, otn);
             }
         }

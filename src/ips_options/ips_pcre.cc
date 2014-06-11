@@ -271,7 +271,7 @@ int PcreOption::eval(Packet *p)
         start_ptr = p->data;
     }
 
-    base_ptr = start_ptr;
+    //base_ptr = start_ptr;
     end_ptr = start_ptr + dsize;
 
     /* doe_ptr's would be set by the previous content option */

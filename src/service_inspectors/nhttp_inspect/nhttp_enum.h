@@ -29,6 +29,8 @@
 #ifndef NHTTP_ENUM_H
 #define NHTTP_ENUM_H
 
+#include <stdint.h>
+
 #define NHTTP_GID 119
 
 namespace NHttpEnums {
