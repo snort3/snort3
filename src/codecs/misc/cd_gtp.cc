@@ -25,16 +25,16 @@
 #include "config.h"
 #endif
 
-#include "packet.h"
 #include "snort_debug.h"
+#include "main/snort.h"
 #include "framework/codec.h"
-#include "codecs/misc/cd_gtp_module.h"
+#include "protocols/packet.h"
 #include "codecs/codec_events.h"
-#include "snort.h"
+#include "codecs/misc/cd_gtp_module.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "packet_io/active.h"
-
+#include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"
 
 namespace
@@ -46,18 +46,13 @@ public:
     GtpCodec() : Codec(CD_GTP_NAME){};
     ~GtpCodec(){};
 
+    virtual PROTO_ID get_proto_id() { return PROTO_GTP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
-
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_GTP; };    
 };
-
 
 
 /* GTP basic Header  */

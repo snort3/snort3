@@ -24,8 +24,8 @@
 #define EXTRACT_H
 
 #define ENDIAN_NONE -1
-#define BIG    0
-#define LITTLE 1
+#define ENDIAN_BIG    0
+#define ENDIAN_LITTLE 1
 #define ENDIAN_FUNC 2
 
 #define PARSELEN 10

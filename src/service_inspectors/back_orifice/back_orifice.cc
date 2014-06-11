@@ -118,7 +118,7 @@
 
 #include "snort_types.h"
 #include "detect.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "event.h"
 #include "parser.h"
 #include "snort_debug.h"
@@ -625,7 +625,7 @@ static const InspectApi bo_api =
         mod_ctor,
         mod_dtor
     },
-    IT_SERVICE, 
+    IT_PROTOCOL, 
     PROTO_BIT__UDP,
     nullptr, // service
     nullptr, // contents

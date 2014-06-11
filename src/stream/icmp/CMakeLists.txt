@@ -8,3 +8,6 @@ add_library( stream_icmp STATIC
     stream_icmp.h
 )
 
+target_link_libraries( stream_icmp
+    protocols
+)

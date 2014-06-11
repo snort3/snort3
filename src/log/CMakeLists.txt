@@ -26,4 +26,5 @@ install(FILES ${LOG_INCLUDES}
 
 target_link_libraries(log
     utils
+    protocols
 )

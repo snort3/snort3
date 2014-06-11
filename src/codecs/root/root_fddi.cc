@@ -27,11 +27,53 @@
 #endif
 
 #include "generators.h"
-#include "decode.h"  
+#include "protocols/packet.h"  
 #include "static_include.h"
 
 #include "../decoder_includes.h"
 
+
+anonymous
+{
+
+/* FDDI header is always this: -worm5er */
+struct Fddi_hdr
+{
+    uint8_t fc;        /* frame control field */
+    uint8_t daddr[FDDI_ALEN];  /* src address */
+    uint8_t saddr[FDDI_ALEN];  /* dst address */
+}         Fddi_hdr;
+
+/* splitting the llc up because of variable lengths of the LLC -worm5er */
+struct Fddi_llc_saps
+{
+    uint8_t dsap;
+    uint8_t ssap;
+}              Fddi_llc_saps;
+
+/* I've found sna frames have two addition bytes after the llc saps -worm5er */
+struct Fddi_llc_sna
+{
+    uint8_t ctrl_fld[2];
+}             Fddi_llc_sna;
+
+/* I've also found other frames that seem to have only one byte...  We're only
+really intersted in the IP data so, until we want other, I'm going to say
+the data is one byte beyond this frame...  -worm5er */
+struct Fddi_llc_other
+{
+    uint8_t ctrl_fld[1];
+}               Fddi_llc_other;
+
+/* Just like TR the ip/arp data is setup as such: -worm5er */
+struct Fddi_llc_iparp
+{
+    uint8_t ctrl_fld;
+    uint8_t protid[3];
+    uint16_t ethertype;
+}               Fddi_llc_iparp;
+
+} // anonymous
 
 /*
  * Function: DecodeFDDIPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
@@ -49,16 +91,8 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
 {
     uint32_t cap_len = pkthdr->caplen;
     uint32_t dataoff = sizeof(Fddi_hdr) + sizeof(Fddi_llc_saps);
-    PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
 
-    dc.total_processed++;
-
-    memset(p, 0, PKT_ZERO_LEN);
-
-    p->pkth = pkthdr;
-    p->pkt = pkt;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"Packet!\n");
             DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",

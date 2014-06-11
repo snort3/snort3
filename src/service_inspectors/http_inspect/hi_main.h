@@ -27,7 +27,7 @@
 #include "config.h"
 #endif
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "stream/stream_api.h"
 #include "hi_ui_config.h"
 #include "util_utf.h"

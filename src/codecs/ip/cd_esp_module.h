@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_ESP_NAME "codec_esp"
+#define CD_ESP_NAME "cd_esp"
 
 class EspModule : public DecodeModule
 {

@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_GTP_NAME "codec_gtp"
+#define CD_GTP_NAME "cd_gtp"
 
 class GtpModule : public DecodeModule
 {

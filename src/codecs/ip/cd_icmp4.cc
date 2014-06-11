@@ -38,6 +38,7 @@
 #include "codecs/checksum.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/ip/cd_icmp4_module.h"
+#include "codecs/sf_protocols.h"
 
 
 namespace{
@@ -49,17 +50,13 @@ public:
     Icmp4Codec() : Codec(CD_ICMP4_NAME){};
     ~Icmp4Codec() {};
     
+    virtual PROTO_ID get_proto_id() { return PROTO_ICMP4; };
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_ICMP4; };
-
 private:
 
     void DecodeICMPEmbeddedIP(const uint8_t *pkt, const uint32_t len, Packet *p);

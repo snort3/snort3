@@ -27,12 +27,120 @@
 #endif
 
 #include "generators.h"
-#include "decode.h"  
+#include "protocols/packet.h"  
 #include "static_include.h"
 
 #include "root_pflog.h"
 #include "../decoder_includes.h"
 
+namespace
+{
+
+
+/*
+ * Snort supports 3 versions of the OpenBSD pflog header:
+ *
+ * Pflog1_Hdr:  CVS = 1.3,  DLT_OLD_PFLOG = 17,  Length = 28
+ * Pflog2_Hdr:  CVS = 1.8,  DLT_PFLOG     = 117, Length = 48
+ * Pflog3_Hdr:  CVS = 1.12, DLT_PFLOG     = 117, Length = 64
+ * Pflog3_Hdr:  CVS = 1.172, DLT_PFLOG     = 117, Length = 100
+ *
+ * Since they have the same DLT, Pflog{2,3}Hdr are distinguished
+ * by their actual length.  The minimum required length excludes
+ * padding.
+ */
+/* Old OpenBSD pf firewall pflog0 header
+ * (information from pf source in kernel)
+ * the rule, reason, and action codes tell why the firewall dropped it -fleck
+ */
+
+struct Pflog1Hdr
+{
+    uint32_t af;
+    char intf[IFNAMSIZ];
+    int16_t rule;
+    uint16_t reason;
+    uint16_t action;
+    uint16_t dir;
+};
+
+#define PFLOG1_HDRLEN (sizeof(struct _Pflog1_hdr))
+
+/*
+ * Note that on OpenBSD, af type is sa_family_t. On linux, that's an unsigned
+ * short, but on OpenBSD, that's a uint8_t, so we should explicitly use uint8_t
+ * here.  - ronaldo
+ */
+
+#define PFLOG_RULELEN 16
+#define PFLOG_PADLEN  3
+
+struct Pflog2Hdr
+{
+    int8_t   length;
+    uint8_t  af;
+    uint8_t  action;
+    uint8_t  reason;
+    char     ifname[IFNAMSIZ];
+    char     ruleset[PFLOG_RULELEN];
+    uint32_t rulenr;
+    uint32_t subrulenr;
+    uint8_t  dir;
+    uint8_t  pad[PFLOG_PADLEN];
+} ;
+
+#define PFLOG2_HDRLEN (sizeof(struct _Pflog2_hdr))
+#define PFLOG2_HDRMIN (PFLOG2_HDRLEN - PFLOG_PADLEN)
+
+struct Pflog3Hdr
+{
+    int8_t   length;
+    uint8_t  af;
+    uint8_t  action;
+    uint8_t  reason;
+    char     ifname[IFNAMSIZ];
+    char     ruleset[PFLOG_RULELEN];
+    uint32_t rulenr;
+    uint32_t subrulenr;
+    uint32_t uid;
+    uint32_t pid;
+    uint32_t rule_uid;
+    uint32_t rule_pid;
+    uint8_t  dir;
+    uint8_t  pad[PFLOG_PADLEN];
+};
+
+#define PFLOG3_HDRLEN (sizeof(struct _Pflog3_hdr))
+#define PFLOG3_HDRMIN (PFLOG3_HDRLEN - PFLOG_PADLEN)
+
+
+struct Pflog4Hdr
+{
+    uint8_t  length;
+    uint8_t  af;
+    uint8_t  action;
+    uint8_t  reason;
+    char     ifname[IFNAMSIZ];
+    char     ruleset[PFLOG_RULELEN];
+    uint32_t rulenr;
+    uint32_t subrulenr;
+    uint32_t uid;
+    uint32_t pid;
+    uint32_t rule_uid;
+    uint32_t rule_pid;
+    uint8_t  dir;
+    uint8_t  rewritten;
+    uint8_t  pad[2];
+    uint8_t saddr[16];
+    uint8_t daddr[16];
+    uint16_t sport;
+    uint16_t dport;
+};
+
+#define PFLOG4_HDRLEN sizeof(struct _Pflog4_hdr)
+#define PFLOG4_HDRMIN sizeof(struct _Pflog4_hdr)
+
+} // namespace
 
 /*
  * Function: DecodePflog(Packet *, DAQ_PktHdr_t *, uint8_t *)

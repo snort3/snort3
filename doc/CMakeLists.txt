@@ -1,7 +1,9 @@
 
 #
-# This list of built sources MUST be kept up to date with
-# the actual build targets located at the bottom of src/CMakelists.txt
+# Assuming a file the source file is 'file_name.txt' the BUILT_SOURCES
+# files will be created with the following command
+#
+#  snort --help-file_name > file_name.txt
 #
 set(BUILT_SOURCES
     builtin.txt
@@ -9,6 +11,8 @@ set(BUILT_SOURCES
     config.txt
     options.txt
     gids.txt
+#    version.txt   Required special formatting. manually add below.
+    CACHE INTERNAL "sources to be built" FORCE
 )
 
 set (UNBUILT_SOURCES
@@ -16,9 +20,9 @@ set (UNBUILT_SOURCES
     differences.txt
     style.txt
     tips.txt
-    images/snort.png
+    plugins.txt
+#    images/snort.png   # images directory is manually included as an a2x option
 )
-
 
 if (MAKE_HTML_DOC)
     set(HTML_DOCS
@@ -32,7 +36,6 @@ if (MAKE_PDF_DOC)
     set(PDF_DOCS snort_manual.pdf)
 endif()
 
-
 # Docuements to be built
 set (EXTRA_DIST ${HTML_DOCS} ${PDF_DOCS})
 
@@ -41,37 +44,34 @@ set (EXTRA_DIST ${HTML_DOCS} ${PDF_DOCS})
 ###############################################################################
 
 
-
-
-
-###############################################################################
-###############################################################################
-
-
 ###############################################################################
 #                                                                             #
-#  Since we'd lke to keep the source tree unpolluted, only build targets      #
-#  in the build directory.  The rest of this file creates custom commands to  #
-#  copy all of the documents into the doc/ directory.                         #
+#  Since we'd lke to keep the source tree unpolluted, create all targets in   #
+#  the build directory.  This section adds custom commands to copy all of the #
+#  BUILT_SOURCES into this directory and create all of the UNBUILT_SOURCES in #
+#  this directory.                                                            #
+#                                                                             #
+#  NOTE: BUILT_SOURCES recipes are actually defined in src/CMakeLists.txt to  #
+#  ensure a file dependency on Snort. This section copies those built sources #
+#  into this directory.                                                       #
 #                                                                             #
 ###############################################################################
 
-
-#  Due to the depency on the snort executable, the files are created in a 
-#  different directory and copied into the top level of the build directory
-#  This next loop copies all of the appropriate files into the doc direcotry
-
+# copy built files into this directory
 set (TARGET_DIR ${CMAKE_BINARY_DIR})
-foreach (file ${BUILT_SOURCES})
+foreach (file ${BUILT_SOURCES};version.txt)
     set(input ${CMAKE_BINARY_DIR}/${file})
     set (output ${CMAKE_CURRENT_BINARY_DIR}/${file})
 
+    # create this custom file name so it can be used below. Doesn't actually
+    # build the file itself.
     add_custom_command(
         OUTPUT ${input}
         COMMAND ${CMAKE_COMMAND}
             -E touch_nocreate ${input}
     )
 
+    #  complementary section to the foreach loop at the bottom of src/CMakeLists.txt
     add_custom_command(
         OUTPUT ${output}
         COMMAND ${CMAKE_COMMAND}
@@ -88,17 +88,6 @@ foreach (file ${BUILT_SOURCES})
 endforeach(file)
 
 
-#copying the images directory!
-add_custom_target(copy_images DEPENDS images)
-add_custom_command(
-    OUTPUT images
-    COMMAND ${CMAKE_COMMAND}
-            -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/images ${CMAKE_CURRENT_BINARY_DIR}/images
-    COMMENT "Copying doc/images.  If the doc/images directory changes, rerun the cmake command!!"
-)
-set_source_files_properties(images SYMBOLIC "YES")
-
-
 # Copy all distributed files into the binary tree (necessary for asciidocs).
 # Then create a dependency between the new and old files.
 foreach (file ${UNBUILT_SOURCES})
@@ -106,13 +95,11 @@ foreach (file ${UNBUILT_SOURCES})
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}
         COMMAND ${CMAKE_COMMAND} 
                 -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${CMAKE_CURRENT_BINARY_DIR}/${file}
-        MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/${file}
-        DEPENDS copy_images
+        MAIN_DEPENDENCY ${file}
         COMMENT "Copying ${file} into binary directory"
     )
 
     list(APPEND UNBUILT_SOURCES_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-#    set(UNBUILT_SOURCES_BINARY_PATH "${UNBUILT_SOURCES_BINARY_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${file}")
 endforeach(file)
 
 foreach (file ${EXTRA_DIST})
@@ -129,19 +116,18 @@ set (ALL_SOURCES
 ###############################################################################
 ###############################################################################
 
-#  This part contains all of the custom commmands for creating the actual
-#  documentation.
+#  create the recipes for building the files
 
 
-set (PDF_ARGUMENTS --icons --icons-dir=./images/icons -a imagesdir=./images)
+set (PDF_ARGUMENTS --icons --icons-dir=./images/icons --resource=${CMAKE_CURRENT_SOURCE_DIR}/images )
 set (HTML_ARGUMENTS --copy --attribute linkcss --attribute stylesdir --attribute disable-javascript --attribute quirks! ${PDF_ARGUMENTS})
 
 add_custom_command(OUTPUT snort_manual.html
     COMMAND ${ASCIIDOC_A2X_EXE} 
         -f xhtml 
         ${HTML_ARGUMENTS} 
-        --resource=${CMAKE_CURRENT_BINARY_DIR} 
-        --destination-dir=${CMAKE_CURRENT_BINARY_DIR} 
+        --resource=${CMAKE_CURRENT_BINARY_DIR}
+        --destination-dir=${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/snort_manual.txt ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.html"
@@ -169,7 +155,7 @@ add_custom_command(OUTPUT snort_manual.tgz
         zcf snort_manual.tgz
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
     MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/snort_manual.txt
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/images ${ALL_SOURCES}
+    DEPENDS ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.tgz"
 )
 
@@ -178,9 +164,9 @@ add_custom_command(OUTPUT images.tgz
         zcf images.tgz 
         --exclude callouts 
         --exclude README
-        -C ${CMAKE_CURRENT_BINARY_DIR}/images 
+        -C ${CMAKE_CURRENT_SOURCE_DIR}/images
         .
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/images ${ALL_SOURCES}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/images ${ALL_SOURCES}
     COMMENT "Documents: building images.tgz"
 )
 
@@ -188,14 +174,14 @@ add_custom_command(OUTPUT images.tgz
 ###############################################################################
 ###############################################################################
 
-# Finally, the commands to create the manuals, and the command to install the 
-# manuals
+# Finally, the commands to set the manual dependencies and install the
+# built documents
 
 
 add_custom_target(snort_manuals ALL
     DEPENDS ${EXTRA_DIST}
 )
-add_dependencies(snort_manuals snort)
+add_dependencies(snort_manuals snort ${ALL_SOURCES})
 
 
 

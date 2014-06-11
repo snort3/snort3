@@ -55,7 +55,7 @@
 #include "ps_module.h"
 
 #include "main/analyzer.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "managers/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"

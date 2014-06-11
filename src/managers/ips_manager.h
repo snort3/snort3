@@ -55,7 +55,7 @@ public:
 
     // soid is arg to soid option, so is arg to so option
     static const char* get_so_options(const char* soid);
-    static so_eval_f get_so_eval(const char* soid, const char* so, void** data);
+    static SoEvalFunc get_so_eval(const char* soid, const char* so, void** data);
     static void delete_so_data(const char* soid, void*);
 
     static void global_init(SnortConfig*);

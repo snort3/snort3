@@ -46,12 +46,14 @@ extern "C" {
 #include <sfbpf_dlt.h>
 }
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "sfip/ipv6_port.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_iph.h"
+#include "codecs/sf_protocols.h"
 
-#include "codecs/layer.h"
+
+#include "protocols/layer.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "protocols/tcp.h"
@@ -59,8 +61,6 @@ extern "C" {
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
-#include "protocols/arp.h"
-#include "protocols/gre.h"
 #include "protocols/mpls.h"
 
 /*  D E F I N E S  ************************************************************/
@@ -118,7 +118,7 @@ extern "C" {
 
 #define REASSEMBLED_PACKET_FLAGS (PKT_REBUILT_STREAM|PKT_REASSEMBLED_OLD)
 
-typedef enum {
+enum PseudoPacketType{
     PSEUDO_PKT_IP,
     PSEUDO_PKT_TCP,
     PSEUDO_PKT_DCE_RPKT,
@@ -129,7 +129,7 @@ typedef enum {
     PSEUDO_PKT_PS,
     PSEUDO_PKT_SDF,
     PSEUDO_PKT_MAX
-} PseudoPacketType;
+} ;
 
 /* error flags */
 #define PKT_ERR_CKSUM_IP     0x01
@@ -139,298 +139,6 @@ typedef enum {
 #define PKT_ERR_CKSUM_ANY    0x0F
 #define PKT_ERR_BAD_TTL      0x10
 
-/*  D A T A  S T R U C T U R E S  *********************************************/
-class Flow;
-
-#ifndef NO_NON_ETHER_DECODER
-/* Start Token Ring Data Structures */
-
-#ifdef _MSC_VER
-    /* Visual C++ pragma to disable warning messages about nonstandard bit field type */
-    #pragma warning( disable : 4214 )
-#endif
-
-/* LLC structure */
-typedef struct _Trh_llc
-{
-    uint8_t dsap;
-    uint8_t ssap;
-    uint8_t protid[3];
-    uint16_t ethertype;
-}        Trh_llc;
-
-/* RIF structure
- * Linux/tcpdump patch defines tokenring header in dump way, since not
- * every tokenring header with have RIF data... we define it separately, and
- * a bit more split up
- */
-
-#ifdef _MSC_VER
-  /* Visual C++ pragma to disable warning messages about nonstandard bit field type */
-  #pragma warning( disable : 4214 )
-#endif
-
-
-/* These are macros to use the bitlevel accesses in the Trh_Mr header
-
-   they haven't been tested and they aren't used much so here is a
-   listing of what used to be there
-
-   #if defined(WORDS_BIGENDIAN)
-      uint16_t bcast:3, len:5, dir:1, lf:3, res:4;
-   #else
-      uint16_t len:5,         length of RIF field, including RC itself
-      bcast:3,       broadcast indicator
-      res:4,         reserved
-      lf:3,      largest frame size
-      dir:1;         direction
-*/
-
-#define TRH_MR_BCAST(trhmr)  ((ntohs((trhmr)->bcast_len_dir_lf_res) & 0xe000) >> 13)
-#define TRH_MR_LEN(trhmr)    ((ntohs((trhmr)->bcast_len_dir_lf_res) & 0x1F00) >> 8)
-#define TRH_MR_DIR(trhmr)    ((ntohs((trhmr)->bcast_len_dir_lf_res) & 0x0080) >> 7)
-#define TRH_MR_LF(trhmr)     ((ntohs((trhmr)->bcast_len_dir_lf_res) & 0x0070) >> 4)
-#define TRH_MR_RES(trhmr)     ((ntohs((trhmr)->bcast_len_dir_lf_res) & 0x000F))
-
-typedef struct _Trh_mr
-{
-    uint16_t bcast_len_dir_lf_res; /* broadcast/res/framesize/direction */
-    uint16_t rseg[8];
-}       Trh_mr;
-#ifdef _MSC_VER
-  /* Visual C++ pragma to enable warning messages about nonstandard bit field type */
-  #pragma warning( default : 4214 )
-#endif
-
-#define TR_ALEN             6        /* octets in an Ethernet header */
-#define FDDI_ALEN           6
-
-typedef struct _Trh_hdr
-{
-    uint8_t ac;        /* access control field */
-    uint8_t fc;        /* frame control field */
-    uint8_t daddr[TR_ALEN];    /* src address */
-    uint8_t saddr[TR_ALEN];    /* dst address */
-}        Trh_hdr;
-
-#ifdef WIN32
-    /* Visual C++ pragma to enable warning messages about nonstandard bit field type */
-    #pragma warning( default : 4214 )
-#endif
-/* End Token Ring Data Structures */
-
-
-/* Start FDDI Data Structures */
-
-/* FDDI header is always this: -worm5er */
-typedef struct _Fddi_hdr
-{
-    uint8_t fc;        /* frame control field */
-    uint8_t daddr[FDDI_ALEN];  /* src address */
-    uint8_t saddr[FDDI_ALEN];  /* dst address */
-}         Fddi_hdr;
-
-/* splitting the llc up because of variable lengths of the LLC -worm5er */
-typedef struct _Fddi_llc_saps
-{
-    uint8_t dsap;
-    uint8_t ssap;
-}              Fddi_llc_saps;
-
-/* I've found sna frames have two addition bytes after the llc saps -worm5er */
-typedef struct _Fddi_llc_sna
-{
-    uint8_t ctrl_fld[2];
-}             Fddi_llc_sna;
-
-/* I've also found other frames that seem to have only one byte...  We're only
-really intersted in the IP data so, until we want other, I'm going to say
-the data is one byte beyond this frame...  -worm5er */
-typedef struct _Fddi_llc_other
-{
-    uint8_t ctrl_fld[1];
-}               Fddi_llc_other;
-
-/* Just like TR the ip/arp data is setup as such: -worm5er */
-typedef struct _Fddi_llc_iparp
-{
-    uint8_t ctrl_fld;
-    uint8_t protid[3];
-    uint16_t ethertype;
-}               Fddi_llc_iparp;
-
-/* End FDDI Data Structures */
-
-
-/* 'Linux cooked captures' data
- * (taken from tcpdump source).
- */
-
-#define SLL_HDR_LEN     16              /* total header length */
-#define SLL_ADDRLEN     8               /* length of address field */
-typedef struct _SLLHdr {
-        uint16_t       sll_pkttype;    /* packet type */
-        uint16_t       sll_hatype;     /* link-layer address type */
-        uint16_t       sll_halen;      /* link-layer address length */
-        uint8_t        sll_addr[SLL_ADDRLEN];  /* link-layer address */
-        uint16_t       sll_protocol;   /* protocol */
-} SLLHdr;
-
-
-/*
- * Snort supports 3 versions of the OpenBSD pflog header:
- *
- * Pflog1_Hdr:  CVS = 1.3,  DLT_OLD_PFLOG = 17,  Length = 28
- * Pflog2_Hdr:  CVS = 1.8,  DLT_PFLOG     = 117, Length = 48
- * Pflog3_Hdr:  CVS = 1.12, DLT_PFLOG     = 117, Length = 64
- * Pflog3_Hdr:  CVS = 1.172, DLT_PFLOG     = 117, Length = 100
- *
- * Since they have the same DLT, Pflog{2,3}Hdr are distinguished
- * by their actual length.  The minimum required length excludes
- * padding.
- */
-/* Old OpenBSD pf firewall pflog0 header
- * (information from pf source in kernel)
- * the rule, reason, and action codes tell why the firewall dropped it -fleck
- */
-
-typedef struct _Pflog1_hdr
-{
-    uint32_t af;
-    char intf[IFNAMSIZ];
-    int16_t rule;
-    uint16_t reason;
-    uint16_t action;
-    uint16_t dir;
-} Pflog1Hdr;
-
-#define PFLOG1_HDRLEN (sizeof(struct _Pflog1_hdr))
-
-/*
- * Note that on OpenBSD, af type is sa_family_t. On linux, that's an unsigned
- * short, but on OpenBSD, that's a uint8_t, so we should explicitly use uint8_t
- * here.  - ronaldo
- */
-
-#define PFLOG_RULELEN 16
-#define PFLOG_PADLEN  3
-
-typedef struct _Pflog2_hdr
-{
-    int8_t   length;
-    uint8_t  af;
-    uint8_t  action;
-    uint8_t  reason;
-    char     ifname[IFNAMSIZ];
-    char     ruleset[PFLOG_RULELEN];
-    uint32_t rulenr;
-    uint32_t subrulenr;
-    uint8_t  dir;
-    uint8_t  pad[PFLOG_PADLEN];
-} Pflog2Hdr;
-
-#define PFLOG2_HDRLEN (sizeof(struct _Pflog2_hdr))
-#define PFLOG2_HDRMIN (PFLOG2_HDRLEN - PFLOG_PADLEN)
-
-typedef struct _Pflog3_hdr
-{
-    int8_t   length;
-    uint8_t  af;
-    uint8_t  action;
-    uint8_t  reason;
-    char     ifname[IFNAMSIZ];
-    char     ruleset[PFLOG_RULELEN];
-    uint32_t rulenr;
-    uint32_t subrulenr;
-    uint32_t uid;
-    uint32_t pid;
-    uint32_t rule_uid;
-    uint32_t rule_pid;
-    uint8_t  dir;
-    uint8_t  pad[PFLOG_PADLEN];
-} Pflog3Hdr;
-
-#define PFLOG3_HDRLEN (sizeof(struct _Pflog3_hdr))
-#define PFLOG3_HDRMIN (PFLOG3_HDRLEN - PFLOG_PADLEN)
-
-
-typedef struct _Pflog4_hdr
-{
-    uint8_t  length;
-    uint8_t  af;
-    uint8_t  action;
-    uint8_t  reason;
-    char     ifname[IFNAMSIZ];
-    char     ruleset[PFLOG_RULELEN];
-    uint32_t rulenr;
-    uint32_t subrulenr;
-    uint32_t uid;
-    uint32_t pid;
-    uint32_t rule_uid;
-    uint32_t rule_pid;
-    uint8_t  dir;
-    uint8_t  rewritten;
-    uint8_t  pad[2];
-    uint8_t saddr[16];
-    uint8_t daddr[16];
-    uint16_t sport;
-    uint16_t dport;
-} Pflog4Hdr;
-
-#define PFLOG4_HDRLEN sizeof(struct _Pflog4_hdr)
-#define PFLOG4_HDRMIN sizeof(struct _Pflog4_hdr)
-
-/*
- * ssl_pkttype values.
- */
-
-#define LINUX_SLL_HOST          0
-#define LINUX_SLL_BROADCAST     1
-#define LINUX_SLL_MULTICAST     2
-#define LINUX_SLL_OTHERHOST     3
-#define LINUX_SLL_OUTGOING      4
-
-/* ssl protocol values */
-
-#define LINUX_SLL_P_802_3       0x0001  /* Novell 802.3 frames without 802.2 LLC header */
-#define LINUX_SLL_P_802_2       0x0004  /* 802.2 frames (not D/I/X Ethernet) */
-#endif  // NO_NON_ETHER_DECODER
-
-
-#ifdef _MSC_VER
-  /* Visual C++ pragma to disable warning messages
-   * about nonstandard bit field type
-   */
-  #pragma warning( disable : 4214 )
-#endif
-
-#define VTH_PRIORITY(vh)  ((ntohs((vh)->vth_pri_cfi_vlan) & 0xe000) >> 13)
-#define VTH_CFI(vh)       ((ntohs((vh)->vth_pri_cfi_vlan) & 0x1000) >> 12)
-#define VTH_VLAN(vh)      ((uint16_t)(ntohs((vh)->vth_pri_cfi_vlan) & 0x0FFF))
-
-typedef struct _VlanTagHdr
-{
-    uint16_t vth_pri_cfi_vlan;
-    uint16_t vth_proto;  /* protocol field... */
-} VlanTagHdr;
-#ifdef _MSC_VER
-  /* Visual C++ pragma to enable warning messages about nonstandard bit field type */
-  #pragma warning( default : 4214 )
-#endif
-
-
-typedef struct _EthLlc
-{
-    uint8_t dsap;
-    uint8_t ssap;
-} EthLlc;
-
-typedef struct _EthLlcOther
-{
-    uint8_t ctrl;
-    uint8_t org_code[3];
-    uint16_t proto_id;
-} EthLlcOther;
 
 /* We must twiddle to align the offset the ethernet header and align
  * the IP header on solaris -- maybe this will work on HPUX too.
@@ -442,142 +150,34 @@ typedef struct _EthLlcOther
 #endif
 
 
-#ifndef NO_NON_ETHER_DECODER
-/*
- *  Wireless Header (IEEE 802.11)
- */
-typedef struct _WifiHdr
-{
-  uint16_t frame_control;
-  uint16_t duration_id;
-  uint8_t  addr1[6];
-  uint8_t  addr2[6];
-  uint8_t  addr3[6];
-  uint16_t seq_control;
-  uint8_t  addr4[6];
-} WifiHdr;
+/* default mpls flags */
+#define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
+#define DEFAULT_LABELCHAIN_LENGTH    -1
 
-
-struct EtherEapol
-{
-    uint8_t  version;  /* EAPOL proto version */
-    uint8_t  eaptype;  /* EAPOL Packet type */
-    uint16_t len;  /* Packet body length */
-};
-
-struct EAPHdr
-{
-    uint8_t code;
-    uint8_t id;
-    uint16_t len;
-};
-
-struct EapolKey
-{
-  uint8_t type;
-  uint8_t length[2];
-  uint8_t counter[8];
-  uint8_t iv[16];
-  uint8_t index;
-  uint8_t sig[16];
-};
-
-
-#endif  // NO_NON_ETHER_DECODER
-
-
-/* Can't add any fields not in the real header here
-   because of how the decoder uses structure overlaying */
-#ifdef _MSC_VER
-  /* Visual C++ pragma to disable warning messages
-   * about nonstandard bit field type
-   */
-  #pragma warning( disable : 4214 )
-#endif
-
-
-#define NUM_IP_PROTOS 256
-
-
-#ifndef IPPROTO_IP_MOBILITY
-#define IPPROTO_IP_MOBILITY     55
-#endif
-#ifndef IPPROTO_SUN_ND
-#define IPPROTO_SUN_ND          77
-#endif
-#ifndef IPPROTO_PIM
-#define IPPROTO_PIM             103
-#endif
-
-#define IP_OPTMAX               40
-#define TCP_OPTLENMAX           40 /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
-const uint32_t IP6_EXTMAX = 8;
+const int32_t MAX_PORTS = 65536;
+const uint16_t NUM_IP_PROTOS = 256;
+const int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
+const uint8_t IP_OPTMAX = 40;
+const uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
+const uint8_t IP6_EXTMAX = 8;
+const uint8_t MIN_TTL = 64;
+const uint8_t MAX_TTL = 255;
 
 
 
-#ifdef _MSC_VER
-  /* Visual C++ pragma to enable warning messages about nonstandard bit field type */
-  #pragma warning( default : 4214 )
-#endif
+/*  D A T A  S T R U C T U R E S  *********************************************/
+class Flow;
 
 
-/* Can't add any fields not in the real header here
-   because of how the decoder uses structure overlaying */
-#ifdef _MSC_VER
-  /* Visual C++ pragma to disable warning
-   * messages about nonstandard bit field type
-   */
-  #pragma warning( disable : 4214 )
-#endif
-
-
-
-#define ERSPAN_VERSION(x) ((ntohs(x->ver_vlan) & 0xf000) >> 12)
-#define ERSPAN_VLAN(x) (ntohs(x->ver_vlan) & 0x0fff)
-#define ERSPAN_SPAN_ID(x) (ntohs(x->flags_spanId) & 0x03ff)
-#define ERSPAN3_TIMESTAMP(x) (x->timestamp)
-
-
-
-#ifdef _MSC_VER
-  /* Visual C++ pragma to enable warning messages
-   * about nonstandard bit field type
-   */
-  #pragma warning( default : 4214 )
-#endif
-
-
-
-typedef struct _Options
+struct Options
 {
     uint8_t code;
     uint8_t len; /* length of the data section */
     const uint8_t *data;
-} Options;
+} ;
 
 
-
-
-/* PPPoEHdr Header; eth::EtherHdr plus the PPPoE Header */
-typedef struct _PPPoEHdr
-{
-    unsigned char ver_type;     /* pppoe version/type */
-    unsigned char code;         /* pppoe code CODE_* */
-    unsigned short session;     /* session id */
-    unsigned short length;      /* payload length */
-                                /* payload follows */
-} PPPoEHdr;
-
-/* PPPoE tag; the payload is a sequence of these */
-typedef struct _PPPoE_Tag
-{
-    unsigned short type;    /* tag type TAG_* */
-    unsigned short length;    /* tag length */
-                            /* payload follows */
-} PPPoE_Tag;
-
-
-#define LAYER_MAX  32
+const uint8_t LAYER_MAX = 32;
 
 struct Packet
 {
@@ -589,21 +189,12 @@ struct Packet
     //^^^------------------------------------------------
 
     //vvv-----------------------------
-    EtherARP *ah;
-    const eth::EtherHdr *eh;         /* standard TCP/IP/Ethernet/ARP headers */
-    const VlanTagHdr *vh;
-    EthLlc *ehllc;
-    EthLlcOther *ehllcother;
-    const PPPoEHdr *pppoeh;     /* Encapsulated PPP of Ether header */
-    const GREHdr *greh;
-    uint32_t *mpls;
 
     const IPHdr *iph, *orig_iph;/* and orig. headers for ICMP_*_UNREACH family */
     const IPHdr *inner_iph;     /* if IP-in-IP, this will be the inner IP header */
     const IPHdr *outer_iph;     /* if IP-in-IP, this will be the outer IP header */
     const TCPHdr *tcph, *orig_tcph;
     const udp::UDPHdr *udph, *orig_udph;
-    const udp::UDPHdr *inner_udph;   /* if Teredo + UDP, this will be the inner UDP header */
     const udp::UDPHdr *outer_udph;   /* if Teredo + UDP, this will be the outer UDP header */
     const ICMPHdr *icmph, *orig_icmph;
 
@@ -672,34 +263,6 @@ struct Packet
     uint8_t GTPencapsulated;
     uint8_t next_layer;         /* index into layers for next encap */
 
-#ifndef NO_NON_ETHER_DECODER
-    const Fddi_hdr *fddihdr;    /* FDDI support headers */
-    Fddi_llc_saps *fddisaps;
-    Fddi_llc_sna *fddisna;
-    Fddi_llc_iparp *fddiiparp;
-    Fddi_llc_other *fddiother;
-
-    const Trh_hdr *trh;         /* Token Ring support headers */
-    Trh_llc *trhllc;
-    Trh_mr *trhmr;
-
-    Pflog1Hdr *pf1h;            /* OpenBSD pflog interface header - version 1 */
-    Pflog2Hdr *pf2h;            /* OpenBSD pflog interface header - version 2 */
-    Pflog3Hdr *pf3h;            /* OpenBSD pflog interface header - version 3 */
-    Pflog4Hdr *pf4h;            /* OpenBSD pflog interface header - version 4 */
-
-#ifdef DLT_LINUX_SLL
-    const SLLHdr *sllh;         /* Linux cooked sockets header */
-#endif
-#ifdef DLT_IEEE802_11
-    const WifiHdr *wifih;       /* wireless LAN header */
-#endif
-    const EtherEapol *eplh;     /* 802.1x EAPOL header */
-    const EAPHdr *eaph;
-    const uint8_t *eaptype;
-    EapolKey *eapolk;
-#endif
-
     // nothing after this point is zeroed ...
     ipv4::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
@@ -745,6 +308,9 @@ struct Packet
 #define PROTO_BIT__ICMP     0x0010
 #define PROTO_BIT__TEREDO   0x0020
 #define PROTO_BIT__GTP      0x0040
+#define PROTO_BIT__MPLS     0x0080
+#define PROTO_BIT__VLAN     0x0100
+#define PROTO_BIT__ETH      0x0200
 #define PROTO_BIT__OTHER    0x8000
 #define PROTO_BIT__ALL      0xffff
 
@@ -813,6 +379,32 @@ static inline bool is_ip6(const Packet *p)
 {
   return p->family == AF_INET6;
 }
+
+static inline uint16_t EXTRACT_16BITS(const uint8_t* p)
+{
+    return ntohs(*(uint16_t*)(p));
+}
+
+#ifdef WORDS_MUSTALIGN
+
+#if defined(__GNUC__)
+/* force word-aligned ntohl parameter */
+    static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+    {
+        uint32_t tmp;
+        memmove(&tmp, p, sizeof(uint32_t));
+        return ntohl(tmp);
+    }
+#endif /* __GNUC__ */
+
+#else
+
+/* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
+    static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
+    {
+        return ntohl(*(uint32_t *)p);
+    }
+#endif /* WORDS_MUSTALIGN */
 
 #endif
 

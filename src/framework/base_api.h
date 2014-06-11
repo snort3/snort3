@@ -42,8 +42,8 @@ enum PlugType
 };
 
 class Module;
-typedef Module* (*mod_ctor_f)();
-typedef void (*mod_dtor_f)(Module*);
+typedef Module* (*ModNewFunc)();
+typedef void (*ModDelFunc)(Module*);
 
 // if we inherit this we can't use a static initializer list :(
 // so BaseApi must be the prefix (ie 1st member) of all plugin api
@@ -53,8 +53,8 @@ struct BaseApi
     const char* name;
     unsigned api_version;
     unsigned version;
-    mod_ctor_f mod_ctor;
-    mod_dtor_f mod_dtor;
+    ModNewFunc mod_ctor;
+    ModDelFunc mod_dtor;
 };
 
 #endif

@@ -26,7 +26,7 @@
 #ifndef ACTIVE_H
 #define ACTIVE_H
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort.h"
 #include "managers/packet_manager.h"
 

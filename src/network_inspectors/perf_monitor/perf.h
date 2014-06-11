@@ -52,7 +52,8 @@
 #include "perf_event.h"
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "decode.h"
+#include "protocols/packet.h"
+#include "main/thread.h"
 
 // Perf Flags
 #define SFPERF_BASE             0x00000001

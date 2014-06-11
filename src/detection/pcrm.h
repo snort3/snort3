@@ -30,8 +30,8 @@
 #ifndef PCRM_H
 #define PCRM_H
 
-#include "decode.h"
 #include "bitop.h"
+#include "protocols/packet.h"
 
 typedef void * RULE_PTR;
 

@@ -21,7 +21,7 @@
 #ifndef EXPECT_CACHE_H
 #define EXPECT_CACHE_H
 
-#include "decode.h"
+#include "protocols/packet.h"
 #include "ipv6_port.h"
 
 class FlowData;

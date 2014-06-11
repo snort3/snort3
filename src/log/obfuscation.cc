@@ -31,7 +31,7 @@ extern "C" {
 
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "stream/stream_api.h"
 #include "snort_bounds.h"
 #include "main/thread.h"

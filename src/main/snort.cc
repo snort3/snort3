@@ -54,7 +54,7 @@ using namespace std;
 #include <thread>
 
 #include "helpers/process.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "managers/packet_manager.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
@@ -764,7 +764,7 @@ static void set_policy(Packet*)  // FIX SSN implement based on bindings
 {
    // for now need to just get stream_* inspectors and call appropriately 
 #if 0
-    int vlanId = (p->vh) ? VTH_VLAN(p->vh) : -1;
+    int vlanId = (p->vh) ? vlan::vth_vlan(p->vh) : -1;
     snort_ip_p srcIp = (p->iph) ? GET_SRC_IP((p)) : (snort_ip_p)0;
     snort_ip_p dstIp = (p->iph) ? GET_DST_IP((p)) : (snort_ip_p)0;
 

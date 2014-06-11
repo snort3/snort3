@@ -36,7 +36,7 @@
 #include "framework/module.h"
 #include "snort_types.h"
 #include "event.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
@@ -58,6 +58,8 @@ struct pcap_pkthdr32
 
 /* this struct is for the alert socket code.... */
 // FIXTHIS alert unix sock supports l2-l3-l4 encapsulations
+
+const unsigned int ALERTMSG_LENGTH = 256;
 struct Alertpkt
 {
     uint8_t alertmsg[ALERTMSG_LENGTH]; /* variable.. */
@@ -155,9 +157,11 @@ static void get_alert_pkt(
     {
         if(p)
         {
-            if (p->eh)
+            if (p->proto_bits & PROTO_BIT__ETH)
             {
-                us.alert.dlthdr=(char *)p->eh-(char *)p->pkt;
+
+                const eth::EtherHdr *eh = layer::get_eth_layer(p);
+                us.alert.dlthdr=(char *)eh-(char *)p->pkt;
             }
 
             /* we don't log any headers besides eth yet */

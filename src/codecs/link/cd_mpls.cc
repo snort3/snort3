@@ -32,6 +32,7 @@
 #include "protocols/protocol_ids.h"
 #include "protocols/mpls.h"
 #include "codecs/link/cd_mpls_module.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -42,13 +43,11 @@ public:
     MplsCodec() : Codec(CD_MPLS_NAME){};
     ~MplsCodec(){};
 
+    virtual PROTO_ID get_proto_id() { return PROTO_MPLS; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);    
 
-    // DELETE from here and below
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_MPLS; };
 };
 
 
@@ -72,7 +71,7 @@ void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    uint32_t* tmpMplsHdr;
+    const uint32_t* tmpMplsHdr;
     uint32_t mpls_h;
     uint32_t label;
     lyr_len= 0;
@@ -86,8 +85,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     int iRet = 0;
 
     UpdateMPLSStats(&sfBase, len, Active_PacketWasDropped());
-    tmpMplsHdr = (uint32_t *) raw_pkt;
-    p->mpls = NULL;
+    tmpMplsHdr = (const uint32_t *) raw_pkt;
 
     while (!bos)
     {
@@ -119,7 +117,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /**
             p->mpls = &(p->mplsHdr);
       **/
-            p->mpls = tmpMplsHdr;
+            p->proto_bits |= PROTO_BIT__MPLS;
             if(!iRet)
             {
                 iRet = ScMplsPayloadType();
@@ -132,6 +130,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
             codec_events::decoder_event(p, DECODE_MPLS_LABEL_STACK);
 
+            p->proto_bits &= ~PROTO_BIT__MPLS;
             p->iph = NULL;
             p->family = NO_IP;
             return false;

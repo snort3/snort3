@@ -45,6 +45,7 @@
 #include "protocols/packet.h"
 #include "framework/codec.h"
 #include "codecs/ip/cd_tcp_module.h"
+#include "codecs/sf_protocols.h"
 
 namespace
 {
@@ -59,17 +60,13 @@ public:
     virtual ~TcpCodec(){};
 
 
+    virtual PROTO_ID get_proto_id() { return PROTO_TCP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *, uint16_t &lyr_len, uint16_t &);
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-
-
-    // DELETE
-    #include "codecs/sf_protocols.h"
-    virtual inline PROTO_ID get_proto_id() { return PROTO_TCP; };
 };
 
 static sfip_var_t *SynToMulticastDstIp = NULL;
@@ -179,18 +176,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /* calculate the checksum */
             csum = checksum::tcp_cksum((uint16_t *)(p->tcph), len, &ph);
 
-#if 0
-            csum = in_chksum_tcp(&ph, (uint16_t *)(p->tcph), len);
-            uint16_t csum2 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph);
-
-            if(csum != csum2)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP_CHECKSUM_ERROR!!! -> the two checksum are not equal %hu != %hu\n",
-                                        csum, csum2););
-                uint16_t csum3 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph);
-            }
-#endif
-
         }
         /* IPv6 traffic */
         else
@@ -204,20 +189,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
 
             csum = checksum::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
-        // TODO::DELETE
-        #if 0
-            csum = in_chksum_tcp6(&ph6, (uint16_t *)(p->tcph), len);
-            uint16_t csum2 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "HELLO!! -> the two checksum are not equal %hu != %hu\n",
-                                        csum, csum2););
-
-            if(csum != csum2)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP_CHECKSUM_ERROR!!! -> the two checksum are not equal %hu != %hu\n",
-                                        csum, csum2););
-                uint16_t csum3 = PacketClass::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
-            }
-            #endif
         }
 
         if(csum)

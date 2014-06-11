@@ -47,7 +47,7 @@
 #include "main/analyzer.h"
 #include "util.h"
 #include "snort_types.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "snort.h"
 
 THREAD_LOCAL SFBASE sfBase;

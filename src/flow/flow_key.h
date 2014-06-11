@@ -23,7 +23,7 @@
 #ifndef FLOW_KEY_H
 #define FLOW_KEY_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "hash/sfhashfcn.h"
 #include "sfip/ipv6_port.h"
 

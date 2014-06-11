@@ -1,6 +1,6 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,19 +17,17 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// trie_api.cc author Russ Combs <rucombs@cisco.com>
 
-#ifndef LAYER_H 
-#define LAYER_H
+#include "framework/mpse.h"
 
-#include "codecs/sf_protocols.h"
+extern const BaseApi* se_lowmem;
+extern const BaseApi* se_lowmem_q;
 
-
-struct Layer {
-    uint16_t prot_id;
-    PROTO_ID proto;
-    uint16_t length;
-    uint8_t* start;
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    se_lowmem,
+    se_lowmem_q,
+    nullptr
 };
 
-
-#endif

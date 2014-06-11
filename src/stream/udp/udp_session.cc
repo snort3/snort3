@@ -35,7 +35,7 @@
 #include "mstring.h"
 #include "sfxhash.h"
 #include "util.h"
-#include "decode.h"
+#include "protocols/packet.h"
 #include "flow/flow_control.h"
 #include "flow/session.h"
 #include "rules.h"
