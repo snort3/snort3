@@ -38,17 +38,17 @@ public:
 
     friend std::ostream &operator<<( std::ostream&, const ConversionData &);
     bool add_variable(std::string name, std::string value);
+    Table* add_table(std::string name);
 
 #if 0
     bool add_option(std::string name, std::string value);
     bool add_option(std::string name, long long int value);
-    Table* add_table(std::string name);
     void reset();
 #endif
 
 private:
     std::vector<Variable*> vars;
-//    std::vector<Table> tables;
+    std::vector<Table*> tables;
 
 };
 

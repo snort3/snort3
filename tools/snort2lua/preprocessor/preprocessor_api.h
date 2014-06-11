@@ -17,23 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// preprocessor_api.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include <fstream>
+#ifndef PREPROCESSOR_API_H
+#define PREPROCESSOR_API_H
+
+#include <vector>
 #include "conversion_state.h"
-#include "converter.h"
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
-
-class InitState : public ConversionState
-{
-public:
-    InitState(Converter* cv);
-    virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
-
-};
+extern const std::vector<const ConvertMap*> preprocessor_api;
 
 #endif

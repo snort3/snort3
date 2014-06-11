@@ -28,6 +28,16 @@
     Table curr_table;
 #endif
 
+
+static inline Table* find_table(std::vector<Table*> vec, std::string name)
+{
+    for( auto *t : vec)
+        if(name.compare(t->get_name()))
+            return t;
+
+    return nullptr;
+}
+
 ConversionData::ConversionData()
 {
 }
@@ -37,17 +47,17 @@ ConversionData::~ConversionData()
     for (auto *v : vars)
         delete v;
 
-//    for (auto t : tables)
-//        delete t;
+    for (auto t : tables)
+        delete t;
 }
 
 std::ostream& operator<<( std::ostream &out, const ConversionData &data)
 {
     for (Variable *v : data.vars)
-        out << (*v) << std::endl;
+        out << (*v) << std::endl << std::endl;
 
-//    for (auto t : data.tables)
-//        out << t << std::endl;
+    for (Table *t : data.tables)
+        out << (*t) << std::endl << std::endl;
 
     return out;
 }
@@ -67,6 +77,19 @@ bool ConversionData::add_variable(std::string name, std::string value)
     return var->add_value(value);
 }
 
+
+Table* ConversionData::add_table(std::string name)
+{
+    Table* t = find_table(tables, name);
+
+    if(t)
+        return t;
+
+    t = new Table(name, 0);
+    tables.push_back(t);
+    return t;
+}
+
 #if 0
 bool ConversionData::add_option(std::string name, std::string value)
 {
@@ -78,10 +101,6 @@ bool ConversionData::add_option(std::string name, long long int value)
 
 }
 
-bool ConversionData::add_table(std::string name)
-{
-
-}
 
 void ConversionData::reset()
 {

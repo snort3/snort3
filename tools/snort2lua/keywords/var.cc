@@ -35,13 +35,12 @@ class Var : public ConversionState
 public:
     Var(Converter* cv);
     virtual ~Var() {};
-    virtual bool convert(std::stringstream& data, bool last_line, std::ofstream&);
+    virtual bool convert(std::stringstream& data, std::ofstream&);
 
 private:
     bool first_line;
     bool is_port_list;
     std::string keyword;
-
 };
 
 } // namespace
@@ -53,7 +52,7 @@ Var::Var(Converter* cv) : ConversionState(cv)
     is_port_list = false;
 }
 
-bool Var::convert(std::stringstream& data_stream, bool last_line, std::ofstream& out)
+bool Var::convert(std::stringstream& data_stream, std::ofstream& out)
 {
     std::string ports;//    converter->print_line(data_stream);
 
@@ -87,65 +86,6 @@ bool Var::convert(std::stringstream& data_stream, bool last_line, std::ofstream&
     {
         return converter->add_variable(keyword, ports);
     }
-
-
-#if 0
-    if(is_port_list || (ports.front() == '[' && ports.back() == ']'))
-    {
-        std::vector<std::string> port_list;
-        is_port_list = true;
-        int count = 11;
-
-        if (first_line)
-            out << std::endl << "[[" << std::endl;
-
-        ports.erase(ports.begin());
-        ports.pop_back();
-        util::split(ports, ',', port_list);
-
-        for(std::string elem : port_list)
-        {
-            if(count >= 11)
-            {
-                if (elem.compare(*port_list.begin()))
-                    out << std::endl;
-                out << "   "; // fourth space added below
-                count = 0;
-            }
-
-            if(elem.front() == '$')
-                elem.erase(elem.begin());
-
-            out << ' ' << std::setw(5) << std::left << elem;
-            count++;
-        }
-
-
-        if(last_line)
-            out << std::endl << "]]" << std::endl;
-    }
-    else
-    {
-        if (first_line)
-            out << "'";
-
-        if(ports.front() == '$')
-        {
-            ports.erase(ports.begin());
-        }
-        else
-        {
-            out <<  std::setw(5) << std::left << ports;
-        }
-
-        if (last_line)
-            out << "'" << std::endl;
-    }
-
-
-    first_line = false;
-    return true;
-#endif
 }
 
 /**************************

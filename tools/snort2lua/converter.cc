@@ -47,15 +47,95 @@ void Converter::reset_state()
 {
     if (state)
         delete state;
+
     state = new InitState(this);
+
+    std::stack<Table*> empty;
+    open_tables.swap(empty );
 }
 
 
-bool Converter::convert_line(std::stringstream& data, bool last_line, std::ofstream& out){
+bool Converter::convert_line(std::stringstream& data, std::ofstream& out)
+{
     if ( state )
-        return state->convert(data, last_line, out);
+        return state->convert(data, out);
     return false;
 }
+
+bool Converter::open_table(std::string name)
+{
+    Table *t;
+
+    // if no open tables, create a top-level table
+    if (open_tables.size() > 0)
+        t = open_tables.top()->open_table(name);
+    else
+        t = data.add_table(name);
+
+    open_tables.push(t);
+    return true;
+}
+
+bool Converter::close_table()
+{
+    open_tables.pop();
+    return true;
+}
+
+
+bool Converter::add_option_to_table(std::string name, std::string val)
+{
+    Table *t = open_tables.top();
+
+    if(t)
+    {
+        t->add_option(name, val);
+        return true;
+    }
+    else
+    {
+        log_error("Must open table before adding an option!!");
+        return false;
+    }
+}
+
+
+bool Converter::add_option_to_table(std::string name, int val)
+{
+    Table *t = open_tables.top();
+
+    if(t)
+    {
+        t->add_option(name, val);
+        return true;
+    }
+    else
+    {
+        log_error("Must open table before adding an option!!");
+        return false;
+    }
+}
+
+bool Converter::add_option_to_table(std::string name, bool val)
+{
+    Table *t = open_tables.top();
+
+    if(t)
+    {
+        t->add_option(name, val);
+        return true;
+    }
+    else
+    {
+        log_error("Must open table before adding an option!!");
+        return false;
+    }
+}
+
+
+/*******************************
+ *******  PRINTING FOO *********
+ *******************************/
 
 void Converter::log_error(std::string error_string)
 {

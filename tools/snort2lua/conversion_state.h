@@ -33,8 +33,7 @@ class ConversionState
 public:
     ConversionState(Converter *cv){ converter = cv; }
     virtual ~ConversionState() {};
-    virtual bool convert(std::stringstream& data, 
-                            bool last_line, 
+    virtual bool convert(std::stringstream& data,
                             std::ofstream& out)=0;
 
 

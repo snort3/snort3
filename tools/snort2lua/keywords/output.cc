@@ -36,13 +36,13 @@ class Output : public ConversionState
 public:
     Output(Converter* cv)  : ConversionState(cv) {};
     virtual ~Output() {};
-    virtual bool convert(std::stringstream& data, bool last_line, std::ofstream&);
+    virtual bool convert(std::stringstream& data, std::ofstream&);
 };
 
 } // namespace
 
 
-bool Output::convert(std::stringstream& data_stream, bool last_line, std::ofstream&)
+bool Output::convert(std::stringstream& data_stream, std::ofstream&)
 {
     std::string keyword;
 

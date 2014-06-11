@@ -33,7 +33,6 @@ extern const ConvertMap *include_map;
 
 
 const std::vector<const ConvertMap*> keyword_api = 
-//const ConvertMap* keywords[] = 
 {
     portvar_map,
     ipvar_map,

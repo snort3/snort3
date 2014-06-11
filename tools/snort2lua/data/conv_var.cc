@@ -44,8 +44,6 @@ bool Variable::add_value(std::string elem)
 {
     std::string s(elem);
 
-    std::cout << s << std::endl;
-
     if(s.front() == '$')
     {
         s.erase(s.begin());
@@ -78,7 +76,7 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
     if (var.strs.size() == 0)
         out << " ''";
 
-    else if(var.count < var.max_line_length)
+    else if(var.count < var.max_line_length || var.strs.size() == 1)
     {
         out << "'";
 
@@ -111,6 +109,5 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
         out << std::endl << " ]]";
     }
 
-    out << std::endl << std::endl;
     return out;
 }

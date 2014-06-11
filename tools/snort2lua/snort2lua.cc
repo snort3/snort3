@@ -29,6 +29,7 @@
 static bool convert(std::ifstream& in, std::ofstream& out)
 {
     Converter cv;
+    bool skip_line = false;
     cv.reset_state();
 //    state->inititalize();
 //    Converter::reset_state();
@@ -45,31 +46,36 @@ static bool convert(std::ifstream& in, std::ofstream& out)
         {
             out << std::endl;
         }
-        else
+        else if(!skip_line)
         {
             if (next_line.back() == '\\')
             {
                 last_line = false;
                 next_line.pop_back();
+                util::rtrim(next_line);
             }
 
             std::stringstream data_stream(next_line);
             while(data_stream.tellg() != -1)
             {
-                if (!cv.convert_line(data_stream, last_line, out))
+                if (!cv.convert_line(data_stream, out))
                 {
                     cv.log_error(next_line);
                     data_stream.setstate(std::basic_ios<char>::eofbit);
+                    skip_line = true;
                 }
             }
         }
 
         if (last_line)
+        {
             cv.reset_state();
-
+            skip_line = false;
+        }
     }
 
     // finally, lets print the converter to file
+    out << "require(\"snort_config\")  -- for loading" << std::endl;
     out << cv;
     return true;
 }

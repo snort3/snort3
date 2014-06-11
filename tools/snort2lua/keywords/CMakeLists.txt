@@ -11,4 +11,5 @@ add_library( keywords
 
 target_link_libraries( keywords
     output
+    preprocessor
 )

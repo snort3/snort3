@@ -17,49 +17,64 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// init_state.h author Josh Rosenbaum <jorosenba@cisco.com>
+// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-
-#include <vector>
 #include <sstream>
-#include <iostream>
-#include "init_state.h"
+#include <vector>
+#include <iomanip>
+
+#include "conversion_state.h"
+#include "converter.h"
 #include "snort2lua_util.h"
-#include "keywords/keywords_api.h"
 
+namespace {
 
-InitState::InitState(Converter* cv) : ConversionState(cv) {}
-
-bool InitState::convert(std::stringstream& data_stream, std::ofstream& out)
+class Suppress : public ConversionState
 {
+public:
+    Suppress(Converter* cv)  : ConversionState(cv) {};
+    virtual ~Suppress() {};
+    virtual bool convert(std::stringstream& data_stream, std::ofstream&);
+};
+
+} // namespace
+
+
+bool Suppress::convert(std::stringstream& data_stream, std::ofstream&)
+{
+#if 0
     std::string keyword;
 
-
-    if ( data_stream >> keyword )
+    if(data_stream >> keyword)
     {
-
-        if( keyword.front() == '#')
+        const ConvertMap* map = util::find_map(output_api, keyword);
+        if (map)
         {
-            keyword.erase(keyword.begin());
-            std::ostringstream oss;
-            oss << data_stream.rdbuf();
-            out << "--" << keyword << oss.str() << std::endl;
-            data_stream.setstate(std::basic_ios<char>::eofbit);
+            converter->set_state(map->ctor(converter));
             return true;
-        }
-        else
-        {
-            const ConvertMap *map = util::find_map(keyword_api, keyword);
-
-            if (map)
-            {
-                converter->set_state(map->ctor(converter));
-                return true;
-            }
         }
     }
 
-    out << "--" << data_stream.str() << std::endl;
+    return false;    
+#endif
+
     data_stream.setstate(std::basic_ios<char>::eofbit);
-    return false;
+    return true;    
 }
+
+/**************************
+ *******  A P I ***********
+ **************************/
+
+static ConversionState* ctor(Converter* cv)
+{
+    return new Suppress(cv);
+}
+
+static const ConvertMap keyword_preprocessor = 
+{
+    "suppress",
+    ctor,
+};
+
+const ConvertMap* preprocessor_map = &keyword_preprocessor;

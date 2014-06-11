@@ -25,6 +25,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <stack>
 
 #include "data/conv_data.h"
 #include "data/conv_var.h"
@@ -38,11 +39,17 @@ public:
     Converter();
     virtual ~Converter() {};
     void reset_state();
-    bool convert_line(std::stringstream& data, bool last_line, std::ofstream& out);
+    bool convert_line(std::stringstream& data, std::ofstream& out);
     void set_state(ConversionState* c);
     
     bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
     friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.data; }
+
+    bool open_table(std::string);
+    bool close_table();
+    bool add_option_to_table(std::string name, std::string val);
+    bool add_option_to_table(std::string name, int val);
+    bool add_option_to_table(std::string name, bool val);
 
     void log_error(std::string);
 
@@ -53,6 +60,7 @@ public:
 private:
     ConversionState* state;
     ConversionData data;
+    std::stack<Table*> open_tables;
 
 
 };

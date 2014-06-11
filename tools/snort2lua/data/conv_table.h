@@ -22,4 +22,36 @@
 #ifndef CONV_TABLE_H
 #define CONV_TABLE_H
 
+
+#include <string>
+#include <vector>
+#include <iostream>
+
+#include "conv_option.h"
+
+class Table
+{
+public:
+    Table(std::string name);
+    Table(std::string name, int depth);
+    virtual ~Table();
+
+    inline std::string get_name(){ return name; };
+    Table* open_table(std::string);
+    bool add_option(std::string, int val);
+    bool add_option(std::string, bool val);
+    bool add_option(std::string, std::string val);
+    bool has_option(std::string name, int val);
+    bool has_option(std::string name, bool val);
+    bool has_option(std::string name, std::string val);
+
+    friend std::ostream &operator<<( std::ostream&, const Table &);
+
+private:
+    std::string name;
+    int depth;
+    std::vector<Table*> tables;
+    std::vector<Option*> options;
+};
+
 #endif

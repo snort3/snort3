@@ -17,23 +17,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// conv_var.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include <fstream>
-#include "conversion_state.h"
-#include "converter.h"
+#ifndef CONV_OPTIONS_H
+#define CONV_OPTIONS_H
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
 
-class InitState : public ConversionState
+#include <string>
+#include <vector>
+#include <iostream>
+
+class Option
 {
 public:
-    InitState(Converter* cv);
-    virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
+    Option(std::string name, int val, int depth);
+    Option(std::string name, bool val, int depth);
+    Option(std::string name, std::string val, int depth);
+    virtual ~Option();
+
+    inline std::string get_name(){ return name; };
+ 
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const Option &);
+    friend bool operator!=(const Option& lhs, const Option& rhs);
+    friend bool operator==(const Option& lhs, const Option& rhs);
+
+private:
+    enum class OptionType{ STRING, BOOL, INT};
+
+    std::string name;
+    std::string value;
+    int depth;
+    OptionType type;
+
 
 };
+
 
 #endif

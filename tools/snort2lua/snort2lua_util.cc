@@ -63,7 +63,6 @@ std::vector<std::string> &split(const std::string &s,
     return elems;
 }
 
-
 const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string keyword)
 {
     for (const ConvertMap *p : map)

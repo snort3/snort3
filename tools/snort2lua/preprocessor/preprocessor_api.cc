@@ -17,23 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// keywords_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include <fstream>
-#include "conversion_state.h"
-#include "converter.h"
+#include "preprocessor/preprocessor_api.h"
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
 
-class InitState : public ConversionState
+extern const ConvertMap *httpinspect_map;
+
+
+
+const std::vector<const ConvertMap*> preprocessor_api = 
 {
-public:
-    InitState(Converter* cv);
-    virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
-
+    httpinspect_map,
+//    nullptr,
 };
-
-#endif

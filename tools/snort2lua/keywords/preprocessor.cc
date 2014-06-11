@@ -26,6 +26,7 @@
 #include "conversion_state.h"
 #include "converter.h"
 #include "snort2lua_util.h"
+#include "preprocessor/preprocessor_api.h"
 
 namespace {
 
@@ -34,20 +35,22 @@ class Preprocessor : public ConversionState
 public:
     Preprocessor(Converter* cv)  : ConversionState(cv) {};
     virtual ~Preprocessor() {};
-    virtual bool convert(std::stringstream& data, bool last_line, std::ofstream&);
+    virtual bool convert(std::stringstream& data, std::ofstream&);
 };
 
 } // namespace
 
 
-bool Preprocessor::convert(std::stringstream& data_stream, bool last_line, std::ofstream&)
+bool Preprocessor::convert(std::stringstream& data_stream, std::ofstream&)
 {
-#if 0
     std::string keyword;
 
-    if(data >> keyword)
+    if(data_stream >> keyword)
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
+        if(keyword.back() == ':')
+            keyword.pop_back();
+
+        const ConvertMap* map = util::find_map(preprocessor_api, keyword);
         if (map)
         {
             converter->set_state(map->ctor(converter));
@@ -56,10 +59,6 @@ bool Preprocessor::convert(std::stringstream& data_stream, bool last_line, std::
     }
 
     return false;    
-#endif
-
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;
 }
 
 /**************************
