@@ -33,6 +33,8 @@
 
 class NHttpInspect;
 class NHttpMsgSection;
+class NHttpMsgRequest;
+class NHttpMsgStatus;
 class NHttpMsgHeader;
 class NHttpMsgBody;
 class NHttpMsgChunkHead;
@@ -50,6 +52,8 @@ public:
     friend class NHttpInspect;
     friend class NHttpMsgSection;
     friend class NHttpMsgHeader;
+    friend class NHttpMsgRequest;
+    friend class NHttpMsgStatus;
     friend class NHttpMsgBody;
     friend class NHttpMsgChunkHead;
     friend class NHttpMsgChunkBody;
@@ -67,7 +71,7 @@ private:
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     // 0 element refers to client request, 1 element refers to server response
-    NHttpEnums::SectionType typeExpected[2] = { NHttpEnums::SEC_HEADER, NHttpEnums::SEC_HEADER };
+    NHttpEnums::SectionType typeExpected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
     int64_t octetsExpected[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // expected size of the upcoming body or chunk body section      
 
     // Inspector's internal data about the current message
@@ -77,6 +81,10 @@ private:
     int64_t numChunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };         // number of chunks seen so far
     int64_t chunkSections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // number of sections seen so far in the current chunk
     int64_t chunkOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };       // number of user data octets seen so far in the current chunk including terminating CRLF
+
+    NHttpEnums::VersionId versionId[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
+    NHttpEnums::MethodId methodId = NHttpEnums::METH__NOTPRESENT;
+    int32_t statusCodeNum = NHttpEnums::STAT_NOTPRESENT;
 };
 
 #endif

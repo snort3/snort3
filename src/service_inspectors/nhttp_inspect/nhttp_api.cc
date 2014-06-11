@@ -69,6 +69,8 @@ void NHttpApi::nhttp_dtor(Inspector* p)
 
 void NHttpApi::nhttp_pinit()
 {
+    NHttpInspect::msgRequest = new NHttpMsgRequest;
+    NHttpInspect::msgStatus = new NHttpMsgStatus;
     NHttpInspect::msgHead = new NHttpMsgHeader;
     NHttpInspect::msgBody = new NHttpMsgBody;
     NHttpInspect::msgChunkHead = new NHttpMsgChunkHead;

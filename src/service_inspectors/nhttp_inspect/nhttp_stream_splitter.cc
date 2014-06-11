@@ -71,25 +71,26 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
     }
 
     switch (SectionType type = sessionData->typeExpected[sourceId]) {
+      case SEC_REQUEST:
+      case SEC_STATUS:
       case SEC_HEADER:
       case SEC_CHUNKHEAD:
       case SEC_TRAILER:
         pafMax = 63780;
         for (uint32_t k = 0; k < length; k++) {
             octetsSeen++;
-
             // Count the alternating <CR> and <LF> characters we have seen in a row
             if (((data[k] == '\r') && (numCrlf%2 == 0)) || ((data[k] == '\n') && (numCrlf%2 == 1))) numCrlf++;
             else numCrlf = 0;
 
-            // Check header for leading CRLF because some 1.0 implementations put extra blank lines between messages. We tolerate this by quietly ignoring them.
-            // Trailer may also have leading CRLF. That is completely normal and means there is no trailer.
-            if (((type == SEC_HEADER) || (type == SEC_TRAILER)) && (numCrlf == 2) && (octetsSeen == 2)) {
-                prepareFlush(sessionData, flushOffset, sourceId, (type == SEC_HEADER) ? SEC_DISCARD : type, tcpClose && (k == length-1), 0, k+1);
+            // Check start line for leading CRLF because some 1.0 implementations put extra blank lines between messages. We tolerate this by quietly ignoring them.
+            // Header/trailer may also have leading CRLF. That is completely normal and means there are no header/trailer lines.
+            if ((numCrlf == 2) && (octetsSeen == 2) && (type != SEC_CHUNKHEAD)) {
+                prepareFlush(sessionData, flushOffset, sourceId, ((type == SEC_REQUEST) || (type == SEC_STATUS)) ? SEC_DISCARD : type, tcpClose && (k == length-1), 0, k+1);
                 return PAF_FLUSH;
             }
-            // The chunk header section always ends with the first <CRLF>
-            else if ((type == SEC_CHUNKHEAD) && (numCrlf == 2)) {
+            // The start line and chunk header section always end with the first <CRLF>
+            else if ((numCrlf == 2) && ((type == SEC_REQUEST) || (type == SEC_STATUS) || (type == SEC_CHUNKHEAD))) {
                 prepareFlush(sessionData, flushOffset, sourceId, type, tcpClose && (k == length-1), 0, k+1);
                 return PAF_FLUSH;
             }

@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgSharedHead class declaration
+//  @brief      NHttpMsgHeadShared class declaration
 //
 
 #ifndef NHTTP_MSG_HEAD_SHARED_H
@@ -34,10 +34,10 @@
 #include "nhttp_msg_section.h"
 
 //-------------------------------------------------------------------------
-// NHttpMsgSharedHead class
+// NHttpMsgHeadShared class
 //-------------------------------------------------------------------------
 
-class NHttpMsgSharedHead: public NHttpMsgSection {
+class NHttpMsgHeadShared: public NHttpMsgSection {
 public:
     void initSection();
     void analyze();
@@ -63,12 +63,12 @@ protected:
 
     // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
     // things into a standard form without changing the underlying format.
-    virtual void parseWhole() = 0;
+    void parseWhole();
     void parseHeaderBlock();
     void parseHeaderLines();
     void deriveHeaderNameId(int index);
 
-    void printMessageHead(FILE *output) const;
+    void printHeaders(FILE *output) const;
 
     // This is where all the derived values, extracted message parts, and normalized values are.
     // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the

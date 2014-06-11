@@ -23,35 +23,42 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Flow Data object used to store session information with Streams
+//  @brief      NHttpMsgStart class declaration
 //
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
-#include "nhttp_enum.h"
-#include "nhttp_flow_data.h"
+#ifndef NHTTP_MSG_START_H
+#define NHTTP_MSG_START_H
 
-using namespace NHttpEnums;
+#include "nhttp_msg_section.h"
 
-unsigned NHttpFlowData::nhttp_flow_id = 0;
+//-------------------------------------------------------------------------
+// NHttpMsgStart class
+//-------------------------------------------------------------------------
 
-NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {}
+class NHttpMsgStart: public NHttpMsgSection {
+public:
+    NHttpMsgStart() {};
+    void initSection();
+    void analyze();
+    void genEvents();
 
-void NHttpFlowData::halfReset(SourceId sourceId) {
-    assert((sourceId == SRC_CLIENT) || (sourceId == SRC_SERVER));
-    dataLength[sourceId] = STAT_NOTPRESENT;
-    octetsExpected[sourceId] = STAT_NOTPRESENT;
-    bodySections[sourceId] = STAT_NOTPRESENT;
-    bodyOctets[sourceId] = STAT_NOTPRESENT;
-    numChunks[sourceId] = STAT_NOTPRESENT;
-    chunkSections[sourceId] = STAT_NOTPRESENT;
-    chunkOctets[sourceId] = STAT_NOTPRESENT;
+protected:
+    // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
+    // things into a standard form without changing the underlying format.
+    virtual void parseStartLine() = 0;
+    void deriveVersionId();
 
-    versionId[sourceId] = VERS__NOTPRESENT;
-    if (sourceId == SRC_CLIENT) methodId = METH__NOTPRESENT;
-    else statusCodeNum = STAT_NOTPRESENT;
-}
+    // This is where all the derived values, extracted message parts, and normalized values are.
+    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
+    // scratchPad (normalized pieces).
+    field startLine;
+    field version;
+};
+
+#endif
+
+
+
+
 
 

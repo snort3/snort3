@@ -28,6 +28,8 @@
 //-------------------------------------------------------------------------
 
 #include "framework/inspector.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_status.h"
 #include "nhttp_msg_head.h"
 #include "nhttp_msg_body.h"
 #include "nhttp_msg_chunk_head.h"
@@ -54,6 +56,8 @@ public:
 
 private:
     friend NHttpApi;
+    static THREAD_LOCAL NHttpMsgRequest *msgRequest;
+    static THREAD_LOCAL NHttpMsgStatus *msgStatus;
     static THREAD_LOCAL NHttpMsgHeader *msgHead;
     static THREAD_LOCAL NHttpMsgBody *msgBody;
     static THREAD_LOCAL NHttpMsgChunkHead *msgChunkHead;
