@@ -23,11 +23,13 @@
 
 
 extern const ConvertMap *httpinspect_map;
+extern const ConvertMap *smtp_map;
 
 
 
 const std::vector<const ConvertMap*> preprocessor_api = 
 {
     httpinspect_map,
+    smtp_map,
 //    nullptr,
 };

@@ -21,7 +21,6 @@
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"
@@ -29,22 +28,22 @@
 
 namespace {
 
-class Suppress : public ConversionState
+class Smtp : public ConversionState
 {
 public:
-    Suppress(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Suppress() {};
+    Smtp(Converter* cv)  : ConversionState(cv) {};
+    virtual ~Smtp() {};
     virtual bool convert(std::stringstream& data_stream);
 };
 
 } // namespace
 
 
-bool Suppress::convert(std::stringstream& data_stream)
+bool Smtp::convert(std::stringstream& data_stream)
 {
+
 #if 0
     std::string keyword;
-
     if(data_stream >> keyword)
     {
         const ConvertMap* map = util::find_map(output_api, keyword);
@@ -55,11 +54,42 @@ bool Suppress::convert(std::stringstream& data_stream)
         }
     }
 
-    return false;    
+ports
+inspection_type stateful|stateless
+normalize all|none|cmds *
+ignore_data
+ignore_tls_data
+max_command_line_len <int> 
+max_header_line_len <int> *
+max_response_line_len <int>
+alt_max_command_line_len <int> { <cmd> [<cmd>] }
+no_alerts
+invalid_cmds { <Space-delimited list of commands> } 
+valid_cmds { <Space-delimited list of commands> } 
+data_cmds { <Space-delimited list of commands> } 
+binary_data_cmds { <Space-delimited list of commands> }
+auth_cmds { <Space-delimited list of commands> } 
+alert_unknown_cmds
+normalize_cmds { <Space-delimited list of commands> } 
+xlink2state { enable/disable [drop] }
+print_cmds
+disabled
+b64_decode_depth
+qp_decode_depth
+bitenc_decode_depth
+uu_decode_depth
+enable_mime_decoding
+max_mime_depth <int> 
+max_mime_mem <int> 
+log_mailfrom
+log_rcptto
+log_filename
+log_email_hdrs
+email_hdrs_log_depth <int> 
+memcap <int>
 #endif
 
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;    
+    return false;    
 }
 
 /**************************
@@ -68,13 +98,13 @@ bool Suppress::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new Suppress(cv);
+    return new Smtp(cv);
 }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap preprocessor_smtp = 
 {
-    "suppress",
+    "smtp",
     ctor,
 };
 
-const ConvertMap* preprocessor_map = &keyword_preprocessor;
+const ConvertMap* smtp_map = &preprocessor_smtp;

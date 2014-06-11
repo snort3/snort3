@@ -21,7 +21,6 @@
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 #include <string>
 
 #include "conversion_state.h"
@@ -38,11 +37,8 @@ public:
     virtual bool convert(std::stringstream& data);
 
 private:
-    void add_decode_option(std::string opt_name, int val);
+    bool add_decode_option(std::string opt_name,  std::stringstream& stream);
     bool missing_arg_error(std::string error_string);
-
-    bool first_line;
-    bool correct_keyword;
 };
 
 } // namespace
@@ -63,7 +59,9 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     std::string s_value;
     int i_value;
 
-    bool retval = true;;
+    // using this to keep track of any errors.  I want to convert as much 
+    // as possible while being aware something went wrong
+    bool retval = true;
 
     if(data_stream >> keyword)
     {
@@ -80,25 +78,40 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     while(data_stream >> keyword)
     {
         if(!keyword.compare("compress_depth"))
-        {
-            if(data_stream >> i_value)
-                converter->add_option_to_table("compress_depth", i_value);
-            else
-                retval = missing_arg_error("compress_depth <int>");
-        }
-        
+            retval = add_int_option("compress_depth", data_stream) && retval;
+
         else if(!keyword.compare("decompress_depth")) 
-        {
-            if(data_stream >> i_value)
-                converter->add_option_to_table("decompress_depth", i_value);
-            else
-                retval = missing_arg_error("decompress_depth <int>");
-        }
+            retval = add_int_option("decompress_depth", data_stream) && retval;
 
         else if(!keyword.compare("detect_anomalous_servers"))
-        {
             converter->add_option_to_table("detect_anomalous_servers", true);
-        }
+
+        else if(!keyword.compare("proxy_alert"))
+            converter->add_option_to_table("proxy_alert", true);
+
+        else if(!keyword.compare("max_gzip_mem"))
+            retval = add_int_option("max_gzip_mem", data_stream) && retval;
+        
+        else if(!keyword.compare("memcap"))
+            retval = add_int_option("memcap", data_stream) && retval;
+        
+        else if(!keyword.compare("disabled"))
+            converter->add_comment_to_table("'disabled' is deprecated");
+
+        else if(!keyword.compare("b64_decode_depth"))
+            retval = add_decode_option("b64_decode_depth", data_stream) && retval;
+
+        else if(!keyword.compare("bitenc_decode_depth"))
+            retval = add_decode_option("bitenc_decode_depth", data_stream) && retval;
+
+        else if(!keyword.compare("max_mime_mem"))
+            retval = add_decode_option("max_mime_mem", data_stream) && retval;
+        
+        else if(!keyword.compare("qp_decode_depth"))
+            retval = add_decode_option("qp_decode_depth", data_stream) && retval;
+
+        else if(!keyword.compare("uu_decode_depth"))
+            retval = add_decode_option("uu_decode_depth", data_stream) && retval;
 
         else if(!keyword.compare("iis_unicode_map"))
         {
@@ -116,70 +129,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
                 retval = missing_arg_error("iis_unicode_map <filename> <codemap>");
             }
         }
-        else if(!keyword.compare("proxy_alert"))
-        {
-            converter->add_option_to_table("proxy_alert", true);
-        }
 
-        else if(!keyword.compare("max_gzip_mem"))
-        {
-            if(data_stream >> i_value)
-                converter->add_option_to_table("max_gzip_mem", i_value);
-            else
-                retval = missing_arg_error("max_gzip_mem <int>");
-        }
-        
-        else if(!keyword.compare("memcap"))
-        {
-            if(data_stream >> i_value)
-                converter->add_option_to_table("memcap", i_value);
-            else
-                retval = missing_arg_error("memcap <int>");
-        }
-        
-        else if(!keyword.compare("disabled"))
-        {
-            converter->add_comment_to_table("'disabled' is deprecated");
-        }
-        
-        else if(!keyword.compare("b64_decode_depth"))
-        {
-            if(data_stream >> i_value)
-                add_decode_option("b64_decode_depth", i_value);
-            else
-                retval = missing_arg_error("b64_decode_depth <int>");
-        }
-
-        else if(!keyword.compare("bitenc_decode_depth"))
-        {
-            if(data_stream >> i_value)
-                add_decode_option("bitenc_decode_depth", i_value);
-            else
-                retval = missing_arg_error("b64_decode_depth <int>");
-        }
-        else if(!keyword.compare("max_mime_mem"))
-        {
-            if(data_stream >> i_value)
-                add_decode_option("max_mime_mem", i_value);
-            else
-                retval = missing_arg_error("max_mime_mem <int>");
-        }
-
-        else if(!keyword.compare("qp_decode_depth"))
-        {
-            if(data_stream >> i_value)
-                add_decode_option("qp_decode_depth", i_value);
-            else
-                retval = missing_arg_error("qp_decode_depth <int>");
-        }
-
-        else if(!keyword.compare("uu_decode_depth"))
-        {
-            if(data_stream >> i_value)
-                add_decode_option("uu_decode_depth", i_value);
-            else
-                retval = missing_arg_error("uu_decode_depth <int>");
-        }
 
         else
         {
@@ -191,12 +141,22 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     return retval;    
 }
 
-
-void HttpInspect::add_decode_option(std::string opt_name, int val)
+bool HttpInspect::add_decode_option(std::string opt_name,  std::stringstream& stream)
 {
-    converter->open_table("decode");
-    converter->add_option_to_table(opt_name, val);
-    converter->close_table();
+    int val;
+
+    if (stream >> val)
+    {
+        converter->open_table("decode");
+        converter->add_option_to_table(opt_name, val);
+        converter->close_table();
+        return true;
+    }
+    else
+    {
+        missing_arg_error(opt_name + " <int>");
+        return false;
+    }
 }
 
 /**************************
