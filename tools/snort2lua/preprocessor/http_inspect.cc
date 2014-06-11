@@ -139,7 +139,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
         
         else if(!keyword.compare("disabled"))
         {
-            converter->add_comment_to_table("the option 'disabled' is deprecated");
+            converter->add_comment_to_table("'disabled' is deprecated");
         }
         
         else if(!keyword.compare("b64_decode_depth"))

@@ -82,12 +82,15 @@ void ConversionData::add_comment(std::string str)
 {
     // leave at most one blank line between comments
     if ( !(str.empty() && !comments.empty() && comments.back().empty()) )
-        comments.push_back(std::string(str, 0, 77) + "...");
+        comments.push_back(std::string(str, 0, 512));
 }
 
 void ConversionData::add_error_comment(std::string error_string)
 {
-    errors.push_back(std::string(error_string, 0, 77) + "...");
+    if (error_string.size() > 80)
+        error_string.insert(76, "...");
+    
+    errors.push_back(std::string(error_string, 0, 79));
 }
 
 std::ostream& operator<<( std::ostream &out, const ConversionData &data)

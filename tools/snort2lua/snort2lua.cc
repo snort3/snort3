@@ -44,29 +44,31 @@ static bool convert(std::ifstream& in, std::ofstream& out)
         {
             cv.add_comment_to_file("");
         }
+        else if (orig_text.front() == '#')
+        {
+            orig_text.erase(orig_text.begin());
+            cv.add_comment_to_file(orig_text);
+        }
+        else if ( orig_text.back() == '\\')
+        {
+            orig_text.pop_back();
+            util::rtrim(orig_text);
+        }
         else
         {
-            if (orig_text.front() != '#' && orig_text.back() == '\\')
+            std::stringstream data_stream(orig_text);
+            while(data_stream.tellg() != -1)
             {
-                orig_text.pop_back();
-                util::rtrim(orig_text);
-            }
-            else
-            {
-                std::stringstream data_stream(orig_text);
-                while(data_stream.tellg() != -1)
+                if (!cv.convert_line(data_stream))
                 {
-                    if (!cv.convert_line(data_stream))
-                    {
-                        cv.log_error("Failed to entirely convert: " + orig_text);
-//                        data_stream.setstate(std::basic_ios<char>::eofbit);
-                        break;
-                    }
+                    cv.log_error("Failed to entirely convert: " + orig_text);
+//                  data_stream.setstate(std::basic_ios<char>::eofbit);
+                    break;
                 }
-
-                orig_text.clear();
-                cv.reset_state();
             }
+
+            orig_text.clear();
+            cv.reset_state();
         }
     }
 
