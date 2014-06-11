@@ -29,48 +29,44 @@
 static bool convert(std::ifstream& in, std::ofstream& out)
 {
     Converter cv;
-    bool skip_line = false;
     cv.reset_state();
-//    state->inititalize();
-//    Converter::reset_state();
+    std::string orig_text;
 
     while(!in.eof())
     {
-        std::string next_line;
-        bool last_line = true;
+        std::string tmp;
+        std::getline(in, tmp);
+        util::ltrim(tmp);
+        orig_text += ' ' + tmp;
+        util::rtrim(orig_text);
 
-        std::getline(in, next_line);
-        util::trim(next_line);
-
-        if (next_line.empty())
+        if (orig_text.empty())
         {
-            out << std::endl;
+            cv.add_comment_to_file("");
         }
-        else if(!skip_line)
+        else
         {
-            if (next_line.back() == '\\')
+            if (orig_text.front() != '#' && orig_text.back() == '\\')
             {
-                last_line = false;
-                next_line.pop_back();
-                util::rtrim(next_line);
+                orig_text.pop_back();
+                util::rtrim(orig_text);
             }
-
-            std::stringstream data_stream(next_line);
-            while(data_stream.tellg() != -1)
+            else
             {
-                if (!cv.convert_line(data_stream, out))
+                std::stringstream data_stream(orig_text);
+                while(data_stream.tellg() != -1)
                 {
-                    cv.log_error(next_line);
-                    data_stream.setstate(std::basic_ios<char>::eofbit);
-                    skip_line = true;
+                    if (!cv.convert_line(data_stream))
+                    {
+                        cv.log_error("Failed to entirely convert: " + orig_text);
+//                        data_stream.setstate(std::basic_ios<char>::eofbit);
+                        break;
+                    }
                 }
-            }
-        }
 
-        if (last_line)
-        {
-            cv.reset_state();
-            skip_line = false;
+                orig_text.clear();
+                cv.reset_state();
+            }
         }
     }
 
@@ -79,6 +75,7 @@ static bool convert(std::ifstream& in, std::ofstream& out)
     out << cv;
     return true;
 }
+
 
 static void show_usage()
 {

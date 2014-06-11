@@ -44,6 +44,7 @@ public:
     bool has_option(std::string name, int val);
     bool has_option(std::string name, bool val);
     bool has_option(std::string name, std::string val);
+    void add_comment(std::string comment);
 
     friend std::ostream &operator<<( std::ostream&, const Table &);
 
@@ -52,6 +53,7 @@ private:
     int depth;
     std::vector<Table*> tables;
     std::vector<Option*> options;
+    std::vector<std::string> comments;
 };
 
 #endif

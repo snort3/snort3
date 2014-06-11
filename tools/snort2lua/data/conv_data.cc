@@ -51,17 +51,6 @@ ConversionData::~ConversionData()
         delete t;
 }
 
-std::ostream& operator<<( std::ostream &out, const ConversionData &data)
-{
-    for (Variable *v : data.vars)
-        out << (*v) << std::endl << std::endl;
-
-    for (Table *t : data.tables)
-        out << (*t) << std::endl << std::endl;
-
-    return out;
-}
-
 bool ConversionData::add_variable(std::string name, std::string value)
 {
     for (auto v : vars)
@@ -77,7 +66,6 @@ bool ConversionData::add_variable(std::string name, std::string value)
     return var->add_value(value);
 }
 
-
 Table* ConversionData::add_table(std::string name)
 {
     Table* t = find_table(tables, name);
@@ -90,6 +78,49 @@ Table* ConversionData::add_table(std::string name)
     return t;
 }
 
+void ConversionData::add_comment(std::string str)
+{
+    // leave at most one blank line between comments
+    if ( !(str.empty() && !comments.empty() && comments.back().empty()) )
+        comments.push_back(std::string(str, 0, 77) + "...");
+}
+
+void ConversionData::add_error_comment(std::string error_string)
+{
+    errors.push_back(std::string(error_string, 0, 77) + "...");
+}
+
+std::ostream& operator<<( std::ostream &out, const ConversionData &data)
+{
+    out << "--[[" << std::endl;
+    out << "--ERRORS:" << std::endl;
+    out << "    all of these occured during the attempted conversion:" << std::endl << std::endl;
+
+    for (std::string s : data.errors)
+        out << s << std::endl << std::endl;
+
+    out << "--]]" << std::endl << std::endl << std::endl;
+
+    for (Variable *v : data.vars)
+        out << (*v) << std::endl << std::endl;
+
+    for (Table *t : data.tables)
+        out << (*t) << std::endl << std::endl;
+
+
+    out << "--[[" << std::endl << std::endl;
+    out << "COMMENTS:" << std::endl;
+    out << "    these line were originally commented out or empty" << std::endl;
+    out << "    in the configuration file." << std::endl;
+    out << std::endl;
+
+    for (std::string s : data.comments)
+        out << s << std::endl;
+
+    out << "--]]" << std::endl;
+
+    return out;
+}
 #if 0
 bool ConversionData::add_option(std::string name, std::string value)
 {

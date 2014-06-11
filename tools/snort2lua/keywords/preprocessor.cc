@@ -35,13 +35,13 @@ class Preprocessor : public ConversionState
 public:
     Preprocessor(Converter* cv)  : ConversionState(cv) {};
     virtual ~Preprocessor() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
+    virtual bool convert(std::stringstream& data);
 };
 
 } // namespace
 
 
-bool Preprocessor::convert(std::stringstream& data_stream, std::ofstream&)
+bool Preprocessor::convert(std::stringstream& data_stream)
 {
     std::string keyword;
 

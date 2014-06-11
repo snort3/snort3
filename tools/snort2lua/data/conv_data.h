@@ -39,6 +39,8 @@ public:
     friend std::ostream &operator<<( std::ostream&, const ConversionData &);
     bool add_variable(std::string name, std::string value);
     Table* add_table(std::string name);
+    void add_comment(std::string comment);
+    void add_error_comment(std::string comment);
 
 #if 0
     bool add_option(std::string name, std::string value);
@@ -49,6 +51,8 @@ public:
 private:
     std::vector<Variable*> vars;
     std::vector<Table*> tables;
+    std::vector<std::string> comments;
+    std::vector<std::string> errors;
 
 };
 

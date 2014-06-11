@@ -35,9 +35,12 @@ class HttpInspect : public ConversionState
 public:
     HttpInspect(Converter* cv);
     virtual ~HttpInspect() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
+    virtual bool convert(std::stringstream& data);
 
 private:
+    void add_decode_option(std::string opt_name, int val);
+    bool missing_arg_error(std::string error_string);
+
     bool first_line;
     bool correct_keyword;
 };
@@ -45,30 +48,32 @@ private:
 } // namespace
 
 
-HttpInspect::HttpInspect(Converter* cv)  : ConversionState(cv)
+bool HttpInspect::missing_arg_error(std::string arg)
 {
-    first_line = true;
+    converter->add_comment_to_table("snort.conf missing argument for " + arg);
+    return false;
 }
 
-bool HttpInspect::convert(std::stringstream& data_stream, std::ofstream&)
+HttpInspect::HttpInspect(Converter* cv)  : ConversionState(cv)
+{}
+
+bool HttpInspect::convert(std::stringstream& data_stream)
 {
     std::string keyword;
-    std::string value;
+    std::string s_value;
+    int i_value;
+
     bool retval = true;;
 
-    if (first_line)
+    if(data_stream >> keyword)
     {
-        if(data_stream >> keyword)
+        if(keyword.compare("global"))
         {
-            if(keyword.compare("global"))
-            {
-                converter->log_error("preprocessor httpinspect: requires the 'global' keyword");
-                return false;
-            }
+            converter->log_error("preprocessor httpinspect: requires the 'global' keyword");
+            return false;
         }
-        first_line = false;
-        converter->open_table("http_inspect");
     }
+    converter->open_table("http_inspect");
 
 
 
@@ -76,127 +81,123 @@ bool HttpInspect::convert(std::stringstream& data_stream, std::ofstream&)
     {
         if(!keyword.compare("compress_depth"))
         {
-            if(data_stream >> value)
-            {
-                int c_depth = std::stoi(value);
-                converter->add_option_to_table("compress_depth", c_depth);
-            }
+            if(data_stream >> i_value)
+                converter->add_option_to_table("compress_depth", i_value);
             else
-            {
-                converter->log_error("unable to find argument for 'preprocessor http_inspect: global compress_depth");
-                retval = false;
-            }
+                retval = missing_arg_error("compress_depth <int>");
         }
+        
         else if(!keyword.compare("decompress_depth")) 
         {
-            if(data_stream >> value)
-            {
-                int c_depth = std::stoi(value);
-                converter->add_option_to_table("decompress_depth", c_depth);
-            }
+            if(data_stream >> i_value)
+                converter->add_option_to_table("decompress_depth", i_value);
             else
-            {
-                converter->log_error("unable to find argument for 'preprocessor http_inspect: global compress_depth");
-                retval = false;
-            }
+                retval = missing_arg_error("decompress_depth <int>");
         }
-        else if(!keyword.compare("detect_anomalous_servers")) {}
+
+        else if(!keyword.compare("detect_anomalous_servers"))
+        {
+            converter->add_option_to_table("detect_anomalous_servers", true);
+        }
+
         else if(!keyword.compare("iis_unicode_map"))
         {
             std::string codemap;
-            if( (data_stream >> value) &&
-                (data_stream >> codemap))
+            if( (data_stream >> s_value) &&
+                (data_stream >> i_value))
             {
-                int code_map_i = std::stoi(codemap, nullptr);
                 converter->open_table("unicode_map");
-                converter->add_option_to_table("map_file", value);
-                converter->add_option_to_table("code_page", code_map_i);
+                converter->add_option_to_table("map_file", s_value);
+                converter->add_option_to_table("code_page", i_value);
                 converter->close_table();
             }
             else
             {
-                converter->log_error("Invalid argument: 'preprocessor http_inspect: global .. unicode_map");
-                retval = false;
+                retval = missing_arg_error("iis_unicode_map <filename> <codemap>");
             }
         }
-        else if(!keyword.compare("proxy_alert")) {}
-        else if(!keyword.compare("max_gzip_mem")) {}
-        else if(!keyword.compare("memcap")) {}
-        else if(!keyword.compare("disabled")) {}
+        else if(!keyword.compare("proxy_alert"))
+        {
+            converter->add_option_to_table("proxy_alert", true);
+        }
+
+        else if(!keyword.compare("max_gzip_mem"))
+        {
+            if(data_stream >> i_value)
+                converter->add_option_to_table("max_gzip_mem", i_value);
+            else
+                retval = missing_arg_error("max_gzip_mem <int>");
+        }
+        
+        else if(!keyword.compare("memcap"))
+        {
+            if(data_stream >> i_value)
+                converter->add_option_to_table("memcap", i_value);
+            else
+                retval = missing_arg_error("memcap <int>");
+        }
+        
+        else if(!keyword.compare("disabled"))
+        {
+            converter->add_comment_to_table("the option 'disabled' is deprecated");
+        }
+        
         else if(!keyword.compare("b64_decode_depth"))
         {
-            if(data_stream >> value)
-            {
-                int c_depth = std::stoi(value);
-                converter->add_option_to_table("b64_decode_depth", c_depth);
-            }
+            if(data_stream >> i_value)
+                add_decode_option("b64_decode_depth", i_value);
             else
-            {
-                converter->log_error("unable to find argument for 'preprocessor http_inspect: global b64_decode_depth");
-                retval = false;
-            }
+                retval = missing_arg_error("b64_decode_depth <int>");
         }
+
         else if(!keyword.compare("bitenc_decode_depth"))
         {
-            if(data_stream >> value)
-            {
-                int c_depth = std::stoi(value);
-                converter->add_option_to_table("bitenc_decode_depth", c_depth);
-            }
+            if(data_stream >> i_value)
+                add_decode_option("bitenc_decode_depth", i_value);
             else
-            {
-                converter->log_error("unable to find argument for 'preprocessor http_inspect: global b64_decode_depth");
-                retval = false;
-            }
+                retval = missing_arg_error("b64_decode_depth <int>");
         }
         else if(!keyword.compare("max_mime_mem"))
         {
-            if(data_stream >> value)
-            {
-                int c_depth = std::stoi(value);
-                converter->add_option_to_table("max_mime_mem", c_depth);
-            }
+            if(data_stream >> i_value)
+                add_decode_option("max_mime_mem", i_value);
             else
-            {
-                converter->log_error("unable to find argument for 'preprocessor http_inspect: global b64_decode_depth");
-                retval = false;
-            }
+                retval = missing_arg_error("max_mime_mem <int>");
         }
+
         else if(!keyword.compare("qp_decode_depth"))
         {
-            if(data_stream >> value)
-            {
-                int c_depth = std::stoi(value);
-                converter->add_option_to_table("qp_decode_depth", c_depth);
-            }
+            if(data_stream >> i_value)
+                add_decode_option("qp_decode_depth", i_value);
             else
-            {
-                converter->log_error("unable to find argument for 'preprocessor http_inspect: global b64_decode_depth");
-                retval = false;
-            }
+                retval = missing_arg_error("qp_decode_depth <int>");
         }
+
         else if(!keyword.compare("uu_decode_depth"))
         {
-            if(data_stream >> value)
-            {
-                int c_depth = std::stoi(value);
-                converter->add_option_to_table("uu_decode_depth", c_depth);
-            }
+            if(data_stream >> i_value)
+                add_decode_option("uu_decode_depth", i_value);
             else
-            {
-                converter->log_error("unable to find argument for 'preprocessor http_inspect: global b64_decode_depth");
-                retval = false;
-            }
+                retval = missing_arg_error("uu_decode_depth <int>");
         }
+
         else
         {
-            converter->log_error("unknown word");
+            converter->log_error("'preprocessor http_inspect: global' --> Invalid argument!!");
+            retval = false;
         }
     }
 
     return retval;    
 }
 
+
+void HttpInspect::add_decode_option(std::string opt_name, int val)
+{
+    converter->open_table("decode");
+    converter->add_option_to_table(opt_name, val);
+    converter->close_table();
+}
 
 /**************************
  *******  A P I ***********

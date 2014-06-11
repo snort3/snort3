@@ -30,7 +30,7 @@
 
 InitState::InitState(Converter* cv) : ConversionState(cv) {}
 
-bool InitState::convert(std::stringstream& data_stream, std::ofstream& out)
+bool InitState::convert(std::stringstream& data_stream)
 {
     std::string keyword;
 
@@ -41,9 +41,10 @@ bool InitState::convert(std::stringstream& data_stream, std::ofstream& out)
         if( keyword.front() == '#')
         {
             keyword.erase(keyword.begin());
-            std::ostringstream oss;
-            oss << data_stream.rdbuf();
-            out << "--" << keyword << oss.str() << std::endl;
+//            std::ostringstream oss;
+//            oss << data_stream.rdbuf();
+//            out << "--" << keyword << oss.str() << std::endl;
+            converter->add_comment_to_file(keyword, data_stream);
             data_stream.setstate(std::basic_ios<char>::eofbit);
             return true;
         }
@@ -59,7 +60,7 @@ bool InitState::convert(std::stringstream& data_stream, std::ofstream& out)
         }
     }
 
-    out << "--" << data_stream.str() << std::endl;
-    data_stream.setstate(std::basic_ios<char>::eofbit);
+//    out << "--" << data_stream.str() << std::endl;
+//    data_stream.setstate(std::basic_ios<char>::eofbit);
     return false;
 }

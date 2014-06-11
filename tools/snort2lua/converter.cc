@@ -55,22 +55,22 @@ void Converter::reset_state()
 }
 
 
-bool Converter::convert_line(std::stringstream& data, std::ofstream& out)
+bool Converter::convert_line(std::stringstream& data)
 {
     if ( state )
-        return state->convert(data, out);
+        return state->convert(data);
     return false;
 }
 
-bool Converter::open_table(std::string name)
+bool Converter::open_table(std::string table_name)
 {
     Table *t;
 
     // if no open tables, create a top-level table
     if (open_tables.size() > 0)
-        t = open_tables.top()->open_table(name);
+        t = open_tables.top()->open_table(table_name);
     else
-        t = data.add_table(name);
+        t = data.add_table(table_name);
 
     open_tables.push(t);
     return true;
@@ -83,13 +83,13 @@ bool Converter::close_table()
 }
 
 
-bool Converter::add_option_to_table(std::string name, std::string val)
+bool Converter::add_option_to_table(std::string option_name, std::string val)
 {
     Table *t = open_tables.top();
 
     if(t)
     {
-        t->add_option(name, val);
+        t->add_option(option_name, val);
         return true;
     }
     else
@@ -100,13 +100,13 @@ bool Converter::add_option_to_table(std::string name, std::string val)
 }
 
 
-bool Converter::add_option_to_table(std::string name, int val)
+bool Converter::add_option_to_table(std::string option_name, int val)
 {
     Table *t = open_tables.top();
 
     if(t)
     {
-        t->add_option(name, val);
+        t->add_option(option_name, val);
         return true;
     }
     else
@@ -116,13 +116,13 @@ bool Converter::add_option_to_table(std::string name, int val)
     }
 }
 
-bool Converter::add_option_to_table(std::string name, bool val)
+bool Converter::add_option_to_table(std::string option_name, bool val)
 {
     Table *t = open_tables.top();
 
     if(t)
     {
-        t->add_option(name, val);
+        t->add_option(option_name, val);
         return true;
     }
     else
@@ -132,6 +132,28 @@ bool Converter::add_option_to_table(std::string name, bool val)
     }
 }
 
+void Converter::add_comment_to_table(std::string error_string)
+{
+    if (open_tables.size() > 0)
+        open_tables.top()->add_comment(error_string);
+    else
+        log_error(error_string);
+}
+
+void Converter::add_comment_to_file(std::string comment)
+{
+    data.add_comment(comment);
+}
+
+void Converter::add_comment_to_file(std::string comment, std::stringstream& stream)
+{
+    int pos = stream.tellg();
+    std::ostringstream oss;
+    oss << stream.rdbuf();
+    comment += oss.str();
+    data.add_comment(comment);
+    stream.seekg(pos);
+}
 
 /*******************************
  *******  PRINTING FOO *********
@@ -139,8 +161,9 @@ bool Converter::add_option_to_table(std::string name, bool val)
 
 void Converter::log_error(std::string error_string)
 {
-    std::cout << "ERROR: Failed to convert:\t" << std::endl;
-    std::cout << "\t\t" << error_string << std::endl << std::endl;
+    data.add_error_comment(error_string);
+//    std::cout << "ERROR: Failed to convert:\t" << std::endl;
+//    std::cout << "\t\t" << error_string << std::endl << std::endl;
 }
 
 void Converter::print_line(std::stringstream& in)

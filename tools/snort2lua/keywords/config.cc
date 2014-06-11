@@ -37,13 +37,13 @@ class Config : public ConversionState
 public:
     Config(Converter* cv)  : ConversionState(cv) {};
     virtual ~Config() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
+    virtual bool convert(std::stringstream& data);
 };
 
 } // namespace
 
 
-bool Config::convert(std::stringstream& data_stream, std::ofstream&)
+bool Config::convert(std::stringstream& data_stream)
 {
 #if 0
     std::string keyword;

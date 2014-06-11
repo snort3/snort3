@@ -39,7 +39,7 @@ public:
     Converter();
     virtual ~Converter() {};
     void reset_state();
-    bool convert_line(std::stringstream& data, std::ofstream& out);
+    bool convert_line(std::stringstream& data);
     void set_state(ConversionState* c);
     
     bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
@@ -50,7 +50,10 @@ public:
     bool add_option_to_table(std::string name, std::string val);
     bool add_option_to_table(std::string name, int val);
     bool add_option_to_table(std::string name, bool val);
+    void add_comment_to_table(std::string comment);
 
+    void add_comment_to_file(std::string comment);
+    void add_comment_to_file(std::string comment, std::stringstream& stream);
     void log_error(std::string);
 
     void print_line(std::stringstream& in);

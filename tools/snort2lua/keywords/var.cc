@@ -35,7 +35,7 @@ class Var : public ConversionState
 public:
     Var(Converter* cv);
     virtual ~Var() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
+    virtual bool convert(std::stringstream& data);
 
 private:
     bool first_line;
@@ -52,7 +52,7 @@ Var::Var(Converter* cv) : ConversionState(cv)
     is_port_list = false;
 }
 
-bool Var::convert(std::stringstream& data_stream, std::ofstream& out)
+bool Var::convert(std::stringstream& data_stream)
 {
     std::string ports;//    converter->print_line(data_stream);
 

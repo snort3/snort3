@@ -32,7 +32,7 @@ class InitState : public ConversionState
 public:
     InitState(Converter* cv);
     virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
+    virtual bool convert(std::stringstream& data);
 
 };
 

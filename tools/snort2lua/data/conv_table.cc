@@ -24,7 +24,7 @@
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
     for( auto *t : vec)
-        if(name.compare(t->get_name()))
+        if(!name.compare(t->get_name()))
             return t;
 
     return nullptr;
@@ -111,6 +111,12 @@ bool Table::has_option(std::string name, std::string val)
     return false;
 }
 
+
+void Table::add_comment(std::string comment)
+{
+    comments.push_back(std::string(comment, 0, 77) + "...");
+}
+
 std::ostream &operator<<( std::ostream& out, const Table &t)
 {
     std::string whitespace = "";
@@ -120,6 +126,9 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
 
     out << whitespace << t.name << " = " << std::endl;
     out << whitespace << '{' << std::endl;
+
+    for(std::string s : t.comments)
+        out << whitespace << "    --" << s << std::endl;
 
     for (Option* o : t.options)
         out << (*o) << std::endl;

@@ -35,13 +35,13 @@ class Include : public ConversionState
 public:
     Include(Converter* cv)  : ConversionState(cv) {};
     virtual ~Include() {};
-    virtual bool convert(std::stringstream& data, std::ofstream&);
+    virtual bool convert(std::stringstream& data);
 };
 
 } // namespace
 
 
-bool Include::convert(std::stringstream& data_stream, std::ofstream&)
+bool Include::convert(std::stringstream& data_stream)
 {
 #if 0
     std::string keyword;
