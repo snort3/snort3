@@ -22,8 +22,7 @@ teredo.h \
 token_ring.h \
 udp.h \
 vlan.h \
-wlan.h \
-packet.h
+wlan.h
 
 libprotocols_a_SOURCES = \
 layer.cc
