@@ -274,10 +274,9 @@ bool ContentOption::operator==(const IpsOption& ips) const
 // private helpers
 //-------------------------------------------------------------------------
 
-static PatternMatchData* NewNode()
+static PatternMatchData* new_pmd()
 {
     PatternMatchData *pmd = (PatternMatchData*)SnortAlloc(sizeof(PatternMatchData));
-    pmd->last_check = (PmdLastCheck*)SnortAlloc(get_instance_max() * sizeof(*pmd->last_check));
 
     /* Set any non-zero default values here. */
     pmd->offset_var = BYTE_EXTRACT_NO_VAR;
@@ -286,6 +285,12 @@ static PatternMatchData* NewNode()
     pmd->within_var = BYTE_EXTRACT_NO_VAR;
 
     return pmd;
+}
+
+static void update_pmd(PatternMatchData* pmd)
+{
+    if ( pmd->exception_flag )
+        pmd->last_check = (PmdLastCheck*)SnortAlloc(get_instance_max() * sizeof(*pmd->last_check));
 }
 
 static int HasFastPattern(OptTreeNode *otn, int list_type)
@@ -565,6 +570,7 @@ bool is_unbounded(void* pv)
  * return  0 for not found
  * return -1 for error (search out of bounds)
  */
+// FIXIT PMD
 static int uniSearchReal(const char *data, int dlen, PatternMatchData *pmd, int nocase)
 {
     /*
@@ -988,6 +994,7 @@ int PatternMatchAdjustRelativeOffsets(
 
     return 1;
 }
+// FIXIT PMD
 
 //-------------------------------------------------------------------------
 // suboption handlers
@@ -1659,7 +1666,7 @@ static IpsOption* content_ctor(
     int opt_len = 0;
     char *next_opt;
 
-    pmd = NewNode();
+    pmd = new_pmd();
 
     if (!data)
         ParseError("No content pattern specified!");
@@ -1669,6 +1676,7 @@ static IpsOption* content_ctor(
 
     opt_data = PayloadExtractParameter(data_dup, &opt_len);
     content_parse(opt_data, pmd);
+    update_pmd(pmd);
     next_opt = opt_data + opt_len;
 
     pmd->http_buffer = HTTP_BUFFER_NONE;

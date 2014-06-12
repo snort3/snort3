@@ -580,7 +580,7 @@ int detection_option_node_evaluate(
                      * option via the content option processing since only not
                      * contents that are not relative in any way will have this
                      * flag set */
-                    if (dup_content_option_data.exception_flag)
+                    if (dup_content_option_data.last_check)
                     {
                         PmdLastCheck* last_check =
                             dup_content_option_data.last_check + get_instance_id();

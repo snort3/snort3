@@ -87,10 +87,11 @@ typedef struct _PatternMatchData
 
     int* replace_depth;      /* >=0 is offset to start of replace */
 
-    // FIXIT last_check REALLY shouldn't be in the PMD
+    // FIXIT wasting some memory here:
     // - this is not used by content option logic directly
     // - and only used on current eval (not across packets)
-    // so wasting a lot memory
+    // (partly mitigated by only allocating if excpetion_flag is set)
+    //
     /* Set if fast pattern matcher found a content in the packet,
        but the rule option specifies a negated content. Only
        applies to negative contents that are not relative */

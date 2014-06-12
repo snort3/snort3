@@ -506,12 +506,15 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
         PMX *neg_pmx = (PMX *)ncl->pmx;
         PatternMatchData *neg_pmd = (PatternMatchData *)neg_pmx->PatternMatchData;
 
+        assert(neg_pmd->last_check);
+
         PmdLastCheck* last_check =
             neg_pmd->last_check + get_instance_id();
 
         last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
         last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
-        last_check->packet_number = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
+        last_check->packet_number = (rule_eval_pkt_count
+            + (PacketManager::get_rebuilt_packet_count()));
         last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
     }
 

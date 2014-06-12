@@ -1,3 +1,6 @@
+88
+-- tweaked allocation of pmd.last_check
+
 87
 -- renamed api function typedefs to camel case for consistency and to match
    style guide
