@@ -5,8 +5,7 @@ src \
 lua \
 doc \
 etc \
-tools \
-examples
+tools
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
