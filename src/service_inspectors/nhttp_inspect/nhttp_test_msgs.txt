@@ -203,12 +203,12 @@ HTTP/1.1 444 O\n K1234567890\r\n\r\n
 @2021
 @break
 @response
-HTTP/1.1 46 status code too short\r\n\r\n
+HTTP/1.1 46 status code too short\r\n
 
 @2022
 @break
 @response
-HTTP/1.1 2001 status code too \x31 long\r\n\r\n
+HTTP/1.1 2001 status code too \x31 long\r\n
 
 @2023
 @break

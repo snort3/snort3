@@ -58,6 +58,9 @@ void NHttpMsgSection::loadSection(const uint8_t *buffer, const uint16_t bufsize,
     infractions = sessionData->infractions;
     sourceId = sessionData->sourceId;
     tcpClose = sessionData->tcpClose;
+    versionId = sessionData->versionId[sourceId];
+    methodId = sessionData->methodId;
+    statusCodeNum = sessionData->statusCodeNum;
 
     scratchPad.reinit();
 }

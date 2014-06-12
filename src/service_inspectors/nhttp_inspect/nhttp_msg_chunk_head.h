@@ -41,7 +41,7 @@ public:
     void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
     void initSection();
     void analyze();
-    void printMessage(FILE *output) const;
+    void printSection(FILE *output) const;
     void genEvents();
     void updateFlow() const;
     void legacyClients() const;

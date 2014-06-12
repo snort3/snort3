@@ -43,7 +43,7 @@ public:
     virtual ~NHttpMsgSection() = default;
     virtual void initSection() = 0;
     virtual void analyze() = 0;
-    virtual void printMessage(FILE *output) const = 0;
+    virtual void printSection(FILE *output) const = 0;
     virtual void genEvents() = 0;
     virtual void updateFlow() const = 0;
     virtual void legacyClients() const = 0;
@@ -70,11 +70,14 @@ protected:
     ScratchPad scratchPad {derivedBuf, NHttpEnums::MAXOCTETS/8};
 
     // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the
+    // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the
     // scratchPad (normalized pieces).
     uint64_t infractions;
     bool tcpClose;
     NHttpEnums::SourceId sourceId;
+    NHttpEnums::VersionId versionId;
+    NHttpEnums::MethodId methodId;
+    int32_t statusCodeNum;
 };
 
 #endif
