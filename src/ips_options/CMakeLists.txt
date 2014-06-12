@@ -15,7 +15,6 @@ SET( PLUGIN_LIST
     ips_flags.cc
     ips_fragbits.cc
     ips_fragoffset.cc
-    ips_ftpbounce.cc
     ips_icmp_id.cc
     ips_icmp_seq.cc
     ips_icode.cc
@@ -89,7 +88,6 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_flags ips_options ips_flags.cc)
     add_shared_library(ips_fragbits ips_options ips_fragbits.cc)
     add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc)
-    add_shared_library(ips_ftpbounce ips_options ips_ftpbounce.cc)
     add_shared_library(ips_icode ips_options ips_icode.cc)
     add_shared_library(ips_id ips_options ips_id.cc)
     add_shared_library(ips_ipopts ips_options ips_ipopts.cc)
