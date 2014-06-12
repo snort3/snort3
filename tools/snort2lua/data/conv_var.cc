@@ -31,10 +31,18 @@ static inline bool var_exists(std::vector<std::string> vec, std::string name)
     return true;
 }
 
-Variable::Variable(std::string n)
+Variable::Variable(std::string name, int depth)
 {
-    name = n;
-    count = n.size();
+    this->name = name;
+    this->count = name.size();
+    this->depth = depth;
+}
+
+Variable::Variable(std::string name)
+{
+    this->name = name;
+    this->count = name.size();
+    this->depth = 0;
 }
 
 Variable::~Variable(){};
@@ -61,13 +69,17 @@ bool Variable::add_value(std::string elem)
 std::ostream& operator<<( std::ostream& out, const Variable &var)
 {
     int length = 0;
+    std::string whitespace;
 
-    out << var.name << " = ";
+    for(int i = 0; i < var.depth; i++)
+        whitespace += "    ";
+
+    out << whitespace << var.name << " = ";
 
     for(auto v : var.vars)
     {
         if ( 0 < length && length + v.size() > var.max_line_length )
-            out << std::endl << '\t';
+            out << std::endl << whitespace << "    ";
 
         length += v.size();
         out << " " << v << " ..";
@@ -83,7 +95,7 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
         for (auto s : var.strs)
         {
             if ( 0 < length && length + s.size() > var.max_line_length )
-                out << std::endl << '\t';
+                out << std::endl << whitespace << "    ";
 
             length += s.size();
             out << " " << s;
@@ -92,21 +104,23 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
     }
     else
     {
-        out << std::endl << "[[ ";
+        out << std::endl <<  whitespace << "[[" << std::endl;
+        out << whitespace << "    ";
+        length = 4 + whitespace.size();
 
         for (auto s : var.strs)
         {
             if ( 0 < length && length + s.size() > var.max_line_length )
             {
-                out << std::endl << '\t';
-                length = 0;
+                out << std::endl << whitespace << "    ";
+                length = 4 + whitespace.size();
             }
 
             length += s.size();
             out << " " << s;
         }
 
-        out << std::endl << " ]]";
+        out << std::endl << whitespace << "]]";
     }
 
     return out;

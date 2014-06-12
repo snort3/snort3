@@ -29,6 +29,7 @@
 class Variable
 {
 public:
+    Variable(std::string name, int depth);
     Variable(std::string name);
     virtual ~Variable();
 
@@ -43,6 +44,7 @@ private:
     std::vector<std::string> strs;
     int count;
     const int max_line_length = 70; // leave room for additional text
+    int depth;
 };
 
 

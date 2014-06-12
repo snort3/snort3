@@ -54,15 +54,25 @@ public:
 
     // add a string option to the table --> table = { name = 'val', }
     bool add_option_to_table(std::string name, std::string val);
+
     // add an int option to the table --> table = { name = val, }
     bool add_option_to_table(std::string name, int val);
+    
     // add a bool option to the table --> table = { name = true|false, }
     bool add_option_to_table(std::string name, bool val);
-    // add a commment to be printed in the table --> table = { -- comment \n }
+    
+    // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
+    bool add_list_to_table(std::string list_name, std::string next_elem);
+    
+    // add a commment to be printed in the table --> table = { -- comment \n ... }
     void add_comment_to_table(std::string comment);
 
     void add_comment_to_file(std::string comment);
     void add_comment_to_file(std::string comment, std::stringstream& stream);
+    // attach a comment about a deprecated option to a file or table
+    void add_deprecated_comment(std::string dep_var);
+    // deprecated option ... use the new option instead
+    void add_deprecated_comment(std::string dep_var, std::string new_var);
     void log_error(std::string);
 
     void print_line(std::stringstream& in);

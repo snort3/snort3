@@ -101,49 +101,57 @@ bool Converter::close_table()
 
 bool Converter::add_option_to_table(std::string option_name, std::string val)
 {
-    Table *t = open_tables.top();
-
-    if(t)
-    {
-        t->add_option(option_name, val);
-        return true;
-    }
-    else
+    if(open_tables.size() == 0)
     {
         log_error("Must open table before adding an option!!");
         return false;
     }
+
+    Table *t = open_tables.top();
+    t->add_option(option_name, val);
+    return true;
 }
 
 
 bool Converter::add_option_to_table(std::string option_name, int val)
 {
-    Table *t = open_tables.top();
-
-    if(t)
-    {
-        t->add_option(option_name, val);
-        return true;
-    }
-    else
+    if(open_tables.size() == 0)
     {
         log_error("Must open table before adding an option!!");
         return false;
     }
+
+    Table *t = open_tables.top();
+    t->add_option(option_name, val);
+    return true;
 }
 
 bool Converter::add_option_to_table(std::string option_name, bool val)
+{
+    if(open_tables.size() == 0)
+    {
+        log_error("Must open table before adding an option!!");
+        return false;
+    }
+
+    Table *t = open_tables.top();
+    t->add_option(option_name, val);
+    return true;
+}
+
+
+bool Converter::add_list_to_table(std::string list_name, std::string next_elem)
 {
     Table *t = open_tables.top();
 
     if(t)
     {
-        t->add_option(option_name, val);
+        t->add_list(list_name, next_elem);
         return true;
     }
     else
     {
-        log_error("Must open table before adding an option!!");
+        log_error("Must open table before adding a list!!");
         return false;
     }
 }
@@ -169,6 +177,27 @@ void Converter::add_comment_to_file(std::string comment, std::stringstream& stre
     comment += oss.str();
     data.add_comment(comment);
     stream.seekg(pos);
+}
+
+void Converter::add_deprecated_comment(std::string dep_var)
+{
+    std::string error_string = "option " + dep_var + " has been deprecated.";
+
+    if (open_tables.size() > 0)
+        add_comment_to_table(error_string);
+    else
+        add_comment_to_file(error_string);
+}
+
+void Converter::add_deprecated_comment(std::string dep_var, std::string new_var)
+{
+    std::string error_string = "option " + dep_var + " has been deprecated" 
+            + " ... using " + new_var + " instead";
+
+    if (open_tables.size() > 0)
+        add_comment_to_table(error_string);
+    else
+        add_comment_to_file(error_string);
 }
 
 /*******************************

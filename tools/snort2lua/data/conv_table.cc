@@ -103,6 +103,18 @@ bool Table::add_option(std::string name, std::string value)
     return true;
 }
 
+
+bool Table::add_list(std::string name, std::string next_elem)
+{
+    for (auto l : lists)
+        if(l->get_name() == name)
+            return l->add_value(next_elem);
+
+    Variable *var = new Variable(name, depth + 1);
+    lists.push_back(var);
+    return var->add_value(next_elem);
+}
+
 bool Table::has_option(Option opt)
 {
     for (Option* o : options)
@@ -133,7 +145,10 @@ bool Table::has_option(std::string name, std::string val)
 
 void Table::add_comment(std::string comment)
 {
-    comments.push_back(std::string(comment, 0, 77) + "...");
+    if (comment.size() > 80)
+        comment.insert(76, "...");
+
+    comments.push_back(std::string(comment, 0, 77));
 }
 
 std::ostream &operator<<( std::ostream& out, const Table &t)
@@ -152,6 +167,9 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
 
     for (Option* o : t.options)
         out << (*o) << ',' << std::endl;
+
+    for (Variable* v : t.lists)
+        out << (*v) << ',' << std::endl;
 
     for (Table* t : t.tables)
         out << (*t) << ',' << std::endl;

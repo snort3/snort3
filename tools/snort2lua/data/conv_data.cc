@@ -57,12 +57,8 @@ ConversionData::~ConversionData()
 bool ConversionData::add_variable(std::string name, std::string value)
 {
     for (auto v : vars)
-    {
         if(v->get_name() == name)
-        {
             return v->add_value(value);
-        }
-    }
 
     Variable *var = new Variable(name);
     vars.push_back(var);

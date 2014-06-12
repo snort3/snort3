@@ -28,6 +28,7 @@
 #include <iostream>
 
 #include "conv_option.h"
+#include "conv_var.h"
 
 class Table
 {
@@ -42,6 +43,7 @@ public:
     bool add_option(std::string, int val);
     bool add_option(std::string, bool val);
     bool add_option(std::string, std::string val);
+    bool add_list(std::string, std::string next_elem);
     void add_comment(std::string comment);
 
     friend std::ostream &operator<<( std::ostream&, const Table &);
@@ -52,6 +54,7 @@ private:
     std::vector<Table*> tables;
     std::vector<Option*> options;
     std::vector<std::string> comments;
+    std::vector<Variable*> lists;
 
 
     bool has_option(std::string name, int val);
