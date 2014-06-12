@@ -65,6 +65,9 @@ Table* Table::open_table(std::string name)
 
 bool Table::add_option(std::string name, int value)
 {
+    if (has_option(name, value))
+        return true;
+
     Option *o = new Option(name, value, depth + 1);
     options.push_back(o);
     return true;
@@ -72,6 +75,9 @@ bool Table::add_option(std::string name, int value)
 
 bool Table::add_option(std::string name, bool value)
 {
+    if (has_option(name, value))
+        return true;
+
     Option *o = new Option(name, value, depth + 1);
     options.push_back(o);
     return true;
@@ -79,36 +85,39 @@ bool Table::add_option(std::string name, bool value)
 
 bool Table::add_option(std::string name, std::string value)
 {
+    if (has_option(name, value))
+        return true;
+
     Option *o = new Option(name, value, depth + 1);
     options.push_back(o);
     return true;
 }
 
-bool Table::has_option(std::string name, int val)
+bool Table::has_option(Option opt)
 {
-    Option new_opt(name, val, depth + 1);
-
     for (Option* o : options)
-        if ( *o == new_opt)
+        if ( (*o) == opt)
             return true;
 
     return false;
+}
+
+bool Table::has_option(std::string name, int val)
+{
+    Option opt(name, val, depth + 1);
+    return has_option(opt);
 }
 
 bool Table::has_option(std::string name, bool val)
 {
-    return false;
+    Option opt(name, val, depth + 1);
+    return has_option(opt);
 }
 
 bool Table::has_option(std::string name, std::string val)
 {
-    Option new_opt(name, val, depth+1);
-
-    for (Option* o : options)
-        if ( *o == new_opt)
-            return true;
-
-    return false;
+    Option opt(name, val, depth + 1);
+    return has_option(opt);
 }
 
 

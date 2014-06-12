@@ -23,13 +23,21 @@
 
 
 extern const ConvertMap *httpinspect_map;
+extern const ConvertMap *normalizer_icmp4_map;
+extern const ConvertMap *normalizer_icmp6_map;
+extern const ConvertMap *normalizer_ip4_map;
+extern const ConvertMap *normalizer_ip6_map;
+extern const ConvertMap *normalizer_tcp_map;
 extern const ConvertMap *smtp_map;
-
-
 
 const std::vector<const ConvertMap*> preprocessor_api = 
 {
     httpinspect_map,
+    normalizer_icmp4_map,
+    normalizer_icmp6_map,
+    normalizer_ip4_map,
+    normalizer_ip6_map,
+    normalizer_tcp_map,
     smtp_map,
 //    nullptr,
 };

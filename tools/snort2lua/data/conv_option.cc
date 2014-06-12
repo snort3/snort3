@@ -75,7 +75,9 @@ std::ostream &operator<<( std::ostream& out, const Option &o)
 
 bool operator==(const Option& lhs, const Option& rhs)
 {
-    return !(lhs.name.compare(rhs.name));
+    return ((!lhs.name.compare(rhs.name)) && 
+        lhs.type == rhs.type &&
+        (!lhs.value.compare(rhs.value)));
 }
 
 bool operator!=(const Option& lhs, const Option& rhs)

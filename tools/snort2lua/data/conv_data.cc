@@ -32,7 +32,7 @@
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
     for( auto *t : vec)
-        if(name.compare(t->get_name()))
+        if(!name.compare(t->get_name()))
             return t;
 
     return nullptr;
