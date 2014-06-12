@@ -44,7 +44,7 @@ struct PmdLastCheck
 
 typedef struct _PatternMatchData
 {
-    // FIXIT below must be thread local of the cloned instance must be
+    // FIXIT below must be thread local or the cloned instance must be
     // thread local because they are updated :(
     int offset;             /* pattern search start offset */
     int depth;              /* pattern search depth */
@@ -52,7 +52,7 @@ typedef struct _PatternMatchData
     int distance;           /* offset to start from based on last match */
     unsigned within;           /* this pattern must be found
                                within X bytes of last match*/
-    // FIXIT above must be thread local of the cloned instance must be
+    // FIXIT above must be thread local or the cloned instance must be
     // thread local because they are updated :(
 
     int8_t offset_var;      /* byte_extract variable indices for offset, */

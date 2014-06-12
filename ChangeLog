@@ -2,6 +2,7 @@
 -- renamed api function typedefs to camel case for consistency and to match
    style guide
 -- fixed some Xcode static analysis issues
+-- removed http_encode rule option
 
 86
 -- pulled in tom's latest nhttp_inpsect code

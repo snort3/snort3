@@ -585,6 +585,7 @@ static int uniSearchReal(const char *data, int dlen, PatternMatchData *pmd, int 
     }
 
     /* Get byte_extract variables */
+    // FIXIT these need to be thread local
     if (pmd->offset_var >= 0 && pmd->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
         GetByteExtractValue(&extract_offset, pmd->offset_var);
