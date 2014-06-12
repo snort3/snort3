@@ -119,7 +119,7 @@ struct InspectApi
     uint16_t proto_bits;
 
     const char* service;   // nullptr when type != IT_SERVICE
-    //ServiceTag tags;       // null terminated list of tags
+    //ServiceTag tags;     // null terminated list of tags
 
     // list of thread local detection buffers captured by inspector
     const char* contents;  // space separated, eg "foo_a foo_b foo_c" 
