@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -97,7 +97,7 @@ void NHttpMsgSection::printMessageTitle(FILE *output, const char *title) const {
 }
 
 void NHttpMsgSection::printMessageWrapup(FILE *output) const {
-    fprintf(output, "Infractions: %lx, TCP Close: %s\n", infractions, tcpClose ? "True" : "False");
+    fprintf(output, "Infractions: %" PRIx64 ", TCP Close: %s\n", infractions, tcpClose ? "True" : "False");
     fprintf(output, "Interface to old clients. http_mask = %x.\n", http_mask);
     for (int i=0; i < HTTP_BUFFER_MAX; i++) {
         if ((1 << i) & http_mask) printInterval(output, http_buffer_name[i], http_buffer[i].buf, http_buffer[i].length);

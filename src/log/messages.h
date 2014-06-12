@@ -26,7 +26,7 @@
 # include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "sfip/sf_ipvar.h"
 #include "sfip/ipv6_port.h"
 

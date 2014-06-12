@@ -23,7 +23,7 @@
 #define ICMP4_H
 
 #include <cstdint>
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "protocols/ipv4.h"
 
 namespace icmp4

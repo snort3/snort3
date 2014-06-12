@@ -16,6 +16,7 @@ gre.h \
 layer.h \
 layer.cc \
 mpls.h \
+packet.h \
 protocol_ids.h \
 tcp.h \
 teredo.h \

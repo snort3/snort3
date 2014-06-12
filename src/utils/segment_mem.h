@@ -25,7 +25,7 @@
 #define SEGMENT_MEM_H
 
 #include <stdlib.h>
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 typedef uint32_t MEM_OFFSET;
 

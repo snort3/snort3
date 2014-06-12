@@ -22,7 +22,7 @@
 #ifndef TCP_SPLITTER_H
 #define TCP_SPLITTER_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 
 class Flow;

@@ -23,7 +23,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/icmp4.h"
@@ -202,27 +202,24 @@ private:
 // to be useful, these must be explicit (*_V0, *_V1, ...)
 #define CDAPI_PLUGIN_V0 0
 
-typedef Codec* (*cd_new_f)(Module*);
-typedef void (*cd_del_f)(Codec *);
-typedef void (*cd_aux_f)();
-typedef void (*cd_dlt_f)(std::vector<int>&v);
-typedef void (*cd_prot_id_f)(std::vector<uint16_t>&);
-
+typedef Codec* (*CdNewFunc)(Module*);
+typedef void (*CdDelFunc)(Codec *);
+typedef void (*CdAuxFunc)();
 
 struct CodecApi
 {
     BaseApi base;
 
     // these may be nullptr
-    cd_aux_f ginit;  // initialize global plugin data
-    cd_aux_f gterm;  // clean-up pinit()
+    CdAuxFunc ginit;  // initialize global plugin data
+    CdAuxFunc gterm;  // clean-up pinit()
 
-    cd_aux_f tinit;  // initialize thread-local plugin data
-    cd_aux_f tterm;  // clean-up tinit()
+    CdAuxFunc tinit;  // initialize thread-local plugin data
+    CdAuxFunc tterm;  // clean-up tinit()
 
     // these must be set
-    cd_new_f ctor;   // get eval optional instance data
-    cd_del_f dtor;   // clean up instance data
+    CdNewFunc ctor;   // get eval optional instance data
+    CdDelFunc dtor;   // clean up instance data
 };
 
 #endif

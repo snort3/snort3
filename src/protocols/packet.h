@@ -46,7 +46,7 @@ extern "C" {
 #include <sfbpf_dlt.h>
 }
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "sfip/ipv6_port.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_iph.h"

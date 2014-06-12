@@ -291,7 +291,7 @@ const char* IpsManager::get_so_options(const char* soid)
     return s ? s + strlen(opt) : nullptr;
 }
 
-so_eval_f IpsManager::get_so_eval(const char* soid, const char* so, void** data)
+SoEvalFunc IpsManager::get_so_eval(const char* soid, const char* so, void** data)
 {
     const SoApi* api = get_so_api(soid);
 

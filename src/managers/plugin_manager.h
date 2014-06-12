@@ -41,7 +41,8 @@
 class Module;
 struct SnortConfig;
 
-class PluginManager {
+class PluginManager
+{
 public:
     // plugin methods
     static void load_plugins(const char* lib_paths);
