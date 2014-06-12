@@ -32,11 +32,12 @@
 class Table
 {
 public:
-    Table(std::string name);
+    Table(int depth);
     Table(std::string name, int depth);
     virtual ~Table();
 
     inline std::string get_name(){ return name; };
+    Table* open_table();
     Table* open_table(std::string);
     bool add_option(std::string, int val);
     bool add_option(std::string, bool val);

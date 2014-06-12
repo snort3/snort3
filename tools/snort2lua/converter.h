@@ -45,11 +45,20 @@ public:
     bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
     friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.data; }
 
-    bool open_table(std::string);
+    // open a table that does not contain a name --> NOT 'name = {...}' ONLY {...})
+    bool open_table();
+    // open a  named tabled --> 'name = {...}')
+    bool open_table(std::string name);
+    // close the current table.  go to previous table level
     bool close_table();
+
+    // add a string option to the table --> table = { name = 'val', }
     bool add_option_to_table(std::string name, std::string val);
+    // add an int option to the table --> table = { name = val, }
     bool add_option_to_table(std::string name, int val);
+    // add a bool option to the table --> table = { name = true|false, }
     bool add_option_to_table(std::string name, bool val);
+    // add a commment to be printed in the table --> table = { -- comment \n }
     void add_comment_to_table(std::string comment);
 
     void add_comment_to_file(std::string comment);

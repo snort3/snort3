@@ -62,12 +62,12 @@ std::ostream &operator<<( std::ostream& out, const Option &o)
     switch(o.type)
     {
         case Option::OptionType::STRING:
-            out << '\'' << o.value << "',";
+            out << '\'' << o.value << '\'';
             break;
 
         case Option::OptionType::BOOL:
         case Option::OptionType::INT:
-            out << o.value << ',';
+            out << o.value;
             break;
     }
     return out;

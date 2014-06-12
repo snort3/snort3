@@ -23,6 +23,9 @@
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
+    if(name.empty())
+        return nullptr;
+
     for( auto *t : vec)
         if(!name.compare(t->get_name()))
             return t;
@@ -30,10 +33,10 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
     return nullptr;
 }
 
-Table::Table(std::string name)
+Table::Table(int depth)
 {
-    this->name = name;
-    depth = 0;
+    this->name = "";
+    this->depth = depth;
 }
 
 Table::Table(std::string name, int depth)
@@ -49,6 +52,13 @@ Table::~Table()
 
     for( Option* o : options)
         delete o;
+}
+
+Table* Table::open_table()
+{
+    Table *t = new Table(depth + 1);
+    tables.push_back(t);
+    return t;
 }
 
 Table* Table::open_table(std::string name)
@@ -133,23 +143,24 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
     for(int i = 0; i < t.depth; i++)
         whitespace += "    ";
 
-    out << whitespace << t.name << " = " << std::endl;
+    if(!t.name.empty())
+        out << whitespace << t.name << " = " << std::endl;
     out << whitespace << '{' << std::endl;
 
     for(std::string s : t.comments)
         out << whitespace << "    --" << s << std::endl;
 
     for (Option* o : t.options)
-        out << (*o) << std::endl;
+        out << (*o) << ',' << std::endl;
 
     for (Table* t : t.tables)
-        out << (*t) << std::endl;
+        out << (*t) << ',' << std::endl;
 
     // don't add a comma if the depth is zero
     if(t.depth == 0)
         out << "}";
     else
-        out << whitespace << "},";
+        out << whitespace << "}";
     
     return out;
 }

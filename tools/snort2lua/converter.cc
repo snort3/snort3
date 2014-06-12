@@ -62,6 +62,22 @@ bool Converter::convert_line(std::stringstream& data)
     return false;
 }
 
+bool Converter::open_table()
+{
+    // if no open tables, create a top-level table
+    if (open_tables.size() > 0)
+    {
+        Table *t = open_tables.top()->open_table();
+        open_tables.push(t);
+        return true;
+    }
+    else
+    {
+        log_error("A nameless table must be nested!!");
+        return false;
+    }
+}
+
 bool Converter::open_table(std::string table_name)
 {
     Table *t;

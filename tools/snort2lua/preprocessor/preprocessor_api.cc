@@ -22,6 +22,8 @@
 #include "preprocessor/preprocessor_api.h"
 
 
+extern const ConvertMap *arpspoof_map;
+extern const ConvertMap *arpspoof_host_map;
 extern const ConvertMap *httpinspect_map;
 extern const ConvertMap *normalizer_icmp4_map;
 extern const ConvertMap *normalizer_icmp6_map;
@@ -32,6 +34,8 @@ extern const ConvertMap *smtp_map;
 
 const std::vector<const ConvertMap*> preprocessor_api = 
 {
+    arpspoof_map,
+    arpspoof_host_map,
     httpinspect_map,
     normalizer_icmp4_map,
     normalizer_icmp6_map,
