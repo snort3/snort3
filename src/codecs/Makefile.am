@@ -11,7 +11,8 @@ sf_protocols.h
 libcodecs_a_SOURCES = \
 codec_api.cc \
 codec_api.h \
-decode_module.h
+decode_module.h \
+sf_protocols.h
 
 libcodec_utils_a_SOURCES = \
 codec_events.cc \

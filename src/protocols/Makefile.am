@@ -14,6 +14,7 @@ ipv4.h \
 ipv6.h \
 gre.h \
 layer.h \
+layer.cc \
 mpls.h \
 packet.h \
 protocol_ids.h \
