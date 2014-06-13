@@ -185,7 +185,10 @@ void EventManager::instantiate(
     Output* p = get_out(name);
 
     if ( !mod || !p )
+    {
         FatalError("unknown logger %s\n", name);
+        return;
+    }
 
     // emulate a config like name = { }
     mod->begin(name, 0, sc);

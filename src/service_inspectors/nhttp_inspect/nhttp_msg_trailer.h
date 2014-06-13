@@ -35,34 +35,13 @@
 // NHttpMsgTrailer class
 //-------------------------------------------------------------------------
 
-class NHttpMsgTrailer: public NHttpMsgSharedHead {
+class NHttpMsgTrailer: public NHttpMsgHeadShared {
 public:
     NHttpMsgTrailer() {};
-    void printMessage(FILE *output) const;
+    void printSection(FILE *output) const;
     void genEvents();
     void updateFlow() const;
-
-private:
-    void parseWhole();
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

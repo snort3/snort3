@@ -16,14 +16,14 @@ gre.h \
 layer.h \
 layer.cc \
 mpls.h \
+packet.h \
 protocol_ids.h \
 tcp.h \
 teredo.h \
 token_ring.h \
 udp.h \
 vlan.h \
-wlan.h \
-packet.h
+wlan.h
 
 libprotocols_a_SOURCES = \
 layer.cc

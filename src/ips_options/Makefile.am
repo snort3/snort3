@@ -16,7 +16,6 @@ ips_dsize.cc \
 ips_flags.cc \
 ips_fragbits.cc \
 ips_fragoffset.cc \
-ips_ftpbounce.cc \
 ips_icmp_id.cc \
 ips_icmp_seq.cc \
 ips_icode.cc \
@@ -109,11 +108,6 @@ optlib_LTLIBRARIES += libips_fragoffset.la
 libips_fragoffset_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_fragoffset_la_LDFLAGS = -export-dynamic -shared
 libips_fragoffset_la_SOURCES = ips_fragoffset.cc
-
-optlib_LTLIBRARIES += libips_ftpbounce.la
-libips_ftpbounce_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_ftpbounce_la_LDFLAGS = -export-dynamic -shared
-libips_ftpbounce_la_SOURCES = ips_ftpbounce.cc
 
 optlib_LTLIBRARIES += libips_icmp_id.la
 libips_icmp_id_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

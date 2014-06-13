@@ -42,6 +42,8 @@
 
 using namespace NHttpEnums;
 
+THREAD_LOCAL NHttpMsgRequest* NHttpInspect::msgRequest;
+THREAD_LOCAL NHttpMsgStatus* NHttpInspect::msgStatus;
 THREAD_LOCAL NHttpMsgHeader* NHttpInspect::msgHead;
 THREAD_LOCAL NHttpMsgBody* NHttpInspect::msgBody;
 THREAD_LOCAL NHttpMsgChunkHead* NHttpInspect::msgChunkHead;
@@ -105,6 +107,8 @@ void NHttpInspect::eval (Packet* p)
 
     if (!NHttpTestInput::test_mode) {
         switch (sessionData->sectionType) {
+          case SEC_REQUEST: msgSect = msgRequest; break;
+          case SEC_STATUS: msgSect = msgStatus; break;
           case SEC_HEADER: msgSect = msgHead; break;
           case SEC_BODY: msgSect = msgBody; break;
           case SEC_CHUNKHEAD: msgSect = msgChunkHead; break;
@@ -120,6 +124,8 @@ void NHttpInspect::eval (Packet* p)
         uint16_t testLength;
         if ((testLength = NHttpTestInput::testInput->toEval(&testBuffer, testNumber)) > 0) {
             switch (sessionData->sectionType) {
+              case SEC_REQUEST: msgSect = msgRequest; break;
+              case SEC_STATUS: msgSect = msgStatus; break;
               case SEC_HEADER: msgSect = msgHead; break;
               case SEC_BODY: msgSect = msgBody; break;
               case SEC_CHUNKHEAD: msgSect = msgChunkHead; break;
@@ -141,7 +147,7 @@ void NHttpInspect::eval (Packet* p)
     msgSect->genEvents();
     msgSect->legacyClients();
 
-    if (!NHttpTestInput::test_mode) msgSect->printMessage(stdout);
+    if (!NHttpTestInput::test_mode) msgSect->printSection(stdout);
     else {
         if (testNumber != fileTestNumber) {
             if (testOut) fclose (testOut);
@@ -150,7 +156,7 @@ void NHttpInspect::eval (Packet* p)
             snprintf(fileName, sizeof(fileName), "%s%" PRIi64 ".txt", testOutputPrefix, testNumber);
             if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
         }
-        msgSect->printMessage(testOut);
+        msgSect->printSection(testOut);
     }
 }
 

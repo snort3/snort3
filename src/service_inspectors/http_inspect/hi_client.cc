@@ -2370,7 +2370,6 @@ static inline const u_char *hi_client_extract_header(
         if (iRet == URI_END)
         {
             header_ptr->header.uri = version_string.uri_end + 1;
-            offset = (u_char *)p;
         }
         else
         {
@@ -2743,7 +2742,7 @@ int StatelessInspection(Packet *p, HI_SESSION *session, HttpsessionData *hsd, in
         //
         // uri_ptr.end points to end of URI & HTTP version identifier.
         if (hi_util_in_bounds(start, end, uri_ptr.uri_end + 1))
-            ptr = hi_client_extract_header(session, ServerConf, &header_ptr, uri_ptr.uri_end+1, end, hsd, stream_ins);
+            hi_client_extract_header(session, ServerConf, &header_ptr, uri_ptr.uri_end+1, end, hsd, stream_ins);
 
         if (header_ptr.header.uri)
         {

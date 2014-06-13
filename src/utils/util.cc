@@ -436,7 +436,6 @@ void InitGroups(int user_id, int group_id)
 
             if (initgroups(username, group_id) < 0)
             {
-                free(username);
                 FatalError("Can not initgroups(%s,%d)", username, group_id);
             }
 

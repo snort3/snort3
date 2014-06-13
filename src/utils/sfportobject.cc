@@ -560,7 +560,10 @@ int PortObjectAddPortObject(PortObject * podst, PortObject * posrc, int *errflag
     {
         PortObjectItem *poi = PortObjectItemDup(po);
         if((ret = PortObjectAddItem(podst, poi, errflag)) != 0)
+        {
+            PortObjectItemFree(poi);
             return ret;
+        }
     }
 
     return ret;
@@ -690,7 +693,10 @@ PortObject * PortObjectDupPorts( PortObject * po )
       {
         poinew = PortObjectItemDup( poi );
         if(!poinew)
-              return 0;
+        {
+            free(ponew);
+            return NULL;
+        }
         PortObjectAddItem( ponew, poinew, NULL );
       }
     }
@@ -3375,7 +3381,6 @@ static PortObject *_POParsePort(POParser *pop)
         return NULL;
     }
 
-    hport = MAXPORTS-1;
     pop->token[0]=0;
 
     /* The string in pop should only be of the form <port> or <port>:<port> */

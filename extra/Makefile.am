@@ -1,6 +1,9 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 EXTRA_DIST = \
-README \
-snort_examples-1.0.tar.gz
+README
 
+SUBDIRS = \
+src
+
+AM_CXXFLAGS = @AM_CXXFLAGS@

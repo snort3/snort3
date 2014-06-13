@@ -4,6 +4,12 @@ set (FILE_LIST
     nhttp_inspect.h
     nhttp_msg_section.cc
     nhttp_msg_section.h
+    nhttp_msg_start.cc
+    nhttp_msg_start.h
+    nhttp_msg_request.cc
+    nhttp_msg_request.h
+    nhttp_msg_status.cc
+    nhttp_msg_status.h
     nhttp_msg_head_shared.cc
     nhttp_msg_head_shared.h
     nhttp_msg_head.cc

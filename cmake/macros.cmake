@@ -48,7 +48,6 @@ macro (add_shared_library libname install_path)
     list(LENGTH sources num_extra_args)
     if (${num_extra_args} GREATER 0)
         string (REPLACE ";" " " sources "${sources}")
-        message ("libname:installdir:source = ${libname} :\t\t${install_path} : ${sources}")
 
         add_library (${libname} SHARED ${ARGN} )
         set_target_properties ( ${libname} 
@@ -59,7 +58,7 @@ macro (add_shared_library libname install_path)
         #INSTALL INTO STATIC LIBRARY
         
         install (TARGETS ${libname}
-            LIBRARY DESTINATION "${CMAKE_PROJECT_NAME}/{install_path}"
+            LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
         )
     
     else (${num_extra_args} GREATER 0)

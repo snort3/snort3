@@ -1,6 +1,5 @@
 
 
-
 set (SEARCH_ENGINE_INCLUDES
     pat_stats.h
 )
@@ -53,9 +52,6 @@ set (SEARCH_ENGINE_SOURCES
     str_search.h
 )
 
-
-
-
 # FIXIT ideally don't include pat_stats.cc separately
 
 if ( STATIC_SEARCH_ENGINES )
@@ -70,6 +66,12 @@ if ( STATIC_SEARCH_ENGINES )
     )
 
 else ( STATIC_SEARCH_ENGINES)
+    add_library(search_engines STATIC
+        ${SEARCH_ENGINE_SOURCES}
+        ${SEARCH_ENGINE_INCLUDES}
+        pat_stats.cc
+    )
+
     add_shared_library(acsmx search_engines ${ACSMX_SOURCES} pat_stats.cc)
     add_shared_library(acsmx2 search_engines ${ACSMX2_SOURCES} acsmx2_api.cc pat_stats.cc)
     add_shared_library(nfa search_engines ${BNFA_SOURCES} bnfa_api.cc pat_stats.cc)

@@ -46,7 +46,6 @@ extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_flags;
 extern const BaseApi* ips_fragbits;
 extern const BaseApi* ips_fragoffset;
-extern const BaseApi* ips_ftpbounce;
 extern const BaseApi* ips_icmp_id;
 extern const BaseApi* ips_icmp_seq;
 extern const BaseApi* ips_icode;
@@ -89,7 +88,6 @@ const BaseApi* ips_options[] =
     ips_flags,
     ips_fragbits,
     ips_fragoffset,
-    ips_ftpbounce,
     ips_icmp_id,
     ips_icmp_seq,
     ips_icode,

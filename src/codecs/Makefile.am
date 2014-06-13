@@ -1,7 +1,12 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
+x_includedir = $(pkgincludedir)/codecs
+
 noinst_LIBRARIES = libcodecs.a
 noinst_LIBRARIES += libcodec_utils.a
+
+x_include_HEADERS = \
+sf_protocols.h
 
 libcodecs_a_SOURCES = \
 codec_api.cc \
@@ -16,7 +21,6 @@ ipv6_util.h \
 ipv6_util.cc  \
 checksum.h \
 checksum.cc
-
 
 SUBDIRS = \
 ip \

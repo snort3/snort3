@@ -21,7 +21,7 @@
 #ifndef INSPECTOR_H
 #define INSPECTOR_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "framework/base_api.h"
 
@@ -36,6 +36,13 @@ typedef int16_t ServiceId;
 // this is the version of the api the plugins are using
 // to be useful, these must be explicit (*_V0, *_V1, ...)
 #define INSAPI_PLUGIN_V0 0
+
+struct ServiceTag
+{
+    const uint8_t* tag;
+    unsigned len;
+    bool to_server;
+};
 
 //-------------------------------------------------------------------------
 // api for class
@@ -98,8 +105,8 @@ enum InspectorType
     IT_MAX
 };
 
-typedef Inspector* (*InspectCtor)(Module*);
-typedef void (*InspectDtorFunc)(Inspector*);
+typedef Inspector* (*InspectNew)(Module*);
+typedef void (*InspectDelFunc)(Inspector*);
 typedef void (*InspectFunc)();
 typedef class Session* (*InspectSsnFunc)(class Flow*);
 typedef struct ContentBuffer* (*InspectBufFunc)(unsigned);
@@ -110,7 +117,9 @@ struct InspectApi
     BaseApi base;
     InspectorType type;
     uint16_t proto_bits;
+
     const char* service;   // nullptr when type != IT_SERVICE
+    //ServiceTag tags;     // null terminated list of tags
 
     // list of thread local detection buffers captured by inspector
     const char* contents;  // space separated, eg "foo_a foo_b foo_c" 
@@ -118,8 +127,8 @@ struct InspectApi
     // main thread funcs - parse time data only
     InspectFunc init;      // allocate process static data
     InspectFunc term;      // release init() data
-    InspectCtor ctor;      // instantiate inspector from Module data
-    InspectDtorFunc dtor;  // release inspector instance
+    InspectNew ctor;       // instantiate inspector from Module data
+    InspectDelFunc dtor;   // release inspector instance
 
     // packet thread funcs - runtime data only
     InspectFunc pinit;     // plugin thread local allocation

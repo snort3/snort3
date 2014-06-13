@@ -35,60 +35,13 @@
 // NHttpMsgHeader class
 //-------------------------------------------------------------------------
 
-class NHttpMsgHeader: public NHttpMsgSharedHead {
+class NHttpMsgHeader: public NHttpMsgHeadShared {
 public:
     NHttpMsgHeader() {};
-    void initSection();
-    void analyze();
-    void printMessage(FILE *output) const;
+    void printSection(FILE *output) const;
     void genEvents();
     void updateFlow() const;
-    void legacyClients() const;
-
-private:
-    // Code conversion tables are for turning token strings into enums.
-    static const StrCode methodList[];
-
-    // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
-    // things into a standard form without changing the underlying format.
-    void parseWhole();
-    void parseRequestLine();
-    void parseStatusLine();
-    void deriveStatusCodeNum();
-    void deriveVersionId();
-    void deriveMethodId();
-
-    // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
-    // scratchPad (normalized pieces).
-    field startLine;
-    field version;
-    NHttpEnums::VersionId versionId;
-    field method;
-    NHttpEnums::MethodId methodId;
-    field uri;
-    field statusCode;
-    int32_t statusCodeNum;
-    field reasonPhrase;
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -29,7 +29,7 @@
 class SoOption : public IpsOption
 {
 public:
-    SoOption(const char*, const char*, so_eval_f f, void* v);
+    SoOption(const char*, const char*, SoEvalFunc f, void* v);
     ~SoOption();
 
     uint32_t hash() const;
@@ -41,12 +41,12 @@ public:
 private:
     const char* soid;
     const char* so;
-    so_eval_f func;
+    SoEvalFunc func;
     void* data;
 };
 
 SoOption::SoOption(
-    const char* id, const char* s, so_eval_f f, void* v)
+    const char* id, const char* s, SoEvalFunc f, void* v)
     : IpsOption("so")
 {
     soid = id;
@@ -83,8 +83,24 @@ bool SoOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-static IpsOption* so_ctor(SnortConfig*, char*, OptTreeNode*);
-static void so_dtor(IpsOption*);
+static IpsOption* so_ctor(
+    SnortConfig*, char* args, OptTreeNode* otn)
+{
+    void* data;
+    SoEvalFunc func = IpsManager::get_so_eval(otn->soid, args, &data);
+
+    if ( !func )
+    {
+        ParseError("Can't link so:%s", args);
+        return nullptr;
+    }
+    return new SoOption(otn->soid, args, func, data);
+}
+
+static void so_dtor(IpsOption* p)
+{
+    delete p;
+}
 
 static const IpsApi so_api =
 {
@@ -106,25 +122,6 @@ static const IpsApi so_api =
     so_dtor,
     nullptr
 };
-
-static IpsOption* so_ctor(
-    SnortConfig*, char* args, OptTreeNode* otn)
-{
-    void* data;
-    so_eval_f func = IpsManager::get_so_eval(otn->soid, args, &data);
-
-    if ( !func )
-    {
-        ParseError("Can't link so:%s", args);
-        return nullptr;
-    }
-    return new SoOption(otn->soid, args, func, data);
-}
-
-static void so_dtor(IpsOption* p)
-{
-    delete p;
-}
 
 const BaseApi* ips_so = &so_api.base;
 

@@ -40,7 +40,7 @@
 #include <arpa/inet.h>
 
 #include "sfip/sfip_t.h"
-#include "snort_debug.h"
+#include "main/snort_debug.h"
 
 /* define SFIP_ROBUST to check pointers passed into the sfip libs.
  * Robustification should not be enabled if the client code is trustworthy.

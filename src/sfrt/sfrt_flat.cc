@@ -455,8 +455,6 @@ GENERIC sfrt_flat_dir8x_lookup(void *adr, table_flat_t* table)
             else
                 return NULL;
         }
-        subtable = (dir_sub_table_flat_t *)(&base[entry[index].value]);
-
     }
     else if (ip->family == AF_INET6)
     {

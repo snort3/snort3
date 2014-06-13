@@ -321,7 +321,8 @@ static int ip_parse(char *ipstr, sfip_t *ip, char *not_flag, PORTSET *portset, c
 
     /* Just to get the IP string out of the way */
     char* lasts = nullptr;
-    port_str = strtok_r(ipstr, " \t", &lasts);
+    strtok_r(ipstr, " \t", &lasts);
+    
     /* Is either the port after the 1st space, or NULL */
     port_str = strtok_r(NULL, " \t", &lasts);
 

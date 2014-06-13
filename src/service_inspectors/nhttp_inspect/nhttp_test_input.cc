@@ -29,9 +29,9 @@
 
 #include <assert.h>
 #include <string.h>
-#include <sys/types.h>
 #include <stdio.h>
 #include <stdexcept>
+#include <stdint.h>
 
 #include "nhttp_enum.h"
 #include "nhttp_test_input.h"

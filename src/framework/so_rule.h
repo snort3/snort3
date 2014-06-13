@@ -21,7 +21,7 @@
 #ifndef SO_RULE_H
 #define SO_RULE_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "framework/ips_option.h"
 
@@ -41,10 +41,10 @@ struct Packet;
 // ctor(<key>) returns eval func and optional data
 // data is freed with dtor(data)
 
-typedef int (*so_eval_f)(void*, Packet*);
-typedef so_eval_f (*so_new_f)(const char* key, void**);
-typedef void (*so_del_f)(void*);
-typedef void (*so_aux_f)();
+typedef int (*SoEvalFunc)(void*, Packet*);
+typedef SoEvalFunc (*SoNewFunc)(const char* key, void**);
+typedef void (*SoDelFunc)(void*);
+typedef void (*SoAuxFunc)();
 
 struct SoApi
 {
@@ -54,15 +54,15 @@ struct SoApi
     unsigned length;
 
     // these may be nullptr
-    so_aux_f pinit;  // initialize global plugin data
-    so_aux_f pterm;  // clean-up pinit()
+    SoAuxFunc pinit;  // initialize global plugin data
+    SoAuxFunc pterm;  // clean-up pinit()
 
-    so_aux_f tinit;  // initialize thread-local plugin data
-    so_aux_f tterm;  // clean-up tinit()
+    SoAuxFunc tinit;  // initialize thread-local plugin data
+    SoAuxFunc tterm;  // clean-up tinit()
 
     // these must be set
-    so_new_f ctor;   // get eval with optional instance data
-    so_del_f dtor;   // clean up instance data
+    SoNewFunc ctor;   // get eval with optional instance data
+    SoDelFunc dtor;   // clean up instance data
 };
 
 #endif

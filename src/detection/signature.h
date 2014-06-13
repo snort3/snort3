@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #include "hash/sfghash.h"
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 struct SnortConfig;
 struct OptTreeNode;

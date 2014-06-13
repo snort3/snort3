@@ -1,0 +1,134 @@
+/****************************************************************************
+ *
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2003-2013 Sourcefire, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 2 as
+ * published by the Free Software Foundation.  You may not use, modify or
+ * distribute this program under any other version of the GNU General
+ * Public License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ ****************************************************************************/
+
+//
+//  @author     Tom Peters <thopeter@cisco.com>
+//
+//  @brief      NHttpMsgStatus class analyzes HTTP status line
+//
+
+
+#include <assert.h>
+#include <string.h>
+#include <sys/types.h>
+#include <stdio.h>
+
+#include "snort.h"
+#include "nhttp_enum.h"
+#include "nhttp_msg_status.h"
+
+using namespace NHttpEnums;
+
+// Reinitialize everything derived in preparation for analyzing a new message
+void NHttpMsgStatus::initSection() {
+    NHttpMsgStart::initSection();
+    statusCode.length = STAT_NOTCOMPUTE;
+    reasonPhrase.length = STAT_NOTCOMPUTE;
+}
+
+// All the header processing that is done for every message (i.e. not just-in-time) is done here.
+void NHttpMsgStatus::analyze() {
+    NHttpMsgStart::analyze();
+    deriveStatusCodeNum();
+}
+
+void NHttpMsgStatus::parseStartLine() {
+    // Eventually we may need to cater to certain format errors, but for now exact match or treat as error.
+    // HTTP/X.Y<SP>###<SP><text>
+    if ((startLine.length < 13) || (startLine.start[8] != ' ') || (startLine.start[12] != ' ')) {
+        infractions |= INF_BADSTATLINE;
+        return;
+    }
+    version.start = startLine.start;
+    version.length = 8;
+    statusCode.start = startLine.start + 9;
+    statusCode.length = 3;
+    reasonPhrase.start = startLine.start + 13;
+    reasonPhrase.length = startLine.length - 13;
+    for (int32_t k = 0; k < reasonPhrase.length; k++) {
+        if ((reasonPhrase.start[k] <= 31) || (reasonPhrase.start[k] >= 127)) {
+            // Illegal character in reason phrase
+            infractions |= INF_BADPHRASE;
+            break;
+        }
+    }
+    assert (startLine.length == version.length + statusCode.length + reasonPhrase.length + 2);
+}
+
+void NHttpMsgStatus::deriveStatusCodeNum() {
+    if (statusCode.length != 3) {
+        statusCodeNum = STAT_PROBLEMATIC;
+        return;
+    }
+    if ((statusCode.start[0] < '0') || (statusCode.start[0] > '9') || (statusCode.start[1] < '0') || (statusCode.start[1] > '9') ||
+       (statusCode.start[2] < '0') || (statusCode.start[2] > '9')) {
+        infractions |= INF_BADSTATCODE;
+        statusCodeNum = STAT_PROBLEMATIC;
+        return;
+    }
+    statusCodeNum = (statusCode.start[0] - '0') * 100 + (statusCode.start[1] - '0') * 10 + (statusCode.start[2] - '0');
+    if ((statusCodeNum < 100) || (statusCodeNum > 599)) {
+        infractions |= INF_BADSTATCODE;
+    }
+}
+
+void NHttpMsgStatus::genEvents() {
+    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+}
+
+void NHttpMsgStatus::printSection(FILE *output) const {
+    NHttpMsgSection::printMessageTitle(output, "status line");
+    if (versionId != VERS__NOTCOMPUTE) fprintf(output, "Version Id: %d\n", versionId);
+    if (statusCodeNum != STAT_NOTCOMPUTE) fprintf(output, "Status Code Num: %d\n", statusCodeNum);
+    printInterval(output, "Reason Phrase", reasonPhrase.start, reasonPhrase.length);
+    NHttpMsgSection::printMessageWrapup(output);
+}
+
+void NHttpMsgStatus::updateFlow() const {
+    const uint64_t disasterMask = INF_BADSTATLINE;
+
+    // The following logic to determine body type is by no means the last word on this topic.
+    if (tcpClose) {
+        sessionData->typeExpected[sourceId] = SEC_CLOSED;
+        sessionData->halfReset(sourceId);
+    }
+    else if (infractions & disasterMask) {
+        sessionData->typeExpected[sourceId] = SEC_ABORT;
+        sessionData->halfReset(sourceId);
+    }
+    else {
+        sessionData->typeExpected[sourceId] = SEC_HEADER;
+        sessionData->versionId[sourceId] = versionId;
+        sessionData->statusCodeNum = statusCodeNum;
+    }
+}
+
+// Legacy support function. Puts message fields into the buffers used by old Snort.
+void NHttpMsgStatus::legacyClients() const {
+    if (statusCode.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_CODE, statusCode.start, (unsigned)statusCode.length);
+    if (reasonPhrase.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reasonPhrase.start, (unsigned)reasonPhrase.length);
+}
+
+
+
+
+

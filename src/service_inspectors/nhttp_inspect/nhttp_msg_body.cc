@@ -65,7 +65,7 @@ void NHttpMsgBody::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgBody::printMessage(FILE *output) const {
+void NHttpMsgBody::printSection(FILE *output) const {
     NHttpMsgSection::printMessageTitle(output, "body");
     fprintf(output, "Expected data length %" PRIi64 ", sections seen %" PRIi64 ", octets seen %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
     printInterval(output, "Data", data.start, data.length);
@@ -84,7 +84,7 @@ void NHttpMsgBody::updateFlow() const {
     }
     else {
         // End of message
-        sessionData->typeExpected[sourceId] = SEC_HEADER;
+        sessionData->typeExpected[sourceId] = (sourceId == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
         sessionData->halfReset(sourceId);
     }
 }
