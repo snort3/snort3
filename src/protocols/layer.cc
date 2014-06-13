@@ -29,7 +29,7 @@ static inline const uint8_t *find_layer(const Layer *lyr,
                                 uint8_t num_layers,
                                 uint16_t prot_id)
 {
-    for(int i = 0; i < num_layers ; i--)
+    for(int i = num_layers - 1; i >= 0 ; i--)
     {
         if (lyr->prot_id == prot_id)
             return lyr->start;
@@ -43,7 +43,7 @@ static inline const uint8_t *find_layer(const Layer *lyr,
                                 uint16_t prot_id1,
                                 uint16_t prot_id2)
 {
-    for(int i = 0; i < num_layers; i--)
+    for(int i = num_layers - 1; i >= 0; i--)
     {
         if (lyr->prot_id == prot_id1 ||
             lyr->prot_id == prot_id2)
