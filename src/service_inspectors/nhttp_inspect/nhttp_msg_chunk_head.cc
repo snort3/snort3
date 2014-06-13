@@ -111,7 +111,7 @@ void NHttpMsgChunkHead::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgChunkHead::printMessage(FILE *output) const {
+void NHttpMsgChunkHead::printSection(FILE *output) const {
     NHttpMsgSection::printMessageTitle(output, "chunk header");
     fprintf(output, "Chunk size: %" PRIi64 "\n", dataLength);
     printInterval(output, "Chunk extensions", chunkExtensions.start, chunkExtensions.length);

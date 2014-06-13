@@ -23,35 +23,48 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgChunkBody class declaration
+//  @brief      NHttpMsgRequest class declaration
 //
 
-#ifndef NHTTP_MSG_CHUNK_BODY_H
-#define NHTTP_MSG_CHUNK_BODY_H
+#ifndef NHTTP_MSG_REQUEST_H
+#define NHTTP_MSG_REQUEST_H
 
-#include "nhttp_msg_body.h"
+#include "nhttp_str_to_code.h"
+#include "nhttp_msg_start.h"
 
 //-------------------------------------------------------------------------
-// NHttpMsgChunkBody class
+// NHttpMsgRequest class
 //-------------------------------------------------------------------------
 
-class NHttpMsgChunkBody : public NHttpMsgBody {
+class NHttpMsgRequest: public NHttpMsgStart {
 public:
-    NHttpMsgChunkBody() {};
-    void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
+    NHttpMsgRequest() {};
     void initSection();
     void analyze();
     void printSection(FILE *output) const;
     void genEvents();
     void updateFlow() const;
+    void legacyClients() const;
 
 private:
-    int64_t numChunks;
-    int64_t chunkSections;
-    int64_t chunkOctets;
+    // Code conversion tables are for turning token strings into enums.
+    static const StrCode methodList[];
+
+    // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
+    // things into a standard form without changing the underlying format.
+    void parseStartLine();
+    void deriveMethodId();
+
+    // This is where all the derived values, extracted message parts, and normalized values are.
+    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
+    // scratchPad (normalized pieces).
+    field method;
+    field uri;
 };
 
 #endif
+
+
 
 
 

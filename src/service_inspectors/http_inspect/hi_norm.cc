@@ -304,11 +304,6 @@ static int PercentDecode(HI_SESSION *session, const u_char *start,
     }
 
     /*
-    **  Initialize the normalization byte
-    */
-    iNorm = 0;
-
-    /*
     **  hex values
     */
     if(valid_lookup[(u_char)iByte] < 0)

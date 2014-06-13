@@ -90,6 +90,7 @@ Snort++ differs from Snort in the following ways:
 * sid == 0 not allowed
 * soid is now a non-metadata option
 * removed uricontent ips rule option
+* deleted unused http_encode option
 
 === Output
 

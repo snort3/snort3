@@ -249,7 +249,7 @@ int ByteJumpOption::eval(Packet *p)
 
     /* save off whatever our ending pointer is */
     end_ptr = start_ptr + dsize;
-    base_ptr = start_ptr;
+    //base_ptr = start_ptr;
 
     /* Get values from byte_extract variables, if present. */
     if (bjd->offset_var >= 0 && bjd->offset_var < NUM_BYTE_EXTRACT_VARS)

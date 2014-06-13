@@ -81,7 +81,7 @@ void NHttpMsgChunkBody::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgChunkBody::printMessage(FILE *output) const {
+void NHttpMsgChunkBody::printSection(FILE *output) const {
     NHttpMsgSection::printMessageTitle(output, "chunk body");
     fprintf(output, "Expected chunk length %" PRIi64 ", cumulative sections %" PRIi64 ", cumulative octets %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
     fprintf(output, "cumulative chunk sections %" PRIi64 ", cumulative chunk octets %" PRIi64 "\n", chunkSections, chunkOctets);

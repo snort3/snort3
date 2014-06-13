@@ -289,7 +289,7 @@ int ByteTestOption::eval(Packet *p)
         start_ptr = (char *) p->data;
     }
 
-    base_ptr = start_ptr;
+    //base_ptr = start_ptr;
     end_ptr = start_ptr + dsize;
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,

@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgSharedHead virtual class rolls up all the common elements of header processing and trailer processing.
+//  @brief      NHttpMsgHeadShared virtual class rolls up all the common elements of header processing and trailer processing.
 //
 
 #include <assert.h>
@@ -38,7 +38,7 @@
 using namespace NHttpEnums;
 
 // Reinitialize everything derived in preparation for analyzing a new message
-void NHttpMsgSharedHead::initSection() {
+void NHttpMsgHeadShared::initSection() {
     headers.length = STAT_NOTCOMPUTE;
     numHeaders = STAT_NOTCOMPUTE;
     for(int k = 0; k < MAXHEADERS; k++) {
@@ -53,7 +53,7 @@ void NHttpMsgSharedHead::initSection() {
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
-void NHttpMsgSharedHead::analyze() {
+void NHttpMsgHeadShared::analyze() {
     parseWhole();
     parseHeaderBlock();
     parseHeaderLines();
@@ -66,8 +66,48 @@ void NHttpMsgSharedHead::analyze() {
     }
 }
 
+void NHttpMsgHeadShared::parseWhole() {
+    // Normal case with header fields
+    if (!tcpClose && (length >= 5)) {
+        headers.start = msgText;
+        headers.length = length - 4;
+        assert(!memcmp(msgText+length-4, "\r\n\r\n", 4));
+    }
+    // Normal case no header fields
+    else if (!tcpClose) {
+        headers.length = STAT_NOTPRESENT;
+        assert((length == 2) && !memcmp(msgText, "\r\n", 2));
+    }
+    // Normal case with header fields and TCP connection close
+    else if ((length >= 5) && !memcmp(msgText+length-4, "\r\n\r\n", 4)) {
+        headers.start = msgText;
+        headers.length = length - 4;
+    }
+    // Normal case no header fields and TCP connection close
+    else if ((length == 2) && !memcmp(msgText, "\r\n", 2)) {
+        headers.length = STAT_NOTPRESENT;
+    }
+    // Abnormal cases truncated by TCP connection close
+    else {
+        infractions |= INF_TRUNCATED;
+        // Lone <CR>
+        if ((length == 1) && (msgText[0] == '\r')) {
+            headers.length = STAT_NOTPRESENT;
+        }
+        // Truncation occurred somewhere in the header fields
+        else {
+            headers.start = msgText;
+            headers.length = length;
+            // When present, remove partial <CR><LF><CR><LF> sequence from the end
+            if ((length >= 4) && !memcmp(msgText+length-3, "\r\n\r", 3)) headers.length -= 3;
+            else if ((length >= 3) && !memcmp(msgText+length-2, "\r\n", 2)) headers.length -= 2;
+            else if ((length >= 2) && (msgText[length-1] == '\r')) headers.length -= 1;
+        }
+    }
+}
+
 // Divide up the block of header fields into individual header field lines.
-void NHttpMsgSharedHead::parseHeaderBlock() {
+void NHttpMsgHeadShared::parseHeaderBlock() {
     if (headers.length <= 0) return;
     int32_t bytesused = 0;
     numHeaders = 0;
@@ -85,7 +125,7 @@ void NHttpMsgSharedHead::parseHeaderBlock() {
 }
 
 // Divide header field lines into field name and field value
-void NHttpMsgSharedHead::parseHeaderLines() {
+void NHttpMsgHeadShared::parseHeaderLines() {
     int colon;
     for (int k=0; k < numHeaders; k++) {
         for (colon=0; colon < headerLine[k].length; colon++) {
@@ -103,7 +143,7 @@ void NHttpMsgSharedHead::parseHeaderLines() {
     }
 }
 
-void NHttpMsgSharedHead::deriveHeaderNameId(int index) {
+void NHttpMsgHeadShared::deriveHeaderNameId(int index) {
      if (headerName[index].length <= 0) return;
     // Normalize header field name to lower case for matching purposes
     uint8_t *lowerName;
@@ -116,12 +156,12 @@ void NHttpMsgSharedHead::deriveHeaderNameId(int index) {
     headerNameId[index] = (HeaderId) strToCode(lowerName, lowerLength, headerList);
 }
 
-void NHttpMsgSharedHead::genEvents() {
+void NHttpMsgHeadShared::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgSharedHead::legacyClients() const {
+void NHttpMsgHeadShared::legacyClients() const {
     ClearHttpBuffers();
 
     if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, headers.start, (unsigned)headers.length);
@@ -140,7 +180,7 @@ void NHttpMsgSharedHead::legacyClients() const {
        SetHttpBuffer(HTTP_BUFFER_COOKIE, headerValueNorm[HEAD_SET_COOKIE].start, (unsigned)headerValueNorm[HEAD_SET_COOKIE].length);
 }
 
-void NHttpMsgSharedHead::printMessageHead(FILE *output) const {
+void NHttpMsgHeadShared::printHeaders(FILE *output) const {
     char titleBuf[100];
     if (numHeaders != STAT_NOTCOMPUTE) fprintf(output, "Number of headers: %d\n", numHeaders);
     for (int j=0; j < numHeaders && j < 200; j++) {
