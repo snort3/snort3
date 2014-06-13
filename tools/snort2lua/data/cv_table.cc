@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// conv_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cv_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "data/conv_table.h"
+#include "data/cv_table.h"
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {

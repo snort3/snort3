@@ -19,19 +19,9 @@
  */
 // output_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "output/output_api.h"
-
-
-extern const ConvertMap *portvar_map;
-extern const ConvertMap *ipvar_map;
-extern const ConvertMap *var_map;
-extern const ConvertMap *output_map;
+#include "output_states/output_api.h"
 
 const std::vector<const ConvertMap*> output_api = 
 {
-    portvar_map,
-    ipvar_map,
-    var_map,
-    output_map,
-//    nullptr,
+    nullptr,
 };

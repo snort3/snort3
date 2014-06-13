@@ -27,20 +27,21 @@
 #include "converter.h"
 #include "snort2lua_util.h"
 
+
 namespace {
 
-class Suppress : public ConversionState
+class Config : public ConversionState
 {
 public:
-    Suppress(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Suppress() {};
+    Config(Converter* cv)  : ConversionState(cv) {};
+    virtual ~Config() {};
     virtual bool convert(std::stringstream& data);
 };
 
 } // namespace
 
 
-bool Suppress::convert(std::stringstream& data_stream)
+bool Config::convert(std::stringstream& data_stream)
 {
 #if 0
     std::string keyword;
@@ -59,7 +60,7 @@ bool Suppress::convert(std::stringstream& data_stream)
 #endif
 
     data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;    
+    return true;
 }
 
 /**************************
@@ -68,13 +69,13 @@ bool Suppress::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new Suppress(cv);
+    return new Config(cv);
 }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap keyword_config = 
 {
-    "suppress",
+    "config",
     ctor,
 };
 
-const ConvertMap* preprocessor_map = &keyword_preprocessor;
+const ConvertMap* config_map = &keyword_config;

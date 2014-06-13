@@ -25,7 +25,7 @@
 #include "conversion_state.h"
 #include "converter.h"
 #include "snort2lua_util.h"
-#include "output/output_api.h"
+#include "output_states/output_api.h"
 
 
 

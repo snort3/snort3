@@ -25,7 +25,7 @@
 #include <iostream>
 #include "init_state.h"
 #include "snort2lua_util.h"
-#include "keywords/keywords_api.h"
+#include "keyword_states/keywords_api.h"
 
 
 InitState::InitState(Converter* cv) : ConversionState(cv) {}
@@ -40,10 +40,8 @@ bool InitState::convert(std::stringstream& data_stream)
 
         if( keyword.front() == '#')
         {
+            std::cout << "THIS SHOULD NEVER OCCUR" << std::endl;
             keyword.erase(keyword.begin());
-//            std::ostringstream oss;
-//            oss << data_stream.rdbuf();
-//            out << "--" << keyword << oss.str() << std::endl;
             converter->add_comment_to_file(keyword, data_stream);
             data_stream.setstate(std::basic_ios<char>::eofbit);
             return true;

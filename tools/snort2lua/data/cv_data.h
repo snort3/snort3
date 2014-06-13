@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// conversion_data.h author Josh Rosenbaum <jorosenba@cisco.com>
+// cv_data.h author Josh Rosenbaum <jorosenba@cisco.com>
 
 #ifndef CONV_DATA_H
 #define CONV_DATA_H
@@ -26,8 +26,8 @@
 #include <iostream>
 #include <vector>
 
-#include "data/conv_table.h"
-#include "data/conv_var.h"
+#include "data/cv_table.h"
+#include "data/cv_var.h"
 
 class ConversionData
 {
