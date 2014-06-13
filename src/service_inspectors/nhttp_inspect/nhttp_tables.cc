@@ -45,7 +45,8 @@
 using namespace NHttpEnums;
 
 const StrCode NHttpMsgRequest::methodList[] =
-   {{ METH_GET,                "GET"},
+   {{ METH_OPTIONS,            "OPTIONS"},
+    { METH_GET,                "GET"},
     { METH_HEAD,               "HEAD"},
     { METH_POST,               "POST"},
     { METH_PUT,                "PUT"},
@@ -92,6 +93,14 @@ const StrCode NHttpMsgRequest::methodList[] =
     { METH_UNBIND,             "UNBIND"},
     { METH_UNLINK,             "UNLINK"},
     { METH_UPDATEREDIRECTREF,  "UPDATEREDIRECTREF"},
+    { 0,                       nullptr} };
+
+const StrCode NHttpMsgRequest::schemeList[] =
+   {{ SCH_HTTP,                "http"},
+    { SCH_HTTPS,               "https"},
+    { SCH_FTP,                 "ftp"},
+    { SCH_GOPHER,              "gopher"},
+    { SCH_FILE,                "file"},
     { 0,                       nullptr} };
 
 const StrCode NHttpMsgHeadShared::headerList[] =

@@ -144,7 +144,7 @@ void NHttpMsgHeadShared::parseHeaderLines() {
 }
 
 void NHttpMsgHeadShared::deriveHeaderNameId(int index) {
-     if (headerName[index].length <= 0) return;
+    if (headerName[index].length <= 0) return;
     // Normalize header field name to lower case for matching purposes
     uint8_t *lowerName;
     if ((lowerName = scratchPad.request(headerName[index].length)) == nullptr) {
@@ -152,8 +152,8 @@ void NHttpMsgHeadShared::deriveHeaderNameId(int index) {
         headerNameId[index] = HEAD__INSUFMEMORY;
         return;
     }
-    int32_t lowerLength = norm2Lower(headerName[index].start, headerName[index].length, lowerName, infractions, nullptr);
-    headerNameId[index] = (HeaderId) strToCode(lowerName, lowerLength, headerList);
+    norm2Lower(headerName[index].start, headerName[index].length, lowerName, infractions, nullptr);
+    headerNameId[index] = (HeaderId) strToCode(lowerName, headerName[index].length, headerList);
 }
 
 void NHttpMsgHeadShared::genEvents() {
