@@ -37,7 +37,7 @@
 #define PACKAGE_VERSION @PACKAGE_VERSION@
 
 /* Version number of package */
-#define VERSION "${SNORT_VERSION_MAJOR}.${SNORT_VERSION_MINOR}.${SNORT_VERSION_BUILD}"
+#define VERSION "@VERSION@"
 
 
 

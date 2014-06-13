@@ -57,61 +57,65 @@ set (EXTRA_DIST ${HTML_DOCS} ${PDF_DOCS})
 #                                                                             #
 ###############################################################################
 
-# copy built files into this directory
-set (TARGET_DIR ${CMAKE_BINARY_DIR})
-foreach (file ${BUILT_SOURCES};version.txt)
-    set(input ${CMAKE_BINARY_DIR}/${file})
-    set (output ${CMAKE_CURRENT_BINARY_DIR}/${file})
 
-    # create this custom file name so it can be used below. Doesn't actually
-    # build the file itself.
-    add_custom_command(
-        OUTPUT ${input}
-        COMMAND ${CMAKE_COMMAND}
-            -E touch_nocreate ${input}
+if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
+
+    # copy built files into this directory
+    set (TARGET_DIR ${CMAKE_BINARY_DIR})
+    foreach (file ${BUILT_SOURCES};version.txt)
+        set(input ${CMAKE_BINARY_DIR}/${file})
+        set (output ${CMAKE_CURRENT_BINARY_DIR}/${file})
+
+        # create this custom file name so it can be used below. Doesn't actually
+        # build the file itself.
+        add_custom_command(
+            OUTPUT ${input}
+            COMMAND ${CMAKE_COMMAND}
+                -E touch_nocreate ${input}
+        )
+
+        #  complementary section to the foreach loop at the bottom of src/CMakeLists.txt
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND ${CMAKE_COMMAND}
+                -E copy ${input} ${output}
+            MAIN_DEPENDENCY ${input}
+            COMMENT "Documents: moving ${file} to doc directory"
+        )
+
+        get_filename_component(file_name "${file}" NAME_WE)
+        add_custom_target(built_doc_${file_name} DEPENDS ${input} ${output})
+        add_dependencies(built_doc_${file_name} doc_${file_name})
+
+        list(APPEND BUILT_SOURCES_BINARY_PATH ${output})
+    endforeach(file)
+
+
+    # Copy all distributed files into the binary tree (necessary for asciidocs).
+    # Then create a dependency between the new and old files.
+    foreach (file ${UNBUILT_SOURCES})
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}
+            COMMAND ${CMAKE_COMMAND}
+                    -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${CMAKE_CURRENT_BINARY_DIR}/${file}
+            MAIN_DEPENDENCY ${file}
+            COMMENT "Copying ${file} into binary directory"
+        )
+
+        list(APPEND UNBUILT_SOURCES_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+    endforeach(file)
+
+    foreach (file ${EXTRA_DIST})
+        list(APPEND EXTRA_DIST_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+    endforeach(file)
+
+
+    set (ALL_SOURCES
+        ${BUILT_SOURCES_BINARY_PATH}
+        ${UNBUILT_SOURCES_BINARY_PATH}
     )
 
-    #  complementary section to the foreach loop at the bottom of src/CMakeLists.txt
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND ${CMAKE_COMMAND}
-            -E copy ${input} ${output}
-        MAIN_DEPENDENCY ${input}
-        COMMENT "Documents: moving ${file} to doc directory"
-    )
-
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(built_doc_${file_name} DEPENDS ${input} ${output})
-    add_dependencies(built_doc_${file_name} doc_${file_name})
-    
-    list(APPEND BUILT_SOURCES_BINARY_PATH ${output})
-endforeach(file)
-
-
-# Copy all distributed files into the binary tree (necessary for asciidocs).
-# Then create a dependency between the new and old files.
-foreach (file ${UNBUILT_SOURCES})
-    add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}
-        COMMAND ${CMAKE_COMMAND} 
-                -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${CMAKE_CURRENT_BINARY_DIR}/${file}
-        MAIN_DEPENDENCY ${file}
-        COMMENT "Copying ${file} into binary directory"
-    )
-
-    list(APPEND UNBUILT_SOURCES_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-endforeach(file)
-
-foreach (file ${EXTRA_DIST})
-    list(APPEND EXTRA_DIST_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-endforeach(file)
-
-
-set (ALL_SOURCES
-    ${BUILT_SOURCES_BINARY_PATH}
-    ${UNBUILT_SOURCES_BINARY_PATH}
-)
-
+endif()
 
 ###############################################################################
 ###############################################################################

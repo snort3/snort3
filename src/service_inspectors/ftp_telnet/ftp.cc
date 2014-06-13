@@ -735,7 +735,7 @@ static const InspectApi fs_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &tn_api,
+    &tn_api.base,
     &fc_api.base,
     &fs_api.base,
     nullptr
