@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// preprocessor.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -26,31 +26,31 @@
 #include "conversion_state.h"
 #include "converter.h"
 #include "snort2lua_util.h"
-#include "output/output_api.h"
-
-
+#include "preprocessor_states/preprocessor_api.h"
 
 namespace {
 
-class Config : public ConversionState
+class Preprocessor : public ConversionState
 {
 public:
-    Config(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Config() {};
+    Preprocessor(Converter* cv)  : ConversionState(cv) {};
+    virtual ~Preprocessor() {};
     virtual bool convert(std::stringstream& data);
 };
 
 } // namespace
 
 
-bool Config::convert(std::stringstream& data_stream)
+bool Preprocessor::convert(std::stringstream& data_stream)
 {
-#if 0
     std::string keyword;
 
-    if(data >> keyword)
+    if(data_stream >> keyword)
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
+        if(keyword.back() == ':')
+            keyword.pop_back();
+
+        const ConvertMap* map = util::find_map(preprocessor_api, keyword);
         if (map)
         {
             converter->set_state(map->ctor(converter));
@@ -59,10 +59,6 @@ bool Config::convert(std::stringstream& data_stream)
     }
 
     return false;    
-#endif
-
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;
 }
 
 /**************************
@@ -71,13 +67,13 @@ bool Config::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new Config(cv);
+    return new Preprocessor(cv);
 }
 
-static const ConvertMap keyword_config = 
+static const ConvertMap keyword_preprocessor = 
 {
-    "config",
+    "preprocessor",
     ctor,
 };
 
-const ConvertMap* config_map = &keyword_config;
+const ConvertMap* preprocessor_map = &keyword_preprocessor;

@@ -38,7 +38,7 @@ static bool convert(std::ifstream& in, std::ofstream& out)
         std::getline(in, tmp);
         util::ltrim(tmp);
         orig_text += ' ' + tmp;
-        util::rtrim(orig_text);
+        util::trim(orig_text);
 
         if (orig_text.empty())
         {
@@ -48,6 +48,7 @@ static bool convert(std::ifstream& in, std::ofstream& out)
         {
             orig_text.erase(orig_text.begin());
             cv.add_comment_to_file(orig_text);
+            orig_text.clear();
         }
         else if ( orig_text.back() == '\\')
         {

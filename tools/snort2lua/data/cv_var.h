@@ -17,33 +17,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// keywords_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cv_var.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "preprocessor/preprocessor_api.h"
+#include <string>
+#include <vector>
+#include <iostream>
 
+#ifndef CONV_VAR_H
+#define CONV_VAR_H
 
-extern const ConvertMap *arpspoof_map;
-extern const ConvertMap *arpspoof_host_map;
-extern const ConvertMap *httpinspect_map;
-extern const ConvertMap *normalizer_icmp4_map;
-extern const ConvertMap *normalizer_icmp6_map;
-extern const ConvertMap *normalizer_ip4_map;
-extern const ConvertMap *normalizer_ip6_map;
-extern const ConvertMap *normalizer_tcp_map;
-extern const ConvertMap *sfportscan_map;
-extern const ConvertMap *smtp_map;
-
-const std::vector<const ConvertMap*> preprocessor_api = 
+class Variable
 {
-    arpspoof_map,
-    arpspoof_host_map,
-    httpinspect_map,
-    normalizer_icmp4_map,
-    normalizer_icmp6_map,
-    normalizer_ip4_map,
-    normalizer_ip6_map,
-    normalizer_tcp_map,
-    sfportscan_map,
-    smtp_map,
-//    nullptr,
+public:
+    Variable(std::string name, int depth);
+    Variable(std::string name);
+    virtual ~Variable();
+
+    inline std::string get_name(){ return name; };
+    bool add_value(std::string);
+    friend std::ostream &operator<<( std::ostream&, const Variable &);
+
+
+private:
+    std::string name;
+    std::vector<std::string> vars;
+    std::vector<std::string> strs;
+    int count;
+    const int max_line_length = 70; // leave room for additional text
+    int depth;
 };
+
+
+#endif

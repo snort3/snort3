@@ -19,7 +19,7 @@
  */
 // keywords_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "keywords/keywords_api.h"
+#include "keyword_states/keywords_api.h"
 
 
 extern const ConvertMap *portvar_map;

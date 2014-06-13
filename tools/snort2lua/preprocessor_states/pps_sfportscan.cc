@@ -49,7 +49,6 @@ private:
 
 bool PortScan::parse_ip_list(std::string list_name, std::stringstream& data_stream)
 {
-    bool retval;
     std::string prev;
     std::string elem;
 

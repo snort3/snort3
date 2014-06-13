@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// conv_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cv_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "data/conv_table.h"
+#include "data/cv_table.h"
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -171,8 +171,8 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
     for (Variable* v : t.lists)
         out << (*v) << ',' << std::endl;
 
-    for (Table* t : t.tables)
-        out << (*t) << ',' << std::endl;
+    for (Table* sub_t : t.tables)
+        out << (*sub_t) << ',' << std::endl;
 
     // don't add a comma if the depth is zero
     if(t.depth == 0)

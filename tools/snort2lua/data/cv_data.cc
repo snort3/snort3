@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// conv_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cv_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "conv_data.h"
+#include "cv_data.h"
 #include "snort2lua_util.h"
 
 #if 0

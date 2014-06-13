@@ -43,19 +43,6 @@ public:
 bool Suppress::convert(std::stringstream& data_stream)
 {
 #if 0
-    std::string keyword;
-
-    if(data_stream >> keyword)
-    {
-        const ConvertMap* map = util::find_map(output_api, keyword);
-        if (map)
-        {
-            converter->set_state(map->ctor(converter));
-            return true;
-        }
-    }
-
-    return false;    
 #endif
 
     data_stream.setstate(std::basic_ios<char>::eofbit);

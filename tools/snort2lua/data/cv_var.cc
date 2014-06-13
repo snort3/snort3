@@ -17,11 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// conv_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// cv_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "data/conv_var.h"
+#include "data/cv_var.h"
 
 
+#if 0
 static inline bool var_exists(std::vector<std::string> vec, std::string name)
 {
     for( auto str : vec)
@@ -30,6 +31,7 @@ static inline bool var_exists(std::vector<std::string> vec, std::string name)
 
     return true;
 }
+#endif
 
 Variable::Variable(std::string name, int depth)
 {

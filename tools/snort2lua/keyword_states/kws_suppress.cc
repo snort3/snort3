@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// preprocessor.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// suppress.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -26,31 +26,29 @@
 #include "conversion_state.h"
 #include "converter.h"
 #include "snort2lua_util.h"
-#include "preprocessor/preprocessor_api.h"
+//#include "suppress_states/suppress_api.h"
 
 namespace {
 
-class Preprocessor : public ConversionState
+class Suppress : public ConversionState
 {
 public:
-    Preprocessor(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Preprocessor() {};
+    Suppress(Converter* cv)  : ConversionState(cv) {};
+    virtual ~Suppress() {};
     virtual bool convert(std::stringstream& data);
 };
 
 } // namespace
 
 
-bool Preprocessor::convert(std::stringstream& data_stream)
+bool Suppress::convert(std::stringstream& data_stream)
 {
+#if 0
     std::string keyword;
 
-    if(data_stream >> keyword)
+    if(data >> keyword)
     {
-        if(keyword.back() == ':')
-            keyword.pop_back();
-
-        const ConvertMap* map = util::find_map(preprocessor_api, keyword);
+        const ConvertMap* map = util::find_map(output_api, keyword);
         if (map)
         {
             converter->set_state(map->ctor(converter));
@@ -59,6 +57,10 @@ bool Preprocessor::convert(std::stringstream& data_stream)
     }
 
     return false;    
+#endif
+
+    data_stream.setstate(std::basic_ios<char>::eofbit);
+    return true;    
 }
 
 /**************************
@@ -67,12 +69,12 @@ bool Preprocessor::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new Preprocessor(cv);
+    return new Suppress(cv);
 }
 
 static const ConvertMap keyword_preprocessor = 
 {
-    "preprocessor",
+    "suppress",
     ctor,
 };
 

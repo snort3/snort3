@@ -17,50 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// conv_var.h author Josh Rosenbaum <jorosenba@cisco.com>
+// cv_option.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef CONV_TABLE_H
-#define CONV_TABLE_H
-
+#ifndef CONV_OPTIONS_H
+#define CONV_OPTIONS_H
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "conv_option.h"
-#include "conv_var.h"
-
-class Table
+class Option
 {
 public:
-    Table(int depth);
-    Table(std::string name, int depth);
-    virtual ~Table();
+    Option(std::string name, int val, int depth);
+    Option(std::string name, bool val, int depth);
+    Option(std::string name, std::string val, int depth);
+    virtual ~Option();
 
     inline std::string get_name(){ return name; };
-    Table* open_table();
-    Table* open_table(std::string);
-    bool add_option(std::string, int val);
-    bool add_option(std::string, bool val);
-    bool add_option(std::string, std::string val);
-    bool add_list(std::string, std::string next_elem);
-    void add_comment(std::string comment);
-
-    friend std::ostream &operator<<( std::ostream&, const Table &);
+ 
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const Option &);
+    friend bool operator!=(const Option& lhs, const Option& rhs);
+    friend bool operator==(const Option& lhs, const Option& rhs);
 
 private:
+    enum class OptionType{ STRING, BOOL, INT};
+
     std::string name;
+    std::string value;
     int depth;
-    std::vector<Table*> tables;
-    std::vector<Option*> options;
-    std::vector<std::string> comments;
-    std::vector<Variable*> lists;
+    OptionType type;
 
 
-    bool has_option(std::string name, int val);
-    bool has_option(std::string name, bool val);
-    bool has_option(std::string name, std::string val);
-    bool has_option(Option o);
 };
+
 
 #endif

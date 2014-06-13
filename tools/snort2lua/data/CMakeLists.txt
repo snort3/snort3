@@ -1,11 +1,11 @@
 
-add_library(data
-    conv_data.h
-    conv_data.cc
-    conv_var.h
-    conv_var.cc
-    conv_table.h
-    conv_table.cc
-    conv_option.h
-    conv_option.cc
+add_library(converrsion_data
+    cv_data.h
+    cv_data.cc
+    cv_var.h
+    cv_var.cc
+    cv_table.h
+    cv_table.cc
+    cv_option.h
+    cv_option.cc
 )
