@@ -75,16 +75,16 @@ preprocessor ftp_telnet_protocol: ftp server default \
     chk_str_fmt { MLSD MLST MODE NLST OPTS PASS PBSZ PORT } \
     chk_str_fmt { PROT REST RETR RMD RNFR RNTO SDUP SITE } \
     chk_str_fmt { SIZE SMNT STAT STOR STRU TEST TYPE USER } \
-    chk_str_fmt { XCRC XCWD XMAS XMD5 XMKD XRCP XRMD XRSQ } \ 
+    chk_str_fmt { XCRC XCWD XMAS XMD5 XMKD XRCP XRMD XRSQ } \
     chk_str_fmt { XSEM XSEN XSHA1 XSHA256 } \
-    cmd_validity ALLO < int [ char R int ] > \    
+    cmd_validity ALLO < int [ char R int ] > \
     cmd_validity EPSV < [ { char 12 | char A char L char L } ] > \
     cmd_validity MACB < string > \
     cmd_validity MDTM < [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string > \
     cmd_validity MODE < char ASBCZ > \
     cmd_validity PORT < host_port > \
     cmd_validity PROT < char CSEP > \
-    cmd_validity STRU < char FRPO [ string ] > \    
+    cmd_validity STRU < char FRPO [ string ] > \
     cmd_validity TYPE < { char AE [ char NTC ] | char I | char L [ number ] } >
 preprocessor ftp_telnet_protocol: ftp client default \
     max_resp_len 256 \

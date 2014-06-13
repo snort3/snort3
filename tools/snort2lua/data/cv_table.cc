@@ -171,8 +171,8 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
     for (Variable* v : t.lists)
         out << (*v) << ',' << std::endl;
 
-    for (Table* t : t.tables)
-        out << (*t) << ',' << std::endl;
+    for (Table* sub_t : t.tables)
+        out << (*sub_t) << ',' << std::endl;
 
     // don't add a comma if the depth is zero
     if(t.depth == 0)
