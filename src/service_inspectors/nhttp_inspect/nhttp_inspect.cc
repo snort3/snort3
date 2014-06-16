@@ -50,17 +50,17 @@ THREAD_LOCAL NHttpMsgChunkHead* NHttpInspect::msgChunkHead;
 THREAD_LOCAL NHttpMsgChunkBody* NHttpInspect::msgChunkBody;
 THREAD_LOCAL NHttpMsgTrailer* NHttpInspect::msgTrailer;
 
-NHttpInspect::NHttpInspect(bool test_mode)
+NHttpInspect::NHttpInspect(bool test_input, bool _test_output) : test_output(_test_output)
 {
-    NHttpTestInput::test_mode = test_mode;
-    if (NHttpTestInput::test_mode) {
+    NHttpTestInput::test_input = test_input;
+    if (NHttpTestInput::test_input) {
         NHttpTestInput::testInput = new NHttpTestInput(testInputFile);
     }
 }
 
 NHttpInspect::~NHttpInspect ()
 {
-    if (NHttpTestInput::test_mode) {
+    if (NHttpTestInput::test_input) {
         delete NHttpTestInput::testInput;
         if (testOut) fclose(testOut);
     }
@@ -105,7 +105,7 @@ void NHttpInspect::eval (Packet* p)
 
     NHttpMsgSection *msgSect = nullptr;
 
-    if (!NHttpTestInput::test_mode) {
+    if (!NHttpTestInput::test_input) {
         switch (sessionData->sectionType) {
           case SEC_REQUEST: msgSect = msgRequest; break;
           case SEC_STATUS: msgSect = msgStatus; break;
@@ -147,16 +147,18 @@ void NHttpInspect::eval (Packet* p)
     msgSect->genEvents();
     msgSect->legacyClients();
 
-    if (!NHttpTestInput::test_mode) msgSect->printSection(stdout);
-    else {
-        if (testNumber != fileTestNumber) {
-            if (testOut) fclose (testOut);
-            fileTestNumber = testNumber;
-            char fileName[100];
-            snprintf(fileName, sizeof(fileName), "%s%" PRIi64 ".txt", testOutputPrefix, testNumber);
-            if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
+    if (test_output) {
+        if (!NHttpTestInput::test_input) msgSect->printSection(stdout);
+        else {
+            if (testNumber != fileTestNumber) {
+                if (testOut) fclose (testOut);
+                fileTestNumber = testNumber;
+                char fileName[100];
+                snprintf(fileName, sizeof(fileName), "%s%" PRIi64 ".txt", testOutputPrefix, testNumber);
+                if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
+            }
+            msgSect->printSection(testOut);
         }
-        msgSect->printSection(testOut);
     }
 }
 
