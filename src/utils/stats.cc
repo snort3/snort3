@@ -244,8 +244,6 @@ void pc_sum()
 
 void DropStats()
 {
-    uint64_t pkts_recv = pc.total_from_daq;
-
     const DAQ_Stats_t* pkt_stats = &g_daq_stats;
 
 #ifdef PPM_MGR
@@ -253,10 +251,10 @@ void DropStats()
 #endif
 
     {
-        uint64_t pkts_drop, pkts_out, pkts_inj;
+        uint64_t pkts_out, pkts_inj;
 
-        pkts_recv = pkt_stats->hw_packets_received;
-        pkts_drop = pkt_stats->hw_packets_dropped;
+        uint64_t pkts_recv = pkt_stats->hw_packets_received;
+        uint64_t pkts_drop = pkt_stats->hw_packets_dropped;
 
         if ( pkts_recv > pkt_stats->packets_filtered
                        + pkt_stats->packets_received )

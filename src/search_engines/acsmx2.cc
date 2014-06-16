@@ -1045,7 +1045,6 @@ static int Conv_Full_DFA_To_Banded(ACSM_STRUCT2 * acsm)
     int       cnt,m,k,i;
 
     for(k=0; k<acsm->acsmNumStates; k++) {
-        cnt=0;
 
         List_ConvToFull(acsm, (acstate_t)k, full );
 
@@ -1154,7 +1153,6 @@ static int Conv_Full_DFA_To_SparseBands(ACSM_STRUCT2 * acsm)
     acstate_t full[MAX_ALPHABET_SIZE];
 
     for(k=0; k<acsm->acsmNumStates; k++) {
-        cnt=0;
 
         List_ConvToFull(acsm, (acstate_t)k, full );
 

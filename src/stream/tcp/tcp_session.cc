@@ -2378,7 +2378,7 @@ static int FlushStream(
     StreamSegment *ss = NULL, *seglist, *sr;
     uint16_t bytes_flushed = 0;
     uint16_t bytes_skipped = 0;
-    uint32_t bytes_queued = st->seg_bytes_logical;
+    STREAM5_DEBUG_WRAP(uint32_t bytes_queued = st->seg_bytes_logical;);
     uint32_t segs = 0;
     int ret;
     PROFILE_VARS;
@@ -2479,7 +2479,7 @@ static int FlushStream(
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "setting st->seglist_base_seq to 0x%X\n", st->seglist_base_seq););
 
-    bytes_queued -= bytes_flushed;
+    STREAM5_DEBUG_WRAP(bytes_queued -= bytes_flushed;);
 
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
         "flushed %d bytes / %d segs on stream, "
@@ -3654,7 +3654,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                         }
                     }
                     seq += overlap;
-                    slide = overlap;
+                    //slide = overlap;
                     if(SEQ_LEQ(seq_end, seq))
                     {
                         /*
@@ -3678,7 +3678,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                                     "left overlap, honoring old data\n"););
                         seq += overlap;
-                        slide = overlap;
+                        //slide = overlap;
                         if(SEQ_LEQ(seq_end, seq))
                         {
                             /*

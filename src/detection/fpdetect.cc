@@ -561,7 +561,7 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
             eval_data.p->packet_flags |= PKT_IP_RULE_2ND;
 
             /* Recurse, and evaluate with the inner IP */
-            rval = rule_tree_match(id, tree, index, data, NULL);
+            rule_tree_match(id, tree, index, data, NULL);
 
             eval_data.p->packet_flags &= ~PKT_IP_RULE_2ND;
             eval_data.p->packet_flags |= PKT_IP_RULE;

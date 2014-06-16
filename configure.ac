@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.086])
+AC_INIT([snort], [2.10.087])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -864,7 +864,6 @@ src/utils/Makefile \
 lua/Makefile \
 doc/Makefile \
 etc/Makefile \
-examples/Makefile \
 tools/Makefile \
 tools/u2boat/Makefile \
 tools/u2spewfoo/Makefile \

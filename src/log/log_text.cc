@@ -1462,10 +1462,10 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
 
     int offset = 0;
     char conv[] = "0123456789ABCDEF";   /* xlation lookup table */
-    int next_layer, ip_start, ip_ob_start, ip_ob_end, byte_pos, char_pos;
+    int ip_start, ip_ob_start, ip_ob_end, byte_pos, char_pos;
     int i;
 
-    next_layer = ip_start = byte_pos = char_pos = 0;
+    ip_start = byte_pos = char_pos = 0;
 
     ip_ob_start = ip_ob_end = -1;
 
@@ -1494,7 +1494,7 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
 
     if(p && ScObfuscate() )
     {
-        next_layer =  p->next_layer;
+        int next_layer =  p->next_layer;
         for ( i = 0; i < next_layer; i++ )
         {
             if ( p->layers[i].proto == PROTO_IP4
@@ -1523,8 +1523,6 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
     /* loop thru the whole buffer */
     while ( pb < end )
     {
-        i = 0;
-
         if (ScVerboseByteDump())
         {
             TextLog_Print(log, "0x%04X: ", offset);

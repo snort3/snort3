@@ -1420,7 +1420,7 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
     {
         if (hi_util_in_bounds(start, end, ptr))
         {
-            iRet = hi_server_inspect_body(session, sd, ptr, end, &body_ptr);
+            hi_server_inspect_body(session, sd, ptr, end, &body_ptr);
         }
     }
     else
@@ -1437,7 +1437,7 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
             }
             else
             {
-                iRet = hi_server_extract_status_msg(start, stat_code_ptr.uri_end ,
+                hi_server_extract_status_msg(start, stat_code_ptr.uri_end ,
                         end, &stat_msg_ptr);
 
                 if ( stat_msg_ptr.uri )
@@ -1540,7 +1540,7 @@ int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *
 
                             if(hi_util_in_bounds(start, end, header_ptr.header.uri_end))
                             {
-                                iRet = hi_server_inspect_body(session, sd, header_ptr.header.uri_end,
+                                hi_server_inspect_body(session, sd, header_ptr.header.uri_end,
                                                                 end, &body_ptr);
                             }
                         }

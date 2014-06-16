@@ -282,8 +282,8 @@ uint32_t FlowKey::hash(SFHASHFCN*, unsigned char *d, int)
     {
         b += tmp;   /* mpls label */
     }
-    offset += 8;    /* skip past vlan/proto/ipver & mpls label */
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    offset += 8;    /* skip past vlan/proto/ipver & mpls label */
     tmp2 = *(uint32_t*)(d+offset); /* after offset that has been moved */
     c += tmp2; /* address space id and 16bits of zero'd pad */
 #endif

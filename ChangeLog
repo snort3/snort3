@@ -1,6 +1,11 @@
 87
 -- renamed api function typedefs to camel case for consistency and to match
    style guide
+-- fixed some Xcode static analysis issues
+-- removed http_encode rule option
+-- removed ftpbounce rule option
+-- removed examples/
+-- pulled in latest from Tom with start line changes
 
 86
 -- pulled in tom's latest nhttp_inpsect code

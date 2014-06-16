@@ -484,10 +484,9 @@ static int PortscanAlertTcp(Packet *p, PS_PROTO *proto, int)
             break;
 
         case PS_ALERT_PORTSWEEP_FILTERED:
-           event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_PORTSWEEP_FILTERED);
-           portsweep = 1;
-
-           return 0;
+            event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN, PSNG_TCP_PORTSWEEP_FILTERED);
+            portsweep = 1;
+            break;
 
         case PS_ALERT_DISTRIBUTED_FILTERED:
             event_ref = GeneratePSSnortEvent(p,GID_PORT_SCAN,
