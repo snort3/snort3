@@ -18,7 +18,7 @@ add_executable(snort2lua
 )
 
 target_link_libraries( snort2lua
-    converrsion_data
+    conversion_data
     keyword_states
     output_states
     preprocessor_states

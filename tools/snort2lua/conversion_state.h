@@ -39,17 +39,50 @@ public:
 protected:
     Converter* converter;
 
-    inline bool add_int_option(std::string keyword, std::stringstream& stream)
+    inline bool parse_int_option(std::string opt_name, std::stringstream& stream)
     {
         int val;
 
         if(stream >> val)
         {
-            converter->add_option_to_table(keyword, val);
+            converter->add_option_to_table(opt_name, val);
             return true;
         }
 
-        converter->add_comment_to_table("snort.conf missing argument for: " + keyword + " <int>");
+        converter->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        return false;
+    }
+
+    // parse adn add a curly bracketed list to the table
+    inline bool parse_curly_bracket_list(std::string list_name, std::stringstream& stream)
+    {
+        std::string elem;
+        bool retval = true;
+
+        if(!(stream >> elem) || (elem != "{"))
+            return false;
+
+        while (stream >> elem && elem != "}")
+            retval = converter->add_list_to_table(list_name, elem) && retval;
+
+        return retval;
+    }
+
+    // parse and add a yes/no boolean option.
+    inline bool parse_yn_bool_option(std::string opt_name, std::stringstream& stream)
+    {
+        std::string val;
+
+        if(!(stream >> val))
+            return false;
+
+        else if(!val.compare("yes"))
+            return converter->add_option_to_table(opt_name, true);
+
+        else if (!val.compare("no"))
+            return converter->add_option_to_table(opt_name, false);
+
+        converter->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
         return false;
     }
 

@@ -17,64 +17,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// include.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_bo.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
+#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"
 #include "snort2lua_util.h"
 
 
-namespace {
 
-class Include : public ConversionState
+static ConversionState* bo_ctor(Converter* cv)
 {
-public:
-    Include(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Include() {};
-    virtual bool convert(std::stringstream& data);
-};
-
-} // namespace
-
-
-bool Include::convert(std::stringstream& data_stream)
-{
-#if 0
-    std::string keyword;
-
-    if(data >> keyword)
-    {
-        const ConvertMap* map = util::find_map(output_api, keyword);
-        if (map)
-        {
-            converter->set_state(map->ctor(converter));
-            return true;
-        }
-    }
-
-    return false;    
-#endif
-
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;
+    cv->open_table("bo");
+    cv->close_table();
+    return nullptr;
 }
 
-/**************************
- *******  A P I ***********
- **************************/
-
-static ConversionState* ctor(Converter* cv)
+static const ConvertMap preprocessor_bo = 
 {
-    return new Include(cv);
-}
-
-static const ConvertMap keyword_include = 
-{
-    "include",
-    ctor,
+    "bo",
+    bo_ctor,
 };
 
-const ConvertMap* include_map = &keyword_include;
+const ConvertMap* bo_map = &preprocessor_bo;
+

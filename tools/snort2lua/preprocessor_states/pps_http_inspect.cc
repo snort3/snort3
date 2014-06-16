@@ -78,10 +78,10 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     while(data_stream >> keyword)
     {
         if(!keyword.compare("compress_depth"))
-            retval = add_int_option("compress_depth", data_stream) && retval;
+            retval = parse_int_option("compress_depth", data_stream) && retval;
 
         else if(!keyword.compare("decompress_depth")) 
-            retval = add_int_option("decompress_depth", data_stream) && retval;
+            retval = parse_int_option("decompress_depth", data_stream) && retval;
 
         else if(!keyword.compare("detect_anomalous_servers"))
             converter->add_option_to_table("detect_anomalous_servers", true);
@@ -90,10 +90,10 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             converter->add_option_to_table("proxy_alert", true);
 
         else if(!keyword.compare("max_gzip_mem"))
-            retval = add_int_option("max_gzip_mem", data_stream) && retval;
+            retval = parse_int_option("max_gzip_mem", data_stream) && retval;
         
         else if(!keyword.compare("memcap"))
-            retval = add_int_option("memcap", data_stream) && retval;
+            retval = parse_int_option("memcap", data_stream) && retval;
         
         else if(!keyword.compare("disabled"))
             converter->add_comment_to_table("'disabled' is deprecated");

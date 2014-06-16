@@ -82,7 +82,7 @@ static bool convert(std::ifstream& in, std::ofstream& out)
 
 static void show_usage()
 {
-    std::cout << "usage:  snort2lua <input_conf_file> <output_lua_file" << std::endl;
+    std::cout << "usage:  snort2lua <input_conf_file> <output_lua_file>" << std::endl;
 }
 
 int main (int argc, char* argv[])

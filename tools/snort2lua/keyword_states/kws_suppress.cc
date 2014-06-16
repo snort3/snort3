@@ -17,11 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// suppress.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_suppress.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"

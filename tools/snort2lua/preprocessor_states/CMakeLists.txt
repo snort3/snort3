@@ -6,6 +6,9 @@ add_library(preprocessor_states
     pps_normalizers.cc
     pps_sfportscan.cc
     pps_ftp_telnet.cc
+    pps_ftp_telnet_protocol.cc
+    pps_bo.cc
     preprocessor_api.h
     preprocessor_api.cc
 )
+

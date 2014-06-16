@@ -21,7 +21,6 @@
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"

@@ -17,11 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// portscan.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_sfportscan.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"
@@ -131,13 +130,15 @@ bool PortScan::convert(std::stringstream& data_stream)
         if(!keyword.compare("proto"))
         {
             converter->add_deprecated_comment("proto", "protos");
-            retval = parse_list("protos", data_stream) && retval;
+            // defined in ConversionState vvvv
+            retval = parse_curly_bracket_list("protos", data_stream) && retval;
         }
 
         if(!keyword.compare("scan_type"))
         {
             converter->add_deprecated_comment("scan_type", "scan_types");
-            retval = parse_list("scan_types", data_stream) && retval;
+            // defined in ConversionState vvvv
+            retval = parse_curly_bracket_list("scan_types", data_stream) && retval;
         }
         else if(!keyword.compare("sense_level"))
             retval = parse_option("sense_level", data_stream) && retval;
