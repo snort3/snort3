@@ -42,24 +42,45 @@ public:
 
 bool Suppress::convert(std::stringstream& data_stream)
 {
-#if 0
+    bool retval = true;
     std::string keyword;
 
-    if(data >> keyword)
+    converter->open_table("suppress");
+    converter->open_table();
+
+    while(data_stream >> keyword)
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
-        if (map)
+        bool tmpval = true;
+
+        if(keyword.back() == ',')
+            keyword.pop_back();
+
+        if(keyword.empty())
+            continue;
+
+        if (!keyword.compare("track"))
+            tmpval = parse_string_option("track", data_stream);
+
+        else if (!keyword.compare("ip"))
+            tmpval = parse_string_option("ip", data_stream);
+
+        else if(!keyword.compare("gen_id"))
         {
-            converter->set_state(map->ctor(converter));
-            return true;
+            converter->add_deprecated_comment("gen_id", "gid");
+            tmpval = parse_int_option("gid", data_stream);
         }
+
+        else if (!keyword.compare("sig_id"))
+        {
+            converter->add_deprecated_comment("sig_id", "sid");
+            tmpval = parse_int_option("sid", data_stream);
+        }
+
+        if (retval)
+            retval = tmpval;
     }
 
-    return false;    
-#endif
-
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;    
+    return retval;
 }
 
 /**************************
@@ -71,10 +92,10 @@ static ConversionState* ctor(Converter* cv)
     return new Suppress(cv);
 }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap keyword_supress =
 {
     "suppress",
     ctor,
 };
 
-const ConvertMap* preprocessor_map = &keyword_preprocessor;
+const ConvertMap* supress_map = &keyword_supress;

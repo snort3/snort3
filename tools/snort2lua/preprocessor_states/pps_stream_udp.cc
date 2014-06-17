@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_stream_udp.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -26,39 +26,53 @@
 #include "converter.h"
 #include "snort2lua_util.h"
 
-
 namespace {
 
-class Config : public ConversionState
+class StreamUdp : public ConversionState
 {
 public:
-    Config(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Config() {};
-    virtual bool convert(std::stringstream& data);
+    StreamUdp(Converter* cv)  : ConversionState(cv) {};
+    virtual ~StreamUdp() {};
+    virtual bool convert(std::stringstream& data_stream);
 };
 
 } // namespace
 
-
-bool Config::convert(std::stringstream& data_stream)
+bool StreamUdp::convert(std::stringstream& data_stream)
 {
-#if 0
+
+    bool retval = true;
     std::string keyword;
 
-    if(data >> keyword)
+    converter->open_table("stream_udp");
+
+    while(data_stream >> keyword)
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
-        if (map)
+        bool tmpval = true;
+
+        if(keyword.back() == ',')
+            keyword.pop_back();
+        
+        if(keyword.empty())
+            continue;
+        
+        if(!keyword.compare("ignore_any_rules"))
+            tmpval = converter->add_option_to_table("ignore_any_rules", true);
+
+        else if(!keyword.compare("timeout"))
         {
-            converter->set_state(map->ctor(converter));
-            return true;
+            converter->add_deprecated_comment("timeout", "session_timeout");
+            tmpval = parse_int_option("session_timeout", data_stream);
         }
+
+        else
+            tmpval = false;
+
+        if (retval)
+            retval = tmpval;
     }
 
-    return false;    
-#endif
-
-    return false;
+    return retval;    
 }
 
 /**************************
@@ -67,13 +81,13 @@ bool Config::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new Config(cv);
+    return new StreamUdp(cv);
 }
 
-static const ConvertMap keyword_config = 
+static const ConvertMap preprocessor_stream_udp = 
 {
-    "config",
+    "stream5_udp",
     ctor,
 };
 
-const ConvertMap* config_map = &keyword_config;
+const ConvertMap* stream_udp_map = &preprocessor_stream_udp;

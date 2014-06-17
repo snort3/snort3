@@ -194,6 +194,12 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
         else if (!keyword.compare("no_alerts"))
             converter->add_deprecated_comment("no_alerts");
 
+        else if (!keyword.compare("decompress_swf"))
+            tmpval = parse_bracketed_unsupported_list("decompress_swf", data_stream);
+
+        else if (!keyword.compare("decompress_pdf"))
+            tmpval = parse_bracketed_unsupported_list("decompress_pdf", data_stream);
+
         else if (!keyword.compare("http_methods"))
             tmpval = parse_curly_bracket_list("http_methods", data_stream);
 
@@ -216,6 +222,13 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
         {
             converter->add_deprecated_comment("flow_depth", "server_flow_depth");
             tmpval = parse_int_option("server_flow_depth", data_stream);
+        }
+
+        else if (!keyword.compare("ports"))
+        {
+            converter->add_deprecated_comment("ports", "bindings");
+            converter->add_comment_to_table("check bindings table for port information");
+            tmpval = parse_bracketed_unsupported_list("ports", data_stream);
         }
 
         else if (!keyword.compare("small_chunk_length"))
@@ -272,17 +285,6 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
                 converter->add_comment_to_table("Unable to convert keyword 'profile'");
                 tmpval = false;
             }
-        }
-
-        else if (!keyword.compare("ports"))
-        {
-            converter->add_deprecated_comment("ports", "bindings");
-            converter->add_comment_to_table("check bindings table for port information");
-            // add commented list for now
-            std::string tmp = "";
-            while (data_stream >> keyword && keyword != "}")
-                tmp += " " + keyword;
-            tmpval = converter->add_option_to_table("--ports", tmp + "}");
         }
 
         else

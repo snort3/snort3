@@ -127,33 +127,22 @@ bool PortScan::convert(std::stringstream& data_stream)
 
     while(data_stream >> keyword)
     {
-        if(!keyword.compare("proto"))
-        {
-            converter->add_deprecated_comment("proto", "protos");
-            // defined in ConversionState vvvv
-            retval = parse_curly_bracket_list("protos", data_stream) && retval;
-        }
+        bool tmpval = true;
 
-        if(!keyword.compare("scan_type"))
-        {
-            converter->add_deprecated_comment("scan_type", "scan_types");
-            // defined in ConversionState vvvv
-            retval = parse_curly_bracket_list("scan_types", data_stream) && retval;
-        }
-        else if(!keyword.compare("sense_level"))
-            retval = parse_option("sense_level", data_stream) && retval;
+        if(!keyword.compare("sense_level"))
+            tmpval = parse_option("sense_level", data_stream);
 
         else if(!keyword.compare("watch_ip"))
-            retval = parse_ip_list("watch_ip", data_stream) && retval;
+            tmpval = parse_ip_list("watch_ip", data_stream);
 
         else if(!keyword.compare("ignore_scanned"))
-            retval = parse_ip_list("ignore_scanners", data_stream) && retval;
+            tmpval = parse_ip_list("ignore_scanners", data_stream);
 
         else if(!keyword.compare("ignore_scanners"))
-            retval = parse_ip_list("ignore_scanned", data_stream) && retval;
+            tmpval = parse_ip_list("ignore_scanned", data_stream);
 
         else if(!keyword.compare("include_midstream"))
-            retval = converter->add_option_to_table("include_midstream", true) && retval;
+            tmpval = converter->add_option_to_table("include_midstream", true);
 
         else if(!keyword.compare("disabled"))
             converter->add_deprecated_comment("disabled");
@@ -165,15 +154,29 @@ bool PortScan::convert(std::stringstream& data_stream)
             converter->add_deprecated_comment("logfile");
 
         else if(!keyword.compare("memcap"))
-            retval = add_portscan_global_option("memcap", data_stream) && retval;
+            tmpval = add_portscan_global_option("memcap", data_stream);
+
+        else if(!keyword.compare("proto"))
+        {
+            converter->add_deprecated_comment("proto", "protos");
+            retval = parse_curly_bracket_list("protos", data_stream) && retval;
+        }
+
+        else if(!keyword.compare("scan_type"))
+        {
+            converter->add_deprecated_comment("scan_type", "scan_types");
+            tmpval = parse_curly_bracket_list("scan_types", data_stream) && retval;
+        }
 
         else
-            retval = false;
+            tmpval = false;
+
+        tmpval = retval && tmpval;
     }
 
 
-    converter->close_table();
-    return retval;    
+    converter->close_table(); // unecessary since the state will be reset
+    return retval;
 }
 
 

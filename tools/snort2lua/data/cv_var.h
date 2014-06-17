@@ -43,7 +43,7 @@ private:
     std::vector<std::string> vars;
     std::vector<std::string> strs;
     int count;
-    const int max_line_length = 70; // leave room for additional text
+    const int max_line_length = 74; // leave room for additional text
     int depth;
 };
 

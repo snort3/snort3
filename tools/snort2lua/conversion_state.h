@@ -40,6 +40,23 @@ public:
 protected:
     Converter* converter;
 
+    inline bool parse_string_option(std::string opt_name, std::stringstream& stream)
+    {
+        std::string val;
+
+        if(stream >> val)
+        {
+            if(val.back() == ',')
+                val.pop_back();
+
+            converter->add_option_to_table(opt_name, val);
+            return true;
+        }
+
+        converter->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        return false;
+    }
+
     inline bool parse_int_option(std::string opt_name, std::stringstream& stream)
     {
         int val;
@@ -54,7 +71,7 @@ protected:
         return false;
     }
 
-    // parse adn add a curly bracketed list to the table
+    // parse and add a curly bracketed list to the table
     inline bool parse_curly_bracket_list(std::string list_name, std::stringstream& stream)
     {
         std::string elem;
@@ -87,7 +104,7 @@ protected:
         return false;
     }
 
-    // parse adn add a curly bracketed list to the table
+    // parse a curly bracketed bit and add it to the table
     inline bool parse_bracketed_byte_list(std::string list_name, std::stringstream& stream)
     {
         std::string elem;
@@ -123,6 +140,33 @@ protected:
         }
 
         return retval;
+    }
+
+    // parse and add a curly bracket list '{...}' which is currently unsupported in Snort++
+    inline bool parse_bracketed_unsupported_list(std::string list_name, std::stringstream& stream)
+    {
+        std::string tmp = "";
+        std::string elem;
+
+        if(!(stream >> elem) || (elem != "{"))
+            return false;
+
+        while (stream >> elem && elem != "}")
+            tmp += " " + elem;
+
+        // remove the extra space at the beginig of the string
+        if(tmp.size() > 0)
+            tmp.erase(tmp.begin());
+
+        return converter->add_option_to_table("--" + list_name, tmp );
+    }
+
+    inline bool pen_table_add_option(std::string table_name, std::string opt_name, std::string val)
+    {
+        bool tmpval = converter->open_table(table_name);
+        tmpval = converter->add_option_to_table(opt_name, val) && tmpval;
+        converter->close_table();
+        return tmpval;
     }
 
 

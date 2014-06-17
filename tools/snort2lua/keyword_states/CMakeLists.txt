@@ -5,6 +5,7 @@ add_library( keyword_states
     kws_var.cc
     kws_preprocessor.cc
     kws_include.cc
+    kws_suppress.cc
     keywords_api.h
     keywords_api.cc
 )

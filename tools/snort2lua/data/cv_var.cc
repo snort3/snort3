@@ -95,13 +95,14 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
     else if(var.count < var.max_line_length || var.strs.size() == 1)
     {
         std::string tmp_str = "";
+        length = whitespace.size();
 
         for (auto s : var.strs)
         {
             if ( 0 < length && length + s.size() > var.max_line_length )
                 tmp_str += "\n" + whitespace + "    ";
 
-            length += s.size();
+            length += s.size() ;
             tmp_str += s + ' ';
         }
         util::trim(tmp_str);
@@ -114,14 +115,14 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
 
         for (auto s : var.strs)
         {
-            if ( 0 < length && length + s.size() > var.max_line_length )
+            if ( length + s.size() > var.max_line_length )
             {
                 util::rtrim(tmp_str);
                 tmp_str += "\n" + whitespace + "    ";
                 length = 4 + whitespace.size();
             }
 
-            length += s.size();
+            length += s.size() + 1;
             tmp_str += s + " ";
         }
 

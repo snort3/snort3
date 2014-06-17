@@ -29,6 +29,7 @@ extern const ConvertMap *output_map;
 extern const ConvertMap *config_map;
 extern const ConvertMap *preprocessor_map;
 extern const ConvertMap *include_map;
+extern const ConvertMap *supress_map;
 
 
 
@@ -41,5 +42,6 @@ const std::vector<const ConvertMap*> keyword_api =
     config_map,
     preprocessor_map,
     include_map,
+    supress_map
 //    nullptr,
 };

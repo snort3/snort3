@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// http_inspect.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_http_inspect.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -87,7 +87,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             retval = parse_int_option("memcap", data_stream) && retval;
         
         else if(!keyword.compare("disabled"))
-            converter->add_comment_to_table("'disabled' is deprecated");
+            converter->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("b64_decode_depth"))
             retval = add_decode_option("b64_decode_depth", data_stream) && retval;

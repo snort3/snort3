@@ -58,8 +58,7 @@ bool Include::convert(std::stringstream& data_stream)
     return false;    
 #endif
 
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;
+    return false;
 }
 
 /**************************
