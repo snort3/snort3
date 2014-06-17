@@ -284,7 +284,7 @@ bool Telnet::convert(std::stringstream& data_stream)
 
     while(data_stream >> keyword)
     {
-        bool tmpval;
+        bool tmpval = true;
         if(!keyword.compare("ayt_attack_thresh"))
         {
             if(data_stream >> i_val)

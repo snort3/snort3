@@ -38,17 +38,10 @@ public:
 
 private:
     bool add_decode_option(std::string opt_name,  std::stringstream& stream);
-    bool missing_arg_error(std::string error_string);
 };
 
 } // namespace
 
-
-bool HttpInspect::missing_arg_error(std::string arg)
-{
-    converter->add_comment_to_table("snort.conf missing argument for " + arg);
-    return false;
-}
 
 HttpInspect::HttpInspect(Converter* cv)  : ConversionState(cv)
 {}
@@ -56,8 +49,6 @@ HttpInspect::HttpInspect(Converter* cv)  : ConversionState(cv)
 bool HttpInspect::convert(std::stringstream& data_stream)
 {
     std::string keyword;
-    std::string s_value;
-    int i_value;
 
     // using this to keep track of any errors.  I want to convert as much 
     // as possible while being aware something went wrong
@@ -116,17 +107,21 @@ bool HttpInspect::convert(std::stringstream& data_stream)
         else if(!keyword.compare("iis_unicode_map"))
         {
             std::string codemap;
-            if( (data_stream >> s_value) &&
-                (data_stream >> i_value))
+            int code_page;
+
+            if( (data_stream >> codemap) &&
+                (data_stream >> code_page))
             {
                 converter->open_table("unicode_map");
-                converter->add_option_to_table("map_file", s_value);
-                converter->add_option_to_table("code_page", i_value);
+                converter->add_option_to_table("map_file", codemap);
+                converter->add_option_to_table("code_page", code_page);
                 converter->close_table();
             }
             else
             {
-                retval = missing_arg_error("iis_unicode_map <filename> <codemap>");
+                converter->add_comment_to_table("snort.conf missing argument for "
+                    "iis_unicode_map <filename> <codemap>");
+                retval = false;
             }
         }
 
@@ -154,7 +149,8 @@ bool HttpInspect::add_decode_option(std::string opt_name,  std::stringstream& st
     }
     else
     {
-        missing_arg_error(opt_name + " <int>");
+        converter->add_comment_to_table("snort.conf missing argument for " +
+            opt_name + " <int>");
         return false;
     }
 }

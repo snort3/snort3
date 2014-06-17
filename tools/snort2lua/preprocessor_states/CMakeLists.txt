@@ -2,6 +2,7 @@
 add_library(preprocessor_states
     pps_arpspoof.cc
     pps_http_inspect.cc
+    pps_http_inspect_server.cc
     pps_smtp.cc
     pps_normalizers.cc
     pps_sfportscan.cc

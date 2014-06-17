@@ -25,6 +25,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cctype>
 
 #include "converter.h"
  
@@ -85,6 +86,45 @@ protected:
         converter->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
         return false;
     }
+
+    // parse adn add a curly bracketed list to the table
+    inline bool parse_bracketed_byte_list(std::string list_name, std::stringstream& stream)
+    {
+        std::string elem;
+        bool retval = true;
+
+        if(!(stream >> elem) || (elem != "{"))
+            return false;
+
+        while (stream >> elem && elem != "}")
+        {
+            int dig;
+
+            if (std::isdigit(elem[0]))
+                dig = std::stoi(elem, nullptr, 0);
+            else if (elem.size() == 1)
+                dig = (int)elem[0];
+            else
+                dig = -1;
+
+            if (0 <= dig && dig <= 255)
+            {
+                std::stringstream tmp;
+                tmp << "0x" << std::hex << dig;
+                retval = converter->add_list_to_table(list_name, tmp.str()) && retval;
+
+            }
+            else
+            {
+                converter->add_comment_to_table("Unable to convert " + elem +
+                        "!!  The element must be a single charachter or number between 0 - 255 inclusive");
+                retval = false;
+            }
+        }
+
+        return retval;
+    }
+
 
 private:
 

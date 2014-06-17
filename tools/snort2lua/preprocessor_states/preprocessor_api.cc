@@ -28,6 +28,7 @@ extern const ConvertMap *bo_map;
 extern const ConvertMap *ftptelnet_map;
 extern const ConvertMap *ftptelnet_protocol_map;
 extern const ConvertMap *httpinspect_map;
+extern const ConvertMap *httpinspect_server_map;
 extern const ConvertMap *normalizer_icmp4_map;
 extern const ConvertMap *normalizer_icmp6_map;
 extern const ConvertMap *normalizer_ip4_map;
@@ -43,6 +44,7 @@ const std::vector<const ConvertMap*> preprocessor_api =
     bo_map,
     ftptelnet_map,
     httpinspect_map,
+    httpinspect_server_map,
     ftptelnet_protocol_map,
     normalizer_icmp4_map,
     normalizer_icmp6_map,

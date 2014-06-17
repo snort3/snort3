@@ -116,6 +116,7 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
         {
             if ( 0 < length && length + s.size() > var.max_line_length )
             {
+                util::rtrim(tmp_str);
                 tmp_str += "\n" + whitespace + "    ";
                 length = 4 + whitespace.size();
             }
