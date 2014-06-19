@@ -141,8 +141,7 @@ add_custom_command(OUTPUT snort_manual.pdf
         -f pdf 
         ${PDF_ARGUMENTS} 
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/snort_manual.txt
-    DEPENDS  ${ALL_SOURCES}
+    DEPENDS  ${ALL_SOURCES} snort_manual.html
     COMMENT "Documents: building snort_manual.pdf"
 )
 
@@ -157,7 +156,6 @@ add_custom_command(OUTPUT snort_manual.tgz
         -E tar 
         zcf snort_manual.tgz
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
-    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/snort_manual.txt
     DEPENDS ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.tgz"
 )

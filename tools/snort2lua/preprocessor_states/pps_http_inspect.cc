@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// http_inspect.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_http_inspect.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -38,17 +38,10 @@ public:
 
 private:
     bool add_decode_option(std::string opt_name,  std::stringstream& stream);
-    bool missing_arg_error(std::string error_string);
 };
 
 } // namespace
 
-
-bool HttpInspect::missing_arg_error(std::string arg)
-{
-    converter->add_comment_to_table("snort.conf missing argument for " + arg);
-    return false;
-}
 
 HttpInspect::HttpInspect(Converter* cv)  : ConversionState(cv)
 {}
@@ -56,8 +49,6 @@ HttpInspect::HttpInspect(Converter* cv)  : ConversionState(cv)
 bool HttpInspect::convert(std::stringstream& data_stream)
 {
     std::string keyword;
-    std::string s_value;
-    int i_value;
 
     // using this to keep track of any errors.  I want to convert as much 
     // as possible while being aware something went wrong
@@ -78,10 +69,10 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     while(data_stream >> keyword)
     {
         if(!keyword.compare("compress_depth"))
-            retval = add_int_option("compress_depth", data_stream) && retval;
+            retval = parse_int_option("compress_depth", data_stream) && retval;
 
         else if(!keyword.compare("decompress_depth")) 
-            retval = add_int_option("decompress_depth", data_stream) && retval;
+            retval = parse_int_option("decompress_depth", data_stream) && retval;
 
         else if(!keyword.compare("detect_anomalous_servers"))
             converter->add_option_to_table("detect_anomalous_servers", true);
@@ -90,13 +81,13 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             converter->add_option_to_table("proxy_alert", true);
 
         else if(!keyword.compare("max_gzip_mem"))
-            retval = add_int_option("max_gzip_mem", data_stream) && retval;
+            retval = parse_int_option("max_gzip_mem", data_stream) && retval;
         
         else if(!keyword.compare("memcap"))
-            retval = add_int_option("memcap", data_stream) && retval;
+            retval = parse_int_option("memcap", data_stream) && retval;
         
         else if(!keyword.compare("disabled"))
-            converter->add_comment_to_table("'disabled' is deprecated");
+            converter->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("b64_decode_depth"))
             retval = add_decode_option("b64_decode_depth", data_stream) && retval;
@@ -116,17 +107,21 @@ bool HttpInspect::convert(std::stringstream& data_stream)
         else if(!keyword.compare("iis_unicode_map"))
         {
             std::string codemap;
-            if( (data_stream >> s_value) &&
-                (data_stream >> i_value))
+            int code_page;
+
+            if( (data_stream >> codemap) &&
+                (data_stream >> code_page))
             {
                 converter->open_table("unicode_map");
-                converter->add_option_to_table("map_file", s_value);
-                converter->add_option_to_table("code_page", i_value);
+                converter->add_option_to_table("map_file", codemap);
+                converter->add_option_to_table("code_page", code_page);
                 converter->close_table();
             }
             else
             {
-                retval = missing_arg_error("iis_unicode_map <filename> <codemap>");
+                converter->add_comment_to_table("snort.conf missing argument for "
+                    "iis_unicode_map <filename> <codemap>");
+                retval = false;
             }
         }
 
@@ -154,7 +149,8 @@ bool HttpInspect::add_decode_option(std::string opt_name,  std::stringstream& st
     }
     else
     {
-        missing_arg_error(opt_name + " <int>");
+        converter->add_comment_to_table("snort.conf missing argument for " +
+            opt_name + " <int>");
         return false;
     }
 }

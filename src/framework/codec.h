@@ -75,7 +75,7 @@ struct EncState{
 // * base+end is start of current layer
 // * base+size-1 is last byte of packet (in) / buffer (out)
 struct Buffer {
-    uint8_t *base;          /* start of data */
+    uint8_t* base;          /* start of data */
     int off;           /* offset into data */
     int end;           /* end of data */
     int size;          /* size of allocation */

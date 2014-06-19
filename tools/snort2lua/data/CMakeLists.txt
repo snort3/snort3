@@ -1,5 +1,5 @@
 
-add_library(converrsion_data
+add_library(conversion_data
     cv_data.h
     cv_data.cc
     cv_var.h

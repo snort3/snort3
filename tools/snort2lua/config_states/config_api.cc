@@ -17,31 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// keywords_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "keyword_states/keywords_api.h"
-
-
-extern const ConvertMap *portvar_map;
-extern const ConvertMap *ipvar_map;
-extern const ConvertMap *var_map;
-extern const ConvertMap *output_map;
-extern const ConvertMap *config_map;
-extern const ConvertMap *preprocessor_map;
-extern const ConvertMap *include_map;
-extern const ConvertMap *supress_map;
+#include "config_states/config_api.h"
 
 
+extern const ConvertMap *autogenerate_decode_rules_map;
+extern const ConvertMap *paf_max_map;
 
-const std::vector<const ConvertMap*> keyword_api = 
+
+const std::vector<const ConvertMap*> config_api = 
 {
-    portvar_map,
-    ipvar_map,
-    var_map,
-    output_map,
-    config_map,
-    preprocessor_map,
-    include_map,
-    supress_map
-//    nullptr,
+    autogenerate_decode_rules_map,
+    paf_max_map,
 };

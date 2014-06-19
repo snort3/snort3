@@ -17,11 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_ftp_telnet.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"
@@ -35,66 +34,81 @@ public:
     FtpTelnet(Converter* cv)  : ConversionState(cv) {};
     virtual ~FtpTelnet() {};
     virtual bool convert(std::stringstream& data_stream);
+private:
+    bool add_ftp_n_telnet_option(std::string opt_name, bool val);
+    void add_ftp_n_telnet_deprecated(std::string opt_name);
 };
 
 } // namespace
 
+bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
+{
+    bool retval;
+
+    converter->open_table("telnet");
+    retval = converter->add_option_to_table(opt_name, val);
+    converter->close_table();
+    converter->open_table("ftp_server");
+    retval = converter->add_option_to_table(opt_name, val) && retval;
+    converter->close_table();
+    return retval;
+}
+
+void FtpTelnet::add_ftp_n_telnet_deprecated(std::string opt_name)
+{
+    converter->open_table("telnet");
+    converter->add_deprecated_comment(opt_name);
+    converter->close_table();
+    converter->open_table("ftp_server");
+    converter->add_deprecated_comment(opt_name);
+    converter->close_table();
+}
 
 bool FtpTelnet::convert(std::stringstream& data_stream)
 {
-#if 0
-# FTP / Telnet normalization and anomaly detection.  For more information, see README.ftptelnet
-preprocessor ftp_telnet: global inspection_type stateful encrypted_traffic no check_encrypted
-preprocessor ftp_telnet_protocol: telnet \
-    ayt_attack_thresh 20 \
-    normalize ports { 23 } \
-    detect_anomalies
-preprocessor ftp_telnet_protocol: ftp server default \
-    def_max_param_len 100 \
-    ports { 21 2100 3535 } \
-    telnet_cmds yes \
-    ignore_telnet_erase_cmds yes \
-    ftp_cmds { ABOR ACCT ADAT ALLO APPE AUTH CCC CDUP } \
-    ftp_cmds { CEL CLNT CMD CONF CWD DELE ENC EPRT } \
-    ftp_cmds { EPSV ESTA ESTP FEAT HELP LANG LIST LPRT } \
-    ftp_cmds { LPSV MACB MAIL MDTM MIC MKD MLSD MLST } \
-    ftp_cmds { MODE NLST NOOP OPTS PASS PASV PBSZ PORT } \
-    ftp_cmds { PROT PWD QUIT REIN REST RETR RMD RNFR } \
-    ftp_cmds { RNTO SDUP SITE SIZE SMNT STAT STOR STOU } \
-    ftp_cmds { STRU SYST TEST TYPE USER XCUP XCRC XCWD } \
-    ftp_cmds { XMAS XMD5 XMKD XPWD XRCP XRMD XRSQ XSEM } \
-    ftp_cmds { XSEN XSHA1 XSHA256 } \
-    alt_max_param_len 0 { ABOR CCC CDUP ESTA FEAT LPSV NOOP PASV PWD QUIT REIN STOU SYST XCUP XPWD } \
-    alt_max_param_len 200 { ALLO APPE CMD HELP NLST RETR RNFR STOR STOU XMKD } \
-    alt_max_param_len 256 { CWD RNTO } \
-    alt_max_param_len 400 { PORT } \
-    alt_max_param_len 512 { SIZE } \
-    chk_str_fmt { ACCT ADAT ALLO APPE AUTH CEL CLNT CMD } \
-    chk_str_fmt { CONF CWD DELE ENC EPRT EPSV ESTP HELP } \
-    chk_str_fmt { LANG LIST LPRT MACB MAIL MDTM MIC MKD } \
-    chk_str_fmt { MLSD MLST MODE NLST OPTS PASS PBSZ PORT } \
-    chk_str_fmt { PROT REST RETR RMD RNFR RNTO SDUP SITE } \
-    chk_str_fmt { SIZE SMNT STAT STOR STRU TEST TYPE USER } \
-    chk_str_fmt { XCRC XCWD XMAS XMD5 XMKD XRCP XRMD XRSQ } \
-    chk_str_fmt { XSEM XSEN XSHA1 XSHA256 } \
-    cmd_validity ALLO < int [ char R int ] > \
-    cmd_validity EPSV < [ { char 12 | char A char L char L } ] > \
-    cmd_validity MACB < string > \
-    cmd_validity MDTM < [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string > \
-    cmd_validity MODE < char ASBCZ > \
-    cmd_validity PORT < host_port > \
-    cmd_validity PROT < char CSEP > \
-    cmd_validity STRU < char FRPO [ string ] > \
-    cmd_validity TYPE < { char AE [ char NTC ] | char I | char L [ number ] } >
-preprocessor ftp_telnet_protocol: ftp client default \
-    max_resp_len 256 \
-    bounce yes \
-    ignore_telnet_erase_cmds yes \
-    telnet_cmds yes
-#endif
 
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;    
+    std::string keyword;
+    std::string s_value;
+
+    // using this to keep track of any errors.  I want to convert as much 
+    // as possible while being aware something went wrong
+    bool retval = true;
+
+    if(data_stream >> keyword)
+    {
+        if(keyword.compare("global"))
+        {
+            converter->log_error("preprocessor ftp_telnet: requires the 'global' keyword");
+            return false;
+        }
+    }
+
+    while(data_stream >> keyword)
+    {
+        if(!keyword.compare("check_encrypted"))
+            retval = add_ftp_n_telnet_option("check_encrypted", true);
+
+        else if(!keyword.compare("inspection_type"))
+            add_ftp_n_telnet_deprecated("inspection_type");
+
+        else if(!keyword.compare("encrypted_traffic"))
+        {
+            data_stream >> s_value;
+
+            if(s_value.compare("yes"))
+                retval = add_ftp_n_telnet_option("encrypted_traffic", true) && retval;
+
+            else
+                retval = add_ftp_n_telnet_option("encrypted_traffic", false) && retval;
+            
+        }
+
+        else
+            retval = false;
+
+    }
+
+    return retval;    
 }
 
 /**************************
@@ -106,10 +120,10 @@ static ConversionState* ctor(Converter* cv)
     return new FtpTelnet(cv);
 }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap preprocessor_ftptelnet = 
 {
     "ftp_telnet",
     ctor,
 };
 
-const ConvertMap* preprocessor_map = &keyword_preprocessor;
+const ConvertMap* ftptelnet_map = &preprocessor_ftptelnet;

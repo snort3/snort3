@@ -17,11 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_http_inspect_server.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"
@@ -37,239 +36,274 @@ public:
     virtual bool convert(std::stringstream& data_stream);
 
 private:
-    missing_arge_error(std::string arg);
+    static int binding_id;
 };
 
 } // namespace
 
-bool HttpInspectServer::missing_arg_error(std::string arg)
-{
-    converter->add_comment_to_table("snort.conf missing argument for " + arg);
-    return false;
-}
-
 
 #if 0
-
-#* ports { [port] [port] . . . } *
-#* iis_unicode_map [file (located in config dir)] [codemap (integer)] *
-#* extended_response_inspection *
-#* enable_cookie *
-#* inspect_gzip *
-#* unlimited_decompress *
-#* decompress_swf { deflate lzma } *
-#* decompress_pdf { deflate } *
-#* normalize_javascript *
-#* max_javascript_whitespaces [positive integer] *
-#* enable_xff *
-#* server_flow_depth [integer] *
-#* flow_depth [integer] *  (to be deprecated)
-#* client_flow_depth [integer] *
-#* post_depth [integer] *
-#* ascii [yes/no] *
-#* extended_ascii_uri *
-#* utf_8 [yes/no] *
-#* u_encode [yes/no] *
-#* bare_byte [yes/no] *
-#* iis_unicode [yes/no] *
-#* double_decode [yes/no] *
-#* non_rfc_char { [byte] [0x00] . . . } *
-#* multi_slash [yes/no] *
-#* iis_backslash [yes/no] *
-#* directory [yes/no] *
-#* apache_whitespace [yes/no] *
-#* iis_delimiter [yes/no] *
-#* chunk_length [non-zero positive integer] *
-#* small_chunk_length { <chunk size> <consecutive chunks> } *
-#* no_pipeline_req *
-#* non_strict *
-#* allow_proxy_use *
-#* no_alerts *
-#* oversize_dir_length [non-zero positive integer] *
-#* inspect_uri_only *
-#* max_header_length [positive integer] *
-#* max_spaces [positive integer] *
-#* webroot *
-#* tab_uri_delimiter *
-#* normalize_headers *
-#* normalize_cookies *
-#* normalize_utf *
-#* max_headers [positive integer] *
-#*http_methods { <CMD1> <CMD2> } *
-#* log_uri *
-#* log_hostname *
-#-- Profile Breakout --
-#* http_client_body *
-#* http_cookie *
-#* http_raw_cookie *
-#* http_header *
-#* http_raw_header *
-#* http_method *
-#* http_uri *
-#* http_raw_uri *
-#* http_stat_code *
-#* http_stat_msg *
-#* http_encode *
-
-
-    { "allow_proxy_use", Parameter::PT_BOOL, nullptr, "false",
-      "don't alert on proxy use for this server" },
-
-    { "apache_whitespace", Parameter::PT_BOOL, nullptr, "true",
-      "don't alert if tab is used in lieu of space characters" },
-
-    { "ascii", Parameter::PT_BOOL, nullptr, "true",
-      "enable decoding ASCII like %2f to /" },
-
-    { "bare_byte", Parameter::PT_BOOL, nullptr, "false",
-      "decode non-standard, non-ASCII character encodings" },
-
-    { "chunk_length", Parameter::PT_INT, "1:", "500000",
-      "alert on chunk lengths greater than specified" },
-
-    { "client_flow_depth", Parameter::PT_INT, "-1:1460", "300",
-      "raw request payload to inspect" },
-
-    { "directory", Parameter::PT_BOOL, nullptr, "true",
-      "normalize . and .. sequences out of URI" },
-
-    { "double_decode", Parameter::PT_BOOL, nullptr, "false",
-      "iis specific extra decoding" },
-
-    { "enable_cookies", Parameter::PT_BOOL, nullptr, "false",
-      "extract cookies" },
-
-    { "enable_xff", Parameter::PT_BOOL, nullptr, "false",
-      "log True-Client-IP and X-Forwarded-For headers with unified2 alerts as extra data" },
-
-    { "extended_ascii_uri", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
-    { "extended_response_inspection", Parameter::PT_BOOL, nullptr, "false",
-      "extract resonse headers" },
-
-    { "http_methods", Parameter::PT_STRING, nullptr, nullptr,
-      "request methods allowed in addition to GET and POST" },
-
-    { "iis_backslash", Parameter::PT_BOOL, nullptr, "false",
-      "normalize directory slashes" },
-
-    { "iis_delimiter", Parameter::PT_BOOL, nullptr, "true",
-      "allow use of non-standard delimiter" },
-
-    { "iis_unicode", Parameter::PT_BOOL, nullptr, "false",
-      "enable unicode code point mapping using unicode_map settings" },
-
-    { "iis_unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
-      "help" },
-
-    { "inspect_gzip", Parameter::PT_BOOL, nullptr, "false",
-      "enable gzip decompression of compressed bodies" },
-
-    { "inspect_uri_only", Parameter::PT_BOOL, nullptr, "false",
-      "disable all detection except for uricontent" },
-
-    { "log_hostname", Parameter::PT_BOOL, nullptr, "false",
-      "enable logging of Hostname with unified2 alerts as extra data" },
-
-    { "log_uri", Parameter::PT_BOOL, nullptr, "false",
-      "enable logging of URI with unified2 alerts as extra data" },
-
-    { "max_header_length", Parameter::PT_INT, "0:65535", "0",
-      "maximum allowed client request header field" },
-
-    { "max_headers", Parameter::PT_INT, "0:1024", "0",
-      "maximum allowd client request headers" },
-
-    { "max_spaces", Parameter::PT_INT, "0:65535", "200",
-      "help" },
-
-    { "multi_slash", Parameter::PT_BOOL, nullptr, "true",
-      "normalize out consecutive slashes in URI" },
-
-    { "no_pipeline_req", Parameter::PT_BOOL, nullptr, "false",
-      "don't inspect pipelined requests after first (still does general detection)" },
-
-    { "non_rfc_chars", Parameter::PT_BIT_LIST, "255", "false",
-      "alert on given non-RFC chars being present in the URI" },
-
-    { "non_strict", Parameter::PT_BOOL, nullptr, "true",
-      "allows HTTP 0.9 processing" },
-
-    { "normalize_cookies", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
-    { "normalize_headers", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
-    { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
-      "normalize javascript between <script> tags" },
-
-    { "max_javascript_whitespaces", Parameter::PT_INT, "0:", "200",
-      "maximum number of consecutive whitespaces" },
-
-    { "normalize_utf", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
-    { "oversize_dir_length", Parameter::PT_INT, "0:", "0",
-      "alert if a URL has a directory longer than this limit" },
-
-    { "post_depth", Parameter::PT_INT, "-1:65535", "-1",
-      "amount of POST data to inspect" },
 
     { "profile", Parameter::PT_ENUM, profiles, "none",
       "set defaults appropriate for selected server" },
 
-    { "server_flow_depth", Parameter::PT_INT, "-1:65535", "300",
-      "response payload to inspect; includes headers with extended_response_inspection" },
-
-    { "small_chunk_count", Parameter::PT_INT, "0:255", "0",
-      "alert if more than this limit of consecutive chunks are below small_chunk_length" },
-
-    { "small_chunk_length", Parameter::PT_INT, "0:255", "0",
-      "alert if more than small_chunk_count consecutive chunks below this limit" },
-
-    { "tab_uri_delimiter", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
-    { "u_encode", Parameter::PT_BOOL, nullptr, "false",
-      "decode %uXXXX character sequences" },
-
-    { "unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
-      "help" },
-
-    { "unlimited_decompress", Parameter::PT_INT, nullptr, "false",
-      "decompress across multiple packets" },
-
-    { "utf_8", Parameter::PT_BOOL, nullptr, "true",
-      "decode UTF-8 unicode sequences in URI" },
-
-    { "webroot", Parameter::PT_BOOL, nullptr, "true",
-      "alert on directory traversals past the top level (web server root)" },
-
-    { "whitespace_chars", Parameter::PT_BIT_LIST, "255", "false",
-      "help" },
 #endif
+
+int HttpInspectServer::binding_id = 0;
 
 bool HttpInspectServer::convert(std::stringstream& data_stream)
 {
     std::string keyword;
+    bool retval = true;
 
-    if(data_stream >> keyword)
+    if(!(data_stream >> keyword) || keyword.compare("server"))
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
-        if (map)
-        {
-            converter->set_state(map->ctor(converter));
-            return true;
-        }
+        return false;
     }
 
-    return false;    
+    if(!(data_stream >> keyword))
+        return false;
 
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;    
+    if(!keyword.compare("default"))
+    {
+        converter->open_table("http_server");
+    }
+    else
+    {
+        converter->open_table("http_server_" + std::to_string(binding_id));
+        binding_id++;
+        // CREATE A BINDING HERE!!
+    }
+
+    // parse the file configuration
+    while(data_stream >> keyword)
+    {
+        bool tmpval = true;
+
+        if (!keyword.compare("extended_response_inspection"))
+            tmpval = converter->add_option_to_table("extended_response_inspection", true);
+
+        else if (!keyword.compare("allow_proxy_use"))
+            tmpval = converter->add_option_to_table("allow_proxy_use", true);
+
+        else if (!keyword.compare("inspect_gzip"))
+            tmpval = converter->add_option_to_table("inspect_gzip", true);
+
+        else if (!keyword.compare("unlimited_decompress"))
+            tmpval = converter->add_option_to_table("unlimited_decompress", true);
+
+        else if (!keyword.compare("normalize_javascript"))
+            tmpval = converter->add_option_to_table("normalize_javascript", true);
+
+        else if (!keyword.compare("enable_xff"))
+            tmpval = converter->add_option_to_table("enable_xff", true);
+
+        else if (!keyword.compare("extended_ascii_uri"))
+            tmpval = converter->add_option_to_table("extended_ascii_uri", true);
+
+        else if (!keyword.compare("non_strict"))
+            tmpval = converter->add_option_to_table("non_strict", true);
+
+        else if (!keyword.compare("inspect_uri_only"))
+            tmpval = converter->add_option_to_table("inspect_uri_only", true);
+
+        else if (!keyword.compare("tab_uri_delimiter"))
+            tmpval = converter->add_option_to_table("tab_uri_delimiter", true);
+
+        else if (!keyword.compare("normalize_headers"))
+            tmpval = converter->add_option_to_table("normalize_headers", true);
+
+        else if (!keyword.compare("normalize_utf"))
+            tmpval = converter->add_option_to_table("normalize_utf", true);
+
+        else if (!keyword.compare("log_uri"))
+            tmpval = converter->add_option_to_table("log_uri", true);
+
+        else if (!keyword.compare("normalize_cookies"))
+            tmpval = converter->add_option_to_table("normalize_cookies", true);
+
+        else if (!keyword.compare("log_hostname"))
+            tmpval = converter->add_option_to_table("log_hostname", true);
+
+        else if (!keyword.compare("no_pipeline_req"))
+            tmpval = converter->add_option_to_table("no_pipeline_req", true);
+
+        else if (!keyword.compare("ascii"))
+            tmpval = parse_yn_bool_option("ascii", data_stream);
+
+        else if (!keyword.compare("utf_8"))
+            tmpval = parse_yn_bool_option("utf_8", data_stream);
+
+        else if (!keyword.compare("u_encode"))
+            tmpval = parse_yn_bool_option("u_encode", data_stream);
+
+        else if (!keyword.compare("bare_byte"))
+            tmpval = parse_yn_bool_option("bare_byte", data_stream);
+
+        else if (!keyword.compare("iis_unicode"))
+            tmpval = parse_yn_bool_option("iis_unicode", data_stream);
+
+        else if (!keyword.compare("double_decode"))
+            tmpval = parse_yn_bool_option("double_decode", data_stream);
+
+        else if (!keyword.compare("multi_slash"))
+            tmpval = parse_yn_bool_option("multi_slash", data_stream);
+
+        else if (!keyword.compare("iis_backslash"))
+            tmpval = parse_yn_bool_option("iis_backslash", data_stream);
+
+        else if (!keyword.compare("directory"))
+            tmpval = parse_yn_bool_option("directory", data_stream);
+
+        else if (!keyword.compare("apache_whitespace"))
+            tmpval = parse_yn_bool_option("apache_whitespace", data_stream);
+
+        else if (!keyword.compare("iis_delimiter"))
+            tmpval = parse_yn_bool_option("iis_delimiter", data_stream);
+
+        else if (!keyword.compare("webroot"))
+            tmpval = parse_yn_bool_option("webroot", data_stream);
+
+        else if (!keyword.compare("max_javascript_whitespaces"))
+            tmpval = parse_int_option("max_javascript_whitespaces", data_stream);
+
+        else if (!keyword.compare("server_flow_depth"))
+            tmpval = parse_int_option("server_flow_depth", data_stream);
+
+        else if (!keyword.compare("client_flow_depth"))
+            tmpval = parse_int_option("client_flow_depth", data_stream);
+
+        else if (!keyword.compare("post_depth"))
+            tmpval = parse_int_option("post_depth", data_stream);
+
+        else if (!keyword.compare("chunk_length"))
+            tmpval = parse_int_option("chunk_length", data_stream);
+
+        else if (!keyword.compare("oversize_dir_length"))
+            tmpval = parse_int_option("oversize_dir_length", data_stream);
+
+        else if (!keyword.compare("max_header_length"))
+            tmpval = parse_int_option("max_header_length", data_stream);
+
+        else if (!keyword.compare("max_spaces"))
+            tmpval = parse_int_option("max_spaces", data_stream);
+
+        else if (!keyword.compare("max_headers"))
+            tmpval = parse_int_option("max_headers", data_stream);
+
+        else if (!keyword.compare("no_alerts"))
+            converter->add_deprecated_comment("no_alerts");
+
+        else if (!keyword.compare("decompress_swf"))
+            tmpval = parse_bracketed_unsupported_list("decompress_swf", data_stream);
+
+        else if (!keyword.compare("decompress_pdf"))
+            tmpval = parse_bracketed_unsupported_list("decompress_pdf", data_stream);
+
+        else if (!keyword.compare("http_methods"))
+            tmpval = parse_curly_bracket_list("http_methods", data_stream);
+
+        else if (!keyword.compare("whitespace_chars"))
+            tmpval = parse_bracketed_byte_list("whitespace_chars", data_stream);
+
+        else if (!keyword.compare("non_rfc_char"))
+        {
+            converter->add_deprecated_comment("non_rfc_char", "non_rfc_chars");
+            parse_bracketed_byte_list("non_rfc_chars", data_stream);
+        }
+
+        else if (!keyword.compare("enable_cookie"))
+        {
+            tmpval = converter->add_option_to_table("enable_cookies", true);
+            converter->add_deprecated_comment("enable_cookie", "enable_cookies");
+        }
+
+        else if (!keyword.compare("flow_depth"))
+        {
+            converter->add_deprecated_comment("flow_depth", "server_flow_depth");
+            tmpval = parse_int_option("server_flow_depth", data_stream);
+        }
+
+        else if (!keyword.compare("ports"))
+        {
+            converter->add_deprecated_comment("ports", "bindings");
+            converter->add_comment_to_table("check bindings table for port information");
+            tmpval = parse_bracketed_unsupported_list("ports", data_stream);
+        }
+
+        else if (!keyword.compare("small_chunk_length"))
+        {
+            std::string bracket;
+            int length;
+            int consec_chunks;
+
+            if(!(data_stream >> bracket) || bracket.compare("{") ||
+                    !(data_stream >> length) ||
+                    !(data_stream >> consec_chunks) ||
+                    !(data_stream >> bracket) || bracket.compare("}"))
+            {
+                tmpval = false;
+            }
+            else
+            {
+                converter->open_table("small_chunk_length");
+                converter->add_option_to_table("size", length);
+                converter->add_option_to_table("count", consec_chunks);
+                converter->close_table();
+            }
+        }
+
+        else if (!keyword.compare("iis_unicode_map"))
+        {
+            std::string map_file;
+            int code_page;
+
+            if( (data_stream >> map_file) &&
+                (data_stream >> code_page))
+            {
+                converter->open_table("iis_unicode_map");
+                tmpval = converter->add_option_to_table("map_file", map_file);
+                tmpval = converter->add_option_to_table("code_page", code_page) && tmpval;
+                converter->close_table();
+            }
+            else
+            {
+                converter->add_comment_to_table("snort.conf missing argument for "
+                    "iis_unicode_map <filename> <codemap>");
+                tmpval = false;
+            }
+        }
+
+        else if (!keyword.compare("profile"))
+        {
+            if (data_stream >> keyword)
+            {
+                tmpval = converter->add_option_to_table("profile", keyword);
+            }
+            else
+            {
+                converter->add_comment_to_table("Unable to convert keyword 'profile'");
+                tmpval = false;
+            }
+        }
+
+        else
+          tmpval = false;
+
+        retval = retval && tmpval;
+    }
+
+    return retval;
 }
+
+#if 0
+// check in confg
+
+
+#* decompress_swf { deflate lzma } *
+#* decompress_pdf { deflate } *
+
+#endif
 
 /**************************
  *******  A P I ***********
