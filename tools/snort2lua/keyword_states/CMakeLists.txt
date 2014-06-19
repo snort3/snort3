@@ -13,4 +13,5 @@ add_library( keyword_states
 target_link_libraries( keyword_states
     output_states
     preprocessor_states
+    config_states
 )

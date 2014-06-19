@@ -161,7 +161,7 @@ protected:
         return converter->add_option_to_table("--" + list_name, tmp );
     }
 
-    inline bool pen_table_add_option(std::string table_name, std::string opt_name, std::string val)
+    inline bool open_table_add_option(std::string table_name, std::string opt_name, std::string val)
     {
         bool tmpval = converter->open_table(table_name);
         tmpval = converter->add_option_to_table(opt_name, val) && tmpval;

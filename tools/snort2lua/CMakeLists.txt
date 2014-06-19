@@ -6,6 +6,7 @@ add_subdirectory(data)
 add_subdirectory(keyword_states)
 add_subdirectory(preprocessor_states)
 add_subdirectory(output_states)
+add_subdirectory(config_states)
 
 add_executable(snort2lua
     snort2lua.cc

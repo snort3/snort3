@@ -185,6 +185,13 @@ bool StreamTcp::convert(std::stringstream& data_stream)
         else if(!keyword.compare("check_session_hijacking"))
             converter->add_deprecated_comment("check_session_hijacking");
 
+        else if(!keyword.compare("bind_to"))
+        {
+            converter->add_deprecated_comment("bind_to", "bindings");
+            if(!(data_stream >> keyword))
+                tmpval = false;
+        }
+
         else if(!keyword.compare("dont_reassemble_async"))
         {
             converter->add_deprecated_comment("dont_reassemble_async", "reassemble_async");
@@ -228,13 +235,6 @@ bool StreamTcp::convert(std::stringstream& data_stream)
 
     return retval;    
 }
-#if 0
-
-#    bind_to <ip_addr>       - IP address for this policy.  The default is set
-    
-    ports <client|server|both> [all|space separated port list] 
-]
-#endif
 
 /**************************
  *******  A P I ***********

@@ -46,6 +46,8 @@ bool Suppress::convert(std::stringstream& data_stream)
     std::string keyword;
 
     converter->open_table("suppress");
+    converter->add_deprecated_comment("gen_id", "gid");
+    converter->add_deprecated_comment("sig_id", "sid");
     converter->open_table();
 
     while(data_stream >> keyword)
@@ -65,16 +67,13 @@ bool Suppress::convert(std::stringstream& data_stream)
             tmpval = parse_string_option("ip", data_stream);
 
         else if(!keyword.compare("gen_id"))
-        {
-            converter->add_deprecated_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", data_stream);
-        }
 
         else if (!keyword.compare("sig_id"))
-        {
-            converter->add_deprecated_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", data_stream);
-        }
+
+        else
+            tmpval = false;
 
         if (retval)
             retval = tmpval;
