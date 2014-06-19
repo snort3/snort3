@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// preprocessor.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_stream_udp.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -25,39 +25,54 @@
 #include "conversion_state.h"
 #include "converter.h"
 #include "snort2lua_util.h"
-#include "preprocessor_states/preprocessor_api.h"
 
 namespace {
 
-class Preprocessor : public ConversionState
+class StreamUdp : public ConversionState
 {
 public:
-    Preprocessor(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Preprocessor() {};
-    virtual bool convert(std::stringstream& data);
+    StreamUdp(Converter* cv)  : ConversionState(cv) {};
+    virtual ~StreamUdp() {};
+    virtual bool convert(std::stringstream& data_stream);
 };
 
 } // namespace
 
-
-bool Preprocessor::convert(std::stringstream& data_stream)
+bool StreamUdp::convert(std::stringstream& data_stream)
 {
+
+    bool retval = true;
     std::string keyword;
 
-    if(data_stream >> keyword)
-    {
-        if(keyword.back() == ':')
-            keyword.pop_back();
+    converter->open_table("stream_udp");
 
-        const ConvertMap* map = util::find_map(preprocessor_api, keyword);
-        if (map)
+    while(data_stream >> keyword)
+    {
+        bool tmpval = true;
+
+        if(keyword.back() == ',')
+            keyword.pop_back();
+        
+        if(keyword.empty())
+            continue;
+        
+        if(!keyword.compare("ignore_any_rules"))
+            tmpval = converter->add_option_to_table("ignore_any_rules", true);
+
+        else if(!keyword.compare("timeout"))
         {
-            converter->set_state(map->ctor(converter));
-            return true;
+            converter->add_deprecated_comment("timeout", "session_timeout");
+            tmpval = parse_int_option("session_timeout", data_stream);
         }
+
+        else
+            tmpval = false;
+
+        if (retval)
+            retval = tmpval;
     }
 
-    return false;    
+    return retval;    
 }
 
 /**************************
@@ -66,13 +81,13 @@ bool Preprocessor::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new Preprocessor(cv);
+    return new StreamUdp(cv);
 }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap preprocessor_stream_udp = 
 {
-    "preprocessor",
+    "stream5_udp",
     ctor,
 };
 
-const ConvertMap* preprocessor_map = &keyword_preprocessor;
+const ConvertMap* stream_udp_map = &preprocessor_stream_udp;

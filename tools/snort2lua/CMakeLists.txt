@@ -6,6 +6,7 @@ add_subdirectory(data)
 add_subdirectory(keyword_states)
 add_subdirectory(preprocessor_states)
 add_subdirectory(output_states)
+add_subdirectory(config_states)
 
 add_executable(snort2lua
     snort2lua.cc
@@ -15,10 +16,11 @@ add_executable(snort2lua
     init_state.cc
     snort2lua_util.h
     snort2lua_util.cc
+    conversion_state.h
 )
 
 target_link_libraries( snort2lua
-    converrsion_data
+    conversion_data
     keyword_states
     output_states
     preprocessor_states

@@ -92,6 +92,13 @@ bool Converter::open_table(std::string table_name)
     return true;
 }
 
+bool Converter::open_top_level_table(std::string table_name)
+{
+    Table *t = data.add_table(table_name);
+    open_tables.push(t);
+    return true;
+}
+
 bool Converter::close_table()
 {
     open_tables.pop();
@@ -103,7 +110,8 @@ bool Converter::add_option_to_table(std::string option_name, std::string val)
 {
     if(open_tables.size() == 0)
     {
-        log_error("Must open table before adding an option!!");
+        log_error("Must open table before adding an option!!: " +
+            option_name + " = " + val);
         return false;
     }
 
@@ -117,7 +125,9 @@ bool Converter::add_option_to_table(std::string option_name, int val)
 {
     if(open_tables.size() == 0)
     {
-        log_error("Must open table before adding an option!!");
+
+        log_error("Must open table before adding an option!!: " +
+            option_name + " = " + std::to_string(val));
         return false;
     }
 
@@ -130,7 +140,8 @@ bool Converter::add_option_to_table(std::string option_name, bool val)
 {
     if(open_tables.size() == 0)
     {
-        log_error("Must open table before adding an option!!");
+        log_error("Must open table before adding an option!!: " +
+            option_name + " = " + std::to_string(val));
         return false;
     }
 
@@ -142,6 +153,13 @@ bool Converter::add_option_to_table(std::string option_name, bool val)
 
 bool Converter::add_list_to_table(std::string list_name, std::string next_elem)
 {
+    if(open_tables.size() == 0)
+    {
+        log_error("Must open table before adding an option!!: " +
+            list_name + " = " + next_elem);
+        return false;
+    }
+
     Table *t = open_tables.top();
 
     if(t)
@@ -151,7 +169,8 @@ bool Converter::add_list_to_table(std::string list_name, std::string next_elem)
     }
     else
     {
-        log_error("Must open table before adding a list!!");
+        log_error("Must open table before adding an list!!: " +
+            list_name + " += " + next_elem);
         return false;
     }
 }
@@ -181,7 +200,7 @@ void Converter::add_comment_to_file(std::string comment, std::stringstream& stre
 
 void Converter::add_deprecated_comment(std::string dep_var)
 {
-    std::string error_string = "option " + dep_var + " has been deprecated.";
+    std::string error_string = "option '" + dep_var + "' deprecated.";
 
     if (open_tables.size() > 0)
         add_comment_to_table(error_string);
@@ -191,8 +210,8 @@ void Converter::add_deprecated_comment(std::string dep_var)
 
 void Converter::add_deprecated_comment(std::string dep_var, std::string new_var)
 {
-    std::string error_string = "option " + dep_var + " has been deprecated" 
-            + " ... using " + new_var + " instead";
+    std::string error_string = "option '" + dep_var + "' deprecated"
+            + " ... using '" + new_var + "' instead";
 
     if (open_tables.size() > 0)
         add_comment_to_table(error_string);

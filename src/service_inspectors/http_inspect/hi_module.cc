@@ -367,10 +367,10 @@ static const Parameter hi_server_params[] =
     { "u_encode", Parameter::PT_BOOL, nullptr, "false",
       "decode %uXXXX character sequences" },
 
-    { "unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
-      "help" },
+//    { "unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
+//      "help" },
 
-    { "unlimited_decompress", Parameter::PT_INT, nullptr, "false",
+    { "unlimited_decompress", Parameter::PT_BOOL, nullptr, "false",
       "decompress across multiple packets" },
 
     { "utf_8", Parameter::PT_BOOL, nullptr, "true",

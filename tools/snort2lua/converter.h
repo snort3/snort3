@@ -54,6 +54,8 @@ public:
     bool open_table();
     // open a  named tabled --> 'name = {...}')
     bool open_table(std::string name);
+    // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
+    bool open_top_level_table(std::string name);
     // close the current table.  go to previous table level
     bool close_table();
 

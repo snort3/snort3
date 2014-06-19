@@ -21,13 +21,7 @@
 
 #include "cv_data.h"
 #include "snort2lua_util.h"
-
-#if 0
-    std::vector<Variable> vars;
-    std::vector<Table> tables;
-    Table curr_table;
-#endif
-
+#include <iostream>
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -72,9 +66,19 @@ Table* ConversionData::add_table(std::string name)
     if(t)
         return t;
 
-    t = new Table(name, 0);
-    tables.push_back(t);
-    return t;
+
+    try
+    {
+        t = new Table(name, 0);
+        tables.push_back(t);
+        return t;
+    }
+    catch (std::bad_alloc& ba)
+    {
+        std::cout << "Failed to allocate memory for a new Table!!" << std::endl;
+        exit (EXIT_FAILURE);
+        return nullptr;
+    }
 }
 
 void ConversionData::add_comment(std::string str)

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_config.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "converter.h"
+#include "config_states/config_api.h"
 #include "snort2lua_util.h"
 
 
@@ -43,12 +43,15 @@ public:
 
 bool Config::convert(std::stringstream& data_stream)
 {
-#if 0
     std::string keyword;
 
-    if(data >> keyword)
+    if(data_stream >> keyword)
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
+
+        if(keyword.back() == ':')
+            keyword.pop_back();
+
+        const ConvertMap* map = util::find_map(config_api, keyword);
         if (map)
         {
             converter->set_state(map->ctor(converter));
@@ -56,11 +59,7 @@ bool Config::convert(std::stringstream& data_stream)
         }
     }
 
-    return false;    
-#endif
-
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;
+    return false;
 }
 
 /**************************

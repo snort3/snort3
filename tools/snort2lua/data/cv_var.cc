@@ -20,7 +20,7 @@
 // cv_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include "data/cv_var.h"
-
+#include "snort2lua_util.h"
 
 #if 0
 static inline bool var_exists(std::vector<std::string> vec, std::string name)
@@ -84,45 +84,52 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
             out << std::endl << whitespace << "    ";
 
         length += v.size();
-        out << " " << v << " ..";
+        out << v << " .. ";
     }
 
     if (var.strs.size() == 0)
-        out << " ''";
+        out << "''";
+
+
 
     else if(var.count < var.max_line_length || var.strs.size() == 1)
     {
-        out << "'";
+        std::string tmp_str = "";
+        length = whitespace.size();
 
         for (auto s : var.strs)
         {
             if ( 0 < length && length + s.size() > var.max_line_length )
-                out << std::endl << whitespace << "    ";
+                tmp_str += "\n" + whitespace + "    ";
 
-            length += s.size();
-            out << " " << s;
+            length += s.size() ;
+            tmp_str += s + ' ';
         }
-        out << "'";
+        util::trim(tmp_str);
+        out << "'" << tmp_str << "'";
     }
     else
     {
-        out << std::endl <<  whitespace << "[[" << std::endl;
-        out << whitespace << "    ";
         length = 4 + whitespace.size();
+        std::string tmp_str = "";
 
         for (auto s : var.strs)
         {
-            if ( 0 < length && length + s.size() > var.max_line_length )
+            if ( length + s.size() > var.max_line_length )
             {
-                out << std::endl << whitespace << "    ";
+                util::rtrim(tmp_str);
+                tmp_str += "\n" + whitespace + "    ";
                 length = 4 + whitespace.size();
             }
 
-            length += s.size();
-            out << " " << s;
+            length += s.size() + 1;
+            tmp_str += s + " ";
         }
 
-        out << std::endl << whitespace << "]]";
+        util::trim(tmp_str);
+        out << std::endl <<  whitespace << "[[" << std::endl;
+        out << whitespace << "    " << tmp_str << std::endl;
+        out << whitespace << "]]";
     }
 
     return out;
