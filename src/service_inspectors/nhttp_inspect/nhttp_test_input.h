@@ -38,7 +38,7 @@ public:
     uint16_t toEval(uint8_t **buffer, int64_t &testNumber);
 
     // Hard for NHttpInspect and PAF to share these without making them "global". This is as good a place as any for them to live.
-    static bool test_mode;
+    static bool test_input;
     static NHttpTestInput *testInput;
 private:
     FILE *testDataFile;

@@ -36,13 +36,14 @@
 NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
 }
 
-
 const Parameter NHttpModule::nhttpParams[] =
-    {{ "test_mode", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
+    {{ "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
+     { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
      { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
 
 bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    test_mode = false;
+    test_input = false;
+    test_output = false;
     return true;
 }
 
@@ -51,11 +52,11 @@ bool NHttpModule::end(const char*, int, SnortConfig*) {
 }
 
 bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_mode")) {
-        test_mode = val.get_bool();
-        return true;
-    }
-    return false;
+    if (val.is("test_input")) test_input = val.get_bool();
+    else if (val.is("test_output")) test_output = val.get_bool();
+    else return false;
+
+    return true;
 }
 
 unsigned NHttpModule::get_gid() const {

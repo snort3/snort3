@@ -79,7 +79,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     DsizeCheckData config;
@@ -125,7 +125,7 @@ bool DsizeOption::operator==(const IpsOption& ips) const
 }
 
 // Test the packet's payload size against the rule payload size value
-int DsizeOption::eval(Packet *p)
+int DsizeOption::eval(Cursor&, Packet *p)
 {
     DsizeCheckData *ds_ptr = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

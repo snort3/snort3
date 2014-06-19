@@ -105,7 +105,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     SessionData config;
@@ -150,7 +150,7 @@ bool SessionOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int SessionOption::eval(Packet *p)
+int SessionOption::eval(Cursor&, Packet *p)
 {
     SessionData *session_data = &config;
     FILE *session;         /* session file ptr */

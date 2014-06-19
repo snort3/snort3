@@ -35,6 +35,7 @@
 #include "extract.h"
 #include "fpdetect.h"
 #include "framework/ips_option.h"
+#include "framework/cursor.h"
 
 #ifdef PERF_PROFILING
 static THREAD_LOCAL PreprocStats byteExtractPerfStats;
@@ -91,7 +92,7 @@ public:
     bool is_relative()
     { return (config.relative_flag == 1); };
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     ByteExtractData config;
@@ -152,15 +153,13 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteExtractOption::eval(Packet *p)
+int ByteExtractOption::eval(Cursor& c, Packet *p)
 {
     ByteExtractData *data = &config;
-    int ret, bytes_read, dsize;
-    const uint8_t *ptr, *start, *end;
+    int ret, bytes_read;
     uint32_t *value;
-    uint8_t rst_doe_flags = 1;
-    PROFILE_VARS;
 
+    PROFILE_VARS;
     PREPROC_PROFILE_START(byteExtractPerfStats);
 
     if (data == NULL || p == NULL)
@@ -169,36 +168,13 @@ int ByteExtractOption::eval(Packet *p)
         return DETECTION_OPTION_NO_MATCH;
     }
 
-    /* setup our fun pointers */
-    if (Is_DetectFlag(FLAG_ALT_DETECT))
-    {
-        dsize = DetectBuffer.len;
-        start = DetectBuffer.data;
-    }
-    else if (Is_DetectFlag(FLAG_ALT_DECODE))
-    {
-        dsize = DecodeBuffer.len;
-        start = DecodeBuffer.data;
-    }
-    else
-    {
-        if(IsLimitedDetect(p))
-            dsize = p->alt_dsize;
-        else
-            dsize = p->dsize;
-        start = p->data;
-    }
+    const uint8_t* start = c.buffer();
+    int dsize = c.size();
 
-    if (data->relative_flag)
-    {
-        ptr = doe_ptr;
-        rst_doe_flags = 0;
-    }
-    else
-        ptr = start;
-
+    const uint8_t* ptr = data->relative_flag ? c.start() : c.buffer();
     ptr += data->offset;
-    end = start + dsize;
+
+    const uint8_t* end = start + dsize;
     value = &(extracted_values[data->var_number]);
 
     /* check bounds */
@@ -244,7 +220,7 @@ int ByteExtractOption::eval(Packet *p)
     }
 
     /* push doe_ptr */
-    UpdateDoePtr((ptr + bytes_read), rst_doe_flags);
+    c.add_pos(bytes_read);
 
     /* this rule option always "matches" if the read is performed correctly */
     PREPROC_PROFILE_END(byteExtractPerfStats);

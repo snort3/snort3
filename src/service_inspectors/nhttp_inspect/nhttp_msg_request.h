@@ -49,17 +49,40 @@ public:
 private:
     // Code conversion tables are for turning token strings into enums.
     static const StrCode methodList[];
+    static const StrCode schemeList[];
 
     // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
     // things into a standard form without changing the underlying format.
     void parseStartLine();
     void deriveMethodId();
+    void parseUri();
+    void deriveSchemeId();
+    void parseAuthority();
+    void derivePortValue();
+    void parseAbsPath();
 
     // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
+    // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
     // scratchPad (normalized pieces).
     field method;
+
+    // URI stuff
     field uri;
+    field uriLegacyNorm;
+    NHttpEnums::UriType uriType;
+    field scheme;
+    field authority;
+    field host;
+    field hostNorm;
+    field port;
+    int32_t portValue;
+    field absPath;
+    field path;
+    field pathNorm;
+    field query;
+    field queryNorm;
+    field fragment;
+    field fragmentNorm;
 };
 
 #endif

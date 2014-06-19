@@ -123,7 +123,6 @@ static const InspectApi icmp_api =
     IT_STREAM,
     PROTO_BIT__ICMP,
     nullptr, // service
-    nullptr, // contents
     icmp_init,
     nullptr, // term
     icmp_ctor,
@@ -133,8 +132,7 @@ static const InspectApi icmp_api =
     icmp_ssn,
     icmp_sum,
     icmp_stats,
-    icmp_reset,
-    nullptr  // getbuf
+    icmp_reset
 };
 
 const BaseApi* nin_stream_icmp = &icmp_api.base;

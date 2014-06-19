@@ -2,6 +2,7 @@
 
 set (FILE_LIST
     http_inspect.cc
+    http_inspect.h
     hi_main.cc
     hi_main.h
     hi_ad.cc 
@@ -14,6 +15,7 @@ set (FILE_LIST
     hi_cmd_lookup.cc 
     hi_cmd_lookup.h
     hi_include.h
+    hi_ips_options.cc
     hi_mi.cc 
     hi_mi.h
     hi_norm.cc 

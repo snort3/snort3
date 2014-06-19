@@ -38,7 +38,7 @@
 
 using namespace NHttpEnums;
 
-bool NHttpTestInput::test_mode = false;
+bool NHttpTestInput::test_input = false;
 NHttpTestInput *NHttpTestInput::testInput = nullptr;
 
 NHttpTestInput::NHttpTestInput(const char *fileName) {

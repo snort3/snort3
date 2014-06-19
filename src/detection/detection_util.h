@@ -63,43 +63,31 @@ typedef enum
 } HTTP_BUFFER;
 #endif
 
-typedef enum {
+enum DetectFlagType
+{
     FLAG_ALT_DECODE         = 0x0001,
     FLAG_ALT_DETECT         = 0x0002,
     FLAG_DETECT_ALL         = 0xffff
-} DetectFlagType;
+};
 
-#define DOE_BUF_URI     0x01
-#define DOE_BUF_STD     0x02
-
-#define HTTPURI_PIPELINE_REQ 0x01
-
-#define HTTP_ENCODE_TYPE__UTF8_UNICODE   0x00000001
-#define HTTP_ENCODE_TYPE__DOUBLE_ENCODE  0x00000002
-#define HTTP_ENCODE_TYPE__NONASCII       0x00000004
-#define HTTP_ENCODE_TYPE__BASE36         0x00000008
-#define HTTP_ENCODE_TYPE__UENCODE        0x00000010
-#define HTTP_ENCODE_TYPE__BARE_BYTE      0x00000020
-#define HTTP_ENCODE_TYPE__IIS_UNICODE    0x00000040
-#define HTTP_ENCODE_TYPE__ASCII          0x00000080
-
-typedef struct
+struct HttpBuffer
 {
     const uint8_t* buf;
     uint16_t length;
     uint32_t encode_type;
-} HttpBuffer;
+};
 
-typedef struct {
+struct DataPointer
+{
     uint8_t *data;
     uint16_t len;
-} DataPointer;
+};
 
-
-typedef struct {
+struct DataBuffer
+{
     uint8_t data[DECODE_BLEN];
     uint16_t len;
-} DataBuffer;
+};
 
 extern THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
 extern THREAD_LOCAL uint32_t base64_decode_size;
@@ -177,74 +165,6 @@ static inline void setFileDataPtr(uint8_t *ptr, uint16_t decode_size)
 {
     file_data_ptr.data = ptr;
     file_data_ptr.len = decode_size;
-}
-
-/*
- * Function: IsBase64DecodeBuf
- *
- * Purpose: Checks if there is base64 decoded buffer.
- *
- * Arguments: p => doe_ptr
- *
- * Returns: Returns 1 if there is base64 decoded data
- *          and if the doe_ptr is within the buffer.
- *          Returns 0 otherwise.
- *
- */
-
-static inline int IsBase64DecodeBuf(const uint8_t *p)
-{
-    if( base64_decode_size && p )
-    {
-        if ((p >= base64_decode_buf) &&
-                (p < (base64_decode_buf + base64_decode_size)))
-        {
-            return 1;
-        }
-        else
-            return 0;
-    }
-    else
-        return 0;
-}
-
-/*
- * Function: SetDoePtr(const uint8_t *ptr, uint8_t type)
- *
- * Purpose: This function set the doe_ptr and sets the type of
- *          buffer to which doe_ptr points.
- *
- * Arguments: ptr       => pointer
- *            type      => type of buffer
- *
- * Returns: void
- *
-*/
-
-static inline void SetDoePtr(const uint8_t *ptr, uint8_t type)
-{
-    doe_ptr = ptr;
-    doe_buf_flags = type;
-}
-
-/*
- * Function: UpdateDoePtr(const uint8_t *ptr, uint8_t update)
- *
- * Purpose: This function updates the doe_ptr and resets the type of
- *          buffer to which doe_ptr points based on the update value.
- *
- * Arguments: ptr       => pointer
- *            update    => reset the buf flag if update is not zero.
- *
- * Returns: void
- *
-*/
-
-static inline void UpdateDoePtr(const uint8_t *ptr, uint8_t update)
-{
-    doe_ptr = ptr;
-    if(update)
-        doe_buf_flags = DOE_BUF_STD;
 }
 
 void EventTrace_Init(void);

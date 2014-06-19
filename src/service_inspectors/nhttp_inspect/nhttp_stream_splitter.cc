@@ -44,7 +44,7 @@ void NHttpStreamSplitter::prepareFlush(NHttpFlowData* sessionData, uint32_t* flu
     sessionData->tcpClose = tcpClose;
     sessionData->infractions = infractions;
     if (tcpClose) sessionData->typeExpected[sourceId] = SEC_CLOSED;
-    if (!NHttpTestInput::test_mode) *flushOffset = numOctets;
+    if (!NHttpTestInput::test_input) *flushOffset = numOctets;
     else NHttpTestInput::testInput->pafFlush(numOctets);
     octetsSeen = 0;
     numCrlf = 0;
@@ -62,7 +62,7 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
 
     SourceId sourceId = (flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER;
 
-    if (NHttpTestInput::test_mode) {
+    if (NHttpTestInput::test_input) {
         *flushOffset = length;
         bool needBreak;
         NHttpTestInput::testInput->toPaf((uint8_t*&)data, length, sourceId, tcpClose, needBreak);

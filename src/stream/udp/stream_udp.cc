@@ -138,7 +138,6 @@ static const InspectApi udp_api =
     IT_STREAM,
     PROTO_BIT__UDP,
     nullptr, // service
-    nullptr, // contents
     udp_init,
     nullptr, // term
     udp_ctor,
@@ -148,8 +147,7 @@ static const InspectApi udp_api =
     udp_ssn,
     udp_sum,
     udp_stats,
-    udp_reset,
-    nullptr  // getbuf
+    udp_reset
 };
 
 const BaseApi* nin_stream_udp = &udp_api.base;

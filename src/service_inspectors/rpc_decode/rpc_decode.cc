@@ -1166,7 +1166,6 @@ static const InspectApi rd_api =
     IT_SERVICE,
     PROTO_BIT__TCP,
     "sunrpc",
-    nullptr, // contents
     rd_init,
     nullptr, // term
     rd_ctor,
@@ -1176,8 +1175,7 @@ static const InspectApi rd_api =
     nullptr, // ssn
     rd_sum,
     rd_stats,
-    rd_reset,
-    nullptr  // getbuf
+    rd_reset
 };
 
 #ifdef BUILDING_SO

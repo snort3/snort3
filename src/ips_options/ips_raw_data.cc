@@ -18,15 +18,11 @@
  ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/* sp_base64_data
- *
- */
-
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <sys/types.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
@@ -42,78 +38,64 @@
 #include "profiler.h"
 #include "fpdetect.h"
 #include "detection/detection_defines.h"
-#include "detection/detection_util.h"
+#include "detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 
+static const char* s_name = "raw_data";
+
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats base64DataPerfStats;
+static THREAD_LOCAL PreprocStats rawDataPerfStats;
 
-static const char* s_name = "base64_data";
-
-static PreprocStats* b64_get_profile(const char* key)
+static PreprocStats* pd_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
-        return &base64DataPerfStats;
+        return &rawDataPerfStats;
 
     return nullptr;
 }
 #endif
 
-class Base64DataOption : public IpsOption
+class RawDataOption : public IpsOption
 {
 public:
-    Base64DataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BASE64_DATA) { };
-
+    RawDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_OTHER) { };
     int eval(Cursor&, Packet*);
 };
 
-int Base64DataOption::eval(Cursor& c, Packet *p)
+int RawDataOption::eval(Cursor& c, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
+    PREPROC_PROFILE_START(rawDataPerfStats);
 
-    PREPROC_PROFILE_START(base64DataPerfStats);
+    c.set(s_name, p->data, p->dsize);
 
-    if ((p->dsize == 0) || !base64_decode_size )
-    {
-        PREPROC_PROFILE_END(base64DataPerfStats);
-        return rval;
-    }
-
-    c.set(s_name, base64_decode_buf, base64_decode_size);
-    rval = DETECTION_OPTION_MATCH;
-
-    PREPROC_PROFILE_END(base64DataPerfStats);
-    return rval;
+    PREPROC_PROFILE_END(rawDataPerfStats);
+    return DETECTION_OPTION_MATCH;
 }
 
-static class IpsOption* base64_data_ctor(
-    SnortConfig*, char *data, OptTreeNode *otn)
+static IpsOption* raw_data_ctor(
+    SnortConfig*, char *data, OptTreeNode*)
 {
-    // FIXIT change base64_data to suboption of base64_decode
-    if ( !otn_has_plugin(otn, RULE_OPTION_TYPE_BASE64_DECODE) )
-        ParseError("base64_decode needs to be specified before base64_data in a rule");
+    if (!IsEmptyStr(data))
+        ParseError("raw_data takes no arguments");
 
-    if ( !IsEmptyStr(data) )
-        ParseError("base64_data takes no arguments");
-
-    return new Base64DataOption;
+    return new RawDataOption;
 }
 
-static void base64_data_dtor(IpsOption* p)
+static void raw_data_dtor(IpsOption* p)
 {
     delete p;
 }
 
-static void base64_data_ginit(SnortConfig*)
+static void raw_data_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &base64DataPerfStats, b64_get_profile);
+    RegisterOtnProfile(s_name, &rawDataPerfStats, pd_get_profile);
 #endif
 }
 
-static const IpsApi base64_data_api =
+static const IpsApi raw_data_api =
 {
     {
         PT_IPS_OPTION,
@@ -125,22 +107,22 @@ static const IpsApi base64_data_api =
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    base64_data_ginit,
+    raw_data_ginit,
     nullptr,
     nullptr,
     nullptr,
-    base64_data_ctor,
-    base64_data_dtor,
+    raw_data_ctor,
+    raw_data_dtor,
     nullptr
 };
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &base64_data_api.base,
+    &raw_data_api.base,
     nullptr
 };
 #else
-const BaseApi* ips_base64_data = &base64_data_api.base;
+const BaseApi* ips_raw_data = &raw_data_api.base;
 #endif
 

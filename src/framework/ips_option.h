@@ -56,7 +56,7 @@ public:
     // packet threads
     virtual void config(SnortConfig*) { };
     virtual bool is_relative() { return false; };
-    virtual int eval(Packet*) { return true; };
+    virtual int eval(struct Cursor&, Packet*) { return true; };
     virtual void action(Packet*) { };
 
     option_type_t get_type() const { return type; };
@@ -103,10 +103,10 @@ struct IpsApi
     IpsChkFunc verify;
 };
 
-static inline int ips_option_eval(void* v, Packet* p)
+static inline int ips_option_eval(void* v, Cursor& c, Packet* p)
 {
     IpsOption* opt = (IpsOption*)v;
-    return opt->eval(p);
+    return opt->eval(c, p);
 }
 
 #endif

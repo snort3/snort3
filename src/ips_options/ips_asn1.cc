@@ -115,7 +115,7 @@ public:
     bool is_relative()
     { return ( config.offset_type == REL_OFFSET ); };
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     ASN1_CTXT config;
@@ -174,7 +174,7 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
     return false;
 }
 
-int Asn1Option::eval(Packet *p)
+int Asn1Option::eval(Cursor&, Packet *p)
 {
     PROFILE_VARS;
 

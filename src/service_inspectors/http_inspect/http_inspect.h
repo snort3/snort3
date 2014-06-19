@@ -1,6 +1,6 @@
 /****************************************************************************
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2008-2013 Sourcefire, Inc.
+ *
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -18,27 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  ****************************************************************************/
-#ifndef RULE_OPTION_TYPES_H
-#define RULE_OPTION_TYPES_H
 
-typedef enum _option_type_t
-{
-    RULE_OPTION_TYPE_LEAF_NODE,
-    RULE_OPTION_TYPE_BASE64_DATA,
-    RULE_OPTION_TYPE_BASE64_DECODE,
-    RULE_OPTION_TYPE_BYTE_EXTRACT,
-    RULE_OPTION_TYPE_BYTE_JUMP,
-    RULE_OPTION_TYPE_BYTE_TEST,
-    RULE_OPTION_TYPE_CONTENT,
-    RULE_OPTION_TYPE_CONTENT_URI,
-    RULE_OPTION_TYPE_FILE_DATA,
-    RULE_OPTION_TYPE_FLOW,
-    RULE_OPTION_TYPE_FLOWBIT,
-    RULE_OPTION_TYPE_IP_PROTO,
-    RULE_OPTION_TYPE_PCRE,
-    RULE_OPTION_TYPE_PKT_DATA,
-    RULE_OPTION_TYPE_OTHER
-} option_type_t;
+#ifndef HTTP_INSPECT_H
+#define HTTP_INSPECT_H
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+struct BaseApi;
+
+extern const BaseApi* ips_http_uri;
+extern const BaseApi* ips_http_header;
+extern const BaseApi* ips_http_client_body;
+extern const BaseApi* ips_http_method;
+extern const BaseApi* ips_http_cookie;
+extern const BaseApi* ips_http_stat_code;
+extern const BaseApi* ips_http_stat_msg;
+extern const BaseApi* ips_http_raw_uri;
+extern const BaseApi* ips_http_raw_header;
+extern const BaseApi* ips_http_raw_cookie;
 
 #endif
 

@@ -59,7 +59,7 @@ void NHttpApi::nhttp_term()
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
     const NHttpModule* nhttpMod = (NHttpModule*) mod;
-    return new NHttpInspect(nhttpMod->get_test_mode());
+    return new NHttpInspect(nhttpMod->get_test_input(), nhttpMod->get_test_output());
 }
 
 void NHttpApi::nhttp_dtor(Inspector* p)
@@ -108,7 +108,6 @@ const InspectApi NHttpApi::nhttp_api =
     IT_SERVICE,
     PROTO_BIT__TCP,
     "http",
-    nullptr, // contents
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,
     NHttpApi::nhttp_ctor,
@@ -118,8 +117,7 @@ const InspectApi NHttpApi::nhttp_api =
     nullptr,
     NHttpApi::nhttp_sum,
     NHttpApi::nhttp_stats,
-    NHttpApi::nhttp_reset,
-    nullptr  // getbuf
+    NHttpApi::nhttp_reset
 };
 
 #ifdef BUILDING_SO

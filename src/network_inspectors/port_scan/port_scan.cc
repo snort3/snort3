@@ -1032,7 +1032,6 @@ static const InspectApi sp_api =
     IT_PROTOCOL,
     PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT dynamic assign
     nullptr, // service
-    nullptr, // contents
     sp_init,
     nullptr, // term
     sp_ctor,
@@ -1042,8 +1041,7 @@ static const InspectApi sp_api =
     nullptr, // ssn
     sp_sum,
     sp_stats,
-    sp_reset,
-    nullptr  // getbuf
+    sp_reset
 };
 
 #ifdef BUILDING_SO

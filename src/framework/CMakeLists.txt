@@ -4,7 +4,7 @@ set (FRAMEWORK_INCLUDES
     base_api.h
     bits.h
     codec.h
-    content_buffer.h
+    cursor.h
     logger.h
     inspector.h
     ips_option.h
@@ -19,6 +19,7 @@ set (FRAMEWORK_INCLUDES
 
 add_library ( framework STATIC
     ${FRAMEWORK_INCLUDES}
+    cursor.cc
     inspector.cc
     ips_option.cc
     parameter.cc

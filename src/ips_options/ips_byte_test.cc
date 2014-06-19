@@ -185,7 +185,7 @@ public:
     bool is_relative()
     { return ( config.relative_flag == 1 ); };
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     ByteTestData config;
@@ -252,7 +252,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteTestOption::eval(Packet *p)
+int ByteTestOption::eval(Cursor&, Packet *p)
 {
     ByteTestData *btd = (ByteTestData *)&config;
     int rval = DETECTION_OPTION_NO_MATCH;

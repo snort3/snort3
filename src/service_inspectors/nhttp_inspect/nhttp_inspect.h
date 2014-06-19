@@ -42,7 +42,7 @@ class NHttpApi;
 
 class NHttpInspect : public Inspector {
 public:
-    NHttpInspect(bool _test_mode);
+    NHttpInspect(bool test_input, bool _test_output);
     ~NHttpInspect();
 
     bool configure(SnortConfig*);
@@ -65,6 +65,7 @@ private:
     static THREAD_LOCAL NHttpMsgTrailer *msgTrailer;
 
     // Test mode
+    bool test_output;
     const char *testInputFile = "nhttp_test_msgs.txt";
     const char *testOutputPrefix = "nhttpresults/testcase";
     FILE *testOut = nullptr;

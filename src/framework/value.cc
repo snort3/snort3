@@ -91,7 +91,7 @@ void Value::get_bits(PortList& list) const
     assert(len == list.size());
 
     for ( unsigned n = 0; n < len; ++n )
-    {   
+    {
         if ( str[n] == '1' )
             list.set(n);
     }
@@ -117,7 +117,7 @@ void Value::get_bits(ByteList& list) const
     assert(len == list.size());
 
     for ( unsigned n = 0; n < len; ++n )
-    {   
+    {
         if ( str[n] == '1' )
             list.set(n);
     }

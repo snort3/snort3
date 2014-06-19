@@ -31,10 +31,5 @@
 char ** mSplit(const char *, const char *, const int, int *, const char);
 void mSplitFree(char ***toks, int numtoks);
 int mContainsSubstr(const char *, int, const char *, int);
-int mSearch(const char *, int, const char *, int, int *, int *);
-int mSearchCI(const char *, int, const char *, int, int *, int *);
-int mSearchREG(const char *, int, const char *, int, int *, int *);
-int *make_skip(char *, int);
-int *make_shift(char *, int);
 
 #endif  /* MSTRING_H */

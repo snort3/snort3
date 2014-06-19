@@ -23,6 +23,7 @@ SET( PLUGIN_LIST
     ips_isdataat.cc 
     ips_itype.cc 
     ips_pkt_data.cc
+    ips_raw_data.cc
     ips_react.cc
     ips_resp.cc
     ips_rpc.cc
@@ -57,9 +58,9 @@ set (IPS_SOURCES
     ips_options.h
     ips_pcre.cc 
     ips_pcre.h
+    ips_replace.cc 
+    ips_replace.h
     ips_so.cc
-    replace.cc 
-    replace.h
 )
 
 
@@ -94,6 +95,7 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_isdataat ips_options ips_isdataat.cc)
     add_shared_library(ips_itype ips_options ips_itype.cc)
     add_shared_library(ips_pkt_data ips_options ips_pkt_data.cc)
+    add_shared_library(ips_raw_data ips_options ips_raw_data.cc)
     add_shared_library(ips_react ips_options ips_react.cc)
     add_shared_library(ips_resp ips_options ips_resp.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)

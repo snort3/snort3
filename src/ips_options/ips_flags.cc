@@ -86,7 +86,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     TcpFlagCheckData config;
@@ -130,7 +130,7 @@ bool TcpFlagOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int TcpFlagOption::eval(Packet *p)
+int TcpFlagOption::eval(Cursor&, Packet *p)
 {
     TcpFlagCheckData *flagptr = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

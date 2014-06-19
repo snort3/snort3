@@ -16,6 +16,7 @@ stats.h
 
 libutils_a_SOURCES = \
 asn1.cc asn1.h \
+boyer_moore.cc boyer_moore.h \
 dyn_array.cc dyn_array.h \
 ring.h ring_logic.h \
 segment_mem.cc \

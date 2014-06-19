@@ -78,7 +78,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     IcmpTypeCheckData config;
@@ -123,7 +123,7 @@ bool IcmpTypeOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IcmpTypeOption::eval(Packet *p)
+int IcmpTypeOption::eval(Cursor&, Packet *p)
 {
     IcmpTypeCheckData *ds_ptr = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

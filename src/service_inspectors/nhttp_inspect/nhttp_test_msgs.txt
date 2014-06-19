@@ -251,14 +251,97 @@ MKREDIRECTREF / HTTP/2.0\r\n\r\n
 @3002
 @break
 @request
-BIND 1234567890?abcdef HTTP/1.1\r\n\r\n
+BIND /1234567890?abcdef HTTP/1.1\r\n\r\n
 
 @3003
 @break
 @request
 GET /test/hi-there.txt HTTP/1.0\r\n\r\n
 
+@3004
+@break
+@request
+GET /URI/Absolute/Path/Example HTTP/1.1\r\n\r\n
 
+@3005
+@break
+@request
+GET /uri/aBSOLUTE/pATH/eXAMPLE?with-query HTTP/1.1\r\n\r\n
+
+@3006
+@break
+@request
+MKWORKSPACE /URI/Absolute/Path/Example#with-fragment HTTP/1.1\r\n\r\n
+
+@3007
+@break
+@request
+BPROPFIND /URI/Absolute/Path/Example?with_QUERY#AndAFragmentToo HTTP/1.1\r\n\r\n
+
+@3008
+@break
+@request
+GET /?with-query HTTP/1.1\r\n\r\n
+
+@3009
+@break
+@request
+ORDERPATCH /#with-fragment HTTP/1.1\r\n\r\n
+
+@3010
+@break
+@request
+UPDATEREDIRECTREF /?with_QUERY#AndAFragmentToo HTTP/1.1\r\n\r\n
+
+@3011
+@break
+@request
+VERYLONGUNKNOWNMETHODTEST /?# HTTP/1.1\r\n\r\n
+
+@3012
+@break
+@request
+LABEL /stuff?# HTTP/1.1\r\n\r\n
+
+@3013
+@break
+@request
+MKCALENDAR /*stufflotsandlotslotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsofstuff?1# HTTP/1.1\r\n\r\n
+
+@3014
+@break
+@request
+VERSION-CONTROL /*stufflotsandlotslotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsandlotsofstuff?#A HTTP/1.1\r\n\r\n
+
+@3015
+@break
+@request
+OPTIONS * HTTP/1.1\r\n\r\n
+
+@3016
+@break
+@request
+OPTIONS /*options/may/have?a*resource HTTP/1.1\r\n\r\n
+
+@3017
+@break
+@request
+CONNECT this.is.an.authority.com HTTP/1.1\r\n\r\n
+
+@3018
+@break
+@request
+CONNECT this.is.an.authority.with.a.port.com:8739 HTTP/1.1\r\n\r\n
+
+@3019
+@break
+@request
+GET http://iamahost.com/simple/example/of/a/path/ HTTP/1.1\r\n\r\n
+
+@3020
+@break
+@request
+GET HtTpS://1.2.3.4.5.a:6/abcdef/ghijklmnop/qrstuvwxyz/?thequery?fieldcontinues?until#afragme#arrives#1234 HTTP/1.1\r\n\r\n
 
 # ***********************************************************************************************
 # Invalid request start lines

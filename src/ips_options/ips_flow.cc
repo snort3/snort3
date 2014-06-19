@@ -84,7 +84,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     FlowCheckData config;
@@ -135,7 +135,7 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FlowCheckOption::eval(Packet *p)
+int FlowCheckOption::eval(Cursor&, Packet *p)
 {
     FlowCheckData *fcd = &config;
     PROFILE_VARS;

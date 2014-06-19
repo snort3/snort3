@@ -209,7 +209,7 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
         cout << ": " << p->help;
 
         if ( p->range )
-            cout << " { " << p->range << " }";
+            cout << " { " << (char*)p->range << " }";
 #else
         cout << item();
         cout << p->get_type();

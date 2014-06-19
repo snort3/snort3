@@ -138,7 +138,6 @@ static const InspectApi tcp_api =
     IT_STREAM,
     PROTO_BIT__TCP,
     nullptr, // service
-    nullptr, // contents
     tcp_init,
     nullptr, // term
     tcp_ctor,
@@ -148,8 +147,7 @@ static const InspectApi tcp_api =
     tcp_ssn,
     tcp_sum,
     tcp_stats,
-    tcp_reset,
-    nullptr  // getbuf
+    tcp_reset
 };
 
 const BaseApi* nin_stream_tcp = &tcp_api.base;

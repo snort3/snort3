@@ -77,6 +77,7 @@ protected:
     NHttpEnums::SourceId sourceId;
     NHttpEnums::VersionId versionId;
     NHttpEnums::MethodId methodId;
+    NHttpEnums::SchemeId schemeId;
     int32_t statusCodeNum;
 };
 

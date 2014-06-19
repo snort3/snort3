@@ -81,7 +81,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     Base64DecodeData config;
@@ -126,7 +126,7 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int Base64DecodeOption::eval(Packet *p)
+int Base64DecodeOption::eval(Cursor&, Packet *p)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
     const uint8_t *start_ptr = NULL;

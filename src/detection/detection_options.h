@@ -45,7 +45,7 @@
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 
-typedef int (*eval_func_t)(void *option_data, Packet *p);
+typedef int (*eval_func_t)(void* option_data, struct Cursor&, Packet*);
 
 struct dot_node_state_t
 {
@@ -117,7 +117,9 @@ int add_detection_option(
 int add_detection_option_tree(
     struct SnortConfig*, detection_option_tree_node_t *option_tree, void **existing_data);
 
-int detection_option_node_evaluate(detection_option_tree_node_t *node, detection_option_eval_data_t *eval_data);
+int detection_option_node_evaluate(
+    detection_option_tree_node_t *node, detection_option_eval_data_t *eval_data, struct Cursor&);
+
 void DetectionHashTableFree(SFXHASH *);
 void DetectionTreeHashTableFree(SFXHASH *);
 #ifdef DEBUG_OPTION_TREE

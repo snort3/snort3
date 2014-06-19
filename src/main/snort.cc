@@ -108,7 +108,7 @@ using namespace std;
 #include "target_based/sftarget_reader.h"
 #include "stream/stream_api.h"
 #include "stream/stream.h"
-#include "ips_options/replace.h"
+#include "ips_options/ips_replace.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"
@@ -974,6 +974,9 @@ DAQ_Verdict packet_callback(
 #endif
 
     s_packet.pkth = NULL;  // no longer avail on segv
+
+    if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
+        DAQ_BreakLoop(-1);
 
     PREPROC_PROFILE_END(totalPerfStats);
     return verdict;
