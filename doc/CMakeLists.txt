@@ -1,17 +1,26 @@
 
-#
-# Assuming a file the source file is 'file_name.txt' the BUILT_SOURCES
-# files will be created with the following command
-#
-#  snort --help-file_name > file_name.txt
-#
+
+##############################################################################
+#                                                                            #
+#  To build another .txt file, add the file to the BUILT_SOURCES variable.   #
+#  If the new file's name is new_file.txt, cmake will automatcially run the  #
+#  command                                                                   #
+#                                                                            #
+#  >>  snort --help-file_name > file_name.txt                                #
+#                                                                            #
+#  to creat the new file. Notice that the extension is missing in the help   #
+#  command. If the command does not exist, the behavior is undefined althogh #
+#  an error will definitely occur.                                           #
+#                                                                            #
+##############################################################################
+
 set(BUILT_SOURCES
     builtin.txt
     commands.txt
     config.txt
     options.txt
     gids.txt
-#    version.txt   Required special formatting. manually add below.
+#    version.txt   Required special formatting. manually added below.
     CACHE INTERNAL "sources to be built" FORCE
 )
 
@@ -48,70 +57,64 @@ set (EXTRA_DIST ${HTML_DOCS} ${PDF_DOCS})
 #                                                                             #
 #  Since we'd lke to keep the source tree unpolluted, create all targets in   #
 #  the build directory.  This section adds custom commands to copy all of the #
-#  BUILT_SOURCES into this directory and create all of the UNBUILT_SOURCES in #
+#  UNBUILT_SOURCES into this directory and create all of the BUILT_SOURCES in #
 #  this directory.                                                            #
 #                                                                             #
-#  NOTE: BUILT_SOURCES recipes are actually defined in src/CMakeLists.txt to  #
-#  ensure a file dependency on Snort. This section copies those built sources #
-#  into this directory.                                                       #
 #                                                                             #
 ###############################################################################
 
-# copy built files into this directory
-set (TARGET_DIR ${CMAKE_BINARY_DIR})
-foreach (file ${BUILT_SOURCES};version.txt)
-    set(input ${CMAKE_BINARY_DIR}/${file})
-    set (output ${CMAKE_CURRENT_BINARY_DIR}/${file})
 
-    # create this custom file name so it can be used below. Doesn't actually
-    # build the file itself.
-    add_custom_command(
-        OUTPUT ${input}
-        COMMAND ${CMAKE_COMMAND}
-            -E touch_nocreate ${input}
-    )
+if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
-    #  complementary section to the foreach loop at the bottom of src/CMakeLists.txt
+    # first, build all of the documents in the binary tree
+
+    foreach (file ${BUILT_SOURCES})
+        set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+        get_filename_component(file_name "${file}" NAME_WE)
+
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND $<TARGET_FILE:snort> --markup --help-${file_name} | sort > ${output}
+            DEPENDS snort
+            COMMENT "Documents: building ${file}"
+        )
+
+        list(APPEND ALL_SOURCES ${output})
+    endforeach(file)
+
+    # build version.txt seperately
+
+    set (input ${CMAKE_BINARY_DIR}/version.txt)
+    set (output ${CMAKE_CURRENT_BINARY_DIR}/version.txt)
     add_custom_command(
         OUTPUT ${output}
-        COMMAND ${CMAKE_COMMAND}
-            -E copy ${input} ${output}
-        MAIN_DEPENDENCY ${input}
-        COMMENT "Documents: moving ${file} to doc directory"
+        COMMAND $<TARGET_FILE:snort> -V 2>&1 | grep -v Using > ${output}
+        DEPENDS snort
+        COMMENT "Documents: building version.txt"
     )
-
-    get_filename_component(file_name "${file}" NAME_WE)
-    add_custom_target(built_doc_${file_name} DEPENDS ${input} ${output})
-    add_dependencies(built_doc_${file_name} doc_${file_name})
-    
-    list(APPEND BUILT_SOURCES_BINARY_PATH ${output})
-endforeach(file)
+    list(APPEND ALL_SOURCES ${output})
 
 
-# Copy all distributed files into the binary tree (necessary for asciidocs).
-# Then create a dependency between the new and old files.
-foreach (file ${UNBUILT_SOURCES})
-    add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}
-        COMMAND ${CMAKE_COMMAND} 
-                -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${CMAKE_CURRENT_BINARY_DIR}/${file}
-        MAIN_DEPENDENCY ${file}
-        COMMENT "Copying ${file} into binary directory"
-    )
+    # next, Copy all distributed files into the binary tree (necessary for asciidocs).
+    # Then create a dependency between the new and old files.
+    foreach (file ${UNBUILT_SOURCES})
+        set (input  "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
+        set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND ${CMAKE_COMMAND} -E copy ${input} ${output}
+            DEPENDS ${input}
+            COMMENT "Copying ${file} into binary directory"
+        )
 
-    list(APPEND UNBUILT_SOURCES_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-endforeach(file)
+        list(APPEND ALL_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+    endforeach(file)
 
-foreach (file ${EXTRA_DIST})
-    list(APPEND EXTRA_DIST_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
-endforeach(file)
+    foreach (file ${EXTRA_DIST})
+        list(APPEND EXTRA_DIST_BINARY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+    endforeach(file)
 
-
-set (ALL_SOURCES
-    ${BUILT_SOURCES_BINARY_PATH}
-    ${UNBUILT_SOURCES_BINARY_PATH}
-)
-
+endif()
 
 ###############################################################################
 ###############################################################################
@@ -181,11 +184,10 @@ add_custom_command(OUTPUT images.tgz
 add_custom_target(snort_manuals ALL
     DEPENDS ${EXTRA_DIST}
 )
-add_dependencies(snort_manuals snort ${ALL_SOURCES})
+#add_dependencies(snort_manuals snort ${ALL_SOURCES})
 
 
 
 install (FILES ${EXTRA_DIST_BINARY_PATH}
     DESTINATION "doc"
 )
-

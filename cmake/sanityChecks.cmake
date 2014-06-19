@@ -5,15 +5,6 @@ include (CheckTypeSize)
 include (CheckLibraryExists)
 
 
-#Sets the current snort version
-set(VERSION ${SNORT_VERSION_MAJOR}.
-            ${SNORT_VERSION_MINOR}.
-            ${SNORT_VERSION_BUILD}
-    )
-
-
-
-
 #check include files
 check_include_file_cxx("dlfcn.h" HAVE_DLFCN_H)
 check_include_file_cxx("math.h" HAVE_MATH_H)
@@ -248,7 +239,7 @@ check_library_exists(rt nanosleep "" HAVE_LIBRT)
 
 configure_file (
     "${PROJECT_SOURCE_DIR}/config.cmake.h.in"
-    "${PROJECT_SOURCE_DIR}/config.h"
+    "${PROJECT_BINARY_DIR}/config.h"
     )
 
 add_definitions( -DHAVE_CONFIG_H )

@@ -35,7 +35,7 @@ if (STATIC_LOGGERS)
 
 else (STATIC_LOGGERS)
 
-    add_library ( logger SHARED
+    add_library ( loggers STATIC
         ${LOGGER_SOURCES}
     )
 

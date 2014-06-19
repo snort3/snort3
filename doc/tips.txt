@@ -92,7 +92,6 @@ The following pointers will help you get started:
     cd Snort++
     mkdir Cbuild
     cd Cbuild
-    ccmake
     cmake ..
 
 * An alternate method for building with cmake and make is to run the

@@ -24,6 +24,7 @@
 
 #include "codecs/decode_module.h"
 
+
 #define CD_TR_NAME "cd_tr"
 
 class TrCodecModule : public DecodeModule
