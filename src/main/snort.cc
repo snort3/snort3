@@ -975,6 +975,9 @@ DAQ_Verdict packet_callback(
 
     s_packet.pkth = NULL;  // no longer avail on segv
 
+    if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
+        DAQ_BreakLoop(-1);
+
     PREPROC_PROFILE_END(totalPerfStats);
     return verdict;
 }

@@ -100,8 +100,6 @@ bool Analyzer::handle(AnalyzerCommand ac)
 
 void Analyzer::analyze()
 {
-    uint64_t max = snort_conf->pkt_cnt;
-
     while ( true )
     {
         if ( command )
@@ -115,11 +113,6 @@ void Analyzer::analyze()
             command = AC_NONE;
         }
         if ( DAQ_Acquire(0, main_func, NULL) )
-            break;
-
-        ++count;
-
-        if ( max && count >= max )
             break;
     }
 }
