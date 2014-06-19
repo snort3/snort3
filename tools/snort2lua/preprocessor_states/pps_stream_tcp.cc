@@ -98,7 +98,6 @@ bool StreamTcp::parse_small_segments(std::stringstream& data_stream)
 
 bool StreamTcp::parse_ports(std::stringstream& data_stream)
 {
-    int i_val;
     std::string s_val;
     std::string opt_name;
     bool retval = true;
