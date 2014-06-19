@@ -66,11 +66,11 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
 
     if(!keyword.compare("default"))
     {
-        converter->open_table("http_server");
+        cv->open_table("http_server");
     }
     else
     {
-        converter->open_table("http_server_" + std::to_string(binding_id));
+        cv->open_table("http_server_" + std::to_string(binding_id));
         binding_id++;
         // CREATE A BINDING HERE!!
     }
@@ -81,52 +81,52 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
         bool tmpval = true;
 
         if (!keyword.compare("extended_response_inspection"))
-            tmpval = converter->add_option_to_table("extended_response_inspection", true);
+            tmpval = cv->add_option_to_table("extended_response_inspection", true);
 
         else if (!keyword.compare("allow_proxy_use"))
-            tmpval = converter->add_option_to_table("allow_proxy_use", true);
+            tmpval = cv->add_option_to_table("allow_proxy_use", true);
 
         else if (!keyword.compare("inspect_gzip"))
-            tmpval = converter->add_option_to_table("inspect_gzip", true);
+            tmpval = cv->add_option_to_table("inspect_gzip", true);
 
         else if (!keyword.compare("unlimited_decompress"))
-            tmpval = converter->add_option_to_table("unlimited_decompress", true);
+            tmpval = cv->add_option_to_table("unlimited_decompress", true);
 
         else if (!keyword.compare("normalize_javascript"))
-            tmpval = converter->add_option_to_table("normalize_javascript", true);
+            tmpval = cv->add_option_to_table("normalize_javascript", true);
 
         else if (!keyword.compare("enable_xff"))
-            tmpval = converter->add_option_to_table("enable_xff", true);
+            tmpval = cv->add_option_to_table("enable_xff", true);
 
         else if (!keyword.compare("extended_ascii_uri"))
-            tmpval = converter->add_option_to_table("extended_ascii_uri", true);
+            tmpval = cv->add_option_to_table("extended_ascii_uri", true);
 
         else if (!keyword.compare("non_strict"))
-            tmpval = converter->add_option_to_table("non_strict", true);
+            tmpval = cv->add_option_to_table("non_strict", true);
 
         else if (!keyword.compare("inspect_uri_only"))
-            tmpval = converter->add_option_to_table("inspect_uri_only", true);
+            tmpval = cv->add_option_to_table("inspect_uri_only", true);
 
         else if (!keyword.compare("tab_uri_delimiter"))
-            tmpval = converter->add_option_to_table("tab_uri_delimiter", true);
+            tmpval = cv->add_option_to_table("tab_uri_delimiter", true);
 
         else if (!keyword.compare("normalize_headers"))
-            tmpval = converter->add_option_to_table("normalize_headers", true);
+            tmpval = cv->add_option_to_table("normalize_headers", true);
 
         else if (!keyword.compare("normalize_utf"))
-            tmpval = converter->add_option_to_table("normalize_utf", true);
+            tmpval = cv->add_option_to_table("normalize_utf", true);
 
         else if (!keyword.compare("log_uri"))
-            tmpval = converter->add_option_to_table("log_uri", true);
+            tmpval = cv->add_option_to_table("log_uri", true);
 
         else if (!keyword.compare("normalize_cookies"))
-            tmpval = converter->add_option_to_table("normalize_cookies", true);
+            tmpval = cv->add_option_to_table("normalize_cookies", true);
 
         else if (!keyword.compare("log_hostname"))
-            tmpval = converter->add_option_to_table("log_hostname", true);
+            tmpval = cv->add_option_to_table("log_hostname", true);
 
         else if (!keyword.compare("no_pipeline_req"))
-            tmpval = converter->add_option_to_table("no_pipeline_req", true);
+            tmpval = cv->add_option_to_table("no_pipeline_req", true);
 
         else if (!keyword.compare("ascii"))
             tmpval = parse_yn_bool_option("ascii", data_stream);
@@ -192,7 +192,7 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
             tmpval = parse_int_option("max_headers", data_stream);
 
         else if (!keyword.compare("no_alerts"))
-            converter->add_deprecated_comment("no_alerts");
+            cv->add_deprecated_comment("no_alerts");
 
         else if (!keyword.compare("decompress_swf"))
             tmpval = parse_bracketed_unsupported_list("decompress_swf", data_stream);
@@ -208,26 +208,26 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
 
         else if (!keyword.compare("non_rfc_char"))
         {
-            converter->add_deprecated_comment("non_rfc_char", "non_rfc_chars");
+            cv->add_deprecated_comment("non_rfc_char", "non_rfc_chars");
             parse_bracketed_byte_list("non_rfc_chars", data_stream);
         }
 
         else if (!keyword.compare("enable_cookie"))
         {
-            tmpval = converter->add_option_to_table("enable_cookies", true);
-            converter->add_deprecated_comment("enable_cookie", "enable_cookies");
+            tmpval = cv->add_option_to_table("enable_cookies", true);
+            cv->add_deprecated_comment("enable_cookie", "enable_cookies");
         }
 
         else if (!keyword.compare("flow_depth"))
         {
-            converter->add_deprecated_comment("flow_depth", "server_flow_depth");
+            cv->add_deprecated_comment("flow_depth", "server_flow_depth");
             tmpval = parse_int_option("server_flow_depth", data_stream);
         }
 
         else if (!keyword.compare("ports"))
         {
-            converter->add_deprecated_comment("ports", "bindings");
-            converter->add_comment_to_table("check bindings table for port information");
+            cv->add_deprecated_comment("ports", "bindings");
+            cv->add_comment_to_table("check bindings table for port information");
             tmpval = parse_bracketed_unsupported_list("ports", data_stream);
         }
 
@@ -246,10 +246,10 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
             }
             else
             {
-                converter->open_table("small_chunk_length");
-                converter->add_option_to_table("size", length);
-                converter->add_option_to_table("count", consec_chunks);
-                converter->close_table();
+                cv->open_table("small_chunk_length");
+                cv->add_option_to_table("size", length);
+                cv->add_option_to_table("count", consec_chunks);
+                cv->close_table();
             }
         }
 
@@ -261,14 +261,14 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
             if( (data_stream >> map_file) &&
                 (data_stream >> code_page))
             {
-                converter->open_table("iis_unicode_map");
-                tmpval = converter->add_option_to_table("map_file", map_file);
-                tmpval = converter->add_option_to_table("code_page", code_page) && tmpval;
-                converter->close_table();
+                cv->open_table("iis_unicode_map");
+                tmpval = cv->add_option_to_table("map_file", map_file);
+                tmpval = cv->add_option_to_table("code_page", code_page) && tmpval;
+                cv->close_table();
             }
             else
             {
-                converter->add_comment_to_table("snort.conf missing argument for "
+                cv->add_comment_to_table("snort.conf missing argument for "
                     "iis_unicode_map <filename> <codemap>");
                 tmpval = false;
             }
@@ -278,11 +278,11 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
         {
             if (data_stream >> keyword)
             {
-                tmpval = converter->add_option_to_table("profile", keyword);
+                tmpval = cv->add_option_to_table("profile", keyword);
             }
             else
             {
-                converter->add_comment_to_table("Unable to convert keyword 'profile'");
+                cv->add_comment_to_table("Unable to convert keyword 'profile'");
                 tmpval = false;
             }
         }

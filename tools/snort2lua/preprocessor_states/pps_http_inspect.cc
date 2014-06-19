@@ -58,11 +58,11 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            converter->log_error("preprocessor httpinspect: requires the 'global' keyword");
+            cv->log_error("preprocessor httpinspect: requires the 'global' keyword");
             return false;
         }
     }
-    converter->open_table("http_inspect");
+    cv->open_table("http_inspect");
 
 
 
@@ -75,10 +75,10 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             retval = parse_int_option("decompress_depth", data_stream) && retval;
 
         else if(!keyword.compare("detect_anomalous_servers"))
-            converter->add_option_to_table("detect_anomalous_servers", true);
+            cv->add_option_to_table("detect_anomalous_servers", true);
 
         else if(!keyword.compare("proxy_alert"))
-            converter->add_option_to_table("proxy_alert", true);
+            cv->add_option_to_table("proxy_alert", true);
 
         else if(!keyword.compare("max_gzip_mem"))
             retval = parse_int_option("max_gzip_mem", data_stream) && retval;
@@ -87,7 +87,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             retval = parse_int_option("memcap", data_stream) && retval;
         
         else if(!keyword.compare("disabled"))
-            converter->add_deprecated_comment("disabled");
+            cv->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("b64_decode_depth"))
             retval = add_decode_option("b64_decode_depth", data_stream) && retval;
@@ -112,14 +112,14 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             if( (data_stream >> codemap) &&
                 (data_stream >> code_page))
             {
-                converter->open_table("unicode_map");
-                converter->add_option_to_table("map_file", codemap);
-                converter->add_option_to_table("code_page", code_page);
-                converter->close_table();
+                cv->open_table("unicode_map");
+                cv->add_option_to_table("map_file", codemap);
+                cv->add_option_to_table("code_page", code_page);
+                cv->close_table();
             }
             else
             {
-                converter->add_comment_to_table("snort.conf missing argument for "
+                cv->add_comment_to_table("snort.conf missing argument for "
                     "iis_unicode_map <filename> <codemap>");
                 retval = false;
             }
@@ -128,7 +128,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
 
         else
         {
-            converter->log_error("'preprocessor http_inspect: global' --> Invalid argument!!");
+            cv->log_error("'preprocessor http_inspect: global' --> Invalid argument!!");
             retval = false;
         }
     }
@@ -142,14 +142,14 @@ bool HttpInspect::add_decode_option(std::string opt_name,  std::stringstream& st
 
     if (stream >> val)
     {
-        converter->open_table("decode");
-        converter->add_option_to_table(opt_name, val);
-        converter->close_table();
+        cv->open_table("decode");
+        cv->add_option_to_table(opt_name, val);
+        cv->close_table();
         return true;
     }
     else
     {
-        converter->add_comment_to_table("snort.conf missing argument for " +
+        cv->add_comment_to_table("snort.conf missing argument for " +
             opt_name + " <int>");
         return false;
     }

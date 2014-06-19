@@ -143,12 +143,13 @@ bool Table::has_option(std::string name, std::string val)
 }
 
 
-void Table::add_comment(std::string comment)
+void Table::add_comment(std::string c)
 {
-    if (comment.size() > 80)
-        comment.insert(76, "...");
+    if (c.size() > 80)
+        c.insert(76, "...");
 
-    comments.push_back(std::string(comment, 0, 77));
+    if (std::find(comments.begin(), comments.end(), c) == comments.end())
+        comments.push_back(std::string(c, 0, 79));
 }
 
 std::ostream &operator<<( std::ostream& out, const Table &t)

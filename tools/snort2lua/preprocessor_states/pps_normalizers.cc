@@ -91,31 +91,31 @@ bool Ip4Normalizer::convert(std::stringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    converter->open_table("normalize");
-    converter->open_table("ip4");
-    converter->add_option_to_table("base", true);
+    cv->open_table("normalize");
+    cv->open_table("ip4");
+    cv->add_option_to_table("base", true);
 
     while( data_stream >> keyword)
     {
 
         if(!keyword.compare("df"))
-            retval = converter->add_option_to_table("df", true) && retval;
+            retval = cv->add_option_to_table("df", true) && retval;
 
         else if(!keyword.compare("rf"))
-            retval = converter->add_option_to_table("rf", true) && retval;
+            retval = cv->add_option_to_table("rf", true) && retval;
         
         else if(!keyword.compare("tos"))
-            retval = converter->add_option_to_table("tos", true) && retval;
+            retval = cv->add_option_to_table("tos", true) && retval;
         
         else if(!keyword.compare("trim"))
-            retval = converter->add_option_to_table("trim", true) && retval;
+            retval = cv->add_option_to_table("trim", true) && retval;
 
         else
             retval = false;
     }
 
-    converter->close_table();
-    converter->close_table();
+    cv->close_table();
+    cv->close_table();
     return retval;    
 }
 
@@ -178,23 +178,23 @@ private:
 
 bool TcpNormalizer::set_ecn_w_comment(std::string comment)
 {
-    converter->add_comment_to_table("tcp normalizer: '" + 
+    cv->add_comment_to_table("tcp normalizer: '" +
         comment + "'' is deprecated. use 'ecn' instead");
-    return converter->add_option_to_table("ecn", true);
+    return cv->add_option_to_table("ecn", true);
 }
 
 bool TcpNormalizer::set_base_w_comment(std::string comment)
 {
-    converter->add_comment_to_table("tcp normalizer: '" + 
+    cv->add_comment_to_table("tcp normalizer: '" +
         comment + "'' is deprecated. use 'base' instead");
-    return converter->add_option_to_table("base", true);
+    return cv->add_option_to_table("base", true);
 }
 
 bool TcpNormalizer::set_trim_w_comment(std::string comment)
 {
-    converter->add_comment_to_table("tcp normalizer: '" + 
+    cv->add_comment_to_table("tcp normalizer: '" +
         comment + "'' is deprecated. use 'trim' instead");
-    return converter->add_option_to_table("trim", true);
+    return cv->add_option_to_table("trim", true);
 }
 
 
@@ -204,9 +204,9 @@ bool TcpNormalizer::convert(std::stringstream& data_stream)
     std::string value;
     bool retval = true;
 
-    converter->open_table("normalize");
-    converter->open_table("tcp");
-    converter->add_option_to_table("base", true);
+    cv->open_table("normalize");
+    cv->open_table("tcp");
+    cv->add_option_to_table("base", true);
 
     while( data_stream >> keyword)
     {
@@ -230,7 +230,7 @@ bool TcpNormalizer::convert(std::stringstream& data_stream)
             retval = set_base_w_comment("req_urp") && retval;
         
         else if(!keyword.compare("ips"))
-            retval = converter->add_option_to_table("ips", true) && retval;
+            retval = cv->add_option_to_table("ips", true) && retval;
         
         else if(!keyword.compare("trim_syn"))
             retval = set_trim_w_comment("trim_syn") && retval;
@@ -245,13 +245,13 @@ bool TcpNormalizer::convert(std::stringstream& data_stream)
             retval = set_trim_w_comment("trim_mss") && retval;
         
         else if(!keyword.compare("trim"))
-            retval = converter->add_option_to_table("trim", true) && retval;
+            retval = cv->add_option_to_table("trim", true) && retval;
 
         else if(!keyword.compare("opts"))
-            retval = converter->add_option_to_table("opts", true) && retval;
+            retval = cv->add_option_to_table("opts", true) && retval;
 
         else if(!keyword.compare("urp"))
-            retval = converter->add_option_to_table("urp", true) && retval;
+            retval = cv->add_option_to_table("urp", true) && retval;
 
         else if(!keyword.compare("ecn"))
         {
@@ -265,8 +265,8 @@ bool TcpNormalizer::convert(std::stringstream& data_stream)
             retval = false;
     }
 
-    converter->close_table();
-    converter->close_table();
+    cv->close_table();
+    cv->close_table();
     return retval;    
 }
 

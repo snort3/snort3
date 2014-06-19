@@ -44,7 +44,7 @@ bool StreamUdp::convert(std::stringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    converter->open_table("stream_udp");
+    cv->open_table("stream_udp");
 
     while(data_stream >> keyword)
     {
@@ -57,11 +57,11 @@ bool StreamUdp::convert(std::stringstream& data_stream)
             continue;
         
         if(!keyword.compare("ignore_any_rules"))
-            tmpval = converter->add_option_to_table("ignore_any_rules", true);
+            tmpval = cv->add_option_to_table("ignore_any_rules", true);
 
         else if(!keyword.compare("timeout"))
         {
-            converter->add_deprecated_comment("timeout", "session_timeout");
+            cv->add_deprecated_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", data_stream);
         }
 

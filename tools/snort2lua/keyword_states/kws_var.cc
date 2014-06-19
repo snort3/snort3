@@ -53,7 +53,7 @@ Var::Var(Converter* cv) : ConversionState(cv)
 
 bool Var::convert(std::stringstream& data_stream)
 {
-    std::string ports;//    converter->print_line(data_stream);
+    std::string ports;//    cv->print_line(data_stream);
 
     if (first_line)
         if (!(data_stream >> keyword))
@@ -77,13 +77,13 @@ bool Var::convert(std::stringstream& data_stream)
         util::split(ports, ',', port_list);
 
         for(std::string elem : port_list)
-            retval = converter->add_variable(keyword, elem) && retval;
+            retval = cv->add_variable(keyword, elem) && retval;
 
         return retval;
     }
     else
     {
-        return converter->add_variable(keyword, ports);
+        return cv->add_variable(keyword, ports);
     }
 }
 

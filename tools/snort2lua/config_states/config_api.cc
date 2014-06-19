@@ -23,11 +23,13 @@
 
 
 extern const ConvertMap *autogenerate_decode_rules_map;
+extern const ConvertMap *checksum_map;
 extern const ConvertMap *paf_max_map;
 
 
 const std::vector<const ConvertMap*> config_api = 
 {
     autogenerate_decode_rules_map,
+    checksum_map,
     paf_max_map,
 };

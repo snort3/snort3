@@ -26,11 +26,13 @@
 #include "init_state.h"
 #include "snort2lua_util.h"
 
-static bool convert(std::ifstream& in, std::ofstream& out)
+static void convert(Converter *cv, std::string input_file)
 {
-    Converter cv;
-    cv.reset_state();
+    std::ifstream in;
     std::string orig_text;
+
+    in.open(input_file,  std::ifstream::in);
+    cv->reset_state();
 
     while(!in.eof())
     {
@@ -42,12 +44,12 @@ static bool convert(std::ifstream& in, std::ofstream& out)
 
         if (orig_text.empty())
         {
-            cv.add_comment_to_file("");
+            cv->add_comment_to_file("");
         }
         else if (orig_text.front() == '#')
         {
             orig_text.erase(orig_text.begin());
-            cv.add_comment_to_file(orig_text);
+            cv->add_comment_to_file(orig_text);
             orig_text.clear();
         }
         else if ( orig_text.back() == '\\')
@@ -60,23 +62,18 @@ static bool convert(std::ifstream& in, std::ofstream& out)
             std::stringstream data_stream(orig_text);
             while(data_stream.tellg() != -1)
             {
-                if (!cv.convert_line(data_stream))
+                if (!cv->convert_line(data_stream))
                 {
-                    cv.log_error("Failed to entirely convert: " + orig_text);
-//                  data_stream.setstate(std::basic_ios<char>::eofbit);
+                    cv->log_error("Failed to entirely convert: " + orig_text);
                     break;
                 }
             }
 
             orig_text.clear();
-            cv.reset_state();
+            cv->reset_state();
         }
     }
 
-    // finally, lets print the converter to file
-    out << "require(\"snort_config\")  -- for loading" << std::endl;
-    out << cv;
-    return true;
 }
 
 
@@ -89,6 +86,8 @@ int main (int argc, char* argv[])
 {
     std::ifstream in;
     std::ofstream out;
+    std::string input_name, output_name;
+    Converter cv;
 
     if (argc != 3)
     {
@@ -96,8 +95,8 @@ int main (int argc, char* argv[])
         return -1;
     }
 
-    in.open(argv[1],  std::ifstream::in);
-    out.open(argv[2],  std::ifstream::out);
+    input_name = std::string(argv[1]);
+    output_name = std::string(argv[2]);
 
     if (in.fail())
     {
@@ -111,10 +110,13 @@ int main (int argc, char* argv[])
         return -1;
     }
 
-    if (!convert(in, out))
-    {
-        std::cout << "Error: failed to convert files!" << std::endl;
-    }
+    convert(&cv, input_name);
+
+
+    // finally, lets print the converter to file
+    out.open(argv[2],  std::ifstream::out);
+    out << "require(\"snort_config\")  -- for loading" << std::endl << std::endl;
+    out << cv;
 
     in.close();
     out.close();

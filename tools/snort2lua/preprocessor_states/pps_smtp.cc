@@ -49,7 +49,7 @@ bool Smtp::convert(std::stringstream& data_stream)
         const ConvertMap* map = util::find_map(output_api, keyword);
         if (map)
         {
-            converter->set_state(map->ctor(converter));
+            cv->set_state(map->ctor(converter));
             return true;
         }
     }

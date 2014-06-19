@@ -87,12 +87,12 @@ bool FtpServer::parse_alt_max_cmd(std::stringstream& data_stream)
     if(!(data_stream >> i_val))
         return false;
 
-    converter->open_table("alt_max_param");
-    converter->open_table();
-    converter->add_option_to_table("length", i_val);
+    cv->open_table("alt_max_param");
+    cv->open_table();
+    cv->add_option_to_table("length", i_val);
     tmpval = parse_curly_bracket_list("commands", data_stream);
-    converter->close_table();
-    converter->close_table();
+    cv->close_table();
+    cv->close_table();
     return tmpval;
 }
 
@@ -109,17 +109,17 @@ bool FtpServer::parse_cmd_validity_cmd(std::stringstream& data_stream)
         return false;
 
 
-    converter->open_table("cmd_validity");
-    converter->open_table();
-    tmpval = converter->add_option_to_table("command", val);
-    tmpval = converter->add_list_to_table("format", elem) && tmpval;
+    cv->open_table("cmd_validity");
+    cv->open_table();
+    tmpval = cv->add_option_to_table("command", val);
+    tmpval = cv->add_list_to_table("format", elem) && tmpval;
 
     while((data_stream >> elem) && (elem != ">"))
-        tmpval = converter->add_list_to_table("format", elem) && tmpval;
+        tmpval = cv->add_list_to_table("format", elem) && tmpval;
 
-    converter->add_list_to_table("format", elem);
-    converter->close_table(); // anonymouse table
-    converter->close_table(); // "cmd_validity" table
+    cv->add_list_to_table("format", elem);
+    cv->close_table(); // anonymouse table
+    cv->close_table(); // "cmd_validity" table
     return tmpval;
 }
 
@@ -131,12 +131,12 @@ bool FtpServer::convert(std::stringstream& data_stream)
     if (data_stream >> keyword)
     {
         if(!keyword.compare("default"))
-            converter->open_table("ftp_server");
+            cv->open_table("ftp_server");
         else
         {
-            converter->open_table("ftp_server_target_" + std::to_string(ftpsever_binding_id));
+            cv->open_table("ftp_server_target_" + std::to_string(ftpsever_binding_id));
             ftpsever_binding_id++;
-            converter->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
+            cv->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
             retval = false;
         }
     }
@@ -151,7 +151,7 @@ bool FtpServer::convert(std::stringstream& data_stream)
 
 
         if(!keyword.compare("print_cmds"))
-            converter->add_option_to_table("print_cmds", true);
+            cv->add_option_to_table("print_cmds", true);
 
         else if(!keyword.compare("def_max_param_len"))
             tmpval = parse_int_option("def_max_param_len", data_stream);
@@ -179,19 +179,19 @@ bool FtpServer::convert(std::stringstream& data_stream)
         
         else if(!keyword.compare("data_chan"))
         {
-            converter->add_deprecated_comment("data_chan", "ignore_data_chan");
-            tmpval = converter->add_option_to_table("ignore_data_chan", true);
+            cv->add_deprecated_comment("data_chan", "ignore_data_chan");
+            tmpval = cv->add_option_to_table("ignore_data_chan", true);
         }
 
         else if (!keyword.compare("ports"))
         {
-            converter->add_deprecated_comment("ports", "bindings");
-            converter->add_comment_to_table("check bindings table for port information");
+            cv->add_deprecated_comment("ports", "bindings");
+            cv->add_comment_to_table("check bindings table for port information");
             // add commented list for now
             std::string tmp = "";
             while (data_stream >> keyword && keyword != "}")
                 tmp += " " + keyword;
-            tmpval = converter->add_option_to_table("--ports", tmp + "}");
+            tmpval = cv->add_option_to_table("--ports", tmp + "}");
         }
 
         else
@@ -218,12 +218,12 @@ bool FtpClient::convert(std::stringstream& data_stream)
     if (data_stream >> keyword)
     {
         if(!keyword.compare("default"))
-            converter->open_table("ftp_client");
+            cv->open_table("ftp_client");
         else
         {
-            converter->open_table("ftp_client_target_" + std::to_string(ftpclient_binding_id));
+            cv->open_table("ftp_client_target_" + std::to_string(ftpclient_binding_id));
             ftpclient_binding_id++;
-            converter->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
+            cv->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
             retval = false;
         }
     }
@@ -255,7 +255,7 @@ bool FtpClient::convert(std::stringstream& data_stream)
             std::string tmp = "";
             while (data_stream >> keyword && keyword != "}")
                 tmp += " " + keyword;
-            tmpval = converter->add_option_to_table("--bounce_to", tmp + "}");
+            tmpval = cv->add_option_to_table("--bounce_to", tmp + "}");
         }
 
         else
@@ -280,7 +280,7 @@ bool Telnet::convert(std::stringstream& data_stream)
     int i_val;
     bool retval = true;
 
-    converter->open_table("telnet");
+    cv->open_table("telnet");
 
     while(data_stream >> keyword)
     {
@@ -288,24 +288,24 @@ bool Telnet::convert(std::stringstream& data_stream)
         if(!keyword.compare("ayt_attack_thresh"))
         {
             if(data_stream >> i_val)
-                tmpval = converter->add_option_to_table("ayt_attack_thresh", i_val);
+                tmpval = cv->add_option_to_table("ayt_attack_thresh", i_val);
             else
                 tmpval = false;
         }
 
         else  if(!keyword.compare("normalize"))
-            tmpval = converter->add_option_to_table("normalize", true);
+            tmpval = cv->add_option_to_table("normalize", true);
 
         else  if(!keyword.compare("ports"))
         {
-            converter->add_deprecated_comment("ports", "bindings");
-            converter->add_comment_to_table("check bindings table for port information");
+            cv->add_deprecated_comment("ports", "bindings");
+            cv->add_comment_to_table("check bindings table for port information");
             // vvvv defined in ConversionState vvvv
             parse_curly_bracket_list("--ports", data_stream); // create a commented list of the ports
         }
 
         else  if(!keyword.compare("detect_anomalies"))
-            tmpval = converter->add_option_to_table("detect_anomalies", true);
+            tmpval = cv->add_option_to_table("detect_anomalies", true);
 
         else
             tmpval = false;
@@ -313,8 +313,6 @@ bool Telnet::convert(std::stringstream& data_stream)
         retval = tmpval && retval;
     }
 
-
-    converter->close_table(); // not necessary but 
     return retval;
 }
 
@@ -331,17 +329,17 @@ bool FtpTelnetProtocol::convert(std::stringstream& data_stream)
     {
         if(!protocol.compare("telnet"))
         {
-            converter->set_state(new Telnet(converter));
+            cv->set_state(new Telnet(cv));
         }
         else if (!protocol.compare("ftp"))
         {
             if(data_stream >> protocol)
             {
                 if(!protocol.compare("client"))
-                    converter->set_state(new FtpClient(converter));
+                    cv->set_state(new FtpClient(cv));
 
                 else if (!protocol.compare("server"))
-                    converter->set_state(new FtpServer(converter));
+                    cv->set_state(new FtpServer(cv));
 
                 else
                     return false;

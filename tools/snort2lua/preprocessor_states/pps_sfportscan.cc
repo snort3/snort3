@@ -64,7 +64,7 @@ bool PortScan::parse_ip_list(std::string list_name, std::stringstream& data_stre
         prev = prev + ' ' + elem;
 
     prev = prev + "]";
-    return converter->add_option_to_table(list_name, prev);
+    return cv->add_option_to_table(list_name, prev);
 }
 
 bool PortScan::parse_list(std::string list_name, std::stringstream& data_stream)
@@ -76,7 +76,7 @@ bool PortScan::parse_list(std::string list_name, std::stringstream& data_stream)
         return false;
 
     while (data_stream >> elem && elem != "}")
-        retval && converter->add_list_to_table(list_name, elem) && retval;
+        retval && cv->add_list_to_table(list_name, elem) && retval;
 
     return retval;
 }
@@ -90,7 +90,7 @@ bool PortScan::parse_option(std::string list_name, std::stringstream& data_strea
         return false;
 
     while (data_stream >> elem && elem != "}")
-        retval && converter->add_option_to_table(list_name, elem) && retval;
+        retval && cv->add_option_to_table(list_name, elem) && retval;
 
     return retval;
 }
@@ -106,11 +106,11 @@ bool PortScan::add_portscan_global_option(std::string name, std::stringstream& d
     if (!(data_stream >> val))
         return false;
 
-    converter->close_table();
-    converter->open_table("port_scan_global");
-    bool retval = converter->add_option_to_table(name, val);
-    converter->close_table();
-    converter->open_table("port_scan");
+    cv->close_table();
+    cv->open_table("port_scan_global");
+    bool retval = cv->add_option_to_table(name, val);
+    cv->close_table();
+    cv->open_table("port_scan");
 
     if (!(data_stream >> garbage) || (garbage != "}"))
         return false;
@@ -123,7 +123,7 @@ bool PortScan::convert(std::stringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    converter->open_table("port_scan");
+    cv->open_table("port_scan");
 
     while(data_stream >> keyword)
     {
@@ -142,29 +142,29 @@ bool PortScan::convert(std::stringstream& data_stream)
             tmpval = parse_ip_list("ignore_scanned", data_stream);
 
         else if(!keyword.compare("include_midstream"))
-            tmpval = converter->add_option_to_table("include_midstream", true);
+            tmpval = cv->add_option_to_table("include_midstream", true);
 
         else if(!keyword.compare("disabled"))
-            converter->add_deprecated_comment("disabled");
+            cv->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("detect_ack_scans"))
-            converter->add_deprecated_comment("detect_ack_scans");
+            cv->add_deprecated_comment("detect_ack_scans");
 
         else if(!keyword.compare("logfile"))
-            converter->add_deprecated_comment("logfile");
+            cv->add_deprecated_comment("logfile");
 
         else if(!keyword.compare("memcap"))
             tmpval = add_portscan_global_option("memcap", data_stream);
 
         else if(!keyword.compare("proto"))
         {
-            converter->add_deprecated_comment("proto", "protos");
+            cv->add_deprecated_comment("proto", "protos");
             retval = parse_curly_bracket_list("protos", data_stream) && retval;
         }
 
         else if(!keyword.compare("scan_type"))
         {
-            converter->add_deprecated_comment("scan_type", "scan_types");
+            cv->add_deprecated_comment("scan_type", "scan_types");
             tmpval = parse_curly_bracket_list("scan_types", data_stream) && retval;
         }
 
@@ -175,7 +175,7 @@ bool PortScan::convert(std::stringstream& data_stream)
     }
 
 
-    converter->close_table(); // unecessary since the state will be reset
+    cv->close_table(); // unecessary since the state will be reset
     return retval;
 }
 

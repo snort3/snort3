@@ -33,12 +33,12 @@ class ConversionState
 {
 
 public:
-    ConversionState(Converter *cv){ converter = cv; }
+    ConversionState(Converter *cv){ this->cv = cv; }
     virtual ~ConversionState() {};
     virtual bool convert(std::stringstream& data)=0;
 
 protected:
-    Converter* converter;
+    Converter* cv;
 
     inline bool parse_string_option(std::string opt_name, std::stringstream& stream)
     {
@@ -49,11 +49,11 @@ protected:
             if(val.back() == ',')
                 val.pop_back();
 
-            converter->add_option_to_table(opt_name, val);
+            cv->add_option_to_table(opt_name, val);
             return true;
         }
 
-        converter->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        cv->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
@@ -63,11 +63,11 @@ protected:
 
         if(stream >> val)
         {
-            converter->add_option_to_table(opt_name, val);
+            cv->add_option_to_table(opt_name, val);
             return true;
         }
 
-        converter->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        cv->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
@@ -81,7 +81,7 @@ protected:
             return false;
 
         while (stream >> elem && elem != "}")
-            retval = converter->add_list_to_table(list_name, elem) && retval;
+            retval = cv->add_list_to_table(list_name, elem) && retval;
 
         return retval;
     }
@@ -95,12 +95,12 @@ protected:
             return false;
 
         else if(!val.compare("yes"))
-            return converter->add_option_to_table(opt_name, true);
+            return cv->add_option_to_table(opt_name, true);
 
         else if (!val.compare("no"))
-            return converter->add_option_to_table(opt_name, false);
+            return cv->add_option_to_table(opt_name, false);
 
-        converter->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
+        cv->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
         return false;
     }
 
@@ -128,12 +128,12 @@ protected:
             {
                 std::stringstream tmp;
                 tmp << "0x" << std::hex << dig;
-                retval = converter->add_list_to_table(list_name, tmp.str()) && retval;
+                retval = cv->add_list_to_table(list_name, tmp.str()) && retval;
 
             }
             else
             {
-                converter->add_comment_to_table("Unable to convert " + elem +
+                cv->add_comment_to_table("Unable to convert " + elem +
                         "!!  The element must be a single charachter or number between 0 - 255 inclusive");
                 retval = false;
             }
@@ -158,14 +158,14 @@ protected:
         if(tmp.size() > 0)
             tmp.erase(tmp.begin());
 
-        return converter->add_option_to_table("--" + list_name, tmp );
+        return cv->add_option_to_table("--" + list_name, tmp );
     }
 
     inline bool open_table_add_option(std::string table_name, std::string opt_name, std::string val)
     {
-        bool tmpval = converter->open_table(table_name);
-        tmpval = converter->add_option_to_table(opt_name, val) && tmpval;
-        converter->close_table();
+        bool tmpval = cv->open_table(table_name);
+        tmpval = cv->add_option_to_table(opt_name, val) && tmpval;
+        cv->close_table();
         return tmpval;
     }
 
