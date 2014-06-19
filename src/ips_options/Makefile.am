@@ -24,6 +24,7 @@ ips_ipopts.cc \
 ips_isdataat.cc \
 ips_itype.cc \
 ips_pkt_data.cc \
+ips_raw_data.cc \
 ips_react.cc \
 ips_resp.cc \
 ips_rpc.cc \
@@ -46,8 +47,8 @@ ips_ip_proto.cc ips_ip_proto.h \
 ips_luajit.cc ips_luajit.h \
 ips_options.cc ips_options.h \
 ips_pcre.cc ips_pcre.h \
-ips_so.cc \
-replace.cc replace.h
+ips_replace.cc ips_replace.h \
+ips_so.cc
 
 if STATIC_IPS_OPTIONS
 libips_options_a_SOURCES += $(plugin_list)
@@ -148,6 +149,11 @@ optlib_LTLIBRARIES += libips_pkt_data.la
 libips_pkt_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_pkt_data_la_LDFLAGS = -export-dynamic -shared
 libips_pkt_data_la_SOURCES = ips_pkt_data.cc
+
+optlib_LTLIBRARIES += libips_raw_data.la
+libips_raw_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_raw_data_la_LDFLAGS = -export-dynamic -shared
+libips_raw_data_la_SOURCES = ips_raw_data.cc
 
 optlib_LTLIBRARIES += libips_react.la
 libips_react_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

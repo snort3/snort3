@@ -875,10 +875,6 @@ static inline int IsPmdFpEligible(PatternMatchData *content)
 
     if ((content->pattern_buf != NULL) && (content->pattern_size != 0))
     {
-        /* We don't add cookie and some other contents to fast pattern matcher */
-        if(content->http_buffer && !IsHttpBufFpEligible(content->http_buffer))
-            return 0;
-
         if (content->exception_flag)
         {
             /* Negative contents can only be considered if they are not relative
@@ -889,7 +885,7 @@ static inline int IsPmdFpEligible(PatternMatchData *content)
              * Also case sensitive patterns cannot be considered since patterns
              * are inserted into the pattern matcher without case which may
              * lead to false negatives */
-            if (content->use_doe || !content->nocase
+            if (content->use_doe || !content->no_case
                     || (content->offset != 0) || (content->depth != 0))
             {
                 return 0;
@@ -1061,7 +1057,7 @@ static int fpFinishPortGroupRule(
                 sc,
                 pattern,
                 pattern_length,
-                pmd->nocase,
+                pmd->no_case,
                 pmd->offset,
                 pmd->depth,
                 (unsigned)pmd->exception_flag,
@@ -1169,6 +1165,8 @@ static int fpAllocPms(
     return 0;
 }
 
+#if 0
+// FIXIT fast_pattern
 static PmType GetPmType (HTTP_BUFFER hb_type)
 {
     switch ( hb_type )
@@ -1187,12 +1185,12 @@ static PmType GetPmType (HTTP_BUFFER hb_type)
     }
     return PM_TYPE__CONTENT;
 }
+#endif
 
 static int fpAddPortGroupRule(
     SnortConfig *sc, PORT_GROUP *pg, OptTreeNode *otn, FastPatternConfig *fp)
 {
     PatternMatchData *pmd = NULL;
-    PatternMatchData *pmd_uri = NULL;
 
     if ((pg == NULL) || (otn == NULL))
         return -1;
@@ -1218,6 +1216,8 @@ static int fpAddPortGroupRule(
         }
     }
 
+#if 0
+    FIXIT need to select http_uri for fast_pattern
     /* http buffer contents take precedence over normal contents if
      * no normal contents have the fast_pattern option */
     pmd_uri = GetLongestPmdContent(otn, CONTENT_HTTP);
@@ -1233,6 +1233,7 @@ static int fpAddPortGroupRule(
             return 0;
         }
     }
+#endif
 
     /* If we get this far then no URI contents were added */
 

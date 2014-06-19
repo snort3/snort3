@@ -32,25 +32,5 @@ void Replace_ResetQueue(void);
 void Replace_QueueChange(PatternMatchData*);
 void Replace_ModifyPacket(Packet*);
 
-static inline void Replace_ResetOffset(PatternMatchData* pmd)
-{
-    if ( pmd->replace_depth )
-        pmd->replace_depth[get_instance_id()] = -1;
-}
-
-static inline void Replace_StoreOffset(PatternMatchData* pmd, int detect_depth)
-{
-    if ( pmd->replace_depth )
-        pmd->replace_depth[get_instance_id()] = detect_depth;
-}
-
-static inline int Replace_OffsetStored(PatternMatchData* pmd)
-{
-    if ( pmd->replace_depth )
-        return pmd->replace_depth[get_instance_id()] >= 0;
-
-    return 0;
-}
-
 #endif
 

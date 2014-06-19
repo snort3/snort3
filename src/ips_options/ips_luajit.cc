@@ -232,7 +232,7 @@ bool LuaJITOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int LuaJITOption::eval(Packet* p)
+int LuaJITOption::eval(Cursor&, Packet* p)
 {
     packet = p;
 

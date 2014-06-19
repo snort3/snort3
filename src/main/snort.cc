@@ -108,7 +108,7 @@ using namespace std;
 #include "target_based/sftarget_reader.h"
 #include "stream/stream_api.h"
 #include "stream/stream.h"
-#include "ips_options/replace.h"
+#include "ips_options/ips_replace.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"

@@ -89,6 +89,7 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
+#include "framework/cursor.h"
 #include "framework/ips_option.h"
 
 #ifdef PERF_PROFILING
@@ -135,7 +136,7 @@ public:
     bool is_relative()
     { return (config.relative_flag == 1); };
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     ByteJumpData config;
@@ -203,102 +204,52 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteJumpOption::eval(Packet *p)
+int ByteJumpOption::eval(Cursor& c, Packet*)
 {
     ByteJumpData *bjd = (ByteJumpData *)&config;
     int rval = DETECTION_OPTION_NO_MATCH;
-    uint32_t value = 0;
-    uint32_t jump_value = 0;
+    uint32_t jump = 0;
     uint32_t payload_bytes_grabbed = 0;
     uint32_t extract_offset;
-    int32_t tmp = 0;
-    int dsize;
-    const uint8_t *base_ptr, *end_ptr, *start_ptr;
-    uint8_t rst_doe_flags = 1;
-    PROFILE_VARS;
+    int32_t offset;
 
+    PROFILE_VARS;
     PREPROC_PROFILE_START(byteJumpPerfStats);
 
-    if (Is_DetectFlag(FLAG_ALT_DETECT))
-    {
-        dsize = DetectBuffer.len;
-        start_ptr = DetectBuffer.data;
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "Using Alternative Detect buffer!\n"););
-    }
-    else if(Is_DetectFlag(FLAG_ALT_DECODE))
-    {
-        dsize = DecodeBuffer.len;
-        start_ptr = DecodeBuffer.data;
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "Using Alternative Decode buffer!\n"););
-    }
-    else
-    {
-        start_ptr = p->data;
-        if(IsLimitedDetect(p))
-            dsize = p->alt_dsize;
-        else
-            dsize = p->dsize;
-    }
-
-    DEBUG_WRAP(
-            DebugMessage(DEBUG_PATTERN_MATCH,"[*] byte jump firing...\n");
-            DebugMessage(DEBUG_PATTERN_MATCH,"payload starts at %p\n", start_ptr);
-            );  /* END DEBUG_WRAP */
-
-    /* save off whatever our ending pointer is */
-    end_ptr = start_ptr + dsize;
-    //base_ptr = start_ptr;
+    const uint8_t *base_ptr, *end_ptr, *start_ptr;
+    int dsize;
 
     /* Get values from byte_extract variables, if present. */
     if (bjd->offset_var >= 0 && bjd->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
         GetByteExtractValue(&extract_offset, bjd->offset_var);
-        bjd->offset = (int32_t) extract_offset;
+        offset = (int32_t) extract_offset;
     }
+    else
+        offset = bjd->offset;
 
-    if(bjd->relative_flag && doe_ptr)
+    start_ptr = c.buffer();
+    dsize = c.size();
+    end_ptr = start_ptr + dsize;
+
+    if( bjd->relative_flag )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "Checking relative offset!\n"););
-
-        /* @todo: possibly degrade to use the other buffer, seems non-intuitive
-         *  Because doe_ptr can be "end" in the last match,
-         *  use end + 1 for upper bound
-         *  Bound checked also after offset is applied
-         *  (see byte_extract() and string_extract())
-         */
-        if(!inBounds(start_ptr, end_ptr + 1, doe_ptr))
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                    "[*] byte jump bounds check failed..\n"););
-
-            PREPROC_PROFILE_END(byteJumpPerfStats);
-            return rval;
-        }
-
-        base_ptr = doe_ptr + bjd->offset;
-        rst_doe_flags = 0;
+        base_ptr = c.start() + offset;
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "checking absolute offset %d\n", bjd->offset););
-        base_ptr = start_ptr + bjd->offset;
+        base_ptr = c.buffer() + offset;
     }
 
-    /* Both of the extraction functions contain checks to insure the data
+    /* Both of the extraction functions contain checks to ensure the data
      * is always inbounds */
 
-    if(!bjd->data_string_convert_flag)
+    if ( !bjd->data_string_convert_flag )
     {
-        if(byte_extract(bjd->endianess, bjd->bytes_to_grab,
-                        base_ptr, start_ptr, end_ptr, &value))
+        if ( byte_extract(
+                bjd->endianess, bjd->bytes_to_grab,
+                base_ptr, start_ptr, end_ptr, &jump) )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                    "Byte Extraction Failed\n"););
-
             PREPROC_PROFILE_END(byteJumpPerfStats);
             return rval;
         }
@@ -307,76 +258,39 @@ int ByteJumpOption::eval(Packet *p)
     }
     else
     {
-        payload_bytes_grabbed = tmp = string_extract(bjd->bytes_to_grab, bjd->base,
-                                               base_ptr, start_ptr, end_ptr, &value);
+        int32_t tmp = string_extract(
+            bjd->bytes_to_grab, bjd->base,
+            base_ptr, start_ptr, end_ptr, &jump);
+
         if (tmp < 0)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                    "Byte Extraction Failed\n"););
-
             PREPROC_PROFILE_END(byteJumpPerfStats);
             return rval;
         }
-
+        payload_bytes_grabbed = tmp;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                            "grabbed %d of %d bytes, value = %08X\n",
-                            payload_bytes_grabbed, bjd->bytes_to_grab, value););
-
-    /* Adjust the jump_value (# bytes to jump forward) with the multiplier. */
     if (bjd->multiplier)
-        jump_value = value * bjd->multiplier;
-    else
-        jump_value = value;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                            "grabbed %d of %d bytes, after multiplier value = %08X\n",
-                            payload_bytes_grabbed, bjd->bytes_to_grab, jump_value););
-
+        jump *= bjd->multiplier;
 
     /* if we need to align on 32-bit boundries, round up to the next
      * 32-bit value
      */
     if(bjd->align_flag)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "offset currently at %d\n", jump_value););
-        if ((jump_value % 4) != 0)
+        if ((jump % 4) != 0)
         {
-            jump_value += (4 - (jump_value % 4));
+            jump += (4 - (jump % 4));
         }
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "offset aligned to %d\n", jump_value););
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                            "Grabbed %d bytes at offset %d, value = 0x%08X\n",
-                            payload_bytes_grabbed, bjd->offset, jump_value););
+    if ( !bjd->from_beginning_flag )
+        jump += payload_bytes_grabbed;
 
-    if(bjd->from_beginning_flag)
+    jump += bjd->post_offset;
+
+    if ( !c.set_pos(jump) )
     {
-        /* Reset base_ptr if from_beginning */
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "jumping from beginning %d bytes\n", jump_value););
-        base_ptr = start_ptr;
-
-        /* from base, push doe_ptr ahead "value" number of bytes */
-        SetDoePtr((base_ptr + jump_value), DOE_BUF_STD);
-
-    }
-    else
-    {
-        UpdateDoePtr((base_ptr + payload_bytes_grabbed + jump_value), rst_doe_flags);
-    }
-
-    /* now adjust using post_offset -- before bounds checking */
-    doe_ptr += bjd->post_offset;
-
-    if(!inBounds(start_ptr, end_ptr, doe_ptr))
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "tmp ptr is not in bounds %p\n", doe_ptr););
         PREPROC_PROFILE_END(byteJumpPerfStats);
         return rval;
     }

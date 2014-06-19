@@ -114,7 +114,7 @@ void Analyzer::analyze()
 
             command = AC_NONE;
         }
-        if ( DAQ_Acquire(1, main_func, NULL) )
+        if ( DAQ_Acquire(0, main_func, NULL) )
             break;
 
         ++count;

@@ -41,6 +41,7 @@
 #include "fpdetect.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
+#include "framework/cursor.h"
 #include "framework/ips_option.h"
 
 static const char* s_name = "file_data";
@@ -74,7 +75,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
     FileData* get_data()
     { return &config; };
@@ -117,7 +118,7 @@ bool FileDataOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FileDataOption::eval(Packet *p)
+int FileDataOption::eval(Cursor& c, Packet *p)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
     uint8_t *data;
@@ -142,8 +143,7 @@ int FileDataOption::eval(Packet *p)
     else
         mime_present = 0;
 
-    SetDoePtr(data,  DOE_BUF_STD);
-    SetAltDetect(data, len);
+    c.set(s_name, data, len);
     rval = DETECTION_OPTION_MATCH;
 
     PREPROC_PROFILE_END(fileDataPerfStats);

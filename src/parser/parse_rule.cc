@@ -96,7 +96,6 @@ typedef struct
     unsigned int sid;
     int dir;
     char content;
-    char uricontent;
 
 } port_entry_t;
 
@@ -199,8 +198,6 @@ static void port_list_print( port_list_t * plist)
                 plist->pl_array[i].dst_port );
         LogMessage(" content %d",
                 plist->pl_array[i].content);
-        LogMessage(" uricontent %d",
-                plist->pl_array[i].uricontent);
         LogMessage(" }\n");
     }
 }
@@ -294,7 +291,7 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
     rim_index = otn->ruleIndex;
 
     /* Add up the nocontent rules */
-    if (!pe->content && !pe->uricontent)
+    if ( !pe->content )
         prc->nc++;
 
     /* If not an any-any rule test for port bleedover, if we are using a
@@ -1640,29 +1637,7 @@ void parse_rule(
 
     /* See what kind of content is going in the fast pattern matcher */
     {
-        /* Since http_cookie content is not used in fast pattern matcher,
-         * need to iterate the entire list */
-        if ( otn_has_plugin(otn, RULE_OPTION_TYPE_CONTENT_URI) )
-        {
-            OptFpList* fpl = otn->opt_func;
-
-            while ( fpl )
-            {
-                if ( fpl->type == RULE_OPTION_TYPE_CONTENT_URI )
-                {
-                    PatternMatchData* pmd = get_pmd(fpl);
-
-                    if ( IsHttpBufFpEligible(pmd->http_buffer) )
-                    {
-                        pe.uricontent = 1;
-                        break;
-                    }
-                }
-                fpl = fpl->next;
-            }
-        }
-
-        if (!pe.uricontent && otn_has_plugin(otn, RULE_OPTION_TYPE_CONTENT) )
+        if ( otn_has_plugin(otn, RULE_OPTION_TYPE_CONTENT) )
         {
             pe.content = 1;
         }

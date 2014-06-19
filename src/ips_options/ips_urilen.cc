@@ -77,7 +77,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     UriLenCheckData config;
@@ -127,7 +127,7 @@ bool UriLenOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int UriLenOption::eval(Packet*)
+int UriLenOption::eval(Cursor&, Packet*)
 {
     UriLenCheckData *udata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

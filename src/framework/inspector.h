@@ -109,7 +109,6 @@ typedef Inspector* (*InspectNew)(Module*);
 typedef void (*InspectDelFunc)(Inspector*);
 typedef void (*InspectFunc)();
 typedef class Session* (*InspectSsnFunc)(class Flow*);
-typedef struct ContentBuffer* (*InspectBufFunc)(unsigned);
 
 // FIXIT ensure all provide stats
 struct InspectApi
@@ -120,9 +119,6 @@ struct InspectApi
 
     const char* service;   // nullptr when type != IT_SERVICE
     //ServiceTag tags;     // null terminated list of tags
-
-    // list of thread local detection buffers captured by inspector
-    const char* contents;  // space separated, eg "foo_a foo_b foo_c" 
 
     // main thread funcs - parse time data only
     InspectFunc init;      // allocate process static data
@@ -137,7 +133,6 @@ struct InspectApi
     InspectFunc sum;       // accumulate stats
     InspectFunc stats;     // output stats
     InspectFunc reset;     // clear stats
-    InspectBufFunc getbuf; // 0-based, eg getbuf(1) means foo_b above
 };
 
 #endif

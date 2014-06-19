@@ -28,6 +28,8 @@ ADD_LIBRARY( utils STATIC
     ${SNPRINTF_SOURCES}
     asn1.cc 
     asn1.h
+    boyer_moore.cc 
+    boyer_moore.h
     dyn_array.cc
     dyn_array.h
     ring.h 

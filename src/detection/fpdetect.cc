@@ -51,6 +51,7 @@
 #include "treenodes.h"
 #include "pcrm.h"
 #include "fpcreate.h"
+#include "framework/cursor.h"
 #include "framework/mpse.h"
 #include "bitop.h"
 #include "perf_monitor/perf.h"
@@ -446,13 +447,12 @@ static int detection_option_tree_evaluate(
     }
 #endif
 
+    Cursor c(eval_data->p);
+
     for ( i = 0; i< root->num_children; i++)
     {
-        /* New tree, reset doe_ptr for safety */
-        UpdateDoePtr(NULL, 0);
-
         /* Increment number of events generated from that child */
-        rval += detection_option_node_evaluate(root->children[i], eval_data);
+        rval += detection_option_node_evaluate(root->children[i], eval_data, c);
     }
 
 #ifdef PPM_MGR

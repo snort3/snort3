@@ -97,7 +97,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
     IsDataAtData* get_data() 
     { return &config; };
@@ -148,7 +148,7 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IsDataAtOption::eval(Packet *p)
+int IsDataAtOption::eval(Cursor&, Packet *p)
 {
     IsDataAtData *isdata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

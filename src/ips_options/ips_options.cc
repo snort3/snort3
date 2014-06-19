@@ -54,6 +54,7 @@ extern const BaseApi* ips_ipopts;
 extern const BaseApi* ips_isdataat;
 extern const BaseApi* ips_itype;
 extern const BaseApi* ips_pkt_data;
+extern const BaseApi* ips_raw_data;
 extern const BaseApi* ips_react;
 extern const BaseApi* ips_resp;
 extern const BaseApi* ips_rpc;
@@ -96,6 +97,7 @@ const BaseApi* ips_options[] =
     ips_isdataat,
     ips_itype,
     ips_pkt_data,
+    ips_raw_data,
     ips_react,
     ips_resp,
     ips_rpc,

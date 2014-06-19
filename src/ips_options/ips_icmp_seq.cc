@@ -91,7 +91,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     IcmpSeqCheckData config;
@@ -133,7 +133,7 @@ bool IcmpSeqOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IcmpSeqOption::eval(Packet *p)
+int IcmpSeqOption::eval(Cursor&, Packet *p)
 {
     IcmpSeqCheckData *icmpSeq = &config;
     PROFILE_VARS;

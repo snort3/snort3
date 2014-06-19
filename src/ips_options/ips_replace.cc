@@ -19,13 +19,15 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "replace.h"
+#include "ips_replace.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <assert.h>
+#include <string>
+using namespace std;
 
 #include "snort_types.h"
 #include "snort_bounds.h"
@@ -35,11 +37,12 @@
 #include "ips_content.h"
 #include "snort.h"
 #include "packet_io/sfdaq.h"
+#include "framework/cursor.h"
+#include "framework/ips_option.h"
 
 #define MAX_PATTERN_SIZE 2048
 
-static void Replace_Parse(
-    char *rule, OptTreeNode*, PatternMatchData* pmd)
+static void replace_parse(char* args, string& s)
 {
     char tmp_buf[MAX_PATTERN_SIZE];
 
@@ -57,20 +60,19 @@ static void Replace_Parse(
     int pending = 0;
     int cnt = 0;
     int literal = 0;
-    int ret;
 
-    if ( !rule )
+    if ( !args )
     {
         ParseError("missing argument to 'replace' option");
     }
     /* clear out the temp buffer */
     memset(tmp_buf, 0, MAX_PATTERN_SIZE);
 
-    while(isspace((int)*rule))
-        rule++;
+    while(isspace((int)*args))
+        args++;
 
     /* find the start of the data */
-    start_ptr = strchr(rule, '"');
+    start_ptr = strchr(args, '"');
 
     if(start_ptr == NULL)
     {
@@ -297,36 +299,15 @@ static void Replace_Parse(
         ParseError("Replace hexmode is not completed");
     }
 
-    if((pmd->replace_buf = (char *) calloc(dummy_size+1,
-                                                  sizeof(char))) == NULL)
-    {
-        ParseError("Replace pattern_buf malloc failed");
-            
-    }
-
-    ret = SafeMemcpy(pmd->replace_buf, tmp_buf, dummy_size,
-                     pmd->replace_buf, (pmd->replace_buf+dummy_size));
-
-    if (ret == SAFEMEM_ERROR)
-    {
-        ParseError("Replace SafeMemcpy failed");
-    }
-
-    pmd->replace_size = dummy_size;
-    pmd->replace_depth = (int*)SnortAlloc(get_instance_max() * sizeof(int));
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-        "pmd (%p) replace_size(%d) replace_buf(%s)\n", pmd,
-        pmd->replace_size, pmd->replace_buf););
+    s.assign(tmp_buf, dummy_size);
 }
 
-void PayloadReplaceInit(
-    PatternMatchData* pmd, char *data, OptTreeNode * otn)
+static bool replace_ok()
 {
     static int warned = 0;
 
-    if( !ScInlineMode() )
-        return;
+    if ( !ScInlineMode() )
+        return false;
 
     if ( !DAQ_CanReplace() )
     {
@@ -336,20 +317,23 @@ void PayloadReplaceInit(
                 " can't replace packets.\n");
             warned = 1;
         }
-        return;
+        return false;
     }
-
-    Replace_Parse(data, otn, pmd);
+    return true;
 }
 
-typedef struct {
-    const char* data;
-    int size;
-    int depth;
-} Replacement;
+//--------------------------------------------------------------------------
+// queue foo
+//--------------------------------------------------------------------------
+
+struct Replacement
+{
+    string data;
+    int offset;
+};
 
 #define MAX_REPLACEMENTS 32
-static THREAD_LOCAL Replacement rpl[MAX_REPLACEMENTS];
+static THREAD_LOCAL Replacement* rpl;
 static THREAD_LOCAL int num_rpl = 0;
 
 void Replace_ResetQueue(void)
@@ -357,7 +341,7 @@ void Replace_ResetQueue(void)
     num_rpl = 0;
 }
 
-void Replace_QueueChange(PatternMatchData* pmd)
+void Replace_QueueChange(string& s, int off)
 {
     Replacement* r;
 
@@ -366,23 +350,22 @@ void Replace_QueueChange(PatternMatchData* pmd)
 
     r = rpl + num_rpl++;
 
-    r->data = pmd->replace_buf;
-    r->size = pmd->replace_size;
-    r->depth = pmd->replace_depth[get_instance_id()];
+    r->data = s;
+    r->offset = off;
 }
 
 static inline void Replace_ApplyChange(Packet *p, Replacement* r)
 {
-    uint8_t* start = (uint8_t*)p->data + r->depth;
+    uint8_t* start = (uint8_t*)p->data + r->offset;
     const uint8_t* end = p->data + p->dsize;
     unsigned len;
 
-    if ( (start + r->size) >= end )
-        len = p->dsize - r->depth;
+    if ( (start + r->data.size()) >= end )
+        len = p->dsize - r->offset;
     else
-        len = r->size;
+        len = r->data.size();
 
-    memcpy(start, r->data, len);
+    memcpy(start, r->data.c_str(), len);
 }
 
 // FIXIT this could be ContentOption::action()
@@ -399,4 +382,201 @@ void Replace_ModifyPacket(Packet *p)
     p->packet_flags |= PKT_MODIFIED;
     num_rpl = 0;
 }
+
+//-------------------------------------------------------------------------
+// replace rule option
+//-------------------------------------------------------------------------
+
+static const char* s_name = "replace";
+
+#ifdef PERF_PROFILING
+static THREAD_LOCAL PreprocStats replacePerfStats;
+
+static PreprocStats* pd_get_profile(const char* key)
+{
+    if ( !strcmp(key, s_name) )
+        return &replacePerfStats;
+
+    return nullptr;
+}
+#endif
+
+class ReplaceOption : public IpsOption
+{
+public:
+    ReplaceOption(string&);
+    ~ReplaceOption();
+
+    int eval(Cursor&, Packet*);
+    void action(Packet*);
+
+    uint32_t hash() const;
+    bool operator==(const IpsOption&) const;
+
+    void store(int off)
+    { offset[get_instance_id()] = off; };
+
+    bool pending()
+    { return offset[get_instance_id()] >= 0; };
+
+    int pos()
+    { return offset[get_instance_id()]; };
+private:
+    string repl;
+    int* offset; /* >=0 is offset to start of replace */
+};
+
+ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+{
+    unsigned n = get_instance_max();
+    offset = new int[n];
+
+    for ( unsigned i = 0; i < n; i++ )
+        offset[i] = -1;
+
+    repl = s;
+}
+
+ReplaceOption::~ReplaceOption() 
+{
+    delete[] offset;
+}
+
+uint32_t ReplaceOption::hash() const
+{
+    uint32_t a,b,c;
+
+    const char* s = repl.c_str();
+    unsigned n = repl.size();
+
+    a = 0;
+    b = n;
+    c = 0;
+
+    mix(a,b,c);
+    mix_str(a,b,c,s,n);
+    mix_str(a,b,c,get_name());
+    final(a,b,c);
+
+    return c;
+}
+
+bool ReplaceOption::operator==(const IpsOption& ips) const
+{
+    if ( strcmp(get_name(), ips.get_name()) )
+        return false;
+
+    ReplaceOption& rhs = (ReplaceOption&)ips;
+
+    if ( repl != rhs.repl )
+        return false;
+
+    return true;
+}
+
+int ReplaceOption::eval(Cursor& c, Packet* p)
+{
+    PROFILE_VARS;
+    PREPROC_PROFILE_START(replacePerfStats);
+
+    if ( PacketWasCooked(p) )
+        return false;
+
+    if ( !c.is("pkt_data") )
+        return DETECTION_OPTION_NO_MATCH;
+
+    if ( c.length() < repl.size() )
+        return DETECTION_OPTION_NO_MATCH;
+
+    store(c.get_pos());
+
+    PREPROC_PROFILE_END(replacePerfStats);
+    return DETECTION_OPTION_MATCH;
+}
+
+// FIXIT this may need to be apply change here
+// and queue change from some other point
+// (almost certainly broke)
+void ReplaceOption::action(Packet*)
+{
+    PROFILE_VARS;
+    PREPROC_PROFILE_START(replacePerfStats);
+
+    if ( pending() )
+        Replace_QueueChange(repl, pos());
+
+    PREPROC_PROFILE_END(replacePerfStats);
+}
+
+static IpsOption* replace_ctor(
+    SnortConfig*, char *data, OptTreeNode* otn)
+{
+    if ( !replace_ok() )
+        return nullptr;
+
+    string s;
+    replace_parse(data, s);
+
+    ReplaceOption* opt = new ReplaceOption(s);
+
+    if ( otn_set_agent(otn, opt) )
+        return opt;
+
+    delete opt;
+    ParseError("At most one action per rule is allowed");
+    return nullptr;
+}
+
+static void replace_dtor(IpsOption* p)
+{
+    delete p;
+}
+
+static void replace_ginit(SnortConfig*)
+{
+#ifdef PERF_PROFILING
+    RegisterOtnProfile(s_name, &replacePerfStats, pd_get_profile);
+#endif
+}
+
+static void replace_tinit(SnortConfig*)
+{
+    rpl = new Replacement[MAX_REPLACEMENTS];
+}
+
+static void replace_tterm(SnortConfig*)
+{
+    delete[] rpl;
+}
+
+static const IpsApi replace_api =
+{
+    {
+        PT_IPS_OPTION,
+        s_name,
+        IPSAPI_PLUGIN_V0,
+        0,
+        nullptr,
+        nullptr
+    },
+    OPT_TYPE_DETECTION,
+    0, 0,
+    replace_ginit,
+    nullptr,
+    replace_tinit,
+    replace_tterm,
+    replace_ctor,
+    replace_dtor,
+    nullptr
+};
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &replace_api.base,
+    nullptr
+};
+#else
+const BaseApi* ips_replace = &replace_api.base;
+#endif
 

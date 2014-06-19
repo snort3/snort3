@@ -70,7 +70,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     TcpSeqCheckData config;
@@ -112,7 +112,7 @@ bool TcpSeqOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int TcpSeqOption::eval(Packet *p)
+int TcpSeqOption::eval(Cursor&, Packet *p)
 {
     TcpSeqCheckData *tcpSeqCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

@@ -70,7 +70,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
     IpTosData* get_data() 
     { return &config; };
@@ -120,7 +120,7 @@ bool IpTosOption::operator==(const IpsOption& ips) const
  * value in the rule.  This is useful to detect things like the "bubonic" DoS tool.
  */
  
-int IpTosOption::eval(Packet *p)
+int IpTosOption::eval(Cursor&, Packet *p)
 {
     IpTosData *ipTosData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

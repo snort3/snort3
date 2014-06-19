@@ -85,7 +85,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     FragOffsetData config;
@@ -129,7 +129,7 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FragOffsetOption::eval(Packet *p)
+int FragOffsetOption::eval(Cursor&, Packet *p)
 {
     FragOffsetData *ipd = &config;
     int p_offset = p->frag_offset * 8;

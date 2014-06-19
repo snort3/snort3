@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 #include "framework/inspector.h"
+#include "http_inspect/http_inspect.h"
 
 extern const BaseApi* sin_http_global;
 extern const BaseApi* sin_http_server;
@@ -41,6 +42,18 @@ const BaseApi* service_inspectors[] =
 {
     sin_http_global,
     sin_http_server,
+
+    ips_http_uri,
+    ips_http_header,
+    ips_http_client_body,
+    ips_http_method,
+    ips_http_cookie,
+    ips_http_stat_code,
+    ips_http_stat_msg,
+    ips_http_raw_uri,
+    ips_http_raw_header,
+    ips_http_raw_cookie,
+
 #ifdef STATIC_INSPECTORS
     sin_bo,
     sin_ftp_client,

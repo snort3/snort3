@@ -339,7 +339,6 @@ static const InspectApi as_api =
     IT_PROTOCOL, 
     PROTO_BIT__ARP,
     nullptr, // service
-    nullptr, // contents
     as_init,
     nullptr, // term
     as_ctor,
@@ -349,8 +348,7 @@ static const InspectApi as_api =
     nullptr, // ssn
     as_sum,
     as_stats,
-    as_reset,
-    nullptr  // getbuf
+    as_reset
 };
 
 #ifdef BUILDING_SO

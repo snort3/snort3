@@ -72,7 +72,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
     IpOptionData* get_data() 
     { return &config; };
@@ -118,7 +118,7 @@ bool IpOptOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IpOptOption::eval(Packet *p)
+int IpOptOption::eval(Cursor&, Packet *p)
 {
     IpOptionData *ipOptionData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

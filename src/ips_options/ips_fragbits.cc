@@ -108,7 +108,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     FragBitsData config;
@@ -153,7 +153,7 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FragBitsOption::eval(Packet *p)
+int FragBitsOption::eval(Cursor&, Packet *p)
 {
     FragBitsData *fb = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
