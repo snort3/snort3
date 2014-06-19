@@ -59,7 +59,7 @@ void NHttpApi::nhttp_term()
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
     const NHttpModule* nhttpMod = (NHttpModule*) mod;
-    return new NHttpInspect(nhttpMod->get_test_mode());
+    return new NHttpInspect(nhttpMod->get_test_input(), nhttpMod->get_test_output());
 }
 
 void NHttpApi::nhttp_dtor(Inspector* p)

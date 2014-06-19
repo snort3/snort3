@@ -75,16 +75,18 @@ private:
     int64_t octetsExpected[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // expected size of the upcoming body or chunk body section      
 
     // Inspector's internal data about the current message
+    // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize hard-to-find bugs
+    NHttpEnums::VersionId versionId[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
+    NHttpEnums::MethodId methodId[2] = { NHttpEnums::METH__NOTPRESENT, NHttpEnums::METH__NOTPRESENT };
+    NHttpEnums::SchemeId schemeId[2] = { NHttpEnums::SCH__NOTPRESENT, NHttpEnums::SCH__NOTPRESENT };
+    int32_t statusCodeNum[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+
     int64_t dataLength[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };        // length of the data from Content-Length field or chunk header.      
     int64_t bodySections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };      // number of body sections seen so far including chunk headers
     int64_t bodyOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };        // number of user data octets seen so far (either regular body or chunks)
     int64_t numChunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };         // number of chunks seen so far
     int64_t chunkSections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // number of sections seen so far in the current chunk
     int64_t chunkOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };       // number of user data octets seen so far in the current chunk including terminating CRLF
-
-    NHttpEnums::VersionId versionId[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
-    NHttpEnums::MethodId methodId = NHttpEnums::METH__NOTPRESENT;
-    int32_t statusCodeNum = NHttpEnums::STAT_NOTPRESENT;
 };
 
 #endif

@@ -118,7 +118,7 @@ void NHttpMsgStatus::updateFlow() const {
     else {
         sessionData->typeExpected[sourceId] = SEC_HEADER;
         sessionData->versionId[sourceId] = versionId;
-        sessionData->statusCodeNum = statusCodeNum;
+        sessionData->statusCodeNum[sourceId] = statusCodeNum;
     }
 }
 

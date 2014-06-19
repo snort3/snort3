@@ -50,8 +50,9 @@ void NHttpFlowData::halfReset(SourceId sourceId) {
     chunkOctets[sourceId] = STAT_NOTPRESENT;
 
     versionId[sourceId] = VERS__NOTPRESENT;
-    if (sourceId == SRC_CLIENT) methodId = METH__NOTPRESENT;
-    else statusCodeNum = STAT_NOTPRESENT;
+    methodId[sourceId] = METH__NOTPRESENT;
+    schemeId[sourceId] = SCH__NOTPRESENT;
+    statusCodeNum[sourceId] = STAT_NOTPRESENT;
 }
 
 
