@@ -453,12 +453,12 @@ void Icmp4Codec::ICMP4MiscTests (Packet *p)
 namespace
 {
 
-typedef struct {
+struct IcmpHdr {
     uint8_t type;
     uint8_t code;
     uint16_t cksum;
     uint32_t unused;
-} IcmpHdr;
+} ;
 
 } // namespace
 
