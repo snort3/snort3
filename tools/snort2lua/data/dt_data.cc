@@ -17,11 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "cv_data.h"
+#include "dt_data.h"
 #include "snort2lua_util.h"
 #include <iostream>
+
+
+static const std::string start_comments =
+    "COMMENTS:\n"
+    "    these line were originally commented out or empty"
+    "in the configuration file.";
+
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -37,6 +44,8 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
 
 ConversionData::ConversionData()
 {
+    comments = new Comments(start_comments, 0,
+                    Comments::CommentType::Mult_Line);
 }
 
 ConversionData::~ConversionData()
@@ -46,6 +55,8 @@ ConversionData::~ConversionData()
 
     for (auto t : tables)
         delete t;
+
+    delete comments;
 }
 
 bool ConversionData::add_variable(std::string name, std::string value)
@@ -84,8 +95,8 @@ Table* ConversionData::add_table(std::string name)
 void ConversionData::add_comment(std::string str)
 {
     // leave at most one blank line between comments
-    if ( !(str.empty() && !comments.empty() && comments.back().empty()) )
-        comments.push_back(std::string(str, 0, 512));
+//    if ( !(str.empty() && !comments.empty() && comments.back().empty()) )
+        comments->add_text(str);
 }
 
 void ConversionData::add_error_comment(std::string error_string)
@@ -113,17 +124,8 @@ std::ostream& operator<<( std::ostream &out, const ConversionData &data)
     for (Table *t : data.tables)
         out << (*t) << std::endl << std::endl;
 
+    out << (*data.comments) << std::endl;
 
-    out << "--[[" << std::endl << std::endl;
-    out << "COMMENTS:" << std::endl;
-    out << "    these line were originally commented out or empty" << std::endl;
-    out << "    in the configuration file." << std::endl;
-    out << std::endl;
-
-    for (std::string s : data.comments)
-        out << s << std::endl;
-
-    out << "--]]" << std::endl;
 
     return out;
 }

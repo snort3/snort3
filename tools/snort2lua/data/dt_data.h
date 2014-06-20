@@ -17,50 +17,45 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_table.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_data.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef CONV_TABLE_H
-#define CONV_TABLE_H
-
+#ifndef DT_DATA_H
+#define DT_DATA_H
 
 #include <string>
-#include <vector>
 #include <iostream>
+#include <vector>
 
-#include "cv_option.h"
-#include "cv_var.h"
+#include "data/dt_table.h"
+#include "data/dt_var.h"
+#include "data/dt_comment.h"
 
-class Table
+class ConversionData
 {
+
 public:
-    Table(int depth);
-    Table(std::string name, int depth);
-    virtual ~Table();
+    ConversionData();
+    virtual ~ConversionData();
 
-    inline std::string get_name(){ return name; };
-    Table* open_table();
-    Table* open_table(std::string);
-    bool add_option(std::string, int val);
-    bool add_option(std::string, bool val);
-    bool add_option(std::string, std::string val);
-    bool add_list(std::string, std::string next_elem);
+    friend std::ostream &operator<<( std::ostream&, const ConversionData &);
+    bool add_variable(std::string name, std::string value);
+    Table* add_table(std::string name);
     void add_comment(std::string comment);
+    void add_error_comment(std::string comment);
 
-    friend std::ostream &operator<<( std::ostream&, const Table &);
+#if 0
+    bool add_option(std::string name, std::string value);
+    bool add_option(std::string name, long long int value);
+    void reset();
+#endif
 
 private:
-    std::string name;
-    int depth;
+    std::vector<Variable*> vars;
     std::vector<Table*> tables;
-    std::vector<Option*> options;
-    std::vector<std::string> comments;
-    std::vector<Variable*> lists;
+    Comments *comments;
+    std::vector<std::string> errors;
 
-
-    bool has_option(std::string name, int val);
-    bool has_option(std::string name, bool val);
-    bool has_option(std::string name, std::string val);
-    bool has_option(Option o);
 };
+
 
 #endif

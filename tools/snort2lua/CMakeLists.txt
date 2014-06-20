@@ -17,6 +17,7 @@ add_executable(snort2lua
     snort2lua_util.h
     snort2lua_util.cc
     conversion_state.h
+    option_parser.h
 )
 
 target_link_libraries( snort2lua

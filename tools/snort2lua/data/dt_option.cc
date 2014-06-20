@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_option.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_option.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "data/cv_option.h"
+#include "data/dt_option.h"
 
 
 Option::Option(std::string name, int val, int depth)

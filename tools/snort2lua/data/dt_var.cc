@@ -19,7 +19,7 @@
  */
 // cv_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "data/cv_var.h"
+#include "data/dt_var.h"
 #include "snort2lua_util.h"
 
 #if 0

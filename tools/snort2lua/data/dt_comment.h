@@ -17,34 +17,45 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_var.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_comment.h author Josh Rosenbaum <jorosenba@cisco.com>
+
+#ifndef DT_COMMENT_H
+#define DT_COMMENT_H
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-#ifndef CONV_VAR_H
-#define CONV_VAR_H
-
-class Variable
+class Comments
 {
 public:
-    Variable(std::string name, int depth);
-    Variable(std::string name);
-    virtual ~Variable();
 
-    inline std::string get_name(){ return name; };
-    bool add_value(std::string);
-    friend std::ostream &operator<<( std::ostream&, const Variable &);
+    enum class CommentType
+    {
+        Single_Lines,
+        Mult_Line
+    };
 
+
+    Comments(CommentType);
+    Comments(int depth, CommentType);
+    Comments(std::string name, int depth, CommentType);
+    virtual ~Comments();
+
+    void add_text(std::string new_text);
+
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const Comments &);
 
 private:
-    std::string name;
-    std::vector<std::string> vars;
-    std::vector<std::string> strs;
-    int count;
-    const int max_line_length = 74; // leave room for additional text
+    std::vector<std::string> comment;
     int depth;
+    bool prev_empty;
+    enum CommentType type;
+    const int max_line_length = 80;
+    const std::string comment_line = "--";
+    const std::string start_multi_com = "--[[";
+    const std::string end_multi_com = "--]]";
 };
 
 

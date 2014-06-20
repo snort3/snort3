@@ -1,11 +1,13 @@
 
 add_library(conversion_data
-    cv_data.h
-    cv_data.cc
-    cv_var.h
-    cv_var.cc
-    cv_table.h
-    cv_table.cc
-    cv_option.h
-    cv_option.cc
+    dt_data.h
+    dt_data.cc
+    dt_var.h
+    dt_var.cc
+    dt_table.h
+    dt_table.cc
+    dt_option.h
+    dt_option.cc
+    dt_comment.h
+    dt_comment.cc
 )
