@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_stream_udp.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_frag3_global.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -28,23 +28,23 @@
 
 namespace {
 
-class StreamUdp : public ConversionState
+class Frag3Global : public ConversionState
 {
 public:
-    StreamUdp(Converter* cv)  : ConversionState(cv) {};
-    virtual ~StreamUdp() {};
+    Frag3Global(Converter* cv)  : ConversionState(cv) {};
+    virtual ~Frag3Global() {};
     virtual bool convert(std::stringstream& data_stream);
 };
 
 } // namespace
 
-bool StreamUdp::convert(std::stringstream& data_stream)
+bool Frag3Global::convert(std::stringstream& data_stream)
 {
 
     bool retval = true;
     std::string keyword;
 
-    cv->open_table("stream_udp");
+    cv->open_table("stream_ip");
 
     while(data_stream >> keyword)
     {
@@ -56,14 +56,20 @@ bool StreamUdp::convert(std::stringstream& data_stream)
         if(keyword.empty())
             continue;
         
-        if(!keyword.compare("ignore_any_rules"))
-            tmpval = cv->add_option_to_table("ignore_any_rules", true);
+        if(!keyword.compare("disabled"))
+            cv->add_deprecated_comment("disabled");
 
-        else if(!keyword.compare("timeout"))
-        {
-            cv->add_diff_option_comment("timeout", "session_timeout");
-            tmpval = parse_int_option("session_timeout", data_stream);
-        }
+        else if(!keyword.compare("max_frags"))
+            tmpval = parse_int_option("max_frags", data_stream);
+        
+        else if(!keyword.compare("memcap"))
+            tmpval = parse_deprecation_option("memcap", data_stream);
+
+        else if(!keyword.compare("prealloc_memcap"))
+            tmpval = parse_deprecation_option("prealloc_memcap", data_stream);
+        
+        else if(!keyword.compare("prealloc_frags"))
+            tmpval = parse_deprecation_option("prealloc_frags", data_stream);
 
         else
             tmpval = false;
@@ -81,13 +87,13 @@ bool StreamUdp::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new StreamUdp(cv);
+    return new Frag3Global(cv);
 }
 
-static const ConvertMap preprocessor_stream_udp =
+static const ConvertMap preprocessor_frag3_global =
 {
-    "stream5_udp",
+    "frag3_global",
     ctor,
 };
 
-const ConvertMap* stream_udp_map = &preprocessor_stream_udp;
+const ConvertMap* frag3_global_map = &preprocessor_frag3_global;

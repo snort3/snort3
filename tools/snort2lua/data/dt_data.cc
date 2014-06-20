@@ -94,9 +94,7 @@ Table* ConversionData::add_table(std::string name)
 
 void ConversionData::add_comment(std::string str)
 {
-    // leave at most one blank line between comments
-//    if ( !(str.empty() && !comments.empty() && comments.back().empty()) )
-        comments->add_text(str);
+    comments->add_text(str);
 }
 
 void ConversionData::add_error_comment(std::string error_string)
@@ -129,21 +127,3 @@ std::ostream& operator<<( std::ostream &out, const ConversionData &data)
 
     return out;
 }
-#if 0
-bool ConversionData::add_option(std::string name, std::string value)
-{
-
-}
-
-bool ConversionData::add_option(std::string name, long long int value)
-{
-
-}
-
-
-void ConversionData::reset()
-{
-
-}
-
-#endif

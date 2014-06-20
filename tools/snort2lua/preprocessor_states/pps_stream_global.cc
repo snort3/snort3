@@ -88,7 +88,7 @@ bool StreamGlobal::convert(std::stringstream& data_stream)
 
         else if(!keyword.compare("prune_log_max"))
         {
-            cv->add_deprecated_comment("prune_log_max", "histogram");
+            cv->add_diff_option_comment("prune_log_max", "histogram");
             if(!(data_stream >> keyword)) // eat the number of bytes
                 tmpval = false;
         }

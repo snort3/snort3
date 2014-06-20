@@ -208,25 +208,25 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
 
         else if (!keyword.compare("non_rfc_char"))
         {
-            cv->add_deprecated_comment("non_rfc_char", "non_rfc_chars");
+            cv->add_diff_option_comment("non_rfc_char", "non_rfc_chars");
             parse_bracketed_byte_list("non_rfc_chars", data_stream);
         }
 
         else if (!keyword.compare("enable_cookie"))
         {
             tmpval = cv->add_option_to_table("enable_cookies", true);
-            cv->add_deprecated_comment("enable_cookie", "enable_cookies");
+            cv->add_diff_option_comment("enable_cookie", "enable_cookies");
         }
 
         else if (!keyword.compare("flow_depth"))
         {
-            cv->add_deprecated_comment("flow_depth", "server_flow_depth");
+            cv->add_diff_option_comment("flow_depth", "server_flow_depth");
             tmpval = parse_int_option("server_flow_depth", data_stream);
         }
 
         else if (!keyword.compare("ports"))
         {
-            cv->add_deprecated_comment("ports", "bindings");
+            cv->add_diff_option_comment("ports", "bindings");
             cv->add_comment_to_table("check bindings table for port information");
             tmpval = parse_bracketed_unsupported_list("ports", data_stream);
         }

@@ -40,6 +40,32 @@ public:
 protected:
     Converter* cv;
 
+#if 0
+    List of forward parsing methods. Placing these here so you don't need ot
+    search through the file
+
+    inline bool parse_string_option(std::string opt_name,
+                                    std::stringstream& stream);
+    inline bool parse_int_option(std::string opt_name,
+                                std::stringstream& stream);
+    inline bool parse_curly_bracket_list(std::string list_name,
+                                        std::stringstream& stream);
+    inline bool parse_yn_bool_option(std::string opt_name,
+                                    std::stringstream& stream);
+    inline bool parse_bracketed_byte_list(std::string list_name,
+                                        std::stringstream& stream);
+    inline bool parse_bracketed_unsupported_list(std::string list_name,
+                                                std::stringstream& stream);
+    inline bool open_table_add_option(std::string table_name,
+                                        std::string opt_name,
+                                        std::string val);
+
+    inline bool parse_deprecation_option(std::string table_name,
+                                        std::stringstream& stream);
+
+#endif
+
+
     inline bool parse_string_option(std::string opt_name, std::stringstream& stream)
     {
         std::string val;
@@ -167,6 +193,20 @@ protected:
         tmpval = cv->add_option_to_table(opt_name, val) && tmpval;
         cv->close_table();
         return tmpval;
+    }
+
+
+    inline bool parse_deprecation_option(std::string opt_name,
+                                        std::stringstream& stream)
+    {
+
+        std::string val;
+        cv->add_deprecated_comment(opt_name);
+
+        if(stream >> val)
+            return true;
+
+        return false;
     }
 
 

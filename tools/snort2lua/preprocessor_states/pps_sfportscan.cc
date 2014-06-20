@@ -158,13 +158,13 @@ bool PortScan::convert(std::stringstream& data_stream)
 
         else if(!keyword.compare("proto"))
         {
-            cv->add_deprecated_comment("proto", "protos");
+            cv->add_diff_option_comment("proto", "protos");
             retval = parse_curly_bracket_list("protos", data_stream) && retval;
         }
 
         else if(!keyword.compare("scan_type"))
         {
-            cv->add_deprecated_comment("scan_type", "scan_types");
+            cv->add_diff_option_comment("scan_type", "scan_types");
             tmpval = parse_curly_bracket_list("scan_types", data_stream) && retval;
         }
 

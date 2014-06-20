@@ -84,8 +84,8 @@ public:
     void add_comment_to_file(std::string comment, std::stringstream& stream);
     // attach a comment about a deprecated option to a file or table
     void add_deprecated_comment(std::string dep_var);
-    // add a comment with the formate 'deprecated option ... use the new option instead'
-    void add_deprecated_comment(std::string dep_var, std::string new_var);
+    // add a comment with telling the user an option has changed
+    void add_diff_option_comment(std::string dep_var, std::string new_var);
     // log an error in the new lua file
     void log_error(std::string);
 

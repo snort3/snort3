@@ -23,6 +23,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <string>
 #include "init_state.h"
 #include "snort2lua_util.h"
 #include "keyword_states/keywords_api.h"

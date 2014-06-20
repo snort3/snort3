@@ -179,13 +179,13 @@ bool FtpServer::convert(std::stringstream& data_stream)
         
         else if(!keyword.compare("data_chan"))
         {
-            cv->add_deprecated_comment("data_chan", "ignore_data_chan");
+            cv->add_diff_option_comment("data_chan", "ignore_data_chan");
             tmpval = cv->add_option_to_table("ignore_data_chan", true);
         }
 
         else if (!keyword.compare("ports"))
         {
-            cv->add_deprecated_comment("ports", "bindings");
+            cv->add_diff_option_comment("ports", "bindings");
             cv->add_comment_to_table("check bindings table for port information");
             // add commented list for now
             std::string tmp = "";
@@ -298,7 +298,7 @@ bool Telnet::convert(std::stringstream& data_stream)
 
         else  if(!keyword.compare("ports"))
         {
-            cv->add_deprecated_comment("ports", "bindings");
+            cv->add_diff_option_comment("ports", "bindings");
             cv->add_comment_to_table("check bindings table for port information");
             // vvvv defined in ConversionState vvvv
             parse_curly_bracket_list("--ports", data_stream); // create a commented list of the ports

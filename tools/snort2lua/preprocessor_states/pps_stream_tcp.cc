@@ -107,17 +107,17 @@ bool StreamTcp::parse_ports(std::stringstream& data_stream)
 
     if( !opt_name.compare("client"))
     {
-        cv->add_deprecated_comment("port client", "client_ports");
+        cv->add_diff_option_comment("port client", "client_ports");
         opt_name = "client_ports";
     }
     else if( !opt_name.compare("server"))
     {
-        cv->add_deprecated_comment("port server", "server_ports");
+        cv->add_diff_option_comment("port server", "server_ports");
         opt_name = "server_ports";
     }
     else if( !opt_name.compare("both"))
     {
-        cv->add_deprecated_comment("port both", "both_ports");
+        cv->add_diff_option_comment("port both", "both_ports");
         opt_name = "both_ports";
     }
 
@@ -186,32 +186,32 @@ bool StreamTcp::convert(std::stringstream& data_stream)
 
         else if(!keyword.compare("bind_to"))
         {
-            cv->add_deprecated_comment("bind_to", "bindings");
+            cv->add_diff_option_comment("bind_to", "bindings");
             if(!(data_stream >> keyword))
                 tmpval = false;
         }
 
         else if(!keyword.compare("dont_reassemble_async"))
         {
-            cv->add_deprecated_comment("dont_reassemble_async", "reassemble_async");
+            cv->add_diff_option_comment("dont_reassemble_async", "reassemble_async");
             tmpval = cv->add_option_to_table("reassemble_async", false);
         }
 
         else if(!keyword.compare("use_static_footprint_sizes"))
         {
-            cv->add_deprecated_comment("footprint", "use_static_footprint_sizes");
+            cv->add_diff_option_comment("footprint", "use_static_footprint_sizes");
             tmpval = cv->add_option_to_table("footprint", true);
         }
 
         else if(!keyword.compare("timeout"))
         {
-            cv->add_deprecated_comment("timeout", "session_timeout");
+            cv->add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", data_stream);
         }
 
         else if(!keyword.compare("max_queued_segs"))
         {
-            cv->add_deprecated_comment("max_queued_segs", "queue_limit.max_segments");
+            cv->add_diff_option_comment("max_queued_segs", "queue_limit.max_segments");
             cv->open_table("queue_limit");
             tmpval = parse_int_option("max_segments", data_stream);
             cv->close_table();
@@ -219,7 +219,7 @@ bool StreamTcp::convert(std::stringstream& data_stream)
 
         else if(!keyword.compare("max_queued_bytes"))
         {
-            cv->add_deprecated_comment("max_queued_bytes", "queue_limit.max_bytes");
+            cv->add_diff_option_comment("max_queued_bytes", "queue_limit.max_bytes");
             cv->open_table("queue_limit");
             tmpval = parse_int_option("max_bytes", data_stream);
             cv->close_table();

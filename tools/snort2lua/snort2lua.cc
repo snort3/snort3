@@ -168,11 +168,6 @@ void convert(Converter *cv, std::string input_file)
 }
 
 
-static void show_usage()
-{
-    std::cout << "usage:  snort2lua <input_conf_file> <output_lua_file>" << std::endl;
-}
-
 int main (int argc, char* argv[])
 {
     std::ifstream in;

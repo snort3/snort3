@@ -25,6 +25,8 @@
 extern const ConvertMap *arpspoof_map;
 extern const ConvertMap *arpspoof_host_map;
 extern const ConvertMap *bo_map;
+extern const ConvertMap *frag3_engine_map;
+extern const ConvertMap *frag3_global_map;
 extern const ConvertMap *ftptelnet_map;
 extern const ConvertMap *ftptelnet_protocol_map;
 extern const ConvertMap *httpinspect_map;
@@ -45,6 +47,8 @@ const std::vector<const ConvertMap*> preprocessor_api =
     arpspoof_map,
     arpspoof_host_map,
     bo_map,
+    frag3_engine_map,
+    frag3_global_map,
     ftptelnet_map,
     httpinspect_map,
     httpinspect_server_map,

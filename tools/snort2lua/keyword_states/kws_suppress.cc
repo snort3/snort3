@@ -46,8 +46,8 @@ bool Suppress::convert(std::stringstream& data_stream)
     std::string keyword;
 
     cv->open_table("suppress");
-    cv->add_deprecated_comment("gen_id", "gid");
-    cv->add_deprecated_comment("sig_id", "sid");
+    cv->add_diff_option_comment("gen_id", "gid");
+    cv->add_diff_option_comment("sig_id", "sid");
     cv->open_table();
 
     while(data_stream >> keyword)
