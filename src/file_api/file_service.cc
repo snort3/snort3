@@ -48,8 +48,9 @@
 
 #include "file_mime_process.h"
 #include "file_resume_block.h"
-#include "service_inspectors/http_inspect/hi_main.h"  // FIXIT bad dependency
+#include "framework/inspector.h"
 #include "detection_util.h"
+#include "service_inspectors/http_inspect/hi_main.h" // FIXIT bad dependency; use inspector::get_buf()
 
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_reader.h"
@@ -433,14 +434,17 @@ static inline int check_http_partial_content(Packet *p)
     uint32_t len = 0;
     uint32_t type = 0;
     uint32_t file_sig;
-    const HttpBuffer* hb = GetHttpBuffer(HTTP_BUFFER_STAT_CODE);
+    InspectionBuffer hb;
 
-    /*Not HTTP response, return*/
-    if ( !hb )
+    if ( !p->flow || !p->flow->clouseau ||
+         // FIXIT cache id at parse time for runtime use
+         !p->flow->clouseau->get_buf("http_stat_code", p, hb) )
+    {
         return 0;
+    }
 
     /*Not partial content, return*/
-    if ( (hb->length != 3) || strncmp((const char*)hb->buf, "206", 3) )
+    if ( (hb.len != 3) || strncmp((const char*)hb.data, "206", 3) )
         return 0;
 
     /*Use URI as the identifier for file*/

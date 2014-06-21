@@ -406,6 +406,7 @@ static const InspectApi pm_api =
     },
     IT_PACKET,
     PROTO_BIT__ALL,
+    nullptr, // buffers
     nullptr, // service
     pm_init,
     nullptr, // term

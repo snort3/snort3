@@ -295,6 +295,7 @@ static const InspectApi no_api =
     },
     IT_PACKET,
     PROTO_BITS,
+    nullptr, // buffers
     nullptr, // service
     no_init,
     nullptr, // term

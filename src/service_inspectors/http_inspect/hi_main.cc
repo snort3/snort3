@@ -1106,6 +1106,7 @@ void FreeHttpsessionData(void *data)
     file_api->free_mime_session(hsd->mime_ssn);
 }
 
+// FIXIT this should leverage inspector get_buf()
 int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     HttpsessionData* hsd = get_session_data(flow);

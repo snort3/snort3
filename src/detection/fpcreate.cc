@@ -104,8 +104,7 @@ static const char *pm_type_strings[PM_TYPE__MAX] =
     "Normal Content",
     "HTTP Uri content",
     "HTTP Header content",
-    "HTTP Client body content",
-    "HTTP Method content",
+    "HTTP Client body content"
 };
 
 /*
@@ -1696,7 +1695,6 @@ static void fpDeletePortGroup(void *data)
     }
 
     free_detection_option_root(&pg->pgNonContentTree);
-
     free(pg);
 }
 

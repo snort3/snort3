@@ -20,64 +20,12 @@
 ffi = require("ffi")
 
 ffi.cdef[[
-enum BufferType {
-    BT_PAYLOAD,
-    BT_HTTP_URI,
-    BT_HTTP_HEADER,
-    BT_HTTP_CLIENT_BODY,
-    BT_HTTP_METHOD,
-    BT_HTTP_COOKIE,
-    BT_HTTP_STAT_CODE,
-    BT_HTTP_STAT_MSG,
-    BT_HTTP_RAW_URI,
-    BT_HTTP_RAW_HEADER,
-    BT_HTTP_RAW_COOKIE
-};
-struct Buffer {
-    enum BufferType type;
+struct Buffer
+{
+    const char* type;
     const uint8_t* data;
-    uint32_t len;
+    unsigned len;
 };
-const struct Buffer* get_buffer(enum BufferType);
+const Buffer* get_buffer();
 ]]
-
-function get_buffer_type(type)
-    if ( type ) then
-        type = type:lower()
-    end
-    if ( type == nil or type == 'payload' ) then
-        return ffi.C.BT_PAYLOAD
-    end
-    if ( type == 'http_uri' ) then
-        return ffi.C.BT_HTTP_URI
-    end
-    if ( type == 'http_header' ) then
-        return ffi.C.BT_HTTP_HEADER
-    end
-    if ( type == 'http_client_body' ) then
-        return ffi.C.BT_HTTP_CLIENT_BODY
-    end
-    if ( type == 'http_method' ) then
-        return ffi.C.BT_HTTP_METHOD
-    end
-    if ( type == 'http_cookie' ) then
-        return ffi.C.BT_HTTP_COOKIE
-    end
-    if ( type == 'http_stat_code' ) then
-        return ffi.C.BT_HTTP_STAT_CODE
-    end
-    if ( type == 'http_stat_msg' ) then
-        return ffi.C.BT_HTTP_STAT_MSG
-    end
-    if ( type == 'http_raw_uri' ) then
-        return ffi.C.BT_HTTP_RAW_URI
-    end
-    if ( type == 'http_raw_header' ) then
-        return ffi.C.BT_HTTP_RAW_HEADER
-    end
-    if ( type == 'http_raw_cookie' ) then
-        return ffi.C.BT_HTTP_RAW_COOKIE
-    end
-    return -1
-end
 

@@ -107,6 +107,7 @@ const InspectApi NHttpApi::nhttp_api =
     },
     IT_SERVICE,
     PROTO_BIT__TCP,
+    nullptr, // buffers
     "http",
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,

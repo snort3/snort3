@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 file_list = \
-http_inspect.cc http_inspect.h \
+http_inspect.cc \
 hi_main.cc hi_main.h \
 hi_ad.cc hi_ad.h \
 hi_client.cc hi_client.h \
@@ -10,7 +10,6 @@ hi_client_stateful.h \
 hi_cmd_lookup.cc hi_cmd_lookup.h \
 hi_events.h \
 hi_include.h \
-hi_ips_options.cc \
 hi_mi.cc hi_mi.h \
 hi_module.cc hi_module.h \
 hi_norm.cc hi_norm.h \
@@ -23,8 +22,6 @@ hi_si.cc hi_si.h \
 hi_stateful_inspect.h \
 hi_ui_config.cc hi_ui_config.h \
 hi_ui_iis_unicode_map.cc hi_ui_iis_unicode_map.h \
-hi_uri.h \
-hi_urilen_check.h \
 hi_util.h \
 hi_util_hbm.cc hi_util_hbm.h \
 hi_util_kmap.cc hi_util_kmap.h \

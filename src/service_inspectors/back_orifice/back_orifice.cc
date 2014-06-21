@@ -627,6 +627,7 @@ static const InspectApi bo_api =
     },
     IT_PROTOCOL, 
     PROTO_BIT__UDP,
+    nullptr, // buffers
     nullptr, // service
     bo_init,
     nullptr, // term

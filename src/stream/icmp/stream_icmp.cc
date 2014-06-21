@@ -122,6 +122,7 @@ static const InspectApi icmp_api =
     },
     IT_STREAM,
     PROTO_BIT__ICMP,
+    nullptr, // buffers
     nullptr, // service
     icmp_init,
     nullptr, // term

@@ -28,22 +28,17 @@
 #include "snort_debug.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"
-#include "detection/detection_util.h"
-#include "framework/content_buffer.h"
 
 extern THREAD_LOCAL int lastType;
-
-#define CHECK_AND_PATTERN_MATCH 1
-#define CHECK_URI_PATTERN_MATCH 2
 
 struct PmdLastCheck
 {
     struct timeval ts;
     uint64_t packet_number;
     uint32_t rebuild_flag;
- };
+};
 
-typedef struct _PatternMatchData
+struct PatternMatchData
 {
     int offset;             /* pattern search start offset */
     int depth;              /* pattern search depth */
@@ -85,9 +80,9 @@ typedef struct _PatternMatchData
        applies to negative contents that are not relative */
     PmdLastCheck* last_check;
 
-} PatternMatchData;
+};
 
-PatternMatchData* content_get_data(void* pv);
+PatternMatchData* content_get_data(void*);
 bool content_next(PatternMatchData*);
 
 int PatternMatchAdjustRelativeOffsets(
@@ -99,22 +94,6 @@ int PatternMatchAdjustRelativeOffsets(
 PatternMatchData* get_pmd(OptFpList*);
 bool is_fast_pattern_only(OptFpList*);
 bool is_unbounded(void*);
-
-// FIXIT must add same fast_pattern options from content to these
-// rule options:
-static inline bool IsHttpBufFpEligible (HTTP_BUFFER http_buffer)
-{
-    switch ( http_buffer )
-    {
-    case HTTP_BUFFER_URI:
-    case HTTP_BUFFER_HEADER:
-    case HTTP_BUFFER_CLIENT_BODY:
-        return true;
-    default:
-        break;
-    }
-    return false;
-}
 
 #endif
 

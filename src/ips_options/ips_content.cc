@@ -236,7 +236,7 @@ static void update_pmd(PatternMatchData* pmd)
         pmd->last_check = (PmdLastCheck*)SnortAlloc(get_instance_max() * sizeof(*pmd->last_check));
 }
 
-static int FastPatterns(OptTreeNode *otn, int list_type)
+static int fast_pattern_count(OptTreeNode *otn, int list_type)
 {
     OptFpList* fpl = otn ? otn->opt_func : nullptr;
     int c = 0;
@@ -256,7 +256,8 @@ static int FastPatterns(OptTreeNode *otn, int list_type)
     return c;
 }
 
-static int32_t ParseInt(const char* data, const char* tag)
+static int32_t parse_int(
+    const char* data, const char* tag, int low = -65535, int high = 65535)
 {
     int32_t value = 0;
     char *endptr = NULL;
@@ -269,13 +270,13 @@ static int32_t ParseInt(const char* data, const char* tag)
     if (errno == ERANGE)
         ParseError("Range problem on '%s' value.", tag);
 
-    if ((value > 65535) || (value < -65535))
-        ParseError("'%s' must in -65535:65535", tag);
+    if ((value > high) || (value < low))
+        ParseError("'%s' must in %d:%d", tag, low, high);
 
     return value;
 }
 
-static void ValidateContent(
+static void validate_content(
     SnortConfig*, PatternMatchData *pmd, OptTreeNode* otn)
 {
     if (pmd == NULL)
@@ -307,7 +308,7 @@ static void ValidateContent(
         }
     }
 
-    if ( FastPatterns(otn, RULE_OPTION_TYPE_CONTENT) > 1 )
+    if ( fast_pattern_count(otn, RULE_OPTION_TYPE_CONTENT) > 1 )
         ParseError("Only one content per rule may be used for fast pattern matching.");
 }
 
@@ -323,7 +324,7 @@ static void make_precomp(PatternMatchData * idx)
     idx->shift_stride = make_shift(idx->pattern_buf, idx->pattern_size);
 }
 
-static char *PayloadExtractParameter(char *data, int *result_len)
+static char *extract_parameter(char *data, int *result_len)
 {
     char *quote_one = NULL, *quote_two = NULL;
     char *comma = NULL;
@@ -587,7 +588,7 @@ static unsigned GetCMF (PatternMatchData* pmd)
 #define BAD_OFFSET (CMF_OFFSET | CMF_DISTANCE | CMF_WITHIN)
 #define BAD_DEPTH (CMF_DEPTH | CMF_DISTANCE | CMF_WITHIN)
 
-static void PayloadSearchOffset(
+static void parse_offset(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if ( GetCMF(pmd) & BAD_OFFSET && pmd->use_doe )
@@ -598,7 +599,7 @@ static void PayloadSearchOffset(
 
     if (isdigit(data[0]) || data[0] == '-')
     {
-        pmd->offset = ParseInt(data, "offset");
+        pmd->offset = parse_int(data, "offset");
     }
     else
     {
@@ -613,7 +614,7 @@ static void PayloadSearchOffset(
                 pmd->offset););
 }
 
-static void PayloadSearchDepth(
+static void parse_depth(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if ( GetCMF(pmd) & BAD_DEPTH && pmd->use_doe )
@@ -624,7 +625,7 @@ static void PayloadSearchDepth(
 
     if (isdigit(data[0]) || data[0] == '-')
     {
-        pmd->depth = ParseInt(data, "depth");
+        pmd->depth = parse_int(data, "depth");
 
         /* check to make sure that this the depth allows this rule to fire */
         if (pmd->depth < (int)pmd->pattern_size)
@@ -646,7 +647,7 @@ static void PayloadSearchDepth(
                 pmd->depth););
 }
 
-static void PayloadSearchDistance(
+static void parse_distance(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if ( GetCMF(pmd) & BAD_DISTANCE && !pmd->use_doe )
@@ -657,7 +658,7 @@ static void PayloadSearchDistance(
 
     if (isdigit(data[0]) || data[0] == '-')
     {
-        pmd->offset = ParseInt(data, "distance");
+        pmd->offset = parse_int(data, "distance");
     }
     else
     {
@@ -671,7 +672,7 @@ static void PayloadSearchDistance(
     pmd->use_doe = 1;
 }
 
-static void PayloadSearchWithin(
+static void parse_within(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if ( GetCMF(pmd) & BAD_WITHIN && !pmd->use_doe )
@@ -682,7 +683,7 @@ static void PayloadSearchWithin(
 
     if (isdigit(data[0]) || data[0] == '-')
     {
-        pmd->depth = ParseInt(data, "within");
+        pmd->depth = parse_int(data, "within");
 
         if (pmd->depth < (int)pmd->pattern_size)
             ParseError("within (%d) is smaller than size of pattern", pmd->depth);
@@ -702,7 +703,7 @@ static void PayloadSearchWithin(
     pmd->use_doe = 1;
 }
 
-static void PayloadSearchNocase(
+static void parse_nocase(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     unsigned int i;
@@ -717,7 +718,7 @@ static void PayloadSearchNocase(
     make_precomp(pmd);
 }
 
-static void PayloadSearchFastPattern(
+static void parse_fast_pattern(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if ( data )
@@ -726,7 +727,7 @@ static void PayloadSearchFastPattern(
     pmd->fp = 1;
 }
 
-static void PayloadSearchFastPatternOnly(
+static void parse_fast_pattern_only(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if ( data )
@@ -736,21 +737,17 @@ static void PayloadSearchFastPatternOnly(
     pmd->fp_only = 1;
 }
 
-static void PayloadSearchFastPatternOffset(
+static const char* error_str = 
+    "fast_pattern_offset + fast_pattern_length must be less "
+    "than or equal to the actual pattern length which is %u.";
+
+static void parse_fast_pattern_offset(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if (data == NULL)
         ParseError("Missing argument to 'fast_pattern_offset' option");
 
-    long offset = ParseInt(data, "fast_pattern_offset");
-
-    static const char* error_str = 
-        "fast_pattern_offset must be non-negative and fast_pattern_offset + "
-        "fast_pattern_length must be less than or equal to the actual pattern "
-        "length which is %u.";
-
-    if ( (offset < 0) || (offset > UINT16_MAX))
-        ParseError(error_str, data, pmd->pattern_size);
+    long offset = parse_int(data, "fast_pattern_offset", 0, UINT16_MAX);
 
     if ((int)pmd->pattern_size < (offset + pmd->fp_length))
         ParseError(error_str, data, pmd->pattern_size);
@@ -759,21 +756,13 @@ static void PayloadSearchFastPatternOffset(
     pmd->fp = 1;
 }
 
-static void PayloadSearchFastPatternLength(
+static void parse_fast_pattern_length(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
     if (data == NULL)
         ParseError("Missing argument to 'fast_pattern_length' option");
 
-    long length = ParseInt(data, "fast_pattern_length");
-
-    const char* error_str = 
-        "fast_pattern_length must be positive and fast_pattern_offset + "
-        "fast_pattern_length must be less than or equal to the actual pattern "
-        "length which is %u.";
-
-    if ( (length < 0) || (length > UINT16_MAX))
-        ParseError(error_str, data, pmd->pattern_size);
+    long length = parse_int(data, "fast_pattern_length", 0, UINT16_MAX);
 
     if ((int)pmd->pattern_size < (pmd->fp_offset + length))
         ParseError(error_str, data, pmd->pattern_size);
@@ -1082,7 +1071,7 @@ static IpsOption* content_ctor(
     data_dup = SnortStrdup(data);
     data_end = data_dup + strlen(data_dup);
 
-    opt_data = PayloadExtractParameter(data_dup, &opt_len);
+    opt_data = extract_parameter(data_dup, &opt_len);
     content_parse(opt_data, pmd);
     update_pmd(pmd);
     next_opt = opt_data + opt_len;
@@ -1098,7 +1087,7 @@ static IpsOption* content_ctor(
             break;
 
         opt_len = 0;
-        opt_data = PayloadExtractParameter(next_opt, &opt_len);
+        opt_data = extract_parameter(next_opt, &opt_len);
         if (!opt_data)
             break;
 
@@ -1112,39 +1101,39 @@ static IpsOption* content_ctor(
 
         if (!strcasecmp(opts[0], "offset"))
         {
-            PayloadSearchOffset(pmd, opt1, otn);
+            parse_offset(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "depth"))
         {
-            PayloadSearchDepth(pmd, opt1, otn);
+            parse_depth(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "nocase"))
         {
-            PayloadSearchNocase(pmd, opt1, otn);
+            parse_nocase(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "fast_pattern"))
         {
-            PayloadSearchFastPattern(pmd, opt1, otn);
+            parse_fast_pattern(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "fast_pattern_only"))
         {
-            PayloadSearchFastPatternOnly(pmd, opt1, otn);
+            parse_fast_pattern_only(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "fast_pattern_offset"))
         {
-            PayloadSearchFastPatternOffset(pmd, opt1, otn);
+            parse_fast_pattern_offset(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "fast_pattern_length"))
         {
-            PayloadSearchFastPatternLength(pmd, opt1, otn);
+            parse_fast_pattern_length(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "distance"))
         {
-            PayloadSearchDistance(pmd, opt1, otn);
+            parse_distance(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "within"))
         {
-            PayloadSearchWithin(pmd, opt1, otn);
+            parse_within(pmd, opt1, otn);
         }
         else
         {
@@ -1154,7 +1143,7 @@ static IpsOption* content_ctor(
     }
 
     free(data_dup);
-    ValidateContent(sc, pmd, otn);
+    validate_content(sc, pmd, otn);
 
     return new ContentOption(pmd, "content");
 }
