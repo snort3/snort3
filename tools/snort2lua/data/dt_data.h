@@ -43,17 +43,11 @@ public:
     void add_comment(std::string comment);
     void add_error_comment(std::string comment);
 
-#if 0
-    bool add_option(std::string name, std::string value);
-    bool add_option(std::string name, long long int value);
-    void reset();
-#endif
-
 private:
     std::vector<Variable*> vars;
     std::vector<Table*> tables;
     Comments *comments;
-    std::vector<std::string> errors;
+    Comments *errors;
 
 };
 

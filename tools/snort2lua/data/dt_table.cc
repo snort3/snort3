@@ -165,7 +165,8 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
         out << whitespace << t.name << " = " << std::endl;
     out << whitespace << '{' << std::endl;
 
-    out << (*t.comments) << std::endl;
+    if (!t.comments->empty())
+        out << (*t.comments) << std::endl;
 
     for (Option* o : t.options)
         out << (*o) << ',' << std::endl;

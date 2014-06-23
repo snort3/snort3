@@ -36,6 +36,8 @@ extern const ConvertMap *normalizer_icmp6_map;
 extern const ConvertMap *normalizer_ip4_map;
 extern const ConvertMap *normalizer_ip6_map;
 extern const ConvertMap *normalizer_tcp_map;
+extern const ConvertMap *perfmonitor_map;
+extern const ConvertMap *rpc_decode_map;
 extern const ConvertMap *sfportscan_map;
 extern const ConvertMap *smtp_map;
 extern const ConvertMap *stream_global_map;
@@ -58,6 +60,8 @@ const std::vector<const ConvertMap*> preprocessor_api =
     normalizer_ip4_map,
     normalizer_ip6_map,
     normalizer_tcp_map,
+    perfmonitor_map,
+    rpc_decode_map,
     sfportscan_map,
     smtp_map,
     stream_global_map,

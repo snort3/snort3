@@ -31,7 +31,7 @@ namespace {
 class Frag3Engine : public ConversionState
 {
 public:
-    Frag3Engine(Converter* cv)  : ConversionState(cv) {};
+    explicit Frag3Engine(Converter* cv)  : ConversionState(cv) {};
     virtual ~Frag3Engine() {};
     virtual bool convert(std::stringstream& data_stream);
 
@@ -69,7 +69,6 @@ bool Frag3Engine::convert(std::stringstream& data_stream)
 {
 
     bool retval = true;
-    bool val;
     std::string keyword;
 
     cv->open_table("stream_ip");

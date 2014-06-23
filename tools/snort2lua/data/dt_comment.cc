@@ -57,10 +57,16 @@ void Comments::add_text(std::string text)
     }
 }
 
+bool Comments::empty()
+{
+    return (comment.size() == 0);
+}
+
 std::ostream &operator<<( std::ostream& out, const Comments &c)
 {
     std::string whitespace = "";
     std::string pre_str;
+    bool first_str = true;
 
     if (c.comment.size() == 0)
         return out;
@@ -87,40 +93,57 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
 
     for (std::string str : c.comment)
     {
-        int str_pos = 0;
         bool first_line = true;
         std::string curr_pre_str = pre_str;
 
+        // print a newline betweens strings, but not before the first line.
+        if (first_str)
+            first_str = false;
+        else
+            out << "\n";
+
+        // if the line is emptry, we need a newline. the loop won't print it.
         if (str.size() == 0)
             out << "\n";
 
-//        while(str_pos < curr_length)
         while(!str.empty())
         {
             int substr_len = max_line_length;
+
+            // determine the first space before 80 charachters
+            // if there are no spaces, print the entire string
             if (substr_len < str.size())
             {
                 substr_len = str.rfind(" ", max_line_length);
 
                 if (substr_len == -1)
-                    substr_len = max_line_length;
+                {
+                    substr_len = str.find(" ");
+
+                    if (substr_len == std::string::npos)
+                        substr_len = str.size();
+                }
             }
 
-            out << "\n" << curr_pre_str << str.substr(0, substr_len);
-            str.erase(0, substr_len + 1); // extra '1' is for the space
-//            str_pos += substr_len + 1; // extra '1' is for the space
-
+            // don't print the extra '\n' on the first line.
             if (first_line)
             {
+                out << curr_pre_str << str.substr(0, substr_len);
                 curr_pre_str += "    ";
                 first_line = false;
             }
+            else
+            {
+                out << "\n" << curr_pre_str << str.substr(0, substr_len);
+            }
+
+            str.erase(0, substr_len + 1); // extra '1' is for the space
         }
     }
 
 
     if (c.type == Comments::CommentType::Mult_Line)
-        out << whitespace << c.end_multi_com;
+        out << '\n' << whitespace << c.end_multi_com;
 
     return out;
 }

@@ -29,6 +29,9 @@ static const std::string start_comments =
     "    these line were originally commented out or empty"
     "in the configuration file.";
 
+static const std::string start_errors =
+    "ERRORS:\n"
+    "    all of these occured during the attempted conversion:\n\n";
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -46,6 +49,8 @@ ConversionData::ConversionData()
 {
     comments = new Comments(start_comments, 0,
                     Comments::CommentType::Mult_Line);
+    errors = new Comments(start_errors, 0,
+                    Comments::CommentType::Mult_Line);
 }
 
 ConversionData::~ConversionData()
@@ -57,6 +62,7 @@ ConversionData::~ConversionData()
         delete t;
 
     delete comments;
+    delete errors;
 }
 
 bool ConversionData::add_variable(std::string name, std::string value)
@@ -76,7 +82,6 @@ Table* ConversionData::add_table(std::string name)
 
     if(t)
         return t;
-
 
     try
     {
@@ -99,22 +104,12 @@ void ConversionData::add_comment(std::string str)
 
 void ConversionData::add_error_comment(std::string error_string)
 {
-    if (error_string.size() > 80)
-        error_string.insert(76, "...");
-    
-    errors.push_back(std::string(error_string, 0, 79));
+    errors->add_text(error_string + "\n");
 }
 
 std::ostream& operator<<( std::ostream &out, const ConversionData &data)
 {
-    out << "--[[" << std::endl;
-    out << "--ERRORS:" << std::endl;
-    out << "    all of these occured during the attempted conversion:" << std::endl << std::endl;
-
-    for (std::string s : data.errors)
-        out << s << std::endl << std::endl;
-
-    out << "--]]" << std::endl << std::endl << std::endl;
+    out << (*data.errors) << std::endl << std::endl;
 
     for (Variable *v : data.vars)
         out << (*v) << std::endl << std::endl;

@@ -48,7 +48,7 @@ namespace {
 class PafMax : public ConversionState
 {
 public:
-    PafMax(Converter* cv)  : ConversionState(cv) {};
+    explicit PafMax(Converter* cv)  : ConversionState(cv) {};
     virtual ~PafMax() {};
     virtual bool convert(std::stringstream& data_stream);
 };

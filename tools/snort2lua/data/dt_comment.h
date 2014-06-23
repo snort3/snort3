@@ -43,6 +43,7 @@ public:
     virtual ~Comments();
 
     void add_text(std::string new_text);
+    bool empty();
 
     // overloading operators
     friend std::ostream &operator<<( std::ostream&, const Comments &);
