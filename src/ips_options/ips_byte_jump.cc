@@ -23,7 +23,7 @@
  *
  * Purpose:
  *      Grab some number of bytes, convert them to their numeric
- *      representation, jump the doe_ptr up that many bytes (for
+ *      representation, jump the cursor up that many bytes (for
  *      further pattern matching/byte_testing).
  *
  *
@@ -53,7 +53,7 @@
  * Effect:
  *
  *      Reads in the indicated bytes, converts them to an numeric
- *      representation and then jumps the doe_ptr up
+ *      representation and then jumps the cursor up
  *      that number of bytes.  Returns 1 if the jump is in range (within the
  *      packet) and 0 if it's not.
  *
@@ -125,13 +125,16 @@ class ByteJumpOption : public IpsOption
 {
 public:
     ByteJumpOption(const ByteJumpData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_BYTE_JUMP)
+        IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
     { config = c; };
 
     ~ByteJumpOption() { };
 
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
+
+    CursorActionType get_cursor_type() const
+    { return CAT_ADJUST; };
 
     bool is_relative()
     { return (config.relative_flag == 1); };

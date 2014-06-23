@@ -27,19 +27,11 @@
 #include "sf_textlog.h"
 #include "actions/actions.h"
 
-THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
-THREAD_LOCAL uint32_t base64_decode_size;
-
-THREAD_LOCAL uint8_t mime_present;
-
-THREAD_LOCAL const uint8_t *doe_ptr;
-THREAD_LOCAL uint8_t doe_buf_flags;
 THREAD_LOCAL uint16_t detect_flags;
 
 THREAD_LOCAL uint32_t http_mask;
 THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 
-THREAD_LOCAL DataPointer DetectBuffer;
 THREAD_LOCAL DataPointer file_data_ptr;
 THREAD_LOCAL DataBuffer DecodeBuffer;
 
@@ -98,7 +90,6 @@ static void LogBuffer (const char* s, const uint8_t* p, unsigned n)
 
 void EventTrace_Log (const Packet* p, OptTreeNode* otn, int action)
 {
-    int i;
     const char* acts = get_action_string(action);
 
     if ( !tlog )
@@ -122,28 +113,9 @@ void EventTrace_Log (const Packet* p, OptTreeNode* otn, int action)
         "Pkt Cnts: Dsz=%u, Alt=%u, Uri=0x%X\n",
         (unsigned)p->dsize, (unsigned)p->alt_dsize, http_mask
     );
-    TextLog_Print(tlog, "Detect: DoeFlags=0x%X, DetectFlags=0x%X, DetBuf=%u, B64=%u\n",
-        doe_buf_flags, detect_flags, DetectBuffer.len, base64_decode_size
-    );
-    LogBuffer("Decode", DecodeBuffer.data, DecodeBuffer.len);
-    LogBuffer("Detect", DetectBuffer.data, DetectBuffer.len);
-    LogBuffer("FileData", file_data_ptr.data, file_data_ptr.len);
-    LogBuffer("Base64", base64_decode_buf, base64_decode_size);
-    if(mime_present)
-        LogBuffer("Mime", file_data_ptr.data, file_data_ptr.len);
+    TextLog_Print(tlog, "Detect: DetectFlags=0x%X\n", detect_flags);
+    LogBuffer("Packet", p->data, p->alt_dsize);
 
-    for ( i = 0; i < HTTP_BUFFER_MAX; i++ )
-    {
-        const HttpBuffer* hb = GetHttpBuffer((HTTP_BUFFER)i);
-
-        if ( !hb )
-            continue;
-
-        TextLog_Print(tlog, "%s[%u] = 0x%X\n",
-            http_buffer_name[i], hb->length, hb->encode_type);
-
-        LogBuffer(http_buffer_name[i], hb->buf, hb->length);
-    }
     nEvents++;
 }
 

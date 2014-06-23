@@ -46,6 +46,10 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 
+// from base64_decode
+extern THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
+extern THREAD_LOCAL uint32_t base64_decode_size;
+
 #ifdef PERF_PROFILING
 static THREAD_LOCAL PreprocStats base64DataPerfStats;
 
@@ -65,17 +69,20 @@ class Base64DataOption : public IpsOption
 public:
     Base64DataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BASE64_DATA) { };
 
+    CursorActionType get_cursor_type() const
+    { return CAT_SET_OTHER; };
+
     int eval(Cursor&, Packet*);
 };
 
-int Base64DataOption::eval(Cursor& c, Packet *p)
+int Base64DataOption::eval(Cursor& c, Packet*)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
     PREPROC_PROFILE_START(base64DataPerfStats);
 
-    if ((p->dsize == 0) || !base64_decode_size )
+    if ( !base64_decode_size )
     {
         PREPROC_PROFILE_END(base64DataPerfStats);
         return rval;
@@ -91,7 +98,6 @@ int Base64DataOption::eval(Cursor& c, Packet *p)
 static class IpsOption* base64_data_ctor(
     SnortConfig*, char *data, OptTreeNode *otn)
 {
-    // FIXIT change base64_data to suboption of base64_decode
     if ( !otn_has_plugin(otn, RULE_OPTION_TYPE_BASE64_DECODE) )
         ParseError("base64_decode needs to be specified before base64_data in a rule");
 

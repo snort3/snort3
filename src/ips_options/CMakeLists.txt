@@ -45,7 +45,6 @@ set (IPS_SOURCES
     ips_content.cc 
     ips_content.h 
     ips_file_data.cc 
-    ips_file_data.h
     ips_flow.cc 
     ips_flow.h
     ips_flowbits.cc 

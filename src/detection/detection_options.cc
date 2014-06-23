@@ -320,11 +320,7 @@ static const char *option_type_str[] =
     "RULE_OPTION_TYPE_LEAF_NODE",
     "RULE_OPTION_TYPE_BASE64_DATA",
     "RULE_OPTION_TYPE_BASE64_DECODE",
-    "RULE_OPTION_TYPE_BYTE_EXTRACT",
-    "RULE_OPTION_TYPE_BYTE_JUMP",
-    "RULE_OPTION_TYPE_BYTE_TEST",
     "RULE_OPTION_TYPE_CONTENT",
-    "RULE_OPTION_TYPE_CONTENT_URI",
     "RULE_OPTION_TYPE_FILE_DATA",
     "RULE_OPTION_TYPE_FLOW",
     "RULE_OPTION_TYPE_FLOWBIT",
@@ -442,8 +438,7 @@ int detection_option_node_evaluate(
     state->last_check.flowbit_failed = 0;
 
     /* Save some stuff off for repeated pattern tests */
-    if ((node->option_type == RULE_OPTION_TYPE_CONTENT) ||
-            (node->option_type == RULE_OPTION_TYPE_CONTENT_URI))
+    if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
     {
         content_data = content_get_data(node->option_data);
     }
@@ -548,12 +543,6 @@ int detection_option_node_evaluate(
                         }
                     }
 #endif
-                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
-                }
-                break;
-            case RULE_OPTION_TYPE_CONTENT_URI:
-                if (node->evaluate)
-                {
                     rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
                 break;
@@ -776,8 +765,7 @@ int detection_option_node_evaluate(
 
         if (continue_loop && (rval == DETECTION_OPTION_MATCH) && (node->relative_children))
         {
-            if ((node->option_type == RULE_OPTION_TYPE_CONTENT) ||
-                    (node->option_type == RULE_OPTION_TYPE_CONTENT_URI))
+            if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
             {
                 continue_loop = content_next(content_data);
             }

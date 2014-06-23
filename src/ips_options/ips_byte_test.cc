@@ -109,6 +109,7 @@
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "fpdetect.h"
+#include "framework/cursor.h"
 #include "framework/ips_option.h"
 
 #define PARSELEN 10
@@ -174,7 +175,7 @@ class ByteTestOption : public IpsOption
 {
 public:
     ByteTestOption(const ByteTestData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_BYTE_TEST)
+        IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
     { config = c; };
 
     ~ByteTestOption() { };
@@ -252,90 +253,50 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteTestOption::eval(Cursor&, Packet *p)
+int ByteTestOption::eval(Cursor& c, Packet*)
 {
     ByteTestData *btd = (ByteTestData *)&config;
     int rval = DETECTION_OPTION_NO_MATCH;
     uint32_t value = 0;
     int success = 0;
-    int dsize;
-    const char *base_ptr, *end_ptr, *start_ptr;
+    const uint8_t *base_ptr, *end_ptr, *start_ptr;
     int payload_bytes_grabbed;
-    uint32_t extract_offset, extract_cmp_value;
+    int offset;
+    uint32_t cmp_value;
+
     PROFILE_VARS;
-
     PREPROC_PROFILE_START(byteTestPerfStats);
-
-    if (Is_DetectFlag(FLAG_ALT_DETECT))
-    {
-        dsize = DetectBuffer.len;
-        start_ptr = (char *)DetectBuffer.data;
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                "Using Alternative Detect buffer!\n"););
-    }
-    else if(Is_DetectFlag(FLAG_ALT_DECODE))
-    {
-        dsize = DecodeBuffer.len;
-        start_ptr = (char *)DecodeBuffer.data;
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "Using Alternative Decode buffer!\n"););
-    }
-    else
-    {
-        if(IsLimitedDetect(p))
-            dsize = p->alt_dsize;
-        else
-            dsize = p->dsize;
-        start_ptr = (char *) p->data;
-    }
-
-    //base_ptr = start_ptr;
-    end_ptr = start_ptr + dsize;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                "[*] byte test firing...\npayload starts at %p\n", start_ptr););
-
 
     /* Get values from byte_extract variables, if present. */
     if (btd->cmp_value_var >= 0 && btd->cmp_value_var < NUM_BYTE_EXTRACT_VARS)
     {
-        GetByteExtractValue(&extract_cmp_value, btd->cmp_value_var);
-        btd->cmp_value = (int32_t) extract_cmp_value;
+        uint32_t val;
+        GetByteExtractValue(&val, btd->cmp_value_var);
+        cmp_value = val;
     }
+    else
+        cmp_value = btd->cmp_value;
+
     if (btd->offset_var >= 0 && btd->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
-        GetByteExtractValue(&extract_offset, btd->offset_var);
-        btd->offset = (int32_t) extract_offset;
+        uint32_t val;
+        GetByteExtractValue(&val, btd->offset_var);
+        offset = (int32_t)val;
     }
+    else
+        offset = btd->offset;
 
-
-    if(btd->relative_flag && doe_ptr)
+    if ( btd->relative_flag )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "Checking relative offset!\n"););
-
-        /* @todo: possibly degrade to use the other buffer, seems non-intuitive
-         *  Because doe_ptr can be "end" in the last match,
-         *  use end + 1 for upper bound
-         *  Bound checked also after offset is applied
-         *  (see byte_extract() and string_extract())
-         */
-        if(!inBounds((const uint8_t *)start_ptr, (const uint8_t *)end_ptr + 1, doe_ptr))
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                    "[*] byte test bounds check failed..\n"););
-            PREPROC_PROFILE_END(byteTestPerfStats);
-            return rval;
-        }
-
-        base_ptr = (const char *)doe_ptr + btd->offset;
+        start_ptr = c.start();
+        end_ptr = start_ptr + c.length();
     }
     else
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "checking absolute offset %d\n", btd->offset););
-        base_ptr = start_ptr + btd->offset;
+        start_ptr = c.buffer();
+        end_ptr = start_ptr + c.size();
     }
+    base_ptr = start_ptr + offset;
 
     /* both of these functions below perform their own bounds checking within
      * byte_extract.c
@@ -343,12 +304,13 @@ int ByteTestOption::eval(Cursor&, Packet *p)
 
     if(!btd->data_string_convert_flag)
     {
-        if(byte_extract(btd->endianess, btd->bytes_to_compare,
-                        (const uint8_t *)base_ptr, (const uint8_t *)start_ptr, (const uint8_t *)end_ptr, &value))
+        if ( byte_extract(
+            btd->endianess, btd->bytes_to_compare,
+            (const uint8_t *)base_ptr,
+            (const uint8_t *)start_ptr,
+            (const uint8_t *)end_ptr,
+            &value))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                    "Byte Extraction Failed\n"););
-
             PREPROC_PROFILE_END(byteTestPerfStats);
             return rval;
         }
@@ -357,9 +319,11 @@ int ByteTestOption::eval(Cursor&, Packet *p)
     else
     {
         payload_bytes_grabbed = string_extract(
-                btd->bytes_to_compare, btd->base,
-                (const uint8_t *)base_ptr, (const uint8_t *)start_ptr,
-                (const uint8_t *)end_ptr, &value);
+            btd->bytes_to_compare, btd->base,
+            (const uint8_t *)base_ptr,
+            (const uint8_t *)start_ptr,
+            (const uint8_t *)end_ptr,
+            &value);
 
         if ( payload_bytes_grabbed < 0 )
         {
@@ -369,7 +333,6 @@ int ByteTestOption::eval(Cursor&, Packet *p)
             PREPROC_PROFILE_END(byteTestPerfStats);
             return rval;
         }
-
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
@@ -378,43 +341,43 @@ int ByteTestOption::eval(Cursor&, Packet *p)
 
     switch(btd->opcode)
     {
-        case BT_LESS_THAN: if(value < btd->cmp_value)
+        case BT_LESS_THAN: if(value < cmp_value)
                                success = 1;
                            break;
 
-        case BT_EQUALS: if(value == btd->cmp_value)
+        case BT_EQUALS: if(value == cmp_value)
                             success = 1;
                         break;
 
-        case BT_GREATER_THAN: if(value > btd->cmp_value)
+        case BT_GREATER_THAN: if(value > cmp_value)
                                   success = 1;
                               break;
 
-        case BT_AND: if ((value & btd->cmp_value) > 0)
+        case BT_AND: if ((value & cmp_value) > 0)
                          success = 1;
                      break;
 
-        case BT_XOR: if ((value ^ btd->cmp_value) > 0)
+        case BT_XOR: if ((value ^ cmp_value) > 0)
                         success = 1;
                     break;
 
-        case BT_GREATER_THAN_EQUAL: if (value >= btd->cmp_value)
+        case BT_GREATER_THAN_EQUAL: if (value >= cmp_value)
                                         success = 1;
                                     break;
 
-        case BT_LESS_THAN_EQUAL: if (value <= btd->cmp_value)
+        case BT_LESS_THAN_EQUAL: if (value <= cmp_value)
                                         success = 1;
                                  break;
 
-        case BT_CHECK_ALL: if ((value & btd->cmp_value) == btd->cmp_value)
+        case BT_CHECK_ALL: if ((value & cmp_value) == cmp_value)
                                success = 1;
                            break;
 
-        case BT_CHECK_ATLEASTONE: if ((value & btd->cmp_value) != 0)
+        case BT_CHECK_ATLEASTONE: if ((value & cmp_value) != 0)
                                       success = 1;
                                   break;
 
-        case BT_CHECK_NONE: if ((value & btd->cmp_value) == 0)
+        case BT_CHECK_NONE: if ((value & cmp_value) == 0)
                                 success = 1;
                             break;
     }

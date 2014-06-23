@@ -991,7 +991,7 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
             ResetEmailDecodeState((Email_DecodeState *)(mime_ssn->decode_state));
             p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
             /* Reset the log count when a packet goes through detection multiple times */
-            DetectReset((uint8_t *)p->data, p->dsize);
+            DetectReset();
         }
         switch (mime_ssn->data_state)
         {

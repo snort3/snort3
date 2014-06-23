@@ -1,3 +1,9 @@
+91
+-- eliminated more RULE_OPTION_TYPE_*
+-- converted remaining rule options over to use cursor
+-- added IpsOption CursorActionType
+-- finally eliminated doe_ptr and friends ... yay!
+
 90
 -- added InspectApi.buffers and Inspector::getbuf()
 -- changed http_* rule options to use Inspector::getbuf()

@@ -18,8 +18,6 @@
  ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "ips_file_data.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -58,90 +56,39 @@ static PreprocStats* fd_get_profile(const char* key)
 }
 #endif
 
-typedef struct _FileData
-{
-    uint8_t mime_decode_flag;
-} FileData;
-
 class FileDataOption : public IpsOption
 {
 public:
-    FileDataOption(const FileData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_FILE_DATA)
-    { config = c; };
-
+    FileDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_FILE_DATA) { };
     ~FileDataOption() { };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    CursorActionType get_cursor_type() const
+    { return CAT_SET_FILE; };
 
     int eval(Cursor&, Packet*);
-
-    FileData* get_data()
-    { return &config; };
-
-private:
-    FileData config;
 };
 
 //-------------------------------------------------------------------------
 // class methods
 //-------------------------------------------------------------------------
 
-uint32_t FileDataOption::hash() const
-{
-    uint32_t a,b,c;
-    const FileData *data = &config;
-
-    a = data->mime_decode_flag;
-    b = 0;
-    c = 0;
-
-    mix_str(a,b,c,get_name());
-    final(a,b,c);
-
-    return c;
-}
-
-bool FileDataOption::operator==(const IpsOption& ips) const
-{
-    if ( strcmp(get_name(), ips.get_name()) )
-        return false;
-
-    FileDataOption& rhs = (FileDataOption&)ips;
-    FileData *left = (FileData*)&config;
-    FileData *right = (FileData*)&rhs.config;
-
-    if( left->mime_decode_flag == right->mime_decode_flag )
-        return true;
-
-    return false;
-}
-
-int FileDataOption::eval(Cursor& c, Packet *p)
+int FileDataOption::eval(Cursor& c, Packet*)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
     uint8_t *data;
     uint16_t len;
-    FileData *idx;
-    PROFILE_VARS;
 
+    PROFILE_VARS;
     PREPROC_PROFILE_START(fileDataPerfStats);
-    idx = (FileData *)&config;
 
     data = file_data_ptr.data;
     len = file_data_ptr.len;
 
-    if ((p->dsize == 0) || (data == NULL)|| (len == 0) || !idx)
+    if ( (data == NULL)|| (len == 0) )
     {
         PREPROC_PROFILE_END(fileDataPerfStats);
         return rval;
     }
-
-    if(idx->mime_decode_flag)
-        mime_present = 1;
-    else
-        mime_present = 0;
 
     c.set(s_name, data, len);
     rval = DETECTION_OPTION_MATCH;
@@ -151,35 +98,14 @@ int FileDataOption::eval(Cursor& c, Packet *p)
 }
 
 //-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-bool decode_mime_file_data(void* v)
-{
-    FileDataOption* opt = (FileDataOption*)v;
-    FileData* p = opt->get_data();
-    return ( p->mime_decode_flag != 0 );
-}
-
-//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-void file_data_parse(char *data, FileData *idx)
+void file_data_parse(char *data)
 {
 
-    if (IsEmptyStr(data))
-    {
-        idx->mime_decode_flag = 0;
-    }
-    else if(!strcasecmp("mime",data))
-    {
-        ParseWarning("The argument 'mime' to 'file_data' rule option is deprecated.\n");
-    }
-    else
-    {
-        ParseError("file_data: Invalid token %s", data);
-    }
+    if ( !IsEmptyStr(data) )
+        ParseError("file_data: takes no arguments '%s'", data);
 
     return;
 
@@ -188,10 +114,8 @@ void file_data_parse(char *data, FileData *idx)
 static IpsOption* file_data_ctor(
     SnortConfig*, char *data, OptTreeNode*)
 {
-    FileData idx;
-    memset(&idx, 0, sizeof(idx));
-    file_data_parse(data, &idx);
-    return new FileDataOption(idx);
+    file_data_parse(data);
+    return new FileDataOption;
 }
 
 static void file_data_dtor(IpsOption* p)

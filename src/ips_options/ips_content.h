@@ -49,7 +49,7 @@ struct PatternMatchData
     int8_t within_var;
 
     int no_case;            /* Toggle case sensitivity */
-    int use_doe;            /* Use the doe_ptr for relative pattern searching */
+    int relative;           /* do relative pattern searching */
 
     unsigned pattern_size;  /* size of app layer pattern */
     unsigned replace_size;  /* size of app layer replace pattern */
@@ -68,7 +68,7 @@ struct PatternMatchData
     uint16_t fp_offset;
     uint16_t fp_length;
 
-    uint8_t exception_flag; /* search for "not this pattern" */
+    uint8_t negated;        /* search for "not this pattern" */
 
     // FIXIT wasting some memory here:
     // - this is not used by content option logic directly

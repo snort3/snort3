@@ -64,7 +64,6 @@ enum HTTP_BUFFER
 enum DetectFlagType
 {
     FLAG_ALT_DECODE         = 0x0001,
-    FLAG_ALT_DETECT         = 0x0002,
     FLAG_DETECT_ALL         = 0xffff
 };
 
@@ -87,21 +86,12 @@ struct DataBuffer
     uint16_t len;
 };
 
-extern THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
-extern THREAD_LOCAL uint32_t base64_decode_size;
-
-extern THREAD_LOCAL uint8_t mime_present;
-
-extern THREAD_LOCAL uint8_t doe_buf_flags;
-extern THREAD_LOCAL const uint8_t *doe_ptr;
-
 extern THREAD_LOCAL uint16_t detect_flags;
 
 extern THREAD_LOCAL uint32_t http_mask;
 extern THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern const char* http_buffer_name[HTTP_BUFFER_MAX];
 
-extern THREAD_LOCAL DataPointer DetectBuffer;
 extern THREAD_LOCAL DataPointer file_data_ptr;
 extern THREAD_LOCAL DataBuffer DecodeBuffer;
 
@@ -200,45 +190,18 @@ static inline void Reset_DetectFlags(uint16_t dflags)
     detect_flags = dflags;
 }
 
-static inline int GetAltDetect(uint8_t **bufPtr, uint16_t *altLenPtr)
-{
-    if ( Is_DetectFlag(FLAG_ALT_DETECT) )
-    {
-        *bufPtr = DetectBuffer.data;
-        *altLenPtr = DetectBuffer.len;
-        return 1;
-    }
-
-    return 0;
-}
-
-static inline void SetAltDetect(uint8_t *buf, uint16_t altLen)
-{
-    DetectFlag_Enable(FLAG_ALT_DETECT);
-    DetectBuffer.data = buf;
-    DetectBuffer.len = altLen;
-}
-
 static inline void SetAltDecode(uint16_t altLen)
 {
     DetectFlag_Enable(FLAG_ALT_DECODE);
     DecodeBuffer.len = altLen;
 }
 
-static inline void DetectReset(uint8_t *buf, uint16_t altLen)
+static inline void DetectReset()
 {
-    DetectBuffer.data = buf;
-    DetectBuffer.len = altLen;
-
     DetectFlag_Disable(FLAG_DETECT_ALL);
-
-    /* Reset the values */
 
     file_data_ptr.data  = NULL;
     file_data_ptr.len = 0;
-    base64_decode_size = 0;
-    doe_buf_flags = 0;
-    mime_present = 0;
     DecodeBuffer.len = 0;
 }
 

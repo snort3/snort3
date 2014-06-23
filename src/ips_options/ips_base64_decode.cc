@@ -44,7 +44,12 @@
 #include "utils/sf_base64decode.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
+#include "framework/cursor.h"
 #include "framework/ips_option.h"
+
+// shared with base64_data
+THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
+THREAD_LOCAL uint32_t base64_decode_size;
 
 #ifdef PERF_PROFILING
 static THREAD_LOCAL PreprocStats base64DecodePerfStats;
@@ -126,57 +131,44 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int Base64DecodeOption::eval(Cursor&, Packet *p)
+int Base64DecodeOption::eval(Cursor& c, Packet*)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
-    const uint8_t *start_ptr = NULL;
+    const uint8_t *start_ptr;
+    unsigned size;
     uint8_t base64_buf[DECODE_BLEN];
     uint32_t base64_size =0;
-    Base64DecodeData *idx;
-    PROFILE_VARS;
 
+    PROFILE_VARS;
     PREPROC_PROFILE_START(base64DecodePerfStats);
 
     base64_decode_size = 0;
-
-    if ((!p->dsize) || (!p->data))
-    {
-        PREPROC_PROFILE_END(base64DecodePerfStats);
-        return rval;
-    }
-
-    idx = (Base64DecodeData *)&config;
+    Base64DecodeData* idx = (Base64DecodeData *)&config;
 
     if(idx->flags & BASE64DECODE_RELATIVE_FLAG)
     {
-        if(!doe_ptr)
-        {
-            start_ptr = p->data;
-            start_ptr = start_ptr + idx->offset;
-        }
-        else
-        {
-            start_ptr = doe_ptr;
-            start_ptr = start_ptr + idx->offset;
-        }
+        start_ptr = c.start();
+        size = c.length();
     }
     else
     {
-        start_ptr = p->data + idx->offset;
+        start_ptr = c.buffer();
+        size = c.size();
     }
 
-    if(start_ptr > (p->data + p->dsize) )
+    if ( idx->offset > size )
     {
         PREPROC_PROFILE_END(base64DecodePerfStats);
         return rval;
     }
+    start_ptr += idx->offset;
+    size -= idx->offset;
 
-    if(sf_unfold_header(start_ptr, p->dsize, base64_buf, sizeof(base64_buf), &base64_size, 0, 0) != 0)
+    if(sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, 0) != 0)
     {
         PREPROC_PROFILE_END(base64DecodePerfStats);
         return rval;
     }
-
 
     if (idx->bytes_to_decode && (base64_size > idx->bytes_to_decode))
     {

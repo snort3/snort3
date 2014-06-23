@@ -944,10 +944,6 @@ void AddRuleFuncToList(int (*rfunc) (Packet *, RuleTreeNode *, struct _RuleFpLis
  *          based on the address, netmask, and addr flags
  *
  * Arguments: rtn => the pointer to the current rules list entry to attach to
- *            ip =>  IP address of the current rule
- *            mask => netmask of the current rule
- *            exception_flag => indicates that a "!" has been set for this
- *                              address
  *            mode => indicates whether this is a rule for the source
  *                    or destination IP for the rule
  *
@@ -1257,42 +1253,32 @@ static int mergeDuplicateOtn(
 
 static void ValidateFastPattern(OptTreeNode *otn)
 {
-    OptFpList *fpl = NULL;
-    int fp_only = 0;
+    OptFpList* fpl;
+    bool relative_is_bad_mkay = false;
 
     for(fpl = otn->opt_func; fpl != NULL; fpl = fpl->next)
     {
-        /* a relative option is following a fast_pattern:only and
-         * there was no resets.
-         */
-        if (fp_only == 1)
+        // a relative option is following a fast_pattern/only and
+        if ( relative_is_bad_mkay )
         {
             if (fpl->isRelative)
                 ParseWarning("relative rule option used after "
                     "fast_pattern:only");
         }
 
-        /* reset the check if one of these are present.
-         */
-        if ((fpl->type == RULE_OPTION_TYPE_FILE_DATA) ||
-            (fpl->type == RULE_OPTION_TYPE_PKT_DATA) ||
-            (fpl->type == RULE_OPTION_TYPE_BASE64_DATA) ||
-            (fpl->type == RULE_OPTION_TYPE_PCRE) ||
-            (fpl->type == RULE_OPTION_TYPE_BYTE_JUMP) ||
-            (fpl->type == RULE_OPTION_TYPE_BYTE_EXTRACT))
+        // reset the check if one of these are present.
+        if ( fpl->context && (fpl->type != RULE_OPTION_TYPE_CONTENT) )
         {
-            fp_only = 0;
+            if ( IpsOption::get_cat(fpl->context) > CAT_NONE )
+                relative_is_bad_mkay = false;
         }
-
-        /* set/unset the check on content options.
-         */
-        if ((fpl->type == RULE_OPTION_TYPE_CONTENT) ||
-            (fpl->type == RULE_OPTION_TYPE_CONTENT_URI))
+        // set/unset the check on content options.
+        else
         {
             if ( is_fast_pattern_only(fpl) )
-                fp_only = 1;
+                relative_is_bad_mkay = true;
             else
-                fp_only = 0;
+                relative_is_bad_mkay = false;
         }
     }
 }

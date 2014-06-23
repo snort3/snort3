@@ -41,7 +41,7 @@ libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
 extract.cc extract.h \
 ips_content.cc ips_content.h  \
-ips_file_data.cc ips_file_data.h \
+ips_file_data.cc \
 ips_flow.cc ips_flow.h \
 ips_flowbits.cc ips_flowbits.h \
 ips_ip_proto.cc ips_ip_proto.h \

@@ -48,7 +48,6 @@
 #include "fpdetect.h"
 #include "detection/detection_options.h"
 #include "ips_options/ips_content.h"
-#include "ips_options/ips_file_data.h"
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_flow.h"
 #include "util.h"
@@ -56,6 +55,7 @@
 #include "parser.h"
 #include "target_based/sftarget_reader.h"
 #include "framework/mpse.h"
+#include "framework/ips_option.h"
 #include "managers/mpse_manager.h"
 #include "bitop_funcs.h"
 
@@ -66,13 +66,6 @@
 #include "snort.h"
 #include "utils/sfportobject.h"
 #include "detection/sfrim.h"
-
-// FIXIT - these were originally defined in sf_dynamic_define.h
-// (and those were possibly redefines) but it doesn't look like
-// anything else is using these; prolly dynamic cruft that should
-// be deleted
-#define CONTENT_NORMAL            0x00010000
-#define CONTENT_HTTP              0x00000007
 
 enum
 {
@@ -88,7 +81,7 @@ static void fpDeletePortGroup(void *);
 static void fpDeletePMX(void *data);
 static int fpGetFinalPattern(FastPatternConfig *fp, PatternMatchData *pmd,
         char **ret_pattern, int *ret_bytes);
-static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn, int type);
+static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn);
 static int fpFinishPortGroupRule(SnortConfig *sc, PORT_GROUP *pg, PmType pm_type,
         OptTreeNode *otn, PatternMatchData *pmd, FastPatternConfig *fp);
 static int fpFinishPortGroup(SnortConfig *sc, PORT_GROUP *pg, FastPatternConfig *fp);
@@ -446,8 +439,7 @@ int otn_create_tree(OptTreeNode *otn, void **existing_tree)
 
         /* Don't add contents that are only for use in the
          * fast pattern matcher */
-        if ((opt_fp->type == RULE_OPTION_TYPE_CONTENT)
-                || (opt_fp->type == RULE_OPTION_TYPE_CONTENT_URI))
+        if ( opt_fp->type == RULE_OPTION_TYPE_CONTENT )
         {
             if ( is_fast_pattern_only(opt_fp) )
             {
@@ -874,7 +866,7 @@ static inline int IsPmdFpEligible(PatternMatchData *content)
 
     if ((content->pattern_buf != NULL) && (content->pattern_size != 0))
     {
-        if (content->exception_flag)
+        if (content->negated)
         {
             /* Negative contents can only be considered if they are not relative
              * and don't have any offset or depth.  This is because the pattern
@@ -884,7 +876,7 @@ static inline int IsPmdFpEligible(PatternMatchData *content)
              * Also case sensitive patterns cannot be considered since patterns
              * are inserted into the pattern matcher without case which may
              * lead to false negatives */
-            if (content->use_doe || !content->no_case
+            if (content->relative || !content->no_case
                     || (content->offset != 0) || (content->depth != 0))
             {
                 return 0;
@@ -897,90 +889,71 @@ static inline int IsPmdFpEligible(PatternMatchData *content)
     return 0;
 }
 
-static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn, int type)
+static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn)
 {
     PatternMatchData *pmd = NULL;
     PatternMatchData *pmd_not = NULL;
     PatternMatchData *pmd_zero = NULL;
     PatternMatchData *pmd_zero_not = NULL;
-    OptFpList *ofl;
-    int max_size = 0;
-    int max_zero_size = 0;
-    uint8_t base64_buf_flag = 0;
-    uint8_t mime_buf_flag = 0;
 
-    if (otn == NULL)
-        return NULL;
+    OptFpList *ofl;
+    int max_size = 0, max_zero_size = 0;
+
+    CursorActionType last_cat = CAT_SET_RAW;  // default is raw packet
+    CursorActionType curr_cat = CAT_NONE;     // selected for fast pattern
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
     {
-        PatternMatchData *tmp;
+        if ( !ofl->context )
+            continue;
 
-        switch (ofl->type)
-        {
-            case RULE_OPTION_TYPE_CONTENT:
-                if (type != CONTENT_NORMAL)
-                    continue;
-                else if(base64_buf_flag || mime_buf_flag)
-                    continue;
-                break;
-            case RULE_OPTION_TYPE_CONTENT_URI:
-                base64_buf_flag = 0;
-                mime_buf_flag = 0;
-                if (type != CONTENT_HTTP)
-                    continue;
-                break;
-            case RULE_OPTION_TYPE_BASE64_DATA:
-                base64_buf_flag =1;
-                continue;
-            case RULE_OPTION_TYPE_PKT_DATA:
-                base64_buf_flag = 0;
-                mime_buf_flag = 0;
-                continue;
-            case RULE_OPTION_TYPE_FILE_DATA:
-                if ( decode_mime_file_data(ofl->context) )
-                    mime_buf_flag = 1;
-                continue;
+        CursorActionType cat = IpsOption::get_cat(ofl->context);
 
-            default:
-                continue;
-        }
+        if ( cat == CAT_NONE )
+            continue;
 
-        tmp = get_pmd(ofl);
+        if ( cat > CAT_SET_RAW )
+            last_cat = cat;
+
+        if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
+            continue;
+
+        PatternMatchData* tmp = get_pmd(ofl);
         assert(tmp);
 
         if (tmp->fp)
             return tmp;
 
-        if (IsPmdFpEligible(tmp))
-        {
-            int size = FLP_Trim(tmp->pattern_buf, tmp->pattern_size, NULL);
+        if ( !IsPmdFpEligible(tmp) )
+            continue;
 
-            /* In case we get all zeros patterns */
-            if ((size == 0) && ((int)tmp->pattern_size > max_zero_size))
+        int size = FLP_Trim(tmp->pattern_buf, tmp->pattern_size, NULL);
+
+        /* In case we get all zeros patterns */
+        if ((size == 0) && ((int)tmp->pattern_size > max_zero_size))
+        {
+            if (tmp->negated)
             {
-                if (tmp->exception_flag)
-                {
-                    pmd_zero_not = tmp;
-                }
-                else
-                {
-                    max_zero_size = tmp->pattern_size;
-                    pmd_zero = tmp;
-                }
+                pmd_zero_not = tmp;
             }
-            else if (size > max_size)
+            else
             {
-                if (tmp->exception_flag)
-                {
-                    pmd_not = tmp;
-                }
-                else
-                {
-                    max_size = size;
-                    pmd = tmp;
-                }
+                max_zero_size = tmp->pattern_size;
+                pmd_zero = tmp;
             }
+        }
+        else if ( last_cat > curr_cat || size > max_size )
+        {
+            if (tmp->negated)
+            {
+                pmd_not = tmp;
+            }
+            else
+            {
+                max_size = size;
+                pmd = tmp;
+            }
+            curr_cat = last_cat;
         }
     }
 
@@ -1032,7 +1005,7 @@ static int fpFinishPortGroupRule(
     }
 
     {
-        if (pmd->exception_flag)
+        if (pmd->negated)
             fpAddPortGroupPrmx(pg, otn, PGCT_NOCONTENT);
         else
             fpAddPortGroupPrmx(pg, otn, pg_type);
@@ -1059,7 +1032,7 @@ static int fpFinishPortGroupRule(
                 pmd->no_case,
                 pmd->offset,
                 pmd->depth,
-                (unsigned)pmd->exception_flag,
+                (unsigned)pmd->negated,
                 pmx,
                 rn->iRuleNodeID
                 );
@@ -1202,7 +1175,7 @@ static int fpAddPortGroupRule(
     if ( !otn->enabled )
         return -1;
 
-    pmd = GetLongestPmdContent(otn, CONTENT_NORMAL);
+    pmd = GetLongestPmdContent(otn);
 
     if ((pmd != NULL) && pmd->fp)
     {
@@ -1214,25 +1187,6 @@ static int fpAddPortGroupRule(
             return 0;
         }
     }
-
-#if 0
-    FIXIT need to select http_uri for fast_pattern
-    /* http buffer contents take precedence over normal contents if
-     * no normal contents have the fast_pattern option */
-    pmd_uri = GetLongestPmdContent(otn, CONTENT_HTTP);
-
-    if (pmd_uri != NULL)
-    {
-        PmType pm_type = GetPmType(pmd_uri->http_buffer);
-
-        if (fpFinishPortGroupRule(sc, pg, pm_type, otn, pmd_uri, fp) == 0)
-        {
-            if (pmd_uri->pattern_size > otn->longestPatternLen)
-                otn->longestPatternLen = pmd_uri->pattern_size;
-            return 0;
-        }
-    }
-#endif
 
     /* If we get this far then no URI contents were added */
 
@@ -1517,7 +1471,7 @@ static int fpGetFinalPattern(FastPatternConfig *fp, PatternMatchData *pmd,
      * inadvertantly disable evaluation of a rule - the shorter pattern
      * may be found, while the unaltered pattern may not be found,
      * disabling inspection of a rule we should inspect */
-    if (pmd->fp_only || pmd->exception_flag)
+    if (pmd->fp_only || pmd->negated)
     {
         *ret_pattern = pattern;
         *ret_bytes = bytes;
@@ -2736,7 +2690,7 @@ static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
     LogMessage("  Fast pattern matcher: %s\n", pm_type_strings[pm_type]);
     LogMessage("  Fast pattern set: %s\n", pmd->fp ? "yes" : "no");
     LogMessage("  Fast pattern only: %s\n", pmd->fp_only ? "yes" : "no");
-    LogMessage("  Negated: %s\n", pmd->exception_flag ? "yes" : "no");
+    LogMessage("  Negated: %s\n", pmd->negated ? "yes" : "no");
 
     /* Fast pattern only patterns don't use offset and length */
     if ((pmd->fp_length != 0) && !pmd->fp_only)

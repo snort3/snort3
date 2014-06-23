@@ -80,7 +80,7 @@ class ByteExtractOption : public IpsOption
 {
 public:
     ByteExtractOption(const ByteExtractData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_BYTE_EXTRACT)
+        IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
     { config = c; };
 
     ~ByteExtractOption()
@@ -88,6 +88,9 @@ public:
 
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
+
+    CursorActionType get_cursor_type() const
+    { return CAT_ADJUST; };
 
     bool is_relative()
     { return (config.relative_flag == 1); };
@@ -219,7 +222,7 @@ int ByteExtractOption::eval(Cursor& c, Packet *p)
         *value = *value + 2 - (*value % 2);
     }
 
-    /* push doe_ptr */
+    /* advance cursor */
     c.add_pos(bytes_read);
 
     /* this rule option always "matches" if the read is performed correctly */
@@ -270,7 +273,9 @@ void ClearVarNames(OptFpList *fpl)
 {
     while (fpl != NULL)
     {
-        if (fpl->type == RULE_OPTION_TYPE_BYTE_EXTRACT)
+        IpsOption* opt = (IpsOption*)fpl->context;
+
+        if ( !strcmp(opt->get_name(), s_name) )
             return;
 
         fpl = fpl->next;

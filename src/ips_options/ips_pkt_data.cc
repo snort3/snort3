@@ -58,6 +58,10 @@ class PktDataOption : public IpsOption
 {
 public:
     PktDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_PKT_DATA) { };
+
+    CursorActionType get_cursor_type() const
+    { return CAT_SET_RAW; };
+
     int eval(Cursor&, Packet*);
 };
 

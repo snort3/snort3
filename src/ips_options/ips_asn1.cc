@@ -76,6 +76,7 @@
 #include "snort.h"
 #include "profiler.h"
 #include "fpdetect.h"
+#include "framework/cursor.h"
 #include "framework/ips_option.h"
 
 #define BITSTRING_OPT  "bitstring_overflow"
@@ -174,7 +175,7 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
     return false;
 }
 
-int Asn1Option::eval(Cursor&, Packet *p)
+int Asn1Option::eval(Cursor& c, Packet *p)
 {
     PROFILE_VARS;
 
@@ -186,7 +187,7 @@ int Asn1Option::eval(Cursor&, Packet *p)
 
     PREPROC_PROFILE_START(asn1PerfStats);
 
-    if (Asn1DoDetect(p->data, p->dsize, &config, doe_ptr))
+    if ( Asn1DoDetect(c.buffer(), c.size(), &config, c.start()) )
     {
         PREPROC_PROFILE_END(asn1PerfStats);
         return DETECTION_OPTION_MATCH;
