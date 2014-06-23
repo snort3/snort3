@@ -17,11 +17,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "cv_data.h"
+#include "dt_data.h"
 #include "snort2lua_util.h"
 #include <iostream>
+
+
+static const std::string start_comments =
+    "COMMENTS:\n"
+    "    these line were originally commented out or empty"
+    "in the configuration file.";
+
+static const std::string start_errors =
+    "ERRORS:\n"
+    "    all of these occured during the attempted conversion:\n\n";
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -37,6 +47,10 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
 
 ConversionData::ConversionData()
 {
+    comments = new Comments(start_comments, 0,
+                    Comments::CommentType::Mult_Line);
+    errors = new Comments(start_errors, 0,
+                    Comments::CommentType::Mult_Line);
 }
 
 ConversionData::~ConversionData()
@@ -46,6 +60,9 @@ ConversionData::~ConversionData()
 
     for (auto t : tables)
         delete t;
+
+    delete comments;
+    delete errors;
 }
 
 bool ConversionData::add_variable(std::string name, std::string value)
@@ -66,7 +83,6 @@ Table* ConversionData::add_table(std::string name)
     if(t)
         return t;
 
-
     try
     {
         t = new Table(name, 0);
@@ -83,29 +99,17 @@ Table* ConversionData::add_table(std::string name)
 
 void ConversionData::add_comment(std::string str)
 {
-    // leave at most one blank line between comments
-    if ( !(str.empty() && !comments.empty() && comments.back().empty()) )
-        comments.push_back(std::string(str, 0, 512));
+    comments->add_text(str);
 }
 
 void ConversionData::add_error_comment(std::string error_string)
 {
-    if (error_string.size() > 80)
-        error_string.insert(76, "...");
-    
-    errors.push_back(std::string(error_string, 0, 79));
+    errors->add_text(error_string + "\n");
 }
 
 std::ostream& operator<<( std::ostream &out, const ConversionData &data)
 {
-    out << "--[[" << std::endl;
-    out << "--ERRORS:" << std::endl;
-    out << "    all of these occured during the attempted conversion:" << std::endl << std::endl;
-
-    for (std::string s : data.errors)
-        out << s << std::endl << std::endl;
-
-    out << "--]]" << std::endl << std::endl << std::endl;
+    out << (*data.errors) << std::endl << std::endl;
 
     for (Variable *v : data.vars)
         out << (*v) << std::endl << std::endl;
@@ -113,35 +117,8 @@ std::ostream& operator<<( std::ostream &out, const ConversionData &data)
     for (Table *t : data.tables)
         out << (*t) << std::endl << std::endl;
 
+    out << (*data.comments) << std::endl;
 
-    out << "--[[" << std::endl << std::endl;
-    out << "COMMENTS:" << std::endl;
-    out << "    these line were originally commented out or empty" << std::endl;
-    out << "    in the configuration file." << std::endl;
-    out << std::endl;
-
-    for (std::string s : data.comments)
-        out << s << std::endl;
-
-    out << "--]]" << std::endl;
 
     return out;
 }
-#if 0
-bool ConversionData::add_option(std::string name, std::string value)
-{
-
-}
-
-bool ConversionData::add_option(std::string name, long long int value)
-{
-
-}
-
-
-void ConversionData::reset()
-{
-
-}
-
-#endif

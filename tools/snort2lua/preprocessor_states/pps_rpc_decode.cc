@@ -17,10 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_stream_udp.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_rpc_decode.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
+#include <string>
 
 #include "conversion_state.h"
 #include "converter.h"
@@ -28,42 +29,51 @@
 
 namespace {
 
-class StreamUdp : public ConversionState
+class RpcDecode : public ConversionState
 {
 public:
-    StreamUdp(Converter* cv)  : ConversionState(cv) {};
-    virtual ~StreamUdp() {};
+    RpcDecode(Converter* cv)  : ConversionState(cv) {};
+    virtual ~RpcDecode() {};
     virtual bool convert(std::stringstream& data_stream);
 };
 
 } // namespace
 
-bool StreamUdp::convert(std::stringstream& data_stream)
+bool RpcDecode::convert(std::stringstream& data_stream)
 {
 
     bool retval = true;
+    std::string port_list = "";
     std::string keyword;
+    int i_val;
+    bool blah;
 
-    cv->open_table("stream_udp");
+    cv->open_table("rpc_decode");
 
+    // parse the port list first.
+    while(data_stream >> i_val)
+        port_list += ' ' + std::to_string(i_val);
+
+    util::ltrim(port_list);
+    cv->add_option_to_table("--ports", port_list);
+    data_stream.clear();  // necessary since badbit() is set
+    
     while(data_stream >> keyword)
     {
         bool tmpval = true;
 
-        if(keyword.back() == ',')
-            keyword.pop_back();
         
-        if(keyword.empty())
-            continue;
-        
-        if(!keyword.compare("ignore_any_rules"))
-            tmpval = cv->add_option_to_table("ignore_any_rules", true);
+        if(!keyword.compare("no_alert_multiple_requests"))
+            cv->add_deprecated_comment("no_alert_multiple_requests");
 
-        else if(!keyword.compare("timeout"))
-        {
-            cv->add_diff_option_comment("timeout", "session_timeout");
-            tmpval = parse_int_option("session_timeout", data_stream);
-        }
+        else if(!keyword.compare("alert_fragments"))
+            cv->add_deprecated_comment("alert_fragments");
+
+        else if(!keyword.compare("no_alert_large_fragments"))
+            cv->add_deprecated_comment("no_alert_large_fragments");
+
+        else if(!keyword.compare("no_alert_incomplete"))
+            cv->add_deprecated_comment("no_alert_incomplete");
 
         else
             tmpval = false;
@@ -72,7 +82,7 @@ bool StreamUdp::convert(std::stringstream& data_stream)
             retval = tmpval;
     }
 
-    return retval;    
+    return retval;   
 }
 
 /**************************
@@ -81,13 +91,13 @@ bool StreamUdp::convert(std::stringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv)
 {
-    return new StreamUdp(cv);
+    return new RpcDecode(cv);
 }
 
-static const ConvertMap preprocessor_stream_udp =
+static const ConvertMap preprocessor_rpc_decode =
 {
-    "stream5_udp",
+    "rpc_decode",
     ctor,
 };
 
-const ConvertMap* stream_udp_map = &preprocessor_stream_udp;
+const ConvertMap* rpc_decode_map = &preprocessor_rpc_decode;

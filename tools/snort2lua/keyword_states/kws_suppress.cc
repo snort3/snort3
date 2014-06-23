@@ -45,10 +45,10 @@ bool Suppress::convert(std::stringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    converter->open_table("suppress");
-    converter->add_deprecated_comment("gen_id", "gid");
-    converter->add_deprecated_comment("sig_id", "sid");
-    converter->open_table();
+    cv->open_table("suppress");
+    cv->add_diff_option_comment("gen_id", "gid");
+    cv->add_diff_option_comment("sig_id", "sid");
+    cv->open_table();
 
     while(data_stream >> keyword)
     {

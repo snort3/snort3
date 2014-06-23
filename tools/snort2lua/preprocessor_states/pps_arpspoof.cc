@@ -42,13 +42,13 @@ bool ArpSpoof::convert(std::stringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    converter->open_table("arp_spoof");
+    cv->open_table("arp_spoof");
 
     while(data_stream >> keyword)
     {
 
         if(!keyword.compare("-unicast"))
-            retval = converter->add_option_to_table("unicast", true) && retval;
+            retval = cv->add_option_to_table("unicast", true) && retval;
 
         else 
             retval = false;
@@ -97,16 +97,16 @@ bool ArpSpoofHost::convert(std::stringstream& data_stream)
     std::string ip, mac;
 
     bool retval = true;
-    converter->open_table("arp_spoof");
-    converter->open_table("hosts");
+    cv->open_table("arp_spoof");
+    cv->open_table("hosts");
 
     while(data_stream >> ip &&
           data_stream >> mac)
     {
-        converter->open_table();
-        converter->add_option_to_table("ip", ip);
-        converter->add_option_to_table("mac", mac);
-        converter->close_table();
+        cv->open_table();
+        cv->add_option_to_table("ip", ip);
+        cv->add_option_to_table("mac", mac);
+        cv->close_table();
 
         ip.clear();
         mac.clear();

@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_option.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_option.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef CONV_OPTIONS_H
-#define CONV_OPTIONS_H
+#ifndef DT_OPTION_H
+#define DT_OPTION_H
 
 #include <string>
 #include <vector>

@@ -200,7 +200,7 @@ void Converter::add_comment_to_file(std::string comment, std::stringstream& stre
 
 void Converter::add_deprecated_comment(std::string dep_var)
 {
-    std::string error_string = "option '" + dep_var + "' deprecated.";
+    std::string error_string = "option deprecated: '" + dep_var + "'";
 
     if (open_tables.size() > 0)
         add_comment_to_table(error_string);
@@ -208,10 +208,10 @@ void Converter::add_deprecated_comment(std::string dep_var)
         add_comment_to_file(error_string);
 }
 
-void Converter::add_deprecated_comment(std::string dep_var, std::string new_var)
+void Converter::add_diff_option_comment(std::string dep_var, std::string new_var)
 {
-    std::string error_string = "option '" + dep_var + "' deprecated"
-            + " ... using '" + new_var + "' instead";
+    std::string error_string = "option change: '" + dep_var + "' --> '"
+            + new_var + "'";
 
     if (open_tables.size() > 0)
         add_comment_to_table(error_string);

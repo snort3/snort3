@@ -17,43 +17,46 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_data.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_comment.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef CONV_DATA_H
-#define CONV_DATA_H
+#ifndef DT_COMMENT_H
+#define DT_COMMENT_H
 
 #include <string>
-#include <iostream>
 #include <vector>
+#include <iostream>
 
-#include "data/cv_table.h"
-#include "data/cv_var.h"
-
-class ConversionData
+class Comments
 {
-
 public:
-    ConversionData();
-    virtual ~ConversionData();
 
-    friend std::ostream &operator<<( std::ostream&, const ConversionData &);
-    bool add_variable(std::string name, std::string value);
-    Table* add_table(std::string name);
-    void add_comment(std::string comment);
-    void add_error_comment(std::string comment);
+    enum class CommentType
+    {
+        Single_Lines,
+        Mult_Line
+    };
 
-#if 0
-    bool add_option(std::string name, std::string value);
-    bool add_option(std::string name, long long int value);
-    void reset();
-#endif
+
+    Comments(CommentType);
+    Comments(int depth, CommentType);
+    Comments(std::string name, int depth, CommentType);
+    virtual ~Comments();
+
+    void add_text(std::string new_text);
+    bool empty();
+
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const Comments &);
 
 private:
-    std::vector<Variable*> vars;
-    std::vector<Table*> tables;
-    std::vector<std::string> comments;
-    std::vector<std::string> errors;
-
+    std::vector<std::string> comment;
+    int depth;
+    bool prev_empty;
+    enum CommentType type;
+    const int max_line_length = 80;
+    const std::string comment_line = "--";
+    const std::string start_multi_com = "--[[";
+    const std::string end_multi_com = "--]]";
 };
 
 

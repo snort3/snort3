@@ -48,7 +48,7 @@ namespace {
 class PafMax : public ConversionState
 {
 public:
-    PafMax(Converter* cv)  : ConversionState(cv) {};
+    explicit PafMax(Converter* cv)  : ConversionState(cv) {};
     virtual ~PafMax() {};
     virtual bool convert(std::stringstream& data_stream);
 };
@@ -58,10 +58,10 @@ public:
 
 bool PafMax::convert(std::stringstream& data_stream)
 {
-    converter->open_table("stream_tcp");
+    cv->open_table("stream_tcp");
     bool retval = parse_int_option("paf_max", data_stream);
-    converter->close_table();
-    return retval;    
+    cv->close_table();
+    return retval;
 }
 
 /*******  A P I ***********/
@@ -98,3 +98,46 @@ static const ConvertMap config_autogenerate_decode_rules =
 };
 
 const ConvertMap* autogenerate_decode_rules_map = &config_autogenerate_decode_rules;
+
+
+
+/*********************************************
+ *************  Checksum  ********************
+ *********************************************/
+
+namespace {
+
+class Checksum : public ConversionState
+{
+public:
+    Checksum(Converter* cv)  : ConversionState(cv) {};
+    virtual ~Checksum() {};
+    virtual bool convert(std::stringstream& data_stream);
+};
+
+} // namespace
+
+
+bool Checksum::convert(std::stringstream& data_stream)
+{
+    cv->open_table("nework");
+    bool retval = parse_string_option("checksum_eval", data_stream);
+    cv->close_table();
+    return retval;
+}
+
+/*******  A P I ***********/
+
+static ConversionState* checksum_ctor(Converter* cv)
+{
+    return new Checksum(cv);
+}
+
+static const ConvertMap config_checksum =
+{
+    "checksum_mode",
+    checksum_ctor,
+};
+
+
+const ConvertMap* checksum_map = &config_checksum;

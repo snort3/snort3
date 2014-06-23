@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "data/cv_table.h"
+#include "data/dt_table.h"
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -37,12 +37,16 @@ Table::Table(int depth)
 {
     this->name = "";
     this->depth = depth;
+    this->comments = new Comments(depth + 1,
+                    Comments::CommentType::Single_Lines);
 }
 
 Table::Table(std::string name, int depth)
 {
     this->name = name;
     this->depth = depth;
+    this->comments = new Comments(depth + 1,
+                    Comments::CommentType::Single_Lines);
 }
 
 Table::~Table()
@@ -52,6 +56,8 @@ Table::~Table()
 
     for( Option* o : options)
         delete o;
+
+    delete comments;
 }
 
 Table* Table::open_table()
@@ -143,12 +149,9 @@ bool Table::has_option(std::string name, std::string val)
 }
 
 
-void Table::add_comment(std::string comment)
+void Table::add_comment(std::string c)
 {
-    if (comment.size() > 80)
-        comment.insert(76, "...");
-
-    comments.push_back(std::string(comment, 0, 77));
+    comments->add_text(c);
 }
 
 std::ostream &operator<<( std::ostream& out, const Table &t)
@@ -162,8 +165,8 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
         out << whitespace << t.name << " = " << std::endl;
     out << whitespace << '{' << std::endl;
 
-    for(std::string s : t.comments)
-        out << whitespace << "    --" << s << std::endl;
+    if (!t.comments->empty())
+        out << (*t.comments) << std::endl;
 
     for (Option* o : t.options)
         out << (*o) << ',' << std::endl;

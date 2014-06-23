@@ -45,23 +45,23 @@ bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
 {
     bool retval;
 
-    converter->open_table("telnet");
-    retval = converter->add_option_to_table(opt_name, val);
-    converter->close_table();
-    converter->open_table("ftp_server");
-    retval = converter->add_option_to_table(opt_name, val) && retval;
-    converter->close_table();
+    cv->open_table("telnet");
+    retval = cv->add_option_to_table(opt_name, val);
+    cv->close_table();
+    cv->open_table("ftp_server");
+    retval = cv->add_option_to_table(opt_name, val) && retval;
+    cv->close_table();
     return retval;
 }
 
 void FtpTelnet::add_ftp_n_telnet_deprecated(std::string opt_name)
 {
-    converter->open_table("telnet");
-    converter->add_deprecated_comment(opt_name);
-    converter->close_table();
-    converter->open_table("ftp_server");
-    converter->add_deprecated_comment(opt_name);
-    converter->close_table();
+    cv->open_table("telnet");
+    cv->add_deprecated_comment(opt_name);
+    cv->close_table();
+    cv->open_table("ftp_server");
+    cv->add_deprecated_comment(opt_name);
+    cv->close_table();
 }
 
 bool FtpTelnet::convert(std::stringstream& data_stream)
@@ -78,7 +78,7 @@ bool FtpTelnet::convert(std::stringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            converter->log_error("preprocessor ftp_telnet: requires the 'global' keyword");
+            cv->log_error("preprocessor ftp_telnet: requires the 'global' keyword");
             return false;
         }
     }

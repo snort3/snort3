@@ -17,35 +17,51 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_var.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_table.h author Josh Rosenbaum <jorosenba@cisco.com>
+
+#ifndef DT_TABLE_H
+#define DT_TABLE_H
+
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-#ifndef CONV_VAR_H
-#define CONV_VAR_H
+#include "dt_option.h"
+#include "dt_var.h"
+#include "dt_comment.h"
 
-class Variable
+class Table
 {
 public:
-    Variable(std::string name, int depth);
-    Variable(std::string name);
-    virtual ~Variable();
+    Table(int depth);
+    Table(std::string name, int depth);
+    virtual ~Table();
 
     inline std::string get_name(){ return name; };
-    bool add_value(std::string);
-    friend std::ostream &operator<<( std::ostream&, const Variable &);
+    Table* open_table();
+    Table* open_table(std::string);
+    bool add_option(std::string, int val);
+    bool add_option(std::string, bool val);
+    bool add_option(std::string, std::string val);
+    bool add_list(std::string, std::string next_elem);
+    void add_comment(std::string comment);
 
+    friend std::ostream &operator<<( std::ostream&, const Table &);
 
 private:
     std::string name;
-    std::vector<std::string> vars;
-    std::vector<std::string> strs;
-    int count;
-    const int max_line_length = 74; // leave room for additional text
     int depth;
-};
+    Comments* comments;
+    std::vector<Table*> tables;
+    std::vector<Option*> options;
+    std::vector<Variable*> lists;
 
+
+    bool has_option(std::string name, int val);
+    bool has_option(std::string name, bool val);
+    bool has_option(std::string name, std::string val);
+    bool has_option(Option o);
+};
 
 #endif

@@ -17,33 +17,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// init_state.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_var.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-
-#include <vector>
-#include <sstream>
-#include <iostream>
 #include <string>
-#include "init_state.h"
-#include "snort2lua_util.h"
-#include "keyword_states/keywords_api.h"
+#include <vector>
+#include <iostream>
 
+#ifndef DT_VAR_H
+#define DT_VAR_H
 
-InitState::InitState(Converter* cv) : ConversionState(cv) {}
-
-bool InitState::convert(std::stringstream& data_stream)
+class Variable
 {
-    std::string keyword;
+public:
+    Variable(std::string name, int depth);
+    Variable(std::string name);
+    virtual ~Variable();
 
-    if (!(data_stream >> keyword))
-        return false;
+    inline std::string get_name(){ return name; };
+    bool add_value(std::string);
+    friend std::ostream &operator<<( std::ostream&, const Variable &);
 
-    const ConvertMap *map = util::find_map(keyword_api, keyword);
-    if (map)
-    {
-        cv->set_state(map->ctor(cv));
-        return true;
-    }
 
-    return false;
-}
+private:
+    std::string name;
+    std::vector<std::string> vars;
+    std::vector<std::string> strs;
+    int count;
+    const int max_line_length = 74; // leave room for additional text
+    int depth;
+};
+
+
+#endif
