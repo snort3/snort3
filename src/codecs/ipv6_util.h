@@ -30,7 +30,7 @@
 namespace ipv6_util
 {
 
-//bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
+bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
 void CheckIPv6ExtensionOrder(Packet *p);
 
 static inline int IPV6ExtensionOrder(uint8_t type)

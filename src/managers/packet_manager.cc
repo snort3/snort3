@@ -37,6 +37,7 @@
 
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
+#include "codecs/ipv6_util.h"
 
 // Encoder FOO
 #ifdef HAVE_DUMBNET_H
@@ -474,6 +475,9 @@ void PacketManager::decode(
         else
             s_stats[other_codecs]++;
     }
+
+    if (p->ip6_extension_count > 0)
+        ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
     p->dsize = len;
