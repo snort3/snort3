@@ -1,3 +1,8 @@
+90
+-- added InspectApi.buffers and Inspector::getbuf()
+-- changed http_* rule options to use Inspector::getbuf()
+-- changed luajit rule option to use the cursor
+
 89
 -- pulled in the latest from tom and josh
 

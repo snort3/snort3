@@ -37,6 +37,7 @@ class InspectorManager
 public:
     static void add_plugin(const InspectApi* api);
     static void dump_plugins(void);
+    static void dump_buffers(void);
     static void release_plugins(void);
 
     static void new_policy(InspectionPolicy*);

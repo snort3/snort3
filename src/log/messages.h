@@ -75,6 +75,10 @@ public:
         const char* eol = !(++idx % max) ? "\n" : "";
         LogMessage("    %18.18s(v%u)%s", s, v, eol);
     };  
+    void dump(const char* s, const char* t)
+    {
+        LogMessage("%s::%s\n", s, t);
+    };  
 private:
     unsigned max;
     unsigned idx;

@@ -21,6 +21,7 @@
 #include "inspector.h"
 
 #include <assert.h>
+#include <string.h>
 
 //-------------------------------------------------------------------------
 // packet handler stuff
@@ -57,5 +58,29 @@ SO_PUBLIC bool Inspector::is_inactive()
             return false;
     
     return true;
+}
+
+unsigned Inspector::get_buf_id(const char* key)
+{
+    const char** p = api->buffers;
+    unsigned id = 0;
+
+    if ( !p )
+        return 0;
+
+    while ( p[id] && strcmp(key, p[id]) )
+        ++id;
+
+    return p[id] ? id+1 : 0;
+}
+
+bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
+{
+    unsigned id = get_buf_id(key);
+
+    if ( !id )
+        return false;
+
+    return get_buf(id, p, b);
 }
 

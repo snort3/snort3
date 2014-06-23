@@ -36,11 +36,11 @@
 #include "snort_debug.h"
 #include "snort.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "detection/detection_defines.h"
-#include "detection/detection_util.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
+#include "flow/flow.h"
+#include "framework/inspector.h"
 
 //-------------------------------------------------------------------------
 // api methods
@@ -79,28 +79,32 @@ static void hi_ips_ginit(SnortConfig*)
 class HttpIpsOption : public IpsOption
 {
 public:
-    HttpIpsOption(const char* s, HTTP_BUFFER b) : IpsOption(s)
-    { key = s; type = b; };
+    HttpIpsOption(const char* s) : IpsOption(s)
+    { key = s; };
 
     int eval(Cursor&, Packet*);
 private:
     const char* key;
-    HTTP_BUFFER type;
 };
 
-int HttpIpsOption::eval(Cursor& c, Packet*)
+int HttpIpsOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
     PREPROC_PROFILE_START(httpIpsPerfStats);
 
     int rval;
-    const HttpBuffer* hb = GetHttpBuffer(type);
+    InspectionBuffer hb;
 
-    if ( !hb )
-        rval = DETECTION_OPTION_MATCH;
+    if ( !p->flow || !p->flow->clouseau )
+        rval = DETECTION_OPTION_NO_MATCH;
+
+    // FIXIT cache id at parse time for runtime use
+    else if ( !p->flow->clouseau->get_buf(key, p, hb) )
+        rval = DETECTION_OPTION_NO_MATCH;
+
     else
     {
-        c.set(key, hb->buf, hb->length);
+        c.set(key, hb.data, hb.len);
         rval = DETECTION_OPTION_MATCH;
     }
 
@@ -118,7 +122,7 @@ static IpsOption* http_uri_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_uri");
 
-    return new HttpIpsOption("http_uri", HTTP_BUFFER_URI);
+    return new HttpIpsOption("http_uri");
 }
 
 static const IpsApi http_uri_api =
@@ -152,7 +156,7 @@ static IpsOption* http_header_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_header");
 
-    return new HttpIpsOption("http_header", HTTP_BUFFER_HEADER);
+    return new HttpIpsOption("http_header");
 }
 
 static const IpsApi http_header_api =
@@ -186,7 +190,7 @@ static IpsOption* http_client_body_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_client_body");
 
-    return new HttpIpsOption("http_client_body", HTTP_BUFFER_CLIENT_BODY);
+    return new HttpIpsOption("http_client_body");
 }
 
 static const IpsApi http_client_body_api =
@@ -220,7 +224,7 @@ static IpsOption* http_method_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_method");
 
-    return new HttpIpsOption("http_method", HTTP_BUFFER_METHOD);
+    return new HttpIpsOption("http_method");
 }
 
 static const IpsApi http_method_api =
@@ -254,7 +258,7 @@ static IpsOption* http_cookie_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_cookie");
 
-    return new HttpIpsOption("http_cookie", HTTP_BUFFER_COOKIE);
+    return new HttpIpsOption("http_cookie");
 }
 
 static const IpsApi http_cookie_api =
@@ -288,7 +292,7 @@ static IpsOption* http_stat_code_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_stat_code");
 
-    return new HttpIpsOption("http_stat_code", HTTP_BUFFER_STAT_CODE);
+    return new HttpIpsOption("http_stat_code");
 }
 
 static const IpsApi http_stat_code_api =
@@ -322,7 +326,7 @@ static IpsOption* http_stat_msg_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_stat_msg");
 
-    return new HttpIpsOption("http_stat_msg", HTTP_BUFFER_STAT_MSG);
+    return new HttpIpsOption("http_stat_msg");
 }
 
 static const IpsApi http_stat_msg_api =
@@ -356,7 +360,7 @@ static IpsOption* http_raw_uri_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_raw_uri");
 
-    return new HttpIpsOption("http_raw_uri", HTTP_BUFFER_RAW_URI);
+    return new HttpIpsOption("http_raw_uri");
 }
 
 static const IpsApi http_raw_uri_api =
@@ -390,7 +394,7 @@ static IpsOption* http_raw_header_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_raw_header");
 
-    return new HttpIpsOption("http_raw_header", HTTP_BUFFER_RAW_HEADER);
+    return new HttpIpsOption("http_raw_header");
 }
 
 static const IpsApi http_raw_header_api =
@@ -424,7 +428,7 @@ static IpsOption* http_raw_cookie_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_raw_cookie");
 
-    return new HttpIpsOption("http_raw_cookie", HTTP_BUFFER_RAW_COOKIE);
+    return new HttpIpsOption("http_raw_cookie");
 }
 
 static const IpsApi http_raw_cookie_api =

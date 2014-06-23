@@ -118,8 +118,10 @@ Swapper::~Swapper()
 void Swapper::apply()
 {
     if ( new_conf )
+    {
         snort_conf = new_conf;
         set_default_policy();
+    }
 
     if ( new_attribs )
         SFAT_SetConfig(new_attribs);

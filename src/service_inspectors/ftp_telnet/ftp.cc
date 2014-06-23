@@ -717,6 +717,7 @@ static const InspectApi fs_api =
     //IT_SESSION,  // FIXIT should be service only
     IT_SERVICE,
     PROTO_BIT__TCP,
+    nullptr, // buffers
     "ftp",   // FIXIT add ftp-data inspector
     fs_init,
     nullptr, // term

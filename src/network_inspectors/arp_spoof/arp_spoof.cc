@@ -338,6 +338,7 @@ static const InspectApi as_api =
     },
     IT_PROTOCOL, 
     PROTO_BIT__ARP,
+    nullptr, // buffers
     nullptr, // service
     as_init,
     nullptr, // term

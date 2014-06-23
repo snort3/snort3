@@ -35,7 +35,10 @@ public:
     Cursor(Packet*);
     Cursor(const Cursor&);
 
-    bool is(const char* s)
+    const char* get_name() const
+    { return name; };
+
+    bool is(const char* s) const
     { return !strcmp(name, s); };
 
     void reset(Packet*);
@@ -43,22 +46,22 @@ public:
     void set(const char* s, const uint8_t* b, unsigned n)
     { name = s; data = b; sz = n; pos = delta = 0; };
 
-    const uint8_t* buffer()
+    const uint8_t* buffer() const
     { return data; };
 
-    unsigned size()
+    unsigned size() const
     { return sz; };
 
-    const uint8_t* start()
+    const uint8_t* start() const
     { return data + pos; };
 
-    unsigned length()
+    unsigned length() const
     { return sz - pos; };
 
-    unsigned get_pos()
+    unsigned get_pos() const
     { return pos; };
 
-    unsigned get_delta()
+    unsigned get_delta() const
     { return delta; };
 
     bool add_pos(unsigned n)

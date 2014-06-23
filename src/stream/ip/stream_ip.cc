@@ -169,6 +169,7 @@ static const InspectApi ip_api =
     },
     IT_STREAM,
     PROTO_BIT__IP,
+    nullptr, // buffers
     nullptr, // service
     ip_init,
     nullptr, // term

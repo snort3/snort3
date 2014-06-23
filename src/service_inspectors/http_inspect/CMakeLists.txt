@@ -2,7 +2,6 @@
 
 set (FILE_LIST
     http_inspect.cc
-    http_inspect.h
     hi_main.cc
     hi_main.h
     hi_ad.cc 
@@ -15,7 +14,6 @@ set (FILE_LIST
     hi_cmd_lookup.cc 
     hi_cmd_lookup.h
     hi_include.h
-    hi_ips_options.cc
     hi_mi.cc 
     hi_mi.h
     hi_norm.cc 
@@ -37,8 +35,6 @@ set (FILE_LIST
     hi_ui_config.h
     hi_ui_iis_unicode_map.cc 
     hi_ui_iis_unicode_map.h
-    hi_uri.h
-    hi_urilen_check.h
     hi_util.h
     hi_util_hbm.cc 
     hi_util_hbm.h

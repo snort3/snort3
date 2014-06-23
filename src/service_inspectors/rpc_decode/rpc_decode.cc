@@ -1165,6 +1165,7 @@ static const InspectApi rd_api =
     },
     IT_SERVICE,
     PROTO_BIT__TCP,
+    nullptr, // buffers
     "sunrpc",
     rd_init,
     nullptr, // term

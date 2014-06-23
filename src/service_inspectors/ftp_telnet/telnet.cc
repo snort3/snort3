@@ -345,6 +345,7 @@ const InspectApi tn_api =
     },
     IT_SERVICE,
     PROTO_BIT__TCP,
+    nullptr, // buffers
     "telnet",
     tn_init,
     nullptr, // term

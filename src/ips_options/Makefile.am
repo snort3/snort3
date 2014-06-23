@@ -16,6 +16,7 @@ ips_dsize.cc \
 ips_flags.cc \
 ips_fragbits.cc \
 ips_fragoffset.cc \
+ips_http.cc \
 ips_icmp_id.cc \
 ips_icmp_seq.cc \
 ips_icode.cc \
@@ -33,8 +34,8 @@ ips_seq.cc \
 ips_session.cc \
 ips_tos.cc \
 ips_ttl.cc \
-ips_window.cc \
-ips_urilen.cc ips_urilen.h
+ips_urilen.cc \
+ips_window.cc
 
 libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \

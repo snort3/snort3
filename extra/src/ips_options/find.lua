@@ -33,12 +33,6 @@ require("snort_plugin")
 -- if present, called once when script is loaded
 -- here we return bool indicating args ok
 function init ()
-    args.bt = get_buffer_type(args.buf)
-
-    if ( args.bt < 0 ) then
-        return 'bad buf'
-    end
-
     if ( args.pat == nil ) then
         return 'missing pat'
     end
@@ -57,7 +51,7 @@ function eval ()
     -- see snort.lua for available buffers
 
     -- buf is a luajit cdata
-    local buf = ffi.C.get_buffer(args.bt)
+    local buf = ffi.C.get_cursor()
 
     -- str is a lua string
     local str = ffi.string(buf.data, buf.len)

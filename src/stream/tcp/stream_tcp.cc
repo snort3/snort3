@@ -137,6 +137,7 @@ static const InspectApi tcp_api =
     },
     IT_STREAM,
     PROTO_BIT__TCP,
+    nullptr, // buffers
     nullptr, // service
     tcp_init,
     nullptr, // term
