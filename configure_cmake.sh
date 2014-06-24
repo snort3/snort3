@@ -43,6 +43,7 @@ Usage: $0 [OPTION]... [VAR=VALUE]...
       --disable-static-loggers    do not include loggers in binary
       --disable-static-ips-options    do not include ips options in binary
       --disable-static-search-engines    do not include search engines in binary
+      --disable-static-codecs  do not include codecs in binary
       --enable-control-socket  Enable the control socket (Linux only)
       --enable-side-channel    Enable the side channel (Linux only)
       --enable-valgrind        Only use if you are testing with valgrind.
@@ -169,11 +170,11 @@ while [ $# -ne 0 ]; do
             prefix=$optarg
             append_cache_entry CMAKE_INSTALL_PREFIX PATH $optarg
             ;;
-        --disable-static-decoders)
-            append_cache_entry STATIC_DECODERS       BOOL   false
+        --disable-static-codecs)
+            append_cache_entry STATIC_CODECS       BOOL   false
             ;;
-        --enable-static-decoders)
-            append_cache_entry STATIC_DECODERS       BOOL   true
+        --enable-static-codecs)
+            append_cache_entry STATIC_CODECS       BOOL   true
             ;;
         --disable-static-inspectors)
             append_cache_entry STATIC_INSPECTORS    BOOL   false

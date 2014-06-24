@@ -5,7 +5,7 @@
 #  use `ccmamke ${PATH_TO_SOURCE}`.
 
 
-option (STATIC_DECODERS "include decoders in binary?" ON)
+option (STATIC_CODECS "include decoders in binary?" ON)
 option (STATIC_INSPECTORS "include inspectors in binary" ON)
 option (STATIC_LOGGERS "include loggers in binary" ON)
 option (STATIC_IPS_OPTIONS "include ips options in binary" ON)
