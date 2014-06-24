@@ -159,8 +159,8 @@ static const InspectApi dpx_api
     },
     IT_PROTOCOL, 
     PROTO_BIT__UDP,
+    nullptr, // buffers
     nullptr, // service
-    nullptr, // contents
     dpx_init,
     nullptr, // term
     dpx_ctor,
@@ -171,7 +171,6 @@ static const InspectApi dpx_api
     dpx_sum,
     dpx_stats,
     dpx_reset,
-    nullptr  // getbuf
 };
 
 SO_PUBLIC const BaseApi* snort_plugins[] =
