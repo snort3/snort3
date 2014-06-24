@@ -67,6 +67,8 @@
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
 #define RPC_FRAG_LEN(ptr)  (ntohl(*((uint32_t *)ptr)) & 0x7FFFFFFF)
 
+static THREAD_LOCAL DataBuffer DecodeBuffer;
+
 using namespace std;
 
 struct RpcDecodeConfig
@@ -477,7 +479,7 @@ static RpcStatus RpcPrepRaw(const uint8_t *data, uint32_t fraglen, Packet*)
         return RPC_STATUS__ERROR;
     }
 
-    SetAltDecode((uint16_t)(RPC_FRAG_HDR_SIZE + fraglen));
+    set_alt_data(DecodeBuffer.data, (RPC_FRAG_HDR_SIZE + fraglen));
 
     return RPC_STATUS__SUCCESS;
 }
@@ -506,7 +508,7 @@ static RpcStatus RpcPrepFrag(RpcSsnData *rsdata, Packet*)
         return RPC_STATUS__ERROR;
     }
 
-    SetAltDecode((uint16_t)RpcBufLen(&rsdata->frag));
+    set_alt_data(DecodeBuffer.data, RpcBufLen(&rsdata->frag));
 
     if (RpcBufLen(&rsdata->frag) > RPC_MAX_BUF_SIZE)
         RpcBufClean(&rsdata->frag);
@@ -530,7 +532,7 @@ static RpcStatus RpcPrepSeg(RpcSsnData *rsdata, Packet*)
         return RPC_STATUS__ERROR;
     }
 
-    SetAltDecode((uint16_t)RpcBufLen(&rsdata->seg));
+    set_alt_data(DecodeBuffer.data, RpcBufLen(&rsdata->seg));
 
     if (RpcBufLen(&rsdata->seg) > RPC_MAX_BUF_SIZE)
     {
@@ -976,7 +978,7 @@ static int ConvertRPC(RpcDecodeConfig *rconfig, RpcSsnData *rsdata, Packet *p)
                //LogNetData(data, decoded_len, NULL);
                );
 
-    SetAltDecode((uint16_t)decoded_len);
+    set_alt_data(DecodeBuffer.data, decoded_len);
 
     return 0;
 }

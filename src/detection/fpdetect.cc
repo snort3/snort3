@@ -1080,11 +1080,11 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
             if ( so && so->get_pattern_count() > 0 )
             {
-                if ( DecodeBuffer.len )
+                if(g_alt_data.len)
                 {
                     start_state = 0;
-                    so->search(DecodeBuffer.data, DecodeBuffer.len,
-                            rule_tree_match, omd, &start_state);
+                    so->search(g_alt_data.data, g_alt_data.len,
+                        rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                     /* Bail if we spent too much time already */
                     if (PPM_PACKET_ABORT_FLAG())
@@ -1092,11 +1092,10 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                 }
 
-                /* Adding this extra search on file data since we no more use DecodeBuffer to decode now*/
-                if(file_data_ptr.len)
+                if(g_file_data.len)
                 {
                     start_state = 0;
-                    so->search(file_data_ptr.data, file_data_ptr.len,
+                    so->search(g_file_data.data, g_file_data.len,
                         rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                     /* Bail if we spent too much time already */

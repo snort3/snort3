@@ -81,8 +81,8 @@ int FileDataOption::eval(Cursor& c, Packet*)
     PROFILE_VARS;
     PREPROC_PROFILE_START(fileDataPerfStats);
 
-    data = file_data_ptr.data;
-    len = file_data_ptr.len;
+    data = g_file_data.data;
+    len = g_file_data.len;
 
     if ( (data == NULL)|| (len == 0) )
     {

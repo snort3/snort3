@@ -35,9 +35,9 @@ Cursor::Cursor(const Cursor& rhs)
 
 void Cursor::reset(Packet* p)
 {
-    if ( DecodeBuffer.len )
+    if ( g_alt_data.len )
     {
-        set("pkt_data", (uint8_t *)DecodeBuffer.data, DecodeBuffer.len);
+        set("pkt_data", g_alt_data.data, g_alt_data.len);
     }
     else if( IsLimitedDetect(p) )
     {

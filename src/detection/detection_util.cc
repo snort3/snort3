@@ -30,8 +30,8 @@
 THREAD_LOCAL uint32_t http_mask;
 THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 
-THREAD_LOCAL DataPointer file_data_ptr;
-THREAD_LOCAL DataBuffer DecodeBuffer;
+THREAD_LOCAL DataPointer g_alt_data;
+THREAD_LOCAL DataPointer g_file_data;
 
 const char* http_buffer_name[HTTP_BUFFER_MAX] =
 {

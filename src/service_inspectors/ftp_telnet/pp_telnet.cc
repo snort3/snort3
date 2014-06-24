@@ -66,6 +66,8 @@
  */
 #define CONSECUTIVE_8BIT_THRESHOLD 3
 
+static THREAD_LOCAL DataBuffer DecodeBuffer;
+
 /*
  * Function: normalize_telnet(Packet *)
  *
@@ -419,11 +421,7 @@ int normalize_telnet(
         }
     }
 
-    SetAltDecode((uint16_t)(write_ptr - start));
+    set_alt_data(DecodeBuffer.data, (uint16_t)(write_ptr - start));
 
-    /* DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-        "Converted buffer after telnet normalization:\n");
-    LogNetData(DecodeBuffer.data, DecodeBuffer.len, NULL););
-    */
     return ret;
 }

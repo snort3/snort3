@@ -62,6 +62,8 @@
 
 #include "ipv6_port.h"
 
+static THREAD_LOCAL DataBuffer DecodeBuffer;
+
 /*
  * Used to keep track of pipelined commands and the last one
  * that resulted in a
