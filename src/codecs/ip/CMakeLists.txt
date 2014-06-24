@@ -1,7 +1,7 @@
 
 
 
-if( STATIC_DECODERS )
+if( STATIC_CODECS )
     set( PLUGIN_SOURCES
         cd_ah.cc
         cd_ah_module.h

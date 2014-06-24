@@ -79,8 +79,7 @@ static THREAD_LOCAL char *variable_names[NUM_BYTE_EXTRACT_VARS];
 class ByteExtractOption : public IpsOption
 {
 public:
-    ByteExtractOption(const ByteExtractData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+    ByteExtractOption(const ByteExtractData& c) : IpsOption(s_name)
     { config = c; };
 
     ~ByteExtractOption()

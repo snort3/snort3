@@ -1080,7 +1080,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
             if ( so && so->get_pattern_count() > 0 )
             {
-                if (Is_DetectFlag(FLAG_ALT_DECODE) && DecodeBuffer.len)
+                if ( DecodeBuffer.len )
                 {
                     start_state = 0;
                     so->search(DecodeBuffer.data, DecodeBuffer.len,

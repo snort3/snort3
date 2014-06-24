@@ -50,7 +50,7 @@ cd_sun_nd.cc \
 cd_swipe.cc
 
 
-if STATIC_DECODERS
+if STATIC_CODECS
 libip_codecs_a_SOURCES += $(plugin_list)
 
 else

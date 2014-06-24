@@ -33,7 +33,7 @@ if ENABLE_NON_ETHER_DECODER
 plugin_list += cd_eapol.cc cd_eapol_module.h cd_eapol_module.cc
 endif
 
-if STATIC_DECODERS
+if STATIC_CODECS
 liblink_codecs_a_SOURCES += $(plugin_list)
 
 else

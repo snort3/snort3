@@ -318,15 +318,10 @@ SFXHASH * DetectionTreeHashTableNew(void)
 static const char *option_type_str[] =
 {
     "RULE_OPTION_TYPE_LEAF_NODE",
-    "RULE_OPTION_TYPE_BASE64_DATA",
-    "RULE_OPTION_TYPE_BASE64_DECODE",
     "RULE_OPTION_TYPE_CONTENT",
-    "RULE_OPTION_TYPE_FILE_DATA",
-    "RULE_OPTION_TYPE_FLOW",
     "RULE_OPTION_TYPE_FLOWBIT",
     "RULE_OPTION_TYPE_IP_PROTO",
     "RULE_OPTION_TYPE_PCRE",
-    "RULE_OPTION_TYPE_PKT_DATA",
     "RULE_OPTION_TYPE_OTHER"
 };
 
@@ -398,14 +393,12 @@ int detection_option_node_evaluate(
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
-    uint16_t save_dflags = 0;
     uint64_t cur_eval_pkt_count = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
     NODE_PROFILE_VARS;
 
     if (!node || !eval_data || !eval_data->p || !eval_data->pomd)
         return 0;
 
-    save_dflags = Get_DetectFlags();
     dot_node_state_t* state = node->state + get_instance_id();
 
     /* see if evaluated it before ... */
@@ -552,15 +545,6 @@ int detection_option_node_evaluate(
                     rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
                 break;
-            case RULE_OPTION_TYPE_PKT_DATA:
-            case RULE_OPTION_TYPE_FILE_DATA:
-            case RULE_OPTION_TYPE_BASE64_DATA:
-                if (node->evaluate)
-                {
-                    save_dflags = Get_DetectFlags();
-                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
-                }
-                break;
             case RULE_OPTION_TYPE_FLOWBIT:
                 if (node->evaluate)
                 {
@@ -628,7 +612,6 @@ int detection_option_node_evaluate(
                     NODE_PROFILE_END_MATCH(node);
                 }
                 state->last_check.result = result;
-                Reset_DetectFlags(save_dflags);
                 return result;
             }
         }
@@ -718,7 +701,6 @@ int detection_option_node_evaluate(
                     {
                         /* bail if we exceeded time */
                         state->last_check.result = result;
-                        Reset_DetectFlags(save_dflags);
                         return result;
                     }
                 }
@@ -822,7 +804,6 @@ int detection_option_node_evaluate(
         NODE_PROFILE_END_MATCH(node);
     }
 
-    Reset_DetectFlags(save_dflags);
     return result;
 }
 

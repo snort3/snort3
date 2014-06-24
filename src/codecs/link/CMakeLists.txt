@@ -1,7 +1,7 @@
 
 
 
-if( STATIC_DECODERS )
+if( STATIC_CODECS )
     set( PLUGIN_SOURCES
         cd_erspan2.cc
         cd_erspan2_module.h

@@ -35,7 +35,7 @@ Cursor::Cursor(const Cursor& rhs)
 
 void Cursor::reset(Packet* p)
 {
-    if ( Is_DetectFlag(FLAG_ALT_DECODE) )
+    if ( DecodeBuffer.len )
     {
         set("pkt_data", (uint8_t *)DecodeBuffer.data, DecodeBuffer.len);
     }

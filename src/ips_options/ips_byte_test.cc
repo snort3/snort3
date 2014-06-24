@@ -174,8 +174,7 @@ typedef struct _ByteTestData
 class ByteTestOption : public IpsOption
 {
 public:
-    ByteTestOption(const ByteTestData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+    ByteTestOption(const ByteTestData& c) : IpsOption(s_name)
     { config = c; };
 
     ~ByteTestOption() { };

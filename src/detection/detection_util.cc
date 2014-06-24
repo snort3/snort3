@@ -27,8 +27,6 @@
 #include "sf_textlog.h"
 #include "actions/actions.h"
 
-THREAD_LOCAL uint16_t detect_flags;
-
 THREAD_LOCAL uint32_t http_mask;
 THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 
@@ -113,7 +111,6 @@ void EventTrace_Log (const Packet* p, OptTreeNode* otn, int action)
         "Pkt Cnts: Dsz=%u, Alt=%u, Uri=0x%X\n",
         (unsigned)p->dsize, (unsigned)p->alt_dsize, http_mask
     );
-    TextLog_Print(tlog, "Detect: DetectFlags=0x%X\n", detect_flags);
     LogBuffer("Packet", p->data, p->alt_dsize);
 
     nEvents++;

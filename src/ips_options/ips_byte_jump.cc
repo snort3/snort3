@@ -124,8 +124,7 @@ typedef struct _ByteJumpData
 class ByteJumpOption : public IpsOption
 {
 public:
-    ByteJumpOption(const ByteJumpData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+    ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name)
     { config = c; };
 
     ~ByteJumpOption() { };

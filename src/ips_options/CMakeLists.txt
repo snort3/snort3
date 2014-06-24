@@ -6,8 +6,7 @@ SET( PLUGIN_LIST
     ips_asn1.cc
     asn1_detect.cc
     asn1_detect.h
-    ips_base64_data.cc
-    ips_base64_decode.cc
+    ips_base64.cc
     ips_byte_test.cc
     ips_byte_jump.cc
     ips_cvs.cc
@@ -79,8 +78,7 @@ else (STATIC_IPS_OPTIONS)
 
     add_shared_library(ips_ack ips_options ips_ack.cc)
     add_shared_library(ips_asn1 ips_options ips_asn1.cc asn1_detect.cc asn1_detect.h)
-    add_shared_library(ips_base64_data ips_options ips_base64_data.cc)
-    add_shared_library(ips_base64_decode ips_options ips_base64_decode.cc)
+    add_shared_library(ips_base64 ips_options ips_base64.cc)
     add_shared_library(ips_byte_test ips_options ips_byte_test.cc)
     add_shared_library(ips_byte_jump ips_options ips_byte_jump.cc)
     add_shared_library(ips_cvs ips_options ips_cvs.cc)
@@ -88,6 +86,7 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_flags ips_options ips_flags.cc)
     add_shared_library(ips_fragbits ips_options ips_fragbits.cc)
     add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc)
+    add_shared_library(ips_http ips_options ips_http.cc)
     add_shared_library(ips_icode ips_options ips_icode.cc)
     add_shared_library(ips_id ips_options ips_id.cc)
     add_shared_library(ips_ipopts ips_options ips_ipopts.cc)

@@ -57,7 +57,7 @@ static PreprocStats* pd_get_profile(const char* key)
 class PktDataOption : public IpsOption
 {
 public:
-    PktDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_PKT_DATA) { };
+    PktDataOption() : IpsOption(s_name) { };
 
     CursorActionType get_cursor_type() const
     { return CAT_SET_RAW; };

@@ -12,7 +12,7 @@ cd_null.cc
 
 
 if ENABLE_NON_ETHER_DECODER
-if STATIC_DECODERS
+if STATIC_CODECS
 libroot_codecs_a_SOURCES += \
 cd_linux_sll.cc \
 cd_tr.cc \

@@ -12,7 +12,7 @@ cd_gtp_module.h \
 cd_gtp_module.cc \
 cd_teredo.cc
 
-if STATIC_DECODERS
+if STATIC_CODECS
 libmisc_codecs_a_SOURCES += $(plugin_list)
 
 

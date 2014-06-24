@@ -86,8 +86,6 @@ struct DataBuffer
     uint16_t len;
 };
 
-extern THREAD_LOCAL uint16_t detect_flags;
-
 extern THREAD_LOCAL uint32_t http_mask;
 extern THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern const char* http_buffer_name[HTTP_BUFFER_MAX];
@@ -137,18 +135,6 @@ static inline void SetHttpBuffer (HTTP_BUFFER b, const uint8_t* buf, unsigned le
 
 #define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
 
-/*
- * Function: setFileDataPtr
- *
- * Purpose: Sets the file data pointer used by
- *          file_data rule option.
- *
- * Arguments: ptr => pointer to the body data
- *
- * Returns: void
- *
- */
-
 static inline void setFileDataPtr(uint8_t *ptr, uint16_t decode_size)
 {
     file_data_ptr.data = ptr;
@@ -165,41 +151,13 @@ static inline int EventTrace_IsEnabled (void)
     return ( snort_conf->event_trace_max > 0 );
 }
 
-static inline void DetectFlag_Enable(DetectFlagType df)
-{   
-    detect_flags |= df;
-}
-    
-static inline void DetectFlag_Disable(DetectFlagType df)
-{   
-    detect_flags &= ~df;
-}
-
-static inline int Is_DetectFlag(DetectFlagType df)
-{
-    return ( (detect_flags & df) != 0 );
-}
-
-static inline uint16_t Get_DetectFlags(void)
-{
-    return detect_flags;
-}
-
-static inline void Reset_DetectFlags(uint16_t dflags)
-{
-    detect_flags = dflags;
-}
-
 static inline void SetAltDecode(uint16_t altLen)
 {
-    DetectFlag_Enable(FLAG_ALT_DECODE);
     DecodeBuffer.len = altLen;
 }
 
 static inline void DetectReset()
 {
-    DetectFlag_Disable(FLAG_DETECT_ALL);
-
     file_data_ptr.data  = NULL;
     file_data_ptr.len = 0;
     DecodeBuffer.len = 0;
