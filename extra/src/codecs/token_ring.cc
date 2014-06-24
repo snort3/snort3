@@ -17,6 +17,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// token_ring.h author Josh Rosenbaum <jrosenba@cisco.com>
+
 
 
 
@@ -29,7 +31,8 @@
 #include "protocols/token_ring.h"
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-#include "codecs/root/cd_tr_module.h"
+
+#include "token_ring_module.h"
 
 namespace
 {
