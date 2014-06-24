@@ -19,7 +19,7 @@
 */
 // ipv6_util.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "codecs/ipv6_util.h"
+#include "codecs/ip/ipv6_util.h"
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
 

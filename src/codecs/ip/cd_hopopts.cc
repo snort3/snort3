@@ -28,7 +28,7 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
-#include "codecs/ipv6_util.h"
+#include "codecs/ip/ipv6_util.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
