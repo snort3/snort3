@@ -4,6 +4,8 @@
 -- added IpsOption CursorActionType
 -- finally eliminated doe_ptr and friends ... yay!
 -- merged ips_option_base64_{data,decode}.cc
+-- fast_pattern_only (previously fast_pattern:only) is gone
+   (delete the option, Snort will figure it out)
 
 90
 -- added InspectApi.buffers and Inspector::getbuf()

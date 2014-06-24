@@ -93,6 +93,7 @@ int PatternMatchAdjustRelativeOffsets(
 // so PMD isn't exposed
 PatternMatchData* get_pmd(OptFpList*);
 bool is_fast_pattern_only(OptFpList*);
+void clear_fast_pattern_only(OptFpList*);
 bool is_unbounded(void*);
 
 #endif

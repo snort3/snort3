@@ -1253,7 +1253,7 @@ static int mergeDuplicateOtn(
 
 static void ValidateFastPattern(OptTreeNode *otn)
 {
-    OptFpList* fpl;
+    OptFpList* fpl, * fp = nullptr;
     bool relative_is_bad_mkay = false;
 
     for(fpl = otn->opt_func; fpl != NULL; fpl = fpl->next)
@@ -1262,21 +1262,26 @@ static void ValidateFastPattern(OptTreeNode *otn)
         if ( relative_is_bad_mkay )
         {
             if (fpl->isRelative)
-                ParseWarning("relative rule option used after "
-                    "fast_pattern:only");
+            {
+                assert(fp);
+                clear_fast_pattern_only(fp);
+            }
         }
 
         // reset the check if one of these are present.
-        if ( fpl->context && (fpl->type != RULE_OPTION_TYPE_CONTENT) )
+        if ( fpl->type != RULE_OPTION_TYPE_CONTENT )
         {
-            if ( IpsOption::get_cat(fpl->context) > CAT_NONE )
+            if ( fpl->context && IpsOption::get_cat(fpl->context) > CAT_NONE )
                 relative_is_bad_mkay = false;
         }
         // set/unset the check on content options.
         else
         {
             if ( is_fast_pattern_only(fpl) )
+            {
+                fp = fpl;
                 relative_is_bad_mkay = true;
+            }
             else
                 relative_is_bad_mkay = false;
         }

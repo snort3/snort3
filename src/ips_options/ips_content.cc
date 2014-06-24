@@ -50,7 +50,6 @@
 #include "detection/detection_util.h"
 
 #define MAX_PATTERN_SIZE 2048
-#define PM_FP_ONLY  "only"
 
 #ifdef PERF_PROFILING
 static THREAD_LOCAL PreprocStats contentPerfStats;
@@ -291,7 +290,8 @@ static void validate_content(
     {
         // this is provisional; will be disabled later if there
         // is a relative rule option following this one
-        pmd->fp_only = false; // true;  FIXIT integrate this with parse_rule.cc::ValidateFastPattern()
+        // see parse_rule.cc::ValidateFastPattern()
+        pmd->fp_only = 1;
     }
 }
 
@@ -397,6 +397,14 @@ bool is_fast_pattern_only(OptFpList* ofl)
         return false;
 
     return pmd->fp_only != 0;
+}
+
+void clear_fast_pattern_only(OptFpList* ofl)
+{
+    PatternMatchData* pmd = get_pmd(ofl);
+
+    if ( pmd )
+        pmd->fp_only = 0;
 }
 
 bool is_unbounded(void* pv)
