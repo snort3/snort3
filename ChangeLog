@@ -3,6 +3,7 @@
 -- converted remaining rule options over to use cursor
 -- added IpsOption CursorActionType
 -- finally eliminated doe_ptr and friends ... yay!
+-- merged ips_option_base64_{data,decode}.cc
 
 90
 -- added InspectApi.buffers and Inspector::getbuf()
