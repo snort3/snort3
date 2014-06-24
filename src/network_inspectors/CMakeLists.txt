@@ -19,6 +19,5 @@ add_library( network_inspectors STATIC
 target_link_libraries( network_inspectors
     ${STATIC_INSPECTOR_LIBS}
     perf_monitor
-    port_scan
     normalize
 )

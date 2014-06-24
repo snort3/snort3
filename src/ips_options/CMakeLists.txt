@@ -72,7 +72,7 @@ if (STATIC_IPS_OPTIONS)
 
 else (STATIC_IPS_OPTIONS)
 
-    add_library ( ips_options SHARED
+    add_library ( ips_options STATIC
         ${IPS_SOURCES}
     )
 
