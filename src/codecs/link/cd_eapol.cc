@@ -189,4 +189,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_eapol = &eapol_api.base;
 #endif
-

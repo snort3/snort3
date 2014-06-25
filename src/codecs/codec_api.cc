@@ -34,7 +34,7 @@ extern const BaseApi* cd_raw6;
 extern const BaseApi* cd_null;
 
 
-// other codecs
+// ip codecs
 extern const BaseApi* cd_ipv4;
 extern const BaseApi* cd_ipv6;
 extern const BaseApi* cd_icmp4;
@@ -43,9 +43,11 @@ extern const BaseApi* cd_tcp;
 extern const BaseApi* cd_udp;
 extern const BaseApi* cd_esp;
 
+// link codecs
+extern const BaseApi* cd_arp;
+
 #ifdef STATIC_CODECS
 extern const BaseApi* cd_ah;
-extern const BaseApi* cd_arp;
 extern const BaseApi* cd_dstopts;
 extern const BaseApi* cd_erspan2;
 extern const BaseApi* cd_erspan3; 
@@ -95,10 +97,10 @@ const BaseApi* codecs[] =
     cd_tcp,
     cd_udp,
     cd_esp,
+    cd_arp,
 
 #ifdef STATIC_CODECS
     cd_ah,
-    cd_arp,
     cd_dstopts,
     cd_erspan2,
     cd_erspan3,
