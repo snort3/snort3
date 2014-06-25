@@ -58,7 +58,7 @@
  * SnortEventqAdd() and SnortEventLog() functions - whichalready  route the events to
  * the fpLogEvent()function.
  */
-SO_PUBLIC uint32_t GenerateSnortEvent(Packet *p, uint32_t gid, uint32_t sid)
+uint32_t GenerateSnortEvent(Packet *p, uint32_t gid, uint32_t sid)
 {
     OptTreeNode *otn;
     RuleTreeNode *rtn;

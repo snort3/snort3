@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include "snort_types.h"
 
-SO_PUBLIC uint32_t GenerateSnortEvent(struct Packet *p, uint32_t gen_id, uint32_t sig_id);
+uint32_t GenerateSnortEvent(struct Packet *p, uint32_t gen_id, uint32_t sig_id);
 
 #endif
 
