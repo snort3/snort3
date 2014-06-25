@@ -32,8 +32,9 @@ namespace linux_sll
  * (taken from tcpdump source).
  */
 
-#define SLL_HDR_LEN     16              /* total header length */
-#define SLL_ADDRLEN     8               /* length of address field */
+const uint8_t SLL_HDR_LEN = 16;
+const uint8_t SLL_ADDRLEN = 8;
+
 typedef struct _SLLHdr {
         uint16_t       sll_pkttype;    /* packet type */
         uint16_t       sll_hatype;     /* link-layer address type */

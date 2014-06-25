@@ -89,18 +89,8 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
     uint32_t cap_len = raw_len;
     uint32_t dataoff;      /* data offset is variable here */
 
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
-            DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
-                (unsigned long)cap_len,(unsigned long) raw_len);
-            );
-
     if(cap_len < sizeof(token_ring::Trh_hdr))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Captured data length < Token Ring header length! "
-            "(%d < %d bytes)\n", cap_len, TR_HLEN););
-
         codec_events::decoder_event(p, DECODE_BAD_TRH);
         return false;
     }
@@ -127,11 +117,6 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
      */
     if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc)))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Captured data length < Token Ring header length! "
-            "(%d < %d bytes)\n", cap_len,
-            (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc))););
-
         codec_events::decoder_event(p, DECODE_BAD_TR_ETHLLC);
         return false;
     }
@@ -149,11 +134,6 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
 
         if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr)))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                "Captured data length < Token Ring header length! "
-                "(%d < %d bytes)\n", cap_len,
-                (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr))););
-
             codec_events::decoder_event(p, DECODE_BAD_TRHMR);
             return false;
         }
@@ -165,11 +145,6 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
         if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +
                       sizeof(token_ring::Trh_mr) + TRH_MR_LEN(trhmr)))
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                "Captured data length < Token Ring header length! "
-                "(%d < %d bytes)\n", cap_len,
-                (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr))););
-
             codec_events::decoder_event(p, DECODE_BAD_TR_MR_LEN);
             return false;
         }
@@ -194,9 +169,6 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
      */
     if(trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
     {
-        DEBUG_WRAP(
-                   DebugMessage(DEBUG_DECODE, "DSAP and SSAP arent set to SNAP\n");
-                );
         return false;
     }
 
