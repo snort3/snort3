@@ -26,8 +26,11 @@ if (STATIC_CODECS)
     endif (ENABLE_NON_ETHER_DECODERS)
 
 else()
-    add_shared_library(cd_wlan codecs cd_wlan.cc cd_wlan_module.h cd_wlan_module.cc)
-    add_shared_library(cd_linux_sll codecs cd_linux_sll.cc)
+
+    if (ENABLE_NON_ETHER_DECODERS)
+        add_shared_library(cd_wlan codecs cd_wlan.cc cd_wlan_module.h cd_wlan_module.cc)
+        add_shared_library(cd_linux_sll codecs cd_linux_sll.cc)
+    endif()
 endif()
 
 

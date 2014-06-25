@@ -70,7 +70,7 @@ bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
         Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     /* do a little validation */
-    if(raw_len < SLL_HDR_LEN)
+    if(raw_len < linux_sll::SLL_HDR_LEN)
     {
         if (ScLogVerbose())
         {
@@ -84,7 +84,7 @@ bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
 
     /* grab out the network type */
     next_prot_id = ntohs(sllh->sll_protocol);
-    lyr_len = SLL_HDR_LEN;
+    lyr_len = linux_sll::SLL_HDR_LEN;
     return true;
 }
 
