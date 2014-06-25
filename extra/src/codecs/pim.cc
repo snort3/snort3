@@ -101,13 +101,8 @@ static const CodecApi pim_api =
     dtor,
 };
 
-
-#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &pim_api.base,
     nullptr
 };
-#else
-const BaseApi* cd_pim = &pim_api.base;
-#endif

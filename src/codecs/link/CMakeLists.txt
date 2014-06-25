@@ -42,8 +42,8 @@ else()
     add_shared_library(cd_transbridge codecs cd_transbridge.cc)
     add_shared_library(cd_vlan codecs cd_vlan.cc cd_vlan_module.h cd_vlan_module.cc)
 
-    if(ENABLE_NON_ETHER_DECODER)
-        add_shared_library(cd_eapol codecs cd_eapol.cc)
+    if(ENABLE_NON_ETHER_DECODERS)
+        add_shared_library(cd_eapol codecs cd_eapol.cc cd_eapol_module.h cd_eapol_module.cc)
     endif()
 
 endif()

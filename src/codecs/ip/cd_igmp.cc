@@ -138,4 +138,13 @@ static const CodecApi igmp_api =
     dtor, // dtor
 };
 
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &igmp_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_igmp = &igmp_api.base;
+#endif
