@@ -43,7 +43,7 @@ struct OptFpList
     /* context data for this test */
     void *context;
     
-    int (*OptTestFunc)(void* option_data, struct Cursor&, Packet*);
+    int (*OptTestFunc)(void* option_data, class Cursor&, Packet*);
     
     OptFpList *next;
 

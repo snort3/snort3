@@ -68,7 +68,7 @@ public:
     // packet threads
     virtual void config(SnortConfig*) { };
     virtual bool is_relative() { return false; };
-    virtual int eval(struct Cursor&, Packet*) { return true; };
+    virtual int eval(class Cursor&, Packet*) { return true; };
     virtual void action(Packet*) { };
 
     option_type_t get_type() const { return type; };

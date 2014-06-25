@@ -70,7 +70,7 @@ int CheckSrcPortNotEq(Packet *, RuleTreeNode *, RuleFpList *, int);
 int CheckDstPortNotEq(Packet *, RuleTreeNode *, RuleFpList *, int);
 
 int RuleListEnd(Packet *, RuleTreeNode *, RuleFpList *, int);
-int OptListEnd(void* option_data, struct Cursor&, Packet*);
+int OptListEnd(void* option_data, class Cursor&, Packet*);
 
 void snort_log(Packet*);
 void CallLogFuncs(Packet*, Event*, const char*);
