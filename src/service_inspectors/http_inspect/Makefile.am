@@ -22,8 +22,6 @@ hi_si.cc hi_si.h \
 hi_stateful_inspect.h \
 hi_ui_config.cc hi_ui_config.h \
 hi_ui_iis_unicode_map.cc hi_ui_iis_unicode_map.h \
-hi_uri.h \
-hi_urilen_check.h \
 hi_util.h \
 hi_util_hbm.cc hi_util_hbm.h \
 hi_util_kmap.cc hi_util_kmap.h \

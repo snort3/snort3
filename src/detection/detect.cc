@@ -139,9 +139,8 @@ void snort_inspect(Packet* p)
         /*
         **  Reset the appropriate application-layer protocol fields
         */
-        ClearHttpBuffers();
         p->alt_dsize = 0;
-        DetectReset((uint8_t *)p->data, p->dsize);
+        DetectReset();
 
         InspectorManager::execute(p);
 
@@ -819,7 +818,7 @@ int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int)
     return 1;
 }
 
-int OptListEnd(void*, Packet*)
+int OptListEnd(void*, Cursor&, Packet*)
 {
     return DETECTION_OPTION_MATCH;
 }

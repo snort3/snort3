@@ -51,16 +51,14 @@ typedef void * RULE_PTR;
 #define PRM_GET_FIRST_GROUP_NODE_NC(pg) (pg->pgHeadNC)
 #define PRM_GET_NEXT_GROUP_NODE_NC(rn)  (rn->rnNext)
 
-typedef enum _PmType
+enum PmType
 {
     PM_TYPE__CONTENT = 0,
     PM_TYPE__HTTP_URI_CONTENT,
     PM_TYPE__HTTP_HEADER_CONTENT,
     PM_TYPE__HTTP_CLIENT_BODY_CONTENT,
-    PM_TYPE__HTTP_METHOD_CONTENT,
     PM_TYPE__MAX
-
-} PmType;
+};
 
 typedef struct _not_rule_node_ {
 

@@ -46,6 +46,16 @@ extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_flags;
 extern const BaseApi* ips_fragbits;
 extern const BaseApi* ips_fragoffset;
+extern const BaseApi* ips_http_uri;
+extern const BaseApi* ips_http_header;
+extern const BaseApi* ips_http_client_body;
+extern const BaseApi* ips_http_method;
+extern const BaseApi* ips_http_cookie;
+extern const BaseApi* ips_http_stat_code;
+extern const BaseApi* ips_http_stat_msg;
+extern const BaseApi* ips_http_raw_uri;
+extern const BaseApi* ips_http_raw_header;
+extern const BaseApi* ips_http_raw_cookie;
 extern const BaseApi* ips_icmp_id;
 extern const BaseApi* ips_icmp_seq;
 extern const BaseApi* ips_icode;
@@ -54,6 +64,7 @@ extern const BaseApi* ips_ipopts;
 extern const BaseApi* ips_isdataat;
 extern const BaseApi* ips_itype;
 extern const BaseApi* ips_pkt_data;
+extern const BaseApi* ips_raw_data;
 extern const BaseApi* ips_react;
 extern const BaseApi* ips_resp;
 extern const BaseApi* ips_rpc;
@@ -88,6 +99,16 @@ const BaseApi* ips_options[] =
     ips_flags,
     ips_fragbits,
     ips_fragoffset,
+    ips_http_uri,
+    ips_http_header,
+    ips_http_client_body,
+    ips_http_method,
+    ips_http_cookie,
+    ips_http_stat_code,
+    ips_http_stat_msg,
+    ips_http_raw_uri,
+    ips_http_raw_header,
+    ips_http_raw_cookie,
     ips_icmp_id,
     ips_icmp_seq,
     ips_icode,
@@ -96,6 +117,7 @@ const BaseApi* ips_options[] =
     ips_isdataat,
     ips_itype,
     ips_pkt_data,
+    ips_raw_data,
     ips_react,
     ips_resp,
     ips_rpc,

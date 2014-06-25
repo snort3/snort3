@@ -34,7 +34,7 @@ extern const BaseApi* cd_raw6;
 extern const BaseApi* cd_null;
 
 
-// other codecs
+// ip codecs
 extern const BaseApi* cd_ipv4;
 extern const BaseApi* cd_ipv6;
 extern const BaseApi* cd_icmp4;
@@ -43,9 +43,11 @@ extern const BaseApi* cd_tcp;
 extern const BaseApi* cd_udp;
 extern const BaseApi* cd_esp;
 
-#ifdef STATIC_DECODERS
-extern const BaseApi* cd_ah;
+// link codecs
 extern const BaseApi* cd_arp;
+
+#ifdef STATIC_CODECS
+extern const BaseApi* cd_ah;
 extern const BaseApi* cd_dstopts;
 extern const BaseApi* cd_erspan2;
 extern const BaseApi* cd_erspan3; 
@@ -58,7 +60,6 @@ extern const BaseApi* cd_igmp;
 extern const BaseApi* cd_mobility;
 extern const BaseApi* cd_mpls;
 extern const BaseApi* cd_no_next;
-extern const BaseApi* cd_pim;
 extern const BaseApi* cd_pgm;
 extern const BaseApi* cd_pppencap;
 extern const BaseApi* cd_pppoepkt_disc;
@@ -73,7 +74,6 @@ extern const BaseApi* cd_vlan;
 #ifndef NO_NON_ETHER_DECODER
 extern const BaseApi* cd_eapol;
 extern const BaseApi* cd_linux_sll;
-extern const BaseApi* cd_tr;
 extern const BaseApi* cd_wlan;
 
 #endif
@@ -97,10 +97,10 @@ const BaseApi* codecs[] =
     cd_tcp,
     cd_udp,
     cd_esp,
-
-#ifdef STATIC_DECODERS
-    cd_ah,
     cd_arp,
+
+#ifdef STATIC_CODECS
+    cd_ah,
     cd_dstopts,
     cd_erspan2,
     cd_erspan3,
@@ -113,7 +113,6 @@ const BaseApi* codecs[] =
     cd_mobility,
     cd_mpls,
     cd_no_next,
-    cd_pim,
     cd_pgm,
     cd_pppencap,
     cd_pppoepkt_disc,
@@ -128,7 +127,6 @@ const BaseApi* codecs[] =
 #ifndef NO_NON_ETHER_DECODER
     cd_eapol,
     cd_linux_sll,
-    cd_tr,
     cd_wlan,
 #endif
 

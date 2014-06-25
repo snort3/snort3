@@ -78,7 +78,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     TtlCheckData config;
@@ -123,7 +123,7 @@ bool TtlOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int TtlOption::eval(Packet *p)
+int TtlOption::eval(Cursor&, Packet *p)
 {
     TtlCheckData *ttlCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

@@ -8,7 +8,7 @@ x_include_HEADERS = \
 base_api.h \
 bits.h \
 codec.h \
-content_buffer.h \
+cursor.h \
 logger.h \
 inspector.h \
 ips_option.h \
@@ -21,6 +21,7 @@ so_rule.h \
 value.h
 
 libframework_a_SOURCES = \
+cursor.cc \
 inspector.cc \
 ips_option.cc \
 parameter.cc \

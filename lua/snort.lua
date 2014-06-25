@@ -8,7 +8,7 @@
 -- export SNORT_LUA_PATH=$install_dir/conf/
 ---------------------------------------------------------------------------
 
-require("snort_config")  -- for loading
+require('snort_config')  -- for loading
 
 -- useful constants
 K = 1024
@@ -166,14 +166,15 @@ search_engine =
     --search_method = 'lowmem_q',
     split_any_any = true,
     search_optimize = true,
-    max_pattern_len = 20
+    max_pattern_len = 20,
+    max_queue_events = 16
 }
 
 -- Configure the event queue.
 event_queue =
 {
-    max_queue = 8,
-    log = 5,
+    max_queue = 16,
+    log = 8,
     order_events = 'content_length'
 }
 
@@ -194,6 +195,7 @@ ppm =
 }
 
 -- Configure Perf Profiling for debugging
+--[[
 profile =
 {
     rules =
@@ -209,6 +211,7 @@ profile =
         file = { append = true }
     }
 }
+--]]
 
 ---------------------------------------------------------------------------
 -- configure inspectors
@@ -323,11 +326,7 @@ hi_x =
     post_depth = 65495,
 }
 
-nhttp_inspect =
-{
-    test_input = false,
-    test_output = false
-}
+nhttp_inspect = { }
 
 ---------------------------------------------------------------------------
 -- ftp / telnet normalization and anomaly detection
@@ -452,7 +451,7 @@ stream_tcp =
 
     session_timeout = 180,
     --require_3whs = -1,
-    show_rebuilt_packets = true,
+    show_rebuilt_packets = false,
 
     flush_factor = 0,
     overlap_limit = 10,
@@ -536,10 +535,28 @@ default_rules =
 #alert http any any -> 1.2.3.4 80 ( sid:3; msg:"3"; content:"HTTP"; )
 
 # no ; separated content suboptions
-alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST URI request for known malicious     URI - /inst.php?fff="; flow:to_server,established; content:"/inst.php?fff=", nocase, http_uri; content:  "coid=", nocase, http_uri; metadata:impact_flag red, policy balanced-ips drop, policy security-ips drop, reference:url,labs.snort.org/docs/16924.html; classtype:trojan-activity; sid:16924; rev:5;)
+#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST URI request for known malicious URI - /inst.php?fff="; flow:to_server,established; http_uri; content:"/inst.php?fff=", nocase; content:  "coid=", nocase; metadata:impact_flag red, policy balanced-ips drop, policy security-ips drop, reference:url,labs.snort.org/docs/16924.html; classtype:trojan-activity; sid:16924; rev:5;)
 
 # fast_pattern:<offset>,<length>; ->
 # fast_pattern:<offset> <length>;
+
+# test pattern = "ABABACD"
+#alert tcp any any -> any any ( sid:100; content:"ABA"; )
+#alert tcp any any -> any any ( sid:200; raw_data; content:"ABA"; )
+#alert tcp any any -> any any ( sid:300; pkt_data; content:"ABA"; )
+#alert tcp any any -> any any ( sid:400; content:"ABA"; content:"C", depth 6; )
+#alert tcp any any -> any any ( sid:401; content:"ABA"; content:"C", depth 5; )
+#alert tcp any any -> any any ( sid:402; content:"ABA"; content:"C", offset 5; )
+#alert tcp any any -> any any ( sid:403; content:"ABA"; content:"C", offset 6; )
+#alert tcp any any -> any any ( sid:404; content:"ABA"; content:"C", offset 5, depth 6; )
+alert tcp any any -> any any ( sid:510; content:"ABA"; content:"C", within 1; )
+alert tcp any any -> any any ( sid:110; pcre:"/ABA/"; )
+alert tcp any any -> any any ( sid:210; raw_data; pcre:"/ABA/"; )
+alert tcp any any -> any any ( sid:310; pkt_data; pcre:"/ABA/"; )
+alert tcp any any -> any any ( sid:410; pcre:"/ABA/"; pcre:"/C/"; )
+alert tcp any any -> any any ( sid:411; pcre:"/ABA/"; pcre:"/AC/R"; )
+alert tcp any any -> any any ( sid:412; pcre:"/ABA/"; pcre:"/AC/"; )
+alert tcp any any -> any any ( sid:414; pcre:"/ABA/"; pcre:"/C/R"; )
 ]]
 
 network =

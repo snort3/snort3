@@ -81,6 +81,13 @@
 #include "parse_rule.h"
 #include "vars.h"
 #include "target_based/sftarget_reader.h"
+#include "events/event_wrapper.h"  // see s_hack
+
+// FIXIT without s_hack, we get this error on Mac:
+// Symbol not found: __Z18GenerateSnortEventP6Packetjj
+// Referenced from: /Users/rucombs/install/lib/snort/inspectors/libport_scan.0.dylib
+// Expected in: flat namespace
+static uint32_t (*s_hack)(Packet*, uint32_t, uint32_t) = GenerateSnortEvent;
 
 rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
 
@@ -90,6 +97,10 @@ rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
 
 static void InitParser(void)
 {
+    if ( !s_hack )
+        LogMessage("This is an ineffective hack to make snort export "
+            "GenerateSnortEvent() for use by port_scan dynamic lib");
+
     parse_rule_init();
 
     if (ruleIndexMap != NULL)
@@ -1196,41 +1207,6 @@ int addRtnToOtn(
 int addRtnToOtn(OptTreeNode* otn, RuleTreeNode* rtn)
 {
     return addRtnToOtn(otn, rtn, get_ips_policy()->policy_id);
-}
-
-/* Parse a boolean argument, with many ways to say "on" or "off".
-   Arguments:
-     char * arg => string argument to parse
-   Returns:
-     1: Parsed a positive argument ("1", "on", "yes", "enable", "true")
-     0: Parsed a negative argument ("0", "off", "no", "disable", "false")
-    -1: Error
-*/
-int ParseBool(const char *arg)
-{
-    if (arg == NULL)
-        return -1;
-
-    /* Trim leading whitespace */
-    while (isspace(*arg))
-        arg++;
-
-    if ( (strcasecmp(arg, "1") == 0) ||
-         (strcasecmp(arg, "on") == 0) ||
-         (strcasecmp(arg, "yes") == 0) ||
-         (strcasecmp(arg, "enable") == 0) ||
-         (strcasecmp(arg, "true") == 0) )
-        return 1;
-
-    if ( (strcasecmp(arg, "0") == 0) ||
-         (strcasecmp(arg, "off") == 0) ||
-         (strcasecmp(arg, "no") == 0) ||
-         (strcasecmp(arg, "disable") == 0) ||
-         (strcasecmp(arg, "false") == 0) )
-        return 0;
-
-    /* Other values are invalid! */
-    return -1;
 }
 
 void rule_index_map_print_index( int index, char *buf, int bufsize )

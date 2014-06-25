@@ -46,11 +46,11 @@ file_api/libfile_api.a \
 file_api/libs/libfile.a \
 ips_options/libips_options.a \
 search_engines/libsearch_engines.a \
-framework/libframework.a \
 flow/libflow.a \
 control/libcontrol.a \
 filters/libfilter.a \
 detection/libdetection.a \
+framework/libframework.a \
 time/libtime.a \
 actions/libactions.a \
 events/libevents.a \

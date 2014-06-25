@@ -59,14 +59,14 @@ class SameIpOption : public IpsOption
 public:
     SameIpOption() : IpsOption(s_name) { };
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 };
 
 //-------------------------------------------------------------------------
 // class methods
 //-------------------------------------------------------------------------
 
-int SameIpOption::eval(Packet *p)
+int SameIpOption::eval(Cursor&, Packet *p)
 {
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;

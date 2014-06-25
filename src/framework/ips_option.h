@@ -41,6 +41,18 @@ struct Packet;
 
 struct SnortConfig;
 
+enum CursorActionType
+{
+    CAT_NONE,
+    CAT_ADJUST,
+    CAT_SET_OTHER,
+    CAT_SET_RAW,
+    CAT_SET_FILE,
+    CAT_SET_BODY,
+    CAT_SET_HEADER,
+    CAT_SET_COMMAND,
+};
+
 class IpsOption
 {
 public:
@@ -56,11 +68,26 @@ public:
     // packet threads
     virtual void config(SnortConfig*) { };
     virtual bool is_relative() { return false; };
-    virtual int eval(Packet*) { return true; };
+    virtual int eval(class Cursor&, Packet*) { return true; };
     virtual void action(Packet*) { };
 
     option_type_t get_type() const { return type; };
     const char* get_name() const { return name; };
+
+    virtual CursorActionType get_cursor_type() const
+    { return CAT_NONE; };
+
+    static int eval(void* v, Cursor& c, Packet* p)
+    {
+        IpsOption* opt = (IpsOption*)v;
+        return opt->eval(c, p);
+    };
+
+    static CursorActionType get_cat(void* v)
+    {
+        IpsOption* opt = (IpsOption*)v;
+        return opt->get_cursor_type();
+    };
 
 protected:
     IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER)
@@ -102,12 +129,6 @@ struct IpsApi
     IpsDelFunc dtor;
     IpsChkFunc verify;
 };
-
-static inline int ips_option_eval(void* v, Packet* p)
-{
-    IpsOption* opt = (IpsOption*)v;
-    return opt->eval(p);
-}
 
 #endif
 

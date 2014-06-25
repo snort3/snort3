@@ -169,8 +169,8 @@ static const InspectApi ip_api =
     },
     IT_STREAM,
     PROTO_BIT__IP,
+    nullptr, // buffers
     nullptr, // service
-    nullptr, // contents
     ip_init,
     nullptr, // term
     ip_ctor,
@@ -180,8 +180,7 @@ static const InspectApi ip_api =
     ip_ssn,
     ip_sum,
     ip_stats,
-    ip_reset,
-    nullptr  // getbuf
+    ip_reset
 };
 
 const BaseApi* nin_stream_ip = &ip_api.base;

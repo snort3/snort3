@@ -33,7 +33,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     void init(const char*, const char*);

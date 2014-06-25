@@ -96,7 +96,6 @@ typedef struct
     unsigned int sid;
     int dir;
     char content;
-    char uricontent;
 
 } port_entry_t;
 
@@ -199,8 +198,6 @@ static void port_list_print( port_list_t * plist)
                 plist->pl_array[i].dst_port );
         LogMessage(" content %d",
                 plist->pl_array[i].content);
-        LogMessage(" uricontent %d",
-                plist->pl_array[i].uricontent);
         LogMessage(" }\n");
     }
 }
@@ -294,7 +291,7 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
     rim_index = otn->ruleIndex;
 
     /* Add up the nocontent rules */
-    if (!pe->content && !pe->uricontent)
+    if ( !pe->content )
         prc->nc++;
 
     /* If not an any-any rule test for port bleedover, if we are using a
@@ -947,10 +944,6 @@ void AddRuleFuncToList(int (*rfunc) (Packet *, RuleTreeNode *, struct _RuleFpLis
  *          based on the address, netmask, and addr flags
  *
  * Arguments: rtn => the pointer to the current rules list entry to attach to
- *            ip =>  IP address of the current rule
- *            mask => netmask of the current rule
- *            exception_flag => indicates that a "!" has been set for this
- *                              address
  *            mode => indicates whether this is a rule for the source
  *                    or destination IP for the rule
  *
@@ -1260,42 +1253,37 @@ static int mergeDuplicateOtn(
 
 static void ValidateFastPattern(OptTreeNode *otn)
 {
-    OptFpList *fpl = NULL;
-    int fp_only = 0;
+    OptFpList* fpl, * fp = nullptr;
+    bool relative_is_bad_mkay = false;
 
     for(fpl = otn->opt_func; fpl != NULL; fpl = fpl->next)
     {
-        /* a relative option is following a fast_pattern:only and
-         * there was no resets.
-         */
-        if (fp_only == 1)
+        // a relative option is following a fast_pattern/only and
+        if ( relative_is_bad_mkay )
         {
             if (fpl->isRelative)
-                ParseWarning("relative rule option used after "
-                    "fast_pattern:only");
+            {
+                assert(fp);
+                clear_fast_pattern_only(fp);
+            }
         }
 
-        /* reset the check if one of these are present.
-         */
-        if ((fpl->type == RULE_OPTION_TYPE_FILE_DATA) ||
-            (fpl->type == RULE_OPTION_TYPE_PKT_DATA) ||
-            (fpl->type == RULE_OPTION_TYPE_BASE64_DATA) ||
-            (fpl->type == RULE_OPTION_TYPE_PCRE) ||
-            (fpl->type == RULE_OPTION_TYPE_BYTE_JUMP) ||
-            (fpl->type == RULE_OPTION_TYPE_BYTE_EXTRACT))
+        // reset the check if one of these are present.
+        if ( fpl->type != RULE_OPTION_TYPE_CONTENT )
         {
-            fp_only = 0;
+            if ( fpl->context && IpsOption::get_cat(fpl->context) > CAT_NONE )
+                relative_is_bad_mkay = false;
         }
-
-        /* set/unset the check on content options.
-         */
-        if ((fpl->type == RULE_OPTION_TYPE_CONTENT) ||
-            (fpl->type == RULE_OPTION_TYPE_CONTENT_URI))
+        // set/unset the check on content options.
+        else
         {
             if ( is_fast_pattern_only(fpl) )
-                fp_only = 1;
+            {
+                fp = fpl;
+                relative_is_bad_mkay = true;
+            }
             else
-                fp_only = 0;
+                relative_is_bad_mkay = false;
         }
     }
 }
@@ -1640,29 +1628,7 @@ void parse_rule(
 
     /* See what kind of content is going in the fast pattern matcher */
     {
-        /* Since http_cookie content is not used in fast pattern matcher,
-         * need to iterate the entire list */
-        if ( otn_has_plugin(otn, RULE_OPTION_TYPE_CONTENT_URI) )
-        {
-            OptFpList* fpl = otn->opt_func;
-
-            while ( fpl )
-            {
-                if ( fpl->type == RULE_OPTION_TYPE_CONTENT_URI )
-                {
-                    PatternMatchData* pmd = get_pmd(fpl);
-
-                    if ( IsHttpBufFpEligible(pmd->http_buffer) )
-                    {
-                        pe.uricontent = 1;
-                        break;
-                    }
-                }
-                fpl = fpl->next;
-            }
-        }
-
-        if (!pe.uricontent && otn_has_plugin(otn, RULE_OPTION_TYPE_CONTENT) )
+        if ( otn_has_plugin(otn, RULE_OPTION_TYPE_CONTENT) )
         {
             pe.content = 1;
         }

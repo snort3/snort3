@@ -209,7 +209,7 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
         cout << ": " << p->help;
 
         if ( p->range )
-            cout << " { " << p->range << " }";
+            cout << " { " << (char*)p->range << " }";
 #else
         cout << item();
         cout << p->get_type();
@@ -476,7 +476,7 @@ void ModuleManager::dump_modules()
 
     for ( auto* p : s_modules )
         if ( !p->api )
-            d.dump(p->mod->get_name(), 0);
+            d.dump(p->mod->get_name());
 }
 
 void ModuleManager::show_configs(bool markup, const char* pfx)

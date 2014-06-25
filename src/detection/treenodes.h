@@ -43,7 +43,7 @@ struct OptFpList
     /* context data for this test */
     void *context;
     
-    int (*OptTestFunc)(void *option_data, Packet *p);
+    int (*OptTestFunc)(void* option_data, class Cursor&, Packet*);
     
     OptFpList *next;
 
@@ -155,11 +155,14 @@ struct RuleTreeNode
     unsigned int otnRefCount;
 };
 
-typedef int (*RuleOptEvalFunc)(void *, Packet *);
+typedef int (*RuleOptEvalFunc)(void*, Cursor&, Packet*);
 OptFpList * AddOptFuncToList(RuleOptEvalFunc, OptTreeNode *);
         
+void* get_rule_type_data(OptTreeNode*, const char* name);
 void* get_rule_type_data(OptTreeNode*, option_type_t);
             
+bool otn_has_plugin(OptTreeNode* otn, const char* name);
+
 static inline bool otn_has_plugin(OptTreeNode* otn, int id)
 { return (otn->plugins & (0x1 << id)) != 0; }
     

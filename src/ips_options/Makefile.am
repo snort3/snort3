@@ -7,8 +7,7 @@ plugin_list = \
 ips_ack.cc \
 ips_asn1.cc \
 asn1_detect.cc asn1_detect.h \
-ips_base64_data.cc \
-ips_base64_decode.cc \
+ips_base64.cc \
 ips_byte_test.cc \
 ips_byte_jump.cc \
 ips_cvs.cc \
@@ -16,6 +15,7 @@ ips_dsize.cc \
 ips_flags.cc \
 ips_fragbits.cc \
 ips_fragoffset.cc \
+ips_http.cc \
 ips_icmp_id.cc \
 ips_icmp_seq.cc \
 ips_icode.cc \
@@ -24,6 +24,7 @@ ips_ipopts.cc \
 ips_isdataat.cc \
 ips_itype.cc \
 ips_pkt_data.cc \
+ips_raw_data.cc \
 ips_react.cc \
 ips_resp.cc \
 ips_rpc.cc \
@@ -32,22 +33,22 @@ ips_seq.cc \
 ips_session.cc \
 ips_tos.cc \
 ips_ttl.cc \
-ips_window.cc \
-ips_urilen.cc ips_urilen.h
+ips_urilen.cc \
+ips_window.cc
 
 libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
 extract.cc extract.h \
 ips_content.cc ips_content.h  \
-ips_file_data.cc ips_file_data.h \
+ips_file_data.cc \
 ips_flow.cc ips_flow.h \
 ips_flowbits.cc ips_flowbits.h \
 ips_ip_proto.cc ips_ip_proto.h \
 ips_luajit.cc ips_luajit.h \
 ips_options.cc ips_options.h \
 ips_pcre.cc ips_pcre.h \
-ips_so.cc \
-replace.cc replace.h
+ips_replace.cc ips_replace.h \
+ips_so.cc
 
 if STATIC_IPS_OPTIONS
 libips_options_a_SOURCES += $(plugin_list)
@@ -64,15 +65,10 @@ libips_asn1_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_asn1_la_LDFLAGS = -export-dynamic -shared
 libips_asn1_la_SOURCES = ips_asn1.cc asn1_detect.cc asn1_detect.h
 
-optlib_LTLIBRARIES += libips_base64_data.la
-libips_base64_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_base64_data_la_LDFLAGS = -export-dynamic -shared
-libips_base64_data_la_SOURCES = ips_base64_data.cc
-
-optlib_LTLIBRARIES += libips_base64_decode.la
-libips_base64_decode_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_base64_decode_la_LDFLAGS = -export-dynamic -shared
-libips_base64_decode_la_SOURCES = ips_base64_decode.cc
+optlib_LTLIBRARIES += libips_base64.la
+libips_base64_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_base64_la_LDFLAGS = -export-dynamic -shared
+libips_base64_la_SOURCES = ips_base64.cc
 
 optlib_LTLIBRARIES += libips_byte_test.la
 libips_byte_test_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -108,6 +104,11 @@ optlib_LTLIBRARIES += libips_fragoffset.la
 libips_fragoffset_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_fragoffset_la_LDFLAGS = -export-dynamic -shared
 libips_fragoffset_la_SOURCES = ips_fragoffset.cc
+
+optlib_LTLIBRARIES += libips_http.la
+libips_http_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_http_la_LDFLAGS = -export-dynamic -shared
+libips_http_la_SOURCES = ips_http.cc
 
 optlib_LTLIBRARIES += libips_icmp_id.la
 libips_icmp_id_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -148,6 +149,11 @@ optlib_LTLIBRARIES += libips_pkt_data.la
 libips_pkt_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_pkt_data_la_LDFLAGS = -export-dynamic -shared
 libips_pkt_data_la_SOURCES = ips_pkt_data.cc
+
+optlib_LTLIBRARIES += libips_raw_data.la
+libips_raw_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_raw_data_la_LDFLAGS = -export-dynamic -shared
+libips_raw_data_la_SOURCES = ips_raw_data.cc
 
 optlib_LTLIBRARIES += libips_react.la
 libips_react_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

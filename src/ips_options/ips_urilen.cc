@@ -19,8 +19,6 @@
  ** USA
  */
 
-#include "ips_urilen.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -44,6 +42,8 @@
 #include "detection/detection_defines.h"
 #include "detection_util.h"
 #include "framework/ips_option.h"
+#include "framework/inspector.h"
+#include "flow/flow.h"
 
 static const char* s_name = "urilen";
 
@@ -52,7 +52,7 @@ static THREAD_LOCAL PreprocStats urilenCheckPerfStats;
 
 static PreprocStats* uc_get_profile(const char* key)
 {
-    if ( !strcmp(key, "urilen_check") )
+    if ( !strcmp(key, s_name) )
         return &urilenCheckPerfStats;
 
     return nullptr;
@@ -67,6 +67,15 @@ static PreprocStats* uc_get_profile(const char* key)
 #define URILEN_CHECK_LT 3
 #define URILEN_CHECK_RG 4
 
+struct UriLenCheckData 
+{
+    uint16_t urilen;
+    uint16_t urilen2;
+    char oper;
+    const char* key;
+
+};
+
 class UriLenOption : public IpsOption
 {
 public:
@@ -77,7 +86,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     UriLenCheckData config;
@@ -98,7 +107,7 @@ uint32_t UriLenOption::hash() const
 
     mix(a,b,c);
 
-    a += data->uri_buf;
+    a += strcmp(data->key, "http_uri");
     b += 0;
 
     mix_str(a,b,c,get_name());
@@ -119,7 +128,7 @@ bool UriLenOption::operator==(const IpsOption& ips) const
     if ((left->urilen == right->urilen)
             && (left->urilen2 == right->urilen2)
             && (left->oper == right->oper)
-            && (left->uri_buf == right->uri_buf))
+            && (!strcmp(left->key, right->key)) )
     {
         return true;
     }
@@ -127,16 +136,18 @@ bool UriLenOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int UriLenOption::eval(Packet*)
+int UriLenOption::eval(Cursor&, Packet* p)
 {
     UriLenCheckData *udata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
-    const HttpBuffer* hb = GetHttpBuffer((HTTP_BUFFER)udata->uri_buf);
-    PROFILE_VARS;
+    InspectionBuffer hb;
 
+    PROFILE_VARS;
     PREPROC_PROFILE_START(urilenCheckPerfStats);
 
-    if ( !hb )
+    if ( !p->flow || !p->flow->clouseau ||
+         // FIXIT cache id at parse time for runtime use
+         !p->flow->clouseau->get_buf(udata->key, p, hb) )
     {
         PREPROC_PROFILE_END(urilenCheckPerfStats);
         return rval;
@@ -145,26 +156,25 @@ int UriLenOption::eval(Packet*)
     switch (udata->oper)
     {
         case URILEN_CHECK_EQ:
-            if (udata->urilen == hb->length)
+            if (udata->urilen == hb.len)
                 rval = DETECTION_OPTION_MATCH;
             break;
         case URILEN_CHECK_GT:
-            if (udata->urilen < hb->length)
+            if (udata->urilen < hb.len)
                 rval = DETECTION_OPTION_MATCH;
             break;
         case URILEN_CHECK_LT:
-            if (udata->urilen > hb->length)
+            if (udata->urilen > hb.len)
                 rval = DETECTION_OPTION_MATCH;
             break;
         case URILEN_CHECK_RG:
-            if ((udata->urilen <= hb->length) && (udata->urilen2 >= hb->length))
+            if ((udata->urilen <= hb.len) && (udata->urilen2 >= hb.len))
                 rval = DETECTION_OPTION_MATCH;
             break;
         default:
             break;
     }
 
-    /* if the test isn't successful, return 0 */
     PREPROC_PROFILE_END(urilenCheckPerfStats);
     return rval;
 }
@@ -272,9 +282,9 @@ static void urilen_parse(char* argp, UriLenCheckData* ds_ptr)
     if (num_toks > 1)
     {
         if (!strcmp(toks[1], URI_LEN_BUF_NORM))
-            ds_ptr->uri_buf = HTTP_BUFFER_URI;
+            ds_ptr->key = "http_uri";
         else if (!strcmp(toks[1], URI_LEN_BUF_RAW))
-            ds_ptr->uri_buf = HTTP_BUFFER_RAW_URI;
+            ds_ptr->key = "http_raw_uri";
         else
             ParseError("Invalid 'urilen' argument.");
     }
@@ -285,7 +295,7 @@ static void urilen_parse(char* argp, UriLenCheckData* ds_ptr)
             ParseError("Invalid 'urilen' argument.");
         }
 
-        ds_ptr->uri_buf = HTTP_BUFFER_RAW_URI;
+        ds_ptr->key = "http_raw_uri";
     }
 
     mSplitFree(&toks, num_toks);
@@ -308,7 +318,7 @@ static void urilen_dtor(IpsOption* p)
 static void urilen_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile("urilen_check", &urilenCheckPerfStats, uc_get_profile);
+    RegisterOtnProfile(s_name, &urilenCheckPerfStats, uc_get_profile);
 #endif
 }
 

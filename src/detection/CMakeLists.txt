@@ -30,6 +30,10 @@ add_library (detection STATIC
     tag.h 
 )
 
+target_link_libraries( detection
+    framework
+)
+
 install(FILES ${DETECTION_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/detection"
 )

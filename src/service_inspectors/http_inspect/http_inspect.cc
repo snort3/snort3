@@ -283,6 +283,7 @@ public:
     { return new HttpSplitter(c2s); };
 
     void eval(Packet*);
+    bool get_buf(unsigned, Packet*, InspectionBuffer&);
 
     void pinit();
     void pterm();
@@ -305,6 +306,18 @@ HttpInspect::~HttpInspect ()
 
     if ( global )
         Share::release(global);
+}
+
+bool HttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
+{
+    const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);
+
+    if ( !h )
+        return false;
+
+    b.data = h->buf;
+    b.len = h->length;
+    return true;
 }
 
 bool HttpInspect::configure (SnortConfig* sc)
@@ -482,17 +495,20 @@ static void hs_reset()
 
 //-------------------------------------------------------------------------
 
-static const char* contents =
-    "http_client_body "
-    "http_cookie "
-    "http_raw_cookie "
-    "http_header "
-    "http_raw_header "
-    "http_method "
-    "http_uri "
-    "http_raw_uri  "
-    "http_stat_code "
-    "http_stat_msg ";
+static const char* buffers[] =
+{
+    "http_client_body",
+    "http_cookie",
+    "http_header",
+    "http_method",
+    "http_raw_cookie",
+    "http_raw_header",
+    "http_raw_uri",
+    "http_stat_code",
+    "http_stat_msg",
+    "http_uri",
+    nullptr
+};
 
 static const InspectApi hs_api =
 {
@@ -506,8 +522,8 @@ static const InspectApi hs_api =
     },
     IT_SERVICE,
     PROTO_BIT__TCP,
+    buffers,
     "http",
-    contents,
     hs_init,
     hs_term,
     hs_ctor,
@@ -517,8 +533,7 @@ static const InspectApi hs_api =
     nullptr, // ssn
     hs_sum,
     hs_stats,
-    hs_reset,
-    nullptr  // getbuf
+    hs_reset
 };
 
 #ifdef BUILDING_SO

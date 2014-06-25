@@ -81,7 +81,7 @@ The following pointers will help you get started:
         --enable-ha --prefix=/home/rcombs/install --enable-debug
         --enable-debug-msgs
 
-* examples/README explains how to build the example plugins.
+* extra/README explains how to build the example plugins.
 
 * if you want to build the documentation, you will need to install
   asciidoc.  you will also need dblatex to build the pdf manual.
@@ -92,7 +92,6 @@ The following pointers will help you get started:
     cd Snort++
     mkdir Cbuild
     cd Cbuild
-    ccmake
     cmake ..
 
 * An alternate method for building with cmake and make is to run the

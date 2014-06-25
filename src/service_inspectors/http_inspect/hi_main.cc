@@ -1012,7 +1012,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
                      detect_data_size = 0;
                  }
 
-                 setFileDataPtr((uint8_t *)session->server.response.body, (uint16_t)detect_data_size);
+                 set_file_data((uint8_t *)session->server.response.body, detect_data_size);
 
                  if (PacketHasPAFPayload(p)
                      && file_api->file_process(p,(uint8_t *)session->server.response.body, (uint16_t)session->server.response.body_size,
@@ -1106,6 +1106,7 @@ void FreeHttpsessionData(void *data)
     file_api->free_mime_session(hsd->mime_ssn);
 }
 
+// FIXIT this should leverage inspector get_buf()
 int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     HttpsessionData* hsd = get_session_data(flow);
@@ -1141,7 +1142,7 @@ int IsGzipData(Flow* flow)
     if(hsd == NULL)
         return -1;
 
-    if((hsd->log_flags & HTTP_LOG_GZIP_DATA) && (file_data_ptr.len > 0 ))
+    if((hsd->log_flags & HTTP_LOG_GZIP_DATA) && (g_file_data.len > 0 ))
         return 0;
     else
         return -1;
@@ -1152,8 +1153,8 @@ int GetHttpGzipData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     if(!IsGzipData(flow))
     {
-        *buf = file_data_ptr.data;
-        *len = file_data_ptr.len;
+        *buf = g_file_data.data;
+        *len = g_file_data.len;
         *type = EVENT_INFO_GZIP_DATA;
         return 1;
     }
@@ -1174,7 +1175,7 @@ int IsJSNormData(Flow* flow)
     if(hsd == NULL)
         return -1;
 
-    if((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && (file_data_ptr.len > 0 ))
+    if((hsd->log_flags & HTTP_LOG_JSNORM_DATA) && (g_file_data.len > 0 ))
         return 0;
     else
         return -1;
@@ -1185,8 +1186,8 @@ int GetHttpJSNormData(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     if(!IsJSNormData(flow))
     {
-        *buf = file_data_ptr.data;
-        *len = file_data_ptr.len;
+        *buf = g_file_data.data;
+        *len = g_file_data.len;
         *type = EVENT_INFO_JSNORM_DATA;
         return 1;
     }

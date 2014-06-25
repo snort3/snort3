@@ -31,7 +31,7 @@
 #include "protocols/packet.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "codecs/ipv6_util.h"
+#include "codecs/ip/ipv6_util.h"
 
 
 namespace
@@ -104,7 +104,9 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->ip6_extension_count++;
     next_prot_id = dsthdr->ip6dest_nxt;
 
-    return true;
+    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
+        return true;
+    return false;
 }
 
 

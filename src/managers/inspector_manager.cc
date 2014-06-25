@@ -89,6 +89,7 @@ PHInstance::PHInstance(PHClass& p) : pp_class(p)
 {
     Module* mod = ModuleManager::get_module(p.api.base.name);
     handler = p.api.ctor(mod);
+    handler->set_api(&p.api);
 }
 
 typedef list<PHGlobal*> PHGlobalList;
@@ -183,6 +184,22 @@ void InspectorManager::dump_plugins()
 
     for ( const auto* p : s_handlers )
         d.dump(p->api.base.name, p->api.base.version);
+}
+
+void InspectorManager::dump_buffers()
+{
+    Dumper d("Inspection Buffers");
+
+    for ( const auto* p : s_handlers )
+    {
+        const char** b = p->api.buffers;
+
+        while ( b && *b )
+        {
+            d.dump(p->api.base.name, *b);
+            ++b;
+        }
+    }
 }
 
 void InspectorManager::release_plugins ()

@@ -69,7 +69,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     TcpAckCheckData config;
@@ -111,7 +111,7 @@ bool TcpAckOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int TcpAckOption::eval(Packet *p)
+int TcpAckOption::eval(Cursor&, Packet *p)
 {
     TcpAckCheckData *ackCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

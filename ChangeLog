@@ -1,3 +1,35 @@
+93
+-- updated example inspector dpx.cc api
+-- misc tweaks
+
+92
+-- fixed fast_pattern only auto configuration
+-- more detection buffer cleanup
+
+91
+-- eliminated more RULE_OPTION_TYPE_*
+-- converted remaining rule options over to use cursor
+-- added IpsOption CursorActionType
+-- finally eliminated doe_ptr and friends ... yay!
+-- merged ips_option_base64_{data,decode}.cc
+-- fast_pattern_only (previously fast_pattern:only) is gone
+
+90
+-- added InspectApi.buffers and Inspector::getbuf()
+-- changed http_* rule options to use Inspector::getbuf()
+-- changed luajit rule option to use the cursor
+
+89
+-- pulled in the latest from tom and josh
+
+88
+-- overhauled content and pcre detection to use Cursor
+-- http_* are now first class rule options
+-- removed experimental contents and get_buf() from InspectApi
+-- changed call to acquire daq with count 0 (all)
+-- changed replace to be 1st class rule option
+-- split boyer-moore functions out of mstring module
+
 87
 -- renamed api function typedefs to camel case for consistency and to match
    style guide

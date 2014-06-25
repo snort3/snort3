@@ -62,6 +62,8 @@
 
 #include "ipv6_port.h"
 
+static THREAD_LOCAL DataBuffer DecodeBuffer;
+
 /*
  * Used to keep track of pipelined commands and the last one
  * that resulted in a
@@ -1013,7 +1015,7 @@ int initialize_ftp(FTP_SESSION *session, Packet *p, int iMode)
         return iRet;
     }
 
-    if (Is_DetectFlag(FLAG_ALT_DECODE))
+    if ( DecodeBuffer.len )
     {
         /* Normalized data will always be in decode buffer */
         if ( (iMode == FTPP_SI_CLIENT_MODE) ||
@@ -1345,7 +1347,7 @@ int check_ftp(FTP_SESSION  *ftpssn, Packet *p, int iMode)
     const unsigned char *read_ptr;
     const unsigned char *end = p->data + p->dsize;
 
-    if (Is_DetectFlag(FLAG_ALT_DECODE))
+    if ( DecodeBuffer.len )
         end = DecodeBuffer.data + DecodeBuffer.len;
 
     if (iMode == FTPP_SI_CLIENT_MODE)

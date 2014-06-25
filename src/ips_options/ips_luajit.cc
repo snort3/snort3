@@ -25,7 +25,7 @@
 #include "managers/ips_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
-#include "detection/detection_util.h"
+#include "framework/cursor.h"
 
 using namespace std;
 
@@ -39,53 +39,30 @@ static const char* opt_eval = "eval";
 // luajit ffi stuff
 //-------------------------------------------------------------------------
 
-enum BufferType
-{
-    BT_PAYLOAD,
-    BT_URI
-};
-
 struct Buffer
 {
-    enum BufferType type;
+    const char* type;
     const uint8_t* data;
-    uint32_t len;
+    unsigned len;
 };
 
 extern "C" {
 // ensure Lua can link with this
-const Buffer* get_buffer(BufferType);
+const Buffer* get_buffer();
 }
 
 static THREAD_LOCAL Packet* packet;
+static THREAD_LOCAL Cursor* cursor;
+static THREAD_LOCAL Buffer buf;
 
 //namespace snort_ffi
 //{
-const Buffer* get_buffer(BufferType type)
+const Buffer* get_buffer()
 {
-    static Buffer buf;
-    buf.type = type;
-
-    if ( type == BT_PAYLOAD && packet )
-    {
-        buf.data = packet->data;
-        buf.len = packet->dsize;
-        return &buf;
-    }
-    else if ( type != BT_PAYLOAD )
-    {
-        const HttpBuffer* p = GetHttpBuffer((HTTP_BUFFER)type);
-
-        if ( p )
-        {
-            buf.data = p->buf;
-            buf.len = p->length;
-            return &buf;
-        }
-    }
-    buf.data = (uint8_t*)"";
-    buf.len = 0;
-
+    assert(cursor);
+    buf.type = cursor->get_name();
+    buf.data = cursor->start();
+    buf.len = cursor->length();
     return &buf;
 }
 //};
@@ -232,9 +209,10 @@ bool LuaJITOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int LuaJITOption::eval(Packet* p)
+int LuaJITOption::eval(Cursor& c, Packet* p)
 {
     packet = p;
+    cursor = &c;
 
     lua_State* L = lua[get_instance_id()];
     lua_getglobal(L, opt_eval);

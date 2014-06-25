@@ -406,8 +406,8 @@ static const InspectApi pm_api =
     },
     IT_PACKET,
     PROTO_BIT__ALL,
+    nullptr, // buffers
     nullptr, // service
-    nullptr, // contents
     pm_init,
     nullptr, // term
     pm_ctor,
@@ -417,8 +417,7 @@ static const InspectApi pm_api =
     nullptr, // ssn
     pm_sum,
     pm_stats,
-    pm_reset,
-    nullptr  // getbuf
+    pm_reset
 };
 
 const BaseApi* nin_perf_monitor = &pm_api.base;

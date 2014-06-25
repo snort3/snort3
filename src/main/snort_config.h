@@ -227,10 +227,9 @@ struct SnortConfig
      * and for Icmp we map the dst port to the Icmp type. This
      * allows us to use the decode packet information to in O(1)
      * select a group of rules to apply to the packet.  These
-     * rules may have uricontent, content, or they may be no content
-     * rules, or any combination. We process the uricontent 1st,
-     * then the content, and then the no content rules for udp/tcp
-     * and icmp, than we process the ip rules. */
+     * rules may or may not have content.  We process the content
+     * 1st and then the no content rules for udp/tcp and icmp, and
+     * then we process the ip rules. */
     PORT_RULE_MAP *prmIpRTNX;
     PORT_RULE_MAP *prmTcpRTNX;
     PORT_RULE_MAP *prmUdpRTNX;

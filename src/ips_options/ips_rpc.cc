@@ -83,7 +83,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     RpcCheckData config;
@@ -132,7 +132,7 @@ bool RpcOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int RpcOption::eval(Packet *p)
+int RpcOption::eval(Cursor&, Packet *p)
 {
     RpcCheckData *ds_ptr = &config;
     unsigned char* c=(unsigned char*)p->data;

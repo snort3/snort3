@@ -174,7 +174,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
     bool is_set(uint8_t bits)
     { return (config.type & bits) != 0; };
@@ -269,7 +269,7 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int FlowBitsOption::eval(Packet *p)
+int FlowBitsOption::eval(Cursor&, Packet *p)
 {
     FLOWBITS_OP *flowbits = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

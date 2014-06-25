@@ -130,7 +130,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     CvsRuleOption config;
@@ -172,7 +172,7 @@ bool CvsOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int CvsOption::eval(Packet *p)
+int CvsOption::eval(Cursor&, Packet *p)
 {
     int ret;
     int rval = DETECTION_OPTION_NO_MATCH;

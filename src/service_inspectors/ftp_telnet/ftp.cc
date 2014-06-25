@@ -94,7 +94,7 @@ static void FTPDataProcess(Packet *p, FTP_DATA_SESSION *data_ssn)
 {
     int status;
 
-    setFileDataPtr((uint8_t *)p->data, (uint16_t)p->dsize);
+    set_file_data((uint8_t *)p->data, p->dsize);
 
     status = file_api->file_process(p, (uint8_t *)p->data,
         (uint16_t)p->dsize, data_ssn->position, data_ssn->direction, false);
@@ -717,8 +717,8 @@ static const InspectApi fs_api =
     //IT_SESSION,  // FIXIT should be service only
     IT_SERVICE,
     PROTO_BIT__TCP,
+    nullptr, // buffers
     "ftp",   // FIXIT add ftp-data inspector
-    nullptr, // contents
     fs_init,
     nullptr, // term
     fs_ctor,
@@ -728,14 +728,13 @@ static const InspectApi fs_api =
     nullptr, // ssn
     fs_sum,
     fs_stats,
-    fs_reset,
-    nullptr  // getbuf
+    fs_reset
 };
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &tn_api,
+    &tn_api.base,
     &fc_api.base,
     &fs_api.base,
     nullptr

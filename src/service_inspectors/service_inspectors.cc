@@ -41,6 +41,7 @@ const BaseApi* service_inspectors[] =
 {
     sin_http_global,
     sin_http_server,
+
 #ifdef STATIC_INSPECTORS
     sin_bo,
     sin_ftp_client,

@@ -37,6 +37,7 @@
 
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
+#include "codecs/ip/ipv6_util.h"
 
 // Encoder FOO
 #ifdef HAVE_DUMBNET_H
@@ -290,7 +291,7 @@ void PacketManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig*
     static int codec_id = 1;
     std::vector<uint16_t> ids;
 
-    if (api_instantiated(cd_api)) // automatically marks as instantiated
+    if (api_instantiated(cd_api)) // automatically saves this api as instantiated
         return;
 
     if (codec_id >= UINT8_MAX)
@@ -474,6 +475,9 @@ void PacketManager::decode(
         else
             s_stats[other_codecs]++;
     }
+
+    if (p->ip6_extension_count > 0)
+        ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
     p->dsize = len;

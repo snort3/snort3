@@ -6,8 +6,7 @@ SET( PLUGIN_LIST
     ips_asn1.cc
     asn1_detect.cc
     asn1_detect.h
-    ips_base64_data.cc
-    ips_base64_decode.cc
+    ips_base64.cc
     ips_byte_test.cc
     ips_byte_jump.cc
     ips_cvs.cc
@@ -15,7 +14,7 @@ SET( PLUGIN_LIST
     ips_flags.cc
     ips_fragbits.cc
     ips_fragoffset.cc
-    ips_ftpbounce.cc
+    ips_http.cc
     ips_icmp_id.cc
     ips_icmp_seq.cc
     ips_icode.cc
@@ -24,6 +23,7 @@ SET( PLUGIN_LIST
     ips_isdataat.cc 
     ips_itype.cc 
     ips_pkt_data.cc
+    ips_raw_data.cc
     ips_react.cc
     ips_resp.cc
     ips_rpc.cc
@@ -34,7 +34,6 @@ SET( PLUGIN_LIST
     ips_ttl.cc
     ips_window.cc
     ips_urilen.cc
-    ips_urilen.h
 )
 
 set (IPS_SOURCES
@@ -45,7 +44,6 @@ set (IPS_SOURCES
     ips_content.cc 
     ips_content.h 
     ips_file_data.cc 
-    ips_file_data.h
     ips_flow.cc 
     ips_flow.h
     ips_flowbits.cc 
@@ -58,9 +56,9 @@ set (IPS_SOURCES
     ips_options.h
     ips_pcre.cc 
     ips_pcre.h
+    ips_replace.cc 
+    ips_replace.h
     ips_so.cc
-    replace.cc 
-    replace.h
 )
 
 
@@ -74,14 +72,13 @@ if (STATIC_IPS_OPTIONS)
 
 else (STATIC_IPS_OPTIONS)
 
-    add_library ( ips_options SHARED
+    add_library ( ips_options STATIC
         ${IPS_SOURCES}
     )
 
     add_shared_library(ips_ack ips_options ips_ack.cc)
     add_shared_library(ips_asn1 ips_options ips_asn1.cc asn1_detect.cc asn1_detect.h)
-    add_shared_library(ips_base64_data ips_options ips_base64_data.cc)
-    add_shared_library(ips_base64_decode ips_options ips_base64_decode.cc)
+    add_shared_library(ips_base64 ips_options ips_base64.cc)
     add_shared_library(ips_byte_test ips_options ips_byte_test.cc)
     add_shared_library(ips_byte_jump ips_options ips_byte_jump.cc)
     add_shared_library(ips_cvs ips_options ips_cvs.cc)
@@ -89,13 +86,14 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_flags ips_options ips_flags.cc)
     add_shared_library(ips_fragbits ips_options ips_fragbits.cc)
     add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc)
-    add_shared_library(ips_ftpbounce ips_options ips_ftpbounce.cc)
+    add_shared_library(ips_http ips_options ips_http.cc)
     add_shared_library(ips_icode ips_options ips_icode.cc)
     add_shared_library(ips_id ips_options ips_id.cc)
     add_shared_library(ips_ipopts ips_options ips_ipopts.cc)
     add_shared_library(ips_isdataat ips_options ips_isdataat.cc)
     add_shared_library(ips_itype ips_options ips_itype.cc)
     add_shared_library(ips_pkt_data ips_options ips_pkt_data.cc)
+    add_shared_library(ips_raw_data ips_options ips_raw_data.cc)
     add_shared_library(ips_react ips_options ips_react.cc)
     add_shared_library(ips_resp ips_options ips_resp.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)

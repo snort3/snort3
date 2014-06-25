@@ -6,20 +6,17 @@ noinst_LIBRARIES = libcodecs.a
 noinst_LIBRARIES += libcodec_utils.a
 
 x_include_HEADERS = \
+codec_events.h \
+decode_module.h \
 sf_protocols.h
 
 libcodecs_a_SOURCES = \
 codec_api.cc \
 codec_api.h \
-decode.h \
-decode_module.h \
-decode_module.h
+sf_protocols.h
 
 libcodec_utils_a_SOURCES = \
 codec_events.cc \
-codec_events.h \
-ipv6_util.h \
-ipv6_util.cc  \
 checksum.h \
 checksum.cc
 

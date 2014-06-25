@@ -49,13 +49,14 @@
 #include "ips_options/ips_flowbits.h"
 #include "ips_options/ips_content.h"
 #include "ips_options/ips_pcre.h"
-#include "ips_options/replace.h"
+#include "ips_options/ips_replace.h"
 #include "fpdetect.h"
 #include "ppm.h"
 #include "profiler.h"
 #include "filters/detection_filter.h"
 #include "main/thread.h"
 #include "framework/ips_option.h"
+#include "framework/cursor.h"
 #include "managers/ips_manager.h"
 #include "managers/packet_manager.h"
 
@@ -317,19 +318,10 @@ SFXHASH * DetectionTreeHashTableNew(void)
 static const char *option_type_str[] =
 {
     "RULE_OPTION_TYPE_LEAF_NODE",
-    "RULE_OPTION_TYPE_BASE64_DATA",
-    "RULE_OPTION_TYPE_BASE64_DECODE",
-    "RULE_OPTION_TYPE_BYTE_EXTRACT",
-    "RULE_OPTION_TYPE_BYTE_JUMP",
-    "RULE_OPTION_TYPE_BYTE_TEST",
     "RULE_OPTION_TYPE_CONTENT",
-    "RULE_OPTION_TYPE_CONTENT_URI",
-    "RULE_OPTION_TYPE_FILE_DATA",
-    "RULE_OPTION_TYPE_FLOW",
     "RULE_OPTION_TYPE_FLOWBIT",
     "RULE_OPTION_TYPE_IP_PROTO",
     "RULE_OPTION_TYPE_PCRE",
-    "RULE_OPTION_TYPE_PKT_DATA",
     "RULE_OPTION_TYPE_OTHER"
 };
 
@@ -388,27 +380,25 @@ int add_detection_option_tree(
 THREAD_LOCAL uint64_t rule_eval_pkt_count = 0;
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t *node, detection_option_eval_data_t *eval_data)
+    detection_option_tree_node_t *node, detection_option_eval_data_t *eval_data,
+    Cursor& orig_cursor)
 {
-    int i, result = 0, prior_result = 0;
+    int i, result = 0; //, prior_result = 0;
     int rval = DETECTION_OPTION_NO_MATCH;
-    const uint8_t *orig_doe_ptr;
     char tmp_noalert_flag = 0;
-    PatternMatchData dup_content_option_data;
-    PcreData dup_pcre_option_data;
-    const uint8_t *dp = NULL;
+    Cursor cursor = orig_cursor;
+    PatternMatchData* content_data;
+    PcreData* pcre_data;
     char continue_loop = 1;
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
-    uint16_t save_dflags = 0;
     uint64_t cur_eval_pkt_count = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
     NODE_PROFILE_VARS;
 
     if (!node || !eval_data || !eval_data->p || !eval_data->pomd)
         return 0;
 
-    save_dflags = Get_DetectFlags();
     dot_node_state_t* state = node->state + get_instance_id();
 
     /* see if evaluated it before ... */
@@ -441,64 +431,13 @@ int detection_option_node_evaluate(
     state->last_check.flowbit_failed = 0;
 
     /* Save some stuff off for repeated pattern tests */
-    orig_doe_ptr = doe_ptr;
-
-    if ((node->option_type == RULE_OPTION_TYPE_CONTENT) ||
-            (node->option_type == RULE_OPTION_TYPE_CONTENT_URI))
+    if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
     {
-        PatternMatchDuplicatePmd(node->option_data, &dup_content_option_data);
-
-        if (dup_content_option_data.buffer_func == CHECK_URI_PATTERN_MATCH)
-        {
-            const HttpBuffer* hb = GetHttpBuffer(dup_content_option_data.http_buffer);
-            dp = hb ? hb->buf : NULL;  // FIXTHIS set length too
-        }
-        else if (dup_content_option_data.rawbytes == 0)
-        {
-            /* If AltDetect is set by calling the rule options which set it,
-             * we should use the Alt Detect before checking for any other buffers.
-             * Alt Detect will take precedence over the Alt Decode and/or packet data.
-             */
-            if(Is_DetectFlag(FLAG_ALT_DETECT))
-                dp = (uint8_t *)DetectBuffer.data;
-            else if(Is_DetectFlag(FLAG_ALT_DECODE))
-                dp = (uint8_t *)DecodeBuffer.data;
-            else
-                dp = eval_data->p->data;
-        }
-        else
-        {
-            dp = eval_data->p->data;
-        }
+        content_data = content_get_data(node->option_data);
     }
     else if (node->option_type == RULE_OPTION_TYPE_PCRE)
     {
-        HTTP_BUFFER hb_type;
-        PcreDuplicatePcreData(node->option_data, &dup_pcre_option_data);
-        hb_type = (HTTP_BUFFER)(dup_pcre_option_data.options & SNORT_PCRE_HTTP_BUFS);
-
-        if ( hb_type )
-        {
-            const HttpBuffer* hb = GetHttpBuffer(hb_type);
-            dp = hb ? hb->buf : NULL;  // FIXTHIS set length too
-        }
-        else if (!(dup_pcre_option_data.options & SNORT_PCRE_RAWBYTES))
-        {
-            /* If AltDetect is set by calling the rule options which set it,
-             * we should use the Alt Detect before checking for any other buffers.
-             * Alt Detect will take precedence over the Alt Decode and/or packet data.
-             */
-            if(Is_DetectFlag(FLAG_ALT_DETECT))
-                dp = (uint8_t *)DetectBuffer.data;
-            else if(Is_DetectFlag(FLAG_ALT_DECODE))
-                dp = (uint8_t *)DecodeBuffer.data;
-            else
-                dp = eval_data->p->data;
-        }
-        else
-        {
-            dp = eval_data->p->data;
-        }
+        pcre_data = pcre_get_data(node->option_data);
     }
 
     /* No, haven't evaluated this one before... Check it. */
@@ -528,7 +467,8 @@ int detection_option_node_evaluate(
                         {
                             if (otn->sigInfo.services[svc_idx].service_ordinal != 0)
                             {
-                                if (eval_data->p->application_protocol_ordinal == otn->sigInfo.services[svc_idx].service_ordinal)
+                                if (eval_data->p->application_protocol_ordinal ==
+                                    otn->sigInfo.services[svc_idx].service_ordinal)
                                 {
                                     check_ports = 0;
                                     break; /* out of for */
@@ -574,16 +514,17 @@ int detection_option_node_evaluate(
             case RULE_OPTION_TYPE_CONTENT:
                 if (node->evaluate)
                 {
+#if 0
                     /* This will be set in the fast pattern matcher if we found
                      * a content and the rule option specifies not that
                      * content. Essentially we've already evaluated this rule
                      * option via the content option processing since only not
                      * contents that are not relative in any way will have this
                      * flag set */
-                    if (dup_content_option_data.exception_flag)
+                    if (content_data->last_check)
                     {
                         PmdLastCheck* last_check =
-                            dup_content_option_data.last_check + get_instance_id();
+                            content_data->last_check + get_instance_id();
 
                         if ((last_check->ts.tv_sec == eval_data->p->pkth->ts.tv_sec) &&
                             (last_check->ts.tv_usec == eval_data->p->pkth->ts.tv_usec) &&
@@ -594,32 +535,14 @@ int detection_option_node_evaluate(
                             break;
                         }
                     }
-
-                    rval = eval_dup_content(
-                        node->option_data, eval_data->p, &dup_content_option_data);
-                }
-                break;
-            case RULE_OPTION_TYPE_CONTENT_URI:
-                if (node->evaluate)
-                {
-                    rval = eval_dup_content(
-                        node->option_data, eval_data->p, &dup_content_option_data);
+#endif
+                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
                 break;
             case RULE_OPTION_TYPE_PCRE:
                 if (node->evaluate)
                 {
-                    rval = eval_dup_pcre(
-                        node->option_data, eval_data->p, &dup_pcre_option_data);
-                }
-                break;
-            case RULE_OPTION_TYPE_PKT_DATA:
-            case RULE_OPTION_TYPE_FILE_DATA:
-            case RULE_OPTION_TYPE_BASE64_DATA:
-                if (node->evaluate)
-                {
-                    save_dflags = Get_DetectFlags();
-                    rval = node->evaluate(node->option_data, eval_data->p);
+                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 }
                 break;
             case RULE_OPTION_TYPE_FLOWBIT:
@@ -628,7 +551,7 @@ int detection_option_node_evaluate(
                     flowbits_setoperation = FlowBits_SetOperation(node->option_data);
                     if (!flowbits_setoperation)
                     {
-                        rval = node->evaluate(node->option_data, eval_data->p);
+                        rval = node->evaluate(node->option_data, cursor, eval_data->p);
                     }
                     else
                     {
@@ -639,7 +562,7 @@ int detection_option_node_evaluate(
                 break;
             default:
                 if (node->evaluate)
-                    rval = node->evaluate(node->option_data, eval_data->p);
+                    rval = node->evaluate(node->option_data, cursor, eval_data->p);
                 break;
         }
 
@@ -689,7 +612,6 @@ int detection_option_node_evaluate(
                     NODE_PROFILE_END_MATCH(node);
                 }
                 state->last_check.result = result;
-                Reset_DetectFlags(save_dflags);
                 return result;
             }
         }
@@ -700,17 +622,11 @@ int detection_option_node_evaluate(
         /* Passed, check the children. */
         if (node->num_children)
         {
-            const uint8_t *tmp_doe_ptr = doe_ptr;
-            const uint8_t tmp_doe_flags = doe_buf_flags;
-
             for (i=0;i<node->num_children; i++)
             {
                 int j = 0;
                 detection_option_tree_node_t *child_node = node->children[i];
                 dot_node_state_t* child_state = child_node->state + get_instance_id();
-
-                /* reset the DOE ptr for each child from here */
-                SetDoePtr(tmp_doe_ptr, tmp_doe_flags);
 
                 for (j = 0; j < NUM_BYTE_EXTRACT_VARS; j++)
                 {
@@ -762,7 +678,9 @@ int detection_option_node_evaluate(
                     }
                 }
 
-                child_state->result = detection_option_node_evaluate(node->children[i], eval_data);
+                child_state->result = detection_option_node_evaluate(
+                    node->children[i], eval_data, cursor);
+
                 if (child_node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
                 {
                     /* Leaf node won't have any children but will return success
@@ -783,7 +701,6 @@ int detection_option_node_evaluate(
                     {
                         /* bail if we exceeded time */
                         state->last_check.result = result;
-                        Reset_DetectFlags(save_dflags);
                         return result;
                     }
                 }
@@ -798,8 +715,6 @@ int detection_option_node_evaluate(
              * rule option */
             if (result == node->num_children)
                 continue_loop = 0;
-            else
-                SetDoePtr(tmp_doe_ptr, tmp_doe_flags);
 
             /* Don't need to reset since it's only checked after we've gone
              * through the loop at least once and the result will have
@@ -808,16 +723,19 @@ int detection_option_node_evaluate(
             //    node->children[i]->result;
         }
 
+#if 0
+        // FIXIT replace is broken now :(
         if (result - prior_result > 0
             && node->option_type == RULE_OPTION_TYPE_CONTENT
-            && Replace_OffsetStored(&dup_content_option_data) && ScInlineMode())
+            && Replace_OffsetStored(content_data) && ScInlineMode())
         {
             // FIXIT queuing replacements here is premature
             // should be done if / when rule actually fires
             // and at that point, the change can be applied
-            Replace_QueueChange(&dup_content_option_data);
+            Replace_QueueChange(content_data);
             prior_result = result;
         }
+#endif
 
         NODE_PROFILE_TMPSTART(node);
 
@@ -829,44 +747,13 @@ int detection_option_node_evaluate(
 
         if (continue_loop && (rval == DETECTION_OPTION_MATCH) && (node->relative_children))
         {
-            if ((node->option_type == RULE_OPTION_TYPE_CONTENT) ||
-                    (node->option_type == RULE_OPTION_TYPE_CONTENT_URI))
+            if ( node->option_type == RULE_OPTION_TYPE_CONTENT )
             {
-                if (dup_content_option_data.exception_flag)
-                {
-                    continue_loop = 0;
-                }
-                else
-                {
-                    const uint8_t *orig_ptr;
-
-                    if (dup_content_option_data.use_doe)
-                        orig_ptr = (orig_doe_ptr == NULL) ? dp : orig_doe_ptr;
-                    else
-                        orig_ptr = dp;
-
-                    continue_loop = PatternMatchAdjustRelativeOffsets(
-                        node->option_data, &dup_content_option_data,
-                        doe_ptr, orig_ptr);
-                }
+                continue_loop = content_next(content_data);
             }
             else if (node->option_type == RULE_OPTION_TYPE_PCRE)
             {
-                if (dup_pcre_option_data.options & SNORT_PCRE_INVERT)
-                {
-                    continue_loop = 0;
-                }
-                else
-                {
-                    const uint8_t *orig_ptr;
-
-                    if (dup_pcre_option_data.options & SNORT_PCRE_RELATIVE)
-                        orig_ptr = (orig_doe_ptr == NULL) ? dp : orig_doe_ptr;
-                    else
-                        orig_ptr = dp;
-
-                    continue_loop = PcreAdjustRelativeOffsets(&dup_pcre_option_data, doe_ptr - orig_ptr);
-                }
+                continue_loop = pcre_next(pcre_data);
             }
             else
             {
@@ -887,16 +774,13 @@ int detection_option_node_evaluate(
 
         loop_count++;
 
-        if (continue_loop)
-            UpdateDoePtr(orig_doe_ptr, 0);
-
     } while (continue_loop);
 
     if (flowbits_setoperation && (result == DETECTION_OPTION_MATCH))
     {
         /* Do any setting/clearing/resetting/toggling of flowbits here
          * given that other rule options matched. */
-        rval = node->evaluate(node->option_data, eval_data->p);
+        rval = node->evaluate(node->option_data, cursor, eval_data->p);
         if (rval != DETECTION_OPTION_MATCH)
         {
             result = rval;
@@ -920,7 +804,6 @@ int detection_option_node_evaluate(
         NODE_PROFILE_END_MATCH(node);
     }
 
-    Reset_DetectFlags(save_dflags);
     return result;
 }
 

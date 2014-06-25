@@ -51,6 +51,7 @@
 #include "treenodes.h"
 #include "pcrm.h"
 #include "fpcreate.h"
+#include "framework/cursor.h"
 #include "framework/mpse.h"
 #include "bitop.h"
 #include "perf_monitor/perf.h"
@@ -446,13 +447,12 @@ static int detection_option_tree_evaluate(
     }
 #endif
 
+    Cursor c(eval_data->p);
+
     for ( i = 0; i< root->num_children; i++)
     {
-        /* New tree, reset doe_ptr for safety */
-        UpdateDoePtr(NULL, 0);
-
         /* Increment number of events generated from that child */
-        rval += detection_option_node_evaluate(root->children[i], eval_data);
+        rval += detection_option_node_evaluate(root->children[i], eval_data, c);
     }
 
 #ifdef PPM_MGR
@@ -506,12 +506,15 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
         PMX *neg_pmx = (PMX *)ncl->pmx;
         PatternMatchData *neg_pmd = (PatternMatchData *)neg_pmx->PatternMatchData;
 
+        assert(neg_pmd->last_check);
+
         PmdLastCheck* last_check =
             neg_pmd->last_check + get_instance_id();
 
         last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
         last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
-        last_check->packet_number = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
+        last_check->packet_number = (rule_eval_pkt_count
+            + (PacketManager::get_rebuilt_packet_count()));
         last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
     }
 
@@ -1077,11 +1080,11 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
             if ( so && so->get_pattern_count() > 0 )
             {
-                if (Is_DetectFlag(FLAG_ALT_DECODE) && DecodeBuffer.len)
+                if(g_alt_data.len)
                 {
                     start_state = 0;
-                    so->search(DecodeBuffer.data, DecodeBuffer.len,
-                            rule_tree_match, omd, &start_state);
+                    so->search(g_alt_data.data, g_alt_data.len,
+                        rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                     /* Bail if we spent too much time already */
                     if (PPM_PACKET_ABORT_FLAG())
@@ -1089,11 +1092,10 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                 }
 
-                /* Adding this extra search on file data since we no more use DecodeBuffer to decode now*/
-                if(file_data_ptr.len)
+                if(g_file_data.len)
                 {
                     start_state = 0;
-                    so->search(file_data_ptr.data, file_data_ptr.len,
+                    so->search(g_file_data.data, g_file_data.len,
                         rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                     /* Bail if we spent too much time already */

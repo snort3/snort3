@@ -363,16 +363,6 @@ static const CodecApi pppoepkt_disc_api =
 };
 
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &pppoepkt_disc_api.base,
-    nullptr
-};
-#else
-const BaseApi* cd_pppoepkt_disc = &pppoepkt_disc_api.base;
-#endif
-
 
 
 /*******************************************************************
@@ -466,9 +456,11 @@ static const CodecApi pppoepkt_sess_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
+    &pppoepkt_disc_api.base,
     &pppoepkt_sess_api.base,
     nullptr
 };
 #else
+const BaseApi* cd_pppoepkt_disc = &pppoepkt_disc_api.base;
 const BaseApi* cd_pppoepkt_sess = &pppoepkt_sess_api.base;
 #endif

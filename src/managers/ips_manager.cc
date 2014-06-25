@@ -168,7 +168,7 @@ bool IpsManager::get_option(
         ips = (IpsOption*)dup;
     }
 
-    OptFpList* fpl = AddOptFuncToList(ips_option_eval, otn);
+    OptFpList* fpl = AddOptFuncToList(IpsOption::eval, otn);
     fpl->context = ips;
     fpl->type = ips->get_type();
 

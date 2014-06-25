@@ -136,6 +136,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_ah = &ah_api.base;
 #endif
-
-
-

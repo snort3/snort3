@@ -1,11 +1,32 @@
 
-# include directories should match configure.ac::AM_CPPFLAGS
 
-include_directories(${DAQ_INCLUDE_DIR})
-include_directories(${PCAP_INCLUDE_DIR})
-include_directories(${PCRE_INCLUDE_DIR})
-include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
-include_directories(${DNET_INCLUDE_DIR})
+# keeping track of external libraries seperately for use in pkg-config.
+set(EXTERNAL_LIBRARIES
+    ${PCRE_LIBRARIES}
+    ${PCAP_LIBRARIES}
+    ${OPENSSL_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+#    ${OPENSSL_CRYPTO_LIBRARY}  -- part of OPENSSL_LIBRARIES
+    ${LUAJIT_LIBRARIES}
+    ${DAQ_LIBRARIES}
+    ${DNET_LIBRARIES}
+    ${CLANG_CXX_LIBRARY}
+    CACHE INTERNAL "external libraries" FORCE
+)
+
+set(EXTERNAL_INCLUDES
+    ${LUAJIT_INCLUDE_DIR}
+    ${DAQ_INCLUDE_DIR}
+    ${PCAP_INCLUDE_DIR}
+    ${PCRE_INCLUDE_DIR}
+    ${DNET_INCLUDE_DIR}
+    ${OPENSSL_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIRS}
+    CACHE INTERNAL "external INCLUDES" FORCE
+)
+include_directories(${EXTERNAL_INCLUDES})
+
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(detection)
 include_directories(events)
@@ -23,11 +44,9 @@ include_directories(target_based)
 include_directories(time)
 include_directories(utils)
 
-add_executable( snort
-    main.h
-    main.cc
-)
 
+
+# Build options for specific librries
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
         arp_spoof
@@ -36,12 +55,19 @@ if (STATIC_INSPECTORS)
         ftp_telnet
         rpc_decode
     )
-endif(STATIC_INSPECTORS)
+endif()
 
 if (BUILD_UNIT_TESTS)
     set( UNIT_TESTS_LIBRARIES unit_tests)
     add_subdirectory(test)
 endif( BUILD_UNIT_TESTS)
+
+
+#  The main Snort executableRA
+add_executable( snort
+    main.h
+    main.cc
+)
 
 target_link_libraries( snort
     main
@@ -89,16 +115,7 @@ target_link_libraries( snort
     misc_codecs
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
-    ${PCRE_LIBRARIES}
-    ${PCAP_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${DNET_LIBRARIES}
-    ${OPENSSL_CRYPTO_LIBRARY}
-    ${LUAJIT_LIBRARIES}
-    ${DAQ_LIBRARIES}
-    ${DNET_LIBRARIES}
-    ${CLANG_CXX_LIBRARY}
+    ${EXTERNAL_LIBRARIES}
 )
 
 add_subdirectory(actions)
@@ -134,53 +151,3 @@ add_subdirectory(search_engines)
 install(TARGETS snort
     RUNTIME DESTINATION bin
 )
-
-##############################################################################
-#                                                                            #
-#  This is the documents section of the file.  It needs to be in same        #
-#  directory or subdirectory as snort to create a valid file dependency on   #
-#  snort.  To build another .txt file with a dependcy on snort, add the file #
-#  to the BUILT_SOURCES variable located at the top of doc/CMakeLists.txt.   #
-#  If the new file's name is new_file.txt, cmake will automatcially run the  #
-#  command                                                                   #
-#                                                                            #
-#  >>  snort --help-file_name > file_name.txt                                #
-#                                                                            #
-#  to creat the new file. Notice that the extension is missing in the help   #
-#  command. If the command does not exist, the behavior is undefined but     #
-#  will likely lead to error.                                                #
-#                                                                            #
-##############################################################################
-
-
-if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
-
-    foreach(file ${BUILT_SOURCES})
-        set(TARGET_DIR ${CMAKE_BINARY_DIR})
-        set(output ${TARGET_DIR}/${file})
-        get_filename_component(file_name "${file}" NAME_WE)
-
-        add_custom_command(
-            OUTPUT ${output}
-            COMMAND snort --markup --help-${file_name} | sort > ${output}
-            DEPENDS snort
-            COMMENT "Documents: building ${output}"
-        )
-        add_custom_target(doc_${file_name} ALL DEPENDS ${output} )
-
-    endforeach()
-
-
-
-    #  version is different since it outputs to standard out.
-    set(file version.txt)
-
-    set(output ${TARGET_DIR}/${file})
-    add_custom_command(
-        OUTPUT ${output}
-        COMMAND snort -V 2>&1 | grep -v Using > ${output}
-        DEPENDS snort
-        COMMENT "Documents: building ${output}"
-    )
-    add_custom_target(doc_version ALL DEPENDS ${output})
-endif()

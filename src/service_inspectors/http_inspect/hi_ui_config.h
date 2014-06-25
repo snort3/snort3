@@ -160,7 +160,7 @@ struct HTTPINSPECT_CONF
     char enable_xff;
     char log_uri;
     char log_hostname;
-    char unlimited_decompress;
+    bool unlimited_decompress;
     char extract_gzip;
 
    /* Support Extended ascii codes in the URI */

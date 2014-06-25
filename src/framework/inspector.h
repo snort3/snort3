@@ -44,6 +44,14 @@ struct ServiceTag
     bool to_server;
 };
 
+struct InspectionBuffer
+{
+    const uint8_t* data;
+    unsigned len;
+};
+
+struct InspectApi;
+
 //-------------------------------------------------------------------------
 // api for class
 //-------------------------------------------------------------------------
@@ -78,9 +86,19 @@ public:
     void set_service(ServiceId id) { srv_id = id; };
     ServiceId get_service() { return srv_id; };
 
+    // key is listed in api buffers
+    // id-1 is zero based index into buffers array
+    unsigned get_buf_id(const char* key);
+    virtual bool get_buf(const char* key, Packet*, InspectionBuffer&);
+    virtual bool get_buf(unsigned /*id*/, Packet*, InspectionBuffer&)
+    { return false; };
+
     // IT_SERVICE only
     virtual class StreamSplitter* get_splitter(bool /*to_server*/)
     { return nullptr; };
+
+    void set_api(const InspectApi* p)
+    { api = p; };
 
 public:
     static unsigned max_slots;
@@ -91,6 +109,7 @@ protected:
     Inspector();  // internal init only at this point
 
 private:
+    const InspectApi* api;
     unsigned* ref_count;
     ServiceId srv_id;
 };
@@ -109,7 +128,6 @@ typedef Inspector* (*InspectNew)(Module*);
 typedef void (*InspectDelFunc)(Inspector*);
 typedef void (*InspectFunc)();
 typedef class Session* (*InspectSsnFunc)(class Flow*);
-typedef struct ContentBuffer* (*InspectBufFunc)(unsigned);
 
 // FIXIT ensure all provide stats
 struct InspectApi
@@ -118,11 +136,9 @@ struct InspectApi
     InspectorType type;
     uint16_t proto_bits;
 
+    const char** buffers;  // null terminated list of exported buffers
     const char* service;   // nullptr when type != IT_SERVICE
     //ServiceTag tags;     // null terminated list of tags
-
-    // list of thread local detection buffers captured by inspector
-    const char* contents;  // space separated, eg "foo_a foo_b foo_c" 
 
     // main thread funcs - parse time data only
     InspectFunc init;      // allocate process static data
@@ -137,7 +153,6 @@ struct InspectApi
     InspectFunc sum;       // accumulate stats
     InspectFunc stats;     // output stats
     InspectFunc reset;     // clear stats
-    InspectBufFunc getbuf; // 0-based, eg getbuf(1) means foo_b above
 };
 
 #endif

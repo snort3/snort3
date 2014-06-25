@@ -92,7 +92,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     IcmpIdCheckData config;
@@ -134,7 +134,7 @@ bool IcmpIdOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IcmpIdOption::eval(Packet *p)
+int IcmpIdOption::eval(Cursor&, Packet *p)
 {
     IcmpIdCheckData *icmpId = &config;
     PROFILE_VARS;

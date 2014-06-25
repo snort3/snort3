@@ -37,6 +37,7 @@ using namespace std;
 #include "managers/shell.h"
 #include "managers/event_manager.h"
 #include "managers/ips_manager.h"
+#include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "packet_io/trough.h"
@@ -256,7 +257,7 @@ static void config_help_signals(SnortConfig*, const char*)
     exit(0);
 }
 
-enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD };
+enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
@@ -282,6 +283,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         ModuleManager::show_commands(s_markup, val);
         ModuleManager::show_rules(s_markup, val);
         break;
+    case HT_BUF:
+        InspectorManager::dump_buffers();
+        break;
     }
     ModuleManager::term();
     PluginManager::release_plugins();
@@ -306,6 +310,11 @@ static void config_markup(SnortConfig*, const char*)
 static void config_help_gids(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_GID);
+}
+
+static void config_help_buffers(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_BUF);
 }
 
 static void config_help_builtin(SnortConfig* sc, const char* val)
@@ -404,11 +413,6 @@ static void config_conf(SnortConfig*, const char* val)
     lua_conf = SnortStrdup(val);
     SetSnortConfDir(lua_conf);
     set_main_hook(snort_inspect);
-}
-
-static void config_log_alerts(SnortConfig* sc, const char*)
-{
-    sc->output = OUTPUT_LOG;
 }
 
 static void config_line_buffer(SnortConfig* sc, const char*)
@@ -682,9 +686,6 @@ static ConfigFunc basic_opts[] =
     { "O", ConfigObfuscate, 
       "obfuscate the logged IP addresses" },
 
-    { "P", ConfigPacketSnaplen, 
-      "<snap> (same as --snaplen)" },
-
     { "Q", config_inline, 
       "enable inline mode operation" },
 
@@ -697,8 +698,8 @@ static ConfigFunc basic_opts[] =
     { "S", config_set_var, 
       "<n=v> set rules file variable n equal to value v" },
 
-    { "s", config_log_alerts, 
-      "log alert messages to syslog" },
+    { "s", ConfigPacketSnaplen, 
+      "<snap> (same as --snaplen)" },
 
     { "T", config_test_mode, 
       "test and report on the current Snort configuration" },
@@ -780,6 +781,9 @@ static ConfigFunc basic_opts[] =
 
     { "help-builtin", config_help_builtin,
       "<module prefix> output matching builtin rules" },
+
+    { "help-buffers", config_help_buffers,
+      "output available inspection buffers" },
 
     { "help-commands", config_help_commands,
       "<module prefix> output matching commands" },
@@ -863,7 +867,7 @@ static ConfigFunc basic_opts[] =
       "<n> skip 1st n packets", },
 
     { "snaplen", ConfigPacketSnaplen,
-      "<snap> set snaplen of packet (same as -P)", },
+      "<snap> set snaplen of packet (same as -s)", },
 
     { "treat-drop-as-alert", ConfigTreatDropAsAlert,
       "converts drop, sdrop, and reject rules into alert rules during startup" },

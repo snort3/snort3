@@ -1,6 +1,6 @@
 
 
-if(STATIC_DECODERS)
+if(STATIC_CODECS)
     set(PLUGIN_LIST
         cd_gtp.cc
         cd_gtp_module.h

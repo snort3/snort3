@@ -72,7 +72,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet*);
+    int eval(Cursor&, Packet*);
 
 private:
     TcpWinCheckData config;
@@ -115,7 +115,7 @@ bool TcpWinOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int TcpWinOption::eval(Packet *p)
+int TcpWinOption::eval(Cursor&, Packet *p)
 {
     TcpWinCheckData *tcpWinCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;

@@ -170,8 +170,7 @@ static const InspectApi dpx_api
     nullptr, // ssn
     dpx_sum,
     dpx_stats,
-    dpx_reset,
-    nullptr  // getbuf
+    dpx_reset
 };
 
 SO_PUBLIC const BaseApi* snort_plugins[] =

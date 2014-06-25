@@ -941,7 +941,7 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
     }
      */
 
-    setFileDataPtr((uint8_t*)start, (uint16_t)(data_end - start));
+    set_file_data((uint8_t*)start, (data_end - start));
 
     if ((mime_ssn->data_state == STATE_DATA_HEADER) ||
             (mime_ssn->data_state == STATE_DATA_UNKNOWN))
@@ -977,7 +977,7 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
             int detection_size = getDetectionSize(conf->b64_depth, conf->qp_depth,
                     conf->uu_depth, conf->bitenc_depth, (Email_DecodeState *)(mime_ssn->decode_state) );
 
-            setFileDataPtr(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, (uint16_t)detection_size);
+            set_file_data(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, detection_size);
             /*Process file type/file signature*/
             if (file_api->file_process(p,(uint8_t *)((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr,
                     (uint16_t)((Email_DecodeState *)(mime_ssn->decode_state))->decoded_bytes, position, upload, false)
@@ -991,7 +991,7 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
             ResetEmailDecodeState((Email_DecodeState *)(mime_ssn->decode_state));
             p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
             /* Reset the log count when a packet goes through detection multiple times */
-            DetectReset((uint8_t *)p->data, p->dsize);
+            DetectReset();
         }
         switch (mime_ssn->data_state)
         {
@@ -1016,11 +1016,11 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
             DecodeConfig *conf= mime_ssn->decode_conf;
             int detection_size = getDetectionSize(conf->b64_depth, conf->qp_depth,
                     conf->uu_depth, conf->bitenc_depth, (Email_DecodeState *)(mime_ssn->decode_state) );
-            setFileDataPtr(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, (uint16_t)detection_size);
+            set_file_data(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, detection_size);
         }
         else
         {
-            setFileDataPtr(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, 0);
+            set_file_data(((Email_DecodeState *)(mime_ssn->decode_state))->decodePtr, 0);
         }
         if ((data_end_marker != end)||(mime_ssn->state_flags & MIME_FLAG_MIME_END))
         {

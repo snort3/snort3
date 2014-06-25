@@ -37,8 +37,7 @@
 #include "snort.h"
 #include "profiler.h"
 #include "fpdetect.h"
-#include "detection/detection_defines.h"
-#include "detection_util.h"
+#include "framework/cursor.h"
 #include "framework/ips_option.h"
 
 static const char* s_name = "pkt_data";
@@ -58,23 +57,23 @@ static PreprocStats* pd_get_profile(const char* key)
 class PktDataOption : public IpsOption
 {
 public:
-    PktDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_PKT_DATA) { };
+    PktDataOption() : IpsOption(s_name) { };
 
-    int eval(Packet*);
+    CursorActionType get_cursor_type() const
+    { return CAT_SET_RAW; };
+
+    int eval(Cursor&, Packet*);
 };
 
-int PktDataOption::eval(Packet*)
+int PktDataOption::eval(Cursor& c, Packet* p)
 {
-    int rval = DETECTION_OPTION_MATCH;
     PROFILE_VARS;
-
     PREPROC_PROFILE_START(pktDataPerfStats);
 
-    SetDoePtr(NULL, DOE_BUF_STD);
-    DetectFlag_Disable(FLAG_ALT_DETECT);
+    c.reset(p);
 
     PREPROC_PROFILE_END(pktDataPerfStats);
-    return rval;
+    return DETECTION_OPTION_MATCH;
 }
 
 static IpsOption* pkt_data_ctor(

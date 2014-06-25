@@ -35,7 +35,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Packet* p)
+    int eval(Cursor&, Packet* p)
     { return func(data, p); };
 
 private:
