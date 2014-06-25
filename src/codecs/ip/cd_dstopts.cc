@@ -104,7 +104,9 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->ip6_extension_count++;
     next_prot_id = dsthdr->ip6dest_nxt;
 
-    return true;
+    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
+        return true;
+    return false;
 }
 
 
