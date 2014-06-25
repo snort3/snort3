@@ -15,9 +15,6 @@ if ENABLE_NON_ETHER_DECODER
 if STATIC_CODECS
 libroot_codecs_a_SOURCES += \
 cd_linux_sll.cc \
-cd_tr.cc \
-cd_tr_module.h \
-cd_tr_module.cc \
 cd_wlan.cc \
 cd_wlan_module.h \
 cd_wlan_module.cc
@@ -37,12 +34,7 @@ cd_wlan_module.cc
 else
 ehlibdir = $(pkglibdir)/codecs
 
-ehlib_LTLIBRARIES = libcd_tr.la
-libcd_tr_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_tr_la_LDFLAGS = -export-dynamic -shared
-libcd_tr_la_SOURCES = cd_tr.cc cd_tr_module.h cd_tr_module.cc
-
-ehlib_LTLIBRARIES += libcd_wlan.la
+ehlib_LTLIBRARIES = libcd_wlan.la
 libcd_wlan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_wlan_la_LDFLAGS = -export-dynamic -shared
 libcd_wlan_la_SOURCES =  cd_wlan.cc cd_wlan_module.h cd_wlan_module.cc

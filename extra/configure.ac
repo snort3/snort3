@@ -68,6 +68,7 @@ AC_SUBST(AM_CPPFLAGS)
 AC_CONFIG_FILES([ \
     Makefile \
     src/Makefile \
+    src/codecs/Makefile \
     src/inspectors/Makefile \
     src/ips_options/Makefile \
     src/loggers/Makefile \

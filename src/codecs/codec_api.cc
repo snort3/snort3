@@ -58,7 +58,6 @@ extern const BaseApi* cd_igmp;
 extern const BaseApi* cd_mobility;
 extern const BaseApi* cd_mpls;
 extern const BaseApi* cd_no_next;
-extern const BaseApi* cd_pim;
 extern const BaseApi* cd_pgm;
 extern const BaseApi* cd_pppencap;
 extern const BaseApi* cd_pppoepkt_disc;
@@ -73,7 +72,6 @@ extern const BaseApi* cd_vlan;
 #ifndef NO_NON_ETHER_DECODER
 extern const BaseApi* cd_eapol;
 extern const BaseApi* cd_linux_sll;
-extern const BaseApi* cd_tr;
 extern const BaseApi* cd_wlan;
 
 #endif
@@ -113,7 +111,6 @@ const BaseApi* codecs[] =
     cd_mobility,
     cd_mpls,
     cd_no_next,
-    cd_pim,
     cd_pgm,
     cd_pppencap,
     cd_pppoepkt_disc,
@@ -128,7 +125,6 @@ const BaseApi* codecs[] =
 #ifndef NO_NON_ETHER_DECODER
     cd_eapol,
     cd_linux_sll,
-    cd_tr,
     cd_wlan,
 #endif
 

@@ -43,7 +43,6 @@ cd_igmp_module.h \
 cd_igmp_module.cc \
 cd_mobility.cc \
 cd_no_next.cc \
-cd_pim.cc \
 cd_pgm.cc \
 cd_pgm_module.h \
 cd_pgm_module.cc \
@@ -83,11 +82,6 @@ ehlib_LTLIBRARIES += libcd_pgm.la
 libcd_pgm_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_pgm_la_LDFLAGS = -export-dynamic -shared
 libcd_pgm_la_SOURCES = cd_pgm.cc cd_pgm_module.h cd_pgm_module.cc
-
-ehlib_LTLIBRARIES += libcd_pim.la
-libcd_pim_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_pim_la_LDFLAGS = -export-dynamic -shared
-libcd_pim_la_SOURCES = cd_pim.cc
 
 ehlib_LTLIBRARIES += libcd_sun_nd.la
 libcd_sun_nd_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
