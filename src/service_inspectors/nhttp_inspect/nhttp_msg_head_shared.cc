@@ -33,6 +33,7 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
+#include "nhttp_normalizers.h"
 #include "nhttp_msg_head_shared.h"
 
 using namespace NHttpEnums;

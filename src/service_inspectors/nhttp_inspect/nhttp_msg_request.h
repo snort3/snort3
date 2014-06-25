@@ -30,6 +30,7 @@
 #define NHTTP_MSG_REQUEST_H
 
 #include "nhttp_str_to_code.h"
+#include "nhttp_uri_norm.h"
 #include "nhttp_msg_start.h"
 
 //-------------------------------------------------------------------------
@@ -51,6 +52,10 @@ private:
     static const StrCode methodList[];
     static const StrCode schemeList[];
 
+    // URI normalization strategy objects
+    static const UriNormalizer uriNoPath;
+    static const UriNormalizer uriPath;
+
     // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
     // things into a standard form without changing the underlying format.
     void parseStartLine();
@@ -60,6 +65,7 @@ private:
     void parseAuthority();
     void derivePortValue();
     void parseAbsPath();
+    void makeLegacyNormUri();
 
     // This is where all the derived values, extracted message parts, and normalized values are.
     // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
@@ -68,21 +74,27 @@ private:
 
     // URI stuff
     field uri;
-    field uriLegacyNorm;
-    NHttpEnums::UriType uriType;
     field scheme;
     field authority;
     field host;
-    field hostNorm;
     field port;
-    int32_t portValue;
     field absPath;
     field path;
-    field pathNorm;
     field query;
-    field queryNorm;
     field fragment;
+
+    uint64_t hostInfractions;
+    uint64_t pathInfractions;
+    uint64_t queryInfractions;
+    uint64_t fragmentInfractions;
+
+    NHttpEnums::UriType uriType;
+    field hostNorm;
+    int32_t portValue;
+    field pathNorm;
+    field queryNorm;
     field fragmentNorm;
+    field uriLegacyNorm;
 };
 
 #endif

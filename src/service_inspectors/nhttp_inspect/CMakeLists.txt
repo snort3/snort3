@@ -24,10 +24,15 @@ set (FILE_LIST
     nhttp_msg_trailer.h
     nhttp_head_norm.cc
     nhttp_head_norm.h
+    nhttp_uri_norm.cc
+    nhttp_uri_norm.h
+    nhttp_normalizers.cc
+    nhttp_normalizers.h
     nhttp_str_to_code.cc
     nhttp_str_to_code.h
     nhttp_api.cc nhttp_api.h
     nhttp_tables.cc
+    nhttp_uri_tables.cc
     nhttp_module.cc
     nhttp_module.h
     nhttp_test_input.cc

@@ -64,10 +64,9 @@ protected:
     const uint8_t * const msgText = rawBuf;
 
     // Working space and storage for all the derived fields. See scratchPad.h for usage instructions.
-    // Allocation size may be complete overkill. Need to revisit this.
-    uint64_t derivedBuf[NHttpEnums::MAXOCTETS/8];
+    uint64_t derivedBuf[NHttpEnums::MAXOCTETS/4];
     NHttpFlowData* sessionData;
-    ScratchPad scratchPad {derivedBuf, NHttpEnums::MAXOCTETS/8};
+    ScratchPad scratchPad {derivedBuf, NHttpEnums::MAXOCTETS/4};
 
     // This is where all the derived values, extracted message parts, and normalized values are.
     // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the

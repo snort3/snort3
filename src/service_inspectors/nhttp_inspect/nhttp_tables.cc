@@ -37,10 +37,12 @@
 #include "framework/module.h"
 #include "nhttp_enum.h"
 #include "nhttp_str_to_code.h"
+#include "nhttp_normalizers.h"
 #include "nhttp_head_norm.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_head.h"
 #include "nhttp_module.h"
+#include "nhttp_uri_norm.h"
 
 using namespace NHttpEnums;
 
