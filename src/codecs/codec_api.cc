@@ -43,7 +43,7 @@ extern const BaseApi* cd_tcp;
 extern const BaseApi* cd_udp;
 extern const BaseApi* cd_esp;
 
-#ifdef STATIC_DECODERS
+#ifdef STATIC_CODECS
 extern const BaseApi* cd_ah;
 extern const BaseApi* cd_arp;
 extern const BaseApi* cd_dstopts;
@@ -98,7 +98,7 @@ const BaseApi* codecs[] =
     cd_udp,
     cd_esp,
 
-#ifdef STATIC_DECODERS
+#ifdef STATIC_CODECS
     cd_ah,
     cd_arp,
     cd_dstopts,

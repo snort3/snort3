@@ -199,5 +199,13 @@ static const CodecApi pgm_api =
     dtor, // dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &pgm_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_pgm = &pgm_api.base;
+#endif
 

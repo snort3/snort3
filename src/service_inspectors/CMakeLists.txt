@@ -5,15 +5,21 @@ add_subdirectory(http_inspect)
 add_subdirectory(nhttp_inspect)
 add_subdirectory(rpc_decode)
 
+if (STATIC_INSPECTORS)
+    set (STATIC_INSECTOR_LIBS
+        rpc_decode
+        back_orifice
+        ftp_telnet
+    )
+endif()
+
 add_library( service_inspectors STATIC
     service_inspectors.cc
     service_inspectors.h
 )
 
 target_link_libraries( service_inspectors
-    back_orifice
-    ftp_telnet
     http_inspect
     nhttp_inspect
-    rpc_decode
+    ${STATIC_INSECTOR_LIBS}
 )

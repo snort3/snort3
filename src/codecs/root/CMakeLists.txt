@@ -6,9 +6,6 @@ include_directories(${PCAP_INCLUDE_DIR})
 if (ENABLE_NON_ETHER_DECODERS)
     set(NON_ETHER_DECODERS
         cd_linux_sll.cc
-        cd_tr.cc
-        cd_tr_module.h
-        cd_tr_module.cc
         cd_wlan.cc
         cd_wlan_module.h
         cd_wlan_module.cc

@@ -17,7 +17,7 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// cd_trk_module.h author Josh Rosenbaum <jrosenba@cisco.com>
+// token_ring_module.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef CD_TRK_MODULE_H
 #define CD_TRK_MODULE_H
@@ -25,14 +25,15 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_TRK_NAME "codec_trk"
+#define CD_TR_NAME "cd_tr"
 
-class TrkModule : public DecodeModule
+class TrCodecModule : public DecodeModule
 {
 public:
-    TrkModule();
+    TrCodecModule();
 
     bool set(const char*, Value&, SnortConfig*);
 };
 
 #endif
+

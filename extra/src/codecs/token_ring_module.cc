@@ -17,9 +17,9 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// cd_arp_module.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// token_ring_module.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "codecs/root/cd_tr_module.h"
+#include "token_ring_module.h"
 
 
 static const Parameter trk_params[] =

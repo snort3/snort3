@@ -183,7 +183,7 @@ static const CodecApi eapol_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &name_api.base,
+    &eapol_api.base,
     nullptr
 };
 #else
