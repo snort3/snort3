@@ -27,18 +27,26 @@
 #include <sstream>
 #include <cctype>
 
-#include "converter.h"
- 
+#include "data/dt_data.h"
+
+class Converter;
+
 class ConversionState
 {
 
 public:
-    explicit ConversionState(Converter *cv){ this->cv = cv; }
+    explicit ConversionState(Converter* cv, LuaData* ld)
+    {
+        this->cv = cv;
+        this->ld = ld;
+    }
+
     virtual ~ConversionState() {};
     virtual bool convert(std::stringstream& data)=0;
 
 protected:
     Converter* cv;
+    LuaData* ld;
 
 #if 0
     List of forward parsing methods. Placing these here so you don't need to
@@ -84,11 +92,11 @@ protected:
             if(val.back() == ',')
                 val.pop_back();
 
-            cv->add_option_to_table(opt_name, val);
+            ld->add_option_to_table(opt_name, val);
             return true;
         }
 
-        cv->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
@@ -98,11 +106,11 @@ protected:
 
         if(stream >> val)
         {
-            cv->add_option_to_table(opt_name, val);
+            ld->add_option_to_table(opt_name, val);
             return true;
         }
 
-        cv->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
@@ -116,7 +124,7 @@ protected:
             return false;
 
         while (stream >> elem && elem != "}")
-            retval = cv->add_list_to_table(list_name, elem) && retval;
+            retval = ld->add_list_to_table(list_name, elem) && retval;
 
         return retval;
     }
@@ -130,12 +138,12 @@ protected:
             return false;
 
         else if(!val.compare("yes"))
-            return cv->add_option_to_table(opt_name, true);
+            return ld->add_option_to_table(opt_name, true);
 
         else if (!val.compare("no"))
-            return cv->add_option_to_table(opt_name, false);
+            return ld->add_option_to_table(opt_name, false);
 
-        cv->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
+        ld->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
         return false;
     }
 
@@ -163,12 +171,12 @@ protected:
             {
                 std::stringstream tmp;
                 tmp << "0x" << std::hex << dig;
-                retval = cv->add_list_to_table(list_name, tmp.str()) && retval;
+                retval = ld->add_list_to_table(list_name, tmp.str()) && retval;
 
             }
             else
             {
-                cv->add_comment_to_table("Unable to convert " + elem +
+                ld->add_comment_to_table("Unable to convert " + elem +
                         "!!  The element must be a single charachter or number between 0 - 255 inclusive");
                 retval = false;
             }
@@ -193,14 +201,14 @@ protected:
         if(tmp.size() > 0)
             tmp.erase(tmp.begin());
 
-        return cv->add_option_to_table("--" + list_name, tmp );
+        return ld->add_option_to_table("--" + list_name, tmp );
     }
 
     inline bool open_table_add_option(std::string table_name, std::string opt_name, std::string val)
     {
-        bool tmpval = cv->open_table(table_name);
-        tmpval = cv->add_option_to_table(opt_name, val) && tmpval;
-        cv->close_table();
+        ld->open_table(table_name);
+        bool tmpval = ld->add_option_to_table(opt_name, val) && tmpval;
+        ld->close_table();
         return tmpval;
     }
 
@@ -210,7 +218,7 @@ protected:
     {
 
         std::string val;
-        cv->add_deprecated_comment(opt_name);
+        ld->add_deprecated_comment(opt_name);
 
         if(stream >> val)
             return true;
@@ -224,7 +232,7 @@ private:
 };
 
 
-typedef ConversionState* (*conv_new_f)(Converter*);
+typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
 
 struct ConvertMap
 {

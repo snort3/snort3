@@ -23,15 +23,15 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class Frag3Global : public ConversionState
 {
 public:
-    Frag3Global(Converter* cv)  : ConversionState(cv) {};
+    Frag3Global(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Frag3Global() {};
     virtual bool convert(std::stringstream& data_stream);
 };
@@ -44,7 +44,7 @@ bool Frag3Global::convert(std::stringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    cv->open_table("stream_ip");
+    ld->open_table("stream_ip");
 
     while(data_stream >> keyword)
     {
@@ -57,7 +57,7 @@ bool Frag3Global::convert(std::stringstream& data_stream)
             continue;
         
         if(!keyword.compare("disabled"))
-            cv->add_deprecated_comment("disabled");
+            ld->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("max_frags"))
             tmpval = parse_int_option("max_frags", data_stream);
@@ -85,9 +85,9 @@ bool Frag3Global::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Frag3Global(cv);
+    return new Frag3Global(cv, ld);
 }
 
 static const ConvertMap preprocessor_frag3_global =

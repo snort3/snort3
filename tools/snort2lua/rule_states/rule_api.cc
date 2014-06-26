@@ -17,29 +17,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include <fstream>
-#include "conversion_state.h"
-#include "util/converter.h"
+#include <string>
+#include "rule_states/rule_api.h"
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
 
-class InitState : public ConversionState
+namespace rules
 {
-public:
-    InitState(Converter* cv, LuaData* ld);
-    virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data);
 
+
+extern const ConvertMap* content_map;
+
+const std::vector<const ConvertMap*> rule_api =
+{
+    content_map,
 };
 
-
-static ConversionState* init_state_ctor(Converter* cv, LuaData* ld)
-{
-    return new InitState(cv, ld);
-}
-
-#endif
+} // namespace rules

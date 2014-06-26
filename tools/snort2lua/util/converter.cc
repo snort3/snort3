@@ -20,21 +20,38 @@
 // converter.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <iostream>
-#include "converter.h"
+#include "util/converter.h"
 #include "conversion_state.h"
 #include "init_state.h"
+#include "util/util.h"
 
-#if 0
-Converter::Converter(Converter* c)
-{
-    state = c;    
-}
 
-Converter::~Converter(){} 
-#endif
 Converter::Converter()
 {
     state = nullptr;
+}
+
+bool Converter::initialize(conv_new_f func)
+{
+    init_state_ctor = func;
+    state = init_state_ctor(this, &ld);
+
+    if (state == nullptr)
+    {
+        ld.add_error_comment("Could not create an 'initial' state!");
+        return false;
+    }
+
+
+    // without this, "default_rules" is considered a bool for some odd reason.
+    std::string s = std::string("$default_rules");
+
+    // create a rules string and point the ips to it
+    ld.add_variable("default_rules", " ");
+    ld.open_table("ips");
+    ld.add_option_to_table("rules", s);
+    ld.close_table();
+    return true;
 }
 
 void Converter::set_state(ConversionState* c)
@@ -48,19 +65,70 @@ void Converter::reset_state()
     if (state)
         delete state;
 
-    state = new InitState(this);
-
-    std::stack<Table*> empty;
-    open_tables.swap(empty );
+    state = init_state_ctor(this, &ld);
+    ld.reset_state();
 }
 
 
-bool Converter::convert_line(std::stringstream& data)
+void Converter::convert_file(std::string input_file)
 {
-    if ( state )
-        return state->convert(data);
-    return false;
+    std::ifstream in;
+    std::string orig_text;
+
+    reset_state();
+    in.open(input_file, std::ifstream::in);
+
+
+    if (in.fail())
+    {
+        ld.add_reject_comment("Unable to open file " + input_file);
+        return;
+    }
+
+    while(!in.eof())
+    {
+        std::string tmp;
+        std::getline(in, tmp);
+        util::ltrim(tmp);
+        orig_text += ' ' + tmp;
+        util::trim(orig_text);
+
+        if (orig_text.empty())
+        {
+            ld.add_reject_comment("");
+        }
+        else if (orig_text.front() == '#')
+        {
+            orig_text.erase(orig_text.begin());
+            util::trim(orig_text);
+            ld.add_reject_comment(orig_text);
+            orig_text.clear();
+        }
+        else if ( orig_text.back() == '\\')
+        {
+            orig_text.pop_back();
+            util::rtrim(orig_text);
+        }
+        else
+        {
+            std::stringstream data_stream(orig_text);
+            while(data_stream.tellg() != -1)
+            {
+                if ((state == nullptr) || !state->convert(data_stream))
+                {
+                    log_error("Failed to entirely convert: " + orig_text);
+                    break;
+                }
+            }
+
+            orig_text.clear();
+            reset_state();
+        }
+    }
+
 }
+
+#if 0
 
 bool Converter::open_table()
 {
@@ -77,6 +145,7 @@ bool Converter::open_table()
         return false;
     }
 }
+
 
 bool Converter::open_table(std::string table_name)
 {
@@ -218,14 +287,14 @@ void Converter::add_diff_option_comment(std::string dep_var, std::string new_var
     else
         add_comment_to_file(error_string);
 }
-
+#endif
 /*******************************
  *******  PRINTING FOO *********
  *******************************/
 
 void Converter::log_error(std::string error_string)
 {
-    data.add_error_comment(error_string);
+    ld.add_error_comment(error_string);
 //    std::cout << "ERROR: Failed to convert:\t" << std::endl;
 //    std::cout << "\t\t" << error_string << std::endl << std::endl;
 }

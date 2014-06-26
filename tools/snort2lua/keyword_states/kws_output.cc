@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 #include "output_states/output_api.h"
 
 
@@ -34,7 +34,7 @@ namespace {
 class Output : public ConversionState
 {
 public:
-    Output(Converter* cv)  : ConversionState(cv) {};
+    Output(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Output() {};
     virtual bool convert(std::stringstream& data);
 };
@@ -51,7 +51,7 @@ bool Output::convert(std::stringstream& data_stream)
         const ConvertMap* map = util::find_map(output_api, keyword);
         if (map)
         {
-            cv->set_state(map->ctor(cv));
+            cv->set_state(map->ctor(cv, ld));
             return true;
         }
     }
@@ -63,9 +63,9 @@ bool Output::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Output(cv);
+    return new Output(cv, ld);
 }
 
 static const ConvertMap keyword_output = 

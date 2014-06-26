@@ -17,50 +17,63 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_ruletype.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "config_states/config_api.h"
+
 
 namespace {
 
-class Suppress : public ConversionState
+class RuleType : public ConversionState
 {
 public:
-    Suppress(Converter* cv)  : ConversionState(cv) {};
-    virtual ~Suppress() {};
-    virtual bool convert(std::stringstream& data_stream);
+    RuleType(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~RuleType() {};
+    virtual bool convert(std::stringstream& data);
 };
 
 } // namespace
 
 
-bool Suppress::convert(std::stringstream& data_stream)
+bool RuleType::convert(std::stringstream& data_stream)
 {
+    std::string keyword;
 #if 0
-#endif
+    if(data_stream >> keyword)
+    {
 
-    data_stream.setstate(std::basic_ios<char>::eofbit);
-    return true;    
+        if(keyword.back() == ':')
+            keyword.pop_back();
+
+        const ConvertMap* map = util::find_map(rules::rule_api, keyword);
+        if (map)
+        {
+            cv->set_state(map->ctor(cv, ld));
+            return true;
+        }
+    }
+#endif
+    return false;
 }
 
 /**************************
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Suppress(cv);
+    return new RuleType(cv, ld);
 }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap keyword_ruletype = 
 {
-    "suppress",
+    "ruletype",
     ctor,
 };
 
-const ConvertMap* preprocessor_map = &keyword_preprocessor;
+const ConvertMap* ruletype_map = &keyword_ruletype;

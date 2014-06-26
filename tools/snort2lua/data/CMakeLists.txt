@@ -10,4 +10,6 @@ add_library(conversion_data
     dt_option.cc
     dt_comment.h
     dt_comment.cc
+    dt_rule.h
+    dt_rule.cc
 )

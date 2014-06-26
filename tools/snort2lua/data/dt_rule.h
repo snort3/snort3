@@ -17,44 +17,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// snort2lua_util.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_rule.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include <algorithm> 
-#include <functional> 
-#include <cctype>
-#include <locale>
-#include "snort2lua_util.h"
-#include "conversion_state.h"
+#ifndef DT_RULE_H
+#define DT_RULE_H
 
-namespace util
+
+#include <string>
+#include <vector>
+#include <iostream>
+#include <array>
+
+class Rule
 {
+public:
+    Rule();
+    virtual ~Rule();
 
+    bool add_hdr_data(std::string data);
 
+    friend std::ostream &operator<<( std::ostream&, const Rule &);
 
+private:
+    std::array<std::string, 7> hdr_data;
+    int num_hdr_data;
+    bool bad_rule;
+};
 
-std::vector<std::string> &split(const std::string &s, 
-                                char delim, 
-                                std::vector<std::string> &elems)
-{
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim))
-    {
-        elems.push_back(item);
-    }
-
-    return elems;
-}
-
-const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string keyword)
-{
-    for (const ConvertMap *p : map)
-        if (p->keyword.compare(0, p->keyword.size(), keyword) == 0)
-            return p;
-
-    return nullptr;
-}
-
-
-} // namespace util
+#endif

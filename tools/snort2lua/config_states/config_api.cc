@@ -22,14 +22,22 @@
 #include "config_states/config_api.h"
 
 
-extern const ConvertMap *autogenerate_decode_rules_map;
-extern const ConvertMap *checksum_map;
-extern const ConvertMap *paf_max_map;
+extern const ConvertMap* autogenerate_decode_rules_map;
+extern const ConvertMap* flowbit_size_map;
+extern const ConvertMap* checksum_map;
+extern const ConvertMap* enable_gtp_map;
+extern const ConvertMap* paf_max_map;
+extern const ConvertMap* pcre_match_limit_map;
+extern const ConvertMap* pcre_match_limit_recursion_map;
 
 
 const std::vector<const ConvertMap*> config_api = 
 {
     autogenerate_decode_rules_map,
     checksum_map,
+    flowbit_size_map,
+    enable_gtp_map,
     paf_max_map,
+    pcre_match_limit_map,
+    pcre_match_limit_recursion_map,
 };

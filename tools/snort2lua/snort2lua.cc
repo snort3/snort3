@@ -22,9 +22,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "converter.h"
+#include "util/converter.h"
 #include "init_state.h"
-#include "snort2lua_util.h"
+#include "util/util.h"
 #include "option_parser.h"
 
 
@@ -109,64 +109,6 @@ const option::Descriptor usage[] =
  **************  MAIN FILES  *****************
  *********************************************/
 
-void convert(Converter *cv, std::string input_file)
-{
-    std::ifstream in;
-    std::string orig_text;
-
-    cv->reset_state();
-    in.open(input_file,  std::ifstream::in);
-
-
-    if (in.fail())
-    {
-        cv->add_comment_to_file("Unable to open file " + input_file);
-        return;
-    }
-
-    while(!in.eof())
-    {
-        std::string tmp;
-        std::getline(in, tmp);
-        util::ltrim(tmp);
-        orig_text += ' ' + tmp;
-        util::trim(orig_text);
-
-        if (orig_text.empty())
-        {
-            cv->add_comment_to_file("");
-        }
-        else if (orig_text.front() == '#')
-        {
-            orig_text.erase(orig_text.begin());
-            util::ltrim(orig_text);
-            cv->add_comment_to_file(orig_text);
-            orig_text.clear();
-        }
-        else if ( orig_text.back() == '\\')
-        {
-            orig_text.pop_back();
-            util::rtrim(orig_text);
-        }
-        else
-        {
-            std::stringstream data_stream(orig_text);
-            while(data_stream.tellg() != -1)
-            {
-                if (!cv->convert_line(data_stream))
-                {
-                    cv->log_error("Failed to entirely convert: " + orig_text);
-                    break;
-                }
-            }
-
-            orig_text.clear();
-            cv->reset_state();
-        }
-    }
-
-}
-
 
 int main (int argc, char* argv[])
 {
@@ -222,10 +164,12 @@ int main (int argc, char* argv[])
         }
     }
 
+    cv.initialize(&init_state_ctor);
+
     // read and convert every include files
     option::Option* opt = options[INPUT_FILE];
     do {
-        convert(&cv, std::string(opt->arg));
+        cv.convert_file(std::string(opt->arg));
     } while ((opt = opt->next()));
 
 

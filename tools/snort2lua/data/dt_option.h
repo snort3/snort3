@@ -42,7 +42,7 @@ public:
     friend bool operator==(const Option& lhs, const Option& rhs);
 
 private:
-    enum class OptionType{ STRING, BOOL, INT};
+    enum class OptionType{ STRING, VAR, BOOL, INT};
 
     std::string name;
     std::string value;

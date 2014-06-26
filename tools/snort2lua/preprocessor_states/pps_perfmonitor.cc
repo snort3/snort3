@@ -24,15 +24,15 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class PerfMonitor : public ConversionState
 {
 public:
-    PerfMonitor(Converter* cv)  : ConversionState(cv) {};
+    PerfMonitor(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~PerfMonitor() {};
     virtual bool convert(std::stringstream& data_stream);
 private:
@@ -51,10 +51,10 @@ bool PerfMonitor::parse_file_option(std::stringstream& data_stream,
 {
     bool tmpval;
 
-    cv->add_comment_to_table(orig_name + " deprecated. If '" + option_name + 
+    ld->add_comment_to_table(orig_name + " deprecated. If '" + option_name +
         " = true', Snort++ automatically prints to '" + new_file_name + "'");
-    cv->add_diff_option_comment(orig_name, option_name + " = true");
-    tmpval = cv->add_option_to_table(option_name, true);
+    ld->add_diff_option_comment(orig_name, option_name + " = true");
+    tmpval = ld->add_option_to_table(option_name, true);
 
     if (eat_option(data_stream)) // we no longer care about the file name.
         return tmpval;
@@ -66,41 +66,41 @@ bool PerfMonitor::convert(std::stringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    cv->open_table("perf_monitor");
+    ld->open_table("perf_monitor");
 
     while (data_stream >> keyword)
     {
         bool tmpval = true;
 
         if (!keyword.compare("flow"))
-            tmpval = cv->add_option_to_table("flow", true);
+            tmpval = ld->add_option_to_table("flow", true);
 
         else if (!keyword.compare("max"))
-            tmpval = cv->add_option_to_table("max", true);
+            tmpval = ld->add_option_to_table("max", true);
 
         else if (!keyword.compare("events"))
-            tmpval = cv->add_option_to_table("events", true);
+            tmpval = ld->add_option_to_table("events", true);
 
         else if (!keyword.compare("console"))
-            tmpval = cv->add_option_to_table("console", true);
+            tmpval = ld->add_option_to_table("console", true);
 
         else if (!keyword.compare("reset"))
-            tmpval = cv->add_option_to_table("reset", true);
+            tmpval = ld->add_option_to_table("reset", true);
 
         else if (!keyword.compare("atexitonly"))
-            cv->add_deprecated_comment("atexitonly");
+            ld->add_deprecated_comment("atexitonly");
 
         else if (!keyword.compare("base-stats"))
-            cv->add_deprecated_comment("atexitonly: base-stats");
+            ld->add_deprecated_comment("atexitonly: base-stats");
 
         else if (!keyword.compare("flow-stats"))
-            cv->add_deprecated_comment("atexitonly: flow-stats");
+            ld->add_deprecated_comment("atexitonly: flow-stats");
 
         else if (!keyword.compare("flow-ip-stats"))
-            cv->add_deprecated_comment("atexitonly: flow-ip-stats");
+            ld->add_deprecated_comment("atexitonly: flow-ip-stats");
 
         else if (!keyword.compare("events-stats"))
-            cv->add_deprecated_comment("atexitonly: events-stats");
+            ld->add_deprecated_comment("atexitonly: events-stats");
 
         else if (!keyword.compare("max_file_size"))
             tmpval = parse_int_option("max_file_size", data_stream);
@@ -123,37 +123,37 @@ bool PerfMonitor::convert(std::stringstream& data_stream)
 
         else if (!keyword.compare("accumulate"))
         {
-            cv->add_diff_option_comment("accumulate", "reset = false");
-            tmpval = cv->add_option_to_table("reset", false);
+            ld->add_diff_option_comment("accumulate", "reset = false");
+            tmpval = ld->add_option_to_table("reset", false);
         }
 
         else if (!keyword.compare("flow-ip"))
         {
-            cv->add_diff_option_comment("flow-ip", "flow_ip");
-            tmpval = cv->add_option_to_table("flow_ip", true);            
+            ld->add_diff_option_comment("flow-ip", "flow_ip");
+            tmpval = ld->add_option_to_table("flow_ip", true);
         }
 
         else if (!keyword.compare("flow-ports"))
         {
-            cv->add_diff_option_comment("flow-ports", "flow_ports");
+            ld->add_diff_option_comment("flow-ports", "flow_ports");
             tmpval = parse_int_option("flow_ports", data_stream);            
         }
 
         else if (!keyword.compare("time"))
         {
-            cv->add_diff_option_comment("time", "seconds");
+            ld->add_diff_option_comment("time", "seconds");
             tmpval = parse_int_option("seconds", data_stream);
         }
 
         else if (!keyword.compare("flow-ip-memcap"))
         {
-            cv->add_diff_option_comment("flow-ip-memcap", "flow_ip_memcap");
+            ld->add_diff_option_comment("flow-ip-memcap", "flow_ip_memcap");
             tmpval = parse_string_option("flow_ip_memcap", data_stream);
         }
 
         else if (!keyword.compare("pktcnt"))
         {
-            cv->add_diff_option_comment("pktcnt", "packets");
+            ld->add_diff_option_comment("pktcnt", "packets");
             tmpval = parse_int_option("packets", data_stream);
         }
 
@@ -171,9 +171,9 @@ bool PerfMonitor::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new PerfMonitor(cv);
+    return new PerfMonitor(cv, ld);
 }
 
 static const ConvertMap keyword_perfmonitor = 

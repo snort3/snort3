@@ -23,9 +23,9 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
+#include "util/converter.h"
 #include "config_states/config_api.h"
-#include "snort2lua_util.h"
+#include "util/util.h"
 
 
 namespace {
@@ -33,7 +33,7 @@ namespace {
 class Config : public ConversionState
 {
 public:
-    Config(Converter* cv)  : ConversionState(cv) {};
+    Config(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Config() {};
     virtual bool convert(std::stringstream& data);
 };
@@ -54,7 +54,7 @@ bool Config::convert(std::stringstream& data_stream)
         const ConvertMap* map = util::find_map(config_api, keyword);
         if (map)
         {
-            cv->set_state(map->ctor(cv));
+            cv->set_state(map->ctor(cv, ld));
             return true;
         }
     }
@@ -66,9 +66,9 @@ bool Config::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Config(cv);
+    return new Config(cv, ld);
 }
 
 static const ConvertMap keyword_config = 

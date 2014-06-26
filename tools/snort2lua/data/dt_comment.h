@@ -32,8 +32,8 @@ public:
 
     enum class CommentType
     {
-        Single_Lines,
-        Mult_Line
+        SINGLE_LINE,
+        MULTI_LINE
     };
 
 

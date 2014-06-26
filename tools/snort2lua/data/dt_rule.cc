@@ -17,29 +17,48 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_rule.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include <fstream>
-#include "conversion_state.h"
-#include "util/converter.h"
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
+#include "data/dt_rule.h"
 
-class InitState : public ConversionState
+
+Rule::Rule()
 {
-public:
-    InitState(Converter* cv, LuaData* ld);
-    virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data);
-
-};
-
-
-static ConversionState* init_state_ctor(Converter* cv, LuaData* ld)
-{
-    return new InitState(cv, ld);
+    bad_rule = false;
+    num_hdr_data = 0;
 }
 
-#endif
+Rule::~Rule(){};
+
+
+bool Rule::add_hdr_data(std::string data)
+{
+    if (num_hdr_data < hdr_data.size())
+    {
+        hdr_data[num_hdr_data] = data;
+        num_hdr_data++;
+        return true;
+    }
+    else
+    {
+        bad_rule = true;
+        return false;
+    }
+}
+
+
+std::ostream &operator<<( std::ostream& out, const Rule &r)
+{
+    std::string built_string = "";
+
+    for(int i = 0; i < r.num_hdr_data; i++)
+    {
+        if (!r.hdr_data.empty())
+            built_string += r.hdr_data[i];
+    }
+
+
+
+    return out;
+}

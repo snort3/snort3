@@ -26,9 +26,11 @@
 #include <fstream>
 #include <sstream>
 #include <stack>
+#include <iostream>
 
 #include "data/dt_data.h"
 #include "data/dt_var.h"
+#include "conversion_state.h"
 
 class ConversionState;
 
@@ -38,15 +40,18 @@ class Converter
 public:
     Converter();
     virtual ~Converter() {};
-    // convert the following line from a snort.conf into a lua.conf
-    bool convert_line(std::stringstream& data);
+    // initialize data class
+    bool initialize(conv_new_f init_state_func);
     // set the next parsing state.
     void set_state(ConversionState* c);
     // reset the current parsing state
     void reset_state();
+    // convert the following file from a snort.conf into a lua.conf
+    void convert_file(std::string input_file);
     // prints the entire lua configuration to the output file.
-    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.data; }
+    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.ld; }
     
+#if 0
     // add a variable to the new lua configuration. For example, --> HOME_NET = 'any'
     bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
 
@@ -86,6 +91,8 @@ public:
     void add_deprecated_comment(std::string dep_var);
     // add a comment with telling the user an option has changed
     void add_diff_option_comment(std::string dep_var, std::string new_var);
+#endif
+
     // log an error in the new lua file
     void log_error(std::string);
 
@@ -97,9 +104,10 @@ private:
     // the current parsing state.
     ConversionState* state;
     // the data which will be printed into the new lua file
-    ConversionData data;
-    // keeps track of the current tables
-    std::stack<Table*> open_tables;
+    LuaData ld;
+    // the init_state constructor
+    conv_new_f init_state_ctor;
+
 };
 
 

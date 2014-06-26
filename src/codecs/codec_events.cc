@@ -26,9 +26,9 @@
 #include "snort.h"
 #include "packet_io/active.h"
 
-void codec_events::exec_udp_chksm_drop(Packet* /* p */)
+void codec_events::exec_udp_chksm_drop (Packet *)
 {
-    if (ScInlineMode() && ScUdpChecksumDrops())
+    if( ScInlineMode() && ScUdpChecksumDrops() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "Dropping bad packet (UDP checksum)\n"););
@@ -36,19 +36,19 @@ void codec_events::exec_udp_chksm_drop(Packet* /* p */)
     }
 }
 
-void codec_events::exec_tcp_chksm_drop(Packet*)
+void codec_events::exec_tcp_chksm_drop (Packet*)
 {
-    if (ScInlineMode() && ScTcpChecksumDrops())
+    if( ScInlineMode() && ScTcpChecksumDrops() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "Dropping bad packet (TCP checksum)\n"););
-    Active_DropPacket();ßs
+        Active_DropPacket();
     }
 }
 
 void codec_events::decoder_event(Packet *p, CodecSid sid)
 {
-    if (p->packet_flags & PKT_REBUILT_STREAM)
+    if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
 
     if ( ScLogVerbose() )
@@ -57,11 +57,11 @@ void codec_events::decoder_event(Packet *p, CodecSid sid)
     SnortEventqAdd(GID_DECODE, sid);
 }
 
-void codec_events::exec_ip_chksm_drop(Packet*)
+void codec_events::exec_ip_chksm_drop (Packet*)
 {
     // TBD only set policy csum drop if policy inline
     // and delete this inline mode check
-    if (ScInlineMode() && ScIpChecksumDrops())
+    if( ScInlineMode() && ScIpChecksumDrops() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "Dropping bad packet (IP checksum)\n"););
@@ -69,9 +69,9 @@ void codec_events::exec_ip_chksm_drop(Packet*)
     }
 }
 
-void codec_events::exec_icmp_chksm_drop(Packet* /*p*/)
+void codec_events::exec_icmp_chksm_drop (Packet*)
 {
-    if (ScInlineMode() && ScIcmpChecksumDrops())
+    if( ScInlineMode() && ScIcmpChecksumDrops() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "Dropping bad packet (ICMP checksum)\n"););

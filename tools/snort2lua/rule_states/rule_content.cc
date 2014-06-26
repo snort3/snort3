@@ -17,29 +17,66 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_ruletype.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
-#include <fstream>
+#include <vector>
+
 #include "conversion_state.h"
 #include "util/converter.h"
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
+namespace rules
+{
 
-class InitState : public ConversionState
+namespace {
+
+class Content : public ConversionState
 {
 public:
-    InitState(Converter* cv, LuaData* ld);
-    virtual ~InitState() {};
+    Content(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~Content() {};
     virtual bool convert(std::stringstream& data);
-
 };
 
+} // namespace
 
-static ConversionState* init_state_ctor(Converter* cv, LuaData* ld)
+
+bool Content::convert(std::stringstream& data_stream)
 {
-    return new InitState(cv, ld);
+    std::string keyword;
+#if 0
+    if(data_stream >> keyword)
+    {
+
+        if(keyword.back() == ':')
+            keyword.pop_back();
+
+        const ConvertMap* map = util::find_map(rules::rule_api, keyword);
+        if (map)
+        {
+            cv->set_state(map->ctor(cv, ld));
+            return true;
+        }
+    }
+#endif
+    return false;
 }
 
-#endif
+/**************************
+ *******  A P I ***********
+ **************************/
+
+static ConversionState* ctor(Converter* cv, LuaData* ld)
+{
+    return new Content(cv, ld);
+}
+
+static const ConvertMap rule_content_api = 
+{
+    "content",
+    ctor,
+};
+
+const ConvertMap* content_map = &rule_content_api;
+
+} // namespace rules

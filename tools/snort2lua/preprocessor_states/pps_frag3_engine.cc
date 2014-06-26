@@ -23,15 +23,15 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class Frag3Engine : public ConversionState
 {
 public:
-    explicit Frag3Engine(Converter* cv)  : ConversionState(cv) {};
+    explicit Frag3Engine(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Frag3Engine() {};
     virtual bool convert(std::stringstream& data_stream);
 
@@ -61,7 +61,7 @@ bool Frag3Engine::parse_ip_list(std::string list_name,
         prev = prev + ' ' + elem;
 
     prev = prev + "]";
-    return cv->add_option_to_table(list_name, prev);
+    return ld->add_option_to_table(list_name, prev);
 
 }
 
@@ -71,7 +71,7 @@ bool Frag3Engine::convert(std::stringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    cv->open_table("stream_ip");
+    ld->open_table("stream_ip");
 
     while(data_stream >> keyword)
     {
@@ -90,7 +90,7 @@ bool Frag3Engine::convert(std::stringstream& data_stream)
             tmpval = parse_string_option("policy", data_stream);
 
         else if(!keyword.compare("detect_anomalies"))
-            cv->add_deprecated_comment("detect_anomalies");
+            ld->add_deprecated_comment("detect_anomalies");
 
         else if(!keyword.compare("bind_to"))
             parse_ip_list("bind_to", data_stream);
@@ -98,19 +98,19 @@ bool Frag3Engine::convert(std::stringstream& data_stream)
         else if(!keyword.compare("timeout"))
         {
             tmpval = parse_int_option("session_timeout", data_stream);
-            cv->add_diff_option_comment("timeout", "session_timeout");
+            ld->add_diff_option_comment("timeout", "session_timeout");
         }
 
         else if(!keyword.compare("overlap_limit"))
         {
             tmpval = parse_int_option("max_overlaps", data_stream);
-            cv->add_diff_option_comment("overlap_limit", "max_overlaps");
+            ld->add_diff_option_comment("overlap_limit", "max_overlaps");
         }
 
         else if(!keyword.compare("min_fragment_length"))
         {
             tmpval = parse_int_option("min_frag_length", data_stream);
-            cv->add_diff_option_comment("min_fragment_length", "min_frag_length");
+            ld->add_diff_option_comment("min_fragment_length", "min_frag_length");
         }
 
         else
@@ -139,9 +139,9 @@ enum stream_ip.policy = linux: fragment reassembly policy { first | linux | bsd 
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Frag3Engine(cv);
+    return new Frag3Engine(cv, ld);
 }
 
 static const ConvertMap preprocessor_frag3_engine =

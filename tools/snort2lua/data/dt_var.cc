@@ -20,7 +20,7 @@
 // cv_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include "data/dt_var.h"
-#include "snort2lua_util.h"
+#include "util/util.h"
 
 #if 0
 static inline bool var_exists(std::vector<std::string> vec, std::string name)
@@ -72,6 +72,7 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
 {
     int length = 0;
     std::string whitespace;
+    bool first_var = true;
 
     for(int i = 0; i < var.depth; i++)
         whitespace += "    ";
@@ -83,16 +84,22 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
         if ( 0 < length && length + v.size() > var.max_line_length )
             out << std::endl << whitespace << "    ";
 
+        if (first_var)
+            first_var = false;
+        else
+            out << " .. ' ' .. "; // add a space
+
         length += v.size();
-        out << v << " .. ";
+        out << v;
     }
 
+    // we're done if there are no strings
     if (var.strs.size() == 0)
-        out << "''";
+        return out;
+    else if (!first_var)
+        out << " .. ";
 
-
-
-    else if(var.count < var.max_line_length || var.strs.size() == 1)
+    if(var.count < var.max_line_length || var.strs.size() == 1)
     {
         std::string tmp_str = "";
         length = whitespace.size();
@@ -103,12 +110,19 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
                 tmp_str += "\n" + whitespace + "    ";
 
             length += s.size() ;
-            tmp_str += s + ' ';
+
+            if (first_var)
+                first_var = false;
+            else
+                tmp_str += ' ';
+
+            tmp_str += s;
         }
-        util::trim(tmp_str);
+
+//        util::trim(tmp_str);
         out << "'" << tmp_str << "'";
     }
-    else
+    else if (var.strs.size() > 0)
     {
         length = 4 + whitespace.size();
         std::string tmp_str = "";
@@ -127,6 +141,7 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
         }
 
         util::trim(tmp_str);
+
         out << std::endl <<  whitespace << "[[" << std::endl;
         out << whitespace << "    " << tmp_str << std::endl;
         out << whitespace << "]]";

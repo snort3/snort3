@@ -22,15 +22,15 @@
 #include <sstream>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class ArpSpoof : public ConversionState
 {
 public:
-    ArpSpoof(Converter* cv)  : ConversionState(cv) {};
+    ArpSpoof(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~ArpSpoof() {};
     virtual bool convert(std::stringstream& data_stream);
 };
@@ -42,13 +42,13 @@ bool ArpSpoof::convert(std::stringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    cv->open_table("arp_spoof");
+    ld->open_table("arp_spoof");
 
     while(data_stream >> keyword)
     {
 
         if(!keyword.compare("-unicast"))
-            retval = cv->add_option_to_table("unicast", true) && retval;
+            retval = ld->add_option_to_table("unicast", true) && retval;
 
         else 
             retval = false;
@@ -59,9 +59,9 @@ bool ArpSpoof::convert(std::stringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* arpspoof_ctor(Converter* cv)
+static ConversionState* arpspoof_ctor(Converter* cv, LuaData* ld)
 {
-    return new ArpSpoof(cv);
+    return new ArpSpoof(cv, ld);
 }
 
 static const ConvertMap preprocessor_arpspoof = 
@@ -84,7 +84,7 @@ namespace {
 class ArpSpoofHost : public ConversionState
 {
 public:
-    ArpSpoofHost(Converter* cv)  : ConversionState(cv) {};
+    ArpSpoofHost(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~ArpSpoofHost() {};
     virtual bool convert(std::stringstream& data_stream);
 };
@@ -97,16 +97,16 @@ bool ArpSpoofHost::convert(std::stringstream& data_stream)
     std::string ip, mac;
 
     bool retval = true;
-    cv->open_table("arp_spoof");
-    cv->open_table("hosts");
+    ld->open_table("arp_spoof");
+    ld->open_table("hosts");
 
     while(data_stream >> ip &&
           data_stream >> mac)
     {
-        cv->open_table();
-        cv->add_option_to_table("ip", ip);
-        cv->add_option_to_table("mac", mac);
-        cv->close_table();
+        ld->open_table();
+        ld->add_option_to_table("ip", ip);
+        ld->add_option_to_table("mac", mac);
+        ld->close_table();
 
         ip.clear();
         mac.clear();
@@ -120,9 +120,9 @@ bool ArpSpoofHost::convert(std::stringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* arpspoof_host_ctor(Converter* cv)
+static ConversionState* arpspoof_host_ctor(Converter* cv, LuaData* ld)
 {
-    return new ArpSpoofHost(cv);
+    return new ArpSpoofHost(cv, ld);
 }
 
 static const ConvertMap preprocessor_arpspoof_host = 

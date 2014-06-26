@@ -76,7 +76,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
 
 
     // creating the correct format for strings
-    if (c.type == Comments::CommentType::Single_Lines)
+    if (c.type == Comments::CommentType::SINGLE_LINE)
     {
         pre_str = whitespace + "--";
     }
@@ -125,6 +125,18 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
                 }
             }
 
+            // add a space between any double hyphens
+            if (c.type == Comments::CommentType::MULTI_LINE)
+            {
+                int found = str.find("]]");
+                while (found != std::string::npos)
+                {
+                    str.insert(found + 1, " ");
+                    found = str.find("]]");
+                }
+            }
+
+
             // don't print the extra '\n' on the first line.
             if (first_line)
             {
@@ -142,7 +154,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
     }
 
 
-    if (c.type == Comments::CommentType::Mult_Line)
+    if (c.type == Comments::CommentType::MULTI_LINE)
         out << '\n' << whitespace << c.end_multi_com;
 
     return out;

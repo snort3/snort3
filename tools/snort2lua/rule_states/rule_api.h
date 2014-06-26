@@ -20,26 +20,22 @@
 // converter.h author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
-#include <fstream>
 #include "conversion_state.h"
-#include "util/converter.h"
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
+#ifndef RULE_API_H
+#define RULE_API_H
 
-class InitState : public ConversionState
+
+#include <vector>
+#include "conversion_state.h"
+
+namespace rules
 {
-public:
-    InitState(Converter* cv, LuaData* ld);
-    virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data);
 
-};
+// vector containing all of hte rule keywords
+extern const std::vector<const ConvertMap*> rule_api;
 
 
-static ConversionState* init_state_ctor(Converter* cv, LuaData* ld)
-{
-    return new InitState(cv, ld);
-}
+} // namespace rules
 
 #endif

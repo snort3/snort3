@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 
 namespace {
@@ -32,7 +32,7 @@ namespace {
 class Var : public ConversionState
 {
 public:
-    Var(Converter* cv);
+    Var(Converter* cv, LuaData* ld);
     virtual ~Var() {};
     virtual bool convert(std::stringstream& data);
 
@@ -45,7 +45,7 @@ private:
 } // namespace
 
 
-Var::Var(Converter* cv) : ConversionState(cv)
+Var::Var(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
 {
     first_line = true;
     is_port_list = false;
@@ -77,13 +77,13 @@ bool Var::convert(std::stringstream& data_stream)
         util::split(ports, ',', port_list);
 
         for(std::string elem : port_list)
-            retval = cv->add_variable(keyword, elem) && retval;
+            retval = ld->add_variable(keyword, elem) && retval;
 
         return retval;
     }
     else
     {
-        return cv->add_variable(keyword, ports);
+        return ld->add_variable(keyword, ports);
     }
 }
 
@@ -91,9 +91,9 @@ bool Var::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Var(cv);
+    return new Var(cv, ld);
 }
 
 static const ConvertMap keyword_portvar = 
