@@ -7,8 +7,7 @@ plugin_list = \
 ips_ack.cc \
 ips_asn1.cc \
 asn1_detect.cc asn1_detect.h \
-ips_base64_data.cc \
-ips_base64_decode.cc \
+ips_base64.cc \
 ips_byte_test.cc \
 ips_byte_jump.cc \
 ips_cvs.cc \
@@ -41,7 +40,7 @@ libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
 extract.cc extract.h \
 ips_content.cc ips_content.h  \
-ips_file_data.cc ips_file_data.h \
+ips_file_data.cc \
 ips_flow.cc ips_flow.h \
 ips_flowbits.cc ips_flowbits.h \
 ips_ip_proto.cc ips_ip_proto.h \
@@ -66,15 +65,10 @@ libips_asn1_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_asn1_la_LDFLAGS = -export-dynamic -shared
 libips_asn1_la_SOURCES = ips_asn1.cc asn1_detect.cc asn1_detect.h
 
-optlib_LTLIBRARIES += libips_base64_data.la
-libips_base64_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_base64_data_la_LDFLAGS = -export-dynamic -shared
-libips_base64_data_la_SOURCES = ips_base64_data.cc
-
-optlib_LTLIBRARIES += libips_base64_decode.la
-libips_base64_decode_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_base64_decode_la_LDFLAGS = -export-dynamic -shared
-libips_base64_decode_la_SOURCES = ips_base64_decode.cc
+optlib_LTLIBRARIES += libips_base64.la
+libips_base64_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_base64_la_LDFLAGS = -export-dynamic -shared
+libips_base64_la_SOURCES = ips_base64.cc
 
 optlib_LTLIBRARIES += libips_byte_test.la
 libips_byte_test_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -110,6 +104,11 @@ optlib_LTLIBRARIES += libips_fragoffset.la
 libips_fragoffset_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_fragoffset_la_LDFLAGS = -export-dynamic -shared
 libips_fragoffset_la_SOURCES = ips_fragoffset.cc
+
+optlib_LTLIBRARIES += libips_http.la
+libips_http_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_http_la_LDFLAGS = -export-dynamic -shared
+libips_http_la_SOURCES = ips_http.cc
 
 optlib_LTLIBRARIES += libips_icmp_id.la
 libips_icmp_id_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

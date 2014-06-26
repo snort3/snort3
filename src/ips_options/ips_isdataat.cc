@@ -59,6 +59,7 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "detection_util.h"
+#include "framework/cursor.h"
 #include "framework/ips_option.h"
 
 static const char* s_name = "isdataat";
@@ -76,14 +77,12 @@ static PreprocStats* at_get_profile(const char* key)
 #endif
 
 #define ISDATAAT_RELATIVE_FLAG 0x01
-#define ISDATAAT_RAWBYTES_FLAG 0x02
-#define ISDATAAT_NOT_FLAG      0x04
+#define ISDATAAT_NOT_FLAG      0x02
 
 typedef struct _IsDataAtData
 {
     uint32_t offset;        /* byte location into the packet */
-    uint8_t  flags;         /* relative to the doe_ptr? */
-                             /* rawbytes buffer? */
+    uint8_t  flags;
     int8_t offset_var;      /* index of byte_extract variable for offset */
 } IsDataAtData;
 
@@ -148,89 +147,37 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IsDataAtOption::eval(Cursor&, Packet *p)
+int IsDataAtOption::eval(Cursor& c, Packet*)
 {
     IsDataAtData *isdata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
-    int dsize;
     const uint8_t *base_ptr, *end_ptr, *start_ptr;
+    int offset;
+
     PROFILE_VARS;
-
     PREPROC_PROFILE_START(isDataAtPerfStats);
-
-    if (!isdata)
-    {
-        PREPROC_PROFILE_END(isDataAtPerfStats);
-        return rval;
-    }
 
     /* Get values from byte_extract variables, if present. */
     if (isdata->offset_var >= 0 && isdata->offset_var < NUM_BYTE_EXTRACT_VARS)
     {
-        GetByteExtractValue(&(isdata->offset), isdata->offset_var);
+        uint32_t value;
+        GetByteExtractValue(&(value), isdata->offset_var);
+        offset = (int)value;
     }
+    else
+        offset = isdata->offset;
 
-    if (isdata->flags & ISDATAAT_RAWBYTES_FLAG)
+    if ( isdata->flags & ISDATAAT_RELATIVE_FLAG )
     {
-        /* Rawbytes specified, force use of that buffer */
-        dsize = p->dsize;
-        start_ptr = p->data;
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "Using RAWBYTES buffer!\n"););
-    }
-    else if (Is_DetectFlag(FLAG_ALT_DETECT))
-    {
-        dsize = DetectBuffer.len;
-        start_ptr = DetectBuffer.data;
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                "Using Alternative Detect buffer!\n"););
-    }
-    else if(Is_DetectFlag(FLAG_ALT_DECODE))
-    {
-        /* If normalized buffer available, use it... */
-        dsize = DecodeBuffer.len;
-        start_ptr = DecodeBuffer.data;
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "Using Alternative Decode buffer!\n"););
+        start_ptr = c.start();
+        end_ptr = start_ptr + c.length();
     }
     else
     {
-        if(IsLimitedDetect(p))
-            dsize = p->alt_dsize;
-        else
-            dsize = p->dsize;
-        start_ptr = p->data;
+        start_ptr = c.buffer();
+        end_ptr = start_ptr + c.size();
     }
-
-    //base_ptr = start_ptr;
-    end_ptr = start_ptr + dsize;
-
-    if((isdata->flags & ISDATAAT_RELATIVE_FLAG) && doe_ptr)
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "Checking relative offset!\n"););
-
-       /*  Because doe_ptr can be "end" in the last match,
-        *  use end + 1 for upper bound
-        *  Bound checked also after offset is applied
-        *
-        */
-        if(!inBounds(start_ptr, end_ptr + 1, doe_ptr))
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                    "[*] isdataat bounds check failed..\n"););
-            PREPROC_PROFILE_END(isDataAtPerfStats);
-            return rval;
-        }
-
-        base_ptr = doe_ptr + isdata->offset;
-    }
-    else
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                                "checking absolute offset %d\n", isdata->offset););
-        base_ptr = start_ptr + isdata->offset;
-    }
+    base_ptr = start_ptr + offset;
 
     if(inBounds(start_ptr, end_ptr, base_ptr))
     {
@@ -243,7 +190,6 @@ int IsDataAtOption::eval(Cursor&, Packet *p)
     {
         rval = !rval;
     }
-
 
     /* otherwise dump */
     PREPROC_PROFILE_END(isDataAtPerfStats);
@@ -312,11 +258,6 @@ static void isdataat_parse(char *data, IsDataAtData *idx)
         {
             /* the offset is relative to the last pattern match */
             idx->flags |= ISDATAAT_RELATIVE_FLAG;
-        }
-        else if(!strcasecmp(cptr, "rawbytes"))
-        {
-            /* the offset is to be applied to the non-normalized buffer */
-            idx->flags |= ISDATAAT_RAWBYTES_FLAG;
         }
         else
         {

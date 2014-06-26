@@ -59,7 +59,7 @@ static PreprocStats* pd_get_profile(const char* key)
 class RawDataOption : public IpsOption
 {
 public:
-    RawDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_OTHER) { };
+    RawDataOption() : IpsOption(s_name) { };
     int eval(Cursor&, Packet*);
 };
 

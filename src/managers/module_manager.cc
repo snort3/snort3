@@ -476,7 +476,7 @@ void ModuleManager::dump_modules()
 
     for ( auto* p : s_modules )
         if ( !p->api )
-            d.dump(p->mod->get_name(), 0);
+            d.dump(p->mod->get_name());
 }
 
 void ModuleManager::show_configs(bool markup, const char* pfx)

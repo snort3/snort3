@@ -27,7 +27,7 @@
 #include "framework/base_api.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/icmp4.h"
-#include "packet.h"
+#include "protocols/packet.h"
 
 struct Packet;
 struct Layer;

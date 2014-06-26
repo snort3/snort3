@@ -35,17 +35,9 @@ Cursor::Cursor(const Cursor& rhs)
 
 void Cursor::reset(Packet* p)
 {
-    /* If AltDetect is set by calling the rule options which set it,
-     * we should use the Alt Detect before checking for any other buffers.
-     * Alt Detect will take precedence over the Alt Decode and/or packet data.
-     */
-    if ( Is_DetectFlag(FLAG_ALT_DETECT) )
+    if ( g_alt_data.len )
     {
-        set("pkt_data", (uint8_t *)DetectBuffer.data, DetectBuffer.len);
-    }
-    else if ( Is_DetectFlag(FLAG_ALT_DECODE) )
-    {
-        set("pkt_data", (uint8_t *)DecodeBuffer.data, DecodeBuffer.len);
+        set("pkt_data", g_alt_data.data, g_alt_data.len);
     }
     else if( IsLimitedDetect(p) )
     {

@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.090])
+AC_INIT([snort], [2.10.092])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -267,14 +267,14 @@ if test "x$static_search_engines" = "xyes"; then
                                       binary])
 fi
 
-AC_ARG_ENABLE(static-decoders,
-    [  --disable-static-decoders    do not include decoders binary ],
-       static_decoders="$enableval", static_decoders="yes")
+AC_ARG_ENABLE(static-codecs,
+    [  --disable-static-codecs    do not include codecs in binary ],
+       static_codecs="$enableval", static_codecs="yes")
 
-AM_CONDITIONAL(STATIC_DECODERS, [test "x$static_decoders" = "xyes"])
+AM_CONDITIONAL(STATIC_CODECS, [test "x$static_codecs" = "xyes"])
 
-if test "x$static_decoders" = "xyes"; then
-    AC_DEFINE(STATIC_DECODERS, [1], [include internal decoders in
+if test "x$static_codecs" = "xyes"; then
+    AC_DEFINE(STATIC_CODECS, [1], [include internal decoders in
                                       binary])
 fi
 

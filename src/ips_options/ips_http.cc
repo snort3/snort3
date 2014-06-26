@@ -79,12 +79,16 @@ static void hi_ips_ginit(SnortConfig*)
 class HttpIpsOption : public IpsOption
 {
 public:
-    HttpIpsOption(const char* s) : IpsOption(s)
-    { key = s; };
+    HttpIpsOption(const char* s, CursorActionType c = CAT_SET_OTHER) : IpsOption(s)
+    { key = s; cat = c; };
+
+    CursorActionType get_cursor_type() const
+    { return cat; };
 
     int eval(Cursor&, Packet*);
 private:
     const char* key;
+    CursorActionType cat;
 };
 
 int HttpIpsOption::eval(Cursor& c, Packet* p)
@@ -122,7 +126,7 @@ static IpsOption* http_uri_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_uri");
 
-    return new HttpIpsOption("http_uri");
+    return new HttpIpsOption("http_uri", CAT_SET_COMMAND);
 }
 
 static const IpsApi http_uri_api =
@@ -156,7 +160,7 @@ static IpsOption* http_header_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_header");
 
-    return new HttpIpsOption("http_header");
+    return new HttpIpsOption("http_header", CAT_SET_HEADER);
 }
 
 static const IpsApi http_header_api =
@@ -190,7 +194,7 @@ static IpsOption* http_client_body_ctor(
     if (!IsEmptyStr(data))
         ParseError("%s takes no arguments", "http_client_body");
 
-    return new HttpIpsOption("http_client_body");
+    return new HttpIpsOption("http_client_body", CAT_SET_BODY);
 }
 
 static const IpsApi http_client_body_api =

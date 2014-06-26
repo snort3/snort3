@@ -1,7 +1,7 @@
 
 
 
-if( STATIC_DECODERS )
+if( STATIC_CODECS )
     set( PLUGIN_SOURCES
         cd_ah.cc
         cd_ah_module.h
@@ -17,7 +17,6 @@ if( STATIC_DECODERS )
         cd_igmp_module.cc
         cd_no_next.cc
         cd_mobility.cc
-        cd_pim.cc
         cd_pgm.cc
         cd_pgm_module.h
         cd_pgm_module.cc
@@ -28,16 +27,15 @@ if( STATIC_DECODERS )
 
 else()
     add_shared_library(cd_ah codecs cd_ah.cc cd_ah_module.h cd_ah_module.cc)
-    add_shared_library(cd_dstopts codecs cd_dstopts.cc)
-    add_shared_library(cd_frag codecs cd_frag.cc)
+    add_shared_library(cd_dstopts codecs cd_dstopts.cc ipv6_util.h ipv6_util.cc)
+    add_shared_library(cd_frag codecs cd_frag.cc ipv6_util.h ipv6_util.cc)
     add_shared_library(cd_gre codecs cd_gre.cc cd_gre_module.h cd_gre_module.cc)
-    add_shared_library(cd_hopopts codecs cd_hopopts.cc)
+    add_shared_library(cd_hopopts codecs cd_hopopts.cc ipv6_util.h ipv6_util.cc)
     add_shared_library(cd_igmp codecs cd_igmp.cc cd_igmp_module.h cd_igmp_module.cc)
     add_shared_library(cd_mobility codecs cd_mobility.cc)
-    add_shared_library(cd_no_next codecs cd_no_next.cc)
-    add_shared_library(cd_pim codecs cd_pim.cc)
+    add_shared_library(cd_no_next codecs cd_no_next.cc ipv6_util.h ipv6_util.cc)
     add_shared_library(cd_pgm codecs cd_pgm.cc cd_pgm_module.h cd_pgm_module.cc)
-    add_shared_library(cd_routing codecs cd_routing.cc)
+    add_shared_library(cd_routing codecs cd_routing.cc ipv6_util.h ipv6_util.cc)
     add_shared_library(cd_sun_nd codecs cd_sun_nd.cc)
     add_shared_library(cd_swipe codecs cd_swipe.cc)
 
@@ -66,6 +64,8 @@ add_library( ip_codecs STATIC
     cd_esp.cc  # statically linked due to its dependance on the packet manager.
     cd_esp_module.h
     cd_esp_module.cc
+    ipv6_util.h
+    ipv6_util.cc
     ${PLUGIN_SOURCES}
 )
 

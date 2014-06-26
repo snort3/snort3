@@ -29,7 +29,7 @@
 #include "protocols/ipv6.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "codecs/ipv6_util.h"
+#include "codecs/ip/ipv6_util.h"
 #include "framework/codec.h"
 #include "stream/stream_api.h"
 #include "main/snort.h"

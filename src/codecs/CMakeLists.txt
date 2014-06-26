@@ -15,8 +15,6 @@ add_library( codecs STATIC
     ${CODEC_INCLUDES}
     codec_api.h
     codec_api.cc
-    ipv6_util.h
-    ipv6_util.cc
     codec_events.cc
     checksum.h
     checksum.cc

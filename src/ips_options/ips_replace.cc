@@ -426,7 +426,7 @@ private:
     int* offset; /* >=0 is offset to start of replace */
 };
 
-ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name)
 {
     unsigned n = get_instance_max();
     offset = new int[n];

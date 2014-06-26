@@ -28,7 +28,7 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
-#include "codecs/ipv6_util.h"
+#include "codecs/ip/ipv6_util.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
@@ -101,7 +101,11 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_HOPOPTS;
     p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
-    return true;
+
+
+    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
+        return true;
+    return false;
 }
 
 void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)

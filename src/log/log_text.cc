@@ -1762,12 +1762,12 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
             if(!IsJSNormData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
-                LogCharData(log, (char *)file_data_ptr.data, file_data_ptr.len);
+                LogCharData(log, (char *)g_file_data.data, g_file_data.len);
             }
             else if(!IsGzipData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
-                LogCharData(log, (char *)file_data_ptr.data, file_data_ptr.len);
+                LogCharData(log, (char *)g_file_data.data, g_file_data.len);
             }
         }
         else
@@ -1776,12 +1776,12 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
             if(!IsJSNormData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Normalized JavaScript for this packet");
-                LogNetData(log, file_data_ptr.data, file_data_ptr.len, NULL);
+                LogNetData(log, g_file_data.data, g_file_data.len, NULL);
             }
             else if(!IsGzipData(p->flow))
             {
                 TextLog_Print(log, "%s\n", "Decompressed Data for this packet");
-                LogNetData(log, file_data_ptr.data, file_data_ptr.len, NULL);
+                LogNetData(log, g_file_data.data, g_file_data.len, NULL);
             }
         }
     }
