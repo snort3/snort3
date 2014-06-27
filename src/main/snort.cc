@@ -99,7 +99,6 @@ using namespace std;
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
 #include "main/analyzer.h"
-#include "main/binder.h"
 #include "log/sf_textlog.h"
 #include "log/log_text.h"
 #include "time/periodic.h"
@@ -390,7 +389,6 @@ static void SnortInit(int argc, char **argv)
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify();
-    Binder::init();
 
     if (snort_conf->file_mask != 0)
         umask(snort_conf->file_mask);

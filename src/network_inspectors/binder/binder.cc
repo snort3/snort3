@@ -19,32 +19,41 @@
 // binder.cc author Russ Combs <rucombs@cisco.com>
 
 #include "binder.h"
-using namespace std;
 
 #include <vector>
+using namespace std;
+
+#include "bind_module.h"
 #include "flow/flow.h"
 #include "framework/inspector.h"
 #include "stream/stream_splitter.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "stream/stream_api.h"
+#include "time/profiler.h"
+#include "utils/stats.h"
+#include "log/messages.h"
 
-static vector<Binding*> bindings;
+static const char* mod_name = "binder";
 
-void Binder::init()
+#ifdef PERF_PROFILING
+static THREAD_LOCAL PreprocStats bindPerfStats;
+
+static PreprocStats* bind_get_profile(const char* key)
 {
-}
+    if ( !strcmp(key, mod_name) )
+        return &bindPerfStats;
 
-void Binder::term()
-{
-    for ( auto* p : bindings )
-        delete p;
+    return nullptr;
 }
+#endif
 
-void Binder::add(Binding* b)
-{
-    bindings.push_back(b);
-}
+static THREAD_LOCAL SimpleStats tstats;
+static SimpleStats gstats;
+
+//-------------------------------------------------------------------------
+// helpers
+//-------------------------------------------------------------------------
 
 // FIXIT bind this is a temporary hack. note that both ends must be set
 // independently and that we must ref count inspectors.
@@ -77,10 +86,61 @@ static bool check_proto(const Flow* flow, BindProto bp)
     return false;
 }
 
+//-------------------------------------------------------------------------
+// class stuff
+//-------------------------------------------------------------------------
+
+class Binder : public Inspector {
+public:
+    Binder(vector<Binding*>);
+    ~Binder();
+
+    void show(SnortConfig*)
+    { LogMessage("Binder\n"); };
+
+    void eval(Packet*);
+
+    void add(Binding* b)
+    { bindings.push_back(b); };
+
+private:
+    Inspector* get_clouseau(Flow*, Packet*);
+
+    void init_flow(Flow*);
+    void init_flow(Flow*, Packet*);
+
+private:
+    vector<Binding*> bindings;
+};
+
+Binder::Binder(vector<Binding*> v)
+{
+    bindings = v;
+}
+
+Binder::~Binder()
+{
+    for ( auto* p : bindings )
+        delete p;
+}
+
+void Binder::eval(Packet* p)
+{
+    Flow* flow = p->flow;
+
+    if ( !flow->ssn_client )
+        init_flow(p->flow);
+
+    else if ( !flow->clouseau )
+        init_flow(p->flow, p);
+
+    ++tstats.total_packets;
+}
+
 // FIXIT bind services - this is a temporary hack that just looks at ports,
 // need to examine all key fields for matching.  ultimately need a routing
 // table, scapegoat tree, magic wand, etc.
-static Inspector* get_clouseau(Flow* flow, Packet* p)
+Inspector* Binder::get_clouseau(Flow* flow, Packet* p)
 {
     Binding* pb;
     unsigned i, sz = bindings.size();
@@ -97,10 +157,14 @@ static Inspector* get_clouseau(Flow* flow, Packet* p)
         if ( pb->ports.test(port) )
             break;
     }
-    if ( i == sz || !pb->type.size() )
-        return nullptr;
+    Inspector* ins;
 
-    Inspector* ins = InspectorManager::get_inspector(pb->type.c_str());
+    if ( i == sz || !pb->type.size() )
+        ins = InspectorManager::get_inspector("wizard");
+        
+    else
+        ins = InspectorManager::get_inspector(pb->type.c_str());
+
     return ins;
 }
 
@@ -149,4 +213,85 @@ void Binder::init_flow(Flow* flow, Packet* p)
 
     flow->set_clouseau(ins);
 }
+
+//-------------------------------------------------------------------------
+// api stuff
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{ return new BinderModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
+
+void bind_init()
+{
+#ifdef PERF_PROFILING
+    RegisterPreprocessorProfile(
+        mod_name, &bindPerfStats, 0, &totalPerfStats, bind_get_profile);
+#endif
+}
+
+static Inspector* bind_ctor(Module* m)
+{
+    BinderModule* mod = (BinderModule*)m;
+    vector<Binding*> pb = mod->get_data();
+    return new Binder(pb);
+}
+
+static void bind_dtor(Inspector* p)
+{
+    delete p;
+}
+
+static void bind_sum()
+{
+    sum_stats(&gstats, &tstats);
+}
+
+static void bind_stats()
+{
+    show_stats(&gstats, mod_name);
+}
+
+static void bind_reset()
+{
+    memset(&gstats, 0, sizeof(gstats));
+}
+
+static const InspectApi bind_api =
+{
+    {
+        PT_INSPECTOR,
+        mod_name,
+        INSAPI_PLUGIN_V0,
+        0,
+        mod_ctor,
+        mod_dtor
+    },
+    IT_BINDER, 
+    PROTO_BIT__ALL,
+    nullptr, // buffers
+    nullptr, // service
+    bind_init,
+    nullptr, // term
+    bind_ctor,
+    bind_dtor,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // ssn
+    bind_sum,
+    bind_stats,
+    bind_reset
+};
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &bind_api.base,
+    nullptr
+};
+#else
+const BaseApi* nin_binder = &bind_api.base;
+#endif
 

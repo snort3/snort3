@@ -37,7 +37,7 @@ struct FlowConfig
 class FlowControl
 {
 public:
-    FlowControl();
+    FlowControl(class Inspector*);
     ~FlowControl();
 
 public:
@@ -94,7 +94,9 @@ private:
     FlowCache* udp_cache;
     FlowCache* icmp_cache;
     FlowCache* ip_cache;
+
     class ExpectCache* exp_cache;
+    class Inspector* binder;
 };
 
 #endif

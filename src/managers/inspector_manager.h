@@ -52,6 +52,7 @@ public:
 
     static void instantiate(const InspectApi*, Module*, SnortConfig*);
     static Inspector* get_inspector(const char* key);
+    static void free_inspector(Inspector*);
     static InspectSsnFunc get_session(const char* key);
 
     static bool configure(SnortConfig*);

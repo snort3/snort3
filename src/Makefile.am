@@ -9,11 +9,13 @@ main.h
 if STATIC_INSPECTORS
 lib_list = \
 network_inspectors/arp_spoof/libarp_spoof.a \
+network_inspectors/binder/libbinder.a \
 network_inspectors/port_scan/libport_scan.a \
 service_inspectors/back_orifice/libback_orifice.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
+service_inspectors/nhttp_inspect/libnhttp_inspect.a \
 service_inspectors/rpc_decode/librpc_decode.a \
-service_inspectors/nhttp_inspect/libnhttp_inspect.a
+service_inspectors/wizard/libwizard.a
 endif
 
 # order libs to avoid undefined symbols

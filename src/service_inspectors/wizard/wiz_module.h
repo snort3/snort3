@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -18,41 +17,25 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "network_inspectors.h"
+// wiz_module.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "framework/inspector.h"
+#ifndef WIZ_MODULE_H
+#define WIZ_MODULE_H
 
-extern const BaseApi* nin_binder;
-extern const BaseApi* nin_normalize;
-extern const BaseApi* nin_perf_monitor;
-extern const BaseApi* nin_stream_ip;
-extern const BaseApi* nin_stream_icmp;
-extern const BaseApi* nin_stream_tcp;
-extern const BaseApi* nin_stream_udp;
+#include "framework/module.h"
 
-#ifdef STATIC_INSPECTORS
-extern const BaseApi* nin_arp_spoof;
-extern const BaseApi* nin_port_scan_global;
-extern const BaseApi* nin_port_scan;
-#endif
-
-const BaseApi* network_inspectors[] =
+class WizardModule : public Module
 {
-    nin_binder,
-    nin_normalize,
-    nin_perf_monitor,
-    nin_stream_ip,
-    nin_stream_icmp,
-    nin_stream_tcp,
-    nin_stream_udp,
-#ifdef STATIC_INSPECTORS
-    nin_arp_spoof,
-    nin_port_scan_global,
-    nin_port_scan,
-#endif
-    nullptr
+public:
+    WizardModule();
+    ~WizardModule();
+
+    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
+
+private:
 };
+
+#endif
 

@@ -33,7 +33,8 @@ class Flow;
         PAF_START,   // internal use only
         PAF_SEARCH,  // searching for next flush point
         PAF_FLUSH,   // flush at given offset
-        PAF_SKIP     // skip ahead to given offset
+        PAF_SKIP,    // skip ahead to given offset
+        PAF_RESET    // rewind to the prior flush point
     };
 
 //-------------------------------------------------------------------------

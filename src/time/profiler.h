@@ -149,12 +149,12 @@ void ShowRuleProfiles(void);
 void ResetRuleProfiling(void);
 
 /* Preprocessor stats info */
-typedef struct _PreprocStats
+struct PreprocStats
 {
     uint64_t ticks, ticks_start;
     uint64_t checks;
     uint64_t exits;
-} PreprocStats;
+};
 
 typedef struct _ProfileConfig
 {

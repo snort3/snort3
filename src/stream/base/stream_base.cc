@@ -141,7 +141,8 @@ StreamBase::StreamBase(const StreamConfig* c)
 void StreamBase::pinit()
 {
     assert(!flow_con);
-    flow_con = new FlowControl();
+    Inspector* pi = InspectorManager::get_inspector("binder");
+    flow_con = new FlowControl(pi);
     InspectSsnFunc f;
 
     if ( config->tcp_cfg.max_sessions )

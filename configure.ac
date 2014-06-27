@@ -842,6 +842,7 @@ src/stream/tcp/Makefile \
 src/stream/udp/Makefile \
 src/network_inspectors/Makefile \
 src/network_inspectors/arp_spoof/Makefile \
+src/network_inspectors/binder/Makefile \
 src/network_inspectors/normalize/Makefile \
 src/network_inspectors/perf_monitor/Makefile \
 src/network_inspectors/port_scan/Makefile \
@@ -853,6 +854,7 @@ src/service_inspectors/ftp_telnet/Makefile \
 src/service_inspectors/http_inspect/Makefile \
 src/service_inspectors/nhttp_inspect/Makefile \
 src/service_inspectors/rpc_decode/Makefile \
+src/service_inspectors/wizard/Makefile \
 src/protocols/Makefile \
 src/search_engines/Makefile \
 src/sfip/Makefile \

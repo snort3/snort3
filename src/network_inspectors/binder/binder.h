@@ -71,15 +71,5 @@ struct Binding
     { role = BR_EITHER; action = BA_INSPECT; };
 };
 
-class Binder
-{
-public:
-    static void init();
-    static void term();
-    static void add(Binding*);
-    static void init_flow(class Flow*);
-    static void init_flow(class Flow*, struct Packet*);
-};
-
 #endif
 

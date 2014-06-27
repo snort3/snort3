@@ -26,7 +26,6 @@
 #include <mutex>
 
 #include "module_manager.h"
-#include "main/binder.h"
 #include "flow/flow.h"
 #include "framework/inspector.h"
 #include "detection/detection_util.h"
@@ -141,20 +140,31 @@ struct FrameworkPolicy
 
         for ( auto* p : ph_list )
         {
-            if ( p->pp_class.api.ssn )
-                continue;
+            switch ( p->pp_class.api.type )
+            {
+            case IT_STREAM:
+                if ( !p->pp_class.api.ssn )
+                    session.add(p);
+                break;
 
-            else if ( p->pp_class.api.type == IT_STREAM )
-                session.add(p);
-
-            else if ( p->pp_class.api.type < IT_STREAM )
+            case IT_PACKET:
+            case IT_PROTOCOL:
                 network.add(p);
+                break;
 
-            else if ( p->pp_class.api.type < IT_SERVICE )
+            case IT_SESSION:
                 generic.add(p);
+                break;
 
-            else
+            case IT_SERVICE:
                 service.add(p);
+                break;
+
+            case IT_BINDER:
+            case IT_WIZARD:
+            case IT_MAX:
+                break;
+            }
         }
     };
 };
@@ -210,6 +220,7 @@ void InspectorManager::release_plugins ()
     {
         if ( !p->init && p->api.term )
             p->api.term();
+
         delete p;
     }
 }
@@ -223,15 +234,7 @@ void InspectorManager::empty_trash()
         if ( !p->is_inactive() )
             return;
 
-#if 0
-        // FIXIT add name to Inspector to enable proper call to dtor
-        InspectApi* api = (InspectApi*)get_api(PT_INSPECTOR, p->get_name());
-
-        if ( api )
-            api->dtor(p);
-#else
-        delete p;
-#endif
+        free_inspector(p);
         s_trash.pop_front();
     }
 }
@@ -309,6 +312,11 @@ Inspector* InspectorManager::get_inspector(const char* key)
 
     return p->handler;
 } 
+
+void InspectorManager::free_inspector(Inspector* p)
+{
+    p->get_api()->dtor(p);
+}
 
 InspectSsnFunc InspectorManager::get_session(const char* key)
 {

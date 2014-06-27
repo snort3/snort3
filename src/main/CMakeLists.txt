@@ -8,8 +8,6 @@ set (INCLUDES
 add_library (main STATIC
     analyzer.h
     analyzer.cc 
-    binder.cc
-    binder.h
     build.h
     modules.cc
     modules.h

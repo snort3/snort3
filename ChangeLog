@@ -1,6 +1,9 @@
 93
 -- updated example inspector dpx.cc api
 -- misc tweaks
+-- changed binder to inspector with designated type
+-- added prototype wizard inspector for service selection magic
+-- fixed plugin instantiation when top level table is a list
 
 92
 -- fixed fast_pattern only auto configuration

@@ -12,14 +12,17 @@ service_inspectors.h
 #back_orifice/libback_orifice.a \
 #ftp_telnet/libftp_telnet.a \
 #http_inspect/libhttp_inspect.a \
+#nhttp_inspect/libnhttp_inspect.a \
 #rpc_decode/librpc_decode.a
+#wizard/libwizard.a
 
 SUBDIRS = \
 back_orifice \
 ftp_telnet \
 http_inspect \
 nhttp_inspect \
-rpc_decode
+rpc_decode \
+wizard
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

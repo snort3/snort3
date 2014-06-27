@@ -12,8 +12,6 @@ thread.h
 libmain_a_SOURCES = \
 analyzer.cc \
 analyzer.h \
-binder.cc \
-binder.h \
 build.h \
 modules.cc \
 modules.h \

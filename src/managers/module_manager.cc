@@ -387,7 +387,7 @@ void close_table(const char* s, int idx)
     {
         h->mod->end(s, idx, s_config);
 
-        if ( h->api && (key == s) )
+        if ( !idx && h->api && (key == s) )
             PluginManager::instantiate(h->api, h->mod, s_config);
     }
 }

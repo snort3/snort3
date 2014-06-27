@@ -100,6 +100,9 @@ public:
     void set_api(const InspectApi* p)
     { api = p; };
 
+    const InspectApi* get_api()
+    { return api; };
+
 public:
     static unsigned max_slots;
     static THREAD_LOCAL unsigned slot;
@@ -116,6 +119,8 @@ private:
 
 enum InspectorType
 {
+    IT_BINDER,
+    IT_WIZARD,
     IT_PACKET,
     IT_PROTOCOL,
     IT_STREAM,

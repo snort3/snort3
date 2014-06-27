@@ -32,18 +32,19 @@
 #include "flow/session.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "main/binder.h"
 #include "utils/stats.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "managers/inspector_manager.h"
 
-FlowControl::FlowControl()
+FlowControl::FlowControl(Inspector* pi)
 {
     ip_cache = nullptr;
     icmp_cache = nullptr;
     tcp_cache = nullptr;
     udp_cache = nullptr;
     exp_cache = nullptr;
+    binder = pi;
 }
 
 FlowControl::~FlowControl()
@@ -264,9 +265,11 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
     if ( !flow )
         return 0;
 
+    p->flow = flow;
+
     if ( !flow->ssn_client )
     {
-        Binder::init_flow(flow);
+        binder->eval(p);
 
         if ( !flow->session->setup(p) )
             return 0;
@@ -274,11 +277,10 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
         news = 1;
     }
 
-    p->flow = flow;
     flow->session->process(p);
 
     if ( news )
-        Binder::init_flow(flow, p);
+        binder->eval(p);
 
     if ( flow->next && is_bidirectional(flow) )
         cache->unlink_uni(flow);
