@@ -60,3 +60,20 @@ const std::vector<const ConvertMap*> keyword_api =
     dynamic_map,
 //    nullptr,
 };
+
+#if 0
+
+namespace keywords
+{
+
+void add_new_rule_keyword(std::string keyword_name)
+{
+    struct Convertmap* new_ruletype = new ConvertMap;
+
+    new_ruletype.keyword = keywords.name;
+
+}
+
+} // namespace keywords
+
+#endif

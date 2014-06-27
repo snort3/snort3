@@ -21,17 +21,30 @@
 
 #include <string>
 #include "rule_states/rule_api.h"
-
+#include "util/util.h"
+#include "util/converter.h"
 
 namespace rules
 {
 
 
 extern const ConvertMap* content_map;
+extern const ConvertMap* gid_map;
+extern const ConvertMap* msg_map;
+extern const ConvertMap* protected_content_map;
+extern const ConvertMap* rev_map;
+extern const ConvertMap* sid_map;
+extern const ConvertMap* uricontent_map;
 
 const std::vector<const ConvertMap*> rule_api =
 {
     content_map,
+    gid_map,
+    msg_map,
+    protected_content_map,
+    rev_map,
+    sid_map,
+    uricontent_map,
 };
 
 } // namespace rules

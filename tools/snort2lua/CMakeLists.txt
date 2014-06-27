@@ -25,6 +25,7 @@ target_link_libraries( snort2lua
     keyword_states
     output_states
     preprocessor_states
+    rule_states
 )
 
 

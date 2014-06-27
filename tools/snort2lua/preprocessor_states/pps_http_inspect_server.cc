@@ -33,7 +33,7 @@ class HttpInspectServer : public ConversionState
 public:
     HttpInspectServer(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~HttpInspectServer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 
 private:
     static int binding_id;
@@ -51,7 +51,7 @@ private:
 
 int HttpInspectServer::binding_id = 0;
 
-bool HttpInspectServer::convert(std::stringstream& data_stream)
+bool HttpInspectServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;

@@ -31,7 +31,7 @@
 
 InitState::InitState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
 
-bool InitState::convert(std::stringstream& data_stream)
+bool InitState::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 

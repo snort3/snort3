@@ -36,73 +36,77 @@ class RuleHeader : public ConversionState
 public:
     explicit RuleHeader(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~RuleHeader() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool RuleHeader::convert(std::stringstream& data_stream)
+bool RuleHeader::convert(std::istringstream& data_stream)
 {
     std::string hdr_data;
-    bool rule_test;
-
-    ld->begin_rule();
 
     // should technically be either one or seven options, but I'm
     // not doing error checking here.
-    while (data_stream >> hdr_data && hdr_data.front() != ('('))
+    std::getline(data_stream, hdr_data, '(');
+    std::istringstream in(hdr_data);
+
+    while (in >> hdr_data)
     {
         ld->add_hdr_data(hdr_data);
     }
 
-    if (!hdr_data.compare("("))
-    {
-        if(!(data_stream >> hdr_data))
-            return false;
-    }
-    else
-    {
-        hdr_data.erase(hdr_data.begin());
-    }
 
-    if(hdr_data.back() == ':')
-        hdr_data.pop_back();
+    // Now, remove the last ')' and anything beyond. We will automatically
+    // add that part back when printing each rule.
+    int curr_pos = data_stream.tellg();
+    std::string rule_string = data_stream.str();
+    int end_pos = rule_string.rfind(')');
+    rule_string = rule_string.substr(0, end_pos);
+    data_stream.str(rule_string);
+    data_stream.seekg(curr_pos);  // position was reset. so find curr position
 
-    // now, lets get the next option and start parsing!
-    const ConvertMap* map = util::find_map(rules::rule_api, hdr_data);
-    if (map)
-    {
-        cv->set_state(map->ctor(cv, ld));
-        return true;
-    }
-
-    return false;
+    // and call the first keywords
+    return set_next_rule_state(data_stream);
 }
 
 /********************************
  *******  GENERAL API ***********
  ********************************/
 
-
-static ConversionState* deprecate_rule_ctor(Converter* cv, LuaData* ld)
-{
-    return new RuleHeader(cv, ld);
-}
-
-
+template<const std::string *name>
 static ConversionState* rule_ctor(Converter* cv, LuaData* ld)
 {
+    ld->begin_rule();
+    ld->add_hdr_data(*name);
     return new RuleHeader(cv, ld);
 }
 
-static const ConvertMap alert_api = {"alert", rule_ctor};
-static const ConvertMap log_api = {"log", rule_ctor};
-static const ConvertMap pass_api = {"pass", rule_ctor};
-static const ConvertMap drop_api = {"drop", rule_ctor};
-static const ConvertMap reject_api = {"reject", rule_ctor};
-static const ConvertMap sdrop_api = {"sdrop", rule_ctor};
-static const ConvertMap activate_api = {"activate", deprecate_rule_ctor};
-static const ConvertMap dynamic_api = {"dynamic", deprecate_rule_ctor};
+template<const std::string *name>
+static ConversionState* dep_rule_ctor(Converter* cv, LuaData* ld)
+{
+    ld->begin_rule();
+    ld->add_hdr_data(*name);
+    return new RuleHeader(cv, ld);
+}
+
+
+static const std::string alert = "alert";
+static const std::string log = "log";
+static const std::string pass = "pass";
+static const std::string drop = "drop";
+static const std::string reject = "reject";
+static const std::string sdrop = "sdrop";
+static const std::string activate = "activate";
+static const std::string dynamic = "dynamic";
+
+static const ConvertMap alert_api = {alert, rule_ctor<&alert>};
+static const ConvertMap log_api = {log, rule_ctor<&log>};
+static const ConvertMap pass_api = {pass, rule_ctor<&pass>};
+static const ConvertMap drop_api = {drop, rule_ctor<&drop>};
+static const ConvertMap reject_api = {reject, rule_ctor<&reject>};
+static const ConvertMap sdrop_api = {sdrop, rule_ctor<&sdrop>};
+static const ConvertMap activate_api = {activate, dep_rule_ctor<&activate>};
+static const ConvertMap dynamic_api = {dynamic, dep_rule_ctor<&dynamic>};
 
 
 const ConvertMap* alert_map = &alert_api;

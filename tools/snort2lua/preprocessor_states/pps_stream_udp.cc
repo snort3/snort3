@@ -33,12 +33,12 @@ class StreamUdp : public ConversionState
 public:
     StreamUdp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~StreamUdp() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool StreamUdp::convert(std::stringstream& data_stream)
+bool StreamUdp::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;

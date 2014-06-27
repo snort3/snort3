@@ -22,7 +22,6 @@
 #include <iostream>
 #include "util/converter.h"
 #include "conversion_state.h"
-#include "init_state.h"
 #include "util/util.h"
 
 
@@ -46,8 +45,7 @@ bool Converter::initialize(conv_new_f func)
     // without this, "default_rules" is considered a bool for some odd reason.
     std::string s = std::string("$default_rules");
 
-    // create a rules string and point the ips to it
-    ld.add_variable("default_rules", " ");
+    // point the ips to a 'default_rules' variable
     ld.open_table("ips");
     ld.add_option_to_table("rules", s);
     ld.close_table();
@@ -111,7 +109,7 @@ void Converter::convert_file(std::string input_file)
         }
         else
         {
-            std::stringstream data_stream(orig_text);
+            std::istringstream data_stream(orig_text);
             while(data_stream.tellg() != -1)
             {
                 if ((state == nullptr) || !state->convert(data_stream))
@@ -257,10 +255,10 @@ void Converter::add_comment_to_file(std::string comment)
     data.add_comment(comment);
 }
 
-void Converter::add_comment_to_file(std::string comment, std::stringstream& stream)
+void Converter::add_comment_to_file(std::string comment, std::istringstream& stream)
 {
     int pos = stream.tellg();
-    std::ostringstream oss;
+    std::oistringstream oss;
     oss << stream.rdbuf();
     comment += oss.str();
     data.add_comment(comment);
@@ -299,7 +297,7 @@ void Converter::log_error(std::string error_string)
 //    std::cout << "\t\t" << error_string << std::endl << std::endl;
 }
 
-void Converter::print_line(std::stringstream& in)
+void Converter::print_line(std::istringstream& in)
 {
     int pos = in.tellg();
     std::ostringstream oss;

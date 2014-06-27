@@ -17,66 +17,225 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// kws_ruletype.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_content.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
 #include "util/converter.h"
+#include "rule_states/rule_api.h"
+#include "util/util.h"
 
 namespace rules
 {
 
 namespace {
 
+
+template<const std::string *option_name>
 class Content : public ConversionState
 {
 public:
     Content(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Content() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Content::convert(std::stringstream& data_stream)
+template<const std::string *option_name>
+bool Content<option_name>::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-#if 0
-    if(data_stream >> keyword)
+    std::string val;
+    bool retval = true;
+
+    std::getline(data_stream, val, ';');
+    retval = ld->add_rule_option(*option_name, val);
+    ld->select_option(*option_name);
+
+    int pos = data_stream.tellg();
+    std::getline(data_stream, val, ';');
+    std::istringstream subopts(val);
+
+    while(subopts >> val)
     {
+        bool tmpval = true;
+        util::trim(val);
+        int keyword_pos = val.find_first_of(':');
+        std::string keyword;
 
-        if(keyword.back() == ':')
-            keyword.pop_back();
-
-        const ConvertMap* map = util::find_map(rules::rule_api, keyword);
-        if (map)
+        if (keyword_pos != std::string::npos)
         {
-            cv->set_state(map->ctor(cv, ld));
-            return true;
+            keyword = val.substr(0, keyword_pos);
+            val = val.substr(keyword_pos + 1, std::string::npos);
+//            subopts.str(val);  // reset the subopts buffer for someone else
         }
-    }
-#endif
-    return false;
+        else
+        {
+            keyword = val;
+            val = std::string();
+        }
+
+        if (!keyword.compare("offset"))
+            tmpval = ld->add_suboption("offset", val);
+
+        else if (!keyword.compare("distance"))
+            tmpval = ld->add_suboption("distance", val);
+
+        else if (!keyword.compare("within"))
+            tmpval = ld->add_suboption("within", val);
+
+        else if (!keyword.compare("depth"))
+            tmpval = ld->add_suboption("depth", val);
+
+        else if (!keyword.compare("nocase"))
+            tmpval = ld->add_suboption("nocase");
+
+        else if (!keyword.compare("rawbytes"))
+            tmpval = ld->add_rule_option_before_selected("pkt_data");
+
+        else if (!keyword.compare("http_client_body"))
+            tmpval = ld->add_rule_option_before_selected("http_client_body");
+
+        else if (!keyword.compare("http_cookie"))
+            tmpval = ld->add_rule_option_before_selected("http_cookie");
+
+        else if (!keyword.compare("http_raw_cookie"))
+            tmpval = ld->add_rule_option_before_selected("http_raw_cookie");
+
+        else if (!keyword.compare("http_header"))
+            tmpval = ld->add_rule_option_before_selected("http_header");
+
+        else if (!keyword.compare("http_raw_header"))
+            tmpval = ld->add_rule_option_before_selected("http_raw_header");
+
+        else if (!keyword.compare("http_method"))
+            tmpval = ld->add_rule_option_before_selected("http_method");
+
+        else if (!keyword.compare("http_uri"))
+            tmpval = ld->add_rule_option_before_selected("http_uri");
+
+        else if (!keyword.compare("http_raw_uri"))
+            tmpval = ld->add_rule_option_before_selected("http_raw_uri");
+
+        else if (!keyword.compare("http_stat_code"))
+            tmpval = ld->add_rule_option_before_selected("http_stat_code");
+
+        else if (!keyword.compare("http_stat_msg"))
+            tmpval = ld->add_rule_option_before_selected("http_stat_msg");
+
+        else if (!keyword.compare("hash"))   // PROTECTED CONTENT
+            tmpval = ld->add_suboption("hash", val);
+
+        else if (!keyword.compare("length"))  // PROTECTED CONTENT
+            tmpval = ld->add_suboption("length", val);
+
+        else if (!keyword.compare("fast_pattern"))
+        {
+            if (val.empty())
+                tmpval = ld->add_suboption("fast_pattern");
+
+            else if(!val.compare("only"))
+                tmpval = true;  // deprecated.  ignore.
+
+            else
+            {
+                // don't let the program catch for invalid syntax.
+                try
+                {
+                    std::size_t pos;
+                    int offset = std::stoi(val, &pos);
+                    if (val[pos] == ',')
+                    {
+                        pos++;
+                        int length = std::stoi(val.substr(pos, std::string::npos));
+                        tmpval = ld->add_suboption("fast_pattern");
+                        tmpval = ld->add_suboption("fast_pattern_offset", std::to_string(offset));
+                        tmpval = ld->add_suboption("fast_pattern_length", std::to_string(length));
+                    }
+                    else
+                        tmpval = false;
+                }
+                catch(std::exception&)
+                {
+                    tmpval = false;
+                }
+            }
+        }
+
+        else
+        {
+            // since we don't know this next option, check for any other options
+            ld->unselect_option(); // don't reference this option anymore
+            data_stream.seekg(pos);
+            data_stream.clear();  // Might have already hit end of stream
+            return set_next_rule_state(data_stream) && retval;
+        }
+
+        if (retval)
+            retval = tmpval;
+
+        // lets get the next keyword
+        pos = data_stream.tellg();
+        std::getline(data_stream, val, ';');
+        subopts.clear();
+        subopts.str(val);
+    };
+
+    // can only get here if we finish parsing this rule
+    return true;
 }
 
 /**************************
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+
+template<const std::string *rule_name>
+static ConversionState* content_ctor(Converter* cv, LuaData* ld)
 {
-    return new Content(cv, ld);
+    return new Content<rule_name>(cv, ld);
 }
 
-static const ConvertMap rule_content_api = 
+static const std::string content = "content";
+static const std::string protected_content = "protected_content";
+static const std::string uricontent = "uricontent";
+
+
+//  Uricontent:"foo" --> http_uti; content:"foo".
+//  So, just add the 'http_uri' option first, then parse as if content
+static ConversionState* uricontent_ctor(Converter* cv, LuaData* ld)
 {
-    "content",
-    ctor,
+    ld->add_rule_option("http_uri");
+    return new Content<&content>(cv, ld);
+}
+
+
+
+static const ConvertMap rule_content_api =
+{
+    content,
+    content_ctor<&content>,
 };
 
+static const ConvertMap rule_protected_content_api =
+{
+    protected_content,
+    content_ctor<&protected_content>,
+};
+
+static const ConvertMap rule_uricontent_api =
+{
+    uricontent,
+    uricontent_ctor,
+};
+
+
 const ConvertMap* content_map = &rule_content_api;
+const ConvertMap* protected_content_map = &rule_protected_content_api;
+const ConvertMap* uricontent_map = &rule_uricontent_api;
 
 } // namespace rules

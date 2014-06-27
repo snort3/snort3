@@ -33,13 +33,13 @@ class Smtp : public ConversionState
 public:
     Smtp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Smtp() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool Smtp::convert(std::stringstream& data_stream)
+bool Smtp::convert(std::istringstream& data_stream)
 {
 
 #if 0

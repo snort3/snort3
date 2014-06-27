@@ -34,12 +34,12 @@ class RpcDecode : public ConversionState
 public:
     RpcDecode(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~RpcDecode() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool RpcDecode::convert(std::stringstream& data_stream)
+bool RpcDecode::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;

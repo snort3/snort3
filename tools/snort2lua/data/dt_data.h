@@ -69,6 +69,7 @@ public:
     bool add_option_to_table(const std::string name, const std::string val);
     bool add_option_to_table(const std::string name, const int val);
     bool add_option_to_table(const std::string name, const bool val);
+    bool add_option_to_table(const std::string name, const char* v);
     // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
     // corresponds to Parameter::PT_MULTI
     bool add_list_to_table(std::string list_name, std::string next_elem);
@@ -81,9 +82,24 @@ public:
 
 
     // RULE PARSING
+    // Create a new rule object.
     void begin_rule();
     // add a new peice of header_data to the current rule
     bool add_hdr_data(std::string data);
+    // add a rule option (keyword and suboption)
+    bool add_rule_option(std::string keyword);
+    // add a rule option (keyword and suboption)
+    bool add_rule_option(std::string keyword, std::string val);
+    // add a rule option (keyword and suboption)
+    bool add_rule_option_before_selected(std::string keyword, std::string val = std::string());
+    // selects the rule option with the given name.  MUST BE CALLED BEFORE ADDING A SUBOPTION.
+    bool select_option(std::string keyword);
+    // clear the selected option.
+    void unselect_option();
+    // add a rule option (keyword and suboption)
+    bool add_suboption(std::string keyword);
+    // add a rule option (keyword and suboption)
+    bool add_suboption(std::string keyword, std::string val);
 
 private:
     std::vector<Variable*> vars;
@@ -93,6 +109,7 @@ private:
     Comments* errors;
     std::stack<Table*> open_tables;
     Rule* curr_rule;
+    RuleOption* curr_rule_opt;
 
 };
 

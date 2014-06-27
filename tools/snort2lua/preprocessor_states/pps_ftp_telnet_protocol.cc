@@ -33,10 +33,10 @@ class FtpServer : public ConversionState
 public:
     FtpServer(Converter* cv, LuaData* ld);
     virtual ~FtpServer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
-    bool parse_alt_max_cmd(std::stringstream& data_stream);
-    bool parse_cmd_validity_cmd(std::stringstream& data_stream);
+    bool parse_alt_max_cmd(std::istringstream& data_stream);
+    bool parse_cmd_validity_cmd(std::istringstream& data_stream);
     static int ftpsever_binding_id;
 };
 
@@ -45,7 +45,7 @@ class FtpClient : public ConversionState
 public:
     FtpClient(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~FtpClient() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
     static int ftpclient_binding_id;
 };
@@ -55,7 +55,7 @@ class Telnet : public ConversionState
 public:
     Telnet(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Telnet() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 class FtpTelnetProtocol : public ConversionState
@@ -63,7 +63,7 @@ class FtpTelnetProtocol : public ConversionState
 public:
     FtpTelnetProtocol(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~FtpTelnetProtocol() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
@@ -79,7 +79,7 @@ int FtpServer::ftpsever_binding_id = 1;
 FtpServer::FtpServer(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
 {}
 
-bool FtpServer::parse_alt_max_cmd(std::stringstream& data_stream)
+bool FtpServer::parse_alt_max_cmd(std::istringstream& data_stream)
 {
     int i_val;
     bool tmpval;
@@ -96,7 +96,7 @@ bool FtpServer::parse_alt_max_cmd(std::stringstream& data_stream)
     return tmpval;
 }
 
-bool FtpServer::parse_cmd_validity_cmd(std::stringstream& data_stream)
+bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
 {
     std::string val;
     std::string elem;
@@ -123,7 +123,7 @@ bool FtpServer::parse_cmd_validity_cmd(std::stringstream& data_stream)
     return tmpval;
 }
 
-bool FtpServer::convert(std::stringstream& data_stream)
+bool FtpServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -210,7 +210,7 @@ bool FtpServer::convert(std::stringstream& data_stream)
 
 int FtpClient::ftpclient_binding_id = 1;
 
-bool FtpClient::convert(std::stringstream& data_stream)
+bool FtpClient::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -274,7 +274,7 @@ bool FtpClient::convert(std::stringstream& data_stream)
  *********  Telnet Protocol  ************
  ****************************************/
 
-bool Telnet::convert(std::stringstream& data_stream)
+bool Telnet::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     int i_val;
@@ -321,7 +321,7 @@ bool Telnet::convert(std::stringstream& data_stream)
  ****************************************/
 
 
-bool FtpTelnetProtocol::convert(std::stringstream& data_stream)
+bool FtpTelnetProtocol::convert(std::istringstream& data_stream)
 {
     std::string protocol;
 

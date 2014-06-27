@@ -33,16 +33,16 @@ class StreamTcp : public ConversionState
 public:
     StreamTcp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~StreamTcp() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 
 private:
-    bool parse_small_segments(std::stringstream& data_stream);
-    bool parse_ports(std::stringstream& data_stream);
+    bool parse_small_segments(std::istringstream& data_stream);
+    bool parse_ports(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool StreamTcp::parse_small_segments(std::stringstream& data_stream)
+bool StreamTcp::parse_small_segments(std::istringstream& data_stream)
 {
     std::string s_val;
     int i_val;
@@ -96,7 +96,7 @@ bool StreamTcp::parse_small_segments(std::stringstream& data_stream)
 }
 
 
-bool StreamTcp::parse_ports(std::stringstream& data_stream)
+bool StreamTcp::parse_ports(std::istringstream& data_stream)
 {
     std::string s_val;
     std::string opt_name;
@@ -137,7 +137,7 @@ bool StreamTcp::parse_ports(std::stringstream& data_stream)
 }
 
 
-bool StreamTcp::convert(std::stringstream& data_stream)
+bool StreamTcp::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;

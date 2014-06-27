@@ -34,13 +34,13 @@ class StreamGlobal : public ConversionState
 public:
     StreamGlobal(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~StreamGlobal() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool StreamGlobal::convert(std::stringstream& data_stream)
+bool StreamGlobal::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;

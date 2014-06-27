@@ -19,22 +19,23 @@
  */
 // converter.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include "conversion_state.h"
 
 #ifndef RULE_API_H
 #define RULE_API_H
 
-
+#include <sstream>
+#include <istream>
 #include <vector>
+
 #include "conversion_state.h"
 
 namespace rules
 {
 
-// vector containing all of hte rule keywords
+// vector containing all of the rule keywords
 extern const std::vector<const ConvertMap*> rule_api;
 
+//bool set_next_rule_state(std::istringstream, Converter* cv, LuaData* ld);
 
 } // namespace rules
 

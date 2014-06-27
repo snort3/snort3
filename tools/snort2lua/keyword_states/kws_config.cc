@@ -35,13 +35,13 @@ class Config : public ConversionState
 public:
     Config(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Config() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Config::convert(std::stringstream& data_stream)
+bool Config::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 

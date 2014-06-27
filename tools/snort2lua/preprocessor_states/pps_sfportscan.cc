@@ -33,20 +33,20 @@ class PortScan : public ConversionState
 public:
     PortScan(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~PortScan() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 
 private:
-    bool parse_list(std::string table_name, std::stringstream& data_stream);
-    bool parse_option(std::string table_name, std::stringstream& data_stream);
-    bool add_portscan_global_option(std::string name, std::stringstream& data_stream);
+    bool parse_list(std::string table_name, std::istringstream& data_stream);
+    bool parse_option(std::string table_name, std::istringstream& data_stream);
+    bool add_portscan_global_option(std::string name, std::istringstream& data_stream);
     // a wrapper for parse_list.  adds an addition '[..]' around the string
-    bool parse_ip_list(std::string table_name, std::stringstream& data_stream);
+    bool parse_ip_list(std::string table_name, std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool PortScan::parse_ip_list(std::string list_name, std::stringstream& data_stream)
+bool PortScan::parse_ip_list(std::string list_name, std::istringstream& data_stream)
 {
     std::string prev;
     std::string elem;
@@ -67,7 +67,7 @@ bool PortScan::parse_ip_list(std::string list_name, std::stringstream& data_stre
     return ld->add_option_to_table(list_name, prev);
 }
 
-bool PortScan::parse_list(std::string list_name, std::stringstream& data_stream)
+bool PortScan::parse_list(std::string list_name, std::istringstream& data_stream)
 {
     std::string elem;
     bool retval = true;
@@ -81,7 +81,7 @@ bool PortScan::parse_list(std::string list_name, std::stringstream& data_stream)
     return retval;
 }
 
-bool PortScan::parse_option(std::string list_name, std::stringstream& data_stream)
+bool PortScan::parse_option(std::string list_name, std::istringstream& data_stream)
 {
     std::string elem;
     bool retval = true;
@@ -95,7 +95,7 @@ bool PortScan::parse_option(std::string list_name, std::stringstream& data_strea
     return retval;
 }
 
-bool PortScan::add_portscan_global_option(std::string name, std::stringstream& data_stream)
+bool PortScan::add_portscan_global_option(std::string name, std::istringstream& data_stream)
 {
     int val;
     std::string garbage;
@@ -119,7 +119,7 @@ bool PortScan::add_portscan_global_option(std::string name, std::stringstream& d
 }
 
 
-bool PortScan::convert(std::stringstream& data_stream)
+bool PortScan::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;

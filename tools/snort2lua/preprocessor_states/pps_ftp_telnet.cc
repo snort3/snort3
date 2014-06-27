@@ -33,7 +33,7 @@ class FtpTelnet : public ConversionState
 public:
     FtpTelnet(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~FtpTelnet() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
     bool add_ftp_n_telnet_option(std::string opt_name, bool val);
     void add_ftp_n_telnet_deprecated(std::string opt_name);
@@ -64,7 +64,7 @@ void FtpTelnet::add_ftp_n_telnet_deprecated(std::string opt_name)
     ld->close_table();
 }
 
-bool FtpTelnet::convert(std::stringstream& data_stream)
+bool FtpTelnet::convert(std::istringstream& data_stream)
 {
 
     std::string keyword;

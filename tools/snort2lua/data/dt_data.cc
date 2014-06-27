@@ -46,6 +46,8 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
 }
 
 LuaData::LuaData()
+    :   curr_rule(nullptr),
+        curr_rule_opt(nullptr)
 {
     comments = new Comments(start_comments, 0,
                     Comments::CommentType::MULTI_LINE);
@@ -92,6 +94,7 @@ void LuaData::reset_state()
     std::stack<Table*> empty;
     open_tables.swap(empty );
     curr_rule = nullptr;
+    curr_rule_opt = nullptr;
 }
 
 void LuaData::open_top_level_table(std::string table_name)
@@ -202,6 +205,13 @@ bool LuaData::add_option_to_table(const std::string option_name, const bool val)
     return true;
 }
 
+// compilers are fickle and dangerous creatures.  Ensure a literal gets
+// sent here rather to become a bool
+bool LuaData::add_option_to_table(const std::string name, const char* v)
+{
+    return add_option_to_table(name, std::string(v));
+}
+
 bool LuaData::add_list_to_table(std::string list_name, std::string next_elem)
 {
     if(open_tables.size() == 0)
@@ -262,7 +272,7 @@ bool LuaData::add_deprecated_comment(std::string dep_var)
 
     if (open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding an option!!: " +
+        add_error_comment("Must open table before adding deprecated comment!!: " +
             dep_var);
         return false;
     }
@@ -275,25 +285,117 @@ bool LuaData::add_deprecated_comment(std::string dep_var)
 
 void LuaData::begin_rule()
 {
-    curr_rule = new Rule();
-    rules.push_back(curr_rule);
+    if (curr_rule != nullptr)
+    {
+        add_error_comment("Attempted to add a nested rules!!");
+    }
+    else
+    {
+        curr_rule = new Rule();
+        rules.push_back(curr_rule);
+    }
 }
 
 bool LuaData::add_hdr_data(std::string data)
 {
-    return curr_rule->add_hdr_data(data);
+    if (curr_rule)
+        return curr_rule->add_hdr_data(data);
+
+    add_error_comment("Must begin a rule before adding a header!");
+    return false;
 }
 
+bool LuaData::add_rule_option(std::string opt_name)
+{
+    if (curr_rule)
+        return curr_rule->add_option(opt_name);
+
+    add_error_comment("Must begin a rule before adding an option!");
+    return false;
+}
+
+bool LuaData::add_rule_option(std::string opt_name, std::string val)
+{
+    if (curr_rule)
+        return curr_rule->add_option(opt_name, val);
+
+    add_error_comment("Must begin a rule before adding an option!");
+    return false;
+}
+
+
+bool LuaData::add_rule_option_before_selected(std::string keyword,
+                                            std::string val)
+{
+    if (!curr_rule_opt)
+    {
+        comments->add_text("Select an option before placing a "
+                "new option before selected option");
+        return false;
+    }
+
+    return curr_rule->add_option_before_selected(curr_rule_opt, keyword, val);
+}
+
+bool LuaData::add_suboption(std::string keyword)
+{
+    if (curr_rule_opt)
+        return curr_rule_opt->add_suboption(keyword);
+
+    add_error_comment("Select an option before adding a suboption!!");
+    return false;
+}
+
+bool LuaData::add_suboption(std::string keyword, std::string val)
+{
+    if (curr_rule_opt)
+        return curr_rule_opt->add_suboption(keyword, val);
+
+    add_error_comment("Select an option before adding a suboption!!");
+    return false;
+}
+
+bool LuaData::select_option(std::string opt_name)
+{
+    // using add_comment here so this error is right above the failed rule
+
+    if (curr_rule)
+    {
+        curr_rule_opt = curr_rule->select_option(opt_name);
+        if (curr_rule_opt != nullptr)
+            return true;
+        else
+            comments->add_text("Option " + opt_name + "never created for following rule:");
+    }
+    else
+    {
+        comments->add_text("Must begin a rule before selecting an option!");
+    }
+
+    return false;
+}
+
+void LuaData::unselect_option()
+{
+    curr_rule_opt = nullptr;
+}
 
 std::ostream& operator<<( std::ostream &out, const LuaData &data)
 {
     out << (*data.errors) << std::endl << std::endl;
 
-    for (Variable *v : data.vars)
-        out << (*v) << std::endl << std::endl;
+    for (Variable* v : data.vars)
+        out << (*v) << "\n\n";
 
-    for (Table *t : data.tables)
-        out << (*t) << std::endl << std::endl;
+    out << "default_rules =\n[[\n";
+
+    for (Rule* r : data.rules)
+        out << (*r) << "\n";
+
+    out << "]]\n";
+
+    for (Table* t : data.tables)
+        out << (*t) << "\n\n";
 
     out << (*data.comments) << std::endl;
 

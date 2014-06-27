@@ -33,17 +33,17 @@ class Frag3Engine : public ConversionState
 public:
     explicit Frag3Engine(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Frag3Engine() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 
 private:
-    bool parse_ip_list(std::string, std::stringstream& data_stream);
+    bool parse_ip_list(std::string, std::istringstream& data_stream);
 };
 
 } // namespace
 
 
 bool Frag3Engine::parse_ip_list(std::string list_name, 
-                                std::stringstream& data_stream)
+                                std::istringstream& data_stream)
 {
     std::string prev;
     std::string elem;
@@ -65,7 +65,7 @@ bool Frag3Engine::parse_ip_list(std::string list_name,
 
 }
 
-bool Frag3Engine::convert(std::stringstream& data_stream)
+bool Frag3Engine::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;

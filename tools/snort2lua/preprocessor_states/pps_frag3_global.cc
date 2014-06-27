@@ -33,12 +33,12 @@ class Frag3Global : public ConversionState
 public:
     Frag3Global(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Frag3Global() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool Frag3Global::convert(std::stringstream& data_stream)
+bool Frag3Global::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;

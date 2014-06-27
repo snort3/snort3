@@ -32,12 +32,12 @@ class InitState : public ConversionState
 public:
     InitState(Converter* cv, LuaData* ld);
     virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 
 };
 
 
-static ConversionState* init_state_ctor(Converter* cv, LuaData* ld)
+static inline ConversionState* init_state_ctor(Converter* cv, LuaData* ld)
 {
     return new InitState(cv, ld);
 }

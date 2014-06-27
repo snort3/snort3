@@ -32,13 +32,13 @@ class ArpSpoof : public ConversionState
 public:
     ArpSpoof(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~ArpSpoof() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool ArpSpoof::convert(std::stringstream& data_stream)
+bool ArpSpoof::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -86,13 +86,13 @@ class ArpSpoofHost : public ConversionState
 public:
     ArpSpoofHost(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~ArpSpoofHost() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool ArpSpoofHost::convert(std::stringstream& data_stream)
+bool ArpSpoofHost::convert(std::istringstream& data_stream)
 {
     std::string ip, mac;
 

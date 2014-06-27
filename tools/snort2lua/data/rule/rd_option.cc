@@ -17,44 +17,49 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// snort2lua_util.h author Josh Rosenbaum <jorosenba@cisco.com>
+// rd_option.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include <sstream>
-#include <algorithm> 
-#include <functional> 
-#include <cctype>
-#include <locale>
-#include "util/util.h"
-#include "conversion_state.h"
+#include "data/rule/rd_option.h"
 
-namespace util
+
+
+RuleOption::RuleOption(std::string name) :
+        name(name), 
+        value(std::string())
+{}
+
+RuleOption::RuleOption(std::string name, std::string value) :
+        name(name), 
+        value(value)
+{}
+
+RuleOption::~RuleOption()
 {
-
-
-
-
-std::vector<std::string> &split(const std::string &s, 
-                                char delim, 
-                                std::vector<std::string> &elems)
-{
-    std::istringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim))
-    {
-        elems.push_back(item);
-    }
-
-    return elems;
 }
 
-const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string keyword)
+bool RuleOption::add_suboption(std::string name)
 {
-    for (const ConvertMap *p : map)
-        if (p->keyword.compare(0, p->keyword.size(), keyword) == 0)
-            return p;
-
-    return nullptr;
+    RuleSubOption* subopt = new RuleSubOption(name);
+    sub_options.push_back(subopt);
+    return true;
 }
 
+bool RuleOption::add_suboption(std::string name, std::string val)
+{
+    RuleSubOption* subopt = new RuleSubOption(name, val);
+    sub_options.push_back(subopt);
+    return true;
+}
 
-} // namespace util
+std::ostream &operator<<( std::ostream& out, const RuleOption &opt)
+{
+    out << opt.name;
+
+    if (!opt.value.empty())
+        out << ":" << opt.value;
+
+    for (RuleSubOption* rso : opt.sub_options)
+        out << ", " << (*rso);
+
+    return out;
+}

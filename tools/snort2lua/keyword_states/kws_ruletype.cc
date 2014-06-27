@@ -34,13 +34,13 @@ class RuleType : public ConversionState
 public:
     RuleType(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~RuleType() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool RuleType::convert(std::stringstream& data_stream)
+bool RuleType::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 #if 0

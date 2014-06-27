@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// conversion_state.h author Josh Rosenbaum <jorosenba@cisco.com>
 
 #ifndef CONVERSION_STATE_H
 #define CONVERSION_STATE_H
@@ -29,20 +29,40 @@
 
 #include "data/dt_data.h"
 
+// the following three files are for the function 'set_next_rule_state'
+#include "util/util.h"
+#include "rule_states/rule_api.h"
+#include "util/converter.h"
+
 class Converter;
+class ConversionState;
+typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
+
+struct ConvertMap
+{
+    std::string keyword;
+    conv_new_f ctor;
+};
+
+// yes, forward declaring.  Without some improvements to design, this needs to stay here.
+namespace rules
+{
+    extern const std::vector<const ConvertMap*> rule_api;
+} // namespace rules.
+
 
 class ConversionState
 {
 
 public:
-    explicit ConversionState(Converter* cv, LuaData* ld)
+    ConversionState(Converter* cv, LuaData* ld)
     {
         this->cv = cv;
         this->ld = ld;
     }
 
     virtual ~ConversionState() {};
-    virtual bool convert(std::stringstream& data)=0;
+    virtual bool convert(std::istringstream& data)=0;
 
 protected:
     Converter* cv;
@@ -52,29 +72,33 @@ protected:
     List of forward parsing methods. Placing these here so you don't need to
     search through the file
 
-    inline bool eat_option(std::stringstream& stream);
+    inline bool eat_option(std::istringstream& stream);
     inline bool parse_string_option(std::string opt_name,
-                                        std::stringstream& stream);
+                                        std::istringstream& stream);
     inline bool parse_int_option(std::string opt_name,
-                                        std::stringstream& stream);
+                                        std::istringstream& stream);
     inline bool parse_curly_bracket_list(std::string list_name,
-                                        std::stringstream& stream);
+                                        std::istringstream& stream);
     inline bool parse_yn_bool_option(std::string opt_name,
-                                        std::stringstream& stream);
+                                        std::istringstream& stream);
     inline bool parse_bracketed_byte_list(std::string list_name,
-                                        std::stringstream& stream);
+                                        std::istringstream& stream);
     inline bool parse_bracketed_unsupported_list(std::string list_name,
-                                        std::stringstream& stream);
+                                        std::istringstream& stream);
     inline bool open_table_add_option(std::string table_name,
                                         std::string opt_name,
                                         std::string val);
     inline bool parse_deprecation_option(std::string table_name,
-                                        std::stringstream& stream);
+                                        std::istringstream& stream);
+
+    //  explicitly defined due quantity of times called and errors if
+    //  not placed here.
+    inline bool set_next_rule_state(std::istringstream& stream)
 
 #endif
 
 
-    inline bool eat_option(std::stringstream& stream)
+    inline bool eat_option(std::istringstream& stream)
     {
         std::string val;
 
@@ -83,7 +107,7 @@ protected:
         return false;
     }
 
-    inline bool parse_string_option(std::string opt_name, std::stringstream& stream)
+    inline bool parse_string_option(std::string opt_name, std::istringstream& stream)
     {
         std::string val;
 
@@ -100,7 +124,7 @@ protected:
         return false;
     }
 
-    inline bool parse_int_option(std::string opt_name, std::stringstream& stream)
+    inline bool parse_int_option(std::string opt_name, std::istringstream& stream)
     {
         int val;
 
@@ -115,7 +139,7 @@ protected:
     }
 
     // parse and add a curly bracketed list to the table
-    inline bool parse_curly_bracket_list(std::string list_name, std::stringstream& stream)
+    inline bool parse_curly_bracket_list(std::string list_name, std::istringstream& stream)
     {
         std::string elem;
         bool retval = true;
@@ -130,7 +154,7 @@ protected:
     }
 
     // parse and add a yes/no boolean option.
-    inline bool parse_yn_bool_option(std::string opt_name, std::stringstream& stream)
+    inline bool parse_yn_bool_option(std::string opt_name, std::istringstream& stream)
     {
         std::string val;
 
@@ -148,7 +172,7 @@ protected:
     }
 
     // parse a curly bracketed bit and add it to the table
-    inline bool parse_bracketed_byte_list(std::string list_name, std::stringstream& stream)
+    inline bool parse_bracketed_byte_list(std::string list_name, std::istringstream& stream)
     {
         std::string elem;
         bool retval = true;
@@ -169,7 +193,7 @@ protected:
 
             if (0 <= dig && dig <= 255)
             {
-                std::stringstream tmp;
+                std::ostringstream tmp;
                 tmp << "0x" << std::hex << dig;
                 retval = ld->add_list_to_table(list_name, tmp.str()) && retval;
 
@@ -186,7 +210,7 @@ protected:
     }
 
     // parse and add a curly bracket list '{...}' which is currently unsupported in Snort++
-    inline bool parse_bracketed_unsupported_list(std::string list_name, std::stringstream& stream)
+    inline bool parse_bracketed_unsupported_list(std::string list_name, std::istringstream& stream)
     {
         std::string tmp = "";
         std::string elem;
@@ -204,17 +228,9 @@ protected:
         return ld->add_option_to_table("--" + list_name, tmp );
     }
 
-    inline bool open_table_add_option(std::string table_name, std::string opt_name, std::string val)
-    {
-        ld->open_table(table_name);
-        bool tmpval = ld->add_option_to_table(opt_name, val) && tmpval;
-        ld->close_table();
-        return tmpval;
-    }
-
 
     inline bool parse_deprecation_option(std::string opt_name,
-                                        std::stringstream& stream)
+                                        std::istringstream& stream)
     {
 
         std::string val;
@@ -227,20 +243,31 @@ protected:
     }
 
 
+    inline bool set_next_rule_state(std::istringstream& stream)
+    {
+        std::string keyword;
+
+        std::getline(stream, keyword, ':');
+        util::trim(keyword);
+
+        if (keyword.empty())
+            return true;
+
+        // now, lets get the next option.
+        const ConvertMap* map = util::find_map(rules::rule_api, keyword);
+        if (map)
+        {
+            cv->set_state(map->ctor(cv, ld));
+            return true;
+        }
+
+        return false;
+    }
+
+
 private:
 
 };
-
-
-typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
-
-struct ConvertMap
-{
-    std::string keyword;
-    conv_new_f ctor;
-};
-
-
 
 
 #endif

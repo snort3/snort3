@@ -143,6 +143,21 @@ const ConvertMap* pcre_match_limit_recursion_map = &config_pcre_match_limit_recu
  ****************** FLOWBIT_SIZE ***************************
  ***********************************************************/
 
+//template<const std::string *snort_option, const std::string *lua_name>
+//config_int_ctor2<snort_option, lua_name, snort_option>
+
+static const std::string alerts = "alerts";
+static const std::string flowbits_size = "flowbits_size";
+
+static const ConvertMap config_flowbit_size =
+{
+    flowbits_size,
+    config_int_ctor<&flowbits_size, &alerts>,
+};
+
+const ConvertMap* flowbit_size_map = &config_flowbit_size;
+
+#if 0
 static ConversionState* flowbit_size_ctor(Converter* cv, LuaData* ld)
 {
     return new ConfigIntOption(cv, ld, "alerts", "flowbits_size");
@@ -155,6 +170,8 @@ static const ConvertMap config_flowbit_size =
 };
 
 const ConvertMap* flowbit_size_map = &config_flowbit_size;
+
+#endif
 
 /*********************************************
  *******  Enable GTP *********

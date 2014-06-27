@@ -28,6 +28,8 @@
 #include <iostream>
 #include <array>
 
+#include "data/rule/rd_option.h"
+
 class Rule
 {
 public:
@@ -35,11 +37,18 @@ public:
     virtual ~Rule();
 
     bool add_hdr_data(std::string data);
+    bool add_option(std::string keyword);
+    bool add_option(std::string keyword, std::string data);
+    RuleOption* select_option(std::string opt_name);
+    bool add_option_before_selected(RuleOption* selected_opt,
+                                    std::string keyword,
+                                    std::string val);
 
     friend std::ostream &operator<<( std::ostream&, const Rule &);
 
 private:
     std::array<std::string, 7> hdr_data;
+    std::vector<RuleOption*> options;
     int num_hdr_data;
     bool bad_rule;
 };

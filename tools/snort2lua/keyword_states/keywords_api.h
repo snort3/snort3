@@ -23,8 +23,18 @@
 #define KEYWORDS_API_H
 
 #include <vector>
+#include <string>
 #include "../conversion_state.h"
 
 extern const std::vector<const ConvertMap*> keyword_api;
+
+#if 0
+namespace keywords
+{
+
+void add_new_rule_keyword(std::string);
+
+}  // namespace keywords
+#endif
 
 #endif

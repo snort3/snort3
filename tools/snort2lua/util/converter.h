@@ -27,12 +27,17 @@
 #include <sstream>
 #include <stack>
 #include <iostream>
+#include <istream>
+#include <ostream>
 
 #include "data/dt_data.h"
 #include "data/dt_var.h"
-#include "conversion_state.h"
 
+
+// typedef redefined from 'conversion_state.h'
 class ConversionState;
+class Converter;
+typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
 
 class Converter
 {
@@ -86,7 +91,7 @@ public:
     // comment will appear immediately below the lua configuration
     void add_comment_to_file(std::string comment);
     // add the entire stream as a comment in the new lua file
-    void add_comment_to_file(std::string comment, std::stringstream& stream);
+    void add_comment_to_file(std::string comment, std::istringstream& stream);
     // attach a comment about a deprecated option to a file or table
     void add_deprecated_comment(std::string dep_var);
     // add a comment with telling the user an option has changed
@@ -96,7 +101,7 @@ public:
     // log an error in the new lua file
     void log_error(std::string);
 
-    void print_line(std::stringstream& in);
+    void print_line(std::istringstream& in);
     void print_line(std::ostringstream& in);
     void print_line(std::string& in);
 

@@ -80,13 +80,13 @@ class Ip4Normalizer : public ConversionState
 public:
     Ip4Normalizer(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Ip4Normalizer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool Ip4Normalizer::convert(std::stringstream& data_stream)
+bool Ip4Normalizer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -166,7 +166,7 @@ class TcpNormalizer : public ConversionState
 public:
     TcpNormalizer(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~TcpNormalizer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
     bool set_base_w_comment(std::string);
     bool set_ecn_w_comment(std::string);
@@ -198,7 +198,7 @@ bool TcpNormalizer::set_trim_w_comment(std::string comment)
 }
 
 
-bool TcpNormalizer::convert(std::stringstream& data_stream)
+bool TcpNormalizer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     std::string value;

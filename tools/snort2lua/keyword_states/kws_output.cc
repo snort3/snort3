@@ -36,13 +36,13 @@ class Output : public ConversionState
 public:
     Output(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Output() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Output::convert(std::stringstream& data_stream)
+bool Output::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 

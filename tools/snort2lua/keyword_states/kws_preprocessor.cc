@@ -34,13 +34,13 @@ class Preprocessor : public ConversionState
 public:
     Preprocessor(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Preprocessor() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Preprocessor::convert(std::stringstream& data_stream)
+bool Preprocessor::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 

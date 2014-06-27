@@ -34,13 +34,13 @@ class Suppress : public ConversionState
 public:
     Suppress(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Suppress() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Suppress::convert(std::stringstream& data_stream)
+bool Suppress::convert(std::istringstream& data_stream)
 {
     bool retval = true;
     std::string keyword;

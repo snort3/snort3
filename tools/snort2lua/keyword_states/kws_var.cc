@@ -34,7 +34,7 @@ class Var : public ConversionState
 public:
     Var(Converter* cv, LuaData* ld);
     virtual ~Var() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 
 private:
     bool first_line;
@@ -51,7 +51,7 @@ Var::Var(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
     is_port_list = false;
 }
 
-bool Var::convert(std::stringstream& data_stream)
+bool Var::convert(std::istringstream& data_stream)
 {
     std::string ports;//    cv->print_line(data_stream);
 

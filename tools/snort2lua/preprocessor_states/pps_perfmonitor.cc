@@ -34,9 +34,9 @@ class PerfMonitor : public ConversionState
 public:
     PerfMonitor(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~PerfMonitor() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
-    bool parse_file_option(std::stringstream& data_stream,
+    bool parse_file_option(std::istringstream& data_stream,
                         std::string orig_name,
                         std::string option_name,
                         std::string new_file_name);
@@ -44,7 +44,7 @@ private:
 
 } // namespace
 
-bool PerfMonitor::parse_file_option(std::stringstream& data_stream,
+bool PerfMonitor::parse_file_option(std::istringstream& data_stream,
                                 std::string orig_name,
                                 std::string option_name,
                                 std::string new_file_name)
@@ -61,7 +61,7 @@ bool PerfMonitor::parse_file_option(std::stringstream& data_stream,
     return false;
 }
 
-bool PerfMonitor::convert(std::stringstream& data_stream)
+bool PerfMonitor::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;

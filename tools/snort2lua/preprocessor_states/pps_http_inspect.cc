@@ -34,10 +34,10 @@ class HttpInspect : public ConversionState
 public:
     HttpInspect(Converter* cv, LuaData* ld);
     virtual ~HttpInspect() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 
 private:
-    bool add_decode_option(std::string opt_name,  std::stringstream& stream);
+    bool add_decode_option(std::string opt_name,  std::istringstream& stream);
 };
 
 } // namespace
@@ -46,7 +46,7 @@ private:
 HttpInspect::HttpInspect(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
 {}
 
-bool HttpInspect::convert(std::stringstream& data_stream)
+bool HttpInspect::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
@@ -136,7 +136,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     return retval;    
 }
 
-bool HttpInspect::add_decode_option(std::string opt_name,  std::stringstream& stream)
+bool HttpInspect::add_decode_option(std::string opt_name,  std::istringstream& stream)
 {
     int val;
 

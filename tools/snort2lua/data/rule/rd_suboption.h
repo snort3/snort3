@@ -17,29 +17,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_option.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "config_states/config_api.h"
+#ifndef RD_SUBOPTION_H
+#define RD_SUBOPTION_H
 
+#include <string>
+#include <vector>
+#include <iostream>
 
-extern const ConvertMap* autogenerate_decode_rules_map;
-extern const ConvertMap* flowbit_size_map;
-extern const ConvertMap* checksum_map;
-extern const ConvertMap* enable_gtp_map;
-extern const ConvertMap* paf_max_map;
-extern const ConvertMap* pcre_match_limit_map;
-extern const ConvertMap* pcre_match_limit_recursion_map;
-extern const ConvertMap* ppm_map;
-
-
-const std::vector<const ConvertMap*> config_api = 
+class RuleSubOption
 {
-    autogenerate_decode_rules_map,
-    checksum_map,
-    flowbit_size_map,
-    enable_gtp_map,
-    paf_max_map,
-    pcre_match_limit_map,
-    pcre_match_limit_recursion_map,
-    ppm_map,
+public:
+    RuleSubOption(std::string name);
+    RuleSubOption(std::string name, std::string val);
+    virtual ~RuleSubOption();
+ 
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const RuleSubOption &);
+
+private:
+//    enum class OptionType{ STRING, VAR, BOOL, INT};
+
+    std::string name;
+    std::string value;
+//    OptionType type;
 };
+
+
+#endif
