@@ -43,14 +43,19 @@ public:
     bool add_option_before_selected(RuleOption* selected_opt,
                                     std::string keyword,
                                     std::string val);
+    void add_comment(std::string comment);
+    void bad_rule();
+    void make_comment();
 
     friend std::ostream &operator<<( std::ostream&, const Rule &);
 
 private:
+    std::vector<std::string> comments;
     std::array<std::string, 7> hdr_data;
     std::vector<RuleOption*> options;
     int num_hdr_data;
-    bool bad_rule;
+    bool is_bad_rule;
+    bool is_comment;
 };
 
 #endif

@@ -30,18 +30,17 @@ class RuleSubOption
 {
 public:
     RuleSubOption(std::string name);
-    RuleSubOption(std::string name, std::string val);
+    RuleSubOption(std::string name, std::string val, char delimeter);
     virtual ~RuleSubOption();
  
     // overloading operators
     friend std::ostream &operator<<( std::ostream&, const RuleSubOption &);
 
 private:
-//    enum class OptionType{ STRING, VAR, BOOL, INT};
 
     std::string name;
     std::string value;
-//    OptionType type;
+    char delimeter;
 };
 
 

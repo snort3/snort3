@@ -43,6 +43,9 @@ public:
     virtual ~Comments();
 
     void add_text(std::string new_text);
+    // insert this string before the first lexigraphically larger string.
+    // will not add duplicates.
+    void add_sorted_text(std::string new_text);
     bool empty();
 
     // overloading operators

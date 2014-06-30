@@ -24,12 +24,12 @@
 
 
 RuleOption::RuleOption(std::string name) :
-        name(name), 
+        name(name),
         value(std::string())
 {}
 
-RuleOption::RuleOption(std::string name, std::string value) :
-        name(name), 
+RuleOption::RuleOption(std::string name, std::string value)
+    :   name(name),
         value(value)
 {}
 
@@ -44,22 +44,41 @@ bool RuleOption::add_suboption(std::string name)
     return true;
 }
 
-bool RuleOption::add_suboption(std::string name, std::string val)
+bool RuleOption::add_suboption(std::string name,
+                                std::string val,
+                                char delimeter)
 {
-    RuleSubOption* subopt = new RuleSubOption(name, val);
+    RuleSubOption* subopt = new RuleSubOption(name, val, delimeter);
     sub_options.push_back(subopt);
     return true;
 }
 
+
 std::ostream &operator<<( std::ostream& out, const RuleOption &opt)
 {
+    bool first_print = true;
+
     out << opt.name;
 
     if (!opt.value.empty())
-        out << ":" << opt.value;
+    {
+        out << ':' << opt.value;
+        first_print = false;
+    }
+    else if (!opt.sub_options.empty())
+    {
+        out << ':' << opt.value;
+    }
 
     for (RuleSubOption* rso : opt.sub_options)
-        out << ", " << (*rso);
+    {
+        if (first_print)
+            first_print = false;
+        else
+            out << ",";
+
+        out << (*rso);
+    }
 
     return out;
 }

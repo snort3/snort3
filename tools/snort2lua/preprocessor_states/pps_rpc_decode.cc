@@ -46,7 +46,6 @@ bool RpcDecode::convert(std::istringstream& data_stream)
     std::string port_list = "";
     std::string keyword;
     int i_val;
-    bool blah;
 
     ld->open_table("rpc_decode");
 

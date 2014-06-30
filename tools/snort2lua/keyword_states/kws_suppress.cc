@@ -25,7 +25,10 @@
 #include "conversion_state.h"
 #include "util/converter.h"
 #include "util/util.h"
-//#include "suppress_states/suppress_api.h"
+
+
+namespace keywords
+{
 
 namespace {
 
@@ -98,3 +101,5 @@ static const ConvertMap keyword_supress =
 };
 
 const ConvertMap* supress_map = &keyword_supress;
+
+} // namespace keywords

@@ -27,6 +27,8 @@
 #include "config_states/config_api.h"
 #include "util/util.h"
 
+namespace keywords
+{
 
 namespace {
 
@@ -51,7 +53,7 @@ bool Config::convert(std::istringstream& data_stream)
         if(keyword.back() == ':')
             keyword.pop_back();
 
-        const ConvertMap* map = util::find_map(config_api, keyword);
+        const ConvertMap* map = util::find_map(config::config_api, keyword);
         if (map)
         {
             cv->set_state(map->ctor(cv, ld));
@@ -78,3 +80,5 @@ static const ConvertMap keyword_config =
 };
 
 const ConvertMap* config_map = &keyword_config;
+
+} // namespace keywords

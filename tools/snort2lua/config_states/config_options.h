@@ -29,6 +29,10 @@
 #include "util/converter.h"
 
 
+namespace config
+{
+#if 0
+
 class ConfigIntOption : public ConversionState
 {
 public:
@@ -79,49 +83,28 @@ private:
     std::string table_name;
     std::string opt_name;
 };
-
+#endif
 
 /**********************************
  ********  TEMPLATES!!   **********
  **********************************/
 
-template<const std::string *snort_option,
-        const std::string *lua_table_name,
-        const std::string* lua_option_name,
-        bool (*parse_func)(std::string table_name, std::istringstream& stream)>
-class ParseConfigOption : public ConversionState
-{
-public:
-    ParseConfigOption( Converter* cv, LuaData* ld)
-                            : ConversionState(cv, ld)
-    {
-    };
 
-    virtual ~ParseConfigOption() {};
-    virtual bool convert(std::istringstream& stream)
-    {
-        // if the two names are not equal ...
-        if((*snort_option).compare((*lua_option_name)))
-            ld->add_diff_option_comment(*snort_option, *lua_option_name);
-
-        ld->open_table((*lua_table_name));
-        return parse_func((*lua_option_name), stream);
-    }
-};
+//  int template
 
 
 template<const std::string *snort_option,
         const std::string *lua_table_name,
         const std::string* lua_option_name>
-class ConfigIntTempOption : public ConversionState
+class ConfigIntOption : public ConversionState
 {
 public:
-    ConfigIntTempOption( Converter* cv, LuaData* ld)
+    ConfigIntOption( Converter* cv, LuaData* ld)
                             : ConversionState(cv, ld)
     {
     };
 
-    virtual ~ConfigIntTempOption() {};
+    virtual ~ConfigIntOption() {};
     virtual bool convert(std::istringstream& stream)
     {
         // if the two names are not equal ...
@@ -138,11 +121,47 @@ template<const std::string *snort_option, const std::string *lua_name, const std
 static ConversionState* config_int_ctor(Converter* cv, LuaData* ld)
 {
     if (lua_option_name)
-        return new ConfigIntTempOption<snort_option, lua_name, lua_option_name>(cv, ld);
+        return new ConfigIntOption<snort_option, lua_name, lua_option_name>(cv, ld);
     else
-        return new ConfigIntTempOption<snort_option, lua_name, snort_option>(cv, ld);
+        return new ConfigIntOption<snort_option, lua_name, snort_option>(cv, ld);
 }
 
+// string template
+
+template<const std::string *snort_option,
+        const std::string *lua_table_name,
+        const std::string* lua_option_name>
+class ConfigStringOption : public ConversionState
+{
+public:
+    ConfigStringOption( Converter* cv, LuaData* ld)
+                            : ConversionState(cv, ld)
+    {
+    };
+
+    virtual ~ConfigStringOption() {};
+    virtual bool convert(std::istringstream& stream)
+    {
+        // if the two names are not equal ...
+        if((*snort_option).compare((*lua_option_name)))
+            ld->add_diff_option_comment(*snort_option, *lua_option_name);
+
+        ld->open_table((*lua_table_name));
+        return parse_string_option(*lua_option_name, stream);
+    }
+};
+
+
+template<const std::string *snort_option, const std::string *lua_name, const std::string *lua_option_name = nullptr>
+static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
+{
+    if (lua_option_name)
+        return new ConfigStringOption<snort_option, lua_name, lua_option_name>(cv, ld);
+    else
+        return new ConfigStringOption<snort_option, lua_name, snort_option>(cv, ld);
+}
+
+} // namespace config
 
 
 #endif

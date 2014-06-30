@@ -28,6 +28,10 @@
 #include "util/util.h"
 #include "rule_states/rule_api.h"
 
+
+namespace keywords
+{
+
 namespace
 {
 
@@ -86,6 +90,8 @@ static ConversionState* dep_rule_ctor(Converter* cv, LuaData* ld)
 {
     ld->begin_rule();
     ld->add_hdr_data(*name);
+    ld->make_rule_a_comment();
+    ld->add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
     return new RuleHeader(cv, ld);
 }
 
@@ -118,3 +124,4 @@ const ConvertMap* sdrop_map = &sdrop_api;
 const ConvertMap* activate_map = &activate_api;
 const ConvertMap* dynamic_map = &dynamic_api;
 
+} // namespace keywords

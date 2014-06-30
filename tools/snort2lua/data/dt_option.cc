@@ -33,7 +33,7 @@ Option::Option(std::string name, int val, int depth)
 Option::Option(std::string name, bool val, int depth)
 {
     this->name = name;
-    this->value = (val) ? "true" : "ealse";
+    this->value = (val) ? "true" : "false";
     this->depth = depth;
     this->type = OptionType::BOOL;
 }

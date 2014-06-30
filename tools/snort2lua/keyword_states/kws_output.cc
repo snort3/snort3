@@ -27,7 +27,8 @@
 #include "util/util.h"
 #include "output_states/output_api.h"
 
-
+namespace keywords
+{
 
 namespace {
 
@@ -48,7 +49,10 @@ bool Output::convert(std::istringstream& data_stream)
 
     if(data_stream >> keyword)
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
+        if (keyword.back() == ':')
+            keyword.pop_back();
+
+        const ConvertMap* map = util::find_map(output::output_api, keyword);
         if (map)
         {
             cv->set_state(map->ctor(cv, ld));
@@ -75,3 +79,5 @@ static const ConvertMap keyword_output =
 };
 
 const ConvertMap* output_map = &keyword_output;
+
+} // namespace keywords

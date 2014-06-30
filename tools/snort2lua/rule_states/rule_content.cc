@@ -51,13 +51,17 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string val;
     bool retval = true;
+    int pos;
 
-    std::getline(data_stream, val, ';');
+    if (!(*option_name).compare("protected_content"))
+        ld->make_rule_a_comment();
+
+    val = util::get_rule_option_args(data_stream);
     retval = ld->add_rule_option(*option_name, val);
     ld->select_option(*option_name);
 
-    int pos = data_stream.tellg();
-    std::getline(data_stream, val, ';');
+    pos = data_stream.tellg();
+    val = util::get_rule_option_args(data_stream);
     std::istringstream subopts(val);
 
     while(subopts >> val)
@@ -79,17 +83,21 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
             val = std::string();
         }
 
+        // necessary since get_line and substr return strings with whitespace.
+        util::trim(keyword);
+        util::trim(val);
+
         if (!keyword.compare("offset"))
-            tmpval = ld->add_suboption("offset", val);
+            tmpval = ld->add_suboption("offset", val, ':');
 
         else if (!keyword.compare("distance"))
-            tmpval = ld->add_suboption("distance", val);
+            tmpval = ld->add_suboption("distance", val, ':');
 
         else if (!keyword.compare("within"))
-            tmpval = ld->add_suboption("within", val);
+            tmpval = ld->add_suboption("within", val, ':');
 
         else if (!keyword.compare("depth"))
-            tmpval = ld->add_suboption("depth", val);
+            tmpval = ld->add_suboption("depth", val, ':');
 
         else if (!keyword.compare("nocase"))
             tmpval = ld->add_suboption("nocase");
@@ -128,10 +136,10 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
             tmpval = ld->add_rule_option_before_selected("http_stat_msg");
 
         else if (!keyword.compare("hash"))   // PROTECTED CONTENT
-            tmpval = ld->add_suboption("hash", val);
+            tmpval = ld->add_suboption("hash", val, ':');
 
         else if (!keyword.compare("length"))  // PROTECTED CONTENT
-            tmpval = ld->add_suboption("length", val);
+            tmpval = ld->add_suboption("length", val, ':');
 
         else if (!keyword.compare("fast_pattern"))
         {
@@ -153,8 +161,8 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
                         pos++;
                         int length = std::stoi(val.substr(pos, std::string::npos));
                         tmpval = ld->add_suboption("fast_pattern");
-                        tmpval = ld->add_suboption("fast_pattern_offset", std::to_string(offset));
-                        tmpval = ld->add_suboption("fast_pattern_length", std::to_string(length));
+                        tmpval = ld->add_suboption("fast_pattern_offset", std::to_string(offset), ':');
+                        tmpval = ld->add_suboption("fast_pattern_length", std::to_string(length), ':');
                     }
                     else
                         tmpval = false;
@@ -180,7 +188,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
 
         // lets get the next keyword
         pos = data_stream.tellg();
-        std::getline(data_stream, val, ';');
+        val = util::get_rule_option_args(data_stream);
         subopts.clear();
         subopts.str(val);
     };
@@ -210,9 +218,9 @@ static const std::string uricontent = "uricontent";
 static ConversionState* uricontent_ctor(Converter* cv, LuaData* ld)
 {
     ld->add_rule_option("http_uri");
+    ld->add_comment_to_rule("uricontent deprecated --> 'http_uri: content:'foo'");
     return new Content<&content>(cv, ld);
 }
-
 
 
 static const ConvertMap rule_content_api =

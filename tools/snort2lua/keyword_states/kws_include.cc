@@ -26,6 +26,8 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace keywords
+{
 
 namespace {
 
@@ -43,7 +45,6 @@ public:
 bool Include::convert(std::istringstream& data_stream)
 {
     std::string keyword;
-    bool includ_test;
 
     if(data_stream >> keyword)
     {
@@ -69,3 +70,5 @@ static const ConvertMap keyword_include =
 };
 
 const ConvertMap* include_map = &keyword_include;
+
+}  // namespace keywords

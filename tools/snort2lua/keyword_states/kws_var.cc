@@ -27,6 +27,9 @@
 #include "util/util.h"
 
 
+namespace keywords
+{
+
 namespace {
 
 class Var : public ConversionState
@@ -117,3 +120,5 @@ static const ConvertMap keyword_var =
 const ConvertMap* portvar_map = &keyword_portvar;
 const ConvertMap* ipvar_map = &keyword_ipvar;
 const ConvertMap* var_map = &keyword_var;
+
+} // namespace keywords

@@ -28,6 +28,10 @@
 #include "config_states/config_options.h"
 
 
+namespace config
+{
+
+
 static inline void open_table_add_option(LuaData* ld,
                                             std::string table_name, 
                                             std::string opt_name, 
@@ -42,19 +46,149 @@ static inline void open_table_add_option(LuaData* ld,
  ************  config paf_max ****************
  *********************************************/
 
-static ConversionState* paf_max_ctor(Converter* cv, LuaData* ld)
-{
-    return new ConfigIntOption(cv, ld, "stream_tcp", "paf_max");
-}
+static const std::string paf_max = "paf_max";
+static const std::string stream_tcp = "stream_tcp";
 
 static const ConvertMap config_paf_max =
 {
-    "paf_max",
-    paf_max_ctor,
+    paf_max,
+    config_int_ctor<&paf_max, &stream_tcp>,
 };
 
-
 const ConvertMap* paf_max_map = &config_paf_max;
+
+
+/*************************************************
+ ********** PCRE_MATCH_LIMIT  ********************
+ *************************************************/
+
+
+static const std::string pcre_match_limit = "pcre_match_limit";
+static const std::string detection = "detection";
+
+static const ConvertMap config_pcre_match_limit =
+{
+    pcre_match_limit,
+    config_int_ctor<&pcre_match_limit, &detection>,
+};
+
+const ConvertMap* pcre_match_limit_map = &config_pcre_match_limit;
+
+
+
+/***********************************************************
+ ********** PCRE_MATCH_LIMIT_RECURSION  ********************
+ ***********************************************************/
+
+static const std::string pcre_match_limit_recursion = "pcre_match_limit_recursion";
+
+
+static const ConvertMap config_pcre_match_limit_recursion =
+{
+    pcre_match_limit_recursion,
+    config_int_ctor<&pcre_match_limit_recursion, &detection>,
+};
+
+const ConvertMap* pcre_match_limit_recursion_map = &config_pcre_match_limit_recursion;
+
+
+/***********************************************************
+ ****************** FLOWBIT_SIZE ***************************
+ ***********************************************************/
+
+//template<const std::string *snort_option, const std::string *lua_name>
+//config_int_ctor2<snort_option, lua_name, snort_option>
+
+static const std::string alerts = "alerts";
+static const std::string flowbits_size = "flowbits_size";
+
+static const ConvertMap config_flowbit_size =
+{
+    flowbits_size,
+    config_int_ctor<&flowbits_size, &alerts>,
+};
+
+const ConvertMap* flowbit_size_map = &config_flowbit_size;
+
+
+/*********************************************
+ *******  Enable GTP *************************
+ *********************************************/
+
+static ConversionState* enable_gtp_ctor(Converter* cv, LuaData* ld)
+{
+    open_table_add_option(ld, "cd_udp", "enable_gtp", true);
+    return nullptr;
+}
+
+static const ConvertMap config_enable_gtp =
+{
+    "enable_gtp",
+    enable_gtp_ctor,
+};
+
+const ConvertMap* enable_gtp_map = &config_enable_gtp;
+
+
+/*********************************************
+ ****************  Snaplen *******************
+ *********************************************/
+
+static const std::string snaplen = "snaplen";
+static const std::string daq = "daq";
+
+static const ConvertMap config_snaplen =
+{
+    snaplen,
+    config_int_ctor<&snaplen, &daq>,
+};
+
+const ConvertMap* snaplen_map = &config_snaplen;
+
+
+/*********************************************
+ ****************  set_gid *******************
+ *********************************************/
+
+static const std::string set_gid = "set_gid";
+static const std::string process = "process";
+
+static const ConvertMap config_set_gid =
+{
+    set_gid,
+    config_string_ctor<&set_gid, &process>,
+};
+
+const ConvertMap* set_gid_map = &config_set_gid;
+
+/*********************************************
+ ****************  set_uid *******************
+ *********************************************/
+
+static const std::string set_uid = "set_uid";
+
+static const ConvertMap config_set_uid =
+{
+    set_uid,
+    config_string_ctor<&set_uid, &process>,
+};
+
+const ConvertMap* set_uid_map = &config_set_uid;
+
+
+/*********************************************
+ ****************  chroot  *******************
+ *********************************************/
+
+static const std::string chroot = "chroot";
+
+static const ConvertMap config_chroot =
+{
+    chroot,
+    config_string_ctor<&chroot, &process>,
+};
+
+const ConvertMap* chroot_map = &config_chroot;
 
 
 /*********************************************
@@ -77,123 +211,6 @@ const ConvertMap* autogenerate_decode_rules_map = &config_autogenerate_decode_ru
 
 
 
-/*********************************************
- *************  Checksum  ********************
- *********************************************/
-
-static ConversionState* checksum_ctor(Converter* cv, LuaData* ld)
-{
-    return new ConfigStringOption(cv, ld, "network", "checksum_eval");
-}
-
-static const ConvertMap config_checksum =
-{
-    "checksum_mode",
-    checksum_ctor,
-};
-
-
-const ConvertMap* checksum_map = &config_checksum;
-
-
-
-
-/*************************************************
- ********** PCRE_MATCH_LIMIT  ********************
- *************************************************/
-
-static ConversionState* pcre_match_limit_ctor(Converter* cv, LuaData* ld)
-{
-    return new ConfigIntOption(cv, ld, "detection", "pcre_match_limit");
-}
-
-static const ConvertMap config_pcre_match_limit =
-{
-    "pcre_match_limit",
-    pcre_match_limit_ctor,
-};
-
-
-const ConvertMap* pcre_match_limit_map = &config_pcre_match_limit;
-
-
-
-/***********************************************************
- ********** PCRE_MATCH_LIMIT_RECURSION  ********************
- ***********************************************************/
-
-static ConversionState* pcre_match_limit_recursion_ctor(Converter* cv, LuaData* ld)
-{
-    return new ConfigIntOption(cv, ld, "detection", "pcre_match_limit_recursion");
-}
-
-static const ConvertMap config_pcre_match_limit_recursion =
-{
-    "pcre_match_limit_recursion",
-    pcre_match_limit_recursion_ctor,
-};
-
-const ConvertMap* pcre_match_limit_recursion_map = &config_pcre_match_limit_recursion;
-
-
-
-
-
-/***********************************************************
- ****************** FLOWBIT_SIZE ***************************
- ***********************************************************/
-
-//template<const std::string *snort_option, const std::string *lua_name>
-//config_int_ctor2<snort_option, lua_name, snort_option>
-
-static const std::string alerts = "alerts";
-static const std::string flowbits_size = "flowbits_size";
-
-static const ConvertMap config_flowbit_size =
-{
-    flowbits_size,
-    config_int_ctor<&flowbits_size, &alerts>,
-};
-
-const ConvertMap* flowbit_size_map = &config_flowbit_size;
-
-#if 0
-static ConversionState* flowbit_size_ctor(Converter* cv, LuaData* ld)
-{
-    return new ConfigIntOption(cv, ld, "alerts", "flowbits_size");
-}
-
-static const ConvertMap config_flowbit_size =
-{
-    "flowbits_size",
-    flowbit_size_ctor,
-};
-
-const ConvertMap* flowbit_size_map = &config_flowbit_size;
-
-#endif
-
-/*********************************************
- *******  Enable GTP *********
- *********************************************/
-
-static ConversionState* enable_gtp_ctor(Converter* cv, LuaData* ld)
-{
-    open_table_add_option(ld, "cd_udp", "enable_gtp", true);
-    return nullptr;
-}
-
-static const ConvertMap config_enable_gtp =
-{
-    "enable_gtp",
-    enable_gtp_ctor,
-};
-
-const ConvertMap* enable_gtp_map = &config_enable_gtp;
-
-
-
-
 #if 0
 config alert with interface name
 Appends interface name to alert (snort -I).
@@ -211,10 +228,7 @@ config checksum drop: <types>
 Types of packets to drop if invalid checksums. Values: none, noip, notcp, noicmp, noudp, ip, tcp, udp, icmp or all (only applicable in inline mode and for packets checked per checksum mode config option).
 config checksum mode: <types>
 ￼
-Types of packets to calculate checksums. Values: none, noip, notcp, noicmp, noudp, ip, tcp, udp, icmp or all.
-config chroot:  <dir>
-Chroots to specified dir (snort -t).
-config classification:  <class>
+
 See Table 3.2 for a list of classifications.
 config cs dir: <path>
 ￼
@@ -242,79 +256,6 @@ config daq list: [<dir>]
 Tell Snort to dump basic DAQ capabilities and exit. You can optionally specify a directory to include any dynamic DAQs from that directory. You can also precede this op- tion with extra DAQ directory options to look in multiple directories.
 config decode esp: [enable | disable]
 ￼
-Enable or disable the decoding of Encapsulated Security Protocol (ESP). This is disabled by default. Some net- works use ESP for authentication without encryption, al- lowing their content to be inspected. Encrypted ESP may cause some false positives if this option is enabled.
-33
-￼￼￼config detection:  [search-method
-<method>]
-￼Select type of fast pattern matcher algorithm to use.
-• search-method <method>
-– Queued match search methods - Matches are queued until the fast pattern matcher is fin- ished with the payload, then evaluated. This was found to generally increase performance through fewer cache misses (evaluating each rule would generally blow away the fast pattern matcher state in the cache).
-∗ ac and ac-q - Aho-Corasick Full (high memory, best performance).
-∗ ac-bnfa and ac-bnfa-q - Aho-Corasick Bi- nary NFA (low memory, high performance)
-∗ lowmem and lowmem-q - Low Memory Key- word Trie (low memory, moderate perfor-
-mance)
-∗ ac-split - Aho-Corasick Full with ANY-
-ANY port group evaluated separately (low memory, high performance). Note this is shorthand for search-method ac, split-any-any
-∗ intel-cpm - Intel CPM library (must have compiled Snort with location of libraries to enable this)
-– No queue search methods - The ”nq” option specifies that matches should not be queued and evaluated as they are found.
-∗ ac-nq - Aho-Corasick Full (high memory, best performance).
-∗ ac-bnfa-nq - Aho-Corasick Binary NFA (low memory, high performance). This is the default search method if none is speci- fied.
-∗ lowmem-nq - Low Memory Keyword Trie (low memory, moderate performance)
-– Other search methods (the above are considered superior to these)
-∗ ac-std - Aho-Corasick Standard (high memory, high performance)
-∗ acs - Aho-Corasick Sparse (high memory, moderate performance)
-∗ ac-banded - Aho-Corasick Banded (high memory, moderate performance)
-∗ ac-sparsebands - Aho-Corasick Sparse- Banded (high memory, moderate perfor- mance)
-￼34
-￼￼￼config detection:  [split-any-any]
-[search-optimize] [max-pattern-len
-<int>]
-￼Other options that affect fast pattern matching.
-• split-any-any
-– A memory/performance tradeoff. By default, ANY-ANY port rules are added to every non ANY-ANY port group so that only one port group rule evaluation needs to be done per packet. Not putting the ANY-ANY port rule group into every other port group can signifi- cantly reduce the memory footprint of the fast pattern matchers if there are many ANY-ANY port rules. But doing so may require two port group evaluations per packet - one for the spe- cific port group and one for the ANY-ANY port group, thus potentially reducing perfor- mance. This option is generic and can be used with any search-method but was specifically intended for use with the ac search-method where the memory footprint is significantly re- duced though overall fast pattern performance is better than ac-bnfa. Of note is that the lower memory footprint can also increase per- formance through fewer cache misses. Default is not to split the ANY-ANY port group.
-• search-optimize
-– Optimizes fast pattern memory when used with search-method ac or ac-split by dynamically determining the size of a state based on the to- tal number of states. When used with ac-bnfa, some fail-state resolution will be attempted, po- tentially increasing performance. Default is not to optimize.
-• max-pattern-len <integer>
-– This is a memory optimization that specifies the maximum length of a pattern that will be put in the fast pattern matcher. Patterns longer than this length will be truncated to this length be- fore inserting into the pattern matcher. Useful when there are very long contents being used and truncating the pattern won’t diminish the uniqueness of the patterns. Note that this may cause more false positive rule evaluations, i.e. rules that will be evaluated because a fast pat- tern was matched, but eventually fail, however CPU cache can play a part in performance so a smaller memory footprint of the fast pattern matcher can potentially increase performance. Default is to not set a maximum pattern length.
-￼35
-￼￼￼config detection:
-[no stream inserts]
-[max queue events <int>] [enable-single-rule-group] [bleedover-port-limit]
-￼￼￼￼￼Other detection engine options.
-• no stream inserts
-– Specifies that stream inserted packets should not be evaluated against the detection engine. This is a potential performance improvement with the idea that the stream rebuilt packet will contain the payload in the inserted one so the stream inserted packet doesn’t need to be eval- uated. Default is to inspect stream inserts.
-• max queue events <integer>
-– Specifies the maximum number of matching fast-pattern states to queue per packet. Default is 5 events.
-• enable-single-rule-group
-– Put all rules into one port group. Not recom-
-mended. Default is not to do this.
-• bleedover-port-limit
-– The maximum number of source or destination ports designated in a rule before the rule is con- sidered an ANY-ANY port group rule. Default is 1024.
-￼￼￼￼￼36
-￼￼￼￼config detection: [debug] Options for detection engine debugging.
-[debug-print-nocontent-rule-tests]
-[debug-print-rule-group-build-details]
-[debug-print-rule-groups-uncompiled]
-[debug-print-rule-groups-compiled]
-[debug-print-fast-pattern]
-[bleedover-warnings-enabled]
-• debug
-– Prints fast pattern information for a particular
-port group.
-• debug-print-nocontent-rule-tests
-– Prints port group information during packet
-evaluation.
-• debug-print-rule-group-build-details
-– Prints port group information during port
-group compilation.
-• debug-print-rule-groups-uncompiled
-– Prints uncompiled port group information.
-• debug-print-rule-groups-compiled
-– Prints compiled port group information.
-• debug-print-fast-pattern
-– For each rule with fast pattern content, prints information about the content being used for the fast pattern matcher.
-• bleedover-warnings-enabled
-– Prints a warning if the number of source or destination ports used in a rule exceed the bleedover-port-limit forcing the rule to be moved into the ANY-ANY port group.
 ￼￼￼config disable decode alerts
 ￼￼￼Turns off the alerts generated by the decode phase of Snort.
 ￼￼config disable inline init failopen
@@ -434,14 +375,8 @@ with a Host Attribute Table (see section 2.7).
 ￼￼config response:  [attempts
 <count>] [, device <dev>]
 ￼Set the number of strafing attempts per injected response and/or the device, such as eth0, from which to send re- sponses. These options may appear in any order but must be comma separated. The are intended for passive mode.
-￼￼config set gid: <gid>
-￼￼Changes GID to specified GID (snort -g).
-￼￼config set uid: <uid>
-￼￼Sets UID to <id> (snort -u).
 ￼￼config show year
 ￼￼Shows year in timestamps (snort -y).
-￼￼config snaplen:  <bytes>
-￼Set the snaplength of packet, same effect as -P <snaplen> or --snaplen <snaplen> options.
 ￼￼config so rule memcap: <bytes>
 ￼￼￼Set global memcap in bytes for so rules that dynamically allocate memory for storing session data in the stream pre- processor. A value of 0 disables the memcap. Default is 0. Maximum value is the maximum value an unsigned 32 bit integer can hold which is 4294967295 or 4GB.
 ￼￼config stateful
@@ -469,3 +404,5 @@ Sets the policy mode to either passive, inline or inline test.
 config tunnel verdicts: gtp|teredo|6in4|4in6
 
 #endif
+
+} // namespace config

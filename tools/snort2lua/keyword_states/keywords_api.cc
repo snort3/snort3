@@ -22,6 +22,9 @@
 #include "keyword_states/keywords_api.h"
 
 
+namespace keywords
+{
+
 extern const ConvertMap *portvar_map;
 extern const ConvertMap *ipvar_map;
 extern const ConvertMap *var_map;
@@ -40,7 +43,7 @@ extern const ConvertMap* activate_map;
 extern const ConvertMap* dynamic_map;
 
 
-const std::vector<const ConvertMap*> keyword_api = 
+const std::vector<const ConvertMap*> keywords_api =
 {
     portvar_map,
     ipvar_map,
@@ -58,22 +61,8 @@ const std::vector<const ConvertMap*> keyword_api =
     sdrop_map,
     activate_map,
     dynamic_map,
-//    nullptr,
 };
 
-#if 0
-
-namespace keywords
-{
-
-void add_new_rule_keyword(std::string keyword_name)
-{
-    struct Convertmap* new_ruletype = new ConvertMap;
-
-    new_ruletype.keyword = keywords.name;
-
-}
 
 } // namespace keywords
 
-#endif

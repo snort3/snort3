@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_frag3_global.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_ppm.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -25,6 +25,9 @@
 #include "conversion_state.h"
 #include "util/converter.h"
 #include "util/util.h"
+
+namespace config
+{
 
 namespace {
 
@@ -43,7 +46,6 @@ bool Ppm::convert(std::istringstream& data_stream)
 
     bool retval = true;
     std::string keyword;
-    bool test;
 
     ld->open_table("ppm");
 
@@ -158,11 +160,6 @@ bool Ppm::convert(std::istringstream& data_stream)
         if (retval)
             retval = tmpval;
     }
-#if 0
-
-pkt-log [log] [alert]
-
-#endif
 
     return retval;    
 }
@@ -183,3 +180,5 @@ static const ConvertMap config_ppm_api =
 };
 
 const ConvertMap* ppm_map = &config_ppm_api;
+
+} // namespace config

@@ -22,6 +22,7 @@
 #include "dt_data.h"
 #include "util/util.h"
 #include <iostream>
+#include <sstream>
 
 
 static const std::string start_comments =
@@ -32,6 +33,10 @@ static const std::string start_comments =
 static const std::string start_errors =
     "ERRORS:\n"
     "    all of these occured during the attempted conversion:\n\n";
+
+static const std::string start_bad_rules =
+    "FAILED RULES CONVERSIONS:\n"
+    "    These rules has invalid rule options\n\n";
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -47,11 +52,14 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
 
 LuaData::LuaData()
     :   curr_rule(nullptr),
-        curr_rule_opt(nullptr)
+        curr_rule_opt(nullptr),
+        curr_rule_bad(false)
 {
     comments = new Comments(start_comments, 0,
                     Comments::CommentType::MULTI_LINE);
     errors = new Comments(start_errors, 0,
+                    Comments::CommentType::MULTI_LINE);
+    bad_rules = new Comments(start_bad_rules, 0,
                     Comments::CommentType::MULTI_LINE);
 }
 
@@ -68,6 +76,7 @@ LuaData::~LuaData()
 
     delete comments;
     delete errors;
+    delete bad_rules;
 }
 
 
@@ -293,6 +302,24 @@ void LuaData::begin_rule()
     {
         curr_rule = new Rule();
         rules.push_back(curr_rule);
+        curr_rule_bad = false;
+    }
+}
+
+void LuaData::make_rule_a_comment()
+{
+    curr_rule->make_comment();
+}
+
+void LuaData::bad_rule(std::string bad_option, std::istringstream& stream)
+{
+    // we only need to go through this once.
+    if (!curr_rule_bad)
+    {
+        bad_rules->add_text("Failed to convert rule: first_unkown_option=" + bad_option +
+                "\n        bad_rule: " + stream.str());
+        curr_rule->bad_rule();
+        curr_rule_bad = true;
     }
 }
 
@@ -346,10 +373,12 @@ bool LuaData::add_suboption(std::string keyword)
     return false;
 }
 
-bool LuaData::add_suboption(std::string keyword, std::string val)
+bool LuaData::add_suboption(std::string keyword,
+                            std::string val,
+                            char delimeter)
 {
     if (curr_rule_opt)
-        return curr_rule_opt->add_suboption(keyword, val);
+        return curr_rule_opt->add_suboption(keyword, val, delimeter);
 
     add_error_comment("Select an option before adding a suboption!!");
     return false;
@@ -380,6 +409,11 @@ void LuaData::unselect_option()
     curr_rule_opt = nullptr;
 }
 
+void LuaData::add_comment_to_rule(std::string comment)
+{
+    curr_rule->add_comment(comment);
+}
+
 std::ostream& operator<<( std::ostream &out, const LuaData &data)
 {
     out << (*data.errors) << std::endl << std::endl;
@@ -387,10 +421,12 @@ std::ostream& operator<<( std::ostream &out, const LuaData &data)
     for (Variable* v : data.vars)
         out << (*v) << "\n\n";
 
-    out << "default_rules =\n[[\n";
 
+    out << (*data.bad_rules) << "\n\n";
+
+    out << "default_rules =\n[[\n";
     for (Rule* r : data.rules)
-        out << (*r) << "\n";
+        out << (*r) << "\n\n";
 
     out << "]]\n";
 

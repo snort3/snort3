@@ -27,6 +27,9 @@
 #include "config_states/config_api.h"
 
 
+namespace keywords
+{
+
 namespace {
 
 class RuleType : public ConversionState
@@ -77,3 +80,5 @@ static const ConvertMap keyword_ruletype =
 };
 
 const ConvertMap* ruletype_map = &keyword_ruletype;
+
+} // namepsace keywords

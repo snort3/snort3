@@ -20,6 +20,7 @@
 // dt_comment.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include "data/dt_comment.h"
+#include "util/util.h"
 
 Comments::Comments(CommentType type)
 {
@@ -55,6 +56,23 @@ void Comments::add_text(std::string text)
 
         prev_empty = text.empty();
     }
+}
+
+void Comments::add_sorted_text(std::string new_text)
+{
+    for (auto it = comment.begin(); it != comment.end(); ++it)
+    {
+        if (new_text.compare(*it) < 0)
+        {
+            comment.insert(it, new_text);
+            return;
+        }
+        // no duplicates
+        else if ((*it).compare(new_text) == 0)
+            return;
+    }
+
+    comment.push_back(new_text);
 }
 
 bool Comments::empty()
@@ -127,14 +145,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
 
             // add a space between any double hyphens
             if (c.type == Comments::CommentType::MULTI_LINE)
-            {
-                int found = str.find("]]");
-                while (found != std::string::npos)
-                {
-                    str.insert(found + 1, " ");
-                    found = str.find("]]");
-                }
-            }
+                util::sanitize_multi_line_string(str);
 
 
             // don't print the extra '\n' on the first line.

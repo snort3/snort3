@@ -27,6 +27,10 @@
 #include "util/util.h"
 #include "preprocessor_states/preprocessor_api.h"
 
+
+namespace keywords
+{
+
 namespace {
 
 class Preprocessor : public ConversionState
@@ -76,3 +80,5 @@ static const ConvertMap keyword_preprocessor =
 };
 
 const ConvertMap* preprocessor_map = &keyword_preprocessor;
+
+} // namespace keywords

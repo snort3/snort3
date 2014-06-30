@@ -25,16 +25,19 @@
 
 
 RuleSubOption::RuleSubOption(std::string name)
-    :   name(name), 
-        value(std::string())
+    :   name(name),
+        value(std::string()),
+        delimeter(':')
 {
 }
 
-RuleSubOption::RuleSubOption(std::string name, std::string value)
-    :   name(name), 
-        value(value)
+RuleSubOption::RuleSubOption(std::string name, std::string value, char delimeter)
+    :   name(name),
+        value(value),
+        delimeter(delimeter)
 {
 }
+
 
 RuleSubOption::~RuleSubOption()
 {
@@ -46,7 +49,7 @@ std::ostream &operator<<( std::ostream& out, const RuleSubOption& subopt)
     out << subopt.name;
 
     if (!subopt.value.empty())
-        out << ":" << subopt.value;
+        out << subopt.delimeter << subopt.value;
 
     return out;
 }

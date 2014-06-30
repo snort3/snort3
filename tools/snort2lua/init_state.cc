@@ -38,7 +38,7 @@ bool InitState::convert(std::istringstream& data_stream)
     if (!(data_stream >> keyword))
         return false;
 
-    const ConvertMap *map = util::find_map(keyword_api, keyword);
+    const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
     if (map)
     {
         cv->set_state(map->ctor(cv, ld));

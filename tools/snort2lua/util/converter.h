@@ -53,50 +53,12 @@ public:
     void reset_state();
     // convert the following file from a snort.conf into a lua.conf
     void convert_file(std::string input_file);
+    // if the parse_include flag is set, parse this file.
+    void parse_include_file(std::string input_file);
     // prints the entire lua configuration to the output file.
     friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.ld; }
     
-#if 0
-    // add a variable to the new lua configuration. For example, --> HOME_NET = 'any'
-    bool inline add_variable(std::string name, std::string v){ return data.add_variable(name, v); };
 
-    // open a table that does not contain a name --> NOT 'name = {...}' ONLY {...})
-    bool open_table();
-    // open a  named tabled --> 'name = {...}')
-    bool open_table(std::string name);
-    // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
-    bool open_top_level_table(std::string name);
-    // close the current table.  go to previous table level
-    bool close_table();
-
-    // add a string option to the table --> table = { name = 'val', }
-    // corresponds to Parameter::PT_STRING, Parameter::PT_SELECT
-    bool add_option_to_table(std::string name, std::string val);
-
-    // add an int option to the table --> table = { name = val, }
-    // corresponds to Parameter::PT_INT, Parametere::PT_PORT, Parametere::PT_REAL, etc
-    bool add_option_to_table(std::string name, int val);
-    
-    // add a bool option to the table --> table = { name = true|false, }
-    // corresponds to Parameter::PT_BOOL
-    bool add_option_to_table(std::string name, bool val);
-    
-    // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
-    // corresponds to Parameter::PT_MULTI
-    bool add_list_to_table(std::string list_name, std::string next_elem);
-    
-    // add a commment to be printed in the table --> table = { -- comment \n ... }
-    void add_comment_to_table(std::string comment);
-
-    // comment will appear immediately below the lua configuration
-    void add_comment_to_file(std::string comment);
-    // add the entire stream as a comment in the new lua file
-    void add_comment_to_file(std::string comment, std::istringstream& stream);
-    // attach a comment about a deprecated option to a file or table
-    void add_deprecated_comment(std::string dep_var);
-    // add a comment with telling the user an option has changed
-    void add_diff_option_comment(std::string dep_var, std::string new_var);
-#endif
 
     // log an error in the new lua file
     void log_error(std::string);
@@ -112,6 +74,8 @@ private:
     LuaData ld;
     // the init_state constructor
     conv_new_f init_state_ctor;
+    // parse_include_files
+    bool parse_includes;
 
 };
 

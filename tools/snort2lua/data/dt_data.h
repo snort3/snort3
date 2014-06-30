@@ -84,6 +84,10 @@ public:
     // RULE PARSING
     // Create a new rule object.
     void begin_rule();
+    // Comment out the current rule
+    void make_rule_a_comment();
+    // bad rules...throw an error
+    void bad_rule(std::string bad_option, std::istringstream& stream);
     // add a new peice of header_data to the current rule
     bool add_hdr_data(std::string data);
     // add a rule option (keyword and suboption)
@@ -99,7 +103,9 @@ public:
     // add a rule option (keyword and suboption)
     bool add_suboption(std::string keyword);
     // add a rule option (keyword and suboption)
-    bool add_suboption(std::string keyword, std::string val);
+    bool add_suboption(std::string keyword, std::string val, char delimeter);
+    // add a comment to a rule
+    void add_comment_to_rule(std::string coment);
 
 private:
     std::vector<Variable*> vars;
@@ -108,9 +114,11 @@ private:
     Comments* comments;
     Comments* errors;
     std::stack<Table*> open_tables;
+
+    Comments* bad_rules;
     Rule* curr_rule;
     RuleOption* curr_rule_opt;
-
+    bool curr_rule_bad;
 };
 
 

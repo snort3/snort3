@@ -56,5 +56,54 @@ const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string
     return nullptr;
 }
 
+std::string &sanitize_multi_line_string(std::string &s)
+{
+
+    int found = s.find("]]");
+    while (found != std::string::npos)
+    {
+        s.insert(found + 1, " ");
+        found = s.find("]]");
+    }
+    return s;
+}
+
+
+int get_substr_length(std::string str, int max_length)
+{
+    int str_len;
+
+    if (str.size() < max_length)
+        return str.size();
+
+    str_len = str.rfind(" ", max_length);
+
+    if (str_len == std::string::npos)
+    {
+        str_len = str.find(" ");
+
+        if (str_len == std::string::npos)
+            return str.size();
+    }
+    return str_len;
+}
+
+std::string get_rule_option_args(std::istringstream& data_stream)
+{
+    std::string args = std::string();
+    std::string tmp;
+
+    do
+    {
+        std::getline(data_stream, tmp, ';');
+        args += tmp + ";";
+
+    } while (tmp.back() == '\\');
+
+    // semicolon will be added when printing
+    args.pop_back();
+    trim(args);
+    return args;
+}
 
 } // namespace util

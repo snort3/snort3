@@ -23,7 +23,9 @@
 #include "data/dt_rule.h"
 
 
-Rule::Rule() :  num_hdr_data(0), bad_rule(false)
+Rule::Rule() :  num_hdr_data(0),
+                is_bad_rule(false),
+                is_comment(false)
 {
 }
 
@@ -40,9 +42,15 @@ bool Rule::add_hdr_data(std::string data)
     }
     else
     {
-        bad_rule = true;
+        is_bad_rule = true;
         return false;
     }
+}
+
+
+void Rule::bad_rule()
+{
+    is_bad_rule = true;
 }
 
 bool Rule::add_option(std::string keyword)
@@ -85,9 +93,30 @@ RuleOption* Rule::select_option(std::string opt_name)
     return nullptr;
 }
 
+
+void Rule::add_comment(std::string new_comment)
+{
+    comments.push_back("# " + new_comment);
+}
+
+void Rule::make_comment()
+{
+    is_comment = true;
+}
+
 std::ostream &operator<<( std::ostream& out, const Rule &r)
 {
     bool first_line = true;
+
+
+    if (r.is_bad_rule)
+        out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";
+
+    for (std::string s : r.comments)
+        out << s << "\n";
+
+    if (r.is_bad_rule || r.is_comment)
+        out << "#";
 
     for(int i = 0; i < r.num_hdr_data; i++)
     {
@@ -112,6 +141,7 @@ std::ostream &operator<<( std::ostream& out, const Rule &r)
     }
 
     out << " )";
+
 
     return out;
 }

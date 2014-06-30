@@ -27,24 +27,122 @@
 namespace rules
 {
 
-
+extern const ConvertMap* ack_map;
+extern const ConvertMap* asn1_map;
+extern const ConvertMap* base64_data_map;
+extern const ConvertMap* base64_decode_map;
+extern const ConvertMap* byte_extract_map;
+extern const ConvertMap* byte_jump_map;
+extern const ConvertMap* byte_test_map;
+extern const ConvertMap* classtype_map;
 extern const ConvertMap* content_map;
+extern const ConvertMap* cvs_map;
+extern const ConvertMap* detection_filter_map;
+extern const ConvertMap* dsize_map;
+extern const ConvertMap* file_data_map;
+extern const ConvertMap* flags_map;
+extern const ConvertMap* flow_map;
+extern const ConvertMap* flowbits_map;
+extern const ConvertMap* fragbits_map;
+extern const ConvertMap* fragoffset_map;
 extern const ConvertMap* gid_map;
+extern const ConvertMap* http_encode_map;
+extern const ConvertMap* icmp_id_map;
+extern const ConvertMap* icmp_seq_map;
+extern const ConvertMap* icode_map;
+extern const ConvertMap* id_map;
+extern const ConvertMap* ipopts_map;
+extern const ConvertMap* ip_proto_map;
+extern const ConvertMap* isdataat_map;
+extern const ConvertMap* itype_map;
+extern const ConvertMap* logto_map;
+extern const ConvertMap* metadata_map;
 extern const ConvertMap* msg_map;
+extern const ConvertMap* pcre_map;
+extern const ConvertMap* pkt_data_map;
+extern const ConvertMap* react_map;
 extern const ConvertMap* protected_content_map;
+extern const ConvertMap* reference_map;
+extern const ConvertMap* replace_map;
+extern const ConvertMap* resp_map;
 extern const ConvertMap* rev_map;
+extern const ConvertMap* rpc_map;
+extern const ConvertMap* sameip_map;
+extern const ConvertMap* seq_map;
+extern const ConvertMap* session_map;
 extern const ConvertMap* sid_map;
+extern const ConvertMap* stream_reassemble_map;
+extern const ConvertMap* stream_size_map;
+extern const ConvertMap* tag_map;
+extern const ConvertMap* threshold_map;
+extern const ConvertMap* ttl_map;
+extern const ConvertMap* tos_map;
 extern const ConvertMap* uricontent_map;
+extern const ConvertMap* urilen_map;
+extern const ConvertMap* window_map;
 
 const std::vector<const ConvertMap*> rule_api =
 {
+    ack_map,
+    asn1_map,
+    base64_data_map,
+    base64_decode_map,
+    byte_extract_map,
+    byte_jump_map,
+    byte_test_map,
+    classtype_map,
     content_map,
+    cvs_map,
+    detection_filter_map,
+    dsize_map,
+    file_data_map,
+    flags_map,
+    flow_map,
+    flowbits_map,
+    fragbits_map,
+    fragoffset_map,
     gid_map,
+    http_encode_map,
+    icmp_id_map,
+    icmp_seq_map,
+    icode_map,
+    id_map,
+    ipopts_map,
+    ip_proto_map,
+    isdataat_map,
+    itype_map,
+    logto_map,
+    metadata_map,
     msg_map,
+    pcre_map,
+    pkt_data_map,
     protected_content_map,
+    react_map,
+    reference_map,
+    replace_map,
+    resp_map,
     rev_map,
+    rpc_map,
+    sameip_map,
+    seq_map,
+    session_map,
     sid_map,
+    stream_reassemble_map,
+    stream_size_map,
+    tag_map,
+    threshold_map,
+    ttl_map,
+    tos_map,
     uricontent_map,
+    urilen_map,
+    window_map,
 };
 
 } // namespace rules
+
+#if 0
+
+extern const BaseApi* ips_so;
+extern const BaseApi* ips_raw_data;
+
+#endif

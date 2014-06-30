@@ -26,15 +26,13 @@
 #include <string>
 #include "../conversion_state.h"
 
-extern const std::vector<const ConvertMap*> keyword_api;
 
-#if 0
 namespace keywords
 {
 
-void add_new_rule_keyword(std::string);
+extern const std::vector<const ConvertMap*> keywords_api;
+
 
 }  // namespace keywords
-#endif
 
 #endif

@@ -91,8 +91,8 @@ protected:
     inline bool parse_deprecation_option(std::string table_name,
                                         std::istringstream& stream);
 
-    //  explicitly defined due quantity of times called and errors if
-    //  not placed here.
+    //  rules have no order. Function placed here because every rule
+    //  uses this.
     inline bool set_next_rule_state(std::istringstream& stream)
 
 #endif
@@ -232,7 +232,6 @@ protected:
     inline bool parse_deprecation_option(std::string opt_name,
                                         std::istringstream& stream)
     {
-
         std::string val;
         ld->add_deprecated_comment(opt_name);
 
@@ -247,21 +246,51 @@ protected:
     {
         std::string keyword;
 
+        int pos = stream.tellg();
         std::getline(stream, keyword, ':');
         util::trim(keyword);
 
         if (keyword.empty())
             return true;
 
-        // now, lets get the next option.
-        const ConvertMap* map = util::find_map(rules::rule_api, keyword);
-        if (map)
+        do
         {
-            cv->set_state(map->ctor(cv, ld));
-            return true;
-        }
+            util::trim(keyword);
+            int semi_colon_pos = keyword.find(';');
+            if (semi_colon_pos != std::string::npos)
+            {
+                // found a nested option without a colon
+                // 2 == last charachter of option + semi_colon
+                stream.seekg(pos + semi_colon_pos +2);
+                keyword = keyword.substr(0, semi_colon_pos);
+            }
 
-        return false;
+            // now, lets get the next option.
+            const ConvertMap* map = util::find_map(rules::rule_api, keyword);
+            if (map)
+            {
+                ld->unselect_option(); // reset option data...just in case.
+                cv->set_state(map->ctor(cv, ld));
+                break;
+            }
+            else
+            {
+                ld->bad_rule(keyword, stream);
+
+                // if there is data after this keyword,
+                //    eat everything until end of keyword
+                if (semi_colon_pos == std::string::npos)
+                    std::getline(stream, keyword, ';');
+
+                pos = stream.tellg();
+            }
+
+        // first get end of option, then get next keyword
+        } while(std::getline(stream, keyword, ':'));
+
+        // Since this is already marked as a bad rule, no need to tell the
+        // main loop that we failed. Correct actions already taken.
+        return true;
     }
 
 

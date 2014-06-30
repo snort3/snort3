@@ -1,6 +1,10 @@
 
 add_library( rule_states
+    rule_base64_decode.cc
     rule_content.cc
+    rule_http_encode.cc
+    rule_metadata.cc
+    rule_pcre.cc
     rule_unchanged.cc
     rule_api.cc
     rule_api.h

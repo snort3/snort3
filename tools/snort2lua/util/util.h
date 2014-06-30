@@ -29,6 +29,7 @@
 #include <functional> 
 #include <cctype>
 #include <locale>
+#include <sstream>
 
 struct ConvertMap;
 
@@ -62,6 +63,14 @@ inline std::string &rtrim(std::string &s) {
 inline std::string &trim(std::string &s) {
         return ltrim(rtrim(s));
 }
+
+std::string get_rule_option_args(std::istringstream& data_stream);
+// remove any ']]'  from this string.
+std::string &sanitize_multi_line_string(std::string &s);
+// find the location of the first space before max_str_lenght.
+// if no space exists before max_str_length, return the first space
+// after max_length. Otherwise, return std::string::npos
+int get_substr_length(std::string s, int max_length);
 
 } // namespace util
 
