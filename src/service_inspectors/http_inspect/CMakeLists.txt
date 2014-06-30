@@ -44,13 +44,13 @@ set (FILE_LIST
     hi_util_xmalloc.h
 )
 
-#if (STATIC_INSPECTORS)
+if (STATIC_INSPECTORS)
     add_library(http_inspect STATIC ${FILE_LIST})
 
-#else (STATIC_INSPECTORS)
-#    add_shared_library(http_inspect inspectors ${FILE_LIST})
+else (STATIC_INSPECTORS)
+    add_shared_library(http_inspect inspectors ${FILE_LIST})
 
-#endif (STATIC_INSPECTORS)
+endif (STATIC_INSPECTORS)
 
 
 

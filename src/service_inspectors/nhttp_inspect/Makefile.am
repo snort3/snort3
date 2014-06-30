@@ -22,18 +22,16 @@ nhttp_flow_data.cc nhttp_flow_data.h \
 nhttp_stream_splitter.cc nhttp_stream_splitter.h \
 nhttp_scratch_pad.h nhttp_enum.h
 
-
-#if STATIC_INSPECTORS
+if STATIC_INSPECTORS
 noinst_LIBRARIES = libnhttp_inspect.a
 libnhttp_inspect_a_SOURCES = $(file_list)
-#else
-# need to fix undefineds first :(
-#shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libnhttp_inspect.la
-#libnhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libnhttp_inspect_la_LDFLAGS = -export-dynamic -shared
-#libnhttp_inspect_la_SOURCES = $(file_list)
-#endif
+else
+shlibdir = $(pkglibdir)/inspectors
+shlib_LTLIBRARIES = libnhttp_inspect.la
+libnhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libnhttp_inspect_la_LDFLAGS = -export-dynamic -shared
+libnhttp_inspect_la_SOURCES = $(file_list)
+endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

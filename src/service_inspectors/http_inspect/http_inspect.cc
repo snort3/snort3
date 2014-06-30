@@ -38,18 +38,6 @@
 **  - 2.10.03:  Initial Development.  DJR
 */
 
-/*
-FIXIT if HI is built dynamically, Snort get these undefineds:
-Undefined symbols for architecture x86_64:
-  "IsGzipData(Flow*)", referenced from:
-      LogIPPkt(_TextLog*, int, Packet*) in liblog.a(log_text.o)
-  "IsJSNormData(Flow*)", referenced from:
-      LogIPPkt(_TextLog*, int, Packet*) in liblog.a(log_text.o)
-  "GetHttpUriData(Flow*, unsigned char**, unsigned int*, unsigned int*)", referenced from:
-      add_file_to_block(Packet*, _File_Verdict, unsigned int, unsigned char*) in libfile_api.a(file_service.o)
-      check_http_partial_content(Packet*)      in libfile_api.a(file_service.o)
-*/
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -453,17 +441,17 @@ static void hs_init()
     /* Find and cache protocol ID for packet comparison */
     hi_app_protocol_id = AddProtocolReference("http");
 
-    hi_paf_init(0);  // FIXTHIS is cap needed?
     HttpFlowData::init();
     HI_SearchInit();
+    hi_paf_init(0);  // FIXTHIS is cap needed?
     InitLookupTables();
     InitJSNormLookupTable();
 }
 
 static void hs_term()
 {
-    hi_paf_term();
     HI_SearchFree();
+    hi_paf_term();
 }
 
 static Inspector* hs_ctor(Module* m)

@@ -28,7 +28,9 @@
 /* otherwise defined in /usr/include/ppp_defs.h */
 #define UDP_HEADER_LEN          8
 
-#define IsUDP(p) (IsIP(p) && p->udph)
+// FIXIT udph should not be set for udp tunnel
+// (only if innermost layer == udp)
+#define IsUDP(p) (IsIP(p) && !IsTCP(p) && p->udph)
 
 
 namespace udp

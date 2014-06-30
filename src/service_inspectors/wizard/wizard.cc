@@ -49,57 +49,66 @@ static PreprocStats* wiz_get_profile(const char* key)
 }
 #endif
 
-static THREAD_LOCAL SimpleStats tstats;
-static SimpleStats gstats;
+struct WizStats
+{
+    PegCount tcp_scans;
+    PegCount tcp_hits;
+    PegCount udp_pkts;
+    PegCount udp_hits;
+};
+
+static const char* wiz_pegs[] =
+{
+    "tcp scans",
+    "tcp hits",
+    "udp packets",
+    "udp hits"
+};
+
+static THREAD_LOCAL WizStats tstats;
+static WizStats gstats;
 
 //-------------------------------------------------------------------------
-// splitter - this doesn't actually split the stream but it applies 
-// basic magic type logic to determine the appropriate inspector that
-// will split the stream.
+// configuration
+// -- spells are used for text protocols
+// -- must compile spells into fsm like hi paf
+//
+// -- hexes are used for binary protocols
+// -- must build a tree trie like file magic
 //-------------------------------------------------------------------------
+
+struct Spell
+{
+    const char* dummy;
+};
+
+struct Hex
+{
+    const char* dummy;
+};
+
+struct Wand
+{
+    unsigned index;
+};
+
+class Wizard;
 
 class MagicSplitter : public StreamSplitter
 {
 public:
-    MagicSplitter(bool c2s) : StreamSplitter(c2s) { };
-    ~MagicSplitter() { };
+    MagicSplitter(bool, class Wizard*);
+    ~MagicSplitter();
 
     PAF_Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp);
+
+    bool is_paf() { return true; };
+
+private:
+    Wizard* wizard;
+    Wand wand;
 };
-
-PAF_Status MagicSplitter::scan (
-    Flow*, const uint8_t* data, uint32_t len,
-    uint32_t, uint32_t* fp)
-{
-    // this is a basic hack to find http requests so that the overall
-    // processing flow can be determined at which point the real magic
-    // can begin.
-    if ( len >= 3 && !strncmp((const char*)data, "GET", 3) )
-    {
-        // FIXIT here we have determined that the inspector should
-        // be http and must somehow tell the binder so it can set 
-        // inspector gadget.
-
-        // the real magic must check direction and protocol
-        // (and should be called from eval() for udp and from
-        // here for tcp).
-
-        // len + 1 means go back to the last flush point
-        *fp = len + 1;
-
-        // the reset status ensures that all the
-        // data scanned so far is delivered to the new inspector's
-        // splitter.
-        return PAF_RESET;
-    }
-
-    return PAF_SEARCH;
-}
-
-//-------------------------------------------------------------------------
-// class stuff
-//-------------------------------------------------------------------------
 
 class Wizard : public Inspector {
 public:
@@ -113,10 +122,71 @@ public:
 
     StreamSplitter* get_splitter(bool);
 
-private:
+    bool check(Wand&, const uint8_t*, unsigned, vector<Spell>&, vector<Hex>&);
 
-private:
+public:
+    vector<Spell> tcp_c2s_spells;
+    vector<Spell> tcp_s2c_spells;
+
+    vector<Spell> udp_c2s_spells;
+    vector<Spell> udp_s2c_spells;
+
+    vector<Hex> tcp_c2s_hexes;
+    vector<Hex> tcp_s2c_hexes;
+
+    vector<Hex> udp_c2s_hexes;
+    vector<Hex> udp_s2c_hexes;
 };
+
+//-------------------------------------------------------------------------
+// splitter - this doesn't actually split the stream but it applies 
+// basic magic type logic to determine the appropriate inspector that
+// will split the stream.
+//-------------------------------------------------------------------------
+
+MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) : StreamSplitter(c2s)
+{
+    wizard = w;
+    w->add_ref();
+}
+
+MagicSplitter::~MagicSplitter()
+{
+    wizard->rem_ref();
+}
+
+PAF_Status MagicSplitter::scan (
+    Flow*, const uint8_t* data, uint32_t len,
+    uint32_t, uint32_t* fp)
+{
+    ++tstats.tcp_scans;
+
+    if ( to_server() )
+    {
+        if ( wizard->check(wand, data, len, wizard->tcp_c2s_spells, wizard->tcp_c2s_hexes) )
+        { 
+            /* set inspector gadget */
+            // len + 1 means go back to the last flush point
+            // (0 means start of this buffer)
+            *fp = len + 1;
+            return PAF_RESET;
+        }
+    }
+    else
+    {
+        if ( wizard->check(wand, data, len, wizard->tcp_s2c_spells, wizard->tcp_s2c_hexes) )
+        { 
+            /* set inspector gadget */
+            *fp = len + 1;
+            return PAF_RESET;
+        }
+    }
+    return PAF_SEARCH;
+}
+
+//-------------------------------------------------------------------------
+// class stuff
+//-------------------------------------------------------------------------
 
 Wizard::Wizard()
 {
@@ -126,18 +196,60 @@ Wizard::~Wizard()
 {
 }
 
-void Wizard::eval(Packet*)
+void Wizard::eval(Packet* p)
 {
     if ( !IsUDP(p) )
         return;
 
-    // FIXIT do udp scanning here
-    ++tstats.total_packets;
+    if ( !p->data || !p->dsize )
+        return;
+
+    Wand wand;
+
+    if ( p->packet_flags & PKT_FROM_CLIENT )
+    {
+        if ( check(wand, p->data, p->dsize, udp_c2s_spells, udp_c2s_hexes) )
+        { /* set inspector gadget */ }
+    }
+
+    else
+    {
+        if ( check(wand, p->data, p->dsize, udp_s2c_spells, udp_s2c_hexes) )
+        { /* set inspector gadget */ }
+    }
+
+    ++tstats.udp_pkts;
 }
 
 StreamSplitter* Wizard::get_splitter(bool c2s)
 {
-    return new MagicSplitter(c2s);
+    return new MagicSplitter(c2s, this);
+}
+
+bool Wizard::check(
+    Wand&, const uint8_t* data, unsigned len, vector<Spell>&, vector<Hex>&)
+{
+    // this is a basic hack to find http requests so that the overall
+    // processing flow can be determined at which point the real magic
+    // can begin.
+
+    if ( len >= 3 && !strncmp((const char*)data, "GET", 3) )
+    {
+        // FIXIT here we have determined that the inspector should
+        // be http and must somehow tell the binder so it can set 
+        // inspector gadget.
+
+        // the real magic must check direction and protocol
+        // (and should be called from eval() for udp and from
+        // here for tcp).
+
+        // the reset status ensures that all the
+        // data scanned so far is delivered to the new inspector's
+        // splitter.
+        ++tstats.tcp_hits;
+        return true;
+    }
+    return false;
 }
 
 //-------------------------------------------------------------------------
@@ -172,12 +284,12 @@ static void wiz_dtor(Inspector* p)
 
 static void wiz_sum()
 {
-    sum_stats(&gstats, &tstats);
+    sum_stats((PegCount*)&gstats, (PegCount*)&tstats, array_size(wiz_pegs));
 }
 
 static void wiz_stats()
 {
-    show_stats(&gstats, mod_name);
+    show_stats((PegCount*)&gstats, wiz_pegs, array_size(wiz_pegs), mod_name);
 }
 
 static void wiz_reset()

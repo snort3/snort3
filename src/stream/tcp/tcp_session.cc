@@ -537,8 +537,9 @@ void Stream5SetSplitterTcp (Flow* lwssn, bool c2s, StreamSplitter* ss)
         trk = &tcpssn->client;
     }
 
-    if ( trk->splitter && tcpssn->tcp_init )
-        delete trk->splitter;
+    // FIXIT we have a sequencing issue with binder
+    //if ( trk->splitter && tcpssn->tcp_init )
+    //    delete trk->splitter;
 
     trk->splitter = ss;
 
@@ -2690,6 +2691,9 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     STREAM5_DEBUG_WRAP( DebugMessage(DEBUG_STREAM_STATE,
                 "After cleaning, %lu bytes in use\n", tcp_memcap->used()););
 
+    memset(&tcpssn->client, 0, sizeof(tcpssn->client));
+    memset(&tcpssn->server, 0, sizeof(tcpssn->server));
+
     tcpssn->lws_init = tcpssn->tcp_init = false;
 }
 
@@ -4783,6 +4787,7 @@ static int NewTcpSession(
 
         tmp->ecn = 0;
         tmp->tcp_init = true;
+
         PREPROC_PROFILE_END(s5TcpNewSessPerfStats);
         return 1;
     }

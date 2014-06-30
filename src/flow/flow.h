@@ -93,7 +93,7 @@ struct StreamFlowData
 class FlowData
 {
 public:
-    FlowData(unsigned u, Inspector* ph = nullptr);
+    FlowData(unsigned u, Inspector* = nullptr);
     virtual ~FlowData();
 
     unsigned get_id()

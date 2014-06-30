@@ -130,6 +130,8 @@ RPC_PORTS =
 -- configure builtin features
 ---------------------------------------------------------------------------
 
+cd_udp = { gtp_ports = GTP_PORTS }
+
 -- Configure active response for non inline operation.
 active =
 {
@@ -326,7 +328,7 @@ hi_x =
     post_depth = 65495,
 }
 
-nhttp_inspect = { }
+--nhttp_inspect = { }
 
 ---------------------------------------------------------------------------
 -- ftp / telnet normalization and anomaly detection
@@ -549,14 +551,18 @@ default_rules =
 #alert tcp any any -> any any ( sid:402; content:"ABA"; content:"C", offset 5; )
 #alert tcp any any -> any any ( sid:403; content:"ABA"; content:"C", offset 6; )
 #alert tcp any any -> any any ( sid:404; content:"ABA"; content:"C", offset 5, depth 6; )
-alert tcp any any -> any any ( sid:510; content:"ABA"; content:"C", within 1; )
-alert tcp any any -> any any ( sid:110; pcre:"/ABA/"; )
-alert tcp any any -> any any ( sid:210; raw_data; pcre:"/ABA/"; )
-alert tcp any any -> any any ( sid:310; pkt_data; pcre:"/ABA/"; )
-alert tcp any any -> any any ( sid:410; pcre:"/ABA/"; pcre:"/C/"; )
-alert tcp any any -> any any ( sid:411; pcre:"/ABA/"; pcre:"/AC/R"; )
-alert tcp any any -> any any ( sid:412; pcre:"/ABA/"; pcre:"/AC/"; )
-alert tcp any any -> any any ( sid:414; pcre:"/ABA/"; pcre:"/C/R"; )
+#alert tcp any any -> any any ( sid:510; content:"ABA"; content:"C", within 1; )
+#alert tcp any any -> any any ( sid:110; pcre:"/ABA/"; )
+#alert tcp any any -> any any ( sid:210; raw_data; pcre:"/ABA/"; )
+#alert tcp any any -> any any ( sid:310; pkt_data; pcre:"/ABA/"; )
+#alert tcp any any -> any any ( sid:410; pcre:"/ABA/"; pcre:"/C/"; )
+#alert tcp any any -> any any ( sid:411; pcre:"/ABA/"; pcre:"/AC/R"; )
+#alert tcp any any -> any any ( sid:412; pcre:"/ABA/"; pcre:"/AC/"; )
+#alert tcp any any -> any any ( sid:414; pcre:"/ABA/"; pcre:"/C/R"; )
+
+alert ( gid:134; sid:1; )
+alert ( gid:134; sid:2; )
+alert ( gid:134; sid:3; )
 ]]
 
 network =
@@ -569,7 +575,7 @@ ips =
 {
     include = '../active.rules',
     rules = default_rules,
-    enable_builtin_rules = true
+    enable_builtin_rules = false
 }
 
 --[[
@@ -613,6 +619,82 @@ hosts =
             { name = 'netbios', proto = 'tcp', port = 137 },
             { name = 'imap', proto = 'tcp', port = 143 },
         }
+    }
+}
+
+---------------------------------------------------------------------------
+-- prototype wizard
+---------------------------------------------------------------------------
+
+ftp_commands = { 'USER' } -- add others
+sip_methods = { 'INVITE', 'NOTIFY' } -- add others
+
+telnet_commands =
+{
+    '|FF F0|', '|FF F1|', '|FF F2|', '|FF F3|',
+    '|FF F4|', '|FF F5|', '|FF F6|', '|FF F7|',
+    '|FF F8|', '|FF F9|', '|FF FA|', '|FF FB|',
+    '|FF FC|', '|FF FD|', '|FF FE|', '|FF FF|'
+}
+
+xwizard =
+{
+    spells =
+    {
+        { service = 'ftp', proto = 'tcp', client_first = false,
+          to_client = ftp_commands, to_server = { '220*FTP' } },
+
+        { service = 'http', proto = 'tcp', client_first = true,
+          to_server = default_http_methods, to_client = { 'HTTP/' } },
+
+        { service = 'imap', proto = 'tcp', client_first = false,
+          to_client = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
+          to_server = { '**OK', '**BYE' } },
+
+        { service = 'pop', proto = 'tcp', client_first = false,
+          to_client = { 'USER', 'APOP' },
+          to_server = { '+OK', '-ERR' } },
+
+        { service = 'sip', proto = 'tcp', client_first = true,
+          to_server = sip_methods, to_client = { 'SIP/' } },
+
+        { service = 'smtp', proto = 'tcp', client_first = false,
+          to_client = { 'HELO', 'EHLO' },
+          to_server = { '220*SMTP', '220*MAIL' } },
+
+        { service = 'ssh', proto = 'tcp', client_first = true,
+          to_server = { '*SSH' }, to_client = { '*SSH' } }
+    },
+    hexes =
+    {
+        { service = 'dce/rpc', proto = 'tcp', client_first = true, 
+          to_server = { '|05 00|' }, to_client = { '|05 00|' } },
+
+        { service = 'dnp3', proto = 'tcp', client_first = true, 
+          to_server = { '|05 64|' }, to_client = { '|05 64|' } },
+
+        { service = 'isakmp',  proto = 'udp', client_first = true,
+          to_server = { '+17 |01|', '+17 |10|' },
+          to_client = { '+17 |01|', '+17 |10|' } },
+
+        { service = 'modbus', proto = 'tcp', client_first = true,
+          to_server = { '+2 |0 0|' } },
+
+        { service = 'rpc', proto = 'tcp', client_first = true,
+          to_server = { '+4 |0 0 0 0 0 0 0 1|' },
+          to_client = { '+4 |0 0 0 0 0 0 0 1|' } },
+
+        { service = 'smb', proto = 'tcp', client_first = true,
+          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
+
+        { service = 'smb', proto = 'udp', client_first = true,
+          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
+
+        { service = 'ssl', proto = 'tcp', client_first = true,
+          to_server = { '|16 03|' }, to_client = { '|16 03|' } },
+
+        { service = 'telnet', proto = 'tcp', client_first = true,
+          to_server = telnet_commands, to_client = telnet_commands },
     }
 }
 

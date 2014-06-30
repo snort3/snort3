@@ -285,13 +285,5 @@ static const InspectApi bind_api =
     bind_reset
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &bind_api.base,
-    nullptr
-};
-#else
 const BaseApi* nin_binder = &bind_api.base;
-#endif
 

@@ -127,8 +127,7 @@ public:
     HttpFlowData();
     ~HttpFlowData();
 
-    static void init()
-    { flow_id = FlowData::get_flow_id(); };
+    static void init();
 
 public:
     static unsigned flow_id;

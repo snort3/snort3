@@ -124,6 +124,11 @@ typedef enum {
 
 unsigned HttpFlowData::flow_id = 0;
 
+void HttpFlowData::init()
+{ 
+    flow_id = FlowData::get_flow_id();
+}
+
 HttpFlowData::HttpFlowData() : FlowData(flow_id)
 {
     memset(&session, 0, sizeof(session));

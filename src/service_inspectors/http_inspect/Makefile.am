@@ -27,17 +27,16 @@ hi_util_hbm.cc hi_util_hbm.h \
 hi_util_kmap.cc hi_util_kmap.h \
 hi_util_xmalloc.cc hi_util_xmalloc.h
 
-#if STATIC_INSPECTORS
+if STATIC_INSPECTORS
 noinst_LIBRARIES = libhttp_inspect.a
 libhttp_inspect_a_SOURCES = $(file_list)
-#else
-# need to fix undefineds first :(
-#shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libhttp_inspect.la
-#libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libhttp_inspect_la_LDFLAGS = -export-dynamic -shared
-#libhttp_inspect_la_SOURCES = $(file_list)
-#endif
+else
+shlibdir = $(pkglibdir)/inspectors
+shlib_LTLIBRARIES = libhttp_inspect.la
+libhttp_inspect_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libhttp_inspect_la_LDFLAGS = -export-dynamic -shared
+libhttp_inspect_la_SOURCES = $(file_list)
+endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

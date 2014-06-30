@@ -4,6 +4,7 @@
 -- changed binder to inspector with designated type
 -- added prototype wizard inspector for service selection magic
 -- fixed plugin instantiation when top level table is a list
+-- changed http_inspect to optionally build dynamically
 
 92
 -- fixed fast_pattern only auto configuration
