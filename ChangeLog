@@ -1,3 +1,7 @@
+95
+-- added some wizard module foo
+-- fixed cmake build with static inspectors for wizard and binder
+
 94
 -- pulled in latest from Tom
 

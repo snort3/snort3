@@ -35,8 +35,70 @@ static const char* s_name = "wizard";
 // wizard module
 //-------------------------------------------------------------------------
 
+static const Parameter wizard_hex_params[] =
+{
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "name of service" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter wizard_hexes_params[] =
+{
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "name of service" },
+
+    { "proto", Parameter::PT_SELECT, "tcp | udp", "tcp",
+      "name of service" },
+
+    { "client_first", Parameter::PT_BOOL, nullptr, "true",
+      "which end initiates data transfer" },
+
+    { "to_server", Parameter::PT_LIST, wizard_hex_params, nullptr,
+      "sequence of offsets and data" },
+
+    { "to_client", Parameter::PT_LIST, wizard_hex_params, nullptr,
+      "sequence of offsets and data" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter wizard_spell_params[] =
+{
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "name of service" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter wizard_spells_params[] =
+{
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "name of service" },
+
+    { "proto", Parameter::PT_SELECT, "tcp | udp", "tcp",
+      "name of service" },
+
+    { "client_first", Parameter::PT_BOOL, nullptr, "true",
+      "which end initiates data transfer" },
+
+    { "to_server", Parameter::PT_LIST, wizard_spell_params, nullptr,
+      "sequence of offsets and data" },
+
+    { "to_client", Parameter::PT_LIST, wizard_spell_params, nullptr,
+      "sequence of offsets and data" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter wizard_params[] =
 {
+    { "hexes", Parameter::PT_LIST, wizard_hexes_params, nullptr,
+      "criteria for binary service identification" },
+
+    { "spells", Parameter::PT_LIST, wizard_spells_params, nullptr,
+      "criteria for text service identification" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
