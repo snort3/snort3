@@ -233,7 +233,7 @@ HTTP/1.0 401 illegal nontext char\x00acter in reason phrase null\r\n\r\n
 @2027
 @break
 @response
-HTTP/1.0 401 illegal nontext character in reason\xffphrase delete\r\n\r\n
+HTTP/1.0 401 illegal nontext character in reason\xFFphrase delete\r\n\r\n
 
 @2028
 @break
@@ -348,6 +348,82 @@ GET HtTpS://1.2.3.4.5.a:6/abcdef/ghijklmnop/qrstuvwxyz/?thequery?fieldcontinues?
 @4001
 @break
 @request
+GET http://sam\xC6plehost.%3d.com:65535/abcdef//ghijkl\x7F?%21%23%24%25%26%27%28%29%2a%2b%2c%2f%3a%3b%3d%3f%40%5b%5dallgoodescapeshere#1234567890%abaaa HTTP/1.1\r\n\r\n
+
+@4002
+@break
+@request
+GET http://hostname.com:0/abcde/fghijklmn/opqrstuvwxyz?%5D%5d%5B%5b%40%3F%3f%3D%3d%3B%3b%3A%3a%2F%2f%2C%2c%2B%2b%2A%2a%29%28%27%26%25%24%23%21#
+1%5D2%5d3%5B4%5b5%406%3F7%3f8%3D9%3da%3Bb%3bc%3Ad%3ae%2Ff%2fg%2CA%2cB%2BC%2bD%2AE%2aF%29%28%27%26%25%24%23%21 HTTP/1.1\r\n\r\n
+
+@4003
+@break
+@request
+GET HTTP://longLONGlonglonglonglonglonglonglonglonglonglong.host.name.com:1/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/0123456789/
+-_.~.._./?# HTTP/1.1\r\n\r\n
+
+@4004
+@break
+@request
+GET HTTPS://host%6Eamewith\xD3impr oper%25.characters.com:123/..?# HTTP/1.1\r\n\r\n
+
+@4005
+@break
+@request
+GET Ftp://%48%6F%53%74%4E%61%4d%2e%63%6F%6D:45678/./123/./456/./7890././.abcdef/ghijklmn///.//./.?# HTTP/1.1\r\n\r\n
+
+@4006
+@break
+@request
+GET a://\xe8hostname.com%25%22\x08:65535/./././././//././/?# HTTP/1.1\r\n\r\n
+
+@4007
+@break
+@request
+GET http\x00://hostname.com:65536/%2e%2f/%2E%2F%2E%2F%2E%2F%2f%2f%2fUVWXYZ__~_/%2E?# HTTP/1.1\r\n\r\n
+
+@4008
+@break
+@request
+GET \xFF://hostname.com:1000000000/..?# HTTP/1.1\r\n\r\n
+
+@4009
+@break
+@request
+GET ht tp://hostname.com/../?# HTTP/1.1\r\n\r\n
+
+@4010
+@break
+@request
+GET http://hostname.com/../../../../%2e%2e/.%2e%2f%2e./../bogus_directory///bogus-subdirectory%2F../../real_directory//
+%54%61%72%67%03%65%74/./?# HTTP/1.1\r\n\r\n
+
+@4011
+@break
+@request
+GET http://hostname.com/1/2/../3//4/..///5/6/..//////////7/8abcdefghijklmnopqrstuvwxyz%25abcdefghijklmnopqrstuvwxyz%3D/
+fa%6be/..?# HTTP/1.1\r\n\r\n
+
+@4012
+@break
+@request
+GET http://hostname.com/1\\2/../3/\\4/..\\//5/6/..///\\\\\\////7/8abcdefghijklmnopqrstuvwxyz%25abcdefghijklmnopqrstuvwxyz%3D\\
+fa%6be\\..?# HTTP/1.1\r\n\r\n
+
+@4013
+@break
+@request
+GET http://hostname.com/?# HTTP/1.1\r\n\r\n
+
+@4014
+@break
+@request
+GET http://hostname.com/?# HTTP/1.1\r\n\r\n
+
+@4015
+@break
+@request
+GET http://hostname.com/?# HTTP/1.1\r\n\r\n
 
 
 # ***********************************************************************************************

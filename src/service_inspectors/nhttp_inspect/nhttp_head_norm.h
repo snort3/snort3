@@ -67,14 +67,6 @@ private:
     const int numNormalizers;
 };
 
-// Normalizer functions
-
-int32_t normDecimalInteger(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
-int32_t norm2Lower(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
-int32_t normStrCode(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
-int32_t normSeqStrCode(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
-int32_t normRemoveLws(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
-
 #endif
 
 

@@ -34,10 +34,13 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_head_norm.h"
+#include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
 
 using namespace NHttpEnums;
+
+const UriNormalizer NHttpMsgRequest::uriNoPath { false };
+const UriNormalizer NHttpMsgRequest::uriPath { true };
 
 // Reinitialize everything derived in preparation for analyzing a new message
 void NHttpMsgRequest::initSection() {
@@ -49,14 +52,18 @@ void NHttpMsgRequest::initSection() {
     scheme.length = STAT_NOTCOMPUTE;
     schemeId = SCH__NOTCOMPUTE;
     host.length = STAT_NOTCOMPUTE;
+    hostInfractions = 0;
     hostNorm.length = STAT_NOTCOMPUTE;
     port.length = STAT_NOTCOMPUTE;
     portValue = STAT_NOTCOMPUTE;
     path.length = STAT_NOTCOMPUTE;
+    pathInfractions = 0;
     pathNorm.length = STAT_NOTCOMPUTE;
     query.length = STAT_NOTCOMPUTE;
+    queryInfractions = 0;
     queryNorm.length = STAT_NOTCOMPUTE;
     fragment.length = STAT_NOTCOMPUTE;
+    fragmentInfractions = 0;
     fragmentNorm.length = STAT_NOTCOMPUTE;
 }
 
@@ -69,6 +76,11 @@ void NHttpMsgRequest::analyze() {
     parseAuthority();
     derivePortValue();
     parseAbsPath();
+    uriPath.normalize(path, pathNorm, scratchPad, pathInfractions);
+    uriNoPath.normalize(host, hostNorm, scratchPad, hostInfractions);
+    uriNoPath.normalize(query, queryNorm, scratchPad, queryInfractions);
+    uriNoPath.normalize(fragment, fragmentNorm, scratchPad, fragmentInfractions);
+    makeLegacyNormUri();
 }
 
 void NHttpMsgRequest::parseStartLine() {
@@ -196,7 +208,7 @@ void NHttpMsgRequest::derivePortValue() {
         portValue = portValue * 10 + (port.start[k] - '0');
         if ((port.start[k] < '0') || (port.start[k] > '9') || (portValue > 65535))
         {
-            infractions |= INF_BADURI;
+            infractions |= INF_BADPORT;
             portValue = STAT_PROBLEMATIC;
             break;
         }
@@ -250,6 +262,8 @@ void NHttpMsgRequest::printSection(FILE *output) const {
     printInterval(output, "Normalized Query", queryNorm.start, queryNorm.length);
     printInterval(output, "Fragment", fragment.start, fragment.length);
     printInterval(output, "Normalized Fragment", fragmentNorm.start, fragmentNorm.length);
+    fprintf(output, "URI infractions: host %" PRIx64 ", path %" PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
+       hostInfractions, pathInfractions, queryInfractions, fragmentInfractions);
     NHttpMsgSection::printMessageWrapup(output);
 }
 
@@ -273,13 +287,73 @@ void NHttpMsgRequest::updateFlow() const {
     }
 }
 
+// Glue normalized URI fields back together 
+void NHttpMsgRequest::makeLegacyNormUri() {
+    if (uriLegacyNorm.length != STAT_NOTCOMPUTE) return;
+
+    // We can reuse the raw URI for the normalized URI unless at least one part of the URI has been normalized
+    if ((hostInfractions == 0) && (pathInfractions == 0) && (queryInfractions == 0) && (fragmentInfractions == 0)) {
+        uriLegacyNorm.start = uri.start;
+        uriLegacyNorm.length = uri.length;
+        return;
+    }
+
+    // Glue normalized path pieces back together
+    const uint32_t totalLength = ((scheme.length >= 0) ? scheme.length + 3 : 0) +
+                                 ((hostNorm.length >= 0) ? hostNorm.length : 0) +
+                                 ((port.length >= 0) ? port.length + 1 : 0) +
+                                 ((pathNorm.length >= 0) ? pathNorm.length : 0) +
+                                 ((queryNorm.length >= 0) ? queryNorm.length + 1 : 0) +
+                                 ((fragmentNorm.length >= 0) ? fragmentNorm.length + 1 : 0);
+    uint8_t* const scratch = scratchPad.request(totalLength);
+    if (scratch != nullptr) {
+        uint8_t *current = scratch;
+        if (scheme.length >= 0) {
+            memcpy(current, scheme.start, scheme.length);
+            current += scheme.length;
+            memcpy(current, "://", 3);
+            current += 3;
+        }
+        if (hostNorm.length >= 0) {
+            memcpy(current, hostNorm.start, hostNorm.length);
+            current += hostNorm.length;
+        }
+        if (port.length >= 0) {
+            memcpy(current, ":", 1);
+            current += 1;
+            memcpy(current, port.start, port.length);
+            current += port.length;
+        }
+        if (pathNorm.length >= 0) {
+            memcpy(current, pathNorm.start, pathNorm.length);
+            current += pathNorm.length;
+        }
+        if (queryNorm.length >= 0) {
+            memcpy(current, "?", 1);
+            current += 1;
+            memcpy(current, queryNorm.start, queryNorm.length);
+            current += queryNorm.length;
+        }
+        if (fragmentNorm.length >= 0) {
+            memcpy(current, "#", 1);
+            current += 1;
+            memcpy(current, fragmentNorm.start, fragmentNorm.length);
+            current += fragmentNorm.length;
+        }
+        assert(totalLength == current - scratch);
+        scratchPad.commit(current - scratch);
+        uriLegacyNorm.start = scratch;
+        uriLegacyNorm.length = current - scratch;
+    }
+    else uriLegacyNorm.length = STAT_INSUFMEMORY;
+}
+
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgRequest::legacyClients() const {
     if (method.length > 0) SetHttpBuffer(HTTP_BUFFER_METHOD, method.start, (unsigned)method.length);
     if (uri.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_URI, uri.start, (unsigned)uri.length);
     if (uriLegacyNorm.length > 0) SetHttpBuffer(HTTP_BUFFER_URI, uriLegacyNorm.start, (unsigned)uriLegacyNorm.length);
 }
-
 
 
 
