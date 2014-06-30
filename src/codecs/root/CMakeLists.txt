@@ -25,13 +25,13 @@ if (STATIC_CODECS)
             )
     endif (ENABLE_NON_ETHER_DECODERS)
 
-else()
+else(STATIC_CODECS)
 
     if (ENABLE_NON_ETHER_DECODERS)
         add_shared_library(cd_wlan codecs cd_wlan.cc cd_wlan_module.h cd_wlan_module.cc)
         add_shared_library(cd_linux_sll codecs cd_linux_sll.cc)
-    endif()
-endif()
+    endif(ENABLE_NON_ETHER_DECODERS)
+endif(STATIC_CODECS)
 
 
 add_library(root_codecs STATIC

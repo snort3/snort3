@@ -40,8 +40,9 @@ set (FILE_LIST
     nhttp_stream_splitter.h
 )
 
-#if (STATIC_INSPECTORS)
+if (STATIC_INSPECTORS)
     add_library(nhttp_inspect STATIC ${FILE_LIST})
-#else()
-#    add_shared_library(nhttp_inspect inspectors ${FILE_LIST})
-#endif()
+else(STATIC_INSPECTORS)
+    add_shared_library(nhttp_inspect inspectors ${FILE_LIST})
+endif(STATIC_INSPECTORS)
+

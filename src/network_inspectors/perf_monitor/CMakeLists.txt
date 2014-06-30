@@ -6,7 +6,7 @@ if( BUILD_PROCPIDSTATS )
         sfprocpidstats.h
     )
 
-endif()
+endif(BUILD_PROCPIDSTATS)
 
 
 add_library ( perf_monitor STATIC

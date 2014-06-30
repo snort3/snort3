@@ -39,16 +39,12 @@ set (FILE_LIST
     telnet_module.h
 )
 
-
 if (STATIC_INSPECTORS)
     add_library(ftp_telnet STATIC ${FILE_LIST})
-    target_link_libraries(ftp_telnet
-        utils
-    )
+    target_link_libraries(ftp_telnet utils)
 
-else ()
+else (STATIC_INSPECTORS)
    add_shared_library(ftp_telnet inspectors ${FILE_LIST})
 
-endif ()
-
+endif (STATIC_INSPECTORS)
 

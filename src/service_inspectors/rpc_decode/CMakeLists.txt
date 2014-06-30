@@ -8,8 +8,8 @@ set( FILE_LIST
 if (STATIC_INSPECTORS)
     add_library( rpc_decode STATIC ${FILE_LIST})
 
-else ()
+else (STATIC_INSPECTORS)
     add_shared_library(rpc_decode inspectors ${FILE_LIST})
 
-endif ()
+endif (STATIC_INSPECTORS)
 

@@ -6,7 +6,7 @@ set( FILE_LIST
 if (STATIC_INSPECTORS)
     add_library( back_orifice STATIC ${FILE_LIST})
 
-else ()
+else (STATIC_INSPECTORS)
     add_shared_library(back_orifice inspectors ${FILE_LIST})
 
-endif ()
+endif (STATIC_INSPECTORS)

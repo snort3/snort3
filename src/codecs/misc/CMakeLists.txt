@@ -8,11 +8,11 @@ if(STATIC_CODECS)
         cd_teredo.cc
     )
 
-else()
+else(STATIC_CODECS)
     add_shared_library(cd_gtp codecs cd_gtp.cc cd_gtp_module.h cd_gtp_module.cc)
     add_shared_library(cd_teredo codecs cd_teredo.cc)
 
-endif()
+endif(STATIC_CODECS)
 
 add_library( misc_codecs STATIC
     cd_default.cc

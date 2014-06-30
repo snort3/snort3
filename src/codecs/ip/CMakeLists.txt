@@ -25,7 +25,7 @@ if( STATIC_CODECS )
         cd_swipe.cc
     )
 
-else()
+else(STATIC_CODECS)
     add_shared_library(cd_ah codecs cd_ah.cc cd_ah_module.h cd_ah_module.cc)
     add_shared_library(cd_dstopts codecs cd_dstopts.cc ipv6_util.h ipv6_util.cc)
     add_shared_library(cd_frag codecs cd_frag.cc ipv6_util.h ipv6_util.cc)
@@ -39,7 +39,7 @@ else()
     add_shared_library(cd_sun_nd codecs cd_sun_nd.cc)
     add_shared_library(cd_swipe codecs cd_swipe.cc)
 
-endif()
+endif(STATIC_CODECS)
 
 
 add_library( ip_codecs STATIC

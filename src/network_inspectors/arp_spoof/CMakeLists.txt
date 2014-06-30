@@ -10,7 +10,7 @@ if (STATIC_INSPECTORS)
         ${FILE_LIST}
     )
 
-else ()
+else (STATIC_INSPECTORS)
     add_shared_library(arpspoof inspectors ${FILE_LIST})
     
-endif ()
+endif (STATIC_INSPECTORS)

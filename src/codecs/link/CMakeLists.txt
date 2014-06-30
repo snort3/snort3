@@ -30,9 +30,9 @@ if( STATIC_CODECS )
             cd_eapol_module.h
             cd_eapol_module.cc
         )
-    endif()
+    endif(ENABLE_NON_ETHER_DECODERS)
 
-else()
+else(STATIC_CODECS)
     add_shared_library(cd_erspan2 codecs cd_erspan2.cc cd_erspan2_module.h cd_erspan2_module.cc)
     add_shared_library(cd_erspan3 codecs cd_erspan3.cc cd_erspan3_module.h cd_erspan3_module.cc)
     add_shared_library(cd_ethloopback codecs cd_ethloopback.cc)
@@ -44,9 +44,9 @@ else()
 
     if(ENABLE_NON_ETHER_DECODERS)
         add_shared_library(cd_eapol codecs cd_eapol.cc cd_eapol_module.h cd_eapol_module.cc)
-    endif()
+    endif(ENABLE_NON_ETHER_DECODERS)
 
-endif()
+endif(STATIC_CODECS)
 
 
 add_library( link_codecs STATIC

@@ -21,7 +21,7 @@ if (STATIC_INSPECTORS)
     )
 
 
-else ()
+else (STATIC_INSPECTORS)
     add_shared_library(port_scan inspectors "${FILE_LIST}")
 
 endif (STATIC_INSPECTORS)
