@@ -37,8 +37,7 @@ public:
     void normalize(const field &input, field &result, ScratchPad &scratchPad, uint64_t &infractions) const;
 
 private:
-    static const NHttpEnums::CharAction pathChar[256];
-    static const NHttpEnums::CharAction nonPathChar[256];
+    static const NHttpEnums::CharAction uriChar[256];
     static const int8_t asHex[256];
     static const bool goodPercent[256];
 

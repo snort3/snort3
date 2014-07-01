@@ -80,7 +80,7 @@ void UriNormalizer::normalize(const field &input, field &result, ScratchPad &scr
 
 bool UriNormalizer::noPathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) const {
     for (int32_t k = 0; k < inLength; k++) {
-        if (nonPathChar[inBuf[k]] == CHAR_NORMAL) continue;
+        if ((uriChar[inBuf[k]] == CHAR_NORMAL) || (uriChar[inBuf[k]] == CHAR_PATH)) continue;
         infractions |= INF_URINEEDNORM;
         return false;
     }
@@ -89,7 +89,7 @@ bool UriNormalizer::noPathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t
 
 bool UriNormalizer::pathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) const {
     for (int32_t k = 0; k < inLength; k++) {
-        if (pathChar[inBuf[k]] == CHAR_NORMAL) continue;
+        if (uriChar[inBuf[k]] == CHAR_NORMAL) continue;
         if ((inBuf[k] == '/') && ((k == 0) || (inBuf[k-1] != '/'))) continue;
         infractions |= INF_URINEEDNORM;
         return false;
@@ -100,8 +100,9 @@ bool UriNormalizer::pathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& 
 int32_t UriNormalizer::normCharClean(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t& infractions, const void *) const {
     int32_t length = 0;
     for (int32_t k = 0; k < inLength; k++) {
-        switch (nonPathChar[inBuf[k]]) {
+        switch (uriChar[inBuf[k]]) {
           case CHAR_NORMAL:
+          case CHAR_PATH:
             outBuf[length++] = inBuf[k];
             break;
           case CHAR_INVALID:
@@ -124,7 +125,7 @@ int32_t UriNormalizer::normCharClean(const uint8_t* inBuf, int32_t inLength, uin
                     else {
                         // Suspicious % escape of an ASCII character that does not need to be escaped
                         infractions |= INF_URIPERCENTASCII;
-                        if (nonPathChar[value] == CHAR_INVALID) infractions |= INF_URIBADCHAR;
+                        if (uriChar[value] == CHAR_INVALID) infractions |= INF_URIBADCHAR;
                         outBuf[length++] = value;
                         k += 2;
                     }
@@ -146,9 +147,6 @@ int32_t UriNormalizer::normCharClean(const uint8_t* inBuf, int32_t inLength, uin
                 infractions |= INF_URIPERCENTOTHER;
                 outBuf[length++] = '%';
             }
-            break;
-          default:
-            assert(0);
             break;
         }
     }
