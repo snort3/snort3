@@ -76,6 +76,18 @@ bool NHttpInspect::configure (SnortConfig *)
     return true;
 }
 
+bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
+{
+    const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);
+
+    if ( !h )
+        return false;
+
+    b.data = h->buf;
+    b.len = h->length;
+    return true;
+}
+
 int NHttpInspect::verify(SnortConfig*)
 {
     return 0; // 0 = good, -1 = bad

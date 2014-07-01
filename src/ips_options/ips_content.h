@@ -69,6 +69,7 @@ struct PatternMatchData
     uint16_t fp_length;
 
     uint8_t negated;        /* search for "not this pattern" */
+    uint8_t pm_type;
 
     // FIXIT wasting some memory here:
     // - this is not used by content option logic directly
@@ -79,7 +80,6 @@ struct PatternMatchData
        but the rule option specifies a negated content. Only
        applies to negative contents that are not relative */
     PmdLastCheck* last_check;
-
 };
 
 PatternMatchData* content_get_data(void*);

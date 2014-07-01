@@ -60,6 +60,10 @@ class RawDataOption : public IpsOption
 {
 public:
     RawDataOption() : IpsOption(s_name) { };
+
+    CursorActionType get_cursor_type() const
+    { return CAT_SET_RAW; };
+
     int eval(Cursor&, Packet*);
 };
 

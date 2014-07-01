@@ -81,16 +81,14 @@ static void fpDeletePortGroup(void *);
 static void fpDeletePMX(void *data);
 static int fpGetFinalPattern(FastPatternConfig *fp, PatternMatchData *pmd,
         char **ret_pattern, int *ret_bytes);
-static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn);
-static int fpFinishPortGroupRule(SnortConfig *sc, PORT_GROUP *pg, PmType pm_type,
+static int fpFinishPortGroupRule(SnortConfig *sc, PORT_GROUP *pg,
         OptTreeNode *otn, PatternMatchData *pmd, FastPatternConfig *fp);
 static int fpFinishPortGroup(SnortConfig *sc, PORT_GROUP *pg, FastPatternConfig *fp);
 static int fpAllocPms(SnortConfig *sc, PORT_GROUP *pg, FastPatternConfig *fp);
 static int fpAddPortGroupRule(SnortConfig *sc, PORT_GROUP *pg, OptTreeNode *otn, FastPatternConfig *fp);
 static int fpAddPortGroupPrmx(PORT_GROUP *pg, OptTreeNode *otn, int cflag);
-static inline int IsPmdFpEligible(PatternMatchData *content);
 static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
-        const char *pattern, int pattern_length, PmType pm_type);
+        const char *pattern, int pattern_length);
 
 static const char *pm_type_strings[PM_TYPE__MAX] =
 {
@@ -859,48 +857,94 @@ static int FLP_Trim( char * p, int plen, char ** buff )
     return size;
  }
 
-static inline int IsPmdFpEligible(PatternMatchData *content)
+static bool pmd_can_be_fp(PatternMatchData* pmd, CursorActionType cat)
 {
-    if (content == NULL)
-        return 0;
+    if ( !pmd->pattern_buf || !pmd->pattern_size )
+        return false;
 
-    if ((content->pattern_buf != NULL) && (content->pattern_size != 0))
-    {
-        if (content->negated)
-        {
-            /* Negative contents can only be considered if they are not relative
-             * and don't have any offset or depth.  This is because the pattern
-             * matcher does not take these into consideration and may find the
-             * content in a non-relevant section of the payload and thus disable
-             * the rule when it shouldn't be.
-             * Also case sensitive patterns cannot be considered since patterns
-             * are inserted into the pattern matcher without case which may
-             * lead to false negatives */
-            if (content->relative || !content->no_case
-                    || (content->offset != 0) || (content->depth != 0))
-            {
-                return 0;
-            }
-        }
+    if ( pmd->relative )
+        return false;
 
-        return 1;
-    }
+    if ( cat <= CAT_SET_OTHER )
+        return false;
 
-    return 0;
+    if ( !pmd->negated )
+        return true;
+
+    /* Negative contents can only be considered if they are not relative
+     * and don't have any offset or depth.  This is because the pattern
+     * matcher does not take these into consideration and may find the
+     * content in a non-relevant section of the payload and thus disable
+     * the rule when it shouldn't be.
+     * Also case sensitive patterns cannot be considered since patterns
+     * are inserted into the pattern matcher without case which may
+     * lead to false negatives */
+    if ( pmd->relative || !pmd->no_case ||
+         pmd->offset || pmd->depth )
+        return false;
+
+    return true;
 }
 
-static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn)
+struct FpFoo
 {
-    PatternMatchData *pmd = NULL;
-    PatternMatchData *pmd_not = NULL;
-    PatternMatchData *pmd_zero = NULL;
-    PatternMatchData *pmd_zero_not = NULL;
+    CursorActionType cat;
+    PatternMatchData* pmd;
+    int size;
 
+    FpFoo()
+    { cat = CAT_NONE; pmd = nullptr; size = 0; };
+
+    FpFoo(CursorActionType c, PatternMatchData* p)
+    {
+        cat = c;
+        pmd = p;
+        size = FLP_Trim(pmd->pattern_buf, pmd->pattern_size, nullptr);
+    };
+    bool is_better(FpFoo& rhs)
+    {
+        if ( size && !rhs.size )
+            return true;
+
+        if ( !pmd->negated && rhs.pmd->negated )
+            return true;
+
+        if ( cat > rhs.cat )
+            return true;
+
+        if ( cat < rhs.cat )
+            return false;
+
+        if ( size > rhs.size )
+            return true;
+
+        return false;
+    };
+};
+
+static PmType get_pm_type(CursorActionType cat)
+{
+    switch ( cat )
+    {
+    case CAT_SET_RAW:
+        return PM_TYPE__CONTENT;
+    case CAT_SET_BODY:
+        return PM_TYPE__HTTP_CLIENT_BODY_CONTENT;
+    case CAT_SET_HEADER:
+        return PM_TYPE__HTTP_HEADER_CONTENT;
+    case CAT_SET_COMMAND:
+        return PM_TYPE__HTTP_URI_CONTENT;
+    default:
+        break;
+    }
+    return PM_TYPE__MAX;
+}
+
+static PatternMatchData * get_fp_content(OptTreeNode *otn)
+{
     OptFpList *ofl;
-    int max_size = 0, max_zero_size = 0;
-
-    CursorActionType last_cat = CAT_SET_RAW;  // default is raw packet
-    CursorActionType curr_cat = CAT_NONE;     // selected for fast pattern
+    CursorActionType curr_cat = CAT_SET_RAW;
+    FpFoo best;
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
     {
@@ -909,11 +953,8 @@ static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn)
 
         CursorActionType cat = IpsOption::get_cat(ofl->context);
 
-        if ( cat == CAT_NONE )
-            continue;
-
-        if ( cat > CAT_SET_RAW )
-            last_cat = cat;
+        if ( cat > CAT_ADJUST )
+            curr_cat = cat;
 
         if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
             continue;
@@ -921,56 +962,24 @@ static PatternMatchData * GetLongestPmdContent(OptTreeNode *otn)
         PatternMatchData* tmp = get_pmd(ofl);
         assert(tmp);
 
+        tmp->pm_type = get_pm_type(curr_cat);
+
         if (tmp->fp)
             return tmp;
 
-        if ( !IsPmdFpEligible(tmp) )
+        if ( !pmd_can_be_fp(tmp, curr_cat) )
             continue;
 
-        int size = FLP_Trim(tmp->pattern_buf, tmp->pattern_size, NULL);
+        FpFoo curr(curr_cat, tmp);
 
-        /* In case we get all zeros patterns */
-        if ((size == 0) && ((int)tmp->pattern_size > max_zero_size))
-        {
-            if (tmp->negated)
-            {
-                pmd_zero_not = tmp;
-            }
-            else
-            {
-                max_zero_size = tmp->pattern_size;
-                pmd_zero = tmp;
-            }
-        }
-        else if ( last_cat > curr_cat || size > max_size )
-        {
-            if (tmp->negated)
-            {
-                pmd_not = tmp;
-            }
-            else
-            {
-                max_size = size;
-                pmd = tmp;
-            }
-            curr_cat = last_cat;
-        }
+        if ( curr.is_better(best) )
+            best = curr;
     }
-
-    if (pmd != NULL)
-        return pmd;
-    else if (pmd_zero != NULL)
-        return pmd_zero;
-    else if (pmd_not != NULL)
-        return pmd_not;
-    else if (pmd_zero_not != NULL)
-        return pmd_zero_not;
-
-    return NULL;
+    return best.pmd;
 }
 
 static int fpFinishPortGroupRule(
-    SnortConfig *sc, PORT_GROUP *pg, PmType pm_type,
+    SnortConfig *sc, PORT_GROUP *pg,
     OptTreeNode *otn, PatternMatchData* pmd, FastPatternConfig *fp)
 {
     PMX * pmx;
@@ -982,27 +991,15 @@ static int fpFinishPortGroupRule(
     if ((pg == NULL) || (otn == NULL) || (fp == NULL))
         return -1;
 
-    switch (pm_type)
+    if ( !pmd )
     {
-        case PM_TYPE__CONTENT:
-            if (pmd == NULL)
-                return -1;
-            pg_type = PGCT_CONTENT;
-            break;
-        case PM_TYPE__HTTP_URI_CONTENT:
-        case PM_TYPE__HTTP_HEADER_CONTENT:
-        case PM_TYPE__HTTP_CLIENT_BODY_CONTENT:
-            if (pmd == NULL)
-                return -1;
-            pg_type = PGCT_URICONTENT;
-            break;
-        case PM_TYPE__MAX:
-        default:
-            if (pmd != NULL)
-                return -1;
-            fpAddPortGroupPrmx(pg, otn, PGCT_NOCONTENT);
-            return 0;  /* Not adding any content to pattern matcher */
+        fpAddPortGroupPrmx(pg, otn, PGCT_NOCONTENT);
+        return 0;  /* Not adding any content to pattern matcher */
     }
+    if (pmd->pm_type == PM_TYPE__CONTENT )
+        pg_type = PGCT_CONTENT;
+    else
+        pg_type = PGCT_URICONTENT;
 
     {
         if (pmd->negated)
@@ -1023,9 +1020,9 @@ static int fpFinishPortGroupRule(
         pmx->PatternMatchData = pmd;
 
         if (fpDetectGetDebugPrintFastPatterns(fp))
-            PrintFastPatternInfo(otn, pmd, pattern, pattern_length, pm_type);
+            PrintFastPatternInfo(otn, pmd, pattern, pattern_length);
 
-        pg->pgPms[pm_type]->add_pattern(
+        pg->pgPms[pmd->pm_type]->add_pattern(
                 sc,
                 pattern,
                 pattern_length,
@@ -1137,34 +1134,12 @@ static int fpAllocPms(
     return 0;
 }
 
-#if 0
-// FIXIT fast_pattern
-static PmType GetPmType (HTTP_BUFFER hb_type)
-{
-    switch ( hb_type )
-    {
-    case HTTP_BUFFER_URI:
-        return PM_TYPE__HTTP_URI_CONTENT;
-
-    case HTTP_BUFFER_HEADER:
-        return PM_TYPE__HTTP_HEADER_CONTENT;
-
-    case HTTP_BUFFER_CLIENT_BODY:
-        return PM_TYPE__HTTP_CLIENT_BODY_CONTENT;
-
-    default:
-        break;
-    }
-    return PM_TYPE__CONTENT;
-}
-#endif
-
 static int fpAddPortGroupRule(
     SnortConfig *sc, PORT_GROUP *pg, OptTreeNode *otn, FastPatternConfig *fp)
 {
     PatternMatchData *pmd = NULL;
 
-    if ((pg == NULL) || (otn == NULL))
+    if ( !pg || !otn )
         return -1;
 
     // skip builtin rules
@@ -1175,11 +1150,18 @@ static int fpAddPortGroupRule(
     if ( !otn->enabled )
         return -1;
 
-    pmd = GetLongestPmdContent(otn);
+    pmd = get_fp_content(otn);
 
-    if ((pmd != NULL) && pmd->fp)
+    if ( pmd && pmd->fp)
     {
-        if (fpFinishPortGroupRule(sc, pg, PM_TYPE__CONTENT, otn, pmd, fp) == 0)
+        if (
+            pmd->fp && !pmd->relative && !pmd->negated &&
+            !pmd->offset && !pmd->depth && pmd->no_case )
+        {
+            pmd->fp_only = 1;
+        }
+
+        if (fpFinishPortGroupRule(sc, pg, otn, pmd, fp) == 0)
         {
             if (pmd->pattern_size > otn->longestPatternLen)
                 otn->longestPatternLen = pmd->pattern_size;
@@ -1190,7 +1172,7 @@ static int fpAddPortGroupRule(
 
     /* If we get this far then no URI contents were added */
 
-    if (fpFinishPortGroupRule(sc, pg, PM_TYPE__CONTENT, otn, pmd, fp) == 0)
+    if ( pmd && fpFinishPortGroupRule(sc, pg, otn, pmd, fp) == 0)
     {
         if (pmd->pattern_size > otn->longestPatternLen)
             otn->longestPatternLen = pmd->pattern_size;
@@ -1198,7 +1180,7 @@ static int fpAddPortGroupRule(
     }
 
     /* No content added */
-    if (fpFinishPortGroupRule(sc, pg, PM_TYPE__MAX, otn, NULL, fp) != 0)
+    if (fpFinishPortGroupRule(sc, pg, otn, NULL, fp) != 0)
         return -1;
 
     return 0;
@@ -2681,13 +2663,13 @@ const char * PatternRawToContent(const char *pattern, int pattern_len)
 }
 
 static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
-        const char *pattern, int pattern_length, PmType pm_type)
+        const char *pattern, int pattern_length)
 {
     if ((otn == NULL) || (pmd == NULL))
         return;
 
     LogMessage("%u:%u\n", otn->sigInfo.generator, otn->sigInfo.id);
-    LogMessage("  Fast pattern matcher: %s\n", pm_type_strings[pm_type]);
+    LogMessage("  Fast pattern matcher: %s\n", pm_type_strings[pmd->pm_type]);
     LogMessage("  Fast pattern set: %s\n", pmd->fp ? "yes" : "no");
     LogMessage("  Fast pattern only: %s\n", pmd->fp_only ? "yes" : "no");
     LogMessage("  Negated: %s\n", pmd->negated ? "yes" : "no");
