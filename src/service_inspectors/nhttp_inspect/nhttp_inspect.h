@@ -45,6 +45,7 @@ public:
     NHttpInspect(bool test_input, bool _test_output);
     ~NHttpInspect();
 
+    bool get_buf(unsigned, Packet*, InspectionBuffer&);
     bool configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);

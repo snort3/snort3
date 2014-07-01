@@ -95,6 +95,21 @@ void NHttpApi::nhttp_reset()
 {
 }
 
+static const char* buffers[] =
+{
+    "http_client_body",
+    "http_cookie",
+    "http_header",
+    "http_method",
+    "http_raw_cookie",
+    "http_raw_header",
+    "http_raw_uri",
+    "http_stat_code",
+    "http_stat_msg",
+    "http_uri",
+    nullptr
+};
+
 const InspectApi NHttpApi::nhttp_api =
 {
     {
@@ -107,7 +122,7 @@ const InspectApi NHttpApi::nhttp_api =
     },
     IT_SERVICE,
     PROTO_BIT__TCP,
-    nullptr, // buffers
+    buffers,
     "http",
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,

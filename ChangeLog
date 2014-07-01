@@ -1,3 +1,11 @@
+96
+-- finished default fp selection
+-- added NHttpInspect::get_buf() and related
+
+95
+-- added some wizard module foo
+-- fixed cmake build with static inspectors for wizard and binder
+
 94
 -- pulled in latest from Tom
 

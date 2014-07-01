@@ -328,7 +328,7 @@ hi_x =
     post_depth = 65495,
 }
 
---nhttp_inspect = { }
+nhttp_inspect = { }
 
 ---------------------------------------------------------------------------
 -- ftp / telnet normalization and anomaly detection
@@ -560,9 +560,10 @@ default_rules =
 #alert tcp any any -> any any ( sid:412; pcre:"/ABA/"; pcre:"/AC/"; )
 #alert tcp any any -> any any ( sid:414; pcre:"/ABA/"; pcre:"/C/R"; )
 
-alert ( gid:134; sid:1; )
-alert ( gid:134; sid:2; )
-alert ( gid:134; sid:3; )
+#alert ( gid:134; sid:1; )
+#alert ( gid:134; sid:2; )
+#alert ( gid:134; sid:3; )
+alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil", nocase, fast_pattern; )
 ]]
 
 network =
@@ -573,9 +574,9 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    include = '../active.rules',
+    --include = '../active.rules',
     rules = default_rules,
-    enable_builtin_rules = false
+    enable_builtin_rules = true
 }
 
 --[[
@@ -637,30 +638,30 @@ telnet_commands =
     '|FF FC|', '|FF FD|', '|FF FE|', '|FF FF|'
 }
 
-xwizard =
+wizard =
 {
     spells =
     {
         { service = 'ftp', proto = 'tcp', client_first = false,
-          to_client = ftp_commands, to_server = { '220*FTP' } },
+          to_server = ftp_commands, to_client = { '220*FTP' } },
 
         { service = 'http', proto = 'tcp', client_first = true,
           to_server = default_http_methods, to_client = { 'HTTP/' } },
 
         { service = 'imap', proto = 'tcp', client_first = false,
-          to_client = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
-          to_server = { '**OK', '**BYE' } },
+          to_server = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
+          to_client = { '**OK', '**BYE' } },
 
         { service = 'pop', proto = 'tcp', client_first = false,
-          to_client = { 'USER', 'APOP' },
-          to_server = { '+OK', '-ERR' } },
+          to_server = { 'USER', 'APOP' },
+          to_client = { '+OK', '-ERR' } },
 
         { service = 'sip', proto = 'tcp', client_first = true,
           to_server = sip_methods, to_client = { 'SIP/' } },
 
         { service = 'smtp', proto = 'tcp', client_first = false,
-          to_client = { 'HELO', 'EHLO' },
-          to_server = { '220*SMTP', '220*MAIL' } },
+          to_server = { 'HELO', 'EHLO' },
+          to_client = { '220*SMTP', '220*MAIL' } },
 
         { service = 'ssh', proto = 'tcp', client_first = true,
           to_server = { '*SSH' }, to_client = { '*SSH' } }
@@ -733,8 +734,8 @@ binder =
     --{ when = target_x, use = { type = 'http_server', name = 'hi_x' } },
 
     -- classic ports only config
-    { when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
-    --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'nhttp_inspect' } },
+    --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
+    { when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'nhttp_inspect' } },
     { when = { proto = 'tcp', ports = FTP_PORTS }, use = { type = 'ftp_server' } },
     { when = { proto = 'tcp', ports = RPC_PORTS }, use = { type = 'rpc_decode' } },
 

@@ -279,20 +279,10 @@ static int32_t parse_int(
 }
 
 static void validate_content(
-    SnortConfig*, PatternMatchData *pmd, OptTreeNode* otn)
+    SnortConfig*, PatternMatchData*, OptTreeNode* otn)
 {
     if ( fast_pattern_count(otn, RULE_OPTION_TYPE_CONTENT) > 1 )
         ParseError("Only one content per rule may be used for fast pattern matching.");
-
-    if (
-        pmd->fp && !pmd->relative && !pmd->negated &&
-        !pmd->offset && !pmd->depth && pmd->no_case )
-    {
-        // this is provisional; will be disabled later if there
-        // is a relative rule option following this one
-        // see parse_rule.cc::ValidateFastPattern()
-        pmd->fp_only = 1;
-    }
 }
 
 static void make_precomp(PatternMatchData * idx)

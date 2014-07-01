@@ -4,6 +4,7 @@ add_subdirectory(ftp_telnet)
 add_subdirectory(http_inspect)
 add_subdirectory(nhttp_inspect)
 add_subdirectory(rpc_decode)
+add_subdirectory(wizard)
 
 if (STATIC_INSPECTORS)
     set (STATIC_INSECTOR_LIBS
@@ -21,5 +22,6 @@ add_library( service_inspectors STATIC
 target_link_libraries( service_inspectors
     http_inspect
     nhttp_inspect
+    wizard
     ${STATIC_INSECTOR_LIBS}
 )
