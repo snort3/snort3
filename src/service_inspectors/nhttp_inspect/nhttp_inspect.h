@@ -65,6 +65,8 @@ private:
     static THREAD_LOCAL NHttpMsgChunkBody *msgChunkBody;
     static THREAD_LOCAL NHttpMsgTrailer *msgTrailer;
 
+    void process(const uint8_t* data, const uint16_t dsize, Flow* const flow);
+
     // Test mode
     bool test_output;
     const char *testInputFile = "nhttp_test_msgs.txt";

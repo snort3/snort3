@@ -106,12 +106,16 @@ void NHttpInspect::show(SnortConfig*)
     LogMessage("NHttpInspect\n");
 }
 
-void NHttpInspect::eval (Packet* p)
+void NHttpInspect::eval(Packet* p)
 {
     // Only packets from the StreamSplitter can be processed
     if (!PacketHasPAFPayload(p)) return;
 
-    Flow *flow = p->flow;
+    process(p->data, p->dsize, p->flow);
+}
+
+void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow)
+{
     NHttpFlowData* sessionData = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(sessionData);
 
@@ -129,7 +133,7 @@ void NHttpInspect::eval (Packet* p)
           case SEC_DISCARD: return;
           default: assert(0); return;
         }
-        msgSect->loadSection(p->data, p->dsize, sessionData);
+        msgSect->loadSection(data, dsize, sessionData);
     }
     else {
         uint8_t *testBuffer;
