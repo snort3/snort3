@@ -124,6 +124,7 @@ void NHttpMsgStatus::updateFlow() const {
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgStatus::legacyClients() const {
+    ClearHttpBuffers();
     if (statusCode.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_CODE, statusCode.start, (unsigned)statusCode.length);
     if (reasonPhrase.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reasonPhrase.start, (unsigned)reasonPhrase.length);
 }

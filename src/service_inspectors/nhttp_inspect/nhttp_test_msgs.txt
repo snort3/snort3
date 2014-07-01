@@ -681,6 +681,20 @@ Accept-Language: is\r\n
 @request
 
 
+# ***********************************************************************************************
+# Alerts
+@14001
+@break
+@request
+
+GET /trigger/basic/normalized/URI/content/match/alert HTTP/1.1\r\n\r\n
+
+@14002
+@break
+@request
+
+GET /%74%72%69%67%67%65%72/encoded/normalized/URI/content/match/alert HTTP/1.1\r\n\r\n
+
 
 
 

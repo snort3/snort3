@@ -350,6 +350,7 @@ void NHttpMsgRequest::makeLegacyNormUri() {
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgRequest::legacyClients() const {
+    ClearHttpBuffers();
     if (method.length > 0) SetHttpBuffer(HTTP_BUFFER_METHOD, method.start, (unsigned)method.length);
     if (uri.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_URI, uri.start, (unsigned)uri.length);
     if (uriLegacyNorm.length > 0) SetHttpBuffer(HTTP_BUFFER_URI, uriLegacyNorm.start, (unsigned)uriLegacyNorm.length);
