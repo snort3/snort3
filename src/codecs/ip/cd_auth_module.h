@@ -17,28 +17,20 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// cd_pppoepkt_module.h author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_ah_module.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef CD_PPPOEPKT_MODULE_H
-#define CD_PPPOEPKT_MODULE_H
+#ifndef CD_AH_MODULE_H
+#define CD_AH_MODULE_H
 
 #include "codecs/decode_module.h"
 
 
-/*
- * NOTE:  This name reflect the file...NOT the Codec!
- *
- * Additionally, this module is used for generator a rule stub ONLY!
- * If you want to create a module for configuration, you must change the
- * names of the correct PPPoEpkt codec
- */
+#define CD_AUTH_NAME "cd_auth"
 
-#define CD_PPPOEPKT_NAME "cd_pppoepkt"
-
-class PPPoEPktModule : public DecodeModule
+class AhModule : public DecodeModule
 {
 public:
-    PPPoEPktModule();
+    AhModule();
 
     bool set(const char*, Value&, SnortConfig*);
 };

@@ -17,37 +17,32 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// cd_pppoepkt_module.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_ah_module.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "codecs/link/cd_pppoepkt_module.h"
+#include "codecs/ip/cd_auth_module.h"
 
 
-static const Parameter pppoepkt_params[] =
+static const Parameter ah_params[] =
 {
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 
-static const RuleMap pppoepkt_rules[] =
+static const RuleMap ah_rules[] =
 {
-    { DECODE_BAD_PPPOE, "(" CD_PPPOEPKT_NAME ") Bad PPPOE frame detected" },
+    { DECODE_AUTH_HDR_TRUNC, "(" CD_AUTH_NAME ") Truncated authentication header"},
+    { DECODE_AUTH_HDR_BAD_LEN, "(" CD_AUTH_NAME ") Bad authentication header length"},
     { 0, nullptr }
 };
 
 //-------------------------------------------------------------------------
-// General PPPoEpkt module.
-//
-//      ***** NOTE: THE CODEC HAS A DIFFERENT NAME!
-//          * Additionally, this module is used for generator a rule stub ONLY!
-//          * If you want to create a module for configuration, you must change the
-//          * names of the correct PPPoEpkt codec
+// rpc module
 //-------------------------------------------------------------------------
 
-/// ^^^  READ THE COMMENT!
-PPPoEPktModule::PPPoEPktModule() : DecodeModule(CD_PPPOEPKT_NAME, pppoepkt_params, pppoepkt_rules)
+AhModule::AhModule() : DecodeModule(CD_AUTH_NAME, ah_params, ah_rules)
 { }
 
-bool PPPoEPktModule::set(const char*, Value&, SnortConfig*)
+bool AhModule::set(const char*, Value&, SnortConfig*)
 {
     return true;
 }

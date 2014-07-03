@@ -28,7 +28,7 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-#include "codecs/ip/cd_ah_module.h"
+#include "codecs/ip/cd_auth_module.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
 #include "codecs/sf_protocols.h"
@@ -39,7 +39,7 @@ namespace
 class AhCodec : public Codec
 {
 public:
-    AhCodec() : Codec(CD_AH_NAME){};
+    AhCodec() : Codec(CD_AUTH_NAME){};
     ~AhCodec(){};
 
 
@@ -112,7 +112,7 @@ static const CodecApi ah_api =
 {
     {
         PT_CODEC,
-        CD_AH_NAME,
+        CD_AUTH_NAME,
         CDAPI_PLUGIN_V0, 
         0,
         mod_ctor,
