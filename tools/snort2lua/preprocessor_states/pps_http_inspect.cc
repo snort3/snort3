@@ -24,29 +24,29 @@
 #include <string>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class HttpInspect : public ConversionState
 {
 public:
-    HttpInspect(Converter* cv);
+    HttpInspect(Converter* cv, LuaData* ld);
     virtual ~HttpInspect() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 
 private:
-    bool add_decode_option(std::string opt_name,  std::stringstream& stream);
+    bool add_decode_option(std::string opt_name,  std::istringstream& stream);
 };
 
 } // namespace
 
 
-HttpInspect::HttpInspect(Converter* cv)  : ConversionState(cv)
+HttpInspect::HttpInspect(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
 {}
 
-bool HttpInspect::convert(std::stringstream& data_stream)
+bool HttpInspect::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
@@ -58,11 +58,11 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            converter->log_error("preprocessor httpinspect: requires the 'global' keyword");
+            cv->log_error("preprocessor httpinspect: requires the 'global' keyword");
             return false;
         }
     }
-    converter->open_table("http_inspect");
+    ld->open_table("http_inspect");
 
 
 
@@ -75,10 +75,10 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             retval = parse_int_option("decompress_depth", data_stream) && retval;
 
         else if(!keyword.compare("detect_anomalous_servers"))
-            converter->add_option_to_table("detect_anomalous_servers", true);
+            ld->add_option_to_table("detect_anomalous_servers", true);
 
         else if(!keyword.compare("proxy_alert"))
-            converter->add_option_to_table("proxy_alert", true);
+            ld->add_option_to_table("proxy_alert", true);
 
         else if(!keyword.compare("max_gzip_mem"))
             retval = parse_int_option("max_gzip_mem", data_stream) && retval;
@@ -87,7 +87,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             retval = parse_int_option("memcap", data_stream) && retval;
         
         else if(!keyword.compare("disabled"))
-            converter->add_deprecated_comment("disabled");
+            ld->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("b64_decode_depth"))
             retval = add_decode_option("b64_decode_depth", data_stream) && retval;
@@ -112,14 +112,14 @@ bool HttpInspect::convert(std::stringstream& data_stream)
             if( (data_stream >> codemap) &&
                 (data_stream >> code_page))
             {
-                converter->open_table("unicode_map");
-                converter->add_option_to_table("map_file", codemap);
-                converter->add_option_to_table("code_page", code_page);
-                converter->close_table();
+                ld->open_table("unicode_map");
+                ld->add_option_to_table("map_file", codemap);
+                ld->add_option_to_table("code_page", code_page);
+                ld->close_table();
             }
             else
             {
-                converter->add_comment_to_table("snort.conf missing argument for "
+                ld->add_comment_to_table("snort.conf missing argument for "
                     "iis_unicode_map <filename> <codemap>");
                 retval = false;
             }
@@ -128,7 +128,7 @@ bool HttpInspect::convert(std::stringstream& data_stream)
 
         else
         {
-            converter->log_error("'preprocessor http_inspect: global' --> Invalid argument!!");
+            cv->log_error("'preprocessor http_inspect: global' --> Invalid argument!!");
             retval = false;
         }
     }
@@ -136,20 +136,20 @@ bool HttpInspect::convert(std::stringstream& data_stream)
     return retval;    
 }
 
-bool HttpInspect::add_decode_option(std::string opt_name,  std::stringstream& stream)
+bool HttpInspect::add_decode_option(std::string opt_name,  std::istringstream& stream)
 {
     int val;
 
     if (stream >> val)
     {
-        converter->open_table("decode");
-        converter->add_option_to_table(opt_name, val);
-        converter->close_table();
+        ld->open_table("decode");
+        ld->add_option_to_table(opt_name, val);
+        ld->close_table();
         return true;
     }
     else
     {
-        converter->add_comment_to_table("snort.conf missing argument for " +
+        ld->add_comment_to_table("snort.conf missing argument for " +
             opt_name + " <int>");
         return false;
     }
@@ -159,9 +159,9 @@ bool HttpInspect::add_decode_option(std::string opt_name,  std::stringstream& st
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new HttpInspect(cv);
+    return new HttpInspect(cv, ld);
 }
 
 static const ConvertMap preprocessor_httpinspect = 

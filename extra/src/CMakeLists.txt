@@ -1,7 +1,5 @@
 
-if(SNORT_FOUND)
-    include_directories(${SNORT_INCLUDE_DIR})
-endif()
+include_directories(${SNORT_INCLUDE_DIR})
 
 set(EX_INSTALL_PATH "lib/snort_examples")
 

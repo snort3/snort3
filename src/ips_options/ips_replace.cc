@@ -512,7 +512,8 @@ static IpsOption* replace_ctor(
     SnortConfig*, char *data, OptTreeNode* otn)
 {
     if ( !replace_ok() )
-        return nullptr;
+        ParseError("Inline mode and DAQ with replace capabilities required "
+            "to use rule option 'replace'.");
 
     string s;
     replace_parse(data, s);

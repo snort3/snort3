@@ -23,17 +23,17 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class FtpTelnet : public ConversionState
 {
 public:
-    FtpTelnet(Converter* cv)  : ConversionState(cv) {};
+    FtpTelnet(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~FtpTelnet() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
     bool add_ftp_n_telnet_option(std::string opt_name, bool val);
     void add_ftp_n_telnet_deprecated(std::string opt_name);
@@ -45,26 +45,26 @@ bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
 {
     bool retval;
 
-    converter->open_table("telnet");
-    retval = converter->add_option_to_table(opt_name, val);
-    converter->close_table();
-    converter->open_table("ftp_server");
-    retval = converter->add_option_to_table(opt_name, val) && retval;
-    converter->close_table();
+    ld->open_table("telnet");
+    retval = ld->add_option_to_table(opt_name, val);
+    ld->close_table();
+    ld->open_table("ftp_server");
+    retval = ld->add_option_to_table(opt_name, val) && retval;
+    ld->close_table();
     return retval;
 }
 
 void FtpTelnet::add_ftp_n_telnet_deprecated(std::string opt_name)
 {
-    converter->open_table("telnet");
-    converter->add_deprecated_comment(opt_name);
-    converter->close_table();
-    converter->open_table("ftp_server");
-    converter->add_deprecated_comment(opt_name);
-    converter->close_table();
+    ld->open_table("telnet");
+    ld->add_deprecated_comment(opt_name);
+    ld->close_table();
+    ld->open_table("ftp_server");
+    ld->add_deprecated_comment(opt_name);
+    ld->close_table();
 }
 
-bool FtpTelnet::convert(std::stringstream& data_stream)
+bool FtpTelnet::convert(std::istringstream& data_stream)
 {
 
     std::string keyword;
@@ -78,7 +78,7 @@ bool FtpTelnet::convert(std::stringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            converter->log_error("preprocessor ftp_telnet: requires the 'global' keyword");
+            cv->log_error("preprocessor ftp_telnet: requires the 'global' keyword");
             return false;
         }
     }
@@ -115,9 +115,9 @@ bool FtpTelnet::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new FtpTelnet(cv);
+    return new FtpTelnet(cv, ld);
 }
 
 static const ConvertMap preprocessor_ftptelnet = 

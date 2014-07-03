@@ -1,5 +1,6 @@
 ---------------------------------------------------------------------------
--- Snort++ prototype configuration
+-- This file contains a sample snort configuration.  You should follow
+-- the steps to create your own custom configuration.
 --
 -- let install_dir be a variable indicating where you installed Snort++.
 -- then do:
@@ -8,7 +9,7 @@
 -- export SNORT_LUA_PATH=$install_dir/conf/
 ---------------------------------------------------------------------------
 
-require('snort_config')  -- for loading
+require('snort_config')
 
 -- useful constants
 K = 1024
@@ -16,7 +17,7 @@ M = K * K
 G = M * K
 
 ---------------------------------------------------------------------------
--- Set paths, ports, and nets:
+-- Step #1: Set paths, ports, and nets:
 --
 -- variables with 'PATH' in the name are vars
 -- variables with 'PORT' in the name are portvars
@@ -28,6 +29,8 @@ G = M * K
 -- paths
 ---------------------------------------------------------------------------
 -- Path to your rules files (this can be a relative path)
+-- Note for Windows users:  You are advised to make this an absolute path,
+-- such as:  c:\snort\rules
 
 RULE_PATH = '../rules'
 BUILTIN_RULE_PATH = '../preproc_rules'
@@ -126,19 +129,39 @@ GTP_PORTS = ' 2123 2152 3386'
 RPC_PORTS = 
     ' 111 32770 32771 32772 32773 32774 32775 32776 32777 32778 32779'
 
----------------------------------------------------------------------------
--- configure builtin features
----------------------------------------------------------------------------
+-- Configure ports to ignore 
+--[[
+ignore_ports =
+{
+    tcp = ' 21 6667:6671 1356'
+    udp = ' 1:17 53'
+}
+--]]
 
-cd_udp = { gtp_ports = GTP_PORTS }
+tcp_client_ports = SSH_PORTS .. FTP_PORTS .. MAIL_PORTS .. RPC_PORTS ..
+[[
+    23 25 42 53 79 109 113 119 135 136 137 139 161 445 513 514 587 593 691
+    1433 1521 1741 3306 6070 6665 6666 6667 6668 6669 7000 8181 
+]]
+tcp_server_ports = ''
+tcp_both_ports = HTTP_PORTS ..
+[[
+    443 465 563 636 989 992 993 994 995 7907 7802 7801 7900 7901 7902 7903
+    7904 7905 7906 7908 7909 7910 7911 7912 7913 7914 7915 7916 7917 7918
+    7919 7920
+]]
+
+---------------------------------------------------------------------------
+-- Step #2: configure builtin features
+---------------------------------------------------------------------------
 
 -- Configure active response for non inline operation.
 active =
 {
     device = 'eth0',
     attempts = 2,
-    max_responses = 0,
-    min_interval = 1
+    --max_active_responses = 2,
+    --min_response_seconds = 5
 }
 
 -- Configure DAQ related options for inline operation.
@@ -168,15 +191,14 @@ search_engine =
     --search_method = 'lowmem_q',
     split_any_any = true,
     search_optimize = true,
-    max_pattern_len = 20,
-    max_queue_events = 16
+    max_pattern_len = 20
 }
 
 -- Configure the event queue.
 event_queue =
 {
-    max_queue = 16,
-    log = 8,
+    max_queue = 8,
+    log = 5,
     order_events = 'content_length'
 }
 
@@ -197,7 +219,6 @@ ppm =
 }
 
 -- Configure Perf Profiling for debugging
---[[
 profile =
 {
     rules =
@@ -213,12 +234,10 @@ profile =
         file = { append = true }
     }
 }
---]]
 
 ---------------------------------------------------------------------------
--- configure inspectors
+-- Step #3: Configure inspectors
 ---------------------------------------------------------------------------
-
 normalize =
 { 
     ip4 = 
@@ -237,6 +256,17 @@ normalize =
     icmp6 = true
 }
 
+--defrag_global = { max_frags = 65536 }
+
+defrag_engine =
+{
+    policy = 'windows', 
+    detect_anomalies = true,
+    overlap_limit = 10,
+    min_frag_length = 100,
+    timeout = 180
+}
+
 arp_spoof =
 {
     unicast = true,
@@ -249,7 +279,10 @@ arp_spoof =
 
 back_orifice = { }
 
-rpc_decode = { }
+rpc_decode =
+{
+    ports = RPC_PORTS
+}
 
 port_scan_global = { memcap = 10000000 }
 
@@ -287,10 +320,10 @@ perf_monitor =
 }
 
 ---------------------------------------------------------------------------
--- http normalization and anomaly detection
+-- HTTP normalization and anomaly detection.
 ---------------------------------------------------------------------------
 
-http_inspect =
+http_global =
 {
     unicode_map =
     {
@@ -312,26 +345,45 @@ default_http_methods =
 
 http_server =
 {
+    unicode_map =
+    {
+        map_file = '/etc/unicode.map',
+        code_page = 1252
+    },
     http_methods = default_http_methods,
     chunk_length = 500000,
     server_flow_depth = 0,
     client_flow_depth = 0,
     post_depth = 65495,
+    oversize_dir_length = 500,
+    max_header_length = 750,
+    max_headers = 100,
+    max_spaces = 200,
+    small_chunk_length = { size = 10, count = 5 },
+    ports = HTTP_PORTS,
+    non_rfc_chars = '0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07',
+    enable_cookies = true,
+    extended_response_inspection = true,
+    inspect_gzip = true,
+    normalize_utf = true,
+    unlimited_decompress = true,
+    normalize_javascript = true,
+    apache_whitespace = false,
+    ascii = false,
+    bare_byte = false,
+    directory = false,
+    double_decode = false,
+    iis_backslash = false,
+    iis_delimiter = false,
+    iis_unicode = false,
+    multi_slash = false,
+    utf_8 = false,
+    u_encode = true,
+    webroot = false
 }
-
-hi_x =
-{
-    http_methods = default_http_methods,
-    chunk_length = 500000,
-    server_flow_depth = 1460,
-    client_flow_depth = 1460,
-    post_depth = 65495,
-}
-
-nhttp_inspect = { }
 
 ---------------------------------------------------------------------------
--- ftp / telnet normalization and anomaly detection
+-- FTP / Telnet normalization and anomaly detection.
 ---------------------------------------------------------------------------
 
 telnet =
@@ -340,7 +392,14 @@ telnet =
     check_encrypted = true,
     ayt_attack_thresh = 20,
     normalize = true,
+    ports = '23',
     detect_anomalies = true
+}
+
+ftp_global =
+{
+    encrypted_traffic = false,
+    check_encrypted = true,
 }
 
 ftp_default_commands =
@@ -364,6 +423,7 @@ ftp_format_commands =
 
 ftp_server =
 {
+    ports = FTP_PORTS,
     def_max_param_len = 100,
 
     encrypted_traffic = false,
@@ -421,53 +481,61 @@ ftp_client =
 }
 
 ---------------------------------------------------------------------------
--- stream reassembly and anomaly detection
+-- the following inspector configs are just prototypes
+-- they are nominally validated but they are not actually loaded
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Target-Based stateful inspection/stream reassembly.
 ---------------------------------------------------------------------------
 
-stream =
+stream_global =
 {
-    ip_cache = { max_sessions = 64000 },
-    icmp_cache = { max_sessions = 0 },
-    tcp_cache = { max_sessions = 256000, idle_timeout = 60 },
-    udp_cache = { max_sessions = 128000, pruning_timeout = 30 },
-}
+    tcp_memcap = 123456789,
+    show_rebuilt_packets = false,
+    prune_log_max = 0,
+    paf_max = 16384,
+    
+    tcp_cache = { max_sessions = 256 * K, idle_timeout = 60 },
+    udp_cache = { max_sessions = 128 * K, pruning_timeout = 30 },
+    ip_cache = { max_sessions = 64 * K },
+    icmp_cache = { max_sessions = 32 * K },
 
-stream_ip =
-{
-    session_timeout = 980,
-    policy = 'windows', 
-    max_overlaps = 10,
-    max_frags = 8191,
-    min_frag_length = 100
-}
-
-stream_icmp =
-{
-    session_timeout = 180,
+    active_response = 
+    {
+        max_responses = 0,
+        min_interval = 1
+    }
 }
 
 stream_tcp =
 {
     policy = 'windows',
-    paf_max = 16384,
 
     session_timeout = 180,
-    --require_3whs = -1,
-    show_rebuilt_packets = false,
-
+    require_3whs = 180,
     flush_factor = 0,
+
     overlap_limit = 10,
 
-    footprint = 0,
-    reassemble_async = true,
-    ignore_any_rules = false,
-}
+    queue_limit =
+    {
+        max_bytes = 3,
+        max_segments = 1300,
+    },
+    small_segments = 
+    {
+        count = 10,
+        maximum_size = 128,
+        ignore_ports = '1 2 3'
+    },
 
-tcp_x =
-{
-    policy = 'linux',
-    paf_max = 16384,
-    session_timeout = 180,
+    footprint = 0,
+    reassemble_async = false,
+    ignore_any_rules = false,
+
+    client_ports = tcp_client_ports,
+    server_ports = tcp_server_ports,
+    both_ports = tcp_both_ports,
 }
 
 stream_udp =
@@ -476,15 +544,26 @@ stream_udp =
     ignore_any_rules = false,
 }
 
+stream_icmp =
+{
+    session_timeout = 180,
+}
+
+stream_ip =
+{
+    session_timeout = 180,
+}
+
 ---------------------------------------------------------------------------
--- loggers
+-- Step #4: Configure loggers
 ---------------------------------------------------------------------------
 
 -- alerts + packets
 unified2 =
 {
     file = 'u2.log',
-    limit = 128 * M,
+    limit = 128,
+    units = 'M',
     nostamp = true,
     mpls_event_types = true,
     vlan_event_types = true
@@ -501,7 +580,9 @@ alert_full = { }
 log_tcpdump = { file = 'snort++.pcap' }
 
 ---------------------------------------------------------------------------
--- ips rules and filters
+-- Step #6: Customize your rule set
+--
+-- NOTE: All categories are enabled in this conf file
 ---------------------------------------------------------------------------
 
 dir = os.getenv('SNORT_LUA_PATH')
@@ -510,13 +591,27 @@ if ( not dir ) then
     dir = ''
 end
 
-include '../lua/classification.lua'
-
-print 'Loading references'
+dofile(dir .. 'classification.lua')
 dofile(dir .. 'reference.lua')
+
+--[[
+event_filter =
+{
+    { gid = 1, sid = 2, type = 'both', count = 1, seconds = 5 },
+    { gid = 1, sid = 1, type = 'both', count = 1, seconds = 5 }
+}
+--]]
+--
+suppress =
+{
+    { gid = 116, sid = 408 },
+    { gid = 116, sid = 412 },
+    { gid = 116, sid = 414 },
+}
 
 default_rules =
 [[
+#output unified2: filename snort.alert, limit 128, nostamp
 # snort-classic comments, includes, and rules with $VARIABLES
 # (rules files support the same syntax)
 
@@ -527,43 +622,17 @@ default_rules =
 
 # text rules
 #include $RULE_PATH/local.rules
+#include $RULE_PATH/app-detect.rules
+#include $RULE_PATH/attack-responses.rules
+#include $RULE_PATH/backdoor.rules
 
 # so rules
+#include $PLUGIN_RULE_PATH/bad-traffic.rules
+#include $PLUGIN_RULE_PATH/chat.rules
 #include $PLUGIN_RULE_PATH/dos.rules
 
-# no metadata:service:
-#alert http ( sid:1; msg:"1"; content:"HTTP"; )
-#alert http any -> 1.2.3.4 ( sid:2; msg:"2"; content:"HTTP"; )
-#alert http any any -> 1.2.3.4 80 ( sid:3; msg:"3"; content:"HTTP"; )
-
-# no ; separated content suboptions
-#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST URI request for known malicious URI - /inst.php?fff="; flow:to_server,established; http_uri; content:"/inst.php?fff=", nocase; content:  "coid=", nocase; metadata:impact_flag red, policy balanced-ips drop, policy security-ips drop, reference:url,labs.snort.org/docs/16924.html; classtype:trojan-activity; sid:16924; rev:5;)
-
-# fast_pattern:<offset>,<length>; ->
-# fast_pattern:<offset> <length>;
-
-# test pattern = "ABABACD"
-#alert tcp any any -> any any ( sid:100; content:"ABA"; )
-#alert tcp any any -> any any ( sid:200; raw_data; content:"ABA"; )
-#alert tcp any any -> any any ( sid:300; pkt_data; content:"ABA"; )
-#alert tcp any any -> any any ( sid:400; content:"ABA"; content:"C", depth 6; )
-#alert tcp any any -> any any ( sid:401; content:"ABA"; content:"C", depth 5; )
-#alert tcp any any -> any any ( sid:402; content:"ABA"; content:"C", offset 5; )
-#alert tcp any any -> any any ( sid:403; content:"ABA"; content:"C", offset 6; )
-#alert tcp any any -> any any ( sid:404; content:"ABA"; content:"C", offset 5, depth 6; )
-#alert tcp any any -> any any ( sid:510; content:"ABA"; content:"C", within 1; )
-#alert tcp any any -> any any ( sid:110; pcre:"/ABA/"; )
-#alert tcp any any -> any any ( sid:210; raw_data; pcre:"/ABA/"; )
-#alert tcp any any -> any any ( sid:310; pkt_data; pcre:"/ABA/"; )
-#alert tcp any any -> any any ( sid:410; pcre:"/ABA/"; pcre:"/C/"; )
-#alert tcp any any -> any any ( sid:411; pcre:"/ABA/"; pcre:"/AC/R"; )
-#alert tcp any any -> any any ( sid:412; pcre:"/ABA/"; pcre:"/AC/"; )
-#alert tcp any any -> any any ( sid:414; pcre:"/ABA/"; pcre:"/C/R"; )
-
-#alert ( gid:134; sid:1; )
-#alert ( gid:134; sid:2; )
-#alert ( gid:134; sid:3; )
-alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil", nocase, fast_pattern; )
+alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
+alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
 ]]
 
 network =
@@ -575,223 +644,58 @@ network =
 ips =
 {
     --include = '../active.rules',
-    rules = default_rules,
+    --rules = default_rules,
     enable_builtin_rules = true
 }
 
---[[
-event_filter =
-{
-    { gid = 1, sid = 2, type = 'both', count = 1, seconds = 5 },
-    { gid = 1, sid = 1, type = 'both', count = 1, seconds = 5 }
-}
---]]
-
-suppress =
-{
-    { gid = 116, sid = 408 },
-    { gid = 116, sid = 412 },
-    { gid = 116, sid = 414 },
-}
-
----------------------------------------------------------------------------
--- net map attributes (replaces attribte table)
----------------------------------------------------------------------------
-
-hosts = 
-{
-    {
-        ip = '1.2.3.4',
-        frag_policy = 'linux',
-        tcp_policy = 'linux',
-        services =
-        {
-            { name = 'ftp', proto = 'tcp', port = 21 },
-            { name = 'smtp', proto = 'tcp', port = 25 },
-            { name = 'http', proto = 'tcp', port = 80 }
-        }
-    },
-    {
-        ip = '2.4.6.8',
-        frag_policy = 'windows',
-        tcp_policy = 'windows',
-        services =
-        {
-            { name = 'netbios', proto = 'tcp', port = 137 },
-            { name = 'imap', proto = 'tcp', port = 143 },
-        }
-    }
-}
-
----------------------------------------------------------------------------
--- prototype wizard
----------------------------------------------------------------------------
-
-ftp_commands = { 'USER' } -- add others
-sip_methods = { 'INVITE', 'NOTIFY' } -- add others
-
-telnet_commands =
-{
-    '|FF F0|', '|FF F1|', '|FF F2|', '|FF F3|',
-    '|FF F4|', '|FF F5|', '|FF F6|', '|FF F7|',
-    '|FF F8|', '|FF F9|', '|FF FA|', '|FF FB|',
-    '|FF FC|', '|FF FD|', '|FF FE|', '|FF FF|'
-}
-
-wizard =
-{
-    spells =
-    {
-        { service = 'ftp', proto = 'tcp', client_first = false,
-          to_server = ftp_commands, to_client = { '220*FTP' } },
-
-        { service = 'http', proto = 'tcp', client_first = true,
-          to_server = default_http_methods, to_client = { 'HTTP/' } },
-
-        { service = 'imap', proto = 'tcp', client_first = false,
-          to_server = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
-          to_client = { '**OK', '**BYE' } },
-
-        { service = 'pop', proto = 'tcp', client_first = false,
-          to_server = { 'USER', 'APOP' },
-          to_client = { '+OK', '-ERR' } },
-
-        { service = 'sip', proto = 'tcp', client_first = true,
-          to_server = sip_methods, to_client = { 'SIP/' } },
-
-        { service = 'smtp', proto = 'tcp', client_first = false,
-          to_server = { 'HELO', 'EHLO' },
-          to_client = { '220*SMTP', '220*MAIL' } },
-
-        { service = 'ssh', proto = 'tcp', client_first = true,
-          to_server = { '*SSH' }, to_client = { '*SSH' } }
-    },
-    hexes =
-    {
-        { service = 'dce/rpc', proto = 'tcp', client_first = true, 
-          to_server = { '|05 00|' }, to_client = { '|05 00|' } },
-
-        { service = 'dnp3', proto = 'tcp', client_first = true, 
-          to_server = { '|05 64|' }, to_client = { '|05 64|' } },
-
-        { service = 'isakmp',  proto = 'udp', client_first = true,
-          to_server = { '+17 |01|', '+17 |10|' },
-          to_client = { '+17 |01|', '+17 |10|' } },
-
-        { service = 'modbus', proto = 'tcp', client_first = true,
-          to_server = { '+2 |0 0|' } },
-
-        { service = 'rpc', proto = 'tcp', client_first = true,
-          to_server = { '+4 |0 0 0 0 0 0 0 1|' },
-          to_client = { '+4 |0 0 0 0 0 0 0 1|' } },
-
-        { service = 'smb', proto = 'tcp', client_first = true,
-          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
-
-        { service = 'smb', proto = 'udp', client_first = true,
-          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
-
-        { service = 'ssl', proto = 'tcp', client_first = true,
-          to_server = { '|16 03|' }, to_client = { '|16 03|' } },
-
-        { service = 'telnet', proto = 'tcp', client_first = true,
-          to_server = telnet_commands, to_client = telnet_commands },
-    }
-}
-
----------------------------------------------------------------------------
 -- prototype bindings:
---
 -- nets and ports move out of inspector configurations
 -- only need to specify non-default bindings
--- when: policy_id, vlans, nets, proto, ports, roles, service
--- use: action | file | type,name | policy_id [,service]
--- when: days, times are tbd
----------------------------------------------------------------------------
+-- match = id | ((vlans | networks) [protocol [ports]])
+-- config = type [name [direction]]
+-- type = module | 'file'
+-- name = type (default) | instance | filename
+-- action = block | allow | inspect (default)
+-- direction = from client | from server | any (default) | none
 
--- define a target selector
-target_x = { nets = HTTP_SERVERS, proto = 'tcp', ports = HTTP_PORTS } 
-
-binder =
+bindings =
 {
-    -- policy selected by firewall
     {
-        when = { policy_id = 'uuid' },
-        use = { file = 'uuid.lua' }
+        match = { id = 5 },
+        config = { type = 'bo', name = 'bo2' }
     },
-    -- policy based on vlan
-    {
-        when = { vlans = '123' },
-        use = { file = 'vlan.lua' }
-    },
-    -- policy based on cidr
-    {
-        when = { nets = HOME_NET },
-        use = { file = 'net.lua' }
-    },
-    -- targeted config
-    --{ when = target_x, use = { type = 'stream_tcp', name = 'tcp_x' } },
-    --{ when = target_x, use = { type = 'http_server', name = 'hi_x' } },
 
-    -- classic ports only config
-    --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
-    { when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'nhttp_inspect' } },
-    { when = { proto = 'tcp', ports = FTP_PORTS }, use = { type = 'ftp_server' } },
-    { when = { proto = 'tcp', ports = RPC_PORTS }, use = { type = 'rpc_decode' } },
+    {
+        match = { id = 4 },
+        config = { type = 'file', name = '4.lua' }
+    },
 
-    -- auto service id override
     {
-        when = { nets = '3.4.5.0/24', proto = 'tcp', ports = '80', role = 'any' },
-        use = { service = 'http' }
+        match = { vlans = '123' },
+        config = { type = 'detect', name = '123.detect' }
     },
-    -- allow rule - replaces config ignore_ports
+
     {
-        when = { nets = '4.5.6.7', proto = 'udp', ports = '53' },
-        use = { action = 'allow' }
+        match = { networks = '1.2.3.0/24', protocol = 'tcp' },
+        config = { type = 'stream_tcp', name = 'last', direction = 'any' }
     },
-    -- block rule
+
     {
-        when = { nets = '5.6.7.8', proto = 'tcp', ports = '8' },
-        use = { action = 'block' }
+        match = { networks = '1.2.3.4', protocol = 'tcp', ports = '80 8080' },
+        config = { type = 'http_inspect' },
+        action = 'inspect'
     },
+
+    {
+        match = { networks = '1.2.3.4', protocol = 'tcp', ports = '88 8088' },
+        config = { type = 'http', name = 'iis' },
+    },
+
+    {
+        match = { networks = '192.168.1.0/24', protocol = 'udp', ports = '53' },
+        action = 'block'
+    }
 }
  
----------------------------------------------------------------------------
--- error handling
----------------------------------------------------------------------------
-
---[[
--- parse error handled by lua:
-foo bar
-
-ERROR: can't load ../lua/snort.lua: ../lua/snort.lua:629: '=' expected near 'bar'
-Fatal Error, Quitting..
-
--- another:
-stream_xyz.foo = 'bar'
-
-ERROR: can't init ../lua/snort.lua: ../lua/snort.lua:635: attempt to index global 'stream_xyz' (a nil value)
-Fatal Error, Quitting..
-
--- semantic errors handled by Snort++ don't have file / line:
-stream_tcp.foo = 'bar'
-
-ERROR: can't find stream_tcp.foo
-Fatal Error, Quitting..
-
--- multiple range errors:
-stream_tcp.policy = 'bar'
-stream_tcp.paf_max = 123456
-
-ERROR invalid stream_tcp.policy = bar
-ERROR invalid stream_tcp.paf_max = 123456
-ERROR: see prior configuration errors
-Fatal Error, Quitting..
-
--- undetected error:
-suppress = { { gid = 116, sid = 408 } }
--- other foo
-suppress = { { gid = 116, sid = 412 } }
-}
---]]
+-- lowmem_q = { var = "test" }
 

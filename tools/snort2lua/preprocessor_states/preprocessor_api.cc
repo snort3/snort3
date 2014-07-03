@@ -25,6 +25,8 @@
 extern const ConvertMap *arpspoof_map;
 extern const ConvertMap *arpspoof_host_map;
 extern const ConvertMap *bo_map;
+extern const ConvertMap *frag3_engine_map;
+extern const ConvertMap *frag3_global_map;
 extern const ConvertMap *ftptelnet_map;
 extern const ConvertMap *ftptelnet_protocol_map;
 extern const ConvertMap *httpinspect_map;
@@ -34,6 +36,8 @@ extern const ConvertMap *normalizer_icmp6_map;
 extern const ConvertMap *normalizer_ip4_map;
 extern const ConvertMap *normalizer_ip6_map;
 extern const ConvertMap *normalizer_tcp_map;
+extern const ConvertMap *perfmonitor_map;
+extern const ConvertMap *rpc_decode_map;
 extern const ConvertMap *sfportscan_map;
 extern const ConvertMap *smtp_map;
 extern const ConvertMap *stream_global_map;
@@ -45,6 +49,8 @@ const std::vector<const ConvertMap*> preprocessor_api =
     arpspoof_map,
     arpspoof_host_map,
     bo_map,
+    frag3_engine_map,
+    frag3_global_map,
     ftptelnet_map,
     httpinspect_map,
     httpinspect_server_map,
@@ -54,6 +60,8 @@ const std::vector<const ConvertMap*> preprocessor_api =
     normalizer_ip4_map,
     normalizer_ip6_map,
     normalizer_tcp_map,
+    perfmonitor_map,
+    rpc_decode_map,
     sfportscan_map,
     smtp_map,
     stream_global_map,

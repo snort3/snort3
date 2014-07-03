@@ -22,7 +22,7 @@
 #include <sstream>
 #include <fstream>
 #include "conversion_state.h"
-#include "converter.h"
+#include "util/converter.h"
 
 #ifndef INIT_STATE_H
 #define INIT_STATE_H
@@ -30,10 +30,16 @@
 class InitState : public ConversionState
 {
 public:
-    InitState(Converter* cv);
+    InitState(Converter* cv, LuaData* ld);
     virtual ~InitState() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 
 };
+
+
+static inline ConversionState* init_state_ctor(Converter* cv, LuaData* ld)
+{
+    return new InitState(cv, ld);
+}
 
 #endif

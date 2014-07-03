@@ -89,8 +89,12 @@ Snort++ differs from Snort in the following ways:
 * rule option sequence: <stub> soid <hidden>
 * sid == 0 not allowed
 * soid is now a non-metadata option
-* removed uricontent ips rule option
+* deleted uricontent ips rule option.
+  uricontent:"foo" -->  http_uri; content:"foo"
 * deleted unused http_encode option
+* content suboption http_* are no full option and should be place before content
+* the following pcre options have been deleted: use sticky buffers instead
+    B, U, P, H, M, C, I, D, K, S, Y
 
 === Output
 
@@ -104,4 +108,5 @@ Snort++ differs from Snort in the following ways:
   is selected; since some events may not be enabled, the queue needs to be sized larger
   than with Snort which used an intermediate queue for decoder events.
 * deleted the intermediate http and ftp_telnet event queues
+* alert_unified2 and log_unified2 have been deleted
 
