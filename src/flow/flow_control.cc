@@ -277,7 +277,9 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
         news = 1;
     }
 
-    flow->session->process(p);
+    // no session client/server for allowed/blocked flows
+    if ( flow->ssn_client )
+        flow->session->process(p);
 
     if ( news )
         binder->eval(p);

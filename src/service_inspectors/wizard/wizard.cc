@@ -23,6 +23,7 @@
 #include <vector>
 using namespace std;
 
+#include "magic.h"
 #include "wiz_module.h"
 #include "flow/flow.h"
 #include "framework/inspector.h"
@@ -70,26 +71,15 @@ static WizStats gstats;
 
 //-------------------------------------------------------------------------
 // configuration
-// -- spells are used for text protocols
-// -- must compile spells into fsm like hi paf
-//
-// -- hexes are used for binary protocols
-// -- must build a tree trie like file magic
 //-------------------------------------------------------------------------
-
-struct Spell
-{
-    const char* dummy;
-};
-
-struct Hex
-{
-    const char* dummy;
-};
 
 struct Wand
 {
-    unsigned index;
+    const MagicPage* hex;
+    const MagicPage* spell;
+
+    void clear()
+    { hex = spell = nullptr; };
 };
 
 class Wizard;
@@ -112,7 +102,7 @@ private:
 
 class Wizard : public Inspector {
 public:
-    Wizard();
+    Wizard(WizardModule*);
     ~Wizard();
 
     void show(SnortConfig*)
@@ -122,20 +112,15 @@ public:
 
     StreamSplitter* get_splitter(bool);
 
-    bool check(Wand&, const uint8_t*, unsigned, vector<Spell>&, vector<Hex>&);
+    void reset(Wand&, bool tcp, bool c2s);
+    bool cast_spell(Wand&, const uint8_t*, unsigned);
 
 public:
-    vector<Spell> tcp_c2s_spells;
-    vector<Spell> tcp_s2c_spells;
+    MagicBook* c2s_hexes;
+    MagicBook* s2c_hexes;
 
-    vector<Spell> udp_c2s_spells;
-    vector<Spell> udp_s2c_spells;
-
-    vector<Hex> tcp_c2s_hexes;
-    vector<Hex> tcp_s2c_hexes;
-
-    vector<Hex> udp_c2s_hexes;
-    vector<Hex> udp_s2c_hexes;
+    MagicBook* c2s_spells;
+    MagicBook* s2c_spells;
 };
 
 //-------------------------------------------------------------------------
@@ -144,10 +129,12 @@ public:
 // will split the stream.
 //-------------------------------------------------------------------------
 
-MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) : StreamSplitter(c2s)
+MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
+    StreamSplitter(c2s)
 {
     wizard = w;
     w->add_ref();
+    w->reset(wand, true, c2s);
 }
 
 MagicSplitter::~MagicSplitter()
@@ -161,25 +148,13 @@ PAF_Status MagicSplitter::scan (
 {
     ++tstats.tcp_scans;
 
-    if ( to_server() )
-    {
-        if ( wizard->check(wand, data, len, wizard->tcp_c2s_spells, wizard->tcp_c2s_hexes) )
-        { 
-            /* set inspector gadget */
-            // len + 1 means go back to the last flush point
-            // (0 means start of this buffer)
-            *fp = len + 1;
-            return PAF_RESET;
-        }
-    }
-    else
-    {
-        if ( wizard->check(wand, data, len, wizard->tcp_s2c_spells, wizard->tcp_s2c_hexes) )
-        { 
-            /* set inspector gadget */
-            *fp = len + 1;
-            return PAF_RESET;
-        }
+    if ( wizard->cast_spell(wand, data, len) )
+    { 
+        // FIXIT len + 1 means go back to the last flush point
+        // (0 means start of this buffer)
+        ++tstats.tcp_hits;
+        *fp = len + 1;
+        return PAF_RESET;
     }
     return PAF_SEARCH;
 }
@@ -188,12 +163,31 @@ PAF_Status MagicSplitter::scan (
 // class stuff
 //-------------------------------------------------------------------------
 
-Wizard::Wizard()
+Wizard::Wizard(WizardModule* m)
 {
+    c2s_hexes = m->get_book(true, true);
+    s2c_hexes = m->get_book(false, true);
+
+    c2s_spells = m->get_book(true, false);
+    s2c_spells = m->get_book(false, false);
 }
 
 Wizard::~Wizard()
 {
+}
+
+void Wizard::reset(Wand& w, bool /*tcp*/, bool c2s)
+{
+    if ( c2s )
+    {
+        w.hex = c2s_hexes->page1();
+        w.spell = c2s_spells->page1();
+    }
+    else
+    {
+        w.hex = s2c_hexes->page1();
+        w.spell = s2c_spells->page1();
+    }
 }
 
 void Wizard::eval(Packet* p)
@@ -205,17 +199,13 @@ void Wizard::eval(Packet* p)
         return;
 
     Wand wand;
+    reset(wand, false, p->packet_flags & PKT_FROM_CLIENT);
 
-    if ( p->packet_flags & PKT_FROM_CLIENT )
+    if ( cast_spell(wand, p->data, p->dsize) )
     {
-        if ( check(wand, p->data, p->dsize, udp_c2s_spells, udp_c2s_hexes) )
-        { /* set inspector gadget */ }
-    }
-
-    else
-    {
-        if ( check(wand, p->data, p->dsize, udp_s2c_spells, udp_s2c_hexes) )
-        { /* set inspector gadget */ }
+        // FIXIT spellbind inspector gadget here
+        // and make the wizard disappear from flow
+        ++tstats.udp_hits;
     }
 
     ++tstats.udp_pkts;
@@ -226,29 +216,25 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
     return new MagicSplitter(c2s, this);
 }
 
-bool Wizard::check(
-    Wand&, const uint8_t* data, unsigned len, vector<Spell>&, vector<Hex>&)
+bool Wizard::cast_spell(
+    Wand& w, const uint8_t* data, unsigned len)
 {
-    // this is a basic hack to find http requests so that the overall
-    // processing flow can be determined at which point the real magic
-    // can begin.
-
-    if ( len >= 3 && !strncmp((const char*)data, "GET", 3) )
+    // FIXIT convert to stateful find
+    if ( w.hex && w.hex->book.find_spell(data, len) )
     {
-        // FIXIT here we have determined that the inspector should
-        // be http and must somehow tell the binder so it can set 
-        // inspector gadget.
-
-        // the real magic must check direction and protocol
-        // (and should be called from eval() for udp and from
-        // here for tcp).
-
-        // the reset status ensures that all the
-        // data scanned so far is delivered to the new inspector's
-        // splitter.
-        ++tstats.tcp_hits;
+        // FIXIT spellbind inspector gadget here
+        // and make the wizard disappear from flow
+        w.clear();
         return true;
     }
+
+    if ( w.spell && w.spell->book.find_spell(data, len) )
+    {
+        // FIXIT spellbind inspector gadget here
+        w.clear();
+        return true;
+    }
+
     return false;
 }
 
@@ -274,7 +260,7 @@ static Inspector* wiz_ctor(Module* m)
 {
     WizardModule* mod = (WizardModule*)m;
     assert(mod);
-    return new Wizard;
+    return new Wizard(mod);
 }
 
 static void wiz_dtor(Inspector* p)

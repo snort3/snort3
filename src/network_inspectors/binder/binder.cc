@@ -108,6 +108,7 @@ private:
 
     void init_flow(Flow*);
     void init_flow(Flow*, Packet*);
+    bool check_rules(Flow*, Packet*);
 
 private:
     vector<Binding*> bindings;
@@ -128,11 +129,11 @@ void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
 
-    if ( !flow->ssn_client )
-        init_flow(p->flow);
+    if ( !flow->ssn_client && !check_rules(flow, p) )
+        init_flow(flow);
 
     else if ( !flow->clouseau )
-        init_flow(p->flow, p);
+        init_flow(flow, p);
 
     ++tstats.total_packets;
 }
@@ -166,6 +167,38 @@ Inspector* Binder::get_clouseau(Flow* flow, Packet* p)
         ins = InspectorManager::get_inspector(pb->type.c_str());
 
     return ins;
+}
+
+bool Binder::check_rules(Flow* flow, Packet* p)
+{
+    Binding* pb;
+    unsigned i, sz = bindings.size();
+
+    Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
+
+    for ( i = 0; i < sz; i++ )
+    {
+        pb = bindings[i];
+
+        if ( !check_proto(flow, pb->proto) )
+            continue;
+
+        if ( pb->ports.test(port) )
+            break;
+    }
+    if ( i < sz && pb->action )
+    {
+        // FIXIT this is repeatedly entered on same flow; need to 
+        // shortcircuit so we don't walk the rules each time
+        if ( pb->action == BA_ALLOW )
+            stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
+
+        else //if ( pb->action == BA_BLOCK )
+            stream.drop_packet(p);
+
+        return true;
+    }
+    return false;
 }
 
 void Binder::init_flow(Flow* flow)

@@ -28,6 +28,7 @@
 using namespace std;
 
 #include "wizard.h"
+#include "magic.h"
 
 static const char* s_name = "wizard";
 
@@ -103,29 +104,82 @@ static const Parameter wizard_params[] =
 };
 
 WizardModule::WizardModule() : Module(s_name, wizard_params)
-{ }
+{
+    c2s_hexes = nullptr;
+    s2c_hexes = nullptr;
+    c2s_spells = nullptr;
+    s2c_spells = nullptr;
+}
 
 WizardModule::~WizardModule()
-{ }
-
-bool WizardModule::set(const char*, Value&, SnortConfig*)
 {
-    //if ( v.is("type") )
-    //    work->type = v.get_string();
+    delete c2s_hexes;
+    delete s2c_hexes;
 
-    //else
-    //    return false;
+    delete c2s_spells;
+    delete s2c_spells;
+}
+
+bool WizardModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("service") )
+        return true;
+
+    else if ( v.is("proto") )
+        return true;
+
+    else if ( v.is("client_first") )
+        return true;
+
+    else if ( v.is("to_server") )
+    {
+        if ( hex )
+            c2s_hexes->add_spell(v.get_string());
+        else
+            c2s_spells->add_spell(v.get_string());
+    }
+    else if ( v.is("to_client") )
+    {
+        if ( hex )
+            s2c_hexes->add_spell(v.get_string());
+        else
+            s2c_spells->add_spell(v.get_string());
+    }
+    else
+        return false;
 
     return true;
 }
 
-bool WizardModule::begin(const char*, int, SnortConfig*)
+bool WizardModule::begin(const char* fqn, int, SnortConfig*)
 {
+    if ( !strcmp(fqn, "wizard") )
+    {
+        c2s_hexes = new HexBook;
+        s2c_hexes = new HexBook;
+
+        c2s_spells = new HexBook;
+        s2c_spells = new HexBook;
+    }
+    else if ( !strcmp(fqn, "hexes") )
+        hex = true;
+
+    else if ( !strcmp(fqn, "spells") )
+        hex = false;
+
     return true;
 }
 
 bool WizardModule::end(const char*, int, SnortConfig*)
 {
     return true;
+}
+
+MagicBook* WizardModule::get_book(bool c2s, bool hex)
+{
+    if ( c2s )
+        return hex ? c2s_hexes : c2s_spells;
+
+    return hex ? s2c_hexes : s2c_spells;
 }
 

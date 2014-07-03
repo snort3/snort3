@@ -1,5 +1,9 @@
 
 set(FILE_LIST
+    magic.cc
+    magic.h
+    hexes.cc
+    spells.cc
     wizard.cc
     wizard.h
     wiz_module.cc

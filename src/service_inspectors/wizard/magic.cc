@@ -16,37 +16,29 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// magic.cc author Russ Combs <rucombs@cisco.com>
 
-// wiz_module.cc author Russ Combs <rucombs@cisco.com>
+#include "magic.h"
 
-#ifndef WIZ_MODULE_H
-#define WIZ_MODULE_H
+MagicPage::MagicPage(const MagicBook& b) : book(b)
+{ 
+    for ( int i = 0; i < 256; ++i ) next[i] = nullptr;
+    any = nullptr;
+}
 
-#include "framework/module.h"
+MagicPage::~MagicPage()
+{ 
+    for ( int i = 0; i < 256; ++i ) 
+    {
+        if ( next[i] && next[i] != this )
+            delete next[i];
+    }
+    delete any;
+}
 
-class MagicBook;
+MagicBook::MagicBook()
+{ root = new MagicPage(*this); }
 
-class WizardModule : public Module
-{
-public:
-    WizardModule();
-    ~WizardModule();
-
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
-
-    MagicBook* get_book(bool c2s, bool hex);
-
-private:
-    bool hex;
-
-    MagicBook* c2s_hexes;
-    MagicBook* s2c_hexes;
-
-    MagicBook* c2s_spells;
-    MagicBook* s2c_spells;
-};
-
-#endif
+MagicBook::~MagicBook()
+{ delete root; }
 

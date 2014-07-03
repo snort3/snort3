@@ -524,6 +524,8 @@ void InspectorManager::execute (Packet* p)
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
+    // FIXIT structure lists so stream, normalize, etc. aren't
+    // called on reassembled packets
     ::execute(p, fp->session.vec, fp->session.num);
     ::execute(p, fp->network.vec, fp->network.num);
     ::execute(p, fp->generic.vec, fp->generic.num);

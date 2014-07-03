@@ -228,7 +228,7 @@ void Normalizer::eval(Packet *p)
     PROFILE_VARS;
     PREPROC_PROFILE_START(norm_perf_stats);
 
-    if ( !Active_PacketWasDropped() )
+    if ( !PacketIsRebuilt(p) && !Active_PacketWasDropped() )
         Norm_Packet(&config, p);
 
     PREPROC_PROFILE_END(norm_perf_stats);
