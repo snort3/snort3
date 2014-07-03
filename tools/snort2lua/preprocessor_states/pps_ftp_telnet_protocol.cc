@@ -23,29 +23,29 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class FtpServer : public ConversionState
 {
 public:
-    FtpServer(Converter* cv);
+    FtpServer(Converter* cv, LuaData* ld);
     virtual ~FtpServer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
-    bool parse_alt_max_cmd(std::stringstream& data_stream);
-    bool parse_cmd_validity_cmd(std::stringstream& data_stream);
+    bool parse_alt_max_cmd(std::istringstream& data_stream);
+    bool parse_cmd_validity_cmd(std::istringstream& data_stream);
     static int ftpsever_binding_id;
 };
 
 class FtpClient : public ConversionState
 {
 public:
-    FtpClient(Converter* cv) : ConversionState(cv) {};
+    FtpClient(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~FtpClient() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
     static int ftpclient_binding_id;
 };
@@ -53,17 +53,17 @@ private:
 class Telnet : public ConversionState
 {
 public:
-    Telnet(Converter* cv)  : ConversionState(cv) {};
+    Telnet(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Telnet() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 class FtpTelnetProtocol : public ConversionState
 {
 public:
-    FtpTelnetProtocol(Converter* cv)  : ConversionState(cv) {};
+    FtpTelnetProtocol(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~FtpTelnetProtocol() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
@@ -76,10 +76,10 @@ public:
 int FtpServer::ftpsever_binding_id = 1;
 
 
-FtpServer::FtpServer(Converter* cv)  : ConversionState(cv)
+FtpServer::FtpServer(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
 {}
 
-bool FtpServer::parse_alt_max_cmd(std::stringstream& data_stream)
+bool FtpServer::parse_alt_max_cmd(std::istringstream& data_stream)
 {
     int i_val;
     bool tmpval;
@@ -87,16 +87,16 @@ bool FtpServer::parse_alt_max_cmd(std::stringstream& data_stream)
     if(!(data_stream >> i_val))
         return false;
 
-    converter->open_table("alt_max_param");
-    converter->open_table();
-    converter->add_option_to_table("length", i_val);
+    ld->open_table("alt_max_param");
+    ld->open_table();
+    ld->add_option_to_table("length", i_val);
     tmpval = parse_curly_bracket_list("commands", data_stream);
-    converter->close_table();
-    converter->close_table();
+    ld->close_table();
+    ld->close_table();
     return tmpval;
 }
 
-bool FtpServer::parse_cmd_validity_cmd(std::stringstream& data_stream)
+bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
 {
     std::string val;
     std::string elem;
@@ -109,21 +109,21 @@ bool FtpServer::parse_cmd_validity_cmd(std::stringstream& data_stream)
         return false;
 
 
-    converter->open_table("cmd_validity");
-    converter->open_table();
-    tmpval = converter->add_option_to_table("command", val);
-    tmpval = converter->add_list_to_table("format", elem) && tmpval;
+    ld->open_table("cmd_validity");
+    ld->open_table();
+    tmpval = ld->add_option_to_table("command", val);
+    tmpval = ld->add_list_to_table("format", elem) && tmpval;
 
     while((data_stream >> elem) && (elem != ">"))
-        tmpval = converter->add_list_to_table("format", elem) && tmpval;
+        tmpval = ld->add_list_to_table("format", elem) && tmpval;
 
-    converter->add_list_to_table("format", elem);
-    converter->close_table(); // anonymouse table
-    converter->close_table(); // "cmd_validity" table
+    ld->add_list_to_table("format", elem);
+    ld->close_table(); // anonymouse table
+    ld->close_table(); // "cmd_validity" table
     return tmpval;
 }
 
-bool FtpServer::convert(std::stringstream& data_stream)
+bool FtpServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -131,12 +131,12 @@ bool FtpServer::convert(std::stringstream& data_stream)
     if (data_stream >> keyword)
     {
         if(!keyword.compare("default"))
-            converter->open_table("ftp_server");
+            ld->open_table("ftp_server");
         else
         {
-            converter->open_table("ftp_server_target_" + std::to_string(ftpsever_binding_id));
+            ld->open_table("ftp_server_target_" + std::to_string(ftpsever_binding_id));
             ftpsever_binding_id++;
-            converter->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
+            ld->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
             retval = false;
         }
     }
@@ -151,7 +151,7 @@ bool FtpServer::convert(std::stringstream& data_stream)
 
 
         if(!keyword.compare("print_cmds"))
-            converter->add_option_to_table("print_cmds", true);
+            ld->add_option_to_table("print_cmds", true);
 
         else if(!keyword.compare("def_max_param_len"))
             tmpval = parse_int_option("def_max_param_len", data_stream);
@@ -179,19 +179,19 @@ bool FtpServer::convert(std::stringstream& data_stream)
         
         else if(!keyword.compare("data_chan"))
         {
-            converter->add_deprecated_comment("data_chan", "ignore_data_chan");
-            tmpval = converter->add_option_to_table("ignore_data_chan", true);
+            ld->add_diff_option_comment("data_chan", "ignore_data_chan");
+            tmpval = ld->add_option_to_table("ignore_data_chan", true);
         }
 
         else if (!keyword.compare("ports"))
         {
-            converter->add_deprecated_comment("ports", "bindings");
-            converter->add_comment_to_table("check bindings table for port information");
+            ld->add_diff_option_comment("ports", "bindings");
+            ld->add_comment_to_table("check bindings table for port information");
             // add commented list for now
             std::string tmp = "";
             while (data_stream >> keyword && keyword != "}")
                 tmp += " " + keyword;
-            tmpval = converter->add_option_to_table("--ports", tmp + "}");
+            tmpval = ld->add_option_to_table("--ports", tmp + "}");
         }
 
         else
@@ -210,7 +210,7 @@ bool FtpServer::convert(std::stringstream& data_stream)
 
 int FtpClient::ftpclient_binding_id = 1;
 
-bool FtpClient::convert(std::stringstream& data_stream)
+bool FtpClient::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -218,12 +218,12 @@ bool FtpClient::convert(std::stringstream& data_stream)
     if (data_stream >> keyword)
     {
         if(!keyword.compare("default"))
-            converter->open_table("ftp_client");
+            ld->open_table("ftp_client");
         else
         {
-            converter->open_table("ftp_client_target_" + std::to_string(ftpclient_binding_id));
+            ld->open_table("ftp_client_target_" + std::to_string(ftpclient_binding_id));
             ftpclient_binding_id++;
-            converter->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
+            ld->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
             retval = false;
         }
     }
@@ -255,7 +255,7 @@ bool FtpClient::convert(std::stringstream& data_stream)
             std::string tmp = "";
             while (data_stream >> keyword && keyword != "}")
                 tmp += " " + keyword;
-            tmpval = converter->add_option_to_table("--bounce_to", tmp + "}");
+            tmpval = ld->add_option_to_table("--bounce_to", tmp + "}");
         }
 
         else
@@ -274,13 +274,13 @@ bool FtpClient::convert(std::stringstream& data_stream)
  *********  Telnet Protocol  ************
  ****************************************/
 
-bool Telnet::convert(std::stringstream& data_stream)
+bool Telnet::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     int i_val;
     bool retval = true;
 
-    converter->open_table("telnet");
+    ld->open_table("telnet");
 
     while(data_stream >> keyword)
     {
@@ -288,24 +288,24 @@ bool Telnet::convert(std::stringstream& data_stream)
         if(!keyword.compare("ayt_attack_thresh"))
         {
             if(data_stream >> i_val)
-                tmpval = converter->add_option_to_table("ayt_attack_thresh", i_val);
+                tmpval = ld->add_option_to_table("ayt_attack_thresh", i_val);
             else
                 tmpval = false;
         }
 
         else  if(!keyword.compare("normalize"))
-            tmpval = converter->add_option_to_table("normalize", true);
+            tmpval = ld->add_option_to_table("normalize", true);
 
         else  if(!keyword.compare("ports"))
         {
-            converter->add_deprecated_comment("ports", "bindings");
-            converter->add_comment_to_table("check bindings table for port information");
+            ld->add_diff_option_comment("ports", "bindings");
+            ld->add_comment_to_table("check bindings table for port information");
             // vvvv defined in ConversionState vvvv
             parse_curly_bracket_list("--ports", data_stream); // create a commented list of the ports
         }
 
         else  if(!keyword.compare("detect_anomalies"))
-            tmpval = converter->add_option_to_table("detect_anomalies", true);
+            tmpval = ld->add_option_to_table("detect_anomalies", true);
 
         else
             tmpval = false;
@@ -313,8 +313,6 @@ bool Telnet::convert(std::stringstream& data_stream)
         retval = tmpval && retval;
     }
 
-
-    converter->close_table(); // not necessary but 
     return retval;
 }
 
@@ -323,7 +321,7 @@ bool Telnet::convert(std::stringstream& data_stream)
  ****************************************/
 
 
-bool FtpTelnetProtocol::convert(std::stringstream& data_stream)
+bool FtpTelnetProtocol::convert(std::istringstream& data_stream)
 {
     std::string protocol;
 
@@ -331,17 +329,17 @@ bool FtpTelnetProtocol::convert(std::stringstream& data_stream)
     {
         if(!protocol.compare("telnet"))
         {
-            converter->set_state(new Telnet(converter));
+            cv->set_state(new Telnet(cv, ld));
         }
         else if (!protocol.compare("ftp"))
         {
             if(data_stream >> protocol)
             {
                 if(!protocol.compare("client"))
-                    converter->set_state(new FtpClient(converter));
+                    cv->set_state(new FtpClient(cv, ld));
 
                 else if (!protocol.compare("server"))
-                    converter->set_state(new FtpServer(converter));
+                    cv->set_state(new FtpServer(cv, ld));
 
                 else
                     return false;
@@ -358,9 +356,9 @@ bool FtpTelnetProtocol::convert(std::stringstream& data_stream)
 
 /*******  PUBLIC API ************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new FtpTelnetProtocol(cv);
+    return new FtpTelnetProtocol(cv, ld);
 }
 
 static const ConvertMap ftptelnet_protocol_preprocessor = 

@@ -32,6 +32,7 @@ extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
 extern const BaseApi* ips_ip_proto;
 extern const BaseApi* ips_pcre;
+extern const BaseApi* ips_replace;
 extern const BaseApi* ips_so;
 
 #ifdef STATIC_IPS_OPTIONS
@@ -86,6 +87,7 @@ const BaseApi* ips_options[] =
     ips_flowbits,
     ips_ip_proto,
     ips_pcre,
+    ips_replace,
     ips_so,
 #ifdef STATIC_IPS_OPTIONS
     ips_ack,

@@ -23,42 +23,27 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <string>
 #include "init_state.h"
-#include "snort2lua_util.h"
+#include "util/util.h"
 #include "keyword_states/keywords_api.h"
 
 
-InitState::InitState(Converter* cv) : ConversionState(cv) {}
+InitState::InitState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
 
-bool InitState::convert(std::stringstream& data_stream)
+bool InitState::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
+    if (!(data_stream >> keyword))
+        return false;
 
-    if ( data_stream >> keyword )
+    const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
+    if (map)
     {
-
-        if( keyword.front() == '#')
-        {
-            std::cout << "THIS SHOULD NEVER OCCUR" << std::endl;
-            keyword.erase(keyword.begin());
-            converter->add_comment_to_file(keyword, data_stream);
-            data_stream.setstate(std::basic_ios<char>::eofbit);
-            return true;
-        }
-        else
-        {
-            const ConvertMap *map = util::find_map(keyword_api, keyword);
-
-            if (map)
-            {
-                converter->set_state(map->ctor(converter));
-                return true;
-            }
-        }
+        cv->set_state(map->ctor(cv, ld));
+        return true;
     }
 
-//    out << "--" << data_stream.str() << std::endl;
-//    data_stream.setstate(std::basic_ios<char>::eofbit);
     return false;
 }

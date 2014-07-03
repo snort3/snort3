@@ -23,23 +23,23 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class Smtp : public ConversionState
 {
 public:
-    Smtp(Converter* cv)  : ConversionState(cv) {};
+    Smtp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Smtp() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool Smtp::convert(std::stringstream& data_stream)
+bool Smtp::convert(std::istringstream& data_stream)
 {
 
 #if 0
@@ -49,7 +49,7 @@ bool Smtp::convert(std::stringstream& data_stream)
         const ConvertMap* map = util::find_map(output_api, keyword);
         if (map)
         {
-            converter->set_state(map->ctor(converter));
+            cv->set_state(map->ctor(converter));
             return true;
         }
     }
@@ -96,9 +96,9 @@ memcap <int>
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Smtp(cv);
+    return new Smtp(cv, ld);
 }
 
 static const ConvertMap preprocessor_smtp = 

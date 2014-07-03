@@ -24,28 +24,28 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class StreamGlobal : public ConversionState
 {
 public:
-    StreamGlobal(Converter* cv)  : ConversionState(cv) {};
+    StreamGlobal(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~StreamGlobal() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool StreamGlobal::convert(std::stringstream& data_stream)
+bool StreamGlobal::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
 
-    converter->open_table("stream");
+    ld->open_table("stream");
 
     while(data_stream >> keyword)
     {
@@ -60,86 +60,86 @@ bool StreamGlobal::convert(std::stringstream& data_stream)
 
 
         if(!keyword.compare("flush_on_alert"))
-            converter->add_deprecated_comment("flush_on_alert");
+            ld->add_deprecated_comment("flush_on_alert");
 
         else if(!keyword.compare("disabled"))
-            converter->add_deprecated_comment("disabled");
+            ld->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("track_tcp"))
         {
-            converter->add_deprecated_comment("track_tcp");
+            ld->add_deprecated_comment("track_tcp");
             if(!(data_stream >> keyword)) // eat the yes/no option
                 tmpval = false;
         }
 
         else if(!keyword.compare("track_udp"))
         {
-            converter->add_deprecated_comment("track_udp");
+            ld->add_deprecated_comment("track_udp");
             if(!(data_stream >> keyword)) // eat the yes/no option
                 tmpval = false;
         }
 
         else if(!keyword.compare("track_icmp"))
         {
-            converter->add_deprecated_comment("track_icmp");
+            ld->add_deprecated_comment("track_icmp");
             if(!(data_stream >> keyword)) // eat the yes/no option
                 tmpval = false;
         }
 
         else if(!keyword.compare("prune_log_max"))
         {
-            converter->add_deprecated_comment("prune_log_max", "histogram");
+            ld->add_diff_option_comment("prune_log_max", "histogram");
             if(!(data_stream >> keyword)) // eat the number of bytes
                 tmpval = false;
         }
 
         else if(!keyword.compare("max_tcp"))
         {
-            converter->open_table("tcp_cache");
+            ld->open_table("tcp_cache");
             tmpval = parse_int_option("max_sessions", data_stream);
-            converter->close_table();
+            ld->close_table();
         }
 
         else if(!keyword.compare("memcap"))
         {
-            converter->open_table("tcp_cache");
+            ld->open_table("tcp_cache");
             tmpval = parse_int_option("memcap", data_stream);
-            converter->close_table();
+            ld->close_table();
         }
 
         else if(!keyword.compare("max_udp"))
         {
-            converter->open_table("udp_cache");
+            ld->open_table("udp_cache");
             tmpval = parse_int_option("max_sessions", data_stream);
-            converter->close_table();
+            ld->close_table();
         }
 
         else if(!keyword.compare("max_icmp"))
         {
-            converter->open_table("icmp_cache");
+            ld->open_table("icmp_cache");
             tmpval = parse_int_option("max_sessions", data_stream);
-            converter->close_table();
+            ld->close_table();
         }
 
         else if(!keyword.compare("show_rebuilt_packets"))
         {
-            converter->open_top_level_table("stream_tcp");
-            converter->add_option_to_table("show_rebuilt_packets", true);
-            converter->close_table();
+            ld->open_top_level_table("stream_tcp");
+            ld->add_option_to_table("show_rebuilt_packets", true);
+            ld->close_table();
         }
 
         else if(!keyword.compare("min_response_seconds"))
         {
-            converter->open_top_level_table("active");
+            ld->open_top_level_table("active");
             tmpval = parse_int_option("min_interval", data_stream);
-            converter->close_table();
+            ld->close_table();
         }
 
         else if(!keyword.compare("max_active_responses"))
         {
-            converter->open_top_level_table("active");
+            ld->open_top_level_table("active");
             tmpval = parse_int_option("max_responses", data_stream);
-            converter->close_table();
+            ld->close_table();
         }
 
 
@@ -158,9 +158,9 @@ bool StreamGlobal::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new StreamGlobal(cv);
+    return new StreamGlobal(cv, ld);
 }
 
 static const ConvertMap preprocessor_stream_global = 

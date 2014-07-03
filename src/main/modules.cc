@@ -195,7 +195,7 @@ static const Parameter search_engine_params[] =
     { "debug_print_rule_groups_compiled", Parameter::PT_BOOL, nullptr, "false",
       "prints compiled rule group information" },
 
-    { "debug_print-fast_pattern", Parameter::PT_BOOL, nullptr, "false",
+    { "debug_print_fast_pattern", Parameter::PT_BOOL, nullptr, "false",
       "print fast pattern info for each rule" },
 
     { "max_pattern_len", Parameter::PT_INT, "0:", "0",
