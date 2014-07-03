@@ -26,6 +26,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class HttpInspectServer : public ConversionState
@@ -322,3 +325,4 @@ static const ConvertMap preprocessor_httpinsepct_server =
 
 const ConvertMap* httpinspect_server_map = &preprocessor_httpinsepct_server;
 
+}

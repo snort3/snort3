@@ -28,6 +28,8 @@
 #include "util/util.h"
 
 
+namespace preprocessors
+{
 
 static ConversionState* bo_ctor(Converter* cv, LuaData* ld)
 {
@@ -44,3 +46,4 @@ static const ConvertMap preprocessor_bo =
 
 const ConvertMap* bo_map = &preprocessor_bo;
 
+} // namespace preprocessors

@@ -27,6 +27,8 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
 
 /****************************
  *******  ICMP4 API *********
@@ -284,3 +286,5 @@ static const ConvertMap preprocessor_norm_tcp =
 };
 
 const ConvertMap* normalizer_tcp_map = &preprocessor_norm_tcp;
+
+} // namespace preprocessors

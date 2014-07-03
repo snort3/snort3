@@ -53,7 +53,7 @@ bool Preprocessor::convert(std::istringstream& data_stream)
         if(keyword.back() == ':')
             keyword.pop_back();
 
-        const ConvertMap* map = util::find_map(preprocessor_api, keyword);
+        const ConvertMap* map = util::find_map(preprocessors::preprocessor_api, keyword);
         if (map)
         {
             cv->set_state(map->ctor(cv, ld));

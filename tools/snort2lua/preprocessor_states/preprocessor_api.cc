@@ -21,6 +21,8 @@
 
 #include "preprocessor_states/preprocessor_api.h"
 
+namespace preprocessors
+{
 
 extern const ConvertMap *arpspoof_map;
 extern const ConvertMap *arpspoof_host_map;
@@ -69,3 +71,5 @@ const std::vector<const ConvertMap*> preprocessor_api =
     stream_udp_map,
 //    nullptr,
 };
+
+} // namespace preprocessors

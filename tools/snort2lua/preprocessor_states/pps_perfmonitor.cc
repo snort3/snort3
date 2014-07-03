@@ -27,6 +27,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class PerfMonitor : public ConversionState
@@ -183,3 +186,5 @@ static const ConvertMap keyword_perfmonitor =
 };
 
 const ConvertMap* perfmonitor_map = &keyword_perfmonitor;
+
+}

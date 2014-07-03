@@ -25,6 +25,11 @@
 #include <vector>
 #include "conversion_state.h"
 
+namespace preprocessors
+{
+
 extern const std::vector<const ConvertMap*> preprocessor_api;
+
+} // namespace preprocessors
 
 #endif

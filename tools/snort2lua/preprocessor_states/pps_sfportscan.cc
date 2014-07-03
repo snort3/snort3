@@ -26,6 +26,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class PortScan : public ConversionState
@@ -196,3 +199,5 @@ static const ConvertMap preprocessor_sfportscan =
 };
 
 const ConvertMap* sfportscan_map = &preprocessor_sfportscan;
+
+} // namespace preprocessors

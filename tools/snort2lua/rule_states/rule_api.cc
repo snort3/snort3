@@ -142,7 +142,7 @@ const std::vector<const ConvertMap*> rule_api =
 
 #if 0
 
-extern const BaseApi* ips_so;
-extern const BaseApi* ips_raw_data;
+ extern const BaseApi* ips_so;
+ extern const BaseApi* ips_raw_data;
 
 #endif

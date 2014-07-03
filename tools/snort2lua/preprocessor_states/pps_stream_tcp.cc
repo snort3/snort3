@@ -26,6 +26,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class StreamTcp : public ConversionState
@@ -251,3 +254,5 @@ static const ConvertMap preprocessor_stream_tcp =
 };
 
 const ConvertMap* stream_tcp_map = &preprocessor_stream_tcp;
+
+} // namespace preprocessors

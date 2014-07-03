@@ -26,6 +26,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class FtpTelnet : public ConversionState
@@ -127,3 +130,5 @@ static const ConvertMap preprocessor_ftptelnet =
 };
 
 const ConvertMap* ftptelnet_map = &preprocessor_ftptelnet;
+
+} // namespace preprocessors

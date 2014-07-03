@@ -26,6 +26,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class Frag3Global : public ConversionState
@@ -97,3 +100,5 @@ static const ConvertMap preprocessor_frag3_global =
 };
 
 const ConvertMap* frag3_global_map = &preprocessor_frag3_global;
+
+} // namespace preprocessors

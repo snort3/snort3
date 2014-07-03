@@ -26,6 +26,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class Smtp : public ConversionState
@@ -108,3 +111,5 @@ static const ConvertMap preprocessor_smtp =
 };
 
 const ConvertMap* smtp_map = &preprocessor_smtp;
+
+} // namespace preprocessors

@@ -26,6 +26,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class StreamUdp : public ConversionState
@@ -91,3 +94,5 @@ static const ConvertMap preprocessor_stream_udp =
 };
 
 const ConvertMap* stream_udp_map = &preprocessor_stream_udp;
+
+} // namespace preprocessors

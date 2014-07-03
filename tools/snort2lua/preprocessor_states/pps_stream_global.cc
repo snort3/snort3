@@ -27,6 +27,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class StreamGlobal : public ConversionState
@@ -170,3 +173,5 @@ static const ConvertMap preprocessor_stream_global =
 };
 
 const ConvertMap* stream_global_map = &preprocessor_stream_global;
+
+} // namespace preprocessors

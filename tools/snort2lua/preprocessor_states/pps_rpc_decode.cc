@@ -27,6 +27,9 @@
 #include "util/converter.h"
 #include "util/util.h"
 
+namespace preprocessors
+{
+
 namespace {
 
 class RpcDecode : public ConversionState
@@ -100,3 +103,5 @@ static const ConvertMap preprocessor_rpc_decode =
 };
 
 const ConvertMap* rpc_decode_map = &preprocessor_rpc_decode;
+
+} // namespace preprocessors
