@@ -39,12 +39,19 @@ public:
 
 
 private:
+    enum class VarType { STRING, VARIABLE};
+
+    struct VarData
+    {
+        std::string data;
+        VarType type;
+    };
+
+    std::vector<VarData*> vars;
     std::string name;
-    std::vector<std::string> vars;
-    std::vector<std::string> strs;
-    int count;
-    const int max_line_length = 74; // leave room for additional text
     int depth;
+    const int max_line_length = 77; // leave room for additional text
+
 };
 
 

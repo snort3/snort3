@@ -17,33 +17,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// cv_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include "data/dt_var.h"
-#include "snort2lua_util.h"
-
-#if 0
-static inline bool var_exists(std::vector<std::string> vec, std::string name)
-{
-    for( auto str : vec)
-        if(name.compare(str))
-            return false;
-
-    return true;
-}
-#endif
+#include "util/util.h"
 
 Variable::Variable(std::string name, int depth)
 {
     this->name = name;
-    this->count = name.size();
     this->depth = depth;
 }
 
 Variable::Variable(std::string name)
 {
     this->name = name;
-    this->count = name.size();
     this->depth = 0;
 }
 
@@ -53,83 +40,136 @@ Variable::~Variable(){};
 bool Variable::add_value(std::string elem)
 {
     std::string s(elem);
+    util::trim(elem);
 
     if(s.front() == '$')
     {
+        // add a space between strings
+        if (!vars.empty())
+        {
+            if (vars.back()->type == VarType::STRING)
+                vars.back()->data += " ";
+            else
+                add_value(" ");
+        }
+
         s.erase(s.begin());
-        vars.push_back(s);
+        VarData *vd = new VarData();
+        vd->type = VarType::VARIABLE;
+        vd->data = s;
+        vars.push_back(vd);
+    }
+    else if (!vars.empty() && vars.back()->type == VarType::STRING)
+    {
+        VarData *vd = vars.back();
+        vd->data += " " + s;
     }
     else
     {
-        strs.push_back(s);
+        VarData *vd = new VarData();
+        vd->type = VarType::STRING;
+
+        // if the previous variable was a symbol, we need a space seperator.
+        if (!vars.empty())
+            s.insert(0, " ");
+
+        vd->data = s;
+        vars.push_back(vd);
     }
 
-    count += s.size();
     return true;
+}
+
+static inline void print_newline(std::ostream& out, int& count, std::string whitespace)
+{
+    out << "\n" << whitespace;
+    count = whitespace.size();
 }
 
 std::ostream& operator<<( std::ostream& out, const Variable &var)
 {
-    int length = 0;
     std::string whitespace;
+    bool first_var = true;
+    int count = 0;
 
     for(int i = 0; i < var.depth; i++)
         whitespace += "    ";
 
     out << whitespace << var.name << " = ";
+    count += whitespace.size() + var.name.size() + 3;
+    whitespace += "    ";
 
-    for(auto v : var.vars)
+    for(Variable::VarData *v : var.vars)
     {
-        if ( 0 < length && length + v.size() > var.max_line_length )
-            out << std::endl << whitespace << "    ";
+        // keeping lines below max_line_length charachters
+        if ((count + 4) > var.max_line_length)
+            print_newline(out, count, whitespace);
 
-        length += v.size();
-        out << v << " .. ";
-    }
-
-    if (var.strs.size() == 0)
-        out << "''";
-
-
-
-    else if(var.count < var.max_line_length || var.strs.size() == 1)
-    {
-        std::string tmp_str = "";
-        length = whitespace.size();
-
-        for (auto s : var.strs)
+        // string concatenation
+        if (!first_var)
         {
-            if ( 0 < length && length + s.size() > var.max_line_length )
-                tmp_str += "\n" + whitespace + "    ";
-
-            length += s.size() ;
-            tmp_str += s + ' ';
+            out << " .. ";
+            count += 4;
         }
-        util::trim(tmp_str);
-        out << "'" << tmp_str << "'";
-    }
-    else
-    {
-        length = 4 + whitespace.size();
-        std::string tmp_str = "";
+        else
+            first_var = false;
 
-        for (auto s : var.strs)
+
+        // print string
+        if (v->type == Variable::VarType::VARIABLE)
         {
-            if ( length + s.size() > var.max_line_length )
+            if (v->data.size() + count > var.max_line_length)
+                print_newline(out, count, whitespace);
+
+            out << v->data;
+            count += v->data.size();
+        }
+
+        else if ((count + v->data.size()) < var.max_line_length)
+        {
+            out << "'" << v->data << "'";
+            count += v->data.size() + 2;
+        }
+
+        else
+        {
+            if (count + 3 > var.max_line_length)
+                print_newline(out, count, whitespace);
+
+
+            util::sanitize_multi_line_string(v->data);
+            out << "[[ ";
+            count += 3;
+
+
+            int printed_length = 0;
+            int str_size = v->data.size();
+            bool first_loop = true;
+
+            while (printed_length < str_size)
             {
-                util::rtrim(tmp_str);
-                tmp_str += "\n" + whitespace + "    ";
-                length = 4 + whitespace.size();
+                if (first_loop)
+                    first_loop = false;
+                else
+                    print_newline(out, count, whitespace);
+
+
+                while(isspace(v->data[printed_length]))
+                    printed_length++;
+
+
+                std::string tmp = v->data.substr(printed_length);
+                int remaining_space = var.max_line_length - count;
+                int str_len = util::get_substr_length(tmp, remaining_space);
+                out << tmp.substr(0, str_len);
+
+                count += str_len;
+                printed_length += str_len;
             }
 
-            length += s.size() + 1;
-            tmp_str += s + " ";
+            out << " ]]";
+            count += 3;
         }
-
-        util::trim(tmp_str);
-        out << std::endl <<  whitespace << "[[" << std::endl;
-        out << whitespace << "    " << tmp_str << std::endl;
-        out << whitespace << "]]";
     }
 
     return out;

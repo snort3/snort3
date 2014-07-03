@@ -23,7 +23,9 @@ cd_udp_module.h \
 cd_udp_module.cc \
 cd_esp.cc \
 cd_esp_module.h \
-cd_esp_module.cc
+cd_esp_module.cc \
+ipv6_util.h \
+ipv6_util.cc
 
 
 plugin_list = \
@@ -41,7 +43,6 @@ cd_igmp_module.h \
 cd_igmp_module.cc \
 cd_mobility.cc \
 cd_no_next.cc \
-cd_pim.cc \
 cd_pgm.cc \
 cd_pgm_module.h \
 cd_pgm_module.cc \
@@ -50,7 +51,7 @@ cd_sun_nd.cc \
 cd_swipe.cc
 
 
-if STATIC_DECODERS
+if STATIC_CODECS
 libip_codecs_a_SOURCES += $(plugin_list)
 
 else
@@ -67,6 +68,11 @@ libcd_gre_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_gre_la_LDFLAGS = -export-dynamic -shared
 libcd_gre_la_SOURCES = cd_gre.cc cd_gre_module.h cd_gre_module.cc
 
+ehlib_LTLIBRARIES += libcd_igmp.la
+libcd_igmp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_igmp_la_LDFLAGS = -export-dynamic -shared
+libcd_igmp_la_SOURCES = cd_igmp.cc cd_igmp_module.h cd_igmp_module.cc
+
 ehlib_LTLIBRARIES += libcd_mobility.la
 libcd_mobility_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_mobility_la_LDFLAGS = -export-dynamic -shared
@@ -75,26 +81,42 @@ libcd_mobility_la_SOURCES = cd_mobility.cc
 ehlib_LTLIBRARIES += libcd_pgm.la
 libcd_pgm_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_pgm_la_LDFLAGS = -export-dynamic -shared
-libcd_pgm_la_SOURCES = cd_gre.cc cd_pgm_module.h cd_pgm_module.cc
-
-ehlib_LTLIBRARIES += libcd_pim.la
-libcd_pim_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_pim_la_LDFLAGS = -export-dynamic -shared
-libcd_pim_la_SOURCES = cd_pim.cc
+libcd_pgm_la_SOURCES = cd_pgm.cc cd_pgm_module.h cd_pgm_module.cc
 
 ehlib_LTLIBRARIES += libcd_sun_nd.la
 libcd_sun_nd_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_sun_nd_la_LDFLAGS = -export-dynamic -shared
 libcd_sun_nd_la_SOURCES = cd_sun_nd.cc
 
-# TODO:  PUT THESE IN THE LIST
-#add_shared_library(cd_dstopts codecs cd_dstopts.cc)
-#add_shared_library(cd_frag codecs cd_frag.cc)
-#add_shared_library(cd_hopopts codecs cd_hopopts.cc)
-#add_shared_library(cd_igmp codecs cd_igmp.cc)
-#add_shared_library(cd_no_next codecs cd_no_next.cc)
-#add_shared_library(cd_routing codecs cd_routing.cc)
-#add_shared_library(cd_swipe codecs cd_swipe.cc)
+ehlib_LTLIBRARIES += libcd_dstopts.la
+libcd_dstopts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_dstopts_la_LDFLAGS = -export-dynamic -shared
+libcd_dstopts_la_SOURCES = cd_dstopts.cc ipv6_util.h ipv6_util.cc
+
+ehlib_LTLIBRARIES += libcd_frag.la
+libcd_frag_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_frag_la_LDFLAGS = -export-dynamic -shared
+libcd_frag_la_SOURCES = cd_frag.cc ipv6_util.h ipv6_util.cc
+
+ehlib_LTLIBRARIES += libcd_hopopts.la
+libcd_hopopts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_hopopts_la_LDFLAGS = -export-dynamic -shared
+libcd_hopopts_la_SOURCES = cd_hopopts.cc ipv6_util.h ipv6_util.cc
+
+ehlib_LTLIBRARIES += libcd_no_next.la
+libcd_no_next_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_no_next_la_LDFLAGS = -export-dynamic -shared
+libcd_no_next_la_SOURCES = cd_no_next.cc ipv6_util.h ipv6_util.cc
+
+ehlib_LTLIBRARIES += libcd_routing.la
+libcd_routing_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_routing_la_LDFLAGS = -export-dynamic -shared
+libcd_routing_la_SOURCES = cd_routing.cc ipv6_util.h ipv6_util.cc
+
+ehlib_LTLIBRARIES += libcd_swipe.la
+libcd_swipe_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_swipe_la_LDFLAGS = -export-dynamic -shared
+libcd_swipe_la_SOURCES = cd_swipe.cc
 
 endif
 

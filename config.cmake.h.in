@@ -56,7 +56,7 @@
 #cmakedefine STATIC_SEARCH_ENGINES 1
 
 /* include internal decoders in binary */
-#cmakedefine STATIC_DECODERS 1
+#cmakedefine STATIC_CODECS 1
 
 /* built control socket */ 
 #cmakedefine CONTROL_SOCKET 1

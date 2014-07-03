@@ -23,32 +23,35 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
-//#include "suppress_states/suppress_api.h"
+#include "util/converter.h"
+#include "util/util.h"
+
+
+namespace keywords
+{
 
 namespace {
 
 class Suppress : public ConversionState
 {
 public:
-    Suppress(Converter* cv)  : ConversionState(cv) {};
+    Suppress(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Suppress() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Suppress::convert(std::stringstream& data_stream)
+bool Suppress::convert(std::istringstream& data_stream)
 {
     bool retval = true;
     std::string keyword;
 
-    cv->open_table("suppress");
-    cv->add_diff_option_comment("gen_id", "gid");
-    cv->add_diff_option_comment("sig_id", "sid");
-    cv->open_table();
+    ld->open_table("suppress");
+    ld->add_diff_option_comment("gen_id", "gid");
+    ld->add_diff_option_comment("sig_id", "sid");
+    ld->open_table();
 
     while(data_stream >> keyword)
     {
@@ -86,9 +89,9 @@ bool Suppress::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Suppress(cv);
+    return new Suppress(cv, ld);
 }
 
 static const ConvertMap keyword_supress =
@@ -98,3 +101,5 @@ static const ConvertMap keyword_supress =
 };
 
 const ConvertMap* supress_map = &keyword_supress;
+
+} // namespace keywords

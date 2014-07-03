@@ -24,38 +24,37 @@
 #include <string>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class RpcDecode : public ConversionState
 {
 public:
-    RpcDecode(Converter* cv)  : ConversionState(cv) {};
+    RpcDecode(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~RpcDecode() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool RpcDecode::convert(std::stringstream& data_stream)
+bool RpcDecode::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;
     std::string port_list = "";
     std::string keyword;
     int i_val;
-    bool blah;
 
-    cv->open_table("rpc_decode");
+    ld->open_table("rpc_decode");
 
     // parse the port list first.
     while(data_stream >> i_val)
         port_list += ' ' + std::to_string(i_val);
 
     util::ltrim(port_list);
-    cv->add_option_to_table("--ports", port_list);
+    ld->add_option_to_table("--ports", port_list);
     data_stream.clear();  // necessary since badbit() is set
     
     while(data_stream >> keyword)
@@ -64,16 +63,16 @@ bool RpcDecode::convert(std::stringstream& data_stream)
 
         
         if(!keyword.compare("no_alert_multiple_requests"))
-            cv->add_deprecated_comment("no_alert_multiple_requests");
+            ld->add_deprecated_comment("no_alert_multiple_requests");
 
         else if(!keyword.compare("alert_fragments"))
-            cv->add_deprecated_comment("alert_fragments");
+            ld->add_deprecated_comment("alert_fragments");
 
         else if(!keyword.compare("no_alert_large_fragments"))
-            cv->add_deprecated_comment("no_alert_large_fragments");
+            ld->add_deprecated_comment("no_alert_large_fragments");
 
         else if(!keyword.compare("no_alert_incomplete"))
-            cv->add_deprecated_comment("no_alert_incomplete");
+            ld->add_deprecated_comment("no_alert_incomplete");
 
         else
             tmpval = false;
@@ -89,9 +88,9 @@ bool RpcDecode::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new RpcDecode(cv);
+    return new RpcDecode(cv, ld);
 }
 
 static const ConvertMap preprocessor_rpc_decode =

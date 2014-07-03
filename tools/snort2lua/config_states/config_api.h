@@ -25,6 +25,11 @@
 #include <vector>
 #include "../conversion_state.h"
 
+namespace config
+{
+
 extern const std::vector<const ConvertMap*> config_api;
+
+} // namespace config
 
 #endif

@@ -23,41 +23,34 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
+namespace keywords
+{
 
 namespace {
 
 class Include : public ConversionState
 {
 public:
-    Include(Converter* cv)  : ConversionState(cv) {};
+    Include(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Include() {};
-    virtual bool convert(std::stringstream& data);
+    virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Include::convert(std::stringstream& data_stream)
+bool Include::convert(std::istringstream& data_stream)
 {
-#if 0
     std::string keyword;
 
-    if(data >> keyword)
+    if(data_stream >> keyword)
     {
-        const ConvertMap* map = util::find_map(output_api, keyword);
-        if (map)
-        {
-            cv->set_state(map->ctor(cv));
-            return true;
-        }
+        cv->convert_file(keyword);
+        return true;
     }
-
-    return false;    
-#endif
-
     return false;
 }
 
@@ -65,9 +58,9 @@ bool Include::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Include(cv);
+    return new Include(cv, ld);
 }
 
 static const ConvertMap keyword_include = 
@@ -77,3 +70,5 @@ static const ConvertMap keyword_include =
 };
 
 const ConvertMap* include_map = &keyword_include;
+
+}  // namespace keywords

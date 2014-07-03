@@ -799,7 +799,7 @@ void DetectRebuiltPacket (Packet* p)
     SnortEventqPush();
     main_hook(p);
     SnortEventqPop();
-    DetectReset((uint8_t *)p->data, p->dsize);
+    DetectReset();
 
     do_detect = tmp_do_detect;
     do_detect_content = tmp_do_detect_content;

@@ -20,3 +20,7 @@ add_library(preprocessor_states
     preprocessor_api.cc
 )
 
+target_link_libraries( preprocessor_states
+    util
+    conversion_data
+)

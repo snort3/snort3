@@ -77,8 +77,7 @@ struct FlowCheckData
 class FlowCheckOption : public IpsOption
 {
 public:
-    FlowCheckOption(const FlowCheckData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_FLOW)
+    FlowCheckOption(const FlowCheckData& c) : IpsOption(s_name)
     { config = c; };
 
     uint32_t hash() const;
@@ -242,7 +241,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
 int OtnFlowFromServer( OptTreeNode * otn )
 {
     FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, RULE_OPTION_TYPE_FLOW);
+        (FlowCheckData*)get_rule_type_data(otn, s_name);
 
     if(fcd )
     {
@@ -253,7 +252,7 @@ int OtnFlowFromServer( OptTreeNode * otn )
 int OtnFlowFromClient( OptTreeNode * otn )
 {
     FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, RULE_OPTION_TYPE_FLOW);
+        (FlowCheckData*)get_rule_type_data(otn, s_name);
 
     if(fcd )
     {
@@ -264,7 +263,7 @@ int OtnFlowFromClient( OptTreeNode * otn )
 int OtnFlowIgnoreReassembled( OptTreeNode * otn )
 {
     FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, RULE_OPTION_TYPE_FLOW);
+        (FlowCheckData*)get_rule_type_data(otn, s_name);
 
     if( fcd )
     {
@@ -275,7 +274,7 @@ int OtnFlowIgnoreReassembled( OptTreeNode * otn )
 int OtnFlowOnlyReassembled( OptTreeNode * otn )
 {
     FlowCheckData* fcd =
-        (FlowCheckData*)get_rule_type_data(otn, RULE_OPTION_TYPE_FLOW);
+        (FlowCheckData*)get_rule_type_data(otn, s_name);
 
     if( fcd )
     {

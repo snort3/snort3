@@ -24,19 +24,19 @@
 #include <iomanip>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 
 /****************************
  *******  ICMP4 API *********
  ****************************/
 
-static ConversionState* icmp4_ctor(Converter* cv)
+static ConversionState* icmp4_ctor(Converter* cv, LuaData* ld)
 {
-    cv->open_table("normalize");
-    cv->add_option_to_table("icmp4", true);
-    cv->close_table();
+    ld->open_table("normalize");
+    ld->add_option_to_table("icmp4", true);
+    ld->close_table();
     return nullptr;
 }
 
@@ -52,11 +52,11 @@ const ConvertMap* normalizer_icmp4_map = &preprocessor_norm_icmp4;
  *******  ICMP6 API *********
  ***************************/
 
-static ConversionState* icmp6_ctor(Converter* cv)
+static ConversionState* icmp6_ctor(Converter* cv, LuaData* ld)
 {
-    cv->open_table("normalize");
-    cv->add_option_to_table("icmp6", true);
-    cv->close_table();
+    ld->open_table("normalize");
+    ld->add_option_to_table("icmp6", true);
+    ld->close_table();
     return nullptr;
 }
 
@@ -78,52 +78,52 @@ namespace {
 class Ip4Normalizer : public ConversionState
 {
 public:
-    Ip4Normalizer(Converter* cv)  : ConversionState(cv) {};
+    Ip4Normalizer(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Ip4Normalizer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool Ip4Normalizer::convert(std::stringstream& data_stream)
+bool Ip4Normalizer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
 
-    cv->open_table("normalize");
-    cv->open_table("ip4");
-    cv->add_option_to_table("base", true);
+    ld->open_table("normalize");
+    ld->open_table("ip4");
+    ld->add_option_to_table("base", true);
 
     while( data_stream >> keyword)
     {
 
         if(!keyword.compare("df"))
-            retval = cv->add_option_to_table("df", true) && retval;
+            retval = ld->add_option_to_table("df", true) && retval;
 
         else if(!keyword.compare("rf"))
-            retval = cv->add_option_to_table("rf", true) && retval;
+            retval = ld->add_option_to_table("rf", true) && retval;
         
         else if(!keyword.compare("tos"))
-            retval = cv->add_option_to_table("tos", true) && retval;
+            retval = ld->add_option_to_table("tos", true) && retval;
         
         else if(!keyword.compare("trim"))
-            retval = cv->add_option_to_table("trim", true) && retval;
+            retval = ld->add_option_to_table("trim", true) && retval;
 
         else
             retval = false;
     }
 
-    cv->close_table();
-    cv->close_table();
+    ld->close_table();
+    ld->close_table();
     return retval;    
 }
 
 /*******  A P I ***********/
 
-static ConversionState* ip4_ctor(Converter* cv)
+static ConversionState* ip4_ctor(Converter* cv, LuaData* ld)
 {
-    return new Ip4Normalizer(cv);
+    return new Ip4Normalizer(cv, ld);
 }
 
 static const ConvertMap preprocessor_norm_ip4 = 
@@ -138,11 +138,11 @@ const ConvertMap* normalizer_ip4_map = &preprocessor_norm_ip4;
  *******  IP6 API *********
  **************************/
 
-static ConversionState* ip6_ctor(Converter* cv)
+static ConversionState* ip6_ctor(Converter* cv, LuaData* ld)
 {
-    cv->open_table("normalize");
-    cv->add_option_to_table("ip6", true);
-    cv->close_table();
+    ld->open_table("normalize");
+    ld->add_option_to_table("ip6", true);
+    ld->close_table();
     return nullptr;
 }
 
@@ -164,9 +164,9 @@ namespace {
 class TcpNormalizer : public ConversionState
 {
 public:
-    TcpNormalizer(Converter* cv)  : ConversionState(cv) {};
+    TcpNormalizer(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~TcpNormalizer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 private:
     bool set_base_w_comment(std::string);
     bool set_ecn_w_comment(std::string);
@@ -178,35 +178,35 @@ private:
 
 bool TcpNormalizer::set_ecn_w_comment(std::string comment)
 {
-    cv->add_comment_to_table("tcp normalizer: '" +
+    ld->add_comment_to_table("tcp normalizer: '" +
         comment + "'' is deprecated. use 'ecn' instead");
-    return cv->add_option_to_table("ecn", true);
+    return ld->add_option_to_table("ecn", true);
 }
 
 bool TcpNormalizer::set_base_w_comment(std::string comment)
 {
-    cv->add_comment_to_table("tcp normalizer: '" +
+    ld->add_comment_to_table("tcp normalizer: '" +
         comment + "'' is deprecated. use 'base' instead");
-    return cv->add_option_to_table("base", true);
+    return ld->add_option_to_table("base", true);
 }
 
 bool TcpNormalizer::set_trim_w_comment(std::string comment)
 {
-    cv->add_comment_to_table("tcp normalizer: '" +
+    ld->add_comment_to_table("tcp normalizer: '" +
         comment + "'' is deprecated. use 'trim' instead");
-    return cv->add_option_to_table("trim", true);
+    return ld->add_option_to_table("trim", true);
 }
 
 
-bool TcpNormalizer::convert(std::stringstream& data_stream)
+bool TcpNormalizer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     std::string value;
     bool retval = true;
 
-    cv->open_table("normalize");
-    cv->open_table("tcp");
-    cv->add_option_to_table("base", true);
+    ld->open_table("normalize");
+    ld->open_table("tcp");
+    ld->add_option_to_table("base", true);
 
     while( data_stream >> keyword)
     {
@@ -230,7 +230,7 @@ bool TcpNormalizer::convert(std::stringstream& data_stream)
             retval = set_base_w_comment("req_urp") && retval;
         
         else if(!keyword.compare("ips"))
-            retval = cv->add_option_to_table("ips", true) && retval;
+            retval = ld->add_option_to_table("ips", true) && retval;
         
         else if(!keyword.compare("trim_syn"))
             retval = set_trim_w_comment("trim_syn") && retval;
@@ -245,13 +245,13 @@ bool TcpNormalizer::convert(std::stringstream& data_stream)
             retval = set_trim_w_comment("trim_mss") && retval;
         
         else if(!keyword.compare("trim"))
-            retval = cv->add_option_to_table("trim", true) && retval;
+            retval = ld->add_option_to_table("trim", true) && retval;
 
         else if(!keyword.compare("opts"))
-            retval = cv->add_option_to_table("opts", true) && retval;
+            retval = ld->add_option_to_table("opts", true) && retval;
 
         else if(!keyword.compare("urp"))
-            retval = cv->add_option_to_table("urp", true) && retval;
+            retval = ld->add_option_to_table("urp", true) && retval;
 
         else if(!keyword.compare("ecn"))
         {
@@ -265,16 +265,16 @@ bool TcpNormalizer::convert(std::stringstream& data_stream)
             retval = false;
     }
 
-    cv->close_table();
-    cv->close_table();
+    ld->close_table();
+    ld->close_table();
     return retval;    
 }
 
 /*******  A P I ***********/
 
-static ConversionState* tcp_ctor(Converter* cv)
+static ConversionState* tcp_ctor(Converter* cv, LuaData* ld)
 {
-    return new TcpNormalizer(cv);
+    return new TcpNormalizer(cv, ld);
 }
 
 static const ConvertMap preprocessor_norm_tcp = 

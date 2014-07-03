@@ -112,3 +112,41 @@ void* get_rule_type_data(OptTreeNode* otn, option_type_t type)
     return nullptr;
 }
 
+void* get_rule_type_data(OptTreeNode* otn, const char* name)
+{
+    OptFpList* fpl = otn->opt_func;
+
+    while ( fpl )
+    {
+        if ( !fpl->context )
+            continue;
+
+        IpsOption* opt = (IpsOption*)fpl->context;
+
+        if ( !strcmp(opt->get_name(), name) )
+            return fpl->context;
+
+        fpl = fpl->next;
+    }
+    return nullptr;
+}
+
+bool otn_has_plugin(OptTreeNode* otn, const char* name)
+{
+    OptFpList* fpl = otn->opt_func;
+
+    while ( fpl )
+    {
+        if ( !fpl->context )
+            continue;
+
+        IpsOption* opt = (IpsOption*)fpl->context;
+
+        if ( !strcmp(opt->get_name(), name) )
+            return true;
+
+        fpl = fpl->next;
+    }
+    return false;
+}
+

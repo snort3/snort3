@@ -25,23 +25,23 @@
 #include <iostream>
 #include <string>
 #include "init_state.h"
-#include "snort2lua_util.h"
+#include "util/util.h"
 #include "keyword_states/keywords_api.h"
 
 
-InitState::InitState(Converter* cv) : ConversionState(cv) {}
+InitState::InitState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
 
-bool InitState::convert(std::stringstream& data_stream)
+bool InitState::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
     if (!(data_stream >> keyword))
         return false;
 
-    const ConvertMap *map = util::find_map(keyword_api, keyword);
+    const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
     if (map)
     {
-        cv->set_state(map->ctor(cv));
+        cv->set_state(map->ctor(cv, ld));
         return true;
     }
 

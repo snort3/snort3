@@ -426,7 +426,7 @@ private:
     int* offset; /* >=0 is offset to start of replace */
 };
 
-ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name, RULE_OPTION_TYPE_OTHER)
+ReplaceOption::ReplaceOption(string& s) : IpsOption(s_name)
 {
     unsigned n = get_instance_max();
     offset = new int[n];
@@ -512,7 +512,8 @@ static IpsOption* replace_ctor(
     SnortConfig*, char *data, OptTreeNode* otn)
 {
     if ( !replace_ok() )
-        return nullptr;
+        ParseError("Inline mode and DAQ with replace capabilities required "
+            "to use rule option 'replace'.");
 
     string s;
     replace_parse(data, s);

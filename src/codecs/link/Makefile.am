@@ -33,7 +33,7 @@ if ENABLE_NON_ETHER_DECODER
 plugin_list += cd_eapol.cc cd_eapol_module.h cd_eapol_module.cc
 endif
 
-if STATIC_DECODERS
+if STATIC_CODECS
 liblink_codecs_a_SOURCES += $(plugin_list)
 
 else
@@ -60,12 +60,26 @@ libcd_vlan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_vlan_la_LDFLAGS = -export-dynamic -shared
 libcd_vlan_la_SOURCES = cd_vlan.cc cd_vlan_module.h cd_vlan_module.cc
 
-# TODO:  CREATE PLUGING LIBRARIES FOR THESE LIBRARIES
-#    add_shared_library(cd_ethloopback codecs cd_ethloopback.cc)
-#    add_shared_library(cd_mpls codecs cd_mpls.cc)
-#    add_shared_library(cd_pppencap codecs cd_pppencap.cc)
-#    add_shared_library(cd_pppoepkt codecs cd_pppoepkt.cc)
-#    add_shared_library(cd_transbridge codecs cd_transbridge.cc)
+ehlib_LTLIBRARIES += libcd_ethloopback.la
+libcd_ethloopback_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_ethloopback_la_LDFLAGS = -export-dynamic -shared
+libcd_ethloopback_la_SOURCES = cd_ethloopback.cc
+
+ehlib_LTLIBRARIES += libcd_pppencap.la
+libcd_pppencap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_pppencap_la_LDFLAGS = -export-dynamic -shared
+libcd_pppencap_la_SOURCES = cd_pppencap.cc
+
+ehlib_LTLIBRARIES += libcd_transbridge.la
+libcd_transbridge_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_transbridge_la_LDFLAGS = -export-dynamic -shared
+libcd_transbridge_la_SOURCES = cd_transbridge.cc
+
+ehlib_LTLIBRARIES += libcd_pppoepkt.la
+libcd_pppoepkt_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_pppoepkt_la_LDFLAGS = -export-dynamic -shared
+libcd_pppoepkt_la_SOURCES = cd_pppoepkt.cc cd_pppoepkt_module.h cd_pppoepkt_module.cc
+
 
 if ENABLE_NON_ETHER_DECODER
 
@@ -75,9 +89,6 @@ libcd_eapol_la_LDFLAGS = -export-dynamic -shared
 libcd_eapol_la_SOURCES = cd_eapol.cc cd_eapol_module.h cd_eapol_module.cc
 endif
 
-#    if(ENABLE_NON_ETHER_DECODER)
-#        add_shared_library(cd_eapol codecs cd_eapol.cc)
-#    endif()
 
 endif
 

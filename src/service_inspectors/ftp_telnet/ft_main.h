@@ -43,7 +43,6 @@ extern int16_t ftp_app_id;
 extern int16_t ftp_data_app_id;
 
 void do_detection(Packet*);
-int FTPPBounceEval(Packet*, const uint8_t **cursor, void *dataPtr);
 
 void CleanupFTPServerConf(void *serverConf);
 void CleanupFTPCMDConf(void *ftpCmd);

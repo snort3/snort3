@@ -23,28 +23,28 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class StreamUdp : public ConversionState
 {
 public:
-    StreamUdp(Converter* cv)  : ConversionState(cv) {};
+    StreamUdp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~StreamUdp() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool StreamUdp::convert(std::stringstream& data_stream)
+bool StreamUdp::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;
     std::string keyword;
 
-    cv->open_table("stream_udp");
+    ld->open_table("stream_udp");
 
     while(data_stream >> keyword)
     {
@@ -57,11 +57,11 @@ bool StreamUdp::convert(std::stringstream& data_stream)
             continue;
         
         if(!keyword.compare("ignore_any_rules"))
-            tmpval = cv->add_option_to_table("ignore_any_rules", true);
+            tmpval = ld->add_option_to_table("ignore_any_rules", true);
 
         else if(!keyword.compare("timeout"))
         {
-            cv->add_diff_option_comment("timeout", "session_timeout");
+            ld->add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", data_stream);
         }
 
@@ -79,9 +79,9 @@ bool StreamUdp::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new StreamUdp(cv);
+    return new StreamUdp(cv, ld);
 }
 
 static const ConvertMap preprocessor_stream_udp =

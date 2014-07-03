@@ -32,6 +32,7 @@ extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
 extern const BaseApi* ips_ip_proto;
 extern const BaseApi* ips_pcre;
+extern const BaseApi* ips_replace;
 extern const BaseApi* ips_so;
 
 #ifdef STATIC_IPS_OPTIONS
@@ -84,18 +85,9 @@ const BaseApi* ips_options[] =
     ips_file_data,
     ips_flow,
     ips_flowbits,
-    ips_http_uri,
-    ips_http_header,
-    ips_http_client_body,
-    ips_http_method,
-    ips_http_cookie,
-    ips_http_stat_code,
-    ips_http_stat_msg,
-    ips_http_raw_uri,
-    ips_http_raw_header,
-    ips_http_raw_cookie,
     ips_ip_proto,
     ips_pcre,
+    ips_replace,
     ips_so,
 #ifdef STATIC_IPS_OPTIONS
     ips_ack,
@@ -109,6 +101,16 @@ const BaseApi* ips_options[] =
     ips_flags,
     ips_fragbits,
     ips_fragoffset,
+    ips_http_uri,
+    ips_http_header,
+    ips_http_client_body,
+    ips_http_method,
+    ips_http_cookie,
+    ips_http_stat_code,
+    ips_http_stat_msg,
+    ips_http_raw_uri,
+    ips_http_raw_header,
+    ips_http_raw_cookie,
     ips_icmp_id,
     ips_icmp_seq,
     ips_icode,

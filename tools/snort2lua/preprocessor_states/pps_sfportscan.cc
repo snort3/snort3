@@ -23,30 +23,30 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class PortScan : public ConversionState
 {
 public:
-    PortScan(Converter* cv)  : ConversionState(cv) {};
+    PortScan(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~PortScan() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 
 private:
-    bool parse_list(std::string table_name, std::stringstream& data_stream);
-    bool parse_option(std::string table_name, std::stringstream& data_stream);
-    bool add_portscan_global_option(std::string name, std::stringstream& data_stream);
+    bool parse_list(std::string table_name, std::istringstream& data_stream);
+    bool parse_option(std::string table_name, std::istringstream& data_stream);
+    bool add_portscan_global_option(std::string name, std::istringstream& data_stream);
     // a wrapper for parse_list.  adds an addition '[..]' around the string
-    bool parse_ip_list(std::string table_name, std::stringstream& data_stream);
+    bool parse_ip_list(std::string table_name, std::istringstream& data_stream);
 };
 
 } // namespace
 
 
-bool PortScan::parse_ip_list(std::string list_name, std::stringstream& data_stream)
+bool PortScan::parse_ip_list(std::string list_name, std::istringstream& data_stream)
 {
     std::string prev;
     std::string elem;
@@ -64,10 +64,10 @@ bool PortScan::parse_ip_list(std::string list_name, std::stringstream& data_stre
         prev = prev + ' ' + elem;
 
     prev = prev + "]";
-    return cv->add_option_to_table(list_name, prev);
+    return ld->add_option_to_table(list_name, prev);
 }
 
-bool PortScan::parse_list(std::string list_name, std::stringstream& data_stream)
+bool PortScan::parse_list(std::string list_name, std::istringstream& data_stream)
 {
     std::string elem;
     bool retval = true;
@@ -76,12 +76,12 @@ bool PortScan::parse_list(std::string list_name, std::stringstream& data_stream)
         return false;
 
     while (data_stream >> elem && elem != "}")
-        retval && cv->add_list_to_table(list_name, elem) && retval;
+        retval && ld->add_list_to_table(list_name, elem) && retval;
 
     return retval;
 }
 
-bool PortScan::parse_option(std::string list_name, std::stringstream& data_stream)
+bool PortScan::parse_option(std::string list_name, std::istringstream& data_stream)
 {
     std::string elem;
     bool retval = true;
@@ -90,12 +90,12 @@ bool PortScan::parse_option(std::string list_name, std::stringstream& data_strea
         return false;
 
     while (data_stream >> elem && elem != "}")
-        retval && cv->add_option_to_table(list_name, elem) && retval;
+        retval && ld->add_option_to_table(list_name, elem) && retval;
 
     return retval;
 }
 
-bool PortScan::add_portscan_global_option(std::string name, std::stringstream& data_stream)
+bool PortScan::add_portscan_global_option(std::string name, std::istringstream& data_stream)
 {
     int val;
     std::string garbage;
@@ -106,11 +106,11 @@ bool PortScan::add_portscan_global_option(std::string name, std::stringstream& d
     if (!(data_stream >> val))
         return false;
 
-    cv->close_table();
-    cv->open_table("port_scan_global");
-    bool retval = cv->add_option_to_table(name, val);
-    cv->close_table();
-    cv->open_table("port_scan");
+    ld->close_table();
+    ld->open_table("port_scan_global");
+    bool retval = ld->add_option_to_table(name, val);
+    ld->close_table();
+    ld->open_table("port_scan");
 
     if (!(data_stream >> garbage) || (garbage != "}"))
         return false;
@@ -119,11 +119,11 @@ bool PortScan::add_portscan_global_option(std::string name, std::stringstream& d
 }
 
 
-bool PortScan::convert(std::stringstream& data_stream)
+bool PortScan::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    cv->open_table("port_scan");
+    ld->open_table("port_scan");
 
     while(data_stream >> keyword)
     {
@@ -142,29 +142,29 @@ bool PortScan::convert(std::stringstream& data_stream)
             tmpval = parse_ip_list("ignore_scanned", data_stream);
 
         else if(!keyword.compare("include_midstream"))
-            tmpval = cv->add_option_to_table("include_midstream", true);
+            tmpval = ld->add_option_to_table("include_midstream", true);
 
         else if(!keyword.compare("disabled"))
-            cv->add_deprecated_comment("disabled");
+            ld->add_deprecated_comment("disabled");
 
         else if(!keyword.compare("detect_ack_scans"))
-            cv->add_deprecated_comment("detect_ack_scans");
+            ld->add_deprecated_comment("detect_ack_scans");
 
         else if(!keyword.compare("logfile"))
-            cv->add_deprecated_comment("logfile");
+            ld->add_deprecated_comment("logfile");
 
         else if(!keyword.compare("memcap"))
             tmpval = add_portscan_global_option("memcap", data_stream);
 
         else if(!keyword.compare("proto"))
         {
-            cv->add_diff_option_comment("proto", "protos");
+            ld->add_diff_option_comment("proto", "protos");
             retval = parse_curly_bracket_list("protos", data_stream) && retval;
         }
 
         else if(!keyword.compare("scan_type"))
         {
-            cv->add_diff_option_comment("scan_type", "scan_types");
+            ld->add_diff_option_comment("scan_type", "scan_types");
             tmpval = parse_curly_bracket_list("scan_types", data_stream) && retval;
         }
 
@@ -175,7 +175,7 @@ bool PortScan::convert(std::stringstream& data_stream)
     }
 
 
-    cv->close_table(); // unecessary since the state will be reset
+    ld->close_table(); // unecessary since the state will be reset
     return retval;
 }
 
@@ -184,9 +184,9 @@ bool PortScan::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new PortScan(cv);
+    return new PortScan(cv, ld);
 }
 
 static const ConvertMap preprocessor_sfportscan = 

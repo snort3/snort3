@@ -24,15 +24,15 @@
 #include <iomanip>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 
 
-static ConversionState* bo_ctor(Converter* cv)
+static ConversionState* bo_ctor(Converter* cv, LuaData* ld)
 {
-    cv->open_table("bo");
-    cv->close_table();
+    ld->open_table("bo");
+    ld->close_table();
     return nullptr;
 }
 

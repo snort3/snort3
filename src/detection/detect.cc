@@ -139,9 +139,8 @@ void snort_inspect(Packet* p)
         /*
         **  Reset the appropriate application-layer protocol fields
         */
-        ClearHttpBuffers();
         p->alt_dsize = 0;
-        DetectReset((uint8_t *)p->data, p->dsize);
+        DetectReset();
 
         InspectorManager::execute(p);
 

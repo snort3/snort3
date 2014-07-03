@@ -22,6 +22,9 @@
 #include "keyword_states/keywords_api.h"
 
 
+namespace keywords
+{
+
 extern const ConvertMap *portvar_map;
 extern const ConvertMap *ipvar_map;
 extern const ConvertMap *var_map;
@@ -30,10 +33,17 @@ extern const ConvertMap *config_map;
 extern const ConvertMap *preprocessor_map;
 extern const ConvertMap *include_map;
 extern const ConvertMap *supress_map;
+extern const ConvertMap* alert_map;
+extern const ConvertMap* log_map;
+extern const ConvertMap* pass_map;
+extern const ConvertMap* drop_map;
+extern const ConvertMap* reject_map;
+extern const ConvertMap* sdrop_map;
+extern const ConvertMap* activate_map;
+extern const ConvertMap* dynamic_map;
 
 
-
-const std::vector<const ConvertMap*> keyword_api = 
+const std::vector<const ConvertMap*> keywords_api =
 {
     portvar_map,
     ipvar_map,
@@ -42,6 +52,17 @@ const std::vector<const ConvertMap*> keyword_api =
     config_map,
     preprocessor_map,
     include_map,
-    supress_map
-//    nullptr,
+    supress_map,
+    alert_map,
+    log_map,
+    pass_map,
+    drop_map,
+    reject_map,
+    sdrop_map,
+    activate_map,
+    dynamic_map,
 };
+
+
+} // namespace keywords
+

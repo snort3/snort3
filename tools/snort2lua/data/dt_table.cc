@@ -38,7 +38,7 @@ Table::Table(int depth)
     this->name = "";
     this->depth = depth;
     this->comments = new Comments(depth + 1,
-                    Comments::CommentType::Single_Lines);
+                    Comments::CommentType::SINGLE_LINE);
 }
 
 Table::Table(std::string name, int depth)
@@ -46,7 +46,7 @@ Table::Table(std::string name, int depth)
     this->name = name;
     this->depth = depth;
     this->comments = new Comments(depth + 1,
-                    Comments::CommentType::Single_Lines);
+                    Comments::CommentType::SINGLE_LINE);
 }
 
 Table::~Table()
@@ -151,7 +151,7 @@ bool Table::has_option(std::string name, std::string val)
 
 void Table::add_comment(std::string c)
 {
-    comments->add_text(c);
+    comments->add_sorted_text(c);
 }
 
 std::ostream &operator<<( std::ostream& out, const Table &t)

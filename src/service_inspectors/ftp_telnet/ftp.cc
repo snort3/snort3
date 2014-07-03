@@ -94,7 +94,7 @@ static void FTPDataProcess(Packet *p, FTP_DATA_SESSION *data_ssn)
 {
     int status;
 
-    setFileDataPtr((uint8_t *)p->data, (uint16_t)p->dsize);
+    set_file_data((uint8_t *)p->data, p->dsize);
 
     status = file_api->file_process(p, (uint8_t *)p->data,
         (uint16_t)p->dsize, data_ssn->position, data_ssn->direction, false);

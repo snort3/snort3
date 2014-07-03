@@ -37,12 +37,8 @@
 #include "detect.h"
 #include "snort.h"
 #include "snort_debug.h"
-#include "treenodes.h"
 
-#ifndef DECODE_BLEN
 #define DECODE_BLEN 65535
-
-#define MAX_URI 8192
 
 enum HTTP_BUFFER
 {
@@ -59,51 +55,32 @@ enum HTTP_BUFFER
     HTTP_BUFFER_URI,
     HTTP_BUFFER_MAX
 };
-#endif
-
-enum DetectFlagType
-{
-    FLAG_ALT_DECODE         = 0x0001,
-    FLAG_ALT_DETECT         = 0x0002,
-    FLAG_DETECT_ALL         = 0xffff
-};
 
 struct HttpBuffer
 {
     const uint8_t* buf;
-    uint16_t length;
+    unsigned length;
     uint32_t encode_type;
 };
 
 struct DataPointer
 {
     uint8_t *data;
-    uint16_t len;
+    unsigned len;
 };
 
 struct DataBuffer
 {
     uint8_t data[DECODE_BLEN];
-    uint16_t len;
+    unsigned len;
 };
-
-extern THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
-extern THREAD_LOCAL uint32_t base64_decode_size;
-
-extern THREAD_LOCAL uint8_t mime_present;
-
-extern THREAD_LOCAL uint8_t doe_buf_flags;
-extern THREAD_LOCAL const uint8_t *doe_ptr;
-
-extern THREAD_LOCAL uint16_t detect_flags;
 
 extern THREAD_LOCAL uint32_t http_mask;
 extern THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];
 extern const char* http_buffer_name[HTTP_BUFFER_MAX];
 
-extern THREAD_LOCAL DataPointer DetectBuffer;
-extern THREAD_LOCAL DataPointer file_data_ptr;
-extern THREAD_LOCAL DataBuffer DecodeBuffer;
+extern THREAD_LOCAL DataPointer g_alt_data;
+extern THREAD_LOCAL DataPointer g_file_data;
 
 static inline void ClearHttpBuffers (void)
 {
@@ -147,22 +124,16 @@ static inline void SetHttpBuffer (HTTP_BUFFER b, const uint8_t* buf, unsigned le
 
 #define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
 
-/*
- * Function: setFileDataPtr
- *
- * Purpose: Sets the file data pointer used by
- *          file_data rule option.
- *
- * Arguments: ptr => pointer to the body data
- *
- * Returns: void
- *
- */
-
-static inline void setFileDataPtr(uint8_t *ptr, uint16_t decode_size)
+static inline void set_alt_data(uint8_t* p, unsigned n)
 {
-    file_data_ptr.data = ptr;
-    file_data_ptr.len = decode_size;
+    g_alt_data.data = p;
+    g_alt_data.len = n;
+}
+
+static inline void set_file_data(uint8_t* p, unsigned n)
+{
+    g_file_data.data = p;
+    g_file_data.len = n;
 }
 
 void EventTrace_Init(void);
@@ -175,71 +146,11 @@ static inline int EventTrace_IsEnabled (void)
     return ( snort_conf->event_trace_max > 0 );
 }
 
-static inline void DetectFlag_Enable(DetectFlagType df)
-{   
-    detect_flags |= df;
-}
-    
-static inline void DetectFlag_Disable(DetectFlagType df)
-{   
-    detect_flags &= ~df;
-}
-
-static inline int Is_DetectFlag(DetectFlagType df)
+static inline void DetectReset()
 {
-    return ( (detect_flags & df) != 0 );
-}
-
-static inline uint16_t Get_DetectFlags(void)
-{
-    return detect_flags;
-}
-
-static inline void Reset_DetectFlags(uint16_t dflags)
-{
-    detect_flags = dflags;
-}
-
-static inline int GetAltDetect(uint8_t **bufPtr, uint16_t *altLenPtr)
-{
-    if ( Is_DetectFlag(FLAG_ALT_DETECT) )
-    {
-        *bufPtr = DetectBuffer.data;
-        *altLenPtr = DetectBuffer.len;
-        return 1;
-    }
-
-    return 0;
-}
-
-static inline void SetAltDetect(uint8_t *buf, uint16_t altLen)
-{
-    DetectFlag_Enable(FLAG_ALT_DETECT);
-    DetectBuffer.data = buf;
-    DetectBuffer.len = altLen;
-}
-
-static inline void SetAltDecode(uint16_t altLen)
-{
-    DetectFlag_Enable(FLAG_ALT_DECODE);
-    DecodeBuffer.len = altLen;
-}
-
-static inline void DetectReset(uint8_t *buf, uint16_t altLen)
-{
-    DetectBuffer.data = buf;
-    DetectBuffer.len = altLen;
-
-    DetectFlag_Disable(FLAG_DETECT_ALL);
-
-    /* Reset the values */
-
-    file_data_ptr.data  = NULL;
-    file_data_ptr.len = 0;
-    base64_decode_size = 0;
-    doe_buf_flags = 0;
-    mime_present = 0;
-    DecodeBuffer.len = 0;
+    g_alt_data.len = 0;
+    g_file_data.len = 0;
+    ClearHttpBuffers();
 }
 
 int IsGzipData(Flow*);  // FIXIT these from HI

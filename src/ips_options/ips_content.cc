@@ -50,7 +50,6 @@
 #include "detection/detection_util.h"
 
 #define MAX_PATTERN_SIZE 2048
-#define PM_FP_ONLY  "only"
 
 #ifdef PERF_PROFILING
 static THREAD_LOCAL PreprocStats contentPerfStats;
@@ -79,8 +78,11 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
+    CursorActionType get_cursor_type() const
+    { return CAT_ADJUST; };
+
     bool is_relative()
-    { return (config->use_doe == 1); };
+    { return (config->relative == 1); };
 
     PatternMatchData* get_data()
     { return config; };
@@ -122,14 +124,14 @@ uint32_t ContentOption::hash() const
     uint32_t a,b,c;
     const PatternMatchData *pmd = config;
 
-    a = pmd->exception_flag;
+    a = pmd->negated;
     b = pmd->offset;
     c = pmd->depth;
 
     mix(a,b,c);
 
     a += pmd->pattern_size;
-    b += pmd->use_doe;
+    b += pmd->relative;
     c += pmd->match_delta;
 
     mix(a,b,c);
@@ -197,10 +199,10 @@ bool ContentOption::operator==(const IpsOption& ips) const
     }
 
     /* Now check the rest of the options */
-    if ((left->exception_flag == right->exception_flag) &&
+    if ((left->negated == right->negated) &&
         (left->offset == right->offset) &&
         (left->depth == right->depth) &&
-        (left->use_doe == right->use_doe) &&
+        (left->relative == right->relative) &&
         (left->match_delta == right->match_delta) &&
         (left->fp == right->fp) &&
         (left->fp_only == right->fp_only) &&
@@ -232,7 +234,7 @@ static PatternMatchData* new_pmd()
 
 static void update_pmd(PatternMatchData* pmd)
 {
-    if ( pmd->exception_flag )
+    if ( pmd->negated )
         pmd->last_check = (PmdLastCheck*)SnortAlloc(get_instance_max() * sizeof(*pmd->last_check));
 }
 
@@ -279,37 +281,18 @@ static int32_t parse_int(
 static void validate_content(
     SnortConfig*, PatternMatchData *pmd, OptTreeNode* otn)
 {
-    if (pmd == NULL)
-        return;
-
-    if (pmd->fp)
-    {
-        if (pmd->use_doe || (pmd->offset != 0) || (pmd->depth != 0))
-        {
-            if (pmd->exception_flag)
-            {
-                ParseError(
-                    "Cannot use the fast_pattern modifier for negated, "
-                    "relative or non-zero offset/depth content searches.");
-            }
-
-            if (pmd->fp_only)
-            {
-                ParseError(
-                    "Fast pattern only contents cannot be relative or "
-                    "have non-zero offset/depth content modifiers.");
-            }
-        }
-
-        if (pmd->fp_only)
-        {
-            if (pmd->exception_flag)
-                ParseError("Fast pattern only contents cannot be negated.");
-        }
-    }
-
     if ( fast_pattern_count(otn, RULE_OPTION_TYPE_CONTENT) > 1 )
         ParseError("Only one content per rule may be used for fast pattern matching.");
+
+    if (
+        pmd->fp && !pmd->relative && !pmd->negated &&
+        !pmd->offset && !pmd->depth && pmd->no_case )
+    {
+        // this is provisional; will be disabled later if there
+        // is a relative rule option following this one
+        // see parse_rule.cc::ValidateFastPattern()
+        pmd->fp_only = 1;
+    }
 }
 
 static void make_precomp(PatternMatchData * idx)
@@ -416,6 +399,14 @@ bool is_fast_pattern_only(OptFpList* ofl)
     return pmd->fp_only != 0;
 }
 
+void clear_fast_pattern_only(OptFpList* ofl)
+{
+    PatternMatchData* pmd = get_pmd(ofl);
+
+    if ( pmd )
+        pmd->fp_only = 0;
+}
+
 bool is_unbounded(void* pv)
 {
     ContentOption* opt = (ContentOption*)pv;
@@ -459,7 +450,7 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
 
     int pos = c.get_delta();
 
-    if ( !pos && pmd->use_doe )
+    if ( !pos && pmd->relative )
         pos = c.get_pos();
 
     pos += offset;
@@ -479,7 +470,7 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
     // case where the match is inverted and there is at least some data.
     if ( end > c.size() || (int)end > pos + depth )
     {
-        if ( pmd->exception_flag && (depth > 0) )
+        if ( pmd->negated && (depth > 0) )
             return 0;
 
         return -1;
@@ -534,7 +525,7 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
     }
     else
     {
-        found ^= idx->exception_flag;
+        found ^= idx->negated;
     }
 
     if ( found )
@@ -557,11 +548,11 @@ PatternMatchData* content_get_data(void* pv)
     return opt->get_data();
 }
 
-/* current should be the doe_ptr after this content rule option matched
+/* current should be the cursor after this content rule option matched
  * orig is the place from where we first did evaluation of this content */
 bool content_next(PatternMatchData* pmd)
 {
-    if ( pmd->exception_flag )
+    if ( pmd->negated )
         return false;
 
     return true;
@@ -591,7 +582,7 @@ static unsigned GetCMF (PatternMatchData* pmd)
 static void parse_offset(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
-    if ( GetCMF(pmd) & BAD_OFFSET && pmd->use_doe )
+    if ( GetCMF(pmd) & BAD_OFFSET && pmd->relative )
         ParseError("offset can't be used with itself, distance, or within");
 
     if (data == NULL)
@@ -617,7 +608,7 @@ static void parse_offset(
 static void parse_depth(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
-    if ( GetCMF(pmd) & BAD_DEPTH && pmd->use_doe )
+    if ( GetCMF(pmd) & BAD_DEPTH && pmd->relative )
         ParseError("depth can't be used with itself, distance, or within");
 
     if (data == NULL)
@@ -650,7 +641,7 @@ static void parse_depth(
 static void parse_distance(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
-    if ( GetCMF(pmd) & BAD_DISTANCE && !pmd->use_doe )
+    if ( GetCMF(pmd) & BAD_DISTANCE && !pmd->relative )
         ParseError("distance can't be used with itself, offset, or depth");
 
     if (data == NULL)
@@ -669,13 +660,13 @@ static void parse_distance(
         }
     }
 
-    pmd->use_doe = 1;
+    pmd->relative = 1;
 }
 
 static void parse_within(
     PatternMatchData* pmd, char *data, OptTreeNode*)
 {
-    if ( GetCMF(pmd) & BAD_WITHIN && !pmd->use_doe )
+    if ( GetCMF(pmd) & BAD_WITHIN && !pmd->relative )
         ParseError("within can't be used with itself, offset, or depth");
 
     if (data == NULL)
@@ -700,7 +691,7 @@ static void parse_within(
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Pattern within = %d\n",
                 pmd->depth););
 
-    pmd->use_doe = 1;
+    pmd->relative = 1;
 }
 
 static void parse_nocase(
@@ -709,7 +700,7 @@ static void parse_nocase(
     unsigned int i;
 
     if (data != NULL)
-        ParseError("'no_case' does not take an argument");
+        ParseError("'nocase' does not take an argument");
 
     for (i = 0; i < pmd->pattern_size; i++)
         pmd->pattern_buf[i] = toupper((int)pmd->pattern_buf[i]);
@@ -725,16 +716,6 @@ static void parse_fast_pattern(
         ParseError("'fast_pattern' does not take an argument");
 
     pmd->fp = 1;
-}
-
-static void parse_fast_pattern_only(
-    PatternMatchData* pmd, char *data, OptTreeNode*)
-{
-    if ( data )
-        ParseError("'fast_pattern_only' does not take an argument");
-
-    pmd->fp = 1;
-    pmd->fp_only = 1;
 }
 
 static const char* error_str = 
@@ -794,7 +775,7 @@ static void content_parse(char *rule, PatternMatchData* ds_idx)
     int pending = 0;
     int cnt = 0;
     int literal = 0;
-    int exception_flag = 0;
+    int negated = 0;
 
     /* clear out the temp buffer */
     memset(tmp_buf, 0, MAX_PATTERN_SIZE);
@@ -807,7 +788,7 @@ static void content_parse(char *rule, PatternMatchData* ds_idx)
 
     if(*rule == '!')
     {
-        exception_flag = 1;
+        negated = 1;
         while(isspace((int)*++rule));
     }
 
@@ -1049,7 +1030,7 @@ static void content_parse(char *rule, PatternMatchData* ds_idx)
     ds_idx->pattern_size = dummy_size;
 
     make_precomp(ds_idx);
-    ds_idx->exception_flag = exception_flag;
+    ds_idx->negated = negated;
 
     ds_idx->match_delta = GetMaxJumpSize(ds_idx->pattern_buf, ds_idx->pattern_size);
 }
@@ -1114,10 +1095,6 @@ static IpsOption* content_ctor(
         else if (!strcasecmp(opts[0], "fast_pattern"))
         {
             parse_fast_pattern(pmd, opt1, otn);
-        }
-        else if (!strcasecmp(opts[0], "fast_pattern_only"))
-        {
-            parse_fast_pattern_only(pmd, opt1, otn);
         }
         else if (!strcasecmp(opts[0], "fast_pattern_offset"))
         {

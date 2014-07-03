@@ -41,14 +41,24 @@ Option::Option(std::string name, bool val, int depth)
 Option::Option(std::string name, std::string val, int depth)
 {
     this->name = name;
-    this->value = std::string(val);
     this->depth = depth;
-    this->type = OptionType::STRING;
+
+    if (val.front() == '$')
+    {
+        val.erase(val.begin());
+        this->value = std::string(val);
+        this->type = OptionType::VAR;
+    }
+    else
+    {
+        this->value = std::string(val);
+        this->type = OptionType::STRING;
+    }
 }
 
 Option::~Option()
 {
-} 
+}
 
 std::ostream &operator<<( std::ostream& out, const Option &o)
 {
@@ -67,6 +77,7 @@ std::ostream &operator<<( std::ostream& out, const Option &o)
 
         case Option::OptionType::BOOL:
         case Option::OptionType::INT:
+        case Option::OptionType::VAR:
             out << o.value;
             break;
     }

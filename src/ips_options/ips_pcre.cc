@@ -391,8 +391,6 @@ static bool pcre_search(
          */
 
         *found_offset = ss->pcre_ovector[1];
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-            "Setting Doe_ptr and found_offset: %p %d\n", doe_ptr, found_offset););
     }
     else if(result == PCRE_ERROR_NOMATCH)
     {
