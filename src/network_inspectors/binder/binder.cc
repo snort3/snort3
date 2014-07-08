@@ -140,10 +140,13 @@ int Binder::exec(int, void* pv)
 {
     Flow* flow = (Flow*)pv;
     Inspector* ins = find_inspector(flow->service);
+    flow->gadget = ins;
+
+    if ( flow->protocol != IPPROTO_TCP )
+        return 0;
 
     if ( ins )
     {
-        flow->gadget = ins;
         stream.set_splitter(flow, true, ins->get_splitter(true));
         stream.set_splitter(flow, false, ins->get_splitter(false));
     }

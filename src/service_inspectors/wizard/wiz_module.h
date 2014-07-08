@@ -23,6 +23,7 @@
 #define WIZ_MODULE_H
 
 #include <string>
+#include <vector>
 #include "framework/module.h"
 
 class MagicBook;
