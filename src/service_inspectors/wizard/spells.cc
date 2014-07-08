@@ -137,7 +137,7 @@ MagicPage* SpellBook::find_spell(
         }
         if ( p->any )
         {
-            while ( s[i] )
+            while ( i < n )
             {
                 if ( MagicPage* q = find_spell(s, n, p->any, i) )
                     return q;
