@@ -322,7 +322,7 @@ static int MakeOpenPortInfo(
 {
     int dsize;
 
-    if(!total_size || !buffer)
+    if ( !total_size || !buffer || !user )
         return -1;
 
     dsize = (g_tmp_pkt->max_dsize - *total_size);

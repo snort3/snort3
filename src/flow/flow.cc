@@ -112,6 +112,8 @@ void Flow::reset()
 
 void Flow::clear(bool freeAppData)
 {
+    assert(flow_state < 3);
+
     if ( freeAppData )
         free_application_data();
 

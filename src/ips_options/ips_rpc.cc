@@ -271,6 +271,7 @@ void rpc_parse(char *data, RpcCheckData *ds_ptr)
     else
     {
         ParseError("Invalid applicaion number in rpc rule option");
+        return;
     }
 
     if(*tmp == '\0') return;

@@ -64,6 +64,7 @@ static void replace_parse(char* args, string& s)
     if ( !args )
     {
         ParseError("missing argument to 'replace' option");
+        return;
     }
     /* clear out the temp buffer */
     memset(tmp_buf, 0, MAX_PATTERN_SIZE);
@@ -90,6 +91,7 @@ static void replace_parse(char* args, string& s)
     {
         ParseError("Replace data needs to be enclosed "
                    "in quotation marks (\")");
+        return;
     }
 
     /* set the end to be NULL */

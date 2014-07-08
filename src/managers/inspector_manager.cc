@@ -532,11 +532,28 @@ void InspectorManager::execute (Packet* p)
 
     if ( p->dsize )
     {
-        if ( p->flow && p->flow->clouseau )
-            p->flow->clouseau->eval(p);
+        Flow* flow = p->flow;
 
+        if ( !flow )
+            return;
+
+        if ( flow->clouseau )
+        {
+            flow->clouseau->eval(p);
+
+            if ( flow->service )
+            {
+                Inspector* ins = InspectorManager::get_inspector("binder");
+                if ( ins )
+                    ins->exec(0, flow);
+
+                flow->clouseau = nullptr;
+            }
+        }
         // FIXIT BIND need more than one service inspector?
         //::execute(p, fp->service.vec, fp->service.num);
+        if ( flow->gadget )
+            flow->gadget->eval(p);
     }
     else
         DisableDetect(p);

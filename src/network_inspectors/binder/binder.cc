@@ -99,16 +99,14 @@ public:
     { LogMessage("Binder\n"); };
 
     void eval(Packet*);
+    int exec(int, void*);
 
     void add(Binding* b)
     { bindings.push_back(b); };
 
 private:
-    Inspector* get_clouseau(Flow*, Packet*);
-
+    int check_rules(Flow*, Packet*);
     void init_flow(Flow*);
-    void init_flow(Flow*, Packet*);
-    bool check_rules(Flow*, Packet*);
 
 private:
     vector<Binding*> bindings;
@@ -128,20 +126,40 @@ Binder::~Binder()
 void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
-
-    if ( !flow->ssn_client && !check_rules(flow, p) )
-        init_flow(flow);
-
-    else if ( !flow->clouseau )
-        init_flow(flow, p);
-
+    flow->flow_state = check_rules(flow, p);
     ++tstats.total_packets;
+}
+
+// FIXIT implement inspector lookup from policy / bindings
+static Inspector* find_inspector(const char*)
+{
+    return nullptr;
+}
+
+int Binder::exec(int, void* pv)
+{
+    Flow* flow = (Flow*)pv;
+    Inspector* ins = find_inspector(flow->service);
+
+    if ( ins )
+    {
+        flow->gadget = ins;
+        stream.set_splitter(flow, true, ins->get_splitter(true));
+        stream.set_splitter(flow, false, ins->get_splitter(false));
+    }
+    else
+    {
+        stream.set_splitter(flow, true, new AtomSplitter(true));
+        stream.set_splitter(flow, false, new AtomSplitter(false));
+    }
+
+    return 0;
 }
 
 // FIXIT bind services - this is a temporary hack that just looks at ports,
 // need to examine all key fields for matching.  ultimately need a routing
-// table, scapegoat tree, magic wand, etc.
-Inspector* Binder::get_clouseau(Flow* flow, Packet* p)
+// table, scapegoat tree, etc.
+int Binder::check_rules(Flow* flow, Packet* p)
 {
     Binding* pb;
     unsigned i, sz = bindings.size();
@@ -158,47 +176,27 @@ Inspector* Binder::get_clouseau(Flow* flow, Packet* p)
         if ( pb->ports.test(port) )
             break;
     }
+        
+    if ( i == sz )
+        return BA_ALLOW;  // default action FIXIT make configurable
+
+    if ( pb->action != BA_INSPECT )
+        return pb->action;
+
+    init_flow(flow);
     Inspector* ins;
 
-    if ( i == sz || !pb->type.size() )
+    if ( !pb->type.size() || pb->type == "wizard" )
+    {
         ins = InspectorManager::get_inspector("wizard");
-        
+        flow->set_clouseau(ins);
+    }
     else
-        ins = InspectorManager::get_inspector(pb->type.c_str());
-
-    return ins;
-}
-
-bool Binder::check_rules(Flow* flow, Packet* p)
-{
-    Binding* pb;
-    unsigned i, sz = bindings.size();
-
-    Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
-
-    for ( i = 0; i < sz; i++ )
     {
-        pb = bindings[i];
-
-        if ( !check_proto(flow, pb->proto) )
-            continue;
-
-        if ( pb->ports.test(port) )
-            break;
+        ins = InspectorManager::get_inspector(pb->type.c_str()); 
+        flow->set_gadget(ins);
     }
-    if ( i < sz && pb->action )
-    {
-        // FIXIT this is repeatedly entered on same flow; need to 
-        // shortcircuit so we don't walk the rules each time
-        if ( pb->action == BA_ALLOW )
-            stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
-
-        else //if ( pb->action == BA_BLOCK )
-            stream.drop_packet(p);
-
-        return true;
-    }
-    return false;
+    return BA_INSPECT;
 }
 
 void Binder::init_flow(Flow* flow)
@@ -207,8 +205,6 @@ void Binder::init_flow(Flow* flow)
     {
     case IPPROTO_IP:
         set_session(flow, "stream_ip");
-        stream.set_splitter(flow, true, nullptr);
-        stream.set_splitter(flow, false, nullptr);
         break;
 
     case IPPROTO_ICMP:
@@ -226,25 +222,6 @@ void Binder::init_flow(Flow* flow)
     default:
         set_session(flow);
     }
-}
-
-void Binder::init_flow(Flow* flow, Packet* p)
-{
-    Inspector* ins = get_clouseau(flow, p);
-
-    if ( !ins )
-        return;
-
-    if ( flow->protocol == IPPROTO_TCP )
-    {
-        StreamSplitter* ss = ins->get_splitter(true);
-        StreamSplitter* cs = ins->get_splitter(false);
-
-        stream.set_splitter(flow, true, ss);
-        stream.set_splitter(flow, false, cs);
-    }
-
-    flow->set_clouseau(ins);
 }
 
 //-------------------------------------------------------------------------

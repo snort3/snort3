@@ -138,7 +138,7 @@ typedef uint16_t Port;
 #  define NORETURN
 # endif
 #else
-# define NORETURN
+# define NORETURN __attribute__ ((noreturn))
 #endif
 
 #if !defined(__GNUC__) || __GNUC__ < 2 || \

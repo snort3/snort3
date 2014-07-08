@@ -54,8 +54,11 @@ static PreprocStats* ip_get_profile(const char* key)
 
 void IpSessionCleanup (Flow* lws, FragTracker* tracker)
 {
-    Defrag* d = get_defrag(lws->ssn_server);
-    d->cleanup(tracker);
+    if ( lws->ssn_server )
+    {
+        Defrag* d = get_defrag(lws->ssn_server);
+        d->cleanup(tracker);
+    }
 
     if (lws->s5_state.session_flags & SSNFLAG_PRUNED)
     {

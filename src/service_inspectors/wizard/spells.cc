@@ -64,7 +64,7 @@ bool SpellBook::translate(const char* in, HexVector& out)
 }
 
 void SpellBook::add_spell(
-    const char* key, HexVector& hv, unsigned i, MagicPage* p)
+    const char* key, const char* val, HexVector& hv, unsigned i, MagicPage* p)
 {
     while ( i < hv.size() )
     {
@@ -79,9 +79,10 @@ void SpellBook::add_spell(
         ++i;
     }
     p->key = key;
+    p->value = val;
 }
 
-bool SpellBook::add_spell(const char* key)
+bool SpellBook::add_spell(const char* key, const char* val)
 {
     HexVector hv;
 
@@ -109,7 +110,7 @@ bool SpellBook::add_spell(const char* key)
     if ( p->key == key )
         return false;
 
-    add_spell(key, hv, i, p);
+    add_spell(key, val, hv, i, p);
     return true;
 }
 
@@ -161,7 +162,7 @@ const char* SpellBook::find_spell(const uint8_t* data, unsigned len) const
         len = max;
     
     if ( MagicPage* p = find_spell(data, len, root) )
-        return p->key.c_str();
+        return p->value.c_str();
     else
         return nullptr;
 }

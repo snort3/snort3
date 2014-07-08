@@ -168,6 +168,7 @@ static void ipopts_parse(char *data, IpOptionData *ds_ptr)
     if(data == NULL)
     {
         ParseError("IP Option keyword missing argument");
+        return;
     }
 
     while(isspace((u_char)*data))

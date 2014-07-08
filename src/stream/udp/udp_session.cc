@@ -83,6 +83,7 @@ static void UdpSessionCleanup(Flow *lwssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
+    lwssn->flow_state = 0;
     lwssn->clear();
 
     udpStats.released++;

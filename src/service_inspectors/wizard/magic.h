@@ -29,8 +29,11 @@ class MagicBook;
 struct MagicPage
 {
     std::string key;
+    std::string value;
+
     MagicPage* next[256];
     MagicPage* any;
+
     const MagicBook& book;
 
     MagicPage(const MagicBook&);
@@ -44,7 +47,7 @@ class MagicBook
 public:
     virtual ~MagicBook();
 
-    virtual bool add_spell(const char* key) = 0;
+    virtual bool add_spell(const char* key, const char* val) = 0;
     virtual const char* find_spell(const uint8_t*, unsigned len) const = 0;
 
     const MagicPage* page1()
@@ -66,12 +69,12 @@ public:
     SpellBook();
     ~SpellBook() { };
 
-    bool add_spell(const char*);
+    bool add_spell(const char*, const char*);
     const char* find_spell(const uint8_t*, unsigned len) const;
 
 private:
     bool translate(const char*, HexVector&);
-    void add_spell(const char*, HexVector&, unsigned, MagicPage*);
+    void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
     MagicPage* find_spell(const uint8_t*, unsigned, MagicPage*, unsigned = 0) const;
 };
 
@@ -86,12 +89,12 @@ public:
     HexBook() { };
     ~HexBook() { };
 
-    bool add_spell(const char*);
+    bool add_spell(const char*, const char*);
     const char* find_spell(const uint8_t*, unsigned len) const;
 
 private:
     bool translate(const char*, HexVector&);
-    void add_spell(const char*, HexVector&, unsigned, MagicPage*);
+    void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
     MagicPage* find_spell(const uint8_t*, unsigned, MagicPage*, unsigned = 0) const;
 };
 

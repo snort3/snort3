@@ -54,7 +54,7 @@ struct WizStats
 {
     PegCount tcp_scans;
     PegCount tcp_hits;
-    PegCount udp_pkts;
+    PegCount udp_scans;
     PegCount udp_hits;
 };
 
@@ -62,7 +62,7 @@ static const char* wiz_pegs[] =
 {
     "tcp scans",
     "tcp hits",
-    "udp packets",
+    "udp scans",
     "udp hits"
 };
 
@@ -77,9 +77,6 @@ struct Wand
 {
     const MagicPage* hex;
     const MagicPage* spell;
-
-    void clear()
-    { hex = spell = nullptr; };
 };
 
 class Wizard;
@@ -113,7 +110,8 @@ public:
     StreamSplitter* get_splitter(bool);
 
     void reset(Wand&, bool tcp, bool c2s);
-    bool cast_spell(Wand&, const uint8_t*, unsigned);
+    bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
+    bool spellbind(const MagicPage*, Flow*, const uint8_t*, unsigned);
 
 public:
     MagicBook* c2s_hexes;
@@ -143,12 +141,12 @@ MagicSplitter::~MagicSplitter()
 }
 
 PAF_Status MagicSplitter::scan (
-    Flow*, const uint8_t* data, uint32_t len,
+    Flow* f, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
     ++tstats.tcp_scans;
 
-    if ( wizard->cast_spell(wand, data, len) )
+    if ( wizard->cast_spell(wand, f, data, len) )
     { 
         // FIXIT len + 1 means go back to the last flush point
         // (0 means start of this buffer)
@@ -201,14 +199,10 @@ void Wizard::eval(Packet* p)
     Wand wand;
     reset(wand, false, p->packet_flags & PKT_FROM_CLIENT);
 
-    if ( cast_spell(wand, p->data, p->dsize) )
-    {
-        // FIXIT spellbind inspector gadget here
-        // and make the wizard disappear from flow
+    if ( cast_spell(wand, p->flow, p->data, p->dsize) )
         ++tstats.udp_hits;
-    }
 
-    ++tstats.udp_pkts;
+    ++tstats.udp_scans;
 }
 
 StreamSplitter* Wizard::get_splitter(bool c2s)
@@ -216,24 +210,22 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
     return new MagicSplitter(c2s, this);
 }
 
-bool Wizard::cast_spell(
-    Wand& w, const uint8_t* data, unsigned len)
+bool Wizard::spellbind(
+    const MagicPage* m, Flow* f, const uint8_t* data, unsigned len)
 {
     // FIXIT convert to stateful find
-    if ( w.hex && w.hex->book.find_spell(data, len) )
-    {
-        // FIXIT spellbind inspector gadget here
-        // and make the wizard disappear from flow
-        w.clear();
-        return true;
-    }
+    f->service = m->book.find_spell(data, len);
+    return f->service != nullptr;
+}
 
-    if ( w.spell && w.spell->book.find_spell(data, len) )
-    {
-        // FIXIT spellbind inspector gadget here
-        w.clear();
+bool Wizard::cast_spell(
+    Wand& w, Flow* f, const uint8_t* data, unsigned len)
+{
+    if ( w.hex && spellbind(w.hex, f, data, len) )
         return true;
-    }
+
+    if ( w.spell && spellbind(w.spell, f, data, len) )
+        return true;
 
     return false;
 }

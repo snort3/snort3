@@ -267,22 +267,32 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
 
     p->flow = flow;
 
-    if ( !flow->ssn_client )
+    if ( !flow->flow_state )
+        binder->eval(p);
+
+    switch ( flow->flow_state )
     {
-        binder->eval(p);
+    case 1: // block
+        stream.drop_packet(p);
+        break;
 
-        if ( !flow->session->setup(p) )
-            return 0;
+    case 2: // allow
+        stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
+        break;
 
-        news = 1;
-    }
+    case 3: // setup
+        if ( !flow->ssn_client || !flow->session->setup(p) )
+        {
+            flow->flow_state = 2;
+            break;
+        }
+        flow->flow_state = 4;
+        // now process
 
-    // no session client/server for allowed/blocked flows
-    if ( flow->ssn_client )
+    case 4: // inspect
         flow->session->process(p);
-
-    if ( news )
-        binder->eval(p);
+        break;
+    }
 
     if ( flow->next && is_bidirectional(flow) )
         cache->unlink_uni(flow);

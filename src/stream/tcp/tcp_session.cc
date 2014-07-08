@@ -537,9 +537,8 @@ void Stream5SetSplitterTcp (Flow* lwssn, bool c2s, StreamSplitter* ss)
         trk = &tcpssn->client;
     }
 
-    // FIXIT we have a sequencing issue with binder
-    //if ( trk->splitter && tcpssn->tcp_init )
-    //    delete trk->splitter;
+    if ( trk->splitter && tcpssn->tcp_init )
+        delete trk->splitter;
 
     trk->splitter = ss;
 
@@ -2683,6 +2682,7 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     s5_paf_clear(&tcpssn->server.paf_state);
 
     // update light-weight state
+    lwssn->flow_state = 0;
     lwssn->clear(freeApplicationData);
 
     // generate event for rate filtering
@@ -7270,21 +7270,15 @@ bool TcpSession::setup (Packet* p)
         flow->session_state = STREAM5_STATE_SYN;  // FIXIT same as line 4555
 
     assert(flow->session == this);
-
-    // FIXIT binder sets splitters before we get here
-    StreamSplitter* sc = client.splitter;
-    StreamSplitter* ss = server.splitter;
-
-    PAF_Status pc = client.paf_state.paf;
-    PAF_Status ps = server.paf_state.paf;
-
     reset();
 
-    client.paf_state.paf = pc;
-    server.paf_state.paf = ps;
+    Inspector* ins = flow->clouseau;
+    if ( !ins )
+        ins = flow->gadget;
+    assert(ins);
 
-    client.splitter = sc;
-    server.splitter = ss;
+    stream.set_splitter(flow, true, ins->get_splitter(true));
+    stream.set_splitter(flow, false, ins->get_splitter(false));
 
     ssnStats.sessions++;
     return true;

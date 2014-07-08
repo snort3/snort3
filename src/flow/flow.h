@@ -121,7 +121,6 @@ struct FlowState
 
     char       direction;
     char       ignore_direction; /* flag to ignore traffic on this session */
-
 };
 
 typedef enum {
@@ -180,6 +179,11 @@ public:
         clouseau = ins;
         clouseau->add_ref();
     };
+    void set_gadget(Inspector* ins)
+    {
+        gadget = ins;
+        gadget->add_ref();
+    };
 
 public:  // FIXIT privatize if possible
     // these fields are const after initialization
@@ -192,12 +196,15 @@ public:  // FIXIT privatize if possible
     Flow* prev, * next;
     Inspector* ssn_client;
     Inspector* ssn_server;
-    Inspector* clouseau;
     long last_data_seen;
 
     // everything from here down is zeroed
     FlowData* appDataList;
+    Inspector* clouseau;
+    Inspector* gadget;
+    const char* service;
 
+    int flow_state;
     FlowState s5_state;  // FIXIT rename this (s5 not appropriate)
 
     snort_ip client_ip; // FIXTHIS family and bits should be changed to uint16_t

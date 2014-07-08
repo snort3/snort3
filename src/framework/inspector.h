@@ -73,6 +73,7 @@ public:
 
     virtual void eval(Packet*) = 0;
     virtual void meta(int, const uint8_t*) { };
+    virtual int exec(int, void*) { return 0; };
 
     // framework support
     unsigned get_ref(unsigned i) { return ref_count[i]; };

@@ -576,7 +576,10 @@ static void parse_offset(
         ParseError("offset can't be used with itself, distance, or within");
 
     if (data == NULL)
+    {
         ParseError("Missing argument to 'offset' option");
+        return;
+    }
 
     if (isdigit(data[0]) || data[0] == '-')
     {
@@ -602,7 +605,10 @@ static void parse_depth(
         ParseError("depth can't be used with itself, distance, or within");
 
     if (data == NULL)
+    {
         ParseError("Missing argument to 'depth' option");
+        return;
+    }
 
     if (isdigit(data[0]) || data[0] == '-')
     {
@@ -635,7 +641,10 @@ static void parse_distance(
         ParseError("distance can't be used with itself, offset, or depth");
 
     if (data == NULL)
+    {
         ParseError("Missing argument to 'distance' option");
+        return;
+    }
 
     if (isdigit(data[0]) || data[0] == '-')
     {
@@ -660,7 +669,10 @@ static void parse_within(
         ParseError("within can't be used with itself, offset, or depth");
 
     if (data == NULL)
+    {
         ParseError("Missing argument to 'within' option");
+        return;
+    }
 
     if (isdigit(data[0]) || data[0] == '-')
     {

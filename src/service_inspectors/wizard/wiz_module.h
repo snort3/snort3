@@ -22,6 +22,7 @@
 #ifndef WIZ_MODULE_H
 #define WIZ_MODULE_H
 
+#include <string>
 #include "framework/module.h"
 
 class MagicBook;
@@ -39,7 +40,14 @@ public:
     MagicBook* get_book(bool c2s, bool hex);
 
 private:
+    void add_spells(MagicBook*, std::string&);
+
+private:
     bool hex;
+    bool c2s;
+
+    std::string service;
+    std::vector<std::string> spells;
 
     MagicBook* c2s_hexes;
     MagicBook* s2c_hexes;

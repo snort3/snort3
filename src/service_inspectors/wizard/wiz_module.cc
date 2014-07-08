@@ -36,10 +36,10 @@ static const char* s_name = "wizard";
 // wizard module
 //-------------------------------------------------------------------------
 
-static const Parameter wizard_hex_params[] =
+static const Parameter wizard_hex_param[] =
 {
-    { "service", Parameter::PT_STRING, nullptr, nullptr,
-      "name of service" },
+    { "hex", Parameter::PT_STRING, nullptr, nullptr,
+      "sequence of data with wild chars (?)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -50,24 +50,24 @@ static const Parameter wizard_hexes_params[] =
       "name of service" },
 
     { "proto", Parameter::PT_SELECT, "tcp | udp", "tcp",
-      "name of service" },
+      "protocol to scan" },
 
     { "client_first", Parameter::PT_BOOL, nullptr, "true",
       "which end initiates data transfer" },
 
-    { "to_server", Parameter::PT_LIST, wizard_hex_params, nullptr,
-      "sequence of offsets and data" },
+    { "to_server", Parameter::PT_LIST, wizard_hex_param, nullptr,
+      "sequence of data with wild chars (?)" },
 
-    { "to_client", Parameter::PT_LIST, wizard_hex_params, nullptr,
-      "sequence of offsets and data" },
+    { "to_client", Parameter::PT_LIST, wizard_hex_param, nullptr,
+      "sequence of data with wild chars (?)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter wizard_spell_params[] =
+static const Parameter wizard_spell_param[] =
 {
-    { "service", Parameter::PT_STRING, nullptr, nullptr,
-      "name of service" },
+    { "spell", Parameter::PT_STRING, nullptr, nullptr,
+      "sequence of data with wild cards (*)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -78,16 +78,16 @@ static const Parameter wizard_spells_params[] =
       "name of service" },
 
     { "proto", Parameter::PT_SELECT, "tcp | udp", "tcp",
-      "name of service" },
+      "protocol to scan" },
 
     { "client_first", Parameter::PT_BOOL, nullptr, "true",
       "which end initiates data transfer" },
 
-    { "to_server", Parameter::PT_LIST, wizard_spell_params, nullptr,
-      "sequence of offsets and data" },
+    { "to_server", Parameter::PT_LIST, wizard_spell_param, nullptr,
+      "list of initial tokens with wild cards (*)" },
 
-    { "to_client", Parameter::PT_LIST, wizard_spell_params, nullptr,
-      "sequence of offsets and data" },
+    { "to_client", Parameter::PT_LIST, wizard_spell_param, nullptr,
+      "list of initial tokens with wild cards (*)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -123,7 +123,7 @@ WizardModule::~WizardModule()
 bool WizardModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("service") )
-        return true;
+        service = v.get_string();
 
     else if ( v.is("proto") )
         return true;
@@ -131,20 +131,12 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("client_first") )
         return true;
 
-    else if ( v.is("to_server") )
-    {
-        if ( hex )
-            c2s_hexes->add_spell(v.get_string());
-        else
-            c2s_spells->add_spell(v.get_string());
-    }
-    else if ( v.is("to_client") )
-    {
-        if ( hex )
-            s2c_hexes->add_spell(v.get_string());
-        else
-            s2c_spells->add_spell(v.get_string());
-    }
+    else if ( v.is("hex") )
+        spells.push_back(v.get_string());
+
+    else if ( v.is("spell") )
+        spells.push_back(v.get_string());
+
     else
         return false;
 
@@ -158,20 +150,58 @@ bool WizardModule::begin(const char* fqn, int, SnortConfig*)
         c2s_hexes = new HexBook;
         s2c_hexes = new HexBook;
 
-        c2s_spells = new HexBook;
-        s2c_spells = new HexBook;
+        c2s_spells = new SpellBook;
+        s2c_spells = new SpellBook;
     }
-    else if ( !strcmp(fqn, "hexes") )
+    else if ( !strcmp(fqn, "wizard.hexes") )
         hex = true;
 
-    else if ( !strcmp(fqn, "spells") )
+    else if ( !strcmp(fqn, "wizard.spells") )
         hex = false;
+
+    else if ( !strcmp(fqn, "wizard.hexes.to_client") )
+        c2s = false;
+
+    else if ( !strcmp(fqn, "wizard.spells.to_client") )
+        c2s = false;
+
+    else if ( !strcmp(fqn, "wizard.hexes.to_server") )
+        c2s = true;
+
+    else if ( !strcmp(fqn, "wizard.spells.to_server") )
+        c2s = true;
 
     return true;
 }
 
-bool WizardModule::end(const char*, int, SnortConfig*)
+void WizardModule::add_spells(MagicBook* b, string& service)
 {
+    for ( auto p : spells )
+        b->add_spell(p.c_str(), service.c_str());
+}
+
+bool WizardModule::end(const char*, int idx, SnortConfig*)
+{
+    if ( !idx )
+        return true;
+
+    if ( hex )
+    {
+        if ( c2s )
+            add_spells(c2s_hexes, service);
+        else
+            add_spells(s2c_hexes, service);
+    }
+    else
+    {
+        if ( c2s )
+            add_spells(c2s_spells, service);
+        else
+            add_spells(s2c_spells, service);
+    }
+    spells.clear();
+    service.clear();
+
     return true;
 }
 

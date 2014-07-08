@@ -219,7 +219,10 @@ static void react_getpage (SnortConfig* sc)
     size_t n;
 
     if ( !sc )
+    {
         ParseError("Snort config for parsing is NULL.");
+        return;
+    }
 
     if ( s_page || !sc->react_page ) return;
 
