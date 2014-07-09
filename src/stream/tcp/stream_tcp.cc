@@ -74,7 +74,7 @@ void StreamTcp::pinit()
 
 void StreamTcp::pterm()
 {
-    //tcp_sterm();  // FIXIT can't do until after StreamBase::pterm()
+    tcp_sterm();
 }
 
 void StreamTcp::show(SnortConfig*)
