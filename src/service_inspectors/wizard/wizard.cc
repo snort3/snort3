@@ -142,18 +142,13 @@ MagicSplitter::~MagicSplitter()
 
 PAF_Status MagicSplitter::scan (
     Flow* f, const uint8_t* data, uint32_t len,
-    uint32_t, uint32_t* fp)
+    uint32_t, uint32_t*)
 {
     ++tstats.tcp_scans;
 
     if ( wizard->cast_spell(wand, f, data, len) )
-    { 
-        // FIXIT len + 1 means go back to the last flush point
-        // (0 means start of this buffer)
         ++tstats.tcp_hits;
-        *fp = len + 1;
-        return PAF_RESET;
-    }
+
     return PAF_SEARCH;
 }
 

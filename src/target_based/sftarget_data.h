@@ -124,24 +124,5 @@ int SFAT_AddHostEntryToMap(void);
 HostAttributeEntry * SFAT_CreateHostEntry(void);
 ApplicationEntry * SFAT_CreateApplicationEntry(void);
 
-#if 0
-/* Callback Functions from YACC */
-#ifdef __cplusplus
-extern "C" {
-#endif
-int SFAT_AddMapEntry(MapEntry *);
-char *SFAT_LookupAttributeNameById(int id);
-int SFAT_SetHostIp(char *);
-int SFAT_SetOSAttribute(AttributeData *data, int attribute);
-int SFAT_SetOSPolicy(char *policy_name, int attribute);
-int SFAT_AddApplicationData(void);
-int SFAT_SetApplicationAttribute(AttributeData *data, int attribute);
-void PrintAttributeData(char *prefix, AttributeData *data);
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-
 #endif /* SFTARGET_DATA_H */
 

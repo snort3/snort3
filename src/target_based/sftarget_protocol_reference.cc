@@ -46,6 +46,7 @@ static const char *standard_protocols[] =
     "tcp",
     "udp",
     "icmp",
+#if 0  // FIXIT should be able to delete this and add only what is needed
     /* Application Protocols */
     "http",
     "ftp",
@@ -68,6 +69,7 @@ static const char *standard_protocols[] =
     "tftp",
     "x11",
     "ftp-data",
+#endif
     NULL
 };
 

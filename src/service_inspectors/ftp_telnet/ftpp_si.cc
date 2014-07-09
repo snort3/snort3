@@ -56,7 +56,6 @@
 #include "snort.h"
 #include "stream/stream_api.h"
 #include "ft_main.h"
-#include "telnet.h"
 
 unsigned FtpFlowData::flow_id = 0;
 unsigned TelnetFlowData::flow_id = 0;
@@ -147,43 +146,11 @@ int TelnetsessionInspection(Packet *p, TELNET_PROTO_CONF* GlobalConf,
         TELNET_SESSION **Telnetsession, FTPP_SI_INPUT *SiInput, int *piInspectMode)
 {
     int iRet;
-    int iTelnetSip;
-    int iTelnetDip;
-    int16_t app_id = stream.get_application_protocol_id(p->flow);
 
-    if (app_id == SFTARGET_UNKNOWN_PROTOCOL)
+    if (SiInput->pdir == FTPP_SI_CLIENT_MODE ||
+        SiInput->pdir == FTPP_SI_SERVER_MODE)
     {
-        return FTPP_INVALID_PROTO;
-    }
-    if (app_id == telnet_app_id)
-    {
-        if (SiInput->pdir == FTPP_SI_CLIENT_MODE ||
-            SiInput->pdir == FTPP_SI_SERVER_MODE)
-        {
-            *piInspectMode = (int)SiInput->pdir;
-        }
-    }
-    else if (app_id && app_id != telnet_app_id)
-    {
-        return FTPP_INVALID_PROTO;
-    }
-    else
-    {
-        iTelnetSip = (p->packet_flags & PKT_FROM_SERVER);
-        iTelnetDip = (p->packet_flags & PKT_FROM_SERVER);
-
-        if (iTelnetSip)
-        {
-            *piInspectMode = FTPP_SI_SERVER_MODE;
-        }
-        else if (iTelnetDip)
-        {
-            *piInspectMode = FTPP_SI_CLIENT_MODE;
-        }
-        else
-        {
-            return FTPP_INVALID_PROTO;
-        }
+        *piInspectMode = (int)SiInput->pdir;
     }
 
     /*
@@ -259,7 +226,6 @@ static int FTPInitConf(
     int iServerSip;
     int iServerDip;
     int iRet = FTPP_SUCCESS;
-    int16_t app_id = 0;
 
     /*
      * We check the IP and the port to see if the FTP client is talking in
@@ -289,12 +255,7 @@ static int FTPInitConf(
     switch(SiInput->pdir)
     {
         case FTPP_SI_NO_MODE:
-
-            app_id = stream.get_application_protocol_id(p->flow);
-
-            if (app_id == ftp_app_id || app_id == 0)
-            {
-
+        {
             /*
              * We check for the case where both SIP and DIP
              * appear to be servers.  In this case, we assume server
@@ -348,42 +309,22 @@ static int FTPInitConf(
             }
             break;
 
-            }
+        }
 
         case FTPP_SI_CLIENT_MODE:
             /* Packet is from client --> dest is Server */
-            app_id = stream.get_application_protocol_id(p->flow);
-
-            if ((app_id == ftp_app_id) || (!app_id && iServerDip))
-            {
-                *piInspectMode = FTPP_SI_CLIENT_MODE;
-                *ClientConf = ClientConfSip;
-                *ServerConf = ServerConfDip;
-                SiInput->pproto = FTPP_SI_PROTO_FTP;
-            }
-            else
-            {
-                *piInspectMode = FTPP_SI_NO_MODE;
-                iRet = FTPP_NONFATAL_ERR;
-            }
+            *piInspectMode = FTPP_SI_CLIENT_MODE;
+            *ClientConf = ClientConfSip;
+            *ServerConf = ServerConfDip;
+            SiInput->pproto = FTPP_SI_PROTO_FTP;
             break;
 
         case FTPP_SI_SERVER_MODE:
             /* Packet is from server --> src is Server */
-            app_id = stream.get_application_protocol_id(p->flow);
-
-            if ((app_id == ftp_app_id) || (!app_id && iServerSip))
-            {
-                *piInspectMode = FTPP_SI_SERVER_MODE;
-                *ClientConf = ClientConfDip;
-                *ServerConf = ServerConfSip;
-                SiInput->pproto = FTPP_SI_PROTO_FTP;
-            }
-            else
-            {
-                *piInspectMode = FTPP_SI_NO_MODE;
-                iRet = FTPP_NONFATAL_ERR;
-            }
+            *piInspectMode = FTPP_SI_SERVER_MODE;
+            *ClientConf = ClientConfDip;
+            *ServerConf = ServerConfSip;
+            SiInput->pproto = FTPP_SI_PROTO_FTP;
             break;
 
         default:

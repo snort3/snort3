@@ -122,8 +122,6 @@ static THREAD_LOCAL const uint32_t flush_size = 28;
 static THREAD_LOCAL const uint32_t rpc_memcap = 1048510;
 static THREAD_LOCAL uint32_t rpc_memory = 0;
 
-static int16_t rpc_decode_app_protocol_id = SFTARGET_UNKNOWN_PROTOCOL;
-
 static const char* mod_name = "rpc_decode";
 
 #ifdef PERF_PROFILING
@@ -142,7 +140,6 @@ static THREAD_LOCAL SimpleStats rdstats;
 static SimpleStats grdstats;
 
 static int ConvertRPC(RpcDecodeConfig *, RpcSsnData *, Packet *);
-static int RpcDecodeIsEligible(RpcDecodeConfig *, Packet *);
 
 static RpcSsnData * RpcSsnDataNew(Packet *);
 static inline void RpcSsnClean(RpcSsnData *);
@@ -203,22 +200,6 @@ static inline void RpcPreprocEvent(
         default:
             break;
     }
-}
-
-static int RpcDecodeIsEligible(RpcDecodeConfig*, Packet *p)
-{
-    int valid_app_id = 0;
-    int16_t app_id = stream.get_application_protocol_id(p->flow);
-
-    if (app_id > 0)
-    {
-        valid_app_id = 1;
-    }
-
-    if (valid_app_id && app_id != rpc_decode_app_protocol_id)
-        return 0;
-
-    return 1;
 }
 
 static RpcStatus RpcStatefulInspection(RpcDecodeConfig *rconfig,
@@ -1069,11 +1050,6 @@ void RpcDecode::eval(Packet *p)
 
         rsdata = fd ? &fd->session : NULL;
     }
-    if (rsdata == NULL)
-    {
-        if (!RpcDecodeIsEligible(&config, p))
-            return;
-    }
 
     PREPROC_PROFILE_START(rpcdecodePerfStats);
     ++rdstats.total_packets;
@@ -1125,7 +1101,6 @@ static void rd_init()
     RegisterPreprocessorProfile(
         mod_name, &rpcdecodePerfStats, 0, &totalPerfStats, rd_get_profile);
 #endif
-    rpc_decode_app_protocol_id = AddProtocolReference("sunrpc");
     RpcFlowData::init();
 }
 

@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "telnet.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,7 +32,6 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 
-#include "telnet.h"
 #include "pp_telnet.h"
 #include "ftpp_si.h"
 #include "ftpp_ui_config.h"
@@ -44,8 +45,6 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
-
-int16_t telnet_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
 static const char* tn_name = "telnet";
 
@@ -302,7 +301,6 @@ static void tn_init()
         tn_name, &telnetPerfStats, 0, &totalPerfStats, tn_get_profile);
 #endif
 
-    telnet_app_id = AddProtocolReference(tn_name);
     TelnetFlowData::init();
 }
 

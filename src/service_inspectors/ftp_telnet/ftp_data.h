@@ -17,12 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef TELNET_H
-#define TELNET_H
+#ifndef FTP_DATA_H
+#define FTP_DATA_H
 
 #include "framework/inspector.h"
 
-extern const InspectApi tn_api;
+extern const InspectApi fd_api;
 
 #endif
 

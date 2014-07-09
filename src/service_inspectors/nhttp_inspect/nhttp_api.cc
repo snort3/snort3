@@ -38,8 +38,6 @@
 #include "nhttp_inspect.h"
 #include "nhttp_api.h"
 
-int16_t NHttpApi::appProtocolId;
-
 Module* NHttpApi::nhttp_mod_ctor() { return new NHttpModule; }
 
 void NHttpApi::nhttp_mod_dtor(Module* m) { delete m; }
@@ -49,7 +47,6 @@ const char* NHttpApi::nhttp_myName = "nhttp_inspect";
 void NHttpApi::nhttp_init()
 {
     NHttpFlowData::init();
-    appProtocolId = AddProtocolReference("nhttp");
 }
 
 void NHttpApi::nhttp_term()

@@ -39,7 +39,6 @@
 
 #define BUF_SIZE 1024
 
-extern int16_t ftp_app_id;
 extern int16_t ftp_data_app_id;
 
 void do_detection(Packet*);

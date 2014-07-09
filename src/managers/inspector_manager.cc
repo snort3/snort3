@@ -34,6 +34,7 @@
 #include "ppm.h"
 #include "snort.h"
 #include "log/messages.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 using namespace std;
 
@@ -185,6 +186,9 @@ void InspectorManager::add_plugin(const InspectApi* api)
 {
     PHGlobal* g = new PHGlobal(*api);
     s_handlers.push_back(g);
+
+    if ( api->service )
+        AddProtocolReference(api->service);
 }
 
 static const InspectApi* get_plugin(const char* keyword)
@@ -527,6 +531,32 @@ static inline void execute(
     }
 }
 
+void InspectorManager::bumble(Packet* p)
+{
+    Flow* flow = p->flow;
+    flow->clouseau->eval(p);
+
+    if ( !flow->service )
+        return;
+
+    Inspector* ins = get_inspector("binder");
+
+    if ( ins )
+        ins->exec(0, flow);
+
+    flow->clear_clouseau();
+
+    if ( !flow->gadget || flow->protocol != IPPROTO_TCP )
+        return;
+
+#if 0
+    ins = get_inspector("stream_tcp");
+
+    if ( ins )
+        ins->exec(0, p);
+#endif
+}
+
 void InspectorManager::execute (Packet* p)
 {
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
@@ -546,18 +576,8 @@ void InspectorManager::execute (Packet* p)
             return;
 
         if ( flow->clouseau )
-        {
-            flow->clouseau->eval(p);
+            bumble(p);
 
-            if ( flow->service )
-            {
-                Inspector* ins = InspectorManager::get_inspector("binder");
-                if ( ins )
-                    ins->exec(0, flow);
-
-                flow->clear_clouseau();
-            }
-        }
         // FIXIT BIND need more than one service inspector?
         //::execute(p, fp->service.vec, fp->service.num);
         if ( flow->gadget )

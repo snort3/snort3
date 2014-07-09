@@ -101,6 +101,8 @@ public:
     void eval(Packet*);
     int exec(int, void*);
 
+    Inspector* find_inspector(const char*);
+
     void add(Binding* b)
     { bindings.push_back(b); };
 
@@ -131,9 +133,24 @@ void Binder::eval(Packet* p)
 }
 
 // FIXIT implement inspector lookup from policy / bindings
-static Inspector* find_inspector(const char*)
+Inspector* Binder::find_inspector(const char* s)
 {
-    return nullptr;
+    Binding* pb;
+    unsigned i, sz = bindings.size();
+
+    for ( i = 0; i < sz; i++ )
+    {
+        pb = bindings[i];
+
+        if ( pb->when_svc == s )
+            break;
+    }
+        
+    if ( i == sz )
+        return nullptr;
+
+    Inspector* ins = InspectorManager::get_inspector(pb->type.c_str());
+    return ins;
 }
 
 int Binder::exec(int, void* pv)

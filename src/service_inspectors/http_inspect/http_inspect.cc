@@ -75,9 +75,6 @@
 
 #define ERRSTRLEN 1000
 
-/* Store the protocol id received from the stream reassembler */
-int16_t hi_app_protocol_id = SFTARGET_UNKNOWN_PROTOCOL;
-
 int hex_lookup[256];
 int valid_lookup[256];
 
@@ -437,9 +434,6 @@ static void hs_init()
     RegisterPreprocessorProfile(
         SERVER_KEYWORD, &hiPerfStats, 0, &totalPerfStats, hi_get_profile);
 #endif
-
-    /* Find and cache protocol ID for packet comparison */
-    hi_app_protocol_id = AddProtocolReference("http");
 
     HttpFlowData::init();
     HI_SearchInit();
