@@ -95,8 +95,7 @@ public:
     { return false; };
 
     // IT_SERVICE only
-    virtual class StreamSplitter* get_splitter(bool /*to_server*/)
-    { return nullptr; };
+    virtual class StreamSplitter* get_splitter(bool to_server);
 
     void set_api(const InspectApi* p)
     { api = p; };

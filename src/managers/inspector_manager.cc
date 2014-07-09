@@ -575,12 +575,12 @@ void InspectorManager::execute (Packet* p)
         if ( !flow )
             return;
 
-        if ( flow->clouseau )
+        if ( flow->clouseau && (p->proto_bits & flow->clouseau->get_api()->proto_bits) )
             bumble(p);
 
         // FIXIT BIND need more than one service inspector?
         //::execute(p, fp->service.vec, fp->service.num);
-        if ( flow->gadget )
+        if ( flow->gadget && (p->proto_bits & flow->gadget->get_api()->proto_bits) )
             flow->gadget->eval(p);
     }
     else
