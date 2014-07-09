@@ -540,7 +540,7 @@ FtpServer::FtpServer(FTP_SERVER_PROTO_CONF* server)
 FtpServer::~FtpServer ()
 {
     CleanupFTPServerConf(ftp_server);
-    free(ftp_server);
+    delete ftp_server;
 
     if ( ftp_client )
         // FIXIT make sure CleanupFTPClientConf() is called
