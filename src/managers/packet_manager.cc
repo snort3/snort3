@@ -276,7 +276,7 @@ void PacketManager::release_plugins()
             p->gterm();
 
         uint8_t index = get_codec(p->base.name);
-        if( index != 0)
+        //if( index != 0)  FIXIT prevents calling dtor()
         {
             p->dtor(s_protocols[index]);
             s_protocols[index] = nullptr;
