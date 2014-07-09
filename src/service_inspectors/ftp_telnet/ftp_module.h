@@ -95,8 +95,8 @@ struct FtpCmd
     uint32_t flags;
     unsigned number;
 
-    FtpCmd(std::string&, uint32_t, unsigned);
-    FtpCmd(std::string&, std::string&);
+    FtpCmd(std::string&, uint32_t, int);
+    FtpCmd(std::string&, std::string&, int);
 };
 
 class FtpServerModule : public Module
@@ -116,14 +116,14 @@ public:
     const FtpCmd* get_cmd(unsigned idx);
 
 private:
-    void add_commands(Value&, uint32_t flags, unsigned num = 0);
+    void add_commands(Value&, uint32_t flags, int num = 0);
 
 private:
     FTP_SERVER_PROTO_CONF* conf;
     std::vector<FtpCmd*> cmds;
     std::string names;
     std::string format;
-    unsigned number;
+    int number;
 };
 
 #endif

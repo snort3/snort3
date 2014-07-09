@@ -158,19 +158,26 @@ bool FtpClientModule::end(const char* fqn, int, SnortConfig*)
 // server stuff
 //-------------------------------------------------------------------------
 
-FtpCmd::FtpCmd(std::string& key, uint32_t flg, unsigned num)
+FtpCmd::FtpCmd(std::string& key, uint32_t flg, int num)
 {
     name = key;
     flags = flg;
     number = num;
 }
 
-FtpCmd::FtpCmd(std::string& key, std::string& fmt)
+FtpCmd::FtpCmd(std::string& key, std::string& fmt, int num)
 {
     name = key;
     format = fmt;
+
     flags = CMD_VALID;
     number = 0;
+
+    if ( num >= 0 )
+    {
+        number = num;
+        flags |= CMD_LEN;
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -234,17 +241,6 @@ static const char* DEFAULT_FTP_CONF[] =
 
 //-------------------------------------------------------------------------
 
-static const Parameter ftp_server_alt_max_params[] =
-{
-    { "commands", Parameter::PT_STRING, nullptr, nullptr,
-      "list of commands" },
-
-    { "length", Parameter::PT_INT, "0:", "0",
-      "specify non-default maximum for command" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter ftp_server_validity_params[] =
 {
     { "command", Parameter::PT_STRING, nullptr, nullptr,
@@ -252,6 +248,9 @@ static const Parameter ftp_server_validity_params[] =
 
     { "format", Parameter::PT_STRING, nullptr, nullptr,
       "format specification" },
+
+    { "length", Parameter::PT_INT, "0:", "0",
+      "specify non-default maximum for command" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -269,9 +268,6 @@ static const Parameter ftp_directory_params[] =
 
 static const Parameter ftp_server_params[] =
 {
-    { "alt_max_param", Parameter::PT_LIST, ftp_server_alt_max_params, nullptr,
-      "specify non-default maximum command lengths" },
-
     { "chk_str_fmt", Parameter::PT_STRING, nullptr, nullptr,
       "check the formatting of the given commands" },
 
@@ -361,7 +357,7 @@ FtpServerModule::~FtpServerModule()
 }
 
 void FtpServerModule::add_commands(
-    Value& v, uint32_t flags, unsigned num)
+    Value& v, uint32_t flags, int num)
 {
     string tok;
     v.set_first_token();
@@ -378,6 +374,13 @@ const FtpCmd* FtpServerModule::get_cmd(unsigned idx)
         return nullptr;
 }
 
+FTP_SERVER_PROTO_CONF* FtpServerModule::get_data()
+{   
+    FTP_SERVER_PROTO_CONF* tmp = conf;
+    conf = nullptr;
+    return tmp;
+}
+
 //-------------------------------------------------------------------------
 
 bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
@@ -389,6 +392,9 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
         add_commands(v, CMD_CHECK);
 
     else if ( v.is("command") )
+        names = v.get_string();
+
+    else if ( v.is("commands") )
         names = v.get_string();
 
     else if ( v.is("data_chan_cmds") )
@@ -442,32 +448,19 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("telnet_cmds") )
         conf->telnet_cmds = v.get_bool();
 
+    else
+        return false;
+
     return true;
 }
 
 //-------------------------------------------------------------------------
 
-FTP_SERVER_PROTO_CONF* FtpServerModule::get_data()
-{   
-    FTP_SERVER_PROTO_CONF* tmp = conf;
-    conf = nullptr;
-    return tmp;
-}
-
-bool FtpServerModule::begin(const char* fqn, int, SnortConfig*)
+bool FtpServerModule::begin(const char*, int, SnortConfig*)
 {
-    if ( strcmp(fqn, FTP_SERVER) )
-    {
-        names.clear();
-        format.clear();
-        number = 0;
-        return true;
-    }
-
-    for ( auto p : cmds )
-        delete p;
-
-    cmds.clear();
+    names.clear();
+    format.clear();
+    number = -1;
 
     if ( !conf )
         conf = new FTP_SERVER_PROTO_CONF;
@@ -475,24 +468,19 @@ bool FtpServerModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-bool FtpServerModule::end(const char* fqn, int, SnortConfig*)
+bool FtpServerModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( !strcmp(fqn, "ftp_server.cmd_validity") )
-        cmds.push_back(new FtpCmd(names, format));
+    if ( !idx )
+        return true;
 
-    else if ( !strcmp(fqn, "ftp_server.alt_max_param") )
-    {
-        Value v(names.c_str());
-        add_commands(v, CMD_LEN, number);
-    }
-    else if ( !strcmp(fqn, "ftp_server.dir_cmds") )
+    if ( !strcmp(fqn, "ftp_server.cmd_validity") )
+        cmds.push_back(new FtpCmd(names, format, number));
+
+    else if ( !strcmp(fqn, "ftp_server.directory_cmds") )
     {
         Value v(names.c_str());
         add_commands(v, CMD_DIR, number);
     }
-    else if ( strcmp(fqn, FTP_SERVER) )
-        return false;
-
     return true;
 }
 

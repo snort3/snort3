@@ -1107,7 +1107,6 @@ void RpcDecode::eval(Packet *p)
     RpcPreprocEvent(&config, rsdata, ConvertRPC(&config, rsdata, p));
 
     PREPROC_PROFILE_END(rpcdecodePerfStats);
-    return;
 }
 
 //-------------------------------------------------------------------------
