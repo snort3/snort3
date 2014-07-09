@@ -39,11 +39,13 @@ NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
 const Parameter NHttpModule::nhttpParams[] =
     {{ "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
      { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
+     { "test_inspect", Parameter::PT_BOOL, nullptr, "false", "force all possible inspections and normalizations" },
      { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
 
 bool NHttpModule::begin(const char*, int, SnortConfig*) {
     test_input = false;
     test_output = false;
+    test_inspect = false;
     return true;
 }
 
@@ -54,6 +56,7 @@ bool NHttpModule::end(const char*, int, SnortConfig*) {
 bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
     if (val.is("test_input")) test_input = val.get_bool();
     else if (val.is("test_output")) test_output = val.get_bool();
+    else if (val.is("test_inspect")) test_inspect = val.get_bool();
     else return false;
 
     return true;

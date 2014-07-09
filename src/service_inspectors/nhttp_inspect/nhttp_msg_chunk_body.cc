@@ -77,6 +77,7 @@ void NHttpMsgChunkBody::analyze() {
     if (tcpClose) infractions |= INF_TRUNCATED;
 }
 
+
 void NHttpMsgChunkBody::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
@@ -89,7 +90,7 @@ void NHttpMsgChunkBody::printSection(FILE *output) const {
     NHttpMsgSection::printMessageWrapup(output);
 }
 
-void NHttpMsgChunkBody::updateFlow() const {
+void NHttpMsgChunkBody::updateFlow() {
     if (tcpClose) {
         sessionData->typeExpected[sourceId] = SEC_CLOSED;
         sessionData->halfReset(sourceId);

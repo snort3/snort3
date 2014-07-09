@@ -60,14 +60,13 @@ void NHttpMsgSection::loadSection(const uint8_t *buffer, const uint16_t bufsize,
     tcpClose = sessionData->tcpClose;
     versionId = sessionData->versionId[sourceId];
     methodId = sessionData->methodId[sourceId];
-    schemeId = sessionData->schemeId[sourceId];
     statusCodeNum = sessionData->statusCodeNum[sourceId];
 
     scratchPad.reinit();
 }
 
 void NHttpMsgSection::printInterval(FILE *output, const char* name, const uint8_t *text, int32_t length, bool intVals) {
-    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE)) return;
+    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) return;
     int outCount = fprintf(output, "%s, length = %d, ", name, length);
     if (length <= 0) {
         fprintf(output, "\n");

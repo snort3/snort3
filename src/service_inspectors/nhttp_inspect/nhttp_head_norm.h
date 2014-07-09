@@ -52,7 +52,7 @@ public:
           normalizer { f1, f2, f3 },
           normArg { f1Arg, f2Arg, f3Arg },
           numNormalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 != nullptr)*(f3 != nullptr)) {};
-    void normalize(ScratchPad &scratchPad, uint64_t &infractions, NHttpEnums::HeaderId headId, const NHttpEnums::HeaderId headerNameId[], const field headerName[], int32_t numHeaders,
+    int32_t normalize(NHttpEnums::HeaderId headId, ScratchPad &scratchPad, uint64_t &infractions, const NHttpEnums::HeaderId headerNameId[], const field headerName[], int32_t numHeaders,
        field &resultField) const;
     NHttpEnums::NormFormat getFormat() const {return format;};
 

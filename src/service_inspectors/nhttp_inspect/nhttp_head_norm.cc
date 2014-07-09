@@ -59,12 +59,14 @@ int32_t HeaderNormalizer::deriveHeaderContent(const uint8_t *value, int32_t leng
     return outLength;
 }
 
-void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, HeaderId headId, const HeaderId headerNameId[], const field headerValue[], int32_t numHeaders,
+// This method normalizes the header field value for headId.
+int32_t HeaderNormalizer::normalize(HeaderId headId, ScratchPad &scratchPad, uint64_t &infractions, const HeaderId headerNameId[], const field headerValue[], int32_t numHeaders,
         field &resultField) const {
-    // This method normalizes the header field value for headId.
+    // If the raw header is not present length will be STAT_NOSOURCE and normalization is skipped
+    if (resultField.length != STAT_NOTCOMPUTE) return resultField.length;
     if (format == NORM_NULL) {
         resultField.length = STAT_NOTCONFIGURED;
-        return;
+        return resultField.length;
     }
 
     // Search Header IDs from all the headers in this message. A critical issue is whether the header can be present more than once in a message. concatenateRepeats means the
@@ -85,8 +87,8 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
         }
     }
     if (numMatches == 0) {
-        resultField.length = STAT_NOTPRESENT;
-        return;
+        resultField.length = STAT_NOSOURCE;
+        return resultField.length;
     }
     if (infractRepeats && (numMatches >= 2)) infractions |= INF_BADHEADERREPS;
 
@@ -102,7 +104,7 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
     uint8_t * const scratch = scratchPad.request(2*bufferLength);
     if (scratch == nullptr) {
         resultField.length = STAT_INSUFMEMORY;
-        return;
+        return resultField.length;
     }
 
     uint8_t * const frontHalf = scratch;
@@ -127,12 +129,13 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
         else                         dataLength = normalizer[i](frontHalf, dataLength, backHalf, infractions, normArg[i]);
         if (dataLength <= 0) {
             resultField.length = dataLength;
-            return;
+            return resultField.length;
         }
     }
     resultField.start = scratch;
     resultField.length = dataLength;
     scratchPad.commit(dataLength);
+    return resultField.length;
 }
 
 

@@ -44,7 +44,7 @@ using namespace NHttpEnums;
 // vastly bigger than any legitimate chunk.
 void NHttpMsgChunkHead::deriveChunkLength() {
     if (chunkSize.length <= 0) {
-        dataLength = STAT_PROBLEMATIC;
+        dataLength = STAT_NOSOURCE;
         infractions |= INF_BADCHUNKSIZE;
         return;
     }
@@ -118,7 +118,7 @@ void NHttpMsgChunkHead::printSection(FILE *output) const {
     NHttpMsgSection::printMessageWrapup(output);
 }
 
-void NHttpMsgChunkHead::updateFlow() const {
+void NHttpMsgChunkHead::updateFlow() {
     if (tcpClose) {
         sessionData->typeExpected[sourceId] = SEC_CLOSED;
         sessionData->halfReset(sourceId);
@@ -141,7 +141,7 @@ void NHttpMsgChunkHead::updateFlow() const {
 
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgChunkHead::legacyClients() const {
+void NHttpMsgChunkHead::legacyClients() {
     ClearHttpBuffers();
     if (startLine.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, startLine.start, (unsigned)startLine.length);
 }

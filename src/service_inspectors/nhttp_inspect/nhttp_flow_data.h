@@ -78,7 +78,6 @@ private:
     // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize hard-to-find bugs
     NHttpEnums::VersionId versionId[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
     NHttpEnums::MethodId methodId[2] = { NHttpEnums::METH__NOTPRESENT, NHttpEnums::METH__NOTPRESENT };
-    NHttpEnums::SchemeId schemeId[2] = { NHttpEnums::SCH__NOTPRESENT, NHttpEnums::SCH__NOTPRESENT };
     int32_t statusCodeNum[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
     int64_t dataLength[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };        // length of the data from Content-Length field or chunk header.      

@@ -41,8 +41,9 @@ class NHttpMsgHeadShared: public NHttpMsgSection {
 public:
     void initSection();
     void analyze();
+    void analyzeAll();
     void genEvents();
-    void legacyClients() const;
+    void legacyClients();
 
 protected:
     // Header normalization. There should be one of these for every different way we can process a header field value.

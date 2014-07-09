@@ -51,7 +51,6 @@ void NHttpFlowData::halfReset(SourceId sourceId) {
 
     versionId[sourceId] = VERS__NOTPRESENT;
     methodId[sourceId] = METH__NOTPRESENT;
-    schemeId[sourceId] = SCH__NOTPRESENT;
     statusCodeNum[sourceId] = STAT_NOTPRESENT;
 }
 

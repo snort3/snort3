@@ -44,15 +44,16 @@
 
 class ScratchPad {
 public:
-    ScratchPad(uint64_t *buff, uint32_t length) : buffer(buff), capacity(length*8), used(0) {}; // Careful: length must be number of uint64_ts provided, not octets.
+    ScratchPad(uint32_t _capacity) : capacity(_capacity), buffer(new uint64_t[_capacity/8+1]) {};
+    ~ScratchPad() { delete[] buffer; };
     void reinit() {used = 0;};
     uint8_t *request(uint32_t needed) const {return (needed <= capacity-used) ? (uint8_t*)(buffer+used) : nullptr;};
     void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; };  // round up to multiple of 8 to preserve alignment
 
 private:
-    uint64_t *buffer;
     uint32_t capacity;
-    uint32_t used;
+    uint64_t *buffer;
+    uint32_t used = 0;
 };
 
 #endif

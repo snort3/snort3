@@ -23,11 +23,10 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      URI normalization functions
+//  @brief      URI normalization class
 //
 
 
-// &&&#include <string.h>
 #include <assert.h>
 #include <sys/types.h>
 
@@ -36,12 +35,9 @@
 
 using namespace NHttpEnums;
 
-void UriNormalizer::normalize(const field &input, field &result, ScratchPad &scratchPad, uint64_t &infractions) const {
+void UriNormalizer::normalize(const field &input, field &result, bool doPath, ScratchPad &scratchPad, uint64_t &infractions) {
     if (result.length != STAT_NOTCOMPUTE) return;
-    if (input.length < 0) {
-        result.length = STAT_NOTPRESENT;
-        return;
-    }
+    assert (input.length >= 0);
 
     // Almost all HTTP requests are honest and rarely need expensive normalization processing. We do a quick scan for
     // red flags and only perform normalization if something comes up. Otherwise we set the normalized field to point
@@ -78,7 +74,7 @@ void UriNormalizer::normalize(const field &input, field &result, ScratchPad &scr
     result.length = dataLength;
 }
 
-bool UriNormalizer::noPathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) const {
+bool UriNormalizer::noPathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) {
     for (int32_t k = 0; k < inLength; k++) {
         if ((uriChar[inBuf[k]] == CHAR_NORMAL) || (uriChar[inBuf[k]] == CHAR_PATH)) continue;
         infractions |= INF_URINEEDNORM;
@@ -87,7 +83,7 @@ bool UriNormalizer::noPathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t
     return true;
 }
 
-bool UriNormalizer::pathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) const {
+bool UriNormalizer::pathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) {
     for (int32_t k = 0; k < inLength; k++) {
         if (uriChar[inBuf[k]] == CHAR_NORMAL) continue;
         if ((inBuf[k] == '/') && ((k == 0) || (inBuf[k-1] != '/'))) continue;
@@ -97,7 +93,7 @@ bool UriNormalizer::pathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& 
     return true;
 }
 
-int32_t UriNormalizer::normCharClean(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t& infractions, const void *) const {
+int32_t UriNormalizer::normCharClean(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t& infractions, const void *) {
     int32_t length = 0;
     for (int32_t k = 0; k < inLength; k++) {
         switch (uriChar[inBuf[k]]) {
@@ -154,7 +150,7 @@ int32_t UriNormalizer::normCharClean(const uint8_t* inBuf, int32_t inLength, uin
 }
 
 // Convert URI backslashes to slashes
-int32_t UriNormalizer::normBackSlash(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t& infractions, const void *) const {
+int32_t UriNormalizer::normBackSlash(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t& infractions, const void *) {
     for (int32_t k = 0; k < inLength; k++) {
         if (inBuf[k] != '\\') outBuf[k] = inBuf[k];
         else {
@@ -166,7 +162,7 @@ int32_t UriNormalizer::normBackSlash(const uint8_t* inBuf, int32_t inLength, uin
 }
 
 // Caution: worst case output length is one greater than input length
-int32_t UriNormalizer::normPathClean(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t& infractions, const void *) const {
+int32_t UriNormalizer::normPathClean(const uint8_t* inBuf, int32_t inLength, uint8_t *outBuf, uint64_t& infractions, const void *) {
     int32_t length = 0;
     // It simplifies the code that handles /./ and /../ to pretend there is an extra '/' after the buffer.
     // Avoids making a special case of URIs that end in . or ..

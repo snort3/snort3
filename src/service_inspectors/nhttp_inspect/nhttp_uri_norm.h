@@ -33,22 +33,19 @@
 
 class UriNormalizer {
 public:
-    UriNormalizer(bool doPath_) : doPath(doPath_) {};
-    void normalize(const field &input, field &result, ScratchPad &scratchPad, uint64_t &infractions) const;
+    static void normalize(const field &input, field &result, bool doPath, ScratchPad &scratchPad, uint64_t &infractions);
 
 private:
     static const NHttpEnums::CharAction uriChar[256];
     static const int8_t asHex[256];
     static const bool goodPercent[256];
 
-    bool noPathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) const;
-    bool pathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions) const;
+    static bool noPathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions);
+    static bool pathCheck(const uint8_t* inBuf, int32_t inLength, uint64_t& infractions);
 
-    int32_t normCharClean(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed) const;
-    int32_t normBackSlash(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed) const;
-    int32_t normPathClean(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed) const;
-
-    bool doPath;
+    static int32_t normCharClean(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
+    static int32_t normBackSlash(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
+    static int32_t normPathClean(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void* notUsed);
 };
 
 #endif

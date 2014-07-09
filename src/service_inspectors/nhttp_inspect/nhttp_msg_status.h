@@ -42,8 +42,8 @@ public:
     void analyze();
     void printSection(FILE *output) const;
     void genEvents();
-    void updateFlow() const;
-    void legacyClients() const;
+    void updateFlow();
+    void legacyClients();
 
 private:
     // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert

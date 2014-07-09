@@ -48,7 +48,7 @@ void NHttpMsgTrailer::printSection(FILE *output) const {
 }
 
 
-void NHttpMsgTrailer::updateFlow() const {
+void NHttpMsgTrailer::updateFlow() {
     if (tcpClose) {
         sessionData->typeExpected[sourceId] = SEC_CLOSED;
         sessionData->halfReset(sourceId);

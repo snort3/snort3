@@ -33,24 +33,26 @@
 #include "framework/module.h"
 #include "framework/inspector.h"
 
+#include "nhttp_module.h"
+
 class NHttpApi {
 public:
     static const InspectApi nhttp_api;
     static int16_t appProtocolId;
 private:
     NHttpApi() = delete;
-    static Module* nhttp_mod_ctor();
-    static void nhttp_mod_dtor(Module* m);
+    static Module* nhttp_mod_ctor() { return new NHttpModule; };
+    static void nhttp_mod_dtor(Module* m) { delete m; };
     static const char* nhttp_myName;
     static void nhttp_init();
-    static void nhttp_term();
+    static void nhttp_term() {};
     static Inspector* nhttp_ctor(Module* mod);
-    static void nhttp_dtor(Inspector* p);
-    static void nhttp_pinit();
-    static void nhttp_pterm();
-    static void nhttp_sum();
-    static void nhttp_stats();
-    static void nhttp_reset();
+    static void nhttp_dtor(Inspector* p) { delete p; };
+    static void nhttp_pinit() {};
+    static void nhttp_pterm() {};
+    static void nhttp_sum() {};
+    static void nhttp_stats() {};
+    static void nhttp_reset() {};
 };
 
 #endif

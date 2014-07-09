@@ -42,11 +42,12 @@ public:
     virtual void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
     virtual ~NHttpMsgSection() = default;
     virtual void initSection() = 0;
-    virtual void analyze() = 0;
+    virtual void analyze() = 0;                           // Minimum necessary processing for every message
+    virtual void analyzeAll() {};                         // Force all just-in-time processing (testing method)
     virtual void printSection(FILE *output) const = 0;
     virtual void genEvents() = 0;
-    virtual void updateFlow() const = 0;
-    virtual void legacyClients() const = 0;
+    virtual void updateFlow() = 0;
+    virtual void legacyClients() = 0;
 
 protected:
     // Convenience methods
@@ -63,10 +64,8 @@ protected:
     // original message should not be changing it. Only loading a completely new message into rawBuf should do that.
     const uint8_t * const msgText = rawBuf;
 
-    // Working space and storage for all the derived fields. See scratchPad.h for usage instructions.
-    uint64_t derivedBuf[NHttpEnums::MAXOCTETS/4];
     NHttpFlowData* sessionData;
-    ScratchPad scratchPad {derivedBuf, NHttpEnums::MAXOCTETS/4};
+    ScratchPad scratchPad {NHttpEnums::MAXOCTETS*2};
 
     // This is where all the derived values, extracted message parts, and normalized values are.
     // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the
@@ -76,7 +75,6 @@ protected:
     NHttpEnums::SourceId sourceId;
     NHttpEnums::VersionId versionId;
     NHttpEnums::MethodId methodId;
-    NHttpEnums::SchemeId schemeId;
     int32_t statusCodeNum;
 };
 

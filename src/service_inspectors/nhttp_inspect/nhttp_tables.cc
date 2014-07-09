@@ -97,7 +97,7 @@ const StrCode NHttpMsgRequest::methodList[] =
     { METH_UPDATEREDIRECTREF,  "UPDATEREDIRECTREF"},
     { 0,                       nullptr} };
 
-const StrCode NHttpMsgRequest::schemeList[] =
+const StrCode NHttpUri::schemeList[] =
    {{ SCH_HTTP,                "http"},
     { SCH_HTTPS,               "https"},
     { SCH_FTP,                 "ftp"},
@@ -155,6 +155,8 @@ const StrCode NHttpMsgHeadShared::headerList[] =
     { HEAD_CONTENT_TYPE,         "content-type"},
     { HEAD_EXPIRES,              "expires"},
     { HEAD_LAST_MODIFIED,        "last-modified"},
+    { HEAD_X_FORWARDED_FOR,      "x-forwarded-for"},
+    { HEAD_TRUE_CLIENT_IP,       "true-client-ip"},
     { 0,                         nullptr} };
 
 const StrCode NHttpMsgHeadShared::transCodeList[] =
@@ -222,7 +224,9 @@ const HeaderNormalizer* const NHttpMsgHeadShared::headerNorms[HEAD__MAXVALUE] = 
     [HEAD_CONTENT_RANGE] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_TYPE] = &NORMALIZER_BASIC,
     [HEAD_EXPIRES] = &NORMALIZER_BASIC,
-    [HEAD_LAST_MODIFIED] = &NORMALIZER_BASIC
+    [HEAD_LAST_MODIFIED] = &NORMALIZER_BASIC,
+    [HEAD_X_FORWARDED_FOR] = &NORMALIZER_CAT,
+    [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC
 };
 
 const int32_t NHttpMsgHeadShared::numNorms = HEAD__MAXVALUE-1;

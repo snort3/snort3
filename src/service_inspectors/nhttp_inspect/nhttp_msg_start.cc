@@ -44,7 +44,7 @@ void NHttpMsgStart::initSection() {
     version.length = STAT_NOTCOMPUTE;
 }
 
-// All the processing that is done for every message (i.e. not just-in-time) is done here.
+// Required message processing that is automatically done instead of being just-in-time
 void NHttpMsgStart::analyze() {
     startLine.start = msgText;
     startLine.length = findCrlf(startLine.start, length, false);
@@ -55,10 +55,16 @@ void NHttpMsgStart::analyze() {
 }
 
 void NHttpMsgStart::deriveVersionId() {
-    if (version.length != 8) {
-        versionId = VERS__PROBLEMATIC;
+    if (version.length <= 0) {
+        versionId = VERS__NOSOURCE;
         return;
     }
+    if (version.length != 8) {
+        versionId = VERS__PROBLEMATIC;
+        infractions |= INF_BADVERSION;
+        return;
+    }
+
     if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.')) {
         versionId = VERS__PROBLEMATIC;
         infractions |= INF_BADVERSION;

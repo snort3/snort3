@@ -72,7 +72,7 @@ void NHttpMsgBody::printSection(FILE *output) const {
     NHttpMsgSection::printMessageWrapup(output);
 }
 
-void NHttpMsgBody::updateFlow() const {
+void NHttpMsgBody::updateFlow() {
     if (tcpClose) {
         sessionData->typeExpected[sourceId] = SEC_CLOSED;
         sessionData->halfReset(sourceId);
@@ -91,7 +91,7 @@ void NHttpMsgBody::updateFlow() const {
 
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgBody::legacyClients() const {
+void NHttpMsgBody::legacyClients() {
     ClearHttpBuffers();
     if (data.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, data.start, (unsigned)data.length);
 }

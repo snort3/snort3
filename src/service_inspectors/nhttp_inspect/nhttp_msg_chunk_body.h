@@ -43,7 +43,7 @@ public:
     void analyze();
     void printSection(FILE *output) const;
     void genEvents();
-    void updateFlow() const;
+    void updateFlow();
 
 private:
     int64_t numChunks;

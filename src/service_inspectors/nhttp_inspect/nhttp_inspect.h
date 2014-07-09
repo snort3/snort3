@@ -42,7 +42,7 @@ class NHttpApi;
 
 class NHttpInspect : public Inspector {
 public:
-    NHttpInspect(bool test_input, bool _test_output);
+    NHttpInspect(bool test_input, bool _test_output, bool _test_inspect);
     ~NHttpInspect();
 
     bool get_buf(unsigned, Packet*, InspectionBuffer&);
@@ -57,18 +57,13 @@ public:
 
 private:
     friend NHttpApi;
-    static THREAD_LOCAL NHttpMsgRequest *msgRequest;
-    static THREAD_LOCAL NHttpMsgStatus *msgStatus;
-    static THREAD_LOCAL NHttpMsgHeader *msgHead;
-    static THREAD_LOCAL NHttpMsgBody *msgBody;
-    static THREAD_LOCAL NHttpMsgChunkHead *msgChunkHead;
-    static THREAD_LOCAL NHttpMsgChunkBody *msgChunkBody;
-    static THREAD_LOCAL NHttpMsgTrailer *msgTrailer;
+    NHttpMsgSection *msgSection = nullptr;
 
     void process(const uint8_t* data, const uint16_t dsize, Flow* const flow);
 
     // Test mode
     bool test_output;
+    bool test_inspect;
     const char *testInputFile = "nhttp_test_msgs.txt";
     const char *testOutputPrefix = "nhttpresults/testcase";
     FILE *testOut = nullptr;

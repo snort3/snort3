@@ -43,8 +43,8 @@ public:
     void analyze();
     void printSection(FILE *output) const;
     void genEvents();
-    void updateFlow() const;
-    void legacyClients() const;
+    void updateFlow();
+    void legacyClients();
 
 protected:
     int64_t dataLength;

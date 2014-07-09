@@ -48,8 +48,11 @@ void NHttpMsgHeader::printSection(FILE *output) const {
     NHttpMsgSection::printMessageWrapup(output);
 }
 
-void NHttpMsgHeader::updateFlow() const {
+void NHttpMsgHeader::updateFlow() {
     const uint64_t disasterMask = 0;
+
+    ;
+    headerNorms[HEAD_CONTENT_LENGTH]->normalize(HEAD_CONTENT_LENGTH, scratchPad, infractions, headerNameId, headerValue, MAXHEADERS, headerValueNorm[HEAD_CONTENT_LENGTH]);
 
     // The following logic to determine body type is by no means the last word on this topic.
     if (tcpClose) {
@@ -66,15 +69,18 @@ void NHttpMsgHeader::updateFlow() const {
         sessionData->halfReset(sourceId);
     }
     // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
-    else if ( (headerValueNorm[HEAD_TRANSFER_ENCODING].length > 0) &&
-         ((*(int64_t *)(headerValueNorm[HEAD_TRANSFER_ENCODING].start + (headerValueNorm[HEAD_TRANSFER_ENCODING].length - 8))) == TRANSCODE_CHUNKED) ) {
+    else if ( (headerNorms[HEAD_TRANSFER_ENCODING]->normalize(HEAD_TRANSFER_ENCODING, scratchPad, infractions,
+                  headerNameId, headerValue, MAXHEADERS, headerValueNorm[HEAD_TRANSFER_ENCODING]) > 0) &&
+            ((*(int64_t *)(headerValueNorm[HEAD_TRANSFER_ENCODING].start + (headerValueNorm[HEAD_TRANSFER_ENCODING].length - 8))) == TRANSCODE_CHUNKED) ) {
         // Chunked body
         sessionData->typeExpected[sourceId] = SEC_CHUNKHEAD;
         sessionData->bodySections[sourceId] = 0;
         sessionData->bodyOctets[sourceId] = 0;
         sessionData->numChunks[sourceId] = 0;
     }
-    else if ((headerValueNorm[HEAD_CONTENT_LENGTH].length > 0) && (*(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start > 0)) {
+    else if ((headerNorms[HEAD_CONTENT_LENGTH]->normalize(HEAD_CONTENT_LENGTH, scratchPad, infractions,
+                 headerNameId, headerValue, MAXHEADERS, headerValueNorm[HEAD_CONTENT_LENGTH]) > 0) &&
+            (*(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start > 0)) {
         // Regular body
         sessionData->typeExpected[sourceId] = SEC_BODY;
         sessionData->octetsExpected[sourceId] = *(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start;

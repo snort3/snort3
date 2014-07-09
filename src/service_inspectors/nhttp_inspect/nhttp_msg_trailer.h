@@ -40,7 +40,7 @@ public:
     NHttpMsgTrailer() {};
     void printSection(FILE *output) const;
     void genEvents();
-    void updateFlow() const;
+    void updateFlow();
 };
 
 #endif
