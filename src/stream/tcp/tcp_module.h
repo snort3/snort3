@@ -73,6 +73,8 @@ class StreamTcpModule : public Module
 {
 public:
     StreamTcpModule();
+    ~StreamTcpModule();
+
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);

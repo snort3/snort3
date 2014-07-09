@@ -204,6 +204,12 @@ StreamTcpModule::StreamTcpModule() :
     config = nullptr;
 }
 
+StreamTcpModule::~StreamTcpModule()
+{
+    for ( auto p : protos )
+        delete p;
+}
+
 StreamTcpConfig* StreamTcpModule::get_data()
 {
     StreamTcpConfig* temp = config;
