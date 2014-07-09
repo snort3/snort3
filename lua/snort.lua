@@ -374,31 +374,48 @@ ftp_server =
     ftp_cmds = ftp_default_commands,
     chk_str_fmt = ftp_format_commands,
 
-    alt_max_param =
-    {
-        { length = 0, 
-          commands = [[ ABOR CCC CDUP ESTA FEAT LPSV
-                    NOOP PASV PWD QUIT REIN STOU SYST XCUP XPWD ]] },
-
-        { length = 200, 
-          commands = 'ALLO APPE CMD HELP NLST RETR RNFR STOR STOU XMKD' },
-
-        { length = 256, commands = 'CWD RNTO' },
-        { length = 400, commands = 'PORT' },
-        { length = 512, commands = 'SIZE' },
-    },
-
     cmd_validity =
     {
-        { command = 'ALLO', format = '< int [ char R int ] >' },
+        { command = 'ABOR', length = 0 },
+        { command = 'CCC', length = 0 },
+        { command = 'CDUP', length = 0 },
+        { command = 'ESTA', length = 0 },
+        { command = 'FEAT', length = 0 },
+        { command = 'LPSV', length = 0 },
+        { command = 'NOOP', length = 0 },
+        { command = 'PASV', length = 0 },
+        { command = 'PWD', length = 0 },
+        { command = 'QUIT', length = 0 },
+        { command = 'REIN', length = 0 },
+        { command = 'SYST', length = 0 },
+        { command = 'XCUP', length = 0 },
+        { command = 'XPWD', length = 0 },
+
+        { command = 'APPE', length = 200 },
+        { command = 'CMD', length = 200 },
+        { command = 'HELP', length = 200 },
+        { command = 'NLST', length = 200 },
+        { command = 'RETR', length = 200 },
+        { command = 'RNFR', length = 200 },
+        { command = 'STOR', length = 200 },
+        { command = 'STOU', length = 200 },
+        { command = 'XMKD', length = 200 },
+
+        { command = 'CWD', length = 256 },
+        { command = 'RNTO', length = 256 },
+        { command = 'SIZE', length = 512 },
+
+        { command = 'ALLO', length = 200, format = '< int [ char R int ] >' },
+        { command = 'PORT', length = 400, format = '< host_port >' },
+
         { command = 'EPSV', format = '< [ { char 12 | char A char L char L } ] >' },
         { command = 'MACB', format = '< string >' },
         { command = 'MDTM', format = '< [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string >' },
         { command = 'MODE', format = '< char ASBCZ >' },
-        { command = 'PORT', format = '< host_port >' },
         { command = 'PROT', format = '< char CSEP >' },
         { command = 'STRU', format = '< char FRPO [ string ] >' },
-        { command = 'TYPE', format = '< { char AE [ char NTC ] | char I | char L [ number ] } >' }
+        { command = 'TYPE', 
+          format = '< { char AE [ char NTC ] | char I | char L [ number ] } >' }
     },
 }
 
@@ -508,10 +525,9 @@ if ( not dir ) then
     dir = ''
 end
 
---include '../lua/classification.lua'
+include '../lua/classification.lua'
 
 print 'Loading references'
-dofile(dir .. 'classification.lua')
 dofile(dir .. 'reference.lua')
 
 default_rules =
