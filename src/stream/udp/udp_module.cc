@@ -48,7 +48,10 @@ static const RuleMap stream_udp_rules[] =
 };
 
 StreamUdpModule::StreamUdpModule() :
-    Module(MOD_NAME, stream_udp_params, stream_udp_rules) { }
+    Module(MOD_NAME, stream_udp_params, stream_udp_rules)
+{
+    config = nullptr;
+}
 
 StreamUdpConfig* StreamUdpModule::get_data()
 {

@@ -179,10 +179,20 @@ public:
         clouseau = ins;
         clouseau->add_ref();
     };
+    void clear_clouseau()
+    {
+        clouseau->rem_ref();
+        clouseau = nullptr;
+    };
     void set_gadget(Inspector* ins)
     {
         gadget = ins;
         gadget->add_ref();
+    };
+    void clear_gadget()
+    {
+        gadget->rem_ref();
+        gadget = nullptr;
     };
 
 public:  // FIXIT privatize if possible

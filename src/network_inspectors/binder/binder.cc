@@ -140,7 +140,9 @@ int Binder::exec(int, void* pv)
 {
     Flow* flow = (Flow*)pv;
     Inspector* ins = find_inspector(flow->service);
-    flow->gadget = ins;
+
+    if ( ins )
+        flow->set_gadget(ins);
 
     if ( flow->protocol != IPPROTO_TCP )
         return 0;

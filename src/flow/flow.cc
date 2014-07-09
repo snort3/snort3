@@ -72,6 +72,12 @@ Flow::~Flow ()
 {
     free_application_data();
 
+    if ( clouseau )
+        clouseau->rem_ref();
+
+    if ( gadget )
+        gadget->rem_ref();
+
     if ( flowdata )
         free(flowdata);
 
@@ -98,10 +104,10 @@ void Flow::reset()
         ssn_server = nullptr;
     }
     if ( clouseau )
-    {
-        clouseau->rem_ref();
-        clouseau = nullptr;
-    }
+        clear_clouseau();
+
+    if ( gadget )
+        clear_gadget();
 
     constexpr size_t offset = offsetof(Flow, appDataList);
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);

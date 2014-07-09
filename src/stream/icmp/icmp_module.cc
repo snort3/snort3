@@ -45,7 +45,10 @@ static const RuleMap stream_icmp_rules[] =
 };
 
 StreamIcmpModule::StreamIcmpModule() :
-    Module(MOD_NAME, stream_icmp_params, stream_icmp_rules) { }
+    Module(MOD_NAME, stream_icmp_params, stream_icmp_rules)
+{
+    config = nullptr;
+}
 
 StreamIcmpConfig* StreamIcmpModule::get_data()
 {

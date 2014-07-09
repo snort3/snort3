@@ -78,7 +78,7 @@ struct PHInstance
     Inspector* handler;
 
     PHInstance(PHClass&);
-    ~PHInstance() { };
+    ~PHInstance();
 
     static bool comp (PHInstance* a, PHInstance* b)
     { return ( a->pp_class.api.type < b->pp_class.api.type ); };
@@ -89,6 +89,12 @@ PHInstance::PHInstance(PHClass& p) : pp_class(p)
     Module* mod = ModuleManager::get_module(p.api.base.name);
     handler = p.api.ctor(mod);
     handler->set_api(&p.api);
+    handler->add_ref();
+}
+
+PHInstance::~PHInstance()
+{
+    handler->rem_ref();
 }
 
 typedef list<PHGlobal*> PHGlobalList;
@@ -101,7 +107,7 @@ static PHList s_trash;
 
 struct FrameworkConfig
 {
-    PHClassList ph_list;
+    PHClassList clist;
 };
 
 struct PHVector
@@ -124,50 +130,52 @@ struct PHVector
 
 struct FrameworkPolicy
 {
-    PHInstanceList ph_list;
+    PHInstanceList ilist;
 
     PHVector session;
     PHVector network;
     PHVector generic;
     PHVector service;
 
-    void vectorize()
-    {
-        session.alloc(ph_list.size());
-        network.alloc(ph_list.size());
-        service.alloc(ph_list.size());
-        generic.alloc(ph_list.size());
-
-        for ( auto* p : ph_list )
-        {
-            switch ( p->pp_class.api.type )
-            {
-            case IT_STREAM:
-                if ( !p->pp_class.api.ssn )
-                    session.add(p);
-                break;
-
-            case IT_PACKET:
-            case IT_PROTOCOL:
-                network.add(p);
-                break;
-
-            case IT_SESSION:
-                generic.add(p);
-                break;
-
-            case IT_SERVICE:
-                service.add(p);
-                break;
-
-            case IT_BINDER:
-            case IT_WIZARD:
-            case IT_MAX:
-                break;
-            }
-        }
-    };
+    void vectorize();
 };
+
+void FrameworkPolicy::vectorize()
+{
+    session.alloc(ilist.size());
+    network.alloc(ilist.size());
+    service.alloc(ilist.size());
+    generic.alloc(ilist.size());
+
+    for ( auto* p : ilist )
+    {
+        switch ( p->pp_class.api.type )
+        {
+        case IT_STREAM:
+            if ( !p->pp_class.api.ssn )
+                session.add(p);
+            break;
+
+        case IT_PACKET:
+        case IT_PROTOCOL:
+            network.add(p);
+            break;
+
+        case IT_SESSION:
+            generic.add(p);
+            break;
+
+        case IT_SERVICE:
+            service.add(p);
+            break;
+
+        case IT_BINDER:
+        case IT_WIZARD:
+        case IT_MAX:
+            break;
+        }
+    }
+}
 
 //-------------------------------------------------------------------------
 // global stuff
@@ -250,7 +258,7 @@ void InspectorManager::new_policy (InspectionPolicy* pi)
 
 void InspectorManager::delete_policy (InspectionPolicy* pi)
 {
-    for ( auto* p : pi->framework_policy->ph_list )
+    for ( auto* p : pi->framework_policy->ilist )
     {
         s_trash.push_back(p->handler);
         delete p;
@@ -262,7 +270,7 @@ void InspectorManager::delete_policy (InspectionPolicy* pi)
 static PHInstance* get_instance(
     FrameworkPolicy* fp, const char* keyword)
 {
-    for ( auto* p : fp->ph_list )
+    for ( auto* p : fp->ilist )
         //if ( !strncasecmp(p->pp_class.api.base.name, keyword, 
         //    strlen(p->pp_class.api.base.name)) )
         if ( !strcasecmp(p->pp_class.api.base.name, keyword) )
@@ -286,7 +294,7 @@ static PHInstance* GetInstance(
         delete p;
         return NULL;
     }
-    fp->ph_list.push_back(p);
+    fp->ilist.push_back(p);
     return p;
 }
 
@@ -294,7 +302,7 @@ static PHInstance* GetInstance(
 void InspectorManager::dispatch_meta (FrameworkPolicy* fp, int type, const uint8_t* data)
 {
     // FIXIT change to select instance by policy and pass that in
-    for ( auto* p : fp->ph_list )
+    for ( auto* p : fp->ilist )
         p->handler->meta(type, data);
 }
 
@@ -335,7 +343,7 @@ void InspectorManager::new_config (SnortConfig* sc)
 
 void InspectorManager::delete_config (SnortConfig* sc)
 {
-    for ( auto* p : sc->framework_config->ph_list )
+    for ( auto* p : sc->framework_config->clist )
         delete p;
 
     delete sc->framework_config;
@@ -348,7 +356,7 @@ void InspectorManager::delete_config (SnortConfig* sc)
 // instance to the policy list.
 static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
 {
-    for ( auto* p : fc->ph_list )
+    for ( auto* p : fc->clist )
         //if ( !strncasecmp(p->api.base.name, keyword, strlen(p->api.base.name)) )
         if ( !strcasecmp(p->api.base.name, keyword) )
             return p;
@@ -364,7 +372,7 @@ static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
                 p->init = false;
             }
             PHClass* ppc = new PHClass(p->api);
-            fc->ph_list.push_back(ppc);
+            fc->clist.push_back(ppc);
             return ppc;
         }
     return NULL;
@@ -372,7 +380,7 @@ static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
 
 void InspectorManager::dump_stats (SnortConfig* sc)
 {
-    for ( auto* p : sc->framework_config->ph_list )
+    for ( auto* p : sc->framework_config->clist )
         if ( p->api.stats )
             p->api.stats();
 }
@@ -382,7 +390,7 @@ void InspectorManager::accumulate (SnortConfig* sc)
     static mutex stats_mutex;
     stats_mutex.lock();
 
-    for ( auto* p : sc->framework_config->ph_list )
+    for ( auto* p : sc->framework_config->clist )
         if ( p->api.sum )
             p->api.sum();
 
@@ -392,7 +400,7 @@ void InspectorManager::accumulate (SnortConfig* sc)
 
 void InspectorManager::reset_stats (SnortConfig* sc)
 {
-    for ( auto* p : sc->framework_config->ph_list )
+    for ( auto* p : sc->framework_config->clist )
         if ( p->api.reset )
             p->api.reset();
 }
@@ -403,7 +411,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
     // FIXIT BIND the policy related logic herein moves to binder
     Inspector::slot = get_instance_id();
 
-    for ( auto* p : sc->framework_config->ph_list )
+    for ( auto* p : sc->framework_config->clist )
         if ( p->api.pinit )
             p->api.pinit();
 
@@ -412,7 +420,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
     if ( !pi->framework_policy )
         return;
 
-    for ( auto* p : pi->framework_policy->ph_list )
+    for ( auto* p : pi->framework_policy->ilist )
         p->handler->pinit();
 }
 
@@ -423,10 +431,10 @@ void InspectorManager::thread_term(SnortConfig* sc)
     if ( !pi || !pi->framework_policy )
         return;
 
-    for ( auto* p : pi->framework_policy->ph_list )
+    for ( auto* p : pi->framework_policy->ilist )
         p->handler->pterm();
 
-    for ( auto* p : sc->framework_config->ph_list )
+    for ( auto* p : sc->framework_config->clist )
         if ( p->api.pterm )
             p->api.pterm();
 
@@ -474,10 +482,10 @@ bool InspectorManager::configure(SnortConfig *sc)
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
     bool ok = true;
 
-    for ( auto* p : fp->ph_list )
+    for ( auto* p : fp->ilist )
         ok = p->handler->configure(sc) && ok;
 
-    fp->ph_list.sort(PHInstance::comp);
+    fp->ilist.sort(PHInstance::comp);
     fp->vectorize();
 
     return ok;
@@ -490,7 +498,7 @@ void InspectorManager::print_config(SnortConfig *sc)
     if ( !pi->framework_policy )
         return;
 
-    for ( auto* p : pi->framework_policy->ph_list )
+    for ( auto* p : pi->framework_policy->ilist )
         p->handler->show(sc);
 }
 
@@ -547,7 +555,7 @@ void InspectorManager::execute (Packet* p)
                 if ( ins )
                     ins->exec(0, flow);
 
-                flow->clouseau = nullptr;
+                flow->clear_clouseau();
             }
         }
         // FIXIT BIND need more than one service inspector?
