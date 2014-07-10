@@ -143,7 +143,6 @@ struct InspectApi
 
     const char** buffers;  // null terminated list of exported buffers
     const char* service;   // nullptr when type != IT_SERVICE
-    //ServiceTag tags;     // null terminated list of tags
 
     // main thread funcs - parse time data only
     InspectFunc init;      // allocate process static data

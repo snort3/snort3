@@ -261,6 +261,7 @@ enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
+    snort_conf = new SnortConfig;
     PluginManager::load_plugins(sc->plugin_path);
     ModuleManager::init();
 
@@ -289,6 +290,7 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     }
     ModuleManager::term();
     PluginManager::release_plugins();
+    delete snort_conf;
     exit(0);
 }
 
