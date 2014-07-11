@@ -95,31 +95,36 @@ static ConversionState* dep_rule_ctor(Converter* cv, LuaData* ld)
     return new RuleHeader(cv, ld);
 }
 
-
 static const std::string alert = "alert";
+static const std::string block = "block";
 static const std::string log = "log";
 static const std::string pass = "pass";
 static const std::string drop = "drop";
 static const std::string reject = "reject";
+static const std::string sblock = "sblock";
 static const std::string sdrop = "sdrop";
 static const std::string activate = "activate";
 static const std::string dynamic = "dynamic";
 
 static const ConvertMap alert_api = {alert, rule_ctor<&alert>};
+static const ConvertMap block_api = {block, rule_ctor<&block>};
 static const ConvertMap log_api = {log, rule_ctor<&log>};
 static const ConvertMap pass_api = {pass, rule_ctor<&pass>};
 static const ConvertMap drop_api = {drop, rule_ctor<&drop>};
 static const ConvertMap reject_api = {reject, rule_ctor<&reject>};
+static const ConvertMap sblock_api = {sdrop, rule_ctor<&sblock>};
 static const ConvertMap sdrop_api = {sdrop, rule_ctor<&sdrop>};
 static const ConvertMap activate_api = {activate, dep_rule_ctor<&activate>};
 static const ConvertMap dynamic_api = {dynamic, dep_rule_ctor<&dynamic>};
 
 
 const ConvertMap* alert_map = &alert_api;
+const ConvertMap* block_map = &block_api;
 const ConvertMap* log_map = &log_api;
 const ConvertMap* pass_map = &pass_api;
 const ConvertMap* drop_map = &drop_api;
 const ConvertMap* reject_map = &reject_api;
+const ConvertMap* sblock_map = &sblock_api;
 const ConvertMap* sdrop_map = &sdrop_api;
 const ConvertMap* activate_map = &activate_api;
 const ConvertMap* dynamic_map = &dynamic_api;

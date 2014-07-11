@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// util.h author Josh Rosenbaum <jorosenba@cisco.com>
 
-#ifndef SNORT2LUA_UTIL_H
-#define SNORT2LUA_UTIL_H
+#ifndef UTIL_H
+#define UTIL_H
 
 
 #include <string>
@@ -64,14 +64,37 @@ inline std::string &trim(std::string &s) {
         return ltrim(rtrim(s));
 }
 
+
+// return true if this file exists. False otherwise.
+bool file_exists (const std::string& name);
+
+/* Takes in a stream and a string of delimeters. The function will extract the charachters
+ * from the stream until it hits one of the delimeters.  The substring will be set to the
+ * third parameter.  The stream itself will point to the chrachter after the first delim.
+ *
+ * PARAMS:
+ *          data_stream - the data stream from which to find a substring.
+ *          delimeters - The string of delimeters.
+ *          options - The found substring will be place in this parameter.  If the
+ *                     stream is empty or no charachters have been extracted, then
+ *                     this parameter wil be set to an empty string.
+ * RETURNS:
+ *          True - when the string is found.
+ *          False - whenma substing was unable to be extracted.
+ */
+bool get_string(std::istringstream& data_stream, std::string& option, std::string delimeters);
+
+
 std::string get_rule_option_args(std::istringstream& data_stream);
-// remove any ']]'  from this string.
+
+// remove any ']]' and double spaces from this string.
 std::string &sanitize_multi_line_string(std::string &s);
+
 // find the location of the first space before max_str_lenght.
 // if no space exists before max_str_length, return the first space
 // after max_length. Otherwise, return std::string::npos
 int get_substr_length(std::string s, int max_length);
 
-} // namespace util
+}  // namespace util
 
 #endif

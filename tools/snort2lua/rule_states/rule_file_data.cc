@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rule_base64_decode.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_file_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -33,23 +33,24 @@ namespace rules
 namespace {
 
 
-class Base64Decode : public ConversionState
+class FileData : public ConversionState
 {
 public:
-    Base64Decode(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Base64Decode() {};
+    FileData(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~FileData() {};
     virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
-bool Base64Decode::convert(std::istringstream& data_stream)
+bool FileData::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string tmp;
     int pos = data_stream.tellg();
     bool retval = true;
 
+    retval = ld->add_rule_option("file_data");
     args = util::get_rule_option_args(data_stream);
 
     // if there are no arguments, the option had a colon before a semicolon.
@@ -60,27 +61,18 @@ bool Base64Decode::convert(std::istringstream& data_stream)
         // Therefore, if a colon is present, we are in the next rule option.
         if (args.find(":") != std::string::npos)
         {
-            retval = ld->add_rule_option("base64_decode");
             data_stream.seekg(pos);
         }
         else
         {
-            // since we still can't be sure if we passed the base64_decode buffer,
-            // check the next option and ensure it matches
-            std::istringstream arg_stream(args);
-            util::get_string(arg_stream, tmp, ", ");
+            // since we still can't be sure if we passed the file_data buffer,
+            // check the next option and ensure it matches 'mime'
+            std::istringstream(args) >> tmp;
 
-            if (!tmp.compare("bytes") ||
-                !tmp.compare("offset") ||
-                !tmp.compare("relative"))
-            {
-                retval = ld->add_rule_option("base64_decode", args) && retval;
-            }
+            if (!tmp.compare("mime"))
+                ld->add_comment_to_rule("file_data's option 'mime' has been deleted");
             else
-            {
                 data_stream.seekg(pos);
-                retval = ld->add_rule_option("base64_decode") && retval;
-            }
         }
     }
     return set_next_rule_state(data_stream) && retval;
@@ -90,19 +82,17 @@ bool Base64Decode::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* file_data_ctor(Converter* cv, LuaData* ld)
 {
-    return new Base64Decode(cv, ld);
+    return new FileData(cv, ld);
 }
 
-static const std::string base64_decode = "base64_decode";
-static const ConvertMap base64_decode_api =
+static const ConvertMap rule_file_data =
 {
-    base64_decode,
-    ctor,
+    "file_data",
+    file_data_ctor,
 };
 
-const ConvertMap* base64_decode_map = &base64_decode_api;
+const ConvertMap* file_data_map = &rule_file_data;
 
 } // namespace rules

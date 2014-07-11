@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// kws_suppress.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_rate_filter.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -32,11 +32,11 @@ namespace keywords
 
 namespace {
 
-class Suppress : public ConversionState
+class RateFilter : public ConversionState
 {
 public:
-    Suppress(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Suppress() {};
+    RateFilter(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~RateFilter() {};
     virtual bool convert(std::istringstream& data);
 
 private:
@@ -61,7 +61,7 @@ static inline int check_list(std::string listToCheck)
     return brackets;
 }
 
-bool Suppress::parse_ip_list(std::istringstream& arg_stream, std::istringstream& data_stream)
+bool RateFilter::parse_ip_list(std::istringstream& arg_stream, std::istringstream& data_stream)
 {
     std::string tmp;
     int list = 0;
@@ -83,19 +83,17 @@ bool Suppress::parse_ip_list(std::istringstream& arg_stream, std::istringstream&
     if (arg_stream.bad() && data_stream.bad())
         return false;
 
-    ld->add_option_to_table("ip", fullIpList);
+    ld->add_option_to_table("apply_to", fullIpList);
     return true;
 }
 
-bool Suppress::convert(std::istringstream& data_stream)
+bool RateFilter::convert(std::istringstream& data_stream)
 {
     bool retval = true;
     std::string args;
 
-    ld->open_table("suppress");
-    ld->add_diff_option_comment("gen_id", "gid");
-    ld->add_diff_option_comment("sig_id", "sid");
-    ld->open_table();
+
+    ld->open_table("rate_filter");
 
     while(std::getline(data_stream, args, ','))
     {
@@ -112,14 +110,32 @@ bool Suppress::convert(std::istringstream& data_stream)
         else if (!keyword.compare("track"))
             tmpval = parse_string_option("track", arg_stream);
 
-        else if (!keyword.compare("ip"))
+        else if (!keyword.compare("count"))
+            tmpval = parse_int_option("count", arg_stream);
+
+        else if (!keyword.compare("seconds"))
+            tmpval = parse_int_option("seconds", arg_stream);
+
+        else if (!keyword.compare("timeout"))
+            tmpval = parse_int_option("timeout", arg_stream);
+
+        else if (!keyword.compare("new_action"))
+            tmpval = parse_string_option("new_action", arg_stream);
+
+        else if (!keyword.compare("apply_to"))
             tmpval = parse_ip_list(arg_stream, data_stream);
 
         else if(!keyword.compare("gen_id"))
+        {
+            ld->add_diff_option_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", arg_stream);
+        }
 
         else if (!keyword.compare("sig_id"))
+        {
+            ld->add_diff_option_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", arg_stream);
+        }
 
         else
             tmpval = false;
@@ -137,15 +153,15 @@ bool Suppress::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Suppress(cv, ld);
+    return new RateFilter(cv, ld);
 }
 
-static const ConvertMap keyword_supress =
+static const ConvertMap keyword_rate_filter =
 {
-    "suppress",
+    "rate_filter",
     ctor,
 };
 
-const ConvertMap* supress_map = &keyword_supress;
+const ConvertMap* rate_filter_map = &keyword_rate_filter;
 
 } // namespace keywords

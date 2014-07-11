@@ -154,7 +154,11 @@ bool PortScan::convert(std::istringstream& data_stream)
             ld->add_deprecated_comment("detect_ack_scans");
 
         else if(!keyword.compare("logfile"))
+        {
+            if (!util::get_string(data_stream, keyword, "}"))
+                tmpval = false;
             ld->add_deprecated_comment("logfile");
+        }
 
         else if(!keyword.compare("memcap"))
             tmpval = add_portscan_global_option("memcap", data_stream);
@@ -174,7 +178,8 @@ bool PortScan::convert(std::istringstream& data_stream)
         else
             tmpval = false;
 
-        tmpval = retval && tmpval;
+        if (retval)
+            retval = tmpval;
     }
 
 

@@ -140,7 +140,25 @@ bool FtpServer::convert(std::istringstream& data_stream)
             ld->open_table("ftp_server_target_" + std::to_string(ftpsever_binding_id));
             ftpsever_binding_id++;
             ld->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
-            retval = false;
+
+
+            // TODO --   add some bindings here!!
+            if (!keyword.compare("{"))
+            {
+                std::string list, tmp;
+
+                while (data_stream >> tmp && tmp.compare("}"))
+                    list += tmp;
+
+                if (!data_stream.good())
+                    return false;
+
+                // this is an ip address list
+            }
+            else
+            {
+                // this is an ip address
+            }
         }
     }
     else
@@ -154,7 +172,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
 
 
         if(!keyword.compare("print_cmds"))
-            ld->add_option_to_table("print_cmds", true);
+            tmpval = ld->add_option_to_table("print_cmds", true);
 
         else if(!keyword.compare("def_max_param_len"))
             tmpval = parse_int_option("def_max_param_len", data_stream);
@@ -179,6 +197,18 @@ bool FtpServer::convert(std::istringstream& data_stream)
 
         else if(!keyword.compare("cmd_validity"))
             tmpval = parse_cmd_validity_cmd(data_stream);
+
+        else if (!keyword.compare("data_chan_cmds"))
+            tmpval = parse_curly_bracket_list("data_chan_cmds", data_stream);
+
+        else if (!keyword.compare("data_xfer_cmds"))
+            tmpval = parse_curly_bracket_list("data_xfer_cmds", data_stream);
+
+        else if (!keyword.compare("file_put_cmds"))
+            tmpval = parse_curly_bracket_list("file_put_cmds", data_stream);
+
+        else if (!keyword.compare("file_get_cmds"))
+            tmpval = parse_curly_bracket_list("file_get_cmds", data_stream);
         
         else if(!keyword.compare("data_chan"))
         {
@@ -202,7 +232,8 @@ bool FtpServer::convert(std::istringstream& data_stream)
             tmpval = false;
         }
 
-        retval = retval && tmpval;
+        if (retval && !tmpval)
+            retval = false;
     }
     return retval;
 }
@@ -226,8 +257,26 @@ bool FtpClient::convert(std::istringstream& data_stream)
         {
             ld->open_table("ftp_client_target_" + std::to_string(ftpclient_binding_id));
             ftpclient_binding_id++;
+
+            // TODO --   add some bindings here!!
+            if (!keyword.compare("{"))
+            {
+                std::string list, tmp;
+
+                while (data_stream >> tmp && tmp.compare("}"))
+                    list += tmp;
+
+                if (!data_stream.good())
+                    return false;
+
+                // this is an ip address list
+            }
+            else
+            {
+                // this is an ip address
+            }
+
             ld->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
-            retval = false;
         }
     }
     else
@@ -266,7 +315,8 @@ bool FtpClient::convert(std::istringstream& data_stream)
             tmpval = false;
         }
 
-        retval = retval && tmpval;
+        if (retval && !tmpval)
+            retval = false;
     }
 
 
@@ -304,7 +354,15 @@ bool Telnet::convert(std::istringstream& data_stream)
             ld->add_diff_option_comment("ports", "bindings");
             ld->add_comment_to_table("check bindings table for port information");
             // vvvv defined in ConversionState vvvv
-            parse_curly_bracket_list("--ports", data_stream); // create a commented list of the ports
+
+            // add commented list for now
+            std::string tmp = "";
+            while (data_stream >> keyword && keyword != "}")
+                tmp += " " + keyword;
+            tmpval = ld->add_option_to_table("--ports", tmp + "}");
+
+
+//            parse_curly_bracket_list("--ports", data_stream); // create a commented list of the ports
         }
 
         else  if(!keyword.compare("detect_anomalies"))

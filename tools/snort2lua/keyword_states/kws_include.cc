@@ -44,11 +44,24 @@ public:
 
 bool Include::convert(std::istringstream& data_stream)
 {
-    std::string keyword;
+    std::string file = std::string();
+    std::string tmp;
 
-    if(data_stream >> keyword)
+    while (data_stream >> tmp)
+        file += tmp;
+
+    if(!file.empty())
     {
-        cv->convert_file(keyword);
+        // if not parsing, assume its a regular rule file.
+
+
+        if (cv->should_convert_includes())
+            cv->parse_include_file(file);
+        else
+        {
+            ld->begin_rule();
+            ld->add_hdr_data("include " + file);
+        }
         return true;
     }
     return false;

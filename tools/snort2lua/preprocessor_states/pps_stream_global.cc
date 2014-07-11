@@ -50,102 +50,146 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
 
     ld->open_table("stream");
 
-    while(data_stream >> keyword)
+    while(util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
+        std::istringstream arg_stream(keyword);
 
-        if(keyword.back() == ',')
-            keyword.pop_back();
-        
-        if(keyword.empty())
-            continue;
+        // should be gauranteed to happen.  Checking for error just cause
+        if (!(arg_stream >> keyword))
+            tmpval = false;
 
-
-
-        if(!keyword.compare("flush_on_alert"))
+        else if (!keyword.compare("flush_on_alert"))
             ld->add_deprecated_comment("flush_on_alert");
 
-        else if(!keyword.compare("disabled"))
+        else if (!keyword.compare("disabled"))
             ld->add_deprecated_comment("disabled");
 
-        else if(!keyword.compare("track_tcp"))
-        {
-            ld->add_deprecated_comment("track_tcp");
-            if(!(data_stream >> keyword)) // eat the yes/no option
-                tmpval = false;
-        }
+        else if (!keyword.compare("enable_ha"))
+            ld->add_unsupported_comment("enable_ha");
 
-        else if(!keyword.compare("track_udp"))
-        {
-            ld->add_deprecated_comment("track_udp");
-            if(!(data_stream >> keyword)) // eat the yes/no option
-                tmpval = false;
-        }
+        else if (!keyword.compare("no_midstream_drop_alerts"))
+            ld->add_deprecated_comment("no_midstream_drop_alerts");
 
-        else if(!keyword.compare("track_icmp"))
-        {
-            ld->add_deprecated_comment("track_icmp");
-            if(!(data_stream >> keyword)) // eat the yes/no option
-                tmpval = false;
-        }
+        else if (!keyword.compare("track_tcp"))
+            tmpval = parse_deleted_option("track_tcp", arg_stream);
 
-        else if(!keyword.compare("prune_log_max"))
+        else if (!keyword.compare("track_udp"))
+            tmpval = parse_deleted_option("track_udp", arg_stream);
+
+        else if (!keyword.compare("track_icmp"))
+            tmpval = parse_deleted_option("track_icmp", arg_stream);
+
+        else if (!keyword.compare("track_ip"))
+            tmpval = parse_deleted_option("track_ip", arg_stream);
+
+        else if (!keyword.compare("prune_log_max"))
         {
             ld->add_diff_option_comment("prune_log_max", "histogram");
-            if(!(data_stream >> keyword)) // eat the number of bytes
+            if (!eat_option(arg_stream))
                 tmpval = false;
         }
 
-        else if(!keyword.compare("max_tcp"))
+        else if (!keyword.compare("max_tcp"))
         {
             ld->open_table("tcp_cache");
-            tmpval = parse_int_option("max_sessions", data_stream);
+            ld->add_diff_option_comment("max_tcp", "max_sessions");
+            tmpval = parse_int_option("max_sessions", arg_stream);
             ld->close_table();
         }
 
-        else if(!keyword.compare("memcap"))
+        else if (!keyword.compare("max_tcp"))
         {
             ld->open_table("tcp_cache");
-            tmpval = parse_int_option("memcap", data_stream);
+            tmpval = parse_int_option("max_sessions", arg_stream);
             ld->close_table();
         }
 
-        else if(!keyword.compare("max_udp"))
+        else if (!keyword.compare("tcp_cache_nominal_timeout"))
+        {
+            ld->open_table("tcp_cache");
+            ld->add_diff_option_comment("tcp_cache_nominal_timeout", "pruning_timeout");
+            tmpval = parse_int_option("pruning_timeout", arg_stream);
+            ld->close_table();
+        }
+
+        else if (!keyword.compare("tcp_cache_pruning_timeout"))
+        {
+            ld->open_table("tcp_cache");
+            ld->add_diff_option_comment("tcp_cache_pruning_timeout", "idle_timeout");
+            tmpval = parse_int_option("idle_timeout", arg_stream);
+            ld->close_table();
+        }
+
+        else if (!keyword.compare("memcap"))
+        {
+            ld->open_table("tcp_cache");
+            tmpval = parse_int_option("memcap", arg_stream);
+            ld->close_table();
+        }
+
+        else if (!keyword.compare("max_udp"))
         {
             ld->open_table("udp_cache");
-            tmpval = parse_int_option("max_sessions", data_stream);
+            ld->add_diff_option_comment("max_udp","max_sessions");
+            tmpval = parse_int_option("max_sessions", arg_stream);
             ld->close_table();
         }
 
-        else if(!keyword.compare("max_icmp"))
+        else if (!keyword.compare("udp_cache_pruning_timeout"))
+        {
+            ld->open_table("udp_cache");
+            ld->add_diff_option_comment("udp_cache_pruning_timeout","pruning_timeout");
+            tmpval = parse_int_option("pruning_timeout", arg_stream);
+            ld->close_table();
+        }
+
+        else if (!keyword.compare("udp_cache_nominal_timeout"))
+        {
+            ld->open_table("udp_cache");
+            ld->add_diff_option_comment("udp_cache_nominal_timeout","idle_timeout");
+            tmpval = parse_int_option("idle_timeout", arg_stream);
+            ld->close_table();
+        }
+
+        else if (!keyword.compare("max_icmp"))
         {
             ld->open_table("icmp_cache");
-            tmpval = parse_int_option("max_sessions", data_stream);
+            ld->add_diff_option_comment("max_icmp","max_sessions");
+            tmpval = parse_int_option("max_sessions", arg_stream);
             ld->close_table();
         }
 
-        else if(!keyword.compare("show_rebuilt_packets"))
+        else if (!keyword.compare("max_ip"))
+        {
+            ld->open_table("ip_cache");
+            ld->add_diff_option_comment("max_ip","max_sessions");
+            tmpval = parse_int_option("max_sessions", arg_stream);
+            ld->close_table();
+        }
+
+        else if (!keyword.compare("show_rebuilt_packets"))
         {
             ld->open_top_level_table("stream_tcp");
             ld->add_option_to_table("show_rebuilt_packets", true);
             ld->close_table();
         }
 
-        else if(!keyword.compare("min_response_seconds"))
+        else if (!keyword.compare("min_response_seconds"))
         {
             ld->open_top_level_table("active");
-            tmpval = parse_int_option("min_interval", data_stream);
+            ld->add_diff_option_comment("min_response_seconds","min_interval");
+            tmpval = parse_int_option("min_interval", arg_stream);
             ld->close_table();
         }
 
-        else if(!keyword.compare("max_active_responses"))
+        else if (!keyword.compare("max_active_responses"))
         {
             ld->open_top_level_table("active");
-            tmpval = parse_int_option("max_responses", data_stream);
+            ld->add_diff_option_comment("max_active_responses","max_responses");
+            tmpval = parse_int_option("max_responses", arg_stream);
             ld->close_table();
         }
-
-
 
         else
             tmpval = false;
@@ -156,6 +200,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
 
     return retval;    
 }
+
 
 /**************************
  *******  A P I ***********

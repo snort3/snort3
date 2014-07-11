@@ -32,6 +32,7 @@ extern const ConvertMap* classification_map;
 extern const ConvertMap* detection_map;
 extern const ConvertMap* enable_gtp_map;
 extern const ConvertMap* event_queue_map;
+extern const ConvertMap* file_map;
 extern const ConvertMap* flowbit_size_map;
 extern const ConvertMap* paf_max_map;
 extern const ConvertMap* pcre_match_limit_map;
@@ -53,6 +54,7 @@ const std::vector<const ConvertMap*> config_api =
     detection_map,
     enable_gtp_map,
     event_queue_map,
+    file_map,
     flowbit_size_map,
     paf_max_map,
     pcre_match_limit_map,

@@ -21,6 +21,7 @@
 
 
 #include "data/dt_rule.h"
+#include "data/dt_data.h"  // included for print mode
 
 
 Rule::Rule() :  num_hdr_data(0),
@@ -108,12 +109,16 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
 {
     bool first_line = true;
 
+    // don't print comment and tag in quiet mode
+    if (!LuaData::is_quiet_mode())
+    {
+        if (rule.is_bad_rule)
+            out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";
 
-    if (rule.is_bad_rule)
-        out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";
+        for (std::string s : rule.comments)
+            out << s << "\n";
+    }
 
-    for (std::string s : rule.comments)
-        out << s << "\n";
 
     if (rule.is_bad_rule || rule.is_comment)
         out << "#";
@@ -128,20 +133,22 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
         out << rule.hdr_data[i];
     }
 
-    out << " (";
-    first_line = true;
-
-    for (auto* r : rule.options)
+    if (!rule.options.empty())
     {
-        if (first_line)
-            first_line = false;
-        else
-            out << ";";
-        out << " " << (*r);
+        out << " (";
+        first_line = true;
+
+        for (auto* r : rule.options)
+        {
+            if (first_line)
+                first_line = false;
+            else
+                out << ";";
+            out << " " << (*r);
+        }
+
+        out << " )";
     }
-
-    out << " )";
-
 
     return out;
 }

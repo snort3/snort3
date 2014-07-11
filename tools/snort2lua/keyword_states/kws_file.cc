@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// preprocessor.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_file.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -25,7 +25,6 @@
 #include "conversion_state.h"
 #include "util/converter.h"
 #include "util/util.h"
-#include "preprocessor_states/preprocessor_api.h"
 
 
 namespace keywords
@@ -33,32 +32,28 @@ namespace keywords
 
 namespace {
 
-class Preprocessor : public ConversionState
+class File : public ConversionState
 {
 public:
-    Preprocessor(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Preprocessor() {};
+    File(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~File() {};
     virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
 
-bool Preprocessor::convert(std::istringstream& data_stream)
+bool File::convert(std::istringstream& data_stream)
 {
-    std::string keyword;
+    // No changes have been made to file. This class literally
+    // copies the entire buffer into a rule.
 
-    if(util::get_string(data_stream, keyword, ":"))
-    {
-        const ConvertMap* map = util::find_map(preprocessors::preprocessor_api, keyword);
-        if (map)
-        {
-            cv->set_state(map->ctor(cv, ld));
-            return true;
-        }
-    }
 
-    return false;    
+    ld->begin_rule();
+    std::string data = data_stream.str();
+    ld->add_hdr_data(data);
+    data_stream.setstate(std::ios_base::eofbit);
+    return true;
 }
 
 /**************************
@@ -67,15 +62,15 @@ bool Preprocessor::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Preprocessor(cv, ld);
+    return new File(cv, ld);
 }
 
-static const ConvertMap keyword_preprocessor = 
+static const ConvertMap keyword_file =
 {
-    "preprocessor",
+    "file",
     ctor,
 };
 
-const ConvertMap* preprocessor_map = &keyword_preprocessor;
+const ConvertMap* file_map = &keyword_file;
 
 } // namespace keywords

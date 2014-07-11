@@ -33,9 +33,9 @@ namespace {
 
 class Classification : public ConversionState
 {
-public:
-    Classification(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Classification() {};
+ public:
+    Classification(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
+    virtual ~Classification() {}
     virtual bool convert(std::istringstream& data_stream);
 };
 

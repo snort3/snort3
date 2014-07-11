@@ -46,25 +46,15 @@ bool RpcDecode::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;
-    std::string port_list = "";
+    std::string port_list = std::string();
     std::string keyword;
-    int i_val;
 
     ld->open_table("rpc_decode");
-
-    // parse the port list first.
-    while(data_stream >> i_val)
-        port_list += ' ' + std::to_string(i_val);
-
-    util::ltrim(port_list);
-    ld->add_option_to_table("--ports", port_list);
-    data_stream.clear();  // necessary since badbit() is set
     
     while(data_stream >> keyword)
     {
         bool tmpval = true;
 
-        
         if(!keyword.compare("no_alert_multiple_requests"))
             ld->add_deprecated_comment("no_alert_multiple_requests");
 
@@ -77,12 +67,18 @@ bool RpcDecode::convert(std::istringstream& data_stream)
         else if(!keyword.compare("no_alert_incomplete"))
             ld->add_deprecated_comment("no_alert_incomplete");
 
+        else if (isdigit(keyword[0]))
+            port_list += ' ' + keyword;
+
         else
             tmpval = false;
 
         if (retval)
             retval = tmpval;
     }
+
+    if (!port_list.empty())
+        ld->add_comment_to_table("add port to binding --> " + port_list);
 
     return retval;   
 }

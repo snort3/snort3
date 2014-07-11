@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_frag3_global.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_gtp.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -31,57 +31,54 @@ namespace preprocessors
 
 namespace {
 
-class Frag3Global : public ConversionState
+class Gtp : public ConversionState
 {
 public:
-    Frag3Global(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Frag3Global() {};
+    Gtp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~Gtp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool Frag3Global::convert(std::istringstream& data_stream)
+
+bool Gtp::convert(std::istringstream& data_stream)
 {
-
+    std::string args;
     bool retval = true;
-    std::string keyword;
 
-    ld->open_table("stream_ip");
+    ld->open_table("cd_udp");
 
-
-    // full options are comma seperated
-    while(util::get_string(data_stream, keyword, ","))
+    while (util::get_string(data_stream, args, ",;"))
     {
+        std::string keyword;
         bool tmpval = true;
+        std::istringstream arg_stream(args);
 
-        // suboptions are space seperated
-        std::istringstream args_stream(keyword);
-        args_stream >> keyword;
-        
-        if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
 
-        else if(!keyword.compare("max_frags"))
-            tmpval = parse_int_option("max_frags", args_stream);
-        
-        else if(!keyword.compare("memcap"))
-            tmpval = parse_deleted_option("memcap", args_stream);
+        if (!(arg_stream >> keyword))
+        {
+            tmpval = false;
+        }
 
-        else if(!keyword.compare("prealloc_memcap"))
-            tmpval = parse_deleted_option("prealloc_memcap", args_stream);
-        
-        else if(!keyword.compare("prealloc_frags"))
-            tmpval = parse_deleted_option("prealloc_frags", args_stream);
+        else if (!keyword.compare("ports"))
+        {
+            ld->add_diff_option_comment("ports", "gtp_ports");
+            tmpval = parse_curly_bracket_list("gtp_ports", arg_stream);
+        }
 
         else
+        {
             tmpval = false;
+        }
 
-        if (retval)
-            retval = tmpval;
+
+        if (retval && !tmpval)
+            retval = false;
     }
 
-    return retval;    
+    ld->close_table();
+    return retval;
 }
 
 /**************************
@@ -90,15 +87,15 @@ bool Frag3Global::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Frag3Global(cv, ld);
+    return new Gtp(cv, ld);
 }
 
-static const ConvertMap preprocessor_frag3_global =
+static const ConvertMap preprocessor_gtp =
 {
-    "frag3_global",
+    "gtp",
     ctor,
 };
 
-const ConvertMap* frag3_global_map = &preprocessor_frag3_global;
+const ConvertMap* gtp_map = &preprocessor_gtp;
 
 } // namespace preprocessors

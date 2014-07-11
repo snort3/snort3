@@ -61,6 +61,7 @@ extern const ConvertMap* msg_map;
 extern const ConvertMap* pcre_map;
 extern const ConvertMap* pkt_data_map;
 extern const ConvertMap* react_map;
+extern const ConvertMap* priority_map;
 extern const ConvertMap* protected_content_map;
 extern const ConvertMap* reference_map;
 extern const ConvertMap* replace_map;
@@ -116,6 +117,7 @@ const std::vector<const ConvertMap*> rule_api =
     msg_map,
     pcre_map,
     pkt_data_map,
+    priority_map,
     protected_content_map,
     react_map,
     reference_map,

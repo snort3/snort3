@@ -25,18 +25,7 @@
 #include <sstream>
 
 
-static const std::string start_comments =
-    "COMMENTS:\n"
-    "    these line were originally commented out or empty"
-    "in the configuration file.";
-
-static const std::string start_errors =
-    "ERRORS:\n"
-    "    all of these occured during the attempted conversion:\n\n";
-
-static const std::string start_bad_rules =
-    "FAILED RULES CONVERSIONS:\n"
-    "    These rules has invalid rule options\n\n";
+LuaData::PrintMode LuaData::mode = LuaData::PrintMode::DEFAULT;
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -65,7 +54,7 @@ LuaData::LuaData()
 
 LuaData::~LuaData()
 {
-    for (auto *v : vars)
+    for (auto v : vars)
         delete v;
 
     for (auto t : tables)
@@ -80,7 +69,7 @@ LuaData::~LuaData()
 }
 
 
-void LuaData::add_reject_comment(std::string comment)
+void LuaData::add_comment(std::string comment)
 {
     comments->add_text(comment);
 }
@@ -101,9 +90,21 @@ bool LuaData::add_variable(std::string name, std::string value)
 void LuaData::reset_state()
 {
     std::stack<Table*> empty;
-    open_tables.swap(empty );
+    open_tables.swap(empty);
     curr_rule = nullptr;
     curr_rule_opt = nullptr;
+}
+
+bool LuaData::add_include_file(std::string file_name)
+{
+
+    Include* incl = new Include(file_name);
+
+    if (incl == nullptr)
+        return false;
+
+    includes.push_back(incl);
+    return true;
 }
 
 void LuaData::open_top_level_table(std::string table_name)
@@ -140,6 +141,22 @@ void LuaData::open_table(std::string table_name)
     }
 
     open_tables.push(t);
+}
+
+void LuaData::open_new_top_level_table(std::string table_name)
+{
+    Table *t = new Table(table_name, 0);
+
+    if (t != nullptr)
+    {
+        tables.push_back(t);
+        open_tables.push(t);
+    }
+    else
+    {
+        std::cout << "OUT OF MEMORY!!" << std::endl;
+    }
+
 }
 
 void LuaData::open_table()
@@ -277,16 +294,32 @@ bool LuaData::add_diff_option_comment(std::string orig_var, std::string new_var)
 
 bool LuaData::add_deprecated_comment(std::string dep_var)
 {
-    std::string error_string = "option deprecated: '" + dep_var + "'";
+    std::string error_string = "option deleted: '" + dep_var + "'";
 
     if (open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding deprecated comment!!: " +
-            dep_var);
+        add_error_comment("Must open a table before adding "
+            "deprecated comment!!: " + dep_var);
         return false;
     }
 
     open_tables.top()->add_comment(error_string);
+    return true;
+}
+
+bool LuaData::add_unsupported_comment(std::string unsupported_var)
+{
+    std::string unsupported_str = "option '" + unsupported_var +
+        "' is current unsupported";
+
+    if (open_tables.size() == 0)
+    {
+        add_error_comment("Must open a tablebefore adding an "
+            "'unsupported' comment");
+        return false;
+    }
+
+    open_tables.top()->add_comment(unsupported_str);
     return true;
 }
 
@@ -316,8 +349,8 @@ void LuaData::bad_rule(std::string bad_option, std::istringstream& stream)
     // we only need to go through this once.
     if (!curr_rule_bad)
     {
-        bad_rules->add_text("Failed to convert rule: first_unkown_option=" + bad_option +
-                "\n        bad_rule: " + stream.str());
+        bad_rules->add_text("Failed to convert rule: first_unkown_option=" + bad_option);
+        bad_rules->add_text("bad_rule: " + stream.str() + ")");
         curr_rule->bad_rule();
         curr_rule_bad = true;
     }
@@ -414,27 +447,92 @@ void LuaData::add_comment_to_rule(std::string comment)
     curr_rule->add_comment(comment);
 }
 
-std::ostream& operator<<( std::ostream &out, const LuaData &data)
+std::ostream& operator<<( std::ostream &out, const LuaData& data)
 {
-    out << (*data.errors) << std::endl << std::endl;
+    if (data.mode == LuaData::PrintMode::DEFAULT)
+    {
+        out << (*data.errors) << "\n";
+        out << (*data.bad_rules) << "\n";
+    }
+
+    for (Include* i : data.includes)
+        out << *i << "\n";
+    out << "\n\n";
 
     for (Variable* v : data.vars)
         out << (*v) << "\n\n";
-
-
-    out << (*data.bad_rules) << "\n\n";
+    out << "\n\n";
 
     out << "default_rules =\n[[\n";
     for (Rule* r : data.rules)
         out << (*r) << "\n\n";
 
-    out << "]]\n";
+    out << "]]\n\n\n";
+
 
     for (Table* t : data.tables)
         out << (*t) << "\n\n";
+    out << "\n\n";
 
-    out << (*data.comments) << std::endl;
-
+    if (data.mode == LuaData::PrintMode::DEFAULT)
+        out << (*data.comments) << "\n" << std::endl;
 
     return out;
+}
+
+
+void LuaData::print_rules(std::ostream& out, bool in_rule_file)
+{
+    if (!in_rule_file)
+        out << "default_rules =\n[[\n";
+
+    for (Rule* r : rules)
+        out << (*r) << "\n";
+
+    if (!in_rule_file)
+        out << "]]\n";
+}
+
+void LuaData::print_rejects(std::ostream& out)
+{
+
+    if (mode == LuaData::PrintMode::DEFAULT)
+    {
+        out << (*errors) << "\n";
+        out << (*bad_rules) << "\n\n";
+    }
+}
+
+void LuaData::print_conf_options(std::ostream& out)
+{
+    for (Variable* v : vars)
+        out << (*v) << "\n\n";
+
+    for (Table* t : tables)
+        out << (*t) << "\n\n";
+
+    if (mode == LuaData::PrintMode::DEFAULT)
+    {
+        out << (*comments) << "\n";
+    }
+}
+
+
+void LuaData::swap_rules(std::vector<Rule*>& new_rules)
+{
+    rules.swap(new_rules);
+}
+
+void LuaData::swap_conf_data(std::vector<Variable*>& new_vars,
+                                std::vector<Table*>& new_tables,
+                                std::vector<Include*>& new_includes,
+                                Comments*& new_comments)
+{
+    vars.swap(new_vars);
+    tables.swap(new_tables);
+    includes.swap(new_includes);
+
+    Comments* tmp = new_comments;
+    new_comments = comments;
+    comments = tmp;
 }

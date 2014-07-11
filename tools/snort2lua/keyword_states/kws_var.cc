@@ -35,40 +35,34 @@ namespace {
 class Var : public ConversionState
 {
 public:
-    Var(Converter* cv, LuaData* ld);
+    Var(Converter* cv, LuaData* ld) : ConversionState(cv, ld){}
     virtual ~Var() {};
     virtual bool convert(std::istringstream& data);
-
-private:
-    bool first_line;
-    bool is_port_list;
-    std::string keyword;
 };
 
 } // namespace
 
-
-Var::Var(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
-{
-    first_line = true;
-    is_port_list = false;
-}
-
+#include <iostream>
 bool Var::convert(std::istringstream& data_stream)
 {
     std::string ports;//    cv->print_line(data_stream);
+    std::string keyword;
 
-    if (first_line)
-        if (!(data_stream >> keyword))
-            return false;
+    if (!(data_stream >> keyword))
+        return false;
 
     if(!(data_stream >> ports))
         return false;
 
-    if(is_port_list || ports.front() == '[')
+    if (isdigit(keyword.front()))
+    {
+        ld->add_comment("Bad variable name"
+            " - " + keyword + " begins with a number!");
+        return false;
+    }
+    else if(ports.front() == '[')
     {
         std::vector<std::string> port_list;
-        is_port_list = true;
         bool retval = true;
 
         if(ports.front() == '[')

@@ -27,6 +27,7 @@ Comments::Comments(CommentType type)
     this->depth = 0;
     this->prev_empty = false;
     this->type = type;
+    this->header = false;
 }
 
 Comments::Comments(int depth, CommentType type)
@@ -34,6 +35,7 @@ Comments::Comments(int depth, CommentType type)
     this->depth = depth;
     this->prev_empty = false;
     this->type = type;
+    this->header = false;
 }
 
 Comments::Comments(std::string comment, int depth, CommentType type)
@@ -42,6 +44,7 @@ Comments::Comments(std::string comment, int depth, CommentType type)
     this->depth = depth;
     this->prev_empty = false;
     this->type = type;
+    this->header = true;
 }
 
 Comments::~Comments()
@@ -53,7 +56,6 @@ void Comments::add_text(std::string text)
     if (!text.empty() || !prev_empty)
     {
         comment.push_back(std::string(text));
-
         prev_empty = text.empty();
     }
 }
@@ -77,7 +79,8 @@ void Comments::add_sorted_text(std::string new_text)
 
 bool Comments::empty()
 {
-    return (comment.size() == 0);
+    int cnt = header ? -1 : 0;
+    return ((comment.size() + cnt) == 0);
 }
 
 std::ostream &operator<<( std::ostream& out, const Comments &c)
@@ -106,13 +109,13 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
 
 
     const int pre_str_length = pre_str.size();
-    const int max_line_length = c.max_line_length - pre_str_length - 1;
 
 
     for (std::string str : c.comment)
     {
         bool first_line = true;
         std::string curr_pre_str = pre_str;
+        int max_line_length = c.max_line_length - pre_str_length - 1;
 
         // print a newline betweens strings, but not before the first line.
         if (first_str)
@@ -123,6 +126,9 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
         // if the line is emptry, we need a newline. the loop won't print it.
         if (str.size() == 0)
             out << "\n";
+
+        else if (c.type == Comments::CommentType::MULTI_LINE)
+            util::sanitize_multi_line_string(util::ltrim(str));
 
         while(!str.empty())
         {
@@ -143,16 +149,13 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
                 }
             }
 
-            // add a space between any double hyphens
-            if (c.type == Comments::CommentType::MULTI_LINE)
-                util::sanitize_multi_line_string(str);
-
 
             // don't print the extra '\n' on the first line.
             if (first_line)
             {
                 out << curr_pre_str << str.substr(0, substr_len);
                 curr_pre_str += "    ";
+                max_line_length -= 4; // account for extra four spaces
                 first_line = false;
             }
             else

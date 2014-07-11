@@ -1,6 +1,6 @@
 
 
-macro ( add_compile_flags library flags)
+macro (add_compile_flags library flags)
 
 
     get_target_property(TEMP ${library} COMPILE_FLAGS)
@@ -14,11 +14,11 @@ macro ( add_compile_flags library flags)
     # append our values
     SET(TEMP "${TEMP} ${flags} " )
     set_target_properties(${library} PROPERTIES COMPILE_FLAGS ${TEMP}) 
-endmacro ( add_compile_flags)
+endmacro (add_compile_flags)
 
 
 
-macro (add_link_flags library )
+macro (add_link_flags library)
 
     get_target_property(TEMP ${library} LINK_FLAGS)
 
@@ -77,8 +77,7 @@ endmacro (set_default_visibility_compile_flag)
 
 
 
-macro ( add_target_compile_flags library flags)
-
+macro (add_target_compile_flags library flags)
 
     get_target_property(TEMP ${library} COMPILE_DEFINITIONS)
 
@@ -91,34 +90,34 @@ macro ( add_target_compile_flags library flags)
     # append our values
     SET(TEMP "${TEMP} ${flags} " )
     set_target_properties(${library} PROPERTIES COMPILE_DEFINITIONS ${TEMP}) 
-endmacro ( add_target_compile_flags )
+endmacro (add_target_compile_flags)
 
 
-macro( set_project_compiler_defines_if_true var flag)
+macro (set_project_compiler_defines_if_true var flag)
     if (${var})
         add_definitions("-D${flag}")
     endif(${var})
-endmacro( set_project_compiler_defines_if_true )
+endmacro (set_project_compiler_defines_if_true)
 
-macro( set_project_compiler_defines_if_false var flag)
+macro (set_project_compiler_defines_if_false var flag)
     if (NOT ${var})
         add_definitions("-D${flag}")
     endif()
-endmacro( set_project_compiler_defines_if_false )
+endmacro (set_project_compiler_defines_if_false)
 
-macro( set_if_true value var)
+macro (set_if_true value var)
     if (${value})
         set(${var} "YES")
     endif()
-endmacro()
+endmacro ()
 
-macro( set_if_false value var)
-    if (value)
+macro (set_if_false value var)
+    if(value)
         set(${var} "NO")
     endif()
-endmacro()
+endmacro ()
 
-macro( append_to_cache_variable cache_var)
+macro (append_to_cache_variable cache_var)
 
     get_property(cache_value CACHE ${cache_var} PROPERTY VALUE)
     get_property(cache_type CACHE ${cache_var} PROPERTY TYPE)
@@ -129,10 +128,10 @@ macro( append_to_cache_variable cache_var)
 
 
     message(STATUS ${cache_var} " ${tmp} " CACHE " " ${cache_type} " ${cache_help_string}")
-endmacro()
+endmacro ()
 
 
-macro( set_cache_variable cache_var)
+macro (set_cache_variable cache_var)
 
     get_property(cache_value CACHE ${cache_var} PROPERTY VALUE)
     get_property(cache_type CACHE ${cache_var} PROPERTY TYPE)
@@ -143,6 +142,6 @@ macro( set_cache_variable cache_var)
 
 
     message(STATUS ${cache_var} " ${tmp}" CACHE " " ${cache_type} " ${cache_help_string}")
-endmacro()
+endmacro ()
 
 

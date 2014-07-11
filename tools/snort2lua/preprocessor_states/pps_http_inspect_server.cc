@@ -75,6 +75,25 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     {
         ld->open_table("http_server_" + std::to_string(binding_id));
         binding_id++;
+        ld->add_comment_to_table("Unable to create an http_inspect_server binding at this time!!!");
+
+        // TODO --   add some bindings here!!
+        if (!keyword.compare("{"))
+        {
+            std::string list, tmp;
+
+            while (data_stream >> tmp && tmp.compare("}"))
+                list += tmp;
+
+            if (!data_stream.good())
+                return false;
+
+            // this is an ip address list
+        }
+        else
+        {
+            // this is an ip address
+        }
         // CREATE A BINDING HERE!!
     }
 
@@ -209,6 +228,9 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         else if (!keyword.compare("whitespace_chars"))
             tmpval = parse_bracketed_byte_list("whitespace_chars", data_stream);
 
+        else if (!keyword.compare("base36"))
+            tmpval = eat_option(data_stream);
+
         else if (!keyword.compare("non_rfc_char"))
         {
             ld->add_diff_option_comment("non_rfc_char", "non_rfc_chars");
@@ -291,9 +313,12 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         }
 
         else
-          tmpval = false;
+        {
+            tmpval = false;
+        }
 
-        retval = retval && tmpval;
+        if (retval && !tmpval)
+            retval = false;
     }
 
     return retval;

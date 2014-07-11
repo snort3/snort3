@@ -47,8 +47,8 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     std::string val;
     bool retval = true;
     int limit;
-    char c;
-    std::string units;
+    char c = '\0';
+    std::string units = "B";
 
 
     ld->open_top_level_table("alert_csv");
@@ -172,6 +172,7 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     if (!(data_stream >> limit))
         return retval;
 
+    // default units is bytes.  set above
     if (data_stream >> c)
     {
         if (c == 'K' || c == 'k')
@@ -181,8 +182,6 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-    else
-        units = "B";
 
 
     retval = ld->add_option_to_table("limit", limit) && retval;

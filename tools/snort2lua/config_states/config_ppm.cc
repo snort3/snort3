@@ -135,7 +135,6 @@ bool Ppm::convert(std::istringstream& data_stream)
         {
             std::string opt1;
             std::string opt2;
-            popped_comma = false;
             ld->add_diff_option_comment("rule-log", "rule_log");
 
             if (!(data_stream >> opt1))

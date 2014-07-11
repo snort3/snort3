@@ -60,8 +60,8 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
 
     retval = ld->add_option_to_table("limit", limit) && retval;
 
-    char c;
-    std::string units;
+    char c = '\0';
+    std::string units = "B";
     if (data_stream >> c)
     {
         if (c == 'K' || c == 'k')
@@ -71,8 +71,6 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-    else
-        units = "B";
 
 
     retval = ld->add_option_to_table("units", units) && retval;

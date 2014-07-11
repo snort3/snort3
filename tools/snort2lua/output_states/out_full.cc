@@ -46,8 +46,8 @@ bool AlertFull::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
     int limit;
-    char c;
-    std::string units;
+    char c = '\0';
+    std::string units = "B";
 
 
     ld->open_top_level_table("alert_full");
@@ -70,8 +70,6 @@ bool AlertFull::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-    else
-        units = "B";
 
 
     retval = ld->add_option_to_table("limit", limit) && retval;

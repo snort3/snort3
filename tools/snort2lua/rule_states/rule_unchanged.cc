@@ -561,20 +561,6 @@ static const ConvertMap rule_urilen =
 
 const ConvertMap* urilen_map = &rule_urilen;
 
-
-/************************************
- ***********  FILE_DATA  ************
- ************************************/
-
-static const std::string file_data = "file_data";
-static const ConvertMap rule_file_data =
-{
-    file_data,
-    unchanged_rule_ctor<&file_data, false>,
-};
-
-const ConvertMap* file_data_map = &rule_file_data;
-
 /************************************
  ***********  BYTE_TEST  ************
  ************************************/
@@ -680,6 +666,19 @@ static const ConvertMap rule_asn1 =
 };
 
 const ConvertMap* asn1_map = &rule_asn1;
+
+/************************************
+ ***********  PRIORITY  *************
+ ************************************/
+
+static const std::string priority = "priority";
+static const ConvertMap rule_priority =
+{
+    priority,
+    unchanged_rule_ctor<&priority>,
+};
+
+const ConvertMap* priority_map = &rule_priority;
 
 
 

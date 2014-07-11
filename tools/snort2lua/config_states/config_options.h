@@ -31,67 +31,13 @@
 
 namespace config
 {
-#if 0
-
-class ConfigIntOption : public ConversionState
-{
-public:
-    explicit ConfigIntOption(Converter* cv,
-                            LuaData* ld,
-                            std::string table_name,
-                            std::string opt_name)
-                            : ConversionState(cv, ld) 
-    {
-        this->table_name = table_name;
-        this->opt_name = opt_name;
-    };
-
-    virtual ~ConfigIntOption() {};
-    virtual bool convert(std::istringstream& stream)
-    {
-        ld->open_table(table_name);
-        return parse_int_option(opt_name, stream);
-    }
-
-private:
-    std::string table_name;
-    std::string opt_name;
-};
-
-/*  Parse a 'config' option which contain one and only one string value */
-class ConfigStringOption : public ConversionState
-{
-public:
-    explicit ConfigStringOption(Converter* cv,
-                                LuaData* ld,
-                                std::string table_name,
-                                std::string opt_name)
-                                : ConversionState(cv, ld) 
-    {
-        this->table_name = table_name;
-        this->opt_name = opt_name;
-    };
-
-    virtual ~ConfigStringOption() {};
-    virtual bool convert(std::istringstream& stream)
-    {
-        ld->open_table(table_name);
-        return parse_string_option(opt_name, stream);
-    }
-
-private:
-    std::string table_name;
-    std::string opt_name;
-};
-#endif
 
 /**********************************
  ********  TEMPLATES!!   **********
  **********************************/
 
 
-//  int template
-
+// int template
 
 template<const std::string *snort_option,
         const std::string *lua_table_name,
