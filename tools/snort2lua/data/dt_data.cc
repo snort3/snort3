@@ -25,7 +25,7 @@
 #include <sstream>
 
 
-LuaData::PrintMode LuaData::mode = LuaData::PrintMode::DEFAULT;
+LuaData::PrintMode LuaData::mode = LuaData::PrintMode::QUIET;
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -349,11 +349,12 @@ void LuaData::bad_rule(std::string bad_option, std::istringstream& stream)
     // we only need to go through this once.
     if (!curr_rule_bad)
     {
-        bad_rules->add_text("Failed to convert rule: first_unkown_option=" + bad_option);
-        bad_rules->add_text("bad_rule: " + stream.str() + ")");
+        bad_rules->add_text(std::string());
+        bad_rules->add_text("Failed to convert rule: " + stream.str() + ")");
         curr_rule->bad_rule();
         curr_rule_bad = true;
     }
+    bad_rules->add_text("^^^^ unkown_option=" + bad_option);
 }
 
 bool LuaData::add_hdr_data(std::string data)

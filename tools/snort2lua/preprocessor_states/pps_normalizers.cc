@@ -32,7 +32,7 @@ namespace preprocessors
 
 
 template<const std::string *norm_option>
-static ConversionState* norm_sans_options_ctor(Converter* cv, LuaData* ld)
+static ConversionState* norm_sans_options_ctor(Converter* /*cv*/, LuaData* ld)
 {
     ld->open_table("normalize");
     ld->add_diff_option_comment("preprocessor normalize_" + *norm_option, *norm_option + " = <bool>");
@@ -238,19 +238,19 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
         
         else if(!keyword.compare("trim_rst"))
         {
-            tmpval = ld->add_diff_option_comment("trim_rst", "trim");
+            ld->add_diff_option_comment("trim_rst", "trim");
             tmpval = ld->add_option_to_table("trim", true);
         }
         
         else if(!keyword.compare("trim_win"))
         {
-            tmpval = ld->add_diff_option_comment("trim_win", "trim");
+            ld->add_diff_option_comment("trim_win", "trim");
             tmpval = ld->add_option_to_table("trim", true);
         }
         
         else if(!keyword.compare("trim_mss"))
         {
-            tmpval = ld->add_diff_option_comment("trim_mss", "trim");
+            ld->add_diff_option_comment("trim_mss", "trim");
             tmpval = ld->add_option_to_table("trim", true);
         }
 

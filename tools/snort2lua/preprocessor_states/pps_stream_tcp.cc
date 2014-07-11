@@ -162,7 +162,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    bool blahhablha;
 
     ld->open_table("stream_tcp");
 

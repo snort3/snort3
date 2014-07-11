@@ -158,7 +158,7 @@ int Converter::convert_file(std::string input_file)
         std::getline(in, tmp);
         util::rtrim(tmp);
 
-        int first_non_white_char = tmp.find_first_not_of(' ');
+        std::size_t first_non_white_char = tmp.find_first_not_of(' ');
         if ((first_non_white_char == std::string::npos) ||
                  (tmp[first_non_white_char] == '#') ||
                  (tmp[first_non_white_char] == ';')) // no, i did not know that semicolons made a line a comment
@@ -184,7 +184,7 @@ int Converter::convert_file(std::string input_file)
         {
             orig_text += tmp;
             std::istringstream data_stream(orig_text);
-            while(data_stream.tellg() != -1)
+            while(data_stream.peek() != std::char_traits<wchar_t>::eof())
             {
                 if ((state == nullptr) || !state->convert(data_stream))
                 {

@@ -258,7 +258,6 @@ protected:
     inline bool set_next_rule_state(std::istringstream& stream)
     {
         std::string keyword;
-
         int pos = stream.tellg();
 
 //        std::getline(stream, keyword, ':');
@@ -267,12 +266,14 @@ protected:
 
         while(std::getline(stream, keyword, ':'))
         {
-            int semi_colon_pos = keyword.find(';');
+            std::size_t semi_colon_pos = keyword.find(';');
             if (semi_colon_pos != std::string::npos)
             {
-                // found a nested option without a colon
-                // 2 == last charachter of option + semi_colon
-                stream.seekg(pos + semi_colon_pos + 1);
+                // found an option without a colon, so set stream
+                // to semi-colon
+                std::streamoff off = 1 + (std::streamoff)(pos) +
+                                     (std::streamoff)(semi_colon_pos);
+                stream.seekg(off);
                 keyword = keyword.substr(0, semi_colon_pos);
             }
 

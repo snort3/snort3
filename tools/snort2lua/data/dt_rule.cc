@@ -123,7 +123,7 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
     if (rule.is_bad_rule || rule.is_comment)
         out << "#";
 
-    for(int i = 0; i < rule.num_hdr_data; i++)
+    for(std::size_t i = 0; i < rule.num_hdr_data; i++)
     {
         if (first_line)
             first_line = false;

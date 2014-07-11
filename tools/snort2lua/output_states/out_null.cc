@@ -29,7 +29,7 @@
 namespace output
 {
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor(Converter* /*cv*/, LuaData* ld)
 {
     ld->open_table("alert_null"); // in case there are no arguments
     ld->close_table();

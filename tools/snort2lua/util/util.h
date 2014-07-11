@@ -93,7 +93,9 @@ std::string &sanitize_multi_line_string(std::string &s);
 // find the location of the first space before max_str_lenght.
 // if no space exists before max_str_length, return the first space
 // after max_length. Otherwise, return std::string::npos
-int get_substr_length(std::string s, int max_length);
+std::size_t  get_substr_length(std::string s, std::size_t max_length);
+
+bool case_compare(std::string, std::string);
 
 }  // namespace util
 

@@ -68,14 +68,13 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
         util::trim(val);
-        int keyword_pos = val.find_first_of(':');
+        std::size_t keyword_pos = val.find_first_of(':');
         std::string keyword;
 
         if (keyword_pos != std::string::npos)
         {
             keyword = val.substr(0, keyword_pos);
             val = val.substr(keyword_pos + 1, std::string::npos);
-//            subopts.str(val);  // reset the subopts buffer for someone else
         }
         else
         {

@@ -64,8 +64,9 @@ bool RuleHeader::convert(std::istringstream& data_stream)
     // add that part back when printing each rule.
     int curr_pos = data_stream.tellg();
     std::string rule_string = data_stream.str();
-    int end_pos = rule_string.rfind(')');
+    std::size_t end_pos = rule_string.rfind(')');
     rule_string = rule_string.substr(0, end_pos);
+    util::rtrim(rule_string); // gaurantee last char is a rule opt/subopt
     data_stream.str(rule_string);
     data_stream.seekg(curr_pos);  // position was reset. so find curr position
 

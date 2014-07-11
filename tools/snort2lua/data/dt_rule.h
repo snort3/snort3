@@ -28,7 +28,7 @@
 #include <iostream>
 #include <array>
 
-#include "data/rule/rd_option.h"
+#include "data/dt_rule_option.h"
 
 class Rule
 {
@@ -53,7 +53,7 @@ private:
     std::vector<std::string> comments;
     std::array<std::string, 7> hdr_data;
     std::vector<RuleOption*> options;
-    int num_hdr_data;
+    std::size_t num_hdr_data;
     bool is_bad_rule;
     bool is_comment;
 };

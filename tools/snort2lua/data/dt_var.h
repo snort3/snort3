@@ -50,7 +50,7 @@ private:
     std::vector<VarData*> vars;
     std::string name;
     int depth;
-    const int max_line_length = 77; // leave room for additional text
+    const std::size_t max_line_length = 77; // leave room for additional text
 
 };
 

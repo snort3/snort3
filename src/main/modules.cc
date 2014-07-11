@@ -812,6 +812,9 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter packets_params[] =
 {
+    { "address_space_agnostic", Parameter::PT_BOOL, nullptr, "false",
+      "file with BPF to select traffic for Snort" },
+
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
       "file with BPF to select traffic for Snort" },
 

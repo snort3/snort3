@@ -19,7 +19,7 @@
  */
 // rd_option.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
-#include "data/rule/rd_option.h"
+#include "data/dt_rule_option.h"
 
 
 

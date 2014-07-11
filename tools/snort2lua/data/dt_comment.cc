@@ -79,8 +79,8 @@ void Comments::add_sorted_text(std::string new_text)
 
 bool Comments::empty()
 {
-    int cnt = header ? -1 : 0;
-    return ((comment.size() + cnt) == 0);
+    return ((comment.size() == 0) ||
+            (comment.size() == 1 && header));
 }
 
 std::ostream &operator<<( std::ostream& out, const Comments &c)
@@ -108,14 +108,14 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
     }
 
 
-    const int pre_str_length = pre_str.size();
+    const std::size_t pre_str_length = pre_str.size();
 
 
     for (std::string str : c.comment)
     {
         bool first_line = true;
         std::string curr_pre_str = pre_str;
-        int max_line_length = c.max_line_length - pre_str_length - 1;
+        std::size_t max_line_length = c.max_line_length - pre_str_length - 1;
 
         // print a newline betweens strings, but not before the first line.
         if (first_str)
@@ -132,7 +132,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
 
         while(!str.empty())
         {
-            int substr_len = max_line_length;
+            std::size_t substr_len = max_line_length;
 
             // determine the first space before 80 charachters
             // if there are no spaces, print the entire string
@@ -140,7 +140,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
             {
                 substr_len = str.rfind(" ", max_line_length);
 
-                if (substr_len == -1)
+                if (substr_len == std::string::npos)
                 {
                     substr_len = str.find(" ");
 

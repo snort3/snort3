@@ -17,51 +17,50 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// kws_config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_default_rule_state.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
 #include "util/converter.h"
-#include "config_states/config_api.h"
 #include "util/util.h"
 
-namespace keywords
+namespace config
 {
 
 namespace {
 
-class Config : public ConversionState
+class DefaultRuleState : public ConversionState
 {
 public:
-    Config(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Config() {};
-    virtual bool convert(std::istringstream& data);
+    DefaultRuleState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~DefaultRuleState() {};
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-
-bool Config::convert(std::istringstream& data_stream)
+bool DefaultRuleState::convert(std::istringstream& data_stream)
 {
-    std::string keyword;
+    bool retval = true;
+    std::string val;
 
-    if (util::get_string(data_stream, keyword, ":"))
+    ld->open_table("alerts");
+
+    if (data_stream >> val &&
+        util::case_compare(val, "disableD"))
     {
-
-        if(keyword.back() == ':')
-            keyword.pop_back();
-
-        const ConvertMap* map = util::find_map(config::config_api, keyword);
-        if (map)
-        {
-            cv->set_state(map->ctor(cv, ld));
-            return true;
-        }
+        ld->add_option_to_table("default_rule_state", false);
+    }
+    else
+    {
+        ld->add_option_to_table("default_rule_state", true);
     }
 
-    return false;
+
+    ld->close_table();
+    return retval;
 }
 
 /**************************
@@ -70,15 +69,15 @@ bool Config::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Config(cv, ld);
+    return new DefaultRuleState(cv, ld);
 }
 
-static const ConvertMap keyword_config = 
+static const ConvertMap default_rule_state_api =
 {
-    "config",
+    "default_rule_state",
     ctor,
 };
 
-const ConvertMap* config_map = &keyword_config;
+const ConvertMap* default_rule_state_map = &default_rule_state_api;
 
-} // namespace keywords
+} // namespace config

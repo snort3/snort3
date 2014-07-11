@@ -17,33 +17,64 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_bo.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_order.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
 #include "util/converter.h"
 #include "util/util.h"
 
-
-namespace preprocessors
+namespace config
 {
 
-static ConversionState* bo_ctor(Converter* /*cv*/, LuaData* ld)
-{
-    ld->open_table("bo");
-    ld->close_table();
-    return nullptr;
-}
+namespace {
 
-static const ConvertMap preprocessor_bo = 
+class Order : public ConversionState
 {
-    "bo",
-    bo_ctor,
+public:
+    Order(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~Order() {};
+    virtual bool convert(std::istringstream& data_stream);
 };
 
-const ConvertMap* bo_map = &preprocessor_bo;
+} // namespace
 
-} // namespace preprocessors
+bool Order::convert(std::istringstream& data_stream)
+{
+    bool retval = true;
+    std::string val;
+
+    ld->open_table("alerts");
+
+    while (data_stream >> val)
+    {
+        bool tmpval = ld->add_list_to_table("order", val);
+
+        if (retval && !tmpval)
+            retval = false;
+    }
+
+    ld->close_table();
+    return retval;
+}
+
+/**************************
+ *******  A P I ***********
+ **************************/
+
+static ConversionState* ctor(Converter* cv, LuaData* ld)
+{
+    return new Order(cv, ld);
+}
+
+static const ConvertMap order_api =
+{
+    "order",
+    ctor,
+};
+
+const ConvertMap* order_map = &order_api;
+
+} // namespace config

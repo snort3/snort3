@@ -43,76 +43,56 @@ public:
 
 bool RuleState::convert(std::istringstream& data_stream)
 {
-    std::string keyword;
+    std::string arg;
     bool retval = true;
     int count = 0;
 
     ld->open_new_top_level_table("rule_state");
 
-    while (data_stream >> keyword)
+    while (util::get_string(data_stream, arg, ", "))
     {
-        int prev = 0;
+        bool tmpval = true;
 
-        // Snort delineates by either a space or a comma
-        while (prev < keyword.size())
+        switch (count)
         {
-            std::string arg;
-            bool tmpval = true;
-            int pos = keyword.find_first_of(",", prev);
+            case 0:
+                tmpval = ld->add_option_to_table("sid", std::stoi(arg));
+                count++;
+                break;
+            case 1:
+                tmpval = ld->add_option_to_table("gid", std::stoi(arg));
+                count++;
+                break;
+            case 2:
+                if (!arg.compare("enabled"))
+                {
+                    ld->add_diff_option_comment("enabled", "enable");
+                    tmpval = ld->add_option_to_table("enable", true);
+                }
+                else if (!arg.compare("disabled"))
+                {
+                    ld->add_diff_option_comment("disabled", "enable");
+                    tmpval = ld->add_option_to_table("enable", false);
+                }
+                else
+                {
+                    ld->add_error_comment("unkown option!");
+                    retval = false;
+                }
 
-            if (pos == std::string::npos)
-            {
-                arg = keyword.substr(prev);
-                prev = pos;
-            }
-            else
-            {
-                arg = keyword.substr(prev, pos - prev);
-                prev = pos + 1;
-            }
+                count++;
+                break;
+            case 3:
+                ld->add_deprecated_comment("action");
+                count++;
+                break;
+            default:
+                ld->add_error_comment("rule_state has too many option!!");
 
-
-            switch (count)
-            {
-                case 0:
-                    tmpval = ld->add_option_to_table("sid", std::stoi(arg));
-                    count++;
-                    break;
-                case 1:
-                    tmpval = ld->add_option_to_table("gid", std::stoi(arg));
-                    count++;
-                    break;
-                case 2:
-                    if (!arg.compare("enabled"))
-                    {
-                        ld->add_diff_option_comment("enabled", "enable");
-                        tmpval = ld->add_option_to_table("enable", true);
-                    }
-                    else if (!arg.compare("disabled"))
-                    {
-                        ld->add_diff_option_comment("disabled", "enable");
-                        tmpval = ld->add_option_to_table("enable", false);
-                    }
-                    else
-                    {
-                        ld->add_error_comment("unkown option!");
-                        retval = false;
-                    }
-
-                    count++;
-                    break;
-                case 3:
-                    ld->add_deprecated_comment("action");
-                    count++;
-                    break;
-                default:
-                    ld->add_error_comment("rule_state has too many option!!");
-
-            }
-
-            if (retval)
-                retval = tmpval;
         }
+
+        if (retval && !tmpval)
+            retval = false;
     }
 
     return retval;

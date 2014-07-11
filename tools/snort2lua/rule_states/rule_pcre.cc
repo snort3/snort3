@@ -52,7 +52,7 @@ bool Pcre::convert(std::istringstream& data_stream)
 
     std::string pcre_str = util::get_rule_option_args(data_stream);
 
-    int pattern_end = pcre_str.rfind("/");
+    std::size_t pattern_end = pcre_str.rfind("/");
     std::string pattern = pcre_str.substr(0, pattern_end + 1);
     std::string options = pcre_str.substr(pattern_end + 1, std::string::npos);
     std::string new_opts = std::string();

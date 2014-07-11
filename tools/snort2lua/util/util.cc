@@ -25,6 +25,8 @@
 #include <cctype>
 #include <locale>
 #include <sys/stat.h>
+#include <iostream>
+#include <string>
 #include "util/util.h"
 #include "conversion_state.h"
 
@@ -58,7 +60,7 @@ const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string
 std::string &sanitize_multi_line_string(std::string &s)
 {
 
-    int found = s.find("]]");
+    std::size_t found = s.find("]]");
     while (found != std::string::npos)
     {
         s.insert(found + 1, " ");
@@ -76,9 +78,9 @@ std::string &sanitize_multi_line_string(std::string &s)
 }
 
 
-int get_substr_length(std::string str, int max_length)
+std::size_t get_substr_length(std::string str, std::size_t max_length)
 {
-    int str_len;
+    std::size_t str_len;
 
     if (str.size() < max_length)
         return str.size();
@@ -112,26 +114,33 @@ bool get_string(std::istringstream& stream,
     }
     else
     {
-        int pos;
+        int pos = 0;
         option = std::string();
 
+        // we don't want an empty string
         while (stream.good() && option.empty())
         {
             pos = stream.tellg();
             std::getline(stream, option, delimeters[0]);
         }
 
-        // check to ensure we got some data (and not a whitespace string)
-        if(option.find_first_not_of(' ') == std::string::npos)
+        // find the first non-delimeter charachter
+        const std::size_t first_char = option.find_first_not_of(delimeters);
+
+        // if there are no charachters between a delimeter, empty string. return false
+        if (first_char == std::string::npos)
             return false;
 
-        int first_delim = option.find_first_of(delimeters);
-        if (first_delim != std::string::npos)
-        {
-            option = option.substr(0, first_delim);
-            stream.seekg(pos + first_delim + 1); // + 1 to eat delimeter
-        }
+        // find the first delimeter after the first non-delimeter
+        std::size_t first_delim = option.find_first_of(delimeters, first_char);
 
+        if (first_delim == std::string::npos)
+            first_delim = option.size();    // set value to take proper substr
+        else
+            stream.seekg((std::streamoff)(pos) + (std::streamoff)(first_delim) + 1);
+
+
+        option = option.substr(first_char, first_delim - first_char);
         trim(option);
         return true;
     }
@@ -158,6 +167,16 @@ std::string get_rule_option_args(std::istringstream& stream)
 bool file_exists (const std::string& name) {
   struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0);
+}
+
+bool case_compare(std::string arg1, std::string arg2)
+{
+    std::transform(arg1.begin(), arg1.end(), arg1.begin(), ::tolower);
+    std::transform(arg2.begin(), arg2.end(), arg2.begin(), ::tolower);
+
+    if (!arg1.compare(arg2))
+        return true;
+    return false;
 }
 
 #if 0

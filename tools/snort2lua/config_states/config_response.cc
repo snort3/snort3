@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config_event_queue.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_response.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -31,62 +31,43 @@ namespace config
 
 namespace {
 
-class EventQueue : public ConversionState
+class Response : public ConversionState
 {
 public:
-    EventQueue(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~EventQueue() {};
+    Response(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~Response() {};
     virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool EventQueue::convert(std::istringstream& data_stream)
+bool Response::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
 
-    ld->open_table("event_queue");
+    ld->open_table("active");
 
     while (util::get_string(data_stream, keyword, ", "))
     {
         bool tmpval = true;
+        std::string val;
 
+        if (!util::get_string(data_stream, val, ", "))
+            tmpval = false;
 
-        if (!keyword.compare("process_all_events"))
-            tmpval = ld->add_option_to_table("process_all_events", true);
+        else if (!keyword.compare("attempts"))
+            tmpval = ld->add_option_to_table("attempts", std::stoi(val));
 
-        else if (!keyword.compare("max_queue"))
-        {
-            std::string val;
+        else if (!keyword.compare("device"))
+            tmpval = ld->add_option_to_table("device", val);
 
-            if(util::get_string(data_stream, val, ", "))
-                tmpval = ld->add_option_to_table("max_queue", std::stoi(val));
-            else
-                tmpval = false;
-        }
-
-        else if (!keyword.compare("log"))
-        {
-            std::string val;
-
-            if(util::get_string(data_stream, val, ", "))
-                tmpval = ld->add_option_to_table("log", std::stoi(val));
-            else
-                tmpval = false;
-        }
-
-        else if (!keyword.compare("order_events"))
-        {
-            std::string val;
-            if(util::get_string(data_stream, val, ", "))
-                tmpval = ld->add_option_to_table("order_events", val);
-            else
-                tmpval = false;
-        }
+        else if (!keyword.compare("dst_mac"))
+            tmpval = ld->add_option_to_table("dst_mac", val);
 
         else
             tmpval = false;
+
 
         if (retval && !tmpval)
             retval = false;
@@ -101,15 +82,15 @@ bool EventQueue::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new EventQueue(cv, ld);
+    return new Response(cv, ld);
 }
 
-static const ConvertMap event_queue_api =
+static const ConvertMap response_api =
 {
-    "event_queue",
+    "response",
     ctor,
 };
 
-const ConvertMap* event_queue_map = &event_queue_api;
+const ConvertMap* response_map = &response_api;
 
 } // namespace config

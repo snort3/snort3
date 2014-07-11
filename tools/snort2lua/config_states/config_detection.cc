@@ -45,23 +45,19 @@ bool Detection::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;
-    std::string keyword;
+    std::string args;
 
     ld->open_table("search_engine");
     ld->add_comment_to_table("This table was previous 'config detection: ...");
 
-    while(data_stream >> keyword)
+    while(util::get_string(data_stream, args, ", "))
     {
         bool tmpval = true;
+        std::string keyword;
+        std::istringstream arg_stream(args);
 
-        if(keyword.back() == ',')
-            keyword.pop_back();
-
-        if(keyword.empty())
-            continue;
-
-        if(!keyword.compare("max_queue_events"))
-            tmpval = parse_int_option("max_queue_events", data_stream);
+        if (!(arg_stream >> keyword)) // impossible to fail. get_string() will return false first.
+            tmpval = false;
 
         else if (!keyword.compare("no_stream_inserts"))
             tmpval = ld->add_option_to_table("no_stream_inserts", true);
@@ -79,18 +75,6 @@ bool Detection::convert(std::istringstream& data_stream)
         {
             ld->add_diff_option_comment("split-any-any", "split_any_any");
             tmpval = ld->add_option_to_table("split_any_any", true);
-        }
-
-        else if(!keyword.compare("max-pattern-len"))
-        {
-            ld->add_diff_option_comment("max-pattern-len", "max_pattern_len");
-            tmpval = parse_int_option("max_pattern_len", data_stream);
-        }
-
-        else if(!keyword.compare("bleedover-port-limit"))
-        {
-            ld->add_diff_option_comment("bleedover-port-limit", "bleedover_port_limit");
-            tmpval = parse_int_option("bleedover_port_limit", data_stream);
         }
 
         else if(!keyword.compare("bleedover-warnings-enabled"))
@@ -135,13 +119,45 @@ bool Detection::convert(std::istringstream& data_stream)
             tmpval = ld->add_option_to_table("debug_print_fast_pattern", true);
         }
 
+        else if(!keyword.compare("max_queue_events"))
+        {
+            std::string val;
+
+            if (util::get_string(data_stream, val, ", "))
+                tmpval = ld->add_option_to_table("max_queue_events", std::stoi(val));
+            else
+                tmpval = false;
+        }
+
+        else if(!keyword.compare("max-pattern-len"))
+        {
+            std::string val;
+            ld->add_diff_option_comment("max-pattern-len", "max_pattern_len");
+
+            if (util::get_string(data_stream, val, ", "))
+                tmpval = ld->add_option_to_table("max_pattern_len", std::stoi(val));
+            else
+                tmpval = false;
+        }
+
+        else if(!keyword.compare("bleedover-port-limit"))
+        {
+            std::string val;
+            ld->add_diff_option_comment("bleedover-port-limit", "bleedover_port_limit");
+
+            if (util::get_string(data_stream, val, ", "))
+                tmpval = ld->add_option_to_table("max_pattern_len", std::stoi(val));
+            else
+                tmpval = false;
+        }
+
         else if (!keyword.compare("search-method"))
         {
             ld->add_diff_option_comment("search-method", "search_method");
             std::string method;
             std::string new_method;
 
-            if (!(data_stream >> method))
+            if (!util::get_string(data_stream, method, ", "))
             {
                 retval = false;
                 continue;
@@ -188,7 +204,7 @@ bool Detection::convert(std::istringstream& data_stream)
                 new_method = "ac_full_q";
 
                 if(!ld->add_option_to_table("split_any_any", true))
-                    retval = false;
+                    tmpval = false;
             }
 
             else
@@ -210,8 +226,8 @@ bool Detection::convert(std::istringstream& data_stream)
         else
             tmpval = false;
 
-        if (retval)
-            retval = tmpval;
+        if (retval && !tmpval)
+            retval = false;
     }
 
     return retval;

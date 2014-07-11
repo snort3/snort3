@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_frag3_global.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_event_trace.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -26,62 +26,52 @@
 #include "util/converter.h"
 #include "util/util.h"
 
-namespace preprocessors
+namespace config
 {
 
 namespace {
 
-class Frag3Global : public ConversionState
+class EventTrace : public ConversionState
 {
 public:
-    Frag3Global(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Frag3Global() {};
+    EventTrace(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~EventTrace() {};
     virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool Frag3Global::convert(std::istringstream& data_stream)
+bool EventTrace::convert(std::istringstream& data_stream)
 {
-
     bool retval = true;
     std::string keyword;
+    std::string arg;
 
-    ld->open_table("stream_ip");
+    ld->open_table("output");
+    ld->open_table("event_trace");
 
-
-    // full options are comma seperated
-    while(util::get_string(data_stream, keyword, ","))
+    while (util::get_string(data_stream, keyword, ", ") &&
+            util::get_string(data_stream, arg, ", "))
     {
         bool tmpval = true;
 
-        // suboptions are space seperated
-        std::istringstream args_stream(keyword);
-        args_stream >> keyword;
-        
-        if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+        if (!keyword.compare("file"))
+            tmpval = ld->add_option_to_table("file", arg);
 
-        else if(!keyword.compare("max_frags"))
-            tmpval = parse_int_option("max_frags", args_stream);
-        
-        else if(!keyword.compare("memcap"))
-            tmpval = parse_deleted_option("memcap", args_stream);
-
-        else if(!keyword.compare("prealloc_memcap"))
-            tmpval = parse_deleted_option("prealloc_memcap", args_stream);
-
-        else if(!keyword.compare("prealloc_frags"))
-            tmpval = parse_deleted_option("prealloc_frags", args_stream);
+        else if (!keyword.compare("max_data"))
+            tmpval = ld->add_option_to_table("max_data", std::stoi(arg));
 
         else
             tmpval = false;
 
-        if (retval)
-            retval = tmpval;
+
+        if (retval && !tmpval)
+            retval = false;
     }
 
-    return retval;    
+    ld->close_table();
+    ld->close_table();
+    return retval;
 }
 
 /**************************
@@ -90,15 +80,15 @@ bool Frag3Global::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Frag3Global(cv, ld);
+    return new EventTrace(cv, ld);
 }
 
-static const ConvertMap preprocessor_frag3_global =
+static const ConvertMap event_trace_api =
 {
-    "frag3_global",
+    "event_trace",
     ctor,
 };
 
-const ConvertMap* frag3_global_map = &preprocessor_frag3_global;
+const ConvertMap* event_trace_map = &event_trace_api;
 
-} // namespace preprocessors
+} // namespace config

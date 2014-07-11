@@ -71,7 +71,7 @@ private:
     bool prev_empty;
     bool header;  // true if a string was passed into constructor
     enum CommentType type;
-    const int max_line_length = 80;
+    const std::size_t max_line_length = 80;
     const std::string comment_line = "--";
     const std::string start_multi_com = "--[[";
     const std::string end_multi_com = "--]]";

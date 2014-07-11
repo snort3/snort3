@@ -40,7 +40,7 @@ struct Arg: public option::Arg
   static void printError(const char* msg1, const option::Option& opt, const char* msg2)
   {
     fprintf(stderr, "%s", msg1);
-    fwrite(opt.name, opt.namelen, 1, stderr);
+      fwrite(opt.name, (std::size_t)opt.namelen, 1, stderr);
     fprintf(stderr, "%s", msg2);
   }
 
@@ -231,7 +231,11 @@ int main (int argc, char* argv[])
             print_line("Multiple print modes provided. "
                 "Running in " + mode + " mode");
     }
-
+    else
+    {
+        quiet_mode = true;
+        ld.set_quiet_print();
+    }
 
     // Get the output file.  Warn the user if they provided multiple
     // files

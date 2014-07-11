@@ -47,35 +47,29 @@ bool File::convert(std::istringstream& data_stream)
     bool retval = true;
 
     ld->open_table("file_id");
-    while(std::getline(data_stream, args, ','))
+    while(util::get_string(data_stream, args, ","))
     {
         std::istringstream arg_stream(args);
         std::string keyword = std::string();
         bool tmpval = true;
 
         if (!(arg_stream >> keyword))
-        {
-            retval = false;
-            continue;
-        }
+            tmpval = false;
 
-        if (keyword.empty())
-            continue;
-#if 0
-        // UNSUPPORTED OPTIONS.  these options were added after 2.9.6
-
+        // vvvvvvvv -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
         else if (!keyword.compare("file_capture_memcap"))
-            ld->add_deprecated_comment("file_capture_memcap");
+            ld->add_unsupported_comment("file_capture_memcap");
 
         else if (!keyword.compare("file_capture_max"))
-            ld->add_deprecated_comment("file_capture_max");
+            ld->add_unsupported_comment("file_capture_max");
 
         else if (!keyword.compare("file_capture_min"))
-            ld->add_deprecated_comment("file_capture_min");
+            ld->add_unsupported_comment("file_capture_min");
 
         else if (!keyword.compare("file_capture_block_size"))
-            ld->add_deprecated_comment("file_capture_block_size");
-#endif
+            ld->add_unsupported_comment("file_capture_block_size");
+        // ^^^^^^^^^ -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
+
         else if (!keyword.compare("show_data_depth"))
             tmpval = parse_int_option("show_data_depth", arg_stream);
 
@@ -107,6 +101,12 @@ bool File::convert(std::istringstream& data_stream)
         {
             ld->add_diff_option_comment("config file: file_block_timeout", "block_timeout");
             tmpval = parse_int_option("block_timeout", arg_stream);
+        }
+
+        else if (!keyword.compare("file_lookup_timeout"))
+        {
+            ld->add_diff_option_comment("config file: file_lookup_timeout", "lookup_timeout");
+            tmpval = parse_int_option("lookup_timeout", arg_stream);
         }
 
         else
