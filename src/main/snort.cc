@@ -266,13 +266,13 @@ static ProfileStats* get_profile(const char* key)
 
 static void register_profiles()
 {
-    RegisterProfile("detect", "total", get_profile);
+    RegisterProfile("detect", nullptr, get_profile);
     RegisterProfile("mpse", "detect", get_profile);
     RegisterProfile("rule eval", "detect", get_profile);
     RegisterProfile("rtn eval", "rule eval", get_profile);
     RegisterProfile("rule tree eval", "rule eval", get_profile);
-    RegisterProfile("decode", "total", get_profile);
-    RegisterProfile("eventq", "total", get_profile);
+    RegisterProfile("decode", nullptr, get_profile);
+    RegisterProfile("eventq", nullptr, get_profile);
     RegisterProfile("total", nullptr, get_profile);
     RegisterProfile("daq meta", nullptr, get_profile);
 }

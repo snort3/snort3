@@ -105,11 +105,20 @@ static int max_layers = 0;
 
 static ProfileStatsNode* get_node(const char*);
 
+#define TOTAL "total"
+
+static ProfileStatsNode* get_root(ProfileStatsNode* idx)
+{
+    while ( idx->parent )
+        idx = idx->parent;
+    return idx;
+}
+
 static void set_node(ProfileStatsNode* idx)
 {
     idx->parent = get_node(idx->pname);
 
-    if ( idx->parent )
+    if ( idx->pname && strcasecmp(idx->pname, TOTAL) )
         idx->layer = idx->parent->layer + 1;
 }
 
@@ -601,7 +610,6 @@ void RegisterProfile(
     const char* keyword, const char* parent, get_profile_func get, Module* mod)
 {
     ProfileStatsNode *node;
-
     node = (ProfileStatsNode *)SnortAlloc(sizeof(ProfileStatsNode));
 
     if (gProfileStatsNodeList == NULL)
@@ -639,6 +647,9 @@ void RegisterProfile(
     node->get_data = get;
     node->owner = mod;
     node->parent = nullptr;
+
+    if ( !node->pname && strcasecmp(node->name, TOTAL) )
+        node->pname = TOTAL;
 
     // FIXIT wtf?
     //if ( !strcasecmp(node->name, "mpse") )
@@ -789,34 +800,6 @@ void CleanupProfileStatsNodeList(void)
     CleanupProfileStatsNodeList(gProfileStatsNodeList);
     gProfileStatsNodeList = NULL;
 }
-
-#if 0
-// FIXIT what was this for?
-// FIXIT profile stats is broken - need to accumulate across threads 
-// as each thread shuts down into the main thread data
-// looks like this was supposed to help do that
-static ProfileStatsNode* accumulate(ProfileStatsNode* node)
-{
-    ProfileStatsNode* last = NULL;
-    ProfileStatsNode* p = gProfileStatsNodeList;
-
-    while ( p && strcmp(p->name, node->name ) )
-    {
-        last = p;
-        p = p->next;
-    }
-    if ( !p )
-    {
-        if ( last )
-            last->next = node;
-        else
-            gProfileStatsNodeList = node;
-        node->next = NULL;
-        return NULL;
-    }
-    return node;
-}
-#endif
 
 // from packet thread only
 void ReleaseProfileStats(void)
@@ -989,7 +972,7 @@ void PrintWorstPreprocs(int numToPrint)
          idx= idx->next, num++)
     {
         /* Skip the total counter */
-        if ( !strcasecmp(idx->node->name, "total") )
+        if ( !strcasecmp(idx->node->name, TOTAL) )
         {
             num--;
             total = idx;
@@ -1107,7 +1090,7 @@ void ShowPreprocProfiles(void)
             {
                 /* Find this idx's parent in the list */
                 parent = findPerfParent(idx, worstPreprocPerformers);
-                if (parent && strcasecmp(parent->node->name, "total"))
+                if (parent && strcasecmp(parent->node->name, TOTAL))
                 {
                     listhead = parent->children;
                 }
@@ -1117,7 +1100,7 @@ void ShowPreprocProfiles(void)
                     parent = NULL;
                 }
                 pwp->pct_of_parent = (double)idx->stats.ticks/idx->parent->stats.ticks*100.0;
-                pwp->pct_of_total = (double)idx->stats.ticks/totalPerfStats.ticks*100.0;
+                pwp->pct_of_total = (double)idx->stats.ticks/get_root(idx)->stats.ticks*100.0;
             }
             else
             {
