@@ -1,3 +1,7 @@
+100
+-- adding profiling to module
+-- profile.preprocs is now profile.modules
+
 99
 -- updated wizard
 
