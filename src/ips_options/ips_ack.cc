@@ -43,9 +43,9 @@
 static const char* s_name = "ack";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats tcpAckPerfStats;
+static THREAD_LOCAL ProfileStats tcpAckPerfStats;
 
-static PreprocStats* ack_get_profile(const char* key)
+static ProfileStats* ack_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &tcpAckPerfStats;
@@ -169,7 +169,7 @@ static void ack_dtor(IpsOption* p)
 static void ack_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &tcpAckPerfStats, ack_get_profile);
+    RegisterOtnProfile(s_name, ack_get_profile);
 #endif
 }
 

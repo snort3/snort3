@@ -229,10 +229,10 @@ static void restart()
 
 //-------------------------------------------------------------------------
 // perf stats
-// FIXIT - this stuff should be in inits where the data lives
+// FIXIT move these to appropriate modules
 //-------------------------------------------------------------------------
 
-static PreprocStats* get_profile(const char* key)
+static ProfileStats* get_profile(const char* key)
 {
     if ( !strcmp(key, "detect") )
         return &detectPerfStats;
@@ -266,24 +266,15 @@ static PreprocStats* get_profile(const char* key)
 
 static void register_profiles()
 {
-    RegisterPreprocessorProfile(
-        "detect", &detectPerfStats, 0, &totalPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "mpse", &mpsePerfStats, 1, &detectPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "rule eval", &rulePerfStats, 1, &detectPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "rtn eval", &ruleRTNEvalPerfStats, 2, &rulePerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "rule tree eval", &ruleOTNEvalPerfStats, 2, &rulePerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "decode", &decodePerfStats, 0, &totalPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "eventq", &eventqPerfStats, 0, &totalPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "total", &totalPerfStats, 0, NULL, get_profile);
-    RegisterPreprocessorProfile(
-        "daq meta", &metaPerfStats, 0, NULL, get_profile);
+    RegisterProfile("detect", "total", get_profile);
+    RegisterProfile("mpse", "detect", get_profile);
+    RegisterProfile("rule eval", "detect", get_profile);
+    RegisterProfile("rtn eval", "rule eval", get_profile);
+    RegisterProfile("rule tree eval", "rule eval", get_profile);
+    RegisterProfile("decode", "total", get_profile);
+    RegisterProfile("eventq", "total", get_profile);
+    RegisterProfile("total", nullptr, get_profile);
+    RegisterProfile("daq meta", nullptr, get_profile);
 }
 
 //-------------------------------------------------------------------------
@@ -593,7 +584,7 @@ static void SnortCleanup()
     ParserCleanup();
 
 #ifdef PERF_PROFILING
-    CleanupPreprocStatsNodeList();
+    CleanupProfileStatsNodeList();
 #endif
 
     CleanupProtoNames();
@@ -1027,7 +1018,7 @@ void snort_thread_term()
         return;
 
 #ifdef PERF_PROFILING
-    ReleasePreprocStats();
+    ReleaseProfileStats();
 #endif
 
     otnx_match_data_term();

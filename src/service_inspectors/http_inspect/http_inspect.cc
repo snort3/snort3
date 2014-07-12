@@ -78,20 +78,10 @@
 int hex_lookup[256];
 int valid_lookup[256];
 
-#ifdef PERF_PROFILING
 // hiDetectPerfStats is not registered; it is used
 // only to exclude detection from hiPerfStats
-THREAD_LOCAL PreprocStats hiPerfStats;
-THREAD_LOCAL PreprocStats hiDetectPerfStats;
-
-static PreprocStats* hi_get_profile(const char* key)
-{
-    if ( !strcmp(key, SERVER_KEYWORD) )
-        return &hiPerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats hiPerfStats;
+THREAD_LOCAL ProfileStats hiDetectPerfStats;
 
 static HIStats ghi_stats;
 
@@ -124,13 +114,6 @@ THREAD_LOCAL int hiDetectCalled = 0;
 /*
 ** Prototypes
 */
-#if 0
-// FIXIT see below
-static int HttpEncodeInit(SnortConfig*, char *, char *, void **);
-static int HttpEncodeEval(Packet*, const uint8_t **, void *);
-static void HttpEncodeCleanup(void *);
-#endif
-static void HttpInspectRegisterRuleOptions(SnortConfig*);
 static inline void InitLookupTables(void);
 static void CheckGzipConfig(HTTPINSPECT_GLOBAL_CONF*);
 static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF*);
@@ -154,16 +137,6 @@ static void CheckMemcap(HTTPINSPECT_GLOBAL_CONF *pPolicyConfig)
 {
     if (!pPolicyConfig->memcap)
         pPolicyConfig->memcap = DEFAULT_HTTP_MEMCAP;
-}
-
-static void HttpInspectRegisterRuleOptions(SnortConfig*)
-{
-#if 0
-    // FIXIT implement preproc rule option as any other
-    RegisterPreprocessorRuleOption(
-        sc, "http_encode", &HttpEncodeInit, &HttpEncodeEval,
-        &HttpEncodeCleanup , NULL, NULL, NULL, NULL);
-#endif
 }
 
 static void updateConfigFromFileProcessing (HTTPINSPECT_CONF* ServerConf)
@@ -310,9 +283,6 @@ bool HttpInspect::configure (SnortConfig* sc)
     global = (HttpData*)Share::acquire(GLOBAL_KEYWORD);
     config->global = global->data;
 
-    // FIXIT this is one time stuff (done for 1st instance)
-    // need api support for one time stuff or what?
-    HttpInspectRegisterRuleOptions(sc);
     HttpInspectInitializeGlobalConfig(config->global);
 
     // FIXIT must load default unicode map from const char*
@@ -430,14 +400,9 @@ static Module* hs_mod_ctor()
 
 static void hs_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        SERVER_KEYWORD, &hiPerfStats, 0, &totalPerfStats, hi_get_profile);
-#endif
-
     HttpFlowData::init();
     HI_SearchInit();
-    hi_paf_init(0);  // FIXTHIS is cap needed?
+    hi_paf_init(0);  // FIXIT is cap needed?
     InitLookupTables();
     InitJSNormLookupTable();
 }

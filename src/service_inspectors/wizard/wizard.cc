@@ -38,17 +38,7 @@ using namespace std;
 
 static const char* mod_name = "wizard";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats wizPerfStats;
-
-static PreprocStats* wiz_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &wizPerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats wizPerfStats;
 
 struct WizStats
 {
@@ -235,14 +225,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-void wiz_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &wizPerfStats, 0, &totalPerfStats, wiz_get_profile);
-#endif
-}
-
 static Inspector* wiz_ctor(Module* m)
 {
     WizardModule* mod = (WizardModule*)m;
@@ -284,7 +266,7 @@ static const InspectApi wiz_api =
     PROTO_BIT__TCP | PROTO_BIT__UDP,
     nullptr, // buffers
     nullptr, // service
-    wiz_init,
+    nullptr, // init
     nullptr, // term
     wiz_ctor,
     wiz_dtor,

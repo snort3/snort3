@@ -52,9 +52,9 @@
 #define MAX_PATTERN_SIZE 2048
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats contentPerfStats;
+static THREAD_LOCAL ProfileStats contentPerfStats;
 
-static PreprocStats* con_get_profile(const char* key)
+static ProfileStats* con_get_profile(const char* key)
 {
     if ( !strcmp(key, "content") )
         return &contentPerfStats;
@@ -1135,7 +1135,7 @@ static void content_dtor(IpsOption* p)
 static void content_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile("content", &contentPerfStats, con_get_profile);
+    RegisterOtnProfile("content", con_get_profile);
 #endif
 }
 

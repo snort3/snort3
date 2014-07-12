@@ -81,6 +81,9 @@ PerfMonModule::PerfMonModule() :
     Module("perf_monitor", perf_params)
 { }
 
+ProfileStats* PerfMonModule::get_profile() const
+{ return &perfmonStats; }
+
 bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("packets") )

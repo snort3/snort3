@@ -71,9 +71,9 @@
 static const char* s_name = "flowbits";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats flowBitsPerfStats;
+static THREAD_LOCAL ProfileStats flowBitsPerfStats;
 
-static PreprocStats* fb_get_profile(const char* key)
+static ProfileStats* fb_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &flowBitsPerfStats;
@@ -1107,7 +1107,7 @@ static void flowbits_ginit(SnortConfig*)
         FatalError("Could not create flowbits bit queue.\n");
 
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &flowBitsPerfStats, fb_get_profile);
+    RegisterOtnProfile(s_name, fb_get_profile);
 #endif
 }
 

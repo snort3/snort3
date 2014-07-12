@@ -50,6 +50,8 @@ struct RuleMap
     const char* msg;
 };
 
+struct ProfileStats;
+
 class Module
 {
 public:
@@ -68,6 +70,15 @@ public:
 
     virtual unsigned get_gid() const
     { return 0; };
+
+    // profile is thread local
+    virtual ProfileStats* get_profile() const
+    { return nullptr; };
+
+    // implement above -or- below
+    virtual ProfileStats* get_profile(
+        unsigned /*index*/, const char*& /*name*/, const char*& /*parent*/) const
+    { return nullptr; };
 
     const char* get_name() const
     { return name ? name : params->name; };

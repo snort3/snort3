@@ -55,7 +55,7 @@ FTP_CLIENT_PROTO_CONF* get_default_ftp_client();
 FTP_SERVER_PROTO_CONF* get_default_ftp_server();
 
 #ifdef PERF_PROFILING
-void ft_update_perf(PreprocStats&);
+void ft_update_perf(ProfileStats&);
 #endif 
 
 #endif

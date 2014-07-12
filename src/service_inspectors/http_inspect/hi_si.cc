@@ -85,7 +85,6 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
     HTTPINSPECT_CONF *ServerConfDip;
     int iServerSip;
     int iServerDip;
-    int16_t app_id = SFTARGET_UNKNOWN_PROTOCOL;
     int http_id_found = 0;
     snort_ip sip;
     snort_ip dip;

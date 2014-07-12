@@ -356,6 +356,9 @@ FtpServerModule::~FtpServerModule()
         delete p;
 }
 
+ProfileStats* FtpServerModule::get_profile() const
+{ return &ftpPerfStats; }
+
 void FtpServerModule::add_commands(
     Value& v, uint32_t flags, int num)
 {

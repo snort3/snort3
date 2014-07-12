@@ -149,6 +149,9 @@ HttpInspectModule::~HttpInspectModule()
         delete config;
 }
 
+ProfileStats* HttpInspectModule::get_profile() const
+{ return &hiPerfStats; }
+
 HTTPINSPECT_GLOBAL_CONF* HttpInspectModule::get_data()
 {
     HTTPINSPECT_GLOBAL_CONF* tmp = config;

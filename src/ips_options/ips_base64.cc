@@ -51,11 +51,11 @@ static THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
 static THREAD_LOCAL uint32_t base64_decode_size;
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats base64PerfStats;
+static THREAD_LOCAL ProfileStats base64PerfStats;
 
 static const char* s_name = "base64_decode";
 
-static PreprocStats* b64dec_get_profile(const char* key)
+static ProfileStats* b64dec_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &base64PerfStats;
@@ -293,7 +293,7 @@ static void base64_decode_dtor(IpsOption* p)
 static void base64_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &base64PerfStats, b64dec_get_profile);
+    RegisterOtnProfile(s_name, b64dec_get_profile);
 #endif
 }
 

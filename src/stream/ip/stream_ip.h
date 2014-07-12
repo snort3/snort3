@@ -53,7 +53,6 @@ struct StreamIpConfig
     StreamIpConfig();
 };
 
-void ip_init();
 void ip_sum();
 void ip_stats();
 void ip_reset();

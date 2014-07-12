@@ -20,10 +20,6 @@
 
 #include "normalize.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "norm.h"
 #include "norm_module.h"
 #include "packet_io/active.h"
@@ -35,17 +31,7 @@
 #include "stream/stream.h"
 #include "framework/inspector.h"
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats norm_perf_stats;
-
-static PreprocStats* no_get_profile(const char* key)
-{
-    if ( !strcmp(key, "normalize") )
-        return &norm_perf_stats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats norm_perf_stats;
 
 #define PROTO_BITS (PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP)
 
@@ -247,14 +233,6 @@ static void mod_dtor(Module* m)
 
 static const char* name = "normalize";
 
-static void no_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        "normalize", &norm_perf_stats, 0, &totalPerfStats, no_get_profile);
-#endif
-}
-
 static void no_sum()
 {
     Norm_SumStats();
@@ -297,7 +275,7 @@ static const InspectApi no_api =
     PROTO_BITS,
     nullptr, // buffers
     nullptr, // service
-    no_init,
+    nullptr, // init
     nullptr, // term
     no_ctor,
     no_dtor,

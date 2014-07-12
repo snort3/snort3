@@ -44,9 +44,9 @@
 static const char* s_name = "rpc";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats rpcCheckPerfStats;
+static THREAD_LOCAL ProfileStats rpcCheckPerfStats;
 
-static PreprocStats* rpc_get_profile(const char* key)
+static ProfileStats* rpc_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &rpcCheckPerfStats;
@@ -314,7 +314,7 @@ static void rpc_dtor(IpsOption* p)
 static void rpc_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &rpcCheckPerfStats, rpc_get_profile);
+    RegisterOtnProfile(s_name, rpc_get_profile);
 #endif
 }
 

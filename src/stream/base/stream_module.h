@@ -26,6 +26,7 @@
 #include "framework/module.h"
 #include "flow/flow_control.h"
 
+extern THREAD_LOCAL ProfileStats s5PerfStats;
 struct SnortConfig;
 
 //-------------------------------------------------------------------------
@@ -50,6 +51,7 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
+    ProfileStats* get_profile() const;
     const StreamConfig* get_data();
 
 private:

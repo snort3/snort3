@@ -69,9 +69,9 @@
 static THREAD_LOCAL int ftppDetectCalled = 0;
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ftppDetectPerfStats;
+static THREAD_LOCAL ProfileStats ftppDetectPerfStats;
 
-void ft_update_perf(PreprocStats& stats)
+void ft_update_perf(ProfileStats& stats)
 {
     if (ftppDetectCalled)
     {

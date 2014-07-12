@@ -65,9 +65,9 @@
 static const char* s_name = "isdataat";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats isDataAtPerfStats;
+static THREAD_LOCAL ProfileStats isDataAtPerfStats;
 
-static PreprocStats* at_get_profile(const char* key)
+static ProfileStats* at_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &isDataAtPerfStats;
@@ -285,7 +285,7 @@ static void isdataat_dtor(IpsOption* p)
 static void isdataat_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &isDataAtPerfStats, at_get_profile);
+    RegisterOtnProfile(s_name, at_get_profile);
 #endif
 }
 

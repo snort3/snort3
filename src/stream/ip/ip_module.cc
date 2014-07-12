@@ -131,6 +131,34 @@ StreamIpModule::~StreamIpModule()
         delete config;
 }
 
+ProfileStats* StreamIpModule::get_profile(
+    unsigned index, const char*& name, const char*& parent) const
+{
+    switch ( index )
+    {
+    case 0:
+        name = "stream_ip";
+        parent = nullptr;
+        return &ip_perf_stats;
+
+    case 1:
+        name = "frag";
+        parent = "stream_ip";
+        return &fragPerfStats;
+    
+    case 2:
+        name = "frag_insert";
+        parent = "frag";
+        return &fragInsertPerfStats;
+
+    case 3:
+        name = "frag_rebuild";
+        parent = "frag";
+        return &fragRebuildPerfStats;
+    }
+    return nullptr;
+}
+
 StreamIpConfig* StreamIpModule::get_data()
 {
     StreamIpConfig* temp = config;

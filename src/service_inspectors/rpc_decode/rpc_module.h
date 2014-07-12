@@ -24,6 +24,7 @@
 
 #include "framework/module.h"
 #include "framework/bits.h"
+#include "main/thread.h"
 
 #define GID_RPC_DECODE 106
 
@@ -32,6 +33,8 @@
 #define RPC_LARGE_FRAGSIZE         3
 #define RPC_INCOMPLETE_SEGMENT     4
 #define RPC_ZERO_LENGTH_FRAGMENT   5
+
+extern THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 
 class RpcModule : public Module
 {
@@ -43,6 +46,8 @@ public:
 
     unsigned get_gid() const
     { return GID_RPC_DECODE; };
+
+    ProfileStats* get_profile() const;
 };
 
 #endif

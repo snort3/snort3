@@ -56,3 +56,6 @@ static const RuleMap rpc_rules[] =
 RpcModule::RpcModule() : Module("rpc_decode", rpc_params, rpc_rules)
 { }
 
+ProfileStats* RpcModule::get_profile() const
+{ return &rpcdecodePerfStats; }
+

@@ -54,17 +54,7 @@
 
 static const char* data_key = "ftp_data";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ftpdataPerfStats;
-
-static PreprocStats* ftp_get_profile(const char* key)
-{
-    if ( !strcmp(key, data_key) )
-        return &ftpdataPerfStats;
-
-    return nullptr;
-}
-#endif
+static THREAD_LOCAL ProfileStats ftpdataPerfStats;
 
 static THREAD_LOCAL SimpleStats fdstats;
 static SimpleStats gfdstats;
@@ -232,9 +222,14 @@ class FtpDataModule : public Module
 public:
     FtpDataModule() : Module(data_key, fd_params) { };
 
+    ProfileStats* get_profile() const;
+
     bool set(const char*, Value&, SnortConfig*)
     { return false; };
 };
+
+ProfileStats* FtpDataModule::get_profile() const
+{ return &ftpdataPerfStats; }
 
 void FtpData::eval(Packet* p)
 {
@@ -265,11 +260,6 @@ static Module* mod_ctor()
 
 static void fd_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        data_key, &ftpdataPerfStats, 0, &totalPerfStats, ftp_get_profile);
-#endif
-
     FtpDataFlowData::init();
 }
 

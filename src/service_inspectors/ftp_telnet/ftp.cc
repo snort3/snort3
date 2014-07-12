@@ -56,23 +56,8 @@ int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
 static const char* client_key = "ftp_client";
 static const char* server_key = "ftp_server";
-static const char* data_key = "ftp_data";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ftpPerfStats;
-static THREAD_LOCAL PreprocStats ftpdataPerfStats;
-
-static PreprocStats* ftp_get_profile(const char* key)
-{
-    if ( !strcmp(key, server_key) )
-        return &ftpPerfStats;
-
-    if ( !strcmp(key, data_key) )
-        return &ftpdataPerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats ftpPerfStats;
 
 static THREAD_LOCAL SimpleStats ftstats;
 static SimpleStats gftstats;
@@ -123,7 +108,7 @@ static int SnortFTP(
         DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
             "Server packet: %.*s\n", p->dsize, p->data));
 
-        // FIXTHIS breaks target-based non-standard ports
+        // FIXIT breaks target-based non-standard ports
         //if ( !ScPafEnabled() )
             /* Force flush of client side of stream  */
         stream.response_flush_stream(p);
@@ -496,13 +481,6 @@ static Module* fs_mod_ctor()
 
 static void fs_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        server_key, &ftpPerfStats, 0, &totalPerfStats, ftp_get_profile);
-    RegisterPreprocessorProfile(
-        data_key, &ftpdataPerfStats, 0, &totalPerfStats, ftp_get_profile);
-#endif
-
     ftp_data_app_id = FindProtocolReference("ftp-data");
     FtpFlowData::init();
 }

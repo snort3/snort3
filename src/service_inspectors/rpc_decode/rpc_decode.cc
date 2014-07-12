@@ -124,17 +124,7 @@ static THREAD_LOCAL uint32_t rpc_memory = 0;
 
 static const char* mod_name = "rpc_decode";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats rpcdecodePerfStats;
-
-static PreprocStats* rd_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &rpcdecodePerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 
 static THREAD_LOCAL SimpleStats rdstats;
 static SimpleStats grdstats;
@@ -1097,10 +1087,6 @@ static void mod_dtor(Module* m)
 
 static void rd_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &rpcdecodePerfStats, 0, &totalPerfStats, rd_get_profile);
-#endif
     RpcFlowData::init();
 }
 

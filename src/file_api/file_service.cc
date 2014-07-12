@@ -189,7 +189,7 @@ static void start_file_processing(void)
     if (!file_processing_initiated)
     {
         file_resume_block_init();
-        //RegisterPreprocStats("file", print_file_stats);  FIXIT not a preproc !
+        //RegisterProfileStats("file", print_file_stats);  FIXIT not a preproc !
         file_processing_initiated = true;
     }
 }

@@ -152,17 +152,7 @@ static THREAD_LOCAL long holdrand = 1L;
 static uint16_t lookup1[65536][3];
 static uint16_t lookup2[65536];
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats boPerfStats;
-
-static PreprocStats* bo_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &boPerfStats;
-
-    return nullptr;
-}
-#endif
+static THREAD_LOCAL ProfileStats boPerfStats;
 
 static THREAD_LOCAL SimpleStats bostats;
 static SimpleStats gbostats;
@@ -213,7 +203,12 @@ public:
 
     unsigned get_gid() const
     { return GID_BO; };
+
+    ProfileStats* get_profile() const;
 };
+
+ProfileStats* BoModule::get_profile() const
+{ return &boPerfStats; }
 
 //-------------------------------------------------------------------------
 // bo implementation
@@ -582,11 +577,6 @@ static void mod_dtor(Module* m)
 
 void bo_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &boPerfStats, 0, &totalPerfStats, bo_get_profile);
-#endif
-
     PrecalcPrefix();
 }
 

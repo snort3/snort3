@@ -139,7 +139,7 @@ static const InspectApi udp_api =
     PROTO_BIT__UDP,
     nullptr, // buffers
     nullptr, // service
-    udp_init,
+    nullptr, // init
     nullptr, // term
     udp_ctor,
     udp_dtor,

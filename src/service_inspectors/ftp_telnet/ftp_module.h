@@ -24,8 +24,10 @@
 
 #include <string>
 #include <vector>
+
 #include "ftpp_ui_config.h"
 #include "framework/module.h"
+#include "main/thread.h"
 
 #define GID_FTP 125
 
@@ -40,6 +42,8 @@
 #define FTP_EVASIVE_TELNET_CMD           9
 
 struct SnortConfig;
+
+extern THREAD_LOCAL ProfileStats ftpPerfStats;
 
 //-------------------------------------------------------------------------
 
@@ -111,6 +115,8 @@ public:
 
     unsigned get_gid() const
     { return GID_FTP; };
+
+    ProfileStats* get_profile() const;
 
     FTP_SERVER_PROTO_CONF* get_data();
     const FtpCmd* get_cmd(unsigned idx);

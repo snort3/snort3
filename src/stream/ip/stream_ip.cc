@@ -171,7 +171,7 @@ static const InspectApi ip_api =
     PROTO_BIT__IP,
     nullptr, // buffers
     nullptr, // service
-    ip_init,
+    nullptr, // init
     nullptr, // term
     ip_ctor,
     ip_dtor,

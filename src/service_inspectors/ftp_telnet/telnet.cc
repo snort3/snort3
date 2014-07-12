@@ -48,17 +48,7 @@
 
 static const char* tn_name = "telnet";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats telnetPerfStats;
-
-static PreprocStats* tn_get_profile(const char* key)
-{
-    if ( !strcmp(key, tn_name) )
-        return &telnetPerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats telnetPerfStats;
 
 static THREAD_LOCAL SimpleStats tnstats;
 static SimpleStats gtnstats;
@@ -296,11 +286,6 @@ static void mod_dtor(Module* m)
 
 static void tn_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        tn_name, &telnetPerfStats, 0, &totalPerfStats, tn_get_profile);
-#endif
-
     TelnetFlowData::init();
 }
 

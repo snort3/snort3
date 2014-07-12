@@ -53,6 +53,11 @@ StreamUdpModule::StreamUdpModule() :
     config = nullptr;
 }
 
+ProfileStats* StreamUdpModule::get_profile() const
+{
+    return &udp_perf_stats;
+}
+
 StreamUdpConfig* StreamUdpModule::get_data()
 {
     StreamUdpConfig* temp = config;

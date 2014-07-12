@@ -36,17 +36,7 @@
 static SessionStats gipStats;
 static THREAD_LOCAL SessionStats ipStats;
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ip_perf_stats;
-
-static PreprocStats* ip_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &ip_perf_stats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats ip_perf_stats;
 
 //-------------------------------------------------------------------------
 // private methods
@@ -197,14 +187,6 @@ int IpSession::process(Packet* p)
 //-------------------------------------------------------------------------
 // api related methods
 //-------------------------------------------------------------------------
-
-void ip_init()
-{
-    RegisterPreprocessorProfile(
-        MOD_NAME, &ip_perf_stats, 0, &totalPerfStats, ip_get_profile);
-
-    Defrag::init();
-}
 
 void ip_sum()
 {

@@ -120,6 +120,9 @@ WizardModule::~WizardModule()
     delete s2c_spells;
 }
 
+ProfileStats* WizardModule::get_profile() const
+{ return &wizPerfStats; }
+
 bool WizardModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("service") )

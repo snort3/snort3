@@ -26,9 +26,12 @@
 
 #include "framework/module.h"
 #include "ps_detect.h"
+#include "main/thread.h"
 
 #define PS_MODULE "port_scan"
 #define PS_GLOBAL "port_scan_global"
+
+extern THREAD_LOCAL ProfileStats psPerfStats;
 
 //-------------------------------------------------------------------------
 
@@ -41,6 +44,7 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
+    ProfileStats* get_profile() const;
     PsCommon* get_data();
 
 private:

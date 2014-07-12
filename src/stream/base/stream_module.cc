@@ -87,6 +87,9 @@ StreamModule::StreamModule() :
     proto = &stream_cfg.ip_cfg;
 }
 
+ProfileStats* StreamModule::get_profile() const
+{ return &s5PerfStats; }
+
 const StreamConfig* StreamModule::get_data()
 {
     return &stream_cfg;

@@ -432,7 +432,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
         default:
             if (ScLogVerbose())
             {
-                // FIXTHIS should only be output once!
+                // FIXIT should only be output once!
                 ErrorMessage("Datalink %i type 2nd layer display is not "
                              "supported\n", DAQ_GetBaseProtocol());
             }
@@ -1644,7 +1644,7 @@ static void LogPacketType(TextLog* log, Packet* p)
         TextLog_Print(log, "%s", "Frag reassembled packet");
         break;
     default:
-        // FIXTHIS do we get here for portscan or sdf?
+        // FIXIT do we get here for portscan or sdf?
         TextLog_Print(log, "%s", "Cooked packet");
         break;
     }

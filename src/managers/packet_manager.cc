@@ -54,7 +54,7 @@ namespace
 
 
 #ifdef PERF_PROFILING
-THREAD_LOCAL PreprocStats decodePerfStats;
+THREAD_LOCAL ProfileStats decodePerfStats;
 #endif
 
 extern const CodecApi* default_codec;

@@ -50,6 +50,9 @@ StreamIcmpModule::StreamIcmpModule() :
     config = nullptr;
 }
 
+ProfileStats* StreamIcmpModule::get_profile() const
+{ return &icmp_perf_stats; }
+
 StreamIcmpConfig* StreamIcmpModule::get_data()
 {
     StreamIcmpConfig* temp = config;

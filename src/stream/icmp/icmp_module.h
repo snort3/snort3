@@ -24,7 +24,9 @@
 
 #include "snort_types.h"
 #include "framework/module.h"
+#include "main/thread.h"
 
+extern THREAD_LOCAL ProfileStats icmp_perf_stats;
 struct SnortConfig;
 
 //-------------------------------------------------------------------------
@@ -43,6 +45,7 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    ProfileStats* get_profile() const;
     StreamIcmpConfig* get_data();
 
 private:

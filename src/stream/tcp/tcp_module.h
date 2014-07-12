@@ -27,6 +27,7 @@
 
 #include "snort_types.h"
 #include "framework/module.h"
+#include "main/thread.h"
 
 #define GID_STREAM_TCP  129
 
@@ -50,6 +51,17 @@
 #define STREAM_TCP_DATA_AFTER_RST_RCVD            18
 #define STREAM_TCP_WINDOW_SLAM                    19
 #define STREAM_TCP_NO_3WHS                        20
+
+extern THREAD_LOCAL ProfileStats s5TcpPerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpNewSessPerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpStatePerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpDataPerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpInsertPerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpPAFPerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpFlushPerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
+extern THREAD_LOCAL ProfileStats s5TcpProcessRebuiltPerfStats;
+extern THREAD_LOCAL ProfileStats streamSizePerfStats;
 
 //-------------------------------------------------------------------------
 // stream_tcp module
@@ -86,6 +98,8 @@ public:
 
     void get_port(Port, bool& c2s, bool& s2c);
     const ServiceReassembly* get_proto(unsigned);
+
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const;
 
 private:
     void add_protos(Value&, bool, bool);

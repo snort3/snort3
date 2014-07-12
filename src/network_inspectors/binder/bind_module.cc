@@ -102,6 +102,9 @@ BinderModule::~BinderModule()
         delete work;
 }
 
+ProfileStats* BinderModule::get_profile() const
+{ return &bindPerfStats; }
+
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     // both

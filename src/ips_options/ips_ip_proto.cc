@@ -47,9 +47,9 @@
 static const char* s_name = "ip_proto";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ipProtoPerfStats;
+static THREAD_LOCAL ProfileStats ipProtoPerfStats;
 
-static PreprocStats* pro_get_profile(const char* key)
+static ProfileStats* pro_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &ipProtoPerfStats;
@@ -303,7 +303,7 @@ static void ip_proto_dtor(IpsOption* p)
 static void ip_proto_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &ipProtoPerfStats, pro_get_profile);
+    RegisterOtnProfile(s_name, pro_get_profile);
 #endif
 }
 

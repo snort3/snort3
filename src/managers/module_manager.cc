@@ -35,6 +35,7 @@
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
+#include "time/profiler.h"
 
 using namespace std;
 
@@ -448,6 +449,8 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
 
     if ( mh->reg )
         Shell::install(m->get_name(), mh->reg);
+
+    RegisterProfile(m);
 }
 
 Module* ModuleManager::get_module(const char* s)

@@ -54,17 +54,7 @@
 static SessionStats gudpStats;
 static THREAD_LOCAL SessionStats udpStats;
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats udp_perf_stats;
-
-static PreprocStats* udp_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &udp_perf_stats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------
 
@@ -244,14 +234,6 @@ int UdpSession::process(Packet *p)
 //-------------------------------------------------------------------------
 // api related methods
 //-------------------------------------------------------------------------
-
-void udp_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        MOD_NAME, &udp_perf_stats, 0, &totalPerfStats, udp_get_profile);
-#endif
-}
 
 void udp_sum()
 {

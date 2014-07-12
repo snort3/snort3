@@ -27,8 +27,11 @@
 
 #include "snort_types.h"
 #include "framework/module.h"
+#include "main/thread.h"
 
 struct SnortConfig;
+
+extern THREAD_LOCAL ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------
 // stream_udp module
@@ -46,6 +49,7 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    ProfileStats* get_profile() const;
     StreamUdpConfig* get_data();
 
 private:

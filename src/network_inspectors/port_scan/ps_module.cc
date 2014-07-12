@@ -215,6 +215,9 @@ PortScanGlobalModule::~PortScanGlobalModule()
         delete common;
 }
 
+ProfileStats* PortScanGlobalModule::get_profile() const
+{ return &psPerfStats; }
+
 bool PortScanGlobalModule::begin(const char*, int, SnortConfig*)
 {
     common = new PsCommon;

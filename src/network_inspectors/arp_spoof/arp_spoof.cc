@@ -96,17 +96,7 @@
 
 static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats arpPerfStats;
-
-static PreprocStats* as_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &arpPerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats arpPerfStats;
 
 static THREAD_LOCAL SimpleStats asstats;
 static SimpleStats gasstats;
@@ -301,14 +291,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static void as_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        MOD_NAME, &arpPerfStats, 0, &totalPerfStats, as_get_profile);
-#endif
-}
-
 static Inspector* as_ctor(Module* m)
 { 
     return new ArpSpoof((ArpSpoofModule*)m);
@@ -340,7 +322,7 @@ static const InspectApi as_api =
     PROTO_BIT__ARP,
     nullptr, // buffers
     nullptr, // service
-    as_init,
+    nullptr, // init
     nullptr, // term
     as_ctor,
     as_dtor,

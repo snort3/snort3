@@ -49,9 +49,9 @@
 static const char* s_name = "http_ips";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats httpIpsPerfStats;
+static THREAD_LOCAL ProfileStats httpIpsPerfStats;
 
-static PreprocStats* hi_ips_get_profile(const char* key)
+static ProfileStats* hi_ips_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &httpIpsPerfStats;
@@ -68,7 +68,7 @@ static void hi_ips_dtor(IpsOption* p)
 static void hi_ips_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &httpIpsPerfStats, hi_ips_get_profile);
+    RegisterOtnProfile(s_name, hi_ips_get_profile);
 #endif
 }
 

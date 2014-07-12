@@ -75,8 +75,8 @@
 #define CHECK_DST_PORT       0x10
 
 #ifdef PERF_PROFILING
-THREAD_LOCAL PreprocStats detectPerfStats;
-THREAD_LOCAL PreprocStats eventqPerfStats;
+THREAD_LOCAL ProfileStats detectPerfStats;
+THREAD_LOCAL ProfileStats eventqPerfStats;
 #endif
 
 THREAD_LOCAL int do_detect;

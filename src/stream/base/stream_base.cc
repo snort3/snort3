@@ -43,18 +43,7 @@
 // globals
 //-------------------------------------------------------------------------
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats s5PerfStats;
-
-static PreprocStats* s5_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &s5PerfStats;
-
-    return nullptr;
-}
-#endif
-
+THREAD_LOCAL ProfileStats s5PerfStats;
 THREAD_LOCAL FlowControl* flow_con = nullptr;
 
 const char* session_pegs[] =
@@ -256,14 +245,6 @@ static void base_dtor(Inspector* p)
     delete p;
 }
 
-static void base_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        MOD_NAME, &s5PerfStats, 0, &totalPerfStats, s5_get_profile);
-#endif
-}
-
 void base_sum()
 {   
     t_stats.tcp = flow_con->get_flow_count(IPPROTO_TCP);
@@ -301,7 +282,7 @@ static const InspectApi base_api =
     PROTO_BIT__IP,
     nullptr, // buffers
     nullptr, // service
-    base_init,
+    nullptr, // init
     nullptr, // term
     base_ctor,
     base_dtor,

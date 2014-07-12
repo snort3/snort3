@@ -846,7 +846,7 @@ void Stream::set_extra_data(
     Stream5SetExtraDataTcp(flow, p, flag);
 }
 
-// FIXTHIS get pv/flow from packet directly?
+// FIXIT get pv/flow from packet directly?
 void Stream::clear_extra_data(
     Flow* pv, Packet* p, uint32_t flag)
 {

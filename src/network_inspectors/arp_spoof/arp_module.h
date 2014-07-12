@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "framework/module.h"
+#include "main/thread.h"
 
 #define MOD_NAME "arp_spoof"
 
@@ -34,6 +35,8 @@
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC  2
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST  3
 #define ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK   4
+
+extern THREAD_LOCAL ProfileStats arpPerfStats;
 
 struct IPMacEntry
 {
@@ -70,6 +73,8 @@ public:
 
     unsigned get_gid() const
     { return GID_ARP_SPOOF; };
+
+    ProfileStats* get_profile() const;
 
 private:
     ArpSpoofConfig* config;

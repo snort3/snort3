@@ -24,6 +24,7 @@
 
 #include "snort_types.h"
 #include "framework/module.h"
+#include "main/thread.h"
 
 struct SnortConfig;
 
@@ -53,6 +54,11 @@ struct SnortConfig;
 #define DEFRAG_EXCESSIVE_OVERLAP  12
 #define DEFRAG_TINY_FRAGMENT      13
 
+extern THREAD_LOCAL ProfileStats ip_perf_stats;
+extern THREAD_LOCAL ProfileStats fragPerfStats;
+extern THREAD_LOCAL ProfileStats fragInsertPerfStats;
+extern THREAD_LOCAL ProfileStats fragRebuildPerfStats;
+
 //-------------------------------------------------------------------------
 // stream_ip module
 //-------------------------------------------------------------------------
@@ -71,6 +77,7 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const;
     StreamIpConfig* get_data();
 
 private:

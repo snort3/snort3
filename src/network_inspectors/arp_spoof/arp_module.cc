@@ -94,6 +94,9 @@ ArpSpoofModule::~ArpSpoofModule()
         delete config;
 }
 
+ProfileStats* ArpSpoofModule::get_profile() const
+{ return &arpPerfStats; }
+
 bool ArpSpoofModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("unicast") )

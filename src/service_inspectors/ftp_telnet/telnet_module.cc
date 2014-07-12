@@ -77,6 +77,9 @@ TelnetModule::~TelnetModule()
         delete conf;
 }
 
+ProfileStats* TelnetModule::get_profile() const
+{ return &telnetPerfStats; }
+
 bool TelnetModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("ayt_attack_thresh") )

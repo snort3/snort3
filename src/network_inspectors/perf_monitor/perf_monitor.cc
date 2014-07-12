@@ -57,17 +57,7 @@ THREAD_LOCAL SFPERF *perfmon_config = NULL;
 
 static const char* mod_name = "perf_monitor";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats perfmonStats;
-
-static PreprocStats* pm_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &perfmonStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats perfmonStats;
 
 static THREAD_LOCAL SimpleStats pmstats;
 static SimpleStats gpmstats;
@@ -356,14 +346,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static void pm_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &perfmonStats, 0, &totalPerfStats, pm_get_profile);
-#endif
-}
-
 static Inspector* pm_ctor(Module* m)
 {
     static THREAD_LOCAL unsigned s_init = true;
@@ -408,7 +390,7 @@ static const InspectApi pm_api =
     PROTO_BIT__ALL,
     nullptr, // buffers
     nullptr, // service
-    pm_init,
+    nullptr, // init
     nullptr, // term
     pm_ctor,
     pm_dtor,

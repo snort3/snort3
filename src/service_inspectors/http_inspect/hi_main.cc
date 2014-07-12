@@ -429,7 +429,7 @@ static inline FilePosition getFilePoistion(Packet *p)
     return position;
 }
 
-// FIXTHIS extra data masks should only be updated as extra data changes state
+// FIXIT extra data masks should only be updated as extra data changes state
 // eg just once when captured; this function is called on every packet and 
 // repeatedly sets the flags on session
 static inline void HttpLogFuncs(
@@ -680,7 +680,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
         if ( iInspectMode == HI_SI_CLIENT_MODE )
         {
             const HttpBuffer* hb;
-            ClearHttpBuffers();  // FIXTHIS needed here and right above??
+            ClearHttpBuffers();  // FIXIT needed here and right above??
 
             if ( session->client.request.uri_norm )
             {

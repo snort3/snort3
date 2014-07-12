@@ -25,6 +25,9 @@
 #include <string>
 #include <vector>
 #include "framework/module.h"
+#include "main/thread.h"
+
+extern THREAD_LOCAL ProfileStats wizPerfStats;
 
 class MagicBook;
 
@@ -37,6 +40,8 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
+
+    ProfileStats* get_profile() const;
 
     MagicBook* get_book(bool c2s, bool hex);
 

@@ -36,18 +36,7 @@ using namespace std;
 
 static const char* mod_name = "binder";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats bindPerfStats;
-
-static PreprocStats* bind_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &bindPerfStats;
-
-    return nullptr;
-}
-#endif
-
+THREAD_LOCAL ProfileStats bindPerfStats;
 static THREAD_LOCAL SimpleStats tstats;
 static SimpleStats gstats;
 
@@ -256,14 +245,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-void bind_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &bindPerfStats, 0, &totalPerfStats, bind_get_profile);
-#endif
-}
-
 static Inspector* bind_ctor(Module* m)
 {
     BinderModule* mod = (BinderModule*)m;
@@ -305,7 +286,7 @@ static const InspectApi bind_api =
     PROTO_BIT__ALL,
     nullptr, // buffers
     nullptr, // service
-    bind_init,
+    nullptr, // init
     nullptr, // term
     bind_ctor,
     bind_dtor,

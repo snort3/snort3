@@ -72,9 +72,9 @@
 static const char* s_name = "react";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats reactPerfStats;
+static THREAD_LOCAL ProfileStats reactPerfStats;
 
-static PreprocStats* act_get_profile(const char* key)
+static ProfileStats* act_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &reactPerfStats;
@@ -382,7 +382,7 @@ static void react_ginit(SnortConfig* sc)
     Active_SetEnabled(1);
 
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &reactPerfStats, act_get_profile);
+    RegisterOtnProfile(s_name, act_get_profile);
 #endif
 }
 

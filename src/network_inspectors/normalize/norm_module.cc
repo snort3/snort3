@@ -163,6 +163,9 @@ NormalizeModule::NormalizeModule() :
     memset(&config, 0, sizeof(config));
 }
 
+ProfileStats* NormalizeModule::get_profile() const
+{ return &norm_perf_stats; }
+
 bool NormalizeModule::set_ip4(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("base") )
