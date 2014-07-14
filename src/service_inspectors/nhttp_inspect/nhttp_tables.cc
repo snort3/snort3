@@ -167,12 +167,11 @@ const StrCode NHttpMsgHeadShared::transCodeList[] =
     { TRANSCODE_DEFLATE,         "deflate"},
     { 0,                         nullptr} };
 
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL {NORM_NULL, false, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC {NORM_FIELD, false, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT {NORM_FIELD, true, false, normRemoveLws, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NOREPEAT {NORM_FIELD, false, true, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false, true, normDecimalInteger, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, false, normRemoveLws, nullptr, norm2Lower, nullptr, normSeqStrCode, NHttpMsgHeadShared::transCodeList};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL {NORM_NULL, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC {NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT {NORM_FIELD, true, normRemoveLws, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false, normDecimalInteger, nullptr, nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, normRemoveLws, nullptr, norm2Lower, nullptr, normSeqStrCode, NHttpMsgHeadShared::transCodeList};
 
 const HeaderNormalizer* const NHttpMsgHeadShared::headerNorms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
     [HEAD__OTHER] = &NORMALIZER_BASIC,

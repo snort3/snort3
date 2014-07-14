@@ -43,17 +43,16 @@
 
 class HeaderNormalizer {
 public:
-    constexpr HeaderNormalizer(NHttpEnums::NormFormat _format, bool _concatenateRepeats, bool _infractRepeats, int32_t (*f1)(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*),
+    constexpr HeaderNormalizer(NHttpEnums::NormFormat _format, bool _concatenateRepeats, int32_t (*f1)(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*),
        const void *f1Arg, int32_t (*f2)(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*), const void *f2Arg, int32_t (*f3)(const uint8_t*, int32_t, uint8_t*, uint64_t&,
        const void*), const void *f3Arg) :
           format(_format),
           concatenateRepeats(_concatenateRepeats),
-          infractRepeats(_infractRepeats),
           normalizer { f1, f2, f3 },
           normArg { f1Arg, f2Arg, f3Arg },
           numNormalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 != nullptr)*(f3 != nullptr)) {};
-    int32_t normalize(NHttpEnums::HeaderId headId, ScratchPad &scratchPad, uint64_t &infractions, const NHttpEnums::HeaderId headerNameId[], const field headerName[], int32_t numHeaders,
-       field &resultField) const;
+    int32_t normalize(const NHttpEnums::HeaderId headId, const int count, ScratchPad &scratchPad, uint64_t &infractions,
+       const NHttpEnums::HeaderId headerNameId[], const field headerValue[], const int32_t numHeaders, field &resultField) const;
     NHttpEnums::NormFormat getFormat() const {return format;};
 
 private:
@@ -61,7 +60,6 @@ private:
 
     const NHttpEnums::NormFormat format;
     const bool concatenateRepeats;
-    const bool infractRepeats;
     int32_t (* const normalizer[3])(const uint8_t*, int32_t, uint8_t*, uint64_t&, const void*);
     const void * normArg[3];
     const int numNormalizers;

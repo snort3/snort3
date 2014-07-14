@@ -39,14 +39,6 @@
 
 using namespace NHttpEnums;
 
-// Reinitialize everything derived in preparation for analyzing a new message
-void NHttpMsgRequest::initSection() {
-    NHttpMsgStart::initSection();
-    method.length = STAT_NOTCOMPUTE;
-    delete uri;
-    uri = nullptr;
-}
-
 void NHttpMsgRequest::parseStartLine() {
     // There should be exactly two spaces. One following the method and one before "HTTP/".
     // Additional spaces located within the URI are not allowed but we will tolerate it
@@ -88,7 +80,7 @@ void NHttpMsgRequest::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgRequest::printSection(FILE *output) const {
+void NHttpMsgRequest::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "request line");
     fprintf(output, "Version Id: %d\n", versionId);
     fprintf(output, "Method Id: %d\n", methodId);

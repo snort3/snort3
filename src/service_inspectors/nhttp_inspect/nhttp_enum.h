@@ -100,8 +100,11 @@ typedef enum { TRANSCODE__OTHER=1, TRANSCODE_CHUNKED, TRANSCODE_IDENTITY, TRANSC
 // Never use the start pointer without verifying that length > 0.
 struct field {
 public:
-    const uint8_t *start = nullptr;
     int32_t length = NHttpEnums::STAT_NOTCOMPUTE;
+    const uint8_t* start = nullptr;
+
+    field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) {};
+    field() = default;
 };
 
 typedef enum 

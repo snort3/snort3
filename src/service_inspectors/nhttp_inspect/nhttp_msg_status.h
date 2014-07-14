@@ -37,23 +37,18 @@
 
 class NHttpMsgStatus: public NHttpMsgStart {
 public:
-    NHttpMsgStatus() {};
-    void initSection();
+    NHttpMsgStatus(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {};
     void analyze();
-    void printSection(FILE *output) const;
+    void printSection(FILE *output);
     void genEvents();
     void updateFlow();
     void legacyClients();
 
 private:
-    // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
-    // things into a standard form without changing the underlying format.
     void parseStartLine();
     void deriveStatusCodeNum();
 
-    // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
-    // scratchPad (normalized pieces).
     field statusCode;
     field reasonPhrase;
 };

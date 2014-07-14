@@ -38,13 +38,6 @@
 
 using namespace NHttpEnums;
 
-// Reinitialize everything derived in preparation for analyzing a new message
-void NHttpMsgStatus::initSection() {
-    NHttpMsgStart::initSection();
-    statusCode.length = STAT_NOTCOMPUTE;
-    reasonPhrase.length = STAT_NOTCOMPUTE;
-}
-
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgStatus::analyze() {
     NHttpMsgStart::analyze();
@@ -100,7 +93,7 @@ void NHttpMsgStatus::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgStatus::printSection(FILE *output) const {
+void NHttpMsgStatus::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "status line");
     fprintf(output, "Version Id: %d\n", versionId);
     fprintf(output, "Status Code Num: %d\n", statusCodeNum);

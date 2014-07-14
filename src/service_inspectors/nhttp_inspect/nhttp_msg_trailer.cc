@@ -41,7 +41,7 @@ void NHttpMsgTrailer::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgTrailer::printSection(FILE *output) const {
+void NHttpMsgTrailer::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "trailer");
     NHttpMsgHeadShared::printHeaders(output);
     NHttpMsgSection::printMessageWrapup(output);

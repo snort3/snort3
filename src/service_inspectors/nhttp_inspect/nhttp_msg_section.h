@@ -39,17 +39,16 @@
 
 class NHttpMsgSection {
 public:
-    virtual void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
-    virtual ~NHttpMsgSection() = default;
-    virtual void initSection() = 0;
+    virtual ~NHttpMsgSection() {delete[] rawBuf;};
     virtual void analyze() = 0;                           // Minimum necessary processing for every message
-    virtual void analyzeAll() {};                         // Force all just-in-time processing (testing method)
-    virtual void printSection(FILE *output) const = 0;
-    virtual void genEvents() = 0;
-    virtual void updateFlow() = 0;
-    virtual void legacyClients() = 0;
+    virtual void printSection(FILE *output) = 0;          // Test tool prints all derived message parts
+    virtual void genEvents() = 0;                         // Converts collected information into required preprocessor events
+    virtual void updateFlow() = 0;                        // Manages the splitter and communication between message sections
+    virtual void legacyClients() = 0;                     // Populates the raw and normalized buffer interface used by old Snort
 
 protected:
+    NHttpMsgSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
+
     // Convenience methods
     static uint32_t findCrlf(const uint8_t* buffer, int32_t length, bool wrappable);
     static void printInterval(FILE *output, const char* name, const uint8_t *text, int32_t length, bool intVals = false);
@@ -57,22 +56,20 @@ protected:
     void printMessageWrapup(FILE *output) const;
 
     // The current strategy is to copy the entire raw message section into this object. Here it is.
-    int32_t length;               // Length of the original message section in octets
-    uint8_t rawBuf[NHttpEnums::MAXOCTETS];    // The original HTTP message section octets
-    // This pointer is the handle for working with the original message data. It makes it simple to later replace rawBuf with some other form of storage
-    // such as the buffer in the packet structure or something dynamic. Const x 2 because this pointer should never change and people working with the
-    // original message should not be changing it. Only loading a completely new message into rawBuf should do that.
-    const uint8_t * const msgText = rawBuf;
+    int32_t length;
+    uint8_t* rawBuf;
+    // This pseudonym for rawBuf isolates details of how the raw message is stored from everything else.
+    const uint8_t* msgText;
 
     NHttpFlowData* sessionData;
-    ScratchPad scratchPad {NHttpEnums::MAXOCTETS*2};
+    NHttpEnums::SourceId sourceId;
+    bool tcpClose;
+    ScratchPad scratchPad;
 
     // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the
+    // These are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the
     // scratchPad (normalized pieces).
     uint64_t infractions;
-    bool tcpClose;
-    NHttpEnums::SourceId sourceId;
     NHttpEnums::VersionId versionId;
     NHttpEnums::MethodId methodId;
     int32_t statusCodeNum;

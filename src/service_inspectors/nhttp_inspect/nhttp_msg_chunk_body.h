@@ -37,11 +37,9 @@
 
 class NHttpMsgChunkBody : public NHttpMsgBody {
 public:
-    NHttpMsgChunkBody() {};
-    void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
-    void initSection();
+    NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
     void analyze();
-    void printSection(FILE *output) const;
+    void printSection(FILE *output);
     void genEvents();
     void updateFlow();
 

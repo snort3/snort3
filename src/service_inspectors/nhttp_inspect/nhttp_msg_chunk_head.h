@@ -37,11 +37,9 @@
 
 class NHttpMsgChunkHead : public NHttpMsgSection {
 public:
-    NHttpMsgChunkHead() {};
-    void loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_);
-    void initSection();
+    NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
     void analyze();
-    void printSection(FILE *output) const;
+    void printSection(FILE *output);
     void genEvents();
     void updateFlow();
     void legacyClients();
@@ -53,7 +51,7 @@ private:
     field chunkSize;
     field chunkExtensions;
 
-    int64_t dataLength;
+    int64_t dataLength = NHttpEnums::STAT_NOTCOMPUTE;
     int64_t bodySections;
     int64_t numChunks;
 };

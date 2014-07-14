@@ -39,9 +39,7 @@
 
 class NHttpUri {
 public:
-    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : methodId(method) {
-       uri.length = length; uri.start = start; };
-
+    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : uri(length, start), methodId(method) {};
     field getUri() const { return uri; };
     NHttpEnums::UriType getUriType() { parseUri(); return uriType; };
     field getScheme() { parseUri(); return scheme; };

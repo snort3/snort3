@@ -38,17 +38,9 @@
 
 using namespace NHttpEnums;
 
-void NHttpMsgBody::loadSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_) {
-    NHttpMsgSection::loadSection(buffer, bufSize, sessionData_);
-
-    dataLength = sessionData->dataLength[sourceId];
-    bodySections = sessionData->bodySections[sourceId];
-    bodyOctets = sessionData->bodyOctets[sourceId];
-}
-
-void NHttpMsgBody::initSection() {
-    data.length = STAT_NOTCOMPUTE;
-}
+NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+   NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), dataLength(sessionData->dataLength[sourceId]),
+   bodySections(sessionData->bodySections[sourceId]), bodyOctets(sessionData->bodyOctets[sourceId]) {}
 
 void NHttpMsgBody::analyze() {
     bodySections++;
@@ -65,7 +57,7 @@ void NHttpMsgBody::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgBody::printSection(FILE *output) const {
+void NHttpMsgBody::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "body");
     fprintf(output, "Expected data length %" PRIi64 ", sections seen %" PRIi64 ", octets seen %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
     printInterval(output, "Data", data.start, data.length);

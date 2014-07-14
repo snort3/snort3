@@ -41,13 +41,11 @@ public:
     unsigned get_gid() const;
     bool get_test_input() const { return test_input; };
     bool get_test_output() const { return test_output; };
-    bool get_test_inspect() const { return test_inspect; };
 private:
     static const Parameter nhttpParams[];
     static const RuleMap nhttpEvents[];
     bool test_input = false;
     bool test_output = false;
-    bool test_inspect = false;
 };
 
 #endif

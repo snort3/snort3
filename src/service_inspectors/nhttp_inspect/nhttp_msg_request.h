@@ -40,26 +40,20 @@
 
 class NHttpMsgRequest: public NHttpMsgStart {
 public:
-    NHttpMsgRequest() {};
+    NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {};
     ~NHttpMsgRequest() { delete uri; };
-    void initSection();
-    void printSection(FILE *output) const;
+    void printSection(FILE *output);
     void genEvents();
     void updateFlow();
     void legacyClients();
 
 private:
-    // Code conversion tables are for turning token strings into enums.
     static const StrCode methodList[];
 
-    // "Parse" methods cut things into pieces. "Extract" methods find the named item. "Derive" methods convert things into a new format
-    // such as an integer or enum token. "Normalize" methods convert things into a standard form without changing the underlying format.
     void parseStartLine();
     void deriveMethodId();
 
-    // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
-    // scratchPad (normalized pieces).
     field method;
     NHttpUri* uri = nullptr;
 };

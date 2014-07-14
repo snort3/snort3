@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgStart virtual class rolls up all the common elements of start line processing.
+//  @brief      NHttpMsgStart virtual class rolls up all the common elements of request and status line processing.
 //
 
 
@@ -38,13 +38,6 @@
 
 using namespace NHttpEnums;
 
-// Reinitialize everything derived in preparation for analyzing a new message
-void NHttpMsgStart::initSection() {
-    startLine.length = STAT_NOTCOMPUTE;
-    version.length = STAT_NOTCOMPUTE;
-}
-
-// Required message processing that is automatically done instead of being just-in-time
 void NHttpMsgStart::analyze() {
     startLine.start = msgText;
     startLine.length = findCrlf(startLine.start, length, false);

@@ -38,6 +38,10 @@
 
 using namespace NHttpEnums;
 
+NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+   NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), bodySections(sessionData->bodySections[sourceId]),
+   numChunks(sessionData->numChunks[sourceId]) {}
+
 // Convert the hexadecimal chunk length.
 // RFC says that zero may be written with multiple digits "000000".
 // Arbitrary limit of 15 hex digits not including leading zeros ensures in a simple way against 64-bit overflow and should be
@@ -70,19 +74,6 @@ void NHttpMsgChunkHead::deriveChunkLength() {
     }
 }
 
-void NHttpMsgChunkHead::loadSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_) {
-    NHttpMsgSection::loadSection(buffer, bufSize, sessionData_);
-
-    bodySections = sessionData->bodySections[sourceId];
-    numChunks = sessionData->numChunks[sourceId];
-}
-
-void NHttpMsgChunkHead::initSection() {
-    startLine.length = STAT_NOTCOMPUTE;
-    chunkSize.length = STAT_NOTCOMPUTE;
-    chunkExtensions.length = STAT_NOTCOMPUTE;
-}
-
 void NHttpMsgChunkHead::analyze() {
     bodySections++;
     // First section in a new chunk is just the start line.
@@ -111,7 +102,7 @@ void NHttpMsgChunkHead::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgChunkHead::printSection(FILE *output) const {
+void NHttpMsgChunkHead::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "chunk header");
     fprintf(output, "Chunk size: %" PRIi64 "\n", dataLength);
     printInterval(output, "Chunk extensions", chunkExtensions.start, chunkExtensions.length);

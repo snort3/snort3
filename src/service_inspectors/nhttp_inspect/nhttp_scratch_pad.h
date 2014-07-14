@@ -46,7 +46,7 @@ class ScratchPad {
 public:
     ScratchPad(uint32_t _capacity) : capacity(_capacity), buffer(new uint64_t[_capacity/8+1]) {};
     ~ScratchPad() { delete[] buffer; };
-    void reinit() {used = 0;};
+    /* &&& not needed anymore I think */ void reinit() {used = 0;};
     uint8_t *request(uint32_t needed) const {return (needed <= capacity-used) ? (uint8_t*)(buffer+used) : nullptr;};
     void commit(uint32_t taken) { used += taken + (8-(taken%8))%8; };  // round up to multiple of 8 to preserve alignment
 

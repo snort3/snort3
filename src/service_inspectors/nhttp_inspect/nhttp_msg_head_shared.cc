@@ -38,37 +38,14 @@
 
 using namespace NHttpEnums;
 
-// Reinitialize everything derived in preparation for analyzing a new message
-void NHttpMsgHeadShared::initSection() {
-    headers.length = STAT_NOTCOMPUTE;
-    numHeaders = STAT_NOTCOMPUTE;
-    for(int k = 0; k < MAXHEADERS; k++) {
-        headerLine[k].length = STAT_NOTCOMPUTE;
-        headerName[k].length = STAT_NOTCOMPUTE;
-        headerNameId[k] = HEAD__NOTCOMPUTE;
-        headerValue[k].length = STAT_NOTCOMPUTE;
-    }
-    for (int k = 1; k < HEAD__MAXVALUE; k++) {
-        headerValueNorm[k].length = STAT_NOSOURCE;
-    }
-}
-
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgHeadShared::analyze() {
     parseWhole();
     parseHeaderBlock();
     parseHeaderLines();
-    for (int j=0; j < MAXHEADERS; j++) {
-        if (headerName[j].length <= 0) break;
+    for (int j=0; j < numHeaders; j++) {
         deriveHeaderNameId(j);
-        // Mark this header field as present and therefore eligible for normalization
-        if (headerNameId[j] > 0) headerValueNorm[headerNameId[j]].length = STAT_NOTCOMPUTE;
-    }
-}
-
-void NHttpMsgHeadShared::analyzeAll() {
-    for (int k=1; k <= numNorms; k++) {
-        headerNorms[k]->normalize((HeaderId)k, scratchPad, infractions, headerNameId, headerValue, MAXHEADERS, headerValueNorm[k]);
+        if (headerNameId[j] > 0) headerCount[headerNameId[j]]++;
     }
 }
 
@@ -176,7 +153,7 @@ void NHttpMsgHeadShared::legacyClients() {
     if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, headers.start, (unsigned)headers.length);
     if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_HEADER, headers.start, (unsigned)headers.length);
  
-    for (int k=0; (headerNameId[k] != HEAD__NOTCOMPUTE) && (k < MAXHEADERS); k++) {
+    for (int k=0; k < numHeaders; k++) {
         if (((headerNameId[k] == HEAD_COOKIE) && (sourceId == SRC_CLIENT)) || ((headerNameId[k] == HEAD_SET_COOKIE) && (sourceId == SRC_SERVER))) {
             if (headerValue[k].length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, headerValue[k].start, (unsigned)headerValue[k].length);
             break;
@@ -184,36 +161,33 @@ void NHttpMsgHeadShared::legacyClients() {
     }
 
     if (sourceId == SRC_CLIENT) {
-       if (headerNorms[HEAD_COOKIE]->normalize(HEAD_COOKIE, scratchPad, infractions, headerNameId, headerValue, MAXHEADERS, headerValueNorm[HEAD_COOKIE]) > 0) {
+       if (headerNorms[HEAD_COOKIE]->normalize(HEAD_COOKIE, headerCount[HEAD_COOKIE], scratchPad, infractions,
+          headerNameId, headerValue, numHeaders, headerValueNorm[HEAD_COOKIE]) > 0) {
            SetHttpBuffer(HTTP_BUFFER_COOKIE, headerValueNorm[HEAD_COOKIE].start, (unsigned)headerValueNorm[HEAD_COOKIE].length);
        }
     }
     else {
-       if (headerNorms[HEAD_SET_COOKIE]->normalize(HEAD_SET_COOKIE, scratchPad, infractions, headerNameId, headerValue, MAXHEADERS, headerValueNorm[HEAD_SET_COOKIE]) > 0) {
+       if (headerNorms[HEAD_SET_COOKIE]->normalize(HEAD_SET_COOKIE, headerCount[HEAD_SET_COOKIE], scratchPad, infractions,
+          headerNameId, headerValue, numHeaders, headerValueNorm[HEAD_SET_COOKIE]) > 0) {
            SetHttpBuffer(HTTP_BUFFER_COOKIE, headerValueNorm[HEAD_SET_COOKIE].start, (unsigned)headerValueNorm[HEAD_SET_COOKIE].length);
        }
     }
 }
 
-void NHttpMsgHeadShared::printHeaders(FILE *output) const {
+void NHttpMsgHeadShared::printHeaders(FILE *output) {
     char titleBuf[100];
     if (numHeaders != STAT_NOSOURCE) fprintf(output, "Number of headers: %d\n", numHeaders);
-    for (int j=0; j < numHeaders && j < 200; j++) {
+    for (int j=0; j < numHeaders; j++) {
         snprintf(titleBuf, sizeof(titleBuf), "Header ID %d", headerNameId[j]);
         printInterval(output, titleBuf, headerValue[j].start, headerValue[j].length);
     }
     for (int k=1; k <= numNorms; k++) {
-        if (headerValueNorm[k].length != STAT_NOSOURCE) {
+        if (headerNorms[k]->normalize((HeaderId)k, headerCount[k], scratchPad, infractions, headerNameId, headerValue, numHeaders, headerValueNorm[k]) != STAT_NOSOURCE) {
             snprintf(titleBuf, sizeof(titleBuf), "Normalized header %d", k);
             printInterval(output, titleBuf, headerValueNorm[k].start, headerValueNorm[k].length, true);
         }
     }
 }
-
-
-
-
-
 
 
 
