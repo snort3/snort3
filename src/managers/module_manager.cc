@@ -375,6 +375,16 @@ bool open_table(const char* s, int idx)
     if ( !m )
         return false;
 
+    static string last;
+
+    if ( last != key )
+    {
+        if ( !last.size() )
+            LogMessage("Configuring modules:\n");
+        LogMessage("\t %s\n", key.c_str());
+        last = key;
+    }
+
     m->begin(s, idx, s_config);
     return true;
 }

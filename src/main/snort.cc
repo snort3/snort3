@@ -362,7 +362,8 @@ static void SnortInit(int argc, char **argv)
     if ( !InspectorManager::configure(snort_conf) )
         FatalError("can't initialize inspectors\n");
 
-    InspectorManager::print_config(snort_conf); // FIXIT make optional
+    if ( ScLogVerbose() )
+        InspectorManager::print_config(snort_conf);
 
     ParseRules(snort_conf);
 
