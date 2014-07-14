@@ -527,9 +527,7 @@ if ( not dir ) then
     dir = ''
 end
 
-include '../lua/classification.lua'
-
-print 'Loading references'
+dofile(dir .. 'classification.lua')
 dofile(dir .. 'reference.lua')
 
 default_rules =
