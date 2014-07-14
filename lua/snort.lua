@@ -176,8 +176,8 @@ search_engine =
 event_queue =
 {
     max_queue = 16,
-    log = 8,
-    order_events = 'content_length'
+    log = 16,
+    order_events = 'priority'
 }
 
 -- Per packet and rule latency enforcement
@@ -201,13 +201,13 @@ profile =
 {
     rules =
     {
-        count = 10,
+        count = 25,
         sort = 'avg_ticks',
         file = { append = true }
     },
-    preprocs =
+    modules =
     {
-        count = 10,
+        --count = 10,
         sort = 'avg_ticks',
         file = { append = true }
     }
@@ -435,6 +435,8 @@ ftp_client =
 --]]
 }
 
+ftp_data = { }
+
 ---------------------------------------------------------------------------
 -- stream reassembly and anomaly detection
 ---------------------------------------------------------------------------
@@ -550,41 +552,6 @@ default_rules =
 #alert http ( sid:1; msg:"1"; content:"HTTP"; )
 #alert http any -> 1.2.3.4 ( sid:2; msg:"2"; content:"HTTP"; )
 #alert http any any -> 1.2.3.4 80 ( sid:3; msg:"3"; content:"HTTP"; )
-
-# no ; separated content suboptions
-#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST URI request for known malicious URI - /inst.php?fff="; flow:to_server,established; http_uri; content:"/inst.php?fff=", nocase; content:  "coid=", nocase; metadata:impact_flag red, policy balanced-ips drop, policy security-ips drop, reference:url,labs.snort.org/docs/16924.html; classtype:trojan-activity; sid:16924; rev:5;)
-
-# fast_pattern:<offset>,<length>; ->
-# fast_pattern:<offset> <length>;
-
-# test pattern = "ABABACD"
-#alert tcp any any -> any any ( sid:100; content:"ABA"; )
-#alert tcp any any -> any any ( sid:200; raw_data; content:"ABA"; )
-#alert tcp any any -> any any ( sid:300; pkt_data; content:"ABA"; )
-#alert tcp any any -> any any ( sid:400; content:"ABA"; content:"C", depth 6; )
-#alert tcp any any -> any any ( sid:401; content:"ABA"; content:"C", depth 5; )
-#alert tcp any any -> any any ( sid:402; content:"ABA"; content:"C", offset 5; )
-#alert tcp any any -> any any ( sid:403; content:"ABA"; content:"C", offset 6; )
-#alert tcp any any -> any any ( sid:404; content:"ABA"; content:"C", offset 5, depth 6; )
-#alert tcp any any -> any any ( sid:510; content:"ABA"; content:"C", within 1; )
-#alert tcp any any -> any any ( sid:110; pcre:"/ABA/"; )
-#alert tcp any any -> any any ( sid:210; raw_data; pcre:"/ABA/"; )
-#alert tcp any any -> any any ( sid:310; pkt_data; pcre:"/ABA/"; )
-#alert tcp any any -> any any ( sid:410; pcre:"/ABA/"; pcre:"/C/"; )
-#alert tcp any any -> any any ( sid:411; pcre:"/ABA/"; pcre:"/AC/R"; )
-#alert tcp any any -> any any ( sid:412; pcre:"/ABA/"; pcre:"/AC/"; )
-#alert tcp any any -> any any ( sid:414; pcre:"/ABA/"; pcre:"/C/R"; )
-
-#alert ( gid:134; sid:1; )
-#alert ( gid:134; sid:2; )
-#alert ( gid:134; sid:3; )
-
-#alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil", fast_pattern; )
-#alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil", nocase, fast_pattern; )
-#alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil"; )
-#alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil"; content:"sauce"; )
-#alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil"; content:"sauce", distance:0; )
-#alert tcp any any -> any 80 ( sid:2; rev:3; http_uri; content:"evil"; http_header; content:"Generic"; )
 ]]
 
 network =
@@ -760,6 +727,13 @@ binder =
     --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'nhttp_inspect' } },
     { when = { proto = 'tcp', ports = FTP_PORTS }, use = { type = 'ftp_server' } },
     { when = { proto = 'tcp', ports = RPC_PORTS }, use = { type = 'rpc_decode' } },
+
+    -- FIXIT these should be defaults when inspector configured
+    { when = { service = 'ftp-data' }, use = { type = 'ftp_data' } },
+    { when = { service = 'ftp' }, use = { type = 'ftp_server' } },
+    { when = { service = 'http' }, use = { type = 'http_server' } },
+    { when = { service = 'sunrpc' }, use = { type = 'rpc_decode' } },
+    { when = { service = 'telnet' }, use = { type = 'telnet' } },
 
     -- auto service id override
     {
