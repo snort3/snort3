@@ -651,9 +651,8 @@ void RegisterProfile(
     if ( !node->pname && strcasecmp(node->name, TOTAL) )
         node->pname = TOTAL;
 
-    // FIXIT wtf?
-    //if ( !strcasecmp(node->name, "mpse") )
-    //    mpsePerfStats = stats;
+    if ( !strcasecmp(node->name, "mpse") )
+        mpsePerfStats = &node->stats;
 }
 
 void RegisterOtnProfile(const char *keyword, get_profile_func get)

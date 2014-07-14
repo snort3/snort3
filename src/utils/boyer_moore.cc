@@ -181,28 +181,13 @@ int *make_shift(char *ptrn, int plen)
 SO_PUBLIC int mSearch(
     const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
 {
-    int b_idx = plen;
-
-#ifdef DEBUG_MSGS
-    char *hexbuf;
-    int cmpcnt = 0;
-#endif
-
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,"buf: %p  blen: %d  ptrn: %p  "
                 "plen: %d\n", buf, blen, ptrn, plen););
 
-#ifdef DEBUG_MSGS
-    hexbuf = fasthex((const u_char *)buf, blen);
-    DebugMessage(DEBUG_PATTERN_MATCH,"buf: %s\n", hexbuf);
-    free(hexbuf);
-    hexbuf = fasthex((const u_char *)ptrn, plen);
-    DebugMessage(DEBUG_PATTERN_MATCH,"ptrn: %s\n", hexbuf);
-    free(hexbuf);
-    DebugMessage(DEBUG_PATTERN_MATCH,"buf: %p  blen: %d  ptrn: %p  "
-                 "plen: %d\n", buf, blen, ptrn, plen);
-#endif /* DEBUG_MSGS */
     if(plen == 0)
         return -1;
+
+    int b_idx = plen;
 
     while(b_idx <= blen)
     {
@@ -210,18 +195,8 @@ SO_PUBLIC int mSearch(
 
         while(buf[--b_idx] == ptrn[--p_idx])
         {
-#ifdef DEBUG_MSGS
-            cmpcnt++;
-#endif
-            if(b_idx < 0)
-                return -1;
-
             if(p_idx == 0)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                            "match: compares = %d.\n", cmpcnt););
                 return b_idx;
-            }
         }
 
         skip_stride = skip[(unsigned char) buf[b_idx]];
@@ -229,9 +204,6 @@ SO_PUBLIC int mSearch(
 
         b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
     }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                "no match: compares = %d.\n", cmpcnt););
 
     return -1;
 }
@@ -255,12 +227,10 @@ SO_PUBLIC int mSearch(
  *      -1 if not found or offset >= 0 if found
  *
  ****************************************************************/
-SO_PUBLIC int mSearchCI(const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
+SO_PUBLIC int mSearchCI(
+    const char *buf, int blen, const char *ptrn, int plen, int *skip, int *shift)
 {
     int b_idx = plen;
-#ifdef DEBUG_MSGS
-    int cmpcnt = 0;
-#endif
 
     if(plen == 0)
         return -1;
@@ -269,19 +239,10 @@ SO_PUBLIC int mSearchCI(const char *buf, int blen, const char *ptrn, int plen, i
     {
         int p_idx = plen, skip_stride, shift_stride;
 
-        while((unsigned char) ptrn[--p_idx] ==
-                toupper((unsigned char) buf[--b_idx]))
+        while((unsigned char) ptrn[--p_idx] == toupper((unsigned char) buf[--b_idx]))
         {
-#ifdef DEBUG_MSGS
-            cmpcnt++;
-#endif
             if(p_idx == 0)
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                            "match: compares = %d.\n",
-                            cmpcnt););
                 return b_idx;
-            }
         }
 
         skip_stride = skip[toupper((unsigned char) buf[b_idx])];
@@ -289,8 +250,6 @@ SO_PUBLIC int mSearchCI(const char *buf, int blen, const char *ptrn, int plen, i
 
         b_idx += (skip_stride > shift_stride) ? skip_stride : shift_stride;
     }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "no match: compares = %d.\n", cmpcnt););
 
     return -1;
 }

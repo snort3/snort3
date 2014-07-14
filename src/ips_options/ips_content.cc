@@ -287,13 +287,7 @@ static void validate_content(
 
 static void make_precomp(PatternMatchData * idx)
 {
-    if(idx->skip_stride)
-       free(idx->skip_stride);
-    if(idx->shift_stride)
-       free(idx->shift_stride);
-
     idx->skip_stride = make_skip(idx->pattern_buf, idx->pattern_size);
-
     idx->shift_stride = make_shift(idx->pattern_buf, idx->pattern_size);
 }
 
@@ -482,15 +476,15 @@ static int uniSearchReal(PatternMatchData* pmd, Cursor& c)
             pmd->skip_stride, pmd->shift_stride);
     }
 
-    c.set_delta(pos + pmd->match_delta);
-
     if ( found >= 0 )
     {
-        c.set_pos(pos + found + pmd->pattern_size);
+        int at = pos + found;
+        c.set_delta(at + pmd->match_delta);
+        c.set_pos(at + pmd->pattern_size);
         return 1;
     }
 
-    return 0;
+    return -1;
 }
 
 static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
@@ -708,7 +702,6 @@ static void parse_nocase(
         pmd->pattern_buf[i] = toupper((int)pmd->pattern_buf[i]);
 
     pmd->no_case = 1;
-    make_precomp(pmd);
 }
 
 static void parse_fast_pattern(
@@ -1038,7 +1031,8 @@ static void content_parse(char *rule, PatternMatchData* ds_idx)
 }
 
 static IpsOption* content_ctor(
-    SnortConfig* sc, char *data, OptTreeNode * otn){
+    SnortConfig* sc, char *data, OptTreeNode * otn)
+{
     PatternMatchData *pmd;
     char *data_end;
     char *data_dup;
