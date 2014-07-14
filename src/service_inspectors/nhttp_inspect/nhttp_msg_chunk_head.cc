@@ -38,13 +38,17 @@
 
 using namespace NHttpEnums;
 
+NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+   NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), bodySections(sessionData->bodySections[sourceId]),
+   numChunks(sessionData->numChunks[sourceId]) {}
+
 // Convert the hexadecimal chunk length.
 // RFC says that zero may be written with multiple digits "000000".
 // Arbitrary limit of 15 hex digits not including leading zeros ensures in a simple way against 64-bit overflow and should be
 // vastly bigger than any legitimate chunk.
 void NHttpMsgChunkHead::deriveChunkLength() {
     if (chunkSize.length <= 0) {
-        dataLength = STAT_PROBLEMATIC;
+        dataLength = STAT_NOSOURCE;
         infractions |= INF_BADCHUNKSIZE;
         return;
     }
@@ -68,19 +72,6 @@ void NHttpMsgChunkHead::deriveChunkLength() {
             return;
         }
     }
-}
-
-void NHttpMsgChunkHead::loadSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_) {
-    NHttpMsgSection::loadSection(buffer, bufSize, sessionData_);
-
-    bodySections = sessionData->bodySections[sourceId];
-    numChunks = sessionData->numChunks[sourceId];
-}
-
-void NHttpMsgChunkHead::initSection() {
-    startLine.length = STAT_NOTCOMPUTE;
-    chunkSize.length = STAT_NOTCOMPUTE;
-    chunkExtensions.length = STAT_NOTCOMPUTE;
 }
 
 void NHttpMsgChunkHead::analyze() {
@@ -111,14 +102,14 @@ void NHttpMsgChunkHead::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgChunkHead::printSection(FILE *output) const {
+void NHttpMsgChunkHead::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "chunk header");
     fprintf(output, "Chunk size: %" PRIi64 "\n", dataLength);
     printInterval(output, "Chunk extensions", chunkExtensions.start, chunkExtensions.length);
     NHttpMsgSection::printMessageWrapup(output);
 }
 
-void NHttpMsgChunkHead::updateFlow() const {
+void NHttpMsgChunkHead::updateFlow() {
     if (tcpClose) {
         sessionData->typeExpected[sourceId] = SEC_CLOSED;
         sessionData->halfReset(sourceId);
@@ -141,7 +132,7 @@ void NHttpMsgChunkHead::updateFlow() const {
 
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgChunkHead::legacyClients() const {
+void NHttpMsgChunkHead::legacyClients() {
     ClearHttpBuffers();
     if (startLine.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, startLine.start, (unsigned)startLine.length);
 }

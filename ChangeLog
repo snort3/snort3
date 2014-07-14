@@ -1,9 +1,15 @@
+101
+-- tweaked startup output
+-- fixed pattern matcher
+-- pulled in latest from Tom
+
 100
 -- adding profiling to module
 -- profile.preprocs is now profile.modules
 
 99
 -- updated wizard
+-- removed service / app id from inspectors
 
 98
 -- initial wizard implementation

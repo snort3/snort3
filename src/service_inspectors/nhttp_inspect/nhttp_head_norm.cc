@@ -59,56 +59,47 @@ int32_t HeaderNormalizer::deriveHeaderContent(const uint8_t *value, int32_t leng
     return outLength;
 }
 
-void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, HeaderId headId, const HeaderId headerNameId[], const field headerValue[], int32_t numHeaders,
-        field &resultField) const {
-    // This method normalizes the header field value for headId.
-    if (format == NORM_NULL) {
-        resultField.length = STAT_NOTCONFIGURED;
-        return;
-    }
+// This method normalizes the header field value for headId.
+int32_t HeaderNormalizer::normalize(const HeaderId headId, const int count, ScratchPad &scratchPad, uint64_t &infractions,
+        const HeaderId headerNameId[], const field headerValue[], const int32_t numHeaders, field &resultField) const {
+    if (resultField.length != STAT_NOTCOMPUTE) return resultField.length;
+    if (format == NORM_NULL) return resultField.length = STAT_NOTCONFIGURED;
+    if (count == 0) return resultField.length = STAT_NOSOURCE;
 
-    // Search Header IDs from all the headers in this message. A critical issue is whether the header can be present more than once in a message. concatenateRepeats means the
-    // header can be present more than once. The standard normalization is to concatenate all the repeated field values into a comma-separated list. Otherwise there should not
-    // be more than one instance of this header. infractRepeats causes us to inspect for improper repeated headers. Regardless of whether we look for these extra values only
-    // the first value will be normalized.
+    // Search Header IDs from all the headers in this message. concatenateRepeats means the header can properly be
+    // present more than once. The standard normalization is to concatenate all the repeated field values into a
+    // comma-separated list. Otherwise only the first value will be normalized and the rest will be ignored.
 
     int numMatches = 0;
     int32_t bufferLength = 0;
-    int firstMatch = -1;
+    int currMatch;
     for (int k=0; k < numHeaders; k++) {
-        if (headerNameId[k] == HEAD__NOTCOMPUTE) break;
         if (headerNameId[k] == headId) {
-            numMatches++;
-            if (numMatches == 1) firstMatch = k;
-            if ((numMatches == 1) || concatenateRepeats) bufferLength += headerValue[k].length;
-            if (!concatenateRepeats && !infractRepeats) break;
+            if (++numMatches == 1) currMatch = k;    // remembering location of the first matching header
+            bufferLength += headerValue[k].length;
+            if (!concatenateRepeats || (numMatches >= count)) break;
         }
     }
-    if (numMatches == 0) {
-        resultField.length = STAT_NOTPRESENT;
-        return;
-    }
-    if (infractRepeats && (numMatches >= 2)) infractions |= INF_BADHEADERREPS;
+    assert((!concatenateRepeats && (numMatches == 1)) || (concatenateRepeats && (numMatches == count)));
+    bufferLength += numMatches - 1;    // allow space for concatenation commas
 
-    // The scratchPad provides the space to store the normalized value. We are allocating twice as much memory as we need to store the normalized field value. The raw field
-    // value will be copied into one half of the buffer. Concatenation and white space normalization happen during this step. Next a series of normalization functions will
-    // transform the value into final form. Each normalization copies the value from one half of the buffer to the other. Based on whether the number of normalization functions
-    // is odd or even, the initial placement in the buffer is chosen so that the final normalization leaves the field value at the front of the buffer. The buffer space actually
-    // used is locked down in the scratchPad. The remainder of the first half and all of the second half are returned to the scratchPad for future use.
-    if (concatenateRepeats) bufferLength += numMatches - 1;    // allow space for concatenation commas
-    // Round up to multiple of eight so that both halves are 64-bit aligned.
-    // 200 is a "way too big" fudge factor to allow for modest expansion of field size during normalization. Needs improvement.
+    // We are allocating twice as much memory as we need to store the normalized field value. The raw field value will
+    // be copied into one half of the buffer. Concatenation and white space normalization happen during this step. Next
+    // a series of normalization functions will transform the value into final form. Each normalization copies the value
+    // from one half of the buffer to the other. Based on whether the number of normalization functions is odd or even,
+    // the initial placement in the buffer is chosen so that the final normalization leaves the field value at the front
+    // of the buffer. The buffer space actually used is locked down in the scratchPad. The remainder of the first half
+    // and all of the second half are returned to the scratchPad for future use.
+
+    // Round up to multiple of eight so that both halves are 64-bit aligned. 200 is a "way too big" fudge factor to allow
+    // for modest expansion of field size during normalization.
     bufferLength += (8-bufferLength%8)%8 + 200;
-    uint8_t * const scratch = scratchPad.request(2*bufferLength);
-    if (scratch == nullptr) {
-        resultField.length = STAT_INSUFMEMORY;
-        return;
-    }
+    uint8_t* const scratch = scratchPad.request(2*bufferLength);
+    if (scratch == nullptr) return resultField.length = STAT_INSUFMEMORY;
 
-    uint8_t * const frontHalf = scratch;
-    uint8_t * const backHalf = scratch + bufferLength;
-    uint8_t *working = (numNormalizers%2 == 0) ? frontHalf : backHalf;
-    int currMatch = firstMatch;
+    uint8_t* const frontHalf = scratch;
+    uint8_t* const backHalf = scratch + bufferLength;
+    uint8_t* working = (numNormalizers%2 == 0) ? frontHalf : backHalf;
     int32_t dataLength = 0;
     for (int j=0; j < numMatches; j++) {
         if (j >= 1) {
@@ -119,20 +110,18 @@ void HeaderNormalizer::normalize(ScratchPad &scratchPad, uint64_t &infractions, 
         int32_t growth = deriveHeaderContent(headerValue[currMatch].start, headerValue[currMatch].length, working);
         working += growth;
         dataLength += growth;
-        if (!concatenateRepeats) break;
     }
 
     for (int i=0; i < numNormalizers; i++) {
         if (i%2 != numNormalizers%2) dataLength = normalizer[i](backHalf, dataLength, frontHalf, infractions, normArg[i]);
         else                         dataLength = normalizer[i](frontHalf, dataLength, backHalf, infractions, normArg[i]);
-        if (dataLength <= 0) {
-            resultField.length = dataLength;
-            return;
-        }
+        if (dataLength <= 0) return resultField.length = dataLength;
     }
     resultField.start = scratch;
     resultField.length = dataLength;
     scratchPad.commit(dataLength);
+    return resultField.length;
 }
+
 
 

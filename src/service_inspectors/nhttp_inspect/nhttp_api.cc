@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,13 +34,8 @@
 #include "snort.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "nhttp_enum.h"
-#include "nhttp_module.h"
 #include "nhttp_inspect.h"
 #include "nhttp_api.h"
-
-Module* NHttpApi::nhttp_mod_ctor() { return new NHttpModule; }
-
-void NHttpApi::nhttp_mod_dtor(Module* m) { delete m; }
 
 const char* NHttpApi::nhttp_myName = "nhttp_inspect";
 
@@ -49,47 +44,10 @@ void NHttpApi::nhttp_init()
     NHttpFlowData::init();
 }
 
-void NHttpApi::nhttp_term()
-{
-}
-
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
     const NHttpModule* nhttpMod = (NHttpModule*) mod;
     return new NHttpInspect(nhttpMod->get_test_input(), nhttpMod->get_test_output());
-}
-
-void NHttpApi::nhttp_dtor(Inspector* p)
-{
-    delete p;
-}
-
-void NHttpApi::nhttp_pinit()
-{
-    NHttpInspect::msgRequest = new NHttpMsgRequest;
-    NHttpInspect::msgStatus = new NHttpMsgStatus;
-    NHttpInspect::msgHead = new NHttpMsgHeader;
-    NHttpInspect::msgBody = new NHttpMsgBody;
-    NHttpInspect::msgChunkHead = new NHttpMsgChunkHead;
-    NHttpInspect::msgChunkBody = new NHttpMsgChunkBody;
-    NHttpInspect::msgTrailer = new NHttpMsgTrailer;
-}
-
-void NHttpApi::nhttp_pterm()
-{
-    delete NHttpInspect::msgHead;
-}
-
-void NHttpApi::nhttp_sum()
-{
-}
-
-void NHttpApi::nhttp_stats()
-{
-}
-
-void NHttpApi::nhttp_reset()
-{
 }
 
 static const char* buffers[] =

@@ -41,18 +41,18 @@ NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {}
 
 void NHttpFlowData::halfReset(SourceId sourceId) {
     assert((sourceId == SRC_CLIENT) || (sourceId == SRC_SERVER));
-    dataLength[sourceId] = STAT_NOTPRESENT;
     octetsExpected[sourceId] = STAT_NOTPRESENT;
+
+    versionId[sourceId] = VERS__NOTPRESENT;
+    methodId[sourceId] = METH__NOTPRESENT;
+    statusCodeNum[sourceId] = STAT_NOTPRESENT;
+
+    dataLength[sourceId] = STAT_NOTPRESENT;
     bodySections[sourceId] = STAT_NOTPRESENT;
     bodyOctets[sourceId] = STAT_NOTPRESENT;
     numChunks[sourceId] = STAT_NOTPRESENT;
     chunkSections[sourceId] = STAT_NOTPRESENT;
     chunkOctets[sourceId] = STAT_NOTPRESENT;
-
-    versionId[sourceId] = VERS__NOTPRESENT;
-    methodId[sourceId] = METH__NOTPRESENT;
-    schemeId[sourceId] = SCH__NOTPRESENT;
-    statusCodeNum[sourceId] = STAT_NOTPRESENT;
 }
 
 
