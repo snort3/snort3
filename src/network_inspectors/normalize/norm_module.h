@@ -45,6 +45,10 @@ public:
     const NormalizerConfig* get_config()
     { return &config; };
 
+    void sum_stats();
+    void show_stats();
+    void reset_stats();
+
 private:
     bool set_ip4(const char*, Value&, SnortConfig*);
     bool set_tcp(const char*, Value&, SnortConfig*);

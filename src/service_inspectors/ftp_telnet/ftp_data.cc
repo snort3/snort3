@@ -55,9 +55,7 @@
 static const char* data_key = "ftp_data";
 
 static THREAD_LOCAL ProfileStats ftpdataPerfStats;
-
 static THREAD_LOCAL SimpleStats fdstats;
-static SimpleStats gfdstats;
 
 //-------------------------------------------------------------------------
 // implementation stuff
@@ -222,11 +220,19 @@ class FtpDataModule : public Module
 public:
     FtpDataModule() : Module(data_key, fd_params) { };
 
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 
     bool set(const char*, Value&, SnortConfig*)
     { return false; };
 };
+
+const char** FtpDataModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* FtpDataModule::get_counts() const
+{ return (PegCount*)&fdstats; }
 
 ProfileStats* FtpDataModule::get_profile() const
 { return &ftpdataPerfStats; }
@@ -252,11 +258,11 @@ void FtpData::eval(Packet* p)
 // api stuff
 //-------------------------------------------------------------------------
 
-static void mod_dtor(Module* m)
-{ delete m; }
-
 static Module* mod_ctor()
 { return new FtpDataModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
 
 static void fd_init()
 {
@@ -271,21 +277,6 @@ static Inspector* fd_ctor(Module*)
 static void fd_dtor(Inspector* p)
 {
     delete p;
-}
-
-static void fd_sum()
-{
-    sum_stats(&gfdstats, &fdstats);
-}
-
-static void fd_stats()
-{
-    show_stats(&gfdstats, data_key);
-}
-
-static void fd_reset()
-{
-    memset(&gfdstats, 0, sizeof(gfdstats));
 }
 
 // exported in ftp.cc
@@ -310,8 +301,6 @@ const InspectApi fd_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    fd_sum,
-    fd_stats,
-    fd_reset
+    nullptr  // reset
 };
 

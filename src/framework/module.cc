@@ -20,6 +20,7 @@
 
 #include "module.h"
 #include "parameter.h"
+#include "utils/stats.h"
 
 static const Parameter null_params[] =
 {
@@ -33,6 +34,7 @@ void Module::init(const char* s)
     list = false;
     cmds = nullptr;
     rules = nullptr;
+    num_counts = -1;
 }
 
 Module::Module(const char* s)
@@ -46,4 +48,50 @@ Module::Module(const char* s, const Parameter* p, bool is_list)
     params = p;
     list = is_list;
 }
+
+void Module::sum_stats()
+{
+    if ( num_counts < 0 )
+        reset_stats();
+
+    PegCount* p = get_counts();
+
+    if ( !p )
+        return;
+
+    for ( int i = 0; i < num_counts; i++ )
+    {
+        counts[i] += p[i];
+        p[i] = 0;
+    }
+}
+
+void Module::show_stats()
+{
+    if ( num_counts > 0 )
+        ::show_stats(get_counts(), get_pegs(), num_counts, get_name());
+}
+
+void Module::reset_stats()
+{
+    num_counts = 0;
+    const char** pegs = get_pegs();
+
+    if ( !pegs )
+        return;
+
+    while ( pegs[num_counts] )
+        ++num_counts;
+
+    counts.resize(num_counts);
+
+    for ( int i = 0; i < num_counts; i++ )
+        counts[i] = 0;
+}
+
+const char* simple_pegs[] =
+{
+    "packets",
+    nullptr
+};
 

@@ -146,8 +146,6 @@ static const InspectApi udp_api =
     nullptr, // pinit
     nullptr, // pterm
     udp_ssn,
-    udp_sum,
-    udp_stats,
     udp_reset
 };
 

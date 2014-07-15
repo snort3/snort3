@@ -33,9 +33,7 @@
 #include "perf_monitor/perf.h"
 #include "flow/flow_control.h"
 
-static SessionStats gipStats;
-static THREAD_LOCAL SessionStats ipStats;
-
+THREAD_LOCAL SessionStats ipStats;
 THREAD_LOCAL ProfileStats ip_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -182,31 +180,5 @@ int IpSession::process(Packet* p)
 
     PREPROC_PROFILE_END(ip_perf_stats);
     return 0;
-}
-
-//-------------------------------------------------------------------------
-// api related methods
-//-------------------------------------------------------------------------
-
-void ip_sum()
-{
-    sum_stats((PegCount*)&gipStats, (PegCount*)&ipStats, session_peg_count);
-    Defrag::sum();
-}
-
-void ip_stats()
-{
-    // FIXIT need to get these before delete flow_con
-    //flow_con->get_prunes(IPPROTO_UDP, ipStats.prunes);
-
-    show_stats((PegCount*)&gipStats, session_pegs, session_peg_count, MOD_NAME);
-    Defrag::stats();
-}
-
-void ip_reset()
-{
-    memset(&ipStats, 0, sizeof(ipStats));
-    flow_con->reset_prunes(IPPROTO_IP);
-    Defrag::reset();
 }
 

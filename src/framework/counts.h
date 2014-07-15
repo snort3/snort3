@@ -31,6 +31,8 @@ struct SimpleStats
     PegCount total_packets;
 };
 
+extern const char* simple_pegs[];
+
 #define array_size(a) (sizeof(a)/sizeof(a[0]))
 
 #endif

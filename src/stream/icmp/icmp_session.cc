@@ -43,9 +43,7 @@
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 
-static SessionStats gicmpStats;
-static THREAD_LOCAL SessionStats icmpStats;
-
+THREAD_LOCAL SessionStats icmpStats;
 THREAD_LOCAL ProfileStats icmp_perf_stats;
 
 //------------------------------------------------------------------------
@@ -234,20 +232,14 @@ void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
 // api related methods
 //-------------------------------------------------------------------------
 
-void icmp_sum()
-{
-    sum_stats((PegCount*)&gicmpStats, (PegCount*)&icmpStats,
-        session_peg_count);
-}
-
+#if 0
 void icmp_stats()
 {
+    // FIXIT move these to the actual owner
     // FIXIT need to get these before delete flow_con
     //flow_con->get_prunes(IPPROTO_UDP, icmpStats.prunes);
-
-    show_stats((PegCount*)&gicmpStats, session_pegs, session_peg_count,
-        MOD_NAME);
 }
+#endif
 
 void icmp_reset()
 {

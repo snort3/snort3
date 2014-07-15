@@ -153,9 +153,7 @@ static uint16_t lookup1[65536][3];
 static uint16_t lookup2[65536];
 
 static THREAD_LOCAL ProfileStats boPerfStats;
-
 static THREAD_LOCAL SimpleStats bostats;
-static SimpleStats gbostats;
 
 //-------------------------------------------------------------------------
 // bo module
@@ -199,8 +197,16 @@ public:
     unsigned get_gid() const
     { return GID_BO; };
 
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 };
+
+const char** BoModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* BoModule::get_counts() const
+{ return (PegCount*)&bostats; }
 
 ProfileStats* BoModule::get_profile() const
 { return &boPerfStats; }
@@ -585,21 +591,6 @@ static void bo_dtor(Inspector* p)
     delete p;
 }
 
-static void bo_sum()
-{
-    sum_stats(&gbostats, &bostats);
-}
-
-static void bo_stats()
-{
-    show_stats(&gbostats, mod_name);
-}
-
-static void bo_reset()
-{
-    memset(&gbostats, 0, sizeof(gbostats));
-}
-
 static const InspectApi bo_api =
 {
     {
@@ -621,9 +612,7 @@ static const InspectApi bo_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    bo_sum,
-    bo_stats,
-    bo_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

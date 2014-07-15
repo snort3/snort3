@@ -79,3 +79,9 @@ bool StreamIcmpModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
+const char** StreamIcmpModule::get_pegs() const
+{ return session_pegs; }
+
+PegCount* StreamIcmpModule::get_counts() const
+{ return (PegCount*)&icmpStats; }
+

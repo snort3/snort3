@@ -131,8 +131,6 @@ static const InspectApi icmp_api =
     nullptr, // pinit
     nullptr, // pterm
     icmp_ssn,
-    icmp_sum,
-    icmp_stats,
     icmp_reset
 };
 

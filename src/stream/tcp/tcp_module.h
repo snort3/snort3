@@ -28,6 +28,7 @@
 #include "snort_types.h"
 #include "framework/module.h"
 #include "main/thread.h"
+#include "stream/stream.h"
 
 #define GID_STREAM_TCP  129
 
@@ -52,6 +53,8 @@
 #define STREAM_TCP_WINDOW_SLAM                    19
 #define STREAM_TCP_NO_3WHS                        20
 
+extern const char* tcp_pegs[];
+extern THREAD_LOCAL struct TcpStats tcpStats;
 extern THREAD_LOCAL ProfileStats s5TcpPerfStats;
 extern THREAD_LOCAL ProfileStats s5TcpNewSessPerfStats;
 extern THREAD_LOCAL ProfileStats s5TcpStatePerfStats;
@@ -102,6 +105,8 @@ public:
     const ServiceReassembly* get_proto(unsigned);
 
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
 
 private:
     void add_protos(Value&, bool, bool);

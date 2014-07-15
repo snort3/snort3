@@ -216,3 +216,9 @@ MagicBook* WizardModule::get_book(bool c2s, bool hex)
     return hex ? s2c_hexes : s2c_spells;
 }
 
+const char** WizardModule::get_pegs() const
+{ return wiz_pegs; }
+
+PegCount* WizardModule::get_counts() const
+{ return (PegCount*)&tstats; }
+

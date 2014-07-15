@@ -174,3 +174,9 @@ void PerfMonModule::get_config(SFPERF& cfg)
     memset(&config, 0, sizeof(config));
 }
 
+const char** PerfMonModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* PerfMonModule::get_counts() const
+{ return (PegCount*)&pmstats; }
+

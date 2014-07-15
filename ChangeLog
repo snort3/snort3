@@ -1,3 +1,8 @@
+102
+-- moved stats (peg counts) to module
+-- removed sum() and stats() from InspectApi
+-- tweaked --help-module
+
 101
 -- tweaked startup output
 -- fixed pattern matcher

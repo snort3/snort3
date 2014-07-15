@@ -30,6 +30,7 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+#include <vector>
 #include <lua.hpp>
 
 #include "framework/value.h"
@@ -103,11 +104,11 @@ public:
     virtual const RuleMap* get_rules() const
     { return nullptr; };
 
-    virtual const char* get_pegs() const
+    virtual const char** get_pegs() const
     { return nullptr; };
 
     // counts and profile are thread local
-    virtual const PegCount* get_counts() const
+    virtual PegCount* get_counts() const
     { return nullptr; };
 
     virtual ProfileStats* get_profile() const
@@ -117,6 +118,10 @@ public:
     virtual ProfileStats* get_profile(
         unsigned /*index*/, const char*& /*name*/, const char*& /*parent*/) const
     { return nullptr; };
+
+    virtual void sum_stats();
+    virtual void show_stats();
+    virtual void reset_stats();
 
 protected:
     Module(const char* s);
@@ -131,6 +136,8 @@ private:
     const Parameter* params;
     const Command* cmds;
     const RuleMap* rules;
+    std::vector<PegCount> counts;
+    int num_counts;
 };
 
 #endif

@@ -43,6 +43,7 @@
 
 struct SnortConfig;
 
+extern THREAD_LOCAL SimpleStats ftstats;
 extern THREAD_LOCAL ProfileStats ftpPerfStats;
 
 //-------------------------------------------------------------------------
@@ -117,6 +118,8 @@ public:
     { return GID_FTP; };
 
     const RuleMap* get_rules() const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 
     FTP_SERVER_PROTO_CONF* get_data();

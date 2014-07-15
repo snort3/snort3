@@ -27,6 +27,8 @@
 #include "framework/module.h"
 #include "main/thread.h"
 
+extern const char* wiz_pegs[];
+extern THREAD_LOCAL struct WizStats tstats;
 extern THREAD_LOCAL ProfileStats wizPerfStats;
 
 class MagicBook;
@@ -41,6 +43,8 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 
     MagicBook* get_book(bool c2s, bool hex);

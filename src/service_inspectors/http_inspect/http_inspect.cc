@@ -83,9 +83,7 @@ int valid_lookup[256];
 THREAD_LOCAL ProfileStats hiPerfStats;
 THREAD_LOCAL ProfileStats hiDetectPerfStats;
 
-static HIStats ghi_stats;
-
-static const char* peg_names[] =
+const char* peg_names[] =
 {
     "packets",
     "gets",
@@ -424,22 +422,6 @@ static void hs_dtor(Inspector* p)
     delete p;
 }
 
-static void hs_sum()
-{
-    sum_stats((PegCount*)&ghi_stats, (PegCount*)&hi_stats, array_size(peg_names));
-}
-
-static void hs_stats()
-{
-    show_stats((PegCount*)&ghi_stats, peg_names, array_size(peg_names),
-        SERVER_KEYWORD);
-}
-
-static void hs_reset()
-{
-    memset(&ghi_stats, 0, sizeof(ghi_stats));
-}
-
 //-------------------------------------------------------------------------
 
 static const char* buffers[] =
@@ -478,9 +460,7 @@ static const InspectApi hs_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    hs_sum,
-    hs_stats,
-    hs_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

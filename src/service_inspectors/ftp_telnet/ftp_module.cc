@@ -490,3 +490,9 @@ bool FtpServerModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
+const char** FtpServerModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* FtpServerModule::get_counts() const
+{ return (PegCount*)&ftstats; }
+

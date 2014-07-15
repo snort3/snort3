@@ -58,9 +58,7 @@ static const char* client_key = "ftp_client";
 static const char* server_key = "ftp_server";
 
 THREAD_LOCAL ProfileStats ftpPerfStats;
-
-static THREAD_LOCAL SimpleStats ftstats;
-static SimpleStats gftstats;
+THREAD_LOCAL SimpleStats ftstats;
 
 static FTP_CLIENT_PROTO_CONF* bind_client = nullptr;
 static FTP_SERVER_PROTO_CONF* bind_server = nullptr;
@@ -502,21 +500,6 @@ static void fs_dtor(Inspector* p)
     delete p;
 }
 
-static void fs_sum()
-{
-    sum_stats(&gftstats, &ftstats);
-}
-
-static void fs_stats()
-{
-    show_stats(&gftstats, server_key);
-}
-
-static void fs_reset()
-{
-    memset(&gftstats, 0, sizeof(gftstats));
-}
-
 static const InspectApi fs_api =
 {
     {
@@ -539,9 +522,7 @@ static const InspectApi fs_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    fs_sum,
-    fs_stats,
-    fs_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

@@ -277,3 +277,12 @@ bool NormalizeModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
+void NormalizeModule::sum_stats()
+{ Norm_SumStats(); }
+
+void NormalizeModule::show_stats()
+{ Norm_PrintStats(get_name()); }
+
+void NormalizeModule::reset_stats()
+{ Norm_ResetStats(); }
+

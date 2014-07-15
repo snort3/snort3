@@ -49,9 +49,7 @@
 static const char* tn_name = "telnet";
 
 THREAD_LOCAL ProfileStats telnetPerfStats;
-
-static THREAD_LOCAL SimpleStats tnstats;
-static SimpleStats gtnstats;
+THREAD_LOCAL SimpleStats tnstats;
 
 //-------------------------------------------------------------------------
 // implementation
@@ -300,21 +298,6 @@ static void tn_dtor(Inspector* p)
     delete p;
 }
 
-static void tn_sum()
-{
-    sum_stats(&gtnstats, &tnstats);
-}
-
-static void tn_stats()
-{
-    show_stats(&gtnstats, tn_name);
-}
-
-static void tn_reset()
-{
-    memset(&gtnstats, 0, sizeof(gtnstats));
-}
-
 // exported in ftp.cc
 const InspectApi tn_api =
 {
@@ -337,8 +320,6 @@ const InspectApi tn_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    tn_sum,
-    tn_stats,
-    tn_reset,
+    nullptr  // reset
 };
 

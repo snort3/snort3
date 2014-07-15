@@ -34,6 +34,7 @@
 
 struct SnortConfig;
 
+extern THREAD_LOCAL SimpleStats tnstats;
 extern THREAD_LOCAL ProfileStats telnetPerfStats;
 
 class TelnetModule : public Module
@@ -50,6 +51,8 @@ public:
     { return GID_TELNET; };
 
     const RuleMap* get_rules() const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 
     TELNET_PROTO_CONF* get_data();

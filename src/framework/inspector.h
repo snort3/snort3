@@ -154,8 +154,6 @@ struct InspectApi
     InspectFunc pinit;     // plugin thread local allocation
     InspectFunc pterm;     // plugin thread local cleanup
     InspectSsnFunc ssn;    // purge caches
-    InspectFunc sum;       // accumulate stats
-    InspectFunc stats;     // output stats
     InspectFunc reset;     // clear stats
 };
 

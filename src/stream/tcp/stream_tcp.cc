@@ -138,8 +138,6 @@ static const InspectApi tcp_api =
     tcp_pinit,
     tcp_pterm,
     tcp_ssn,
-    tcp_sum,
-    tcp_stats,
     tcp_reset
 };
 

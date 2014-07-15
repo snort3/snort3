@@ -99,6 +99,13 @@ THREAD_LOCAL ProfileStats streamReassembleRuleOptionPerfStats;
 
 struct TcpStats
 {
+    PegCount sessions;
+    PegCount prunes;
+    PegCount timeouts;
+    PegCount created;
+    PegCount released;
+    PegCount discards;
+    PegCount events;
     PegCount trackers_created;
     PegCount trackers_released;
     PegCount segs_created;
@@ -112,8 +119,15 @@ struct TcpStats
     PegCount s5tcp2;
 };
 
-static const char* tcp_pegs[] =
+const char* tcp_pegs[] =
 {
+    "sessions",
+    "prunes",
+    "timeouts",
+    "created",
+    "released",
+    "discards",
+    "events",
     "trackers created",
     "trackers released",
     "segs created",
@@ -127,12 +141,7 @@ static const char* tcp_pegs[] =
     "server cleanup flushes"
 };
 
-static SessionStats gssnStats;
-static TcpStats gtcpStats;
-
-static THREAD_LOCAL SessionStats ssnStats;
-static THREAD_LOCAL TcpStats tcpStats;
-
+THREAD_LOCAL TcpStats tcpStats;
 THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 
 /*  M A C R O S  **************************************************/
@@ -912,114 +921,114 @@ static void PrintFlushMgr(FlushMgr *fm)
 
 static inline void Discard ()
 {
-    ssnStats.discards++;
+    tcpStats.discards++;
 }
 
 static inline void EventSynOnEst()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SYN_ON_EST);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventExcessiveOverlap()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadTimestamp()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_TIMESTAMP);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventWindowTooLarge()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_TOO_LARGE);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataOnSyn()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_SYN);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataOnClosed()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_CLOSED);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataAfterReset()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RESET);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadSegment()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_SEGMENT);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventSessionHijackedClient()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_CLIENT);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 static inline void EventSessionHijackedServer()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_SERVER);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataWithoutFlags()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_WITHOUT_FLAGS);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventMaxSmallSegsExceeded()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SMALL_SEGMENT);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void Event4whs()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_4WAY_HANDSHAKE);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventNoTimestamp()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_TIMESTAMP);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadReset()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_RST);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadFin()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_FIN);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadAck()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_ACK);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataAfterRstRcvd()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RST_RCVD);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventInternal (uint32_t eventSid)
@@ -1038,13 +1047,13 @@ static inline void EventInternal (uint32_t eventSid)
 static inline void EventWindowSlam ()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_SLAM);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventNo3whs()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_3WHS);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 /*
@@ -7214,7 +7223,7 @@ bool TcpSession::setup (Packet* p)
     stream.set_splitter(flow, true, ins->get_splitter(true));
     stream.set_splitter(flow, false, ins->get_splitter(false));
 
-    ssnStats.sessions++;
+    tcpStats.sessions++;
     return true;
 }
 
@@ -7354,7 +7363,7 @@ int TcpSession::process(Packet *p)
             /* Not reset, simply time'd out.  Clean it up */
             TcpSessionCleanup(flow, 1);
         }
-        ssnStats.timeouts++;
+        tcpStats.timeouts++;
     }
     status = ProcessTcp(flow, p, &tdb, config);
 
@@ -7393,31 +7402,8 @@ void tcp_init()
 #endif
 }
 
-void tcp_sum()
-{
-    sum_stats((PegCount*)&gssnStats, (PegCount*)&ssnStats,
-        session_peg_count);
-
-    sum_stats((PegCount*)&gtcpStats, (PegCount*)&tcpStats,
-        array_size(tcp_pegs));
-}
-
-void tcp_stats()
-{
-    // FIXIT need to get these before delete flow_con
-    //flow_con->get_prunes(IPPROTO_TCP, ssnStats.prunes);
-
-    show_stats((PegCount*)&gssnStats, session_pegs, session_peg_count,
-        MOD_NAME);
-
-    show_stats((PegCount*)&gtcpStats, tcp_pegs, array_size(tcp_pegs));
-}
-
 void tcp_reset()
 {
-    memset(&gssnStats, 0, sizeof(gssnStats));
-    memset(&gtcpStats, 0, sizeof(gtcpStats));
-
     flow_con->reset_prunes(IPPROTO_TCP);
 }
 

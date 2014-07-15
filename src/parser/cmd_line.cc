@@ -280,9 +280,7 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         ModuleManager::show_rules(s_markup, val);
         break;
     case HT_MOD:
-        ModuleManager::show_configs(s_markup, val);
-        ModuleManager::show_commands(s_markup, val);
-        ModuleManager::show_rules(s_markup, val);
+        ModuleManager::show_module(s_markup, val);
         break;
     case HT_BUF:
         InspectorManager::dump_buffers();
@@ -797,7 +795,7 @@ static ConfigFunc basic_opts[] =
       "<module prefix> output matching generators" },
 
     { "help-module", config_help_module,
-      "output config, commands, and builtin rules for given module" },
+      "output description of given module" },
 
     { "help-options", config_help_options,
       "<option prefix> (same as --help)" },

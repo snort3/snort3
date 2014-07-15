@@ -178,9 +178,7 @@ static const InspectApi ip_api =
     nullptr, // pinit
     nullptr, // pterm
     ip_ssn,
-    ip_sum,
-    ip_stats,
-    ip_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_stream_ip = &ip_api.base;

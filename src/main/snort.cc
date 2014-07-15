@@ -1006,6 +1006,7 @@ void snort_thread_init(const char* intf)
 
 void snort_thread_term()
 {
+    ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
     IpsManager::clear_options();
     EventManager::close_outputs();

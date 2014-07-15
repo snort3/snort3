@@ -28,12 +28,13 @@
 #include "profiler.h"
 #include "snort_types.h"
 #include "snort.h"
-#include "stream/stream.h"
 #include "framework/inspector.h"
 
-THREAD_LOCAL ProfileStats norm_perf_stats;
-
 #define PROTO_BITS (PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP)
+
+static const char* name = "normalize";
+
+THREAD_LOCAL ProfileStats norm_perf_stats;
 
 //-------------------------------------------------------------------------
 // printing stuff
@@ -231,26 +232,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static const char* name = "normalize";
-
-static void no_sum()
-{
-    Norm_SumStats();
-    Stream_SumNormalizationStats();
-}
-
-static void no_stats()
-{
-    Norm_PrintStats(name);
-    Stream_PrintNormalizationStats();
-}
-
-static void no_reset()
-{
-    Norm_ResetStats();
-    Stream_ResetNormalizationStats();
-}
-
 static Inspector* no_ctor(Module* m)
 {
     return new Normalizer((NormalizeModule*)m);
@@ -282,9 +263,7 @@ static const InspectApi no_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    no_sum,
-    no_stats,
-    no_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_normalize = &no_api.base;

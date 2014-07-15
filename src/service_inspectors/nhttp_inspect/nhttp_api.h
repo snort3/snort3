@@ -49,9 +49,6 @@ private:
     static void nhttp_dtor(Inspector* p) { delete p; };
     static void nhttp_pinit() {};
     static void nhttp_pterm() {};
-    static void nhttp_sum() {};
-    static void nhttp_stats() {};
-    static void nhttp_reset() {};
 };
 
 #endif

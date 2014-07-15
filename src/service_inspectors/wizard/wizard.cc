@@ -48,16 +48,16 @@ struct WizStats
     PegCount udp_hits;
 };
 
-static const char* wiz_pegs[] =
+const char* wiz_pegs[] =
 {
     "tcp scans",
     "tcp hits",
     "udp scans",
-    "udp hits"
+    "udp hits",
+    nullptr
 };
 
-static THREAD_LOCAL WizStats tstats;
-static WizStats gstats;
+THREAD_LOCAL WizStats tstats;
 
 //-------------------------------------------------------------------------
 // configuration
@@ -237,21 +237,6 @@ static void wiz_dtor(Inspector* p)
     delete p;
 }
 
-static void wiz_sum()
-{
-    sum_stats((PegCount*)&gstats, (PegCount*)&tstats, array_size(wiz_pegs));
-}
-
-static void wiz_stats()
-{
-    show_stats((PegCount*)&gstats, wiz_pegs, array_size(wiz_pegs), mod_name);
-}
-
-static void wiz_reset()
-{
-    memset(&gstats, 0, sizeof(gstats));
-}
-
 static const InspectApi wiz_api =
 {
     {
@@ -273,9 +258,7 @@ static const InspectApi wiz_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    wiz_sum,
-    wiz_stats,
-    wiz_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

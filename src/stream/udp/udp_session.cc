@@ -51,9 +51,7 @@
 #define udp_responder_ip flow->server_ip
 #define udp_responder_port flow->server_port
 
-static SessionStats gudpStats;
-static THREAD_LOCAL SessionStats udpStats;
-
+THREAD_LOCAL SessionStats udpStats;
 THREAD_LOCAL ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -235,24 +233,16 @@ int UdpSession::process(Packet *p)
 // api related methods
 //-------------------------------------------------------------------------
 
-void udp_sum()
-{
-    sum_stats((PegCount*)&gudpStats, (PegCount*)&udpStats,
-        session_peg_count);
-}
-
+#if 0
 void udp_stats()
 {
     // FIXIT need to get these before delete flow_con
     //flow_con->get_prunes(IPPROTO_UDP, udpStats.prunes);
-
-    show_stats((PegCount*)&gudpStats, session_pegs, session_peg_count,
-        MOD_NAME);
 }
+#endif
 
 void udp_reset()
 {
-    memset(&udpStats, 0, sizeof(udpStats));
     flow_con->reset_prunes(IPPROTO_UDP);
 }
 

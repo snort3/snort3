@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <list>
+#include <mutex>
 #include <string>
 #include <sstream>
 #include <lua.hpp>
@@ -492,6 +493,50 @@ void ModuleManager::dump_modules()
             d.dump(p->mod->get_name());
 }
 
+void ModuleManager::show_module(bool markup, const char* name)
+{
+    s_modules.sort(comp_gids);
+    s_markup = markup;
+
+    for ( auto p : s_modules )
+    {
+        const Module* m = p->mod;
+        assert(m);
+
+        if ( strcmp(m->get_name(), name) )
+            continue;
+
+        LogMessage("\nModule: %s\n", name);
+
+        if ( const Parameter* p = m->get_parameters() )
+        {
+            if ( p->type < Parameter::PT_MAX )
+            {
+                LogMessage("\nConfiguration:\n");
+                show_configs(markup, name);
+            }
+        }
+
+        if ( m->get_commands() )
+        {
+            LogMessage("\nCommands:\n");
+            show_commands(markup, name);
+        }
+
+        if ( m->get_rules() )
+        {
+            LogMessage("\nRules:\n");
+            show_rules(markup, name);
+        }
+
+        if ( m->get_pegs() )
+        {
+            LogMessage("\nPeg counts:\n");
+            show_pegs(markup, name);
+        }
+    }
+}
+
 void ModuleManager::show_configs(bool markup, const char* pfx)
 {
     s_modules.sort(comp_mods);
@@ -585,6 +630,37 @@ void ModuleManager::show_gids(bool markup, const char* pfx)
     }    
 }
 
+void ModuleManager::show_pegs(bool markup, const char* pfx)
+{
+    s_modules.sort(comp_gids);
+    s_markup = markup;
+    unsigned len = pfx ? strlen(pfx) : 0;
+
+    for ( auto p : s_modules )
+    {
+        const Module* m = p->mod;
+        assert(m);
+
+        if ( pfx && strncmp(m->get_name(), pfx, len) )
+            continue;
+
+        const char** pegs = m->get_pegs();
+
+        if ( !pegs )
+            continue;
+
+        while ( *pegs )
+        {
+            cout << item();
+            cout << emphasis_on();
+            cout << *pegs;
+            cout << emphasis_off();
+            cout << endl;
+            ++pegs;
+        }
+    }    
+}
+
 void ModuleManager::show_rules(bool markup, const char* pfx)
 {
     s_modules.sort(comp_gids);
@@ -650,5 +726,29 @@ void ModuleManager::load_rules(SnortConfig* sc)
         }
     }    
     pop_parse_location();
+}
+
+void ModuleManager::dump_stats (SnortConfig*)
+{
+    for ( auto p : s_modules )
+        p->mod->show_stats();
+}
+
+void ModuleManager::accumulate (SnortConfig*)
+{
+    static mutex stats_mutex;
+    stats_mutex.lock();
+
+    for ( auto p : s_modules )
+        p->mod->sum_stats();
+
+    pc_sum();
+    stats_mutex.unlock();
+}
+
+void ModuleManager::reset_stats (SnortConfig*)
+{
+    for ( auto p : s_modules )
+        p->mod->reset_stats();
 }
 

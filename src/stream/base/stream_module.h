@@ -54,9 +54,17 @@ public:
     ProfileStats* get_profile() const;
     const StreamConfig* get_data();
 
+    void sum_stats();
+    void show_stats();
+    void reset_stats();
+
 private:
     FlowConfig* proto;
 };
+
+extern void base_sum();
+extern void base_stats();
+extern void base_reset();
 
 #endif
 

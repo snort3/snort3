@@ -85,10 +85,8 @@ const InspectApi NHttpApi::nhttp_api =
     NHttpApi::nhttp_dtor,
     NHttpApi::nhttp_pinit,
     NHttpApi::nhttp_pterm,
-    nullptr,
-    NHttpApi::nhttp_sum,
-    NHttpApi::nhttp_stats,
-    NHttpApi::nhttp_reset
+    nullptr, // ssn
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

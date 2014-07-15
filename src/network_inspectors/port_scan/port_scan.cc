@@ -82,10 +82,8 @@
 static THREAD_LOCAL Packet* g_tmp_pkt = NULL;
 static THREAD_LOCAL FILE* g_logfile = NULL;
 
+THREAD_LOCAL SimpleStats spstats;
 THREAD_LOCAL ProfileStats psPerfStats;
-
-static THREAD_LOCAL SimpleStats spstats;
-static SimpleStats gspstats;
 
 /*
 **  NAME
@@ -985,20 +983,9 @@ static void sp_dtor(Inspector* p)
     delete p;
 }
 
-static void sp_sum()
-{
-    sum_stats(&gspstats, &spstats);
-}
-
-static void sp_stats()
-{
-    show_stats(&gspstats, PS_MODULE);
-}
-
 static void sp_reset()
 {
     ps_reset();
-    memset(&gspstats, 0, sizeof(gspstats));
 }
 
 static const InspectApi sp_api =
@@ -1022,8 +1009,6 @@ static const InspectApi sp_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    sp_sum,
-    sp_stats,
     sp_reset
 };
 

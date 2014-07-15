@@ -45,6 +45,8 @@ public:
     { return GID_HTTP_CLIENT; };
 
     const RuleMap* get_rules() const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 
     HTTPINSPECT_GLOBAL_CONF* get_data();

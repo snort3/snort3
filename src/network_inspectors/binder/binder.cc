@@ -37,8 +37,6 @@ using namespace std;
 static const char* mod_name = "binder";
 
 THREAD_LOCAL ProfileStats bindPerfStats;
-static THREAD_LOCAL SimpleStats tstats;
-static SimpleStats gstats;
 
 //-------------------------------------------------------------------------
 // helpers
@@ -118,7 +116,7 @@ void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
     flow->flow_state = check_rules(flow, p);
-    ++tstats.total_packets;
+    ++bstats.total_packets;
 }
 
 // FIXIT implement inspector lookup from policy / bindings
@@ -257,21 +255,6 @@ static void bind_dtor(Inspector* p)
     delete p;
 }
 
-static void bind_sum()
-{
-    sum_stats(&gstats, &tstats);
-}
-
-static void bind_stats()
-{
-    show_stats(&gstats, mod_name);
-}
-
-static void bind_reset()
-{
-    memset(&gstats, 0, sizeof(gstats));
-}
-
 static const InspectApi bind_api =
 {
     {
@@ -293,9 +276,7 @@ static const InspectApi bind_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    bind_sum,
-    bind_stats,
-    bind_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_binder = &bind_api.base;

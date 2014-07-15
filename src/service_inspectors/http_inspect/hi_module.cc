@@ -155,6 +155,12 @@ const RuleMap* HttpInspectModule::get_rules() const
 ProfileStats* HttpInspectModule::get_profile() const
 { return &hiPerfStats; }
 
+const char** HttpInspectModule::get_pegs() const
+{ return peg_names; }
+
+PegCount* HttpInspectModule::get_counts() const
+{ return (PegCount*)&hi_stats; }
+
 HTTPINSPECT_GLOBAL_CONF* HttpInspectModule::get_data()
 {
     HTTPINSPECT_GLOBAL_CONF* tmp = config;

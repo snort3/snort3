@@ -130,3 +130,12 @@ bool StreamModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
+void StreamModule::sum_stats()
+{ base_sum(); }
+
+void StreamModule::show_stats()
+{ base_stats(); }
+
+void StreamModule::reset_stats()
+{ base_reset(); }
+

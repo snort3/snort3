@@ -382,33 +382,6 @@ static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
     return NULL;
 }
 
-void InspectorManager::dump_stats (SnortConfig* sc)
-{
-    for ( auto* p : sc->framework_config->clist )
-        if ( p->api.stats )
-            p->api.stats();
-}
-
-void InspectorManager::accumulate (SnortConfig* sc)
-{
-    static mutex stats_mutex;
-    stats_mutex.lock();
-
-    for ( auto* p : sc->framework_config->clist )
-        if ( p->api.sum )
-            p->api.sum();
-
-    pc_sum();
-    stats_mutex.unlock();
-}
-
-void InspectorManager::reset_stats (SnortConfig* sc)
-{
-    for ( auto* p : sc->framework_config->clist )
-        if ( p->api.reset )
-            p->api.reset();
-}
-
 // this is per thread
 void InspectorManager::thread_init(SnortConfig* sc)
 {
@@ -441,8 +414,6 @@ void InspectorManager::thread_term(SnortConfig* sc)
     for ( auto* p : sc->framework_config->clist )
         if ( p->api.pterm )
             p->api.pterm();
-
-    accumulate(sc);
 }
 
 //-------------------------------------------------------------------------

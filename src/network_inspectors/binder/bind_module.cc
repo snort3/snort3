@@ -29,6 +29,8 @@ using namespace std;
 
 #include "binder.h"
 
+THREAD_LOCAL SimpleStats bstats;
+
 //-------------------------------------------------------------------------
 // binder module
 //-------------------------------------------------------------------------
@@ -177,4 +179,10 @@ vector<Binding*> BinderModule::get_data()
 {
     return bindings;  // move semantics
 }
+
+const char** BinderModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* BinderModule::get_counts() const
+{ return (PegCount*)&bstats; }
 

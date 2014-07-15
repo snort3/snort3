@@ -98,9 +98,6 @@ static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 THREAD_LOCAL ProfileStats arpPerfStats;
 
-static THREAD_LOCAL SimpleStats asstats;
-static SimpleStats gasstats;
-
 //-------------------------------------------------------------------------
 // implementation stuff
 //-------------------------------------------------------------------------
@@ -299,15 +296,6 @@ static Inspector* as_ctor(Module* m)
 static void as_dtor(Inspector* p)
 { delete p; }
 
-static void as_sum()
-{ sum_stats(&gasstats, &asstats); }
-
-static void as_stats()
-{ show_stats(&gasstats, MOD_NAME); }
-
-static void as_reset()
-{ memset(&gasstats, 0, sizeof(gasstats)); }
-
 static const InspectApi as_api =
 {
     {
@@ -329,9 +317,7 @@ static const InspectApi as_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    as_sum,
-    as_stats,
-    as_reset
+    nullptr, // reset
 };
 
 #ifdef BUILDING_SO

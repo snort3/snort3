@@ -25,6 +25,7 @@
 using namespace std;
 
 #include "stream_ip.h"
+#include "ip_defrag.h"
 #include "main/snort_config.h"
 #include "stream/stream.h"
 
@@ -211,4 +212,19 @@ bool StreamIpModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
+
+const char** StreamIpModule::get_pegs() const
+{ return session_pegs; }
+
+PegCount* StreamIpModule::get_counts() const
+{ return (PegCount*)&ipStats; }
+
+void StreamIpModule::sum_stats()
+{ Defrag::sum(); }
+
+void StreamIpModule::show_stats()
+{ Defrag::stats(); }
+
+void StreamIpModule::reset_stats()
+{ Defrag::reset(); }
 

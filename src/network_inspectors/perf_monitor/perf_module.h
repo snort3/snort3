@@ -25,6 +25,7 @@
 #include "perf.h"
 #include "framework/module.h"
 
+extern THREAD_LOCAL SimpleStats pmstats;
 extern THREAD_LOCAL ProfileStats perfmonStats;
 
 class PerfMonModule : public Module
@@ -35,6 +36,8 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 
     void get_config(SFPERF&);

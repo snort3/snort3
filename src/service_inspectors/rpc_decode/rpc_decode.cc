@@ -125,9 +125,7 @@ static THREAD_LOCAL uint32_t rpc_memory = 0;
 static const char* mod_name = "rpc_decode";
 
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
-
-static THREAD_LOCAL SimpleStats rdstats;
-static SimpleStats grdstats;
+THREAD_LOCAL SimpleStats rdstats;
 
 static int ConvertRPC(RpcDecodeConfig *, RpcSsnData *, Packet *);
 
@@ -1100,21 +1098,6 @@ static void rd_dtor(Inspector* p)
     delete p;
 }
 
-static void rd_sum()
-{
-    sum_stats(&grdstats, &rdstats);
-}
-
-static void rd_stats()
-{
-    show_stats(&grdstats, mod_name);
-}
-
-static void rd_reset()
-{
-    memset(&grdstats, 0, sizeof(grdstats));
-}
-
 static const InspectApi rd_api =
 {
     {
@@ -1136,9 +1119,7 @@ static const InspectApi rd_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    rd_sum,
-    rd_stats,
-    rd_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

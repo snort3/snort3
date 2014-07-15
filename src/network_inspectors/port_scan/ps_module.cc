@@ -245,3 +245,9 @@ PsCommon* PortScanGlobalModule::get_data()
     return tmp;
 }
 
+const char** PortScanGlobalModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* PortScanGlobalModule::get_counts() const
+{ return (PegCount*)&spstats; }
+

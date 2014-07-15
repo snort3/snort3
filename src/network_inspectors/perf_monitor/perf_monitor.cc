@@ -57,10 +57,8 @@ THREAD_LOCAL SFPERF *perfmon_config = NULL;
 
 static const char* mod_name = "perf_monitor";
 
+THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
-
-static THREAD_LOCAL SimpleStats pmstats;
-static SimpleStats gpmstats;
 
 /* This function changes the perfmon log files permission if exists.
    It is done in the  PerfMonitorInit() before Snort changed its user & group.
@@ -356,21 +354,6 @@ static Inspector* pm_ctor(Module* m)
     return new PerfMonitor((PerfMonModule*)m);
 }
 
-static void pm_sum()
-{
-    sum_stats(&gpmstats, &pmstats);
-}
-
-static void pm_stats()
-{
-    show_stats(&gpmstats, mod_name);
-}
-
-static void pm_reset()
-{
-    memset(&gpmstats, 0, sizeof(gpmstats));
-}
-
 static void pm_dtor(Inspector* p)
 {
     delete p;
@@ -397,9 +380,7 @@ static const InspectApi pm_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    pm_sum,
-    pm_stats,
-    pm_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_perf_monitor = &pm_api.base;

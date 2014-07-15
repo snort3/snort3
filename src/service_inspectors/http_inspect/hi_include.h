@@ -57,6 +57,7 @@ typedef struct _hi_stats {
 } HIStats;
 
 extern THREAD_LOCAL HIStats hi_stats;
+extern const char* peg_names[];
 
 #endif
 
