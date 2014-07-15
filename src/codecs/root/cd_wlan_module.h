@@ -32,6 +32,7 @@ class WlanCodecModule : public DecodeModule
 public:
     WlanCodecModule();
 
+    const RuleMap* get_rules() const;
     bool set(const char*, Value&, SnortConfig*);
 };
 

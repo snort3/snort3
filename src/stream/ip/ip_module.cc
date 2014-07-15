@@ -120,7 +120,7 @@ static const Parameter stream_ip_params[] =
 };
 
 StreamIpModule::StreamIpModule() :
-    Module(MOD_NAME, stream_ip_params, stream_ip_rules)
+    Module(MOD_NAME, stream_ip_params)
 {
     config = nullptr;
 }
@@ -130,6 +130,9 @@ StreamIpModule::~StreamIpModule()
     if ( config )
         delete config;
 }
+
+const RuleMap* StreamIpModule::get_rules() const
+{ return stream_ip_rules; }
 
 ProfileStats* StreamIpModule::get_profile(
     unsigned index, const char*& name, const char*& parent) const

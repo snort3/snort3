@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_igmp_module.h"
 
-
-static const Parameter igmp_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap igmp_rules[] =
 {
     { DECODE_IGMP_OPTIONS_DOS, "(" CD_IGMP_NAME ") DOS IGMP IP Options validation attempt" },
@@ -38,10 +31,9 @@ static const RuleMap igmp_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-IgmpModule::IgmpModule() : DecodeModule(CD_IGMP_NAME, igmp_params, igmp_rules)
+IgmpModule::IgmpModule() : DecodeModule(CD_IGMP_NAME)
 { }
 
-bool IgmpModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* IgmpModule::get_rules() const
+{ return igmp_rules; }
+

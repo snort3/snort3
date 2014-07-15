@@ -212,7 +212,11 @@ enum CodecSid {
 class DecodeModule : public Module
 {
 public:
-    using Module::Module; // inherit Module's constructors
+    DecodeModule(const char* s) : Module(s)
+    { };
+
+    DecodeModule(const char* s, const Parameter* p, bool is_list = false)
+    : Module(s, p, is_list) { };
 
     unsigned get_gid() const
     { return GID_DECODE; };

@@ -39,13 +39,8 @@ static const Parameter stream_icmp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap stream_icmp_rules[] =
-{
-    { 0, nullptr }
-};
-
 StreamIcmpModule::StreamIcmpModule() :
-    Module(MOD_NAME, stream_icmp_params, stream_icmp_rules)
+    Module(MOD_NAME, stream_icmp_params)
 {
     config = nullptr;
 }

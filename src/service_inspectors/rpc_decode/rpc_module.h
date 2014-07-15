@@ -47,6 +47,7 @@ public:
     unsigned get_gid() const
     { return GID_RPC_DECODE; };
 
+    const RuleMap* get_rules() const;
     ProfileStats* get_profile() const;
 };
 

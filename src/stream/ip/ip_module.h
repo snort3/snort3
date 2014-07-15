@@ -77,6 +77,7 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    const RuleMap* get_rules() const;
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const;
     StreamIpConfig* get_data();
 

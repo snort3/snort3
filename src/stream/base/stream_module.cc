@@ -76,13 +76,8 @@ static const Parameter stream_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap stream_rules[] =
-{
-    { 0, nullptr }
-};
-
 StreamModule::StreamModule() :
-    Module(MOD_NAME, stream_params, stream_rules)
+    Module(MOD_NAME, stream_params)
 {
     proto = &stream_cfg.ip_cfg;
 }

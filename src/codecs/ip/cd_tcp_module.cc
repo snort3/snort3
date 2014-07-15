@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_tcp_module.h"
 
-
-static const Parameter tcp_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 // rules which will loaded into snort. 
 // You can now reference these rules by calling a codec_event
 // in your main codec's functions
@@ -61,10 +54,9 @@ static const RuleMap tcp_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-TcpModule::TcpModule() : DecodeModule(CD_TCP_NAME, tcp_params, tcp_rules)
+TcpModule::TcpModule() : DecodeModule(CD_TCP_NAME)
 { }
 
-bool TcpModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* TcpModule::get_rules() const
+{ return tcp_rules; }
+

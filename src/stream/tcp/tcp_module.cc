@@ -199,7 +199,7 @@ static const RuleMap stream_tcp_rules[] =
 };
 
 StreamTcpModule::StreamTcpModule() :
-    Module(MOD_NAME, stream_tcp_params, stream_tcp_rules)
+    Module(MOD_NAME, stream_tcp_params)
 {
     config = nullptr;
 }
@@ -209,6 +209,9 @@ StreamTcpModule::~StreamTcpModule()
     for ( auto p : protos )
         delete p;
 }
+
+const RuleMap* StreamTcpModule::get_rules() const
+{ return stream_tcp_rules; }
 
 ProfileStats* StreamTcpModule::get_profile(
     unsigned index, const char*& name, const char*& parent) const

@@ -103,7 +103,7 @@ static const RuleMap port_scan_rules[] =
 //-------------------------------------------------------------------------
 
 PortScanModule::PortScanModule() :
-    Module("port_scan", port_scan_params, port_scan_rules)
+    Module("port_scan", port_scan_params)
 {
     config = nullptr;
 }
@@ -113,6 +113,9 @@ PortScanModule::~PortScanModule()
     if ( config )
         delete config;
 }
+
+const RuleMap* PortScanModule::get_rules() const
+{ return port_scan_rules; }
 
 //-------------------------------------------------------------------------
 // FIXIT ipset_parse() format must be changed to remove comma

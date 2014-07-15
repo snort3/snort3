@@ -66,10 +66,9 @@ static const RuleMap ipv6_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-Ipv6Module::Ipv6Module() : DecodeModule(CD_IPV6_NAME, ipv6_params, ipv6_rules)
+Ipv6Module::Ipv6Module() : DecodeModule(CD_IPV6_NAME, ipv6_params)
 { }
 
-bool Ipv6Module::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* Ipv6Module::get_rules() const
+{ return ipv6_rules; }
+

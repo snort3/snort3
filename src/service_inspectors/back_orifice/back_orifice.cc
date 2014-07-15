@@ -177,11 +177,6 @@ static SimpleStats gbostats;
 #define BO_SNORT_BUFFER_ATTACK_STR \
     "(back_orifice) BO Snort buffer attack"
 
-static const Parameter bo_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const RuleMap bo_rules[] =
 {
     { BO_TRAFFIC_DETECT, BO_TRAFFIC_DETECT_STR },
@@ -195,11 +190,11 @@ static const RuleMap bo_rules[] =
 class BoModule : public Module
 {
 public:
-    BoModule() : Module("back_orifice", bo_params, bo_rules)
+    BoModule() : Module("back_orifice")
     { };
 
-    bool set(const char*, Value&, SnortConfig*)
-    { return false; };
+    const RuleMap* get_rules() const
+    { return bo_rules; };
 
     unsigned get_gid() const
     { return GID_BO; };

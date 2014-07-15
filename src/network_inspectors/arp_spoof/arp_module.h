@@ -74,6 +74,7 @@ public:
     unsigned get_gid() const
     { return GID_ARP_SPOOF; };
 
+    const RuleMap* get_rules() const;
     ProfileStats* get_profile() const;
 
 private:

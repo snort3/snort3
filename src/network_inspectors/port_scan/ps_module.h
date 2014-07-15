@@ -60,6 +60,8 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
+    const RuleMap* get_rules() const;
+
     unsigned get_gid() const
     { return GID_PORT_SCAN; };
 

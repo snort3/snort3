@@ -116,6 +116,7 @@ public:
     unsigned get_gid() const
     { return GID_FTP; };
 
+    const RuleMap* get_rules() const;
     ProfileStats* get_profile() const;
 
     FTP_SERVER_PROTO_CONF* get_data();

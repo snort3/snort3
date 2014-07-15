@@ -91,6 +91,8 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    const RuleMap* get_rules() const;
+
     unsigned get_gid() const
     { return GID_STREAM_TCP; };
 

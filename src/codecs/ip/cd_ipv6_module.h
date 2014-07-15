@@ -32,8 +32,7 @@ class Ipv6Module : public DecodeModule
 public:
     Ipv6Module();
 
-    bool set(const char*, Value&, SnortConfig*);
-
+    const RuleMap* get_rules() const;
 };
 
 #endif

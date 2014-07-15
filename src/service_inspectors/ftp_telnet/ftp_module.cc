@@ -342,7 +342,7 @@ static const RuleMap ftp_server_rules[] =
 //-------------------------------------------------------------------------
 
 FtpServerModule::FtpServerModule() :
-    Module(FTP_SERVER, ftp_server_params, ftp_server_rules)
+    Module(FTP_SERVER, ftp_server_params)
 {
     conf = nullptr;
 }
@@ -355,6 +355,9 @@ FtpServerModule::~FtpServerModule()
     for ( auto p : cmds )
         delete p;
 }
+
+const RuleMap* FtpServerModule::get_rules() const
+{ return ftp_server_rules; }
 
 ProfileStats* FtpServerModule::get_profile() const
 { return &ftpPerfStats; }

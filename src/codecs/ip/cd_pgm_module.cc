@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_pgm_module.h"
 
-
-static const Parameter pgm_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap pgm_rules[] =
 {
     { DECODE_PGM_NAK_OVERFLOW, "(" CD_PGM_NAME ") BAD-TRAFFIC PGM nak list overflow attempt" },
@@ -38,10 +31,9 @@ static const RuleMap pgm_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-PgmModule::PgmModule() : DecodeModule(CD_PGM_NAME, pgm_params, pgm_rules)
+PgmModule::PgmModule() : DecodeModule(CD_PGM_NAME)
 { }
 
-bool PgmModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* PgmModule::get_rules() const
+{ return pgm_rules; }
+

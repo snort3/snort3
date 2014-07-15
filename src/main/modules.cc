@@ -1619,11 +1619,6 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 // snort module
 //-------------------------------------------------------------------------
 
-static const Parameter snort_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, "show available plugins" },
@@ -1642,7 +1637,8 @@ static const Command snort_cmds[] =
 class SnortModule : public Module
 {
 public:
-    SnortModule() : Module("snort", snort_params, snort_cmds) { };
+    SnortModule() : Module("snort") { };
+    const Command* get_commands() const { return snort_cmds; };
     bool set(const char*, Value&, SnortConfig*) { return false; };
 };
 

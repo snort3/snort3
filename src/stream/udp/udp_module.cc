@@ -42,13 +42,8 @@ static const Parameter stream_udp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap stream_udp_rules[] =
-{
-    { 0, nullptr }
-};
-
 StreamUdpModule::StreamUdpModule() :
-    Module(MOD_NAME, stream_udp_params, stream_udp_rules)
+    Module(MOD_NAME, stream_udp_params)
 {
     config = nullptr;
 }

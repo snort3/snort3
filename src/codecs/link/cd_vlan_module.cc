@@ -21,13 +21,6 @@
 
 #include "codecs/link/cd_vlan_module.h"
 
-
-static const Parameter vlan_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap vlan_rules[] =
 {
     { DECODE_BAD_VLAN, "(" CD_VLAN_NAME ") Bad VLAN Frame" },
@@ -40,10 +33,9 @@ static const RuleMap vlan_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-VlanModule::VlanModule() : DecodeModule(CD_VLAN_NAME, vlan_params, vlan_rules)
+VlanModule::VlanModule() : DecodeModule(CD_VLAN_NAME)
 { }
 
-bool VlanModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* VlanModule::get_rules() const
+{ return vlan_rules; }
+

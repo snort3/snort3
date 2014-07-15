@@ -80,7 +80,7 @@ static const RuleMap arp_spoof_rules[] =
 //-------------------------------------------------------------------------
 
 ArpSpoofModule::ArpSpoofModule() : 
-    Module(mod_name, arp_spoof_params, arp_spoof_rules)
+    Module(mod_name, arp_spoof_params)
 {
     config = new ArpSpoofConfig;
 
@@ -93,6 +93,9 @@ ArpSpoofModule::~ArpSpoofModule()
     if ( config )
         delete config;
 }
+
+const RuleMap* ArpSpoofModule::get_rules() const
+{ return arp_spoof_rules; }
 
 ProfileStats* ArpSpoofModule::get_profile() const
 { return &arpPerfStats; }

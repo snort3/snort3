@@ -49,6 +49,7 @@ public:
     unsigned get_gid() const
     { return GID_TELNET; };
 
+    const RuleMap* get_rules() const;
     ProfileStats* get_profile() const;
 
     TELNET_PROTO_CONF* get_data();

@@ -66,7 +66,7 @@ static const RuleMap telnet_rules[] =
 };
 
 TelnetModule::TelnetModule() :
-    Module("telnet", telnet_params, telnet_rules)
+    Module("telnet", telnet_params)
 {
     conf = nullptr;
 }
@@ -76,6 +76,9 @@ TelnetModule::~TelnetModule()
     if ( conf )
         delete conf;
 }
+
+const RuleMap* TelnetModule::get_rules() const
+{ return telnet_rules; }
 
 ProfileStats* TelnetModule::get_profile() const
 { return &telnetPerfStats; }
