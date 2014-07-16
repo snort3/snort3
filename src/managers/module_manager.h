@@ -35,12 +35,15 @@ public:
     static void add_module(class Module*, const struct BaseApi* = nullptr);
     static Module* get_module(const char*);
 
+    static void list_modules();
     static void dump_modules();
+
     static void show_module(bool markup, const char*);
     static void show_configs(bool markup, const char* = nullptr);
     static void show_commands(bool markup, const char* = nullptr);
     static void show_gids(bool markup, const char* = nullptr);
     static void show_pegs(bool markup, const char* = nullptr);
+
     static void show_rules(bool markup, const char* = nullptr);
     static void load_rules(SnortConfig*);
 

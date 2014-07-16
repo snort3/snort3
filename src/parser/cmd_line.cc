@@ -257,7 +257,7 @@ static void config_help_signals(SnortConfig*, const char*)
     exit(0);
 }
 
-enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF };
+enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF, HT_LST };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
@@ -284,6 +284,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         break;
     case HT_BUF:
         InspectorManager::dump_buffers();
+        break;
+    case HT_LST:
+        ModuleManager::list_modules();
         break;
     }
     ModuleManager::term();
@@ -325,6 +328,11 @@ static void config_help_builtin(SnortConfig* sc, const char* val)
 static void config_help_module(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_MOD);
+}
+
+static void config_list_modules(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_LST);
 }
 
 static void config_lua(SnortConfig*, const char* val)
@@ -802,6 +810,9 @@ static ConfigFunc basic_opts[] =
 
     { "help-signals", config_help_signals,
       "dump available control signals" },
+
+    { "list-modules", config_list_modules,
+      "list all known modules" },
 
     { "lua", config_lua,
       "<chunk> extend/override conf with chunk; may be repeated" },

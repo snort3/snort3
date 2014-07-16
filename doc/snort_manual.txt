@@ -18,6 +18,10 @@ include::tips.txt[]
 
 include::differences.txt[]
 
+== Modules
+
+include::modules.txt[]
+
 == Command Line Options
 
 include::options.txt[]

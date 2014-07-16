@@ -65,6 +65,9 @@ static bool s_markup = false;
 // markup foo (for asciidoc)
 //-------------------------------------------------------------------------
 
+static const char* head()
+{ return s_markup ? "=== " : ""; }
+
 static const char* item()
 { return s_markup ? "* " : ""; }
 
@@ -483,6 +486,14 @@ unsigned ModuleManager::get_errors()
     return err;
 }
 
+void ModuleManager::list_modules()
+{
+    s_modules.sort(comp_mods);
+
+    for ( auto* p : s_modules )
+        LogMessage("%s\n", p->mod->get_name());
+}
+
 void ModuleManager::dump_modules()
 {
     s_modules.sort(comp_mods);
@@ -491,6 +502,28 @@ void ModuleManager::dump_modules()
     for ( auto* p : s_modules )
         if ( !p->api )
             d.dump(p->mod->get_name());
+}
+
+static const char* mod_types[PT_MAX] =
+{
+    "data",
+    "codec",
+    "logger",
+    "ips option",
+    "so rule",
+    "inspector",
+    "search engine"
+};
+
+static const char* mod_type(const BaseApi* api)
+{
+    if ( !api )
+        return "basic";
+
+    if ( api->type > PT_MAX )
+        return "error";
+
+    return mod_types[api->type];
 }
 
 void ModuleManager::show_module(bool markup, const char* name)
@@ -506,32 +539,33 @@ void ModuleManager::show_module(bool markup, const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        LogMessage("\nModule: %s\n", name);
+        cout << endl << head() << name << endl << endl;
+        cout << "Type: "  << mod_type(p->api) << endl << endl;
 
         if ( const Parameter* p = m->get_parameters() )
         {
             if ( p->type < Parameter::PT_MAX )
             {
-                LogMessage("\nConfiguration:\n");
+                cout << endl << "Configuration: "  << endl << endl;
                 show_configs(markup, name);
             }
         }
 
         if ( m->get_commands() )
         {
-            LogMessage("\nCommands:\n");
+            cout << endl << "Commands: "  << endl << endl;
             show_commands(markup, name);
         }
 
         if ( m->get_rules() )
         {
-            LogMessage("\nRules:\n");
+            cout << endl << "Rules: "  << endl << endl;
             show_rules(markup, name);
         }
 
         if ( m->get_pegs() )
         {
-            LogMessage("\nPeg counts:\n");
+            cout << endl << "Peg counts: "  << endl << endl;
             show_pegs(markup, name);
         }
     }

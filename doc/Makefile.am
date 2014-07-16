@@ -7,6 +7,7 @@ builtin.txt \
 commands.txt \
 config.txt \
 gids.txt \
+modules.txt \
 options.txt \
 version.txt
 
@@ -52,6 +53,11 @@ config.txt: $(snort)
 
 gids.txt: $(snort)
 	$(snort) --markup --help-gids | sort -n  -k 1.4 > $@
+
+modules.txt: $(snort)
+	for m in `$(snort) --list-modules` ; do \
+		$(snort) --markup --help-module $$m ; \
+	done > $@
 
 options.txt: $(snort)
 	$(snort) --markup --help-options | sort > $@
