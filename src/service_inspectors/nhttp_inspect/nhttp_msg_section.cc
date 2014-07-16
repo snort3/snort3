@@ -37,6 +37,16 @@
 
 using namespace NHttpEnums;
 
+NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+   length(bufSize), sessionData(sessionData_), sourceId(sourceId_), tcpClose(sessionData->tcpClose[sourceId]),
+   scratchPad(2*length+500), infractions(sessionData->infractions[sourceId]), versionId(sessionData->versionId[sourceId]),
+   methodId(sessionData->methodId[sourceId]), statusCodeNum(sessionData->statusCodeNum[sourceId])
+{
+    rawBuf = new uint8_t[length];
+    memcpy(rawBuf, buffer, length);
+    msgText = rawBuf;
+}
+
 // Return the number of octets before the first CRLF. Return length if CRLF not present.
 //
 // wrappable: CRLF does not count in a header field when immediately followed by <SP> or <LF>. These whitespace characters
@@ -49,25 +59,8 @@ uint32_t NHttpMsgSection::findCrlf(const uint8_t* buffer, int32_t length, bool w
     return length;
 }
 
-// Load a new message section
-void NHttpMsgSection::loadSection(const uint8_t *buffer, const uint16_t bufsize, NHttpFlowData *sessionData_) {
-    length = bufsize;
-    memcpy(rawBuf, buffer, length);
-
-    sessionData = sessionData_;
-    infractions = sessionData->infractions;
-    sourceId = sessionData->sourceId;
-    tcpClose = sessionData->tcpClose;
-    versionId = sessionData->versionId[sourceId];
-    methodId = sessionData->methodId[sourceId];
-    schemeId = sessionData->schemeId[sourceId];
-    statusCodeNum = sessionData->statusCodeNum[sourceId];
-
-    scratchPad.reinit();
-}
-
 void NHttpMsgSection::printInterval(FILE *output, const char* name, const uint8_t *text, int32_t length, bool intVals) {
-    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE)) return;
+    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) return;
     int outCount = fprintf(output, "%s, length = %d, ", name, length);
     if (length <= 0) {
         fprintf(output, "\n");

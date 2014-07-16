@@ -27,8 +27,13 @@
 
 #include "snort_types.h"
 #include "framework/module.h"
-
+#include "main/thread.h"
+#include "stream/stream.h"
+    
 struct SnortConfig;
+
+extern THREAD_LOCAL SessionStats udpStats;
+extern THREAD_LOCAL ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------
 // stream_udp module
@@ -46,6 +51,9 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    ProfileStats* get_profile() const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
     StreamUdpConfig* get_data();
 
 private:

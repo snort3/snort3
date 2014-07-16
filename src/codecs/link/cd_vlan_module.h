@@ -32,7 +32,7 @@ class VlanModule : public DecodeModule
 public:
     VlanModule();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

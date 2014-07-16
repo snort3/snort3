@@ -424,7 +424,7 @@ static void queue_add (QUEUE * s, int state)
 
     if (!s->head) {
         q = s->tail = s->head =
-                          (QNODE *)AC_MALLOC(sizeof(QNODE), ACSM2_MEMORY_TYPE__NONE);
+            (QNODE *)AC_MALLOC(sizeof(QNODE), ACSM2_MEMORY_TYPE__NONE);
         MEMASSERT (q, "queue_add");
         q->state = state;
         q->next = 0;

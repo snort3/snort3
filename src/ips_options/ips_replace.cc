@@ -64,6 +64,7 @@ static void replace_parse(char* args, string& s)
     if ( !args )
     {
         ParseError("missing argument to 'replace' option");
+        return;
     }
     /* clear out the temp buffer */
     memset(tmp_buf, 0, MAX_PATTERN_SIZE);
@@ -90,6 +91,7 @@ static void replace_parse(char* args, string& s)
     {
         ParseError("Replace data needs to be enclosed "
                    "in quotation marks (\")");
+        return;
     }
 
     /* set the end to be NULL */
@@ -390,9 +392,9 @@ void Replace_ModifyPacket(Packet *p)
 static const char* s_name = "replace";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats replacePerfStats;
+static THREAD_LOCAL ProfileStats replacePerfStats;
 
-static PreprocStats* pd_get_profile(const char* key)
+static ProfileStats* pd_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &replacePerfStats;
@@ -536,7 +538,7 @@ static void replace_dtor(IpsOption* p)
 static void replace_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &replacePerfStats, pd_get_profile);
+    RegisterOtnProfile(s_name, pd_get_profile);
 #endif
 }
 

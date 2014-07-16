@@ -25,6 +25,7 @@
 using namespace std;
 
 #include "stream_ip.h"
+#include "ip_defrag.h"
 #include "main/snort_config.h"
 #include "stream/stream.h"
 
@@ -120,7 +121,7 @@ static const Parameter stream_ip_params[] =
 };
 
 StreamIpModule::StreamIpModule() :
-    Module(MOD_NAME, stream_ip_params, stream_ip_rules)
+    Module(MOD_NAME, stream_ip_params)
 {
     config = nullptr;
 }
@@ -129,6 +130,37 @@ StreamIpModule::~StreamIpModule()
 {
     if ( config )
         delete config;
+}
+
+const RuleMap* StreamIpModule::get_rules() const
+{ return stream_ip_rules; }
+
+ProfileStats* StreamIpModule::get_profile(
+    unsigned index, const char*& name, const char*& parent) const
+{
+    switch ( index )
+    {
+    case 0:
+        name = "stream_ip";
+        parent = nullptr;
+        return &ip_perf_stats;
+
+    case 1:
+        name = "frag";
+        parent = "stream_ip";
+        return &fragPerfStats;
+    
+    case 2:
+        name = "frag_insert";
+        parent = "frag";
+        return &fragInsertPerfStats;
+
+    case 3:
+        name = "frag_rebuild";
+        parent = "frag";
+        return &fragRebuildPerfStats;
+    }
+    return nullptr;
 }
 
 StreamIpConfig* StreamIpModule::get_data()
@@ -180,4 +212,19 @@ bool StreamIpModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
+
+const char** StreamIpModule::get_pegs() const
+{ return session_pegs; }
+
+PegCount* StreamIpModule::get_counts() const
+{ return (PegCount*)&ipStats; }
+
+void StreamIpModule::sum_stats()
+{ Defrag::sum(); }
+
+void StreamIpModule::show_stats()
+{ Defrag::stats(); }
+
+void StreamIpModule::reset_stats()
+{ Defrag::reset(); }
 

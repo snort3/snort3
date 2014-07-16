@@ -549,19 +549,6 @@ static const ConvertMap rule_threshold =
 const ConvertMap* threshold_map = &rule_threshold;
 
 /************************************
- *************  URILEN  *************
- ************************************/
-
-static const std::string urilen = "urilen";
-static const ConvertMap rule_urilen =
-{
-    urilen,
-    unchanged_rule_ctor<&urilen>,
-};
-
-const ConvertMap* urilen_map = &rule_urilen;
-
-/************************************
  ***********  BYTE_TEST  ************
  ************************************/
 

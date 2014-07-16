@@ -13,6 +13,7 @@ nhttp_msg_chunk_head.cc nhttp_msg_chunk_head.h \
 nhttp_msg_chunk_body.cc nhttp_msg_chunk_body.h \
 nhttp_msg_trailer.cc nhttp_msg_trailer.h \
 nhttp_head_norm.cc nhttp_head_norm.h \
+nhttp_uri.cc nhttp_uri.h \
 nhttp_uri_norm.cc nhttp_uri_norm.h \
 nhttp_normalizers.cc nhttp_normalizers.h \
 nhttp_str_to_code.cc nhttp_str_to_code.h \

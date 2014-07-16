@@ -34,9 +34,9 @@ enum BindRole
 
 enum BindAction
 {
-    BA_INSPECT,
+    BA_BLOCK = 1,
     BA_ALLOW,
-    BA_BLOCK
+    BA_INSPECT
 };
 
 enum BindProto

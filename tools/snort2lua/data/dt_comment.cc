@@ -128,7 +128,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
             out << "\n";
 
         else if (c.type == Comments::CommentType::MULTI_LINE)
-            util::sanitize_multi_line_string(util::ltrim(str));
+            util::sanitize_lua_string(util::ltrim(str));
 
         while(!str.empty())
         {

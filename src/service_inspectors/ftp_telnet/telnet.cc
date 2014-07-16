@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "telnet.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,7 +32,6 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 
-#include "telnet.h"
 #include "pp_telnet.h"
 #include "ftpp_si.h"
 #include "ftpp_ui_config.h"
@@ -45,24 +46,10 @@
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
 
-int16_t telnet_app_id = SFTARGET_UNKNOWN_PROTOCOL;
-
 static const char* tn_name = "telnet";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats telnetPerfStats;
-
-static PreprocStats* tn_get_profile(const char* key)
-{
-    if ( !strcmp(key, tn_name) )
-        return &telnetPerfStats;
-
-    return nullptr;
-}
-#endif
-
-static THREAD_LOCAL SimpleStats tnstats;
-static SimpleStats gtnstats;
+THREAD_LOCAL ProfileStats telnetPerfStats;
+THREAD_LOCAL SimpleStats tnstats;
 
 //-------------------------------------------------------------------------
 // implementation
@@ -297,12 +284,6 @@ static void mod_dtor(Module* m)
 
 static void tn_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        tn_name, &telnetPerfStats, 0, &totalPerfStats, tn_get_profile);
-#endif
-
-    telnet_app_id = AddProtocolReference(tn_name);
     TelnetFlowData::init();
 }
 
@@ -315,21 +296,6 @@ static Inspector* tn_ctor(Module* m)
 static void tn_dtor(Inspector* p)
 {
     delete p;
-}
-
-static void tn_sum()
-{
-    sum_stats(&gtnstats, &tnstats);
-}
-
-static void tn_stats()
-{
-    show_stats(&gtnstats, tn_name);
-}
-
-static void tn_reset()
-{
-    memset(&gtnstats, 0, sizeof(gtnstats));
 }
 
 // exported in ftp.cc
@@ -354,8 +320,6 @@ const InspectApi tn_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    tn_sum,
-    tn_stats,
-    tn_reset,
+    nullptr  // reset
 };
 

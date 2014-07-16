@@ -229,10 +229,10 @@ static void restart()
 
 //-------------------------------------------------------------------------
 // perf stats
-// FIXIT - this stuff should be in inits where the data lives
+// FIXIT move these to appropriate modules
 //-------------------------------------------------------------------------
 
-static PreprocStats* get_profile(const char* key)
+static ProfileStats* get_profile(const char* key)
 {
     if ( !strcmp(key, "detect") )
         return &detectPerfStats;
@@ -266,24 +266,15 @@ static PreprocStats* get_profile(const char* key)
 
 static void register_profiles()
 {
-    RegisterPreprocessorProfile(
-        "detect", &detectPerfStats, 0, &totalPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "mpse", &mpsePerfStats, 1, &detectPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "rule eval", &rulePerfStats, 1, &detectPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "rtn eval", &ruleRTNEvalPerfStats, 2, &rulePerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "rule tree eval", &ruleOTNEvalPerfStats, 2, &rulePerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "decode", &decodePerfStats, 0, &totalPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "eventq", &eventqPerfStats, 0, &totalPerfStats, get_profile);
-    RegisterPreprocessorProfile(
-        "total", &totalPerfStats, 0, NULL, get_profile);
-    RegisterPreprocessorProfile(
-        "daq meta", &metaPerfStats, 0, NULL, get_profile);
+    RegisterProfile("detect", nullptr, get_profile);
+    RegisterProfile("mpse", "detect", get_profile);
+    RegisterProfile("rule eval", "detect", get_profile);
+    RegisterProfile("rtn eval", "rule eval", get_profile);
+    RegisterProfile("rule tree eval", "rule eval", get_profile);
+    RegisterProfile("decode", nullptr, get_profile);
+    RegisterProfile("eventq", nullptr, get_profile);
+    RegisterProfile("total", nullptr, get_profile);
+    RegisterProfile("daq meta", nullptr, get_profile);
 }
 
 //-------------------------------------------------------------------------
@@ -371,7 +362,8 @@ static void SnortInit(int argc, char **argv)
     if ( !InspectorManager::configure(snort_conf) )
         FatalError("can't initialize inspectors\n");
 
-    InspectorManager::print_config(snort_conf); // FIXIT make optional
+    if ( ScLogVerbose() )
+        InspectorManager::print_config(snort_conf);
 
     ParseRules(snort_conf);
 
@@ -593,7 +585,7 @@ static void SnortCleanup()
     ParserCleanup();
 
 #ifdef PERF_PROFILING
-    CleanupPreprocStatsNodeList();
+    CleanupProfileStatsNodeList();
 #endif
 
     CleanupProtoNames();
@@ -1014,6 +1006,7 @@ void snort_thread_init(const char* intf)
 
 void snort_thread_term()
 {
+    ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
     IpsManager::clear_options();
     EventManager::close_outputs();
@@ -1027,7 +1020,7 @@ void snort_thread_term()
         return;
 
 #ifdef PERF_PROFILING
-    ReleasePreprocStats();
+    ReleaseProfileStats();
 #endif
 
     otnx_match_data_term();

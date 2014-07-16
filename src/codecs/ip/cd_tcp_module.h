@@ -32,8 +32,7 @@ class TcpModule : public DecodeModule
 public:
     TcpModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-
+    const RuleMap* get_rules() const;
 };
 
 #endif

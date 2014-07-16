@@ -40,8 +40,6 @@ public:
     struct timeval ssn_time;
 };
 
-void icmp_init();
-void icmp_sum();
 void icmp_stats();
 void icmp_reset();
 

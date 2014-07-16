@@ -21,13 +21,6 @@
 
 #include "codecs/misc/cd_gtp_module.h"
 
-
-static const Parameter gtp_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap gtp_rules[] =
 {
 
@@ -40,10 +33,9 @@ static const RuleMap gtp_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-GtpModule::GtpModule() : DecodeModule(CD_GTP_NAME, gtp_params, gtp_rules)
+GtpModule::GtpModule() : DecodeModule(CD_GTP_NAME)
 { }
 
-bool GtpModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* GtpModule::get_rules() const
+{ return gtp_rules; }
+

@@ -54,7 +54,7 @@ static int already_fatal = 0;
 /*
  * Function: LogMessage(const char *, ...)
  *
- * Purpose: Print a message to stderr or with logfacility.
+ * Purpose: Print a message to stdout or with logfacility.
  *
  * Arguments: format => the formatted error string to print out
  *            ... => format commands/fillers
@@ -69,7 +69,7 @@ void LogMessage(const char *format,...)
     if (snort_conf == NULL)
     {
         va_start(ap, format);
-        vfprintf(stderr, format, ap);
+        vfprintf(stdout, format, ap);
         va_end(ap);
         return;
     }
@@ -86,7 +86,7 @@ void LogMessage(const char *format,...)
     }
     else
     {
-        vfprintf(stderr, format, ap);
+        vfprintf(stdout, format, ap);
     }
 
     va_end(ap);

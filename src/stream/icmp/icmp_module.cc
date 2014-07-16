@@ -39,13 +39,14 @@ static const Parameter stream_icmp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap stream_icmp_rules[] =
-{
-    { 0, nullptr }
-};
-
 StreamIcmpModule::StreamIcmpModule() :
-    Module(MOD_NAME, stream_icmp_params, stream_icmp_rules) { }
+    Module(MOD_NAME, stream_icmp_params)
+{
+    config = nullptr;
+}
+
+ProfileStats* StreamIcmpModule::get_profile() const
+{ return &icmp_perf_stats; }
 
 StreamIcmpConfig* StreamIcmpModule::get_data()
 {
@@ -77,4 +78,10 @@ bool StreamIcmpModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
+
+const char** StreamIcmpModule::get_pegs() const
+{ return session_pegs; }
+
+PegCount* StreamIcmpModule::get_counts() const
+{ return (PegCount*)&icmpStats; }
 

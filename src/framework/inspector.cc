@@ -23,6 +23,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include "stream/stream_splitter.h"
+
 //-------------------------------------------------------------------------
 // packet handler stuff
 //-------------------------------------------------------------------------
@@ -82,5 +84,13 @@ bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
         return false;
 
     return get_buf(id, p, b);
+}
+
+StreamSplitter* Inspector::get_splitter(bool to_server)
+{
+    if ( !api || api->type != IT_SERVICE )
+        return nullptr;
+
+    return new AtomSplitter(to_server);
 }
 

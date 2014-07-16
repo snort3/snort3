@@ -50,19 +50,22 @@ using namespace std;
 #include "sf_textlog.h"
 #include "detection_options.h"
 #include "fpdetect.h"
+#include "framework/module.h"
 
 #ifdef PERF_PROFILING
 
 /* Data types *****************************************************************/
-typedef struct _PreprocStatsNode
+typedef struct _ProfileStatsNode
 {
-    PreprocStats* stats;
-    char *name;
+    ProfileStats stats;
+    const char* name;
+    const char* pname;
+    Module* owner;
     int layer;
-    PreprocStats *parent;
-    struct _PreprocStatsNode *next;
+    struct _ProfileStatsNode *next;
+    struct _ProfileStatsNode *parent;
     get_profile_func get_data;
-} PreprocStatsNode;
+} ProfileStatsNode;
 
 typedef struct _OTN_WorstPerformer
 {
@@ -77,7 +80,7 @@ typedef struct _OTN_WorstPerformer
 
 typedef struct _Preproc_WorstPerformer
 {
-    PreprocStatsNode *node;
+    ProfileStatsNode *node;
     struct _Preproc_WorstPerformer *next;
     struct _Preproc_WorstPerformer *prev;
     struct _Preproc_WorstPerformer *children;
@@ -93,12 +96,58 @@ static THREAD_LOCAL double ticks_per_microsec = 0.0;
 static OTN_WorstPerformer *worstPerformers = NULL;
 static Preproc_WorstPerformer *worstPreprocPerformers = NULL;
 
-THREAD_LOCAL PreprocStats totalPerfStats;
-THREAD_LOCAL PreprocStats metaPerfStats;
-static THREAD_LOCAL PreprocStats* mpsePerfStats;
+THREAD_LOCAL ProfileStats totalPerfStats;
+THREAD_LOCAL ProfileStats metaPerfStats;
+static THREAD_LOCAL ProfileStats* mpsePerfStats;
 
-static PreprocStatsNode* gPreprocStatsNodeList = NULL;
-static THREAD_LOCAL int max_layers = 0;
+static ProfileStatsNode* gProfileStatsNodeList = NULL;
+static int max_layers = 0;
+
+static ProfileStatsNode* get_node(const char*);
+
+#define TOTAL "total"
+
+static ProfileStatsNode* get_root(ProfileStatsNode* idx)
+{
+    while ( idx->parent )
+        idx = idx->parent;
+    return idx;
+}
+
+static void set_node(ProfileStatsNode* idx)
+{
+    idx->parent = get_node(idx->pname);
+
+    if ( idx->pname && strcasecmp(idx->pname, TOTAL) )
+        idx->layer = idx->parent->layer + 1;
+}
+
+static ProfileStatsNode* get_node(const char* s)
+{
+    for ( ProfileStatsNode* idx = gProfileStatsNodeList; idx; idx = idx->next )
+    {
+        if ( !strcmp(idx->name, s) )
+        {
+            if ( idx->pname && !idx->parent )
+                set_node(idx);
+
+            return idx;
+        }
+    }
+    return nullptr;
+}
+
+static void link_nodes()
+{
+    for ( ProfileStatsNode* idx = gProfileStatsNodeList; idx; idx = idx->next )
+    {
+        if ( idx->pname && !idx->parent )
+            set_node(idx);
+
+        if ( idx->layer > max_layers)
+            max_layers =  idx->layer;
+    }
+}
 
 static void getTicksPerMicrosec(void)
 {
@@ -548,6 +597,7 @@ void ShowRuleProfiles(void)
     detection_option_tree_update_otn_stats(sc->detection_option_tree_hash_table);
 
     CollectRTNProfile();
+    link_nodes();
 
     /* Specifically call out a top xxx or something? */
     PrintWorstRules(sc->profile_rules.num);
@@ -556,25 +606,20 @@ void ShowRuleProfiles(void)
 
 /* The preprocessor profile list is only accessed for printing stats when
  * Snort shuts down. */
-void RegisterPreprocessorProfile(
-    const char *keyword, PreprocStats *stats, int layer, PreprocStats *parent,
-    get_profile_func get)
+void RegisterProfile(
+    const char* keyword, const char* parent, get_profile_func get, Module* mod)
 {
-    PreprocStatsNode *node;
+    ProfileStatsNode *node;
+    node = (ProfileStatsNode *)SnortAlloc(sizeof(ProfileStatsNode));
 
-    if (stats == NULL)
-        return;
-
-    node = (PreprocStatsNode *)SnortAlloc(sizeof(PreprocStatsNode));
-
-    if (gPreprocStatsNodeList == NULL)
+    if (gProfileStatsNodeList == NULL)
     {
-        gPreprocStatsNodeList = node;
+        gProfileStatsNodeList = node;
     }
     else
     {
-        PreprocStatsNode *tmp = gPreprocStatsNodeList;
-        PreprocStatsNode *last;
+        ProfileStatsNode *tmp = gProfileStatsNodeList;
+        ProfileStatsNode *last;
 
         do
         {
@@ -596,24 +641,56 @@ void RegisterPreprocessorProfile(
         last->next = node;
     }
 
-    node->name = SnortStrdup(keyword);
-    node->stats = stats;  /* Set the stats reference */
-    node->parent = parent;
-    node->layer = layer;
+    node->name = keyword;
+    node->pname = parent;
+    node->layer = 0;
     node->get_data = get;
+    node->owner = mod;
+    node->parent = nullptr;
 
-    if (layer > max_layers)
-        max_layers = layer;
+    if ( !node->pname && strcasecmp(node->name, TOTAL) )
+        node->pname = TOTAL;
 
     if ( !strcasecmp(node->name, "mpse") )
-        mpsePerfStats = stats;
+        mpsePerfStats = &node->stats;
 }
 
-void RegisterOtnProfile(
-    const char *keyword, PreprocStats *stats, get_profile_func get)
+void RegisterOtnProfile(const char *keyword, get_profile_func get)
 {
-    RegisterPreprocessorProfile(
-        keyword, stats, 3, &ruleOTNEvalPerfStats, get);
+    RegisterProfile(keyword, "rule tree eval", get);
+}
+
+void RegisterProfile(Module* m)
+{
+    ProfileStats* ps = m->get_profile();
+
+    if ( ps )
+        RegisterProfile(m->get_name(), nullptr, nullptr, m);
+
+    else 
+    {
+        unsigned i = 0;
+        const char* name, * pname;
+
+        while ( (ps = m->get_profile(i++, name, pname)) )
+            RegisterProfile(name, pname, nullptr, m);
+    }
+}
+
+static ProfileStats* get_profile(ProfileStatsNode* node)
+{
+    ProfileStats* ps = node->owner->get_profile();
+
+    if ( ps )
+        return ps;
+
+    unsigned i = 0;
+    const char* name, * pname;
+
+    while ( (ps = node->owner->get_profile(i++, name, pname)) &&
+        strcasecmp(node->name, name) );
+
+    return ps;
 }
 
 void FreePreprocPerformance(Preproc_WorstPerformer *idx)
@@ -644,9 +721,9 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
             TextLog_Print(log, "%*d%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
                    indent, num,
                    28 - indent, idx->node->name, 6, idx->node->layer,
-                   11, idx->node->stats->checks,
-                   11, idx->node->stats->exits,
-                   20, (uint64_t)(idx->node->stats->ticks/ticks_per_microsec),
+                   11, idx->node->stats.checks,
+                   11, idx->node->stats.exits,
+                   20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
                    11, idx->ticks_per_check/ticks_per_microsec,
                    14, idx->pct_of_parent,
                    13, idx->pct_of_total);
@@ -656,9 +733,9 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
             LogMessage("%*d%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
         	                   indent, num,
         	                   28 - indent, idx->node->name, 6, idx->node->layer,
-        	                   11, idx->node->stats->checks,
-        	                   11, idx->node->stats->exits,
-        	                   20, (uint64_t)(idx->node->stats->ticks/ticks_per_microsec),
+        	                   11, idx->node->stats.checks,
+        	                   11, idx->node->stats.exits,
+        	                   20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
         	                   11, idx->ticks_per_check/ticks_per_microsec,
         	                   14, idx->pct_of_parent,
         	                   13, idx->pct_of_total);
@@ -674,9 +751,9 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
             TextLog_Print(log, "%*s%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
                    indent, idx->node->name,
                    28 - indent, idx->node->name, 6, idx->node->layer,
-                   11, idx->node->stats->checks,
-                   11, idx->node->stats->exits,
-                   20, (uint64_t)(idx->node->stats->ticks/ticks_per_microsec),
+                   11, idx->node->stats.checks,
+                   11, idx->node->stats.exits,
+                   20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
                    11, idx->ticks_per_check/ticks_per_microsec,
                    14, idx->pct_of_parent,
                    13, idx->pct_of_parent);
@@ -686,9 +763,9 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
             LogMessage("%*s%*s%*d" FMTu64("*") FMTu64("*") FMTu64("*") "%*.2f%*.2f%*.2f\n",
         	                   indent, idx->node->name,
         	                   28 - indent, idx->node->name, 6, idx->node->layer,
-        	                   11, idx->node->stats->checks,
-        	                   11, idx->node->stats->exits,
-        	                   20, (uint64_t)(idx->node->stats->ticks/ticks_per_microsec),
+        	                   11, idx->node->stats.checks,
+        	                   11, idx->node->stats.exits,
+        	                   20, (uint64_t)(idx->node->stats.ticks/ticks_per_microsec),
         	                   11, idx->ticks_per_check/ticks_per_microsec,
         	                   14, idx->pct_of_parent,
         	                   13, idx->pct_of_parent);
@@ -706,69 +783,46 @@ void PrintPreprocPerformance(TextLog *log, int num, Preproc_WorstPerformer *idx)
 }
 
 // from main thread only
-static void CleanupPreprocStatsNodeList(PreprocStatsNode* node)
+static void CleanupProfileStatsNodeList(ProfileStatsNode* node)
 {
     while (node)
     {
-        PreprocStatsNode* nxt = node->next;
-        free(node->name);
+        ProfileStatsNode* nxt = node->next;
         free(node);
         node = nxt;
     }
 }
 
 // from main thread only
-void CleanupPreprocStatsNodeList(void)
+void CleanupProfileStatsNodeList(void)
 {
-    CleanupPreprocStatsNodeList(gPreprocStatsNodeList);
-    gPreprocStatsNodeList = NULL;
+    CleanupProfileStatsNodeList(gProfileStatsNodeList);
+    gProfileStatsNodeList = NULL;
 }
-
-#if 0
-// FIXIT what was this for?
-// FIXIT profile stats is broken - need to accumulate across threads 
-// as each thread shuts down into the main thread data
-// looks like this was supposed to help do that
-static PreprocStatsNode* accumulate(PreprocStatsNode* node)
-{
-    PreprocStatsNode* last = NULL;
-    PreprocStatsNode* p = gPreprocStatsNodeList;
-
-    while ( p && strcmp(p->name, node->name ) )
-    {
-        last = p;
-        p = p->next;
-    }
-    if ( !p )
-    {
-        if ( last )
-            last->next = node;
-        else
-            gPreprocStatsNodeList = node;
-        node->next = NULL;
-        return NULL;
-    }
-    return node;
-}
-#endif
 
 // from packet thread only
-void ReleasePreprocStats(void)
+void ReleaseProfileStats(void)
 {
     static mutex stats_mutex;
     stats_mutex.lock();
 
-    PreprocStatsNode* node = gPreprocStatsNodeList;
+    ProfileStatsNode* node = gProfileStatsNodeList;
 
     while (node)
     {
-        const PreprocStats* ps = node->get_data(node->name);
+        const ProfileStats* ps;
+        assert(node->get_data || node->owner);
+        
+        if ( node->owner )
+            ps = get_profile(node);
+        else
+            ps = node->get_data(node->name);
         assert(ps);
 
-        node->stats->ticks += ps->ticks;
-        node->stats->ticks_start += ps->ticks_start;
-        node->stats->checks += ps->checks;
-        node->stats->exits += ps->exits;
+        node->stats.ticks += ps->ticks;
+        node->stats.ticks_start += ps->ticks_start;
+        node->stats.checks += ps->checks;
+        node->stats.exits += ps->exits;
 
         node = node->next;
     }
@@ -917,7 +971,7 @@ void PrintWorstPreprocs(int numToPrint)
          idx= idx->next, num++)
     {
         /* Skip the total counter */
-        if (idx->node->stats == &totalPerfStats)
+        if ( !strcasecmp(idx->node->name, TOTAL) )
         {
             num--;
             total = idx;
@@ -928,9 +982,9 @@ void PrintWorstPreprocs(int numToPrint)
         PrintPreprocPerformance(log, num, idx);
         //LogMessage("%*d%*s%*d%*d" FMTu64("*") "%*.1f%*.1f\n",
         //    6, num, 20, idx->node->name, 6, idx->node->layer,
-        //    11, idx->node->stats->checks,
-        //    11, idx->node->stats->exits,
-        //    20, idx->node->stats->ticks,
+        //    11, idx->node->stats.checks,
+        //    11, idx->node->stats.exits,
+        //    20, idx->node->stats.ticks,
         //    11, idx->ticks_per_check,
         //    14, idx->pct_of_parent,
         //    14, idx->pct_of_total);
@@ -944,7 +998,7 @@ void PrintWorstPreprocs(int numToPrint)
     worstPreprocPerformers = NULL;
 }
 
-Preproc_WorstPerformer *findPerfParent(PreprocStatsNode *node,
+Preproc_WorstPerformer *findPerfParent(ProfileStatsNode *node,
                                        Preproc_WorstPerformer *top)
 {
     Preproc_WorstPerformer *list = top;
@@ -958,11 +1012,8 @@ Preproc_WorstPerformer *findPerfParent(PreprocStatsNode *node,
 
     while (list)
     {
-        if (list->node->stats == node->parent)
-        {
-            parent = list;
-            return parent;
-        }
+        if ( !strcmp(list->node->name, node->pname) )
+            return list;
 
         parent = findPerfParent(node, list->children);
 
@@ -977,25 +1028,25 @@ Preproc_WorstPerformer *findPerfParent(PreprocStatsNode *node,
 
 void ResetPreprocProfiling(void)
 {
-    PreprocStatsNode *idx = NULL;
+    ProfileStatsNode *idx = NULL;
     SnortConfig *sc = snort_conf;
 
     if ((sc == NULL) || (sc->profile_preprocs.num == 0))
         return;
 
-    for (idx = gPreprocStatsNodeList; idx != NULL; idx = idx->next)
+    for (idx = gProfileStatsNodeList; idx != NULL; idx = idx->next)
     {
-        idx->stats->ticks = 0;
-        idx->stats->ticks_start = 0;
-        idx->stats->checks = 0;
-        idx->stats->exits = 0;
+        idx->stats.ticks = 0;
+        idx->stats.ticks_start = 0;
+        idx->stats.checks = 0;
+        idx->stats.exits = 0;
     }
 }
 
 void ShowPreprocProfiles(void)
 {
     /* Cycle through all Rules, print ticks & check count for each */
-    PreprocStatsNode *idx;
+    ProfileStatsNode *idx;
     int layer;
     Preproc_WorstPerformer *parent, *pwp, *curr = NULL, *last = NULL;
     char got_position;
@@ -1005,6 +1056,8 @@ void ShowPreprocProfiles(void)
 
     if ((sc == NULL) || (sc->profile_preprocs.num == 0))
         return;
+
+    link_nodes();
 
     /* Adjust mpse stats to not include rule evaluation */
     if ( mpsePerfStats )
@@ -1016,9 +1069,9 @@ void ShowPreprocProfiles(void)
     for (layer=0;layer<=max_layers;layer++)
     {
 
-        for (idx = gPreprocStatsNodeList; idx; idx = idx->next)
+        for (idx = gProfileStatsNodeList; idx; idx = idx->next)
         {
-            if (idx->stats->checks == 0 || idx->stats->ticks == 0)
+            if (idx->stats.checks == 0 || idx->stats.ticks == 0)
                 continue;
 
             if (idx->layer != layer)
@@ -1026,7 +1079,7 @@ void ShowPreprocProfiles(void)
 
             last = NULL;
 
-            ticks_per_check = (double)idx->stats->ticks/(double)idx->stats->checks;
+            ticks_per_check = (double)idx->stats.ticks/(double)idx->stats.checks;
 
             pwp = (Preproc_WorstPerformer *)SnortAlloc(sizeof(Preproc_WorstPerformer));
             pwp->node = idx;
@@ -1036,7 +1089,7 @@ void ShowPreprocProfiles(void)
             {
                 /* Find this idx's parent in the list */
                 parent = findPerfParent(idx, worstPreprocPerformers);
-                if (parent && (parent->node->stats != &totalPerfStats))
+                if (parent && strcasecmp(parent->node->name, TOTAL))
                 {
                     listhead = parent->children;
                 }
@@ -1045,8 +1098,8 @@ void ShowPreprocProfiles(void)
                     listhead = worstPreprocPerformers;
                     parent = NULL;
                 }
-                pwp->pct_of_parent = (double)idx->stats->ticks/idx->parent->ticks*100.0;
-                pwp->pct_of_total = (double)idx->stats->ticks/totalPerfStats.ticks*100.0;
+                pwp->pct_of_parent = (double)idx->stats.ticks/idx->parent->stats.ticks*100.0;
+                pwp->pct_of_total = (double)idx->stats.ticks/get_root(idx)->stats.ticks*100.0;
             }
             else
             {
@@ -1064,13 +1117,13 @@ void ShowPreprocProfiles(void)
                 switch (sc->profile_preprocs.sort)
                 {
                     case PROFILE_SORT_CHECKS:
-                        if (pwp->node->stats->checks >= curr->node->stats->checks)
+                        if (pwp->node->stats.checks >= curr->node->stats.checks)
                         {
                             got_position = 1;
                         }
                         break;
                     case PROFILE_SORT_TOTAL_TICKS:
-                        if (pwp->node->stats->ticks >= curr->node->stats->ticks)
+                        if (pwp->node->stats.ticks >= curr->node->stats.ticks)
                         {
                             got_position = 1;
                         }
@@ -1128,7 +1181,7 @@ void ShowPreprocProfiles(void)
         }
     }
     PrintWorstPreprocs(sc->profile_preprocs.num);
-    CleanupPreprocStatsNodeList();
+    CleanupProfileStatsNodeList();
 }
 
 #endif

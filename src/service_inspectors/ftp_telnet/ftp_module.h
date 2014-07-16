@@ -24,8 +24,10 @@
 
 #include <string>
 #include <vector>
+
 #include "ftpp_ui_config.h"
 #include "framework/module.h"
+#include "main/thread.h"
 
 #define GID_FTP 125
 
@@ -40,6 +42,9 @@
 #define FTP_EVASIVE_TELNET_CMD           9
 
 struct SnortConfig;
+
+extern THREAD_LOCAL SimpleStats ftstats;
+extern THREAD_LOCAL ProfileStats ftpPerfStats;
 
 //-------------------------------------------------------------------------
 
@@ -95,8 +100,8 @@ struct FtpCmd
     uint32_t flags;
     unsigned number;
 
-    FtpCmd(std::string&, uint32_t, unsigned);
-    FtpCmd(std::string&, std::string&);
+    FtpCmd(std::string&, uint32_t, int);
+    FtpCmd(std::string&, std::string&, int);
 };
 
 class FtpServerModule : public Module
@@ -112,18 +117,23 @@ public:
     unsigned get_gid() const
     { return GID_FTP; };
 
+    const RuleMap* get_rules() const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
+    ProfileStats* get_profile() const;
+
     FTP_SERVER_PROTO_CONF* get_data();
     const FtpCmd* get_cmd(unsigned idx);
 
 private:
-    void add_commands(Value&, uint32_t flags, unsigned num = 0);
+    void add_commands(Value&, uint32_t flags, int num = 0);
 
 private:
     FTP_SERVER_PROTO_CONF* conf;
     std::vector<FtpCmd*> cmds;
     std::string names;
     std::string format;
-    unsigned number;
+    int number;
 };
 
 #endif

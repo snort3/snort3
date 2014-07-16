@@ -24,6 +24,7 @@
 
 #include "ftpp_ui_config.h"
 #include "framework/module.h"
+#include "main/thread.h"
 
 #define GID_TELNET 126
 
@@ -32,6 +33,9 @@
 #define TELNET_SB_NO_SE       3
 
 struct SnortConfig;
+
+extern THREAD_LOCAL SimpleStats tnstats;
+extern THREAD_LOCAL ProfileStats telnetPerfStats;
 
 class TelnetModule : public Module
 {
@@ -45,6 +49,11 @@ public:
 
     unsigned get_gid() const
     { return GID_TELNET; };
+
+    const RuleMap* get_rules() const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
+    ProfileStats* get_profile() const;
 
     TELNET_PROTO_CONF* get_data();
 

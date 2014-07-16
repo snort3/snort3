@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgStart virtual class rolls up all the common elements of start line processing.
+//  @brief      NHttpMsgStart virtual class rolls up all the common elements of request and status line processing.
 //
 
 
@@ -38,13 +38,6 @@
 
 using namespace NHttpEnums;
 
-// Reinitialize everything derived in preparation for analyzing a new message
-void NHttpMsgStart::initSection() {
-    startLine.length = STAT_NOTCOMPUTE;
-    version.length = STAT_NOTCOMPUTE;
-}
-
-// All the processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgStart::analyze() {
     startLine.start = msgText;
     startLine.length = findCrlf(startLine.start, length, false);
@@ -55,10 +48,16 @@ void NHttpMsgStart::analyze() {
 }
 
 void NHttpMsgStart::deriveVersionId() {
-    if (version.length != 8) {
-        versionId = VERS__PROBLEMATIC;
+    if (version.length <= 0) {
+        versionId = VERS__NOSOURCE;
         return;
     }
+    if (version.length != 8) {
+        versionId = VERS__PROBLEMATIC;
+        infractions |= INF_BADVERSION;
+        return;
+    }
+
     if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.')) {
         versionId = VERS__PROBLEMATIC;
         infractions |= INF_BADVERSION;

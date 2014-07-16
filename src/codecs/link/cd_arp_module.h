@@ -32,7 +32,7 @@ class ArpModule : public DecodeModule
 public:
     ArpModule();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_auth_module.h"
 
-
-static const Parameter ah_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap ah_rules[] =
 {
     { DECODE_AUTH_HDR_TRUNC, "(" CD_AUTH_NAME ") Truncated authentication header"},
@@ -36,13 +29,12 @@ static const RuleMap ah_rules[] =
 };
 
 //-------------------------------------------------------------------------
-// rpc module
+// auth module
 //-------------------------------------------------------------------------
 
-AhModule::AhModule() : DecodeModule(CD_AUTH_NAME, ah_params, ah_rules)
+AhModule::AhModule() : DecodeModule(CD_AUTH_NAME)
 { }
 
-bool AhModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* AhModule::get_rules() const
+{ return ah_rules; }
+

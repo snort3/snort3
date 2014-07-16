@@ -58,9 +58,9 @@
 static const char* s_name = "flags";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats tcpFlagsPerfStats;
+static THREAD_LOCAL ProfileStats tcpFlagsPerfStats;
 
-static PreprocStats* tf_get_profile(const char* key)
+static ProfileStats* tf_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &tcpFlagsPerfStats;
@@ -396,7 +396,7 @@ static void flags_dtor(IpsOption* p)
 static void flags_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &tcpFlagsPerfStats, tf_get_profile);
+    RegisterOtnProfile(s_name, tf_get_profile);
 #endif
 }
 

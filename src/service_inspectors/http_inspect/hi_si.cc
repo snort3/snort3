@@ -85,7 +85,6 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
     HTTPINSPECT_CONF *ServerConfDip;
     int iServerSip;
     int iServerDip;
-    int16_t app_id = SFTARGET_UNKNOWN_PROTOCOL;
     int http_id_found = 0;
     snort_ip sip;
     snort_ip dip;
@@ -118,18 +117,6 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
     */
     iServerSip = (p->packet_flags & PKT_FROM_SERVER);
     iServerDip = (p->packet_flags & PKT_FROM_CLIENT);
-
-    app_id = stream.get_application_protocol_id(p->flow);
-    if (app_id == hi_app_protocol_id)
-    {
-        http_id_found = 1;
-    }
-    if (app_id && !http_id_found)
-    {
-        /* This packet was identified as something else. Forget it. */
-        iServerSip = 0;
-        iServerDip = 0;
-    }
 
     /*
     **  We default to the no HTTP traffic case

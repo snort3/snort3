@@ -58,19 +58,17 @@ public:
     friend class NHttpMsgChunkHead;
     friend class NHttpMsgChunkBody;
     friend class NHttpMsgTrailer;
-    friend class NHttpTestInput;
     friend class NHttpStreamSplitter;
 private:
     void halfReset(NHttpEnums::SourceId sourceId);
 
     // StreamSplitter => Inspector (facts about the most recent message section)
-    NHttpEnums::SourceId sourceId = NHttpEnums::SRC__NOTCOMPUTE;
-    NHttpEnums::SectionType sectionType = NHttpEnums::SEC__NOTCOMPUTE;
-    bool tcpClose = false;
-    uint64_t infractions = 0;
+    // 0 element refers to client request, 1 element refers to server response
+    NHttpEnums::SectionType sectionType[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
+    bool tcpClose[2] = { false, false };
+    uint64_t infractions[2] = { 0, 0 };
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
-    // 0 element refers to client request, 1 element refers to server response
     NHttpEnums::SectionType typeExpected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
     int64_t octetsExpected[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // expected size of the upcoming body or chunk body section      
 
@@ -78,7 +76,6 @@ private:
     // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize hard-to-find bugs
     NHttpEnums::VersionId versionId[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
     NHttpEnums::MethodId methodId[2] = { NHttpEnums::METH__NOTPRESENT, NHttpEnums::METH__NOTPRESENT };
-    NHttpEnums::SchemeId schemeId[2] = { NHttpEnums::SCH__NOTPRESENT, NHttpEnums::SCH__NOTPRESENT };
     int32_t statusCodeNum[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
     int64_t dataLength[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };        // length of the data from Content-Length field or chunk header.      

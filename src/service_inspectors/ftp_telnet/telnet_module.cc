@@ -66,7 +66,7 @@ static const RuleMap telnet_rules[] =
 };
 
 TelnetModule::TelnetModule() :
-    Module("telnet", telnet_params, telnet_rules)
+    Module("telnet", telnet_params)
 {
     conf = nullptr;
 }
@@ -76,6 +76,12 @@ TelnetModule::~TelnetModule()
     if ( conf )
         delete conf;
 }
+
+const RuleMap* TelnetModule::get_rules() const
+{ return telnet_rules; }
+
+ProfileStats* TelnetModule::get_profile() const
+{ return &telnetPerfStats; }
 
 bool TelnetModule::set(const char*, Value& v, SnortConfig*)
 {
@@ -117,4 +123,10 @@ bool TelnetModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
+
+const char** TelnetModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* TelnetModule::get_counts() const
+{ return (PegCount*)&tnstats; }
 

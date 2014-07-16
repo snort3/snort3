@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_icmp6_module.h"
 
-
-static const Parameter icmp6_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 // rules which will loaded into snort. 
 // You can now reference these rules by calling a codec_event
 // in your main codec's functions
@@ -51,10 +44,9 @@ static const RuleMap icmp6_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-Icmp6Module::Icmp6Module() : DecodeModule(CD_ICMP6_NAME, icmp6_params, icmp6_rules)
+Icmp6Module::Icmp6Module() : DecodeModule(CD_ICMP6_NAME)
 { }
 
-bool Icmp6Module::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* Icmp6Module::get_rules() const
+{ return icmp6_rules; }
+

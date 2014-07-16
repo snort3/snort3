@@ -41,6 +41,8 @@ public:
     PpmModule();
     bool set(const char*, Value&, SnortConfig*);
 
+    const RuleMap* get_rules() const;
+
     unsigned get_gid() const
     { return GID_PPM; };
 };

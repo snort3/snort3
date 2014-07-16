@@ -36,20 +36,7 @@ using namespace std;
 
 static const char* mod_name = "binder";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats bindPerfStats;
-
-static PreprocStats* bind_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &bindPerfStats;
-
-    return nullptr;
-}
-#endif
-
-static THREAD_LOCAL SimpleStats tstats;
-static SimpleStats gstats;
+THREAD_LOCAL ProfileStats bindPerfStats;
 
 //-------------------------------------------------------------------------
 // helpers
@@ -99,15 +86,16 @@ public:
     { LogMessage("Binder\n"); };
 
     void eval(Packet*);
+    int exec(int, void*);
+
+    Inspector* find_inspector(const char*);
 
     void add(Binding* b)
     { bindings.push_back(b); };
 
 private:
-    Inspector* get_clouseau(Flow*, Packet*);
-
+    int check_rules(Flow*, Packet*);
     void init_flow(Flow*);
-    void init_flow(Flow*, Packet*);
 
 private:
     vector<Binding*> bindings;
@@ -127,20 +115,60 @@ Binder::~Binder()
 void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
+    flow->flow_state = check_rules(flow, p);
+    ++bstats.total_packets;
+}
 
-    if ( !flow->ssn_client )
-        init_flow(p->flow);
+// FIXIT implement inspector lookup from policy / bindings
+Inspector* Binder::find_inspector(const char* s)
+{
+    Binding* pb;
+    unsigned i, sz = bindings.size();
 
-    else if ( !flow->clouseau )
-        init_flow(p->flow, p);
+    for ( i = 0; i < sz; i++ )
+    {
+        pb = bindings[i];
 
-    ++tstats.total_packets;
+        if ( pb->when_svc == s )
+            break;
+    }
+        
+    if ( i == sz )
+        return nullptr;
+
+    Inspector* ins = InspectorManager::get_inspector(pb->type.c_str());
+    return ins;
+}
+
+int Binder::exec(int, void* pv)
+{
+    Flow* flow = (Flow*)pv;
+    Inspector* ins = find_inspector(flow->service);
+
+    if ( ins )
+        flow->set_gadget(ins);
+
+    if ( flow->protocol != IPPROTO_TCP )
+        return 0;
+
+    if ( ins )
+    {
+        stream.set_splitter(flow, true, ins->get_splitter(true));
+        stream.set_splitter(flow, false, ins->get_splitter(false));
+    }
+    else
+    {
+        stream.set_splitter(flow, true, new AtomSplitter(true));
+        stream.set_splitter(flow, false, new AtomSplitter(false));
+    }
+
+    return 0;
 }
 
 // FIXIT bind services - this is a temporary hack that just looks at ports,
 // need to examine all key fields for matching.  ultimately need a routing
-// table, scapegoat tree, magic wand, etc.
-Inspector* Binder::get_clouseau(Flow* flow, Packet* p)
+// table, scapegoat tree, etc.
+int Binder::check_rules(Flow* flow, Packet* p)
 {
     Binding* pb;
     unsigned i, sz = bindings.size();
@@ -157,15 +185,27 @@ Inspector* Binder::get_clouseau(Flow* flow, Packet* p)
         if ( pb->ports.test(port) )
             break;
     }
+        
+    if ( i == sz )
+        return BA_ALLOW;  // default action FIXIT make configurable
+
+    if ( pb->action != BA_INSPECT )
+        return pb->action;
+
+    init_flow(flow);
     Inspector* ins;
 
-    if ( i == sz || !pb->type.size() )
+    if ( !pb->type.size() || pb->type == "wizard" )
+    {
         ins = InspectorManager::get_inspector("wizard");
-        
+        flow->set_clouseau(ins);
+    }
     else
-        ins = InspectorManager::get_inspector(pb->type.c_str());
-
-    return ins;
+    {
+        ins = InspectorManager::get_inspector(pb->type.c_str()); 
+        flow->set_gadget(ins);
+    }
+    return BA_INSPECT;
 }
 
 void Binder::init_flow(Flow* flow)
@@ -174,8 +214,6 @@ void Binder::init_flow(Flow* flow)
     {
     case IPPROTO_IP:
         set_session(flow, "stream_ip");
-        stream.set_splitter(flow, true, nullptr);
-        stream.set_splitter(flow, false, nullptr);
         break;
 
     case IPPROTO_ICMP:
@@ -195,25 +233,6 @@ void Binder::init_flow(Flow* flow)
     }
 }
 
-void Binder::init_flow(Flow* flow, Packet* p)
-{
-    Inspector* ins = get_clouseau(flow, p);
-
-    if ( !ins )
-        return;
-
-    if ( flow->protocol == IPPROTO_TCP )
-    {
-        StreamSplitter* ss = ins->get_splitter(true);
-        StreamSplitter* cs = ins->get_splitter(false);
-
-        stream.set_splitter(flow, true, ss);
-        stream.set_splitter(flow, false, cs);
-    }
-
-    flow->set_clouseau(ins);
-}
-
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
@@ -223,14 +242,6 @@ static Module* mod_ctor()
 
 static void mod_dtor(Module* m)
 { delete m; }
-
-void bind_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &bindPerfStats, 0, &totalPerfStats, bind_get_profile);
-#endif
-}
 
 static Inspector* bind_ctor(Module* m)
 {
@@ -242,21 +253,6 @@ static Inspector* bind_ctor(Module* m)
 static void bind_dtor(Inspector* p)
 {
     delete p;
-}
-
-static void bind_sum()
-{
-    sum_stats(&gstats, &tstats);
-}
-
-static void bind_stats()
-{
-    show_stats(&gstats, mod_name);
-}
-
-static void bind_reset()
-{
-    memset(&gstats, 0, sizeof(gstats));
 }
 
 static const InspectApi bind_api =
@@ -273,16 +269,14 @@ static const InspectApi bind_api =
     PROTO_BIT__ALL,
     nullptr, // buffers
     nullptr, // service
-    bind_init,
+    nullptr, // init
     nullptr, // term
     bind_ctor,
     bind_dtor,
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    bind_sum,
-    bind_stats,
-    bind_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_binder = &bind_api.base;

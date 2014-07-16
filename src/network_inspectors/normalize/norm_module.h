@@ -29,6 +29,8 @@
 #include "framework/module.h"
 #include "norm.h"
 
+extern THREAD_LOCAL ProfileStats norm_perf_stats;
+
 class NormalizeModule : public Module
 {
 public:
@@ -38,8 +40,14 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    ProfileStats* get_profile() const;
+
     const NormalizerConfig* get_config()
     { return &config; };
+
+    void sum_stats();
+    void show_stats();
+    void reset_stats();
 
 private:
     bool set_ip4(const char*, Value&, SnortConfig*);

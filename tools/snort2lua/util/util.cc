@@ -57,7 +57,7 @@ const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string
     return nullptr;
 }
 
-std::string &sanitize_multi_line_string(std::string &s)
+std::string &sanitize_lua_string(std::string &s)
 {
 
     std::size_t found = s.find("]]");

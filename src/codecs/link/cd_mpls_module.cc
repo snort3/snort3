@@ -60,8 +60,11 @@ static const RuleMap mpls_rules[] =
 // mpls module
 //-------------------------------------------------------------------------
 
-MplsModule::MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_params, mpls_rules)
+MplsModule::MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_params)
 { }
+
+const RuleMap* MplsModule::get_rules() const
+{ return mpls_rules; }
 
 bool MplsModule::set(const char*, Value& v, SnortConfig* sc)
 { 

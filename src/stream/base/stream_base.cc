@@ -40,21 +40,10 @@
 #include "profiler.h"
 
 //-------------------------------------------------------------------------
-// globals
+// stats
 //-------------------------------------------------------------------------
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats s5PerfStats;
-
-static PreprocStats* s5_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &s5PerfStats;
-
-    return nullptr;
-}
-#endif
-
+THREAD_LOCAL ProfileStats s5PerfStats;
 THREAD_LOCAL FlowControl* flow_con = nullptr;
 
 const char* session_pegs[] =
@@ -65,7 +54,8 @@ const char* session_pegs[] =
     "created",
     "released",
     "discards",
-    "events"
+    "events",
+    nullptr
 };
 
 const unsigned session_peg_count = array_size(session_pegs);
@@ -88,6 +78,29 @@ static const char* base_pegs[] =
     "icmp flows",
     "ip flows"
 };
+
+void base_sum()
+{   
+    t_stats.tcp = flow_con->get_flow_count(IPPROTO_TCP);
+    t_stats.udp = flow_con->get_flow_count(IPPROTO_UDP);
+    t_stats.icmp = flow_con->get_flow_count(IPPROTO_ICMP);
+    t_stats.ip = flow_con->get_flow_count(IPPROTO_IP);
+
+    sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
+        array_size(base_pegs));
+}   
+    
+void base_stats()
+{   
+    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs),
+        MOD_NAME);
+}
+
+void base_reset()
+{
+    flow_con->clear_flow_counts();
+    memset(&t_stats, 0, sizeof(t_stats));
+}
 
 //-------------------------------------------------------------------------
 // runtime support
@@ -256,37 +269,6 @@ static void base_dtor(Inspector* p)
     delete p;
 }
 
-static void base_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        MOD_NAME, &s5PerfStats, 0, &totalPerfStats, s5_get_profile);
-#endif
-}
-
-void base_sum()
-{   
-    t_stats.tcp = flow_con->get_flow_count(IPPROTO_TCP);
-    t_stats.udp = flow_con->get_flow_count(IPPROTO_UDP);
-    t_stats.icmp = flow_con->get_flow_count(IPPROTO_ICMP);
-    t_stats.ip = flow_con->get_flow_count(IPPROTO_IP);
-
-    sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
-        array_size(base_pegs));
-}   
-    
-void base_stats()
-{   
-    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs),
-        MOD_NAME);
-}
-
-void base_reset()
-{
-    flow_con->clear_flow_counts();
-    memset(&t_stats, 0, sizeof(t_stats));
-}
-
 static const InspectApi base_api =
 {
     {
@@ -301,16 +283,14 @@ static const InspectApi base_api =
     PROTO_BIT__IP,
     nullptr, // buffers
     nullptr, // service
-    base_init,
+    nullptr, // init
     nullptr, // term
     base_ctor,
     base_dtor,
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    base_sum,
-    base_stats,
-    base_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_stream_base = &base_api.base;

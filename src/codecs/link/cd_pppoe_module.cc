@@ -17,18 +17,11 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// cd_pppoepkt_module.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_pppoe_module.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "codecs/link/cd_pppoe_module.h"
 
-
-static const Parameter pppoepkt_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
-static const RuleMap pppoepkt_rules[] =
+static const RuleMap pppoe_rules[] =
 {
     { DECODE_BAD_PPPOE, "(" CD_PPPOE_NAME ") Bad PPPOE frame detected" },
     { 0, nullptr }
@@ -44,10 +37,9 @@ static const RuleMap pppoepkt_rules[] =
 //-------------------------------------------------------------------------
 
 /// ^^^  READ THE COMMENT!
-PPPoEModule::PPPoEModule() : DecodeModule(CD_PPPOE_NAME, pppoepkt_params, pppoepkt_rules)
+PPPoEModule::PPPoEModule() : DecodeModule(CD_PPPOE_NAME)
 { }
 
-bool PPPoEModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* PPPoEModule::get_rules() const
+{ return pppoe_rules; }
+

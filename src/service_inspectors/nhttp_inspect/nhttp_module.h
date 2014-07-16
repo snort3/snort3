@@ -39,8 +39,10 @@ public:
     bool end(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
     unsigned get_gid() const;
+    const RuleMap* get_rules() const;
     bool get_test_input() const { return test_input; };
     bool get_test_output() const { return test_output; };
+
 private:
     static const Parameter nhttpParams[];
     static const RuleMap nhttpEvents[];

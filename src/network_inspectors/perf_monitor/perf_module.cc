@@ -81,6 +81,9 @@ PerfMonModule::PerfMonModule() :
     Module("perf_monitor", perf_params)
 { }
 
+ProfileStats* PerfMonModule::get_profile() const
+{ return &perfmonStats; }
+
 bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("packets") )
@@ -170,4 +173,10 @@ void PerfMonModule::get_config(SFPERF& cfg)
     cfg = config;
     memset(&config, 0, sizeof(config));
 }
+
+const char** PerfMonModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* PerfMonModule::get_counts() const
+{ return (PegCount*)&pmstats; }
 

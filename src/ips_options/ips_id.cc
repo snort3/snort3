@@ -43,9 +43,9 @@
 static const char* s_name = "id";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ipIdPerfStats;
+static THREAD_LOCAL ProfileStats ipIdPerfStats;
 
-static PreprocStats* id_get_profile(const char* key)
+static ProfileStats* id_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &ipIdPerfStats;
@@ -182,7 +182,7 @@ static void id_dtor(IpsOption* p)
 static void id_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &ipIdPerfStats, id_get_profile);
+    RegisterOtnProfile(s_name, id_get_profile);
 #endif
 }
 

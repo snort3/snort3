@@ -85,9 +85,9 @@
 static const char* s_name = "resp";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats resp3PerfStats;
+static THREAD_LOCAL ProfileStats resp3PerfStats;
 
-static PreprocStats* rsp_get_profile(const char* key)
+static ProfileStats* rsp_get_profile(const char* key)
 {
     if ( !strcmp(key, "resp3") )
         return &resp3PerfStats;
@@ -296,7 +296,7 @@ static void resp_ginit(SnortConfig*)
     Active_SetEnabled(1);
 
 #ifdef PERF_PROFILING
-    RegisterOtnProfile("resp3", &resp3PerfStats, rsp_get_profile);
+    RegisterOtnProfile("resp3", rsp_get_profile);
 #endif
 }
 

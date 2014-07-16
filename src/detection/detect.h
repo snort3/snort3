@@ -42,8 +42,8 @@ extern THREAD_LOCAL int do_detect;
 extern THREAD_LOCAL int do_detect_content;
 
 #ifdef PERF_PROFILING
-extern THREAD_LOCAL PreprocStats eventqPerfStats;
-extern THREAD_LOCAL PreprocStats detectPerfStats;
+extern THREAD_LOCAL ProfileStats eventqPerfStats;
+extern THREAD_LOCAL ProfileStats detectPerfStats;
 #endif
 
 /* detection/manipulation funcs */

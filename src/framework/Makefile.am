@@ -25,6 +25,7 @@ cursor.cc \
 inspector.cc \
 ips_option.cc \
 parameter.cc \
+module.cc \
 mpse.cc \
 value.cc
 

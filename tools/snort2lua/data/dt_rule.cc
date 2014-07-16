@@ -22,6 +22,7 @@
 
 #include "data/dt_rule.h"
 #include "data/dt_data.h"  // included for print mode
+#include "util/util.h"
 
 
 Rule::Rule() :  num_hdr_data(0),
@@ -130,7 +131,8 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
         else
             out << " ";
 
-        out << rule.hdr_data[i];
+        std::string tmp = rule.hdr_data[i];
+        out << util::sanitize_lua_string(tmp);
     }
 
     if (!rule.options.empty())

@@ -43,20 +43,8 @@
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 
-static SessionStats gicmpStats;
-static THREAD_LOCAL SessionStats icmpStats;
-
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats icmp_perf_stats;
-
-static PreprocStats* icmp_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &icmp_perf_stats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL SessionStats icmpStats;
+THREAD_LOCAL ProfileStats icmp_perf_stats;
 
 //------------------------------------------------------------------------
 // private functions
@@ -244,28 +232,14 @@ void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
 // api related methods
 //-------------------------------------------------------------------------
 
-void icmp_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        MOD_NAME, &icmp_perf_stats, 0, &totalPerfStats, icmp_get_profile);
-#endif
-}
-
-void icmp_sum()
-{
-    sum_stats((PegCount*)&gicmpStats, (PegCount*)&icmpStats,
-        session_peg_count);
-}
-
+#if 0
 void icmp_stats()
 {
+    // FIXIT move these to the actual owner
     // FIXIT need to get these before delete flow_con
     //flow_con->get_prunes(IPPROTO_UDP, icmpStats.prunes);
-
-    show_stats((PegCount*)&gicmpStats, session_pegs, session_peg_count,
-        MOD_NAME);
 }
+#endif
 
 void icmp_reset()
 {

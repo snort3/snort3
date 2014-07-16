@@ -21,13 +21,6 @@
 
 #include "codecs/link/cd_erspan2_module.h"
 
-
-static const Parameter erspan2_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap erspan2_rules[] =
 {
     { DECODE_ERSPAN_HDR_VERSION_MISMATCH, "(codec_erspan) ERSpan Header version mismatch" },
@@ -39,10 +32,9 @@ static const RuleMap erspan2_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-Erspan2Module::Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME, erspan2_params, erspan2_rules)
+Erspan2Module::Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME)
 { }
 
-bool Erspan2Module::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* Erspan2Module::get_rules() const
+{ return erspan2_rules; }
+

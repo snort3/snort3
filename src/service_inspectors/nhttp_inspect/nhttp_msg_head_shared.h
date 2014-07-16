@@ -39,13 +39,15 @@
 
 class NHttpMsgHeadShared: public NHttpMsgSection {
 public:
-    void initSection();
     void analyze();
     void genEvents();
-    void legacyClients() const;
+    void legacyClients();
 
 protected:
-    // Header normalization. There should be one of these for every different way we can process a header field value.
+    NHttpMsgHeadShared(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+       NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_) {};
+
+    // Header normalization strategies. There should be one of these for every different way we can process a header field value.
     static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;
     static const HeaderNormalizer NORMALIZER_CAT;
@@ -57,29 +59,29 @@ protected:
     static const HeaderNormalizer* const headerNorms[];
     static const int32_t numNorms;
 
-    // Code conversion tables are for turning token strings into enums.
+    // Tables of header field names and header value names
     static const StrCode headerList[];
     static const StrCode transCodeList[];
 
-    // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
-    // things into a standard form without changing the underlying format.
     void parseWhole();
     void parseHeaderBlock();
     void parseHeaderLines();
     void deriveHeaderNameId(int index);
 
-    void printHeaders(FILE *output) const;
+    void printHeaders(FILE *output);
 
-    // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that this is all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
-    // scratchPad (normalized pieces).
     field headers;
+
+    // All of these are indexed by the relative position of the header field in the message
     static const int MAXHEADERS = 200;  // I'm an arbitrary number. Need to revisit.
-    int32_t numHeaders;
+    int32_t numHeaders = NHttpEnums::STAT_NOTCOMPUTE;
     field headerLine[MAXHEADERS];
     field headerName[MAXHEADERS];
     NHttpEnums::HeaderId headerNameId[MAXHEADERS];
     field headerValue[MAXHEADERS];
+
+    // Normalized values are indexed by HeaderId
+    int headerCount[NHttpEnums::HEAD__MAXVALUE] = { };
     field headerValueNorm[NHttpEnums::HEAD__MAXVALUE];
 };
 

@@ -27,15 +27,14 @@
 
 class Flow;
 
-    enum PAF_Status // FIXIT move inside StreamSplitter
-    {
-        PAF_ABORT,   // non-paf operation
-        PAF_START,   // internal use only
-        PAF_SEARCH,  // searching for next flush point
-        PAF_FLUSH,   // flush at given offset
-        PAF_SKIP,    // skip ahead to given offset
-        PAF_RESET    // rewind to the prior flush point
-    };
+enum PAF_Status // FIXIT move inside StreamSplitter
+{
+    PAF_ABORT,   // non-paf operation
+    PAF_START,   // internal use only
+    PAF_SEARCH,  // searching for next flush point
+    PAF_FLUSH,   // flush at given offset
+    PAF_SKIP     // skip ahead to given offset
+};
 
 //-------------------------------------------------------------------------
 

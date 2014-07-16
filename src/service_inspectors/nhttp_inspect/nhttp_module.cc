@@ -33,8 +33,11 @@
 #include "nhttp_enum.h"
 #include "nhttp_module.h"
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
-}
+NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams)
+{ }
+
+const RuleMap* NHttpModule::get_rules() const
+{ return nhttpEvents; }
 
 const Parameter NHttpModule::nhttpParams[] =
     {{ "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },

@@ -42,13 +42,16 @@ static const Parameter stream_udp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap stream_udp_rules[] =
-{
-    { 0, nullptr }
-};
-
 StreamUdpModule::StreamUdpModule() :
-    Module(MOD_NAME, stream_udp_params, stream_udp_rules) { }
+    Module(MOD_NAME, stream_udp_params)
+{
+    config = nullptr;
+}
+
+ProfileStats* StreamUdpModule::get_profile() const
+{
+    return &udp_perf_stats;
+}
 
 StreamUdpConfig* StreamUdpModule::get_data()
 {
@@ -83,4 +86,10 @@ bool StreamUdpModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
+
+const char** StreamUdpModule::get_pegs() const
+{ return session_pegs; }
+
+PegCount* StreamUdpModule::get_counts() const
+{ return (PegCount*)&udpStats; }
 

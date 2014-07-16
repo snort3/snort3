@@ -22,7 +22,6 @@
 #include "codecs/ip/cd_esp_module.h"
 #include "main/snort_config.h"
 
-
 static const Parameter esp_params[] =
 {
     { "decode_esp", Parameter::PT_BOOL, nullptr, "false",
@@ -45,8 +44,11 @@ static const RuleMap esp_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-EspModule::EspModule() : DecodeModule(CD_ESP_NAME, esp_params, esp_rules)
+EspModule::EspModule() : DecodeModule(CD_ESP_NAME, esp_params)
 { }
+
+const RuleMap* EspModule::get_rules() const
+{ return esp_rules; }
 
 bool EspModule::set(const char*, Value& v, SnortConfig* sc)
 {
@@ -57,5 +59,4 @@ bool EspModule::set(const char*, Value& v, SnortConfig* sc)
 
     return true;
 }
-
 

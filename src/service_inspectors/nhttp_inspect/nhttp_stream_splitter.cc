@@ -39,10 +39,9 @@ using namespace NHttpEnums;
 // Convenience function. All the housekeeping that must be done before we can return PAF_FLUSH to stream.
 void NHttpStreamSplitter::prepareFlush(NHttpFlowData* sessionData, uint32_t* flushOffset, SourceId sourceId, SectionType sectionType, bool tcpClose,
       uint64_t infractions, uint32_t numOctets) {
-    sessionData->sourceId = sourceId;
-    sessionData->sectionType = sectionType;
-    sessionData->tcpClose = tcpClose;
-    sessionData->infractions = infractions;
+    sessionData->sectionType[sourceId] = sectionType;
+    sessionData->tcpClose[sourceId] = tcpClose;
+    sessionData->infractions[sourceId] = infractions;
     if (tcpClose) sessionData->typeExpected[sourceId] = SEC_CLOSED;
     if (!NHttpTestInput::test_input) *flushOffset = numOctets;
     else NHttpTestInput::testInput->pafFlush(numOctets);

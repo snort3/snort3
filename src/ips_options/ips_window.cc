@@ -44,9 +44,9 @@
 static const char* s_name = "window";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats tcpWinPerfStats;
+static THREAD_LOCAL ProfileStats tcpWinPerfStats;
 
-static PreprocStats* win_get_profile(const char* key)
+static ProfileStats* win_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &tcpWinPerfStats;
@@ -214,7 +214,7 @@ static void window_dtor(IpsOption* p)
 static void window_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &tcpWinPerfStats, win_get_profile);
+    RegisterOtnProfile(s_name, win_get_profile);
 #endif
 }
 

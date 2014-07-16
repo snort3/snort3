@@ -20,10 +20,6 @@
 
 #include "normalize.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "norm.h"
 #include "norm_module.h"
 #include "packet_io/active.h"
@@ -32,22 +28,13 @@
 #include "profiler.h"
 #include "snort_types.h"
 #include "snort.h"
-#include "stream/stream.h"
 #include "framework/inspector.h"
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats norm_perf_stats;
-
-static PreprocStats* no_get_profile(const char* key)
-{
-    if ( !strcmp(key, "normalize") )
-        return &norm_perf_stats;
-
-    return nullptr;
-}
-#endif
-
 #define PROTO_BITS (PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP)
+
+static const char* name = "normalize";
+
+THREAD_LOCAL ProfileStats norm_perf_stats;
 
 //-------------------------------------------------------------------------
 // printing stuff
@@ -228,7 +215,7 @@ void Normalizer::eval(Packet *p)
     PROFILE_VARS;
     PREPROC_PROFILE_START(norm_perf_stats);
 
-    if ( !Active_PacketWasDropped() )
+    if ( !PacketIsRebuilt(p) && !Active_PacketWasDropped() )
         Norm_Packet(&config, p);
 
     PREPROC_PROFILE_END(norm_perf_stats);
@@ -244,34 +231,6 @@ static Module* mod_ctor()
 
 static void mod_dtor(Module* m)
 { delete m; }
-
-static const char* name = "normalize";
-
-static void no_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        "normalize", &norm_perf_stats, 0, &totalPerfStats, no_get_profile);
-#endif
-}
-
-static void no_sum()
-{
-    Norm_SumStats();
-    Stream_SumNormalizationStats();
-}
-
-static void no_stats()
-{
-    Norm_PrintStats(name);
-    Stream_PrintNormalizationStats();
-}
-
-static void no_reset()
-{
-    Norm_ResetStats();
-    Stream_ResetNormalizationStats();
-}
 
 static Inspector* no_ctor(Module* m)
 {
@@ -297,16 +256,14 @@ static const InspectApi no_api =
     PROTO_BITS,
     nullptr, // buffers
     nullptr, // service
-    no_init,
+    nullptr, // init
     nullptr, // term
     no_ctor,
     no_dtor,
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    no_sum,
-    no_stats,
-    no_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_normalize = &no_api.base;
