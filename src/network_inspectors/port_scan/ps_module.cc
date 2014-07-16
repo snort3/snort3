@@ -103,7 +103,7 @@ static const RuleMap port_scan_rules[] =
 //-------------------------------------------------------------------------
 
 PortScanModule::PortScanModule() :
-    Module("port_scan", port_scan_params, port_scan_rules)
+    Module("port_scan", port_scan_params)
 {
     config = nullptr;
 }
@@ -113,6 +113,9 @@ PortScanModule::~PortScanModule()
     if ( config )
         delete config;
 }
+
+const RuleMap* PortScanModule::get_rules() const
+{ return port_scan_rules; }
 
 //-------------------------------------------------------------------------
 // FIXIT ipset_parse() format must be changed to remove comma
@@ -215,6 +218,9 @@ PortScanGlobalModule::~PortScanGlobalModule()
         delete common;
 }
 
+ProfileStats* PortScanGlobalModule::get_profile() const
+{ return &psPerfStats; }
+
 bool PortScanGlobalModule::begin(const char*, int, SnortConfig*)
 {
     common = new PsCommon;
@@ -238,4 +244,10 @@ PsCommon* PortScanGlobalModule::get_data()
     common = nullptr;
     return tmp;
 }
+
+const char** PortScanGlobalModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* PortScanGlobalModule::get_counts() const
+{ return (PegCount*)&spstats; }
 

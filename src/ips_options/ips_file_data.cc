@@ -45,9 +45,9 @@
 static const char* s_name = "file_data";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats fileDataPerfStats;
+static THREAD_LOCAL ProfileStats fileDataPerfStats;
 
-static PreprocStats* fd_get_profile(const char* key)
+static ProfileStats* fd_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &fileDataPerfStats;
@@ -126,7 +126,7 @@ static void file_data_dtor(IpsOption* p)
 static void file_data_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &fileDataPerfStats, fd_get_profile);
+    RegisterOtnProfile(s_name, fd_get_profile);
 #endif
 }
 

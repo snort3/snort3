@@ -260,10 +260,6 @@ protected:
         std::string keyword;
         int pos = stream.tellg();
 
-//        std::getline(stream, keyword, ':');
-//        if (keyword.find_first_not_of(' ') == std::string::npos)
-//            return true;
-
         while(std::getline(stream, keyword, ':'))
         {
             std::size_t semi_colon_pos = keyword.find(';');

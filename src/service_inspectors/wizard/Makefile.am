@@ -1,6 +1,9 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 file_list = \
+magic.cc magic.h \
+hexes.cc \
+spells.cc \
 wizard.cc wizard.h \
 wiz_module.cc wiz_module.h
 

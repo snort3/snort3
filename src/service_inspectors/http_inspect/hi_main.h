@@ -38,12 +38,10 @@
 
 #include <zlib.h>
 
-extern int16_t hi_app_protocol_id;
-
 extern THREAD_LOCAL DataBuffer HttpDecodeBuf;
 
 #ifdef PERF_PROFILING
-extern THREAD_LOCAL PreprocStats hiDetectPerfStats;
+extern THREAD_LOCAL ProfileStats hiDetectPerfStats;
 extern THREAD_LOCAL int hiDetectCalled;
 #endif
 

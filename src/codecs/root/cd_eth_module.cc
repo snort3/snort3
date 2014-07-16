@@ -21,13 +21,6 @@
 
 #include "codecs/root/cd_eth_module.h"
 
-
-static const Parameter eth_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap eth_rules[] =
 {
     { DECODE_ETH_HDR_TRUNC, "(" CD_ETH_NAME ") truncated eth header" },
@@ -38,10 +31,9 @@ static const RuleMap eth_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-EthModule::EthModule() : DecodeModule(CD_ETH_NAME, eth_params, eth_rules)
+EthModule::EthModule() : DecodeModule(CD_ETH_NAME)
 { }
 
-bool EthModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* EthModule::get_rules() const
+{ return eth_rules; }
+

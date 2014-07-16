@@ -252,15 +252,21 @@ static bool valid_addr(Value& v, const char*)
 static bool valid_bit_list(Value& v, const char* r)
 {
     string pl = v.get_string();
-    stringstream ss(pl);
-    ss >> setbase(0);
+    string bs;
 
     int max = r ? strtol(r, nullptr, 0) : 0;
     assert(max > 0);
 
-    string bs;
-    bs.assign(max+1, '0');
+    if ( pl == "any" )
+    {
+        bs.assign(max+1, '1');
+        v.set(bs.c_str());
+        return true;
+    }
+    stringstream ss(pl);
+    ss >> setbase(0);
 
+    bs.assign(max+1, '0');
     int bit;
 
     while ( ss >> bit )

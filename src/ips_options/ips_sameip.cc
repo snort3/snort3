@@ -43,9 +43,9 @@
 static const char* s_name = "sameip";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats sameIpPerfStats;
+static THREAD_LOCAL ProfileStats sameIpPerfStats;
 
-static PreprocStats* si_get_profile(const char* key)
+static ProfileStats* si_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &sameIpPerfStats;
@@ -119,7 +119,7 @@ static void sameip_dtor(IpsOption* p)
 static void sameip_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &sameIpPerfStats, si_get_profile);
+    RegisterOtnProfile(s_name, si_get_profile);
 #endif
 }
 

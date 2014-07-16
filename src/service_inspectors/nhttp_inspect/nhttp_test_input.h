@@ -35,7 +35,7 @@ public:
     ~NHttpTestInput();
     void toPaf(uint8_t*& data, uint32_t &length, NHttpEnums::SourceId &sourceId, bool &tcpClose, bool &needBreak);
     void pafFlush(uint32_t length);
-    uint16_t toEval(uint8_t **buffer, int64_t &testNumber);
+    uint16_t toEval(uint8_t **buffer, int64_t &testNumber, NHttpEnums::SourceId &sourceId);
 
     // Hard for NHttpInspect and PAF to share these without making them "global". This is as good a place as any for them to live.
     static bool test_input;

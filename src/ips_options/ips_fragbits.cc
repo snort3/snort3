@@ -80,9 +80,9 @@
 static const char* s_name = "fragbits";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats fragBitsPerfStats;
+static THREAD_LOCAL ProfileStats fragBitsPerfStats;
 
-static PreprocStats* fb_get_profile(const char* key)
+static ProfileStats* fb_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &fragBitsPerfStats;
@@ -322,7 +322,7 @@ static void fragbits_dtor(IpsOption* p)
 static void fragbits_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &fragBitsPerfStats, fb_get_profile);
+    RegisterOtnProfile(s_name, fb_get_profile);
 #endif
 }
 

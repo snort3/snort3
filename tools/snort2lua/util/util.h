@@ -88,7 +88,7 @@ bool get_string(std::istringstream& data_stream, std::string& option, std::strin
 std::string get_rule_option_args(std::istringstream& data_stream);
 
 // remove any ']]' and double spaces from this string.
-std::string &sanitize_multi_line_string(std::string &s);
+std::string &sanitize_lua_string(std::string &s);
 
 // find the location of the first space before max_str_lenght.
 // if no space exists before max_str_length, return the first space

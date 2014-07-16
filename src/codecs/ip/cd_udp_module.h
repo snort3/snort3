@@ -32,8 +32,8 @@ class UdpModule : public DecodeModule
 public:
     UdpModule();
 
+    const RuleMap* get_rules() const;
     bool set(const char*, Value&, SnortConfig*);
-
 };
 
 #endif

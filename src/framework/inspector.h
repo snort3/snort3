@@ -73,6 +73,7 @@ public:
 
     virtual void eval(Packet*) = 0;
     virtual void meta(int, const uint8_t*) { };
+    virtual int exec(int, void*) { return 0; };
 
     // framework support
     unsigned get_ref(unsigned i) { return ref_count[i]; };
@@ -94,8 +95,7 @@ public:
     { return false; };
 
     // IT_SERVICE only
-    virtual class StreamSplitter* get_splitter(bool /*to_server*/)
-    { return nullptr; };
+    virtual class StreamSplitter* get_splitter(bool to_server);
 
     void set_api(const InspectApi* p)
     { api = p; };
@@ -143,7 +143,6 @@ struct InspectApi
 
     const char** buffers;  // null terminated list of exported buffers
     const char* service;   // nullptr when type != IT_SERVICE
-    //ServiceTag tags;     // null terminated list of tags
 
     // main thread funcs - parse time data only
     InspectFunc init;      // allocate process static data
@@ -155,8 +154,6 @@ struct InspectApi
     InspectFunc pinit;     // plugin thread local allocation
     InspectFunc pterm;     // plugin thread local cleanup
     InspectSsnFunc ssn;    // purge caches
-    InspectFunc sum;       // accumulate stats
-    InspectFunc stats;     // output stats
     InspectFunc reset;     // clear stats
 };
 

@@ -38,17 +38,9 @@
 
 using namespace NHttpEnums;
 
-void NHttpMsgChunkBody::loadSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_) {
-    NHttpMsgBody::loadSection(buffer, bufSize, sessionData_);
-
-    numChunks = sessionData->numChunks[sourceId];
-    chunkSections = sessionData->chunkSections[sourceId];
-    chunkOctets = sessionData->chunkOctets[sourceId];
-}
-
-void NHttpMsgChunkBody::initSection() {
-    NHttpMsgBody::initSection();
-}
+NHttpMsgChunkBody::NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+    NHttpMsgBody(buffer, bufSize, sessionData_, sourceId_), numChunks(sessionData->numChunks[sourceId]),
+    chunkSections(sessionData->chunkSections[sourceId]), chunkOctets(sessionData->chunkOctets[sourceId]) {}
 
 void NHttpMsgChunkBody::analyze() {
     bodySections++;
@@ -77,11 +69,12 @@ void NHttpMsgChunkBody::analyze() {
     if (tcpClose) infractions |= INF_TRUNCATED;
 }
 
+
 void NHttpMsgChunkBody::genEvents() {
     if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
 }
 
-void NHttpMsgChunkBody::printSection(FILE *output) const {
+void NHttpMsgChunkBody::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "chunk body");
     fprintf(output, "Expected chunk length %" PRIi64 ", cumulative sections %" PRIi64 ", cumulative octets %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
     fprintf(output, "cumulative chunk sections %" PRIi64 ", cumulative chunk octets %" PRIi64 "\n", chunkSections, chunkOctets);
@@ -89,7 +82,7 @@ void NHttpMsgChunkBody::printSection(FILE *output) const {
     NHttpMsgSection::printMessageWrapup(output);
 }
 
-void NHttpMsgChunkBody::updateFlow() const {
+void NHttpMsgChunkBody::updateFlow() {
     if (tcpClose) {
         sessionData->typeExpected[sourceId] = SEC_CLOSED;
         sessionData->halfReset(sourceId);

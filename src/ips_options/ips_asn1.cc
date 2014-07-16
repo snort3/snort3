@@ -91,11 +91,11 @@
 #define DELIMITERS " ,\t\n"
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats asn1PerfStats;
+static THREAD_LOCAL ProfileStats asn1PerfStats;
 
 static const char* s_name = "asn1";
 
-static PreprocStats* asn1_get_profile(const char* key)
+static ProfileStats* asn1_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &asn1PerfStats;
@@ -325,7 +325,7 @@ static void asn1_dtor(IpsOption* p)
 static void asn1_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &asn1PerfStats, asn1_get_profile);
+    RegisterOtnProfile(s_name, asn1_get_profile);
 #endif
 }
 

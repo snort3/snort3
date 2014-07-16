@@ -41,7 +41,7 @@ class PPPoEModule : public DecodeModule
 public:
     PPPoEModule();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

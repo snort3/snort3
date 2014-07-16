@@ -139,7 +139,7 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
                 print_newline(out, count, whitespace);
 
 
-            util::sanitize_multi_line_string(v->data);
+            util::sanitize_lua_string(v->data);
             out << "[[ ";
             count += 3;
 

@@ -7,6 +7,7 @@ add_library( rule_states
     rule_metadata.cc
     rule_pcre.cc
     rule_unchanged.cc
+    rule_urilen.cc
     rule_api.cc
     rule_api.h
 )

@@ -57,20 +57,8 @@ THREAD_LOCAL SFPERF *perfmon_config = NULL;
 
 static const char* mod_name = "perf_monitor";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats perfmonStats;
-
-static PreprocStats* pm_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &perfmonStats;
-
-    return nullptr;
-}
-#endif
-
-static THREAD_LOCAL SimpleStats pmstats;
-static SimpleStats gpmstats;
+THREAD_LOCAL SimpleStats pmstats;
+THREAD_LOCAL ProfileStats perfmonStats;
 
 /* This function changes the perfmon log files permission if exists.
    It is done in the  PerfMonitorInit() before Snort changed its user & group.
@@ -356,14 +344,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static void pm_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &perfmonStats, 0, &totalPerfStats, pm_get_profile);
-#endif
-}
-
 static Inspector* pm_ctor(Module* m)
 {
     static THREAD_LOCAL unsigned s_init = true;
@@ -372,21 +352,6 @@ static Inspector* pm_ctor(Module* m)
         return nullptr;
 
     return new PerfMonitor((PerfMonModule*)m);
-}
-
-static void pm_sum()
-{
-    sum_stats(&gpmstats, &pmstats);
-}
-
-static void pm_stats()
-{
-    show_stats(&gpmstats, mod_name);
-}
-
-static void pm_reset()
-{
-    memset(&gpmstats, 0, sizeof(gpmstats));
 }
 
 static void pm_dtor(Inspector* p)
@@ -408,16 +373,14 @@ static const InspectApi pm_api =
     PROTO_BIT__ALL,
     nullptr, // buffers
     nullptr, // service
-    pm_init,
+    nullptr, // init
     nullptr, // term
     pm_ctor,
     pm_dtor,
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    pm_sum,
-    pm_stats,
-    pm_reset
+    nullptr  // reset
 };
 
 const BaseApi* nin_perf_monitor = &pm_api.base;

@@ -25,7 +25,10 @@
 #include <vector>
 
 #include "framework/module.h"
+#include "main/thread.h"
 
+extern THREAD_LOCAL SimpleStats bstats;
+extern THREAD_LOCAL ProfileStats bindPerfStats;
 struct Binding;
 
 class BinderModule : public Module
@@ -37,6 +40,10 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
+
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
+    ProfileStats* get_profile() const;
 
     std::vector<Binding*> get_data();
 private:

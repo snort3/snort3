@@ -130,6 +130,8 @@ RPC_PORTS =
 -- configure builtin features
 ---------------------------------------------------------------------------
 
+cd_udp = { gtp_ports = GTP_PORTS }
+
 -- Configure active response for non inline operation.
 active =
 {
@@ -174,8 +176,8 @@ search_engine =
 event_queue =
 {
     max_queue = 16,
-    log = 8,
-    order_events = 'content_length'
+    log = 16,
+    order_events = 'priority'
 }
 
 -- Per packet and rule latency enforcement
@@ -195,23 +197,21 @@ ppm =
 }
 
 -- Configure Perf Profiling for debugging
---[[
 profile =
 {
     rules =
     {
-        count = 10,
+        count = 25,
         sort = 'avg_ticks',
         file = { append = true }
     },
-    preprocs =
+    modules =
     {
-        count = 10,
+        --count = 10,
         sort = 'avg_ticks',
         file = { append = true }
     }
 }
---]]
 
 ---------------------------------------------------------------------------
 -- configure inspectors
@@ -374,31 +374,48 @@ ftp_server =
     ftp_cmds = ftp_default_commands,
     chk_str_fmt = ftp_format_commands,
 
-    alt_max_param =
-    {
-        { length = 0, 
-          commands = [[ ABOR CCC CDUP ESTA FEAT LPSV
-                    NOOP PASV PWD QUIT REIN STOU SYST XCUP XPWD ]] },
-
-        { length = 200, 
-          commands = 'ALLO APPE CMD HELP NLST RETR RNFR STOR STOU XMKD' },
-
-        { length = 256, commands = 'CWD RNTO' },
-        { length = 400, commands = 'PORT' },
-        { length = 512, commands = 'SIZE' },
-    },
-
     cmd_validity =
     {
-        { command = 'ALLO', format = '< int [ char R int ] >' },
+        { command = 'ABOR', length = 0 },
+        { command = 'CCC', length = 0 },
+        { command = 'CDUP', length = 0 },
+        { command = 'ESTA', length = 0 },
+        { command = 'FEAT', length = 0 },
+        { command = 'LPSV', length = 0 },
+        { command = 'NOOP', length = 0 },
+        { command = 'PASV', length = 0 },
+        { command = 'PWD', length = 0 },
+        { command = 'QUIT', length = 0 },
+        { command = 'REIN', length = 0 },
+        { command = 'SYST', length = 0 },
+        { command = 'XCUP', length = 0 },
+        { command = 'XPWD', length = 0 },
+
+        { command = 'APPE', length = 200 },
+        { command = 'CMD', length = 200 },
+        { command = 'HELP', length = 200 },
+        { command = 'NLST', length = 200 },
+        { command = 'RETR', length = 200 },
+        { command = 'RNFR', length = 200 },
+        { command = 'STOR', length = 200 },
+        { command = 'STOU', length = 200 },
+        { command = 'XMKD', length = 200 },
+
+        { command = 'CWD', length = 256 },
+        { command = 'RNTO', length = 256 },
+        { command = 'SIZE', length = 512 },
+
+        { command = 'ALLO', length = 200, format = '< int [ char R int ] >' },
+        { command = 'PORT', length = 400, format = '< host_port >' },
+
         { command = 'EPSV', format = '< [ { char 12 | char A char L char L } ] >' },
         { command = 'MACB', format = '< string >' },
         { command = 'MDTM', format = '< [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string >' },
         { command = 'MODE', format = '< char ASBCZ >' },
-        { command = 'PORT', format = '< host_port >' },
         { command = 'PROT', format = '< char CSEP >' },
         { command = 'STRU', format = '< char FRPO [ string ] >' },
-        { command = 'TYPE', format = '< { char AE [ char NTC ] | char I | char L [ number ] } >' }
+        { command = 'TYPE', 
+          format = '< { char AE [ char NTC ] | char I | char L [ number ] } >' }
     },
 }
 
@@ -417,6 +434,8 @@ ftp_client =
     }
 --]]
 }
+
+ftp_data = { }
 
 ---------------------------------------------------------------------------
 -- stream reassembly and anomaly detection
@@ -508,9 +527,7 @@ if ( not dir ) then
     dir = ''
 end
 
-include '../lua/classification.lua'
-
-print 'Loading references'
+dofile(dir .. 'classification.lua')
 dofile(dir .. 'reference.lua')
 
 default_rules =
@@ -533,30 +550,6 @@ default_rules =
 #alert http ( sid:1; msg:"1"; content:"HTTP"; )
 #alert http any -> 1.2.3.4 ( sid:2; msg:"2"; content:"HTTP"; )
 #alert http any any -> 1.2.3.4 80 ( sid:3; msg:"3"; content:"HTTP"; )
-
-# no ; separated content suboptions
-#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST URI request for known malicious URI - /inst.php?fff="; flow:to_server,established; http_uri; content:"/inst.php?fff=", nocase; content:  "coid=", nocase; metadata:impact_flag red, policy balanced-ips drop, policy security-ips drop, reference:url,labs.snort.org/docs/16924.html; classtype:trojan-activity; sid:16924; rev:5;)
-
-# fast_pattern:<offset>,<length>; ->
-# fast_pattern:<offset> <length>;
-
-# test pattern = "ABABACD"
-#alert tcp any any -> any any ( sid:100; content:"ABA"; )
-#alert tcp any any -> any any ( sid:200; raw_data; content:"ABA"; )
-#alert tcp any any -> any any ( sid:300; pkt_data; content:"ABA"; )
-#alert tcp any any -> any any ( sid:400; content:"ABA"; content:"C", depth 6; )
-#alert tcp any any -> any any ( sid:401; content:"ABA"; content:"C", depth 5; )
-#alert tcp any any -> any any ( sid:402; content:"ABA"; content:"C", offset 5; )
-#alert tcp any any -> any any ( sid:403; content:"ABA"; content:"C", offset 6; )
-#alert tcp any any -> any any ( sid:404; content:"ABA"; content:"C", offset 5, depth 6; )
-alert tcp any any -> any any ( sid:510; content:"ABA"; content:"C", within 1; )
-alert tcp any any -> any any ( sid:110; pcre:"/ABA/"; )
-alert tcp any any -> any any ( sid:210; raw_data; pcre:"/ABA/"; )
-alert tcp any any -> any any ( sid:310; pkt_data; pcre:"/ABA/"; )
-alert tcp any any -> any any ( sid:410; pcre:"/ABA/"; pcre:"/C/"; )
-alert tcp any any -> any any ( sid:411; pcre:"/ABA/"; pcre:"/AC/R"; )
-alert tcp any any -> any any ( sid:412; pcre:"/ABA/"; pcre:"/AC/"; )
-alert tcp any any -> any any ( sid:414; pcre:"/ABA/"; pcre:"/C/R"; )
 ]]
 
 network =
@@ -567,9 +560,9 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    include = '../active.rules',
-    rules = default_rules,
-    enable_builtin_rules = true
+    --include = '../active.rules',
+    --rules = default_rules,
+    enable_builtin_rules = false
 }
 
 --[[
@@ -617,6 +610,83 @@ hosts =
 }
 
 ---------------------------------------------------------------------------
+-- prototype wizard
+---------------------------------------------------------------------------
+
+http_methods = { 'GET', 'POST', 'HEAD' } -- build from default_http_methods
+ftp_commands = { 'USER' } -- add others
+sip_methods = { 'INVITE', 'NOTIFY' } -- add others
+isakmp_hex = { '?????????????????|01|', '?????????????????|10|' }
+
+telnet_commands =
+{
+    '|FF F0|', '|FF F1|', '|FF F2|', '|FF F3|',
+    '|FF F4|', '|FF F5|', '|FF F6|', '|FF F7|',
+    '|FF F8|', '|FF F9|', '|FF FA|', '|FF FB|',
+    '|FF FC|', '|FF FD|', '|FF FE|', '|FF FF|'
+}
+
+wizard =
+{
+    spells =
+    {
+        { service = 'ftp', proto = 'tcp', client_first = false,
+          to_server = ftp_commands, to_client = { '220*FTP' } },
+
+        { service = 'http', proto = 'tcp', client_first = true,
+          to_server = http_methods, to_client = { 'HTTP/' } },
+
+        { service = 'imap', proto = 'tcp', client_first = false,
+          to_server = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
+          to_client = { '**OK', '**BYE' } },
+
+        { service = 'pop3', proto = 'tcp', client_first = false,
+          to_server = { 'USER', 'APOP' },
+          to_client = { '+OK', '-ERR' } },
+
+        { service = 'sip', proto = 'tcp', client_first = true,
+          to_server = sip_methods, to_client = { 'SIP/' } },
+
+        { service = 'smtp', proto = 'tcp', client_first = false,
+          to_server = { 'HELO', 'EHLO' },
+          to_client = { '220*SMTP', '220*MAIL' } },
+
+        { service = 'ssh', proto = 'tcp', client_first = true,
+          to_server = { '*SSH' }, to_client = { '*SSH' } }
+    },
+    hexes =
+    {
+        { service = 'dcerpc', proto = 'tcp', client_first = true, 
+          to_server = { '|05 00|' }, to_client = { '|05 00|' } },
+
+        { service = 'dnp3', proto = 'tcp', client_first = true, 
+          to_server = { '|05 64|' }, to_client = { '|05 64|' } },
+
+        { service = 'isakmp',  proto = 'udp', client_first = true,
+          to_server = isakmp_hex, to_client = isakmp_hex },
+--[[
+        { service = 'modbus', proto = 'tcp', client_first = true,
+          to_server = { '??|0 0|' } },
+
+        { service = 'rpc', proto = 'tcp', client_first = true,
+          to_server = { '????|0 0 0 0 0 0 0 1|' },
+          to_client = { '????|0 0 0 0 0 0 0 1|' } },
+--]]
+        { service = 'smb', proto = 'tcp', client_first = true,
+          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
+
+        { service = 'smb', proto = 'udp', client_first = true,
+          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
+
+        { service = 'ssl', proto = 'tcp', client_first = true,
+          to_server = { '|16 03|' }, to_client = { '|16 03|' } },
+
+        { service = 'telnet', proto = 'tcp', client_first = true,
+          to_server = telnet_commands, to_client = telnet_commands },
+    }
+}
+
+---------------------------------------------------------------------------
 -- prototype bindings:
 --
 -- nets and ports move out of inspector configurations
@@ -651,10 +721,17 @@ binder =
     --{ when = target_x, use = { type = 'http_server', name = 'hi_x' } },
 
     -- classic ports only config
-    { when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
+    --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
     --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'nhttp_inspect' } },
     { when = { proto = 'tcp', ports = FTP_PORTS }, use = { type = 'ftp_server' } },
     { when = { proto = 'tcp', ports = RPC_PORTS }, use = { type = 'rpc_decode' } },
+
+    -- FIXIT these should be defaults when inspector configured
+    { when = { service = 'ftp-data' }, use = { type = 'ftp_data' } },
+    { when = { service = 'ftp' }, use = { type = 'ftp_server' } },
+    { when = { service = 'http' }, use = { type = 'http_server' } },
+    { when = { service = 'sunrpc' }, use = { type = 'rpc_decode' } },
+    { when = { service = 'telnet' }, use = { type = 'telnet' } },
 
     -- auto service id override
     {
@@ -666,11 +743,14 @@ binder =
         when = { nets = '4.5.6.7', proto = 'udp', ports = '53' },
         use = { action = 'allow' }
     },
+    { when = { proto = 'tcp', ports = SSH_PORTS }, use = { action = 'allow' } },
     -- block rule
     {
         when = { nets = '5.6.7.8', proto = 'tcp', ports = '8' },
         use = { action = 'block' }
     },
+    { when = { proto = 'tcp', ports = 'any' }, use = { type = 'wizard' } },
+    { when = { proto = 'udp', ports = 'any' }, use = { type = 'wizard' } },
 }
  
 ---------------------------------------------------------------------------

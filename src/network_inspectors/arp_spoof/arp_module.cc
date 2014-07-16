@@ -32,6 +32,8 @@ static const char* mod_name = "arp_spoof";
 #define ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK_STR \
     "(arp_spoof) Attempted ARP cache overwrite attack"
 
+THREAD_LOCAL SimpleStats asstats;
+
 //-------------------------------------------------------------------------
 // arp_spoof stuff
 //-------------------------------------------------------------------------
@@ -80,7 +82,7 @@ static const RuleMap arp_spoof_rules[] =
 //-------------------------------------------------------------------------
 
 ArpSpoofModule::ArpSpoofModule() : 
-    Module(mod_name, arp_spoof_params, arp_spoof_rules)
+    Module(mod_name, arp_spoof_params)
 {
     config = new ArpSpoofConfig;
 
@@ -93,6 +95,12 @@ ArpSpoofModule::~ArpSpoofModule()
     if ( config )
         delete config;
 }
+
+const RuleMap* ArpSpoofModule::get_rules() const
+{ return arp_spoof_rules; }
+
+ProfileStats* ArpSpoofModule::get_profile() const
+{ return &arpPerfStats; }
 
 bool ArpSpoofModule::set(const char*, Value& v, SnortConfig*)
 {
@@ -126,4 +134,11 @@ bool ArpSpoofModule::end(const char*, int idx, SnortConfig*)
 
     return true;
 }
+
+const char** ArpSpoofModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* ArpSpoofModule::get_counts() const
+{ return (PegCount*)&asstats; }
+
 

@@ -198,6 +198,7 @@ struct FTP_SERVER_PROTO_CONF
     CMD_LOOKUP* cmd_lookup;
 
     FTP_SERVER_PROTO_CONF();
+    ~FTP_SERVER_PROTO_CONF();
 };
 
 typedef struct s_FTP_BOUNCE_TO
@@ -228,6 +229,7 @@ struct FTP_CLIENT_PROTO_CONF
     BOUNCE_LOOKUP* bounce_lookup;
 
     FTP_CLIENT_PROTO_CONF();
+    ~FTP_CLIENT_PROTO_CONF();
 };
 
 /*

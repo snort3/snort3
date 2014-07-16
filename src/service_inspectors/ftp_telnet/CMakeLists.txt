@@ -4,6 +4,8 @@ set (FILE_LIST
     ft_main.cc
     ft_main.h
     ftp.cc
+    ftp_data.cc
+    ftp_data.h
     ftp_bounce_lookup.cc
     ftp_bounce_lookup.h
     ftp_client.h

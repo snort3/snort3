@@ -322,7 +322,7 @@ int Active_IsRSTCandidate(const Packet* p)
 
 int Active_IsUNRCandidate(const Packet* p)
 {
-    // FIXTHIS allow unr to tcp/udp/icmp4/icmp6 only or for all
+    // FIXIT allow unr to tcp/udp/icmp4/icmp6 only or for all
     switch ( GetInnerProto(p) ) {
     case PROTO_UDP:
     case PROTO_TCP:
@@ -438,7 +438,7 @@ static inline int _Active_DoReset(Packet *p)
                 Active_QueueReject();
             break;
 
-        // FIXTHIS send unr to udp/icmp4/icmp6 only or for all non-tcp?
+        // FIXIT send unr to udp/icmp4/icmp6 only or for all non-tcp?
         case IPPROTO_UDP:
         case IPPROTO_ICMP:
         case IPPROTO_ICMPV6:

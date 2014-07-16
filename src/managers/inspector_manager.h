@@ -46,10 +46,6 @@ public:
     static void new_config(SnortConfig*);
     static void delete_config(SnortConfig*);
 
-    static void dump_stats(SnortConfig*);
-    static void accumulate(SnortConfig*);
-    static void reset_stats(SnortConfig*);
-
     static void instantiate(const InspectApi*, Module*, SnortConfig*);
     static Inspector* get_inspector(const char* key);
     static void free_inspector(Inspector*);
@@ -65,6 +61,7 @@ public:
     static void dispatch_meta(FrameworkPolicy*, int type, const uint8_t* data);
 
     static void execute(Packet*);
+    static void bumble(Packet*);
     static void empty_trash();
 };
 

@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_ipv4_module.h"
 
-
-static const Parameter ipv4_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 // rules which will loaded into snort. 
 // You can now reference these rules by calling a codec_event
 // in your main codec's functions
@@ -67,12 +60,9 @@ static const RuleMap ipv4_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-Ipv4Module::Ipv4Module() : DecodeModule(CD_IPV4_NAME, ipv4_params, ipv4_rules)
+Ipv4Module::Ipv4Module() : DecodeModule(CD_IPV4_NAME)
 { }
 
-bool Ipv4Module::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
-
+const RuleMap* Ipv4Module::get_rules() const
+{ return ipv4_rules; }
 

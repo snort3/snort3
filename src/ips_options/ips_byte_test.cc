@@ -116,11 +116,11 @@
 #define TEXTLEN  (PARSELEN + 2)
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats byteTestPerfStats;
+static THREAD_LOCAL ProfileStats byteTestPerfStats;
 
 static const char* s_name = "byte_test";
 
-static PreprocStats* bt_get_profile(const char* key)
+static ProfileStats* bt_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &byteTestPerfStats;
@@ -624,7 +624,7 @@ static void byte_test_dtor(IpsOption* p)
 static void byte_test_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &byteTestPerfStats, bt_get_profile);
+    RegisterOtnProfile(s_name, bt_get_profile);
 #endif
 }
 

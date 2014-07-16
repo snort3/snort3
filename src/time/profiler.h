@@ -149,9 +149,10 @@ void ShowRuleProfiles(void);
 void ResetRuleProfiling(void);
 
 /* Preprocessor stats info */
-struct PreprocStats
+struct ProfileStats
 {
-    uint64_t ticks, ticks_start;
+    uint64_t ticks;
+    uint64_t ticks_start;
     uint64_t checks;
     uint64_t exits;
 };
@@ -166,23 +167,22 @@ typedef struct _ProfileConfig
 } ProfileConfig;
 
 // thread local access method
-typedef PreprocStats* (*get_profile_func)(const char*);
+typedef ProfileStats* (*get_profile_func)(const char*);
 
-// FIXIT "preprocessor" here is a misnomer
-void RegisterPreprocessorProfile(
-    const char* keyword, PreprocStats* stats,
-    int layer, PreprocStats* parent, get_profile_func);
+void RegisterProfile(
+    const char* keyword, const char* parent,
+    get_profile_func, class Module* owner = nullptr);
 
-void RegisterOtnProfile(
-    const char* keyword, PreprocStats* stats, get_profile_func);
+void RegisterOtnProfile(const char* keyword, get_profile_func);
+void RegisterProfile(class Module*);
 
 void ShowPreprocProfiles(void);
 void ResetPreprocProfiling(void);
-void ReleasePreprocStats(void);
-void CleanupPreprocStatsNodeList(void);
+void ReleaseProfileStats(void);
+void CleanupProfileStatsNodeList(void);
 
-extern THREAD_LOCAL PreprocStats totalPerfStats;
-extern THREAD_LOCAL PreprocStats metaPerfStats;
+extern THREAD_LOCAL ProfileStats totalPerfStats;
+extern THREAD_LOCAL ProfileStats metaPerfStats;
 #else
 #define PROFILE_VARS
 #define PROFILE_VARS_NAMED(name)

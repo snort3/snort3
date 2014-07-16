@@ -41,6 +41,7 @@
 #include "ftp_splitter.h"
 #include "pp_ftp.h"
 #include "profiler.h"
+#include "ftp_data.h"
 #include "telnet.h"
 
 #include "stream/stream_api.h"
@@ -51,31 +52,13 @@
 #include "framework/share.h"
 #include "detection/detection_util.h"
 
-int16_t ftp_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
 static const char* client_key = "ftp_client";
 static const char* server_key = "ftp_server";
-static const char* data_key = "ftp_data";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ftpPerfStats;
-static THREAD_LOCAL PreprocStats ftpdataPerfStats;
-
-static PreprocStats* ftp_get_profile(const char* key)
-{
-    if ( !strcmp(key, server_key) )
-        return &ftpPerfStats;
-
-    if ( !strcmp(key, data_key) )
-        return &ftpdataPerfStats;
-
-    return nullptr;
-}
-#endif
-
-static THREAD_LOCAL SimpleStats ftstats;
-static SimpleStats gftstats;
+THREAD_LOCAL ProfileStats ftpPerfStats;
+THREAD_LOCAL SimpleStats ftstats;
 
 static FTP_CLIENT_PROTO_CONF* bind_client = nullptr;
 static FTP_SERVER_PROTO_CONF* bind_server = nullptr;
@@ -89,142 +72,6 @@ FTP_SERVER_PROTO_CONF* get_default_ftp_server()
 //-------------------------------------------------------------------------
 // implementation stuff
 //-------------------------------------------------------------------------
-
-static void FTPDataProcess(Packet *p, FTP_DATA_SESSION *data_ssn)
-{
-    int status;
-
-    set_file_data((uint8_t *)p->data, p->dsize);
-
-    status = file_api->file_process(p, (uint8_t *)p->data,
-        (uint16_t)p->dsize, data_ssn->position, data_ssn->direction, false);
-
-    /* Filename needs to be set AFTER the first call to file_process( ) */
-    if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))
-    {
-        file_api->set_file_name(p->flow,
-          (uint8_t *)data_ssn->filename, data_ssn->file_xfer_info);
-        data_ssn->packet_flags |= FTPDATA_FLG_FILENAME_SET;
-    }
-
-    /* Ignore the rest of this transfer if file processing is complete
-     * and preprocessor was configured to ignore ftp-data sessions. */
-    if (!status && data_ssn->data_chan)
-    {
-        stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
-    }
-}
-
-static int SnortFTPData(Packet *p)
-{
-    FTP_DATA_SESSION *data_ssn;
-
-    if (!p->flow)
-        return -1;
-
-    data_ssn = (FTP_DATA_SESSION *)
-        p->flow->get_application_data(FtpFlowData::flow_id);
-
-    if (!PROTO_IS_FTP_DATA(data_ssn))
-        return -2;
-
-    /* Do this now before splitting the work for rebuilt and raw packets. */
-    if ((p->packet_flags & PKT_PDU_TAIL) || (p->tcph->th_flags & TH_FIN))
-        SetFTPDataEOFDirection(p, data_ssn);
-
-    /*
-     * Raw Packet Processing
-     */
-    if (!(p->packet_flags & PKT_REBUILT_STREAM))
-    {
-        if (!(data_ssn->packet_flags & FTPDATA_FLG_REASSEMBLY_SET))
-        {
-            /* Enable Reassembly */
-            stream.set_splitter(p->flow, true);
-            stream.set_splitter(p->flow, false);
-
-            data_ssn->packet_flags |= FTPDATA_FLG_REASSEMBLY_SET;
-        }
-
-        if (data_ssn->file_xfer_info == FTPP_FILE_UNKNOWN)
-            return 0;
-
-        if (!FTPDataDirection(p, data_ssn) && FTPDataEOF(data_ssn))
-        {
-            /* flush any remaining data from transmitter. */
-            stream.response_flush_stream(p);
-
-            /* If position is not set to END then no data has been flushed */
-            if ((data_ssn->position != SNORT_FILE_END) ||
-                (data_ssn->position != SNORT_FILE_FULL))
-            {
-                DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-                  "FTP-DATA Processing Raw Packet\n"););
-
-                finalFilePosition(&data_ssn->position);
-                FTPDataProcess(p, data_ssn);
-            }
-        }
-
-        return 0;
-    }
-
-    if (data_ssn->file_xfer_info == FTPP_FILE_UNKNOWN)
-    {
-        /* FTP-Data session is in limbo, we need to lookup the control session
-         * to figure out what to do. */
-
-        FtpFlowData* fd = (FtpFlowData*)stream.get_application_data_from_key(
-            &data_ssn->ftp_key, FtpFlowData::flow_id);
-
-        FTP_SESSION *ftp_ssn = fd ? &fd->session : NULL;
-
-        if (!PROTO_IS_FTP(ftp_ssn))
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
-              "FTP-DATA Invalid FTP_SESSION retrieved durring lookup\n"););
-
-            if (data_ssn->data_chan)
-                stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
-
-            return -2;
-        }
-
-        switch (ftp_ssn->file_xfer_info)
-        {
-            case FTPP_FILE_UNKNOWN:
-                /* Keep waiting */
-                break;
-
-            case FTPP_FILE_IGNORE:
-                /* This wasn't a file transfer; ignore it */
-                if (data_ssn->data_chan)
-                    stream.set_ignore_direction(p->flow, SSN_DIR_BOTH);
-                return 0;
-
-            default:
-                /* A file transfer was detected. */
-                data_ssn->direction = ftp_ssn->data_xfer_dir;
-                data_ssn->file_xfer_info = ftp_ssn->file_xfer_info;
-                ftp_ssn->file_xfer_info  = 0;
-                data_ssn->filename  = ftp_ssn->filename;
-                ftp_ssn->filename   = NULL;
-                break;
-        }
-    }
-
-    if (!FTPDataDirection(p, data_ssn))
-        return 0;
-
-    if (FTPDataEOFDirection(p, data_ssn))
-        finalFilePosition(&data_ssn->position);
-    else
-        initFilePosition(&data_ssn->position,
-          file_api->get_file_processed_size(p->flow));
-
-    FTPDataProcess(p, data_ssn);
-    return 0;
-}
 
 static inline int InspectClientPacket (Packet* p)
 {
@@ -259,7 +106,7 @@ static int SnortFTP(
         DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
             "Server packet: %.*s\n", p->dsize, p->data));
 
-        // FIXTHIS breaks target-based non-standard ports
+        // FIXIT breaks target-based non-standard ports
         //if ( !ScPafEnabled() )
             /* Force flush of client side of stream  */
         stream.response_flush_stream(p);
@@ -523,7 +370,6 @@ public:
     bool configure(SnortConfig*);
     void show(SnortConfig*);
     void eval(Packet*);
-    void eval_alt(Packet*);
     StreamSplitter* get_splitter(bool);
 
 private:
@@ -540,7 +386,7 @@ FtpServer::FtpServer(FTP_SERVER_PROTO_CONF* server)
 FtpServer::~FtpServer ()
 {
     CleanupFTPServerConf(ftp_server);
-    free(ftp_server);
+    delete ftp_server;
 
     if ( ftp_client )
         // FIXIT make sure CleanupFTPClientConf() is called
@@ -568,35 +414,10 @@ StreamSplitter* FtpServer::get_splitter(bool c2s)
     return new FtpSplitter(c2s);
 }
 
-void FtpServer::eval_alt(Packet* p)
-{
-    // precondition - what we registered for
-    assert(IsTCP(p) && p->data && p->dsize);
-
-    ++ftstats.total_packets;
-    snort_ftp(p);
-}
-
 void FtpServer::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsTCP(p));
-
-    if ( file_api->get_max_file_depth() >= 0 )
-    {
-        if ( stream.get_application_protocol_id(p->flow)
-            == ftp_data_app_id )
-        {
-            PROFILE_VARS;
-            PREPROC_PROFILE_START(ftpdataPerfStats);
-            ++ftstats.total_packets;
-            SnortFTPData(p);
-            PREPROC_PROFILE_END(ftpdataPerfStats);
-            return;
-        }
-    }
-    if ( !p->dsize || (p->data == NULL) )
-        return;
+    assert(IsTCP(p) && p->data && p->dsize);
 
     ++ftstats.total_packets;
     snort_ftp(p);
@@ -658,18 +479,8 @@ static Module* fs_mod_ctor()
 
 static void fs_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        server_key, &ftpPerfStats, 0, &totalPerfStats, ftp_get_profile);
-    RegisterPreprocessorProfile(
-        data_key, &ftpdataPerfStats, 0, &totalPerfStats, ftp_get_profile);
-#endif
-
-    ftp_app_id = AddProtocolReference("ftp");
-    ftp_data_app_id = AddProtocolReference("ftp-data");
-
+    ftp_data_app_id = FindProtocolReference("ftp-data");
     FtpFlowData::init();
-    FtpDataFlowData::init();
 }
 
 static Inspector* fs_ctor(Module* mod)
@@ -689,21 +500,6 @@ static void fs_dtor(Inspector* p)
     delete p;
 }
 
-static void fs_sum()
-{
-    sum_stats(&gftstats, &ftstats);
-}
-
-static void fs_stats()
-{
-    show_stats(&gftstats, server_key);
-}
-
-static void fs_reset()
-{
-    memset(&gftstats, 0, sizeof(gftstats));
-}
-
 static const InspectApi fs_api =
 {
     {
@@ -718,7 +514,7 @@ static const InspectApi fs_api =
     IT_SERVICE,
     PROTO_BIT__TCP,
     nullptr, // buffers
-    "ftp",   // FIXIT add ftp-data inspector
+    "ftp",
     fs_init,
     nullptr, // term
     fs_ctor,
@@ -726,22 +522,22 @@ static const InspectApi fs_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    fs_sum,
-    fs_stats,
-    fs_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &tn_api.base,
     &fc_api.base,
     &fs_api.base,
+    &fd_api.base,
+    &tn_api.base,
     nullptr
 };
 #else
 const BaseApi* sin_telnet = &tn_api.base;
 const BaseApi* sin_ftp_client = &fc_api.base;
 const BaseApi* sin_ftp_server = &fs_api.base;
+const BaseApi* sin_ftp_data = &fd_api.base;
 #endif
 

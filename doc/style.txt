@@ -49,7 +49,7 @@ yet firm so feedback is welcome to get something we can live with.
   write, easier to read, and overall better code.
 
 * Use consistent spacing and linebreaks.  Always indent 4 spaces from the
-  breaking line.  Try to keep lines less than 80 chars; it greatly helps
+  breaking line.  Keep lines less than 100 chars; it greatly helps
   readability.
 
     No:

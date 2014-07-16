@@ -44,9 +44,9 @@
 static const char* s_name = "icode";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats icmpCodePerfStats;
+static THREAD_LOCAL ProfileStats icmpCodePerfStats;
 
-static PreprocStats* ic_get_profile(const char* key)
+static ProfileStats* ic_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &icmpCodePerfStats;
@@ -282,7 +282,7 @@ static void icode_dtor(IpsOption* p)
 static void icode_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &icmpCodePerfStats, ic_get_profile);
+    RegisterOtnProfile(s_name, ic_get_profile);
 #endif
 }
 

@@ -36,7 +36,7 @@ using namespace std;
 static THREAD_LOCAL uint64_t s_bcnt=0;
 
 #ifdef PERF_PROFILING
-THREAD_LOCAL PreprocStats mpsePerfStats;
+THREAD_LOCAL ProfileStats mpsePerfStats;
 #endif
 
 //-------------------------------------------------------------------------

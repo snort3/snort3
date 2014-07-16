@@ -36,7 +36,6 @@
 
 // Need to replace this simple algorithm for better performance
 int32_t strToCode(const uint8_t *text, int32_t textLen, const StrCode table[]) {
-    if (textLen <= 0) return NHttpEnums::STAT_PROBLEMATIC;
     for (int32_t k=0; table[k].name != nullptr; k++) {
         if ((textLen == (int) strlen(table[k].name)) && (memcmp(text, table[k].name, textLen) == 0)) {
             return table[k].code;

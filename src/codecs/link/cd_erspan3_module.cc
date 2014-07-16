@@ -21,13 +21,6 @@
 
 #include "codecs/link/cd_erspan3_module.h"
 
-
-static const Parameter erspan3_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap erspan3_rules[] =
 {
     { DECODE_ERSPAN3_DGRAM_LT_HDR, "(" CD_ERSPAN3_NAME ") captured < ERSpan Type3 Header Length" },
@@ -38,10 +31,9 @@ static const RuleMap erspan3_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-Erspan3Module::Erspan3Module() : DecodeModule(CD_ERSPAN3_NAME, erspan3_params, erspan3_rules)
+Erspan3Module::Erspan3Module() : DecodeModule(CD_ERSPAN3_NAME)
 { }
 
-bool Erspan3Module::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* Erspan3Module::get_rules() const
+{ return erspan3_rules; }
+

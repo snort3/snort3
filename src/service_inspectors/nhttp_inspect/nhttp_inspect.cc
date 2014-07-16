@@ -42,14 +42,6 @@
 
 using namespace NHttpEnums;
 
-THREAD_LOCAL NHttpMsgRequest* NHttpInspect::msgRequest;
-THREAD_LOCAL NHttpMsgStatus* NHttpInspect::msgStatus;
-THREAD_LOCAL NHttpMsgHeader* NHttpInspect::msgHead;
-THREAD_LOCAL NHttpMsgBody* NHttpInspect::msgBody;
-THREAD_LOCAL NHttpMsgChunkHead* NHttpInspect::msgChunkHead;
-THREAD_LOCAL NHttpMsgChunkBody* NHttpInspect::msgChunkBody;
-THREAD_LOCAL NHttpMsgTrailer* NHttpInspect::msgTrailer;
-
 NHttpInspect::NHttpInspect(bool test_input, bool _test_output) : test_output(_test_output)
 {
     NHttpTestInput::test_input = test_input;
@@ -60,6 +52,7 @@ NHttpInspect::NHttpInspect(bool test_input, bool _test_output) : test_output(_te
 
 NHttpInspect::~NHttpInspect ()
 {
+    delete msgSection;
     if (NHttpTestInput::test_input) {
         delete NHttpTestInput::testInput;
         if (testOut) fclose(testOut);
@@ -106,61 +99,63 @@ void NHttpInspect::show(SnortConfig*)
     LogMessage("NHttpInspect\n");
 }
 
-void NHttpInspect::eval (Packet* p)
+void NHttpInspect::eval(Packet* p)
 {
     // Only packets from the StreamSplitter can be processed
     if (!PacketHasPAFPayload(p)) return;
 
-    Flow *flow = p->flow;
+    process(p->data, p->dsize, p->flow, (p->packet_flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER);
+}
+
+void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId sourceId)
+{
+    delete msgSection;
+    msgSection = nullptr;
+
     NHttpFlowData* sessionData = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(sessionData);
 
-    NHttpMsgSection *msgSect = nullptr;
-
     if (!NHttpTestInput::test_input) {
-        switch (sessionData->sectionType) {
-          case SEC_REQUEST: msgSect = msgRequest; break;
-          case SEC_STATUS: msgSect = msgStatus; break;
-          case SEC_HEADER: msgSect = msgHead; break;
-          case SEC_BODY: msgSect = msgBody; break;
-          case SEC_CHUNKHEAD: msgSect = msgChunkHead; break;
-          case SEC_CHUNKBODY: msgSect = msgChunkBody; break;
-          case SEC_TRAILER: msgSect = msgTrailer; break;
+        switch (sessionData->sectionType[sourceId]) {
+          case SEC_REQUEST: msgSection = new NHttpMsgRequest(data, dsize, sessionData, sourceId); break;
+          case SEC_STATUS: msgSection = new NHttpMsgStatus(data, dsize, sessionData, sourceId); break;
+          case SEC_HEADER: msgSection = new NHttpMsgHeader(data, dsize, sessionData, sourceId); break;
+          case SEC_BODY: msgSection = new NHttpMsgBody(data, dsize, sessionData, sourceId); break;
+          case SEC_CHUNKHEAD: msgSection = new NHttpMsgChunkHead(data, dsize, sessionData, sourceId); break;
+          case SEC_CHUNKBODY: msgSection = new NHttpMsgChunkBody(data, dsize, sessionData, sourceId); break;
+          case SEC_TRAILER: msgSection = new NHttpMsgTrailer(data, dsize, sessionData, sourceId); break;
           case SEC_DISCARD: return;
           default: assert(0); return;
         }
-        msgSect->loadSection(p->data, p->dsize, sessionData);
     }
     else {
         uint8_t *testBuffer;
         uint16_t testLength;
-        if ((testLength = NHttpTestInput::testInput->toEval(&testBuffer, testNumber)) > 0) {
-            switch (sessionData->sectionType) {
-              case SEC_REQUEST: msgSect = msgRequest; break;
-              case SEC_STATUS: msgSect = msgStatus; break;
-              case SEC_HEADER: msgSect = msgHead; break;
-              case SEC_BODY: msgSect = msgBody; break;
-              case SEC_CHUNKHEAD: msgSect = msgChunkHead; break;
-              case SEC_CHUNKBODY: msgSect = msgChunkBody; break;
-              case SEC_TRAILER: msgSect = msgTrailer; break;
+        if ((testLength = NHttpTestInput::testInput->toEval(&testBuffer, testNumber, sourceId)) > 0) {
+            switch (sessionData->sectionType[sourceId]) {
+              case SEC_REQUEST: msgSection = new NHttpMsgRequest(testBuffer, testLength, sessionData, sourceId); break;
+              case SEC_STATUS: msgSection = new NHttpMsgStatus(testBuffer, testLength, sessionData, sourceId); break;
+              case SEC_HEADER: msgSection = new NHttpMsgHeader(testBuffer, testLength, sessionData, sourceId); break;
+              case SEC_BODY: msgSection = new NHttpMsgBody(testBuffer, testLength, sessionData, sourceId); break;
+              case SEC_CHUNKHEAD: msgSection = new NHttpMsgChunkHead(testBuffer, testLength, sessionData, sourceId); break;
+              case SEC_CHUNKBODY: msgSection = new NHttpMsgChunkBody(testBuffer, testLength, sessionData, sourceId); break;
+              case SEC_TRAILER: msgSection = new NHttpMsgTrailer(testBuffer, testLength, sessionData, sourceId); break;
               case SEC_DISCARD: return;
               default: assert(0); return;
             }
-            msgSect->loadSection(testBuffer, testLength, sessionData);
         }
         else {
             printf("Zero length test data.\n");
             return;
         }
     }
-    msgSect->initSection();
-    msgSect->analyze();
-    msgSect->updateFlow();
-    msgSect->genEvents();
-    msgSect->legacyClients();
+    msgSection->analyze();
+    msgSection->updateFlow();
+    msgSection->genEvents();
+    msgSection->legacyClients();
 
     if (test_output) {
-        if (!NHttpTestInput::test_input) msgSect->printSection(stdout);
+        if (!NHttpTestInput::test_input) msgSection->printSection(stdout);
         else {
             if (testNumber != fileTestNumber) {
                 if (testOut) fclose (testOut);
@@ -169,7 +164,7 @@ void NHttpInspect::eval (Packet* p)
                 snprintf(fileName, sizeof(fileName), "%s%" PRIi64 ".txt", testOutputPrefix, testNumber);
                 if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
             }
-            msgSect->printSection(testOut);
+            msgSection->printSection(testOut);
         }
     }
 }

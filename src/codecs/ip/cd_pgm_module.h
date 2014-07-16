@@ -32,7 +32,7 @@ class PgmModule : public DecodeModule
 public:
     PgmModule();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

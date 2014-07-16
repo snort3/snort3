@@ -44,9 +44,9 @@
 static const char* s_name = "ipopts";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ipOptionPerfStats;
+static THREAD_LOCAL ProfileStats ipOptionPerfStats;
 
-static PreprocStats* opt_get_profile(const char* key)
+static ProfileStats* opt_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &ipOptionPerfStats;
@@ -168,6 +168,7 @@ static void ipopts_parse(char *data, IpOptionData *ds_ptr)
     if(data == NULL)
     {
         ParseError("IP Option keyword missing argument");
+        return;
     }
 
     while(isspace((u_char)*data))
@@ -241,7 +242,7 @@ static void ipopts_dtor(IpsOption* p)
 static void ipopts_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &ipOptionPerfStats, opt_get_profile);
+    RegisterOtnProfile(s_name, opt_get_profile);
 #endif
 }
 

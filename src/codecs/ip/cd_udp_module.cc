@@ -58,8 +58,11 @@ static const RuleMap udp_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-UdpModule::UdpModule() : DecodeModule(CD_UDP_NAME, udp_params, udp_rules)
+UdpModule::UdpModule() : DecodeModule(CD_UDP_NAME, udp_params)
 { }
+
+const RuleMap* UdpModule::get_rules() const
+{ return udp_rules; }
 
 bool UdpModule::set(const char*, Value& v, SnortConfig* sc)
 {

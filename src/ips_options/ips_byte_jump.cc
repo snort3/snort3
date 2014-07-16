@@ -93,11 +93,11 @@
 #include "framework/ips_option.h"
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats byteJumpPerfStats;
+static THREAD_LOCAL ProfileStats byteJumpPerfStats;
 
 static const char* s_name = "byte_jump";
 
-static PreprocStats* bj_get_profile(const char* key)
+static ProfileStats* bj_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &byteJumpPerfStats;
@@ -481,7 +481,7 @@ static void byte_jump_dtor(IpsOption* p)
 static void byte_jump_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &byteJumpPerfStats, bj_get_profile);
+    RegisterOtnProfile(s_name, bj_get_profile);
 #endif
 }
 

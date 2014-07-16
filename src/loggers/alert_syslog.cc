@@ -213,6 +213,7 @@ static void AlertSyslog(
         else
             SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
 
+        if ( event )
         {
             if ((event->sig_info->classType != NULL)
                     && (event->sig_info->classType->name != NULL))

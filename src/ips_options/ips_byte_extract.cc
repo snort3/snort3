@@ -38,11 +38,11 @@
 #include "framework/cursor.h"
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats byteExtractPerfStats;
+static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 
 static const char* s_name = "byte_extract";
 
-static PreprocStats* be_get_profile(const char* key)
+static ProfileStats* be_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &byteExtractPerfStats;
@@ -592,7 +592,7 @@ static void byte_extract_tterm(SnortConfig*)
 void byte_extract_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &byteExtractPerfStats, be_get_profile);
+    RegisterOtnProfile(s_name, be_get_profile);
 #endif
 }
 

@@ -35,7 +35,7 @@ struct Packet;
 //-------------------------------------------------------------------------
 
 #ifdef PERF_PROFILING
-extern THREAD_LOCAL PreprocStats decodePerfStats;
+extern THREAD_LOCAL ProfileStats decodePerfStats;
 #endif
 
 

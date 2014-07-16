@@ -43,9 +43,9 @@
 static const char* s_name = "seq";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats tcpSeqPerfStats;
+static THREAD_LOCAL ProfileStats tcpSeqPerfStats;
 
-static PreprocStats* seq_get_profile(const char* key)
+static ProfileStats* seq_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &tcpSeqPerfStats;
@@ -173,7 +173,7 @@ static void seq_dtor(IpsOption* p)
 static void seq_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &tcpSeqPerfStats, seq_get_profile);
+    RegisterOtnProfile(s_name, seq_get_profile);
 #endif
 }
 

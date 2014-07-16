@@ -64,9 +64,9 @@ static const char* s_name = "pcre";
 static int s_ovector_max = 0;
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats pcrePerfStats;
+static THREAD_LOCAL ProfileStats pcrePerfStats;
 
-static PreprocStats* pcre_get_profile(const char* key)
+static ProfileStats* pcre_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &pcrePerfStats;
@@ -622,7 +622,7 @@ static void pcre_dtor(IpsOption* p)
 static void pcre_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &pcrePerfStats, pcre_get_profile);
+    RegisterOtnProfile(s_name, pcre_get_profile);
 #endif
 }
 

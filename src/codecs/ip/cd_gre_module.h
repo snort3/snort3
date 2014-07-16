@@ -32,7 +32,7 @@ class GreModule : public DecodeModule
 public:
     GreModule();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

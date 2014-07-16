@@ -253,9 +253,10 @@ void NHttpTestInput::pafFlush(uint32_t length) {
 }
 
 
-uint16_t NHttpTestInput::toEval(uint8_t **buffer, int64_t &testNumber_) {
+uint16_t NHttpTestInput::toEval(uint8_t **buffer, int64_t &testNumber_, SourceId &sourceId) {
     if (!flushed) return 0;
     testNumber_ = testNumber;
+    sourceId = lastSourceId;
     *buffer = msgBuf;
     if (fillOctets > 0) {
         uint32_t fillOut = (fillOctets <= 16384) ? fillOctets : 16384;

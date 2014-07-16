@@ -37,7 +37,7 @@
 #ifdef HAVE_OPENSSL_SHA
 #include <openssl/sha.h>
 #define SHA256CONTEXT SHA256_CTX
-#define SHA256INIT    SHA256_Init  // FIXTHIS these are deprecated
+#define SHA256INIT    SHA256_Init  // FIXIT these are deprecated
 #define SHA256UPDATE  SHA256_Update
 #define SHA256FINAL   SHA256_Final
 #else

@@ -44,9 +44,9 @@
 static const char* s_name = "dsize";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats dsizePerfStats;
+static THREAD_LOCAL ProfileStats dsizePerfStats;
 
-static PreprocStats* dsz_get_profile(const char* key)
+static ProfileStats* dsz_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &dsizePerfStats;
@@ -268,7 +268,7 @@ static void dsize_dtor(IpsOption* p)
 static void dsize_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &dsizePerfStats, dsz_get_profile);
+    RegisterOtnProfile(s_name, dsz_get_profile);
 #endif
 }
 

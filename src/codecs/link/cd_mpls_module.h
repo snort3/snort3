@@ -32,8 +32,8 @@ class MplsModule : public DecodeModule
 public:
     MplsModule();
 
+    const RuleMap* get_rules() const;
     bool set(const char*, Value&, SnortConfig*);
-
 };
 
 #endif

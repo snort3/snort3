@@ -87,7 +87,10 @@ static const RuleMap ppm_rules[] =
 // ppm module
 //-------------------------------------------------------------------------
 
-PpmModule::PpmModule() : Module("ppm", ppm_params, ppm_rules) { }
+PpmModule::PpmModule() : Module("ppm", ppm_params) { }
+
+const RuleMap* PpmModule::get_rules() const
+{ return ppm_rules; }
 
 bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
 {

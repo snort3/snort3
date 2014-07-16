@@ -432,7 +432,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
         default:
             if (ScLogVerbose())
             {
-                // FIXTHIS should only be output once!
+                // FIXIT should only be output once!
                 ErrorMessage("Datalink %i type 2nd layer display is not "
                              "supported\n", DAQ_GetBaseProtocol());
             }
@@ -1462,10 +1462,10 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
 
     int offset = 0;
     char conv[] = "0123456789ABCDEF";   /* xlation lookup table */
-    int ip_start, ip_ob_start, ip_ob_end, byte_pos, char_pos;
+    int ip_ob_start, ip_ob_end, byte_pos, char_pos;
     int i;
 
-    ip_start = byte_pos = char_pos = 0;
+    byte_pos = char_pos = 0;
 
     ip_ob_start = ip_ob_end = -1;
 
@@ -1506,7 +1506,7 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
             }
         }
 
-        ip_start = p->layers[i].start - data;
+        int ip_start = p->layers[i].start - data;
 
         if(ip_start > 0 )
         {
@@ -1644,7 +1644,7 @@ static void LogPacketType(TextLog* log, Packet* p)
         TextLog_Print(log, "%s", "Frag reassembled packet");
         break;
     default:
-        // FIXTHIS do we get here for portscan or sdf?
+        // FIXIT do we get here for portscan or sdf?
         TextLog_Print(log, "%s", "Cooked packet");
         break;
     }

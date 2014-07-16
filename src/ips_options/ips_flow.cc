@@ -47,9 +47,9 @@
 static const char* s_name = "flow";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats flowCheckPerfStats;
+static THREAD_LOCAL ProfileStats flowCheckPerfStats;
 
-static PreprocStats* fc_get_profile(const char* key)
+static ProfileStats* fc_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &flowCheckPerfStats;
@@ -431,7 +431,7 @@ static void flow_dtor(IpsOption* p)
 static void flow_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &flowCheckPerfStats, fc_get_profile);
+    RegisterOtnProfile(s_name, fc_get_profile);
 #endif
 }
 

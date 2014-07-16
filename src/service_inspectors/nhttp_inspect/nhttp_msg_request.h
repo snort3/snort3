@@ -30,6 +30,7 @@
 #define NHTTP_MSG_REQUEST_H
 
 #include "nhttp_str_to_code.h"
+#include "nhttp_uri.h"
 #include "nhttp_uri_norm.h"
 #include "nhttp_msg_start.h"
 
@@ -39,62 +40,22 @@
 
 class NHttpMsgRequest: public NHttpMsgStart {
 public:
-    NHttpMsgRequest() {};
-    void initSection();
-    void analyze();
-    void printSection(FILE *output) const;
+    NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {};
+    ~NHttpMsgRequest() { delete uri; };
+    void printSection(FILE *output);
     void genEvents();
-    void updateFlow() const;
-    void legacyClients() const;
+    void updateFlow();
+    void legacyClients();
 
 private:
-    // Code conversion tables are for turning token strings into enums.
     static const StrCode methodList[];
-    static const StrCode schemeList[];
 
-    // URI normalization strategy objects
-    static const UriNormalizer uriNoPath;
-    static const UriNormalizer uriPath;
-
-    // "Parse" methods cut things into pieces. "Derive" methods convert things into a new format such as an integer or enum token. "Normalize" methods convert
-    // things into a standard form without changing the underlying format.
     void parseStartLine();
     void deriveMethodId();
-    void parseUri();
-    void deriveSchemeId();
-    void parseAuthority();
-    void derivePortValue();
-    void parseAbsPath();
-    void makeLegacyNormUri();
 
-    // This is where all the derived values, extracted message parts, and normalized values are.
-    // Note that these are all scalars, buffer pointers, and buffer sizes. The actual buffers are in the message buffer (raw pieces) or the
-    // scratchPad (normalized pieces).
     field method;
-
-    // URI stuff
-    field uri;
-    field scheme;
-    field authority;
-    field host;
-    field port;
-    field absPath;
-    field path;
-    field query;
-    field fragment;
-
-    uint64_t hostInfractions;
-    uint64_t pathInfractions;
-    uint64_t queryInfractions;
-    uint64_t fragmentInfractions;
-
-    NHttpEnums::UriType uriType;
-    field hostNorm;
-    int32_t portValue;
-    field pathNorm;
-    field queryNorm;
-    field fragmentNorm;
-    field uriLegacyNorm;
+    NHttpUri* uri = nullptr;
 };
 
 #endif

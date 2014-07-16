@@ -138,7 +138,7 @@ static const RuleMap hi_global_rules[] =
 };
 
 HttpInspectModule::HttpInspectModule() :
-    Module(GLOBAL_KEYWORD, hi_global_params, hi_global_rules)
+    Module(GLOBAL_KEYWORD, hi_global_params)
 {
     config = nullptr;
 }
@@ -148,6 +148,18 @@ HttpInspectModule::~HttpInspectModule()
     if ( config )
         delete config;
 }
+
+const RuleMap* HttpInspectModule::get_rules() const
+{ return hi_global_rules; }
+
+ProfileStats* HttpInspectModule::get_profile() const
+{ return &hiPerfStats; }
+
+const char** HttpInspectModule::get_pegs() const
+{ return peg_names; }
+
+PegCount* HttpInspectModule::get_counts() const
+{ return (PegCount*)&hi_stats; }
 
 HTTPINSPECT_GLOBAL_CONF* HttpInspectModule::get_data()
 {
@@ -402,7 +414,7 @@ static const RuleMap hi_server_rules[] =
 };
 
 HttpServerModule::HttpServerModule() :
-    Module(SERVER_KEYWORD, hi_server_params, hi_server_rules)
+    Module(SERVER_KEYWORD, hi_server_params)
 { 
     server = nullptr;
 }
@@ -412,6 +424,9 @@ HttpServerModule::~HttpServerModule()
     if ( server )
         delete server;
 }
+
+const RuleMap* HttpServerModule::get_rules() const
+{ return hi_server_rules; }
 
 HTTPINSPECT_CONF* HttpServerModule::get_data()
 {

@@ -87,10 +87,10 @@ static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn);
 static inline int fpSessionAlerted(Packet *p, OptTreeNode *otn);
 
 #ifdef PERF_PROFILING
-THREAD_LOCAL PreprocStats rulePerfStats;
-THREAD_LOCAL PreprocStats ncrulePerfStats;
-THREAD_LOCAL PreprocStats ruleRTNEvalPerfStats;
-THREAD_LOCAL PreprocStats ruleOTNEvalPerfStats;
+THREAD_LOCAL ProfileStats rulePerfStats;
+THREAD_LOCAL ProfileStats ncrulePerfStats;
+THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
+THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 #endif
 
 THREAD_LOCAL OTNX_MATCH_DATA t_omd;
