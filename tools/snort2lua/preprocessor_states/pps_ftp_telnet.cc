@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -63,10 +63,10 @@ void FtpTelnet::add_ftp_n_telnet_deprecated(std::istringstream& data_stream,
     std::string tmp;
     data_stream >> tmp;  // eat the next word
     ld->open_table("telnet");
-    ld->add_deprecated_comment(opt_name);
+    ld->add_deleted_comment(opt_name);
     ld->close_table();
     ld->open_table("ftp_server");
-    ld->add_deprecated_comment(opt_name);
+    ld->add_deleted_comment(opt_name);
     ld->close_table();
 }
 
@@ -84,7 +84,7 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            cv->log_error("preprocessor ftp_telnet: requires the 'global' keyword");
+            ld->add_error_comment("preprocessor ftp_telnet: requires the 'global' keyword");
             return false;
         }
     }

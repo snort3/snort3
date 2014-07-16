@@ -24,8 +24,8 @@
 #include <string>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -56,16 +56,16 @@ bool RpcDecode::convert(std::istringstream& data_stream)
         bool tmpval = true;
 
         if(!keyword.compare("no_alert_multiple_requests"))
-            ld->add_deprecated_comment("no_alert_multiple_requests");
+            ld->add_deleted_comment("no_alert_multiple_requests");
 
         else if(!keyword.compare("alert_fragments"))
-            ld->add_deprecated_comment("alert_fragments");
+            ld->add_deleted_comment("alert_fragments");
 
         else if(!keyword.compare("no_alert_large_fragments"))
-            ld->add_deprecated_comment("no_alert_large_fragments");
+            ld->add_deleted_comment("no_alert_large_fragments");
 
         else if(!keyword.compare("no_alert_incomplete"))
-            ld->add_deprecated_comment("no_alert_incomplete");
+            ld->add_deleted_comment("no_alert_incomplete");
 
         else if (isdigit(keyword[0]))
             port_list += ' ' + keyword;

@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -199,13 +199,13 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             tmpval = parse_ports(arg_stream);
 
         else if (!keyword.compare("detect_anomalies"))
-            ld->add_deprecated_comment("detect_anomalies");
+            ld->add_deleted_comment("detect_anomalies");
 
         else if (!keyword.compare("dont_store_large_packets"))
-            ld->add_deprecated_comment("dont_store_large_packets");
+            ld->add_deleted_comment("dont_store_large_packets");
 
         else if (!keyword.compare("check_session_hijacking"))
-            ld->add_deprecated_comment("check_session_hijacking");
+            ld->add_deleted_comment("check_session_hijacking");
 
         else if (!keyword.compare("flush_factor"))
             tmpval = parse_int_option("flush_factor", arg_stream);

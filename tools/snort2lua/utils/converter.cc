@@ -20,9 +20,9 @@
 // converter.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include <iostream>
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "conversion_state.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 #include "data/dt_comment.h"
 
 
@@ -184,11 +184,11 @@ int Converter::convert_file(std::string input_file)
         {
             orig_text += tmp;
             std::istringstream data_stream(orig_text);
-            while(data_stream.peek() != std::char_traits<wchar_t>::eof())
+            while(data_stream.peek() != EOF)
             {
                 if ((state == nullptr) || !state->convert(data_stream))
                 {
-                    log_error("Failed to entirely convert: " + orig_text);
+                    ld->add_error_comment("Failed to entirely convert: " + orig_text);
                     break;
                 }
             }
@@ -201,48 +201,3 @@ int Converter::convert_file(std::string input_file)
     // this is set by parse_include_file
     return error ? -3 : 0;
 }
-
-/*******************************
- *******  PRINTING FOO *********
- *******************************/
-
-void Converter::log_error(std::string error_string)
-{
-    ld->add_error_comment(error_string);
-//    std::cout << "ERROR: Failed to convert:\t" << std::endl;
-//    std::cout << "\t\t" << error_string << std::endl << std::endl;
-}
-
-void Converter::print_line(std::istringstream& in)
-{
-    int pos = in.tellg();
-    std::ostringstream oss;
-    oss << in.rdbuf();
-    std::cout << "DEBUG: " << oss.str() << std::endl;
-    in.seekg(pos);
-}
-
-void Converter::print_line(std::ostringstream& in)
-{
-    std::cout << "DEBUG: " << in.str() << std::endl;
-}
-void Converter::print_line(std::string& in)
-{
-    std::cout << "DEBUG: " << in << std::endl;
-}
-
-#if 0
-
-void Converter::inititalize()
-{
-		state = this;
-}
-
-
-
-void Converter::set_state(Converter* c){ 
-    delete state;
-    state = c; 
-}
-
-#endif

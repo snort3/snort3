@@ -24,8 +24,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -60,16 +60,16 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = false;
 
         else if (!keyword.compare("flush_on_alert"))
-            ld->add_deprecated_comment("flush_on_alert");
+            ld->add_deleted_comment("flush_on_alert");
 
         else if (!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+            ld->add_deleted_comment("disabled");
 
         else if (!keyword.compare("enable_ha"))
             ld->add_unsupported_comment("enable_ha");
 
         else if (!keyword.compare("no_midstream_drop_alerts"))
-            ld->add_deprecated_comment("no_midstream_drop_alerts");
+            ld->add_deleted_comment("no_midstream_drop_alerts");
 
         else if (!keyword.compare("track_tcp"))
             tmpval = parse_deleted_option("track_tcp", arg_stream);

@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace config
 {
@@ -56,7 +56,7 @@ static ConversionState* deleted_ctor(Converter* cv, LuaData* ld)
     if (!ld->is_quiet_mode())
     {
         ld->open_table("deleted_snort_config_options");
-        ld->add_deprecated_comment("config " + *snort_option + "[:.*]");
+        ld->add_deleted_comment("config " + *snort_option + "[:.*]");
         ld->close_table();
     }
 

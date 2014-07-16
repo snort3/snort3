@@ -22,7 +22,7 @@
 
 #include "data/dt_rule.h"
 #include "data/dt_data.h"  // included for print mode
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 
 Rule::Rule() :  num_hdr_data(0),
@@ -31,7 +31,7 @@ Rule::Rule() :  num_hdr_data(0),
 {
 }
 
-Rule::~Rule(){};
+Rule::~Rule(){}
 
 
 bool Rule::add_hdr_data(std::string data)

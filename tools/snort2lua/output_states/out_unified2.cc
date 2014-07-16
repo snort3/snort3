@@ -23,9 +23,9 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "rule_states/rule_api.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 namespace output
 {

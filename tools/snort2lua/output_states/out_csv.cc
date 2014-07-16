@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace output
 {
@@ -70,7 +70,7 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         std::string new_val = std::string();
 
         if (!val.compare("default"))
-            ld->add_deprecated_comment("default");
+            ld->add_deleted_comment("default");
 
         else if (!val.compare("timestamp"))
             new_val = "timestamp";

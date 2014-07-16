@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -93,7 +93,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             tmpval = parse_string_option("policy", data_stream);
 
         else if(!keyword.compare("detect_anomalies"))
-            ld->add_deprecated_comment("detect_anomalies");
+            ld->add_deleted_comment("detect_anomalies");
 
         else if(!keyword.compare("bind_to"))
             parse_ip_list("bind_to", data_stream);

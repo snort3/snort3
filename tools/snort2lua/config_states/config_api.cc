@@ -102,7 +102,7 @@ extern const ConvertMap* mpls_payload_type_map;
 extern const ConvertMap* min_ttl_map;
 extern const ConvertMap* new_ttl_map;
 extern const ConvertMap* nolog_map;
-extern const ConvertMap* nopcre_map;;
+extern const ConvertMap* nopcre_map;
 extern const ConvertMap* no_promisc_map;
 extern const ConvertMap* obfuscate_map;
 extern const ConvertMap* order_map;

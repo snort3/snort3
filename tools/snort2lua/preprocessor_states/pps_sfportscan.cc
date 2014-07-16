@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -148,16 +148,16 @@ bool PortScan::convert(std::istringstream& data_stream)
             tmpval = ld->add_option_to_table("include_midstream", true);
 
         else if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+            ld->add_deleted_comment("disabled");
 
         else if(!keyword.compare("detect_ack_scans"))
-            ld->add_deprecated_comment("detect_ack_scans");
+            ld->add_deleted_comment("detect_ack_scans");
 
         else if(!keyword.compare("logfile"))
         {
             if (!util::get_string(data_stream, keyword, "}"))
                 tmpval = false;
-            ld->add_deprecated_comment("logfile");
+            ld->add_deleted_comment("logfile");
         }
 
         else if(!keyword.compare("memcap"))

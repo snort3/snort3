@@ -38,3 +38,5 @@ WlanCodecModule::WlanCodecModule() : DecodeModule(CD_WLAN_NAME)
 const RuleMap* WlanCodecModule::get_rules() const
 { return wifi_rules; }
 
+bool WlanCodecModule::set(const char* /*fqn*/, Value& /*v*/, SnortConfig* /*sc*/)
+{ return true; }

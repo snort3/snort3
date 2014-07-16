@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace config
 {
@@ -197,7 +197,7 @@ bool Detection::convert(std::istringstream& data_stream)
                 new_method = "lowmem";
 
             else if (!method.compare("mwm"))
-                ld->add_deprecated_comment("mwm");
+                ld->add_deleted_comment("mwm");
 
             else if (!method.compare("ac-split"))
             {

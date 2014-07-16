@@ -20,7 +20,7 @@
 // dt_data.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include "dt_data.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 #include <iostream>
 #include <sstream>
 
@@ -292,7 +292,7 @@ bool LuaData::add_diff_option_comment(std::string orig_var, std::string new_var)
 }
 
 
-bool LuaData::add_deprecated_comment(std::string dep_var)
+bool LuaData::add_deleted_comment(std::string dep_var)
 {
     std::string error_string = "option deleted: '" + dep_var + "'";
 

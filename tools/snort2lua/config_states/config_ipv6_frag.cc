@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace config
 {
@@ -48,7 +48,7 @@ void Ipv6Frag::add_deleted_option(std::string dlt_opt)
 {
     // see comment in Ipv6Frag::convert
     if (!ld->is_quiet_mode())
-        ld->add_deprecated_comment("config ipv6_frag: " + dlt_opt);
+        ld->add_deleted_comment("config ipv6_frag: " + dlt_opt);
 }
 
 bool Ipv6Frag::convert(std::istringstream& data_stream)

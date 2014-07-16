@@ -62,21 +62,8 @@ public:
     int convert_file(std::string input_file);
     // parse an include file.  Use this function to ensure all set options are properly
     void parse_include_file(std::string file);
-    // convert an include file. This function initializes structure which are kept seperate between files.
-//    void convert_include_files(std::string input_file);
     // Should we parse an include file?
     inline bool should_convert_includes() { return parse_includes; }
-    // prints the entire lua configuration to the output file.
-//    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << (*(cv.ld)); }
-
-
-
-    // log an error in the new lua file
-    void log_error(std::string);
-
-    void print_line(std::istringstream& in);
-    void print_line(std::ostringstream& in);
-    void print_line(std::string& in);
 
 private:
     // the current parsing state.

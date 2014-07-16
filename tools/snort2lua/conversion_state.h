@@ -30,9 +30,9 @@
 #include "data/dt_data.h"
 
 // the following three files are for the function 'set_next_rule_state'
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 #include "rule_states/rule_api.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 
 class Converter;
 class ConversionState;
@@ -244,7 +244,7 @@ protected:
                                         bool required = true)
     {
         std::string val;
-        ld->add_deprecated_comment(opt_name);
+        ld->add_deleted_comment(opt_name);
 
         if(stream >> val)
             return true;

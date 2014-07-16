@@ -21,8 +21,8 @@
 
 #include <string>
 #include "rule_states/rule_api.h"
-#include "util/util.h"
-#include "util/converter.h"
+#include "utils/snort2lua_util.h"
+#include "utils/converter.h"
 
 namespace rules
 {

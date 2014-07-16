@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace keywords
 {
@@ -83,7 +83,7 @@ bool RuleState::convert(std::istringstream& data_stream)
                 count++;
                 break;
             case 3:
-                ld->add_deprecated_comment("action");
+                ld->add_deleted_comment("action");
                 count++;
                 break;
             default:

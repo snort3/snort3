@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -60,7 +60,7 @@ bool Frag3Global::convert(std::istringstream& data_stream)
         args_stream >> keyword;
         
         if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+            ld->add_deleted_comment("disabled");
 
         else if(!keyword.compare("max_frags"))
             tmpval = parse_int_option("max_frags", args_stream);

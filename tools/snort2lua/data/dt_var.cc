@@ -20,7 +20,7 @@
 // dt_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include "data/dt_var.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 Variable::Variable(std::string name, int depth)
 {
@@ -34,7 +34,7 @@ Variable::Variable(std::string name)
     this->depth = 0;
 }
 
-Variable::~Variable(){};
+Variable::~Variable(){}
 
 // does this need a new variable?
 bool Variable::add_value(std::string elem)

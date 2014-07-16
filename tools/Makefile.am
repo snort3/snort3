@@ -2,6 +2,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 
 SUBDIRS = \
 u2boat \
-u2spewfoo
+u2spewfoo \
+snort2lua
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

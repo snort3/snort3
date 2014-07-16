@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -214,7 +214,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_headers", data_stream);
 
         else if (!keyword.compare("no_alerts"))
-            ld->add_deprecated_comment("no_alerts");
+            ld->add_deleted_comment("no_alerts");
 
         else if (!keyword.compare("decompress_swf"))
             tmpval = parse_bracketed_unsupported_list("decompress_swf", data_stream);

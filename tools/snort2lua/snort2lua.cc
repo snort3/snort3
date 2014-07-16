@@ -22,9 +22,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "init_state.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 #include "option_parser.h"
 
 

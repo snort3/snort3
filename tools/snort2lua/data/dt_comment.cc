@@ -20,7 +20,7 @@
 // dt_comment.cc author Josh Rosenbaum <jorosenba@cisco.com>
 
 #include "data/dt_comment.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 Comments::Comments(CommentType type)
 {

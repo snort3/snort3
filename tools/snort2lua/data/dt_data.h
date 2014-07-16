@@ -111,7 +111,7 @@ public:
     // add a comment about an option change to the table
     bool add_diff_option_comment(std::string orig_var, std::string new_var);
     // attach a deprecated option comment to the current table
-    bool add_deprecated_comment(std::string dep_var);
+    bool add_deleted_comment(std::string dep_var);
     // attach an unsupported option comment to the current table
     bool add_unsupported_comment(std::string unsupported_var);
 

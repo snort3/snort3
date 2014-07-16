@@ -8,7 +8,7 @@ add_subdirectory(preprocessor_states)
 add_subdirectory(output_states)
 add_subdirectory(config_states)
 add_subdirectory(rule_states)
-add_subdirectory(util)
+add_subdirectory(utils)
 
 if (BUILD_UNIT_TESTS)
 if (0)
@@ -26,7 +26,7 @@ add_executable( snort2lua
 
 target_link_libraries( snort2lua
     conversion_data
-    util
+    snort2lua_utils
     keyword_states
     output_states
     preprocessor_states

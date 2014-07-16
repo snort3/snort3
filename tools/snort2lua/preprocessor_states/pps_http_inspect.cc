@@ -24,8 +24,8 @@
 #include <string>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace preprocessors
 {
@@ -61,7 +61,7 @@ bool HttpInspect::convert(std::istringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            cv->log_error("preprocessor httpinspect: requires the 'global' keyword");
+            ld->add_error_comment("preprocessor httpinspect: requires the 'global' keyword");
             return false;
         }
     }
@@ -95,7 +95,7 @@ bool HttpInspect::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("chunk_length", data_stream);
         
         else if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+            ld->add_deleted_comment("disabled");
 
         else if(!keyword.compare("b64_decode_depth"))
             tmpval = add_decode_option("b64_decode_depth", data_stream);

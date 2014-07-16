@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <string>
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 #include "conversion_state.h"
 
 namespace util
