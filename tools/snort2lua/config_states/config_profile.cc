@@ -139,7 +139,7 @@ static ConversionState* ctor(Converter* cv, LuaData* ld)
  **************************/
 
 static const std::string rules = "rules";
-static const std::string preprocs = "preprocs";
+static const std::string modules = "modules";
 
 
 static const ConvertMap profile_rules_api =
@@ -151,7 +151,7 @@ static const ConvertMap profile_rules_api =
 static const ConvertMap profile_preprocs_api =
 {
     "profile_preprocs",
-    ctor<&preprocs>,
+    ctor<&modules>,
 };
 
 const ConvertMap* profile_rules_map = &profile_rules_api;
