@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config_api.h author Josh Rosenbaum <jorosenba@cisco.com>
+// config_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef CONFIG_API_H
 #define CONFIG_API_H

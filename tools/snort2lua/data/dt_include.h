@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_include.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_include.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef DT_INCLUDE_H
 #define DT_INCLUDE_H

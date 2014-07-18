@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// ipv6_util.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// ipv6_util.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "codecs/ip/ipv6_util.h"
 #include "protocols/packet.h"

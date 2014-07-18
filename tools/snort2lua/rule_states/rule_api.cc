@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rule_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <string>
 #include "rule_states/rule_api.h"

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_data.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_data.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef DT_DATA_H
 #define DT_DATA_H
@@ -50,6 +50,7 @@ public:
     static inline void set_difference_print() {mode = PrintMode::DIFFERENCES; }
     static inline bool is_difference_mode() { return mode == PrintMode::DIFFERENCES; }
     inline bool failed_conversions() { return !errors->empty() || !bad_rules->empty(); }
+    inline bool contains_rules() { return rules.size() != 0; }
 
 
     friend std::ostream &operator<<(std::ostream&, const LuaData &);

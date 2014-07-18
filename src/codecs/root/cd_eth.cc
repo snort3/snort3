@@ -81,10 +81,6 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
 bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
         Packet *p, uint16_t &lyr_len, uint16_t& next_prot_id)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
-            DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
-                (unsigned long)len, (unsigned long)p->pkth->pktlen);
-            );
 
     /* do a little validation */
     if(len < eth::hdr_len())

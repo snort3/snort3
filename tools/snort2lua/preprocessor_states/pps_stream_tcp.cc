@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -107,7 +107,6 @@ bool StreamTcp::parse_ports(std::istringstream& stream)
         opt_name = "server_ports";
 
     else if( !dir.compare("both"))
-
         opt_name = "both_ports";
 
     else
@@ -119,7 +118,6 @@ bool StreamTcp::parse_ports(std::istringstream& stream)
 
 
     ld->add_diff_option_comment("port " + dir, opt_name);
-    ld->add_list_to_table(opt_name, s_val);
     return retval;
 }
 

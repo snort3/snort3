@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// packet_manager.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// packet_manager.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <vector>
 #include <cstring>
@@ -171,11 +171,14 @@ static inline int get_inner_ip_lyr(const Packet *p)
 static inline uint8_t get_codec(const char* keyword)
 {
     // starting at 1 since 0 is default
-    for ( uint8_t i = 1; s_protocols[i] != 0 && i < UINT8_MAX; i++  )
+    for ( uint8_t i = 1; i < s_protocols.size() && i < UINT8_MAX; i++  )
     {
-        const char *name = s_protocols[i]->get_name();
-        if ( !strncasecmp(name, keyword, strlen(name)) )
-            return i;
+        if (s_protocols[i])
+        {
+            const char *name = s_protocols[i]->get_name();
+            if ( !strncasecmp(name, keyword, strlen(name)) )
+                return i;
+        }
     }
     return 0;
 }
@@ -432,6 +435,12 @@ void PacketManager::decode(
     uint8_t mapped_prot = grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint16_t len, lyr_len;
+
+
+    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
+            DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
+                (unsigned long)pkthdr->caplen, (unsigned long)pkthdr->pktlen);
+            );
 
     PREPROC_PROFILE_START(decodePerfStats);
 

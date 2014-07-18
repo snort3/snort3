@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// snort2lua.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// snort2lua.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <iostream>
 #include <fstream>
@@ -84,8 +84,8 @@ static const char* help_str = "    --help, -h\t\tprint usage and exit";
 static const char* conf_file_str = "    --conf-file, -c\t\toriginal snort configuration file. Specify as many files as you would like";
 static const char* output_file_str  = "    --output-file, -o \t\tdefault = snort.lua.   The new Snort++ configuration file name.";
 static const char* rule_file_str  = "    --rules-file, -r \t\tWrite all rules to this file. If not specified, rules will be in default output";
-static const char* error_file_str  = "    --error-file, -e \t\tdefault = snort.lua.rej.  Specify the reject file.";
-static const char* all_str  = "    --all, -a\t\tOutput any data directerd towards the the rule, output, and reject file into the specified output file. (does NOT effect include options";
+static const char* error_file_str  = "    --error-file, -e \t\tSpecify the reject file. Use with '-a' or '--all' to print errors to this file. Default = snort.rej";
+static const char* all_str  = "    --all, -a\t\tOutput all data, including errors and differences. (default only prints the new snort.lua.rej file";
 static const char* parse_includes_str  = "    --parse_includes, -p\t\tWhen parsing specified input files, follow and parse any 'include <file>'";
 static const char* dont_parse_includes_str  = "    --parse-input-files, -i\t\tOnly parse specified input files. do NOT follow any 'include <file> when parsing.";
 static const char* parse_mult_str = "    --mult-rule-files, -m\t\tWhen parsing include file named 'file', write rules to file.rules (parse_includes must be turn on)";
@@ -124,7 +124,6 @@ enum OptionIndex {
     PARSE_INCLUDES,
     MULT_RULE_FILES,
     MULT_CONF_FILES,
-    ONE_OUTPUT_FILE,
     PRINT_MODE,
     UNKNOWN,
 };
@@ -136,7 +135,6 @@ const option::Descriptor usage[] =
     {OUTPUT_FILE, 0, "o", "output-file", Arg::Required, output_file_str },
     {RULE_FILE, 0, "r", "rules-file", Arg::Required, rule_file_str },
     {ERROR_FILE, 0, "e", "error-file", Arg::Required, error_file_str },
-    {ONE_OUTPUT_FILE, 0, "a", "all", Arg::None, all_str },
     {PARSE_INCLUDES, OPT_MULT_FILES, "p", "parse-includes", Arg::None, parse_includes_str },
     {PARSE_INCLUDES, OPT_SING_FILE, "i", "parse-input-files", Arg::None, dont_parse_includes_str },
     {MULT_RULE_FILES, OPT_MULT_FILES, "m", "mult-rule-files", Arg::None, parse_mult_str },
@@ -145,7 +143,7 @@ const option::Descriptor usage[] =
     {MULT_CONF_FILES, OPT_SING_FILE, "t", "mult-conf-files", Arg::None, parse_single_conf_str },
     {PRINT_MODE, PRINT_QUIET, "q", "output-quiet", Arg::None, quiet_str },
     {PRINT_MODE, PRINT_DIFFERENCES, "d", "output-differences", Arg::None, differences_str },
-    {PRINT_MODE, PRINT_ALL, "", "output-default", Arg::None, default_str},
+    {PRINT_MODE, PRINT_ALL, "a", "all", Arg::None, all_str },
     {UNKNOWN, 0, "", "", option::Arg::None, ""},
     {0,0,0,0,0,0}
 };
@@ -177,7 +175,6 @@ int main (int argc, char* argv[])
     std::string output_file = std::string();
     std::string error_file = std::string();
     std::string rule_file = std::string();
-    bool single_out_file = false;
     bool rule_file_specifed = false;
     bool fail = false;;
     Converter cv;
@@ -325,11 +322,6 @@ int main (int argc, char* argv[])
             cv.set_convert_conf_mult_files(false);
     }
 
-    //  print everything to the specified output file.  Usefull for testing
-    if (options[ONE_OUTPUT_FILE])
-        single_out_file = true;
-
-
     if (options[UNKNOWN])
     {
 
@@ -348,24 +340,26 @@ int main (int argc, char* argv[])
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
     // now.  Otherwise, set up the include file.
-    if (rule_file.empty() || !rule_file.compare(output_file))
+    if (ld.contains_rules())
     {
-        std::string s = std::string("$default_rules");
-        rule_file_specifed = false;
+        if (rule_file.empty() || !rule_file.compare(output_file))
+        {
+            std::string s = std::string("$default_rules");
+            rule_file_specifed = false;
 
-        ld.open_top_level_table("ips");
-        ld.add_option_to_table("rules", s);
-        ld.close_table();
+            ld.open_top_level_table("ips");
+            ld.add_option_to_table("rules", s);
+            ld.close_table();
+        }
+        else
+        {
+            rule_file_specifed = true;
+
+            ld.open_top_level_table("ips");
+            ld.add_option_to_table("include", rule_file);
+            ld.close_table();
+        }
     }
-    else
-    {
-        rule_file_specifed = true;
-
-        ld.open_top_level_table("ips");
-        ld.add_option_to_table("include", rule_file);
-        ld.close_table();
-    }
-
 
 
 
@@ -389,42 +383,43 @@ int main (int argc, char* argv[])
     out.open(output_file,  std::ifstream::out);
     out << "require(\"snort_config\")  -- for loading\n\n";
 
-    if (single_out_file)
+    if (!rule_file_specifed)
     {
-        out << ld << std::endl;
-        ld.print_rejects(out);
-    }
-    else if (!rule_file_specifed)
-    {
-        std::ofstream rejects;  // in this case, rejects are regular configuration options
-        rejects.open(error_file, std::ifstream::out);
-
         ld.print_rules(out, rule_file_specifed);
         ld.print_conf_options(out);
-        ld.print_rejects(rejects);
 
-        rejects << std::endl;
         out << std::endl;
 
-        rejects.close();
+        if (ld.failed_conversions() && !ld.is_quiet_mode())
+        {
+            std::ofstream rejects;  // in this case, rejects are regular configuration options
+            rejects.open(error_file, std::ifstream::out);
+            ld.print_rejects(rejects);
+            rejects << std::endl;
+            rejects.close();
+        }
     }
     else
     {
-        std::ofstream rules, rejects;
+        std::ofstream rules;
         rules.open(rule_file, std::ifstream::out);
-        rejects.open(error_file, std::ifstream::out);
 
         ld.print_rules(rules, rule_file_specifed);
         ld.print_conf_options(out);
-        ld.print_rejects(rejects);
 
         // flush all data
-        rules << std::endl;
         out << std::endl;
-        rejects << std::endl;
-
+        rules << std::endl;
         rules.close();
-        rejects.close();
+
+        if (ld.failed_conversions() && !ld.is_quiet_mode())
+        {
+            std::ofstream rejects;
+            rejects.open(error_file, std::ifstream::out);
+            ld.print_rejects(rejects);
+            rejects << std::endl;
+            rejects.close();
+        }
     }
 
 

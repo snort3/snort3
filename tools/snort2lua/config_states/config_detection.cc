@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config_detection.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_detection.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -155,7 +155,6 @@ bool Detection::convert(std::istringstream& data_stream)
         {
             ld->add_diff_option_comment("search-method", "search_method");
             std::string method;
-            std::string new_method;
 
             if (!util::get_string(data_stream, method, ", "))
             {
@@ -163,45 +162,101 @@ bool Detection::convert(std::istringstream& data_stream)
                 continue;
             }
 
-            if (!method.compare("ac") || !method.compare("ac-q"))
-                new_method = "ac_full_q";
+
+            if (!method.compare("mwm"))
+                ld->add_deleted_comment("mwm");
+
+            else if (!method.compare("ac"))
+            {
+                ld->add_diff_option_comment("ac", "ac_full_q");
+                tmpval = ld->add_option_to_table("search_method", "ac_full_q");
+            }
+
+            else if (!method.compare("ac-q"))
+            {
+                ld->add_diff_option_comment("ac-q", "ac_full_q");
+                tmpval = ld->add_option_to_table("search_method", "ac_full_q");
+            }
 
             else if (!method.compare("ac-nq"))
-                new_method = "ac_full";
+            {
+                ld->add_diff_option_comment("ac-nq", "ac_full");
+                tmpval = ld->add_option_to_table("search_method", "ac_full");
+            }
 
-            else if (!method.compare("ac-bnfa") || !method.compare("ac-bnfa-q"))
-                new_method = "ac_bnfa_q";
+            else if (!method.compare("ac-bnfa"))
+            {
+                ld->add_diff_option_comment("ac-bnfa", "ac_bnfa_q");
+                tmpval = ld->add_option_to_table("search_method", "ac_bnfa_q");
+            }
+
+            else if (!method.compare("ac-bnfa-q"))
+            {
+                ld->add_diff_option_comment("ac-bnfa-q", "ac_bnfa_q");
+                tmpval = ld->add_option_to_table("search_method", "ac_bnfa_q");
+            }
 
             else if (!method.compare("ac-bnfa-nq"))
-                new_method = "ac_bnfa";
+            {
+                ld->add_diff_option_comment("ac-bnfa-nq", "ac_bnfa");
+                tmpval = ld->add_option_to_table("search_method", "ac_bnfa");
+            }
 
             else if (!method.compare("intel-cpm"))
-                new_method = "intel_cpm";
+            {
+                ld->add_diff_option_comment("intel-cpm", "intel_cpm");
+                tmpval = ld->add_option_to_table("search_method", "intel_cpm");
+            }
 
             else if (!method.compare("ac-std"))
-                new_method = "ac_std";
+            {
+                ld->add_diff_option_comment("ac-std", "ac_std");
+                tmpval = ld->add_option_to_table("search_method", "ac_std");
+            }
 
             else if (!method.compare("ac-banded"))
-                new_method = "ac_banded";
+            {
+                ld->add_diff_option_comment("ac-banded", "ac_banded");
+                tmpval = ld->add_option_to_table("search_method", "ac_banded");
+            }
 
             else if (!method.compare("acs"))
-                new_method = "ac_sparse";
+            {
+                ld->add_diff_option_comment("acs", "ac_sparse");
+                tmpval = ld->add_option_to_table("search_method", "ac_sparse");
+            }
 
             else if (!method.compare("ac-sparsebands"))
-                new_method = "ac_sparse_bands";
+            {
+                ld->add_diff_option_comment("ac-sparsebands", "ac_sparse_bands");
+                tmpval = ld->add_option_to_table("search_method", "ac_sparse_bands");
+            }
 
-            else if (!method.compare("lowmem") || !method.compare("lowmem-q"))
-                new_method = "lowmem_q";
+            else if (!method.compare("lowmem"))
+            {
+                ld->add_diff_option_comment("lowmem", "lowmem_q");
+                tmpval = ld->add_option_to_table("search_method", "lowmem_q");
+            }
+
+            else if (!method.compare("lowmem-q"))
+            {
+                ld->add_diff_option_comment("lowmem-q", "lowmem_q");
+                tmpval = ld->add_option_to_table("search_method", "lowmem_q");
+            }
 
             else if (!method.compare("lowmem-nq"))
-                new_method = "lowmem";
-
-            else if (!method.compare("mwm"))
-                ld->add_deleted_comment("mwm");
+            {
+                ld->add_diff_option_comment("lowmem-nq", "lowmem");
+                tmpval = ld->add_option_to_table("search_method", "lowmem");
+            }
 
             else if (!method.compare("ac-split"))
             {
-                new_method = "ac_full_q";
+                ld->add_diff_option_comment("ac-split", "split_any_any");
+                ld->add_diff_option_comment("ac-split", "ac_full_q");
+                bool tmpval2 = !ld->add_option_to_table("split_any_any", true);
+                bool tmpval1 = ld->add_option_to_table("search_method", "ac_full_q");
+                tmpval = tmpval1 && tmpval2;
 
                 if(!ld->add_option_to_table("split_any_any", true))
                     tmpval = false;
@@ -211,16 +266,6 @@ bool Detection::convert(std::istringstream& data_stream)
             {
                 tmpval = false;
             }
-
-            // lets finally add this option
-            if(!new_method.empty())
-            {
-                if (new_method.compare(method))
-                    ld->add_diff_option_comment(method, new_method);
-
-                tmpval = ld->add_option_to_table("search_method", new_method);
-            }
-
         }
 
         else
