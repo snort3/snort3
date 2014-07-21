@@ -82,20 +82,8 @@
 static THREAD_LOCAL Packet* g_tmp_pkt = NULL;
 static THREAD_LOCAL FILE* g_logfile = NULL;
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats sfpsPerfStats;
-
-static PreprocStats* ps_get_profile(const char* key)
-{
-    if ( !strcmp(key, PS_MODULE) )
-        return &sfpsPerfStats;
-
-    return nullptr;
-}
-#endif
-
-static THREAD_LOCAL SimpleStats spstats;
-static SimpleStats gspstats;
+THREAD_LOCAL SimpleStats spstats;
+THREAD_LOCAL ProfileStats psPerfStats;
 
 /*
 **  NAME
@@ -322,7 +310,7 @@ static int MakeOpenPortInfo(
 {
     int dsize;
 
-    if(!total_size || !buffer)
+    if ( !total_size || !buffer || !user )
         return -1;
 
     dsize = (g_tmp_pkt->max_dsize - *total_size);
@@ -921,7 +909,7 @@ void PortScan::eval(Packet *p)
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
 
-    PREPROC_PROFILE_START(sfpsPerfStats);
+    PREPROC_PROFILE_START(psPerfStats);
     ++spstats.total_packets;
 
     memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT don't zap unless necessary
@@ -942,7 +930,7 @@ void PortScan::eval(Packet *p)
         PortscanAlert(&ps_pkt, &ps_pkt.scanned->proto, ps_pkt.proto);
     }
 
-    PREPROC_PROFILE_END(sfpsPerfStats);
+    PREPROC_PROFILE_END(psPerfStats);
 }
 
 //-------------------------------------------------------------------------
@@ -985,14 +973,6 @@ static const DataApi sd_api =
 static Module* mod_ctor()
 { return new PortScanModule; }
 
-static void sp_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        PS_MODULE, &sfpsPerfStats, 0, &totalPerfStats, ps_get_profile);
-#endif
-}
-
 static Inspector* sp_ctor(Module* m)
 {
     return new PortScan((PortScanModule*)m);
@@ -1003,20 +983,9 @@ static void sp_dtor(Inspector* p)
     delete p;
 }
 
-static void sp_sum()
-{
-    sum_stats(&gspstats, &spstats);
-}
-
-static void sp_stats()
-{
-    show_stats(&gspstats, PS_MODULE);
-}
-
 static void sp_reset()
 {
     ps_reset();
-    memset(&gspstats, 0, sizeof(gspstats));
 }
 
 static const InspectApi sp_api =
@@ -1033,15 +1002,13 @@ static const InspectApi sp_api =
     PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT dynamic assign
     nullptr, // buffers
     nullptr, // service
-    sp_init,
+    nullptr, // init
     nullptr, // term
     sp_ctor,
     sp_dtor,
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    sp_sum,
-    sp_stats,
     sp_reset
 };
 

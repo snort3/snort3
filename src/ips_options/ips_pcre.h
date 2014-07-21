@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 
-// FIXTHIS poor encapsulation
+// FIXIT poor encapsulation
 #define SNORT_PCRE_RELATIVE         0x00010 // relative to the end of the last match
 #define SNORT_PCRE_INVERT           0x00020 // invert detect
 #define SNORT_PCRE_RAWBYTES         0x00040 // Don't use decoded buffer (if available)

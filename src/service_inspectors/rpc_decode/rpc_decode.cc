@@ -122,27 +122,12 @@ static THREAD_LOCAL const uint32_t flush_size = 28;
 static THREAD_LOCAL const uint32_t rpc_memcap = 1048510;
 static THREAD_LOCAL uint32_t rpc_memory = 0;
 
-static int16_t rpc_decode_app_protocol_id = SFTARGET_UNKNOWN_PROTOCOL;
-
 static const char* mod_name = "rpc_decode";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats rpcdecodePerfStats;
-
-static PreprocStats* rd_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &rpcdecodePerfStats;
-
-    return nullptr;
-}
-#endif
-
-static THREAD_LOCAL SimpleStats rdstats;
-static SimpleStats grdstats;
+THREAD_LOCAL ProfileStats rpcdecodePerfStats;
+THREAD_LOCAL SimpleStats rdstats;
 
 static int ConvertRPC(RpcDecodeConfig *, RpcSsnData *, Packet *);
-static int RpcDecodeIsEligible(RpcDecodeConfig *, Packet *);
 
 static RpcSsnData * RpcSsnDataNew(Packet *);
 static inline void RpcSsnClean(RpcSsnData *);
@@ -203,22 +188,6 @@ static inline void RpcPreprocEvent(
         default:
             break;
     }
-}
-
-static int RpcDecodeIsEligible(RpcDecodeConfig*, Packet *p)
-{
-    int valid_app_id = 0;
-    int16_t app_id = stream.get_application_protocol_id(p->flow);
-
-    if (app_id > 0)
-    {
-        valid_app_id = 1;
-    }
-
-    if (valid_app_id && app_id != rpc_decode_app_protocol_id)
-        return 0;
-
-    return 1;
 }
 
 static RpcStatus RpcStatefulInspection(RpcDecodeConfig *rconfig,
@@ -1069,11 +1038,6 @@ void RpcDecode::eval(Packet *p)
 
         rsdata = fd ? &fd->session : NULL;
     }
-    if (rsdata == NULL)
-    {
-        if (!RpcDecodeIsEligible(&config, p))
-            return;
-    }
 
     PREPROC_PROFILE_START(rpcdecodePerfStats);
     ++rdstats.total_packets;
@@ -1107,7 +1071,6 @@ void RpcDecode::eval(Packet *p)
     RpcPreprocEvent(&config, rsdata, ConvertRPC(&config, rsdata, p));
 
     PREPROC_PROFILE_END(rpcdecodePerfStats);
-    return;
 }
 
 //-------------------------------------------------------------------------
@@ -1122,11 +1085,6 @@ static void mod_dtor(Module* m)
 
 static void rd_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &rpcdecodePerfStats, 0, &totalPerfStats, rd_get_profile);
-#endif
-    rpc_decode_app_protocol_id = AddProtocolReference("sunrpc");
     RpcFlowData::init();
 }
 
@@ -1138,21 +1096,6 @@ static Inspector* rd_ctor(Module* m)
 static void rd_dtor(Inspector* p)
 {
     delete p;
-}
-
-static void rd_sum()
-{
-    sum_stats(&grdstats, &rdstats);
-}
-
-static void rd_stats()
-{
-    show_stats(&grdstats, mod_name);
-}
-
-static void rd_reset()
-{
-    memset(&grdstats, 0, sizeof(grdstats));
 }
 
 static const InspectApi rd_api =
@@ -1176,9 +1119,7 @@ static const InspectApi rd_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    rd_sum,
-    rd_stats,
-    rd_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

@@ -43,9 +43,9 @@
 static const char* s_name = "pkt_data";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats pktDataPerfStats;
+static THREAD_LOCAL ProfileStats pktDataPerfStats;
 
-static PreprocStats* pd_get_profile(const char* key)
+static ProfileStats* pd_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &pktDataPerfStats;
@@ -93,7 +93,7 @@ static void pkt_data_dtor(IpsOption* p)
 static void pkt_data_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &pktDataPerfStats, pd_get_profile);
+    RegisterOtnProfile(s_name, pd_get_profile);
 #endif
 }
 

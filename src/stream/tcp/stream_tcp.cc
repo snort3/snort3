@@ -44,10 +44,6 @@ public:
 
     void eval(Packet*);
 
-    void pinit();
-    void pterm();
-    void reset();
-
 public:
     StreamTcpConfig* config;
 };
@@ -67,16 +63,6 @@ int StreamTcp::verify_config(SnortConfig* sc)
     return Stream5VerifyTcpConfig(sc, config);
 }
 
-void StreamTcp::pinit()
-{
-    tcp_sinit();
-}
-
-void StreamTcp::pterm()
-{
-    //tcp_sterm();  // FIXIT can't do until after StreamBase::pterm()
-}
-
 void StreamTcp::show(SnortConfig*)
 {
     if ( config )
@@ -87,10 +73,6 @@ void StreamTcp::eval(Packet*)
 {
     // uses session::process() instead
     assert(false);
-}
-
-void StreamTcp::reset()
-{
 }
 
 StreamTcpConfig* get_tcp_cfg(Inspector* ins)
@@ -125,6 +107,16 @@ Session* tcp_ssn(Flow* lws)
     return new TcpSession(lws);
 }
 
+void tcp_pinit()
+{
+    tcp_sinit();
+}
+
+void tcp_pterm()
+{
+    tcp_sterm();
+}
+
 static const InspectApi tcp_api =
 {
     {
@@ -143,11 +135,9 @@ static const InspectApi tcp_api =
     nullptr, // term
     tcp_ctor,
     tcp_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
+    tcp_pinit,
+    tcp_pterm,
     tcp_ssn,
-    tcp_sum,
-    tcp_stats,
     tcp_reset
 };
 

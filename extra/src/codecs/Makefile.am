@@ -7,7 +7,6 @@ libpim_ex_la_LDFLAGS = -export-dynamic -shared
 libpim_ex_la_SOURCES = pim.cc
 
 
-ehlibdir = $(pkglibdir)/codecs
 ehlib_LTLIBRARIES += libtoken_ring_ex.la
 libtoken_ring_ex_la_CXXFLAGS = $(AM_CXXFLAGS)
 libtoken_ring_ex_la_LDFLAGS = -export-dynamic -shared

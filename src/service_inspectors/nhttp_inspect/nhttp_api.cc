@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,14 +37,11 @@
 #include "nhttp_inspect.h"
 #include "nhttp_api.h"
 
-int16_t NHttpApi::appProtocolId;
-
 const char* NHttpApi::nhttp_myName = "nhttp_inspect";
 
 void NHttpApi::nhttp_init()
 {
     NHttpFlowData::init();
-    appProtocolId = AddProtocolReference("nhttp");
 }
 
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
@@ -88,10 +85,8 @@ const InspectApi NHttpApi::nhttp_api =
     NHttpApi::nhttp_dtor,
     NHttpApi::nhttp_pinit,
     NHttpApi::nhttp_pterm,
-    nullptr,
-    NHttpApi::nhttp_sum,
-    NHttpApi::nhttp_stats,
-    NHttpApi::nhttp_reset
+    nullptr, // ssn
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

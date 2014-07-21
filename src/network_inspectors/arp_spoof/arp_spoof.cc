@@ -96,20 +96,7 @@
 
 static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats arpPerfStats;
-
-static PreprocStats* as_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &arpPerfStats;
-
-    return nullptr;
-}
-#endif
-
-static THREAD_LOCAL SimpleStats asstats;
-static SimpleStats gasstats;
+THREAD_LOCAL ProfileStats arpPerfStats;
 
 //-------------------------------------------------------------------------
 // implementation stuff
@@ -301,14 +288,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static void as_init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        MOD_NAME, &arpPerfStats, 0, &totalPerfStats, as_get_profile);
-#endif
-}
-
 static Inspector* as_ctor(Module* m)
 { 
     return new ArpSpoof((ArpSpoofModule*)m);
@@ -316,15 +295,6 @@ static Inspector* as_ctor(Module* m)
 
 static void as_dtor(Inspector* p)
 { delete p; }
-
-static void as_sum()
-{ sum_stats(&gasstats, &asstats); }
-
-static void as_stats()
-{ show_stats(&gasstats, MOD_NAME); }
-
-static void as_reset()
-{ memset(&gasstats, 0, sizeof(gasstats)); }
 
 static const InspectApi as_api =
 {
@@ -340,16 +310,14 @@ static const InspectApi as_api =
     PROTO_BIT__ARP,
     nullptr, // buffers
     nullptr, // service
-    as_init,
+    nullptr, // init
     nullptr, // term
     as_ctor,
     as_dtor,
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    as_sum,
-    as_stats,
-    as_reset
+    nullptr, // reset
 };
 
 #ifdef BUILDING_SO

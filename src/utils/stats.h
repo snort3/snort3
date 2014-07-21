@@ -38,8 +38,7 @@
 #include "sfip/sf_ipvar.h"
 #include "sfip/ipv6_port.h"
 #include "utils/sflsq.h"
-
-typedef uint64_t PegCount;
+#include "framework/counts.h"
 
 struct PacketCount
 {
@@ -68,15 +67,8 @@ struct ProcessCount
     PegCount attribute_table_hosts;
 };
 
-struct SimpleStats
-{
-    PegCount total_packets;
-};
-
 extern ProcessCount proc_stats;
 extern THREAD_LOCAL PacketCount pc; 
-
-#define array_size(a) (sizeof(a)/sizeof(a[0]))
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
 void show_stats(PegCount*, const char* names[], unsigned n,

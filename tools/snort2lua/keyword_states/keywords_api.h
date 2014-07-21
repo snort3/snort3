@@ -23,8 +23,16 @@
 #define KEYWORDS_API_H
 
 #include <vector>
+#include <string>
 #include "../conversion_state.h"
 
-extern const std::vector<const ConvertMap*> keyword_api;
+
+namespace keywords
+{
+
+extern const std::vector<const ConvertMap*> keywords_api;
+
+
+}  // namespace keywords
 
 #endif

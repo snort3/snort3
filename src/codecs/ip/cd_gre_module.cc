@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_gre_module.h"
 
-
-static const Parameter gre_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap gre_rules[] =
 {
     { DECODE_GRE_DGRAM_LT_GREHDR, "(" CD_GRE_NAME ") GRE header length > payload length" },
@@ -43,10 +36,9 @@ static const RuleMap gre_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-GreModule::GreModule() : DecodeModule(CD_GRE_NAME, gre_params, gre_rules)
+GreModule::GreModule() : DecodeModule(CD_GRE_NAME)
 { }
 
-bool GreModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* GreModule::get_rules() const
+{ return gre_rules; }
+

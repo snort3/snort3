@@ -85,60 +85,27 @@
 #include "tcp_module.h"
 #include "stream/stream_splitter.h"
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats s5TcpPerfStats;
-static THREAD_LOCAL PreprocStats s5TcpNewSessPerfStats;
-static THREAD_LOCAL PreprocStats s5TcpStatePerfStats;
-static THREAD_LOCAL PreprocStats s5TcpDataPerfStats;
-static THREAD_LOCAL PreprocStats s5TcpInsertPerfStats;
-static THREAD_LOCAL PreprocStats s5TcpPAFPerfStats;
-static THREAD_LOCAL PreprocStats s5TcpFlushPerfStats;
-static THREAD_LOCAL PreprocStats s5TcpBuildPacketPerfStats;
-static THREAD_LOCAL PreprocStats s5TcpProcessRebuiltPerfStats;
-static THREAD_LOCAL PreprocStats streamSizePerfStats;
-static THREAD_LOCAL PreprocStats streamReassembleRuleOptionPerfStats;
-
-static PreprocStats* tcp_get_profile(const char* key)
-{
-    if ( !strcmp(key, MOD_NAME) )
-        return &s5TcpPerfStats;
-
-    if ( !strcmp(key, "tcpNewSess") )
-        return &s5TcpNewSessPerfStats;
-
-    if ( !strcmp(key, "tcpState") )
-        return &s5TcpStatePerfStats;
-
-    if ( !strcmp(key, "tcpData") )
-        return &s5TcpDataPerfStats;
-
-    if ( !strcmp(key, "tcpPktInsert") )
-        return &s5TcpInsertPerfStats;
-
-    if ( !strcmp(key, "tcpPAF") )
-        return &s5TcpPAFPerfStats;
-
-    if ( !strcmp(key, "tcpFlush") )
-        return &s5TcpFlushPerfStats;
-
-    if ( !strcmp(key, "tcpBuildPacket") )
-        return &s5TcpBuildPacketPerfStats;
-
-    if ( !strcmp(key, "tcpProcessRebuilt") )
-        return &s5TcpProcessRebuiltPerfStats;
-
-    if ( !strcmp(key, "stream_size") )
-        return &streamSizePerfStats;
-
-    if ( !strcmp(key, "reassemble") )
-        return &streamReassembleRuleOptionPerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats s5TcpPerfStats;
+THREAD_LOCAL ProfileStats s5TcpNewSessPerfStats;
+THREAD_LOCAL ProfileStats s5TcpStatePerfStats;
+THREAD_LOCAL ProfileStats s5TcpDataPerfStats;
+THREAD_LOCAL ProfileStats s5TcpInsertPerfStats;
+THREAD_LOCAL ProfileStats s5TcpPAFPerfStats;
+THREAD_LOCAL ProfileStats s5TcpFlushPerfStats;
+THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
+THREAD_LOCAL ProfileStats s5TcpProcessRebuiltPerfStats;
+THREAD_LOCAL ProfileStats streamSizePerfStats;
+THREAD_LOCAL ProfileStats streamReassembleRuleOptionPerfStats;
 
 struct TcpStats
 {
+    PegCount sessions;
+    PegCount prunes;
+    PegCount timeouts;
+    PegCount created;
+    PegCount released;
+    PegCount discards;
+    PegCount events;
     PegCount trackers_created;
     PegCount trackers_released;
     PegCount segs_created;
@@ -152,8 +119,15 @@ struct TcpStats
     PegCount s5tcp2;
 };
 
-static const char* tcp_pegs[] =
+const char* tcp_pegs[] =
 {
+    "sessions",
+    "prunes",
+    "timeouts",
+    "created",
+    "released",
+    "discards",
+    "events",
     "trackers created",
     "trackers released",
     "segs created",
@@ -167,12 +141,7 @@ static const char* tcp_pegs[] =
     "server cleanup flushes"
 };
 
-static SessionStats gssnStats;
-static TcpStats gtcpStats;
-
-static THREAD_LOCAL SessionStats ssnStats;
-static THREAD_LOCAL TcpStats tcpStats;
-
+THREAD_LOCAL TcpStats tcpStats;
 THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 
 /*  M A C R O S  **************************************************/
@@ -537,9 +506,8 @@ void Stream5SetSplitterTcp (Flow* lwssn, bool c2s, StreamSplitter* ss)
         trk = &tcpssn->client;
     }
 
-    // FIXIT we have a sequencing issue with binder
-    //if ( trk->splitter && tcpssn->tcp_init )
-    //    delete trk->splitter;
+    if ( trk->splitter && tcpssn->tcp_init )
+        delete trk->splitter;
 
     trk->splitter = ss;
 
@@ -646,32 +614,6 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
     sf_base->stream5_mem_in_use = tcp_memcap->used();
 }
 
-static void Stream5TcpRegisterPreprocProfiles(void)
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        MOD_NAME, &s5TcpPerfStats, 0, &totalPerfStats, tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpNewSess", &s5TcpNewSessPerfStats, 1, &s5TcpPerfStats, tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpState", &s5TcpStatePerfStats, 1, &s5TcpPerfStats, tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpData", &s5TcpDataPerfStats, 2, &s5TcpStatePerfStats, tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpPktInsert", &s5TcpInsertPerfStats, 3, &s5TcpDataPerfStats, tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpPAF", &s5TcpPAFPerfStats, 2, &s5TcpStatePerfStats, tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpFlush", &s5TcpFlushPerfStats, 2, &s5TcpStatePerfStats, tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpBuildPacket", &s5TcpBuildPacketPerfStats, 3, &s5TcpFlushPerfStats,
-        tcp_get_profile);
-    RegisterPreprocessorProfile(
-        "tcpProcessRebuilt", &s5TcpProcessRebuiltPerfStats, 3,
-        &s5TcpFlushPerfStats, tcp_get_profile);
-#endif
-}
-
 #if 0
 static void Stream5TcpRegisterRuleOptions(SnortConfig*)
 {
@@ -685,10 +627,10 @@ static void Stream5TcpRegisterRuleOptions(SnortConfig*)
                                    &s5TcpStreamReassembleRuleOptionEval, &s5TcpStreamReassembleRuleOptionCleanup,
                                    NULL, NULL, NULL, NULL);
 #ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
+    RegisterProfile(
         "stream_size", &streamSizePerfStats, 4, &preprocRuleOptionPerfStats,
         tcp_get_profile);
-    RegisterPreprocessorProfile(
+    RegisterProfile(
         "reassemble", &streamReassembleRuleOptionPerfStats, 4,
         &preprocRuleOptionPerfStats, tcp_get_profile);
 #endif
@@ -979,114 +921,114 @@ static void PrintFlushMgr(FlushMgr *fm)
 
 static inline void Discard ()
 {
-    ssnStats.discards++;
+    tcpStats.discards++;
 }
 
 static inline void EventSynOnEst()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SYN_ON_EST);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventExcessiveOverlap()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadTimestamp()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_TIMESTAMP);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventWindowTooLarge()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_TOO_LARGE);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataOnSyn()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_SYN);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataOnClosed()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_ON_CLOSED);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataAfterReset()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RESET);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadSegment()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_SEGMENT);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventSessionHijackedClient()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_CLIENT);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 static inline void EventSessionHijackedServer()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SESSION_HIJACKED_SERVER);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataWithoutFlags()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_WITHOUT_FLAGS);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventMaxSmallSegsExceeded()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_SMALL_SEGMENT);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void Event4whs()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_4WAY_HANDSHAKE);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventNoTimestamp()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_TIMESTAMP);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadReset()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_RST);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadFin()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_FIN);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventBadAck()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_BAD_ACK);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventDataAfterRstRcvd()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_DATA_AFTER_RST_RCVD);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventInternal (uint32_t eventSid)
@@ -1105,13 +1047,13 @@ static inline void EventInternal (uint32_t eventSid)
 static inline void EventWindowSlam ()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_WINDOW_SLAM);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 static inline void EventNo3whs()
 {
     SnortEventqAdd(GID_STREAM_TCP, STREAM_TCP_NO_3WHS);
-    ssnStats.events++;
+    tcpStats.events++;
 }
 
 /*
@@ -1462,7 +1404,7 @@ static inline int ValidTimestamp(StreamTracker *talker,
     if ( p->tcph->th_flags & TH_ACK &&
         Normalize_IsEnabled(p, NORM_TCP_OPT) )
     {
-        // FIXTHIS validate tsecr here (check that it was previously sent)
+        // FIXIT validate tsecr here (check that it was previously sent)
         // checking for the most recent ts is easy enough must check if
         // ts are up to date in retransmitted packets
     }
@@ -1738,7 +1680,7 @@ static inline void UpdateSsn(
 {
 #if 0
     if (
-         // FIXTHIS these checks are a hack to avoid off by one normalization
+         // FIXIT these checks are a hack to avoid off by one normalization
          // due to FIN ... if last segment filled a hole, r_nxt_ack is not at
          // end of data, FIN is ignored so sequence isn't bumped, and this
          // forces seq-- on ACK of FIN.  :(
@@ -1750,8 +1692,8 @@ static inline void UpdateSsn(
         // if a gap exists prior to ack, move ack back to start of gap
         StreamSegment* seg = snd->seglist;
 
-        // FIXTHIS must check ack oob with empty seglist
-        // FIXTHIS add lower gap bound to tracker for efficiency?
+        // FIXIT must check ack oob with empty seglist
+        // FIXIT add lower gap bound to tracker for efficiency?
         while ( seg )
         {
             uint32_t seq = seg->seq + seg->size;
@@ -2014,7 +1956,7 @@ static inline void purge_all (StreamTracker *st)
 // * we may flush partial segments
 // * must adjust seq->seq and seg->size when a flush gets only the
 //   initial part of a segment
-// * FIXTHIS need flag to mark any reassembled packets that have a gap
+// * FIXIT need flag to mark any reassembled packets that have a gap
 //   (if we reassemble such)
 static inline int purge_flushed_ackd (TcpSession *tcpssn, StreamTracker *st)
 {
@@ -2292,7 +2234,7 @@ static inline uint32_t get_q_footprint(StreamTracker *st)
     return fp;
 }
 
-// FIXTHIS get_q_sequenced() performance could possibly be
+// FIXIT get_q_sequenced() performance could possibly be
 // boosted by tracking sequenced bytes as seglist is updated
 // to avoid the while loop, etc. below.
 static inline uint32_t get_q_sequenced(StreamTracker *st)
@@ -2334,7 +2276,7 @@ static inline int flush_ackd(
     return flush_to_seq(tcpssn, st, bytes, p, sip, dip, sp, dp, dir);
 }
 
-// FIXTHIS flush_stream() calls should be replaced with calls to
+// FIXIT flush_stream() calls should be replaced with calls to
 // CheckFlushPolicyOn*() with the exception that for the *OnAck() case,
 // any available ackd data must be flushed in both directions.
 static inline int flush_stream(
@@ -2463,9 +2405,9 @@ static int FlushStream(
             break;
 
         /* Check for a gap/missing packet */
-        // FIXTHIS PAF should account for missing data and resume
+        // FIXIT PAF should account for missing data and resume
         // scanning at the start of next PDU instead of aborting.
-        // FIXTHIS FIN may be in toSeq causing bogus gap counts.
+        // FIXIT FIN may be in toSeq causing bogus gap counts.
         if ( (ss->next && (ss->seq + ss->size != ss->next->seq)) ||
             (!ss->next && (ss->seq + ss->size < toSeq)))
         {
@@ -2683,6 +2625,7 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     s5_paf_clear(&tcpssn->server.paf_state);
 
     // update light-weight state
+    lwssn->flow_state = 0;
     lwssn->clear(freeApplicationData);
 
     // generate event for rate filtering
@@ -4256,7 +4199,7 @@ static int ProcessTcpData(
         }
 
         /* move the ack boundry up, this is the only way we'll accept data */
-        // FIXTHIS for ips, must move all the way to first hole or right end
+        // FIXIT for ips, must move all the way to first hole or right end
         if (listener->s_mgr.state_queue == TCP_STATE_NONE)
             listener->r_nxt_ack = tdb->end_seq;
 
@@ -4307,7 +4250,7 @@ static int ProcessTcpData(
                 {
                     /* set next ack so we are within the window going forward on
                     * this side. */
-                    // FIXTHIS for ips, must move all the way to first hole or right end
+                    // FIXIT for ips, must move all the way to first hole or right end
                     listener->r_nxt_ack = tdb->end_seq;
                 }
             }
@@ -5696,7 +5639,7 @@ static int ProcessTcp(
                         }
                         if ( lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM )
                         {
-                            // FIXTHIS this should be handled below in fin section
+                            // FIXIT this should be handled below in fin section
                             // but midstream sessions fail the seq test
                             listener->s_mgr.state_queue = TCP_STATE_TIME_WAIT;
                             listener->s_mgr.transition_seq = tdb->end_seq;
@@ -5747,7 +5690,7 @@ static int ProcessTcp(
                 break;
 
             default:
-                // FIXTHIS safe to ignore when inline?
+                // FIXIT safe to ignore when inline?
                 break;
         }
     }
@@ -5976,7 +5919,7 @@ dupfin:
 
                 if(flushed)
                 {
-                    // FIXTHIS - these calls redundant?
+                    // FIXIT - these calls redundant?
                     purge_alerts(talker, talker->r_win_base, tcpssn->flow);
                     purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
                 }
@@ -7270,23 +7213,17 @@ bool TcpSession::setup (Packet* p)
         flow->session_state = STREAM5_STATE_SYN;  // FIXIT same as line 4555
 
     assert(flow->session == this);
-
-    // FIXIT binder sets splitters before we get here
-    StreamSplitter* sc = client.splitter;
-    StreamSplitter* ss = server.splitter;
-
-    PAF_Status pc = client.paf_state.paf;
-    PAF_Status ps = server.paf_state.paf;
-
     reset();
 
-    client.paf_state.paf = pc;
-    server.paf_state.paf = ps;
+    Inspector* ins = flow->clouseau;
+    if ( !ins )
+        ins = flow->gadget;
+    assert(ins);
 
-    client.splitter = sc;
-    server.splitter = ss;
+    stream.set_splitter(flow, true, ins->get_splitter(true));
+    stream.set_splitter(flow, false, ins->get_splitter(false));
 
-    ssnStats.sessions++;
+    tcpStats.sessions++;
     return true;
 }
 
@@ -7426,7 +7363,7 @@ int TcpSession::process(Packet *p)
             /* Not reset, simply time'd out.  Clean it up */
             TcpSessionCleanup(flow, 1);
         }
-        ssnStats.timeouts++;
+        tcpStats.timeouts++;
     }
     status = ProcessTcp(flow, p, &tdb, config);
 
@@ -7459,38 +7396,14 @@ int TcpSession::process(Packet *p)
 
 void tcp_init()
 {
-    Stream5TcpRegisterPreprocProfiles();
 #if 0
     // FIXIT add inspector rule options
     Stream5TcpRegisterRuleOptions(sc);
 #endif
 }
 
-void tcp_sum()
-{
-    sum_stats((PegCount*)&gssnStats, (PegCount*)&ssnStats,
-        session_peg_count);
-
-    sum_stats((PegCount*)&gtcpStats, (PegCount*)&tcpStats,
-        array_size(tcp_pegs));
-}
-
-void tcp_stats()
-{
-    // FIXIT need to get these before delete flow_con
-    //flow_con->get_prunes(IPPROTO_TCP, ssnStats.prunes);
-
-    show_stats((PegCount*)&gssnStats, session_pegs, session_peg_count,
-        MOD_NAME);
-
-    show_stats((PegCount*)&gtcpStats, tcp_pegs, array_size(tcp_pegs));
-}
-
 void tcp_reset()
 {
-    memset(&gssnStats, 0, sizeof(gssnStats));
-    memset(&gtcpStats, 0, sizeof(gtcpStats));
-
     flow_con->reset_prunes(IPPROTO_TCP);
 }
 

@@ -250,25 +250,9 @@ static const char *frag_policy_names[] =
     "WINDOWS",
     "SOLARIS"};
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats fragPerfStats;
-static THREAD_LOCAL PreprocStats fragInsertPerfStats;
-static THREAD_LOCAL PreprocStats fragRebuildPerfStats;
-
-static PreprocStats* frag_get_profile(const char* key)
-{
-    if ( !strcmp(key, "frag" ) )
-        return &fragPerfStats;
-
-    if ( !strcmp(key, "fraginsert" ) )
-        return &fragInsertPerfStats;
-
-    if ( !strcmp(key, "fragrebuild" ) )
-        return &fragRebuildPerfStats;
-
-    return nullptr;
-}
-#endif
+THREAD_LOCAL ProfileStats fragPerfStats;
+THREAD_LOCAL ProfileStats fragInsertPerfStats;
+THREAD_LOCAL ProfileStats fragRebuildPerfStats;
 
 /*  P R O T O T Y P E S  ********************************************/
 static void FragRebuild(FragTracker *, Packet *);
@@ -1029,7 +1013,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         /* Set the 'next' protocol */
         if (p->ip6_frag_index > 0)
         {
-            // FIXTHIS use of last_extension works but is ugly
+            // FIXIT use of last_extension works but is ugly
             IP6Extension *last_extension = (IP6Extension *)
                 (dpkt->pkt + (p->ip6_extensions[p->ip6_frag_index -1].data - p->pkt));
             last_extension->ip6e_nxt = ft->protocol;
@@ -2677,18 +2661,6 @@ inline int Defrag::expire(Packet*, FragTracker *ft, FragEngine *fe)
 //-------------------------------------------------------------------------
 // static methods
 //-------------------------------------------------------------------------
-
-void Defrag::init()
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        "frag", &fragPerfStats, 0, &totalPerfStats, frag_get_profile);
-    RegisterPreprocessorProfile(
-        "fraginsert", &fragInsertPerfStats, 1, &fragPerfStats, frag_get_profile);
-    RegisterPreprocessorProfile(
-        "fragrebuild", &fragRebuildPerfStats, 1, &fragPerfStats, frag_get_profile);
-#endif
-}
 
 void Defrag::sum()
 {

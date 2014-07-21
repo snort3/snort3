@@ -234,6 +234,7 @@ void Stream::stop_inspection(
     /* TODO: Handle bytes/response parameters */
 
     DisableInspection(p);
+    flow->flow_state = 2;
 }
 
 void Stream::resume_inspection(Flow* flow, char dir)
@@ -302,6 +303,7 @@ void Stream::drop_packet(Packet *p)
     if (!flow)
         return;
 
+    flow->flow_state = 1;
     flow->session->clear();
 
     if (!(p->packet_flags & PKT_STATELESS))
@@ -844,7 +846,7 @@ void Stream::set_extra_data(
     Stream5SetExtraDataTcp(flow, p, flag);
 }
 
-// FIXTHIS get pv/flow from packet directly?
+// FIXIT get pv/flow from packet directly?
 void Stream::clear_extra_data(
     Flow* pv, Packet* p, uint32_t flag)
 {

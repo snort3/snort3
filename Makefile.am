@@ -3,7 +3,6 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 SUBDIRS = \
 src \
 lua \
-doc \
 etc \
 tools
 

@@ -9,14 +9,14 @@ if( STATIC_CODECS )
         cd_erspan3.cc
         cd_erspan3_module.h
         cd_erspan3_module.cc
-        cd_ethloopback.cc
+        cd_eth_loopback.cc
         cd_mpls.cc
         cd_mpls_module.h
         cd_mpls_module.cc
         cd_pppencap.cc
-        cd_pppoepkt.cc
-        cd_pppoepkt_module.h
-        cd_pppoepkt_module.cc
+        cd_pppoe.cc
+        cd_pppoe_module.h
+        cd_pppoe_module.cc
         cd_transbridge.cc
         cd_vlan.cc
         cd_vlan_module.h
@@ -35,10 +35,10 @@ if( STATIC_CODECS )
 else(STATIC_CODECS)
     add_shared_library(cd_erspan2 codecs cd_erspan2.cc cd_erspan2_module.h cd_erspan2_module.cc)
     add_shared_library(cd_erspan3 codecs cd_erspan3.cc cd_erspan3_module.h cd_erspan3_module.cc)
-    add_shared_library(cd_ethloopback codecs cd_ethloopback.cc)
+    add_shared_library(cd_eth_loopback codecs cd_eth_loopback.cc)
     add_shared_library(cd_mpls codecs cd_mpls.cc cd_mpls_module.h cd_mpls_module.cc)
     add_shared_library(cd_pppencap codecs cd_pppencap.cc)
-    add_shared_library(cd_pppoepkt codecs cd_pppoepkt.cc cd_pppoepkt_module.h cd_pppoepkt_module.cc)
+    add_shared_library(cd_pppoe codecs cd_pppoe.cc cd_pppoe_module.h cd_pppoe_module.cc)
     add_shared_library(cd_transbridge codecs cd_transbridge.cc)
     add_shared_library(cd_vlan codecs cd_vlan.cc cd_vlan_module.h cd_vlan_module.cc)
 

@@ -124,15 +124,13 @@ static const InspectApi icmp_api =
     PROTO_BIT__ICMP,
     nullptr, // buffers
     nullptr, // service
-    icmp_init,
+    nullptr, // init
     nullptr, // term
     icmp_ctor,
     icmp_dtor,
     nullptr, // pinit
     nullptr, // pterm
     icmp_ssn,
-    icmp_sum,
-    icmp_stats,
     icmp_reset
 };
 

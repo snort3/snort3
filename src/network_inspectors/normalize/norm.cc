@@ -32,6 +32,7 @@
 #include "packet_io/sfdaq.h"
 #include "protocols/ipv4.h"
 #include "protocols/tcp.h"
+#include "stream/stream.h"
 
 typedef enum {
     PC_IP4_TRIM,
@@ -57,25 +58,25 @@ typedef enum {
 } PegCounts;
 
 static const char* pegName[PC_MAX] = {
-    "ip4::trim",
-    "ip4::tos",
-    "ip4::df",
-    "ip4::rf",
-    "ip4::ttl",
-    "ip4::opts",
-    "icmp4::echo",
-    "ip6::ttl",
-    "ip6::opts",
-    "icmp6::echo",
-    "tcp::syn_opt",
-    "tcp::ts_ecr",
-    "tcp::opt",
-    "tcp::pad",
-    "tcp::rsv",
-    "tcp::ecn_pkt",
-    "tcp::ns",
-    "tcp::urg",
-    "tcp::urp"
+    "ip4.trim",
+    "ip4.tos",
+    "ip4.df",
+    "ip4.rf",
+    "ip4.ttl",
+    "ip4.opts",
+    "icmp4.echo",
+    "ip6.ttl",
+    "ip6.opts",
+    "icmp6.echo",
+    "tcp.syn_opt",
+    "tcp.ts_ecr",
+    "tcp.opt",
+    "tcp.pad",
+    "tcp.rsv",
+    "tcp.ecn_pkt",
+    "tcp.ns",
+    "tcp.urg",
+    "tcp.urp"
 };
 
 static THREAD_LOCAL PegCount normStats[PC_MAX];
@@ -516,16 +517,19 @@ static int Norm_TCP (
 void Norm_SumStats (void)
 {
     sum_stats((PegCount*)&gnormStats, (PegCount*)&normStats, array_size(pegName));
+    Stream_SumNormalizationStats();
 }
 
 void Norm_PrintStats (const char* name)
 {
     show_stats((PegCount*)&gnormStats, pegName, array_size(pegName), name);
+    Stream_PrintNormalizationStats();
 }
 
 void Norm_ResetStats (void)
 {
     memset(gnormStats, 0, sizeof(gnormStats));
+    Stream_ResetNormalizationStats();
 }
 
 //-----------------------------------------------------------------------

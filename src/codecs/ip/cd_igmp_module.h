@@ -32,7 +32,7 @@ class IgmpModule : public DecodeModule
 public:
     IgmpModule();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

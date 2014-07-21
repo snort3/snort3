@@ -15,14 +15,14 @@ cd_erspan2_module.cc \
 cd_erspan3.cc \
 cd_erspan3_module.h \
 cd_erspan3_module.cc \
-cd_ethloopback.cc \
+cd_eth_loopback.cc \
 cd_mpls.cc \
 cd_mpls_module.h \
 cd_mpls_module.cc \
 cd_pppencap.cc \
-cd_pppoepkt.cc \
-cd_pppoepkt_module.h \
-cd_pppoepkt_module.cc \
+cd_pppoe.cc \
+cd_pppoe_module.h \
+cd_pppoe_module.cc \
 cd_transbridge.cc \
 cd_vlan.cc \
 cd_vlan_module.h \
@@ -60,10 +60,10 @@ libcd_vlan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_vlan_la_LDFLAGS = -export-dynamic -shared
 libcd_vlan_la_SOURCES = cd_vlan.cc cd_vlan_module.h cd_vlan_module.cc
 
-ehlib_LTLIBRARIES += libcd_ethloopback.la
-libcd_ethloopback_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_ethloopback_la_LDFLAGS = -export-dynamic -shared
-libcd_ethloopback_la_SOURCES = cd_ethloopback.cc
+ehlib_LTLIBRARIES += libcd_eth_loopback.la
+libcd_eth_loopback_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_eth_loopback_la_LDFLAGS = -export-dynamic -shared
+libcd_eth_loopback_la_SOURCES = cd_eth_loopback.cc
 
 ehlib_LTLIBRARIES += libcd_pppencap.la
 libcd_pppencap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -75,10 +75,10 @@ libcd_transbridge_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_transbridge_la_LDFLAGS = -export-dynamic -shared
 libcd_transbridge_la_SOURCES = cd_transbridge.cc
 
-ehlib_LTLIBRARIES += libcd_pppoepkt.la
-libcd_pppoepkt_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_pppoepkt_la_LDFLAGS = -export-dynamic -shared
-libcd_pppoepkt_la_SOURCES = cd_pppoepkt.cc cd_pppoepkt_module.h cd_pppoepkt_module.cc
+ehlib_LTLIBRARIES += libcd_pppoe.la
+libcd_pppoe_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_pppoe_la_LDFLAGS = -export-dynamic -shared
+libcd_pppoe_la_SOURCES = cd_pppoe.cc cd_pppoe_module.h cd_pppoe_module.cc
 
 
 if ENABLE_NON_ETHER_DECODER

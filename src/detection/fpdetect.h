@@ -43,10 +43,10 @@
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
 #ifdef PERF_PROFILING
-extern THREAD_LOCAL PreprocStats rulePerfStats;
-extern THREAD_LOCAL PreprocStats ncrulePerfStats;
-extern THREAD_LOCAL PreprocStats ruleRTNEvalPerfStats;
-extern THREAD_LOCAL PreprocStats ruleOTNEvalPerfStats;
+extern THREAD_LOCAL ProfileStats rulePerfStats;
+extern THREAD_LOCAL ProfileStats ncrulePerfStats;
+extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
+extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
 #endif
 
 /*

@@ -26,9 +26,13 @@
 
 #include "framework/module.h"
 #include "ps_detect.h"
+#include "main/thread.h"
 
 #define PS_MODULE "port_scan"
 #define PS_GLOBAL "port_scan_global"
+
+extern THREAD_LOCAL SimpleStats spstats;
+extern THREAD_LOCAL ProfileStats psPerfStats;
 
 //-------------------------------------------------------------------------
 
@@ -41,6 +45,9 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
+    ProfileStats* get_profile() const;
     PsCommon* get_data();
 
 private:
@@ -55,6 +62,8 @@ public:
 
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
+
+    const RuleMap* get_rules() const;
 
     unsigned get_gid() const
     { return GID_PORT_SCAN; };

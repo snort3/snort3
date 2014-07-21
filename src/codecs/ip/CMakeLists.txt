@@ -3,9 +3,9 @@
 
 if( STATIC_CODECS )
     set( PLUGIN_SOURCES
-        cd_ah.cc
-        cd_ah_module.h
-        cd_ah_module.cc
+        cd_auth.cc
+        cd_auth_module.h
+        cd_auth_module.cc
         cd_dstopts.cc
         cd_frag.cc
         cd_gre.cc
@@ -25,8 +25,8 @@ if( STATIC_CODECS )
         cd_swipe.cc
     )
 
-else(STATIC_CODECS)
-    add_shared_library(cd_ah codecs cd_ah.cc cd_ah_module.h cd_ah_module.cc)
+else()
+    add_shared_library(cd_auth codecs cd_auth.cc cd_auth_module.h cd_auth_module.cc)
     add_shared_library(cd_dstopts codecs cd_dstopts.cc ipv6_util.h ipv6_util.cc)
     add_shared_library(cd_frag codecs cd_frag.cc ipv6_util.h ipv6_util.cc)
     add_shared_library(cd_gre codecs cd_gre.cc cd_gre_module.h cd_gre_module.cc)
@@ -39,7 +39,7 @@ else(STATIC_CODECS)
     add_shared_library(cd_sun_nd codecs cd_sun_nd.cc)
     add_shared_library(cd_swipe codecs cd_swipe.cc)
 
-endif(STATIC_CODECS)
+endif()
 
 
 add_library( ip_codecs STATIC

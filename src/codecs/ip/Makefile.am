@@ -29,9 +29,9 @@ ipv6_util.cc
 
 
 plugin_list = \
-cd_ah.cc \
-cd_ah_module.h \
-cd_ah_module.cc \
+cd_auth.cc \
+cd_auth_module.h \
+cd_auth_module.cc \
 cd_dstopts.cc \
 cd_frag.cc \
 cd_gre.cc \

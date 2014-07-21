@@ -21,13 +21,6 @@
 
 #include "codecs/ip/cd_icmp4_module.h"
 
-
-static const Parameter icmp4_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 // rules which will loaded into snort. 
 // You can now reference these rules by calling a codec_event
 // in your main codec's functions
@@ -65,10 +58,9 @@ static const RuleMap icmp4_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-Icmp4Module::Icmp4Module() : DecodeModule(CD_ICMP4_NAME, icmp4_params, icmp4_rules)
+Icmp4Module::Icmp4Module() : DecodeModule(CD_ICMP4_NAME)
 { }
 
-bool Icmp4Module::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* Icmp4Module::get_rules() const
+{ return icmp4_rules; }
+

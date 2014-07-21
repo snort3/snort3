@@ -195,7 +195,7 @@ static const Parameter search_engine_params[] =
     { "debug_print_rule_groups_compiled", Parameter::PT_BOOL, nullptr, "false",
       "prints compiled rule group information" },
 
-    { "debug_print-fast_pattern", Parameter::PT_BOOL, nullptr, "false",
+    { "debug_print_fast_pattern", Parameter::PT_BOOL, nullptr, "false",
       "print fast pattern info for each rule" },
 
     { "max_pattern_len", Parameter::PT_INT, "0:", "0",
@@ -329,7 +329,7 @@ static const Parameter profile_rule_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter profile_preproc_params[] =
+static const Parameter profile_module_params[] =
 {
     { "count", Parameter::PT_INT, "-1:", "-1",
       "print results to given level (-1 = all, 0 = off?)" },
@@ -349,7 +349,7 @@ static const Parameter profile_params[] =
     { "rules", Parameter::PT_TABLE, profile_rule_params, nullptr,
       "" },
 
-    { "preprocs", Parameter::PT_TABLE, profile_preproc_params, nullptr,
+    { "modules", Parameter::PT_TABLE, profile_module_params, nullptr,
       "" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -360,13 +360,25 @@ class ProfileModule : public Module
 public:
     ProfileModule() : Module("profile", profile_params) { };
     bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*);
 };
+
+bool ProfileModule::begin(const char* fqn, int, SnortConfig* sc)
+{
+    if ( !strcmp(fqn, "profile.rules") )
+        sc->profile_rules.num = -1;
+
+    else if ( !strcmp(fqn, "profile.modules") )
+        sc->profile_preprocs.num = -1;
+
+    return true;
+}
 
 bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     ProfileConfig* p;
     const char* spr = "profile.rules";
-    const char* spp = "profile.preprocs";
+    const char* spp = "profile.modules";
 
     if ( !strncmp(fqn, spr, strlen(spr)) )
         p = &sc->profile_rules;
@@ -1607,11 +1619,6 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 // snort module
 //-------------------------------------------------------------------------
 
-static const Parameter snort_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, "show available plugins" },
@@ -1630,7 +1637,8 @@ static const Command snort_cmds[] =
 class SnortModule : public Module
 {
 public:
-    SnortModule() : Module("snort", snort_params, snort_cmds) { };
+    SnortModule() : Module("snort") { };
+    const Command* get_commands() const { return snort_cmds; };
     bool set(const char*, Value&, SnortConfig*) { return false; };
 };
 

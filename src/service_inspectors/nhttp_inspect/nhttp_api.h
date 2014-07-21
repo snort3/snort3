@@ -38,7 +38,6 @@
 class NHttpApi {
 public:
     static const InspectApi nhttp_api;
-    static int16_t appProtocolId;
 private:
     NHttpApi() = delete;
     static Module* nhttp_mod_ctor() { return new NHttpModule; };
@@ -50,9 +49,6 @@ private:
     static void nhttp_dtor(Inspector* p) { delete p; };
     static void nhttp_pinit() {};
     static void nhttp_pterm() {};
-    static void nhttp_sum() {};
-    static void nhttp_stats() {};
-    static void nhttp_reset() {};
 };
 
 #endif

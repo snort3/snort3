@@ -34,9 +34,9 @@ enum BindRole
 
 enum BindAction
 {
-    BA_INSPECT,
+    BA_BLOCK = 1,
     BA_ALLOW,
-    BA_BLOCK
+    BA_INSPECT
 };
 
 enum BindProto
@@ -68,7 +68,7 @@ struct Binding
     std::string file;
 
     Binding()
-    { role = BR_EITHER; action = BA_INSPECT; };
+    { role = BR_EITHER; proto = BP_ANY; action = BA_INSPECT; };
 };
 
 #endif

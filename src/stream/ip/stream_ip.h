@@ -53,11 +53,6 @@ struct StreamIpConfig
     StreamIpConfig();
 };
 
-void ip_init();
-void ip_sum();
-void ip_stats();
-void ip_reset();
-
 StreamIpConfig* get_ip_cfg(Inspector*);
 class Defrag* get_defrag(Inspector*);
 

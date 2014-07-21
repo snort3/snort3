@@ -32,7 +32,7 @@ class Ipv4Module : public DecodeModule
 public:
     Ipv4Module();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

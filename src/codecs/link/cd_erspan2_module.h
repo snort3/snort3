@@ -32,7 +32,7 @@ class Erspan2Module : public DecodeModule
 public:
     Erspan2Module();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

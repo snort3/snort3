@@ -21,13 +21,6 @@
 
 #include "codecs/link/cd_arp_module.h"
 
-
-static const Parameter arp_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap arp_rules[] =
 {
     { DECODE_ARP_TRUNCATED, "(" CD_ARP_NAME ") Truncated ARP" },
@@ -38,10 +31,9 @@ static const RuleMap arp_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-ArpModule::ArpModule() : DecodeModule(CD_ARP_NAME, arp_params, arp_rules)
+ArpModule::ArpModule() : DecodeModule(CD_ARP_NAME)
 { }
 
-bool ArpModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* ArpModule::get_rules() const
+{ return arp_rules; }
+

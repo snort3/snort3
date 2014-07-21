@@ -32,7 +32,7 @@ class Icmp4Module : public DecodeModule
 public:
     Icmp4Module();
 
-    bool set(const char*, Value&, SnortConfig*);
+    const RuleMap* get_rules() const;
 };
 
 #endif

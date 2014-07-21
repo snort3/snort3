@@ -57,7 +57,7 @@ struct pcap_pkthdr32
 };
 
 /* this struct is for the alert socket code.... */
-// FIXTHIS alert unix sock supports l2-l3-l4 encapsulations
+// FIXIT alert unix sock supports l2-l3-l4 encapsulations
 
 const unsigned int ALERTMSG_LENGTH = 256;
 struct Alertpkt

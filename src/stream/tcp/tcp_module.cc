@@ -199,9 +199,71 @@ static const RuleMap stream_tcp_rules[] =
 };
 
 StreamTcpModule::StreamTcpModule() :
-    Module(MOD_NAME, stream_tcp_params, stream_tcp_rules)
+    Module(MOD_NAME, stream_tcp_params)
 {
     config = nullptr;
+}
+
+StreamTcpModule::~StreamTcpModule()
+{
+    for ( auto p : protos )
+        delete p;
+}
+
+const RuleMap* StreamTcpModule::get_rules() const
+{ return stream_tcp_rules; }
+
+ProfileStats* StreamTcpModule::get_profile(
+    unsigned index, const char*& name, const char*& parent) const
+{
+    switch ( index )
+    {
+    case 0:
+        name = "stream_tcp";
+        parent = nullptr;
+        return &s5TcpPerfStats;
+
+    case 1:
+        name = "tcpNewSess";
+        parent = "stream_tcp";
+        return &s5TcpNewSessPerfStats;
+
+    case 2:
+        name = "tcpState";
+        parent = "stream_tcp";
+        return &s5TcpStatePerfStats;
+
+    case 3:
+        name = "tcpData";
+        parent = "tcpState";
+        return &s5TcpDataPerfStats;
+
+    case 4:
+        name = "tcpPktInsert";
+        parent = "tcpData";
+        return &s5TcpInsertPerfStats;
+
+    case 5:
+        name = "tcpPAF";
+        parent = "tcpState";
+        return &s5TcpPAFPerfStats;
+
+    case 6:
+        name = "tcpFlush";
+        parent = "tcpState";
+        return &s5TcpFlushPerfStats;
+
+    case 7:
+        name = "tcpBuildPacket";
+        parent = "tcpFlush";
+        return &s5TcpBuildPacketPerfStats;
+
+    case 8:
+        name = "tcpProcessRebuilt";
+        parent = "tcpFlush";
+        return &s5TcpProcessRebuiltPerfStats;
+    }
+    return nullptr;
 }
 
 StreamTcpConfig* StreamTcpModule::get_data()
@@ -371,4 +433,10 @@ bool StreamTcpModule::end(const char*, int, SnortConfig*)
     }
     return true;
 }
+
+const char** StreamTcpModule::get_pegs() const
+{ return tcp_pegs; }
+
+PegCount* StreamTcpModule::get_counts() const
+{ return (PegCount*)&tcpStats; }
 

@@ -22,7 +22,6 @@
 
 #include "framework/inspector.h"
 
-extern int16_t telnet_app_id;
 extern const InspectApi tn_api;
 
 #endif

@@ -1,3 +1,28 @@
+102
+-- moved stats (peg counts) to module
+-- removed sum() and stats() from InspectApi
+-- tweaked --help-module
+
+101
+-- tweaked startup output
+-- fixed pattern matcher
+-- pulled in latest from Tom
+
+100
+-- adding profiling to module
+-- profile.preprocs is now profile.modules
+
+99
+-- updated wizard
+-- removed service / app id from inspectors
+
+98
+-- initial wizard implementation
+
+97
+-- latest from Tom
+-- some valgrind fixes
+
 96
 -- finished default fp selection
 -- added NHttpInspect::get_buf() and related

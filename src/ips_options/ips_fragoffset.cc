@@ -57,9 +57,9 @@
 static const char* s_name = "fragoffset";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats fragOffsetPerfStats;
+static THREAD_LOCAL ProfileStats fragOffsetPerfStats;
 
-static PreprocStats* fo_get_profile(const char* key)
+static ProfileStats* fo_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &fragOffsetPerfStats;
@@ -263,7 +263,7 @@ static void fragoffset_dtor(IpsOption* p)
 static void fragoffset_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &fragOffsetPerfStats, fo_get_profile);
+    RegisterOtnProfile(s_name, fo_get_profile);
 #endif
 }
 

@@ -257,10 +257,11 @@ static void config_help_signals(SnortConfig*, const char*)
     exit(0);
 }
 
-enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF };
+enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF, HT_LST };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
+    snort_conf = new SnortConfig;
     PluginManager::load_plugins(sc->plugin_path);
     ModuleManager::init();
 
@@ -279,16 +280,18 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         ModuleManager::show_rules(s_markup, val);
         break;
     case HT_MOD:
-        ModuleManager::show_configs(s_markup, val);
-        ModuleManager::show_commands(s_markup, val);
-        ModuleManager::show_rules(s_markup, val);
+        ModuleManager::show_module(s_markup, val);
         break;
     case HT_BUF:
         InspectorManager::dump_buffers();
         break;
+    case HT_LST:
+        ModuleManager::list_modules();
+        break;
     }
     ModuleManager::term();
     PluginManager::release_plugins();
+    delete snort_conf;
     exit(0);
 }
 
@@ -325,6 +328,11 @@ static void config_help_builtin(SnortConfig* sc, const char* val)
 static void config_help_module(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_MOD);
+}
+
+static void config_list_modules(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_LST);
 }
 
 static void config_lua(SnortConfig*, const char* val)
@@ -795,13 +803,16 @@ static ConfigFunc basic_opts[] =
       "<module prefix> output matching generators" },
 
     { "help-module", config_help_module,
-      "output config, commands, and builtin rules for given module" },
+      "output description of given module" },
 
     { "help-options", config_help_options,
       "<option prefix> (same as --help)" },
 
     { "help-signals", config_help_signals,
       "dump available control signals" },
+
+    { "list-modules", config_list_modules,
+      "list all known modules" },
 
     { "lua", config_lua,
       "<chunk> extend/override conf with chunk; may be repeated" },

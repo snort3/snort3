@@ -62,11 +62,11 @@
 #include "framework/ips_option.h"
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats cvsPerfStats;
+static THREAD_LOCAL ProfileStats cvsPerfStats;
 
 static const char* s_name = "cvs";
 
-static PreprocStats* cvs_get_profile(const char* key)
+static ProfileStats* cvs_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &cvsPerfStats;
@@ -488,7 +488,7 @@ static void cvs_dtor(IpsOption* p)
 static void cvs_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &cvsPerfStats, cvs_get_profile);
+    RegisterOtnProfile(s_name, cvs_get_profile);
 #endif
 }
 

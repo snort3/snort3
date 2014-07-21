@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <list>
+#include <mutex>
 #include <string>
 #include <sstream>
 #include <lua.hpp>
@@ -35,6 +36,7 @@
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
+#include "time/profiler.h"
 
 using namespace std;
 
@@ -62,6 +64,9 @@ static bool s_markup = false;
 //-------------------------------------------------------------------------
 // markup foo (for asciidoc)
 //-------------------------------------------------------------------------
+
+static const char* head()
+{ return s_markup ? "=== " : ""; }
 
 static const char* item()
 { return s_markup ? "* " : ""; }
@@ -374,6 +379,16 @@ bool open_table(const char* s, int idx)
     if ( !m )
         return false;
 
+    static string last;
+
+    if ( last != key )
+    {
+        if ( !last.size() )
+            LogMessage("Configuring modules:\n");
+        LogMessage("\t %s\n", key.c_str());
+        last = key;
+    }
+
     m->begin(s, idx, s_config);
     return true;
 }
@@ -448,6 +463,8 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
 
     if ( mh->reg )
         Shell::install(m->get_name(), mh->reg);
+
+    RegisterProfile(m);
 }
 
 Module* ModuleManager::get_module(const char* s)
@@ -469,6 +486,14 @@ unsigned ModuleManager::get_errors()
     return err;
 }
 
+void ModuleManager::list_modules()
+{
+    s_modules.sort(comp_mods);
+
+    for ( auto* p : s_modules )
+        LogMessage("%s\n", p->mod->get_name());
+}
+
 void ModuleManager::dump_modules()
 {
     s_modules.sort(comp_mods);
@@ -477,6 +502,73 @@ void ModuleManager::dump_modules()
     for ( auto* p : s_modules )
         if ( !p->api )
             d.dump(p->mod->get_name());
+}
+
+static const char* mod_types[PT_MAX] =
+{
+    "data",
+    "codec",
+    "logger",
+    "ips option",
+    "so rule",
+    "inspector",
+    "search engine"
+};
+
+static const char* mod_type(const BaseApi* api)
+{
+    if ( !api )
+        return "basic";
+
+    if ( api->type > PT_MAX )
+        return "error";
+
+    return mod_types[api->type];
+}
+
+void ModuleManager::show_module(bool markup, const char* name)
+{
+    s_modules.sort(comp_gids);
+    s_markup = markup;
+
+    for ( auto p : s_modules )
+    {
+        const Module* m = p->mod;
+        assert(m);
+
+        if ( strcmp(m->get_name(), name) )
+            continue;
+
+        cout << endl << head() << name << endl << endl;
+        cout << "Type: "  << mod_type(p->api) << endl << endl;
+
+        if ( const Parameter* p = m->get_parameters() )
+        {
+            if ( p->type < Parameter::PT_MAX )
+            {
+                cout << endl << "Configuration: "  << endl << endl;
+                show_configs(markup, name);
+            }
+        }
+
+        if ( m->get_commands() )
+        {
+            cout << endl << "Commands: "  << endl << endl;
+            show_commands(markup, name);
+        }
+
+        if ( m->get_rules() )
+        {
+            cout << endl << "Rules: "  << endl << endl;
+            show_rules(markup, name);
+        }
+
+        if ( m->get_pegs() )
+        {
+            cout << endl << "Peg counts: "  << endl << endl;
+            show_pegs(markup, name);
+        }
+    }
 }
 
 void ModuleManager::show_configs(bool markup, const char* pfx)
@@ -572,6 +664,37 @@ void ModuleManager::show_gids(bool markup, const char* pfx)
     }    
 }
 
+void ModuleManager::show_pegs(bool markup, const char* pfx)
+{
+    s_modules.sort(comp_gids);
+    s_markup = markup;
+    unsigned len = pfx ? strlen(pfx) : 0;
+
+    for ( auto p : s_modules )
+    {
+        const Module* m = p->mod;
+        assert(m);
+
+        if ( pfx && strncmp(m->get_name(), pfx, len) )
+            continue;
+
+        const char** pegs = m->get_pegs();
+
+        if ( !pegs )
+            continue;
+
+        while ( *pegs )
+        {
+            cout << item();
+            cout << emphasis_on();
+            cout << *pegs;
+            cout << emphasis_off();
+            cout << endl;
+            ++pegs;
+        }
+    }    
+}
+
 void ModuleManager::show_rules(bool markup, const char* pfx)
 {
     s_modules.sort(comp_gids);
@@ -637,5 +760,29 @@ void ModuleManager::load_rules(SnortConfig* sc)
         }
     }    
     pop_parse_location();
+}
+
+void ModuleManager::dump_stats (SnortConfig*)
+{
+    for ( auto p : s_modules )
+        p->mod->show_stats();
+}
+
+void ModuleManager::accumulate (SnortConfig*)
+{
+    static mutex stats_mutex;
+    stats_mutex.lock();
+
+    for ( auto p : s_modules )
+        p->mod->sum_stats();
+
+    pc_sum();
+    stats_mutex.unlock();
+}
+
+void ModuleManager::reset_stats (SnortConfig*)
+{
+    for ( auto p : s_modules )
+        p->mod->reset_stats();
 }
 

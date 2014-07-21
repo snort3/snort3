@@ -30,10 +30,12 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+#include <vector>
 #include <lua.hpp>
 
 #include "framework/value.h"
 #include "framework/parameter.h"
+#include "framework/counts.h"
 
 struct SnortConfig;
 
@@ -50,11 +52,14 @@ struct RuleMap
     const char* msg;
 };
 
+struct ProfileStats;
+
 class Module
 {
 public:
     virtual ~Module() { };
 
+    // configuration:
     // for lists (tables with numeric indices):
     // int == 0 is list container
     // int > 0 is list item
@@ -64,8 +69,10 @@ public:
     virtual bool end(const char*, int, SnortConfig*)
     { return true; };
 
-    virtual bool set(const char*, Value&, SnortConfig*) = 0;
+    virtual bool set(const char*, Value&, SnortConfig*)
+    { return !get_parameters(); };
 
+    // ips events:
     virtual unsigned get_gid() const
     { return 0; };
 
@@ -91,36 +98,46 @@ public:
     const Parameter* get_parameters() const
     { return params; };
 
-    const Command* get_commands() const
-    { return cmds; };
+    virtual const Command* get_commands() const
+    { return nullptr; };
 
-    const RuleMap* get_rules() const
-    { return rules; };
+    virtual const RuleMap* get_rules() const
+    { return nullptr; };
+
+    virtual const char** get_pegs() const
+    { return nullptr; };
+
+    // counts and profile are thread local
+    virtual PegCount* get_counts() const
+    { return nullptr; };
+
+    virtual ProfileStats* get_profile() const
+    { return nullptr; };
+
+    // implement above -or- below
+    virtual ProfileStats* get_profile(
+        unsigned /*index*/, const char*& /*name*/, const char*& /*parent*/) const
+    { return nullptr; };
+
+    virtual void sum_stats();
+    virtual void show_stats();
+    virtual void reset_stats();
 
 protected:
-    Module(const char* s, const Parameter* p, bool is_list = false)
-    { init(s, p); list = is_list; };
-
-    Module(const char* s, const Parameter* p, const RuleMap* r)
-    { init(s, p); rules = r; };
-
-    Module(const char* s, const Parameter* p, const Command* c)
-    { init(s, p); cmds = c; };
-
-    Module(const char* s, const Parameter* p, const RuleMap* r, const Command* c)
-    { init(s, p); rules = r; cmds = c; };
+    Module(const char* s);
+    Module(const char* s, const Parameter* p, bool is_list = false);
 
 private:
     friend class ModuleManager;
-
-    void init(const char* s, const Parameter* p)
-    { name = s; params = p; list = false; cmds = nullptr; rules = nullptr; };
+    void init(const char* s);
 
     bool list;
     const char* name;
     const Parameter* params;
     const Command* cmds;
     const RuleMap* rules;
+    std::vector<PegCount> counts;
+    int num_counts;
 };
 
 #endif

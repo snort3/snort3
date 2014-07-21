@@ -42,9 +42,9 @@
 static const char* s_name = "tos";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ipTosPerfStats;
+static THREAD_LOCAL ProfileStats ipTosPerfStats;
 
-static PreprocStats* tos_get_profile(const char* key)
+static ProfileStats* tos_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &ipTosPerfStats;
@@ -218,7 +218,7 @@ static void tos_dtor(IpsOption* p)
 static void tos_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &ipTosPerfStats, tos_get_profile);
+    RegisterOtnProfile(s_name, tos_get_profile);
 #endif
 }
 

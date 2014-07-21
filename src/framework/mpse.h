@@ -111,7 +111,7 @@ private:
 };
 
 #ifdef PERF_PROFILING
-extern THREAD_LOCAL PreprocStats mpsePerfStats;
+extern THREAD_LOCAL ProfileStats mpsePerfStats;
 #endif
 
 typedef void (*MpseOptFunc)(SnortConfig*);

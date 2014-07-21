@@ -76,16 +76,14 @@ static const Parameter stream_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap stream_rules[] =
-{
-    { 0, nullptr }
-};
-
 StreamModule::StreamModule() :
-    Module(MOD_NAME, stream_params, stream_rules)
+    Module(MOD_NAME, stream_params)
 {
     proto = &stream_cfg.ip_cfg;
 }
+
+ProfileStats* StreamModule::get_profile() const
+{ return &s5PerfStats; }
 
 const StreamConfig* StreamModule::get_data()
 {
@@ -131,4 +129,13 @@ bool StreamModule::begin(const char* fqn, int, SnortConfig*)
 
     return true;
 }
+
+void StreamModule::sum_stats()
+{ base_sum(); }
+
+void StreamModule::show_stats()
+{ base_stats(); }
+
+void StreamModule::reset_stats()
+{ base_reset(); }
 

@@ -32,6 +32,7 @@ class EspModule : public DecodeModule
 public:
     EspModule();
 
+    const RuleMap* get_rules() const;
     bool set(const char*, Value&, SnortConfig*);
 };
 

@@ -64,9 +64,9 @@
 static const char* s_name = "icmp_seq";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats icmpSeqPerfStats;
+static THREAD_LOCAL ProfileStats icmpSeqPerfStats;
 
-static PreprocStats* is_get_profile(const char* key)
+static ProfileStats* is_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &icmpSeqPerfStats;
@@ -202,7 +202,7 @@ static void icmp_seq_dtor(IpsOption* p)
 static void icmp_seq_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &icmpSeqPerfStats, is_get_profile);
+    RegisterOtnProfile(s_name, is_get_profile);
 #endif
 }
 

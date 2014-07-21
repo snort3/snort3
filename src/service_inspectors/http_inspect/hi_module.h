@@ -29,6 +29,8 @@
 #define GLOBAL_KEYWORD "http_inspect"
 #define SERVER_KEYWORD "http_server"
 
+extern THREAD_LOCAL ProfileStats hiPerfStats;
+
 class HttpInspectModule : public Module
 {
 public:
@@ -41,6 +43,11 @@ public:
 
     unsigned get_gid() const
     { return GID_HTTP_CLIENT; };
+
+    const RuleMap* get_rules() const;
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
+    ProfileStats* get_profile() const;
 
     HTTPINSPECT_GLOBAL_CONF* get_data();
 
@@ -57,6 +64,8 @@ public:
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
+
+    const RuleMap* get_rules() const;
 
     unsigned get_gid() const
     { return GID_HTTP_SERVER; };

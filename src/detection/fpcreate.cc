@@ -906,6 +906,9 @@ struct FpFoo
         if ( size && !rhs.size )
             return true;
 
+        if ( !rhs.pmd )
+            return true;
+
         if ( !pmd->negated && rhs.pmd->negated )
             return true;
 
@@ -927,6 +930,8 @@ static PmType get_pm_type(CursorActionType cat)
     switch ( cat )
     {
     case CAT_SET_RAW:
+    case CAT_SET_FILE:
+    case CAT_SET_OTHER:
         return PM_TYPE__CONTENT;
     case CAT_SET_BODY:
         return PM_TYPE__HTTP_CLIENT_BODY_CONTENT;
@@ -937,6 +942,7 @@ static PmType get_pm_type(CursorActionType cat)
     default:
         break;
     }
+    assert(false);
     return PM_TYPE__MAX;
 }
 

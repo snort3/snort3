@@ -43,9 +43,9 @@
 static const char* s_name = "ttl";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats ttlCheckPerfStats;
+static THREAD_LOCAL ProfileStats ttlCheckPerfStats;
 
-static PreprocStats* ttl_get_profile(const char* key)
+static ProfileStats* ttl_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &ttlCheckPerfStats;
@@ -362,7 +362,7 @@ static void ttl_dtor(IpsOption* p)
 static void ttl_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &ttlCheckPerfStats, ttl_get_profile);
+    RegisterOtnProfile(s_name, ttl_get_profile);
 #endif
 }
 

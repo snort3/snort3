@@ -21,13 +21,6 @@
 
 #include "codecs/root/cd_wlan_module.h"
 
-
-static const Parameter wifi_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap wifi_rules[] =
 {
     { DECODE_BAD_80211_ETHLLC, "(" CD_WLAN_NAME ") Bad 802.11 LLC header" },
@@ -39,10 +32,9 @@ static const RuleMap wifi_rules[] =
 // wifi module
 //-------------------------------------------------------------------------
 
-WlanCodecModule::WlanCodecModule() : DecodeModule(CD_WLAN_NAME, wifi_params, wifi_rules)
+WlanCodecModule::WlanCodecModule() : DecodeModule(CD_WLAN_NAME)
 { }
 
-bool WlanCodecModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* WlanCodecModule::get_rules() const
+{ return wifi_rules; }
+

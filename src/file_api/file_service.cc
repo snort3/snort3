@@ -189,7 +189,7 @@ static void start_file_processing(void)
     if (!file_processing_initiated)
     {
         file_resume_block_init();
-        //RegisterPreprocStats("file", print_file_stats);  FIXIT not a preproc !
+        //RegisterProfileStats("file", print_file_stats);  FIXIT not a preproc !
         file_processing_initiated = true;
     }
 }
@@ -324,6 +324,7 @@ static void printFileContext (FileContext* context)
         cur += used;
     }
 
+#if 0
     if (unused > 0)
     {
         used = snprintf(cur, unused, "\nProcessed size: %u\n",
@@ -331,6 +332,7 @@ static void printFileContext (FileContext* context)
         //unused -= used;
         //cur += used;
     }
+#endif
 
     buf[sizeof(buf) - 1] = '\0';
     printf("%s", buf);

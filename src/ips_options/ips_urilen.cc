@@ -48,9 +48,9 @@
 static const char* s_name = "urilen";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats urilenCheckPerfStats;
+static THREAD_LOCAL ProfileStats urilenCheckPerfStats;
 
-static PreprocStats* uc_get_profile(const char* key)
+static ProfileStats* uc_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &urilenCheckPerfStats;
@@ -318,7 +318,7 @@ static void urilen_dtor(IpsOption* p)
 static void urilen_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &urilenCheckPerfStats, uc_get_profile);
+    RegisterOtnProfile(s_name, uc_get_profile);
 #endif
 }
 

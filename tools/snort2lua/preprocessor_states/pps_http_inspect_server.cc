@@ -23,17 +23,17 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "converter.h"
-#include "snort2lua_util.h"
+#include "util/converter.h"
+#include "util/util.h"
 
 namespace {
 
 class HttpInspectServer : public ConversionState
 {
 public:
-    HttpInspectServer(Converter* cv)  : ConversionState(cv) {};
+    HttpInspectServer(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~HttpInspectServer() {};
-    virtual bool convert(std::stringstream& data_stream);
+    virtual bool convert(std::istringstream& data_stream);
 
 private:
     static int binding_id;
@@ -51,7 +51,7 @@ private:
 
 int HttpInspectServer::binding_id = 0;
 
-bool HttpInspectServer::convert(std::stringstream& data_stream)
+bool HttpInspectServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
@@ -66,11 +66,11 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
 
     if(!keyword.compare("default"))
     {
-        converter->open_table("http_server");
+        ld->open_table("http_server");
     }
     else
     {
-        converter->open_table("http_server_" + std::to_string(binding_id));
+        ld->open_table("http_server_" + std::to_string(binding_id));
         binding_id++;
         // CREATE A BINDING HERE!!
     }
@@ -81,52 +81,52 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
         bool tmpval = true;
 
         if (!keyword.compare("extended_response_inspection"))
-            tmpval = converter->add_option_to_table("extended_response_inspection", true);
+            tmpval = ld->add_option_to_table("extended_response_inspection", true);
 
         else if (!keyword.compare("allow_proxy_use"))
-            tmpval = converter->add_option_to_table("allow_proxy_use", true);
+            tmpval = ld->add_option_to_table("allow_proxy_use", true);
 
         else if (!keyword.compare("inspect_gzip"))
-            tmpval = converter->add_option_to_table("inspect_gzip", true);
+            tmpval = ld->add_option_to_table("inspect_gzip", true);
 
         else if (!keyword.compare("unlimited_decompress"))
-            tmpval = converter->add_option_to_table("unlimited_decompress", true);
+            tmpval = ld->add_option_to_table("unlimited_decompress", true);
 
         else if (!keyword.compare("normalize_javascript"))
-            tmpval = converter->add_option_to_table("normalize_javascript", true);
+            tmpval = ld->add_option_to_table("normalize_javascript", true);
 
         else if (!keyword.compare("enable_xff"))
-            tmpval = converter->add_option_to_table("enable_xff", true);
+            tmpval = ld->add_option_to_table("enable_xff", true);
 
         else if (!keyword.compare("extended_ascii_uri"))
-            tmpval = converter->add_option_to_table("extended_ascii_uri", true);
+            tmpval = ld->add_option_to_table("extended_ascii_uri", true);
 
         else if (!keyword.compare("non_strict"))
-            tmpval = converter->add_option_to_table("non_strict", true);
+            tmpval = ld->add_option_to_table("non_strict", true);
 
         else if (!keyword.compare("inspect_uri_only"))
-            tmpval = converter->add_option_to_table("inspect_uri_only", true);
+            tmpval = ld->add_option_to_table("inspect_uri_only", true);
 
         else if (!keyword.compare("tab_uri_delimiter"))
-            tmpval = converter->add_option_to_table("tab_uri_delimiter", true);
+            tmpval = ld->add_option_to_table("tab_uri_delimiter", true);
 
         else if (!keyword.compare("normalize_headers"))
-            tmpval = converter->add_option_to_table("normalize_headers", true);
+            tmpval = ld->add_option_to_table("normalize_headers", true);
 
         else if (!keyword.compare("normalize_utf"))
-            tmpval = converter->add_option_to_table("normalize_utf", true);
+            tmpval = ld->add_option_to_table("normalize_utf", true);
 
         else if (!keyword.compare("log_uri"))
-            tmpval = converter->add_option_to_table("log_uri", true);
+            tmpval = ld->add_option_to_table("log_uri", true);
 
         else if (!keyword.compare("normalize_cookies"))
-            tmpval = converter->add_option_to_table("normalize_cookies", true);
+            tmpval = ld->add_option_to_table("normalize_cookies", true);
 
         else if (!keyword.compare("log_hostname"))
-            tmpval = converter->add_option_to_table("log_hostname", true);
+            tmpval = ld->add_option_to_table("log_hostname", true);
 
         else if (!keyword.compare("no_pipeline_req"))
-            tmpval = converter->add_option_to_table("no_pipeline_req", true);
+            tmpval = ld->add_option_to_table("no_pipeline_req", true);
 
         else if (!keyword.compare("ascii"))
             tmpval = parse_yn_bool_option("ascii", data_stream);
@@ -192,7 +192,7 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
             tmpval = parse_int_option("max_headers", data_stream);
 
         else if (!keyword.compare("no_alerts"))
-            converter->add_deprecated_comment("no_alerts");
+            ld->add_deprecated_comment("no_alerts");
 
         else if (!keyword.compare("decompress_swf"))
             tmpval = parse_bracketed_unsupported_list("decompress_swf", data_stream);
@@ -208,26 +208,26 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
 
         else if (!keyword.compare("non_rfc_char"))
         {
-            converter->add_deprecated_comment("non_rfc_char", "non_rfc_chars");
+            ld->add_diff_option_comment("non_rfc_char", "non_rfc_chars");
             parse_bracketed_byte_list("non_rfc_chars", data_stream);
         }
 
         else if (!keyword.compare("enable_cookie"))
         {
-            tmpval = converter->add_option_to_table("enable_cookies", true);
-            converter->add_deprecated_comment("enable_cookie", "enable_cookies");
+            tmpval = ld->add_option_to_table("enable_cookies", true);
+            ld->add_diff_option_comment("enable_cookie", "enable_cookies");
         }
 
         else if (!keyword.compare("flow_depth"))
         {
-            converter->add_deprecated_comment("flow_depth", "server_flow_depth");
+            ld->add_diff_option_comment("flow_depth", "server_flow_depth");
             tmpval = parse_int_option("server_flow_depth", data_stream);
         }
 
         else if (!keyword.compare("ports"))
         {
-            converter->add_deprecated_comment("ports", "bindings");
-            converter->add_comment_to_table("check bindings table for port information");
+            ld->add_diff_option_comment("ports", "bindings");
+            ld->add_comment_to_table("check bindings table for port information");
             tmpval = parse_bracketed_unsupported_list("ports", data_stream);
         }
 
@@ -246,10 +246,10 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
             }
             else
             {
-                converter->open_table("small_chunk_length");
-                converter->add_option_to_table("size", length);
-                converter->add_option_to_table("count", consec_chunks);
-                converter->close_table();
+                ld->open_table("small_chunk_length");
+                ld->add_option_to_table("size", length);
+                ld->add_option_to_table("count", consec_chunks);
+                ld->close_table();
             }
         }
 
@@ -261,14 +261,14 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
             if( (data_stream >> map_file) &&
                 (data_stream >> code_page))
             {
-                converter->open_table("iis_unicode_map");
-                tmpval = converter->add_option_to_table("map_file", map_file);
-                tmpval = converter->add_option_to_table("code_page", code_page) && tmpval;
-                converter->close_table();
+                ld->open_table("iis_unicode_map");
+                tmpval = ld->add_option_to_table("map_file", map_file);
+                tmpval = ld->add_option_to_table("code_page", code_page) && tmpval;
+                ld->close_table();
             }
             else
             {
-                converter->add_comment_to_table("snort.conf missing argument for "
+                ld->add_comment_to_table("snort.conf missing argument for "
                     "iis_unicode_map <filename> <codemap>");
                 tmpval = false;
             }
@@ -278,11 +278,11 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
         {
             if (data_stream >> keyword)
             {
-                tmpval = converter->add_option_to_table("profile", keyword);
+                tmpval = ld->add_option_to_table("profile", keyword);
             }
             else
             {
-                converter->add_comment_to_table("Unable to convert keyword 'profile'");
+                ld->add_comment_to_table("Unable to convert keyword 'profile'");
                 tmpval = false;
             }
         }
@@ -309,9 +309,9 @@ bool HttpInspectServer::convert(std::stringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv)
+static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new HttpInspectServer(cv);
+    return new HttpInspectServer(cv, ld);
 }
 
 static const ConvertMap preprocessor_httpinsepct_server = 

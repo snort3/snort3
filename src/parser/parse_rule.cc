@@ -1337,14 +1337,15 @@ static OptTreeNode* ParseRuleOptions(
     
             /* break out the option name from its data */
             opts = mSplit(toks[i], ":", 2, &num_opts, '\\');
+            char* opt = (num_opts == 2) ? opts[1] : (char*)"";
     
             if ( !parse_otn(
-                sc, rtn, otn, opts[0], opts[1], &so_opts) )
+                sc, rtn, otn, opts[0], opt, &so_opts) )
             {
                 int type;
     
                 if ( !IpsManager::get_option(
-                    sc, otn, protocol, opts[0], opts[1], type) )
+                    sc, otn, protocol, opts[0], opt, type) )
                 {
                     ParseError("Unknown rule option: %s.", opts[0]);
                 }

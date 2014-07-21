@@ -40,8 +40,6 @@ public:
     struct timeval ssn_time;
 };
 
-void udp_init();
-void udp_sum();
 void udp_stats();
 void udp_reset();
 

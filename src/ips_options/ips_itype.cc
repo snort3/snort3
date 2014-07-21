@@ -44,9 +44,9 @@
 static const char* s_name = "itype";
 
 #ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats icmpTypePerfStats;
+static THREAD_LOCAL ProfileStats icmpTypePerfStats;
 
-static PreprocStats* it_get_profile(const char* key)
+static ProfileStats* it_get_profile(const char* key)
 {
     if ( !strcmp(key, s_name) )
         return &icmpTypePerfStats;
@@ -60,7 +60,7 @@ static PreprocStats* it_get_profile(const char* key)
 #define ICMP_TYPE_TEST_LT 3
 #define ICMP_TYPE_TEST_RG 4
 
-typedef struct _IcmpTypeCheckData  // FIXTHIS used in parser.cc
+typedef struct _IcmpTypeCheckData  // FIXIT used in parser.cc
 {
     /* the icmp type number */
     int icmp_type;
@@ -289,7 +289,7 @@ static void itype_dtor(IpsOption* p)
 static void itype_ginit(SnortConfig*)
 {
 #ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, &icmpTypePerfStats, it_get_profile);
+    RegisterOtnProfile(s_name, it_get_profile);
 #endif
 }
 

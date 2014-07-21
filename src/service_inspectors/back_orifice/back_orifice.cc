@@ -152,20 +152,8 @@ static THREAD_LOCAL long holdrand = 1L;
 static uint16_t lookup1[65536][3];
 static uint16_t lookup2[65536];
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats boPerfStats;
-
-static PreprocStats* bo_get_profile(const char* key)
-{
-    if ( !strcmp(key, mod_name) )
-        return &boPerfStats;
-
-    return nullptr;
-}
-#endif
-
+static THREAD_LOCAL ProfileStats boPerfStats;
 static THREAD_LOCAL SimpleStats bostats;
-static SimpleStats gbostats;
 
 //-------------------------------------------------------------------------
 // bo module
@@ -187,11 +175,6 @@ static SimpleStats gbostats;
 #define BO_SNORT_BUFFER_ATTACK_STR \
     "(back_orifice) BO Snort buffer attack"
 
-static const Parameter bo_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const RuleMap bo_rules[] =
 {
     { BO_TRAFFIC_DETECT, BO_TRAFFIC_DETECT_STR },
@@ -205,15 +188,28 @@ static const RuleMap bo_rules[] =
 class BoModule : public Module
 {
 public:
-    BoModule() : Module("back_orifice", bo_params, bo_rules)
+    BoModule() : Module("back_orifice")
     { };
 
-    bool set(const char*, Value&, SnortConfig*)
-    { return false; };
+    const RuleMap* get_rules() const
+    { return bo_rules; };
 
     unsigned get_gid() const
     { return GID_BO; };
+
+    const char** get_pegs() const;
+    PegCount* get_counts() const;
+    ProfileStats* get_profile() const;
 };
+
+const char** BoModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* BoModule::get_counts() const
+{ return (PegCount*)&bostats; }
+
+ProfileStats* BoModule::get_profile() const
+{ return &boPerfStats; }
 
 //-------------------------------------------------------------------------
 // bo implementation
@@ -582,11 +578,6 @@ static void mod_dtor(Module* m)
 
 void bo_init()
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        mod_name, &boPerfStats, 0, &totalPerfStats, bo_get_profile);
-#endif
-
     PrecalcPrefix();
 }
 
@@ -598,21 +589,6 @@ static Inspector* bo_ctor(Module*)
 static void bo_dtor(Inspector* p)
 {
     delete p;
-}
-
-static void bo_sum()
-{
-    sum_stats(&gbostats, &bostats);
-}
-
-static void bo_stats()
-{
-    show_stats(&gbostats, mod_name);
-}
-
-static void bo_reset()
-{
-    memset(&gbostats, 0, sizeof(gbostats));
 }
 
 static const InspectApi bo_api =
@@ -636,9 +612,7 @@ static const InspectApi bo_api =
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // ssn
-    bo_sum,
-    bo_stats,
-    bo_reset
+    nullptr  // reset
 };
 
 #ifdef BUILDING_SO

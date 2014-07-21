@@ -21,13 +21,6 @@
 
 #include "codecs/link/cd_eapol_module.h"
 
-
-static const Parameter eapol_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-
 static const RuleMap eapol_rules[] =
 {
     { DECODE_EAPOL_TRUNCATED, "(" CD_EAPOL_NAME ") Truncated EAP Header" },
@@ -40,10 +33,9 @@ static const RuleMap eapol_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-EapolModule::EapolModule() : DecodeModule(CD_EAPOL_NAME, eapol_params, eapol_rules)
+EapolModule::EapolModule() : DecodeModule(CD_EAPOL_NAME)
 { }
 
-bool EapolModule::set(const char*, Value&, SnortConfig*)
-{
-    return true;
-}
+const RuleMap* EapolModule::get_rules() const
+{ return eapol_rules; }
+
