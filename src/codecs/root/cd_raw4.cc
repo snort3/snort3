@@ -41,7 +41,7 @@ public:
     ~Raw4Codec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_data_link_type(std::vector<int>&);
@@ -70,7 +70,7 @@ public:
  *
  * Returns: void function
  */
-bool Raw4Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*raw_len*/, 
+bool Raw4Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
         Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t &next_prot_id)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP4 Packet!\n"););

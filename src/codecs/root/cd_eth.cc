@@ -46,7 +46,7 @@ public:
     virtual PROTO_ID get_proto_id() { return PROTO_ETH; };
     virtual void get_protocol_ids(std::vector<uint16_t>&) {};
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -78,15 +78,15 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
  *
  * Returns: void function
  */
-bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t& next_prot_id)
 {
 
     /* do a little validation */
-    if(len < eth::hdr_len())
+    if(raw_len < eth::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "WARNING: Truncated eth header (%d bytes).\n", len););
+            "WARNING: Truncated eth header (%d bytes).\n", raw_len););
 
         codec_events::decoder_event(p, DECODE_ETH_HDR_TRUNC);
 

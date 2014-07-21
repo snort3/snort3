@@ -434,8 +434,8 @@ void PacketManager::decode(
     uint16_t prot_id;
     uint8_t mapped_prot = grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
-    uint16_t len, lyr_len;
-
+    uint16_t lyr_len = 0;
+    uint32_t len = 0;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
             DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
@@ -466,31 +466,32 @@ void PacketManager::decode(
         len -= lyr_len;
         pkt += lyr_len;
         lyr_len = 0;
-
-        // since the IP length and the packet length may not be equal.
-        if (p->packet_flags & PKT_NEW_IP_LEN)
-        {
-            len = p->ip_dsize;
-            p->packet_flags &= ~PKT_NEW_IP_LEN;
-        }
     }
 
     // if the final protocol ID is not the default codec, a Codec failed
     if (prev_prot_id != FINISHED_DECODE)
     {
-        // if the codec exists, it failed
-        if(s_proto_map[prev_prot_id])
-            s_stats[discards]++;
-        else
-            s_stats[other_codecs]++;
+        if (!(p->packet_flags & PKT_UNSURE_ENCAP))
+        {
+            // if the codec exists, it failed
+            if(s_proto_map[prev_prot_id])
+                s_stats[discards]++;
+            else
+                s_stats[other_codecs]++;
+        }
+
+        if (p->packet_flags & PKT_ESP_LYR_PRESENT)
+            p->packet_flags |= PKT_TRUST;
     }
 
     if (p->ip6_extension_count > 0)
         ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
+    p->packet_flags &= ~PKT_ESP_LYR_PRESENT; // cleanup.  Just in case.
     p->dsize = len;
     p->data = pkt;
+
     PREPROC_PROFILE_END(decodePerfStats);
 }
 
@@ -707,8 +708,6 @@ SO_PUBLIC void PacketManager::encode_update (Packet* p)
         || (p->packet_flags & PKT_RESIZED)
     )
         pkth->caplen = pkth->pktlen = len;
-
-    p->packet_flags &= ~PKT_LOGGED;
 }
 
 //-------------------------------------------------------------------------

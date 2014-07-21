@@ -67,91 +67,148 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     std::istringstream format(keyword);
     while (std::getline(format, val, ','))
     {
-        std::string new_val = std::string();
+        bool tmpval = true;
 
         if (!val.compare("default"))
             ld->add_deleted_comment("default");
 
         else if (!val.compare("timestamp"))
-            new_val = "timestamp";
+            tmpval = ld->add_list_to_table("csv", "timestamp");
 
         else if (!val.compare("msg"))
-            new_val = "msg";
-
-        else if (!val.compare("sig_generator"))
-            new_val = "gid";
-
-        else if (!val.compare("sid_id"))
-            new_val = "sid";
-
-        else if (!val.compare("sig_rev"))
-            new_val = "rev";
+            tmpval = ld->add_list_to_table("csv", "msg");
 
         else if (!val.compare("proto"))
-            new_val = "proto";
-
-        else if (!val.compare("src"))
-            new_val = "src";
-
-        else if (!val.compare("srcport"))
-            new_val = "src_port";
+            tmpval = ld->add_list_to_table("csv", "proto");
 
         else if (!val.compare("dst"))
-            new_val = "dst";
+            tmpval = ld->add_list_to_table("csv", "dst");
 
-        else if (!val.compare("dstport"))
-            new_val = "dst_port";
-
-        else if (!val.compare("ethsrc"))
-            new_val = "eth_src";
-
-        else if (!val.compare("ethdst"))
-            new_val = "eth_dst";
-
-        else if (!val.compare("ethlen"))
-            new_val = "eth_len";
-
-        else if (!val.compare("tcpflags"))
-            new_val = "tcp_flags";
-
-        else if (!val.compare("tcpseq"))
-            new_val = "tcp_seq";
-
-        else if (!val.compare("tcpack"))
-            new_val = "tcp_ack";
-
-        else if (!val.compare("tcplen"))
-            new_val = "tcp_len";
-
-        else if (!val.compare("tcpwindow"))
-            new_val = "tcp_win";
+        else if (!val.compare("src"))
+            tmpval = ld->add_list_to_table("csv", "src");
 
         else if (!val.compare("ttl"))
-            new_val = "ttl";
-
-        else if (!val.compare("tos"))
-            new_val = "tos";
+            tmpval = ld->add_list_to_table("csv", "ttl");
 
         else if (!val.compare("id"))
-            new_val = "id";
+            tmpval = ld->add_list_to_table("csv", "id");
+
+        else if (!val.compare("tos"))
+            tmpval = ld->add_list_to_table("csv", "tos");
+
+        else if (!val.compare("sig_generator"))
+        {
+            ld->add_diff_option_comment("sig_generator", "gid");
+            tmpval = ld->add_list_to_table("csv", "gid");
+        }
+
+        else if (!val.compare("sid_id"))
+        {
+            ld->add_diff_option_comment("sid_id", "sid");
+            tmpval = ld->add_list_to_table("csv", "sid");
+        }
+
+        else if (!val.compare("sig_rev"))
+        {
+            ld->add_diff_option_comment("sig_rev", "rev");
+            tmpval = ld->add_list_to_table("csv", "rev");
+        }
+
+        else if (!val.compare("srcport"))
+        {
+            ld->add_diff_option_comment("srcport", "src_port");
+            tmpval = ld->add_list_to_table("csv", "src_port");
+        }
+
+        else if (!val.compare("dstport"))
+        {
+            ld->add_diff_option_comment("dstport", "dst_port");
+            tmpval = ld->add_list_to_table("csv", "dst_port");
+        }
+
+        else if (!val.compare("ethsrc"))
+        {
+            ld->add_diff_option_comment("ethsrc", "eth_src");
+            tmpval = ld->add_list_to_table("csv", "eth_src");
+        }
+
+        else if (!val.compare("ethdst"))
+        {
+            ld->add_diff_option_comment("ethdst", "eth_dst");
+            tmpval = ld->add_list_to_table("csv", "eth_dst");
+        }
+
+        else if (!val.compare("ethlen"))
+        {
+            ld->add_diff_option_comment("ethlen", "eth_len");
+            tmpval = ld->add_list_to_table("csv", "eth_len");
+        }
+
+        else if (!val.compare("tcpflags"))
+        {
+            ld->add_diff_option_comment("tcpflags", "tcp_flags");
+            tmpval = ld->add_list_to_table("csv", "tcp_flags");
+        }
+
+        else if (!val.compare("tcpseq"))
+        {
+            ld->add_diff_option_comment("tcpseq", "tcp_seq");
+            tmpval = ld->add_list_to_table("csv", "tcp_seq");
+        }
+
+        else if (!val.compare("tcpack"))
+        {
+            ld->add_diff_option_comment("tcpack", "tcp_ack");
+            tmpval = ld->add_list_to_table("csv", "tcp_ack");
+        }
+
+        else if (!val.compare("tcplen"))
+        {
+            ld->add_diff_option_comment("tcplen", "tcp_len");
+            tmpval = ld->add_list_to_table("csv", "tcp_len");
+        }
+
+        else if (!val.compare("tcpwindow"))
+        {
+            ld->add_diff_option_comment("tcpwindow", "tcp_win");
+            tmpval = ld->add_list_to_table("csv", "tcp_win");
+        }
 
         else if (!val.compare("dgmlen"))
-            new_val = "dgm_len";
+        {
+            ld->add_diff_option_comment("dgmlen", "dgm_len");
+            tmpval = ld->add_list_to_table("csv", "dgm_len");
+        }
 
         else if (!val.compare("iplen"))
-            new_val = "ip_len";
+        {
+            ld->add_diff_option_comment("iplen", "ip_len");
+            tmpval = ld->add_list_to_table("csv", "ip_len");
+        }
 
         else if (!val.compare("icmptype"))
-            new_val = "icmp_type";
+        {
+            ld->add_diff_option_comment("icmptype", "icmp_type");
+            tmpval = ld->add_list_to_table("csv", "icmp_type");
+        }
 
         else if (!val.compare("icmpcode"))
-            new_val = "icmp_code";
+        {
+            ld->add_diff_option_comment("icmpcode", "icmp_code");
+            tmpval = ld->add_list_to_table("csv", "icmp_code");
+        }
 
         else if (!val.compare("icmpid"))
-            new_val = "icmp_id";
+        {
+            ld->add_diff_option_comment("icmpid", "icmp_id");
+            tmpval = ld->add_list_to_table("csv", "icmp_id");
+        }
 
         else if (!val.compare("icmpseq"))
-            new_val = "icmp_seq";
+        {
+            ld->add_diff_option_comment("icmpseq", "icmp_seq");
+            tmpval = ld->add_list_to_table("csv", "icmp_seq");
+        }
 
         else
         {
@@ -159,14 +216,8 @@ bool AlertCsv::convert(std::istringstream& data_stream)
             retval = false;
         }
 
-        if (!new_val.empty())
-        {
-            if (val.compare(new_val))
-                ld->add_diff_option_comment(val, new_val);
-
-            if (!ld->add_list_to_table("csv", new_val))
-                retval = false;
-        }
+        if (retval && !tmpval)
+            retval = false;
     }
 
     if (!(data_stream >> limit))
@@ -186,11 +237,6 @@ bool AlertCsv::convert(std::istringstream& data_stream)
 
     retval = ld->add_option_to_table("limit", limit) && retval;
     retval = ld->add_option_to_table("units", units) && retval;
-
-    // If we read something, more data available and bad input
-    if (data_stream >> keyword)
-        retval = false;
-
     return retval;
 }
 

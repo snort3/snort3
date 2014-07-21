@@ -38,7 +38,8 @@ public:
     Table(std::string name, int depth);
     virtual ~Table();
 
-    inline std::string get_name(){ return name; };
+    inline std::string get_name(){ return name; }
+    bool has_differences();
     Table* open_table();
     Table* open_table(std::string);
     bool add_option(std::string, int val);

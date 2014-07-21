@@ -43,7 +43,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_GRE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
 
@@ -93,13 +93,13 @@ void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Notes: see RFCs 1701, 2784 and 2637
  */
-bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    if (len < GRE_HEADER_LEN)
+    if (raw_len < GRE_HEADER_LEN)
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 
@@ -108,7 +108,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         /* discard packet - multiple GRE encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
         codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 
@@ -127,7 +127,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             if (GRE_RECUR(greh) || GRE_FLAGS(greh))
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_HEADER,
-                                raw_pkt, len);
+                                raw_pkt, raw_len);
                 return false;
             }
 
@@ -154,7 +154,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 while (1)
                 {
                     lyr_len += GRE_SRE_HEADER_LEN;
-                    if (lyr_len > len)
+                    if (lyr_len > raw_len)
                         break;
 
                     sre_addrfamily = ntohs(*((uint16_t *)sre_ptr));
@@ -182,7 +182,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 GRE_RECUR(greh) || GRE_V1_FLAGS(greh))
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                raw_pkt, len);
+                                raw_pkt, raw_len);
                 return false;
             }
 
@@ -190,7 +190,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             if (GRE_PROTO(greh) != ETHERTYPE_PPP)
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                raw_pkt, len);
+                                raw_pkt, raw_len);
                 return false;
             }
 
@@ -198,7 +198,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             if (!(GRE_KEY(greh)))
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
-                                raw_pkt, len);
+                                raw_pkt, raw_len);
                 return false;
             }
 
@@ -214,14 +214,14 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         default:
             codec_events::decoder_alert_encapsulated(p, DECODE_GRE_INVALID_VERSION,
-                            raw_pkt, len);
+                            raw_pkt, raw_len);
             return false;
     }
 
-    if (lyr_len > len)
+    if (lyr_len > raw_len)
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_GRE_DGRAM_LT_GREHDR,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 

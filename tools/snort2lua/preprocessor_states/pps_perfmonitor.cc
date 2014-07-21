@@ -38,6 +38,7 @@ public:
     PerfMonitor(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~PerfMonitor() {};
     virtual bool convert(std::istringstream& data_stream);
+
 private:
     bool parse_file_option(std::istringstream& data_stream,
                         std::string orig_name,
@@ -56,7 +57,6 @@ bool PerfMonitor::parse_file_option(std::istringstream& data_stream,
 
     ld->add_comment_to_table(orig_name + " deprecated. If '" + option_name +
         " = true', Snort++ automatically prints to '" + new_file_name + "'");
-    ld->add_diff_option_comment(orig_name, option_name + " = true");
     tmpval = ld->add_option_to_table(option_name, true);
 
     if (eat_option(data_stream)) // we no longer care about the file name.
@@ -113,16 +113,25 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
                                 "file", "perf_monitor.csv");
 
         else if (!keyword.compare("snortfile"))
+        {
+            ld->add_diff_option_comment("snortfile", "file = true");
             parse_file_option(data_stream, "snortfile",
                                 "file", "perf_monitor.csv");
+        }
 
         else if (!keyword.compare("flow-file"))
+        {
+            ld->add_diff_option_comment("flow-file", "flow_file = true");
             parse_file_option(data_stream, "flow-file",
                                 "flow_file", "perf_monitor_flow.csv");
+        }
 
         else if (!keyword.compare("flow-ip-file"))
+        {
+            ld->add_diff_option_comment("flow-ip-file", "flow_ip_file = true");
             parse_file_option(data_stream, "flow-ip-file",
                                 "flow_ip_file", "perf_monitor_flow_ip.csv");
+        }
 
         else if (!keyword.compare("accumulate"))
         {

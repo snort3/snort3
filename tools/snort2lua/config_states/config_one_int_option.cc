@@ -57,7 +57,8 @@ public:
            (lua_option) &&
            (*snort_option).compare(*lua_option))
         {
-            ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
+            ld->add_diff_option_comment("config " + *snort_option +
+                    ":", *lua_option);
         }
 
         bool retval = parse_int_option(*lua_option, stream);

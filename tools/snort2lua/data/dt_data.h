@@ -50,7 +50,7 @@ public:
     static inline void set_difference_print() {mode = PrintMode::DIFFERENCES; }
     static inline bool is_difference_mode() { return mode == PrintMode::DIFFERENCES; }
     inline bool failed_conversions() { return !errors->empty() || !bad_rules->empty(); }
-    inline bool contains_rules() { return rules.size() != 0; }
+    inline bool contains_rules() { return rules.size() > 0; }
 
 
     friend std::ostream &operator<<(std::ostream&, const LuaData &);

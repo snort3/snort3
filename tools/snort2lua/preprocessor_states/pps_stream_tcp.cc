@@ -101,23 +101,57 @@ bool StreamTcp::parse_ports(std::istringstream& stream)
         return false;
 
     if( !dir.compare("client"))
+    {
+        ld->add_diff_option_comment("ports client", "client_ports");
         opt_name = "client_ports";
+    }
 
     else if( !dir.compare("server"))
+    {
+        ld->add_diff_option_comment("ports server", "server_ports");
         opt_name = "server_ports";
+    }
 
     else if( !dir.compare("both"))
+    {
+        ld->add_diff_option_comment("ports both", "both_ports");
         opt_name = "both_ports";
+    }
 
     else
         return false;
 
 
+#if 0
+    // do nothing if no ports provided
+    if (stream >> protocol )
+    {
+        ld->open_top_level_table("binder");
+        ld->open_table();
+        ld->open_table("when");
+        ld->add_option_to_table("proto", "tcp");
+
+
+        if (!protocol.compare("all"))
+
+        else if (!protocol.compare("none"))
+
+        else
+            do
+            {
+
+            }while(stream >> protocol);
+
+        while (stream >> protocol)
+            tmpval = ld->add_list_to_table(lua_dir, protocol) && tmpval;
+    }
+
     while(stream >> s_val)
         retval = ld->add_list_to_table(opt_name, s_val) && retval;
 
-
     ld->add_diff_option_comment("port " + dir, opt_name);
+
+#endif
     return retval;
 }
 
@@ -147,12 +181,10 @@ bool StreamTcp::parse_protocol(std::istringstream& stream)
     else
         return false;
 
-    // TODO: update funcitnoality if Snort++ StreamTcpModule is updated
 
     while (stream >> protocol)
         tmpval = ld->add_list_to_table(lua_dir, protocol) && tmpval;
 
-    ld->add_diff_option_comment("protocol " + dir, lua_dir);
     return true;
 }
 

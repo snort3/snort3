@@ -37,7 +37,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
 };
@@ -78,15 +78,16 @@ void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  *
  */
-bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     lyr_len = sizeof(ERSpanType2Hdr);
     ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)raw_pkt;
 
-    if (len < sizeof(ERSpanType2Hdr))
+    if (raw_len < sizeof(ERSpanType2Hdr))
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR, raw_pkt, len);
+        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR,
+                        raw_pkt, raw_len);
         return false;
     }
 
@@ -95,7 +96,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
         codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 
@@ -104,7 +105,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if (erspan_version(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 

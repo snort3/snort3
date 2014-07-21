@@ -43,7 +43,7 @@ public:
 
 
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 };
 
@@ -66,7 +66,7 @@ void LinuxSllCodec::get_data_link_type(std::vector<int>&v)
 #endif
 }
 
-bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     /* do a little validation */

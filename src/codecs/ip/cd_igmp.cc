@@ -39,7 +39,7 @@ public:
     ~IgmpCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
@@ -54,12 +54,12 @@ public:
 
 
 
-bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
 {
     int i, alert = 0;
 
-    if (len >= 1 && raw_pkt[0] == 0x11)
+    if (raw_len >= 1 && raw_pkt[0] == 0x11)
     {
         if (p->ip_options_data != NULL) {
             if (p->ip_options_len >= 2) {

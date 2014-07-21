@@ -62,7 +62,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_TCP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &);
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -108,13 +108,13 @@ void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
 {
-    if(len < tcp::hdr_len())
+    if(raw_len < tcp::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "TCP packet (len = %d) cannot contain " "20 byte header\n", len););
+            "TCP packet (len = %d) cannot contain " "20 byte header\n", raw_len););
 
         codec_events::decoder_event(p, DECODE_TCP_DGRAM_LT_TCPHDR);
 
@@ -129,7 +129,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     lyr_len = TCP_OFFSET(p->tcph) << 2;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP th_off is %d, passed len is %lu\n",
-                TCP_OFFSET(p->tcph), (unsigned long)len););
+                TCP_OFFSET(p->tcph), (unsigned long)raw_len););
 
     if(lyr_len < tcp::hdr_len())
     {
@@ -143,11 +143,11 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         return false;
     }
 
-    if(lyr_len > len)
+    if(lyr_len > raw_len)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "TCP Data Offset(%d) < longer than payload(%d)!\n",
-            TCP_OFFSET(p->tcph) << 2, len););
+            TCP_OFFSET(p->tcph) << 2, raw_len););
 
         codec_events::decoder_event(p, DECODE_TCP_LARGE_OFFSET);
 
@@ -169,12 +169,12 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             /* setup the pseudo header for checksum calculation */
             ph.zero = 0;
             ph.protocol = GET_IPH_PROTO(p);
-            ph.len = htons((uint16_t)len);
+            ph.len = htons((uint16_t)raw_len);
 
             /* if we're being "stateless" we probably don't care about the TCP
              * checksum, but it's not bad to keep around for shits and giggles */
             /* calculate the checksum */
-            csum = checksum::tcp_cksum((uint16_t *)(p->tcph), len, &ph);
+            csum = checksum::tcp_cksum((uint16_t *)(p->tcph), raw_len, &ph);
 
         }
         /* IPv6 traffic */
@@ -185,10 +185,10 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
             ph6.zero = 0;
             ph6.protocol = GET_IPH_PROTO(p);
-            ph6.len = htons((uint16_t)len);
+            ph6.len = htons((uint16_t)raw_len);
 
 
-            csum = checksum::tcp_cksum((uint16_t *)(p->tcph), len, &ph6);
+            csum = checksum::tcp_cksum((uint16_t *)(p->tcph), raw_len, &ph6);
         }
 
         if(csum)
@@ -290,9 +290,9 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     /* set the data pointer and size */
     p->data = (uint8_t *) (raw_pkt + lyr_len);
 
-    if(lyr_len < len)
+    if(lyr_len < raw_len)
     {
-        p->dsize = (uint16_t)(len - lyr_len);
+        p->dsize = (uint16_t)(raw_len - lyr_len);
     }
     else
     {
