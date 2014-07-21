@@ -67,6 +67,7 @@ private:
     NHttpEnums::SectionType sectionType[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
     bool tcpClose[2] = { false, false };
     uint64_t infractions[2] = { 0, 0 };
+    uint64_t eventsGenerated[2] = { 0, 0 };
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType typeExpected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };

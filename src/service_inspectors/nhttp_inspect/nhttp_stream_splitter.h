@@ -41,7 +41,9 @@ public:
 private:
     void prepareFlush(NHttpFlowData* sessionData, uint32_t* flushOffset, NHttpEnums::SourceId sourceId, NHttpEnums::SectionType sectionType, bool tcpClose,
           uint64_t infractions, uint32_t numOctets);
+    void createEvent(NHttpEnums::EventSid sid);
 
+    uint64_t eventsGenerated = 0;
     int64_t octetsSeen;
     int numCrlf;
     uint32_t pafMax = 63780;

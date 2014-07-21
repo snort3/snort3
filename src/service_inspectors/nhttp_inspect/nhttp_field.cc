@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,46 +23,42 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgTrailer class analyzes HTTP chunked message trailers.
+//  @brief      Field class
 //
 
-#include <assert.h>
-#include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
 
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_msg_trailer.h"
+#include "nhttp_field.h"
 
 using namespace NHttpEnums;
 
-void NHttpMsgTrailer::genEvents() {
-    NHttpMsgHeadShared::genEvents();
-}
-
-void NHttpMsgTrailer::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "trailer");
-    NHttpMsgHeadShared::printHeaders(output);
-    NHttpMsgSection::printMessageWrapup(output);
-}
-
-
-void NHttpMsgTrailer::updateFlow() {
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+void Field::print(FILE *output, const char* name, bool intVals) const {
+    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) return;
+    int outCount = fprintf(output, "%s, length = %d, ", name, length);
+    if (length <= 0) {
+        fprintf(output, "\n");
+        return;
     }
-    else {
-        sessionData->typeExpected[sourceId] = (sourceId == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
-        sessionData->halfReset(sourceId);
+    int32_t printLength = (length <= 1000) ? length : 1000;    // Limit the amount of data printed
+    for (int k=0; k < printLength; k++) {
+        if ((start[k] >= 0x20) && (start[k] <= 0x7E)) fprintf(output, "%c", (char)start[k]);
+        else if (start[k] == 0xD) fprintf(output, "~");
+        else if (start[k] == 0xA) fprintf(output, "^");
+        else fprintf(output, "*");
+        if ((k%120 == (119 - outCount)) && (k+1 < printLength)) fprintf(output, "\n");
     }
+
+    if (intVals && (printLength%8 == 0)) {
+        fprintf(output, "\nInteger values =");
+        for (int j=0; j < printLength; j+=8) {
+            fprintf(output, " %" PRIu64 , *((const uint64_t*)(start+j)));
+        }
+    }
+    fprintf(output, "\n");
 }
-
-
-
-
-
 
 
 

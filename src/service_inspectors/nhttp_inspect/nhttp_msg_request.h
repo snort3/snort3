@@ -33,6 +33,7 @@
 #include "nhttp_uri.h"
 #include "nhttp_uri_norm.h"
 #include "nhttp_msg_start.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgRequest class
@@ -54,7 +55,7 @@ private:
     void parseStartLine();
     void deriveMethodId();
 
-    field method;
+    Field method;
     NHttpUri* uri = nullptr;
 };
 

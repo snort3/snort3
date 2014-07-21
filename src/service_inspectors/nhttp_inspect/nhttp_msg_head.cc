@@ -39,7 +39,9 @@
 using namespace NHttpEnums;
 
 void NHttpMsgHeader::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+    NHttpMsgHeadShared::genEvents();
+    if (headerCount[HEAD_CONTENT_LENGTH] > 1) createEvent(EVENT_MULTIPLE_CONTLEN);
+
 }
 
 void NHttpMsgHeader::printSection(FILE *output) {

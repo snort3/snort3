@@ -30,6 +30,7 @@
 #define NHTTP_MSG_CHUNK_HEAD_H
 
 #include "nhttp_msg_section.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgChunkHead class
@@ -47,9 +48,9 @@ public:
 private:
     void deriveChunkLength();
 
-    field startLine;
-    field chunkSize;
-    field chunkExtensions;
+    Field startLine;
+    Field chunkSize;
+    Field chunkExtensions;
 
     int64_t dataLength = NHttpEnums::STAT_NOTCOMPUTE;
     int64_t bodySections;

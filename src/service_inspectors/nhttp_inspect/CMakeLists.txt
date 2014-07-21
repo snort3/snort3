@@ -43,6 +43,8 @@ set (FILE_LIST
     nhttp_flow_data.h
     nhttp_scratch_pad.h
     nhttp_enum.h
+    nhttp_field.cc
+    nhttp_field.h
     nhttp_stream_splitter.cc
     nhttp_stream_splitter.h
 )

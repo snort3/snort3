@@ -23,43 +23,51 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Module class for NHttpInspect
+//  @brief      Field object
 //
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
-#include "nhttp_enum.h"
-#include "nhttp_module.h"
+#ifndef NHTTP_FIELD_H
+#define NHTTP_FIELD_H
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams, nhttpEvents) {
-}
+#include <stdint.h>
+#include <stdio.h>
 
-const Parameter NHttpModule::nhttpParams[] =
-    {{ "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
-     { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
+// Individual pieces of the message found during parsing
+// Length values <= 0 are StatusCode values and imply that the start pointer is meaningless.
+// Never use the start pointer without verifying that length > 0.
+class Field {
+public:
+    int32_t length = NHttpEnums::STAT_NOTCOMPUTE;
+    const uint8_t* start = nullptr;
 
-bool NHttpModule::begin(const char*, int, SnortConfig*) {
-    test_input = false;
-    test_output = false;
-    return true;
-}
+    Field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) {};
+    Field() = default;
+    void print(FILE *output, const char* name, bool intVals = false) const;
+};
 
-bool NHttpModule::end(const char*, int, SnortConfig*) {
-    return true;
-}
+#endif
 
-bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_input")) test_input = val.get_bool();
-    else if (val.is("test_output")) test_output = val.get_bool();
-    else return false;
 
-    return true;
-}
 
-unsigned NHttpModule::get_gid() const {
-    return NHttpEnums::NHTTP_GID;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

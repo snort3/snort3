@@ -44,23 +44,23 @@ NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t bufSize, NHttpF
 
 void NHttpMsgBody::analyze() {
     bodySections++;
-    bodyOctets += length;
-    data.start = msgText;
-    data.length = length;
+    bodyOctets += msgText.length;
+    data.start = msgText.start;
+    data.length = msgText.length;
 
     // The following statement tests for the case where streams underfulfilled flush due to a TCP connection close
-    if ((length < 16384) && (bodyOctets < dataLength)) tcpClose = true;
+    if ((msgText.length < 16384) && (bodyOctets < dataLength)) tcpClose = true;
     if (tcpClose && (bodyOctets < dataLength)) infractions |= INF_TRUNCATED;
 }
 
 void NHttpMsgBody::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+// &&&    if (infractions != 0) createEvent(EVENT_ASCII); // I'm just an example event
 }
 
 void NHttpMsgBody::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "body");
     fprintf(output, "Expected data length %" PRIi64 ", sections seen %" PRIi64 ", octets seen %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
-    printInterval(output, "Data", data.start, data.length);
+    data.print(output, "Data");
     NHttpMsgSection::printMessageWrapup(output);
 }
 

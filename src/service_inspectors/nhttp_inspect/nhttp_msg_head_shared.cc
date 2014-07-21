@@ -51,40 +51,40 @@ void NHttpMsgHeadShared::analyze() {
 
 void NHttpMsgHeadShared::parseWhole() {
     // Normal case with header fields
-    if (!tcpClose && (length >= 5)) {
-        headers.start = msgText;
-        headers.length = length - 4;
-        assert(!memcmp(msgText+length-4, "\r\n\r\n", 4));
+    if (!tcpClose && (msgText.length >= 5)) {
+        headers.start = msgText.start;
+        headers.length = msgText.length - 4;
+        assert(!memcmp(msgText.start+msgText.length-4, "\r\n\r\n", 4));
     }
     // Normal case no header fields
     else if (!tcpClose) {
         headers.length = STAT_NOTPRESENT;
-        assert((length == 2) && !memcmp(msgText, "\r\n", 2));
+        assert((msgText.length == 2) && !memcmp(msgText.start, "\r\n", 2));
     }
     // Normal case with header fields and TCP connection close
-    else if ((length >= 5) && !memcmp(msgText+length-4, "\r\n\r\n", 4)) {
-        headers.start = msgText;
-        headers.length = length - 4;
+    else if ((msgText.length >= 5) && !memcmp(msgText.start+msgText.length-4, "\r\n\r\n", 4)) {
+        headers.start = msgText.start;
+        headers.length = msgText.length - 4;
     }
     // Normal case no header fields and TCP connection close
-    else if ((length == 2) && !memcmp(msgText, "\r\n", 2)) {
+    else if ((msgText.length == 2) && !memcmp(msgText.start, "\r\n", 2)) {
         headers.length = STAT_NOTPRESENT;
     }
     // Abnormal cases truncated by TCP connection close
     else {
         infractions |= INF_TRUNCATED;
         // Lone <CR>
-        if ((length == 1) && (msgText[0] == '\r')) {
+        if ((msgText.length == 1) && (msgText.start[0] == '\r')) {
             headers.length = STAT_NOTPRESENT;
         }
         // Truncation occurred somewhere in the header fields
         else {
-            headers.start = msgText;
-            headers.length = length;
+            headers.start = msgText.start;
+            headers.length = msgText.length;
             // When present, remove partial <CR><LF><CR><LF> sequence from the end
-            if ((length >= 4) && !memcmp(msgText+length-3, "\r\n\r", 3)) headers.length -= 3;
-            else if ((length >= 3) && !memcmp(msgText+length-2, "\r\n", 2)) headers.length -= 2;
-            else if ((length >= 2) && (msgText[length-1] == '\r')) headers.length -= 1;
+            if ((msgText.length >= 4) && !memcmp(msgText.start+msgText.length-3, "\r\n\r", 3)) headers.length -= 3;
+            else if ((msgText.length >= 3) && !memcmp(msgText.start+msgText.length-2, "\r\n", 2)) headers.length -= 2;
+            else if ((msgText.length >= 2) && (msgText.start[msgText.length-1] == '\r')) headers.length -= 1;
         }
     }
 }
@@ -143,7 +143,7 @@ void NHttpMsgHeadShared::deriveHeaderNameId(int index) {
 }
 
 void NHttpMsgHeadShared::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+    if (infractions & INF_TOOMANYHEADERS) createEvent(EVENT_MAX_HEADERS);
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
@@ -179,12 +179,12 @@ void NHttpMsgHeadShared::printHeaders(FILE *output) {
     if (numHeaders != STAT_NOSOURCE) fprintf(output, "Number of headers: %d\n", numHeaders);
     for (int j=0; j < numHeaders; j++) {
         snprintf(titleBuf, sizeof(titleBuf), "Header ID %d", headerNameId[j]);
-        printInterval(output, titleBuf, headerValue[j].start, headerValue[j].length);
+        headerValue[j].print(output, titleBuf);
     }
     for (int k=1; k <= numNorms; k++) {
         if (headerNorms[k]->normalize((HeaderId)k, headerCount[k], scratchPad, infractions, headerNameId, headerValue, numHeaders, headerValueNorm[k]) != STAT_NOSOURCE) {
             snprintf(titleBuf, sizeof(titleBuf), "Normalized header %d", k);
-            printInterval(output, titleBuf, headerValueNorm[k].start, headerValueNorm[k].length, true);
+            headerValueNorm[k].print(output, titleBuf, true);
         }
     }
 }

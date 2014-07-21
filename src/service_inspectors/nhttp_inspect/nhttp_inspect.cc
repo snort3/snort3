@@ -165,6 +165,7 @@ void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
                 if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
             }
             msgSection->printSection(testOut);
+            printf("Finished processing section from test %" PRIi64 "\n", testNumber);
         }
     }
 }

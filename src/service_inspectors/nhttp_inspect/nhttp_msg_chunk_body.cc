@@ -44,8 +44,8 @@ NHttpMsgChunkBody::NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t bufSi
 
 void NHttpMsgChunkBody::analyze() {
     bodySections++;
-    chunkOctets += length;
-    bodyOctets += length;
+    chunkOctets += msgText.length;
+    bodyOctets += msgText.length;
     int termCrlfBytes = 0;
     if (chunkOctets > dataLength) {
         // Final <CR><LF> are not data and do not belong in octet total or data field
@@ -53,32 +53,32 @@ void NHttpMsgChunkBody::analyze() {
         assert(termCrlfBytes <= 2);
         bodyOctets -= termCrlfBytes;
         // Check for correct CRLF termination. Beware the section might break just before chunk end.
-        if ( ! ( ((termCrlfBytes == 2) && (length >= 2) && (msgText[length-2] == '\r') && (msgText[length-1] == '\n')) ||
-                 ((termCrlfBytes == 2) && (length == 1) && (msgText[length-1] == '\n')) ||
-                 ((termCrlfBytes == 1) && (msgText[length-1] == '\r')) ) ) {
+        if ( ! ( ((termCrlfBytes == 2) && (msgText.length >= 2) && (msgText.start[msgText.length-2] == '\r') && (msgText.start[msgText.length-1] == '\n')) ||
+                 ((termCrlfBytes == 2) && (msgText.length == 1) && (msgText.start[msgText.length-1] == '\n')) ||
+                 ((termCrlfBytes == 1) && (msgText.start[msgText.length-1] == '\r')) ) ) {
             infractions |= INF_BROKENCHUNK;
         }
     }
 
-    data.start = msgText;
-    data.length = length - termCrlfBytes;
+    data.start = msgText.start;
+    data.length = msgText.length - termCrlfBytes;
 
     chunkSections++;
     // The following statement tests for the case where streams underfulfilled flush due to a TCP connection close
-    if ((length < 16384) && (bodyOctets + termCrlfBytes < dataLength + 2)) tcpClose = true;
+    if ((msgText.length < 16384) && (bodyOctets + termCrlfBytes < dataLength + 2)) tcpClose = true;
     if (tcpClose) infractions |= INF_TRUNCATED;
 }
 
 
 void NHttpMsgChunkBody::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+// &&&    if (infractions != 0) createEvent(EVENT_ASCII); // I'm just an example event
 }
 
 void NHttpMsgChunkBody::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "chunk body");
     fprintf(output, "Expected chunk length %" PRIi64 ", cumulative sections %" PRIi64 ", cumulative octets %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
     fprintf(output, "cumulative chunk sections %" PRIi64 ", cumulative chunk octets %" PRIi64 "\n", chunkSections, chunkOctets);
-    printInterval(output, "Data", data.start, data.length);
+    data.print(output, "Data");
     NHttpMsgSection::printMessageWrapup(output);
 }
 

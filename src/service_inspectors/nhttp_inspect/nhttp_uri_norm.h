@@ -30,10 +30,11 @@
 #define NHTTP_URI_NORM_H
 
 #include "nhttp_scratch_pad.h"
+#include "nhttp_field.h"
 
 class UriNormalizer {
 public:
-    static void normalize(const field &input, field &result, bool doPath, ScratchPad &scratchPad, uint64_t &infractions);
+    static void normalize(const Field &input, Field &result, bool doPath, ScratchPad &scratchPad, uint64_t &infractions);
 
 private:
     static const NHttpEnums::CharAction uriChar[256];

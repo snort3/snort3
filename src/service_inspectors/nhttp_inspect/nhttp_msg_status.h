@@ -30,6 +30,7 @@
 #define NHTTP_MSG_STATUS_H
 
 #include "nhttp_msg_start.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgStatus class
@@ -49,8 +50,8 @@ private:
     void parseStartLine();
     void deriveStatusCodeNum();
 
-    field statusCode;
-    field reasonPhrase;
+    Field statusCode;
+    Field reasonPhrase;
 };
 
 #endif

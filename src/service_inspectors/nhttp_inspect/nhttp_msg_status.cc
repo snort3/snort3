@@ -90,14 +90,14 @@ void NHttpMsgStatus::deriveStatusCodeNum() {
 }
 
 void NHttpMsgStatus::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+// &&&    if (infractions != 0) createEvent(EVENT_ASCII); // I'm just an example event
 }
 
 void NHttpMsgStatus::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "status line");
     fprintf(output, "Version Id: %d\n", versionId);
     fprintf(output, "Status Code Num: %d\n", statusCodeNum);
-    printInterval(output, "Reason Phrase", reasonPhrase.start, reasonPhrase.length);
+    reasonPhrase.print(output, "Reason Phrase");
     NHttpMsgSection::printMessageWrapup(output);
 }
 

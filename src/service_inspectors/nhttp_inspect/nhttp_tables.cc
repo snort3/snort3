@@ -277,6 +277,32 @@ const RuleMap NHttpModule::nhttpEvents[] =
     { EVENT_JS_OBFUSCATION_EXCD,             "(nhttp_inspect) javascript obfuscation levels exceeds 1" },
     { EVENT_JS_EXCESS_WS,                    "(nhttp_inspect) javascript whitespaces exceeds max allowed" },
     { EVENT_MIXED_ENCODINGS,                 "(nhttp_inspect) multiple encodings within javascript obfuscated data" },
+    { EVENT_SWF_ZLIB_FAILURE,                "(nhttp_inspect) SWF file zlib decompression failure" },
+    { EVENT_SWF_LZMA_FAILURE,                "(nhttp_inspect) SWF file LZMA decompression failure" },
+    { EVENT_PDF_DEFL_FAILURE,                "(nhttp_inspect) PDF file deflate decompression failure" },
+    { EVENT_PDF_UNSUP_COMP_TYPE,             "(nhttp_inspect) PDF file unsupported compression type" },
+    { EVENT_PDF_CASC_COMP,                   "(nhttp_inspect) PDF file cascaded compression" },
+    { EVENT_PDF_PARSE_FAILURE,               "(nhttp_inspect) PDF file parse failure" },
+
     { 0, nullptr }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

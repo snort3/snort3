@@ -30,6 +30,7 @@
 #define NHTTP_MSG_BODY_H
 
 #include "nhttp_msg_section.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgBody class
@@ -49,7 +50,7 @@ protected:
     int64_t bodySections;
     int64_t bodyOctets;
 
-    field data;
+    Field data;
 };
 
 #endif

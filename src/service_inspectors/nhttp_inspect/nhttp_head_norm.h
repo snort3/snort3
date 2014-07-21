@@ -30,6 +30,7 @@
 #define NHTTP_HEAD_NORM_H
 
 #include "nhttp_scratch_pad.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // HeaderNormalizer class
@@ -52,7 +53,7 @@ public:
           normArg { f1Arg, f2Arg, f3Arg },
           numNormalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 != nullptr)*(f3 != nullptr)) {};
     int32_t normalize(const NHttpEnums::HeaderId headId, const int count, ScratchPad &scratchPad, uint64_t &infractions,
-       const NHttpEnums::HeaderId headerNameId[], const field headerValue[], const int32_t numHeaders, field &resultField) const;
+       const NHttpEnums::HeaderId headerNameId[], const Field headerValue[], const int32_t numHeaders, Field &resultField) const;
     NHttpEnums::NormFormat getFormat() const {return format;};
 
 private:

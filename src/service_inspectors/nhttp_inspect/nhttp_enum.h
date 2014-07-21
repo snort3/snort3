@@ -31,11 +31,11 @@
 
 #include <stdint.h>
 
-#define NHTTP_GID 119
-
 namespace NHttpEnums {
 
 static const uint32_t MAXOCTETS = 63780;
+
+static const uint32_t NHTTP_GID = 119;
 
 // Field status codes for when no valid value is present in length or integer value. Positive values are actual length or field value.
 typedef enum { STAT_NOSOURCE=-6, STAT_NOTCONFIGURED=-5, STAT_NOTCOMPUTE=-4, STAT_INSUFMEMORY=-3, STAT_PROBLEMATIC=-2, STAT_NOTPRESENT=-1, STAT_EMPTYSTRING=0, STAT_OTHER=1 } StatusCode;
@@ -93,20 +93,6 @@ typedef enum { CHAR_NORMAL=2, CHAR_PERCENT, CHAR_PATH, CHAR_INVALID, CHAR_EIGHTB
 // Transfer codings
 typedef enum { TRANSCODE__OTHER=1, TRANSCODE_CHUNKED, TRANSCODE_IDENTITY, TRANSCODE_GZIP, TRANSCODE_COMPRESS, TRANSCODE_DEFLATE } Transcoding;
 
-} // end namespace NHttpEnums
-
-// Individual pieces of the message found during parsing
-// Length values <= 0 are StatusCode values and imply that the start pointer is meaningless.
-// Never use the start pointer without verifying that length > 0.
-struct field {
-public:
-    int32_t length = NHttpEnums::STAT_NOTCOMPUTE;
-    const uint8_t* start = nullptr;
-
-    field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) {};
-    field() = default;
-};
-
 typedef enum 
 {
     EVENT_ASCII = 1,
@@ -154,8 +140,40 @@ typedef enum
     EVENT_JS_OBFUSCATION_EXCD,
     EVENT_JS_EXCESS_WS,
     EVENT_MIXED_ENCODINGS,
+    EVENT_SWF_ZLIB_FAILURE,
+    EVENT_SWF_LZMA_FAILURE,
+    EVENT_PDF_DEFL_FAILURE,
+    EVENT_PDF_UNSUP_COMP_TYPE,
+    EVENT_PDF_CASC_COMP,
+    EVENT_PDF_PARSE_FAILURE,
     EVENT_MAXVALUE
 } EventSid;
 
+} // end namespace NHttpEnums
+
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -61,7 +61,7 @@ int32_t HeaderNormalizer::deriveHeaderContent(const uint8_t *value, int32_t leng
 
 // This method normalizes the header field value for headId.
 int32_t HeaderNormalizer::normalize(const HeaderId headId, const int count, ScratchPad &scratchPad, uint64_t &infractions,
-        const HeaderId headerNameId[], const field headerValue[], const int32_t numHeaders, field &resultField) const {
+        const HeaderId headerNameId[], const Field headerValue[], const int32_t numHeaders, Field &resultField) const {
     if (resultField.length != STAT_NOTCOMPUTE) return resultField.length;
     if (format == NORM_NULL) return resultField.length = STAT_NOTCONFIGURED;
     if (count == 0) return resultField.length = STAT_NOSOURCE;
