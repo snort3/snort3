@@ -120,7 +120,7 @@ public:
     // Register the code's protocol ID's and Ethertypes
     virtual void get_protocol_ids(std::vector<uint16_t>&) {};
     // decode function
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len,
+    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id) = 0;
 
     // 

@@ -466,13 +466,6 @@ void PacketManager::decode(
         len -= lyr_len;
         pkt += lyr_len;
         lyr_len = 0;
-
-        // since the IP length and the packet length may not be equal.
-        if (p->packet_flags & PKT_NEW_IP_LEN)
-        {
-            len = p->ip_dsize;
-            p->packet_flags &= ~PKT_NEW_IP_LEN;
-        }
     }
 
     // if the final protocol ID is not the default codec, a Codec failed
@@ -483,6 +476,12 @@ void PacketManager::decode(
             s_stats[discards]++;
         else
             s_stats[other_codecs]++;
+
+        if (p->packet_flags & PKT_ESP_LYR_PRESENT)
+        {
+            p->packet_flags |= PKT_TRUST;
+            p->packet_flags &= ~PKT_ESP_LYR_PRESENT;
+        }
     }
 
     if (p->ip6_extension_count > 0)

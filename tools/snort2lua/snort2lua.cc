@@ -337,6 +337,22 @@ int main (int argc, char* argv[])
 
 
 
+
+
+    cv.initialize(&init_state_ctor, &ld);
+
+    // MAIN LOOP!!   walk through every input file and begin converting!
+    option::Option* opt = options[CONF_FILE];
+    do {
+        if (cv.convert_file(std::string(opt->arg)) < 0)
+        {
+            print_line("Failed Conversion of file " + std::string(opt->arg));
+            fail = true;
+        }
+    } while ((opt = opt->next()));
+
+
+
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
     // now.  Otherwise, set up the include file.
@@ -360,21 +376,6 @@ int main (int argc, char* argv[])
             ld.close_table();
         }
     }
-
-
-
-    cv.initialize(&init_state_ctor, &ld);
-
-    // MAIN LOOP!!   walk through every input file and begin converting!
-    option::Option* opt = options[CONF_FILE];
-    do {
-        if (cv.convert_file(std::string(opt->arg)) < 0)
-        {
-            print_line("Failed Conversion of file " + std::string(opt->arg));
-            fail = true;
-        }
-    } while ((opt = opt->next()));
-
 
 
     // finally, lets print the converter to file

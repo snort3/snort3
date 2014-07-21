@@ -52,7 +52,7 @@ public:
     
     virtual PROTO_ID get_proto_id() { return PROTO_ICMP4; };
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t raw_len, 
+    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -90,7 +90,7 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
  *
  * Returns: void function
  */
-bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t raw_len, 
+bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
 {
     if(raw_len < icmp4::hdr_len())

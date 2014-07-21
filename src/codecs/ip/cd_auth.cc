@@ -45,7 +45,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 };
 
@@ -58,13 +58,13 @@ void AhCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_AH);
 }
 
-bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 
     IP6Extension *ah = (IP6Extension *)raw_pkt;
 
-    if (len < ipv6::min_ext_len())
+    if (raw_len < ipv6::min_ext_len())
     {
         codec_events::decoder_event(p, DECODE_AUTH_HDR_TRUNC);
         return false;
@@ -72,7 +72,7 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     lyr_len = sizeof(*ah) + (ah->ip6e_len << 2);
 
-    if (lyr_len > len)
+    if (lyr_len > raw_len)
     {
         codec_events::decoder_event(p, DECODE_AUTH_HDR_BAD_LEN);
         return false;

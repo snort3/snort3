@@ -48,7 +48,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_IP6; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -130,16 +130,17 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     ipv6::IP6RawHdr *hdr;
     uint32_t payload_len;
+    uint32_t* new_raw_len = const_cast<uint32_t*>(&raw_len); // enable settomg of packet length
 
 
     hdr = reinterpret_cast<ipv6::IP6RawHdr*>(const_cast<uint8_t*>(raw_pkt));
 
-    if(len < ipv6::hdr_len())
+    if(raw_len < ipv6::hdr_len())
     {
         if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED);
@@ -169,7 +170,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         {
 
             codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                            raw_pkt, len);
+                            raw_pkt, raw_len);
             goto decodeipv6_fail;
         }
         else
@@ -183,9 +184,9 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     payload_len = ntohs(hdr->ip6plen) + ipv6::hdr_len();
 
-    if(payload_len != len)
+    if(payload_len != raw_len)
     {
-        if (payload_len > len)
+        if (payload_len > raw_len)
         {
             if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
                 codec_events::decoder_event(p, DECODE_IPV6_DGRAM_GT_CAPLEN);
@@ -228,8 +229,8 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->actual_ip_len = ntohs(p->ip6h->len);
     p->ip_data = raw_pkt + ipv6::hdr_len();
     p->ip_dsize = ntohs(p->ip6h->len);
-    p->packet_flags |= PKT_NEW_IP_LEN;
     p->proto_bits |= PROTO_BIT__IP;
+    (*new_raw_len) = p->actual_ip_len + ipv6::hdr_len(); // this will be removed in Packetmanager
 
 
     lyr_len = sizeof(*hdr);

@@ -48,7 +48,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_GTP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -84,7 +84,7 @@ void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  */
 
-bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint8_t  next_hdr_type;
@@ -99,7 +99,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if (p->GTPencapsulated)
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_GTP_MULTIPLE_ENCAPSULATION,
-                raw_pkt, len);
+                raw_pkt, raw_len);
         return false;
     }
     else
@@ -107,7 +107,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         p->GTPencapsulated = 1;
     }
     /*Check the length*/
-    if (len < GTP_MIN_LEN)
+    if (raw_len < GTP_MIN_LEN)
        return false;
     /* We only care about PDU*/
     if ( hdr->type != 255)
@@ -125,7 +125,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         lyr_len = GTP_V0_HEADER_LEN;
         /*Check header fields*/
-        if (len < lyr_len)
+        if (raw_len < lyr_len)
         {
             codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
             return false;
@@ -134,10 +134,10 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         p->proto_bits |= PROTO_BIT__GTP;
 
         /*Check the length field. */
-        if (len != ((unsigned int)ntohs(hdr->length) + lyr_len))
+        if (raw_len != ((unsigned int)ntohs(hdr->length) + lyr_len))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
-                    len - lyr_len, ntohs(hdr->length)););
+                    raw_len - lyr_len, ntohs(hdr->length)););
             codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
             return false;
         }
@@ -153,7 +153,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             lyr_len =  GTP_V1_HEADER_LEN;
 
             /*Check optional fields*/
-            if (len < lyr_len)
+            if (raw_len < lyr_len)
             {
                 codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                 return false;
@@ -165,7 +165,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
             {
                 uint16_t ext_hdr_len;
                 /*check length before reading data*/
-                if (len < (uint32_t)(lyr_len + 4))
+                if (raw_len < (uint32_t)(lyr_len + 4))
                 {
                     codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                     return false;
@@ -182,7 +182,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 lyr_len += ext_hdr_len * 4;
 
                 /*check length before reading data*/
-                if (len < lyr_len)
+                if (raw_len < lyr_len)
                 {
                     codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
                     return false;
@@ -196,10 +196,10 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         p->proto_bits |= PROTO_BIT__GTP;
 
         /*Check the length field. */
-        if (len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
+        if (raw_len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
-                    len - GTP_MIN_LEN, ntohs(hdr->length)););
+                    raw_len - GTP_MIN_LEN, ntohs(hdr->length)););
             codec_events::decoder_event(p, DECODE_GTP_BAD_LEN);
             return false;
         }
@@ -215,7 +215,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         Active_SetTunnelBypass();
 
 
-    if (len > 0)
+    if (raw_len > 0)
     {
         p->packet_flags |= PKT_UNSURE_ENCAP;
 

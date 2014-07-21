@@ -42,7 +42,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_PPP_ENCAP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
 };
@@ -73,7 +73,7 @@ void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     static THREAD_LOCAL bool had_vj = false;
@@ -100,7 +100,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
     /* do a little validation:
      *
      */
-    if(len < 2)
+    if(raw_len < 2)
     {
         if (ScLogVerbose())
         {
@@ -140,11 +140,11 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t len,
         case PPP_VJ_UCOMP:
             /* VJ compression modifies the protocol field. It must be set
              * to tcp (only TCP packets can be VJ compressed) */
-            if(len < (lyr_len + ipv4::hdr_len()))
+            if(raw_len < (lyr_len + ipv4::hdr_len()))
             {
                 if (ScLogVerbose())
                     ErrorMessage("PPP VJ min packet length > captured len! "
-                                 "(%d bytes)\n", len);
+                                 "(%d bytes)\n", raw_len);
                 return false;
             }
 

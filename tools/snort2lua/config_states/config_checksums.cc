@@ -31,9 +31,9 @@ namespace config
 
 namespace {
 
-template<const std::string *snort_option,
-        const std::string *lua_table_name,
-        const std::string *lua_option_name>
+template<const std::string* snort_option,
+        const std::string* lua_table_name,
+        const std::string* lua_option_name>
 class ConfigChecksum : public ConversionState
 {
 public:
@@ -60,7 +60,9 @@ public:
     }
 };
 
-template<const std::string *snort_option, const std::string *lua_name, const std::string *lua_option_name = nullptr>
+template<const std::string *snort_option,
+         const std::string *lua_name,
+         const std::string *lua_option_name = nullptr>
 static ConversionState* config_checksum_ctor(Converter* cv, LuaData* ld)
 {
     if (lua_option_name)

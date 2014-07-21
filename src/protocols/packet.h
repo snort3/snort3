@@ -96,24 +96,21 @@ extern "C" {
 #define PKT_IP_RULE          0x00040000  /* this packet is being evaluated against an IP rule */
 #define PKT_IP_RULE_2ND      0x00080000  /* this packet is being evaluated against an IP rule */
 
-#define PKT_LOGGED           0x00100000  /* this packet has been logged */
-#define PKT_PSEUDO           0x00200000  /* is a pseudo packet */
-#define PKT_MODIFIED         0x00400000  /* packet had normalizations, etc. */
-#define PKT_RESIZED          0x00800000  /* packet has new size; must set modified too */
+#define PKT_PSEUDO           0x00100000  /* is a pseudo packet */
+#define PKT_MODIFIED         0x00200000  /* packet had normalizations, etc. */
+#define PKT_RESIZED          0x00300000  /* packet has new size; must set modified too */
 
 // neither of these flags will be set for (full) retransmissions or non-data segments
 // a partial overlap results in out of sequence condition
 // out of sequence condition is sticky
-#define PKT_STREAM_ORDER_OK  0x01000000  /* this segment is in order, w/o gaps */
-#define PKT_STREAM_ORDER_BAD 0x02000000  /* this stream had at least one gap */
-#define PKT_REASSEMBLED_OLD  0x04000000  /* for backwards compat with so rules */
+#define PKT_STREAM_ORDER_OK  0x00800000  /* this segment is in order, w/o gaps */
+#define PKT_STREAM_ORDER_BAD 0x01000000  /* this stream had at least one gap */
+#define PKT_REASSEMBLED_OLD  0x02000000  /* for backwards compat with so rules */
 
-#define PKT_IPREP_SOURCE_TRIGGERED  0x08000000
-#define PKT_IPREP_DATA_SET          0x10000000
-#define PKT_FILE_EVENT_SET          0x20000000
-#define PKT_NEW_IP_LEN              0X40000000 /* For Codecs to tell PacketManger a new length should be set */
+#define PKT_FILE_EVENT_SET   0x04000000
+#define PKT_ESP_LYR_PRESENT  0x08000000
+
 // 0x40000000 are available
-
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
 
 #define REASSEMBLED_PACKET_FLAGS (PKT_REBUILT_STREAM|PKT_REASSEMBLED_OLD)

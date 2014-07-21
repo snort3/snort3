@@ -45,7 +45,9 @@ public:
 
 } // namespace
 
-template<const std::string* snort_option, const std::string* lua_table_name, const std::string* lua_option_name = nullptr>
+template<const std::string* snort_option,
+         const std::string* lua_table_name,
+         const std::string* lua_option_name = nullptr>
 static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
 {
     ld->open_table(*lua_table_name);
@@ -62,7 +64,9 @@ static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
     return new DeadCode(cv, ld);
 }
 
-template<const std::string* snort_option, const std::string* lua_table_name, const std::string* lua_option_name = nullptr>
+template<const std::string* snort_option,
+         const std::string* lua_table_name,
+         const std::string* lua_option_name = nullptr>
 static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
 {
     ld->open_table(*lua_table_name);

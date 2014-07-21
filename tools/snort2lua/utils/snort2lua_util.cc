@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <string>
+#include <cstring>
 #include "utils/snort2lua_util.h"
 #include "conversion_state.h"
 

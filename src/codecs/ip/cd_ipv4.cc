@@ -59,7 +59,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_IP4; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -160,19 +160,17 @@ void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
     uint16_t hlen;  /* ip header length */
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n"););
-
     /* do a little validation */
-    if(len < ipv4::hdr_len())
+    if(raw_len < ipv4::hdr_len())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "WARNING: Truncated IP4 header (%d bytes).\n", len););
+            "WARNING: Truncated IP4 header (%d bytes).\n", raw_len););
 
         if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IP4_HDR_TRUNC);
@@ -187,7 +185,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         if (p->encapsulated)
         {
             codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                raw_pkt, len);
+                raw_pkt, raw_len);
 
             return false;
         }
@@ -236,12 +234,12 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         return false;
     }
 
-    if (ip_len > len)
+    if (ip_len > raw_len)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "IP Len field is %d bytes bigger than captured length.\n"
             "    (ip.len: %lu, cap.len: %lu)\n",
-            ip_len - len, ip_len, len););
+            ip_len - raw_len, ip_len, raw_len););
 
         codec_events::decoder_event(p, DECODE_IPV4_DGRAM_GT_CAPLEN);
 
@@ -323,9 +321,10 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     /* set the real IP length for logging */
     p->actual_ip_len = (uint16_t) ip_len;
-    p->packet_flags |= PKT_NEW_IP_LEN;
 
     /* set the remaining packet length */
+    uint32_t* new_raw_len = const_cast<uint32_t*>(&raw_len);
+    *new_raw_len = ip_len;
     ip_len -= hlen;
 
     /* check for fragmented packets */

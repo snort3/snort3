@@ -42,7 +42,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
 };
@@ -57,7 +57,7 @@ void MobilityCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_MOBILITY);
 }
 
-bool MobilityCodec::decode(const uint8_t* raw_pkt, const uint32_t raw_len, 
+bool MobilityCodec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         Packet* p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
 {
     codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);

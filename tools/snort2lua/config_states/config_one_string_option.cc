@@ -56,7 +56,8 @@ public:
 
         // if the two names are not equal ...
         if((*snort_option).compare(*lua_option))
-            ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
+            ld->add_diff_option_comment("config " + *snort_option +
+                ":", *lua_option);
 
         // get length (stringstream will not read spaces...which we want)
         const int pos = stream.tellg();
