@@ -616,7 +616,9 @@ bool Ipv6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
     // extension headers are decoded and we stop at frag6.
     // in such case we do not modify the packet length.
     if ( (p->packet_flags & PKT_MODIFIED)
+#ifdef NORMALIZER
         && !(p->packet_flags & PKT_RESIZED)
+#endif
     ) {
         *len = ntohs(h->ip6plen) + sizeof(*h);
     }

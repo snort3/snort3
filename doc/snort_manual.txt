@@ -18,6 +18,10 @@ include::tips.txt[]
 
 include::differences.txt[]
 
+=== Configuration Changes
+
+include::config_changes.txt
+
 == Modules
 
 include::modules.txt[]

@@ -54,3 +54,7 @@ stamp-h1
 tools/u2boat/u2boat
 tools/u2spewfoo/u2spewfoo
 ylwrap
+*results
+*snort.alert*
+*snort.out*
+*snort.log*

@@ -13,6 +13,7 @@ version.txt
 
 unbuilt_sources = \
 snort_manual.txt \
+config_changes.txt \
 differences.txt \
 plugins.txt \
 style.txt \
