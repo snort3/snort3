@@ -41,20 +41,11 @@
 #include "detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/module.h"
 
 static const char* s_name = "raw_data";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats rawDataPerfStats;
-
-static ProfileStats* pd_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &rawDataPerfStats;
-
-    return nullptr;
-}
-#endif
 
 class RawDataOption : public IpsOption
 {
@@ -78,25 +69,41 @@ int RawDataOption::eval(Cursor& c, Packet* p)
     return DETECTION_OPTION_MATCH;
 }
 
-static IpsOption* raw_data_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("raw_data takes no arguments");
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
 
+class RawDataModule : public Module
+{
+public:
+    RawDataModule() : Module(s_name) { };
+
+    ProfileStats* get_profile() const
+    { return &rawDataPerfStats; };
+};
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new RawDataModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* raw_data_ctor(Module*, OptTreeNode*)
+{
     return new RawDataOption;
 }
 
 static void raw_data_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void raw_data_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, pd_get_profile);
-#endif
 }
 
 static const IpsApi raw_data_api =
@@ -106,12 +113,12 @@ static const IpsApi raw_data_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    raw_data_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

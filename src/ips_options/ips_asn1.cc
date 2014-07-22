@@ -78,31 +78,22 @@
 #include "fpdetect.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 #define BITSTRING_OPT  "bitstring_overflow"
 #define DOUBLE_OPT     "double_overflow"
-#define LENGTH_OPT     "oversize_length"
-#define DBL_FREE_OPT   "double_free"
+#define PRINT_OPT      "print"
 
+#define LENGTH_OPT     "oversize_length"
 #define ABS_OFFSET_OPT "absolute_offset"
 #define REL_OFFSET_OPT "relative_offset"
-#define PRINT_OPT      "print"
 
 #define DELIMITERS " ,\t\n"
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats asn1PerfStats;
 
 static const char* s_name = "asn1";
-
-static ProfileStats* asn1_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &asn1PerfStats;
-
-    return nullptr;
-}
-#endif
 
 class Asn1Option : public IpsOption
 {
@@ -198,135 +189,107 @@ int Asn1Option::eval(Cursor& c, Packet *p)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter asn1_params[] =
+{
+    { BITSTRING_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
+      "Detects invalid bitstring encodings that are known to be remotely exploitable." },
+
+    { DOUBLE_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
+      "Detects a double ASCII encoding that is larger than a standard buffer." },
+
+    { PRINT_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
+      "<>max | <max | >min" },
+
+    { LENGTH_OPT, Parameter::PT_INT, "0:", nullptr,
+      "Compares ASN.1 type lengths with the supplied argument." },
+
+    { ABS_OFFSET_OPT, Parameter::PT_INT, "0:", nullptr,
+      "Absolute offset from the beginning of the packet." },
+
+    { REL_OFFSET_OPT, Parameter::PT_INT, nullptr, nullptr,
+      "relative offset from the cursor." },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class Asn1Module : public Module
+{
+public:
+    Asn1Module() : Module(s_name, asn1_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &asn1PerfStats; };
+
+    ASN1_CTXT data;
+};
+
+bool Asn1Module::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool Asn1Module::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is(BITSTRING_OPT) )
+        data.bs_overflow = 1;
+
+    else if ( v.is(DOUBLE_OPT) )
+        data.double_overflow = 1;
+
+    else if ( v.is(PRINT_OPT) )
+        data.print = 1;
+
+    else if ( v.is(LENGTH_OPT) )
+    {
+        data.length = 1;
+        data.max_length = v.get_long();
+    }
+    else if ( v.is(ABS_OFFSET_OPT) )
+    {
+        data.offset_type = ABS_OFFSET;
+        data.offset = v.get_long();
+    }
+    else if ( v.is(REL_OFFSET_OPT) )
+    {
+        data.offset_type = REL_OFFSET;
+        data.offset = v.get_long();
+    }
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-/*
-**  Parse the detection option arguments.
-**    - bitstring_overflow
-**    - double_overflow
-**    - oversize_length
-**    - print
-**    - abs_offset
-**    - rel_offset
-*/
-static void asn1_parse(char *data, ASN1_CTXT *asn1)
+static Module* mod_ctor()
 {
-    char *pcTok;
-    char *endTok;
-
-    if(!data)
-        ParseError("No options to 'asn1' detection plugin.");
-
-    char* lasts = nullptr;
-    pcTok = strtok_r(data, DELIMITERS, &lasts);
-
-    if(!pcTok)
-        ParseError("No options to 'asn1' detection plugin.");
-
-    while(pcTok)
-    {
-        if(!strcasecmp(pcTok, BITSTRING_OPT))
-        {
-            asn1->bs_overflow = 1;
-        }
-        else if(!strcasecmp(pcTok, DOUBLE_OPT))
-        {
-            asn1->double_overflow = 1;
-        }
-        else if(!strcasecmp(pcTok, PRINT_OPT))
-        {
-            asn1->print = 1;
-        }
-        else if(!strcasecmp(pcTok, LENGTH_OPT))
-        {
-            long int max_length;
-            char *pcEnd;
-
-            pcTok = strtok_r(NULL, DELIMITERS, &lasts);
-
-            if(!pcTok)
-                ParseError("No option to '%s' in 'asn1' detection plugin",
-                    LENGTH_OPT);
-
-            max_length = SnortStrtolRange(pcTok, &pcEnd, 10, 0, INT32_MAX);
-
-            if ((pcEnd == pcTok) || (*pcEnd) || (errno == ERANGE))
-                ParseError(
-                    "Negative size, underflow or overflow (of long int) to "
-                    "'%s' in 'asn1' detection plugin. Must be positive or zero.",
-                    LENGTH_OPT);
-
-            asn1->length = 1;
-            asn1->max_length = (unsigned int)max_length;
-        }
-        else if(!strcasecmp(pcTok, ABS_OFFSET_OPT))
-        {
-            pcTok = strtok_r(NULL, DELIMITERS, &lasts);
-            if(!pcTok)
-            {
-                ParseError(
-                    "No option to '%s' in 'asn1' detection plugin", ABS_OFFSET_OPT);
-            }
-
-            asn1->offset_type = ABS_OFFSET;
-            asn1->offset = SnortStrtol(pcTok, &endTok, 10);
-            if (endTok == pcTok)
-            {
-                ParseError(
-                    "Invalid parameter to '%s' in 'asn1' detection plugin",
-                    ABS_OFFSET_OPT);
-            }
-
-        }
-        else if(!strcasecmp(pcTok, REL_OFFSET_OPT))
-        {
-            pcTok = strtok_r(NULL, DELIMITERS, &lasts);
-            if(!pcTok)
-            {
-                ParseError(
-                    "No option to '%s' in 'asn1' detection plugin",
-                    REL_OFFSET_OPT);
-            }
-
-            asn1->offset_type = REL_OFFSET;
-            asn1->offset = SnortStrtol(pcTok, &endTok, 10);
-            if (endTok == pcTok)
-            {
-                ParseError(
-                    "Invalid parameter to '%s' in 'asn1' detection plugin",
-                    pcTok);
-            }
-        }
-        else
-        {
-            ParseError("Unknown ('%s') asn1 detection option.", pcTok);
-        }
-
-        pcTok = strtok_r(NULL, DELIMITERS, &lasts);
-    }
-
-    return;
+    return new Asn1Module;
 }
 
-static IpsOption* asn1_ctor(SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    ASN1_CTXT asn1;
-    memset(&asn1, 0, sizeof(asn1));
-    asn1_parse(data, &asn1);
-    return new Asn1Option(asn1);
+    delete m;
+}
+
+static IpsOption* asn1_ctor(Module* p, OptTreeNode*)
+{
+    Asn1Module* m = (Asn1Module*)p;
+    return new Asn1Option(m->data);
 }
 
 static void asn1_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void asn1_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, asn1_get_profile);
-#endif
 }
 
 static const IpsApi asn1_api =
@@ -336,12 +299,12 @@ static const IpsApi asn1_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    asn1_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

@@ -380,7 +380,7 @@ static void SnortInit(int argc, char **argv)
     SetRuleStates(snort_conf);
 
     /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::verify();
+    IpsManager::verify(snort_conf);
 
     if (snort_conf->file_mask != 0)
         umask(snort_conf->file_mask);
@@ -655,7 +655,7 @@ static SnortConfig * get_reload_config(void)
     SetRuleStates(sc);
 
     /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::verify();
+    IpsManager::verify(sc);
 
     if ((sc->file_mask != 0) && (sc->file_mask != snort_conf->file_mask))
         umask(sc->file_mask);

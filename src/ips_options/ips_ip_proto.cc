@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,20 +43,12 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "ip_proto";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats ipProtoPerfStats;
-
-static ProfileStats* pro_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &ipProtoPerfStats;
-
-    return nullptr;
-}
-#endif
 
 #define IP_PROTO__EQUAL         0
 #define IP_PROTO__NOT_EQUAL     1
@@ -230,7 +222,7 @@ int GetOtnIpProto(OptTreeNode *otn)
 // class methods
 //-------------------------------------------------------------------------
 
-static void ip_proto_parse(char *data, IpProtoData *ds_ptr)
+static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
 {
     while(isspace((int)*data)) data++;
 
@@ -286,25 +278,72 @@ static void ip_proto_parse(char *data, IpProtoData *ds_ptr)
     }
 }
 
-static IpsOption* ip_proto_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter ip_proto_params[] =
 {
-    IpProtoData ipd;
-    memset(&ipd, 0, sizeof(ipd));
-    ip_proto_parse(data, &ipd);
-    return new IpProtoOption(ipd);
+    { "*proto", Parameter::PT_STRING, nullptr, nullptr, 
+      "[!|>|<] name or number" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class IpProtoModule : public Module
+{
+public:
+    IpProtoModule() : Module(s_name, ip_proto_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &ipProtoPerfStats; };
+
+    IpProtoData data;
+};
+
+bool IpProtoModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool IpProtoModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*proto") )
+        ip_proto_parse(v.get_string(), &data);
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new IpProtoModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* ip_proto_ctor(Module* p, OptTreeNode*)
+{
+    IpProtoModule* m = (IpProtoModule*)p;
+    return new IpProtoOption(m->data);
 }
 
 static void ip_proto_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void ip_proto_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, pro_get_profile);
-#endif
 }
 
 static const IpsApi ip_proto_api =
@@ -314,12 +353,12 @@ static const IpsApi ip_proto_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__IP,
-    ip_proto_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

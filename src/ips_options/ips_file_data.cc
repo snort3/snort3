@@ -41,20 +41,11 @@
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/module.h"
 
 static const char* s_name = "file_data";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats fileDataPerfStats;
-
-static ProfileStats* fd_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &fileDataPerfStats;
-
-    return nullptr;
-}
-#endif
 
 class FileDataOption : public IpsOption
 {
@@ -98,36 +89,40 @@ int FileDataOption::eval(Cursor& c, Packet*)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+class FileDataModule : public Module
+{
+public:
+    FileDataModule() : Module(s_name) { };
+
+    ProfileStats* get_profile() const
+    { return &fileDataPerfStats; };
+};
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-void file_data_parse(char *data)
+static Module* mod_ctor()
 {
-
-    if ( !IsEmptyStr(data) )
-        ParseError("file_data: takes no arguments '%s'", data);
-
-    return;
-
+    return new FileDataModule;
 }
 
-static IpsOption* file_data_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    file_data_parse(data);
+    delete m;
+}
+
+static IpsOption* file_data_ctor(Module*, OptTreeNode*)
+{
     return new FileDataOption;
 }
 
 static void file_data_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void file_data_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, fd_get_profile);
-#endif
 }
 
 static const IpsApi file_data_api =
@@ -137,12 +132,12 @@ static const IpsApi file_data_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    file_data_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

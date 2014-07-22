@@ -43,43 +43,30 @@
 #include "detection_util.h"
 #include "framework/ips_option.h"
 #include "framework/inspector.h"
+#include "framework/cursor.h"
+#include "framework/module.h"
 #include "flow/flow.h"
 
-static const char* s_name = "urilen";
+static const char* s_name = "bufferlen";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL ProfileStats urilenCheckPerfStats;
+static THREAD_LOCAL ProfileStats lenCheckPerfStats;
 
-static ProfileStats* uc_get_profile(const char* key)
+#define LEN_CHECK_EQ 1
+#define LEN_CHECK_GT 2
+#define LEN_CHECK_LT 3
+#define LEN_CHECK_RG 4
+
+struct LenCheckData 
 {
-    if ( !strcmp(key, s_name) )
-        return &urilenCheckPerfStats;
-
-    return nullptr;
-}
-#endif
-
-#define URI_LEN_BUF_NORM  "norm"
-#define URI_LEN_BUF_RAW   "raw"
-
-#define URILEN_CHECK_EQ 1
-#define URILEN_CHECK_GT 2
-#define URILEN_CHECK_LT 3
-#define URILEN_CHECK_RG 4
-
-struct UriLenCheckData 
-{
-    uint16_t urilen;
-    uint16_t urilen2;
+    uint16_t len;
+    uint16_t len2;
     char oper;
-    const char* key;
-
 };
 
-class UriLenOption : public IpsOption
+class LenOption : public IpsOption
 {
 public:
-    UriLenOption(const UriLenCheckData& c) :
+    LenOption(const LenCheckData& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -89,26 +76,21 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    UriLenCheckData config;
+    LenCheckData config;
 };
 
 //-------------------------------------------------------------------------
 // class methods
 //-------------------------------------------------------------------------
 
-uint32_t UriLenOption::hash() const
+uint32_t LenOption::hash() const
 {
     uint32_t a,b,c;
-    const UriLenCheckData *data = &config;
+    const LenCheckData *data = &config;
 
-    a = data->urilen;
-    b = data->urilen2;
+    a = data->len;
+    b = data->len2;
     c = data->oper;
-
-    mix(a,b,c);
-
-    a += strcmp(data->key, "http_uri");
-    b += 0;
 
     mix_str(a,b,c,get_name());
     final(a,b,c);
@@ -116,19 +98,18 @@ uint32_t UriLenOption::hash() const
     return c;
 }
 
-bool UriLenOption::operator==(const IpsOption& ips) const
+bool LenOption::operator==(const IpsOption& ips) const
 {
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    UriLenOption& rhs = (UriLenOption&)ips;
-    UriLenCheckData *left = (UriLenCheckData*)&config;
-    UriLenCheckData *right = (UriLenCheckData*)&rhs.config;
+    LenOption& rhs = (LenOption&)ips;
+    LenCheckData *left = (LenCheckData*)&config;
+    LenCheckData *right = (LenCheckData*)&rhs.config;
 
-    if ((left->urilen == right->urilen)
-            && (left->urilen2 == right->urilen2)
-            && (left->oper == right->oper)
-            && (!strcmp(left->key, right->key)) )
+    if ( (left->len == right->len)
+            && (left->len2 == right->len2)
+            && (left->oper == right->oper) )
     {
         return true;
     }
@@ -136,54 +117,45 @@ bool UriLenOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int UriLenOption::eval(Cursor&, Packet* p)
+int LenOption::eval(Cursor& c, Packet*)
 {
-    UriLenCheckData *udata = &config;
+    LenCheckData *udata = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
-    InspectionBuffer hb;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(urilenCheckPerfStats);
-
-    if ( !p->flow || !p->flow->clouseau ||
-         // FIXIT cache id at parse time for runtime use
-         !p->flow->clouseau->get_buf(udata->key, p, hb) )
-    {
-        PREPROC_PROFILE_END(urilenCheckPerfStats);
-        return rval;
-    }
+    PREPROC_PROFILE_START(lenCheckPerfStats);
 
     switch (udata->oper)
     {
-        case URILEN_CHECK_EQ:
-            if (udata->urilen == hb.len)
+        case LEN_CHECK_EQ:
+            if (udata->len == c.size())
                 rval = DETECTION_OPTION_MATCH;
             break;
-        case URILEN_CHECK_GT:
-            if (udata->urilen < hb.len)
+        case LEN_CHECK_GT:
+            if (udata->len < c.size())
                 rval = DETECTION_OPTION_MATCH;
             break;
-        case URILEN_CHECK_LT:
-            if (udata->urilen > hb.len)
+        case LEN_CHECK_LT:
+            if (udata->len > c.size())
                 rval = DETECTION_OPTION_MATCH;
             break;
-        case URILEN_CHECK_RG:
-            if ((udata->urilen <= hb.len) && (udata->urilen2 >= hb.len))
+        case LEN_CHECK_RG:
+            if ((udata->len <= c.size()) && (udata->len2 >= c.size()))
                 rval = DETECTION_OPTION_MATCH;
             break;
         default:
             break;
     }
 
-    PREPROC_PROFILE_END(urilenCheckPerfStats);
+    PREPROC_PROFILE_END(lenCheckPerfStats);
     return rval;
 }
 
 //-------------------------------------------------------------------------
-// api methods
+// module methods
 //-------------------------------------------------------------------------
 
-static void urilen_parse(char* argp, UriLenCheckData* ds_ptr)
+static void len_parse(const char* argp, LenCheckData* ds_ptr)
 {
     char* curp = NULL;
     char **toks;
@@ -192,7 +164,7 @@ static void urilen_parse(char* argp, UriLenCheckData* ds_ptr)
     toks = mSplit(argp, ",", 2, &num_toks, '\\');
     if (!num_toks)
     {
-        ParseError("'urilen' requires arguments.");
+        ParseError("'%s' requires arguments.", s_name);
     }
 
     curp = toks[0];
@@ -208,33 +180,33 @@ static void urilen_parse(char* argp, UriLenCheckData* ds_ptr)
         mtoks = mSplit(curp, "<>", 2, &num_mtoks, '\\');
         if (num_mtoks != 2)
         {
-            ParseError("Invalid 'urilen' argument.");
+            ParseError("Invalid '%s' argument.", s_name);
         }
 
         val = strtol(mtoks[0], &endp, 0);
         if ((val < 0) || *endp || (val > UINT16_MAX))
         {
-            ParseError("Invalid 'urilen' argument.");
+            ParseError("Invalid '%s' argument.", s_name);
         }
 
-        ds_ptr->urilen = (uint16_t)val;
+        ds_ptr->len = (uint16_t)val;
 
         val = strtol(mtoks[1], &endp, 0);
         if ((val < 0) || *endp || (val > UINT16_MAX))
         {
-            ParseError("Invalid 'urilen' argument.");
+            ParseError("Invalid '%s' argument.", s_name);
         }
 
-        ds_ptr->urilen2 = (uint16_t)val;
+        ds_ptr->len2 = (uint16_t)val;
 
-        if (ds_ptr->urilen2 < ds_ptr->urilen)
+        if (ds_ptr->len2 < ds_ptr->len)
         {
-            uint16_t tmp = ds_ptr->urilen;
-            ds_ptr->urilen = ds_ptr->urilen2;
-            ds_ptr->urilen2 = tmp;
+            uint16_t tmp = ds_ptr->len;
+            ds_ptr->len = ds_ptr->len2;
+            ds_ptr->len2 = tmp;
         }
 
-        ds_ptr->oper = URILEN_CHECK_RG;
+        ds_ptr->oper = LEN_CHECK_RG;
 
         mSplitFree(&mtoks, num_mtoks);
     }
@@ -246,110 +218,137 @@ static void urilen_parse(char* argp, UriLenCheckData* ds_ptr)
         if(*curp == '>')
         {
             curp++;
-            ds_ptr->oper = URILEN_CHECK_GT;
+            ds_ptr->oper = LEN_CHECK_GT;
         }
         else if(*curp == '<')
         {
             curp++;
-            ds_ptr->oper = URILEN_CHECK_LT;
+            ds_ptr->oper = LEN_CHECK_LT;
         }
         else
         {
-            ds_ptr->oper = URILEN_CHECK_EQ;
+            ds_ptr->oper = LEN_CHECK_EQ;
         }
 
         while(isspace((int)*curp)) curp++;
 
         if (!*curp)
         {
-            ParseError("Invalid 'urilen' argument.");
+            ParseError("Invalid '%s' argument.", s_name);
         }
 
         val = strtol(curp, &endp, 0);
         if ((val < 0) || *endp || (val > UINT16_MAX))
         {
-            ParseError("Invalid 'urilen' argument.");
+            ParseError("Invalid '%s' argument.", s_name);
         }
 
-        if ((ds_ptr->oper == URILEN_CHECK_LT) && (val == 0))
+        if ((ds_ptr->oper == LEN_CHECK_LT) && (val == 0))
         {
-            ParseError("Invalid 'urilen' argument.");
+            ParseError("Invalid '%s' argument.", s_name);
         }
 
-        ds_ptr->urilen = (uint16_t)val;
+        ds_ptr->len = (uint16_t)val;
     }
 
-    if (num_toks > 1)
+    if (num_toks > 1 || strchr(argp, ','))
     {
-        if (!strcmp(toks[1], URI_LEN_BUF_NORM))
-            ds_ptr->key = "http_uri";
-        else if (!strcmp(toks[1], URI_LEN_BUF_RAW))
-            ds_ptr->key = "http_raw_uri";
-        else
-            ParseError("Invalid 'urilen' argument.");
-    }
-    else
-    {
-        if (strchr(argp, ','))
-        {
-            ParseError("Invalid 'urilen' argument.");
-        }
-
-        ds_ptr->key = "http_raw_uri";
+        ParseError("Invalid '%s' argument.", s_name);
     }
 
     mSplitFree(&toks, num_toks);
 }
 
-static IpsOption* urilen_ctor(
-    SnortConfig*, char* argp, OptTreeNode*)
+static const Parameter len_params[] =
 {
-    UriLenCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    urilen_parse(argp, &ds_ptr);
-    return new UriLenOption(ds_ptr);
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class LenModule : public Module
+{
+public:
+    LenModule() : Module(s_name, len_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &lenCheckPerfStats; };
+
+    LenCheckData data;
+};
+
+bool LenModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
 }
 
-static void urilen_dtor(IpsOption* p)
+bool LenModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    len_parse(v.get_string(), &data);
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new LenModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* len_ctor(Module* p, OptTreeNode*)
+{
+    LenModule* m = (LenModule*)p;
+    return new LenOption(m->data);
+}
+
+static void len_dtor(IpsOption* p)
 {
     delete p;
 }
 
-static void urilen_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, uc_get_profile);
-#endif
-}
-
-static const IpsApi urilen_api =
+static const IpsApi len_api =
 {
     {
         PT_IPS_OPTION,
-        "urilen",
+        s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    urilen_ginit,
     nullptr,
     nullptr,
     nullptr,
-    urilen_ctor,
-    urilen_dtor,
+    nullptr,
+    len_ctor,
+    len_dtor,
     nullptr
 };
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &urilen_api.base,
+    &len_api.base,
     nullptr
 };
 #else
-const BaseApi* ips_urilen = &urilen_api.base;
+const BaseApi* ips_bufferlen = &len_api.base;
 #endif
 

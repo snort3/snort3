@@ -136,3 +136,20 @@ bool Value::get_next_token(string& tok)
     return ss && ( *ss >> tok );
 }
 
+bool Value::strtol(long& n) const
+{
+    const char* s = str.c_str();
+
+    if ( !*s )
+        return false;
+
+    char* end = nullptr;
+
+    n = ::strtol(s, &end, 0);
+
+    if ( *end )
+        return false;
+
+    return true;
+}
+

@@ -26,14 +26,15 @@
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
 #include "framework/cursor.h"
+#include "time/profiler.h"
 
 using namespace std;
 
+// FIXIT need to register these perf stats
+static THREAD_LOCAL ProfileStats luajitPerfStats;
+
 static const char* opt_init = "init";
 static const char* opt_eval = "eval";
-
-// FIXIT add profiling - note will be aggregate for
-// all luajit scripts
 
 //-------------------------------------------------------------------------
 // luajit ffi stuff
@@ -51,7 +52,6 @@ extern "C" {
 const Buffer* get_buffer();
 }
 
-static THREAD_LOCAL Packet* packet;
 static THREAD_LOCAL Cursor* cursor;
 static THREAD_LOCAL Buffer buf;
 
@@ -93,7 +93,7 @@ const char* load(lua_State*, void* ud, size_t* size)
 }
 
 static void init_lua(
-    lua_State*& L, string& chunk, const char* name, const char* args)
+    lua_State*& L, string& chunk, const char* name, string& args)
 {
     L = luaL_newstate();
     luaL_openlibs(L);
@@ -112,10 +112,7 @@ static void init_lua(
 
     // create an args table with any rule options
     string table("args = {");
-    //if ( args && strlen(args) > 2)
-    //    table.append(args+1, strlen(args)-2);
-    if ( args )
-        table += args;
+    table += args;
     table += "}";
 
     // load the args table 
@@ -160,21 +157,53 @@ static void term_lua(lua_State*& L)
 }
 
 //-------------------------------------------------------------------------
-// class stuff
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter luajit_params[] =
+{
+    { "*args", Parameter::PT_STRING, nullptr, nullptr,
+      "option arguments" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+LuaJitModule::LuaJitModule() : Module("luajit", luajit_params)
+{ }
+
+ProfileStats* LuaJitModule::get_profile() const
+{ return &luajitPerfStats; }
+
+bool LuaJitModule::begin(const char*, int, SnortConfig*)
+{
+    args.clear();
+    return true;
+}
+
+bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*args") )
+        return false;
+
+    args = v.get_string();
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// option stuff
 //-------------------------------------------------------------------------
 
 LuaJITOption::LuaJITOption(
-    const char* name, string& chunk, const char* args)
+    const char* name, string& chunk, LuaJitModule* mod)
     : IpsOption(name)
 {
+    config = mod->args;
     unsigned max = get_instance_max();
 
     lua = new lua_State*[max];
 
     for ( unsigned i = 0; i < max; ++i )
-        init_lua(lua[i], chunk, name, args);
-
-    config = args ? args : "";
+        init_lua(lua[i], chunk, name, config);
 }
 
 LuaJITOption::~LuaJITOption()
@@ -209,9 +238,11 @@ bool LuaJITOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int LuaJITOption::eval(Cursor& c, Packet* p)
+int LuaJITOption::eval(Cursor& c, Packet*)
 {
-    packet = p;
+    PROFILE_VARS;
+    PREPROC_PROFILE_START(luajitPerfStats);
+
     cursor = &c;
 
     lua_State* L = lua[get_instance_id()];
@@ -221,11 +252,15 @@ int LuaJITOption::eval(Cursor& c, Packet* p)
     {
         const char* err = lua_tostring(L, -1);
         ErrorMessage("%s\n", err);
+        PREPROC_PROFILE_END(luajitPerfStats);
         return DETECTION_OPTION_NO_MATCH;
     }
     bool result = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
-    return result ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
+    int ret = result ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
+    PREPROC_PROFILE_END(luajitPerfStats);
+
+    return ret;
 }
 

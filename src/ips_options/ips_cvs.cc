@@ -60,20 +60,12 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats cvsPerfStats;
 
 static const char* s_name = "cvs";
-
-static ProfileStats* cvs_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &cvsPerfStats;
-
-    return nullptr;
-}
-#endif
 
 #define CVS_CONFIG_DELIMITERS  " \t\n"
 
@@ -434,62 +426,69 @@ static void CvsGetEOL(const uint8_t *ptr, const uint8_t *end,
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter cvs_params[] =
+{
+    { CVS_CONF_INVALID_ENTRY_STR, Parameter::PT_IMPLIED, nullptr, nullptr,
+      "looks for an invalid Entry string" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class CvsModule : public Module
+{
+public:
+    CvsModule() : Module(s_name, cvs_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &cvsPerfStats; };
+
+    CvsRuleOption data;
+};
+
+bool CvsModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool CvsModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is(CVS_CONF_INVALID_ENTRY_STR) )
+        return false;
+
+    data.type = CVS_INVALID_ENTRY;
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void cvs_parse(char *rule_args, CvsRuleOption *cvs_rule_option)
+static Module* mod_ctor()
 {
-    char **toks;
-    int num_toks = 0;
-
-
-    toks = mSplit(rule_args, CVS_CONFIG_DELIMITERS, 2, &num_toks, 0);
-
-    switch (num_toks)
-    {
-        /* no arguments */
-        case 1:
-            if (strcasecmp(toks[0], CVS_CONF_INVALID_ENTRY_STR) == 0)
-            {
-                cvs_rule_option->type = CVS_INVALID_ENTRY;
-            }
-            else
-            {
-                ParseError("Invalid argument specified for CVS rule: %s",
-                           toks[0]);
-            }
-
-            break;
-
-        default:
-            ParseError("No or wrong number of arguments "
-                       "specified for CVS rule");
-                       
-            break;
-    }
-
-    mSplitFree(&toks, num_toks);
+    return new CvsModule;
 }
 
-static IpsOption* cvs_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    CvsRuleOption cvs_rule_option;
-    memset(&cvs_rule_option, 0, sizeof(cvs_rule_option));
-    cvs_parse(data, &cvs_rule_option);
-    return new CvsOption(cvs_rule_option);
+    delete m;
+}
+
+static IpsOption* cvs_ctor(Module* p, OptTreeNode*)
+{
+    CvsModule* m = (CvsModule*)p;
+    return new CvsOption(m->data);
 }
 
 static void cvs_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void cvs_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, cvs_get_profile);
-#endif
 }
 
 static const IpsApi cvs_api =
@@ -499,12 +498,12 @@ static const IpsApi cvs_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    cvs_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

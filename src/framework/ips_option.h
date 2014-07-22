@@ -109,9 +109,8 @@ enum RuleOptType
 };
 
 typedef void (*IpsOptFunc)(SnortConfig*);
-typedef bool (*IpsChkFunc)();
 
-typedef IpsOption* (*IpsNewFunc)(SnortConfig*, char*, struct OptTreeNode*);
+typedef IpsOption* (*IpsNewFunc)(class Module*, struct OptTreeNode*);
 typedef void (*IpsDelFunc)(IpsOption*);
 
 struct IpsApi
@@ -127,7 +126,7 @@ struct IpsApi
     IpsOptFunc tterm;
     IpsNewFunc ctor;
     IpsDelFunc dtor;
-    IpsChkFunc verify;
+    IpsOptFunc verify;
 };
 
 #endif

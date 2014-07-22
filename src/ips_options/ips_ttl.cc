@@ -39,39 +39,18 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "ttl";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats ttlCheckPerfStats;
-
-static ProfileStats* ttl_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &ttlCheckPerfStats;
-
-    return nullptr;
-}
-#endif
-
-#define TTL_CHECK_EQ 1
-#define TTL_CHECK_GT 2
-#define TTL_CHECK_LT 3
-#define TTL_CHECK_RG 4
-#define TTL_CHECK_GT_EQ 5
-#define TTL_CHECK_LT_EQ 6
-
-typedef struct _TtlCheckData
-{
-    int ttl;
-    int h_ttl;
-    char oper;
-} TtlCheckData;
 
 class TtlOption : public IpsOption
 {
 public:
-    TtlOption(const TtlCheckData& c) :
+    TtlOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -81,7 +60,7 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    TtlCheckData config;
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -91,11 +70,10 @@ private:
 uint32_t TtlOption::hash() const
 {
     uint32_t a,b,c;
-    const TtlCheckData *data = &config;
 
-    a = data->ttl;
-    b = data->h_ttl;
-    c = data->oper;
+    a = config.op;
+    b = config.min;
+    c = config.max;
 
     mix(a,b,c);
     mix_str(a,b,c,get_name());
@@ -110,22 +88,11 @@ bool TtlOption::operator==(const IpsOption& ips) const
         return false;
 
     TtlOption& rhs = (TtlOption&)ips;
-    TtlCheckData *left = (TtlCheckData*)&config;
-    TtlCheckData *right = (TtlCheckData*)&rhs.config;
-
-    if ((left->ttl == right->ttl) &&
-        (left->h_ttl == right->h_ttl) &&
-        (left->oper == right->oper))
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 int TtlOption::eval(Cursor&, Packet *p)
 {
-    TtlCheckData *ttlCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
@@ -134,236 +101,76 @@ int TtlOption::eval(Cursor&, Packet *p)
 
     PREPROC_PROFILE_START(ttlCheckPerfStats);
 
-    switch (ttlCheckData->oper)
-    {
-        case TTL_CHECK_EQ:
-            if (ttlCheckData->ttl == GET_IPH_TTL(p))
-                rval = DETECTION_OPTION_MATCH;
-#ifdef DEBUG_MSGS
-            else
-            {
-                DebugMessage(DEBUG_PLUGIN, "CheckTtlEq: Not equal to %d\n",
-                    ttlCheckData->ttl);
-            }
-#endif
-            break;
-        case TTL_CHECK_GT:
-            if (ttlCheckData->ttl < GET_IPH_TTL(p))
-                rval = DETECTION_OPTION_MATCH;
-#ifdef DEBUG_MSGS
-            else
-            {
-                DebugMessage(DEBUG_PLUGIN, "CheckTtlEq: Not greater than %d\n",
-                    ttlCheckData->ttl);
-            }
-#endif
-            break;
-        case TTL_CHECK_LT:
-            if (ttlCheckData->ttl > GET_IPH_TTL(p))
-                rval = DETECTION_OPTION_MATCH;
-#ifdef DEBUG_MSGS
-            else
-            {
-                DebugMessage(DEBUG_PLUGIN, "CheckTtlEq: Not less than %d\n",
-                    ttlCheckData->ttl);
-            }
-#endif
-            break;
-        case TTL_CHECK_GT_EQ:
-            if (ttlCheckData->ttl <= GET_IPH_TTL(p))
-                rval = DETECTION_OPTION_MATCH;
-#ifdef DEBUG_MSGS
-            else
-            {
-                DebugMessage(DEBUG_PLUGIN, "CheckTtlEq: Not greater than or equal to %d\n",
-                    ttlCheckData->ttl);
-            }
-#endif
-            break;
-        case TTL_CHECK_LT_EQ:
-            if (ttlCheckData->ttl >= GET_IPH_TTL(p))
-                rval = DETECTION_OPTION_MATCH;
-#ifdef DEBUG_MSGS
-            else
-            {
-                DebugMessage(DEBUG_PLUGIN, "CheckTtlEq: Not less than or equal to %d\n",
-                    ttlCheckData->ttl);
-            }
-#endif
-            break;
+    if ( config.eval(GET_IPH_TTL(p)) )
+        rval = DETECTION_OPTION_MATCH;
 
-         case TTL_CHECK_RG:
-            if ((ttlCheckData->ttl <= GET_IPH_TTL(p)) &&
-                (ttlCheckData->h_ttl >= GET_IPH_TTL(p)))
-                rval = DETECTION_OPTION_MATCH;
-#ifdef DEBUG_MSGS
-            else
-            {
-                DebugMessage(DEBUG_PLUGIN, "CheckTtlLT: Not Within the range %d - %d (%d)\n",
-                     ttlCheckData->ttl,
-                     ttlCheckData->h_ttl,
-                     GET_IPH_TTL(p));
-            }
-#endif
-            break;
-        default:
-            break;
-    }
-
-    /* if the test isn't successful, return 0 */
     PREPROC_PROFILE_END(ttlCheckPerfStats);
     return rval;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter ttl_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class TtlModule : public Module
+{
+public:
+    TtlModule() : Module(s_name, ttl_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &ttlCheckPerfStats; };
+
+    RangeCheck data;
+};
+
+bool TtlModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool TtlModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
 }
 
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void ttl_parse(char *data, TtlCheckData *ds_ptr)
+static Module* mod_ctor()
 {
-    char ttlrel;
-    char *endTok;
-    int ttl;
-    char *origData = data;
-    char *curPtr  = data;
-    int equals_present = 0, rel_present =0;
-
-    if(data == NULL)
-    {
-        ParseError("No arguments to 'ttl'");
-    }
-
-    while(isspace((int)*data)) data++;
-
-    ttlrel = *data;
-    curPtr = data;
-
-    switch (ttlrel) {
-        case '-':
-            ds_ptr->h_ttl = -1; /* leading dash flag */
-            data++;
-            rel_present = 1;
-            break;
-        case '>':
-        case '<':
-            curPtr++;
-            while(isspace((int)*curPtr)) curPtr++;
-            if((*curPtr) == '=')
-            {
-                equals_present = 1;
-                data = curPtr;
-            }
-        case '=':
-            data++;
-            rel_present = 1;
-            break;
-       default:
-            ttlrel = '=';
-    }
-    while(isspace((int)*data)) data++;
-
-    ttl = SnortStrtol(data, &endTok, 10);
-    /* next char after first number must either be - or NULL */
-    if ((endTok == data) || ((*endTok != '-') && (*endTok != '\0')))
-    {
-        ParseError("Invalid parameter '%s' to 'ttl' (not a number?)", origData);
-    }
-
-    if (ttl< 0 || ttl > 255)
-    {
-        ParseError("Invalid number '%s' to 'ttl' (should be between 0 to 255)",
-            origData);
-    }
-    ds_ptr->ttl = ttl;
-
-    data = endTok;
-    if (*data == '-')
-    {
-        if(rel_present || (ds_ptr->h_ttl == -1 ))
-        {
-            ParseError("Invalid parameter '%s' to 'ttl' (not a number?)", origData);
-        }
-        data++;
-        ttlrel = '-';
-    }
-    switch (ttlrel)
-    {
-        case '>':
-            if(equals_present)
-                ds_ptr->oper = TTL_CHECK_GT_EQ;
-            else
-                ds_ptr->oper = TTL_CHECK_GT;
-            break;
-        case '<':
-            if(equals_present)
-                ds_ptr->oper = TTL_CHECK_LT_EQ;
-            else
-                ds_ptr->oper = TTL_CHECK_LT;
-            break;
-        case '=':
-            ds_ptr->oper = TTL_CHECK_EQ;
-            break;
-        case '-':
-            while(isspace((int)*data)) data++;
-            if (ds_ptr->h_ttl != -1)
-            {
-                if(*data=='\0')
-                {
-                    ds_ptr->h_ttl = 255;
-                }
-                else
-                {
-                    ttl = SnortStrtol(data, &endTok, 10);
-                    if ((endTok == data) || (*endTok != '\0') || (ds_ptr->ttl > ttl))
-                    {
-                        ParseError("Invalid parameter '%s' to 'ttl' "
-                                "(not a number or invalid range?) ", origData);
-                    }
-                    if (ttl< 0 || ttl > 255)
-                    {
-                        ParseError("Invalid number '%s' to 'ttl' (should be between 0 to  "
-                                "255) ", origData);
-                    }
-                    if (ttl == 0)
-                        ds_ptr->h_ttl = 255;
-                    else
-                        ds_ptr->h_ttl = ttl;
-                }
-            }
-            else /* leading dash*/
-            {
-                ds_ptr->h_ttl = ds_ptr->ttl;
-                ds_ptr->ttl   = 0;
-            }
-            ds_ptr->oper = TTL_CHECK_RG;
-            break;
-        default:
-            break;
-    }
-    DEBUG_WRAP(DebugMessage(
-        DEBUG_PLUGIN, "Set TTL check value to %c%d (%d)\n",
-        ttlrel, ds_ptr->ttl, ds_ptr->h_ttl););
+    return new TtlModule;
 }
 
-static IpsOption* ttl_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    TtlCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    ttl_parse(data, &ds_ptr);
-    return new TtlOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* ttl_ctor(Module* p, OptTreeNode*)
+{
+    TtlModule* m = (TtlModule*)p;
+    return new TtlOption(m->data);
 }
 
 static void ttl_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void ttl_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, ttl_get_profile);
-#endif
 }
 
 static const IpsApi ttl_api =
@@ -373,12 +180,12 @@ static const IpsApi ttl_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    ttl_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

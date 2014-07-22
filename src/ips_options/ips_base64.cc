@@ -46,23 +46,15 @@
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
 static THREAD_LOCAL uint32_t base64_decode_size;
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats base64PerfStats;
 
 static const char* s_name = "base64_decode";
-
-static ProfileStats* b64dec_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &base64PerfStats;
-
-    return nullptr;
-}
-#endif
 
 //-------------------------------------------------------------------------
 // base64_decode
@@ -189,112 +181,83 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
 }
 
 //-------------------------------------------------------------------------
+// decode module
+//-------------------------------------------------------------------------
+
+static const Parameter decode_params[] =
+{
+    { "bytes", Parameter::PT_INT, "1:", nullptr,
+      "Number of base64 encoded bytes to decode." },
+
+    { "offset", Parameter::PT_INT, "0:", nullptr,
+      "Bytes past start of buffer to start decoding." },
+
+    { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "Apply offset to cursor instead of start of buffer." },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class B64DecodeModule : public Module
+{
+public:
+    B64DecodeModule() : Module(s_name, decode_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &base64PerfStats; };
+
+    Base64DecodeData data;
+};
+
+bool B64DecodeModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool B64DecodeModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("bytes") )
+        data.bytes_to_decode = v.get_long();
+
+    else if ( v.is("offset") )
+        data.offset = v.get_long();
+
+    else if ( v.is("relative") )
+        data.flags |= BASE64DECODE_RELATIVE_FLAG;
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void base64_decode_parse(char *data, Base64DecodeData *idx)
+static Module* mod_ctor()
 {
-    char **toks;
-    char **toks1;
-    int num_toks;
-    int num_toks1;
-    char *token;
-    int i=0;
-    char *endptr;
-    int value = 0;
-
-
-    /*no arguments*/
-    if (IsEmptyStr(data))
-    {
-        idx->offset = 0;
-        idx->bytes_to_decode = 0;
-        idx->flags = 0;
-        return;
-    }
-
-    toks = mSplit(data, ",", 0, &num_toks, 0);
-
-    if (num_toks > 3 )
-    {
-         ParseError("Bad arguments to base64_decode.");
-
-    }
-
-    while (i < num_toks )
-    {
-        token = toks[i];
-
-        if( strcmp(token , "relative") == 0 )
-        {
-            idx->flags |= BASE64DECODE_RELATIVE_FLAG;
-            i++;
-            continue;
-        }
-
-        toks1 = mSplit(token, " \t", 0, &num_toks1, 0);
-
-        if ( num_toks1 != 2 )
-        {
-            ParseError("Bad arguments to base64_decode.");
-        }
-
-        if( strcmp(toks1[0], "offset") == 0 )
-        {
-            value = SnortStrtol(toks1[1], &endptr, 10);
-            if(*endptr || value < 0)
-            {
-                ParseError("Bad arguments to base64_decode.");
-            }
-            idx->offset = value;
-        }
-        else if( strcmp(toks1[0], "bytes") == 0 )
-        {
-            value = SnortStrtol(toks1[1], &endptr, 10);
-            if(*endptr || (value < 0) )
-            {
-                ParseError("Bad arguments to base64_decode.");
-            }
-
-            if(!value)
-            {
-                ParseError("'bytes' option to base64_decode cannot be zero.");
-            }
-            idx->bytes_to_decode = value;
-        }
-        else
-        {
-            ParseError("Bad arguments to base64_decode.");
-        }
-
-        mSplitFree(&toks1,num_toks1);
-        i++;
-    }
-
-    mSplitFree(&toks,num_toks);
-    return;
-
+    return new B64DecodeModule;
 }
 
-static IpsOption* base64_decode_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    Base64DecodeData idx;
-    memset(&idx, 0, sizeof(idx));
-    base64_decode_parse(data, &idx);
-    return new Base64DecodeOption(idx);
+    delete m;
+}
+
+static IpsOption* base64_decode_ctor(Module* p, OptTreeNode*)
+{
+    B64DecodeModule* m = (B64DecodeModule*)p;
+    return new Base64DecodeOption(m->data);
 }
 
 static void base64_decode_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void base64_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, b64dec_get_profile);
-#endif
 }
 
 static const IpsApi base64_decode_api =
@@ -304,12 +267,12 @@ static const IpsApi base64_decode_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    base64_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,
@@ -355,14 +318,15 @@ int Base64DataOption::eval(Cursor& c, Packet*)
     return rval;
 }
 
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
 static class IpsOption* base64_data_ctor(
-    SnortConfig*, char *data, OptTreeNode *otn)
+    Module*, OptTreeNode *otn)
 {
     if ( !otn_has_plugin(otn, "base64_decode") )
         ParseError("base64_decode needs to be specified before base64_data in a rule");
-
-    if ( !IsEmptyStr(data) )
-        ParseError("base64_data takes no arguments");
 
     return new Base64DataOption;
 }
@@ -384,7 +348,7 @@ static const IpsApi base64_data_api =
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    base64_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

@@ -324,6 +324,7 @@ bool Parameter::validate(Value& v) const
         return valid_bit_list(v, (const char*)range);
 
     case PT_ADDR_LIST:
+    case PT_IMPLIED:
         return true;
 
     default:
@@ -332,13 +333,13 @@ bool Parameter::validate(Value& v) const
     return false;
 }
 
-const char* pt2str[] =
+static const char* pt2str[Parameter::PT_MAX] =
 {
     "table", "list",
     "bool", "int", "real", "port",
     "string", "select", "multi", "enum",
     "mac", "ip4", "addr",
-    "bit_list", "addr_list"
+    "bit_list", "addr_list", "implied"
 };
 
 const char* Parameter::get_type() const

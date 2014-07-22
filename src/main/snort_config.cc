@@ -231,9 +231,6 @@ void SnortConfFree(SnortConfig *sc)
         free(sc->profile_preprocs.filename);
 #endif
 
-    if (sc->base_version != NULL)
-        free(sc->base_version);
-
     FreeRuleStateList(sc->rule_state_list);
     FreeClassifications(sc->classifications);
     FreeReferences(sc->references);

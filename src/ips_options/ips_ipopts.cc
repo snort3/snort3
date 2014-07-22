@@ -40,27 +40,19 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "ipopts";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats ipOptionPerfStats;
 
-static ProfileStats* opt_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &ipOptionPerfStats;
-
-    return nullptr;
-}
-#endif
-
-typedef struct _IpOptionData
+struct IpOptionData
 {
     u_char ip_option;
     u_char any_flag;
 
-} IpOptionData;
+};
 
 class IpOptOption : public IpsOption
 {
@@ -163,17 +155,8 @@ int IpOptOption::eval(Cursor&, Packet *p)
 // api methods
 //-------------------------------------------------------------------------
 
-static void ipopts_parse(char *data, IpOptionData *ds_ptr)
+static void ipopts_parse(const char* data, IpOptionData* ds_ptr)
 {
-    if(data == NULL)
-    {
-        ParseError("IP Option keyword missing argument");
-        return;
-    }
-
-    while(isspace((u_char)*data))
-        data++;
-
     if(strcasecmp(data, "rr") == 0)
     {
         ds_ptr->ip_option = IPOPT_RR;
@@ -219,31 +202,77 @@ static void ipopts_parse(char *data, IpOptionData *ds_ptr)
         ds_ptr->ip_option = 0;
         ds_ptr->any_flag = 1;
     }
-    else
-    {
-        ParseError("Unknown IP option argument: %s", data);
-    }
 }
 
-static IpsOption* ipopts_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const char* s_opts =
+    "rr|eol|nop|ts|sec|esec|lsrr|lsrre|ssrr|satid|any";
+
+static const Parameter ipopt_params[] =
 {
-    IpOptionData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    ipopts_parse(data, &ds_ptr);
-    return new IpOptOption(ds_ptr);
+    { "*opt", Parameter::PT_SELECT, s_opts, nullptr,
+      "output format" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class IpOptModule : public Module
+{
+public:
+    IpOptModule() : Module(s_name, ipopt_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &ipOptionPerfStats; };
+
+    IpOptionData data;
+};
+
+bool IpOptModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool IpOptModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*mode") )
+        ipopts_parse(v.get_string(), &data);
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new IpOptModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* ipopts_ctor(Module* p, OptTreeNode*)
+{
+    IpOptModule* m = (IpOptModule*)p;
+    return new IpOptOption(m->data);
 }
 
 static void ipopts_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void ipopts_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, opt_get_profile);
-#endif
 }
 
 static const IpsApi ipopts_api =
@@ -253,12 +282,12 @@ static const IpsApi ipopts_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    ipopts_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

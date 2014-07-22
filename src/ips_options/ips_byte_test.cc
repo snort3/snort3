@@ -92,6 +92,9 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include <string>
+using namespace std;
+
 #include "snort_types.h"
 #include "snort_bounds.h"
 #include "extract.h"
@@ -111,23 +114,15 @@
 #include "fpdetect.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 #define PARSELEN 10
 #define TEXTLEN  (PARSELEN + 2)
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats byteTestPerfStats;
 
 static const char* s_name = "byte_test";
-
-static ProfileStats* bt_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &byteTestPerfStats;
-
-    return nullptr;
-}
-#endif
 
 // FIXIT cloned from sf_snort_plugin_api.h
 #define CHECK_EQ            0
@@ -404,228 +399,239 @@ int ByteTestOption::eval(Cursor& c, Packet*)
 // api
 //-------------------------------------------------------------------------
 
-static void byte_test_parse(char *data, ByteTestData *idx)
+static void parse_operator(const char* cptr, ByteTestData& idx)
 {
-    char **toks;
-    char *endp;
-    int num_toks;
-    char *cptr;
-    int i =0;
-
-    toks = mSplit(data, ",", 12, &num_toks, 0);
-
-    if(num_toks < 4)
-        ParseError("Bad arguments to byte_test: %s", data);
-
-    /* set how many bytes to process from the packet */
-    idx->bytes_to_compare = strtol(toks[0], &endp, 10);
-
-    if(toks[0] == endp)
-    {
-        ParseError("Unable to parse as byte value %s", toks[0]);
-    }
-
-    if(*endp != '\0')
-    {
-        ParseError("byte_test option has bad value: %s.", toks[0]);
-    }
-
-    if(idx->bytes_to_compare > PARSELEN || idx->bytes_to_compare == 0)
-    {
-        ParseError("byte_test can't process more than 10 bytes");
-    }
-
-    cptr = toks[1];
-
     while(isspace((int)*cptr)) {cptr++;}
 
     if(*cptr == '!')
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
-                    "enabling not flag\n"););
-       idx->not_flag = 1;
+       idx.not_flag = 1;
        cptr++;
     }
 
-    if (idx->not_flag && strlen(cptr) == 0)
+    if (idx.not_flag && strlen(cptr) == 0)
     {
-        idx->opcode = BT_EQUALS;
+        idx.opcode = BT_EQUALS;
     }
     else
     {
         /* set the opcode */
         switch(*cptr)
         {
-            case '<': idx->opcode = BT_LESS_THAN;
+            case '<': idx.opcode = BT_LESS_THAN;
                       cptr++;
                       if (*cptr == '=')
-                          idx->opcode = BT_LESS_THAN_EQUAL;
+                          idx.opcode = BT_LESS_THAN_EQUAL;
                       else
                           cptr--;
                       break;
 
-            case '=': idx->opcode = BT_EQUALS;
+            case '=': idx.opcode = BT_EQUALS;
                       break;
 
-            case '>': idx->opcode = BT_GREATER_THAN;
+            case '>': idx.opcode = BT_GREATER_THAN;
                       cptr++;
                       if (*cptr == '=')
-                          idx->opcode = BT_GREATER_THAN_EQUAL;
+                          idx.opcode = BT_GREATER_THAN_EQUAL;
                       else
                           cptr--;
                       break;
 
-            case '&': idx->opcode = BT_AND;
+            case '&': idx.opcode = BT_AND;
                       break;
 
-            case '^': idx->opcode = BT_XOR;
+            case '^': idx.opcode = BT_XOR;
                       break;
 
             default: ParseError(
-                "byte_test unknown opcode ('%c, %s')", *cptr, toks[1]);
+                "byte_test unknown opcode ('%c)", *cptr);
         }
     }
-
-
-    /* set the value to test against */
-    if (isdigit(toks[2][0]) || toks[2][0] == '-')
-    {
-        idx->cmp_value = SnortStrtoul(toks[2], &endp, 0);
-        idx->cmp_value_var = -1;
-
-        if(toks[2] == endp)
-        {
-            ParseError("Unable to parse as comparison value %s", toks[2]);
-        }
-
-        if(*endp != '\0')
-        {
-            ParseError("byte_test option has bad comparison value: %s.", toks[2]);
-        }
-
-        if(errno == ERANGE)
-        {
-            printf("Bad range: %s\n", toks[2]);
-        }
-    }
-    else
-    {
-        idx->cmp_value_var = GetVarByName(toks[2]);
-        if (idx->cmp_value_var == BYTE_EXTRACT_NO_VAR)
-        {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
-        }
-    }
-
-    if (isdigit(toks[3][0]) || toks[3][0] == '-')
-    {
-        /* set offset */
-        idx->offset = strtol(toks[3], &endp, 10);
-        idx->offset_var = -1;
-
-        if(toks[3] == endp)
-        {
-            ParseError("Unable to parse as offset value %s", toks[3]);
-        }
-
-        if(*endp != '\0')
-        {
-            ParseError("byte_test option has bad offset: %s.", toks[3]);
-        }
-    }
-    else
-    {
-        idx->offset_var = GetVarByName(toks[3]);
-        if (idx->offset_var == BYTE_EXTRACT_NO_VAR)
-        {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
-        }
-    }
-
-
-    i = 4;
-
-    /* is it a relative offset? */
-    if(num_toks > 4)
-    {
-        while(i < num_toks)
-        {
-            cptr = toks[i];
-
-            while(isspace((int)*cptr)) {cptr++;}
-
-            if(!strcasecmp(cptr, "relative"))
-            {
-                /* the offset is relative to the last pattern match */
-                idx->relative_flag = 1;
-            }
-            else if(!strcasecmp(cptr, "string"))
-            {
-                /* the data will be represented as a string that needs
-                 * to be converted to an int, binary is assumed otherwise
-                 */
-                idx->data_string_convert_flag = 1;
-            }
-            else if(!strcasecmp(cptr, "little"))
-            {
-                idx->endianess = LITTLE;
-            }
-            else if(!strcasecmp(cptr, "big"))
-            {
-                /* this is the default */
-                idx->endianess = BIG;
-            }
-            else if(!strcasecmp(cptr, "hex"))
-            {
-                idx->base = 16;
-            }
-            else if(!strcasecmp(cptr, "dec"))
-            {
-                idx->base = 10;
-            }
-            else if(!strcasecmp(cptr, "oct"))
-            {
-                idx->base = 8;
-            }
-            // FIXIT allow pluggable byte order func here (eg dce2)
-            else
-            {
-                ParseError("unknown modifier '%s'", cptr);
-            }
-            i++;
-        }
-    }
-
-    /* idx->base is only set if the parameter is specified */
-    if(!idx->data_string_convert_flag && idx->base)
-    {
-        ParseError(
-            "hex, dec and oct modifiers must be used in conjunction"
-            "with the 'string' modifier");
-    }
-
-    mSplitFree(&toks, num_toks);
 }
 
-static IpsOption* byte_test_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter jump_params[] =
 {
-    ByteTestData idx;
-    memset(&idx, 0, sizeof(idx));
-    byte_test_parse(data, &idx);
-    return new ByteTestOption(idx);
+    { "*count", Parameter::PT_INT, "1:10", nullptr,
+      "number of bytes to pick up from the buffer" },
+
+    { "*operator", Parameter::PT_STRING, nullptr, nullptr,
+      "variable name or number of bytes into the buffer to start processing" },
+
+    { "*compare", Parameter::PT_STRING, nullptr, nullptr,
+      "variable name or value to test the converted result against" },
+
+    { "*offset", Parameter::PT_STRING, nullptr, nullptr,
+      "variable name or number of bytes into the payload to start processing" },
+
+    { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "offset from cursor instead of start of buffer" },
+
+    { "big", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "big endian" },
+
+    { "little", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "little endian" },
+
+    { "dce", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dcerpc2 determines endianness" },
+
+    { "string", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from string" },
+
+    { "hex", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from hex string" },
+
+    { "oct", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from octal string" },
+
+    { "dec", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from decimal string" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class ByteTestModule : public Module
+{
+public:
+    ByteTestModule() : Module(s_name, jump_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &byteTestPerfStats; };
+
+    ByteTestData data;
+    string cmp_var;
+    string off_var;
+};
+
+bool ByteTestModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    cmp_var.clear();
+    off_var.clear();
+    return true;
+}
+
+bool ByteTestModule::end(const char*, int, SnortConfig*)
+{
+    if ( off_var.size() )
+    {
+        data.offset_var = GetVarByName(off_var.c_str());
+
+        if (data.offset_var == BYTE_EXTRACT_NO_VAR)
+        {
+            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            return false;
+        }
+    }
+    if ( cmp_var.size() )
+    {
+        data.cmp_value_var = GetVarByName(cmp_var.c_str());
+
+        if (data.cmp_value_var == BYTE_EXTRACT_NO_VAR)
+        {
+            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            return false;
+        }
+    }
+    unsigned e1 = ffs(data.endianess);
+    unsigned e2 = ffs(data.endianess >> e1);
+    
+    if ( e1 && e2 )
+    {
+        ParseError("byte_extract rule option has multiple arguments "
+            "specifying the type of string conversion. Use only "
+            "one of 'dec', 'hex', or 'oct'.");
+    }
+    return true;
+}
+
+bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*count") )
+        data.bytes_to_compare = v.get_long();
+
+    else if ( v.is("*operator") )
+        parse_operator(v.get_string(), data);
+
+    else if ( v.is("*compare") )
+    {
+        long n;
+        if ( v.strtol(n) )
+            data.offset = n;
+        else
+            cmp_var = v.get_string();
+    }
+    else if ( v.is("*offset") )
+    {
+        long n;
+        if ( v.strtol(n) )
+            data.offset = n;
+        else
+            off_var = v.get_string();
+    }
+    else if ( v.is("relative") )
+        data.relative_flag = 1;
+
+    else if ( v.is("big") )
+        data.endianess |= ENDIAN_LITTLE;
+
+    else if ( v.is("little") )
+        data.endianess |= ENDIAN_BIG;
+
+    else if ( v.is("dce") )
+        data.endianess |= ENDIAN_FUNC;
+
+    else if ( v.is("string") )
+    {
+        data.data_string_convert_flag = 1;
+        data.base = 10;
+    }
+    else if ( v.is("dec") )
+        data.base = 10;
+
+    else if ( v.is("hex") )
+        data.base = 16;
+
+    else if ( v.is("oct") )
+        data.base = 8;
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new ByteTestModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* byte_test_ctor(Module* p, OptTreeNode*)
+{
+    ByteTestModule* m = (ByteTestModule*)p;
+    return new ByteTestOption(m->data);
 }
 
 static void byte_test_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void byte_test_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, bt_get_profile);
-#endif
 }
 
 static const IpsApi byte_test_api =
@@ -635,12 +641,12 @@ static const IpsApi byte_test_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    byte_test_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

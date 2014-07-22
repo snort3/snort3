@@ -46,6 +46,8 @@
 #include "detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "pcre";
 
@@ -63,32 +65,26 @@ static const char* s_name = "pcre";
  * configuraton, we won't pcre_capture count again, so save the max.  */
 static int s_ovector_max = 0;
 
-#ifdef PERF_PROFILING
+// this is a temporary value used during parsing and set in snort conf
+// by verify; search uses the value in snort conf
+static int s_ovector_size = 0;
+
 static THREAD_LOCAL ProfileStats pcrePerfStats;
-
-static ProfileStats* pcre_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &pcrePerfStats;
-
-    return nullptr;
-}
-#endif
 
 //-------------------------------------------------------------------------
 // implementation foo
 //-------------------------------------------------------------------------
 
 static void pcre_capture(
-    SnortConfig* sc, const void *code, const void *extra)
+    const void *code, const void *extra)
 {
     int tmp_ovector_size = 0;
 
     pcre_fullinfo((const pcre *)code, (const pcre_extra *)extra,
         PCRE_INFO_CAPTURECOUNT, &tmp_ovector_size);
 
-    if (tmp_ovector_size > sc->pcre_ovector_size)
-        sc->pcre_ovector_size = tmp_ovector_size;
+    if (tmp_ovector_size > s_ovector_size)
+        s_ovector_size = tmp_ovector_size;
 }
 
 static void pcre_check_anchored(PcreData *pcre_data)
@@ -138,8 +134,7 @@ static void pcre_check_anchored(PcreData *pcre_data)
     }
 }
 
-static void pcre_parse(
-    SnortConfig* sc, char *data, PcreData *pcre_data, OptTreeNode*)
+static void pcre_parse(const char* data, PcreData* pcre_data)
 {
     const char *error;
     char *re, *free_me;
@@ -309,7 +304,7 @@ static void pcre_parse(
         ParseError("pcre study failed : %s", error);
     }
 
-    pcre_capture(sc, pcre_data->re, pcre_data->pe);
+    pcre_capture(pcre_data->re, pcre_data->pe);
     pcre_check_anchored(pcre_data);
 
     free(free_me);
@@ -603,15 +598,81 @@ bool pcre_next(PcreData* pcre)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter pcre_params[] =
+{
+    { "*regex", Parameter::PT_STRING, nullptr, nullptr,
+      "Snort regular expression" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class PcreModule : public Module
+{
+public:
+    PcreModule() : Module(s_name, pcre_params)
+    { data = nullptr; };
+
+    ~PcreModule()
+    { delete data; };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &pcrePerfStats; };
+
+    PcreData* get_data();
+
+private:
+    PcreData* data;
+};
+
+PcreData* PcreModule::get_data()
+{
+    PcreData* tmp = data;
+    data = nullptr;
+    return tmp;
+}
+
+bool PcreModule::begin(const char*, int, SnortConfig*)
+{
+    data = (PcreData*)SnortAlloc(sizeof(*data));
+    return true;
+}
+
+bool PcreModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*regex") )
+        pcre_parse(v.get_string(), data);
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static IpsOption* pcre_ctor(
-    SnortConfig* sc, char *data, OptTreeNode *otn)
+static Module* mod_ctor()
 {
-    PcreData* pcre_data = (PcreData*)SnortAlloc(sizeof(PcreData));
-    pcre_parse(sc, data, pcre_data, otn);
-    return new PcreOption(pcre_data);
+    return new PcreModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* pcre_ctor(Module* p, OptTreeNode*)
+{
+    PcreModule* m = (PcreModule*)p;
+    PcreData* d = m->get_data();
+    return new PcreOption(d);
 }
 
 static void pcre_dtor(IpsOption* p)
@@ -619,13 +680,8 @@ static void pcre_dtor(IpsOption* p)
     delete p;
 }
 
-static void pcre_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, pcre_get_profile);
-#endif
-}
-
+// FIXIT the thread specific ovector can be allocated and deallocated 
+// from the main thread since it isn't literally thread local
 void pcre_tinit(SnortConfig* sc)
 {
     SnortState* ss = sc->state + get_instance_id();
@@ -643,20 +699,21 @@ void pcre_tterm(SnortConfig* sc)
     ss->pcre_ovector = nullptr;
 }
 
-bool pcre_verify()
+static void pcre_verify(SnortConfig* sc)
 {
     /* The pcre_fullinfo() function can be used to find out how many
      * capturing subpatterns there are in a compiled pattern. The
      * smallest size for ovector that will allow for n captured
      * substrings, in addition to the offsets of the substring matched
      * by the whole pattern, is (n+1)*3.  */
-    snort_conf->pcre_ovector_size += 1;
-    snort_conf->pcre_ovector_size *= 3;
+    s_ovector_size += 1;
+    s_ovector_size *= 3;
 
-    if (snort_conf->pcre_ovector_size > s_ovector_max)
-        s_ovector_max = snort_conf->pcre_ovector_size;
+    if (s_ovector_size > s_ovector_max)
+        s_ovector_max = s_ovector_size;
 
-    return true;
+    sc->pcre_ovector_size = s_ovector_size;
+    s_ovector_size = 0;
 }
 
 static const IpsApi pcre_api =
@@ -666,12 +723,12 @@ static const IpsApi pcre_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    pcre_ginit,
+    nullptr,
     nullptr,
     pcre_tinit,
     pcre_tterm,

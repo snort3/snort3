@@ -36,27 +36,14 @@
 #include "fpdetect.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 
 static const char* s_name = "byte_extract";
 
-static ProfileStats* be_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &byteExtractPerfStats;
-
-    return nullptr;
-}
-#endif
-
 #define MAX_BYTES_TO_GRAB 4
-
-#define MIN_BYTE_EXTRACT_OFFSET -65535
-#define MAX_BYTE_EXTRACT_OFFSET 65535
-#define MIN_BYTE_EXTRACT_MULTIPLIER 1
-#define MAX_BYTE_EXTRACT_MULTIPLIER 65535
 
 typedef struct _ByteExtractData
 {
@@ -251,7 +238,7 @@ static void clear_var_names()
 //-------------------------------------------------------------------------
 
 /* Given a variable name, retrieve its index. For use by other options. */
-int8_t GetVarByName(char *name)
+int8_t GetVarByName(const char *name)
 {
     int i;
 
@@ -346,24 +333,6 @@ static bool ByteExtractVerify(ByteExtractData *data)
                    "string extraction.",  PARSELEN);
     }
 
-    if (data->offset < MIN_BYTE_EXTRACT_OFFSET || data->offset > MAX_BYTE_EXTRACT_OFFSET)
-    {
-        ParseError("byte_extract rule option has invalid offset. "
-                   "Valid offsets are between %d and %d.",
-                     MIN_BYTE_EXTRACT_OFFSET, MAX_BYTE_EXTRACT_OFFSET);
-    }
-
-    if (data->multiplier < MIN_BYTE_EXTRACT_MULTIPLIER || data->multiplier > MAX_BYTE_EXTRACT_MULTIPLIER)
-    {
-        ParseError("byte_extract rule option has invalid multiplier. "
-                   "Valid multipliers are between %d and %d.",
-                    MIN_BYTE_EXTRACT_MULTIPLIER, MAX_BYTE_EXTRACT_MULTIPLIER);
-    }
-
-    if (data->bytes_to_grab == 0)
-        ParseError("byte_extract rule option extracts zero bytes. "
-                   "'bytes_to_extract' must be 1 or greater.");
-
     if (data->align != 0 && data->align != 2 && data->align != 4)
         ParseError("byte_extract rule option has an invalid argument "
                    "to 'align'. Valid arguments are '2' and '4'.");
@@ -384,194 +353,171 @@ static bool ByteExtractVerify(ByteExtractData *data)
                    "(dec, hex, or oct) without the \"string\" "
                    "argument.");
     }
+    unsigned e1 = ffs(data->endianess);
+    unsigned e2 = ffs(data->endianess >> e1);
+    
+    if ( e1 && e2 )
+    {
+        ParseError("byte_extract rule option has multiple arguments "
+            "specifying the type of string conversion. Use only "
+            "one of 'dec', 'hex', or 'oct'.");
+    }
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter extract_params[] =
+{
+    { "*count", Parameter::PT_INT, "1:10", nullptr,
+      "number of bytes to pick up from the buffer" },
+
+    { "*offset", Parameter::PT_INT, "-65535:65535", nullptr,
+      "number of bytes into the buffer to start processing" },
+
+    { "*name", Parameter::PT_STRING, nullptr, nullptr,
+      "name of the variable that will be used in other rule options" },
+
+    { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "offset from cursor instead of start of buffer" },
+
+    { "multiplier", Parameter::PT_INT, "1:65535", nullptr,
+      "scale extracted value by given amount" },
+
+    { "align", Parameter::PT_INT, "0:4", nullptr,
+      "round the number of converted bytes up to the next 2- or 4-byte boundary" },
+
+    { "big", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "big endian" },
+
+    { "little", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "little endian" },
+
+    { "dce", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dcerpc2 determines endianness" },
+
+    { "string", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from string" },
+
+    { "hex", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from hex string" },
+
+    { "oct", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from octal string" },
+
+    { "dec", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from decimal string" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class ExtractModule : public Module
+{
+public:
+    ExtractModule() : Module(s_name, extract_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &byteExtractPerfStats; };
+
+    ByteExtractData data;
+};
+
+bool ExtractModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    data.multiplier = 1;
+    return true;
+}
+
+bool ExtractModule::end(const char*, int, SnortConfig*)
+{
+    return ByteExtractVerify(&data);
+}
+
+bool ExtractModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*count") )
+        data.bytes_to_grab = v.get_long();
+
+    else if ( v.is("*offset") )
+        data.offset = v.get_long();
+
+    else if ( v.is("*name") )
+        data.name = strdup(v.get_string());
+
+    else if ( v.is("relative") )
+        data.relative_flag = 1;
+
+    else if ( v.is("align") )
+        data.align = v.get_long();
+
+    else if ( v.is("multiplier") )
+        data.multiplier = v.get_long();
+
+    else if ( v.is("big") )
+        data.endianess |= ENDIAN_LITTLE;
+
+    else if ( v.is("little") )
+        data.endianess |= ENDIAN_BIG;
+
+    else if ( v.is("dce") )
+        data.endianess |= ENDIAN_FUNC;
+
+    else if ( v.is("string") )
+    {
+        data.data_string_convert_flag = 1;
+        data.base = 10;
+    }
+    else if ( v.is("dec") )
+        data.base = 10;
+
+    else if ( v.is("hex") )
+        data.base = 16;
+
+    else if ( v.is("oct") )
+        data.base = 8;
+
+    else
+        return false;
 
     return true;
 }
 
-static int byte_extract_parse(ByteExtractData *data, char *args)
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
 {
-    char *args_copy = SnortStrdup(args);
-    char *endptr, *saveptr = args_copy;
-    char *token = strtok_r(args_copy, ",", &saveptr);
-
-    /* set defaults / sentinels */
-    data->multiplier = 1;
-    data->endianess = ENDIAN_NONE;
-
-    /* first: bytes_to_extract */
-    if (token)
-    {
-        data->bytes_to_grab = SnortStrtoul(token, &endptr, 10);
-        if (*endptr != '\0')
-            ParseError("byte_extract rule option has non-digits in the "
-                    "'bytes_to_extract' field.");
-        token = strtok_r(NULL, ",", &saveptr);
-    }
-
-    /* second: offset */
-    if (token)
-    {
-        data->offset = SnortStrtoul(token, &endptr, 10);
-        if (*endptr != '\0')
-            ParseError("byte_extract rule option has non-digits in the "
-                    "'offset' field.");
-        token = strtok_r(NULL, ",", &saveptr);
-    }
-
-    /* third: variable name */
-    if (token)
-    {
-        data->name = SnortStrdup(token);
-        token = strtok_r(NULL, ",", &saveptr);
-    }
-
-    /* optional arguments */
-    while (token)
-    {
-        if (strcmp(token, "relative") == 0)
-        {
-            data->relative_flag = 1;
-        }
-
-        else if (strncmp(token, "align ", 6) == 0)
-        {
-            char *value = (token+6);
-
-            if (data->align == 0)
-                data->align = (uint8_t)SnortStrtoul(value, &endptr, 10);
-            else
-                ParseError("byte_extract rule option includes the "
-                        "'align' argument twice.");
-
-            if (*endptr != '\0')
-                ParseError("byte_extract rule option has non-digits in the "
-                        "argument to 'align'. ");
-        }
-
-        else if (strcmp(token, "little") == 0)
-        {
-            if (data->endianess == ENDIAN_NONE)
-                data->endianess = ENDIAN_LITTLE;
-            else
-                ParseError("byte_extract rule option specifies the "
-                        "byte order twice. Use only one of 'big', 'little', "
-                        "or 'dce'.");
-        }
-
-        else if (strcmp(token, "big") == 0)
-        {
-            if (data->endianess == ENDIAN_NONE)
-                data->endianess = ENDIAN_BIG;
-            else
-                ParseError("byte_extract rule option specifies the "
-                        "byte order twice. Use only one of 'big', 'little', "
-                        "or 'dce'.");
-        }
-
-        else if (strncmp(token, "multiplier ", 11) == 0)
-        {
-            char *value = (token+11);
-            if (value[0] == '\0')
-                ParseError("byte_extract rule option has a 'multiplier' "
-                        "argument with no value specified.");
-
-            if (data->multiplier == 1)
-            {
-                data->multiplier = SnortStrtoul(value, &endptr, 10);
-
-                if (*endptr != '\0')
-                    ParseError("byte_extract rule option has non-digits in the "
-                            "argument to 'multiplier'. ");
-            }
-            else
-                ParseError("byte_extract rule option has multiple "
-                        "'multiplier' arguments. Use only one.");
-        }
-
-        else if (strcmp(token, "string") == 0)
-        {
-            if (data->data_string_convert_flag == 0)
-                data->data_string_convert_flag = 1;
-            else
-                ParseError("byte_extract rule option has multiple "
-                        "'string' arguments. Use only one.");
-        }
-
-        else if (strcmp(token, "dec") == 0)
-        {
-            if (data->base == 0)
-                data->base = 10;
-            else
-                ParseError("byte_extract rule option has multiple arguments "
-                        "specifying the type of string conversion. Use only "
-                        "one of 'dec', 'hex', or 'oct'.");
-        }
-
-        else if (strcmp(token, "hex") == 0)
-        {
-            if (data->base == 0)
-                data->base = 16;
-            else
-                ParseError("byte_extract rule option has multiple arguments "
-                        "specifying the type of string conversion. Use only "
-                        "one of 'dec', 'hex', or 'oct'.");
-        }
-
-        else if (strcmp(token, "oct") == 0)
-        {
-            if (data->base == 0)
-                data->base = 8;
-            else
-                ParseError("byte_extract rule option has multiple arguments "
-                        "specifying the type of string conversion. Use only "
-                        "one of 'dec', 'hex', or 'oct'.");
-        }
-        else
-        {
-            ParseError("byte_extract rule option has invalid argument '%s'.", token);
-        }
-
-        token = strtok_r(NULL, ",", &saveptr);
-    }
-
-    free(args_copy);
-
-    /* Need to check this error before the sentinel gets replaced */
-    if (data->endianess != ENDIAN_NONE && data->data_string_convert_flag == 1)
-    {
-        ParseError("byte_extract rule option can't have 'string' specified "
-            "at the same time as a byte order ('big' or 'little').");
-    }
-
-    /* Replace sentinels with defaults */
-    if (data->endianess == ENDIAN_NONE)
-        data->endianess = ENDIAN_BIG;
-
-    if (data->data_string_convert_flag && (data->base == 0))
-        data->base = 10;
-
-    /* At this point you could verify the data and return something. */
-    return ByteExtractVerify(data);
+    return new ExtractModule;
 }
 
-static IpsOption* byte_extract_ctor(
-    SnortConfig*, char *data, OptTreeNode* otn)
+static void mod_dtor(Module* m)
 {
-    ByteExtractData idx;
-    memset(&idx, 0, sizeof(idx));
+    delete m;
+}
+
+static IpsOption* byte_extract_ctor(Module* p, OptTreeNode* otn)
+{
+    ExtractModule* m = (ExtractModule*)p;
+    ByteExtractData& data = m->data;
 
     ClearVarNames(otn->opt_func);
-
-    byte_extract_parse(&idx, data);
-    idx.var_number = AddVarNameToList(&idx);
+    data.var_number = AddVarNameToList(&data);
 
     // FIXIT can this be handled by setting max_per_rule = 2?
-    if (idx.var_number >= NUM_BYTE_EXTRACT_VARS)
+    if (data.var_number >= NUM_BYTE_EXTRACT_VARS)
     {
         ParseError("Rule has more than %d byte_extract variables.",
             NUM_BYTE_EXTRACT_VARS);
     }
-    return new ByteExtractOption(idx);
+    return new ByteExtractOption(data);
 }
 
 static void byte_extract_dtor(IpsOption* p)
@@ -589,13 +535,6 @@ static void byte_extract_tterm(SnortConfig*)
     clear_var_names();
 }
 
-void byte_extract_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, be_get_profile);
-#endif
-}
-
 static const IpsApi byte_extract_api =
 {
     {
@@ -603,12 +542,12 @@ static const IpsApi byte_extract_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    byte_extract_ginit,
+    nullptr,
     nullptr,
     byte_extract_tinit,
     byte_extract_tterm,

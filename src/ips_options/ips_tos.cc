@@ -38,32 +38,18 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "tos";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats ipTosPerfStats;
-
-static ProfileStats* tos_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &ipTosPerfStats;
-
-    return nullptr;
-}
-#endif
-
-typedef struct _IpTosCheckData
-{
-    uint8_t ip_tos;
-    uint8_t not_flag;
-
-} IpTosData;
 
 class IpTosOption : public IpsOption
 {
 public:
-    IpTosOption(const IpTosData& c) :
+    IpTosOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -72,11 +58,8 @@ public:
 
     int eval(Cursor&, Packet*);
 
-    IpTosData* get_data() 
-    { return &config; };
-
-private:
-    IpTosData config;
+public:
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -86,11 +69,10 @@ private:
 uint32_t IpTosOption::hash() const
 {
     uint32_t a,b,c;
-    const IpTosData *data = &config;
 
-    a = data->ip_tos;
-    b = data->not_flag;
-    c = 0;
+    a = config.op;
+    b = config.min;
+    c = config.max;;
 
     mix_str(a,b,c,get_name());
     final(a,b,c);
@@ -104,16 +86,7 @@ bool IpTosOption::operator==(const IpsOption& ips) const
         return false;
 
     IpTosOption& rhs = (IpTosOption&)ips;
-    IpTosData *left = (IpTosData*)&config;
-    IpTosData *right = (IpTosData*)&rhs.config;
-
-    if ((left->ip_tos == right->ip_tos) &&
-        (left->not_flag == right->not_flag))
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 /* Purpose: Test the ip header's tos field to see if its value is equal to the
@@ -122,104 +95,84 @@ bool IpTosOption::operator==(const IpsOption& ips) const
  
 int IpTosOption::eval(Cursor&, Packet *p)
 {
-    IpTosData *ipTosData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
     if(!IPH_IS_VALID(p))
-        return rval; /* if error occured while ip header
-                   * was processed, return 0 automagically.  */
+        return rval;
 
     PREPROC_PROFILE_START(ipTosPerfStats);
 
-    if((ipTosData->ip_tos == GET_IPH_TOS(p)) ^ (ipTosData->not_flag))
-    {
+    if ( config.eval(GET_IPH_TOS(p)) )
         rval = DETECTION_OPTION_MATCH;
-    }
-    else
-    {
-        /* you can put debug comments here or not */
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"););
-    }
 
-    /* if the test isn't successful, return 0 */
     PREPROC_PROFILE_END(ipTosPerfStats);
     return rval;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter tos_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class TosModule : public Module
+{
+public:
+    TosModule() : Module(s_name, tos_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &ipTosPerfStats; };
+
+    RangeCheck data;
+};
+
+bool TosModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool TosModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
 }
 
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void tos_parse(char *data, IpTosData *ds_ptr)
+static Module* mod_ctor()
 {
-    char *endTok;
-    char *start;
-
-    /* get rid of any whitespace */
-    while(isspace((int)*data))
-    {
-        data++;
-    }
-
-    if(data[0] == '!')
-    {
-        ds_ptr->not_flag = 1;
-        start = &data[1];
-    }
-    else
-    {
-        start = &data[0];
-    }
-
-    if(strchr(start, (int) 'x') == NULL && strchr(start, (int)'X') == NULL)
-    {
-        ds_ptr->ip_tos = (uint8_t)SnortStrtoulRange(start, &endTok, 10, 0, UINT8_MAX);
-        if ((endTok == start) || (*endTok != '\0'))
-        {
-            ParseError("Invalid parameter '%s' to 'tos' (not a number?) ", data);
-        }
-    }
-    else
-    {
-        /* hex? */
-        start = strchr(data,(int)'x');
-        if(!start)
-        {
-            start = strchr(data,(int)'X');
-        }
-        if (start)
-        {
-            ds_ptr->ip_tos = (uint8_t)SnortStrtoulRange(start+1, &endTok, 16, 0, UINT8_MAX);
-        }
-        if (!start || (endTok == start+1) || (*endTok != '\0'))
-        {
-            ParseError("Invalid parameter '%s' to 'tos' (not a number?) ", data);
-        }
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"TOS set to %d\n", ds_ptr->ip_tos););
+    return new TosModule;
 }
 
-static IpsOption* tos_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    IpTosData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    tos_parse(data, &ds_ptr);
-    return new IpTosOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* tos_ctor(Module* p, OptTreeNode*)
+{
+    TosModule* m = (TosModule*)p;
+    return new IpTosOption(m->data);
 }
 
 static void tos_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void tos_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, tos_get_profile);
-#endif
 }
 
 static const IpsApi tos_api =
@@ -229,12 +182,12 @@ static const IpsApi tos_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    tos_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

@@ -36,40 +36,37 @@
 #include "snort_debug.h"
 #include "snort.h"
 #include "profiler.h"
+#include "flow/flow.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
-#include "flow/flow.h"
 #include "framework/inspector.h"
+#include "framework/module.h"
 
 //-------------------------------------------------------------------------
-// api methods
+// module
 //-------------------------------------------------------------------------
 
-static const char* s_name = "http_ips";
-
-#ifdef PERF_PROFILING
-static THREAD_LOCAL ProfileStats httpIpsPerfStats;
-
-static ProfileStats* hi_ips_get_profile(const char* key)
+class HttpCursorModule : public Module
 {
-    if ( !strcmp(key, s_name) )
-        return &httpIpsPerfStats;
+public:
+    HttpCursorModule(const char* s, ProfileStats& p) :
+        Module(s), ps(p) { };
 
-    return nullptr;
+    ProfileStats* get_profile() const
+    { return &ps; };
+
+    ProfileStats& ps;
+};
+
+static void mod_dtor(Module* m)
+{
+    delete m;
 }
-#endif
 
-static void hi_ips_dtor(IpsOption* p)
+static void opt_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void hi_ips_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, hi_ips_get_profile);
-#endif
 }
 
 //-------------------------------------------------------------------------
@@ -79,7 +76,9 @@ static void hi_ips_ginit(SnortConfig*)
 class HttpIpsOption : public IpsOption
 {
 public:
-    HttpIpsOption(const char* s, CursorActionType c = CAT_SET_OTHER) : IpsOption(s)
+    HttpIpsOption(
+        const char* s, ProfileStats& p, CursorActionType c = CAT_SET_OTHER) :
+        IpsOption(s), ps(p)
     { key = s; cat = c; };
 
     CursorActionType get_cursor_type() const
@@ -89,12 +88,13 @@ public:
 private:
     const char* key;
     CursorActionType cat;
+    ProfileStats& ps;
 };
 
 int HttpIpsOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(httpIpsPerfStats);
+    PREPROC_PROFILE_START(ps);
 
     int rval;
     InspectionBuffer hb;
@@ -112,7 +112,7 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
         rval = DETECTION_OPTION_MATCH;
     }
 
-    PREPROC_PROFILE_END(httpIpsPerfStats);
+    PREPROC_PROFILE_END(ps);
     return rval;
 }
 
@@ -120,33 +120,39 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
 // http_uri
 //-------------------------------------------------------------------------
 
-static IpsOption* http_uri_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_uri");
+#undef IPS_OPT
+#define IPS_OPT "http_uri"
 
-    return new HttpIpsOption("http_uri", CAT_SET_COMMAND);
+static THREAD_LOCAL ProfileStats uri_ps;
+
+static Module* uri_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, uri_ps);
 }
 
-static const IpsApi http_uri_api =
+static IpsOption* uri_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, uri_ps, CAT_SET_COMMAND);
+}
+
+static const IpsApi uri_api =
 {
     {
         PT_IPS_OPTION,
-        "http_uri",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        uri_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_uri_ctor,
-    hi_ips_dtor,
+    nullptr,
+    uri_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -154,33 +160,39 @@ static const IpsApi http_uri_api =
 // http_header
 //-------------------------------------------------------------------------
 
-static IpsOption* http_header_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_header");
+#undef IPS_OPT
+#define IPS_OPT "http_header"
 
-    return new HttpIpsOption("http_header", CAT_SET_HEADER);
+static THREAD_LOCAL ProfileStats header_ps;
+
+static Module* header_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, header_ps);
 }
 
-static const IpsApi http_header_api =
+static IpsOption* header_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, header_ps, CAT_SET_HEADER);
+}
+
+static const IpsApi header_api =
 {
     {
         PT_IPS_OPTION,
-        "http_header",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        header_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_header_ctor,
-    hi_ips_dtor,
+    nullptr,
+    header_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -188,33 +200,39 @@ static const IpsApi http_header_api =
 // http_client_body
 //-------------------------------------------------------------------------
 
-static IpsOption* http_client_body_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_client_body");
+#undef IPS_OPT
+#define IPS_OPT "http_client_body"
 
-    return new HttpIpsOption("http_client_body", CAT_SET_BODY);
+static THREAD_LOCAL ProfileStats client_body_ps;
+
+static Module* client_body_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, client_body_ps);
 }
 
-static const IpsApi http_client_body_api =
+static IpsOption* client_body_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, client_body_ps, CAT_SET_BODY);
+}
+
+static const IpsApi client_body_api =
 {
     {
         PT_IPS_OPTION,
-        "http_client_body",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        client_body_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_client_body_ctor,
-    hi_ips_dtor,
+    nullptr,
+    client_body_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -222,33 +240,39 @@ static const IpsApi http_client_body_api =
 // http_method
 //-------------------------------------------------------------------------
 
-static IpsOption* http_method_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_method");
+#undef IPS_OPT
+#define IPS_OPT "http_method"
 
-    return new HttpIpsOption("http_method");
+static THREAD_LOCAL ProfileStats method_ps;
+
+static Module* method_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, method_ps);
 }
 
-static const IpsApi http_method_api =
+static IpsOption* method_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, method_ps);
+}
+
+static const IpsApi method_api =
 {
     {
         PT_IPS_OPTION,
-        "http_method",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        method_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_method_ctor,
-    hi_ips_dtor,
+    nullptr,
+    method_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -256,33 +280,39 @@ static const IpsApi http_method_api =
 // http_cookie
 //-------------------------------------------------------------------------
 
-static IpsOption* http_cookie_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_cookie");
+#undef IPS_OPT
+#define IPS_OPT "http_cookie"
 
-    return new HttpIpsOption("http_cookie");
+static THREAD_LOCAL ProfileStats cookie_ps;
+
+static Module* cookie_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, cookie_ps);
 }
 
-static const IpsApi http_cookie_api =
+static IpsOption* cookie_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, cookie_ps);
+}
+
+static const IpsApi cookie_api =
 {
     {
         PT_IPS_OPTION,
-        "http_cookie",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        cookie_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_cookie_ctor,
-    hi_ips_dtor,
+    nullptr,
+    cookie_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -290,33 +320,39 @@ static const IpsApi http_cookie_api =
 // http_stat_code
 //-------------------------------------------------------------------------
 
-static IpsOption* http_stat_code_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_stat_code");
+#undef IPS_OPT
+#define IPS_OPT "http_stat_code"
 
-    return new HttpIpsOption("http_stat_code");
+static THREAD_LOCAL ProfileStats stat_code_ps;
+
+static Module* stat_code_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, stat_code_ps);
 }
 
-static const IpsApi http_stat_code_api =
+static IpsOption* stat_code_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, stat_code_ps);
+}
+
+static const IpsApi stat_code_api =
 {
     {
         PT_IPS_OPTION,
-        "http_stat_code",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        stat_code_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_stat_code_ctor,
-    hi_ips_dtor,
+    nullptr,
+    stat_code_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -324,33 +360,39 @@ static const IpsApi http_stat_code_api =
 // http_stat_msg
 //-------------------------------------------------------------------------
 
-static IpsOption* http_stat_msg_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_stat_msg");
+#undef IPS_OPT
+#define IPS_OPT "http_stat_msg"
 
-    return new HttpIpsOption("http_stat_msg");
+static THREAD_LOCAL ProfileStats stat_msg_ps;
+
+static Module* stat_msg_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, stat_msg_ps);
 }
 
-static const IpsApi http_stat_msg_api =
+static IpsOption* stat_msg_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, stat_msg_ps);
+}
+
+static const IpsApi stat_msg_api =
 {
     {
         PT_IPS_OPTION,
-        "http_stat_msg",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        stat_msg_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_stat_msg_ctor,
-    hi_ips_dtor,
+    nullptr,
+    stat_msg_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -358,33 +400,39 @@ static const IpsApi http_stat_msg_api =
 // http_raw_uri
 //-------------------------------------------------------------------------
 
-static IpsOption* http_raw_uri_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_raw_uri");
+#undef IPS_OPT
+#define IPS_OPT "http_raw_uri"
 
-    return new HttpIpsOption("http_raw_uri");
+static THREAD_LOCAL ProfileStats raw_uri_ps;
+
+static Module* raw_uri_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, raw_uri_ps);
 }
 
-static const IpsApi http_raw_uri_api =
+static IpsOption* raw_uri_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, raw_uri_ps);
+}
+
+static const IpsApi raw_uri_api =
 {
     {
         PT_IPS_OPTION,
-        "http_raw_uri",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        raw_uri_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_raw_uri_ctor,
-    hi_ips_dtor,
+    nullptr,
+    raw_uri_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -392,33 +440,39 @@ static const IpsApi http_raw_uri_api =
 // http_raw_header
 //-------------------------------------------------------------------------
 
-static IpsOption* http_raw_header_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_raw_header");
+#undef IPS_OPT
+#define IPS_OPT "http_raw_header"
 
-    return new HttpIpsOption("http_raw_header");
+static THREAD_LOCAL ProfileStats raw_header_ps;
+
+static Module* raw_header_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, raw_header_ps);
 }
 
-static const IpsApi http_raw_header_api =
+static IpsOption* raw_header_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, raw_header_ps);
+}
+
+static const IpsApi raw_header_api =
 {
     {
         PT_IPS_OPTION,
-        "http_raw_header",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        raw_header_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_raw_header_ctor,
-    hi_ips_dtor,
+    nullptr,
+    raw_header_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -426,33 +480,39 @@ static const IpsApi http_raw_header_api =
 // http_raw_cookie
 //-------------------------------------------------------------------------
 
-static IpsOption* http_raw_cookie_ctor(
-    SnortConfig*, char* data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("%s takes no arguments", "http_raw_cookie");
+#undef IPS_OPT
+#define IPS_OPT "http_raw_cookie"
 
-    return new HttpIpsOption("http_raw_cookie");
+static THREAD_LOCAL ProfileStats raw_cookie_ps;
+
+static Module* raw_cookie_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, raw_cookie_ps);
 }
 
-static const IpsApi http_raw_cookie_api =
+static IpsOption* raw_cookie_opt_ctor(Module*, OptTreeNode*)
+{
+    return new HttpIpsOption(IPS_OPT, raw_cookie_ps);
+}
+
+static const IpsApi raw_cookie_api =
 {
     {
         PT_IPS_OPTION,
-        "http_raw_cookie",
+        IPS_OPT,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        raw_cookie_mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    hi_ips_ginit,
     nullptr,
     nullptr,
     nullptr,
-    http_raw_cookie_ctor,
-    hi_ips_dtor,
+    nullptr,
+    raw_cookie_opt_ctor,
+    opt_dtor,
     nullptr
 };
 
@@ -463,28 +523,28 @@ static const IpsApi http_raw_cookie_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &http_uri_api.base,
-    &http_header_api.base,
-    &http_client_body_api.base,
-    &http_method_api.base,
-    &http_cookie_api.base,
-    &http_stat_code_api.base,
-    &http_stat_msg_api.base,
-    &http_raw_uri_api.base,
-    &http_raw_header_api.base,
-    &http_raw_cookie_api.base,
+    &uri_api.base,
+    &header_api.base,
+    &client_body_api.base,
+    &method_api.base,
+    &cookie_api.base,
+    &stat_code_api.base,
+    &stat_msg_api.base,
+    &raw_uri_api.base,
+    &raw_header_api.base,
+    &raw_cookie_api.base,
     nullptr
 };
 #else
-const BaseApi* ips_http_uri = &http_uri_api.base;
-const BaseApi* ips_http_header = &http_header_api.base;
-const BaseApi* ips_http_client_body = &http_client_body_api.base;
-const BaseApi* ips_http_method = &http_method_api.base;
-const BaseApi* ips_http_cookie = &http_cookie_api.base;
-const BaseApi* ips_http_stat_code = &http_stat_code_api.base;
-const BaseApi* ips_http_stat_msg = &http_stat_msg_api.base;
-const BaseApi* ips_http_raw_uri = &http_raw_uri_api.base;
-const BaseApi* ips_http_raw_header = &http_raw_header_api.base;
-const BaseApi* ips_http_raw_cookie = &http_raw_cookie_api.base;
+const BaseApi* ips_http_uri = &uri_api.base;
+const BaseApi* ips_http_header = &header_api.base;
+const BaseApi* ips_http_client_body = &client_body_api.base;
+const BaseApi* ips_http_method = &method_api.base;
+const BaseApi* ips_http_cookie = &cookie_api.base;
+const BaseApi* ips_http_stat_code = &stat_code_api.base;
+const BaseApi* ips_http_stat_msg = &stat_msg_api.base;
+const BaseApi* ips_http_raw_uri = &raw_uri_api.base;
+const BaseApi* ips_http_raw_header = &raw_header_api.base;
+const BaseApi* ips_http_raw_cookie = &raw_cookie_api.base;
 #endif
 
