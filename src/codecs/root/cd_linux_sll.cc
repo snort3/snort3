@@ -33,7 +33,7 @@
 namespace
 {
 
-#define CD_LINUX_SSL_NAME "cd_linux_sll"
+#define CD_LINUX_SSL_NAME "linux_sll"
 
 class LinuxSllCodec : public Codec
 {

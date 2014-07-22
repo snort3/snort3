@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_WLAN_NAME "cd_wlan"
+#define CD_WLAN_NAME "wlan"
 
 class WlanCodecModule : public DecodeModule
 {

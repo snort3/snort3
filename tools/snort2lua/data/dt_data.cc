@@ -452,8 +452,11 @@ std::ostream& operator<<( std::ostream &out, const LuaData& data)
 {
     if (data.mode == LuaData::PrintMode::DEFAULT)
     {
-        out << (*data.errors) << "\n";
-        out << (*data.bad_rules) << "\n";
+        if (!data.errors->empty())
+            out << (*data.errors) << "\n";
+
+        if (!data.bad_rules->empty())
+            out << (*data.bad_rules) << "\n";
     }
 
     for (Include* i : data.includes)
@@ -475,7 +478,8 @@ std::ostream& operator<<( std::ostream &out, const LuaData& data)
         out << (*t) << "\n\n";
     out << "\n\n";
 
-    if (data.mode == LuaData::PrintMode::DEFAULT)
+    if (data.mode == LuaData::PrintMode::DEFAULT &&
+        !data.comments->empty())
         out << (*data.comments) << "\n" << std::endl;
 
     return out;
@@ -499,8 +503,11 @@ void LuaData::print_rejects(std::ostream& out)
 
     if (mode == LuaData::PrintMode::DEFAULT)
     {
-        out << (*errors) << "\n";
-        out << (*bad_rules) << "\n\n";
+        if (!errors->empty())
+            out << (*errors) << "\n";
+
+        if (!bad_rules->empty())
+            out << (*bad_rules) << "\n\n";
     }
 }
 
@@ -512,10 +519,9 @@ void LuaData::print_conf_options(std::ostream& out)
     for (Table* t : tables)
         out << (*t) << "\n\n";
 
-    if (mode == LuaData::PrintMode::DEFAULT)
-    {
+    if (mode == LuaData::PrintMode::DEFAULT &&
+        !comments->empty())
         out << (*comments) << "\n";
-    }
 }
 
 

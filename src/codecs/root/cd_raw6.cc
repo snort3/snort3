@@ -32,7 +32,7 @@
 namespace
 {
 
-#define CD_RAW6_NAME "cd_raw6"
+#define CD_RAW6_NAME "raw6"
 
 class Raw6Codec : public Codec
 {

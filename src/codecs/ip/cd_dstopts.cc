@@ -37,7 +37,7 @@
 namespace
 {
 
-#define CD_DSTOPTS_NAME "cd_ipv6_dstopts"
+#define CD_DSTOPTS_NAME "ipv6_dstopts"
 
 class Ipv6DSTOptsCodec : public Codec
 {

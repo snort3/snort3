@@ -32,7 +32,7 @@
 namespace
 {
 
-#define CD_PPPENCAP_NAME "cd_pppencap"
+#define CD_PPPENCAP_NAME "pppencap"
 
 class PppEncap : public Codec
 {

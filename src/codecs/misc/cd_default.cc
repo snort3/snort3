@@ -32,7 +32,7 @@
 namespace
 {
 
-#define CD_DEFAULT_NAME "codec_default"
+#define CD_DEFAULT_NAME "default_codec"
 
 class DefaultCodec : public Codec
 {

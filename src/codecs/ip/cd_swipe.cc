@@ -30,7 +30,7 @@
 
 namespace{
 
-#define CD_SWIPE_NAME "cd_swipe"
+#define CD_SWIPE_NAME "swipe"
 
 
 class SwipeCodec : public Codec

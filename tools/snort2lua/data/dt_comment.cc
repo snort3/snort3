@@ -25,7 +25,7 @@
 Comments::Comments(CommentType type)
 {
     this->depth = 0;
-    this->prev_empty = false;
+    this->prev_empty = true;
     this->type = type;
     this->header = false;
 }
@@ -33,7 +33,7 @@ Comments::Comments(CommentType type)
 Comments::Comments(int depth, CommentType type)
 {
     this->depth = depth;
-    this->prev_empty = false;
+    this->prev_empty = true;
     this->type = type;
     this->header = false;
 }
@@ -42,7 +42,7 @@ Comments::Comments(std::string comment, int depth, CommentType type)
 {
     this->comment.push_back(std::string(comment));
     this->depth = depth;
-    this->prev_empty = false;
+    this->prev_empty = true;
     this->type = type;
     this->header = true;
 }
@@ -53,6 +53,8 @@ Comments::~Comments()
 
 void Comments::add_text(std::string text)
 {
+    // if this line is not an empty string
+    // OR the previous line was not an empty string
     if (!text.empty() || !prev_empty)
     {
         comment.push_back(std::string(text));

@@ -52,7 +52,7 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
         return false;
 
 
-    ld->open_table("cd_esp");
+    ld->open_table("esp");
 
     if (!type.compare("1") ||
         !type.compare("on") ||

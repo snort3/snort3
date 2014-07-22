@@ -51,7 +51,7 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
     if (!(data_stream >> type))
         return false;
 
-    ld->open_table("cd_mpls");
+    ld->open_table("mpls");
 
 
     if (!type.compare("ethernet"))

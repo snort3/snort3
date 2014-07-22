@@ -37,7 +37,7 @@
 namespace
 {
 
-#define CD_NO_NEXT_NAME "cd_ipv6_no_next"
+#define CD_NO_NEXT_NAME "ipv6_no_next"
 
 class Ipv6NoNextCodec : public Codec
 {

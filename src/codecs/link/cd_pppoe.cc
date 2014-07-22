@@ -273,7 +273,7 @@ namespace
 {
 
 const uint16_t ETHERNET_TYPE_PPPoE_DISC =  0x8863; /* discovery stage */
-#define CD_PPPOEPKT_DISC_NAME "cd_pppoe_disc"
+#define CD_PPPOEPKT_DISC_NAME "pppoe_disc"
 
 class PPPoEDiscCodec : public Codec
 {
@@ -374,7 +374,7 @@ namespace
 {
 
 
-#define CD_PPPOEPKT_SESS_NAME "cd_pppoe_sess"
+#define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
 
 const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
 

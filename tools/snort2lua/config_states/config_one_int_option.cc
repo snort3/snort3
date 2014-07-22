@@ -91,7 +91,7 @@ static const std::string attribute_table = "attribute_table";
 static const std::string alerts = "alerts";
 static const std::string daq = "daq";
 static const std::string detection = "detection";
-static const std::string cd_mpls = "cd_mpls";
+static const std::string mpls = "mpls";
 static const std::string network = "network";
 static const std::string output = "output";
 static const std::string packets = "packets";
@@ -175,7 +175,7 @@ static const ConvertMap max_mpls_labelchain_len_api =
 {
     max_mpls_labelchain_len,
     config_int_ctor<&max_mpls_labelchain_len,
-                    &cd_mpls,
+                    &mpls,
                     &max_mpls_stack_depth>,
 };
 

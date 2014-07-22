@@ -27,7 +27,7 @@
 namespace
 {
 
-#define CD_ETHLOOPBACK_NAME "cd_ethloopback"
+#define CD_ETHLOOPBACK_NAME "ethloopback"
 
 
 class EthLoopbackCodec : public Codec

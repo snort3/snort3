@@ -103,7 +103,6 @@ static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
 
 static const std::string active = "active";
 static const std::string alerts = "alerts";
-static const std::string cd_mpls = "cd_mpls";
 static const std::string daq = "daq";
 static const std::string ips = "ips";
 static const std::string mode = "mode";
