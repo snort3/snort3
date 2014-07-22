@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jorosenba@cisco.com>
+// converter.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef CONVERTER_H
 #define CONVERTER_H
@@ -31,12 +31,13 @@
 #include <ostream>
 
 #include "data/dt_data.h"
-#include "data/dt_var.h"
+//#include "data/dt_var.h"
 
 
 // typedef redefined from 'conversion_state.h'
 class ConversionState;
 class Converter;
+class LuaData;
 typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
 
 class Converter
@@ -44,38 +45,38 @@ class Converter
 
 public:
     Converter();
-    virtual ~Converter() {};
+    virtual ~Converter();
     // initialize data class
-    bool initialize(conv_new_f init_state_func);
+    bool initialize(conv_new_f init_state_func, LuaData* ld);
     // set the next parsing state.
     void set_state(ConversionState* c);
+    // tells this class whether to parse include files.
+    inline void set_parse_includes(bool val) { parse_includes = val; }
+    // tells this class whether to convert a file inline or pull all data into one file.
+    inline void set_convert_rules_mult_files(bool var) { convert_rules_mult_files = var; }
+    // tells this class whether to convert a file inline or pull all data into one file.
+    inline void set_convert_conf_mult_files(bool var) { convert_conf_mult_files = var; }
     // reset the current parsing state
     void reset_state();
     // convert the following file from a snort.conf into a lua.conf
-    void convert_file(std::string input_file);
-    // if the parse_include flag is set, parse this file.
-    void parse_include_file(std::string input_file);
-    // prints the entire lua configuration to the output file.
-    friend std::ostream &operator<<( std::ostream& out, const Converter &cv) { return out << cv.ld; }
-    
-
-
-    // log an error in the new lua file
-    void log_error(std::string);
-
-    void print_line(std::istringstream& in);
-    void print_line(std::ostringstream& in);
-    void print_line(std::string& in);
+    int convert_file(std::string input_file);
+    // parse an include file.  Use this function to ensure all set options are properly
+    void parse_include_file(std::string file);
+    // Should we parse an include file?
+    inline bool should_convert_includes() { return parse_includes; }
 
 private:
     // the current parsing state.
     ConversionState* state;
     // the data which will be printed into the new lua file
-    LuaData ld;
+    LuaData *ld;
     // the init_state constructor
     conv_new_f init_state_ctor;
-    // parse_include_files
+
     bool parse_includes;
+    bool convert_rules_mult_files;
+    bool convert_conf_mult_files;
+    bool error;
 
 };
 

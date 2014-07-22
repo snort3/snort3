@@ -39,3 +39,5 @@ EapolModule::EapolModule() : DecodeModule(CD_EAPOL_NAME)
 const RuleMap* EapolModule::get_rules() const
 { return eapol_rules; }
 
+bool EapolModule::set(const char* /*fqn*/, Value& /*v*/, SnortConfig* /*sc*/)
+{ return true; }

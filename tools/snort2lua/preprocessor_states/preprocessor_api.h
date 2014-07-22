@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// preprocessor_api.h author Josh Rosenbaum <jorosenba@cisco.com>
+// preprocessor_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef PREPROCESSOR_API_H
 #define PREPROCESSOR_API_H
@@ -25,6 +25,11 @@
 #include <vector>
 #include "conversion_state.h"
 
+namespace preprocessors
+{
+
 extern const std::vector<const ConvertMap*> preprocessor_api;
+
+} // namespace preprocessors
 
 #endif

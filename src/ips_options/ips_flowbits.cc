@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  ** Copyright (C) 2003-2013 Sourcefire, Inc.
  **
  ** This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,9 @@
 #include <ctype.h>
 #include <sys/types.h>
 
+#include <string>
+using namespace std;
+
 #include "snort_types.h"
 #include "detection/treenodes.h"
 #include "protocols/packet.h"
@@ -67,20 +70,12 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "flowbits";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats flowBitsPerfStats;
-
-static ProfileStats* fb_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &flowBitsPerfStats;
-
-    return nullptr;
-}
-#endif
 
 #define DEFAULT_FLOWBIT_GROUP  "default"
 #define ALLOWED_SPECIAL_CHARS       ".-_"
@@ -108,15 +103,14 @@ static ProfileStats* fb_get_profile(const char* key)
 **  may occur for a given object.  This is different from how
 **  the type element is used from the FLOWBITS_ITEM structure.
 */
-typedef struct _FLOWBITS_OBJECT
+struct FLOWBITS_OBJECT
 {
     uint16_t id;
     uint8_t  types;
     int toggle;
     int set;
     int isset;
-
-} FLOWBITS_OBJECT;
+};
 
 typedef enum
 {
@@ -132,7 +126,7 @@ typedef enum
 **
 **  The type element track only one operation.
 */
-typedef struct _FLOWBITS_OP
+struct FLOWBITS_OP
 {
     uint16_t *ids;
     uint8_t  num_ids;
@@ -141,7 +135,7 @@ typedef struct _FLOWBITS_OP
     char *name;
     char *group;
     uint32_t group_id;
-} FLOWBITS_OP;
+};
 
 typedef struct _FLOWBITS_GRP
 {
@@ -165,7 +159,7 @@ static int checkFlowBits(
 class FlowBitsOption : public IpsOption
 {
 public:
-    FlowBitsOption(const FLOWBITS_OP& c) :
+    FlowBitsOption(FLOWBITS_OP* c) :
         IpsOption(s_name, RULE_OPTION_TYPE_FLOWBIT)
     { config = c; };
 
@@ -177,10 +171,10 @@ public:
     int eval(Cursor&, Packet*);
 
     bool is_set(uint8_t bits)
-    { return (config.type & bits) != 0; };
+    { return (config->type & bits) != 0; };
 
 private:
-    FLOWBITS_OP config;
+    FLOWBITS_OP* config;
 };
 
 //-------------------------------------------------------------------------
@@ -189,20 +183,20 @@ private:
 
 FlowBitsOption::~FlowBitsOption()
 {
-    FLOWBITS_OP *data = &config;
+    if (config->ids)
+        free(config->ids);
+    if (config->name)
+        free(config->name);
+    if (config->group)
+        free(config->group);
 
-    if (data->ids)
-        free(data->ids);
-    if (data->name)
-        free(data->name);
-    if (data->group)
-        free(data->group);
+    delete config;
 }
 
 uint32_t FlowBitsOption::hash() const
 {
     uint32_t a,b,c;
-    const FLOWBITS_OP *data = &config;
+    const FLOWBITS_OP *data = config;
     int i;
     int j = 0;
 
@@ -271,7 +265,7 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
 
 int FlowBitsOption::eval(Cursor&, Packet *p)
 {
-    FLOWBITS_OP *flowbits = &config;
+    FLOWBITS_OP* flowbits = config;
     int rval = DETECTION_OPTION_NO_MATCH;
 
     PROFILE_VARS;
@@ -900,8 +894,7 @@ static void processFlowBitsWithGroup(char *flowbitsName, char *groupName, FLOWBI
     DEBUG_WRAP( printOutFlowbits(flowbits));
 }
 
-static void flowbits_parse(
-    SnortConfig* sc, char *data, FLOWBITS_OP *flowbits)
+static FLOWBITS_OP* flowbits_parse(const char *data)
 {
     char **toks;
     int num_toks;
@@ -910,12 +903,7 @@ static void flowbits_parse(
     char *flowbitsName = NULL;
     FLOWBITS_GRP *flowbits_grp;
 
-    if (sc == NULL)
-    {
-        ParseError("Snort config for parsing is NULL.");
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_FLOWBITS, "flowbits parsing %s\n",data););
+    FLOWBITS_OP* flowbits = (FLOWBITS_OP*)SnortAlloc(sizeof(*flowbits));
 
     toks = mSplit(data, ",", 0, &num_toks, 0);
 
@@ -967,7 +955,7 @@ static void flowbits_parse(
         flowbits->name  = SnortStrdup(typeName);
 
         mSplitFree(&toks, num_toks);
-        return;
+        return flowbits;
     }
     else if(!strcasecmp("reset",typeName))
     {
@@ -990,7 +978,7 @@ static void flowbits_parse(
         flowbits->num_ids   = 0;
         flowbits->name  = SnortStrdup(typeName);
         mSplitFree(&toks, num_toks);
-        return;
+        return flowbits;
 
     }
     else
@@ -1016,6 +1004,7 @@ static void flowbits_parse(
     processFlowBitsWithGroup(flowbitsName, groupName, flowbits);
 
     mSplitFree(&toks, num_toks);
+    return flowbits;
 }
 
 static void FlowBitsVerify(void)
@@ -1105,10 +1094,6 @@ static void flowbits_ginit(SnortConfig*)
 
     if ( !flowbits_bit_queue )
         FatalError("Could not create flowbits bit queue.\n");
-
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, fb_get_profile);
-#endif
 }
 
 static void flowbits_gterm(SnortConfig*)
@@ -1132,20 +1117,80 @@ static void flowbits_gterm(SnortConfig*)
     }
 }
 
-static IpsOption* flowbits_ctor(
-    SnortConfig* sc, char *data, OptTreeNode *otn)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter flowbits_params[] =
 {
-    FLOWBITS_OP flowbits;
-    memset(&flowbits, 0, sizeof(flowbits));
+    { "*command", Parameter::PT_STRING, nullptr, nullptr,
+      "set|reset|isset|etc." },
 
-    // FIXIT this should be obviated when so rules are supported
-    /* Flowbits are now part of the rule stub for .so rules.
-     * We avoid adding the flowbit twice by skipping it here. */
-    if (otn->sigInfo.generator == 3)
-        return nullptr;
+    { "*arg1", Parameter::PT_STRING, nullptr, nullptr,
+      "bits or group" },
 
-    flowbits_parse(sc, data, &flowbits);
-    return new FlowBitsOption(flowbits);
+    { "*arg2", Parameter::PT_STRING, nullptr, nullptr,
+      "group if arg1 is bits" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class FlowbitsModule : public Module
+{
+public:
+    FlowbitsModule() : Module(s_name, flowbits_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &flowBitsPerfStats; };
+
+public:
+    string args;
+};
+
+bool FlowbitsModule::begin(const char*, int, SnortConfig*)
+{
+    args.clear();
+    return true;
+}
+
+bool FlowbitsModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*command") )
+        args = v.get_string();
+
+    else if ( v.is("*arg1") || v.is("*arg2") )
+    {
+        args += ", ";
+        args += v.get_string();
+    }
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new FlowbitsModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* flowbits_ctor(Module* p, OptTreeNode*)
+{
+    FlowbitsModule* m = (FlowbitsModule*)p;
+    FLOWBITS_OP* fbop = flowbits_parse(m->args.c_str());
+    return new FlowBitsOption(fbop);
 }
 
 static void flowbits_dtor(IpsOption* p)
@@ -1153,10 +1198,10 @@ static void flowbits_dtor(IpsOption* p)
     delete p;
 }
 
-static bool flowbits_verify()
+// FIXIT updating statics during reload is bad, mkay?
+static void flowbits_verify(SnortConfig*)
 {
     FlowBitsVerify();
-    return true;
 }
 
 #if 0
@@ -1181,8 +1226,8 @@ static const IpsApi flowbits_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,

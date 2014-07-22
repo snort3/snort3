@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// conversion_state.h author Josh Rosenbaum <jorosenba@cisco.com>
+// conversion_state.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef CONVERSION_STATE_H
 #define CONVERSION_STATE_H
@@ -30,9 +30,9 @@
 #include "data/dt_data.h"
 
 // the following three files are for the function 'set_next_rule_state'
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 #include "rule_states/rule_api.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 
 class Converter;
 class ConversionState;
@@ -74,9 +74,11 @@ protected:
 
     inline bool eat_option(std::istringstream& stream);
     inline bool parse_string_option(std::string opt_name,
-                                        std::istringstream& stream);
+                                        std::istringstream& stream
+                                        bool required = true);
     inline bool parse_int_option(std::string opt_name,
-                                        std::istringstream& stream);
+                                        std::istringstream& stream
+                                        bool required = true);
     inline bool parse_curly_bracket_list(std::string list_name,
                                         std::istringstream& stream);
     inline bool parse_yn_bool_option(std::string opt_name,
@@ -85,11 +87,9 @@ protected:
                                         std::istringstream& stream);
     inline bool parse_bracketed_unsupported_list(std::string list_name,
                                         std::istringstream& stream);
-    inline bool open_table_add_option(std::string table_name,
-                                        std::string opt_name,
-                                        std::string val);
-    inline bool parse_deprecation_option(std::string table_name,
-                                        std::istringstream& stream);
+    inline bool parse_deleted_option(std::string table_name,
+                                        std::istringstream& stream,
+                                        bool required = true);
 
     //  rules have no order. Function placed here because every rule
     //  uses this.
@@ -107,7 +107,9 @@ protected:
         return false;
     }
 
-    inline bool parse_string_option(std::string opt_name, std::istringstream& stream)
+    inline bool parse_string_option(std::string opt_name,
+                                    std::istringstream& stream,
+                                    bool required = true)
     {
         std::string val;
 
@@ -120,11 +122,16 @@ protected:
             return true;
         }
 
+        if (!required)
+            return true;
+
         ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
-    inline bool parse_int_option(std::string opt_name, std::istringstream& stream)
+    inline bool parse_int_option(std::string opt_name,
+                                    std::istringstream& stream,
+                                    bool required = true)
     {
         int val;
 
@@ -133,6 +140,9 @@ protected:
             ld->add_option_to_table(opt_name, val);
             return true;
         }
+
+        if (!required)
+            return true;
 
         ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
@@ -229,15 +239,18 @@ protected:
     }
 
 
-    inline bool parse_deprecation_option(std::string opt_name,
-                                        std::istringstream& stream)
+    inline bool parse_deleted_option(std::string opt_name,
+                                        std::istringstream& stream,
+                                        bool required = true)
     {
         std::string val;
-        ld->add_deprecated_comment(opt_name);
+        ld->add_deleted_comment(opt_name);
 
         if(stream >> val)
             return true;
 
+        if (!required)
+            return true;
         return false;
     }
 
@@ -245,27 +258,23 @@ protected:
     inline bool set_next_rule_state(std::istringstream& stream)
     {
         std::string keyword;
-
         int pos = stream.tellg();
-        std::getline(stream, keyword, ':');
-        util::trim(keyword);
 
-        if (keyword.empty())
-            return true;
-
-        do
+        while(std::getline(stream, keyword, ':'))
         {
-            util::trim(keyword);
-            int semi_colon_pos = keyword.find(';');
+            std::size_t semi_colon_pos = keyword.find(';');
             if (semi_colon_pos != std::string::npos)
             {
-                // found a nested option without a colon
-                // 2 == last charachter of option + semi_colon
-                stream.seekg(pos + semi_colon_pos +2);
+                // found an option without a colon, so set stream
+                // to semi-colon
+                std::streamoff off = 1 + (std::streamoff)(pos) +
+                                     (std::streamoff)(semi_colon_pos);
+                stream.seekg(off);
                 keyword = keyword.substr(0, semi_colon_pos);
             }
 
             // now, lets get the next option.
+            util::trim(keyword);
             const ConvertMap* map = util::find_map(rules::rule_api, keyword);
             if (map)
             {
@@ -284,12 +293,16 @@ protected:
 
                 pos = stream.tellg();
             }
+        }
 
-        // first get end of option, then get next keyword
-        } while(std::getline(stream, keyword, ':'));
-
-        // Since this is already marked as a bad rule, no need to tell the
-        // main loop that we failed. Correct actions already taken.
+        // This is definitely a special case to always return true, I have
+        // already taken corrective action by signifyig this is a 'bad rule'.
+        // Additionally, I don't return false earlier becasue, when possible,
+        // I want to parse the entire rule. If I only return false when the
+        // last option was invalid, this would lead to an incosistant and
+        // unreliable return value.  Bottom line, I'm consistant by returning
+        // true and handling "bad" values and directly signifgying to Data
+        // classes this is a bad rule.
         return true;
     }
 

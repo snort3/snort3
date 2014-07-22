@@ -61,31 +61,18 @@
 #include "detection/detection_defines.h"
 #include "fpdetect.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "icmp_id";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats icmpIdPerfStats;
-
-static ProfileStats* ii_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &icmpIdPerfStats;
-
-    return nullptr;
-}
-#endif
-
-typedef struct _IcmpIdCheckData
-{
-        u_short icmpid;
-
-} IcmpIdCheckData;
 
 class IcmpIdOption : public IpsOption
 {
 public:
-    IcmpIdOption(const IcmpIdCheckData& c) :
+    IcmpIdOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -95,7 +82,7 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    IcmpIdCheckData config;
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -105,11 +92,10 @@ private:
 uint32_t IcmpIdOption::hash() const
 {
     uint32_t a,b,c;
-    const IcmpIdCheckData *data = &config;
 
-    a = data->icmpid;
-    b = 0;
-    c = 0;
+    a = config.op;
+    b = config.min;
+    c = config.max;
 
     mix_str(a,b,c,get_name());
     final(a,b,c);
@@ -123,34 +109,24 @@ bool IcmpIdOption::operator==(const IpsOption& ips) const
         return false;
 
     IcmpIdOption& rhs = (IcmpIdOption&)ips;
-    IcmpIdCheckData *left = (IcmpIdCheckData*)&config;
-    IcmpIdCheckData *right = (IcmpIdCheckData*)&rhs.config;
-
-    if (left->icmpid == right->icmpid)
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 int IcmpIdOption::eval(Cursor&, Packet *p)
 {
-    IcmpIdCheckData *icmpId = &config;
     PROFILE_VARS;
 
     if(!p->icmph)
-        return DETECTION_OPTION_NO_MATCH; /* if error occured while icmp header
-                   * was processed, return 0 automagically.  */
+        return DETECTION_OPTION_NO_MATCH;
 
     PREPROC_PROFILE_START(icmpIdPerfStats);
 
-    if( (p->icmph->type == ICMP_ECHO || p->icmph->type == ICMP_ECHOREPLY)
-        || ((uint16_t)p->icmph->type == icmp6::Icmp6Types::ECHO || (uint16_t)p->icmph->type == icmp6::Icmp6Types::REPLY)
-      )
+    if ( (p->icmph->type == ICMP_ECHO || 
+        p->icmph->type == ICMP_ECHOREPLY) ||
+        ((uint16_t)p->icmph->type == icmp6::Icmp6Types::ECHO ||
+         (uint16_t)p->icmph->type == icmp6::Icmp6Types::REPLY) )
     {
-        /* test the rule ID value against the ICMP extension ID field */
-        if(icmpId->icmpid == p->icmph->s_icmp_id)
+        if ( config.eval(p->icmph->s_icmp_id) )
         {
             PREPROC_PROFILE_END(icmpIdPerfStats);
             return DETECTION_OPTION_MATCH;
@@ -161,47 +137,68 @@ int IcmpIdOption::eval(Cursor&, Packet *p)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter icmp_id_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class IcmpIdModule : public Module
+{
+public:
+    IcmpIdModule() : Module(s_name, icmp_id_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &icmpIdPerfStats; };
+
+    RangeCheck data;
+};
+
+bool IcmpIdModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool IcmpIdModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void icmp_id_parse(char *data, IcmpIdCheckData *ds_ptr)
+static Module* mod_ctor()
 {
-    char *endTok;
-
-    /* advance past whitespace */
-    while(isspace((int)*data)) data++;
-
-    ds_ptr->icmpid = (uint16_t)SnortStrtoulRange(data, &endTok, 10, 0, UINT16_MAX);
-    if ((endTok == data) || (*endTok != '\0'))
-    {
-        ParseError(
-            "Invalid parameter '%s' to icmp_id.  Must be between "
-            "0 & 65535, inclusive", data);
-    }
-    ds_ptr->icmpid = htons(ds_ptr->icmpid);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Set ICMP ID test value to %d\n", ds_ptr->icmpid););
+    return new IcmpIdModule;
 }
 
-static IpsOption* icmp_id_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    IcmpIdCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    icmp_id_parse(data, &ds_ptr);
-    return new IcmpIdOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* icmp_id_ctor(Module* p, OptTreeNode*)
+{
+    IcmpIdModule* m = (IcmpIdModule*)p;
+    return new IcmpIdOption(m->data);
 }
 
 static void icmp_id_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void icmp_id_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, ii_get_profile);
-#endif
 }
 
 static const IpsApi icmp_id_api =
@@ -211,12 +208,12 @@ static const IpsApi icmp_id_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__ICMP,
-    icmp_id_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

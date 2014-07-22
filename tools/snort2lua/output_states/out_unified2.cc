@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// out_unified2.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// out_unified2.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "rule_states/rule_api.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 namespace output
 {
@@ -44,7 +44,7 @@ public:
 
     virtual bool convert(std::istringstream& data_stream)
     {
-        std::string keyword;
+        std::string args;
         bool retval = true;
 
         ld->open_table("unified2");
@@ -52,18 +52,18 @@ public:
         if (!(*output_name).compare("unified2"))
             ld->add_diff_option_comment("output " + (*output_name), "unified2");
 
-        while (data_stream >> keyword)
+        while (std::getline(data_stream, args, ','))
         {
             bool tmpval = true;
+            std::string keyword;
 
-            if (keyword.back() == ',')
-                keyword.pop_back();
+            std::istringstream arg_stream(args);
+            arg_stream >> keyword;
 
             if (keyword.empty())
                 continue;
 
-
-            if (!keyword.compare("nostamp"))
+            else if (!keyword.compare("nostamp"))
                 tmpval = ld->add_option_to_table("nostamp", true);
 
             else if (!keyword.compare("mpls_event_types"))
@@ -74,13 +74,13 @@ public:
 
             else if (!keyword.compare("filename"))
             {
-                tmpval = parse_string_option("file", data_stream);
+                tmpval = parse_string_option("file", arg_stream);
                 ld->add_diff_option_comment("filename", "file");
             }
 
             else if (!keyword.compare("limit"))
             {
-                tmpval = parse_int_option("limit", data_stream);
+                tmpval = parse_int_option("limit", arg_stream);
                 tmpval = ld->add_option_to_table("units", "M") && tmpval;
             }
 

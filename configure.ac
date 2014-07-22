@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.102])
+AC_INIT([snort], [2.10.103])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -801,7 +801,7 @@ CXXFLAGS="$CFLAGS"
 echo "$AM_CFLAGS $CFLAGS" > cflags.out
 echo "$AM_CPPFLAGS $CPPFLAGS" > cppflags.out
 
-AM_CPPFLAGS='-I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/main -I$(top_srcdir)/src/parser -I$(top_srcdir)/src/utils -I$(top_srcdir)/src/loggers -I$(top_srcdir)/src/time -I$(top_srcdir)/src/protocols -I$(top_srcdir)/src/network_inspectors -I$(top_srcdir)/src/log -I$(top_srcdir)/src/events -I$(top_srcdir)/src/sfip -I$(top_srcdir)/src/detection -I$(top_srcdir)/src/hash' 
+AM_CPPFLAGS='-I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/main -I$(top_srcdir)/src/parser -I$(top_srcdir)/src/utils -I$(top_srcdir)/src/loggers -I$(top_srcdir)/src/time -I$(top_srcdir)/src/protocols -I$(top_srcdir)/src/network_inspectors -I$(top_srcdir)/src/log -I$(top_srcdir)/src/events -I$(top_srcdir)/src/sfip -I$(top_srcdir)/src/detection -I$(top_srcdir)/src/hash -I$(top_srcdir)/tools/snort2lua'
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CXXFLAGS)
@@ -869,6 +869,14 @@ etc/Makefile \
 tools/Makefile \
 tools/u2boat/Makefile \
 tools/u2spewfoo/Makefile \
+tools/snort2lua/Makefile \
+tools/snort2lua/config_states/Makefile \
+tools/snort2lua/data/Makefile \
+tools/snort2lua/keyword_states/Makefile \
+tools/snort2lua/output_states/Makefile \
+tools/snort2lua/preprocessor_states/Makefile \
+tools/snort2lua/rule_states/Makefile \
+tools/snort2lua/utils/Makefile \
 ])
 
 AC_OUTPUT

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// include.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// include.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace keywords
 {
@@ -44,11 +44,24 @@ public:
 
 bool Include::convert(std::istringstream& data_stream)
 {
-    std::string keyword;
+    std::string file = std::string();
+    std::string tmp;
 
-    if(data_stream >> keyword)
+    while (data_stream >> tmp)
+        file += tmp;
+
+    if(!file.empty())
     {
-        cv->convert_file(keyword);
+        // if not parsing, assume its a regular rule file.
+
+
+        if (cv->should_convert_includes())
+            cv->parse_include_file(file);
+        else
+        {
+            ld->begin_rule();
+            ld->add_hdr_data("include " + file);
+        }
         return true;
     }
     return false;

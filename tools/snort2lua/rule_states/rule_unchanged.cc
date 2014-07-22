@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rule_content.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_content.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "rule_states/rule_api.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 namespace rules
 {
@@ -549,33 +549,6 @@ static const ConvertMap rule_threshold =
 const ConvertMap* threshold_map = &rule_threshold;
 
 /************************************
- *************  URILEN  *************
- ************************************/
-
-static const std::string urilen = "urilen";
-static const ConvertMap rule_urilen =
-{
-    urilen,
-    unchanged_rule_ctor<&urilen>,
-};
-
-const ConvertMap* urilen_map = &rule_urilen;
-
-
-/************************************
- ***********  FILE_DATA  ************
- ************************************/
-
-static const std::string file_data = "file_data";
-static const ConvertMap rule_file_data =
-{
-    file_data,
-    unchanged_rule_ctor<&file_data, false>,
-};
-
-const ConvertMap* file_data_map = &rule_file_data;
-
-/************************************
  ***********  BYTE_TEST  ************
  ************************************/
 
@@ -680,6 +653,19 @@ static const ConvertMap rule_asn1 =
 };
 
 const ConvertMap* asn1_map = &rule_asn1;
+
+/************************************
+ ***********  PRIORITY  *************
+ ************************************/
+
+static const std::string priority = "priority";
+static const ConvertMap rule_priority =
+{
+    priority,
+    unchanged_rule_ctor<&priority>,
+};
+
+const ConvertMap* priority_map = &rule_priority;
 
 
 

@@ -28,12 +28,11 @@ ips_raw_data.cc \
 ips_react.cc \
 ips_resp.cc \
 ips_rpc.cc \
-ips_sameip.cc \
 ips_seq.cc \
 ips_session.cc \
 ips_tos.cc \
 ips_ttl.cc \
-ips_urilen.cc \
+ips_bufferlen.cc \
 ips_window.cc
 
 libips_options_a_SOURCES = \
@@ -170,11 +169,6 @@ libips_rpc_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_rpc_la_LDFLAGS = -export-dynamic -shared
 libips_rpc_la_SOURCES = ips_rpc.cc
 
-optlib_LTLIBRARIES += libips_sameip.la
-libips_sameip_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_sameip_la_LDFLAGS = -export-dynamic -shared
-libips_sameip_la_SOURCES = ips_sameip.cc
-
 optlib_LTLIBRARIES += libips_seq.la
 libips_seq_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_seq_la_LDFLAGS = -export-dynamic -shared
@@ -200,10 +194,10 @@ libips_window_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_window_la_LDFLAGS = -export-dynamic -shared
 libips_window_la_SOURCES = ips_window.cc
 
-optlib_LTLIBRARIES += libips_urilen.la
-libips_urilen_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_urilen_la_LDFLAGS = -export-dynamic -shared
-libips_urilen_la_SOURCES = ips_urilen.cc ips_urilen.h
+optlib_LTLIBRARIES += libips_bufferlen.la
+libips_bufferlen_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_bufferlen_la_LDFLAGS = -export-dynamic -shared
+libips_bufferlen_la_SOURCES = ips_bufferlen.cc ips_bufferlen.h
 endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

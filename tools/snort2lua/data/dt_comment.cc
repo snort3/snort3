@@ -17,16 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_comment.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_comment.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "data/dt_comment.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 Comments::Comments(CommentType type)
 {
     this->depth = 0;
     this->prev_empty = false;
     this->type = type;
+    this->header = false;
 }
 
 Comments::Comments(int depth, CommentType type)
@@ -34,6 +35,7 @@ Comments::Comments(int depth, CommentType type)
     this->depth = depth;
     this->prev_empty = false;
     this->type = type;
+    this->header = false;
 }
 
 Comments::Comments(std::string comment, int depth, CommentType type)
@@ -42,6 +44,7 @@ Comments::Comments(std::string comment, int depth, CommentType type)
     this->depth = depth;
     this->prev_empty = false;
     this->type = type;
+    this->header = true;
 }
 
 Comments::~Comments()
@@ -53,7 +56,6 @@ void Comments::add_text(std::string text)
     if (!text.empty() || !prev_empty)
     {
         comment.push_back(std::string(text));
-
         prev_empty = text.empty();
     }
 }
@@ -77,7 +79,8 @@ void Comments::add_sorted_text(std::string new_text)
 
 bool Comments::empty()
 {
-    return (comment.size() == 0);
+    return ((comment.size() == 0) ||
+            (comment.size() == 1 && header));
 }
 
 std::ostream &operator<<( std::ostream& out, const Comments &c)
@@ -105,14 +108,14 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
     }
 
 
-    const int pre_str_length = pre_str.size();
-    const int max_line_length = c.max_line_length - pre_str_length - 1;
+    const std::size_t pre_str_length = pre_str.size();
 
 
     for (std::string str : c.comment)
     {
         bool first_line = true;
         std::string curr_pre_str = pre_str;
+        std::size_t max_line_length = c.max_line_length - pre_str_length - 1;
 
         // print a newline betweens strings, but not before the first line.
         if (first_str)
@@ -124,9 +127,12 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
         if (str.size() == 0)
             out << "\n";
 
+        else if (c.type == Comments::CommentType::MULTI_LINE)
+            util::sanitize_lua_string(util::ltrim(str));
+
         while(!str.empty())
         {
-            int substr_len = max_line_length;
+            std::size_t substr_len = max_line_length;
 
             // determine the first space before 80 charachters
             // if there are no spaces, print the entire string
@@ -134,7 +140,7 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
             {
                 substr_len = str.rfind(" ", max_line_length);
 
-                if (substr_len == -1)
+                if (substr_len == std::string::npos)
                 {
                     substr_len = str.find(" ");
 
@@ -143,16 +149,13 @@ std::ostream &operator<<( std::ostream& out, const Comments &c)
                 }
             }
 
-            // add a space between any double hyphens
-            if (c.type == Comments::CommentType::MULTI_LINE)
-                util::sanitize_multi_line_string(str);
-
 
             // don't print the extra '\n' on the first line.
             if (first_line)
             {
                 out << curr_pre_str << str.substr(0, substr_len);
                 curr_pre_str += "    ";
+                max_line_length -= 4; // account for extra four spaces
                 first_line = false;
             }
             else

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_comment.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_comment.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef DT_COMMENT_H
 #define DT_COMMENT_H
@@ -25,6 +25,20 @@
 #include <string>
 #include <vector>
 #include <iostream>
+
+
+static const std::string start_comments =
+    "\nCOMMENTS:\n"
+    "    these line were originally commented"
+    "in the configuration file.";
+
+static const std::string start_errors =
+    "\nERRORS:\n"
+    "    all of these occured during the attempted conversion:\n\n";
+
+static const std::string start_bad_rules =
+    "\nFAILED RULES CONVERSIONS:\n"
+    "    These rules has invalid rule options\n\n";
 
 class Comments
 {
@@ -55,8 +69,9 @@ private:
     std::vector<std::string> comment;
     int depth;
     bool prev_empty;
+    bool header;  // true if a string was passed into constructor
     enum CommentType type;
-    const int max_line_length = 80;
+    const std::size_t max_line_length = 80;
     const std::string comment_line = "--";
     const std::string start_multi_com = "--[[";
     const std::string end_multi_com = "--]]";

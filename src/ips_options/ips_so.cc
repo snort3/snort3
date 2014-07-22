@@ -19,12 +19,24 @@
 */
 
 #include "framework/so_rule.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <string>
+using namespace std;
+
+#include "framework/parameter.h"
+#include "framework/module.h"
 #include "managers/ips_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
+#include "time/profiler.h"
 
-// FIXIT add profiling - note: will be for so option
-// overall, and include all the various so evals
+static const char* s_name = "so";
+
+static THREAD_LOCAL ProfileStats soPerfStats;
 
 class SoOption : public IpsOption
 {
@@ -35,8 +47,7 @@ public:
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
 
-    int eval(Cursor&, Packet* p)
-    { return func(data, p); };
+    int eval(Cursor&, Packet*);
 
 private:
     const char* soid;
@@ -47,7 +58,7 @@ private:
 
 SoOption::SoOption(
     const char* id, const char* s, SoEvalFunc f, void* v)
-    : IpsOption("so")
+    : IpsOption(s_name)
 {
     soid = id;
     so = s;
@@ -83,18 +94,88 @@ bool SoOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-static IpsOption* so_ctor(
-    SnortConfig*, char* args, OptTreeNode* otn)
+int SoOption::eval(Cursor&, Packet* p)
 {
-    void* data;
-    SoEvalFunc func = IpsManager::get_so_eval(otn->soid, args, &data);
+    PROFILE_VARS;
+    PREPROC_PROFILE_START(soPerfStats);
+
+    int ret = func(data, p);
+
+    PREPROC_PROFILE_END(soPerfStats);
+    return ret;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter so_params[] =
+{
+    { "*func", Parameter::PT_STRING, nullptr, nullptr,
+      "name of function to call" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class SoModule : public Module
+{
+public:
+    SoModule() : Module(s_name, so_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &soPerfStats; };
+
+    string name;
+};
+
+bool SoModule::begin(const char*, int, SnortConfig*)
+{
+    name.clear();
+    return true;
+}
+
+bool SoModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*func") )
+        name = v.get_string();
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new SoModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
+{
+    void* data = nullptr;
+    SoModule* m = (SoModule*)p;
+    const char* name = m->name.c_str();
+
+    SoEvalFunc func = IpsManager::get_so_eval(otn->soid, name, &data);
 
     if ( !func )
     {
-        ParseError("Can't link so:%s", args);
+        ParseError("Can't link so:%s", name);
         return nullptr;
     }
-    return new SoOption(otn->soid, args, func, data);
+    return new SoOption(otn->soid, name, func, data);
 }
 
 static void so_dtor(IpsOption* p)
@@ -106,11 +187,11 @@ static const IpsApi so_api =
 {
     {
         PT_IPS_OPTION,
-        "so",
+        s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0x0,

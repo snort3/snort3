@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config_ppm.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_ppm.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace config
 {
@@ -135,7 +135,6 @@ bool Ppm::convert(std::istringstream& data_stream)
         {
             std::string opt1;
             std::string opt2;
-            popped_comma = false;
             ld->add_diff_option_comment("rule-log", "rule_log");
 
             if (!(data_stream >> opt1))

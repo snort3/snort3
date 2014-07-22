@@ -28,7 +28,7 @@
 #define BYTE_EXTRACT_NO_VAR -1
 #define BYTE_EXTRACT_INVALID_ERR_STR "Rule option uses an undefined byte_extract variable name."
 
-int8_t GetVarByName(char *name);
+int8_t GetVarByName(const char *name);
 
 int GetByteExtractValue(uint32_t *dst, int8_t var_number);
 int SetByteExtractValue(uint32_t value, int8_t var_number);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_var.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_var.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <string>
 #include <vector>
@@ -50,7 +50,7 @@ private:
     std::vector<VarData*> vars;
     std::string name;
     int depth;
-    const int max_line_length = 77; // leave room for additional text
+    const std::size_t max_line_length = 77; // leave room for additional text
 
 };
 

@@ -17,19 +17,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_bo.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_bo.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 #include <iomanip>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 
+namespace preprocessors
+{
 
-static ConversionState* bo_ctor(Converter* cv, LuaData* ld)
+static ConversionState* bo_ctor(Converter* /*cv*/, LuaData* ld)
 {
     ld->open_table("bo");
     ld->close_table();
@@ -44,3 +46,4 @@ static const ConvertMap preprocessor_bo =
 
 const ConvertMap* bo_map = &preprocessor_bo;
 
+} // namespace preprocessors

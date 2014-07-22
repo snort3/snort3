@@ -18,15 +18,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rule_pcre.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_pcre.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "rule_states/rule_api.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 namespace rules
 {
@@ -52,7 +52,7 @@ bool Pcre::convert(std::istringstream& data_stream)
 
     std::string pcre_str = util::get_rule_option_args(data_stream);
 
-    int pattern_end = pcre_str.rfind("/");
+    std::size_t pattern_end = pcre_str.rfind("/");
     std::string pattern = pcre_str.substr(0, pattern_end + 1);
     std::string options = pcre_str.substr(pattern_end + 1, std::string::npos);
     std::string new_opts = std::string();

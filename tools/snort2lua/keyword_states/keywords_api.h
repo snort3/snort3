@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// keywords_api.h author Josh Rosenbaum <jorosenba@cisco.com>
+// keywords_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef KEYWORDS_API_H
 #define KEYWORDS_API_H

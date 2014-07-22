@@ -64,6 +64,8 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 #define GREATER_THAN            1
 #define LESS_THAN               2
@@ -79,17 +81,7 @@
 
 static const char* s_name = "fragbits";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats fragBitsPerfStats;
-
-static ProfileStats* fb_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &fragBitsPerfStats;
-
-    return nullptr;
-}
-#endif
 
 typedef struct _FragBitsData
 {
@@ -236,10 +228,10 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 // api methods
 //-------------------------------------------------------------------------
 
-void fragbits_parse(char *data, FragBitsData *ds_ptr)
+void fragbits_parse(const char *data, FragBitsData *ds_ptr)
 {
-    char *fptr;
-    char *fend;
+    const char *fptr;
+    const char *fend;
 
     /* manipulate the option arguments here */
     fptr = data;
@@ -301,29 +293,78 @@ void fragbits_parse(char *data, FragBitsData *ds_ptr)
     ds_ptr->frag_bits = htons(ds_ptr->frag_bits);
 }
 
-static IpsOption* fragbits_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter fragbits_params[] =
 {
-    if ( !bitmask )
-        bitmask = htons(0xE000);  // TBD do this only once, not per rule
+    { "*flags", Parameter::PT_STRING, nullptr, nullptr,
+      "these flags are tested" },
 
-    FragBitsData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    fragbits_parse(data, &ds_ptr);
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
-    return new FragBitsOption(ds_ptr);
+class FragBitsModule : public Module
+{
+public:
+    FragBitsModule() : Module(s_name, fragbits_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &fragBitsPerfStats; };
+
+    FragBitsData data;
+};
+
+
+bool FragBitsModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool FragBitsModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*flags") )
+        fragbits_parse(v.get_string(), &data);
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new FragBitsModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+void fragbits_init(SnortConfig*)
+{
+    bitmask = htons(0xE000);
+}
+
+static IpsOption* fragbits_ctor(Module* p, OptTreeNode*)
+{
+    FragBitsModule* m = (FragBitsModule*)p;
+    return new FragBitsOption(m->data);
 }
 
 static void fragbits_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void fragbits_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, fb_get_profile);
-#endif
 }
 
 static const IpsApi fragbits_api =
@@ -333,12 +374,12 @@ static const IpsApi fragbits_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    fragbits_ginit,
+    fragbits_init,
     nullptr,
     nullptr,
     nullptr,

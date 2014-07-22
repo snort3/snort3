@@ -72,6 +72,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include <string>
+
 #include "snort_types.h"
 #include "snort_bounds.h"
 #include "detection/treenodes.h"
@@ -91,20 +93,13 @@
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats byteJumpPerfStats;
 
 static const char* s_name = "byte_jump";
-
-static ProfileStats* bj_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &byteJumpPerfStats;
-
-    return nullptr;
-}
-#endif
+using namespace std;
 
 typedef struct _ByteJumpData
 {
@@ -306,183 +301,184 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter jump_params[] =
+{
+    { "*count", Parameter::PT_INT, "1:10", nullptr,
+      "number of bytes to pick up from the buffer" },
+
+    { "*offset", Parameter::PT_STRING, nullptr, nullptr,
+      "variable name or number of bytes into the buffer to start processing" },
+
+    { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "offset from cursor instead of start of buffer" },
+
+    { "from_beginning", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "jump from start of buffer instead of cursor" },
+
+    { "multiplier", Parameter::PT_INT, "1:65535", nullptr,
+      "scale extracted value by given amount" },
+
+    { "align", Parameter::PT_INT, "0:4", nullptr,
+      "round the number of converted bytes up to the next 2- or 4-byte boundary" },
+
+    { "post_offset", Parameter::PT_INT, "-65535:65535", nullptr,
+      "also skip forward or backwards (positive of negative value) this number of bytes" },
+
+    { "big", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "big endian" },
+
+    { "little", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "little endian" },
+
+    { "dce", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dcerpc2 determines endianness" },
+
+    { "string", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from string" },
+
+    { "hex", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from hex string" },
+
+    { "oct", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from octal string" },
+
+    { "dec", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "convert from decimal string" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class ByteJumpModule : public Module
+{
+public:
+    ByteJumpModule() : Module(s_name, jump_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &byteJumpPerfStats; };
+
+    ByteJumpData data;
+    string var;
+};
+
+bool ByteJumpModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    var.clear();
+    data.multiplier = 1;
+    return true;
+}
+
+bool ByteJumpModule::end(const char*, int, SnortConfig*)
+{
+    if ( var.size() )
+    {
+        data.offset_var = GetVarByName(var.c_str());
+
+        if (data.offset_var == BYTE_EXTRACT_NO_VAR)
+        {
+            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            return false;
+        }
+    }
+    unsigned e1 = ffs(data.endianess);
+    unsigned e2 = ffs(data.endianess >> e1);
+    
+    if ( e1 && e2 )
+    {
+        ParseError("byte_extract rule option has multiple arguments "
+            "specifying the type of string conversion. Use only "
+            "one of 'dec', 'hex', or 'oct'.");
+    }
+    return true;
+}
+
+bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*count") )
+        data.bytes_to_grab = v.get_long();
+
+    else if ( v.is("*offset") )
+    {
+        long n;
+        if ( v.strtol(n) )
+            data.offset = n;
+        else
+            var = v.get_string();
+    }
+    else if ( v.is("relative") )
+        data.relative_flag = 1;
+
+    else if ( v.is("from_beginning") )
+        data.from_beginning_flag = 1;
+
+    else if ( v.is("align") )
+        data.align_flag = 1;
+
+    else if ( v.is("multiplier") )
+        data.multiplier = v.get_long();
+
+    else if ( v.is("post_offset") )
+        data.post_offset = v.get_long();
+
+    else if ( v.is("big") )
+        data.endianess |= ENDIAN_LITTLE;
+
+    else if ( v.is("little") )
+        data.endianess |= ENDIAN_BIG;
+
+    else if ( v.is("dce") )
+        data.endianess |= ENDIAN_FUNC;
+
+    else if ( v.is("string") )
+    {
+        data.data_string_convert_flag = 1;
+        data.base = 10;
+    }
+    else if ( v.is("dec") )
+        data.base = 10;
+
+    else if ( v.is("hex") )
+        data.base = 16;
+
+    else if ( v.is("oct") )
+        data.base = 8;
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void byte_jump_parse(char *data, ByteJumpData *idx)
+static Module* mod_ctor()
 {
-    char **toks;
-    char *endp;
-    int num_toks;
-    char *cptr;
-    int i =0;
-
-    toks = mSplit(data, ",", 12, &num_toks, 0);
-
-    if(num_toks < 2)
-        ParseError("Bad arguments to byte_jump: %s", data);
-
-    /* set how many bytes to process from the packet */
-    idx->bytes_to_grab = strtoul(toks[0], &endp, 10);
-
-    if(endp==toks[0])
-    {
-        ParseError("Unable to parse as byte value %s", toks[0]);
-    }
-
-    if(idx->bytes_to_grab > PARSELEN || idx->bytes_to_grab == 0)
-    {
-        ParseError("byte_jump can't process more than %d bytes!",
-            PARSELEN);
-    }
-
-    /* set offset */
-    if (isdigit(toks[1][0]) || toks[1][0] == '-')
-    {
-        idx->offset = strtol(toks[1], &endp, 10);
-        idx->offset_var = -1;
-
-        if(endp==toks[1])
-        {
-            ParseError("Unable to parse as offset %s", toks[1]);
-        }
-    }
-    else
-    {
-        idx->offset_var = GetVarByName(toks[1]);
-        if (idx->offset_var == BYTE_EXTRACT_NO_VAR)
-        {
-            ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
-        }
-    }
-
-    i = 2;
-
-    /* is it a relative offset? */
-    if(num_toks > 2)
-    {
-        while(i < num_toks)
-        {
-            cptr = toks[i];
-
-            while(isspace((int)*cptr)) {cptr++;}
-
-            if(!strcasecmp(cptr, "relative"))
-            {
-                /* the offset is relative to the last pattern match */
-                idx->relative_flag = 1;
-            }
-            else if(!strcasecmp(cptr, "from_beginning"))
-            {
-                idx->from_beginning_flag = 1;
-            }
-            else if(!strcasecmp(cptr, "string"))
-            {
-                /* the data will be represented as a string that needs
-                 * to be converted to an int, binary is assumed otherwise
-                 */
-                idx->data_string_convert_flag = 1;
-            }
-            else if(!strcasecmp(cptr, "little"))
-            {
-                idx->endianess = ENDIAN_LITTLE;
-            }
-            else if(!strcasecmp(cptr, "big"))
-            {
-                /* this is the default */
-                idx->endianess = ENDIAN_BIG;
-            }
-            else if(!strcasecmp(cptr, "hex"))
-            {
-                idx->base = 16;
-            }
-            else if(!strcasecmp(cptr, "dec"))
-            {
-                idx->base = 10;
-            }
-            else if(!strcasecmp(cptr, "oct"))
-            {
-                idx->base = 8;
-            }
-            else if(!strcasecmp(cptr, "align"))
-            {
-                idx->align_flag = 1;
-            }
-            else if(!strncasecmp(cptr, "multiplier ", 11))
-            {
-                /* Format of this option is multiplier xx.
-                 * xx is a positive base 10 number.
-                 */
-                char *mval = &cptr[11];
-                long factor = 0;
-                int multiplier_len = strlen(cptr);
-                if (multiplier_len > 11)
-                {
-                    factor = strtol(mval, &endp, 10);
-                }
-                if ((factor <= 0) || (endp != cptr + multiplier_len))
-                {
-                    ParseError("invalid length multiplier '%s'", cptr);
-                }
-                idx->multiplier = factor;
-            }
-            else if(!strncasecmp(cptr, "post_offset ", 12))
-            {
-                /* Format of this option is post_offset xx.
-                 * xx is a positive or negative base 10 integer.
-                 */
-                char *mval = &cptr[12];
-                int32_t factor = 0;
-                int postoffset_len = strlen(cptr);
-                if (postoffset_len > 12)
-                {
-                    factor = strtol(mval, &endp, 10);
-                }
-                if (endp != cptr + postoffset_len)
-                {
-                    ParseError("invalid post_offset '%s'", cptr);
-                }
-                idx->post_offset = factor;
-            }
-            // FIXIT allow byte order plugin here
-            else
-            {
-                ParseError("unknown modifier '%s'", cptr);
-            }
-            i++;
-        }
-    }
-
-    /* idx->base is only set if the parameter is specified */
-    if(!idx->data_string_convert_flag && idx->base)
-    {
-        ParseError(
-            "hex, dec and oct modifiers must be used in conjunction"
-            " with the 'string' modifier");
-    }
-
-    mSplitFree(&toks, num_toks);
+    return new ByteJumpModule;
 }
 
-static IpsOption* byte_jump_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    ByteJumpData idx;
-    memset(&idx, 0, sizeof(idx));
-    byte_jump_parse(data, &idx);
-    return new ByteJumpOption(idx);
+    delete m;
+}
+
+static IpsOption* byte_jump_ctor(Module* p, OptTreeNode*)
+{
+    ByteJumpModule* m = (ByteJumpModule*)p;
+    return new ByteJumpOption(m->data);
 }
 
 static void byte_jump_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void byte_jump_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, bj_get_profile);
-#endif
 }
 
 static const IpsApi byte_jump_api =
@@ -492,12 +488,12 @@ static const IpsApi byte_jump_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    byte_jump_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

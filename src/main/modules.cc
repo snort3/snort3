@@ -824,6 +824,9 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter packets_params[] =
 {
+    { "address_space_agnostic", Parameter::PT_BOOL, nullptr, "false",
+      "file with BPF to select traffic for Snort" },
+
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
       "file with BPF to select traffic for Snort" },
 
@@ -1494,6 +1497,9 @@ static const Parameter rate_filter_params[] =
     { "timeout", Parameter::PT_INT, "0:", "1",
       "count interval" },
 
+    { "apply_to", Parameter::PT_STRING, nullptr, nullptr,
+      "restrict filter to these addresses according to track" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1770,6 +1776,12 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
 // xxx module - used as copy/paste template
 //-------------------------------------------------------------------------
 
+static const RuleMap xxx_rules[] =
+{
+    { SID, "STR" },
+    { 0, 0, nullptr }
+};
+
 static const Parameter xxx_params[] =
 {
     { "name", Parameter::PT_INT, "range", "deflt",
@@ -1778,16 +1790,11 @@ static const Parameter xxx_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap xxx_rules[] =
-{
-    { SID, "STR" },
-    { 0, 0, nullptr }
-};
-
 class XXXModule : public Module
 {
 public:
-    XXXModule() : Module("xxx", xxx_params, xxx_rules) { };
+    XXXModule() : Module("xxx", xxx_params) { };
+    const RuleMap* get_rules() { return xxx_rules; };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1811,6 +1818,32 @@ bool XXXModule::begin(const char*, int, SnortConfig*)
 
 bool XXXModule::end(const char*, int, SnortConfig*)
 {
+    return true;
+}
+
+static const Parameter xxx_params[] =
+{
+    { "name", Parameter::PT_INT, "range", "deflt",
+      "help" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class XXXModule : public Module
+{
+public:
+    XXXModule() : Module("xxx", xxx_params) { };
+    bool set(const char*, Value&, SnortConfig*);
+};
+
+bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
+{
+    if ( v.is("name") )
+        sc->pkt_cnt = v.get_long();
+
+    else
+        return false;
+
     return true;
 }
 

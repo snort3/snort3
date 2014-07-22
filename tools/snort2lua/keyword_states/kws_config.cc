@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// kws_config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_config.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "config_states/config_api.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 namespace keywords
 {
@@ -47,7 +47,7 @@ bool Config::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
-    if(data_stream >> keyword)
+    if (util::get_string(data_stream, keyword, ":"))
     {
 
         if(keyword.back() == ':')

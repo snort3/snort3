@@ -17,14 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_frag3_global.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_frag3_global.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -46,30 +49,30 @@ bool Frag3Global::convert(std::istringstream& data_stream)
 
     ld->open_table("stream_ip");
 
-    while(data_stream >> keyword)
+
+    // full options are comma seperated
+    while(util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
 
-        if(keyword.back() == ',')
-            keyword.pop_back();
-        
-        if(keyword.empty())
-            continue;
+        // suboptions are space seperated
+        std::istringstream args_stream(keyword);
+        args_stream >> keyword;
         
         if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+            ld->add_deleted_comment("disabled");
 
         else if(!keyword.compare("max_frags"))
-            tmpval = parse_int_option("max_frags", data_stream);
+            tmpval = parse_int_option("max_frags", args_stream);
         
         else if(!keyword.compare("memcap"))
-            tmpval = parse_deprecation_option("memcap", data_stream);
+            tmpval = parse_deleted_option("memcap", args_stream);
 
         else if(!keyword.compare("prealloc_memcap"))
-            tmpval = parse_deprecation_option("prealloc_memcap", data_stream);
-        
+            tmpval = parse_deleted_option("prealloc_memcap", args_stream);
+
         else if(!keyword.compare("prealloc_frags"))
-            tmpval = parse_deprecation_option("prealloc_frags", data_stream);
+            tmpval = parse_deleted_option("prealloc_frags", args_stream);
 
         else
             tmpval = false;
@@ -97,3 +100,5 @@ static const ConvertMap preprocessor_frag3_global =
 };
 
 const ConvertMap* frag3_global_map = &preprocessor_frag3_global;
+
+} // namespace preprocessors

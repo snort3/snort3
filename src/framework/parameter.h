@@ -44,6 +44,7 @@ struct Parameter
         PT_ADDR,       // ip4 or ip6 CIDR
         PT_BIT_LIST,   // string that converts to bitset
         PT_ADDR_LIST,  // snort address list format?
+        PT_IMPLIED,    // rule option args w/o values eg relative
         PT_MAX
     };
     const char* name;

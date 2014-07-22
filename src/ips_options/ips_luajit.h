@@ -23,11 +23,26 @@
 
 #include <string>
 #include "framework/ips_option.h"
+#include "framework/module.h"
+
+class LuaJitModule : public Module
+{
+public:
+    LuaJitModule();
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const;
+
+public:
+    std::string args;
+};
 
 class LuaJITOption : public IpsOption
 {
 public:
-    LuaJITOption(const char* name, std::string& chunk, const char* args);
+    LuaJITOption(const char* name, std::string& chunk, LuaJitModule*);
     ~LuaJITOption();
 
     uint32_t hash() const;

@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rule_content.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_content.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "rule_states/rule_api.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 namespace rules
 {
@@ -64,26 +64,17 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     val = util::get_rule_option_args(data_stream);
     std::istringstream subopts(val);
 
-    while(subopts >> val)
+    while(util::get_string(subopts, keyword, ":"))
     {
         bool tmpval = true;
-        util::trim(val);
-        int keyword_pos = val.find_first_of(':');
-        std::string keyword;
+        val = std::string();
+        std::string tmp_str;
 
-        if (keyword_pos != std::string::npos)
-        {
-            keyword = val.substr(0, keyword_pos);
-            val = val.substr(keyword_pos + 1, std::string::npos);
-//            subopts.str(val);  // reset the subopts buffer for someone else
-        }
-        else
-        {
-            keyword = val;
-            val = std::string();
-        }
+        // get the rest of this option
+        while(subopts >> tmp_str)
+            val += tmp_str + " ";
 
-        // necessary since get_line and substr return strings with whitespace.
+        // necessary since options contain whitespace
         util::trim(keyword);
         util::trim(val);
 

@@ -17,31 +17,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_option.h author Josh Rosenbaum <jorosenba@cisco.com>
-
-#ifndef RD_SUBOPTION_H
-#define RD_SUBOPTION_H
+// dt_rule_suboptions.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <string>
-#include <vector>
-#include <iostream>
+#include "data/dt_rule_suboption.h"
 
-class RuleSubOption
+
+RuleSubOption::RuleSubOption(std::string name)
+    :   name(name),
+        value(std::string()),
+        delimeter(':')
 {
-public:
-    RuleSubOption(std::string name);
-    RuleSubOption(std::string name, std::string val, char delimeter);
-    virtual ~RuleSubOption();
- 
-    // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const RuleSubOption &);
+}
 
-private:
-
-    std::string name;
-    std::string value;
-    char delimeter;
-};
+RuleSubOption::RuleSubOption(std::string name, std::string value, char delimeter)
+    :   name(name),
+        value(value),
+        delimeter(delimeter)
+{
+}
 
 
-#endif
+RuleSubOption::~RuleSubOption()
+{
+}
+
+// overloading operators
+std::ostream &operator<<( std::ostream& out, const RuleSubOption& subopt)
+{
+    out << subopt.name;
+
+    if (!subopt.value.empty())
+        out << subopt.delimeter << subopt.value;
+
+    return out;
+}

@@ -17,14 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_ftp_telnet.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_ftp_telnet.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -36,7 +39,7 @@ public:
     virtual bool convert(std::istringstream& data_stream);
 private:
     bool add_ftp_n_telnet_option(std::string opt_name, bool val);
-    void add_ftp_n_telnet_deprecated(std::string opt_name);
+    void add_ftp_n_telnet_deprecated(std::istringstream&, std::string opt_name);
 };
 
 } // namespace
@@ -54,13 +57,16 @@ bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
     return retval;
 }
 
-void FtpTelnet::add_ftp_n_telnet_deprecated(std::string opt_name)
+void FtpTelnet::add_ftp_n_telnet_deprecated(std::istringstream& data_stream,
+                                            std::string opt_name)
 {
+    std::string tmp;
+    data_stream >> tmp;  // eat the next word
     ld->open_table("telnet");
-    ld->add_deprecated_comment(opt_name);
+    ld->add_deleted_comment(opt_name);
     ld->close_table();
     ld->open_table("ftp_server");
-    ld->add_deprecated_comment(opt_name);
+    ld->add_deleted_comment(opt_name);
     ld->close_table();
 }
 
@@ -78,34 +84,39 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            cv->log_error("preprocessor ftp_telnet: requires the 'global' keyword");
+            ld->add_error_comment("preprocessor ftp_telnet: requires the 'global' keyword");
             return false;
         }
     }
 
     while(data_stream >> keyword)
     {
+        bool tmpval = true;
+
         if(!keyword.compare("check_encrypted"))
-            retval = add_ftp_n_telnet_option("check_encrypted", true);
+            tmpval = add_ftp_n_telnet_option("check_encrypted", true);
 
         else if(!keyword.compare("inspection_type"))
-            add_ftp_n_telnet_deprecated("inspection_type");
+            add_ftp_n_telnet_deprecated(data_stream, "inspection_type");
 
         else if(!keyword.compare("encrypted_traffic"))
         {
             data_stream >> s_value;
 
             if(s_value.compare("yes"))
-                retval = add_ftp_n_telnet_option("encrypted_traffic", true) && retval;
-
+                tmpval = add_ftp_n_telnet_option("encrypted_traffic", true);
             else
-                retval = add_ftp_n_telnet_option("encrypted_traffic", false) && retval;
+                tmpval = add_ftp_n_telnet_option("encrypted_traffic", false);
             
         }
 
         else
+        {
             retval = false;
+        }
 
+        if (retval && !tmpval)
+            retval = false;
     }
 
     return retval;    
@@ -127,3 +138,5 @@ static const ConvertMap preprocessor_ftptelnet =
 };
 
 const ConvertMap* ftptelnet_map = &preprocessor_ftptelnet;
+
+} // namespace preprocessors

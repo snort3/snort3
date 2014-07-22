@@ -17,15 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_http_inspect.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_http_inspect.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 #include <string>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -58,7 +61,7 @@ bool HttpInspect::convert(std::istringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            cv->log_error("preprocessor httpinspect: requires the 'global' keyword");
+            ld->add_error_comment("preprocessor httpinspect: requires the 'global' keyword");
             return false;
         }
     }
@@ -68,41 +71,46 @@ bool HttpInspect::convert(std::istringstream& data_stream)
 
     while(data_stream >> keyword)
     {
+        bool tmpval = true;
+
         if(!keyword.compare("compress_depth"))
-            retval = parse_int_option("compress_depth", data_stream) && retval;
+            tmpval = parse_int_option("compress_depth", data_stream);
 
         else if(!keyword.compare("decompress_depth")) 
-            retval = parse_int_option("decompress_depth", data_stream) && retval;
+            tmpval = parse_int_option("decompress_depth", data_stream);
 
         else if(!keyword.compare("detect_anomalous_servers"))
-            ld->add_option_to_table("detect_anomalous_servers", true);
+            tmpval = ld->add_option_to_table("detect_anomalous_servers", true);
 
         else if(!keyword.compare("proxy_alert"))
-            ld->add_option_to_table("proxy_alert", true);
+            tmpval = ld->add_option_to_table("proxy_alert", true);
 
         else if(!keyword.compare("max_gzip_mem"))
-            retval = parse_int_option("max_gzip_mem", data_stream) && retval;
+            tmpval = parse_int_option("max_gzip_mem", data_stream);
         
         else if(!keyword.compare("memcap"))
-            retval = parse_int_option("memcap", data_stream) && retval;
+            tmpval = parse_int_option("memcap", data_stream);
+
+        else if(!keyword.compare("chunk_length"))
+            tmpval = parse_int_option("chunk_length", data_stream);
         
         else if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+            ld->add_deleted_comment("disabled");
 
         else if(!keyword.compare("b64_decode_depth"))
-            retval = add_decode_option("b64_decode_depth", data_stream) && retval;
+            tmpval = add_decode_option("b64_decode_depth", data_stream);
 
         else if(!keyword.compare("bitenc_decode_depth"))
-            retval = add_decode_option("bitenc_decode_depth", data_stream) && retval;
+            tmpval = add_decode_option("bitenc_decode_depth", data_stream);
 
         else if(!keyword.compare("max_mime_mem"))
-            retval = add_decode_option("max_mime_mem", data_stream) && retval;
+            tmpval = add_decode_option("max_mime_mem", data_stream);
         
         else if(!keyword.compare("qp_decode_depth"))
-            retval = add_decode_option("qp_decode_depth", data_stream) && retval;
+            tmpval = add_decode_option("qp_decode_depth", data_stream);
 
         else if(!keyword.compare("uu_decode_depth"))
-            retval = add_decode_option("uu_decode_depth", data_stream) && retval;
+            tmpval = add_decode_option("uu_decode_depth", data_stream);
 
         else if(!keyword.compare("iis_unicode_map"))
         {
@@ -113,24 +121,25 @@ bool HttpInspect::convert(std::istringstream& data_stream)
                 (data_stream >> code_page))
             {
                 ld->open_table("unicode_map");
-                ld->add_option_to_table("map_file", codemap);
-                ld->add_option_to_table("code_page", code_page);
+                tmpval = ld->add_option_to_table("map_file", codemap);
+                tmpval = ld->add_option_to_table("code_page", code_page) && tmpval;
                 ld->close_table();
             }
             else
             {
                 ld->add_comment_to_table("snort.conf missing argument for "
                     "iis_unicode_map <filename> <codemap>");
-                retval = false;
+                tmpval = false;
             }
         }
 
-
         else
         {
-            cv->log_error("'preprocessor http_inspect: global' --> Invalid argument!!");
             retval = false;
         }
+
+        if (retval && !tmpval)
+            retval = false;
     }
 
     return retval;    
@@ -171,3 +180,5 @@ static const ConvertMap preprocessor_httpinspect =
 };
 
 const ConvertMap* httpinspect_map = &preprocessor_httpinspect;
+
+} // namespace preprocessors

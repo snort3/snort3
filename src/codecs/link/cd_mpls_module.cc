@@ -31,7 +31,7 @@ static const Parameter mpls_params[] =
     { "enable_mpls_overlapping_ip", Parameter::PT_BOOL, nullptr, "false",
       "enable if private network addresses overlap and must be differentiated by MPLS label(s)" },
 
-    { "max_mpls_label_chain_len", Parameter::PT_INT, "-1:", "-1",
+    { "max_mpls_stack_depth", Parameter::PT_INT, "-1:", "-1",
       "set MPLS stack depth" },
 
     { "mpls_payload_type", Parameter::PT_ENUM, "eth | ip4 | ip6", "ip4",
@@ -78,7 +78,7 @@ bool MplsModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             sc->run_flags |= RUN_FLAG__MPLS_OVERLAPPING_IP; // FIXIT move to existing bitfield
     }
-    else if ( v.is("max_mpls_label_chain_len") )
+    else if ( v.is("max_mpls_stack_depth") )
         sc->mpls_stack_depth = v.get_long();
 
     else if ( v.is("mpls_payload_type") )

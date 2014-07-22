@@ -68,20 +68,12 @@
 #include "sfhashfcn.h"
 #include "snort.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "react";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats reactPerfStats;
-
-static ProfileStats* act_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &reactPerfStats;
-
-    return nullptr;
-}
-#endif
 
 static const char* MSG_KEY = "<>";
 static const char* MSG_PERCENT = "%";
@@ -111,15 +103,14 @@ static const char* DEFAULT_MSG =
     "You are attempting to access a forbidden site.<br />"
     "Consult your system administrator for details.";
 
-typedef struct _ReactData
+struct ReactData
 {
     int rule_msg;        // 1=>use rule msg; 0=>use DEFAULT_MSG
     ssize_t buf_len;     // length of response
     char* resp_buf;      // response to send
 
-} ReactData;
+};
 
-static int s_deprecated = 0;
 static char* s_page = NULL;
 
 class ReactOption : public IpsOption
@@ -280,10 +271,6 @@ static void React_Send (Packet* p,  void* pv)
     PREPROC_PROFILE_END(reactPerfStats);
 }
 
-//-------------------------------------------------------------------------
-// api methods
-//-------------------------------------------------------------------------
-
 // format response buffer
 static void react_config (ReactData* rd, OptTreeNode* otn)
 {
@@ -310,55 +297,70 @@ static void react_config (ReactData* rd, OptTreeNode* otn)
     rd->buf_len = strlen(rd->resp_buf);
 }
 
-static void react_parse(char* data, ReactData* rd, OptTreeNode* otn)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter react_params[] =
 {
-    char* tok = NULL;
-    char* lasts = nullptr;
+    { "msg", Parameter::PT_IMPLIED, nullptr, nullptr,
+      " use rule message in response page" },
 
-    if ( data )
-    {
-        while(isspace((int)*data)) data++;
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
-        tok = strtok_r(data, ",", &lasts);
-    }
-    while(tok)
-    {
-        /* parse the react option keywords */
-        if (
-            !strncasecmp(tok, "proxy", 5) ||
-            !strcasecmp(tok, "block") ||
-            !strcasecmp(tok, "warn") )
-        {
-            if ( !s_deprecated )
-            {
-                ParseWarning("proxy, block, and warn options are deprecated.\n");
-                s_deprecated = 1;
-            }
-        }
-        else if ( !strcasecmp(tok, "msg") )
-        {
-            if ( !otn->sigInfo.message )
-                ParseError("react: msg mst follow rule msg");
+class ReactModule : public Module
+{
+public:
+    ReactModule() : Module(s_name, react_params) { };
 
-            rd->rule_msg = 1;
-        }
-        else
-            ParseError("invalid react option: %s", tok);
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
 
-        tok = strtok_r(NULL, ",", &lasts);
+    ProfileStats* get_profile() const
+    { return &reactPerfStats; };
 
-        /* get rid of spaces */
-        while ( tok && isspace((int)*tok) ) tok++;
-    }
-    rd->resp_buf = NULL;
-    rd->buf_len = 0;
+    bool msg;
+};
+
+bool ReactModule::begin(const char*, int, SnortConfig*)
+{
+    msg = false;
+    return true;
 }
 
-static IpsOption* react_ctor(
-    SnortConfig*, char* data, OptTreeNode* otn)
+bool ReactModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("msg") )
+        msg = v.get_bool();
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new ReactModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* react_ctor(Module* p, OptTreeNode* otn)
 {
     ReactData* rd = (ReactData*)SnortAlloc(sizeof(*rd));
-    react_parse(data, rd, otn);
+
+    ReactModule* m = (ReactModule*)p;
+    rd->rule_msg = m->msg;
+
     react_config(rd, otn);
 
     ReactOption* opt = new ReactOption(rd);
@@ -380,10 +382,6 @@ static void react_ginit(SnortConfig* sc)
 {
     react_getpage(sc);
     Active_SetEnabled(1);
-
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, act_get_profile);
-#endif
 }
 
 static void react_gterm(SnortConfig*)
@@ -402,8 +400,8 @@ static const IpsApi react_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_ACTION,
     1, PROTO_BIT__TCP,

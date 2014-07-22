@@ -69,7 +69,7 @@ static LuaIpsApi* find_api(const char* key)
     return nullptr;
 }
 
-static IpsOption* ctor(SnortConfig*, char* args, struct OptTreeNode*)
+static IpsOption* ctor(Module* m, struct OptTreeNode*)
 {
     const char* key = IpsManager::get_option_keyword();
     LuaIpsApi* api = find_api(key);
@@ -77,7 +77,8 @@ static IpsOption* ctor(SnortConfig*, char* args, struct OptTreeNode*)
     if ( !api )
         return nullptr;
 
-    return new LuaJITOption(api->name.c_str(), api->chunk, args);
+    LuaJitModule* mod = (LuaJitModule*)m;
+    return new LuaJITOption(api->name.c_str(), api->chunk, mod);
 }
 
 static void dtor(IpsOption* p)
