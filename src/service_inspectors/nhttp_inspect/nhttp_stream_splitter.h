@@ -44,8 +44,8 @@ private:
     void createEvent(NHttpEnums::EventSid sid);
 
     uint64_t eventsGenerated = 0;
-    int64_t octetsSeen;
-    int numCrlf;
+    int64_t octetsSeen = 0;
+    int numCrlf = 0;
     uint32_t pafMax = 63780;
 };
 
