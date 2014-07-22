@@ -17,15 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_perfmonitor.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_perfmonitor.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <string>
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -88,19 +91,19 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
             tmpval = ld->add_option_to_table("reset", true);
 
         else if (!keyword.compare("atexitonly"))
-            ld->add_deprecated_comment("atexitonly");
+            ld->add_deleted_comment("atexitonly");
 
         else if (!keyword.compare("base-stats"))
-            ld->add_deprecated_comment("atexitonly: base-stats");
+            ld->add_deleted_comment("atexitonly: base-stats");
 
         else if (!keyword.compare("flow-stats"))
-            ld->add_deprecated_comment("atexitonly: flow-stats");
+            ld->add_deleted_comment("atexitonly: flow-stats");
 
         else if (!keyword.compare("flow-ip-stats"))
-            ld->add_deprecated_comment("atexitonly: flow-ip-stats");
+            ld->add_deleted_comment("atexitonly: flow-ip-stats");
 
         else if (!keyword.compare("events-stats"))
-            ld->add_deprecated_comment("atexitonly: events-stats");
+            ld->add_deleted_comment("atexitonly: events-stats");
 
         else if (!keyword.compare("max_file_size"))
             tmpval = parse_int_option("max_file_size", data_stream);
@@ -183,3 +186,5 @@ static const ConvertMap keyword_perfmonitor =
 };
 
 const ConvertMap* perfmonitor_map = &keyword_perfmonitor;
+
+}

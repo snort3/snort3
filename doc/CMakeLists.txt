@@ -20,6 +20,7 @@ set(BUILT_SOURCES
     config.txt
     options.txt
     gids.txt
+#    modules.txt   Requires Special formatting. manually added below.
 #    version.txt   Required special formatting. manually added below.
     CACHE INTERNAL "sources to be built" FORCE
 )
@@ -78,13 +79,10 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
             DEPENDS snort
             COMMENT "Documents: building ${file}"
         )
-
         list(APPEND ALL_SOURCES ${output})
     endforeach(file)
 
     # build version.txt seperately
-
-    set (input ${CMAKE_BINARY_DIR}/version.txt)
     set (output ${CMAKE_CURRENT_BINARY_DIR}/version.txt)
     add_custom_command(
         OUTPUT ${output}
@@ -93,6 +91,18 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
         COMMENT "Documents: building version.txt"
     )
     list(APPEND ALL_SOURCES ${output})
+
+    # build modules.txt seperately
+    set (output ${CMAKE_CURRENT_BINARY_DIR}/modules.txt)
+    set(SNORT_EXECUTABLE "${CMAKE_BINARY_DIR}/src/snort")
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND ${CMAKE_COMMAND} -E echo "" > ${output}
+        COMMAND for m in `${SNORT_EXECUTABLE} --list-modules`\; do ${SNORT_EXECUTABLE} --markup --help-module $$m >> ${output}\; done
+        DEPENDS snort
+        COMMENT "Documents: building modules.txt"
+    )
+    list (APPEND ALL_SOURCES ${output})
 
 
     # next, Copy all distributed files into the binary tree (necessary for asciidocs).

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// out_fast.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// out_fast.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace output
 {
@@ -71,8 +71,8 @@ bool AlertFast::convert(std::istringstream& data_stream)
 
 
     int limit;
-    char c;
-    std::string units;
+    char c = '\0';
+    std::string units = "B";
 
     std::istringstream tmp_stream(keyword);
     tmp_stream >> limit;  // gauranteed success since keyword is non-empty
@@ -85,8 +85,6 @@ bool AlertFast::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-    else
-        units = "B";
 
 
     retval = ld->add_option_to_table("limit", limit) && retval;

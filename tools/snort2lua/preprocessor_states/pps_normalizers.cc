@@ -17,33 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_normalizers.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_normalizers.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 #include <iomanip>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
+namespace preprocessors
+{
+
+
+template<const std::string *norm_option>
+static ConversionState* norm_sans_options_ctor(Converter* /*cv*/, LuaData* ld)
+{
+    ld->open_table("normalize");
+    ld->add_diff_option_comment("preprocessor normalize_" + *norm_option, *norm_option + " = <bool>");
+    ld->add_option_to_table(*norm_option, true);
+    ld->close_table();
+    return nullptr;
+}
 
 /****************************
  *******  ICMP4 API *********
  ****************************/
 
-static ConversionState* icmp4_ctor(Converter* cv, LuaData* ld)
-{
-    ld->open_table("normalize");
-    ld->add_option_to_table("icmp4", true);
-    ld->close_table();
-    return nullptr;
-}
 
-static const ConvertMap preprocessor_norm_icmp4 = 
+static const std::string icmp4 = "icmp4";
+static const ConvertMap preprocessor_norm_icmp4 =
 {
     "normalize_icmp4",
-    icmp4_ctor,
+    norm_sans_options_ctor<&icmp4>,
 };
 
 const ConvertMap* normalizer_icmp4_map = &preprocessor_norm_icmp4;
@@ -52,22 +59,28 @@ const ConvertMap* normalizer_icmp4_map = &preprocessor_norm_icmp4;
  *******  ICMP6 API *********
  ***************************/
 
-static ConversionState* icmp6_ctor(Converter* cv, LuaData* ld)
-{
-    ld->open_table("normalize");
-    ld->add_option_to_table("icmp6", true);
-    ld->close_table();
-    return nullptr;
-}
-
-static const ConvertMap preprocessor_norm_icmp6 = 
+static const std::string icmp6 = "icmp6";
+static const ConvertMap preprocessor_norm_icmp6 =
 {
     "normalize_icmp6",
-    icmp6_ctor,
+    norm_sans_options_ctor<&icmp6>,
 };
 
 const ConvertMap* normalizer_icmp6_map = &preprocessor_norm_icmp6;
 
+
+/**************************
+ *******  IP6 API *********
+ **************************/
+
+static const std::string ip6 = "ip6";
+static const ConvertMap preprocessor_norm_ip6 =
+{
+    "normalize_ip6",
+    norm_sans_options_ctor<&ip6>,
+};
+
+const ConvertMap* normalizer_ip6_map = &preprocessor_norm_ip6;
 
 /**************************
  *******  IP4 API *********
@@ -95,22 +108,26 @@ bool Ip4Normalizer::convert(std::istringstream& data_stream)
     ld->open_table("ip4");
     ld->add_option_to_table("base", true);
 
-    while( data_stream >> keyword)
+    while (util::get_string(data_stream, keyword, " ,"))
     {
+        bool tmpval = true;
 
         if(!keyword.compare("df"))
-            retval = ld->add_option_to_table("df", true) && retval;
+            tmpval = ld->add_option_to_table("df", true);
 
         else if(!keyword.compare("rf"))
-            retval = ld->add_option_to_table("rf", true) && retval;
+            tmpval = ld->add_option_to_table("rf", true);
         
         else if(!keyword.compare("tos"))
-            retval = ld->add_option_to_table("tos", true) && retval;
+            tmpval = ld->add_option_to_table("tos", true);
         
         else if(!keyword.compare("trim"))
-            retval = ld->add_option_to_table("trim", true) && retval;
+            tmpval = ld->add_option_to_table("trim", true);
 
         else
+            tmpval = false;
+
+        if (retval && !tmpval)
             retval = false;
     }
 
@@ -135,27 +152,6 @@ static const ConvertMap preprocessor_norm_ip4 =
 const ConvertMap* normalizer_ip4_map = &preprocessor_norm_ip4;
 
 /**************************
- *******  IP6 API *********
- **************************/
-
-static ConversionState* ip6_ctor(Converter* cv, LuaData* ld)
-{
-    ld->open_table("normalize");
-    ld->add_option_to_table("ip6", true);
-    ld->close_table();
-    return nullptr;
-}
-
-static const ConvertMap preprocessor_norm_ip6 = 
-{
-    "normalize_ip6",
-    ip6_ctor,
-};
-
-const ConvertMap* normalizer_ip6_map = &preprocessor_norm_ip6;
-
-
-/**************************
  *******  TCP API *********
  **************************/
 
@@ -167,35 +163,9 @@ public:
     TcpNormalizer(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~TcpNormalizer() {};
     virtual bool convert(std::istringstream& data_stream);
-private:
-    bool set_base_w_comment(std::string);
-    bool set_ecn_w_comment(std::string);
-    bool set_trim_w_comment(std::string);
-
 };
 
 } // namespace
-
-bool TcpNormalizer::set_ecn_w_comment(std::string comment)
-{
-    ld->add_comment_to_table("tcp normalizer: '" +
-        comment + "'' is deprecated. use 'ecn' instead");
-    return ld->add_option_to_table("ecn", true);
-}
-
-bool TcpNormalizer::set_base_w_comment(std::string comment)
-{
-    ld->add_comment_to_table("tcp normalizer: '" +
-        comment + "'' is deprecated. use 'base' instead");
-    return ld->add_option_to_table("base", true);
-}
-
-bool TcpNormalizer::set_trim_w_comment(std::string comment)
-{
-    ld->add_comment_to_table("tcp normalizer: '" +
-        comment + "'' is deprecated. use 'trim' instead");
-    return ld->add_option_to_table("trim", true);
-}
 
 
 bool TcpNormalizer::convert(std::istringstream& data_stream)
@@ -208,60 +178,130 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
     ld->open_table("tcp");
     ld->add_option_to_table("base", true);
 
-    while( data_stream >> keyword)
+    while (util::get_string(data_stream, keyword, " ,"))
     {
+        bool tmpval = true;
 
-        if(!keyword.compare("rsv"))
-            retval = set_base_w_comment("rsv") && retval;
-        
-        else if(!keyword.compare("pad"))
-            retval = set_base_w_comment("pad") && retval;
-
-        else if(!keyword.compare("block"))
-            retval = set_base_w_comment("block") && retval;
-
-        else if(!keyword.compare("req_urg"))
-            retval = set_base_w_comment("req_urg") && retval;
-
-        else if(!keyword.compare("req_pay"))
-            retval = set_base_w_comment("req_pay") && retval;
-
-        else if(!keyword.compare("req_urp"))
-            retval = set_base_w_comment("req_urp") && retval;
-        
-        else if(!keyword.compare("ips"))
-            retval = ld->add_option_to_table("ips", true) && retval;
-        
-        else if(!keyword.compare("trim_syn"))
-            retval = set_trim_w_comment("trim_syn") && retval;
-        
-        else if(!keyword.compare("trim_rst"))
-            retval = set_trim_w_comment("trim_rst") && retval;
-        
-        else if(!keyword.compare("trim_win"))
-            retval = set_trim_w_comment("trim_win") && retval;
-        
-        else if(!keyword.compare("trim_mss"))
-            retval = set_trim_w_comment("trim_mss") && retval;
+        if(!keyword.compare("ips"))
+            tmpval = ld->add_option_to_table("ips", true);
         
         else if(!keyword.compare("trim"))
-            retval = ld->add_option_to_table("trim", true) && retval;
+            tmpval = ld->add_option_to_table("trim", true);
 
         else if(!keyword.compare("opts"))
-            retval = ld->add_option_to_table("opts", true) && retval;
+            tmpval = ld->add_option_to_table("opts", true);
 
         else if(!keyword.compare("urp"))
-            retval = ld->add_option_to_table("urp", true) && retval;
+            tmpval = ld->add_option_to_table("urp", true);
+
+        else if(!keyword.compare("rsv"))
+        {
+            ld->add_diff_option_comment("rsv", "base");
+            ld->add_option_to_table("base", true);
+        }
+
+        else if(!keyword.compare("pad"))
+        {
+            ld->add_diff_option_comment("pad", "base");
+            ld->add_option_to_table("base", true);
+        }
+
+        else if(!keyword.compare("block"))
+        {
+            ld->add_diff_option_comment("block", "base");
+            ld->add_option_to_table("base", true);
+        }
+
+        else if(!keyword.compare("req_urg"))
+        {
+            ld->add_diff_option_comment("req_urg", "base");
+            ld->add_option_to_table("base", true);
+        }
+
+        else if(!keyword.compare("req_pay"))
+        {
+            ld->add_diff_option_comment("req_pay", "base");
+            ld->add_option_to_table("base", true);
+        }
+
+        else if(!keyword.compare("req_urp"))
+        {
+            ld->add_diff_option_comment("req_urp", "base");
+            ld->add_option_to_table("base", true);
+        }
+        
+        else if(!keyword.compare("trim_syn"))
+        {
+            ld->add_diff_option_comment("trim_syn", "trim");
+            tmpval = ld->add_option_to_table("trim", true);
+        }
+        
+        else if(!keyword.compare("trim_rst"))
+        {
+            ld->add_diff_option_comment("trim_rst", "trim");
+            tmpval = ld->add_option_to_table("trim", true);
+        }
+        
+        else if(!keyword.compare("trim_win"))
+        {
+            ld->add_diff_option_comment("trim_win", "trim");
+            tmpval = ld->add_option_to_table("trim", true);
+        }
+        
+        else if(!keyword.compare("trim_mss"))
+        {
+            ld->add_diff_option_comment("trim_mss", "trim");
+            tmpval = ld->add_option_to_table("trim", true);
+        }
 
         else if(!keyword.compare("ecn"))
         {
-            if (data_stream >> value)
-                set_ecn_w_comment("ecn " + value);
+            if (util::get_string(data_stream, value, " ,"))
+                ld->add_option_to_table("ecn", value);
             else
-                retval = false;
+                tmpval = false;
+        }
+
+        else if (!keyword.compare("allow"))
+        {
+            // loop until we break or reach end of stream
+            while (util::get_string(data_stream, keyword, " ,"))
+            {
+                int pos = data_stream.tellg();
+
+                if (!keyword.compare("sack"))
+                    ld->add_list_to_table("allow_names", "sack");
+
+                else if (!keyword.compare("echo"))
+                    ld->add_list_to_table("allow_names", "echo");
+
+                else if (!keyword.compare("partial_order"))
+                    ld->add_list_to_table("allow_names", "partial_order");
+
+                else if (!keyword.compare("conn_count"))
+                    ld->add_list_to_table("allow_names", "conn_count");
+
+                else if (!keyword.compare("alt_checksum"))
+                    ld->add_list_to_table("allow_names", "alt_checksum");
+
+                else if (!keyword.compare("md5"))
+                    ld->add_list_to_table("allow_names", "md5");
+
+                else if (isdigit(keyword[0]))
+                    ld->add_list_to_table("allow_codes", keyword);
+
+                else
+                {
+                    data_stream.seekg(pos);
+                    break;
+                }
+            }
         }
 
         else
+            retval = false;
+
+        if (retval && !tmpval)
             retval = false;
     }
 
@@ -284,3 +324,5 @@ static const ConvertMap preprocessor_norm_tcp =
 };
 
 const ConvertMap* normalizer_tcp_map = &preprocessor_norm_tcp;
+
+} // namespace preprocessors

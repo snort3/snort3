@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config_event_queue.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config_event_queue.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace config
 {
@@ -48,21 +48,48 @@ bool EventQueue::convert(std::istringstream& data_stream)
 
     ld->open_table("event_queue");
 
-    while (data_stream >> keyword)
+    while (util::get_string(data_stream, keyword, ", "))
     {
         bool tmpval = true;
 
-        if (!keyword.compare("max_queue"))
-            tmpval = parse_int_option("max_queue", data_stream);
+
+        if (!keyword.compare("process_all_events"))
+            tmpval = ld->add_option_to_table("process_all_events", true);
+
+        else if (!keyword.compare("max_queue"))
+        {
+            std::string val;
+
+            if(util::get_string(data_stream, val, ", "))
+                tmpval = ld->add_option_to_table("max_queue", std::stoi(val));
+            else
+                tmpval = false;
+        }
 
         else if (!keyword.compare("log"))
-            tmpval = parse_int_option("log", data_stream);
+        {
+            std::string val;
+
+            if(util::get_string(data_stream, val, ", "))
+                tmpval = ld->add_option_to_table("log", std::stoi(val));
+            else
+                tmpval = false;
+        }
 
         else if (!keyword.compare("order_events"))
-            tmpval = parse_string_option("order_events", data_stream);
+        {
+            std::string val;
+            if(util::get_string(data_stream, val, ", "))
+                tmpval = ld->add_option_to_table("order_events", val);
+            else
+                tmpval = false;
+        }
 
-        if (retval)
-            retval = tmpval;
+        else
+            tmpval = false;
+
+        if (retval && !tmpval)
+            retval = false;
     }
 
     return retval;

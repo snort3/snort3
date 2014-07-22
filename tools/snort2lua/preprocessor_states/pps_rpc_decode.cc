@@ -17,15 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_rpc_decode.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_rpc_decode.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 #include <string>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -43,36 +46,29 @@ bool RpcDecode::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;
-    std::string port_list = "";
+    std::string port_list = std::string();
     std::string keyword;
-    int i_val;
 
     ld->open_table("rpc_decode");
-
-    // parse the port list first.
-    while(data_stream >> i_val)
-        port_list += ' ' + std::to_string(i_val);
-
-    util::ltrim(port_list);
-    ld->add_option_to_table("--ports", port_list);
-    data_stream.clear();  // necessary since badbit() is set
     
     while(data_stream >> keyword)
     {
         bool tmpval = true;
 
-        
         if(!keyword.compare("no_alert_multiple_requests"))
-            ld->add_deprecated_comment("no_alert_multiple_requests");
+            ld->add_deleted_comment("no_alert_multiple_requests");
 
         else if(!keyword.compare("alert_fragments"))
-            ld->add_deprecated_comment("alert_fragments");
+            ld->add_deleted_comment("alert_fragments");
 
         else if(!keyword.compare("no_alert_large_fragments"))
-            ld->add_deprecated_comment("no_alert_large_fragments");
+            ld->add_deleted_comment("no_alert_large_fragments");
 
         else if(!keyword.compare("no_alert_incomplete"))
-            ld->add_deprecated_comment("no_alert_incomplete");
+            ld->add_deleted_comment("no_alert_incomplete");
+
+        else if (isdigit(keyword[0]))
+            port_list += ' ' + keyword;
 
         else
             tmpval = false;
@@ -80,6 +76,9 @@ bool RpcDecode::convert(std::istringstream& data_stream)
         if (retval)
             retval = tmpval;
     }
+
+    if (!port_list.empty())
+        ld->add_comment_to_table("add port to binding --> " + port_list);
 
     return retval;   
 }
@@ -100,3 +99,5 @@ static const ConvertMap preprocessor_rpc_decode =
 };
 
 const ConvertMap* rpc_decode_map = &preprocessor_rpc_decode;
+
+} // namespace preprocessors

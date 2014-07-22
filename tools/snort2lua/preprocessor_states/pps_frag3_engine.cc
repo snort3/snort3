@@ -17,14 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_frag3_engine.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_frag3_engine.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -90,7 +93,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             tmpval = parse_string_option("policy", data_stream);
 
         else if(!keyword.compare("detect_anomalies"))
-            ld->add_deprecated_comment("detect_anomalies");
+            ld->add_deleted_comment("detect_anomalies");
 
         else if(!keyword.compare("bind_to"))
             parse_ip_list("bind_to", data_stream);
@@ -139,3 +142,5 @@ static const ConvertMap preprocessor_frag3_engine =
 };
 
 const ConvertMap* frag3_engine_map = &preprocessor_frag3_engine;
+
+} // namespace preprocessors

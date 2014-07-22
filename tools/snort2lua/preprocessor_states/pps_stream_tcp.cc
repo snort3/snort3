@@ -17,14 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// config.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -38,104 +41,120 @@ public:
 private:
     bool parse_small_segments(std::istringstream& data_stream);
     bool parse_ports(std::istringstream& data_stream);
+    bool parse_protocol(std::istringstream& data_stream);
 };
 
 } // namespace
 
-bool StreamTcp::parse_small_segments(std::istringstream& data_stream)
+bool StreamTcp::parse_small_segments(std::istringstream& stream)
 {
-    std::string s_val;
-    int i_val;
+    int consec_segs;
+    std::string bytes;
+    int min_bytes;
+    std::string ignore_ports;
 
-    if (!(data_stream >> i_val))
+    if (!(stream >> consec_segs) ||
+        !(stream >> bytes) ||
+        bytes.compare("bytes") ||
+        !(stream >> min_bytes))
         return false;
+
+
 
     ld->open_table("small_segments");
-    ld->add_option_to_table("count", i_val);
-    ld->close_table();
-
-    if (!(data_stream >> s_val))
-        return false;
-
-    if (!s_val.compare(",") || s_val.compare("bytes"))
-        return false;
-
-    if(!(data_stream >> i_val))
-        return false;
-
-    ld->open_table("small_segments");
-    ld->add_option_to_table("maximum_size", i_val);
+    ld->add_option_to_table("count", consec_segs);
+    ld->add_option_to_table("maximum_size", min_bytes);
     ld->close_table();
 
 
-    if (!(data_stream >> s_val))
-        return false;
-
-    // if the next string is either a comma, end of command
-    if (!s_val.compare(","))
+    if (!(stream >> ignore_ports))
         return true;
 
     // otherwise the next argument MUST be ignore_ports
-    if (s_val.compare("ignore_ports"))
+    if (ignore_ports.compare("ignore_ports"))
         return false;
 
 
     ld->open_table("small_segments");
+    long long port;
 
-    while(data_stream >> s_val && (s_val.back() != ','))
-        ld->add_list_to_table("ignore_ports", s_val);
-
-    if (!s_val.empty())
-    {
-        s_val.pop_back();
-        ld->add_list_to_table("ignore_ports", s_val);
-    }
+    // extracting into an int since thats what they should be!
+    while(stream >> port)
+        ld->add_list_to_table("ignore_ports", std::to_string(port));
 
     ld->close_table();
+
+    if (!stream.eof())
+        return false;
     return true;
 }
 
 
-bool StreamTcp::parse_ports(std::istringstream& data_stream)
+bool StreamTcp::parse_ports(std::istringstream& stream)
 {
     std::string s_val;
+    std::string dir;
     std::string opt_name;
     bool retval = true;
 
-    if(!(data_stream >> opt_name))
+    if(!(stream >> dir))
         return false;
 
-    if( !opt_name.compare("client"))
-    {
-        ld->add_diff_option_comment("port client", "client_ports");
+    if( !dir.compare("client"))
         opt_name = "client_ports";
-    }
-    else if( !opt_name.compare("server"))
-    {
-        ld->add_diff_option_comment("port server", "server_ports");
+
+    else if( !dir.compare("server"))
         opt_name = "server_ports";
-    }
-    else if( !opt_name.compare("both"))
-    {
-        ld->add_diff_option_comment("port both", "both_ports");
+
+    else if( !dir.compare("both"))
         opt_name = "both_ports";
-    }
 
     else
         return false;
 
-    while(data_stream >> s_val && (s_val.back() != ','))
+
+    while(stream >> s_val)
         retval = ld->add_list_to_table(opt_name, s_val) && retval;
 
-    if (!s_val.empty())
-    {
-        s_val.pop_back();
-        ld->add_list_to_table(opt_name, s_val);
-    }
 
+    ld->add_diff_option_comment("port " + dir, opt_name);
     return retval;
 }
 
+bool StreamTcp::parse_protocol(std::istringstream& stream)
+{
+    std::string dir;
+    std::string lua_dir;
+    std::string protocol;
+    bool tmpval = true;
+
+    // this may seem idiotic, but Snort does not actually require
+    // any keywords for the 'protocol' keyword.  So, this is
+    // still technically correct.
+    if (!(stream >> dir))
+        return true;
+
+
+    if (!dir.compare("client"))
+        lua_dir = "client_protocols";
+
+    else if (!dir.compare("server"))
+        lua_dir = "server_protocols";
+
+    else if (!dir.compare("both"))
+        lua_dir = "both_protocols";
+
+    else
+        return false;
+
+    // TODO: update funcitnoality if Snort++ StreamTcpModule is updated
+
+    while (stream >> protocol)
+        tmpval = ld->add_list_to_table(lua_dir, protocol) && tmpval;
+
+    ld->add_diff_option_comment("protocol " + dir, lua_dir);
+    return true;
+}
 
 bool StreamTcp::convert(std::istringstream& data_stream)
 {
@@ -144,95 +163,105 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     ld->open_table("stream_tcp");
 
-    while(data_stream >> keyword)
+
+    while(util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
+        std::istringstream arg_stream(keyword);
 
-        if(keyword.back() == ',')
-            keyword.pop_back();
-        
-        if(keyword.empty())
-            continue;
+        // should be gauranteed to happen.  Checking for error just cause
+        if (!(arg_stream >> keyword))
+            tmpval = false;
 
-        if(!keyword.compare("policy"))
-            tmpval = parse_string_option("policy", data_stream);
 
-        else if(!keyword.compare("overlap_limit"))
-            tmpval = parse_int_option("overlap_limit", data_stream);
 
-        else if(!keyword.compare("max_window"))
-            tmpval = parse_int_option("max_window", data_stream);
+        if (!keyword.compare("policy"))
+            tmpval = parse_string_option("policy", arg_stream);
 
-        else if(!keyword.compare("require_3whs"))
-            tmpval = parse_int_option("require_3whs", data_stream);
+        else if (!keyword.compare("overlap_limit"))
+            tmpval = parse_int_option("overlap_limit", arg_stream);
 
-        else if(!keyword.compare("small_segments"))
-            tmpval = parse_small_segments(data_stream);
+        else if (!keyword.compare("max_window"))
+            tmpval = parse_int_option("max_window", arg_stream);
 
-        else if(!keyword.compare("ignore_any_rules"))
+        else if (!keyword.compare("require_3whs"))
+            tmpval = parse_int_option("require_3whs", arg_stream, false);
+
+        else if (!keyword.compare("small_segments"))
+            tmpval = parse_small_segments(arg_stream);
+
+        else if (!keyword.compare("ignore_any_rules"))
             tmpval = ld->add_option_to_table("ignore_any_rules", true);
 
-        else if(!keyword.compare("ports"))
-            tmpval = parse_ports(data_stream);
+        else if (!keyword.compare("ports"))
+            tmpval = parse_ports(arg_stream);
 
-        else if(!keyword.compare("detect_anomalies"))
-            ld->add_deprecated_comment("detect_anomalies");
+        else if (!keyword.compare("detect_anomalies"))
+            ld->add_deleted_comment("detect_anomalies");
 
-        else if(!keyword.compare("dont_store_large_packets"))
-            ld->add_deprecated_comment("dont_store_large_packets");
+        else if (!keyword.compare("dont_store_large_packets"))
+            ld->add_deleted_comment("dont_store_large_packets");
 
-        else if(!keyword.compare("check_session_hijacking"))
-            ld->add_deprecated_comment("check_session_hijacking");
+        else if (!keyword.compare("check_session_hijacking"))
+            ld->add_deleted_comment("check_session_hijacking");
 
-        else if(!keyword.compare("bind_to"))
+        else if (!keyword.compare("flush_factor"))
+            tmpval = parse_int_option("flush_factor", arg_stream);
+
+        else if(!keyword.compare("protocol"))
+            tmpval = parse_protocol(arg_stream);
+
+        else if (!keyword.compare("bind_to"))
         {
             ld->add_diff_option_comment("bind_to", "bindings");
-            if(!(data_stream >> keyword))
+            if (!eat_option(arg_stream))
                 tmpval = false;
         }
 
-        else if(!keyword.compare("dont_reassemble_async"))
+        else if (!keyword.compare("dont_reassemble_async"))
         {
             ld->add_diff_option_comment("dont_reassemble_async", "reassemble_async");
             tmpval = ld->add_option_to_table("reassemble_async", false);
         }
 
-        else if(!keyword.compare("use_static_footprint_sizes"))
+        else if (!keyword.compare("use_static_footprint_sizes"))
         {
             ld->add_diff_option_comment("footprint", "use_static_footprint_sizes");
             tmpval = ld->add_option_to_table("footprint", true);
         }
 
-        else if(!keyword.compare("timeout"))
+        else if (!keyword.compare("timeout"))
         {
             ld->add_diff_option_comment("timeout", "session_timeout");
-            tmpval = parse_int_option("session_timeout", data_stream);
+            tmpval = parse_int_option("session_timeout", arg_stream);
         }
 
-        else if(!keyword.compare("max_queued_segs"))
+        else if (!keyword.compare("max_queued_segs"))
         {
             ld->add_diff_option_comment("max_queued_segs", "queue_limit.max_segments");
             ld->open_table("queue_limit");
-            tmpval = parse_int_option("max_segments", data_stream);
+            tmpval = parse_int_option("max_segments", arg_stream);
             ld->close_table();
         }
 
-        else if(!keyword.compare("max_queued_bytes"))
+        else if (!keyword.compare("max_queued_bytes"))
         {
             ld->add_diff_option_comment("max_queued_bytes", "queue_limit.max_bytes");
             ld->open_table("queue_limit");
-            tmpval = parse_int_option("max_bytes", data_stream);
+            tmpval = parse_int_option("max_bytes", arg_stream);
             ld->close_table();
         }
 
         else
+        {
             tmpval = false;
+        }
 
-        if (retval)
-            retval = tmpval;
+        if (retval && !tmpval)
+            retval = false;
     }
 
-    return retval;    
+    return retval;
 }
 
 /**************************
@@ -251,3 +280,5 @@ static const ConvertMap preprocessor_stream_tcp =
 };
 
 const ConvertMap* stream_tcp_map = &preprocessor_stream_tcp;
+
+} // namespace preprocessors

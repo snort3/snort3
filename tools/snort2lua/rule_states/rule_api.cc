@@ -17,12 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rule_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <string>
 #include "rule_states/rule_api.h"
-#include "util/util.h"
-#include "util/converter.h"
+#include "utils/snort2lua_util.h"
+#include "utils/converter.h"
 
 namespace rules
 {
@@ -61,6 +61,7 @@ extern const ConvertMap* msg_map;
 extern const ConvertMap* pcre_map;
 extern const ConvertMap* pkt_data_map;
 extern const ConvertMap* react_map;
+extern const ConvertMap* priority_map;
 extern const ConvertMap* protected_content_map;
 extern const ConvertMap* reference_map;
 extern const ConvertMap* replace_map;
@@ -116,6 +117,7 @@ const std::vector<const ConvertMap*> rule_api =
     msg_map,
     pcre_map,
     pkt_data_map,
+    priority_map,
     protected_content_map,
     react_map,
     reference_map,
@@ -142,7 +144,7 @@ const std::vector<const ConvertMap*> rule_api =
 
 #if 0
 
-extern const BaseApi* ips_so;
-extern const BaseApi* ips_raw_data;
+ extern const BaseApi* ips_so;
+ extern const BaseApi* ips_raw_data;
 
 #endif

@@ -17,14 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_sfportscan.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// pps_sfportscan.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
+
+namespace preprocessors
+{
 
 namespace {
 
@@ -145,13 +148,17 @@ bool PortScan::convert(std::istringstream& data_stream)
             tmpval = ld->add_option_to_table("include_midstream", true);
 
         else if(!keyword.compare("disabled"))
-            ld->add_deprecated_comment("disabled");
+            ld->add_deleted_comment("disabled");
 
         else if(!keyword.compare("detect_ack_scans"))
-            ld->add_deprecated_comment("detect_ack_scans");
+            ld->add_deleted_comment("detect_ack_scans");
 
         else if(!keyword.compare("logfile"))
-            ld->add_deprecated_comment("logfile");
+        {
+            if (!util::get_string(data_stream, keyword, "}"))
+                tmpval = false;
+            ld->add_deleted_comment("logfile");
+        }
 
         else if(!keyword.compare("memcap"))
             tmpval = add_portscan_global_option("memcap", data_stream);
@@ -171,7 +178,8 @@ bool PortScan::convert(std::istringstream& data_stream)
         else
             tmpval = false;
 
-        tmpval = retval && tmpval;
+        if (retval)
+            retval = tmpval;
     }
 
 
@@ -196,3 +204,5 @@ static const ConvertMap preprocessor_sfportscan =
 };
 
 const ConvertMap* sfportscan_map = &preprocessor_sfportscan;
+
+} // namespace preprocessors

@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rule_base64_decode.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// rule_base64_decode.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
+#include "utils/converter.h"
 #include "rule_states/rule_api.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 namespace rules
 {
@@ -48,33 +48,41 @@ bool Base64Decode::convert(std::istringstream& data_stream)
     std::string args;
     std::string tmp;
     int pos = data_stream.tellg();
-    bool retval;
+    bool retval = true;
 
-    // a colon should have already been parsed when retrieving the keyword.
-    // Therefore, if a semicolon is present, we are in the next rule option.
     args = util::get_rule_option_args(data_stream);
-    if (args.find(":") != std::string::npos)
-    {
-        retval = ld->add_rule_option("base64_decode");
-        data_stream.seekg(pos);
-        return set_next_rule_state(data_stream);
-    }
 
-    // since we still can't be sure if we passed the base64_decode buffer,
-    // check the next option and ensure it matches
-    std::istringstream(args) >> tmp;
-    if (!tmp.compare("bytes") ||
-        !tmp.compare("offset") ||
-        !tmp.compare("relative"))
+    // if there are no arguments, the option had a colon before a semicolon.
+    // we are therefore done with this rule.
+    if (!args.empty())
     {
-        retval = ld->add_rule_option("base64_decode", args);
-    }
-    else
-    {
-        data_stream.seekg(pos);
-        retval = ld->add_rule_option("base64_decode");
-    }
+        // a colon will have been parsed when retrieving the keyword.
+        // Therefore, if a colon is present, we are in the next rule option.
+        if (args.find(":") != std::string::npos)
+        {
+            retval = ld->add_rule_option("base64_decode");
+            data_stream.seekg(pos);
+        }
+        else
+        {
+            // since we still can't be sure if we passed the base64_decode buffer,
+            // check the next option and ensure it matches
+            std::istringstream arg_stream(args);
+            util::get_string(arg_stream, tmp, ", ");
 
+            if (!tmp.compare("bytes") ||
+                !tmp.compare("offset") ||
+                !tmp.compare("relative"))
+            {
+                retval = ld->add_rule_option("base64_decode", args) && retval;
+            }
+            else
+            {
+                data_stream.seekg(pos);
+                retval = ld->add_rule_option("base64_decode") && retval;
+            }
+        }
+    }
     return set_next_rule_state(data_stream) && retval;
 }
 

@@ -17,10 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_rule.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 #include "data/dt_rule.h"
+#include "data/dt_data.h"  // included for print mode
+#include "utils/snort2lua_util.h"
 
 
 Rule::Rule() :  num_hdr_data(0),
@@ -29,7 +31,7 @@ Rule::Rule() :  num_hdr_data(0),
 {
 }
 
-Rule::~Rule(){};
+Rule::~Rule(){}
 
 
 bool Rule::add_hdr_data(std::string data)
@@ -108,40 +110,47 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
 {
     bool first_line = true;
 
+    // don't print comment and tag in quiet mode
+    if (!LuaData::is_quiet_mode())
+    {
+        if (rule.is_bad_rule)
+            out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";
 
-    if (rule.is_bad_rule)
-        out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";
+        for (std::string s : rule.comments)
+            out << s << "\n";
+    }
 
-    for (std::string s : rule.comments)
-        out << s << "\n";
 
     if (rule.is_bad_rule || rule.is_comment)
         out << "#";
 
-    for(int i = 0; i < rule.num_hdr_data; i++)
+    for(std::size_t i = 0; i < rule.num_hdr_data; i++)
     {
         if (first_line)
             first_line = false;
         else
             out << " ";
 
-        out << rule.hdr_data[i];
+        std::string tmp = rule.hdr_data[i];
+        out << util::sanitize_lua_string(tmp);
     }
 
-    out << " (";
-    first_line = true;
-
-    for (auto* r : rule.options)
+    if (!rule.options.empty())
     {
-        if (first_line)
-            first_line = false;
-        else
-            out << ";";
-        out << " " << (*r);
+        out << " (";
+        first_line = true;
+
+        for (auto* r : rule.options)
+        {
+            if (first_line)
+                first_line = false;
+            else
+                out << ";";
+            out << " " << (*r);
+        }
+
+        out << " )";
     }
-
-    out << " )";
-
 
     return out;
 }

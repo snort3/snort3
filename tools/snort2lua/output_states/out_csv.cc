@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// out_csv.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// out_csv.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 namespace output
 {
@@ -47,8 +47,8 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     std::string val;
     bool retval = true;
     int limit;
-    char c;
-    std::string units;
+    char c = '\0';
+    std::string units = "B";
 
 
     ld->open_top_level_table("alert_csv");
@@ -70,7 +70,7 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         std::string new_val = std::string();
 
         if (!val.compare("default"))
-            ld->add_deprecated_comment("default");
+            ld->add_deleted_comment("default");
 
         else if (!val.compare("timestamp"))
             new_val = "timestamp";
@@ -172,6 +172,7 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     if (!(data_stream >> limit))
         return retval;
 
+    // default units is bytes.  set above
     if (data_stream >> c)
     {
         if (c == 'K' || c == 'k')
@@ -181,8 +182,6 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         else if (c == 'G' || c == 'g')
             units = "G";
     }
-    else
-        units = "B";
 
 
     retval = ld->add_option_to_table("limit", limit) && retval;

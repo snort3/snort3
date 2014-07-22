@@ -17,39 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// rd_suboption.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_option.h author Josh Rosenbaum <jrosenba@cisco.com>
+
+#ifndef DT_RULE_OPTION_H
+#define DT_RULE_OPTION_H
 
 #include <string>
+#include <vector>
+#include <iostream>
 
-#include "data/rule/rd_suboption.h"
+#include "data/dt_rule_suboption.h"
 
-
-RuleSubOption::RuleSubOption(std::string name)
-    :   name(name),
-        value(std::string()),
-        delimeter(':')
+class RuleOption
 {
-}
+public:
+    RuleOption(std::string name);
+    RuleOption(std::string name, std::string val);
+    virtual ~RuleOption();
 
-RuleSubOption::RuleSubOption(std::string name, std::string value, char delimeter)
-    :   name(name),
-        value(value),
-        delimeter(delimeter)
-{
-}
+    inline std::string get_name(){ return name; };
+
+    bool add_suboption(std::string name);
+    bool add_suboption(std::string name, std::string val, char delimeter);
+ 
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const RuleOption &);
+
+private:
+
+    std::string name;
+    std::string value;
+    std::vector<RuleSubOption*> sub_options;
 
 
-RuleSubOption::~RuleSubOption()
-{
-}
+};
 
-// overloading operators
-std::ostream &operator<<( std::ostream& out, const RuleSubOption& subopt)
-{
-    out << subopt.name;
 
-    if (!subopt.value.empty())
-        out << subopt.delimeter << subopt.value;
-
-    return out;
-}
+#endif

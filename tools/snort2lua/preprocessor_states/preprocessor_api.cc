@@ -17,10 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// preprocessor_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// preprocessor_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "preprocessor_states/preprocessor_api.h"
 
+namespace preprocessors
+{
 
 extern const ConvertMap *arpspoof_map;
 extern const ConvertMap *arpspoof_host_map;
@@ -29,6 +31,7 @@ extern const ConvertMap *frag3_engine_map;
 extern const ConvertMap *frag3_global_map;
 extern const ConvertMap *ftptelnet_map;
 extern const ConvertMap *ftptelnet_protocol_map;
+extern const ConvertMap *gtp_map;
 extern const ConvertMap *httpinspect_map;
 extern const ConvertMap *httpinspect_server_map;
 extern const ConvertMap *normalizer_icmp4_map;
@@ -39,7 +42,7 @@ extern const ConvertMap *normalizer_tcp_map;
 extern const ConvertMap *perfmonitor_map;
 extern const ConvertMap *rpc_decode_map;
 extern const ConvertMap *sfportscan_map;
-extern const ConvertMap *smtp_map;
+extern const ConvertMap *stream_ip_map;
 extern const ConvertMap *stream_global_map;
 extern const ConvertMap *stream_tcp_map;
 extern const ConvertMap *stream_udp_map;
@@ -55,6 +58,7 @@ const std::vector<const ConvertMap*> preprocessor_api =
     httpinspect_map,
     httpinspect_server_map,
     ftptelnet_protocol_map,
+    gtp_map,
     normalizer_icmp4_map,
     normalizer_icmp6_map,
     normalizer_ip4_map,
@@ -63,9 +67,11 @@ const std::vector<const ConvertMap*> preprocessor_api =
     perfmonitor_map,
     rpc_decode_map,
     sfportscan_map,
-    smtp_map,
+    stream_ip_map,
     stream_global_map,
     stream_tcp_map,
     stream_udp_map,
 //    nullptr,
 };
+
+} // namespace preprocessors

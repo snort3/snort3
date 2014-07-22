@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// keywords_api.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// keywords_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "keyword_states/keywords_api.h"
 
@@ -25,42 +25,62 @@
 namespace keywords
 {
 
-extern const ConvertMap *portvar_map;
-extern const ConvertMap *ipvar_map;
-extern const ConvertMap *var_map;
-extern const ConvertMap *output_map;
-extern const ConvertMap *config_map;
-extern const ConvertMap *preprocessor_map;
-extern const ConvertMap *include_map;
-extern const ConvertMap *supress_map;
-extern const ConvertMap* alert_map;
-extern const ConvertMap* log_map;
-extern const ConvertMap* pass_map;
-extern const ConvertMap* drop_map;
-extern const ConvertMap* reject_map;
-extern const ConvertMap* sdrop_map;
 extern const ConvertMap* activate_map;
+extern const ConvertMap* alert_map;
+extern const ConvertMap* block_map;
+extern const ConvertMap* config_map;
+extern const ConvertMap* drop_map;
 extern const ConvertMap* dynamic_map;
+extern const ConvertMap* dynamicdetection_map;
+extern const ConvertMap* dynamicengine_map;
+extern const ConvertMap* dynamicpreprocessor_map;
+extern const ConvertMap* dynamicsidechannel_map;
+extern const ConvertMap* event_filter_map;
+extern const ConvertMap* file_map;
+extern const ConvertMap* include_map;
+extern const ConvertMap* ipvar_map;
+extern const ConvertMap* log_map;
+extern const ConvertMap* output_map;
+extern const ConvertMap* pass_map;
+extern const ConvertMap* portvar_map;
+extern const ConvertMap* preprocessor_map;
+extern const ConvertMap* rate_filter_map;
+extern const ConvertMap* reject_map;
+extern const ConvertMap* rule_state_map;
+extern const ConvertMap* sblock_map;
+extern const ConvertMap* sdrop_map;
+extern const ConvertMap* supress_map;
+extern const ConvertMap* var_map;
 
 
 const std::vector<const ConvertMap*> keywords_api =
 {
-    portvar_map,
-    ipvar_map,
-    var_map,
-    output_map,
-    config_map,
-    preprocessor_map,
-    include_map,
-    supress_map,
-    alert_map,
-    log_map,
-    pass_map,
-    drop_map,
-    reject_map,
-    sdrop_map,
     activate_map,
+    alert_map,
+    block_map,
+    config_map,
+    drop_map,
     dynamic_map,
+    dynamicdetection_map,
+    dynamicengine_map,
+    dynamicpreprocessor_map,
+    dynamicsidechannel_map,
+    event_filter_map,
+    file_map,
+    include_map,
+    ipvar_map,
+    log_map,
+    output_map,
+    pass_map,
+    portvar_map,
+    preprocessor_map,
+    rate_filter_map,
+    reject_map,
+    rule_state_map,
+    sblock_map,
+    sdrop_map,
+    supress_map,
+    var_map,
 };
 
 

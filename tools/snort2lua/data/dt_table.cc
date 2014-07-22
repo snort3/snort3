@@ -17,9 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_table.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_table.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "data/dt_table.h"
+#include "data/dt_data.h"  // to check for print mode
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {
@@ -165,17 +166,21 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
         out << whitespace << t.name << " = " << std::endl;
     out << whitespace << '{' << std::endl;
 
-    if (!t.comments->empty())
+    if (!t.comments->empty() && !LuaData::is_quiet_mode())
         out << (*t.comments) << std::endl;
 
-    for (Option* o : t.options)
-        out << (*o) << ',' << std::endl;
+    // if we only want differences, don't print data
+    if (!LuaData::is_difference_mode())
+    {
+        for (Option* o : t.options)
+            out << (*o) << ",\n";
 
-    for (Variable* v : t.lists)
-        out << (*v) << ',' << std::endl;
+        for (Variable* v : t.lists)
+            out << (*v) << ",\n";
+    }
 
     for (Table* sub_t : t.tables)
-        out << (*sub_t) << ',' << std::endl;
+        out << (*sub_t) << ",\n";
 
     // don't add a comma if the depth is zero
     if(t.depth == 0)

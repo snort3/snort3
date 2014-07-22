@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// kws_suppress.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// kws_suppress.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "util/converter.h"
-#include "util/util.h"
+#include "utils/converter.h"
+#include "utils/snort2lua_util.h"
 
 
 namespace keywords
@@ -38,42 +38,88 @@ public:
     Suppress(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
     virtual ~Suppress() {};
     virtual bool convert(std::istringstream& data);
+
+private:
+    bool parse_ip_list(std::istringstream& arg_stream, std::istringstream& data_stream);
 };
 
 } // namespace
 
+static inline int check_list(std::string listToCheck)
+{
+    int brackets = 0;
+
+    for (char& c : listToCheck)
+    {
+        if (c == '[')
+            brackets++;
+
+        else if (c == ']')
+            brackets--;
+    }
+
+    return brackets;
+}
+
+bool Suppress::parse_ip_list(std::istringstream& arg_stream, std::istringstream& data_stream)
+{
+    std::string tmp;
+    int list = 0;
+
+    // will automatically extract entire string since originally delineated on comma
+    std::getline(arg_stream, tmp, ',');
+    std::string fullIpList = util::trim(tmp);
+    list = check_list(tmp);
+
+
+    while (list > 0)
+    {
+        fullIpList += ",";
+        std::getline(data_stream, tmp, ',');
+        list += check_list(tmp);
+        fullIpList += tmp;
+    }
+
+    if (arg_stream.bad() && data_stream.bad())
+        return false;
+
+    ld->add_option_to_table("ip", fullIpList);
+    return true;
+}
 
 bool Suppress::convert(std::istringstream& data_stream)
 {
     bool retval = true;
-    std::string keyword;
+    std::string args;
 
     ld->open_table("suppress");
     ld->add_diff_option_comment("gen_id", "gid");
     ld->add_diff_option_comment("sig_id", "sid");
     ld->open_table();
 
-    while(data_stream >> keyword)
+    while(std::getline(data_stream, args, ','))
     {
+        std::string keyword;
+        std::istringstream arg_stream(args);
         bool tmpval = true;
 
-        if(keyword.back() == ',')
-            keyword.pop_back();
+        arg_stream >> keyword;
+
 
         if(keyword.empty())
             continue;
 
-        if (!keyword.compare("track"))
-            tmpval = parse_string_option("track", data_stream);
+        else if (!keyword.compare("track"))
+            tmpval = parse_string_option("track", arg_stream);
 
         else if (!keyword.compare("ip"))
-            tmpval = parse_string_option("ip", data_stream);
+            tmpval = parse_ip_list(arg_stream, data_stream);
 
         else if(!keyword.compare("gen_id"))
-            tmpval = parse_int_option("gid", data_stream);
+            tmpval = parse_int_option("gid", arg_stream);
 
         else if (!keyword.compare("sig_id"))
-            tmpval = parse_int_option("sid", data_stream);
+            tmpval = parse_int_option("sid", arg_stream);
 
         else
             tmpval = false;

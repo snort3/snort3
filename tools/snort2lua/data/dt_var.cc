@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_var.cc author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_var.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "data/dt_var.h"
-#include "util/util.h"
+#include "utils/snort2lua_util.h"
 
 Variable::Variable(std::string name, int depth)
 {
@@ -34,7 +34,7 @@ Variable::Variable(std::string name)
     this->depth = 0;
 }
 
-Variable::~Variable(){};
+Variable::~Variable(){}
 
 // does this need a new variable?
 bool Variable::add_value(std::string elem)
@@ -80,7 +80,9 @@ bool Variable::add_value(std::string elem)
     return true;
 }
 
-static inline void print_newline(std::ostream& out, int& count, std::string whitespace)
+static inline void print_newline(std::ostream& out,
+                                 std::size_t& count,
+                                 std::string whitespace)
 {
     out << "\n" << whitespace;
     count = whitespace.size();
@@ -90,7 +92,7 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
 {
     std::string whitespace;
     bool first_var = true;
-    int count = 0;
+    std::size_t count = 0;
 
     for(int i = 0; i < var.depth; i++)
         whitespace += "    ";
@@ -137,13 +139,13 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
                 print_newline(out, count, whitespace);
 
 
-            util::sanitize_multi_line_string(v->data);
+            util::sanitize_lua_string(v->data);
             out << "[[ ";
             count += 3;
 
 
-            int printed_length = 0;
-            int str_size = v->data.size();
+            std::size_t printed_length = 0;
+            std::size_t str_size = v->data.size();
             bool first_loop = true;
 
             while (printed_length < str_size)
@@ -159,12 +161,21 @@ std::ostream& operator<<( std::ostream& out, const Variable &var)
 
 
                 std::string tmp = v->data.substr(printed_length);
-                int remaining_space = var.max_line_length - count;
-                int str_len = util::get_substr_length(tmp, remaining_space);
-                out << tmp.substr(0, str_len);
 
-                count += str_len;
-                printed_length += str_len;
+                if (var.max_line_length < count)
+                {
+                    out << "FATAL ERROR: dt_var.cc - underflow! was "
+                            "not reset" << std::endl;
+                }
+                else
+                {
+                    std::size_t remaining_space = var.max_line_length - count;
+                    std::size_t str_len = util::get_substr_length(tmp, remaining_space);
+                    out << tmp.substr(0, str_len);
+
+                    count += str_len;
+                    printed_length += str_len;
+                }
             }
 
             out << " ]]";

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_rule.h author Josh Rosenbaum <jorosenba@cisco.com>
+// dt_rule.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef DT_RULE_H
 #define DT_RULE_H
@@ -28,7 +28,7 @@
 #include <iostream>
 #include <array>
 
-#include "data/rule/rd_option.h"
+#include "data/dt_rule_option.h"
 
 class Rule
 {
@@ -53,7 +53,7 @@ private:
     std::vector<std::string> comments;
     std::array<std::string, 7> hdr_data;
     std::vector<RuleOption*> options;
-    int num_hdr_data;
+    std::size_t num_hdr_data;
     bool is_bad_rule;
     bool is_comment;
 };
