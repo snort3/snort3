@@ -49,9 +49,9 @@ static void replace_parse(const char* args, string& s)
     char tmp_buf[MAX_PATTERN_SIZE];
 
     /* got enough ptrs for you? */
-    char *start_ptr;
-    char *end_ptr;
-    char *idx;
+    const char *start_ptr;
+    const char *end_ptr;
+    const char *idx;
     const char *dummy_idx;
     const char *dummy_end;
     char hex_buf[3];
@@ -97,9 +97,6 @@ static void replace_parse(const char* args, string& s)
                    "in quotation marks (\")");
         return;
     }
-
-    /* set the end to be NULL */
-    *end_ptr = '\0';
 
     /* how big is it?? */
     size = end_ptr - start_ptr;
