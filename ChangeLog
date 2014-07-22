@@ -3,6 +3,7 @@
 -- removed ips option sameip which was obsoleted by 116:152
 -- content args offset, depth, distance, and within must be followed by a
    space not a colon
+-- latest snort2lua updates from josh
 
 102
 -- moved stats (peg counts) to module
