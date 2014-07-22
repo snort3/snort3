@@ -528,12 +528,12 @@ static void parse_content(PatternMatchData* ds_idx, const char* rule)
     char tmp_buf[MAX_PATTERN_SIZE];
 
     /* got enough ptrs for you? */
-    char *start_ptr;
-    char *end_ptr;
-    char *idx;
-    char *dummy_idx;
-    char *dummy_end;
-    char *tmp;
+    const char *start_ptr;
+    const char *end_ptr;
+    const char *idx;
+    const char *dummy_idx;
+    const char *dummy_end;
+    const char *tmp;
     char hex_buf[3];
     u_int dummy_size = 0;
     int size;
@@ -573,9 +573,6 @@ static void parse_content(PatternMatchData* ds_idx, const char* rule)
 
     if (end_ptr == NULL)
         ParseError("Content data needs to be enclosed in quotation marks (\")");
-
-    /* Move the null termination up a bit more */
-    *end_ptr = '\0';
 
     /* Is there anything other than whitespace after the trailing
      * double quote? */
