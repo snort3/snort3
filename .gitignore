@@ -58,3 +58,4 @@ ylwrap
 *snort.alert*
 *snort.out*
 *snort.log*
+*.lck

@@ -30,10 +30,10 @@
 namespace checksum
 {
 
-uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum)
+uint16_t cksum_add(const uint16_t *buf, std::size_t len, uint32_t cksum)
 {
     uint16_t *sp = (uint16_t *)buf;
-    int n, sn;
+    std::size_t n, sn;
 
     if (len > 1 )
     {
@@ -110,7 +110,8 @@ uint16_t cksum_add(const uint16_t *buf, size_t len, uint32_t cksum)
 }
 
 
-static inline void add_ipv4_pseudoheader(const uint16_t *h, uint32_t &cksum)
+static inline void add_ipv4_pseudoheader(const uint16_t *h,
+                                         uint32_t &cksum)
 {
     /* ipv4 pseudo header must have 12 bytes */
     cksum += h[0];
@@ -122,7 +123,8 @@ static inline void add_ipv4_pseudoheader(const uint16_t *h, uint32_t &cksum)
 }
 
 
-static inline void add_ipv6_pseudoheader(const uint16_t *h, uint32_t &cksum)
+static inline void add_ipv6_pseudoheader(const uint16_t *h,
+                                         uint32_t &cksum)
 {
    /* PseudoHeader must have 36 bytes */
    cksum += h[0];
@@ -147,7 +149,7 @@ static inline void add_ipv6_pseudoheader(const uint16_t *h, uint32_t &cksum)
 
 
 static inline void add_tcp_header(const uint16_t* &d,
-                                    size_t &len,
+                                    std::size_t &len,
                                     uint32_t &cksum)
 {
     /* TCP hdr must have 20 hdr bytes */
@@ -179,8 +181,8 @@ static inline void add_udp_header(const uint16_t* &d,
 }
 
 static inline void add_ip_header(const uint16_t* &d,
-                                    size_t &len,
-                                    uint32_t &cksum)
+                                 std::size_t &len,
+                                 uint32_t &cksum)
 {
     /* IP must be >= 20 bytes */
     cksum += d[0];
@@ -198,7 +200,9 @@ static inline void add_ip_header(const uint16_t* &d,
 }
 
  
-uint16_t icmp_cksum(const uint16_t *buf, size_t len, Pseudoheader6* ph)
+uint16_t icmp_cksum(const uint16_t *buf,
+                    std::size_t len,
+                    Pseudoheader6* ph)
 {
     uint32_t cksum = 0;
 
@@ -212,7 +216,9 @@ uint16_t icmp_cksum(const uint16_t *buf, size_t len)
 }
 
 
-uint16_t tcp_cksum(const uint16_t *h, size_t len, Pseudoheader *ph )
+uint16_t tcp_cksum(const uint16_t *h,
+                   std::size_t len,
+                   Pseudoheader *ph )
 {
     uint32_t cksum = 0;
 
@@ -222,7 +228,9 @@ uint16_t tcp_cksum(const uint16_t *h, size_t len, Pseudoheader *ph )
 }
 
 
-uint16_t tcp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph )
+uint16_t tcp_cksum(const uint16_t *buf,
+                   std::size_t len,
+                   Pseudoheader6 *ph )
 {
     uint32_t cksum = 0;
 
@@ -232,7 +240,9 @@ uint16_t tcp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph )
 }
 
 
-uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader *ph )
+uint16_t udp_cksum(const uint16_t *buf,
+                   std::size_t len,
+                   Pseudoheader *ph )
 {
     uint32_t cksum = 0;
 
@@ -242,7 +252,9 @@ uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader *ph )
 }
 
 
-uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph )
+uint16_t udp_cksum(const uint16_t *buf,
+                   std::size_t len,
+                   Pseudoheader6 *ph )
 {
     uint32_t cksum = 0;
 
@@ -251,7 +263,7 @@ uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph )
     return cksum_add(buf, len, cksum);
 }
 
-uint16_t ip_cksum(const uint16_t *buf, size_t len)
+uint16_t ip_cksum(const uint16_t *buf, std::size_t len)
 {
     uint32_t cksum = 0;
 
@@ -259,7 +271,7 @@ uint16_t ip_cksum(const uint16_t *buf, size_t len)
     return cksum_add(buf, len, cksum);
 }
 
-uint16_t cksum_add(const uint16_t *buf, size_t len)
+uint16_t cksum_add(const uint16_t *buf, std::size_t len)
 {
     return cksum_add(buf, len, 0);
 }

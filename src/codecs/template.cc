@@ -70,18 +70,18 @@ struct NameHdr
 } // namespace
 
 
-void NameCodec::get_data_link_type(std::vector<int>&v)
+void NameCodec::get_data_link_type(std::vector<int>&/*v*/)
 {
 //    v.push_back(DLT_ID);
 }
 
-void NameCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void NameCodec::get_protocol_ids(std::vector<uint16_t>&/*v*/)
 {
 //    v.push_back(PROTO_TYPE);
 }
 
-bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t& /*raw_len*/,
+        Packet* /*p*/, uint16_t& lyr_len, uint16_t& next_prot_id)
 {
     // reinterpret the raw data into this codec's data format
     const NameHdr *hdr = reinterpret_cast<const NameHdr *>(raw_pkt);
@@ -120,12 +120,15 @@ bool NameCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
     return true;
 }
 
-bool NameCodec::update(Packet*, Layer*, uint32_t* len)
+bool NameCodec::update(Packet*, Layer*, uint32_t* /*len*/)
 {
     return true;
 }
 
-void NameCodec::format(EncodeFlags, const Packet* p, Packet* c, Layer*)
+void NameCodec::format(EncodeFlags,
+                       const Packet* /*p*/,
+                       Packet* /*c*/,
+                       Layer* /*l*/)
 {
 }
 
