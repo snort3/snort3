@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,44 +16,37 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// range.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef IPS_LUAJIT_H
-#define IPS_LUAJIT_H
+#ifndef RANGE_H
+#define RANGE_H
 
-#include <string>
-#include "framework/ips_option.h"
-#include "framework/module.h"
+// unfortunately, <> was implemented inconsistently.  eg:
+// dsize implements <> as ( a <= c && c <= b ) and
+// icode implements <> as ( a < c && c < b )
 
-class LuaJitModule : public Module
+// <> is implemented icode style but we add explicit options
+// <=> for dsize style and >< for icode style so rule options
+// can coerce <> if needed for backwards compatibility
+
+struct RangeCheck
 {
-public:
-    LuaJitModule();
+    enum Op
+    {
+        // =  !  <   <=  >   >=  <>  ><  <=>
+        EQ, NOT, LT, LE, GT, GE, LG, GL, LEG, MAX
+    };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    Op op;
+    long min;
+    long max;
 
-    ProfileStats* get_profile() const;
+    bool operator==(const RangeCheck&) const;
 
-public:
-    std::string args;
-};
-
-class LuaJITOption : public IpsOption
-{
-public:
-    LuaJITOption(const char* name, std::string& chunk, LuaJitModule*);
-    ~LuaJITOption();
-
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
-
-    int eval(Cursor&, Packet*);
-
-private:
-    void init(const char*, const char*);
-
-    std::string config;
-    struct lua_State** lua;
+    void init();
+    // FIXIT add ttl style syntax
+    bool parse(const char* s); 
+    bool eval(long);
 };
 
 #endif

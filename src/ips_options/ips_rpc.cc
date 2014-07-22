@@ -40,20 +40,12 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "rpc";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats rpcCheckPerfStats;
-
-static ProfileStats* rpc_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &rpcCheckPerfStats;
-
-    return nullptr;
-}
-#endif
 
 // This is driven by 64-bit Solaris which doesn't define _LONG
 #ifndef IXDR_GET_LONG
@@ -250,72 +242,91 @@ int RpcOption::eval(Cursor&, Packet *p)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter rpc_params[] =
+{
+    { "*app", Parameter::PT_STRING, nullptr, nullptr,
+      "application number" },
+
+    { "*ver", Parameter::PT_STRING, nullptr, nullptr,
+      "version number or * for any" },
+
+    { "*proc", Parameter::PT_STRING, nullptr, nullptr,
+      "procedure number or * for any" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class RpcModule : public Module
+{
+public:
+    RpcModule() : Module(s_name, rpc_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &rpcCheckPerfStats; };
+
+    RpcCheckData data;
+};
+
+bool RpcModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool RpcModule::set(const char*, Value& v, SnortConfig*)
+{
+    char* end;
+
+    if ( v.is("*app") )
+    {
+        data.program = strtoul(v.get_string(), &end, 0);
+        data.flags |= RPC_CHECK_PROG;
+    }
+    else if ( v.is("*ver") )
+    {
+        data.vers = strtoul(v.get_string(), &end, 0);
+        data.flags |= RPC_CHECK_VERS;
+    }
+    else if ( v.is("*proc") )
+    {
+        data.proc = strtoul(v.get_string(), &end, 0);
+        data.flags |= RPC_CHECK_PROC;
+    }
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-void rpc_parse(char *data, RpcCheckData *ds_ptr)
+static Module* mod_ctor()
 {
-    char *tmp = NULL;
-
-    ds_ptr->flags=0;
-
-    /* advance past whitespace */
-    while(isspace((int)*data)) data++;
-
-    if(*data != '*')
-    {
-        ds_ptr->program = strtoul(data,&tmp,0);
-        ds_ptr->flags|=RPC_CHECK_PROG;
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Set RPC program to %lu\n", ds_ptr->program););
-    }
-    else
-    {
-        ParseError("Invalid applicaion number in rpc rule option");
-        return;
-    }
-
-    if(*tmp == '\0') return;
-
-    data=++tmp;
-    if(*data != '*')
-    {
-        ds_ptr->vers = strtoul(data,&tmp,0);
-        ds_ptr->flags|=RPC_CHECK_VERS;
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Set RPC vers to %lu\n", ds_ptr->vers););
-    }
-    else
-    {
-        tmp++;
-    }
-    if(*tmp == '\0') return;
-    data=++tmp;
-    if(*data != '*')
-    {
-        ds_ptr->proc = strtoul(data,&tmp,0);
-        ds_ptr->flags|=RPC_CHECK_PROC;
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Set RPC proc to %lu\n", ds_ptr->proc););
-    }
+    return new RpcModule;
 }
 
-static IpsOption* rpc_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    RpcCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    rpc_parse(data, &ds_ptr);
-    return new RpcOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* rpc_ctor(Module* p, OptTreeNode*)
+{
+    RpcModule* m = (RpcModule*)p;
+    return new RpcOption(m->data);
 }
 
 static void rpc_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void rpc_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, rpc_get_profile);
-#endif
 }
 
 static const IpsApi rpc_api =
@@ -325,12 +336,12 @@ static const IpsApi rpc_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP|PROTO_BIT__UDP,
-    rpc_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

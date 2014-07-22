@@ -60,31 +60,18 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "icmp_seq";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats icmpSeqPerfStats;
-
-static ProfileStats* is_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &icmpSeqPerfStats;
-
-    return nullptr;
-}
-#endif
-
-typedef struct _IcmpSeqCheckData
-{
-    unsigned short icmpseq;
-
-} IcmpSeqCheckData;
 
 class IcmpSeqOption : public IpsOption
 {
 public:
-    IcmpSeqOption(const IcmpSeqCheckData& c) :
+    IcmpSeqOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -94,7 +81,7 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    IcmpSeqCheckData config;
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -104,11 +91,10 @@ private:
 uint32_t IcmpSeqOption::hash() const
 {
     uint32_t a,b,c;
-    const IcmpSeqCheckData *data = &config;
 
-    a = data->icmpseq;
-    b = 0;
-    c = 0;
+    a = config.op;
+    b = config.min;
+    c = config.max;
 
     mix_str(a,b,c,get_name());
     final(a,b,c);
@@ -122,88 +108,98 @@ bool IcmpSeqOption::operator==(const IpsOption& ips) const
         return false;
 
     IcmpSeqOption& rhs = (IcmpSeqOption&)ips;
-    IcmpSeqCheckData *left = (IcmpSeqCheckData*)&config;
-    IcmpSeqCheckData *right = (IcmpSeqCheckData*)&rhs.config;
-
-    if (left->icmpseq == right->icmpseq)
-    {
-        return true;
-    }
+    return ( config == rhs.config );
 
     return false;
 }
 
 int IcmpSeqOption::eval(Cursor&, Packet *p)
 {
-    IcmpSeqCheckData *icmpSeq = &config;
     PROFILE_VARS;
 
     if(!p->icmph)
-        return DETECTION_OPTION_NO_MATCH; /* if error occured while icmp header
-                   * was processed, return 0 automagically.  */
+        return DETECTION_OPTION_NO_MATCH;
 
     PREPROC_PROFILE_START(icmpSeqPerfStats);
 
-    if( (p->icmph->type == ICMP_ECHO || p->icmph->type == ICMP_ECHOREPLY)
-        || ((uint16_t)p->icmph->type == icmp6::Icmp6Types::ECHO || (uint16_t)p->icmph->type == icmp6::Icmp6Types::REPLY)
-      )
+    if ( (p->icmph->type == ICMP_ECHO ||
+          p->icmph->type == ICMP_ECHOREPLY) ||
+        ((uint16_t)p->icmph->type == icmp6::Icmp6Types::ECHO ||
+         (uint16_t)p->icmph->type == icmp6::Icmp6Types::REPLY) )
     {
-        /* test the rule ID value against the ICMP extension ID field */
-        if(icmpSeq->icmpseq == p->icmph->s_icmp_seq)
+        if ( config.eval(p->icmph->s_icmp_seq) )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "ICMP ID check success\n"););
             PREPROC_PROFILE_END(icmpSeqPerfStats);
             return DETECTION_OPTION_MATCH;
-        }
-        else
-        {
-            /* you can put debug comments here or not */
-            DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "ICMP ID check failed\n"););
         }
     }
     PREPROC_PROFILE_END(icmpSeqPerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter icmp_id_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class IcmpSeqModule : public Module
+{
+public:
+    IcmpSeqModule() : Module(s_name, icmp_id_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &icmpSeqPerfStats; };
+
+    RangeCheck data;
+};
+
+bool IcmpSeqModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool IcmpSeqModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
+}
+
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void icmp_seq_parse(char *data, IcmpSeqCheckData *ds_ptr)
+static Module* mod_ctor()
 {
-    char *endTok;
-
-    while(isspace((int)*data)) data++;
-
-    ds_ptr->icmpseq = (uint16_t)SnortStrtoulRange(data, &endTok, 10, 0, UINT16_MAX);
-    if ((endTok == data) || (*endTok != '\0'))
-    {
-        ParseError("Invalid parameter '%s' to icmp_seq.  "
-                   "Must be between 0 & 65535, inclusive", data);
-    }
-    ds_ptr->icmpseq = htons(ds_ptr->icmpseq);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Set ICMP Seq test value to %d\n", ds_ptr->icmpseq););
+    return new IcmpSeqModule;
 }
 
-static IpsOption* icmp_seq_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    IcmpSeqCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    icmp_seq_parse(data, &ds_ptr);
-    return new IcmpSeqOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* icmp_seq_ctor(Module* p, OptTreeNode*)
+{
+    IcmpSeqModule* m = (IcmpSeqModule*)p;
+    return new IcmpSeqOption(m->data);
 }
 
 static void icmp_seq_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void icmp_seq_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, is_get_profile);
-#endif
 }
 
 static const IpsApi icmp_seq_api =
@@ -213,12 +209,12 @@ static const IpsApi icmp_seq_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__ICMP,
-    icmp_seq_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

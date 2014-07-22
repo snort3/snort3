@@ -69,12 +69,11 @@ extern const BaseApi* ips_raw_data;
 extern const BaseApi* ips_react;
 extern const BaseApi* ips_resp;
 extern const BaseApi* ips_rpc;
-extern const BaseApi* ips_sameip;
 extern const BaseApi* ips_seq;
 extern const BaseApi* ips_session;
 extern const BaseApi* ips_tos;
 extern const BaseApi* ips_ttl;
-extern const BaseApi* ips_urilen;
+extern const BaseApi* ips_bufferlen;
 extern const BaseApi* ips_window;
 #endif
 
@@ -123,12 +122,11 @@ const BaseApi* ips_options[] =
     ips_react,
     ips_resp,
     ips_rpc,
-    ips_sameip,
     ips_seq,
     ips_session,
     ips_tos,
     ips_ttl,
-    ips_urilen,
+    ips_bufferlen,
     ips_window,
 #endif
     nullptr

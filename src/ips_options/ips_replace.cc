@@ -39,10 +39,12 @@ using namespace std;
 #include "packet_io/sfdaq.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 #define MAX_PATTERN_SIZE 2048
 
-static void replace_parse(char* args, string& s)
+static void replace_parse(const char* args, string& s)
 {
     char tmp_buf[MAX_PATTERN_SIZE];
 
@@ -66,6 +68,8 @@ static void replace_parse(char* args, string& s)
         ParseError("missing argument to 'replace' option");
         return;
     }
+    args = SnortStrdup(args);
+
     /* clear out the temp buffer */
     memset(tmp_buf, 0, MAX_PATTERN_SIZE);
 
@@ -115,7 +119,6 @@ static void replace_parse(char* args, string& s)
     /* why is this buffer so small? */
     memset(hex_buf, '0', 2);
     hex_buf[2] = '\0';
-
 
     /* BEGIN BAD JUJU..... */
     while(idx < end_ptr)
@@ -301,6 +304,7 @@ static void replace_parse(char* args, string& s)
         ParseError("Replace hexmode is not completed");
     }
 
+    delete args;
     s.assign(tmp_buf, dummy_size);
 }
 
@@ -391,17 +395,7 @@ void Replace_ModifyPacket(Packet *p)
 
 static const char* s_name = "replace";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats replacePerfStats;
-
-static ProfileStats* pd_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &replacePerfStats;
-
-    return nullptr;
-}
-#endif
 
 class ReplaceOption : public IpsOption
 {
@@ -510,17 +504,71 @@ void ReplaceOption::action(Packet*)
     PREPROC_PROFILE_END(replacePerfStats);
 }
 
-static IpsOption* replace_ctor(
-    SnortConfig*, char *data, OptTreeNode* otn)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter repl_params[] =
+{
+    { "*mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
+      "output format" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class ReplModule : public Module
+{
+public:
+    ReplModule() : Module(s_name, repl_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &replacePerfStats; };
+
+    string data;
+};
+
+bool ReplModule::begin(const char*, int, SnortConfig*)
+{
+    data.clear();
+    return true;
+}
+
+bool ReplModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*data") )
+        replace_parse(v.get_string(), data);
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new ReplModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* replace_ctor(Module* p, OptTreeNode* otn)
 {
     if ( !replace_ok() )
         ParseError("Inline mode and DAQ with replace capabilities required "
             "to use rule option 'replace'.");
 
-    string s;
-    replace_parse(data, s);
-
-    ReplaceOption* opt = new ReplaceOption(s);
+    ReplModule* m = (ReplModule*)p;
+    ReplaceOption* opt = new ReplaceOption(m->data);
 
     if ( otn_set_agent(otn, opt) )
         return opt;
@@ -533,13 +581,6 @@ static IpsOption* replace_ctor(
 static void replace_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void replace_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, pd_get_profile);
-#endif
 }
 
 static void replace_tinit(SnortConfig*)
@@ -559,12 +600,12 @@ static const IpsApi replace_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    replace_ginit,
+    nullptr,
     nullptr,
     replace_tinit,
     replace_tterm,

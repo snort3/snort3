@@ -288,7 +288,6 @@ struct Packet
     /**policyId provided in configuration file. Used for correlating configuration
      * with event output
      */
-    uint16_t configPolicyId;
     uint16_t user_policy_id;
 
     uint32_t iplist_id;

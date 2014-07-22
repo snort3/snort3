@@ -244,8 +244,6 @@ struct SnortConfig
 
     PolicyMap* policy_map;
 
-    char *base_version;
-
     uint8_t tunnel_mask;
 
     uint32_t so_rule_memcap;

@@ -23,20 +23,20 @@
 #ifndef EXTRACT_H
 #define EXTRACT_H
 
-#define ENDIAN_NONE -1
-#define ENDIAN_BIG    0
-#define ENDIAN_LITTLE 1
-#define ENDIAN_FUNC 2
+#define ENDIAN_NONE   0x0
+#define ENDIAN_BIG    0x1
+#define ENDIAN_LITTLE 0x2
+#define ENDIAN_FUNC   0x4
 
-#define PARSELEN 10
+#define PARSELEN      10
 
-int string_extract(int bytes_to_grab, int base, const uint8_t *ptr,
-                   const uint8_t *start, const uint8_t *end,
-                   uint32_t *value);
+int string_extract(
+    int bytes_to_grab, int base, const uint8_t *ptr,
+    const uint8_t *start, const uint8_t *end, uint32_t *value);
 
-int byte_extract(int endianess, int bytes_to_grab, const uint8_t *ptr,
-                 const uint8_t *start, const uint8_t *end,
-                 uint32_t *value);
+int byte_extract(
+    int endianess, int bytes_to_grab, const uint8_t *ptr,
+    const uint8_t *start, const uint8_t *end, uint32_t *value);
 
 #endif
 

@@ -39,31 +39,18 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "id";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats ipIdPerfStats;
-
-static ProfileStats* id_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &ipIdPerfStats;
-
-    return nullptr;
-}
-#endif
-
-typedef struct _IpIdCheckData
-{
-    u_long ip_id;
-
-} IpIdCheckData;
 
 class IpIdOption : public IpsOption
 {
 public:
-    IpIdOption(const IpIdCheckData& c) :
+    IpIdOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -73,7 +60,7 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    IpIdCheckData config;
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -83,11 +70,10 @@ private:
 uint32_t IpIdOption::hash() const
 {
     uint32_t a,b,c;
-    const IpIdCheckData *data = &config;
 
-    a = data->ip_id;
-    b = 0;
-    c = 0;
+    a = config.op;
+    b = config.min;
+    c = config.max;
 
     mix_str(a,b,c,get_name());
     final(a,b,c);
@@ -101,89 +87,93 @@ bool IpIdOption::operator==(const IpsOption& ips) const
         return false;
 
     IpIdOption& rhs = (IpIdOption&)ips;
-    IpIdCheckData *left = (IpIdCheckData*)&config;
-    IpIdCheckData *right = (IpIdCheckData*)&rhs.config;
-
-    if (left->ip_id == right->ip_id)
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 int IpIdOption::eval(Cursor&, Packet *p)
 {
-    IpIdCheckData *ipIdCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
     if(!IPH_IS_VALID(p))
-        return rval; /* if error occured while ip header
-                   * was processed, return 0 automagically.  */
+        return rval;
 
     PREPROC_PROFILE_START(ipIdPerfStats);
 
-    if(ipIdCheckData->ip_id == GET_IPH_ID(p))
-    {
-        /* call the next function in the function list recursively */
+    if ( config.eval(GET_IPH_ID(p)) )
         rval = DETECTION_OPTION_MATCH;
-    }
-    else
-    {
-        /* you can put debug comments here or not */
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "No match for sp_ip_id_check\n"););
-    }
 
-    /* if the test isn't successful, return 0 */
     PREPROC_PROFILE_END(ipIdPerfStats);
     return rval;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter ip_id_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class IpIdModule : public Module
+{
+public:
+    IpIdModule() : Module(s_name, ip_id_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &ipIdPerfStats; };
+
+    RangeCheck data;
+};
+
+bool IpIdModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool IpIdModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
 }
 
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void id_parse(char *data, IpIdCheckData* ds_ptr)
+static Module* mod_ctor()
 {
-    int ip_id;
-    char *endTok;
-
-    /* get rid of any whitespace */
-    while(isspace((int)*data))
-    {
-        data++;
-    }
-
-    ip_id = SnortStrtolRange(data, &endTok, 10, 0, UINT16_MAX);
-    if ((endTok == data) || (*endTok != '\0'))
-    {
-        ParseError("Invalid parameter '%s' to id (not a number?) ", data);
-    }
-    ds_ptr->ip_id = htons( (u_short) ip_id);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"ID set to %ld\n", ds_ptr->ip_id););
+    return new IpIdModule;
 }
 
-static IpsOption* id_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    IpIdCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    id_parse(data, &ds_ptr);
-    return new IpIdOption(ds_ptr);
+    delete m;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static IpsOption* id_ctor(Module* p, OptTreeNode*)
+{
+    IpIdModule* m = (IpIdModule*)p;
+    return new IpIdOption(m->data);
 }
 
 static void id_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void id_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, id_get_profile);
-#endif
 }
 
 static const IpsApi id_api =
@@ -193,12 +183,12 @@ static const IpsApi id_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    id_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

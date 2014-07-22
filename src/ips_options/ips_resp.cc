@@ -70,8 +70,8 @@
 #include "snort.h"
 #include "util.h"
 #include "framework/ips_option.h"
-
-#define MOD_NAME "sp_resp3"     /* plugin name */
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 #define RESP_RST_SND  0x01
 #define RESP_RST_RCV  0x02
@@ -84,39 +84,27 @@
 
 static const char* s_name = "resp";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats resp3PerfStats;
 
-static ProfileStats* rsp_get_profile(const char* key)
-{
-    if ( !strcmp(key, "resp3") )
-        return &resp3PerfStats;
-
-    return nullptr;
-}
-#endif
-
 // instance data
-typedef struct {
+struct Resp3_Data
+{
     uint32_t mask;
-} Resp3_Data;
+};
 
 class RespondOption : public IpsOption
 {
 public:
-    RespondOption(Resp3_Data* c) :
+    RespondOption(uint32_t f) :
         IpsOption(s_name)
-    { config = c; };
-
-    ~RespondOption()
-    { delete config; };
+    { config.mask = f; };
 
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
     void action(Packet*);
 
 private:
-    Resp3_Data* config;
+    Resp3_Data config;
 };
 
 static void Resp3_Send(Packet*, void*);
@@ -129,7 +117,7 @@ uint32_t RespondOption::hash() const
 {
     uint32_t a,b,c;
 
-    a = config->mask;
+    a = config.mask;
     b = 0;
     c = 0;
 
@@ -145,8 +133,8 @@ bool RespondOption::operator==(const IpsOption& ips) const
         return false;
 
     RespondOption& rhs = (RespondOption&)ips;
-    const Resp3_Data *left = config;
-    const Resp3_Data *right = rhs.config;
+    const Resp3_Data *left = &config;
+    const Resp3_Data *right = &rhs.config;
 
     if (left->mask == right->mask)
         return true;
@@ -159,7 +147,7 @@ void RespondOption::action(Packet*)
     PROFILE_VARS;
     PREPROC_PROFILE_START(resp3PerfStats);
 
-    Active_QueueResponse(Resp3_Send, config);
+    Active_QueueResponse(Resp3_Send, &config);
 
     PREPROC_PROFILE_END(resp3PerfStats);
 }
@@ -202,81 +190,111 @@ static void Resp3_Send (Packet* p, void* pv)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter resp_params[] =
+{
+    { "reset_source", Parameter::PT_STRING, nullptr, nullptr,
+      "reset sender" },
+
+    { "rst_snd", Parameter::PT_STRING, nullptr, nullptr,
+      "reset sender" },
+
+    { "reset_dest", Parameter::PT_STRING, nullptr, nullptr,
+      "reset receiver" },
+
+    { "rst_rcv", Parameter::PT_STRING, nullptr, nullptr,
+      "reset receiver" },
+
+    { "reset_both", Parameter::PT_STRING, nullptr, nullptr,
+      "reset both sender and receiver" },
+
+    { "rst_all", Parameter::PT_STRING, nullptr, nullptr,
+      "reset both sender and receiver" },
+
+    { "icmp_net", Parameter::PT_STRING, nullptr, nullptr,
+      "send icmp network unreachable to sender" },
+
+    { "icmp_host", Parameter::PT_STRING, nullptr, nullptr,
+      "send icmp host unreachable to sender" },
+
+    { "icmp_port", Parameter::PT_STRING, nullptr, nullptr,
+      "send icmp port unreachable to sender" },
+
+    { "icmp_all", Parameter::PT_STRING, nullptr, nullptr,
+      "send icmp net, host, and port unreachable to sender" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class RespModule : public Module
+{
+public:
+    RespModule() : Module(s_name, resp_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &resp3PerfStats; };
+
+    uint32_t flags;
+};
+
+bool RespModule::begin(const char*, int, SnortConfig*)
+{
+    flags = 0;
+    return true;
+}
+
+bool RespModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("reset_source") || v.is("rst_snd") )
+        flags |= RESP_RST_SND;
+
+    else if ( v.is("reset_dest") || v.is("rst_rcv") )
+        flags |= RESP_RST_RCV;
+
+    else if ( v.is("reset_both") || v.is("rst_all") )
+        flags |= (RESP_RST_RCV | RESP_RST_SND);
+
+    else if ( v.is("icmp_net") )
+        flags |= RESP_UNR_NET;
+
+    else if ( v.is("icmp_host") )
+        flags |= RESP_UNR_HOST;
+
+    else if ( v.is("icmp_port") )
+        flags |= RESP_UNR_PORT;
+
+    else if ( v.is("icmp_all") )
+        flags |= (RESP_UNR_NET | RESP_UNR_HOST | RESP_UNR_PORT);
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static int resp_parse(char* type)
+static Module* mod_ctor()
 {
-    char* *toks;
-    uint32_t flags = 0;
-    int num_toks = 0, i;
-
-    if ( type )
-        toks = mSplit(type, ",", 6, &num_toks, 0);
-    else
-        ParseError("%s: missing resp modifier", MOD_NAME);
-
-    i = 0;
-    while (i < num_toks)
-    {
-        if ( !strcasecmp(toks[i], "reset_source") ||
-             !strcasecmp(toks[i], "rst_snd") )
-        {
-            flags |= RESP_RST_SND;
-            i++;
-        }
-        else if ( !strcasecmp(toks[i], "reset_dest") ||
-                  !strcasecmp(toks[i], "rst_rcv") )
-        {
-            flags |= RESP_RST_RCV;
-            i++;
-        }
-        else if ( !strcasecmp(toks[i], "reset_both") ||
-                  !strcasecmp(toks[i], "rst_all") )
-        {
-            flags |= (RESP_RST_RCV | RESP_RST_SND);
-            i++;
-        }
-        else if (!strcasecmp(toks[i], "icmp_net"))
-        {
-            flags |= RESP_UNR_NET;
-            i++;
-        }
-        else if (!strcasecmp(toks[i], "icmp_host"))
-        {
-            flags |= RESP_UNR_HOST;
-            i++;
-        }
-        else if (!strcasecmp(toks[i], "icmp_port"))
-        {
-            flags |= RESP_UNR_PORT;
-            i++;
-        }
-        else if (!strcasecmp(toks[i], "icmp_all"))
-        {
-            flags |= (RESP_UNR_NET | RESP_UNR_HOST | RESP_UNR_PORT);
-            i++;
-        }
-        else
-            ParseError("%s: invalid resp modifier: %s", MOD_NAME, toks[i]);
-    }
-
-    mSplitFree(&toks, num_toks);
-
-    if ( !flags )
-        ParseError("%s: invalid resp configuration: %s",
-            MOD_NAME, "no response specified");
-
-    return flags;
+    return new RespModule;
 }
 
-static IpsOption* resp_ctor(
-    SnortConfig*, char* data, OptTreeNode* otn)
+static void mod_dtor(Module* m)
 {
-    Resp3_Data* rd = (Resp3_Data*)SnortAlloc(sizeof(*rd));
-    rd->mask = resp_parse(data);
+    delete m;
+}
 
-    RespondOption* opt = new RespondOption(rd);
+static IpsOption* resp_ctor(Module* p, OptTreeNode* otn)
+{
+    RespModule* m = (RespModule*)p;
+    RespondOption* opt = new RespondOption(m->flags);
     
     if ( otn_set_agent(otn, opt) )
         return opt;
@@ -294,10 +312,6 @@ static void resp_dtor(IpsOption* p)
 static void resp_ginit(SnortConfig*)
 {
     Active_SetEnabled(1);
-
-#ifdef PERF_PROFILING
-    RegisterOtnProfile("resp3", rsp_get_profile);
-#endif
 }
 
 static const IpsApi resp_api =
@@ -307,8 +321,8 @@ static const IpsApi resp_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_ACTION,
     1, 0,

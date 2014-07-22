@@ -40,6 +40,8 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 #define M_NORMAL  0
 #define M_ALL     1
@@ -57,17 +59,7 @@
 
 static const char* s_name = "flags";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats tcpFlagsPerfStats;
-
-static ProfileStats* tf_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &tcpFlagsPerfStats;
-
-    return nullptr;
-}
-#endif
 
 struct TcpFlagCheckData
 {
@@ -215,14 +207,13 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
     return rval;
 }
 //-------------------------------------------------------------------------
-// api methods
+// parse methods
 //-------------------------------------------------------------------------
 
-static void flags_parse(char *rule, TcpFlagCheckData *idx)
+static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
 {
-    char *fptr;
-    char *fend;
-    int comma_set = 0;
+    const char *fptr;
+    const char *fend;
 
     fptr = rule;
 
@@ -245,7 +236,7 @@ static void flags_parse(char *rule, TcpFlagCheckData *idx)
 
     idx->mode = M_NORMAL; /* this is the default, unless overridden */
 
-    while(fptr < fend && comma_set == 0)
+    while(fptr < fend)
     {
         switch(*fptr)
         {
@@ -307,9 +298,6 @@ static void flags_parse(char *rule, TcpFlagCheckData *idx)
                          present, other are don't care */
                 idx->mode = M_ALL;
                 break;
-            case ',':
-                comma_set = 1;
-                break;
             default:
                 ParseError(
                     "bad TCP flag = '%c'"
@@ -320,13 +308,34 @@ static void flags_parse(char *rule, TcpFlagCheckData *idx)
 
         fptr++;
     }
+}
+
+static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
+{
+    const char *fptr;
+    const char *fend;
+
+    fptr = rule;
+
+    /* make sure there is atleast a split pointer */
+    if(fptr == NULL)
+    {
+        ParseError("Flags missing in TCP flag rule");
+    }
 
     while(isspace((u_char) *fptr))
         fptr++;
 
+    if(strlen(fptr) == 0)
+    {
+        ParseError("Flags missing in TCP flag rule");
+    }
+
+    /* find the end of the alert string */
+    fend = fptr + strlen(fptr);
 
     /* create the mask portion now */
-    while(fptr < fend && comma_set == 1)
+    while(fptr < fend)
     {
         switch(*fptr)
         {
@@ -379,25 +388,78 @@ static void flags_parse(char *rule, TcpFlagCheckData *idx)
     }
 }
 
-static IpsOption* flags_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter flags_params[] =
 {
-    TcpFlagCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    flags_parse(data, &ds_ptr);
-    return new TcpFlagOption(ds_ptr);
+    { "*test_flags", Parameter::PT_STRING, nullptr, nullptr,
+      "these flags are tested" },
+
+    { "*mask_flags", Parameter::PT_STRING, nullptr, nullptr,
+      "these flags are don't cares" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class FlagsModule : public Module
+{
+public:
+    FlagsModule() : Module(s_name, flags_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &tcpFlagsPerfStats; };
+
+    TcpFlagCheckData data;
+};
+
+bool FlagsModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool FlagsModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*test_flags") )
+        flags_parse_test(v.get_string(), &data);
+
+    else if ( v.is("*mask_flags") )
+        flags_parse_mask(v.get_string(), &data);
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new FlagsModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* flags_ctor(Module* p, OptTreeNode*)
+{
+    FlagsModule* m = (FlagsModule*)p;
+    return new TcpFlagOption(m->data);
 }
 
 static void flags_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void flags_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, tf_get_profile);
-#endif
 }
 
 static const IpsApi flags_api =
@@ -407,12 +469,12 @@ static const IpsApi flags_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    flags_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

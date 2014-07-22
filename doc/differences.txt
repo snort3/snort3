@@ -91,6 +91,7 @@ Snort++ differs from Snort in the following ways:
 * soid is now a non-metadata option
 * deleted uricontent ips rule option.
   uricontent:"foo" -->  http_uri; content:"foo"
+* deleted urilen raw and norm; must use http_raw_uri and http_uri instead
 * deleted unused http_encode option
 * content suboption http_* are no full option and should be place before content
 * the following pcre options have been deleted: use sticky buffers instead

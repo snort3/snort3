@@ -56,6 +56,9 @@ public:
     void set(double d)
     { type = VT_NUM; num = d; str.clear(); };
 
+    void set(long n)
+    { set((double)n); };
+
     void set(const char* s)
     { type = VT_STR; str = s; num = 0; };
 
@@ -85,6 +88,8 @@ public:
 
     const char* get_string() const
     { return str.c_str(); };
+
+    bool strtol(long&) const;
 
     void get_bits(PortList&) const;
     void get_bits(VlanList&) const;
