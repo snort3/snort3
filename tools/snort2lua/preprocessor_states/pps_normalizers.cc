@@ -267,7 +267,7 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
             // loop until we break or reach end of stream
             while (util::get_string(data_stream, keyword, " ,"))
             {
-                int pos = data_stream.tellg();
+                std::streamoff pos = data_stream.tellg();
 
                 if (!keyword.compare("sack"))
                     ld->add_list_to_table("allow_names", "sack");

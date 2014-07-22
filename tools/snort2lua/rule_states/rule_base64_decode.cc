@@ -47,7 +47,7 @@ bool Base64Decode::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string tmp;
-    int pos = data_stream.tellg();
+    std::streamoff pos = data_stream.tellg();
     bool retval = true;
 
     args = util::get_rule_option_args(data_stream);

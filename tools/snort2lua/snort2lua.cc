@@ -93,7 +93,6 @@ static const char* parse_single_str = "    --single-rule-files, -s\t\tWhen parsi
 static const char* parse_mult_conf_str = "    --mult-conf-files, -n\t\tWhen parsing include file named 'file', write conf data to file.lua (parse_includes must be turn on)";
 static const char* parse_single_conf_str = "    --single-conf-files, -t\t\tWhen parsing include files, pull all data into specified output files";
 static const char* differences_str  = "    --output-differences, -d\t\tlua syntax aside, output to specified files the differences between your Snort and Snort++ configuration";
-static const char* default_str  = "    --output-default \t\toutput all data to specified files";
 static const char* quiet_str  = "    --output-quiet, -d\t\tdon't print to standard out. only output lua and rule syntax to specified files (no comments, errors, or reject)";
 
 enum OptionType
