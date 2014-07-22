@@ -355,7 +355,7 @@ void PacketManager::thread_init(void)
                         s_protocols[grinder]->get_name(), cd->get_name(),
                         cd->get_name());
 
-                grinder = i;
+                grinder = (uint8_t)i;
             }
         }
     }
@@ -488,8 +488,8 @@ void PacketManager::decode(
         ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
-    p->packet_flags &= ~PKT_ESP_LYR_PRESENT; // cleanup.  Just in case.
-    p->dsize = len;
+    p->packet_flags &= (uint32_t)~PKT_ESP_LYR_PRESENT; // cleanup just in case.
+    p->dsize = (uint16_t)len;
     p->data = pkt;
 
     PREPROC_PROFILE_END(decodePerfStats);
@@ -569,7 +569,7 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
 {
     int i;
     Layer* lyr;
-    size_t len;
+    int len;
     int num_layers = p->next_layer;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
     uint8_t* pkt = (uint8_t*)c->pkt;
