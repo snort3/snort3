@@ -173,7 +173,6 @@ void RegisterProfile(
     const char* keyword, const char* parent,
     get_profile_func, class Module* owner = nullptr);
 
-void RegisterOtnProfile(const char* keyword, get_profile_func);
 void RegisterProfile(class Module*);
 
 void ShowPreprocProfiles(void);

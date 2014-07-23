@@ -1,3 +1,8 @@
+104
+-- changed configure --with-libpcre-* to --with-pcre-* for consistency
+-- same for pcap (again!)
+-- added stream_size and stream_reassemble ips options
+
 103
 -- added modules to ips options
 -- removed ips option sameip which was obsoleted by 116:152

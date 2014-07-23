@@ -424,7 +424,7 @@ fi
 # with foo
 #--------------------------------------------------------------------------
 
-AC_ARG_WITH(libpcap_includes,
+AC_ARG_WITH(pcap_includes,
 	[  --with-pcap-includes=DIR    libpcap include directory],
 	[with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
 
@@ -432,7 +432,7 @@ if test "x$with_libpcap_includes" != "xno"; then
    CPPFLAGS="${CPPFLAGS} -I${with_libpcap_includes}"
 fi
 
-AC_ARG_WITH(libpcap_libraries,
+AC_ARG_WITH(pcap_libraries,
 	[  --with-pcap-libraries=DIR   libpcap library directory],
 	[with_libpcap_libraries="$withval"],[with_libpcap_libraries="no"])
 
@@ -460,7 +460,7 @@ if test "x$with_luajit_libraries" != "xno"; then
     fi
 fi
 
-AC_ARG_WITH(libpcre_includes,
+AC_ARG_WITH(pcre_includes,
        [  --with-pcre-includes=DIR    libpcre include directory],
        [with_libpcre_includes="$withval"],[with_libpcre_includes="no"])
 
@@ -471,7 +471,7 @@ else
     CPPFLAGS="${CPPFLAGS} `pcre-config --cflags`"
 fi
 
-AC_ARG_WITH(libpcre_libraries,
+AC_ARG_WITH(pcre_libraries,
        [  --with-pcre-libraries=DIR   libpcre library directory],
        [with_libpcre_libraries="$withval"],[with_libpcre_libraries="no"])
 

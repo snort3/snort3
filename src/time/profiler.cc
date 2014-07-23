@@ -655,11 +655,6 @@ void RegisterProfile(
         mpsePerfStats = &node->stats;
 }
 
-void RegisterOtnProfile(const char *keyword, get_profile_func get)
-{
-    RegisterProfile(keyword, "rule tree eval", get);
-}
-
 void RegisterProfile(Module* m)
 {
     ProfileStats* ps = m->get_profile();
