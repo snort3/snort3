@@ -248,7 +248,7 @@ static bool api_instantiated(const CodecApi* cd_api)
                     "Cannot find Codec %s's api", cd_api->base.name);
 
     int pos = p - s_codecs.begin();
-    if(instantiated_api[pos])
+    if(instantiated_api[(std::size_t)pos])
         return true;
 
     instantiated_api[pos] = true;
@@ -314,7 +314,7 @@ void PacketManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig*
                 s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
                 id, cd->get_name());
 
-        s_proto_map[id] = codec_id;
+        s_proto_map[id] = (uint8_t)codec_id;
     }
 
     s_protocols[codec_id++] = cd;
