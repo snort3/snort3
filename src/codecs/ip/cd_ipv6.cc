@@ -135,8 +135,6 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 {
     ipv6::IP6RawHdr *hdr;
     uint32_t payload_len;
-    uint32_t* new_raw_len = const_cast<uint32_t*>(&raw_len); // enable settomg of packet length
-
 
     hdr = reinterpret_cast<ipv6::IP6RawHdr*>(const_cast<uint8_t*>(raw_pkt));
 
@@ -230,10 +228,9 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     p->ip_data = raw_pkt + ipv6::hdr_len();
     p->ip_dsize = ntohs(p->ip6h->len);
     p->proto_bits |= PROTO_BIT__IP;
-    (*new_raw_len) = p->actual_ip_len + ipv6::hdr_len(); // this will be removed in Packetmanager
+    // extra ipv6 header will be removed in PacketManager
+    const_cast<uint32_t&>(raw_len) =  p->actual_ip_len + ipv6::hdr_len();
 
-
-    lyr_len = sizeof(*hdr);
     IPV6MiscTests(p);
 
     next_prot_id = GET_IPH_PROTO(p);
@@ -619,7 +616,9 @@ bool Ipv6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
     // extension headers are decoded and we stop at frag6.
     // in such case we do not modify the packet length.
     if ( (p->packet_flags & PKT_MODIFIED)
+#ifdef NORMALIZER
         && !(p->packet_flags & PKT_RESIZED)
+#endif
     ) {
         *len = ntohs(h->ip6plen) + sizeof(*h);
     }

@@ -46,23 +46,15 @@ public:
     virtual bool convert(std::istringstream& stream)
     {
         if (snort_option == nullptr ||
-            lua_table == nullptr ||
-            lua_option == nullptr)
+            lua_table == nullptr)
         {
             return false;
         }
 
-        ld->open_table(*lua_table);
-
-        // if the two names are not equal ...
-        if((*snort_option).compare(*lua_option))
-            ld->add_diff_option_comment("config " + *snort_option +
-                ":", *lua_option);
-
         // get length (stringstream will not read spaces...which we want)
-        const int pos = stream.tellg();
+        const std::streamoff pos = stream.tellg();
         stream.seekg(0, stream.end);
-        const int length = ((int) stream.tellg()) - pos;
+        const std::streamoff length = stream.tellg() - pos;
         stream.seekg(pos);
 
         // read argument
@@ -73,8 +65,21 @@ public:
         delete[] arg_c;
         util::trim(arg_s);
 
-        // finally, add to the table
-        bool retval = ld->add_option_to_table(*lua_option, arg_s);
+
+        bool retval;
+        ld->open_table(*lua_table);
+
+        if((lua_option != nullptr) && (*snort_option).compare(*lua_option))
+        {
+            ld->add_diff_option_comment("config " + *snort_option +
+                ":", *lua_option);
+            retval = ld->add_option_to_table(*lua_option, arg_s);
+        }
+        else
+        {
+            retval = ld->add_option_to_table(*snort_option, arg_s);
+        }
+
         ld->close_table();
         return retval;
     }
@@ -86,14 +91,9 @@ template<const std::string *snort_option,
         const std::string *lua_option = nullptr>
 static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
 {
-    if (lua_option)
-        return new ConfigStringOption<snort_option,
-                                    lua_table,
-                                    lua_option>(cv, ld);
-    else
-        return new ConfigStringOption<snort_option,
-                                    lua_table,
-                                    snort_option>(cv, ld);
+    return new ConfigStringOption<snort_option,
+                                lua_table,
+                                lua_option>(cv, ld);
 }
 
 
@@ -103,7 +103,6 @@ static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
 
 static const std::string active = "active";
 static const std::string alerts = "alerts";
-static const std::string cd_mpls = "cd_mpls";
 static const std::string daq = "daq";
 static const std::string ips = "ips";
 static const std::string mode = "mode";

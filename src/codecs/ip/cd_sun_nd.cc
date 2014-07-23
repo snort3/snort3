@@ -32,7 +32,7 @@ namespace
 {
 
 // yes, macros are necessary. The API and class constructor require different strings.
-#define CD_SUN_ND_NAME "cd_sun_nd"
+#define CD_SUN_ND_NAME "sun_nd"
 
 class SunNdCodec : public Codec
 {

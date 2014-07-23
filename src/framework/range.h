@@ -16,23 +16,38 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// range.h author Russ Combs <rucombs@cisco.com>
 
-// cd_arp_module.h author Josh Rosenbaum <jrosenba@cisco.com>
+#ifndef RANGE_H
+#define RANGE_H
 
-#ifndef CD_ARP_MODULE_H
-#define CD_ARP_MODULE_H
+// unfortunately, <> was implemented inconsistently.  eg:
+// dsize implements <> as ( a <= c && c <= b ) and
+// icode implements <> as ( a < c && c < b )
 
-#include "codecs/decode_module.h"
+// <> is implemented icode style but we add explicit options
+// <=> for dsize style and >< for icode style so rule options
+// can coerce <> if needed for backwards compatibility
 
-
-#define CD_ARP_NAME "arp"
-
-class ArpModule : public DecodeModule
+struct RangeCheck
 {
-public:
-    ArpModule();
+    enum Op
+    {
+        // =  !  <   <=  >   >=  <>  ><  <=>
+        EQ, NOT, LT, LE, GT, GE, LG, GL, LEG, MAX
+    };
 
-    const RuleMap* get_rules() const;
+    Op op;
+    long min;
+    long max;
+
+    bool operator==(const RangeCheck&) const;
+
+    void init();
+    // FIXIT add ttl style syntax
+    bool parse(const char* s); 
+    bool eval(long);
 };
 
 #endif
+

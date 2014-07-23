@@ -40,32 +40,18 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "window";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats tcpWinPerfStats;
-
-static ProfileStats* win_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &tcpWinPerfStats;
-
-    return nullptr;
-}
-#endif
-
-typedef struct _TcpWinCheckData
-{
-    uint16_t tcp_win;
-    uint8_t not_flag;
-
-} TcpWinCheckData;
 
 class TcpWinOption : public IpsOption
 {
 public:
-    TcpWinOption(const TcpWinCheckData& c) :
+    TcpWinOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -75,7 +61,7 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    TcpWinCheckData config;
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -85,11 +71,10 @@ private:
 uint32_t TcpWinOption::hash() const
 {
     uint32_t a,b,c;
-    const TcpWinCheckData *data = &config;
 
-    a = data->tcp_win;
-    b = data->not_flag;
-    c = 0;
+    a = config.op;
+    b = config.min;
+    c = config.max;
 
     mix_str(a,b,c,get_name());
     final(a,b,c);
@@ -103,21 +88,11 @@ bool TcpWinOption::operator==(const IpsOption& ips) const
         return false;
 
     TcpWinOption& rhs = (TcpWinOption&)ips;
-    TcpWinCheckData *left = (TcpWinCheckData*)&config;
-    TcpWinCheckData *right = (TcpWinCheckData*)&rhs.config;
-
-    if ((left->tcp_win == right->tcp_win) &&
-        (left->not_flag == right->not_flag))
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 int TcpWinOption::eval(Cursor&, Packet *p)
 {
-    TcpWinCheckData *tcpWinCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
@@ -126,96 +101,76 @@ int TcpWinOption::eval(Cursor&, Packet *p)
 
     PREPROC_PROFILE_START(tcpWinPerfStats);
 
-    if((tcpWinCheckData->tcp_win == p->tcph->th_win) ^ (tcpWinCheckData->not_flag))
-    {
+    if ( config.eval(p->tcph->th_win) )
         rval = DETECTION_OPTION_MATCH;
-    }
 
-    /* if the test isn't successful, return 0 */
     PREPROC_PROFILE_END(tcpWinPerfStats);
     return rval;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter window[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class WindowModule : public Module
+{
+public:
+    WindowModule() : Module(s_name, window) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &tcpWinPerfStats; };
+
+    RangeCheck data;
+};
+
+bool WindowModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool WindowModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
 }
 
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void window_parse(char *data, TcpWinCheckData* ds_ptr)
+static Module* mod_ctor()
 {
-    int win_size = 0;
-    char *endTok;
-    char *start;
-
-    /* get rid of any whitespace */
-    while(isspace((int)*data))
-    {
-        data++;
-    }
-
-    if(data[0] == '!')
-    {
-        ds_ptr->not_flag = 1;
-        start = &data[1];
-    }
-    else
-    {
-        start = &data[0];
-    }
-
-    if(strchr(start, (int) 'x') == NULL && strchr(start, (int)'X') == NULL)
-    {
-        win_size = SnortStrtolRange(start, &endTok, 10, 0, UINT16_MAX);
-        if ((endTok == start) || (*endTok != '\0'))
-        {
-            ParseError("Invalid parameter '%s' to 'window' (not a "
-                    "number?) ", data);
-        }
-    }
-    else
-    {
-        /* hex? */
-        start = strchr(data,(int)'x');
-        if(!start)
-        {
-            start = strchr(data,(int)'X');
-        }
-        if (start)
-        {
-            win_size = SnortStrtolRange(start+1, &endTok, 16, 0, UINT16_MAX);
-        }
-        if (!start || (endTok == start+1) || (*endTok != '\0'))
-        {
-            ParseError("=> Invalid parameter '%s' to 'window' (not a "
-                    "number?) ", data);
-        }
-    }
-
-    ds_ptr->tcp_win = htons((uint16_t)win_size);
-
-#ifdef DEBUG_MSGS
-    DebugMessage(DEBUG_PLUGIN,"TCP Window set to 0x%X\n", ds_ptr->tcp_win);
-#endif
+    return new WindowModule;
 }
 
-static IpsOption* window_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    TcpWinCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    window_parse(data, &ds_ptr);
-    return new TcpWinOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* window_ctor(Module* p, OptTreeNode*)
+{
+    WindowModule* m = (WindowModule*)p;
+    return new TcpWinOption(m->data);
 }
 
 static void window_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void window_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, win_get_profile);
-#endif
 }
 
 static const IpsApi window_api =
@@ -225,12 +180,12 @@ static const IpsApi window_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    window_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

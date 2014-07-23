@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  ** Copyright (C) 1998-2013 Sourcefire, Inc.
  **
  ** This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@
  *    <int>         byte location to check if there is data
  *    ["relative"]  look for byte location relative to the end of the last
  *                  pattern match
- *    ["rawbytes"]  force use of the non-normalized buffer.
  *
  * Sample:
  *   alert tcp any any -> any 110 (msg:"POP3 user overflow"; \
@@ -61,20 +60,12 @@
 #include "detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "isdataat";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats isDataAtPerfStats;
-
-static ProfileStats* at_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &isDataAtPerfStats;
-
-    return nullptr;
-}
-#endif
 
 #define ISDATAAT_RELATIVE_FLAG 0x01
 #define ISDATAAT_NOT_FLAG      0x02
@@ -197,23 +188,17 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
 }
 
 //-------------------------------------------------------------------------
-// api methods
+// parser
 //-------------------------------------------------------------------------
 
-static void isdataat_parse(char *data, IsDataAtData *idx)
+static void isdataat_parse(const char *data, IsDataAtData *idx)
 {
     char **toks;
     int num_toks;
-    int i;
-    char *cptr;
     char *endp;
     char *offset;
 
     toks = mSplit(data, ",", 3, &num_toks, 0);
-
-    if(num_toks > 3)
-        ParseError("Bad arguments to IsDataAt: %s", data);
-
     offset = toks[0];
 
     if(*offset == '!')
@@ -248,45 +233,81 @@ static void isdataat_parse(char *data, IsDataAtData *idx)
         }
     }
 
-    for (i=1; i< num_toks; i++)
-    {
-        cptr = toks[i];
-
-        while(isspace((int)*cptr)) {cptr++;}
-
-        if(!strcasecmp(cptr, "relative"))
-        {
-            /* the offset is relative to the last pattern match */
-            idx->flags |= ISDATAAT_RELATIVE_FLAG;
-        }
-        else
-        {
-            ParseError("unknown modifier '%s'", toks[1]);
-        }
-    }
-
     mSplitFree(&toks,num_toks);
 }
 
-static IpsOption* isdataat_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter isdataat_params[] =
 {
-    IsDataAtData idx;
-    memset(&idx, 0, sizeof(idx));
-    isdataat_parse(data, &idx);
-    return new IsDataAtOption(idx);
+    { "*length", Parameter::PT_STRING, nullptr, nullptr,
+      "num | !num" },
+
+    { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "num | !num" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class IsDataAtModule : public Module
+{
+public:
+    IsDataAtModule() : Module(s_name, isdataat_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &isDataAtPerfStats; };
+
+    IsDataAtData data;
+};
+
+bool IsDataAtModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool IsDataAtModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*length") )
+        isdataat_parse(v.get_string(), &data);
+
+    else if ( v.is("relative") )
+        data.flags |= ISDATAAT_RELATIVE_FLAG;
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new IsDataAtModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* isdataat_ctor(Module* p, OptTreeNode*)
+{
+    IsDataAtModule* m = (IsDataAtModule*)p;
+    return new IsDataAtOption(m->data);
 }
 
 static void isdataat_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void isdataat_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, at_get_profile);
-#endif
 }
 
 static const IpsApi isdataat_api =
@@ -296,12 +317,12 @@ static const IpsApi isdataat_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    isdataat_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

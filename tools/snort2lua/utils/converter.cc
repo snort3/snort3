@@ -106,7 +106,7 @@ void Converter::parse_include_file(std::string input_file)
         // add this new file as a snort style rule
         error = true;
         ld->begin_rule();
-        ld->add_hdr_data("include " + input_file + ".rules");
+        ld->add_hdr_data("include " + input_file);
         return;
     }
 

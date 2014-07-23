@@ -63,7 +63,7 @@ public:
 
     static void setup_options();
     static void clear_options();
-    static bool verify();
+    static bool verify(SnortConfig*);
 
     static void dump_rule_stubs(const char*);
 };

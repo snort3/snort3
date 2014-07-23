@@ -27,13 +27,12 @@ SET( PLUGIN_LIST
     ips_react.cc
     ips_resp.cc
     ips_rpc.cc
-    ips_sameip.cc
     ips_seq.cc
     ips_session.cc
     ips_tos.cc
     ips_ttl.cc
     ips_window.cc
-    ips_urilen.cc
+    ips_bufferlen.cc
 )
 
 set (IPS_SOURCES
@@ -97,13 +96,12 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_react ips_options ips_react.cc)
     add_shared_library(ips_resp ips_options ips_resp.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)
-    add_shared_library(ips_sameip ips_options ips_sameip.cc)
     add_shared_library(ips_seq ips_options ips_seq.cc)
     add_shared_library(ips_session ips_options ips_session.cc)
     add_shared_library(ips_tos ips_options ips_tos.cc)
     add_shared_library(ips_ttl ips_options ips_ttl.cc)
     add_shared_library(ips_window ips_options ips_window.cc)
-    add_shared_library(ips_urilen ips_options ips_urilen.cc)
+    add_shared_library(ips_bufferlen ips_options ips_bufferlen.cc)
 
 
 endif (STATIC_IPS_OPTIONS)

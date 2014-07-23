@@ -33,7 +33,6 @@ target_link_libraries( snort2lua
     rule_states
 )
 
-
 install (TARGETS snort2lua
     RUNTIME DESTINATION bin
 )

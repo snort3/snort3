@@ -248,7 +248,7 @@ static bool api_instantiated(const CodecApi* cd_api)
                     "Cannot find Codec %s's api", cd_api->base.name);
 
     int pos = p - s_codecs.begin();
-    if(instantiated_api[pos])
+    if(instantiated_api[(std::size_t)pos])
         return true;
 
     instantiated_api[pos] = true;
@@ -314,7 +314,7 @@ void PacketManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig*
                 s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
                 id, cd->get_name());
 
-        s_proto_map[id] = codec_id;
+        s_proto_map[id] = (uint8_t)codec_id;
     }
 
     s_protocols[codec_id++] = cd;
@@ -355,7 +355,7 @@ void PacketManager::thread_init(void)
                         s_protocols[grinder]->get_name(), cd->get_name(),
                         cd->get_name());
 
-                grinder = i;
+                grinder = (uint8_t)i;
             }
         }
     }
@@ -434,8 +434,8 @@ void PacketManager::decode(
     uint16_t prot_id;
     uint8_t mapped_prot = grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
-    uint16_t len, lyr_len;
-
+    uint16_t lyr_len = 0;
+    uint32_t len = 0;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
             DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
@@ -471,25 +471,27 @@ void PacketManager::decode(
     // if the final protocol ID is not the default codec, a Codec failed
     if (prev_prot_id != FINISHED_DECODE)
     {
-        // if the codec exists, it failed
-        if(s_proto_map[prev_prot_id])
-            s_stats[discards]++;
-        else
-            s_stats[other_codecs]++;
+        if (!(p->packet_flags & PKT_UNSURE_ENCAP))
+        {
+            // if the codec exists, it failed
+            if(s_proto_map[prev_prot_id])
+                s_stats[discards]++;
+            else
+                s_stats[other_codecs]++;
+        }
 
         if (p->packet_flags & PKT_ESP_LYR_PRESENT)
-        {
             p->packet_flags |= PKT_TRUST;
-            p->packet_flags &= ~PKT_ESP_LYR_PRESENT;
-        }
     }
 
     if (p->ip6_extension_count > 0)
         ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
-    p->dsize = len;
+    p->packet_flags &= (uint32_t)~PKT_ESP_LYR_PRESENT; // cleanup just in case.
+    p->dsize = (uint16_t)len;
     p->data = pkt;
+
     PREPROC_PROFILE_END(decodePerfStats);
 }
 
@@ -567,7 +569,7 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
 {
     int i;
     Layer* lyr;
-    size_t len;
+    int len;
     int num_layers = p->next_layer;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
     uint8_t* pkt = (uint8_t*)c->pkt;
@@ -706,8 +708,6 @@ SO_PUBLIC void PacketManager::encode_update (Packet* p)
         || (p->packet_flags & PKT_RESIZED)
     )
         pkth->caplen = pkth->pktlen = len;
-
-    p->packet_flags &= ~PKT_LOGGED;
 }
 
 //-------------------------------------------------------------------------

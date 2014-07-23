@@ -119,7 +119,7 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
        If the padding length is too big, this is probably encrypted traffic. */
     if (pad_length < raw_len)
     {
-        lyr_len += (pad_length);
+        const_cast<uint32_t&>(raw_len) -= pad_length;
     }
     else
     {
@@ -131,16 +131,14 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
 
-    if (!PacketManager::has_codec(next_prot_id))
+    if (PacketManager::has_codec(next_prot_id))
     {
         /* Attempt to decode the inner payload.
            There is a small chance that an encrypted next_header would become a
            different valid next_header. The PKT_UNSURE_ENCAP flag tells the next
            decoder stage to silently ignore invalid headers. */
         p->packet_flags |= PKT_UNSURE_ENCAP;
-
-        uint32_t* new_raw_len = const_cast<uint32_t*>(&raw_len);
-        (*new_raw_len) = raw_len - (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
+        const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
         p->packet_flags |= PKT_ESP_LYR_PRESENT;
     }
     else

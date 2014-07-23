@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_ETH_NAME "cd_eth"
+#define CD_ETH_NAME "eth"
 
 class EthModule : public DecodeModule
 {

@@ -37,7 +37,7 @@
 namespace
 {
 
-#define CD_IPV6_ROUTING_NAME "cd_ipv6_routing"
+#define CD_IPV6_ROUTING_NAME "ipv6_routing"
 
 class Ipv6RoutingCodec : public Codec
 {

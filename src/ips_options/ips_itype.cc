@@ -40,38 +40,18 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "itype";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats icmpTypePerfStats;
-
-static ProfileStats* it_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &icmpTypePerfStats;
-
-    return nullptr;
-}
-#endif
-
-#define ICMP_TYPE_TEST_EQ 1
-#define ICMP_TYPE_TEST_GT 2
-#define ICMP_TYPE_TEST_LT 3
-#define ICMP_TYPE_TEST_RG 4
-
-typedef struct _IcmpTypeCheckData  // FIXIT used in parser.cc
-{
-    /* the icmp type number */
-    int icmp_type;
-    int icmp_type2;
-    uint8_t opcode;
-} IcmpTypeCheckData;
 
 class IcmpTypeOption : public IpsOption
 {
 public:
-    IcmpTypeOption(const IcmpTypeCheckData& c) :
+    IcmpTypeOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -81,7 +61,7 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    IcmpTypeCheckData config;
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -91,11 +71,10 @@ private:
 uint32_t IcmpTypeOption::hash() const
 {
     uint32_t a,b,c;
-    const IcmpTypeCheckData *data = &config;
 
-    a = data->icmp_type;
-    b = data->icmp_type2;
-    c = data->opcode;
+    a = config.op;
+    b = config.min;
+    c = config.max;
 
     mix(a,b,c);
     mix_str(a,b,c,get_name());
@@ -110,22 +89,11 @@ bool IcmpTypeOption::operator==(const IpsOption& ips) const
         return false;
 
     IcmpTypeOption& rhs = (IcmpTypeOption&)ips;
-    IcmpTypeCheckData *left = (IcmpTypeCheckData*)&config;
-    IcmpTypeCheckData *right = (IcmpTypeCheckData*)&rhs.config;
-
-    if ((left->icmp_type == right->icmp_type) &&
-        (left->icmp_type2 == right->icmp_type2) &&
-        (left->opcode == right->opcode))
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 int IcmpTypeOption::eval(Cursor&, Packet *p)
 {
-    IcmpTypeCheckData *ds_ptr = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
@@ -135,162 +103,76 @@ int IcmpTypeOption::eval(Cursor&, Packet *p)
 
     PREPROC_PROFILE_START(icmpTypePerfStats);
 
-    switch(ds_ptr->opcode)
-    {
-        case ICMP_TYPE_TEST_EQ:
-            if (p->icmph->type == ds_ptr->icmp_type)
-                rval = DETECTION_OPTION_MATCH;
-            break;
-        case ICMP_TYPE_TEST_GT:
-            if (p->icmph->type > ds_ptr->icmp_type)
-                rval = DETECTION_OPTION_MATCH;
-            break;
-        case ICMP_TYPE_TEST_LT:
-            if (p->icmph->type < ds_ptr->icmp_type)
-                rval = DETECTION_OPTION_MATCH;
-            break;
-        case ICMP_TYPE_TEST_RG:
-            if (p->icmph->type > ds_ptr->icmp_type &&
-                    p->icmph->type < ds_ptr->icmp_type2)
-                rval = DETECTION_OPTION_MATCH;
-            break;
-    }
-
-    DEBUG_WRAP(
-        if (rval == DETECTION_OPTION_MATCH)
-        {
-            DebugMessage(DEBUG_PLUGIN, "Got icmp type match!\n");
-        }
-        else
-        {
-            DebugMessage(DEBUG_PLUGIN, "Failed icmp type match!\n");
-        }
-        );
+    if ( config.eval(p->icmph->type) )
+        rval = DETECTION_OPTION_MATCH;
 
     PREPROC_PROFILE_END(icmpTypePerfStats);
     return rval;
 }
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter itype_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class ItypeModule : public Module
+{
+public:
+    ItypeModule() : Module(s_name, itype_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &icmpTypePerfStats; };
+
+    RangeCheck data;
+};
+
+bool ItypeModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool ItypeModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
+}
+
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void itype_parse(char *data, IcmpTypeCheckData *ds_ptr)
+static Module* mod_ctor()
 {
-    char *type;
-    char *endptr = NULL;
-
-    /* set a pointer to the data so to leave the original unchanged */
-    type = data;
-
-    if(!data)
-    {
-        ParseError("No ICMP Type Specified");
-    }
-
-    /* get rid of spaces before the data */
-    while(isspace((int)*data))
-        data++;
-
-    if (*data == '\0')
-    {
-        ParseError("No ICMP Type Specified : %s", type);
-    }
-
-    /*
-     * if a range is specified, put the min in icmp_type, and the max in
-     * icmp_type2
-     */
-
-    if (isdigit((int)*data) && strstr(data, "<>"))
-    {
-        ds_ptr->icmp_type = strtol(data, &endptr, 10);
-        while (isspace((int)*endptr))
-            endptr++;
-
-        if (*endptr != '<')
-        {
-            ParseError("Invalid ICMP itype in rule: %s", type);
-        }
-
-        data = endptr;
-
-        data += 2;   /* move past <> */
-
-        while (isspace((int)*data))
-            data++;
-
-        ds_ptr->icmp_type2 = strtol(data, &endptr, 10);
-        if (*data == '\0' || *endptr != '\0')
-        {
-            ParseError("Invalid ICMP itype in rule: %s", type);
-        }
-
-        ds_ptr->opcode = ICMP_TYPE_TEST_RG;
-    }
-    /* otherwise if its greater than... */
-    else if (*data == '>')
-    {
-        data++;
-        while (isspace((int)*data))
-            data++;
-
-        ds_ptr->icmp_type = strtol(data, &endptr, 10);
-        if (*data == '\0' || *endptr != '\0')
-        {
-            ParseError("Invalid ICMP itype in rule: %s", type);
-        }
-
-        ds_ptr->opcode = ICMP_TYPE_TEST_GT;
-    }
-    /* otherwise if its less than ... */
-    else if (*data == '<')
-    {
-        data++;
-        while (isspace((int)*data))
-            data++;
-
-        ds_ptr->icmp_type = strtol(data, &endptr, 10);
-        if (*data == '\0' || *endptr != '\0')
-        {
-            ParseError("Invalid ICMP itype in rule: %s", type);
-        }
-
-        ds_ptr->opcode  = ICMP_TYPE_TEST_LT;
-    }
-    /* otherwise check if its a digit */
-    else
-    {
-        ds_ptr->icmp_type = strtol(data, &endptr, 10);
-        if (*endptr != '\0')
-        {
-            ParseError("Invalid ICMP itype in rule: %s", type);
-        }
-
-        ds_ptr->opcode = ICMP_TYPE_TEST_EQ;
-    }
-
-    return;
+    return new ItypeModule;
 }
 
-static IpsOption* itype_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    IcmpTypeCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    itype_parse(data, &ds_ptr);
-    return new IcmpTypeOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* itype_ctor(Module* p, OptTreeNode*)
+{
+    ItypeModule* m = (ItypeModule*)p;
+    return new IcmpTypeOption(m->data);
 }
 
 static void itype_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void itype_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, it_get_profile);
-#endif
 }
 
 static const IpsApi itype_api =
@@ -300,12 +182,12 @@ static const IpsApi itype_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__ICMP,
-    itype_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

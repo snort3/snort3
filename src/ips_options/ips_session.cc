@@ -57,7 +57,6 @@
 
 #include "treenodes.h"
 #include "protocols/packet.h"
-#include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
 #include "snort.h"
@@ -68,23 +67,12 @@
 #include "detection/detection_defines.h"
 #include "main/analyzer.h"
 #include "framework/ips_option.h"
-
-#define SESSION_PRINTABLE    1
-#define SESSION_ALL          2
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "session";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats sessionPerfStats;
-
-static ProfileStats* ssn_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &sessionPerfStats;
-
-    return nullptr;
-}
-#endif
 
 #define SESSION_PRINTABLE  1
 #define SESSION_ALL        2
@@ -327,59 +315,71 @@ static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
 }
 
 //-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter ssn_params[] =
+{
+    { "*mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
+      "output format" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class SsnModule : public Module
+{
+public:
+    SsnModule() : Module(s_name, ssn_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &sessionPerfStats; };
+
+    SessionData data;
+};
+
+bool SsnModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool SsnModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("*mode") )
+        data.session_flag = v.get_long() + 1;
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void session_parse(char *data, SessionData *ds_ptr)
+static Module* mod_ctor()
 {
-    /* manipulate the option arguments here */
-    while(isspace((int)*data))
-        data++;
-
-    if(!strncasecmp(data, "printable", 9))
-    {
-        ds_ptr->session_flag = SESSION_PRINTABLE;
-        return;
-    }
-
-    if(!strncasecmp(data, "binary", 6))
-    {
-        ds_ptr->session_flag = SESSION_BINARY;
-        return;
-    }
-
-    if(!strncasecmp(data, "all", 3))
-    {
-        ds_ptr->session_flag = SESSION_ALL;
-        return;
-    }
-
-    ParseError("invalid session modifier: %s", data);
+    return new SsnModule;
 }
 
-static IpsOption* session_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    SessionData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
+    delete m;
+}
 
-    /* be sure to check that the protocol that is passed in matches the
-       transport layer protocol that you're using for this rule! */
-    session_parse(data, &ds_ptr);
-
-    return new SessionOption(ds_ptr);
+static IpsOption* session_ctor(Module* p, OptTreeNode*)
+{
+    SsnModule* m = (SsnModule*)p;
+    return new SessionOption(m->data);
 }
 
 static void session_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void session_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, ssn_get_profile);
-#endif
 }
 
 static const IpsApi session_api =
@@ -389,8 +389,8 @@ static const IpsApi session_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_LOGGING,
     /*
@@ -400,7 +400,7 @@ static const IpsApi session_api =
      * should work for everyone
      */
     1, /*PROTO_BIT__TCP*/0,
-    session_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

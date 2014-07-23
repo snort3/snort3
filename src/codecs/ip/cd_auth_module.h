@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_AUTH_NAME "cd_auth"
+#define CD_AUTH_NAME "auth"
 
 class AhModule : public DecodeModule
 {

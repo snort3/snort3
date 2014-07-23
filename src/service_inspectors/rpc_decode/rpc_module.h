@@ -37,10 +37,10 @@
 extern THREAD_LOCAL SimpleStats rdstats;
 extern THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 
-class RpcModule : public Module
+class RpcDecodeModule : public Module
 {
 public:
-    RpcModule();
+    RpcDecodeModule();
 
     bool set(const char*, Value&, SnortConfig*)
     { return false; };

@@ -80,7 +80,6 @@ std::vector<FtpServer::Command>::iterator FtpServer::get_command(
                             std::string cmd_name,
                             std::vector<FtpServer::Command>::iterator it)
 {
-    bool ftp_test;
     for (; it != commands.end(); ++it)
         if (!cmd_name.compare((*it).name))
             return it;
@@ -138,7 +137,6 @@ bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
 {
     std::string command;
     std::string elem;
-    bool first_line = true;
 
     if (!(data_stream >> command) ||
         !(data_stream >> elem) ||

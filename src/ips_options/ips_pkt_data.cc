@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  ** Copyright (C) 1998-2013 Sourcefire, Inc.
  **
  ** This program is free software; you can redistribute it and/or modify
@@ -39,20 +39,11 @@
 #include "fpdetect.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
+#include "framework/module.h"
 
 static const char* s_name = "pkt_data";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats pktDataPerfStats;
-
-static ProfileStats* pd_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &pktDataPerfStats;
-
-    return nullptr;
-}
-#endif
 
 class PktDataOption : public IpsOption
 {
@@ -76,25 +67,41 @@ int PktDataOption::eval(Cursor& c, Packet* p)
     return DETECTION_OPTION_MATCH;
 }
 
-static IpsOption* pkt_data_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
-{
-    if (!IsEmptyStr(data))
-        ParseError("pkt_data takes no arguments");
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
 
+class PktDataModule : public Module
+{
+public:
+    PktDataModule() : Module(s_name) { };
+
+    ProfileStats* get_profile() const
+    { return &pktDataPerfStats; };
+};
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new PktDataModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* pkt_data_ctor(Module*, OptTreeNode*)
+{
     return new PktDataOption;
 }
 
 static void pkt_data_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void pkt_data_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, pd_get_profile);
-#endif
 }
 
 static const IpsApi pkt_data_api =
@@ -104,12 +111,12 @@ static const IpsApi pkt_data_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    pkt_data_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

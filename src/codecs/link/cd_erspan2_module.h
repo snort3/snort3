@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_ERSPAN2_NAME "cd_erspan2"
+#define CD_ERSPAN2_NAME "erspan2"
 
 class Erspan2Module : public DecodeModule
 {

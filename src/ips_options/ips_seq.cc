@@ -39,31 +39,18 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+#include "framework/range.h"
 
 static const char* s_name = "seq";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats tcpSeqPerfStats;
-
-static ProfileStats* seq_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &tcpSeqPerfStats;
-
-    return nullptr;
-}
-#endif
-
-typedef struct _TcpSeqCheckData
-{
-    u_long tcp_seq;
-
-} TcpSeqCheckData;
 
 class TcpSeqOption : public IpsOption
 {
 public:
-    TcpSeqOption(const TcpSeqCheckData& c) :
+    TcpSeqOption(const RangeCheck& c) :
         IpsOption(s_name)
     { config = c; };
 
@@ -73,7 +60,7 @@ public:
     int eval(Cursor&, Packet*);
 
 private:
-    TcpSeqCheckData config;
+    RangeCheck config;
 };
 
 //-------------------------------------------------------------------------
@@ -83,11 +70,10 @@ private:
 uint32_t TcpSeqOption::hash() const
 {
     uint32_t a,b,c;
-    const TcpSeqCheckData *data = &config;
 
-    a = data->tcp_seq;
-    b = 0;
-    c = 0;
+    a = config.op;
+    b = config.min;
+    c = config.max;
 
     mix_str(a,b,c,get_name());
     final(a,b,c);
@@ -101,80 +87,89 @@ bool TcpSeqOption::operator==(const IpsOption& ips) const
         return false;
 
     TcpSeqOption& rhs = (TcpSeqOption&)ips;
-    TcpSeqCheckData *left = (TcpSeqCheckData*)&config;
-    TcpSeqCheckData *right = (TcpSeqCheckData*)&rhs.config;
-
-    if (left->tcp_seq == right->tcp_seq)
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 int TcpSeqOption::eval(Cursor&, Packet *p)
 {
-    TcpSeqCheckData *tcpSeqCheckData = &config;
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
     if(!p->tcph)
-        return rval; /* if error appeared when tcp header was processed,
-               * test fails automagically */
+        return rval;
 
     PREPROC_PROFILE_START(tcpSeqPerfStats);
 
-    if(tcpSeqCheckData->tcp_seq == p->tcph->th_seq)
-    {
+    if ( config.eval(p->tcph->th_seq) )
         rval = DETECTION_OPTION_MATCH;
-    }
-#ifdef DEBUG_MSGS
-    else
-    {
-        /* you can put debug comments here or not */
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"No match\n"););
-    }
-#endif
 
-    /* if the test isn't successful, return 0 */
     PREPROC_PROFILE_END(tcpSeqPerfStats);
     return rval;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter seq_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if packet payload size is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class SeqModule : public Module
+{
+public:
+    SeqModule() : Module(s_name, seq_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &tcpSeqPerfStats; };
+
+    RangeCheck data;
+};
+
+bool SeqModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool SeqModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
 }
 
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static void seq_parse(char *data, TcpSeqCheckData *ds_ptr)
+static Module* mod_ctor()
 {
-    char **ep = NULL;
-
-    ds_ptr->tcp_seq = strtoul(data, ep, 0);
-    ds_ptr->tcp_seq = htonl(ds_ptr->tcp_seq);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Seq set to %lX\n", ds_ptr->tcp_seq););
-
+    return new SeqModule;
 }
 
-static IpsOption* seq_ctor(
-    SnortConfig*, char *data, OptTreeNode*)
+static void mod_dtor(Module* m)
 {
-    TcpSeqCheckData ds_ptr;
-    memset(&ds_ptr, 0, sizeof(ds_ptr));
-    seq_parse(data, &ds_ptr);
-    return new TcpSeqOption(ds_ptr);
+    delete m;
+}
+
+static IpsOption* seq_ctor(Module* p, OptTreeNode*)
+{
+    SeqModule* m = (SeqModule*)p;
+    return new TcpSeqOption(m->data);
 }
 
 static void seq_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void seq_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, seq_get_profile);
-#endif
 }
 
 static const IpsApi seq_api =
@@ -184,12 +179,12 @@ static const IpsApi seq_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    seq_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,

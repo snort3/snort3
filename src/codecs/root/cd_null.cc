@@ -33,7 +33,7 @@
 namespace
 {
 
-#define CD_NULL_NAME "cd_null"
+#define CD_NULL_NAME "null"
 
 class NullCodec : public Codec
 {

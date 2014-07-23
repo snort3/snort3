@@ -323,8 +323,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     p->actual_ip_len = (uint16_t) ip_len;
 
     /* set the remaining packet length */
-    uint32_t* new_raw_len = const_cast<uint32_t*>(&raw_len);
-    *new_raw_len = ip_len;
+    const_cast<uint32_t&>(raw_len) = ip_len;
     ip_len -= hlen;
 
     /* check for fragmented packets */

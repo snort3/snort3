@@ -988,7 +988,7 @@ public:
 
 class RpcDecode : public Inspector {
 public:
-    RpcDecode(RpcModule*);
+    RpcDecode(RpcDecodeModule*);
 
     void show(SnortConfig*);
     void eval(Packet*);
@@ -1000,7 +1000,7 @@ private:
     RpcDecodeConfig config;
 };
 
-RpcDecode::RpcDecode(RpcModule*)
+RpcDecode::RpcDecode(RpcDecodeModule*)
 {
 }
 
@@ -1078,7 +1078,7 @@ void RpcDecode::eval(Packet *p)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{ return new RpcModule; }
+{ return new RpcDecodeModule; }
 
 static void mod_dtor(Module* m)
 { delete m; }
@@ -1090,7 +1090,7 @@ static void rd_init()
 
 static Inspector* rd_ctor(Module* m)
 {
-    return new RpcDecode((RpcModule*)m);
+    return new RpcDecode((RpcDecodeModule*)m);
 }
 
 static void rd_dtor(Inspector* p)

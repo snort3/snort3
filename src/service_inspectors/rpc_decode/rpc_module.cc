@@ -53,18 +53,18 @@ static const RuleMap rpc_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-RpcModule::RpcModule() : Module("rpc_decode", rpc_params)
+RpcDecodeModule::RpcDecodeModule() : Module("rpc_decode", rpc_params)
 { }
 
-const RuleMap* RpcModule::get_rules() const
+const RuleMap* RpcDecodeModule::get_rules() const
 { return rpc_rules; }
 
-const char** RpcModule::get_pegs() const
+const char** RpcDecodeModule::get_pegs() const
 { return simple_pegs; }
 
-PegCount* RpcModule::get_counts() const
+PegCount* RpcDecodeModule::get_counts() const
 { return (PegCount*)&rdstats; }
 
-ProfileStats* RpcModule::get_profile() const
+ProfileStats* RpcDecodeModule::get_profile() const
 { return &rpcdecodePerfStats; }
 

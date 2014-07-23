@@ -308,7 +308,7 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
 {
     if ( !mod->set(fqn, val, s_config) )
     {
-        LogMessage("ERROR: %s is invalid\n", fqn);
+        ErrorMessage("ERROR: %s is invalid\n", fqn);
         ++s_errors;
     }
 
@@ -345,11 +345,11 @@ static bool set_value(const char* fqn, Value& v)
     }
 
     if ( v.get_type() == Value::VT_STR )
-        LogMessage("ERROR invalid %s = %s\n", fqn, v.get_string());
+        ErrorMessage("ERROR invalid %s = %s\n", fqn, v.get_string());
     else if ( v.get_real() == v.get_long() )
-        LogMessage("ERROR invalid %s = %ld\n", fqn, v.get_long());
+        ErrorMessage("ERROR invalid %s = %ld\n", fqn, v.get_long());
     else
-        LogMessage("ERROR invalid %s = %g\n", fqn, v.get_real());
+        ErrorMessage("ERROR invalid %s = %g\n", fqn, v.get_real());
 
     ++s_errors;
     return false;
@@ -374,11 +374,15 @@ bool open_table(const char* s, int idx)
     string key = s;
     set_top(key);
 
-    Module* m = ModuleManager::get_module(key.c_str());
+    // ips option parameters only using in rules which
+    // are non-lua; may be possible to allow a subtable
+    // for lua config of ips option globals
+    ModHook* h = get_hook(key.c_str());
 
-    if ( !m )
+    if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
         return false;
 
+    Module* m = h->mod;
     static string last;
 
     if ( last != key )

@@ -38,7 +38,7 @@
 namespace
 {
 
-#define CD_IPV6_FRAG_NAME "cd_ipv6_frag"
+#define CD_IPV6_FRAG_NAME "ipv6_frag"
 
 class Ipv6FragCodec : public Codec
 {

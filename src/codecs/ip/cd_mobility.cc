@@ -32,7 +32,7 @@ namespace
 {
 
 // yes, macros are necessary. The API and class constructor require different strings.
-#define CD_MOBILE_NAME "cd_mobility"
+#define CD_MOBILE_NAME "mobility"
 
 class MobilityCodec : public Codec
 {

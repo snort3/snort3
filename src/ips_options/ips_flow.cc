@@ -43,20 +43,12 @@
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
 
 static const char* s_name = "flow";
 
-#ifdef PERF_PROFILING
 static THREAD_LOCAL ProfileStats flowCheckPerfStats;
-
-static ProfileStats* fc_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &flowCheckPerfStats;
-
-    return nullptr;
-}
-#endif
 
 #define ONLY_STREAM   0x01
 #define ONLY_FRAG     0x02
@@ -284,89 +276,11 @@ int OtnFlowOnlyReassembled( OptTreeNode * otn )
 }
 
 //-------------------------------------------------------------------------
-// api methods
+// support methods
 //-------------------------------------------------------------------------
 
-static void flow_parse(char *data, FlowCheckData* fcd, OptTreeNode *otn)
+static void flow_verify(FlowCheckData* fcd)
 {
-    char *token, *str, *p;
-
-    str = SnortStrdup(data);
-
-    p = str;
-
-    /* nuke leading whitespace */
-    while(isspace((int)*p)) p++;
-
-    char* lasts = nullptr;
-    token = strtok_r(p, ",", &lasts);
-
-    while(token)
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                    "parsed %s,(%d)\n", token,strlen(token)););
-
-        while(isspace((int)*token))
-            token++;
-
-        if(!strcasecmp(token, "to_server"))
-        {
-            fcd->from_client = 1;
-        }
-        else if(!strcasecmp(token, "to_client"))
-        {
-            fcd->from_server = 1;
-        }
-        else if(!strcasecmp(token, "from_server"))
-        {
-            fcd->from_server = 1;
-        }
-        else if(!strcasecmp(token, "from_client"))
-        {
-            fcd->from_client = 1;
-        }
-        else if(!strcasecmp(token, "stateless"))
-        {
-            fcd->stateless = 1;
-            otn->stateless = 1;
-        }
-        else if(!strcasecmp(token, "established"))
-        {
-            fcd->established = 1;
-            otn->established = 1;
-        }
-        else if(!strcasecmp(token, "not_established"))
-        {
-            fcd->unestablished = 1;
-            otn->unestablished = 1;
-        }
-        else if(!strcasecmp(token, "no_stream"))
-        {
-            fcd->ignore_reassembled |= IGNORE_STREAM;
-        }
-        else if(!strcasecmp(token, "only_stream"))
-        {
-            fcd->only_reassembled |= ONLY_STREAM;
-        }
-        else if(!strcasecmp(token, "no_frag"))
-        {
-            fcd->ignore_reassembled |= IGNORE_FRAG;
-        }
-        else if(!strcasecmp(token, "only_frag"))
-        {
-            fcd->only_reassembled |= ONLY_FRAG;
-        }
-        else
-        {
-            ParseError("Unknown Flow Option: '%s'", token);
-
-        }
-
-
-        token = strtok_r(NULL, ",", &lasts);
-    }
-    free(str);
-
     if(fcd->from_client && fcd->from_server)
     {
         ParseError("Can't use both from_client and flow_from server");
@@ -382,57 +296,175 @@ static void flow_parse(char *data, FlowCheckData* fcd, OptTreeNode *otn)
         ParseError("Can't use no_frag and only_frag");
     }
 
-    if(otn->stateless && (fcd->from_client || fcd->from_server))
+    if(fcd->stateless && (fcd->from_client || fcd->from_server))
     {
         ParseError("Can't use flow: stateless option with other options");
     }
 
-    if(otn->stateless && otn->established)
+    if(fcd->stateless && fcd->established)
     {
         ParseError("Can't specify established and stateless "
                    "options in same rule");
     }
 
-    if(otn->stateless && otn->unestablished)
+    if(fcd->stateless && fcd->unestablished)
     {
         ParseError("Can't specify unestablished and stateless "
                    "options in same rule");
     }
 
-    if(otn->established && otn->unestablished)
+    if(fcd->established && fcd->unestablished)
     {
         ParseError("Can't specify unestablished and established "
                    "options in same rule");
     }
 }
 
-static IpsOption* flow_ctor(
-    SnortConfig*, char *data, OptTreeNode *otn)
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter flow_params[] =
 {
-    FlowCheckData fcd;
-    memset(&fcd, 0, sizeof(fcd));
-    flow_parse(data, &fcd, otn);
+    { "to_client", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match on server responses" },
+
+    { "to_server", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match on client requests" },
+
+    { "from_client", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "same as to_server" },
+
+    { "from_server", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "same as to_client" },
+
+    { "established", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match only during data transfer phase" },
+
+    { "not_established", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match only outside data transfer phase" },
+
+    { "stateless", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match regardless of stream state" },
+
+    { "no_stream", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match on raw packets only" },
+
+    { "only_stream", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match on reassembled packets only" },
+
+    { "no_frag", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match on raw packets only" },
+
+    { "only_frag", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "match on defragmented packets only" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class FlowModule : public Module
+{
+public:
+    FlowModule() : Module(s_name, flow_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &flowCheckPerfStats; };
+
+    FlowCheckData data;
+};
+
+bool FlowModule::begin(const char*, int, SnortConfig*)
+{
+    memset(&data, 0, sizeof(data));
+    return true;
+}
+
+bool FlowModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("to_server") )
+        data.from_client = 1;
+
+    else if ( v.is("to_client") )
+        data.from_server = 1;
+
+    else if ( v.is("from_server") )
+        data.from_server = 1;
+
+    else if ( v.is("from_client") )
+        data.from_client = 1;
+
+    else if ( v.is("stateless") )
+        data.stateless = 1;
+
+    else if ( v.is("established") )
+        data.established = 1;
+
+    else if ( v.is("not_established") )
+        data.unestablished = 1;
+
+    else if ( v.is("no_stream") )
+        data.ignore_reassembled |= IGNORE_STREAM;
+
+    else if ( v.is("only_stream") )
+        data.only_reassembled |= ONLY_STREAM;
+
+    else if ( v.is("no_frag") )
+        data.ignore_reassembled |= IGNORE_FRAG;
+
+    else if ( v.is("only_frag") ) 
+        data.only_reassembled |= ONLY_FRAG;
+
+    else
+        return false;
+
+    flow_verify(&data);
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new FlowModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* flow_ctor(Module* p, OptTreeNode *otn)
+{
+    FlowModule* m = (FlowModule*)p;
+
+    if ( m->data.stateless )
+        otn->stateless = 1;
+
+    if ( m->data.established )
+        otn->established = 1;
+
+    if ( m->data.unestablished )
+        otn->unestablished = 1;
 
     if (otn->proto == IPPROTO_ICMP)
     {
-        if ((fcd.only_reassembled != ONLY_FRAG) && (fcd.ignore_reassembled != IGNORE_FRAG))
+        if ( (m->data.only_reassembled != ONLY_FRAG) &&
+             (m->data.ignore_reassembled != IGNORE_FRAG) )
         {
             ParseError("Cannot check flow connection for ICMP traffic");
         }
     }
-    return new FlowCheckOption(fcd);
+    return new FlowCheckOption(m->data);
 }
 
 static void flow_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void flow_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterOtnProfile(s_name, fc_get_profile);
-#endif
 }
 
 static const IpsApi flow_api =
@@ -442,12 +474,12 @@ static const IpsApi flow_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, 0,
-    flow_ginit,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,
