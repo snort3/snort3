@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <string>
+#include <cstring>
 #include "utils/snort2lua_util.h"
 #include "conversion_state.h"
 
@@ -114,7 +115,7 @@ bool get_string(std::istringstream& stream,
     }
     else
     {
-        int pos = 0;
+        std::streamoff pos = 0;
         option = std::string();
 
         // we don't want an empty string

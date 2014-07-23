@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_PGM_NAME "cd_pgm"
+#define CD_PGM_NAME "pgm"
 
 class PgmModule : public DecodeModule
 {

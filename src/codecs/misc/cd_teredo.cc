@@ -40,7 +40,7 @@
 namespace
 {
 
-#define CD_TEREDO_NAME "cd_teredo"
+#define CD_TEREDO_NAME "teredo"
 
 class TeredoCodec : public Codec
 {
@@ -49,7 +49,7 @@ public:
     ~TeredoCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 };
 
@@ -61,10 +61,10 @@ void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROTOCOL_TEREDO);
 }
 
-bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    if (len < teredo::min_hdr_len())
+    if (raw_len < teredo::min_hdr_len())
         return false;
 
     /* Decode indicators. If both are present, Auth always comes before Origin. */
@@ -72,13 +72,13 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     {
         uint8_t client_id_length, auth_data_length;
 
-        if (len < teredo::min_indicator_auth_len())
+        if (raw_len < teredo::min_indicator_auth_len())
             return false;
 
         client_id_length = *(raw_pkt + 2);
         auth_data_length = *(raw_pkt + 3);
 
-        if (len < (uint32_t)(teredo::min_indicator_auth_len() + client_id_length + auth_data_length))
+        if (raw_len < (uint32_t)(teredo::min_indicator_auth_len() + client_id_length + auth_data_length))
             return false;
 
         raw_pkt += (teredo::min_indicator_auth_len() + client_id_length + auth_data_length);
@@ -87,7 +87,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
     if (ntohs(*(uint16_t *)raw_pkt) == teredo::indicator_origin())
     {
-        if (len < teredo::indicator_origin_len())
+        if (raw_len < teredo::indicator_origin_len())
             return false;
 
         raw_pkt += teredo::indicator_origin_len();

@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_IPV4_NAME "cd_ipv4"
+#define CD_IPV4_NAME "ipv4"
 
 class Ipv4Module : public DecodeModule
 {

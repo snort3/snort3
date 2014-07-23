@@ -36,7 +36,7 @@
 namespace
 {
 
-#define CD_HOPOPTS_NAME "cd_ipv6_hopopts"
+#define CD_HOPOPTS_NAME "ipv6_hopopts"
 
 class Ipv6HopOptsCodec : public Codec
 {
@@ -45,7 +45,7 @@ public:
     ~Ipv6HopOptsCodec() {};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool update(Packet*, Layer*, uint32_t* len);
 };
@@ -67,13 +67,13 @@ struct IP6HopByHop
  * Class functions
  */
 
-bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     const IP6HopByHop *hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw_pkt);
 
 
-    if (len < sizeof(IP6HopByHop))
+    if (raw_len < sizeof(IP6HopByHop))
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -92,7 +92,7 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
     next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
 
-    if(lyr_len > len)
+    if(lyr_len > raw_len)
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -103,7 +103,7 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->ip6_extension_count++;
 
 
-    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
+    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
         return true;
     return false;
 }

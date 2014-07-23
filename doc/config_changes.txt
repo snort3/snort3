@@ -1,0 +1,229 @@
+change:  ac ==> ac_full_q
+change:  ac-banded ==> ac_banded
+change:  ac-bnfa ==> ac_bnfa_q
+change:  ac-bnfa-nq ==> ac_bnfa
+change:  ac-bnfa-q ==> ac_bnfa_q
+change:  ac-nq ==> ac_full
+change:  ac-q ==> ac_full_q
+change:  ac-sparsebands ==> ac_sparse_bands
+change:  ac-split ==> ac_full_q
+change:  ac-split ==> split_any_any
+change:  ac-std ==> ac_std
+change:  accumulate ==> reset = false
+change:  acs ==> ac_sparse
+change:  addressspace_agnostic  ==> address_space_agnostic
+change:  alert_unified2 ==> unified2
+change:  alertfile  ==> alert_file
+change:  alt_max_param_len ==> cmd_validity
+change:  autogenerate_preprocessor_decoder_rules  ==> enable_builtin_rules
+change:  bind_to ==> bindings
+change:  bleedover-port-limit ==> bleedover_port_limit
+change:  bleedover-warnings-enabled ==> bleedover_warnings_enabled
+change:  block ==> base
+change:  checksum_mode  ==> checksum_eval
+change:  config file: file_block_timeout ==> block_timeout
+change:  config file: file_lookup_timeout ==> lookup_timeout
+change:  config file: file_signature_depth ==> signature_depth
+change:  config file: file_type_depth ==> type_depth
+change:  config file: signature ==> enable_signature
+change:  config file: type_id ==> enable_type
+change:  config mpls_payload_type: ethernet ==> mpls_payload_type = eth
+change:  config mpls_payload_type: ipv4 ==> mpls_payload_type = ip4
+change:  config mpls_payload_type: ipv6 ==> mpls_payload_type = ip6
+change:  daq  ==> name
+change:  daq_dir  ==> dir
+change:  daq_mode  ==> mode
+change:  daq_var  ==> var
+change:  data_chan ==> ignore_data_chan
+change:  debug-pkts ==> debug_pkts
+change:  debug-print-fast-pattern ==> debug_print_fast_pattern
+change:  debug-print-nocontent-rule-tests ==> debug_print_nocontent_rule_tests
+change:  debug-print-rule-group-build-details ==> debug_print_rule_group_build_details
+change:  debug-print-rule-groups-compiled ==> debug_print_rule_groups_compiled
+change:  debug-print-rule-groups-uncompiled ==> debug_print_rule_groups_uncompiled
+change:  detection_filter  ==> detection_filter_memcap
+change:  dgmlen ==> dgm_len
+change:  disable_inline_init_failopen  ==> enable_inline_init_failopen
+change:  disabled ==> enable
+change:  dont_reassemble_async ==> reassemble_async
+change:  dstport ==> dst_port
+change:  dynamicdetection ==> plugin_path
+change:  dynamicengine ==> plugin_path
+change:  dynamicpreprocessor ==> plugin_path
+change:  dynamicsidechannel ==> plugin_path
+change:  enable-single-rule-group ==> enable_single_rule_group
+change:  enable_cookie ==> enable_cookies
+change:  enable_deep_teredo_inspection  ==> deep_teredo_inspection
+change:  enabled ==> enable
+change:  ethdst ==> eth_dst
+change:  ethlen ==> eth_len
+change:  ethsrc ==> eth_src
+change:  event_filter  ==> event_filter_memcap
+change:  fastpath-expensive-packets ==> fastpath_expensive_packets
+change:  filename ==> file
+change:  flow-file ==> flow_file = true
+change:  flow-ip ==> flow_ip
+change:  flow-ip-file ==> flow_ip_file = true
+change:  flow-ip-memcap ==> flow_ip_memcap
+change:  flow-ports ==> flow_ports
+change:  flow_depth ==> server_flow_depth
+change:  footprint ==> use_static_footprint_sizes
+change:  gen_id ==> gid
+change:  icmpcode ==> icmp_code
+change:  icmpid ==> icmp_id
+change:  icmpseq ==> icmp_seq
+change:  icmptype ==> icmp_type
+change:  intel-cpm ==> intel_cpm
+change:  iplen ==> ip_len
+change:  log_alert ==> level = alert
+change:  log_auth ==> facility = auth
+change:  log_authpriv ==> facility = authpriv
+change:  log_cons ==> options = cons
+change:  log_crit ==> level = crit
+change:  log_daemon ==> facility = daemon
+change:  log_debug ==> level = debug
+change:  log_emerg ==> level = emerg
+change:  log_err ==> level = err
+change:  log_info ==> level = info
+change:  log_local0 ==> facility = local0
+change:  log_local1 ==> facility = local1
+change:  log_local2 ==> facility = local2
+change:  log_local3 ==> facility = local3
+change:  log_local4 ==> facility = local4
+change:  log_local5 ==> facility = local5
+change:  log_local6 ==> facility = local6
+change:  log_local7 ==> facility = local7
+change:  log_ndelay ==> options = ndelay
+change:  log_notice ==> level = notice
+change:  log_perror ==> options = perror
+change:  log_pid ==> options = pid
+change:  log_unified2 ==> unified2
+change:  log_user ==> facility = user
+change:  log_warning ==> level = warning
+change:  lowmem ==> lowmem_q
+change:  lowmem-nq ==> lowmem
+change:  lowmem-q ==> lowmem_q
+change:  max-pattern-len ==> max_pattern_len
+change:  max-pkt-time ==> max_pkt_time
+change:  max-rule-time ==> max_rule_time
+change:  max_active_responses ==> max_responses
+change:  max_attribute_hosts  ==> max_hosts
+change:  max_attribute_services_per_host  ==> max_services_per_host
+change:  max_icmp ==> max_sessions
+change:  max_ip ==> max_sessions
+change:  max_queued_bytes ==> queue_limit.max_bytes
+change:  max_queued_segs ==> queue_limit.max_segments
+change:  max_tcp ==> max_sessions
+change:  max_udp ==> max_sessions
+change:  min_fragment_length ==> min_frag_length
+change:  min_response_seconds ==> min_interval
+change:  non_rfc_char ==> non_rfc_chars
+change:  nopcre  ==> pcre_enable
+change:  overlap_limit ==> max_overlaps
+change:  pad ==> base
+change:  pkt-log  ==> pkt_log
+change:  pkt_count  ==> limit
+change:  pktcnt ==> packets
+change:  policy_mode  ==> mode
+change:  ports ==> bindings
+change:  ports ==> gtp_ports
+change:  ports both ==> both_ports
+change:  ports client ==> client_ports
+change:  ports server ==> server_ports
+change:  preprocessor normalize_icmp4 ==> icmp4 == <bool>
+change:  preprocessor normalize_icmp6 ==> icmp6 == <bool>
+change:  preprocessor normalize_ip6 ==> ip6 == <bool>
+change:  print ==> count
+change:  proto ==> protos
+change:  prune_log_max ==> histogram
+change:  rate_filter  ==> rate_filter_memcap
+change:  req_pay ==> base
+change:  req_urg ==> base
+change:  req_urp ==> base
+change:  rsv ==> base
+change:  rule-log ==> rule_log
+change:  scan_type ==> scan_types
+change:  search-method ==> search_method
+change:  search-optimize ==> search_optimize
+change:  sid_id ==> sid
+change:  sig_generator ==> gid
+change:  sig_id ==> sid
+change:  sig_rev ==> rev
+change:  snortfile ==> file = true
+change:  sort avg_ticks_per_nomatch ==> sort = avg_ticks_per_no_match
+change:  split-any-any ==> split_any_any
+change:  srcport ==> src_port
+change:  suspend-expensive-rules ==> suspend_expensive_rules
+change:  suspend-timeout ==> suspend_timeout
+change:  tcp_cache_nominal_timeout ==> pruning_timeout
+change:  tcp_cache_pruning_timeout ==> idle_timeout
+change:  tcpack ==> tcp_ack
+change:  tcpflags ==> tcp_flags
+change:  tcplen ==> tcp_len
+change:  tcpseq ==> tcp_seq
+change:  tcpwindow ==> tcp_win
+change:  threshold  ==> event_filter_memcap
+change:  time ==> seconds
+change:  timeout ==> session_timeout
+change:  trim_mss ==> trim
+change:  trim_rst ==> trim
+change:  trim_syn ==> trim
+change:  trim_win ==> trim
+change:  udp_cache_nominal_timeout ==> idle_timeout
+change:  udp_cache_pruning_timeout ==> pruning_timeout
+change:  unified2 ==> unified2
+deleted: action
+deleted: alert_fragments
+deleted: atexitonly
+deleted: atexitonly: base-stats
+deleted: atexitonly: events-stats
+deleted: atexitonly: flow-ip-stats
+deleted: atexitonly: flow-stats
+deleted: check_session_hijacking
+deleted: config cs_dir
+deleted: config disable_attribute_reload_thread
+deleted: config disable_decode_alerts
+deleted: config disable_decode_drops
+deleted: config disable_ipopt_alerts
+deleted: config disable_ipopt_drops
+deleted: config disable_tcpopt_alerts
+deleted: config disable_tcpopt_drops
+deleted: config disable_tcpopt_experimental_alerts
+deleted: config disable_tcpopt_experimental_drops
+deleted: config disable_tcpopt_obsolete_alerts
+deleted: config disable_tcpopt_obsolete_drops
+deleted: config disable_tcpopt_ttcp_alerts
+deleted: config disable_ttcp_alerts
+deleted: config disable_ttcp_drops
+deleted: config dump_dynamic_rules_path
+deleted: config enable_decode_drops
+deleted: config enable_decode_oversized_alerts
+deleted: config enable_decode_oversized_drops
+deleted: config enable_ipopt_drops
+deleted: config enable_tcpopt_drops
+deleted: config enable_tcpopt_experimental_drops
+deleted: config enable_tcpopt_obsolete_drops
+deleted: config enable_tcpopt_ttcp_drops
+deleted: config enable_ttcp_drops
+deleted: config flexresp2_attempts
+deleted: config flexresp2_interface
+deleted: config flexresp2_memcap
+deleted: config flexresp2_rows
+deleted: config include_vlan_in_alerts
+deleted: config interface
+deleted: config layer2resets
+deleted: config policy_version
+deleted: config so_rule_memcap
+deleted: default
+deleted: detect_ack_scans
+deleted: detect_anomalies
+deleted: disabled
+deleted: dont_store_large_packets
+deleted: flush_on_alert
+deleted: logfile
+deleted: mwm
+deleted: no_alert_incomplete
+deleted: no_alert_large_fragments
+deleted: no_alert_multiple_requests
+deleted: no_alerts
+deleted: no_midstream_drop_alerts

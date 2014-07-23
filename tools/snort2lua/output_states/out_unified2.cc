@@ -98,7 +98,7 @@ public:
 template<const std::string* output_name>
 static ConversionState* unified2_ctor(Converter* cv, LuaData* ld)
 {
-    ld->open_top_level_table("unified2"); // in case there are no arguments
+    ld->open_top_level_table("unified2"); // create table in case there are no arguments
     ld->close_table();
     return new Unified2<output_name>(cv, ld);
 }

@@ -61,6 +61,18 @@ Table::~Table()
     delete comments;
 }
 
+bool Table::has_differences()
+{
+    if (!comments->empty())
+        return true;
+
+    for (Table* t : tables)
+        if (t->has_differences())
+            return true;
+
+    return false;
+}
+
 Table* Table::open_table()
 {
     Table *t = new Table(depth + 1);
@@ -177,10 +189,17 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
 
         for (Variable* v : t.lists)
             out << (*v) << ",\n";
+
+        for (Table* sub_t : t.tables)
+            out << (*sub_t) << ",\n";
+    }
+    else
+    {
+        for (Table* sub_t : t.tables)
+            if (sub_t->has_differences())
+                out << (*sub_t) << ",\n";
     }
 
-    for (Table* sub_t : t.tables)
-        out << (*sub_t) << ",\n";
 
     // don't add a comma if the depth is zero
     if(t.depth == 0)

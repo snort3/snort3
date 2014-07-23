@@ -27,7 +27,7 @@
 namespace
 {
 
-#define CD_ETHLOOPBACK_NAME "cd_ethloopback"
+#define CD_ETHLOOPBACK_NAME "ethloopback"
 
 
 class EthLoopbackCodec : public Codec
@@ -38,7 +38,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     
@@ -55,7 +55,7 @@ void EthLoopbackCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(ETHERNET_TYPE_LOOP);
 }
 
-bool EthLoopbackCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*raw_len*/, 
+bool EthLoopbackCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
         Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
 {
 

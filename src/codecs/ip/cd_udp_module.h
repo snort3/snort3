@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_UDP_NAME "cd_udp"
+#define CD_UDP_NAME "udp"
 
 class UdpModule : public DecodeModule
 {

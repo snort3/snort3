@@ -45,7 +45,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_MPLS; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);    
 
 };
@@ -68,7 +68,7 @@ void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     const uint32_t* tmpMplsHdr;
@@ -80,11 +80,11 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     uint8_t bos = 0;
     uint8_t ttl;
     uint8_t chainLen = 0;
-    uint32_t stack_len = len;
+    uint32_t stack_len = raw_len;
 
     int iRet = 0;
 
-    UpdateMPLSStats(&sfBase, len, Active_PacketWasDropped());
+    UpdateMPLSStats(&sfBase, raw_len, Active_PacketWasDropped());
     tmpMplsHdr = (const uint32_t *) raw_pkt;
 
     while (!bos)

@@ -210,12 +210,12 @@ static inline bool is_ipv4(uint8_t ch)
 
 static inline uint8_t get_pkt_len(const IP4Hdr* p)
 {
-    return (p->ip_verhl & 0x0f) << 2;
+    return (uint8_t)((p->ip_verhl & 0x0f) << 2);
 }
 
 static inline uint8_t get_pkt_len(const IPHdr* p)
 {
-    return (p->ip_verhl & 0x0f) << 2;
+    return (uint8_t)((p->ip_verhl & 0x0f) << 2);
 }
 
 static inline uint8_t get_version(IPHdr* p)

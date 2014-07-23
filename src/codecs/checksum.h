@@ -28,6 +28,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <cstddef>
 
 
 namespace checksum
@@ -51,14 +52,14 @@ struct Pseudoheader
 };
 
 
-uint16_t cksum_add(const uint16_t *buf, size_t len);
-uint16_t tcp_cksum(const uint16_t *buf, size_t len, Pseudoheader*);
-uint16_t tcp_cksum(const uint16_t *buf, size_t len, Pseudoheader6 *ph );
-uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader*);
-uint16_t udp_cksum(const uint16_t *buf, size_t len, Pseudoheader6*);
-uint16_t icmp_cksum(const uint16_t *buf, size_t len, Pseudoheader6*);
-uint16_t icmp_cksum(const uint16_t *buf, size_t len);
-uint16_t ip_cksum(const uint16_t *buf, size_t len);
+uint16_t cksum_add(const uint16_t *buf, std::size_t len);
+uint16_t tcp_cksum(const uint16_t *buf, std::size_t len, Pseudoheader*);
+uint16_t tcp_cksum(const uint16_t *buf, std::size_t len, Pseudoheader6 *ph );
+uint16_t udp_cksum(const uint16_t *buf, std::size_t len, Pseudoheader*);
+uint16_t udp_cksum(const uint16_t *buf, std::size_t len, Pseudoheader6*);
+uint16_t icmp_cksum(const uint16_t *buf, std::size_t len, Pseudoheader6*);
+uint16_t icmp_cksum(const uint16_t *buf, std::size_t len);
+uint16_t ip_cksum(const uint16_t *buf, std::size_t len);
 
 } // namespace checksum
 

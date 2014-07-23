@@ -45,7 +45,9 @@ public:
 
 } // namespace
 
-template<const std::string* snort_option, const std::string* lua_table_name, const std::string* lua_option_name = nullptr>
+template<const std::string* snort_option,
+         const std::string* lua_table_name,
+         const std::string* lua_option_name = nullptr>
 static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
 {
     ld->open_table(*lua_table_name);
@@ -62,7 +64,9 @@ static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
     return new DeadCode(cv, ld);
 }
 
-template<const std::string* snort_option, const std::string* lua_table_name, const std::string* lua_option_name = nullptr>
+template<const std::string* snort_option,
+         const std::string* lua_table_name,
+         const std::string* lua_option_name = nullptr>
 static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
 {
     ld->open_table(*lua_table_name);
@@ -84,8 +88,8 @@ static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
  *************************************************/
 
 static const std::string alerts = "alerts";
-static const std::string cd_udp = "cd_udp";
-static const std::string cd_mpls = "cd_mpls";
+static const std::string udp = "udp";
+static const std::string mpls = "mpls";
 static const std::string daq = "daq";
 static const std::string detection = "detection";
 static const std::string ips = "ips";
@@ -235,7 +239,7 @@ static const std::string enable_mpls_multicast = "enable_mpls_multicast";
 static const ConvertMap enable_mpls_multicast_api =
 {
     enable_mpls_multicast,
-    config_true_no_opt_ctor<&enable_mpls_multicast, &cd_mpls>
+    config_true_no_opt_ctor<&enable_mpls_multicast, &mpls>
 };
 
 const ConvertMap* enable_mpls_multicast_map = &enable_mpls_multicast_api;
@@ -251,7 +255,7 @@ static const std::string deep_teredo_inspection =
 static const ConvertMap enable_deep_teredo_inspection_api =
 {
     enable_deep_teredo_inspection,
-    config_true_no_opt_ctor<&enable_deep_teredo_inspection, &cd_udp, &deep_teredo_inspection>
+    config_true_no_opt_ctor<&enable_deep_teredo_inspection, &udp, &deep_teredo_inspection>
 };
 
 const ConvertMap* enable_deep_teredo_inspection_map = &enable_deep_teredo_inspection_api;
@@ -264,7 +268,7 @@ static const std::string enable_gtp = "enable_gtp";
 static const ConvertMap enable_gtp_api =
 {
     enable_gtp,
-    config_true_no_opt_ctor<&enable_gtp, &cd_udp>
+    config_true_no_opt_ctor<&enable_gtp, &udp>
 };
 
 const ConvertMap* enable_gtp_map = &enable_gtp_api;
@@ -277,7 +281,7 @@ static const std::string enable_mpls_overlapping_ip = "enable_mpls_overlapping_i
 static const ConvertMap enable_mpls_overlapping_ip_api =
 {
     enable_mpls_overlapping_ip,
-    config_true_no_opt_ctor<&enable_mpls_overlapping_ip, &cd_mpls>
+    config_true_no_opt_ctor<&enable_mpls_overlapping_ip, &mpls>
 };
 
 const ConvertMap* enable_mpls_overlapping_ip_map = &enable_mpls_overlapping_ip_api;

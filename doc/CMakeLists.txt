@@ -20,8 +20,9 @@ set(BUILT_SOURCES
     config.txt
     options.txt
     gids.txt
-#    modules.txt   Requires Special formatting. manually added below.
-#    version.txt   Required special formatting. manually added below.
+#   modules.txt         Requires Special formatting. manually added below.
+#   version.txt         Required special formatting. manually added below.
+#   config_changes.txt  If ruby executable found
     CACHE INTERNAL "sources to be built" FORCE
 )
 
@@ -31,7 +32,7 @@ set (UNBUILT_SOURCES
     style.txt
     tips.txt
     plugins.txt
-#    images/snort.png   # images directory is manually included as an a2x option
+#   config_changes.txt  If ruby executable is NOT found
 )
 
 if (MAKE_HTML_DOC)
@@ -104,6 +105,23 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
     )
     list (APPEND ALL_SOURCES ${output})
 
+
+    # If ruby is present, built the configuration differences
+    if (RUBY_EXECUTABLE)
+        set (output ${CMAKE_CURRENT_BINARY_DIR}/config_changes.txt)
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND ${RUBY_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/get_differences.rb
+                ${CMAKE_SOURCE_DIR}/tools/snort2lua
+                > ${output}
+            DEPENDS snort2lua
+            COMMENT "Documents: building config_changes.txt"
+        )
+        list (APPEND ALL_SOURCES ${output})
+    else()
+        list(APPEND UNBUILT_SOURCES conf_differences.txt)
+    endif()
 
     # next, Copy all distributed files into the binary tree (necessary for asciidocs).
     # Then create a dependency between the new and old files.

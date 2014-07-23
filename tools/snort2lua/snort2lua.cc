@@ -93,7 +93,6 @@ static const char* parse_single_str = "    --single-rule-files, -s\t\tWhen parsi
 static const char* parse_mult_conf_str = "    --mult-conf-files, -n\t\tWhen parsing include file named 'file', write conf data to file.lua (parse_includes must be turn on)";
 static const char* parse_single_conf_str = "    --single-conf-files, -t\t\tWhen parsing include files, pull all data into specified output files";
 static const char* differences_str  = "    --output-differences, -d\t\tlua syntax aside, output to specified files the differences between your Snort and Snort++ configuration";
-static const char* default_str  = "    --output-default \t\toutput all data to specified files";
 static const char* quiet_str  = "    --output-quiet, -d\t\tdon't print to standard out. only output lua and rule syntax to specified files (no comments, errors, or reject)";
 
 enum OptionType
@@ -337,6 +336,22 @@ int main (int argc, char* argv[])
 
 
 
+
+
+    cv.initialize(&init_state_ctor, &ld);
+
+    // MAIN LOOP!!   walk through every input file and begin converting!
+    option::Option* opt = options[CONF_FILE];
+    do {
+        if (cv.convert_file(std::string(opt->arg)) < 0)
+        {
+            print_line("Failed Conversion of file " + std::string(opt->arg));
+            fail = true;
+        }
+    } while ((opt = opt->next()));
+
+
+
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
     // now.  Otherwise, set up the include file.
@@ -360,21 +375,6 @@ int main (int argc, char* argv[])
             ld.close_table();
         }
     }
-
-
-
-    cv.initialize(&init_state_ctor, &ld);
-
-    // MAIN LOOP!!   walk through every input file and begin converting!
-    option::Option* opt = options[CONF_FILE];
-    do {
-        if (cv.convert_file(std::string(opt->arg)) < 0)
-        {
-            print_line("Failed Conversion of file " + std::string(opt->arg));
-            fail = true;
-        }
-    } while ((opt = opt->next()));
-
 
 
     // finally, lets print the converter to file

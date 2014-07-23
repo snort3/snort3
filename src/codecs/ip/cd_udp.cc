@@ -59,7 +59,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_UDP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
@@ -86,7 +86,7 @@ void UdpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint16_t uhlen;
@@ -95,10 +95,10 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP))
         p->outer_udph = p->udph;
 
-    if(len < sizeof(udp::UDPHdr))
+    if(raw_len < sizeof(udp::UDPHdr))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                "Truncated UDP header (%d bytes)\n", len););
+                "Truncated UDP header (%d bytes)\n", raw_len););
 
         codec_events::decoder_event(p, DECODE_UDP_DGRAM_LT_UDPHDR);
 
@@ -131,7 +131,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         fragmented_udp_flag = 1;
     }
 
-    /* verify that the header len is a valid value */
+    /* verify that the header raw_len is a valid value */
     if(uhlen < UDP_HEADER_LEN)
     {
         codec_events::decoder_event(p, DECODE_UDP_DGRAM_INVALID_LENGTH);
@@ -141,14 +141,14 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     /* make sure there are enough bytes as designated by length field */
-    if(uhlen > len)
+    if(uhlen > raw_len)
     {
         codec_events::decoder_event(p, DECODE_UDP_DGRAM_SHORT_PACKET);
 
         PopUdp(p);
         return false;
     }
-    else if(uhlen < len)
+    else if(uhlen < raw_len)
     {
         codec_events::decoder_event(p, DECODE_UDP_DGRAM_LONG_PACKET);
 
@@ -201,7 +201,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
                 COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
                 ph6.zero = 0;
                 ph6.protocol = GET_IPH_PROTO(p);
-                ph6.len = htons((u_short)len);
+                ph6.len = htons((u_short)raw_len);
 
                 csum = checksum::udp_cksum((uint16_t *)(p->udph), uhlen, &ph6);
             }

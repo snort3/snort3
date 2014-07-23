@@ -38,7 +38,7 @@
 namespace
 {
 
-#define CD_IPV6_FRAG_NAME "cd_ipv6_frag"
+#define CD_IPV6_FRAG_NAME "ipv6_frag"
 
 class Ipv6FragCodec : public Codec
 {
@@ -47,7 +47,7 @@ public:
     ~Ipv6FragCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
@@ -58,7 +58,7 @@ public:
 } // namespace
 
 
-bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     const IP6Frag *ip6frag_hdr = reinterpret_cast<const IP6Frag *>(raw_pkt);
@@ -66,7 +66,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_FRAGMENT);
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    if(len < ipv6::min_ext_len() )
+    if(raw_len < ipv6::min_ext_len() )
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -79,7 +79,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     // already checked for short pacekt above
-    if (len == sizeof(IP6Frag))
+    if (raw_len == sizeof(IP6Frag))
     {
         codec_events::decoder_event(p, DECODE_ZERO_LENGTH_FRAG);
         return false;
@@ -114,7 +114,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
     lyr_len = sizeof(IP6Frag);
-    p->ip_frag_len = (uint16_t)(len - lyr_len);
+    p->ip_frag_len = (uint16_t)(raw_len - lyr_len);
 
     if ( p->frag_flag && ((p->frag_offset > 0) ||
          (ip6frag_hdr->ip6f_nxt != IPPROTO_UDP)) )

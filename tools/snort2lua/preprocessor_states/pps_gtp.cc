@@ -47,7 +47,7 @@ bool Gtp::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    ld->open_table("cd_udp");
+    ld->open_table("udp");
 
     while (util::get_string(data_stream, args, ",;"))
     {

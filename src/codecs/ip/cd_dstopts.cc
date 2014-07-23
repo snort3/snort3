@@ -37,7 +37,7 @@
 namespace
 {
 
-#define CD_DSTOPTS_NAME "cd_ipv6_dstopts"
+#define CD_DSTOPTS_NAME "ipv6_dstopts"
 
 class Ipv6DSTOptsCodec : public Codec
 {
@@ -47,7 +47,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool update(Packet*, Layer*, uint32_t* len);
 
@@ -64,7 +64,7 @@ struct IP6Dest
 } // anonymous namespace
 
 
-bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     const IP6Dest *dsthdr = reinterpret_cast<const IP6Dest *>(raw_pkt);
@@ -74,7 +74,7 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
 
-    if(len < sizeof(IP6Dest))
+    if(raw_len < sizeof(IP6Dest))
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -92,7 +92,7 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
 
     lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
-    if(lyr_len > len)
+    if(lyr_len > raw_len)
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -104,7 +104,7 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     p->ip6_extension_count++;
     next_prot_id = dsthdr->ip6dest_nxt;
 
-    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, len, p))
+    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
         return true;
     return false;
 }

@@ -38,7 +38,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
     virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
@@ -102,16 +102,16 @@ void Erspan3Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  *
  */
-bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     lyr_len = sizeof(ERSpanType3Hdr);
     ERSpanType3Hdr *erSpan3Hdr = (ERSpanType3Hdr *)raw_pkt;
 
-    if (len < sizeof(ERSpanType3Hdr))
+    if (raw_len < sizeof(ERSpanType3Hdr))
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 
@@ -120,7 +120,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
         /* discard packet - multiple encapsulation */
         /* not sure if this is ever used but I am assuming it is not */
         codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 
@@ -129,7 +129,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t len,
     if (erspan_version(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        raw_pkt, len);
+                        raw_pkt, raw_len);
         return false;
     }
 

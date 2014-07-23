@@ -33,7 +33,7 @@
 namespace
 {
 
-#define CD_NULL_NAME "cd_null"
+#define CD_NULL_NAME "null"
 
 class NullCodec : public Codec
 {
@@ -42,7 +42,7 @@ public:
     ~NullCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_data_link_type(std::vector<int>&);
@@ -67,7 +67,7 @@ static const uint16_t NULL_HDRLEN = 4;
  *
  * Returns: void function
  */
-bool NullCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t raw_len,
+bool NullCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
         Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "NULL Packet!\n"); );

@@ -58,7 +58,7 @@ static const RuleMap ipv6_rules[] =
     { DECODE_IPV6_ISATAP_SPOOF, "(" CD_IPV6_NAME ") BAD-TRAFFIC ISATAP-addressed IPv6 traffic spoofing attempt" },
     { DECODE_IPV6_BAD_FRAG_PKT, "(" CD_IPV6_NAME ") bogus fragmentation packet. Possible BSD attack" },
     { DECODE_IPV6_ROUTE_ZERO, "(" CD_IPV6_NAME ") IPV6 routing type 0 extension header" },
-    { DECODE_IP6_EXCESS_EXT_HDR, "(decode) too many IP6 extension headers" },
+    { DECODE_IP6_EXCESS_EXT_HDR, "(" CD_IPV6_NAME ") too many IP6 extension headers" },
     { 0, nullptr }
 };
 

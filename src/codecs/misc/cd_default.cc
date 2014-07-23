@@ -32,7 +32,7 @@
 namespace
 {
 
-#define CD_DEFAULT_NAME "codec_default"
+#define CD_DEFAULT_NAME "default_codec"
 
 class DefaultCodec : public Codec
 {
@@ -41,7 +41,7 @@ public:
     ~DefaultCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t*, const uint32_t, 
+    virtual bool decode(const uint8_t*, const uint32_t&,
         Packet*, uint16_t&, uint16_t&) { return false; };
 };
 
