@@ -287,8 +287,8 @@ if test "x$enable_valgrind" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(ppm,
-[  --disable-ppm            Disable packet/rule performance monitor],
-       enable_ppm="$enableval", enable_ppm="yes")
+[  --enable-ppm            Enable packet/rule performance monitor],
+       enable_ppm="$enableval", enable_ppm="no")
 
 if test "x$enable_ppm" = "xyes"; then
     AC_DEFINE(PPM_MGR, [1], [build ppm manager])
@@ -303,8 +303,8 @@ if test "x$enable_ppm_test" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(perfprofiling,
-[  --disable-perfprofiling  Disable preprocessor and rule performance profiling],
-       enable_perfprofiling="$enableval", enable_perfprofiling="yes")
+[  --enable-perfprofiling  Enable preprocessor and rule performance profiling],
+       enable_perfprofiling="$enableval", enable_perfprofiling="no")
 
 if test "x$enable_perfprofiling" = "xyes"; then
     CPPFLAGS="$CPPFLAGS -DPERF_PROFILING"
@@ -363,7 +363,7 @@ if test "x$enable_profile" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(sourcefire,
-[  --enable-sourcefire      Enable Sourcefire specific build options, encompasing --enable-perfprofiling and --enable-ppm],
+[  --enable-sourcefire      Enable Sourcefire specific build options, including --enable-perfprofiling and --enable-ppm],
        enable_sourcefire="$enableval", enable_sourcefire="no")
 
 if test "x$enable_sourcefire" = "xyes"; then

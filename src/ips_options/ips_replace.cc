@@ -41,6 +41,7 @@ using namespace std;
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "detection/detection_defines.h"
 
 #define MAX_PATTERN_SIZE 2048
 

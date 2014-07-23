@@ -27,6 +27,17 @@
 #include "config.h"
 #endif
 
+#include "snort_types.h"
+
+// unconditionally declared
+struct ProfileStats
+{
+    uint64_t ticks;
+    uint64_t ticks_start;
+    uint64_t checks;
+    uint64_t exits;
+};
+
 #ifdef PERF_PROFILING
 #include "main/thread.h"
 #include "time/cpuclock.h"
@@ -147,15 +158,6 @@
 /************** Profiling API ******************/
 void ShowRuleProfiles(void);
 void ResetRuleProfiling(void);
-
-/* Preprocessor stats info */
-struct ProfileStats
-{
-    uint64_t ticks;
-    uint64_t ticks_start;
-    uint64_t checks;
-    uint64_t exits;
-};
 
 typedef struct _ProfileConfig
 {

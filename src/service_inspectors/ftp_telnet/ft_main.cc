@@ -66,9 +66,9 @@
 #include "mstring.h"
 #include "sfsnprintfappend.h"
 
-static THREAD_LOCAL int ftppDetectCalled = 0;
-
 #ifdef PERF_PROFILING
+// FIXIT ftp, http, etc. should not be calling Detect()
+static THREAD_LOCAL int ftppDetectCalled = 0;
 static THREAD_LOCAL ProfileStats ftppDetectPerfStats;
 
 void ft_update_perf(ProfileStats& stats)

@@ -40,6 +40,7 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "detection/detection_defines.h"
 
 static const char* s_name = "pkt_data";
 

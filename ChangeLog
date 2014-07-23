@@ -1,6 +1,7 @@
 104
 -- changed configure --with-libpcre-* to --with-pcre-* for consistency
 -- same for pcap (again!)
+-- made ppm and perfprofiling disabled by default in configure.ac
 -- added stream_size and stream_reassemble ips options
 
 103
