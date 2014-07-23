@@ -193,7 +193,7 @@ void ArpSpoof::eval(Packet *p)
             (ntohs(ah->ea_hdr.ar_pro) != ETHERNET_TYPE_IP))
         return;
 
-    PREPROC_PROFILE_START(arpPerfStats);
+    MODULE_PROFILE_START(arpPerfStats);
     ++asstats.total_packets;
 
     switch(ntohs(ah->ea_hdr.ar_op))
@@ -241,7 +241,7 @@ void ArpSpoof::eval(Packet *p)
             }
             break;
     }
-    PREPROC_PROFILE_END(arpPerfStats);
+    MODULE_PROFILE_END(arpPerfStats);
 
     /* return if the overwrite list hasn't been initialized */
     if (!config->check_overwrite)

@@ -449,7 +449,7 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
     int found = 0;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(contentPerfStats);
+    MODULE_PROFILE_START(contentPerfStats);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: "););
 
@@ -478,7 +478,7 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match failed\n"););
     }
 
-    PREPROC_PROFILE_END(contentPerfStats);
+    MODULE_PROFILE_END(contentPerfStats);
     return rval;
 }
 

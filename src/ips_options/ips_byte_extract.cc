@@ -149,11 +149,11 @@ int ByteExtractOption::eval(Cursor& c, Packet *p)
     uint32_t *value;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(byteExtractPerfStats);
+    MODULE_PROFILE_START(byteExtractPerfStats);
 
     if (data == NULL || p == NULL)
     {
-        PREPROC_PROFILE_END(byteExtractPerfStats);
+        MODULE_PROFILE_END(byteExtractPerfStats);
         return DETECTION_OPTION_NO_MATCH;
     }
 
@@ -169,7 +169,7 @@ int ByteExtractOption::eval(Cursor& c, Packet *p)
     /* check bounds */
     if (ptr < start || ptr >= end)
     {
-        PREPROC_PROFILE_END(byteExtractPerfStats);
+        MODULE_PROFILE_END(byteExtractPerfStats);
         return DETECTION_OPTION_NO_MATCH;
     }
 
@@ -179,7 +179,7 @@ int ByteExtractOption::eval(Cursor& c, Packet *p)
         ret = byte_extract(data->endianess, data->bytes_to_grab, ptr, start, end, value);
         if (ret < 0)
         {
-            PREPROC_PROFILE_END(byteExtractPerfStats);
+            MODULE_PROFILE_END(byteExtractPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
         bytes_read = data->bytes_to_grab;
@@ -189,7 +189,7 @@ int ByteExtractOption::eval(Cursor& c, Packet *p)
         ret = string_extract(data->bytes_to_grab, data->base, ptr, start, end, value);
         if (ret < 0)
         {
-            PREPROC_PROFILE_END(byteExtractPerfStats);
+            MODULE_PROFILE_END(byteExtractPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
         bytes_read = ret;
@@ -212,7 +212,7 @@ int ByteExtractOption::eval(Cursor& c, Packet *p)
     c.add_pos(bytes_read);
 
     /* this rule option always "matches" if the read is performed correctly */
-    PREPROC_PROFILE_END(byteExtractPerfStats);
+    MODULE_PROFILE_END(byteExtractPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

@@ -170,12 +170,12 @@ static int MetaCallback(
     SnortPolicy *policy;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(metaPerfStats);
+    MODULE_PROFILE_START(metaPerfStats);
 
     policy = snort_conf->targeted_policies[policy_id];
     InspectorManager::dispatch_meta(policy->framework_policy, metahdr->type, data);
 
-    PREPROC_PROFILE_END(metaPerfStats);
+    MODULE_PROFILE_END(metaPerfStats);
 
     return 0;
 }
@@ -867,7 +867,7 @@ DAQ_Verdict packet_callback(
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(totalPerfStats);
+    MODULE_PROFILE_START(totalPerfStats);
 
     pc.total_from_daq++;
 
@@ -879,18 +879,18 @@ DAQ_Verdict packet_callback(
 
     if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
     {
-        PREPROC_PROFILE_END(totalPerfStats);
+        MODULE_PROFILE_END(totalPerfStats);
         return verdict;
     }
 
     /* reset the thresholding subsystem checks for this packet */
     sfthreshold_reset();
 
-    PREPROC_PROFILE_START(eventqPerfStats);
+    MODULE_PROFILE_START(eventqPerfStats);
     SnortEventqReset();
     Replace_ResetQueue();
     Active_ResetQueue();
-    PREPROC_PROFILE_END(eventqPerfStats);
+    MODULE_PROFILE_END(eventqPerfStats);
 
     verdict = ProcessPacket(&s_packet, pkthdr, pkt);
 
@@ -970,7 +970,7 @@ DAQ_Verdict packet_callback(
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);
 
-    PREPROC_PROFILE_END(totalPerfStats);
+    MODULE_PROFILE_END(totalPerfStats);
     return verdict;
 }
 

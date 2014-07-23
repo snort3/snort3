@@ -145,7 +145,7 @@ int SizeOption::eval(Cursor&, Packet* pkt)
         return DETECTION_OPTION_NO_MATCH;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(streamSizePerfStats);
+    MODULE_PROFILE_START(streamSizePerfStats);
 
     Flow *lwssn = (Flow*)pkt->flow;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
@@ -208,7 +208,7 @@ int SizeOption::eval(Cursor&, Packet* pkt)
         result = DETECTION_OPTION_NO_MATCH;
         break;
     }
-    PREPROC_PROFILE_END(streamSizePerfStats);
+    MODULE_PROFILE_END(streamSizePerfStats);
     return result;
 }
 

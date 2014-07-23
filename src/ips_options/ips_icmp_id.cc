@@ -119,7 +119,7 @@ int IcmpIdOption::eval(Cursor&, Packet *p)
     if(!p->icmph)
         return DETECTION_OPTION_NO_MATCH;
 
-    PREPROC_PROFILE_START(icmpIdPerfStats);
+    MODULE_PROFILE_START(icmpIdPerfStats);
 
     if ( (p->icmph->type == ICMP_ECHO || 
         p->icmph->type == ICMP_ECHOREPLY) ||
@@ -128,11 +128,11 @@ int IcmpIdOption::eval(Cursor&, Packet *p)
     {
         if ( config.eval(p->icmph->s_icmp_id) )
         {
-            PREPROC_PROFILE_END(icmpIdPerfStats);
+            MODULE_PROFILE_END(icmpIdPerfStats);
             return DETECTION_OPTION_MATCH;
         }
     }
-    PREPROC_PROFILE_END(icmpIdPerfStats);
+    MODULE_PROFILE_END(icmpIdPerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
 

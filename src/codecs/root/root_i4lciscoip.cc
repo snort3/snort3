@@ -52,7 +52,7 @@ void DecodeI4LCiscoIPPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *p
 {
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -66,7 +66,7 @@ void DecodeI4LCiscoIPPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *p
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "What the hell is this?\n"););
         // TBD add decoder drop event for bad i4l cisco pkt
         dc.other++;
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -75,6 +75,6 @@ void DecodeI4LCiscoIPPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *p
 
     DecodeIP(pkt + 4, p->pkth->caplen - 4, p);
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }

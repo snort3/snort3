@@ -108,7 +108,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         return 0;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(streamReassembleRuleOptionPerfStats);
+    MODULE_PROFILE_START(streamReassembleRuleOptionPerfStats);
 
     Flow *lwssn = (Flow*)pkt->flow;
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
@@ -141,7 +141,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
         /* TBD: Set TF_FORCE_FLUSH ? */
     }
 
-    PREPROC_PROFILE_END(streamReassembleRuleOptionPerfStats);
+    MODULE_PROFILE_END(streamReassembleRuleOptionPerfStats);
 
     if (srod.alert)
         return DETECTION_OPTION_MATCH;

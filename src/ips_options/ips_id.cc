@@ -98,12 +98,12 @@ int IpIdOption::eval(Cursor&, Packet *p)
     if(!IPH_IS_VALID(p))
         return rval;
 
-    PREPROC_PROFILE_START(ipIdPerfStats);
+    MODULE_PROFILE_START(ipIdPerfStats);
 
     if ( config.eval(GET_IPH_ID(p)) )
         rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(ipIdPerfStats);
+    MODULE_PROFILE_END(ipIdPerfStats);
     return rval;
 }
 

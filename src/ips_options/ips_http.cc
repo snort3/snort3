@@ -94,7 +94,7 @@ private:
 int HttpIpsOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(ps);
+    MODULE_PROFILE_START(ps);
 
     int rval;
     InspectionBuffer hb;
@@ -112,7 +112,7 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
         rval = DETECTION_OPTION_MATCH;
     }
 
-    PREPROC_PROFILE_END(ps);
+    MODULE_PROFILE_END(ps);
     return rval;
 }
 

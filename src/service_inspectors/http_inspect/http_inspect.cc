@@ -326,7 +326,7 @@ void HttpInspect::eval (Packet* p)
     // preconditions - what we registered for
     assert(IsTCP(p) && p->dsize && p->data);
 
-    PREPROC_PROFILE_START(hiPerfStats);
+    MODULE_PROFILE_START(hiPerfStats);
 
     HttpInspectMain(config, p);
 
@@ -340,7 +340,7 @@ void HttpInspect::eval (Packet* p)
      * spent in Detect().
      * Subtract the ticks from this if iCallDetect == 0
      */
-    PREPROC_PROFILE_END(hiPerfStats);
+    MODULE_PROFILE_END(hiPerfStats);
 #ifdef PERF_PROFILING
     if (hiDetectCalled)
     {

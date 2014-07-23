@@ -53,7 +53,7 @@ void DecodeChdlcPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
     uint32_t cap_len = pkthdr->caplen;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -69,7 +69,7 @@ void DecodeChdlcPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
             ErrorMessage("Captured data length < CHDLC header length"
                          " (%d bytes)\n", cap_len);
         }
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -85,7 +85,7 @@ void DecodeChdlcPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
         dc.other++;
     }
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 

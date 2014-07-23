@@ -99,7 +99,7 @@ static int SnortFTP(
         return FTPP_SUCCESS;
     }
 
-    PREPROC_PROFILE_START(ftpPerfStats);
+    MODULE_PROFILE_START(ftpPerfStats);
 
     if (iInspectMode == FTPP_SI_SERVER_MODE)
     {
@@ -117,7 +117,7 @@ static int SnortFTP(
         {
             DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
                 "Client packet will be reassembled\n"));
-            PREPROC_PROFILE_END(ftpPerfStats);
+            MODULE_PROFILE_END(ftpPerfStats);
             return FTPP_SUCCESS;
         }
         else
@@ -132,7 +132,7 @@ static int SnortFTP(
     iRet = initialize_ftp(FTPsession, p, iInspectMode);
     if (iRet)
     {
-        PREPROC_PROFILE_END(ftpPerfStats);
+        MODULE_PROFILE_END(ftpPerfStats);
         return iRet;
     }
 
@@ -149,7 +149,7 @@ static int SnortFTP(
         do_detection(p);
     }
 
-    PREPROC_PROFILE_END(ftpPerfStats);
+    MODULE_PROFILE_END(ftpPerfStats);
 #ifdef PERF_PROFILING
     ft_update_perf(ftpPerfStats);
 #endif
