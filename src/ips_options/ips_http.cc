@@ -99,11 +99,11 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
     int rval;
     InspectionBuffer hb;
 
-    if ( !p->flow || !p->flow->clouseau )
+    if ( !p->flow || !p->flow->gadget )
         rval = DETECTION_OPTION_NO_MATCH;
 
     // FIXIT cache id at parse time for runtime use
-    else if ( !p->flow->clouseau->get_buf(key, p, hb) )
+    else if ( !p->flow->gadget->get_buf(key, p, hb) )
         rval = DETECTION_OPTION_NO_MATCH;
 
     else
