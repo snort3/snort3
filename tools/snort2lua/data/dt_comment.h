@@ -29,7 +29,7 @@
 
 static const std::string start_comments =
     "\nCOMMENTS:\n"
-    "    these line were originally commented "
+    "    these line were commented "
     "in the configuration file.";
 
 static const std::string start_errors =
