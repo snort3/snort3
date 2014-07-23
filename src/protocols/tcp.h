@@ -156,7 +156,7 @@ enum TcpOpt{
 
 inline void set_tcp_offset(TCPHdr *tcph, uint8_t value)
 {
-    tcph->th_offx2 = (tcph->th_offx2 & 0x0f) | (value << 4);
+    tcph->th_offx2 = (uint8_t)((tcph->th_offx2 & 0x0f) | (value << 4));
 }
 
 inline void set_tcp_x2(TCPHdr* tcph, uint8_t value)

@@ -146,7 +146,7 @@ static inline void sfip_set_bits(sfip_t *p, int bits) {
 
     if(bits < 0 || bits > 128) return;
 
-    p->bits = bits;
+    p->bits = (int16_t)bits;
 }
 
 /* Returns the raw IP address as an in6_addr */
