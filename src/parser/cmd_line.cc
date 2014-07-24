@@ -875,7 +875,7 @@ static ConfigFunc basic_opts[] =
       "process all action groups" },
 
     { "rule", config_rule,
-      "add this line to rules configuration" },
+      "add this line to rules configuration; may be repeated" },
 
     { "script-path", ConfigScriptPath,
       "where to find luajit scripts" },
