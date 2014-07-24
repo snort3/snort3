@@ -43,6 +43,7 @@ using namespace std;
 #include "packet_io/trough.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
+#include "parser/parser.h"
 #include "utils/util.h"
 
 #define LOG_NONE  "none"
@@ -575,6 +576,11 @@ static void config_pcap_no_filter(SnortConfig*, const char*)
 }
 
 
+static void config_rule(SnortConfig*, const char* r)
+{
+    parser_append_rules(r);
+}
+
 static void config_pcap_show(SnortConfig* sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__PCAP_SHOW;
@@ -867,6 +873,9 @@ static ConfigFunc basic_opts[] =
 
     { "process-all-events", ConfigProcessAllEvents,
       "process all action groups" },
+
+    { "rule", config_rule,
+      "add this line to rules configuration" },
 
     { "script-path", ConfigScriptPath,
       "where to find luajit scripts" },

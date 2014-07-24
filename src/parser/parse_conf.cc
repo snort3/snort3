@@ -478,7 +478,7 @@ static void ParseConfigFileLine(SnortConfig *sc, char *buf)
                     if ( ScTreatDropAsAlert() )
                         parse_rule(sc, args, RULE_TYPE__ALERT, node->RuleList);
 
-                    else if ( ScKeepDropRules() ||  ScLoadAsDropRules() )
+                    else if ( ScKeepDropRules() || ScLoadAsDropRules() )
                         parse_rule(sc, args, node->mode, node->RuleList);
                 }
                 else if ( node->mode == RULE_TYPE__SDROP )
