@@ -51,7 +51,7 @@ bool AlertSyslog::convert(std::istringstream& data_stream)
     bool retval = true;
 
     ld->open_table("alert_syslog");
-    int pos = data_stream.tellg();
+    std::streamoff pos = data_stream.tellg();
 
     while (data_stream >> keyword)
     {

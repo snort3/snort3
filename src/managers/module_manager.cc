@@ -468,7 +468,9 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     if ( mh->reg )
         Shell::install(m->get_name(), mh->reg);
 
+#ifdef PERF_PROFILING
     RegisterProfile(m);
+#endif
 }
 
 Module* ModuleManager::get_module(const char* s)

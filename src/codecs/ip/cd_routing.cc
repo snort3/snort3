@@ -37,7 +37,7 @@
 namespace
 {
 
-#define CD_IPV6_ROUTING_NAME "cd_ipv6_routing"
+#define CD_IPV6_ROUTING_NAME "ipv6_routing"
 
 class Ipv6RoutingCodec : public Codec
 {
@@ -46,7 +46,7 @@ public:
     ~Ipv6RoutingCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);    
@@ -78,7 +78,7 @@ struct IP6Route0
 } // namespace
 
 
-bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     const IP6Route *rte = reinterpret_cast<const IP6Route *>(raw_pkt);
@@ -87,7 +87,7 @@ bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
 
-    if(len < ipv6::min_ext_len())
+    if(raw_len < ipv6::min_ext_len())
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -99,7 +99,7 @@ bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
         return false;
     }
 
-    if (len < sizeof(IP6Route))
+    if (raw_len < sizeof(IP6Route))
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -121,7 +121,7 @@ bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
     }
     
     lyr_len = ipv6::min_ext_len() + (rte->ip6rte_len << 3);
-    if(lyr_len > len)
+    if(lyr_len > raw_len)
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;

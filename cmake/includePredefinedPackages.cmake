@@ -14,3 +14,4 @@ find_package(DNET REQUIRED)
 # optional libraries
 find_package(Asciidoc QUIET)
 find_package(DBLATEX QUIET)
+find_package(Ruby QUIET 1.8.7)

@@ -44,7 +44,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_VLAN; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 };
 
@@ -79,10 +79,10 @@ void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    if(len < sizeof(vlan::VlanTagHdr))
+    if(raw_len < sizeof(vlan::VlanTagHdr))
     {
         codec_events::decoder_event(p, DECODE_BAD_VLAN);
 
@@ -109,7 +109,7 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
      */
     if(ntohs(vh->vth_proto) <= ETHERNET_MAX_LEN_ENCAP)
     {
-        if(len < sizeof(vlan::VlanTagHdr) + sizeof(EthLlc))
+        if(raw_len < sizeof(vlan::VlanTagHdr) + sizeof(EthLlc))
         {
             codec_events::decoder_event(p, DECODE_BAD_VLAN_ETHLLC);
 
@@ -128,7 +128,7 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t len,
 
         if(ehllc->dsap == ETH_DSAP_IP && ehllc->ssap == ETH_SSAP_IP)
         {
-            if ( len < len_vlan_llc_other() )
+            if (raw_len < len_vlan_llc_other())
             {
                 codec_events::decoder_event(p, DECODE_BAD_VLAN_OTHER);
 

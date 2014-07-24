@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_VLAN_NAME "cd_vlan"
+#define CD_VLAN_NAME "vlan"
 
 class VlanModule : public DecodeModule
 {

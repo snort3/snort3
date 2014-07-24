@@ -23,6 +23,7 @@ depcomp
 doc/builtin.txt
 doc/commands.txt
 doc/config.txt
+doc/config_changes.txt
 doc/docbook-xsl.css
 doc/gids.txt
 doc/images.tgz

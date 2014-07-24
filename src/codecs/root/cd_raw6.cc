@@ -32,7 +32,7 @@
 namespace
 {
 
-#define CD_RAW6_NAME "cd_raw6"
+#define CD_RAW6_NAME "raw6"
 
 class Raw6Codec : public Codec
 {
@@ -40,7 +40,7 @@ public:
     Raw6Codec() : Codec(CD_RAW6_NAME){};
     ~Raw6Codec() {};
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual void get_data_link_type(std::vector<int>&);
 
@@ -51,7 +51,7 @@ public:
 
 
 // raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
-bool Raw6Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t /*raw_len*/,
+bool Raw6Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
         Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& next_prot_id)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP6 Packet!\n"););

@@ -4,7 +4,7 @@ project(snort CXX C)
 
 set(SNORT_VERSION_MAJOR 2)
 set(SNORT_VERSION_MINOR 10)
-set(SNORT_VERSION_BUILD  102)
+set(SNORT_VERSION_BUILD  103)
 set(VERSION "${SNORT_VERSION_MAJOR}.${SNORT_VERSION_MINOR}.${SNORT_VERSION_BUILD}")
 
 # ensure cmake will look in the cmake directory for configuration files

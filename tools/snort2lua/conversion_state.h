@@ -258,7 +258,7 @@ protected:
     inline bool set_next_rule_state(std::istringstream& stream)
     {
         std::string keyword;
-        int pos = stream.tellg();
+        std::streamoff pos = stream.tellg();
 
         while(std::getline(stream, keyword, ':'))
         {

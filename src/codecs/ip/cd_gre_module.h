@@ -25,7 +25,7 @@
 #include "codecs/decode_module.h"
 
 
-#define CD_GRE_NAME "cd_gre"
+#define CD_GRE_NAME "gre"
 
 class GreModule : public DecodeModule
 {

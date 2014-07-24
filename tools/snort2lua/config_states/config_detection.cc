@@ -254,7 +254,7 @@ bool Detection::convert(std::istringstream& data_stream)
             {
                 ld->add_diff_option_comment("ac-split", "split_any_any");
                 ld->add_diff_option_comment("ac-split", "ac_full_q");
-                bool tmpval2 = !ld->add_option_to_table("split_any_any", true);
+                bool tmpval2 = ld->add_option_to_table("split_any_any", true);
                 bool tmpval1 = ld->add_option_to_table("search_method", "ac_full_q");
                 tmpval = tmpval1 && tmpval2;
 

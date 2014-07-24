@@ -51,7 +51,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string val;
     bool retval = true;
-    int pos;
+    std::streamoff pos;
 
     if (!(*option_name).compare("protected_content"))
         ld->make_rule_a_comment();

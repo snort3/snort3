@@ -232,6 +232,7 @@ static void restart()
 // FIXIT move these to appropriate modules
 //-------------------------------------------------------------------------
 
+#ifdef PERF_PROFILING
 static ProfileStats* get_profile(const char* key)
 {
     if ( !strcmp(key, "detect") )
@@ -263,9 +264,11 @@ static ProfileStats* get_profile(const char* key)
 
     return nullptr;
 }
+#endif
 
 static void register_profiles()
 {
+#ifdef PERF_PROFILING
     RegisterProfile("detect", nullptr, get_profile);
     RegisterProfile("mpse", "detect", get_profile);
     RegisterProfile("rule eval", "detect", get_profile);
@@ -275,6 +278,7 @@ static void register_profiles()
     RegisterProfile("eventq", nullptr, get_profile);
     RegisterProfile("total", nullptr, get_profile);
     RegisterProfile("daq meta", nullptr, get_profile);
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -323,9 +327,7 @@ static void SnortInit(int argc, char **argv)
 
     SnortConfig *sc;
 
-#ifdef PERF_PROFILING
     register_profiles();
-#endif
 
     sc = ParseSnortConf(snort_cmd_line_conf->var_list);
 

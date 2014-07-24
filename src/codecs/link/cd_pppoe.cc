@@ -273,7 +273,7 @@ namespace
 {
 
 const uint16_t ETHERNET_TYPE_PPPoE_DISC =  0x8863; /* discovery stage */
-#define CD_PPPOEPKT_DISC_NAME "cd_pppoe_disc"
+#define CD_PPPOEPKT_DISC_NAME "pppoe_disc"
 
 class PPPoEDiscCodec : public Codec
 {
@@ -284,7 +284,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_PPPOE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
 };
@@ -298,7 +298,7 @@ void PPPoEDiscCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool PPPoEDiscCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+bool PPPoEDiscCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     return pppoepkt_decode(raw_pkt, raw_len, p, PppoepktType::DISCOVERY,
@@ -374,7 +374,7 @@ namespace
 {
 
 
-#define CD_PPPOEPKT_SESS_NAME "cd_pppoe_sess"
+#define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
 
 const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
 
@@ -387,7 +387,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_PPPOE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len,
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
 };
@@ -401,7 +401,7 @@ void PPPoESessCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool PPPoESessCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+bool PPPoESessCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     return pppoepkt_decode(raw_pkt, raw_len, p, PppoepktType::SESSION,

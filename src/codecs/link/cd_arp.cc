@@ -43,7 +43,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_ARP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &);
     
 };
@@ -75,10 +75,10 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool ArpCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t len,
+bool ArpCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t& /* next_prot_id */)
 {
-    if(len < sizeof(EtherARP))
+    if(raw_len < sizeof(EtherARP))
     {
         codec_events::decoder_event(p, DECODE_ARP_TRUNCATED);
         return false;

@@ -534,7 +534,7 @@ public:
    */
   int index() const
   {
-    return desc == 0 ? -1 : desc->index;
+    return desc == 0 ? -1 : (int)desc->index;
   }
 
   /**
@@ -1448,7 +1448,7 @@ public:
         return false; // overflow protection: don't accept number of options that doesn't fit signed int
 
       buffer[parser.op_count] = option;
-      int idx = buffer[parser.op_count].desc->index;
+      unsigned idx = buffer[parser.op_count].desc->index;
       if (options[idx])
         options[idx].append(buffer[parser.op_count]);
       else

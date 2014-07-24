@@ -36,7 +36,7 @@
 namespace
 {
 
-#define CD_TRANSBRIDGE_NAME "cd_transbridge"
+#define CD_TRANSBRIDGE_NAME "transbridge"
 
 class TransbridgeCodec : public Codec
 {
@@ -46,7 +46,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     
 };
@@ -76,7 +76,7 @@ void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
  * convention needed to be changed and the stuff at the beginning
  * wasn't needed since we are already deep into the packet
  */
-bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t raw_len,
+bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     if(raw_len < eth::hdr_len())

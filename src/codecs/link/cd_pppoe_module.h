@@ -34,7 +34,7 @@
  */
 
 
-#define CD_PPPOE_NAME "cd_pppoe"
+#define CD_PPPOE_NAME "pppoe"
 
 class PPPoEModule : public DecodeModule
 {

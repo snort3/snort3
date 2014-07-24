@@ -41,7 +41,7 @@ public:
     ~EapolCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t len, 
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
@@ -107,22 +107,22 @@ void DecodeEapolKey(const uint8_t* /*pkt*/, uint32_t len, Packet * p)
  ************** main codec functions  ************
  *************************************************/
 
-bool EapolCodec::decode(const uint8_t *raw_pkt, const uint32_t len, 
+bool EapolCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t & /*lyr_len*/, uint16_t &/*next_prot_id */)
 {
     const eapol::EtherEapol* eplh = reinterpret_cast<const eapol::EtherEapol*>(raw_pkt);
 
-    if(len < sizeof(eapol::EtherEapol))
+    if(raw_len < sizeof(eapol::EtherEapol))
     {
         codec_events::decoder_event(p, DECODE_EAPOL_TRUNCATED);
         return false;
     }
 
     if (eplh->eaptype == EAPOL_TYPE_EAP) {
-        DecodeEAP(raw_pkt + sizeof(eapol::EtherEapol), len - sizeof(eapol::EtherEapol), p);
+        DecodeEAP(raw_pkt + sizeof(eapol::EtherEapol), raw_len - sizeof(eapol::EtherEapol), p);
     }
     else if(eplh->eaptype == EAPOL_TYPE_KEY) {
-        DecodeEapolKey(raw_pkt + sizeof(eapol::EtherEapol), len - sizeof(eapol::EtherEapol), p);
+        DecodeEapolKey(raw_pkt + sizeof(eapol::EtherEapol), raw_len - sizeof(eapol::EtherEapol), p);
     }
 
     return true;
