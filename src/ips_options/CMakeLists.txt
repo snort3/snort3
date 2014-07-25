@@ -15,6 +15,7 @@ SET( PLUGIN_LIST
     ips_fragbits.cc
     ips_fragoffset.cc
     ips_http.cc
+    ips_http_header.cc
     ips_icmp_id.cc
     ips_icmp_seq.cc
     ips_icode.cc
