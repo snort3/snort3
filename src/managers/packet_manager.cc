@@ -633,7 +633,8 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     c->data = lyr->start + lyr->length;
     len = c->data - c->pkt;
 
-    assert(len < Codec::PKT_MAX - IP_MAXPACKET); // len < ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU
+    // len < ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU
+    assert((unsigned)len < Codec::PKT_MAX - IP_MAXPACKET);
 
     c->max_dsize = IP_MAXPACKET - len;
     c->proto_bits = p->proto_bits;
