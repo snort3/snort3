@@ -52,6 +52,7 @@
 #include "pcrm.h"
 #include "fpcreate.h"
 #include "framework/cursor.h"
+#include "framework/inspector.h"
 #include "framework/mpse.h"
 #include "bitop.h"
 #include "perf_monitor/perf.h"
@@ -1006,15 +1007,16 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
         if ( fp->inspect_stream_insert || !(p->packet_flags & PKT_STREAM_INSERT) )
         {
-            const HttpBuffer* hb;
+            Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
+            InspectionBuffer buf;
 
             omd->pg = port_group;
             omd->p = p;
             omd->check_ports = check_ports;
 
-            if ( GetHttpBufferMask() )
+            if ( gadget )
             {
-                if ( (hb = GetHttpBuffer(HTTP_BUFFER_URI)) )
+                if ( gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
                 {
                     so = port_group->pgPms[PM_TYPE__HTTP_URI_CONTENT];
 
@@ -1022,7 +1024,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
                     {
                         start_state = 0;
 
-                        so->search(hb->buf, hb->length,
+                        so->search(buf.data, buf.len,
                             rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                         /* Bail if we spent too much time already */
@@ -1031,7 +1033,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                     }
                 }
-                if ( (hb = GetHttpBuffer(HTTP_BUFFER_HEADER)) )
+                if ( gadget->get_buf(InspectionBuffer::IBT_HEADER, p, buf) )
                 {
                     so = port_group->pgPms[PM_TYPE__HTTP_HEADER_CONTENT];
 
@@ -1039,7 +1041,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
                     {
                         start_state = 0;
 
-                        so->search(hb->buf, hb->length,
+                        so->search(buf.data, buf.len,
                             rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                         /* Bail if we spent too much time already */
@@ -1048,7 +1050,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                     }
                 }
-                if ( (hb = GetHttpBuffer(HTTP_BUFFER_CLIENT_BODY)) )
+                if ( gadget->get_buf(InspectionBuffer::IBT_BODY, p, buf) )
                 {
                     so = port_group->pgPms[PM_TYPE__HTTP_CLIENT_BODY_CONTENT];
 
@@ -1056,7 +1058,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
                     {
                         start_state = 0;
 
-                        so->search(hb->buf, hb->length,
+                        so->search(buf.data, buf.len,
                             rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                         /* Bail if we spent too much time already */
@@ -1076,6 +1078,8 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
              **  payload, in case any of the rules have the
              **  'rawbytes' option.
              */
+            // FIXIT alt buf and file data should be obtained from 
+            // inspector gadget as an extension of above
             so = port_group->pgPms[PM_TYPE__CONTENT];
 
             if ( so && so->get_pattern_count() > 0 )

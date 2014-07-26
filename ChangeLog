@@ -1,3 +1,6 @@
+106
+-- converted fpdetect.cc to pull fast pattern buffers from inspector gadget
+
 105
 -- changed PREPROC to MODULE in profiling defines
 -- added --rule "<rule>" for easy command line testing

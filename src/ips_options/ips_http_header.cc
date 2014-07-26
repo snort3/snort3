@@ -129,7 +129,8 @@ static bool find(
         if ( n < k )
             return false;
 
-        if ( !strncasecmp(h, (char*)t, k) )
+        if ( !strncasecmp(h, (char*)t, k) &&
+             !strncmp((char*)t+k, ": ", 2) )
             break;
 
         t = (uint8_t*)memchr(t, '\n', n);
@@ -140,6 +141,9 @@ static bool find(
         n = b.len - (++t - b.data);
     }
     while ( true );
+
+    // skip over the keyword to the data
+    t += k + 2;
 
     // now find the end of header
     const uint8_t* z = (uint8_t*)memchr(t, '\n', n);
