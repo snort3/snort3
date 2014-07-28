@@ -85,6 +85,15 @@ private:
     int64_t numChunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };         // number of chunks seen so far
     int64_t chunkSections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // number of sections seen so far in the current chunk
     int64_t chunkOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };       // number of user data octets seen so far in the current chunk including terminating CRLF
+
+    // Stored message sections from this session
+    NHttpMsgRequest* requestStart = nullptr;
+    NHttpMsgHeader* requestHeaders = nullptr;
+    NHttpMsgStatus* responseStart = nullptr;
+    NHttpMsgHeader* responseHeaders = nullptr;
+    // The very latest section for each side that will be deleted as soon as the next section arrives.
+    // If the section pointer is saved someplace else then do not put it here as well. Just leave it nullptr.
+    NHttpMsgSection* latest[2] = { nullptr, nullptr };
 };
 
 #endif
