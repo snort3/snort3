@@ -62,7 +62,7 @@ void DecodeEncPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
     struct enc_header *enc_h;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -77,7 +77,7 @@ void DecodeEncPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
             ErrorMessage("Captured data length < Encap header length!  (%d bytes)\n",
                 cap_len);
         }
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -92,7 +92,7 @@ void DecodeEncPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
         ErrorMessage("WARNING: Unknown address family (af: 0x%x).\n",
                 enc_h->af);
     }
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 #endif /* DLT_ENC */

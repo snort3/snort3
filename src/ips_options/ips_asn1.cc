@@ -176,15 +176,15 @@ int Asn1Option::eval(Cursor& c, Packet *p)
     if(!p->data)
         return DETECTION_OPTION_NO_MATCH;
 
-    PREPROC_PROFILE_START(asn1PerfStats);
+    MODULE_PROFILE_START(asn1PerfStats);
 
     if ( Asn1DoDetect(c.buffer(), c.size(), &config, c.start()) )
     {
-        PREPROC_PROFILE_END(asn1PerfStats);
+        MODULE_PROFILE_END(asn1PerfStats);
         return DETECTION_OPTION_MATCH;
     }
 
-    PREPROC_PROFILE_END(asn1PerfStats);
+    MODULE_PROFILE_END(asn1PerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
 

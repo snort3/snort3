@@ -60,6 +60,7 @@ using namespace std;
 #include "search_engines/search_engines.h"
 #include "codecs/codec_api.h"
 #include "helpers/directory.h"
+#include "helpers/markup.h"
 #include "parser/parser.h"
 
 #if defined(LINUX)
@@ -302,6 +303,23 @@ void PluginManager::load_plugins(const char* paths)
     ::load_plugins(paths);
     load_list(ScriptManager::get_ips_options());
     add_plugins();
+}
+
+// FIXIT some plugins don't have modules; consider adding them
+// for stray parameters, perfstats, documentation, etc.
+void PluginManager::list_plugins()
+{
+    PlugMap::iterator it;
+
+    for ( it = plug_map.begin(); it != plug_map.end(); ++it )
+    {
+        Plugin& p = it->second;
+        cout << Markup::item();
+        cout << p.key;
+        if ( p.api->mod_ctor )
+            cout << " (module)";
+        cout << endl;
+    }
 }
 
 void PluginManager::dump_plugins()

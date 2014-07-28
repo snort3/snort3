@@ -144,7 +144,7 @@ int SessionOption::eval(Cursor&, Packet *p)
     FILE *session;         /* session file ptr */
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(sessionPerfStats);
+    MODULE_PROFILE_START(sessionPerfStats);
 
     /* if there's data in this packet */
     if(p != NULL)
@@ -155,7 +155,7 @@ int SessionOption::eval(Cursor&, Packet *p)
 
              if(session == NULL)
              {
-                 PREPROC_PROFILE_END(sessionPerfStats);
+                 MODULE_PROFILE_END(sessionPerfStats);
                  return DETECTION_OPTION_MATCH;
              }
 
@@ -165,7 +165,7 @@ int SessionOption::eval(Cursor&, Packet *p)
         }
     }
 
-    PREPROC_PROFILE_END(sessionPerfStats);
+    MODULE_PROFILE_END(sessionPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

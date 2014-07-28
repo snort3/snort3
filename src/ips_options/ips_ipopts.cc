@@ -122,13 +122,13 @@ int IpOptOption::eval(Cursor&, Packet *p)
         return rval; /* if error occured while ip header
                    * was processed, return 0 automagically.  */
 
-    PREPROC_PROFILE_START(ipOptionPerfStats);
+    MODULE_PROFILE_START(ipOptionPerfStats);
 
     if((ipOptionData->any_flag == 1) && (p->ip_option_count > 0))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Matched any ip options!\n"););
         rval = DETECTION_OPTION_MATCH;
-        PREPROC_PROFILE_END(ipOptionPerfStats);
+        MODULE_PROFILE_END(ipOptionPerfStats);
         return rval;
     }
 
@@ -141,13 +141,13 @@ int IpOptOption::eval(Cursor&, Packet *p)
         if(ipOptionData->ip_option == p->ip_options[i].code)
         {
             rval = DETECTION_OPTION_MATCH;
-            PREPROC_PROFILE_END(ipOptionPerfStats);
+            MODULE_PROFILE_END(ipOptionPerfStats);
             return rval;
         }
     }
 
     /* if the test isn't successful, return 0 */
-    PREPROC_PROFILE_END(ipOptionPerfStats);
+    MODULE_PROFILE_END(ipOptionPerfStats);
     return rval;
 }
 

@@ -60,11 +60,11 @@ public:
 int PktDataOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(pktDataPerfStats);
+    MODULE_PROFILE_START(pktDataPerfStats);
 
     c.reset(p);
 
-    PREPROC_PROFILE_END(pktDataPerfStats);
+    MODULE_PROFILE_END(pktDataPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

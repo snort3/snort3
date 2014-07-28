@@ -146,7 +146,7 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     int offset;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(isDataAtPerfStats);
+    MODULE_PROFILE_START(isDataAtPerfStats);
 
     /* Get values from byte_extract variables, if present. */
     if (isdata->offset_var >= 0 && isdata->offset_var < NUM_BYTE_EXTRACT_VARS)
@@ -183,7 +183,7 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     }
 
     /* otherwise dump */
-    PREPROC_PROFILE_END(isDataAtPerfStats);
+    MODULE_PROFILE_END(isDataAtPerfStats);
     return rval;
 }
 

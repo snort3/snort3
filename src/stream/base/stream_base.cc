@@ -208,7 +208,7 @@ void StreamBase::eval(Packet *p)
     if ( !is_eligible(p) )
         return;
 
-    PREPROC_PROFILE_START(s5PerfStats);
+    MODULE_PROFILE_START(s5PerfStats);
 
     switch ( GET_IPH_PROTO(p) )
     {
@@ -236,7 +236,7 @@ void StreamBase::eval(Packet *p)
         break;
     }
 
-    PREPROC_PROFILE_END(s5PerfStats);
+    MODULE_PROFILE_END(s5PerfStats);
 }
 
 #if 0

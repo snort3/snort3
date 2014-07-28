@@ -259,7 +259,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
     uint32_t cmp_value;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(byteTestPerfStats);
+    MODULE_PROFILE_START(byteTestPerfStats);
 
     /* Get values from byte_extract variables, if present. */
     if (btd->cmp_value_var >= 0 && btd->cmp_value_var < NUM_BYTE_EXTRACT_VARS)
@@ -305,7 +305,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
             (const uint8_t *)end_ptr,
             &value))
         {
-            PREPROC_PROFILE_END(byteTestPerfStats);
+            MODULE_PROFILE_END(byteTestPerfStats);
             return rval;
         }
         payload_bytes_grabbed = (int)btd->bytes_to_compare;
@@ -324,7 +324,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
             DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH,
                                     "String Extraction Failed\n"););
 
-            PREPROC_PROFILE_END(byteTestPerfStats);
+            MODULE_PROFILE_END(byteTestPerfStats);
             return rval;
         }
     }
@@ -391,7 +391,7 @@ int ByteTestOption::eval(Cursor& c, Packet*)
     }
 
     /* if the test isn't successful, this function *must* return 0 */
-    PREPROC_PROFILE_END(byteTestPerfStats);
+    MODULE_PROFILE_END(byteTestPerfStats);
     return rval;
 }
 

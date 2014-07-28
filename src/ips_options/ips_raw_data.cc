@@ -61,11 +61,11 @@ public:
 int RawDataOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(rawDataPerfStats);
+    MODULE_PROFILE_START(rawDataPerfStats);
 
     c.set(s_name, p->data, p->dsize);
 
-    PREPROC_PROFILE_END(rawDataPerfStats);
+    MODULE_PROFILE_END(rawDataPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

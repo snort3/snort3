@@ -52,6 +52,7 @@
 #include "pcrm.h"
 #include "fpcreate.h"
 #include "framework/cursor.h"
+#include "framework/inspector.h"
 #include "framework/mpse.h"
 #include "bitop.h"
 #include "perf_monitor/perf.h"
@@ -377,11 +378,11 @@ int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports)
 {
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(ruleRTNEvalPerfStats);
+    MODULE_PROFILE_START(ruleRTNEvalPerfStats);
 
     if(rtn == NULL)
     {
-        PREPROC_PROFILE_END(ruleRTNEvalPerfStats);
+        MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
     }
 
@@ -396,7 +397,7 @@ int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports)
                     "   => Header check failed, checking next node\n"););
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
                     "   => returned from next node check\n"););
-        PREPROC_PROFILE_END(ruleRTNEvalPerfStats);
+        MODULE_PROFILE_END(ruleRTNEvalPerfStats);
         return 0;
     }
 
@@ -410,7 +411,7 @@ int fpEvalRTN(RuleTreeNode *rtn, Packet *p, int check_ports)
     **  Return that there is a rule match and log the event outside
     **  of this routine.
     */
-    PREPROC_PROFILE_END(ruleRTNEvalPerfStats);
+    MODULE_PROFILE_END(ruleRTNEvalPerfStats);
     return 1;
 }
 
@@ -424,7 +425,7 @@ static int detection_option_tree_evaluate(
     if (!root)
         return 0;
 
-    PREPROC_PROFILE_START(ruleOTNEvalPerfStats); /* Not really OTN, but close */
+    MODULE_PROFILE_START(ruleOTNEvalPerfStats); /* Not really OTN, but close */
 
 #ifdef PPM_MGR
     /* Start Rule Timer */
@@ -473,7 +474,7 @@ static int detection_option_tree_evaluate(
     }
 #endif
 
-    PREPROC_PROFILE_END(ruleOTNEvalPerfStats);
+    MODULE_PROFILE_END(ruleOTNEvalPerfStats);
     return rval;
 }
 
@@ -494,7 +495,7 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
     eval_data.flowbit_failed = 0;
     eval_data.flowbit_noalert = 0;
 
-    PREPROC_PROFILE_START(rulePerfStats);
+    MODULE_PROFILE_START(rulePerfStats);
 
     /* NOTE: The otn will be the first one in the match state. If there are
      * multiple rules associated with a match state, mucking with the otn
@@ -536,7 +537,7 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
         UpdateNQEvents(&sfEvent);
     }
 
-    PREPROC_PROFILE_END(rulePerfStats);
+    MODULE_PROFILE_END(rulePerfStats);
     if (eval_data.flowbit_failed)
     {
         return -1;
@@ -1006,15 +1007,16 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
         if ( fp->inspect_stream_insert || !(p->packet_flags & PKT_STREAM_INSERT) )
         {
-            const HttpBuffer* hb;
+            Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
+            InspectionBuffer buf;
 
             omd->pg = port_group;
             omd->p = p;
             omd->check_ports = check_ports;
 
-            if ( GetHttpBufferMask() )
+            if ( gadget )
             {
-                if ( (hb = GetHttpBuffer(HTTP_BUFFER_URI)) )
+                if ( gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
                 {
                     so = port_group->pgPms[PM_TYPE__HTTP_URI_CONTENT];
 
@@ -1022,7 +1024,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
                     {
                         start_state = 0;
 
-                        so->search(hb->buf, hb->length,
+                        so->search(buf.data, buf.len,
                             rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                         /* Bail if we spent too much time already */
@@ -1031,7 +1033,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                     }
                 }
-                if ( (hb = GetHttpBuffer(HTTP_BUFFER_HEADER)) )
+                if ( gadget->get_buf(InspectionBuffer::IBT_HEADER, p, buf) )
                 {
                     so = port_group->pgPms[PM_TYPE__HTTP_HEADER_CONTENT];
 
@@ -1039,7 +1041,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
                     {
                         start_state = 0;
 
-                        so->search(hb->buf, hb->length,
+                        so->search(buf.data, buf.len,
                             rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                         /* Bail if we spent too much time already */
@@ -1048,7 +1050,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 #endif
                     }
                 }
-                if ( (hb = GetHttpBuffer(HTTP_BUFFER_CLIENT_BODY)) )
+                if ( gadget->get_buf(InspectionBuffer::IBT_BODY, p, buf) )
                 {
                     so = port_group->pgPms[PM_TYPE__HTTP_CLIENT_BODY_CONTENT];
 
@@ -1056,7 +1058,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
                     {
                         start_state = 0;
 
-                        so->search(hb->buf, hb->length,
+                        so->search(buf.data, buf.len,
                             rule_tree_match, omd, &start_state);
 #ifdef PPM_MGR
                         /* Bail if we spent too much time already */
@@ -1076,6 +1078,8 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
              **  payload, in case any of the rules have the
              **  'rawbytes' option.
              */
+            // FIXIT alt buf and file data should be obtained from 
+            // inspector gadget as an extension of above
             so = port_group->pgPms[PM_TYPE__CONTENT];
 
             if ( so && so->get_pattern_count() > 0 )
@@ -1179,9 +1183,9 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
             eval_data.flowbit_failed = 0;
             eval_data.flowbit_noalert = 0;
 
-            PREPROC_PROFILE_START(ncrulePerfStats);
+            MODULE_PROFILE_START(ncrulePerfStats);
             rval = detection_option_tree_evaluate((detection_option_tree_root_t*)port_group->pgNonContentTree, &eval_data);
-            PREPROC_PROFILE_END(ncrulePerfStats);
+            MODULE_PROFILE_END(ncrulePerfStats);
 
             if (rval)
             {

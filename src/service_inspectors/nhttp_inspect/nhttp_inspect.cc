@@ -69,6 +69,26 @@ bool NHttpInspect::configure (SnortConfig *)
     return true;
 }
 
+bool NHttpInspect::get_buf(
+    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    switch ( ibt )
+    {
+    case InspectionBuffer::IBT_KEY:
+        return get_buf(HTTP_BUFFER_URI, p, b);
+
+    case InspectionBuffer::IBT_HEADER:
+        return get_buf(HTTP_BUFFER_HEADER, p, b);
+
+    case InspectionBuffer::IBT_BODY:
+        return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
+
+    default:
+        break;
+    }   
+    return nullptr;
+}
+
 bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 {
     const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);

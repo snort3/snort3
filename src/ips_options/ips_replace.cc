@@ -471,7 +471,7 @@ bool ReplaceOption::operator==(const IpsOption& ips) const
 int ReplaceOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(replacePerfStats);
+    MODULE_PROFILE_START(replacePerfStats);
 
     if ( PacketWasCooked(p) )
         return false;
@@ -484,7 +484,7 @@ int ReplaceOption::eval(Cursor& c, Packet* p)
 
     store(c.get_pos());
 
-    PREPROC_PROFILE_END(replacePerfStats);
+    MODULE_PROFILE_END(replacePerfStats);
     return DETECTION_OPTION_MATCH;
 }
 
@@ -494,12 +494,12 @@ int ReplaceOption::eval(Cursor& c, Packet* p)
 void ReplaceOption::action(Packet*)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(replacePerfStats);
+    MODULE_PROFILE_START(replacePerfStats);
 
     if ( pending() )
         Replace_QueueChange(repl, pos());
 
-    PREPROC_PROFILE_END(replacePerfStats);
+    MODULE_PROFILE_END(replacePerfStats);
 }
 
 //-------------------------------------------------------------------------

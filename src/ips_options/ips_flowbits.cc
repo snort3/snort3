@@ -273,12 +273,12 @@ int FlowBitsOption::eval(Cursor&, Packet *p)
     if (!flowbits)
         return rval;
 
-    PREPROC_PROFILE_START(flowBitsPerfStats);
+    MODULE_PROFILE_START(flowBitsPerfStats);
 
     rval = checkFlowBits( flowbits->type, (uint8_t)flowbits->eval,
             flowbits->ids, flowbits->num_ids, flowbits->group, p);
 
-    PREPROC_PROFILE_END(flowBitsPerfStats);
+    MODULE_PROFILE_END(flowBitsPerfStats);
     return rval;
 }
 

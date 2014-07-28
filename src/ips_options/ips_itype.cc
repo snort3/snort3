@@ -101,12 +101,12 @@ int IcmpTypeOption::eval(Cursor&, Packet *p)
     if(!p->icmph)
         return rval;
 
-    PREPROC_PROFILE_START(icmpTypePerfStats);
+    MODULE_PROFILE_START(icmpTypePerfStats);
 
     if ( config.eval(p->icmph->type) )
         rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(icmpTypePerfStats);
+    MODULE_PROFILE_END(icmpTypePerfStats);
     return rval;
 }
 

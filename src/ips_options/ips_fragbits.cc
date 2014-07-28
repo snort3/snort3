@@ -156,7 +156,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
         return rval;
     }
 
-    PREPROC_PROFILE_START(fragBitsPerfStats);
+    MODULE_PROFILE_START(fragBitsPerfStats);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckFragBits: ");
            DebugMessage(DEBUG_PLUGIN, "[rule: 0x%X:%d   pkt: 0x%X] ",
@@ -220,7 +220,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
     }
 
     /* if the test isn't successful, this function *must* return 0 */
-    PREPROC_PROFILE_END(fragBitsPerfStats);
+    MODULE_PROFILE_END(fragBitsPerfStats);
     return rval;
 }
 

@@ -1984,7 +1984,7 @@ static inline int _flush_to_seq (
     EncodeFlags enc_flags = 0;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(s5TcpFlushPerfStats);
+    MODULE_PROFILE_START(s5TcpFlushPerfStats);
 
     if ( !p->packet_flags || (dir & p->packet_flags) )
         enc_flags = ENC_FLAG_FWD;
@@ -2017,7 +2017,7 @@ static inline int _flush_to_seq (
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Negative footprint, bailing %d (0x%X - 0x%X)\n",
                         footprint, stop_seq, st->seglist_base_seq););
-            PREPROC_PROFILE_END(s5TcpFlushPerfStats);
+            MODULE_PROFILE_END(s5TcpFlushPerfStats);
 
             return bytes_processed;
         }
@@ -2063,7 +2063,7 @@ static inline int _flush_to_seq (
                 "setting st->seglist_base_seq to 0x%X\n", stop_seq););
             st->seglist_base_seq = stop_seq;
 
-            PREPROC_PROFILE_END(s5TcpFlushPerfStats);
+            MODULE_PROFILE_END(s5TcpFlushPerfStats);
             return bytes_processed;
         }
 
@@ -2106,16 +2106,16 @@ static inline int _flush_to_seq (
         tcpStats.rebuilt_packets++;
         UpdateStreamReassStats(&sfBase, flushed_bytes);
 
-        PREPROC_PROFILE_TMPEND(s5TcpFlushPerfStats);
+        MODULE_PROFILE_TMPEND(s5TcpFlushPerfStats);
         {
             PROFILE_VARS;
-            PREPROC_PROFILE_START(s5TcpProcessRebuiltPerfStats);
+            MODULE_PROFILE_START(s5TcpProcessRebuiltPerfStats);
 
             DetectRebuiltPacket(s5_pkt);
 
-            PREPROC_PROFILE_END(s5TcpProcessRebuiltPerfStats);
+            MODULE_PROFILE_END(s5TcpProcessRebuiltPerfStats);
         }
-        PREPROC_PROFILE_TMPSTART(s5TcpFlushPerfStats);
+        MODULE_PROFILE_TMPSTART(s5TcpFlushPerfStats);
 
         // TBD abort should be by PAF callback only since
         // recovery may be possible in some cases
@@ -2125,7 +2125,7 @@ static inline int _flush_to_seq (
         st->splitter->update();
 
     /* tell them how many bytes we processed */
-    PREPROC_PROFILE_END(s5TcpFlushPerfStats);
+    MODULE_PROFILE_END(s5TcpFlushPerfStats);
     return bytes_processed;
 }
 
@@ -2304,7 +2304,7 @@ static int FlushStream(
     if ( st->seglist == NULL || st->seglist_tail == NULL )
         return -1;
 
-    PREPROC_PROFILE_START(s5TcpBuildPacketPerfStats);
+    MODULE_PROFILE_START(s5TcpBuildPacketPerfStats);
 
     // skip over previously flushed segments
     seglist = st->seglist_next;
@@ -2405,7 +2405,7 @@ static int FlushStream(
         bytes_flushed, segs, bytes_skipped, bytes_queued););
 
     assert(st->seglist);
-    PREPROC_PROFILE_END(s5TcpBuildPacketPerfStats);
+    MODULE_PROFILE_END(s5TcpBuildPacketPerfStats);
     return bytes_flushed - bytes_skipped;
 }
 
@@ -3056,7 +3056,7 @@ static void NewQueue(
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "In NewQueue\n"););
 
-    PREPROC_PROFILE_START(s5TcpInsertPerfStats);
+    MODULE_PROFILE_START(s5TcpInsertPerfStats);
 
     if(st->flush_policy != STREAM_FLPOLICY_IGNORE)
     {
@@ -3075,7 +3075,7 @@ static void NewQueue(
             {
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "full overlap on ack'd data, dropping segment\n"););
-                PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                MODULE_PROFILE_END(s5TcpInsertPerfStats);
                 return;
             }
         }
@@ -3088,7 +3088,7 @@ static void NewQueue(
                     ss->size, st->seglist_base_seq););
     }
 
-    PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+    MODULE_PROFILE_END(s5TcpInsertPerfStats);
     return;
 }
 
@@ -3408,7 +3408,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n"););
 
-    PREPROC_PROFILE_START(s5TcpInsertPerfStats);
+    MODULE_PROFILE_START(s5TcpInsertPerfStats);
 
     // NORM fast tracks are in sequence - no norms
     if(st->seglist_tail && SegmentFastTrack(st->seglist_tail, tdb))
@@ -3425,7 +3425,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                 slide /* 0 */, trunc /* 0 */, seq, left /* tail */,
                 &ss);
 
-        PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+        MODULE_PROFILE_END(s5TcpInsertPerfStats);
         return ret;
     }
 
@@ -3585,7 +3585,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                         /* flag an anomaly */
                         EventBadSegment();
                         Discard();
-                        PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
                         return STREAM_INSERT_ANOMALY;
                     }
                     break;
@@ -3609,7 +3609,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                             /* flag an anomaly */
                             EventBadSegment();
                             Discard();
-                            PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
                         }
                     }
@@ -3638,7 +3638,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                         {
                             /* No warning,
                              * its done in StreamSeglistAddNode */
-                            PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return ret;
                         }
                         left->size -= (int16_t)overlap;
@@ -3670,7 +3670,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                 /* flag an anomaly */
                 EventBadSegment();
                 Discard();
-                PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                MODULE_PROFILE_END(s5TcpInsertPerfStats);
                 return STREAM_INSERT_ANOMALY;
             }
         }
@@ -3878,7 +3878,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                                         seq, seq_end, overlap););
                             EventBadSegment();
                             Discard();
-                            PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
                         }
 
@@ -3900,7 +3900,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                     if (ret != STREAM_INSERT_OK)
                     {
                         /* no warning, already done above */
-                        PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                        MODULE_PROFILE_END(s5TcpInsertPerfStats);
                         return ret;
                     }
 
@@ -3937,7 +3937,7 @@ static int StreamQueue(StreamTracker *st, Packet *p, TcpDataBlock *tdb,
                                 seq, seq_end, overlap););
                             EventBadSegment();
                             Discard();
-                            PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+                            MODULE_PROFILE_END(s5TcpInsertPerfStats);
                             return STREAM_INSERT_ANOMALY;
                         }
                         break;
@@ -3972,7 +3972,7 @@ right_overlap_last:
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "StreamQueue returning normally\n"););
 
-    PREPROC_PROFILE_END(s5TcpInsertPerfStats);
+    MODULE_PROFILE_END(s5TcpInsertPerfStats);
     return ret;
 }
 
@@ -4150,13 +4150,13 @@ static int ProcessTcpData(
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                 "In ProcessTcpData()\n"););
 
-    PREPROC_PROFILE_START(s5TcpDataPerfStats);
+    MODULE_PROFILE_START(s5TcpDataPerfStats);
     if ((p->tcph->th_flags & TH_SYN) && (listener->os_policy != STREAM_POLICY_MACOS))
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Bailing, data on SYN, not MAC Policy!\n"););
         NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
-        PREPROC_PROFILE_END(s5TcpDataPerfStats);
+        MODULE_PROFILE_END(s5TcpDataPerfStats);
         return S5_UNALIGNED;
     }
 
@@ -4169,7 +4169,7 @@ static int ProcessTcpData(
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                         "Bailing, we're out of the window!\n"););
             NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
-            PREPROC_PROFILE_END(s5TcpDataPerfStats);
+            MODULE_PROFILE_END(s5TcpDataPerfStats);
             return S5_UNALIGNED;
         }
 
@@ -4186,7 +4186,7 @@ static int ProcessTcpData(
             ProcessTcpStream(listener, tcpssn, p, tdb, config);
             /* set flags to session flags */
 
-            PREPROC_PROFILE_END(s5TcpDataPerfStats);
+            MODULE_PROFILE_END(s5TcpDataPerfStats);
             return S5_ALIGNED;
         }
     }
@@ -4214,7 +4214,7 @@ static int ProcessTcpData(
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Bailing, we're out of the window!\n"););
                 NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
-                PREPROC_PROFILE_END(s5TcpDataPerfStats);
+                MODULE_PROFILE_END(s5TcpDataPerfStats);
                 return S5_UNALIGNED;
             }
 
@@ -4242,7 +4242,7 @@ static int ProcessTcpData(
         }
     }
 
-    PREPROC_PROFILE_END(s5TcpDataPerfStats);
+    MODULE_PROFILE_END(s5TcpDataPerfStats);
     return S5_UNALIGNED;
 }
 
@@ -4396,7 +4396,7 @@ static int NewTcpSession(
     TcpSession *tmp = NULL;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(s5TcpNewSessPerfStats);
+    MODULE_PROFILE_START(s5TcpNewSessPerfStats);
 
     if (TCP_ISFLAGSET(p->tcph, TH_SYN) &&
         !TCP_ISFLAGSET(p->tcph, TH_ACK))
@@ -4706,11 +4706,11 @@ static int NewTcpSession(
         tmp->ecn = 0;
         tmp->tcp_init = true;
 
-        PREPROC_PROFILE_END(s5TcpNewSessPerfStats);
+        MODULE_PROFILE_END(s5TcpNewSessPerfStats);
         return 1;
     }
 
-    PREPROC_PROFILE_END(s5TcpNewSessPerfStats);
+    MODULE_PROFILE_END(s5TcpNewSessPerfStats);
     return 0;
 }
 
@@ -4874,7 +4874,7 @@ static int ProcessTcp(
 
     tcpssn = (TcpSession*)lwssn->session;
 
-    PREPROC_PROFILE_START(s5TcpStatePerfStats);
+    MODULE_PROFILE_START(s5TcpStatePerfStats);
 
     if ( !tcpssn->tcp_init )
     {
@@ -4999,7 +4999,7 @@ static int ProcessTcp(
              * we missed).
              */
             /* Do nothing. */
-            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode;
         }
     }
@@ -5127,7 +5127,7 @@ static int ProcessTcp(
             {
                 /* Got SYN/RST.  We're done. */
                 NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
-                PREPROC_PROFILE_END(s5TcpStatePerfStats);
+                MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_RST;
             }
             else if (TCP_ISFLAGSET(p->tcph, TH_SYN) &&
@@ -5218,7 +5218,7 @@ static int ProcessTcp(
     if (!tcpssn->tcp_init)
     {
         LogTcpEvents(eventcode);
-        PREPROC_PROFILE_END(s5TcpStatePerfStats);
+        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode;
     }
 
@@ -5254,7 +5254,7 @@ static int ProcessTcp(
                 Discard();
                 NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
                 LogTcpEvents(eventcode);
-                PREPROC_PROFILE_END(s5TcpStatePerfStats);
+                MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_BAD_PKT;
             }
         }
@@ -5290,7 +5290,7 @@ static int ProcessTcp(
                 Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_CLOSING);
                 /* Leave listener open, data may be in transit */
                 LogTcpEvents(eventcode);
-                PREPROC_PROFILE_END(s5TcpStatePerfStats);
+                MODULE_PROFILE_END(s5TcpStatePerfStats);
                 return retcode | ACTION_RST;
             }
             /* Reset not valid. */
@@ -5300,7 +5300,7 @@ static int ProcessTcp(
             eventcode |= EVENT_BAD_RST;
             NormalDropPacketIf(p, NORM_TCP);
             LogTcpEvents(eventcode);
-            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode;
         }
 
@@ -5337,7 +5337,7 @@ static int ProcessTcp(
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Accepted SYN ACK\n"););
         LogTcpEvents(eventcode);
-        PREPROC_PROFILE_END(s5TcpStatePerfStats);
+        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode;
     }
 
@@ -5397,7 +5397,7 @@ static int ProcessTcp(
                 leave listener open, data may be in transit */
 
             LogTcpEvents(eventcode);
-            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ACTION_RST;
         }
         /* Reset not valid. */
@@ -5407,7 +5407,7 @@ static int ProcessTcp(
         eventcode |= EVENT_BAD_RST;
         NormalDropPacketIf(p, NORM_TCP);
         LogTcpEvents(eventcode);
-        PREPROC_PROFILE_END(s5TcpStatePerfStats);
+        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
     }
     else
@@ -5421,7 +5421,7 @@ static int ProcessTcp(
             Discard();
             NormalTrimPayloadIf(p, NORM_TCP_TRIM, 0, tdb);
             LogTcpEvents(eventcode);
-            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ts_action;
         }
     }
@@ -5433,7 +5433,7 @@ static int ProcessTcp(
         Discard();
         // this packet was normalized elsewhere
         LogTcpEvents(eventcode);
-        PREPROC_PROFILE_END(s5TcpStatePerfStats);
+        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ts_action;
     }
 
@@ -5481,7 +5481,7 @@ static int ProcessTcp(
             /* got a bad SYN on the session, alert! */
             eventcode |= EVENT_SYN_ON_EST;
             LogTcpEvents(eventcode);
-            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | action;
         }
     }
@@ -5498,7 +5498,7 @@ static int ProcessTcp(
         Discard();
         NormalDropPacketIf(p, NORM_TCP);
         LogTcpEvents(eventcode);
-        PREPROC_PROFILE_END(s5TcpStatePerfStats);
+        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_BAD_PKT;
     }
     else if ((p->packet_flags & PKT_FROM_CLIENT)
@@ -5515,7 +5515,7 @@ static int ProcessTcp(
         if ( NormalDropPacketIf(p, NORM_TCP) )
         {
             LogTcpEvents(eventcode);
-            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+            MODULE_PROFILE_END(s5TcpStatePerfStats);
             return retcode | ACTION_BAD_PKT;
         }
     }
@@ -5596,7 +5596,7 @@ static int ProcessTcp(
                         if ( NormalDropPacketIf(p, NORM_TCP) )
                         {
                             LogTcpEvents(eventcode);
-                            PREPROC_PROFILE_END(s5TcpStatePerfStats);
+                            MODULE_PROFILE_END(s5TcpStatePerfStats);
                             return retcode | ACTION_BAD_PKT;
                         }
                     }
@@ -5642,7 +5642,7 @@ static int ProcessTcp(
                     eventcode |= EVENT_BAD_ACK;
                     LogTcpEvents(eventcode);
                     NormalDropPacketIf(p, NORM_TCP);
-                    PREPROC_PROFILE_END(s5TcpStatePerfStats);
+                    MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }
                 break;
@@ -5833,7 +5833,7 @@ static int ProcessTcp(
                     eventcode |= EVENT_BAD_FIN;
                     LogTcpEvents(eventcode);
                     NormalDropPacketIf(p, NORM_TCP);
-                    PREPROC_PROFILE_END(s5TcpStatePerfStats);
+                    MODULE_PROFILE_END(s5TcpStatePerfStats);
                     return retcode | ACTION_BAD_PKT;
                 }
             }
@@ -5950,7 +5950,7 @@ dupfin:
         /* The last ACK is a part of the session.  Delete the session after processing is complete. */
         TcpSessionCleanup(lwssn, 0);
         lwssn->session_state |= STREAM5_STATE_CLOSED;
-        PREPROC_PROFILE_END(s5TcpStatePerfStats);
+        MODULE_PROFILE_END(s5TcpStatePerfStats);
         return retcode | ACTION_LWSSN_CLOSED;
     }
     else if(listener->s_mgr.state == TCP_STATE_CLOSED && talker->s_mgr.state == TCP_STATE_SYN_SENT)
@@ -5970,7 +5970,7 @@ dupfin:
         CheckFlushPolicyOnAck(tcpssn, talker, listener, tdb, p);
 
     LogTcpEvents(eventcode);
-    PREPROC_PROFILE_END(s5TcpStatePerfStats);
+    MODULE_PROFILE_END(s5TcpStatePerfStats);
     return retcode;
 }
 
@@ -6018,7 +6018,7 @@ static inline uint32_t flush_pdu_ips (
     StreamSegment* seg;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(s5TcpPAFPerfStats);
+    MODULE_PROFILE_START(s5TcpPAFPerfStats);
     avail = get_q_sequenced(trk);
     seg = trk->seglist_next;
 
@@ -6044,13 +6044,13 @@ static inline uint32_t flush_pdu_ips (
 
         if ( flush_pt > 0 )
         {
-            PREPROC_PROFILE_END(s5TcpPAFPerfStats);
+            MODULE_PROFILE_END(s5TcpPAFPerfStats);
             return flush_pt;
         }
         seg = seg->next;
     }
 
-    PREPROC_PROFILE_END(s5TcpPAFPerfStats);
+    MODULE_PROFILE_END(s5TcpPAFPerfStats);
     return 0;
 }
 
@@ -6157,7 +6157,7 @@ static inline uint32_t flush_pdu_ackd (
     StreamSegment* seg;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(s5TcpPAFPerfStats);
+    MODULE_PROFILE_START(s5TcpPAFPerfStats);
     seg = SEQ_LT(trk->seglist_base_seq, trk->r_win_base) ? trk->seglist : NULL;
 
     // * must stop if not acked
@@ -6187,13 +6187,13 @@ static inline uint32_t flush_pdu_ackd (
 
         if ( flush_pt > 0 )
         {
-            PREPROC_PROFILE_END(s5TcpPAFPerfStats);
+            MODULE_PROFILE_END(s5TcpPAFPerfStats);
             return flush_pt;
         }
         seg = seg->next;
     }
 
-    PREPROC_PROFILE_END(s5TcpPAFPerfStats);
+    MODULE_PROFILE_END(s5TcpPAFPerfStats);
     return 0;
 }
 
@@ -6876,11 +6876,11 @@ int TcpSession::process(Packet *p)
             GET_SRC_IP(p), p->sp, GET_DST_IP(p), p->dp, flagbuf,
             ntohl(p->tcph->th_seq), ntohl(p->tcph->th_ack), p->dsize););
 
-    PREPROC_PROFILE_START(s5TcpPerfStats);
+    MODULE_PROFILE_START(s5TcpPerfStats);
 
     if ( stream.blocked_session(flow, p) )
     {
-        PREPROC_PROFILE_END(s5TcpPerfStats);
+        MODULE_PROFILE_END(s5TcpPerfStats);
         return ACTION_NOTHING;
     }
     SetupTcpDataBlock(&tdb, p);
@@ -6910,7 +6910,7 @@ int TcpSession::process(Packet *p)
                     "for non SYN packet.\n"););
 
                 EventNo3whs();
-                PREPROC_PROFILE_END(s5TcpPerfStats);
+                MODULE_PROFILE_END(s5TcpPerfStats);
             }
         }
         tcpssn->lws_init = true;
@@ -6959,7 +6959,7 @@ int TcpSession::process(Packet *p)
             p->packet_flags & PKT_FROM_SERVER? "server" : "client"););
     }
 
-    PREPROC_PROFILE_END(s5TcpPerfStats);
+    MODULE_PROFILE_END(s5TcpPerfStats);
     S5TraceTCP(p, flow, &tdb, 0);
     return 0;
 }

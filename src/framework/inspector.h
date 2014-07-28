@@ -37,15 +37,14 @@ typedef int16_t ServiceId;
 // to be useful, these must be explicit (*_V0, *_V1, ...)
 #define INSAPI_PLUGIN_V0 0
 
-struct ServiceTag
-{
-    const uint8_t* tag;
-    unsigned len;
-    bool to_server;
-};
-
 struct InspectionBuffer
 {
+    enum Type
+    {
+        IBT_KEY, IBT_HEADER, IBT_BODY, 
+        IBT_ALT, IBT_FILE, // FIXIT alt and file data are tbd
+        IBT_MAX
+    };
     const uint8_t* data;
     unsigned len;
 };
@@ -87,6 +86,13 @@ public:
     void set_service(ServiceId id) { srv_id = id; };
     ServiceId get_service() { return srv_id; };
 
+    // for well known buffers
+    // well known buffers may be included among generic below,
+    // but they must be accessible from here
+    virtual bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&)
+    { return false; };
+
+    // for generic buffers
     // key is listed in api buffers
     // id-1 is zero based index into buffers array
     unsigned get_buf_id(const char* key);

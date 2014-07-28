@@ -145,11 +145,11 @@ bool RespondOption::operator==(const IpsOption& ips) const
 void RespondOption::action(Packet*)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(resp3PerfStats);
+    MODULE_PROFILE_START(resp3PerfStats);
 
     Active_QueueResponse(Resp3_Send, &config);
 
-    PREPROC_PROFILE_END(resp3PerfStats);
+    MODULE_PROFILE_END(resp3PerfStats);
 }
 
 //--------------------------------------------------------------------
@@ -159,7 +159,7 @@ void RespondOption::action(Packet*)
 static void Resp3_Send (Packet* p, void* pv)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(resp3PerfStats);
+    MODULE_PROFILE_START(resp3PerfStats);
 
     Resp3_Data* rd = (Resp3_Data*)pv;
     uint32_t flags = 0;
@@ -186,7 +186,7 @@ static void Resp3_Send (Packet* p, void* pv)
         Active_SendUnreach(p, ENC_UNR_PORT);
 
     Active_IgnoreSession(p);
-    PREPROC_PROFILE_END(resp3PerfStats);
+    MODULE_PROFILE_END(resp3PerfStats);
 }
 
 //-------------------------------------------------------------------------

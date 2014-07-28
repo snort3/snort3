@@ -18,6 +18,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_http.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -94,7 +95,7 @@ private:
 int HttpIpsOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(ps);
+    MODULE_PROFILE_START(ps);
 
     int rval;
     InspectionBuffer hb;
@@ -112,7 +113,7 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
         rval = DETECTION_OPTION_MATCH;
     }
 
-    PREPROC_PROFILE_END(ps);
+    MODULE_PROFILE_END(ps);
     return rval;
 }
 
@@ -152,46 +153,6 @@ static const IpsApi uri_api =
     nullptr,
     nullptr,
     uri_opt_ctor,
-    opt_dtor,
-    nullptr
-};
-
-//-------------------------------------------------------------------------
-// http_header
-//-------------------------------------------------------------------------
-
-#undef IPS_OPT
-#define IPS_OPT "http_header"
-
-static THREAD_LOCAL ProfileStats header_ps;
-
-static Module* header_mod_ctor()
-{
-    return new HttpCursorModule(IPS_OPT, header_ps);
-}
-
-static IpsOption* header_opt_ctor(Module*, OptTreeNode*)
-{
-    return new HttpIpsOption(IPS_OPT, header_ps, CAT_SET_HEADER);
-}
-
-static const IpsApi header_api =
-{
-    {
-        PT_IPS_OPTION,
-        IPS_OPT,
-        IPSAPI_PLUGIN_V0,
-        0,
-        header_mod_ctor,
-        mod_dtor
-    },
-    OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    header_opt_ctor,
     opt_dtor,
     nullptr
 };
@@ -524,7 +485,6 @@ static const IpsApi raw_cookie_api =
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &uri_api.base,
-    &header_api.base,
     &client_body_api.base,
     &method_api.base,
     &cookie_api.base,
@@ -537,7 +497,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 };
 #else
 const BaseApi* ips_http_uri = &uri_api.base;
-const BaseApi* ips_http_header = &header_api.base;
 const BaseApi* ips_http_client_body = &client_body_api.base;
 const BaseApi* ips_http_method = &method_api.base;
 const BaseApi* ips_http_cookie = &cookie_api.base;

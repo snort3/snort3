@@ -100,7 +100,7 @@ int DsizeOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(dsizePerfStats);
+    MODULE_PROFILE_START(dsizePerfStats);
 
     /* fake packet dsizes are always wrong */
     /* (unless they are PDUs) */
@@ -108,14 +108,14 @@ int DsizeOption::eval(Cursor&, Packet *p)
         (p->packet_flags & PKT_REBUILT_STREAM) &&
         !(p->packet_flags & PKT_PDU_HEAD) )
     {
-        PREPROC_PROFILE_END(dsizePerfStats);
+        MODULE_PROFILE_END(dsizePerfStats);
         return rval;
     }
 
     if ( config.eval(p->dsize) )
         rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(dsizePerfStats);
+    MODULE_PROFILE_END(dsizePerfStats);
     return rval;
 }
 

@@ -3,6 +3,8 @@
 add_library (helpers STATIC
     directory.cc
     directory.h
+    markup.cc
+    markup.h
     process.cc
     process.h
     swapper.h

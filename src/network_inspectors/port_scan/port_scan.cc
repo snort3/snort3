@@ -909,7 +909,7 @@ void PortScan::eval(Packet *p)
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
 
-    PREPROC_PROFILE_START(psPerfStats);
+    MODULE_PROFILE_START(psPerfStats);
     ++spstats.total_packets;
 
     memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT don't zap unless necessary
@@ -930,7 +930,7 @@ void PortScan::eval(Packet *p)
         PortscanAlert(&ps_pkt, &ps_pkt.scanned->proto, ps_pkt.proto);
     }
 
-    PREPROC_PROFILE_END(psPerfStats);
+    MODULE_PROFILE_END(psPerfStats);
 }
 
 //-------------------------------------------------------------------------
