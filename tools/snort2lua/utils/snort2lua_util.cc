@@ -30,6 +30,7 @@
 #include <cstring>
 #include "utils/snort2lua_util.h"
 #include "conversion_state.h"
+#include "data/dt_data.h"
 
 namespace util
 {
@@ -115,7 +116,7 @@ bool get_string(std::istringstream& stream,
     }
     else
     {
-        std::streamoff pos = 0;
+        int pos = 0;
         option = std::string();
 
         // we don't want an empty string

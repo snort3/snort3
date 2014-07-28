@@ -69,6 +69,182 @@ LuaData::~LuaData()
 }
 
 
+
+std::string LuaData::translate_variable(std::string var_name)
+{
+    for (auto v : vars)
+        if (!var_name.compare(v->get_name()))
+            return v->get_value(this);
+
+    return std::string();
+}
+
+/*
+ * I am ashamed to say, but I have absolutely no idea what
+ * Snort attempts to do when 'expanding' variables.  Since I also
+ * have absolutely no inclination to figure out this mess,
+ * I copied the Snort version of ExpandVars and made some
+ * minor adjustments.
+ *
+ * Given a Snort style string to expand, this funcion will return
+ * the expanded string
+ */
+std::string LuaData::expand_vars(std::string string)
+{
+    std::string estring;
+    estring.resize(1024, '\0');
+
+    char rawvarname[128], varname[128], varaux[128], varbuffer[128];
+    char varmodifier;
+    const char* varcontents;
+    int varname_completed, c, i, j, iv, jv, l_string, name_only;
+    int quote_toggle = 0;
+
+    if(string.empty() || string.rfind('$') == std::string::npos)
+        return string;
+
+
+    i = j = 0;
+    l_string = string.size();
+    std::cout << "ExpandVars, Before: " << string << std::endl;
+
+    while(i < l_string && j < std::string::npos)
+    {
+        c = string[i++];
+
+        if(c == '"')
+        {
+            /* added checks to make sure that we are inside a quoted string
+             */
+            quote_toggle ^= 1;
+        }
+
+        if(c == '$' && !quote_toggle)
+        {
+            std::memset((char *) rawvarname, 0, sizeof(rawvarname));
+            varname_completed = 0;
+            name_only = 1;
+            iv = i;
+            jv = 0;
+
+            if(string[i] == '(')
+            {
+                name_only = 0;
+                iv = i + 1;
+            }
+
+            while(!varname_completed
+                  && iv < l_string
+                  && jv < (int)sizeof(rawvarname) - 1)
+            {
+                c = string[iv++];
+
+                if((name_only && !(isalnum(c) || c == '_'))
+                   || (!name_only && c == ')'))
+                {
+                    varname_completed = 1;
+
+                    if(name_only)
+                        iv--;
+                }
+                else
+                {
+                    rawvarname[jv++] = (char)c;
+                }
+            }
+
+            if(varname_completed || iv == l_string)
+            {
+                char *p;
+
+                i = iv;
+
+                varcontents = NULL;
+
+                memset((char *) varname, 0, sizeof(varname));
+                memset((char *) varaux, 0, sizeof(varaux));
+                varmodifier = ' ';
+
+                p = strchr(rawvarname, ':');
+                if (p)
+                {
+                    std::strncpy(varname, rawvarname, p - rawvarname);
+
+                    if(strlen(p) >= 2)
+                    {
+                        varmodifier = *(p + 1);
+                        std::strncpy(varaux, p + 2, sizeof(varaux));
+                    }
+                }
+                else
+                    std::strncpy(varname, rawvarname, sizeof(varname));
+
+                memset((char *) varbuffer, 0, sizeof(varbuffer));
+
+                std::string tmp = translate_variable(varname);
+                varcontents = tmp.c_str();
+
+                switch(varmodifier)
+                {
+                    case '-':
+                        if(!varcontents || !strlen(varcontents))
+                            varcontents = varaux;
+                        break;
+
+                    case '?':
+                        if(!varcontents || !strlen(varcontents))
+                            return std::string();
+                        break;
+                }
+
+                /* If variable not defined now, we're toast */
+                if(!varcontents || !strlen(varcontents))
+                {
+                    return std::string();
+                }
+
+                if(varcontents)
+                {
+                    int l_varcontents = strlen(varcontents);
+
+                    iv = 0;
+
+                    if (estring.size() < j + l_varcontents)
+                        estring.resize(estring.size() * 2);
+
+                    while(iv < l_varcontents && j < estring.size() - 1)
+                        estring[j++] = varcontents[iv++];
+                }
+            }
+            else
+            {
+                if (estring.size() < j+ 1)
+                    estring.resize(estring.size() * 2, '\0');
+
+                estring[j++] = '$';
+            }
+        }
+        else
+        {
+            if (estring.size() < j+ 1)
+                estring.resize(estring.size() * 2, '\0');
+
+            estring[j++] = (char)c;
+        }
+    }
+
+    if (estring.size() < j)
+        estring.resize(estring.size() + 1, '\0');
+    else
+        estring.resize(j);
+
+    estring[j] = '\0';
+    std::cout << "ExpandVars, After: " << estring << std::endl;
+
+    return estring;
+}
+
+
 void LuaData::add_comment(std::string comment)
 {
     comments->add_text(comment);
@@ -78,7 +254,7 @@ void LuaData::add_comment(std::string comment)
 bool LuaData::add_variable(std::string name, std::string value)
 {
     for (auto v : vars)
-        if(v->get_name() == name)
+        if (!name.compare(v->get_name()))
             return v->add_value(value);
 
     Variable *var = new Variable(name);
@@ -408,11 +584,10 @@ bool LuaData::add_suboption(std::string keyword)
 }
 
 bool LuaData::add_suboption(std::string keyword,
-                            std::string val,
-                            char delimeter)
+                            std::string val)
 {
     if (curr_rule_opt)
-        return curr_rule_opt->add_suboption(keyword, val, delimeter);
+        return curr_rule_opt->add_suboption(keyword, val);
 
     add_error_comment("Select an option before adding a suboption!!");
     return false;

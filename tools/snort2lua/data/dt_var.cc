@@ -20,6 +20,7 @@
 // dt_var.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "data/dt_var.h"
+#include "data/dt_data.h"
 #include "utils/snort2lua_util.h"
 
 Variable::Variable(std::string name, int depth)
@@ -35,6 +36,29 @@ Variable::Variable(std::string name)
 }
 
 Variable::~Variable(){}
+
+
+std::string Variable::get_value(LuaData* ld)
+{
+    std::string variable = "";
+    bool first_line = true;
+
+    for (auto v : vars)
+    {
+        if (first_line)
+            first_line = false;
+        else
+            variable.push_back(' ');
+
+        if (v->type == VarType::STRING)
+            variable.append(std::string(v->data));
+        else
+            variable.append(std::string(ld->translate_variable(v->data)));
+    }
+
+    std::cout << "VARIABLE: value == " << variable << "END" << std::endl;
+    return variable;
+}
 
 // does this need a new variable?
 bool Variable::add_value(std::string elem)

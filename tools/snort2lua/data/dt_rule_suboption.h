@@ -30,17 +30,15 @@ class RuleSubOption
 {
 public:
     RuleSubOption(std::string name);
-    RuleSubOption(std::string name, std::string val, char delimeter);
+    RuleSubOption(std::string name, std::string val);
     virtual ~RuleSubOption();
  
     // overloading operators
     friend std::ostream &operator<<( std::ostream&, const RuleSubOption &);
 
 private:
-
     std::string name;
     std::string value;
-    char delimeter;
 };
 
 

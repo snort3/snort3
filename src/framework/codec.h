@@ -168,7 +168,7 @@ protected:
 
     static inline uint8_t buff_diff(Buffer *buf, uint8_t* ho)
     {
-        return ((uint8_t*)(buf->base+buf->end)-(uint8_t*)ho);
+        return (((uint8_t*)(buf->base+buf->end))-(uint8_t*)ho);
     }
 
     static inline icmp4::IcmpCode get_icmp_code (EncodeType et)

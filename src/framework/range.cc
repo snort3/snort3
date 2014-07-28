@@ -21,6 +21,7 @@
 #include "range.h"
 
 #include <string.h>
+#include <stdlib.h>
 #include <string>
 using namespace std;
 
