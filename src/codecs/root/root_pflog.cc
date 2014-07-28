@@ -162,7 +162,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
     uint32_t padlen = PFLOG_PADLEN;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -183,7 +183,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             ErrorMessage("Captured data length < minimum Pflog length! "
                     "(%d < %lu)\n", cap_len, (unsigned long)PFLOG2_HDRMIN);
         }
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -216,7 +216,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
                     *((uint8_t*)pkt));
             }
             dc.discards++;
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
     }
 
@@ -229,7 +229,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
                     "(%d < %d)\n", cap_len, hlen);
         }
         dc.discards++;
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
     /* note that the pflen may exclude the padding which is always present */
@@ -240,7 +240,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             ErrorMessage("Bad Pflog header length! (%d bytes)\n", pflen);
         }
         dc.discards++;
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP datagram size calculated to be "
@@ -251,13 +251,13 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
     {
         case AF_INET:   /* IPv4 */
             DecodeIP(p->pkt + hlen, cap_len - hlen, p);
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
 
 #if defined(AF_INET6)
         case AF_INET6:  /* IPv6 */
             DecodeIPV6(p->pkt + hlen, cap_len - hlen, p);
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
 #endif
 
@@ -267,10 +267,10 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
              */
             // TBD add decoder drop event for unknown pflog network type
             dc.other++;
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
     }
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }

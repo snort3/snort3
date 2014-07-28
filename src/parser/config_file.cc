@@ -65,7 +65,7 @@
 // messages
 #define CONFIG_OPT__POLICY_VERSION                  "policy_version"
 #ifdef PERF_PROFILING
-# define CONFIG_OPT__PROFILE_PREPROCS               "profile_preprocs"
+# define CONFIG_OPT__PROFILE_MODULES               "profile_preprocs"
 # define CONFIG_OPT__PROFILE_RULES                  "profile_rules"
 #endif
 

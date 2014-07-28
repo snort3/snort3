@@ -77,7 +77,7 @@
 #define METADATA_VALUE__ENABLED   "enabled"
 #define METADATA_VALUE__OFF       "off"
 #define METADATA_VALUE__ON        "on"
-#define METADATA_VALUE__PREPROC   "preproc"
+#define METADATA_VALUE__MODULE   "preproc"
 #define METADATA_VALUE__SHARED    "shared"
 
 /* Tag options */

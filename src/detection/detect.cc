@@ -150,10 +150,10 @@ void snort_inspect(Packet* p)
 
     check_tags_flag = 1;
 
-    PREPROC_PROFILE_START(eventqPerfStats);
+    MODULE_PROFILE_START(eventqPerfStats);
     SnortEventqLog(p);
     SnortEventqReset();
-    PREPROC_PROFILE_END(eventqPerfStats);
+    MODULE_PROFILE_END(eventqPerfStats);
 
     /* Check for normally closed session */
     stream.check_session_closed(p);
@@ -355,9 +355,9 @@ int Detect(Packet * p)
     **  This is where we short circuit so
     **  that we can do IP checks.
     */
-    PREPROC_PROFILE_START(detectPerfStats);
+    MODULE_PROFILE_START(detectPerfStats);
     detected = fpEvalPacket(p);
-    PREPROC_PROFILE_END(detectPerfStats);
+    MODULE_PROFILE_END(detectPerfStats);
 
     return detected;
 }

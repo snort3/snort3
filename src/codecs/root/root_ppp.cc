@@ -57,7 +57,7 @@ void DecodePppPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
     int hlen = 0;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -75,7 +75,7 @@ void DecodePppPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             ErrorMessage("Length not big enough for even a single "
                          "header or a one byte payload\n");
         }
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -89,7 +89,7 @@ void DecodePppPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
 
     DecodePppPktEncapsulated(p->pkt + hlen, cap_len - hlen, p);
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 

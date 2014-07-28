@@ -1,3 +1,19 @@
+106
+-- converted fpdetect.cc to pull fast pattern buffers from inspector gadget
+
+105
+-- changed PREPROC to MODULE in profiling defines
+-- added --rule "<rule>" for easy command line testing
+-- added --list-plugins to see which plugins don't have modules
+-- added helpers/markup.{h,cc}
+-- added optional header selector to http_header
+
+104
+-- changed configure --with-libpcre-* to --with-pcre-* for consistency
+-- same for pcap (again!)
+-- made ppm and perfprofiling disabled by default in configure.ac
+-- added stream_size and stream_reassemble ips options
+
 103
 -- added modules to ips options
 -- removed ips option sameip which was obsoleted by 116:152

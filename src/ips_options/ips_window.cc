@@ -99,12 +99,12 @@ int TcpWinOption::eval(Cursor&, Packet *p)
     if(!p->tcph)
         return rval;
 
-    PREPROC_PROFILE_START(tcpWinPerfStats);
+    MODULE_PROFILE_START(tcpWinPerfStats);
 
     if ( config.eval(p->tcph->th_win) )
         rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(tcpWinPerfStats);
+    MODULE_PROFILE_END(tcpWinPerfStats);
     return rval;
 }
 

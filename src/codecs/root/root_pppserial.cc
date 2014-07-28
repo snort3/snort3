@@ -53,7 +53,7 @@ void DecodePppSerialPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t *
     uint32_t cap_len = pkthdr->caplen;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -71,7 +71,7 @@ void DecodePppSerialPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t *
             ErrorMessage("Captured data length < PPP header length"
                          " (%d bytes)\n", cap_len);
         }
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -82,7 +82,7 @@ void DecodePppSerialPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t *
         DecodeChdlcPkt(p, pkthdr, pkt);
     }
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 

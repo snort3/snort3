@@ -134,7 +134,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
     uint32_t base64_size =0;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(base64PerfStats);
+    MODULE_PROFILE_START(base64PerfStats);
 
     base64_decode_size = 0;
     Base64DecodeData* idx = (Base64DecodeData *)&config;
@@ -152,7 +152,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
 
     if ( idx->offset > size )
     {
-        PREPROC_PROFILE_END(base64PerfStats);
+        MODULE_PROFILE_END(base64PerfStats);
         return rval;
     }
     start_ptr += idx->offset;
@@ -160,7 +160,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
 
     if(sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, 0) != 0)
     {
-        PREPROC_PROFILE_END(base64PerfStats);
+        MODULE_PROFILE_END(base64PerfStats);
         return rval;
     }
 
@@ -171,11 +171,11 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
 
     if(sf_base64decode(base64_buf, base64_size, (uint8_t *)base64_decode_buf, sizeof(base64_decode_buf), &base64_decode_size) != 0)
     {
-        PREPROC_PROFILE_END(base64PerfStats);
+        MODULE_PROFILE_END(base64PerfStats);
         return rval;
     }
 
-    PREPROC_PROFILE_END(base64PerfStats);
+    MODULE_PROFILE_END(base64PerfStats);
 
     return DETECTION_OPTION_MATCH;
 }
@@ -303,18 +303,18 @@ int Base64DataOption::eval(Cursor& c, Packet*)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(base64PerfStats);
+    MODULE_PROFILE_START(base64PerfStats);
 
     if ( !base64_decode_size )
     {
-        PREPROC_PROFILE_END(base64PerfStats);
+        MODULE_PROFILE_END(base64PerfStats);
         return rval;
     }
 
     c.set(s_data_name, base64_decode_buf, base64_decode_size);
     rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(base64PerfStats);
+    MODULE_PROFILE_END(base64PerfStats);
     return rval;
 }
 

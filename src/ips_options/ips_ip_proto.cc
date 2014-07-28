@@ -130,7 +130,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
         return rval;
     }
 
-    PREPROC_PROFILE_START(ipProtoPerfStats);
+    MODULE_PROFILE_START(ipProtoPerfStats);
 
     switch (ipd->comparison_flag)
     {
@@ -161,7 +161,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
     }
 
     /* if the test isn't successful, this function *must* return 0 */
-    PREPROC_PROFILE_END(ipProtoPerfStats);
+    MODULE_PROFILE_END(ipProtoPerfStats);
     return rval;
 }
 

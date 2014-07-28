@@ -442,7 +442,7 @@ void PacketManager::decode(
                 (unsigned long)pkthdr->caplen, (unsigned long)pkthdr->pktlen);
             );
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     // initialize all of the relevent data to decode this packet
     memset(p, 0, PKT_ZERO_LEN);
@@ -492,7 +492,7 @@ void PacketManager::decode(
     p->dsize = (uint16_t)len;
     p->data = pkt;
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
 }
 
 bool PacketManager::has_codec(uint16_t cd_id)
@@ -633,7 +633,8 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     c->data = lyr->start + lyr->length;
     len = c->data - c->pkt;
 
-    assert(len < Codec::PKT_MAX - IP_MAXPACKET); // len < ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU
+    // len < ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU
+    assert((unsigned)len < Codec::PKT_MAX - IP_MAXPACKET);
 
     c->max_dsize = IP_MAXPACKET - len;
     c->proto_bits = p->proto_bits;

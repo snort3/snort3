@@ -532,12 +532,12 @@ int PcreOption::eval(Cursor& c, Packet*)
     bool matched = false;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(pcrePerfStats);
+    MODULE_PROFILE_START(pcrePerfStats);
 
     //short circuit this for testing pcre performance impact
     if (ScNoPcre())
     {
-        PREPROC_PROFILE_END(pcrePerfStats);
+        MODULE_PROFILE_END(pcrePerfStats);
         return DETECTION_OPTION_NO_MATCH;
     }
 
@@ -558,11 +558,11 @@ int PcreOption::eval(Cursor& c, Packet*)
             c.set_pos(found_offset);
             c.set_delta(found_offset);
         }
-        PREPROC_PROFILE_END(pcrePerfStats);
+        MODULE_PROFILE_END(pcrePerfStats);
         return DETECTION_OPTION_MATCH;
     }
 
-    PREPROC_PROFILE_END(pcrePerfStats);
+    MODULE_PROFILE_END(pcrePerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
 

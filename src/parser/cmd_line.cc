@@ -25,6 +25,7 @@
 #endif
 
 #include <syslog.h>
+#include <iostream>
 #include <string>
 using namespace std;
 
@@ -43,7 +44,9 @@ using namespace std;
 #include "packet_io/trough.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
+#include "parser/parser.h"
 #include "utils/util.h"
+#include "helpers/markup.h"
 
 #define LOG_NONE  "none"
 #define LOG_TEXT  "text"
@@ -66,8 +69,6 @@ static char* snort_conf_dir = nullptr;
 
 const char* get_snort_conf() { return lua_conf; }
 const char* get_snort_conf_dir() { return snort_conf_dir; }
-
-static bool s_markup = false;
 
 static void show_usage(const char* program_name);
 static void show_options(const char* pfx);
@@ -257,7 +258,9 @@ static void config_help_signals(SnortConfig*, const char*)
     exit(0);
 }
 
-enum HelpType { HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF, HT_LST };
+enum HelpType {
+    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF, HT_LST, HT_PLG
+};
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
@@ -268,25 +271,28 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     switch ( ht )
     {
     case HT_CFG:
-        ModuleManager::show_configs(s_markup, val);
+        ModuleManager::show_configs(val);
         break;
     case HT_CMD:
-        ModuleManager::show_commands(s_markup, val);
+        ModuleManager::show_commands(val);
         break;
     case HT_GID:
-        ModuleManager::show_gids(s_markup, val);
+        ModuleManager::show_gids(val);
         break;
     case HT_IPS:
-        ModuleManager::show_rules(s_markup, val);
+        ModuleManager::show_rules(val);
         break;
     case HT_MOD:
-        ModuleManager::show_module(s_markup, val);
+        ModuleManager::show_module(val);
         break;
     case HT_BUF:
         InspectorManager::dump_buffers();
         break;
     case HT_LST:
         ModuleManager::list_modules();
+        break;
+    case HT_PLG:
+        PluginManager::list_plugins();
         break;
     }
     ModuleManager::term();
@@ -307,7 +313,7 @@ static void config_help_commands(SnortConfig* sc, const char* val)
 
 static void config_markup(SnortConfig*, const char*)
 {
-    s_markup = true;
+    Markup::enable();
 }
 
 static void config_help_gids(SnortConfig* sc, const char* val)
@@ -333,6 +339,11 @@ static void config_help_module(SnortConfig* sc, const char* val)
 static void config_list_modules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_LST);
+}
+
+static void config_list_plugins(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_PLG);
 }
 
 static void config_lua(SnortConfig*, const char* val)
@@ -575,6 +586,11 @@ static void config_pcap_no_filter(SnortConfig*, const char*)
 }
 
 
+static void config_rule(SnortConfig*, const char* r)
+{
+    parser_append_rules(r);
+}
+
 static void config_pcap_show(SnortConfig* sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__PCAP_SHOW;
@@ -814,6 +830,9 @@ static ConfigFunc basic_opts[] =
     { "list-modules", config_list_modules,
       "list all known modules" },
 
+    { "list-plugins", config_list_plugins,
+      "list all known modules" },
+
     { "lua", config_lua,
       "<chunk> extend/override conf with chunk; may be repeated" },
 
@@ -867,6 +886,9 @@ static ConfigFunc basic_opts[] =
 
     { "process-all-events", ConfigProcessAllEvents,
       "process all action groups" },
+
+    { "rule", config_rule,
+      "add this line to rules configuration; may be repeated" },
 
     { "script-path", ConfigScriptPath,
       "where to find luajit scripts" },
@@ -974,15 +996,19 @@ static void show_options(const char* pfx)
     ConfigFunc* p = basic_opts;
     unsigned n = pfx ? strlen(pfx) : 0;
 
-    const char* fmt = s_markup ?
-        "* *%s%s* %s\n" : "%s%s %s\n";
-
     while ( p->name )
     {
         if ( p->help && (!n || !strncasecmp(p->name, pfx, n)) )
         {
+            cout << Markup::item();
+            cout << Markup::emphasis_on();
+
             const char* prefix = strlen(p->name) > 1 ? "--" : "-";
-            fprintf(stdout, fmt, prefix, p->name, p->help);
+            cout << prefix << p->name;
+            cout << Markup::emphasis_off();
+
+            cout << " " << p->help;
+            cout << endl;
         }
         ++p;
     }

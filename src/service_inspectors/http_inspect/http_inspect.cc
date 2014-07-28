@@ -239,6 +239,8 @@ public:
     { return new HttpSplitter(c2s); };
 
     void eval(Packet*);
+
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
     bool get_buf(unsigned, Packet*, InspectionBuffer&);
 
     void pinit();
@@ -262,6 +264,26 @@ HttpInspect::~HttpInspect ()
 
     if ( global )
         Share::release(global);
+}
+
+bool HttpInspect::get_buf(
+    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    switch ( ibt )
+    {
+    case InspectionBuffer::IBT_KEY:
+        return get_buf(HTTP_BUFFER_URI, p, b);
+
+    case InspectionBuffer::IBT_HEADER:
+        return get_buf(HTTP_BUFFER_HEADER, p, b);
+
+    case InspectionBuffer::IBT_BODY:
+        return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
+
+    default:
+        break;
+    }
+    return nullptr;
 }
 
 bool HttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
@@ -326,7 +348,7 @@ void HttpInspect::eval (Packet* p)
     // preconditions - what we registered for
     assert(IsTCP(p) && p->dsize && p->data);
 
-    PREPROC_PROFILE_START(hiPerfStats);
+    MODULE_PROFILE_START(hiPerfStats);
 
     HttpInspectMain(config, p);
 
@@ -340,7 +362,7 @@ void HttpInspect::eval (Packet* p)
      * spent in Detect().
      * Subtract the ticks from this if iCallDetect == 0
      */
-    PREPROC_PROFILE_END(hiPerfStats);
+    MODULE_PROFILE_END(hiPerfStats);
 #ifdef PERF_PROFILING
     if (hiDetectCalled)
     {

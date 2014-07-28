@@ -607,12 +607,12 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
             return 0;
         }
         // see comments on call to Detect() below
-        PREPROC_PROFILE_START(hiDetectPerfStats);
+        MODULE_PROFILE_START(hiDetectPerfStats);
         Detect(p);
 #ifdef PERF_PROFILING
         hiDetectCalled = 1;
 #endif
-        PREPROC_PROFILE_END(hiDetectPerfStats);
+        MODULE_PROFILE_END(hiDetectPerfStats);
         return 0;
     }
 
@@ -1047,12 +1047,12 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
         **  better than having all these Packet struct field checks in the
         **  main detection engine for each protocol field.
         */
-        PREPROC_PROFILE_START(hiDetectPerfStats);
+        MODULE_PROFILE_START(hiDetectPerfStats);
         Detect(p);
 #ifdef PERF_PROFILING
         hiDetectCalled = 1;
 #endif
-        PREPROC_PROFILE_END(hiDetectPerfStats);
+        MODULE_PROFILE_END(hiDetectPerfStats);
 
         /*
         **  We set the global detection flag here so that if request pipelines

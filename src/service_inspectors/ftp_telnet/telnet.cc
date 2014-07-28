@@ -93,7 +93,7 @@ static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION *Telnets
         return FTPP_SUCCESS;
     }
 
-    PREPROC_PROFILE_START(telnetPerfStats);
+    MODULE_PROFILE_START(telnetPerfStats);
 
     if (!telnet_config->normalize)
     {
@@ -109,7 +109,7 @@ static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION *Telnets
             do_detection(p);
         }
     }
-    PREPROC_PROFILE_END(telnetPerfStats);
+    MODULE_PROFILE_END(telnetPerfStats);
 #ifdef PERF_PROFILING
     ft_update_perf(telnetPerfStats);
 #endif

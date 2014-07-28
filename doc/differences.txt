@@ -86,16 +86,21 @@ Snort++ differs from Snort in the following ways:
 * deleted unused rule_state.action
 * fastpattern:1 2;
 * no ; separated content suboptions
+* offset, depth, distance, and within must use a space separator not colon
+  (eg. offset:5; becomes offset 5;)
 * rule option sequence: <stub> soid <hidden>
 * sid == 0 not allowed
 * soid is now a non-metadata option
+* content suboptions http_* are now full options and should be place before content
+* the following pcre options have been deleted: use sticky buffers instead
+    B, U, P, H, M, C, I, D, K, S, Y
 * deleted uricontent ips rule option.
   uricontent:"foo" -->  http_uri; content:"foo"
 * deleted urilen raw and norm; must use http_raw_uri and http_uri instead
 * deleted unused http_encode option
-* content suboption http_* are no full option and should be place before content
-* the following pcre options have been deleted: use sticky buffers instead
-    B, U, P, H, M, C, I, D, K, S, Y
+* urilen replaced with generic bufferlen which applies to current sticky
+  buffer
+* added optional selector to http_header, eg http_header:User-Agent;
 
 === Output
 

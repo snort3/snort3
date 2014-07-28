@@ -211,7 +211,7 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
     int32_t offset;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(byteJumpPerfStats);
+    MODULE_PROFILE_START(byteJumpPerfStats);
 
     const uint8_t *base_ptr, *end_ptr, *start_ptr;
     int dsize;
@@ -247,7 +247,7 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
                 bjd->endianess, bjd->bytes_to_grab,
                 base_ptr, start_ptr, end_ptr, &jump) )
         {
-            PREPROC_PROFILE_END(byteJumpPerfStats);
+            MODULE_PROFILE_END(byteJumpPerfStats);
             return rval;
         }
 
@@ -261,7 +261,7 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
 
         if (tmp < 0)
         {
-            PREPROC_PROFILE_END(byteJumpPerfStats);
+            MODULE_PROFILE_END(byteJumpPerfStats);
             return rval;
         }
         payload_bytes_grabbed = tmp;
@@ -288,7 +288,7 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
 
     if ( !c.set_pos(jump) )
     {
-        PREPROC_PROFILE_END(byteJumpPerfStats);
+        MODULE_PROFILE_END(byteJumpPerfStats);
         return rval;
     }
     else
@@ -296,7 +296,7 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
         rval = DETECTION_OPTION_MATCH;
     }
 
-    PREPROC_PROFILE_END(byteJumpPerfStats);
+    MODULE_PROFILE_END(byteJumpPerfStats);
     return rval;
 }
 

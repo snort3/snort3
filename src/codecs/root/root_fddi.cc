@@ -106,7 +106,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
         {
             ErrorMessage("Captured data length < FDDI header length! "
                          "(%d %d bytes)\n", cap_len, dataoff);
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
         }
     }
@@ -132,7 +132,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             {
                 ErrorMessage("Captured data length < FDDI header length! "
                              "(%d %d bytes)\n", cap_len, dataoff);
-                PREPROC_PROFILE_END(decodePerfStats);
+                MODULE_PROFILE_END(decodePerfStats);
                 return;
             }
         }
@@ -150,7 +150,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             {
                 ErrorMessage("Captured data length < FDDI header length! "
                              "(%d %d bytes)\n", cap_len, dataoff);
-                PREPROC_PROFILE_END(decodePerfStats);
+                MODULE_PROFILE_END(decodePerfStats);
                 return;
             }
         }
@@ -170,7 +170,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             {
                 ErrorMessage("Captured data length < FDDI header length! "
                              "(%d %d bytes)\n", cap_len, dataoff);
-                PREPROC_PROFILE_END(decodePerfStats);
+                MODULE_PROFILE_END(decodePerfStats);
                 return;
             }
         }
@@ -186,7 +186,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
                 DebugMessage(DEBUG_DECODE,
                     "This FDDI Packet isn't an IP/ARP packet...\n");
                 );
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -197,7 +197,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
         case ETHERNET_TYPE_IP:
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Decoding IP\n"););
             DecodeIP(p->pkt + dataoff, cap_len, p);
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
 
         case ETHERNET_TYPE_ARP:
@@ -205,12 +205,12 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Decoding ARP\n"););
             dc.arp++;
 
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
 
         case ETHERNET_TYPE_8021Q:
             DecodeVlan(p->pkt + dataoff, cap_len, p);
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
 
 
@@ -221,11 +221,11 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
             // TBD add decoder drop event for unknown fddi/eth type
             dc.other++;
 
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
     }
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 

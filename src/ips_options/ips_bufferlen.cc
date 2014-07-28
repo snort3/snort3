@@ -123,7 +123,7 @@ int LenOption::eval(Cursor& c, Packet*)
     int rval = DETECTION_OPTION_NO_MATCH;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(lenCheckPerfStats);
+    MODULE_PROFILE_START(lenCheckPerfStats);
 
     switch (udata->oper)
     {
@@ -147,7 +147,7 @@ int LenOption::eval(Cursor& c, Packet*)
             break;
     }
 
-    PREPROC_PROFILE_END(lenCheckPerfStats);
+    MODULE_PROFILE_END(lenCheckPerfStats);
     return rval;
 }
 

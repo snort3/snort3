@@ -27,6 +27,17 @@
 #include "config.h"
 #endif
 
+#include "snort_types.h"
+
+// unconditionally declared
+struct ProfileStats
+{
+    uint64_t ticks;
+    uint64_t ticks_start;
+    uint64_t checks;
+    uint64_t exits;
+};
+
 #ifdef PERF_PROFILING
 #include "main/thread.h"
 #include "time/cpuclock.h"
@@ -96,66 +107,57 @@
 
 #define OTN_PROFILE_ALERT(otn) otn->state[get_instance_id()].alerts++;
 
-#ifndef PROFILING_PREPROCS
-#define PROFILING_PREPROCS ScProfilePreprocs()
+#ifndef PROFILING_MODULES
+#define PROFILING_MODULES ScProfilePreprocs()
 #endif
 
-#define PREPROC_PROFILE_START_NAMED(name, ppstat) \
-    if (PROFILING_PREPROCS) { \
+#define MODULE_PROFILE_START_NAMED(name, ppstat) \
+    if (PROFILING_MODULES) { \
         ppstat.checks++; \
         PROFILE_START_NAMED(name); \
         ppstat.ticks_start = name##_ticks_start; \
     }
-#define PREPROC_PROFILE_START(ppstat) PREPROC_PROFILE_START_NAMED(snort, ppstat)
+#define MODULE_PROFILE_START(ppstat) MODULE_PROFILE_START_NAMED(snort, ppstat)
 
-#define PREPROC_PROFILE_REENTER_START_NAMED(name, ppstat) \
-    if (PROFILING_PREPROCS) { \
+#define MODULE_PROFILE_REENTER_START_NAMED(name, ppstat) \
+    if (PROFILING_MODULES) { \
         PROFILE_START_NAMED(name); \
         ppstat.ticks_start = name##_ticks_start; \
     }
-#define PREPROC_PROFILE_REENTER_START(ppstat) PREPROC_PROFILE_REENTER_START_NAMED(snort, ppstat)
+#define MODULE_PROFILE_REENTER_START(ppstat) MODULE_PROFILE_REENTER_START_NAMED(snort, ppstat)
 
-#define PREPROC_PROFILE_TMPSTART_NAMED(name, ppstat) \
-    if (PROFILING_PREPROCS) { \
+#define MODULE_PROFILE_TMPSTART_NAMED(name, ppstat) \
+    if (PROFILING_MODULES) { \
         PROFILE_START_NAMED(name); \
         ppstat.ticks_start = name##_ticks_start; \
     }
-#define PREPROC_PROFILE_TMPSTART(ppstat) PREPROC_PROFILE_TMPSTART_NAMED(snort, ppstat)
+#define MODULE_PROFILE_TMPSTART(ppstat) MODULE_PROFILE_TMPSTART_NAMED(snort, ppstat)
 
-#define PREPROC_PROFILE_END_NAMED(name, ppstat) \
-    if (PROFILING_PREPROCS) { \
+#define MODULE_PROFILE_END_NAMED(name, ppstat) \
+    if (PROFILING_MODULES) { \
         PROFILE_END_NAMED(name); \
         ppstat.exits++; \
         ppstat.ticks += name##_ticks_end - ppstat.ticks_start; \
     }
-#define PREPROC_PROFILE_END(ppstat) PREPROC_PROFILE_END_NAMED(snort, ppstat)
+#define MODULE_PROFILE_END(ppstat) MODULE_PROFILE_END_NAMED(snort, ppstat)
 
-#define PREPROC_PROFILE_REENTER_END_NAMED(name, ppstat) \
-    if (PROFILING_PREPROCS) { \
+#define MODULE_PROFILE_REENTER_END_NAMED(name, ppstat) \
+    if (PROFILING_MODULES) { \
         PROFILE_END_NAMED(name); \
         ppstat.ticks += name##_ticks_end - ppstat.ticks_start; \
     }
-#define PREPROC_PROFILE_REENTER_END(ppstat) PREPROC_PROFILE_REENTER_END_NAMED(snort, ppstat)
+#define MODULE_PROFILE_REENTER_END(ppstat) MODULE_PROFILE_REENTER_END_NAMED(snort, ppstat)
 
-#define PREPROC_PROFILE_TMPEND_NAMED(name, ppstat) \
-    if (PROFILING_PREPROCS) { \
+#define MODULE_PROFILE_TMPEND_NAMED(name, ppstat) \
+    if (PROFILING_MODULES) { \
         PROFILE_END_NAMED(name); \
         ppstat.ticks += name##_ticks_end - ppstat.ticks_start; \
     }
-#define PREPROC_PROFILE_TMPEND(ppstat) PREPROC_PROFILE_TMPEND_NAMED(snort, ppstat)
+#define MODULE_PROFILE_TMPEND(ppstat) MODULE_PROFILE_TMPEND_NAMED(snort, ppstat)
 
 /************** Profiling API ******************/
 void ShowRuleProfiles(void);
 void ResetRuleProfiling(void);
-
-/* Preprocessor stats info */
-struct ProfileStats
-{
-    uint64_t ticks;
-    uint64_t ticks_start;
-    uint64_t checks;
-    uint64_t exits;
-};
 
 typedef struct _ProfileConfig
 {
@@ -173,7 +175,6 @@ void RegisterProfile(
     const char* keyword, const char* parent,
     get_profile_func, class Module* owner = nullptr);
 
-void RegisterOtnProfile(const char* keyword, get_profile_func);
 void RegisterProfile(class Module*);
 
 void ShowPreprocProfiles(void);
@@ -193,18 +194,18 @@ extern THREAD_LOCAL ProfileStats metaPerfStats;
 #define NODE_PROFILE_TMPSTART(node)
 #define NODE_PROFILE_TMPEND(node)
 #define OTN_PROFILE_ALERT(otn)
-#define PREPROC_PROFILE_START(ppstat)
-#define PREPROC_PROFILE_START_NAMED(name, ppstat)
-#define PREPROC_PROFILE_REENTER_START(ppstat)
-#define PREPROC_PROFILE_REENTER_START_NAMED(name, ppstat)
-#define PREPROC_PROFILE_TMPSTART(ppstat)
-#define PREPROC_PROFILE_TMPSTART_NAMED(name, ppstat)
-#define PREPROC_PROFILE_END(ppstat)
-#define PREPROC_PROFILE_END_NAMED(name, ppstat)
-#define PREPROC_PROFILE_REENTER_END(ppstat)
-#define PREPROC_PROFILE_REENTER_END_NAMED(name, ppstat)
-#define PREPROC_PROFILE_TMPEND(ppstat)
-#define PREPROC_PROFILE_TMPEND_NAMED(name, ppstat)
+#define MODULE_PROFILE_START(ppstat)
+#define MODULE_PROFILE_START_NAMED(name, ppstat)
+#define MODULE_PROFILE_REENTER_START(ppstat)
+#define MODULE_PROFILE_REENTER_START_NAMED(name, ppstat)
+#define MODULE_PROFILE_TMPSTART(ppstat)
+#define MODULE_PROFILE_TMPSTART_NAMED(name, ppstat)
+#define MODULE_PROFILE_END(ppstat)
+#define MODULE_PROFILE_END_NAMED(name, ppstat)
+#define MODULE_PROFILE_REENTER_END(ppstat)
+#define MODULE_PROFILE_REENTER_END_NAMED(name, ppstat)
+#define MODULE_PROFILE_TMPEND(ppstat)
+#define MODULE_PROFILE_TMPEND_NAMED(name, ppstat)
 #endif
 
 static inline void ShowAllProfiles()

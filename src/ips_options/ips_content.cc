@@ -226,6 +226,8 @@ static PatternMatchData* new_pmd()
     return pmd;
 }
 
+// FIXIT must ensure that fast_pattern is applied to 
+// a fast_pattern inspection buffer
 static int fast_pattern_count(OptTreeNode *otn, int list_type)
 {
     OptFpList* fpl = otn ? otn->opt_func : nullptr;
@@ -449,7 +451,7 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
     int found = 0;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(contentPerfStats);
+    MODULE_PROFILE_START(contentPerfStats);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: "););
 
@@ -478,7 +480,7 @@ static int CheckANDPatternMatch(PatternMatchData* idx, Cursor& c)
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Pattern match failed\n"););
     }
 
-    PREPROC_PROFILE_END(contentPerfStats);
+    MODULE_PROFILE_END(contentPerfStats);
     return rval;
 }
 
@@ -937,7 +939,7 @@ static void parse_fast_pattern_offset(PatternMatchData* pmd, const char *data)
         ParseError(error_str, data, pmd->pattern_size);
 
     pmd->fp_offset = offset;
-    pmd->fp = 1;
+    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
 }
 
 static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
@@ -951,12 +953,8 @@ static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
         ParseError(error_str, data, pmd->pattern_size);
 
     pmd->fp_length = length;
-    pmd->fp = 1;
+    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
 }
-
-//-------------------------------------------------------------------------
-// content api methods
-//-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
 // module
@@ -1060,7 +1058,7 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         pmd->no_case = 1;
 
     else if ( v.is("fast_pattern") )
-        pmd->fp = 1;
+        pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
 
     else if ( v.is("fast_pattern_offset") )
         parse_fast_pattern_offset(pmd, v.get_string());

@@ -1039,7 +1039,7 @@ void RpcDecode::eval(Packet *p)
         rsdata = fd ? &fd->session : NULL;
     }
 
-    PREPROC_PROFILE_START(rpcdecodePerfStats);
+    MODULE_PROFILE_START(rpcdecodePerfStats);
     ++rdstats.total_packets;
 
     if ((rsdata == NULL) && (p->flow != NULL))
@@ -1056,7 +1056,7 @@ void RpcDecode::eval(Packet *p)
 
         if (ret == RPC_STATUS__SUCCESS)
         {
-            PREPROC_PROFILE_END(rpcdecodePerfStats);
+            MODULE_PROFILE_END(rpcdecodePerfStats);
             return;
         }
 
@@ -1070,7 +1070,7 @@ void RpcDecode::eval(Packet *p)
 
     RpcPreprocEvent(&config, rsdata, ConvertRPC(&config, rsdata, p));
 
-    PREPROC_PROFILE_END(rpcdecodePerfStats);
+    MODULE_PROFILE_END(rpcdecodePerfStats);
 }
 
 //-------------------------------------------------------------------------

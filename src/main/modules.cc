@@ -1871,7 +1871,9 @@ void module_init()
     ModuleManager::add_module(new DetectionModule);
     ModuleManager::add_module(new PacketsModule);
     ModuleManager::add_module(new ProcessModule);
+#ifdef PERF_PROFILING
     ModuleManager::add_module(new ProfileModule);
+#endif
     ModuleManager::add_module(new ReferencesModule);
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);

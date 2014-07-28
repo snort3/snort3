@@ -246,12 +246,12 @@ void FtpData::eval(Packet* p)
         return;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(ftpdataPerfStats);
+    MODULE_PROFILE_START(ftpdataPerfStats);
 
     SnortFTPData(p);
     ++fdstats.total_packets;
 
-    PREPROC_PROFILE_END(ftpdataPerfStats);
+    MODULE_PROFILE_END(ftpdataPerfStats);
 }
 
 //-------------------------------------------------------------------------
