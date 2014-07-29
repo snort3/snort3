@@ -97,8 +97,6 @@ public:
     void open_top_level_table(std::string name);
     // open a nested named table --> 'name = {...}')
     void open_table(std::string name);
-    // create a new table with this name...even if a table with the same name already exists
-    void open_new_top_level_table(std::string name);
     // open a nested table that does not contain a name --> {...})
     void open_table();
     // close the nested table.  go to previous table level

@@ -97,7 +97,8 @@ std::string LuaData::expand_vars(std::string string)
     char rawvarname[128], varname[128], varaux[128], varbuffer[128];
     char varmodifier;
     const char* varcontents;
-    int varname_completed, c, i, j, iv, jv, l_string, name_only;
+    std::size_t varname_completed, i, j, iv, jv, l_string, name_only;
+    char c;
     int quote_toggle = 0;
 
     if(string.empty() || string.rfind('$') == std::string::npos)
@@ -168,7 +169,7 @@ std::string LuaData::expand_vars(std::string string)
                 p = strchr(rawvarname, ':');
                 if (p)
                 {
-                    std::strncpy(varname, rawvarname, p - rawvarname);
+                    std::strncpy(varname, rawvarname, (std::size_t)(p - rawvarname));
 
                     if(strlen(p) >= 2)
                     {
@@ -205,7 +206,7 @@ std::string LuaData::expand_vars(std::string string)
 
                 if(varcontents)
                 {
-                    int l_varcontents = strlen(varcontents);
+                    std::size_t l_varcontents = strlen(varcontents);
 
                     iv = 0;
 
@@ -317,22 +318,6 @@ void LuaData::open_table(std::string table_name)
     }
 
     open_tables.push(t);
-}
-
-void LuaData::open_new_top_level_table(std::string table_name)
-{
-    Table *t = new Table(table_name, 0);
-
-    if (t != nullptr)
-    {
-        tables.push_back(t);
-        open_tables.push(t);
-    }
-    else
-    {
-        std::cout << "OUT OF MEMORY!!" << std::endl;
-    }
-
 }
 
 void LuaData::open_table()

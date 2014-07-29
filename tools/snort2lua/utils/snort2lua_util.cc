@@ -116,7 +116,7 @@ bool get_string(std::istringstream& stream,
     }
     else
     {
-        int pos = 0;
+        std::streamoff pos = 0;
         option = std::string();
 
         // we don't want an empty string

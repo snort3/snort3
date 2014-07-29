@@ -208,19 +208,6 @@ static const ConvertMap new_ttl_api =
 const ConvertMap* new_ttl_map = &new_ttl_api;
 
 /*************************************************
- ******************  paf_max   *******************
- *************************************************/
-
-static const std::string paf_max = "paf_max";
-static const ConvertMap paf_max_api =
-{
-    paf_max,
-    config_int_ctor<&paf_max, &stream_tcp>,
-};
-
-const ConvertMap* paf_max_map = &paf_max_api;
-
-/*************************************************
  **************  pcre_match_limit   **************
  *************************************************/
 

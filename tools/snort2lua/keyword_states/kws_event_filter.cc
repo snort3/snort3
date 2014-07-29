@@ -46,7 +46,8 @@ bool EventFilter::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    ld->open_new_top_level_table("event_filter");
+    ld->open_table("event_filter");
+    ld->open_table();
 
     while (std::getline(data_stream, args, ','))
     {
@@ -94,6 +95,8 @@ bool EventFilter::convert(std::istringstream& data_stream)
 
     }
 
+    ld->close_table();
+    ld->close_table();
 
     return retval;
 }
