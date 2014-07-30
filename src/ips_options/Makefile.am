@@ -34,7 +34,9 @@ ips_session.cc \
 ips_tos.cc \
 ips_ttl.cc \
 ips_bufferlen.cc \
-ips_window.cc
+ips_window.cc \
+range.cc \
+range.h
 
 libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
@@ -58,7 +60,7 @@ optlibdir = $(pkglibdir)/ips_options
 optlib_LTLIBRARIES = libips_ack.la
 libips_ack_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_ack_la_LDFLAGS = -export-dynamic -shared
-libips_ack_la_SOURCES = ips_ack.cc
+libips_ack_la_SOURCES = ips_ack.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_asn1.la
 libips_asn1_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -88,7 +90,7 @@ libips_cvs_la_SOURCES = ips_cvs.cc
 optlib_LTLIBRARIES += libips_dsize.la
 libips_dsize_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_dsize_la_LDFLAGS = -export-dynamic -shared
-libips_dsize_la_SOURCES = ips_dsize.cc
+libips_dsize_la_SOURCES = ips_dsize.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_flags.la
 libips_flags_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -103,32 +105,37 @@ libips_fragbits_la_SOURCES = ips_fragbits.cc
 optlib_LTLIBRARIES += libips_fragoffset.la
 libips_fragoffset_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_fragoffset_la_LDFLAGS = -export-dynamic -shared
-libips_fragoffset_la_SOURCES = ips_fragoffset.cc
+libips_fragoffset_la_SOURCES = ips_fragoffset.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_http.la
 libips_http_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_http_la_LDFLAGS = -export-dynamic -shared
 libips_http_la_SOURCES = ips_http.cc
 
+optlib_LTLIBRARIES += libips_http_header.la
+libips_http_header_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_http_header_la_LDFLAGS = -export-dynamic -shared
+libips_http_header_la_SOURCES = ips_http_header.cc
+
 optlib_LTLIBRARIES += libips_icmp_id.la
 libips_icmp_id_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_icmp_id_la_LDFLAGS = -export-dynamic -shared
-libips_icmp_id_la_SOURCES = ips_icmp_id.cc
+libips_icmp_id_la_SOURCES = ips_icmp_id.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_icmp_seq.la
 libips_icmp_seq_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_icmp_seq_la_LDFLAGS = -export-dynamic -shared
-libips_icmp_seq_la_SOURCES = ips_icmp_seq.cc
+libips_icmp_seq_la_SOURCES = ips_icmp_seq.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_icode.la
 libips_icode_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_icode_la_LDFLAGS = -export-dynamic -shared
-libips_icode_la_SOURCES = ips_icode.cc
+libips_icode_la_SOURCES = ips_icode.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_id.la
 libips_id_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_id_la_LDFLAGS = -export-dynamic -shared
-libips_id_la_SOURCES = ips_id.cc
+libips_id_la_SOURCES = ips_id.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_ipopts.la
 libips_ipopts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -143,7 +150,7 @@ libips_isdataat_la_SOURCES = ips_isdataat.cc
 optlib_LTLIBRARIES += libips_itype.la
 libips_itype_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_itype_la_LDFLAGS = -export-dynamic -shared
-libips_itype_la_SOURCES = ips_itype.cc
+libips_itype_la_SOURCES = ips_itype.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_pkt_data.la
 libips_pkt_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -173,7 +180,7 @@ libips_rpc_la_SOURCES = ips_rpc.cc
 optlib_LTLIBRARIES += libips_seq.la
 libips_seq_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_seq_la_LDFLAGS = -export-dynamic -shared
-libips_seq_la_SOURCES = ips_seq.cc
+libips_seq_la_SOURCES = ips_seq.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_session.la
 libips_session_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -183,17 +190,17 @@ libips_session_la_SOURCES = ips_session.cc
 optlib_LTLIBRARIES += libips_tos.la
 libips_tos_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_tos_la_LDFLAGS = -export-dynamic -shared
-libips_tos_la_SOURCES = ips_tos.cc
+libips_tos_la_SOURCES = ips_tos.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_ttl.la
 libips_ttl_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_ttl_la_LDFLAGS = -export-dynamic -shared
-libips_ttl_la_SOURCES = ips_ttl.cc
+libips_ttl_la_SOURCES = ips_ttl.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_window.la
 libips_window_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_window_la_LDFLAGS = -export-dynamic -shared
-libips_window_la_SOURCES = ips_window.cc
+libips_window_la_SOURCES = ips_window.cc range.cc range.h
 
 optlib_LTLIBRARIES += libips_bufferlen.la
 libips_bufferlen_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

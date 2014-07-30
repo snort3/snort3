@@ -60,7 +60,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "generators.h"
 #include "hi_events.h"
 #include "protocols/packet.h"
@@ -201,7 +200,7 @@ typedef struct {
     Cell cell[256];
 } State;
 
-static State* hi_fsm = NULL;
+static State* hi_fsm = nullptr;
 static unsigned hi_fsm_size = 0;
 
 #define EOL '\n'  // \r is ignored

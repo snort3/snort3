@@ -220,7 +220,6 @@ public:
     bool tcp_init;
 };
 
-void tcp_init();
 void tcp_sum();
 void tcp_stats();
 void tcp_reset();

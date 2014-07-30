@@ -43,7 +43,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "framework/range.h"
+#include "range.h"
 
 #define GREATER_THAN            1
 #define LESS_THAN               2

@@ -6836,10 +6836,6 @@ int TcpSession::process(Packet *p)
 // tcp module stuff
 //-------------------------------------------------------------------------
 
-void tcp_init()
-{
-}
-
 void tcp_reset()
 {
     flow_con->reset_prunes(IPPROTO_TCP);

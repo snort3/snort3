@@ -21,6 +21,10 @@
 #ifndef RANGE_H
 #define RANGE_H
 
+// FIXIT ideally this would be in framework/ and we'd have just one copy
+// but that breaks dynamic builds so each dynamic ips option plugin has
+// its own copy for now.
+
 // unfortunately, <> was implemented inconsistently.  eg:
 // dsize implements <> as ( a <= c && c <= b ) and
 // icode implements <> as ( a < c && c < b )

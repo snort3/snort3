@@ -34,6 +34,8 @@ SET( PLUGIN_LIST
     ips_ttl.cc
     ips_window.cc
     ips_bufferlen.cc
+    range.cc
+    range.h
 )
 
 set (IPS_SOURCES
@@ -76,32 +78,35 @@ else (STATIC_IPS_OPTIONS)
         ${IPS_SOURCES}
     )
 
-    add_shared_library(ips_ack ips_options ips_ack.cc)
+    add_shared_library(ips_ack ips_options ips_ack.cc range.cc range.h)
     add_shared_library(ips_asn1 ips_options ips_asn1.cc asn1_detect.cc asn1_detect.h)
     add_shared_library(ips_base64 ips_options ips_base64.cc)
     add_shared_library(ips_byte_test ips_options ips_byte_test.cc)
     add_shared_library(ips_byte_jump ips_options ips_byte_jump.cc)
     add_shared_library(ips_cvs ips_options ips_cvs.cc)
-    add_shared_library(ips_dsize ips_options ips_dsize.cc)
+    add_shared_library(ips_dsize ips_options ips_dsize.cc range.cc range.h)
     add_shared_library(ips_flags ips_options ips_flags.cc)
     add_shared_library(ips_fragbits ips_options ips_fragbits.cc)
-    add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc)
+    add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc range.cc range.h)
     add_shared_library(ips_http ips_options ips_http.cc)
-    add_shared_library(ips_icode ips_options ips_icode.cc)
-    add_shared_library(ips_id ips_options ips_id.cc)
+    add_shared_library(ips_http_header ips_options ips_http_header.cc)
+    add_shared_library(ips_icode ips_options ips_icode.cc range.cc range.h)
+    add_shared_library(ips_icmp_id ips_options ips_icmp_id.cc range.cc range.h)
+    add_shared_library(ips_icmp_seq ips_options ips_icmp_seq.cc range.cc range.h)
+    add_shared_library(ips_id ips_options ips_id.cc range.cc range.h)
     add_shared_library(ips_ipopts ips_options ips_ipopts.cc)
     add_shared_library(ips_isdataat ips_options ips_isdataat.cc)
-    add_shared_library(ips_itype ips_options ips_itype.cc)
+    add_shared_library(ips_itype ips_options ips_itype.cc range.cc range.h)
     add_shared_library(ips_pkt_data ips_options ips_pkt_data.cc)
     add_shared_library(ips_raw_data ips_options ips_raw_data.cc)
     add_shared_library(ips_react ips_options ips_react.cc)
     add_shared_library(ips_resp ips_options ips_resp.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)
-    add_shared_library(ips_seq ips_options ips_seq.cc)
+    add_shared_library(ips_seq ips_options ips_seq.cc range.cc range.h)
     add_shared_library(ips_session ips_options ips_session.cc)
-    add_shared_library(ips_tos ips_options ips_tos.cc)
-    add_shared_library(ips_ttl ips_options ips_ttl.cc)
-    add_shared_library(ips_window ips_options ips_window.cc)
+    add_shared_library(ips_tos ips_options ips_tos.cc range.cc range.h)
+    add_shared_library(ips_ttl ips_options ips_ttl.cc range.cc range.h)
+    add_shared_library(ips_window ips_options ips_window.cc range.cc range.h)
     add_shared_library(ips_bufferlen ips_options ips_bufferlen.cc)
 
 

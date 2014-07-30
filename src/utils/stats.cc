@@ -200,8 +200,8 @@ const char* verdict_names[] =
 
 static const char* pc_names[] =
 {
-    "fail open",
     "analyzed",
+    "fail open",
     "alerts",
     "total alerts",
     "logged",
