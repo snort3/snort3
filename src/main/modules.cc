@@ -1396,8 +1396,8 @@ static const Parameter event_filter_params[] =
     { "track", Parameter::PT_ENUM, "by_src | by_dst", nullptr,
       "filter only matching source or destination addresses" },
 
-    { "count", Parameter::PT_INT, "0:", "0",
-      "number of events in interval before tripping" },
+    { "count", Parameter::PT_INT, "-1:", "0",
+      "number of events in interval before tripping; -1 to disable" },
 
     { "seconds", Parameter::PT_INT, "0:", "0",
       "count interval" },

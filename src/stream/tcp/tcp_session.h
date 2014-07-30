@@ -136,8 +136,11 @@ struct StreamTracker
     StreamSegment *seglist;       /* first queued segment */
     StreamSegment *seglist_tail;  /* last queued segment */
 
-    // TBD move out of here since only used per packet?
-    StreamSegment* seglist_next;  /* next queued segment to flush */
+    // FIXIT seglist_base_seq is the sequence number to flush from
+    // and is valid even when seglist is empty.  seglist_next is
+    // the segment to flush from and is set per packet.  should keep
+    // up to date.
+    StreamSegment* seglist_next;
 
 #ifdef DEBUG
     int segment_ordinal;

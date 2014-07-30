@@ -1008,6 +1008,9 @@ void snort_thread_init(const char* intf)
 
 void snort_thread_term()
 {
+#ifdef PPM_MGR
+    ppm_sum_stats();
+#endif
     ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
     IpsManager::clear_options();

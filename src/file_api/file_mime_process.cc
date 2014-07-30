@@ -856,6 +856,7 @@ static void reset_mime_state(MimeState *mime_ssn)
     memset(&mime_ssn->mime_boundary, 0, sizeof(MimeBoundary));
 }
 
+#if 0
 static inline FilePosition getFilePoistion(Packet *p)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
@@ -871,6 +872,8 @@ static inline FilePosition getFilePoistion(Packet *p)
 
     return position;
 }
+#endif
+
 /*
  * Main function for mime processing
  *

@@ -27,6 +27,7 @@
 
 #include "ppm.h"
 #include "main/snort_config.h"
+#include "main/snort.h"
 
 //-------------------------------------------------------------------------
 // ppm attributes
@@ -91,6 +92,14 @@ PpmModule::PpmModule() : Module("ppm", ppm_params) { }
 
 const RuleMap* PpmModule::get_rules() const
 { return ppm_rules; }
+
+bool PpmModule::begin(const char*, int, SnortConfig* sc)
+{
+    if ( !PPM_ENABLED() )
+        PPM_INIT(&sc->ppm_cfg);
+
+    return true;
+}
 
 bool PpmModule::set(const char*, Value& v, SnortConfig* sc)
 {

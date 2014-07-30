@@ -738,7 +738,7 @@ void PacketManager::dump_stats()
         pkt_names.push_back(s_protocols[i]->get_name());
 
     show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
-        "codecs");
+        "codec");
 }
 
 SO_PUBLIC void PacketManager::encode_set_dst_mac(uint8_t *mac)

@@ -406,9 +406,6 @@ static uint32_t Stream5GetWscale(Packet *, uint16_t *);
 static uint32_t Stream5PacketHasWscale(Packet *);
 static uint32_t Stream5GetMss(Packet *, uint16_t *);
 static uint32_t Stream5GetTcpTimestamp(Packet *, uint32_t *, int strip);
-static int FlushStream(
-    Packet*, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
-    const uint8_t *flushbuf_end);
 static void TcpSessionCleanup(Flow *ssn, int freeApplicationData);
 
 int s5TcpStreamSizeInit(SnortConfig* sc, char *name, char *parameters, void **dataPtr);
@@ -615,71 +612,6 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
 //-------------------------------------------------------------------------
 // policy translation
 //-------------------------------------------------------------------------
-
-static inline uint16_t StreamPolicyIdFromName(char *name)
-{
-    if (!name)
-    {
-        return STREAM_POLICY_DEFAULT;
-    }
-
-    if(!strcasecmp(name, "bsd"))
-    {
-        return STREAM_POLICY_BSD;
-    }
-    else if(!strcasecmp(name, "old-linux"))
-    {
-        return STREAM_POLICY_OLD_LINUX;
-    }
-    else if(!strcasecmp(name, "linux"))
-    {
-        return STREAM_POLICY_LINUX;
-    }
-    else if(!strcasecmp(name, "first"))
-    {
-        return STREAM_POLICY_FIRST;
-    }
-    else if(!strcasecmp(name, "last"))
-    {
-        return STREAM_POLICY_LAST;
-    }
-    else if(!strcasecmp(name, "windows"))
-    {
-        return STREAM_POLICY_WINDOWS;
-    }
-    else if(!strcasecmp(name, "solaris"))
-    {
-        return STREAM_POLICY_SOLARIS;
-    }
-    else if(!strcasecmp(name, "win2003") ||
-            !strcasecmp(name, "win2k3"))
-    {
-        return STREAM_POLICY_WINDOWS2K3;
-    }
-    else if(!strcasecmp(name, "vista"))
-    {
-        return STREAM_POLICY_VISTA;
-    }
-    else if(!strcasecmp(name, "hpux") ||
-            !strcasecmp(name, "hpux11"))
-    {
-        return STREAM_POLICY_HPUX11;
-    }
-    else if(!strcasecmp(name, "hpux10"))
-    {
-        return STREAM_POLICY_HPUX10;
-    }
-    else if(!strcasecmp(name, "irix"))
-    {
-        return STREAM_POLICY_IRIX;
-    }
-    else if(!strcasecmp(name, "macos") ||
-            !strcasecmp(name, "grannysmith"))
-    {
-        return STREAM_POLICY_MACOS;
-    }
-    return STREAM_POLICY_DEFAULT; /* BSD is the default */
-}
 
 static inline uint16_t GetTcpReassemblyPolicy(int os_policy)
 {
@@ -1969,6 +1901,134 @@ static void ShowRebuiltPacket (TcpSession* ssn, Packet* pkt)
         LogIPPkt(IPPROTO_TCP, pkt);
 }
 
+static inline unsigned int getSegmentFlushSize(
+        StreamTracker* st,
+        StreamSegment *ss,
+        uint32_t to_seq,
+        unsigned int flushBufSize
+        )
+{
+    unsigned int flushSize = ss->size;
+
+    //copy only till flush buffer gets full
+    if ( flushSize > flushBufSize )
+        flushSize = flushBufSize;
+
+    // copy only to flush point
+    if ( s5_paf_active(&st->paf_state) && SEQ_GT(ss->seq + flushSize, to_seq) )
+        flushSize = to_seq - ss->seq;
+
+    return flushSize;
+}
+
+/*
+ * flush the client seglist up to the most recently acked segment
+ */
+static int FlushStream(
+    Packet*, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
+    const uint8_t *flushbuf_end)
+{
+    uint16_t bytes_flushed = 0;
+    STREAM5_DEBUG_WRAP(uint32_t bytes_queued = st->seg_bytes_logical;);
+    uint32_t segs = 0;
+    uint32_t flags = PKT_PDU_HEAD;
+    PROFILE_VARS;
+
+    assert(st->seglist_next);
+    MODULE_PROFILE_START(s5TcpBuildPacketPerfStats);
+
+    while ( SEQ_LT(st->seglist_next->seq, toSeq) )
+    {
+        StreamSegment* ss = st->seglist_next, * sr;
+        unsigned flushbuf_size = flushbuf_end - flushbuf;
+        unsigned bytes_to_copy = getSegmentFlushSize(st, ss, toSeq, flushbuf_size);
+        unsigned bytes_copied = 0;
+
+        STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+            "Flushing %u bytes from %X\n", bytes_to_copy, ss->seq));
+
+        if ( SEQ_EQ(ss->seq + bytes_to_copy,  toSeq) )
+            flags |= PKT_PDU_TAIL;
+
+        const StreamBuffer* sb = st->splitter->reassemble(
+            bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
+
+        flags = 0;
+
+        if ( sb )
+        {
+            unsigned len = s5_pkt->max_dsize;
+            assert(sb->length <= len);
+
+            if ( sb->length < len )
+                len = sb->length;
+
+            s5_pkt->data = sb->data;
+            s5_pkt->dsize = len;
+
+            bytes_to_copy = bytes_copied;
+        }
+        else if ( !bytes_copied )
+        {
+            // FIXIT change stream splitter default reassemble 
+            // to copy into external buffer to eliminate this special case
+            memcpy(flushbuf, ss->payload, bytes_to_copy);
+        }
+        else
+            assert(bytes_to_copy == bytes_copied);
+
+        flushbuf += bytes_to_copy;
+        bytes_flushed += bytes_to_copy;
+
+        if ( bytes_to_copy < ss->size &&
+             DupStreamNode(NULL, st, ss, &sr) == STREAM_INSERT_OK )
+        {
+            ss->size = bytes_to_copy;
+            sr->seq += bytes_to_copy;
+            sr->size -= bytes_to_copy;
+            sr->payload += bytes_to_copy + (ss->payload - ss->data);
+        }
+        ss->buffered = SL_BUF_FLUSHED;
+        st->flush_count++;
+        segs++;
+
+        if ( sb )
+            break;
+
+        if ( flushbuf >= flushbuf_end )
+            break;
+
+        if ( SEQ_EQ(ss->seq + bytes_to_copy,  toSeq) )
+            break;
+
+        /* Check for a gap/missing packet */
+        // FIXIT PAF should account for missing data and resume
+        // scanning at the start of next PDU instead of aborting.
+        // FIXIT FIN may be in toSeq causing bogus gap counts.
+        if ( (ss->next && (ss->seq + ss->size != ss->next->seq)) ||
+            (!ss->next && (ss->seq + ss->size < toSeq)))
+        {
+            st->flags |= TF_MISSING_PKT;
+            st->flags |= TF_PKT_MISSED;
+            tcpStats.gaps++;
+        }
+        if ( !ss->next )
+            break;
+
+        st->seglist_next = ss->next;
+    }
+
+    STREAM5_DEBUG_WRAP(bytes_queued -= bytes_flushed;);
+
+    STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+        "flushed %d bytes / %d segs on stream, "
+        "%d still queued\n",
+        bytes_flushed, segs, bytes_queued););
+
+    MODULE_PROFILE_END(s5TcpBuildPacketPerfStats);
+    return bytes_flushed;
+}
+
 static inline int _flush_to_seq (
 
     TcpSession *tcpssn, StreamTracker *st, uint32_t bytes, Packet *p,
@@ -2006,6 +2066,8 @@ static inline int _flush_to_seq (
     if ( !bytes && SEQ_GT(st->r_win_base, st->seglist_base_seq) )
         bytes = st->r_win_base - st->seglist_base_seq;
 
+    // FIXIT this should not be necessary here
+    st->seglist_base_seq = st->seglist_next->seq;
     stop_seq = st->seglist_base_seq + bytes;
 
     do
@@ -2046,30 +2108,9 @@ static inline int _flush_to_seq (
         const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
         flushed_bytes = FlushStream(p, st, stop_seq, (uint8_t *)s5_pkt->data, s5_pkt_end);
 
-        if(flushed_bytes == -1)
-        {
-            /* couldn't put a stream together for whatever reason
-             * should probably clean the seglist and bail...
-             */
-            if(st->seglist)
-            {
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "dumping entire seglist!\n"););
-                purge_all(st);
-                st->splitter->reset();
-            }
-
-            STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                "setting st->seglist_base_seq to 0x%X\n", stop_seq););
-            st->seglist_base_seq = stop_seq;
-
-            MODULE_PROFILE_END(s5TcpFlushPerfStats);
-            return bytes_processed;
-        }
-
         if (flushed_bytes == 0)
         {
-            /* No more ACK'd data... bail */
+            /* No more data... bail */
             break;
         }
 
@@ -2116,6 +2157,11 @@ static inline int _flush_to_seq (
             MODULE_PROFILE_END(s5TcpProcessRebuiltPerfStats);
         }
         MODULE_PROFILE_TMPSTART(s5TcpFlushPerfStats);
+
+        st->seglist_base_seq = st->seglist_next->seq + flushed_bytes;
+
+        STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
+            "setting st->seglist_base_seq to 0x%X\n", st->seglist_base_seq););
 
         // TBD abort should be by PAF callback only since
         // recovery may be possible in some cases
@@ -2183,7 +2229,6 @@ static inline int flush_to_seq(
     }
 
     return _flush_to_seq(tcpssn, st, bytes, p, sip, dip, sp, dp, dir);
-
 }
 
 /*
@@ -2264,149 +2309,6 @@ static inline int flush_stream(
         return flush_to_seq(tcpssn, st, bytes, p, sip, dip, sp, dp, dir);
     }
     return flush_ackd(tcpssn, st, p, sip, dip, sp, dp, dir);
-}
-
-static inline unsigned int getSegmentFlushSize(
-        StreamTracker* st,
-        StreamSegment *ss,
-        uint32_t to_seq,
-        unsigned int flushBufSize
-        )
-{
-    unsigned int flushSize = ss->size;
-
-    //copy only till flush buffer gets full
-    if ( flushSize > flushBufSize )
-        flushSize = flushBufSize;
-
-    // copy only to flush point
-    if ( s5_paf_active(&st->paf_state) && SEQ_GT(ss->seq + flushSize, to_seq) )
-        flushSize = to_seq - ss->seq;
-
-    return flushSize;
-}
-
-/*
- * flush the client seglist up to the most recently acked segment
- */
-static int FlushStream(
-    Packet*, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
-    const uint8_t *flushbuf_end)
-{
-    StreamSegment *ss = NULL, *seglist, *sr;
-    uint16_t bytes_flushed = 0;
-    uint16_t bytes_skipped = 0;
-    STREAM5_DEBUG_WRAP(uint32_t bytes_queued = st->seg_bytes_logical;);
-    uint32_t segs = 0;
-    int ret;
-    PROFILE_VARS;
-
-    if ( st->seglist == NULL || st->seglist_tail == NULL )
-        return -1;
-
-    MODULE_PROFILE_START(s5TcpBuildPacketPerfStats);
-
-    // skip over previously flushed segments
-    seglist = st->seglist_next;
-
-    for(ss = seglist; ss && SEQ_LT(ss->seq,  toSeq); ss = ss->next)
-    {
-        unsigned int flushbuf_size = flushbuf_end - flushbuf;
-        unsigned int bytes_to_copy = getSegmentFlushSize(st, ss, toSeq, flushbuf_size);
-
-        STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-            "Flushing %u bytes from %X\n", bytes_to_copy, ss->seq));
-
-        if(ss->urg_offset == 1)
-        {
-            /* if urg_offset is set, seq + urg_offset is seq # of octet
-             * in stream following the last urgent octet.  all preceding
-             * octets in segment are considered urgent.  this code will
-             * skip over the urgent data when flushing.
-             */
-
-            unsigned int non_urgent_bytes =
-                ss->urg_offset < bytes_to_copy ? (bytes_to_copy - ss->urg_offset) : 0;
-
-            if ( non_urgent_bytes )
-            {
-                ret = SafeMemcpy(flushbuf, ss->payload+ss->urg_offset,
-                          non_urgent_bytes, flushbuf, flushbuf_end);
-
-                if (ret == SAFEMEM_ERROR)
-                {
-                    STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                                "ERROR writing flushbuf attempting to "
-                                "write flushbuf out of range!\n"););
-                }
-                else
-                    flushbuf += non_urgent_bytes;
-
-                bytes_skipped += ss->urg_offset;
-            }
-        }
-        else
-        {
-            ret = SafeMemcpy(flushbuf, ss->payload,
-                      bytes_to_copy, flushbuf, flushbuf_end);
-
-            if (ret == SAFEMEM_ERROR)
-            {
-                STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                            "ERROR writing flushbuf attempting to "
-                            "write flushbuf out of range!\n"););
-            }
-            else
-                flushbuf += bytes_to_copy;
-        }
-
-        if ( bytes_to_copy < ss->size &&
-             DupStreamNode(NULL, st, ss, &sr) == STREAM_INSERT_OK )
-        {
-            ss->size = bytes_to_copy;
-            sr->seq += bytes_to_copy;
-            sr->size -= bytes_to_copy;
-            sr->payload += bytes_to_copy + (ss->payload - ss->data);
-        }
-        bytes_flushed += bytes_to_copy;
-        ss->buffered = SL_BUF_FLUSHED;
-        st->flush_count++;
-        segs++;
-
-        if ( flushbuf >= flushbuf_end )
-            break;
-
-        if ( SEQ_EQ(ss->seq + bytes_to_copy,  toSeq) )
-            break;
-
-        /* Check for a gap/missing packet */
-        // FIXIT PAF should account for missing data and resume
-        // scanning at the start of next PDU instead of aborting.
-        // FIXIT FIN may be in toSeq causing bogus gap counts.
-        if ( (ss->next && (ss->seq + ss->size != ss->next->seq)) ||
-            (!ss->next && (ss->seq + ss->size < toSeq)))
-        {
-            st->flags |= TF_MISSING_PKT;
-            st->flags |= TF_PKT_MISSED;
-            tcpStats.gaps++;
-        }
-    }
-
-    st->seglist_base_seq = toSeq;
-
-    STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-        "setting st->seglist_base_seq to 0x%X\n", st->seglist_base_seq););
-
-    STREAM5_DEBUG_WRAP(bytes_queued -= bytes_flushed;);
-
-    STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-        "flushed %d bytes / %d segs on stream, "
-        "skipped %d bytes, %d still queued\n",
-        bytes_flushed, segs, bytes_skipped, bytes_queued););
-
-    assert(st->seglist);
-    MODULE_PROFILE_END(s5TcpBuildPacketPerfStats);
-    return bytes_flushed - bytes_skipped;
 }
 
 int Stream5FlushServer(Packet *p, Flow *lwssn)
@@ -2991,10 +2893,12 @@ static uint32_t Stream5PacketHasWscale(Packet *p)
     return Stream5GetWscale(p, &wscale);
 }
 
+#if 0
 static inline int IsWellFormed(Packet *p, StreamTracker *ts)
 {
     return ( !ts->mss || (p->dsize <= ts->mss) );
 }
+#endif
 
 static void FinishServerInit(Packet *p, TcpDataBlock *tdb, TcpSession *ssn)
 {
@@ -3090,45 +2994,6 @@ static void NewQueue(
 
     MODULE_PROFILE_END(s5TcpInsertPerfStats);
     return;
-}
-
-static inline StreamSegment *FindSegment(StreamTracker *st, uint32_t pkt_seq)
-{
-    int32_t dist_head;
-    int32_t dist_tail;
-    StreamSegment *ss;
-
-    if (!st->seglist)
-        return NULL;
-
-    dist_head = pkt_seq - st->seglist->seq;
-    dist_tail = pkt_seq - st->seglist_tail->seq;
-
-    if (dist_head <= dist_tail)
-    {
-        /* Start iterating at the head (left) */
-        for (ss = st->seglist; ss; ss = ss->next)
-        {
-            if (SEQ_EQ(ss->seq, pkt_seq))
-                return ss;
-
-            if (SEQ_GEQ(ss->seq, pkt_seq))
-                break;
-        }
-    }
-    else
-    {
-        /* Start iterating at the tail (right) */
-        for (ss = st->seglist_tail; ss; ss = ss->prev)
-        {
-            if (SEQ_EQ(ss->seq, pkt_seq))
-                return ss;
-
-            if (SEQ_LT(ss->seq, pkt_seq))
-                break;
-        }
-    }
-    return NULL;
 }
 
 static inline int SegmentFastTrack(StreamSegment *tail, TcpDataBlock *tdb)
@@ -6088,6 +5953,8 @@ static inline int CheckFlushPolicyOnData(
 
             while ( flush_amt > 0 )
             {
+#if 0
+                // FIXIT can't do this with new HI - copy is inevitable
                 // if this payload is exactly one pdu, don't
                 // actually flush, just use the raw packet
                 if ( (tdb->seq == listener->seglist->seq) &&
@@ -6101,6 +5968,7 @@ static inline int CheckFlushPolicyOnData(
                     ShowRebuiltPacket(tcpssn, p);
                 }
                 else
+#endif
                 {
                     this_flush = flush_to_seq(
                         tcpssn, listener, flush_amt, p,

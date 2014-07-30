@@ -121,7 +121,7 @@ static inline RuleTreeNode * protocolRuleList(RuleListNode *rule, int protocol)
     }
     return NULL;
 }
-#endif
+
 static inline const char* getProtocolName (int protocol)
 {
     static const char *protocolName[] = {"TCP", "UDP", "ICMP"};
@@ -139,6 +139,7 @@ static inline const char* getProtocolName (int protocol)
     }
     return NULL;
 }
+#endif
 
 //-------------------------------------------------------------------------
 // public methods

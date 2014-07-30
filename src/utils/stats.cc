@@ -70,7 +70,7 @@ static inline void LogSeparator()
     LogMessage("%s\n", STATS_SEPARATOR);
 }
 
-static inline void LogLabel(const char* s)
+void LogLabel(const char* s)
 {
     if ( *s == ' ' )
     {
@@ -83,18 +83,23 @@ static inline void LogLabel(const char* s)
     }
 }
 
-static inline void LogCount (const char* s, uint64_t c)
+void LogCount (const char* s, uint64_t c)
 {
     LogMessage("%25.25s: " STDu64 "\n", s, c);
 }
 
-static inline void LogStat (const char* s, uint64_t n, uint64_t tot)
+void LogStat (const char* s, uint64_t n, uint64_t tot)
 {
 #ifdef VALGRIND_TESTING
     LogMessage("%25.25s: " FMTu64("-12") "\n", s, n);
 #else
     LogMessage("%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
 #endif
+}
+
+void LogStat (const char* s, double d)
+{
+    LogMessage("%25.25s: %g\n", s, d);
 }
 
 //-------------------------------------------------------------------------
@@ -246,9 +251,7 @@ void DropStats()
 {
     const DAQ_Stats_t* pkt_stats = &g_daq_stats;
 
-#ifdef PPM_MGR
-    PPM_PRINT_SUMMARY(&snort_conf->ppm_cfg);
-#endif
+    LogLabel("Basic");
 
     {
         uint64_t pkts_out, pkts_inj;
@@ -297,6 +300,7 @@ void DropStats()
     PacketManager::dump_stats();
     //mpse_print_qinfo();
 
+    LogLabel("Modules");
     ModuleManager::dump_stats(snort_conf);
 
     // ensure proper counting of log_limit
@@ -306,8 +310,12 @@ void DropStats()
     if ( gpc.total_alert_pkts == gpc.alert_pkts )
         gpc.total_alert_pkts = 0;
 
+    LogLabel("Summary");
     show_stats((PegCount*)&gpc, pc_names, array_size(pc_names), "detection");
 
+#ifdef PPM_MGR
+    PPM_PRINT_SUMMARY(&snort_conf->ppm_cfg);
+#endif
     proc_stats.attribute_table_hosts = SFAT_NumberOfHosts();
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names), "process");
 }

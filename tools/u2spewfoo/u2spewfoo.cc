@@ -474,17 +474,6 @@ static void event2_6_dump(u2record *record) {
 
 }
 
-static inline void print_uuid (const char* label, uint8_t* data)
-{
-#ifdef HAVE_LIBUUID
-    char buf[37];
-    uuid_unparse(data, buf);
-    printf("%s: %s\n", label, buf);
-#else
-    printf("%s: %.*s\n", label, 16, data);
-#endif
-}
-
 #define LOG_CHARS 16
 
 static void LogBuffer (const uint8_t* p, unsigned n)
