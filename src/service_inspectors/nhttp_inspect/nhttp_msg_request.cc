@@ -40,7 +40,7 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
        NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
     delete sessionData->startLine[SRC_CLIENT];
     sessionData->startLine[SRC_CLIENT] = this;

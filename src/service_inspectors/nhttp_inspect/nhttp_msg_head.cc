@@ -38,7 +38,7 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgHeader::NHttpMsgHeader(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+NHttpMsgHeader::NHttpMsgHeader(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
        NHttpMsgHeadShared(buffer, bufSize, sessionData_, sourceId_) {
     sessionData->headers[sourceId] = this;
 }

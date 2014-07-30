@@ -39,7 +39,7 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgStatus::NHttpMsgStatus(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+NHttpMsgStatus::NHttpMsgStatus(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
        NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
     delete sessionData->startLine[SRC_SERVER];
     sessionData->startLine[SRC_SERVER] = this;

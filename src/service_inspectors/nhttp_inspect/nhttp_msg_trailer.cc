@@ -37,7 +37,7 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
    NHttpMsgHeadShared(buffer, bufSize, sessionData_, sourceId_) {
     delete sessionData->latestOther[sourceId];
     sessionData->latestOther[sourceId] = this;
