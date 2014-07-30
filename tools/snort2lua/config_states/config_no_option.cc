@@ -43,21 +43,21 @@ public:
     }
 };
 
-} // namespace
-
 template<const std::string* snort_option,
-         const std::string* lua_table_name,
-         const std::string* lua_option_name = nullptr>
+         const std::string* lua_table,
+         const std::string* lua_option = nullptr>
 static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
 {
-    ld->open_table(*lua_table_name);
+    ld->open_table(*lua_table);
 
-    if (lua_option_name == nullptr)
-        ld->add_option_to_table(*snort_option, true);
+    if (lua_option != nullptr && (*snort_option).compare(*lua_option))
+    {
+        ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
+        ld->add_option_to_table(*lua_option, true);
+    }
     else
     {
-        ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option_name);
-        ld->add_option_to_table(*lua_option_name, true);
+        ld->add_option_to_table(*snort_option, true);
     }
 
     ld->close_table();
@@ -65,23 +65,27 @@ static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
 }
 
 template<const std::string* snort_option,
-         const std::string* lua_table_name,
-         const std::string* lua_option_name = nullptr>
+         const std::string* lua_table,
+         const std::string* lua_option = nullptr>
 static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
 {
-    ld->open_table(*lua_table_name);
+    ld->open_table(*lua_table);
 
-    if (lua_option_name == nullptr)
-        ld->add_option_to_table(*snort_option, false);
+    if (lua_option != nullptr && (*snort_option).compare(*lua_option))
+    {
+        ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
+        ld->add_option_to_table(*lua_option, false);
+    }
     else
     {
-        ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option_name);
-        ld->add_option_to_table(*lua_option_name, false);
+        ld->add_option_to_table(*snort_option, false);
     }
 
     ld->close_table();
     return new DeadCode(cv, ld);
 }
+
+} // namespace
 
 /*************************************************
  ****************  STRUCT_NAMES  *****************

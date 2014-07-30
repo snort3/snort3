@@ -112,8 +112,8 @@ macro (set_if_true value var)
 endmacro ()
 
 macro (set_if_false value var)
-    if(value)
-        set(${var} "NO")
+    if(NOT ${value})
+        set(${var} "YES")
     endif()
 endmacro ()
 

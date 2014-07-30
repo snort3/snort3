@@ -95,12 +95,13 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
     # build modules.txt seperately
     set (output ${CMAKE_CURRENT_BINARY_DIR}/modules.txt)
-    set(SNORT_EXECUTABLE "${CMAKE_BINARY_DIR}/src/snort")
     add_custom_command(
         OUTPUT ${output}
-        COMMAND ${CMAKE_COMMAND} -E echo "" > ${output}
-        COMMAND for m in `${SNORT_EXECUTABLE} --list-modules`\; do ${SNORT_EXECUTABLE} --markup --help-module $$m >> ${output}\; done
-        DEPENDS snort
+        COMMAND ${CMAKE_COMMAND}
+            -DOUT_FILE=${output}
+            -DSNORT_EXECUTABLE=$<TARGET_FILE:snort>
+            -P ${CMAKE_CURRENT_LIST_DIR}/module_output.cmake
+        DEPENDS snort ${CMAKE_CURRENT_LIST_DIR}/module_output.cmake
         COMMENT "Documents: building modules.txt"
     )
     list (APPEND ALL_SOURCES ${output})
@@ -122,7 +123,7 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
         )
         list (APPEND ALL_SOURCES ${output})
     else()
-        list(APPEND UNBUILT_SOURCES conf_differences.txt)
+        list (APPEND UNBUILT_SOURCES conf_differences.txt)
     endif()
 
     # next, Copy all distributed files into the binary tree (necessary for asciidocs).

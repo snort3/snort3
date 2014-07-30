@@ -26,7 +26,11 @@
 #include "utils/converter.h"
 #include "utils/snort2lua_util.h"
 
+
 namespace config
+{
+
+namespace
 {
 
 template<const std::string* snort_option,
@@ -43,26 +47,29 @@ public:
     virtual ~ConfigIntOption() {};
     virtual bool convert(std::istringstream& stream)
     {
-        if (snort_option == nullptr ||
-            lua_table == nullptr ||
-            lua_option == nullptr)
+        if ((snort_option == nullptr) ||
+            (lua_table == nullptr))
         {
             return false;
         }
 
         ld->open_table(*lua_table);
+        bool retval;
 
         // if the two names are not equal ...
-        if((snort_option) &&
-           (lua_option) &&
-           (*snort_option).compare(*lua_option))
+        if((lua_option != nullptr) && (*snort_option).compare(*lua_option))
         {
+            retval = parse_int_option(*lua_option, stream);
             ld->add_diff_option_comment("config " + *snort_option +
                     ":", *lua_option);
         }
+        else
+        {
+            retval = parse_int_option(*snort_option, stream);
+        }
 
-        bool retval = parse_int_option(*lua_option, stream);
         ld->close_table();
+        stream.setstate(std::ios::eofbit); // not interested in any additional arguments
         return retval;
     }
 };
@@ -72,16 +79,12 @@ template<const std::string *snort_option,
         const std::string *lua_option = nullptr>
 static ConversionState* config_int_ctor(Converter* cv, LuaData* ld)
 {
-    if (lua_option)
-        return new ConfigIntOption<snort_option,
-                                    lua_table,
-                                    lua_option>(cv, ld);
-    else
-        return new ConfigIntOption<snort_option,
-                                    lua_table,
-                                    snort_option>(cv, ld);
+    return new ConfigIntOption<snort_option,
+                                lua_table,
+                                lua_option>(cv, ld);
 }
 
+} // namespace
 
 /*************************************************
  ****************  STRUCT_NAMES  *****************

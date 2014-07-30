@@ -23,6 +23,7 @@
 #include "utils/snort2lua_util.h"
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 
 LuaData::PrintMode LuaData::mode = LuaData::PrintMode::QUIET;
@@ -162,8 +163,8 @@ std::string LuaData::expand_vars(std::string string)
 
                 varcontents = NULL;
 
-                memset((char *) varname, 0, sizeof(varname));
-                memset((char *) varaux, 0, sizeof(varaux));
+                std::memset((char *) varname, 0, sizeof(varname));
+                std::memset((char *) varaux, 0, sizeof(varaux));
                 varmodifier = ' ';
 
                 p = strchr(rawvarname, ':');
@@ -180,7 +181,7 @@ std::string LuaData::expand_vars(std::string string)
                 else
                     std::strncpy(varname, rawvarname, sizeof(varname));
 
-                memset((char *) varbuffer, 0, sizeof(varbuffer));
+                std::memset((char *) varbuffer, 0, sizeof(varbuffer));
 
                 std::string tmp = translate_variable(varname);
                 varcontents = tmp.c_str();

@@ -62,6 +62,7 @@ find_library(DAQ_LIBRARY
     DOC "DAQ library directory"
     NO_DEFAULT_PATH
 )
+
 find_library(DAQ_LIBRARY
     NAMES  ${DAQ_LIB}
     HINTS  ENV DAQ_DIR
@@ -69,7 +70,7 @@ find_library(DAQ_LIBRARY
     DOC "DAQ library directory"
 )
 
-set(DAQ_LIBRARIES ${DAQ_LIBRARY} ${DAQ_STATIC_LIBRARIES} CACHE STRING "Daq libraries")
+set(DAQ_LIBRARIES ${DAQ_LIBRARY} ${DAQ_STATIC_LIBRARIES})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(DAQ
