@@ -36,8 +36,19 @@
 #include "nhttp_enum.h"
 #include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
+#include "nhttp_msg_head.h"
 
 using namespace NHttpEnums;
+
+NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
+       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
+    delete sessionData->startLine[SRC_CLIENT];
+    sessionData->startLine[SRC_CLIENT] = this;
+    delete sessionData->headers[SRC_CLIENT];
+    sessionData->headers[SRC_CLIENT] = nullptr;
+    delete sessionData->latestOther[SRC_CLIENT];
+    sessionData->latestOther[SRC_CLIENT] = nullptr;
+}
 
 void NHttpMsgRequest::parseStartLine() {
     // There should be exactly two spaces. One following the method and one before "HTTP/".

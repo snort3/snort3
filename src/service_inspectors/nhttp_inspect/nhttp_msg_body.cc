@@ -40,7 +40,10 @@ using namespace NHttpEnums;
 
 NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
    NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), dataLength(sessionData->dataLength[sourceId]),
-   bodySections(sessionData->bodySections[sourceId]), bodyOctets(sessionData->bodyOctets[sourceId]) {}
+   bodySections(sessionData->bodySections[sourceId]), bodyOctets(sessionData->bodyOctets[sourceId]) {
+    delete sessionData->latestOther[sourceId];
+    sessionData->latestOther[sourceId] = this;
+}
 
 void NHttpMsgBody::analyze() {
     bodySections++;
@@ -54,7 +57,6 @@ void NHttpMsgBody::analyze() {
 }
 
 void NHttpMsgBody::genEvents() {
-// &&&    if (infractions != 0) createEvent(EVENT_ASCII); // I'm just an example event
 }
 
 void NHttpMsgBody::printSection(FILE *output) {

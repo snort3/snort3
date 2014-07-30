@@ -81,7 +81,5 @@ void NHttpMsgStart::deriveVersionId() {
     }
 }
 
-void NHttpMsgStart::genEvents() {
-// &&&    if (infractions != 0) createEvent(EVENT_ASCII); // I'm just an example event
-}
+void NHttpMsgStart::genEvents() {}
 

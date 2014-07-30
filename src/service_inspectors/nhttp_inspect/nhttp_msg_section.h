@@ -40,7 +40,7 @@
 
 class NHttpMsgSection {
 public:
-    virtual ~NHttpMsgSection() {delete[] rawBuf;};
+    virtual ~NHttpMsgSection() { delete[] rawBuf; };
     virtual void analyze() = 0;                           // Minimum necessary processing for every message
     virtual void printSection(FILE *output) = 0;          // Test tool prints all derived message parts
     virtual void genEvents() = 0;                         // Converts collected information into required preprocessor events

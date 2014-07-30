@@ -58,7 +58,6 @@ public:
 
 private:
     friend NHttpApi;
-    NHttpMsgSection *msgSection = nullptr;
 
     void process(const uint8_t* data, const uint16_t dsize, Flow* const flow, NHttpEnums::SourceId sourceId_);
 

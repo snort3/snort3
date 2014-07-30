@@ -39,8 +39,8 @@
 using namespace NHttpEnums;
 
 NHttpMsgChunkBody::NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-    NHttpMsgBody(buffer, bufSize, sessionData_, sourceId_), numChunks(sessionData->numChunks[sourceId]),
-    chunkSections(sessionData->chunkSections[sourceId]), chunkOctets(sessionData->chunkOctets[sourceId]) {}
+   NHttpMsgBody(buffer, bufSize, sessionData_, sourceId_), numChunks(sessionData->numChunks[sourceId]),
+   chunkSections(sessionData->chunkSections[sourceId]), chunkOctets(sessionData->chunkOctets[sourceId]) {}
 
 void NHttpMsgChunkBody::analyze() {
     bodySections++;
@@ -70,9 +70,7 @@ void NHttpMsgChunkBody::analyze() {
 }
 
 
-void NHttpMsgChunkBody::genEvents() {
-// &&&    if (infractions != 0) createEvent(EVENT_ASCII); // I'm just an example event
-}
+void NHttpMsgChunkBody::genEvents() {}
 
 void NHttpMsgChunkBody::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "chunk body");

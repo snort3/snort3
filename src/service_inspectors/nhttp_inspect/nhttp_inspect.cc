@@ -52,7 +52,6 @@ NHttpInspect::NHttpInspect(bool test_input, bool _test_output) : test_output(_te
 
 NHttpInspect::~NHttpInspect ()
 {
-    delete msgSection;
     if (NHttpTestInput::test_input) {
         delete NHttpTestInput::testInput;
         if (testOut) fclose(testOut);
@@ -84,9 +83,8 @@ bool NHttpInspect::get_buf(
         return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
 
     default:
-        break;
+        return false;
     }   
-    return nullptr;
 }
 
 bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
@@ -129,11 +127,10 @@ void NHttpInspect::eval(Packet* p)
 
 void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId sourceId)
 {
-    delete msgSection;
-    msgSection = nullptr;
-
     NHttpFlowData* sessionData = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(sessionData);
+
+    NHttpMsgSection *msgSection = nullptr;
 
     if (!NHttpTestInput::test_input) {
         switch (sessionData->sectionType[sourceId]) {

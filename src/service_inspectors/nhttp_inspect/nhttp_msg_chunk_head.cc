@@ -40,7 +40,10 @@ using namespace NHttpEnums;
 
 NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
    NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), bodySections(sessionData->bodySections[sourceId]),
-   numChunks(sessionData->numChunks[sourceId]) {}
+   numChunks(sessionData->numChunks[sourceId]) {
+    delete sessionData->latestOther[sourceId];
+    sessionData->latestOther[sourceId] = this;
+}
 
 // Convert the hexadecimal chunk length.
 // RFC says that zero may be written with multiple digits "000000".
@@ -98,9 +101,7 @@ void NHttpMsgChunkHead::analyze() {
     if (tcpClose) infractions |= INF_TRUNCATED;
 }
 
-void NHttpMsgChunkHead::genEvents() {
-// &&&    if (infractions != 0) createEvent(EVENT_ASCII); // I'm just an example event
-}
+void NHttpMsgChunkHead::genEvents() {}
 
 void NHttpMsgChunkHead::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "chunk header");

@@ -33,6 +33,7 @@
 
 class NHttpInspect;
 class NHttpMsgSection;
+class NHttpMsgStart;
 class NHttpMsgRequest;
 class NHttpMsgStatus;
 class NHttpMsgHeader;
@@ -46,12 +47,14 @@ class NHttpFlowData : public FlowData
 {
 public:
     NHttpFlowData();
+    ~NHttpFlowData();
     static unsigned nhttp_flow_id;
     static void init() { nhttp_flow_id = FlowData::get_flow_id(); };
 
     friend class NHttpInspect;
     friend class NHttpMsgSection;
     friend class NHttpMsgHeader;
+    friend class NHttpMsgStart;
     friend class NHttpMsgRequest;
     friend class NHttpMsgStatus;
     friend class NHttpMsgBody;
@@ -87,13 +90,11 @@ private:
     int64_t chunkOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };       // number of user data octets seen so far in the current chunk including terminating CRLF
 
     // Stored message sections from this session
-    NHttpMsgRequest* requestStart = nullptr;
-    NHttpMsgHeader* requestHeaders = nullptr;
-    NHttpMsgStatus* responseStart = nullptr;
-    NHttpMsgHeader* responseHeaders = nullptr;
-    // The very latest section for each side that will be deleted as soon as the next section arrives.
-    // If the section pointer is saved someplace else then do not put it here as well. Just leave it nullptr.
-    NHttpMsgSection* latest[2] = { nullptr, nullptr };
+    // You must reset to nullptr after deleting a section
+    // Never put one section in two places. latestOther is only for things not otherwise listed
+    NHttpMsgStart* startLine[2] = { nullptr, nullptr };
+    NHttpMsgHeader* headers[2] = { nullptr, nullptr };
+    NHttpMsgSection* latestOther[2] = { nullptr, nullptr };
 };
 
 #endif
