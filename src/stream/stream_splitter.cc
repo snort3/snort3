@@ -20,8 +20,32 @@
 
 #include "stream/stream_splitter.h"
 
+#include <assert.h>
+#include <string.h>
+
+#include "protocols/packet.h"
+
+static THREAD_LOCAL uint8_t pdu_buf[65536];
+static THREAD_LOCAL StreamBuffer str_buf;
+
 uint32_t StreamSplitter::max()
 { return 16384; }  // FIXIT make default configurable
+
+const StreamBuffer* StreamSplitter::reassemble(
+    unsigned offset, const uint8_t* p, unsigned n, uint32_t flags, unsigned& copied)
+{ 
+    assert(offset + n < sizeof(pdu_buf));
+    memcpy(pdu_buf+offset, p, n);
+    copied = n;
+
+    if ( flags & PKT_PDU_TAIL )
+    {
+        str_buf.data = pdu_buf;
+        str_buf.length = offset + n;
+        return &str_buf;
+    }
+    return nullptr;
+}
 
 AtomSplitter::AtomSplitter(bool b, uint32_t sz) : StreamSplitter(b)
 {

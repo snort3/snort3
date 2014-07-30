@@ -74,6 +74,7 @@
 #include "detection/fpdetect.h"
 #include "actions/actions.h"
 #include "protocols/packet.h"
+#include "utils/stats.h"
 
 #ifdef PPM_MGR
 
@@ -86,6 +87,8 @@
 #define PPM_DEFAULT_RULE_THRESHOLD   5
 
 PPM_TICKS ppm_tpu = 0; /* ticks per usec */
+
+static ppm_stats_t g_ppm_stats;
 
 THREAD_LOCAL ppm_stats_t       ppm_stats;
 THREAD_LOCAL ppm_pkt_timer_t   ppm_pkt_times[PPM_MAX_TIMERS];
@@ -224,8 +227,7 @@ void ppm_print_cfg(ppm_cfg_t *ppm_cfg)
     }
 }
 
-static
-int print_rule( int, RuleTreeNode*, OptTreeNode * o )
+static int print_rule( int, RuleTreeNode*, OptTreeNode * o )
 {
     if( !o->enabled )
     {
@@ -236,6 +238,23 @@ int print_rule( int, RuleTreeNode*, OptTreeNode * o )
     return 0;
 }
 
+// FIXIT ppm_stats should be rolled into ppm module
+// (need module support)
+
+void ppm_sum_stats()
+{
+    g_ppm_stats.pkt_event_cnt += ppm_stats.pkt_event_cnt;
+    g_ppm_stats.rule_event_cnt += ppm_stats.rule_event_cnt;
+    g_ppm_stats.tot_pkt_time += ppm_stats.tot_pkt_time;
+    g_ppm_stats.tot_pkts += ppm_stats.tot_pkts;
+    g_ppm_stats.tot_rule_time += ppm_stats.tot_rule_time;
+    g_ppm_stats.tot_rules += ppm_stats.tot_pkts;
+    g_ppm_stats.tot_nc_rule_time += ppm_stats.tot_nc_rule_time;
+    g_ppm_stats.tot_nc_rules += ppm_stats.tot_nc_rules;
+    g_ppm_stats.tot_pcre_rule_time += ppm_stats.tot_pcre_rule_time;
+    g_ppm_stats.tot_pcre_rules += ppm_stats.tot_pcre_rules;
+}
+
 void ppm_print_summary(ppm_cfg_t *ppm_cfg)
 {
     if (ppm_cfg == NULL)
@@ -244,47 +263,46 @@ void ppm_print_summary(ppm_cfg_t *ppm_cfg)
     if (!ppm_cfg->enabled)
         return;
 
-    LogMessage("===============================================================================\n");
     if(ppm_cfg->max_pkt_ticks)
     {
-        LogMessage("Packet Performance Summary:\n");
+        LogLabel("packet performance");
 
-        LogMessage("   max packet time       : %g usecs\n",
+        LogStat("max packet time (usecs)",
             ppm_ticks_to_usecs(ppm_cfg->max_pkt_ticks));
 
-        LogMessage("   packet events         : %u\n",
-            (unsigned int)ppm_stats.pkt_event_cnt);
+        LogCount("packet events",
+            (unsigned int)g_ppm_stats.pkt_event_cnt);
 
-        if( ppm_stats.tot_pkts )
-            LogMessage("   avg pkt time          : %g usecs\n",
-                ppm_ticks_to_usecs((PPM_TICKS)(ppm_stats.tot_pkt_time/
-                    ppm_stats.tot_pkts)));
+        if( g_ppm_stats.tot_pkts )
+            LogStat("avg pkt time (usecs)",
+                ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_pkt_time/
+                    g_ppm_stats.tot_pkts)));
     }
 
     if(ppm_cfg->max_rule_ticks)
     {
-        LogMessage("Rule Performance Summary:\n");
+        LogLabel("rule performance");
 
-        LogMessage("   max rule time         : %lu usecs\n",
+        LogCount("max rule time (usecs)",
             (unsigned long)(ppm_cfg->max_rule_ticks/ppm_tpu));
 
-        LogMessage("   rule events           : %u\n",
-            (unsigned int)ppm_stats.rule_event_cnt);
+        LogCount("rule events",
+            (unsigned int)g_ppm_stats.rule_event_cnt);
 
-        if( ppm_stats.tot_rules )
-            LogMessage("   avg rule time         : %g usecs\n",
-                ppm_ticks_to_usecs((PPM_TICKS)(ppm_stats.tot_rule_time/
-                    ppm_stats.tot_rules)));
+        if( g_ppm_stats.tot_rules )
+            LogStat("avg rule time (usecs)", 
+                ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_rule_time/
+                    g_ppm_stats.tot_rules)));
 
-        if( ppm_stats.tot_nc_rules )
-            LogMessage("   avg nc-rule time      : %g usecs\n",
-                ppm_ticks_to_usecs((PPM_TICKS)(ppm_stats.tot_nc_rule_time/
-                    ppm_stats.tot_nc_rules)));
+        if( g_ppm_stats.tot_nc_rules )
+            LogStat("avg nc-rule time (usecs)",
+                ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_nc_rule_time/
+                    g_ppm_stats.tot_nc_rules)));
 
-        if( ppm_stats.tot_pcre_rules )
-            LogMessage("   avg nc-pcre-rule time : %g usecs\n",
-                ppm_ticks_to_usecs((PPM_TICKS)(ppm_stats.tot_pcre_rule_time/
-                    ppm_stats.tot_pcre_rules)));
+        if( g_ppm_stats.tot_pcre_rules )
+            LogStat("avg nc-pcre-rule time (usecs)",
+                ppm_ticks_to_usecs((PPM_TICKS)(g_ppm_stats.tot_pcre_rule_time/
+                    g_ppm_stats.tot_pcre_rules)));
 
         fpWalkOtns( 0, print_rule );
     }

@@ -1,3 +1,14 @@
+107
+-- fixed stats output
+-- deleted code that skipped over TCP urgent data when flushing
+-- added StreamSplitter::reassemble() etc for PAR
+-- updated ppm output to use stats functions for consistency
+-- fixed old HI chunk splitting
+-- changed stream tcp to use StreamSplitter::reassemble() instead of
+    direct memcpy()
+-- several new Xcode warnings cleaned up (mostly unused funcs)
+-- fixed dynamic build of ips options
+
 106
 -- converted fpdetect.cc to pull fast pattern buffers from inspector gadget
 

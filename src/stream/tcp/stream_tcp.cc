@@ -131,7 +131,7 @@ static const InspectApi tcp_api =
     PROTO_BIT__TCP,
     nullptr, // buffers
     nullptr, // service
-    tcp_init,
+    nullptr, // init
     nullptr, // term
     tcp_ctor,
     tcp_dtor,

@@ -2666,8 +2666,10 @@ int acsmPrintDetailInfo2(ACSM_STRUCT2*)
  *   all groups use the same format, state size, etc..
  *   Combined with accrued stats, we get an average picture of things.
  */
+#if 0
 static inline double pct(unsigned long n, unsigned long d)
 { return (100.0 * n) / d; }
+#endif
 
 int acsmPrintSummaryInfo2(void)
 {

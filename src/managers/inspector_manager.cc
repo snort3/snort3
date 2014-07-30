@@ -354,19 +354,13 @@ void InspectorManager::delete_config (SnortConfig* sc)
     sc->framework_config = nullptr;
 }
 
-// note that we now have multiple preproc configs saved by parser
-// (s5-global, s5-tcp, ..., etc.) but just one ppapi.  that means
-// we must call the config func multiple times but add only the 1st
-// instance to the policy list.
 static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
 {
     for ( auto* p : fc->clist )
-        //if ( !strncasecmp(p->api.base.name, keyword, strlen(p->api.base.name)) )
         if ( !strcasecmp(p->api.base.name, keyword) )
             return p;
 
     for ( auto* p : s_handlers )
-        //if ( !strncasecmp(p->api.base.name, keyword, strlen(p->api.base.name)) )
         if ( !strcasecmp(p->api.base.name, keyword) )
         {
             if ( p->init )

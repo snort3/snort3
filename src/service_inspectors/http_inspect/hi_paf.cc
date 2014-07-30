@@ -60,7 +60,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "generators.h"
 #include "hi_events.h"
 #include "protocols/packet.h"
@@ -201,7 +200,7 @@ typedef struct {
     Cell cell[256];
 } State;
 
-static State* hi_fsm = NULL;
+static State* hi_fsm = nullptr;
 static unsigned hi_fsm_size = 0;
 
 #define EOL '\n'  // \r is ignored
@@ -411,7 +410,7 @@ static void get_state (int s, char* buf, int max)
     snprintf(buf, max, "%s+%d", sbase, (s-nbase));
 }
 
-#if 1
+#if 0
 static inline bool dump_it (int c)
 {
     if ( !c ) return false;
@@ -703,6 +702,8 @@ static inline PAF_Status hi_exec (Hi5State* s, Action a, int c)
                 "%s: lnc=%u\n", __FUNCTION__, s->len);)
             if ( s->len )
                 return PAF_SKIP;
+            else
+                return PAF_FLUSH;
             s->flags &= ~HIF_NOF;
             s->msg = 3;
             break;
@@ -1008,7 +1009,7 @@ HttpSplitter::HttpSplitter(bool c2s) : StreamSplitter(c2s)
     if ( c2s )
         state.fsm = REQ_START_STATE;
     else
-        state.fsm = REQ_START_STATE;
+        state.fsm = RSP_START_STATE;
 }
 
 HttpSplitter::~HttpSplitter() { }

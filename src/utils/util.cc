@@ -134,7 +134,7 @@ int DisplayBanner(void)
 
 /****************************************************************************
  *
- * Function: ts_print(register const struct, char *)
+ * Function: ts_print(const struct, char *)
  *
  * Purpose: Generate a time stamp and stuff it in a buffer.  This one has
  *          millisecond precision.  Oh yeah, I ripped this code off from
@@ -146,9 +146,9 @@ int DisplayBanner(void)
  * Returns: void function
  *
  ****************************************************************************/
-void ts_print(register const struct timeval *tvp, char *timebuf)
+void ts_print(const struct timeval *tvp, char *timebuf)
 {
-    register int s;
+    int s;
     int    localzone;
     time_t Time;
     struct timeval tv;
@@ -511,8 +511,8 @@ void CleanupProtoNames(void)
  ****************************************************************************/
 char *read_infile(char *fname)
 {
-    register int fd, cc;
-    register char *cp, *cmt;
+    int fd, cc;
+    char *cp, *cmt;
     struct stat buf;
 
     fd = open(fname, O_RDONLY);
