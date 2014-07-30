@@ -33,7 +33,14 @@ enum PAF_Status // FIXIT move inside StreamSplitter
     PAF_START,   // internal use only
     PAF_SEARCH,  // searching for next flush point
     PAF_FLUSH,   // flush at given offset
+    PAF_BUILD,   // reassemble to given offset
     PAF_SKIP     // skip ahead to given offset
+};
+
+struct StreamBuffer
+{
+    const uint8_t* data;
+    unsigned length;
 };
 
 //-------------------------------------------------------------------------
@@ -50,6 +57,14 @@ public:
         uint32_t flags,        // packet flags indicating direction of data
         uint32_t* fp           // flush point (offset) relative to data
     ) = 0;
+
+    virtual const StreamBuffer* reassemble(
+        unsigned offset,       // data offset from start of reassembly
+        const uint8_t* data,   // data to reassemble
+        unsigned len,          // length of data
+        uint32_t flags,        // packet flags indicating pdu head and/or tail
+        unsigned& copied       // actual data copied (1 <= copied <= len)
+    );
 
     virtual bool is_paf() { return false; };
     virtual uint32_t max();

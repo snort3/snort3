@@ -174,7 +174,7 @@ int SizeOption::eval(Cursor&, Packet* pkt)
         server_size = tcpssn->server.isn - tcpssn->server.l_nxt_seq;
     }
 
-    int result;
+    int result = DETECTION_OPTION_NO_MATCH;
 
     switch (ssod.direction)
     {
@@ -205,7 +205,6 @@ int SizeOption::eval(Cursor&, Packet* pkt)
         break;
 
     default:
-        result = DETECTION_OPTION_NO_MATCH;
         break;
     }
     MODULE_PROFILE_END(streamSizePerfStats);

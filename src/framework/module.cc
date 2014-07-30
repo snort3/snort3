@@ -69,7 +69,7 @@ void Module::sum_stats()
 void Module::show_stats()
 {
     if ( num_counts > 0 )
-        ::show_stats(get_counts(), get_pegs(), num_counts, get_name());
+        ::show_stats(&counts[0], get_pegs(), num_counts, get_name());
 }
 
 void Module::reset_stats()

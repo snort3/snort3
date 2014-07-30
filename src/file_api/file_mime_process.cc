@@ -856,6 +856,7 @@ static void reset_mime_state(MimeState *mime_ssn)
     memset(&mime_ssn->mime_boundary, 0, sizeof(MimeBoundary));
 }
 
+#if 0
 static inline FilePosition getFilePoistion(Packet *p)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
@@ -871,6 +872,8 @@ static inline FilePosition getFilePoistion(Packet *p)
 
     return position;
 }
+#endif
+
 /*
  * Main function for mime processing
  *
@@ -1047,7 +1050,7 @@ const uint8_t * process_mime_data(void *packet, const uint8_t *start, const uint
 }
 
 /*
- * This is the initialization funcation for mime processing.
+ * This is the initialization function for mime processing.
  * This should be called when snort initializes
  */
 void init_mime(void)
@@ -1060,8 +1063,9 @@ void init_mime(void)
     mime_hdr_search_mpse = search_api->search_instance_new();
     if (mime_hdr_search_mpse == NULL)
     {
-        FatalError("Could not allocate MIME "
-                "header search.\n");
+        // FIXIT make configurable or at least fall back to any
+        // available search engine
+        FatalError("Could not instantiate ac_bnfa search engine.\n");
     }
 
     for (tmp = &mime_hdrs[0]; tmp->name != NULL; tmp++)

@@ -70,6 +70,11 @@ struct ProcessCount
 extern ProcessCount proc_stats;
 extern THREAD_LOCAL PacketCount pc; 
 
+void LogLabel(const char*);
+void LogCount(const char*, uint64_t);
+void LogStat(const char*, uint64_t n, uint64_t tot);
+void LogStat(const char*, double);
+
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
 void show_stats(PegCount*, const char* names[], unsigned n,
     const char* module_name = nullptr);

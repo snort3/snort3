@@ -58,10 +58,10 @@ else
 
 ehlibdir = $(pkglibdir)/codecs
 
-ehlib_LTLIBRARIES = libcd_ah.la
-libcd_ah_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_ah_la_LDFLAGS = -export-dynamic -shared
-libcd_ah_la_SOURCES = cd_ah.cc cd_ah_module.h cd_ah_module.cc
+ehlib_LTLIBRARIES = libcd_auth.la
+libcd_auth_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_auth_la_LDFLAGS = -export-dynamic -shared
+libcd_auth_la_SOURCES = cd_auth.cc cd_auth_module.h cd_auth_module.cc
 
 ehlib_LTLIBRARIES += libcd_gre.la
 libcd_gre_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

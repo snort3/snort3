@@ -324,8 +324,9 @@ void ppm_set_max_pkt_time(ppm_cfg_t *, PPM_USECS);
 void ppm_set_max_rule_time(ppm_cfg_t *, PPM_USECS);
 void ppm_set_max_suspend_time(ppm_cfg_t *, PPM_SECS);
 
-void   ppm_print_cfg(ppm_cfg_t *);
-void   ppm_print_summary(ppm_cfg_t *);
+void ppm_print_cfg(ppm_cfg_t *);
+void ppm_print_summary(ppm_cfg_t *);
+void ppm_sum_stats();
 double ppm_ticks_to_usecs( PPM_TICKS );
 
 void ppm_pkt_log(ppm_cfg_t*, Packet*);
@@ -336,7 +337,7 @@ void ppm_set_rule_event (ppm_cfg_t *, detection_option_tree_root_t *);
 void ppm_clear_rule_event (ppm_cfg_t *, detection_option_tree_root_t *);
 void ppm_set_rule(detection_option_tree_root_t *, PPM_TICKS);
 
-#define PPM_INIT()            ppm_init()
+#define PPM_INIT(x)           ppm_init(x)
 #define PPM_PRINT_CFG(x)      ppm_print_cfg(x)
 #define PPM_PRINT_SUMMARY(x)  ppm_print_summary(x)
 
