@@ -38,6 +38,7 @@ enum PlugType
     PT_SO_RULE,
     PT_INSPECTOR,
     PT_SEARCH_ENGINE,
+    PT_ACTION,
     PT_MAX
 };
 

@@ -188,7 +188,7 @@ static const RuleMap bo_rules[] =
 class BoModule : public Module
 {
 public:
-    BoModule() : Module("back_orifice")
+    BoModule() : Module(mod_name)
     { };
 
     const RuleMap* get_rules() const

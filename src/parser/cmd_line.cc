@@ -53,7 +53,6 @@ using namespace std;
 #define LOG_PCAP  "pcap"
 
 #define ALERT_NONE    "none"
-#define ALERT_PKT_CNT "packet-count"
 #define ALERT_CMG     "cmg"
 #define ALERT_JH      "jh"
 #define ALERT_DJR     "djr"
@@ -407,10 +406,6 @@ static void config_alert_mode(SnortConfig* sc, const char* val)
         sc->output_flags |= OUTPUT_FLAG__NO_ALERT;
         EventManager::enable_alerts(false);
     }
-    else if (strcasecmp(val, ALERT_PKT_CNT) == 0)
-    {
-        sc->output_flags |= OUTPUT_FLAG__ALERT_PKT_CNT;
-    }
     else if ((strcasecmp(val, ALERT_CMG) == 0) ||
              (strcasecmp(val, ALERT_JH) == 0) ||
              (strcasecmp(val, ALERT_DJR) == 0))
@@ -649,7 +644,7 @@ static ConfigFunc basic_opts[] =
       "show usage" },
 
     { "A", config_alert_mode, 
-      "<mode> set alert mode: fast, full, console, test, unsock, or none " },
+      "<mode> set alert mode: none, cmg, or alert_*" },
 
     { "B", ConfigObfuscationMask, 
       "<mask> obfuscated IP addresses in alerts and packet dumps using CIDR mask" },

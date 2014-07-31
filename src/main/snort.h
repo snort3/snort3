@@ -143,7 +143,6 @@ typedef enum _OutputFlag
     OUTPUT_FLAG__OBFUSCATE         = 0x00000100,      /* -B */
     OUTPUT_FLAG__ALERT_IFACE       = 0x00000200,      /* -I */
     OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000400,      /* --nostamps */
-    OUTPUT_FLAG__ALERT_PKT_CNT     = 0x00000800,      /* -A packet-count */
 
     OUTPUT_FLAG__NO_ALERT          = 0x00001000,      /* -A none */
     OUTPUT_FLAG__NO_LOG            = 0x00002000,      /* -K none */
@@ -365,11 +364,6 @@ static inline int ScOutputDataLink(void)
 static inline int ScVerboseByteDump(void)
 {
     return snort_conf->output_flags & OUTPUT_FLAG__VERBOSE_DUMP;
-}
-
-static inline int ScAlertPacketCount(void)
-{
-    return snort_conf->output_flags & OUTPUT_FLAG__ALERT_PKT_CNT;
 }
 
 static inline int ScObfuscate(void)
