@@ -205,10 +205,10 @@ static const IpsApi urg_api =
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     urg_ctor,
     urg_dtor,
     nullptr

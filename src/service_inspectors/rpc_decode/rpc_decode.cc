@@ -1113,11 +1113,11 @@ static const InspectApi rd_api =
     nullptr, // buffers
     "sunrpc",
     rd_init,
-    nullptr, // term
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     rd_ctor,
     rd_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

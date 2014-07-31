@@ -137,8 +137,8 @@ public:
 
     void show(SnortConfig*);
 
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
 
     void eval(Packet*);
 
@@ -151,7 +151,7 @@ StreamBase::StreamBase(const StreamConfig* c)
     config = c;
 }
 
-void StreamBase::pinit()
+void StreamBase::tinit()
 {
     assert(!flow_con);
     Inspector* pi = InspectorManager::get_inspector("binder");
@@ -184,7 +184,7 @@ void StreamBase::pinit()
     }
 }
 
-void StreamBase::pterm()
+void StreamBase::tterm()
 {
     flow_con->purge_flows(IPPROTO_TCP);
     flow_con->purge_flows(IPPROTO_UDP);
@@ -285,10 +285,10 @@ static const InspectApi base_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
+    nullptr, // tinit
+    nullptr, // tterm
     base_ctor,
     base_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

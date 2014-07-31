@@ -230,8 +230,8 @@ void InspectorManager::release_plugins ()
 
     for ( auto* p : s_handlers )
     {
-        if ( !p->init && p->api.term )
-            p->api.term();
+        if ( !p->init && p->api.pterm )
+            p->api.pterm();
 
         delete p;
     }
@@ -365,8 +365,8 @@ static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
         {
             if ( p->init )
             {
-                if ( p->api.init )
-                    p->api.init();
+                if ( p->api.pinit )
+                    p->api.pinit();
                 p->init = false;
             }
             PHClass* ppc = new PHClass(p->api);
@@ -383,8 +383,8 @@ void InspectorManager::thread_init(SnortConfig* sc)
     Inspector::slot = get_instance_id();
 
     for ( auto* p : sc->framework_config->clist )
-        if ( p->api.pinit )
-            p->api.pinit();
+        if ( p->api.tinit )
+            p->api.tinit();
 
     InspectionPolicy* pi = get_inspection_policy();
 
@@ -392,7 +392,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
         return;
 
     for ( auto* p : pi->framework_policy->ilist )
-        p->handler->pinit();
+        p->handler->tinit();
 }
 
 void InspectorManager::thread_term(SnortConfig* sc)
@@ -403,11 +403,11 @@ void InspectorManager::thread_term(SnortConfig* sc)
         return;
 
     for ( auto* p : pi->framework_policy->ilist )
-        p->handler->pterm();
+        p->handler->tterm();
 
     for ( auto* p : sc->framework_config->clist )
-        if ( p->api.pterm )
-            p->api.pterm();
+        if ( p->api.tterm )
+            p->api.tterm();
 }
 
 //-------------------------------------------------------------------------

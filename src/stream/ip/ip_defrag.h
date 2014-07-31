@@ -45,8 +45,8 @@ public:
     void process(Packet*, FragTracker*);
     void cleanup(FragTracker*);
 
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
 
     static void init();
     static void sum();

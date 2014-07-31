@@ -275,8 +275,8 @@ void PacketManager::release_plugins()
 {
     for ( auto* p : s_codecs )
     {
-        if(p->gterm)
-            p->gterm();
+        if(p->pterm)
+            p->pterm();
 
         uint8_t index = get_codec(p->base.name);
         if( index != 0)
@@ -301,8 +301,8 @@ void PacketManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig*
         FatalError("A maximum of 256 codecs can be registered\n");
 
     // global init here to ensure the global policy has already been configured
-    if (cd_api->ginit)
-        cd_api->ginit();
+    if (cd_api->pinit)
+        cd_api->pinit();
 
     Codec *cd = cd_api->ctor(m);
     cd->get_protocol_ids(ids);

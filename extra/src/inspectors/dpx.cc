@@ -149,12 +149,12 @@ static const InspectApi dpx_api
     PROTO_BIT__UDP,
     nullptr, // service
     nullptr, // contents
-    nullptr, // init
-    nullptr, // term
-    dpx_ctor,
-    dpx_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    dpx_ctor,
+    dpx_dtor,
     nullptr, // ssn
     nullptr  // reset
 };

@@ -211,8 +211,8 @@ struct CodecApi
     BaseApi base;
 
     // these may be nullptr
-    CdAuxFunc ginit;  // initialize global plugin data
-    CdAuxFunc gterm;  // clean-up pinit()
+    CdAuxFunc pinit;  // initialize global plugin data
+    CdAuxFunc pterm;  // clean-up pinit()
 
     CdAuxFunc tinit;  // initialize thread-local plugin data
     CdAuxFunc tterm;  // clean-up tinit()

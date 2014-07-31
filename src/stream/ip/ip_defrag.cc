@@ -1291,14 +1291,14 @@ bool Defrag::configure(SnortConfig*)
     return true;
 }
 
-void Defrag::pinit()
+void Defrag::tinit()
 {
     defrag_pkt = PacketManager::encode_new();
     encap_defrag_pkt = PacketManager::encode_new();
     pkt_snaplen = DAQ_GetSnapLen();
 }
 
-void Defrag::pterm()
+void Defrag::tterm()
 {
     PacketManager::encode_delete(defrag_pkt);
     defrag_pkt = NULL;

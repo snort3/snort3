@@ -67,10 +67,10 @@ static const SoApi so_api =
     },
     sid_18758_gz,
     sid_18758_gz_len,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor,
     dtor,
 };

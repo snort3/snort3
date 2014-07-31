@@ -269,12 +269,12 @@ static const InspectApi bind_api =
     PROTO_BIT__ALL,
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    bind_ctor,
-    bind_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    bind_ctor,
+    bind_dtor,
     nullptr, // ssn
     nullptr  // reset
 };

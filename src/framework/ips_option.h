@@ -120,8 +120,8 @@ struct IpsApi
     unsigned max_per_rule;
     unsigned protos;
 
-    IpsOptFunc ginit;
-    IpsOptFunc gterm;
+    IpsOptFunc pinit;
+    IpsOptFunc pterm;
     IpsOptFunc tinit;
     IpsOptFunc tterm;
     IpsNewFunc ctor;

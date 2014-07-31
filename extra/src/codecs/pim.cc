@@ -93,10 +93,10 @@ static const CodecApi pim_api =
         nullptr,
         nullptr
     },
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor,
     dtor,
 };

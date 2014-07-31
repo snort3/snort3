@@ -314,11 +314,11 @@ const InspectApi tn_api =
     nullptr, // buffers
     "telnet",
     tn_init,
-    nullptr, // term
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     tn_ctor,
     tn_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

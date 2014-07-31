@@ -215,10 +215,10 @@ static const CodecApi tr_api =
         mod_ctor,
         mod_dtor
     },
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     ctor,
     dtor,
 };
