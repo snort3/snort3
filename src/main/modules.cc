@@ -1405,8 +1405,8 @@ static const Parameter event_filter_params[] =
     { "track", Parameter::PT_ENUM, "by_src | by_dst", nullptr,
       "filter only matching source or destination addresses" },
 
-    { "count", Parameter::PT_INT, "0:", "0",
-      "number of events in interval before tripping" },
+    { "count", Parameter::PT_INT, "-1:", "0",
+      "number of events in interval before tripping; -1 to disable" },
 
     { "seconds", Parameter::PT_INT, "0:", "0",
       "count interval" },
@@ -1880,7 +1880,9 @@ void module_init()
     ModuleManager::add_module(new DetectionModule);
     ModuleManager::add_module(new PacketsModule);
     ModuleManager::add_module(new ProcessModule);
+#ifdef PERF_PROFILING
     ModuleManager::add_module(new ProfileModule);
+#endif
     ModuleManager::add_module(new ReferencesModule);
     ModuleManager::add_module(new RuleStateModule);
     ModuleManager::add_module(new SearchEngineModule);

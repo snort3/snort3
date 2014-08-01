@@ -272,10 +272,10 @@ struct Packet
     const ipv6::IP6RawHdr* raw_ip6h;  // innermost raw ip6 header
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
-    ipv4::IP4Hdr inner_ip4h, inner_orig_ip4h;
-    ipv6::IP6Hdr inner_ip6h, inner_orig_ip6h;
-    ipv4::IP4Hdr outer_ip4h, outer_orig_ip4h;
-    ipv6::IP6Hdr outer_ip6h, outer_orig_ip6h;
+    ipv4::IP4Hdr inner_ip4h;
+    ipv6::IP6Hdr inner_ip6h;
+    ipv4::IP4Hdr outer_ip4h;
+    ipv6::IP6Hdr outer_ip6h;
 
     MplsHdr mplsHdr;
 

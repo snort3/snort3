@@ -405,7 +405,7 @@ void PacketManager::decode(
                 (unsigned long)pkthdr->caplen, (unsigned long)pkthdr->pktlen);
             );
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     // initialize all of the relevent data to decode this packet
     memset(p, 0, PKT_ZERO_LEN);
@@ -423,8 +423,8 @@ void PacketManager::decode(
         if ( p->num_layers == LAYER_MAX )
         {
             codec_events::decoder_event(p, DECODE_TOO_MANY_LAYERS);
-            PREPROC_PROFILE_END(decodePerfStats);
-            return false;
+            MODULE_PROFILE_END(decodePerfStats);
+            return /*false */;
         }
 
         // internal statistics and record keeping
@@ -470,7 +470,7 @@ void PacketManager::decode(
     p->dsize = (uint16_t)len;
     p->data = pkt;
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
 }
 
 bool PacketManager::has_codec(uint16_t cd_id)
@@ -611,7 +611,8 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     c->data = lyr->start + lyr->length;
     len = c->data - c->pkt;
 
-    assert(len < Codec::PKT_MAX - IP_MAXPACKET); // len < ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU
+    // len < ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU
+    assert((unsigned)len < Codec::PKT_MAX - IP_MAXPACKET);
 
     c->max_dsize = IP_MAXPACKET - len;
     c->proto_bits = p->proto_bits;
@@ -715,7 +716,7 @@ void PacketManager::dump_stats()
         pkt_names.push_back(s_protocols[i]->get_name());
 
     show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
-        "codecs");
+        "codec");
 }
 
 SO_PUBLIC void PacketManager::encode_set_dst_mac(uint8_t *mac)

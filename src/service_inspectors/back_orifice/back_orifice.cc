@@ -484,7 +484,7 @@ void BackOrifice::eval(Packet *p)
         return;
     }
 
-    PREPROC_PROFILE_START(boPerfStats);
+    MODULE_PROFILE_START(boPerfStats);
     ++bostats.total_packets;
 
     /*
@@ -529,7 +529,7 @@ void BackOrifice::eval(Packet *p)
                     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
                             "Failed check one on 0x%X : 0x%X\n",
                             *magic_data, plaintext););
-                    PREPROC_PROFILE_END(boPerfStats);
+                    MODULE_PROFILE_END(boPerfStats);
                     return;
                 }
 
@@ -561,7 +561,7 @@ void BackOrifice::eval(Packet *p)
         }
     }
 
-    PREPROC_PROFILE_END(boPerfStats);
+    MODULE_PROFILE_END(boPerfStats);
 
     return;
 }

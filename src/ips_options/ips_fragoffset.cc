@@ -43,7 +43,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "framework/range.h"
+#include "range.h"
 
 #define GREATER_THAN            1
 #define LESS_THAN               2
@@ -117,12 +117,12 @@ int FragOffsetOption::eval(Cursor&, Packet *p)
         return rval;
     }
 
-    PREPROC_PROFILE_START(fragOffsetPerfStats);
+    MODULE_PROFILE_START(fragOffsetPerfStats);
 
     if ( config.eval(p_offset) )
         rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(fragOffsetPerfStats);
+    MODULE_PROFILE_END(fragOffsetPerfStats);
     return rval;
 }
 

@@ -36,7 +36,7 @@ typedef struct tag_search
     unsigned int max_len;
 } t_search;
 
-void *  SearchInstanceNew(void)
+static void*  SearchInstanceNew(void)
 {
     t_search * search = (t_search*)malloc(sizeof(t_search));
     if( !search )
@@ -54,7 +54,7 @@ void *  SearchInstanceNew(void)
     return search;
 }
 
-void SearchInstanceFree( void * instance )
+static void SearchInstanceFree( void * instance )
 {
     t_search * search = (t_search*)instance;
     if( instance )
@@ -64,7 +64,7 @@ void SearchInstanceFree( void * instance )
     }
 }
 
-void SearchInstanceAdd(
+static void SearchInstanceAdd(
     void*instance, const char *pat, unsigned int pat_len, int id)
 {
     t_search * search = (t_search*)instance;
@@ -77,7 +77,8 @@ void SearchInstanceAdd(
          search->max_len = pat_len;
 
 }
-void SearchInstancePrepPatterns(void * instance)
+
+static void SearchInstancePrepPatterns(void * instance)
 {
     t_search * search = (t_search*)instance;
     if( search && search->mpse )
@@ -86,7 +87,7 @@ void SearchInstancePrepPatterns(void * instance)
     }
 }
 
-int  SearchInstanceFindString(
+static int SearchInstanceFindString(
     void * instance,
     const char *str,
     unsigned int str_len,

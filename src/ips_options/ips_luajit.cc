@@ -241,7 +241,7 @@ bool LuaJITOption::operator==(const IpsOption& ips) const
 int LuaJITOption::eval(Cursor& c, Packet*)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(luajitPerfStats);
+    MODULE_PROFILE_START(luajitPerfStats);
 
     cursor = &c;
 
@@ -252,14 +252,14 @@ int LuaJITOption::eval(Cursor& c, Packet*)
     {
         const char* err = lua_tostring(L, -1);
         ErrorMessage("%s\n", err);
-        PREPROC_PROFILE_END(luajitPerfStats);
+        MODULE_PROFILE_END(luajitPerfStats);
         return DETECTION_OPTION_NO_MATCH;
     }
     bool result = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
     int ret = result ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
-    PREPROC_PROFILE_END(luajitPerfStats);
+    MODULE_PROFILE_END(luajitPerfStats);
 
     return ret;
 }

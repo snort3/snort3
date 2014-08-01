@@ -58,6 +58,8 @@ void FreeRuleLists(SnortConfig *);
 void VarTablesFree(SnortConfig *);
 void PortTablesFree(rule_port_tables_t *);
 
+void parser_append_rules(const char*);
+
 int GetRuleProtocol(const char *);
 
 void ConfigureSideChannelModules(SnortConfig *);

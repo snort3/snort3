@@ -41,7 +41,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "framework/range.h"
+#include "range.h"
 
 static const char* s_name = "ack";
 
@@ -98,12 +98,12 @@ int TcpAckOption::eval(Cursor&, Packet *p)
     if(!p->tcph)
         return rval;
 
-    PREPROC_PROFILE_START(tcpAckPerfStats);
+    MODULE_PROFILE_START(tcpAckPerfStats);
 
     if ( config.eval(p->tcph->th_ack) )
         rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(tcpAckPerfStats);
+    MODULE_PROFILE_END(tcpAckPerfStats);
     return rval;
 }
 

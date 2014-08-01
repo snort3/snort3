@@ -213,12 +213,12 @@ void Normalizer::show(SnortConfig* sc)
 void Normalizer::eval(Packet *p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(norm_perf_stats);
+    MODULE_PROFILE_START(norm_perf_stats);
 
     if ( !PacketIsRebuilt(p) && !Active_PacketWasDropped() )
         Norm_Packet(&config, p);
 
-    PREPROC_PROFILE_END(norm_perf_stats);
+    MODULE_PROFILE_END(norm_perf_stats);
     return;
 }
 

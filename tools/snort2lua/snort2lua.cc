@@ -376,6 +376,11 @@ int main (int argc, char* argv[])
         }
     }
 
+    // Snort++ requires a binder table to be instantiated,
+    // although not necessarily filled.  So, just add this table.
+    // If its already added, these lines won't have any effect
+    ld.open_top_level_table("binder");
+    ld.close_table();
 
     // finally, lets print the converter to file
 

@@ -280,7 +280,7 @@ void PerfMonitor::eval(Packet *p)
 {
     static THREAD_LOCAL bool first = true;
     PROFILE_VARS;
-    PREPROC_PROFILE_START(perfmonStats);
+    MODULE_PROFILE_START(perfmonStats);
 
     if (first)
     {
@@ -311,7 +311,7 @@ void PerfMonitor::eval(Packet *p)
     sfPerformanceStats(&config, p);
     ++pmstats.total_packets;
 
-    PREPROC_PROFILE_END(perfmonStats);
+    MODULE_PROFILE_END(perfmonStats);
 }
 
 void PerfMonitor::pterm()

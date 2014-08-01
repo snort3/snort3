@@ -33,6 +33,9 @@ extern const BaseApi* nin_stream_icmp;
 extern const BaseApi* nin_stream_tcp;
 extern const BaseApi* nin_stream_udp;
 
+extern const BaseApi* ips_stream_reassemble;
+extern const BaseApi* ips_stream_size;
+
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* nin_arp_spoof;
 extern const BaseApi* nin_port_scan_global;
@@ -48,6 +51,10 @@ const BaseApi* network_inspectors[] =
     nin_stream_icmp,
     nin_stream_tcp,
     nin_stream_udp,
+
+    ips_stream_reassemble,
+    ips_stream_size,
+
 #ifdef STATIC_INSPECTORS
     nin_arp_spoof,
     nin_port_scan_global,

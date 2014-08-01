@@ -454,6 +454,7 @@ void sfiph_build(Packet *p, const void *hdr, int family)
 
 void sfiph_orig_build(Packet *p, const void *hdr, int family)
 {
+#if 0
     ipv6::IP6RawHdr *hdr6;
     IPHdr *hdr4;
 
@@ -497,6 +498,7 @@ void sfiph_orig_build(Packet *p, const void *hdr, int family)
         p->actual_ip_len = ntohs(p->inner_orig_ip6h.len) + IP6_HDR_LEN;
         p->orig_ip6h = &p->inner_orig_ip6h;
     }
+  #endif
 }
 
 #ifdef TESTER

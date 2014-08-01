@@ -195,9 +195,6 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         else if (!keyword.compare("client_flow_depth"))
             tmpval = parse_int_option("client_flow_depth", data_stream);
 
-        else if (!keyword.compare("post_depth"))
-            tmpval = parse_int_option("post_depth", data_stream);
-
         else if (!keyword.compare("chunk_length"))
             tmpval = parse_int_option("chunk_length", data_stream);
 
@@ -230,6 +227,12 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("base36"))
             tmpval = eat_option(data_stream);
+
+        else if (!keyword.compare("post_depth"))
+        {
+            tmpval = parse_int_option("post_depth", data_stream);
+            ld->add_diff_option_comment("post_depth [-1:65495]", "post_depth [-1:65535]");
+        }
 
         else if (!keyword.compare("non_rfc_char"))
         {

@@ -6,6 +6,7 @@ add_library( rule_states
     rule_http_encode.cc
     rule_metadata.cc
     rule_pcre.cc
+    rule_threshold.cc
     rule_unchanged.cc
     rule_urilen.cc
     rule_api.cc

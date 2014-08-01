@@ -40,7 +40,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "framework/range.h"
+#include "range.h"
 
 static const char* s_name = "tos";
 
@@ -101,12 +101,12 @@ int IpTosOption::eval(Cursor&, Packet *p)
     if(!IPH_IS_VALID(p))
         return rval;
 
-    PREPROC_PROFILE_START(ipTosPerfStats);
+    MODULE_PROFILE_START(ipTosPerfStats);
 
     if ( config.eval(GET_IPH_TOS(p)) )
         rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(ipTosPerfStats);
+    MODULE_PROFILE_END(ipTosPerfStats);
     return rval;
 }
 

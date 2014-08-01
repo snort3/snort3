@@ -37,6 +37,7 @@
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
 #include "time/profiler.h"
+#include "helpers/markup.h"
 
 using namespace std;
 
@@ -58,34 +59,6 @@ static unsigned s_errors = 0;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
-
-static bool s_markup = false;
-
-//-------------------------------------------------------------------------
-// markup foo (for asciidoc)
-//-------------------------------------------------------------------------
-
-static const char* head()
-{ return s_markup ? "=== " : ""; }
-
-static const char* item()
-{ return s_markup ? "* " : ""; }
-
-static const char* emphasis_on()
-{ return s_markup ? "*" : ""; }
-
-static const char* emphasis_off()
-{ return s_markup ? "*" : ""; }
-
-static const string& emphasis(const string& s)
-{ 
-    static string m;
-    m.clear();
-    m += emphasis_on();
-    m += s;
-    m += emphasis_off();
-    return m;
-}
 
 //-------------------------------------------------------------------------
 // ModHook foo
@@ -204,9 +177,9 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     else if ( !pfx || !strncmp(key.c_str(), pfx, strlen(pfx)) )
     {
 #if 1
-        cout << item();
+        cout << Markup::item();
         cout << p->get_type();
-        cout << " " << emphasis(key);
+        cout << " " << Markup::emphasis(key);
 
         if ( p->deflt )
             cout << " = " << (char*)p->deflt;
@@ -216,9 +189,9 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
         if ( p->range )
             cout << " { " << (char*)p->range << " }";
 #else
-        cout << item();
+        cout << Markup::item();
         cout << p->get_type();
-        cout << "\t" << emphasis(key);
+        cout << "\t" << Markup::emphasis(key);
 
         if ( p->deflt )
             cout << "\t" << (char*)p->deflt;
@@ -468,7 +441,9 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     if ( mh->reg )
         Shell::install(m->get_name(), mh->reg);
 
+#ifdef PERF_PROFILING
     RegisterProfile(m);
+#endif
 }
 
 Module* ModuleManager::get_module(const char* s)
@@ -530,10 +505,9 @@ static const char* mod_type(const BaseApi* api)
     return mod_types[api->type];
 }
 
-void ModuleManager::show_module(bool markup, const char* name)
+void ModuleManager::show_module(const char* name)
 {
     s_modules.sort(comp_gids);
-    s_markup = markup;
 
     for ( auto p : s_modules )
     {
@@ -543,7 +517,7 @@ void ModuleManager::show_module(bool markup, const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        cout << endl << head() << name << endl << endl;
+        cout << endl << Markup::head() << name << endl << endl;
         cout << "Type: "  << mod_type(p->api) << endl << endl;
 
         if ( const Parameter* p = m->get_parameters() )
@@ -551,34 +525,33 @@ void ModuleManager::show_module(bool markup, const char* name)
             if ( p->type < Parameter::PT_MAX )
             {
                 cout << endl << "Configuration: "  << endl << endl;
-                show_configs(markup, name);
+                show_configs(name);
             }
         }
 
         if ( m->get_commands() )
         {
             cout << endl << "Commands: "  << endl << endl;
-            show_commands(markup, name);
+            show_commands(name);
         }
 
         if ( m->get_rules() )
         {
             cout << endl << "Rules: "  << endl << endl;
-            show_rules(markup, name);
+            show_rules(name);
         }
 
         if ( m->get_pegs() )
         {
             cout << endl << "Peg counts: "  << endl << endl;
-            show_pegs(markup, name);
+            show_pegs(name);
         }
     }
 }
 
-void ModuleManager::show_configs(bool markup, const char* pfx)
+void ModuleManager::show_configs(const char* pfx)
 {
     s_modules.sort(comp_mods);
-    s_markup = markup;
 
     for ( auto p : s_modules )
     {
@@ -608,10 +581,9 @@ void ModuleManager::show_configs(bool markup, const char* pfx)
     }
 }
 
-void ModuleManager::show_commands(bool markup, const char* pfx)
+void ModuleManager::show_commands(const char* pfx)
 {
     s_modules.sort(comp_mods);
-    s_markup = markup;
     unsigned len = pfx ? strlen(pfx) : 0;
 
     for ( auto p : s_modules )
@@ -628,11 +600,11 @@ void ModuleManager::show_commands(bool markup, const char* pfx)
         
         while ( c->name )
         {
-            cout << item();
-            cout << emphasis_on();
+            cout << Markup::item();
+            cout << Markup::emphasis_on();
             cout << p->mod->get_name();
             cout << "." << c->name;
-            cout << emphasis_off();
+            cout << Markup::emphasis_off();
             cout << "(): " << c->help;
             cout << endl;
             c++;
@@ -640,10 +612,9 @@ void ModuleManager::show_commands(bool markup, const char* pfx)
     }
 }
 
-void ModuleManager::show_gids(bool markup, const char* pfx)
+void ModuleManager::show_gids(const char* pfx)
 {
     s_modules.sort(comp_gids);
-    s_markup = markup;
     unsigned len = pfx ? strlen(pfx) : 0;
 
     for ( auto p : s_modules )
@@ -658,20 +629,19 @@ void ModuleManager::show_gids(bool markup, const char* pfx)
 
         if ( gid )
         {
-            cout << item();
-            cout << emphasis_on();
+            cout << Markup::item();
+            cout << Markup::emphasis_on();
             cout << gid;
-            cout << emphasis_off();
+            cout << Markup::emphasis_off();
             cout << ": " << m->get_name();
             cout << endl;
         }
     }    
 }
 
-void ModuleManager::show_pegs(bool markup, const char* pfx)
+void ModuleManager::show_pegs(const char* pfx)
 {
     s_modules.sort(comp_gids);
-    s_markup = markup;
     unsigned len = pfx ? strlen(pfx) : 0;
 
     for ( auto p : s_modules )
@@ -689,20 +659,19 @@ void ModuleManager::show_pegs(bool markup, const char* pfx)
 
         while ( *pegs )
         {
-            cout << item();
-            cout << emphasis_on();
+            cout << Markup::item();
+            cout << Markup::emphasis_on();
             cout << *pegs;
-            cout << emphasis_off();
+            cout << Markup::emphasis_off();
             cout << endl;
             ++pegs;
         }
     }    
 }
 
-void ModuleManager::show_rules(bool markup, const char* pfx)
+void ModuleManager::show_rules(const char* pfx)
 {
     s_modules.sort(comp_gids);
-    s_markup = markup;
     unsigned len = pfx ? strlen(pfx) : 0;
 
     for ( auto p : s_modules )
@@ -720,10 +689,10 @@ void ModuleManager::show_rules(bool markup, const char* pfx)
 
         while ( r->msg )
         {
-            cout << item();
-            cout << emphasis_on();
+            cout << Markup::item();
+            cout << Markup::emphasis_on();
             cout << gid << ":" << r->sid;
-            cout << emphasis_off();
+            cout << Markup::emphasis_off();
             cout << " " << r->msg;
             cout << endl;
             r++;

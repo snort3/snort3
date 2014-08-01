@@ -211,7 +211,7 @@ int UdpSession::process(Packet *p)
     SFXHASH_NODE *hash_node = NULL;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(udp_perf_stats);
+    MODULE_PROFILE_START(udp_perf_stats);
     /*
      * Check if the session is expired.
      * Should be done before we do something with the packet...
@@ -225,7 +225,7 @@ int UdpSession::process(Packet *p)
     flow->markup_packet_flags(p);
     flow->set_expire(p, pc->session_timeout);
 
-    PREPROC_PROFILE_END(udp_perf_stats);
+    MODULE_PROFILE_END(udp_perf_stats);
     return 0;
 }
 

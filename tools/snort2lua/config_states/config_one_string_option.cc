@@ -29,6 +29,9 @@
 namespace config
 {
 
+namespace
+{
+
 
 
 template<const std::string* snort_option,
@@ -96,6 +99,7 @@ static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
                                 lua_option>(cv, ld);
 }
 
+} // namespace
 
 /*************************************************
  *****************  STRUCT_NAMES  ****************

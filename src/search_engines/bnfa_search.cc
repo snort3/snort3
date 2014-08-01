@@ -1761,7 +1761,7 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa_qx(bnfa_state_t * pcx, u
     int k;
     int nc;
     int index;
-    register bnfa_state_t * pcs;
+    bnfa_state_t * pcs;
 
     for(;;) {
         pcs = pcx + sindex + 1; /* skip state-id == 1st word */
@@ -1813,7 +1813,7 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa(bnfa_state_t * pcx, unsi
     int k;
     int nc;
     int index;
-    register bnfa_state_t * pcs;
+    bnfa_state_t * pcs;
 
     for(;;) {
         pcs = pcx + sindex + 1; /* skip state-id == 1st word */

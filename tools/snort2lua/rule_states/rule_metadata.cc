@@ -95,7 +95,7 @@ bool Metadata::convert(std::istringstream& data_stream)
 
         else
         {
-            tmpval = ld->add_suboption(keyword, value, ' ');
+            tmpval = ld->add_suboption(keyword, value);
         }
 
         if (retval)

@@ -56,7 +56,9 @@ bool Include::convert(std::istringstream& data_stream)
 
 
         if (cv->should_convert_includes())
-            cv->parse_include_file(file);
+        {
+            cv->parse_include_file(ld->expand_vars(file));
+        }
         else
         {
             ld->begin_rule();

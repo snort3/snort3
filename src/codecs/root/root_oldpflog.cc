@@ -51,7 +51,7 @@ void DecodeOldPflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt
     uint32_t cap_len = pkthdr->caplen;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -72,7 +72,7 @@ void DecodeOldPflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt
             ErrorMessage("Captured data length < Pflog header length! "
                     "(%d bytes)\n", cap_len);
         }
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
@@ -87,13 +87,13 @@ void DecodeOldPflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt
                         "bytes\n", (unsigned long)(cap_len - PFLOG1_HDRLEN)););
 
             DecodeIP(p->pkt + PFLOG1_HDRLEN, cap_len - PFLOG1_HDRLEN, p);
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
 
 #if defined(AF_INET6)
         case AF_INET6:  /* IPv6 */
             DecodeIPV6(p->pkt + PFLOG1_HDRLEN, cap_len - PFLOG1_HDRLEN, p);
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
 #endif
 
@@ -103,11 +103,11 @@ void DecodeOldPflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt
              */
             // TBD add decoder drop event for unknown old pflog network type
             dc.other++;
-            PREPROC_PROFILE_END(decodePerfStats);
+            MODULE_PROFILE_END(decodePerfStats);
             return;
     }
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 

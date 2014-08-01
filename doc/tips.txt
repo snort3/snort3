@@ -73,7 +73,7 @@ The following pointers will help you get started:
 
     ./configure --enable-inline-init-failopen --enable-option-checking=fatal
         --enable-pthread --with-libpcap-includes=/usr/local/include
-        --with-libpcap-libraries=/usr/local/lib
+        --with-pcap-libraries=/usr/local/lib
         --with-dnet-includes=/usr/local/include
         --with-dnet-libraries=/usr/local/lib --enable-sourcefire
         --with-luajit-includes=/usr/local/include/luajit-2.0

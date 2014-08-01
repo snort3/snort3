@@ -188,13 +188,13 @@ bool ReactOption::operator==(const IpsOption& ips) const
 void ReactOption::action(Packet* p)
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(reactPerfStats);
+    MODULE_PROFILE_START(reactPerfStats);
 
     if ( Active_IsRSTCandidate(p) )
         Active_QueueResponse(React_Send, config);
 
     Active_DropSession();
-    PREPROC_PROFILE_END(reactPerfStats);
+    MODULE_PROFILE_END(reactPerfStats);
 }
 
 //-------------------------------------------------------------------------
@@ -261,14 +261,14 @@ static void React_Send (Packet* p,  void* pv)
     EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & rd->buf_len);
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(reactPerfStats);
+    MODULE_PROFILE_START(reactPerfStats);
     Active_IgnoreSession(p);
 
     Active_SendData(p, df, (uint8_t*)rd->resp_buf, rd->buf_len);
     Active_SendReset(p, rf);
     Active_SendReset(p, ENC_FLAG_FWD);
 
-    PREPROC_PROFILE_END(reactPerfStats);
+    MODULE_PROFILE_END(reactPerfStats);
 }
 
 // format response buffer

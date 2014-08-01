@@ -131,7 +131,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
     FlowCheckData *fcd = &config;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(flowCheckPerfStats);
+    MODULE_PROFILE_START(flowCheckPerfStats);
 
     /* Check established/unestablished first */
     {
@@ -141,7 +141,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
             ** This option requires an established connection and it isn't
             ** in that state yet, so no match.
             */
-            PREPROC_PROFILE_END(flowCheckPerfStats);
+            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
         else if ((fcd->unestablished == 1) && (p->packet_flags & PKT_STREAM_EST))
@@ -150,7 +150,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
             **  We're looking for an unestablished stream, and this is
             **  established, so don't continue processing.
             */
-            PREPROC_PROFILE_END(flowCheckPerfStats);
+            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
@@ -163,7 +163,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
                 (p->packet_flags & PKT_FROM_SERVER))
             {
                 /* No match on from_client */
-                PREPROC_PROFILE_END(flowCheckPerfStats);
+                MODULE_PROFILE_END(flowCheckPerfStats);
                 return DETECTION_OPTION_NO_MATCH;
             }
         }
@@ -177,7 +177,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
                 (p->packet_flags & PKT_FROM_CLIENT))
             {
                 /* No match on from_server */
-                PREPROC_PROFILE_END(flowCheckPerfStats);
+                MODULE_PROFILE_END(flowCheckPerfStats);
                 return DETECTION_OPTION_NO_MATCH;
             }
         }
@@ -188,7 +188,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
     {
         if (p->packet_flags & PKT_REBUILT_STREAM)
         {
-            PREPROC_PROFILE_END(flowCheckPerfStats);
+            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
@@ -197,7 +197,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
     {
         if (p->packet_flags & PKT_REBUILT_FRAG)
         {
-            PREPROC_PROFILE_END(flowCheckPerfStats);
+            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
@@ -208,7 +208,7 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
         if ( !(p->packet_flags & PKT_REBUILT_STREAM)
             && !PacketHasFullPDU(p)
         ) {
-            PREPROC_PROFILE_END(flowCheckPerfStats);
+            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
@@ -217,12 +217,12 @@ int FlowCheckOption::eval(Cursor&, Packet *p)
     {
         if (!(p->packet_flags & PKT_REBUILT_FRAG))
         {
-            PREPROC_PROFILE_END(flowCheckPerfStats);
+            MODULE_PROFILE_END(flowCheckPerfStats);
             return DETECTION_OPTION_NO_MATCH;
         }
     }
 
-    PREPROC_PROFILE_END(flowCheckPerfStats);
+    MODULE_PROFILE_END(flowCheckPerfStats);
     return DETECTION_OPTION_MATCH;
 }
 

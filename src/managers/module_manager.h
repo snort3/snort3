@@ -38,15 +38,14 @@ public:
     static void list_modules();
     static void dump_modules();
 
-    static void show_module(bool markup, const char*);
-    static void show_configs(bool markup, const char* = nullptr);
-    static void show_commands(bool markup, const char* = nullptr);
-    static void show_gids(bool markup, const char* = nullptr);
-    static void show_pegs(bool markup, const char* = nullptr);
+    static void show_module(const char*);
+    static void show_configs(const char* = nullptr);
+    static void show_commands(const char* = nullptr);
+    static void show_gids(const char* = nullptr);
+    static void show_pegs(const char* = nullptr);
+    static void show_rules(const char* = nullptr);
 
-    static void show_rules(bool markup, const char* = nullptr);
     static void load_rules(SnortConfig*);
-
     static void set_config(SnortConfig*);
     static unsigned get_errors();
 

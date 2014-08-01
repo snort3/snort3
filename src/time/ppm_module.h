@@ -39,6 +39,8 @@ class PpmModule : public Module
 {
 public:
     PpmModule();
+
+    bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
 
     const RuleMap* get_rules() const;

@@ -16,38 +16,35 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// range.h author Russ Combs <rucombs@cisco.com>
+// markup.cc author Russ Combs <rucombs@cisco.com>
 
-#ifndef RANGE_H
-#define RANGE_H
+#include "markup.h"
+using namespace std;
 
-// unfortunately, <> was implemented inconsistently.  eg:
-// dsize implements <> as ( a <= c && c <= b ) and
-// icode implements <> as ( a < c && c < b )
+bool Markup::enabled = false;
 
-// <> is implemented icode style but we add explicit options
-// <=> for dsize style and >< for icode style so rule options
-// can coerce <> if needed for backwards compatibility
+void Markup::enable(bool e)
+{ enabled = e; }
 
-struct RangeCheck
+const char* Markup::head()
+{ return enabled ? "=== " : ""; }
+
+const char* Markup::item()
+{ return enabled ? "* " : ""; }
+
+const char* Markup::emphasis_on()
+{ return enabled ? "*" : ""; }
+
+const char* Markup::emphasis_off()
+{ return enabled ? "*" : ""; }
+
+const string& Markup::emphasis(const string& s)
 {
-    enum Op
-    {
-        // =  !  <   <=  >   >=  <>  ><  <=>
-        EQ, NOT, LT, LE, GT, GE, LG, GL, LEG, MAX
-    };
-
-    Op op;
-    long min;
-    long max;
-
-    bool operator==(const RangeCheck&) const;
-
-    void init();
-    // FIXIT add ttl style syntax
-    bool parse(const char* s); 
-    bool eval(long);
-};
-
-#endif
+    static string m;
+    m.clear();
+    m += emphasis_on();
+    m += s;
+    m += emphasis_off();
+    return m;
+}
 

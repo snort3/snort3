@@ -201,13 +201,13 @@ profile =
 {
     rules =
     {
-        count = 25,
+        count = 0,
         sort = 'avg_ticks',
         file = { append = true }
     },
     modules =
     {
-        --count = 10,
+        count = 0,
         sort = 'avg_ticks',
         file = { append = true }
     }
@@ -498,6 +498,7 @@ stream_udp =
 ---------------------------------------------------------------------------
 
 -- alerts + packets
+--[[
 unified2 =
 {
     file = 'u2.log',
@@ -506,16 +507,17 @@ unified2 =
     mpls_event_types = true,
     vlan_event_types = true
 }
+--]]
 
 -- text
 --alert_syslog = { mode = 'LOG_AUTH LOG_ALERT' }
-alert_fast = { }
-alert_full = { }
---alert_test = { file = 'alert.tsv', session = false, msg = true }
+--alert_fast = { }
+--alert_full = { }
+--alert_test = { file = 'alert.tsv' }
 --alert_csv = { file = 'alert.csv' }
 
 -- pcap
-log_tcpdump = { file = 'snort++.pcap' }
+--log_tcpdump = { file = 'snort++.pcap' }
 
 ---------------------------------------------------------------------------
 -- ips rules and filters
@@ -550,6 +552,13 @@ default_rules =
 #alert http ( sid:1; msg:"1"; content:"HTTP"; )
 #alert http any -> 1.2.3.4 ( sid:2; msg:"2"; content:"HTTP"; )
 #alert http any any -> 1.2.3.4 80 ( sid:3; msg:"3"; content:"HTTP"; )
+
+#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST User-Agent known malicious    user agent - SAH Agent"; flow:to_server,established; content:"User-Agent|3A| SAH Agent"; metadata: policy balanced-ips drop, policy connectivity-ips drop, policy security-ips drop, service http;    classtype:misc-activity; sid:5808; rev:9;)
+
+#alert tcp any any -> any 80 ( msg:"Sample rule for Snort++"; http_uri; content:"attack"; sid:1; )
+#alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header:Transfer-Encoding; content:"chunk"; sid:2; )
+#alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header; content:"chunk"; sid:3; )
+#alert tcp any any -> any any ( msg:"Sample rule for Snort++"; content:"trigger"; sid:2; )
 ]]
 
 network =
@@ -560,8 +569,9 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    --include = '../active.rules',
-    --rules = default_rules,
+    --include = '../test.rules',
+    --include = 'active.rules',
+    rules = default_rules,
     enable_builtin_rules = false
 }
 

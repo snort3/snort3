@@ -141,7 +141,7 @@ int RpcOption::eval(Cursor&, Packet *p)
         return 0; /* if error occured while ip header
                    * was processed, return 0 automagically.  */
 
-    PREPROC_PROFILE_START(rpcCheckPerfStats);
+    MODULE_PROFILE_START(rpcCheckPerfStats);
 
     if( IsTCP(p) )
     {
@@ -151,7 +151,7 @@ int RpcOption::eval(Cursor&, Packet *p)
         if(p->dsize<28)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"););
-            PREPROC_PROFILE_END(rpcCheckPerfStats);
+            MODULE_PROFILE_END(rpcCheckPerfStats);
             return rval;
         }
     }
@@ -161,7 +161,7 @@ int RpcOption::eval(Cursor&, Packet *p)
         if(p->dsize<24)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet too small"););
-            PREPROC_PROFILE_END(rpcCheckPerfStats);
+            MODULE_PROFILE_END(rpcCheckPerfStats);
             return rval;
         }
     }
@@ -186,7 +186,7 @@ int RpcOption::eval(Cursor&, Packet *p)
     if(direction != CALL)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "RPC packet not a call"););
-        PREPROC_PROFILE_END(rpcCheckPerfStats);
+        MODULE_PROFILE_END(rpcCheckPerfStats);
         return rval;
     }
 
@@ -197,7 +197,7 @@ int RpcOption::eval(Cursor&, Packet *p)
     if(rpcvers != RPC_MSG_VERSION)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"RPC msg version invalid"););
-        PREPROC_PROFILE_END(rpcCheckPerfStats);
+        MODULE_PROFILE_END(rpcCheckPerfStats);
         return rval;
     }
 
@@ -237,7 +237,7 @@ int RpcOption::eval(Cursor&, Packet *p)
     }
 
     /* if the test isn't successful, return 0 */
-    PREPROC_PROFILE_END(rpcCheckPerfStats);
+    MODULE_PROFILE_END(rpcCheckPerfStats);
     return rval;
 }
 

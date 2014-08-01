@@ -10,6 +10,7 @@ rule_file_data.cc \
 rule_http_encode.cc \
 rule_metadata.cc \
 rule_pcre.cc \
+rule_threshold.cc \
 rule_unchanged.cc \
 rule_urilen.cc \
 rule_api.cc \

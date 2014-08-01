@@ -91,6 +91,14 @@ static uint32_t (*s_hack)(Packet*, uint32_t, uint32_t) = GenerateSnortEvent;
 
 rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
 
+static std::string s_aux_rules;
+
+void parser_append_rules(const char* s)
+{
+    s_aux_rules += s;
+    s_aux_rules += "\n";
+}
+
 //-------------------------------------------------------------------------
 // private / implementation methods
 //-------------------------------------------------------------------------
@@ -757,6 +765,9 @@ void ParserCleanup(void)
 
 void ParseRules(SnortConfig *sc)
 {
+    std::string& s = sc->policy_map->ips_policy[0]->rules;
+    s += s_aux_rules;
+
     for ( auto p : sc->policy_map->ips_policy )
     {
         if ( p->enable_builtin_rules )

@@ -8,5 +8,7 @@ add_library( stream_tcp STATIC
     tcp_module.h
     tcp_session.cc
     tcp_session.h
+    ips_stream_reassemble.cc
+    ips_stream_size.cc
 )
 

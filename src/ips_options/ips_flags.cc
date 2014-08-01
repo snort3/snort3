@@ -129,13 +129,13 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
     u_char tcp_flags;
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(tcpFlagsPerfStats);
+    MODULE_PROFILE_START(tcpFlagsPerfStats);
 
     if(!p->tcph)
     {
         /* if error appeared when tcp header was processed,
          * test fails automagically */
-        PREPROC_PROFILE_END(tcpFlagsPerfStats);
+        MODULE_PROFILE_END(tcpFlagsPerfStats);
         return rval;
     }
 
@@ -203,7 +203,7 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
             break;
     }
 
-    PREPROC_PROFILE_END(tcpFlagsPerfStats);
+    MODULE_PROFILE_END(tcpFlagsPerfStats);
     return rval;
 }
 //-------------------------------------------------------------------------

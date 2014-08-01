@@ -70,21 +70,21 @@ int FileDataOption::eval(Cursor& c, Packet*)
     uint16_t len;
 
     PROFILE_VARS;
-    PREPROC_PROFILE_START(fileDataPerfStats);
+    MODULE_PROFILE_START(fileDataPerfStats);
 
     data = g_file_data.data;
     len = g_file_data.len;
 
     if ( (data == NULL)|| (len == 0) )
     {
-        PREPROC_PROFILE_END(fileDataPerfStats);
+        MODULE_PROFILE_END(fileDataPerfStats);
         return rval;
     }
 
     c.set(s_name, data, len);
     rval = DETECTION_OPTION_MATCH;
 
-    PREPROC_PROFILE_END(fileDataPerfStats);
+    MODULE_PROFILE_END(fileDataPerfStats);
     return rval;
 }
 

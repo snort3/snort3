@@ -376,7 +376,7 @@ static void ParseOtnMetadata(
             if (value == NULL)
                 ParseError("Metadata key '%s' requires a value.", key);
 
-            if ( strcasecmp(value, METADATA_VALUE__PREPROC) &&
+            if ( strcasecmp(value, METADATA_VALUE__MODULE) &&
                  strcasecmp(value, METADATA_VALUE__DECODE) &&
                  strcasecmp(value, METADATA_VALUE__DETECT) )
             {

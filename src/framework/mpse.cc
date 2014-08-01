@@ -55,14 +55,14 @@ int Mpse::search(
     void * data, int* current_state )
 {
     PROFILE_VARS;
-    PREPROC_PROFILE_START(mpsePerfStats);
+    MODULE_PROFILE_START(mpsePerfStats);
 
     int ret = _search(T, n, action, data, current_state);
 
     if ( inc_global_counter )
       s_bcnt += n;
 
-    PREPROC_PROFILE_END(mpsePerfStats);
+    MODULE_PROFILE_END(mpsePerfStats);
     return ret;
 }
 

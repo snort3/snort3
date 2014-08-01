@@ -62,7 +62,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "framework/range.h"
+#include "range.h"
 
 static const char* s_name = "icmp_seq";
 
@@ -120,7 +120,7 @@ int IcmpSeqOption::eval(Cursor&, Packet *p)
     if(!p->icmph)
         return DETECTION_OPTION_NO_MATCH;
 
-    PREPROC_PROFILE_START(icmpSeqPerfStats);
+    MODULE_PROFILE_START(icmpSeqPerfStats);
 
     if ( (p->icmph->type == ICMP_ECHO ||
           p->icmph->type == ICMP_ECHOREPLY) ||
@@ -129,11 +129,11 @@ int IcmpSeqOption::eval(Cursor&, Packet *p)
     {
         if ( config.eval(p->icmph->s_icmp_seq) )
         {
-            PREPROC_PROFILE_END(icmpSeqPerfStats);
+            MODULE_PROFILE_END(icmpSeqPerfStats);
             return DETECTION_OPTION_MATCH;
         }
     }
-    PREPROC_PROFILE_END(icmpSeqPerfStats);
+    MODULE_PROFILE_END(icmpSeqPerfStats);
     return DETECTION_OPTION_NO_MATCH;
 }
 

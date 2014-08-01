@@ -23,3 +23,14 @@ set(includedir "\${prefix}/${INCLUDE_INSTALL_PATH}")
 set(libdir "\${prefix}/snort")
 
 
+
+# setting and install the pkg-config information
+
+configure_file(
+    "${CMAKE_SOURCE_DIR}/snort.pc.in"
+    "${CMAKE_BINARY_DIR}/snort.pc"
+    @ONLY)
+
+install (FILES ${CMAKE_BINARY_DIR}/snort.pc
+    DESTINATION "lib/pkgconfig/"
+)

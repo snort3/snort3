@@ -655,11 +655,6 @@ void RegisterProfile(
         mpsePerfStats = &node->stats;
 }
 
-void RegisterOtnProfile(const char *keyword, get_profile_func get)
-{
-    RegisterProfile(keyword, "rule tree eval", get);
-}
-
 void RegisterProfile(Module* m)
 {
     ProfileStats* ps = m->get_profile();
@@ -893,22 +888,22 @@ void PrintWorstPreprocs(int numToPrint)
     {
         if(log)
         {
-            TextLog_Print(log, "Preprocessor Profile Statistics (worst %d)\n", numToPrint);
+            TextLog_Print(log, "Module Profile Statistics (worst %d)\n", numToPrint);
         }
         else
         {
-            LogMessage("Preprocessor Profile Statistics (worst %d)\n", numToPrint);
+            LogMessage("Module Profile Statistics (worst %d)\n", numToPrint);
         }
     }
     else
     {
         if(log)
         {
-            TextLog_Print(log, "Preprocessor Profile Statistics (all)\n");
+            TextLog_Print(log, "Module Profile Statistics (all)\n");
         }
         else
         {
-            LogMessage("Preprocessor Profile Statistics (all)\n");
+            LogMessage("Module Profile Statistics (all)\n");
         }
     }
 

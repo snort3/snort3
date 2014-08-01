@@ -43,9 +43,6 @@ public:
     virtual bool convert(std::istringstream& data_stream);
 };
 
-} // namespace
-
-
 template<const std::string* snort_option,
         const std::string* lua_table,
         const std::string* lua_option>
@@ -77,6 +74,9 @@ static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
     return new Memcap<snort_option, lua_table, lua_option>(cv, ld);
 }
+
+
+} // namespace
 
 /**************************
  *******  A P I ***********

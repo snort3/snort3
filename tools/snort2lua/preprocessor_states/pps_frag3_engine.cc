@@ -89,20 +89,11 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
         if(!keyword.compare("min_ttl"))
             tmpval = parse_int_option("min_ttl", data_stream);
 
-        else if(!keyword.compare("policy"))
-            tmpval = parse_string_option("policy", data_stream);
-
         else if(!keyword.compare("detect_anomalies"))
             ld->add_deleted_comment("detect_anomalies");
 
         else if(!keyword.compare("bind_to"))
             parse_ip_list("bind_to", data_stream);
-
-        else if(!keyword.compare("timeout"))
-        {
-            tmpval = parse_int_option("session_timeout", data_stream);
-            ld->add_diff_option_comment("timeout", "session_timeout");
-        }
 
         else if(!keyword.compare("overlap_limit"))
         {
@@ -114,6 +105,65 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
         {
             tmpval = parse_int_option("min_frag_length", data_stream);
             ld->add_diff_option_comment("min_fragment_length", "min_frag_length");
+        }
+
+        else if(!keyword.compare("timeout"))
+        {
+            std::string val;
+            ld->add_diff_option_comment("timeout", "session_timeout");
+
+            if (data_stream >> val)
+            {
+                int seconds = std::stoi(val);
+                if (seconds == 0)
+                {
+                    tmpval = ld->add_option_to_table("session_timeout", 256);
+                    ld->add_comment_to_table("preprocessor frag3_engine: "
+                        "timeout 0 ==> session_timeout 256");
+                }
+                else
+                {
+                    tmpval = ld->add_option_to_table("session_timeout", seconds);
+                }
+            }
+        }
+
+
+        else if(!keyword.compare("policy"))
+        {
+            std::string policy;
+
+            if (!(data_stream >> policy))
+                tmpval = false;
+
+            else if (!policy.compare("first"))
+                tmpval = ld->add_option_to_table("policy", "first");
+
+            else if (!policy.compare("bsd"))
+                tmpval = ld->add_option_to_table("policy", "bsd");
+
+            else if (!policy.compare("last"))
+                tmpval = ld->add_option_to_table("policy", "last");
+
+            else if (!policy.compare("windows"))
+                tmpval = ld->add_option_to_table("policy", "windows");
+
+            else if (!policy.compare("linux"))
+                tmpval = ld->add_option_to_table("policy", "linux");
+
+            else if (!policy.compare("solaris"))
+                tmpval = ld->add_option_to_table("policy", "solaris");
+
+            else if (!policy.compare("bsd-right"))
+            {
+                ld->add_diff_option_comment("policy bsd-right", "policy = bsd_right");
+                tmpval = ld->add_option_to_table("policy", "bsd_right");
+            }
+
+            else
+            {
+                tmpval = false;
+            }
         }
 
         else

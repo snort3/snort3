@@ -22,4 +22,5 @@ target_link_libraries( network_inspectors
     binder
     perf_monitor
     normalize
+    stream_tcp
 )

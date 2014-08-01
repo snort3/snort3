@@ -51,7 +51,7 @@ void DecodeI4LRawIPPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * 
 {
     PROFILE_VARS;
 
-    PREPROC_PROFILE_START(decodePerfStats);
+    MODULE_PROFILE_START(decodePerfStats);
 
     dc.total_processed++;
 
@@ -65,14 +65,14 @@ void DecodeI4LRawIPPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * 
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "What the hell is this?\n"););
         // TBD add decoder drop event for bad i4l raw pkt
         dc.other++;
-        PREPROC_PROFILE_END(decodePerfStats);
+        MODULE_PROFILE_END(decodePerfStats);
         return;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n"););
     DecodeIP(pkt + 2, p->pkth->pktlen - 2, p);
 
-    PREPROC_PROFILE_END(decodePerfStats);
+    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 
