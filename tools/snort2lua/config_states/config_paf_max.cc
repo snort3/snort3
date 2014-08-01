@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// include.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// config_paf_max.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -26,47 +26,40 @@
 #include "utils/converter.h"
 #include "utils/snort2lua_util.h"
 
-namespace keywords
+namespace config
 {
 
 namespace {
 
-class Include : public ConversionState
+class PafMax : public ConversionState
 {
 public:
-    Include(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
-    virtual ~Include() {};
-    virtual bool convert(std::istringstream& data);
+    PafMax(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    virtual ~PafMax() {};
+    virtual bool convert(std::istringstream& data_stream);
 };
 
 } // namespace
 
-
-bool Include::convert(std::istringstream& data_stream)
+bool PafMax::convert(std::istringstream& data_stream)
 {
-    std::string file = std::string();
-    std::string tmp;
+    bool retval = true;
+    int val;
 
-    while (data_stream >> tmp)
-        file += tmp;
+    ld->open_table("stream_tcp");
 
-    if(!file.empty())
+    if (data_stream >> val)
     {
-        // if not parsing, assume its a regular rule file.
-
-
-        if (cv->should_convert_includes())
-        {
-            cv->parse_include_file(ld->expand_vars(file));
-        }
+        if (val < 1460)
+            retval = ld->add_diff_option_comment("paf_max [0:63780]", "paf_max [1460:63780]");
         else
-        {
-            ld->begin_rule();
-            ld->add_hdr_data("include " + file);
-        }
-        return true;
+            retval = ld->add_option_to_table("paf_max", val);
     }
-    return false;
+    else
+        retval = false;
+
+    ld->close_table();
+    return retval;
 }
 
 /**************************
@@ -75,15 +68,15 @@ bool Include::convert(std::istringstream& data_stream)
 
 static ConversionState* ctor(Converter* cv, LuaData* ld)
 {
-    return new Include(cv, ld);
+    return new PafMax(cv, ld);
 }
 
-static const ConvertMap keyword_include = 
+static const ConvertMap paf_max_api =
 {
-    "include",
+    "paf_max",
     ctor,
 };
 
-const ConvertMap* include_map = &keyword_include;
+const ConvertMap* paf_max_map = &paf_max_api;
 
-}  // namespace keywords
+} // namespace config

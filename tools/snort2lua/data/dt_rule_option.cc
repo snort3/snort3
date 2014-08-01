@@ -45,10 +45,9 @@ bool RuleOption::add_suboption(std::string name)
 }
 
 bool RuleOption::add_suboption(std::string name,
-                                std::string val,
-                                char delimeter)
+                                std::string val)
 {
-    RuleSubOption* subopt = new RuleSubOption(name, val, delimeter);
+    RuleSubOption* subopt = new RuleSubOption(name, val);
     sub_options.push_back(subopt);
     return true;
 }

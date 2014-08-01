@@ -82,8 +82,9 @@ bool file_exists (const std::string& name);
  *          True - when the string is found.
  *          False - whenma substing was unable to be extracted.
  */
-bool get_string(std::istringstream& data_stream, std::string& option,
-        const std::string delimeters);
+bool get_string(std::istringstream& data_stream,
+                std::string& option,
+                const std::string delimeters);
 
 
 std::string get_rule_option_args(std::istringstream& data_stream);

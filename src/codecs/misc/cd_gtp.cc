@@ -90,22 +90,16 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     uint8_t  next_hdr_type;
     uint8_t  version;
     uint8_t  ip_ver;
-    GTPHdr *hdr;
+    const GTPHdr *hdr;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Start GTP decoding.\n"););
 
-    hdr = (GTPHdr *) raw_pkt;
+    p->encapsulations++;
 
-    if (p->GTPencapsulated)
-    {
-        codec_events::decoder_alert_encapsulated(p, DECODE_GTP_MULTIPLE_ENCAPSULATION,
-                raw_pkt, raw_len);
-        return false;
-    }
-    else
-    {
-        p->GTPencapsulated = 1;
-    }
+    hdr = reinterpret_cast<const GTPHdr *>(raw_pkt);
+
+
+
     /*Check the length*/
     if (raw_len < GTP_MIN_LEN)
        return false;

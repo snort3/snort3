@@ -41,7 +41,7 @@ public:
     LuaData();
     virtual ~LuaData();
 
-    // set the print mode. Quiet, Different, or Default. Setters for snort2lua,
+    // set and retrieve various pieces of information from this Data object
     // getters are for other data classes.
     static inline void set_default_print() {mode = PrintMode::DEFAULT; }
     static inline bool is_default_mode() { return mode == PrintMode::DEFAULT; }
@@ -52,6 +52,11 @@ public:
     inline bool failed_conversions() { return !errors->empty() || !bad_rules->empty(); }
     inline bool contains_rules() { return rules.size() > 0; }
 
+    // given a Snort-style variable, translate into a string.
+    std::string expand_vars(std::string string);
+    // translate a given variable into a string
+    // spaces will appear if multiple values added to variable
+    std::string translate_variable(std::string);
 
     friend std::ostream &operator<<(std::ostream&, const LuaData &);
     void print_rules(std::ostream&, bool in_rule_file);
@@ -68,7 +73,9 @@ public:
                             std::vector<Include*>&,
                             Comments*&);
 
-    // FILE OUTPUTS
+
+
+    // FILE CREATION AND ADDITIONS
 
     void add_error_comment(std::string comment);
     // add a reject comment to the rejct file
@@ -84,20 +91,18 @@ public:
 
 
 
-    // TABLE OUTPUTS
+    // CREATING TABLES AND NEXTED TABLES
 
     // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
     void open_top_level_table(std::string name);
     // open a nested named table --> 'name = {...}')
     void open_table(std::string name);
-    // create a new table with this name...even if a table with the same name already exists
-    void open_new_top_level_table(std::string name);
     // open a nested table that does not contain a name --> {...})
     void open_table();
     // close the nested table.  go to previous table level
     void close_table();
 
-    // ADDING FIELDS TO TABLES
+    // ADDING DATA AND FIELDS TO CURRENT TABLE
 
     // add an string, bool, or int option to the table. --> table = { name = var };
     bool add_option_to_table(const std::string name, const std::string val);
@@ -117,7 +122,8 @@ public:
     bool add_unsupported_comment(std::string unsupported_var);
 
 
-    // RULE PARSING
+    // CREATE RULE AND ADD DATA TO THE RULE
+
     // Create a new rule object.
     void begin_rule();
     // Comment out the current rule
@@ -139,11 +145,12 @@ public:
     // add a rule option (keyword and suboption)
     bool add_suboption(std::string keyword);
     // add a rule option (keyword and suboption)
-    bool add_suboption(std::string keyword, std::string val, char delimeter);
+    bool add_suboption(std::string keyword, std::string val);
     // add a comment to a rule
     void add_comment_to_rule(std::string coment);
 
 private:
+
     enum class PrintMode
     {
         DEFAULT,

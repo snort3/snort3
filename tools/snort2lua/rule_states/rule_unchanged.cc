@@ -536,19 +536,6 @@ static const ConvertMap rule_detection_filter =
 const ConvertMap* detection_filter_map = &rule_detection_filter;
 
 /************************************
- ***********  THRESHOLD  ************
- ************************************/
-
-static const std::string threshold = "threshold";
-static const ConvertMap rule_threshold =
-{
-    threshold,
-    unchanged_rule_ctor<&threshold>,
-};
-
-const ConvertMap* threshold_map = &rule_threshold;
-
-/************************************
  ***********  BYTE_TEST  ************
  ************************************/
 

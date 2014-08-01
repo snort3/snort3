@@ -38,7 +38,7 @@ public:
     inline std::string get_name(){ return name; };
 
     bool add_suboption(std::string name);
-    bool add_suboption(std::string name, std::string val, char delimeter);
+    bool add_suboption(std::string name, std::string val);
  
     // overloading operators
     friend std::ostream &operator<<( std::ostream&, const RuleOption &);

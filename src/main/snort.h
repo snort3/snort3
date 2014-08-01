@@ -542,9 +542,14 @@ static inline uint32_t ScSoRuleMemcap(void)
     return snort_conf->so_rule_memcap;
 }
 
-static inline bool ScTunnelBypassEnabled (uint8_t proto)
+static inline bool ScTunnelBypassEnabled(uint8_t proto)
 {
     return !(snort_conf->tunnel_mask & proto);
+}
+
+static inline int8_t ScMaxEncapsulations(void)
+{
+    return snort_conf->max_encapsulations;
 }
 
 #endif

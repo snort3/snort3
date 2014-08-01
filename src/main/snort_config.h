@@ -137,6 +137,7 @@ struct SnortConfig
     uint8_t enable_gtp;
     char *gtp_ports;
     uint8_t enable_esp;
+    int8_t max_encapsulations;
 
     int pkt_snaplen;
 

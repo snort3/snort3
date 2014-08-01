@@ -78,7 +78,7 @@ FragEngine::FragEngine()
 //-------------------------------------------------------------------------
 
 static const char* policies = 
-    "first | linux | bsd | bsd_right |last | windows | solaris";
+    "first | linux | bsd | bsd_right | last | windows | solaris";
 
 static const RuleMap stream_ip_rules[] =
 {

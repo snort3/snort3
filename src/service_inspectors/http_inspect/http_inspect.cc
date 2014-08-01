@@ -105,6 +105,7 @@ const char* peg_names[] =
     "gzip packets",
     "compressed bytes",
     "decompressed bytes",
+    nullptr,
 };
 
 THREAD_LOCAL int hiDetectCalled = 0;
