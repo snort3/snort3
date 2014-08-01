@@ -889,7 +889,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
     PREPROC_PROFILE_START(fragRebuildPerfStats);
 
-    if ( p->encapsulated )
+    if ( p->encapsulations )
         dpkt = encap_defrag_pkt;
     else
         dpkt = defrag_pkt;

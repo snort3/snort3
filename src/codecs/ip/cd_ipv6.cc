@@ -162,22 +162,13 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     // This will need to go
     if (p->family != NO_IP)
     {
-        /* Snort currently supports only 2 IP layers. Any more will fail to be
-           decoded. */
-        if (p->encapsulated)
-        {
-
+        if (p->encapsulations)
             codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                             raw_pkt, raw_len);
-            goto decodeipv6_fail;
-        }
-        else
-        {
-            p->encapsulated = 1;
-            p->outer_iph = p->iph;
-            p->outer_ip_data = p->ip_data;
-            p->outer_ip_dsize = p->ip_dsize;
-        }
+
+        p->outer_iph = p->iph;
+        p->outer_ip_data = p->ip_data;
+        p->outer_ip_dsize = p->ip_dsize;
     }
 
     payload_len = ntohs(hdr->ip6plen) + ipv6::hdr_len();
@@ -216,7 +207,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     sfiph_build(p, hdr, AF_INET6);
 
     /* Remove outer IP options */
-    if (p->encapsulated)
+    if (p->encapsulations)
     {
         p->ip_options_data = NULL;
         p->ip_options_len = 0;
@@ -624,7 +615,7 @@ bool Ipv6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
     }
     else
     {
-        if ( i + 1 == p->next_layer )
+        if ( i + 1 == p->num_layers )
             *len += lyr->length + p->dsize;
 
         // w/o all extension headers, can't use just the
@@ -654,7 +645,7 @@ void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     if ( f & ENC_FLAG_DEF )
     {
         int i = lyr - c->layers;
-        if ( i + 1 == p->next_layer )
+        if ( i + 1 == p->num_layers )
         {
             uint8_t* b = (uint8_t*)p->ip6_extensions[p->ip6_frag_index].data;
             if ( b ) lyr->length = b - p->layers[i].start;

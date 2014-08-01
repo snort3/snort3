@@ -109,6 +109,7 @@ extern "C" {
 
 #define PKT_FILE_EVENT_SET   0x04000000
 #define PKT_ESP_LYR_PRESENT  0x08000000
+#define PKT_UNUSED_FLAGS     0xF0000000
 
 // 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
@@ -205,12 +206,11 @@ struct Packet
     //vvv-----------------------------
     ipv4::IP4Hdr *ip4h, *orig_ip4h;
     ipv6::IP6Hdr *ip6h, *orig_ip6h;
-    icmp6::ICMP6Hdr *icmp6h, *orig_icmp6h;
+    icmp6::ICMP6Hdr *icmp6h;
 
     IPH_API* iph_api;
     IPH_API* orig_iph_api;
     IPH_API* outer_iph_api;
-    IPH_API* outer_orig_iph_api;
 
     int family;
     int orig_family;
@@ -256,9 +256,9 @@ struct Packet
     uint8_t ip6_frag_index;
 
     uint8_t error_flags;        /* flags indicate checksum errors, bad TTLs, etc. */
-    uint8_t encapsulated;
-    uint8_t GTPencapsulated;
-    uint8_t next_layer;         /* index into layers for next encap */
+    uint8_t num_layers;         /* index into layers for next encap */
+    uint8_t decode_flags;       /* flags used while decoding */
+    uint8_t encapsulations;     /* thh curent number of encapsulations */
 
     // nothing after this point is zeroed ...
     ipv4::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */

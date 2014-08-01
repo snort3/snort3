@@ -408,23 +408,23 @@ void Log2ndHeader(TextLog* log, Packet* p)
     switch(DAQ_GetBaseProtocol())
     {
         case DLT_EN10MB:        /* Ethernet */
-            if(p && (p->next_layer > 0))
+            if(p && (p->num_layers > 0))
                 LogEthHeader(log, p);
             break;
 #ifndef NO_NON_ETHER_DECODER
 #ifdef DLT_IEEE802_11
         case DLT_IEEE802_11:
-            if(p && (p->next_layer > 0))
+            if(p && (p->num_layers > 0))
                 LogWifiHeader(log, p);
             break;
 #endif
         case DLT_IEEE802:                /* Token Ring */
-            if(p && (p->next_layer > 0))
+            if(p && (p->num_layers > 0))
                 LogTrHeader(log, p);
             break;
 #ifdef DLT_LINUX_SLL
         case DLT_LINUX_SLL:
-            if (p && (p->next_layer > 0))
+            if (p && (p->num_layers > 0))
                 LogSLLHeader(log, p);  /* Linux cooked sockets */
             break;
 #endif
@@ -1019,8 +1019,8 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
     orig_p->dp = p->orig_dp;
     orig_p->icmph = p->orig_icmph;
     orig_p->iph_api = p->orig_iph_api;
-    orig_p->ip4h = p->orig_ip4h;
-    orig_p->ip6h = p->orig_ip6h;
+//    orig_p->ip4h = p->orig_ip4h;
+//    orig_p->ip6h = p->orig_ip6h;
     orig_p->family = p->orig_family;
 
     if(orig_p->iph != NULL)
@@ -1494,8 +1494,8 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
 
     if(p && ScObfuscate() )
     {
-        int next_layer =  p->next_layer;
-        for ( i = 0; i < next_layer; i++ )
+        int num_layers =  p->num_layers;
+        for ( i = 0; i < num_layers; i++ )
         {
             if ( p->layers[i].proto == PROTO_IP4
                   || p->layers[i].proto == PROTO_IP6

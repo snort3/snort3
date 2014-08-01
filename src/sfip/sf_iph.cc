@@ -463,15 +463,11 @@ void sfiph_orig_build(Packet *p, const void *hdr, int family)
     /* If iph_api is already set, we've been here before.
      * That means this is a nested IP.  */
     if (p->orig_iph_api && (p->orig_iph_api->ver == IPH_API_V4))
-    {
         memcpy(&p->outer_orig_ip4h, &p->inner_orig_ip4h, sizeof(IP4Hdr));
-        p->outer_orig_iph_api = p->orig_iph_api;
-    }
+
     else if (p->orig_iph_api && (p->orig_iph_api->ver == IPH_API_V6))
-    {
         memcpy(&p->outer_orig_ip6h, &p->inner_orig_ip6h, sizeof(IP6Hdr));
-        p->outer_orig_iph_api = p->orig_iph_api;
-    }
+
 
     _set_callbacks(p, family, CALLBACK_ICMP_ORIG);
 

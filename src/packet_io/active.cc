@@ -79,8 +79,8 @@ static int s_enabled = 0;
 
 static inline PROTO_ID GetInnerProto (const Packet* p)
 {
-    if ( !p->next_layer ) return PROTO_MAX;
-    return ( p->layers[p->next_layer-1].proto );
+    if ( !p->num_layers ) return PROTO_MAX;
+    return ( p->layers[p->num_layers-1].proto );
 }
 
 //--------------------------------------------------------------------

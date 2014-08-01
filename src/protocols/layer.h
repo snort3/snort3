@@ -64,19 +64,22 @@ struct EtherHdr;
 }
 
 
-// code maintained in header to ensure files to not depend on this library
 namespace layer
 {
 
+// all of these functions will begin search from layer 0,
+// and will return the first function they find.
 
-// signatures. No need to go searching for the correct function
+
 const arp::EtherARP* get_arp_layer(const Packet*);
 const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
 const gre::GREHdr* get_gre_layer(const Packet*);
 const eapol::EtherEapol* get_eapol_layer(const Packet*);
 const eth::EtherHdr* get_eth_layer(const Packet*);
-const uint8_t* get_root_layer(const Packet*);
+const uint8_t* get_root_layer(const Packet* const);
 
+int get_inner_ip_lyr(const Packet* const p);
+uint16_t get_outer_ip_next_proto(const Packet* const);
 
 } // namespace layer
 

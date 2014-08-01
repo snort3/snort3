@@ -26,13 +26,11 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
-#include "protocols/packet.h"  
-#include "static_include.h"
 
-#include "root_ppp.h"
-#include "../decoder_includes.h"
-#include "protocols/root/root_chdlc.h"
+#include "framework/codec.h"
+
+
+static int DLT_PPP = 51;
 
 
 /*
@@ -55,18 +53,6 @@ void DecodePppPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
 {
     uint32_t cap_len = pkthdr->caplen;
     int hlen = 0;
-    PROFILE_VARS;
-
-    PREPROC_PROFILE_START(decodePerfStats);
-
-    dc.total_processed++;
-
-    memset(p, 0, PKT_ZERO_LEN);
-
-    p->pkth = pkthdr;
-    p->pkt = pkt;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n"););
 
     if(cap_len < 2)
     {
@@ -89,7 +75,6 @@ void DecodePppPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
 
     DecodePppPktEncapsulated(p->pkt + hlen, cap_len - hlen, p);
 
-    PREPROC_PROFILE_END(decodePerfStats);
     return;
 }
 

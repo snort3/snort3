@@ -99,7 +99,7 @@ static const uint8_t MAX_EOL_PAD[TCP_OPTLENMAX] = {
 // go from inner to outer
 int Norm_Packet (NormalizerConfig* c, Packet* p)
 {
-    uint8_t lyr = p->next_layer;
+    uint8_t lyr = p->num_layers;
     int changes = 0;
 
     while ( lyr > 0 )

@@ -93,7 +93,7 @@ Snort++ differs from Snort in the following ways:
   uricontent:"foo" -->  http_uri; content:"foo"
 * deleted urilen raw and norm; must use http_raw_uri and http_uri instead
 * deleted unused http_encode option
-* content suboption http_* are no full option and should be place before content
+* content suboption http_* are not full option and should be place before content
 * the following pcre options have been deleted: use sticky buffers instead
     B, U, P, H, M, C, I, D, K, S, Y
 

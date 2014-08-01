@@ -133,7 +133,7 @@ int SnortEventqAdd(OptTreeNode* otn)
 
     EventNode* en = (EventNode*)sfeventq_event_alloc(event_queue[qIndex]);
 
-    if ( !en )
+    if ( en )
         return -1;
 
     en->otn = otn;

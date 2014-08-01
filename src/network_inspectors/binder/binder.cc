@@ -29,6 +29,8 @@ using namespace std;
 #include "stream/stream_splitter.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
+#include "protocols/vlan.h"
+#include "protocols/layer.h"
 #include "stream/stream_api.h"
 #include "time/profiler.h"
 #include "utils/stats.h"
@@ -174,6 +176,7 @@ int Binder::check_rules(Flow* flow, Packet* p)
     unsigned i, sz = bindings.size();
 
     Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
+    uint16_t vlan = vlan::vth_vlan(layer::get_vlan_layer(p));
 
     for ( i = 0; i < sz; i++ )
     {
