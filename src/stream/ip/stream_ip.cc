@@ -63,8 +63,8 @@ public:
     int verify_config(SnortConfig*);
     void show(SnortConfig*);
 
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
 
     void eval(Packet*);
 
@@ -97,14 +97,14 @@ int StreamIp::verify_config(SnortConfig*)
     return 0;
 }
 
-void StreamIp::pinit()
+void StreamIp::tinit()
 {
-    defrag->pinit();
+    defrag->tinit();
 }
 
-void StreamIp::pterm()
+void StreamIp::tterm()
 {
-    defrag->pterm();
+    defrag->tterm();
 }
 
 void StreamIp::show(SnortConfig* sc)
@@ -171,12 +171,12 @@ static const InspectApi ip_api =
     PROTO_BIT__IP,
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    ip_ctor,
-    ip_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    ip_ctor,
+    ip_dtor,
     ip_ssn,
     nullptr  // reset
 };

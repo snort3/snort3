@@ -8,7 +8,9 @@ x_include_HEADERS = \
 actions.h
 
 libactions_a_SOURCES = \
-actions.cc
+actions.cc \
+ips_actions.cc \
+ips_actions.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

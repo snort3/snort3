@@ -32,6 +32,7 @@
 #include "detection/detection_util.h"
 #include "nhttp_scratch_pad.h"
 #include "nhttp_flow_data.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgSection class
@@ -39,7 +40,7 @@
 
 class NHttpMsgSection {
 public:
-    virtual ~NHttpMsgSection() {delete[] rawBuf;};
+    virtual ~NHttpMsgSection() { delete[] rawBuf; };
     virtual void analyze() = 0;                           // Minimum necessary processing for every message
     virtual void printSection(FILE *output) = 0;          // Test tool prints all derived message parts
     virtual void genEvents() = 0;                         // Converts collected information into required preprocessor events
@@ -51,15 +52,14 @@ protected:
 
     // Convenience methods
     static uint32_t findCrlf(const uint8_t* buffer, int32_t length, bool wrappable);
-    static void printInterval(FILE *output, const char* name, const uint8_t *text, int32_t length, bool intVals = false);
     void printMessageTitle(FILE *output, const char *title) const;
     void printMessageWrapup(FILE *output) const;
+    void createEvent(NHttpEnums::EventSid sid);
 
     // The current strategy is to copy the entire raw message section into this object. Here it is.
-    int32_t length;
     uint8_t* rawBuf;
     // This pseudonym for rawBuf isolates details of how the raw message is stored from everything else.
-    const uint8_t* msgText;
+    Field msgText;
 
     NHttpFlowData* sessionData;
     NHttpEnums::SourceId sourceId;
@@ -70,6 +70,7 @@ protected:
     // These are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the
     // scratchPad (normalized pieces).
     uint64_t infractions;
+    uint64_t eventsGenerated;
     NHttpEnums::VersionId versionId;
     NHttpEnums::MethodId methodId;
     int32_t statusCodeNum;

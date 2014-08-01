@@ -256,12 +256,12 @@ static const InspectApi no_api =
     PROTO_BITS,
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    no_ctor,
-    no_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    no_ctor,
+    no_dtor,
     nullptr, // ssn
     nullptr  // reset
 };

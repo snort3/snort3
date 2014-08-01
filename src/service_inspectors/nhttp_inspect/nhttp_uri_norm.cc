@@ -35,7 +35,7 @@
 
 using namespace NHttpEnums;
 
-void UriNormalizer::normalize(const field &input, field &result, bool doPath, ScratchPad &scratchPad, uint64_t &infractions) {
+void UriNormalizer::normalize(const Field &input, Field &result, bool doPath, ScratchPad &scratchPad, uint64_t &infractions) {
     if (result.length != STAT_NOTCOMPUTE) return;
     assert (input.length >= 0);
 

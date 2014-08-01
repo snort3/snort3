@@ -34,6 +34,7 @@
 #include <iostream>
 using namespace std;
 
+#include "action_manager.h"
 #include "data_manager.h"
 #include "event_manager.h"
 #include "inspector_manager.h"
@@ -45,6 +46,7 @@ using namespace std;
 
 #include "framework/codec.h"
 #include "framework/logger.h"
+#include "framework/ips_action.h"
 #include "framework/ips_option.h"
 #include "framework/inspector.h"
 #include "framework/mpse.h"
@@ -53,6 +55,7 @@ using namespace std;
 
 #include "loggers/loggers.h"
 #include "ips_options/ips_options.h"
+#include "actions/ips_actions.h"
 #include "log/messages.h"
 #include "stream/stream_inspectors.h"
 #include "network_inspectors/network_inspectors.h"
@@ -75,19 +78,19 @@ struct Symbol
     unsigned version;
 };
 
-static Symbol symbols[] =
+static Symbol symbols[PT_MAX] =
 {
     // sequence must match PlugType definition
     { "module", 0 },
     { "codec", CDAPI_VERSION },
-    { "event_handler", LOGAPI_VERSION },
-    { "ips_option", IPSAPI_VERSION },
-    { "so_rule", SOAPI_VERSION },
     { "inspector", INSAPI_VERSION },
+    { "ips_action", ACTAPI_VERSION },
+    { "ips_option", IPSAPI_VERSION },
     { "search_engine", SEAPI_VERSION },
-    { nullptr, 0 }
+    { "so_rule", SOAPI_VERSION },
+    { "event_handler", LOGAPI_VERSION }
 };
-
+    
 struct Plugin
 {
     string key;
@@ -235,6 +238,10 @@ static void add_plugin(Plugin& p)
         MpseManager::add_plugin((MpseApi*)p.api);
         break;
 
+    case PT_IPS_ACTION:
+        ActionManager::add_plugin((ActionApi*)p.api);
+        break;
+
     default:
         assert(false);
         break;
@@ -293,13 +300,14 @@ static void unload_plugins()
 
 void PluginManager::load_plugins(const char* paths)
 {
-    load_list(loggers);
+    load_list(codecs);
+    load_list(ips_actions);
     load_list(ips_options);
     load_list(stream_inspectors);
     load_list(network_inspectors);
     load_list(service_inspectors);
     load_list(search_engines);
-    load_list(codecs);
+    load_list(loggers);
     ::load_plugins(paths);
     load_list(ScriptManager::get_ips_options());
     add_plugins();
@@ -329,12 +337,14 @@ void PluginManager::dump_plugins()
     InspectorManager::dump_plugins();
     MpseManager::dump_plugins();
     IpsManager::dump_plugins();
+    ActionManager::dump_plugins();
     EventManager::dump_plugins();
 }
 
 void PluginManager::release_plugins ()
 {
     EventManager::release_plugins();
+    ActionManager::release_plugins();
     InspectorManager::release_plugins();
     IpsManager::release_plugins();
     MpseManager::release_plugins();
@@ -375,24 +385,28 @@ void PluginManager::instantiate(
         PacketManager::instantiate((CodecApi*)api, mod, sc);
         break;
 
-    case PT_LOGGER:
-        EventManager::instantiate((LogApi*)api, mod, sc);
+    case PT_INSPECTOR:
+        InspectorManager::instantiate((InspectApi*)api, mod, sc);
+        break;
+
+    case PT_IPS_ACTION:
+        ActionManager::instantiate((ActionApi*)api, mod, sc);
         break;
 
     case PT_IPS_OPTION:
         //IpsManager::instantiate((IpsApi*)api, mod, sc);
         break;
 
+    case PT_SEARCH_ENGINE:
+        MpseManager::instantiate((MpseApi*)api, mod, sc);
+        break;
+
     case PT_SO_RULE:
         //IpsManager::instantiate((SoApi*)api, mod, sc);
         break;
 
-    case PT_INSPECTOR:
-        InspectorManager::instantiate((InspectApi*)api, mod, sc);
-        break;
-
-    case PT_SEARCH_ENGINE:
-        MpseManager::instantiate((MpseApi*)api, mod, sc);
+    case PT_LOGGER:
+        EventManager::instantiate((LogApi*)api, mod, sc);
         break;
 
     default:

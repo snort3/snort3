@@ -310,12 +310,12 @@ static const InspectApi as_api =
     PROTO_BIT__ARP,
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    as_ctor,
-    as_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    as_ctor,
+    as_dtor,
     nullptr, // ssn
     nullptr, // reset
 };

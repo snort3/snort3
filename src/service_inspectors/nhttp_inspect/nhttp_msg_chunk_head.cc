@@ -40,7 +40,10 @@ using namespace NHttpEnums;
 
 NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
    NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), bodySections(sessionData->bodySections[sourceId]),
-   numChunks(sessionData->numChunks[sourceId]) {}
+   numChunks(sessionData->numChunks[sourceId]) {
+    delete sessionData->latestOther[sourceId];
+    sessionData->latestOther[sourceId] = this;
+}
 
 // Convert the hexadecimal chunk length.
 // RFC says that zero may be written with multiple digits "000000".
@@ -78,10 +81,10 @@ void NHttpMsgChunkHead::analyze() {
     bodySections++;
     // First section in a new chunk is just the start line.
     numChunks++;
-    startLine.start = msgText;
-    if (!tcpClose) startLine.length = length - 2;
-    else startLine.length = findCrlf(startLine.start, length, false);
-    chunkSize.start = msgText;
+    startLine.start = msgText.start;
+    if (!tcpClose) startLine.length = msgText.length - 2;
+    else startLine.length = findCrlf(startLine.start, msgText.length, false);
+    chunkSize.start = msgText.start;
     // Start line format is chunk size in hex followed by optional semicolon and extensions field
     for (chunkSize.length = 0; (chunkSize.length < startLine.length) && (startLine.start[chunkSize.length] != ';'); chunkSize.length++);
     if (chunkSize.length == startLine.length) {
@@ -91,21 +94,19 @@ void NHttpMsgChunkHead::analyze() {
         chunkExtensions.length = STAT_EMPTYSTRING;
     }
     else {
-        chunkExtensions.start = msgText + chunkSize.length + 1;
+        chunkExtensions.start = msgText.start + chunkSize.length + 1;
         chunkExtensions.length = startLine.length - chunkSize.length - 1;
     }
     deriveChunkLength();
     if (tcpClose) infractions |= INF_TRUNCATED;
 }
 
-void NHttpMsgChunkHead::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
-}
+void NHttpMsgChunkHead::genEvents() {}
 
 void NHttpMsgChunkHead::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "chunk header");
     fprintf(output, "Chunk size: %" PRIi64 "\n", dataLength);
-    printInterval(output, "Chunk extensions", chunkExtensions.start, chunkExtensions.length);
+    chunkExtensions.print(output, "Chunk extensions");
     NHttpMsgSection::printMessageWrapup(output);
 }
 

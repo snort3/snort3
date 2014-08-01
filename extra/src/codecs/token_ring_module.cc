@@ -22,13 +22,13 @@
 #include "token_ring_module.h"
 
 
-static const Parameter trk_params[] =
+static const Parameter tkr_params[] =
 {
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 
-static const RuleMap trk_rules[] =
+static const RuleMap tkr_rules[] =
 {
     { DECODE_BAD_TRH, "(" CD_TR_NAME ") Bad Token Ring Header" },
     { DECODE_BAD_TR_ETHLLC, "(" CD_TR_NAME ") Bad Token Ring ETHLLC Header" },
@@ -41,8 +41,11 @@ static const RuleMap trk_rules[] =
 // token ring module
 //-------------------------------------------------------------------------
 
-TrCodecModule::TrCodecModule() : DecodeModule(CD_TR_NAME, trk_params, trk_rules)
+TrCodecModule::TrCodecModule() : DecodeModule(CD_TR_NAME, tkr_params)
 { }
+
+const RuleMap* TrCodecModule::get_rules() const
+{ return tkr_rules; }
 
 bool TrCodecModule::set(const char*, Value&, SnortConfig*)
 {

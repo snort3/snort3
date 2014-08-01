@@ -1,5 +1,6 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,24 +18,10 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// token_ring_module.h author Josh Rosenbaum <jrosenba@cisco.com>
+#ifndef IPS_ACTIONS_H
+#define IPS_ACTIONS_H
 
-#ifndef CD_TRK_MODULE_H
-#define CD_TRK_MODULE_H
-
-#include "codecs/decode_module.h"
-
-
-#define CD_TR_NAME "cd_tr"
-
-class TrCodecModule : public DecodeModule
-{
-public:
-    TrCodecModule();
-
-    const RuleMap* get_rules() const;
-    bool set(const char*, Value&, SnortConfig*);
-};
+extern const struct BaseApi* ips_actions[];
 
 #endif
 

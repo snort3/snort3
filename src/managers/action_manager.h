@@ -16,47 +16,35 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// base_api.h author Russ Combs <rucombs@cisco.com>
+// action_manager.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef BASE_API_H
-#define BASE_API_H
+#ifndef ACTION_MANAGER_H
+#define ACTION_MANAGER_H
 
-// use these for plugin modules
-// this is the current version of the api
-#define MODAPI_VERSION 0
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
-// this is the version of the api the plugins are using
-// to be useful, these must be explicit (*_V0, *_V1, ...)
-#define MODAPI_PLUGIN_V0 0
+#include "snort_types.h"
+#include "framework/base_api.h"
 
-enum PlugType
+struct ActionApi;
+class IpsAction;
+struct SnortConfig;
+
+//-------------------------------------------------------------------------
+
+class ActionManager
 {
-    PT_DATA,
-    PT_CODEC,
-    PT_INSPECTOR,
-    PT_IPS_ACTION,
-    PT_IPS_OPTION,
-    PT_SEARCH_ENGINE,
-    PT_SO_RULE,
-    PT_LOGGER,
-    PT_MAX
-};
+public:
+    static void add_plugin(const ActionApi*);
+    static void release_plugins();
+    static void dump_plugins();
 
-class Module;
-typedef Module* (*ModNewFunc)();
-typedef void (*ModDelFunc)(Module*);
-
-// if we inherit this we can't use a static initializer list :(
-// so BaseApi must be the prefix (ie 1st member) of all plugin api
-struct BaseApi
-{
-    PlugType type;
-    const char* name;
-    unsigned api_version;
-    unsigned version;
-    ModNewFunc mod_ctor;
-    ModDelFunc mod_dtor;
+    static void instantiate(const ActionApi*, Module*, SnortConfig*);
+    static void execute(struct Packet*);
 };
 
 #endif
+
 

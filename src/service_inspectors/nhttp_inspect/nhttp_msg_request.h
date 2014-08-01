@@ -33,6 +33,7 @@
 #include "nhttp_uri.h"
 #include "nhttp_uri_norm.h"
 #include "nhttp_msg_start.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgRequest class
@@ -40,8 +41,7 @@
 
 class NHttpMsgRequest: public NHttpMsgStart {
 public:
-    NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
-       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {};
+    NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
     ~NHttpMsgRequest() { delete uri; };
     void printSection(FILE *output);
     void genEvents();
@@ -54,7 +54,7 @@ private:
     void parseStartLine();
     void deriveMethodId();
 
-    field method;
+    Field method;
     NHttpUri* uri = nullptr;
 };
 

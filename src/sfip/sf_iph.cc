@@ -53,7 +53,6 @@
 sfip_t *ip6_ret_src(const Packet *p)
 {
     VALIDATE(p, 1);
-
     return &p->ip6h->ip_src;
 }
 
@@ -61,7 +60,8 @@ sfip_t *orig_ip6_ret_src(const Packet *p)
 {
     VALIDATE(p, 1);
 
-    return &p->orig_ip6h->ip_src;
+    return nullptr;
+//  return &p->orig_ip6h->ip_src;
 }
 
 sfip_t *ip6_ret_dst(const Packet *p)
@@ -75,8 +75,8 @@ sfip_t *ip6_ret_dst(const Packet *p)
 sfip_t *orig_ip6_ret_dst(const Packet *p)
 {
     VALIDATE(p, 1);
-
-    return &p->orig_ip6h->ip_dst;
+    return nullptr;
+//  return &p->orig_ip6h->ip_dst;
 }
 
 uint16_t ip6_ret_toc(const Packet *p)
@@ -86,7 +86,8 @@ uint16_t ip6_ret_toc(const Packet *p)
 
     toc = (uint16_t)((ntohl(p->ip6h->vcl) & 0x0FF00000) >> 20);
 
-    return toc;
+    return 0;
+//  return toc;
 }
 
 uint16_t orig_ip6_ret_toc(const Packet *p)
@@ -94,8 +95,9 @@ uint16_t orig_ip6_ret_toc(const Packet *p)
     uint16_t toc;
     VALIDATE(p,1);
 
-    toc = (uint16_t)((ntohl(p->orig_ip6h->vcl) & 0x0FF00000) >> 20);
-    return toc;
+    return 0;
+//    toc = (uint16_t)((ntohl(p->orig_ip6h->vcl) & 0x0FF00000) >> 20);
+//  return toc;
 }
 
 uint8_t ip6_ret_hops(const Packet *p)
@@ -109,7 +111,8 @@ uint8_t orig_ip6_ret_hops(const Packet *p)
 {
 //    VALIDATE(p,1);
 
-    return p->orig_ip6h->hop_lmt;
+    return 0;
+//  return p->orig_ip6h->hop_lmt;
 }
 
 uint16_t ip6_ret_len(const Packet *p)
@@ -126,7 +129,8 @@ uint16_t orig_ip6_ret_len(const Packet *p)
 {
     VALIDATE(p,1);
 
-    return p->orig_ip6h->len;
+    return 0;
+//  return p->orig_ip6h->len;
 }
 
 uint32_t ip6_ret_id(const Packet *p)
@@ -155,7 +159,8 @@ uint8_t ip6_ret_next(const Packet *p)
 uint8_t orig_ip6_ret_next(const Packet *p)
 {
     VALIDATE(p,1);
-    return p->orig_ip6h->next;
+    return 0;
+//  return p->orig_ip6h->next;
 }
 
 uint16_t ip6_ret_off(const Packet *p)
@@ -182,7 +187,8 @@ uint8_t ip6_ret_ver(const Packet *p)
 
 uint8_t orig_ip6_ret_ver(const Packet *p)
 {
-    return (uint8_t)IP6_VER(p->orig_ip6h->vcl);
+    return 0;
+//  return (uint8_t)IP6_VER(p->orig_ip6h->vcl);
 }
 
 sfip_t *ip4_ret_dst(const Packet *p)
@@ -194,7 +200,8 @@ sfip_t *ip4_ret_dst(const Packet *p)
 sfip_t *orig_ip4_ret_dst(const Packet *p)
 {
     VALIDATE(p,1);
-    return &p->orig_ip4h->ip_dst;
+    return nullptr;
+//  return &p->orig_ip4h->ip_dst;
 }
 
 sfip_t *ip4_ret_src(const Packet *p)
@@ -206,7 +213,8 @@ sfip_t *ip4_ret_src(const Packet *p)
 sfip_t *orig_ip4_ret_src(const Packet *p)
 {
     VALIDATE(p,1);
-    return &p->orig_ip4h->ip_src;
+    return nullptr;
+//  return &p->orig_ip4h->ip_src;
 }
 
 uint16_t ip4_ret_tos(const Packet *p)
@@ -220,7 +228,8 @@ uint16_t orig_ip4_ret_tos(const Packet *p)
 {
    VALIDATE(p,1);
 
-   return p->orig_ip4h->ip_tos;
+    return 0;
+//  return p->orig_ip4h->ip_tos;
 }
 
 uint8_t ip4_ret_ttl(const Packet *p)
@@ -234,7 +243,8 @@ uint8_t orig_ip4_ret_ttl(const Packet *p)
 {
     VALIDATE(p,1);
 
-    return p->orig_ip4h->ip_ttl;
+    return 0;
+//  return p->orig_ip4h->ip_ttl;
 }
 
 uint16_t ip4_ret_len(const Packet *p)
@@ -248,7 +258,8 @@ uint16_t orig_ip4_ret_len(const Packet *p)
 {
     VALIDATE(p,1);
 
-    return p->orig_ip4h->ip_len;
+    return 0;
+//  return p->orig_ip4h->ip_len;
 }
 
 uint32_t ip4_ret_id(const Packet *p)
@@ -262,7 +273,8 @@ uint32_t orig_ip4_ret_id(const Packet *p)
 {
     VALIDATE(p,1);
 
-    return (uint32_t)p->orig_ip4h->ip_id;
+    return 0;
+//  return (uint32_t)p->orig_ip4h->ip_id;
 }
 
 uint8_t ip4_ret_proto(const Packet *p)
@@ -276,7 +288,8 @@ uint8_t orig_ip4_ret_proto(const Packet *p)
 {
     // VALIDATION()
 
-    return p->orig_ip4h->ip_proto;
+    return 0;
+//  return p->orig_ip4h->ip_proto;
 }
 
 uint16_t ip4_ret_off(const Packet *p)
@@ -286,7 +299,8 @@ uint16_t ip4_ret_off(const Packet *p)
 
 uint16_t orig_ip4_ret_off(const Packet *p)
 {
-    return p->orig_ip4h->ip_off;
+    return 0;
+//  return p->orig_ip4h->ip_off;
 }
 
 uint8_t ip4_ret_ver(const Packet *p)

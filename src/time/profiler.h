@@ -27,7 +27,7 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 
 // unconditionally declared
 struct ProfileStats

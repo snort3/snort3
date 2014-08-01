@@ -23,33 +23,51 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Noninstantiated class to collect static framework API functions and facilitate friendships.
+//  @brief      Field object
 //
 
-#ifndef NHTTP_API_H
-#define NHTTP_API_H
+#ifndef NHTTP_FIELD_H
+#define NHTTP_FIELD_H
 
-#include "framework/parameter.h"
-#include "framework/module.h"
-#include "framework/inspector.h"
+#include <stdint.h>
+#include <stdio.h>
 
-#include "nhttp_module.h"
-
-class NHttpApi {
+// Individual pieces of the message found during parsing
+// Length values <= 0 are StatusCode values and imply that the start pointer is meaningless.
+// Never use the start pointer without verifying that length > 0.
+class Field {
 public:
-    static const InspectApi nhttp_api;
-private:
-    NHttpApi() = delete;
-    static Module* nhttp_mod_ctor() { return new NHttpModule; };
-    static void nhttp_mod_dtor(Module* m) { delete m; };
-    static const char* nhttp_myName;
-    static void nhttp_init();
-    static void nhttp_term() {};
-    static Inspector* nhttp_ctor(Module* mod);
-    static void nhttp_dtor(Inspector* p) { delete p; };
-    static void nhttp_tinit() {};
-    static void nhttp_tterm() {};
+    int32_t length = NHttpEnums::STAT_NOTCOMPUTE;
+    const uint8_t* start = nullptr;
+
+    Field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) {};
+    Field() = default;
+    void print(FILE *output, const char* name, bool intVals = false) const;
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

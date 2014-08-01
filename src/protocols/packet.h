@@ -204,8 +204,8 @@ struct Packet
     Flow* flow;   /* for session tracking */
 
     //vvv-----------------------------
-    ipv4::IP4Hdr *ip4h, *orig_ip4h;
-    ipv6::IP6Hdr *ip6h, *orig_ip6h;
+    ipv4::IP4Hdr *ip4h;
+    ipv6::IP6Hdr *ip6h;
     icmp6::ICMP6Hdr *icmp6h;
 
     IPH_API* iph_api;

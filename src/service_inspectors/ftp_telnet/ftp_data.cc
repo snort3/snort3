@@ -295,11 +295,11 @@ const InspectApi fd_api =
     nullptr, // buffers
     "ftp-data",
     fd_init,
-    nullptr, // term
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     fd_ctor,
     fd_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

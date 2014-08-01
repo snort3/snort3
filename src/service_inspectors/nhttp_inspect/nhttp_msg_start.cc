@@ -39,10 +39,10 @@
 using namespace NHttpEnums;
 
 void NHttpMsgStart::analyze() {
-    startLine.start = msgText;
-    startLine.length = findCrlf(startLine.start, length, false);
+    startLine.start = msgText.start;
+    startLine.length = findCrlf(startLine.start, msgText.length, false);
     // special case of TCP close between CR and LF
-    if (tcpClose && (length == startLine.length) && (startLine.start[length-1] == '\r')) startLine.length--;
+    if (tcpClose && (msgText.length == startLine.length) && (startLine.start[startLine.length-1] == '\r')) startLine.length--;
     parseStartLine();
     deriveVersionId();
 }
@@ -81,7 +81,5 @@ void NHttpMsgStart::deriveVersionId() {
     }
 }
 
-void NHttpMsgStart::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
-}
+void NHttpMsgStart::genEvents() {}
 

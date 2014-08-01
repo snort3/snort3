@@ -35,8 +35,19 @@
 #include "snort.h"
 #include "nhttp_enum.h"
 #include "nhttp_msg_status.h"
+#include "nhttp_msg_head.h"
 
 using namespace NHttpEnums;
+
+NHttpMsgStatus::NHttpMsgStatus(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
+    delete sessionData->startLine[SRC_SERVER];
+    sessionData->startLine[SRC_SERVER] = this;
+    delete sessionData->headers[SRC_SERVER];
+    sessionData->headers[SRC_SERVER] = nullptr;
+    delete sessionData->latestOther[SRC_SERVER];
+    sessionData->latestOther[SRC_SERVER] = nullptr;
+}
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgStatus::analyze() {
@@ -89,15 +100,13 @@ void NHttpMsgStatus::deriveStatusCodeNum() {
     }
 }
 
-void NHttpMsgStatus::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
-}
+void NHttpMsgStatus::genEvents() {}
 
 void NHttpMsgStatus::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "status line");
     fprintf(output, "Version Id: %d\n", versionId);
     fprintf(output, "Status Code Num: %d\n", statusCodeNum);
-    printInterval(output, "Reason Phrase", reasonPhrase.start, reasonPhrase.length);
+    reasonPhrase.print(output, "Reason Phrase");
     NHttpMsgSection::printMessageWrapup(output);
 }
 

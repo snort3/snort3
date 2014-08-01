@@ -36,8 +36,19 @@
 #include "nhttp_enum.h"
 #include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
+#include "nhttp_msg_head.h"
 
 using namespace NHttpEnums;
+
+NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
+    delete sessionData->startLine[SRC_CLIENT];
+    sessionData->startLine[SRC_CLIENT] = this;
+    delete sessionData->headers[SRC_CLIENT];
+    sessionData->headers[SRC_CLIENT] = nullptr;
+    delete sessionData->latestOther[SRC_CLIENT];
+    sessionData->latestOther[SRC_CLIENT] = nullptr;
+}
 
 void NHttpMsgRequest::parseStartLine() {
     // There should be exactly two spaces. One following the method and one before "HTTP/".
@@ -77,32 +88,48 @@ void NHttpMsgRequest::deriveMethodId() {
 }
 
 void NHttpMsgRequest::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+    if (methodId == METH__OTHER) createEvent(EVENT_UNKNOWN_METHOD);
+
+    // URI character encoding events
+    if (uri && (uri->getUriInfractions() & INF_URIPERCENTASCII)) createEvent(EVENT_ASCII);
+    if (uri && (uri->getUriInfractions() & INF_URIPERCENTUCODE)) createEvent(EVENT_U_ENCODE);
+    if (uri && (uri->getUriInfractions() & INF_URI8BITCHAR)) createEvent(EVENT_BARE_BYTE);
+    if (uri && (uri->getUriInfractions() & INF_URIPERCENTUTF8)) createEvent(EVENT_UTF_8);
+    if (uri && (uri->getUriInfractions() & INF_URIBADCHAR)) createEvent(EVENT_NON_RFC_CHAR);
+
+    // URI path events
+    if (uri && (uri->getPathInfractions() & INF_URIMULTISLASH)) createEvent(EVENT_MULTI_SLASH);
+    if (uri && (uri->getPathInfractions() & INF_URIBACKSLASH)) createEvent(EVENT_IIS_BACKSLASH);
+    if (uri && (uri->getPathInfractions() & INF_URISLASHDOT)) createEvent(EVENT_SELF_DIR_TRAV);
+    if (uri && (uri->getPathInfractions() & INF_URISLASHDOTDOT)) createEvent(EVENT_DIR_TRAV);
+    if (uri && (uri->getPathInfractions() & INF_URIROOTTRAV)) createEvent(EVENT_WEBROOT_DIR);
+
 }
 
 void NHttpMsgRequest::printSection(FILE *output) {
     NHttpMsgSection::printMessageTitle(output, "request line");
     fprintf(output, "Version Id: %d\n", versionId);
     fprintf(output, "Method Id: %d\n", methodId);
-    printInterval(output, "URI", uri->getUri().start, uri->getUri().length);
-    if ((uri->getUriType() != URI__NOTCOMPUTE) && (uri->getUriType() != URI__NOSOURCE)) fprintf(output, "URI Type: %d\n", uri->getUriType());
-    printInterval(output, "Scheme", uri->getScheme().start, uri->getScheme().length);
-    if ((uri->getSchemeId() != SCH__NOTCOMPUTE) && (uri->getSchemeId() != SCH__NOSOURCE)) fprintf(output, "Scheme Id: %d\n", uri->getSchemeId());
-    printInterval(output, "Authority", uri->getAuthority().start, uri->getAuthority().length);
-    printInterval(output, "Host Name", uri->getHost().start, uri->getHost().length);
-    printInterval(output, "Normalized Host Name", uri->getNormHost().start, uri->getNormHost().length);
-    printInterval(output, "Port", uri->getPort().start, uri->getPort().length);
-    if ((uri->getPortValue() != STAT_NOTCOMPUTE) && (uri->getPortValue() != STAT_NOSOURCE)) fprintf(output, "Port Value: %d\n", uri->getPortValue());
-    printInterval(output, "Absolute Path", uri->getAbsPath().start, uri->getAbsPath().length);
-    printInterval(output, "Path", uri->getPath().start, uri->getPath().length);
-    printInterval(output, "Normalized Path", uri->getNormPath().start, uri->getNormPath().length);
-    printInterval(output, "Query", uri->getQuery().start, uri->getQuery().length);
-    printInterval(output, "Normalized Query", uri->getNormQuery().start, uri->getNormQuery().length);
-    printInterval(output, "Fragment", uri->getFragment().start, uri->getFragment().length);
-    printInterval(output, "Normalized Fragment", uri->getNormFragment().start, uri->getNormFragment().length);
-    fprintf(output, "URI infractions: overall %" PRIx64 ", host %" PRIx64 ", path %" PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
-       uri->getUriInfractions(), uri->getHostInfractions(), uri->getPathInfractions(), uri->getQueryInfractions(),
-       uri->getFragmentInfractions());
+    uri->getUri().print(output, "URI");
+    if (uri->getUriType() != URI__NOSOURCE) fprintf(output, "URI Type: %d\n", uri->getUriType());
+    uri->getScheme().print(output, "Scheme");
+    if (uri->getSchemeId() != SCH__NOSOURCE) fprintf(output, "Scheme Id: %d\n", uri->getSchemeId());
+    uri->getAuthority().print(output, "Authority");
+    uri->getHost().print(output, "Host Name");
+    uri->getNormHost().print(output, "Normalized Host Name");
+    uri->getPort().print(output, "Port");
+    if (uri->getPortValue() != STAT_NOSOURCE) fprintf(output, "Port Value: %d\n", uri->getPortValue());
+    uri->getAbsPath().print(output, "Absolute Path");
+    uri->getPath().print(output, "Path");
+    uri->getNormPath().print(output, "Normalized Path");
+    uri->getQuery().print(output, "Query");
+    uri->getNormQuery().print(output, "Normalized Query");
+    uri->getFragment().print(output, "Fragment");
+    uri->getNormFragment().print(output, "Normalized Fragment");
+    fprintf(output, "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %" PRIx64 ", port %" PRIx64 ", path %"
+       PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
+       uri->getUriInfractions(), uri->getFormatInfractions(), uri->getSchemeInfractions(), uri->getHostInfractions(),
+       uri->getPortInfractions(), uri->getPathInfractions(), uri->getQueryInfractions(), uri->getFragmentInfractions());
     NHttpMsgSection::printMessageWrapup(output);
  }
 

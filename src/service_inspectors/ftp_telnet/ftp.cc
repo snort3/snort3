@@ -516,11 +516,11 @@ static const InspectApi fs_api =
     nullptr, // buffers
     "ftp",
     fs_init,
-    nullptr, // term
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     fs_ctor,
     fs_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

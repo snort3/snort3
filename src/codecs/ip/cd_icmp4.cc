@@ -292,7 +292,7 @@ void Icmp4Codec::DecodeICMPEmbeddedIP(const uint8_t *pkt, const uint32_t len, Pa
     ip_len = ntohs(GET_ORIG_IPH_LEN(p));
 
     /* set the IP header length */
-    hlen = (p->orig_ip4h->ip_verhl & 0x0f) << 2;
+    hlen = (p->orig_iph->ip_verhl & 0x0f) << 2;
 
     if(len < hlen)
     {
