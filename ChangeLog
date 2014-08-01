@@ -1,3 +1,8 @@
+108
+-- added IpsAction for ips rule action plugins
+-- renamed various api *init() and *term() for consistency and possible
+   move to base api
+
 107
 -- fixed stats output
 -- deleted code that skipped over TCP urgent data when flushing

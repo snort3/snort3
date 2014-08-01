@@ -71,7 +71,7 @@
 #include "detection_options.h"
 #include "actions/actions.h"
 #include "managers/packet_manager.h"
-
+#include "managers/action_manager.h"
 
 /*
 **  Static function prototypes
@@ -145,12 +145,16 @@ static inline void InitMatchInfo(OTNX_MATCH_DATA *o)
 // this handles the non-rule-actions (responses).
 static inline void fpLogOther (Packet* p, OptTreeNode* otn, int action)
 {
+    // FIXIT some or all of these can be migrated to user defined actions
     otn_trigger_actions(otn, p);
 
     if ( !EventTrace_IsEnabled() )
         return;
 
     EventTrace_Log(p, otn, action);
+
+    // user defined actions are done here
+    ActionManager::execute(p);
 }
 
 /*

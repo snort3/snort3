@@ -100,7 +100,7 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
 
 bool get_string(std::istringstream& stream,
                 std::string& option,
-                std::string delimeters)
+                const std::string delimeters)
 {
     if (delimeters.empty() || !stream.good())
     {

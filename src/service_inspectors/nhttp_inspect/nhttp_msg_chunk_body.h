@@ -44,7 +44,7 @@ public:
     void updateFlow();
 
 private:
-    int64_t numChunks;
+    int64_t numChunks;  // FIXIT unused entity warning from xcode
     int64_t chunkSections;
     int64_t chunkOctets;
 };
