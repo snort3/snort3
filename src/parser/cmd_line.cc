@@ -75,13 +75,13 @@ static const char* snort_help =
 "Snort has several options to get more help:\n"
 "\n"
 "--help this overview of help\n"
-"--help-builtin <module prefix> output matching builtin rules\n"
+"--help-builtin [<module prefix>] output matching builtin rules\n"
 "--help-buffers output available inspection buffers\n"
-"--help-commands <module prefix> output matching commands\n"
-"--help-config <module prefix> output matching config options\n"
-"--help-gids <module prefix> output matching generators\n"
-"--help-module output description of given module\n"
-"--help-options <option prefix> output matching command line option quick help\n"
+"--help-commands [<module prefix>] output matching commands\n"
+"--help-config [<module prefix>] output matching config options\n"
+"--help-gids [<module prefix>] output matching generators\n"
+"--help-module <module> output description of given module\n"
+"--help-options [<option prefix>] output matching command line options\n"
 "--help-signals dump available control signals\n"
 "--list-modules list all known modules\n"
 "--list-plugins list all known modules\n"
@@ -845,16 +845,16 @@ static ConfigFunc basic_opts[] =
       "output available inspection buffers" },
 
     { "help-commands", help_commands,
-      "<module prefix> output matching commands" },
+      "[<module prefix>] output matching commands" },
 
     { "help-config", help_config,
-      "<module prefix> output matching config options" },
+      "[<module prefix>] output matching config options" },
 
     { "help-gids", help_gids,
-      "<module prefix> output matching generators" },
+      "[<module prefix>] output matching generators" },
 
     { "help-module", help_module,
-      "output description of given module" },
+      "<module> output description of given module" },
 
     { "help-options", help_options,
       "<option prefix> output matching command line option quick help" },

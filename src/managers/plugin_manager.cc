@@ -81,16 +81,24 @@ struct Symbol
 static Symbol symbols[PT_MAX] =
 {
     // sequence must match PlugType definition
-    { "module", 0 },
+    { "data", 0 },
     { "codec", CDAPI_VERSION },
     { "inspector", INSAPI_VERSION },
     { "ips_action", ACTAPI_VERSION },
     { "ips_option", IPSAPI_VERSION },
     { "search_engine", SEAPI_VERSION },
     { "so_rule", SOAPI_VERSION },
-    { "event_handler", LOGAPI_VERSION }
+    { "logger", LOGAPI_VERSION }
 };
-    
+ 
+const char* PluginManager::get_type_name(PlugType pt)
+{
+    if ( pt >= PT_MAX )
+        return "error";
+
+    return symbols[pt].name;
+}
+
 struct Plugin
 {
     string key;

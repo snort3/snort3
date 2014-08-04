@@ -28,6 +28,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <sstream>
 #include "utils/snort2lua_util.h"
 #include "conversion_state.h"
 #include "data/dt_data.h"
@@ -98,10 +99,10 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
     }
     return str_len;
 }
-
-bool inline get_string_helper(std::istringstream& stream,
-                              std::string& option,
-                              const std::string& delimeters)
+    
+bool get_string(std::istringstream& stream,
+                std::string& option,
+                const std::string delimeters)
 {
     if (delimeters.empty() || !stream.good())
     {
@@ -147,12 +148,6 @@ bool inline get_string_helper(std::istringstream& stream,
         return true;
     }
 }
-
-
-bool get_string(std::istringstream& stream,
-                      std::string& option,
-                       const std::string delimeters)
-{ return get_string_helper(stream, option, delimeters); }
 
 std::string get_rule_option_args(std::istringstream& stream)
 {

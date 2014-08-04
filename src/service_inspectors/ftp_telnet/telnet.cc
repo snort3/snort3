@@ -216,8 +216,6 @@ static int PrintTelnetConf(TELNET_PROTO_CONF *TelnetConf)
     LogMessage("      Are You There Threshold: %d\n",
         TelnetConf->ayt_threshold);
     LogMessage("      Normalize: %s\n", TelnetConf->normalize ? "YES" : "NO");
-    LogMessage("      Detect Anomalies: %s\n",
-            TelnetConf->detect_anomalies ? "YES" : "NO");
     PrintConfOpt(TelnetConf->detect_encrypted, "Check for Encrypted Traffic");
     LogMessage("      Continue to check encrypted data: %s\n",
         TelnetConf->check_encrypted_data ? "YES" : "NO");

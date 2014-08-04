@@ -37,10 +37,10 @@
 static const Parameter hi_umap_params[] =
 {
     { "code_page", Parameter::PT_INT, "0:", "1252",
-      "help" },
+      "select code page in map file" },
 
     { "map_file", Parameter::PT_STRING, nullptr, nullptr,
-      "help" },
+      "unicode map file" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -71,7 +71,7 @@ static const Parameter hi_global_params[] =
       "maximum amount of packet payload to decompress" },
 
     { "decode", Parameter::PT_TABLE, hi_decode_params, nullptr,
-      "help" },
+      "decode parameters" },
 
     { "decompress_depth", Parameter::PT_INT, "1:65535", "2920",
       "maximum amount of decompressed data to process" },
@@ -93,7 +93,7 @@ static const Parameter hi_global_params[] =
       "alert on proxy usage for servers without allow_proxy_use" },
 
     { "unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
-      "help" },
+      "default unicode map configuration" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -287,7 +287,7 @@ static const Parameter hi_server_params[] =
       "log True-Client-IP and X-Forwarded-For headers with unified2 alerts as extra data" },
 
     { "extended_ascii_uri", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
+      "allow extended ASCII codes in the request URI" },
 
     { "extended_response_inspection", Parameter::PT_BOOL, nullptr, "false",
       "extract resonse headers" },
@@ -305,7 +305,7 @@ static const Parameter hi_server_params[] =
       "enable unicode code point mapping using unicode_map settings" },
 
     { "iis_unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
-      "help" },
+      "server unicode map configuration" },
 
     { "inspect_gzip", Parameter::PT_BOOL, nullptr, "false",
       "enable gzip decompression of compressed bodies" },
@@ -326,7 +326,7 @@ static const Parameter hi_server_params[] =
       "maximum allowd client request headers" },
 
     { "max_spaces", Parameter::PT_INT, "0:65535", "200",
-      "help" },
+      "maximum allowed whitespaces when folding" },
 
     { "multi_slash", Parameter::PT_BOOL, nullptr, "true",
       "normalize out consecutive slashes in URI" },
@@ -341,10 +341,10 @@ static const Parameter hi_server_params[] =
       "allows HTTP 0.9 processing" },
 
     { "normalize_cookies", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
+      "normalize cookies similar to URI" },
 
     { "normalize_headers", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
+      "normalize headers other than cookie similar to URI" },
 
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
       "normalize javascript between <script> tags" },
@@ -353,7 +353,7 @@ static const Parameter hi_server_params[] =
       "maximum number of consecutive whitespaces" },
 
     { "normalize_utf", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
+      "normalize response bodies with UTF content-types" },
 
     { "oversize_dir_length", Parameter::PT_INT, "0:", "0",
       "alert if a URL has a directory longer than this limit" },
@@ -374,13 +374,10 @@ static const Parameter hi_server_params[] =
       "alert if more than small_chunk_count consecutive chunks below this limit" },
 
     { "tab_uri_delimiter", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
+      "whether a tab not preceded by a space is considered a delimiter or part of URI" },
 
     { "u_encode", Parameter::PT_BOOL, nullptr, "false",
       "decode %uXXXX character sequences" },
-
-//    { "unicode_map", Parameter::PT_TABLE, hi_umap_params, nullptr,
-//      "help" },
 
     { "unlimited_decompress", Parameter::PT_BOOL, nullptr, "false",
       "decompress across multiple packets" },
@@ -392,7 +389,7 @@ static const Parameter hi_server_params[] =
       "alert on directory traversals past the top level (web server root)" },
 
     { "whitespace_chars", Parameter::PT_BIT_LIST, "255", "false",
-      "help" },
+      "allowed white space characters" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

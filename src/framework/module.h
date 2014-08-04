@@ -54,6 +54,7 @@ struct RuleMap
 
 struct ProfileStats;
 
+// FIXIT add brief help string to modules
 class Module
 {
 public:

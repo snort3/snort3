@@ -483,30 +483,21 @@ void ModuleManager::dump_modules()
             d.dump(p->mod->get_name());
 }
 
-static const char* mod_types[PT_MAX] =
-{
-    "data",
-    "codec",
-    "logger",
-    "ips option",
-    "so rule",
-    "inspector",
-    "search engine"
-};
-
 static const char* mod_type(const BaseApi* api)
 {
     if ( !api )
         return "basic";
 
-    if ( api->type > PT_MAX )
-        return "error";
-
-    return mod_types[api->type];
+    return PluginManager::get_type_name(api->type);
 }
 
 void ModuleManager::show_module(const char* name)
 {
+    if ( !name || !*name )
+    {
+        cerr << "module name required" << endl;
+        return;
+    }
     s_modules.sort(comp_gids);
 
     for ( auto p : s_modules )

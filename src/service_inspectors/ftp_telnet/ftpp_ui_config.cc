@@ -77,9 +77,7 @@ TELNET_PROTO_CONF::TELNET_PROTO_CONF()
 {
     normalize = check_encrypted_data = 0;
     ayt_threshold = FTPP_UI_CONFIG_TELNET_DEF_AYT_THRESHOLD;
-
     detect_encrypted = 0;
-    detect_anomalies = 0;
 }
 
 /*

@@ -77,7 +77,7 @@ static const Parameter full_params[] =
       "set limit (0 is unlimited)" },
 
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "help" },
+      "limit is in bytes | KB | MB | GB" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

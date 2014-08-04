@@ -50,7 +50,7 @@ struct Parameter
     const char* name;
     Type type;
     const void* range;  // nullptr|const char*|const Parameter*
-    const char* deflt;
+    const char* deflt;  // FIXIT add defaults for tables and lists
     const char* help;
 
     const char* get_type() const;
