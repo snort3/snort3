@@ -195,7 +195,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         {
             /* Don't drop the packet if this is encapuslated in Teredo or ESP.
                Just get rid of the TCP header and stop decoding. */
-            if (p->packet_flags & PKT_UNSURE_ENCAP)
+            if (p->decode_flags & DECODE__UNSURE_ENCAP)
             {
                 p->tcph = NULL;
                 return false;

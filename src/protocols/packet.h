@@ -81,40 +81,35 @@ extern "C" {
 
 #define PKT_PDU_HEAD         0x00000100  /* start of PDU */
 #define PKT_PDU_TAIL         0x00000200  /* end of PDU */
-#define PKT_UNSURE_ENCAP     0x00000400  /* packet may have incorrect encapsulation layer. */
-                                         /* don't alert if "next layer" is invalid. */
-#define PKT_HTTP_DECODE      0x00000800  /* this packet has normalized http */
+#define PKT_HTTP_DECODE      0x00000400  /* this packet has normalized http */
 
-#define PKT_IGNORE           0x00001000  /* this packet should be ignored, based on port */
-#define PKT_TRUST            0x00002000  /* this packet should fallback to being whitelisted if no other verdict was specified */
-#define PKT_ALLOW_MULTIPLE_DETECT 0x00004000  /* packet has either pipelined mime attachements */
+#define PKT_IGNORE           0x00000800  /* this packet should be ignored, based on port */
+#define PKT_TRUST            0x00001000  /* this packet should fallback to being whitelisted if no other verdict was specified */
+#define PKT_ALLOW_MULTIPLE_DETECT 0x00002000  /* packet has either pipelined mime attachements */
                                               /* or pipeline http requests */
-#define PKT_PAYLOAD_OBFUSCATE     0x00008000
+#define PKT_PAYLOAD_OBFUSCATE     0x00004000
 
-#define PKT_STATELESS        0x00010000  /* Packet has matched a stateless rule */
-#define PKT_PASS_RULE        0x00020000  /* this packet has matched a pass rule */
-#define PKT_IP_RULE          0x00040000  /* this packet is being evaluated against an IP rule */
-#define PKT_IP_RULE_2ND      0x00080000  /* this packet is being evaluated against an IP rule */
+#define PKT_STATELESS        0x00008000  /* Packet has matched a stateless rule */
+#define PKT_PASS_RULE        0x00010000  /* this packet has matched a pass rule */
+#define PKT_IP_RULE          0x00020000  /* this packet is being evaluated against an IP rule */
+#define PKT_IP_RULE_2ND      0x00040000  /* this packet is being evaluated against an IP rule */
 
-#define PKT_PSEUDO           0x00100000  /* is a pseudo packet */
-#define PKT_MODIFIED         0x00200000  /* packet had normalizations, etc. */
-#define PKT_RESIZED          0x00300000  /* packet has new size; must set modified too */
+#define PKT_PSEUDO           0x00080000  /* is a pseudo packet */
+#define PKT_MODIFIED         0x00100000  /* packet had normalizations, etc. */
+#define PKT_RESIZED          0x00180000  /* packet has new size; must set modified too */
 
 // neither of these flags will be set for (full) retransmissions or non-data segments
 // a partial overlap results in out of sequence condition
 // out of sequence condition is sticky
-#define PKT_STREAM_ORDER_OK  0x00800000  /* this segment is in order, w/o gaps */
-#define PKT_STREAM_ORDER_BAD 0x01000000  /* this stream had at least one gap */
-#define PKT_REASSEMBLED_OLD  0x02000000  /* for backwards compat with so rules */
+#define PKT_STREAM_ORDER_OK  0x00200000  /* this segment is in order, w/o gaps */
+#define PKT_STREAM_ORDER_BAD 0x00400000  /* this stream had at least one gap */
 
-#define PKT_FILE_EVENT_SET   0x04000000
-#define PKT_ESP_LYR_PRESENT  0x08000000
-#define PKT_UNUSED_FLAGS     0xF0000000
+#define PKT_FILE_EVENT_SET   0x00800000
+#define PKT_UNUSED_FLAGS     0xff000000
 
 // 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
 
-#define REASSEMBLED_PACKET_FLAGS (PKT_REBUILT_STREAM|PKT_REASSEMBLED_OLD)
 
 enum PseudoPacketType{
     PSEUDO_PKT_IP,
@@ -160,6 +155,7 @@ const uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 const uint8_t IP6_EXTMAX = 8;
 const uint8_t MIN_TTL = 64;
 const uint8_t MAX_TTL = 255;
+const uint8_t LAYER_MAX = 32;
 
 
 
@@ -175,12 +171,9 @@ struct Options
 } ;
 
 
-const uint8_t LAYER_MAX = 32;
 
 struct Packet
 {
-    const DAQ_PktHdr_t *pkth;    // packet meta data
-    const uint8_t *pkt;         // raw packet data
 
     //vvv------------------------------------------------
     // TODO convenience stuff to be refactored for layers
@@ -245,11 +238,6 @@ struct Packet
 
     int16_t application_protocol_ordinal;
 
-    uint8_t frag_flag;          /* flag to indicate a fragmented packet */
-    uint8_t mf;                 /* more fragments flag */
-    uint8_t df;                 /* don't fragment flag */
-    uint8_t rf;                 /* IP reserved bit */
-
     uint8_t ip_option_count;    /* number of options in this packet */
     uint8_t tcp_option_count;
     uint8_t ip6_extension_count;
@@ -261,9 +249,14 @@ struct Packet
     uint8_t encapsulations;     /* thh curent number of encapsulations */
 
     // nothing after this point is zeroed ...
+    const DAQ_PktHdr_t *pkth;    // packet meta data
+    const uint8_t *pkt;         // raw packet data
+
     ipv4::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
     IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
+
+
 
     const uint8_t *ip_frag_start;
     const uint8_t *ip_options_data;
@@ -294,7 +287,7 @@ struct Packet
 
 };
 
-#define PKT_ZERO_LEN offsetof(Packet, ip_options)
+#define PKT_ZERO_LEN offsetof(Packet, pkth)
 
 #define PROTO_BIT__NONE     0x0000
 #define PROTO_BIT__IP       0x0001
@@ -307,8 +300,19 @@ struct Packet
 #define PROTO_BIT__MPLS     0x0080
 #define PROTO_BIT__VLAN     0x0100
 #define PROTO_BIT__ETH      0x0200
+#define PROTO_BIT__FREE     0x7c00
 #define PROTO_BIT__OTHER    0x8000
 #define PROTO_BIT__ALL      0xffff
+
+/*  Decode Flags */
+#define DECODE__FRAG    0x01  /* flag to indicate a fragmented packet */
+#define DECODE__MF      0x02  /* more fragments flag */
+#define DECODE__DF      0x04  /* don't fragment flag */
+#define DECODE__RF      0x08  /* IP reserved bit */
+#define DECODE__ESP     0x10  /* flag to indicate an ESP layer has been seen */
+#define DECODE__UNSURE_ENCAP 0x20 /* packet may have incorrect encapsulation layer. */
+                                  /* don't alert if "next layer" is invalid. */
+#define DECODE__FREE    0xC0
 
 #define IsIP(p) (IPH_IS_VALID(p))
 #define IsTCP(p) (IsIP(p) && p->tcph)

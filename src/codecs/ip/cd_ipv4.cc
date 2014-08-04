@@ -172,7 +172,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated IP4 header (%d bytes).\n", raw_len););
 
-        if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
+        if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IP4_HDR_TRUNC);
 
         p->iph = NULL;
@@ -203,7 +203,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if(ipv4::get_version((IPHdr*)raw_pkt) != 4)
     {
-        if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
+        if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_NOT_IPV4_DGRAM);
 
         p->iph = NULL;
@@ -329,40 +329,45 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      * get the values of the reserved, more
      * fragments and don't fragment flags
      */
-    p->rf = (uint8_t)((p->frag_offset & 0x8000) >> 15);
-    p->df = (uint8_t)((p->frag_offset & 0x4000) >> 14);
-    p->mf = (uint8_t)((p->frag_offset & 0x2000) >> 13);
+    if (p->frag_offset & 0x8000)
+        p->decode_flags |= DECODE__RF;
+
+    if (p->frag_offset & 0x4000)
+        p->decode_flags |= DECODE__DF;
+
+    if (p->frag_offset & 0x2000)
+        p->decode_flags |= DECODE__MF;
 
     /* mask off the high bits in the fragment offset field */
     p->frag_offset &= 0x1FFF;
 
-    if ( p->df && p->frag_offset )
+    if ((p->decode_flags & DECODE__DF) && p->frag_offset )
         codec_events::decoder_event(p, DECODE_IP4_DF_OFFSET);
 
     if ( p->frag_offset + p->actual_ip_len > IP_MAXPACKET )
         codec_events::decoder_event(p, DECODE_IP4_LEN_OFFSET);
 
-    if(p->frag_offset || p->mf)
+    if(p->frag_offset || (p->decode_flags & DECODE__MF))
     {
         if ( !ip_len)
         {
             codec_events::decoder_event(p, DECODE_ZERO_LENGTH_FRAG);
-            p->frag_flag = 0;
+            p->decode_flags &= ~DECODE__FRAG;
         }
         else
         {
             /* set the packet fragment flag */
-            p->frag_flag = 1;
+            p->decode_flags |= DECODE__FRAG;
             p->ip_frag_start = raw_pkt + hlen;
             p->ip_frag_len = (uint16_t)ip_len;
         }
     }
     else
     {
-        p->frag_flag = 0;
+        p->decode_flags &= ~DECODE__FRAG;
     }
 
-    if( p->mf && p->df )
+    if( (p->decode_flags & DECODE__MF) && (p->decode_flags & DECODE__DF))
     {
         codec_events::decoder_event(p, DECODE_BAD_FRAGBITS);
     }
@@ -381,8 +386,8 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* if this packet isn't a fragment
      * or if it is, its a UDP packet and offset is 0 */
-    if(!(p->frag_flag) ||
-            (p->frag_flag && (p->frag_offset == 0) &&
+    if(!(p->decode_flags & DECODE__FRAG) ||
+            ((p->decode_flags & DECODE__FRAG) && (p->frag_offset == 0) &&
             (p->iph->ip_proto == IPPROTO_UDP)))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP header length: %lu\n",

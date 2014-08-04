@@ -115,6 +115,10 @@ public:
 
     // Get the codec's name
     inline const char* get_name(){return name; };
+    // Several codecs are for convenience. So, tell Snort++ not to print any info
+    virtual bool dump_at_startup(){ return true; };
+    // used for backwards compatability.
+    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     // Registers this Codec's data link type (as defined by libpcap)
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes
@@ -139,8 +143,6 @@ public:
     virtual bool update(Packet*, Layer*, uint32_t* /*len*/) { return true; };
     // formatter
     virtual void format(EncodeFlags, const Packet* /*orig*/, Packet* /*clone*/, Layer*) {};
-    // used for backwards compatability.
-    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
 
 
 protected:

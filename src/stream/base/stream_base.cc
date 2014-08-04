@@ -218,7 +218,7 @@ void StreamBase::eval(Packet *p)
         break;
 
     case IPPROTO_UDP:
-        if ( p->frag_flag )
+        if ( p->decode_flags & DECODE__FRAG )
             flow_con->process_ip(p);
 
         if ( p->udph )

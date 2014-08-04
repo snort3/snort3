@@ -211,7 +211,7 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     if (raw_len > 0)
     {
-        p->packet_flags |= PKT_UNSURE_ENCAP;
+        p->decode_flags |= DECODE__UNSURE_ENCAP;
 
         ip_ver = *(raw_pkt + GTP_MIN_LEN) & 0xF0;
         if (ip_ver == 0x40)

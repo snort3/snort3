@@ -109,7 +109,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* set the ptr to the start of the UDP header */
     p->udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
 
-    if (!p->frag_flag)
+    if (!(p->decode_flags & DECODE__FRAG))
     {
         uhlen = ntohs(p->udph->uh_len);
     }
@@ -214,7 +214,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         {
             /* Don't drop the packet if this was ESP or Teredo.
                Just stop decoding. */
-            if (p->packet_flags & PKT_UNSURE_ENCAP)
+            if (p->decode_flags & DECODE__UNSURE_ENCAP)
             {
                 PopUdp(p);
                 return false;
@@ -249,14 +249,14 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     if (ScGTPDecoding() &&
          (ScIsGTPPort(p->sp)||ScIsGTPPort(p->dp)))
     {
-        if ( !p->frag_flag )
+        if ( !(p->decode_flags & DECODE__FRAG) )
             next_prot_id = PROTOCOL_GTP;
     }
     else if (teredo::is_teredo_port(p->sp) ||
         teredo::is_teredo_port(p->dp) ||
         ScDeepTeredoInspection())
     {
-        if ( !p->frag_flag )
+        if ( !(p->decode_flags & DECODE__FRAG) )
             next_prot_id = PROTOCOL_TEREDO;
     }
 

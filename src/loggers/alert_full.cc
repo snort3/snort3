@@ -215,7 +215,7 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         LogIPHeader(full_log, p);
 
         /* if this isn't a fragment, print the other header info */
-        if(!p->frag_flag)
+        if(!(p->decode_flags & DECODE__FRAG))
         {
             switch(GET_IPH_PROTO(p))
             {

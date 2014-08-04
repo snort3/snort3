@@ -65,9 +65,9 @@ private:
 
 } // namespace
 
-static inline void IPV6MiscTests(Packet *p);
-static void CheckIPV6Multicast(Packet *p);
-static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr);
+static inline void IPV6MiscTests(const Packet* const p);
+static void CheckIPV6Multicast(const Packet* const p);
+static inline int CheckTeredoPrefix(const ipv6::IP6RawHdr* const hdr);
 
 /********************************************************************
  *************************   PRIVATE FUNCTIONS **********************
@@ -133,14 +133,14 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    ipv6::IP6RawHdr *hdr;
+    const ipv6::IP6RawHdr *hdr;
     uint32_t payload_len;
 
     hdr = reinterpret_cast<ipv6::IP6RawHdr*>(const_cast<uint8_t*>(raw_pkt));
 
     if(raw_len < ipv6::hdr_len())
     {
-        if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
+        if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED);
 
         // Taken from prot_ipv4.cc
@@ -152,7 +152,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* Verify version in IP6 Header agrees */
     if(!is_ip6_hdr_ver(hdr))
     {
-        if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
+        if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IPV6_IS_NOT);
 
         goto decodeipv6_fail;
@@ -177,7 +177,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     {
         if (payload_len > raw_len)
         {
-            if ((p->packet_flags & PKT_UNSURE_ENCAP) == 0)
+            if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
                 codec_events::decoder_event(p, DECODE_IPV6_DGRAM_GT_CAPLEN);
 
             goto decodeipv6_fail;
@@ -201,7 +201,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* lay the IP struct over the raw data */
     // this is ugly but necessary to keep the rest of the code happy
-    p->inner_iph = p->iph = reinterpret_cast<IPHdr *>(const_cast<uint8_t*>(raw_pkt));
+    p->inner_iph = p->iph = reinterpret_cast<const IPHdr *>(raw_pkt);
 
     /* Build Packet structure's version of the IP6 header */
     sfiph_build(p, hdr, AF_INET6);
@@ -251,7 +251,7 @@ decodeipv6_fail:
  *
  * Returns: void function
  */
-static inline void IPV6MiscTests(Packet *p)
+static inline void IPV6MiscTests(const Packet* const p)
 {
     /*
      * Some IP Header tests
@@ -300,7 +300,7 @@ static inline void IPV6MiscTests(Packet *p)
 
 
 /* Check for multiple IPv6 Multicast-related alerts */
-static void CheckIPV6Multicast(Packet *p)
+static void CheckIPV6Multicast(const Packet* const p)
 {
     ipv6::MulticastScope multicast_scope;
 
@@ -514,7 +514,7 @@ static void CheckIPV6Multicast(Packet *p)
 
 /* Teredo packets need to have one of their IPs use either the Teredo prefix,
    or a link-local prefix (in the case of Router Solicitation messages) */
-static inline int CheckTeredoPrefix(ipv6::IP6RawHdr *hdr)
+static inline int CheckTeredoPrefix(const ipv6::IP6RawHdr* const hdr)
 {
     /* Check if src address matches 2001::/32 */
     if ((hdr->ip6_src.s6_addr[0] == 0x20) &&

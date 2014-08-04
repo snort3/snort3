@@ -231,7 +231,7 @@ void FlowControl::set_key(FlowKey* key, const Packet* p)
     addressSpaceId = 0;
 #endif
 
-    if ( p->frag_flag )
+    if ( (p->decode_flags & DECODE__FRAG) )
     {
         key->init(GET_SRC_IP(p), GET_DST_IP(p), GET_IPH_ID(p),
             proto, vlanId, mplsId, addressSpaceId);

@@ -247,7 +247,7 @@ static void AlertSyslog(
                     "{%d} ", GET_IPH_PROTO(p));
         }
 
-        if (p->frag_flag
+        if ((p->decode_flags & DECODE__FRAG)
                 || ((GET_IPH_PROTO(p) != IPPROTO_TCP)
                     && (GET_IPH_PROTO(p) != IPPROTO_UDP)))
         {

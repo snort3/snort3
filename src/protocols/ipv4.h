@@ -85,6 +85,7 @@ struct IpOptions
     const uint8_t *data;
 };
 
+// This must be a standard layour struct!
 struct IPHdr
 {
     uint8_t ip_verhl;      /* version & header length */

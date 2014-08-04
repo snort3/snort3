@@ -83,8 +83,6 @@ struct in6_addr
 #define IP6F_MF_MASK        0x0001  /* more-fragments flag */
 
 #define IP6F_OFFSET(fh) ((ntohs((fh)->ip6f_offlg) & IP6F_OFFSET_MASK) >> 3)
-#define IP6F_RES(fh) (fh)->ip6f_reserved
-#define IP6F_MF(fh) (ntohs((fh)->ip6f_offlg) & IP6F_MF_MASK )
 
 /* to store references to IP6 Extension Headers */
 struct IP6Option
@@ -213,17 +211,21 @@ inline bool is_multicast_scope_global(uint8_t ch)
     return (static_cast<MulticastScope>(ch) == MulticastScope::IP6_MULTICAST_SCOPE_GLOBAL);
 }
 
-inline bool is_ip6_hdr_ver(IP6RawHdr *hdr)
-{
-    return ((ntohl(hdr->ip6_vtf) >> 28) == 6);
-}
+inline bool is_ip6_hdr_ver(const IP6RawHdr* const hdr)
+{ return ((ntohl(hdr->ip6_vtf) >> 28) == 6); }
 
 inline size_t min_ext_len()
-{
-    return detail::MIN_EXT_LEN;
-}
+{ return detail::MIN_EXT_LEN; }
 
-} // namespace
+inline bool is_mf_set(const IP6Frag* const fh)
+{ return (ntohs(fh->ip6f_offlg) & IP6F_MF_MASK); }
+
+inline bool is_res_set(const IP6Frag* const fh)
+{ return fh->ip6f_reserved; }
+
+//#define IP6F_RES(fh) (fh)->ip6f_reserved
+
+} // namespace ipv6
 
 
 

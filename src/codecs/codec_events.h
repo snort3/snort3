@@ -27,13 +27,13 @@
 namespace codec_events
 {
 
-void exec_ip_chksm_drop(Packet*);
-void exec_udp_chksm_drop (Packet*);
-void exec_tcp_chksm_drop (Packet*);
-void exec_icmp_chksm_drop (Packet*);
-void decoder_event(Packet* p, CodecSid);
+void exec_ip_chksm_drop (const Packet* const);
+void exec_udp_chksm_drop (const Packet*const);
+void exec_tcp_chksm_drop (const Packet* const);
+void exec_icmp_chksm_drop (const Packet* const);
+void decoder_event(const Packet* p, CodecSid const);
 void decoder_alert_encapsulated(
-    Packet*, CodecSid, const uint8_t* pkt, uint32_t len);
+    Packet* const, CodecSid, const uint8_t* pkt, uint32_t len);
 
 
 } //namespace codec_events

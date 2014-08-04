@@ -532,13 +532,13 @@ static inline int FragCheckFirstLast(Packet *p, FragTracker *ft)
     uint16_t endOfThisFrag;
 
     /* set the frag flag if this is the first fragment */
-    if(p->mf && p->frag_offset == 0)
+    if((p->decode_flags & DECODE__MF) && p->frag_offset == 0)
     {
         ft->frag_flags |= FRAG_GOT_FIRST;
 
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Got first frag\n"););
     }
-    else if((!p->mf) && (p->frag_offset > 0)) /* set for last frag too */
+    else if((!(p->decode_flags & DECODE__MF)) && (p->frag_offset > 0)) /* set for last frag too */
     {
         /* Use the actual length here, because packet may have been
         * truncated.  Don't want to try to copy more than we actually
@@ -754,7 +754,7 @@ static inline int checkTinyFragments(
 {
     //Snort may need to raise a separate event if
     //only trimmed length is tiny.
-    if(p->mf)
+    if(p->decode_flags & DECODE__MF)
     {
         ///detect tiny fragments before processing overlaps.
         if (engine->min_fragment_length)
@@ -940,7 +940,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
          * clear the packet fragment fields
          */
         ((IPHdr *)dpkt->iph)->ip_off = 0x0000;
-        dpkt->frag_flag = 0;
+        dpkt->decode_flags &= ~DECODE__FRAG;
 
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                     "[^^] Walking fraglist:\n"););
@@ -991,7 +991,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
          * tell the rest of the system that this is a rebuilt fragment
          */
         dpkt->packet_flags |= PKT_REBUILT_FRAG;
-        dpkt->frag_flag = 0;
+        dpkt->decode_flags &= ~DECODE__FRAG;
         dpkt->dsize = (uint16_t)ft->calculated_size;
 
         PacketManager::encode_update(dpkt);
@@ -1328,7 +1328,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
 
     // preconditions - what we registered for
     assert(IPH_IS_VALID(p) && !(p->error_flags & PKT_ERR_CKSUM_IP));
-    assert(p->frag_flag);
+    assert(p->decode_flags & DECODE__FRAG);
 
     /*
      * First case: if frag offset is 0 & UDP, let that packet go
@@ -1348,8 +1348,11 @@ void Defrag::process(Packet* p, FragTracker* ft)
      *    Disable Inspection since we'll look at the payload in
      *    a rebuilt packet later.  So don't process it further.
      */
-    if ((p->frag_offset != 0) || ((GET_IPH_PROTO(p) != IPPROTO_UDP) && (p->mf)))
+    if ((p->frag_offset != 0) ||
+        ((GET_IPH_PROTO(p) != IPPROTO_UDP) && (p->decode_flags & DECODE__MF)))
+    {
         DisableDetect(p);
+    }
 
     /*
      * pkt's not going to make it to the engine, bail
@@ -1455,7 +1458,8 @@ void Defrag::process(Packet* p, FragTracker* ft)
 #ifdef DEBUG
                 LogMessage("WARNING: Excessive IP fragment overlap, "
                            "(More: %u, offset: %u, offsetSize: %u).\n",
-                           p->mf, (p->frag_offset<<3), p->ip_frag_len);
+                           (p->decode_flags & DECODE__MF),
+                           (p->frag_offset<<3), p->ip_frag_len);
 #endif
                 t_stats.discards++;
                 MODULE_PROFILE_END(fragPerfStats);
@@ -1592,7 +1596,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
     /*
      * might have last frag...
      */
-    if(!p->mf)
+    if(!(p->decode_flags & DECODE__MF))
     {
         if ((frag_end > ft->calculated_size) &&
             (firstLastOk == FRAG_LAST_OFFSET_ADJUST))
@@ -1747,7 +1751,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
                     ((ft->frag_flags & FRAG_GOT_LAST) &&
                      frag_end != ft->calculated_size))
             {
-                if (!p->mf)
+                if (!(p->decode_flags & DECODE__MF))
                 {
                     /*
                      * teardrop attack...
@@ -1927,7 +1931,7 @@ left_overlap_last:
                     ((ft->frag_flags & FRAG_GOT_LAST) &&
                      frag_end != ft->calculated_size))
             {
-                if (!p->mf)
+                if (!(p->decode_flags & DECODE__MF))
                 {
                     /*
                      * teardrop attack...
@@ -2355,7 +2359,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     frag_end = f->offset + fragLength;
     f->ord = ft->ordinal++;
     f->data = f->fptr;     /* ptr to adjusted start position */
-    if (!p->mf)
+    if (!(p->decode_flags & DECODE__MF))
     {
         f->last = 1;
     }

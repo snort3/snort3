@@ -398,7 +398,7 @@ void PacketManager::decode(
     uint8_t mapped_prot = grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint16_t lyr_len = 0;
-    uint32_t len = 0;
+    uint32_t len;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
             DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
@@ -443,7 +443,7 @@ void PacketManager::decode(
     // if the final protocol ID is not the default codec, a Codec failed
     if (prev_prot_id != FINISHED_DECODE)
     {
-        if (!(p->packet_flags & PKT_UNSURE_ENCAP))
+        if (!(p->decode_flags & DECODE__UNSURE_ENCAP))
         {
             // if the codec exists, it failed
             if(s_proto_map[prev_prot_id])
@@ -452,7 +452,7 @@ void PacketManager::decode(
                 s_stats[other_codecs]++;
         }
 
-        if (p->packet_flags & PKT_ESP_LYR_PRESENT)
+        if (p->decode_flags & DECODE__ESP)
             p->packet_flags |= PKT_TRUST;
     }
 
@@ -466,7 +466,6 @@ void PacketManager::decode(
         ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
-    p->packet_flags &= (uint32_t)~PKT_ESP_LYR_PRESENT; // cleanup just in case.
     p->dsize = (uint16_t)len;
     p->data = pkt;
 
@@ -549,6 +548,8 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     Layer* lyr;
     int len;
     int num_layers = p->num_layers;
+
+    // TODO -- remove
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
     uint8_t* pkt = (uint8_t*)c->pkt;
 
@@ -557,9 +558,10 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
 
     memset(c, 0, PKT_ZERO_LEN);
 
+    // TODO -- remove
     c->raw_ip6h = nullptr;
-    c->pkth = pkth;
-    c->pkt = pkt;
+//    c->pkth = pkth;
+//    c->pkt = pkt;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     pkth->ingress_index = phdr->ingress_index;
@@ -619,18 +621,6 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     c->packet_flags |= PKT_PSEUDO;
     c->pseudo_type = type;
     c->user_policy_id = p->user_policy_id;  // cooked packet gets same policy as raw
-
-    switch ( type )
-    {
-        case PSEUDO_PKT_SMB_SEG:
-        case PSEUDO_PKT_DCE_SEG:
-        case PSEUDO_PKT_DCE_FRAG:
-        case PSEUDO_PKT_SMB_TRANS:
-            c->packet_flags |= PKT_REASSEMBLED_OLD;
-            break;
-        default:
-            break;
-    }
 
     // setup pkt capture header
     pkth->caplen = len;

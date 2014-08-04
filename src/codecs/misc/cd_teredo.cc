@@ -103,7 +103,7 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             Active_SetTunnelBypass();
 
         if ((!teredo::is_teredo_port(p->sp)) && (!teredo::is_teredo_port(p->dp)))
-            p->packet_flags |= PKT_UNSURE_ENCAP;
+            p->decode_flags |= DECODE__UNSURE_ENCAP;
 
         next_prot_id = IPPROTO_IPV6;
         return true;

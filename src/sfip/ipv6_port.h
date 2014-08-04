@@ -112,8 +112,7 @@ typedef sfip_t *snort_ip_p;
 
 #define GET_INNER_SRC_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_src)):(&((p)->inner_ip4h.ip_src)))
 #define GET_INNER_DST_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_dst)):(&((p)->inner_ip4h.ip_dst)))
-#define GET_OUTER_SRC_IP(p)  (IS_OUTER_IP6(p) ? (&((p)->outer_ip6h.ip_src)):(&((p)->outer_ip4h.ip_src)))
-#define GET_OUTER_DST_IP(p)  (IS_OUTER_IP6(p) ? (&((p)->outer_ip6h.ip_dst)):(&((p)->outer_ip4h.ip_dst)))
+
 static inline int sfip_equal (snort_ip* ip1, snort_ip* ip2)
 {
     if ( ip1->family != ip2->family )

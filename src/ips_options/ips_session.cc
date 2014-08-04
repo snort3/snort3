@@ -149,7 +149,7 @@ int SessionOption::eval(Cursor&, Packet *p)
     /* if there's data in this packet */
     if(p != NULL)
     {
-        if((p->dsize != 0 && p->data != NULL) || p->frag_flag != 1)
+        if((p->dsize != 0 && p->data != NULL) || (!(p->decode_flags & DECODE__FRAG)))
         {
              session = OpenSessionFile(p);
 
@@ -181,7 +181,7 @@ static FILE *OpenSessionFile(Packet *p)
 
     FILE *ret;
 
-    if(p->frag_flag)
+    if(p->decode_flags & DECODE__FRAG)
     {
         return NULL;
     }
@@ -270,7 +270,7 @@ static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
     const u_char *end;
     char conv[] = "0123456789ABCDEF"; /* xlation lookup table */
 
-    if(p->dsize == 0 || p->data == NULL || p->frag_flag)
+    if(p->dsize == 0 || p->data == NULL || (p->decode_flags & DECODE__FRAG))
         return;
 
     idx = p->data;

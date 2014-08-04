@@ -549,7 +549,7 @@ void LogIpAddrs(TextLog *log, Packet *p)
     if (!IPH_IS_VALID(p))
         return;
 
-    if (p->frag_flag
+    if ((p->decode_flags & DECODE__FRAG)
             || ((GET_IPH_PROTO(p) != IPPROTO_TCP)
                 && (GET_IPH_PROTO(p) != IPPROTO_UDP)))
     {
@@ -644,7 +644,7 @@ void LogIPHeader(TextLog*  log, Packet * p)
     }
 
     /* print fragment info if necessary */
-    if(p->frag_flag)
+    if(p->decode_flags & DECODE__FRAG)
     {
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
                 (p->frag_offset & 0x1FFF),
@@ -660,7 +660,7 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
     uint8_t save_ip_option_count = p->ip_option_count;
     IP4Hdr *save_ip4h = p->ip4h;
     IP6Hdr *save_ip6h = p->ip6h;
-    uint8_t save_frag_flag = p->frag_flag;
+    uint8_t save_frag_flag = (p->decode_flags & DECODE__FRAG);
     uint16_t save_sp, save_dp;
 
     p->family = p->outer_family;
@@ -669,7 +669,7 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
     p->ip_option_count = 0;
     p->ip4h = &p->outer_ip4h;
     p->ip6h = &p->outer_ip6h;
-    p->frag_flag = 0;
+    p->decode_flags &= ~DECODE__FRAG;
 
     if (p->proto_bits & PROTO_BIT__TEREDO)
     {
@@ -700,7 +700,7 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
     p->ip_option_count = save_ip_option_count;
     p->ip4h = save_ip4h;
     p->ip6h = save_ip6h;
-    p->frag_flag = save_frag_flag;
+    p->decode_flags |= save_frag_flag;
 }
 
 /*-------------------------------------------------------------------
@@ -1702,7 +1702,7 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
     LogIPHeader(log, p);
 
     /* if this isn't a fragment, print the other header info */
-    if ( !p->frag_flag )
+    if (!(p->decode_flags & DECODE__FRAG))
     {
         switch (GET_IPH_PROTO(p))
         {

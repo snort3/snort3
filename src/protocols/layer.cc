@@ -132,6 +132,7 @@ uint8_t get_outer_ip_next_pro(const Packet* const p)
                 break;
         }
     }
+    return -1;
 }
 
 int get_inner_ip_lyr(const Packet* const p)

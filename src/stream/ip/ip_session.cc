@@ -170,7 +170,7 @@ int IpSession::process(Packet* p)
         return 0;
     }
 
-    if ( p->frag_flag )
+    if ( p->decode_flags & DECODE__FRAG )
     {
         Defrag* d = get_defrag(flow->ssn_server);
         d->process(p, &tracker);
