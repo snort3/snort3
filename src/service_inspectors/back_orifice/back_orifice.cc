@@ -188,7 +188,7 @@ static const RuleMap bo_rules[] =
 class BoModule : public Module
 {
 public:
-    BoModule() : Module("back_orifice")
+    BoModule() : Module(mod_name)
     { };
 
     const RuleMap* get_rules() const
@@ -606,11 +606,11 @@ static const InspectApi bo_api =
     nullptr, // buffers
     nullptr, // service
     bo_init,
-    nullptr, // term
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     bo_ctor,
     bo_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

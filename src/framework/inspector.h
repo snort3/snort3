@@ -67,8 +67,8 @@ public:
     virtual void show(SnortConfig*) { };
 
     // packet thread functions
-    virtual void pinit() { };
-    virtual void pterm() { };
+    virtual void tinit() { };
+    virtual void tterm() { };
 
     virtual void eval(Packet*) = 0;
     virtual void meta(int, const uint8_t*) { };
@@ -150,15 +150,12 @@ struct InspectApi
     const char** buffers;  // null terminated list of exported buffers
     const char* service;   // nullptr when type != IT_SERVICE
 
-    // main thread funcs - parse time data only
-    InspectFunc init;      // allocate process static data
-    InspectFunc term;      // release init() data
+    InspectFunc pinit;     // plugin init
+    InspectFunc pterm;     // cleanup pinit()
+    InspectFunc tinit;     // thread local init
+    InspectFunc tterm;     // cleanup tinit()
     InspectNew ctor;       // instantiate inspector from Module data
     InspectDelFunc dtor;   // release inspector instance
-
-    // packet thread funcs - runtime data only
-    InspectFunc pinit;     // plugin thread local allocation
-    InspectFunc pterm;     // plugin thread local cleanup
     InspectSsnFunc ssn;    // purge caches
     InspectFunc reset;     // clear stats
 };

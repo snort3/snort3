@@ -75,6 +75,7 @@ change:  icmpseq ==> icmp_seq
 change:  icmptype ==> icmp_type
 change:  intel-cpm ==> intel_cpm
 change:  iplen ==> ip_len
+change:  ips_option: threshold ==> event_filter
 change:  log_alert ==> level = alert
 change:  log_auth ==> facility = auth
 change:  log_authpriv ==> facility = authpriv
@@ -121,15 +122,18 @@ change:  non_rfc_char ==> non_rfc_chars
 change:  nopcre  ==> pcre_enable
 change:  overlap_limit ==> max_overlaps
 change:  pad ==> base
+change:  paf_max [0:63780] ==> paf_max [1460:63780]
 change:  pkt-log  ==> pkt_log
 change:  pkt_count  ==> limit
 change:  pktcnt ==> packets
+change:  policy bsd-right ==> policy = bsd_right
 change:  policy_mode  ==> mode
 change:  ports ==> bindings
 change:  ports ==> gtp_ports
 change:  ports both ==> both_ports
 change:  ports client ==> client_ports
 change:  ports server ==> server_ports
+change:  post_depth [-1:65495] ==> post_depth [-1:65535]
 change:  preprocessor normalize_icmp4 ==> icmp4 == <bool>
 change:  preprocessor normalize_icmp6 ==> icmp6 == <bool>
 change:  preprocessor normalize_ip6 ==> ip6 == <bool>

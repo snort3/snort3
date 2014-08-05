@@ -104,11 +104,11 @@ int NHttpInspect::verify(SnortConfig*)
     return 0; // 0 = good, -1 = bad
 }
 
-void NHttpInspect::pinit()
+void NHttpInspect::tinit()
 {
 }
 
-void NHttpInspect::pterm()
+void NHttpInspect::tterm()
 {
 }
 

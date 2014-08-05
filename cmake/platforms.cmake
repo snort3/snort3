@@ -4,9 +4,38 @@
 # 
 
 
+# TODO:  Either make a macro or a  of platforms and loop over them.
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "aix")
+    set(AIX "1")
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "bsdi")
+    set(BSDI "1")
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "freebsd")
+    set(FREEBSD "1")
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "hpux")
+    set(HPUX "1")
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "linux")
+    set(LINUX "1")
+endif ()
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    set(LINUX "YES")
+endif("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "openbsd")
     set(OPENBSD "1")
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "osf")
+    set(OSF1 "1")
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "sgi-irix")
@@ -21,41 +50,15 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "sunos")
     set(SUNOS "1")
 endif ()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "linux")
-    set(LINUX "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "hpux")
-    set(HPUX "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "freebsd")
-    set(FREEBSD "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "bsdi")
-    set(BSDI "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "aix")
-    set(AIX "1")
-endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "osf")
-    set(OSF1 "1")
-endif ()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "tru64")
     set(OSF1 "1")
 endif ()
+
 
 # APPLE is defined by Cmake
 if (APPLE)
     set(MACOS 1)
 endif()
-
-
-
 
 
 

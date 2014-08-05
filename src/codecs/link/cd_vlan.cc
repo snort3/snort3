@@ -157,9 +157,22 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
     else
     {
+        uint16_t vid = vlan::vth_vlan(vh);
+
+        // Vlan IDs 0 and 4095 are reserved.
+        if (vid == 0 || vid == 4095)
+        {
+            codec_events::decoder_event(p, DECODE_BAD_VLAN);
+
+            // TBD add decoder drop event for VLAN hdr len issue
+            p->iph = NULL;
+            p->family = NO_IP;
+            return false;
+        }
+
+
         lyr_len = sizeof(vlan::VlanTagHdr);
         next_prot_id = ntohs(vh->vth_proto);
-
     }
 
     p->proto_bits |= PROTO_BIT__VLAN;

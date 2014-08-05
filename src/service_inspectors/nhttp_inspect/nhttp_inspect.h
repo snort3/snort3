@@ -52,8 +52,8 @@ public:
     void show(SnortConfig*);
     void eval(Packet*);
     bool enabled();
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
     NHttpStreamSplitter* get_splitter(bool isClientToServer) { return new NHttpStreamSplitter(isClientToServer, this); };
 
 private:

@@ -334,7 +334,7 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
 //    uint16_t orig_frag_offset;
 
     /* lay the IP struct over the raw data */
-    ipv6::IP6RawHdr* hdr = (ipv6::IP6RawHdr*)pkt;
+    const ipv6::IP6RawHdr* hdr = reinterpret_cast<const ipv6::IP6RawHdr*>(pkt);
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP6: ip header"
                     " starts at: %p, length is %lu\n", hdr,

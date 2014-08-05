@@ -79,16 +79,16 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         util::trim(val);
 
         if (!keyword.compare("offset"))
-            tmpval = ld->add_suboption("offset", val, ':');
+            tmpval = ld->add_suboption("offset", val);
 
         else if (!keyword.compare("distance"))
-            tmpval = ld->add_suboption("distance", val, ':');
+            tmpval = ld->add_suboption("distance", val);
 
         else if (!keyword.compare("within"))
-            tmpval = ld->add_suboption("within", val, ':');
+            tmpval = ld->add_suboption("within", val);
 
         else if (!keyword.compare("depth"))
-            tmpval = ld->add_suboption("depth", val, ':');
+            tmpval = ld->add_suboption("depth", val);
 
         else if (!keyword.compare("nocase"))
             tmpval = ld->add_suboption("nocase");
@@ -127,10 +127,10 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
             tmpval = ld->add_rule_option_before_selected("http_stat_msg");
 
         else if (!keyword.compare("hash"))   // PROTECTED CONTENT
-            tmpval = ld->add_suboption("hash", val, ':');
+            tmpval = ld->add_suboption("hash", val);
 
         else if (!keyword.compare("length"))  // PROTECTED CONTENT
-            tmpval = ld->add_suboption("length", val, ':');
+            tmpval = ld->add_suboption("length", val);
 
         else if (!keyword.compare("fast_pattern"))
         {
@@ -152,8 +152,8 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
                         pos++;
                         int length = std::stoi(val.substr(pos, std::string::npos));
                         tmpval = ld->add_suboption("fast_pattern");
-                        tmpval = ld->add_suboption("fast_pattern_offset", std::to_string(offset), ':');
-                        tmpval = ld->add_suboption("fast_pattern_length", std::to_string(length), ':');
+                        tmpval = ld->add_suboption("fast_pattern_offset", std::to_string(offset));
+                        tmpval = ld->add_suboption("fast_pattern_length", std::to_string(length));
                     }
                     else
                         tmpval = false;

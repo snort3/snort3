@@ -96,7 +96,7 @@ LuaIpsApi::LuaIpsApi(string& s, unsigned ver, string& c)
     api.base.version = ver;
     api.base.api_version = IPSAPI_VERSION;
 
-    api.ginit = api.gterm = nullptr;
+    api.pinit = api.pterm = nullptr;
     api.tinit = api.tterm = nullptr;
 
     api.ctor = ctor;

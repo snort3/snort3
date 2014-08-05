@@ -47,7 +47,8 @@ bool RuleState::convert(std::istringstream& data_stream)
     bool retval = true;
     int count = 0;
 
-    ld->open_new_top_level_table("rule_state");
+    ld->open_table("rule_state");
+    ld->open_table();
 
     while (util::get_string(data_stream, arg, ", "))
     {
@@ -95,6 +96,8 @@ bool RuleState::convert(std::istringstream& data_stream)
             retval = false;
     }
 
+    ld->close_table();
+    ld->close_table();
     return retval;
 }
 

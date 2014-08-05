@@ -6,6 +6,8 @@ set ( ACTIONS_INCLUDES
 add_library(actions STATIC
     ${ACTIONS_INCLUDES}
     actions.cc
+    ips_actions.cc
+    ips_actions.h
 )
 
 install (FILES ${ACTIONS_INCLUDES}

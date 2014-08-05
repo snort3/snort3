@@ -216,8 +216,6 @@ static int PrintTelnetConf(TELNET_PROTO_CONF *TelnetConf)
     LogMessage("      Are You There Threshold: %d\n",
         TelnetConf->ayt_threshold);
     LogMessage("      Normalize: %s\n", TelnetConf->normalize ? "YES" : "NO");
-    LogMessage("      Detect Anomalies: %s\n",
-            TelnetConf->detect_anomalies ? "YES" : "NO");
     PrintConfOpt(TelnetConf->detect_encrypted, "Check for Encrypted Traffic");
     LogMessage("      Continue to check encrypted data: %s\n",
         TelnetConf->check_encrypted_data ? "YES" : "NO");
@@ -314,11 +312,11 @@ const InspectApi tn_api =
     nullptr, // buffers
     "telnet",
     tn_init,
-    nullptr, // term
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     tn_ctor,
     tn_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

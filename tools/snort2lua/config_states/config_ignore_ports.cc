@@ -56,6 +56,7 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
         return false;
 
     ld->open_table("when");
+    ld->add_option_to_table("proto", keyword);
 
     while (data_stream >> port)
     {

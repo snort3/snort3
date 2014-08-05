@@ -1,0 +1,79 @@
+/*
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// ips_action.h author Russ Combs <rucombs@cisco.com>
+
+#ifndef IPS_ACTION_H
+#define IPS_ACTION_H
+
+#include "main/snort_types.h"
+#include "framework/base_api.h"
+#include "actions/actions.h"
+
+struct Packet;
+
+// this is the current version of the api
+#define ACTAPI_VERSION 0
+
+// this is the version of the api the plugins are using
+// to be useful, these must be explicit (*_V0, *_V1, ...)
+#define ACTAPI_PLUGIN_V0 0
+
+//-------------------------------------------------------------------------
+// api for class
+//-------------------------------------------------------------------------
+
+struct SnortConfig;
+
+class IpsAction
+{
+public:
+    virtual ~IpsAction() { };
+
+    virtual void exec(Packet*) = 0;
+
+    RuleType get_type() const { return type; };
+    const char* get_name() const { return name; };
+
+protected:
+    IpsAction(const char* s, RuleType t)
+    { name = s; type = t; };
+
+private:
+    const char* name;
+    RuleType type;
+};
+
+typedef void (*IpsActFunc)();
+typedef IpsAction* (*ActNewFunc)(class Module*);
+typedef void (*ActDelFunc)(IpsAction*);
+
+struct ActionApi
+{
+    BaseApi base;
+
+    IpsActFunc pinit;
+    IpsActFunc pterm;
+    IpsActFunc tinit;
+    IpsActFunc tterm;
+    ActNewFunc ctor;
+    ActDelFunc dtor;
+};
+
+#endif
+

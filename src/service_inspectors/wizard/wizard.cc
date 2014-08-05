@@ -253,10 +253,10 @@ static const InspectApi wiz_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
+    nullptr, // tinit
+    nullptr, // tterm
     wiz_ctor,
     wiz_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

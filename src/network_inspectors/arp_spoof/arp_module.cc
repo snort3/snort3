@@ -51,11 +51,8 @@ static const Parameter arp_spoof_hosts_params[] =
 
 static const Parameter arp_spoof_params[] =
 {
-    { "unicast", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
     { "hosts", Parameter::PT_LIST, arp_spoof_hosts_params, nullptr,
-      "help" },
+      "configure ARP cache overwrite attacks" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -85,8 +82,6 @@ ArpSpoofModule::ArpSpoofModule() :
     Module(mod_name, arp_spoof_params)
 {
     config = new ArpSpoofConfig;
-
-    config->check_unicast_arp = false;
     config->check_overwrite = false;
 }
 
@@ -104,10 +99,7 @@ ProfileStats* ArpSpoofModule::get_profile() const
 
 bool ArpSpoofModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("unicast") )
-        config->check_unicast_arp = v.get_bool();
-
-    else if ( v.is("ip") )
+    if ( v.is("ip") )
         host.ipv4_addr = v.get_ip4();
 
     else if ( v.is("mac") )

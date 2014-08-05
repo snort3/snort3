@@ -102,6 +102,7 @@ Snort++ differs from Snort in the following ways:
   buffer
 * added optional selector to http_header, eg http_header:User-Agent;
 
+
 === Output
 
 * alert_fast includes packet data by default

@@ -32,6 +32,7 @@ class TrCodecModule : public DecodeModule
 public:
     TrCodecModule();
 
+    const RuleMap* get_rules() const;
     bool set(const char*, Value&, SnortConfig*);
 };
 

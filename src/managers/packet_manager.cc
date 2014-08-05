@@ -38,6 +38,8 @@
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "codecs/ip/ipv6_util.h"
+#include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
 
 // Encoder FOO
 #ifdef HAVE_DUMBNET_H
@@ -106,9 +108,9 @@ static inline void push_layer(Packet *p,
                                 uint32_t len,
                                 Codec *const cd)
 {
-    if ( p->next_layer < LAYER_MAX )
+    if ( p->num_layers < LAYER_MAX )
     {
-        Layer& lyr = p->layers[p->next_layer++];
+        Layer& lyr = p->layers[p->num_layers++];
         lyr.proto = cd->get_proto_id();
         lyr.prot_id = prot_id;
         lyr.start = (uint8_t*)hdr_start;
@@ -121,45 +123,6 @@ static inline void push_layer(Packet *p,
     }
 }
 
-static inline uint8_t* get_inner_ip_hdr(const Packet *p)
-{
-    const Layer *layers = p->layers;
-
-    for (int i = p->next_layer-1; i >= 0; i--)
-    {
-        switch(layers[i].prot_id)
-        {
-            case ETHERTYPE_IPV4:
-            case ETHERTYPE_IPV6:
-            case IPPROTO_ID_IPIP:
-            case IPPROTO_ID_IPV6:
-                return layers[i].start;
-            default:
-                break;
-        }
-    }
-    return nullptr;
-}
-
-static inline int get_inner_ip_lyr(const Packet *p)
-{
-    const Layer *layers = p->layers;
-
-    for (int i = p->next_layer-1; i >= 0; i--)
-    {
-        switch(layers[i].prot_id)
-        {
-            case ETHERTYPE_IPV4:
-            case ETHERTYPE_IPV6:
-            case IPPROTO_ID_IPIP:
-            case IPPROTO_ID_IPV6:
-                return i;
-            default:
-                break;
-        }
-    }
-    return -1;
-}
 
 /*
  * Begin search from index 1.  0 is a special case in that it is the default
@@ -193,9 +156,9 @@ static const uint8_t* encode_packet(
     obuf.size = sizeof(s_pkt);
 
     // setting convenience pointers
-    enc->layer = p->next_layer;
+    enc->layer = p->num_layers;
     enc->p = p;
-    enc->ip_hdr = get_inner_ip_hdr(p);
+    enc->ip_hdr = p->layers[layer::get_inner_ip_lyr(p)].start;
 
     if ( ipv4::is_ipv4(*(enc->ip_hdr)))
         enc->ip_len = ipv4::get_pkt_len((IPHdr*) enc->ip_hdr);
@@ -206,7 +169,7 @@ static const uint8_t* encode_packet(
 
 
     const Layer *lyrs = p->layers;
-    for(int i = p->next_layer-1; i >= 0; i--)
+    for(int i = p->num_layers-1; i >= 0; i--)
     {
         // lots of room for improvement
         const Layer *l = &lyrs[i];
@@ -275,8 +238,8 @@ void PacketManager::release_plugins()
 {
     for ( auto* p : s_codecs )
     {
-        if(p->gterm)
-            p->gterm();
+        if(p->pterm)
+            p->pterm();
 
         uint8_t index = get_codec(p->base.name);
         if( index != 0)
@@ -301,8 +264,8 @@ void PacketManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig*
         FatalError("A maximum of 256 codecs can be registered\n");
 
     // global init here to ensure the global policy has already been configured
-    if (cd_api->ginit)
-        cd_api->ginit();
+    if (cd_api->pinit)
+        cd_api->pinit();
 
     Codec *cd = cd_api->ctor(m);
     cd->get_protocol_ids(ids);
@@ -455,6 +418,15 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
     {
+        // must be done here after decode and before push for case layer
+        // LAYER_MAX+1 is invalid or the default codec
+        if ( p->num_layers == LAYER_MAX )
+        {
+            codec_events::decoder_event(p, DECODE_TOO_MANY_LAYERS);
+            MODULE_PROFILE_END(decodePerfStats);
+            return /*false */;
+        }
+
         // internal statistics and record keeping
         push_layer(p, prev_prot_id, pkt, lyr_len, s_protocols[mapped_prot]);
         s_stats[mapped_prot + stat_offset]++;
@@ -482,6 +454,12 @@ void PacketManager::decode(
 
         if (p->packet_flags & PKT_ESP_LYR_PRESENT)
             p->packet_flags |= PKT_TRUST;
+    }
+
+    if (ScMaxEncapsulations() != -1 &&
+        p->encapsulations > ScMaxEncapsulations())
+    {
+        codec_events::decoder_event(p, DECODE_IP_MULTIPLE_ENCAPSULATION);
     }
 
     if (p->ip6_extension_count > 0)
@@ -570,7 +548,7 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     int i;
     Layer* lyr;
     int len;
-    int num_layers = p->next_layer;
+    int num_layers = p->num_layers;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
     uint8_t* pkt = (uint8_t*)c->pkt;
 
@@ -601,7 +579,7 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
 
     if ( f & ENC_FLAG_NET )
     {
-        num_layers = get_inner_ip_lyr(p) + 1;
+        num_layers = layer::get_inner_ip_lyr(p) + 1;
 
         // TBD:  is this an extraneous check?
         if (num_layers == 0)
@@ -629,7 +607,7 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     }
 
     // setup payload info
-    c->next_layer = num_layers;
+    c->num_layers = num_layers;
     c->data = lyr->start + lyr->length;
     len = c->data - c->pkt;
 
@@ -697,7 +675,7 @@ SO_PUBLIC void PacketManager::encode_update (Packet* p)
     p->actual_ip_len = 0;
     Layer *lyr = p->layers;
 
-    for ( i = p->next_layer - 1; i >= 0; i-- )
+    for ( i = p->num_layers - 1; i >= 0; i-- )
     {
         Layer *l = lyr + i;
 

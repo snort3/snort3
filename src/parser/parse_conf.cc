@@ -209,7 +209,7 @@ static void ParseSdrop(SnortConfig *sc, const char *args)
         parse_rule(sc, args, RULE_TYPE__SDROP, &sc->SDrop);
 }
 
-void ParseInclude(SnortConfig *sc, const char *arg)
+static void ParseInclude(SnortConfig *sc, const char *arg)
 {
     struct stat file_stat;  /* for include path testing */
     char* fname = SnortStrdup(arg);

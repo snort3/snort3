@@ -175,7 +175,7 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
         whitespace += "    ";
 
     if(!t.name.empty())
-        out << whitespace << t.name << " = " << std::endl;
+        out << whitespace << t.name << " =" << std::endl;
     out << whitespace << '{' << std::endl;
 
     if (!t.comments->empty() && !LuaData::is_quiet_mode())

@@ -870,7 +870,7 @@ bool PortScan::configure(SnortConfig*)
     return true;
 }
 
-void PortScan::pinit()
+void PortScan::tinit()
 {
     g_tmp_pkt = PacketManager::encode_new();
 
@@ -886,7 +886,7 @@ void PortScan::pinit()
     ps_init_hash(config->common->memcap);
 }
 
-void PortScan::pterm()
+void PortScan::tterm()
 {
     fclose(g_logfile);
     ps_cleanup();
@@ -1002,12 +1002,12 @@ static const InspectApi sp_api =
     PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT dynamic assign
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    sp_ctor,
-    sp_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    sp_ctor,
+    sp_dtor,
     nullptr, // ssn
     sp_reset
 };

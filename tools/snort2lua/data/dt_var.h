@@ -26,6 +26,8 @@
 #ifndef DT_VAR_H
 #define DT_VAR_H
 
+class LuaData;
+
 class Variable
 {
 public:
@@ -34,6 +36,7 @@ public:
     virtual ~Variable();
 
     inline std::string get_name(){ return name; };
+    std::string get_value(LuaData*);
     bool add_value(std::string);
     friend std::ostream &operator<<( std::ostream&, const Variable &);
 

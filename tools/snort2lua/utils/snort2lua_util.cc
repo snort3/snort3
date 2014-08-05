@@ -28,8 +28,10 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <sstream>
 #include "utils/snort2lua_util.h"
 #include "conversion_state.h"
+#include "data/dt_data.h"
 
 namespace util
 {
@@ -97,10 +99,10 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
     }
     return str_len;
 }
-
+    
 bool get_string(std::istringstream& stream,
                 std::string& option,
-                std::string delimeters)
+                const std::string delimeters)
 {
     if (delimeters.empty() || !stream.good())
     {

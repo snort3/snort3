@@ -126,10 +126,10 @@ static const InspectApi icmp_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
+    nullptr, // tinit
+    nullptr, // tterm
     icmp_ctor,
     icmp_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     icmp_ssn,
     icmp_reset
 };

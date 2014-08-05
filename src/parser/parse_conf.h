@@ -32,7 +32,6 @@ struct SnortConfig;
 void ParseConfigFile(SnortConfig*, const char* fname, bool do_rules);
 void ParseConfigString(SnortConfig*, const char* str, bool do_rules);
 
-void ParseInclude(SnortConfig*, const char *arg);
 void AddRuleState(SnortConfig*, const RuleState&);
 
 #define ERR_PAIR_COUNT \

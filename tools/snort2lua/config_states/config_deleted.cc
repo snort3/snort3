@@ -45,7 +45,7 @@ public:
 
 bool Deleted::convert(std::istringstream& data_stream)
 {
-    data_stream.setstate(std::ios::eofbit); // these deleted, not failures
+    data_stream.setstate(std::ios::eofbit); // deleted, not failures
     return true;
 }
 

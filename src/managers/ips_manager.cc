@@ -322,8 +322,8 @@ bool IpsManager::get_option(
 
     if ( !opt->init )
     {
-        if ( opt->api->ginit )
-            opt->api->ginit(sc);
+        if ( opt->api->pinit )
+            opt->api->pinit(sc);
         opt->init = true;
     }
     // FIXIT verify api->protos and api->max_per_rule
@@ -365,9 +365,9 @@ void IpsManager::global_init(SnortConfig*)
 void IpsManager::global_term(SnortConfig* sc)
 {
     for ( auto* p : s_options )
-        if ( p->init && p->api->gterm )
+        if ( p->init && p->api->pterm )
         {
-            p->api->gterm(sc);
+            p->api->pterm(sc);
             p->init = false;
         }
 }

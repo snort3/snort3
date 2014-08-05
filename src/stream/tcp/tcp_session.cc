@@ -3873,9 +3873,8 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
 
                 if (rcv->small_seg_count > config->max_consec_small_segs)
                 {
-                    /* Above threshold, log it... requires detect_anomalies be
-                    * on in this TCP policy, action controlled by preprocessor
-                    * rule. */
+                    /* Above threshold, log it...  in this TCP policy, 
+                     * action controlled by preprocessor rule. */
                     EventMaxSmallSegsExceeded();
 
                     /* Reset counter, so we're not too noisy */

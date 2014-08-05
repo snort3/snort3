@@ -81,10 +81,10 @@ const InspectApi NHttpApi::nhttp_api =
     "http",
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,
+    NHttpApi::nhttp_tinit,
+    NHttpApi::nhttp_tterm,
     NHttpApi::nhttp_ctor,
     NHttpApi::nhttp_dtor,
-    NHttpApi::nhttp_pinit,
-    NHttpApi::nhttp_pterm,
     nullptr, // ssn
     nullptr  // reset
 };

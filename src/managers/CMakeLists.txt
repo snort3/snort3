@@ -7,6 +7,8 @@ set (LUA_INCLUDES
 )
 
 add_library( managers
+    action_manager.h
+    action_manager.cc
     data_manager.h
     data_manager.cc
     event_manager.cc
@@ -39,6 +41,7 @@ target_link_libraries(managers
     search_engines
     parser
     codecs
+    actions
 )
 
 install (FILES ${LUA_INCLUDES}

@@ -32,6 +32,7 @@ add_library (detection STATIC
 
 target_link_libraries( detection
     framework
+    managers
 )
 
 install(FILES ${DETECTION_INCLUDES}

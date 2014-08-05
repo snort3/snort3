@@ -180,22 +180,18 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    if (p->family != NO_IP)
+    if (p->encapsulations)
     {
-        if (p->encapsulated)
-        {
+        if (p->encapsulations)
             codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
                 raw_pkt, raw_len);
 
-            return false;
-        }
-        else
-        {
-            p->encapsulated = 1;
-            p->outer_iph = p->iph;
-            p->outer_ip_data = p->ip_data;
-            p->outer_ip_dsize = p->ip_dsize;
-        }
+
+        p->encapsulations++;
+        p->outer_iph = p->iph;
+        p->outer_ip_data = p->ip_data;
+        p->outer_ip_dsize = p->ip_dsize;
+
     }
 
     /* lay the IP struct over the raw data */
@@ -311,7 +307,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
          * Zero these options so they aren't associated with this inner IP
          * since p->iph will be pointing to this inner IP
          */
-        if (p->encapsulated)
+        if (p->encapsulations)
         {
             p->ip_options_data = NULL;
             p->ip_options_len = 0;
@@ -692,7 +688,7 @@ bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 
     *len += ipv4::get_pkt_len(h);
 
-    if ( i + 1 == p->next_layer )
+    if ( i + 1 == p->num_layers )
     {
         *len += p->dsize;
     }
@@ -724,7 +720,7 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     if ( f & ENC_FLAG_DEF )
     {
         int i = lyr - c->layers;
-        if ( i + 1 == p->next_layer )
+        if ( i + 1 == p->num_layers )
         {
             lyr->length = sizeof(*ch);
             ch->ip_len = htons(lyr->length);

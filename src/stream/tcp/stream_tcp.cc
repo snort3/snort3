@@ -107,12 +107,12 @@ Session* tcp_ssn(Flow* lws)
     return new TcpSession(lws);
 }
 
-void tcp_pinit()
+void tcp_tinit()
 {
     tcp_sinit();
 }
 
-void tcp_pterm()
+void tcp_tterm()
 {
     tcp_sterm();
 }
@@ -133,10 +133,10 @@ static const InspectApi tcp_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
+    tcp_tinit,
+    tcp_tterm,
     tcp_ctor,
     tcp_dtor,
-    tcp_pinit,
-    tcp_pterm,
     tcp_ssn,
     tcp_reset
 };
