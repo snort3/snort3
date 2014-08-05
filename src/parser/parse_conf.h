@@ -29,8 +29,8 @@ void parse_conf_print();
 
 struct SnortConfig;
 
-void ParseConfigFile(SnortConfig*, const char* fname, bool do_rules);
-void ParseConfigString(SnortConfig*, const char* str, bool do_rules);
+void ParseConfigFile(SnortConfig*, const char* fname);
+void ParseConfigString(SnortConfig*, const char* str);
 
 void AddRuleState(SnortConfig*, const RuleState&);
 

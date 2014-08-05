@@ -481,6 +481,12 @@ static void ParseOtnReference(
     mSplitFree(&toks, num_toks);
 }
 
+static void ParseOtnRem(
+    SnortConfig*, RuleTreeNode*,
+    OptTreeNode*, const char*)
+{
+}
+
 static void ParseOtnRevision(
     SnortConfig*, RuleTreeNode*,
     OptTreeNode *otn, const char *args)
@@ -717,6 +723,7 @@ static RuleOptFunc rule_options[] =
     { RULE_OPT__MSG,              1, 1, 0, ParseOtnMessage },
     { RULE_OPT__PRIORITY,         1, 1, 0, ParseOtnPriority },
     { RULE_OPT__REFERENCE,        1, 0, 0, ParseOtnReference },
+    { RULE_OPT__REM,              1, 1, 0, ParseOtnRem },
     { RULE_OPT__REVISION,         1, 1, 0, ParseOtnRevision },
     { RULE_OPT__SID,              1, 1, 0, ParseOtnSid },
     { RULE_OPT__SOID,             1, 1, 0, ParseOtnSoid },

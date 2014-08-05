@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2007-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,12 +56,12 @@ sfip_t *ip6_ret_src(const Packet *p)
     return &p->ip6h->ip_src;
 }
 
-sfip_t *orig_ip6_ret_src(const Packet *p)
+sfip_t *orig_ip6_ret_src(const Packet*)
 {
     VALIDATE(p, 1);
 
     return nullptr;
-//  return &p->orig_ip6h->ip_src;
+    //return &p->orig_ip6h->ip_src;
 }
 
 sfip_t *ip6_ret_dst(const Packet *p)

@@ -60,6 +60,7 @@
 #define RULE_OPT__METADATA          "metadata"
 #define RULE_OPT__PRIORITY          "priority"
 #define RULE_OPT__REFERENCE         "reference"
+#define RULE_OPT__REM               "rem"
 #define RULE_OPT__REVISION          "rev"
 #define RULE_OPT__SID               "sid"
 #define RULE_OPT__SOID              "soid"

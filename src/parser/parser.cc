@@ -778,14 +778,14 @@ void ParseRules(SnortConfig *sc)
         if ( fname && *fname )
         {
             push_parse_location(fname);
-            ParseConfigFile(sc, fname, true);
+            ParseConfigFile(sc, fname);
             pop_parse_location();
         }
 
         if ( !p->rules.empty() )
         {
             push_parse_location("rules");
-            ParseConfigString(sc, p->rules.c_str(), true);
+            ParseConfigString(sc, p->rules.c_str());
             pop_parse_location();
         }
     }
