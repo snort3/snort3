@@ -51,6 +51,7 @@ private:
 
     Field statusCode;
     Field reasonPhrase;
+    NHttpMsgRequest* request;
 };
 
 #endif

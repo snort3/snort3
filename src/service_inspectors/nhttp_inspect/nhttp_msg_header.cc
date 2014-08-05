@@ -34,7 +34,7 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 
 using namespace NHttpEnums;
 

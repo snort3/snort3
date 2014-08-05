@@ -30,6 +30,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include "snort.h"
+#include "protocols/packet.h"
 #include "nhttp_enum.h"
 #include "nhttp_test_input.h"
 #include "nhttp_stream_splitter.h"
@@ -53,6 +54,22 @@ void NHttpStreamSplitter::prepareFlush(NHttpFlowData* sessionData, uint32_t* flu
 void NHttpStreamSplitter::createEvent(EventSid sid) {
     SnortEventqAdd(NHTTP_GID, (uint32_t)sid);
     eventsGenerated |= 1 << (sid-1);
+}
+
+const StreamBuffer* NHttpStreamSplitter::reassemble(unsigned offset, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) {
+    static THREAD_LOCAL StreamBuffer nhttp_buf;
+    if (flags & PKT_PDU_HEAD) {
+        sectionBuffer = new uint8_t[65536];
+    }
+    memcpy(sectionBuffer+offset, data, len);
+    copied = len;
+    if (flags & PKT_PDU_TAIL) {
+        process(sectionBuffer, offset + len, p->flow, to_server() ? SRC_CLIENT : SRC_SERVER);
+        nhttp_buf.data = sectionBuffer;
+        nhttp_buf.length = offset + len;
+        return &nhttp_buf;
+    }
+    return nullptr;
 }
 
 PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flushOffset) {

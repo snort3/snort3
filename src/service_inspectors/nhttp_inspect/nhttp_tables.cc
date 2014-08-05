@@ -40,7 +40,7 @@
 #include "nhttp_normalizers.h"
 #include "nhttp_head_norm.h"
 #include "nhttp_msg_request.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 #include "nhttp_module.h"
 #include "nhttp_uri_norm.h"
 

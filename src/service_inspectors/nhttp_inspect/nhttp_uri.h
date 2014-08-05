@@ -42,16 +42,16 @@ class NHttpUri {
 public:
     NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : uri(length, start), methodId(method),
        scratchPad(2*length+200) {};
-    Field getUri() const { return uri; };
+    const Field& getUri() const { return uri; };
     NHttpEnums::UriType getUriType() { parseUri(); return uriType; };
-    Field getScheme() { parseUri(); return scheme; };
-    Field getAuthority() { parseUri(); return authority; };
-    Field getHost() { parseAuthority(); return host; };
-    Field getPort() { parseAuthority(); return port; };
-    Field getAbsPath() { parseUri(); return absPath; };
-    Field getPath() { parseAbsPath(); return path; };
-    Field getQuery() { parseAbsPath(); return query; };
-    Field getFragment() { parseAbsPath(); return fragment; };
+    const Field& getScheme() { parseUri(); return scheme; };
+    const Field& getAuthority() { parseUri(); return authority; };
+    const Field& getHost() { parseAuthority(); return host; };
+    const Field& getPort() { parseAuthority(); return port; };
+    const Field& getAbsPath() { parseUri(); return absPath; };
+    const Field& getPath() { parseAbsPath(); return path; };
+    const Field& getQuery() { parseAbsPath(); return query; };
+    const Field& getFragment() { parseAbsPath(); return fragment; };
 
     uint64_t getFormatInfractions() { parseUri(); return formatInfractions; };
     uint64_t getSchemeInfractions() { getSchemeId(); return schemeInfractions; };
@@ -64,12 +64,12 @@ public:
        getPortInfractions() | getPathInfractions() | getQueryInfractions() | getFragmentInfractions(); };
 
     NHttpEnums::SchemeId getSchemeId();
-    Field getNormHost();
+    const Field& getNormHost();
     int32_t getPortValue();
-    Field getNormPath();
-    Field getNormQuery();
-    Field getNormFragment();
-    Field getNormLegacy();
+    const Field& getNormPath();
+    const Field& getNormQuery();
+    const Field& getNormFragment();
+    const Field& getNormLegacy();
 
 private:
     static const StrCode schemeList[];

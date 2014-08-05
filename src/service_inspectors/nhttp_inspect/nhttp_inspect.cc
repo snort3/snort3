@@ -117,12 +117,10 @@ void NHttpInspect::show(SnortConfig*)
     LogMessage("NHttpInspect\n");
 }
 
-void NHttpInspect::eval(Packet* p)
+void NHttpInspect::eval(Packet*)
 {
-    // Only packets from the StreamSplitter can be processed
-    if (!PacketHasPAFPayload(p)) return;
-
-    process(p->data, p->dsize, p->flow, (p->packet_flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER);
+    printf("eval()\n"); fflush(nullptr); /* &&& */
+    return;
 }
 
 void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId sourceId)

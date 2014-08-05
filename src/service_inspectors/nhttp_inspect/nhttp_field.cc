@@ -35,6 +35,8 @@
 
 using namespace NHttpEnums;
 
+const Field Field::FIELD_NULL { STAT_NOSOURCE };
+
 void Field::print(FILE *output, const char* name, bool intVals) const {
     if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) return;
     int outCount = fprintf(output, "%s, length = %d, ", name, length);

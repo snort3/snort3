@@ -47,6 +47,9 @@ public:
     void genEvents();
     void updateFlow();
     void legacyClients();
+    const Field& getMethod() { return method; };
+    const Field& getUri();
+    const Field& getUriNormLegacy();
 
 private:
     static const StrCode methodList[];

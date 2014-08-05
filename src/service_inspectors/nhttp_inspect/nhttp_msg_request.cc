@@ -36,14 +36,14 @@
 #include "nhttp_enum.h"
 #include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 
 using namespace NHttpEnums;
 
 NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
        NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
-    delete sessionData->startLine[SRC_CLIENT];
-    sessionData->startLine[SRC_CLIENT] = this;
+    delete sessionData->requestLine;
+    sessionData->requestLine = this;
     delete sessionData->headers[SRC_CLIENT];
     sessionData->headers[SRC_CLIENT] = nullptr;
     delete sessionData->latestOther[SRC_CLIENT];
@@ -85,6 +85,20 @@ void NHttpMsgRequest::deriveMethodId() {
         return;
     }
     methodId = (MethodId) strToCode(method.start, method.length, methodList);
+}
+
+const Field& NHttpMsgRequest::getUri() {
+    if (uri != nullptr) {
+        return uri->getUri();
+    }
+    return Field::FIELD_NULL;
+}
+
+const Field& NHttpMsgRequest::getUriNormLegacy() {
+    if (uri != nullptr) {
+        return uri->getNormLegacy();
+    }
+    return Field::FIELD_NULL;
 }
 
 void NHttpMsgRequest::genEvents() {

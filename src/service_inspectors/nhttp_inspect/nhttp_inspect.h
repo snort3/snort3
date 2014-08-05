@@ -30,7 +30,7 @@
 #include "framework/inspector.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 #include "nhttp_msg_body.h"
 #include "nhttp_msg_chunk_head.h"
 #include "nhttp_msg_chunk_body.h"
@@ -54,7 +54,7 @@ public:
     bool enabled();
     void pinit();
     void pterm();
-    NHttpStreamSplitter* get_splitter(bool isClientToServer) { return new NHttpStreamSplitter(isClientToServer); };
+    NHttpStreamSplitter* get_splitter(bool isClientToServer) { return new NHttpStreamSplitter(isClientToServer, this); };
 
 private:
     friend NHttpApi;

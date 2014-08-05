@@ -31,18 +31,6 @@
 
 #include "stream/stream_api.h"
 
-class NHttpInspect;
-class NHttpMsgSection;
-class NHttpMsgStart;
-class NHttpMsgRequest;
-class NHttpMsgStatus;
-class NHttpMsgHeader;
-class NHttpMsgBody;
-class NHttpMsgChunkHead;
-class NHttpMsgChunkBody;
-class NHttpMsgTrailer;
-class NHttpTestInput;
-
 class NHttpFlowData : public FlowData
 {
 public:
@@ -92,9 +80,10 @@ private:
     // Stored message sections from this session
     // You must reset to nullptr after deleting a section
     // Never put one section in two places. latestOther is only for things not otherwise listed
-    NHttpMsgStart* startLine[2] = { nullptr, nullptr };
-    NHttpMsgHeader* headers[2] = { nullptr, nullptr };
-    NHttpMsgSection* latestOther[2] = { nullptr, nullptr };
+    class NHttpMsgRequest* requestLine = nullptr;
+    class NHttpMsgStatus* statusLine = nullptr;
+    class NHttpMsgHeader* headers[2] = { nullptr, nullptr };
+    class NHttpMsgSection* latestOther[2] = { nullptr, nullptr };
 };
 
 #endif

@@ -44,7 +44,7 @@ public:
     void updateFlow();
 
 private:
-    int64_t numChunks;
+    // int64_t numChunks;    // will be needed in future commented out to please compiler &&&
     int64_t chunkSections;
     int64_t chunkOctets;
 };

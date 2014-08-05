@@ -35,7 +35,7 @@
 #include "nhttp_msg_section.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 
 using namespace NHttpEnums;
 
@@ -44,8 +44,9 @@ unsigned NHttpFlowData::nhttp_flow_id = 0;
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {}
 
 NHttpFlowData::~NHttpFlowData() {
+    delete requestLine;
+    delete statusLine;
     for(int k=0; k <= 1; k++) {
-        delete startLine[k];
         delete headers[k];
         delete latestOther[k];
     }

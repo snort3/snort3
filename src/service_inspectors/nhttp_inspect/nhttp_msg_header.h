@@ -26,8 +26,8 @@
 //  @brief      NHttpMsgHeader class declaration
 //
 
-#ifndef NHTTP_MSG_HEAD_H
-#define NHTTP_MSG_HEAD_H
+#ifndef NHTTP_MSG_HEADER_H
+#define NHTTP_MSG_HEADER_H
 
 #include "nhttp_msg_head_shared.h"
 

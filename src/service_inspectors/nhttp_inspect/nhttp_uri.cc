@@ -118,7 +118,7 @@ SchemeId NHttpUri::getSchemeId() {
     return schemeId;
 }
 
-Field NHttpUri::getNormHost() {
+const Field& NHttpUri::getNormHost() {
     if (hostNorm.length != STAT_NOTCOMPUTE) return hostNorm;
     if (getHost().length < 0) {
         hostNorm.length = STAT_NOSOURCE;
@@ -128,7 +128,7 @@ Field NHttpUri::getNormHost() {
     return hostNorm;
 }
 
-Field NHttpUri::getNormPath() {
+const Field& NHttpUri::getNormPath() {
     if (pathNorm.length != STAT_NOTCOMPUTE) return pathNorm;
     if (getPath().length < 0) {
         pathNorm.length = STAT_NOSOURCE;
@@ -138,7 +138,7 @@ Field NHttpUri::getNormPath() {
     return pathNorm;
 }
 
-Field NHttpUri::getNormQuery() {
+const Field& NHttpUri::getNormQuery() {
     if (queryNorm.length != STAT_NOTCOMPUTE) return queryNorm;
     if (getQuery().length < 0) {
         queryNorm.length = STAT_NOSOURCE;
@@ -148,7 +148,7 @@ Field NHttpUri::getNormQuery() {
     return queryNorm;
 }
 
-Field NHttpUri::getNormFragment() {
+const Field& NHttpUri::getNormFragment() {
     if (fragmentNorm.length != STAT_NOTCOMPUTE) return fragmentNorm;
     if (getFragment().length < 0) {
         fragmentNorm.length = STAT_NOSOURCE;
@@ -222,7 +222,7 @@ void NHttpUri::parseAbsPath() {
 }
 
 // Glue normalized URI fields back together 
-Field NHttpUri::getNormLegacy() {
+const Field& NHttpUri::getNormLegacy() {
     if (legacyNorm.length != STAT_NOTCOMPUTE) return legacyNorm;
 
     if (getPath().length >= 0) UriNormalizer::normalize(path, pathNorm, true, scratchPad, pathInfractions);

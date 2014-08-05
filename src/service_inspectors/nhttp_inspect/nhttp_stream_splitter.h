@@ -32,17 +32,23 @@
 #include "stream/stream_splitter.h"
 #include "nhttp_flow_data.h"
 
+class NHttpInspect;
+
 class NHttpStreamSplitter : public StreamSplitter {
 public:
-    NHttpStreamSplitter(bool isClientToServer) : StreamSplitter(isClientToServer) {};
+    NHttpStreamSplitter(bool isClientToServer, NHttpInspect* myInspector_) : StreamSplitter(isClientToServer), myInspector(myInspector_) {};
     PAF_Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flushOffset);
     bool is_paf() { return true; };
     uint32_t max() { return pafMax; };
+    const StreamBuffer* reassemble(unsigned offset, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied);
 private:
     void prepareFlush(NHttpFlowData* sessionData, uint32_t* flushOffset, NHttpEnums::SourceId sourceId, NHttpEnums::SectionType sectionType, bool tcpClose,
           uint64_t infractions, uint32_t numOctets);
     void createEvent(NHttpEnums::EventSid sid);
 
+    NHttpInspect* const myInspector;
+
+    uint8_t *sectionBuffer = nullptr;
     uint64_t eventsGenerated = 0;
     int64_t octetsSeen = 0;
     int numCrlf = 0;

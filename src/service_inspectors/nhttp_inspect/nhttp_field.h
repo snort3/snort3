@@ -31,6 +31,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
 
 // Individual pieces of the message found during parsing
 // Length values <= 0 are StatusCode values and imply that the start pointer is meaningless.
@@ -40,7 +41,10 @@ public:
     int32_t length = NHttpEnums::STAT_NOTCOMPUTE;
     const uint8_t* start = nullptr;
 
+    static const Field FIELD_NULL;
+
     Field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) {};
+    explicit Field(int32_t length_) : length(length_) { assert(length<=0); };
     Field() = default;
     void print(FILE *output, const char* name, bool intVals = false) const;
 };

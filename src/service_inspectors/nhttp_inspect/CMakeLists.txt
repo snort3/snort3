@@ -12,8 +12,8 @@ set (FILE_LIST
     nhttp_msg_status.h
     nhttp_msg_head_shared.cc
     nhttp_msg_head_shared.h
-    nhttp_msg_head.cc
-    nhttp_msg_head.h
+    nhttp_msg_header.cc
+    nhttp_msg_header.h
     nhttp_msg_body.cc
     nhttp_msg_body.h
     nhttp_msg_chunk_head.cc

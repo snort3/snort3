@@ -35,14 +35,15 @@
 #include "snort.h"
 #include "nhttp_enum.h"
 #include "nhttp_msg_status.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_header.h"
 
 using namespace NHttpEnums;
 
 NHttpMsgStatus::NHttpMsgStatus(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
-    delete sessionData->startLine[SRC_SERVER];
-    sessionData->startLine[SRC_SERVER] = this;
+       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_), request(sessionData->requestLine) {
+    delete sessionData->statusLine;
+    sessionData->statusLine = this;
     delete sessionData->headers[SRC_SERVER];
     sessionData->headers[SRC_SERVER] = nullptr;
     delete sessionData->latestOther[SRC_SERVER];
@@ -132,8 +133,21 @@ void NHttpMsgStatus::updateFlow() {
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgStatus::legacyClients() {
     ClearHttpBuffers();
-    if (statusCode.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_CODE, statusCode.start, (unsigned)statusCode.length);
-    if (reasonPhrase.length > 0) SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reasonPhrase.start, (unsigned)reasonPhrase.length);
+    if ((request != nullptr) && (request->getMethod().length > 0)) {
+        SetHttpBuffer(HTTP_BUFFER_METHOD, request->getMethod().start, (unsigned)request->getMethod().length);
+    }
+    if ((request != nullptr) && (request->getUri().length > 0)) {
+        SetHttpBuffer(HTTP_BUFFER_RAW_URI, request->getUri().start, (unsigned)request->getUri().length);
+    }
+    if ((request != nullptr) && (request->getUriNormLegacy().length > 0)) {
+        SetHttpBuffer(HTTP_BUFFER_URI, request->getUriNormLegacy().start, (unsigned)request->getUriNormLegacy().length);
+    }
+    if (statusCode.length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_CODE, statusCode.start, (unsigned)statusCode.length);
+    }
+    if (reasonPhrase.length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reasonPhrase.start, (unsigned)reasonPhrase.length);
+    }
 }
 
 
