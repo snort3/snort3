@@ -124,30 +124,18 @@ static void inc_parse_position()
     ++loc.line;
 }
 
-static bool s_parse_rules = false;
 static void ParseTheConf(SnortConfig*, const char* fname);
-
-/* Used to determine whether or not to parse the keyword line based on
- * whether or not we're parsing rules */
-typedef enum _KeywordType
-{
-    KEYWORD_TYPE__MAIN,
-    KEYWORD_TYPE__RULE,
-    KEYWORD_TYPE__ALL
-
-} KeywordType;
 
 typedef void (*ParseFunc)(SnortConfig *, const char *);
 
-typedef struct _KeywordFunc
+struct KeywordFunc
 {
     const char *name;
-    KeywordType type;
     int expand_vars;
     int default_policy_only;
     ParseFunc parse_func;
 
-} KeywordFunc;
+};
 
 // only keep drop rules ...
 // if we are inline (and can actually drop),
@@ -293,11 +281,6 @@ void AddRuleState(SnortConfig* sc, const RuleState& rs)
     }
 }
 
-static void ParseFile(SnortConfig *sc, const char *args)
-{
-    parse_file_rule(args, &(sc->file_config));
-}
-
 static const KeywordFunc snort_conf_keywords[] =
 {
     // this stuff is expected to remain since rules don't fit in Lua tables
@@ -305,30 +288,18 @@ static const KeywordFunc snort_conf_keywords[] =
     // nested rules files
 
     // however, these must become pluggable ...
-    { ACTION_ALERT,    KEYWORD_TYPE__RULE, 0, 0, ParseAlert },
-    { ACTION_DROP,     KEYWORD_TYPE__RULE, 0, 0, ParseDrop },
-    { ACTION_BLOCK,    KEYWORD_TYPE__RULE, 0, 0, ParseDrop },
-    { ACTION_LOG,      KEYWORD_TYPE__RULE, 0, 0, ParseLog },
-    { ACTION_PASS,     KEYWORD_TYPE__RULE, 0, 0, ParsePass },
-    { ACTION_REJECT,   KEYWORD_TYPE__RULE, 0, 0, ParseReject },
-    { ACTION_SDROP,    KEYWORD_TYPE__RULE, 0, 0, ParseSdrop },
-    { ACTION_SBLOCK,   KEYWORD_TYPE__RULE, 0, 0, ParseSdrop },
+    { ACTION_ALERT,    0, 0, ParseAlert },
+    { ACTION_DROP,     0, 0, ParseDrop },
+    { ACTION_BLOCK,    0, 0, ParseDrop },
+    { ACTION_LOG,      0, 0, ParseLog },
+    { ACTION_PASS,     0, 0, ParsePass },
+    { ACTION_REJECT,   0, 0, ParseReject },
+    { ACTION_SDROP,    0, 0, ParseSdrop },
+    { ACTION_SBLOCK,   0, 0, ParseSdrop },
 
-    { SNORT_CONF_KEYWORD__FILE,     KEYWORD_TYPE__MAIN, 0, 1, ParseFile },
-    { SNORT_CONF_KEYWORD__INCLUDE,  KEYWORD_TYPE__ALL,  1, 0, ParseInclude },
+    { SNORT_CONF_KEYWORD__INCLUDE,  1, 0, ParseInclude },
 
-#if 0
-    // this needs to be turned into an action plugin
-    // the special case parsing got in the way refactoring for Lua
-    // so it's toast - here for reference only
-
-    /* Special parsing case is ruletype.  Need to send the file pointer so
-     * it can parse what's between '{' and '}' which can span multiple
-     * lines without a line continuation character */
-    { SNORT_CONF_KEYWORD__RULE_TYPE, KEYWORD_TYPE__ALL,  1, 0, ParseRuleTypeDeclaration },
-#endif
-
-    { NULL, KEYWORD_TYPE__ALL, 0, 0, NULL }   /* Marks end of array */
+    { NULL, 0, 0, NULL }   // sentinel
 };
 
 static int ContinuationCheck(char *rule)
@@ -438,14 +409,6 @@ static void ParseConfigFileLine(SnortConfig *sc, char *buf)
             {
                 if (strcasecmp(keyword, snort_conf_keywords[i].name) == 0)
                 {
-                    if (((snort_conf_keywords[i].type == KEYWORD_TYPE__RULE) &&
-                         !s_parse_rules) ||
-                        ((snort_conf_keywords[i].type == KEYWORD_TYPE__MAIN) &&
-                         s_parse_rules))
-                    {
-                        break;
-                    }
-
                     if (snort_conf_keywords[i].expand_vars)
                         args = SnortStrdup(ExpandVars(sc, toks[1]));
 
@@ -457,7 +420,7 @@ static void ParseConfigFileLine(SnortConfig *sc, char *buf)
             /* Didn't find any pre-defined snort_conf_keywords.  Look for a user defined
              * rule type */
 
-            if ((snort_conf_keywords[i].name == NULL) && s_parse_rules)
+            if ( (snort_conf_keywords[i].name == NULL) )
             {
                 RuleListNode *node;
 
@@ -548,10 +511,8 @@ static void ParseTheConf(SnortConfig *sc, const char *fname)
     free(buf);
 }
 
-void ParseConfigString(SnortConfig* sc, const char* s, bool parse_rules)
+void ParseConfigString(SnortConfig* sc, const char* s)
 {
-    s_parse_rules = parse_rules;
-
     string rules = s;
     stringstream ss(rules);
 
@@ -564,10 +525,8 @@ void ParseConfigString(SnortConfig* sc, const char* s, bool parse_rules)
 }
 
 void ParseConfigFile(
-    SnortConfig *sc, const char *fname, bool parse_rules)
+    SnortConfig *sc, const char *fname)
 {
-    s_parse_rules = parse_rules;
-
     if ( fname )
         ParseTheConf(sc, fname);
 }
