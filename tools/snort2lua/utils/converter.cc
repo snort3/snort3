@@ -22,7 +22,7 @@
 #include <iostream>
 #include "utils/converter.h"
 #include "conversion_state.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include "data/dt_comment.h"
 
 

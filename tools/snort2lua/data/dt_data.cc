@@ -20,7 +20,7 @@
 // dt_data.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "dt_data.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include <iostream>
 #include <sstream>
 #include <cstring>

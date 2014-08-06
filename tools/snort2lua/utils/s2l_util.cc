@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// util.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// s2l_util.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <algorithm> 
@@ -28,7 +28,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include "conversion_state.h"
 #include "data/dt_data.h"
 
@@ -99,9 +99,9 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
     return str_len;
 }
 
-bool inline get_string_helper(std::istringstream& stream,
-                              std::string& option,
-                              const std::string& delimeters)
+bool get_string(std::istringstream& stream,
+                std::string& option,
+                const std::string delimeters)
 {
     if (delimeters.empty() || !stream.good())
     {
@@ -147,12 +147,6 @@ bool inline get_string_helper(std::istringstream& stream,
         return true;
     }
 }
-
-
-bool get_string(std::istringstream& stream,
-                      std::string& option,
-                       const std::string delimeters)
-{ return get_string_helper(stream, option, delimeters); }
 
 std::string get_rule_option_args(std::istringstream& stream)
 {

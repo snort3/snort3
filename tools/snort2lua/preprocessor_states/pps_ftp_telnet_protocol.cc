@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
+#include "preprocessor_states/pps_binder.h"
 
 namespace preprocessors
 {
@@ -189,6 +189,9 @@ bool FtpServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
+    Binder bind(ld);
+    bind.set_use_type("ftp_server");
+    bind.set_when_proto("tcp");
 
     if (data_stream >> keyword)
     {
@@ -196,27 +199,24 @@ bool FtpServer::convert(std::istringstream& data_stream)
             ld->open_table("ftp_server");
         else
         {
-            ld->open_table("ftp_server_target_" + std::to_string(ftpsever_binding_id));
+            std::string table_name = "ftp_server_target_" + std::to_string(ftpsever_binding_id);
+            bind.set_use_name(table_name);
+            ld->open_table(table_name);
             ftpsever_binding_id++;
-            ld->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
 
-
-            // TODO --   add some bindings here!!
             if (!keyword.compare("{"))
             {
-                std::string list, tmp;
+                std::string tmp;
 
                 while (data_stream >> tmp && tmp.compare("}"))
-                    list += tmp;
+                    bind.add_when_net(tmp);
 
                 if (!data_stream.good())
                     return false;
-
-                // this is an ip address list
             }
             else
             {
-                // this is an ip address
+                bind.add_when_net(keyword);
             }
         }
     }
@@ -281,9 +281,15 @@ bool FtpServer::convert(std::istringstream& data_stream)
             ld->add_comment_to_table("check bindings table for port information");
             // add commented list for now
             std::string tmp = "";
-            while (data_stream >> keyword && keyword != "}")
-                tmp += " " + keyword;
-            tmpval = ld->add_option_to_table("--ports", tmp + "}");
+            if ((data_stream >> keyword) && !keyword.compare("{"))
+            {
+                while (data_stream >> keyword && keyword.compare("}"))
+                    bind.add_when_port(keyword);
+            }
+            else
+            {
+                tmpval = false;
+            }
         }
 
         else
@@ -358,6 +364,10 @@ bool FtpClient::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
+    Binder bind(ld);
+    bind.set_use_type("ftp_client");
+    bind.set_when_proto("tcp");
+
 
     if (data_stream >> keyword)
     {
@@ -365,25 +375,25 @@ bool FtpClient::convert(std::istringstream& data_stream)
             ld->open_table("ftp_client");
         else
         {
-            ld->open_table("ftp_client_target_" + std::to_string(ftpclient_binding_id));
+            std::string table_name = "ftp_client_target_" +
+                std::to_string(ftpclient_binding_id);
+            bind.set_use_name(table_name);
+            ld->open_table(table_name);
             ftpclient_binding_id++;
 
-            // TODO --   add some bindings here!!
             if (!keyword.compare("{"))
             {
-                std::string list, tmp;
+                std::string tmp;
 
                 while (data_stream >> tmp && tmp.compare("}"))
-                    list += tmp;
+                    bind.add_when_net(tmp);
 
                 if (!data_stream.good())
                     return false;
-
-                // this is an ip address list
             }
             else
             {
-                // this is an ip address
+                bind.add_when_net(keyword);
             }
 
             ld->add_comment_to_table("Unable to create target based ftp configuration at this time!!!");
@@ -414,15 +424,47 @@ bool FtpClient::convert(std::istringstream& data_stream)
         // add bounce_to as a commented list
         else if(!keyword.compare("bounce_to"))
         {
-            std::string tmp = "";
-            while (data_stream >> keyword && keyword != "}")
-                tmp += " " + keyword;
-            tmpval = ld->add_option_to_table("--bounce_to", tmp + "}");
+            // get rid of the "{"
+            if (!(data_stream >> keyword) && keyword.compare("{"))
+            {
+                retval = false;
+            }
+            else
+            {
+                ld->open_table("bounce_to");
+
+                while (data_stream >> keyword && keyword.compare("}"))
+                {
+                    std::istringstream bounce_stream(keyword);
+                    std::string data;
+                    bool tmpval1 = true, tmpval2 = true, tmpval3 = true;
+                    ld->open_table();
+
+                    if (util::get_string(bounce_stream, data, ","))
+                        tmpval1 = ld->add_option_to_table("address", data);
+
+                    if (util::get_string(bounce_stream, data, ","))
+                        tmpval2 = ld->add_option_to_table("port", std::stoi(data));
+
+                    if (util::get_string(bounce_stream, data, ","))
+                        tmpval3 = ld->add_option_to_table("last_port", std::stoi(data));
+
+                    // shouldn't be a fourth argument
+                    if (!tmpval1 || !tmpval2 || !tmpval3 ||
+                                util::get_string(bounce_stream, data, ","))
+                    {
+                        retval = false;
+                    }
+
+                    ld->close_table(); // anonymouse
+                }
+                ld->close_table(); // "bounce_to"
+            }
         }
 
         else
         {
-            tmpval = false;
+            retval = false;
         }
 
         if (retval && !tmpval)
@@ -455,7 +497,10 @@ bool Telnet::convert(std::istringstream& data_stream)
     std::string keyword;
     int i_val;
     bool retval = true;
+    Binder bind(ld);
 
+    bind.set_when_proto("tcp");
+    bind.set_use_type("telnet");
     ld->open_table("telnet");
 
     while(data_stream >> keyword)
@@ -476,16 +521,17 @@ bool Telnet::convert(std::istringstream& data_stream)
         {
             ld->add_diff_option_comment("ports", "bindings");
             ld->add_comment_to_table("check bindings table for port information");
-            // vvvv defined in ConversionState vvvv
 
-            // add commented list for now
-            std::string tmp = "";
-            while (data_stream >> keyword && keyword != "}")
-                tmp += " " + keyword;
-            tmpval = ld->add_option_to_table("--ports", tmp + "}");
-
-
-//            parse_curly_bracket_list("--ports", data_stream); // create a commented list of the ports
+            // adding ports to the binding.
+            if ((data_stream >> keyword) && !keyword.compare("{"))
+            {
+                while (data_stream >> keyword && keyword != "}")
+                    bind.add_when_port(keyword);
+            }
+            else
+            {
+                tmpval = false;
+            }
         }
 
         else  if(!keyword.compare("detect_anomalies"))

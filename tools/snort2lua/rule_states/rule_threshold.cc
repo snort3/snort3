@@ -25,7 +25,7 @@
 #include "conversion_state.h"
 #include "utils/converter.h"
 #include "rule_states/rule_api.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 
 namespace rules
 {
@@ -118,13 +118,13 @@ bool Threshold::convert(std::istringstream& data_stream)
         if (!rule_keyword.compare("sid"))
         {
             std::string val = util::get_rule_option_args(data_stream);
-            ld->add_option_to_table("sid", val);
+            ld->add_option_to_table("sid", std::stoi(val));
             found_sid = true;
         }
         else if (!rule_keyword.compare("gid"))
         {
             std::string val = util::get_rule_option_args(data_stream);
-            ld->add_option_to_table("gid", val);
+            ld->add_option_to_table("gid", std::stoi(val));
             found_gid = true;
         }
         else  if (semi_colon_pos == std::string::npos)

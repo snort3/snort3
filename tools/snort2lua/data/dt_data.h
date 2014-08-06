@@ -83,8 +83,6 @@ public:
     // add a variable to this file
     bool add_variable(std::string name, std::string value);
     // add a Snort style include file
-    bool add_lua_file(std::string name);
-    // add a Snort style include file
     bool add_include_file(std::string name);
     // reset any open tables.
     void reset_state();

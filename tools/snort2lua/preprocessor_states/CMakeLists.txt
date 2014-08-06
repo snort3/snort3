@@ -1,6 +1,8 @@
 
 add_library(preprocessor_states
     pps_arpspoof.cc
+    pps_binder.h
+    pps_binder.cc
     pps_bo.cc
     pps_frag3_engine.cc
     pps_frag3_global.cc
