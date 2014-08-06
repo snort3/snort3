@@ -308,10 +308,12 @@ uint8_t ip4_ret_ver(const Packet *p)
     return (p->iph->ip_verhl & 0xf0) >> 4;
 }
 
+#if 0
 uint8_t orig_ip4_ret_ver(const Packet *p)
 {
     return (p->orig_iph->ip_verhl & 0xf0) >> 4;
 }
+#endif
 
 uint8_t ip4_ret_hlen(const Packet *p)
 {
@@ -320,7 +322,8 @@ uint8_t ip4_ret_hlen(const Packet *p)
 
 uint8_t orig_ip4_ret_hlen(const Packet *p)
 {
-    return p->orig_iph->ip_verhl & 0x0f;
+    return 0;
+//    return p->orig_iph->ip_verhl & 0x0f;
 }
 
 uint8_t ip6_ret_hlen(const Packet*)
@@ -346,7 +349,7 @@ IPH_API ip4 =
    ip4_ret_off,
    ip4_ret_ver,
    ip4_ret_hlen,
-
+#if 0
    orig_ip4_ret_src,
    orig_ip4_ret_dst,
    orig_ip4_ret_tos,
@@ -357,7 +360,7 @@ IPH_API ip4 =
    orig_ip4_ret_off,
    orig_ip4_ret_ver,
    orig_ip4_ret_hlen,
-
+#endif
    IPH_API_V4
 };
 
@@ -373,7 +376,7 @@ IPH_API ip6 =
    ip6_ret_off,
    ip6_ret_ver,
    ip6_ret_hlen,
-
+#if 0
    orig_ip6_ret_src,
    orig_ip6_ret_dst,
    orig_ip6_ret_toc,
@@ -384,7 +387,7 @@ IPH_API ip6 =
    orig_ip6_ret_off,
    orig_ip6_ret_ver,
    orig_ip6_ret_hlen,
-
+#endif
    IPH_API_V6
 };
 
@@ -398,15 +401,6 @@ static inline void _set_callbacks(Packet* p, int family, char orig)
             p->iph_api = &ip6;
 
         p->family = family;
-    }
-    else
-    {
-        if(family == AF_INET)
-            p->orig_iph_api = &ip4;
-        else
-            p->orig_iph_api = &ip6;
-
-        p->orig_family = family;
     }
 }
 

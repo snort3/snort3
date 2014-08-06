@@ -36,6 +36,7 @@
 #include "packet_io/active.h"
 #include "codecs/ip/cd_ipv6_module.h"
 #include "codecs/sf_protocols.h"
+#include "protocols/protocol_ids.h"
 
 namespace
 {
@@ -125,8 +126,8 @@ uint8_t Ipv6Codec::RevTTL (const EncState* enc, uint8_t ttl)
 
 void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ipv6::ethertype());
-    v.push_back(ipv6::prot_id());
+    v.push_back(ETHERTYPE_IPV6);
+    v.push_back(IPPROTO_ID_IPV6);
 }
 
 

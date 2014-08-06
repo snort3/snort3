@@ -43,11 +43,9 @@ namespace ipv6
 
 namespace detail
 {
-const uint16_t ETHERNET_TYPE_IPV6 = 0x86dd;
-const uint16_t IPV6_PROT_ID = 41;
-const uint8_t IP6_HEADER_LEN = 40;
-const uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
-const uint32_t MIN_EXT_LEN = 8;
+constexpr uint8_t IP6_HEADER_LEN = 40;
+constexpr uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
+constexpr uint32_t MIN_EXT_LEN = 8;
 } // namespace
 
 
@@ -108,7 +106,13 @@ struct IP6Frag
     uint8_t   ip6f_reserved;    /* reserved field */
     uint16_t  ip6f_offlg;   /* offset, reserved, and flag */
     uint32_t  ip6f_ident;   /* identification */
-} ;
+
+    inline uint32_t get_id() const
+    { return ip6f_ident; }
+
+    inline uint16_t get_off() const
+    { return ip6f_offlg; }
+};
 
 
 struct IP6RawHdr
@@ -119,9 +123,39 @@ struct IP6RawHdr
     uint8_t  ip6_next;                /* next header */
     uint8_t  ip6_hoplim;               /* hop limit */
 
-    struct in6_addr ip6_src;      /* source address */
-    struct in6_addr ip6_dst;      /* destination address */
+    in6_addr ip6_src;      /* source address */
+    in6_addr ip6_dst;      /* destination address */
+
+    inline const in6_addr* get_src() const
+    { return &ip6_src; }
+
+    inline const in6_addr* get_dst() const
+    { return &ip6_dst; }
+
+    inline uint16_t get_tos() const
+    { return (uint16_t)((ntohl(ip6_vtf) & 0x0FF00000) >> 20); }
+
+    inline uint8_t get_hop_lim() const
+    { return ip6_hoplim; }
+
+    inline uint16_t get_len() const
+    { return ip6_payload_len; }
+
+    inline uint8_t get_next() const
+    { return ip6_next; }
+
+    inline uint8_t get_ver() const
+    { return (uint8_t)(ntohl(ip6_vtf) >> 28); }
+
+    inline uint8_t get_hdr_len() const
+    { return (uint8_t) detail::IP6_HEADER_LEN; }
+
+    // becaise Snort expects this in terms of 32 bit words.
+    inline uint8_t get_hlen() const
+    { return detail::IP6_HEADER_LEN / 4; }
+
 };
+
 
 struct IP6Hdr
 {
@@ -164,16 +198,6 @@ enum class HopByHopOptions : uint8_t
 inline uint8_t hdr_len()
 {
     return detail::IP6_HEADER_LEN;
-}
-
-inline uint16_t ethertype()
-{
-    return detail::ETHERNET_TYPE_IPV6;
-}
-
-inline uint16_t prot_id()
-{
-    return detail::IPV6_PROT_ID;
 }
 
 inline bool is_multicast(uint8_t addr)

@@ -140,7 +140,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         case PPP_VJ_UCOMP:
             /* VJ compression modifies the protocol field. It must be set
              * to tcp (only TCP packets can be VJ compressed) */
-            if(raw_len < (lyr_len + ipv4::hdr_len()))
+            if(raw_len < (lyr_len + ip::IP4_HEADER_LEN))
             {
                 if (ScLogVerbose())
                     ErrorMessage("PPP VJ min packet length > captured len! "

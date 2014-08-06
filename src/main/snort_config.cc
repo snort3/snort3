@@ -195,6 +195,8 @@ SnortConfig * SnortConfNew(void)
     set_ips_policy(sc->get_ips_policy());
     set_network_policy(sc->get_network_policy());
 
+    sc->max_encapsulations = -1;
+
     return sc;
 }
 
@@ -464,6 +466,9 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 
     if ( cmd_line->remote_control )
         config_file->remote_control = cmd_line->remote_control;
+
+    if ( cmd_line->max_encapsulations )
+        config_file->max_encapsulations = cmd_line->max_encapsulations;
 
     // config file vars are stored differently
     // FIXIT should config_file and cmd_line use the same var list / table?

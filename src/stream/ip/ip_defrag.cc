@@ -916,7 +916,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
             DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                     "Adjusting IP Header to %d bytes\n",
                     new_ip_hlen););
-            ipv4::set_hlen((IPHdr *)dpkt->iph, new_ip_hlen>>2);
+            ip::set_hlen((IPHdr *)dpkt->iph, new_ip_hlen>>2);
 
             ret = SafeMemcpy(rebuild_ptr, ft->ip_options_data,
                 ft->ip_options_len, rebuild_ptr, rebuild_end);

@@ -160,8 +160,8 @@ static const uint8_t* encode_packet(
     enc->p = p;
     enc->ip_hdr = p->layers[layer::get_inner_ip_lyr(p)].start;
 
-    if ( ipv4::is_ipv4(*(enc->ip_hdr)))
-        enc->ip_len = ipv4::get_pkt_len((IPHdr*) enc->ip_hdr);
+    if ( ip::is_ipv4(*(enc->ip_hdr)))
+        enc->ip_len = ip::get_pkt_len((IPHdr*) enc->ip_hdr);
     else if ( ipv6::is_ip6_hdr_ver((ipv6::IP6RawHdr*)(enc->ip_hdr)))
         enc->ip_len = sizeof(ipv6::IP6RawHdr);
     else
@@ -207,7 +207,7 @@ static bool api_instantiated(const CodecApi* cd_api)
         std::find(s_codecs.begin(), s_codecs.end(), cd_api);
 
     if (p == s_codecs.end())
-        FatalError("PacketManager:: should never reach this code!!" \
+        FatalError("PacketManager:: should never reach this code!!"
                     "Cannot find Codec %s's api", cd_api->base.name);
 
     int pos = p - s_codecs.begin();
@@ -409,6 +409,8 @@ void PacketManager::decode(
 
     // initialize all of the relevent data to decode this packet
     memset(p, 0, PKT_ZERO_LEN);
+    p->ip_api.reset();
+
     p->pkth = pkthdr;
     p->pkt = pkt;
     len = pkthdr->caplen;
@@ -418,6 +420,11 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
     {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %u:"
+                "ip header starts at: %p, length is %lu\n",
+                s_protocols[mapped_prot]->get_name(), prot_id, pkt,
+                (unsigned long) len););
+
         // must be done here after decode and before push for case layer
         // LAYER_MAX+1 is invalid or the default codec
         if ( p->num_layers == LAYER_MAX )
@@ -440,6 +447,12 @@ void PacketManager::decode(
         lyr_len = 0;
     }
 
+    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
+                    " starts at: %p, length is %lu\n",
+                     s_protocols[mapped_prot]->get_name(),
+                     prot_id, pkt, (unsigned long) len););
+
+
     // if the final protocol ID is not the default codec, a Codec failed
     if (prev_prot_id != FINISHED_DECODE)
     {
@@ -452,7 +465,7 @@ void PacketManager::decode(
                 s_stats[other_codecs]++;
         }
 
-        if (p->decode_flags & DECODE__ESP)
+        if (p->decode_flags & DECODE__TRUST_ON_FAIL)
             p->packet_flags |= PKT_TRUST;
     }
 

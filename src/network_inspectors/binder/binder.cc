@@ -176,7 +176,9 @@ int Binder::check_rules(Flow* flow, Packet* p)
     unsigned i, sz = bindings.size();
 
     Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
-    uint16_t vlan = vlan::vth_vlan(layer::get_vlan_layer(p));
+
+    if (p->proto_bits & PROTO_BIT__VLAN)
+        uint16_t vlan = vlan::vth_vlan(layer::get_vlan_layer(p));
 
     for ( i = 0; i < sz; i++ )
     {

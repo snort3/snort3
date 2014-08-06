@@ -21,17 +21,19 @@
 
 
 #include "protocols/packet.h"
+#include "protocols/layer.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
+#include "protocols/ip.h"
 
 namespace layer
 {
 
-static inline const uint8_t *find_layer(const Layer *lyr,
+static inline const uint8_t* find_outer_layer(const Layer* lyr,
                                 uint8_t num_layers,
                                 uint16_t prot_id)
 {
-    for(int i = num_layers - 1; i >= 0 ; i--)
+    for(int i = 0; i < num_layers ; i++)
     {
         if (lyr->prot_id == prot_id)
             return lyr->start;
@@ -40,20 +42,47 @@ static inline const uint8_t *find_layer(const Layer *lyr,
     return nullptr;
 }
 
-static inline const uint8_t *find_layer(const Layer *lyr,
+static inline const uint8_t* find_inner_layer(const Layer* lyr,
+                                uint8_t num_layers,
+                                uint16_t prot_id)
+{
+    int tmp = num_layers-1;
+    lyr = &lyr[tmp];
+
+    for(int i = tmp; i >= 0 ; i--)
+    {
+        if (lyr->prot_id == prot_id)
+            return lyr->start;
+        lyr--;
+    }
+    return nullptr;
+}
+
+static inline const uint8_t* find_inner_layer(const Layer* lyr,
                                 uint8_t num_layers,
                                 uint16_t prot_id1,
                                 uint16_t prot_id2)
 {
+    int tmp = num_layers-1;
+    lyr = &lyr[tmp];
+
     for(int i = num_layers - 1; i >= 0; i--)
     {
         if (lyr->prot_id == prot_id1 ||
             lyr->prot_id == prot_id2)
             return lyr->start;
-        lyr++;
+        lyr--;
     }
     return nullptr;
 }
+
+
+const uint8_t* get_inner_layer(const Packet* p, uint16_t proto)
+{ return find_inner_layer(p->layers, p->num_layers, proto); }
+
+const uint8_t* get_outer_layer(const Packet* p, uint16_t proto)
+{ return find_outer_layer(p->layers, p->num_layers, proto); }
+
 
 const arp::EtherARP* get_arp_layer(const Packet* const p)
 {
@@ -61,7 +90,7 @@ const arp::EtherARP* get_arp_layer(const Packet* const p)
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const arp::EtherARP*>(
-        find_layer(lyr, num_layers, ETHERTYPE_ARP, ETHERTYPE_REVARP));
+        find_inner_layer(lyr, num_layers, ETHERTYPE_ARP, ETHERTYPE_REVARP));
 }
 
 const gre::GREHdr* get_gre_layer(const Packet* const p)
@@ -70,7 +99,7 @@ const gre::GREHdr* get_gre_layer(const Packet* const p)
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const gre::GREHdr*>(
-        find_layer(lyr, num_layers, IPPROTO_ID_GRE));
+        find_inner_layer(lyr, num_layers, IPPROTO_ID_GRE));
 }
 
 const eapol::EtherEapol* get_eapol_layer(const Packet* const p)
@@ -79,7 +108,7 @@ const eapol::EtherEapol* get_eapol_layer(const Packet* const p)
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const eapol::EtherEapol*>(
-            find_layer(lyr, num_layers, ETHERTYPE_EAPOL));
+        find_inner_layer(lyr, num_layers, ETHERTYPE_EAPOL));
 }
 
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)
@@ -88,7 +117,7 @@ const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const vlan::VlanTagHdr*>(
-        find_layer(lyr, num_layers, ETHERTYPE_8021Q));
+        find_inner_layer(lyr, num_layers, ETHERTYPE_8021Q));
 }
 
 const eth::EtherHdr* get_eth_layer(const Packet* const p)
@@ -98,7 +127,7 @@ const eth::EtherHdr* get_eth_layer(const Packet* const p)
 
     // First, search for the inner eth layer (transbridging)
     const eth::EtherHdr* eh = reinterpret_cast<const eth::EtherHdr*>(
-        find_layer(lyr, num_layers, ETHERTYPE_TRANS_ETHER_BRIDGING));
+        find_inner_layer(lyr, num_layers, ETHERTYPE_TRANS_ETHER_BRIDGING));
 
     // if no inner eth layer, assume root layer is eth (callers job to confirm)
     return eh ? eh : reinterpret_cast<const eth::EtherHdr*>(get_root_layer(p));
@@ -154,5 +183,63 @@ int get_inner_ip_lyr(const Packet* const p)
     }
     return -1;
 }
+
+bool set_api_ip_embed_icmp(Packet* const p)
+{ return set_api_ip_embed_icmp(p, p->ip_api); }
+
+bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
+{
+    int num_layers = p->num_layers - 1;
+    const Layer* lyr = &p->layers[num_layers];
+
+    for(int i = num_layers; i >= 0; i--)
+    {
+        if (lyr->prot_id == IP_EMBEDDED_IN_ICMP4)
+        {
+            const ip::IPHdr* ip4h =
+                reinterpret_cast<const ip::IPHdr*>(lyr->start);
+            api.set(ip4h);
+            return true;
+        }
+        else if (lyr->prot_id == IP_EMBEDDED_IN_ICMP6)
+        {
+            const ipv6::IP6RawHdr* ip6h =
+                reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
+            api.set(ip6h);
+            return true;
+        }
+
+        lyr--;
+    }
+
+    api.reset();
+    return false;
+}
+
+const uint8_t* get_prot_embed_icmp(const Packet* const p)
+{
+    return find_inner_layer(p->layers,
+                            p->num_layers,
+                            PROT_EMBEDDED_IN_ICMP);
+}
+
+const tcp::TCPHdr* get_tcp_embed_icmp(const Packet* const p)
+{
+    return reinterpret_cast<const tcp::TCPHdr*>(
+        get_prot_embed_icmp(p));
+}
+
+const udp::UDPHdr* get_udp_embed_icmp(const Packet* const p)
+{
+    return reinterpret_cast<const udp::UDPHdr*>(
+        get_prot_embed_icmp(p));
+}
+
+const icmp::ICMPHdr* get_icmp_embed_icmp(const Packet* const p)
+{
+    return reinterpret_cast<const icmp::ICMPHdr*>(
+        get_prot_embed_icmp(p));
+}
+
 
 } // namespace layer

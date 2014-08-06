@@ -1004,7 +1004,6 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 {
     Packet op;
     Packet *orig_p;
-    uint32_t orig_ip_hlen;
 
     if (log == NULL || p == NULL)
         return;
@@ -1012,50 +1011,73 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
     memset((char*)&op, 0, sizeof(op));
     orig_p = &op;
 
-    orig_p->iph = p->orig_iph;
-    orig_p->tcph = p->orig_tcph;
-    orig_p->udph = p->orig_udph;
-    orig_p->sp = p->orig_sp;
-    orig_p->dp = p->orig_dp;
-    orig_p->icmph = p->orig_icmph;
-    orig_p->iph_api = p->orig_iph_api;
-//    orig_p->ip4h = p->orig_ip4h;
-//    orig_p->ip6h = p->orig_ip6h;
-    orig_p->family = p->orig_family;
-
-    if(orig_p->iph != NULL)
+    if (!layer::set_api_ip_embed_icmp(p, op.ip_api))
     {
-        TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-        LogIPHeader(log, orig_p);
-        orig_ip_hlen = ipv4::get_pkt_len(p->orig_iph) << 2;
-
-        switch(GET_IPH_PROTO(orig_p))
+        switch(orig_p->ip_api.proto())
         {
             case IPPROTO_TCP:
-                if(orig_p->tcph != NULL)
+            {
+                const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(p);
+                if (tcph)
+                {
+                    orig_p->sp = ntohs(tcph->th_sport);
+                    orig_p->dp = ntohs(tcph->th_dport);
+                    orig_p->tcph = tcph;
+                }
+
+                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+                LogIPHeader(log, orig_p);
+
+                if(tcph != NULL)
+                {
                     TextLog_Print(log, "Seq: 0x%lX\n",
                             (u_long)ntohl(orig_p->tcph->th_seq));
+                }
                 break;
+            }
 
             case IPPROTO_UDP:
-                if(orig_p->udph != NULL)
+            {
+                const udp::UDPHdr* udph = layer::get_udp_embed_icmp(p);
+                if (udph)
+                {
+                    orig_p->sp = ntohs(p->udph->uh_sport);
+                    orig_p->dp = ntohs(p->udph->uh_dport);
+                    orig_p->udph = udph;
+                }
+
+                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+                LogIPHeader(log, orig_p);
+
+                if(udph != NULL)
                     TextLog_Print(log, "Len: %d  Csum: %d\n",
                             ntohs(orig_p->udph->uh_len) - UDP_HEADER_LEN,
                             ntohs(orig_p->udph->uh_chk));
                 break;
+            }
 
             case IPPROTO_ICMP:
-                if(orig_p->icmph != NULL)
-                    LogEmbeddedICMPHeader(log, orig_p->icmph);
+            {
+                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+                LogIPHeader(log, orig_p);
+
+                const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(p);
+                if(icmph != NULL)
+                    LogEmbeddedICMPHeader(log, icmph);
                 break;
+            }
 
             default:
+                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+                LogIPHeader(log, orig_p);
+
                 TextLog_Print(log, "Protocol: 0x%X (unknown or "
                         "header truncated)", GET_IPH_PROTO(orig_p));
                 break;
         }       /* switch */
 
         /* if more than 8 bytes of original IP payload sent */
+        uint32_t orig_ip_hlen = p->ip_api.hlen() << 2;
         if (p->dsize - orig_ip_hlen > 8)
         {
             TextLog_Print(log, "(%d more bytes of original packet)\n",

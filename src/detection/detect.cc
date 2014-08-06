@@ -308,7 +308,8 @@ int Detect(Packet * p)
         return 0;
     }
 
-
+    // FIXIT:  Bug??  Do we want to check inner IP protocol tpe,
+    //          when indexing outer ip array??
     if (!snort_conf->ip_proto_array[GET_IPH_PROTO(p)])
     {
         switch (p->outer_family)

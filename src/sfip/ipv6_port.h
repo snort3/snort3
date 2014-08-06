@@ -42,9 +42,6 @@ typedef sfip_t *snort_ip_p;
 #define GET_SRC_IP(p) ((p)->iph_api->iph_ret_src(p))
 #define GET_DST_IP(p) ((p)->iph_api->iph_ret_dst(p))
 
-#define GET_ORIG_SRC(p) ((p)->orig_iph_api->orig_iph_ret_src(p))
-#define GET_ORIG_DST(p) ((p)->orig_iph_api->orig_iph_ret_dst(p))
-
 /* These are here for backwards compatibility */
 #define GET_SRC_ADDR(x) GET_SRC_IP(x)
 #define GET_DST_ADDR(x) GET_DST_IP(x)
@@ -68,11 +65,18 @@ typedef sfip_t *snort_ip_p;
 #define GET_IPH_VER(p)   (p)->iph_api->iph_ret_ver(p)
 #define GET_IPH_PROTO(p) ((uint8_t)(IS_IP6(p) ? ((p)->ip6h->next) : ((p)->iph_api->iph_ret_proto(p))))
 
+
+#if 0
+
+#define GET_ORIG_SRC(p) ((p)->orig_iph_api->orig_iph_ret_src(p))
+#define GET_ORIG_DST(p) ((p)->orig_iph_api->orig_iph_ret_dst(p))
 #define GET_ORIG_IPH_PROTO(p)   (p)->orig_iph_api->orig_iph_ret_proto(p)
 #define GET_ORIG_IPH_VER(p)     (p)->orig_iph_api->orig_iph_ret_ver(p)
 #define GET_ORIG_IPH_LEN(p)     (p)->orig_iph_api->orig_iph_ret_len(p)
 #define GET_ORIG_IPH_OFF(p)     (p)->orig_iph_api->orig_iph_ret_off(p)
 #define GET_ORIG_IPH_PROTO(p)   (p)->orig_iph_api->orig_iph_ret_proto(p)
+
+#endif
 
 /* XXX make sure these aren't getting confused with sfip_is_valid within the code */
 #define IPH_IS_VALID(p) iph_is_valid(p)

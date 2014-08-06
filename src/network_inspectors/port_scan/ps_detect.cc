@@ -575,7 +575,7 @@ int PortScan::ps_get_proto(PS_PKT *ps_pkt, int *proto)
                 || ((p->icmph != NULL) && (p->icmph->type == ICMP_DEST_UNREACH)
                     && ((p->icmph->code == ICMP_PORT_UNREACH)
                         || (p->icmph->code == ICMP_PKT_FILTERED))
-                    && (p->orig_tcph != NULL)))
+                    && (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)))
         {
             *proto = PS_PROTO_TCP;
             return 0;
@@ -588,7 +588,7 @@ int PortScan::ps_get_proto(PS_PKT *ps_pkt, int *proto)
                 || ((p->icmph != NULL) && (p->icmph->type == ICMP_DEST_UNREACH)
                     && ((p->icmph->code == ICMP_PORT_UNREACH)
                         || (p->icmph->code == ICMP_PKT_FILTERED))
-                    && (p->orig_udph != NULL)))
+                    && (p->proto_bits & PROTO_BIT__UDP_EMBED_ICMP)))
         {
             *proto = PS_PROTO_UDP;
             return 0;

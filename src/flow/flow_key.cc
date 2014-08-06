@@ -1,4 +1,3 @@
-
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 ** Copyright (C) 2005-2013 Sourcefire, Inc.
@@ -89,7 +88,7 @@ inline void FlowKey::init4(
         port_h = srcPort;
     }
     if (ScMplsOverlappingIp() &&
-        ipv4::isPrivateIP(*src) && ipv4::isPrivateIP(*dst))
+        ip::isPrivateIP(*src) && ip::isPrivateIP(*dst))
         mplsLabel = mplsId;
     else
     	mplsLabel = 0;

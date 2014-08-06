@@ -42,6 +42,7 @@
 #include "profiler.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "protocols/ip.h"
 
 THREAD_LOCAL SessionStats icmpStats;
 THREAD_LOCAL ProfileStats icmp_perf_stats;
@@ -74,26 +75,45 @@ static int ProcessIcmpUnreach(Packet *p)
 {
     /* Handle ICMP unreachable */
     FlowKey skey;
-    Flow *ssn = NULL;
+    Flow* ssn = NULL;
     uint16_t sport;
     uint16_t dport;
-    sfip_t *src;
-    sfip_t *dst;
+    const sfip_t* src;
+    const sfip_t* dst;
+    ip::IpApi iph;
 
-    /* No "orig" IP Header */
-    if (!p->orig_iph)
+    /* Set the Ip API to the embedded IP Header. */
+    if (!layer::set_api_ip_embed_icmp(p, iph))
         return 0;
 
-    /* Get TCP/UDP/ICMP session from original protocol/port info
-     * embedded in the ICMP Unreach message.  This is already decoded
-     * in p->orig_foo.  TCP/UDP ports are decoded as p->orig_sp/dp.
+    /* Get IP/TCP/UDP/ICMP session from original protocol/port info
+     * embedded in the ICMP Unreach message.
      */
-    skey.protocol = GET_ORIG_IPH_PROTO(p);
-    sport = p->orig_sp;
-    dport = p->orig_dp;
+    skey.protocol = iph.proto();
+    src = iph.get_src();
+    dst = iph.get_dst();
 
-    src = GET_ORIG_SRC(p);
-    dst = GET_ORIG_DST(p);
+
+    if (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)
+    {
+        const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(p);
+        sport = ntohs(tcph->th_sport);
+        dport = ntohs(tcph->th_dport);
+    }
+    else if (p->proto_bits & PROTO_BIT__UDP_EMBED_ICMP)
+    {
+        const udp::UDPHdr* udph = layer::get_udp_embed_icmp(p);
+
+        sport = ntohs(udph->uh_sport);
+        dport = ntohs(udph->uh_dport);
+    }
+    else
+    {
+        sport = 0;
+        dport = 0;
+    }
+
+
 
     if (sfip_fast_lt6(src, dst))
     {
@@ -102,7 +122,7 @@ static int ProcessIcmpUnreach(Packet *p)
         COPY4(skey.ip_h, dst->ip32);
         skey.port_h = dport;
     }
-    else if (IP_EQUALITY(GET_ORIG_SRC(p), GET_ORIG_DST(p)))
+    else if (IP_EQUALITY(iph.get_src(), iph.get_dst()))
     {
         COPY4(skey.ip_l, src->ip32);
         COPY4(skey.ip_h, skey.ip_l);

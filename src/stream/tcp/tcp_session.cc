@@ -85,6 +85,8 @@
 #include "tcp_module.h"
 #include "stream/stream_splitter.h"
 
+using namespace tcp;
+
 THREAD_LOCAL ProfileStats s5TcpPerfStats;
 THREAD_LOCAL ProfileStats s5TcpNewSessPerfStats;
 THREAD_LOCAL ProfileStats s5TcpStatePerfStats;

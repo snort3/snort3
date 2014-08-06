@@ -62,6 +62,7 @@ extern "C" {
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "protocols/mpls.h"
+#include "protocols/ip.h"
 
 /*  D E F I N E S  ************************************************************/
 
@@ -147,15 +148,15 @@ enum PseudoPacketType{
 #define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
 #define DEFAULT_LABELCHAIN_LENGTH    -1
 
-const int32_t MAX_PORTS = 65536;
-const uint16_t NUM_IP_PROTOS = 256;
-const int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
-const uint8_t IP_OPTMAX = 40;
-const uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
-const uint8_t IP6_EXTMAX = 8;
-const uint8_t MIN_TTL = 64;
-const uint8_t MAX_TTL = 255;
-const uint8_t LAYER_MAX = 32;
+constexpr int32_t MAX_PORTS = 65536;
+constexpr uint16_t NUM_IP_PROTOS = 256;
+constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
+constexpr uint8_t IP_OPTMAX = 40;
+constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
+constexpr uint8_t IP6_EXTMAX = 8;
+constexpr uint8_t MIN_TTL = 64;
+constexpr uint8_t MAX_TTL = 255;
+constexpr uint8_t LAYER_MAX = 32;
 
 
 
@@ -181,13 +182,13 @@ struct Packet
 
     //vvv-----------------------------
 
-    const IPHdr *iph, *orig_iph;/* and orig. headers for ICMP_*_UNREACH family */
+    const IPHdr *iph;
     const IPHdr *inner_iph;     /* if IP-in-IP, this will be the inner IP header */
     const IPHdr *outer_iph;     /* if IP-in-IP, this will be the outer IP header */
-    const TCPHdr *tcph, *orig_tcph;
-    const udp::UDPHdr *udph, *orig_udph;
+    const tcp::TCPHdr *tcph;
+    const udp::UDPHdr *udph;
     const udp::UDPHdr *outer_udph;   /* if Teredo + UDP, this will be the outer UDP header */
-    const ICMPHdr *icmph, *orig_icmph;
+    const ICMPHdr *icmph;
 
     const uint8_t *data;        /* packet payload pointer */
     const uint8_t *ip_data;     /* IP payload pointer */
@@ -197,16 +198,13 @@ struct Packet
     Flow* flow;   /* for session tracking */
 
     //vvv-----------------------------
-    ipv4::IP4Hdr *ip4h;
+    ip::IP4Hdr *ip4h;
     ipv6::IP6Hdr *ip6h;
-    icmp6::ICMP6Hdr *icmp6h;
 
     IPH_API* iph_api;
-    IPH_API* orig_iph_api;
     IPH_API* outer_iph_api;
 
     int family;
-    int orig_family;
     int outer_family;
     //^^^-----------------------------
 
@@ -231,8 +229,6 @@ struct Packet
     //vvv-----------------------------
     uint16_t sp;                /* source port (TCP/UDP) */
     uint16_t dp;                /* dest port (TCP/UDP) */
-    uint16_t orig_sp;           /* source port (TCP/UDP) of original datagram */
-    uint16_t orig_dp;           /* dest port (TCP/UDP) of original datagram */
     //^^^-----------------------------
     // and so on ...
 
@@ -252,7 +248,7 @@ struct Packet
     const DAQ_PktHdr_t *pkth;    // packet meta data
     const uint8_t *pkt;         // raw packet data
 
-    ipv4::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
+    ip::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
     IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
 
@@ -265,10 +261,11 @@ struct Packet
     const ipv6::IP6RawHdr* raw_ip6h;  // innermost raw ip6 header
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
-    ipv4::IP4Hdr inner_ip4h;
+    ip::IP4Hdr inner_ip4h;
     ipv6::IP6Hdr inner_ip6h;
-    ipv4::IP4Hdr outer_ip4h;
+    ip::IP4Hdr outer_ip4h;
     ipv6::IP6Hdr outer_ip6h;
+    ip::IpApi ip_api;
 
     MplsHdr mplsHdr;
 
@@ -300,7 +297,10 @@ struct Packet
 #define PROTO_BIT__MPLS     0x0080
 #define PROTO_BIT__VLAN     0x0100
 #define PROTO_BIT__ETH      0x0200
-#define PROTO_BIT__FREE     0x7c00
+#define PROTO_BIT__TCP_EMBED_ICMP  0x0400
+#define PROTO_BIT__UDP_EMBED_ICMP  0x0800
+#define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
+#define PROTO_BIT__FREE     0x6000
 #define PROTO_BIT__OTHER    0x8000
 #define PROTO_BIT__ALL      0xffff
 
@@ -309,9 +309,9 @@ struct Packet
 #define DECODE__MF      0x02  /* more fragments flag */
 #define DECODE__DF      0x04  /* don't fragment flag */
 #define DECODE__RF      0x08  /* IP reserved bit */
-#define DECODE__ESP     0x10  /* flag to indicate an ESP layer has been seen */
-#define DECODE__UNSURE_ENCAP 0x20 /* packet may have incorrect encapsulation layer. */
-                                  /* don't alert if "next layer" is invalid. */
+#define DECODE__TRUST_ON_FAIL 0x10  /* if decode fails, set the PKT_TRUST flag */
+#define DECODE__UNSURE_ENCAP  0x20  /* packet may have incorrect encapsulation layer. */
+                                    /* don't alert if "next layer" is invalid. */
 #define DECODE__FREE    0xC0
 
 #define IsIP(p) (IPH_IS_VALID(p))

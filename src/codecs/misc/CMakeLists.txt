@@ -2,6 +2,9 @@
 
 if(STATIC_CODECS)
     set(PLUGIN_LIST
+        cd_ip4_embedded_in_icmp.cc
+        cd_ip6_embedded_in_icmp.cc
+        cd_prot_embedded_in_icmp.cc
         cd_gtp.cc
         cd_gtp_module.h
         cd_gtp_module.cc
@@ -11,6 +14,9 @@ if(STATIC_CODECS)
 else(STATIC_CODECS)
     add_shared_library(cd_gtp codecs cd_gtp.cc cd_gtp_module.h cd_gtp_module.cc)
     add_shared_library(cd_teredo codecs cd_teredo.cc)
+
+    #  When static codecs NOT enabled, the icmp files will be included in the
+    #  ICMP libraries in the other file.
 
 endif(STATIC_CODECS)
 

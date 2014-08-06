@@ -36,7 +36,6 @@
 #include "protocols/teredo.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
 #include "protocols/ipv4.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/checksum.h"
@@ -341,7 +340,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         ho->uh_len = htons((uint16_t)len);
         ho->uh_chk = 0;
 
-        if (ipv4::is_ipv4((ipv4::IPHdr*)enc->ip_hdr)) {
+        if (ip::is_ipv4(*(enc->ip_hdr))) {
             checksum::Pseudoheader ps;
             ps.sip = ((IPHdr *)enc->ip_hdr)->ip_src.s_addr;
             ps.dip = ((IPHdr *)enc->ip_hdr)->ip_dst.s_addr;
@@ -364,20 +363,20 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     }
 
     // if this is not GTP, we want to return an ICMP unreachable packet
-    else if ( ipv4::is_ipv4((ipv4::IPHdr*)enc->ip_hdr))
+    else if ( ip::is_ipv4(*(enc->ip_hdr)))
     {
         // copied directly from Icmp4Codec::encode()
         uint8_t* p;
         IcmpHdr* ho;
 
-        if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp4::unreach_data()))
+        if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp::unreach_data()))
             return false;
 
         const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
         ho = reinterpret_cast<IcmpHdr*>(out->base);
 
         enc->proto = IPPROTO_ID_ICMPV4;
-        ho->type = icmp4::IcmpType::DEST_UNREACH;
+        ho->type = icmp::IcmpType::DEST_UNREACH;
         ho->code = get_icmp_code(enc->type);
         ho->cksum = 0;
         ho->unused = 0;
@@ -388,7 +387,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         // copy first 8 octets of original ip data (ie udp header)
         p += enc->ip_len;
-        memcpy(p, hi, icmp4::unreach_data());
+        memcpy(p, hi, icmp::unreach_data());
 
         ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
     }
@@ -403,9 +402,9 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         // copy first 8 octets of original ip data (ie udp header)
         // TBD: copy up to minimum MTU worth of data
-        if (!update_buffer(out, icmp4::unreach_data()))
+        if (!update_buffer(out, icmp::unreach_data()))
             return false;
-        memcpy(out->base, raw_in, icmp4::unreach_data());
+        memcpy(out->base, raw_in, icmp::unreach_data());
 
         // copy original ip header
         if (!update_buffer(out, enc->ip_len))

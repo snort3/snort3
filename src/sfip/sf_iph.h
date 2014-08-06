@@ -39,6 +39,7 @@ typedef struct _IPH_API
     uint8_t    (*iph_ret_ver)(const Packet*);
     uint8_t    (*iph_ret_hlen)(const Packet*);
 
+#if 0
     sfip_t *   (*orig_iph_ret_src)(const Packet*);
     sfip_t *   (*orig_iph_ret_dst)(const Packet*);
     uint16_t   (*orig_iph_ret_tos)(const Packet*);
@@ -49,7 +50,7 @@ typedef struct _IPH_API
     uint16_t   (*orig_iph_ret_off)(const Packet*);
     uint8_t    (*orig_iph_ret_ver)(const Packet*);
     uint8_t    (*orig_iph_ret_hlen)(const Packet*);
-
+#endif
     char ver;
 } IPH_API;
 
@@ -63,7 +64,6 @@ extern IPH_API ip6;
 #define NO_IP 0
 
 void sfiph_build(Packet*, const void *hdr, int family);
-void sfiph_orig_build(Packet*, const void *hdr, int family);
 
 /* Sets the callbacks to point at the family selected by
  *  * "family".  "family" is either AF_INET or AF_INET6 */

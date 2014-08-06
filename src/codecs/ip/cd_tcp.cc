@@ -123,7 +123,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     /* lay TCP on top of the data cause there is enough of it! */
-    p->tcph = reinterpret_cast<TCPHdr*>(const_cast<uint8_t*>(raw_pkt));
+    p->tcph = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(raw_pkt));
 
     /* multiply the payload offset value by 4 */
     lyr_len = TCP_OFFSET(p->tcph) << 2;
@@ -587,7 +587,7 @@ static inline void TCPMiscTests(Packet *p)
 bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
     int ctl;
-    const TCPHdr* hi = reinterpret_cast<const TCPHdr*>(raw_in);
+    const tcp::TCPHdr* hi = reinterpret_cast<const tcp::TCPHdr*>(raw_in);
     bool attach_payload = (enc->type == EncodeType::ENC_TCP_FIN || 
         enc->type == EncodeType::ENC_TCP_PUSH);
 
@@ -602,7 +602,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     if (!update_buffer(out, tcp::get_tcp_hdr_len(hi)))
         return false;
 
-    TCPHdr* ho = reinterpret_cast<TCPHdr*>(out->base);
+    tcp::TCPHdr* ho = reinterpret_cast<tcp::TCPHdr*>(out->base);
     ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
 
     if ( forward(enc) )
@@ -661,7 +661,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
     ho->th_sum = 0;
 
-    if (ipv4::get_version((IPHdr *)enc->ip_hdr) == 4) {
+    if (ip::get_version((IPHdr *)enc->ip_hdr) == 4) {
         checksum::Pseudoheader ps;
         int len = buff_diff(out, (uint8_t*)ho);
 
@@ -688,7 +688,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
 bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
-    TCPHdr* h = (TCPHdr*)(lyr->start);
+    tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(lyr->start);
 
     *len += tcp::get_tcp_hdr_len(h) + p->dsize;
 
@@ -719,13 +719,13 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 
 void TcpCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
-    TCPHdr* ch = (TCPHdr*)lyr->start;
+    tcp::TCPHdr* ch = (tcp::TCPHdr*)lyr->start;
     c->tcph = ch;
 
     if ( reverse(f) )
     {
         int i = lyr - c->layers;
-        TCPHdr* ph = (TCPHdr*)p->layers[i].start;
+        tcp::TCPHdr* ph = (tcp::TCPHdr*)p->layers[i].start;
 
         ch->th_sport = ph->th_dport;
         ch->th_dport = ph->th_sport;

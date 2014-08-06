@@ -215,9 +215,9 @@ bool GtpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
         ip_ver = *(raw_pkt + GTP_MIN_LEN) & 0xF0;
         if (ip_ver == 0x40)
-            next_prot_id = ipv4::prot_id(); 
+            next_prot_id = IPPROTO_ID_IPIP;
         else if (ip_ver == 0x60)
-            next_prot_id = ipv6::prot_id();
+            next_prot_id = IPPROTO_ID_IPV6;
     }
     
     return true;

@@ -138,8 +138,8 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
            different valid next_header. The DECODE__UNSURE_ENCAP flag tells the next
            decoder stage to silently ignore invalid headers. */
         p->decode_flags |= DECODE__UNSURE_ENCAP;
+        p->decode_flags |= DECODE__TRUST_ON_FAIL;
         const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
-        p->decode_flags |= DECODE__ESP;
     }
     else
     {

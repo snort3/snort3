@@ -10,6 +10,8 @@ eapol.h \
 eth.h \
 icmp4.h \
 icmp6.h \
+ip.h \
+ip.cc \
 ipv4.h \
 ipv6.h \
 gre.h \
