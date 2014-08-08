@@ -37,7 +37,7 @@ using namespace std;
 #include "main/analyzer.h"
 #include "managers/shell.h"
 #include "managers/event_manager.h"
-#include "managers/ips_manager.h"
+#include "managers/so_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -298,7 +298,8 @@ static void help_signals(SnortConfig*, const char*)
 }
 
 enum HelpType {
-    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF, HT_LST, HT_PLG
+    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
+    HT_BUF, HT_LST, HT_PLG, HT_DDR
 };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -332,6 +333,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         break;
     case HT_PLG:
         PluginManager::list_plugins();
+        break;
+    case HT_DDR:
+        SoManager::dump_rule_stubs(val);
         break;
     }
     ModuleManager::term();
@@ -385,6 +389,14 @@ static void list_plugins(SnortConfig* sc, const char* val)
     show_help(sc, val, HT_PLG);
 }
 
+static void dump_dynamic_rules(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_DDR);
+    //PluginManager::load_plugins(sc->plugin_path);
+    ////SoManager::dump_rule_stubs(val);
+    //exit(0);
+}
+
 static void config_lua(SnortConfig*, const char* val)
 {
     Shell::set_overrides(val);
@@ -419,13 +431,6 @@ static void config_daq_list(SnortConfig* sc, const char* val)
     DAQ_Load(sc);
     DAQ_PrintTypes(stdout);
     DAQ_Unload();
-    exit(0);
-}
-
-static void dump_dynamic_rules(SnortConfig* sc, const char* val)
-{
-    PluginManager::load_plugins(sc->plugin_path);
-    IpsManager::dump_rule_stubs(val);
     exit(0);
 }
 

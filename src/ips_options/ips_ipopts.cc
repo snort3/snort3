@@ -213,7 +213,7 @@ static const char* s_opts =
 
 static const Parameter ipopt_params[] =
 {
-    { "*opt", Parameter::PT_SELECT, s_opts, nullptr,
+    { "~opt", Parameter::PT_SELECT, s_opts, nullptr,
       "output format" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -241,7 +241,7 @@ bool IpOptModule::begin(const char*, int, SnortConfig*)
 
 bool IpOptModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*mode") )
+    if ( v.is("~opt") )
         ipopts_parse(v.get_string(), &data);
 
     else

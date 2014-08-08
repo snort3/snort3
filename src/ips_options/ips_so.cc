@@ -29,7 +29,7 @@ using namespace std;
 
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "managers/ips_manager.h"
+#include "managers/so_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
 #include "time/profiler.h"
@@ -69,7 +69,7 @@ SoOption::SoOption(
 SoOption::~SoOption()
 {
     if ( data )
-        IpsManager::delete_so_data(soid, data);
+        SoManager::delete_so_data(soid, data);
 }
 
 uint32_t SoOption::hash() const
@@ -111,7 +111,7 @@ int SoOption::eval(Cursor&, Packet* p)
 
 static const Parameter so_params[] =
 {
-    { "*func", Parameter::PT_STRING, nullptr, nullptr,
+    { "~func", Parameter::PT_STRING, nullptr, nullptr,
       "name of function to call" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -139,7 +139,7 @@ bool SoModule::begin(const char*, int, SnortConfig*)
 
 bool SoModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*func") )
+    if ( v.is("~func") )
         name = v.get_string();
 
     else
@@ -168,7 +168,7 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
     SoModule* m = (SoModule*)p;
     const char* name = m->name.c_str();
 
-    SoEvalFunc func = IpsManager::get_so_eval(otn->soid, name, &data);
+    SoEvalFunc func = SoManager::get_so_eval(otn->soid, name, &data);
 
     if ( !func )
     {

@@ -306,10 +306,10 @@ int ByteJumpOption::eval(Cursor& c, Packet*)
 
 static const Parameter jump_params[] =
 {
-    { "*count", Parameter::PT_INT, "1:10", nullptr,
+    { "~count", Parameter::PT_INT, "1:10", nullptr,
       "number of bytes to pick up from the buffer" },
 
-    { "*offset", Parameter::PT_STRING, nullptr, nullptr,
+    { "~offset", Parameter::PT_STRING, nullptr, nullptr,
       "variable name or number of bytes into the buffer to start processing" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -401,10 +401,10 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
 
 bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*count") )
+    if ( v.is("~count") )
         data.bytes_to_grab = v.get_long();
 
-    else if ( v.is("*offset") )
+    else if ( v.is("~offset") )
     {
         long n;
         if ( v.strtol(n) )

@@ -113,7 +113,7 @@ int IpIdOption::eval(Cursor&, Packet *p)
 
 static const Parameter ip_id_params[] =
 {
-    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -141,7 +141,7 @@ bool IpIdModule::begin(const char*, int, SnortConfig*)
 
 bool IpIdModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*range") )
+    if ( !v.is("~range") )
         return false;
 
     return data.parse(v.get_string());

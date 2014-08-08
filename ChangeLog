@@ -1,3 +1,8 @@
+110
+-- converted rule meta options to ips options (w/o eval)
+-- rewrote rule parsing
+-- split so manager out from ips manager
+
 109
 -- changed --help to give overview of help
 -- fixed stream_ip alerts (defrag -> stream_ip)

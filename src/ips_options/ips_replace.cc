@@ -508,7 +508,7 @@ void ReplaceOption::action(Packet*)
 
 static const Parameter repl_params[] =
 {
-    { "*mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
+    { "~mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
       "output format" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -536,7 +536,7 @@ bool ReplModule::begin(const char*, int, SnortConfig*)
 
 bool ReplModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*data") )
+    if ( v.is("~mode") )
         replace_parse(v.get_string(), data);
 
     else

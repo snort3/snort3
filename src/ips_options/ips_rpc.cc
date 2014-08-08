@@ -247,13 +247,13 @@ int RpcOption::eval(Cursor&, Packet *p)
 
 static const Parameter rpc_params[] =
 {
-    { "*app", Parameter::PT_STRING, nullptr, nullptr,
+    { "~app", Parameter::PT_STRING, nullptr, nullptr,
       "application number" },
 
-    { "*ver", Parameter::PT_STRING, nullptr, nullptr,
+    { "~ver", Parameter::PT_STRING, nullptr, nullptr,
       "version number or * for any" },
 
-    { "*proc", Parameter::PT_STRING, nullptr, nullptr,
+    { "~proc", Parameter::PT_STRING, nullptr, nullptr,
       "procedure number or * for any" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -283,17 +283,17 @@ bool RpcModule::set(const char*, Value& v, SnortConfig*)
 {
     char* end;
 
-    if ( v.is("*app") )
+    if ( v.is("~app") )
     {
         data.program = strtoul(v.get_string(), &end, 0);
         data.flags |= RPC_CHECK_PROG;
     }
-    else if ( v.is("*ver") )
+    else if ( v.is("~ver") )
     {
         data.vers = strtoul(v.get_string(), &end, 0);
         data.flags |= RPC_CHECK_VERS;
     }
-    else if ( v.is("*proc") )
+    else if ( v.is("~proc") )
     {
         data.proc = strtoul(v.get_string(), &end, 0);
         data.flags |= RPC_CHECK_PROC;

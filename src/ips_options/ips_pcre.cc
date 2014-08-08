@@ -603,7 +603,7 @@ bool pcre_next(PcreData* pcre)
 
 static const Parameter pcre_params[] =
 {
-    { "*regex", Parameter::PT_STRING, nullptr, nullptr,
+    { "~regex", Parameter::PT_STRING, nullptr, nullptr,
       "Snort regular expression" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -645,7 +645,7 @@ bool PcreModule::begin(const char*, int, SnortConfig*)
 
 bool PcreModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*regex") )
+    if ( v.is("~regex") )
         pcre_parse(v.get_string(), data);
 
     else

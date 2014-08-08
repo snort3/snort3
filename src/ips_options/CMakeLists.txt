@@ -9,11 +9,14 @@ SET( PLUGIN_LIST
     ips_base64.cc
     ips_byte_test.cc
     ips_byte_jump.cc
+    ips_classtype.cc
     ips_cvs.cc
+    ips_detection_filter.cc
     ips_dsize.cc
     ips_flags.cc
     ips_fragbits.cc
     ips_fragoffset.cc
+    ips_gid.cc
     ips_http.cc
     ips_http_header.cc
     ips_icmp_id.cc
@@ -23,13 +26,22 @@ SET( PLUGIN_LIST
     ips_ipopts.cc
     ips_isdataat.cc 
     ips_itype.cc 
+    ips_metadata.cc 
+    ips_msg.cc 
     ips_pkt_data.cc
+    ips_priority.cc
     ips_raw_data.cc
     ips_react.cc
+    ips_reference.cc
+    ips_rem.cc
+    ips_rev.cc
     ips_resp.cc
     ips_rpc.cc
     ips_seq.cc
     ips_session.cc
+    ips_sid.cc
+    ips_soid.cc
+    ips_tag.cc
     ips_tos.cc
     ips_ttl.cc
     ips_window.cc

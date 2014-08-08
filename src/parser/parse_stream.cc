@@ -369,6 +369,7 @@ static void exec(
         rps.val.clear();
         break;
     case FSM_ADD:
+        // adding another state would eliminate this if
         if ( rps.opt.empty() )
             rps.opt += tok;
         else

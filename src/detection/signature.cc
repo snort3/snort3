@@ -41,7 +41,7 @@
 /********************* Reference Implementation *******************************/
 
 ReferenceNode * AddReference(
-    SnortConfig *sc, ReferenceNode **head, char *system, char *id)
+    SnortConfig *sc, ReferenceNode **head, const char *system, const char *id)
 {
     ReferenceNode *node;
 
@@ -126,7 +126,7 @@ ReferenceSystemNode * ReferenceSystemAdd(
     return node;
 }
 
-ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *head, char *name)
+ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *head, const char *name)
 {
     if (name == NULL)
         return NULL;

@@ -43,6 +43,7 @@ using namespace std;
 #include "mpse_manager.h"
 #include "packet_manager.h"
 #include "script_manager.h"
+#include "so_manager.h"
 
 #include "framework/codec.h"
 #include "framework/logger.h"
@@ -235,7 +236,7 @@ static void add_plugin(Plugin& p)
         break;
 
     case PT_SO_RULE:
-        IpsManager::add_plugin((SoApi*)p.api);
+        SoManager::add_plugin((SoApi*)p.api);
         break;
 
     case PT_INSPECTOR:
@@ -345,6 +346,7 @@ void PluginManager::dump_plugins()
     InspectorManager::dump_plugins();
     MpseManager::dump_plugins();
     IpsManager::dump_plugins();
+    SoManager::dump_plugins();
     ActionManager::dump_plugins();
     EventManager::dump_plugins();
 }
@@ -355,6 +357,7 @@ void PluginManager::release_plugins ()
     ActionManager::release_plugins();
     InspectorManager::release_plugins();
     IpsManager::release_plugins();
+    SoManager::release_plugins();
     MpseManager::release_plugins();
     PacketManager::release_plugins();
 

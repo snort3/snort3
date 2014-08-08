@@ -9,8 +9,8 @@ add_library (parser STATIC
     parse_ip.h 
     parse_rule.cc 
     parse_rule.h 
-    parse_otn.cc 
-    parse_otn.h 
+    parse_stream.cc 
+    parse_stream.h 
     cmd_line.cc 
     cmd_line.h 
     config_file.cc 

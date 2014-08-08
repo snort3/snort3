@@ -162,7 +162,7 @@ static void term_lua(lua_State*& L)
 
 static const Parameter luajit_params[] =
 {
-    { "*args", Parameter::PT_STRING, nullptr, nullptr,
+    { "~args", Parameter::PT_STRING, nullptr, nullptr,
       "option arguments" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -182,7 +182,7 @@ bool LuaJitModule::begin(const char*, int, SnortConfig*)
 
 bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*args") )
+    if ( !v.is("~args") )
         return false;
 
     args = v.get_string();
@@ -193,7 +193,7 @@ bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
 // option stuff
 //-------------------------------------------------------------------------
 
-LuaJITOption::LuaJITOption(
+LuaJitOption::LuaJitOption(
     const char* name, string& chunk, LuaJitModule* mod)
     : IpsOption(name)
 {
@@ -206,7 +206,7 @@ LuaJITOption::LuaJITOption(
         init_lua(lua[i], chunk, name, config);
 }
 
-LuaJITOption::~LuaJITOption()
+LuaJitOption::~LuaJitOption()
 {
     unsigned max = get_instance_max();
 
@@ -216,7 +216,7 @@ LuaJITOption::~LuaJITOption()
     delete[] lua;
 }
 
-uint32_t LuaJITOption::hash() const
+uint32_t LuaJitOption::hash() const
 {
     uint32_t a = 0, b = 0, c = 0;
     mix_str(a,b,c,get_name());
@@ -225,9 +225,9 @@ uint32_t LuaJITOption::hash() const
     return c;
 }
 
-bool LuaJITOption::operator==(const IpsOption& ips) const
+bool LuaJitOption::operator==(const IpsOption& ips) const
 {
-    LuaJITOption& rhs = (LuaJITOption&)ips;
+    LuaJitOption& rhs = (LuaJitOption&)ips;
 
     if ( strcmp(get_name(), rhs.get_name()) )
         return false;
@@ -238,7 +238,7 @@ bool LuaJITOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int LuaJITOption::eval(Cursor& c, Packet*)
+int LuaJitOption::eval(Cursor& c, Packet*)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(luajitPerfStats);

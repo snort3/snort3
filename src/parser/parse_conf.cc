@@ -42,13 +42,14 @@
 
 #include <stack>
 #include <string>
+#include <fstream>
 #include <sstream>
-using namespace std;
 
 #include "snort_bounds.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "parser.h"
+#include "parse_stream.h"
 #include "cmd_line.h"
 #include "parse_rule.h"
 #include "snort_debug.h"
@@ -72,14 +73,14 @@ using namespace std;
 
 struct Location
 {
-    string file;
+    std::string file;
     unsigned line;
 
     Location(const char* s, unsigned u)
     { file = s; line = u; };
 };
 
-static stack<Location> files;
+static std::stack<Location> files;
 
 const char* get_parse_file()
 {
@@ -124,80 +125,7 @@ static void inc_parse_position()
     ++loc.line;
 }
 
-static void ParseTheConf(SnortConfig*, const char* fname);
-
-typedef void (*ParseFunc)(SnortConfig *, const char *);
-
-struct KeywordFunc
-{
-    const char *name;
-    int expand_vars;
-    int default_policy_only;
-    ParseFunc parse_func;
-
-};
-
-// only keep drop rules ...
-// if we are inline (and can actually drop),
-// or we are going to just alert instead of drop,
-// or we are going to ignore session data instead of drop.
-// the alert case is tested for separately with ScTreatDropAsAlert().
-static inline int ScKeepDropRules (void)
-{
-    return ( ScInlineMode() || ScAdapterInlineMode() || ScTreatDropAsIgnore() );
-}
-
-static inline int ScLoadAsDropRules (void)
-{
-    return ( ScInlineTestMode() || ScAdapterInlineTestMode() );
-}
-
-static void ParseAlert(SnortConfig *sc, const char *args)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "Alert\n"););
-    parse_rule(sc, args, RULE_TYPE__ALERT, &sc->Alert);
-}
-
-static void ParseDrop(SnortConfig *sc, const char *args)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Drop\n"););
-
-    /* Parse as an alert if we're treating drops as alerts */
-    if (ScTreatDropAsAlert())
-        parse_rule(sc, args, RULE_TYPE__ALERT, &sc->Alert);
-
-    else if ( ScKeepDropRules() || ScLoadAsDropRules() )
-        parse_rule(sc, args, RULE_TYPE__DROP, &sc->Drop);
-}
-
-static void ParseLog(SnortConfig *sc, const char *args)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "Log\n"););
-    parse_rule(sc, args, RULE_TYPE__LOG, &sc->Log);
-}
-
-static void ParsePass(SnortConfig *sc, const char *args)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "Pass\n"););
-    parse_rule(sc, args, RULE_TYPE__PASS, &sc->Pass);
-}
-
-static void ParseReject(SnortConfig *sc, const char *args)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "Reject\n"););
-    parse_rule(sc, args, RULE_TYPE__REJECT, &sc->Reject);
-    Active_SetEnabled(1);
-}
-
-static void ParseSdrop(SnortConfig *sc, const char *args)
-{
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "SDrop\n"););
-
-    if ( ScKeepDropRules() && !ScTreatDropAsAlert() )
-        parse_rule(sc, args, RULE_TYPE__SDROP, &sc->SDrop);
-}
-
-static void ParseInclude(SnortConfig *sc, const char *arg)
+void parse_include(SnortConfig *sc, const char *arg)
 {
     struct stat file_stat;  /* for include path testing */
     char* fname = SnortStrdup(arg);
@@ -209,21 +137,14 @@ static void ParseInclude(SnortConfig *sc, const char *arg)
         const char* snort_conf_dir = get_snort_conf_dir();
 
         int path_len = strlen(snort_conf_dir) + strlen(arg) + 1;
-
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"ParseInclude: stat "
-                                "on %s failed - going to config_dir\n", fname););
-
         free(fname);
 
         fname = (char *)SnortAlloc(path_len);
         snprintf(fname, path_len, "%s%s", snort_conf_dir, arg);
-
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"ParseInclude: Opening "
-                                "and parsing %s\n", fname););
     }
 
     push_parse_location(fname);
-    ParseTheConf(sc, fname);
+    ParseConfigFile(sc, fname);
     pop_parse_location();
     free((char*)fname);
 }
@@ -261,6 +182,122 @@ void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
     }
 }
 
+void add_service_to_otn(
+    SnortConfig* sc, OptTreeNode* otn, const char* value)
+{
+    if (otn->sigInfo.num_services >= sc->max_metadata_services)
+    {
+        ParseError("Too many service's specified for rule.");
+    }
+    else
+    {
+        char *svc_name;
+        int svc_count = otn->sigInfo.num_services;
+
+        if (otn->sigInfo.services == NULL)
+        {
+            otn->sigInfo.services = 
+                (ServiceInfo*)SnortAlloc(sizeof(ServiceInfo) * sc->max_metadata_services);
+        }
+
+        svc_name = otn->sigInfo.services[svc_count].service = SnortStrdup(value);
+        otn->sigInfo.services[svc_count].service_ordinal = FindProtocolReference(svc_name);
+
+        if (otn->sigInfo.services[svc_count].service_ordinal == SFTARGET_UNKNOWN_PROTOCOL)
+        {
+            otn->sigInfo.services[svc_count].service_ordinal = AddProtocolReference(svc_name);
+        }
+
+        otn->sigInfo.num_services++;
+    }
+}
+
+// only keep drop rules ...
+// if we are inline (and can actually drop),
+// or we are going to just alert instead of drop,
+// or we are going to ignore session data instead of drop.
+// the alert case is tested for separately with ScTreatDropAsAlert().
+static inline int ScKeepDropRules (void)
+{
+    return ( ScInlineMode() || ScAdapterInlineMode() || ScTreatDropAsIgnore() );
+}
+
+static inline int ScLoadAsDropRules (void)
+{
+    return ( ScInlineTestMode() || ScAdapterInlineTestMode() );
+}
+
+RuleType get_rule_type(const char* s)
+{
+    if ( !strcmp(s, "alert") )
+        return RULE_TYPE__ALERT;
+
+    if ( !strcmp(s, "drop") || !strcmp(s, "block") )
+    {
+        if ( ScTreatDropAsAlert() )
+            return RULE_TYPE__ALERT;
+
+        else if ( ScKeepDropRules() || ScLoadAsDropRules() )
+            return RULE_TYPE__DROP;
+
+        else
+            return RULE_TYPE__NONE;
+    }
+    if ( !strcmp(s, "sdrop") )
+    {
+        if ( ScKeepDropRules() && !ScTreatDropAsAlert() )
+            return RULE_TYPE__SDROP;
+
+        else if ( ScLoadAsDropRules() )
+            return RULE_TYPE__DROP;
+
+        else
+            return RULE_TYPE__NONE;
+    }
+
+    if ( !strcmp(s, "log") )
+        return RULE_TYPE__LOG;
+
+    if ( !strcmp(s, "pass") )
+        return RULE_TYPE__PASS;
+
+    if ( !strcmp(s, "reject") )
+    {
+        Active_SetEnabled(1);
+        return RULE_TYPE__REJECT;
+    }
+
+    return RULE_TYPE__NONE;
+}
+
+ListHead* get_rule_list(SnortConfig* sc, RuleType type)
+{
+    switch ( type )
+    {
+    case RULE_TYPE__ALERT:
+        return &sc->Alert;
+
+    case RULE_TYPE__LOG:
+        return &sc->Log;
+
+    case RULE_TYPE__PASS:
+        return &sc->Pass;
+
+    case RULE_TYPE__DROP:
+        return &sc->Drop; 
+
+    case RULE_TYPE__SDROP:
+        return &sc->SDrop;
+
+    case RULE_TYPE__REJECT:
+        return &sc->Reject;
+
+    default:
+        break;
+    }
+    return nullptr;
+}
+
 // FIXIT find this a better home
 void AddRuleState(SnortConfig* sc, const RuleState& rs)
 {
@@ -281,253 +318,25 @@ void AddRuleState(SnortConfig* sc, const RuleState& rs)
     }
 }
 
-static const KeywordFunc snort_conf_keywords[] =
+void ParseConfigFile(SnortConfig *sc, const char *fname)
 {
-    // this stuff is expected to remain since rules don't fit in Lua tables
-    // in any helpful way; include stays too since it is used to load
-    // nested rules files
+    if ( !fname )
+        return;
 
-    // however, these must become pluggable ...
-    { ACTION_ALERT,    0, 0, ParseAlert },
-    { ACTION_DROP,     0, 0, ParseDrop },
-    { ACTION_BLOCK,    0, 0, ParseDrop },
-    { ACTION_LOG,      0, 0, ParseLog },
-    { ACTION_PASS,     0, 0, ParsePass },
-    { ACTION_REJECT,   0, 0, ParseReject },
-    { ACTION_SDROP,    0, 0, ParseSdrop },
-    { ACTION_SBLOCK,   0, 0, ParseSdrop },
+    std::ifstream fs(fname, std::ios_base::binary);
 
-    { SNORT_CONF_KEYWORD__INCLUDE,  1, 0, ParseInclude },
-
-    { NULL, 0, 0, NULL }   // sentinel
-};
-
-static int ContinuationCheck(char *rule)
-{
-    char *idx;  /* indexing var for moving around on the string */
-
-    idx = rule + strlen(rule) - 1;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"initial idx set to \'%c\'\n",
-                *idx););
-
-    while(isspace((int)*idx))
-    {
-        idx--;
-    }
-
-    if(*idx == '\\')
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Got continuation char, "
-                    "clearing char and returning 1\n"););
-
-        /* clear the '\' so there isn't a problem on the appended string */
-        *idx = '\x0';
-        return 1;
-    }
-
-    return 0;
-}
-
-static void ParseConfigFileLine(SnortConfig *sc, char *buf)
-{
-    /* Used for line continuation */
-    static int continuation = 0;
-    static char *saved_line = NULL;
-    static char *new_line = NULL;
-
-        /* buffer indexing pointer */
-        char *index = buf;
-
-        /* Increment the line counter so the error messages know which
-         * line to bitch about */
-        inc_parse_position();
-
-        /* fgets always appends a null, so doing a strlen should be safe */
-        if ((strlen(buf) + 1) == MAX_LINE_LENGTH)
-        {
-            ParseError("Line greater than or equal to %u characters which is "
-                       "more than the parser is willing to handle.  Try "
-                       "splitting it up on multiple lines if possible.",
-                       MAX_LINE_LENGTH);
-        }
-
-        /* advance through any whitespace at the beginning of the line */
-        while (isspace((int)*index))
-            index++;
-
-        /* If it's an empty line or starts with a comment character */
-        if ((strlen(index) == 0) || (*index == '#') || (*index == ';'))
-            return;
-
-        if (continuation)
-        {
-            int new_line_len = strlen(saved_line) + strlen(index) + 1;
-
-            if (new_line_len >= PARSE_RULE_SIZE)
-            {
-                ParseError("Rule greater than or equal to %u characters which "
-                           "is more than the parser is willing to handle.  "
-                           "Submit a bug to bugs@snort.org if you legitimately "
-                           "feel like your rule or keyword configuration needs "
-                           "more than this amount of space.", PARSE_RULE_SIZE);
-            }
-
-            new_line = (char *)SnortAlloc(new_line_len);
-            snprintf(new_line, new_line_len, "%s%s", saved_line, index);
-
-            free(saved_line);
-            saved_line = NULL;
-            index = new_line;
-
-            DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"concat rule: %s\n",
-                                    new_line););
-        }
-
-        /* check for a '\' continuation character at the end of the line
-         * if it's there we need to get the next line in the file */
-        if (ContinuationCheck(index) == 0)
-        {
-            char **toks;
-            int num_toks;
-            char *keyword;
-            char *args;
-            int i;
-
-            DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,
-                                    "[*] Processing keyword: %s\n", index););
-
-            /* Get the keyword and args */
-            toks = mSplit(index, " \t", 2, &num_toks, 0);
-            if (num_toks != 2)
-                ParseError("Invalid configuration line: %s", index);
-
-            keyword = SnortStrdup(ExpandVars(sc, toks[0]));
-            args = toks[1];
-
-            for (i = 0; snort_conf_keywords[i].name != NULL; i++)
-            {
-                if (strcasecmp(keyword, snort_conf_keywords[i].name) == 0)
-                {
-                    if (snort_conf_keywords[i].expand_vars)
-                        args = SnortStrdup(ExpandVars(sc, toks[1]));
-
-                    snort_conf_keywords[i].parse_func(sc, args);
-                    break;
-                }
-            }
-
-            /* Didn't find any pre-defined snort_conf_keywords.  Look for a user defined
-             * rule type */
-
-            if ( (snort_conf_keywords[i].name == NULL) )
-            {
-                RuleListNode *node;
-
-                DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES, "Unknown rule type, "
-                                        "might be declared\n"););
-
-                for (node = sc->rule_lists; node != NULL; node = node->next)
-                {
-                    if (strcasecmp(node->name, keyword) == 0)
-                        break;
-                }
-
-                if (node == NULL)
-                    ParseError("Unknown rule type: %s.", toks[0]);
-
-                if ( node->mode == RULE_TYPE__DROP )
-                {
-                    if ( ScTreatDropAsAlert() )
-                        parse_rule(sc, args, RULE_TYPE__ALERT, node->RuleList);
-
-                    else if ( ScKeepDropRules() || ScLoadAsDropRules() )
-                        parse_rule(sc, args, node->mode, node->RuleList);
-                }
-                else if ( node->mode == RULE_TYPE__SDROP )
-                {
-                    if ( ScKeepDropRules() && !ScTreatDropAsAlert() )
-                        parse_rule(sc, args, node->mode, node->RuleList);
-
-                    else if ( ScLoadAsDropRules() )
-                        parse_rule(sc, args, RULE_TYPE__DROP, node->RuleList);
-                }
-                else
-                {
-                    parse_rule(sc, args, node->mode, node->RuleList);
-                }
-            }
-
-            if (args != toks[1])
-                free(args);
-
-            free(keyword);
-            mSplitFree(&toks, num_toks);
-
-            if(new_line != NULL)
-            {
-                free(new_line);
-                new_line = NULL;
-                continuation = 0;
-            }
-        }
-        else
-        {
-            /* save the current line */
-            saved_line = SnortStrdup(index);
-
-            /* current line was a continuation itself... */
-            if (new_line != NULL)
-            {
-                free(new_line);
-                new_line = NULL;
-            }
-
-            /* set the flag to let us know the next line is
-             * a continuation line */
-            continuation = 1;
-        }
-}
-
-static void ParseTheConf(SnortConfig *sc, const char *fname)
-{
-    char *buf = (char *)SnortAlloc(MAX_LINE_LENGTH + 1);
-    FILE *fp = fopen(fname, "r");
-
-    /* open the rules file */
-    if (fp == NULL)
+    if ( !fs )
     {
         ParseError("Unable to open rules file '%s': %s.\n",
-                   fname, get_error(errno));
+            fname, get_error(errno));
     }
-
-    /* loop thru each file line and send it to the rule parser */
-    while ((fgets(buf, MAX_LINE_LENGTH, fp)) != NULL)
-    {
-        ParseConfigFileLine(sc, buf);
-    }
-
-    fclose(fp);
-    free(buf);
+    parse_stream(fs, sc);
 }
 
 void ParseConfigString(SnortConfig* sc, const char* s)
 {
-    string rules = s;
-    stringstream ss(rules);
-
-    char *buf = (char *)SnortAlloc(MAX_LINE_LENGTH + 1);
-
-    while ( ss.getline(buf, MAX_LINE_LENGTH) )
-        ParseConfigFileLine(sc, buf);
-        
-    free(buf);
-}
-
-void ParseConfigFile(
-    SnortConfig *sc, const char *fname)
-{
-    if ( fname )
-        ParseTheConf(sc, fname);
+    std::string rules = s;
+    std::stringstream ss(rules);
+    parse_stream(ss, sc);
 }
 

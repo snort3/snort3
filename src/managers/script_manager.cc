@@ -35,7 +35,7 @@
 // N ::= number of instances of script + args and
 // K ::= number of threads
 // change to create K lua states here for each script + args
-// and change LuaJITOption() to get reference to thread states
+// and change LuaJitOption() to get reference to thread states
 // ultimately should look into changing detection engine to 
 // keep just one copy of rule option + args
 
@@ -78,7 +78,7 @@ static IpsOption* ctor(Module* m, struct OptTreeNode*)
         return nullptr;
 
     LuaJitModule* mod = (LuaJitModule*)m;
-    return new LuaJITOption(api->name.c_str(), api->chunk, mod);
+    return new LuaJitOption(api->name.c_str(), api->chunk, mod);
 }
 
 static void dtor(IpsOption* p)

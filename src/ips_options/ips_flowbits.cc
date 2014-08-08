@@ -1123,13 +1123,13 @@ static void flowbits_gterm(SnortConfig*)
 
 static const Parameter flowbits_params[] =
 {
-    { "*command", Parameter::PT_STRING, nullptr, nullptr,
+    { "~command", Parameter::PT_STRING, nullptr, nullptr,
       "set|reset|isset|etc." },
 
-    { "*arg1", Parameter::PT_STRING, nullptr, nullptr,
+    { "~arg1", Parameter::PT_STRING, nullptr, nullptr,
       "bits or group" },
 
-    { "*arg2", Parameter::PT_STRING, nullptr, nullptr,
+    { "~arg2", Parameter::PT_STRING, nullptr, nullptr,
       "group if arg1 is bits" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -1158,10 +1158,10 @@ bool FlowbitsModule::begin(const char*, int, SnortConfig*)
 
 bool FlowbitsModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*command") )
+    if ( v.is("~command") )
         args = v.get_string();
 
-    else if ( v.is("*arg1") || v.is("*arg2") )
+    else if ( v.is("~arg1") || v.is("~arg2") )
     {
         args += ", ";
         args += v.get_string();

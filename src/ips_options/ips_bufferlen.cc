@@ -261,7 +261,7 @@ static void len_parse(const char* argp, LenCheckData* ds_ptr)
 
 static const Parameter len_params[] =
 {
-    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -289,7 +289,7 @@ bool LenModule::begin(const char*, int, SnortConfig*)
 
 bool LenModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*range") )
+    if ( !v.is("~range") )
         return false;
 
     len_parse(v.get_string(), &data);

@@ -371,13 +371,13 @@ static bool ByteExtractVerify(ByteExtractData *data)
 
 static const Parameter extract_params[] =
 {
-    { "*count", Parameter::PT_INT, "1:10", nullptr,
+    { "~count", Parameter::PT_INT, "1:10", nullptr,
       "number of bytes to pick up from the buffer" },
 
-    { "*offset", Parameter::PT_INT, "-65535:65535", nullptr,
+    { "~offset", Parameter::PT_INT, "-65535:65535", nullptr,
       "number of bytes into the buffer to start processing" },
 
-    { "*name", Parameter::PT_STRING, nullptr, nullptr,
+    { "~name", Parameter::PT_STRING, nullptr, nullptr,
       "name of the variable that will be used in other rule options" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -442,13 +442,13 @@ bool ExtractModule::end(const char*, int, SnortConfig*)
 
 bool ExtractModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*count") )
+    if ( v.is("~count") )
         data.bytes_to_grab = v.get_long();
 
-    else if ( v.is("*offset") )
+    else if ( v.is("~offset") )
         data.offset = v.get_long();
 
-    else if ( v.is("*name") )
+    else if ( v.is("~name") )
         data.name = strdup(v.get_string());
 
     else if ( v.is("relative") )

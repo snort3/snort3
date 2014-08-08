@@ -27,6 +27,8 @@ add_library( managers
     plugin_manager.h
     script_manager.cc
     script_manager.h
+    so_manager.cc
+    so_manager.h
     shell.cc
     shell.h
 )

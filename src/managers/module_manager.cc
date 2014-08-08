@@ -710,7 +710,12 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            ss << "alert ( ";
+            // FIXIT move builtin generation to a better home
+            // FIXIT builtins should allow configurable nets and ports
+            // FIXIT builtins should have accurate proto
+            //       (but ip winds up in all others)
+            // FIXIT if msg has C escaped embedded quotes, we break
+            ss << "alert tcp any any -> any any ( ";
             ss << "gid:" << gid << "; ";
             ss << "sid:" << r->sid << "; ";
             ss << "msg:\"" << r->msg << "\"; )";
