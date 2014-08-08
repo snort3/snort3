@@ -43,44 +43,55 @@ public:
     }
 };
 
+
+
 template<const std::string* snort_option,
          const std::string* lua_table,
-         const std::string* lua_option = nullptr>
+         const std::string* lua_option>
 static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
 {
     ld->open_table(*lua_table);
 
-    if (lua_option != nullptr && (*snort_option).compare(*lua_option))
-    {
+    if (snort_option->compare(*lua_option))
         ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
-        ld->add_option_to_table(*lua_option, true);
-    }
-    else
-    {
-        ld->add_option_to_table(*snort_option, true);
-    }
 
+    ld->add_option_to_table(*lua_option, true);
+    ld->close_table();
+    return new DeadCode(cv, ld);
+}
+
+template<const std::string* snort_option,
+         const std::string* lua_table>
+static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
+{
+    ld->open_table(*lua_table);
+    ld->add_option_to_table(*snort_option, true);
     ld->close_table();
     return new DeadCode(cv, ld);
 }
 
 template<const std::string* snort_option,
          const std::string* lua_table,
-         const std::string* lua_option = nullptr>
+         const std::string* lua_option>
 static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
 {
     ld->open_table(*lua_table);
 
-    if (lua_option != nullptr && (*snort_option).compare(*lua_option))
-    {
+    // WARNING:  THIS WILL SEGFAULT if any variable is nullptr!!
+    if (snort_option->compare(*lua_option))
         ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
-        ld->add_option_to_table(*lua_option, false);
-    }
-    else
-    {
-        ld->add_option_to_table(*snort_option, false);
-    }
 
+    ld->add_option_to_table(*lua_option, false);
+    ld->close_table();
+    return new DeadCode(cv, ld);
+}
+
+template<const std::string* snort_option,
+         const std::string* lua_table>
+static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
+{
+    ld->open_table(*lua_table);
+    ld->add_option_to_table(*snort_option, false);
     ld->close_table();
     return new DeadCode(cv, ld);
 }

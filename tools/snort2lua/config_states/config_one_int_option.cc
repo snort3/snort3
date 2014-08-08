@@ -21,6 +21,7 @@
 
 #include <sstream>
 #include <vector>
+#include <string>
 
 #include "conversion_state.h"
 #include "utils/converter.h"
@@ -41,9 +42,9 @@ class ConfigIntOption : public ConversionState
 {
 public:
     ConfigIntOption(Converter* cv, LuaData* ld,
-                        const std::string& snort_option,
-                        const std::string& lua_table,
-                        const std::string& lua_option) :
+                        const std::string* snort_option,
+                        const std::string* lua_table,
+                        const std::string* lua_option) :
             ConversionState(cv, ld),
             snort_option(snort_option),
             lua_table(lua_table),
@@ -54,27 +55,29 @@ public:
 
     virtual bool convert(std::istringstream& stream)
     {
-        if ((snort_option.empty()) ||
-            (lua_table.empty()))
+        if ((snort_option == nullptr) ||
+            (snort_option->empty()) ||
+            (lua_table == nullptr)||
+            (lua_table->empty()))
         {
             ld->add_error_comment("Invalid Option!!  Missing either the Snort Option"
                 " or the corresponding lua table!!");
             return false;
         }
 
-        ld->open_table(lua_table);
+        ld->open_table(*lua_table);
         bool retval;
 
         // if the two names are not equal ...
-        if (snort_option.compare(lua_option))
+        if ((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
-            retval = parse_int_option(lua_option, stream);
-            ld->add_diff_option_comment("config " + snort_option +
-                    ":", lua_option);
+            retval = parse_int_option(*lua_option, stream);
+            ld->add_diff_option_comment("config " + *snort_option +
+                    ":", *lua_option);
         }
         else
         {
-            retval = parse_int_option(snort_option, stream);
+            retval = parse_int_option(*snort_option, stream);
         }
 
         ld->close_table();
@@ -83,9 +86,9 @@ public:
     }
 
 private:
-    const std::string snort_option;
-    const std::string lua_table;
-    const std::string lua_option;
+    const std::string* snort_option;
+    const std::string* lua_table;
+    const std::string* lua_option;
 };
 
 
@@ -94,9 +97,9 @@ template<const std::string *snort_option,
         const std::string *lua_option = nullptr>
 static ConversionState* config_int_ctor(Converter* cv, LuaData* ld)
 {
-    return new ConfigIntOption(cv, ld, *snort_option,
-                                *lua_table,
-                                *lua_option);
+    return new ConfigIntOption(cv, ld, snort_option,
+                                lua_table,
+                                lua_option);
 }
 
 } // namespace

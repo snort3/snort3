@@ -21,6 +21,7 @@
 
 #include <sstream>
 #include <vector>
+#include <string>
 
 #include "conversion_state.h"
 #include "utils/converter.h"
@@ -32,24 +33,27 @@ namespace config
 namespace
 {
 
-
-
-template<const std::string* snort_option,
-        const std::string* lua_table,
-        const std::string* lua_option>
 class ConfigStringOption : public ConversionState
 {
 public:
-    ConfigStringOption( Converter* cv, LuaData* ld)
-                            : ConversionState(cv, ld)
+    ConfigStringOption( Converter* cv, LuaData* ld,
+                        const std::string* snort_option,
+                        const std::string* lua_table,
+                        const std::string* lua_option) :
+            ConversionState(cv, ld),
+            snort_option(snort_option),
+            lua_table(lua_table),
+            lua_option(lua_option)
     {
     };
-
     virtual ~ConfigStringOption() {};
+
     virtual bool convert(std::istringstream& stream)
     {
-        if (snort_option == nullptr ||
-            lua_table == nullptr)
+        if ((snort_option == nullptr) ||
+            (snort_option->empty()) ||
+            (lua_table == nullptr) ||
+            (lua_table->empty()))
         {
             return false;
         }
@@ -72,7 +76,7 @@ public:
         bool retval;
         ld->open_table(*lua_table);
 
-        if((lua_option != nullptr) && (*snort_option).compare(*lua_option))
+        if((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
             ld->add_diff_option_comment("config " + *snort_option +
                 ":", *lua_option);
@@ -86,6 +90,11 @@ public:
         ld->close_table();
         return retval;
     }
+
+private:
+    const std::string* snort_option;
+    const std::string* lua_table;
+    const std::string* lua_option;
 };
 
 
@@ -94,9 +103,10 @@ template<const std::string *snort_option,
         const std::string *lua_option = nullptr>
 static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
 {
-    return new ConfigStringOption<snort_option,
-                                lua_table,
-                                lua_option>(cv, ld);
+    return new ConfigStringOption(cv, ld,
+                                     snort_option,
+                                     lua_table,
+                                     lua_option);
 }
 
 } // namespace

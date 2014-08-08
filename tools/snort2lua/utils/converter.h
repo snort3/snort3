@@ -19,8 +19,8 @@
  */
 // converter.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef CONVERTER_H
-#define CONVERTER_H
+#ifndef UTILS_CONVERTER_H
+#define UTILS_CONVERTER_H
 
 #include <string>
 #include <fstream>
