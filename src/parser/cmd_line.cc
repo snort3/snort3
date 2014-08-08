@@ -99,9 +99,12 @@ static const char* snort_help =
 "\n"
 "    type name = default: help { range }\n"
 "\n"
-"If a name starts with * it is positional; these are used in IPS rule options.\n"
-"The name should not be included in the rule.  If the name ends with [] it is a\n"
-"list item and can be repeated.\n"
+"+ For Lua configuration (not IPS rules), if the name ends with [] it is a\n"
+"  list item and can be repeated.\n"
+"+ For IPS rules only, names starting with ~ indicate positional parameters.\n"
+"  The name does not appear in the rule.\n"
+"+ IPS rules may also have a wild card parameter, which is indicated by a *.\n"
+"  Only used for metadata that Snort ignores.\n"
 ;
 
 //-------------------------------------------------------------------------

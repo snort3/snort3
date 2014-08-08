@@ -26,6 +26,6 @@ struct Buffer
     const uint8_t* data;
     unsigned len;
 };
-const Buffer* get_buffer();
+const struct Buffer* get_buffer();
 ]]
 

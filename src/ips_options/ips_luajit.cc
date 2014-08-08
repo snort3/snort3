@@ -162,8 +162,8 @@ static void term_lua(lua_State*& L)
 
 static const Parameter luajit_params[] =
 {
-    { "~args", Parameter::PT_STRING, nullptr, nullptr,
-      "option arguments" },
+    { "*", Parameter::PT_STRING, nullptr, nullptr,
+      "luajit arguments" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -182,9 +182,6 @@ bool LuaJitModule::begin(const char*, int, SnortConfig*)
 
 bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~args") )
-        return false;
-
     args = v.get_string();
     return true;
 }

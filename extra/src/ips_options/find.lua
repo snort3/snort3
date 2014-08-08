@@ -16,12 +16,12 @@
 --     alert tcp any any -> any 80 ( \
 --         msg:"luajit example"; sid:1; \
 --         content:"GET /"; \
---         find:buf='payload', pat='GET .+ HTTP/1.1'; )
+--         find:pat "GET .+ HTTP/1.1"; )
 --
 -- the arg string is (in general) optional
 -- if present, it will be put in a table named args, eg:
 --
---     args { buf='payload', pat='GET .+ HTTP/1.1' }
+--     args { pat='GET .+ HTTP/1.1' }
 --
 -- this table is defined before init is called
 -- ----------------------------------------------------------

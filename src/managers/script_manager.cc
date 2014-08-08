@@ -60,6 +60,16 @@ static vector<LuaIpsApi*> ips_options;
 // api stuff
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    return new LuaJitModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
 static LuaIpsApi* find_api(const char* key)
 {
     for ( auto p : ips_options )
@@ -91,17 +101,18 @@ LuaIpsApi::LuaIpsApi(string& s, unsigned ver, string& c)
     name = s;
     chunk = c;
 
+    memset(&api, 0, sizeof(api));
+
     api.base.type = PT_IPS_OPTION;
     api.base.name = name.c_str();
     api.base.version = ver;
     api.base.api_version = IPSAPI_VERSION;
 
-    api.pinit = api.pterm = nullptr;
-    api.tinit = api.tterm = nullptr;
+    api.base.mod_ctor = mod_ctor;
+    api.base.mod_dtor = mod_dtor;
 
     api.ctor = ctor;
     api.dtor = dtor;
-    api.verify = nullptr;
 }
 
 //-------------------------------------------------------------------------
