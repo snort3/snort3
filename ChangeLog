@@ -1,3 +1,7 @@
+111
+-- fix up luajit ips rule option
+-- fix up rule loading
+
 110
 -- converted rule meta options to ips options (w/o eval)
 -- rewrote rule parsing

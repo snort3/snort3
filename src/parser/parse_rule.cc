@@ -89,9 +89,6 @@ typedef struct
     int proto;
     int icmp_type;
     int ip_proto;
-    char *protocol;
-    char *src_port;
-    char *dst_port;
     unsigned int gid;
     unsigned int sid;
     int dir;
@@ -121,6 +118,7 @@ typedef struct
 static int rule_count = 0;
 static int detect_rule_count = 0;
 static int builtin_rule_count = 0;
+static int so_rule_count = 0;
 static int head_count = 0;          /* number of header blocks (chain heads?) */
 static int otn_count = 0;           /* number of chains */
 
@@ -131,38 +129,15 @@ static rule_count_t ipCnt;
 
 static port_list_t port_list;
 
-static void port_entry_free(port_entry_t *pentry)
-{
-    if (pentry->src_port != NULL)
-    {
-        free(pentry->src_port);
-        pentry->src_port = NULL;
-    }
-
-    if (pentry->dst_port != NULL)
-    {
-        free(pentry->dst_port);
-        pentry->dst_port = NULL;
-    }
-
-    if (pentry->protocol != NULL)
-    {
-        free(pentry->protocol);
-        pentry->protocol = NULL;
-    }
-}
-
 static int port_list_add_entry( port_list_t * plist, port_entry_t * pentry)
 {
     if( !plist )
     {
-        port_entry_free(pentry);
         return -1;
     }
 
     if( plist->pl_cnt >= plist->pl_max )
     {
-        port_entry_free(pentry);
         return -1;
     }
 
@@ -191,13 +166,8 @@ static void port_list_print( port_list_t * plist)
     {
         LogMessage("rule %d { ", i);
         LogMessage(" gid %u sid %u",plist->pl_array[i].gid,plist->pl_array[i].sid );
-        LogMessage(" protocol %s", plist->pl_array[i].protocol);
         LogMessage(" dir %d",plist->pl_array[i].dir);
-        LogMessage(" src_port %s dst_port %s ",
-                plist->pl_array[i].src_port,
-                plist->pl_array[i].dst_port );
-        LogMessage(" content %d",
-                plist->pl_array[i].content);
+        LogMessage(" content %d", plist->pl_array[i].content);
         LogMessage(" }\n");
     }
 }
@@ -205,11 +175,6 @@ static void port_list_print( port_list_t * plist)
 
 static void port_list_free( port_list_t * plist)
 {
-    int i;
-    for(i=0;i<plist->pl_cnt;i++)
-    {
-        port_entry_free(&plist->pl_array[i]);
-    }
     plist->pl_cnt = 0;
 }
 
@@ -279,9 +244,8 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
                    "***\n***Info:  src & dst ports are both specific"
-                   " >> gid=%u sid=%u src=%s dst=%s\n***\n",
-                   otn->sigInfo.generator, otn->sigInfo.id,
-                   pe->src_port, pe->dst_port););
+                   " >> gid=%u sid=%u\n***\n",
+                   otn->sigInfo.generator, otn->sigInfo.id));
 
         prc->sd++;
     }
@@ -1237,15 +1201,7 @@ static int mergeDuplicateOtn(
                 "%d:%d duplicates previous rule. Using revision %d.",
                 otn_new->sigInfo.generator, otn_new->sigInfo.id, otn_new->sigInfo.rev);
         }
-
-        if ( otn_new->sigInfo.text_rule )
-            detect_rule_count--;
-        else
-            builtin_rule_count--;
     }
-
-    otn_count--;
-
     OtnRemove(sc->otn_map, otn_cur);
     DestroyRuleTreeNode(rtn_cur);
 
@@ -1297,6 +1253,7 @@ void parse_rule_init()
     rule_count = 0;
     detect_rule_count = 0;
     builtin_rule_count = 0;
+    so_rule_count = 0;
     head_count = 0;
     otn_count = 0;
 
@@ -1327,6 +1284,7 @@ void parse_rule_print()
 
     LogMessage("%25.25s: %-12u\n", "text rules", detect_rule_count);
     LogMessage("%25.25s: %-12u\n", "builtin rules", builtin_rule_count);
+    LogMessage("%25.25s: %-12u\n", "so rules", so_rule_count);
     LogMessage("%25.25s: %-12u\n", "option chains", otn_count);
     LogMessage("%25.25s: %-12u\n", "chain headers", head_count);
 
@@ -1463,7 +1421,6 @@ OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode& rtn)
 
     otn->chain_node_number = otn_count;
     otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
-    otn->sigInfo.text_rule = true;
     otn->proto = rtn.proto;
     otn->enabled = ScDefaultRuleState();
 
@@ -1481,7 +1438,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         if ( !so_opts )
             ParseError("SO rule %s not loaded.", otn->soid);
 
-        otn->sigInfo.text_rule = false;
+        otn->sigInfo.generator = 3;  // FIXIT why isn't this set already? (don't hardcode)
     }
     
     // FIXIT must parse so_opts (to right of soid)
@@ -1489,6 +1446,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     {
         printf("so_opts = %s\n", so_opts);
     }
+
     /* The IPs in the test node get free'd in ProcessHeadNode if there is
      * already a matching RTN.  The portobjects will get free'd when the
      * port var table is free'd */
@@ -1510,20 +1468,33 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
             return;
         }
     }
-    else
-    {
-        otn->ruleIndex = RuleIndexMapAdd(
-            ruleIndexMap, otn->sigInfo.generator, otn->sigInfo.id);
-    }
-
     //otn->num_detection_opts += num_detection_opts; FIXIT tbd
     otn_count++;
     rule_count++;
 
-    if ( otn->sigInfo.text_rule )
+    // FIXIT need more reliable way of knowing type of rule instead of hard
+    // coding these gids
+    if ( otn->sigInfo.generator == 1 )
+    {
+        otn->sigInfo.text_rule = true;
         detect_rule_count++;
+    }
+    else if ( otn->sigInfo.generator == 3 )
+    {
+        otn->sigInfo.text_rule = true;
+        so_rule_count++;
+    }
     else
+    {
+        otn->sigInfo.text_rule = false;
         builtin_rule_count++;
+    }
+
+    if ( !otn_dup )
+    {
+        otn->ruleIndex = RuleIndexMapAdd(
+            ruleIndexMap, otn->sigInfo.generator, otn->sigInfo.id);
+    }
 
     OptFpList* fpl = AddOptFuncToList(OptListEnd, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;
@@ -1537,17 +1508,6 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     /* Get rule option info */
     pe.gid = otn->sigInfo.generator;
     pe.sid = otn->sigInfo.id;
-
-#if 0
-    // FIXIT why is this copied??
-    /* Have to have at least 6 toks */
-    if (num_toks != 0)
-    {
-        pe.protocol = SnortStrdup(toks[0]);
-        pe.src_port = SnortStrdup(toks[2]);
-        pe.dst_port = SnortStrdup(toks[5]);
-    }
-#endif
 
     /* See what kind of content is going in the fast pattern matcher */
     {

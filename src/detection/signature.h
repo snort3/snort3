@@ -78,9 +78,6 @@ void AddClassification(
 ClassType * ClassTypeLookupByType(SnortConfig*, const char *);
 ClassType * ClassTypeLookupById(SnortConfig*, int);
 
-#define SI_RULE_TYPE_DETECT  0
-#define SI_RULE_TYPE_BUILTIN 1
-
 typedef struct _ServiceInfo
 {
     char *service;
