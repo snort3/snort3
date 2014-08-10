@@ -247,7 +247,6 @@ bool IpsManager::option_end(
 #endif
 
     Module* mod = current_module;
-    current_keyword = nullptr;
     current_module = nullptr;
     current_params = nullptr;
 
@@ -255,6 +254,7 @@ bool IpsManager::option_end(
     {
         ErrorMessage("ERROR can't finalize %s\n", key);
         s_errors++;
+        current_keyword = nullptr;
         return false;
     }
     
@@ -264,6 +264,7 @@ bool IpsManager::option_end(
     // FIXIT need to error out in the end if any errors
     IpsOption* ips = opt->api->ctor(mod, otn);
     type = opt->api->type;
+    current_keyword = nullptr;
 
     if ( !ips )
         return ( type == OPT_TYPE_META );

@@ -100,6 +100,11 @@ const char* PluginManager::get_type_name(PlugType pt)
     return symbols[pt].name;
 }
 
+static const char* current_plugin = nullptr;
+
+const char* PluginManager::get_current_plugin()
+{ return current_plugin; }
+
 struct Plugin
 {
     string key;
@@ -214,6 +219,7 @@ static void add_plugin(Plugin& p)
 {
     if ( p.api->mod_ctor )
     {
+        current_plugin = p.api->name;
         Module* m = p.api->mod_ctor();
         ModuleManager::add_module(m, p.api);
     }

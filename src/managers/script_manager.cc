@@ -27,6 +27,7 @@
 
 #include "ips_manager.h"
 #include "framework/ips_option.h"
+#include "managers/plugin_manager.h"
 #include "ips_options/ips_luajit.h"
 #include "parser/parser.h"
 #include "helpers/directory.h"
@@ -62,7 +63,8 @@ static vector<LuaIpsApi*> ips_options;
 
 static Module* mod_ctor()
 {
-    return new LuaJitModule;
+    const char* key = PluginManager::get_current_plugin();
+    return new LuaJitModule(key);
 }
 
 static void mod_dtor(Module* m)
@@ -88,7 +90,7 @@ static IpsOption* ctor(Module* m, struct OptTreeNode*)
         return nullptr;
 
     LuaJitModule* mod = (LuaJitModule*)m;
-    return new LuaJitOption(api->name.c_str(), api->chunk, mod);
+    return new LuaJitOption(key, api->chunk, mod);
 }
 
 static void dtor(IpsOption* p)

@@ -110,13 +110,8 @@ static void init_lua(
         ParseError("%s luajit failed to init chunk %s", 
             name, lua_tostring(L, -1));
 
-    // create an args table with any rule options
-    string table("args = {");
-    table += args;
-    table += "}";
-
     // load the args table 
-    if ( luaL_loadstring(L, table.c_str()) )
+    if ( luaL_loadstring(L, args.c_str()) )
         ParseError("%s luajit failed to load args %s", 
             name, lua_tostring(L, -1));
 
@@ -162,13 +157,13 @@ static void term_lua(lua_State*& L)
 
 static const Parameter luajit_params[] =
 {
-    { "*", Parameter::PT_STRING, nullptr, nullptr,
+    { "~", Parameter::PT_STRING, nullptr, nullptr,
       "luajit arguments" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-LuaJitModule::LuaJitModule() : Module("luajit", luajit_params)
+LuaJitModule::LuaJitModule(const char* name) : Module(name, luajit_params)
 { }
 
 ProfileStats* LuaJitModule::get_profile() const
@@ -194,7 +189,21 @@ LuaJitOption::LuaJitOption(
     const char* name, string& chunk, LuaJitModule* mod)
     : IpsOption(name)
 {
-    config = mod->args;
+    string args = mod->args;
+
+    // if args not empty, it has to be a quoted string
+    // so remove enclosing quotes
+    if ( args.size() > 1 )
+    {
+        args.erase(0, 1);
+        args.erase(args.size()-1);
+    }
+
+    // create an args table with any rule options
+    config = "args = { ";
+    config += args;
+    config += "}";
+
     unsigned max = get_instance_max();
 
     lua = new lua_State*[max];

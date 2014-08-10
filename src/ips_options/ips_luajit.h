@@ -28,7 +28,7 @@
 class LuaJitModule : public Module
 {
 public:
-    LuaJitModule();
+    LuaJitModule(const char* name);
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
