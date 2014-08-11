@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include <istream>
+#include <sstream>
 #include <string>
 using namespace std;
 
@@ -297,7 +298,12 @@ struct RuleParseState
     string key;
     string opt;
     string val;
+
+    RuleParseState()
+    { otn = nullptr; };
 };
+
+static void parse_body(const char*, RuleParseState&, struct SnortConfig*);
 
 static void exec(
     FsmAction act, string& tok,
@@ -337,10 +343,17 @@ static void exec(
         rps.otn = parse_rule_open(sc, rps.rtn);
         break;
     case FSM_EOB:
-        parse_rule_close(sc, rps.rtn, rps.otn);
-        rps.otn = nullptr;
-        rules++;
+    {
+        const char* extra = parse_rule_close(sc, rps.rtn, rps.otn);
+        if ( extra )
+            parse_body(extra, rps, sc);
+        else
+        {
+            rps.otn = nullptr;
+            rules++;
+        }
         break;
+    }
     case FSM_KEY:
         parse_rule_opt_begin(sc, tok.c_str());
         rps.key = tok;
@@ -392,11 +405,40 @@ static void exec(
     }
 }
 
-int parse_stream(istream& is, struct SnortConfig* sc)
+// parse_body() is called at the end of a stub rule to parse the detection
+// options in an so rule.  similar to parse_stream() except we start in a
+// different state.
+static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfig* sc)
+{
+    stringstream is(extra);
+
+    string tok;
+    TokenType type;
+    bool esc = false;
+
+    int num = 8;
+    const char* punct = "(:,;)";
+
+    while ( (type = get_token(is, tok, punct, esc)) )
+    {
+        ++tokens;
+        const State* s = get_state(num, type, tok);
+
+        exec(s->action, tok, rps, sc);
+        num = s->next;
+        esc = (rps.key == "pcre");
+
+        if ( s->punct )
+            punct = s->punct;
+    }
+}
+
+void parse_stream(istream& is, struct SnortConfig* sc)
 {
     string tok;
     TokenType type;
     bool esc = false;
+
     int num = 0;
     const char* punct = fsm[0].punct;
     RuleParseState rps;
@@ -420,6 +462,5 @@ int parse_stream(istream& is, struct SnortConfig* sc)
     //printf("lines = %d, comments = %d\n", lines, comments);
     //printf("rules = %d, keys = %d\n", rules, keys);
     //printf("lists = %d, strings = %d\n", lists, strings);
-
-    return 0;
 }
+

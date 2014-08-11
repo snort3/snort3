@@ -1427,26 +1427,28 @@ OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode& rtn)
     return otn;
 }
 
-void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
+const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 {
+    static bool entered = false;
     const char* so_opts = nullptr;
 
-    if ( otn->soid )
+    if ( entered )
+        entered = false;
+
+    else if ( otn->soid )
     {
         so_opts = SoManager::get_so_options(otn->soid);
 
         if ( !so_opts )
             ParseError("SO rule %s not loaded.", otn->soid);
-
-        otn->sigInfo.generator = 3;  // FIXIT why isn't this set already? (don't hardcode)
+        else
+        {
+            otn->sigInfo.generator = 3;  // FIXIT why isn't this set already? (don't hardcode)
+            entered = true;
+            return so_opts;
+        }
     }
     
-    // FIXIT must parse so_opts (to right of soid)
-    if ( so_opts )
-    {
-        printf("so_opts = %s\n", so_opts);
-    }
-
     /* The IPs in the test node get free'd in ProcessHeadNode if there is
      * already a matching RTN.  The portobjects will get free'd when the
      * port var table is free'd */
@@ -1465,7 +1467,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         {
             /* We are keeping the old/dup OTN and trashing the new one
              * we just created - it's free'd in the remove dup function */
-            return;
+            return nullptr;
         }
     }
     //otn->num_detection_opts += num_detection_opts; FIXIT tbd
@@ -1533,5 +1535,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
      */
     if (FinishPortListRule(sc->port_tables, new_rtn, otn, rtn.proto, &pe, sc->fast_pattern_config))
         ParseError("Failed to finish a port list rule.");
+
+    return nullptr;
 }
 
