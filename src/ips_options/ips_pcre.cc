@@ -49,6 +49,10 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
+#ifndef PCRE_STUDY_JIT_COMPILE
+#define PCRE_STUDY_JIT_COMPILE 0
+#endif
+
 static const char* s_name = "pcre";
 
 /*
@@ -245,7 +249,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     }
 
     /* now study it... */
-    pcre_data->pe = pcre_study(pcre_data->re, 0, &error);
+    pcre_data->pe = pcre_study(pcre_data->re, PCRE_STUDY_JIT_COMPILE, &error);
 
     if (pcre_data->pe)
     {
@@ -444,8 +448,14 @@ PcreOption::~PcreOption()
 
     if (config->expression)
         free(config->expression);
+
     if (config->pe)
-        free(config->pe);
+#ifdef PCRE_CONFIG_JIT
+        pcre_free_study(config->pe);
+#else
+        pcre_free(config->pe);
+#endif
+
     if (config->re)
         free(config->re);
 

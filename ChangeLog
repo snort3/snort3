@@ -2,6 +2,7 @@
 -- fix up luajit ips rule option
 -- fix up rule loading
 -- fixed so rule parsing
+-- added pcre jit
 
 110
 -- converted rule meta options to ips options (w/o eval)
