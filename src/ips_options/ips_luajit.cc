@@ -102,23 +102,31 @@ static void init_lua(
 
     // first load the chunk
     if ( lua_load(L, load, &ldr, name) )
-        ParseError("%s luajit failed to load chunk %s", 
-            name, lua_tostring(L, -1));
+    {
+        ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // now exec the chunk to define functions etc in L
     if ( lua_pcall(L, 0, 0, 0) )
-        ParseError("%s luajit failed to init chunk %s", 
-            name, lua_tostring(L, -1));
+    {
+        ParseError("%s luajit failed to init chunk %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // load the args table 
     if ( luaL_loadstring(L, args.c_str()) )
-        ParseError("%s luajit failed to load args %s", 
-            name, lua_tostring(L, -1));
+    {
+        ParseError("%s luajit failed to load args %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // exec the args table to define it in L
     if ( lua_pcall(L, 0, 0, 0) )
-        ParseError("%s luajit failed to init args %s", 
-            name, lua_tostring(L, -1));
+    {
+        ParseError("%s luajit failed to init args %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // exec the init func if defined
     lua_getglobal(L, opt_init);
@@ -130,17 +138,20 @@ static void init_lua(
     {
         const char* err = lua_tostring(L, -1);
         ParseError("%s %s", name, err);
+        return;
     }
     // string is an error message
     if ( lua_isstring(L, -1) )
     {
         const char* err = lua_tostring(L, -1);
         ParseError("%s %s", name, err);
+        return;
     }
     // bool is the result
     if ( !lua_toboolean(L, -1) )
     {
         ParseError("%s init() returned false", name);
+        return;
     }
     // initialization complete
     lua_pop(L, 1);

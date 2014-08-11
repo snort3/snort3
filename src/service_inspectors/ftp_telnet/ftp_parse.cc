@@ -167,7 +167,7 @@ static void SetOptionalsNext(FTP_PARAM_FMT *ThisFmt, FTP_PARAM_FMT *NextFmt,
                 ThisFmt->choices = (FTP_PARAM_FMT **)calloc(numChoices, sizeof(FTP_PARAM_FMT *));
                 if (ThisFmt->choices == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 memcpy(ThisFmt->choices, choices, sizeof(FTP_PARAM_FMT *) * numChoices);
@@ -249,13 +249,13 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 OptFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (OptFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
@@ -280,7 +280,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
@@ -297,7 +297,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 NewFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (NewFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 if (curr_len > 0)
@@ -305,7 +305,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                     curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                     if (curr_format == NULL)
                     {
-                        ParseError("Failed to allocate memory");
+                        ParseAbort("Failed to allocate memory");
                     }
 
                     strncpy(curr_format, start_ch, curr_len);
@@ -326,7 +326,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 NewFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (NewFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 NewFmt->prev = LastNonOptFmt;
@@ -340,7 +340,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 NewFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (NewFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 NewFmt->prev = CurrFmt;
@@ -359,7 +359,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
@@ -382,7 +382,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
@@ -410,7 +410,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
         curr_format = (char *)calloc(curr_len + 1, sizeof(char));
         if (curr_format == NULL)
         {
-            ParseError("Failed to allocate memory");
+            ParseAbort("Failed to allocate memory");
         }
 
         strncpy(curr_format, start_ch, curr_len);
@@ -474,7 +474,7 @@ int DoNextFormat(FTP_PARAM_FMT *ThisFmt, int allocated,
         NextFmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
         if (NextFmt == NULL)
         {
-            ParseError("Failed to allocate memory");
+            ParseAbort("Failed to allocate memory");
         }
 
         ThisFmt->optional_fmt = NextFmt;
@@ -499,7 +499,7 @@ int DoNextFormat(FTP_PARAM_FMT *ThisFmt, int allocated,
             FTP_PARAM_FMT **tmpChoices = (FTP_PARAM_FMT **)calloc(numChoices, sizeof(FTP_PARAM_FMT *));
             if (tmpChoices == NULL)
             {
-                ParseError("Failed to allocate memory");
+                ParseAbort("Failed to allocate memory");
             }
 
             if (ThisFmt->numChoices)
@@ -514,7 +514,7 @@ int DoNextFormat(FTP_PARAM_FMT *ThisFmt, int allocated,
             NextFmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
             if (NextFmt == NULL)
             {
-                ParseError("Failed to allocate memory");
+                ParseAbort("Failed to allocate memory");
             }
 
             ThisFmt->numChoices = numChoices;
@@ -541,7 +541,7 @@ int DoNextFormat(FTP_PARAM_FMT *ThisFmt, int allocated,
         NextFmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
         if (NextFmt == NULL)
         {
-            ParseError("Failed to allocate memory");
+            ParseAbort("Failed to allocate memory");
         }
 
         NextFmt->prev_param_fmt = ThisFmt;
@@ -586,7 +586,7 @@ int DoNextFormat(FTP_PARAM_FMT *ThisFmt, int allocated,
         DateFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
         if (DateFmt == NULL)
         {
-            ParseError("Failed to allocate memory");
+            ParseAbort("Failed to allocate memory");
         }
 
         NextFmt->format.date_fmt = DateFmt;
@@ -617,7 +617,7 @@ int DoNextFormat(FTP_PARAM_FMT *ThisFmt, int allocated,
         NextFmt->format.literal = (char *)calloc(1, len+1);
         if ( !NextFmt->format.literal )
         {
-            ParseError("Failed to allocate memory");
+            ParseAbort("Failed to allocate memory");
         }
         strncpy(NextFmt->format.literal, fmt, len);
         NextFmt->format.literal[len] = '\0';
@@ -701,7 +701,7 @@ int ProcessFTPCmdValidity(
     HeadFmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
     if (HeadFmt == NULL)
     {
-        ParseError("Failed to allocate memory");
+        ParseAbort("Failed to allocate memory");
     }
 
     HeadFmt->type = e_head;
@@ -725,7 +725,7 @@ int ProcessFTPCmdValidity(
         FTPCmd = (FTP_CMD_CONF *)calloc(1, sizeof(FTP_CMD_CONF)+strlen(cmd));
         if (FTPCmd == NULL)
         {
-            ParseError("Failed to allocate memory");
+            ParseAbort("Failed to allocate memory");
         }
 
         strcpy(FTPCmd->cmd_name, cmd);
@@ -832,7 +832,7 @@ int ProcessFTPAllowBounce(
 
         if (newBounce == NULL)
         {
-            ParseError("Failed to allocate memory for Bounce");
+            ParseAbort("Failed to allocate memory for Bounce");
             return FTPP_FATAL_ERR;
         }
         sfip_set_raw(&newBounce->ip, addr, len == 4 ? AF_INET : AF_INET6);

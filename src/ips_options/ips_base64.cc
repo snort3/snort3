@@ -326,7 +326,10 @@ static class IpsOption* base64_data_ctor(
     Module*, OptTreeNode *otn)
 {
     if ( !otn_has_plugin(otn, "base64_decode") )
+    {
         ParseError("base64_decode needs to be specified before base64_data in a rule");
+        return nullptr;
+    }
 
     return new Base64DataOption;
 }

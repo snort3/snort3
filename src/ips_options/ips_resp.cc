@@ -299,7 +299,7 @@ static IpsOption* resp_ctor(Module* p, OptTreeNode* otn)
         return opt;
 
     delete opt;
-    ParseError("At most one action per rule is allowed");
+    ParseError("at most one action per rule is allowed");
     return nullptr;
 }
 

@@ -325,26 +325,35 @@ static bool ByteExtractVerify(ByteExtractData *data)
     {
         ParseError("byte_extract rule option cannot extract more than %d bytes.",
                      MAX_BYTES_TO_GRAB);
+        return false;
     }
 
     if (data->bytes_to_grab > PARSELEN && data->data_string_convert_flag == 1)
     {
         ParseError("byte_extract rule cannot process more than %d bytes for "
                    "string extraction.",  PARSELEN);
+        return false;
     }
 
     if (data->align != 0 && data->align != 2 && data->align != 4)
+    {
         ParseError("byte_extract rule option has an invalid argument "
                    "to 'align'. Valid arguments are '2' and '4'.");
+        return false;
+    }
 
     if (data->offset < 0 && data->relative_flag == 0)
+    {
         ParseError("byte_extract rule option has a negative offset, but does "
                    "not use the 'relative' option.");
+        return false;
+    }
 
     if (data->name && isdigit(data->name[0]))
     {
         ParseError("byte_extract rule option has a name which starts with a digit. "
                    "Variable names must start with a letter.");
+        return false;
     }
 
     if (data->base && !data->data_string_convert_flag)
@@ -352,6 +361,7 @@ static bool ByteExtractVerify(ByteExtractData *data)
         ParseError("byte_extract rule option has a string conversion type "
                    "(dec, hex, or oct) without the \"string\" "
                    "argument.");
+        return false;
     }
     unsigned e1 = ffs(data->endianess);
     unsigned e2 = ffs(data->endianess >> e1);
@@ -361,6 +371,7 @@ static bool ByteExtractVerify(ByteExtractData *data)
         ParseError("byte_extract rule option has multiple arguments "
             "specifying the type of string conversion. Use only "
             "one of 'dec', 'hex', or 'oct'.");
+        return false;
     }
     return true;
 }
@@ -516,6 +527,7 @@ static IpsOption* byte_extract_ctor(Module* p, OptTreeNode* otn)
     {
         ParseError("Rule has more than %d byte_extract variables.",
             NUM_BYTE_EXTRACT_VARS);
+        return nullptr;
     }
     return new ByteExtractOption(data);
 }

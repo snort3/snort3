@@ -27,6 +27,7 @@
 #include <string>
 using namespace std;
 
+#include "parser.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
 #include "detection/treenodes.h"
@@ -76,7 +77,10 @@ static TokenType get_token(
         //printf("state = %d, c = %d\n", state, c);
 
         if ( c == '\n' )
+        {
             lines++;
+            inc_parse_position();
+        }
 
         switch ( state )
         {
@@ -355,7 +359,8 @@ static void exec(
         break;
     }
     case FSM_KEY:
-        parse_rule_opt_begin(sc, tok.c_str());
+        if ( tok != "include" )
+            parse_rule_opt_begin(sc, tok.c_str());
         rps.key = tok;
         rps.opt.clear();
         rps.val.clear();

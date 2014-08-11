@@ -119,7 +119,7 @@ void pop_parse_location()
         files.pop();
 }
 
-static void inc_parse_position()
+void inc_parse_position()
 {
     Location& loc = files.top();
     ++loc.line;
@@ -143,7 +143,7 @@ void parse_include(SnortConfig *sc, const char *arg)
         snprintf(fname, path_len, "%s%s", snort_conf_dir, arg);
     }
 
-    push_parse_location(fname);
+    push_parse_location(fname, 0);
     ParseConfigFile(sc, fname);
     pop_parse_location();
     free((char*)fname);
@@ -159,25 +159,26 @@ void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
     {
         switch(ret) {
             case SFIP_ARG_ERR:
-                ParseError("The following is not allowed: %s.", val);
-                break;
+                ParseError("the following is not allowed: %s.", val);
+                return;
 
             case SFIP_DUPLICATE:
                 ParseMessage("Var '%s' redefined.", var);
                 break;
 
             case SFIP_CONFLICT:
-                ParseError("Negated IP ranges that are more general than "
+                ParseError("negated IP ranges that are more general than "
                         "non-negated ranges are not allowed. Consider "
                         "inverting the logic in %s.", var);
-                break;
+                return;
 
             case SFIP_NOT_ANY:
                 ParseError("!any is not allowed in %s.", var);
-                break;
+                return;
 
             default:
-                ParseError("Failed to parse the IP address: %s.", val);
+                ParseError("failed to parse the IP address: %s.", val);
+                return;
         }
     }
 }
@@ -187,7 +188,7 @@ void add_service_to_otn(
 {
     if (otn->sigInfo.num_services >= sc->max_metadata_services)
     {
-        ParseError("Too many service's specified for rule.");
+        ParseError("too many service's specified for rule.");
     }
     else
     {
@@ -327,8 +328,9 @@ void ParseConfigFile(SnortConfig *sc, const char *fname)
 
     if ( !fs )
     {
-        ParseError("Unable to open rules file '%s': %s.\n",
+        ParseError("unable to open rules file '%s': %s.\n",
             fname, get_error(errno));
+        return;
     }
     parse_stream(fs, sc);
 }

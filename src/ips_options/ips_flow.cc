@@ -283,40 +283,47 @@ static void flow_verify(FlowCheckData* fcd)
 {
     if(fcd->from_client && fcd->from_server)
     {
-        ParseError("Can't use both from_client and flow_from server");
+        ParseError("can't use both from_client and flow_from server");
+        return;
     }
 
     if((fcd->ignore_reassembled & IGNORE_STREAM) && (fcd->only_reassembled & ONLY_STREAM))
     {
-        ParseError("Can't use no_stream and only_stream");
+        ParseError("can't use no_stream and only_stream");
+        return;
     }
 
     if((fcd->ignore_reassembled & IGNORE_FRAG) && (fcd->only_reassembled & ONLY_FRAG))
     {
-        ParseError("Can't use no_frag and only_frag");
+        ParseError("can't use no_frag and only_frag");
+        return;
     }
 
     if(fcd->stateless && (fcd->from_client || fcd->from_server))
     {
-        ParseError("Can't use flow: stateless option with other options");
+        ParseError("can't use flow: stateless option with other options");
+        return;
     }
 
     if(fcd->stateless && fcd->established)
     {
-        ParseError("Can't specify established and stateless "
+        ParseError("can't specify established and stateless "
                    "options in same rule");
+        return;
     }
 
     if(fcd->stateless && fcd->unestablished)
     {
-        ParseError("Can't specify unestablished and stateless "
+        ParseError("can't specify unestablished and stateless "
                    "options in same rule");
+        return;
     }
 
     if(fcd->established && fcd->unestablished)
     {
-        ParseError("Can't specify unestablished and established "
+        ParseError("can't specify unestablished and established "
                    "options in same rule");
+        return;
     }
 }
 
@@ -457,6 +464,7 @@ static IpsOption* flow_ctor(Module* p, OptTreeNode *otn)
              (m->data.ignore_reassembled != IGNORE_FRAG) )
         {
             ParseError("Cannot check flow connection for ICMP traffic");
+            return nullptr;
         }
     }
     return new FlowCheckOption(m->data);

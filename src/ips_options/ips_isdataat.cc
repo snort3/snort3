@@ -216,12 +216,14 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
 
         if(offset == endp)
         {
-            ParseError("Unable to parse as byte value %s\n", toks[0]);
+            ParseError("unable to parse as byte value %s\n", toks[0]);
+            return;
         }
 
         if(idx->offset > 65535)
         {
-            ParseError("IsDataAt offset greater than max IPV4 packet size");
+            ParseError("isdataat offset greater than max IPV4 packet size");
+            return;
         }
     }
     else
@@ -230,6 +232,7 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
         if (idx->offset_var == BYTE_EXTRACT_NO_VAR)
         {
             ParseError("%s", BYTE_EXTRACT_INVALID_ERR_STR);
+            return;
         }
     }
 

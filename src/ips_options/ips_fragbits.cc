@@ -243,7 +243,8 @@ void fragbits_parse(const char *data, FragBitsData *ds_ptr)
 
     if(strlen(fptr) == 0)
     {
-        ParseError("No arguments to the fragbits keyword");
+        ParseError("no arguments to the fragbits keyword");
+        return;
     }
 
     fend = fptr + strlen(fptr);
@@ -284,6 +285,7 @@ void fragbits_parse(const char *data, FragBitsData *ds_ptr)
             default:
                 ParseError(
                     "Bad Frag Bits = '%c'. Valid options are: RDM+!*", *fptr);
+                return;
         }
 
         fptr++;

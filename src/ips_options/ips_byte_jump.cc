@@ -395,6 +395,7 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
         ParseError("byte_extract rule option has multiple arguments "
             "specifying the type of string conversion. Use only "
             "one of 'dec', 'hex', or 'oct'.");
+        return false;
     }
     return true;
 }

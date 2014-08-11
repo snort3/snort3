@@ -255,8 +255,9 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
         ip_proto = SnortStrtoul(data, &endptr, 10);
         if ((errno == ERANGE) || (ip_proto >= NUM_IP_PROTOS))
         {
-            ParseError("Invalid protocol number for 'ip_proto' "
+            ParseError("invalid protocol number for 'ip_proto' "
                        "rule option.  Value must be between 0 and 255.");
+            return;
         }
 
         ds_ptr->protocol = (uint8_t)ip_proto;
@@ -272,8 +273,9 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
         }
         else
         {
-            ParseError("Invalid protocol name for \"ip_proto\" "
+            ParseError("invalid protocol name for \"ip_proto\" "
                        "rule option: '%s'.", data);
+            return;
         }
     }
 }

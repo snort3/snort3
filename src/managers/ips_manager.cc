@@ -66,7 +66,6 @@ static OptionList s_options;
 static const char* current_keyword = nullptr;
 static Module* current_module = nullptr;
 static const Parameter* current_params = nullptr;
-static unsigned s_errors = 0;
 
 //-------------------------------------------------------------------------
 // plugins
@@ -162,7 +161,6 @@ static bool set_arg(
             return true;
     }
 
-    ErrorMessage("ERROR invalid %s = %s\n", opt, val);
     return false;
 }
 
@@ -202,8 +200,7 @@ bool IpsManager::option_begin(
 
     if ( current_module && !current_module->begin(key, 0, sc) )
     {
-        ErrorMessage("ERROR can't initialize %s\n", key);
-        s_errors++;
+        ParseError("can't initialize %s\n", key);
         return false;
     }
     current_keyword = key;
@@ -214,10 +211,10 @@ bool IpsManager::option_begin(
 bool IpsManager::option_set(
     SnortConfig* sc, const char* key, const char* opt, const char* val)
 {
-    if ( !current_module )
+    if ( !current_module || !current_keyword )
         return false;
 
-    assert(current_keyword && !strcmp(current_keyword, key));
+    assert(!strcmp(current_keyword, key));
 
     if ( !*val && is_positional(current_params) )
     {
@@ -226,7 +223,7 @@ bool IpsManager::option_set(
     }
 
     if ( !set_arg(current_module, current_params, opt, val, sc) )
-        ErrorMessage("ERROR invalid argument %s:%s = %s\n", key, opt, val);
+        ParseError("invalid argument %s:%s = %s\n", key, opt, val);
 
     if ( is_positional(current_params) )
         ++current_params;
@@ -238,7 +235,10 @@ bool IpsManager::option_end(
     SnortConfig* sc, OptTreeNode* otn, int proto,
     const char* key, RuleOptType& type)
 {
-    assert(current_keyword && !strcmp(current_keyword, key));
+    if ( !current_keyword )
+        return false;
+
+    assert(!strcmp(current_keyword, key));
 
 #ifdef NDEBUG
     UNUSED(proto);
@@ -252,8 +252,7 @@ bool IpsManager::option_end(
 
     if ( mod && !mod->end(key, 0, sc) )
     {
-        ErrorMessage("ERROR can't finalize %s\n", key);
-        s_errors++;
+        ParseError("can't finalize %s\n", key);
         current_keyword = nullptr;
         return false;
     }

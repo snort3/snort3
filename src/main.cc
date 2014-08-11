@@ -48,6 +48,7 @@ using namespace std;
 #include "managers/inspector_manager.h"
 #include "managers/shell.h"
 #include "util.h"
+#include "parser/parser.h"
 #include "profiler.h"
 #include "packet_io/trough.h"
 #include "packet_io/intf.h"
@@ -603,7 +604,13 @@ static bool set_mode()
     if ( unit_test_enabled() )
         exit(unit_test());
 #endif
+    unsigned n = get_parse_errors();
 
+    if ( n )
+    {
+        ParseAbort("%d config errors found", n);
+        return false;
+    }
     if ( ScTestMode() ||
         (!Trough_GetQCount() && !(snort_conf->run_flags & RUN_FLAG__SHELL)) )
     {

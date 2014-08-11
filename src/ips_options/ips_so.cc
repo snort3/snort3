@@ -172,7 +172,7 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
 
     if ( !func )
     {
-        ParseError("Can't link so:%s", name);
+        ParseError("can't link so:%s", name);
         return nullptr;
     }
     return new SoOption(otn->soid, name, func, data);

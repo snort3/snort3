@@ -213,19 +213,28 @@ static void react_getpage (SnortConfig* sc)
     if ( s_page || !sc->react_page ) return;
 
     if ( stat(sc->react_page, &fs) )
+    {
         ParseError("can't stat react page file '%s'.", sc->react_page);
+        return;
+    }
 
     s_page = (char*)SnortAlloc(fs.st_size+1);
     fd = fopen(sc->react_page, "r");
 
     if ( !fd )
+    {
         ParseError("can't open react page file '%s'.", sc->react_page);
+        return;
+    }
 
     n = fread(s_page, 1, fs.st_size, fd);
     fclose(fd);
 
     if ( n != (size_t)fs.st_size )
+    {
         ParseError("can't load react page file '%s'.", sc->react_page);
+        return;
+    }
 
     s_page[n] = '\0';
     msg = strstr(s_page, MSG_KEY);
@@ -243,6 +252,7 @@ static void react_getpage (SnortConfig* sc)
             ParseError("can't specify more than one %%s or other "
                 "printf style formatting characters in react page '%s'.",
                 sc->react_page);
+            return;
         }
     }
 }

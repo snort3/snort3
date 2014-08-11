@@ -116,16 +116,19 @@ static void pcre_check_anchored(PcreData *pcre_data)
 
         case PCRE_ERROR_NULL:
             ParseError("pcre_fullinfo: code and/or where were NULL.");
+            return;
 
         case PCRE_ERROR_BADMAGIC:
-            ParseError("pcre_fullinfo: compiled code didn't have "
-                       "correct magic.");
+            ParseError("pcre_fullinfo: compiled code didn't have correct magic.");
+            return;
 
         case PCRE_ERROR_BADOPTION:
             ParseError("pcre_fullinfo: option type is invalid.");
+            return;
 
         default:
             ParseError("pcre_fullinfo: Unknown error code.");
+            return;
     }
 
     if ((options & PCRE_ANCHORED) && !(options & PCRE_MULTILINE))
@@ -150,6 +153,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     if(data == NULL)
     {
         ParseError("pcre requires a regular expression");
+        return;
     }
 
     free_me = SnortStrdup(data);
@@ -234,6 +238,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
 
         default:
             ParseError("unknown/extra pcre option encountered");
+            return;
         }
         opts++;
     }
@@ -246,6 +251,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     {
         ParseError(": pcre compile of '%s' failed at offset "
                    "%d : %s", re, erroffset, error);
+        return;
     }
 
     /* now study it... */
@@ -306,6 +312,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     if(error != NULL)
     {
         ParseError("pcre study failed : %s", error);
+        return;
     }
 
     pcre_capture(pcre_data->re, pcre_data->pe);
