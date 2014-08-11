@@ -90,7 +90,7 @@ void NHttpUri::parseUri() {
             absPath.start = uri.start + k;
         }
         else {
-            uriInfractions |= INF_BADURI;
+            formatInfractions |= INF_BADURI;
             uriType = URI__PROBLEMATIC;
             scheme.length = STAT_PROBLEMATIC;
             authority.length = STAT_PROBLEMATIC;
@@ -109,16 +109,16 @@ SchemeId NHttpUri::getSchemeId() {
     // Normalize scheme name to lower case for matching purposes
     uint8_t *lowerScheme;
     if ((lowerScheme = scratchPad.request(scheme.length)) == nullptr) {
-        uriInfractions |= INF_NOSCRATCH;
+        schemeInfractions |= INF_NOSCRATCH;
         schemeId = SCH__INSUFMEMORY;
         return schemeId;
     }
-    norm2Lower(scheme.start, scheme.length, lowerScheme, uriInfractions, nullptr);
+    norm2Lower(scheme.start, scheme.length, lowerScheme, schemeInfractions, nullptr);
     schemeId = (SchemeId) strToCode(lowerScheme, scheme.length, schemeList);
     return schemeId;
 }
 
-field NHttpUri::getNormHost() {
+Field NHttpUri::getNormHost() {
     if (hostNorm.length != STAT_NOTCOMPUTE) return hostNorm;
     if (getHost().length < 0) {
         hostNorm.length = STAT_NOSOURCE;
@@ -128,7 +128,7 @@ field NHttpUri::getNormHost() {
     return hostNorm;
 }
 
-field NHttpUri::getNormPath() {
+Field NHttpUri::getNormPath() {
     if (pathNorm.length != STAT_NOTCOMPUTE) return pathNorm;
     if (getPath().length < 0) {
         pathNorm.length = STAT_NOSOURCE;
@@ -138,23 +138,23 @@ field NHttpUri::getNormPath() {
     return pathNorm;
 }
 
-field NHttpUri::getNormQuery() {
+Field NHttpUri::getNormQuery() {
     if (queryNorm.length != STAT_NOTCOMPUTE) return queryNorm;
     if (getQuery().length < 0) {
         queryNorm.length = STAT_NOSOURCE;
         return queryNorm;
     }
-    UriNormalizer::normalize(query, queryNorm, true, scratchPad, queryInfractions);
+    UriNormalizer::normalize(query, queryNorm, false, scratchPad, queryInfractions);
     return queryNorm;
 }
 
-field NHttpUri::getNormFragment() {
+Field NHttpUri::getNormFragment() {
     if (fragmentNorm.length != STAT_NOTCOMPUTE) return fragmentNorm;
     if (getFragment().length < 0) {
         fragmentNorm.length = STAT_NOSOURCE;
         return fragmentNorm;
     }
-    UriNormalizer::normalize(fragment, fragmentNorm, true, scratchPad, fragmentInfractions);
+    UriNormalizer::normalize(fragment, fragmentNorm, false, scratchPad, fragmentInfractions);
     return fragmentNorm;
 }
 
@@ -169,7 +169,7 @@ int32_t NHttpUri::getPortValue() {
         portValue = portValue * 10 + (port.start[k] - '0');
         if ((port.start[k] < '0') || (port.start[k] > '9') || (portValue > 65535))
         {
-            uriInfractions |= INF_BADPORT;
+            portInfractions |= INF_BADPORT;
             portValue = STAT_PROBLEMATIC;
             break;
         }
@@ -222,7 +222,7 @@ void NHttpUri::parseAbsPath() {
 }
 
 // Glue normalized URI fields back together 
-field NHttpUri::getNormLegacy() {
+Field NHttpUri::getNormLegacy() {
     if (legacyNorm.length != STAT_NOTCOMPUTE) return legacyNorm;
 
     if (getPath().length >= 0) UriNormalizer::normalize(path, pathNorm, true, scratchPad, pathInfractions);

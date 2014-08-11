@@ -207,8 +207,8 @@ public:
 
     void eval(Packet*);
 
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
     void reset();
 
 private:
@@ -271,9 +271,24 @@ bool PerfMonitor::configure(SnortConfig*)
     return true;
 }
 
-void PerfMonitor::pinit()
+void PerfMonitor::tinit()
 {
     InitPerfStats(&config);
+}
+
+void PerfMonitor::tterm()
+{
+    if ( config.perf_flags & SFPERF_SUMMARY )
+        sfPerfStatsSummary(&config);
+
+    sfCloseBaseStatsFile(&config);
+    sfCloseFlowStatsFile(&config);
+    sfCloseFlowIPStatsFile(&config);
+
+    FreeFlowStats(&sfFlow);
+#ifdef LINUX_SMP
+    FreeProcPidStats(&sfBase.sfProcPidStats);
+#endif
 }
 
 void PerfMonitor::eval(Packet *p)
@@ -312,21 +327,6 @@ void PerfMonitor::eval(Packet *p)
     ++pmstats.total_packets;
 
     MODULE_PROFILE_END(perfmonStats);
-}
-
-void PerfMonitor::pterm()
-{
-    if ( config.perf_flags & SFPERF_SUMMARY )
-        sfPerfStatsSummary(&config);
-
-    sfCloseBaseStatsFile(&config);
-    sfCloseFlowStatsFile(&config);
-    sfCloseFlowIPStatsFile(&config);
-
-    FreeFlowStats(&sfFlow);
-#ifdef LINUX_SMP
-    FreeProcPidStats(&sfBase.sfProcPidStats);
-#endif
 }
 
 void PerfMonitor::reset()
@@ -373,12 +373,12 @@ static const InspectApi pm_api =
     PROTO_BIT__ALL,
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    pm_ctor,
-    pm_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    pm_ctor,
+    pm_dtor,
     nullptr, // ssn
     nullptr  // reset
 };

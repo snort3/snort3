@@ -52,13 +52,12 @@ public:
     void show(SnortConfig*);
     void eval(Packet*);
     bool enabled();
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
     NHttpStreamSplitter* get_splitter(bool isClientToServer) { return new NHttpStreamSplitter(isClientToServer); };
 
 private:
     friend NHttpApi;
-    NHttpMsgSection *msgSection = nullptr;
 
     void process(const uint8_t* data, const uint16_t dsize, Flow* const flow, NHttpEnums::SourceId sourceId_);
 

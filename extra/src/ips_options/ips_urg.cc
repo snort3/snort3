@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -34,6 +32,9 @@
 #include "detection/detection_defines.h"
 #include "detection/treenodes.h"
 #include "framework/ips_option.h"
+#include "framework/module.h"
+#include "framework/parameter.h"
+//#include "framework/range.h"
 #include "hash/sfhashfcn.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"
@@ -42,25 +43,44 @@ static const char* s_name = "urg";
 
 // FIXIT profiling is desirable but must be refactored to
 // avoid dependence on snort_config.h which snowballs
-#undef PERF_PROFILING
+//#undef PERF_PROFILING
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats tcpUrgPerfStats;
+static THREAD_LOCAL ProfileStats tcpUrgPerfStats;
 
-static PreprocStats* urg_get_profile(const char* key)
+//-------------------------------------------------------------------------
+// range check
+//-------------------------------------------------------------------------
+// FIXIT this is a stub until we can use range.{h,cc}
+
+struct RangeCheck
 {
-    if ( !strcmp(key, s_name) )
-        return &tcpUrgPerfStats;
+    unsigned op, min, max;
 
-    return nullptr;
-}
-#endif
+    RangeCheck()
+    { init(); };
+
+    void init()
+    { op = min = max = 0; };
+
+    bool operator==(const RangeCheck& rhs) const
+    { return ( op == rhs.op && min == rhs.min && max == rhs.max ); };
+
+    bool eval(unsigned up)
+    { return up == min; };
+
+    bool parse(const char* s)
+    { min = atoi(s); return true; };
+};
+
+//-------------------------------------------------------------------------
+// option 
+//-------------------------------------------------------------------------
 
 class TcpUrgOption : public IpsOption
 {
 public:
-    TcpUrgOption(uint16_t up) : IpsOption(s_name)
-    { urg_ptr = htons(up); };
+    TcpUrgOption(const RangeCheck& c) : IpsOption(s_name)
+    { config = c; };
 
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;
@@ -68,18 +88,20 @@ public:
     int eval(Packet*);
 
 private:
-    uint16_t urg_ptr;
+    RangeCheck config;
 };
-
-//-------------------------------------------------------------------------
-// option methods
-//-------------------------------------------------------------------------
 
 uint32_t TcpUrgOption::hash() const
 {
-    uint32_t a = urg_ptr, b = 0, c = 0;
+    uint32_t a, b, c;
+
+    a = config.op;
+    b = config.min;
+    c = config.max;
+
     mix_str(a,b,c,get_name());
     final(a,b,c);
+
     return c;
 }
 
@@ -89,61 +111,86 @@ bool TcpUrgOption::operator==(const IpsOption& ips) const
         return false;
 
     TcpUrgOption& rhs = (TcpUrgOption&)ips;
-
-    if ( urg_ptr == rhs.urg_ptr)
-    {
-        return true;
-    }
-
-    return false;
+    return ( config == rhs.config );
 }
 
 int TcpUrgOption::eval(Packet *p)
 {
     //PROFILE_VARS;
-    //PREPROC_PROFILE_START(tcpUrgPerfStats);
-    int result = DETECTION_OPTION_NO_MATCH;
+    //MODULE_PROFILE_START(tcpUrgPerfStats);
 
-    if ( !p->tcph )
-        return result;
+    int rval = DETECTION_OPTION_NO_MATCH;
 
-    if ( (p->tcph->th_flags & 0x20) &&
-         (urg_ptr == p->tcph->th_urp) )
-    {
-        result = DETECTION_OPTION_MATCH;
-    }
+    if ( p->tcph && config.eval(p->tcph->th_ack) )
+        rval = DETECTION_OPTION_MATCH;
 
-    //PREPROC_PROFILE_END(tcpUrgPerfStats);
-    return result;
+    //MODULE_PROFILE_END(tcpUrgPerfStats);
+    return rval;
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter urg_params[] =
+{
+    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+      "check if urgent offset is min<>max | <max | >min" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class UrgModule : public Module
+{
+public:
+    UrgModule() : Module(s_name, urg_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &tcpUrgPerfStats; };
+
+    RangeCheck data;
+};
+
+bool UrgModule::begin(const char*, int, SnortConfig*)
+{
+    data.init();
+    return true;
+}
+
+bool UrgModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( !v.is("*range") )
+        return false;
+
+    return data.parse(v.get_string());
 }
 
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
 
-static IpsOption* urg_ctor(
-    SnortConfig*, char* arg, OptTreeNode*)
+static Module* mod_ctor()
 {
-    char* end;
-    long up = strtol(arg, &end, 0);
+    return new UrgModule;
+}
 
-    if ( !*arg || *end || up < 0 || up > 0xFFFF )
-        up = 0;
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
 
-    return new TcpUrgOption((uint16_t)up);
+static IpsOption* urg_ctor(Module* p, OptTreeNode*)
+{
+    UrgModule* m = (UrgModule*)p;
+    return new TcpUrgOption(m->data);
 }
 
 static void urg_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void urg_ginit(SnortConfig*)
-{
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        s_name, &tcpUrgPerfStats, 3, &ruleOTNEvalPerfStats, urg_get_profile);
-#endif
 }
 
 static const IpsApi urg_api =
@@ -153,15 +200,15 @@ static const IpsApi urg_api =
         s_name,
         IPSAPI_PLUGIN_V0,
         0,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     OPT_TYPE_DETECTION,
     1, PROTO_BIT__TCP,
-    urg_ginit,
-    nullptr,
-    nullptr,
-    nullptr,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     urg_ctor,
     urg_dtor,
     nullptr

@@ -34,6 +34,7 @@
 #include "main/snort_types.h"
 #include "events/event_queue.h"
 #include "framework/inspector.h"
+#include "framework/module.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"
@@ -55,26 +56,16 @@
 
 static const char* s_name = "dpx";
 
-#ifdef PERF_PROFILING
-static THREAD_LOCAL PreprocStats dpxPerfStats;
-
-static PreprocStats* dpx_get_profile(const char* key)
-{
-    if ( !strcmp(key, s_name) )
-        return &dpxPerfStats;
-
-    return nullptr;
-}
-#endif
+static THREAD_LOCAL ProfileStats dpxPerfStats;
 
 static THREAD_LOCAL SimpleStats dpxstats;
-static SimpleStats gdpxstats;
 
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
-class DpxPH : public Inspector {
+class DpxPH : public Inspector
+{
 public:
     DpxPH();
 
@@ -111,16 +102,28 @@ void DpxPH::eval(Packet* p)
 }
 
 //-------------------------------------------------------------------------
-// api stuff
+// module stuff
 //-------------------------------------------------------------------------
 
-void dpx_init()
+class DpxModule : public Module
 {
-#ifdef PERF_PROFILING
-    RegisterPreprocessorProfile(
-        s_name, &dpxPerfStats, 0, &totalPerfStats, dpx_get_profile);
-#endif
-}
+public:
+    DpxModule() : Module(s_name)
+    { };
+
+    const char** get_pegs() const
+    { return simple_pegs; };
+
+    PegCount* get_counts() const
+    { return (PegCount*)&dpxstats; };
+
+    ProfileStats* get_profile() const
+    { return &dpxPerfStats; };
+};
+
+//-------------------------------------------------------------------------
+// api stuff
+//-------------------------------------------------------------------------
 
 static Inspector* dpx_ctor(Module*)
 {
@@ -130,21 +133,6 @@ static Inspector* dpx_ctor(Module*)
 static void dpx_dtor(Inspector* p)
 {
     delete p;
-}
-
-static void dpx_sum()
-{
-    sum_stats(&gdpxstats, &dpxstats);
-}
-
-static void dpx_stats()
-{
-    show_stats(&gdpxstats, s_name);
-}
-
-static void dpx_reset()
-{
-    memset(&gdpxstats, 0, sizeof(gdpxstats));
 }
 
 static const InspectApi dpx_api
@@ -161,16 +149,14 @@ static const InspectApi dpx_api
     PROTO_BIT__UDP,
     nullptr, // service
     nullptr, // contents
-    dpx_init,
-    nullptr, // term
-    dpx_ctor,
-    dpx_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    dpx_ctor,
+    dpx_dtor,
     nullptr, // ssn
-    dpx_sum,
-    dpx_stats,
-    dpx_reset
+    nullptr  // reset
 };
 
 SO_PUBLIC const BaseApi* snort_plugins[] =

@@ -92,16 +92,16 @@ bool TcpAckOption::operator==(const IpsOption& ips) const
 
 int TcpAckOption::eval(Cursor&, Packet *p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
-
-    if(!p->tcph)
-        return rval;
-
     MODULE_PROFILE_START(tcpAckPerfStats);
 
-    if ( config.eval(p->tcph->th_ack) )
+    int rval;
+
+    if ( p->tcph && config.eval(p->tcph->th_ack) )
         rval = DETECTION_OPTION_MATCH;
+
+    else
+        rval = DETECTION_OPTION_NO_MATCH;
 
     MODULE_PROFILE_END(tcpAckPerfStats);
     return rval;
@@ -113,7 +113,7 @@ int TcpAckOption::eval(Cursor&, Packet *p)
 
 static const Parameter ack_params[] =
 {
-    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -141,7 +141,7 @@ bool AckModule::begin(const char*, int, SnortConfig*)
 
 bool AckModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*range") )
+    if ( !v.is("~range") )
         return false;
 
     return data.parse(v.get_string());

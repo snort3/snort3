@@ -33,7 +33,6 @@ enum PAF_Status // FIXIT move inside StreamSplitter
     PAF_START,   // internal use only
     PAF_SEARCH,  // searching for next flush point
     PAF_FLUSH,   // flush at given offset
-    PAF_BUILD,   // reassemble to given offset
     PAF_SKIP     // skip ahead to given offset
 };
 
@@ -59,6 +58,7 @@ public:
     ) = 0;
 
     virtual const StreamBuffer* reassemble(
+        Flow*,
         unsigned offset,       // data offset from start of reassembly
         const uint8_t* data,   // data to reassemble
         unsigned len,          // length of data

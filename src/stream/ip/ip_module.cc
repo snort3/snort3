@@ -30,45 +30,45 @@ using namespace std;
 #include "stream/stream.h"
 
 #define DEFRAG_IPOPTIONS_STR \
-    "(defrag) Inconsistent IP Options on Fragmented Packets"
+    "(stream_ip) Inconsistent IP Options on Fragmented Packets"
 
 #define DEFRAG_TEARDROP_STR \
-    "(defrag) Teardrop attack"
+    "(stream_ip) Teardrop attack"
 
 #define DEFRAG_SHORT_FRAG_STR \
-    "(defrag) Short fragment, possible DoS attempt"
+    "(stream_ip) Short fragment, possible DoS attempt"
 
 #define DEFRAG_ANOMALY_OVERSIZE_STR \
-    "(defrag) Fragment packet ends after defragmented packet"
+    "(stream_ip) Fragment packet ends after defragmented packet"
 
 #define DEFRAG_ANOMALY_ZERO_STR \
-    "(defrag) Zero-byte fragment packet"
+    "(stream_ip) Zero-byte fragment packet"
 
 #define DEFRAG_ANOMALY_BADSIZE_SM_STR \
-    "(defrag) Bad fragment size, packet size is negative"
+    "(stream_ip) Bad fragment size, packet size is negative"
 
 #define DEFRAG_ANOMALY_BADSIZE_LG_STR \
-    "(defrag) Bad fragment size, packet size is greater than 65536"
+    "(stream_ip) Bad fragment size, packet size is greater than 65536"
 
 #define DEFRAG_ANOMALY_OVLP_STR \
-    "(defrag) Fragmentation overlap"
+    "(stream_ip) Fragmentation overlap"
 
 #if 0  // OBE
 #define DEFRAG_IPV6_BSD_ICMP_FRAG_STR
-    "(defrag) IPv6 BSD mbufs remote kernel buffer overflow"
+    "(stream_ip) IPv6 BSD mbufs remote kernel buffer overflow"
 
 #define DEFRAG_IPV6_BAD_FRAG_PKT_STR
-    "(defrag) Bogus fragmentation packet. Possible BSD attack"
+    "(stream_ip) Bogus fragmentation packet. Possible BSD attack"
 #endif
 
 #define DEFRAG_MIN_TTL_EVASION_STR \
-    "(defrag) TTL value less than configured minimum, not using for reassembly"
+    "(stream_ip) TTL value less than configured minimum, not using for reassembly"
 
 #define DEFRAG_EXCESSIVE_OVERLAP_STR \
-    "(defrag) Excessive fragment overlap"
+    "(stream_ip) Excessive fragment overlap"
 
 #define DEFRAG_TINY_FRAGMENT_STR \
-    "(defrag) Tiny fragment"
+    "(stream_ip) Tiny fragment"
 
 FragEngine::FragEngine()
 { memset(this, 0, sizeof(*this)); }

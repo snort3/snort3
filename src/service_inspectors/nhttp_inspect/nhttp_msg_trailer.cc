@@ -37,8 +37,14 @@
 
 using namespace NHttpEnums;
 
+NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+   NHttpMsgHeadShared(buffer, bufSize, sessionData_, sourceId_) {
+    delete sessionData->latestOther[sourceId];
+    sessionData->latestOther[sourceId] = this;
+}
+
 void NHttpMsgTrailer::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+    NHttpMsgHeadShared::genEvents();
 }
 
 void NHttpMsgTrailer::printSection(FILE *output) {

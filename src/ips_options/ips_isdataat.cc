@@ -242,7 +242,7 @@ static void isdataat_parse(const char *data, IsDataAtData *idx)
 
 static const Parameter isdataat_params[] =
 {
-    { "*length", Parameter::PT_STRING, nullptr, nullptr,
+    { "~length", Parameter::PT_STRING, nullptr, nullptr,
       "num | !num" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -273,7 +273,7 @@ bool IsDataAtModule::begin(const char*, int, SnortConfig*)
 
 bool IsDataAtModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*length") )
+    if ( v.is("~length") )
         isdataat_parse(v.get_string(), &data);
 
     else if ( v.is("relative") )

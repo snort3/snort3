@@ -44,7 +44,7 @@ typedef struct _ReferenceSystemNode
 } ReferenceSystemNode;
 
 ReferenceSystemNode * ReferenceSystemAdd(SnortConfig*, const char*, const char*);
-ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *, char *);
+ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *, const char *);
 void ParseReferenceSystemConfig(char *args);
 
 
@@ -57,7 +57,7 @@ typedef struct _ReferenceNode
 
 } ReferenceNode;
 
-ReferenceNode * AddReference(SnortConfig*, ReferenceNode **, char *, char *);
+ReferenceNode * AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
 void FPrintReference(FILE *, ReferenceNode *);
 
 /* struct for rule classification */
@@ -77,9 +77,6 @@ void AddClassification(
 
 ClassType * ClassTypeLookupByType(SnortConfig*, const char *);
 ClassType * ClassTypeLookupById(SnortConfig*, int);
-
-#define SI_RULE_TYPE_DETECT  0
-#define SI_RULE_TYPE_BUILTIN 1
 
 typedef struct _ServiceInfo
 {

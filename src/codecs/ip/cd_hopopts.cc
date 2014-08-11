@@ -115,7 +115,7 @@ void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool Ipv6HopOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
-    if ( lyr == (p->layers + p->next_layer - 1) )
+    if ( lyr == (p->layers + p->num_layers - 1) )
         *len += p->dsize;
 
     *len += lyr->length;

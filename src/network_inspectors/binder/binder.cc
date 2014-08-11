@@ -29,6 +29,8 @@ using namespace std;
 #include "stream/stream_splitter.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
+#include "protocols/vlan.h"
+#include "protocols/layer.h"
 #include "stream/stream_api.h"
 #include "time/profiler.h"
 #include "utils/stats.h"
@@ -173,7 +175,9 @@ int Binder::check_rules(Flow* flow, Packet* p)
     Binding* pb;
     unsigned i, sz = bindings.size();
 
-    Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
+    // FIXIT called before stream runs - these flags aren't set
+    // (below is structed to work by accident on initial syn until fixed)
+    Port port = (p->packet_flags & PKT_FROM_SERVER) ? p->sp : p->dp;
 
     for ( i = 0; i < sz; i++ )
     {
@@ -269,12 +273,12 @@ static const InspectApi bind_api =
     PROTO_BIT__ALL,
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    bind_ctor,
-    bind_dtor,
     nullptr, // pinit
     nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
+    bind_ctor,
+    bind_dtor,
     nullptr, // ssn
     nullptr  // reset
 };

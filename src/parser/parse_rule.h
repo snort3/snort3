@@ -23,11 +23,29 @@
 
 #include "detection/rules.h"
 
+struct SnortConfig;
+struct OptTreeNode;
+struct RuleTreeNode;
+
 void parse_rule_init();
 void parse_rule_term();
 void parse_rule_print();
 
 void parse_rule(struct SnortConfig*, const char *args, RuleType, ListHead*);
+
+void parse_rule_type(SnortConfig*, const char*, RuleTreeNode&);
+void parse_rule_proto(SnortConfig*, const char*, RuleTreeNode&);
+void parse_rule_nets(
+    SnortConfig*, const char*, bool src, RuleTreeNode&);
+void parse_rule_ports(
+    SnortConfig*, const char*, bool src, RuleTreeNode&);
+void parse_rule_dir(SnortConfig*, const char*, RuleTreeNode&);
+void parse_rule_opt_begin(SnortConfig*, const char* key);
+void parse_rule_opt_set(
+    SnortConfig*, const char* key, const char* opt, const char* val);
+void parse_rule_opt_end(SnortConfig*, const char* key, OptTreeNode*);
+OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode&);
+void parse_rule_close(SnortConfig*, RuleTreeNode&, OptTreeNode*);
 
 int get_rule_count();
 

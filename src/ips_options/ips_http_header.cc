@@ -53,7 +53,7 @@ static THREAD_LOCAL ProfileStats httpHeaderPerfStats;
 
 static const Parameter hh_params[] =
 {
-    { "*name", Parameter::PT_STRING, nullptr, nullptr,
+    { "~name", Parameter::PT_STRING, nullptr, nullptr,
       "restrict to given header" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -86,7 +86,7 @@ bool HttpHeaderModule::begin(const char*, int, SnortConfig*)
 
 bool HttpHeaderModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*name") )
+    if ( v.is("~name") )
         name = v.get_string();
 
     else

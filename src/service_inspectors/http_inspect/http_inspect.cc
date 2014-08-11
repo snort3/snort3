@@ -244,8 +244,8 @@ public:
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
     bool get_buf(unsigned, Packet*, InspectionBuffer&);
 
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
 
 private:
     HTTPINSPECT_CONF* config;
@@ -313,7 +313,7 @@ bool HttpInspect::configure (SnortConfig* sc)
     return !HttpInspectVerifyPolicy(sc, config);
 }
 
-void HttpInspect::pinit()
+void HttpInspect::tinit()
 {
     memset(&hi_stats, 0, sizeof(HIStats));
 
@@ -330,7 +330,7 @@ void HttpInspect::pinit()
     }
 }
 
-void HttpInspect::pterm()
+void HttpInspect::tterm()
 {
 }
 
@@ -478,10 +478,10 @@ static const InspectApi hs_api =
     "http",
     hs_init,
     hs_term,
+    nullptr, // tinit
+    nullptr, // tterm
     hs_ctor,
     hs_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     nullptr, // ssn
     nullptr  // reset
 };

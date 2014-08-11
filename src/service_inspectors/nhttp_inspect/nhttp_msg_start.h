@@ -30,6 +30,7 @@
 #define NHTTP_MSG_START_H
 
 #include "nhttp_msg_section.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgStart class
@@ -46,8 +47,8 @@ protected:
     virtual void parseStartLine() = 0;
     void deriveVersionId();
 
-    field startLine;
-    field version;
+    Field startLine;
+    Field version;
 };
 
 #endif

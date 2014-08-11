@@ -534,8 +534,8 @@ bool Telnet::convert(std::istringstream& data_stream)
             }
         }
 
-        else  if(!keyword.compare("detect_anomalies"))
-            tmpval = ld->add_option_to_table("detect_anomalies", true);
+        else if(!keyword.compare("detect_anomalies"))
+            ld->add_deleted_comment("detect_anomalies");
 
         else
             tmpval = false;

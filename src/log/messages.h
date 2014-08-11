@@ -58,10 +58,11 @@ char* ObfuscateIpToText(sfip_t*);
 class Dumper
 {
 public:
-    Dumper(const char* s, unsigned n = 3)
+    Dumper(const char* s = nullptr, unsigned n = 3)
     {
         max = n; idx = 0; 
-        if ( s ) LogMessage("%s\n", s);
+        if ( s )
+            LogMessage("%s\n", s);
     };
 
     ~Dumper()

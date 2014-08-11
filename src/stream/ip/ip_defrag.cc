@@ -889,7 +889,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
     MODULE_PROFILE_START(fragRebuildPerfStats);
 
-    if ( p->encapsulated )
+    if ( p->encapsulations )
         dpkt = encap_defrag_pkt;
     else
         dpkt = defrag_pkt;
@@ -1291,14 +1291,14 @@ bool Defrag::configure(SnortConfig*)
     return true;
 }
 
-void Defrag::pinit()
+void Defrag::tinit()
 {
     defrag_pkt = PacketManager::encode_new();
     encap_defrag_pkt = PacketManager::encode_new();
     pkt_snaplen = DAQ_GetSnapLen();
 }
 
-void Defrag::pterm()
+void Defrag::tterm()
 {
     PacketManager::encode_delete(defrag_pkt);
     defrag_pkt = NULL;

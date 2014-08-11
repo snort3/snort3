@@ -299,7 +299,7 @@ void fragbits_parse(const char *data, FragBitsData *ds_ptr)
 
 static const Parameter fragbits_params[] =
 {
-    { "*flags", Parameter::PT_STRING, nullptr, nullptr,
+    { "~flags", Parameter::PT_STRING, nullptr, nullptr,
       "these flags are tested" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -328,7 +328,7 @@ bool FragBitsModule::begin(const char*, int, SnortConfig*)
 
 bool FragBitsModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*flags") )
+    if ( v.is("~flags") )
         fragbits_parse(v.get_string(), &data);
 
     else

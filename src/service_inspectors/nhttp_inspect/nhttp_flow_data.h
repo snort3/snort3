@@ -33,6 +33,7 @@
 
 class NHttpInspect;
 class NHttpMsgSection;
+class NHttpMsgStart;
 class NHttpMsgRequest;
 class NHttpMsgStatus;
 class NHttpMsgHeader;
@@ -46,12 +47,14 @@ class NHttpFlowData : public FlowData
 {
 public:
     NHttpFlowData();
+    ~NHttpFlowData();
     static unsigned nhttp_flow_id;
     static void init() { nhttp_flow_id = FlowData::get_flow_id(); };
 
     friend class NHttpInspect;
     friend class NHttpMsgSection;
     friend class NHttpMsgHeader;
+    friend class NHttpMsgStart;
     friend class NHttpMsgRequest;
     friend class NHttpMsgStatus;
     friend class NHttpMsgBody;
@@ -67,6 +70,7 @@ private:
     NHttpEnums::SectionType sectionType[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
     bool tcpClose[2] = { false, false };
     uint64_t infractions[2] = { 0, 0 };
+    uint64_t eventsGenerated[2] = { 0, 0 };
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType typeExpected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
@@ -84,6 +88,13 @@ private:
     int64_t numChunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };         // number of chunks seen so far
     int64_t chunkSections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // number of sections seen so far in the current chunk
     int64_t chunkOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };       // number of user data octets seen so far in the current chunk including terminating CRLF
+
+    // Stored message sections from this session
+    // You must reset to nullptr after deleting a section
+    // Never put one section in two places. latestOther is only for things not otherwise listed
+    NHttpMsgStart* startLine[2] = { nullptr, nullptr };
+    NHttpMsgHeader* headers[2] = { nullptr, nullptr };
+    NHttpMsgSection* latestOther[2] = { nullptr, nullptr };
 };
 
 #endif

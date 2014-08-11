@@ -21,6 +21,8 @@
 
 
 #include "protocols/packet.h"
+#include "protocols/ipv4.h"
+#include "protocols/ipv6.h"
 
 namespace layer
 {
@@ -53,45 +55,45 @@ static inline const uint8_t *find_layer(const Layer *lyr,
     return nullptr;
 }
 
-const arp::EtherARP* get_arp_layer(const Packet* p)
+const arp::EtherARP* get_arp_layer(const Packet* const p)
 {
-    uint8_t num_layers = p->next_layer;
+    uint8_t num_layers = p->num_layers;
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const arp::EtherARP*>(
         find_layer(lyr, num_layers, ETHERTYPE_ARP, ETHERTYPE_REVARP));
 }
 
-const gre::GREHdr* get_gre_layer(const Packet* p)
+const gre::GREHdr* get_gre_layer(const Packet* const p)
 {
-    uint8_t num_layers = p->next_layer;
+    uint8_t num_layers = p->num_layers;
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const gre::GREHdr*>(
         find_layer(lyr, num_layers, IPPROTO_ID_GRE));
 }
 
-const eapol::EtherEapol* get_eapol_layer(const Packet* p)
+const eapol::EtherEapol* get_eapol_layer(const Packet* const p)
 {
-    uint8_t num_layers = p->next_layer;
+    uint8_t num_layers = p->num_layers;
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const eapol::EtherEapol*>(
             find_layer(lyr, num_layers, ETHERTYPE_EAPOL));
 }
 
-const vlan::VlanTagHdr* get_vlan_layer(const Packet* p)
+const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)
 {
-    uint8_t num_layers = p->next_layer;
+    uint8_t num_layers = p->num_layers;
     const Layer *lyr = p->layers;
 
     return reinterpret_cast<const vlan::VlanTagHdr*>(
         find_layer(lyr, num_layers, ETHERTYPE_8021Q));
 }
 
-const eth::EtherHdr* get_eth_layer(const Packet* p)
+const eth::EtherHdr* get_eth_layer(const Packet* const p)
 {
-    uint8_t num_layers = p->next_layer;
+    uint8_t num_layers = p->num_layers;
     const Layer *lyr = p->layers;
 
     // First, search for the inner eth layer (transbridging)
@@ -102,12 +104,55 @@ const eth::EtherHdr* get_eth_layer(const Packet* p)
     return eh ? eh : reinterpret_cast<const eth::EtherHdr*>(get_root_layer(p));
 }
 
-const uint8_t* get_root_layer(const Packet* p)
+const uint8_t* get_root_layer(const Packet* const p)
 {
     // since token ring is the grinder, its the begining of the packet.
-    if (p->next_layer > 0)
+    if (p->num_layers > 0)
         return p->layers[0].start;
     return nullptr;
+}
+
+
+uint8_t get_outer_ip_next_pro(const Packet* const p)
+{
+    const Layer* layers = p->layers;
+    const int max_layers = p->num_layers;
+
+    for (int i = 0; i < max_layers; i++)
+    {
+        switch(layers[i].prot_id)
+        {
+            case ETHERTYPE_IPV4:
+            case IPPROTO_ID_IPIP:
+                return reinterpret_cast<IP4Hdr*>(layers[i].start)->ip_proto;
+            case ETHERTYPE_IPV6:
+            case IPPROTO_ID_IPV6:
+                return reinterpret_cast<IP6Hdr*>(layers[i].start)->next;
+            default:
+                break;
+        }
+    }
+    return -1;
+}
+
+int get_inner_ip_lyr(const Packet* const p)
+{
+    const Layer* layers = p->layers;
+
+    for (int i = p->num_layers-1; i >= 0; i--)
+    {
+        switch(layers[i].prot_id)
+        {
+            case ETHERTYPE_IPV4:
+            case ETHERTYPE_IPV6:
+            case IPPROTO_ID_IPIP:
+            case IPPROTO_ID_IPV6:
+                return i;
+            default:
+                break;
+        }
+    }
+    return -1;
 }
 
 } // namespace layer

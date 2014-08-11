@@ -18,16 +18,10 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PARSE_OTN_H
-#define PARSE_OTN_H
+#ifndef IPS_ACTIONS_H
+#define IPS_ACTIONS_H
 
-#include "detection/rules.h"
-
-void parse_otn_clear();
-
-bool parse_otn(
-    struct SnortConfig*, struct RuleTreeNode*, struct OptTreeNode*,
-    char* opt, char* args, const char** so_opts);
+extern const struct BaseApi* ips_actions[];
 
 #endif
 

@@ -37,7 +37,7 @@ using namespace std;
 #include "main/analyzer.h"
 #include "managers/shell.h"
 #include "managers/event_manager.h"
-#include "managers/ips_manager.h"
+#include "managers/so_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -53,7 +53,6 @@ using namespace std;
 #define LOG_PCAP  "pcap"
 
 #define ALERT_NONE    "none"
-#define ALERT_PKT_CNT "packet-count"
 #define ALERT_CMG     "cmg"
 #define ALERT_JH      "jh"
 #define ALERT_DJR     "djr"
@@ -70,8 +69,43 @@ static char* snort_conf_dir = nullptr;
 const char* get_snort_conf() { return lua_conf; }
 const char* get_snort_conf_dir() { return snort_conf_dir; }
 
-static void show_usage(const char* program_name);
-static void show_options(const char* pfx);
+static void help_args(const char* pfx);
+
+static const char* snort_help =
+"Snort has several options to get more help:\n"
+"\n"
+"--help this overview of help\n"
+"--help-builtin [<module prefix>] output matching builtin rules\n"
+"--help-buffers output available inspection buffers\n"
+"--help-commands [<module prefix>] output matching commands\n"
+"--help-config [<module prefix>] output matching config options\n"
+"--help-gids [<module prefix>] output matching generators\n"
+"--help-module <module> output description of given module\n"
+"--help-options [<option prefix>] output matching command line options\n"
+"--help-signals dump available control signals\n"
+"--list-modules list all known modules\n"
+"--list-plugins list all known modules\n"
+"--markup output help in asciidoc compatible format\n"
+"\n"
+"--help* and --list* options preempt other processing so should be last on the\n"
+"command line since any following options are ignored.  To ensure options like\n"
+"--plugin-path take effect, place them ahead of the help or list options.\n"
+"\n"
+"Options that filter output based on a matching prefix, such as --help-config\n"
+"won't output anything if there is no match.  If no prefix is given, everything\n"
+"matches.\n"
+"\n"
+"Parameters are given with this format:\n"
+"\n"
+"    type name = default: help { range }\n"
+"\n"
+"+ For Lua configuration (not IPS rules), if the name ends with [] it is a\n"
+"  list item and can be repeated.\n"
+"+ For IPS rules only, names starting with ~ indicate positional parameters.\n"
+"  The name does not appear in the rule.\n"
+"+ IPS rules may also have a wild card parameter, which is indicated by a *.\n"
+"  Only used for metadata that Snort ignores.\n"
+;
 
 //-------------------------------------------------------------------------
 // private methods
@@ -239,27 +273,36 @@ static void config_daemon_restart(SnortConfig* sc, const char* val)
     config_daemon(sc, val);
 }
 
-static void config_usage(SnortConfig*, const char* val)
-{
-    show_usage("snort");
-    show_options(val);
-    exit(1);
-}
+//-------------------------------------------------------------------------
 
-static void config_help_options(SnortConfig*, const char* val)
+static void help_basic(SnortConfig*, const char*)
 {
-    show_options(val);
+    fprintf(stdout, "Snort help: %s", snort_help);
     exit(0);
 }
 
-static void config_help_signals(SnortConfig*, const char*)
+static void help_usage(SnortConfig*, const char* val)
+{
+    fprintf(stdout, "USAGE: %s [-options] <filter options>\n", "snort");
+    help_args(val);
+    exit(1);
+}
+
+static void help_options(SnortConfig*, const char* val)
+{
+    help_args(val);
+    exit(0);
+}
+
+static void help_signals(SnortConfig*, const char*)
 {
     help_signals();
     exit(0);
 }
 
 enum HelpType {
-    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF, HT_LST, HT_PLG
+    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
+    HT_BUF, HT_LST, HT_PLG, HT_DDR
 };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -294,6 +337,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     case HT_PLG:
         PluginManager::list_plugins();
         break;
+    case HT_DDR:
+        SoManager::dump_rule_stubs(val);
+        break;
     }
     ModuleManager::term();
     PluginManager::release_plugins();
@@ -301,12 +347,12 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     exit(0);
 }
 
-static void config_help(SnortConfig* sc, const char* val)
+static void help_config(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_CFG);
 }
 
-static void config_help_commands(SnortConfig* sc, const char* val)
+static void help_commands(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_CMD);
 }
@@ -316,34 +362,42 @@ static void config_markup(SnortConfig*, const char*)
     Markup::enable();
 }
 
-static void config_help_gids(SnortConfig* sc, const char* val)
+static void help_gids(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_GID);
 }
 
-static void config_help_buffers(SnortConfig* sc, const char* val)
+static void help_buffers(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_BUF);
 }
 
-static void config_help_builtin(SnortConfig* sc, const char* val)
+static void help_builtin(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_IPS);
 }
 
-static void config_help_module(SnortConfig* sc, const char* val)
+static void help_module(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_MOD);
 }
 
-static void config_list_modules(SnortConfig* sc, const char* val)
+static void list_modules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_LST);
 }
 
-static void config_list_plugins(SnortConfig* sc, const char* val)
+static void list_plugins(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PLG);
+}
+
+static void dump_dynamic_rules(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_DDR);
+    //PluginManager::load_plugins(sc->plugin_path);
+    ////SoManager::dump_rule_stubs(val);
+    //exit(0);
 }
 
 static void config_lua(SnortConfig*, const char* val)
@@ -383,13 +437,6 @@ static void config_daq_list(SnortConfig* sc, const char* val)
     exit(0);
 }
 
-static void dump_dynamic_rules(SnortConfig* sc, const char* val)
-{
-    PluginManager::load_plugins(sc->plugin_path);
-    IpsManager::dump_rule_stubs(val);
-    exit(0);
-}
-
 static void config_nolock_pid_file(SnortConfig* sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__NO_LOCK_PID_FILE;
@@ -406,10 +453,6 @@ static void config_alert_mode(SnortConfig* sc, const char* val)
     {
         sc->output_flags |= OUTPUT_FLAG__NO_ALERT;
         EventManager::enable_alerts(false);
-    }
-    else if (strcasecmp(val, ALERT_PKT_CNT) == 0)
-    {
-        sc->output_flags |= OUTPUT_FLAG__ALERT_PKT_CNT;
     }
     else if ((strcasecmp(val, ALERT_CMG) == 0) ||
              (strcasecmp(val, ALERT_JH) == 0) ||
@@ -638,7 +681,7 @@ static ConfigFunc spec_opts[] =
 
     // stuff we do now because we are going to quit anyway
     { "W", config_show_interfaces, "" },
-    { "?", config_usage, "" },
+    { "?", help_usage, "" },
 
     { nullptr, nullptr, nullptr }
 };
@@ -649,7 +692,7 @@ static ConfigFunc basic_opts[] =
       "show usage" },
 
     { "A", config_alert_mode, 
-      "<mode> set alert mode: fast, full, console, test, unsock, or none " },
+      "<mode> set alert mode: none, cmg, or alert_*" },
 
     { "B", ConfigObfuscationMask, 
       "<mask> obfuscated IP addresses in alerts and packet dumps using CIDR mask" },
@@ -800,37 +843,37 @@ static ConfigFunc basic_opts[] =
     { "enable-inline-test", config_inline_test,
       "enable Inline-Test Mode Operation" },
 
-    { "help", config_help_options,
-      "<option prefix> output matching command line option quick help" },
+    { "help", help_basic,
+      "overview of help" },
 
-    { "help-builtin", config_help_builtin,
+    { "help-builtin", help_builtin,
       "<module prefix> output matching builtin rules" },
 
-    { "help-buffers", config_help_buffers,
+    { "help-buffers", help_buffers,
       "output available inspection buffers" },
 
-    { "help-commands", config_help_commands,
-      "<module prefix> output matching commands" },
+    { "help-commands", help_commands,
+      "[<module prefix>] output matching commands" },
 
-    { "help-config", config_help,
-      "<module prefix> output matching config options" },
+    { "help-config", help_config,
+      "[<module prefix>] output matching config options" },
 
-    { "help-gids", config_help_gids,
-      "<module prefix> output matching generators" },
+    { "help-gids", help_gids,
+      "[<module prefix>] output matching generators" },
 
-    { "help-module", config_help_module,
-      "output description of given module" },
+    { "help-module", help_module,
+      "<module> output description of given module" },
 
-    { "help-options", config_help_options,
-      "<option prefix> (same as --help)" },
+    { "help-options", help_options,
+      "<option prefix> output matching command line option quick help" },
 
-    { "help-signals", config_help_signals,
+    { "help-signals", help_signals,
       "dump available control signals" },
 
-    { "list-modules", config_list_modules,
+    { "list-modules", list_modules,
       "list all known modules" },
 
-    { "list-plugins", config_list_plugins,
+    { "list-plugins", list_plugins,
       "list all known modules" },
 
     { "lua", config_lua,
@@ -918,6 +961,29 @@ static ConfigFunc basic_opts[] =
     { nullptr, nullptr, nullptr }
 };
 
+static void help_args(const char* pfx)
+{
+    ConfigFunc* p = basic_opts;
+    unsigned n = pfx ? strlen(pfx) : 0;
+
+    while ( p->name )
+    {
+        if ( p->help && (!n || !strncasecmp(p->name, pfx, n)) )
+        {
+            cout << Markup::item();
+            cout << Markup::emphasis_on();
+
+            const char* prefix = strlen(p->name) > 1 ? "--" : "-";
+            cout << prefix << p->name;
+            cout << Markup::emphasis_off();
+
+            cout << " " << p->help;
+            cout << endl;
+        }
+        ++p;
+    }
+}
+
 static void check_flags(SnortConfig* sc)
 {
     if ((sc->run_flags & RUN_FLAG__TEST) &&
@@ -987,36 +1053,6 @@ SnortConfig* ParseCmdLine(int argc, char* argv[])
 
     check_flags(sc);
     return sc;
-}
-
-//-------------------------------------------------------------------------
-
-static void show_options(const char* pfx)
-{
-    ConfigFunc* p = basic_opts;
-    unsigned n = pfx ? strlen(pfx) : 0;
-
-    while ( p->name )
-    {
-        if ( p->help && (!n || !strncasecmp(p->name, pfx, n)) )
-        {
-            cout << Markup::item();
-            cout << Markup::emphasis_on();
-
-            const char* prefix = strlen(p->name) > 1 ? "--" : "-";
-            cout << prefix << p->name;
-            cout << Markup::emphasis_off();
-
-            cout << " " << p->help;
-            cout << endl;
-        }
-        ++p;
-    }
-}
-
-static void show_usage(const char *program_name)
-{
-    fprintf(stdout, "USAGE: %s [-options] <filter options>\n", program_name);
 }
 
 //-------------------------------------------------------------------------

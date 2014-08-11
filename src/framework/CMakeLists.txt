@@ -4,6 +4,7 @@ set (FRAMEWORK_INCLUDES
     base_api.h
     bits.h
     codec.h
+    counts.h
     cursor.h
     logger.h
     inspector.h

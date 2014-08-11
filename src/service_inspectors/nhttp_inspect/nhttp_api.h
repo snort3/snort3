@@ -47,8 +47,8 @@ private:
     static void nhttp_term() {};
     static Inspector* nhttp_ctor(Module* mod);
     static void nhttp_dtor(Inspector* p) { delete p; };
-    static void nhttp_pinit() {};
-    static void nhttp_pterm() {};
+    static void nhttp_tinit() {};
+    static void nhttp_tterm() {};
 };
 
 #endif

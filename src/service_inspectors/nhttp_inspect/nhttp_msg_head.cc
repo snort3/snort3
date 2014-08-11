@@ -38,8 +38,15 @@
 
 using namespace NHttpEnums;
 
+NHttpMsgHeader::NHttpMsgHeader(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
+       NHttpMsgHeadShared(buffer, bufSize, sessionData_, sourceId_) {
+    sessionData->headers[sourceId] = this;
+}
+
 void NHttpMsgHeader::genEvents() {
-    if (infractions != 0) SnortEventqAdd(NHTTP_GID, EVENT_ASCII); // I'm just an example event
+    NHttpMsgHeadShared::genEvents();
+    if (headerCount[HEAD_CONTENT_LENGTH] > 1) createEvent(EVENT_MULTIPLE_CONTLEN);
+
 }
 
 void NHttpMsgHeader::printSection(FILE *output) {

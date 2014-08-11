@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.107])
+AC_INIT([snort], [2.10.111])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -225,6 +225,16 @@ fi
 
 AM_CONDITIONAL(LINUX, [test "x$linux" = "xyes"])
 
+AC_ARG_ENABLE(static-ips-actions,
+    [  --disable-static-ips-actions    do not include ips actions in binary ],
+       static_ips_actions="$enableval", static_ips_actions="yes")
+
+AM_CONDITIONAL(STATIC_IPS_ACTIONS, [test "x$static_ips_actions" = "xyes"])
+
+if test "x$static_ips_actions" = "xyes"; then
+    AC_DEFINE(STATIC_IPS_ACTIONS, [1], [include internal ips actions in binary])
+fi
+
 AC_ARG_ENABLE(static-inspectors,
     [  --disable-static-inspectors    do not include inspectors in binary ],
        static_inspectors="$enableval", static_inspectors="yes")
@@ -252,8 +262,7 @@ AC_ARG_ENABLE(static-ips-options,
 AM_CONDITIONAL(STATIC_IPS_OPTIONS, [test "x$static_ips_options" = "xyes"])
 
 if test "x$static_ips_options" = "xyes"; then
-    AC_DEFINE(STATIC_IPS_OPTIONS, [1],
-        [include internal ips options in binary])
+    AC_DEFINE(STATIC_IPS_OPTIONS, [1], [include internal ips options in binary])
 fi
 
 AC_ARG_ENABLE(static-search-engines,
@@ -263,8 +272,7 @@ AC_ARG_ENABLE(static-search-engines,
 AM_CONDITIONAL(STATIC_SEARCH_ENGINES, [test "x$static_search_engines" = "xyes"])
 
 if test "x$static_search_engines" = "xyes"; then
-    AC_DEFINE(STATIC_SEARCH_ENGINES, [1], [include internal inspectors in
-                                      binary])
+    AC_DEFINE(STATIC_SEARCH_ENGINES, [1], [include internal search engines in binary])
 fi
 
 AC_ARG_ENABLE(static-codecs,
@@ -274,8 +282,7 @@ AC_ARG_ENABLE(static-codecs,
 AM_CONDITIONAL(STATIC_CODECS, [test "x$static_codecs" = "xyes"])
 
 if test "x$static_codecs" = "xyes"; then
-    AC_DEFINE(STATIC_CODECS, [1], [include internal decoders in
-                                      binary])
+    AC_DEFINE(STATIC_CODECS, [1], [include internal decoders in binary])
 fi
 
 AC_ARG_ENABLE(valgrind,

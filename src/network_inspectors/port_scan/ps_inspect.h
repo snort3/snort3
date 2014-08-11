@@ -46,8 +46,8 @@ public:
 
     void eval(Packet*);
 
-    void pinit();
-    void pterm();
+    void tinit();
+    void tterm();
 
 private:
     void ps_parse(SnortConfig*, char *);

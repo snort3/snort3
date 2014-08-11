@@ -63,6 +63,6 @@ bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
 }
 
 unsigned NHttpModule::get_gid() const {
-    return NHTTP_GID;
+    return NHttpEnums::NHTTP_GID;
 }
 

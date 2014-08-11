@@ -141,10 +141,10 @@ static const InspectApi udp_api =
     nullptr, // service
     nullptr, // init
     nullptr, // term
+    nullptr, // tinit
+    nullptr, // tterm
     udp_ctor,
     udp_dtor,
-    nullptr, // pinit
-    nullptr, // pterm
     udp_ssn,
     udp_reset
 };

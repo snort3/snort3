@@ -1925,7 +1925,7 @@ static inline unsigned int getSegmentFlushSize(
  * flush the client seglist up to the most recently acked segment
  */
 static int FlushStream(
-    Packet*, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
+    Packet* p, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
     const uint8_t *flushbuf_end)
 {
     uint16_t bytes_flushed = 0;
@@ -1951,7 +1951,7 @@ static int FlushStream(
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = st->splitter->reassemble(
-            bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
+            p->flow, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
@@ -3873,9 +3873,8 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
 
                 if (rcv->small_seg_count > config->max_consec_small_segs)
                 {
-                    /* Above threshold, log it... requires detect_anomalies be
-                    * on in this TCP policy, action controlled by preprocessor
-                    * rule. */
+                    /* Above threshold, log it...  in this TCP policy, 
+                     * action controlled by preprocessor rule. */
                     EventMaxSmallSegsExceeded();
 
                     /* Reset counter, so we're not too noisy */

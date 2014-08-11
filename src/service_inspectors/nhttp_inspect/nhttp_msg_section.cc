@@ -38,13 +38,14 @@
 using namespace NHttpEnums;
 
 NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-   length(bufSize), sessionData(sessionData_), sourceId(sourceId_), tcpClose(sessionData->tcpClose[sourceId]),
-   scratchPad(2*length+500), infractions(sessionData->infractions[sourceId]), versionId(sessionData->versionId[sourceId]),
-   methodId(sessionData->methodId[sourceId]), statusCodeNum(sessionData->statusCodeNum[sourceId])
+   sessionData(sessionData_), sourceId(sourceId_), tcpClose(sessionData->tcpClose[sourceId]), scratchPad(2*bufSize+500),
+   infractions(sessionData->infractions[sourceId]), eventsGenerated(sessionData->eventsGenerated[sourceId]),
+   versionId(sessionData->versionId[sourceId]), methodId(sessionData->methodId[sourceId]), statusCodeNum(sessionData->statusCodeNum[sourceId])
 {
-    rawBuf = new uint8_t[length];
-    memcpy(rawBuf, buffer, length);
-    msgText = rawBuf;
+    rawBuf = new uint8_t[bufSize];
+    memcpy(rawBuf, buffer, bufSize);
+    msgText.start = rawBuf;
+    msgText.length = bufSize;
 }
 
 // Return the number of octets before the first CRLF. Return length if CRLF not present.
@@ -59,46 +60,40 @@ uint32_t NHttpMsgSection::findCrlf(const uint8_t* buffer, int32_t length, bool w
     return length;
 }
 
-void NHttpMsgSection::printInterval(FILE *output, const char* name, const uint8_t *text, int32_t length, bool intVals) {
-    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) return;
-    int outCount = fprintf(output, "%s, length = %d, ", name, length);
-    if (length <= 0) {
-        fprintf(output, "\n");
-        return;
-    }
-    if (text == nullptr) {
-        fprintf(output, "nullptr\n");
-        return;
-    }
-    if (length > 1000) length = 1000;    // Limit the amount of data printed
-    for (int k=0; k < length; k++) {
-        if ((text[k] >= 0x20) && (text[k] <= 0x7E)) fprintf(output, "%c", (char)text[k]);
-        else if (text[k] == 0xD) fprintf(output, "~");
-        else if (text[k] == 0xA) fprintf(output, "^");
-        else fprintf(output, "*");
-        if ((k%120 == (119 - outCount)) && (k+1 < length)) fprintf(output, "\n");
-    }
-
-    if (intVals && (length%8 == 0)) {
-        fprintf(output, "\nInteger values =");
-        for (int j=0; j < length; j+=8) {
-            fprintf(output, " %" PRIu64 , *((const uint64_t*)(text+j)));
-        }
-    }
-    fprintf(output, "\n");
-}
-
 void NHttpMsgSection::printMessageTitle(FILE *output, const char *title) const {
     fprintf(output, "HTTP message %s:\n", title);
-    printInterval(output, "Input", msgText, length);
+    msgText.print(output, "Input");
 }
 
 void NHttpMsgSection::printMessageWrapup(FILE *output) const {
-    fprintf(output, "Infractions: %" PRIx64 ", TCP Close: %s\n", infractions, tcpClose ? "True" : "False");
+    fprintf(output, "Infractions: %" PRIx64 ", Events: %" PRIx64 ", TCP Close: %s\n", infractions, eventsGenerated,
+       tcpClose ? "True" : "False");
     fprintf(output, "Interface to old clients. http_mask = %x.\n", http_mask);
     for (int i=0; i < HTTP_BUFFER_MAX; i++) {
-        if ((1 << i) & http_mask) printInterval(output, http_buffer_name[i], http_buffer[i].buf, http_buffer[i].length);
+        if ((1 << i) & http_mask) Field(http_buffer[i].length, http_buffer[i].buf).print(output, http_buffer_name[i]);
     }
     fprintf(output, "\n");
 }
+
+void NHttpMsgSection::createEvent(EventSid sid) {
+    const uint32_t NHTTP_GID = 119;
+    SnortEventqAdd(NHTTP_GID, (uint32_t)sid);
+    eventsGenerated |= (1 << (sid-1));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

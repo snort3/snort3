@@ -33,11 +33,12 @@ enum PlugType
 {
     PT_DATA,
     PT_CODEC,
-    PT_LOGGER,
-    PT_IPS_OPTION,
-    PT_SO_RULE,
     PT_INSPECTOR,
+    PT_IPS_ACTION,
+    PT_IPS_OPTION,
     PT_SEARCH_ENGINE,
+    PT_SO_RULE,
+    PT_LOGGER,
     PT_MAX
 };
 

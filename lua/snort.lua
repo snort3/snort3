@@ -184,12 +184,12 @@ event_queue =
 ppm =
 {
 -- Per Packet latency configuration
-    max_pkt_time = 250,
+    max_pkt_time = 0,
     fastpath_expensive_packets = true,
     pkt_log = 'log',
 
 -- Per Rule latency configuration
-    max_rule_time = 200,
+    max_rule_time = 0,
     threshold = 3,
     suspend_expensive_rules = true,
     suspend_timeout = 20,
@@ -237,7 +237,6 @@ normalize =
 
 arp_spoof =
 {
-    unicast = true,
     hosts =
     {
         { ip = '192.168.40.1', mac = 'f0:0f:00:f0:0f:00' },
@@ -288,6 +287,15 @@ perf_monitor =
 -- http normalization and anomaly detection
 ---------------------------------------------------------------------------
 
+default_http_methods =
+[[
+    GET POST PUT SEARCH MKCOL COPY MOVE LOCK UNLOCK NOTIFY POLL BCOPY
+    BDELETE BMOVE LINK UNLINK OPTIONS HEAD DELETE TRACE TRACK CONNECT
+    SOURCE SUBSCRIBE UNSUBSCRIBE PROPFIND PROPPATCH BPROPFIND BPROPPATCH
+    RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA
+    RPC_OUT_DATA RPC_ECHO_DATA
+]]
+
 http_inspect =
 {
     unicode_map =
@@ -298,15 +306,6 @@ http_inspect =
     compress_depth = 65535,
     decompress_depth = 65535
 }
-
-default_http_methods =
-[[
-    GET POST PUT SEARCH MKCOL COPY MOVE LOCK UNLOCK NOTIFY POLL BCOPY
-    BDELETE BMOVE LINK UNLINK OPTIONS HEAD DELETE TRACE TRACK CONNECT
-    SOURCE SUBSCRIBE UNSUBSCRIBE PROPFIND PROPPATCH BPROPFIND BPROPPATCH
-    RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA
-    RPC_OUT_DATA RPC_ECHO_DATA
-]]
 
 http_server =
 {
@@ -338,7 +337,6 @@ telnet =
     check_encrypted = true,
     ayt_attack_thresh = 20,
     normalize = true,
-    detect_anomalies = true
 }
 
 ftp_default_commands =
@@ -559,6 +557,8 @@ default_rules =
 #alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header:Transfer-Encoding; content:"chunk"; sid:2; )
 #alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header; content:"chunk"; sid:3; )
 #alert tcp any any -> any any ( msg:"Sample rule for Snort++"; content:"trigger"; sid:2; )
+
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request"; metadata:service http; reference:url,en.wikipedia.org/wiki/Vbs; classtype:misc-activity; sid:18758; rev:8; soid:3|18758;)
 ]]
 
 network =
@@ -572,7 +572,7 @@ ips =
     --include = '../test.rules',
     --include = 'active.rules',
     rules = default_rules,
-    enable_builtin_rules = false
+    --enable_builtin_rules = true
 }
 
 --[[
@@ -623,7 +623,7 @@ hosts =
 -- prototype wizard
 ---------------------------------------------------------------------------
 
-http_methods = { 'GET', 'POST', 'HEAD' } -- build from default_http_methods
+http_methods = { 'GIT', 'GET', 'POST', 'HEAD' } -- build from default_http_methods
 ftp_commands = { 'USER' } -- add others
 sip_methods = { 'INVITE', 'NOTIFY' } -- add others
 isakmp_hex = { '?????????????????|01|', '?????????????????|10|' }
@@ -739,7 +739,8 @@ binder =
     -- FIXIT these should be defaults when inspector configured
     { when = { service = 'ftp-data' }, use = { type = 'ftp_data' } },
     { when = { service = 'ftp' }, use = { type = 'ftp_server' } },
-    { when = { service = 'http' }, use = { type = 'http_server' } },
+    --{ when = { service = 'http' }, use = { type = 'http_server' } },
+    { when = { service = 'http' }, use = { type = 'nhttp_inspect' } },
     { when = { service = 'sunrpc' }, use = { type = 'rpc_decode' } },
     { when = { service = 'telnet' }, use = { type = 'telnet' } },
 

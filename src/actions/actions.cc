@@ -57,9 +57,6 @@ int AlertAction(Packet* p, const OptTreeNode* otn)
         lh.LogList = otn->outputFuncs;
         CallLogFuncs(p, otn, &lh);
     }
-    if (ScAlertPacketCount())
-        LogMessage("[" STDu64 "]", pc.total_from_daq);
-
     CallAlertFuncs(p, otn, rtn->listhead);
 
     DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "   => Finishing alert packet!\n"););

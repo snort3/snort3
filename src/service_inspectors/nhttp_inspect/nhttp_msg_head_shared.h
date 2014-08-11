@@ -32,6 +32,7 @@
 #include "nhttp_str_to_code.h"
 #include "nhttp_head_norm.h"
 #include "nhttp_msg_section.h"
+#include "nhttp_field.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgHeadShared class
@@ -70,19 +71,19 @@ protected:
 
     void printHeaders(FILE *output);
 
-    field headers;
+    Field headers;
 
     // All of these are indexed by the relative position of the header field in the message
     static const int MAXHEADERS = 200;  // I'm an arbitrary number. Need to revisit.
     int32_t numHeaders = NHttpEnums::STAT_NOTCOMPUTE;
-    field headerLine[MAXHEADERS];
-    field headerName[MAXHEADERS];
+    Field headerLine[MAXHEADERS];
+    Field headerName[MAXHEADERS];
     NHttpEnums::HeaderId headerNameId[MAXHEADERS];
-    field headerValue[MAXHEADERS];
+    Field headerValue[MAXHEADERS];
 
     // Normalized values are indexed by HeaderId
     int headerCount[NHttpEnums::HEAD__MAXVALUE] = { };
-    field headerValueNorm[NHttpEnums::HEAD__MAXVALUE];
+    Field headerValueNorm[NHttpEnums::HEAD__MAXVALUE];
 };
 
 #endif

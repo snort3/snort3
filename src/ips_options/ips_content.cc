@@ -962,7 +962,7 @@ static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
 
 static const Parameter content_params[] =
 {
-    { "*data", Parameter::PT_STRING, nullptr, nullptr,
+    { "~data", Parameter::PT_STRING, nullptr, nullptr,
       "data to match" },
 
     { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -1039,7 +1039,7 @@ bool ContentModule::end(const char*, int, SnortConfig*)
 
 bool ContentModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*data") )
+    if ( v.is("~data") )
         parse_content(pmd, v.get_string());
 
     else if ( v.is("offset") )

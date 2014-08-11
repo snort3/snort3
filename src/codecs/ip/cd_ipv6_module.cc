@@ -47,7 +47,7 @@ static const RuleMap ipv6_rules[] =
     { DECODE_IPV6_DST_RESERVED_MULTICAST, "(" CD_IPV6_NAME ") IPv6 packet with reserved multicast destination address" },
     { DECODE_IPV6_BAD_OPT_TYPE, "(" CD_IPV6_NAME ") IPv6 header includes an undefined option type" },
     { DECODE_IPV6_BAD_MULTICAST_SCOPE, "(" CD_IPV6_NAME ") IPv6 address includes an unassigned multicast scope value" },
-    { DECODE_IPV6_BAD_NEXT_HEADER, "(" CD_IPV6_NAME ") IPv6 header includes an invalid value for the \"next header\" field" },
+    { DECODE_IPV6_BAD_NEXT_HEADER, "(" CD_IPV6_NAME ") IPv6 header includes an invalid value for the 'next header' field" },
     { DECODE_IPV6_ROUTE_AND_HOPBYHOP, "(" CD_IPV6_NAME ") IPv6 header includes a routing extension header followed by a hop-by-hop header" },
     { DECODE_IPV6_TWO_ROUTE_HEADERS, "(" CD_IPV6_NAME ") IPv6 header includes two routing extension headers" },
     { DECODE_IPV6_DSTOPTS_WITH_ROUTING, "(" CD_IPV6_NAME ") IPv6 header has destination options followed by a routing header" },

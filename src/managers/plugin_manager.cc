@@ -34,6 +34,7 @@
 #include <iostream>
 using namespace std;
 
+#include "action_manager.h"
 #include "data_manager.h"
 #include "event_manager.h"
 #include "inspector_manager.h"
@@ -42,9 +43,11 @@ using namespace std;
 #include "mpse_manager.h"
 #include "packet_manager.h"
 #include "script_manager.h"
+#include "so_manager.h"
 
 #include "framework/codec.h"
 #include "framework/logger.h"
+#include "framework/ips_action.h"
 #include "framework/ips_option.h"
 #include "framework/inspector.h"
 #include "framework/mpse.h"
@@ -53,6 +56,7 @@ using namespace std;
 
 #include "loggers/loggers.h"
 #include "ips_options/ips_options.h"
+#include "actions/ips_actions.h"
 #include "log/messages.h"
 #include "stream/stream_inspectors.h"
 #include "network_inspectors/network_inspectors.h"
@@ -75,18 +79,31 @@ struct Symbol
     unsigned version;
 };
 
-static Symbol symbols[] =
+static Symbol symbols[PT_MAX] =
 {
     // sequence must match PlugType definition
-    { "module", 0 },
+    { "data", 0 },
     { "codec", CDAPI_VERSION },
-    { "event_handler", LOGAPI_VERSION },
-    { "ips_option", IPSAPI_VERSION },
-    { "so_rule", SOAPI_VERSION },
     { "inspector", INSAPI_VERSION },
+    { "ips_action", ACTAPI_VERSION },
+    { "ips_option", IPSAPI_VERSION },
     { "search_engine", SEAPI_VERSION },
-    { nullptr, 0 }
+    { "so_rule", SOAPI_VERSION },
+    { "logger", LOGAPI_VERSION }
 };
+ 
+const char* PluginManager::get_type_name(PlugType pt)
+{
+    if ( pt >= PT_MAX )
+        return "error";
+
+    return symbols[pt].name;
+}
+
+static const char* current_plugin = nullptr;
+
+const char* PluginManager::get_current_plugin()
+{ return current_plugin; }
 
 struct Plugin
 {
@@ -202,6 +219,7 @@ static void add_plugin(Plugin& p)
 {
     if ( p.api->mod_ctor )
     {
+        current_plugin = p.api->name;
         Module* m = p.api->mod_ctor();
         ModuleManager::add_module(m, p.api);
     }
@@ -224,7 +242,7 @@ static void add_plugin(Plugin& p)
         break;
 
     case PT_SO_RULE:
-        IpsManager::add_plugin((SoApi*)p.api);
+        SoManager::add_plugin((SoApi*)p.api);
         break;
 
     case PT_INSPECTOR:
@@ -233,6 +251,10 @@ static void add_plugin(Plugin& p)
 
     case PT_SEARCH_ENGINE:
         MpseManager::add_plugin((MpseApi*)p.api);
+        break;
+
+    case PT_IPS_ACTION:
+        ActionManager::add_plugin((ActionApi*)p.api);
         break;
 
     default:
@@ -293,13 +315,14 @@ static void unload_plugins()
 
 void PluginManager::load_plugins(const char* paths)
 {
-    load_list(loggers);
+    load_list(codecs);
+    load_list(ips_actions);
     load_list(ips_options);
     load_list(stream_inspectors);
     load_list(network_inspectors);
     load_list(service_inspectors);
     load_list(search_engines);
-    load_list(codecs);
+    load_list(loggers);
     ::load_plugins(paths);
     load_list(ScriptManager::get_ips_options());
     add_plugins();
@@ -329,14 +352,18 @@ void PluginManager::dump_plugins()
     InspectorManager::dump_plugins();
     MpseManager::dump_plugins();
     IpsManager::dump_plugins();
+    SoManager::dump_plugins();
+    ActionManager::dump_plugins();
     EventManager::dump_plugins();
 }
 
 void PluginManager::release_plugins ()
 {
     EventManager::release_plugins();
+    ActionManager::release_plugins();
     InspectorManager::release_plugins();
     IpsManager::release_plugins();
+    SoManager::release_plugins();
     MpseManager::release_plugins();
     PacketManager::release_plugins();
 
@@ -375,24 +402,28 @@ void PluginManager::instantiate(
         PacketManager::instantiate((CodecApi*)api, mod, sc);
         break;
 
-    case PT_LOGGER:
-        EventManager::instantiate((LogApi*)api, mod, sc);
+    case PT_INSPECTOR:
+        InspectorManager::instantiate((InspectApi*)api, mod, sc);
+        break;
+
+    case PT_IPS_ACTION:
+        ActionManager::instantiate((ActionApi*)api, mod, sc);
         break;
 
     case PT_IPS_OPTION:
         //IpsManager::instantiate((IpsApi*)api, mod, sc);
         break;
 
+    case PT_SEARCH_ENGINE:
+        MpseManager::instantiate((MpseApi*)api, mod, sc);
+        break;
+
     case PT_SO_RULE:
         //IpsManager::instantiate((SoApi*)api, mod, sc);
         break;
 
-    case PT_INSPECTOR:
-        InspectorManager::instantiate((InspectApi*)api, mod, sc);
-        break;
-
-    case PT_SEARCH_ENGINE:
-        MpseManager::instantiate((MpseApi*)api, mod, sc);
+    case PT_LOGGER:
+        EventManager::instantiate((LogApi*)api, mod, sc);
         break;
 
     default:
