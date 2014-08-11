@@ -9,7 +9,6 @@ add_subdirectory(output_states)
 add_subdirectory(config_states)
 add_subdirectory(rule_states)
 add_subdirectory(utils)
-add_subdirectory(tinyxml)
 
 if (BUILD_UNIT_TESTS)
 if (0)

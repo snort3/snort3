@@ -24,5 +24,4 @@ target_link_libraries( keyword_states
     preprocessor_states
     config_states
     rule_states
-    tinyxml     # for parsing attribute table
 )

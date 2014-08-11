@@ -21,11 +21,12 @@
 
 #include <sstream>
 #include <vector>
+#include <fstream>
 #include <unordered_map>
 
 #include "conversion_state.h"
 #include "utils/s2l_util.h"
-#include "tinyxml/tinyxml.h"
+
 
 namespace keywords
 {
@@ -40,181 +41,152 @@ public:
     virtual bool convert(std::istringstream& data);
 
 private:
-    std::istringstream* stream; // tempporarily a variable so I can hit failed_conversion
+    std::istringstream* stream; // so I can caldd ld->failed_conversion
     std::unordered_map<std::string, std::string> attr_map;
+    std::ifstream attr_file;
 
-    std::string add_lua_opt(TiXmlNode* node, std::string lua_opt = std::string());
-    bool parse_map_entries(TiXmlNode* snort_attr);
-    bool parse_attr_table(TiXmlNode* snort_attr);
-    bool parse_entry(TiXmlNode* mapped_entry);
-    bool parse_host(TiXmlNode* host);
-    bool parse_service(TiXmlNode* host);
+    bool get_next_element(std::string& elem);
+    void parse_os();
+    void parse_service();
+    void parse_services();
+    void parse_host();
+    void parse_entry();
+    void parse_map_entries();
+    void parse_attr_table();
 };
 
 } // namespace
 
-
-/*
- * Add this Node's Child's text as a lua options.  This
- * returns void since it will automatically add a
- * bad opiton to the reject's file.
- *
- * ASSUMPTION: The relevant table has already been opened
- */
-std::string AttributeTable::add_lua_opt(TiXmlNode* node, std::string lua_opt)
+bool AttributeTable::get_next_element(std::string& elem)
 {
-    TiXmlNode* text_node = node->LastChild();
+    if (attr_file.eof())
+        return false;
 
-    if (!text_node)
-    {
-        ld->developer_error("Attribute Table::add_lua_opt() --> " +
-            std::string(node->Value()) + " has no child!!");
-    }
-    else
-    {
-        std::string text_str(text_node->Value());
+    std::getline(attr_file, elem, '<');
+    util::trim(elem);
 
-        if (text_str.empty())
-            ld->developer_error("Attribute Table::add_lua_opt() --> " +
-                std::string(node->Value()) + " child has no Text!");
-        else
-        {
-            if (!lua_opt.empty())
-                ld->add_option_to_table(lua_opt, text_str);
-            return text_str;
-        }
+    if (!elem.empty() && elem.front() != '<')
+    {
+        // add the '<' charachter back for next call
+        attr_file.unget();
+        return true;
     }
 
-    return std::string();
-}
+    // since we've already extracted everything until '<'
+    std::getline(attr_file, elem, '>');
 
-/*
- * The element passed in should be an ENTRY node
- */
-bool AttributeTable::parse_entry(TiXmlNode* mapped_entry)
-{
-
-    if (std::string(mapped_entry->Value()).compare("ENTRY"))
-        return false;
-
-    TiXmlNode* elem_id = mapped_entry->LastChild("ID");
-    TiXmlNode* elem_value = mapped_entry->LastChild("VALUE");
-
-    if (!elem_id || !elem_value)
-        return false;
-
-    TiXmlNode* id_text =  elem_id->LastChild();
-    TiXmlNode* value_text =  elem_value->LastChild();
-
-    if (!id_text || !value_text)
-        return false;
-
-    std::string id = std::string(id_text->Value());
-    std::string val = std::string(value_text->Value());
-
-    attr_map[id] = val;
-    return true;
+    util::trim(elem);
+    return !elem.empty();
 }
 
 /*
  * Parse the 'SERVICE' element and add elemnts to Lua configuration
  */
-bool AttributeTable::parse_service(TiXmlNode* service)
+void AttributeTable::parse_service()
 {
-    if (std::string(service->Value()).compare("SERVICE"))
-        return false;
+    std::string elem;
 
     ld->open_table("services");
     ld->open_table();
 
-    TiXmlNode* name = service->LastChild("PROTOCOL");
-    if (name)
+    while(get_next_element(elem) &&
+          elem.compare("/SERVICE"))
     {
-        TiXmlNode* val = name->LastChild("ATTRIBUTE_VALUE");
-        if (val)
+        if (!elem.compare("PROTOCOL"))
         {
-            std::string val_str = add_lua_opt(val);
-            ld->add_option_to_table("name", val_str);
+            while(get_next_element(elem) &&
+                elem.compare("/PROTOCOL"))
+            {
+                if (!elem.compare("ATTRIBUTE_VALUE"))
+                {
+                    get_next_element(elem);
+                    ld->add_option_to_table("name", elem);
+                }
+                else if (!elem.compare("ATTRIBUTE_ID"))
+                {
+                    get_next_element(elem);
+                    ld->add_option_to_table("name", attr_map[elem]);
+                }
+            } // while("/PROTOCOL")
         }
-
-        TiXmlNode* id = name->LastChild("ATTRIBUTE_ID");
-        if (id)
+        else if (!elem.compare("IPPROTO"))
         {
-            std::string id_str = add_lua_opt(id);
-            ld->add_option_to_table("name", attr_map[id_str]);
+            while(get_next_element(elem) &&
+                elem.compare("/IPPROTO"))
+            {
+                if (!elem.compare("ATTRIBUTE_VALUE"))
+                {
+                    get_next_element(elem);
+                    ld->add_option_to_table("proto", elem);
+                }
+                else if (!elem.compare("ATTRIBUTE_ID"))
+                {
+                    get_next_element(elem);
+                    ld->add_option_to_table("proto", attr_map[elem]);
+                }
+            } // while("/IPPROTO")
         }
-    }
-
-    TiXmlNode* proto = service->LastChild("IPPROTO");
-    if (proto)
-    {
-        TiXmlNode* val = proto->LastChild("ATTRIBUTE_VALUE");
-        if (val)
+        else if (!elem.compare("PORT"))
         {
-            std::string proto_str = add_lua_opt(val);
-            ld->add_option_to_table("proto", proto_str);
+            while(get_next_element(elem) &&
+                elem.compare("/PORT"))
+            {
+                if (!elem.compare("ATTRIBUTE_VALUE"))
+                {
+                    get_next_element(elem);
+                    ld->add_option_to_table("proto", std::stoi(elem));
+                }
+                else if (!elem.compare("ATTRIBUTE_ID"))
+                {
+                    get_next_element(elem);
+                    ld->add_option_to_table("proto", std::stoi(attr_map[elem]));
+                }
+            } // while("/IPPROTO")
         }
-
-        TiXmlNode* id = proto->LastChild("ATTRIBUTE_ID");
-        if (id)
-        {
-            std::string proto_str = add_lua_opt(id);
-            ld->add_option_to_table("proto", attr_map[proto_str])   ;
-        }
-    }
-
-    TiXmlNode* port =  service->LastChild("PORT");
-    if (port)
-    {
-        TiXmlNode* val = port->LastChild("ATTRIBUTE_VALUE");
-        if (val)
-        {
-            int port = std::stoi(add_lua_opt(val));
-            ld->add_option_to_table("proto", port);
-        }
-
-        TiXmlNode* id = port->LastChild("ATTRIBUTE_ID");
-        if (id)
-        {
-            std::string proto_str = add_lua_opt(id);
-            ld->add_option_to_table("proto", std::stoi(attr_map[proto_str]));
-        }
-    }
+    } // while ("/SERVICE")
 
     ld->close_table();
     ld->close_table();
-    return true;
 }
 
+
 /*
- * Parse the 'HOST' element and add elemnts to Lua configuration
+ * Parse the 'SERVICES' element.  Expect 'SERVICE'
  */
-bool AttributeTable::parse_host(TiXmlNode* host)
+void AttributeTable::parse_services()
 {
-    bool retval = true;
+    std::string elem;
 
-    if (std::string(host->Value()).compare("HOST"))
-        return false;
-
-    ld->open_table("hosts");
-    ld->add_diff_option_comment("Attribute_table: STREAM_POLICY", "hosts: tcp_policy");
-    ld->open_table();
-
-    // First up, the IP
-    TiXmlNode* ip = host->LastChild("IP");
-    if (ip)
-        add_lua_opt(ip, "ip");
-
-    TiXmlNode* os = host->LastChild("OPERATING_SYSTEM");
-    if (os)
+    while(get_next_element(elem) &&
+          elem.compare("/SERVICES"))
     {
-        TiXmlNode* frag_policy = os->LastChild("FRAG_POLICY");
-        if (frag_policy)
-        {
-            std::string policy = add_lua_opt(frag_policy);
+        // every element in an attribute table should be a host
+        if (!elem.compare("SERVICE"))
+            parse_service();
+        else
+            ld->failed_conversion(*stream, "AttributeTable: <SERVICES>"
+                                  " should only contain <SERVICE> elements!");
+    }
+}
 
-            if (!policy.compare("unknown"))
-                ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>");
+void AttributeTable::parse_os()
+{
+    std::string elem;
+
+    while(get_next_element(elem) &&
+          elem.compare("/OPERATING_SYSTEM"))
+    {
+
+        if (!elem.compare("FRAG_POLICY"))
+        {
+            std::string policy;
+
+            if (!get_next_element(policy))
+                ld->failed_conversion(*stream,  "AttributeTable:"
+                    " <FRAG_POLICY>**missing policy**</FRAG_POLICY>");
+
+            else if (!policy.compare("unknown"))
+                    ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>");
 
             else if (!policy.compare("hpux"))
                 ld->add_deleted_comment("Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>");
@@ -243,7 +215,6 @@ bool AttributeTable::parse_host(TiXmlNode* host)
             else if (!policy.compare("windows"))
                 ld->add_option_to_table("frag_policy", "windows");
 
-
             else if (!policy.compare("bsd-right"))
             {
                 // keep this on one line so data miner can find it
@@ -253,20 +224,22 @@ bool AttributeTable::parse_host(TiXmlNode* host)
 
             else
             {
-                retval = false;
                 ld->failed_conversion(*stream, "Attribute_Table: <FRAG_POLICY>" +
                     policy + "</FRAG_POLICY>");
             }
         }
 
-
-        TiXmlNode* tcp_policy = os->LastChild("STREAM_POLICY");
-        if (tcp_policy)
+        else if (!elem.compare("STREAM_POLICY"))
         {
-            std::string policy = add_lua_opt(tcp_policy);
+            std::string policy;
 
-            if (!policy.compare("bsd"))
-                ld->add_option_to_table("tcp_policy", "bsd");
+
+            if (!get_next_element(policy))
+                ld->failed_conversion(*stream,  "AttributeTable:"
+                    " <STREAM_POLICY>**missing policy**</STREAM_POLICY>");
+
+            else if (!policy.compare("bsd"))
+                    ld->add_option_to_table("tcp_policy", "bsd");
 
             else if (!policy.compare("first"))
                 ld->add_option_to_table("tcp_policy", "first");
@@ -315,60 +288,108 @@ bool AttributeTable::parse_host(TiXmlNode* host)
 
             else
             {
-                retval = false;
-                ld->failed_conversion(*stream, policy);
-            }
+                ld->failed_conversion(*stream, "Attribute_Table: <STREAM_POLICY>" +
+                    policy + "</STREAM_POLICY>");                }
         }
     }
+}
 
-    TiXmlNode* services = host->LastChild("SERVICES");
-    if (services)
+
+/*
+ * Parse the 'HOST' element and add elements to Lua configuration
+ */
+void AttributeTable::parse_host()
+{
+    ld->open_table("hosts");
+    ld->add_diff_option_comment("Attribute_table: STREAM_POLICY", "hosts: tcp_policy");
+    ld->open_table();
+
+    std::string elem;
+
+
+    while(get_next_element(elem) &&
+          elem.compare("/HOST"))
     {
-        for ( TiXmlNode* elem = services->FirstChild();
-                elem != 0; elem = elem->NextSibling())
+        if (!elem.compare("OPERATING_SYSTEM"))
         {
-            parse_service(elem);
+            parse_os();
+        }
+        else if (!elem.compare("SERVICES"))
+        {
+            parse_services();
+        }
+        else if (!elem.compare("IP"))
+        {
+            std::string ip;
+            if (get_next_element(ip))
+                ld->add_option_to_table("ip", ip);
+            else
+                ld->failed_conversion(*stream,  "AttributeTable:"
+                    " <IP>**missing ip**</IP>");
         }
     }
 
+    ld->close_table();
+    ld->close_table();
+}
 
-    ld->close_table();
-    ld->close_table();
-    return retval;
+void AttributeTable::parse_attr_table()
+{
+    std::string elem;
+
+    while(get_next_element(elem) &&
+          elem.compare("/ATTRIBUTE_TABLE"))
+    {
+        // every element in an attribute table should be a host
+        if (elem.compare("HOST"))
+            ld->failed_conversion(*stream, "AttributeTable: <ATTRIBUTE_TABLE>"
+                    " should only contain <HOST> elements!");
+        else
+            parse_host();
+    }
 }
 
 /*
- * Expected the Parameter passed in to be a pointer to
- * the ATTRIBUTE_MAP node
+ * The element passed in should be an ENTRY node
  */
-bool AttributeTable::parse_map_entries(TiXmlNode* snort_attr)
+void AttributeTable::parse_entry()
 {
-    bool retval = true;
-    TiXmlNode* map = snort_attr->FirstChild("ATTRIBUTE_MAP");
+    std::string elem;
+    std::string id = std::string();
+    std::string value = std::string();
 
-    for ( TiXmlNode* elem = map->FirstChild(); elem != 0; elem = elem->NextSibling())
+    while(get_next_element(elem) &&
+          elem.compare("/ENTRY"))
     {
-        if (!parse_entry(elem))
-            retval = false;
+        if (!elem.compare("ID"))
+        {
+            if (!get_next_element(id))
+                ld->failed_conversion(*stream, "AttributeTable:"
+                    " <ID>**missing option**</ID>");
+        }
+        else if (!elem.compare("VALUE"))
+        {
+            if (!get_next_element(value))
+                ld->failed_conversion(*stream, "AttributeTable:"
+                    " <VALUE>**missing option**</VALUE>");
+        }
     }
 
-    snort_attr->RemoveChild(map);
-    return retval;
+    // add this pair to the map.
+    if (!id.empty() && !value.empty())
+        attr_map[id] = value;
 }
 
-bool AttributeTable::parse_attr_table(TiXmlNode* snort_attr)
+
+void AttributeTable::parse_map_entries()
 {
-    bool retval = true;
+    std::string elem;
 
-    TiXmlNode* attr_table = snort_attr->FirstChild("ATTRIBUTE_TABLE");
-
-    for ( TiXmlNode* elem = attr_table->FirstChild(); elem != 0; elem = elem->NextSibling())
+    while(get_next_element(elem) &&
+          elem.compare("/ATTRIBUTE_MAP"))
     {
-        if (!parse_host(elem))
-            retval = false;
+        parse_entry();
     }
-
-    return retval;
 }
 
 bool AttributeTable::convert(std::istringstream& data_stream)
@@ -388,28 +409,35 @@ bool AttributeTable::convert(std::istringstream& data_stream)
     if (file.empty())
         return false;
 
-
+    // setting class variables
     stream = &data_stream;
-
     file = ld->expand_vars(file);
-    TiXmlDocument doc(file.c_str());
 
 
-    if (!util::file_exists(file) || !doc.LoadFile()) // really the same test twice
+    if (!util::file_exists(file))
     {
         ld->open_table("hosts");
         ld->add_comment_to_table("unable to open the attribute file: " + file);
         return false;
     }
 
-    // Now that we have parsed the config option and loaded the file,
-    // begin converting to Snort++ format.
+    attr_file.open(file, std::ifstream::in);
+    std::string elem;
+    while (get_next_element(elem))
+    {
+        if (!elem.compare("ATTRIBUTE_MAP"))
+            parse_map_entries();
 
+        else if (!elem.compare("ATTRIBUTE_TABLE"))
+            parse_attr_table();
 
-    TiXmlNode* attributes = doc.FirstChild("SNORT_ATTRIBUTES");
-
-    parse_map_entries(attributes); // save all mapped items to attr_map
-    parse_attr_table(attributes); // parse and converter remaining xml document
+        /*
+         * While there probaby should be another else,
+         * I have absolutely NO idea what correct
+         * 'grammar' entails. So, in this case and all others
+         * just ignore any extra data.
+         */
+    }
     return true;
 }
 
