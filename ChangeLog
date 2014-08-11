@@ -3,6 +3,8 @@
 -- fix up rule loading
 -- fixed so rule parsing
 -- added pcre jit
+-- fixed --help-module to use exact match on module for params instead of
+   prefix
 
 110
 -- converted rule meta options to ips options (w/o eval)

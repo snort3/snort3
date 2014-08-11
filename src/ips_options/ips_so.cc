@@ -112,7 +112,7 @@ int SoOption::eval(Cursor&, Packet* p)
 static const Parameter so_params[] =
 {
     { "~func", Parameter::PT_STRING, nullptr, nullptr,
-      "name of function to call" },
+      "name of eval function" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

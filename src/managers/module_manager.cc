@@ -516,7 +516,7 @@ void ModuleManager::show_module(const char* name)
             if ( p->type < Parameter::PT_MAX )
             {
                 cout << endl << "Configuration: "  << endl << endl;
-                show_configs(name);
+                show_configs(name, true);
             }
         }
 
@@ -540,7 +540,7 @@ void ModuleManager::show_module(const char* name)
     }
 }
 
-void ModuleManager::show_configs(const char* pfx)
+void ModuleManager::show_configs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_mods);
 
@@ -548,6 +548,9 @@ void ModuleManager::show_configs(const char* pfx)
     {
         Module* m = p->mod;
         string s;
+
+        if ( exact && strcmp(m->get_name(), pfx) )
+            continue;
 
         if ( m->is_list() )
         {
