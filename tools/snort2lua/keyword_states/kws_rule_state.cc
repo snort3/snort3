@@ -77,7 +77,7 @@ bool RuleState::convert(std::istringstream& data_stream)
                 }
                 else
                 {
-                    ld->add_error_comment("unkown option!");
+                    ld->failed_conversion(data_stream, "third option must be {enabled|disabled|");
                     retval = false;
                 }
 
@@ -88,7 +88,7 @@ bool RuleState::convert(std::istringstream& data_stream)
                 count++;
                 break;
             default:
-                ld->add_error_comment("rule_state has too many option!!");
+                ld->failed_conversion(data_stream, "too many options!!");
 
         }
 

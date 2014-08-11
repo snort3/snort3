@@ -81,7 +81,6 @@ bool RuleHeader::convert(std::istringstream& data_stream)
 template<const std::string *name>
 static ConversionState* rule_ctor(Converter* cv, LuaData* ld)
 {
-    ld->begin_rule();
     ld->add_hdr_data(*name);
     return new RuleHeader(cv, ld);
 }
@@ -89,7 +88,6 @@ static ConversionState* rule_ctor(Converter* cv, LuaData* ld)
 template<const std::string *name>
 static ConversionState* dep_rule_ctor(Converter* cv, LuaData* ld)
 {
-    ld->begin_rule();
     ld->add_hdr_data(*name);
     ld->make_rule_a_comment();
     ld->add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");

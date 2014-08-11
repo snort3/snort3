@@ -50,7 +50,7 @@ bool Converter::initialize(conv_new_f func, LuaData* ld)
 
     if (state == nullptr)
     {
-        ld->add_error_comment("Could not create an 'initial' state!");
+        std::cout << "Failed Converter initialization!" << std::endl;
         return false;
     }
 
@@ -105,7 +105,6 @@ void Converter::parse_include_file(std::string input_file)
 
         // add this new file as a snort style rule
         error = true;
-        ld->begin_rule();
         ld->add_hdr_data("include " + input_file);
         return;
     }
@@ -135,7 +134,6 @@ void Converter::parse_include_file(std::string input_file)
 
 
         // add this new file as a snort style rule
-        ld->begin_rule();
         ld->add_hdr_data("include " + input_file + ".rules");
     }
 }
@@ -144,8 +142,10 @@ int Converter::convert_file(std::string input_file)
 {
     std::ifstream in;
     std::string orig_text;
-//    bool space_present = false;
 
+    // theoretically, I can save this state.  But there's
+    // no need since any function calling this method
+    // will set the state when it's done anyway.
     reset_state();
 
     if (!util::file_exists(input_file))
@@ -188,7 +188,7 @@ int Converter::convert_file(std::string input_file)
             {
                 if ((state == nullptr) || !state->convert(data_stream))
                 {
-                    ld->add_error_comment("Failed to entirely convert: " + orig_text);
+                    ld->failed_conversion(data_stream);
                     break;
                 }
             }

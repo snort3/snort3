@@ -49,7 +49,6 @@ bool File::convert(std::istringstream& data_stream)
     // copies the entire buffer into a rule.
 
 
-    ld->begin_rule();
     std::string data = data_stream.str();
     ld->add_hdr_data(data);
     data_stream.setstate(std::ios_base::eofbit);

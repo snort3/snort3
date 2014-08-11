@@ -34,6 +34,24 @@
 #include "data/dt_rule.h"
 #include "data/dt_include.h"
 
+/*
+ *
+ * As a heads up to whoever reads this file.  This one API is
+ * really three distinct API's rolled into one.  One API for rules,
+ * one api for misc data (variables, includes, etcs), one api
+ * for creating tables. Hoever, the reason they are
+ * together is becasue this class is not static, and I did not
+ * want to be pass three pointers to the three API's when
+ * creating new convesion states.  There are comments in
+ * in all caps which show the seperate the sections.
+ *
+ * The first section of this file is really LuaData creation
+ * and initialization, and adding miscelaneous objects
+ * to the LuaData data.  The second section is for creating
+ * tables and their options.  The third section is for
+ * creating rules.
+ */
+
 class LuaData
 {
 
@@ -77,19 +95,27 @@ public:
 
     // FILE CREATION AND ADDITIONS
 
-    void add_error_comment(std::string comment);
-    // add a reject comment to the rejct file
-    void add_comment(std::string comment);
+    // Call when failed to convert a line.
+    // stream == the stringstream object which failed to convert
+    void failed_conversion(std::istringstream& stream);
+    // same as above. unknown_option is the specific option which
+    // casue the failure.
+    void failed_conversion(std::istringstream& stream, std::string unkown_option);
     // add a variable to this file
     bool add_variable(std::string name, std::string value);
     // add a Snort style include file
     bool add_include_file(std::string name);
     // reset any open tables.
     void reset_state();
+    // add a 'comment' to the Lua file. shoudl ONLY be used when
+    // adding a comment from the original Snort file.
+    void add_comment(std::string);
+    // For problems with the Snort2Lua code, NOT with the snort configuration
+    void developer_error(std::string comment);
 
 
 
-    // CREATING TABLES AND NEXTED TABLES
+    // CREATING TABLES AND NESTED TABLES
 
     // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
     void open_top_level_table(std::string name);
@@ -102,7 +128,7 @@ public:
 
     // ADDING DATA AND FIELDS TO CURRENT TABLE
 
-    // add an string, bool, or int option to the table. --> table = { name = var };
+    // add an string, bool, or int option to the table. --> table = { name = var |'var'};
     bool add_option_to_table(const std::string name, const std::string val);
     bool add_option_to_table(const std::string name, const int val);
     bool add_option_to_table(const std::string name, const bool val);
@@ -122,12 +148,10 @@ public:
 
     // CREATE RULE AND ADD DATA TO THE RULE
 
-    // Create a new rule object.
-    void begin_rule();
     // Comment out the current rule
     void make_rule_a_comment();
     // bad rules...throw an error
-    void bad_rule(std::string bad_option, std::istringstream& stream);
+    void bad_rule(std::istringstream& stream, std::string bad_option);
     // add a new peice of header_data to the current rule
     bool add_hdr_data(std::string data);
     // add a rule option (keyword and suboption)
@@ -170,8 +194,11 @@ private:
     Comments* bad_rules;
     Rule* curr_rule;
     RuleOption* curr_rule_opt;
-    bool curr_rule_bad;
+    bool curr_data_bad;
 
+
+    // Create a new rule object.
+    void begin_rule();
 };
 
 

@@ -284,7 +284,7 @@ protected:
             }
             else
             {
-                ld->bad_rule(keyword, stream);
+                ld->bad_rule(stream, keyword);
 
                 // if there is data after this keyword,
                 //    eat everything until end of keyword

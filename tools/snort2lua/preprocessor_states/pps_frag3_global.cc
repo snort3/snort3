@@ -77,8 +77,12 @@ bool Frag3Global::convert(std::istringstream& data_stream)
         else
             tmpval = false;
 
-        if (retval)
-            retval = tmpval;
+
+        if (!tmpval)
+        {
+            ld->failed_conversion(data_stream, "keyword");
+            retval = false;
+        }
     }
 
     return retval;    

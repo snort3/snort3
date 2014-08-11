@@ -70,7 +70,7 @@ bool Urilen::convert(std::istringstream& data_stream)
                 tmpval = ld->add_rule_option_before_selected("http_uri");
 
             else
-                ld->bad_rule("invalid arguments: " + args, data_stream);
+                ld->bad_rule(data_stream, "invalid arguments: " + args);
 
             if (retval && !tmpval)
                 retval = false;
@@ -78,7 +78,7 @@ bool Urilen::convert(std::istringstream& data_stream)
     }
     else
     {
-        ld->bad_rule("urilen: option required", data_stream);
+        ld->bad_rule(data_stream, "urilen: option required");
     }
 
     ld->unselect_option();

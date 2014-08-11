@@ -61,7 +61,6 @@ bool Include::convert(std::istringstream& data_stream)
         }
         else
         {
-            ld->begin_rule();
             ld->add_hdr_data("include " + file);
         }
         return true;

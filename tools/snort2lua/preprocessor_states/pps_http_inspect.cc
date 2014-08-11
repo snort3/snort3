@@ -61,7 +61,7 @@ bool HttpInspect::convert(std::istringstream& data_stream)
     {
         if(keyword.compare("global"))
         {
-            ld->add_error_comment("preprocessor httpinspect: requires the 'global' keyword");
+            ld->failed_conversion(data_stream, "'global' keyword required");
             return false;
         }
     }

@@ -60,7 +60,7 @@ public:
             (lua_table == nullptr)||
             (lua_table->empty()))
         {
-            ld->add_error_comment("Invalid Option!!  Missing either the Snort Option"
+            ld->developer_error("Invalid Option!!  Missing either the Snort Option"
                 " or the corresponding lua table!!");
             return false;
         }

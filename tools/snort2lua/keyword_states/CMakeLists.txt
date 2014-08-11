@@ -1,5 +1,6 @@
 
 add_library( keyword_states
+    kws_attribute_table.cc
     kws_config.cc
     kws_event_filter.cc
     kws_file.cc
@@ -23,4 +24,5 @@ target_link_libraries( keyword_states
     preprocessor_states
     config_states
     rule_states
+    tinyxml     # for parsing attribute table
 )

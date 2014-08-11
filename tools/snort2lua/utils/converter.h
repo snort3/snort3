@@ -31,12 +31,11 @@
 #include <ostream>
 
 #include "data/dt_data.h"
-//#include "data/dt_var.h"
 
 
 // typedef redefined from 'conversion_state.h'
+class Converter; // for typedef below
 class ConversionState;
-class Converter;
 class LuaData;
 typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
 

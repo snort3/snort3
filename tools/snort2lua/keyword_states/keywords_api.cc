@@ -26,6 +26,7 @@ namespace keywords
 {
 
 extern const ConvertMap* activate_map;
+extern const ConvertMap* attribute_table_map;
 extern const ConvertMap* alert_map;
 extern const ConvertMap* block_map;
 extern const ConvertMap* config_map;
@@ -56,6 +57,7 @@ extern const ConvertMap* var_map;
 const std::vector<const ConvertMap*> keywords_api =
 {
     activate_map,
+    attribute_table_map,
     alert_map,
     block_map,
     config_map,
