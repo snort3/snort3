@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -25,15 +23,12 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
 
 #include <string>
 
 #include "snort_types.h"
 #include "detection/treenodes.h"
 #include "snort_debug.h"
-#include "util.h"
 #include "snort.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"

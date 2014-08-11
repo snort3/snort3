@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -18,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_icmp_seq.cc author Russ Combs <rucombs@cisco.com>
 
 /* sp_icmp_seq_check
  *
@@ -46,14 +45,10 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <ctype.h>
 
 #include "snort_types.h"
-#include "detection/treenodes.h"
 #include "protocols/packet.h"
-#include "parser.h"
 #include "snort_debug.h"
-#include "util.h"
 #include "snort.h"
 #include "profiler.h"
 #include "detection/fpdetect.h"

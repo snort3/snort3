@@ -128,25 +128,25 @@ bool RangeCheck::eval(long c)
 {
     switch ( op )
     {
-        case EQ:
+    case EQ:
         return ( min == c );
 
-        case NOT:
+    case NOT:
         return ( min != c );
 
-        case LT:
+    case LT:
         return ( min < c );
 
-        case LE:
+    case LE:
         return ( min <= c );
 
-        case GT:
+    case GT:
         return ( min > c );
 
-        case GE:
+    case GE:
         return ( min >= c );
 
-        case LG:
+    case LG:
         return ( min < c && c < max );
 
     default:

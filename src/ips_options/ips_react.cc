@@ -1,7 +1,5 @@
 /****************************************************************************
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2005-2013 Sourcefire, Inc.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -19,9 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  ****************************************************************************/
-
-// @file    sp_react.c
-// @author  Russ Combs <rcombs@sourcefire.com>
+// ips_react.cc author Russ Combs <rucombs@cisco.com>
 
 /* The original Snort React Plugin was contributed by Maciej Szarpak, Warsaw
  * University of Technology.  The module has been entirely rewritten by
@@ -61,9 +57,8 @@
 #include "protocols/packet.h"
 #include "managers/packet_manager.h"
 #include "detection/detection_defines.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "packet_io/active.h"
 #include "sfhashfcn.h"
 #include "snort.h"

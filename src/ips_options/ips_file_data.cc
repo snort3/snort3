@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  ** Copyright (C) 1998-2013 Sourcefire, Inc.
  **
  ** This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  ** along with this program; if not, write to the Free Software
  ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+// ips_filedata.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -28,15 +29,8 @@
 #include <errno.h>
 
 #include "snort_types.h"
-#include "snort_bounds.h"
-#include "protocols/packet.h"
-#include "parser.h"
 #include "snort_debug.h"
-#include "util.h"
-#include "mstring.h"
-#include "snort.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
