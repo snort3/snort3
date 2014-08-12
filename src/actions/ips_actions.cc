@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_actions.cc author Russ Combs <rucombs@cisco.com>
 
 #include "ips_actions.h"
 
@@ -24,14 +24,14 @@
 #include "config.h"
 #endif
 
-#ifdef STATIC_ACTIONS
-//extern const BaseApi* act_bo;
+#ifdef STATIC_IPS_ACTIONS
+extern const BaseApi* act_reject;
 #endif
 
 const BaseApi* ips_actions[] =
 {
-#ifdef STATIC_ACTIONS
-//    act_bo,
+#ifdef STATIC_IPS_ACTIONS
+    act_reject,
 #endif
     nullptr,
 };

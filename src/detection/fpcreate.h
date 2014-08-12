@@ -82,7 +82,7 @@ typedef struct _NCListNode
 **  This structure holds configuration options for the
 **  detection engine.
 */
-typedef struct _FastPatternConfig
+struct FastPatternConfig
 {
     const struct MpseApi* search_api;
     int inspect_stream_insert;
@@ -99,8 +99,7 @@ typedef struct _FastPatternConfig
     int num_patterns_truncated;  /* due to max_pattern_len */
     int num_patterns_trimmed;    /* due to zero byte prefix */
     int debug_print_fast_pattern;
-
-} FastPatternConfig;
+};
 
 /*
  *  Service Rule Map Master Table

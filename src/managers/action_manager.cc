@@ -61,10 +61,20 @@ void ActionManager::dump_plugins()
 
 //-------------------------------------------------------------------------
 
-void ActionManager::instantiate(const ActionApi*, Module*, SnortConfig*)
+RuleType ActionManager::get_action_type(const char* s)
 {
-    // nothing to do here 
-    // see 
+    for ( auto* p : s_actors )
+    {
+        if ( !strcmp(p->base.name, s) )
+            return p->type;
+    }
+    return RULE_TYPE__NONE;
+}
+
+void ActionManager::instantiate(
+    const ActionApi* api, Module*, SnortConfig* sc)
+{
+    CreateRuleType(sc, api->base.name, api->type, 0, nullptr);
 }
 
 #if 0

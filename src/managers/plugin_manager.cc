@@ -233,28 +233,28 @@ static void add_plugin(Plugin& p)
         PacketManager::add_plugin((CodecApi*)p.api);
         break;
 
-    case PT_LOGGER:
-        EventManager::add_plugin((LogApi*)p.api);
+    case PT_INSPECTOR:
+        InspectorManager::add_plugin((InspectApi*)p.api);
+        break;
+
+    case PT_IPS_ACTION:
+        ActionManager::add_plugin((ActionApi*)p.api);
         break;
 
     case PT_IPS_OPTION:
         IpsManager::add_plugin((IpsApi*)p.api);
         break;
 
-    case PT_SO_RULE:
-        SoManager::add_plugin((SoApi*)p.api);
-        break;
-
-    case PT_INSPECTOR:
-        InspectorManager::add_plugin((InspectApi*)p.api);
-        break;
-
     case PT_SEARCH_ENGINE:
         MpseManager::add_plugin((MpseApi*)p.api);
         break;
 
-    case PT_IPS_ACTION:
-        ActionManager::add_plugin((ActionApi*)p.api);
+    case PT_SO_RULE:
+        SoManager::add_plugin((SoApi*)p.api);
+        break;
+
+    case PT_LOGGER:
+        EventManager::add_plugin((LogApi*)p.api);
         break;
 
     default:

@@ -129,6 +129,8 @@ static rule_count_t ipCnt;
 
 static port_list_t port_list;
 
+static bool s_ignore = false;  // for skipping drop rules when not inline, etc.
+
 static int port_list_add_entry( port_list_t * plist, port_entry_t * pentry)
 {
     if( !plist )
@@ -891,7 +893,9 @@ static void XferHeader(RuleTreeNode *test_node, RuleTreeNode *rtn)
  * Returns: void function
  *
  ***************************************************************************/
-void AddRuleFuncToList(int (*rfunc) (Packet *, RuleTreeNode *, struct _RuleFpList *, int), RuleTreeNode * rtn)
+void AddRuleFuncToList(
+    int (*rfunc) (Packet *, RuleTreeNode *, struct RuleFpList *, int),
+    RuleTreeNode * rtn)
 {
     RuleFpList *idx;
 
@@ -1337,11 +1341,19 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
     memset(&rtn, 0, sizeof(rtn));
     rtn.type = get_rule_type(s);
-    rtn.listhead = get_rule_list(sc, (RuleType)rtn.type);
+
+    if ( rtn.type == RULE_TYPE__NONE )
+        s_ignore = true;
+
+    else
+        rtn.listhead = get_rule_list(sc, (RuleType)rtn.type);
 }
 
 void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return;
+
     rtn.proto = GetRuleProtocol(s);
 
     switch (rtn.proto)
@@ -1377,12 +1389,18 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 void parse_rule_nets(
     SnortConfig* sc, const char* s, bool src, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return;
+
     ProcessIP(sc, s, &rtn, src ? SRC : DST, 0);
 }
 
 void parse_rule_ports(
     SnortConfig*, const char* s, bool src, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return;
+
     IpsPolicy* p = get_ips_policy();
 
     if ( ParsePortList(&rtn, p->portVarTable, p->nonamePortVarTable,
@@ -1394,6 +1412,9 @@ void parse_rule_ports(
 
 void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return;
+
     if (strcmp(s, RULE_DIR_OPT__BIDIRECTIONAL) == 0)
         rtn.flags |= BIDIRECTIONAL;
 
@@ -1403,6 +1424,9 @@ void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
 
 void parse_rule_opt_begin(SnortConfig* sc, const char* key)
 {
+    if ( s_ignore )
+        return;
+
     if ( !IpsManager::option_begin(sc, key) )
     {
         ParseError("unknown rule keyword: %s.", key);
@@ -1412,6 +1436,9 @@ void parse_rule_opt_begin(SnortConfig* sc, const char* key)
 void parse_rule_opt_set(
     SnortConfig* sc, const char* key, const char* opt, const char* val)
 {
+    if ( s_ignore )
+        return;
+
     if ( !IpsManager::option_set(sc, key, opt, val) )
     {
         ParseError("unknown rule option: %s:%s.", key, opt);
@@ -1420,6 +1447,9 @@ void parse_rule_opt_set(
 
 void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
 {
+    if ( s_ignore )
+        return;
+
     RuleOptType type = OPT_TYPE_MAX;
     IpsManager::option_end(sc, otn, otn->proto, key, type);
 
@@ -1429,6 +1459,9 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
 
 OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode& rtn)
 {
+    if ( s_ignore )
+        return nullptr;
+
     OptTreeNode* otn = (OptTreeNode *)SnortAlloc(sizeof(OptTreeNode));
     otn->state = (OtnState*)SnortAlloc(sizeof(OtnState)*get_instance_max());
 
@@ -1440,8 +1473,17 @@ OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode& rtn)
     return otn;
 }
 
+// return nullptr if nothing left to do
+// for so rules, return the detection options and continue parsing
+// but if already entered, don't recurse again
 const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 {
+    if ( s_ignore )
+    {
+        s_ignore = false;
+        return nullptr;
+    }
+
     static bool entered = false;
     const char* so_opts = nullptr;
 

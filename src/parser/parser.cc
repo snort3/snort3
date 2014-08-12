@@ -139,7 +139,6 @@ static void CreateDefaultRules(SnortConfig *sc)
     CreateRuleType(sc, ACTION_PASS, RULE_TYPE__PASS, 0, &sc->Pass);
     CreateRuleType(sc, ACTION_DROP, RULE_TYPE__DROP, 1, &sc->Drop);
     CreateRuleType(sc, ACTION_SDROP, RULE_TYPE__SDROP, 0, &sc->SDrop);
-    CreateRuleType(sc, ACTION_REJECT, RULE_TYPE__REJECT, 1, &sc->Reject);
     CreateRuleType(sc, ACTION_ALERT, RULE_TYPE__ALERT, 1, &sc->Alert);
     CreateRuleType(sc, ACTION_LOG, RULE_TYPE__LOG, 1, &sc->Log);
 }
@@ -933,7 +932,6 @@ void FreeRuleLists(SnortConfig *sc)
 
     FreeOutputLists(&sc->Drop);
     FreeOutputLists(&sc->SDrop);
-    FreeOutputLists(&sc->Reject);
     FreeOutputLists(&sc->Alert);
     FreeOutputLists(&sc->Log);
     FreeOutputLists(&sc->Pass);
@@ -950,7 +948,6 @@ void FreeRuleLists(SnortConfig *sc)
 
             if ( (tmp->RuleList != &sc->Drop) &&
                 (tmp->RuleList != &sc->SDrop) &&
-                (tmp->RuleList != &sc->Reject) &&
                 (tmp->RuleList != &sc->Alert) &&
                 (tmp->RuleList != &sc->Log) &&
                 (tmp->RuleList != &sc->Pass) )

@@ -361,7 +361,10 @@ bool open_table(const char* s, int idx)
     if ( last != key )
     {
         if ( !last.size() )
+            // FIXIT is this not main thread?  snort_conf
+            // differs from main and -q is broken here
             LogMessage("Configuring modules:\n");
+
         LogMessage("\t %s\n", key.c_str());
         last = key;
     }

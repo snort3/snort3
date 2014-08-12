@@ -47,6 +47,7 @@
 
 #include "snort_bounds.h"
 #include "rules.h"
+#include "actions/actions.h"
 #include "treenodes.h"
 #include "parser.h"
 #include "parse_stream.h"
@@ -66,6 +67,7 @@
 #include "packet_io/active.h"
 #include "file_api/libs/file_config.h"
 #include "framework/ips_option.h"
+#include "managers/action_manager.h"
 #include "actions/actions.h"
 #include "config_file.h"
 #include "keywords.h"
@@ -230,45 +232,39 @@ static inline int ScLoadAsDropRules (void)
 
 RuleType get_rule_type(const char* s)
 {
-    if ( !strcmp(s, "alert") )
-        return RULE_TYPE__ALERT;
+    RuleType rt = get_action_type(s);
 
-    if ( !strcmp(s, "drop") || !strcmp(s, "block") )
+    if ( rt == RULE_TYPE__NONE )
+        rt = ActionManager::get_action_type(s);
+
+    switch ( rt )
     {
+    case RULE_TYPE__DROP:
         if ( ScTreatDropAsAlert() )
             return RULE_TYPE__ALERT;
 
-        else if ( ScKeepDropRules() || ScLoadAsDropRules() )
+        if ( ScKeepDropRules() || ScLoadAsDropRules() )
             return RULE_TYPE__DROP;
 
-        else
-            return RULE_TYPE__NONE;
-    }
-    if ( !strcmp(s, "sdrop") )
-    {
+        return RULE_TYPE__NONE;
+
+    case RULE_TYPE__SDROP:
         if ( ScKeepDropRules() && !ScTreatDropAsAlert() )
             return RULE_TYPE__SDROP;
 
-        else if ( ScLoadAsDropRules() )
+        if ( ScLoadAsDropRules() )
             return RULE_TYPE__DROP;
 
-        else
-            return RULE_TYPE__NONE;
+        return RULE_TYPE__NONE;
+
+    case RULE_TYPE__NONE:
+        ParseError("unknown rule type '%s'", s);
+        break;
+
+    default:
+        break;
     }
-
-    if ( !strcmp(s, "log") )
-        return RULE_TYPE__LOG;
-
-    if ( !strcmp(s, "pass") )
-        return RULE_TYPE__PASS;
-
-    if ( !strcmp(s, "reject") )
-    {
-        Active_SetEnabled(1);
-        return RULE_TYPE__REJECT;
-    }
-
-    return RULE_TYPE__NONE;
+    return rt;
 }
 
 ListHead* get_rule_list(SnortConfig* sc, RuleType type)
@@ -289,9 +285,6 @@ ListHead* get_rule_list(SnortConfig* sc, RuleType type)
 
     case RULE_TYPE__SDROP:
         return &sc->SDrop;
-
-    case RULE_TYPE__REJECT:
-        return &sc->Reject;
 
     default:
         break;
