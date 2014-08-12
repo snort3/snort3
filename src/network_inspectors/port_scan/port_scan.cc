@@ -65,7 +65,6 @@
 #include "snort.h"
 #include "filters/sfthreshold.h"
 #include "sfsnprintfappend.h"
-#include "sf_iph.h"
 #include "framework/inspector.h"
 #include "framework/share.h"
 #include "framework/plug_data.h"
@@ -193,7 +192,7 @@ static int LogPortscanAlert(Packet *p, uint32_t event_id,
     const sfip_t *src_addr;
     const sfip_t *dst_addr;
 
-    if(!p->iph_api)
+    if(!p->ip_api.is_valid())
         return -1;
 
     /* Do not log if being suppressed */

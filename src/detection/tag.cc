@@ -367,8 +367,8 @@ static void AddTagNode(Packet *p, TagData *tag, int mode, uint32_t now,
         return;
     }
 
-    IP_COPY_VALUE(idx->key.sip, p->ip_api.get_src());
-    IP_COPY_VALUE(idx->key.dip, p->ip_api.get_dst());
+    sfip_copy(idx->key.sip, p->ip_api.get_src());
+    sfip_copy(idx->key.dip, p->ip_api.get_dst());
     idx->key.sp = p->sp;
     idx->key.dp = p->dp;
     idx->proto = p->ip_api.proto();
@@ -468,8 +468,8 @@ int CheckTagList(Packet *p, Event *event)
 
     DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "[*] Checking session tag list (forward)...\n"););
 
-    IP_COPY_VALUE(idx.key.sip, p->ip_api.get_src());
-    IP_COPY_VALUE(idx.key.dip, p->ip_api.get_dst());
+    sfip_copy(idx.key.sip, p->ip_api.get_src());
+    sfip_copy(idx.key.dip, p->ip_api.get_dst());
     idx.key.sp = p->sp;
     idx.key.dp = p->dp;
 
@@ -478,8 +478,8 @@ int CheckTagList(Packet *p, Event *event)
 
     if(returned == NULL)
     {
-        IP_COPY_VALUE(idx.key.dip, p->ip_api.get_src());
-        IP_COPY_VALUE(idx.key.sip, p->ip_api.get_dst());
+        sfip_copy(idx.key.dip, p->ip_api.get_src());
+        sfip_copy(idx.key.sip, p->ip_api.get_dst());
         idx.key.dp = p->sp;
         idx.key.sp = p->dp;
 
@@ -499,7 +499,7 @@ int CheckTagList(Packet *p, Event *event)
                 **  Only switch sip, because that's all we check for
                 **  the host tags.
                 */
-                IP_COPY_VALUE(idx.key.sip, p->ip_api.get_src());
+                sfip_copy(idx.key.sip, p->ip_api.get_src());
 
                 returned = (TagNode *) sfxhash_find(host_tag_cache_ptr, &idx);
             }

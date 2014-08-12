@@ -456,7 +456,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
         set_ip_protocol(flow);
     }
 
-    host_entry = SFAT_LookupHostEntryByIP(IP_ARG(flow->server_ip));
+    host_entry = SFAT_LookupHostEntryByIP(&flow->server_ip);
     if (host_entry)
     {
         set_application_protocol_id_from_host_entry(flow, host_entry, SSN_DIR_SERVER);
@@ -467,7 +467,7 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
         }
     }
 
-    host_entry = SFAT_LookupHostEntryByIP(IP_ARG(flow->client_ip));
+    host_entry = SFAT_LookupHostEntryByIP(&flow->client_ip);
 
     if (host_entry)
     {
@@ -501,7 +501,7 @@ int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
         set_ip_protocol(flow);
 
     SFAT_UpdateApplicationProtocol(
-        IP_ARG(flow->server_ip), ntohs(flow->server_port),
+        &flow->server_ip, ntohs(flow->server_port),
         flow->s5_state.ipprotocol, id);
 
     return id;

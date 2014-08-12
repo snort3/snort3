@@ -122,7 +122,7 @@ static int ProcessIcmpUnreach(Packet *p)
         COPY4(skey.ip_h, dst->ip32);
         skey.port_h = dport;
     }
-    else if (IP_EQUALITY(iph.get_src(), iph.get_dst()))
+    else if (sfip_equals(iph.get_src(), iph.get_dst()))
     {
         COPY4(skey.ip_l, src->ip32);
         COPY4(skey.ip_h, skey.ip_l);
@@ -225,7 +225,7 @@ int IcmpSession::process(Packet* p)
 
 void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
 {
-    if (IP_EQUALITY(&icmp_sender_ip, ip))
+    if (sfip_equals(&icmp_sender_ip, ip))
     {
         if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
         {
@@ -233,7 +233,7 @@ void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
             return;
         }
     }
-    else if (IP_EQUALITY(&icmp_responder_ip, ip))
+    else if (sfip_equals(&icmp_responder_ip, ip))
     {
         if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
         {

@@ -105,8 +105,8 @@ int file_resume_block_add_file(void *pkt, uint32_t file_sig, uint32_t timeout,
 
     srcIP = p->ip_api.get_src();
     dstIP = p->ip_api.get_dst();
-    IP_COPY_VALUE(hashKey.dip, dstIP);
-    IP_COPY_VALUE(hashKey.sip, srcIP);
+    sfip_copy(hashKey.dip, dstIP);
+    sfip_copy(hashKey.sip, srcIP);
     hashKey.file_sig = file_sig;
 
     hash_node = sfxhash_find_node(fileHash, &hashKey);
@@ -241,8 +241,8 @@ File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig)
     }
     srcIP = p->ip_api.get_src();
     dstIP = p->ip_api.get_dst();
-    IP_COPY_VALUE(hashKey.dip, dstIP);
-    IP_COPY_VALUE(hashKey.sip, srcIP);
+    sfip_copy(hashKey.dip, dstIP);
+    sfip_copy(hashKey.sip, srcIP);
     hashKey.file_sig = file_sig;
 
     hash_node = sfxhash_find_node(fileHash, &hashKey);

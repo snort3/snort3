@@ -336,8 +336,8 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         {
             checksum::Pseudoheader ps;
             const IPHdr *ip4h = ip_api->get_ip4h();
-            ps.sip = ((IPHdr *)enc->ip_hdr)->ip_src;
-            ps.dip = ((IPHdr *)enc->ip_hdr)->ip_dst;
+            ps.sip = ip4h->get_src();
+            ps.dip = ip4h->get_dst();
             ps.zero = 0;
             ps.protocol = IPPROTO_UDP;
             ps.len = ho->uh_len;

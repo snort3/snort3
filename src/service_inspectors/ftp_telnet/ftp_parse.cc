@@ -840,7 +840,7 @@ int ProcessFTPAllowBounce(
         newBounce->porthi = high;
  
         int iRet = ftp_bounce_lookup_add(
-            ClientConf->bounce_lookup, IP_ARG(newBounce->ip), newBounce);
+            ClientConf->bounce_lookup, &newBounce->ip, newBounce);
 
         if (iRet)
         {

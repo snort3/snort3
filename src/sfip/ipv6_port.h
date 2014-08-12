@@ -32,10 +32,6 @@
 #include "sfip/sf_ipvar.h"
 
 
-#ifdef inet_ntoa
-#undef inet_ntoa
-#endif
-#define inet_ntoa sfip_ntoa
 
 #if 0
 typedef const sfip_t *const sfip_t*;
@@ -59,10 +55,6 @@ typedef const sfip_t snort_ip;
 #define GET_IPH_OFF(p)   (p)->iph_api->iph_ret_off(p)
 #define GET_IPH_VER(p)   (p)->iph_api->iph_ret_ver(p)
 
-#endif
-
-
-#if 0
 #define p->ip_api.proto() ((uint8_t)(IS_IP6(p) ? ((p)->ip6h->next) : ((p)->iph_api->iph_ret_proto(p))))
 
 
@@ -80,18 +72,14 @@ typedef const sfip_t snort_ip;
 /* XXX make sure these aren't getting confused with sfip_is_valid within the code */
 #define IPH_IS_VALID(p) iph_is_valid(p)
 
-#endif
 
 #define IP_EQUALITY(x,y) (sfip_compare((x),(y)) == SFIP_EQUAL)
 #define IP_EQUALITY_UNSET(x,y) (sfip_compare_unset((x),(y)) == SFIP_EQUAL)
 #define IP_LESSER(x,y)   (sfip_compare((x),(y)) == SFIP_LESSER)
 #define IP_GREATER(x,y)  (sfip_compare((x),(y)) == SFIP_GREATER)
-
-
-
 #define IP_CLEAR(x) (x).bits = (x).family = 0; (x).ip32[0] = (x).ip32[1] = (x).ip32[2] = (x).ip32[3] = 0;
-
 #define IP_IS_SET(x) sfip_is_set(&x)
+#define IP_COPY_VALUE(x,y) ( x = *y)
 
 /* This loop trickery is intentional.  If each copy is performed
  * individually on each field, then the following expression gets broken:
@@ -101,7 +89,8 @@ typedef const sfip_t snort_ip;
  * If the macro is instead enclosed in braces, then having a semicolon
  * trailing the macro causes compile breakage.
  * So: use loop. */
-#define IP_COPY_VALUE(x,y) \
+
+ \
         do {  \
                 (x).bits = (y)->bits; \
                 (x).family = (y)->family; \
@@ -111,7 +100,6 @@ typedef const sfip_t snort_ip;
                 (x).ip32[3] = (y)->ip32[3]; \
         } while(0)
 
-#if 0
 #define GET_IPH_HLEN(p) ((p)->iph_api->iph_ret_hlen(p))
 #define SET_IPH_HLEN(p, val)
 
@@ -121,11 +109,13 @@ typedef const sfip_t snort_ip;
 
 #define GET_INNER_SRC_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_src)):(&((p)->inner_ip4h.ip_src)))
 #define GET_INNER_DST_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_dst)):(&((p)->inner_ip4h.ip_dst)))
-#endif
+
+
 #define IP_ARG(ipt)  (&ipt)
 #define IP_PTR(ipp)  (ipp)
 #define IP_VAL(ipt)  (*ipt)
 #define IP_SIZE(ipp) (sfip_size(ipp))
+
 
 static inline int sfip_equal (const sfip_t *ip1, const sfip_t *ip2)
 {
@@ -143,6 +133,7 @@ static inline int sfip_equal (const sfip_t *ip1, const sfip_t *ip2)
     }
     return 0;
 }
+#endif
 
 #endif /* IPV6_PORT_H */
 

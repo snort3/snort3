@@ -141,9 +141,9 @@ int RateFilter_Test(
     }
     else
     {
-        IP_CLEAR(cleared);
-        sip = IP_ARG(cleared);
-        dip = IP_ARG(cleared);
+        sfip_clear(cleared);
+        sip = &cleared;
+        dip = &cleared;
     }
 
     if ((snort_conf == NULL) || (snort_conf->rate_filter_config == NULL))

@@ -376,7 +376,7 @@ HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
 
 HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)
 {
-    if (!p || !p->iph_api)
+    if (!p || !p->ip_api.is_valid())
         return NULL;
 
     return SFAT_LookupHostEntryByIP(p->ip_api.get_src());
@@ -384,7 +384,7 @@ HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)
 
 HostAttributeEntry *SFAT_LookupHostEntryByDst(Packet *p)
 {
-    if (!p || !p->iph_api)
+    if (!p || !p->ip_api.is_valid())
         return NULL;
 
     return SFAT_LookupHostEntryByIP(p->ip_api.get_dst());

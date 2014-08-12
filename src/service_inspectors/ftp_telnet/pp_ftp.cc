@@ -363,7 +363,7 @@ static int getIP2428 (
     int family = AF_UNSPEC, port = 0;
     char buf[64];
 
-    IP_CLEAR((*ipRet));
+    sfip_clear((*ipRet));
     *portRet = 0;
 
     /* check first delimiter */
@@ -787,7 +787,7 @@ static int validate_param(Packet *p,
                 break;
             }
 
-            if ( ThisFmt->type == e_extd_host_port && !IP_IS_SET(ipAddr) )
+            if ( ThisFmt->type == e_extd_host_port && !sfip_is_set(ipAddr) )
             {
                 // actually, we expect no addr in 229 responses, which is
                 // understood to be server address, so we set that here
@@ -795,12 +795,12 @@ static int validate_param(Packet *p,
             }
             if ( session->client_conf->bounce )
             {
-                if (!IP_EQUALITY(&ipAddr, p->ip_api.get_src()))
+                if (!sfip_equals(&ipAddr, p->ip_api.get_src()))
                 {
                     int alert = 1;
 
                     FTP_BOUNCE_TO *BounceTo = ftp_bounce_lookup_find(
-                        session->client_conf->bounce_lookup, (const sfip_t*)IP_ARG(ipAddr), &iRet);
+                        session->client_conf->bounce_lookup, &ipAddr, &iRet);
                     if (BounceTo)
                     {
                         if (BounceTo->portlo)
@@ -844,7 +844,7 @@ static int validate_param(Packet *p,
                 session->data_chan_state &= ~DATA_CHAN_PASV_CMD_ISSUED;
             }
 
-            IP_CLEAR(session->serverIP);
+            sfip_clear(session->serverIP);
             session->serverPort = 0;
         }
         break;
@@ -1088,7 +1088,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                     sfip_t ipAddr;
                     uint16_t port=0;
                     const char *ip_begin = req->param_begin;
-                    IP_CLEAR(ipAddr);
+                    sfip_clear(ipAddr);
                     session->data_chan_state &= ~DATA_CHAN_PASV_CMD_ISSUED;
                     session->data_chan_state |= DATA_CHAN_PASV_CMD_ACCEPT;
                     session->data_chan_index = -1;
@@ -1124,14 +1124,14 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                         );
                         if (iRet == FTPP_SUCCESS)
                         {
-                            if (!IP_IS_SET(ipAddr))
-                                IP_COPY_VALUE(session->serverIP, p->ip_api.get_src());
+                            if (!sfip_is_set(ipAddr))
+                                sfip_copy(session->serverIP, p->ip_api.get_src());
                             else
                             {
                                 session->serverIP = ipAddr;
                             }
                             session->serverPort = port;
-                            IP_COPY_VALUE(session->clientIP, p->ip_api.get_dst());
+                            sfip_copy(session->clientIP, p->ip_api.get_dst());
                             session->clientPort = 0;
 
                             if ((file_api->get_max_file_depth() > 0) || !(session->server_conf->data_chan))
@@ -1146,8 +1146,8 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
 
                                 /* Call into Streams to mark data channel as ftp-data */
                                 result = stream.set_application_protocol_id_expected(
-                                    IP_ARG(session->clientIP), session->clientPort,
-                                    IP_ARG(session->serverIP), session->serverPort,
+                                    &session->clientIP, session->clientPort,
+                                    &session->serverIP, session->serverPort,
                                     (uint8_t)(p->ip_api.proto()), ftp_data_app_id, fd);
 
                                 if (result < 0)
@@ -1158,8 +1158,8 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                                 /* Call into Streams to mark data channel as something
                                  * to ignore. */
                                 stream.ignore_session(
-                                    IP_ARG(session->clientIP), session->clientPort,
-                                    IP_ARG(session->serverIP), session->serverPort,
+                                    &session->clientIP, session->clientPort,
+                                    &session->serverIP, session->serverPort,
                                     (uint8_t)(p->ip_api.proto()),
                                     FtpDataFlowData::flow_id, SSN_DIR_BOTH);
                             }
@@ -1189,13 +1189,13 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                     session->data_chan_state &= ~DATA_CHAN_PORT_CMD_ISSUED;
                     session->data_chan_state |= DATA_CHAN_PORT_CMD_ACCEPT;
                     session->data_chan_index = -1;
-                    if (IP_IS_SET(session->clientIP))
+                    if (sfip_is_set(session->clientIP))
                     {
                         /* This means we're not in passive mode. */
                         /* Server is listening/sending from its own IP,
                          * FTP Port -1 */
                         /* Client IP, Port specified via PORT command */
-                        IP_COPY_VALUE(session->serverIP, p->ip_api.get_src());
+                        sfip_copy(session->serverIP, p->ip_api.get_src());
 
                         /* Can't necessarily guarantee this, especially
                          * in the case of a proxy'd connection where the
@@ -1217,8 +1217,8 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
 
                             /* Call into Streams to mark data channel as ftp-data */
                             result = stream.set_application_protocol_id_expected(
-                                IP_ARG(session->clientIP), session->clientPort,
-                                IP_ARG(session->serverIP), session->serverPort,
+                                &session->clientIP, session->clientPort,
+                                &session->serverIP, session->serverPort,
                                 (uint8_t)(p->ip_api.proto()), ftp_data_app_id, fd);
 
                             if (result < 0)
@@ -1229,8 +1229,8 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                             /* Call into Streams to mark data channel as something
                              * to ignore. */
                             stream.ignore_session(
-                                IP_ARG(session->clientIP), session->clientPort,
-                                IP_ARG(session->serverIP), session->serverPort,
+                                &session->clientIP, session->clientPort,
+                                &session->serverIP, session->serverPort,
                                 (uint8_t)(p->ip_api.proto()),
                                 FtpDataFlowData::flow_id, SSN_DIR_BOTH);
                         }
@@ -1257,8 +1257,8 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                 }
                 /* Clear the session info for next transfer -->
                  * reset host/port */
-                IP_CLEAR(session->serverIP);
-                IP_CLEAR(session->clientIP);
+                sfip_clear(session->serverIP);
+                sfip_clear(session->clientIP);
                 session->serverPort = session->clientPort = 0;
 
                 session->data_chan_state = NO_STATE;

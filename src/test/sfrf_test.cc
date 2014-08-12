@@ -951,7 +951,7 @@ static int EventTest (EventData* p) {
     sfip_pton(p->dip, &dip);
 
     status = SFRF_TestThreshold(
-        &rfc, p->gid, p->sid, IP_ARG(sip), IP_ARG(dip), curtime, op);
+        &rfc, p->gid, p->sid, &sip, &dip, curtime, op);
 
     if ( status >= RULE_TYPE__MAX ) status -= RULE_TYPE__MAX;
 

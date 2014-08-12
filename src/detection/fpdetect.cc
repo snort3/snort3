@@ -223,12 +223,12 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
     else
     {
         sfip_t cleared;
-        IP_CLEAR(cleared);
+        sfip_clear(cleared);
 
         filterEvent = sfthreshold_test(
             otn->sigInfo.generator,
             otn->sigInfo.id,
-            IP_ARG(cleared), IP_ARG(cleared),
+            &cleared, &cleared,
             p->pkth->ts.tv_sec);
     }
 

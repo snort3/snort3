@@ -142,17 +142,17 @@ inline bool ExpectKey::set(
 
     if (rval == SFIP_LESSER || (rval == SFIP_EQUAL && cliPort < srvPort))
     {
-        IP_COPY_VALUE(ip1, cliIP);
+        sfip_copy(ip1, cliIP);
         port1 = cliPort;
-        IP_COPY_VALUE(ip2, srvIP);
+        sfip_copy(ip2, srvIP);
         port2 = srvPort;
         reverse = false;
     }
     else
     {
-        IP_COPY_VALUE(ip1, srvIP);
+        sfip_copy(ip1, srvIP);
         port1 = srvPort;
-        IP_COPY_VALUE(ip2, cliIP);
+        sfip_copy(ip2, cliIP);
         port2 = cliPort;
         reverse = true;
     }

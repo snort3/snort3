@@ -374,12 +374,12 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
         else
         {
             sfip_t cleared;
-            IP_CLEAR(cleared);
+            sfip_clear(cleared);
 
             filterEvent = sfthreshold_test(
                         potn->sigInfo.generator,
                         potn->sigInfo.id,
-                        IP_ARG(cleared), IP_ARG(cleared),
+                        &cleared, &cleared,
                         p->pkth->ts.tv_sec);
         }
 
@@ -452,12 +452,12 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
                 else
                 {
                     sfip_t cleared;
-                    IP_CLEAR(cleared);
+                    sfip_clear(cleared);
 
                     filterEvent = sfthreshold_test(
                                 otn->sigInfo.generator,
                                 otn->sigInfo.id,
-                                IP_ARG(cleared), IP_ARG(cleared),
+                                &cleared, &cleared,
                                 p->pkth->ts.tv_sec);
                 }
 
@@ -506,12 +506,12 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
                 else
                 {
                     sfip_t cleared;
-                    IP_CLEAR(cleared);
+                    sfip_clear(cleared);
 
                     filterEvent = sfthreshold_test(
                                 otn->sigInfo.generator,
                                 otn->sigInfo.id,
-                                IP_ARG(cleared), IP_ARG(cleared),
+                                &cleared, &cleared,
                                 p->pkth->ts.tv_sec);
                 }
 

@@ -562,10 +562,7 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     Layer* lyr;
     int len;
     int num_layers = p->num_layers;
-
-    // TODO -- remove
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
-    uint8_t* pkt = (uint8_t*)c->pkt;
 
     if ( num_layers <= 0 )
         return -1;

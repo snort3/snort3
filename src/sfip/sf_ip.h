@@ -122,7 +122,7 @@ void sfip_obfuscate(sfip_t *ob, sfip_t *ip);
 static inline unsigned int sfip_size(const sfip_t *ipt)
 {
     if ( ipt->family == AF_INET6 ) return sizeof(*ipt);
-    return (unsigned int)((ipt->ip.u6_addr8+4) - (u_int8_t*)ipt);
+    return (unsigned int)((ipt->ip8+4) - (u_int8_t*)ipt);
 }
 
 /* Member-access *******************************************************/
@@ -160,9 +160,10 @@ static inline void sfip_set_bits(sfip_t *p, int bits) {
 /* Returns SFIP_EQUAL if so */
 SFIP_RET sfip_contains(const sfip_t *net, const sfip_t *ip);
 
+#if 0
 /* Returns 1 if the IP is non-zero. 0 otherwise */
 /* XXX This is a performance critical function, \
- *  need to determine if it's safe to not check these pointers */\
+ *  need to determine if it's safe to not check these pointers */
 static inline int sfip_is_set(const sfip_t *ip) {
 //    ARG_CHECK1(ip, -1);
     return ip->ip32[0] ||
@@ -171,6 +172,7 @@ static inline int sfip_is_set(const sfip_t *ip) {
               ip->ip32[2] ||
               ip->ip32[3] || ip->bits != 128)) || ((ip->family == AF_INET) && ip->bits != 32)  ;
 }
+#endif
 
 /* Return 1 if the IP is a loopback IP */
 int sfip_is_loopback(const sfip_t *ip);
@@ -214,7 +216,7 @@ static inline SFIP_RET _ip6_cmp(const sfip_t *ip1, const sfip_t *ip2) {
  * or greater than ip2 In the case of mismatched families, the IPv4 address
  * is converted to an IPv6 representation. */
 /* XXX-IPv6 Should add version of sfip_compare that just tests equality */
-static inline SFIP_RET sfip_compare(const sfip_t *ip1, const sfip_t *ip2) {
+static inline SFIP_RET sfip_compare(const sfip_t* const ip1, const sfip_t* const ip2) {
     int f1,f2;
 
     ARG_CHECK2(ip1, ip2, SFIP_ARG_ERR);
@@ -255,7 +257,7 @@ static inline SFIP_RET sfip_compare(const sfip_t *ip1, const sfip_t *ip2) {
  * or greater than ip2 In the case of mismatched families, the IPv4 address
  * is converted to an IPv6 representation. */
 /* XXX-IPv6 Should add version of sfip_compare that just tests equality */
-static inline SFIP_RET sfip_compare_unset(const sfip_t *ip1, const sfip_t *ip2) {
+static inline SFIP_RET sfip_compare_unset(const sfip_t* const ip1, const sfip_t* const ip2) {
     int f1,f2;
 
     ARG_CHECK2(ip1, ip2, SFIP_ARG_ERR);
@@ -292,17 +294,17 @@ static inline SFIP_RET sfip_compare_unset(const sfip_t *ip1, const sfip_t *ip2) 
     return SFIP_FAILURE;
 }
 
-static inline int sfip_fast_lt4(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_lt4(const sfip_t* const ip1, const sfip_t* const ip2) {
     return *ip1->ip32 < *ip2->ip32;
 }
-static inline int sfip_fast_gt4(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_gt4(const sfip_t* const ip1, const sfip_t* const ip2) {
     return *ip1->ip32 > *ip2->ip32;
 }
-static inline int sfip_fast_eq4(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_eq4(const sfip_t* const ip1, const sfip_t* const ip2) {
     return *ip1->ip32 == *ip2->ip32;
 }
 
-static inline int sfip_fast_lt6(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_lt6(const sfip_t* const ip1, const sfip_t* const ip2) {
     const u_int32_t *p1, *p2;
 
     p1 = ip1->ip32;
@@ -323,7 +325,7 @@ static inline int sfip_fast_lt6(const sfip_t *ip1, const sfip_t *ip2) {
     return 0;
 }
 
-static inline int sfip_fast_gt6(const sfip_t *ip1, const sfip_t *ip2) {
+static inline int sfip_fast_gt6(const sfip_t* const ip1, const sfip_t* const ip2) {
     const u_int32_t *p1, *p2;
 
     p1 = ip1->ip32;
@@ -477,15 +479,15 @@ static inline int sfip_is_private(const sfip_t *ip)
 
 }
 
+#if 0
 #define sfip_equals(x,y) (sfip_compare(&x, &y) == SFIP_EQUAL)
 #define sfip_not_equals !sfip_equals
 #define sfip_clear(x) memset(x, 0, 16)
+#endif
 
 /* Printing ************************************************************/
 
 /* Uses a static buffer to return a string representation of the IP */
-char *sfip_to_str(const sfip_t *ip);
-#define sfip_ntoa(x) sfip_to_str(x)
 void sfip_raw_ntop(int family, const void *ip_raw, char *buf, int bufsize);
 void sfip_ntop(const sfip_t *ip, char *buf, int bufsize);
 

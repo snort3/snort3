@@ -288,16 +288,16 @@ static sfSFSValue *findFlowIPStats(SFFLOW *sfFlow, const sfip_t *src_addr, const
     sfSFSKey key;
     sfSFSValue *value;
 
-    if (IP_LESSER(src_addr, dst_addr))
+    if (sfip_lesser(src_addr, dst_addr))
     {
-        IP_COPY_VALUE(key.ipA, src_addr);
-        IP_COPY_VALUE(key.ipB, dst_addr);
+        sfip_copy(key.ipA, src_addr);
+        sfip_copy(key.ipB, dst_addr);
         *swapped = 0;
     }
     else
     {
-        IP_COPY_VALUE(key.ipA, dst_addr);
-        IP_COPY_VALUE(key.ipB, src_addr);
+        sfip_copy(key.ipA, dst_addr);
+        sfip_copy(key.ipB, src_addr);
         *swapped = 1;
     }
 

@@ -49,7 +49,6 @@ extern "C" {
 #include "main/snort_types.h"
 #include "sfip/ipv6_port.h"
 #include "sfip/sf_ip.h"
-#include "sfip/sf_iph.h"
 #include "codecs/sf_protocols.h"
 
 
@@ -191,8 +190,6 @@ struct Packet
     Flow* flow;   /* for session tracking */
 
     //vvv-----------------------------
-    IPH_API* iph_api;
-
     int family;
     //^^^-----------------------------
 

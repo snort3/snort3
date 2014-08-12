@@ -129,7 +129,7 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP *BounceLookup,
         return FTPP_INVALID_ARG;
     }
 
-    iRet = KMapAdd(BounceLookup, (void*)IP_PTR(Ip), IP_SIZE(Ip), (void*)BounceTo);
+    iRet = KMapAdd(BounceLookup, (void*)Ip, Ip->sfip_size(), (void*)BounceTo);
 
     if (iRet)
     {
@@ -185,7 +185,7 @@ FTP_BOUNCE_TO  *ftp_bounce_lookup_find(
 
     *iError = FTPP_SUCCESS;
 
-    BounceTo = (FTP_BOUNCE_TO *)KMapFind(BounceLookup, (void*)IP_PTR(Ip), IP_SIZE(Ip));
+    BounceTo = (FTP_BOUNCE_TO *)KMapFind(BounceLookup, (void*)Ip, Ip->sfip_size());
     if (!BounceTo)
     {
         *iError = FTPP_NOT_FOUND;

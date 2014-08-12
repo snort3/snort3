@@ -78,7 +78,6 @@
 #include "flow/session.h"
 #include "profiler.h"
 #include "ipv6_port.h"
-#include "sf_iph.h"
 #include "fpdetect.h"
 #include "detection_util.h"
 #include "file_api/file_api.h"
@@ -553,7 +552,7 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
             sf_base->iSessionsEstablished++;
 
             if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-                UpdateFlowIPState(&sfFlow, IP_ARG(lwssn->client_ip), IP_ARG(lwssn->server_ip), SFS_STATE_TCP_ESTABLISHED);
+                UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_ESTABLISHED);
 
             lwssn->s5_state.session_flags |= SSNFLAG_COUNTED_ESTABLISH;
 
@@ -576,7 +575,7 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
                 sf_base->iSessionsEstablished--;
 
                 if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-                    UpdateFlowIPState(&sfFlow, IP_ARG(lwssn->client_ip), IP_ARG(lwssn->server_ip), SFS_STATE_TCP_CLOSED);
+                    UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_CLOSED);
             }
             else if (lwssn->s5_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
             {
@@ -597,7 +596,7 @@ void Stream5UpdatePerfBaseState(SFBASE *sf_base,
             sf_base->iSessionsEstablished--;
 
             if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-                UpdateFlowIPState(&sfFlow, IP_ARG(lwssn->client_ip), IP_ARG(lwssn->server_ip), SFS_STATE_TCP_CLOSED);
+                UpdateFlowIPState(&sfFlow, &lwssn->client_ip, &lwssn->server_ip, SFS_STATE_TCP_CLOSED);
         }
         else if (lwssn->s5_state.session_flags & SSNFLAG_COUNTED_INITIALIZE)
         {
@@ -4727,9 +4726,9 @@ static int ProcessTcp(
                     "session direction.\n"););
             /* SYN packet from client */
             lwssn->s5_state.direction = FROM_CLIENT;
-            IP_COPY_VALUE(lwssn->client_ip, p->ip_api.get_src());
+            sfip_copy(lwssn->client_ip, p->ip_api.get_src());
             lwssn->client_port = p->tcph->th_sport;
-            IP_COPY_VALUE(lwssn->server_ip, p->ip_api.get_dst());
+            sfip_copy(lwssn->server_ip, p->ip_api.get_dst());
             lwssn->server_port = p->tcph->th_dport;
             lwssn->session_state |= STREAM5_STATE_SYN;
 
@@ -4762,9 +4761,9 @@ static int ProcessTcp(
                         "Stream5 SYN|ACK PACKET, establishing lightweight"
                         "session direction.\n"););
                 lwssn->s5_state.direction = FROM_SERVER;
-                IP_COPY_VALUE(lwssn->client_ip, p->ip_api.get_dst());
+                sfip_copy(lwssn->client_ip, p->ip_api.get_dst());
                 lwssn->client_port = p->tcph->th_dport;
-                IP_COPY_VALUE(lwssn->server_ip, p->ip_api.get_src());
+                sfip_copy(lwssn->server_ip, p->ip_api.get_src());
                 lwssn->server_port = p->tcph->th_sport;
             }
             lwssn->session_state |= STREAM5_STATE_SYN_ACK;
@@ -4797,17 +4796,17 @@ static int ProcessTcp(
             if (p->sp > p->dp)
             {
                 lwssn->s5_state.direction = FROM_CLIENT;
-                IP_COPY_VALUE(lwssn->client_ip, p->ip_api.get_src());
+                sfip_copy(lwssn->client_ip, p->ip_api.get_src());
                 lwssn->client_port = p->tcph->th_sport;
-                IP_COPY_VALUE(lwssn->server_ip, p->ip_api.get_dst());
+                sfip_copy(lwssn->server_ip, p->ip_api.get_dst());
                 lwssn->server_port = p->tcph->th_dport;
             }
             else
             {
                 lwssn->s5_state.direction = FROM_SERVER;
-                IP_COPY_VALUE(lwssn->client_ip, p->ip_api.get_dst());
+                sfip_copy(lwssn->client_ip, p->ip_api.get_dst());
                 lwssn->client_port = p->tcph->th_dport;
-                IP_COPY_VALUE(lwssn->server_ip, p->ip_api.get_src());
+                sfip_copy(lwssn->server_ip, p->ip_api.get_src());
                 lwssn->server_port = p->tcph->th_sport;
             }
             lwssn->session_state |= STREAM5_STATE_MIDSTREAM;
@@ -4962,9 +4961,9 @@ static int ProcessTcp(
                      !TCP_ISFLAGSET(p->tcph, TH_ACK))
             {
                 lwssn->s5_state.direction = FROM_CLIENT;
-                IP_COPY_VALUE(lwssn->client_ip, p->ip_api.get_src());
+                sfip_copy(lwssn->client_ip, p->ip_api.get_src());
                 lwssn->client_port = p->tcph->th_sport;
-                IP_COPY_VALUE(lwssn->server_ip, p->ip_api.get_dst());
+                sfip_copy(lwssn->server_ip, p->ip_api.get_dst());
                 lwssn->server_port = p->tcph->th_dport;
                 lwssn->session_state = STREAM5_STATE_SYN;
                 lwssn->set_ttl(p, true);
@@ -4981,9 +4980,9 @@ static int ProcessTcp(
             else if (TCP_ISFLAGSET(p->tcph, (TH_SYN|TH_ACK)))
             {
                 lwssn->s5_state.direction = FROM_SERVER;
-                IP_COPY_VALUE(lwssn->client_ip, p->ip_api.get_dst());
+                sfip_copy(lwssn->client_ip, p->ip_api.get_dst());
                 lwssn->client_port = p->tcph->th_dport;
-                IP_COPY_VALUE(lwssn->server_ip, p->ip_api.get_src());
+                sfip_copy(lwssn->server_ip, p->ip_api.get_src());
                 lwssn->server_port = p->tcph->th_sport;
                 lwssn->session_state = STREAM5_STATE_SYN_ACK;
                 lwssn->set_ttl(p, false);
@@ -6203,7 +6202,7 @@ int GetTcpRebuiltPackets(Packet *p, Flow *ssn,
 
     /* StreamTracker is the opposite of the ip of the reassembled
      * packet --> it came out the queue for the other side */
-    if (IP_EQUALITY(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6251,7 +6250,7 @@ int GetTcpStreamSegments(Packet *p, Flow *ssn,
 
     /* StreamTracker is the opposite of the ip of the reassembled
      * packet --> it came out the queue for the other side */
-    if (IP_EQUALITY(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6290,7 +6289,7 @@ int Stream5AddSessionAlertTcp(
     Stream5AlertInfo* ai;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (IP_EQUALITY(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6328,7 +6327,7 @@ int Stream5CheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t s
         return 0;
     }
 
-    if (IP_EQUALITY(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6362,7 +6361,7 @@ int Stream5UpdateSessionAlertTcp (
     uint32_t seq_num;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (IP_EQUALITY(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6397,7 +6396,7 @@ void Stream5SetExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
     StreamTracker *st;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (IP_EQUALITY(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6410,7 +6409,7 @@ void Stream5ClearExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
     StreamTracker *st;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (IP_EQUALITY(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6643,7 +6642,7 @@ void TcpSession::update_direction(
     uint16_t tmpPort;
     StreamTracker tmpTracker;
 
-    if (IP_EQUALITY(&tcp_client_ip, ip) && (tcp_client_port == port))
+    if (sfip_equals(&tcp_client_ip, ip) && (tcp_client_port == port))
     {
         if ((dir == SSN_DIR_CLIENT) && (flow->s5_state.direction == SSN_DIR_CLIENT))
         {
@@ -6651,7 +6650,7 @@ void TcpSession::update_direction(
             return;
         }
     }
-    else if (IP_EQUALITY(&tcp_server_ip, ip) && (tcp_server_port == port))
+    else if (sfip_equals(&tcp_server_ip, ip) && (tcp_server_port == port))
     {
         if ((dir == SSN_DIR_SERVER) && (flow->s5_state.direction == SSN_DIR_SERVER))
         {

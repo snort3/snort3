@@ -152,13 +152,13 @@ bool UdpSession::setup(Packet* p)
     AddUDPSession(&sfBase);
 
     if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
-        UpdateFlowIPState(&sfFlow, IP_ARG(flow->client_ip),
-            IP_ARG(flow->server_ip), SFS_STATE_UDP_CREATED);
+        UpdateFlowIPState(&sfFlow, &flow->client_ip,
+            &flow->server_ip, SFS_STATE_UDP_CREATED);
 
     flow->s5_state.direction = FROM_SENDER;
-    IP_COPY_VALUE(flow->client_ip, p->ip_api.get_src());
+    sfip_copy(flow->client_ip, p->ip_api.get_src());
     flow->client_port = p->udph->uh_sport;
-    IP_COPY_VALUE(flow->server_ip, p->ip_api.get_dst());
+    sfip_copy(flow->server_ip, p->ip_api.get_dst());
     flow->server_port = p->udph->uh_dport;
 
     if ( flow_con->expected_flow(flow, p) )
@@ -179,7 +179,7 @@ void UdpSession::update_direction(
     sfip_t tmpIp;
     uint16_t tmpPort;
 
-    if (IP_EQUALITY(&udp_sender_ip, ip) && (udp_sender_port == port))
+    if (sfip_equals(&udp_sender_ip, ip) && (udp_sender_port == port))
     {
         if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
         {
@@ -187,7 +187,7 @@ void UdpSession::update_direction(
             return;
         }
     }
-    else if (IP_EQUALITY(&udp_responder_ip, ip) && (udp_responder_port == port))
+    else if (sfip_equals(&udp_responder_ip, ip) && (udp_responder_port == port))
     {
         if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
         {

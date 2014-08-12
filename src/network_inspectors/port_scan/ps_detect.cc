@@ -511,12 +511,12 @@ int PortScan::ps_tracker_lookup(PS_PKT *ps_pkt, PS_TRACKER **scanner,
     if (config->detect_scan_type &
         (PS_TYPE_PORTSCAN | PS_TYPE_DECOYSCAN | PS_TYPE_DISTPORTSCAN))
     {
-        IP_CLEAR(key.scanner);
+        sfip_clear(key.scanner);
 
         if(ps_pkt->reverse_pkt)
-            IP_COPY_VALUE(key.scanned, p->ip_api.get_src());
+            sfip_copy(key.scanned, p->ip_api.get_src());
         else
-            IP_COPY_VALUE(key.scanned, p->ip_api.get_dst());
+            sfip_copy(key.scanned, p->ip_api.get_dst());
 
         /*
         **  Get the scanned tracker.
@@ -529,12 +529,12 @@ int PortScan::ps_tracker_lookup(PS_PKT *ps_pkt, PS_TRACKER **scanner,
     */
     if(config->detect_scan_type & PS_TYPE_PORTSWEEP)
     {
-        IP_CLEAR(key.scanned);
+        sfip_clear(key.scanned);
 
         if(ps_pkt->reverse_pkt)
-            IP_COPY_VALUE(key.scanner, p->ip_api.get_dst());
+            sfip_copy(key.scanner, p->ip_api.get_dst());
         else
-            IP_COPY_VALUE(key.scanner, p->ip_api.get_src());
+            sfip_copy(key.scanner, p->ip_api.get_src());
 
         /*
         **  Get the scanner tracker
@@ -726,32 +726,32 @@ int PortScan::ps_proto_update(PS_PROTO *proto, int ps_cnt, int pri_cnt, const sf
     if(proto->connection_count < 0)
         proto->connection_count = 0;
 
-    if(!IP_EQUALITY_UNSET(&proto->u_ips, ip))
+    if(!sfip_unset_equals(&proto->u_ips, ip))
     {
         proto->u_ip_count++;
-        IP_COPY_VALUE(proto->u_ips, ip);
+        sfip_copy(proto->u_ips, ip);
     }
 
     /* we need to do the IP comparisons in host order */
 
     if(sfip_is_set(&proto->low_ip))
     {
-        if(IP_GREATER(&proto->low_ip, ip))
-            IP_COPY_VALUE(proto->low_ip, ip);
+        if(sfip_greater(&proto->low_ip, ip))
+            sfip_copy(proto->low_ip, ip);
     }
     else
     {
-        IP_COPY_VALUE(proto->low_ip, ip);
+        sfip_copy(proto->low_ip, ip);
     }
 
-    if(IP_IS_SET(proto->high_ip))
+    if(sfip_is_set(proto->high_ip))
     {
-        if(IP_LESSER(&proto->high_ip, ip))
-            IP_COPY_VALUE(proto->high_ip, ip);
+        if(sfip_lesser(&proto->high_ip, ip))
+            sfip_copy(proto->high_ip, ip);
     }
     else
     {
-        IP_COPY_VALUE(proto->high_ip, ip);
+        sfip_copy(proto->high_ip, ip);
     }
 
     if(proto->u_ports != port)
@@ -827,7 +827,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     Packet  *p;
     uint32_t session_flags;
     sfip_t cleared;
-    IP_CLEAR(cleared);
+    sfip_clear(cleared);
 
     p = (Packet *)ps_pkt->pkt;
 
@@ -1006,7 +1006,7 @@ int PortScan::ps_tracker_update_ip(PS_PKT *ps_pkt, PS_TRACKER *scanner,
 {
     Packet *p;
     sfip_t cleared;
-    IP_CLEAR(cleared);
+    sfip_clear(cleared);
 
     p = (Packet *)ps_pkt->pkt;
 
@@ -1038,7 +1038,7 @@ int PortScan::ps_tracker_update_udp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
 {
     Packet  *p;
     sfip_t    cleared;
-    IP_CLEAR(cleared);
+    sfip_clear(cleared);
 
     p = (Packet *)ps_pkt->pkt;
 
@@ -1095,7 +1095,7 @@ int PortScan::ps_tracker_update_icmp(
 {
     Packet  *p;
     sfip_t cleared;
-    IP_CLEAR(cleared);
+    sfip_clear(cleared);
 
     p = (Packet *)ps_pkt->pkt;
 

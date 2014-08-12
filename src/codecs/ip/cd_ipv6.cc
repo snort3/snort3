@@ -162,14 +162,13 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         goto decodeipv6_fail;
     }
 
+#if 0
+    // multiple encapsulations are now allowed.  this alert is no longer valid
+    if (p->encapsulations)
+        codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
+                        raw_pkt, raw_len);
+#endif
 
-    // This will need to go
-    if (p->family != NO_IP)
-    {
-        if (p->encapsulations)
-            codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                            raw_pkt, raw_len);
-    }
 
     payload_len = ntohs(ip6h->ip6plen) + ipv6::hdr_len();
 
@@ -252,7 +251,7 @@ static inline void IPV6CheckIsatap(const ipv6::IP6RawHdr* ip6h, Packet* p)
            fe80:0000:0000:0000:0000:5efe, followed by the IPv4 address. */
         if (isatap_interface_id == 0x00005EFE)
         {
-            if (p->ip_api.get_src()->ip.u6_addr32[0] != ip6h->ip6_src.u6_addr32[3])
+            if (p->ip_api.get_src()->ip32[0] != ip6h->ip6_src.u6_addr32[3])
                 codec_events::decoder_event(p, DECODE_IPV6_ISATAP_SPOOF);
         }
     }

@@ -82,6 +82,8 @@ namespace icmp
 struct ICMPHdr;
 }
 
+struct Packet;
+
 namespace layer
 {
 

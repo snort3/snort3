@@ -130,8 +130,8 @@ bool IpSession::setup (Packet* p)
 
     ipStats.sessions++;
 
-    IP_COPY_VALUE(flow->client_ip, p->ip_api.get_src());
-    IP_COPY_VALUE(flow->server_ip, p->ip_api.get_dst());
+    sfip_copy(flow->client_ip, p->ip_api.get_src());
+    sfip_copy(flow->server_ip, p->ip_api.get_dst());
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))

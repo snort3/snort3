@@ -2,7 +2,6 @@
 
 set(SFIP_INCLUDES
     ipv6_port.h
-    sf_iph.h
     sf_ip.h
     sf_ipvar.h
     sfip_t.h
@@ -11,7 +10,6 @@ set(SFIP_INCLUDES
 add_library ( sfip STATIC
     ${SFIP_INCLUDES}
     sf_ip.cc
-    sf_iph.cc
     sf_ipvar.cc
     sf_vartable.cc
     sf_vartable.h 

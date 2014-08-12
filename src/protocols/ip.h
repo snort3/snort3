@@ -40,7 +40,7 @@
 #include "sfip/sfip_t.h"
 
 
-class Packet;
+struct Packet;
 
 namespace ip
 {

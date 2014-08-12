@@ -942,7 +942,7 @@ int sfthd_test_local(
 
     /* Set up the key */
     key.policyId = policy_id;
-    key.ip     = IP_VAL(ip);
+    key.ip = *ip;
     key.thd_id = sfthd_node->thd_id;
 
     /* Set up a new data element */
@@ -1033,7 +1033,7 @@ static inline int sfthd_test_global(
     */
 
     /* Set up the key */
-    key.ip     = IP_VAL(ip);
+    key.ip = *ip;
     key.gen_id = sfthd_node->gen_id;
     key.sig_id = sig_id;
     key.policyId = policy_id;

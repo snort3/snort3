@@ -137,7 +137,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 p->dsize -= sizeof(ICMPHdr::icmp_hun.idseq);
                 p->data += sizeof(ICMPHdr::icmp_hun.idseq);
 
-                if ( ipv6::is_multicast(p->ip_api.get_dst()->ip.u6_addr8[0]) )
+                if ( ipv6::is_multicast(p->ip_api.get_dst()->ip8[0]) )
                     codec_events::decoder_event(p, DECODE_ICMP6_DST_MULTICAST);
             }
             else

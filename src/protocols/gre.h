@@ -38,7 +38,7 @@ struct GREHdr
     inline uint8_t get_version() const
     { return version & 0x07; }
 
-    inline uint8_t get_proto() const
+    inline uint16_t get_proto() const
     { return ntohs(ether_type); }
 };
 

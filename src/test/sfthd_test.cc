@@ -804,12 +804,12 @@ static int EventTest (EventData* p, void* rule) {
     if ( rule )
     {
         status = sfthd_test_rule(
-            dThd, (THD_NODE *)rule, IP_ARG(sip), IP_ARG(dip), curtime);
+            dThd, (THD_NODE *)rule, &sip, &dip, curtime);
     }
     else
     {
         status = sfthd_test_threshold(
-            pThdObjs, pThd, p->gid, p->sid, IP_ARG(sip), IP_ARG(dip), curtime);
+            pThdObjs, pThd, p->gid, p->sid, &sip, &dip, curtime);
     }
 
     return status;

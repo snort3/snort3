@@ -566,8 +566,8 @@ int SFRF_TestThreshold(
             case SFRF_TRACK_BY_RULE:
                 {
                     sfip_t cleared;
-                    IP_CLEAR(cleared);
-                    newStatus = SFRF_TestObject(cfgNode, IP_ARG(cleared), curTime, op);
+                    sfip_clear(cleared);
+                    newStatus = SFRF_TestObject(cfgNode, &cleared, curTime, op);
                 }
                 break;
 
@@ -808,7 +808,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     SFXHASH_NODE * hnode = NULL;
 
     /* Setup key */
-    key.ip = *(IP_PTR(ip));
+    key.ip = *(ip);
     key.tid = tid;
     key.policyId = get_network_policy()->policy_id;
 
