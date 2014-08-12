@@ -39,11 +39,12 @@ public:
     static void dump_modules();
 
     static void show_module(const char*);
-    static void show_configs(const char* = nullptr);
+    static void show_configs(const char* = nullptr, bool exact = false);
     static void show_commands(const char* = nullptr);
     static void show_gids(const char* = nullptr);
     static void show_pegs(const char* = nullptr);
     static void show_rules(const char* = nullptr);
+    static void dump_rules(const char* = nullptr);
 
     static void load_rules(SnortConfig*);
     static void set_config(SnortConfig*);

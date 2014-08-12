@@ -378,7 +378,8 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
             pox = PortObjectDupPorts(rtn->dst_portobject);
             if (pox == NULL)
             {
-                ParseError("Could not dup a port object - out of memory.");
+                ParseError("could not dup a port object - out of memory.");
+                return -1;
             }
 
             /* Add the port object to the table, and add the rule to the port object */
@@ -396,7 +397,8 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
                 pox = PortObjectDupPorts(rtn->dst_portobject);
                 if (pox == NULL)
                 {
-                    ParseError("Could not dup a bidir-port object - out of memory.");
+                    ParseError("could not dup a bidir-port object - out of memory.");
+                    return -1;
                 }
 
                 PortTableAddObject(srcTable, pox);
@@ -419,7 +421,8 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
             pox = PortObjectDupPorts(rtn->src_portobject);
             if (pox == NULL)
             {
-                ParseError("Could not dup a port object - out of memory.");
+                ParseError("could not dup a port object - out of memory.");
+                return -1;
             }
 
             PortTableAddObject(srcTable, pox);
@@ -436,8 +439,8 @@ static int FinishPortListRule(rule_port_tables_t *port_tables, RuleTreeNode *rtn
                 pox = PortObjectDupPorts(rtn->src_portobject);
                 if (pox == NULL)
                 {
-                    ParseError("Could not dup a bidir-port object - out "
-                               "of memory.");
+                    ParseError("could not dup a bidir-port object - out of memory.");
+                    return -1;
                 }
 
                 PortTableAddObject(dstTable, pox);
@@ -454,8 +457,9 @@ static int ValidateIPList(sfip_var_t *addrset, const char *token)
 {
     if(!addrset || !(addrset->head||addrset->neg_head))
     {
-        ParseError("Empty IP used either as source IP or as "
+        ParseError("empty IP used either as source IP or as "
             "destination IP in a rule. IP list: %s.", token);
+        return -1;
     }
 
     return 0;
@@ -503,20 +507,24 @@ static int ProcessIP(
             if(ret == SFIP_LOOKUP_FAILURE)
             {
                 ParseError("Undefined variable in the string: %s.", addr);
+                return -1;
             }
             else if(ret == SFIP_CONFLICT)
             {
                 ParseError("Negated IP ranges that are more general than "
                            "non-negated ranges are not allowed. Consider "
                            "inverting the logic: %s.", addr);
+                return -1;
             }
             else if(ret == SFIP_NOT_ANY)
             {
                 ParseError("!any is not allowed: %s.", addr);
+                return -1;
             }
             else
             {
                 ParseError("Unable to process the IP address: %s.", addr);
+                return -1;
             }
         }
 
@@ -556,21 +564,25 @@ static int ProcessIP(
         {
             if(ret == SFIP_LOOKUP_FAILURE)
             {
-                ParseError("Undefined variable in the string: %s.", addr);
+                ParseError("undefined variable in the string: %s.", addr);
+                return -1;
             }
             else if(ret == SFIP_CONFLICT)
             {
-                ParseError("Negated IP ranges that are more general than "
+                ParseError("negated IP ranges that are more general than "
                            "non-negated ranges are not allowed. Consider "
                            "inverting the logic: %s.", addr);
+                return -1;
             }
             else if(ret == SFIP_NOT_ANY)
             {
                 ParseError("!any is not allowed: %s.", addr);
+                return -1;
             }
             else
             {
-                ParseError("Unable to process the IP address: %s.", addr);
+                ParseError("unable to process the IP address: %s.", addr);
+                return -1;
             }
         }
 
@@ -613,7 +625,7 @@ static PortObject * ParsePortListTcpUdpPort(
     {
         portobject = PortVarTableFind(pvt, "any");
         if (portobject == NULL)
-            ParseError("PortVarTable missing an 'any' variable.");
+            ParseAbort("PortVarTable missing an 'any' variable.");
 
         return portobject;
     }
@@ -629,7 +641,7 @@ static PortObject * ParsePortListTcpUdpPort(
       /* look it up  in the port var table */
       portobject = PortVarTableFind(pvt, name);
       if (portobject == NULL)
-          ParseError("***PortVar Lookup failed on '%s'.", port_str);
+          ParseAbort("***PortVar Lookup failed on '%s'.", port_str);
 
       DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"PortVarTableFind: '%s' found!\n", port_str););
     }
@@ -651,7 +663,7 @@ static PortObject * ParsePortListTcpUdpPort(
        if( !portobject )
        {
           const char* errstr = PortObjectParseError( &poparser );
-          ParseError("***Rule--PortVar Parse error: (pos=%d,error=%s)\n>>%s\n>>%*s",
+          ParseAbort("***Rule--PortVar Parse error: (pos=%d,error=%s)\n>>%s\n>>%*s",
                      poparser.pos,errstr,port_str,poparser.pos,"^");
        }
 
@@ -672,7 +684,7 @@ static PortObject * ParsePortListTcpUdpPort(
            /* Add to the un-named port var table */
            if (PortTableAddObject(noname, portobject))
            {
-               ParseError("Unable to add raw port object to unnamed "
+               ParseAbort("Unable to add raw port object to unnamed "
                           "port var table, out of memory.");
            }
        }
@@ -716,6 +728,7 @@ static int ParsePortList(
         if (portobject == NULL)
         {
             ParseError("PortVarTable missing an 'any' variable.");
+            return -1;
         }
     }
 
@@ -738,6 +751,7 @@ static int ParsePortList(
     if( PortObjectIsPureNot( portobject ) )
     {
         ParseError("Pure NOT ports are not allowed.");
+        return -1;
         /*
            if( dst_flag )
            rtn->flags |= EXCEPT_DST_PORT;
@@ -1135,6 +1149,7 @@ static int mergeDuplicateOtn(
         ParseError("GID %d SID %d in rule duplicates previous rule, with "
                    "different protocol.",
                    otn_new->sigInfo.generator, otn_new->sigInfo.id);
+        return 0;
     }
 
     rtn_cur = getRtnFromOtn(otn_cur);
@@ -1144,6 +1159,7 @@ static int mergeDuplicateOtn(
         ParseError("GID %d SID %d in rule duplicates previous rule, with "
                    "different type.",
                    otn_new->sigInfo.generator, otn_new->sigInfo.id);
+        return 0;
     }
 
     if ( otn_new->sigInfo.rev < otn_cur->sigInfo.rev )
@@ -1194,6 +1210,7 @@ static int mergeDuplicateOtn(
             ParseError(
                 "%d:%d:%d duplicates previous rule.",
                 otn_new->sigInfo.generator, otn_new->sigInfo.id, otn_new->sigInfo.rev);
+            return 0;
         }
         else
         {
@@ -1352,7 +1369,7 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         break;
 
     default:
-        ParseError("Bad protocol: %s", s);
+        ParseError("bad protocol: %s", s);
         break;
     }
 }
@@ -1371,7 +1388,7 @@ void parse_rule_ports(
     if ( ParsePortList(&rtn, p->portVarTable, p->nonamePortVarTable,
             s, rtn.proto, src ? SRC : DST) )
     {
-        ParseError("Bad ports: '%s'", s);
+        ParseError("bad ports: '%s'", s);
     }
 }
 
@@ -1381,14 +1398,14 @@ void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
         rtn.flags |= BIDIRECTIONAL;
 
     else if ( strcmp(s, RULE_DIR_OPT__DIRECTIONAL) )
-        ParseError("Illegal direction specifier: %s", s);
+        ParseError("illegal direction specifier: %s", s);
 }
 
 void parse_rule_opt_begin(SnortConfig* sc, const char* key)
 {
     if ( !IpsManager::option_begin(sc, key) )
     {
-        ParseError("Unknown rule keyword: %s.", key);
+        ParseError("unknown rule keyword: %s.", key);
     }
 }
 
@@ -1397,19 +1414,15 @@ void parse_rule_opt_set(
 {
     if ( !IpsManager::option_set(sc, key, opt, val) )
     {
-        ParseError("Unknown rule option: %s:%s.", key, opt);
+        ParseError("unknown rule option: %s:%s.", key, opt);
     }
 }
 
 void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
 {
     RuleOptType type = OPT_TYPE_MAX;
+    IpsManager::option_end(sc, otn, otn->proto, key, type);
 
-    // FIXIT is this the same proto?
-    if ( !IpsManager::option_end(sc, otn, otn->proto, key, type) )
-    {
-        ParseError("Unknown rule keyword: %s.", key);
-    }
     if ( type != OPT_TYPE_META )
         otn->num_detection_opts++;
 }
@@ -1427,26 +1440,28 @@ OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode& rtn)
     return otn;
 }
 
-void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
+const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 {
+    static bool entered = false;
     const char* so_opts = nullptr;
 
-    if ( otn->soid )
+    if ( entered )
+        entered = false;
+
+    else if ( otn->soid )
     {
         so_opts = SoManager::get_so_options(otn->soid);
 
         if ( !so_opts )
             ParseError("SO rule %s not loaded.", otn->soid);
-
-        otn->sigInfo.generator = 3;  // FIXIT why isn't this set already? (don't hardcode)
+        else
+        {
+            otn->sigInfo.generator = 3;  // FIXIT why isn't this set already? (don't hardcode)
+            entered = true;
+            return so_opts;
+        }
     }
     
-    // FIXIT must parse so_opts (to right of soid)
-    if ( so_opts )
-    {
-        printf("so_opts = %s\n", so_opts);
-    }
-
     /* The IPs in the test node get free'd in ProcessHeadNode if there is
      * already a matching RTN.  The portobjects will get free'd when the
      * port var table is free'd */
@@ -1465,10 +1480,9 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         {
             /* We are keeping the old/dup OTN and trashing the new one
              * we just created - it's free'd in the remove dup function */
-            return;
+            return nullptr;
         }
     }
-    //otn->num_detection_opts += num_detection_opts; FIXIT tbd
     otn_count++;
     rule_count++;
 
@@ -1486,6 +1500,9 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     }
     else
     {
+        if ( otn->num_detection_opts )
+            ParseError("builtin rules do not support detection options");
+
         otn->sigInfo.text_rule = false;
         builtin_rule_count++;
     }
@@ -1533,5 +1550,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
      */
     if (FinishPortListRule(sc->port_tables, new_rtn, otn, rtn.proto, &pe, sc->fast_pattern_config))
         ParseError("Failed to finish a port list rule.");
+
+    return nullptr;
 }
 

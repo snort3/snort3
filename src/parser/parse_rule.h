@@ -45,7 +45,7 @@ void parse_rule_opt_set(
     SnortConfig*, const char* key, const char* opt, const char* val);
 void parse_rule_opt_end(SnortConfig*, const char* key, OptTreeNode*);
 OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode&);
-void parse_rule_close(SnortConfig*, RuleTreeNode&, OptTreeNode*);
+const char* parse_rule_close(SnortConfig*, RuleTreeNode&, OptTreeNode*);
 
 int get_rule_count();
 

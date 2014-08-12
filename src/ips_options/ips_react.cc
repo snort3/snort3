@@ -1,7 +1,5 @@
 /****************************************************************************
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2005-2013 Sourcefire, Inc.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -19,9 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  ****************************************************************************/
-
-// @file    sp_react.c
-// @author  Russ Combs <rcombs@sourcefire.com>
+// ips_react.cc author Russ Combs <rucombs@cisco.com>
 
 /* The original Snort React Plugin was contributed by Maciej Szarpak, Warsaw
  * University of Technology.  The module has been entirely rewritten by
@@ -61,9 +57,8 @@
 #include "protocols/packet.h"
 #include "managers/packet_manager.h"
 #include "detection/detection_defines.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "packet_io/active.h"
 #include "sfhashfcn.h"
 #include "snort.h"
@@ -218,19 +213,28 @@ static void react_getpage (SnortConfig* sc)
     if ( s_page || !sc->react_page ) return;
 
     if ( stat(sc->react_page, &fs) )
+    {
         ParseError("can't stat react page file '%s'.", sc->react_page);
+        return;
+    }
 
     s_page = (char*)SnortAlloc(fs.st_size+1);
     fd = fopen(sc->react_page, "r");
 
     if ( !fd )
+    {
         ParseError("can't open react page file '%s'.", sc->react_page);
+        return;
+    }
 
     n = fread(s_page, 1, fs.st_size, fd);
     fclose(fd);
 
     if ( n != (size_t)fs.st_size )
+    {
         ParseError("can't load react page file '%s'.", sc->react_page);
+        return;
+    }
 
     s_page[n] = '\0';
     msg = strstr(s_page, MSG_KEY);
@@ -248,6 +252,7 @@ static void react_getpage (SnortConfig* sc)
             ParseError("can't specify more than one %%s or other "
                 "printf style formatting characters in react page '%s'.",
                 sc->react_page);
+            return;
         }
     }
 }

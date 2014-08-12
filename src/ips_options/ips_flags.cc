@@ -220,7 +220,8 @@ static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
     /* make sure there is atleast a split pointer */
     if(fptr == NULL)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     while(isspace((u_char) *fptr))
@@ -228,7 +229,8 @@ static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
 
     if(strlen(fptr) == 0)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     /* find the end of the alert string */
@@ -304,6 +306,7 @@ static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
                     "Valid otions: UAPRSFCE or 0 for NO flags (e.g. NULL scan),"
                     " and !, + or * for modifiers",
                     *fptr);
+                return;
         }
 
         fptr++;
@@ -320,7 +323,8 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
     /* make sure there is atleast a split pointer */
     if(fptr == NULL)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     while(isspace((u_char) *fptr))
@@ -328,7 +332,8 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
 
     if(strlen(fptr) == 0)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     /* find the end of the alert string */
@@ -382,6 +387,7 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
                 break;
             default:
                 ParseError("bad TCP flag = '%c'. Valid otions: UAPRSFCE", *fptr);
+                return;
         }
 
         fptr++;

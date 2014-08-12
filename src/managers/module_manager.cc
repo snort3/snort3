@@ -516,7 +516,7 @@ void ModuleManager::show_module(const char* name)
             if ( p->type < Parameter::PT_MAX )
             {
                 cout << endl << "Configuration: "  << endl << endl;
-                show_configs(name);
+                show_configs(name, true);
             }
         }
 
@@ -540,7 +540,7 @@ void ModuleManager::show_module(const char* name)
     }
 }
 
-void ModuleManager::show_configs(const char* pfx)
+void ModuleManager::show_configs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_mods);
 
@@ -548,6 +548,9 @@ void ModuleManager::show_configs(const char* pfx)
     {
         Module* m = p->mod;
         string s;
+
+        if ( exact && strcmp(m->get_name(), pfx) )
+            continue;
 
         if ( m->is_list() )
         {
@@ -729,6 +732,44 @@ void ModuleManager::load_rules(SnortConfig* sc)
         }
     }    
     pop_parse_location();
+}
+
+void ModuleManager::dump_rules(const char* pfx)
+{
+    s_modules.sort(comp_gids);
+    unsigned len = pfx ? strlen(pfx) : 0;
+
+    for ( auto p : s_modules )
+    {
+        const Module* m = p->mod;
+
+        if ( pfx && strncmp(m->get_name(), pfx, len) )
+            continue;
+
+        const RuleMap* r = m->get_rules();
+        unsigned gid = m->get_gid();
+
+        if ( !r )
+            continue;
+
+        ostream& ss = cout;
+
+        while ( r->msg )
+        {
+            // FIXIT move builtin generation to a better home
+            // FIXIT builtins should allow configurable nets and ports
+            // FIXIT builtins should have accurate proto
+            //       (but ip winds up in all others)
+            // FIXIT if msg has C escaped embedded quotes, we break
+            ss << "alert tcp any any -> any any ( ";
+            ss << "gid:" << gid << "; ";
+            ss << "sid:" << r->sid << "; ";
+            ss << "msg:\"" << r->msg << "\"; )";
+            ss << endl;
+
+            r++;
+        }
+    }    
 }
 
 void ModuleManager::dump_stats (SnortConfig*)

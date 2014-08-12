@@ -84,6 +84,11 @@ libips_base64_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_base64_la_LDFLAGS = -export-dynamic -shared
 libips_base64_la_SOURCES = ips_base64.cc
 
+optlib_LTLIBRARIES += libips_bufferlen.la
+libips_bufferlen_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libips_bufferlen_la_LDFLAGS = -export-dynamic -shared
+libips_bufferlen_la_SOURCES = ips_bufferlen.cc range.cc range.h
+
 optlib_LTLIBRARIES += libips_byte_test.la
 libips_byte_test_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_byte_test_la_LDFLAGS = -export-dynamic -shared
@@ -273,11 +278,6 @@ optlib_LTLIBRARIES += libips_window.la
 libips_window_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_window_la_LDFLAGS = -export-dynamic -shared
 libips_window_la_SOURCES = ips_window.cc range.cc range.h
-
-optlib_LTLIBRARIES += libips_bufferlen.la
-libips_bufferlen_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_bufferlen_la_LDFLAGS = -export-dynamic -shared
-libips_bufferlen_la_SOURCES = ips_bufferlen.cc ips_bufferlen.h
 endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

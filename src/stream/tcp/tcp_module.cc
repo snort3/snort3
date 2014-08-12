@@ -74,7 +74,7 @@ using namespace std;
     "(stream_tcp) TCP session without 3-way handshake"
 
 static const char* policies =
-    "first | last | bsd | linux | old-linux | windows | win-2003 | vista "
+    "first | last | bsd | linux | old-linux | windows | win-2003 | vista | "
     "solaris | hpux | hpux10 | irix | macos";
 
 static const char* client_ports =

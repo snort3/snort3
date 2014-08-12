@@ -279,7 +279,7 @@ static int ProcessFTPDataChanCmdsList(
             FTPCmd = (FTP_CMD_CONF *)calloc(1, sizeof(FTP_CMD_CONF)+strlen(cmd));
             if (FTPCmd == NULL)
             {
-                ParseError("Failed to allocate memory");
+                ParseAbort("failed to allocate memory");
             }
 
             strcpy(FTPCmd->cmd_name, cmd);
@@ -323,7 +323,7 @@ static int ProcessFTPDataChanCmdsList(
                 Fmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
                 if (Fmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 Fmt->type = e_head;
@@ -332,7 +332,7 @@ static int ProcessFTPDataChanCmdsList(
                 Fmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
                 if (Fmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("Failed to allocate memory");
                 }
 
                 Fmt->type = e_strformat;
@@ -448,7 +448,6 @@ static PlugData* fc_ctor(Module* m)
 
     while ( const BounceTo* bt = mod->get_bounce(i++) )
     {
-        printf("%s\n", bt->address.c_str());
         ProcessFTPAllowBounce(
             gc, (uint8_t*)bt->address.c_str(), bt->address.size(), bt->low, bt->high);
     }

@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_so.cc author Russ Combs <rucombs@cisco.com>
 
 #include "framework/so_rule.h"
 
@@ -112,7 +112,7 @@ int SoOption::eval(Cursor&, Packet* p)
 static const Parameter so_params[] =
 {
     { "~func", Parameter::PT_STRING, nullptr, nullptr,
-      "name of function to call" },
+      "name of eval function" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -172,7 +172,7 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
 
     if ( !func )
     {
-        ParseError("Can't link so:%s", name);
+        ParseError("can't link so:%s", name);
         return nullptr;
     }
     return new SoOption(otn->soid, name, func, data);

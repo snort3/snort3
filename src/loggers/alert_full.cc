@@ -196,7 +196,7 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
 
     if(p && IPH_IS_VALID(p))
     {
-        LogPriorityData(full_log, event, TRUE);
+        LogPriorityData(full_log, event, true);
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"););

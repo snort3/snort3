@@ -32,27 +32,25 @@
 #include "detection/detection_defines.h"
 #include "sid_18758.h"
 
-static constexpr unsigned crash_test_dummy = 18758;
-
-static int eval(void* v, Packet* p)
+static int eval(void*, Packet* p)
 {
-    unsigned u = *((unsigned*)v);
-    assert(u == crash_test_dummy);
     return p ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
 }
 
-static SoEvalFunc ctor(const char* so, void** pv)
+static SoEvalFunc ctor(const char* /*so*/, void** pv)
 {
-    assert(!strcmp(so, "eval"));
-    *pv = new unsigned(crash_test_dummy);
+    // so == "eval" here because that's our only so: option
+    // but we could use multiple so: options and bind to 
+    // different functions based on the value of so
+    // *pv can point to any data we need to use with so
+    *pv = nullptr;
     return eval;
 }
 
-static void dtor(void* v)
+static void dtor(void* /*pv*/)
 {
-    unsigned* u = (unsigned*)v;
-    assert(*u == crash_test_dummy);
-    delete u;
+    // cast pv to your type here
+    // and then delete it
 }
 
 static const SoApi so_api =

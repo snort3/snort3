@@ -136,10 +136,10 @@ const char* SoManager::get_so_options(const char* soid)
     // FIXIT this approach won't tolerate spaces and might get
     // fooled by matching content (should it precede this)
     char opt[32];
-    snprintf(opt, sizeof(opt), "; soid:%s", soid);
+    snprintf(opt, sizeof(opt), "soid:%s;", soid);
     const char* s = strstr(rule, opt);
 
-    return s ? s + strlen(opt) + 1 : nullptr;
+    return s ? s + strlen(opt) : nullptr;
 }
 
 SoEvalFunc SoManager::get_so_eval(const char* soid, const char* so, void** data)

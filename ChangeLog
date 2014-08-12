@@ -1,6 +1,12 @@
 111
 -- fix up luajit ips rule option
 -- fix up rule loading
+-- fixed so rule parsing
+-- added pcre jit
+-- fixed --help-module to use exact match on module for params instead of
+   prefix
+-- added ParseAbort() so ParseError() doesn't fatal immediately
+-- fixed ftp_client.bounce_to handling in module
 
 110
 -- converted rule meta options to ips options (w/o eval)

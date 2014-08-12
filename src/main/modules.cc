@@ -1863,9 +1863,6 @@ bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
 
 void module_init()
 {
-    // FIXIT in alpha order for --help-config but module 
-    // manager should sort anyway
-    //
     // make sure parameters can be set regardless of sequence
     // since Lua calls this by table hash key traversal
     // (which is effectively random)

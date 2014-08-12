@@ -302,7 +302,7 @@ static void help_signals(SnortConfig*, const char*)
 
 enum HelpType {
     HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
-    HT_BUF, HT_LST, HT_PLG, HT_DDR
+    HT_BUF, HT_LST, HT_PLG, HT_DDR, HT_DBR
 };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -339,6 +339,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         break;
     case HT_DDR:
         SoManager::dump_rule_stubs(val);
+        break;
+    case HT_DBR:
+        ModuleManager::dump_rules(val);
         break;
     }
     ModuleManager::term();
@@ -392,12 +395,14 @@ static void list_plugins(SnortConfig* sc, const char* val)
     show_help(sc, val, HT_PLG);
 }
 
+static void dump_builtin_rules(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_DBR);
+}
+
 static void dump_dynamic_rules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DDR);
-    //PluginManager::load_plugins(sc->plugin_path);
-    ////SoManager::dump_rule_stubs(val);
-    //exit(0);
 }
 
 static void config_lua(SnortConfig*, const char* val)
@@ -833,6 +838,9 @@ static ConfigFunc basic_opts[] =
 
     { "daq-var", ConfigDaqVar,
       "<name=value> specify extra DAQ configuration variable" },
+
+    { "dump-builtin-rules", dump_builtin_rules,
+      "creates stub rule files of all loaded rules libraries" },
 
     { "dump-dynamic-rules", dump_dynamic_rules,
       "<path> creates stub rule files of all loaded rules libraries" },

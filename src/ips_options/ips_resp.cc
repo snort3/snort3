@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -47,8 +47,7 @@
  * - if a resp3 rule is also a drop rule, the drop processing takes precedence.
  */
 
-// @file    sp_respond3.c
-// @author  Russ Combs <rcombs@sourcefire.com>
+// ips_resp.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -300,7 +299,7 @@ static IpsOption* resp_ctor(Module* p, OptTreeNode* otn)
         return opt;
 
     delete opt;
-    ParseError("At most one action per rule is allowed");
+    ParseError("at most one action per rule is allowed");
     return nullptr;
 }
 

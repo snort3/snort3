@@ -83,16 +83,18 @@ static void PerfMonitorChangeLogFilesPermission(void)
             {
                 if (chmod(perfmon_config->file, mode) != 0)
                 {
-                    ParseError("Perfmonitor: Unable to change mode of "
+                    ParseError("perfmonitor: Unable to change mode of "
                             "base stats file '%s' to mode:%d: %s.",
                             perfmon_config->file, mode, get_error(errno));
+                    return;
                 }
 
                 if (chown(perfmon_config->file, ScUid(), ScGid()) != 0)
                 {
-                    ParseError("Perfmonitor: Unable to change permissions of "
+                    ParseError("perfmonitor: Unable to change permissions of "
                             "base stats file '%s' to user:%d and group:%d: %s.",
                             perfmon_config->file, ScUid(), ScGid(), get_error(errno));
+                    return;
                 }
             }
         }
@@ -108,16 +110,18 @@ static void PerfMonitorChangeLogFilesPermission(void)
             {
                 if (chmod(perfmon_config->flow_file, mode) != 0)
                 {
-                    ParseError("Perfmonitor: Unable to change mode of "
+                    ParseError("perfmonitor: Unable to change mode of "
                             "flow stats file '%s' to mode:%d: %s.",
                             perfmon_config->flow_file, mode, get_error(errno));
+                    return;
                 }
 
                 if (chown(perfmon_config->flow_file, ScUid(), ScGid()) != 0)
                 {
-                    ParseError("Perfmonitor: Unable to change permissions of "
+                    ParseError("perfmonitor: Unable to change permissions of "
                             "flow stats file '%s' to user:%d and group:%d: %s.",
                             perfmon_config->flow_file, ScUid(), ScGid(), get_error(errno));
+                    return;
                 }
             }
         }
@@ -133,16 +137,18 @@ static void PerfMonitorChangeLogFilesPermission(void)
             {
                 if (chmod(perfmon_config->flowip_file, mode) != 0)
                 {
-                    ParseError("Perfmonitor: Unable to change mode of "
+                    ParseError("perfmonitor: Unable to change mode of "
                             "flow-ip stats file '%s' to mode:%d: %s.",
                             perfmon_config->flowip_file, mode, get_error(errno));
+                    return;
                 }
 
                 if (chown(perfmon_config->flowip_file, ScUid(), ScGid()) != 0)
                 {
-                    ParseError("Perfmonitor: Unable to change permissions of "
+                    ParseError("perfmonitor: Unable to change permissions of "
                             "flow-ip stats file '%s' to user:%d and group:%d: %s.",
                             perfmon_config->flowip_file, ScUid(), ScGid(), get_error(errno));
+                    return;
                 }
             }
         }
@@ -250,7 +256,10 @@ bool PerfMonitor::configure(SnortConfig*)
         const char* file = get_instance_file(name, config.file);
 
         if ( (config.fh = sfOpenBaseStatsFile(file)) == NULL )
-            ParseError("Perfmonitor: Cannot open base stats file '%s'.", file);
+        {
+            ParseError("perfmonitor: Cannot open base stats file '%s'.", file);
+            return false;
+        }
     }
 
     if ( config.flow_file )
@@ -258,7 +267,10 @@ bool PerfMonitor::configure(SnortConfig*)
         const char* file = get_instance_file(name, config.flow_file);
 
         if ( (config.flow_fh = sfOpenFlowStatsFile(file)) == NULL )
-            ParseError("Perfmonitor: Cannot open flow stats file '%s'.", file);
+        {
+            ParseError("perfmonitor: Cannot open flow stats file '%s'.", file);
+            return false;
+        }
     }
 
     if ( config.flowip_file )
@@ -266,7 +278,10 @@ bool PerfMonitor::configure(SnortConfig*)
         const char* file = get_instance_file(name, config.flowip_file);
 
         if ( (config.flowip_fh = sfOpenFlowIPStatsFile(file)) == NULL )
-            ParseError("Perfmonitor: Cannot open flow-ip stats file '%s'.", file);
+        {
+            ParseError("perfmonitor: Cannot open flow-ip stats file '%s'.", file);
+            return false;
+        }
     }
     return true;
 }
