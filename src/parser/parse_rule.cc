@@ -1483,7 +1483,6 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             return nullptr;
         }
     }
-    //otn->num_detection_opts += num_detection_opts; FIXIT tbd
     otn_count++;
     rule_count++;
 
@@ -1501,6 +1500,9 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     }
     else
     {
+        if ( otn->num_detection_opts )
+            ParseError("builtin rules do not support detection options");
+
         otn->sigInfo.text_rule = false;
         builtin_rule_count++;
     }

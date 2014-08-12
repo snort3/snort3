@@ -19,13 +19,9 @@
 // module.h author Russ Combs <rucombs@cisco.com>
 
 // FIXIT 
-// -- add get method
 // -- add set_default method
-// -- add stats/pegs and profiling
-// -- move to respective source files / dirs once complete
 // -- add trace param(s)
 // -- add memcap related
-// -- add optional startup param output
 
 #ifndef MODULE_H
 #define MODULE_H

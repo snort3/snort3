@@ -145,7 +145,7 @@ bool TextLog_Flush(TextLog* txt)
 {
     int ok;
 
-    if ( !txt->pos ) return FALSE;
+    if ( !txt->pos ) return false;
     if ( txt->size + txt->pos > txt->maxFile ) TextLog_Roll(txt);
 
     ok = fwrite(txt->buf, txt->pos, 1, txt->file);
@@ -154,9 +154,9 @@ bool TextLog_Flush(TextLog* txt)
     {
         txt->size += txt->pos;
         TextLog_Reset(txt);
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 /*-------------------------------------------------------------------
@@ -172,7 +172,7 @@ bool TextLog_Putc (TextLog* txt, char c)
     txt->buf[txt->pos++] = c;
     txt->buf[txt->pos] = '\0';
 
-    return TRUE;
+    return true;
 }
 
 /*-------------------------------------------------------------------
@@ -194,14 +194,14 @@ bool TextLog_Write (TextLog* txt, const char* str, int len)
     {
         txt->pos = txt->maxBuf - 1;
         txt->buf[txt->pos] = '\0';
-        return FALSE;
+        return false;
     }
     else if ( len < 0 )
     {
-        return FALSE;
+        return false;
     }
     txt->pos += len;
-    return TRUE;
+    return true;
 }
 
 /*-------------------------------------------------------------------
@@ -231,14 +231,14 @@ bool TextLog_Print (TextLog* txt, const char* fmt, ...)
     {
         txt->pos = txt->maxBuf - 1;
         txt->buf[txt->pos] = '\0';
-        return FALSE;
+        return false;
     }
     else if ( len < 0 )
     {
-        return FALSE;
+        return false;
     }
     txt->pos += len;
-    return TRUE;
+    return true;
 }
 
 /*-------------------------------------------------------------------
@@ -265,11 +265,11 @@ bool TextLog_Quote (TextLog* txt, const char* qs)
         }
         txt->buf[pos++] = *qs++;
     }
-    if ( *qs ) return FALSE;
+    if ( *qs ) return false;
 
     txt->buf[pos++] = '"';
     txt->pos = pos;
 
-    return TRUE;
+    return true;
 }
 

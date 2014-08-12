@@ -37,6 +37,7 @@ static const Parameter client_bounce_params[] =
     { "address", Parameter::PT_ADDR, nullptr, nullptr,
       "allowed ip address in CIDR format" },
 
+    // FIXIT port and last_port should be replaced with a port list
     { "port", Parameter::PT_PORT, "1:", nullptr,
       "allowed port" },
 
