@@ -161,14 +161,14 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     if (ScTcpChecksums())
     {
         uint16_t csum;
-        if(IS_IP4(p))
+        if(p->ip_api.is_ip4())
         {
             checksum::Pseudoheader ph;
-            ph.sip = *p->ip4h->ip_src.ip32;
-            ph.dip = *p->ip4h->ip_dst.ip32;
+            ph.sip = p->ip_api.get_ip4_src();
+            ph.dip = p->ip_api.get_ip4_dst();
             /* setup the pseudo header for checksum calculation */
             ph.zero = 0;
-            ph.protocol = GET_IPH_PROTO(p);
+            ph.protocol = p->ip_api.proto();
             ph.len = htons((uint16_t)raw_len);
 
             /* if we're being "stateless" we probably don't care about the TCP
@@ -181,10 +181,10 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         else
         {
             checksum::Pseudoheader6 ph6;
-            COPY4(ph6.sip, p->ip6h->ip_src.ip32);
-            COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
+            COPY4(ph6.sip, p->ip_api.get_ip6_src()->u6_addr32);
+            COPY4(ph6.dip, p->ip_api.get_ip6_dst()->u6_addr32);
             ph6.zero = 0;
-            ph6.protocol = GET_IPH_PROTO(p);
+            ph6.protocol = p->ip_api.proto();
             ph6.len = htons((uint16_t)raw_len);
 
 
@@ -237,14 +237,14 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         {
             if( p->tcph->th_seq == 6060842 )
             {
-                if( GET_IPH_ID(p) == 413 )
+                if( p->ip_api.id(p) == 413 )
                 {
                     codec_events::decoder_event(p, DECODE_DOS_NAPTHA);
                 }
             }
         }
 
-        if( sfvar_ip_in(SynToMulticastDstIp, GET_DST_ADDR(p)) )
+        if( sfvar_ip_in(SynToMulticastDstIp, p->ip_api.get_dst()) )
         {
             codec_events::decoder_event(p, DECODE_SYN_TO_MULTICAST);
         }
@@ -665,8 +665,8 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         checksum::Pseudoheader ps;
         int len = buff_diff(out, (uint8_t*)ho);
 
-        ps.sip = ((IPHdr *)(enc->ip_hdr))->ip_src.s_addr;
-        ps.dip = ((IPHdr *)(enc->ip_hdr))->ip_dst.s_addr;
+        ps.sip = ((IPHdr *)(enc->ip_hdr))->ip_src;
+        ps.dip = ((IPHdr *)(enc->ip_hdr))->ip_dst;
         ps.zero = 0;
         ps.protocol = IPPROTO_TCP;
         ps.len = htons((uint16_t)len);
@@ -675,8 +675,8 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         checksum::Pseudoheader6 ps6;
         int len = buff_diff(out, (uint8_t*) ho);
 
-        memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.s6_addr, sizeof(ps6.sip));
-        memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.s6_addr, sizeof(ps6.dip));
+        memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
+        memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_TCP;
         ps6.len = htons((uint16_t)len);
@@ -692,21 +692,25 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 
     *len += tcp::get_tcp_hdr_len(h) + p->dsize;
 
-    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) ) {
+    if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
+    {
         h->th_sum = 0;
 
-        if (IS_IP4(p)) {
+        if (p->ip_api.is_ip4())
+        {
             checksum::Pseudoheader ps;
-            ps.sip = ((IPHdr *)(lyr-1)->start)->ip_src.s_addr;
-            ps.dip = ((IPHdr *)(lyr-1)->start)->ip_dst.s_addr;
+            ps.sip = ((IPHdr *)(lyr-1)->start)->ip_src;
+            ps.dip = ((IPHdr *)(lyr-1)->start)->ip_dst;
             ps.zero = 0;
             ps.protocol = IPPROTO_TCP;
             ps.len = htons((uint16_t)*len);
             h->th_sum = checksum::tcp_cksum((uint16_t *)h, *len, &ps);
-        } else {
+        }
+        else
+        {
             checksum::Pseudoheader6 ps6;
-            memcpy(ps6.sip, &p->ip6h->ip_src.ip32, sizeof(ps6.sip));
-            memcpy(ps6.dip, &p->ip6h->ip_dst.ip32, sizeof(ps6.dip));
+            memcpy(ps6.sip, &p->ip_api.get_ip6_src()->u6_addr32, sizeof(ps6.sip));
+            memcpy(ps6.dip, &p->ip_api.get_ip6_dst()->u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_TCP;
             ps6.len = htons((uint16_t)*len);

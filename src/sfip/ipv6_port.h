@@ -31,31 +31,26 @@
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
 
-typedef sfip_t snort_ip;
-typedef sfip_t *snort_ip_p;
 
 #ifdef inet_ntoa
 #undef inet_ntoa
 #endif
 #define inet_ntoa sfip_ntoa
 
-#define GET_SRC_IP(p) ((p)->iph_api->iph_ret_src(p))
-#define GET_DST_IP(p) ((p)->iph_api->iph_ret_dst(p))
+#if 0
+typedef const sfip_t *const sfip_t*;
+typedef sfip_t *const sfip_t*;
+typedef const sfip_t snort_ip;
+
+#define p->ip_api.get_src() ((p)->iph_api->iph_ret_src(p))
+#define p->ip_api.get_dst() ((p)->iph_api->iph_ret_dst(p))
 
 /* These are here for backwards compatibility */
 #define GET_SRC_ADDR(x) GET_SRC_IP(x)
 #define GET_DST_ADDR(x) GET_DST_IP(x)
-
-#define IP_EQUALITY(x,y) (sfip_compare((x),(y)) == SFIP_EQUAL)
-#define IP_EQUALITY_UNSET(x,y) (sfip_compare_unset((x),(y)) == SFIP_EQUAL)
-#define IP_LESSER(x,y)   (sfip_compare((x),(y)) == SFIP_LESSER)
-#define IP_GREATER(x,y)  (sfip_compare((x),(y)) == SFIP_GREATER)
-
 #define IS_IP4(x) ((x)->family == AF_INET)
 #define IS_IP6(x) ((x)->family == AF_INET6)
 
-#define IS_OUTER_IP4(x) ((x)->outer_family == AF_INET)
-#define IS_OUTER_IP6(x) ((x)->outer_family == AF_INET6)
 
 #define GET_IPH_TOS(p)   (p)->iph_api->iph_ret_tos(p)
 #define GET_IPH_LEN(p)   (p)->iph_api->iph_ret_len(p)
@@ -63,10 +58,16 @@ typedef sfip_t *snort_ip_p;
 #define GET_IPH_ID(p)    (p)->iph_api->iph_ret_id(p)
 #define GET_IPH_OFF(p)   (p)->iph_api->iph_ret_off(p)
 #define GET_IPH_VER(p)   (p)->iph_api->iph_ret_ver(p)
-#define GET_IPH_PROTO(p) ((uint8_t)(IS_IP6(p) ? ((p)->ip6h->next) : ((p)->iph_api->iph_ret_proto(p))))
+
+#endif
 
 
 #if 0
+#define p->ip_api.proto() ((uint8_t)(IS_IP6(p) ? ((p)->ip6h->next) : ((p)->iph_api->iph_ret_proto(p))))
+
+
+#define IS_OUTER_IP4(x) ((x)->outer_family == AF_INET)
+#define IS_OUTER_IP6(x) ((x)->outer_family == AF_INET6)
 
 #define GET_ORIG_SRC(p) ((p)->orig_iph_api->orig_iph_ret_src(p))
 #define GET_ORIG_DST(p) ((p)->orig_iph_api->orig_iph_ret_dst(p))
@@ -76,10 +77,17 @@ typedef sfip_t *snort_ip_p;
 #define GET_ORIG_IPH_OFF(p)     (p)->orig_iph_api->orig_iph_ret_off(p)
 #define GET_ORIG_IPH_PROTO(p)   (p)->orig_iph_api->orig_iph_ret_proto(p)
 
-#endif
-
 /* XXX make sure these aren't getting confused with sfip_is_valid within the code */
 #define IPH_IS_VALID(p) iph_is_valid(p)
+
+#endif
+
+#define IP_EQUALITY(x,y) (sfip_compare((x),(y)) == SFIP_EQUAL)
+#define IP_EQUALITY_UNSET(x,y) (sfip_compare_unset((x),(y)) == SFIP_EQUAL)
+#define IP_LESSER(x,y)   (sfip_compare((x),(y)) == SFIP_LESSER)
+#define IP_GREATER(x,y)  (sfip_compare((x),(y)) == SFIP_GREATER)
+
+
 
 #define IP_CLEAR(x) (x).bits = (x).family = 0; (x).ip32[0] = (x).ip32[1] = (x).ip32[2] = (x).ip32[3] = 0;
 
@@ -103,21 +111,23 @@ typedef sfip_t *snort_ip_p;
                 (x).ip32[3] = (y)->ip32[3]; \
         } while(0)
 
+#if 0
 #define GET_IPH_HLEN(p) ((p)->iph_api->iph_ret_hlen(p))
 #define SET_IPH_HLEN(p, val)
 
 #define GET_IP_DGMLEN(p) IS_IP6(p) ? (ntohs(GET_IPH_LEN(p)) + (GET_IPH_HLEN(p) << 2)) : ntohs(GET_IPH_LEN(p))
 #define GET_IP_PAYLEN(p) IS_IP6(p) ? ntohs(GET_IPH_LEN(p)) : (ntohs(GET_IPH_LEN(p)) - (GET_IPH_HLEN(p) << 2))
 
+
+#define GET_INNER_SRC_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_src)):(&((p)->inner_ip4h.ip_src)))
+#define GET_INNER_DST_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_dst)):(&((p)->inner_ip4h.ip_dst)))
+#endif
 #define IP_ARG(ipt)  (&ipt)
 #define IP_PTR(ipp)  (ipp)
 #define IP_VAL(ipt)  (*ipt)
 #define IP_SIZE(ipp) (sfip_size(ipp))
 
-#define GET_INNER_SRC_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_src)):(&((p)->inner_ip4h.ip_src)))
-#define GET_INNER_DST_IP(p)  (IS_IP6(p) ? (&((p)->inner_ip6h.ip_dst)):(&((p)->inner_ip4h.ip_dst)))
-
-static inline int sfip_equal (snort_ip* ip1, snort_ip* ip2)
+static inline int sfip_equal (const sfip_t *ip1, const sfip_t *ip2)
 {
     if ( ip1->family != ip2->family )
     {

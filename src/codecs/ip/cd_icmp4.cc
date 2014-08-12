@@ -363,11 +363,11 @@ void Icmp4Codec::DecodeICMPEmbeddedIP(const uint8_t *pkt, const uint32_t len, Pa
 }
 #endif
 
-void Icmp4Codec::ICMP4AddrTests (Packet* p)
+void Icmp4Codec::ICMP4AddrTests(Packet* p)
 {
     uint8_t msb_dst;
 
-    uint32_t dst = GET_DST_IP(p)->ip32[0];
+    uint32_t dst = p->ip_api.get_dst()->ip32[0];
 
     // check all 32 bits; all set so byte order is irrelevant ...
     if ( ip::is_broadcast(dst) )

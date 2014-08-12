@@ -90,7 +90,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
     {
         uint16_t csum;
 
-        if(IS_IP4(p))
+        if(p->ip_api.is_ip4())
         {
             csum = checksum::cksum_add((uint16_t *)(icmp6h), raw_len);
         }
@@ -98,10 +98,11 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         else
         {
             checksum::Pseudoheader6 ph6;
-            COPY4(ph6.sip, p->ip6h->ip_src.ip32);
-            COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
+            ip::IpApi *ip_api = &p->ip_api;
+            COPY4(ph6.sip, ip_api->get_src()->ip32);
+            COPY4(ph6.dip, ip_api->get_dst()->ip32);
             ph6.zero = 0;
-            ph6.protocol = GET_IPH_PROTO(p);
+            ph6.protocol = ip_api->proto();
             ph6.len = htons((u_short)raw_len);
 
             csum = checksum::icmp_cksum((uint16_t *)(icmp6h), raw_len, &ph6);
@@ -136,7 +137,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 p->dsize -= sizeof(ICMPHdr::icmp_hun.idseq);
                 p->data += sizeof(ICMPHdr::icmp_hun.idseq);
 
-                if ( ipv6::is_multicast(p->ip6h->ip_dst.ip.u6_addr8[0]) )
+                if ( ipv6::is_multicast(p->ip_api.get_dst()->ip.u6_addr8[0]) )
                     codec_events::decoder_event(p, DECODE_ICMP6_DST_MULTICAST);
             }
             else
@@ -427,7 +428,7 @@ typedef struct {
 } // namespace
 
 
-bool Icmp6Codec::encode (EncState* enc, Buffer* out, const uint8_t *raw_in)
+bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
 {
     checksum::Pseudoheader6 ps6;
     IcmpHdr* ho;
@@ -464,8 +465,8 @@ bool Icmp6Codec::encode (EncState* enc, Buffer* out, const uint8_t *raw_in)
     enc->proto = IPPROTO_ICMPV6;
     int len = buff_diff(out, (uint8_t *)ho);
 
-    memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.s6_addr, sizeof(ps6.sip));
-    memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.s6_addr, sizeof(ps6.dip));
+    memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
+    memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
     ps6.zero = 0;
     ps6.protocol = IPPROTO_ICMPV6;
     ps6.len = htons((uint16_t)(len));
@@ -485,8 +486,8 @@ bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
         checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
-        memcpy(ps6.sip, &p->ip6h->ip_src.ip32, sizeof(ps6.sip));
-        memcpy(ps6.dip, &p->ip6h->ip_dst.ip32, sizeof(ps6.dip));
+        memcpy(ps6.sip, &p->ip_api.get_src()->ip32, sizeof(ps6.sip));
+        memcpy(ps6.dip, &p->ip_api.get_dst()->ip32, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)*len);

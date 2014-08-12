@@ -57,12 +57,11 @@ public:
 
 
 #ifndef DLT_PPP
-static constexpr int DLT_PPP = 51;
+static constexpr int DLT_PPP = 9;
 #endif
 
 static constexpr uint8_t CHDLC_ADDR_BROADCAST = 0xff;
 static constexpr uint8_t CHDLC_CTRL_UNNUMBERED = 0x03;
-
 
 void PPPCodec::get_data_link_type(std::vector<int>& v)
 {

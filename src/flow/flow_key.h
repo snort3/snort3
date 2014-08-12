@@ -41,13 +41,13 @@ struct FlowKey
     uint16_t   addressSpaceIdPad1;
 
     void init(
-        snort_ip_p srcIP, uint16_t srcPort,
-        snort_ip_p dstIP, uint16_t dstPort,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
         char proto, uint16_t vlan, 
         uint32_t mplsId, uint16_t addrSpaceId);
 
     void init(
-        snort_ip_p srcIP, snort_ip_p dstIP, 
+        const sfip_t *srcIP, const sfip_t *dstIP,
         uint32_t id, char proto, uint16_t vlan, 
         uint32_t mplsId, uint16_t addrSpaceId);
 
@@ -57,13 +57,13 @@ struct FlowKey
 
 private:
     void init4(
-        snort_ip_p srcIP, uint16_t srcPort,
-        snort_ip_p dstIP, uint16_t dstPort,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
         char proto, uint32_t mplsId, bool order = true);
 
     void init6(
-        snort_ip_p srcIP, uint16_t srcPort,
-        snort_ip_p dstIP, uint16_t dstPort,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
         char proto, uint32_t mplsId, bool order = true);
 };
 

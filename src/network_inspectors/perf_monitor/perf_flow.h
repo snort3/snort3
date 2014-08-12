@@ -126,8 +126,8 @@ int InitFlowIPStats   (SFFLOW *sfFlow);
 void UpdateFlowStats(SFFLOW *, Packet *);
 void ProcessFlowStats(SFFLOW *sfFlow, FILE *fh, int console);
 void ProcessFlowIPStats(SFFLOW *sfFlow, FILE *fh, int console);
-int UpdateFlowIPStats(SFFLOW *, snort_ip_p src_addr, snort_ip_p dst_addr, int len, SFSType type);
-int UpdateFlowIPState(SFFLOW *, snort_ip_p src_addr, snort_ip_p dst_addr, SFSState state);
+int UpdateFlowIPStats(SFFLOW *, const sfip_t *src_addr, const sfip_t *dst_addr, int len, SFSType type);
+int UpdateFlowIPState(SFFLOW *, const sfip_t *src_addr, const sfip_t *dst_addr, SFSState state);
 void FreeFlowStats(SFFLOW *sfFlow);
 void LogFlowPerfHeader(FILE *);
 

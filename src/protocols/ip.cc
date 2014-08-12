@@ -19,6 +19,7 @@
 */
 // ip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <arpa/inet.h>
 #include "protocols/ip.h"
 #include "protocols/packet.h"
 
@@ -68,7 +69,7 @@ bool IpApi::set(const uint8_t* raw_ip_data)
     return true;
 }
 
-const sfip_t* IpApi::get_src()
+const sfip_t *IpApi::get_src()
 {
     if (src_p)
         return src_p;
@@ -100,7 +101,7 @@ const sfip_t* IpApi::get_src()
 }
 
 
-const sfip_t* IpApi::get_dst()
+const sfip_t *IpApi::get_dst()
 {
     if (dst_p)
         return dst_p;
@@ -131,7 +132,7 @@ const sfip_t* IpApi::get_dst()
 
 }
 
-uint32_t IpApi::id(const Packet* const p)
+uint32_t IpApi::id(const Packet* const p) const
 {
     if (ip4h)
         return ip4h->get_id();
@@ -146,7 +147,7 @@ uint32_t IpApi::id(const Packet* const p)
     return frag_hdr->get_id();
 }
 
-uint16_t IpApi::off(const Packet* const p)
+uint16_t IpApi::off(const Packet* const p) const
 {
     if (ip4h)
         return ip4h->get_id();
@@ -162,4 +163,48 @@ uint16_t IpApi::off(const Packet* const p)
 }
 
 
-} // namespace protocols
+const uint8_t* IpApi::ip_data() const
+{
+    if (ip4h)
+        return reinterpret_cast<const uint8_t*>(ip4h) + (ip4h->get_hlen() << 2);
+
+    if (ip6h)
+        return reinterpret_cast<const uint8_t*>(ip6h) + (ip6h->get_hlen() << 2);
+
+    return nullptr;
+}
+
+uint16_t IpApi::actual_ip_len() const
+{
+    if (ip4h)
+        return ntohs(ip4h->get_len());
+
+    if (ip6h)
+        return ntohs(ip6h->get_len());
+
+    return 0;
+}
+
+uint16_t IpApi::dgram_len() const
+{
+    if (ip4h)
+        return ntohs(ip4h->get_len());
+
+    if (ip6h)
+        return ntohs(ip6h->get_len()) + (ip6h->get_hlen() << 2);
+
+    return 0;
+}
+
+uint16_t IpApi::pay_len() const
+{
+    if (ip4h)
+        return ntohs(ip4h->get_len()) - (ip4h->get_hlen() << 2);
+
+    if (ip6h)
+        return ntohs(ip6h->get_len());
+
+    return 0;
+}
+
+} // namespace ip

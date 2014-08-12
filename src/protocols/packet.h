@@ -182,30 +182,18 @@ struct Packet
 
     //vvv-----------------------------
 
-    const IPHdr *iph;
-    const IPHdr *inner_iph;     /* if IP-in-IP, this will be the inner IP header */
-    const IPHdr *outer_iph;     /* if IP-in-IP, this will be the outer IP header */
-    const tcp::TCPHdr *tcph;
-    const udp::UDPHdr *udph;
-    const udp::UDPHdr *outer_udph;   /* if Teredo + UDP, this will be the outer UDP header */
-    const ICMPHdr *icmph;
+    const tcp::TCPHdr* tcph;
+    const udp::UDPHdr* udph;
+    const ICMPHdr* icmph;
 
-    const uint8_t *data;        /* packet payload pointer */
-    const uint8_t *ip_data;     /* IP payload pointer */
-    const uint8_t *outer_ip_data;  /* Outer IP payload pointer */
     //^^^-----------------------------
 
     Flow* flow;   /* for session tracking */
 
     //vvv-----------------------------
-    ip::IP4Hdr *ip4h;
-    ipv6::IP6Hdr *ip6h;
-
     IPH_API* iph_api;
-    IPH_API* outer_iph_api;
 
     int family;
-    int outer_family;
     //^^^-----------------------------
 
     uint32_t packet_flags;      /* special flags for the packet */
@@ -214,11 +202,9 @@ struct Packet
     uint16_t proto_bits;
 
     //vvv-----------------------------
+    const uint8_t* data;        /* packet payload pointer */
     uint16_t dsize;             /* packet payload size */
-    uint16_t ip_dsize;          /* IP payload size */
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
-    uint16_t actual_ip_len;     /* for logging truncated pkts (usually by small snaplen)*/
-    uint16_t outer_ip_dsize;    /* Outer IP payload size */
     //^^^-----------------------------
 
     uint16_t frag_offset;       /* fragment offset number */
@@ -258,16 +244,11 @@ struct Packet
     const uint8_t *ip_options_data;
     const uint8_t *tcp_options_data;
 
-    const ipv6::IP6RawHdr* raw_ip6h;  // innermost raw ip6 header
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
-    ip::IP4Hdr inner_ip4h;
-    ipv6::IP6Hdr inner_ip6h;
-    ip::IP4Hdr outer_ip4h;
-    ipv6::IP6Hdr outer_ip6h;
     ip::IpApi ip_api;
 
-    MplsHdr mplsHdr;
+    mpls::MplsHdr mplsHdr;
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
     uint16_t max_dsize;
@@ -314,7 +295,7 @@ struct Packet
                                     /* don't alert if "next layer" is invalid. */
 #define DECODE__FREE    0xC0
 
-#define IsIP(p) (IPH_IS_VALID(p))
+#define IsIP(p) (p->ip_api.is_valid())
 #define IsTCP(p) (IsIP(p) && p->tcph)
 #define IsICMP(p) (IsIP(p) && p->icmph)
 #define GET_PKT_SEQ(p) (ntohl(p->tcph->th_seq))
@@ -342,7 +323,7 @@ static inline uint8_t GetEventProto(const Packet *p)
 {
     if (IsPortscanPacket(p))
         return p->ps_proto;
-    return IPH_IS_VALID(p) ? GET_IPH_PROTO(p) : 0;
+    return p->ip_api.proto(); // return 0 if invalid
 }
 
 static inline bool PacketHasFullPDU (const Packet* p)

@@ -946,7 +946,7 @@ static int EventTest (EventData* p) {
     // this is the only acceptable public value for op
     SFRF_COUNT_OPERATION op = SFRF_COUNT_INCREMENT;
 
-    snort_ip sip, dip;
+    sfip_t sip, dip;
     sfip_pton(p->sip, &sip);
     sfip_pton(p->dip, &dip);
 

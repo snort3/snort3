@@ -165,11 +165,11 @@ static void get_alert_pkt(
             }
 
             /* we don't log any headers besides eth yet */
-            if (IPH_IS_VALID(p) && p->pkt && IS_IP4(p))
+            if (p->ip_api.is_ip4() && p->pkt)
             {
-                us.alert.nethdr=(char *)p->iph-(char *)p->pkt;
+                us.alert.nethdr=(char *)p->ip_api.get_ip4h()-(char *)p->pkt;
 
-                switch(GET_IPH_PROTO(p))
+                switch(p->ip_api.proto())
                 {
                     case IPPROTO_TCP:
                        if (p->tcph)

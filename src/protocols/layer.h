@@ -97,6 +97,8 @@ const gre::GREHdr* get_gre_layer(const Packet*);
 const eapol::EtherEapol* get_eapol_layer(const Packet*);
 const eth::EtherHdr* get_eth_layer(const Packet*);
 const uint8_t* get_root_layer(const Packet* const);
+/* return a pointer to the outermost UDP layer */
+const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
 
 
 // ICMP with Embedded IP layer
@@ -120,7 +122,45 @@ const icmp::ICMPHdr* get_icmp_embed_icmp(const Packet* const);
 
 
 int get_inner_ip_lyr(const Packet* const p);
-uint16_t get_outer_ip_next_proto(const Packet* const);
+
+/*
+ * Starting from layer 'curr_layer', continuing looking at increasingly
+ * outermost layer for another IP protocol.  If an IP protocol is found,
+ * set the given ip_api to that layer.
+ * PARAMS:
+ *          Packet* = packet struct containing data
+ *          ip::Api = ip api to be set
+ *          uint8_t curr_layer = the current, zero based layer from which to
+ *                               start searching outwards.  This field will be
+ *                               set to the Ip Api's layer, zeo based layer.
+ *
+ *                               0<= curr_layer < p->num_layers
+ * RETURNS:
+ *          true:  if the api is set
+ *          false: if the api has NOT been set
+ *
+ * NOTE: curr_layer should NOT be p->num_layers.  the curr_layer field
+ *       will be reset in this function and num_layers should be constant
+ *
+ * NOTE: curr_layer is zero based.  That means to get all of the ip
+ *       layers (starting from teh innermost layer), during the first call
+ *       'curr_layer == p->num_layers - 1'.
+ *
+ * NOTE: This functions is extremely useful in a loop
+ *          while (set_inner_ip_api(p, api, layer)) { ... }
+ */
+bool set_inner_ip_api(const Packet* const, ip::IpApi&, uint8_t& curr_layer);
+
+/*
+ * Identical to above function except will begin searching from the
+ * outermost layer until the innermost layer
+ *
+ * NOTE: curr_layer is zero based.  That means to get all of the ip
+ *       layers (starting from the OUTERMOST layer), during the first call
+ *       'curr_layer == 0'.
+ */
+bool set_outer_ip_api(const Packet* const, ip::IpApi&, uint8_t& curr_layer);
+
 
 } // namespace layer
 

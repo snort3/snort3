@@ -210,7 +210,7 @@ static void LogGREHeader(TextLog *log, Packet *p)
         return;
 
     TextLog_Print(log, "GRE version:%u flags:0x%02X ether-type:0x%04X\n",
-            GRE_VERSION(greh), greh->flags, GRE_PROTO(greh));
+            greh->get_version(), greh->flags, greh->get_proto());
 }
 
 #ifndef NO_NON_ETHER_DECODER
@@ -546,26 +546,26 @@ static void LogIpOptions(TextLog*  log, Packet * p)
  */
 void LogIpAddrs(TextLog *log, Packet *p)
 {
-    if (!IPH_IS_VALID(p))
+    if (!p->ip_api.is_valid())
         return;
 
     if ((p->decode_flags & DECODE__FRAG)
-            || ((GET_IPH_PROTO(p) != IPPROTO_TCP)
-                && (GET_IPH_PROTO(p) != IPPROTO_UDP)))
+            || ((p->ip_api.proto() != IPPROTO_TCP)
+                && (p->ip_api.proto() != IPPROTO_UDP)))
     {
         const char *ip_fmt = "%s -> %s";
 
         if (ScObfuscate())
         {
             TextLog_Print(log, ip_fmt,
-                    ObfuscateIpToText(GET_SRC_ADDR(p)),
-                    ObfuscateIpToText(GET_DST_ADDR(p)));
+                    ObfuscateIpToText(p->ip_api.get_src()),
+                    ObfuscateIpToText(p->ip_api.get_dst()));
         }
         else
         {
             TextLog_Print(log, ip_fmt,
-                    inet_ntoax(GET_SRC_ADDR(p)),
-                    inet_ntoax(GET_DST_ADDR(p)));
+                    inet_ntoax(p->ip_api.get_src()),
+                    inet_ntoax((p->ip_api.get_dst())));
         }
     }
     else
@@ -575,14 +575,14 @@ void LogIpAddrs(TextLog *log, Packet *p)
         if (ScObfuscate())
         {
             TextLog_Print(log, ip_fmt,
-                    ObfuscateIpToText(GET_SRC_ADDR(p)), p->sp,
-                    ObfuscateIpToText(GET_DST_ADDR(p)), p->dp);
+                    ObfuscateIpToText(p->ip_api.get_src()), p->sp,
+                    ObfuscateIpToText(p->ip_api.get_dst()), p->dp);
         }
         else
         {
             TextLog_Print(log, ip_fmt,
-                    inet_ntoax(GET_SRC_ADDR(p)), p->sp,
-                    inet_ntoax(GET_DST_ADDR(p)), p->dp);
+                    inet_ntoax(p->ip_api.get_src()), p->sp,
+                    inet_ntoax(p->ip_api.get_dst()), p->dp);
         }
     }
 }
@@ -599,7 +599,7 @@ void LogIpAddrs(TextLog *log, Packet *p)
  */
 void LogIPHeader(TextLog*  log, Packet * p)
 {
-    if(!IPH_IS_VALID(p))
+    if(!p->ip_api.is_valid())
     {
         TextLog_Print(log, "IP header truncated\n");
         return;
@@ -617,22 +617,22 @@ void LogIPHeader(TextLog*  log, Packet * p)
     }
 
     TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            protocol_names[GET_IPH_PROTO(p)],
-            GET_IPH_TTL(p),
-            GET_IPH_TOS(p),
-            IS_IP6(p) ? ntohl(GET_IPH_ID(p)) : ntohs((uint16_t)GET_IPH_ID(p)),
-            GET_IPH_HLEN(p) << 2,
-            GET_IP_DGMLEN(p));
+            protocol_names[p->ip_api.proto()],
+            p->ip_api.ttl(),
+            p->ip_api.tos(),
+            p->ip_api.is_ip6() ? ntohl(p->ip_api.id(p)) : ntohs((uint16_t)p->ip_api.id(p)),
+            p->ip_api.hlen() << 2,
+            p->ip_api.dgram_len());
 
     /* print the reserved bit if it's set */
-    if((uint8_t)((ntohs(GET_IPH_OFF(p)) & 0x8000) >> 15) == 1)
+    if((uint8_t)((ntohs(p->ip_api.off(p)) & 0x8000) >> 15) == 1)
         TextLog_Puts(log, " RB");
 
     /* printf more frags/don't frag bits */
-    if((uint8_t)((ntohs(GET_IPH_OFF(p)) & 0x4000) >> 14) == 1)
+    if((uint8_t)((ntohs(p->ip_api.off(p)) & 0x4000) >> 14) == 1)
         TextLog_Puts(log, " DF");
 
-    if((uint8_t)((ntohs(GET_IPH_OFF(p)) & 0x2000) >> 13) == 1)
+    if((uint8_t)((ntohs(p->ip_api.off(p)) & 0x2000) >> 13) == 1)
         TextLog_Puts(log, " MF");
 
     TextLog_NewLine(log);
@@ -648,27 +648,18 @@ void LogIPHeader(TextLog*  log, Packet * p)
     {
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
                 (p->frag_offset & 0x1FFF),
-                GET_IP_PAYLEN(p));
+                p->ip_api.pay_len());
     }
 }
 
 static void LogOuterIPHeader(TextLog *log, Packet *p)
 {
-    int save_family = p->family;
-    IPH_API *save_api = p->iph_api;
-    const IPHdr *save_iph = p->iph;
     uint8_t save_ip_option_count = p->ip_option_count;
-    IP4Hdr *save_ip4h = p->ip4h;
-    IP6Hdr *save_ip6h = p->ip6h;
     uint8_t save_frag_flag = (p->decode_flags & DECODE__FRAG);
     uint16_t save_sp, save_dp;
+    ip::IpApi save_ip_api = p->ip_api;
 
-    p->family = p->outer_family;
-    p->iph_api = p->outer_iph_api;
-    p->iph = p->outer_iph;
     p->ip_option_count = 0;
-    p->ip4h = &p->outer_ip4h;
-    p->ip6h = &p->outer_ip6h;
     p->decode_flags &= ~DECODE__FRAG;
 
     if (p->proto_bits & PROTO_BIT__TEREDO)
@@ -676,16 +667,10 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
         save_sp = p->sp;
         save_dp = p->dp;
 
-        if (p->outer_udph)
-        {
-            p->sp = ntohs(p->outer_udph->uh_sport);
-            p->dp = ntohs(p->outer_udph->uh_dport);
-        }
-        else
-        {
-            p->sp = ntohs(p->udph->uh_sport);
-            p->dp = ntohs(p->udph->uh_dport);
-        }
+        const udp::UDPHdr *udph = layer::get_outer_udp_lyr(p);
+        p->sp = ntohs(udph->uh_sport);
+        p->dp = ntohs(udph->uh_dport);
+
         LogIPHeader(log, p);
 
         p->sp = save_sp;
@@ -694,12 +679,8 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
     else
         LogIPHeader(log, p);
 
-    p->family = save_family;
-    p->iph_api = save_api;
-    p->iph = save_iph;
+    p->ip_api = save_ip_api;
     p->ip_option_count = save_ip_option_count;
-    p->ip4h = save_ip4h;
-    p->ip6h = save_ip6h;
     p->decode_flags |= save_frag_flag;
 }
 
@@ -918,7 +899,7 @@ void LogUDPHeader(TextLog* log, Packet* p)
         return;
     }
     /* not much to do here... */
-    TextLog_Print(log, "Len: %d\n", ntohs(p->udph->uh_len) - UDP_HEADER_LEN);
+    TextLog_Print(log, "Len: %d\n", ntohs(p->udph->uh_len) - udp::UDP_HEADER_LEN);
 }
 
 /*--------------------------------------------------------------------
@@ -1051,7 +1032,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 
                 if(udph != NULL)
                     TextLog_Print(log, "Len: %d  Csum: %d\n",
-                            ntohs(orig_p->udph->uh_len) - UDP_HEADER_LEN,
+                            ntohs(orig_p->udph->uh_len) - udp::UDP_HEADER_LEN,
                             ntohs(orig_p->udph->uh_chk));
                 break;
             }
@@ -1072,7 +1053,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                 LogIPHeader(log, orig_p);
 
                 TextLog_Print(log, "Protocol: 0x%X (unknown or "
-                        "header truncated)", GET_IPH_PROTO(orig_p));
+                        "header truncated)", orig_p->ip_api.proto());
                 break;
         }       /* switch */
 
@@ -1686,10 +1667,8 @@ static void LogPacketType(TextLog* log, Packet* p)
  *--------------------------------------------------------------------
  */
 
-#define DATA_PTR(p) \
-    ((uint8_t*)p->iph + (GET_IPH_HLEN(p) << 2))
 #define DATA_LEN(p) \
-    (p->actual_ip_len - (GET_IPH_HLEN(p) << 2))
+    (p->ip_api.actual_ip_len() - (p->ip_api.hlen() << 2))
 
 void LogIPPkt(TextLog* log, int type, Packet * p)
 {
@@ -1714,11 +1693,25 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
             LogMPLSHeader(log, p);
         }
 
-        if ( p->outer_iph )
+
+        // FIXIT --> log everything in order!!
+        ip::IpApi tmp_api = p->ip_api;
+        uint8_t num_layer = 0;
+        bool first = true;
+
+        while (layer::set_outer_ip_api(p, p->ip_api, num_layer) &&
+            tmp_api != p->ip_api)
         {
             LogOuterIPHeader(log, p);
-            LogGREHeader(log, p); // checks for valid gre layer before logging
+
+            if (first)
+                LogGREHeader(log, p); // checks for valid gre layer before logging
+            else
+                first = false;
+
         }
+
+        p->ip_api = tmp_api;
     }
 
     LogIPHeader(log, p);
@@ -1726,17 +1719,16 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
     /* if this isn't a fragment, print the other header info */
     if (!(p->decode_flags & DECODE__FRAG))
     {
-        switch (GET_IPH_PROTO(p))
+        switch (p->ip_api.proto())
         {
             case IPPROTO_TCP:
                 if ( p->tcph != NULL )
-
                 {
                     LogTCPHeader(log, p);
                 }
                 else
                 {
-                    LogNetData(log, DATA_PTR(p), DATA_LEN(p), NULL);
+                    LogNetData(log, p->ip_api.ip_data(), p->ip_api.pay_len(), NULL);
                 }
                 break;
 
@@ -1748,7 +1740,7 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
                 }
                 else
                 {
-                    LogNetData(log, DATA_PTR(p), DATA_LEN(p), NULL);
+                    LogNetData(log, p->ip_api.ip_data(), p->ip_api.pay_len(), NULL);
                 }
 
                 break;
@@ -1760,7 +1752,7 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
                 }
                 else
                 {
-                    LogNetData(log, DATA_PTR(p), GET_IP_PAYLEN(p), NULL);
+                    LogNetData(log, p->ip_api.ip_data(), p->ip_api.pay_len(), NULL);
                 }
                 break;
 

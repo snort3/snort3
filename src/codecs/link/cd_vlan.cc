@@ -62,9 +62,11 @@ struct EthLlcOther
     uint16_t proto_id;
 };
 
+
+constexpr unsigned int ETHERNET_MAX_LEN_ENCAP = 1518;    /* 802.3 (+LLC) or ether II ? */
+
 } // namespace
 
-static const unsigned int ETHERNET_MAX_LEN_ENCAP = 1518;    /* 802.3 (+LLC) or ether II ? */
 
 
 static inline uint32_t len_vlan_llc_other()
@@ -85,10 +87,6 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     if(raw_len < sizeof(vlan::VlanTagHdr))
     {
         codec_events::decoder_event(p, DECODE_BAD_VLAN);
-
-        // TBD add decoder drop event for VLAN hdr len issue
-        p->iph = NULL;
-        p->family = NO_IP;
         return false;
     }
 
@@ -112,9 +110,6 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         if(raw_len < sizeof(vlan::VlanTagHdr) + sizeof(EthLlc))
         {
             codec_events::decoder_event(p, DECODE_BAD_VLAN_ETHLLC);
-
-            p->iph = NULL;
-            p->family = NO_IP;
             return false;
         }
 
@@ -131,10 +126,6 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             if (raw_len < len_vlan_llc_other())
             {
                 codec_events::decoder_event(p, DECODE_BAD_VLAN_OTHER);
-
-                p->iph = NULL;
-                p->family = NO_IP;
-
                 return false;
             }
 
@@ -163,10 +154,6 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         if (vid == 0 || vid == 4095)
         {
             codec_events::decoder_event(p, DECODE_BAD_VLAN);
-
-            // TBD add decoder drop event for VLAN hdr len issue
-            p->iph = NULL;
-            p->family = NO_IP;
             return false;
         }
 

@@ -344,11 +344,11 @@ typedef struct _SnortActionRequest
 void load_sar(Packet *packet, Event *event, SnortActionRequest& sar)
 
 {
-    if(!event || !packet || !IPH_IS_VALID(packet))
+    if(!event || !packet || !packet->ip_api.is_valid())
         return;
 
     // for now, only support ip4
-    if ( !IS_IP4(packet) )
+    if ( !packet->ip_api.is_ip4() )
         return;
 
     /* construct the action request */
@@ -365,9 +365,9 @@ void load_sar(Packet *packet, Event *event, SnortActionRequest& sar)
     //   can be determined by reading 1 byte
     // * addresses could be moved to end of struct in uint8_t[32]
     //   and only 1st 8 used for ip4
-    sar.src_ip =  ntohl(GET_SRC_IP(packet)->ip32[0]);
-    sar.dest_ip = ntohl(GET_DST_IP(packet)->ip32[0]);
-    sar.protocol = GET_IPH_PROTO(packet);
+    sar.src_ip =  ntohl(packet->ip_api.get_src()->ip32[0]);
+    sar.dest_ip = ntohl(packet->ip_api.get_dst()->ip32[0]);
+    sar.protocol = packet->ip_api.proto();
 
     if(sar.protocol == IPPROTO_UDP || sar.protocol == IPPROTO_TCP)
     {

@@ -118,7 +118,7 @@ int IpOptOption::eval(Cursor&, Packet *p)
     PROFILE_VARS;
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CheckIpOptions:"););
-    if(!IPH_IS_VALID(p))
+    if(!p->ip_api.is_valid())
         return rval; /* if error occured while ip header
                    * was processed, return 0 automagically.  */
 

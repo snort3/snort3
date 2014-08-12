@@ -39,9 +39,9 @@
 
 int ftp_bounce_lookup_init(BOUNCE_LOOKUP **BounceLookup);
 int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP **BounceLookup);
-int ftp_bounce_lookup_add(BOUNCE_LOOKUP *BounceLookup, snort_ip_p ip, FTP_BOUNCE_TO *BounceTo);
+int ftp_bounce_lookup_add(BOUNCE_LOOKUP *BounceLookup, const sfip_t *ip, FTP_BOUNCE_TO *BounceTo);
 
-FTP_BOUNCE_TO *ftp_bounce_lookup_find(BOUNCE_LOOKUP *BounceLookup, snort_ip_p ip, int *iError);
+FTP_BOUNCE_TO *ftp_bounce_lookup_find(BOUNCE_LOOKUP *BounceLookup, const sfip_t *ip, int *iError);
 FTP_BOUNCE_TO *ftp_bounce_lookup_first(BOUNCE_LOOKUP *BounceLookup, int *iError);
 FTP_BOUNCE_TO *ftp_bounce_lookup_next(BOUNCE_LOOKUP *BounceLookup, int *iError);
 

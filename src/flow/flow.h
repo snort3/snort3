@@ -217,8 +217,8 @@ public:  // FIXIT privatize if possible
     int flow_state;
     FlowState s5_state;  // FIXIT rename this (s5 not appropriate)
 
-    snort_ip client_ip; // FIXIT family and bits should be changed to uint16_t
-    snort_ip server_ip; // or uint8_t to reduce sizeof from 24 to 20
+    sfip_t client_ip; // FIXIT family and bits should be changed to uint16_t
+    sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
 
     uint64_t expire_time;
     uint32_t normal_mask;

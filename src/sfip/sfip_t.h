@@ -33,9 +33,15 @@
 
 #include <stdint.h>
 
+#ifndef WIN32
+#include <netinet/in.h>
+#else
+#include <winsock2.h>
+#endif
+
 /* factored out for attribute table */
 
-typedef struct _ip {
+struct sfip_t {
     int16_t family;
     int16_t bits;
 
@@ -52,7 +58,40 @@ typedef struct _ip {
     #define ip16 ip.u6_addr16
     #define ip32 ip.u6_addr32
 /*    #define ip64 ip.u6_addr64 */
-} sfip_t;
+
+    inline bool is_ip6() const
+    { return family == AF_INET6; }
+
+    inline bool is_ip4() const
+    { return family == AF_INET; }
+
+
+};
+
+inline bool operator==(const sfip_t& lhs, const sfip_t& rhs)
+{
+    if (lhs.is_ip4())
+    {
+        return  (rhs.is_ip4()) &&
+                (lhs.ip.u6_addr32[0] == rhs.ip.u6_addr32[0]);
+    }
+    else if (lhs.is_ip6())
+    {
+        return  (rhs.is_ip6()) &&
+                (lhs.ip.u6_addr32[0] == rhs.ip.u6_addr32[0]) &&
+                (lhs.ip.u6_addr32[1] == rhs.ip.u6_addr32[1]) &&
+                (lhs.ip.u6_addr32[2] == rhs.ip.u6_addr32[2]) &&
+                (lhs.ip.u6_addr32[3] == rhs.ip.u6_addr32[3]);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+inline bool operator!=(const sfip_t& lhs, const sfip_t& rhs)
+{ return !(lhs == rhs); }
+
 
 #endif
 

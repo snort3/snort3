@@ -233,17 +233,17 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     }
 
     /* print the packet header to the alert file */
-    if (IPH_IS_VALID(p))
+    if (p->ip_api.is_valid())
     {
         LogPriorityData(fast_log, event, 0);
-        TextLog_Print(fast_log, "{%s} ", protocol_names[GET_IPH_PROTO(p)]);
+        TextLog_Print(fast_log, "{%s} ", protocol_names[p->ip_api.proto()]);
         LogIpAddrs(fast_log, p);
     }
 
     if(packet)
     {
-        if(IPH_IS_VALID(p))
-            LogIPPkt(fast_log, GET_IPH_PROTO(p), p);
+        if(p->ip_api.is_valid())
+            LogIPPkt(fast_log, p->ip_api.proto(), p);
 #ifndef NO_NON_ETHER_DECODER
         else if(p->proto_bits & PROTO_BIT__ARP)
             LogArpHeader(fast_log, p);

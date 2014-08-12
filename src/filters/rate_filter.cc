@@ -130,14 +130,14 @@ int RateFilter_Test(
     unsigned gid = otn->sigInfo.generator;
     unsigned sid = otn->sigInfo.id;
 
-    snort_ip_p sip;
-    snort_ip_p dip;
-    snort_ip cleared;
+    const sfip_t *sip;
+    const sfip_t *dip;
+    sfip_t cleared;
 
-    if ( IPH_IS_VALID(p) )
+    if ( p->ip_api.is_valid() )
     {
-        sip = GET_SRC_IP(p);
-        dip = GET_DST_IP(p);
+        sip = p->ip_api.get_src();
+        dip = p->ip_api.get_dst();
     }
     else
     {

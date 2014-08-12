@@ -596,8 +596,8 @@ int FTPsessionInspection(
  */
 int SetSiInput(FTPP_SI_INPUT *SiInput, Packet *p)
 {   
-    IP_COPY_VALUE(SiInput->sip, GET_SRC_IP(p));
-    IP_COPY_VALUE(SiInput->dip, GET_DST_IP(p));
+    IP_COPY_VALUE(SiInput->sip, p->ip_api.get_src());
+    IP_COPY_VALUE(SiInput->dip, p->ip_api.get_dst());
     SiInput->sport = p->sp;
     SiInput->dport = p->dp;
         

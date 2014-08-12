@@ -197,7 +197,7 @@ static void AlertSyslog(
     char event_string[STD_BUF];
     event_string[0] = '\0';
 
-    if ((p != NULL) && IPH_IS_VALID(p))
+    if ((p != NULL) && p->ip_api.is_valid())
     {
         if (event != NULL)
         {
@@ -236,33 +236,34 @@ static void AlertSyslog(
                     "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
         }
 
-        if (protocol_names[GET_IPH_PROTO(p)] != NULL)
+        uint16_t proto = p->ip_api.proto();
+        if (protocol_names[proto] != NULL)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "{%s} ", protocol_names[GET_IPH_PROTO(p)]);
+                    "{%s} ", protocol_names[proto]);
         }
         else
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "{%d} ", GET_IPH_PROTO(p));
+                    "{%d} ", proto);
         }
 
         if ((p->decode_flags & DECODE__FRAG)
-                || ((GET_IPH_PROTO(p) != IPPROTO_TCP)
-                    && (GET_IPH_PROTO(p) != IPPROTO_UDP)))
+                || ((proto != IPPROTO_TCP)
+                    && (proto != IPPROTO_UDP)))
         {
             const char *ip_fmt = "%s -> %s";
 
             if (ScObfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        ObfuscateIpToText(GET_SRC_ADDR(p)),
-                        ObfuscateIpToText(GET_DST_ADDR(p)));
+                        ObfuscateIpToText(p->ip_api.get_src()),
+                        ObfuscateIpToText(p->ip_api.get_dst()));
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        inet_ntoax(GET_SRC_ADDR(p)), inet_ntoax(GET_DST_ADDR(p)));
+                        inet_ntoax(p->ip_api.get_src()), inet_ntoax(p->ip_api.get_dst()));
             }
         }
         else
@@ -272,14 +273,14 @@ static void AlertSyslog(
             if (ScObfuscate())
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        ObfuscateIpToText(GET_SRC_ADDR(p)), p->sp,
-                        ObfuscateIpToText(GET_DST_ADDR(p)), p->dp);
+                        ObfuscateIpToText(p->ip_api.get_src()), p->sp,
+                        ObfuscateIpToText(p->ip_api.get_dst()), p->dp);
             }
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                        inet_ntoax(GET_SRC_ADDR(p)), p->sp,
-                        inet_ntoax(GET_DST_ADDR(p)), p->dp);
+                        inet_ntoax(p->ip_api.get_src()), p->sp,
+                        inet_ntoax(p->ip_api.get_dst()), p->dp);
             }
         }
 

@@ -797,7 +797,7 @@ static int EventTest (EventData* p, void* rule) {
     long curtime = (long)p->now;
     int status;
 
-    snort_ip sip, dip;
+    sfip_t sip, dip;
     sfip_pton(p->sip, &sip);
     sfip_pton(p->dip, &dip);
 

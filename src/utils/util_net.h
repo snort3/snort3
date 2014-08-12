@@ -36,7 +36,7 @@
 #include "snort_types.h"
 #include "ipv6_port.h"
 
-char *inet_ntoax(sfip_t *);
+char *inet_ntoax(const sfip_t *);
 
 char * mktcpflag_str(int flags);
 

@@ -50,6 +50,8 @@
 #define VALIDATE(x,y)
 #endif
 
+#if 0
+
 sfip_t *ip6_ret_src(const Packet *p)
 {
     VALIDATE(p, 1);
@@ -337,8 +339,11 @@ uint8_t orig_ip6_ret_hlen(const Packet*)
     return IP6_HDR_LEN / 4;
 }
 
+#endif
+
 IPH_API ip4 =
 {
+#if 0
    ip4_ret_src,
    ip4_ret_dst,
    ip4_ret_tos,
@@ -349,7 +354,6 @@ IPH_API ip4 =
    ip4_ret_off,
    ip4_ret_ver,
    ip4_ret_hlen,
-#if 0
    orig_ip4_ret_src,
    orig_ip4_ret_dst,
    orig_ip4_ret_tos,
@@ -366,6 +370,7 @@ IPH_API ip4 =
 
 IPH_API ip6 =
 {
+#if 0
    ip6_ret_src,
    ip6_ret_dst,
    ip6_ret_toc,
@@ -376,7 +381,6 @@ IPH_API ip6 =
    ip6_ret_off,
    ip6_ret_ver,
    ip6_ret_hlen,
-#if 0
    orig_ip6_ret_src,
    orig_ip6_ret_dst,
    orig_ip6_ret_toc,
@@ -419,6 +423,7 @@ void sfiph_build(Packet *p, const void *hdr, int family)
 
     /* If family is already set, we've been here before.
      * That means this is a nested IP.  */
+#if 0
     if (p->family != NO_IP)
     {
         if (p->iph_api->ver == IPH_API_V4)
@@ -426,11 +431,11 @@ void sfiph_build(Packet *p, const void *hdr, int family)
         else if (p->iph_api->ver == IPH_API_V6)
             memcpy(&p->outer_ip6h, &p->inner_ip6h, sizeof(IP6Hdr));
 
-        p->outer_iph_api = p->iph_api;
-        p->outer_family = p->family;
     }
-
+#endif
     _set_callbacks(p, family, CALLBACK_IP);
+
+#if 0
 
     if(family == AF_INET)
     {
@@ -442,7 +447,7 @@ void sfiph_build(Packet *p, const void *hdr, int family)
         memcpy(&p->inner_ip4h, hdr4, sizeof(IPHdr) - 8);
         sfip_set_raw(&p->inner_ip4h.ip_src, &hdr4->ip_src, family);
         sfip_set_raw(&p->inner_ip4h.ip_dst, &hdr4->ip_dst, family);
-        p->actual_ip_len = ntohs(p->inner_ip4h.ip_len);
+//        p->actual_ip_len = ntohs(p->inner_ip4h.ip_len);
         p->ip4h = &p->inner_ip4h;
     }
     else
@@ -455,9 +460,10 @@ void sfiph_build(Packet *p, const void *hdr, int family)
         memcpy(&p->inner_ip6h, hdr6, sizeof(ipv6::IP6RawHdr) - 32);
         sfip_set_raw(&p->inner_ip6h.ip_src, &hdr6->ip6_src, family);
         sfip_set_raw(&p->inner_ip6h.ip_dst, &hdr6->ip6_dst, family);
-        p->actual_ip_len = ntohs(p->inner_ip6h.len) + IP6_HDR_LEN;
+//        p->actual_ip_len = ntohs(p->inner_ip6h.len) + IP6_HDR_LEN;
         p->ip6h = &p->inner_ip6h;
     }
+#endif
 }
 
 void sfiph_orig_build(Packet *p, const void *hdr, int family)

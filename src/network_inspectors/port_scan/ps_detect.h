@@ -70,9 +70,9 @@ typedef struct s_PS_PROTO
     unsigned short low_p;
     unsigned short u_ports;
 
-    snort_ip           high_ip;
-    snort_ip           low_ip;
-    snort_ip           u_ips;
+    sfip_t           high_ip;
+    sfip_t           low_ip;
+    sfip_t           u_ips;
 
     unsigned short open_ports[PS_OPEN_PORTS];
     unsigned char  open_ports_cnt;

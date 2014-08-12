@@ -142,7 +142,7 @@ bool UdpSession::setup(Packet* p)
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
-    flow->protocol = GET_IPH_PROTO(p);
+    flow->protocol = p->ip_api.proto();
     flow->s5_state.direction = FROM_SENDER;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
@@ -156,9 +156,9 @@ bool UdpSession::setup(Packet* p)
             IP_ARG(flow->server_ip), SFS_STATE_UDP_CREATED);
 
     flow->s5_state.direction = FROM_SENDER;
-    IP_COPY_VALUE(flow->client_ip, GET_SRC_IP(p));
+    IP_COPY_VALUE(flow->client_ip, p->ip_api.get_src());
     flow->client_port = p->udph->uh_sport;
-    IP_COPY_VALUE(flow->server_ip, GET_DST_IP(p));
+    IP_COPY_VALUE(flow->server_ip, p->ip_api.get_dst());
     flow->server_port = p->udph->uh_dport;
 
     if ( flow_con->expected_flow(flow, p) )
@@ -174,9 +174,9 @@ void UdpSession::clear()
 }
 
 void UdpSession::update_direction(
-    char dir, snort_ip_p ip, uint16_t port)
+    char dir, const sfip_t *ip, uint16_t port)
 {
-    snort_ip tmpIp;
+    sfip_t tmpIp;
     uint16_t tmpPort;
 
     if (IP_EQUALITY(&udp_sender_ip, ip) && (udp_sender_port == port))

@@ -86,8 +86,8 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
     int iServerSip;
     int iServerDip;
     int http_id_found = 0;
-    snort_ip sip;
-    snort_ip dip;
+    sfip_t sip;
+    sfip_t dip;
 
     //structure copy
     sip = SiInput->sip;

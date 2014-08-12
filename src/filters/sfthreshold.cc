@@ -310,7 +310,7 @@ int sfthreshold_create(
 */
 int sfthreshold_test(
     unsigned gen_id, unsigned  sig_id,
-    snort_ip_p sip, snort_ip_p dip,
+    const sfip_t *sip, const sfip_t *dip,
     long curtime )
 {
     if ((snort_conf->threshold_config == NULL) ||

@@ -91,7 +91,7 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if((ip4h->get_ver() != 4) && !IS_IP6(p))
+    if((ip4h->get_ver() != 4) && !p->ip_api.is_ip6())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP: not IPv4 datagram ([ver: 0x%x][len: 0x%x])\n",
@@ -133,7 +133,7 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
         /* ICMP error packets could contain as much of original payload
          * as possible, but not exceed 576 bytes
          */
-        else if (ntohs(GET_IPH_LEN(p)) > 576)
+        else if (ntohs(p->ip_api.len()) > 576)
         {
             codec_events::decoder_event(p, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
         }

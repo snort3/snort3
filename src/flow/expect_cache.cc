@@ -120,21 +120,21 @@ void ExpectNode::clear(ExpectFlow*& list)
 
 struct ExpectKey
 {
-    snort_ip ip1;
-    snort_ip ip2;
+    sfip_t ip1;
+    sfip_t ip2;
     uint16_t port1;
     uint16_t port2;
     uint32_t protocol;
 
     bool set(
-        snort_ip_p cliIP, uint16_t cliPort,
-        snort_ip_p srvIP, uint16_t srvPort,
+        const sfip_t *cliIP, uint16_t cliPort,
+        const sfip_t *srvIP, uint16_t srvPort,
         uint8_t proto);
 };
 
 inline bool ExpectKey::set(
-    snort_ip_p cliIP, uint16_t cliPort,
-    snort_ip_p srvIP, uint16_t srvPort,
+    const sfip_t *cliIP, uint16_t cliPort,
+    const sfip_t *srvIP, uint16_t srvPort,
     uint8_t proto )
 {
     bool reverse;
@@ -344,8 +344,8 @@ ExpectCache::~ExpectCache ()
  * session expiry in seconds.
  */
 int ExpectCache::add_flow(
-    snort_ip_p cliIP, uint16_t cliPort,
-    snort_ip_p srvIP, uint16_t srvPort,
+    const sfip_t *cliIP, uint16_t cliPort,
+    const sfip_t *srvIP, uint16_t srvPort,
     uint8_t protocol, char direction,
     FlowData* fd, int16_t appId)
 {
@@ -388,11 +388,11 @@ bool ExpectCache::is_expected(Packet* p)
     if ( !hash_table->get_count() )
         return false;
 
-    snort_ip* srcIP = GET_SRC_IP(p);
-    snort_ip* dstIP = GET_DST_IP(p);
+    const sfip_t *srcIP = p->ip_api.get_src();
+    const sfip_t *dstIP = p->ip_api.get_dst();
 
     ExpectKey key;
-    bool reversed_key = key.set(dstIP, p->dp, srcIP, p->sp, GET_IPH_PROTO(p));
+    bool reversed_key = key.set(dstIP, p->dp, srcIP, p->sp, p->ip_api.proto());
 
     uint16_t port1;
     uint16_t port2;

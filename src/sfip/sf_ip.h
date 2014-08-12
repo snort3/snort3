@@ -119,7 +119,7 @@ void sfip_obfuscate(sfip_t *ob, sfip_t *ip);
 
 /* return required size (eg for hashing)
  * requires that address bytes be the last field in sfip_t */
-static inline unsigned int sfip_size(sfip_t* ipt)
+static inline unsigned int sfip_size(const sfip_t *ipt)
 {
     if ( ipt->family == AF_INET6 ) return sizeof(*ipt);
     return (unsigned int)((ipt->ip.u6_addr8+4) - (u_int8_t*)ipt);

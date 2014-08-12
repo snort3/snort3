@@ -160,6 +160,7 @@ static const uint8_t* encode_packet(
     enc->p = p;
     enc->ip_hdr = p->layers[layer::get_inner_ip_lyr(p)].start;
 
+    // FIXIT:  Remove this funky stuff.
     if ( ip::is_ipv4(*(enc->ip_hdr)))
         enc->ip_len = ip::get_pkt_len((IPHdr*) enc->ip_hdr);
     else if ( ipv6::is_ip6_hdr_ver((ipv6::IP6RawHdr*)(enc->ip_hdr)))
@@ -571,10 +572,6 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
 
     memset(c, 0, PKT_ZERO_LEN);
 
-    // TODO -- remove
-    c->raw_ip6h = nullptr;
-//    c->pkth = pkth;
-//    c->pkt = pkt;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     pkth->ingress_index = phdr->ingress_index;
@@ -617,6 +614,8 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
         lyr->length = p->layers[i].length;
         lyr->start = (uint8_t*)b;
 
+        // NOTE: this must always go from outer to inner
+        //       to ensure a valid ip header
         uint8_t mapped_prot = i ? s_proto_map[lyr->prot_id] : grinder;
         s_protocols[mapped_prot]->format(f, p, c, lyr);
     }
@@ -675,7 +674,6 @@ SO_PUBLIC void PacketManager::encode_update (Packet* p)
     uint32_t len = 0;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)p->pkth;
 
-    p->actual_ip_len = 0;
     Layer *lyr = p->layers;
 
     for ( i = p->num_layers - 1; i >= 0; i-- )

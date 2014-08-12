@@ -34,7 +34,7 @@ public:
     virtual ~Session() { };
 
     virtual bool setup(Packet*) { return true; };
-    virtual void update_direction(char /*dir*/, snort_ip*, uint16_t /*port*/) { };
+    virtual void update_direction(char /*dir*/, const sfip_t*, uint16_t /*port*/) { };
     virtual int process(Packet*) { return 0; };
     virtual void clear() = 0;
     virtual void cleanup() { clear(); };

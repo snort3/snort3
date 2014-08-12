@@ -349,7 +349,7 @@ int SFAT_AddHostEntryToMap(void)
     return ret == RT_SUCCESS ? SFAT_OK : SFAT_ERROR;
 }
 
-HostAttributeEntry *SFAT_LookupHostEntryByIP(sfip_t *ipAddr)
+HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
 {
     HostAttributeEntry *host = NULL;
     sfip_t local_ipAddr;
@@ -379,7 +379,7 @@ HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)
     if (!p || !p->iph_api)
         return NULL;
 
-    return SFAT_LookupHostEntryByIP(GET_SRC_IP(p));
+    return SFAT_LookupHostEntryByIP(p->ip_api.get_src());
 }
 
 HostAttributeEntry *SFAT_LookupHostEntryByDst(Packet *p)
@@ -387,7 +387,7 @@ HostAttributeEntry *SFAT_LookupHostEntryByDst(Packet *p)
     if (!p || !p->iph_api)
         return NULL;
 
-    return SFAT_LookupHostEntryByIP(GET_DST_IP(p));
+    return SFAT_LookupHostEntryByIP(p->ip_api.get_dst());
 }
 
 void SFAT_Cleanup(void)

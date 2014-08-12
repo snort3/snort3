@@ -18,6 +18,8 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#ifndef PROTOCOLS_IPV4_H
+#define PROTOCOLS_IPV4_H
 
 #include <cstdint>
 
@@ -38,8 +40,6 @@
 
 
 
-#ifndef IPV4_H
-#define IPV4_H
 
 #define ETHERNET_TYPE_IP 0x0800
 
@@ -97,6 +97,7 @@ struct IpOptions
     { return code == static_cast<uint8_t>(IPOptionCodes::RR); }
 };
 
+
 // This must be a standard layour struct!
 struct IPHdr
 {
@@ -108,9 +109,10 @@ struct IPHdr
     uint8_t ip_ttl;        /* time to live field */
     uint8_t ip_proto;      /* datagram protocol */
     uint16_t ip_csum;      /* checksum */
-    in_addr ip_src;        /* source IP */
-    in_addr ip_dst;        /* dest IP */
+    uint32_t ip_src;  /* source IP */
+    uint32_t ip_dst;  /* dest IP */
 
+    /* getters */
     inline uint8_t get_hlen() const
     { return ip_verhl & 0x0f; }
 
@@ -138,11 +140,28 @@ struct IPHdr
     inline uint16_t get_csum() const
     { return ip_csum; }
 
-    inline const in_addr* get_src() const
-    { return &ip_src; }
+    inline uint32_t get_src() const
+    { return ip_src; }
 
-    inline const in_addr* get_dst() const
-    { return &ip_dst; }
+    inline uint32_t get_dst() const
+    { return ip_dst; }
+
+    /* booleans */
+    inline bool is_src_broadcast() const
+    { return ip_src == detail::IP4_BROADCAST; }
+
+    inline bool is_dst_broadcast() const
+    { return ip_dst == detail::IP4_BROADCAST; }
+
+    /*  setters  */
+    inline void set_hlen(uint8_t value)
+    { ip_verhl = (ip_verhl & 0xf0) | (value & 0x0f); }
+
+    inline void set_ip_len(uint16_t value)
+    { ip_len = value; }
+
+    inline void set_proto(uint8_t prot)
+    { ip_proto = prot; }
 } ;
 
 
@@ -241,16 +260,6 @@ static inline void set_version(IPHdr* p, uint8_t value)
 static inline void set_version(IP4Hdr* p, uint8_t value)
 {
     p->ip_verhl = (unsigned char)((p->ip_verhl & 0x0f) | (value << 4));
-}
-
-static inline void set_hlen(IPHdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)(((p)->ip_verhl & 0xf0) | (value & 0x0f));
-}
-
-static inline void set_hlen(IP4Hdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)(((p)->ip_verhl & 0xf0) | (value & 0x0f));
 }
 
 } /* namespace ip */

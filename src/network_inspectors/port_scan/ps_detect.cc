@@ -116,13 +116,11 @@
 #include "ipobj.h"
 #include "stream/stream_api.h"
 
-# define CLEARED &cleared
-
 typedef struct s_PS_HASH_KEY
 {
     int protocol;
-    snort_ip scanner;
-    snort_ip scanned;
+    sfip_t scanner;
+    sfip_t scanned;
 } PS_HASH_KEY;
 
 typedef struct s_PS_ALERT_CONF
@@ -304,8 +302,8 @@ void ps_reset(void)
 /**
 **  Check scanner and scanned ips to see if we can filter them out.
 */
-int PortScan::ps_ignore_ip(snort_ip_p scanner, uint16_t scanner_port,
-                        snort_ip_p scanned, uint16_t scanned_port)
+int PortScan::ps_ignore_ip(const sfip_t *scanner, uint16_t scanner_port,
+                        const sfip_t *scanned, uint16_t scanned_port)
 {
     if (config->ignore_scanners)
     {
@@ -334,11 +332,11 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
 {
     Packet  *p;
     int      reverse_pkt = 0;
-    snort_ip_p scanner, scanned;
+    const sfip_t *scanner, *scanned;
 
     p = (Packet *)ps_pkt->pkt;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->ip_api.is_valid())
         return 1;
 
     if(p->tcph)
@@ -414,8 +412,8 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
             reverse_pkt = 1;
     }
 
-    scanner = GET_SRC_IP(p);
-    scanned = GET_DST_IP(p);
+    scanner = p->ip_api.get_src();
+    scanned = p->ip_api.get_dst();
 
     if(reverse_pkt)
     {
@@ -516,9 +514,9 @@ int PortScan::ps_tracker_lookup(PS_PKT *ps_pkt, PS_TRACKER **scanner,
         IP_CLEAR(key.scanner);
 
         if(ps_pkt->reverse_pkt)
-            IP_COPY_VALUE(key.scanned, GET_SRC_IP(p));
+            IP_COPY_VALUE(key.scanned, p->ip_api.get_src());
         else
-            IP_COPY_VALUE(key.scanned, GET_DST_IP(p));
+            IP_COPY_VALUE(key.scanned, p->ip_api.get_dst());
 
         /*
         **  Get the scanned tracker.
@@ -534,9 +532,9 @@ int PortScan::ps_tracker_lookup(PS_PKT *ps_pkt, PS_TRACKER **scanner,
         IP_CLEAR(key.scanned);
 
         if(ps_pkt->reverse_pkt)
-            IP_COPY_VALUE(key.scanner, GET_DST_IP(p));
+            IP_COPY_VALUE(key.scanner, p->ip_api.get_dst());
         else
-            IP_COPY_VALUE(key.scanner, GET_SRC_IP(p));
+            IP_COPY_VALUE(key.scanner, p->ip_api.get_src());
 
         /*
         **  Get the scanner tracker
@@ -597,7 +595,7 @@ int PortScan::ps_get_proto(PS_PKT *ps_pkt, int *proto)
 
     if (config->detect_scans & PS_PROTO_IP)
     {
-        if ((IPH_IS_VALID(p) && (p->icmph == NULL))
+        if ((p->ip_api.is_valid() && (p->icmph == NULL))
                 || ((p->icmph != NULL) && (p->icmph->type == ICMP_DEST_UNREACH)
                     && ((p->icmph->code == ICMP_PROT_UNREACH)
                         || (p->icmph->code == ICMP_PKT_FILTERED))))
@@ -679,7 +677,7 @@ int PortScan::ps_proto_update_window(PS_PROTO *proto, time_t pkt_time)
 **  @param u_short  port/ip_proto to track
 **  @param time_t   time the packet was received. update windows.
 */
-int PortScan::ps_proto_update(PS_PROTO *proto, int ps_cnt, int pri_cnt, snort_ip_p ip,
+int PortScan::ps_proto_update(PS_PROTO *proto, int ps_cnt, int pri_cnt, const sfip_t *ip,
         u_short port, time_t pkt_time)
 {
     if(!proto)
@@ -828,7 +826,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
 {
     Packet  *p;
     uint32_t session_flags;
-    snort_ip cleared;
+    sfip_t cleared;
     IP_CLEAR(cleared);
 
     p = (Packet *)ps_pkt->pkt;
@@ -861,13 +859,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
             if(scanned)
             {
                 ps_proto_update(&scanned->proto,1,0,
-                                 GET_SRC_IP(p),p->dp, packet_time());
+                                 p->ip_api.get_src(),p->dp, packet_time());
             }
 
             if(scanner)
             {
                 ps_proto_update(&scanner->proto,1,0,
-                                 GET_DST_IP(p),p->dp, packet_time());
+                                 p->ip_api.get_dst(),p->dp, packet_time());
             }
         }
         /*
@@ -877,12 +875,12 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
         {
             if(scanned)
             {
-                ps_proto_update(&scanned->proto,-1,0,CLEARED,0,0);
+                ps_proto_update(&scanned->proto,-1,0,&cleared,0,0);
             }
 
             if(scanner)
             {
-                ps_proto_update(&scanner->proto,-1,0,CLEARED,0,0);
+                ps_proto_update(&scanner->proto,-1,0,&cleared,0,0);
             }
         }
         /*
@@ -895,13 +893,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
         {
             if(scanned)
             {
-                ps_proto_update(&scanned->proto,0,1,CLEARED,0,0);
+                ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
                 scanned->priority_node = 1;
             }
 
             if(scanner)
             {
-                ps_proto_update(&scanner->proto,0,1,CLEARED,0,0);
+                ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
                 scanner->priority_node = 1;
             }
         }
@@ -939,13 +937,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
         if(scanned)
         {
             ps_proto_update(&scanned->proto,1,0,
-                             GET_SRC_IP(p),p->dp, packet_time());
+                             p->ip_api.get_src(),p->dp, packet_time());
         }
 
         if(scanner)
         {
             ps_proto_update(&scanner->proto,1,0,
-                             GET_DST_IP(p),p->dp, packet_time());
+                             p->ip_api.get_dst(),p->dp, packet_time());
         }
     }
     /*
@@ -957,12 +955,12 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     {
         if(scanned)
         {
-            ps_proto_update(&scanned->proto,-1,0,CLEARED,0,0);
+            ps_proto_update(&scanned->proto,-1,0,&cleared,0,0);
         }
 
         if(scanner)
         {
-            ps_proto_update(&scanner->proto,-1,0,CLEARED,0,0);
+            ps_proto_update(&scanner->proto,-1,0,&cleared,0,0);
         }
     }
     /*
@@ -973,13 +971,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     {
         if(scanned)
         {
-            ps_proto_update(&scanned->proto,0,1,CLEARED,0,0);
+            ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
             scanned->priority_node = 1;
         }
 
         if(scanner)
         {
-            ps_proto_update(&scanner->proto,0,1,CLEARED,0,0);
+            ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
             scanner->priority_node = 1;
         }
     }
@@ -990,13 +988,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     {
         if(scanned)
         {
-            ps_proto_update(&scanned->proto,0,1,CLEARED,0,0);
+            ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
             scanned->priority_node = 1;
         }
 
         if(scanner)
         {
-            ps_proto_update(&scanner->proto,0,1,CLEARED,0,0);
+            ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
             scanner->priority_node = 1;
         }
     }
@@ -1007,24 +1005,24 @@ int PortScan::ps_tracker_update_ip(PS_PKT *ps_pkt, PS_TRACKER *scanner,
                                 PS_TRACKER *scanned)
 {
     Packet *p;
-    snort_ip cleared;
+    sfip_t cleared;
     IP_CLEAR(cleared);
 
     p = (Packet *)ps_pkt->pkt;
 
-    if(p->iph)
+    if(p->ip_api.is_valid())
     {
         if(p->icmph)
         {
             if(scanned)
             {
-                ps_proto_update(&scanned->proto,0,1,CLEARED,0,0);
+                ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
                 scanned->priority_node = 1;
             }
 
             if(scanner)
             {
-                ps_proto_update(&scanner->proto,0,1,CLEARED,0,0);
+                ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
                 scanner->priority_node = 1;
             }
 
@@ -1039,7 +1037,7 @@ int PortScan::ps_tracker_update_udp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
                                  PS_TRACKER *scanned)
 {
     Packet  *p;
-    snort_ip    cleared;
+    sfip_t    cleared;
     IP_CLEAR(cleared);
 
     p = (Packet *)ps_pkt->pkt;
@@ -1048,13 +1046,13 @@ int PortScan::ps_tracker_update_udp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     {
         if(scanned)
         {
-            ps_proto_update(&scanned->proto,0,1,CLEARED,0,0);
+            ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
             scanned->priority_node = 1;
         }
 
         if(scanner)
         {
-            ps_proto_update(&scanner->proto,0,1,CLEARED,0,0);
+            ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
             scanner->priority_node = 1;
         }
     }
@@ -1069,22 +1067,22 @@ int PortScan::ps_tracker_update_udp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
                 if(scanned)
                 {
                     ps_proto_update(&scanned->proto,1,0,
-                                     GET_SRC_IP(p),p->dp, packet_time());
+                                     p->ip_api.get_src(),p->dp, packet_time());
                 }
 
                 if(scanner)
                 {
                     ps_proto_update(&scanner->proto,1,0,
-                                     GET_DST_IP(p),p->dp, packet_time());
+                                     p->ip_api.get_dst(),p->dp, packet_time());
                 }
             }
             else if (direction == PKT_FROM_SERVER)
             {
                 if(scanned)
-                    ps_proto_update(&scanned->proto,-1,0,CLEARED,0,0);
+                    ps_proto_update(&scanned->proto,-1,0,&cleared,0,0);
 
                 if(scanner)
-                    ps_proto_update(&scanner->proto,-1,0,CLEARED,0,0);
+                    ps_proto_update(&scanner->proto,-1,0,&cleared,0,0);
             }
         }
     }
@@ -1096,7 +1094,7 @@ int PortScan::ps_tracker_update_icmp(
     PS_PKT *ps_pkt, PS_TRACKER *scanner, PS_TRACKER*)
 {
     Packet  *p;
-    snort_ip cleared;
+    sfip_t cleared;
     IP_CLEAR(cleared);
 
     p = (Packet *)ps_pkt->pkt;
@@ -1113,7 +1111,7 @@ int PortScan::ps_tracker_update_icmp(
                 if(scanner)
                 {
                     ps_proto_update(&scanner->proto,1,0,
-                                     GET_DST_IP(p), 0, packet_time());
+                                     p->ip_api.get_dst(), 0, packet_time());
                 }
 
                 break;
@@ -1122,7 +1120,7 @@ int PortScan::ps_tracker_update_icmp(
 
                 if(scanner)
                 {
-                    ps_proto_update(&scanner->proto,0,1,CLEARED,0,0);
+                    ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
                     scanner->priority_node = 1;
                 }
 

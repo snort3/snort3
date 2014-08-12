@@ -1,5 +1,3 @@
-/* $Id: decode.c,v 1.285 2013-06-29 03:03:00 rcombs Exp $ */
-
 /*
 ** Copyright (C) 2002-2013 Sourcefire, Inc.
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
@@ -26,12 +24,37 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
-#include "protocols/packet.h"  
-#include "static_include.h"
+#include "framework/codec.h"
 
-#include "root_i4lrawip.h"
-#include "../decoder_includes.h"
+
+namespace
+{
+
+
+#ifndef I4L_RAW_IP
+#define I4L_RAW_IP "i4l_raw_ip"
+#endif
+
+class I4LRawIpCodec : public Codec
+{
+public:
+    I4LRawIpCodec() : Codec(I4L_RAW_IP){};
+    ~I4LRawIpCodec() {};
+
+
+    virtual void get_data_link_type(std::vector<int>&);
+    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+};
+
+
+} // namespace
+
+
+void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
+{
+    v.push_back(DLT_ID);
+}
 
 /*
  * Function: DecodeI4LRawIPPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
@@ -47,32 +70,63 @@
  *
  * Returns: void function
  */
-void DecodeI4LRawIPPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
+
+bool I4LRawIpCodec::decode(const uint8_t *raw_pkt, const uint32_t& /*raw_len*/,
+        Packet* /*p*/, uint16_t& lyr_len, uint16_t& next_prot_id)
 {
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(decodePerfStats);
-
-    dc.total_processed++;
-
-    memset(p, 0, PKT_ZERO_LEN);
-
-    p->pkth = pkthdr;
-    p->pkt = pkt;
-
-    if(p->pkth->pktlen < 2)
+    if(raw_len < 2)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "What the hell is this?\n"););
-        // TBD add decoder drop event for bad i4l raw pkt
-        dc.other++;
-        MODULE_PROFILE_END(decodePerfStats);
-        return;
+        return false;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n"););
-    DecodeIP(pkt + 2, p->pkth->pktlen - 2, p);
-
-    MODULE_PROFILE_END(decodePerfStats);
-    return;
+    lyr_len = 2;
+    next_prot_id = ETHERTYPE_IPV4;
+    return true;
 }
+
+
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
+
+static Codec* ctor(Module*)
+{
+    return new NameCodec();
+}
+
+static void dtor(Codec *cd)
+{
+    delete cd;
+}
+
+
+static const CodecApi i4l_raw_ip_api =
+{
+    {
+        PT_CODEC,
+        I4L_RAW_IP,
+        CDAPI_PLUGIN_V0,
+        0,
+        nullptr, // mod_ctor
+        nullptr  // mod_dtor
+    },
+    nullptr, // ginit
+    nullptr, // gterm
+    nullptr, // tinit
+    nullptr, // tterm
+    ctor,
+    dtor,
+};
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &i4l_raw_ip_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_name = &i4l_raw_ip_api.base;
+#endif
 

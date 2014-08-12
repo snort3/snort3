@@ -78,8 +78,8 @@ static int ProcessIcmpUnreach(Packet *p)
     Flow* ssn = NULL;
     uint16_t sport;
     uint16_t dport;
-    const sfip_t* src;
-    const sfip_t* dst;
+    const sfip_t *src;
+    const sfip_t *dst;
     ip::IpApi iph;
 
     /* Set the Ip API to the embedded IP Header. */
@@ -223,7 +223,7 @@ int IcmpSession::process(Packet* p)
 #define icmp_sender_ip flow->client_ip
 #define icmp_responder_ip flow->server_ip
 
-void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
+void IcmpSession::update_direction(char dir, const sfip_t *ip, uint16_t)
 {
     if (IP_EQUALITY(&icmp_sender_ip, ip))
     {
@@ -243,7 +243,7 @@ void IcmpSession::update_direction(char dir, snort_ip* ip, uint16_t)
     }
 
     /* Swap them -- leave ssn->s5_state.direction the same */
-    snort_ip tmpIp = icmp_sender_ip;
+    sfip_t tmpIp = icmp_sender_ip;
     icmp_sender_ip = icmp_responder_ip;
     icmp_responder_ip = tmpIp;
 }

@@ -72,7 +72,7 @@ typedef struct
      * whether dos threshold is tracking by source or destination IP address. For tracking
      * by rule, it is cleared out (all 0s).
      */
-    snort_ip ip;
+    sfip_t ip;
 
 } tSFRFTrackingNodeKey ;
 
@@ -121,7 +121,7 @@ static int _checkSamplingPeriod(
 );
 
 static tSFRFTrackingNode *_getSFRFTrackingNode(
-    snort_ip_p,
+    const sfip_t*,
     unsigned tid,
     time_t curTime
 );
@@ -130,8 +130,8 @@ static void _updateDependentThresholds(
     RateFilterConfig *config,
     unsigned gid,
     unsigned sid,
-    snort_ip_p sip,
-    snort_ip_p dip,
+    const sfip_t *sip,
+    const sfip_t *dip,
     time_t curTime
 );
 
@@ -360,7 +360,7 @@ int SFRF_ConfigAdd(
 
 
 #ifdef SFRF_DEBUG
-static char* get_netip(snort_ip_p ip)
+static char* get_netip(const sfip_t *ip)
 {
     return sfip_ntoa(ip);
 }
@@ -384,7 +384,7 @@ static char* get_netip(snort_ip_p ip)
  */
 static int SFRF_TestObject(
     tSFRFConfigNode* cfgNode,
-    snort_ip_p ip,
+    const sfip_t *ip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
 ) {
@@ -449,7 +449,7 @@ static int SFRF_TestObject(
     return retValue;
 }
 
-static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, snort_ip_p ip)
+static inline int SFRF_AppliesTo(tSFRFConfigNode* pCfg, const sfip_t *ip)
 {
     return ( !pCfg->applyTo || sfvar_ip_in(pCfg->applyTo, ip) );
 }
@@ -473,8 +473,8 @@ int SFRF_TestThreshold(
     RateFilterConfig *config,
     unsigned gid,
     unsigned sid,
-    snort_ip_p sip,
-    snort_ip_p dip,
+    const sfip_t *sip,
+    const sfip_t *dip,
     time_t curTime,
     SFRF_COUNT_OPERATION op
 ) {
@@ -565,7 +565,7 @@ int SFRF_TestThreshold(
 
             case SFRF_TRACK_BY_RULE:
                 {
-                    snort_ip cleared;
+                    sfip_t cleared;
                     IP_CLEAR(cleared);
                     newStatus = SFRF_TestObject(cfgNode, IP_ARG(cleared), curTime, op);
                 }
@@ -778,8 +778,8 @@ static void _updateDependentThresholds(
     RateFilterConfig *config,
     unsigned gid,
     unsigned sid,
-    snort_ip_p sip,
-    snort_ip_p dip,
+    const sfip_t *sip,
+    const sfip_t *dip,
     time_t curTime
 ) {
     if ( gid == GENERATOR_INTERNAL &&
@@ -799,7 +799,7 @@ static void _updateDependentThresholds(
 }
 
 static tSFRFTrackingNode* _getSFRFTrackingNode(
-    snort_ip_p ip,
+    const sfip_t *ip,
     unsigned tid,
     time_t curTime
 ) {

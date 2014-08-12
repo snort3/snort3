@@ -41,8 +41,8 @@ static THREAD_LOCAL_TBD SFXHASH *fileHash = NULL;
 
 typedef struct _FileHashKey
 {
-    snort_ip sip;
-    snort_ip dip;
+    sfip_t sip;
+    sfip_t dip;
     uint32_t file_sig;
 } FileHashKey;
 
@@ -98,13 +98,13 @@ int file_resume_block_add_file(void *pkt, uint32_t file_sig, uint32_t timeout,
     SFXHASH_NODE *hash_node = NULL;
     FileNode *node;
     FileNode new_node;
-    snort_ip_p srcIP;
-    snort_ip_p dstIP;
+    const sfip_t *srcIP;
+    const sfip_t *dstIP;
     Packet *p = (Packet *)pkt;
     time_t now = p->pkth->ts.tv_sec;
 
-    srcIP = GET_SRC_IP(p);
-    dstIP = GET_DST_IP(p);
+    srcIP = p->ip_api.get_src();
+    dstIP = p->ip_api.get_dst();
     IP_COPY_VALUE(hashKey.dip, dstIP);
     IP_COPY_VALUE(hashKey.sip, srcIP);
     hashKey.file_sig = file_sig;
@@ -226,8 +226,8 @@ static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE 
 File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig)
 {
     File_Verdict verdict = FILE_VERDICT_UNKNOWN;
-    snort_ip_p srcIP;
-    snort_ip_p dstIP;
+    const sfip_t *srcIP;
+    const sfip_t *dstIP;
     SFXHASH_NODE *hash_node;
     FileHashKey hashKey;
     FileNode *node;
@@ -239,8 +239,8 @@ File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig)
         DEBUG_WRAP(DebugMessage(DEBUG_FILE, "No expected sessions\n"););
         return verdict;
     }
-    srcIP = GET_SRC_IP(p);
-    dstIP = GET_DST_IP(p);
+    srcIP = p->ip_api.get_src();
+    dstIP = p->ip_api.get_dst();
     IP_COPY_VALUE(hashKey.dip, dstIP);
     IP_COPY_VALUE(hashKey.sip, srcIP);
     hashKey.file_sig = file_sig;

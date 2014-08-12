@@ -208,9 +208,10 @@ void FlowControl::reset_prunes (int proto)
         cache->reset_prunes();
 }
 
-void FlowControl::set_key(FlowKey* key, const Packet* p)
+void FlowControl::set_key(FlowKey* key, Packet* p)
 {
-    char proto = GET_IPH_PROTO(p);
+    ip::IpApi* ip_api = &p->ip_api;
+    uint8_t proto = ip_api->proto();
     uint32_t mplsId;
     uint16_t vlanId;
     uint16_t addressSpaceId;
@@ -233,17 +234,17 @@ void FlowControl::set_key(FlowKey* key, const Packet* p)
 
     if ( (p->decode_flags & DECODE__FRAG) )
     {
-        key->init(GET_SRC_IP(p), GET_DST_IP(p), GET_IPH_ID(p),
+        key->init(ip_api->get_src(), ip_api->get_dst(), ip_api->id(p),
             proto, vlanId, mplsId, addressSpaceId);
     }
     else if ((proto == IPPROTO_ICMP) || (proto == IPPROTO_ICMPV6))
     {
-        key->init(GET_SRC_IP(p), p->icmph->type, GET_DST_IP(p), 0,
+        key->init(ip_api->get_src(), p->icmph->type, ip_api->get_dst(), 0,
             proto, vlanId, mplsId, addressSpaceId);
     }
     else
     {
-        key->init(GET_SRC_IP(p), p->sp, GET_DST_IP(p), p->dp,
+        key->init(ip_api->get_src(), p->sp, ip_api->get_dst(), p->dp,
             proto, vlanId, mplsId, addressSpaceId);
     }
 }
@@ -463,8 +464,8 @@ char FlowControl::expected_flow (Flow* flow, Packet* p)
 }
 
 int FlowControl::add_expected(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     uint8_t protocol, char direction,
     FlowData* fd)
 {
@@ -473,8 +474,8 @@ int FlowControl::add_expected(
 }
 
 int FlowControl::add_expected(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     uint8_t protocol, int16_t appId,
     FlowData* fd)
 {

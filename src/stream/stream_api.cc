@@ -94,8 +94,8 @@ void Stream::delete_session(const FlowKey* key)
 //-------------------------------------------------------------------------
 
 Flow* Stream::get_session_ptr_from_ip_port(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     char ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceId)
 {
@@ -118,9 +118,9 @@ void Stream::populate_session_key(Packet *p, FlowKey *key)
 #endif
 
     key->init(
-        GET_SRC_IP(p), p->sp,
-        GET_DST_IP(p), p->dp,
-        GET_IPH_PROTO(p),
+        p->ip_api.get_src(), p->sp,
+        p->ip_api.get_dst(), p->dp,
+        p->ip_api.proto(),
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? vlan::vth_vlan(layer::get_vlan_layer(p)) : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->mplsHdr.label : 0,
@@ -151,8 +151,8 @@ FlowData* Stream::get_application_data_from_key(
 }
 
 FlowData* Stream::get_application_data_from_ip_port(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     char ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
@@ -185,8 +185,8 @@ void Stream::check_session_closed(Packet* p)
 }
 
 int Stream::ignore_session(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     uint8_t protocol, char direction, 
     uint32_t flow_id)
 {
@@ -199,7 +199,7 @@ int Stream::ignore_session(
 }
 
 void Stream::stop_inspection(
-    Flow*  flow, Packet *p, char dir,
+    Flow *flow, Packet *p, char dir,
     int32_t /*bytes*/, int /*response*/)
 {
     if (!flow)
@@ -257,7 +257,7 @@ void Stream::resume_inspection(Flow* flow, char dir)
 }
 
 void Stream::update_direction(
-    Flow*  flow, char dir, snort_ip_p ip, uint16_t port)
+    Flow*  flow, char dir, const sfip_t *ip, uint16_t port)
 {
     if (!flow)
         return;
@@ -380,8 +380,8 @@ void Stream::init_active_response(Packet* p, Flow* flow)
 //-------------------------------------------------------------------------
 
 int Stream::set_application_protocol_id_expected(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     uint8_t protocol, int16_t appId,
     FlowData* fd) 
 {
@@ -791,14 +791,14 @@ int Stream::response_flush_stream(Packet *p)
 }
 
 int Stream::add_session_alert(
-    Flow* flow, Packet *p, uint32_t gid, uint32_t sid)
+    Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
         return 0;
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( GET_IPH_PROTO(p) != IPPROTO_TCP )
+    if ( p->ip_api.proto() != IPPROTO_TCP )
         return 0;
 
     return Stream5AddSessionAlertTcp(flow, p, gid, sid);
@@ -806,21 +806,21 @@ int Stream::add_session_alert(
 
 /* return non-zero if gid/sid have already been seen */
 int Stream::check_session_alerted(
-    Flow* flow, Packet *p, uint32_t gid, uint32_t sid)
+    Flow *flow, Packet *p, uint32_t gid, uint32_t sid)
 {
     if ( !flow )
         return 0;
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( GET_IPH_PROTO(p) != IPPROTO_TCP )
+    if ( p->ip_api.proto() != IPPROTO_TCP )
         return 0;
 
     return Stream5CheckSessionAlertTcp(flow, p, gid, sid);
 }
 
 int Stream::update_session_alert(
-    Flow* flow, Packet *p,
+    Flow *flow, Packet *p,
     uint32_t gid, uint32_t sid,
     uint32_t event_id, uint32_t event_second)
 {
@@ -829,7 +829,7 @@ int Stream::update_session_alert(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( GET_IPH_PROTO(p) != IPPROTO_TCP )
+    if ( p->ip_api.proto() != IPPROTO_TCP )
         return 0;
 
     return Stream5UpdateSessionAlertTcp(flow, p, gid, sid, event_id, event_second);

@@ -19,10 +19,14 @@
 */
 
 
-#ifndef GRE_H
-#define GRE_H
+#ifndef PROTOCOLS_GRE_H
+#define PROTOCOLS_GRE_H
 
-namespace gre{
+#include <arpa/inet.h>
+
+
+namespace gre
+{
 
 /* GRE related stuff */
 struct GREHdr
@@ -31,12 +35,14 @@ struct GREHdr
     uint8_t version;
     uint16_t ether_type;
 
+    inline uint8_t get_version() const
+    { return version & 0x07; }
+
+    inline uint8_t get_proto() const
+    { return ntohs(ether_type); }
 };
 
 
 } // namespace gre
-
-#define GRE_VERSION(x) (x->version & 0x07)
-#define GRE_PROTO(x)   ntohs(x->ether_type)
 
 #endif

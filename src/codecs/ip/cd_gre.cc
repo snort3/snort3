@@ -113,7 +113,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     const gre::GREHdr *greh = reinterpret_cast<const gre::GREHdr *>(raw_pkt);
     lyr_len = GRE_HEADER_LEN;
 
-    switch (GRE_VERSION(greh))
+    switch (greh->get_version())
     {
         case 0x00:
             /* these must not be set */
@@ -180,7 +180,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             }
 
             /* protocol must be 0x880B - PPP */
-            if (GRE_PROTO(greh) != ETHERTYPE_PPP)
+            if (greh->get_proto() != ETHERTYPE_PPP)
             {
                 codec_events::decoder_alert_encapsulated(p, DECODE_GRE_V1_INVALID_HEADER,
                                 raw_pkt, raw_len);
@@ -218,7 +218,7 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    next_prot_id = GRE_PROTO(greh);
+    next_prot_id = greh->get_proto();
     return true;
 }
 

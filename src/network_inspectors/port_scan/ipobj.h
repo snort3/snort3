@@ -85,7 +85,7 @@ typedef struct {
 */
 IPSET * ipset_new     (void);
 int     ipset_add     ( IPSET * ipset, sfip_t *ip, void * port, int notflag);
-int     ipset_contains( IPSET * ipset, sfip_t *ip, void * port);
+int     ipset_contains( IPSET * ipset, const sfip_t *ip, void * port);
 IPSET * ipset_copy    ( IPSET * ipset );
 void    ipset_free    ( IPSET * ipset );
 int     ipset_print   ( IPSET * ipset );
