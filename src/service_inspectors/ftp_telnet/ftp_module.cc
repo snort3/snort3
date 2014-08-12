@@ -137,28 +137,39 @@ bool FtpClientModule::begin(const char* fqn, int idx, SnortConfig*)
     if ( !conf )
         conf = new FTP_CLIENT_PROTO_CONF;
 
-    address.clear();
-    port = last_port = 0;
-
-    if ( !idx && !strcmp(fqn, "ftp_client.bounce_to") )
+    if ( !strcmp(fqn, "ftp_client.bounce_to") )
     {
-        for ( auto p : bounce_to )
-            delete p;
+        if ( idx )
+        {
+            address.clear();
+            port = last_port = 0;
+        }
+        else
+        {
+            for ( auto p : bounce_to )
+                delete p;
 
-        bounce_to.clear();
+            bounce_to.clear();
+        }
     }
     return true;
 }
 
-bool FtpClientModule::end(const char* fqn, int, SnortConfig*)
+bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if ( strcmp(fqn, "ftp_client.bounce_to") )
         return true;
 
-    if ( last_port && (port > last_port) )
-        return false;
+    if ( idx && !strcmp(fqn, "ftp_client.bounce_to") )
+    {
+        if ( !address.size() )
+            return false;
 
-    bounce_to.push_back(new BounceTo(address, port, last_port));
+        if ( last_port && (port > last_port) )
+            return false;
+
+        bounce_to.push_back(new BounceTo(address, port, last_port));
+    }
     return true;
 }
 

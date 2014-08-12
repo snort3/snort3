@@ -448,7 +448,6 @@ static PlugData* fc_ctor(Module* m)
 
     while ( const BounceTo* bt = mod->get_bounce(i++) )
     {
-        printf("%s\n", bt->address.c_str());
         ProcessFTPAllowBounce(
             gc, (uint8_t*)bt->address.c_str(), bt->address.size(), bt->low, bt->high);
     }

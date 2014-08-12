@@ -17,11 +17,11 @@ find_path(PCRE_INCLUDE_DIR
 )
 
 
-find_library(PCRE_LIBRARIES 
-    NAMES pcre
-    PATHS ${PCRE_LIBRARIES_DIR}
-    NO_DEFAULT_PATH
-)
+#find_library(PCRE_LIBRARIES 
+#    NAMES pcre
+#    PATHS ${PCRE_LIBRARIES_DIR}
+#    NO_DEFAULT_PATH
+#)
 find_library(PCRE_LIBRARIES 
     NAMES pcre
 )
