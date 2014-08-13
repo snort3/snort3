@@ -595,10 +595,13 @@ static void IntegrityCheckRules(SnortConfig *sc)
  *      configuration file to parse the rules.
  *
  ***************************************************************************/
-SnortConfig * ParseSnortConf(VarNode* tmp)
+SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
 {
     SnortConfig *sc = SnortConfNew();
     snort_conf = sc;
+
+    sc->logging_flags = boot_conf->logging_flags;
+    VarNode* tmp = boot_conf->var_list;
 
     const char* fname = get_snort_conf();
 

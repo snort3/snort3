@@ -45,7 +45,7 @@ void pop_parse_location();
 void inc_parse_position();
 
 /* rule setup funcs */
-SnortConfig * ParseSnortConf(struct VarNode*);
+SnortConfig * ParseSnortConf(const SnortConfig*);
 void ParseRules(SnortConfig *);
 
 void OrderRuleLists(SnortConfig *, const char *);
