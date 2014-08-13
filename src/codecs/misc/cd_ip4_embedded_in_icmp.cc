@@ -101,7 +101,7 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
     }
 
     ip_len = ntohs(ip4h->get_len());/* set the IP datagram length */
-    hlen = ip4h->get_len() << 2;    /* set the IP header length */
+    hlen = ip4h->get_hlen() << 2;    /* set the IP header length */
 
     if(raw_len < hlen)
     {
@@ -212,7 +212,7 @@ static const CodecApi ip4_embedded_in_icmp_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &name_api.base,
+    &ip4_embedded_in_icmp_api.base,
     nullptr
 };
 #else

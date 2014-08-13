@@ -8,6 +8,7 @@
 option (STATIC_CODECS "include decoders in binary?" ON)
 option (STATIC_INSPECTORS "include inspectors in binary" ON)
 option (STATIC_LOGGERS "include loggers in binary" ON)
+option (STATIC_IPS_ACTIONS "include internal ips actions in binary" ON)
 option (STATIC_IPS_OPTIONS "include ips options in binary" ON)
 option (STATIC_SEARCH_ENGINES "include search engines in binary" ON)
 option (BUILD_CONTROL_SOCKET "Enable the control socket (Linux only)" OFF)

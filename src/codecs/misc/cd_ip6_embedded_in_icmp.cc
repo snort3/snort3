@@ -183,7 +183,7 @@ static const CodecApi ip6_embedded_in_icmp_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &name_api.base,
+    &ip6_embedded_in_icmp_api.base,
     nullptr
 };
 #else

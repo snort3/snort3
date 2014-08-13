@@ -14,8 +14,6 @@
 #ENDIF(UNIX)
 
 
-
-
 # convert cmake options into compiler defines
 
 set_project_compiler_defines_if_true (ENABLE_PERFPROFILING "PERF_PROFILING")
@@ -32,9 +30,11 @@ set_project_compiler_defines_if_true (ENABLE_LARGE_PCAP "_FILE_OFFSET_BITS=64")
 
 # convert cmake options into config.h defines
 
+
 set_if_true (STATIC_INSPECTORS STATIC_INSPECTORS)
 set_if_true (STATIC_SEARCH_ENGINES STATIC_SEARCH_ENGINES)
 set_if_true (STATIC_LOGGERS STATIC_LOGGERS)
+set_if_true (STATIC_IPS_ACTIONS STATIC_IPS_ACTIONS)
 set_if_true (STATIC_IPS_OPTIONS STATIC_IPS_OPTIONS)
 set_if_true (STATIC_CODECS STATIC_CODECS)
 set_if_true (BUILD_SIDE_CHANNEL SIDE_CHANNEL)

@@ -58,6 +58,7 @@ extern const BaseApi* cd_gtp;
 extern const BaseApi* cd_hopopts;
 extern const BaseApi* cd_ip4_embedded_in_icmp;
 extern const BaseApi* cd_ip6_embedded_in_icmp;
+extern const BaseApi* cd_prot_embedded_in_icmp;
 extern const BaseApi* cd_igmp;
 extern const BaseApi* cd_mobility;
 extern const BaseApi* cd_mpls;
@@ -114,6 +115,7 @@ const BaseApi* codecs[] =
     cd_hopopts,
     cd_ip4_embedded_in_icmp,
     cd_ip6_embedded_in_icmp,
+    cd_prot_embedded_in_icmp,
     cd_igmp,
     cd_mobility,
     cd_mpls,
