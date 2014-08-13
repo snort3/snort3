@@ -103,6 +103,7 @@ public:
     void update();
 
 private:
+    uint16_t base;
     uint16_t min;
     uint16_t segs;
     uint16_t bytes;

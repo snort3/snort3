@@ -5982,7 +5982,7 @@ static inline int CheckFlushPolicyOnData(
             }
             if ( !flags && listener->splitter->is_paf() )
             {
-                // FIXIT PAF auto disable with multipe splitters?
+                // FIXIT PAF auto disable with multiple splitters?
                 //if ( AutoDisable(listener, talker) )
                 //    return 0;
 
@@ -6114,7 +6114,7 @@ int CheckFlushPolicyOnAck(
             }
             if ( !flags && talker->splitter->is_paf() )
             {
-                // FIXIT PAF auto disable with multipe splitters?
+                // FIXIT PAF auto disable with multiple splitters?
                 //if ( AutoDisable(talker, listener) )
                 //    return 0;
 
