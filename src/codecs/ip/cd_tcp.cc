@@ -699,8 +699,9 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         if (p->ip_api.is_ip4())
         {
             checksum::Pseudoheader ps;
-            ps.sip = ((IPHdr *)(lyr-1)->start)->ip_src;
-            ps.dip = ((IPHdr *)(lyr-1)->start)->ip_dst;
+            const ip::IPHdr* ip4h = p->ip_api.get_ip4h();
+            ps.sip = ip4h->get_src();
+            ps.dip = ip4h->get_dst();;
             ps.zero = 0;
             ps.protocol = IPPROTO_TCP;
             ps.len = htons((uint16_t)*len);
@@ -709,8 +710,9 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         else
         {
             checksum::Pseudoheader6 ps6;
-            memcpy(ps6.sip, &p->ip_api.get_ip6_src()->u6_addr32, sizeof(ps6.sip));
-            memcpy(ps6.dip, &p->ip_api.get_ip6_dst()->u6_addr32, sizeof(ps6.dip));
+            const ipv6::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
+            memcpy(ps6.sip, ip6h->get_src()->u6_addr32, sizeof(ps6.sip));
+            memcpy(ps6.dip, ip6h->get_dst()->u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_TCP;
             ps6.len = htons((uint16_t)*len);

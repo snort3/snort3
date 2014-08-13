@@ -177,8 +177,9 @@ int Binder::check_rules(Flow* flow, Packet* p)
 
     Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
 
-    if (p->proto_bits & PROTO_BIT__VLAN)
-        uint16_t vlan = vlan::vth_vlan(layer::get_vlan_layer(p));
+    // FIXIT -- use vlan when searching bindings
+//    if (p->proto_bits & PROTO_BIT__VLAN)
+//        uint16_t vlan = vlan::vth_vlan(layer::get_vlan_layer(p));
 
     for ( i = 0; i < sz; i++ )
     {

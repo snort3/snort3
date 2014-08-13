@@ -56,9 +56,6 @@ public:
 
 } // namespace
 
-// TODO: delete
-#include <iostream>
-
 void Ip6EmbeddedInIcmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IP_EMBEDDED_IN_ICMP6);
@@ -77,7 +74,7 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
                     (unsigned long) raw_len););
 
     /* do a little validation */
-    if ( raw_len < ipv6::hdr_len() )
+    if ( raw_len < ipv6::IP6_HEADER_LEN )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP short header (%d bytes)\n", raw_len););
@@ -102,11 +99,11 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
         return false;
     }
 
-    if ( raw_len < ipv6::hdr_len() )
+    if ( raw_len < ipv6::IP6_HEADER_LEN )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP6 len (%d bytes) < IP6 hdr len (%d bytes), packet discarded\n",
-            raw_len, ipv6::hdr_len()););
+            raw_len, ipv6::IP6_HEADER_LEN););
 
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
 
@@ -119,7 +116,7 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
     // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP6 Unreachable IP6 header length: "
-                            "%lu\n", (unsigned long)ipv6::hdr_len()););
+                            "%lu\n", (unsigned long)ipv6::IP6_HEADER_LEN););
 
     // since we know the protocol ID in this layer (and NOT the
     // next layer), set the correct protocol here.  Normally,
@@ -145,6 +142,7 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
             break;
     }
 
+    lyr_len = ipv6::IP6_HEADER_LEN;
     return true;
 }
 

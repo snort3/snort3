@@ -43,11 +43,11 @@ namespace ipv6
 
 namespace detail
 {
-constexpr uint8_t IP6_HEADER_LEN = 40;
 constexpr uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
 constexpr uint32_t MIN_EXT_LEN = 8;
 } // namespace
 
+constexpr uint8_t IP6_HEADER_LEN = 40;
 
 
 
@@ -169,11 +169,11 @@ struct IP6RawHdr
     { return (uint8_t)(ntohl(ip6_vtf) >> 28); }
 
     inline uint8_t get_hdr_len() const
-    { return (uint8_t) detail::IP6_HEADER_LEN; }
+    { return (uint8_t) IP6_HEADER_LEN; }
 
     // becaise Snort expects this in terms of 32 bit words.
     inline uint8_t get_hlen() const
-    { return detail::IP6_HEADER_LEN / 4; }
+    { return IP6_HEADER_LEN / 4; }
 
     inline MulticastScope get_dst_multicast_scope() const
     { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1] & 0x0F); }
@@ -211,12 +211,6 @@ struct IP6RawHdr
 
 };
 
-
-
-inline uint8_t hdr_len()
-{
-    return detail::IP6_HEADER_LEN;
-}
 
 inline bool is_multicast(uint8_t addr)
 {

@@ -58,8 +58,6 @@ public:
 
 } // namespace
 
-// TODO: delete
-#include <iostream>
 
 void Ip4EmbeddedInIcmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -172,6 +170,7 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
             break;
     }
 
+    lyr_len = ip::IP4_HEADER_LEN;
     return true;
 }
 

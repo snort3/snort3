@@ -132,11 +132,13 @@ int get_inner_ip_lyr(const Packet* const p);
  * PARAMS:
  *          Packet* = packet struct containing data
  *          ip::Api = ip api to be set
- *          uint8_t curr_layer = the current, zero based layer from which to
- *                               start searching outwards.  This field will be
- *                               set to the Ip Api's layer, zeo based layer.
+ *          int8_t curr_layer = the current, zero based layer from which to
+ *                              start searching outwards. Afte the fucntions,
+ *                              This field will be set to the layer before
+ *                              the Ip Api.  If no IP layer is found,
+ *                              it will be set to zero.
  *
- *                               0<= curr_layer < p->num_layers
+ *                               0 <= curr_layer < p->num_layers
  * RETURNS:
  *          true:  if the api is set
  *          false: if the api has NOT been set
@@ -146,12 +148,12 @@ int get_inner_ip_lyr(const Packet* const p);
  *
  * NOTE: curr_layer is zero based.  That means to get all of the ip
  *       layers (starting from teh innermost layer), during the first call
- *       'curr_layer == p->num_layers - 1'.
+ *       'curr_layer == p->num_layers'.
  *
  * NOTE: This functions is extremely useful in a loop
  *          while (set_inner_ip_api(p, api, layer)) { ... }
  */
-bool set_inner_ip_api(const Packet* const, ip::IpApi&, uint8_t& curr_layer);
+bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
 
 /*
  * Identical to above function except will begin searching from the
@@ -161,7 +163,7 @@ bool set_inner_ip_api(const Packet* const, ip::IpApi&, uint8_t& curr_layer);
  *       layers (starting from the OUTERMOST layer), during the first call
  *       'curr_layer == 0'.
  */
-bool set_outer_ip_api(const Packet* const, ip::IpApi&, uint8_t& curr_layer);
+bool set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
 
 
 } // namespace layer

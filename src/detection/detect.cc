@@ -323,7 +323,7 @@ int Detect(Packet * p)
     //          layer!!
     bool proto_found = false;
     ip::IpApi tmp_api;
-    uint8_t curr_layer = p->num_layers - 1;
+    int8_t curr_layer = p->num_layers - 1;
 
     while (!proto_found &&
             layer::set_inner_ip_api(p, tmp_api, curr_layer))

@@ -142,7 +142,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* lay the IP struct over the raw data */
     ip6h = reinterpret_cast<ipv6::IP6RawHdr*>(const_cast<uint8_t*>(raw_pkt));
 
-    if(raw_len < ipv6::hdr_len())
+    if(raw_len < ipv6::IP6_HEADER_LEN)
     {
         if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED);
@@ -170,7 +170,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 #endif
 
 
-    payload_len = ntohs(ip6h->ip6plen) + ipv6::hdr_len();
+    payload_len = ntohs(ip6h->ip6plen) + ipv6::IP6_HEADER_LEN;
 
     if(payload_len != raw_len)
     {
@@ -211,7 +211,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* set the real IP length for logging */
     p->proto_bits |= PROTO_BIT__IP;
     // extra ipv6 header will be removed in PacketManager
-    const_cast<uint32_t&>(raw_len) = ntohs(ip6h->get_len()) + ipv6::hdr_len();
+    const_cast<uint32_t&>(raw_len) = ntohs(ip6h->get_len()) + ipv6::IP6_HEADER_LEN;
 
     // check for isatap before overwriting the ip_api.
     IPV6CheckIsatap(ip6h, p);
@@ -222,7 +222,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     CheckIPV6Multicast(ip6h, p);
 
     next_prot_id = ip6h->get_next();
-    lyr_len = ipv6::hdr_len();
+    lyr_len = ipv6::IP6_HEADER_LEN;
     return true;
 
 

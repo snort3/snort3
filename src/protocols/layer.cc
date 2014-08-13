@@ -202,9 +202,9 @@ int get_inner_ip_lyr(const Packet* const p)
 
 bool set_inner_ip_api(const Packet* const p,
                         ip::IpApi& api,
-                        uint8_t& curr_layer)
+                        int8_t& curr_layer)
 {
-    if (curr_layer >= p->num_layers)
+    if (curr_layer < 0 || curr_layer >= p->num_layers)
         return false;
 
     do
@@ -219,6 +219,7 @@ bool set_inner_ip_api(const Packet* const p,
                 const ip::IPHdr* ip4h =
                     reinterpret_cast<const ip::IPHdr*>(lyr->start);
                 api.set(ip4h);
+                curr_layer--;
                 return true;
             }
             case ETHERTYPE_IPV6:
@@ -227,23 +228,24 @@ bool set_inner_ip_api(const Packet* const p,
                 const ipv6::IP6RawHdr* ip6h =
                     reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
                 api.set(ip6h);
+                curr_layer--;
                 return true;
             }
             //default:
                 // don't care about this layer if its not IP.
         }
 
-    } while (curr_layer-- != 0);
+    } while (--curr_layer >= 0);
 
     return false;
 }
 
 bool set_outer_ip_api(const Packet* const p,
                       ip::IpApi& api,
-                      uint8_t& curr_layer)
+                      int8_t& curr_layer)
 {
     uint8_t num_layers = p->num_layers;
-    if (curr_layer >= num_layers)
+    if (curr_layer < 0 || curr_layer >= num_layers)
         return false;
 
     do
@@ -258,6 +260,7 @@ bool set_outer_ip_api(const Packet* const p,
                 const ip::IPHdr* ip4h =
                     reinterpret_cast<const ip::IPHdr*>(lyr->start);
                 api.set(ip4h);
+                curr_layer++;
                 return true;
             }
             case ETHERTYPE_IPV6:
@@ -266,6 +269,7 @@ bool set_outer_ip_api(const Packet* const p,
                 const ipv6::IP6RawHdr* ip6h =
                     reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
                 api.set(ip6h);
+                curr_layer++;
                 return true;
             }
             //default:

@@ -552,7 +552,7 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
     if (eval_data.p->packet_flags & PKT_IP_RULE)
     {
         ip::IpApi tmp_api = eval_data.p->ip_api;
-        uint8_t curr_layer = eval_data.p->num_layers -1;
+        int8_t curr_layer = eval_data.p->num_layers - 1;
 
         if (layer::set_inner_ip_api(eval_data.p,
                                     eval_data.p->ip_api,
@@ -952,7 +952,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
     int start_state;
     const uint8_t *tmp_payload;
     ip::IpApi tmp_api;
-    uint8_t curr_ip_layer = 0;
+    int8_t curr_ip_layer = 0;
     bool repeat = false;
     uint16_t tmp_dsize;
     FastPatternConfig *fp = snort_conf->fast_pattern_config;
@@ -1495,7 +1495,7 @@ int fpEvalPacket(Packet *p)
         p->data = (const uint8_t *)udph + udp::UDP_HEADER_LEN;
 
         ip::IpApi tmp_api;
-        uint8_t curr_layer = 0;
+        int8_t curr_layer = 0;
         layer::set_outer_ip_api(p, tmp_api, curr_layer);
 
         if (tmp_api.pay_len() >  udp::UDP_HEADER_LEN)

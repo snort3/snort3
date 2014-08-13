@@ -88,9 +88,9 @@ char *sfip_to_str(const sfip_t *ip);
  */
 static inline int sfip_is_set(const sfip_t& ip);
 static inline int sfip_is_set(const sfip_t* const ip);
-static inline bool sfip_equals(const sfip_t& lhs, const sfip_t& rhs);
-static inline bool sfip_unset_equals(const sfip_t& lhs, const sfip_t& rhs);
-static inline bool sfip_not_equals(const sfip_t& lhs, const sfip_t& rhs);
+static inline bool sfip_equals(const sfip_t* const lhs, const sfip_t* const rhs);
+static inline bool sfip_unset_equals(const sfip_t* const lhs, const sfip_t* const rhs);
+static inline bool sfip_not_equals(const sfip_t* const lhs, const sfip_t* const rhs);
 static inline bool sfip_lesser(const sfip_t* const lhs, const sfip_t* const rhs);
 static inline bool sfip_greater(const sfip_t* const lhs, const sfip_t* const rhs);
 static inline void sfip_clear(sfip_t& x);

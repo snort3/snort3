@@ -1696,7 +1696,7 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
 
         // FIXIT --> log everything in order!!
         ip::IpApi tmp_api = p->ip_api;
-        uint8_t num_layer = 0;
+        int8_t num_layer = 0;
         bool first = true;
 
         while (layer::set_outer_ip_api(p, p->ip_api, num_layer) &&

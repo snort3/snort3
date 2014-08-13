@@ -450,8 +450,8 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         if (p->ip_api.is_ip4()) {
             checksum::Pseudoheader ps;
             const ip::IPHdr* ip4h = p->ip_api.get_ip4h();
-            ps.sip = ((IPHdr *)(lyr-1)->start)->ip_src;
-            ps.dip = ((IPHdr *)(lyr-1)->start)->ip_dst;
+            ps.sip = ip4h->get_src();
+            ps.dip = ip4h->get_dst();
             ps.zero = 0;
             ps.protocol = IPPROTO_UDP;
             ps.len = htons((uint16_t)*len);
