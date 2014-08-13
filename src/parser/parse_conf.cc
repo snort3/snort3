@@ -267,29 +267,14 @@ RuleType get_rule_type(const char* s)
     return rt;
 }
 
-ListHead* get_rule_list(SnortConfig* sc, RuleType type)
+ListHead* get_rule_list(SnortConfig* sc, const char* s)
 {
-    switch ( type )
-    {
-    case RULE_TYPE__ALERT:
-        return &sc->Alert;
+    const RuleListNode* p = sc->rule_lists;
 
-    case RULE_TYPE__LOG:
-        return &sc->Log;
-
-    case RULE_TYPE__PASS:
-        return &sc->Pass;
-
-    case RULE_TYPE__DROP:
-        return &sc->Drop; 
-
-    case RULE_TYPE__SDROP:
-        return &sc->SDrop;
-
-    default:
-        break;
-    }
-    return nullptr;
+    while ( p && strcmp(p->name, s) )
+        p = p->next;
+    
+    return p ? p->RuleList : nullptr;
 }
 
 // FIXIT find this a better home

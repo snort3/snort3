@@ -544,13 +544,11 @@ static void config_log_mode(SnortConfig* sc, const char* val)
 
 static void config_inline(SnortConfig* sc, const char*)
 {
-    LogMessage("Enabling inline operation\n");
     sc->run_flags |= RUN_FLAG__INLINE;
 }
 
 static void config_inline_test(SnortConfig* sc, const char*)
 {
-    LogMessage("Enable Inline Test Mode\n");
     sc->run_flags |= RUN_FLAG__INLINE_TEST;
 }
 

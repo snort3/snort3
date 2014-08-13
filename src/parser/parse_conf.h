@@ -39,7 +39,7 @@ void AddRuleState(SnortConfig*, const RuleState&);
 void add_service_to_otn(SnortConfig*, OptTreeNode*, const char*);
 
 RuleType get_rule_type(const char*);
-ListHead* get_rule_list(SnortConfig*, RuleType);
+ListHead* get_rule_list(SnortConfig*, const char*);
 
 #define ERR_PAIR_COUNT \
         "%s has incorrect argument count; should be %d pairs.", ERR_KEY

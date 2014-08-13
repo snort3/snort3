@@ -86,9 +86,11 @@ RejectAction::RejectAction(RejectModule*) :
     Active_SetEnabled(1);
 }
 
-void RejectAction::exec(Packet*)
+void RejectAction::exec(Packet* p)
 {
-    printf("ACT Now!");
+    if ( PacketIsRebuilt(p) )
+        return;
+
     Active_QueueReject();
 }
 

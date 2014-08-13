@@ -150,10 +150,8 @@ static inline void fpLogOther (
     // FIXIT some or all of these can be migrated to user defined actions
     otn_trigger_actions(otn, p);
 
-    if ( !EventTrace_IsEnabled() )
-        return;
-
-    EventTrace_Log(p, otn, action);
+    if ( EventTrace_IsEnabled() )
+        EventTrace_Log(p, otn, action);
 
     // user defined actions are done here
     if ( rtn->listhead->action )

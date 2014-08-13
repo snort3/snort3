@@ -72,9 +72,16 @@ RuleType ActionManager::get_action_type(const char* s)
 }
 
 void ActionManager::instantiate(
-    const ActionApi* api, Module*, SnortConfig* sc)
+    const ActionApi* api, Module* m, SnortConfig* sc)
 {
-    CreateRuleType(sc, api->base.name, api->type, 0, nullptr);
+    IpsAction* act = api->ctor(m);
+
+    if ( act )
+    {
+        ListHead* lh = CreateRuleType(sc, api->base.name, api->type, 0, nullptr);
+        assert(lh);
+        lh->action = act;
+    }
 }
 
 #if 0
