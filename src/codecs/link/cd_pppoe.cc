@@ -40,10 +40,10 @@ enum class PppoepktType
 /* PPPoEHdr Header; eth::EtherHdr plus the PPPoE Header */
 struct PPPoEHdr
 {
-    unsigned char ver_type;     /* pppoe version/type */
-    unsigned char code;         /* pppoe code CODE_* */
-    unsigned short session;     /* session id */
-    unsigned short length;      /* payload length */
+    uint8_t ver_type;     /* pppoe version/type */
+    uint8_t code;         /* pppoe code CODE_* */
+    uint16_t session;     /* session id */
+    uint16_t length;      /* payload length */
                                 /* payload follows */
 };
 

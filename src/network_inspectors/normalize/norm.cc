@@ -494,18 +494,20 @@ static int Norm_TCP (
         sfBase.iPegs[PERF_COUNT_TCP_URG]++;
         changes++;
     }
-    if ( p->tcp_options_len > 0 )
+
+    uint8_t tcp_options_len = p->tcph->options_len();
+    if ( tcp_options_len > 0 )
     {
-        uint8_t* opts = p->layers[layer].start + TCP_HEADER_LEN;
+        uint8_t* opts = p->layers[layer].start + tcp::TCP_HEADER_LEN;
 
         if ( Norm_IsEnabled(c, NORM_TCP_OPT) )
         {
-            changes = Norm_TCPOptions(c, opts, p->tcp_options_len,
+            changes = Norm_TCPOptions(c, opts, tcp_options_len,
                 h, p->tcp_option_count, changes);
         }
         else
         {
-            changes = Norm_TCPPadding(opts, p->tcp_options_len,
+            changes = Norm_TCPPadding(opts, tcp_options_len,
                 p->tcp_option_count, changes);
         }
     }

@@ -111,7 +111,7 @@ void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t& /*next_prot_id*/)
 {
-    if(raw_len < tcp::hdr_len())
+    if(raw_len < tcp::TCP_HEADER_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "TCP packet (len = %d) cannot contain " "20 byte header\n", raw_len););
@@ -123,15 +123,16 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     /* lay TCP on top of the data cause there is enough of it! */
-    p->tcph = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(raw_pkt));
+    tcp::TCPHdr* tcph = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(raw_pkt));
+    p->tcph = tcph;
 
     /* multiply the payload offset value by 4 */
-    lyr_len = TCP_OFFSET(p->tcph) << 2;
+    lyr_len = tcph->hdr_len();
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "TCP th_off is %d, passed len is %lu\n",
                 TCP_OFFSET(p->tcph), (unsigned long)raw_len););
 
-    if(lyr_len < tcp::hdr_len())
+    if(lyr_len < tcp::TCP_HEADER_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "TCP Data Offset (%d) < lyr_len (%d) \n",
@@ -269,18 +270,16 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     p->dp = ntohs(p->tcph->th_dport);
 
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "tcp header starts at: %p\n", p->tcph););
-
     /* if options are present, decode them */
-    p->tcp_options_len = (uint16_t)(lyr_len - tcp::hdr_len());
+    uint16_t tcp_opt_len = (uint16_t)(tcph->hdr_len() - tcp::TCP_HEADER_LEN);
 
-    if(p->tcp_options_len > 0)
+    if(tcp_opt_len > 0)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "%lu bytes of tcp options....\n",
-                    (unsigned long)(p->tcp_options_len)););
+                    (unsigned long)(tcp_opt_len)););
 
-        p->tcp_options_data = raw_pkt + tcp::hdr_len();
-        DecodeTCPOptions((uint8_t *) (raw_pkt + tcp::hdr_len()), p->tcp_options_len, p);
+        p->tcp_options_data = raw_pkt + tcp::TCP_HEADER_LEN;
+        DecodeTCPOptions((uint8_t *) (raw_pkt + tcp::TCP_HEADER_LEN), tcp_opt_len, p);
     }
     else
     {
@@ -383,7 +382,7 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
      * 4) increment option code ptr
      *
      * TCP_OPTLENMAX = 40 because of
-     *        (((2^4) - 1) * 4  - tcp::hdr_len)
+     *        (((2^4) - 1) * 4  - tcp::TCP_HEADER_LEN
      *
      */
 
@@ -690,7 +689,7 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(lyr->start);
 
-    *len += tcp::get_tcp_hdr_len(h) + p->dsize;
+    *len += h->hdr_len() + p->dsize;
 
     if ( !PacketWasCooked(p) || (p->packet_flags & PKT_REBUILT_FRAG) )
     {

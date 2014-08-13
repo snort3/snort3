@@ -175,47 +175,31 @@ struct Options
 struct Packet
 {
 
-    //vvv------------------------------------------------
-    // TODO convenience stuff to be refactored for layers
-    //^^^------------------------------------------------
-
-    //vvv-----------------------------
-
+    /* these four pounters are each referenced literally
+     * hundreds of times.  NOTHING else should be added!!
+     */
     const tcp::TCPHdr* tcph;
     const udp::UDPHdr* udph;
     const ICMPHdr* icmph;
-
-    //^^^-----------------------------
-
     Flow* flow;   /* for session tracking */
 
-    //vvv-----------------------------
-    int family;
-    //^^^-----------------------------
+
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
+    uint16_t proto_bits;        /* protocols contained within this packet */
+    int16_t application_protocol_ordinal;
 
-    uint16_t proto_bits;
 
-    //vvv-----------------------------
-    const uint8_t* data;        /* packet payload pointer */
-    uint16_t dsize;             /* packet payload size */
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
-    //^^^-----------------------------
+    uint16_t sp;                /* source port (TCP/UDP) */
+    uint16_t dp;                /* dest port (TCP/UDP) */
+
 
     uint16_t frag_offset;       /* fragment offset number */
     uint16_t ip_frag_len;
-    uint16_t ip_options_len;
-    uint16_t tcp_options_len;
 
-    //vvv-----------------------------
-    uint16_t sp;                /* source port (TCP/UDP) */
-    uint16_t dp;                /* dest port (TCP/UDP) */
-    //^^^-----------------------------
-    // and so on ...
 
-    int16_t application_protocol_ordinal;
 
     uint8_t ip_option_count;    /* number of options in this packet */
     uint8_t tcp_option_count;
@@ -225,11 +209,15 @@ struct Packet
     uint8_t error_flags;        /* flags indicate checksum errors, bad TTLs, etc. */
     uint8_t num_layers;         /* index into layers for next encap */
     uint8_t decode_flags;       /* flags used while decoding */
-    uint8_t encapsulations;     /* thh curent number of encapsulations */
+    uint8_t encapsulations;     /* the curent number of encapsulations */
 
     // nothing after this point is zeroed ...
     const DAQ_PktHdr_t *pkth;    // packet meta data
     const uint8_t *pkt;         // raw packet data
+
+    // These are both set before PacketManager::decode() returns
+    const uint8_t* data;        /* packet payload pointer */
+    uint16_t dsize;             /* packet payload size */
 
     ip::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
@@ -238,13 +226,11 @@ struct Packet
 
 
     const uint8_t *ip_frag_start;
-    const uint8_t *ip_options_data;
     const uint8_t *tcp_options_data;
 
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
     ip::IpApi ip_api;
-
     mpls::MplsHdr mplsHdr;
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
@@ -346,16 +332,6 @@ static inline bool PacketIsRebuilt (const Packet* p)
 static inline void SetExtraData (Packet* p, uint32_t xid)
 {
     p->xtradata_mask |= BIT(xid);
-}
-
-static inline bool is_ip4(const Packet *p)
-{
-  return p->family == AF_INET;
-}
-
-static inline bool is_ip6(const Packet *p)
-{
-  return p->family == AF_INET6;
 }
 
 static inline uint16_t EXTRACT_16BITS(const uint8_t* p)

@@ -116,6 +116,14 @@ public:
     inline uint32_t get_ip4_dst() const
     { return ip4h ? ip4h->get_dst() : 0; }
 
+    // only relevent to IP4.
+    inline uint8_t get_ip_opt_len() const
+    { return ip4h ? ip4h->get_opt_len() : 0; }
+
+    // only relevent to IP4.
+    inline const uint8_t* get_ip_opt_data() const
+    { return ip4h ? reinterpret_cast<const uint8_t*>(ip4h + IP4_HEADER_LEN) : nullptr; }
+
     inline const ipv6::snort_in6_addr* get_ip6_src() const
     { return ip6h ? ip6h->get_src() : nullptr; }
 

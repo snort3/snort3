@@ -97,8 +97,8 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     if (ipv6::is_res_set(ip6frag_hdr))
         p->decode_flags |= DECODE__RF;
 
-
-    p->frag_offset = IP6F_OFFSET(ip6frag_hdr);
+    // three least signifigant bits are all flags
+    p->frag_offset = ntohs(ip6frag_hdr->get_off()) >> 3;
     if (p->frag_offset || (p->decode_flags & DECODE__MF))
     {
         p->decode_flags |= DECODE__FRAG;

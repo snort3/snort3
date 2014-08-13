@@ -70,19 +70,8 @@ struct sfip_t {
 
 };
 
-
-// because we can --- and this is leftover from Snort which we're stuck with
-#ifdef inet_ntoa
-#undef inet_ntoa
-#endif
-
-char *sfip_to_str(const sfip_t *ip);
-#define sfip_ntoa(x) sfip_to_str(x)
-#define inet_ntoa sfip_ntoa
-
-
 /*
- * Implementing these functions rather than opeators since
+ * Implementing these functions rather than implenting opeators since
  * the Google style guide recomends staying away from
  * operators.  Most of these are a copy and paste from sf_ip.h
  */
@@ -96,6 +85,16 @@ static inline bool sfip_greater(const sfip_t* const lhs, const sfip_t* const rhs
 static inline void sfip_clear(sfip_t& x);
 static inline void sfip_copy(sfip_t& lhs, const sfip_t* const rhs);
 
+
+
+// because we can --- and this is leftover from Snort which we're stuck with
+#ifdef inet_ntoa
+#undef inet_ntoa
+#endif
+
+char *sfip_to_str(const sfip_t *ip);
+#define sfip_ntoa(x) sfip_to_str(x)
+#define inet_ntoa sfip_ntoa
 
 
 /* Returns 1 if the IP is non-zero. 0 otherwise *
