@@ -1,5 +1,7 @@
 112
 -- initial action plugin - reject
+-- added total to StreamSplitter::reassemble()
+-- removed StreamTcpModule ports and protos settings
 
 111
 -- fix up luajit ips rule option

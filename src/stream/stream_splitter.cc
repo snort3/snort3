@@ -32,7 +32,7 @@ uint32_t StreamSplitter::max()
 { return 16384; }  // FIXIT make default configurable
 
 const StreamBuffer* StreamSplitter::reassemble(
-    Flow*, unsigned offset, const uint8_t* p,
+    Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 { 
     assert(offset + n < sizeof(pdu_buf));

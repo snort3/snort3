@@ -59,9 +59,10 @@ public:
 
     virtual const StreamBuffer* reassemble(
         Flow*,
+        unsigned total,        // total amount to flush (sum of iterations)
         unsigned offset,       // data offset from start of reassembly
         const uint8_t* data,   // data to reassemble
-        unsigned len,          // length of data
+        unsigned len,          // length of data to process this iteration
         uint32_t flags,        // packet flags indicating pdu head and/or tail
         unsigned& copied       // actual data copied (1 <= copied <= len)
     );

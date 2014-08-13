@@ -303,11 +303,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define SUB_RST_SENT  0x04
 #define SUB_FIN_SENT  0x08
 
-// flush types
-#define S5_FT_INTERNAL  0  // normal s5 "footprint"
-#define S5_FT_EXTERNAL  1  // set by other preprocessor
-#define S5_FT_PAF_MAX   2  // paf_max + footprint fp
-
 #define SLAM_MAX 4
 
 //#define DEBUG_STREAM5
@@ -1937,6 +1932,8 @@ static int FlushStream(
     assert(st->seglist_next);
     MODULE_PROFILE_START(s5TcpBuildPacketPerfStats);
 
+    uint32_t total = toSeq - st->seglist_next->seq;
+
     while ( SEQ_LT(st->seglist_next->seq, toSeq) )
     {
         StreamSegment* ss = st->seglist_next, * sr;
@@ -1951,7 +1948,7 @@ static int FlushStream(
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = st->splitter->reassemble(
-            p->flow, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
+            p->flow, total, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
@@ -2035,7 +2032,7 @@ static inline int _flush_to_seq (
     snort_ip_p sip, snort_ip_p, uint16_t, uint16_t, uint32_t dir)
 {
     uint32_t stop_seq;
-    uint32_t footprint = 0;
+    uint32_t footprint;
     uint32_t bytes_processed = 0;
     int32_t flushed_bytes;
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
