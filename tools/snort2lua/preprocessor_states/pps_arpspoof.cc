@@ -23,7 +23,7 @@
 
 #include "conversion_state.h"
 #include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 
 namespace preprocessors
 {
@@ -51,13 +51,18 @@ bool ArpSpoof::convert(std::istringstream& data_stream)
     {
 
         if(!keyword.compare("-unicast"))
-            retval = ld->add_option_to_table("unicast", true) && retval;
-
-        else 
+        {
+            if (!ld->add_option_to_table("unicast", true))
+                retval = false;
+        }
+        else
+        {
+            ld->failed_conversion(data_stream, keyword);
             retval = false;
+        }
     }
 
-    return retval;    
+    return retval;
 }
 
 /*******  A P I ***********/

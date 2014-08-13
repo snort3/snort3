@@ -30,7 +30,7 @@
 #include "data/dt_data.h"
 
 // the following three files are for the function 'set_next_rule_state'
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include "rule_states/rule_api.h"
 #include "utils/converter.h"
 
@@ -284,7 +284,7 @@ protected:
             }
             else
             {
-                ld->bad_rule(keyword, stream);
+                ld->bad_rule(stream, keyword);
 
                 // if there is data after this keyword,
                 //    eat everything until end of keyword

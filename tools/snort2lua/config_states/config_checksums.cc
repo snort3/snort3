@@ -24,21 +24,24 @@
 
 #include "conversion_state.h"
 #include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 
 namespace config
 {
 
 namespace {
 
-template<const std::string* snort_option,
-        const std::string* lua_table_name,
-        const std::string* lua_option_name>
 class ConfigChecksum : public ConversionState
 {
 public:
-    ConfigChecksum( Converter* cv, LuaData* ld)
-                            : ConversionState(cv, ld)
+    ConfigChecksum( Converter* cv, LuaData* ld,
+                        const std::string* snort_option,
+                        const std::string* lua_table,
+                        const std::string* lua_option) :
+            ConversionState(cv, ld),
+            snort_option(snort_option),
+            lua_table(lua_table),
+            lua_option(lua_option)
     {
     };
 
@@ -47,28 +50,42 @@ public:
     {
         std::string val;
         bool retval = true;
-        ld->open_table((*lua_table_name));
 
-        // if the two names are not equal ...
-        if((*snort_option).compare((*lua_option_name)))
-            ld->add_diff_option_comment(*snort_option, *lua_option_name);
+        if (snort_option == nullptr || lua_table == nullptr)
+            return false;
+
+
+        ld->open_table(*lua_table);
+
+
+        if(lua_option == nullptr)
+        {
+            lua_option = snort_option;
+        }
+        else if (snort_option->compare(*lua_option))
+        {
+            ld->add_diff_option_comment(*snort_option, *lua_option);
+        }
 
         while (stream >> val)
-            retval = ld->add_list_to_table(*lua_option_name, val) && retval;
+            retval = ld->add_list_to_table(*lua_option, val) && retval;
 
         return retval;
     }
+
+private:
+    const std::string* snort_option;
+    const std::string* lua_table;
+    const std::string* lua_option;
 };
+
 
 template<const std::string *snort_option,
          const std::string *lua_name,
-         const std::string *lua_option_name = nullptr>
+         const std::string *lua_option = nullptr>
 static ConversionState* config_checksum_ctor(Converter* cv, LuaData* ld)
 {
-    if (lua_option_name)
-        return new ConfigChecksum<snort_option, lua_name, lua_option_name>(cv, ld);
-    else
-        return new ConfigChecksum<snort_option, lua_name, snort_option>(cv, ld);
+    return new ConfigChecksum(cv, ld, snort_option, lua_name, lua_option);
 }
 
 

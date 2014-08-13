@@ -20,7 +20,7 @@
 // dt_data.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "dt_data.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -43,7 +43,7 @@ static inline Table* find_table(std::vector<Table*> vec, std::string name)
 LuaData::LuaData()
     :   curr_rule(nullptr),
         curr_rule_opt(nullptr),
-        curr_rule_bad(false)
+        curr_data_bad(false)
 {
     comments = new Comments(start_comments, 0,
                     Comments::CommentType::MULTI_LINE);
@@ -247,9 +247,30 @@ std::string LuaData::expand_vars(std::string string)
 }
 
 
-void LuaData::add_comment(std::string comment)
+void LuaData::failed_conversion(std::istringstream& stream)
 {
-    comments->add_text(comment);
+    // we only need to go through this once.
+    if (!curr_data_bad)
+    {
+        errors->add_text(std::string());
+        errors->add_text("Failed to entire convert the following line:");
+        errors->add_text(stream.str());
+        curr_data_bad = true;
+    }
+}
+
+void LuaData::failed_conversion(std::istringstream& stream,
+                                std::string unkown_option)
+{
+    // we only need to go through this once.
+    if (!curr_data_bad)
+    {
+        errors->add_text(std::string());
+        errors->add_text("Failed to entire convert the following line:");
+        errors->add_text(stream.str());
+        curr_data_bad = true;
+    }
+    errors->add_text("^^^^ unkown_option=" + unkown_option);
 }
 
 
@@ -271,6 +292,7 @@ void LuaData::reset_state()
     open_tables.swap(empty);
     curr_rule = nullptr;
     curr_rule_opt = nullptr;
+    curr_data_bad = false;
 }
 
 bool LuaData::add_include_file(std::string file_name)
@@ -326,7 +348,7 @@ void LuaData::open_table()
     // if no open tables, create a top-level table
     if (open_tables.size() == 0)
     {
-        add_error_comment("A nameless table must be nested inside a table!!");
+        developer_error("A nameless table must be nested inside a table!!");
     }
     else
     {
@@ -338,16 +360,20 @@ void LuaData::open_table()
 void LuaData::close_table()
 {
     if (open_tables.size() == 0)
-        add_error_comment("No open tables to close!!");
+        developer_error("No open tables to close!!");
     else
         open_tables.pop();
 }
 
 
-
-void LuaData::add_error_comment(std::string error_string)
+void LuaData::developer_error(std::string error_string)
 {
-    errors->add_text(error_string + "\n");
+    std::cout << error_string << std::endl;
+}
+
+void LuaData::add_comment(std::string c)
+{
+    comments->add_text(c);
 }
 
 
@@ -355,7 +381,7 @@ bool LuaData::add_option_to_table(const std::string option_name, const std::stri
 {
     if(open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding an option!!: " +
+        developer_error("Must open table before adding an option!!: " +
             option_name + " = " + val);
         return false;
     }
@@ -369,7 +395,7 @@ bool LuaData::add_option_to_table(const std::string option_name, const int val)
 {
     if(open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding an option!!: " +
+        developer_error("Must open table before adding an option!!: " +
             option_name + " = " + std::to_string(val));
         return false;
     }
@@ -383,7 +409,7 @@ bool LuaData::add_option_to_table(const std::string option_name, const bool val)
 {
     if(open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding an option!!: " +
+        developer_error("Must open table before adding an option!!: " +
             option_name + " = " + std::to_string(val));
         return false;
     }
@@ -404,7 +430,7 @@ bool LuaData::add_list_to_table(std::string list_name, std::string next_elem)
 {
     if(open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding an option!!: " +
+        developer_error("Must open table before adding an option!!: " +
             list_name + " = " + next_elem);
         return false;
     }
@@ -418,7 +444,7 @@ bool LuaData::add_list_to_table(std::string list_name, std::string next_elem)
     }
     else
     {
-        add_error_comment("Must open table before adding an list!!: " +
+        developer_error("Must open table before adding an list!!: " +
             list_name + " += " + next_elem);
         return false;
     }
@@ -428,7 +454,7 @@ bool LuaData::add_comment_to_table(std::string comment)
 {
     if (open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding an option!!: '" +
+        developer_error("Must open table before adding an option!!: '" +
             comment + "'");
         return false;
     }
@@ -444,7 +470,7 @@ bool LuaData::add_diff_option_comment(std::string orig_var, std::string new_var)
 
     if (open_tables.size() == 0)
     {
-        add_error_comment("Must open table before adding an option!!: " +
+        developer_error("Must open table before adding an option!!: " +
             orig_var + " = " + new_var);
         return false;
     }
@@ -460,7 +486,7 @@ bool LuaData::add_deleted_comment(std::string dep_var)
 
     if (open_tables.size() == 0)
     {
-        add_error_comment("Must open a table before adding "
+        developer_error("Must open a table before adding "
             "deprecated comment!!: " + dep_var);
         return false;
     }
@@ -476,7 +502,7 @@ bool LuaData::add_unsupported_comment(std::string unsupported_var)
 
     if (open_tables.size() == 0)
     {
-        add_error_comment("Must open a tablebefore adding an "
+        developer_error("Must open a tablebefore adding an "
             "'unsupported' comment");
         return false;
     }
@@ -489,67 +515,68 @@ bool LuaData::add_unsupported_comment(std::string unsupported_var)
 
 void LuaData::begin_rule()
 {
-    if (curr_rule != nullptr)
-    {
-        add_error_comment("Attempted to add a nested rules!!");
-    }
-    else
+    if (curr_rule == nullptr)
     {
         curr_rule = new Rule();
         rules.push_back(curr_rule);
-        curr_rule_bad = false;
+        curr_data_bad = false;
     }
 }
 
 void LuaData::make_rule_a_comment()
 {
+    if (!curr_rule)
+        begin_rule();
+
     curr_rule->make_comment();
 }
 
-void LuaData::bad_rule(std::string bad_option, std::istringstream& stream)
+void LuaData::bad_rule(std::istringstream& stream, std::string bad_option)
 {
+    if (!curr_rule)
+        begin_rule();
+
     // we only need to go through this once.
-    if (!curr_rule_bad)
+    if (!curr_data_bad)
     {
         bad_rules->add_text(std::string());
         bad_rules->add_text("Failed to convert rule: " + stream.str() + ")");
         curr_rule->bad_rule();
-        curr_rule_bad = true;
+        curr_data_bad = true;
     }
     bad_rules->add_text("^^^^ unkown_option=" + bad_option);
 }
 
 bool LuaData::add_hdr_data(std::string data)
 {
-    if (curr_rule)
-        return curr_rule->add_hdr_data(data);
 
-    add_error_comment("Must begin a rule before adding a header!");
-    return false;
+    if (!curr_rule)
+        begin_rule();
+
+    return curr_rule->add_hdr_data(data);
 }
 
 bool LuaData::add_rule_option(std::string opt_name)
 {
-    if (curr_rule)
-        return curr_rule->add_option(opt_name);
+    if (!curr_rule)
+        begin_rule();
 
-    add_error_comment("Must begin a rule before adding an option!");
-    return false;
+    return curr_rule->add_option(opt_name);
 }
 
 bool LuaData::add_rule_option(std::string opt_name, std::string val)
 {
-    if (curr_rule)
-        return curr_rule->add_option(opt_name, val);
+    if (!curr_rule)
+        begin_rule();
 
-    add_error_comment("Must begin a rule before adding an option!");
-    return false;
+    return curr_rule->add_option(opt_name, val);
 }
 
 
 bool LuaData::add_rule_option_before_selected(std::string keyword,
                                             std::string val)
 {
+
     if (!curr_rule_opt)
     {
         comments->add_text("Select an option before placing a "
@@ -565,7 +592,7 @@ bool LuaData::add_suboption(std::string keyword)
     if (curr_rule_opt)
         return curr_rule_opt->add_suboption(keyword);
 
-    add_error_comment("Select an option before adding a suboption!!");
+    developer_error("Select an option before adding a suboption!!");
     return false;
 }
 
@@ -575,14 +602,13 @@ bool LuaData::add_suboption(std::string keyword,
     if (curr_rule_opt)
         return curr_rule_opt->add_suboption(keyword, val);
 
-    add_error_comment("Select an option before adding a suboption!!");
+    developer_error("Select an option before adding a suboption!!");
     return false;
 }
 
 bool LuaData::select_option(std::string opt_name)
 {
     // using add_comment here so this error is right above the failed rule
-
     if (curr_rule)
     {
         curr_rule_opt = curr_rule->select_option(opt_name);
@@ -606,6 +632,9 @@ void LuaData::unselect_option()
 
 void LuaData::add_comment_to_rule(std::string comment)
 {
+    if (!curr_rule)
+        begin_rule();
+
     curr_rule->add_comment(comment);
 }
 

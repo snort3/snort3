@@ -1,5 +1,6 @@
 
 add_library( keyword_states
+    kws_attribute_table.cc
     kws_config.cc
     kws_event_filter.cc
     kws_file.cc

@@ -21,10 +21,11 @@
 
 #include <sstream>
 #include <vector>
+#include <string>
 
 #include "conversion_state.h"
 #include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 
 
 namespace config
@@ -33,23 +34,34 @@ namespace config
 namespace
 {
 
-template<const std::string* snort_option,
-        const std::string* lua_table,
-        const std::string* lua_option>
+// Yes, this looks rather ugly. However, when using Templates,
+// I always got warnings.  Since we've got zero tolerance policy
+// for such things (and I wanted to keep my checks in Snort2Lua
+// for the next developer who comes along)
 class ConfigIntOption : public ConversionState
 {
 public:
-    ConfigIntOption( Converter* cv, LuaData* ld)
-                            : ConversionState(cv, ld)
+    ConfigIntOption(Converter* cv, LuaData* ld,
+                        const std::string* snort_option,
+                        const std::string* lua_table,
+                        const std::string* lua_option) :
+            ConversionState(cv, ld),
+            snort_option(snort_option),
+            lua_table(lua_table),
+            lua_option(lua_option)
     {
-    };
-
+    }
     virtual ~ConfigIntOption() {};
+
     virtual bool convert(std::istringstream& stream)
     {
         if ((snort_option == nullptr) ||
-            (lua_table == nullptr))
+            (snort_option->empty()) ||
+            (lua_table == nullptr)||
+            (lua_table->empty()))
         {
+            ld->developer_error("Invalid Option!!  Missing either the Snort Option"
+                " or the corresponding lua table!!");
             return false;
         }
 
@@ -57,7 +69,7 @@ public:
         bool retval;
 
         // if the two names are not equal ...
-        if((lua_option != nullptr) && (*snort_option).compare(*lua_option))
+        if ((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
             retval = parse_int_option(*lua_option, stream);
             ld->add_diff_option_comment("config " + *snort_option +
@@ -72,22 +84,28 @@ public:
         stream.setstate(std::ios::eofbit); // not interested in any additional arguments
         return retval;
     }
+
+private:
+    const std::string* snort_option;
+    const std::string* lua_table;
+    const std::string* lua_option;
 };
+
 
 template<const std::string *snort_option,
         const std::string *lua_table,
         const std::string *lua_option = nullptr>
 static ConversionState* config_int_ctor(Converter* cv, LuaData* ld)
 {
-    return new ConfigIntOption<snort_option,
+    return new ConfigIntOption(cv, ld, snort_option,
                                 lua_table,
-                                lua_option>(cv, ld);
+                                lua_option);
 }
 
 } // namespace
 
 /*************************************************
- ****************  STRUCT_NAMES  *****************
+ ************** LUA  STRUCT_NAMES  ***************
  *************************************************/
 
 static const std::string attribute_table = "attribute_table";

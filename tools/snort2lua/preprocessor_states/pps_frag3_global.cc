@@ -24,7 +24,7 @@
 
 #include "conversion_state.h"
 #include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 
 namespace preprocessors
 {
@@ -77,8 +77,12 @@ bool Frag3Global::convert(std::istringstream& data_stream)
         else
             tmpval = false;
 
-        if (retval)
-            retval = tmpval;
+
+        if (!tmpval)
+        {
+            ld->failed_conversion(data_stream, "keyword");
+            retval = false;
+        }
     }
 
     return retval;    

@@ -24,7 +24,7 @@
 
 #include "utils/converter.h"
 #include "init_state.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include "option_parser.h"
 
 
