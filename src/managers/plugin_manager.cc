@@ -43,6 +43,7 @@ using namespace std;
 #include "mpse_manager.h"
 #include "packet_manager.h"
 #include "script_manager.h"
+#include "so_manager.h"
 
 #include "framework/codec.h"
 #include "framework/logger.h"
@@ -81,16 +82,29 @@ struct Symbol
 static Symbol symbols[PT_MAX] =
 {
     // sequence must match PlugType definition
-    { "module", 0 },
+    { "data", 0 },
     { "codec", CDAPI_VERSION },
     { "inspector", INSAPI_VERSION },
     { "ips_action", ACTAPI_VERSION },
     { "ips_option", IPSAPI_VERSION },
     { "search_engine", SEAPI_VERSION },
     { "so_rule", SOAPI_VERSION },
-    { "event_handler", LOGAPI_VERSION }
+    { "logger", LOGAPI_VERSION }
 };
-    
+ 
+const char* PluginManager::get_type_name(PlugType pt)
+{
+    if ( pt >= PT_MAX )
+        return "error";
+
+    return symbols[pt].name;
+}
+
+static const char* current_plugin = nullptr;
+
+const char* PluginManager::get_current_plugin()
+{ return current_plugin; }
+
 struct Plugin
 {
     string key;
@@ -205,6 +219,7 @@ static void add_plugin(Plugin& p)
 {
     if ( p.api->mod_ctor )
     {
+        current_plugin = p.api->name;
         Module* m = p.api->mod_ctor();
         ModuleManager::add_module(m, p.api);
     }
@@ -218,28 +233,28 @@ static void add_plugin(Plugin& p)
         PacketManager::add_plugin((CodecApi*)p.api);
         break;
 
-    case PT_LOGGER:
-        EventManager::add_plugin((LogApi*)p.api);
+    case PT_INSPECTOR:
+        InspectorManager::add_plugin((InspectApi*)p.api);
+        break;
+
+    case PT_IPS_ACTION:
+        ActionManager::add_plugin((ActionApi*)p.api);
         break;
 
     case PT_IPS_OPTION:
         IpsManager::add_plugin((IpsApi*)p.api);
         break;
 
-    case PT_SO_RULE:
-        IpsManager::add_plugin((SoApi*)p.api);
-        break;
-
-    case PT_INSPECTOR:
-        InspectorManager::add_plugin((InspectApi*)p.api);
-        break;
-
     case PT_SEARCH_ENGINE:
         MpseManager::add_plugin((MpseApi*)p.api);
         break;
 
-    case PT_IPS_ACTION:
-        ActionManager::add_plugin((ActionApi*)p.api);
+    case PT_SO_RULE:
+        SoManager::add_plugin((SoApi*)p.api);
+        break;
+
+    case PT_LOGGER:
+        EventManager::add_plugin((LogApi*)p.api);
         break;
 
     default:
@@ -337,6 +352,7 @@ void PluginManager::dump_plugins()
     InspectorManager::dump_plugins();
     MpseManager::dump_plugins();
     IpsManager::dump_plugins();
+    SoManager::dump_plugins();
     ActionManager::dump_plugins();
     EventManager::dump_plugins();
 }
@@ -347,6 +363,7 @@ void PluginManager::release_plugins ()
     ActionManager::release_plugins();
     InspectorManager::release_plugins();
     IpsManager::release_plugins();
+    SoManager::release_plugins();
     MpseManager::release_plugins();
     PacketManager::release_plugins();
 

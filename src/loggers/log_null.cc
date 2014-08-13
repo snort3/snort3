@@ -38,32 +38,10 @@
 // log_null module
 //-------------------------------------------------------------------------
 
-static const Parameter null_params[] =
-{
-    // FIXIT this definitely has no params
-    // is module needed?  should this even be user facing?
-    // the purpose is to override a conf from cmdline to stop logging
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-class NullModule : public Module
-{
-public:
-    NullModule() : Module("log_null", null_params) { };
-    bool set(const char*, Value&, SnortConfig*) { return false; };
-};
-
 class NullLogger : public Logger {
 public:
     NullLogger() { };
 };
-
-static Module* mod_ctor()
-{ return new NullModule; }
-
-static void mod_dtor(Module* m)
-{ delete m; }
 
 static Logger* null_ctor(SnortConfig*, Module*)
 { return new NullLogger; }
@@ -78,8 +56,8 @@ static LogApi null_api
         "log_null",
         LOGAPI_PLUGIN_V0,
         0,
-        mod_ctor,
-        mod_dtor
+        nullptr, // mod_ctor,
+        nullptr  //mod_dtor
     },
     OUTPUT_TYPE_FLAG__LOG,
     null_ctor,

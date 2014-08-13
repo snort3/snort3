@@ -244,7 +244,6 @@ struct TELNET_PROTO_CONF
     bool normalize;
     bool check_encrypted_data;
     bool detect_encrypted;
-    bool detect_anomalies;
 
     TELNET_PROTO_CONF();
 };

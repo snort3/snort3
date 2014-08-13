@@ -175,11 +175,9 @@ int Binder::check_rules(Flow* flow, Packet* p)
     Binding* pb;
     unsigned i, sz = bindings.size();
 
-    Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
-
-    // FIXIT -- use vlan when searching bindings
-//    if (p->proto_bits & PROTO_BIT__VLAN)
-//        uint16_t vlan = vlan::vth_vlan(layer::get_vlan_layer(p));
+    // FIXIT called before stream runs - these flags aren't set
+    // (below is structed to work by accident on initial syn until fixed)
+    Port port = (p->packet_flags & PKT_FROM_SERVER) ? p->sp : p->dp;
 
     for ( i = 0; i < sz; i++ )
     {

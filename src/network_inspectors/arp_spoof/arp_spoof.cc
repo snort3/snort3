@@ -199,16 +199,13 @@ void ArpSpoof::eval(Packet *p)
     switch(ntohs(ah->ea_hdr.ar_op))
     {
         case ARPOP_REQUEST:
-            if (config->check_unicast_arp)
+            if (memcmp((u_char *)eh->ether_dst, (u_char *)bcast, 6) != 0)
             {
-                if (memcmp((u_char *)eh->ether_dst, (u_char *)bcast, 6) != 0)
-                {
-                    SnortEventqAdd(GID_ARP_SPOOF,
-                            ARPSPOOF_UNICAST_ARP_REQUEST);
+                SnortEventqAdd(GID_ARP_SPOOF,
+                    ARPSPOOF_UNICAST_ARP_REQUEST);
 
-                    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
-                            "MODNAME: Unicast request\n"););
-                }
+                DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
+                        "MODNAME: Unicast request\n"););
             }
             else if (memcmp((u_char *)eh->ether_src,
                     (u_char *)ah->arp_sha, 6) != 0)

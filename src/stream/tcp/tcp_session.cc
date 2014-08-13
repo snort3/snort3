@@ -304,11 +304,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define SUB_RST_SENT  0x04
 #define SUB_FIN_SENT  0x08
 
-// flush types
-#define S5_FT_INTERNAL  0  // normal s5 "footprint"
-#define S5_FT_EXTERNAL  1  // set by other preprocessor
-#define S5_FT_PAF_MAX   2  // paf_max + footprint fp
-
 #define SLAM_MAX 4
 
 //#define DEBUG_STREAM5
@@ -1926,7 +1921,7 @@ static inline unsigned int getSegmentFlushSize(
  * flush the client seglist up to the most recently acked segment
  */
 static int FlushStream(
-    Packet*, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
+    Packet* p, StreamTracker *st, uint32_t toSeq, uint8_t *flushbuf,
     const uint8_t *flushbuf_end)
 {
     uint16_t bytes_flushed = 0;
@@ -1937,6 +1932,8 @@ static int FlushStream(
 
     assert(st->seglist_next);
     MODULE_PROFILE_START(s5TcpBuildPacketPerfStats);
+
+    uint32_t total = toSeq - st->seglist_next->seq;
 
     while ( SEQ_LT(st->seglist_next->seq, toSeq) )
     {
@@ -1952,7 +1949,7 @@ static int FlushStream(
             flags |= PKT_PDU_TAIL;
 
         const StreamBuffer* sb = st->splitter->reassemble(
-            bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
+            p->flow, total, bytes_flushed, ss->payload, bytes_to_copy, flags, bytes_copied);
 
         flags = 0;
 
@@ -2034,7 +2031,7 @@ static inline int _flush_to_seq (
     TcpSession *tcpssn, StreamTracker *st, uint32_t bytes, Packet *p, uint32_t dir)
 {
     uint32_t stop_seq;
-    uint32_t footprint = 0;
+    uint32_t footprint;
     uint32_t bytes_processed = 0;
     int32_t flushed_bytes;
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
@@ -3847,9 +3844,8 @@ static void ProcessTcpStream(StreamTracker *rcv, TcpSession *tcpssn,
 
                 if (rcv->small_seg_count > config->max_consec_small_segs)
                 {
-                    /* Above threshold, log it... requires detect_anomalies be
-                    * on in this TCP policy, action controlled by preprocessor
-                    * rule. */
+                    /* Above threshold, log it...  in this TCP policy, 
+                     * action controlled by preprocessor rule. */
                     EventMaxSmallSegsExceeded();
 
                     /* Reset counter, so we're not too noisy */

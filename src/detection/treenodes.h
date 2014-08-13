@@ -118,17 +118,17 @@ struct OptTreeNode
 };
 
 /* function pointer list for rule head nodes */
-typedef struct _RuleFpList
+struct RuleFpList
 {
     /* context data for this test */
     void *context;
 
     /* rule check function pointer */
-    int (*RuleHeadFunc)(Packet *, RuleTreeNode *, struct _RuleFpList *, int);
+    int (*RuleHeadFunc)(Packet *, RuleTreeNode *, RuleFpList *, int);
 
     /* pointer to the next rule function node */
-    struct _RuleFpList *next;
-} RuleFpList;
+    RuleFpList *next;
+};
 
 struct RuleTreeNode
 {
@@ -140,7 +140,7 @@ struct RuleTreeNode
     PortObject * src_portobject;
     PortObject * dst_portobject;
 
-    struct _ListHead *listhead;
+    struct ListHead* listhead;
 
     int proto;
     int head_node_number;

@@ -124,7 +124,7 @@ static int LogAction(Packet* p, const OptTreeNode* otn)
 static const char* rule_type[RULE_TYPE__MAX] =
 {
     "none", "alert", "drop", 
-    "log", "pass", "reject", "sdrop"
+    "log", "pass", "sdrop"
 };
 
 const char* get_action_string(int action)
@@ -154,9 +154,6 @@ RuleType get_action_type(const char* s)
 
     else if ( !strcasecmp(s, ACTION_PASS) )
         return RULE_TYPE__PASS;
-
-    else if ( !strcasecmp(s, ACTION_REJECT) )
-        return RULE_TYPE__REJECT;
 
     else if ( !strcasecmp(s, ACTION_SDROP) )
         return RULE_TYPE__SDROP;
@@ -192,12 +189,6 @@ void action_execute(int action, Packet* p, OptTreeNode* otn, uint16_t event_id)
 
         case RULE_TYPE__SDROP:
             SDropAction(p, otn);
-            break;
-
-        case RULE_TYPE__REJECT:
-            DropAction(p, otn);
-            Active_QueueReject();
-            SetTags(p, otn, event_id);
             break;
 
         default:

@@ -167,7 +167,7 @@ static void SetOptionalsNext(FTP_PARAM_FMT *ThisFmt, FTP_PARAM_FMT *NextFmt,
                 ThisFmt->choices = (FTP_PARAM_FMT **)calloc(numChoices, sizeof(FTP_PARAM_FMT *));
                 if (ThisFmt->choices == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    ParseAbort("failed to allocate memory");
                 }
 
                 memcpy(ThisFmt->choices, choices, sizeof(FTP_PARAM_FMT *) * numChoices);

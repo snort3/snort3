@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_luajit.cc author Russ Combs <rucombs@cisco.com>
 
 #include "ips_luajit.h"
 
@@ -102,28 +102,31 @@ static void init_lua(
 
     // first load the chunk
     if ( lua_load(L, load, &ldr, name) )
-        ParseError("%s luajit failed to load chunk %s", 
-            name, lua_tostring(L, -1));
+    {
+        ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // now exec the chunk to define functions etc in L
     if ( lua_pcall(L, 0, 0, 0) )
-        ParseError("%s luajit failed to init chunk %s", 
-            name, lua_tostring(L, -1));
-
-    // create an args table with any rule options
-    string table("args = {");
-    table += args;
-    table += "}";
+    {
+        ParseError("%s luajit failed to init chunk %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // load the args table 
-    if ( luaL_loadstring(L, table.c_str()) )
-        ParseError("%s luajit failed to load args %s", 
-            name, lua_tostring(L, -1));
+    if ( luaL_loadstring(L, args.c_str()) )
+    {
+        ParseError("%s luajit failed to load args %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // exec the args table to define it in L
     if ( lua_pcall(L, 0, 0, 0) )
-        ParseError("%s luajit failed to init args %s", 
-            name, lua_tostring(L, -1));
+    {
+        ParseError("%s luajit failed to init args %s", name, lua_tostring(L, -1));
+        return;
+    }
 
     // exec the init func if defined
     lua_getglobal(L, opt_init);
@@ -135,17 +138,20 @@ static void init_lua(
     {
         const char* err = lua_tostring(L, -1);
         ParseError("%s %s", name, err);
+        return;
     }
     // string is an error message
     if ( lua_isstring(L, -1) )
     {
         const char* err = lua_tostring(L, -1);
         ParseError("%s %s", name, err);
+        return;
     }
     // bool is the result
     if ( !lua_toboolean(L, -1) )
     {
         ParseError("%s init() returned false", name);
+        return;
     }
     // initialization complete
     lua_pop(L, 1);
@@ -162,13 +168,13 @@ static void term_lua(lua_State*& L)
 
 static const Parameter luajit_params[] =
 {
-    { "*args", Parameter::PT_STRING, nullptr, nullptr,
-      "option arguments" },
+    { "~", Parameter::PT_STRING, nullptr, nullptr,
+      "luajit arguments" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-LuaJitModule::LuaJitModule() : Module("luajit", luajit_params)
+LuaJitModule::LuaJitModule(const char* name) : Module(name, luajit_params)
 { }
 
 ProfileStats* LuaJitModule::get_profile() const
@@ -182,9 +188,6 @@ bool LuaJitModule::begin(const char*, int, SnortConfig*)
 
 bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*args") )
-        return false;
-
     args = v.get_string();
     return true;
 }
@@ -193,11 +196,25 @@ bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
 // option stuff
 //-------------------------------------------------------------------------
 
-LuaJITOption::LuaJITOption(
+LuaJitOption::LuaJitOption(
     const char* name, string& chunk, LuaJitModule* mod)
     : IpsOption(name)
 {
-    config = mod->args;
+    string args = mod->args;
+
+    // if args not empty, it has to be a quoted string
+    // so remove enclosing quotes
+    if ( args.size() > 1 )
+    {
+        args.erase(0, 1);
+        args.erase(args.size()-1);
+    }
+
+    // create an args table with any rule options
+    config = "args = { ";
+    config += args;
+    config += "}";
+
     unsigned max = get_instance_max();
 
     lua = new lua_State*[max];
@@ -206,7 +223,7 @@ LuaJITOption::LuaJITOption(
         init_lua(lua[i], chunk, name, config);
 }
 
-LuaJITOption::~LuaJITOption()
+LuaJitOption::~LuaJitOption()
 {
     unsigned max = get_instance_max();
 
@@ -216,7 +233,7 @@ LuaJITOption::~LuaJITOption()
     delete[] lua;
 }
 
-uint32_t LuaJITOption::hash() const
+uint32_t LuaJitOption::hash() const
 {
     uint32_t a = 0, b = 0, c = 0;
     mix_str(a,b,c,get_name());
@@ -225,9 +242,9 @@ uint32_t LuaJITOption::hash() const
     return c;
 }
 
-bool LuaJITOption::operator==(const IpsOption& ips) const
+bool LuaJitOption::operator==(const IpsOption& ips) const
 {
-    LuaJITOption& rhs = (LuaJITOption&)ips;
+    LuaJitOption& rhs = (LuaJitOption&)ips;
 
     if ( strcmp(get_name(), rhs.get_name()) )
         return false;
@@ -238,7 +255,7 @@ bool LuaJITOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int LuaJITOption::eval(Cursor& c, Packet*)
+int LuaJitOption::eval(Cursor& c, Packet*)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(luajitPerfStats);

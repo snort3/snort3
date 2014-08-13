@@ -270,14 +270,10 @@ int parse_mime_decode_args(DecodeConfig *decode_conf, char *arg, const char *pre
         /*
          **  Fatal Error, log error and exit.
          */
-        if (*errStr)
-        {
-            ParseError("%s", errStr);
-        }
+        if ( *errStr )
+            ParseError("mime decode: %s", errStr);
         else
-        {
-            ParseError("Undefined Error.");
-        }
+            ParseError("mime decode: %s", "undefined error");
     }
 
     return ret;

@@ -325,11 +325,9 @@ static void SnortInit(int argc, char **argv)
     PluginManager::dump_plugins();
     FileAPIInit();
 
-    SnortConfig *sc;
-
     register_profiles();
 
-    sc = ParseSnortConf(snort_cmd_line_conf->var_list);
+    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
 
     /* Merge the command line and config file confs to take care of
      * command line overriding config file.
@@ -616,7 +614,7 @@ void snort_cleanup()
 // instantiate things that can be reloaded
 static SnortConfig * get_reload_config(void)
 {
-    SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf->var_list);
+    SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
 
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
 

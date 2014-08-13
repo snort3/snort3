@@ -155,14 +155,15 @@ static void verify_magic_offset(MagicData *parent, MagicData *current)
 {
     if ((parent) && (parent->content_len + parent->offset > current->offset))
     {
-        ParseError(" Magic content at offset %d overlaps with offset %d.",
+        ParseError("magic content at offset %d overlaps with offset %d.",
                 parent->offset, current->offset);
+        return;
 
     }
 
     if ((current->next) && (current->content_len + current->offset > current->next->offset))
     {
-        ParseError(" Magic content at offset %d overlaps with offset %d.",
+        ParseError("magic content at offset %d overlaps with offset %d.",
                 current->offset, current->next->offset);
 
     }

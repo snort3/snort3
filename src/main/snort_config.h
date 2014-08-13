@@ -216,7 +216,6 @@ struct SnortConfig
     ListHead Pass;
     ListHead Drop;
     ListHead SDrop;
-    ListHead Reject;
 
     struct FrameworkConfig* framework_config;
 

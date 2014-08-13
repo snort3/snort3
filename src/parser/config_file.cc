@@ -153,7 +153,8 @@ static int GetChecksumFlags(const char *args)
         }
         else
         {
-            ParseError("Unknown command line checksum option: %s.", toks[i]);
+            ParseError("unknown command line checksum option: %s.", toks[i]);
+            return ret_flags;
         }
     }
 
@@ -272,7 +273,8 @@ void ConfigDstMac(SnortConfig* sc, const char* s)
 
     if ( eth_pton(s, &dst) < 0 )
     {
-        ParseError("Format check failed: %s,  Use format like 12:34:56:78:90:1a", s);
+        ParseError("format check failed: %s,  Use format like 12:34:56:78:90:1a", s);
+        return;
     }
     sc->eth_dst = (uint8_t*)SnortAlloc (sizeof(dst.data));
     memcpy(sc->eth_dst, dst.data, sizeof(dst.data));
@@ -292,8 +294,10 @@ void ConfigDaqType(SnortConfig *sc, const char *args)
         return;
 
     if ( sc->daq_type )
-        ParseError("Setting DAQ to %s but %s already selected.",
-            args, sc->daq_type);
+    {
+        ParseError("setting DAQ to %s but %s already selected.", args, sc->daq_type);
+        return;
+    }
 
     // will be validated later after paths are established
     sc->daq_type = SnortStrdup(args);
@@ -318,7 +322,10 @@ void ConfigDaqVar(SnortConfig *sc, const char *args)
         sc->daq_vars = StringVector_New();
 
         if ( !sc->daq_vars )
+        {
             ParseError("can't allocate memory for daq_var '%s'.", args);
+            return;
+        }
     }
     if ( !StringVector_Add(sc->daq_vars, args) )
         ParseError("can't allocate memory for daq_var '%s'.", args);
@@ -334,7 +341,10 @@ void ConfigDaqDir(SnortConfig *sc, const char *args)
         sc->daq_dirs = StringVector_New();
 
         if ( !sc->daq_dirs )
+        {
             ParseError("can't allocate memory for daq_dir '%s'.", args);
+            return;
+        }
     }
     if ( !StringVector_Add(sc->daq_dirs, args) )
         ParseError("can't allocate memory for daq_dir '%s'.", args);
@@ -390,9 +400,10 @@ void ConfigPacketSnaplen(SnortConfig *sc, const char *args)
         ((snaplen != 0) && (snaplen < MIN_SNAPLEN)) ||
         (snaplen > MAX_SNAPLEN) )
     {
-        ParseError("Invalid snaplen: %s.  Snaplen must be between "
+        ParseError("invalid snaplen: %s.  Snaplen must be between "
                    "%u and %u inclusive or 0 for default = %u.",
                    args, MIN_SNAPLEN, MAX_SNAPLEN, DAQ_GetSnapLen());
+        return;
     }
 
     sc->pkt_snaplen = snaplen;
@@ -428,7 +439,7 @@ PolicyMode GetPolicyMode(PolicyMode mode)
         break;
 
     default:
-        ParseError("Unknown command line policy mode option: %d.", mode);
+        ParseError("unknown command line policy mode option: %d.", mode);
     }
     return mode;
 }
@@ -474,7 +485,10 @@ void ConfigSetGid(SnortConfig *sc, const char *args)
             struct group *gr = getgrnam(args);  // main thread only
 
             if (gr == NULL)
-                ParseError("Group '%s' unknown.", args);
+            {
+                ParseError("group '%s' unknown.", args);
+                return;
+            }
 
             sc->group_id = gr->gr_gid;
             break;
@@ -488,7 +502,7 @@ void ConfigSetGid(SnortConfig *sc, const char *args)
         if ((errno == ERANGE) || (*endptr != '\0') ||
             (sc->group_id < 0))
         {
-            ParseError("Group id '%s' out of range.", args);
+            ParseError("group id '%s' out of range.", args);
         }
     }
 }
@@ -510,7 +524,10 @@ void ConfigSetUid(SnortConfig *sc, const char *args)
             struct passwd *pw = getpwnam(args);  // main thread only
 
             if (pw == NULL)
-                ParseError("User '%s' unknown.", args);
+            {
+                ParseError("user '%s' unknown.", args);
+                return;
+            }
 
             sc->user_id = (int)pw->pw_uid;
 
@@ -528,7 +545,10 @@ void ConfigSetUid(SnortConfig *sc, const char *args)
     {
         sc->user_id = SnortStrtol(args, &endptr, 10);
         if ((errno == ERANGE) || (*endptr != '\0'))
-            ParseError("User id '%s' out of range.", args);
+        {
+            ParseError("user id '%s' out of range.", args);
+            return;
+        }
 
         /* Set group id to user's default group if not
          * already set */
@@ -537,7 +557,10 @@ void ConfigSetUid(SnortConfig *sc, const char *args)
             struct passwd *pw = getpwuid((uid_t)sc->user_id);  // main thread only
 
             if (pw == NULL)
-                ParseError("User '%s' unknown.", args);
+            {
+                ParseError("user '%s' unknown.", args);
+                return;
+            }
 
             sc->group_id = (int)pw->pw_gid;
         }
@@ -563,7 +586,7 @@ void ConfigSoRuleMemcap(SnortConfig *sc, const char *args)
     sc->so_rule_memcap = SnortStrtoul(args, &endptr, 0);
     if ((errno == ERANGE) || (*endptr != '\0'))
     {
-        ParseError("Invalid so rule memcap: %s.  Memcap must be between "
+        ParseError("invalid so rule memcap: %s.  Memcap must be between "
                    "0 and %u inclusive.", args, UINT32_MAX);
     }
 }
@@ -603,7 +626,7 @@ void ConfigUmask(SnortConfig *sc, const char *args)
     if ((errno == ERANGE) || (*endptr != '\0') ||
         (mask < 0) || (mask & ~FILEACCESSBITS))
     {
-        ParseError("Bad umask: %s", args);
+        ParseError("bad umask: %s", args);
     }
     sc->file_mask = (mode_t)mask;
 }
@@ -642,7 +665,10 @@ void ConfigTunnelVerdicts ( SnortConfig *sc, const char *args )
             sc->tunnel_mask |= TUNNEL_4IN6;
 
         else
-            ParseError("Unknown tunnel bypass protocol");
+        {
+            ParseError("unknown tunnel bypass protocol");
+            return;
+        }
 
         tok = strtok_r(NULL, " ,", &lasts);
     }

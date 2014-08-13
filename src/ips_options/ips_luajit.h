@@ -28,7 +28,7 @@
 class LuaJitModule : public Module
 {
 public:
-    LuaJitModule();
+    LuaJitModule(const char* name);
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -39,11 +39,11 @@ public:
     std::string args;
 };
 
-class LuaJITOption : public IpsOption
+class LuaJitOption : public IpsOption
 {
 public:
-    LuaJITOption(const char* name, std::string& chunk, LuaJitModule*);
-    ~LuaJITOption();
+    LuaJitOption(const char* name, std::string& chunk, LuaJitModule*);
+    ~LuaJitOption();
 
     uint32_t hash() const;
     bool operator==(const IpsOption&) const;

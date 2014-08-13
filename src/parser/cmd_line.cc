@@ -37,7 +37,7 @@ using namespace std;
 #include "main/analyzer.h"
 #include "managers/shell.h"
 #include "managers/event_manager.h"
-#include "managers/ips_manager.h"
+#include "managers/so_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
@@ -75,13 +75,13 @@ static const char* snort_help =
 "Snort has several options to get more help:\n"
 "\n"
 "--help this overview of help\n"
-"--help-builtin <module prefix> output matching builtin rules\n"
+"--help-builtin [<module prefix>] output matching builtin rules\n"
 "--help-buffers output available inspection buffers\n"
-"--help-commands <module prefix> output matching commands\n"
-"--help-config <module prefix> output matching config options\n"
-"--help-gids <module prefix> output matching generators\n"
-"--help-module output description of given module\n"
-"--help-options <option prefix> output matching command line option quick help\n"
+"--help-commands [<module prefix>] output matching commands\n"
+"--help-config [<module prefix>] output matching config options\n"
+"--help-gids [<module prefix>] output matching generators\n"
+"--help-module <module> output description of given module\n"
+"--help-options [<option prefix>] output matching command line options\n"
 "--help-signals dump available control signals\n"
 "--list-modules list all known modules\n"
 "--list-plugins list all known modules\n"
@@ -99,9 +99,12 @@ static const char* snort_help =
 "\n"
 "    type name = default: help { range }\n"
 "\n"
-"If a name starts with * it is positional; these are used in IPS rule options.\n"
-"The name should not be included in the rule.  If the name ends with [] it is a\n"
-"list item and can be repeated.\n"
+"+ For Lua configuration (not IPS rules), if the name ends with [] it is a\n"
+"  list item and can be repeated.\n"
+"+ For IPS rules only, names starting with ~ indicate positional parameters.\n"
+"  The name does not appear in the rule.\n"
+"+ IPS rules may also have a wild card parameter, which is indicated by a *.\n"
+"  Only used for metadata that Snort ignores.\n"
 ;
 
 //-------------------------------------------------------------------------
@@ -298,7 +301,8 @@ static void help_signals(SnortConfig*, const char*)
 }
 
 enum HelpType {
-    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD, HT_BUF, HT_LST, HT_PLG
+    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
+    HT_BUF, HT_LST, HT_PLG, HT_DDR, HT_DBR
 };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -332,6 +336,12 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         break;
     case HT_PLG:
         PluginManager::list_plugins();
+        break;
+    case HT_DDR:
+        SoManager::dump_rule_stubs(val);
+        break;
+    case HT_DBR:
+        ModuleManager::dump_rules(val);
         break;
     }
     ModuleManager::term();
@@ -385,6 +395,16 @@ static void list_plugins(SnortConfig* sc, const char* val)
     show_help(sc, val, HT_PLG);
 }
 
+static void dump_builtin_rules(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_DBR);
+}
+
+static void dump_dynamic_rules(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_DDR);
+}
+
 static void config_lua(SnortConfig*, const char* val)
 {
     Shell::set_overrides(val);
@@ -419,13 +439,6 @@ static void config_daq_list(SnortConfig* sc, const char* val)
     DAQ_Load(sc);
     DAQ_PrintTypes(stdout);
     DAQ_Unload();
-    exit(0);
-}
-
-static void dump_dynamic_rules(SnortConfig* sc, const char* val)
-{
-    PluginManager::load_plugins(sc->plugin_path);
-    IpsManager::dump_rule_stubs(val);
     exit(0);
 }
 
@@ -531,13 +544,11 @@ static void config_log_mode(SnortConfig* sc, const char* val)
 
 static void config_inline(SnortConfig* sc, const char*)
 {
-    LogMessage("Enabling inline operation\n");
     sc->run_flags |= RUN_FLAG__INLINE;
 }
 
 static void config_inline_test(SnortConfig* sc, const char*)
 {
-    LogMessage("Enable Inline Test Mode\n");
     sc->run_flags |= RUN_FLAG__INLINE_TEST;
 }
 
@@ -826,6 +837,9 @@ static ConfigFunc basic_opts[] =
     { "daq-var", ConfigDaqVar,
       "<name=value> specify extra DAQ configuration variable" },
 
+    { "dump-builtin-rules", dump_builtin_rules,
+      "creates stub rule files of all loaded rules libraries" },
+
     { "dump-dynamic-rules", dump_dynamic_rules,
       "<path> creates stub rule files of all loaded rules libraries" },
 
@@ -845,16 +859,16 @@ static ConfigFunc basic_opts[] =
       "output available inspection buffers" },
 
     { "help-commands", help_commands,
-      "<module prefix> output matching commands" },
+      "[<module prefix>] output matching commands" },
 
     { "help-config", help_config,
-      "<module prefix> output matching config options" },
+      "[<module prefix>] output matching config options" },
 
     { "help-gids", help_gids,
-      "<module prefix> output matching generators" },
+      "[<module prefix>] output matching generators" },
 
     { "help-module", help_module,
-      "output description of given module" },
+      "<module> output description of given module" },
 
     { "help-options", help_options,
       "<option prefix> output matching command line option quick help" },

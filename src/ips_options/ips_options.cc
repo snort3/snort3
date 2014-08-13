@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_options.cc author Russ Combs <rucombs@cisco.com>
 
 #include "ips_options.h"
 
@@ -42,11 +42,14 @@ extern const BaseApi* ips_base64_data;
 extern const BaseApi* ips_base64_decode;
 extern const BaseApi* ips_byte_jump;
 extern const BaseApi* ips_byte_test;
+extern const BaseApi* ips_classtype;
 extern const BaseApi* ips_cvs;
+extern const BaseApi* ips_detection_filter;
 extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_flags;
 extern const BaseApi* ips_fragbits;
 extern const BaseApi* ips_fragoffset;
+extern const BaseApi* ips_gid;
 extern const BaseApi* ips_http_uri;
 extern const BaseApi* ips_http_header;
 extern const BaseApi* ips_http_client_body;
@@ -64,13 +67,22 @@ extern const BaseApi* ips_id;
 extern const BaseApi* ips_ipopts;
 extern const BaseApi* ips_isdataat;
 extern const BaseApi* ips_itype;
+extern const BaseApi* ips_metadata;
+extern const BaseApi* ips_msg;
 extern const BaseApi* ips_pkt_data;
+extern const BaseApi* ips_priority;
 extern const BaseApi* ips_raw_data;
 extern const BaseApi* ips_react;
+extern const BaseApi* ips_reference;
+extern const BaseApi* ips_rem;
+extern const BaseApi* ips_rev;
 extern const BaseApi* ips_resp;
 extern const BaseApi* ips_rpc;
 extern const BaseApi* ips_seq;
 extern const BaseApi* ips_session;
+extern const BaseApi* ips_sid;
+extern const BaseApi* ips_soid;
+extern const BaseApi* ips_tag;
 extern const BaseApi* ips_tos;
 extern const BaseApi* ips_ttl;
 extern const BaseApi* ips_bufferlen;
@@ -95,11 +107,14 @@ const BaseApi* ips_options[] =
     ips_base64_decode,
     ips_byte_jump,
     ips_byte_test,
+    ips_classtype,
     ips_cvs,
+    ips_detection_filter,
     ips_dsize,
     ips_flags,
     ips_fragbits,
     ips_fragoffset,
+    ips_gid,
     ips_http_uri,
     ips_http_header,
     ips_http_client_body,
@@ -117,13 +132,22 @@ const BaseApi* ips_options[] =
     ips_ipopts,
     ips_isdataat,
     ips_itype,
+    ips_metadata,
+    ips_msg,
     ips_pkt_data,
+    ips_priority,
     ips_raw_data,
     ips_react,
+    ips_reference,
+    ips_rem,
     ips_resp,
+    ips_rev,
     ips_rpc,
     ips_seq,
     ips_session,
+    ips_sid,
+    ips_soid,
+    ips_tag,
     ips_tos,
     ips_ttl,
     ips_bufferlen,

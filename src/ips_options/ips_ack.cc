@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -18,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_ack.cc author Russ Combs <rucombs@cisco.com>
 
 #include <sys/types.h>
 
@@ -113,7 +112,7 @@ int TcpAckOption::eval(Cursor&, Packet *p)
 
 static const Parameter ack_params[] =
 {
-    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -141,7 +140,7 @@ bool AckModule::begin(const char*, int, SnortConfig*)
 
 bool AckModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*range") )
+    if ( !v.is("~range") )
         return false;
 
     return data.parse(v.get_string());

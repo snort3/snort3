@@ -88,9 +88,6 @@ int Stream5UpdateSessionAlertTcp(
 void Stream5SetExtraDataTcp(Flow*, Packet*, uint32_t flag);
 void Stream5ClearExtraDataTcp(Flow*, Packet*, uint32_t flag);
 
-uint32_t Stream5GetFlushPointTcp(Flow*, char dir);
-void Stream5SetFlushPointTcp(Flow*, char dir, uint32_t flush_point);
-
 bool Stream5GetReassemblyFlushPolicyTcp(Flow*, char dir);
 
 char Stream5IsStreamSequencedTcp(Flow*, char dir);

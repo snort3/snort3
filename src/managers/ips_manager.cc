@@ -62,10 +62,10 @@ struct Option
 
 typedef list<Option*> OptionList;
 static OptionList s_options;
-static list<const SoApi*> s_rules;
 
 static const char* current_keyword = nullptr;
-static unsigned s_errors = 0;
+static Module* current_module = nullptr;
+static const Parameter* current_params = nullptr;
 
 //-------------------------------------------------------------------------
 // plugins
@@ -76,32 +76,20 @@ void IpsManager::add_plugin(const IpsApi* api)
     s_options.push_back(new Option(api));
 }
 
-void IpsManager::add_plugin(const SoApi* api)
-{
-    s_rules.push_back(api);
-}
-
 void IpsManager::release_plugins()
 {
     for ( auto* p : s_options )
         delete p;
 
     s_options.clear();
-    s_rules.clear();
 }
 
 void IpsManager::dump_plugins()
 {
-    {
-        Dumper d("IPS Options");
+    Dumper d("IPS Options");
 
-        for ( auto* p : s_options )
-            d.dump(p->api->base.name, p->api->base.version);
-    }
-    Dumper d("SO Rules");
-
-    for ( auto* p : s_rules )
-        d.dump(p->base.name, p->base.version);
+    for ( auto* p : s_options )
+        d.dump(p->api->base.name, p->api->base.version);
 }
 
 //-------------------------------------------------------------------------
@@ -120,49 +108,16 @@ void IpsManager::delete_option(IpsOption* ips)
     
 //-------------------------------------------------------------------------
 
-const char* next_arg(const char* t, string& s)
-{
-    int state = 0;
-
-    while ( *t == ' ' )
-        ++t;
-
-    while ( char c = *t )
-    {
-        switch ( state )
-        {
-        case 0:
-            if ( c == ',' )
-                return ++t;
-            else if ( c == '"' )
-                state = 1;
-            break;
-        case 1:
-            if ( c == '"' )
-                state = 0;
-            else if ( c == '\\' )
-                state = 2;
-            break;
-        case 2:
-            state = 1;
-            break;
-        }
-        s.push_back(c);
-        ++t;
-    }
-    return t;
-}
-
 static bool is_positional(const Parameter* p)
 {
-    return ( p->name && *p->name == '*' );
+    return ( p->name && *p->name == '~' );
 }
 
-static const Parameter* find_arg(const Parameter* p, string& s)
+static const Parameter* find_arg(const Parameter* p, const char* s)
 {
     while ( p->name )
     {
-        if ( !strncmp(p->name, s.c_str(), strlen(p->name)) )
+        if ( !strcmp(p->name, s) || !strcmp(p->name, "*") )
             return p;
         ++p;
     }
@@ -170,29 +125,16 @@ static const Parameter* find_arg(const Parameter* p, string& s)
 }
 
 static bool set_arg(
-    Module* m, const Parameter* p, string& s, SnortConfig* sc)
+    Module* m, const Parameter* p, 
+    const char* opt, const char* val, SnortConfig* sc)
 {
     if ( !is_positional(p) )
-        p = find_arg(p, s);
+        p = find_arg(p, opt);
 
     if ( !p )
         return false;
 
-    const char* t = s.c_str();
-    
-    if ( !is_positional(p) )
-    {
-        t += strlen(p->name);
-
-        // for backwards compatibility such as depth:8
-        //if ( *t == ':' )
-        //    ++t;
-
-        while ( *t == ' ' )
-            ++t;
-    }
-
-    Value v(t);
+    Value v(opt);
     bool ok = true;
 
     if ( p->type == Parameter::PT_IMPLIED )
@@ -201,13 +143,15 @@ static bool set_arg(
     else if ( p->type == Parameter::PT_INT )
     {
         char* end = nullptr;
-        long n = strtol(t, &end, 0);
+        long n = strtol(val, &end, 0);
 
         if ( !*end )
             v.set(n);
         else
             ok = false;
     }
+    else
+        v.set(val);
 
     if ( ok && p->validate(v) )
     {
@@ -217,76 +161,7 @@ static bool set_arg(
             return true;
     }
 
-    ErrorMessage("ERROR invalid %s = %s\n", p->name, t);
     return false;
-}
-
-static IpsOption* parse_opt(
-    Option* opt, const char* keyword, char* args, 
-    SnortConfig* sc, OptTreeNode* otn)
-{
-    Module* m = ModuleManager::get_module(keyword);
-    unsigned errors = 0;
-
-    if ( !m )
-    {
-        if ( args && *args )
-        {
-            ErrorMessage("ERROR %s does not take arguments\n", keyword);
-            s_errors++;
-        }
-        return opt->api->ctor(nullptr, otn);
-    }
-
-    if ( !args )
-        args = (char*)"";
-
-    if ( !m->begin(keyword, 0, sc) )
-    {
-        ErrorMessage("ERROR can't initialize %s\n", keyword);
-        s_errors++;
-        return nullptr;
-    }
-    const Parameter* p = m->get_parameters();
-
-    if ( *args && (!p || !p->name) )
-    {
-        ErrorMessage("ERROR %s does not take arguments\n", keyword);
-        s_errors++;
-        args = (char*)"";
-    }
-    string s;
-    //printf("opt = %s\n", keyword);
-    const char* t = next_arg(args, s);
-
-    while ( s.size() )
-    {
-        //printf("arg = '%s'\n", s.c_str());
-
-        if ( !set_arg(m, p, s, sc) )
-            ErrorMessage("ERROR invalid argument %s.%s\n", keyword, p->name);
-
-        if ( is_positional(p) )
-            ++p;
-
-        s.clear();
-        t = next_arg(t, s);
-    }
-
-    if ( errors )
-    {
-        s_errors += errors;
-        return nullptr;
-    }
-    if ( !m->end(keyword, 0, sc) )
-    {
-        ErrorMessage("ERROR can't initialize %s\n", keyword);
-        s_errors++;
-        return nullptr;
-    }
-    
-    // FIXIT need to error out in the end if any errors
-    return opt->api->ctor(m, otn);
 }
 
 //-------------------------------------------------------------------------
@@ -305,20 +180,13 @@ const char* IpsManager::get_option_keyword()
     return current_keyword;
 }
 
-bool IpsManager::get_option(
-    SnortConfig* sc, OptTreeNode* otn, int proto,
-    const char* keyword, char* args, int& type)
+bool IpsManager::option_begin(
+    SnortConfig* sc, const char* key)
 {
-    Option* opt = get_opt(keyword);
+    Option* opt = get_opt(key);
 
     if ( !opt )
         return false;
-
-#ifdef NDEBUG
-    UNUSED(proto);
-#else
-    assert(proto == otn->proto);
-#endif
 
     if ( !opt->init )
     {
@@ -328,12 +196,77 @@ bool IpsManager::get_option(
     }
     // FIXIT verify api->protos and api->max_per_rule
     // before calling ctor
-    current_keyword = keyword;
-    IpsOption* ips = parse_opt(opt, keyword, args, sc, otn);
+    current_module = ModuleManager::get_module(key);
+
+    if ( current_module && !current_module->begin(key, 0, sc) )
+    {
+        ParseError("can't initialize %s\n", key);
+        return false;
+    }
+    current_keyword = key;
+    current_params = current_module ? current_module->get_parameters() : nullptr;
+    return true;
+}
+
+bool IpsManager::option_set(
+    SnortConfig* sc, const char* key, const char* opt, const char* val)
+{
+    if ( !current_module || !current_keyword )
+        return false;
+
+    assert(!strcmp(current_keyword, key));
+
+    if ( !*val && is_positional(current_params) )
+    {
+        val = opt;  // eg: gid:116; key="gid" and opt="116"
+        opt = "";
+    }
+
+    if ( !set_arg(current_module, current_params, opt, val, sc) )
+        ParseError("invalid argument %s:%s = %s\n", key, opt, val);
+
+    if ( is_positional(current_params) )
+        ++current_params;
+
+    return true;
+}
+
+bool IpsManager::option_end(
+    SnortConfig* sc, OptTreeNode* otn, int proto,
+    const char* key, RuleOptType& type)
+{
+    if ( !current_keyword )
+        return false;
+
+    assert(!strcmp(current_keyword, key));
+
+#ifdef NDEBUG
+    UNUSED(proto);
+#else
+    assert(proto == otn->proto);
+#endif
+
+    Module* mod = current_module;
+    current_module = nullptr;
+    current_params = nullptr;
+
+    if ( mod && !mod->end(key, 0, sc) )
+    {
+        ParseError("can't finalize %s\n", key);
+        current_keyword = nullptr;
+        return false;
+    }
+    
+    Option* opt = get_opt(key);
+    assert(opt);
+
+    // FIXIT need to error out in the end if any errors
+    IpsOption* ips = opt->api->ctor(mod, otn);
+    type = opt->api->type;
     current_keyword = nullptr;
 
     if ( !ips )
-        return false;
+        return ( type == OPT_TYPE_META );
 
     void* dup;
 
@@ -352,7 +285,6 @@ bool IpsManager::get_option(
         fpl->isRelative = 1;
 
     otn_set_plugin(otn, ips->get_type());
-    type = opt->api->type;
     return true;
 }
 
@@ -393,122 +325,5 @@ bool IpsManager::verify(SnortConfig* sc)
             p->api->verify(sc);
 
     return true;
-}
-
-//-------------------------------------------------------------------------
-// so rules
-//-------------------------------------------------------------------------
-
-#define GZIP_WBITS 31
-
-// FIXIT make this into a general utility for one shot decompress
-// and add class for stream decompress
-const char*  uncompress(const uint8_t* data, unsigned len)
-{
-    const unsigned max_rule = 65536;
-    static char buf[max_rule];
-
-    z_stream stream;
-
-    stream.next_in = (Bytef*)data;
-    stream.avail_in = (uInt)len;
-
-    stream.next_out = (Bytef*)buf;
-    stream.avail_out = (uInt)(max_rule - 1);
-
-    stream.zalloc = nullptr;
-    stream.zfree = nullptr;
-
-    stream.total_in = 0;
-    stream.total_out = 0;
- 
-    if ( inflateInit2(&stream, GZIP_WBITS) != Z_OK )
-        return nullptr;
-
-    if ( inflate(&stream, Z_SYNC_FLUSH) != Z_STREAM_END )
-        return nullptr;
-
-    assert(stream.total_out < max_rule);
-    buf[stream.total_out] = '\0';
-
-    return buf;
-}
-
-//-------------------------------------------------------------------------
-
-static const SoApi* get_so_api(const char* soid)
-{
-    for ( auto* p : s_rules )
-        if ( !strcmp(p->base.name, soid) )
-            return p;
-
-    return nullptr;
-}
-
-const char* IpsManager::get_so_options(const char* soid)
-{
-    const SoApi* api = get_so_api(soid);
-
-    if ( !api )
-        return nullptr;
-
-    const char* rule = uncompress(api->rule, api->length);
-
-    if ( !rule )
-        return nullptr;
-
-    // FIXIT this approach won't tolerate spaces and might get
-    // fooled by matching content (should it precede this)
-    char opt[32];
-    snprintf(opt, sizeof(opt), "; soid:%s", soid);
-    const char* s = strstr(rule, opt);
-
-    return s ? s + strlen(opt) : nullptr;
-}
-
-SoEvalFunc IpsManager::get_so_eval(const char* soid, const char* so, void** data)
-{
-    const SoApi* api = get_so_api(soid);
-
-    if ( !api || !api->ctor )
-        return nullptr;
-
-    return api->ctor(so, data);
-}
-
-void IpsManager::delete_so_data(const char* soid, void* pv)
-{
-    const SoApi* api = get_so_api(soid);
-
-    if ( api && api->dtor )
-        api->dtor(pv);
-}
-
-//-------------------------------------------------------------------------
-
-void IpsManager::dump_rule_stubs(const char* path)
-{
-    unsigned c = 0;
-    std::ofstream ofs(path);
-
-    for ( auto* p : s_rules )
-    {
-        const char* s;
-        const char* rule = uncompress(p->rule, p->length);
-
-        if ( !rule )
-            continue;
-
-        if ( !(s = strstr(rule, "soid:")) )
-            continue;
-
-        if ( !(s = strchr(s, ';')) )
-            continue;
-
-        string stub(rule, ++s-rule);
-        ofs << stub << ")" << endl;
-        ++c;
-    }
-    LogMessage("%u rule stubs dumped.\n", c);
 }
 

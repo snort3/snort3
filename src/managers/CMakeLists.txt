@@ -27,6 +27,8 @@ add_library( managers
     plugin_manager.h
     script_manager.cc
     script_manager.h
+    so_manager.cc
+    so_manager.h
     shell.cc
     shell.h
 )
@@ -41,7 +43,7 @@ target_link_libraries(managers
     search_engines
     parser
     codecs
-    actions
+    ips_actions
 )
 
 install (FILES ${LUA_INCLUDES}

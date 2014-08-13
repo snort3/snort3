@@ -320,7 +320,7 @@ static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
 
 static const Parameter ssn_params[] =
 {
-    { "*mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
+    { "~mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
       "output format" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -348,7 +348,7 @@ bool SsnModule::begin(const char*, int, SnortConfig*)
 
 bool SsnModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*mode") )
+    if ( v.is("~mode") )
         data.session_flag = v.get_long() + 1;
 
     else

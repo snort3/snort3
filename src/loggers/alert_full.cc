@@ -77,7 +77,7 @@ static const Parameter full_params[] =
       "set limit (0 is unlimited)" },
 
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "help" },
+      "limit is in bytes | KB | MB | GB" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -196,7 +196,7 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
 
     if(p && p->ip_api.is_valid())
     {
-        LogPriorityData(full_log, event, TRUE);
+        LogPriorityData(full_log, event, true);
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"););

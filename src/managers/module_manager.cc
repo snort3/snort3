@@ -362,6 +362,7 @@ bool open_table(const char* s, int idx)
     {
         if ( !last.size() )
             LogMessage("Configuring modules:\n");
+
         LogMessage("\t %s\n", key.c_str());
         last = key;
     }
@@ -483,30 +484,21 @@ void ModuleManager::dump_modules()
             d.dump(p->mod->get_name());
 }
 
-static const char* mod_types[PT_MAX] =
-{
-    "data",
-    "codec",
-    "logger",
-    "ips option",
-    "so rule",
-    "inspector",
-    "search engine"
-};
-
 static const char* mod_type(const BaseApi* api)
 {
     if ( !api )
         return "basic";
 
-    if ( api->type > PT_MAX )
-        return "error";
-
-    return mod_types[api->type];
+    return PluginManager::get_type_name(api->type);
 }
 
 void ModuleManager::show_module(const char* name)
 {
+    if ( !name || !*name )
+    {
+        cerr << "module name required" << endl;
+        return;
+    }
     s_modules.sort(comp_gids);
 
     for ( auto p : s_modules )
@@ -525,7 +517,7 @@ void ModuleManager::show_module(const char* name)
             if ( p->type < Parameter::PT_MAX )
             {
                 cout << endl << "Configuration: "  << endl << endl;
-                show_configs(name);
+                show_configs(name, true);
             }
         }
 
@@ -549,7 +541,7 @@ void ModuleManager::show_module(const char* name)
     }
 }
 
-void ModuleManager::show_configs(const char* pfx)
+void ModuleManager::show_configs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_mods);
 
@@ -557,6 +549,9 @@ void ModuleManager::show_configs(const char* pfx)
     {
         Module* m = p->mod;
         string s;
+
+        if ( exact && strcmp(m->get_name(), pfx) )
+            continue;
 
         if ( m->is_list() )
         {
@@ -719,7 +714,12 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            ss << "alert ( ";
+            // FIXIT move builtin generation to a better home
+            // FIXIT builtins should allow configurable nets and ports
+            // FIXIT builtins should have accurate proto
+            //       (but ip winds up in all others)
+            // FIXIT if msg has C escaped embedded quotes, we break
+            ss << "alert tcp any any -> any any ( ";
             ss << "gid:" << gid << "; ";
             ss << "sid:" << r->sid << "; ";
             ss << "msg:\"" << r->msg << "\"; )";
@@ -727,12 +727,50 @@ void ModuleManager::load_rules(SnortConfig* sc)
 
             // note:  you can NOT do ss.str().c_str() here
             const string& rule = ss.str();
-            ParseConfigString(sc, rule.c_str(), true);
+            ParseConfigString(sc, rule.c_str());
 
             r++;
         }
     }    
     pop_parse_location();
+}
+
+void ModuleManager::dump_rules(const char* pfx)
+{
+    s_modules.sort(comp_gids);
+    unsigned len = pfx ? strlen(pfx) : 0;
+
+    for ( auto p : s_modules )
+    {
+        const Module* m = p->mod;
+
+        if ( pfx && strncmp(m->get_name(), pfx, len) )
+            continue;
+
+        const RuleMap* r = m->get_rules();
+        unsigned gid = m->get_gid();
+
+        if ( !r )
+            continue;
+
+        ostream& ss = cout;
+
+        while ( r->msg )
+        {
+            // FIXIT move builtin generation to a better home
+            // FIXIT builtins should allow configurable nets and ports
+            // FIXIT builtins should have accurate proto
+            //       (but ip winds up in all others)
+            // FIXIT if msg has C escaped embedded quotes, we break
+            ss << "alert tcp any any -> any any ( ";
+            ss << "gid:" << gid << "; ";
+            ss << "sid:" << r->sid << "; ";
+            ss << "msg:\"" << r->msg << "\"; )";
+            ss << endl;
+
+            r++;
+        }
+    }    
 }
 
 void ModuleManager::dump_stats (SnortConfig*)

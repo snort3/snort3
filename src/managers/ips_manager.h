@@ -28,11 +28,10 @@
 #include "snort_types.h"
 #include "detection/detection_options.h"
 #include "framework/base_api.h"
-#include "framework/so_rule.h"
+#include "framework/ips_option.h"
 
 struct SnortConfig;
 struct IpsApi;
-struct SoApi;
 
 //-------------------------------------------------------------------------
 
@@ -40,23 +39,23 @@ class IpsManager
 {
 public:
     static void add_plugin(const IpsApi*);
-    static void add_plugin(const SoApi*);
     static void dump_plugins();
     static void release_plugins();
 
     static void instantiate(const IpsApi*, Module*, SnortConfig*);
-    static void instantiate(const SoApi*);
 
     static bool get_option(
             SnortConfig*, struct OptTreeNode*, int proto,
-        const char* keyword, char* args, int&);
+        const char* keyword, char* args, RuleOptType&);
+
+    static bool option_begin(SnortConfig*, const char* key);
+    static bool option_set(
+        SnortConfig*, const char* key, const char* opt, const char* val);
+    static bool option_end(
+        SnortConfig*, OptTreeNode*, int proto, const char* key, RuleOptType&);
+
     static void delete_option(class IpsOption*);
     static const char* get_option_keyword();
-
-    // soid is arg to soid option, so is arg to so option
-    static const char* get_so_options(const char* soid);
-    static SoEvalFunc get_so_eval(const char* soid, const char* so, void** data);
-    static void delete_so_data(const char* soid, void*);
 
     static void global_init(SnortConfig*);
     static void global_term(SnortConfig*);
@@ -64,8 +63,6 @@ public:
     static void setup_options();
     static void clear_options();
     static bool verify(SnortConfig*);
-
-    static void dump_rule_stubs(const char*);
 };
 
 #endif

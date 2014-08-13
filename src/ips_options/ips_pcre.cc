@@ -49,6 +49,10 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
+#ifndef PCRE_STUDY_JIT_COMPILE
+#define PCRE_STUDY_JIT_COMPILE 0
+#endif
+
 static const char* s_name = "pcre";
 
 /*
@@ -112,16 +116,19 @@ static void pcre_check_anchored(PcreData *pcre_data)
 
         case PCRE_ERROR_NULL:
             ParseError("pcre_fullinfo: code and/or where were NULL.");
+            return;
 
         case PCRE_ERROR_BADMAGIC:
-            ParseError("pcre_fullinfo: compiled code didn't have "
-                       "correct magic.");
+            ParseError("pcre_fullinfo: compiled code didn't have correct magic.");
+            return;
 
         case PCRE_ERROR_BADOPTION:
             ParseError("pcre_fullinfo: option type is invalid.");
+            return;
 
         default:
             ParseError("pcre_fullinfo: Unknown error code.");
+            return;
     }
 
     if ((options & PCRE_ANCHORED) && !(options & PCRE_MULTILINE))
@@ -146,6 +153,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     if(data == NULL)
     {
         ParseError("pcre requires a regular expression");
+        return;
     }
 
     free_me = SnortStrdup(data);
@@ -230,6 +238,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
 
         default:
             ParseError("unknown/extra pcre option encountered");
+            return;
         }
         opts++;
     }
@@ -242,10 +251,11 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     {
         ParseError(": pcre compile of '%s' failed at offset "
                    "%d : %s", re, erroffset, error);
+        return;
     }
 
     /* now study it... */
-    pcre_data->pe = pcre_study(pcre_data->re, 0, &error);
+    pcre_data->pe = pcre_study(pcre_data->re, PCRE_STUDY_JIT_COMPILE, &error);
 
     if (pcre_data->pe)
     {
@@ -302,6 +312,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     if(error != NULL)
     {
         ParseError("pcre study failed : %s", error);
+        return;
     }
 
     pcre_capture(pcre_data->re, pcre_data->pe);
@@ -444,8 +455,14 @@ PcreOption::~PcreOption()
 
     if (config->expression)
         free(config->expression);
+
     if (config->pe)
-        free(config->pe);
+#ifdef PCRE_CONFIG_JIT
+        pcre_free_study(config->pe);
+#else
+        pcre_free(config->pe);
+#endif
+
     if (config->re)
         free(config->re);
 
@@ -603,7 +620,7 @@ bool pcre_next(PcreData* pcre)
 
 static const Parameter pcre_params[] =
 {
-    { "*regex", Parameter::PT_STRING, nullptr, nullptr,
+    { "~regex", Parameter::PT_STRING, nullptr, nullptr,
       "Snort regular expression" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -645,7 +662,7 @@ bool PcreModule::begin(const char*, int, SnortConfig*)
 
 bool PcreModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*regex") )
+    if ( v.is("~regex") )
         pcre_parse(v.get_string(), data);
 
     else

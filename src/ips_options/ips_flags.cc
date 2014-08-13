@@ -220,7 +220,8 @@ static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
     /* make sure there is atleast a split pointer */
     if(fptr == NULL)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     while(isspace((u_char) *fptr))
@@ -228,7 +229,8 @@ static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
 
     if(strlen(fptr) == 0)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     /* find the end of the alert string */
@@ -304,6 +306,7 @@ static void flags_parse_test(const char *rule, TcpFlagCheckData *idx)
                     "Valid otions: UAPRSFCE or 0 for NO flags (e.g. NULL scan),"
                     " and !, + or * for modifiers",
                     *fptr);
+                return;
         }
 
         fptr++;
@@ -320,7 +323,8 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
     /* make sure there is atleast a split pointer */
     if(fptr == NULL)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     while(isspace((u_char) *fptr))
@@ -328,7 +332,8 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
 
     if(strlen(fptr) == 0)
     {
-        ParseError("Flags missing in TCP flag rule");
+        ParseError("flags missing in TCP flag rule");
+        return;
     }
 
     /* find the end of the alert string */
@@ -382,6 +387,7 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
                 break;
             default:
                 ParseError("bad TCP flag = '%c'. Valid otions: UAPRSFCE", *fptr);
+                return;
         }
 
         fptr++;
@@ -394,10 +400,10 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
 
 static const Parameter flags_params[] =
 {
-    { "*test_flags", Parameter::PT_STRING, nullptr, nullptr,
+    { "~test_flags", Parameter::PT_STRING, nullptr, nullptr,
       "these flags are tested" },
 
-    { "*mask_flags", Parameter::PT_STRING, nullptr, nullptr,
+    { "~mask_flags", Parameter::PT_STRING, nullptr, nullptr,
       "these flags are don't cares" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -425,10 +431,10 @@ bool FlagsModule::begin(const char*, int, SnortConfig*)
 
 bool FlagsModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*test_flags") )
+    if ( v.is("~test_flags") )
         flags_parse_test(v.get_string(), &data);
 
-    else if ( v.is("*mask_flags") )
+    else if ( v.is("~mask_flags") )
         flags_parse_mask(v.get_string(), &data);
 
     else

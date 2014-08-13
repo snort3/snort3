@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -24,19 +22,11 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
 #include <string>
 using namespace std;
 
 #include "snort_types.h"
-#include "treenodes.h"
-#include "protocols/packet.h"
 #include "parser.h"
-#include "util.h"
 #include "snort_debug.h"
 #include "snort.h"
 #include "profiler.h"
@@ -53,7 +43,7 @@ static THREAD_LOCAL ProfileStats httpHeaderPerfStats;
 
 static const Parameter hh_params[] =
 {
-    { "*name", Parameter::PT_STRING, nullptr, nullptr,
+    { "~name", Parameter::PT_STRING, nullptr, nullptr,
       "restrict to given header" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -86,7 +76,7 @@ bool HttpHeaderModule::begin(const char*, int, SnortConfig*)
 
 bool HttpHeaderModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*name") )
+    if ( v.is("~name") )
         name = v.get_string();
 
     else

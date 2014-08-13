@@ -82,8 +82,9 @@ static void replace_parse(const char* args, string& s)
 
     if(start_ptr == NULL)
     {
-        ParseError("Replace data needs to be "
+        ParseError("replace data needs to be "
                    "enclosed in quotation marks (\")");
+        return;
     }
 
     /* move the start up from the beggining quotes */
@@ -94,7 +95,7 @@ static void replace_parse(const char* args, string& s)
 
     if(end_ptr == NULL)
     {
-        ParseError("Replace data needs to be enclosed "
+        ParseError("replace data needs to be enclosed "
                    "in quotation marks (\")");
         return;
     }
@@ -105,7 +106,8 @@ static void replace_parse(const char* args, string& s)
     /* uh, this shouldn't happen */
     if(size <= 0)
     {
-        ParseError("Replace data has bad pattern length!");
+        ParseError("replace data has bad pattern length!");
+        return;
     }
     /* set all the pointers to the appropriate places... */
     idx = start_ptr;
@@ -124,9 +126,10 @@ static void replace_parse(const char* args, string& s)
         if (dummy_size >= MAX_PATTERN_SIZE-1)
         {
             /* Have more data to parse and pattern is about to go beyond end of buffer */
-            ParseError("Replace buffer overflow, make a "
+            ParseError("replace buffer overflow, make a "
                     "smaller pattern please! (Max size = %d)",
                     MAX_PATTERN_SIZE-1);
+            return;
         }
 
         DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "processing char: %c\n", *idx););
@@ -226,9 +229,10 @@ static void replace_parse(const char* args, string& s)
                             }
                             else
                             {
-                                ParseError("Replace buffer overflow, make a "
+                                ParseError("replace buffer overflow, make a "
                                            "smaller pattern please! (Max size = %d)",
                                            MAX_PATTERN_SIZE-1);
+                                return;
                             }
                         }
                     }
@@ -236,10 +240,11 @@ static void replace_parse(const char* args, string& s)
                     {
                         if(*idx != ' ')
                         {
-                            ParseError("Replace found '%c'(0x%X) in "
+                            ParseError("replace found '%c'(0x%X) in "
                                        "your binary buffer.  Valid hex values only "
                                        "please! (0x0 -0xF) Position: %d",
                                        (char) *idx, (char) *idx, cnt);
+                            return;
                         }
                     }
                 }
@@ -254,7 +259,8 @@ static void replace_parse(const char* args, string& s)
                         }
                         else
                         {
-                            ParseError("Replace buffer overflow");
+                            ParseError("replace buffer overflow");
+                            return;
                         }
 
                         if(literal)
@@ -276,9 +282,10 @@ static void replace_parse(const char* args, string& s)
                         }
                         else
                         {
-                            ParseError("Replace found character value out of "
+                            ParseError("replace found character value out of "
                                        "range, only hex characters allowed in binary "
                                        "content buffers");
+                            return;
                         }
                     }
                 }
@@ -295,11 +302,15 @@ static void replace_parse(const char* args, string& s)
 
     /* error pruning */
 
-    if (literal) {
+    if (literal)
+    {
         ParseError("Replace backslash escape is not completed");
+        return;
     }
-    if (hexmode) {
+    if (hexmode)
+    {
         ParseError("Replace hexmode is not completed");
+        return;
     }
 
     delete args;
@@ -508,7 +519,7 @@ void ReplaceOption::action(Packet*)
 
 static const Parameter repl_params[] =
 {
-    { "*mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
+    { "~mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
       "output format" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -536,7 +547,7 @@ bool ReplModule::begin(const char*, int, SnortConfig*)
 
 bool ReplModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*data") )
+    if ( v.is("~mode") )
         replace_parse(v.get_string(), data);
 
     else

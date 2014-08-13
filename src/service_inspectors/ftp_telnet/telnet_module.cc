@@ -44,9 +44,6 @@ static const Parameter telnet_params[] =
     { "check_encrypted", Parameter::PT_BOOL, nullptr, "false",
       "check for end of encryption" },
 
-    { "detect_anomalies", Parameter::PT_BOOL, nullptr, "false",
-      "help" },
-
     { "encrypted_traffic", Parameter::PT_BOOL, nullptr, "false",
       "check for encrypted telnet and ftp" },
 
@@ -90,9 +87,6 @@ bool TelnetModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("check_encrypted") )
         conf->detect_encrypted = v.get_bool();
-
-    else if ( v.is("detect_anomalies") )
-        conf->detect_anomalies = v.get_bool();
 
     else if ( v.is("encrypted_traffic") )
         conf->check_encrypted_data = v.get_bool();

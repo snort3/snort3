@@ -15,15 +15,17 @@
 --
 --     alert tcp any any -> any 80 ( \
 --         msg:"luajit example"; sid:1; \
---         content:"GET /"; \
---         find:buf='payload', pat='GET .+ HTTP/1.1'; )
+--         content:"GET"; \
+--         find:"pat='HTTP/1%.%d'"; )
 --
 -- the arg string is (in general) optional
 -- if present, it will be put in a table named args, eg:
 --
---     args { buf='payload', pat='GET .+ HTTP/1.1' }
+--     args { pat='GET .+ HTTP/1.1' }
 --
 -- this table is defined before init is called
+-- the args string, if present, must be valid lua code like
+-- name1 = value1, name2 = 'value2'.
 -- ----------------------------------------------------------
 
 -- this pulls in snort bindings with ffi
@@ -51,7 +53,7 @@ function eval ()
     -- see snort.lua for available buffers
 
     -- buf is a luajit cdata
-    local buf = ffi.C.get_cursor()
+    local buf = ffi.C.get_buffer()
 
     -- str is a lua string
     local str = ffi.string(buf.data, buf.len)

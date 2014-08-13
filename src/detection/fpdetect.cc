@@ -53,6 +53,7 @@
 #include "fpcreate.h"
 #include "framework/cursor.h"
 #include "framework/inspector.h"
+#include "framework/ips_action.h"
 #include "framework/mpse.h"
 #include "bitop.h"
 #include "perf_monitor/perf.h"
@@ -143,18 +144,18 @@ static inline void InitMatchInfo(OTNX_MATCH_DATA *o)
 
 // called by fpLogEvent(), which does the filtering etc.
 // this handles the non-rule-actions (responses).
-static inline void fpLogOther (Packet* p, OptTreeNode* otn, int action)
+static inline void fpLogOther (
+    Packet* p, RuleTreeNode* rtn, OptTreeNode* otn, int action)
 {
     // FIXIT some or all of these can be migrated to user defined actions
     otn_trigger_actions(otn, p);
 
-    if ( !EventTrace_IsEnabled() )
-        return;
-
-    EventTrace_Log(p, otn, action);
+    if ( EventTrace_IsEnabled() )
+        EventTrace_Log(p, otn, action);
 
     // user defined actions are done here
-    ActionManager::execute(p);
+    if ( rtn->listhead->action )
+        rtn->listhead->action->exec(p);
 }
 
 /*
@@ -194,7 +195,7 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
         if ( block_action(rtn->type) )
             Active_DropSession();
 
-        fpLogOther(p, otn, rtn->type);
+        fpLogOther(p, rtn, otn, rtn->type);
         return 1;
     }
 
@@ -242,7 +243,7 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
             Active_DropSession();
 
         pc.event_limit++;
-        fpLogOther(p, otn, action);
+        fpLogOther(p, rtn, otn, action);
         return 1;
     }
 
@@ -253,14 +254,14 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
 	if ( (p->packet_flags & PKT_PASS_RULE)
          &&(ScGetEvalIndex(rtn->type) > ScGetEvalIndex(RULE_TYPE__PASS)))
 	{
-	    fpLogOther(p, otn, rtn->type);
+	    fpLogOther(p, rtn, otn, rtn->type);
 	    return 1;
 	}
     OTN_PROFILE_ALERT(otn);
 
     event_id++;
     action_execute(action, p, otn, event_id);
-    fpLogOther(p, otn, action);
+    fpLogOther(p, rtn, otn, action);
 
     return 0;
 }
