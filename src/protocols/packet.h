@@ -272,11 +272,11 @@ struct Packet
 #define DECODE__FRAG    0x01  /* flag to indicate a fragmented packet */
 #define DECODE__MF      0x02  /* more fragments flag */
 #define DECODE__DF      0x04  /* don't fragment flag */
-#define DECODE__RF      0x08  /* IP reserved bit */
-#define DECODE__TRUST_ON_FAIL 0x10  /* if decode fails, set the PKT_TRUST flag */
-#define DECODE__UNSURE_ENCAP  0x20  /* packet may have incorrect encapsulation layer. */
+//#define DECODE__RF      0x08  /* IP reserved bit */
+#define DECODE__TRUST_ON_FAIL 0x08  /* if decode fails, set the PKT_TRUST flag */
+#define DECODE__UNSURE_ENCAP  0x10  /* packet may have incorrect encapsulation layer. */
                                     /* don't alert if "next layer" is invalid. */
-#define DECODE__FREE    0xC0
+#define DECODE__FREE    0xE0
 
 #define IsIP(p) (p->ip_api.is_valid())
 #define IsTCP(p) (IsIP(p) && p->tcph)

@@ -158,16 +158,6 @@ static const uint8_t* encode_packet(
     // setting convenience pointers
     enc->layer = p->num_layers;
     enc->p = p;
-    enc->ip_hdr = p->layers[layer::get_inner_ip_lyr(p)].start;
-
-    // FIXIT:  Remove this funky stuff.
-    if ( ip::is_ipv4(*(enc->ip_hdr)))
-        enc->ip_len = ip::get_pkt_len((IPHdr*) enc->ip_hdr);
-    else if ( ipv6::is_ip6_hdr_ver((ipv6::IP6RawHdr*)(enc->ip_hdr)))
-        enc->ip_len = sizeof(ipv6::IP6RawHdr);
-    else
-        enc->ip_hdr = 0;
-
 
     const Layer *lyrs = p->layers;
     for(int i = p->num_layers-1; i >= 0; i--)
@@ -543,9 +533,6 @@ SO_PUBLIC const uint8_t* PacketManager::encode_response(
 
     enc.payLoad = payLoad;
     enc.payLen = payLen;
-
-    enc.ip_hdr = NULL;
-    enc.ip_len = 0;
     enc.proto = 0;
 
     if ( encode_pkt )

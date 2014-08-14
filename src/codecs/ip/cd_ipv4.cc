@@ -99,7 +99,7 @@ uint8_t Ipv4Codec::GetTTL (const EncState* enc)
 {
     char dir;
     uint8_t ttl;
-    int outer = !enc->ip_hdr;
+    const bool outer = enc->p->ip_api.is_valid();
 
     if ( !enc->p->flow )
         return 0;
@@ -115,7 +115,7 @@ uint8_t Ipv4Codec::GetTTL (const EncState* enc)
 
     // so if we don't get outer, we use inner
     if ( 0 == ttl && outer )
-        ttl = stream.get_session_ttl(enc->p->flow, dir, 0);
+        ttl = stream.get_session_ttl(enc->p->flow, dir, false);
 
     return ttl;
 }
@@ -302,8 +302,12 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      * get the values of the reserved, more
      * fragments and don't fragment flags
      */
+
+#if 0
+     // Reserved bit currently unused
     if (frag_off & 0x8000)
         p->decode_flags |= DECODE__RF;
+#endif
 
     if (frag_off & 0x4000)
         p->decode_flags |= DECODE__DF;
@@ -404,28 +408,28 @@ static inline void IP4AddrTests(const IPHdr* iph, const Packet* p)
     msb_dst = (uint8_t)(iph->ip_dst & 0xff);
 #endif
     // check the msb ...
-    if ( ip::is_loopback(msb_src) || ip::is_loopback(msb_dst) )
+    if ( (msb_src == ip::IP4_LOOPBACK) || (msb_dst == ip::IP4_LOOPBACK) )
     {
         codec_events::decoder_event(p, DECODE_BAD_TRAFFIC_LOOPBACK);
     }
     // check the msb ...
-    if ( ip::is_this_net(msb_src) )
+    if ( msb_src == ip::IP4_THIS_NET )
         codec_events::decoder_event(p, DECODE_IP4_SRC_THIS_NET);
 
-    if ( ip::is_this_net(msb_dst) )
+    if ( msb_dst == ip::IP4_THIS_NET )
         codec_events::decoder_event(p, DECODE_IP4_DST_THIS_NET);
 
     // check the 'msn' (most significant nibble) ...
     msb_src >>= 4;
     msb_dst >>= 4;
 
-    if ( ip::is_multicast(msb_src) )
+    if ( msb_src == ip::IP4_MULTICAST )
         codec_events::decoder_event(p, DECODE_IP4_SRC_MULTICAST);
 
-    if ( ip::is_reserved(msb_src) )
+    if ( msb_src == ip::IP4_RESERVED )
         codec_events::decoder_event(p, DECODE_IP4_SRC_RESERVED);
 
-    if ( ip::is_reserved(msb_dst))
+    if ( msb_dst == ip::IP4_RESERVED )
         codec_events::decoder_event(p, DECODE_IP4_DST_RESERVED);
 }
 

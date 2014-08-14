@@ -46,10 +46,10 @@ public:
     ~ProtEmbeddedInIcmp() {};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
 };
 
 } // namespace
@@ -60,18 +60,35 @@ void ProtEmbeddedInIcmp::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROT_EMBEDDED_IN_ICMP);
 }
 
-bool ProtEmbeddedInIcmp::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool ProtEmbeddedInIcmp::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
+        Packet* /*p*/, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
 {
 
     // Since the previous layer already set the correct p->proto_bits,
     // there is really nothing to do here.  This layer is actually
     // a placeholder so I can easily find this layer's data at some
     // other point in Snort++.
+
+    lyr_len = raw_len; // so I can access len when encoding
     return true;
 }
 
 
+bool ProtEmbeddedInIcmp::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+{
+    uint16_t lyr_len = enc->p->layers[enc->layer-1].length;
+
+
+    if (icmp::ICMP_UNREACH_DATA_LEN < lyr_len)
+        lyr_len = icmp::ICMP_UNREACH_DATA_LEN;
+
+    if (!update_buffer(out, lyr_len))
+        return false;
+
+
+    memcpy(out->base, raw_in, lyr_len);
+    return true;
+}
 
 
 //-------------------------------------------------------------------------

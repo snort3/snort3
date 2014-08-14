@@ -414,11 +414,24 @@ void Flow::set_ttl (Packet* p, bool client)
 {
     uint8_t inner_ttl = 0, outer_ttl = 0;
 
-    // FIXIT!! -- set the outer_ttl based on a layer approach
-    outer_ttl = (uint8_t)255;
+    ip::IpApi outer_ip_api;
+    int8_t tmp = 0;
+    layer::set_outer_ip_api(p, outer_ip_api, tmp);
 
-    if ( p->ip_api.is_valid() )
+    /*
+     * If there is only one IP layer, then
+     * outer_ip == inner_ip ==> both are true.
+     *
+     * If there are no IP layers, then
+     * outer_ip.is_valid() == inner_ip.is_valid() == false
+     */
+    if (outer_ip_api.is_valid())
+    {
+        // FIXIT!! -- Do we want more than just the outermost
+        //            and innermost ttl()?
+        outer_ttl = outer_ip_api.ttl();
         inner_ttl = p->ip_api.ttl();
+    }
 
     if ( client )
     {

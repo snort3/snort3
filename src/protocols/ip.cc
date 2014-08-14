@@ -42,7 +42,7 @@ void IpApi::set(const IPHdr* h4)
     dst_p = nullptr;
 }
 
-void IpApi::set(const ipv6::IP6RawHdr* h6)
+void IpApi::set(const ip::IP6RawHdr* h6)
 {
     ip6h = h6;
     ip4h = nullptr;
@@ -59,8 +59,8 @@ bool IpApi::set(const uint8_t* raw_ip_data)
         return true;
     }
 
-    const ipv6::IP6RawHdr* h6 =
-        reinterpret_cast<const ipv6::IP6RawHdr*>(raw_ip_data);
+    const ip::IP6RawHdr* h6 =
+        reinterpret_cast<const ip::IP6RawHdr*>(raw_ip_data);
 
     if (h6->get_ver() != 6)
         return false;

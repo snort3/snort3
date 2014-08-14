@@ -42,20 +42,20 @@ bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
     /* Iterate through the options, check for bad ones */
     while (pkt < hdr_end)
     {
-        const ipv6::HopByHopOptions type = static_cast<ipv6::HopByHopOptions>(*pkt);
+        const ip::HopByHopOptions type = static_cast<ip::HopByHopOptions>(*pkt);
         switch (type)
         {
-            case ipv6::HopByHopOptions::PAD1:
+            case ip::HopByHopOptions::PAD1:
                 pkt++;
                 break;
-            case ipv6::HopByHopOptions::PADN:
-            case ipv6::HopByHopOptions::JUMBO:
-            case ipv6::HopByHopOptions::RTALERT:
-            case ipv6::HopByHopOptions::TUNNEL_ENCAP:
-            case ipv6::HopByHopOptions::QUICK_START:
-            case ipv6::HopByHopOptions::CALIPSO:
-            case ipv6::HopByHopOptions::HOME_ADDRESS:
-            case ipv6::HopByHopOptions::ENDPOINT_IDENT:
+            case ip::HopByHopOptions::PADN:
+            case ip::HopByHopOptions::JUMBO:
+            case ip::HopByHopOptions::RTALERT:
+            case ip::HopByHopOptions::TUNNEL_ENCAP:
+            case ip::HopByHopOptions::QUICK_START:
+            case ip::HopByHopOptions::CALIPSO:
+            case ip::HopByHopOptions::HOME_ADDRESS:
+            case ip::HopByHopOptions::ENDPOINT_IDENT:
                 oplen = *(++pkt);
                 if ((pkt + oplen + 1) > hdr_end)
                 {

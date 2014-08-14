@@ -49,10 +49,11 @@ public:
     ~Ip4EmbeddedInIcmpCodec() {};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual bool encode(EncState* enc, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
 
 };
 
@@ -170,7 +171,20 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
             break;
     }
 
+    // If you change this, change the buffer and
+    // memcpy length in encode() below !!
     lyr_len = ip::IP4_HEADER_LEN;
+    return true;
+}
+
+
+bool Ip4EmbeddedInIcmpCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+{
+    // allocate space for this protocols encoded data
+    if (!update_buffer(out, ip::IP4_HEADER_LEN))
+        return false;
+
+    memcpy(out->base, raw_in, ip::IP4_HEADER_LEN);
     return true;
 }
 

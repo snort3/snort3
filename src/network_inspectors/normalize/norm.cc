@@ -256,13 +256,13 @@ static int Norm_ICMP4 (
 static int Norm_IP6 (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    ipv6::IP6RawHdr* h = (ipv6::IP6RawHdr*)(p->layers[layer].start);
+    ip::IP6RawHdr* h = (ip::IP6RawHdr*)(p->layers[layer].start);
 
     if ( Norm_IsEnabled(c, NORM_IP6_TTL) )
     {
-        if ( h->ip6hops < ScMinTTL() )
+        if ( h->ip6_hoplim < ScMinTTL() )
         {
-            h->ip6hops = ScNewTTL();
+            h->ip6_hoplim = ScNewTTL();
             p->error_flags &= ~PKT_ERR_BAD_TTL;
             normStats[PC_IP6_TTL]++;
             sfBase.iPegs[PERF_COUNT_IP6_TTL]++;

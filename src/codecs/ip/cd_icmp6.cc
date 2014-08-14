@@ -137,7 +137,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 p->dsize -= sizeof(ICMPHdr::icmp_hun.idseq);
                 p->data += sizeof(ICMPHdr::icmp_hun.idseq);
 
-                if ( ipv6::is_multicast(p->ip_api.get_dst()->ip8[0]) )
+                if ( p->ip_api.get_ip6h()->is_dst_multicast() )
                     codec_events::decoder_event(p, DECODE_ICMP6_DST_MULTICAST);
             }
             else
@@ -327,14 +327,14 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
 //    uint16_t orig_frag_offset;
 
     /* lay the IP struct over the raw data */
-    const ipv6::IP6RawHdr* hdr = reinterpret_cast<const ipv6::IP6RawHdr*>(pkt);
+    const ip::IP6RawHdr* hdr = reinterpret_cast<const ip::IP6RawHdr*>(pkt);
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP6: ip header"
                     " starts at: %p, length is %lu\n", hdr,
                     (unsigned long) len););
 
     /* do a little validation */
-    if ( len < ipv6::hdr_len() )
+    if ( len < ip::hdr_len() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP short header (%d bytes)\n", len););
@@ -348,22 +348,22 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if(IPRAW_HDR_VER(hdr) != 6)
+    if(hdr->get_ver() != 6)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP: not IPv6 datagram ([ver: 0x%x][len: 0x%x])\n",
-            IPRAW_HDR_VER(hdr), len););
+            hdr->get_ver(), len););
 
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
 
         return;
     }
 
-    if ( len < ipv6::hdr_len() )
+    if ( len < ip::hdr_len() )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP6 len (%d bytes) < IP6 hdr len (%d bytes), packet discarded\n",
-            len, ipv6::hdr_len()););
+            len, ip::hdr_len()););
 
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
 
@@ -377,12 +377,12 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
     // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP6 Unreachable IP6 header length: "
-                            "%lu\n", (unsigned long)ipv6::hdr_len()););
+                            "%lu\n", (unsigned long)ip::hdr_len()););
 
     switch(GET_ORIG_IPH_PROTO(p))
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->orig_tcph = (TCPHdr *)(pkt + ipv6::hdr_len());
+            p->orig_tcph = (TCPHdr *)(pkt + ip::hdr_len());
 
             /* stuff more data into the printout data struct */
             p->orig_sp = ntohs(p->orig_tcph->th_sport);
@@ -391,7 +391,7 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
             break;
 
         case IPPROTO_UDP:
-            p->orig_udph = (udp::UDPHdr *)(pkt + ipv6::hdr_len());
+            p->orig_udph = (udp::UDPHdr *)(pkt + ip::hdr_len());
 
             /* fill in the printout data structs */
             p->orig_sp = ntohs(p->orig_udph->uh_sport);
@@ -400,7 +400,7 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
             break;
 
         case IPPROTO_ICMP:
-            p->orig_icmph = (ICMPHdr *)(pkt + ipv6::hdr_len());
+            p->orig_icmph = (ICMPHdr *)(pkt + ip::hdr_len());
             break;
     }
 
@@ -437,36 +437,42 @@ bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
     // may be intervening extension headers which aren't copied
 
 
+#if 0
+    // Now performed in cd_prot_embedded_in_icmp.cc
+
     // copy first 8 octets of original ip data (ie udp header)
     // TBD: copy up to minimum MTU worth of data
-    if (!update_buffer(out, icmp::unreach_data()))
+    if (!update_buffer(out, icmp::ICMP_UNREACH_DATA_LEN))
         return false;
-    memcpy(out->base, raw_in, icmp::unreach_data());
-
-
+    memcpy(out->base, raw_in, icmp::ICMP_UNREACH_DATA_LEN);
     // copy original ip header
     if (!update_buffer(out, enc->ip_len))
         return false;
 
+    // Now performed in cd_ip6_embedded_in_icmp.cc
     // TBD should be able to elminate enc->ip_hdr by using layer-2
     memcpy(out->base, enc->ip_hdr, enc->ip_len);
-    ((ipv6::IP6RawHdr*)out->base)->ip6nxt = IPPROTO_UDP;
+    ((ip::IP6RawHdr*)out->base)->ip6_next = IPPROTO_UDP;
+
+#endif
 
 
     if (!update_buffer(out, sizeof(*ho)))
         return false;
 
     ho = reinterpret_cast<IcmpHdr*>(out->base);
-    ho->type = 1;   // dest unreachable
-    ho->code = 4;   // port unreachable
+    ho->type = static_cast<uint8_t>(icmp6::Icmp6Types::UNREACH);
+    ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));   // port unreachable
     ho->cksum = 0;
     ho->unused = 0;
 
     enc->proto = IPPROTO_ICMPV6;
     int len = buff_diff(out, (uint8_t *)ho);
 
-    memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
-    memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
+    const ip::IP6RawHdr* const ip6h = enc->p->ip_api.get_ip6h();
+
+    memcpy(ps6.sip, ip6h->ip6_src.u6_addr8, sizeof(ps6.sip));
+    memcpy(ps6.dip, ip6h->ip6_dst.u6_addr8, sizeof(ps6.dip));
     ps6.zero = 0;
     ps6.protocol = IPPROTO_ICMPV6;
     ps6.len = htons((uint16_t)(len));

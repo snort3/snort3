@@ -169,10 +169,10 @@ uint8_t get_outer_ip_next_pro(const Packet* const p)
         {
             case ETHERTYPE_IPV4:
             case IPPROTO_ID_IPIP:
-                return reinterpret_cast<IP4Hdr*>(layers[i].start)->ip_proto;
+                return reinterpret_cast<IPHdr*>(layers[i].start)->get_proto();
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
-                return reinterpret_cast<ipv6::IP6RawHdr*>(layers[i].start)->get_next();
+                return reinterpret_cast<ip::IP6RawHdr*>(layers[i].start)->get_next();
             default:
                 break;
         }
@@ -225,8 +225,8 @@ bool set_inner_ip_api(const Packet* const p,
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
             {
-                const ipv6::IP6RawHdr* ip6h =
-                    reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
+                const ip::IP6RawHdr* ip6h =
+                    reinterpret_cast<const ip::IP6RawHdr*>(lyr->start);
                 api.set(ip6h);
                 curr_layer--;
                 return true;
@@ -266,8 +266,8 @@ bool set_outer_ip_api(const Packet* const p,
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
             {
-                const ipv6::IP6RawHdr* ip6h =
-                    reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
+                const ip::IP6RawHdr* ip6h =
+                    reinterpret_cast<const ip::IP6RawHdr*>(lyr->start);
                 api.set(ip6h);
                 curr_layer++;
                 return true;
@@ -303,8 +303,8 @@ bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
         }
         else if (lyr->prot_id == IP_EMBEDDED_IN_ICMP6)
         {
-            const ipv6::IP6RawHdr* ip6h =
-                reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
+            const ip::IP6RawHdr* ip6h =
+                reinterpret_cast<const ip::IP6RawHdr*>(lyr->start);
             api.set(ip6h);
             return true;
         }

@@ -66,7 +66,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_FRAGMENT);
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    if(raw_len < ipv6::min_ext_len() )
+    if(raw_len < ip::MIN_EXT_LEN )
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -91,11 +91,14 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     p->decode_flags &= ~DECODE__DF;
 
-    if (ipv6::is_mf_set(ip6frag_hdr))
+    if (ntohs(ip6frag_hdr->ip6f_offlg) & ip::IP6F_MF_MASK)
         p->decode_flags |= DECODE__MF;
 
-    if (ipv6::is_res_set(ip6frag_hdr))
+#if 0
+    // reserved flag currently not used
+    if (ip6frag_hdr->get_res() != 0)))
         p->decode_flags |= DECODE__RF;
+#endif
 
     // three least signifigant bits are all flags
     p->frag_offset = ntohs(ip6frag_hdr->get_off()) >> 3;

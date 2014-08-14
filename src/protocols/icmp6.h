@@ -94,6 +94,15 @@ enum Icmp6Types : std::uint8_t   {
     NODE_INFO_RESPONSE = 140,
 };
 
+enum class Icmp6Code : std::uint8_t
+{
+    /* Type == 1 */
+    UNREACH_NET = 0x00,
+    UNREACH_FILTER_PROHIB = 0x01,
+    UNREACH_HOST = 0x03,
+    UNREACH_PORT = 0x04,
+};
+
 inline uint16_t hdr_min_len()
 {
     return detail::HEADER_MIN_LEN;

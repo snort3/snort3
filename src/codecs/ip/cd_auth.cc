@@ -64,7 +64,7 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     IP6Extension *ah = (IP6Extension *)raw_pkt;
 
-    if (raw_len < ipv6::min_ext_len())
+    if (raw_len < ip::MIN_EXT_LEN)
     {
         codec_events::decoder_event(p, DECODE_AUTH_HDR_TRUNC);
         return false;

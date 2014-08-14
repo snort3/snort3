@@ -657,25 +657,29 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
     // in case of ip6 extension headers, this gets next correct
     enc->proto = IPPROTO_TCP;
-
     ho->th_sum = 0;
+    const ip::IpApi * const ip_api = &enc->p->ip_api;
 
-    if (ip::get_version((IPHdr *)enc->ip_hdr) == 4) {
+    if (ip_api->is_ip4() == 4) {
         checksum::Pseudoheader ps;
         int len = buff_diff(out, (uint8_t*)ho);
 
-        ps.sip = ((IPHdr *)(enc->ip_hdr))->ip_src;
-        ps.dip = ((IPHdr *)(enc->ip_hdr))->ip_dst;
+        const IPHdr* const ip4h = ip_api->get_ip4h();
+        ps.sip = ip4h->get_src();
+        ps.dip = ip4h->get_dst();
         ps.zero = 0;
         ps.protocol = IPPROTO_TCP;
         ps.len = htons((uint16_t)len);
         ho->th_sum = checksum::tcp_cksum((uint16_t *)ho, len, &ps);
-    } else {
+    }
+    else
+    {
         checksum::Pseudoheader6 ps6;
         int len = buff_diff(out, (uint8_t*) ho);
 
-        memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
-        memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
+        const ip::IP6RawHdr* const ip6h = ip_api->get_ip6h();
+        memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
+        memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_TCP;
         ps6.len = htons((uint16_t)len);
@@ -709,7 +713,7 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         else
         {
             checksum::Pseudoheader6 ps6;
-            const ipv6::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
+            const ip::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
             memcpy(ps6.sip, ip6h->get_src()->u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, ip6h->get_dst()->u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;

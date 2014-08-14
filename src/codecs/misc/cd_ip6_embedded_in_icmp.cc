@@ -50,6 +50,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual bool encode(EncState *enc, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 };
@@ -67,14 +68,14 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
 //    uint16_t orig_frag_offset;
 
     /* lay the IP struct over the raw data */
-    const ipv6::IP6RawHdr* ip6h = reinterpret_cast<const ipv6::IP6RawHdr*>(raw_pkt);
+    const ip::IP6RawHdr* ip6h = reinterpret_cast<const ip::IP6RawHdr*>(raw_pkt);
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP6: ip header"
                     " starts at: %p, length is %lu\n", ip6h,
                     (unsigned long) raw_len););
 
     /* do a little validation */
-    if ( raw_len < ipv6::IP6_HEADER_LEN )
+    if ( raw_len < ip::IP6_HEADER_LEN )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP short header (%d bytes)\n", raw_len););
@@ -99,11 +100,11 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
         return false;
     }
 
-    if ( raw_len < ipv6::IP6_HEADER_LEN )
+    if ( raw_len < ip::IP6_HEADER_LEN )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "ICMP6: IP6 len (%d bytes) < IP6 hdr len (%d bytes), packet discarded\n",
-            raw_len, ipv6::IP6_HEADER_LEN););
+            raw_len, ip::IP6_HEADER_LEN););
 
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
 
@@ -116,7 +117,7 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
     // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP6 Unreachable IP6 header length: "
-                            "%lu\n", (unsigned long)ipv6::IP6_HEADER_LEN););
+                            "%lu\n", (unsigned long)ip::IP6_HEADER_LEN););
 
     // since we know the protocol ID in this layer (and NOT the
     // next layer), set the correct protocol here.  Normally,
@@ -142,9 +143,24 @@ bool Ip6EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
             break;
     }
 
-    lyr_len = ipv6::IP6_HEADER_LEN;
+    // if you changed lyr_len, you MUST change the encode()
+    // function below to copy and update_buffer() correctly!
+    lyr_len = ip::IP6_HEADER_LEN;
     return true;
 }
+
+
+bool Ip6EmbeddedInIcmpCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
+{
+    if (!update_buffer(out, ip::IP6_HEADER_LEN))
+        return false;
+
+
+    memcpy(out->base, raw_in, ip::IP6_HEADER_LEN);
+    ((ip::IP6RawHdr*)out->base)->ip6_next = IPPROTO_UDP;
+    return true;
+}
+
 
 //-------------------------------------------------------------------------
 // api

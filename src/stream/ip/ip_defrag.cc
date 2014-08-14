@@ -1001,7 +1001,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     }
     else /* Inner/only is IP6 */
     {
-        ipv6::IP6RawHdr* rawHdr = const_cast<ipv6::IP6RawHdr*>(dpkt->ip_api.get_ip6h());
+        ip::IP6RawHdr* rawHdr = const_cast<ip::IP6RawHdr*>(dpkt->ip_api.get_ip6h());
 
         if ( !rawHdr )
         {
@@ -1023,7 +1023,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         }
         else
         {
-            rawHdr->ip6nxt = ft->protocol;
+            rawHdr->ip6_next = ft->protocol;
         }
         dpkt->dsize = (uint16_t)ft->calculated_size;
         PacketManager::encode_update(dpkt);

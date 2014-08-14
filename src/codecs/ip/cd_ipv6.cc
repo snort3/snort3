@@ -67,10 +67,10 @@ private:
 } // namespace
 
 
-static inline void IPV6CheckIsatap(const ipv6::IP6RawHdr*, Packet* p);
+static inline void IPV6CheckIsatap(const ip::IP6RawHdr* const, Packet* p);
 static inline void IPV6MiscTests(Packet* p);
-static void CheckIPV6Multicast(const ipv6::IP6RawHdr*, const Packet* const p);
-static inline int CheckTeredoPrefix(const ipv6::IP6RawHdr* const hdr);
+static void CheckIPV6Multicast(const ip::IP6RawHdr*, const Packet* const p);
+static inline int CheckTeredoPrefix(const ip::IP6RawHdr* const hdr);
 
 /********************************************************************
  *************************   PRIVATE FUNCTIONS **********************
@@ -80,7 +80,7 @@ uint8_t Ipv6Codec::GetTTL (const EncState* enc)
 {
     char dir;
     uint8_t ttl;
-    int outer = !enc->ip_hdr;
+    const bool outer = enc->p->ip_api.is_valid();
 
     if ( !enc->p->flow )
         return 0;
@@ -96,7 +96,7 @@ uint8_t Ipv6Codec::GetTTL (const EncState* enc)
 
     // so if we don't get outer, we use inner
     if ( 0 == ttl && outer )
-        ttl = stream.get_session_ttl(enc->p->flow, dir, 0);
+        ttl = stream.get_session_ttl(enc->p->flow, dir, false);
 
     return ttl;
 }
@@ -136,13 +136,13 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    const ipv6::IP6RawHdr* ip6h;
     uint32_t payload_len;
 
     /* lay the IP struct over the raw data */
-    ip6h = reinterpret_cast<ipv6::IP6RawHdr*>(const_cast<uint8_t*>(raw_pkt));
+    const ip::IP6RawHdr* const ip6h =
+        reinterpret_cast<ip::IP6RawHdr*>(const_cast<uint8_t*>(raw_pkt));
 
-    if(raw_len < ipv6::IP6_HEADER_LEN)
+    if(raw_len < ip::IP6_HEADER_LEN)
     {
         if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED);
@@ -154,7 +154,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
     /* Verify version in IP6 Header agrees */
-    if(!is_ip6_hdr_ver(ip6h))
+    if(ip6h->get_ver() != 6)
     {
         if ((p->decode_flags & DECODE__UNSURE_ENCAP) == 0)
             codec_events::decoder_event(p, DECODE_IPV6_IS_NOT);
@@ -170,7 +170,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 #endif
 
 
-    payload_len = ntohs(ip6h->ip6plen) + ipv6::IP6_HEADER_LEN;
+    payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
 
     if(payload_len != raw_len)
     {
@@ -206,7 +206,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* set the real IP length for logging */
     p->proto_bits |= PROTO_BIT__IP;
     // extra ipv6 header will be removed in PacketManager
-    const_cast<uint32_t&>(raw_len) = ntohs(ip6h->get_len()) + ipv6::IP6_HEADER_LEN;
+    const_cast<uint32_t&>(raw_len) = ntohs(ip6h->get_len()) + ip::IP6_HEADER_LEN;
 
     // check for isatap before overwriting the ip_api.
     IPV6CheckIsatap(ip6h, p);
@@ -217,7 +217,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     CheckIPV6Multicast(ip6h, p);
 
     next_prot_id = ip6h->get_next();
-    lyr_len = ipv6::IP6_HEADER_LEN;
+    lyr_len = ip::IP6_HEADER_LEN;
     return true;
 
 
@@ -235,7 +235,7 @@ decodeipv6_fail:
     return false;
 }
 
-static inline void IPV6CheckIsatap(const ipv6::IP6RawHdr* ip6h, Packet* p)
+static inline void IPV6CheckIsatap(const ip::IP6RawHdr* const ip6h, Packet* p)
 {
     /* Only check for IPv6 over IPv4 */
     if (p->ip_api.is_ip4() && p->ip_api.proto() == IPPROTO_IPV6)
@@ -295,10 +295,10 @@ static inline void IPV6MiscTests(Packet* p)
 
 
 /* Check for multiple IPv6 Multicast-related alerts */
-static void CheckIPV6Multicast(const ipv6::IP6RawHdr* ip6h,
+static void CheckIPV6Multicast(const ip::IP6RawHdr* ip6h,
         const Packet* const p)
 {
-    ipv6::MulticastScope multicast_scope;
+    ip::MulticastScope multicast_scope;
 
     if (ip6h->is_src_multicast())
     {
@@ -312,13 +312,13 @@ static void CheckIPV6Multicast(const ipv6::IP6RawHdr* ip6h,
     multicast_scope = ip6h->get_dst_multicast_scope();
     switch (multicast_scope)
     {
-        case ipv6::MulticastScope::RESERVED:
-        case ipv6::MulticastScope::INTERFACE:
-        case ipv6::MulticastScope::LINK:
-        case ipv6::MulticastScope::ADMIN:
-        case ipv6::MulticastScope::SITE:
-        case ipv6::MulticastScope::ORG:
-        case ipv6::MulticastScope::GLOBAL:
+        case ip::MulticastScope::RESERVED:
+        case ip::MulticastScope::INTERFACE:
+        case ip::MulticastScope::LINK:
+        case ip::MulticastScope::ADMIN:
+        case ip::MulticastScope::SITE:
+        case ip::MulticastScope::ORG:
+        case ip::MulticastScope::GLOBAL:
             break;
 
         default:
@@ -340,7 +340,7 @@ static void CheckIPV6Multicast(const ipv6::IP6RawHdr* ip6h,
         return;
     }
 
-    if (ip6h->is_multicast_scope_reserved())
+    if (ip6h->is_dst_multicast_scope_reserved())
     {
         // Node-local scope
         if ((ip6h->ip6_dst.u6_addr16[1] != 0) ||
@@ -366,7 +366,7 @@ static void CheckIPV6Multicast(const ipv6::IP6RawHdr* ip6h,
             }
         }
     }
-    else if (ip6h->is_multicast_scope_link())
+    else if (ip6h->is_dst_multicast_scope_link())
     {
         // Link-local scope
         switch (ntohl(ip6h->ip6_dst.u6_addr32[3]))
@@ -413,7 +413,7 @@ static void CheckIPV6Multicast(const ipv6::IP6RawHdr* ip6h,
                 codec_events::decoder_event(p, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
-    else if (ip6h->is_multicast_scope_site())
+    else if (ip6h->is_dst_multicast_scope_site())
     {
         // Site-local scope
         switch (ntohl(ip6h->ip6_dst.u6_addr32[3]))
@@ -510,7 +510,7 @@ static void CheckIPV6Multicast(const ipv6::IP6RawHdr* ip6h,
 
 /* Teredo packets need to have one of their IPs use either the Teredo prefix,
    or a link-local prefix (in the case of Router Solicitation messages) */
-static inline int CheckTeredoPrefix(const ipv6::IP6RawHdr* const hdr)
+static inline int CheckTeredoPrefix(const ip::IP6RawHdr* const hdr)
 {
     /* Check if src address matches 2001::/32 */
     if ((hdr->ip6_src.u6_addr8[0] == 0x20) &&
@@ -558,44 +558,49 @@ static inline int CheckTeredoPrefix(const ipv6::IP6RawHdr* const hdr)
 
 bool Ipv6Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
-    if (!update_buffer(out, sizeof(ipv6::IP6RawHdr)))
+    if (!update_buffer(out, sizeof(ip::IP6RawHdr)))
         return false;
 
-    const ipv6::IP6RawHdr* hi = reinterpret_cast<const ipv6::IP6RawHdr*>(raw_in);
-    ipv6::IP6RawHdr* ho = (ipv6::IP6RawHdr*)(out->base);
+    const ip::IP6RawHdr* hi = reinterpret_cast<const ip::IP6RawHdr*>(raw_in);
+    ip::IP6RawHdr* ho = (ip::IP6RawHdr*)(out->base);
 
 
-    ho->ip6flow = htonl(ntohl(hi->ip6flow) & 0xFFF00000);
-    ho->ip6nxt = hi->ip6nxt;
+    ho->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
+
+
+    if ( enc->proto )
+    {
+        ho->ip6_next = enc->proto;
+        enc->proto = 0;
+    }
+    else
+    {
+        ho->ip6_next = hi->ip6_next;
+    }
 
     if ( forward(enc) )
     {
         memcpy(ho->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ho->ip6_src.u6_addr8));
         memcpy(ho->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ho->ip6_dst.u6_addr8));
 
-        ho->ip6hops = FwdTTL(enc, hi->ip6hops);
+        ho->ip6_hoplim = FwdTTL(enc, hi->ip6_hoplim);
     }
     else
     {
         memcpy(ho->ip6_src.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ho->ip6_src.u6_addr8));
         memcpy(ho->ip6_dst.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ho->ip6_dst.u6_addr8));
 
-        ho->ip6hops = RevTTL(enc, hi->ip6hops);
+        ho->ip6_hoplim = RevTTL(enc, hi->ip6_hoplim);
     }
 
-    if ( enc->proto )
-    {
-        ho->ip6nxt = enc->proto;
-        enc->proto = 0;
-    }
     
-    ho->ip6plen = htons((uint16_t)(out->end - sizeof(*ho)));
+    ho->ip6_payload_len = htons((uint16_t)(out->end - sizeof(*ho)));
     return true;
 }
 
 bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
-    ipv6::IP6RawHdr* h = (ipv6::IP6RawHdr*)(lyr->start);
+    ip::IP6RawHdr* h = (ip::IP6RawHdr*)(lyr->start);
     int i = lyr - p->layers;
 
     // if we didn't trim payload or format this packet,
@@ -608,7 +613,7 @@ bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 #endif
     )
     {
-        *len = ntohs(h->ip6plen) + sizeof(*h);
+        *len = ntohs(h->ip6_payload_len) + sizeof(*h);
     }
     else
     {
@@ -621,7 +626,7 @@ bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
             *len += lyr[1].start - lyr->start;
 
         // len includes header, remove for payload
-        h->ip6plen = htons((uint16_t)(*len - sizeof(*h)));
+        h->ip6_payload_len = htons((uint16_t)(*len - sizeof(*h)));
     }
 
     return true;
@@ -629,13 +634,13 @@ bool Ipv6Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 
 void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
-    ipv6::IP6RawHdr* ch = reinterpret_cast<ipv6::IP6RawHdr*>(
+    ip::IP6RawHdr* ch = reinterpret_cast<ip::IP6RawHdr*>(
                             const_cast<uint8_t*>(lyr->start));
 
     if ( reverse(f) )
     {
         int i = lyr - c->layers;
-        ipv6::IP6RawHdr* ph = (ipv6::IP6RawHdr*)p->layers[i].start;
+        ip::IP6RawHdr* ph = (ip::IP6RawHdr*)p->layers[i].start;
 
         memcpy(ch->ip6_src.u6_addr8, ph->ip6_dst.u6_addr8, sizeof(ch->ip6_src.u6_addr8));
         memcpy(ch->ip6_dst.u6_addr8, ph->ip6_src.u6_addr8, sizeof(ch->ip6_dst.u6_addr8));

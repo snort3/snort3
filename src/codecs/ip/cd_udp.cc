@@ -192,7 +192,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             else if( !fragmented_udp_flag )
             {
                 checksum::Pseudoheader6 ph6;
-                const ipv6::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
+                const ip::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
                 COPY4(ph6.sip, ip6h->ip6_src.u6_addr32);
                 COPY4(ph6.dip, ip6h->ip6_dst.u6_addr32);
                 ph6.zero = 0;
@@ -304,6 +304,8 @@ typedef struct {
 
 bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 {   
+    const ip::IpApi* const ip_api = &enc->p->ip_api;
+
     if (enc->p->proto_bits & PROTO_BIT__GTP)
     {
         const udp::UDPHdr* hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);
@@ -329,13 +331,10 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         ho->uh_len = htons((uint16_t)len);
         ho->uh_chk = 0;
 
-
-        const ip::IpApi* ip_api = &enc->p->ip_api;
-
         if (ip_api->is_ip4())
         {
             checksum::Pseudoheader ps;
-            const IPHdr *ip4h = ip_api->get_ip4h();
+            const IPHdr* const ip4h = ip_api->get_ip4h();
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();
             ps.zero = 0;
@@ -346,9 +345,9 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         else
         {
             checksum::Pseudoheader6 ps6;
-            const ipv6::IP6RawHdr *ip6h = ip_api->get_ip6h();
-            memcpy(ps6.sip, ip6h->ip6_src.u6_addr8, sizeof(ps6.sip));
-            memcpy(ps6.dip, ip6h->ip6_dst.u6_addr8, sizeof(ps6.dip));
+            const ip::IP6RawHdr* const ip6h = ip_api->get_ip6h();
+            memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
+            memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_UDP;
             ps6.len = ho->uh_len;
@@ -359,31 +358,32 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     }
 
     // if this is not GTP, we want to return an ICMP unreachable packet
-    else if ( ip::is_ipv4(*(enc->ip_hdr)))
+    else if ( ip_api->is_ip4())
     {
         // copied directly from Icmp4Codec::encode()
         uint8_t* p;
         IcmpHdr* ho;
+        const uint8_t ip_len = ip_api->get_ip4h()->get_hlen() << 2;
 
-        if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp::unreach_data()))
-        return false;
+        if (!update_buffer(out, sizeof(*ho) + ip_len + icmp::ICMP_UNREACH_DATA_LEN))
+            return false;
 
         const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
         ho = reinterpret_cast<IcmpHdr*>(out->base);
 
         enc->proto = IPPROTO_ID_ICMPV4;
         ho->type = icmp::IcmpType::DEST_UNREACH;
-        ho->code = get_icmp_code(enc->type);
+        ho->code = get_icmp4_code(enc->type);
         ho->cksum = 0;
         ho->unused = 0;
 
         // copy original ip header
         p = out->base + sizeof(IcmpHdr);
-        memcpy(p, enc->ip_hdr, enc->ip_len);
+        memcpy(p, ip_api->get_ip4h(), ip_len);
 
         // copy first 8 octets of original ip data (ie udp header)
-        p += enc->ip_len;
-        memcpy(p, hi, icmp::unreach_data());
+        p += ip_len;
+        memcpy(p, hi, icmp::ICMP_UNREACH_DATA_LEN);
 
         ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
     }
@@ -398,24 +398,24 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         // copy first 8 octets of original ip data (ie udp header)
         // TBD: copy up to minimum MTU worth of data
-        if (!update_buffer(out, icmp::unreach_data()))
+        if (!update_buffer(out, icmp::ICMP_UNREACH_DATA_LEN))
             return false;
-        memcpy(out->base, raw_in, icmp::unreach_data());
+        memcpy(out->base, raw_in, icmp::ICMP_UNREACH_DATA_LEN);
 
         // copy original ip header
-        if (!update_buffer(out, enc->ip_len))
+        if (!update_buffer(out, ip::IP6_HEADER_LEN))
             return false;
-        // TBD should be able to elminate enc->ip_hdr by using layer-2
-        memcpy(out->base, enc->ip_hdr, enc->ip_len);
-        ((ipv6::IP6RawHdr*)out->base)->ip6nxt = IPPROTO_UDP;
+
+        memcpy(out->base, ip_api->get_ip6h(), ip::IP6_HEADER_LEN);
+        ((ip::IP6RawHdr*)out->base)->ip6_next = IPPROTO_UDP;
 
 
         if (!update_buffer(out, sizeof(*ho)))
             return false;
 
         ho = reinterpret_cast<IcmpHdr*>(out->base);
-        ho->type = 1;   // dest unreachable
-        ho->code = 4;   // port unreachable
+        ho->type = static_cast<uint8_t>(icmp6::Icmp6Types::UNREACH);
+        ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));
         ho->cksum = 0;
         ho->unused = 0;
 
@@ -424,8 +424,8 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
 
         int len = buff_diff(out, (uint8_t *)ho);
-        memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
-        memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
+        memcpy(ps6.sip, ip_api->get_ip6h()->get_src()->u6_addr8, sizeof(ps6.sip));
+        memcpy(ps6.dip, ip_api->get_ip6h()->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)(len));
@@ -460,7 +460,7 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         else
         {
             checksum::Pseudoheader6 ps6;
-            const ipv6::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
+            const ip::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
             memcpy(ps6.sip, &ip6h->ip6_src.u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, &ip6h->ip6_dst.u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;

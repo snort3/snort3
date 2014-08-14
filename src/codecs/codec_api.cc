@@ -28,10 +28,6 @@
 #include "framework/codec.h"
 
 // root codecs
-extern const BaseApi* cd_eth;
-extern const BaseApi* cd_raw4;
-extern const BaseApi* cd_raw6;
-extern const BaseApi* cd_null;
 
 
 // ip codecs
@@ -74,6 +70,12 @@ extern const BaseApi* cd_teredo;
 extern const BaseApi* cd_transbridge;
 extern const BaseApi* cd_vlan;
 
+//  Root codecs
+extern const BaseApi* cd_eth;
+extern const BaseApi* cd_raw4;
+extern const BaseApi* cd_raw6;
+extern const BaseApi* cd_null;
+
 #ifndef NO_NON_ETHER_DECODER
 extern const BaseApi* cd_eapol;
 extern const BaseApi* cd_linux_sll;
@@ -87,12 +89,6 @@ extern const BaseApi* cd_wlan;
 
 const BaseApi* codecs[] =
 {
-    cd_eth,
-    cd_raw4,
-    cd_raw6,
-    cd_null,
-
-
     // non root codeccs
     cd_ipv4,
     cd_ipv6,
@@ -130,6 +126,12 @@ const BaseApi* codecs[] =
     cd_teredo,
     cd_transbridge,
     cd_vlan,
+
+    /* root codecs */
+    cd_eth,
+    cd_raw4,
+    cd_raw6,
+    cd_null,
 
 #ifndef NO_NON_ETHER_DECODER
     cd_eapol,

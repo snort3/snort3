@@ -63,7 +63,7 @@ bool Ipv6NoNextCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_l
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
     p->dsize = 0;
-    lyr_len = ipv6::min_ext_len();
+    lyr_len = ip::MIN_EXT_LEN;
     return true;
 }
 

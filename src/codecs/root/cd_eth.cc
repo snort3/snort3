@@ -243,4 +243,14 @@ static const CodecApi eth_api =
     dtor, // dtor
 };
 
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &eth_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_eth = &eth_api.base;
+#endif

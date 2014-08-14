@@ -86,7 +86,8 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
 bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t& next_prot_id)
 {
-    if(raw_len < icmp::hdr_len())
+
+    if(raw_len < icmp::ICMP_HEADER_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated ICMP4 header (%d bytes).\n", raw_len););
@@ -175,7 +176,7 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         }
     }
 
-    lyr_len =  icmp::hdr_len();
+    lyr_len =  icmp::ICMP_HEADER_LEN;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP type: %d   code: %d\n",
                 p->icmph->type, p->icmph->code););
@@ -370,7 +371,7 @@ void Icmp4Codec::ICMP4AddrTests(Packet* p)
     uint32_t dst = p->ip_api.get_dst()->ip32[0];
 
     // check all 32 bits; all set so byte order is irrelevant ...
-    if ( ip::is_broadcast(dst) )
+    if ( dst == ip::IP4_BROADCAST )
         codec_events::decoder_event(p, DECODE_ICMP4_DST_BROADCAST);
 
     /* - don't use htonl for speed reasons -
@@ -384,7 +385,7 @@ void Icmp4Codec::ICMP4AddrTests(Packet* p)
     // check the 'msn' (most significant nibble) ...
     msb_dst >>= 4;
 
-    if( ip::is_multicast(msb_dst) )
+    if( msb_dst == ip::IP4_MULTICAST )
         codec_events::decoder_event(p, DECODE_ICMP4_DST_MULTICAST);
 }
 
@@ -463,7 +464,7 @@ bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
     uint8_t* p;
     IcmpHdr* ho;
 
-    if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp::unreach_data()))
+    if (!update_buffer(out, sizeof(*ho)))
         return false;
 
     const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
@@ -471,17 +472,21 @@ bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 
     enc->proto = IPPROTO_ID_ICMPV4;
     ho->type = icmp::IcmpType::DEST_UNREACH;
-    ho->code = get_icmp_code(enc->type);
+    ho->code = get_icmp4_code(enc->type);
     ho->cksum = 0;
     ho->unused = 0;
 
+#if 0
     // copy original ip header
     p = out->base + sizeof(IcmpHdr);
     memcpy(p, enc->ip_hdr, enc->ip_len);
 
+    // Now performed in cd_prot_embedded_in_icmp.cc
+
     // copy first 8 octets of original ip data (ie udp header)
     p += enc->ip_len;
-    memcpy(p, hi, icmp::unreach_data());
+    memcpy(p, hi, icmp::ICMP_UNREACH_DATA_LEN);
+#endif
 
     ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
 
@@ -492,6 +497,7 @@ bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     IcmpHdr* h = (IcmpHdr*)(lyr->start);
 
+    // This function will not be called if encoding unreachables
     *len += sizeof(*h) + p->dsize;
 
 
