@@ -146,6 +146,9 @@ struct IPHdr
     inline uint32_t get_dst() const
     { return ip_dst; }
 
+    inline uint8_t get_opt_len() const
+    { return (get_hlen() << 2) - IP4_HEADER_LEN; }
+
     /* booleans */
     inline bool is_src_broadcast() const
     { return ip_src == detail::IP4_BROADCAST; }

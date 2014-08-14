@@ -61,10 +61,8 @@ constexpr uint8_t IP6_HEADER_LEN = 40;
    (ntohl(p_rawiph->ip6_vtf) >> 28)
 
 
-#define IP6F_OFFSET_MASK    0xfff8  /* mask out offset from _offlg */
 #define IP6F_MF_MASK        0x0001  /* more-fragments flag */
 
-#define IP6F_OFFSET(fh) ((ntohs((fh)->ip6f_offlg) & IP6F_OFFSET_MASK) >> 3)
 
 
 enum class MulticastScope : uint8_t

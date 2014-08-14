@@ -45,14 +45,14 @@ enum EncodeType{
 
 
 typedef uint32_t EncodeFlags;
-const uint32_t ENC_FLAG_FWD = 0x80000000;  // send in forward direction
-const uint32_t ENC_FLAG_SEQ = 0x40000000;  // VAL bits contain seq adj
-const uint32_t ENC_FLAG_ID  = 0x20000000;  // use randomized IP ID
-const uint32_t ENC_FLAG_NET = 0x10000000;  // stop after innermost network (ip4/6) layer
-const uint32_t ENC_FLAG_DEF = 0x08000000;  // stop before innermost ip4 opts or ip6 frag header
-const uint32_t ENC_FLAG_RAW = 0x04000000;  // don't encode outer eth header (this is raw ip)
-const uint32_t ENC_FLAG_RES = 0x03000000;  // bits reserved for future use
-const uint32_t ENC_FLAG_VAL = 0x00FFFFFF;  // bits for adjusting seq and/or ack
+constexpr uint32_t ENC_FLAG_FWD = 0x80000000;  // send in forward direction
+constexpr uint32_t ENC_FLAG_SEQ = 0x40000000;  // VAL bits contain seq adj
+constexpr uint32_t ENC_FLAG_ID  = 0x20000000;  // use randomized IP ID
+constexpr uint32_t ENC_FLAG_NET = 0x10000000;  // stop after innermost network (ip4/6) layer
+constexpr uint32_t ENC_FLAG_DEF = 0x08000000;  // stop before innermost ip4 opts or ip6 frag header
+constexpr uint32_t ENC_FLAG_RAW = 0x04000000;  // don't encode outer eth header (this is raw ip)
+constexpr uint32_t ENC_FLAG_RES = 0x03000000;  // bits reserved for future use
+constexpr uint32_t ENC_FLAG_VAL = 0x00FFFFFF;  // bits for adjusting seq and/or ack
 
 
 struct EncState{

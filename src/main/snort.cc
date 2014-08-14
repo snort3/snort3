@@ -816,9 +816,11 @@ DAQ_Verdict ProcessPacket(
     if ( !p->proto_bits )
         p->proto_bits = PROTO_BIT__OTHER;
 
+#if 0
     // FIXIT required until decoders are fixed
     else if ( !p->family && (p->proto_bits & PROTO_BIT__IP) )
         p->proto_bits &= ~PROTO_BIT__IP;
+#endif
 
     set_policy(p);
 

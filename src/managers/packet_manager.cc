@@ -431,6 +431,8 @@ void PacketManager::decode(
         if ( p->num_layers == LAYER_MAX )
         {
             codec_events::decoder_event(p, DECODE_TOO_MANY_LAYERS);
+            p->dsize = (uint16_t)len;
+            p->data = pkt;
             MODULE_PROFILE_END(decodePerfStats);
             return /*false */;
         }
@@ -480,6 +482,12 @@ void PacketManager::decode(
         ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
+
+    /*
+     * NOTE:  NEVER RETURN BEFORE SETTING THESE TWO VARIABLES!!
+     *        they are no longer zeroed above, which means if they
+     *        unset, undefined behavior will ensure
+     */
     p->dsize = (uint16_t)len;
     p->data = pkt;
 

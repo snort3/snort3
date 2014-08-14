@@ -201,11 +201,6 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
     /* Remove outer IP options */
-    if (p->encapsulations)
-    {
-        p->ip_options_data = NULL;
-        p->ip_options_len = 0;
-    }
     p->ip_option_count = 0;
 
     /* set the real IP length for logging */

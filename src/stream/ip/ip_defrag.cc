@@ -653,7 +653,8 @@ static int FragHandleIPOptions(FragTracker *ft,
          * This is the first packet.  If it has IP options,
          * save them off, so we can set them on the reassembled packet.
          */
-        if (p->ip_options_len)
+        uint16_t ip_options_len = p->ip_api.get_ip_opt_len();
+        if (ip_options_len)
         {
             if (ft->ip_options_data)
             {
@@ -667,9 +668,9 @@ static int FragHandleIPOptions(FragTracker *ft,
             else
             {
                 /* Allocate and copy in the options */
-                ft->ip_options_data = (uint8_t*)SnortAlloc(p->ip_options_len);
-                memcpy(ft->ip_options_data, p->ip_options_data, p->ip_options_len);
-                ft->ip_options_len = p->ip_options_len;
+                ft->ip_options_data = (uint8_t*)SnortAlloc(ip_options_len);
+                memcpy(ft->ip_options_data, p->ip_api.get_ip_opt_data(), ip_options_len);
+                ft->ip_options_len = ip_options_len;
                 ft->ip_option_count = p->ip_option_count;
             }
         }

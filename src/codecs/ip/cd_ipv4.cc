@@ -189,7 +189,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* lay the IP struct over the raw data */
     IPHdr* iph = reinterpret_cast<IPHdr*>(const_cast<uint8_t *>(raw_pkt));
-    p->ip_api.set(iph);
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -251,6 +250,9 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
+    // set the api now since this layer has been verified as valid
+    p->ip_api.set(iph);
+
     /*
      * IP Header tests: Land attack, and Loop back test
      */
@@ -272,12 +274,11 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     /* test for IP options */
-    p->ip_options_len = (uint16_t)(hlen - ip::IP4_HEADER_LEN);
+    uint16_t ip_opt_len = (uint16_t)(hlen - ip::IP4_HEADER_LEN);
 
-    if(p->ip_options_len > 0)
+    if(ip_opt_len > 0)
     {
-        p->ip_options_data = raw_pkt + ip::IP4_HEADER_LEN;
-        DecodeIPOptions((raw_pkt + ip::IP4_HEADER_LEN), p->ip_options_len, p);
+        DecodeIPOptions((raw_pkt + ip::IP4_HEADER_LEN), ip_opt_len, p);
     }
     else
     {
@@ -287,11 +288,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
          * Zero these options so they aren't associated with this inner IP
          * since p->iph will be pointing to this inner IP
          */
-        if (p->encapsulations)
-        {
-            p->ip_options_data = NULL;
-            p->ip_options_len = 0;
-        }
         p->ip_option_count = 0;
     }
 
@@ -300,31 +296,31 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     ip_len -= hlen;
 
     /* check for fragmented packets */
-    p->frag_offset = ntohs(iph->get_off());
+    uint16_t frag_off = ntohs(iph->get_off());
 
     /*
      * get the values of the reserved, more
      * fragments and don't fragment flags
      */
-    if (p->frag_offset & 0x8000)
+    if (frag_off & 0x8000)
         p->decode_flags |= DECODE__RF;
 
-    if (p->frag_offset & 0x4000)
+    if (frag_off & 0x4000)
         p->decode_flags |= DECODE__DF;
 
-    if (p->frag_offset & 0x2000)
+    if (frag_off & 0x2000)
         p->decode_flags |= DECODE__MF;
 
     /* mask off the high bits in the fragment offset field */
-    p->frag_offset &= 0x1FFF;
+    frag_off &= 0x1FFF;
 
-    if ((p->decode_flags & DECODE__DF) && p->frag_offset )
+    if ((p->decode_flags & DECODE__DF) && frag_off )
         codec_events::decoder_event(p, DECODE_IP4_DF_OFFSET);
 
-    if ( p->frag_offset + ip_len > IP_MAXPACKET )
+    if ( frag_off + ip_len > IP_MAXPACKET )
         codec_events::decoder_event(p, DECODE_IP4_LEN_OFFSET);
 
-    if(p->frag_offset || (p->decode_flags & DECODE__MF))
+    if(frag_off || (p->decode_flags & DECODE__MF))
     {
         if ( !ip_len)
         {
@@ -349,19 +345,19 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         codec_events::decoder_event(p, DECODE_BAD_FRAGBITS);
     }
 
+    p->frag_offset = frag_off;
 
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, iph->get_proto());
 
     p->proto_bits |= PROTO_BIT__IP;
-
     IPMiscTests(p);
     lyr_len = hlen;
 
     /* if this packet isn't a fragment
      * or if it is, its a UDP packet and offset is 0 */
     if(!(p->decode_flags & DECODE__FRAG) ||
-            ((p->decode_flags & DECODE__FRAG) && (p->frag_offset == 0) &&
+            ((p->decode_flags & DECODE__FRAG) && (frag_off == 0) &&
             (iph->get_proto() == IPPROTO_UDP)))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP header length: %lu\n",
