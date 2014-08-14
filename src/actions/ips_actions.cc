@@ -25,13 +25,17 @@
 #endif
 
 #ifdef STATIC_IPS_ACTIONS
+extern const BaseApi* act_react;
 extern const BaseApi* act_reject;
+extern const BaseApi* act_resp;
 #endif
 
 const BaseApi* ips_actions[] =
 {
 #ifdef STATIC_IPS_ACTIONS
+    act_react,
     act_reject,
+    act_resp,
 #endif
     nullptr,
 };

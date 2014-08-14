@@ -1343,10 +1343,15 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
     rtn.type = get_rule_type(s);
 
     if ( rtn.type == RULE_TYPE__NONE )
+    {
         s_ignore = true;
-
+        return;
+    }
     else
         rtn.listhead = get_rule_list(sc, s);
+
+    if ( !rtn.listhead )
+        ParseError("unconfigured rule action '%s'", s);
 }
 
 void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)

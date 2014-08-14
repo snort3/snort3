@@ -18,6 +18,8 @@
 */
 // parse_stream.cc author Russ Combs <rucombs@cisco.com>
 
+#include "parse_stream.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>

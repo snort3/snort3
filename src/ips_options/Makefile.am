@@ -32,11 +32,9 @@ ips_msg.cc \
 ips_pkt_data.cc \
 ips_priority.cc \
 ips_raw_data.cc \
-ips_react.cc \
 ips_reference.cc \
 ips_rem.cc \
 ips_rev.cc \
-ips_resp.cc \
 ips_rpc.cc \
 ips_seq.cc \
 ips_session.cc \
@@ -209,11 +207,6 @@ libips_raw_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_raw_data_la_LDFLAGS = -export-dynamic -shared
 libips_raw_data_la_SOURCES = ips_raw_data.cc
 
-optlib_LTLIBRARIES += libips_react.la
-libips_react_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_react_la_LDFLAGS = -export-dynamic -shared
-libips_react_la_SOURCES = ips_react.cc
-
 optlib_LTLIBRARIES += libips_reference.la
 libips_reference_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_reference_la_LDFLAGS = -export-dynamic -shared
@@ -223,11 +216,6 @@ optlib_LTLIBRARIES += libips_rem.la
 libips_rem_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_rem_la_LDFLAGS = -export-dynamic -shared
 libips_rem_la_SOURCES = ips_rem.cc
-
-optlib_LTLIBRARIES += libips_resp.la
-libips_resp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_resp_la_LDFLAGS = -export-dynamic -shared
-libips_resp_la_SOURCES = ips_resp.cc
 
 optlib_LTLIBRARIES += libips_rev.la
 libips_rev_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

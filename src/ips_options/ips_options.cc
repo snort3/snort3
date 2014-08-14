@@ -72,11 +72,9 @@ extern const BaseApi* ips_msg;
 extern const BaseApi* ips_pkt_data;
 extern const BaseApi* ips_priority;
 extern const BaseApi* ips_raw_data;
-extern const BaseApi* ips_react;
 extern const BaseApi* ips_reference;
 extern const BaseApi* ips_rem;
 extern const BaseApi* ips_rev;
-extern const BaseApi* ips_resp;
 extern const BaseApi* ips_rpc;
 extern const BaseApi* ips_seq;
 extern const BaseApi* ips_session;
@@ -137,10 +135,8 @@ const BaseApi* ips_options[] =
     ips_pkt_data,
     ips_priority,
     ips_raw_data,
-    ips_react,
     ips_reference,
     ips_rem,
-    ips_resp,
     ips_rev,
     ips_rpc,
     ips_seq,

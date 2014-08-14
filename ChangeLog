@@ -1,5 +1,8 @@
 113
 -- initial FlushBucket implementation
+-- converted ips_resp and ips_react to actions
+-- implemented byte code parser to replace bad juju in ips_content and
+   ips_replace
 
 112
 -- initial action plugin - reject

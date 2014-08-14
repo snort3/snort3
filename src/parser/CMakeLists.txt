@@ -3,6 +3,8 @@
 add_library (parser STATIC 
     parser.cc 
     parser.h 
+    parse_byte_code.cc 
+    parse_byte_code.h 
     parse_conf.cc 
     parse_conf.h 
     parse_ip.cc 
