@@ -23,7 +23,6 @@
 
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
-#include "network_inspectors/perf_monitor/perf_base.h"
 #include "network_inspectors/perf_monitor/perf.h"
 #include "snort.h"
 #include "protocols/mpls.h"

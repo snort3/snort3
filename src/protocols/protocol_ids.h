@@ -19,8 +19,8 @@
 */
 
 
-#ifndef PROTOCOL_IDS_H
-#define PROTOCOL_IDS_H
+#ifndef PROTOCOLS_PROTOCOL_IDS_H
+#define PROTOCOLS_PROTOCOL_IDS_H
 
 /*****************************************************************
  *****  NOTE:   Protocols are only included in this file when ****

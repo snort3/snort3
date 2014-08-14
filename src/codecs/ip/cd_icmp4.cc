@@ -110,7 +110,7 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         case icmp::IcmpType::TIME_EXCEEDED:
         case icmp::IcmpType::PARAMETERPROB:
         case icmp::IcmpType::ECHOREPLY:
-        case icmp::IcmpType::ECHO:
+        case icmp::IcmpType::ECHO_4:
         case icmp::IcmpType::ROUTER_ADVERTISE:
         case icmp::IcmpType::ROUTER_SOLICIT:
         case icmp::IcmpType::INFO_REQUEST:
@@ -183,7 +183,7 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 
     switch(p->icmph->type)
     {
-        case icmp::IcmpType::ECHO:
+        case icmp::IcmpType::ECHO_4:
             ICMP4AddrTests(p);
         // fall through ...
 
@@ -393,7 +393,7 @@ void Icmp4Codec::ICMP4AddrTests(Packet* p)
 void Icmp4Codec::ICMP4MiscTests (Packet *p)
 {
     if ((p->dsize == 0) &&
-        (p->icmph->type == icmp::IcmpType::ECHO))
+        (p->icmph->type == icmp::IcmpType::ECHO_4))
         codec_events::decoder_event(p, DECODE_ICMP_PING_NMAP);
 
     if ((p->dsize == 0) &&
@@ -423,7 +423,7 @@ void Icmp4Codec::ICMP4MiscTests (Packet *p)
         codec_events::decoder_event(p, DECODE_ICMP_SOURCE_QUENCH);
 
     if ((p->dsize == 4) &&
-        (p->icmph->type == icmp::IcmpType::ECHO) &&
+        (p->icmph->type == icmp::IcmpType::ECHO_4) &&
         (p->icmph->s_icmp_seq == 0) &&
         (p->icmph->code == icmp::IcmpCode::ECHO_CODE))
         codec_events::decoder_event(p, DECODE_ICMP_BROADSCAN_SMURF_SCANNER);

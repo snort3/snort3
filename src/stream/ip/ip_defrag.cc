@@ -1017,7 +1017,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         if (p->ip6_frag_index > 0)
         {
             // FIXIT use of last_extension works but is ugly
-            IP6Extension *last_extension = (IP6Extension *)
+            ip::IP6Extension *last_extension = (ip::IP6Extension *)
                 (dpkt->pkt + (p->ip6_extensions[p->ip6_frag_index -1].data - p->pkt));
             last_extension->ip6e_nxt = ft->protocol;
         }
@@ -1557,7 +1557,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
 
     if (p->ip_api.is_ip6() && (p->frag_offset == 0))
     {
-        IP6Frag *fragHdr = (IP6Frag *)p->ip6_extensions[p->ip6_frag_index].data;
+        ip::IP6Frag *fragHdr = (ip::IP6Frag *)p->ip6_extensions[p->ip6_frag_index].data;
         if (ft->protocol != fragHdr->ip6f_nxt)
         {
             ft->protocol = fragHdr->ip6f_nxt;
@@ -2304,7 +2304,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         if (p->frag_offset == 0)
         {
-            IP6Frag *fragHdr = (IP6Frag *)p->ip6_extensions[p->ip6_frag_index].data;
+            ip::IP6Frag *fragHdr = (ip::IP6Frag *)p->ip6_extensions[p->ip6_frag_index].data;
             ft->protocol = fragHdr->ip6f_nxt;
         }
     }

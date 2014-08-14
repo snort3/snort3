@@ -19,8 +19,8 @@
 */
 
 
-#ifndef VLAN_H
-#define VLAN_H
+#ifndef PROTOCOLS_VLAN_H
+#define PROTOCOLS_VLAN_H
 
 namespace vlan
 {

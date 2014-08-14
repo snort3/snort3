@@ -18,8 +18,8 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PACKET_H
-#define PACKET_H
+#ifndef PROTOCOLS_PACKET_H
+#define PROTOCOLS_PACKET_H
 
 /*  I N C L U D E S  **********************************************************/
 
@@ -47,14 +47,9 @@ extern "C" {
 }
 
 #include "main/snort_types.h"
-#include "sfip/ipv6_port.h"
 #include "sfip/sf_ip.h"
-#include "codecs/sf_protocols.h"
 
 
-#include "protocols/layer.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/eth.h"
@@ -62,6 +57,10 @@ extern "C" {
 #include "protocols/icmp6.h"
 #include "protocols/mpls.h"
 #include "protocols/ip.h"
+#include "protocols/layer.h"
+#include "protocols/ipv4.h"
+#include "protocols/ipv6.h"
+
 
 /*  D E F I N E S  ************************************************************/
 
@@ -180,7 +179,7 @@ struct Packet
      */
     const tcp::TCPHdr* tcph;
     const udp::UDPHdr* udph;
-    const ICMPHdr* icmph;
+    const icmp::ICMPHdr* icmph;
     Flow* flow;   /* for session tracking */
 
 
@@ -220,8 +219,8 @@ struct Packet
     uint16_t dsize;             /* packet payload size */
 
     ip::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
+    ip::IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
-    IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
 
 
 

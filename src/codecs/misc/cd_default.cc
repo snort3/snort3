@@ -26,7 +26,6 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 
 namespace

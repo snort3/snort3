@@ -72,7 +72,7 @@ void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
     Packet* p, uint16_t &lyr_len, uint16_t & next_prot_id )
 {
-    if(raw_len < icmp6::hdr_min_len())
+    if(raw_len < icmp::ICMP6_HEADER_MIN_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated ICMP6 header (%d bytes).\n", raw_len););
@@ -81,7 +81,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    const icmp6::ICMP6Hdr* icmp6h = reinterpret_cast<const icmp6::ICMP6Hdr*>(raw_pkt);
+    const icmp::ICMP6Hdr* icmp6h = reinterpret_cast<const icmp::ICMP6Hdr*>(raw_pkt);
     p->icmph = reinterpret_cast<const ICMPHdr*>(raw_pkt); /* This is needed for icmp rules */
 
 
@@ -119,16 +119,16 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         }
     }
 
-    p->dsize = (u_short)(raw_len - icmp6::hdr_min_len());
-    p->data = raw_pkt + icmp6::hdr_min_len();
+    p->dsize = (u_short)(raw_len - icmp::ICMP6_HEADER_MIN_LEN);
+    p->data = raw_pkt + icmp::ICMP6_HEADER_MIN_LEN;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP type: %d   code: %d\n",
                 icmp6h->type, icmp6h->code););
 
     switch(icmp6h->type)
     {
-        case icmp6::Icmp6Types::ECHO:
-        case icmp6::Icmp6Types::REPLY:
+        case icmp::Icmp6Types::ECHO_6:
+        case icmp::Icmp6Types::REPLY_6:
             if (p->dsize >= sizeof(ICMPHdr::icmp_hun.idseq))
             {
                 /* Set data pointer to that of the "echo message" */
@@ -152,10 +152,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::BIG:
-            if (p->dsize >= sizeof(ICMP6TooBig))
+        case icmp::Icmp6Types::BIG:
+            if (p->dsize >= sizeof(icmp::ICMP6TooBig))
             {
-                ICMP6TooBig *too_big = (ICMP6TooBig *)raw_pkt;
+                icmp::ICMP6TooBig *too_big = (icmp::ICMP6TooBig *)raw_pkt;
                 /* Set data pointer past MTU */
                 p->data += 4;
                 p->dsize -= 4;
@@ -164,7 +164,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
                 }
-                lyr_len = icmp6::hdr_normal_len();
+                lyr_len = icmp::ICMP6_HEADER_NORMAL_LEN;
                 next_prot_id = IP_EMBEDDED_IN_ICMP6;
             }
             else
@@ -179,16 +179,16 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::TIME:
-        case icmp6::Icmp6Types::PARAMS:
-        case icmp6::Icmp6Types::UNREACH:
+        case icmp::Icmp6Types::TIME:
+        case icmp::Icmp6Types::PARAMS:
+        case icmp::Icmp6Types::UNREACH:
             if (p->dsize >= 4)
             {
                 /* Set data pointer past the 'unused/mtu/pointer block */
                 p->data += 4;
                 p->dsize -= 4;
 
-                if (icmp6h->type == icmp6::Icmp6Types::UNREACH)
+                if (icmp6h->type == icmp::Icmp6Types::UNREACH)
                 {
                     if (icmp6h->code == 2)
                     {
@@ -199,7 +199,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                         codec_events::decoder_event(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
                     }
                 }
-                lyr_len = icmp6::hdr_normal_len();
+                lyr_len = icmp::ICMP6_HEADER_NORMAL_LEN;
                 next_prot_id = IP_EMBEDDED_IN_ICMP6;
             }
             else
@@ -214,10 +214,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::ADVERTISEMENT:
-            if (p->dsize >= (sizeof(ICMP6RouterAdvertisement) - icmp6::hdr_min_len()))
+        case icmp::Icmp6Types::ADVERTISEMENT:
+            if (p->dsize >= (sizeof(icmp::ICMP6RouterAdvertisement) - icmp::ICMP6_HEADER_MIN_LEN))
             {
-                ICMP6RouterAdvertisement *ra = (ICMP6RouterAdvertisement *)raw_pkt;
+                icmp::ICMP6RouterAdvertisement *ra = (icmp::ICMP6RouterAdvertisement *)raw_pkt;
                 if (icmp6h->code != 0)
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_ADVERT_BAD_CODE);
@@ -226,7 +226,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
                 }
-                lyr_len = icmp6::hdr_min_len();
+                lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
@@ -240,10 +240,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::SOLICITATION:
-            if (p->dsize >= (sizeof(ICMP6RouterSolicitation) - icmp6::hdr_min_len()))
+        case icmp::Icmp6Types::SOLICITATION:
+            if (p->dsize >= (sizeof(icmp::ICMP6RouterSolicitation) - icmp::ICMP6_HEADER_MIN_LEN))
             {
-                ICMP6RouterSolicitation *rs = (ICMP6RouterSolicitation *)raw_pkt;
+                icmp::ICMP6RouterSolicitation *rs = (icmp::ICMP6RouterSolicitation *)raw_pkt;
                 if (rs->code != 0)
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
@@ -252,7 +252,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
                 }
-                lyr_len = icmp6::hdr_min_len();
+                lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
@@ -266,11 +266,11 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::NODE_INFO_QUERY:
-        case icmp6::Icmp6Types::NODE_INFO_RESPONSE:
-            if (p->dsize >= (sizeof(ICMP6NodeInfo) - icmp6::hdr_min_len()))
+        case icmp::Icmp6Types::NODE_INFO_QUERY:
+        case icmp::Icmp6Types::NODE_INFO_RESPONSE:
+            if (p->dsize >= (sizeof(icmp::ICMP6NodeInfo) - icmp::ICMP6_HEADER_MIN_LEN))
             {
-                ICMP6NodeInfo *ni = (ICMP6NodeInfo *)raw_pkt;
+                icmp::ICMP6NodeInfo *ni = (icmp::ICMP6NodeInfo *)raw_pkt;
                 if (ni->code > 2)
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
@@ -278,7 +278,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 /* TODO: Add alert for INFO Response, code == 1 || code == 2)
                  * and there is data.
                  */
-                 lyr_len = icmp6::hdr_min_len();
+                 lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
@@ -297,7 +297,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                     "WARNING: ICMP6_TYPE (type %d).\n", icmp6h->type););
             codec_events::decoder_event(p, DECODE_ICMP6_TYPE_OTHER);
 
-            lyr_len = icmp6::hdr_min_len();
+            lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             break;
     }
 
@@ -461,7 +461,7 @@ bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
         return false;
 
     ho = reinterpret_cast<IcmpHdr*>(out->base);
-    ho->type = static_cast<uint8_t>(icmp6::Icmp6Types::UNREACH);
+    ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
     ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));   // port unreachable
     ho->cksum = 0;
     ho->unused = 0;

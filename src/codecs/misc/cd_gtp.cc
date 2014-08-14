@@ -31,8 +31,6 @@
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
 #include "codecs/misc/cd_gtp_module.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
 #include "packet_io/active.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"

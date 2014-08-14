@@ -78,14 +78,14 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool ArpCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t& /* next_prot_id */)
 {
-    if(raw_len < sizeof(EtherARP))
+    if(raw_len < sizeof(arp::EtherARP))
     {
         codec_events::decoder_event(p, DECODE_ARP_TRUNCATED);
         return false;
     }
 
     p->proto_bits |= PROTO_BIT__ARP;
-    lyr_len = sizeof(EtherARP);
+    lyr_len = sizeof(arp::EtherARP);
     
     return true;
 }

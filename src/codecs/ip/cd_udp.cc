@@ -414,7 +414,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
             return false;
 
         ho = reinterpret_cast<IcmpHdr*>(out->base);
-        ho->type = static_cast<uint8_t>(icmp6::Icmp6Types::UNREACH);
+        ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
         ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));
         ho->cksum = 0;
         ho->unused = 0;

@@ -118,7 +118,6 @@ struct snort_in6_addr
     };
 };
 
-
 struct IP6RawHdr
 {
     uint32_t ip6_vtf;               /* 4 bits version, 8 bits TC,len
@@ -192,16 +191,6 @@ struct IP6RawHdr
 
 };
 
-
 } // namespace ipv6
-
-
-
-
-
-// TODO --> delete EVERYTHING below this line!
-typedef ip::IP6Option IP6Option;
-typedef ip::IP6Extension IP6Extension;
-typedef ip::IP6Frag IP6Frag;
 
 #endif

@@ -19,8 +19,8 @@
 */
 
 
-#ifndef TEREDO_H 
-#define TEREDO_H
+#ifndef PROTOCOLS_TEREDO_H
+#define PROTOCOLS_TEREDO_H
 
 #include <cstdint>
 

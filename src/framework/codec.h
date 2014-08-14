@@ -25,9 +25,10 @@
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
+#include "protocols/packet.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/icmp4.h"
-#include "protocols/packet.h"
+#include "protocols/icmp6.h"
 
 struct Packet;
 struct Layer;
@@ -120,15 +121,15 @@ static inline icmp::IcmpCode get_icmp4_code(EncodeType et)
     }
 }
 
-static inline icmp6::Icmp6Code get_icmp6_code(EncodeType et)
+static inline icmp::Icmp6Code get_icmp6_code(EncodeType et)
 {
     switch ( et )
     {
-        case EncodeType::ENC_UNR_NET:  return icmp6::Icmp6Code::UNREACH_NET;
-        case EncodeType::ENC_UNR_HOST: return icmp6::Icmp6Code::UNREACH_HOST;
-        case EncodeType::ENC_UNR_PORT: return icmp6::Icmp6Code::UNREACH_PORT;
-        case EncodeType::ENC_UNR_FW:   return icmp6::Icmp6Code::UNREACH_FILTER_PROHIB;
-        default: return icmp6::Icmp6Code::UNREACH_PORT;
+        case EncodeType::ENC_UNR_NET:  return icmp::Icmp6Code::UNREACH_NET;
+        case EncodeType::ENC_UNR_HOST: return icmp::Icmp6Code::UNREACH_HOST;
+        case EncodeType::ENC_UNR_PORT: return icmp::Icmp6Code::UNREACH_PORT;
+        case EncodeType::ENC_UNR_FW:   return icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
+        default: return icmp::Icmp6Code::UNREACH_PORT;
     }
 }
 

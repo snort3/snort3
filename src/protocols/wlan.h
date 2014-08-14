@@ -19,8 +19,8 @@
 */
 
 
-#ifndef WLAN_H
-#define WLAN_H
+#ifndef PROTOCOLS_WLAN_H
+#define PROTOCOLS_WLAN_H
 
 #ifndef NO_NON_ETHER_DECODER
 

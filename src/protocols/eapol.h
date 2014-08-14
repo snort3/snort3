@@ -19,8 +19,8 @@
 */
 
 
-#ifndef EAPOL_H
-#define EAPOL_H
+#ifndef PROTOCOLS_EAPOL_H
+#define PROTOCOLS_EAPOL_H
 
 #ifndef NO_NON_ETHER_DECODER
 

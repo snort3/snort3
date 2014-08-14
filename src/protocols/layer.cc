@@ -21,8 +21,9 @@
 
 
 #include <netinet/in.h>
-#include "protocols/packet.h"
 #include "protocols/layer.h"
+#include "protocols/protocol_ids.h"
+#include "protocols/packet.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "protocols/ip.h"

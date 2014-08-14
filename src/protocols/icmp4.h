@@ -19,8 +19,8 @@
 */
 
 
-#ifndef ICMP4_H
-#define ICMP4_H
+#ifndef PROTOCOLS_ICMP4_H
+#define PROTOCOLS_ICMP4_H
 
 #include <cstdint>
 #include "protocols/ipv4.h" // for in_addr
@@ -39,21 +39,21 @@ constexpr uint8_t ICMP_UNREACH_DATA_LEN = 8;
 //enum class IcmpType : std::uint8_t {
 enum IcmpType : std::uint8_t
 {
-    ECHOREPLY = 0, 
-    DEST_UNREACH = 3, 
-    SOURCE_QUENCH = 4,  
-    REDIRECT = 5,  
-    ECHO = 8, 
-    ROUTER_ADVERTISE = 9,  
-    ROUTER_SOLICIT = 10, 
-    TIME_EXCEEDED = 11, 
-    PARAMETERPROB = 12, 
-    TIMESTAMP = 13, 
-    TIMESTAMPREPLY = 14, 
-    INFO_REQUEST = 15, 
-    INFO_REPLY = 16, 
-    ADDRESS = 17,  
-    ADDRESSREPLY = 18,  
+    ECHOREPLY = 0,
+    DEST_UNREACH = 3,
+    SOURCE_QUENCH = 4,
+    REDIRECT = 5,
+    ECHO_4 = 8,
+    ROUTER_ADVERTISE = 9,
+    ROUTER_SOLICIT = 10,
+    TIME_EXCEEDED = 11,
+    PARAMETERPROB = 12,
+    TIMESTAMP = 13,
+    TIMESTAMPREPLY = 14,
+    INFO_REQUEST = 15,
+    INFO_REPLY = 16,
+    ADDRESS = 17,
+    ADDRESSREPLY = 18,
 //      NR_ICMP_TYPES = 18,
 };
 

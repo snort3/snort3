@@ -18,13 +18,11 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef LAYER_H 
-#define LAYER_H
+#ifndef PROTOCOLS_LAYER_H
+#define PROTOCOLS_LAYER_H
 
 #include <cstdint>
-#include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
-
 
 struct Layer {
     uint16_t prot_id;

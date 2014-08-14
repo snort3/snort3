@@ -19,8 +19,8 @@
 */
 
 
-#ifndef UDP_H
-#define UDP_H
+#ifndef PROTOCOLS_UDP_H
+#define PROTOCOLS_UDP_H
 
 #include <cstdint>
 
@@ -42,7 +42,6 @@ struct UDPHdr
     uint16_t uh_dport;
     uint16_t uh_len;
     uint16_t uh_chk;
-
 };
 
 

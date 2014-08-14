@@ -279,8 +279,8 @@ static int Norm_ICMP6 (
 {
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
 
-    if ( ((uint16_t)h->type == icmp6::Icmp6Types::ECHO ||
-          (uint16_t)h->type == icmp6::Icmp6Types::REPLY) &&
+    if ( ((uint16_t)h->type == icmp::Icmp6Types::ECHO_6 ||
+          (uint16_t)h->type == icmp::Icmp6Types::REPLY_6) &&
          (h->code != 0) )
     {
         h->code = static_cast<icmp::IcmpCode>(0);

@@ -19,19 +19,18 @@
 */
 
 
-#ifndef ICMP6_H
-#define ICMP6_H
+#ifndef PROTOCOLS_ICMP6_H
+#define PROTOCOLS_ICMP6_H
 
 #include <cstdint>
 
-namespace icmp6
+namespace icmp
 {
 
-namespace detail
-{
-    const uint16_t HEADER_MIN_LEN = 4;
-    const uint16_t HEADER_NORMAL_LEN = 8;
-} // namespace detail
+
+constexpr uint16_t ICMP6_HEADER_MIN_LEN = 4;
+constexpr uint16_t ICMP6_HEADER_NORMAL_LEN = 8;
+
 
 struct ICMP6Hdr
 {
@@ -79,15 +78,16 @@ struct ICMP6NodeInfo
     uint64_t nonce;
 } ;
 
-//
-//enum class Icmp6Types : std::uint8_t {
-enum Icmp6Types : std::uint8_t   {
+
+//enum class Icmp6Types : std::uint8_t
+enum Icmp6Types : std::uint8_t
+{
     UNREACH = 1,
     BIG = 2,
     TIME = 3,
     PARAMS = 4,
-    ECHO = 128,
-    REPLY = 129,
+    ECHO_6 = 128,
+    REPLY_6 = 129,
     SOLICITATION = 133,
     ADVERTISEMENT = 134,
     NODE_INFO_QUERY = 139,
@@ -103,33 +103,7 @@ enum class Icmp6Code : std::uint8_t
     UNREACH_PORT = 0x04,
 };
 
-inline uint16_t hdr_min_len()
-{
-    return detail::HEADER_MIN_LEN;
-}
-
-
-inline uint16_t hdr_normal_len()
-{
-    return detail::HEADER_NORMAL_LEN;
-}
-
 }  // namespace icmp6
-
-
-
-//   Things that should be deleted immediately....which I bet will manage to make it into production
-
-#if 1
-#define ICMP6_ECHO   icmp6::Icmp6Types::ECHO
-#define ICMP6_REPLY  icmp6::Icmp6Types::REPLY
-#endif
-
-typedef icmp6::ICMP6Hdr ICMP6Hdr;
-typedef icmp6::ICMP6TooBig ICMP6TooBig;
-typedef icmp6::ICMP6NodeInfo ICMP6NodeInfo;
-typedef icmp6::ICMP6RouterAdvertisement ICMP6RouterAdvertisement;
-typedef icmp6::ICMP6RouterSolicitation ICMP6RouterSolicitation;
 
 
 #endif

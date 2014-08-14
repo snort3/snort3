@@ -18,8 +18,8 @@
 */
 
 
-#ifndef TCP_H 
-#define TCP_H
+#ifndef PROTOCOLS_TCP_H
+#define PROTOCOLS_TCP_H
 
 #include <cstdint>
 

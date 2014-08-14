@@ -19,8 +19,8 @@
 */
 
 
-#ifndef TOKEN_RING_H
-#define TOKEN_RING_H
+#ifndef PROTOCOLS_TOKEN_RING_H
+#define PROTOCOLS_TOKEN_RING_H
 
 namespace token_ring{
 

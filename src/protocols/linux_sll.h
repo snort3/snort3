@@ -19,8 +19,8 @@
 */
 
 
-#ifndef LINUX_SLL_H
-#define LINUX_SLL_H
+#ifndef PROTOCOLS_LINUX_SLL_H
+#define PROTOCOLS_LINUX_SLL_H
 
 #ifndef NO_NON_ETHER_DECODER
 

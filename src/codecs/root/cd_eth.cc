@@ -26,7 +26,6 @@
 #include <pcap.h>
 #include "codecs/root/cd_eth_module.h"
 #include "framework/codec.h"
-#include "time/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/eth.h"
 #include "codecs/codec_events.h"
@@ -88,7 +87,7 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 {
 
     /* do a little validation */
-    if(raw_len < eth::hdr_len())
+    if(raw_len < eth::ETH_HEADER_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated eth header (%d bytes).\n", raw_len););
@@ -115,10 +114,10 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             );
 
     next_prot_id = ntohs(eh->ether_type);
-    if (next_prot_id > eth::min_ethertype() )
+    if (next_prot_id > eth::MIN_ETHERTYPE )
     {
         p->proto_bits |= PROTO_BIT__ETH;
-        lyr_len = eth::hdr_len();
+        lyr_len = eth::ETH_HEADER_LEN;
         return true;
     }
 

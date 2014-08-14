@@ -116,9 +116,9 @@ inline void FlowKey::init6(
     }
     else if ( proto == IPPROTO_ICMPV6 )
     {
-        if (srcPort == icmp6::Icmp6Types::REPLY)
+        if (srcPort == icmp::Icmp6Types::REPLY_6)
         {
-            dstPort = icmp6::Icmp6Types::ECHO; /* Treat ICMPv6 echo reply the same as request */
+            dstPort = icmp::Icmp6Types::ECHO_6; /* Treat ICMPv6 echo reply the same as request */
             srcPort = 0;
         }
         else /* otherwise, every ICMP type gets different key */

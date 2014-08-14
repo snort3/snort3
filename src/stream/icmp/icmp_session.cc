@@ -43,6 +43,7 @@
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 #include "protocols/ip.h"
+#include "protocols/icmp4.h"
 
 THREAD_LOCAL SessionStats icmpStats;
 THREAD_LOCAL ProfileStats icmp_perf_stats;

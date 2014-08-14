@@ -52,10 +52,13 @@
 
 #include "sfip/sf_ip.h"
 
+#include "protocols/eth.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
+#include "protocols/udp.h"
+#include "protocols/tcp.h"
 #include "protocols/gre.h"
 #include "protocols/token_ring.h"
 #include "protocols/wlan.h"

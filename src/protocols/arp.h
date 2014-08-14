@@ -19,8 +19,8 @@
 */
 
 
-#ifndef ARP_H
-#define ARP_H
+#ifndef PROTOCOLS_ARP_H
+#define PROTOCOLS_ARP_H
 
 namespace arp
 {
@@ -52,13 +52,10 @@ struct EtherARP
 
 } // namespace arp
 
-typedef arp::ARPHdr ARPHdr;
-typedef arp::EtherARP EtherARP;
-
-const uint16_t ARPOP_REQUEST = 1;    /* ARP request                  */
-const uint16_t ARPOP_REPLY = 2;    /* ARP reply                    */
-const uint16_t ARPOP_RREQUEST = 3;    /* RARP request                 */
-const uint16_t ARPOP_RREPLY = 4;    /* RARP reply                   */
+constexpr uint16_t ARPOP_REQUEST = 1;  /* ARP request  */
+constexpr uint16_t ARPOP_REPLY = 2;    /* ARP reply    */
+constexpr uint16_t ARPOP_RREQUEST = 3; /* RARP request */
+constexpr uint16_t ARPOP_RREPLY = 4;   /* RARP reply   */
 
 
 #endif

@@ -30,7 +30,6 @@
 #include "codecs/codec_events.h"
 #include "codecs/ip/cd_auth_module.h"
 #include "protocols/protocol_ids.h"
-#include "protocols/ipv6.h"
 #include "codecs/sf_protocols.h"
 
 namespace
@@ -62,7 +61,7 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 
-    IP6Extension *ah = (IP6Extension *)raw_pkt;
+    ip::IP6Extension *ah = (ip::IP6Extension *)raw_pkt;
 
     if (raw_len < ip::MIN_EXT_LEN)
     {

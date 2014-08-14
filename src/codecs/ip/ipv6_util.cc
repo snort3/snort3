@@ -28,7 +28,7 @@ namespace ipv6_util
 
 bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
 {
-    IP6Extension *exthdr = (IP6Extension *)pkt;
+    ip::IP6Extension *exthdr = (ip::IP6Extension *)pkt;
     uint32_t total_octets = (exthdr->ip6e_len * 8) + 8;
     const uint8_t *hdr_end = pkt + total_octets;
     uint8_t oplen;
