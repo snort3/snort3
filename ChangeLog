@@ -4,6 +4,7 @@
 -- implemented byte code parser to replace bad juju in ips_content and
    ips_replace
 -- stream workarounds for new packet / protocol foo and shutdown sequencing
+-- fixed end of rule parsing to not require ; and recognize incomplete rules
 
 112
 -- initial action plugin - reject

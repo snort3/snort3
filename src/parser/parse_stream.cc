@@ -207,7 +207,8 @@ enum FsmAction
     FSM_SIP, FSM_SP, 
     FSM_DIR, 
     FSM_DIP, FSM_DP,
-    FSM_SOB, FSM_EOB, 
+    FSM_STB, FSM_SOB,
+    FSM_EOB, 
     FSM_KEY, FSM_OPT,
     FSM_VAL, FSM_SET,
     FSM_ADD, FSM_INC,
@@ -222,7 +223,8 @@ const char* acts[FSM_MAX] =
     "sip", "sp",
     "dir",
     "dip", "dp",
-    "sob", "eob",
+    "stb", "sob",
+    "eob",
     "key", "opt",
     "val", "set",
     "add", "inc",
@@ -244,8 +246,9 @@ static const State fsm[] =
 {
     { -1,  0, TT_NONE,    FSM_ERR, nullptr,    ""      },
     {  0, 15, TT_LITERAL, FSM_KEY, "include",  ""      },
-    {  0,  1, TT_LITERAL, FSM_ACT, nullptr,    ""      },
-    {  1,  2, TT_LITERAL, FSM_PRO, nullptr,    nullptr },
+    {  0,  1, TT_LITERAL, FSM_ACT, nullptr,    "("     },
+    {  1,  8, TT_PUNCT,   FSM_STB, "(",        "(:,;)" },
+    {  1,  2, TT_LITERAL, FSM_PRO, nullptr,    ""      },
     {  2,  3, TT_LIST,    FSM_SIP, nullptr,    nullptr },
     {  2,  3, TT_LITERAL, FSM_SIP, nullptr,    nullptr },
     {  3,  4, TT_LIST,    FSM_SP,  nullptr,    nullptr },
@@ -257,21 +260,25 @@ static const State fsm[] =
     {  6,  7, TT_LITERAL, FSM_DP,  nullptr,    "(:,;)" },
     {  7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
     {  8,  0, TT_PUNCT,   FSM_EOB, ")",        nullptr },
-    {  8, 13, TT_LITERAL, FSM_KEY, "metadata", ":,;"   },
-    {  8, 13, TT_LITERAL, FSM_KEY, "reference",":,;"   },
+    {  8, 13, TT_LITERAL, FSM_KEY, "metadata", ":,;)"  },
+    {  8, 13, TT_LITERAL, FSM_KEY, "reference",":,;)"  },
     {  8,  9, TT_LITERAL, FSM_KEY, nullptr,    nullptr },
     {  9,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
     {  9, 10, TT_PUNCT,   FSM_NOP, ":",        nullptr },
+    {  9,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 10, 12, TT_STRING,  FSM_OPT, nullptr,    nullptr },
     { 10, 11, TT_LITERAL, FSM_OPT, nullptr,    nullptr },
     { 11, 12, TT_STRING,  FSM_VAL, nullptr,    nullptr },
     { 11, 12, TT_LITERAL, FSM_VAL, nullptr,    nullptr },
     { 11,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
+    { 11,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 11, 10, TT_PUNCT,   FSM_SET, ",",        nullptr },
     { 12,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
+    { 12,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 12, 10, TT_PUNCT,   FSM_SET, ",",        nullptr },
     { 13, 14, TT_PUNCT,   FSM_NOP, ":",        nullptr },
     { 14,  8, TT_PUNCT,   FSM_END, ";",        "(:,;)" },
+    { 14,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 14, 14, TT_NONE,    FSM_SET, ",",        nullptr },
     { 14, 14, TT_NONE,    FSM_ADD, nullptr,    nullptr },
     { 15,  0, TT_LITERAL, FSM_INC, nullptr,    nullptr },
@@ -345,11 +352,16 @@ static void exec(
         //printf("parse dp = %s\n", tok.c_str());
         parse_rule_ports(sc, tok.c_str(), false, rps.rtn);
         break;
+    case FSM_STB:
+        rps.otn = parse_rule_open(sc, rps.rtn, true);
+        break;
     case FSM_SOB:
         rps.otn = parse_rule_open(sc, rps.rtn);
         break;
     case FSM_EOB:
     {
+        if ( rps.key.size() )
+            exec(FSM_END, tok, rps, sc);
         const char* extra = parse_rule_close(sc, rps.rtn, rps.otn);
         if ( extra )
             parse_body(extra, rps, sc);
@@ -465,6 +477,9 @@ void parse_stream(istream& is, struct SnortConfig* sc)
         if ( s->punct )
             punct = s->punct;
     }
+    if ( num )
+        ParseError("incomplete rule");
+
     //printf("chars = %d, tokens = %d\n", chars, tokens);
     //printf("lines = %d, comments = %d\n", lines, comments);
     //printf("rules = %d, keys = %d\n", rules, keys);
