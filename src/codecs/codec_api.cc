@@ -56,6 +56,9 @@ extern const BaseApi* cd_frag;
 extern const BaseApi* cd_gre;
 extern const BaseApi* cd_gtp;
 extern const BaseApi* cd_hopopts;
+extern const BaseApi* cd_ip4_embedded_in_icmp;
+extern const BaseApi* cd_ip6_embedded_in_icmp;
+extern const BaseApi* cd_prot_embedded_in_icmp;
 extern const BaseApi* cd_igmp;
 extern const BaseApi* cd_mobility;
 extern const BaseApi* cd_mpls;
@@ -74,6 +77,7 @@ extern const BaseApi* cd_vlan;
 #ifndef NO_NON_ETHER_DECODER
 extern const BaseApi* cd_eapol;
 extern const BaseApi* cd_linux_sll;
+extern const BaseApi* cd_ppp;
 extern const BaseApi* cd_wlan;
 
 #endif
@@ -109,6 +113,9 @@ const BaseApi* codecs[] =
     cd_gre,
     cd_gtp,
     cd_hopopts,
+    cd_ip4_embedded_in_icmp,
+    cd_ip6_embedded_in_icmp,
+    cd_prot_embedded_in_icmp,
     cd_igmp,
     cd_mobility,
     cd_mpls,
@@ -127,6 +134,7 @@ const BaseApi* codecs[] =
 #ifndef NO_NON_ETHER_DECODER
     cd_eapol,
     cd_linux_sll,
+    cd_ppp,
     cd_wlan,
 #endif
 

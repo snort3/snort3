@@ -5,6 +5,8 @@ set (PROTOCOL_HEADERS
     eth.h
     icmp4.h
     icmp6.h
+    ip.cc
+    ip.h
     ipv4.h
     ipv6.h
     gre.h

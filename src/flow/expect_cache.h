@@ -32,8 +32,8 @@ public:
     ~ExpectCache();
 
     int add_flow(
-        snort_ip* cliIP, uint16_t cliPort,
-        snort_ip* srvIP, uint16_t srvPort,
+        const sfip_t *cliIP, uint16_t cliPort,
+        const sfip_t *srvIP, uint16_t srvPort,
         uint8_t protocol, char direction, 
         FlowData*, int16_t appId = 0);
 
@@ -57,7 +57,7 @@ private:
     class ZHash* hash_table;
     struct ExpectNode* nodes;
     struct ExpectFlow* pool, *list;
-    snort_ip zeroed;
+    sfip_t zeroed;
 
     unsigned long expects, realized;
     unsigned long prunes, overflows;

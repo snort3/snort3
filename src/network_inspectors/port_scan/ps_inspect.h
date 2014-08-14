@@ -53,8 +53,8 @@ private:
     void ps_parse(SnortConfig*, char *);
 
     int ps_ignore_ip(
-        snort_ip_p scanner, uint16_t scanner_port,
-        snort_ip_p scanned, uint16_t scanned_port);
+        const sfip_t *scanner, uint16_t scanner_port,
+        const sfip_t *scanned, uint16_t scanned_port);
 
     int ps_filter_ignore(PS_PKT *ps_pkt);
     int ps_tracker_lookup(
@@ -64,7 +64,7 @@ private:
     int ps_proto_update_window(PS_PROTO *proto, time_t pkt_time);
 
     int ps_proto_update(
-        PS_PROTO *proto, int ps_cnt, int pri_cnt, snort_ip_p ip,
+        PS_PROTO *proto, int ps_cnt, int pri_cnt, const sfip_t *ip,
         u_short port, time_t pkt_time);
 
     int ps_tracker_update(

@@ -111,8 +111,8 @@ typedef struct s_HI_SESSION
 */
 typedef struct s_HI_SI_INPUT
 {
-    snort_ip sip;
-    snort_ip dip;
+    sfip_t sip;
+    sfip_t dip;
     unsigned short sport;
     unsigned short dport;
     unsigned char pdir;

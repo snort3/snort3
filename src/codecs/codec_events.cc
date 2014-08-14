@@ -26,7 +26,7 @@
 #include "snort.h"
 #include "packet_io/active.h"
 
-void codec_events::exec_udp_chksm_drop (Packet *)
+void codec_events::exec_udp_chksm_drop (const Packet* const/*p*/)
 {
     if( ScInlineMode() && ScUdpChecksumDrops() )
     {
@@ -36,7 +36,7 @@ void codec_events::exec_udp_chksm_drop (Packet *)
     }
 }
 
-void codec_events::exec_tcp_chksm_drop (Packet*)
+void codec_events::exec_tcp_chksm_drop (const Packet* const /*p*/)
 {
     if( ScInlineMode() && ScTcpChecksumDrops() )
     {
@@ -46,7 +46,7 @@ void codec_events::exec_tcp_chksm_drop (Packet*)
     }
 }
 
-void codec_events::decoder_event(Packet *p, CodecSid sid)
+void codec_events::decoder_event(const Packet* const p, CodecSid sid)
 {
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;
@@ -57,7 +57,7 @@ void codec_events::decoder_event(Packet *p, CodecSid sid)
     SnortEventqAdd(GID_DECODE, sid);
 }
 
-void codec_events::exec_ip_chksm_drop (Packet*)
+void codec_events::exec_ip_chksm_drop (const Packet* const /*p*/)
 {
     // TBD only set policy csum drop if policy inline
     // and delete this inline mode check
@@ -69,7 +69,7 @@ void codec_events::exec_ip_chksm_drop (Packet*)
     }
 }
 
-void codec_events::exec_icmp_chksm_drop (Packet*)
+void codec_events::exec_icmp_chksm_drop (const Packet* const /*p*/)
 {
     if( ScInlineMode() && ScIcmpChecksumDrops() )
     {
@@ -79,8 +79,10 @@ void codec_events::exec_icmp_chksm_drop (Packet*)
     }
 }
 
-void codec_events::decoder_alert_encapsulated(
-    Packet *p, CodecSid sid, const uint8_t *pkt, uint32_t len)
+void codec_events::decoder_alert_encapsulated(Packet* const p,
+                                              CodecSid sid,
+                                              const uint8_t *pkt,
+                                              uint32_t len)
 {
     decoder_event(p, sid);
 

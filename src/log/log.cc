@@ -155,9 +155,9 @@ void LogIPPkt(int type, Packet* p)
 
 void snort_print(Packet* p)
 {
-    if (p->iph != NULL)
+    if (p->ip_api.is_valid())
     {
-        LogIPPkt(text_log, GET_IPH_PROTO((p)), p);
+        LogIPPkt(text_log, p->ip_api.proto(), p);
     }
 #ifndef NO_NON_ETHER_DECODER
     else if (p->proto_bits & PROTO_BIT__ARP)

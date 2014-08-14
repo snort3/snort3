@@ -135,11 +135,11 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     {
         /* Attempt to decode the inner payload.
            There is a small chance that an encrypted next_header would become a
-           different valid next_header. The PKT_UNSURE_ENCAP flag tells the next
+           different valid next_header. The DECODE__UNSURE_ENCAP flag tells the next
            decoder stage to silently ignore invalid headers. */
-        p->packet_flags |= PKT_UNSURE_ENCAP;
+        p->decode_flags |= DECODE__UNSURE_ENCAP;
+        p->decode_flags |= DECODE__TRUST_ON_FAIL;
         const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
-        p->packet_flags |= PKT_ESP_LYR_PRESENT;
     }
     else
     {

@@ -86,8 +86,8 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
     int iServerSip;
     int iServerDip;
     int http_id_found = 0;
-    snort_ip sip;
-    snort_ip dip;
+    sfip_t sip;
+    sfip_t dip;
 
     //structure copy
     sip = SiInput->sip;
@@ -95,11 +95,11 @@ static int InitServerConf(HTTPINSPECT_CONF *GlobalConf,
 
     if (sip.family == AF_INET)
     {
-        sip.ip.u6_addr32[0] = ntohl(sip.ip.u6_addr32[0]);
+        sip.ip32[0] = ntohl(sip.ip32[0]);
     }
     if (dip.family == AF_INET)
     {
-        dip.ip.u6_addr32[0] = ntohl(dip.ip.u6_addr32[0]);
+        dip.ip32[0] = ntohl(dip.ip32[0]);
     }
 
     ServerConfDip = ServerConfSip = GlobalConf;

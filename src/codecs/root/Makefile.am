@@ -15,6 +15,7 @@ if ENABLE_NON_ETHER_DECODER
 if STATIC_CODECS
 libroot_codecs_a_SOURCES += \
 cd_linux_sll.cc \
+cd_ppp.cc \
 cd_wlan.cc \
 cd_wlan_module.h \
 cd_wlan_module.cc
@@ -34,15 +35,20 @@ cd_wlan_module.cc
 else
 ehlibdir = $(pkglibdir)/codecs
 
-ehlib_LTLIBRARIES = libcd_wlan.la
-libcd_wlan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_wlan_la_LDFLAGS = -export-dynamic -shared
-libcd_wlan_la_SOURCES =  cd_wlan.cc cd_wlan_module.h cd_wlan_module.cc
-
-ehlib_LTLIBRARIES += libcd_linux_sll.la
+ehlib_LTLIBRARIES = libcd_linux_sll.la
 libcd_linux_sll_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_linux_sll_la_LDFLAGS = -export-dynamic -shared
 libcd_linux_sll_la_SOURCES =  cd_linux_sll.cc
+
+ehlib_LTLIBRARIES += libcd_ppp.la
+libcd_ppp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_ppp_la_LDFLAGS = -export-dynamic -shared
+libcd_ppp_la_SOURCES =  cd_ppp.cc cd_ppp.h
+
+ehlib_LTLIBRARIES += libcd_wlan.la
+libcd_wlan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_wlan_la_LDFLAGS = -export-dynamic -shared
+libcd_wlan_la_SOURCES =  cd_wlan.cc cd_wlan_module.h cd_wlan_module.cc
 
 endif
 endif

@@ -105,7 +105,7 @@ typedef struct {
 typedef struct{
 
     int thd_id;
-    snort_ip ip;
+    sfip_t ip;
     PolicyId policyId;
 
 } THD_IP_NODE_KEY ;
@@ -114,7 +114,7 @@ typedef struct{
 
     unsigned gen_id;
     unsigned sig_id;
-    snort_ip ip;
+    sfip_t ip;
     PolicyId policyId;
 
 } THD_IP_GNODE_KEY ;
@@ -234,7 +234,7 @@ ThresholdObjects * sfthd_objs_new(void);
 void sfthd_objs_free(ThresholdObjects *);
 
 int sfthd_test_rule(SFXHASH *rule_hash, THD_NODE *sfthd_node,
-                    snort_ip_p sip, snort_ip_p dip, long curtime);
+                    const sfip_t *sip, const sfip_t *dip, long curtime);
 
 void * sfthd_create_rule_threshold(
    int id,
@@ -248,14 +248,14 @@ struct SnortConfig;
 int sfthd_create_threshold(
     SnortConfig*,
     ThresholdObjects *,
-    unsigned     gen_id,
-    unsigned     sig_id,
-    int          tracking,
-    int          type,
-    int          priority,
-    int          count,
-    int          seconds,
-    sfip_var_t*   ip_address
+    unsigned gen_id,
+    unsigned sig_id,
+    int tracking,
+    int type,
+    int priority,
+    int count,
+    int seconds,
+    sfip_var_t *ip_address
 );
 
 //  1: don't log due to event_filter
@@ -264,21 +264,21 @@ int sfthd_create_threshold(
 int sfthd_test_threshold(
     ThresholdObjects *,
     THD_STRUCT *,
-    unsigned     gen_id,
-    unsigned     sig_id,
-    snort_ip_p   sip,
-    snort_ip_p   dip,
-    long         curtime ) ;
+    unsigned gen_id,
+    unsigned sig_id,
+    const sfip_t *sip,
+    const sfip_t *dip,
+    long curtime ) ;
 
 
 SFXHASH * sfthd_new_hash(unsigned, size_t, size_t);
 
 int sfthd_test_local(
     SFXHASH *local_hash,
-    THD_NODE   * sfthd_node,
-    snort_ip_p   sip,
-    snort_ip_p   dip,
-    time_t       curtime );
+    THD_NODE *sfthd_node,
+    const sfip_t *sip,
+    const sfip_t *dip,
+    time_t curtime );
 
 #ifdef THD_DEBUG
 int sfthd_show_objects( THD_STRUCT * thd );

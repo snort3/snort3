@@ -213,23 +213,23 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
 
     // When rate filters kick in, event filters are still processed.
     // perform event filtering tests - impacts logging
-    if ( IPH_IS_VALID(p) )
+    if ( p->ip_api.is_valid() )
     {
         filterEvent = sfthreshold_test(
             otn->sigInfo.generator,
             otn->sigInfo.id,
-            GET_SRC_IP(p), GET_DST_IP(p),
+            p->ip_api.get_src(), p->ip_api.get_dst(),
             p->pkth->ts.tv_sec);
     }
     else
     {
-        snort_ip cleared;
-        IP_CLEAR(cleared);
+        sfip_t cleared;
+        sfip_clear(cleared);
 
         filterEvent = sfthreshold_test(
             otn->sigInfo.generator,
             otn->sigInfo.id,
-            IP_ARG(cleared), IP_ARG(cleared),
+            &cleared, &cleared,
             p->pkth->ts.tv_sec);
     }
 
@@ -552,33 +552,39 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
      * the inner IP offset as well */
     if (eval_data.p->packet_flags & PKT_IP_RULE)
     {
-        if (eval_data.p->outer_ip_data)
+        ip::IpApi tmp_api = eval_data.p->ip_api;
+        int8_t curr_layer = eval_data.p->num_layers - 1;
+
+        if (layer::set_inner_ip_api(eval_data.p,
+                                    eval_data.p->ip_api,
+                                    curr_layer) &&
+                (eval_data.p->ip_api != tmp_api))
         {
             const uint8_t *tmp_data = eval_data.p->data;
             uint16_t tmp_dsize = eval_data.p->dsize;
-            const IPHdr* tmp_iph = eval_data.p->iph;
-            void *tmp_ip4h = (void *)eval_data.p->ip4h;
-            void *tmp_ip6h = (void *)eval_data.p->ip6h;
-            eval_data.p->iph = eval_data.p->inner_iph;
-            eval_data.p->ip4h = &eval_data.p->inner_ip4h;
-            eval_data.p->ip6h = &eval_data.p->inner_ip6h;
-            eval_data.p->data = eval_data.p->ip_data;
-            eval_data.p->dsize = eval_data.p->ip_dsize;
 
             /* clear so we dont keep recursing */
             eval_data.p->packet_flags &= ~PKT_IP_RULE;
             eval_data.p->packet_flags |= PKT_IP_RULE_2ND;
 
-            /* Recurse, and evaluate with the inner IP */
-            rule_tree_match(id, tree, index, data, NULL);
+            do
+            {
+                eval_data.p->data = eval_data.p->ip_api.ip_data();
+                eval_data.p->dsize = eval_data.p->ip_api.pay_len();
 
+                /* Recurse, and evaluate with the inner IP */
+                rule_tree_match(id, tree, index, data, NULL);
+
+
+            } while (layer::set_inner_ip_api(eval_data.p,
+                                             eval_data.p->ip_api,
+                                             curr_layer) &&
+                        (eval_data.p->ip_api != tmp_api));
+
+            /*  cleanup restore original data & dsize */
             eval_data.p->packet_flags &= ~PKT_IP_RULE_2ND;
             eval_data.p->packet_flags |= PKT_IP_RULE;
 
-            /* restore original data & dsize */
-            eval_data.p->iph = tmp_iph;
-            eval_data.p->ip4h = (IP4Hdr*)tmp_ip4h;
-            eval_data.p->ip6h = (IP6Hdr*)tmp_ip6h;
             eval_data.p->data = tmp_data;
             eval_data.p->dsize = tmp_dsize;
         }
@@ -946,42 +952,30 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
     Mpse* so;
     int start_state;
     const uint8_t *tmp_payload;
+    ip::IpApi tmp_api;
+    int8_t curr_ip_layer = 0;
+    bool repeat = false;
     uint16_t tmp_dsize;
-    const IPHdr* tmp_iph;
-    void *tmp_ip6h;
-    void *tmp_ip4h;
-    char repeat = 0;
     FastPatternConfig *fp = snort_conf->fast_pattern_config;
     PROFILE_VARS;
 
     if (ip_rule)
     {
-        tmp_iph = p->iph;
-        tmp_ip6h = (void *)p->ip6h;
-        tmp_ip4h = (void *)p->ip4h;
+        // FIXIT -- Copying p->ip_data may be unnecessary because when
+        //          finished evaluating, ip_api will be the innermost
+        //          layer. Right now, ip_api should already be the
+        //          innermost layer
+        tmp_api = p->ip_api;
+
         tmp_payload = p->data;
         tmp_dsize = p->dsize;
 
-        /* Set the packet payload pointers to that of IP,
-         ** since this is an IP rule. */
-        if (p->outer_ip_data)
+        if (layer::set_outer_ip_api(p, p->ip_api, curr_ip_layer))
         {
-            p->iph = p->outer_iph;
-            p->ip6h = &p->outer_ip6h;
-            p->ip4h = &p->outer_ip4h;
-            p->data = p->outer_ip_data;
-            p->dsize = p->outer_ip_dsize;
+            p->data = p->ip_api.ip_data();
+            p->dsize = p->ip_api.pay_len();
             p->packet_flags |= PKT_IP_RULE;
-            repeat = 2;
-        }
-        else
-        {
-            if (p->ip_data)
-            {
-                p->data = p->ip_data;
-                p->dsize = p->ip_dsize;
-                p->packet_flags |= PKT_IP_RULE;
-            }
+            repeat = true;
         }
     }
     else
@@ -1206,33 +1200,31 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
             }
         }
 
-        if (ip_rule && p->outer_ip_data)
+        if (ip_rule)
         {
-            /* Evaluate again with the inner IPs */
-            p->iph = p->inner_iph;
-            p->ip6h = &p->inner_ip6h;
-            p->ip4h = &p->inner_ip4h;
-            p->data = p->ip_data;
-            p->dsize = p->ip_dsize;
-            p->packet_flags |= PKT_IP_RULE_2ND | PKT_IP_RULE;
-            repeat--;
+
+            /* Evaluate again with the next IP layer */
+            if (layer::set_outer_ip_api(p, p->ip_api, curr_ip_layer))
+            {
+                p->data = p->ip_api.ip_data();
+                p->dsize = p->ip_api.pay_len();
+                p->packet_flags |= PKT_IP_RULE_2ND | PKT_IP_RULE;
+            }
+            else
+            {
+                /* Set the data & dsize back to original values. */
+                p->data = tmp_payload;
+                p->dsize = tmp_dsize;
+                p->packet_flags &= ~(PKT_IP_RULE| PKT_IP_RULE_2ND);
+                repeat = false;
+            }
         }
     }
-    while(repeat != 0);
+    while(repeat);
 
 #ifdef PPM_MGR  /* Tag only used with PPM right now */
 fp_eval_header_sw_reset_ip:
 #endif
-    if (ip_rule)
-    {
-        /* Set the data & dsize back to original values. */
-        p->iph = tmp_iph;
-        p->ip6h = (IP6Hdr *)tmp_ip6h;
-        p->ip4h = (IP4Hdr *)tmp_ip4h;
-        p->data = tmp_payload;
-        p->dsize = tmp_dsize;
-        p->packet_flags &= ~(PKT_IP_RULE| PKT_IP_RULE_2ND);
-    }
 
     return 0;
 }
@@ -1483,7 +1475,7 @@ static inline int fpEvalHeaderIp(Packet *p, int ip_proto, OTNX_MATCH_DATA *omd)
 */
 int fpEvalPacket(Packet *p)
 {
-    int ip_proto = GET_IPH_PROTO(p);
+    int ip_proto = p->ip_api.proto();
     OTNX_MATCH_DATA *omd = &t_omd;
 
     /* Run UDP rules against the UDP header of Teredo packets */
@@ -1496,15 +1488,20 @@ int fpEvalPacket(Packet *p)
         int tmp_do_detect_content = do_detect_content;
         uint16_t tmp_dsize = p->dsize;
 
-        if (p->outer_udph)
-        {
-            p->udph = p->outer_udph;
-        }
-        p->sp = ntohs(p->udph->uh_sport);
-        p->dp = ntohs(p->udph->uh_dport);
-        p->data = (const uint8_t *)p->udph + UDP_HEADER_LEN;
-        if (p->outer_ip_dsize >  UDP_HEADER_LEN)
-            p->dsize = p->outer_ip_dsize - UDP_HEADER_LEN;
+        const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
+
+        p->udph = udph;
+        p->sp = ntohs(udph->uh_sport);
+        p->dp = ntohs(udph->uh_dport);
+        p->data = (const uint8_t *)udph + udp::UDP_HEADER_LEN;
+
+        ip::IpApi tmp_api;
+        int8_t curr_layer = 0;
+        layer::set_outer_ip_api(p, tmp_api, curr_layer);
+
+        if (tmp_api.pay_len() >  udp::UDP_HEADER_LEN)
+            p->dsize = tmp_api.pay_len() - udp::UDP_HEADER_LEN;
+
         if (p->dsize)
             do_detect_content = 1;
 
@@ -1569,7 +1566,7 @@ int fpEvalPacket(Packet *p)
 
 void fpEvalIpProtoOnlyRules(SF_LIST **ip_proto_only_lists, Packet *p, uint8_t proto_id)
 {
-    if ((p != NULL) && IPH_IS_VALID(p))
+    if ((p != NULL) && p->ip_api.is_valid())
     {
         SF_LIST *l = ip_proto_only_lists[proto_id];
         OptTreeNode *otn;

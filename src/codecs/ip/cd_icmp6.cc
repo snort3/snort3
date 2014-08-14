@@ -53,16 +53,11 @@ public:
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-    
 };
 
 
 
 } // anonymous namespace
-
-
-static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p);
 
 
 void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
@@ -75,7 +70,7 @@ void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 //--------------------------------------------------------------------
 
 bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
-    Packet* p, uint16_t &lyr_len, uint16_t & /* next_prot_id */)
+    Packet* p, uint16_t &lyr_len, uint16_t & next_prot_id )
 {
     if(raw_len < icmp6::hdr_min_len())
     {
@@ -86,7 +81,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    p->icmp6h = reinterpret_cast<icmp6::ICMP6Hdr*>(const_cast<uint8_t*>(raw_pkt));
+    const icmp6::ICMP6Hdr* icmp6h = reinterpret_cast<const icmp6::ICMP6Hdr*>(raw_pkt);
     p->icmph = reinterpret_cast<const ICMPHdr*>(raw_pkt); /* This is needed for icmp rules */
 
 
@@ -95,21 +90,22 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
     {
         uint16_t csum;
 
-        if(IS_IP4(p))
+        if(p->ip_api.is_ip4())
         {
-            csum = checksum::cksum_add((uint16_t *)(p->icmp6h), raw_len);
+            csum = checksum::cksum_add((uint16_t *)(icmp6h), raw_len);
         }
         /* IPv6 traffic */
         else
         {
             checksum::Pseudoheader6 ph6;
-            COPY4(ph6.sip, p->ip6h->ip_src.ip32);
-            COPY4(ph6.dip, p->ip6h->ip_dst.ip32);
+            ip::IpApi *ip_api = &p->ip_api;
+            COPY4(ph6.sip, ip_api->get_src()->ip32);
+            COPY4(ph6.dip, ip_api->get_dst()->ip32);
             ph6.zero = 0;
-            ph6.protocol = GET_IPH_PROTO(p);
+            ph6.protocol = ip_api->proto();
             ph6.len = htons((u_short)raw_len);
 
-            csum = checksum::icmp_cksum((uint16_t *)(p->icmp6h), raw_len, &ph6);
+            csum = checksum::icmp_cksum((uint16_t *)(icmp6h), raw_len, &ph6);
         }
         if(csum)
         {
@@ -127,9 +123,9 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
     p->data = raw_pkt + icmp6::hdr_min_len();
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP type: %d   code: %d\n",
-                p->icmp6h->type, p->icmp6h->code););
+                icmp6h->type, icmp6h->code););
 
-    switch(p->icmp6h->type)
+    switch(icmp6h->type)
     {
         case icmp6::Icmp6Types::ECHO:
         case icmp6::Icmp6Types::REPLY:
@@ -141,7 +137,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 p->dsize -= sizeof(ICMPHdr::icmp_hun.idseq);
                 p->data += sizeof(ICMPHdr::icmp_hun.idseq);
 
-                if ( ipv6::is_multicast(p->ip6h->ip_dst.ip.u6_addr8[0]) )
+                if ( ipv6::is_multicast(p->ip_api.get_dst()->ip8[0]) )
                     codec_events::decoder_event(p, DECODE_ICMP6_DST_MULTICAST);
             }
             else
@@ -152,7 +148,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
-                p->icmp6h = NULL;
                 return false;
             }
             break;
@@ -170,7 +165,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                     codec_events::decoder_event(p, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
                 }
                 lyr_len = icmp6::hdr_normal_len();
-                DecodeICMPEmbeddedIP6(p->data, p->dsize, p);
+                next_prot_id = IP_EMBEDDED_IN_ICMP6;
             }
             else
             {
@@ -180,7 +175,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
-                p->icmp6h = NULL;
                 return false;
             }
             break;
@@ -194,19 +188,19 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 p->data += 4;
                 p->dsize -= 4;
 
-                if (p->icmp6h->type == icmp6::Icmp6Types::UNREACH)
+                if (icmp6h->type == icmp6::Icmp6Types::UNREACH)
                 {
-                    if (p->icmp6h->code == 2)
+                    if (icmp6h->code == 2)
                     {
                         codec_events::decoder_event(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE);
                     }
-                    else if (p->icmp6h->code > 6)
+                    else if (icmp6h->code > 6)
                     {
                         codec_events::decoder_event(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
                     }
                 }
                 lyr_len = icmp6::hdr_normal_len();
-                DecodeICMPEmbeddedIP6(p->data, p->dsize, p);
+                next_prot_id = IP_EMBEDDED_IN_ICMP6;
             }
             else
             {
@@ -216,7 +210,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
-                p->icmp6h = NULL;
                 return false;
             }
             break;
@@ -225,7 +218,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             if (p->dsize >= (sizeof(ICMP6RouterAdvertisement) - icmp6::hdr_min_len()))
             {
                 ICMP6RouterAdvertisement *ra = (ICMP6RouterAdvertisement *)raw_pkt;
-                if (p->icmp6h->code != 0)
+                if (icmp6h->code != 0)
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_ADVERT_BAD_CODE);
                 }
@@ -243,7 +236,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
-                p->icmp6h = NULL;
                 return false;
             }
             break;
@@ -270,7 +262,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
-                p->icmp6h = NULL;
                 return false;
             }
             break;
@@ -297,14 +288,13 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
-                p->icmp6h = NULL;
                 return false;
             }
             break;
 
         default:
                 DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "WARNING: ICMP6_TYPE (type %d).\n", p->icmp6h->type););
+                    "WARNING: ICMP6_TYPE (type %d).\n", icmp6h->type););
             codec_events::decoder_event(p, DECODE_ICMP6_TYPE_OTHER);
 
             lyr_len = icmp6::hdr_min_len();
@@ -317,6 +307,9 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 }
 
 
+// TODO:  delete (along with any mention of this function)
+
+#if 0
 
 /*
  * Function: DecodeICMPEmbeddedIP6(uint8_t *, const uint32_t, Packet *)
@@ -414,6 +407,8 @@ static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet
     return;
 }
 
+#endif
+
 
 /******************************************************************
  ******************** E N C O D E R  ******************************
@@ -433,7 +428,7 @@ typedef struct {
 } // namespace
 
 
-bool Icmp6Codec::encode (EncState* enc, Buffer* out, const uint8_t *raw_in)
+bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
 {
     checksum::Pseudoheader6 ps6;
     IcmpHdr* ho;
@@ -444,9 +439,9 @@ bool Icmp6Codec::encode (EncState* enc, Buffer* out, const uint8_t *raw_in)
 
     // copy first 8 octets of original ip data (ie udp header)
     // TBD: copy up to minimum MTU worth of data
-    if (!update_buffer(out, icmp4::unreach_data()))
+    if (!update_buffer(out, icmp::unreach_data()))
         return false;
-    memcpy(out->base, raw_in, icmp4::unreach_data());
+    memcpy(out->base, raw_in, icmp::unreach_data());
 
 
     // copy original ip header
@@ -470,8 +465,8 @@ bool Icmp6Codec::encode (EncState* enc, Buffer* out, const uint8_t *raw_in)
     enc->proto = IPPROTO_ICMPV6;
     int len = buff_diff(out, (uint8_t *)ho);
 
-    memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.s6_addr, sizeof(ps6.sip));
-    memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.s6_addr, sizeof(ps6.dip));
+    memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
+    memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
     ps6.zero = 0;
     ps6.protocol = IPPROTO_ICMPV6;
     ps6.len = htons((uint16_t)(len));
@@ -491,8 +486,8 @@ bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
         checksum::Pseudoheader6 ps6;
         h->cksum = 0;
 
-        memcpy(ps6.sip, &p->ip6h->ip_src.ip32, sizeof(ps6.sip));
-        memcpy(ps6.dip, &p->ip6h->ip_dst.ip32, sizeof(ps6.dip));
+        memcpy(ps6.sip, &p->ip_api.get_src()->ip32, sizeof(ps6.sip));
+        memcpy(ps6.dip, &p->ip_api.get_dst()->ip32, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)*len);
@@ -500,12 +495,6 @@ bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
     }
 
     return true;
-}
-
-void Icmp6Codec::format (EncodeFlags, const Packet*, Packet* c, Layer* lyr)
-{
-    // TBD handle nested icmp6 layers
-    c->icmp6h = (ICMP6Hdr*)lyr->start;
 }
 
 //-------------------------------------------------------------------------

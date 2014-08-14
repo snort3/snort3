@@ -96,6 +96,7 @@ static inline bool update_buffer(Buffer* buf, size_t n)
 }
 
 
+
 class Codec
 {
 public:
@@ -115,6 +116,8 @@ public:
 
     // Get the codec's name
     inline const char* get_name(){return name; };
+    // used for backwards compatability.
+    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     // Registers this Codec's data link type (as defined by libpcap)
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes
@@ -139,8 +142,6 @@ public:
     virtual bool update(Packet*, Layer*, uint32_t* /*len*/) { return true; };
     // formatter
     virtual void format(EncodeFlags, const Packet* /*orig*/, Packet* /*clone*/, Layer*) {};
-    // used for backwards compatability.
-    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
 
 
 protected:
@@ -171,14 +172,14 @@ protected:
         return (((uint8_t*)(buf->base+buf->end))-(uint8_t*)ho);
     }
 
-    static inline icmp4::IcmpCode get_icmp_code (EncodeType et)
+    static inline icmp::IcmpCode get_icmp_code (EncodeType et)
     {
         switch ( et ) {
-            case EncodeType::ENC_UNR_NET:  return icmp4::IcmpCode::NET_UNREACH;
-            case EncodeType::ENC_UNR_HOST: return icmp4::IcmpCode::HOST_UNREACH;
-            case EncodeType::ENC_UNR_PORT: return icmp4::IcmpCode::PORT_UNREACH;
-            case EncodeType::ENC_UNR_FW:   return icmp4::IcmpCode::PKT_FILTERED;
-            default: return icmp4::IcmpCode::PORT_UNREACH;
+            case EncodeType::ENC_UNR_NET:  return icmp::IcmpCode::NET_UNREACH;
+            case EncodeType::ENC_UNR_HOST: return icmp::IcmpCode::HOST_UNREACH;
+            case EncodeType::ENC_UNR_PORT: return icmp::IcmpCode::PORT_UNREACH;
+            case EncodeType::ENC_UNR_FW:   return icmp::IcmpCode::PKT_FILTERED;
+            default: return icmp::IcmpCode::PORT_UNREACH;
         }
     }
 

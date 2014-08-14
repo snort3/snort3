@@ -19,8 +19,8 @@
  */
 // keywords_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef KEYWORDS_API_H
-#define KEYWORDS_API_H
+#ifndef KEYWORD_STATES_KEYWORDS_API_H
+#define KEYWORD_STATES_KEYWORDS_API_H
 
 #include <vector>
 #include <string>

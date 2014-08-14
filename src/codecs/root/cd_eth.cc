@@ -55,9 +55,14 @@ public:
 
 } // namespace
 
+#ifndef DLT_PPP_ETHER
+// For PPP over Eth, the first layer is ethernet.
+constexpr int DLT_PPP_ETHER = 51;
+#endif
 
 void EthCodec::get_data_link_type(std::vector<int>&v)
 {
+    v.push_back(DLT_PPP_ETHER);
     v.push_back(DLT_EN10MB);
 }
 

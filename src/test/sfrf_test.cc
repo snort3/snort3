@@ -946,12 +946,12 @@ static int EventTest (EventData* p) {
     // this is the only acceptable public value for op
     SFRF_COUNT_OPERATION op = SFRF_COUNT_INCREMENT;
 
-    snort_ip sip, dip;
+    sfip_t sip, dip;
     sfip_pton(p->sip, &sip);
     sfip_pton(p->dip, &dip);
 
     status = SFRF_TestThreshold(
-        &rfc, p->gid, p->sid, IP_ARG(sip), IP_ARG(dip), curtime, op);
+        &rfc, p->gid, p->sid, &sip, &dip, curtime, op);
 
     if ( status >= RULE_TYPE__MAX ) status -= RULE_TYPE__MAX;
 

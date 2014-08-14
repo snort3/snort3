@@ -79,7 +79,7 @@ namespace tcp
 namespace detail
 {
 
-const uint8_t TCP_HEADER_LEN = 20;
+constexpr uint8_t TCP_HEADER_LEN = 20;
 
 } // namespace detail
 
@@ -260,8 +260,6 @@ inline void set_tcp_x2(TCPHdr* tcph, uint8_t value)
                              Intended to replace MD5 Signature Option [RFC2385] */
 
 #define TCP_HEADER_LEN tcp::hdr_len()
-
-#define TCPHdr tcp::TCPHdr
 
 
 #endif /* TCP_H */

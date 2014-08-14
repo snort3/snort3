@@ -488,9 +488,9 @@ static inline int FTPResetsession(FTP_SESSION *Ftpsession)
     Ftpsession->server_conf = NULL;
 
     Ftpsession->encr_state = NO_STATE;
-    IP_CLEAR(Ftpsession->clientIP);
+    sfip_clear(Ftpsession->clientIP);
     Ftpsession->clientPort = 0;
-    IP_CLEAR(Ftpsession->serverIP);
+    sfip_clear(Ftpsession->serverIP);
     Ftpsession->serverPort = 0;
     Ftpsession->data_chan_state = NO_STATE;
     Ftpsession->data_chan_index = -1;
@@ -596,8 +596,8 @@ int FTPsessionInspection(
  */
 int SetSiInput(FTPP_SI_INPUT *SiInput, Packet *p)
 {   
-    IP_COPY_VALUE(SiInput->sip, GET_SRC_IP(p));
-    IP_COPY_VALUE(SiInput->dip, GET_DST_IP(p));
+    sfip_copy(SiInput->sip, p->ip_api.get_src());
+    sfip_copy(SiInput->dip, p->ip_api.get_dst());
     SiInput->sport = p->sp;
     SiInput->dport = p->dp;
         

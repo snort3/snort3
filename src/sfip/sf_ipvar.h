@@ -125,7 +125,7 @@ void sfvar_free(sfip_var_t *var);
 
 /* Returns non-zero if ip is contained in 'var', 0 otherwise */
 /* If either argument is NULL, 0 is returned. */
-int sfvar_ip_in(sfip_var_t *var, sfip_t *ip);
+int sfvar_ip_in(sfip_var_t *var, const sfip_t *ip);
 
 /* Prints the variable "var" to the file descriptor 'f' */
 void sfvar_print(const char *prefix, sfip_var_t *var);

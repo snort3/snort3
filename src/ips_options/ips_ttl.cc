@@ -88,12 +88,12 @@ int TtlOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->ip_api.is_valid())
         return rval;
 
     MODULE_PROFILE_START(ttlCheckPerfStats);
 
-    if ( config.eval(GET_IPH_TTL(p)) )
+    if ( config.eval(p->ip_api.ttl()) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(ttlCheckPerfStats);

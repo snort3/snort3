@@ -151,7 +151,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->ip_api.is_valid())
     {
         return rval;
     }
@@ -160,13 +160,13 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckFragBits: ");
            DebugMessage(DEBUG_PLUGIN, "[rule: 0x%X:%d   pkt: 0x%X] ",
-                fb->frag_bits, fb->mode, (GET_IPH_OFF(p)&bitmask)););
+                fb->frag_bits, fb->mode, (p->ip_api.off(p)&bitmask)););
 
     switch(fb->mode)
     {
         case FB_NORMAL:
             /* check if the rule bits match the bits in the packet */
-            if(fb->frag_bits == (GET_IPH_OFF(p)&bitmask))
+            if(fb->frag_bits == (p->ip_api.off(p)&bitmask))
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got Normal bits match\n"););
                 rval = DETECTION_OPTION_MATCH;
@@ -179,7 +179,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 
         case FB_NOT:
             /* check if the rule bits don't match the bits in the packet */
-            if((fb->frag_bits & (GET_IPH_OFF(p)&bitmask)) == 0)
+            if((fb->frag_bits & (p->ip_api.off(p)&bitmask)) == 0)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got NOT bits match\n"););
                 rval = DETECTION_OPTION_MATCH;
@@ -192,7 +192,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 
         case FB_ALL:
             /* check if the rule bits are present in the packet */
-            if((fb->frag_bits & (GET_IPH_OFF(p)&bitmask)) == fb->frag_bits)
+            if((fb->frag_bits & (p->ip_api.off(p)&bitmask)) == fb->frag_bits)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ALL bits match\n"););
                 rval = DETECTION_OPTION_MATCH;
@@ -205,7 +205,7 @@ int FragBitsOption::eval(Cursor&, Packet *p)
 
         case FB_ANY:
             /* check if any of the rule bits match the bits in the packet */
-            if((fb->frag_bits & (GET_IPH_OFF(p)&bitmask)) != 0)
+            if((fb->frag_bits & (p->ip_api.off(p)&bitmask)) != 0)
             {
                 DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Got ANY bits match\n"););
                 rval = DETECTION_OPTION_MATCH;

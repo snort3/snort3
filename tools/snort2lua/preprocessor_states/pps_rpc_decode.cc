@@ -24,8 +24,8 @@
 #include <string>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
+#include "preprocessor_states/pps_binder.h"
 
 namespace preprocessors
 {
@@ -46,8 +46,13 @@ bool RpcDecode::convert(std::istringstream& data_stream)
 {
 
     bool retval = true;
-    std::string port_list = std::string();
     std::string keyword;
+
+    // adding the binder entry
+    Binder bind(ld);
+    bind.set_when_proto("tcp");
+    bind.set_use_type("rpc_decode");
+    std::string port_list = std::string();
 
     ld->open_table("rpc_decode");
     
@@ -68,7 +73,7 @@ bool RpcDecode::convert(std::istringstream& data_stream)
             ld->add_deleted_comment("no_alert_incomplete");
 
         else if (isdigit(keyword[0]))
-            port_list += ' ' + keyword;
+            bind.add_when_port(keyword);
 
         else
             tmpval = false;
@@ -76,9 +81,6 @@ bool RpcDecode::convert(std::istringstream& data_stream)
         if (retval)
             retval = tmpval;
     }
-
-    if (!port_list.empty())
-        ld->add_comment_to_table("add port to binding --> " + port_list);
 
     return retval;   
 }

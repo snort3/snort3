@@ -74,7 +74,7 @@ bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         for(i=0; i< (int) p->ip_option_count; i++) {
             /* All IGMPv2 packets contain IP option code 148 (router alert).
                This vulnerability only applies to IGMPv3, so return early. */
-            if (ipv4::is_opt_rtralt(p->ip_options[i].code)) {
+            if (p->ip_options[i].is_opt_rtralt()) {
                 return true; /* No alert. */
             }
 

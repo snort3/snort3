@@ -40,7 +40,7 @@
 #endif
 
 typedef struct {
-    snort_ip_p ip;
+    const sfip_t *ip;
     int bits;
 } IPLOOKUP;
 
@@ -496,7 +496,7 @@ static int _dir_sub_insert(IPLOOKUP *ip, int length, int cur_len, INFO ptr,
  * @param len       Number of bits of the IP used for lookup
  * @param ptr       Information to be associated with this IP range
  * @param master_table    The table that describes all, returned by dir_new */
-int sfrt_dir_flat_insert(snort_ip_p ip, int len, word data_index,
+int sfrt_dir_flat_insert(const sfip_t *ip, int len, word data_index,
         int behavior, TABLE_PTR table_ptr, updateEntryInfoFunc updateEntry, INFO *data)
 {
     dir_table_flat_t *root;
@@ -580,7 +580,7 @@ static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP *ip, TABLE_PTR table_ptr)
 }
 
 /* Lookup information associated with the value "ip" */
-tuple_flat_t sfrt_dir_flat_lookup(snort_ip_p ip, TABLE_PTR table_ptr)
+tuple_flat_t sfrt_dir_flat_lookup(const sfip_t *ip, TABLE_PTR table_ptr)
 {
     dir_table_flat_t *root;
     uint8_t *base = (uint8_t *)segment_basePtr();

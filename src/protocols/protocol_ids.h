@@ -47,27 +47,30 @@
  * http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
  */
 
-const uint16_t IPPROTO_ID_HOPOPTS = 0;
-const uint16_t IPPROTO_ID_ICMPV4 = 1;
-const uint16_t IPPROTO_ID_IPIP = 4;
-const uint16_t IPPROTO_ID_IPV6 = 41;
-const uint16_t IPPROTO_ID_ROUTING = 43;
-const uint16_t IPPROTO_ID_FRAGMENT = 44;
-const uint16_t IPPROTO_ID_GRE = 47;
-const uint16_t IPPROTO_ID_ESP = 50;
-const uint16_t IPPROTO_ID_AH = 51; // RFC 4302
-const uint16_t IPPROTO_ID_ICMPV6 = 58;
-const uint16_t IPPROTO_ID_NONEXT = 59;
-const uint16_t IPPROTO_ID_DSTOPTS = 60;
+constexpr uint16_t IPPROTO_ID_HOPOPTS = 0;
+constexpr uint16_t IPPROTO_ID_ICMPV4 = 1;
+constexpr uint16_t IPPROTO_ID_IPIP = 4;
+constexpr uint16_t IPPROTO_ID_IPV6 = 41;
+constexpr uint16_t IPPROTO_ID_ROUTING = 43;
+constexpr uint16_t IPPROTO_ID_FRAGMENT = 44;
+constexpr uint16_t IPPROTO_ID_GRE = 47;
+constexpr uint16_t IPPROTO_ID_ESP = 50;
+constexpr uint16_t IPPROTO_ID_AH = 51; // RFC 4302
+constexpr uint16_t IPPROTO_ID_ICMPV6 = 58;
+constexpr uint16_t IPPROTO_ID_NONEXT = 59;
+constexpr uint16_t IPPROTO_ID_DSTOPTS = 60;
 
 
 /*
  *  Undefined Protocol!
  */
 
-const uint16_t FINISHED_DECODE = 0x0100;  // Indicates Codecs have succesfully decoded packet
-const uint16_t PROTOCOL_TEREDO = 0x0101;
-const uint16_t PROTOCOL_GTP = 0x0102;
+constexpr uint16_t FINISHED_DECODE = 0x0100;  // Indicates Codecs have succesfully decoded packet
+constexpr uint16_t PROTOCOL_TEREDO = 0x0101;
+constexpr uint16_t PROTOCOL_GTP = 0x0102;
+constexpr uint16_t IP_EMBEDDED_IN_ICMP4 = 0x0103;
+constexpr uint16_t IP_EMBEDDED_IN_ICMP6 = 0x0104;
+constexpr uint16_t PROT_EMBEDDED_IN_ICMP = 0x0105;
 
 
 
@@ -81,17 +84,15 @@ const uint16_t PROTOCOL_GTP = 0x0102;
  */
 
 
-const uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
-const uint16_t ETHERTYPE_IPV4 = 0x0800;
-const uint16_t ETHERTYPE_REVARP = 0x8035;
-const uint16_t ETHERTYPE_ARP = 0x0806;
-const uint16_t ETHERTYPE_8021Q = 0x8100;
-const uint16_t ETHERTYPE_IPX = 0x8137;
-const uint16_t ETHERTYPE_IPV6 = 0x86dd;
-const uint16_t ETHERTYPE_PPP = 0x880B;
-const uint16_t ETHERTYPE_EAPOL = 0x888e;
+constexpr uint16_t ETHERTYPE_TRANS_ETHER_BRIDGING = 0x6558;
+constexpr uint16_t ETHERTYPE_IPV4 = 0x0800;
+constexpr uint16_t ETHERTYPE_REVARP = 0x8035;
+constexpr uint16_t ETHERTYPE_ARP = 0x0806;
+constexpr uint16_t ETHERTYPE_8021Q = 0x8100;
+constexpr uint16_t ETHERTYPE_IPX = 0x8137;
+constexpr uint16_t ETHERTYPE_IPV6 = 0x86dd;
+constexpr uint16_t ETHERTYPE_PPP = 0x880B;
+constexpr uint16_t ETHERTYPE_EAPOL = 0x888e;
 
 
 #endif
-
-

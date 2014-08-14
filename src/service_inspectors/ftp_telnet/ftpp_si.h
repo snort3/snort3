@@ -163,9 +163,9 @@ typedef struct s_FTP_SESSION
     int data_chan_index;
     int data_xfer_index;
     int data_xfer_dir;
-    snort_ip      clientIP;
+    sfip_t      clientIP;
     uint16_t clientPort;
-    snort_ip      serverIP;
+    sfip_t      serverIP;
     uint16_t serverPort;
 
     /* A file is being transfered on ftp-data channel */
@@ -246,8 +246,8 @@ public:
  */
 struct FTPP_SI_INPUT
 {
-    snort_ip sip;
-    snort_ip dip;
+    sfip_t sip;
+    sfip_t dip;
     unsigned short sport;
     unsigned short dport;
     unsigned char pdir;

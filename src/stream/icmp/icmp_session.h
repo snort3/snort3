@@ -31,7 +31,7 @@ public:
     IcmpSession(Flow*);
 
     bool setup(Packet*);
-    void update_direction(char dir, snort_ip*, uint16_t port);
+    void update_direction(char dir, const sfip_t*, uint16_t port);
     int process(Packet*);
     void clear();
 

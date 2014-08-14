@@ -17,16 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// util.h author Josh Rosenbaum <jrosenba@cisco.com>
+// s2l_util.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef S2L_UTIL_H
+#define S2L_UTIL_H
 
 
 #include <string>
 #include <vector>
-#include <algorithm> 
-#include <functional> 
+#include <algorithm>
+#include <functional>
 #include <cctype>
 #include <locale>
 #include <sstream>

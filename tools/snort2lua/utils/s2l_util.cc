@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// util.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// s2l_util.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <algorithm> 
@@ -29,7 +29,8 @@
 #include <string>
 #include <cstring>
 #include <sstream>
-#include "utils/snort2lua_util.h"
+
+#include "utils/s2l_util.h"
 #include "conversion_state.h"
 #include "data/dt_data.h"
 
@@ -99,7 +100,7 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
     }
     return str_len;
 }
-    
+
 bool get_string(std::istringstream& stream,
                 std::string& option,
                 const std::string delimeters)
@@ -181,37 +182,5 @@ bool case_compare(std::string arg1, std::string arg2)
         return true;
     return false;
 }
-
-#if 0
-bool is_textfile_empty( const char* filename )
-{
-    string   s;
-    ifstream f( filename, ios::binary );
-
-    // Check for UTF-8 BOM
-    if (f.peek() == 0xEF)
-    {
-        f.get();
-        if (f.get() != 0xBB)
-            return false;
-        if (f.get() != 0xBF)
-            return false;
-    }
-
-    // Scan every line of the file for non-whitespace characters
-    while (getline( f, s ))
-    {
-        if (s.find_first_not_of(
-                    " \t\n\v\f\r" // whitespace
-                    "\0\xFE\xFF"  // non-printing (used in various Unicode encodings)
-                    ) != string::npos)
-            return false;
-    }
-
-    // If we get this far, then the file only contains whitespace
-    // (or its size is zero)
-    return true;
-}
-#endif
 
 } // namespace util

@@ -43,7 +43,7 @@ int ftpp_ui_client_lookup_add(CLIENT_LOOKUP *ClientLookup, sfip_t * IP,
                             FTP_CLIENT_PROTO_CONF *ClientConf);
 
 FTP_CLIENT_PROTO_CONF *ftpp_ui_client_lookup_find(CLIENT_LOOKUP *ClientLookup, 
-                                            snort_ip_p Ip, int *iError);
+                                            const sfip_t *Ip, int *iError);
 FTP_CLIENT_PROTO_CONF *ftpp_ui_client_lookup_first(CLIENT_LOOKUP *ClientLookup,
                                             int *iError);
 FTP_CLIENT_PROTO_CONF *ftpp_ui_client_lookup_next(CLIENT_LOOKUP *ClientLookup,

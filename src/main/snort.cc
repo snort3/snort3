@@ -755,8 +755,8 @@ static void set_policy(Packet*)  // FIX SSN implement based on bindings
    // for now need to just get stream_* inspectors and call appropriately 
 #if 0
     int vlanId = (p->vh) ? vlan::vth_vlan(p->vh) : -1;
-    snort_ip_p srcIp = (p->iph) ? GET_SRC_IP((p)) : (snort_ip_p)0;
-    snort_ip_p dstIp = (p->iph) ? GET_DST_IP((p)) : (snort_ip_p)0;
+    const sfip_t *srcIp = p->ip_api.get_src(); // returns nullptr if not set
+    const sfip_t *dstIp = p->ip_api.get_dst();
 
     //set policy id for this packet
     setCurrentPolicy(snort_conf, sfGetApplicablePolicyId(

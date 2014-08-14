@@ -26,7 +26,7 @@
 #include "main/snort_types.h"
 #include "protocols/ipv4.h"
 
-namespace icmp4
+namespace icmp
 {
 
 namespace detail
@@ -176,7 +176,7 @@ struct ICMPHdr
         /* IP header for unreach */
         struct ih_ip
         {
-            ipv4::IPHdr *ip;
+            ip::IPHdr *ip;
             /* options and then 64 bits of data */
         } ip;
 
@@ -224,12 +224,12 @@ static inline uint8_t unreach_data()
     return detail::ICMP_UNREACH_DATA;
 }
 
-} //namespace icmp4
+} //namespace icmp
 
 
 
-typedef icmp4::ICMPbaseHdr ICMPbaseHdr;
-typedef icmp4::ICMPHdr ICMPHdr;
+typedef icmp::ICMPbaseHdr ICMPbaseHdr;
+typedef icmp::ICMPHdr ICMPHdr;
 
 #ifndef ICMP_ECHOREPLY
 const uint8_t ICMP_ECHOREPLY = 0;    /* Echo Reply                   */

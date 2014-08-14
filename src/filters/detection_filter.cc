@@ -59,7 +59,7 @@ void detection_filter_print_config(DetectionFilterConfig*)
 
 int detection_filter_test (
     void* pv,
-    snort_ip_p sip, snort_ip_p dip,
+    const sfip_t *sip, const sfip_t *dip,
     long curtime )
 {
     if (pv == NULL)

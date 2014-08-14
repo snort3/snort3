@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
+#include "preprocessor_states/pps_binder.h"
 
 namespace preprocessors
 {
@@ -58,6 +58,10 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
+    Binder bind(ld);
+
+    bind.set_when_proto("tcp");
+    bind.set_use_type("http_server");
 
     if(!(data_stream >> keyword) || keyword.compare("server"))
     {
@@ -73,28 +77,26 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     }
     else
     {
-        ld->open_table("http_server_" + std::to_string(binding_id));
+        std::string table_name = "http_server_" + std::to_string(binding_id);
+        bind.set_use_name(table_name);
+        ld->open_table(table_name);
         binding_id++;
-        ld->add_comment_to_table("Unable to create an http_inspect_server binding at this time!!!");
 
-        // TODO --   add some bindings here!!
         if (!keyword.compare("{"))
         {
-            std::string list, tmp;
+            std::string tmp;
 
             while (data_stream >> tmp && tmp.compare("}"))
-                list += tmp;
+                bind.add_when_net(tmp);
 
             if (!data_stream.good())
                 return false;
 
-            // this is an ip address list
         }
         else
         {
-            // this is an ip address
+            bind.add_when_net(keyword);
         }
-        // CREATE A BINDING HERE!!
     }
 
     // parse the file configuration
@@ -254,9 +256,18 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("ports"))
         {
+            std::string tmp = "";
             ld->add_diff_option_comment("ports", "bindings");
-            ld->add_comment_to_table("check bindings table for port information");
-            tmpval = parse_bracketed_unsupported_list("ports", data_stream);
+
+            if ((data_stream >> keyword) && !keyword.compare("{"))
+            {
+                while (data_stream >> keyword && keyword.compare("}"))
+                    bind.add_when_port(keyword);
+            }
+            else
+            {
+                tmpval = false;
+            }
         }
 
         else if (!keyword.compare("small_chunk_length"))
@@ -305,14 +316,9 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         else if (!keyword.compare("profile"))
         {
             if (data_stream >> keyword)
-            {
                 tmpval = ld->add_option_to_table("profile", keyword);
-            }
             else
-            {
-                ld->add_comment_to_table("Unable to convert keyword 'profile'");
                 tmpval = false;
-            }
         }
 
         else

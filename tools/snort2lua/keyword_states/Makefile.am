@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 noinst_LIBRARIES = libkeyword_states.a
 
 libkeyword_states_a_SOURCES = \
+kws_attribute_table.cc \
 kws_config.cc \
 kws_event_filter.cc \
 kws_file.cc \

@@ -43,7 +43,7 @@ target_link_libraries(managers
     search_engines
     parser
     codecs
-    actions
+    ips_actions
 )
 
 install (FILES ${LUA_INCLUDES}

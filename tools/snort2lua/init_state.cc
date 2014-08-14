@@ -25,7 +25,7 @@
 #include <iostream>
 #include <string>
 #include "init_state.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include "keyword_states/keywords_api.h"
 
 
