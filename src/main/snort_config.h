@@ -149,7 +149,6 @@ struct SnortConfig
     char* respond_device;
     uint8_t *eth_dst;
 
-    char* react_page;
     const char* output;
 
     //------------------------------------------------------

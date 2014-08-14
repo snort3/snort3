@@ -263,9 +263,6 @@ void SnortConfFree(SnortConfig *sc)
 
     InspectorManager::delete_config(sc);
 
-    if ( sc->react_page )
-        free(sc->react_page);
-
     if ( sc->daq_type )
         free(sc->daq_type);
 

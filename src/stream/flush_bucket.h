@@ -16,14 +16,57 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// parse_stream.h author Russ Combs <rucombs@cisco.com>
+// flush_bucket.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef PARSE_STREAM_H
-#define PARSE_STREAM_H
+#ifndef FLUSH_BUCKET_H
+#define FLUSH_BUCKET_H
 
-#include <istream>
+#include "main/snort_types.h"
+#include "main/thread.h"
 
-void parse_stream(std::istream&, struct SnortConfig*);
+class FlushBucket
+{
+public:
+    virtual ~FlushBucket() { };
+    virtual uint16_t get_next() = 0;
+
+    static uint16_t get_size();
+    static void set(FlushBucket*);
+    static void clear();
+
+protected:
+    FlushBucket() { };
+    static FlushBucket* flush_bucket;
+};
+
+class ConstFlushBucket : public FlushBucket
+{
+public:
+    ConstFlushBucket(uint16_t sz)
+    { size = sz; };
+
+    uint16_t get_next()
+    { return size; };
+
+private:
+    uint16_t size;
+};
+
+class StaticFlushBucket : public FlushBucket
+{
+public:
+    StaticFlushBucket();
+    uint16_t get_next();
+
+private:
+    unsigned idx;
+};
+
+class RandomFlushBucket : public StaticFlushBucket
+{
+public:
+    RandomFlushBucket();
+};
 
 #endif
 

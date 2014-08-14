@@ -16,14 +16,14 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// parse_stream.h author Russ Combs <rucombs@cisco.com>
+// parse_byte_code.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef PARSE_STREAM_H
 #define PARSE_STREAM_H
 
-#include <istream>
+#include <string>
 
-void parse_stream(std::istream&, struct SnortConfig*);
+bool parse_byte_code(const char*, bool& negate, std::string&);
 
 #endif
 

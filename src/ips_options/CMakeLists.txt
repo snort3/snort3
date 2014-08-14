@@ -32,11 +32,9 @@ SET( PLUGIN_LIST
     ips_pkt_data.cc
     ips_priority.cc
     ips_raw_data.cc
-    ips_react.cc
     ips_reference.cc
     ips_rem.cc
     ips_rev.cc
-    ips_resp.cc
     ips_rpc.cc
     ips_seq.cc
     ips_session.cc
@@ -112,8 +110,6 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_itype ips_options ips_itype.cc range.cc range.h)
     add_shared_library(ips_pkt_data ips_options ips_pkt_data.cc)
     add_shared_library(ips_raw_data ips_options ips_raw_data.cc)
-    add_shared_library(ips_react ips_options ips_react.cc)
-    add_shared_library(ips_resp ips_options ips_resp.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)
     add_shared_library(ips_seq ips_options ips_seq.cc range.cc range.h)
     add_shared_library(ips_session ips_options ips_session.cc)

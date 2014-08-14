@@ -29,6 +29,9 @@
 #include "tcp_module.h"
 #include "tcp_session.h"
 
+#include "main/snort.h"
+#include "stream/flush_bucket.h"
+
 //-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
@@ -41,6 +44,9 @@ public:
 
     int verify_config(SnortConfig*);
     void show(SnortConfig*);
+
+    void tinit();
+    void tterm();
 
     void eval(Packet*);
 
@@ -65,8 +71,28 @@ int StreamTcp::verify_config(SnortConfig* sc)
 
 void StreamTcp::show(SnortConfig*)
 {
-    if ( config )
-        tcp_show(config);
+    tcp_show(config);
+}
+
+void StreamTcp::tinit()
+{
+    FlushBucket* fb;
+
+    if ( config->footprint )
+        fb = new ConstFlushBucket(config->footprint);
+
+    else if ( ScStaticHash() )
+        fb = new StaticFlushBucket;
+
+    else
+        fb = new RandomFlushBucket;
+
+    FlushBucket::set(fb);
+}
+
+void StreamTcp::tterm()
+{
+    //FlushBucket::clear();  FIXIT must be called after StreamBase::tterm()
 }
 
 void StreamTcp::eval(Packet*)

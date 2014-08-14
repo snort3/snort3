@@ -18,8 +18,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  ****************************************************************************/
-/* Snort sp_resp3 Detection Plugin
- *
+/*
  * Perform flexible response on packets matching conditions specified in Snort
  * rules.
  *
@@ -43,32 +42,22 @@
  * reject actions.
  *
  * - bypasses sequence strafing in inline mode.
- *
- * - if a resp3 rule is also a drop rule, the drop processing takes precedence.
  */
 
-// ips_resp.cc author Russ Combs <rucombs@cisco.com>
+// act_resp.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "snort_types.h"
-#include "snort_bounds.h"
 #include "snort_debug.h"
 #include "protocols/packet.h"
-#include "managers/packet_manager.h"
-#include "detection/detection_defines.h"
-#include "mstring.h"
-#include "parser.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "packet_io/active.h"
-#include "sfhashfcn.h"
-#include "sfxhash.h"
 #include "snort.h"
 #include "util.h"
-#include "framework/ips_option.h"
+#include "framework/ips_action.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
 
@@ -81,6 +70,7 @@
 #define RESP_RST (RESP_RST_SND|RESP_RST_RCV)
 #define RESP_UNR (RESP_UNR_NET|RESP_UNR_HOST|RESP_UNR_PORT)
 
+// FIXIT this should merge with or replace reject
 static const char* s_name = "resp";
 
 static THREAD_LOCAL ProfileStats resp3PerfStats;
@@ -91,16 +81,13 @@ struct Resp3_Data
     uint32_t mask;
 };
 
-class RespondOption : public IpsOption
+class RespondAction : public IpsAction
 {
 public:
-    RespondOption(uint32_t f) :
-        IpsOption(s_name)
+    RespondAction(uint32_t f) : IpsAction(s_name)
     { config.mask = f; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
-    void action(Packet*);
+    void exec(Packet*);
 
 private:
     Resp3_Data config;
@@ -112,36 +99,7 @@ static void Resp3_Send(Packet*, void*);
 // class methods
 //-------------------------------------------------------------------------
 
-uint32_t RespondOption::hash() const
-{
-    uint32_t a,b,c;
-
-    a = config.mask;
-    b = 0;
-    c = 0;
-
-    mix_str(a,b,c,get_name());
-    final(a,b,c);
-
-    return c;
-}
-
-bool RespondOption::operator==(const IpsOption& ips) const
-{
-    if ( strcmp(get_name(), ips.get_name()) )
-        return false;
-
-    RespondOption& rhs = (RespondOption&)ips;
-    const Resp3_Data *left = &config;
-    const Resp3_Data *right = &rhs.config;
-
-    if (left->mask == right->mask)
-        return true;
-
-    return false;
-}
-
-void RespondOption::action(Packet*)
+void RespondAction::exec(Packet*)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(resp3PerfStats);
@@ -290,48 +248,39 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* resp_ctor(Module* p, OptTreeNode* otn)
+static IpsAction* resp_ctor(Module* p)
 {
     RespModule* m = (RespModule*)p;
-    RespondOption* opt = new RespondOption(m->flags);
-    
-    if ( otn_set_agent(otn, opt) )
-        return opt;
-
-    delete opt;
-    ParseError("at most one action per rule is allowed");
-    return nullptr;
+    return new RespondAction(m->flags);
 }
 
-static void resp_dtor(IpsOption* p)
+static void resp_dtor(IpsAction* p)
 {
     delete p;
 }
 
-static void resp_ginit(SnortConfig*)
+static void resp_ginit()
 {
     Active_SetEnabled(1);
 }
 
-static const IpsApi resp_api =
+static const ActionApi resp_api =
 {
     {
-        PT_IPS_OPTION,
+        PT_IPS_ACTION,
         s_name,
-        IPSAPI_PLUGIN_V0,
+        ACTAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    OPT_TYPE_ACTION,
-    1, 0,
+    RULE_TYPE__DROP,
     resp_ginit,
     nullptr,
     nullptr,
     nullptr,
     resp_ctor,
-    resp_dtor,
-    nullptr
+    resp_dtor
 };
 
 #ifdef BUILDING_SO
@@ -341,6 +290,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     nullptr
 };
 #else
-const BaseApi* ips_resp = &resp_api.base;
+const BaseApi* act_resp = &resp_api.base;
 #endif
 
