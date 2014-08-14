@@ -3,6 +3,7 @@
 -- converted ips_resp and ips_react to actions
 -- implemented byte code parser to replace bad juju in ips_content and
    ips_replace
+-- stream workarounds for new packet / protocol foo and shutdown sequencing
 
 112
 -- initial action plugin - reject
