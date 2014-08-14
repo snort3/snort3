@@ -200,7 +200,7 @@ bool IpsManager::option_begin(
 
     if ( current_module && !current_module->begin(key, 0, sc) )
     {
-        ParseError("can't initialize %s\n", key);
+        ParseError("can't initialize %s", key);
         return false;
     }
     current_keyword = key;
