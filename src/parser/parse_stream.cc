@@ -260,12 +260,15 @@ static const State fsm[] =
     {  6,  7, TT_LITERAL, FSM_DP,  nullptr,    "(:,;)" },
     {  7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
     {  8,  0, TT_PUNCT,   FSM_EOB, ")",        nullptr },
-    {  8, 13, TT_LITERAL, FSM_KEY, "metadata", ":,;)"  },
+    {  8, 13, TT_LITERAL, FSM_KEY, "metadata", nullptr },
     {  8, 13, TT_LITERAL, FSM_KEY, "reference",":,;"   },
     {  8,  9, TT_LITERAL, FSM_KEY, nullptr,    nullptr },
     {  9,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
     {  9, 10, TT_PUNCT,   FSM_NOP, ":",        nullptr },
-    {  9,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
+    // we can't allow this because the syntax is squiffy
+    // would prefer to require a ; after the last option
+    // (and delete all the other cases like this too)
+    //{  9,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 10, 12, TT_STRING,  FSM_OPT, nullptr,    nullptr },
     { 10, 11, TT_LITERAL, FSM_OPT, nullptr,    nullptr },
     { 11, 12, TT_STRING,  FSM_VAL, nullptr,    nullptr },
@@ -299,6 +302,7 @@ static const State* get_state(int num, TokenType type, const string& tok)
             return fsm + i;
         }
     }
+    ParseError("syntax error");
     return fsm;
 }
 
