@@ -1,0 +1,368 @@
+/****************************************************************************
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 2 as
+ * published by the Free Software Foundation.  You may not use, modify or
+ * distribute this program under any other version of the GNU General
+ * Public License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ ****************************************************************************/
+// act_react.cc author Russ Combs <rucombs@cisco.com>
+
+/* The original Snort React Plugin was contributed by Maciej Szarpak, Warsaw
+ * University of Technology.  The module has been entirely rewritten by
+ * Sourcefire as part of the effort to overhaul active response.  Some of the
+ * changes include:
+ *
+ * - elimination of unworkable warn mode
+ * - elimination of proxy port (rule header has ports)
+ * - integration with unified active response mechanism
+ * - queuing of rule action responses so at most one is issued
+ * - allow override by rule action when action is drop
+ * - addition of http headers to default response
+ * - added custom page option
+ * - and other stuff
+ *
+ * This version will send a web page to the client and then reset both
+ * ends of the session.  The web page may be configured or the default
+ * may be used.  The web page can have the default warning message
+ * inserted or the message from the rule.
+ *
+ * If you wish to just reset the session, use the reject keyword instead.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "snort_types.h"
+#include "snort_debug.h"
+#include "protocols/packet.h"
+#include "profiler.h"
+#include "packet_io/active.h"
+#include "parser/parser.h"
+#include "snort.h"
+#include "framework/ips_action.h"
+#include "framework/parameter.h"
+#include "framework/module.h"
+
+static const char* s_name = "react";
+
+static THREAD_LOCAL ProfileStats reactPerfStats;
+
+static const char* MSG_KEY = "<>";
+static const char* MSG_PERCENT = "%";
+
+static const char* DEFAULT_HTTP =
+    "HTTP/1.1 403 Forbidden\r\n"
+    "Connection: close\r\n"
+    "Content-Type: text/html; charset=utf-8\r\n"
+    "Content-Length: %d\r\n"
+    "\r\n";
+
+static const char* DEFAULT_HTML =
+    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\r\n"
+    "    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n"
+    "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n"
+    "<head>\r\n"
+    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n"
+    "<title>Access Denied</title>\r\n"
+    "</head>\r\n"
+    "<body>\r\n"
+    "<h1>Access Denied</h1>\r\n"
+    "<p>%s</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n";
+
+static const char* DEFAULT_MSG =
+    "You are attempting to access a forbidden site.<br />"
+    "Consult your system administrator for details.";
+
+struct ReactData
+{
+    int rule_msg;        // 1=>use rule msg; 0=>use DEFAULT_MSG
+    ssize_t buf_len;     // length of response
+    char* resp_buf;      // response to send
+
+};
+
+static char* s_page = NULL;
+
+class ReactAction : public IpsAction
+{
+public:
+    ReactAction(ReactData* c) : IpsAction(s_name)
+    { config = c; };
+
+    ~ReactAction();
+
+    void exec(Packet*);
+
+private:
+    ReactData* config;
+};
+
+static void React_Send(Packet*,  void*);
+
+//-------------------------------------------------------------------------
+// class methods
+//-------------------------------------------------------------------------
+
+ReactAction::~ReactAction()
+{
+    if ( s_page )
+    {
+        free(s_page);
+        s_page = nullptr;
+    }
+    if (config->resp_buf)
+        free(config->resp_buf);
+
+    free(config);
+}
+
+void ReactAction::exec(Packet* p)
+{
+    PROFILE_VARS;
+    MODULE_PROFILE_START(reactPerfStats);
+
+    if ( Active_IsRSTCandidate(p) )
+        Active_QueueResponse(React_Send, config);
+
+    Active_DropSession();
+    MODULE_PROFILE_END(reactPerfStats);
+}
+
+//-------------------------------------------------------------------------
+// implementation foo
+//-------------------------------------------------------------------------
+
+// FIXIT this moves to module
+static bool react_getpage (const char* file)
+{
+    char* msg;
+    char* percent_s;
+    struct stat fs;
+    FILE* fd;
+    size_t n;
+
+    if ( stat(file, &fs) )
+    {
+        ParseError("can't stat react page file '%s'.", file);
+        return false;
+    }
+
+    s_page = (char*)SnortAlloc(fs.st_size+1);
+    fd = fopen(file, "r");
+
+    if ( !fd )
+    {
+        ParseError("can't open react page file '%s'.", file);
+        return false;
+    }
+
+    n = fread(s_page, 1, fs.st_size, fd);
+    fclose(fd);
+
+    if ( n != (size_t)fs.st_size )
+    {
+        ParseError("can't load react page file '%s'.", file);
+        return false;
+    }
+
+    s_page[n] = '\0';
+    msg = strstr(s_page, MSG_KEY);
+    if ( msg ) strncpy(msg, "%s", 2);
+
+    // search for %
+    percent_s = strstr(s_page, MSG_PERCENT);
+    if (percent_s)
+    {
+        percent_s += strlen(MSG_PERCENT); // move past current
+        // search for % again
+        percent_s = strstr(percent_s, MSG_PERCENT);
+        if (percent_s)
+        {
+            ParseError("can't specify more than one %%s or other "
+                "printf style formatting characters in react page '%s'.",
+                file);
+            return false;
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------
+
+static void React_Send (Packet* p,  void* pv)
+{
+    ReactData* rd = (ReactData*)pv;
+    EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
+    EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & rd->buf_len);
+    PROFILE_VARS;
+
+    MODULE_PROFILE_START(reactPerfStats);
+    Active_IgnoreSession(p);
+
+    Active_SendData(p, df, (uint8_t*)rd->resp_buf, rd->buf_len);
+    Active_SendReset(p, rf);
+    Active_SendReset(p, ENC_FLAG_FWD);
+
+    MODULE_PROFILE_END(reactPerfStats);
+}
+
+// format response buffer
+static void react_config (ReactData* rd)
+{
+    size_t body_len, head_len, total_len;
+    char dummy;
+
+    const char* head = DEFAULT_HTTP;
+    const char* body = s_page ? s_page : DEFAULT_HTML;
+    const char* msg = DEFAULT_MSG;
+
+    body_len = snprintf(&dummy, 1, body, msg);
+    head_len = snprintf(&dummy, 1, head, body_len);
+    total_len = head_len + body_len + 1;
+
+    rd->resp_buf = (char*)SnortAlloc(total_len);
+
+    SnortSnprintf((char*)rd->resp_buf, head_len+1, head, body_len);
+    SnortSnprintf((char*)rd->resp_buf+head_len, body_len+1, body, msg);
+
+    // set actual length
+    rd->resp_buf[total_len-1] = '\0';
+    rd->buf_len = strlen(rd->resp_buf);
+}
+
+//-------------------------------------------------------------------------
+// module
+//-------------------------------------------------------------------------
+
+static const Parameter react_params[] =
+{
+    { "msg", Parameter::PT_IMPLIED, nullptr, nullptr,
+      " use rule message in response page" },
+
+    { "page", Parameter::PT_STRING, nullptr, nullptr,
+      "file containing HTTP reponse (headers and body)" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+class ReactModule : public Module
+{
+public:
+    ReactModule() : Module(s_name, react_params) { };
+
+    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*);
+
+    ProfileStats* get_profile() const
+    { return &reactPerfStats; };
+
+    bool msg;
+};
+
+bool ReactModule::begin(const char*, int, SnortConfig*)
+{
+    msg = false;
+    return true;
+}
+
+bool ReactModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("msg") )
+        msg = v.get_bool();
+
+    else if ( v.is("page") )
+        return react_getpage(v.get_string());
+
+    else
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+// api methods
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new ReactModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsAction* react_ctor(Module* p)
+{
+    ReactData* rd = (ReactData*)SnortAlloc(sizeof(*rd));
+
+    ReactModule* m = (ReactModule*)p;
+    rd->rule_msg = m->msg;
+
+    react_config(rd);
+
+    return new ReactAction(rd);
+}
+
+static void react_dtor(IpsAction* p)
+{
+    delete p;
+}
+
+static void react_pinit()
+{
+    Active_SetEnabled(1);
+}
+
+static const ActionApi react_api =
+{
+    {
+        PT_IPS_ACTION,
+        s_name,
+        ACTAPI_PLUGIN_V0,
+        0,
+        mod_ctor,
+        mod_dtor
+    },
+    RULE_TYPE__DROP,
+    react_pinit,
+    nullptr,  // pterm
+    nullptr,  // tinit
+    nullptr,  // tterm
+    react_ctor,
+    react_dtor,
+};
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &react_api.base,
+    nullptr
+};
+#else
+const BaseApi* act_react = &react_api.base;
+#endif
+
