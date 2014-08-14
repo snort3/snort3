@@ -1,3 +1,7 @@
+change:  Attribute_table: <FRAG_POLICY>bsd-right</FRAG_POLICY> ==> hosts.frag_policy = bsd_right
+change:  Attribute_table: <FRAG_POLICY>hpux11</FRAG_POLICY> ==> hosts.tcp_policy = hpux
+change:  Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY> ==> hosts.tcp_policy = hpux10
+change:  Attribute_table: STREAM_POLICY ==> hosts: tcp_policy
 change:  ac ==> ac_full_q
 change:  ac-banded ==> ac_banded
 change:  ac-bnfa ==> ac_bnfa_q
@@ -176,6 +180,10 @@ change:  trim_win ==> trim
 change:  udp_cache_nominal_timeout ==> idle_timeout
 change:  udp_cache_pruning_timeout ==> pruning_timeout
 change:  unified2 ==> unified2
+deleted: Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>
+deleted: Attribute_table: <FRAG_POLICY>irix</FRAG_POLICY>
+deleted: Attribute_table: <FRAG_POLICY>old-linux</FRAG_POLICY>
+deleted: Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>
 deleted: action
 deleted: alert_fragments
 deleted: atexitonly
