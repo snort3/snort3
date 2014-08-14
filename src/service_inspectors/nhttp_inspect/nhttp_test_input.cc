@@ -52,28 +52,29 @@ NHttpTestInput::~NHttpTestInput() {
 // Read from the test data file and present to PAF.
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
-void NHttpTestInput::toPaf(uint8_t*& data, uint32_t &length, SourceId &sourceId, bool &tcpClose, bool &needBreak) {
-    // No new data presented to PAF while the last section is still being flushed.
-    if (flushed) {
-        length = 0;
-        return;
-    }
-
+void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &sourceId, bool &tcpClose, bool &needBreak) {
     sourceId = lastSourceId;
     tcpClose = false;
     needBreak = false;
 
+    // Need to create and inspect additional message section(s) from the previous flush before we read new stuff
+    if ((endOffset == 0) && (flushOctets > 0)) {
+        length = 0;
+        return;
+    }
+
     if (justFlushed) {
-        // PAF just flushed. There may or may not be leftover data in our buffer.
+        // PAF just flushed and it has all been sent to inspection. There may or may not be leftover data from the
+        // last segment that was not flushed.
         justFlushed = false;
         data = msgBuf;
-        length = endOffset - flushOffset;  // this is the leftover data
+        length = endOffset - flushOctets;  // this is the leftover data
         previousOffset = 0;
         endOffset = length;
         if (length > 0) {
             // Must present unflushed leftovers to PAF again.
             // If we don't take this opportunity to left justify our data in the buffer we may "walk" to the right until we run out of buffer space
-            memmove(msgBuf, msgBuf+flushOffset, length);
+            memmove(msgBuf, msgBuf+flushOctets, length);
             tcpClose = tcpAlreadyClosed;
             return;
         }
@@ -89,7 +90,7 @@ void NHttpTestInput::toPaf(uint8_t*& data, uint32_t &length, SourceId &sourceId,
 
     // Now we need to move forward by reading more data from the file
     int newChar;
-    typedef enum { WAITING, COMMENT, COMMAND, SECTION, ESCAPE, HEXVAL, FILLNUM, BRIDGE } State;
+    typedef enum { WAITING, COMMENT, COMMAND, SECTION, ESCAPE, HEXVAL } State;
     State state = WAITING;
     bool ending;
     int commandLength;
@@ -97,7 +98,6 @@ void NHttpTestInput::toPaf(uint8_t*& data, uint32_t &length, SourceId &sourceId,
     char commandValue[MaxCommand];
     uint8_t hexVal;
     int numDigits;
-    uint32_t fillLength;
 
     while ((newChar = getc(testDataFile)) != EOF) {
         switch (state) {
@@ -176,22 +176,12 @@ void NHttpTestInput::toPaf(uint8_t*& data, uint32_t &length, SourceId &sourceId,
               case 'n':  state = SECTION; data[length++] = '\n'; break;
               case 'r':  state = SECTION; data[length++] = '\r'; break;
               case 't':  state = SECTION; data[length++] = '\t'; break;
-              case 'B':  state = BRIDGE; break;
-              case 'C':  endOffset = previousOffset + length; return;
-              case 'T':  tcpClose = tcpAlreadyClosed = true; endOffset = previousOffset + length; return;
               case '#':  state = SECTION; data[length++] = '#';  break;
               case '@':  state = SECTION; data[length++] = '@';  break;
               case '\\': state = SECTION; data[length++] = '\\'; break;
               case 'x':
               case 'X':  state = HEXVAL; hexVal = 0; numDigits = 0; break;
-              case '/':  state = FILLNUM; fillLength = 0; break;
               default:   assert(0); state = SECTION; break;
-            }
-            break;
-          case BRIDGE:
-            if (newChar != '\n') {
-                state = SECTION;
-                data[length++] = (uint8_t) newChar;
             }
             break;
           case HEXVAL:
@@ -204,30 +194,6 @@ void NHttpTestInput::toPaf(uint8_t*& data, uint32_t &length, SourceId &sourceId,
                 state = SECTION;
             }
             break;
-          case FILLNUM:
-            if (newChar != '/') {
-                assert((newChar >= '0') && (newChar <= '9'));
-                fillLength = fillLength * 10 + (newChar - '0');
-                assert(fillLength <= sizeof(msgBuf));  
-                break;
-            }
-            else {
-                bodyData = true;
-                // Add the specified number of fill characters to the buffer and cut.
-                // Simulates body data at the end of a header segment or the first segment containing body data
-                // Don't allow a buffer overrun.
-                if (previousOffset + length + fillLength > sizeof(msgBuf)) assert(0);
-                for (uint32_t k=0; k < fillLength; k++) {
-                    data[length++] = 'x';
-                }
-                endOffset = previousOffset + length;
-                return;
-            }
-        }
-        // If we have reached the configured maximum segment size automatically cut the data.
-        if (length >= mssLength) {
-            endOffset = previousOffset + length;
-            return;
         }
         // Don't allow a buffer overrun.
         if (previousOffset + length >= sizeof(msgBuf)) assert(0);
@@ -237,59 +203,42 @@ void NHttpTestInput::toPaf(uint8_t*& data, uint32_t &length, SourceId &sourceId,
     return;
 }
 
-void NHttpTestInput::pafFlush(uint32_t length) {
-    assert(!flushed);
-    flushed = true;
-    if (bodyData && (previousOffset + length >= endOffset)) {
-        fillOctets = length;
-        bodyData = false;
-        previousOffset = 0;
-        endOffset = 0;
-        flushOffset = 0;
-    }
-    else {
-        flushOffset = previousOffset + length;
-    }
+void NHttpTestInput::flush(uint32_t length) {
+    flushOctets = previousOffset + length;
+    justFlushed = true;
 }
 
 
-uint16_t NHttpTestInput::toEval(uint8_t **buffer, int64_t &testNumber_, SourceId &sourceId) {
-    if (!flushed) return 0;
-    testNumber_ = testNumber;
+void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &sourceId) {
     sourceId = lastSourceId;
     *buffer = msgBuf;
-    if (fillOctets > 0) {
-        uint32_t fillOut = (fillOctets <= 16384) ? fillOctets : 16384;
-        for (uint32_t k = 0; k < fillOut; k++) {
+
+    if (flushOctets <= endOffset) {
+        // All the data we need comes from the file
+        length = flushOctets;
+    }
+    else {
+        // We need to generate additional data to fill out the body or chunk section
+        // We may come through here multiple times as we generate all the PAF max body sections needed for a single flush
+        length = (flushOctets <= 16384) ? flushOctets : 16384;
+        for (uint32_t k = endOffset; k < length; k++) {
             msgBuf[k] = 'A' + k % 26;
         }
-        fillOctets -= fillOut;
-        if (fillOctets == 0) {
-            if (fillOut > 1) msgBuf[fillOut-2] = termBytes[0];
-            msgBuf[fillOut-1] = termBytes[1];
-            flushed = false;
-            justFlushed = true;
+
+        flushOctets -= length;
+
+        if (flushOctets == 0) {
+            if (length-endOffset > 1) {
+                msgBuf[length-2] = termBytes[0];
+            }
+            msgBuf[length-1] = termBytes[1];
         }
-        else if (fillOctets == 1) {
-            msgBuf[fillOut-1] = termBytes[0];
+        else if (flushOctets == 1) {
+             msgBuf[length-1] = termBytes[0];
         }
-        return (uint16_t)fillOut;
+
+        endOffset = 0;
     }
-    flushed = false;
-    justFlushed = true;
-    return (uint16_t)flushOffset;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 

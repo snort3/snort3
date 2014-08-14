@@ -50,7 +50,7 @@ public:
     bool configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);
-    void eval(Packet*);
+    void eval(Packet*) { return; };
     bool enabled();
     void tinit();
     void tterm();
@@ -58,6 +58,7 @@ public:
 
 private:
     friend NHttpApi;
+    friend NHttpStreamSplitter;
 
     void process(const uint8_t* data, const uint16_t dsize, Flow* const flow, NHttpEnums::SourceId sourceId_);
 
@@ -66,7 +67,6 @@ private:
     const char *testInputFile = "nhttp_test_msgs.txt";
     const char *testOutputPrefix = "nhttpresults/testcase";
     FILE *testOut = nullptr;
-    int64_t testNumber = 0;
     int64_t fileTestNumber = -1;
 };
 

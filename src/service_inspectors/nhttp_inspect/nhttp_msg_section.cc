@@ -39,12 +39,10 @@ using namespace NHttpEnums;
 
 NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
    sessionData(sessionData_), sourceId(sourceId_), tcpClose(sessionData->tcpClose[sourceId]), scratchPad(2*bufSize+500),
-   infractions(sessionData->infractions[sourceId]), eventsGenerated(sessionData->eventsGenerated[sourceId]),
-   versionId(sessionData->versionId[sourceId]), methodId(sessionData->methodId[sourceId]), statusCodeNum(sessionData->statusCodeNum[sourceId])
+   infractions(sessionData->infractions[sourceId]), versionId(sessionData->versionId[sourceId]),
+   methodId(sessionData->methodId[sourceId]), statusCodeNum(sessionData->statusCodeNum[sourceId])
 {
-    rawBuf = new uint8_t[bufSize];
-    memcpy(rawBuf, buffer, bufSize);
-    msgText.start = rawBuf;
+    msgText.start = buffer;
     msgText.length = bufSize;
 }
 

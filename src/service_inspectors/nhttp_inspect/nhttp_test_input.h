@@ -33,26 +33,22 @@ class NHttpTestInput {
 public:
     NHttpTestInput(const char *fileName);
     ~NHttpTestInput();
-    void toPaf(uint8_t*& data, uint32_t &length, NHttpEnums::SourceId &sourceId, bool &tcpClose, bool &needBreak);
-    void pafFlush(uint32_t length);
-    uint16_t toEval(uint8_t **buffer, int64_t &testNumber, NHttpEnums::SourceId &sourceId);
+    void scan(uint8_t*& data, uint32_t &length, NHttpEnums::SourceId &sourceId, bool &tcpClose, bool &needBreak);
+    void flush(uint32_t length);
+    void reassemble(uint8_t **buffer, unsigned &length, NHttpEnums::SourceId &sourceId);
 
-    // Hard for NHttpInspect and PAF to share these without making them "global". This is as good a place as any for them to live.
     static bool test_input;
     static NHttpTestInput *testInput;
+    int64_t getTestNumber() { return testNumber; };
 private:
     FILE *testDataFile;
     uint8_t msgBuf[2 * NHttpEnums::MAXOCTETS];
-    bool flushed = false;   // verifies alternation between PAF section flushing and eval() section processing
-    bool justFlushed = true;   // toPaf() needs to do special post-flush processing before it resumes reading the file
+    bool justFlushed = true;   // all octets sent to inspection and must resume reading the file
     bool tcpAlreadyClosed = false;  // so we can keep presenting a TCP close to PAF until all the remaining octets are consumed and flushed
-    uint32_t flushOffset = 0;  // last character in buffer that has been flushed by PAF and must go to eval().
+    uint32_t flushOctets = 0;  // number of octets that have been flushed and must go to inspection
     uint32_t previousOffset = 0;   // last character in the buffer shown to PAF but not flushed yet
     uint32_t endOffset = 0;   // last read character in the buffer
-    bool bodyData = false;  // pending output of fill data
-    uint32_t fillOctets = 0;    // remaining fill data
     int64_t testNumber = 0;   // for numbering test output files
-    uint32_t mssLength = 1460;   // Maximum Segment Size. Needs to be enhanced to be set through a command.
     NHttpEnums::SourceId lastSourceId = NHttpEnums::SRC_CLIENT;   // current direction of traffic flow. Toggled by commands in file.
     uint8_t termBytes[2] = { 'x', 'y' };
 };

@@ -34,6 +34,7 @@
 #include "nhttp_enum.h"
 #include "nhttp_test_input.h"
 #include "nhttp_stream_splitter.h"
+#include "nhttp_inspect.h"
 
 using namespace NHttpEnums;
 
@@ -43,30 +44,48 @@ void NHttpStreamSplitter::prepareFlush(NHttpFlowData* sessionData, uint32_t* flu
     sessionData->sectionType[sourceId] = sectionType;
     sessionData->tcpClose[sourceId] = tcpClose;
     sessionData->infractions[sourceId] = infractions;
-    sessionData->eventsGenerated[sourceId] = eventsGenerated;
     if (tcpClose) sessionData->typeExpected[sourceId] = SEC_CLOSED;
     if (!NHttpTestInput::test_input) *flushOffset = numOctets;
-    else NHttpTestInput::testInput->pafFlush(numOctets);
-    octetsSeen = 0;
-    numCrlf = 0;
+    else NHttpTestInput::testInput->flush(numOctets);
+    sessionData->octetsSeen[sourceId] = 0;
+    sessionData->numCrlf[sourceId] = 0;
 }
 
-void NHttpStreamSplitter::createEvent(EventSid sid) {
-    SnortEventqAdd(NHTTP_GID, (uint32_t)sid);
-    eventsGenerated |= 1 << (sid-1);
-}
-
-const StreamBuffer* NHttpStreamSplitter::reassemble(unsigned offset, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) {
+const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned offset, const uint8_t* data, unsigned len,
+       uint32_t flags, unsigned& copied)
+{
     static THREAD_LOCAL StreamBuffer nhttp_buf;
     if (flags & PKT_PDU_HEAD) {
         sectionBuffer = new uint8_t[65536];
     }
-    memcpy(sectionBuffer+offset, data, len);
+
+    SourceId sourceId = (flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER;
+
     copied = len;
+
+    if (NHttpTestInput::test_input) {
+        if (!(flags & PKT_PDU_TAIL))
+        {
+            return nullptr;
+        }
+        uint8_t* buffer;
+        NHttpTestInput::testInput->reassemble(&buffer, len, sourceId);
+        if (len == 0) {
+            // There is no more test data
+            delete[] sectionBuffer;
+            sectionBuffer = nullptr;
+            return nullptr;
+        }
+        data = buffer;
+        offset = 0;
+    }
+
+    memcpy(sectionBuffer+offset, data, len);
     if (flags & PKT_PDU_TAIL) {
-        process(sectionBuffer, offset + len, p->flow, to_server() ? SRC_CLIENT : SRC_SERVER);
+        myInspector->process(sectionBuffer, offset + len, flow, sourceId);
         nhttp_buf.data = sectionBuffer;
         nhttp_buf.length = offset + len;
+        sectionBuffer = nullptr;   // the buffer is the responsibility of the inspector now
         return &nhttp_buf;
     }
     return nullptr;
@@ -87,7 +106,7 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
     if (NHttpTestInput::test_input) {
         *flushOffset = length;
         bool needBreak;
-        NHttpTestInput::testInput->toPaf((uint8_t*&)data, length, sourceId, tcpClose, needBreak);
+        NHttpTestInput::testInput->scan((uint8_t*&)data, length, sourceId, tcpClose, needBreak);
         if (length == 0) return PAF_FLUSH;
         if (needBreak) flow->set_application_data(sessionData = new NHttpFlowData);
     }
@@ -100,29 +119,29 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
       case SEC_TRAILER:
         pafMax = 63780;
         for (uint32_t k = 0; k < length; k++) {
-            octetsSeen++;
+            sessionData->octetsSeen[sourceId]++;
             // Count the alternating <CR> and <LF> characters we have seen in a row
-            if (((data[k] == '\r') && (numCrlf%2 == 0)) || ((data[k] == '\n') && (numCrlf%2 == 1))) numCrlf++;
-            else numCrlf = 0;
+            if (((data[k] == '\r') && (sessionData->numCrlf[sourceId]%2 == 0)) || ((data[k] == '\n') && (sessionData->numCrlf[sourceId]%2 == 1))) sessionData->numCrlf[sourceId]++;
+            else sessionData->numCrlf[sourceId] = 0;
 
             // Check start line for leading CRLF because some 1.0 implementations put extra blank lines between messages. We tolerate this by quietly ignoring them.
             // Header/trailer may also have leading CRLF. That is completely normal and means there are no header/trailer lines.
-            if ((numCrlf == 2) && (octetsSeen == 2) && (type != SEC_CHUNKHEAD)) {
+            if ((sessionData->numCrlf[sourceId] == 2) && (sessionData->octetsSeen[sourceId] == 2) && (type != SEC_CHUNKHEAD)) {
                 prepareFlush(sessionData, flushOffset, sourceId, ((type == SEC_REQUEST) || (type == SEC_STATUS)) ? SEC_DISCARD : type, tcpClose && (k == length-1), 0, k+1);
                 return PAF_FLUSH;
             }
             // The start line and chunk header section always end with the first <CRLF>
-            else if ((numCrlf == 2) && ((type == SEC_REQUEST) || (type == SEC_STATUS) || (type == SEC_CHUNKHEAD))) {
+            else if ((sessionData->numCrlf[sourceId] == 2) && ((type == SEC_REQUEST) || (type == SEC_STATUS) || (type == SEC_CHUNKHEAD))) {
                 prepareFlush(sessionData, flushOffset, sourceId, type, tcpClose && (k == length-1), 0, k+1);
                 return PAF_FLUSH;
             }
             // The header and trailer sections always end with the first double <CRLF>
-            else if (numCrlf == 4) {
+            else if (sessionData->numCrlf[sourceId] == 4) {
                 prepareFlush(sessionData, flushOffset, sourceId, type, tcpClose && (k == length-1), 0, k+1);
                 return PAF_FLUSH;
             }
             // We must do this to protect ourself from buffer overrun.
-            else if (octetsSeen >= 63780) {
+            else if (sessionData->octetsSeen[sourceId] >= 63780) {
                 prepareFlush(sessionData, flushOffset, sourceId, type, tcpClose && (k == length-1), INF_HEADTOOLONG, k+1);
                 return PAF_FLUSH;
             }
@@ -130,7 +149,7 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
         // Incomplete headers wait patiently for more data
         if (!tcpClose) return PAF_SEARCH;
         // Discard the oddball case where the new "message" starts with <CR><close>
-        else if ((octetsSeen == 1) && (numCrlf == 1)) prepareFlush(sessionData, flushOffset, sourceId, SEC_DISCARD, true, 0, length);
+        else if ((sessionData->octetsSeen[sourceId] == 1) && (sessionData->numCrlf[sourceId] == 1)) prepareFlush(sessionData, flushOffset, sourceId, SEC_DISCARD, true, 0, length);
         // TCP connection close, flush the partial header
         else prepareFlush(sessionData, flushOffset, sourceId, type, true, INF_TRUNCATED, length);
         return PAF_FLUSH;
