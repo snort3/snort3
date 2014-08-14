@@ -92,7 +92,7 @@ void StreamTcp::tinit()
 
 void StreamTcp::tterm()
 {
-    FlushBucket::clear();
+    //FlushBucket::clear();  FIXIT must be called after StreamBase::tterm()
 }
 
 void StreamTcp::eval(Packet*)
