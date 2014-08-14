@@ -261,7 +261,7 @@ static const State fsm[] =
     {  7,  8, TT_PUNCT,   FSM_SOB, "(",        nullptr },
     {  8,  0, TT_PUNCT,   FSM_EOB, ")",        nullptr },
     {  8, 13, TT_LITERAL, FSM_KEY, "metadata", ":,;)"  },
-    {  8, 13, TT_LITERAL, FSM_KEY, "reference",":,;)"  },
+    {  8, 13, TT_LITERAL, FSM_KEY, "reference",":,;"   },
     {  8,  9, TT_LITERAL, FSM_KEY, nullptr,    nullptr },
     {  9,  8, TT_PUNCT,   FSM_END, ";",        nullptr },
     {  9, 10, TT_PUNCT,   FSM_NOP, ":",        nullptr },
@@ -278,7 +278,6 @@ static const State fsm[] =
     { 12, 10, TT_PUNCT,   FSM_SET, ",",        nullptr },
     { 13, 14, TT_PUNCT,   FSM_NOP, ":",        nullptr },
     { 14,  8, TT_PUNCT,   FSM_END, ";",        "(:,;)" },
-    { 14,  0, TT_PUNCT,   FSM_EOB, ")",        ""      },
     { 14, 14, TT_NONE,    FSM_SET, ",",        nullptr },
     { 14, 14, TT_NONE,    FSM_ADD, nullptr,    nullptr },
     { 15,  0, TT_LITERAL, FSM_INC, nullptr,    nullptr },
@@ -311,6 +310,8 @@ struct RuleParseState
     string key;
     string opt;
     string val;
+
+    bool tbd;
 
     RuleParseState()
     { otn = nullptr; };
@@ -360,7 +361,7 @@ static void exec(
         break;
     case FSM_EOB:
     {
-        if ( rps.key.size() )
+        if ( rps.tbd )
             exec(FSM_END, tok, rps, sc);
         const char* extra = parse_rule_close(sc, rps.rtn, rps.otn);
         if ( extra )
@@ -378,19 +379,23 @@ static void exec(
         rps.key = tok;
         rps.opt.clear();
         rps.val.clear();
+        rps.tbd = true;
         break;
     case FSM_OPT:
         rps.opt = tok;
         rps.val.clear();
+        rps.tbd = true;
         break;
     case FSM_VAL:
         rps.val = tok;
+        rps.tbd = true;
         break;
     case FSM_SET:
         //printf("parse %s:%s = %s\n", rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         parse_rule_opt_set(sc, rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         rps.opt.clear();
         rps.val.clear();
+        rps.tbd = false;
         break;
     case FSM_END:
         //printf("parse %s:%s = %s\n", rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
@@ -399,6 +404,7 @@ static void exec(
         parse_rule_opt_end(sc, rps.key.c_str(), rps.otn);
         rps.opt.clear();
         rps.val.clear();
+        rps.tbd = false;
         break;
     case FSM_ADD:
         // adding another state would eliminate this if
@@ -410,6 +416,7 @@ static void exec(
                 rps.val += " ";
             rps.val += tok;
         }
+        rps.tbd = true;
         break;
     case FSM_INC:
         //printf("\nparse %s = %s\n", rps.key.c_str(), tok.c_str());
