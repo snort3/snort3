@@ -34,6 +34,7 @@ using namespace std;
 #include "snort_debug.h"
 #include "protocols/packet.h"
 #include "parser.h"
+#include "parse_byte_code.h"
 #include "ips_content.h"
 #include "snort.h"
 #include "packet_io/sfdaq.h"
@@ -47,263 +48,14 @@ using namespace std;
 
 static void replace_parse(const char* args, string& s)
 {
-    char tmp_buf[MAX_PATTERN_SIZE];
+    bool negated;
+    std::string buf;
 
-    /* got enough ptrs for you? */
-    const char *start_ptr;
-    const char *end_ptr;
-    const char *idx;
-    const char *dummy_idx;
-    const char *dummy_end;
-    char hex_buf[3];
-    u_int dummy_size = 0;
-    int size;
-    int hexmode = 0;
-    int hexsize = 0;
-    int pending = 0;
-    int cnt = 0;
-    int literal = 0;
-
-    if ( !args )
-    {
-        ParseError("missing argument to 'replace' option");
+    if ( !parse_byte_code(args, negated, s) )
         return;
-    }
-    args = SnortStrdup(args);
 
-    /* clear out the temp buffer */
-    memset(tmp_buf, 0, MAX_PATTERN_SIZE);
-
-    while(isspace((int)*args))
-        args++;
-
-    /* find the start of the data */
-    start_ptr = strchr(args, '"');
-
-    if(start_ptr == NULL)
-    {
-        ParseError("Replace data needs to be "
-                   "enclosed in quotation marks (\")");
-    }
-
-    /* move the start up from the beggining quotes */
-    start_ptr++;
-
-    /* find the end of the data */
-    end_ptr = strrchr(start_ptr, '"');
-
-    if(end_ptr == NULL)
-    {
-        ParseError("Replace data needs to be enclosed "
-                   "in quotation marks (\")");
-        return;
-    }
-
-    /* how big is it?? */
-    size = end_ptr - start_ptr;
-
-    /* uh, this shouldn't happen */
-    if(size <= 0)
-    {
-        ParseError("Replace data has bad pattern length!");
-    }
-    /* set all the pointers to the appropriate places... */
-    idx = start_ptr;
-
-    /* set the indexes into the temp buffer */
-    dummy_idx = tmp_buf;
-    dummy_end = (dummy_idx + size);
-
-    /* why is this buffer so small? */
-    memset(hex_buf, '0', 2);
-    hex_buf[2] = '\0';
-
-    /* BEGIN BAD JUJU..... */
-    while(idx < end_ptr)
-    {
-        if (dummy_size >= MAX_PATTERN_SIZE-1)
-        {
-            /* Have more data to parse and pattern is about to go beyond end of buffer */
-            ParseError("Replace buffer overflow, make a "
-                    "smaller pattern please! (Max size = %d)",
-                    MAX_PATTERN_SIZE-1);
-        }
-
-        DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "processing char: %c\n", *idx););
-
-        switch(*idx)
-        {
-            case '|':
-
-                DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Got bar... "););
-
-                if(!literal)
-                {
-
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-                        "not in literal mode... "););
-
-                    if(!hexmode)
-                    {
-                        DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-                        "Entering hexmode\n"););
-
-                        hexmode = 1;
-                    }
-                    else
-                    {
-
-                        DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-                        "Exiting hexmode\n"););
-
-                        hexmode = 0;
-                        pending = 0;
-                    }
-
-                    if(hexmode)
-                        hexsize = 0;
-                }
-                else
-                {
-
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-                        "literal set, Clearing\n"););
-
-                    literal = 0;
-                    tmp_buf[dummy_size] = start_ptr[cnt];
-                    dummy_size++;
-                }
-
-                break;
-
-            case '\\':
-
-                DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Got literal char... "););
-
-                if(!literal)
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-                        "Setting literal\n"););
-
-                    literal = 1;
-                }
-                else
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-                        "Clearing literal\n"););
-
-                    tmp_buf[dummy_size] = start_ptr[cnt];
-                    literal = 0;
-                    dummy_size++;
-                }
-                break;
-
-            default:
-                if(hexmode)
-                {
-                    if(isxdigit((int) *idx))
-                    {
-                        hexsize++;
-
-                        if(!pending)
-                        {
-                            hex_buf[0] = *idx;
-                            pending++;
-                        }
-                        else
-                        {
-                            hex_buf[1] = *idx;
-                            pending--;
-
-                            if(dummy_idx < dummy_end)
-                            {
-                                tmp_buf[dummy_size] = (u_char)
-                                    strtol(hex_buf, (char **) NULL, 16)&0xFF;
-
-                                dummy_size++;
-                                memset(hex_buf, '0', 2);
-                                hex_buf[2] = '\0';
-                            }
-                            else
-                            {
-                                ParseError("Replace buffer overflow, make a "
-                                           "smaller pattern please! (Max size = %d)",
-                                           MAX_PATTERN_SIZE-1);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(*idx != ' ')
-                        {
-                            ParseError("Replace found '%c'(0x%X) in "
-                                       "your binary buffer.  Valid hex values only "
-                                       "please! (0x0 -0xF) Position: %d",
-                                       (char) *idx, (char) *idx, cnt);
-                        }
-                    }
-                }
-                else
-                {
-                    if(*idx >= 0x1F && *idx <= 0x7e)
-                    {
-                        if(dummy_idx < dummy_end)
-                        {
-                            tmp_buf[dummy_size] = start_ptr[cnt];
-                            dummy_size++;
-                        }
-                        else
-                        {
-                            ParseError("Replace buffer overflow");
-                        }
-
-                        if(literal)
-                        {
-                            literal = 0;
-                        }
-                    }
-                    else
-                    {
-                        if(literal)
-                        {
-                            tmp_buf[dummy_size] = start_ptr[cnt];
-                            dummy_size++;
-
-                            DEBUG_WRAP(DebugMessage(DEBUG_PARSER,
-                            "Clearing literal\n"););
-
-                            literal = 0;
-                        }
-                        else
-                        {
-                            ParseError("Replace found character value out of "
-                                       "range, only hex characters allowed in binary "
-                                       "content buffers");
-                        }
-                    }
-                }
-
-                break;
-
-        } /* end switch */
-
-        dummy_idx++;
-        idx++;
-        cnt++;
-    }
-    /* ...END BAD JUJU */
-
-    /* error pruning */
-
-    if (literal) {
-        ParseError("Replace backslash escape is not completed");
-    }
-    if (hexmode) {
-        ParseError("Replace hexmode is not completed");
-    }
-
-    delete args;
-    s.assign(tmp_buf, dummy_size);
+    if ( negated )
+        ParseError("can't negate replace string");
 }
 
 static bool replace_ok()
@@ -508,7 +260,7 @@ void ReplaceOption::action(Packet*)
 
 static const Parameter repl_params[] =
 {
-    { "*mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
+    { "~mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
       "output format" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -536,7 +288,7 @@ bool ReplModule::begin(const char*, int, SnortConfig*)
 
 bool ReplModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*data") )
+    if ( v.is("~mode") )
         replace_parse(v.get_string(), data);
 
     else

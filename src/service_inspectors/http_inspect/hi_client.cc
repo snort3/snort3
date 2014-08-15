@@ -1870,7 +1870,7 @@ const u_char *extract_http_xff(HI_SESSION *session, const u_char *p, const u_cha
             }
             if(*true_ip)
             {
-                if(!IP_EQUALITY(*true_ip, tmp))
+                if(!sfip_equals(*true_ip, tmp))
                 {
                     sfip_free(*true_ip);
                     *true_ip = tmp;

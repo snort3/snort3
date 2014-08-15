@@ -92,14 +92,6 @@ typedef uint16_t Port;
 
 /* utilities */
 
-#ifndef TRUE // FIXIT get rid of these
-# define TRUE 1
-#endif
-
-#ifndef FALSE // FIXIT get rid of these
-# define FALSE 0
-#endif
-
 #ifndef SIZE_MAX
 #define SIZE_MAX 0xFFFFFFFF  // FIXIT not defined for g++?
 #endif

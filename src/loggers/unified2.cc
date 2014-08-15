@@ -257,10 +257,11 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(IPH_IS_VALID(p))
+        if(p->ip_api.is_valid())
         {
-            alertdata.ip_source = p->iph->ip_src.s_addr;
-            alertdata.ip_destination = p->iph->ip_dst.s_addr;
+            const ip::IPHdr* const iph = p->ip_api.get_ip4h();
+            alertdata.ip_source = iph->get_src();
+            alertdata.ip_destination = iph->get_dst();
             alertdata.protocol = GetEventProto(p);
 
             if ((alertdata.protocol == IPPROTO_ICMP) && p->icmph)
@@ -354,14 +355,14 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(IPH_IS_VALID(p))
+        if(p->ip_api.is_valid())
         {
-            snort_ip_p ip;
+            const sfip_t *ip;
 
-            ip = GET_SRC_IP(p);
+            ip = p->ip_api.get_src();
             alertdata.ip_source = *(struct in6_addr*)ip->ip32;
 
-            ip = GET_DST_IP(p);
+            ip = p->ip_api.get_dst();
             alertdata.ip_destination = *(struct in6_addr*)ip->ip32;
 
             alertdata.protocol = GetEventProto(p);
@@ -419,7 +420,12 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
-void _WriteExtraData(Unified2Config *config, uint32_t event_id, uint32_t event_second, uint8_t *buffer, uint32_t len, uint32_t type )
+void _WriteExtraData(Unified2Config *config,
+                     uint32_t event_id,
+                     uint32_t event_second,
+                     const uint8_t *buffer,
+                     uint32_t len,
+                     uint32_t type )
 {
 
     Serial_Unified2_Header hdr;
@@ -1165,7 +1171,7 @@ void U2Logger::close()
 
 void U2Logger::alert(Packet *p, const char *msg, Event *event)
 {
-    if(IS_IP4(p))
+    if(p->ip_api.is_ip4())
     {
         _AlertIP4_v2(p, msg, &config, event);
     }
@@ -1173,12 +1179,12 @@ void U2Logger::alert(Packet *p, const char *msg, Event *event)
     {
         _AlertIP6_v2(p, msg, &config, event);
 
-        if(ScLogIPv6Extra() && IS_IP6(p))
+        if(ScLogIPv6Extra() && p->ip_api.is_ip6())
         {
-            snort_ip_p ip = GET_SRC_IP(p);
+            const sfip_t *ip = p->ip_api.get_src();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
                 &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_SRC);
-            ip = GET_DST_IP(p);
+            ip = p->ip_api.get_dst();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
                 &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_DST);
         }

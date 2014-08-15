@@ -37,13 +37,15 @@
 #include "parser/cmd_line.h"
 #include "detection/sfrim.h"
 
+unsigned get_parse_errors();
 const char* get_parse_file();
 void get_parse_location(const char*& name, unsigned& line);
-void push_parse_location(const char* name, unsigned line = 0);
+void push_parse_location(const char* name, unsigned line = 1);
 void pop_parse_location();
+void inc_parse_position();
 
 /* rule setup funcs */
-SnortConfig * ParseSnortConf(struct VarNode*);
+SnortConfig * ParseSnortConf(const SnortConfig*);
 void ParseRules(SnortConfig *);
 
 void OrderRuleLists(SnortConfig *, const char *);
@@ -60,11 +62,10 @@ void PortTablesFree(rule_port_tables_t *);
 
 void parser_append_rules(const char*);
 
-int GetRuleProtocol(const char *);
-
 void ConfigureSideChannelModules(SnortConfig *);
 
-NORETURN void ParseError(const char *, ...);
+NORETURN void ParseAbort(const char *, ...);
+void ParseError(const char *, ...);
 void ParseWarning(const char *, ...);
 void ParseMessage(const char *, ...);
 

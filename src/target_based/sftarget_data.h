@@ -38,35 +38,9 @@
 
 typedef enum
 {
-    ATTRIBUTE_NAME,
-    ATTRIBUTE_ID
-} AttributeTypes;
-
-typedef enum
-{
     ATTRIBUTE_SERVICE,
     ATTRIBUTE_CLIENT
 } ServiceClient;
-
-typedef struct _MapData
-{
-    char s_mapvalue[SFAT_BUFSZ];
-    uint32_t l_mapid;
-} MapData;
-
-typedef MapData MapEntry;
-
-typedef struct _AttributeData
-{
-    AttributeTypes type;
-    union
-    {
-        char s_value[SFAT_BUFSZ];
-        uint32_t l_value;
-    } value;
-    int confidence;
-    int16_t attributeOrdinal;
-} AttributeData;
 
 #define APPLICATION_ENTRY_PORT 0x01
 #define APPLICATION_ENTRY_IPPROTO 0x02

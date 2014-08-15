@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// config.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// pps_stream_tcp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
+#include "preprocessor_states/pps_binder.h"
 
 namespace preprocessors
 {
@@ -90,14 +90,14 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
 }
 
 
-bool StreamTcp::parse_ports(std::istringstream& stream)
+bool StreamTcp::parse_ports(std::istringstream& arg_stream)
 {
     std::string s_val;
     std::string dir;
     std::string opt_name;
     bool retval = true;
 
-    if(!(stream >> dir))
+    if(!(arg_stream >> dir))
         return false;
 
     if( !dir.compare("client"))
@@ -192,7 +192,10 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
+    Binder bind(ld);
 
+    bind.set_when_proto("tcp");
+    bind.set_use_type("stream_tcp");
     ld->open_table("stream_tcp");
 
 
@@ -204,7 +207,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         // should be gauranteed to happen.  Checking for error just cause
         if (!(arg_stream >> keyword))
             tmpval = false;
-
 
 
         if (!keyword.compare("policy"))
@@ -246,7 +248,11 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         else if (!keyword.compare("bind_to"))
         {
             ld->add_diff_option_comment("bind_to", "bindings");
-            if (!eat_option(arg_stream))
+
+            std::string addr;
+            if (arg_stream >> addr)
+                bind.add_when_net(addr);
+            else
                 tmpval = false;
         }
 

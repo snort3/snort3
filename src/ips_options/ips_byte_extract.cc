@@ -325,26 +325,35 @@ static bool ByteExtractVerify(ByteExtractData *data)
     {
         ParseError("byte_extract rule option cannot extract more than %d bytes.",
                      MAX_BYTES_TO_GRAB);
+        return false;
     }
 
     if (data->bytes_to_grab > PARSELEN && data->data_string_convert_flag == 1)
     {
         ParseError("byte_extract rule cannot process more than %d bytes for "
                    "string extraction.",  PARSELEN);
+        return false;
     }
 
     if (data->align != 0 && data->align != 2 && data->align != 4)
+    {
         ParseError("byte_extract rule option has an invalid argument "
                    "to 'align'. Valid arguments are '2' and '4'.");
+        return false;
+    }
 
     if (data->offset < 0 && data->relative_flag == 0)
+    {
         ParseError("byte_extract rule option has a negative offset, but does "
                    "not use the 'relative' option.");
+        return false;
+    }
 
     if (data->name && isdigit(data->name[0]))
     {
         ParseError("byte_extract rule option has a name which starts with a digit. "
                    "Variable names must start with a letter.");
+        return false;
     }
 
     if (data->base && !data->data_string_convert_flag)
@@ -352,6 +361,7 @@ static bool ByteExtractVerify(ByteExtractData *data)
         ParseError("byte_extract rule option has a string conversion type "
                    "(dec, hex, or oct) without the \"string\" "
                    "argument.");
+        return false;
     }
     unsigned e1 = ffs(data->endianess);
     unsigned e2 = ffs(data->endianess >> e1);
@@ -361,6 +371,7 @@ static bool ByteExtractVerify(ByteExtractData *data)
         ParseError("byte_extract rule option has multiple arguments "
             "specifying the type of string conversion. Use only "
             "one of 'dec', 'hex', or 'oct'.");
+        return false;
     }
     return true;
 }
@@ -371,13 +382,13 @@ static bool ByteExtractVerify(ByteExtractData *data)
 
 static const Parameter extract_params[] =
 {
-    { "*count", Parameter::PT_INT, "1:10", nullptr,
+    { "~count", Parameter::PT_INT, "1:10", nullptr,
       "number of bytes to pick up from the buffer" },
 
-    { "*offset", Parameter::PT_INT, "-65535:65535", nullptr,
+    { "~offset", Parameter::PT_INT, "-65535:65535", nullptr,
       "number of bytes into the buffer to start processing" },
 
-    { "*name", Parameter::PT_STRING, nullptr, nullptr,
+    { "~name", Parameter::PT_STRING, nullptr, nullptr,
       "name of the variable that will be used in other rule options" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -442,13 +453,13 @@ bool ExtractModule::end(const char*, int, SnortConfig*)
 
 bool ExtractModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*count") )
+    if ( v.is("~count") )
         data.bytes_to_grab = v.get_long();
 
-    else if ( v.is("*offset") )
+    else if ( v.is("~offset") )
         data.offset = v.get_long();
 
-    else if ( v.is("*name") )
+    else if ( v.is("~name") )
         data.name = strdup(v.get_string());
 
     else if ( v.is("relative") )
@@ -516,6 +527,7 @@ static IpsOption* byte_extract_ctor(Module* p, OptTreeNode* otn)
     {
         ParseError("Rule has more than %d byte_extract variables.",
             NUM_BYTE_EXTRACT_VARS);
+        return nullptr;
     }
     return new ByteExtractOption(data);
 }

@@ -159,7 +159,7 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
     if ( !IsIP(p) )
         return;
 
-    switch ( GET_IPH_PROTO(p) )
+    switch ( p->ip_api.proto() )
     {
         case IPPROTO_TCP:
             Active_SendReset(p, 0);
@@ -410,7 +410,7 @@ int Active_ForceDropAction(Packet *p)
     // explicitly drop packet
     Active_ForceDropPacket();
 
-    switch ( GET_IPH_PROTO(p) )
+    switch ( p->ip_api.proto() )
     {
         case IPPROTO_TCP:
         case IPPROTO_UDP:
@@ -428,10 +428,10 @@ static inline int _Active_DoReset(Packet *p)
     if ( Active_PacketWouldBeDropped() )
         return 0;
 
-    if ( !IPH_IS_VALID(p) )
+    if ( !p->ip_api.is_valid() )
         return 0;
 
-    switch ( GET_IPH_PROTO(p) )
+    switch ( p->ip_api.proto() )
     {
         case IPPROTO_TCP:
             if ( Active_IsRSTCandidate(p) )

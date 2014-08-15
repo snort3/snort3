@@ -91,6 +91,15 @@ public:
 
     bool strtol(long&) const;
 
+    bool operator==(const char* s) const
+    { return str == s; };
+
+    bool operator==(long n) const
+    { return (long)num == n; };
+
+    bool operator==(double d) const
+    { return num == d; };
+
     void get_bits(PortList&) const;
     void get_bits(VlanList&) const;
     void get_bits(ByteList&) const;

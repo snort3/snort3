@@ -26,8 +26,6 @@
 
 
 /* otherwise defined in /usr/include/ppp_defs.h */
-#define UDP_HEADER_LEN          8
-
 // FIXIT udph should not be set for udp tunnel
 // (only if innermost layer == udp)
 #define IsUDP(p) (IsIP(p) && !IsTCP(p) && p->udph)
@@ -36,11 +34,7 @@
 namespace udp
 {
 
-namespace detail
-{
-const uint8_t HEADER_LEN = 8;
-
-} // namespace detail
+constexpr uint8_t UDP_HEADER_LEN = 8;
 
 struct UDPHdr
 {
@@ -50,11 +44,6 @@ struct UDPHdr
     uint16_t uh_chk;
 
 };
-
-inline uint8_t header_len()
-{
-    return detail::HEADER_LEN;
-}
 
 
 } // namespace

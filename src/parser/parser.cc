@@ -89,6 +89,8 @@
 // Expected in: flat namespace
 static uint32_t (*s_hack)(Packet*, uint32_t, uint32_t) = GenerateSnortEvent;
 
+static unsigned parse_errors = 0;
+
 rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
 
 static std::string s_aux_rules;
@@ -97,6 +99,13 @@ void parser_append_rules(const char* s)
 {
     s_aux_rules += s;
     s_aux_rules += "\n";
+}
+
+unsigned get_parse_errors()
+{ 
+    unsigned tmp = parse_errors;
+    parse_errors = 0;
+    return tmp;
 }
 
 //-------------------------------------------------------------------------
@@ -118,7 +127,7 @@ static void InitParser(void)
 
     if (ruleIndexMap == NULL)
     {
-        ParseError("Failed to create rule index map.");
+        ParseAbort("failed to create rule index map.");
     }
 }
 
@@ -130,7 +139,6 @@ static void CreateDefaultRules(SnortConfig *sc)
     CreateRuleType(sc, ACTION_PASS, RULE_TYPE__PASS, 0, &sc->Pass);
     CreateRuleType(sc, ACTION_DROP, RULE_TYPE__DROP, 1, &sc->Drop);
     CreateRuleType(sc, ACTION_SDROP, RULE_TYPE__SDROP, 0, &sc->SDrop);
-    CreateRuleType(sc, ACTION_REJECT, RULE_TYPE__REJECT, 1, &sc->Reject);
     CreateRuleType(sc, ACTION_ALERT, RULE_TYPE__ALERT, 1, &sc->Alert);
     CreateRuleType(sc, ACTION_LOG, RULE_TYPE__LOG, 1, &sc->Log);
 }
@@ -206,80 +214,80 @@ static rule_port_tables_t * PortTablesNew(void)
     /* No content rule objects */
     rpt->tcp_nocontent = PortObjectNew();
     if (rpt->tcp_nocontent == NULL)
-        ParseError("ParseRulesFile nocontent PortObjectNew() failed");
+        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
     PortObjectAddPortAny(rpt->tcp_nocontent);
 
     rpt->udp_nocontent = PortObjectNew();
     if (rpt->udp_nocontent == NULL)
-        ParseError("ParseRulesFile nocontent PortObjectNew() failed");
+        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
     PortObjectAddPortAny(rpt->udp_nocontent);
 
     rpt->icmp_nocontent = PortObjectNew();
     if (rpt->icmp_nocontent == NULL)
-        ParseError("ParseRulesFile nocontent PortObjectNew() failed");
+        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
     PortObjectAddPortAny(rpt->icmp_nocontent);
 
     rpt->ip_nocontent = PortObjectNew();
     if (rpt->ip_nocontent == NULL)
-        ParseError("ParseRulesFile nocontent PortObjectNew() failed");
+        ParseAbort("ParseRulesFile nocontent PortObjectNew() failed");
     PortObjectAddPortAny(rpt->ip_nocontent);
 
     /* Create the Any-Any Port Objects for each protocol */
     rpt->tcp_anyany = PortObjectNew();
     if (rpt->tcp_anyany == NULL)
-        ParseError("ParseRulesFile tcp any-any PortObjectNew() failed");
+        ParseAbort("ParseRulesFile tcp any-any PortObjectNew() failed");
     PortObjectAddPortAny(rpt->tcp_anyany);
 
     rpt->udp_anyany = PortObjectNew();
     if (rpt->udp_anyany == NULL)
-        ParseError("ParseRulesFile udp any-any PortObjectNew() failed");
+        ParseAbort("ParseRulesFile udp any-any PortObjectNew() failed");
     PortObjectAddPortAny(rpt->udp_anyany);
 
     rpt->icmp_anyany = PortObjectNew();
     if (rpt->icmp_anyany == NULL)
-        ParseError("ParseRulesFile icmp any-any PortObjectNew() failed");
+        ParseAbort("ParseRulesFile icmp any-any PortObjectNew() failed");
     PortObjectAddPortAny(rpt->icmp_anyany);
 
     rpt->ip_anyany = PortObjectNew();
     if (rpt->ip_anyany == NULL)
-        ParseError("ParseRulesFile ip PortObjectNew() failed");
+        ParseAbort("ParseRulesFile ip PortObjectNew() failed");
     PortObjectAddPortAny(rpt->ip_anyany);
 
     /* Create the tcp Rules PortTables */
     rpt->tcp_src = PortTableNew();
     if (rpt->tcp_src == NULL)
-        ParseError("ParseRulesFile tcp-src PortTableNew() failed");
+        ParseAbort("ParseRulesFile tcp-src PortTableNew() failed");
 
     rpt->tcp_dst = PortTableNew();
     if (rpt->tcp_dst == NULL)
-        ParseError("ParseRulesFile tcp-dst PortTableNew() failed");
+        ParseAbort("ParseRulesFile tcp-dst PortTableNew() failed");
 
     /* Create the udp Rules PortTables */
     rpt->udp_src = PortTableNew();
     if (rpt->udp_src == NULL)
-        ParseError("ParseRulesFile udp-src PortTableNew() failed");
+        ParseAbort("ParseRulesFile udp-src PortTableNew() failed");
 
     rpt->udp_dst = PortTableNew();
     if (rpt->udp_dst == NULL)
-        ParseError("ParseRulesFile udp-dst PortTableNew() failed");
+        ParseAbort("ParseRulesFile udp-dst PortTableNew() failed");
 
     /* Create the icmp Rules PortTables */
     rpt->icmp_src = PortTableNew();
     if (rpt->icmp_src == NULL)
-        ParseError("ParseRulesFile icmp-src PortTableNew() failed");
+        ParseAbort("ParseRulesFile icmp-src PortTableNew() failed");
 
     rpt->icmp_dst = PortTableNew();
     if (rpt->icmp_dst == NULL)
-        ParseError("ParseRulesFile icmp-dst PortTableNew() failed");
+        ParseAbort("ParseRulesFile icmp-dst PortTableNew() failed");
 
     /* Create the ip Rules PortTables */
     rpt->ip_src = PortTableNew();
     if (rpt->ip_src == NULL)
-        ParseError("ParseRulesFile ip-src PortTableNew() failed");
+        ParseAbort("ParseRulesFile ip-src PortTableNew() failed");
 
     rpt->ip_dst = PortTableNew();
     if (rpt->ip_dst == NULL)
-        ParseError("ParseRulesFile ip-dst PortTableNew() failed");
+        ParseAbort("ParseRulesFile ip-dst PortTableNew() failed");
 
     /*
      * someday these could be read from snort.conf, something like...
@@ -365,7 +373,7 @@ static void OtnInit(SnortConfig *sc)
     /* Init sid-gid -> otn map */
     sc->otn_map = OtnLookupNew();
     if (sc->otn_map == NULL)
-        ParseError("ParseRulesFile otn_map sfghash_new failed.");
+        ParseAbort("ParseRulesFile otn_map sfghash_new failed.");
 }
 
 #define IFACE_VARS_MAX 128
@@ -556,7 +564,7 @@ static void IntegrityCheckRules(SnortConfig *sc)
 
                 if(opt_func_count == 0)
                 {
-                    ParseError("Zero Length OTN List");
+                    ParseError("zero Length OTN List");
                 }
                 //DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"\n"););
 
@@ -587,10 +595,13 @@ static void IntegrityCheckRules(SnortConfig *sc)
  *      configuration file to parse the rules.
  *
  ***************************************************************************/
-SnortConfig * ParseSnortConf(VarNode* tmp)
+SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
 {
     SnortConfig *sc = SnortConfNew();
     snort_conf = sc;
+
+    sc->logging_flags = boot_conf->logging_flags;
+    VarNode* tmp = boot_conf->var_list;
 
     const char* fname = get_snort_conf();
 
@@ -687,7 +698,7 @@ char* ProcessFileOption(SnortConfig *sc, const char *filespec)
 
     if(filespec == NULL)
     {
-        ParseError("no arguement in this file option, remove extra ':' at the end of the alert option");
+        ParseAbort("no arguement in this file option, remove extra ':' at the end of the alert option");
     }
 
     /* look for ".." in the string and complain and exit if it is found */
@@ -746,6 +757,7 @@ void SetRuleStates(SnortConfig *sc)
         {
             ParseError("Rule state specified for invalid SID: %d GID: %d",
                        rule_state->sid, rule_state->gid);
+            return;
         }
 
         otn->enabled = rule_state->state;
@@ -875,45 +887,6 @@ ListHead * CreateRuleType(SnortConfig *sc, const char *name,
     return node->RuleList;
 }
 
-/****************************************************************************
- *
- * Function: GetRuleProtocol(char *)
- *
- * Purpose: Figure out which protocol the current rule is talking about
- *
- * Arguments: proto_str => the protocol string
- *
- * Returns: The integer value of the protocol
- *
- ***************************************************************************/
-int GetRuleProtocol(const char *proto_str)
-{
-    if (strcasecmp(proto_str, RULE_PROTO_OPT__TCP) == 0)
-    {
-        return IPPROTO_TCP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__UDP) == 0)
-    {
-        return IPPROTO_UDP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__ICMP) == 0)
-    {
-        return IPPROTO_ICMP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__IP) == 0)
-    {
-        return ETHERNET_TYPE_IP;
-    }
-    else
-    {
-        /* If we've gotten here, we have a protocol string we didn't recognize
-         * and should exit */
-        ParseError("Bad protocol: %s.", proto_str);
-    }
-
-    return -1;
-}
-
 void FreeRuleLists(SnortConfig *sc)
 {
     if (sc == NULL)
@@ -923,7 +896,6 @@ void FreeRuleLists(SnortConfig *sc)
 
     FreeOutputLists(&sc->Drop);
     FreeOutputLists(&sc->SDrop);
-    FreeOutputLists(&sc->Reject);
     FreeOutputLists(&sc->Alert);
     FreeOutputLists(&sc->Log);
     FreeOutputLists(&sc->Pass);
@@ -940,7 +912,6 @@ void FreeRuleLists(SnortConfig *sc)
 
             if ( (tmp->RuleList != &sc->Drop) &&
                 (tmp->RuleList != &sc->SDrop) &&
-                (tmp->RuleList != &sc->Reject) &&
                 (tmp->RuleList != &sc->Alert) &&
                 (tmp->RuleList != &sc->Log) &&
                 (tmp->RuleList != &sc->Pass) )
@@ -1057,8 +1028,9 @@ void OrderRuleLists(SnortConfig *sc, const char *order)
 
         if( node == NULL )
         {
-            ParseError("Ruletype '%s' does not exist or "
+            ParseError("ruletype '%s' does not exist or "
                        "has already been ordered.", toks[i]);
+            return;
         }
     }
 
@@ -1078,7 +1050,7 @@ void OrderRuleLists(SnortConfig *sc, const char *order)
     sc->rule_lists = ordered_list;
 }
 
-SO_PUBLIC NORETURN void ParseError(const char *format, ...)
+SO_PUBLIC NORETURN void ParseAbort(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -1097,6 +1069,29 @@ SO_PUBLIC NORETURN void ParseError(const char *format, ...)
         FatalError("%s(%d) %s\n", file_name, file_line, buf);
     else
         FatalError("%s\n", buf);
+}
+
+SO_PUBLIC void ParseError(const char *format, ...)
+{
+    char buf[STD_BUF+1];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(buf, STD_BUF, format, ap);
+    va_end(ap);
+
+    buf[STD_BUF] = '\0';
+
+    const char* file_name;
+    unsigned file_line;
+    get_parse_location(file_name, file_line);
+
+    if (file_name != NULL)
+        LogMessage("ERROR: %s(%d) %s\n", file_name, file_line, buf);
+    else
+        LogMessage("ERROR: %s\n", buf);
+
+    parse_errors++;
 }
 
 SO_PUBLIC void ParseWarning(const char *format, ...)

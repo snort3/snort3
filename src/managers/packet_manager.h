@@ -126,8 +126,6 @@ public:
     {
         encode_set_pkt(NULL);
     }
-
 };
 
 #endif
-

@@ -325,11 +325,9 @@ static void SnortInit(int argc, char **argv)
     PluginManager::dump_plugins();
     FileAPIInit();
 
-    SnortConfig *sc;
-
     register_profiles();
 
-    sc = ParseSnortConf(snort_cmd_line_conf->var_list);
+    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
 
     /* Merge the command line and config file confs to take care of
      * command line overriding config file.
@@ -616,7 +614,7 @@ void snort_cleanup()
 // instantiate things that can be reloaded
 static SnortConfig * get_reload_config(void)
 {
-    SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf->var_list);
+    SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
 
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
 
@@ -757,8 +755,8 @@ static void set_policy(Packet*)  // FIX SSN implement based on bindings
    // for now need to just get stream_* inspectors and call appropriately 
 #if 0
     int vlanId = (p->vh) ? vlan::vth_vlan(p->vh) : -1;
-    snort_ip_p srcIp = (p->iph) ? GET_SRC_IP((p)) : (snort_ip_p)0;
-    snort_ip_p dstIp = (p->iph) ? GET_DST_IP((p)) : (snort_ip_p)0;
+    const sfip_t *srcIp = p->ip_api.get_src(); // returns nullptr if not set
+    const sfip_t *dstIp = p->ip_api.get_dst();
 
     //set policy id for this packet
     setCurrentPolicy(snort_conf, sfGetApplicablePolicyId(
@@ -818,9 +816,11 @@ DAQ_Verdict ProcessPacket(
     if ( !p->proto_bits )
         p->proto_bits = PROTO_BIT__OTHER;
 
+#if 0
     // FIXIT required until decoders are fixed
     else if ( !p->family && (p->proto_bits & PROTO_BIT__IP) )
         p->proto_bits &= ~PROTO_BIT__IP;
+#endif
 
     set_policy(p);
 

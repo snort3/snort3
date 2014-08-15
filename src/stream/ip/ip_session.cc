@@ -130,8 +130,8 @@ bool IpSession::setup (Packet* p)
 
     ipStats.sessions++;
 
-    IP_COPY_VALUE(flow->client_ip, GET_SRC_IP(p));
-    IP_COPY_VALUE(flow->server_ip, GET_DST_IP(p));
+    sfip_copy(flow->client_ip, p->ip_api.get_src());
+    sfip_copy(flow->server_ip, p->ip_api.get_dst());
 
 #ifdef ENABLE_EXPECTED_IP
     if ( flow_con->expected_session(flow, p))
@@ -170,7 +170,7 @@ int IpSession::process(Packet* p)
         return 0;
     }
 
-    if ( p->frag_flag )
+    if ( p->decode_flags & DECODE__FRAG )
     {
         Defrag* d = get_defrag(flow->ssn_server);
         d->process(p, &tracker);

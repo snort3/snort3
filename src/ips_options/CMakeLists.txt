@@ -7,13 +7,17 @@ SET( PLUGIN_LIST
     asn1_detect.cc
     asn1_detect.h
     ips_base64.cc
+    ips_bufferlen.cc
     ips_byte_test.cc
     ips_byte_jump.cc
+    ips_classtype.cc
     ips_cvs.cc
+    ips_detection_filter.cc
     ips_dsize.cc
     ips_flags.cc
     ips_fragbits.cc
     ips_fragoffset.cc
+    ips_gid.cc
     ips_http.cc
     ips_http_header.cc
     ips_icmp_id.cc
@@ -23,17 +27,23 @@ SET( PLUGIN_LIST
     ips_ipopts.cc
     ips_isdataat.cc 
     ips_itype.cc 
+    ips_metadata.cc 
+    ips_msg.cc 
     ips_pkt_data.cc
+    ips_priority.cc
     ips_raw_data.cc
-    ips_react.cc
-    ips_resp.cc
+    ips_reference.cc
+    ips_rem.cc
+    ips_rev.cc
     ips_rpc.cc
     ips_seq.cc
     ips_session.cc
+    ips_sid.cc
+    ips_soid.cc
+    ips_tag.cc
     ips_tos.cc
     ips_ttl.cc
     ips_window.cc
-    ips_bufferlen.cc
     range.cc
     range.h
 )
@@ -81,6 +91,7 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_ack ips_options ips_ack.cc range.cc range.h)
     add_shared_library(ips_asn1 ips_options ips_asn1.cc asn1_detect.cc asn1_detect.h)
     add_shared_library(ips_base64 ips_options ips_base64.cc)
+    add_shared_library(ips_bufferlen ips_options range.cc range.h)
     add_shared_library(ips_byte_test ips_options ips_byte_test.cc)
     add_shared_library(ips_byte_jump ips_options ips_byte_jump.cc)
     add_shared_library(ips_cvs ips_options ips_cvs.cc)
@@ -99,15 +110,12 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_itype ips_options ips_itype.cc range.cc range.h)
     add_shared_library(ips_pkt_data ips_options ips_pkt_data.cc)
     add_shared_library(ips_raw_data ips_options ips_raw_data.cc)
-    add_shared_library(ips_react ips_options ips_react.cc)
-    add_shared_library(ips_resp ips_options ips_resp.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)
     add_shared_library(ips_seq ips_options ips_seq.cc range.cc range.h)
     add_shared_library(ips_session ips_options ips_session.cc)
     add_shared_library(ips_tos ips_options ips_tos.cc range.cc range.h)
     add_shared_library(ips_ttl ips_options ips_ttl.cc range.cc range.h)
     add_shared_library(ips_window ips_options ips_window.cc range.cc range.h)
-    add_shared_library(ips_bufferlen ips_options ips_bufferlen.cc)
 
 
 endif (STATIC_IPS_OPTIONS)

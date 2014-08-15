@@ -10,6 +10,8 @@ stream_api.h \
 stream_splitter.h
 
 libstream_a_SOURCES = \
+flush_bucket.cc \
+flush_bucket.h \
 stream.h \
 stream_api.cc \
 stream_inspectors.cc \

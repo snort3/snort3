@@ -21,7 +21,7 @@
 
 #include "data/dt_var.h"
 #include "data/dt_data.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 
 Variable::Variable(std::string name, int depth)
 {

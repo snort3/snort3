@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2005-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -220,10 +220,10 @@ static int Norm_IP4 (
             changes++;
         }
     }
-    if ( p->layers[layer].length > IP_HEADER_LEN )
+    if ( p->layers[layer].length > ip::IP4_HEADER_LEN )
     {
-        uint8_t* opts = p->layers[layer].start + IP_HEADER_LEN;
-        uint8_t len = p->layers[layer].length - IP_HEADER_LEN;
+        uint8_t* opts = p->layers[layer].start + ip::IP4_HEADER_LEN;
+        uint8_t len = p->layers[layer].length - ip::IP4_HEADER_LEN;
         // expect len > 0 because IHL yields a multiple of 4
         memset(opts, IPOPT_NOP, len);
         normStats[PC_IP4_OPTS]++;
@@ -241,9 +241,9 @@ static int Norm_ICMP4 (
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
 
     if ( (h->type == ICMP_ECHO || h->type == ICMP_ECHOREPLY) &&
-         (h->code != icmp4::IcmpCode::ECHO_CODE) )
+         (h->code != icmp::IcmpCode::ECHO_CODE) )
     {
-        h->code =  icmp4::IcmpCode::ECHO_CODE;
+        h->code =  icmp::IcmpCode::ECHO_CODE;
         normStats[PC_ICMP4_ECHO]++;
         sfBase.iPegs[PERF_COUNT_ICMP4_ECHO]++;
         changes++;
@@ -283,7 +283,7 @@ static int Norm_ICMP6 (
           (uint16_t)h->type == icmp6::Icmp6Types::REPLY) &&
          (h->code != 0) )
     {
-        h->code = static_cast<icmp4::IcmpCode>(0);
+        h->code = static_cast<icmp::IcmpCode>(0);
         normStats[PC_ICMP6_ECHO]++;
         sfBase.iPegs[PERF_COUNT_ICMP6_ECHO]++;
         changes++;
@@ -344,7 +344,7 @@ static inline void NopDaOpt (uint8_t* opt, uint8_t len)
 
 static inline int Norm_TCPOptions (
     NormalizerConfig* config,
-    uint8_t* opts, size_t len, const TCPHdr* h, uint8_t numOpts, int changes)
+    uint8_t* opts, size_t len, const tcp::TCPHdr* h, uint8_t numOpts, int changes)
 {
     size_t i = 0;
     uint8_t c = 0;
@@ -433,7 +433,7 @@ static inline int Norm_TCPPadding (
 static int Norm_TCP (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    TCPHdr* h = (TCPHdr*)(p->layers[layer].start);
+    tcp::TCPHdr* h = (tcp::TCPHdr*)(p->layers[layer].start);
 
     if ( h->th_offx2 & TH_RSV )
     {
@@ -494,18 +494,20 @@ static int Norm_TCP (
         sfBase.iPegs[PERF_COUNT_TCP_URG]++;
         changes++;
     }
-    if ( p->tcp_options_len > 0 )
+
+    uint8_t tcp_options_len = p->tcph->options_len();
+    if ( tcp_options_len > 0 )
     {
-        uint8_t* opts = p->layers[layer].start + TCP_HEADER_LEN;
+        uint8_t* opts = p->layers[layer].start + tcp::TCP_HEADER_LEN;
 
         if ( Norm_IsEnabled(c, NORM_TCP_OPT) )
         {
-            changes = Norm_TCPOptions(c, opts, p->tcp_options_len,
+            changes = Norm_TCPOptions(c, opts, tcp_options_len,
                 h, p->tcp_option_count, changes);
         }
         else
         {
-            changes = Norm_TCPPadding(opts, p->tcp_options_len,
+            changes = Norm_TCPPadding(opts, tcp_options_len,
                 p->tcp_option_count, changes);
         }
     }

@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_so.cc author Russ Combs <rucombs@cisco.com>
 
 #include "framework/so_rule.h"
 
@@ -29,7 +29,7 @@ using namespace std;
 
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "managers/ips_manager.h"
+#include "managers/so_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
 #include "time/profiler.h"
@@ -69,7 +69,7 @@ SoOption::SoOption(
 SoOption::~SoOption()
 {
     if ( data )
-        IpsManager::delete_so_data(soid, data);
+        SoManager::delete_so_data(soid, data);
 }
 
 uint32_t SoOption::hash() const
@@ -111,8 +111,8 @@ int SoOption::eval(Cursor&, Packet* p)
 
 static const Parameter so_params[] =
 {
-    { "*func", Parameter::PT_STRING, nullptr, nullptr,
-      "name of function to call" },
+    { "~func", Parameter::PT_STRING, nullptr, nullptr,
+      "name of eval function" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -139,7 +139,7 @@ bool SoModule::begin(const char*, int, SnortConfig*)
 
 bool SoModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*func") )
+    if ( v.is("~func") )
         name = v.get_string();
 
     else
@@ -168,11 +168,11 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
     SoModule* m = (SoModule*)p;
     const char* name = m->name.c_str();
 
-    SoEvalFunc func = IpsManager::get_so_eval(otn->soid, name, &data);
+    SoEvalFunc func = SoManager::get_so_eval(otn->soid, name, &data);
 
     if ( !func )
     {
-        ParseError("Can't link so:%s", name);
+        ParseError("can't link so:%s", name);
         return nullptr;
     }
     return new SoOption(otn->soid, name, func, data);

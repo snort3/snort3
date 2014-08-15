@@ -124,7 +124,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->ip_api.is_valid())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Not IP\n"););
         return rval;
@@ -135,22 +135,22 @@ int IpProtoOption::eval(Cursor&, Packet *p)
     switch (ipd->comparison_flag)
     {
         case IP_PROTO__EQUAL:
-            if (GET_IPH_PROTO(p) == ipd->protocol)
+            if (p->ip_api.proto() == ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 
         case IP_PROTO__NOT_EQUAL:
-            if (GET_IPH_PROTO(p) != ipd->protocol)
+            if (p->ip_api.proto() != ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 
         case IP_PROTO__GREATER_THAN:
-            if (GET_IPH_PROTO(p) > ipd->protocol)
+            if (p->ip_api.proto() > ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 
         case IP_PROTO__LESS_THAN:
-            if (GET_IPH_PROTO(p) < ipd->protocol)
+            if (p->ip_api.proto() < ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 
@@ -255,8 +255,9 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
         ip_proto = SnortStrtoul(data, &endptr, 10);
         if ((errno == ERANGE) || (ip_proto >= NUM_IP_PROTOS))
         {
-            ParseError("Invalid protocol number for 'ip_proto' "
+            ParseError("invalid protocol number for 'ip_proto' "
                        "rule option.  Value must be between 0 and 255.");
+            return;
         }
 
         ds_ptr->protocol = (uint8_t)ip_proto;
@@ -272,8 +273,9 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
         }
         else
         {
-            ParseError("Invalid protocol name for \"ip_proto\" "
+            ParseError("invalid protocol name for \"ip_proto\" "
                        "rule option: '%s'.", data);
+            return;
         }
     }
 }
@@ -284,7 +286,7 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
 
 static const Parameter ip_proto_params[] =
 {
-    { "*proto", Parameter::PT_STRING, nullptr, nullptr, 
+    { "~proto", Parameter::PT_STRING, nullptr, nullptr, 
       "[!|>|<] name or number" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -312,7 +314,7 @@ bool IpProtoModule::begin(const char*, int, SnortConfig*)
 
 bool IpProtoModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*proto") )
+    if ( v.is("~proto") )
         ip_proto_parse(v.get_string(), &data);
 
     else

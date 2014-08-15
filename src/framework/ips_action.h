@@ -47,16 +47,14 @@ public:
 
     virtual void exec(Packet*) = 0;
 
-    RuleType get_type() const { return type; };
     const char* get_name() const { return name; };
 
 protected:
-    IpsAction(const char* s, RuleType t)
-    { name = s; type = t; };
+    IpsAction(const char* s)
+    { name = s; };
 
 private:
     const char* name;
-    RuleType type;
 };
 
 typedef void (*IpsActFunc)();
@@ -66,11 +64,13 @@ typedef void (*ActDelFunc)(IpsAction*);
 struct ActionApi
 {
     BaseApi base;
+    RuleType type;
 
     IpsActFunc pinit;
     IpsActFunc pterm;
     IpsActFunc tinit;
     IpsActFunc tterm;
+
     ActNewFunc ctor;
     ActDelFunc dtor;
 };

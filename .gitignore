@@ -49,6 +49,7 @@ snort
 snort.pc
 src/snort
 src/tags
+tools/snort2lua/tags
 src/target_based/sf_attribute_table.h
 src/target_based/y.tab.c
 src/test/suite_decl.h

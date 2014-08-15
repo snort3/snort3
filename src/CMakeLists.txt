@@ -106,7 +106,7 @@ target_link_libraries( snort
     loggers
     service_inspectors
     stream
-    actions
+    ips_actions
     managers
     codecs
     root_codecs

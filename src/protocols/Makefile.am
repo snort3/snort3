@@ -10,6 +10,7 @@ eapol.h \
 eth.h \
 icmp4.h \
 icmp6.h \
+ip.h \
 ipv4.h \
 ipv6.h \
 gre.h \
@@ -25,7 +26,8 @@ vlan.h \
 wlan.h
 
 libprotocols_a_SOURCES = \
-layer.cc
+layer.cc \
+ip.cc
 
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

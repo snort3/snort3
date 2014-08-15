@@ -38,6 +38,7 @@
 #include "utils/boyer_moore.h"
 #include "util.h"
 #include "parser/parser.h"
+#include "parser/parse_byte_code.h"
 #include "sfhashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -257,13 +258,22 @@ static int32_t parse_int(
     value = SnortStrtol(data, &endptr, 10);
 
     if (*endptr)
-        ParseError("Invalid '%s' format.", tag);
+    {
+        ParseError("invalid '%s' format.", tag);
+        return value;
+    }
 
     if (errno == ERANGE)
-        ParseError("Range problem on '%s' value.", tag);
+    {
+        ParseError("range problem on '%s' value.", tag);
+        return value;
+    }
 
     if ((value > high) || (value < low))
+    {
         ParseError("'%s' must in %d:%d", tag, low, high);
+        return value;
+    }
 
     return value;
 }
@@ -272,7 +282,10 @@ static void validate_content(
     PatternMatchData* pmd, OptTreeNode* otn)
 {
     if ( fast_pattern_count(otn, RULE_OPTION_TYPE_CONTENT) > 1 )
-        ParseError("Only one content per rule may be used for fast pattern matching.");
+    {
+        ParseError("only one content per rule may be used for fast pattern matching.");
+        return;
+    }
 
     if ( pmd->negated )
         pmd->last_check = (PmdLastCheck*)SnortAlloc(get_instance_max() * sizeof(*pmd->last_check));
@@ -527,268 +540,14 @@ static unsigned GetCMF (PatternMatchData* pmd)
 
 static void parse_content(PatternMatchData* ds_idx, const char* rule)
 {
-    char tmp_buf[MAX_PATTERN_SIZE];
+    bool negated;
+    std::string buf;
 
-    /* got enough ptrs for you? */
-    const char *start_ptr;
-    const char *end_ptr;
-    const char *idx;
-    const char *dummy_idx;
-    const char *dummy_end;
-    const char *tmp;
-    char hex_buf[3];
-    u_int dummy_size = 0;
-    int size;
-    int hexmode = 0;
-    int hexsize = 0;
-    int pending = 0;
-    int cnt = 0;
-    int literal = 0;
-    int negated = 0;
+    if ( !parse_byte_code(rule, negated, buf) )
+        return;
 
-    /* clear out the temp buffer */
-    memset(tmp_buf, 0, MAX_PATTERN_SIZE);
-
-    if (rule == NULL)
-        ParseError("content_parse Got Null enclosed in quotation marks (\")");
-
-    while(isspace((int)*rule))
-        rule++;
-
-    if(*rule == '!')
-    {
-        negated = 1;
-        while(isspace((int)*++rule));
-    }
-
-    /* find the start of the data */
-    start_ptr = strchr(rule, '"');
-
-    if (start_ptr != rule)
-        ParseError("Content data needs to be enclosed in quotation marks (\")");
-
-    /* move the start up from the beggining quotes */
-    start_ptr++;
-
-    /* find the end of the data */
-    end_ptr = strrchr(start_ptr, '"');
-
-    if (end_ptr == NULL)
-        ParseError("Content data needs to be enclosed in quotation marks (\")");
-
-    /* Is there anything other than whitespace after the trailing
-     * double quote? */
-    tmp = end_ptr + 1;
-    while (*tmp != '\0' && isspace ((int)*tmp))
-        tmp++;
-
-    if (strlen (tmp) > 0)
-    {
-        ParseError("Bad data (possibly due to missing semicolon) after "
-                "trailing double quote.");
-    }
-
-    /* how big is it?? */
-    size = end_ptr - start_ptr;
-
-    /* uh, this shouldn't happen */
-    if (size <= 0)
-        ParseError("Bad pattern length");
-
-    /* set all the pointers to the appropriate places... */
-    idx = start_ptr;
-
-    /* set the indexes into the temp buffer */
-    dummy_idx = tmp_buf;
-    dummy_end = (dummy_idx + size);
-
-    /* why is this buffer so small? */
-    memset(hex_buf, '0', 2);
-    hex_buf[2] = '\0';
-
-    /* BEGIN BAD JUJU..... */
-    while(idx < end_ptr)
-    {
-        if (dummy_size >= MAX_PATTERN_SIZE-1)
-        {
-            /* Have more data to parse and pattern is about to go beyond end of buffer */
-            ParseError("content_parse() dummy buffer overflow, make a smaller "
-                    "pattern please! (Max size = %d)", MAX_PATTERN_SIZE-1);
-        }
-
-        DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "processing char: %c\n", *idx););
-        switch(*idx)
-        {
-            case '|':
-                DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Got bar... "););
-                if(!literal)
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "not in literal mode... "););
-                    if(!hexmode)
-                    {
-                        DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Entering hexmode\n"););
-                        hexmode = 1;
-                    }
-                    else
-                    {
-                        DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Exiting hexmode\n"););
-
-                        /*
-                        **  Hexmode is not even.
-                        */
-                        if(!hexsize || hexsize % 2)
-                        {
-                            ParseError("Content hexmode argument has invalid "
-                                    "number of hex digits.  The argument '%s' "
-                                    "must contain a full even byte string.", start_ptr);
-                        }
-
-                        hexmode = 0;
-                        pending = 0;
-                    }
-
-                    if(hexmode)
-                        hexsize = 0;
-                }
-                else
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "literal set, Clearing\n"););
-                    literal = 0;
-                    tmp_buf[dummy_size] = start_ptr[cnt];
-                    dummy_size++;
-                }
-
-                break;
-
-            case '\\':
-                DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Got literal char... "););
-
-                if(!literal)
-                {
-                    /* Make sure the next char makes this a valid
-                     * escape sequence.
-                     */
-                    if (idx [1] != '\0' && strchr ("\\\":;", idx [1]) == NULL)
-                    {
-                        ParseError("Bad escape sequence starting with '%s'.", idx);
-                    }
-
-                    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Setting literal\n"););
-
-                    literal = 1;
-                }
-                else
-                {
-                    DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "Clearing literal\n"););
-                    tmp_buf[dummy_size] = start_ptr[cnt];
-                    literal = 0;
-                    dummy_size++;
-                }
-
-                break;
-            case '"':
-                if (!literal)
-                    ParseError("Non-escaped '\"' character!");
-                /* otherwise process the character as default */
-            default:
-                if(hexmode)
-                {
-                    if(isxdigit((int) *idx))
-                    {
-                        hexsize++;
-
-                        if(!pending)
-                        {
-                            hex_buf[0] = *idx;
-                            pending++;
-                        }
-                        else
-                        {
-                            hex_buf[1] = *idx;
-                            pending--;
-
-                            if(dummy_idx < dummy_end)
-                            {
-                                tmp_buf[dummy_size] = (u_char)
-                                    strtol(hex_buf, (char **) NULL, 16)&0xFF;
-
-                                dummy_size++;
-                                memset(hex_buf, '0', 2);
-                                hex_buf[2] = '\0';
-                            }
-                            else
-                            {
-                                ParseError("content_parse() dummy buffer "
-                                        "overflow, make a smaller pattern "
-                                        "please! (Max size = %d)", MAX_PATTERN_SIZE-1);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(*idx != ' ')
-                        {
-                            ParseError("What is this '%c'(0x%X) doing in "
-                                    "your binary buffer?  Valid hex values "
-                                    "only please! (0x0 - 0xF) Position: %d",
-                                    (char) *idx, (char) *idx, cnt);
-                        }
-                    }
-                }
-                else
-                {
-                    if(*idx >= 0x1F && *idx <= 0x7e)
-                    {
-                        if(dummy_idx < dummy_end)
-                        {
-                            tmp_buf[dummy_size] = start_ptr[cnt];
-                            dummy_size++;
-                        }
-                        else
-                        {
-                            ParseError("content_parse() dummy buffer "
-                                    "overflow, make a smaller pattern "
-                                    "please! (Max size = %d)", MAX_PATTERN_SIZE-1);
-                        }
-
-                        if(literal)
-                        {
-                            literal = 0;
-                        }
-                    }
-                    else
-                    {
-                        if(literal)
-                        {
-                            tmp_buf[dummy_size] = start_ptr[cnt];
-                            dummy_size++;
-                            DEBUG_WRAP(DebugMessage(DEBUG_PARSER, "Clearing literal\n"););
-                            literal = 0;
-                        }
-                        else
-                        {
-                            ParseError("Character value out of range, try a "
-                                    "binary buffer.");
-                        }
-                    }
-                }
-
-                break;
-        }
-
-        dummy_idx++;
-        idx++;
-        cnt++;
-    }
-    /* ...END BAD JUJU */
-
-    /* error prunning */
-
-    if (literal)
-        ParseError("Backslash escape is not completed.");
-
-    if (hexmode)
-        ParseError("Hexmode is not completed.");
+    const char* tmp_buf = buf.c_str();
+    unsigned dummy_size = buf.size();
 
     ds_idx->pattern_buf = (char *)SnortAlloc(dummy_size+1);
     memcpy(ds_idx->pattern_buf, tmp_buf, dummy_size);
@@ -804,11 +563,14 @@ static void parse_content(PatternMatchData* ds_idx, const char* rule)
 static void parse_offset(PatternMatchData* pmd, const char *data)
 {
     if ( GetCMF(pmd) & BAD_OFFSET && pmd->relative )
+    {
         ParseError("offset can't be used with itself, distance, or within");
+        return;
+    }
 
     if (data == NULL)
     {
-        ParseError("Missing argument to 'offset' option");
+        ParseError("missing argument to 'offset' option");
         return;
     }
 
@@ -822,6 +584,7 @@ static void parse_offset(PatternMatchData* pmd, const char *data)
         if (pmd->offset_var == BYTE_EXTRACT_NO_VAR)
         {
             ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            return;
         }
     }
 
@@ -832,11 +595,14 @@ static void parse_offset(PatternMatchData* pmd, const char *data)
 static void parse_depth(PatternMatchData* pmd, const char *data)
 {
     if ( GetCMF(pmd) & BAD_DEPTH && pmd->relative )
+    {
         ParseError("depth can't be used with itself, distance, or within");
+        return;
+    }
 
     if (data == NULL)
     {
-        ParseError("Missing argument to 'depth' option");
+        ParseError("missing argument to 'depth' option");
         return;
     }
 
@@ -847,8 +613,9 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
         /* check to make sure that this the depth allows this rule to fire */
         if (pmd->depth < (int)pmd->pattern_size)
         {
-            ParseError("The depth (%d) is less than the size of the content(%u)!",
+            ParseError("the depth (%d) is less than the size of the content(%u)!",
                     pmd->depth, pmd->pattern_size);
+            return;
         }
     }
     else
@@ -857,6 +624,7 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
         if (pmd->depth_var == BYTE_EXTRACT_NO_VAR)
         {
             ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            return;
         }
     }
 
@@ -867,11 +635,14 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
 static void parse_distance(PatternMatchData* pmd, const char *data)
 {
     if ( GetCMF(pmd) & BAD_DISTANCE && !pmd->relative )
+    {
         ParseError("distance can't be used with itself, offset, or depth");
+        return;
+    }
 
     if (data == NULL)
     {
-        ParseError("Missing argument to 'distance' option");
+        ParseError("missing argument to 'distance' option");
         return;
     }
 
@@ -885,6 +656,7 @@ static void parse_distance(PatternMatchData* pmd, const char *data)
         if (pmd->offset_var == BYTE_EXTRACT_NO_VAR)
         {
             ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            return;
         }
     }
 
@@ -894,11 +666,14 @@ static void parse_distance(PatternMatchData* pmd, const char *data)
 static void parse_within(PatternMatchData* pmd, const char *data)
 {
     if ( GetCMF(pmd) & BAD_WITHIN && !pmd->relative )
+    {
         ParseError("within can't be used with itself, offset, or depth");
+        return;
+    }
 
     if (data == NULL)
     {
-        ParseError("Missing argument to 'within' option");
+        ParseError("missing argument to 'within' option");
         return;
     }
 
@@ -907,7 +682,10 @@ static void parse_within(PatternMatchData* pmd, const char *data)
         pmd->depth = parse_int(data, "within");
 
         if (pmd->depth < (int)pmd->pattern_size)
+        {
             ParseError("within (%d) is smaller than size of pattern", pmd->depth);
+            return;
+        }
     }
     else
     {
@@ -915,6 +693,7 @@ static void parse_within(PatternMatchData* pmd, const char *data)
         if (pmd->depth_var == BYTE_EXTRACT_NO_VAR)
         {
             ParseError(BYTE_EXTRACT_INVALID_ERR_STR);
+            return;
         }
     }
 
@@ -931,12 +710,18 @@ static const char* error_str =
 static void parse_fast_pattern_offset(PatternMatchData* pmd, const char *data)
 {
     if (data == NULL)
-        ParseError("Missing argument to 'fast_pattern_offset' option");
+    {
+        ParseError("missing argument to 'fast_pattern_offset' option");
+        return;
+    }
 
     long offset = parse_int(data, "fast_pattern_offset", 0, UINT16_MAX);
 
     if ((int)pmd->pattern_size < (offset + pmd->fp_length))
+    {
         ParseError(error_str, data, pmd->pattern_size);
+        return;
+    }
 
     pmd->fp_offset = offset;
     pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
@@ -945,12 +730,18 @@ static void parse_fast_pattern_offset(PatternMatchData* pmd, const char *data)
 static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
 {
     if (data == NULL)
-        ParseError("Missing argument to 'fast_pattern_length' option");
+    {
+        ParseError("missing argument to 'fast_pattern_length' option");
+        return;
+    }
 
     long length = parse_int(data, "fast_pattern_length", 0, UINT16_MAX);
 
     if ((int)pmd->pattern_size < (pmd->fp_offset + length))
+    {
         ParseError(error_str, data, pmd->pattern_size);
+        return;
+    }
 
     pmd->fp_length = length;
     pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
@@ -962,7 +753,7 @@ static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
 
 static const Parameter content_params[] =
 {
-    { "*data", Parameter::PT_STRING, nullptr, nullptr,
+    { "~data", Parameter::PT_STRING, nullptr, nullptr,
       "data to match" },
 
     { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -1039,7 +830,7 @@ bool ContentModule::end(const char*, int, SnortConfig*)
 
 bool ContentModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*data") )
+    if ( v.is("~data") )
         parse_content(pmd, v.get_string());
 
     else if ( v.is("offset") )

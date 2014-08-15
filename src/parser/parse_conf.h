@@ -21,6 +21,7 @@
 #ifndef PARSE_CONF_H
 #define PARSE_CONF_H
 
+#include <string>
 #include "detection/rules.h"
 
 void parse_conf_init();
@@ -32,8 +33,16 @@ struct SnortConfig;
 void ParseConfigFile(SnortConfig*, const char* fname);
 void ParseConfigString(SnortConfig*, const char* str);
 
-void AddRuleState(SnortConfig*, const RuleState&);
+void parse_include(SnortConfig*, const char*);
 
+void AddRuleState(SnortConfig*, const RuleState&);
+void add_service_to_otn(SnortConfig*, OptTreeNode*, const char*);
+
+RuleType get_rule_type(const char*);
+ListHead* get_rule_list(SnortConfig*, const char*);
+
+#if 0
+// FIXIT delete this cruft
 #define ERR_PAIR_COUNT \
         "%s has incorrect argument count; should be %d pairs.", ERR_KEY
 #define ERR_NOT_PAIRED \
@@ -50,6 +59,7 @@ void AddRuleState(SnortConfig*, const RuleState&);
         "%s could not be created.", ERR_KEY
 #define ERR_CREATE_EX \
         "%s could not be created: %s.", ERR_KEY
+#endif
 
 #endif
 

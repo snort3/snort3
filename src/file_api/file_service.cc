@@ -501,7 +501,7 @@ static inline void _file_signature_lookup(FileContext* context,
             context->file_signature_enabled = 0;
             if (file_config && file_config->block_timeout_lookup)
                 file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
-                        FILE_SIGNATURE_SHA256_STR, RULE_TYPE__REJECT);
+                        FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
             else
                 file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
                         FILE_SIGNATURE_SHA256_STR, RULE_TYPE__ALERT);
@@ -576,7 +576,7 @@ static void render_block_verdict(void *ctx, void *p)
     else if (context->verdict == FILE_VERDICT_REJECT)
     {
         file_eventq_add(GENERATOR_FILE_SIGNATURE, FILE_SIGNATURE_SHA256,
-                FILE_SIGNATURE_SHA256_STR, RULE_TYPE__REJECT);
+                FILE_SIGNATURE_SHA256_STR, RULE_TYPE__DROP);
         Active_ForceDropPacket();
         DisableInspection(pkt);
         pkt->packet_flags |= PKT_FILE_EVENT_SET;
@@ -690,8 +690,10 @@ static int file_process( void* p, uint8_t* file_data, int data_size,
         }
         else if (verdict == FILE_VERDICT_REJECT)
         {
-            file_eventq_add(GENERATOR_FILE_TYPE, context->file_type_id,
-                    file_info_from_ID(context->file_config,context->file_type_id), RULE_TYPE__REJECT);
+            file_eventq_add(
+                GENERATOR_FILE_TYPE, context->file_type_id,
+                file_info_from_ID(context->file_config,context->file_type_id),
+                RULE_TYPE__DROP);
             Active_ForceDropPacket();
             DisableInspection(pkt);
             updateFileSize(context, data_size, position);

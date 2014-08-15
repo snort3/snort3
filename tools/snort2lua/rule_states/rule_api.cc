@@ -21,7 +21,7 @@
 
 #include <string>
 #include "rule_states/rule_api.h"
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 #include "utils/converter.h"
 
 namespace rules
@@ -142,9 +142,3 @@ const std::vector<const ConvertMap*> rule_api =
 
 } // namespace rules
 
-#if 0
-
- extern const BaseApi* ips_so;
- extern const BaseApi* ips_raw_data;
-
-#endif

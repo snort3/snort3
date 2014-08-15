@@ -75,15 +75,6 @@ extern THREAD_LOCAL ProfileStats streamSizePerfStats;
 struct SnortConfig;
 struct StreamTcpConfig;
 
-struct ServiceReassembly
-{
-    std::string name;
-    bool c2s;
-    bool s2c;
-
-    ServiceReassembly(std::string&, bool, bool);
-};
-
 class StreamTcpModule : public Module
 {
 public:
@@ -101,25 +92,12 @@ public:
 
     StreamTcpConfig* get_data();
 
-    void get_port(Port, bool& c2s, bool& s2c);
-    const ServiceReassembly* get_proto(unsigned);
-
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const;
     const char** get_pegs() const;
     PegCount* get_counts() const;
 
 private:
-    void add_protos(Value&, bool, bool);
-
-private:
     StreamTcpConfig* config;
-
-    PortList ports_client;
-    PortList ports_server;
-    PortList ports_both;
-
-    std::vector<ServiceReassembly*> protos;
-    bool client_protos_set;
 };
 
 #endif

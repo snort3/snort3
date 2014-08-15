@@ -1,7 +1,5 @@
 /****************************************************************************
- *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2005-2013 Sourcefire, Inc.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License Version 2 as
@@ -19,9 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  ****************************************************************************/
-
-// @file    sp_react.c
-// @author  Russ Combs <rcombs@sourcefire.com>
+// act_react.cc author Russ Combs <rucombs@cisco.com>
 
 /* The original Snort React Plugin was contributed by Maciej Szarpak, Warsaw
  * University of Technology.  The module has been entirely rewritten by
@@ -31,7 +27,7 @@
  * - elimination of unworkable warn mode
  * - elimination of proxy port (rule header has ports)
  * - integration with unified active response mechanism
- * - queuing of rule option responses so at most one is issued
+ * - queuing of rule action responses so at most one is issued
  * - allow override by rule action when action is drop
  * - addition of http headers to default response
  * - added custom page option
@@ -42,7 +38,7 @@
  * may be used.  The web page can have the default warning message
  * inserted or the message from the rule.
  *
- * If you wish to just reset the session, use the resp keyword instead.
+ * If you wish to just reset the session, use the reject keyword instead.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -59,15 +55,11 @@
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "protocols/packet.h"
-#include "managers/packet_manager.h"
-#include "detection/detection_defines.h"
-#include "parser.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "packet_io/active.h"
-#include "sfhashfcn.h"
+#include "parser/parser.h"
 #include "snort.h"
-#include "framework/ips_option.h"
+#include "framework/ips_action.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
 
@@ -113,18 +105,15 @@ struct ReactData
 
 static char* s_page = NULL;
 
-class ReactOption : public IpsOption
+class ReactAction : public IpsAction
 {
 public:
-    ReactOption(ReactData* c) :
-        IpsOption(s_name)
+    ReactAction(ReactData* c) : IpsAction(s_name)
     { config = c; };
 
-    ~ReactOption();
+    ~ReactAction();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
-    void action(Packet*);
+    void exec(Packet*);
 
 private:
     ReactData* config;
@@ -136,56 +125,20 @@ static void React_Send(Packet*,  void*);
 // class methods
 //-------------------------------------------------------------------------
 
-ReactOption::~ReactOption()
+ReactAction::~ReactAction()
 {
+    if ( s_page )
+    {
+        free(s_page);
+        s_page = nullptr;
+    }
     if (config->resp_buf)
         free(config->resp_buf);
 
     free(config);
 }
 
-uint32_t ReactOption::hash() const
-{
-    uint32_t a,b,c;
-    const ReactData *data = config;
-
-    const char* s = data->resp_buf;
-    unsigned n = data->buf_len;
-
-    a = data->rule_msg;
-    b = n;
-    c = 0;
-
-    mix(a,b,c);
-    mix_str(a,b,c,s,n);
-    mix_str(a,b,c,get_name());
-    final(a,b,c);
-
-    return c;
-}
-
-bool ReactOption::operator==(const IpsOption& ips) const
-{
-    if ( strcmp(get_name(), ips.get_name()) )
-        return false;
-
-    ReactOption& rhs = (ReactOption&)ips;
-    ReactData *left = config;
-    ReactData *right = rhs.config;
-
-    if (left->buf_len != right->buf_len)
-        return false;
-
-    if (memcmp(left->resp_buf, right->resp_buf, left->buf_len) != 0)
-        return false;
-
-    if (left->rule_msg != right->rule_msg)
-        return false;
-
-    return true;
-}
-
-void ReactOption::action(Packet* p)
+void ReactAction::exec(Packet* p)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(reactPerfStats);
@@ -201,7 +154,8 @@ void ReactOption::action(Packet* p)
 // implementation foo
 //-------------------------------------------------------------------------
 
-static void react_getpage (SnortConfig* sc)
+// FIXIT this moves to module
+static bool react_getpage (const char* file)
 {
     char* msg;
     char* percent_s;
@@ -209,28 +163,29 @@ static void react_getpage (SnortConfig* sc)
     FILE* fd;
     size_t n;
 
-    if ( !sc )
+    if ( stat(file, &fs) )
     {
-        ParseError("Snort config for parsing is NULL.");
-        return;
+        ParseError("can't stat react page file '%s'.", file);
+        return false;
     }
 
-    if ( s_page || !sc->react_page ) return;
-
-    if ( stat(sc->react_page, &fs) )
-        ParseError("can't stat react page file '%s'.", sc->react_page);
-
     s_page = (char*)SnortAlloc(fs.st_size+1);
-    fd = fopen(sc->react_page, "r");
+    fd = fopen(file, "r");
 
     if ( !fd )
-        ParseError("can't open react page file '%s'.", sc->react_page);
+    {
+        ParseError("can't open react page file '%s'.", file);
+        return false;
+    }
 
     n = fread(s_page, 1, fs.st_size, fd);
     fclose(fd);
 
     if ( n != (size_t)fs.st_size )
-        ParseError("can't load react page file '%s'.", sc->react_page);
+    {
+        ParseError("can't load react page file '%s'.", file);
+        return false;
+    }
 
     s_page[n] = '\0';
     msg = strstr(s_page, MSG_KEY);
@@ -247,9 +202,11 @@ static void react_getpage (SnortConfig* sc)
         {
             ParseError("can't specify more than one %%s or other "
                 "printf style formatting characters in react page '%s'.",
-                sc->react_page);
+                file);
+            return false;
         }
     }
+    return true;
 }
 
 //--------------------------------------------------------------------
@@ -272,16 +229,14 @@ static void React_Send (Packet* p,  void* pv)
 }
 
 // format response buffer
-static void react_config (ReactData* rd, OptTreeNode* otn)
+static void react_config (ReactData* rd)
 {
     size_t body_len, head_len, total_len;
     char dummy;
 
     const char* head = DEFAULT_HTTP;
     const char* body = s_page ? s_page : DEFAULT_HTML;
-
-    const char* msg = otn->sigInfo.message;
-    if ( !msg || !rd->rule_msg ) msg = DEFAULT_MSG;
+    const char* msg = DEFAULT_MSG;
 
     body_len = snprintf(&dummy, 1, body, msg);
     head_len = snprintf(&dummy, 1, head, body_len);
@@ -305,6 +260,9 @@ static const Parameter react_params[] =
 {
     { "msg", Parameter::PT_IMPLIED, nullptr, nullptr,
       " use rule message in response page" },
+
+    { "page", Parameter::PT_STRING, nullptr, nullptr,
+      "file containing HTTP reponse (headers and body)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -334,6 +292,9 @@ bool ReactModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("msg") )
         msg = v.get_bool();
 
+    else if ( v.is("page") )
+        return react_getpage(v.get_string());
+
     else
         return false;
 
@@ -354,64 +315,45 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* react_ctor(Module* p, OptTreeNode* otn)
+static IpsAction* react_ctor(Module* p)
 {
     ReactData* rd = (ReactData*)SnortAlloc(sizeof(*rd));
 
     ReactModule* m = (ReactModule*)p;
     rd->rule_msg = m->msg;
 
-    react_config(rd, otn);
+    react_config(rd);
 
-    ReactOption* opt = new ReactOption(rd);
-
-    if ( otn_set_agent(otn, opt) )
-        return opt;
-
-    delete opt;
-    ParseError("At most one action per rule is allowed");
-    return nullptr;
+    return new ReactAction(rd);
 }
 
-static void react_dtor(IpsOption* p)
+static void react_dtor(IpsAction* p)
 {
     delete p;
 }
 
-static void react_ginit(SnortConfig* sc)
+static void react_pinit()
 {
-    react_getpage(sc);
     Active_SetEnabled(1);
 }
 
-static void react_gterm(SnortConfig*)
-{
-    if ( s_page )
-    {
-        free(s_page);
-        s_page = nullptr;
-    }
-}
-
-static const IpsApi react_api =
+static const ActionApi react_api =
 {
     {
-        PT_IPS_OPTION,
+        PT_IPS_ACTION,
         s_name,
-        IPSAPI_PLUGIN_V0,
+        ACTAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    OPT_TYPE_ACTION,
-    1, PROTO_BIT__TCP,
-    react_ginit,
-    react_gterm,
-    nullptr,
-    nullptr,
+    RULE_TYPE__DROP,
+    react_pinit,
+    nullptr,  // pterm
+    nullptr,  // tinit
+    nullptr,  // tterm
     react_ctor,
     react_dtor,
-    nullptr
 };
 
 #ifdef BUILDING_SO
@@ -421,6 +363,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     nullptr
 };
 #else
-const BaseApi* ips_react = &react_api.base;
+const BaseApi* act_react = &react_api.base;
 #endif
 

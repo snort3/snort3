@@ -223,22 +223,20 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("proto", type))
         {
-            if (IPH_IS_VALID(p))
+            // api returns zero if invalid
+            switch (p->ip_api.proto())
             {
-                switch (GET_IPH_PROTO(p))
-                {
-                    case IPPROTO_UDP:
-                        TextLog_Puts(csv_log, "UDP");
-                        break;
-                    case IPPROTO_TCP:
-                        TextLog_Puts(csv_log, "TCP");
-                        break;
-                    case IPPROTO_ICMP:
-                        TextLog_Puts(csv_log, "ICMP");
-                        break;
-                    default:
-                        break;
-                }
+                case IPPROTO_UDP:
+                    TextLog_Puts(csv_log, "UDP");
+                    break;
+                case IPPROTO_TCP:
+                    TextLog_Puts(csv_log, "TCP");
+                    break;
+                case IPPROTO_ICMP:
+                    TextLog_Puts(csv_log, "ICMP");
+                    break;
+                default:
+                    break;
             }
         }
         else if (!strcasecmp("eth_src", type))
@@ -276,43 +274,38 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("src_port", type))
         {
-            if (IPH_IS_VALID(p))
+            // api return 0 if invalid
+            switch (p->ip_api.proto())
             {
-                switch (GET_IPH_PROTO(p))
-                {
-                    case IPPROTO_UDP:
-                    case IPPROTO_TCP:
-                        TextLog_Print(csv_log, "%d", p->sp);
-                        break;
-                    default:
-                        break;
-                }
+                case IPPROTO_UDP:
+                case IPPROTO_TCP:
+                    TextLog_Print(csv_log, "%d", p->sp);
+                    break;
+                default:
+                    break;
             }
         }
         else if (!strcasecmp("dst_port", type))
         {
-            if (IPH_IS_VALID(p))
+            switch (p->ip_api.proto())
             {
-                switch (GET_IPH_PROTO(p))
-                {
-                    case IPPROTO_UDP:
-                    case IPPROTO_TCP:
-                        TextLog_Print(csv_log, "%d", p->dp);
-                        break;
-                    default:
-                        break;
-                }
+                case IPPROTO_UDP:
+                case IPPROTO_TCP:
+                    TextLog_Print(csv_log, "%d", p->dp);
+                    break;
+                default:
+                    break;
             }
         }
         else if (!strcasecmp("src_addr", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Puts(csv_log, inet_ntoa(GET_SRC_ADDR(p)));
+            if (p->ip_api.is_valid())
+                TextLog_Puts(csv_log, inet_ntoa(p->ip_api.get_src()));
         }
         else if (!strcasecmp("dst_addr", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Puts(csv_log, inet_ntoa(GET_DST_ADDR(p)));
+            if (p->ip_api.is_valid())
+                TextLog_Puts(csv_log, inet_ntoa(p->ip_api.get_dst()));
         }
         else if (!strcasecmp("icmp_type", type))
         {
@@ -336,33 +329,34 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("ttl", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Print(csv_log, "%d", GET_IPH_TTL(p));
+            if (p->ip_api.is_valid())
+                TextLog_Print(csv_log, "%d",p->ip_api.ttl());
         }
         else if (!strcasecmp("tos", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Print(csv_log, "%d", GET_IPH_TOS(p));
+            if (p->ip_api.is_valid())
+                TextLog_Print(csv_log, "%d", p->ip_api.tos());
         }
         else if (!strcasecmp("id", type))
         {
-            if (IPH_IS_VALID(p))
+            if (p->ip_api.is_valid())
             {
-                TextLog_Print(csv_log, "%u", IS_IP6(p) ? ntohl(GET_IPH_ID(p))
-                        : ntohs((uint16_t)GET_IPH_ID(p)));
+                TextLog_Print(csv_log, "%u", p->ip_api.is_ip6()
+                        ? ntohl(p->ip_api.id(p))
+                        : ntohs((uint16_t)p->ip_api.id(p)));
             }
         }
         else if (!strcasecmp("ip_len", type))
         {
-            if (IPH_IS_VALID(p))
-                TextLog_Print(csv_log, "%d", GET_IPH_LEN(p) << 2);
+            if (p->ip_api.is_valid())
+                TextLog_Print(csv_log, "%d", p->ip_api.len() << 2);
         }
         else if (!strcasecmp("dgm_len", type))
         {
-            if (IPH_IS_VALID(p))
+            if (p->ip_api.is_valid())
             {
                 // XXX might cause a bug when IPv6 is printed?
-                TextLog_Print(csv_log, "%d", ntohs(GET_IPH_LEN(p)));
+                TextLog_Print(csv_log, "%d", ntohs(p->ip_api.len()));
             }
         }
         else if (!strcasecmp("tcp_seq", type))

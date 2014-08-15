@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,13 +16,14 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// parse_stream.h author Russ Combs <rucombs@cisco.com>
 
+#ifndef PARSE_STREAM_H
+#define PARSE_STREAM_H
 
-#ifndef ROOT_PPP_H
-#define ROOT_PPP_H
+#include <istream>
 
+void parse_stream(std::istream&, struct SnortConfig*);
 
-void DecodePppPkt(Packet *, const DAQ_PktHdr_t*, const uint8_t *);
-
-#endif /* ROOT_PPP_H */
+#endif
 

@@ -194,16 +194,16 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         }
     }
 
-    if(p && IPH_IS_VALID(p))
+    if(p && p->ip_api.is_valid())
     {
-        LogPriorityData(full_log, event, TRUE);
+        LogPriorityData(full_log, event, true);
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"););
 
     LogTimeStamp(full_log, p);
 
-    if(p && IPH_IS_VALID(p))
+    if(p && p->ip_api.is_valid())
     {
         /* print the packet header to the alert file */
 
@@ -215,9 +215,9 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         LogIPHeader(full_log, p);
 
         /* if this isn't a fragment, print the other header info */
-        if(!p->frag_flag)
+        if(!(p->decode_flags & DECODE__FRAG))
         {
-            switch(GET_IPH_PROTO(p))
+            switch(p->ip_api.proto())
             {
                 case IPPROTO_TCP:
                    LogTCPHeader(full_log, p);

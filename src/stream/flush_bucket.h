@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,17 +16,57 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// flush_bucket.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef PARSE_OTN_H
-#define PARSE_OTN_H
+#ifndef FLUSH_BUCKET_H
+#define FLUSH_BUCKET_H
 
-#include "detection/rules.h"
+#include "main/snort_types.h"
+#include "main/thread.h"
 
-void parse_otn_clear();
+class FlushBucket
+{
+public:
+    virtual ~FlushBucket() { };
+    virtual uint16_t get_next() = 0;
 
-bool parse_otn(
-    struct SnortConfig*, struct RuleTreeNode*, struct OptTreeNode*,
-    char* opt, char* args, const char** so_opts);
+    static uint16_t get_size();
+    static void set(FlushBucket*);
+    static void clear();
+
+protected:
+    FlushBucket() { };
+    static FlushBucket* flush_bucket;
+};
+
+class ConstFlushBucket : public FlushBucket
+{
+public:
+    ConstFlushBucket(uint16_t sz)
+    { size = sz; };
+
+    uint16_t get_next()
+    { return size; };
+
+private:
+    uint16_t size;
+};
+
+class StaticFlushBucket : public FlushBucket
+{
+public:
+    StaticFlushBucket();
+    uint16_t get_next();
+
+private:
+    unsigned idx;
+};
+
+class RandomFlushBucket : public StaticFlushBucket
+{
+public:
+    RandomFlushBucket();
+};
 
 #endif
 

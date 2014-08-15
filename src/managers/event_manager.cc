@@ -226,7 +226,7 @@ void EventManager::configure_outputs(SnortConfig*)
         Output* p = get_out(config->keyword);
 
         if ( !p )
-            ParseError("Unknown output plugin: '%s'", config->keyword);
+            ParseError("unknown output plugin: '%s'", config->keyword);
 
         /* Each user defined rule type has it's own rule list
          * and the output plugin attaches to it here */

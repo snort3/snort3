@@ -54,7 +54,7 @@ filters/libfilter.a \
 detection/libdetection.a \
 framework/libframework.a \
 time/libtime.a \
-actions/libactions.a \
+actions/libips_actions.a \
 events/libevents.a \
 hash/libhash.a \
 log/liblog.a \

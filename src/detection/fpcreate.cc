@@ -1149,7 +1149,7 @@ static int fpAddPortGroupRule(
         return -1;
 
     // skip builtin rules
-    if ( !otn->sigInfo.text_rule )
+    if ( !otn->sigInfo.text_rule )  // FIXIT must be set for so rules too!
         return -1;
 
     /* Rule not enabled */

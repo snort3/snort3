@@ -51,10 +51,11 @@ public:
 };
 
 
-const static uint16_t ETHERNET_TYPE_MPLS_UNICAST = 0x8847;
-const static uint16_t ETHERNET_TYPE_MPLS_MULTICAST = 0x8848;
-const static uint32_t MPLS_HEADER_LEN = 4;
-const static uint32_t NUM_RESERVED_LABELS = 16;
+constexpr uint16_t ETHERTYPE_MPLS_UNICAST = 0x8847;
+constexpr uint16_t ETHERTYPE_MPLS_MULTICAST = 0x8848;
+constexpr int MPLS_HEADER_LEN = 4;
+constexpr int NUM_RESERVED_LABELS = 16;
+constexpr int MPLS_PAYLOADTYPE_ERROR = -1;
 
 } // namespace
 
@@ -63,8 +64,8 @@ static int checkMplsHdr(uint32_t, uint8_t, uint8_t, uint8_t, Packet *);
 
 void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ETHERNET_TYPE_MPLS_UNICAST);
-    v.push_back(ETHERNET_TYPE_MPLS_MULTICAST);
+    v.push_back(ETHERTYPE_MPLS_UNICAST);
+    v.push_back(ETHERTYPE_MPLS_MULTICAST);
 }
 
 
@@ -92,9 +93,6 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         if(stack_len < MPLS_HEADER_LEN)
         {
             codec_events::decoder_event(p, DECODE_BAD_MPLS);
-
-            p->iph = NULL;
-            p->family = NO_IP;
             return false;
         }
 
@@ -131,8 +129,6 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             codec_events::decoder_event(p, DECODE_MPLS_LABEL_STACK);
 
             p->proto_bits &= ~PROTO_BIT__MPLS;
-            p->iph = NULL;
-            p->family = NO_IP;
             return false;
         }
     }   /* while bos not 1, peel off more labels */
@@ -213,16 +209,12 @@ static int checkMplsHdr(
 
                codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL1);
 
-               p->iph = NULL;
-               p->family = NO_IP;
                iRet = MPLS_PAYLOADTYPE_ERROR;
                break;
 
       case 3:
                codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL3);
 
-               p->iph = NULL;
-               p->family = NO_IP;
                iRet = MPLS_PAYLOADTYPE_ERROR;
                break;
         case 4:

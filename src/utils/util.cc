@@ -1233,19 +1233,19 @@ int CheckValueInRange(const char *value_str, const char *option,
 
     if ( value_str == NULL )
     {
-        ParseError("Invalid format for %s.", option);
+        ParseError("invalid format for %s.", option);
         return -1;
     }
 
     if (SnortStrToU32(value_str, &endptr, &val, 10))
     {
-        ParseError("Invalid format for %s.", option);
+        ParseError("invalid format for %s.", option);
         return -1;
     }
 
     if(*endptr)
     {
-        ParseError("Invalid format for %s.", option);
+        ParseError("invalid format for %s.", option);
         return -1;
     }
 
@@ -1253,7 +1253,7 @@ int CheckValueInRange(const char *value_str, const char *option,
 
     if ( (errno == ERANGE) || (*value) < lo || (*value) > hi)
     {
-        ParseError("Invalid value for %s."
+        ParseError("invalid value for %s."
                 "It should range between %u and %u.", option,
                 lo, hi);
         return -1;

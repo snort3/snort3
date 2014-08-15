@@ -53,15 +53,16 @@ void ErrorMessageThrottled(ThrottleInfo*,const char*, ...) __attribute__((format
 NORETURN void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 void PrintPacketData(const uint8_t*, const uint32_t);
-char* ObfuscateIpToText(sfip_t*);
+char* ObfuscateIpToText(const sfip_t*);
 
 class Dumper
 {
 public:
-    Dumper(const char* s, unsigned n = 3)
+    Dumper(const char* s = nullptr, unsigned n = 3)
     {
         max = n; idx = 0; 
-        if ( s ) LogMessage("%s\n", s);
+        if ( s )
+            LogMessage("%s\n", s);
     };
 
     ~Dumper()

@@ -22,7 +22,7 @@
 
 #include "data/dt_rule.h"
 #include "data/dt_data.h"  // included for print mode
-#include "utils/snort2lua_util.h"
+#include "utils/s2l_util.h"
 
 
 Rule::Rule() :  num_hdr_data(0),

@@ -430,14 +430,14 @@ void InspectorManager::instantiate(
     PHClass* ppc = GetClass(keyword, fc);
 
     if ( !ppc )
-        ParseError("Unknown inspector: '%s'.", keyword);
+        ParseError("unknown inspector: '%s'.", keyword);
 
     else
     {
         PHInstance* ppi = GetInstance(ppc, fp, keyword);
 
         if ( !ppi )
-            ParseError("Can't instantiate inspector: '%s'.", keyword);
+            ParseError("can't instantiate inspector: '%s'.", keyword);
     }
 }
 

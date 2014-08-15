@@ -1,4 +1,3 @@
-
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 ** Copyright (C) 2005-2013 Sourcefire, Inc.
@@ -35,12 +34,12 @@
 //-------------------------------------------------------------------------
 
 inline void FlowKey::init4(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     char proto, uint32_t mplsId, bool order)
 {
-    uint32_t *src;
-    uint32_t *dst;
+    const uint32_t *src;
+    const uint32_t *dst;
 
     if ( proto == IPPROTO_ICMP )
     {
@@ -89,19 +88,19 @@ inline void FlowKey::init4(
         port_h = srcPort;
     }
     if (ScMplsOverlappingIp() &&
-        ipv4::isPrivateIP(*src) && ipv4::isPrivateIP(*dst))
+        ip::isPrivateIP(*src) && ip::isPrivateIP(*dst))
         mplsLabel = mplsId;
     else
     	mplsLabel = 0;
 }
 
 inline void FlowKey::init6(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     char proto, uint32_t mplsId, bool order)
 {
-    sfip_t *src;
-    sfip_t *dst;
+    const sfip_t *src;
+    const sfip_t *dst;
 
     if ( proto == IPPROTO_ICMP )
     {
@@ -168,8 +167,8 @@ inline void FlowKey::init6(
 }
 
 void FlowKey::init(
-    snort_ip_p srcIP, uint16_t srcPort,
-    snort_ip_p dstIP, uint16_t dstPort,
+    const sfip_t *srcIP, uint16_t srcPort,
+    const sfip_t *dstIP, uint16_t dstPort,
     char proto, uint16_t vlan, 
     uint32_t mplsId, uint16_t addrSpaceId)
 {
@@ -178,7 +177,7 @@ void FlowKey::init(
      * stored in the ip_l and the port for that ip is
      * stored in port_l.
      */
-    if (IS_IP4(srcIP))
+    if (srcIP->is_ip4())
         init4(srcIP, srcPort, dstIP, dstPort, proto, mplsId);
 
     else
@@ -205,7 +204,7 @@ void FlowKey::init(
 }
 
 void FlowKey::init(
-    snort_ip_p srcIP, snort_ip_p dstIP, 
+    const sfip_t *srcIP, const sfip_t *dstIP,
     uint32_t id, char proto, uint16_t vlan, 
     uint32_t mplsId, uint16_t addrSpaceId)
 {
@@ -214,7 +213,7 @@ void FlowKey::init(
     uint16_t srcPort = id & 0xFFFF;
     uint16_t dstPort = id >> 16;
 
-    if (IS_IP4(srcIP))
+    if (srcIP->is_ip4())
     {
         version = 4;
         protocol = proto;

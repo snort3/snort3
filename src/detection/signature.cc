@@ -41,7 +41,7 @@
 /********************* Reference Implementation *******************************/
 
 ReferenceNode * AddReference(
-    SnortConfig *sc, ReferenceNode **head, char *system, char *id)
+    SnortConfig *sc, ReferenceNode **head, const char *system, const char *id)
 {
     ReferenceNode *node;
 
@@ -126,7 +126,7 @@ ReferenceSystemNode * ReferenceSystemAdd(
     return node;
 }
 
-ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *head, char *name)
+ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *head, const char *name)
 {
     if (name == NULL)
         return NULL;
@@ -340,13 +340,14 @@ void OtnLookupAdd(SFGHASH *otn_map, OptTreeNode *otn)
             /* Assume it's a rule without an sid */
             if (key.sid == 0)
             {
-                ParseError("Duplicate rule with same gid (%u) and no sid.  To "
-                           "avoid this, make sure all of your rules define an "
+                // FIXIT should not be possible - sid is required
+                ParseError("duplicate rule with same gid (%u) and no sid.  To "
+                           "avoid this, make sure all of your rules define a "
                            "sid.", key.gid);
             }
             else
             {
-                ParseError("Duplicate rule with same gid (%u) and sid (%u)",
+                ParseError("duplicate rule with same gid (%u) and sid (%u)",
                            key.gid, key.sid);
             }
 

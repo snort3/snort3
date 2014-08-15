@@ -824,7 +824,7 @@ sfip_var_t *sfvar_deep_copy(const sfip_var_t *var)
 
 
 /* Support function for sfvar_ip_in  */
-static inline int _sfvar_ip_in4(sfip_var_t *var, sfip_t *ip)
+static inline int _sfvar_ip_in4(sfip_var_t *var, const sfip_t *ip)
 {
     int match;
     sfip_node_t *pos_idx, *neg_idx;
@@ -893,7 +893,7 @@ static inline int _sfvar_ip_in4(sfip_var_t *var, sfip_t *ip)
 }
 
 /* Support function for sfvar_ip_in  */
-static inline int _sfvar_ip_in6(sfip_var_t *var, sfip_t *ip)
+static inline int _sfvar_ip_in6(sfip_var_t *var, const sfip_t *ip)
 {
     int match;
     sfip_node_t *pos_idx, *neg_idx;
@@ -963,7 +963,7 @@ static inline int _sfvar_ip_in6(sfip_var_t *var, sfip_t *ip)
 }
 /* Returns SFIP_SUCCESS if ip is contained in 'var', SFIP_FAILURE otherwise */
 /* If either argument is NULL, SFIP_ARG_ERR is returned. */
-int sfvar_ip_in(sfip_var_t *var, sfip_t *ip)
+int sfvar_ip_in(sfip_var_t *var, const sfip_t *ip)
 {
     if(!var || !ip)
         return 0;

@@ -363,23 +363,23 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
         if (potn == NULL)
             return;
 
-        if ( IPH_IS_VALID(p) )
+        if ( p->ip_api.is_valid() )
         {
             filterEvent = sfthreshold_test(
                         potn->sigInfo.generator,
                         potn->sigInfo.id,
-                        GET_SRC_IP(p), GET_DST_IP(p),
+                        p->ip_api.get_src(), p->ip_api.get_dst(),
                         p->pkth->ts.tv_sec);
         }
         else
         {
-            snort_ip cleared;
-            IP_CLEAR(cleared);
+            sfip_t cleared;
+            sfip_clear(cleared);
 
             filterEvent = sfthreshold_test(
                         potn->sigInfo.generator,
                         potn->sigInfo.id,
-                        IP_ARG(cleared), IP_ARG(cleared),
+                        &cleared, &cleared,
                         p->pkth->ts.tv_sec);
         }
 
@@ -392,10 +392,10 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
         char src[INET6_ADDRSTRLEN];
         char dst[INET6_ADDRSTRLEN];
 
-        sfip_t* addr = GET_SRC_IP(p);
+        const sfip_t *addr = p->ip_api.get_src();
         sfip_ntop(addr, src, sizeof(src));
 
-        addr = GET_DST_IP(p);
+        addr = p->ip_api.get_dst();
         sfip_ntop(addr, dst, sizeof(dst));
 
         if (ppm_abort_this_pkt)
@@ -441,23 +441,23 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
 
             if (otn != NULL)
             {
-                if ( IPH_IS_VALID(p) )
+                if ( p->ip_api.is_valid() )
                 {
                     filterEvent = sfthreshold_test(
                                 otn->sigInfo.generator,
                                 otn->sigInfo.id,
-                                GET_SRC_IP(p), GET_DST_IP(p),
+                                p->ip_api.get_src(), p->ip_api.get_dst(),
                                 p->pkth->ts.tv_sec);
                 }
                 else
                 {
-                    snort_ip cleared;
-                    IP_CLEAR(cleared);
+                    sfip_t cleared;
+                    sfip_clear(cleared);
 
                     filterEvent = sfthreshold_test(
                                 otn->sigInfo.generator,
                                 otn->sigInfo.id,
-                                IP_ARG(cleared), IP_ARG(cleared),
+                                &cleared, &cleared,
                                 p->pkth->ts.tv_sec);
                 }
 
@@ -495,23 +495,23 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
             if (otn != NULL)
             {
                 // FIXIT why was this done specially?
-                if ( IPH_IS_VALID(p) )
+                if ( p->ip_api.is_valid() )
                 {
                     filterEvent = sfthreshold_test(
                                 otn->sigInfo.generator,
                                 otn->sigInfo.id,
-                                GET_SRC_IP(p), GET_DST_IP(p),
+                                p->ip_api.get_src(), p->ip_api.get_dst(),
                                 p->pkth->ts.tv_sec);
                 }
                 else
                 {
-                    snort_ip cleared;
-                    IP_CLEAR(cleared);
+                    sfip_t cleared;
+                    sfip_clear(cleared);
 
                     filterEvent = sfthreshold_test(
                                 otn->sigInfo.generator,
                                 otn->sigInfo.id,
-                                IP_ARG(cleared), IP_ARG(cleared),
+                                &cleared, &cleared,
                                 p->pkth->ts.tv_sec);
                 }
 
@@ -526,10 +526,10 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
             char src[INET6_ADDRSTRLEN];
             char dst[INET6_ADDRSTRLEN];
 
-            sfip_t* addr = GET_SRC_IP(p);
+            const sfip_t *addr = p->ip_api.get_src();
             sfip_ntop(addr, src, sizeof(src));
 
-            addr = GET_DST_IP(p);
+            addr = p->ip_api.get_dst();
             sfip_ntop(addr, dst, sizeof(dst));
 
             LogMessage(PPM_FMT_SUS_PKT, pktcnt, src, p->sp, dst, p->dp);

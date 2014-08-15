@@ -3,14 +3,16 @@
 add_library (parser STATIC 
     parser.cc 
     parser.h 
+    parse_byte_code.cc 
+    parse_byte_code.h 
     parse_conf.cc 
     parse_conf.h 
     parse_ip.cc 
     parse_ip.h 
     parse_rule.cc 
     parse_rule.h 
-    parse_otn.cc 
-    parse_otn.h 
+    parse_stream.cc 
+    parse_stream.h 
     cmd_line.cc 
     cmd_line.h 
     config_file.cc 

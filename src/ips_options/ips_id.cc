@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -18,24 +16,19 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ips_id.cc author Russ Combs <rucombs@cisco.com>
 
 #include <sys/types.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
 
 #include "snort_types.h"
-#include "treenodes.h"
 #include "protocols/packet.h"
-#include "parser.h"
 #include "snort_debug.h"
-#include "util.h"
 #include "snort.h"
 #include "profiler.h"
-#include "fpdetect.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
@@ -95,12 +88,12 @@ int IpIdOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!IPH_IS_VALID(p))
+    if(!p->ip_api.is_valid())
         return rval;
 
     MODULE_PROFILE_START(ipIdPerfStats);
 
-    if ( config.eval(GET_IPH_ID(p)) )
+    if ( config.eval(p->ip_api.id(p)) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(ipIdPerfStats);
@@ -113,7 +106,7 @@ int IpIdOption::eval(Cursor&, Packet *p)
 
 static const Parameter ip_id_params[] =
 {
-    { "*range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -141,7 +134,7 @@ bool IpIdModule::begin(const char*, int, SnortConfig*)
 
 bool IpIdModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*range") )
+    if ( !v.is("~range") )
         return false;
 
     return data.parse(v.get_string());

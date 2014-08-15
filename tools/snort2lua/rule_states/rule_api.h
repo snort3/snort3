@@ -35,8 +35,6 @@ namespace rules
 // vector containing all of the rule keywords
 extern const std::vector<const ConvertMap*> rule_api;
 
-//bool set_next_rule_state(std::istringstream, Converter* cv, LuaData* ld);
-
 } // namespace rules
 
 #endif

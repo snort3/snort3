@@ -54,33 +54,33 @@ typedef struct _TagData
     int tag_direction;  /* source or dest, used for host tagging */
 } TagData;
 
-struct _RuleListNode;
 struct OutputSet;
 
-typedef struct _ListHead
+struct ListHead
 {
-    OutputSet *LogList;
-    OutputSet *AlertList;
-    struct _RuleListNode *ruleListNode;
-} ListHead; 
+    OutputSet* LogList;
+    OutputSet* AlertList;
+    class IpsAction* action;
+    struct RuleListNode* ruleListNode;
+}; 
 
-typedef struct _RuleListNode
+struct RuleListNode
 {
-    ListHead *RuleList;         /* The rule list associated with this node */
-    RuleType mode;              /* the rule mode */
-    int rval;                   /* 0 == no detection, 1 == detection event */
-    int evalIndex;              /* eval index for this rule set */
-    char *name;                 /* name of this rule list (for debugging)  */
-    struct _RuleListNode *next; /* the next RuleListNode */
-} RuleListNode;
+    ListHead *RuleList;   /* The rule list associated with this node */
+    RuleType mode;        /* the rule mode */
+    int rval;             /* 0 == no detection, 1 == detection event */
+    int evalIndex;        /* eval index for this rule set */
+    char* name;           /* name of this rule list */
+    RuleListNode* next;   /* the next RuleListNode */
+};
 
-typedef struct _RuleState
+struct RuleState
 {
     uint32_t sid;
     uint32_t gid;
     int state;
-    struct _RuleState *next;
+    RuleState *next;
+};
 
-} RuleState;
+#endif
 
-#endif /* RULES_H */

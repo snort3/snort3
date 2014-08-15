@@ -175,7 +175,9 @@ int Binder::check_rules(Flow* flow, Packet* p)
     Binding* pb;
     unsigned i, sz = bindings.size();
 
-    Port port = (p->packet_flags & PKT_FROM_CLIENT) ? p->dp : p->sp;
+    // FIXIT called before stream runs - these flags aren't set
+    // (below is structed to work by accident on initial syn until fixed)
+    Port port = (p->packet_flags & PKT_FROM_SERVER) ? p->sp : p->dp;
 
     for ( i = 0; i < sz; i++ )
     {

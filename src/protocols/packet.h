@@ -49,7 +49,6 @@ extern "C" {
 #include "main/snort_types.h"
 #include "sfip/ipv6_port.h"
 #include "sfip/sf_ip.h"
-#include "sfip/sf_iph.h"
 #include "codecs/sf_protocols.h"
 
 
@@ -62,6 +61,7 @@ extern "C" {
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "protocols/mpls.h"
+#include "protocols/ip.h"
 
 /*  D E F I N E S  ************************************************************/
 
@@ -81,40 +81,35 @@ extern "C" {
 
 #define PKT_PDU_HEAD         0x00000100  /* start of PDU */
 #define PKT_PDU_TAIL         0x00000200  /* end of PDU */
-#define PKT_UNSURE_ENCAP     0x00000400  /* packet may have incorrect encapsulation layer. */
-                                         /* don't alert if "next layer" is invalid. */
-#define PKT_HTTP_DECODE      0x00000800  /* this packet has normalized http */
+#define PKT_HTTP_DECODE      0x00000400  /* this packet has normalized http */
 
-#define PKT_IGNORE           0x00001000  /* this packet should be ignored, based on port */
-#define PKT_TRUST            0x00002000  /* this packet should fallback to being whitelisted if no other verdict was specified */
-#define PKT_ALLOW_MULTIPLE_DETECT 0x00004000  /* packet has either pipelined mime attachements */
+#define PKT_IGNORE           0x00000800  /* this packet should be ignored, based on port */
+#define PKT_TRUST            0x00001000  /* this packet should fallback to being whitelisted if no other verdict was specified */
+#define PKT_ALLOW_MULTIPLE_DETECT 0x00002000  /* packet has either pipelined mime attachements */
                                               /* or pipeline http requests */
-#define PKT_PAYLOAD_OBFUSCATE     0x00008000
+#define PKT_PAYLOAD_OBFUSCATE     0x00004000
 
-#define PKT_STATELESS        0x00010000  /* Packet has matched a stateless rule */
-#define PKT_PASS_RULE        0x00020000  /* this packet has matched a pass rule */
-#define PKT_IP_RULE          0x00040000  /* this packet is being evaluated against an IP rule */
-#define PKT_IP_RULE_2ND      0x00080000  /* this packet is being evaluated against an IP rule */
+#define PKT_STATELESS        0x00008000  /* Packet has matched a stateless rule */
+#define PKT_PASS_RULE        0x00010000  /* this packet has matched a pass rule */
+#define PKT_IP_RULE          0x00020000  /* this packet is being evaluated against an IP rule */
+#define PKT_IP_RULE_2ND      0x00040000  /* this packet is being evaluated against an IP rule */
 
-#define PKT_PSEUDO           0x00100000  /* is a pseudo packet */
-#define PKT_MODIFIED         0x00200000  /* packet had normalizations, etc. */
-#define PKT_RESIZED          0x00300000  /* packet has new size; must set modified too */
+#define PKT_PSEUDO           0x00080000  /* is a pseudo packet */
+#define PKT_MODIFIED         0x00100000  /* packet had normalizations, etc. */
+#define PKT_RESIZED          0x00180000  /* packet has new size; must set modified too */
 
 // neither of these flags will be set for (full) retransmissions or non-data segments
 // a partial overlap results in out of sequence condition
 // out of sequence condition is sticky
-#define PKT_STREAM_ORDER_OK  0x00800000  /* this segment is in order, w/o gaps */
-#define PKT_STREAM_ORDER_BAD 0x01000000  /* this stream had at least one gap */
-#define PKT_REASSEMBLED_OLD  0x02000000  /* for backwards compat with so rules */
+#define PKT_STREAM_ORDER_OK  0x00200000  /* this segment is in order, w/o gaps */
+#define PKT_STREAM_ORDER_BAD 0x00400000  /* this stream had at least one gap */
 
-#define PKT_FILE_EVENT_SET   0x04000000
-#define PKT_ESP_LYR_PRESENT  0x08000000
-#define PKT_UNUSED_FLAGS     0xF0000000
+#define PKT_FILE_EVENT_SET   0x00800000
+#define PKT_UNUSED_FLAGS     0xff000000
 
 // 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
 
-#define REASSEMBLED_PACKET_FLAGS (PKT_REBUILT_STREAM|PKT_REASSEMBLED_OLD)
 
 enum PseudoPacketType{
     PSEUDO_PKT_IP,
@@ -152,14 +147,15 @@ enum PseudoPacketType{
 #define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
 #define DEFAULT_LABELCHAIN_LENGTH    -1
 
-const int32_t MAX_PORTS = 65536;
-const uint16_t NUM_IP_PROTOS = 256;
-const int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
-const uint8_t IP_OPTMAX = 40;
-const uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
-const uint8_t IP6_EXTMAX = 8;
-const uint8_t MIN_TTL = 64;
-const uint8_t MAX_TTL = 255;
+constexpr int32_t MAX_PORTS = 65536;
+constexpr uint16_t NUM_IP_PROTOS = 256;
+constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
+constexpr uint8_t IP_OPTMAX = 40;
+constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
+constexpr uint8_t IP6_EXTMAX = 8;
+constexpr uint8_t MIN_TTL = 64;
+constexpr uint8_t MAX_TTL = 255;
+constexpr uint8_t LAYER_MAX = 32;
 
 
 
@@ -175,80 +171,35 @@ struct Options
 } ;
 
 
-const uint8_t LAYER_MAX = 32;
 
 struct Packet
 {
-    const DAQ_PktHdr_t *pkth;    // packet meta data
-    const uint8_t *pkt;         // raw packet data
 
-    //vvv------------------------------------------------
-    // TODO convenience stuff to be refactored for layers
-    //^^^------------------------------------------------
-
-    //vvv-----------------------------
-
-    const IPHdr *iph, *orig_iph;/* and orig. headers for ICMP_*_UNREACH family */
-    const IPHdr *inner_iph;     /* if IP-in-IP, this will be the inner IP header */
-    const IPHdr *outer_iph;     /* if IP-in-IP, this will be the outer IP header */
-    const TCPHdr *tcph, *orig_tcph;
-    const udp::UDPHdr *udph, *orig_udph;
-    const udp::UDPHdr *outer_udph;   /* if Teredo + UDP, this will be the outer UDP header */
-    const ICMPHdr *icmph, *orig_icmph;
-
-    const uint8_t *data;        /* packet payload pointer */
-    const uint8_t *ip_data;     /* IP payload pointer */
-    const uint8_t *outer_ip_data;  /* Outer IP payload pointer */
-    //^^^-----------------------------
-
+    /* these four pounters are each referenced literally
+     * hundreds of times.  NOTHING else should be added!!
+     */
+    const tcp::TCPHdr* tcph;
+    const udp::UDPHdr* udph;
+    const ICMPHdr* icmph;
     Flow* flow;   /* for session tracking */
 
-    //vvv-----------------------------
-    ipv4::IP4Hdr *ip4h;
-    ipv6::IP6Hdr *ip6h;
-    icmp6::ICMP6Hdr *icmp6h;
 
-    IPH_API* iph_api;
-    IPH_API* orig_iph_api;
-    IPH_API* outer_iph_api;
-
-    int family;
-    int orig_family;
-    int outer_family;
-    //^^^-----------------------------
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
+    uint16_t proto_bits;        /* protocols contained within this packet */
+    int16_t application_protocol_ordinal;
 
-    uint16_t proto_bits;
 
-    //vvv-----------------------------
-    uint16_t dsize;             /* packet payload size */
-    uint16_t ip_dsize;          /* IP payload size */
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
-    uint16_t actual_ip_len;     /* for logging truncated pkts (usually by small snaplen)*/
-    uint16_t outer_ip_dsize;    /* Outer IP payload size */
-    //^^^-----------------------------
+    uint16_t sp;                /* source port (TCP/UDP) */
+    uint16_t dp;                /* dest port (TCP/UDP) */
+
 
     uint16_t frag_offset;       /* fragment offset number */
     uint16_t ip_frag_len;
-    uint16_t ip_options_len;
-    uint16_t tcp_options_len;
 
-    //vvv-----------------------------
-    uint16_t sp;                /* source port (TCP/UDP) */
-    uint16_t dp;                /* dest port (TCP/UDP) */
-    uint16_t orig_sp;           /* source port (TCP/UDP) of original datagram */
-    uint16_t orig_dp;           /* dest port (TCP/UDP) of original datagram */
-    //^^^-----------------------------
-    // and so on ...
 
-    int16_t application_protocol_ordinal;
-
-    uint8_t frag_flag;          /* flag to indicate a fragmented packet */
-    uint8_t mf;                 /* more fragments flag */
-    uint8_t df;                 /* don't fragment flag */
-    uint8_t rf;                 /* IP reserved bit */
 
     uint8_t ip_option_count;    /* number of options in this packet */
     uint8_t tcp_option_count;
@@ -258,26 +209,29 @@ struct Packet
     uint8_t error_flags;        /* flags indicate checksum errors, bad TTLs, etc. */
     uint8_t num_layers;         /* index into layers for next encap */
     uint8_t decode_flags;       /* flags used while decoding */
-    uint8_t encapsulations;     /* thh curent number of encapsulations */
+    uint8_t encapsulations;     /* the curent number of encapsulations */
 
     // nothing after this point is zeroed ...
-    ipv4::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
+    const DAQ_PktHdr_t *pkth;    // packet meta data
+    const uint8_t *pkt;         // raw packet data
+
+    // These are both set before PacketManager::decode() returns
+    const uint8_t* data;        /* packet payload pointer */
+    uint16_t dsize;             /* packet payload size */
+
+    ip::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
     IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
 
+
+
     const uint8_t *ip_frag_start;
-    const uint8_t *ip_options_data;
     const uint8_t *tcp_options_data;
 
-    const ipv6::IP6RawHdr* raw_ip6h;  // innermost raw ip6 header
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
-    ipv4::IP4Hdr inner_ip4h;
-    ipv6::IP6Hdr inner_ip6h;
-    ipv4::IP4Hdr outer_ip4h;
-    ipv6::IP6Hdr outer_ip6h;
-
-    MplsHdr mplsHdr;
+    ip::IpApi ip_api;
+    mpls::MplsHdr mplsHdr;
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
     uint16_t max_dsize;
@@ -294,7 +248,7 @@ struct Packet
 
 };
 
-#define PKT_ZERO_LEN offsetof(Packet, ip_options)
+#define PKT_ZERO_LEN offsetof(Packet, pkth)
 
 #define PROTO_BIT__NONE     0x0000
 #define PROTO_BIT__IP       0x0001
@@ -307,10 +261,24 @@ struct Packet
 #define PROTO_BIT__MPLS     0x0080
 #define PROTO_BIT__VLAN     0x0100
 #define PROTO_BIT__ETH      0x0200
+#define PROTO_BIT__TCP_EMBED_ICMP  0x0400
+#define PROTO_BIT__UDP_EMBED_ICMP  0x0800
+#define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
+#define PROTO_BIT__FREE     0x6000
 #define PROTO_BIT__OTHER    0x8000
 #define PROTO_BIT__ALL      0xffff
 
-#define IsIP(p) (IPH_IS_VALID(p))
+/*  Decode Flags */
+#define DECODE__FRAG    0x01  /* flag to indicate a fragmented packet */
+#define DECODE__MF      0x02  /* more fragments flag */
+#define DECODE__DF      0x04  /* don't fragment flag */
+#define DECODE__RF      0x08  /* IP reserved bit */
+#define DECODE__TRUST_ON_FAIL 0x10  /* if decode fails, set the PKT_TRUST flag */
+#define DECODE__UNSURE_ENCAP  0x20  /* packet may have incorrect encapsulation layer. */
+                                    /* don't alert if "next layer" is invalid. */
+#define DECODE__FREE    0xC0
+
+#define IsIP(p) (p->ip_api.is_valid())
 #define IsTCP(p) (IsIP(p) && p->tcph)
 #define IsICMP(p) (IsIP(p) && p->icmph)
 #define GET_PKT_SEQ(p) (ntohl(p->tcph->th_seq))
@@ -338,7 +306,7 @@ static inline uint8_t GetEventProto(const Packet *p)
 {
     if (IsPortscanPacket(p))
         return p->ps_proto;
-    return IPH_IS_VALID(p) ? GET_IPH_PROTO(p) : 0;
+    return p->ip_api.proto(); // return 0 if invalid
 }
 
 static inline bool PacketHasFullPDU (const Packet* p)
@@ -364,16 +332,6 @@ static inline bool PacketIsRebuilt (const Packet* p)
 static inline void SetExtraData (Packet* p, uint32_t xid)
 {
     p->xtradata_mask |= BIT(xid);
-}
-
-static inline bool is_ip4(const Packet *p)
-{
-  return p->family == AF_INET;
-}
-
-static inline bool is_ip6(const Packet *p)
-{
-  return p->family == AF_INET6;
 }
 
 static inline uint16_t EXTRACT_16BITS(const uint8_t* p)

@@ -65,14 +65,14 @@ public:
     bool is_expected(Packet*);
 
     int add_expected(
-        snort_ip* srcIP, uint16_t srcPort,
-        snort_ip* dstIP, uint16_t dstPort,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
         uint8_t protocol, char direction,
         FlowData*);
 
     int add_expected(
-        snort_ip* srcIP, uint16_t srcPort,
-        snort_ip* dstIP, uint16_t dstPort,
+        const sfip_t *srcIP, uint16_t srcPort,
+        const sfip_t *dstIP, uint16_t dstPort,
         uint8_t protocol, int16_t appId,
         FlowData*);
 
@@ -85,7 +85,7 @@ public:
 
 private:
     class FlowCache* get_cache(int proto);
-    void set_key(FlowKey*, const Packet*);
+    void set_key(FlowKey*, Packet*);
 
     unsigned process(FlowCache*, Packet*);
 

@@ -26,6 +26,7 @@
 #endif
 
 #include "snort_types.h"
+#include "actions/actions.h"
 #include "framework/base_api.h"
 
 struct ActionApi;
@@ -40,6 +41,8 @@ public:
     static void add_plugin(const ActionApi*);
     static void release_plugins();
     static void dump_plugins();
+
+    static RuleType get_action_type(const char*);
 
     static void instantiate(const ActionApi*, Module*, SnortConfig*);
     static void execute(struct Packet*);

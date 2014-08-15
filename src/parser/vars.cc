@@ -170,13 +170,13 @@ int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
     {
         if(strstr(s,"!"))
         {
-            ParseError("Illegal use of negation and 'any': %s.", s);
+            ParseError("illegal use of negation and 'any': %s.", s);
         }
 
         po = PortObjectNew();
         if( !po )
         {
-            ParseError("PortVarTable missing an 'any' variable.");
+            ParseAbort("PortVarTable missing an 'any' variable.");
         }
         PortObjectSetName( po, name );
         PortObjectAddPortAny( po );
@@ -188,7 +188,7 @@ int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
         if(!po)
         {
             const char* errstr = PortObjectParseError( &pop );
-            ParseError("*** PortVar Parse error: (pos=%d,error=%s)\n>>%s\n>>%*s.",
+            ParseAbort("PortVar Parse error: (pos=%d,error=%s)\n>>%s\n>>%*s.",
                        pop.pos,errstr,s,pop.pos,"^");
         }
     }
@@ -197,7 +197,7 @@ int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
     rstat = PortVarTableAdd(portVarTable, po);
     if( rstat < 0 )
     {
-        ParseError("***PortVarTableAdd failed with '%s', exiting.", po->name);
+        ParseError("PortVarTableAdd failed with '%s', exiting.", po->name);
     }
     else if( rstat > 0 )
     {
@@ -421,7 +421,7 @@ void DisallowCrossTableDuplicateVars(
                     || sfvt_lookup_var(ip_vartable, name)
                )
             {
-                ParseError("Can not redefine variable name %s to be of type "
+                ParseError("can not redefine variable name %s to be of type "
                            "'var'. Use a different name.", name);
             }
             break;
@@ -433,7 +433,7 @@ void DisallowCrossTableDuplicateVars(
                 {
                     if(strcasecmp(p->name, name) == 0)
                     {
-                        ParseError("Can not redefine variable name %s to be of "
+                        ParseError("can not redefine variable name %s to be of "
                                    "type 'portvar'. Use a different name.", name);
                     }
                     p = p->next;
@@ -442,7 +442,7 @@ void DisallowCrossTableDuplicateVars(
 
             if(sfvt_lookup_var(ip_vartable, name))
             {
-                ParseError("Can not redefine variable name %s to be of type "
+                ParseError("can not redefine variable name %s to be of type "
                            "'portvar'. Use a different name.", name);
             }
 
@@ -455,7 +455,7 @@ void DisallowCrossTableDuplicateVars(
                 {
                     if(strcasecmp(p->name, name) == 0)
                     {
-                        ParseError("Can not redefine variable name %s to be of "
+                        ParseError("can not redefine variable name %s to be of "
                                    "type 'ipvar'. Use a different name.", name);
                     }
 
@@ -465,7 +465,7 @@ void DisallowCrossTableDuplicateVars(
 
             if(PortVarTableFind(portVarTable, name))
             {
-                ParseError("Can not redefine variable name %s to be of type "
+                ParseError("can not redefine variable name %s to be of type "
                            "'ipvar'. Use a different name.", name);
             }
 
@@ -498,7 +498,7 @@ VarEntry * VarDefine(
 
     if(value == NULL)
     {
-        ParseError("Bad value in variable definition!  Make sure you don't "
+        ParseAbort("bad value in variable definition!  Make sure you don't "
                    "have a '$' in the var name.");
     }
 
@@ -520,7 +520,7 @@ VarEntry * VarDefine(
         {
             switch(ret) {
                 case SFIP_ARG_ERR:
-                    ParseError("The following is not allowed: %s.", value);
+                    ParseAbort("the following is not allowed: %s.", value);
                     break;
 
                 case SFIP_DUPLICATE:
@@ -528,17 +528,17 @@ VarEntry * VarDefine(
                     break;
 
                 case SFIP_CONFLICT:
-                    ParseError("Negated IP ranges that are more general than "
+                    ParseAbort("negated IP ranges that are more general than "
                                "non-negated ranges are not allowed. Consider "
                                "inverting the logic in %s.", name);
                     break;
 
                 case SFIP_NOT_ANY:
-                    ParseError("!any is not allowed in %s.", name);
+                    ParseAbort("!any is not allowed in %s.", name);
                     break;
 
                 default:
-                    ParseError("Failed to parse the IP address: %s.", value);
+                    ParseAbort("failed to parse the IP address: %s.", value);
             }
         }
         return NULL;
@@ -580,7 +580,7 @@ VarEntry * VarDefine(
     value = ExpandVars(sc, value);
     if(!value)
     {
-        ParseError("Could not expand var('%s').", name);
+        ParseAbort("could not expand var('%s').", name);
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
@@ -751,7 +751,7 @@ const char *VarGet(SnortConfig*, const char *name)
             } while(p != var_table);
         }
 
-        ParseError("Undefined variable name: %s.", name);
+        ParseError("undefined variable name: %s.", name);
     }
 
     return name;
@@ -881,16 +881,16 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
                         if(!varcontents || !strlen(varcontents))
                         {
                             if(strlen(varaux))
-                                ParseError("%s", varaux);
+                                ParseAbort("%s", varaux);
                             else
-                                ParseError("Undefined variable '%s'.", varname);
+                                ParseAbort("undefined variable '%s'.", varname);
                         }
                         break;
                 }
 
                 /* If variable not defined now, we're toast */
                 if(!varcontents || !strlen(varcontents))
-                    ParseError("Undefined variable name: %s.", varname);
+                    ParseAbort("undefined variable name: %s.", varname);
 
                 if(varcontents)
                 {
@@ -955,7 +955,7 @@ void InitVarTables(IpsPolicy *p)
 
     if ((p->portVarTable == NULL) || (p->nonamePortVarTable == NULL))
     {
-        ParseError("Failed to create port variable tables.\n");
+        ParseError("failed to create port variable tables.\n");
     }
 }
 

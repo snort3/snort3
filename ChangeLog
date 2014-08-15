@@ -1,3 +1,31 @@
+113
+-- initial FlushBucket implementation
+-- converted ips_resp and ips_react to actions
+-- implemented byte code parser to replace bad juju in ips_content and
+   ips_replace
+-- stream workarounds for new packet / protocol foo and shutdown sequencing
+-- fixed end of rule parsing to not require ; and recognize incomplete rules
+
+112
+-- initial action plugin - reject
+-- added total to StreamSplitter::reassemble()
+-- removed StreamTcpModule ports and protos settings
+
+111
+-- fix up luajit ips rule option
+-- fix up rule loading
+-- fixed so rule parsing
+-- added pcre jit
+-- fixed --help-module to use exact match on module for params instead of
+   prefix
+-- added ParseAbort() so ParseError() doesn't fatal immediately
+-- fixed ftp_client.bounce_to handling in module
+
+110
+-- converted rule meta options to ips options (w/o eval)
+-- rewrote rule parsing
+-- split so manager out from ips manager
+
 109
 -- changed --help to give overview of help
 -- fixed stream_ip alerts (defrag -> stream_ip)

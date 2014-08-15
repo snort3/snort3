@@ -591,7 +591,7 @@ static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
         else if (p->udph != NULL)
             type = SFS_TYPE_UDP;
 
-        UpdateFlowIPStats(&sfFlow, GET_SRC_IP(p), GET_DST_IP(p), p->pkth->caplen, type);
+        UpdateFlowIPStats(&sfFlow, p->ip_api.get_src(), p->ip_api.get_dst(), p->pkth->caplen, type);
     }
 }
 

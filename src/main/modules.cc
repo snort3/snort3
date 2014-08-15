@@ -782,9 +782,6 @@ static const Parameter active_params[] =
     { "min_interval", Parameter::PT_INT, "1:", "255",
       "minimum number of seconds between responses" },
 
-    { "react", Parameter::PT_STRING, nullptr, nullptr,
-      "file containing HTTP reponse (headers and body)" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -811,9 +808,6 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("min_interval") )
         sc->min_interval = v.get_long();
-
-    else if ( v.is("react") )
-        sc->react_page = SnortStrdup(v.get_string());
 
     else
         return false;
@@ -1863,9 +1857,6 @@ bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
 
 void module_init()
 {
-    // FIXIT in alpha order for --help-config but module 
-    // manager should sort anyway
-    //
     // make sure parameters can be set regardless of sequence
     // since Lua calls this by table hash key traversal
     // (which is effectively random)

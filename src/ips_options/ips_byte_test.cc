@@ -455,16 +455,16 @@ static void parse_operator(const char* cptr, ByteTestData& idx)
 
 static const Parameter jump_params[] =
 {
-    { "*count", Parameter::PT_INT, "1:10", nullptr,
+    { "~count", Parameter::PT_INT, "1:10", nullptr,
       "number of bytes to pick up from the buffer" },
 
-    { "*operator", Parameter::PT_STRING, nullptr, nullptr,
+    { "~operator", Parameter::PT_STRING, nullptr, nullptr,
       "variable name or number of bytes into the buffer to start processing" },
 
-    { "*compare", Parameter::PT_STRING, nullptr, nullptr,
+    { "~compare", Parameter::PT_STRING, nullptr, nullptr,
       "variable name or value to test the converted result against" },
 
-    { "*offset", Parameter::PT_STRING, nullptr, nullptr,
+    { "~offset", Parameter::PT_STRING, nullptr, nullptr,
       "variable name or number of bytes into the payload to start processing" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -549,19 +549,20 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
         ParseError("byte_extract rule option has multiple arguments "
             "specifying the type of string conversion. Use only "
             "one of 'dec', 'hex', or 'oct'.");
+        return false;
     }
     return true;
 }
 
 bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*count") )
+    if ( v.is("~count") )
         data.bytes_to_compare = v.get_long();
 
-    else if ( v.is("*operator") )
+    else if ( v.is("~operator") )
         parse_operator(v.get_string(), data);
 
-    else if ( v.is("*compare") )
+    else if ( v.is("~compare") )
     {
         long n;
         if ( v.strtol(n) )
@@ -569,7 +570,7 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
         else
             cmp_var = v.get_string();
     }
-    else if ( v.is("*offset") )
+    else if ( v.is("~offset") )
     {
         long n;
         if ( v.strtol(n) )

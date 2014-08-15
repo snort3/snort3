@@ -98,7 +98,7 @@ void ipset_free( IPSET * ipc )
     }
 }
 
-int     ipset_add     ( IPSET * ipset, sfip_t *ip, void * vport, int notflag)
+int ipset_add (IPSET * ipset, sfip_t *ip, void * vport, int notflag)
 {
     if( !ipset ) return -1;
 
@@ -118,7 +118,7 @@ int     ipset_add     ( IPSET * ipset, sfip_t *ip, void * vport, int notflag)
     return 0;
 }
 
-int ipset_contains( IPSET * ipc, sfip_t * ip, void *port)
+int ipset_contains( IPSET *ipc, const sfip_t *ip, void *port)
 {
     PORTRANGE *pr;
     unsigned short portu;

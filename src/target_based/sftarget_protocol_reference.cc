@@ -202,7 +202,7 @@ int16_t GetProtocolReference(Packet *p)
             }
         }
 
-        switch (GET_IPH_PROTO(p))
+        switch (p->ip_api.proto())
         {
         case IPPROTO_TCP:
             ipprotocol = protocolReferenceTCP;

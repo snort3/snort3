@@ -124,10 +124,10 @@ static void PrintIPMacEntryList(IPMacEntryList& ipmel)
 
     for ( auto p : ipmel )
     {
-        snort_ip in;
+        sfip_t in;
         sfip_set_raw(&in, &p.ipv4_addr, AF_INET);
         // FIXIT replace all inet_ntoa() with thread safe
-        LogMessage("    %s -> ", inet_ntoa(IP_ARG(in)));
+        LogMessage("    %s -> ", inet_ntoa(&in));
 
         for (int i = 0; i < 6; i++)
         {

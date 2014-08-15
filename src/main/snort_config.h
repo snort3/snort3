@@ -149,7 +149,6 @@ struct SnortConfig
     char* respond_device;
     uint8_t *eth_dst;
 
-    char* react_page;
     const char* output;
 
     //------------------------------------------------------
@@ -216,7 +215,6 @@ struct SnortConfig
     ListHead Pass;
     ListHead Drop;
     ListHead SDrop;
-    ListHead Reject;
 
     struct FrameworkConfig* framework_config;
 

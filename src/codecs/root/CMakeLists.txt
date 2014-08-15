@@ -7,6 +7,7 @@ if (STATIC_CODECS)
     if (ENABLE_NON_ETHER_DECODERS)
             set(NON_ETHER_PLUGINS
                 cd_linux_sll.cc
+                cd_ppp.cc
                 cd_wlan.cc
                 cd_wlan_module.h
                 cd_wlan_module.cc
@@ -15,7 +16,6 @@ if (STATIC_CODECS)
         #        root_i4lrawip.cc
         #        root_oldpflog.cc
         #        root_enc.cc
-        #        root_ppp.cc
         #        root_pflog.cc
         #        root_pppserial.cc
         #        root_chdlc.cc
@@ -30,6 +30,7 @@ else(STATIC_CODECS)
     if (ENABLE_NON_ETHER_DECODERS)
         add_shared_library(cd_wlan codecs cd_wlan.cc cd_wlan_module.h cd_wlan_module.cc)
         add_shared_library(cd_linux_sll codecs cd_linux_sll.cc)
+        add_shared_library(cd_ppp codecs cd_ppp.cc)
     endif(ENABLE_NON_ETHER_DECODERS)
 endif(STATIC_CODECS)
 

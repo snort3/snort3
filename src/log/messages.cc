@@ -341,7 +341,7 @@ void PrintPacketData(const uint8_t *data, const uint32_t len)
     LogMessage("\n");
 }
 
-char * ObfuscateIpToText(sfip_t *ip)
+char * ObfuscateIpToText(const sfip_t *ip)
 {
     static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
     static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];
@@ -360,9 +360,9 @@ char * ObfuscateIpToText(sfip_t *ip)
     if (ip == NULL)
         return ip_buf;
 
-    if (!IP_IS_SET(snort_conf->obfuscation_net))
+    if (!sfip_is_set(snort_conf->obfuscation_net))
     {
-        if (IS_IP6(ip))
+        if (ip->is_ip6())
             SnortSnprintf(ip_buf, buf_size, "x:x:x:x::x:x:x:x");
         else
             SnortSnprintf(ip_buf, buf_size, "xxx.xxx.xxx.xxx");
@@ -372,9 +372,9 @@ char * ObfuscateIpToText(sfip_t *ip)
         sfip_t tmp;
         char *tmp_buf;
 
-        IP_COPY_VALUE(tmp, ip);
+        sfip_copy(tmp, ip);
 
-        if (IP_IS_SET(snort_conf->homenet))
+        if (sfip_is_set(snort_conf->homenet))
         {
             if (sfip_contains(&snort_conf->homenet, &tmp) == SFIP_CONTAINS)
                 sfip_obfuscate(&snort_conf->obfuscation_net, &tmp);

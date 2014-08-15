@@ -76,13 +76,10 @@
 namespace tcp
 {
 
-namespace detail
-{
 
-const uint8_t TCP_HEADER_LEN = 20;
-
-} // namespace detail
-
+constexpr uint8_t TCP_HEADER_LEN = 20; // this is actually the minimal TCP header lenght
+constexpr int OPT_TRUNC = -1;
+constexpr int OPT_BADLEN = -2;
 
 struct TCPHdr
 {
@@ -95,15 +92,24 @@ struct TCPHdr
     uint16_t th_win;       /* window */
     uint16_t th_sum;       /* checksum */
     uint16_t th_urp;       /* urgent pointer */
+
+    inline uint8_t hdr_len() const
+    { return (th_offx2 & 0xf0) >> 2; }
+
+    inline uint8_t off() const
+    { return th_offx2 >> 4; }
+
+    inline uint8_t options_len() const
+    { return hdr_len() - TCP_HEADER_LEN; }
 };
 
-const int OPT_TRUNC = -1;
-const int OPT_BADLEN = -2;
 
+#if 0
 inline uint8_t hdr_len()
 {
     return detail::TCP_HEADER_LEN;
 }
+#endif
 
 inline uint8_t get_tcp_hdr_len(const TCPHdr *h)
 {
@@ -189,7 +195,7 @@ inline void set_tcp_x2(TCPHdr* tcph, uint8_t value)
 #define TCP_ISFLAGSET(tcph, flags) (((tcph)->th_flags & (flags)) == (flags))
 
 
-}  // namespace Tcp
+}  // namespace tcp
 
 
 
@@ -258,10 +264,5 @@ inline void set_tcp_x2(TCPHdr* tcph, uint8_t value)
 
 #define TCPOPT_AUTH   29  /* [RFC5925] - The TCP Authentication Option
                              Intended to replace MD5 Signature Option [RFC2385] */
-
-#define TCP_HEADER_LEN tcp::hdr_len()
-
-#define TCPHdr tcp::TCPHdr
-
 
 #endif /* TCP_H */

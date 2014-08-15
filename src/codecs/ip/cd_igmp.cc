@@ -61,9 +61,11 @@ bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     if (raw_len >= 1 && raw_pkt[0] == 0x11)
     {
-        if (p->ip_options_data != NULL) {
-            if (p->ip_options_len >= 2) {
-                if (*(p->ip_options_data) == 0 && *(p->ip_options_data+1) == 0)
+        const uint8_t* ip_opt_data = p->ip_api.get_ip_opt_data();
+
+        if (ip_opt_data != nullptr) {
+            if (p->ip_api.get_ip_opt_len() >= 2) {
+                if (*(ip_opt_data) == 0 && *(ip_opt_data+1) == 0)
                 {
                     codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
                     return false;
@@ -74,7 +76,7 @@ bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         for(i=0; i< (int) p->ip_option_count; i++) {
             /* All IGMPv2 packets contain IP option code 148 (router alert).
                This vulnerability only applies to IGMPv3, so return early. */
-            if (ipv4::is_opt_rtralt(p->ip_options[i].code)) {
+            if (p->ip_options[i].is_opt_rtralt()) {
                 return true; /* No alert. */
             }
 

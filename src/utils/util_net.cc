@@ -91,7 +91,7 @@ char * mktcpflag_str(int flags)
  * 
  * @param ip ip in NETWORK BYTE ORDER
  */
-char *inet_ntoax(sfip_t *ip)
+char *inet_ntoax(const sfip_t *ip)
 {
     static THREAD_LOCAL char ip_buf1[INET6_ADDRSTRLEN];
     static THREAD_LOCAL char ip_buf2[INET6_ADDRSTRLEN];

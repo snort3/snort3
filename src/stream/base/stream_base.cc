@@ -114,7 +114,7 @@ static inline bool is_eligible(Packet* p)
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return false;
 
-    if ( !IPH_IS_VALID(p) )
+    if ( !p->ip_api.is_valid() )
         return false;
 
     return true;
@@ -210,7 +210,7 @@ void StreamBase::eval(Packet *p)
 
     MODULE_PROFILE_START(s5PerfStats);
 
-    switch ( GET_IPH_PROTO(p) )
+    switch ( p->ip_api.proto() )
     {
     case IPPROTO_TCP:
         if ( p->tcph )
@@ -218,7 +218,7 @@ void StreamBase::eval(Packet *p)
         break;
 
     case IPPROTO_UDP:
-        if ( p->frag_flag )
+        if ( p->decode_flags & DECODE__FRAG )
             flow_con->process_ip(p);
 
         if ( p->udph )
@@ -231,7 +231,7 @@ void StreamBase::eval(Packet *p)
         break;
 
     case IPPROTO_IP:
-        if ( p->iph )
+        if ( p->ip_api.is_valid() )
             flow_con->process_ip(p);
         break;
     }
@@ -280,7 +280,7 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__IP,
+    PROTO_BIT__ALL,  // FIXIT which bits??
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

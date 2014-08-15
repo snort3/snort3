@@ -160,8 +160,9 @@ static const uint8_t* encode_packet(
     enc->p = p;
     enc->ip_hdr = p->layers[layer::get_inner_ip_lyr(p)].start;
 
-    if ( ipv4::is_ipv4(*(enc->ip_hdr)))
-        enc->ip_len = ipv4::get_pkt_len((IPHdr*) enc->ip_hdr);
+    // FIXIT:  Remove this funky stuff.
+    if ( ip::is_ipv4(*(enc->ip_hdr)))
+        enc->ip_len = ip::get_pkt_len((IPHdr*) enc->ip_hdr);
     else if ( ipv6::is_ip6_hdr_ver((ipv6::IP6RawHdr*)(enc->ip_hdr)))
         enc->ip_len = sizeof(ipv6::IP6RawHdr);
     else
@@ -207,7 +208,7 @@ static bool api_instantiated(const CodecApi* cd_api)
         std::find(s_codecs.begin(), s_codecs.end(), cd_api);
 
     if (p == s_codecs.end())
-        FatalError("PacketManager:: should never reach this code!!" \
+        FatalError("PacketManager:: should never reach this code!!"
                     "Cannot find Codec %s's api", cd_api->base.name);
 
     int pos = p - s_codecs.begin();
@@ -398,7 +399,7 @@ void PacketManager::decode(
     uint8_t mapped_prot = grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint16_t lyr_len = 0;
-    uint32_t len = 0;
+    uint32_t len;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
             DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
@@ -409,6 +410,8 @@ void PacketManager::decode(
 
     // initialize all of the relevent data to decode this packet
     memset(p, 0, PKT_ZERO_LEN);
+    p->ip_api.reset();
+
     p->pkth = pkthdr;
     p->pkt = pkt;
     len = pkthdr->caplen;
@@ -418,11 +421,18 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while(s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
     {
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %u:"
+                "ip header starts at: %p, length is %lu\n",
+                s_protocols[mapped_prot]->get_name(), prot_id, pkt,
+                (unsigned long) len););
+
         // must be done here after decode and before push for case layer
         // LAYER_MAX+1 is invalid or the default codec
         if ( p->num_layers == LAYER_MAX )
         {
             codec_events::decoder_event(p, DECODE_TOO_MANY_LAYERS);
+            p->dsize = (uint16_t)len;
+            p->data = pkt;
             MODULE_PROFILE_END(decodePerfStats);
             return /*false */;
         }
@@ -440,10 +450,16 @@ void PacketManager::decode(
         lyr_len = 0;
     }
 
+    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
+                    " starts at: %p, length is %lu\n",
+                     s_protocols[mapped_prot]->get_name(),
+                     prot_id, pkt, (unsigned long) len););
+
+
     // if the final protocol ID is not the default codec, a Codec failed
     if (prev_prot_id != FINISHED_DECODE)
     {
-        if (!(p->packet_flags & PKT_UNSURE_ENCAP))
+        if (!(p->decode_flags & DECODE__UNSURE_ENCAP))
         {
             // if the codec exists, it failed
             if(s_proto_map[prev_prot_id])
@@ -452,7 +468,7 @@ void PacketManager::decode(
                 s_stats[other_codecs]++;
         }
 
-        if (p->packet_flags & PKT_ESP_LYR_PRESENT)
+        if (p->decode_flags & DECODE__TRUST_ON_FAIL)
             p->packet_flags |= PKT_TRUST;
     }
 
@@ -466,7 +482,12 @@ void PacketManager::decode(
         ipv6_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
-    p->packet_flags &= (uint32_t)~PKT_ESP_LYR_PRESENT; // cleanup just in case.
+
+    /*
+     * NOTE:  NEVER RETURN BEFORE SETTING THESE TWO VARIABLES!!
+     *        they are no longer zeroed above, which means if they
+     *        unset, undefined behavior will ensure
+     */
     p->dsize = (uint16_t)len;
     p->data = pkt;
 
@@ -550,16 +571,12 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     int len;
     int num_layers = p->num_layers;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
-    uint8_t* pkt = (uint8_t*)c->pkt;
 
     if ( num_layers <= 0 )
         return -1;
 
     memset(c, 0, PKT_ZERO_LEN);
 
-    c->raw_ip6h = nullptr;
-    c->pkth = pkth;
-    c->pkt = pkt;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     pkth->ingress_index = phdr->ingress_index;
@@ -602,6 +619,8 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
         lyr->length = p->layers[i].length;
         lyr->start = (uint8_t*)b;
 
+        // NOTE: this must always go from outer to inner
+        //       to ensure a valid ip header
         uint8_t mapped_prot = i ? s_proto_map[lyr->prot_id] : grinder;
         s_protocols[mapped_prot]->format(f, p, c, lyr);
     }
@@ -619,18 +638,6 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
     c->packet_flags |= PKT_PSEUDO;
     c->pseudo_type = type;
     c->user_policy_id = p->user_policy_id;  // cooked packet gets same policy as raw
-
-    switch ( type )
-    {
-        case PSEUDO_PKT_SMB_SEG:
-        case PSEUDO_PKT_DCE_SEG:
-        case PSEUDO_PKT_DCE_FRAG:
-        case PSEUDO_PKT_SMB_TRANS:
-            c->packet_flags |= PKT_REASSEMBLED_OLD;
-            break;
-        default:
-            break;
-    }
 
     // setup pkt capture header
     pkth->caplen = len;
@@ -672,7 +679,6 @@ SO_PUBLIC void PacketManager::encode_update (Packet* p)
     uint32_t len = 0;
     DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)p->pkth;
 
-    p->actual_ip_len = 0;
     Layer *lyr = p->layers;
 
     for ( i = p->num_layers - 1; i >= 0; i-- )

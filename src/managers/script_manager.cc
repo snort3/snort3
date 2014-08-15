@@ -27,6 +27,7 @@
 
 #include "ips_manager.h"
 #include "framework/ips_option.h"
+#include "managers/plugin_manager.h"
 #include "ips_options/ips_luajit.h"
 #include "parser/parser.h"
 #include "helpers/directory.h"
@@ -35,7 +36,7 @@
 // N ::= number of instances of script + args and
 // K ::= number of threads
 // change to create K lua states here for each script + args
-// and change LuaJITOption() to get reference to thread states
+// and change LuaJitOption() to get reference to thread states
 // ultimately should look into changing detection engine to 
 // keep just one copy of rule option + args
 
@@ -60,6 +61,17 @@ static vector<LuaIpsApi*> ips_options;
 // api stuff
 //-------------------------------------------------------------------------
 
+static Module* mod_ctor()
+{
+    const char* key = PluginManager::get_current_plugin();
+    return new LuaJitModule(key);
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
 static LuaIpsApi* find_api(const char* key)
 {
     for ( auto p : ips_options )
@@ -78,7 +90,7 @@ static IpsOption* ctor(Module* m, struct OptTreeNode*)
         return nullptr;
 
     LuaJitModule* mod = (LuaJitModule*)m;
-    return new LuaJITOption(api->name.c_str(), api->chunk, mod);
+    return new LuaJitOption(key, api->chunk, mod);
 }
 
 static void dtor(IpsOption* p)
@@ -91,17 +103,18 @@ LuaIpsApi::LuaIpsApi(string& s, unsigned ver, string& c)
     name = s;
     chunk = c;
 
+    memset(&api, 0, sizeof(api));
+
     api.base.type = PT_IPS_OPTION;
     api.base.name = name.c_str();
     api.base.version = ver;
     api.base.api_version = IPSAPI_VERSION;
 
-    api.pinit = api.pterm = nullptr;
-    api.tinit = api.tterm = nullptr;
+    api.base.mod_ctor = mod_ctor;
+    api.base.mod_dtor = mod_dtor;
 
     api.ctor = ctor;
     api.dtor = dtor;
-    api.verify = nullptr;
 }
 
 //-------------------------------------------------------------------------

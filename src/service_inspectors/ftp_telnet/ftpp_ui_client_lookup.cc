@@ -152,7 +152,7 @@ int ftpp_ui_client_lookup_add(
 
 /*
  * Function: ftpp_ui_client_lookup_find(CLIENT_LOOKUP *ClientLookup,
- *                                  snort_ip_p ip, int *iError)
+ *                                  const sfip_t *ip, int *iError)
  *
  * Purpose: Find a client configuration given a IP.
  *          We look up a client configuration given an IP and
@@ -170,7 +170,7 @@ int ftpp_ui_client_lookup_add(
  */
 
 FTP_CLIENT_PROTO_CONF *ftpp_ui_client_lookup_find(CLIENT_LOOKUP *ClientLookup,
-                                            snort_ip_p Ip, int *iError)
+                                            const sfip_t *Ip, int *iError)
 {
     FTP_CLIENT_PROTO_CONF *ClientConf = NULL;
 

@@ -55,13 +55,22 @@ sfip_var_t* sfip_var_from_string(const char *addr)
     if((ret_code = sfvt_add_to_var(ip_vartable, ret, addr)) != SFIP_SUCCESS)
     {
         if(ret_code == SFIP_LOOKUP_FAILURE)
+        {
             ParseError("Undefined variable in the string: %s", addr);
+            return ret;
+        }
         else if(ret_code == SFIP_CONFLICT)
+        {
             ParseError("Negated IP ranges that equal to or are"
                 " more-specific than non-negated ranges are not allowed."
                 " Consider inverting the logic: %s.", addr);
+            return ret;
+        }
         else
+        {
             ParseError("Unable to process the IP address: %s", addr);
+            return ret;
+        }
     }
 
     return ret;
