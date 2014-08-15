@@ -38,19 +38,19 @@
 
 class NHttpMsgStatus: public NHttpMsgStart {
 public:
-    NHttpMsgStatus(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
+    NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
     void analyze();
-    void printSection(FILE *output);
-    void genEvents();
-    void updateFlow();
-    void legacyClients();
+    void print_section(FILE *output);
+    void gen_events();
+    void update_flow();
+    void legacy_clients();
 
 private:
-    void parseStartLine();
-    void deriveStatusCodeNum();
+    void parse_start_line();
+    void derive_status_code_num();
 
-    Field statusCode;
-    Field reasonPhrase;
+    Field status_code;
+    Field reason_phrase;
     NHttpMsgRequest* request;
 };
 

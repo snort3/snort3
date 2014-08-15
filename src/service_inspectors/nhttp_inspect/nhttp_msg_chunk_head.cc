@@ -38,39 +38,39 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-   NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), bodySections(sessionData->bodySections[sourceId]),
-   numChunks(sessionData->numChunks[sourceId]) {
-    delete sessionData->latestOther[sourceId];
-    sessionData->latestOther[sourceId] = this;
+NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+   NHttpMsgSection(buffer, buf_size, session_data_, source_id_), body_sections(session_data->body_sections[source_id]),
+   num_chunks(session_data->num_chunks[source_id]) {
+    delete session_data->latest_other[source_id];
+    session_data->latest_other[source_id] = this;
 }
 
 // Convert the hexadecimal chunk length.
 // RFC says that zero may be written with multiple digits "000000".
 // Arbitrary limit of 15 hex digits not including leading zeros ensures in a simple way against 64-bit overflow and should be
 // vastly bigger than any legitimate chunk.
-void NHttpMsgChunkHead::deriveChunkLength() {
-    if (chunkSize.length <= 0) {
-        dataLength = STAT_NOSOURCE;
+void NHttpMsgChunkHead::derive_chunk_length() {
+    if (chunk_size.length <= 0) {
+        data_length = STAT_NOSOURCE;
         infractions |= INF_BADCHUNKSIZE;
         return;
     }
-    dataLength = 0;
-    int nonLeadingZeros = 0;
-    for (int k=0; k < chunkSize.length; k++) {
-        if (nonLeadingZeros || (chunkSize.start[k] != '0')) nonLeadingZeros++;
-        if (nonLeadingZeros > 15) {
-            dataLength = STAT_PROBLEMATIC;
+    data_length = 0;
+    int non_leading_zeros = 0;
+    for (int k=0; k < chunk_size.length; k++) {
+        if (non_leading_zeros || (chunk_size.start[k] != '0')) non_leading_zeros++;
+        if (non_leading_zeros > 15) {
+            data_length = STAT_PROBLEMATIC;
             infractions |= INF_BADCHUNKSIZE;
             return;
         }
 
-        dataLength *= 16;
-        if ((chunkSize.start[k] >= '0') && (chunkSize.start[k] <= '9')) dataLength += chunkSize.start[k] - '0';
-        else if ((chunkSize.start[k] >= 'A') && (chunkSize.start[k] <= 'F')) dataLength += chunkSize.start[k] - 'A' + 10;
-        else if ((chunkSize.start[k] >= 'a') && (chunkSize.start[k] <= 'f')) dataLength += chunkSize.start[k] - 'a' + 10;
+        data_length *= 16;
+        if ((chunk_size.start[k] >= '0') && (chunk_size.start[k] <= '9')) data_length += chunk_size.start[k] - '0';
+        else if ((chunk_size.start[k] >= 'A') && (chunk_size.start[k] <= 'F')) data_length += chunk_size.start[k] - 'A' + 10;
+        else if ((chunk_size.start[k] >= 'a') && (chunk_size.start[k] <= 'f')) data_length += chunk_size.start[k] - 'a' + 10;
         else {
-            dataLength = STAT_PROBLEMATIC;
+            data_length = STAT_PROBLEMATIC;
             infractions |= INF_BADCHUNKSIZE;
             return;
         }
@@ -78,64 +78,68 @@ void NHttpMsgChunkHead::deriveChunkLength() {
 }
 
 void NHttpMsgChunkHead::analyze() {
-    bodySections++;
+    body_sections++;
     // First section in a new chunk is just the start line.
-    numChunks++;
-    startLine.start = msgText.start;
-    if (!tcpClose) startLine.length = msgText.length - 2;
-    else startLine.length = findCrlf(startLine.start, msgText.length, false);
-    chunkSize.start = msgText.start;
-    // Start line format is chunk size in hex followed by optional semicolon and extensions field
-    for (chunkSize.length = 0; (chunkSize.length < startLine.length) && (startLine.start[chunkSize.length] != ';'); chunkSize.length++);
-    if (chunkSize.length == startLine.length) {
-        chunkExtensions.length = STAT_NOTPRESENT;
-    }
-    else if (chunkSize.length == startLine.length - 1) {
-        chunkExtensions.length = STAT_EMPTYSTRING;
+    num_chunks++;
+    start_line.start = msg_text.start;
+    if (!tcp_close) {
+        start_line.length = msg_text.length - 2;
     }
     else {
-        chunkExtensions.start = msgText.start + chunkSize.length + 1;
-        chunkExtensions.length = startLine.length - chunkSize.length - 1;
+        start_line.length = find_crlf(start_line.start, msg_text.length, false);
     }
-    deriveChunkLength();
-    if (tcpClose) infractions |= INF_TRUNCATED;
+    chunk_size.start = msg_text.start;
+    // Start line format is chunk size in hex followed by optional semicolon and extensions field
+    for (chunk_size.length = 0; (chunk_size.length < start_line.length) && (start_line.start[chunk_size.length] != ';'); chunk_size.length++);
+    if (chunk_size.length == start_line.length) {
+        chunk_extensions.length = STAT_NOTPRESENT;
+    }
+    else if (chunk_size.length == start_line.length - 1) {
+        chunk_extensions.length = STAT_EMPTYSTRING;
+    }
+    else {
+        chunk_extensions.start = msg_text.start + chunk_size.length + 1;
+        chunk_extensions.length = start_line.length - chunk_size.length - 1;
+    }
+    derive_chunk_length();
+    if (tcp_close) infractions |= INF_TRUNCATED;
 }
 
-void NHttpMsgChunkHead::genEvents() {}
+void NHttpMsgChunkHead::gen_events() {}
 
-void NHttpMsgChunkHead::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "chunk header");
-    fprintf(output, "Chunk size: %" PRIi64 "\n", dataLength);
-    chunkExtensions.print(output, "Chunk extensions");
-    NHttpMsgSection::printMessageWrapup(output);
+void NHttpMsgChunkHead::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "chunk header");
+    fprintf(output, "Chunk size: %" PRIi64 "\n", data_length);
+    chunk_extensions.print(output, "Chunk extensions");
+    NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgChunkHead::updateFlow() {
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+void NHttpMsgChunkHead::update_flow() {
+    if (tcp_close) {
+        session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->half_reset(source_id);
     }
-    else if (dataLength > 0) {
-        sessionData->typeExpected[sourceId] = SEC_CHUNKBODY;
-        sessionData->octetsExpected[sourceId] = dataLength+2;
-        sessionData->bodySections[sourceId] = bodySections;
-        sessionData->numChunks[sourceId] = numChunks;
-        sessionData->dataLength[sourceId] = dataLength;
-        sessionData->chunkSections[sourceId] = 0;
-        sessionData->chunkOctets[sourceId] = 0;
+    else if (data_length > 0) {
+        session_data->type_expected[source_id] = SEC_CHUNKBODY;
+        session_data->octets_expected[source_id] = data_length+2;
+        session_data->body_sections[source_id] = body_sections;
+        session_data->num_chunks[source_id] = num_chunks;
+        session_data->data_length[source_id] = data_length;
+        session_data->chunk_sections[source_id] = 0;
+        session_data->chunk_octets[source_id] = 0;
     }
     else {
         // This was zero-length last chunk, trailer comes next
-        sessionData->typeExpected[sourceId] = SEC_TRAILER;
-        sessionData->halfReset(sourceId);
+        session_data->type_expected[source_id] = SEC_TRAILER;
+        session_data->half_reset(source_id);
     }
 }
 
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgChunkHead::legacyClients() {
+void NHttpMsgChunkHead::legacy_clients() {
     ClearHttpBuffers();
-    if (startLine.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, startLine.start, (unsigned)startLine.length);
+    if (start_line.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, start_line.start, (unsigned)start_line.length);
 }
 
 

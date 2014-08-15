@@ -46,7 +46,7 @@
 
 using namespace NHttpEnums;
 
-const StrCode NHttpMsgRequest::methodList[] =
+const StrCode NHttpMsgRequest::method_list[] =
    {{ METH_OPTIONS,            "OPTIONS"},
     { METH_GET,                "GET"},
     { METH_HEAD,               "HEAD"},
@@ -97,7 +97,7 @@ const StrCode NHttpMsgRequest::methodList[] =
     { METH_UPDATEREDIRECTREF,  "UPDATEREDIRECTREF"},
     { 0,                       nullptr} };
 
-const StrCode NHttpUri::schemeList[] =
+const StrCode NHttpUri::scheme_list[] =
    {{ SCH_HTTP,                "http"},
     { SCH_HTTPS,               "https"},
     { SCH_FTP,                 "ftp"},
@@ -105,7 +105,7 @@ const StrCode NHttpUri::schemeList[] =
     { SCH_FILE,                "file"},
     { 0,                       nullptr} };
 
-const StrCode NHttpMsgHeadShared::headerList[] =
+const StrCode NHttpMsgHeadShared::header_list[] =
    {{ HEAD_CACHE_CONTROL,        "cache-control"},
     { HEAD_CONNECTION,           "connection"},
     { HEAD_DATE,                 "date"},
@@ -159,7 +159,7 @@ const StrCode NHttpMsgHeadShared::headerList[] =
     { HEAD_TRUE_CLIENT_IP,       "true-client-ip"},
     { 0,                         nullptr} };
 
-const StrCode NHttpMsgHeadShared::transCodeList[] =
+const StrCode NHttpMsgHeadShared::trans_code_list[] =
    {{ TRANSCODE_CHUNKED,         "chunked"},
     { TRANSCODE_IDENTITY,        "identity"},
     { TRANSCODE_GZIP,            "gzip"},
@@ -167,13 +167,18 @@ const StrCode NHttpMsgHeadShared::transCodeList[] =
     { TRANSCODE_DEFLATE,         "deflate"},
     { 0,                         nullptr} };
 
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL {NORM_NULL, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC {NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT {NORM_FIELD, true, normRemoveLws, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false, normDecimalInteger, nullptr, nullptr, nullptr, nullptr, nullptr};
-const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, normRemoveLws, nullptr, norm2Lower, nullptr, normSeqStrCode, NHttpMsgHeadShared::transCodeList};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_NIL {NORM_NULL, false, nullptr, nullptr, nullptr, nullptr,
+   nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_BASIC {NORM_FIELD, false, nullptr, nullptr, nullptr, nullptr,
+   nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_CAT {NORM_FIELD, true, norm_remove_lws, nullptr, nullptr,
+   nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false, norm_decimal_integer, nullptr,
+   nullptr, nullptr, nullptr, nullptr};
+const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, norm_remove_lws, nullptr,
+   norm_to_lower, nullptr, norm_seq_str_code, NHttpMsgHeadShared::trans_code_list};
 
-const HeaderNormalizer* const NHttpMsgHeadShared::headerNorms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
+const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
     [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
     [HEAD_CONNECTION] = &NORMALIZER_BASIC,
@@ -228,9 +233,9 @@ const HeaderNormalizer* const NHttpMsgHeadShared::headerNorms[HEAD__MAXVALUE] = 
     [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC
 };
 
-const int32_t NHttpMsgHeadShared::numNorms = HEAD__MAXVALUE-1;
+const int32_t NHttpMsgHeadShared::num_norms = HEAD__MAXVALUE-1;
 
-const RuleMap NHttpModule::nhttpEvents[] =
+const RuleMap NHttpModule::nhttp_events[] =
 {
     { EVENT_ASCII,                           "(nhttp_inspect) ascii encoding" },
     { EVENT_DOUBLE_DECODE,                   "(nhttp_inspect) double decoding attack" },

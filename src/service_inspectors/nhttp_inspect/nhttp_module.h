@@ -34,18 +34,18 @@
 class NHttpModule : public Module
 {
 public:
-    NHttpModule();
+    NHttpModule() : Module("nhttp_inspect", nhttp_params) {};
     bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*) { return true; };
     bool set(const char*, Value&, SnortConfig*);
-    unsigned get_gid() const;
-    const RuleMap* get_rules() const;
+    unsigned get_gid() const { return NHttpEnums::NHTTP_GID; };
+    const RuleMap* get_rules() const { return nhttp_events; };
     bool get_test_input() const { return test_input; };
     bool get_test_output() const { return test_output; };
 
 private:
-    static const Parameter nhttpParams[];
-    static const RuleMap nhttpEvents[];
+    static const Parameter nhttp_params[];
+    static const RuleMap nhttp_events[];
     bool test_input = false;
     bool test_output = false;
 };

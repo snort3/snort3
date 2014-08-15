@@ -37,16 +37,16 @@
 
 class NHttpMsgChunkBody : public NHttpMsgBody {
 public:
-    NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
+    NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
     void analyze();
-    void printSection(FILE *output);
-    void genEvents();
-    void updateFlow();
+    void print_section(FILE *output);
+    void gen_events();
+    void update_flow();
 
 private:
-    // int64_t numChunks;    // will be needed in future commented out to please compiler &&&
-    int64_t chunkSections;
-    int64_t chunkOctets;
+    // int64_t num_chunks;    // will be needed in future commented out to please compiler &&&
+    int64_t chunk_sections;
+    int64_t chunk_octets;
 };
 
 #endif

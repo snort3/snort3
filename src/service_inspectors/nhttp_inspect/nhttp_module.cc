@@ -33,13 +33,7 @@
 #include "nhttp_enum.h"
 #include "nhttp_module.h"
 
-NHttpModule::NHttpModule() : Module("nhttp_inspect", nhttpParams)
-{ }
-
-const RuleMap* NHttpModule::get_rules() const
-{ return nhttpEvents; }
-
-const Parameter NHttpModule::nhttpParams[] =
+const Parameter NHttpModule::nhttp_params[] =
     {{ "test_input", Parameter::PT_BOOL, nullptr, "false", "read HTTP messages from text file" },
      { "test_output", Parameter::PT_BOOL, nullptr, "false", "print out HTTP section data" },
      { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
@@ -50,19 +44,18 @@ bool NHttpModule::begin(const char*, int, SnortConfig*) {
     return true;
 }
 
-bool NHttpModule::end(const char*, int, SnortConfig*) {
-    return true;
-}
-
 bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
-    if (val.is("test_input")) test_input = val.get_bool();
-    else if (val.is("test_output")) test_output = val.get_bool();
-    else return false;
+    if (val.is("test_input")) {
+        test_input = val.get_bool();
+    }
+    else if (val.is("test_output")) {
+        test_output = val.get_bool();
+    }
+    else {
+        return false;
+    }
 
     return true;
 }
 
-unsigned NHttpModule::get_gid() const {
-    return NHttpEnums::NHTTP_GID;
-}
 

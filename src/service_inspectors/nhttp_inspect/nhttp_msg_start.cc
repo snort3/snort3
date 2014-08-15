@@ -39,47 +39,47 @@
 using namespace NHttpEnums;
 
 void NHttpMsgStart::analyze() {
-    startLine.start = msgText.start;
-    startLine.length = findCrlf(startLine.start, msgText.length, false);
+    start_line.start = msg_text.start;
+    start_line.length = find_crlf(start_line.start, msg_text.length, false);
     // special case of TCP close between CR and LF
-    if (tcpClose && (msgText.length == startLine.length) && (startLine.start[startLine.length-1] == '\r')) startLine.length--;
-    parseStartLine();
-    deriveVersionId();
+    if (tcp_close && (msg_text.length == start_line.length) && (start_line.start[start_line.length-1] == '\r')) start_line.length--;
+    parse_start_line();
+    derive_version_id();
 }
 
-void NHttpMsgStart::deriveVersionId() {
+void NHttpMsgStart::derive_version_id() {
     if (version.length <= 0) {
-        versionId = VERS__NOSOURCE;
+        version_id = VERS__NOSOURCE;
         return;
     }
     if (version.length != 8) {
-        versionId = VERS__PROBLEMATIC;
+        version_id = VERS__PROBLEMATIC;
         infractions |= INF_BADVERSION;
         return;
     }
 
     if (memcmp(version.start, "HTTP/", 5) || (version.start[6] != '.')) {
-        versionId = VERS__PROBLEMATIC;
+        version_id = VERS__PROBLEMATIC;
         infractions |= INF_BADVERSION;
     }
     else if ((version.start[5] == '1') && (version.start[7] == '1')) {
-        versionId = VERS_1_1;
+        version_id = VERS_1_1;
     }
     else if ((version.start[5] == '1') && (version.start[7] == '0')) {
-        versionId = VERS_1_0;
+        version_id = VERS_1_0;
     }
     else if ((version.start[5] == '2') && (version.start[7] == '0')) {
-        versionId = VERS_2_0;
+        version_id = VERS_2_0;
     }
     else if ((version.start[5] >= '0') && (version.start[5] <= '9') && (version.start[7] >= '0') && (version.start[7] <= '9')) {
-        versionId = VERS__OTHER;
+        version_id = VERS__OTHER;
         infractions |= INF_UNKNOWNVERSION;
     }
     else {
-        versionId = VERS__PROBLEMATIC;
+        version_id = VERS__PROBLEMATIC;
         infractions |= INF_BADVERSION;
     }
 }
 
-void NHttpMsgStart::genEvents() {}
+void NHttpMsgStart::gen_events() {}
 

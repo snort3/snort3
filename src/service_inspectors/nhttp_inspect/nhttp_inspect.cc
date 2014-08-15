@@ -42,19 +42,21 @@
 
 using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(bool test_input, bool _test_output) : test_output(_test_output)
+NHttpInspect::NHttpInspect(bool test_input_, bool test_output_) : test_output(test_output_)
 {
-    NHttpTestInput::test_input = test_input;
+    NHttpTestInput::test_input = test_input_;
     if (NHttpTestInput::test_input) {
-        NHttpTestInput::testInput = new NHttpTestInput(testInputFile);
+        NHttpTestInput::test_input_source = new NHttpTestInput(test_input_file);
     }
 }
 
 NHttpInspect::~NHttpInspect ()
 {
     if (NHttpTestInput::test_input) {
-        delete NHttpTestInput::testInput;
-        if (testOut) fclose(testOut);
+        delete NHttpTestInput::test_input_source;
+        if (test_out) {
+            fclose(test_out);
+        }
     }
 }
 
@@ -101,15 +103,7 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 
 int NHttpInspect::verify(SnortConfig*)
 {
-    return 0; // 0 = good, -1 = bad
-}
-
-void NHttpInspect::tinit()
-{
-}
-
-void NHttpInspect::tterm()
-{
+    return 0;
 }
 
 void NHttpInspect::show(SnortConfig*)
@@ -117,42 +111,42 @@ void NHttpInspect::show(SnortConfig*)
     LogMessage("NHttpInspect\n");
 }
 
-void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId sourceId)
+void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id)
 {
-    NHttpFlowData* sessionData = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
-    assert(sessionData);
+    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
+    assert(session_data);
 
-    NHttpMsgSection *msgSection = nullptr;
+    NHttpMsgSection *msg_section = nullptr;
 
-    switch (sessionData->sectionType[sourceId]) {
-      case SEC_REQUEST: msgSection = new NHttpMsgRequest(data, dsize, sessionData, sourceId); break;
-      case SEC_STATUS: msgSection = new NHttpMsgStatus(data, dsize, sessionData, sourceId); break;
-      case SEC_HEADER: msgSection = new NHttpMsgHeader(data, dsize, sessionData, sourceId); break;
-      case SEC_BODY: msgSection = new NHttpMsgBody(data, dsize, sessionData, sourceId); break;
-      case SEC_CHUNKHEAD: msgSection = new NHttpMsgChunkHead(data, dsize, sessionData, sourceId); break;
-      case SEC_CHUNKBODY: msgSection = new NHttpMsgChunkBody(data, dsize, sessionData, sourceId); break;
-      case SEC_TRAILER: msgSection = new NHttpMsgTrailer(data, dsize, sessionData, sourceId); break;
+    switch (session_data->section_type[source_id]) {
+      case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id); break;
+      case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id); break;
+      case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id); break;
+      case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id); break;
+      case SEC_CHUNKHEAD: msg_section = new NHttpMsgChunkHead(data, dsize, session_data, source_id); break;
+      case SEC_CHUNKBODY: msg_section = new NHttpMsgChunkBody(data, dsize, session_data, source_id); break;
+      case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id); break;
       case SEC_DISCARD: delete[] data; return;
       default: assert(0); delete[] data; return;
     }
 
-    msgSection->analyze();
-    msgSection->updateFlow();
-    msgSection->genEvents();
-    msgSection->legacyClients();
+    msg_section->analyze();
+    msg_section->update_flow();
+    msg_section->gen_events();
+    msg_section->legacy_clients();
 
     if (test_output) {
-        if (!NHttpTestInput::test_input) msgSection->printSection(stdout);
+        if (!NHttpTestInput::test_input) msg_section->print_section(stdout);
         else {
-            if (NHttpTestInput::testInput->getTestNumber() != fileTestNumber) {
-                if (testOut) fclose (testOut);
-                fileTestNumber = NHttpTestInput::testInput->getTestNumber();
-                char fileName[100];
-                snprintf(fileName, sizeof(fileName), "%s%" PRIi64 ".txt", testOutputPrefix, fileTestNumber);
-                if ((testOut = fopen(fileName, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
+            if (NHttpTestInput::test_input_source->get_test_number() != file_test_number) {
+                if (test_out) fclose (test_out);
+                file_test_number = NHttpTestInput::test_input_source->get_test_number();
+                char file_name[100];
+                snprintf(file_name, sizeof(file_name), "%s%" PRIi64 ".txt", test_output_prefix, file_test_number);
+                if ((test_out = fopen(file_name, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
             }
-            msgSection->printSection(testOut);
-            printf("Finished processing section from test %" PRIi64 "\n", fileTestNumber);
+            msg_section->print_section(test_out);
+            printf("Finished processing section from test %" PRIi64 "\n", file_test_number);
         }
     }
 }

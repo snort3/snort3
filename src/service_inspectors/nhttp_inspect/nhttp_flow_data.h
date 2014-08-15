@@ -51,42 +51,43 @@ public:
     friend class NHttpMsgTrailer;
     friend class NHttpStreamSplitter;
 private:
-    void halfReset(NHttpEnums::SourceId sourceId);
+    void half_reset(NHttpEnums::SourceId source_id);
 
     // StreamSplitter internal data
-    int64_t octetsSeen[2] = { 0, 0 };
-    int numCrlf[2] = { 0, 0 };
+    int64_t octets_seen[2] = { 0, 0 };
+    int num_crlf[2] = { 0, 0 };
     
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
-    NHttpEnums::SectionType sectionType[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
-    bool tcpClose[2] = { false, false };
+    NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
+    bool tcp_close[2] = { false, false };
     uint64_t infractions[2] = { 0, 0 };
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
-    NHttpEnums::SectionType typeExpected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
-    int64_t octetsExpected[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // expected size of the upcoming body or chunk body section      
+    NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
+    int64_t octets_expected[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // expected size of the upcoming body or chunk body section
 
     // Inspector's internal data about the current message
-    // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize hard-to-find bugs
-    NHttpEnums::VersionId versionId[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
-    NHttpEnums::MethodId methodId[2] = { NHttpEnums::METH__NOTPRESENT, NHttpEnums::METH__NOTPRESENT };
-    int32_t statusCodeNum[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize
+    // hard-to-find bugs
+    NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
+    NHttpEnums::MethodId method_id[2] = { NHttpEnums::METH__NOTPRESENT, NHttpEnums::METH__NOTPRESENT };
+    int32_t status_code_num[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
-    int64_t dataLength[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };        // length of the data from Content-Length field or chunk header.      
-    int64_t bodySections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };      // number of body sections seen so far including chunk headers
-    int64_t bodyOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };        // number of user data octets seen so far (either regular body or chunks)
-    int64_t numChunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };         // number of chunks seen so far
-    int64_t chunkSections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // number of sections seen so far in the current chunk
-    int64_t chunkOctets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };       // number of user data octets seen so far in the current chunk including terminating CRLF
+    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // length of the data from Content-Length field or chunk header.      
+    int64_t body_sections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // number of body sections seen so far including chunk headers
+    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // number of user data octets seen so far (either regular body or chunks)
+    int64_t num_chunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };      // number of chunks seen so far
+    int64_t chunk_sections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };  // number of sections seen so far in the current chunk
+    int64_t chunk_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // number of user data octets seen so far in the current chunk including terminating CRLF
 
     // Stored message sections from this session
     // You must reset to nullptr after deleting a section
     // Never put one section in two places. latestOther is only for things not otherwise listed
-    class NHttpMsgRequest* requestLine = nullptr;
-    class NHttpMsgStatus* statusLine = nullptr;
+    class NHttpMsgRequest* request_line = nullptr;
+    class NHttpMsgStatus* status_line = nullptr;
     class NHttpMsgHeader* headers[2] = { nullptr, nullptr };
-    class NHttpMsgSection* latestOther[2] = { nullptr, nullptr };
+    class NHttpMsgSection* latest_other[2] = { nullptr, nullptr };
 };
 
 #endif

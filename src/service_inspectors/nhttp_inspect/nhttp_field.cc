@@ -37,25 +37,29 @@ using namespace NHttpEnums;
 
 const Field Field::FIELD_NULL { STAT_NOSOURCE };
 
-void Field::print(FILE *output, const char* name, bool intVals) const {
-    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) return;
-    int outCount = fprintf(output, "%s, length = %d, ", name, length);
+void Field::print(FILE *output, const char* name, bool int_vals) const {
+    if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) {
+        return;
+    }
+    int out_count = fprintf(output, "%s, length = %d, ", name, length);
     if (length <= 0) {
         fprintf(output, "\n");
         return;
     }
-    int32_t printLength = (length <= 1000) ? length : 1000;    // Limit the amount of data printed
-    for (int k=0; k < printLength; k++) {
+    int32_t print_length = (length <= 1000) ? length : 1000;    // Limit the amount of data printed
+    for (int k=0; k < print_length; k++) {
         if ((start[k] >= 0x20) && (start[k] <= 0x7E)) fprintf(output, "%c", (char)start[k]);
         else if (start[k] == 0xD) fprintf(output, "~");
         else if (start[k] == 0xA) fprintf(output, "^");
         else fprintf(output, "*");
-        if ((k%120 == (119 - outCount)) && (k+1 < printLength)) fprintf(output, "\n");
+        if ((k%120 == (119 - out_count)) && (k+1 < print_length)) {
+            fprintf(output, "\n");
+        }
     }
 
-    if (intVals && (printLength%8 == 0)) {
+    if (int_vals && (print_length%8 == 0)) {
         fprintf(output, "\nInteger values =");
-        for (int j=0; j < printLength; j+=8) {
+        for (int j=0; j < print_length; j+=8) {
             fprintf(output, " %" PRIu64 , *((const uint64_t*)(start+j)));
         }
     }

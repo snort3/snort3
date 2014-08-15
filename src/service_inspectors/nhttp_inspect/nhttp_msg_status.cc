@@ -40,113 +40,113 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgStatus::NHttpMsgStatus(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_), request(sessionData->requestLine) {
-    delete sessionData->statusLine;
-    sessionData->statusLine = this;
-    delete sessionData->headers[SRC_SERVER];
-    sessionData->headers[SRC_SERVER] = nullptr;
-    delete sessionData->latestOther[SRC_SERVER];
-    sessionData->latestOther[SRC_SERVER] = nullptr;
+NHttpMsgStatus::NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+       NHttpMsgStart(buffer, buf_size, session_data_, source_id_), request(session_data->request_line) {
+    delete session_data->status_line;
+    session_data->status_line = this;
+    delete session_data->headers[SRC_SERVER];
+    session_data->headers[SRC_SERVER] = nullptr;
+    delete session_data->latest_other[SRC_SERVER];
+    session_data->latest_other[SRC_SERVER] = nullptr;
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgStatus::analyze() {
     NHttpMsgStart::analyze();
-    deriveStatusCodeNum();
+    derive_status_code_num();
 }
 
-void NHttpMsgStatus::parseStartLine() {
+void NHttpMsgStatus::parse_start_line() {
     // Eventually we may need to cater to certain format errors, but for now exact match or treat as error.
     // HTTP/X.Y<SP>###<SP><text>
-    if ((startLine.length < 13) || (startLine.start[8] != ' ') || (startLine.start[12] != ' ')) {
+    if ((start_line.length < 13) || (start_line.start[8] != ' ') || (start_line.start[12] != ' ')) {
         infractions |= INF_BADSTATLINE;
         return;
     }
-    version.start = startLine.start;
+    version.start = start_line.start;
     version.length = 8;
-    statusCode.start = startLine.start + 9;
-    statusCode.length = 3;
-    reasonPhrase.start = startLine.start + 13;
-    reasonPhrase.length = startLine.length - 13;
-    for (int32_t k = 0; k < reasonPhrase.length; k++) {
-        if ((reasonPhrase.start[k] <= 31) || (reasonPhrase.start[k] >= 127)) {
+    status_code.start = start_line.start + 9;
+    status_code.length = 3;
+    reason_phrase.start = start_line.start + 13;
+    reason_phrase.length = start_line.length - 13;
+    for (int32_t k = 0; k < reason_phrase.length; k++) {
+        if ((reason_phrase.start[k] <= 31) || (reason_phrase.start[k] >= 127)) {
             // Illegal character in reason phrase
             infractions |= INF_BADPHRASE;
             break;
         }
     }
-    assert (startLine.length == version.length + statusCode.length + reasonPhrase.length + 2);
+    assert (start_line.length == version.length + status_code.length + reason_phrase.length + 2);
 }
 
-void NHttpMsgStatus::deriveStatusCodeNum() {
-    if (statusCode.length <= 0) {
-        statusCodeNum = STAT_NOSOURCE;
+void NHttpMsgStatus::derive_status_code_num() {
+    if (status_code.length <= 0) {
+        status_code_num = STAT_NOSOURCE;
         return;
     }
-    if (statusCode.length != 3) {
-        statusCodeNum = STAT_PROBLEMATIC;
+    if (status_code.length != 3) {
+        status_code_num = STAT_PROBLEMATIC;
         return;
     }
 
-    if ((statusCode.start[0] < '0') || (statusCode.start[0] > '9') || (statusCode.start[1] < '0') || (statusCode.start[1] > '9') ||
-       (statusCode.start[2] < '0') || (statusCode.start[2] > '9')) {
+    if ((status_code.start[0] < '0') || (status_code.start[0] > '9') || (status_code.start[1] < '0') || (status_code.start[1] > '9') ||
+       (status_code.start[2] < '0') || (status_code.start[2] > '9')) {
         infractions |= INF_BADSTATCODE;
-        statusCodeNum = STAT_PROBLEMATIC;
+        status_code_num = STAT_PROBLEMATIC;
         return;
     }
-    statusCodeNum = (statusCode.start[0] - '0') * 100 + (statusCode.start[1] - '0') * 10 + (statusCode.start[2] - '0');
-    if ((statusCodeNum < 100) || (statusCodeNum > 599)) {
+    status_code_num = (status_code.start[0] - '0') * 100 + (status_code.start[1] - '0') * 10 + (status_code.start[2] - '0');
+    if ((status_code_num < 100) || (status_code_num > 599)) {
         infractions |= INF_BADSTATCODE;
     }
 }
 
-void NHttpMsgStatus::genEvents() {}
+void NHttpMsgStatus::gen_events() {}
 
-void NHttpMsgStatus::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "status line");
-    fprintf(output, "Version Id: %d\n", versionId);
-    fprintf(output, "Status Code Num: %d\n", statusCodeNum);
-    reasonPhrase.print(output, "Reason Phrase");
-    NHttpMsgSection::printMessageWrapup(output);
+void NHttpMsgStatus::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "status line");
+    fprintf(output, "Version Id: %d\n", version_id);
+    fprintf(output, "Status Code Num: %d\n", status_code_num);
+    reason_phrase.print(output, "Reason Phrase");
+    NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgStatus::updateFlow() {
-    const uint64_t disasterMask = INF_BADSTATLINE;
+void NHttpMsgStatus::update_flow() {
+    const uint64_t disaster_mask = INF_BADSTATLINE;
 
     // The following logic to determine body type is by no means the last word on this topic.
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+    if (tcp_close) {
+        session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->half_reset(source_id);
     }
-    else if (infractions & disasterMask) {
-        sessionData->typeExpected[sourceId] = SEC_ABORT;
-        sessionData->halfReset(sourceId);
+    else if (infractions & disaster_mask) {
+        session_data->type_expected[source_id] = SEC_ABORT;
+        session_data->half_reset(source_id);
     }
     else {
-        sessionData->typeExpected[sourceId] = SEC_HEADER;
-        sessionData->versionId[sourceId] = versionId;
-        sessionData->statusCodeNum[sourceId] = statusCodeNum;
+        session_data->type_expected[source_id] = SEC_HEADER;
+        session_data->version_id[source_id] = version_id;
+        session_data->status_code_num[source_id] = status_code_num;
     }
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgStatus::legacyClients() {
+void NHttpMsgStatus::legacy_clients() {
     ClearHttpBuffers();
-    if ((request != nullptr) && (request->getMethod().length > 0)) {
-        SetHttpBuffer(HTTP_BUFFER_METHOD, request->getMethod().start, (unsigned)request->getMethod().length);
+    if ((request != nullptr) && (request->get_method().length > 0)) {
+        SetHttpBuffer(HTTP_BUFFER_METHOD, request->get_method().start, (unsigned)request->get_method().length);
     }
-    if ((request != nullptr) && (request->getUri().length > 0)) {
-        SetHttpBuffer(HTTP_BUFFER_RAW_URI, request->getUri().start, (unsigned)request->getUri().length);
+    if ((request != nullptr) && (request->get_uri().length > 0)) {
+        SetHttpBuffer(HTTP_BUFFER_RAW_URI, request->get_uri().start, (unsigned)request->get_uri().length);
     }
-    if ((request != nullptr) && (request->getUriNormLegacy().length > 0)) {
-        SetHttpBuffer(HTTP_BUFFER_URI, request->getUriNormLegacy().start, (unsigned)request->getUriNormLegacy().length);
+    if ((request != nullptr) && (request->get_uri_norm_legacy().length > 0)) {
+        SetHttpBuffer(HTTP_BUFFER_URI, request->get_uri_norm_legacy().start, (unsigned)request->get_uri_norm_legacy().length);
     }
-    if (statusCode.length > 0) {
-        SetHttpBuffer(HTTP_BUFFER_STAT_CODE, statusCode.start, (unsigned)statusCode.length);
+    if (status_code.length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_CODE, status_code.start, (unsigned)status_code.length);
     }
-    if (reasonPhrase.length > 0) {
-        SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reasonPhrase.start, (unsigned)reasonPhrase.length);
+    if (reason_phrase.length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reason_phrase.start, (unsigned)reason_phrase.length);
     }
 }
 

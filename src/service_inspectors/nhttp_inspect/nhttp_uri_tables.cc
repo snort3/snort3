@@ -35,7 +35,7 @@
 
 using namespace NHttpEnums;
 
-const CharAction UriNormalizer::uriChar[256] = {
+const CharAction UriNormalizer::uri_char[256] = {
    CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,
    CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,
    CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,   CHAR_INVALID,
@@ -76,7 +76,7 @@ const CharAction UriNormalizer::uriChar[256] = {
    CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,
    CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT,  CHAR_EIGHTBIT };
 
-const int8_t UriNormalizer::asHex[256] = {
+const int8_t UriNormalizer::as_hex[256] = {
    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
@@ -101,7 +101,7 @@ const int8_t UriNormalizer::asHex[256] = {
    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  };
 
-const bool UriNormalizer::goodPercent[256] = {
+const bool UriNormalizer::good_percent[256] = {
    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
 

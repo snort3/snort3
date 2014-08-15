@@ -38,54 +38,54 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-   NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_), dataLength(sessionData->dataLength[sourceId]),
-   bodySections(sessionData->bodySections[sourceId]), bodyOctets(sessionData->bodyOctets[sourceId]) {
-    delete sessionData->latestOther[sourceId];
-    sessionData->latestOther[sourceId] = this;
+NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+   NHttpMsgSection(buffer, buf_size, session_data_, source_id_), data_length(session_data->data_length[source_id]),
+   body_sections(session_data->body_sections[source_id]), body_octets(session_data->body_octets[source_id]) {
+    delete session_data->latest_other[source_id];
+    session_data->latest_other[source_id] = this;
 }
 
 void NHttpMsgBody::analyze() {
-    bodySections++;
-    bodyOctets += msgText.length;
-    data.start = msgText.start;
-    data.length = msgText.length;
+    body_sections++;
+    body_octets += msg_text.length;
+    data.start = msg_text.start;
+    data.length = msg_text.length;
 
     // The following statement tests for the case where streams underfulfilled flush due to a TCP connection close
-    if ((msgText.length < 16384) && (bodyOctets < dataLength)) tcpClose = true;
-    if (tcpClose && (bodyOctets < dataLength)) infractions |= INF_TRUNCATED;
+    if ((msg_text.length < 16384) && (body_octets < data_length)) tcp_close = true;
+    if (tcp_close && (body_octets < data_length)) infractions |= INF_TRUNCATED;
 }
 
-void NHttpMsgBody::genEvents() {
+void NHttpMsgBody::gen_events() {
 }
 
-void NHttpMsgBody::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "body");
-    fprintf(output, "Expected data length %" PRIi64 ", sections seen %" PRIi64 ", octets seen %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
+void NHttpMsgBody::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "body");
+    fprintf(output, "Expected data length %" PRIi64 ", sections seen %" PRIi64 ", octets seen %" PRIi64 "\n", data_length, body_sections, body_octets);
     data.print(output, "Data");
-    NHttpMsgSection::printMessageWrapup(output);
+    NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgBody::updateFlow() {
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+void NHttpMsgBody::update_flow() {
+    if (tcp_close) {
+        session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->half_reset(source_id);
     }
-    else if (bodyOctets < dataLength) {
+    else if (body_octets < data_length) {
         // More body coming
-        sessionData->bodySections[sourceId] = bodySections;
-        sessionData->bodyOctets[sourceId] = bodyOctets;
+        session_data->body_sections[source_id] = body_sections;
+        session_data->body_octets[source_id] = body_octets;
     }
     else {
         // End of message
-        sessionData->typeExpected[sourceId] = (sourceId == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
-        sessionData->halfReset(sourceId);
+        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
+        session_data->half_reset(source_id);
     }
 }
 
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgBody::legacyClients() {
+void NHttpMsgBody::legacy_clients() {
     ClearHttpBuffers();
     if (data.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, data.start, (unsigned)data.length);
 }

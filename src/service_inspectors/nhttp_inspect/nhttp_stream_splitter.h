@@ -36,23 +36,23 @@ class NHttpInspect;
 
 class NHttpStreamSplitter : public StreamSplitter {
 public:
-    NHttpStreamSplitter(bool isClientToServer, NHttpInspect* myInspector_) : StreamSplitter(isClientToServer),
-       myInspector(myInspector_) {};
-    ~NHttpStreamSplitter() { delete[] sectionBuffer; };
-    PAF_Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flushOffset);
+    NHttpStreamSplitter(bool is_client_to_server, NHttpInspect* my_inspector_) : StreamSplitter(is_client_to_server),
+       my_inspector(my_inspector_) {};
+    ~NHttpStreamSplitter() { delete[] section_buffer; };
+    PAF_Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flush_offset);
     const StreamBuffer* reassemble(Flow* flow, unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
        unsigned& copied);
     bool is_paf() { return true; };
-    uint32_t max() { return pafMax; };
+    uint32_t max() { return paf_max; };
 private:
-    void prepareFlush(NHttpFlowData* sessionData, uint32_t* flushOffset, NHttpEnums::SourceId sourceId, NHttpEnums::SectionType sectionType, bool tcpClose,
-          uint64_t infractions, uint32_t numOctets);
-    void createEvent(NHttpEnums::EventSid sid);
+    void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SourceId source_id, NHttpEnums::SectionType section_type, bool tcp_close,
+          uint64_t infractions, uint32_t num_octets);
+    void create_event(NHttpEnums::EventSid sid);
 
-    NHttpInspect* const myInspector;
+    NHttpInspect* const my_inspector;
 
-    uint8_t *sectionBuffer = nullptr;
-    uint32_t pafMax = 63780;
+    uint8_t *section_buffer = nullptr;
+    uint32_t paf_max = 63780;
 };
 
 #endif

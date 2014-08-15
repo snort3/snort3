@@ -37,7 +37,7 @@
 #include "nhttp_inspect.h"
 #include "nhttp_api.h"
 
-const char* NHttpApi::nhttp_myName = "nhttp_inspect";
+const char* NHttpApi::nhttp_my_name = "nhttp_inspect";
 
 void NHttpApi::nhttp_init()
 {
@@ -69,7 +69,7 @@ const InspectApi NHttpApi::nhttp_api =
 {
     {
         PT_INSPECTOR,
-        NHttpApi::nhttp_myName,
+        NHttpApi::nhttp_my_name,
         INSAPI_PLUGIN_V0,
         0,
         NHttpApi::nhttp_mod_ctor,

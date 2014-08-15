@@ -40,74 +40,74 @@
 
 class NHttpUri {
 public:
-    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : uri(length, start), methodId(method),
-       scratchPad(2*length+200) {};
-    const Field& getUri() const { return uri; };
-    NHttpEnums::UriType getUriType() { parseUri(); return uriType; };
-    const Field& getScheme() { parseUri(); return scheme; };
-    const Field& getAuthority() { parseUri(); return authority; };
-    const Field& getHost() { parseAuthority(); return host; };
-    const Field& getPort() { parseAuthority(); return port; };
-    const Field& getAbsPath() { parseUri(); return absPath; };
-    const Field& getPath() { parseAbsPath(); return path; };
-    const Field& getQuery() { parseAbsPath(); return query; };
-    const Field& getFragment() { parseAbsPath(); return fragment; };
+    NHttpUri(const uint8_t* start, int32_t length, NHttpEnums::MethodId method) : uri(length, start), method_id(method),
+       scratch_pad(2*length+200) {};
+    const Field& get_uri() const { return uri; };
+    NHttpEnums::UriType get_uri_type() { parse_uri(); return uri_type; };
+    const Field& get_scheme() { parse_uri(); return scheme; };
+    const Field& get_authority() { parse_uri(); return authority; };
+    const Field& get_host() { parse_authority(); return host; };
+    const Field& get_port() { parse_authority(); return port; };
+    const Field& get_abs_path() { parse_uri(); return abs_path; };
+    const Field& get_path() { parse_abs_path(); return path; };
+    const Field& get_query() { parse_abs_path(); return query; };
+    const Field& get_fragment() { parse_abs_path(); return fragment; };
 
-    uint64_t getFormatInfractions() { parseUri(); return formatInfractions; };
-    uint64_t getSchemeInfractions() { getSchemeId(); return schemeInfractions; };
-    uint64_t getHostInfractions() { getNormHost(); return hostInfractions; };
-    uint64_t getPortInfractions() { getPortValue(); return portInfractions; };
-    uint64_t getPathInfractions() { getNormPath(); return pathInfractions; };
-    uint64_t getQueryInfractions() { getNormQuery(); return queryInfractions; };
-    uint64_t getFragmentInfractions() { getNormFragment(); return fragmentInfractions; };
-    uint64_t getUriInfractions() { return getFormatInfractions() | getSchemeInfractions() | getHostInfractions() |
-       getPortInfractions() | getPathInfractions() | getQueryInfractions() | getFragmentInfractions(); };
+    uint64_t get_format_infractions() { parse_uri(); return format_infractions; };
+    uint64_t get_scheme_infractions() { get_scheme_id(); return scheme_infractions; };
+    uint64_t get_host_infractions() { get_norm_host(); return host_infractions; };
+    uint64_t get_port_infractions() { get_port_value(); return port_infractions; };
+    uint64_t get_path_infractions() { get_norm_path(); return path_infractions; };
+    uint64_t get_query_infractions() { get_norm_query(); return query_infractions; };
+    uint64_t get_fragment_infractions() { get_norm_fragment(); return fragment_infractions; };
+    uint64_t get_uri_infractions() { return get_format_infractions() | get_scheme_infractions() | get_host_infractions() |
+       get_port_infractions() | get_path_infractions() | get_query_infractions() | get_fragment_infractions(); };
 
-    NHttpEnums::SchemeId getSchemeId();
-    const Field& getNormHost();
-    int32_t getPortValue();
-    const Field& getNormPath();
-    const Field& getNormQuery();
-    const Field& getNormFragment();
-    const Field& getNormLegacy();
+    NHttpEnums::SchemeId get_scheme_id();
+    const Field& get_norm_host();
+    int32_t get_port_value();
+    const Field& get_norm_path();
+    const Field& get_norm_query();
+    const Field& get_norm_fragment();
+    const Field& get_norm_legacy();
 
 private:
-    static const StrCode schemeList[];
+    static const StrCode scheme_list[];
 
     Field uri;
-    const NHttpEnums::MethodId methodId;
+    const NHttpEnums::MethodId method_id;
 
     Field scheme;
     Field authority;
     Field host;
     Field port;
-    Field absPath;
+    Field abs_path;
     Field path;
     Field query;
     Field fragment;
 
-    uint64_t formatInfractions = 0;
-    uint64_t schemeInfractions = 0;
-    uint64_t hostInfractions = 0;
-    uint64_t portInfractions = 0;
-    uint64_t pathInfractions = 0;
-    uint64_t queryInfractions = 0;
-    uint64_t fragmentInfractions = 0;
+    uint64_t format_infractions = 0;
+    uint64_t scheme_infractions = 0;
+    uint64_t host_infractions = 0;
+    uint64_t port_infractions = 0;
+    uint64_t path_infractions = 0;
+    uint64_t query_infractions = 0;
+    uint64_t fragment_infractions = 0;
 
-    NHttpEnums::UriType uriType = NHttpEnums::URI__NOTCOMPUTE;
-    NHttpEnums::SchemeId schemeId = NHttpEnums::SCH__NOTCOMPUTE;
-    Field hostNorm;
-    int32_t portValue = NHttpEnums::STAT_NOTCOMPUTE;
-    Field pathNorm;
-    Field queryNorm;
-    Field fragmentNorm;
-    Field legacyNorm;
+    NHttpEnums::UriType uri_type = NHttpEnums::URI__NOTCOMPUTE;
+    NHttpEnums::SchemeId scheme_id = NHttpEnums::SCH__NOTCOMPUTE;
+    Field host_norm;
+    int32_t port_value = NHttpEnums::STAT_NOTCOMPUTE;
+    Field path_norm;
+    Field query_norm;
+    Field fragment_norm;
+    Field legacy_norm;
 
-    void parseUri();
-    void parseAuthority();
-    void parseAbsPath();
+    void parse_uri();
+    void parse_authority();
+    void parse_abs_path();
 
-    ScratchPad scratchPad;
+    ScratchPad scratch_pad;
 };
 
 #endif

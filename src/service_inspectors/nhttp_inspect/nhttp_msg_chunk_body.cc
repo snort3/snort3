@@ -38,67 +38,67 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgChunkBody::NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-   NHttpMsgBody(buffer, bufSize, sessionData_, sourceId_), /* numChunks(sessionData->numChunks[sourceId]), &&& */
-   chunkSections(sessionData->chunkSections[sourceId]), chunkOctets(sessionData->chunkOctets[sourceId]) {}
+NHttpMsgChunkBody::NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+   NHttpMsgBody(buffer, buf_size, session_data_, source_id_), /* num_chunks(session_data->num_chunks[source_id]), &&& */
+   chunk_sections(session_data->chunk_sections[source_id]), chunk_octets(session_data->chunk_octets[source_id]) {}
 
 void NHttpMsgChunkBody::analyze() {
-    bodySections++;
-    chunkOctets += msgText.length;
-    bodyOctets += msgText.length;
-    int termCrlfBytes = 0;
-    if (chunkOctets > dataLength) {
+    body_sections++;
+    chunk_octets += msg_text.length;
+    body_octets += msg_text.length;
+    int term_crlf_bytes = 0;
+    if (chunk_octets > data_length) {
         // Final <CR><LF> are not data and do not belong in octet total or data field
-        termCrlfBytes = chunkOctets - dataLength;
-        assert(termCrlfBytes <= 2);
-        bodyOctets -= termCrlfBytes;
+        term_crlf_bytes = chunk_octets - data_length;
+        assert(term_crlf_bytes <= 2);
+        body_octets -= term_crlf_bytes;
         // Check for correct CRLF termination. Beware the section might break just before chunk end.
-        if ( ! ( ((termCrlfBytes == 2) && (msgText.length >= 2) && (msgText.start[msgText.length-2] == '\r') && (msgText.start[msgText.length-1] == '\n')) ||
-                 ((termCrlfBytes == 2) && (msgText.length == 1) && (msgText.start[msgText.length-1] == '\n')) ||
-                 ((termCrlfBytes == 1) && (msgText.start[msgText.length-1] == '\r')) ) ) {
+        if ( ! ( ((term_crlf_bytes == 2) && (msg_text.length >= 2) && (msg_text.start[msg_text.length-2] == '\r') && (msg_text.start[msg_text.length-1] == '\n')) ||
+                 ((term_crlf_bytes == 2) && (msg_text.length == 1) && (msg_text.start[msg_text.length-1] == '\n')) ||
+                 ((term_crlf_bytes == 1) && (msg_text.start[msg_text.length-1] == '\r')) ) ) {
             infractions |= INF_BROKENCHUNK;
         }
     }
 
-    data.start = msgText.start;
-    data.length = msgText.length - termCrlfBytes;
+    data.start = msg_text.start;
+    data.length = msg_text.length - term_crlf_bytes;
 
-    chunkSections++;
+    chunk_sections++;
     // The following statement tests for the case where streams underfulfilled flush due to a TCP connection close
-    if ((msgText.length < 16384) && (bodyOctets + termCrlfBytes < dataLength + 2)) tcpClose = true;
-    if (tcpClose) infractions |= INF_TRUNCATED;
+    if ((msg_text.length < 16384) && (body_octets + term_crlf_bytes < data_length + 2)) tcp_close = true;
+    if (tcp_close) infractions |= INF_TRUNCATED;
 }
 
 
-void NHttpMsgChunkBody::genEvents() {}
+void NHttpMsgChunkBody::gen_events() {}
 
-void NHttpMsgChunkBody::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "chunk body");
-    fprintf(output, "Expected chunk length %" PRIi64 ", cumulative sections %" PRIi64 ", cumulative octets %" PRIi64 "\n", dataLength, bodySections, bodyOctets);
-    fprintf(output, "cumulative chunk sections %" PRIi64 ", cumulative chunk octets %" PRIi64 "\n", chunkSections, chunkOctets);
+void NHttpMsgChunkBody::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "chunk body");
+    fprintf(output, "Expected chunk length %" PRIi64 ", cumulative sections %" PRIi64 ", cumulative octets %" PRIi64 "\n", data_length, body_sections, body_octets);
+    fprintf(output, "cumulative chunk sections %" PRIi64 ", cumulative chunk octets %" PRIi64 "\n", chunk_sections, chunk_octets);
     data.print(output, "Data");
-    NHttpMsgSection::printMessageWrapup(output);
+    NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgChunkBody::updateFlow() {
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+void NHttpMsgChunkBody::update_flow() {
+    if (tcp_close) {
+        session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->half_reset(source_id);
     }
-    else if (chunkOctets < dataLength + 2) {
-        sessionData->bodySections[sourceId] = bodySections;
-        sessionData->bodyOctets[sourceId] = bodyOctets;
-        sessionData->chunkSections[sourceId] = chunkSections;
-        sessionData->chunkOctets[sourceId] = chunkOctets;
+    else if (chunk_octets < data_length + 2) {
+        session_data->body_sections[source_id] = body_sections;
+        session_data->body_octets[source_id] = body_octets;
+        session_data->chunk_sections[source_id] = chunk_sections;
+        session_data->chunk_octets[source_id] = chunk_octets;
     }
     else {
-        sessionData->typeExpected[sourceId] = SEC_CHUNKHEAD;
-        sessionData->octetsExpected[sourceId] = STAT_NOTPRESENT;
-        sessionData->dataLength[sourceId] = STAT_NOTPRESENT;
-        sessionData->bodySections[sourceId] = bodySections;
-        sessionData->bodyOctets[sourceId] = bodyOctets;
-        sessionData->chunkSections[sourceId] = STAT_NOTPRESENT;
-        sessionData->chunkOctets[sourceId] = STAT_NOTPRESENT;
+        session_data->type_expected[source_id] = SEC_CHUNKHEAD;
+        session_data->octets_expected[source_id] = STAT_NOTPRESENT;
+        session_data->data_length[source_id] = STAT_NOTPRESENT;
+        session_data->body_sections[source_id] = body_sections;
+        session_data->body_octets[source_id] = body_octets;
+        session_data->chunk_sections[source_id] = STAT_NOTPRESENT;
+        session_data->chunk_octets[source_id] = STAT_NOTPRESENT;
     }
 }
 

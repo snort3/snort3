@@ -40,138 +40,138 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-       NHttpMsgStart(buffer, bufSize, sessionData_, sourceId_) {
-    delete sessionData->requestLine;
-    sessionData->requestLine = this;
-    delete sessionData->headers[SRC_CLIENT];
-    sessionData->headers[SRC_CLIENT] = nullptr;
-    delete sessionData->latestOther[SRC_CLIENT];
-    sessionData->latestOther[SRC_CLIENT] = nullptr;
+NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+       NHttpMsgStart(buffer, buf_size, session_data_, source_id_) {
+    delete session_data->request_line;
+    session_data->request_line = this;
+    delete session_data->headers[SRC_CLIENT];
+    session_data->headers[SRC_CLIENT] = nullptr;
+    delete session_data->latest_other[SRC_CLIENT];
+    session_data->latest_other[SRC_CLIENT] = nullptr;
 }
 
-void NHttpMsgRequest::parseStartLine() {
+void NHttpMsgRequest::parse_start_line() {
     // There should be exactly two spaces. One following the method and one before "HTTP/".
     // Additional spaces located within the URI are not allowed but we will tolerate it
     // <method><SP><URI><SP>HTTP/X.Y
-    if (startLine.start[startLine.length-9] != ' ') {
+    if (start_line.start[start_line.length-9] != ' ') {
         // space before "HTTP" missing or in wrong place
         infractions |= INF_BADREQLINE;
         return;
     }
 
     int32_t space;
-    for (space = 0; space < startLine.length-9; space++) {
-        if (startLine.start[space] == ' ') break;
+    for (space = 0; space < start_line.length-9; space++) {
+        if (start_line.start[space] == ' ') break;
     }
-    if (space >= startLine.length-9) {
+    if (space >= start_line.length-9) {
         // leading space or no space
         infractions |= INF_BADREQLINE;
         return;
     }
 
-    method.start = startLine.start;
+    method.start = start_line.start;
     method.length = space;
-    deriveMethodId();
-    uri = new NHttpUri(startLine.start + method.length + 1, startLine.length - method.length - 10, methodId);
-    version.start = startLine.start + (startLine.length - 8);
+    derive_method_id();
+    uri = new NHttpUri(start_line.start + method.length + 1, start_line.length - method.length - 10, method_id);
+    version.start = start_line.start + (start_line.length - 8);
     version.length = 8;
-    assert (startLine.length == method.length + uri->getUri().length + version.length + 2);
+    assert (start_line.length == method.length + uri->get_uri().length + version.length + 2);
 }
 
-void NHttpMsgRequest::deriveMethodId() {
+void NHttpMsgRequest::derive_method_id() {
     if (method.length <= 0) {
-        methodId = METH__NOSOURCE;
+        method_id = METH__NOSOURCE;
         return;
     }
-    methodId = (MethodId) strToCode(method.start, method.length, methodList);
+    method_id = (MethodId) str_to_code(method.start, method.length, method_list);
 }
 
-const Field& NHttpMsgRequest::getUri() {
+const Field& NHttpMsgRequest::get_uri() {
     if (uri != nullptr) {
-        return uri->getUri();
+        return uri->get_uri();
     }
     return Field::FIELD_NULL;
 }
 
-const Field& NHttpMsgRequest::getUriNormLegacy() {
+const Field& NHttpMsgRequest::get_uri_norm_legacy() {
     if (uri != nullptr) {
-        return uri->getNormLegacy();
+        return uri->get_norm_legacy();
     }
     return Field::FIELD_NULL;
 }
 
-void NHttpMsgRequest::genEvents() {
-    if (methodId == METH__OTHER) createEvent(EVENT_UNKNOWN_METHOD);
+void NHttpMsgRequest::gen_events() {
+    if (method_id == METH__OTHER) create_event(EVENT_UNKNOWN_METHOD);
 
     // URI character encoding events
-    if (uri && (uri->getUriInfractions() & INF_URIPERCENTASCII)) createEvent(EVENT_ASCII);
-    if (uri && (uri->getUriInfractions() & INF_URIPERCENTUCODE)) createEvent(EVENT_U_ENCODE);
-    if (uri && (uri->getUriInfractions() & INF_URI8BITCHAR)) createEvent(EVENT_BARE_BYTE);
-    if (uri && (uri->getUriInfractions() & INF_URIPERCENTUTF8)) createEvent(EVENT_UTF_8);
-    if (uri && (uri->getUriInfractions() & INF_URIBADCHAR)) createEvent(EVENT_NON_RFC_CHAR);
+    if (uri && (uri->get_uri_infractions() & INF_URIPERCENTASCII)) create_event(EVENT_ASCII);
+    if (uri && (uri->get_uri_infractions() & INF_URIPERCENTUCODE)) create_event(EVENT_U_ENCODE);
+    if (uri && (uri->get_uri_infractions() & INF_URI8BITCHAR)) create_event(EVENT_BARE_BYTE);
+    if (uri && (uri->get_uri_infractions() & INF_URIPERCENTUTF8)) create_event(EVENT_UTF_8);
+    if (uri && (uri->get_uri_infractions() & INF_URIBADCHAR)) create_event(EVENT_NON_RFC_CHAR);
 
     // URI path events
-    if (uri && (uri->getPathInfractions() & INF_URIMULTISLASH)) createEvent(EVENT_MULTI_SLASH);
-    if (uri && (uri->getPathInfractions() & INF_URIBACKSLASH)) createEvent(EVENT_IIS_BACKSLASH);
-    if (uri && (uri->getPathInfractions() & INF_URISLASHDOT)) createEvent(EVENT_SELF_DIR_TRAV);
-    if (uri && (uri->getPathInfractions() & INF_URISLASHDOTDOT)) createEvent(EVENT_DIR_TRAV);
-    if (uri && (uri->getPathInfractions() & INF_URIROOTTRAV)) createEvent(EVENT_WEBROOT_DIR);
+    if (uri && (uri->get_path_infractions() & INF_URIMULTISLASH)) create_event(EVENT_MULTI_SLASH);
+    if (uri && (uri->get_path_infractions() & INF_URIBACKSLASH)) create_event(EVENT_IIS_BACKSLASH);
+    if (uri && (uri->get_path_infractions() & INF_URISLASHDOT)) create_event(EVENT_SELF_DIR_TRAV);
+    if (uri && (uri->get_path_infractions() & INF_URISLASHDOTDOT)) create_event(EVENT_DIR_TRAV);
+    if (uri && (uri->get_path_infractions() & INF_URIROOTTRAV)) create_event(EVENT_WEBROOT_DIR);
 
 }
 
-void NHttpMsgRequest::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "request line");
-    fprintf(output, "Version Id: %d\n", versionId);
-    fprintf(output, "Method Id: %d\n", methodId);
-    uri->getUri().print(output, "URI");
-    if (uri->getUriType() != URI__NOSOURCE) fprintf(output, "URI Type: %d\n", uri->getUriType());
-    uri->getScheme().print(output, "Scheme");
-    if (uri->getSchemeId() != SCH__NOSOURCE) fprintf(output, "Scheme Id: %d\n", uri->getSchemeId());
-    uri->getAuthority().print(output, "Authority");
-    uri->getHost().print(output, "Host Name");
-    uri->getNormHost().print(output, "Normalized Host Name");
-    uri->getPort().print(output, "Port");
-    if (uri->getPortValue() != STAT_NOSOURCE) fprintf(output, "Port Value: %d\n", uri->getPortValue());
-    uri->getAbsPath().print(output, "Absolute Path");
-    uri->getPath().print(output, "Path");
-    uri->getNormPath().print(output, "Normalized Path");
-    uri->getQuery().print(output, "Query");
-    uri->getNormQuery().print(output, "Normalized Query");
-    uri->getFragment().print(output, "Fragment");
-    uri->getNormFragment().print(output, "Normalized Fragment");
+void NHttpMsgRequest::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "request line");
+    fprintf(output, "Version Id: %d\n", version_id);
+    fprintf(output, "Method Id: %d\n", method_id);
+    uri->get_uri().print(output, "URI");
+    if (uri->get_uri_type() != URI__NOSOURCE) fprintf(output, "URI Type: %d\n", uri->get_uri_type());
+    uri->get_scheme().print(output, "Scheme");
+    if (uri->get_scheme_id() != SCH__NOSOURCE) fprintf(output, "Scheme Id: %d\n", uri->get_scheme_id());
+    uri->get_authority().print(output, "Authority");
+    uri->get_host().print(output, "Host Name");
+    uri->get_norm_host().print(output, "Normalized Host Name");
+    uri->get_port().print(output, "Port");
+    if (uri->get_port_value() != STAT_NOSOURCE) fprintf(output, "Port Value: %d\n", uri->get_port_value());
+    uri->get_abs_path().print(output, "Absolute Path");
+    uri->get_path().print(output, "Path");
+    uri->get_norm_path().print(output, "Normalized Path");
+    uri->get_query().print(output, "Query");
+    uri->get_norm_query().print(output, "Normalized Query");
+    uri->get_fragment().print(output, "Fragment");
+    uri->get_norm_fragment().print(output, "Normalized Fragment");
     fprintf(output, "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %" PRIx64 ", port %" PRIx64 ", path %"
        PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
-       uri->getUriInfractions(), uri->getFormatInfractions(), uri->getSchemeInfractions(), uri->getHostInfractions(),
-       uri->getPortInfractions(), uri->getPathInfractions(), uri->getQueryInfractions(), uri->getFragmentInfractions());
-    NHttpMsgSection::printMessageWrapup(output);
+       uri->get_uri_infractions(), uri->get_format_infractions(), uri->get_scheme_infractions(), uri->get_host_infractions(),
+       uri->get_port_infractions(), uri->get_path_infractions(), uri->get_query_infractions(), uri->get_fragment_infractions());
+    NHttpMsgSection::print_message_wrapup(output);
  }
 
-void NHttpMsgRequest::updateFlow() {
-    const uint64_t disasterMask = INF_BADREQLINE;
+void NHttpMsgRequest::update_flow() {
+    const uint64_t disaster_mask = INF_BADREQLINE;
 
     // The following logic to determine body type is by no means the last word on this topic.
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+    if (tcp_close) {
+        session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->half_reset(source_id);
     }
-    else if (infractions & disasterMask) {
-        sessionData->typeExpected[sourceId] = SEC_ABORT;
-        sessionData->halfReset(sourceId);
+    else if (infractions & disaster_mask) {
+        session_data->type_expected[source_id] = SEC_ABORT;
+        session_data->half_reset(source_id);
     }
     else {
-        sessionData->typeExpected[sourceId] = SEC_HEADER;
-        sessionData->versionId[sourceId] = versionId;
-        sessionData->methodId[sourceId] = methodId;
+        session_data->type_expected[source_id] = SEC_HEADER;
+        session_data->version_id[source_id] = version_id;
+        session_data->method_id[source_id] = method_id;
     }
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgRequest::legacyClients() {
+void NHttpMsgRequest::legacy_clients() {
     ClearHttpBuffers();
     if (method.length > 0) SetHttpBuffer(HTTP_BUFFER_METHOD, method.start, (unsigned)method.length);
-    if (uri->getUri().length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_URI, uri->getUri().start, (unsigned)uri->getUri().length);
-    if (uri->getNormLegacy().length > 0) SetHttpBuffer(HTTP_BUFFER_URI, uri->getNormLegacy().start, (unsigned)uri->getNormLegacy().length);
+    if (uri->get_uri().length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_URI, uri->get_uri().start, (unsigned)uri->get_uri().length);
+    if (uri->get_norm_legacy().length > 0) SetHttpBuffer(HTTP_BUFFER_URI, uri->get_norm_legacy().start, (unsigned)uri->get_norm_legacy().length);
 }
 
 

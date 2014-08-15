@@ -40,89 +40,89 @@ using namespace NHttpEnums;
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgHeadShared::analyze() {
-    parseWhole();
-    parseHeaderBlock();
-    parseHeaderLines();
-    for (int j=0; j < numHeaders; j++) {
-        deriveHeaderNameId(j);
-        if (headerNameId[j] > 0) headerCount[headerNameId[j]]++;
+    parse_whole();
+    parse_header_block();
+    parse_header_lines();
+    for (int j=0; j < num_headers; j++) {
+        derive_header_name_id(j);
+        if (header_name_id[j] > 0) header_count[header_name_id[j]]++;
     }
 }
 
-void NHttpMsgHeadShared::parseWhole() {
+void NHttpMsgHeadShared::parse_whole() {
     // Normal case with header fields
-    if (!tcpClose && (msgText.length >= 5)) {
-        headers.start = msgText.start;
-        headers.length = msgText.length - 4;
-        assert(!memcmp(msgText.start+msgText.length-4, "\r\n\r\n", 4));
+    if (!tcp_close && (msg_text.length >= 5)) {
+        headers.start = msg_text.start;
+        headers.length = msg_text.length - 4;
+        assert(!memcmp(msg_text.start+msg_text.length-4, "\r\n\r\n", 4));
     }
     // Normal case no header fields
-    else if (!tcpClose) {
+    else if (!tcp_close) {
         headers.length = STAT_NOTPRESENT;
-        assert((msgText.length == 2) && !memcmp(msgText.start, "\r\n", 2));
+        assert((msg_text.length == 2) && !memcmp(msg_text.start, "\r\n", 2));
     }
     // Normal case with header fields and TCP connection close
-    else if ((msgText.length >= 5) && !memcmp(msgText.start+msgText.length-4, "\r\n\r\n", 4)) {
-        headers.start = msgText.start;
-        headers.length = msgText.length - 4;
+    else if ((msg_text.length >= 5) && !memcmp(msg_text.start+msg_text.length-4, "\r\n\r\n", 4)) {
+        headers.start = msg_text.start;
+        headers.length = msg_text.length - 4;
     }
     // Normal case no header fields and TCP connection close
-    else if ((msgText.length == 2) && !memcmp(msgText.start, "\r\n", 2)) {
+    else if ((msg_text.length == 2) && !memcmp(msg_text.start, "\r\n", 2)) {
         headers.length = STAT_NOTPRESENT;
     }
     // Abnormal cases truncated by TCP connection close
     else {
         infractions |= INF_TRUNCATED;
         // Lone <CR>
-        if ((msgText.length == 1) && (msgText.start[0] == '\r')) {
+        if ((msg_text.length == 1) && (msg_text.start[0] == '\r')) {
             headers.length = STAT_NOTPRESENT;
         }
         // Truncation occurred somewhere in the header fields
         else {
-            headers.start = msgText.start;
-            headers.length = msgText.length;
+            headers.start = msg_text.start;
+            headers.length = msg_text.length;
             // When present, remove partial <CR><LF><CR><LF> sequence from the end
-            if ((msgText.length >= 4) && !memcmp(msgText.start+msgText.length-3, "\r\n\r", 3)) headers.length -= 3;
-            else if ((msgText.length >= 3) && !memcmp(msgText.start+msgText.length-2, "\r\n", 2)) headers.length -= 2;
-            else if ((msgText.length >= 2) && (msgText.start[msgText.length-1] == '\r')) headers.length -= 1;
+            if ((msg_text.length >= 4) && !memcmp(msg_text.start+msg_text.length-3, "\r\n\r", 3)) headers.length -= 3;
+            else if ((msg_text.length >= 3) && !memcmp(msg_text.start+msg_text.length-2, "\r\n", 2)) headers.length -= 2;
+            else if ((msg_text.length >= 2) && (msg_text.start[msg_text.length-1] == '\r')) headers.length -= 1;
         }
     }
 }
 
 // Divide up the block of header fields into individual header field lines.
-void NHttpMsgHeadShared::parseHeaderBlock() {
+void NHttpMsgHeadShared::parse_header_block() {
     if (headers.length < 0) {
-        numHeaders = STAT_NOSOURCE;
+        num_headers = STAT_NOSOURCE;
         return;
     }
 
-    int32_t bytesUsed = 0;
-    numHeaders = 0;
-    while (bytesUsed < headers.length) {
-        headerLine[numHeaders].start = headers.start + bytesUsed;
-        headerLine[numHeaders].length = findCrlf(headerLine[numHeaders].start, headers.length - bytesUsed, true);
-        bytesUsed += headerLine[numHeaders++].length + 2;
-        if (numHeaders >= MAXHEADERS) {
+    int32_t bytes_used = 0;
+    num_headers = 0;
+    while (bytes_used < headers.length) {
+        header_line[num_headers].start = headers.start + bytes_used;
+        header_line[num_headers].length = find_crlf(header_line[num_headers].start, headers.length - bytes_used, true);
+        bytes_used += header_line[num_headers++].length + 2;
+        if (num_headers >= MAXHEADERS) {
              break;
         }
     }
-    if (bytesUsed < headers.length) {
+    if (bytes_used < headers.length) {
         infractions |= INF_TOOMANYHEADERS;
     }
 }
 
 // Divide header field lines into field name and field value
-void NHttpMsgHeadShared::parseHeaderLines() {
+void NHttpMsgHeadShared::parse_header_lines() {
     int colon;
-    for (int k=0; k < numHeaders; k++) {
-        for (colon=0; colon < headerLine[k].length; colon++) {
-            if (headerLine[k].start[colon] == ':') break;
+    for (int k=0; k < num_headers; k++) {
+        for (colon=0; colon < header_line[k].length; colon++) {
+            if (header_line[k].start[colon] == ':') break;
         }
-        if (colon < headerLine[k].length) {
-            headerName[k].start = headerLine[k].start;
-            headerName[k].length = colon;
-            headerValue[k].start = headerLine[k].start + colon + 1;
-            headerValue[k].length = headerLine[k].length - colon - 1;
+        if (colon < header_line[k].length) {
+            header_name[k].start = header_line[k].start;
+            header_name[k].length = colon;
+            header_value[k].start = header_line[k].start + colon + 1;
+            header_value[k].length = header_line[k].length - colon - 1;
         }
         else {
             infractions |= INF_BADHEADER;
@@ -130,61 +130,61 @@ void NHttpMsgHeadShared::parseHeaderLines() {
     }
 }
 
-void NHttpMsgHeadShared::deriveHeaderNameId(int index) {
+void NHttpMsgHeadShared::derive_header_name_id(int index) {
     // Normalize header field name to lower case for matching purposes
-    uint8_t *lowerName;
-    if ((lowerName = scratchPad.request(headerName[index].length)) == nullptr) {
+    uint8_t *lower_name;
+    if ((lower_name = scratch_pad.request(header_name[index].length)) == nullptr) {
         infractions |= INF_NOSCRATCH;
-        headerNameId[index] = HEAD__INSUFMEMORY;
+        header_name_id[index] = HEAD__INSUFMEMORY;
         return;
     }
-    norm2Lower(headerName[index].start, headerName[index].length, lowerName, infractions, nullptr);
-    headerNameId[index] = (HeaderId) strToCode(lowerName, headerName[index].length, headerList);
+    norm_to_lower(header_name[index].start, header_name[index].length, lower_name, infractions, nullptr);
+    header_name_id[index] = (HeaderId) str_to_code(lower_name, header_name[index].length, header_list);
 }
 
-void NHttpMsgHeadShared::genEvents() {
-    if (infractions & INF_TOOMANYHEADERS) createEvent(EVENT_MAX_HEADERS);
+void NHttpMsgHeadShared::gen_events() {
+    if (infractions & INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgHeadShared::legacyClients() {
+void NHttpMsgHeadShared::legacy_clients() {
     ClearHttpBuffers();
 
     if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, headers.start, (unsigned)headers.length);
     if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_HEADER, headers.start, (unsigned)headers.length);
  
-    for (int k=0; k < numHeaders; k++) {
-        if (((headerNameId[k] == HEAD_COOKIE) && (sourceId == SRC_CLIENT)) || ((headerNameId[k] == HEAD_SET_COOKIE) && (sourceId == SRC_SERVER))) {
-            if (headerValue[k].length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, headerValue[k].start, (unsigned)headerValue[k].length);
+    for (int k=0; k < num_headers; k++) {
+        if (((header_name_id[k] == HEAD_COOKIE) && (source_id == SRC_CLIENT)) || ((header_name_id[k] == HEAD_SET_COOKIE) && (source_id == SRC_SERVER))) {
+            if (header_value[k].length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, header_value[k].start, (unsigned)header_value[k].length);
             break;
         }
     }
 
-    if (sourceId == SRC_CLIENT) {
-       if (headerNorms[HEAD_COOKIE]->normalize(HEAD_COOKIE, headerCount[HEAD_COOKIE], scratchPad, infractions,
-          headerNameId, headerValue, numHeaders, headerValueNorm[HEAD_COOKIE]) > 0) {
-           SetHttpBuffer(HTTP_BUFFER_COOKIE, headerValueNorm[HEAD_COOKIE].start, (unsigned)headerValueNorm[HEAD_COOKIE].length);
+    if (source_id == SRC_CLIENT) {
+       if (header_norms[HEAD_COOKIE]->normalize(HEAD_COOKIE, header_count[HEAD_COOKIE], scratch_pad, infractions,
+          header_name_id, header_value, num_headers, header_value_norm[HEAD_COOKIE]) > 0) {
+           SetHttpBuffer(HTTP_BUFFER_COOKIE, header_value_norm[HEAD_COOKIE].start, (unsigned)header_value_norm[HEAD_COOKIE].length);
        }
     }
     else {
-       if (headerNorms[HEAD_SET_COOKIE]->normalize(HEAD_SET_COOKIE, headerCount[HEAD_SET_COOKIE], scratchPad, infractions,
-          headerNameId, headerValue, numHeaders, headerValueNorm[HEAD_SET_COOKIE]) > 0) {
-           SetHttpBuffer(HTTP_BUFFER_COOKIE, headerValueNorm[HEAD_SET_COOKIE].start, (unsigned)headerValueNorm[HEAD_SET_COOKIE].length);
+       if (header_norms[HEAD_SET_COOKIE]->normalize(HEAD_SET_COOKIE, header_count[HEAD_SET_COOKIE], scratch_pad, infractions,
+          header_name_id, header_value, num_headers, header_value_norm[HEAD_SET_COOKIE]) > 0) {
+           SetHttpBuffer(HTTP_BUFFER_COOKIE, header_value_norm[HEAD_SET_COOKIE].start, (unsigned)header_value_norm[HEAD_SET_COOKIE].length);
        }
     }
 }
 
-void NHttpMsgHeadShared::printHeaders(FILE *output) {
-    char titleBuf[100];
-    if (numHeaders != STAT_NOSOURCE) fprintf(output, "Number of headers: %d\n", numHeaders);
-    for (int j=0; j < numHeaders; j++) {
-        snprintf(titleBuf, sizeof(titleBuf), "Header ID %d", headerNameId[j]);
-        headerValue[j].print(output, titleBuf);
+void NHttpMsgHeadShared::print_headers(FILE *output) {
+    char title_buf[100];
+    if (num_headers != STAT_NOSOURCE) fprintf(output, "Number of headers: %d\n", num_headers);
+    for (int j=0; j < num_headers; j++) {
+        snprintf(title_buf, sizeof(title_buf), "Header ID %d", header_name_id[j]);
+        header_value[j].print(output, title_buf);
     }
-    for (int k=1; k <= numNorms; k++) {
-        if (headerNorms[k]->normalize((HeaderId)k, headerCount[k], scratchPad, infractions, headerNameId, headerValue, numHeaders, headerValueNorm[k]) != STAT_NOSOURCE) {
-            snprintf(titleBuf, sizeof(titleBuf), "Normalized header %d", k);
-            headerValueNorm[k].print(output, titleBuf, true);
+    for (int k=1; k <= num_norms; k++) {
+        if (header_norms[k]->normalize((HeaderId)k, header_count[k], scratch_pad, infractions, header_name_id, header_value, num_headers, header_value_norm[k]) != STAT_NOSOURCE) {
+            snprintf(title_buf, sizeof(title_buf), "Normalized header %d", k);
+            header_value_norm[k].print(output, title_buf, true);
         }
     }
 }

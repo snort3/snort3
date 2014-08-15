@@ -41,14 +41,15 @@
 class NHttpMsgHeadShared: public NHttpMsgSection {
 public:
     void analyze();
-    void genEvents();
-    void legacyClients();
+    void gen_events();
+    void legacy_clients();
 
 protected:
-    NHttpMsgHeadShared(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
-       NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_) {};
+    NHttpMsgHeadShared(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_) : NHttpMsgSection(buffer, buf_size, session_data_, source_id_) {};
 
-    // Header normalization strategies. There should be one of these for every different way we can process a header field value.
+    // Header normalization strategies. There should be one of these for every different way we can process
+    // a header field value.
     static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;
     static const HeaderNormalizer NORMALIZER_CAT;
@@ -57,33 +58,33 @@ protected:
     static const HeaderNormalizer NORMALIZER_TRANSCODE;
 
     // Master table of known header fields and their normalization strategies.
-    static const HeaderNormalizer* const headerNorms[];
-    static const int32_t numNorms;
+    static const HeaderNormalizer* const header_norms[];
+    static const int32_t num_norms;
 
     // Tables of header field names and header value names
-    static const StrCode headerList[];
-    static const StrCode transCodeList[];
+    static const StrCode header_list[];
+    static const StrCode trans_code_list[];
 
-    void parseWhole();
-    void parseHeaderBlock();
-    void parseHeaderLines();
-    void deriveHeaderNameId(int index);
+    void parse_whole();
+    void parse_header_block();
+    void parse_header_lines();
+    void derive_header_name_id(int index);
 
-    void printHeaders(FILE *output);
+    void print_headers(FILE *output);
 
     Field headers;
 
     // All of these are indexed by the relative position of the header field in the message
     static const int MAXHEADERS = 200;  // I'm an arbitrary number. Need to revisit.
-    int32_t numHeaders = NHttpEnums::STAT_NOTCOMPUTE;
-    Field headerLine[MAXHEADERS];
-    Field headerName[MAXHEADERS];
-    NHttpEnums::HeaderId headerNameId[MAXHEADERS];
-    Field headerValue[MAXHEADERS];
+    int32_t num_headers = NHttpEnums::STAT_NOTCOMPUTE;
+    Field header_line[MAXHEADERS];
+    Field header_name[MAXHEADERS];
+    NHttpEnums::HeaderId header_name_id[MAXHEADERS];
+    Field header_value[MAXHEADERS];
 
     // Normalized values are indexed by HeaderId
-    int headerCount[NHttpEnums::HEAD__MAXVALUE] = { };
-    Field headerValueNorm[NHttpEnums::HEAD__MAXVALUE];
+    int header_count[NHttpEnums::HEAD__MAXVALUE] = { };
+    Field header_value_norm[NHttpEnums::HEAD__MAXVALUE];
 };
 
 #endif

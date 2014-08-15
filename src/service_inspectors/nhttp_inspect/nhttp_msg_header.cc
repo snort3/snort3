@@ -38,64 +38,64 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgHeader::NHttpMsgHeader(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-       NHttpMsgHeadShared(buffer, bufSize, sessionData_, sourceId_) {
-    sessionData->headers[sourceId] = this;
+NHttpMsgHeader::NHttpMsgHeader(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+       NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_) {
+    session_data->headers[source_id] = this;
 }
 
-void NHttpMsgHeader::genEvents() {
-    NHttpMsgHeadShared::genEvents();
-    if (headerCount[HEAD_CONTENT_LENGTH] > 1) createEvent(EVENT_MULTIPLE_CONTLEN);
+void NHttpMsgHeader::gen_events() {
+    NHttpMsgHeadShared::gen_events();
+    if (header_count[HEAD_CONTENT_LENGTH] > 1) create_event(EVENT_MULTIPLE_CONTLEN);
 
 }
 
-void NHttpMsgHeader::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "header");
-    NHttpMsgHeadShared::printHeaders(output);
-    NHttpMsgSection::printMessageWrapup(output);
+void NHttpMsgHeader::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "header");
+    NHttpMsgHeadShared::print_headers(output);
+    NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgHeader::updateFlow() {
-    const uint64_t disasterMask = 0;
+void NHttpMsgHeader::update_flow() {
+    const uint64_t disaster_mask = 0;
 
     // The following logic to determine body type is by no means the last word on this topic.
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+    if (tcp_close) {
+        session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->half_reset(source_id);
     }
-    else if (infractions & disasterMask) {
-        sessionData->typeExpected[sourceId] = SEC_ABORT;
-        sessionData->halfReset(sourceId);
+    else if (infractions & disaster_mask) {
+        session_data->type_expected[source_id] = SEC_ABORT;
+        session_data->half_reset(source_id);
     }
-    else if ((sourceId == SRC_SERVER) && ((statusCodeNum <= 199) || (statusCodeNum == 204) || (statusCodeNum == 304))) {
+    else if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) || (status_code_num == 304))) {
         // No body allowed by RFC for these response codes
-        sessionData->typeExpected[sourceId] = (sourceId == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
-        sessionData->halfReset(sourceId);
+        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
+        session_data->half_reset(source_id);
     }
     // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
-    else if ( (headerNorms[HEAD_TRANSFER_ENCODING]->normalize(HEAD_TRANSFER_ENCODING, headerCount[HEAD_TRANSFER_ENCODING],
-                  scratchPad, infractions, headerNameId, headerValue, numHeaders, headerValueNorm[HEAD_TRANSFER_ENCODING]) > 0) &&
-            ((*(int64_t *)(headerValueNorm[HEAD_TRANSFER_ENCODING].start + (headerValueNorm[HEAD_TRANSFER_ENCODING].length - 8))) == TRANSCODE_CHUNKED) ) {
+    else if ( (header_norms[HEAD_TRANSFER_ENCODING]->normalize(HEAD_TRANSFER_ENCODING, header_count[HEAD_TRANSFER_ENCODING],
+                  scratch_pad, infractions, header_name_id, header_value, num_headers, header_value_norm[HEAD_TRANSFER_ENCODING]) > 0) &&
+            ((*(int64_t *)(header_value_norm[HEAD_TRANSFER_ENCODING].start + (header_value_norm[HEAD_TRANSFER_ENCODING].length - 8))) == TRANSCODE_CHUNKED) ) {
         // Chunked body
-        sessionData->typeExpected[sourceId] = SEC_CHUNKHEAD;
-        sessionData->bodySections[sourceId] = 0;
-        sessionData->bodyOctets[sourceId] = 0;
-        sessionData->numChunks[sourceId] = 0;
+        session_data->type_expected[source_id] = SEC_CHUNKHEAD;
+        session_data->body_sections[source_id] = 0;
+        session_data->body_octets[source_id] = 0;
+        session_data->num_chunks[source_id] = 0;
     }
-    else if ((headerNorms[HEAD_CONTENT_LENGTH]->normalize(HEAD_CONTENT_LENGTH, headerCount[HEAD_CONTENT_LENGTH],
-                 scratchPad, infractions, headerNameId, headerValue, numHeaders, headerValueNorm[HEAD_CONTENT_LENGTH]) > 0) &&
-            (*(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start > 0)) {
+    else if ((header_norms[HEAD_CONTENT_LENGTH]->normalize(HEAD_CONTENT_LENGTH, header_count[HEAD_CONTENT_LENGTH],
+                 scratch_pad, infractions, header_name_id, header_value, num_headers, header_value_norm[HEAD_CONTENT_LENGTH]) > 0) &&
+            (*(int64_t*)header_value_norm[HEAD_CONTENT_LENGTH].start > 0)) {
         // Regular body
-        sessionData->typeExpected[sourceId] = SEC_BODY;
-        sessionData->octetsExpected[sourceId] = *(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start;
-        sessionData->dataLength[sourceId] = *(int64_t*)headerValueNorm[HEAD_CONTENT_LENGTH].start;
-        sessionData->bodySections[sourceId] = 0;
-        sessionData->bodyOctets[sourceId] = 0;
+        session_data->type_expected[source_id] = SEC_BODY;
+        session_data->octets_expected[source_id] = *(int64_t*)header_value_norm[HEAD_CONTENT_LENGTH].start;
+        session_data->data_length[source_id] = *(int64_t*)header_value_norm[HEAD_CONTENT_LENGTH].start;
+        session_data->body_sections[source_id] = 0;
+        session_data->body_octets[source_id] = 0;
     }
     else {
         // No body
-        sessionData->typeExpected[sourceId] = (sourceId == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
-        sessionData->halfReset(sourceId);
+        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
+        session_data->half_reset(source_id);
     }
 }
 

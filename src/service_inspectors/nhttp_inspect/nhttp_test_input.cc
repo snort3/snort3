@@ -39,140 +39,154 @@
 using namespace NHttpEnums;
 
 bool NHttpTestInput::test_input = false;
-NHttpTestInput *NHttpTestInput::testInput = nullptr;
+NHttpTestInput *NHttpTestInput::test_input_source = nullptr;
 
-NHttpTestInput::NHttpTestInput(const char *fileName) {
-    if ((testDataFile = fopen(fileName, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
+NHttpTestInput::NHttpTestInput(const char *file_name) {
+    if ((test_data_file = fopen(file_name, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
 }
 
 NHttpTestInput::~NHttpTestInput() {
-    fclose(testDataFile);
+    fclose(test_data_file);
 }
 
 // Read from the test data file and present to PAF.
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
-void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &sourceId, bool &tcpClose, bool &needBreak) {
-    sourceId = lastSourceId;
-    tcpClose = false;
-    needBreak = false;
+void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id, bool &tcp_close, bool &need_break) {
+    source_id = last_source_id;
+    tcp_close = false;
+    need_break = false;
 
     // Need to create and inspect additional message section(s) from the previous flush before we read new stuff
-    if ((endOffset == 0) && (flushOctets > 0)) {
+    if ((end_offset == 0) && (flush_octets > 0)) {
         length = 0;
         return;
     }
 
-    if (justFlushed) {
+    if (just_flushed) {
         // PAF just flushed and it has all been sent to inspection. There may or may not be leftover data from the
         // last segment that was not flushed.
-        justFlushed = false;
-        data = msgBuf;
-        length = endOffset - flushOctets;  // this is the leftover data
-        previousOffset = 0;
-        endOffset = length;
+        just_flushed = false;
+        data = msg_buf;
+        length = end_offset - flush_octets;  // this is the leftover data
+        previous_offset = 0;
+        end_offset = length;
         if (length > 0) {
             // Must present unflushed leftovers to PAF again.
             // If we don't take this opportunity to left justify our data in the buffer we may "walk" to the right until we run out of buffer space
-            memmove(msgBuf, msgBuf+flushOctets, length);
-            tcpClose = tcpAlreadyClosed;
+            memmove(msg_buf, msg_buf+flush_octets, length);
+            tcp_close = tcp_already_closed;
             return;
         }
         // If we reach here then PAF has already flushed all the data we have read so far.
-        tcpAlreadyClosed = false;
+        tcp_already_closed = false;
     }
     else {
         // The data we gave PAF last time was not flushed
         length = 0;
-        previousOffset = endOffset;
-        data = msgBuf + previousOffset;
+        previous_offset = end_offset;
+        data = msg_buf + previous_offset;
     }
 
     // Now we need to move forward by reading more data from the file
-    int newChar;
+    int new_char;
     typedef enum { WAITING, COMMENT, COMMAND, SECTION, ESCAPE, HEXVAL } State;
     State state = WAITING;
     bool ending;
-    int commandLength;
-    const int MaxCommand = 100;
-    char commandValue[MaxCommand];
-    uint8_t hexVal;
-    int numDigits;
+    int command_length;
+    const int max_command = 100;
+    char command_value[max_command];
+    uint8_t hex_val;
+    int num_digits;
 
-    while ((newChar = getc(testDataFile)) != EOF) {
+    while ((new_char = getc(test_data_file)) != EOF) {
         switch (state) {
           case WAITING:
-            if (newChar == '#') state = COMMENT;
-            else if (newChar == '@') {
-                state = COMMAND;
-                commandLength = 0;
+            if (new_char == '#') {
+                state = COMMENT;
             }
-            else if (newChar == '\\') {
+            else if (new_char == '@') {
+                state = COMMAND;
+                command_length = 0;
+            }
+            else if (new_char == '\\') {
                 state = ESCAPE;
                 ending = false;
             }
-            else if (newChar != '\n') {
+            else if (new_char != '\n') {
                 state = SECTION;
                 ending = false;
-                data[length++] = (uint8_t) newChar;
+                data[length++] = (uint8_t) new_char;
             }
             break;
           case COMMENT:
-            if (newChar == '\n') state = WAITING;
+            if (new_char == '\n') {
+                state = WAITING;
+            }
             break;
           case COMMAND:
-            if (newChar == '\n') {
+            if (new_char == '\n') {
                 state = WAITING;
-                if ((commandLength == strlen("request")) && !memcmp(commandValue, "request", strlen("request"))) sourceId = lastSourceId = SRC_CLIENT;
-                else if ((commandLength == strlen("response")) && !memcmp(commandValue, "response", strlen("response"))) sourceId = lastSourceId = SRC_SERVER;
-                else if ((commandLength == strlen("break")) && !memcmp(commandValue, "break", strlen("break"))) needBreak = true;
-                else if ((commandLength == strlen("bodyend")) && !memcmp(commandValue, "bodyend", strlen("bodyend"))) {
-                    termBytes[0] = 'x';
-                    termBytes[1] = 'y';
+                if ((command_length == strlen("request")) && !memcmp(command_value, "request", strlen("request"))) {
+                    source_id = last_source_id = SRC_CLIENT;
                 }
-                else if ((commandLength == strlen("chunkend")) && !memcmp(commandValue, "chunkend", strlen("chunkend"))) {
-                    termBytes[0] = '\r';
-                    termBytes[1] = '\n';
+                else if ((command_length == strlen("response")) && !memcmp(command_value, "response", strlen("response"))) {
+                    source_id = last_source_id = SRC_SERVER;
                 }
-                else if (commandLength > 0) {
+                else if ((command_length == strlen("break")) && !memcmp(command_value, "break", strlen("break"))) {
+                    need_break = true;
+                }
+                else if ((command_length == strlen("bodyend")) && !memcmp(command_value, "bodyend", strlen("bodyend"))) {
+                    term_bytes[0] = 'x';
+                    term_bytes[1] = 'y';
+                }
+                else if ((command_length == strlen("chunkend")) && !memcmp(command_value, "chunkend", strlen("chunkend"))) {
+                    term_bytes[0] = '\r';
+                    term_bytes[1] = '\n';
+                }
+                else if (command_length > 0) {
                     // Look for a test number
-                    bool isNumber = true;
-                    for (int k=0; (k < commandLength) && isNumber; k++) {
-                        isNumber = (commandValue[k] >= '0') && (commandValue[k] <= '9');
+                    bool is_number = true;
+                    for (int k=0; (k < command_length) && is_number; k++) {
+                        is_number = (command_value[k] >= '0') && (command_value[k] <= '9');
                     }
-                    if (isNumber) {
-                        testNumber = 0;
-                        for (int j=0; j < commandLength; j++) {
-                            testNumber = testNumber * 10 + (commandValue[j] - '0');
+                    if (is_number) {
+                        test_number = 0;
+                        for (int j=0; j < command_length; j++) {
+                            test_number = test_number * 10 + (command_value[j] - '0');
                         }
                     }
                 }
             }
             else {
-                if (commandLength < MaxCommand) commandValue[commandLength++] = newChar;
-                else assert(0);
+                if (command_length < max_command) {
+                     command_value[command_length++] = new_char;
+                }
+                else {
+                    assert(0);
+                }
             }
             break;
           case SECTION:
-            if (newChar == '\\') {
+            if (new_char == '\\') {
                 state = ESCAPE;
                 ending = false;
             }
-            else if (newChar == '\n') {
+            else if (new_char == '\n') {
                 if (ending) {
                     // Found the blank line that ends the section.
-                    endOffset = previousOffset + length;
+                    end_offset = previous_offset + length;
                     return;
                 }
                 ending = true;
             }
             else {
                 ending = false;
-                data[length++] = (uint8_t) newChar;
+                data[length++] = (uint8_t) new_char;
             }
             break;
           case ESCAPE:
-            switch (newChar) {
+            switch (new_char) {
               case 'n':  state = SECTION; data[length++] = '\n'; break;
               case 'r':  state = SECTION; data[length++] = '\r'; break;
               case 't':  state = SECTION; data[length++] = '\t'; break;
@@ -180,64 +194,64 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &sourceId, 
               case '@':  state = SECTION; data[length++] = '@';  break;
               case '\\': state = SECTION; data[length++] = '\\'; break;
               case 'x':
-              case 'X':  state = HEXVAL; hexVal = 0; numDigits = 0; break;
+              case 'X':  state = HEXVAL; hex_val = 0; num_digits = 0; break;
               default:   assert(0); state = SECTION; break;
             }
             break;
           case HEXVAL:
-            if ((newChar >= '0') && (newChar <= '9')) hexVal = hexVal * 16 + (newChar - '0');
-            else if ((newChar >= 'a') && (newChar <= 'f')) hexVal = hexVal * 16 + 10 + (newChar - 'a');
-            else if ((newChar >= 'A') && (newChar <= 'F')) hexVal = hexVal * 16 + 10 + (newChar - 'A');
+            if ((new_char >= '0') && (new_char <= '9')) hex_val = hex_val * 16 + (new_char - '0');
+            else if ((new_char >= 'a') && (new_char <= 'f')) hex_val = hex_val * 16 + 10 + (new_char - 'a');
+            else if ((new_char >= 'A') && (new_char <= 'F')) hex_val = hex_val * 16 + 10 + (new_char - 'A');
             else assert(0);
-            if (++numDigits == 2) {
-                data[length++] = hexVal;
+            if (++num_digits == 2) {
+                data[length++] = hex_val;
                 state = SECTION;
             }
             break;
         }
         // Don't allow a buffer overrun.
-        if (previousOffset + length >= sizeof(msgBuf)) assert(0);
+        if (previous_offset + length >= sizeof(msg_buf)) assert(0);
     }
     // End-of-file. Return everything we have so far.
-    endOffset = previousOffset + length;
+    end_offset = previous_offset + length;
     return;
 }
 
 void NHttpTestInput::flush(uint32_t length) {
-    flushOctets = previousOffset + length;
-    justFlushed = true;
+    flush_octets = previous_offset + length;
+    just_flushed = true;
 }
 
 
-void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &sourceId) {
-    sourceId = lastSourceId;
-    *buffer = msgBuf;
+void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &source_id) {
+    source_id = last_source_id;
+    *buffer = msg_buf;
 
-    if (flushOctets <= endOffset) {
+    if (flush_octets <= end_offset) {
         // All the data we need comes from the file
-        length = flushOctets;
+        length = flush_octets;
     }
     else {
         // We need to generate additional data to fill out the body or chunk section
         // We may come through here multiple times as we generate all the PAF max body sections needed for a single flush
-        length = (flushOctets <= 16384) ? flushOctets : 16384;
-        for (uint32_t k = endOffset; k < length; k++) {
-            msgBuf[k] = 'A' + k % 26;
+        length = (flush_octets <= 16384) ? flush_octets : 16384;
+        for (uint32_t k = end_offset; k < length; k++) {
+            msg_buf[k] = 'A' + k % 26;
         }
 
-        flushOctets -= length;
+        flush_octets -= length;
 
-        if (flushOctets == 0) {
-            if (length-endOffset > 1) {
-                msgBuf[length-2] = termBytes[0];
+        if (flush_octets == 0) {
+            if (length-end_offset > 1) {
+                msg_buf[length-2] = term_bytes[0];
             }
-            msgBuf[length-1] = termBytes[1];
+            msg_buf[length-1] = term_bytes[1];
         }
-        else if (flushOctets == 1) {
-             msgBuf[length-1] = termBytes[0];
+        else if (flush_octets == 1) {
+             msg_buf[length-1] = term_bytes[0];
         }
 
-        endOffset = 0;
+        end_offset = 0;
     }
 }
 
