@@ -23,7 +23,6 @@ snort_LDADD = \
 target_based/libtarget_based.a \
 managers/libmanagers.a \
 main/libmain.a \
-parser/libparser.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
@@ -47,6 +46,7 @@ stream/libstream.a \
 file_api/libfile_api.a \
 file_api/libs/libfile.a \
 ips_options/libips_options.a \
+parser/libparser.a \
 search_engines/libsearch_engines.a \
 flow/libflow.a \
 control/libcontrol.a \
