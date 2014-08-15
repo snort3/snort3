@@ -29,13 +29,55 @@
 #include "snort.h"
 #include "protocols/icmp4.h"
 #include "codecs/codec_events.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/ip/cd_icmp4_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 
 
 namespace{
+
+#define CD_ICMP4_NAME "icmp4"
+
+static const RuleMap icmp4_rules[] =
+{
+    { DECODE_ICMP_DGRAM_LT_ICMPHDR, "(" CD_ICMP4_NAME ") ICMP Header Truncated" },
+    { DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR, "(" CD_ICMP4_NAME ") ICMP Timestamp Header Truncated" },
+    { DECODE_ICMP_DGRAM_LT_ADDRHDR, "(" CD_ICMP4_NAME ") ICMP Address Header Truncated" },
+    { DECODE_ICMP_ORIG_IP_TRUNCATED, "(" CD_ICMP4_NAME ") ICMP Original IP Header Truncated" },
+    { DECODE_ICMP_ORIG_IP_VER_MISMATCH, "(" CD_ICMP4_NAME ") ICMP version and Original IP Header versions differ" },
+    { DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP, "(" CD_ICMP4_NAME ") ICMP Original Datagram Length < Original IP Header Length" },
+    { DECODE_ICMP_ORIG_PAYLOAD_LT_64, "(" CD_ICMP4_NAME ") ICMP Original IP Payload < 64 bits" },
+    { DECODE_ICMP_ORIG_PAYLOAD_GT_576, "(" CD_ICMP4_NAME ") ICMP Origianl IP Payload > 576 bytes" },
+    { DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET, "(" CD_ICMP4_NAME ") ICMP Original IP Fragmented and Offset Not 0" },
+    { DECODE_ICMP4_DST_MULTICAST, "(" CD_ICMP4_NAME ") ICMP4 packet to multicast dest address" },
+    { DECODE_ICMP4_DST_BROADCAST, "(" CD_ICMP4_NAME ") ICMP4 packet to broadcast dest address" },
+    { DECODE_ICMP4_TYPE_OTHER, "(" CD_ICMP4_NAME ") ICMP4 type other" },
+    { DECODE_ICMP_PING_NMAP, "(" CD_ICMP4_NAME ") ICMP PING NMAP" },
+    { DECODE_ICMP_ICMPENUM, "(" CD_ICMP4_NAME ") ICMP icmpenum v1.1.1" },
+    { DECODE_ICMP_REDIRECT_HOST, "(" CD_ICMP4_NAME ") ICMP redirect host" },
+    { DECODE_ICMP_REDIRECT_NET, "(" CD_ICMP4_NAME ") ICMP redirect net" },
+    { DECODE_ICMP_TRACEROUTE_IPOPTS, "(" CD_ICMP4_NAME ") ICMP traceroute ipopts" },
+    { DECODE_ICMP_SOURCE_QUENCH, "(" CD_ICMP4_NAME ") ICMP Source Quench" },
+    { DECODE_ICMP_BROADSCAN_SMURF_SCANNER, "(" CD_ICMP4_NAME ") Broadscan Smurf Scanner" },
+    { DECODE_ICMP_DST_UNREACH_ADMIN_PROHIBITED, "(" CD_ICMP4_NAME ") ICMP Destination Unreachable Communication Administratively Prohibited" },
+    { DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED, "(" CD_ICMP4_NAME ") ICMP Destination Unreachable Communication with Destination Host is Administratively Prohibited" },
+    { DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED, "(" CD_ICMP4_NAME ") ICMP Destination Unreachable Communication with Destination Network is Administratively Prohibited" },
+    { DECODE_ICMP_PATH_MTU_DOS, "(" CD_ICMP4_NAME ") ICMP PATH MTU denial of service attempt" },
+    { DECODE_ICMP_DOS_ATTEMPT, "(" CD_ICMP4_NAME ") BAD-TRAFFIC linux ICMP header dos attempt" },
+    { DECODE_ICMP4_HDR_TRUNC, "(" CD_ICMP4_NAME ") truncated ICMP4 header" },
+    { 0, nullptr }
+};
+
+class Icmp4Module : public DecodeModule
+{
+public:
+    Icmp4Module() : DecodeModule(CD_ICMP4_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return icmp4_rules; }
+};
+
 
 
 class Icmp4Codec : public Codec{
@@ -61,9 +103,7 @@ private:
 } // namespace
 
 void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
-{
-    v.push_back(IPPROTO_ID_ICMPV4);
-}
+{ v.push_back(IPPROTO_ID_ICMPV4); }
 
 
 
@@ -225,144 +265,6 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
     p->proto_bits &= ~(PROTO_BIT__UDP | PROTO_BIT__TCP);
     return true;
 }
-
-// TODO: delete
-#if 0
-/*
- * Function: DecodeICMPEmbeddedIP(uint8_t *, const uint32_t, Packet *)
- *
- * Purpose: Decode the ICMP embedded IP header + 64 bits payload
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to dummy packet decode struct
- *
- * Returns: void function
- */
-void Icmp4Codec::DecodeICMPEmbeddedIP(const uint8_t *pkt, const uint32_t len, Packet *p)
-{
-    uint32_t ip_len;       /* length from the start of the ip hdr to the
-                             * pkt end */
-    uint32_t hlen;             /* ip header length */
-    uint16_t orig_frag_offset;
-
-    /* do a little validation */
-    if(len < ip::hdr_len())
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP short header (%d bytes)\n", len););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
-
-        p->orig_family = NO_IP;
-        p->orig_iph = NULL;
-        return;
-    }
-
-    /* lay the IP struct over the raw data */
-    sfiph_orig_build(p, pkt, AF_INET);
-    p->orig_iph = (IPHdr *) pkt;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP: ip header"
-                    " starts at: %p, length is %lu\n", p->orig_iph,
-                    (unsigned long) len););
-    /*
-     * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
-     * So we are just ignoring non IP datagrams
-     */
-    if((GET_ORIG_IPH_VER(p) != 4) && !IS_IP6(p))
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: not IPv4 datagram ([ver: 0x%x][len: 0x%x])\n",
-            GET_ORIG_IPH_VER(p), GET_ORIG_IPH_LEN(p)););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
-
-        p->orig_family = NO_IP;
-        p->orig_iph = NULL;
-        return;
-    }
-
-    /* set the IP datagram length */
-    ip_len = ntohs(GET_ORIG_IPH_LEN(p));
-
-    /* set the IP header length */
-    hlen = (p->orig_iph->ip_verhl & 0x0f) << 2;
-
-    if(len < hlen)
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP len (%d bytes) < IP hdr len (%d bytes), packet discarded\n",
-            ip_len, hlen););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
-
-        p->orig_family = NO_IP;
-        p->orig_iph = NULL;
-        return;
-    }
-
-    /* set the remaining packet length */
-    ip_len = len - hlen;
-
-    orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
-    orig_frag_offset &= 0x1FFF;
-
-    if (orig_frag_offset == 0)
-    {
-        /* Original IP payload should be 64 bits */
-        if (ip_len < 8)
-        {
-            codec_events::decoder_event(p, DECODE_ICMP_ORIG_PAYLOAD_LT_64);
-
-            return;
-        }
-        /* ICMP error packets could contain as much of original payload
-         * as possible, but not exceed 576 bytes
-         */
-        else if (ntohs(GET_IPH_LEN(p)) > 576)
-        {
-            codec_events::decoder_event(p, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
-        }
-    }
-    else
-    {
-        /* RFC states that only first frag will get an ICMP response */
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
-        return;
-    }
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP Unreachable IP header length: "
-                            "%lu\n", (unsigned long)hlen););
-
-    switch(GET_ORIG_IPH_PROTO(p))
-    {
-        case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->orig_tcph = (TCPHdr *)(pkt + hlen);
-
-            /* stuff more data into the printout data struct */
-            p->orig_sp = ntohs(p->orig_tcph->th_sport);
-            p->orig_dp = ntohs(p->orig_tcph->th_dport);
-
-            break;
-
-        case IPPROTO_UDP:
-            p->orig_udph = (udp::UDPHdr *)(pkt + hlen);
-
-            /* fill in the printout data structs */
-            p->orig_sp = ntohs(p->orig_udph->uh_sport);
-            p->orig_dp = ntohs(p->orig_udph->uh_dport);
-
-            break;
-
-        case IPPROTO_ICMP:
-            p->orig_icmph = (ICMPHdr *)(pkt + hlen);
-            break;
-    }
-
-    return;
-}
-#endif
 
 void Icmp4Codec::ICMP4AddrTests(Packet* p)
 {
@@ -560,5 +462,12 @@ static const CodecApi icmp4_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &icmp4_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_icmp4 = &icmp4_api.base;
-
+#endif

@@ -34,7 +34,7 @@ void IpApi::reset()
     dst_p = nullptr;
 }
 
-void IpApi::set(const IPHdr* h4)
+void IpApi::set(const IP4Hdr* h4)
 {
     ip4h = h4;
     ip6h = nullptr;
@@ -42,7 +42,7 @@ void IpApi::set(const IPHdr* h4)
     dst_p = nullptr;
 }
 
-void IpApi::set(const ip::IP6RawHdr* h6)
+void IpApi::set(const ip::IP6Hdr* h6)
 {
     ip6h = h6;
     ip4h = nullptr;
@@ -52,15 +52,15 @@ void IpApi::set(const ip::IP6RawHdr* h6)
 
 bool IpApi::set(const uint8_t* raw_ip_data)
 {
-    const IPHdr* h4 = reinterpret_cast<const IPHdr*>(raw_ip_data);
+    const IP4Hdr* h4 = reinterpret_cast<const IP4Hdr*>(raw_ip_data);
     if (h4->get_ver() == 4)
     {
         set(h4);
         return true;
     }
 
-    const ip::IP6RawHdr* h6 =
-        reinterpret_cast<const ip::IP6RawHdr*>(raw_ip_data);
+    const ip::IP6Hdr* h6 =
+        reinterpret_cast<const ip::IP6Hdr*>(raw_ip_data);
 
     if (h6->get_ver() != 6)
         return false;
@@ -169,7 +169,7 @@ const uint8_t* IpApi::ip_data() const
         return reinterpret_cast<const uint8_t*>(ip4h) + (ip4h->get_hlen() << 2);
 
     if (ip6h)
-        return reinterpret_cast<const uint8_t*>(ip6h) + (ip6h->get_hlen() << 2);
+        return reinterpret_cast<const uint8_t*>(ip6h) + IP6_HEADER_LEN;
 
     return nullptr;
 }

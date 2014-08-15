@@ -41,16 +41,59 @@
 
 #include "utils/stats.h"
 #include "packet_io/active.h"
-#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
 #include "main/thread.h"
 #include "stream/stream_api.h"
-#include "codecs/ip/cd_ipv4_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/ip.h"
 
 namespace{
+
+#define CD_IPV4_NAME "ipv4"
+static const RuleMap ipv4_rules[] =
+{
+    { DECODE_NOT_IPV4_DGRAM, "(" CD_IPV4_NAME ") Not IPv4 datagram" },
+    { DECODE_IPV4_INVALID_HEADER_LEN, "(" CD_IPV4_NAME ") hlen < IP_HEADER_LEN" },
+    { DECODE_IPV4_DGRAM_LT_IPHDR, "(" CD_IPV4_NAME ") IP dgm len < IP Hdr len" },
+    { DECODE_IPV4OPT_BADLEN, "(" CD_IPV4_NAME ") Ipv4 Options found with bad lengths" },
+    { DECODE_IPV4OPT_TRUNCATED, "(" CD_IPV4_NAME ") Truncated Ipv4 Options" },
+    { DECODE_IPV4_DGRAM_GT_CAPLEN, "(" CD_IPV4_NAME ") IP dgm len > captured len" },
+    { DECODE_ZERO_TTL, "(" CD_IPV4_NAME ") IPV4 packet with zero TTL" },
+    { DECODE_BAD_FRAGBITS, "(" CD_IPV4_NAME ") IPV4 packet with bad frag bits (Both MF and DF set)" },
+    { DECODE_IP4_LEN_OFFSET, "(" CD_IPV4_NAME ") IPV4 packet frag offset + length exceed maximum" },
+    { DECODE_IP4_SRC_THIS_NET, "(" CD_IPV4_NAME ") IPV4 packet from 'current net' source address" },
+    { DECODE_IP4_DST_THIS_NET, "(" CD_IPV4_NAME ") IPV4 packet to 'current net' dest address" },
+    { DECODE_IP4_SRC_MULTICAST, "(" CD_IPV4_NAME ") IPV4 packet from multicast source address" },
+    { DECODE_IP4_SRC_RESERVED, "(" CD_IPV4_NAME ") IPV4 packet from reserved source address" },
+    { DECODE_IP4_DST_RESERVED, "(" CD_IPV4_NAME ") IPV4 packet to reserved dest address" },
+    { DECODE_IP4_SRC_BROADCAST, "(" CD_IPV4_NAME ") IPV4 packet from broadcast source address" },
+    { DECODE_IP4_DST_BROADCAST, "(" CD_IPV4_NAME ") IPV4 packet to broadcast dest address" },
+    { DECODE_IP4_MIN_TTL, "(" CD_IPV4_NAME ") IPV4 packet below TTL limit" },
+    { DECODE_IP4_DF_OFFSET, "(" CD_IPV4_NAME ") IPV4 packet both DF and offset set" },
+    { DECODE_IP_RESERVED_FRAG_BIT, "(" CD_IPV4_NAME ") BAD-TRAFFIC IP reserved bit set" },
+    { DECODE_IP_UNASSIGNED_PROTO, "(" CD_IPV4_NAME ") BAD-TRAFFIC Unassigned/Reserved IP protocol" },
+    { DECODE_IP_BAD_PROTO, "(" CD_IPV4_NAME ") BAD-TRAFFIC Bad IP protocol" },
+    { DECODE_IP_OPTION_SET, "(" CD_IPV4_NAME ") MISC IP option set" },
+    { DECODE_IP_MULTIPLE_ENCAPSULATION, "(" CD_IPV4_NAME ") Two or more IP (v4 and/or v6) encapsulation layers present" },
+    { DECODE_ZERO_LENGTH_FRAG, "(" CD_IPV4_NAME ") fragment with zero length" },
+    { DECODE_IP4_HDR_TRUNC, "(" CD_IPV4_NAME ") truncated IP4 header" },
+    { DECODE_BAD_TRAFFIC_LOOPBACK, "(" CD_IPV4_NAME ") Bad Traffic Loopback IP" },
+    { DECODE_BAD_TRAFFIC_SAME_SRCDST, "(" CD_IPV4_NAME ") Bad Traffic Same Src/Dst IP" },
+    { 0, nullptr }
+};
+
+class Ipv4Module : public DecodeModule
+{
+public:
+    Ipv4Module() : DecodeModule(CD_IPV4_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return ipv4_rules; }
+};
+
+
 
 class Ipv4Codec : public Codec
 {
@@ -86,10 +129,16 @@ static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 }  // namespace
 
 
-static inline void IP4AddrTests (const IPHdr*, const Packet* p);
+static inline void IP4AddrTests (const IP4Hdr*, const Packet* p);
 static inline void IPMiscTests(Packet *);
 static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
 
+static int OptLenValidate(const uint8_t *option_ptr,
+                                 const uint8_t *end,
+                                 const uint8_t *len_ptr,
+                                 int expected_len,
+                                 Options *tcpopt,
+                                 uint8_t *byte_skip);
 
 /*******************************************
  ************  PRIVATE FUNCTIONS ***********
@@ -188,7 +237,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     p->encapsulations++;
 
     /* lay the IP struct over the raw data */
-    IPHdr* iph = reinterpret_cast<IPHdr*>(const_cast<uint8_t *>(raw_pkt));
+    IP4Hdr* iph = reinterpret_cast<IP4Hdr*>(const_cast<uint8_t *>(raw_pkt));
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -381,7 +430,7 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //--------------------------------------------------------------------
 
 
-static inline void IP4AddrTests(const IPHdr* iph, const Packet* p)
+static inline void IP4AddrTests(const IP4Hdr* iph, const Packet* p)
 {
     uint8_t msb_src, msb_dst;
 
@@ -583,6 +632,57 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
     return;
 }
 
+
+static int OptLenValidate(const uint8_t *option_ptr,
+                                 const uint8_t *end,
+                                 const uint8_t *len_ptr,
+                                 int expected_len,
+                                 Options *tcpopt,
+                                 uint8_t *byte_skip)
+{
+    *byte_skip = 0;
+
+    if(len_ptr == NULL)
+        return tcp::OPT_TRUNC;
+
+
+    if(*len_ptr == 0 || expected_len == 0 || expected_len == 1)
+    {
+        return tcp::OPT_BADLEN;
+    }
+    else if(expected_len > 1)
+    {
+        /* not enough data to read in a perfect world */
+        if((option_ptr + expected_len) > end)
+            return tcp::OPT_TRUNC;
+
+        if(*len_ptr != expected_len)
+            return tcp::OPT_BADLEN;
+    }
+    else /* expected_len < 0 (i.e. variable length) */
+    {
+        /* RFC sez that we MUST have atleast this much data */
+        if(*len_ptr < 2)
+            return tcp::OPT_BADLEN;
+
+        /* not enough data to read in a perfect world */
+        if((option_ptr + *len_ptr) > end)
+            return tcp::OPT_TRUNC;
+    }
+
+    tcpopt->len = *len_ptr - 2;
+
+    if(*len_ptr == 2)
+        tcpopt->data = NULL;
+    else
+        tcpopt->data = option_ptr + 2;
+
+    *byte_skip = *len_ptr;
+
+    return 0;
+}
+
+
 /******************************************************************
  ******************** E N C O D E R  ******************************
 *******************************************************************/
@@ -609,14 +709,14 @@ static inline uint16_t IpId_Next ()
 
 bool Ipv4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
-    IPHdr *ho;
+    IP4Hdr *ho;
 
     if (!update_buffer(out, sizeof(*ho)))
         return false;
 
 
-    const IPHdr *hi = reinterpret_cast<const IPHdr*>(raw_in);
-    ho = reinterpret_cast<IPHdr*>(out->base);
+    const IP4Hdr *hi = reinterpret_cast<const IP4Hdr*>(raw_in);
+    ho = reinterpret_cast<IP4Hdr*>(out->base);
 
     /* IPv4 encoded header is hardcoded 20 bytes */
     ho->ip_verhl = 0x45;
@@ -655,7 +755,7 @@ bool Ipv4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 
 bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
-    IPHdr* h = (IPHdr*)(lyr->start);
+    IP4Hdr* h = (IP4Hdr*)(lyr->start);
     int i = lyr - p->layers;
     uint16_t hlen = h->get_hlen() << 2;
 
@@ -680,12 +780,12 @@ bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 {
     // TBD handle nested ip layers
-    IPHdr* ch = (IPHdr*)lyr->start;
+    IP4Hdr* ch = (IP4Hdr*)lyr->start;
 
     if ( reverse(f) )
     {
         int i = lyr - c->layers;
-        IPHdr* ph = (IPHdr*)p->layers[i].start;
+        IP4Hdr* ph = (IP4Hdr*)p->layers[i].start;
 
         ch->ip_src = ph->ip_dst;
         ch->ip_dst = ph->ip_src;
@@ -778,5 +878,18 @@ static const CodecApi ipv4_api =
     dtor, // dtor
 };
 
+#if 0
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &ipv4_api.base,
+    nullptr
+};
+#else
+const BaseApi* cd_ipv4 = &ipv4_api.base;
+#endif
+#endif
 
+
+// Currently needs to be static
 const BaseApi* cd_ipv4 = &ipv4_api.base;

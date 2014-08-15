@@ -225,7 +225,6 @@ struct Packet
 
 
     const uint8_t *ip_frag_start;
-    const uint8_t *tcp_options_data;
 
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
@@ -291,52 +290,36 @@ struct Packet
 
 #define BIT(i) (0x1 << (i-1))
 
-static inline int PacketWasCooked(const Packet* p)
-{
-    return ( p->packet_flags & PKT_PSEUDO ) != 0;
-}
+static inline int PacketWasCooked(const Packet* const p)
+{ return ( p->packet_flags & PKT_PSEUDO ) != 0; }
 
-static inline bool IsPortscanPacket(const Packet *p)
-{
-    return ( PacketWasCooked(p) && (p->pseudo_type == PSEUDO_PKT_PS));
-}
+static inline bool IsPortscanPacket(const Packet* const p)
+{ return ( PacketWasCooked(p) && (p->pseudo_type == PSEUDO_PKT_PS)); }
 
-static inline uint8_t GetEventProto(const Packet *p)
+static inline uint8_t GetEventProto(const Packet* const p)
 {
     if (IsPortscanPacket(p))
         return p->ps_proto;
     return p->ip_api.proto(); // return 0 if invalid
 }
 
-static inline bool PacketHasFullPDU (const Packet* p)
-{
-    return ( (p->packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL );
-}
+static inline bool PacketHasFullPDU (const Packet* const p)
+{ return ( (p->packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL ); }
 
-static inline bool PacketHasStartOfPDU (const Packet* p)
-{
-    return ( (p->packet_flags & PKT_PDU_HEAD) != 0 );
-}
+static inline bool PacketHasStartOfPDU (const Packet* const p)
+{ return ( (p->packet_flags & PKT_PDU_HEAD) != 0 ); }
 
-static inline bool PacketHasPAFPayload (const Packet* p)
-{
-    return ( (p->packet_flags & PKT_REBUILT_STREAM) || PacketHasFullPDU(p) );
-}
+static inline bool PacketHasPAFPayload (const Packet* const p)
+{ return ( (p->packet_flags & PKT_REBUILT_STREAM) || PacketHasFullPDU(p) ); }
 
-static inline bool PacketIsRebuilt (const Packet* p)
-{
-    return ( (p->packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0 );
-}
+static inline bool PacketIsRebuilt (const Packet* const p)
+{ return ( (p->packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0 ); }
 
-static inline void SetExtraData (Packet* p, uint32_t xid)
-{
-    p->xtradata_mask |= BIT(xid);
-}
+static inline void SetExtraData (Packet* p, const uint32_t xid)
+{ p->xtradata_mask |= BIT(xid); }
 
-static inline uint16_t EXTRACT_16BITS(const uint8_t* p)
-{
-    return ntohs(*(uint16_t*)(p));
-}
+static inline uint16_t EXTRACT_16BITS(const uint8_t* const p)
+{ return ntohs(*(uint16_t*)(p)); }
 
 #ifdef WORDS_MUSTALIGN
 
@@ -354,9 +337,7 @@ static inline uint16_t EXTRACT_16BITS(const uint8_t* p)
 
 /* allows unaligned ntohl parameter - dies w/SIGBUS on SPARCs */
     static inline uint32_t EXTRACT_32BITS(const uint8_t* p)
-    {
-        return ntohl(*(uint32_t *)p);
-    }
+    { return ntohl(*(uint32_t *)p); }
 #endif /* WORDS_MUSTALIGN */
 
 #endif

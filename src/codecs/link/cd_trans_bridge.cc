@@ -36,7 +36,7 @@
 namespace
 {
 
-#define CD_TRANSBRIDGE_NAME "transbridge"
+#define CD_TRANSBRIDGE_NAME "trans_ether_bridging"
 
 class TransbridgeCodec : public Codec
 {

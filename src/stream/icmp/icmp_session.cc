@@ -97,13 +97,13 @@ static int ProcessIcmpUnreach(Packet *p)
 
     if (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)
     {
-        const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(p);
+        const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(iph);
         sport = ntohs(tcph->th_sport);
         dport = ntohs(tcph->th_dport);
     }
     else if (p->proto_bits & PROTO_BIT__UDP_EMBED_ICMP)
     {
-        const udp::UDPHdr* udph = layer::get_udp_embed_icmp(p);
+        const udp::UDPHdr* udph = layer::get_udp_embed_icmp(iph);
 
         sport = ntohs(udph->uh_sport);
         dport = ntohs(udph->uh_dport);

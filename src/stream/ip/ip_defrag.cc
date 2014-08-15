@@ -905,7 +905,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
     if (p->ip_api.is_ip4())
     {
-        ip::IPHdr* iph = const_cast<ip::IPHdr*>(dpkt->ip_api.get_ip4h());
+        ip::IP4Hdr* iph = const_cast<ip::IP4Hdr*>(dpkt->ip_api.get_ip4h());
 
         /*
          * if there are IP options, copy those in as well
@@ -1001,7 +1001,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     }
     else /* Inner/only is IP6 */
     {
-        ip::IP6RawHdr* rawHdr = const_cast<ip::IP6RawHdr*>(dpkt->ip_api.get_ip6h());
+        ip::IP6Hdr* rawHdr = const_cast<ip::IP6Hdr*>(dpkt->ip_api.get_ip6h());
 
         if ( !rawHdr )
         {

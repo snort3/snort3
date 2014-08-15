@@ -21,13 +21,32 @@
 
 
 #include "framework/codec.h"
-#include "codecs/link/cd_erspan2_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
 
 namespace
 {
+
+#define CD_ERSPAN2_NAME "erspan2"
+
+static const RuleMap erspan2_rules[] =
+{
+    { DECODE_ERSPAN_HDR_VERSION_MISMATCH, "(codec_erspan) ERSpan Header version mismatch" },
+    { DECODE_ERSPAN2_DGRAM_LT_HDR, "(" CD_ERSPAN2_NAME ") captured < ERSpan Type2 Header Length" },
+    { 0, nullptr }
+};
+
+class Erspan2Module : public DecodeModule
+{
+public:
+    Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return erspan2_rules; }
+};
+
 
 class Erspan2Codec : public Codec
 {

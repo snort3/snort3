@@ -118,7 +118,7 @@ struct snort_in6_addr
     };
 };
 
-struct IP6RawHdr
+struct IP6Hdr
 {
     uint32_t ip6_vtf;               /* 4 bits version, 8 bits TC,len
                                         20 bits flow-ID */

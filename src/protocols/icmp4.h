@@ -172,7 +172,7 @@ struct ICMPHdr
         /* IP header for unreach */
         struct ih_ip
         {
-            ip::IPHdr *ip;
+            ip::IP4Hdr *ip;
             /* options and then 64 bits of data */
         } ip;
 

@@ -22,7 +22,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/link/cd_pppoe_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "codecs/sf_protocols.h"
@@ -45,6 +45,32 @@ struct PPPoEHdr
     uint16_t session;     /* session id */
     uint16_t length;      /* payload length */
                                 /* payload follows */
+};
+
+
+
+//-------------------------------------------------------------------------
+// General PPPoEpkt module.
+//
+//      ***** NOTE: THE CODEC HAS A DIFFERENT NAME!
+//          * Additionally, this module is used for generator a rule stub ONLY!
+//          * If you want to create a module for configuration, you must change the
+//          * names of the correct PPPoEpkt codec
+//-------------------------------------------------------------------------
+#define CD_PPPOE_NAME "pppoe"
+static const RuleMap pppoe_rules[] =
+{
+    { DECODE_BAD_PPPOE, "(" CD_PPPOE_NAME ") Bad PPPOE frame detected" },
+    { 0, nullptr }
+};
+
+class PPPoEModule : public DecodeModule
+{
+public:
+    PPPoEModule() : DecodeModule(CD_PPPOE_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return pppoe_rules; }
 };
 
 } // namespace

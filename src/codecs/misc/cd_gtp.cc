@@ -30,13 +30,38 @@
 #include "framework/codec.h"
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
-#include "codecs/misc/cd_gtp_module.h"
 #include "packet_io/active.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/decode_module.h"
 
 namespace
 {
+
+#define CD_GTP_NAME "gtp"
+
+static const RuleMap gtp_rules[] =
+{
+    { DECODE_GTP_MULTIPLE_ENCAPSULATION, "(" CD_GTP_NAME ") Two or more GTP encapsulation layers present" },
+    { DECODE_GTP_BAD_LEN, "(" CD_GTP_NAME ") GTP header length is invalid" },
+    { 0, nullptr }
+};
+
+class GtpModule : public DecodeModule
+{
+public:
+    GtpModule() : DecodeModule(CD_GTP_NAME) {};
+
+    const RuleMap* get_rules() const
+    { return gtp_rules; }
+};
+
+
+//-------------------------------------------------------------------------
+// gtp module
+//-------------------------------------------------------------------------
+
+
 
 class GtpCodec : public Codec
 {

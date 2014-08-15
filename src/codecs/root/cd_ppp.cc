@@ -38,7 +38,7 @@ namespace
 // this macros is defined in the module to ensure identical names. However,
 // if you don't want a module, define the name here.
 #ifndef PPP_NAME
-#define PPP_NAME "point_to_point"
+#define PPP_NAME "ppp"
 #endif
 
 class PPPCodec : public Codec

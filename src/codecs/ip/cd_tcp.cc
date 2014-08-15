@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_tcp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -36,7 +37,7 @@
 #include "packet_io/sfdaq.h"
 #include "parser/parse_ip.h"
 #include "codecs/codec_events.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
 
 #include "snort.h"
 #include "packet_io/active.h"
@@ -44,11 +45,53 @@
 #include "protocols/tcp.h"
 #include "protocols/packet.h"
 #include "framework/codec.h"
-#include "codecs/ip/cd_tcp_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
+
 
 namespace
 {
+
+
+#define CD_TCP_NAME "tcp"
+
+static const RuleMap tcp_rules[] =
+{
+    { DECODE_TCP_DGRAM_LT_TCPHDR, "(" CD_TCP_NAME ") TCP packet len is smaller than 20 bytes" },
+    { DECODE_TCP_INVALID_OFFSET, "(" CD_TCP_NAME ") TCP Data Offset is less than 5" },
+    { DECODE_TCP_LARGE_OFFSET, "(" CD_TCP_NAME ") TCP Header length exceeds packet length" },
+
+    { DECODE_TCPOPT_BADLEN, "(" CD_TCP_NAME ") Tcp Options found with bad lengths" },
+    { DECODE_TCPOPT_TRUNCATED, "(" CD_TCP_NAME ") Truncated Tcp Options" },
+    { DECODE_TCPOPT_TTCP, "(" CD_TCP_NAME ") T/TCP Detected" },
+    { DECODE_TCPOPT_OBSOLETE, "(" CD_TCP_NAME ") Obsolete TCP Options found" },
+    { DECODE_TCPOPT_EXPERIMENTAL, "(" CD_TCP_NAME ") Experimental Tcp Options found" },
+    { DECODE_TCPOPT_WSCALE_INVALID, "(" CD_TCP_NAME ") Tcp Window Scale Option found with length > 14" },
+    { DECODE_TCP_XMAS, "(" CD_TCP_NAME ") XMAS Attack Detected" },
+    { DECODE_TCP_NMAP_XMAS, "(" CD_TCP_NAME ") Nmap XMAS Attack Detected" },
+    { DECODE_TCP_BAD_URP, "(" CD_TCP_NAME ") TCP urgent pointer exceeds payload length or no payload" },
+    { DECODE_TCP_SYN_FIN, "(" CD_TCP_NAME ") TCP SYN with FIN" },
+    { DECODE_TCP_SYN_RST, "(" CD_TCP_NAME ") TCP SYN with RST" },
+    { DECODE_TCP_MUST_ACK, "(" CD_TCP_NAME ") TCP PDU missing ack for established session" },
+    { DECODE_TCP_NO_SYN_ACK_RST, "(" CD_TCP_NAME ") TCP has no SYN, ACK, or RST" },
+    { DECODE_TCP_SHAFT_SYNFLOOD, "(" CD_TCP_NAME ") DDOS shaft synflood" },
+    { DECODE_TCP_PORT_ZERO, "(" CD_TCP_NAME ") BAD-TRAFFIC TCP port 0 traffic" },
+    { DECODE_DOS_NAPTHA, "(decode) DOS NAPTHA Vulnerability Detected" },
+    { DECODE_SYN_TO_MULTICAST, "(decode) Bad Traffic SYN to multicast address" },
+    { 0, nullptr }
+};
+
+
+class TcpModule : public DecodeModule
+{
+public:
+    TcpModule() : DecodeModule(CD_TCP_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return tcp_rules; }
+};
+
+
 
 class TcpCodec : public Codec
 {
@@ -75,7 +118,7 @@ static sfip_var_t *SynToMulticastDstIp = NULL;
 
 
 
-int OptLenValidate(const uint8_t *option_ptr,
+static int OptLenValidate(const uint8_t *option_ptr,
                                  const uint8_t *end,
                                  const uint8_t *len_ptr,
                                  int expected_len,
@@ -85,11 +128,6 @@ int OptLenValidate(const uint8_t *option_ptr,
 
 static void DecodeTCPOptions(const uint8_t *, uint32_t, Packet *);
 static inline void TCPMiscTests(Packet *p);
-
-#if 0
-static inline unsigned short in_chksum_tcp(pseudoheader *, unsigned short *, int);
-static inline unsigned short in_chksum_tcp6(pseudoheader6 *, unsigned short *, int);
-#endif
 
 void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -278,7 +316,6 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "%lu bytes of tcp options....\n",
                     (unsigned long)(tcp_opt_len)););
 
-        p->tcp_options_data = raw_pkt + tcp::TCP_HEADER_LEN;
         DecodeTCPOptions((uint8_t *) (raw_pkt + tcp::TCP_HEADER_LEN), tcp_opt_len, p);
     }
     else
@@ -664,7 +701,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         checksum::Pseudoheader ps;
         int len = buff_diff(out, (uint8_t*)ho);
 
-        const IPHdr* const ip4h = ip_api->get_ip4h();
+        const IP4Hdr* const ip4h = ip_api->get_ip4h();
         ps.sip = ip4h->get_src();
         ps.dip = ip4h->get_dst();
         ps.zero = 0;
@@ -677,7 +714,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         checksum::Pseudoheader6 ps6;
         int len = buff_diff(out, (uint8_t*) ho);
 
-        const ip::IP6RawHdr* const ip6h = ip_api->get_ip6h();
+        const ip::IP6Hdr* const ip6h = ip_api->get_ip6h();
         memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
         memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
@@ -702,7 +739,7 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         if (p->ip_api.is_ip4())
         {
             checksum::Pseudoheader ps;
-            const ip::IPHdr* ip4h = p->ip_api.get_ip4h();
+            const ip::IP4Hdr* ip4h = p->ip_api.get_ip4h();
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();;
             ps.zero = 0;
@@ -713,7 +750,7 @@ bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         else
         {
             checksum::Pseudoheader6 ps6;
-            const ip::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
+            const ip::IP6Hdr* ip6h = p->ip_api.get_ip6h();
             memcpy(ps6.sip, ip6h->get_src()->u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, ip6h->get_dst()->u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
@@ -744,7 +781,7 @@ void TcpCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 }
 
 
-int OptLenValidate(const uint8_t *option_ptr,
+static int OptLenValidate(const uint8_t *option_ptr,
                                  const uint8_t *end,
                                  const uint8_t *len_ptr,
                                  int expected_len,
@@ -1062,5 +1099,12 @@ static const CodecApi tcp_api =
     dtor, // dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &tcp_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_tcp = &tcp_api.base;
-
+#endif

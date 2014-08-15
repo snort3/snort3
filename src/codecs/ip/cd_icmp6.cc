@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_icmp6.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -29,16 +30,43 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
 
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
-#include "codecs/ip/cd_icmp6_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 
 
 namespace
 {
+
+#define CD_ICMP6_NAME "icmp6"
+static const RuleMap icmp6_rules[] =
+{
+    { DECODE_ICMP6_HDR_TRUNC, "(" CD_ICMP6_NAME ") truncated ICMP6 header" },
+    { DECODE_ICMP6_TYPE_OTHER, "(" CD_ICMP6_NAME ") ICMP6 type not decoded" },
+    { DECODE_ICMP6_DST_MULTICAST, "(" CD_ICMP6_NAME ") ICMP6 packet to multicast address" },
+    { DECODE_ICMPV6_TOO_BIG_BAD_MTU, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 2 (message too big) with MTU field < 1280" },
+    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 1 (destination unreachable) with non-RFC 2463 code" },
+    { DECODE_ICMPV6_SOLICITATION_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 router solicitation packet with a code not equal to 0" },
+    { DECODE_ICMPV6_ADVERT_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 router advertisement packet with a code not equal to 0" },
+    { DECODE_ICMPV6_SOLICITATION_BAD_RESERVED, "(" CD_ICMP6_NAME ") ICMPv6 router solicitation packet with the reserved field not equal to 0" },
+    { DECODE_ICMPV6_ADVERT_BAD_REACHABLE, "(" CD_ICMP6_NAME ") ICMPv6 router advertisement packet with the reachable time field set > 1 hour" },
+    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 1 (destination unreachable) with non-RFC 4443 code" },
+    { DECODE_ICMPV6_NODE_INFO_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 node info query/response packet with a code greater than 2" },
+    { 0, nullptr }
+};
+
+class Icmp6Module : public DecodeModule
+{
+public:
+    Icmp6Module() : DecodeModule(CD_ICMP6_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return icmp6_rules; }
+};
+
 
 class Icmp6Codec : public Codec
 {
@@ -307,109 +335,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 }
 
 
-// TODO:  delete (along with any mention of this function)
-
-#if 0
-
-/*
- * Function: DecodeICMPEmbeddedIP6(uint8_t *, const uint32_t, Packet *)
- *
- * Purpose: Decode the ICMP embedded IP6 header + payload
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to dummy packet decode struct
- *
- * Returns: void function
- */
-static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
-{
-//    uint16_t orig_frag_offset;
-
-    /* lay the IP struct over the raw data */
-    const ip::IP6RawHdr* hdr = reinterpret_cast<const ip::IP6RawHdr*>(pkt);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP6: ip header"
-                    " starts at: %p, length is %lu\n", hdr,
-                    (unsigned long) len););
-
-    /* do a little validation */
-    if ( len < ip::hdr_len() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP6: IP short header (%d bytes)\n", len););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
-
-        return;
-    }
-
-    /*
-     * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
-     * So we are just ignoring non IP datagrams
-     */
-    if(hdr->get_ver() != 6)
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: not IPv6 datagram ([ver: 0x%x][len: 0x%x])\n",
-            hdr->get_ver(), len););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
-
-        return;
-    }
-
-    if ( len < ip::hdr_len() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP6: IP6 len (%d bytes) < IP6 hdr len (%d bytes), packet discarded\n",
-            len, ip::hdr_len()););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
-
-        return;
-    }
-    sfiph_orig_build(p, pkt, AF_INET6);
-
-//    orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
-//    orig_frag_offset &= 0x1FFF;
-
-    // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP6 Unreachable IP6 header length: "
-                            "%lu\n", (unsigned long)ip::hdr_len()););
-
-    switch(GET_ORIG_IPH_PROTO(p))
-    {
-        case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->orig_tcph = (TCPHdr *)(pkt + ip::hdr_len());
-
-            /* stuff more data into the printout data struct */
-            p->orig_sp = ntohs(p->orig_tcph->th_sport);
-            p->orig_dp = ntohs(p->orig_tcph->th_dport);
-
-            break;
-
-        case IPPROTO_UDP:
-            p->orig_udph = (udp::UDPHdr *)(pkt + ip::hdr_len());
-
-            /* fill in the printout data structs */
-            p->orig_sp = ntohs(p->orig_udph->uh_sport);
-            p->orig_dp = ntohs(p->orig_udph->uh_dport);
-
-            break;
-
-        case IPPROTO_ICMP:
-            p->orig_icmph = (ICMPHdr *)(pkt + ip::hdr_len());
-            break;
-    }
-
-    return;
-}
-
-#endif
-
-
 /******************************************************************
  ******************** E N C O D E R  ******************************
  ******************************************************************/
@@ -452,7 +377,7 @@ bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
     // Now performed in cd_ip6_embedded_in_icmp.cc
     // TBD should be able to elminate enc->ip_hdr by using layer-2
     memcpy(out->base, enc->ip_hdr, enc->ip_len);
-    ((ip::IP6RawHdr*)out->base)->ip6_next = IPPROTO_UDP;
+    ((ip::IP6Hdr*)out->base)->ip6_next = IPPROTO_UDP;
 
 #endif
 
@@ -469,7 +394,7 @@ bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
     enc->proto = IPPROTO_ICMPV6;
     int len = buff_diff(out, (uint8_t *)ho);
 
-    const ip::IP6RawHdr* const ip6h = enc->p->ip_api.get_ip6h();
+    const ip::IP6Hdr* const ip6h = enc->p->ip_api.get_ip6h();
 
     memcpy(ps6.sip, ip6h->ip6_src.u6_addr8, sizeof(ps6.sip));
     memcpy(ps6.dip, ip6h->ip6_dst.u6_addr8, sizeof(ps6.dip));
@@ -546,4 +471,12 @@ static const CodecApi ipv6_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &ipv6_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_icmp6 = &ipv6_api.base;
+#endif

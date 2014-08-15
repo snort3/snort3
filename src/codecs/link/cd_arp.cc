@@ -25,7 +25,7 @@
 
 
 #include "framework/codec.h"
-#include "codecs/link/cd_arp_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
@@ -33,6 +33,25 @@
 
 namespace
 {
+
+#define CD_ARP_NAME "arp"
+
+static const RuleMap arp_rules[] =
+{
+    { DECODE_ARP_TRUNCATED, "(" CD_ARP_NAME ") Truncated ARP" },
+    { 0, nullptr }
+};
+
+
+class ArpModule : public DecodeModule
+{
+public:
+    ArpModule() : DecodeModule(CD_ARP_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return arp_rules; }
+};
+
 
 class ArpCodec : public Codec
 {
@@ -134,4 +153,12 @@ static const CodecApi arp_api =
     dtor, // dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &arp_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_arp = &arp_api.base;
+#endif

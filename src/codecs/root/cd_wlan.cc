@@ -25,15 +25,32 @@
 #endif
 
 #include <pcap.h>
-#include "framework/codec.h"
-#include "codecs/root/cd_wlan_module.h"
-#include "codecs/codec_events.h"
 #include "protocols/wlan.h"
+#include "framework/codec.h"
+#include "codecs/decode_module.h"
+#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 
 namespace
 {
+
+#define CD_WLAN_NAME "wlan"
+static const RuleMap wlan_rules[] =
+{
+    { DECODE_BAD_80211_ETHLLC, "(" CD_WLAN_NAME ") Bad 802.11 LLC header" },
+    { DECODE_BAD_80211_OTHER, "(" CD_WLAN_NAME ") Bad 802.11 Extra LLC Info" },
+    { 0, nullptr }
+};
+
+class WlanCodecModule : public DecodeModule
+{
+public:
+    WlanCodecModule() : DecodeModule(CD_WLAN_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return wlan_rules; }
+};
 
 
 class WlanCodec : public Codec

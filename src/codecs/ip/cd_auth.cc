@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_ah.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_auth.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -28,18 +28,41 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-#include "codecs/ip/cd_auth_module.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
 
 namespace
 {
 
-class AhCodec : public Codec
+#define CD_AUTH_NAME "auth"
+
+static const RuleMap auth_rules[] =
+{
+    { DECODE_AUTH_HDR_TRUNC, "(" CD_AUTH_NAME ") Truncated authentication header"},
+    { DECODE_AUTH_HDR_BAD_LEN, "(" CD_AUTH_NAME ") Bad authentication header length"},
+    { 0, nullptr }
+};
+
+class AuthModule : public DecodeModule
 {
 public:
-    AhCodec() : Codec(CD_AUTH_NAME){};
-    ~AhCodec(){};
+    AuthModule() : DecodeModule(CD_AUTH_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return auth_rules; }
+};
+
+
+//-------------------------------------------------------------------------
+// auth module
+//-------------------------------------------------------------------------
+
+
+class AuthCodec : public Codec
+{
+public:
+    AuthCodec() : Codec(CD_AUTH_NAME){};
+    ~AuthCodec(){};
 
 
     virtual PROTO_ID get_proto_id() { return PROTO_AH; };
@@ -52,12 +75,12 @@ public:
 
 } // anonymous namespace
 
-void AhCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IPPROTO_ID_AH);
 }
 
-bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
+bool AuthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
 
@@ -89,7 +112,7 @@ bool AhCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 static Module* mod_ctor()
 {
-    return new AhModule;
+    return new AuthModule;
 }
 
 static void mod_dtor(Module* m)
@@ -99,7 +122,7 @@ static void mod_dtor(Module* m)
 
 static Codec* ctor(Module*)
 {
-    return new AhCodec();
+    return new AuthCodec();
 }
 
 static void dtor(Codec *cd)

@@ -19,13 +19,13 @@
 
 // token_ring_module.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef CD_TRK_MODULE_H
-#define CD_TRK_MODULE_H
+#ifndef CODECS_TOKEN_RING_MODULE_H
+#define CODECS_TOKEN_RING_MODULE_H
 
 #include "codecs/decode_module.h"
 
 
-#define CD_TR_NAME "cd_tr"
+#define TR_NAME "token_ring"
 
 class TrCodecModule : public DecodeModule
 {

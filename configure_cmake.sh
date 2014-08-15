@@ -290,12 +290,6 @@ while [ $# -ne 0 ]; do
         --enable-ha)
             append_cache_entry BUILD_HA    BOOL   true
             ;;
-        --disable-non-ether-decoders)
-            append_cache_entry ENABLE_NON_ETHER_DECODERS    BOOL   false
-            ;;
-        --enable-non-ether-decoders)
-            append_cache_entry ENABLE_NON_ETHER_DECODERS    BOOL   true
-            ;;
         --disable-large-pcap)
             append_cache_entry ENABLE_LARGE_PCAP    BOOL   false
             ;;

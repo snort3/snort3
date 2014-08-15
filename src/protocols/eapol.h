@@ -22,8 +22,6 @@
 #ifndef PROTOCOLS_EAPOL_H
 #define PROTOCOLS_EAPOL_H
 
-#ifndef NO_NON_ETHER_DECODER
-
 namespace eapol
 {
 
@@ -93,5 +91,4 @@ struct EapolKey
 
 }
 
-#endif /* NO_NON_ETHER_DECODER */
 #endif /* EAPOL_H */

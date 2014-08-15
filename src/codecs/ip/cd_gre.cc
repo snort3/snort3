@@ -25,7 +25,6 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/ip/cd_gre_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
@@ -34,6 +33,33 @@
 
 namespace
 {
+
+#define CD_GRE_NAME "gre"
+
+static const RuleMap gre_rules[] =
+{
+    { DECODE_GRE_DGRAM_LT_GREHDR, "(" CD_GRE_NAME ") GRE header length > payload length" },
+    { DECODE_GRE_MULTIPLE_ENCAPSULATION, "(" CD_GRE_NAME ") Multiple encapsulations in packet" },
+    { DECODE_GRE_INVALID_VERSION, "(" CD_GRE_NAME ") Invalid GRE version" },
+    { DECODE_GRE_INVALID_HEADER, "(" CD_GRE_NAME ") Invalid GRE header" },
+    { DECODE_GRE_V1_INVALID_HEADER, "(" CD_GRE_NAME ") Invalid GRE v.1 PPTP header" },
+    { DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR, "(" CD_GRE_NAME ") GRE Trans header length > payload length" },
+    { 0, nullptr }
+};
+
+
+class GreModule : public DecodeModule
+{
+public:
+    GreModule() : DecodeModule(CD_GRE_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return gre_rules; }
+};
+
+
+
+
 
 class GreCodec : public Codec
 {

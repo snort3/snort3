@@ -16,15 +16,19 @@ add_library( codecs STATIC
     codec_api.h
     codec_api.cc
     codec_events.cc
-    checksum.h
-    checksum.cc
     template.cc   # for development purposes.  Keep the template up to date
 )
 
 
+if (STATIC_CODECS)
+    set (CODEC_PLUGIN_LIBRARIES
+        link_codecs
+    )
+endif(STATIC_CODECS)
+
 target_link_libraries( codecs
+    ${CODEC_PLUGIN_LIBRARIES}
     root_codecs
-    link_codecs
     ip_codecs
     misc_codecs
     protocols

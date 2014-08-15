@@ -24,7 +24,7 @@
 #endif
 
 #include <pcap.h>
-#include "codecs/root/cd_eth_module.h"
+#include "codecs/decode_module.h"
 #include "framework/codec.h"
 #include "protocols/packet.h"
 #include "protocols/eth.h"
@@ -34,6 +34,23 @@
 
 namespace
 {
+
+#define CD_ETH_NAME "eth"
+static const RuleMap eth_rules[] =
+{
+    { DECODE_ETH_HDR_TRUNC, "(" CD_ETH_NAME ") truncated eth header" },
+    { 0, nullptr }
+};
+
+class EthModule : public DecodeModule
+{
+public:
+    EthModule() : DecodeModule(CD_ETH_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return eth_rules; }
+};
+
 
 class EthCodec : public Codec
 {

@@ -40,7 +40,7 @@ namespace
 class TrCodec : public Codec
 {
 public:
-    TrCodec() : Codec(CD_TR_NAME){};
+    TrCodec() : Codec(TR_NAME){};
     ~TrCodec() {};
 
 
@@ -209,7 +209,7 @@ static const CodecApi tr_api =
 {
     {
         PT_CODEC,
-        CD_TR_NAME,
+        TR_NAME,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

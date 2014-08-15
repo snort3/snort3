@@ -33,7 +33,7 @@ namespace
 {
 
 // yes, macros are necessary. The API and class constructor require different strings.
-#define CD_PIM_NAME "cd_pim"
+#define CD_PIM_NAME "pim"
 
 class PimCodec : public Codec
 {

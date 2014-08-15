@@ -27,13 +27,52 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "codecs/ip/cd_esp_module.h"
 #include "managers/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 
 namespace
 {
+
+
+#define CD_ESP_NAME "esp"
+
+static const RuleMap esp_rules[] =
+{
+    { DECODE_ESP_HEADER_TRUNC, "(" CD_ESP_NAME ") truncated Encapsulated Security Payload (ESP) header" },
+    { 0, nullptr }
+};
+
+
+static const Parameter esp_params[] =
+{
+    { "decode_esp", Parameter::PT_BOOL, nullptr, "false",
+      "enable for inspection of esp traffic that has authentication but not encryption" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+
+class EspModule : public DecodeModule
+{
+public:
+    EspModule() : DecodeModule(CD_ESP_NAME, esp_params) {}
+
+    const RuleMap* get_rules() const
+    { return esp_rules; }
+
+
+    bool set(const char*, Value& v, SnortConfig* sc)
+    {
+        if ( v.is("decode_esp") )
+            sc->enable_esp = v.get_bool();
+        else
+            return false;
+
+        return true;
+    }
+};
+
 
 class EspCodec : public Codec
 {

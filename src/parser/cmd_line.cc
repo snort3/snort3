@@ -558,7 +558,7 @@ static void config_test_mode(SnortConfig* sc, const char*)
     sc->run_flags |= RUN_FLAG__TEST;
 }
 
-#if !defined(NO_NON_ETHER_DECODER) && defined(DLT_IEEE802_11)
+#if defined(DLT_IEEE802_11)
 static void config_show_wifi_mgt(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__SHOW_WIFI_MGMT;
@@ -792,7 +792,7 @@ static ConfigFunc basic_opts[] =
     { "W", config_ignore, // spec opt
       "lists available interfaces" },
 
-#if !defined(NO_NON_ETHER_DECODER) && defined(DLT_IEEE802_11)
+#if defined(DLT_IEEE802_11)
     { "w", config_show_wifi_mgt, 
       "dump 802.11 management and control frames" },
 #endif

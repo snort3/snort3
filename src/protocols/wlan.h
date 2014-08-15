@@ -22,7 +22,7 @@
 #ifndef PROTOCOLS_WLAN_H
 #define PROTOCOLS_WLAN_H
 
-#ifndef NO_NON_ETHER_DECODER
+#include <cstdint>
 
 namespace wlan
 {
@@ -86,7 +86,3 @@ struct WifiHdr
 } // namespace wlan
 
 #endif
-
-#endif
-
-

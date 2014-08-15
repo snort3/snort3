@@ -92,7 +92,7 @@ struct IpOptions
 
 
 // This must be a standard layour struct!
-struct IPHdr
+struct IP4Hdr
 {
     uint8_t ip_verhl;      /* version & header length */
     uint8_t ip_tos;        /* type of service */
@@ -188,7 +188,7 @@ static inline bool isPrivateIP(uint32_t addr)
 /* we need to change them as well as get them */
 // TYPEDEF WHICH NEED TO BE DELETED
 
-typedef ip::IPHdr IPHdr;
+typedef ip::IP4Hdr IP4Hdr;
 
 
 constexpr uint8_t IPOPT_EOL = 0x00;

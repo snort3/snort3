@@ -109,16 +109,21 @@ const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
 // RETURN:
 //          true - ip layer found and api set
 //          false - ip layer NOT found, api reset
-bool set_api_ip_embed_icmp(const Packet*);
 bool set_api_ip_embed_icmp(const Packet*, ip::IpApi& api);
 
-// When a protocol is embedded in ICMP, this function
-// will return a pointer to the layer.  Use the
-// proto_bits to determine what this layer is!
-const uint8_t* get_prot_embed_icmp(const Packet* const);
-const tcp::TCPHdr* get_tcp_embed_icmp(const Packet* const);
-const udp::UDPHdr* get_udp_embed_icmp(const Packet* const);
-const icmp::ICMPHdr* get_icmp_embed_icmp(const Packet* const);
+// a helper function when the api to be set is inside the packet
+bool set_api_ip_embed_icmp(const Packet* p);
+
+/*
+ *When a protocol is embedded in ICMP, these functions
+ * will return a pointer to the layer.  Use the
+ * proto_bits before calling these function to determine
+ * what this layer is!
+ */
+const tcp::TCPHdr* get_tcp_embed_icmp(const ip::IpApi&);
+const udp::UDPHdr* get_udp_embed_icmp(const ip::IpApi&);
+const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
+
 
 
 int get_inner_ip_lyr(const Packet* const p);
