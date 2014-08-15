@@ -57,8 +57,8 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     session_data->num_crlf[source_id] = 0;
 }
 
-const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned offset, const uint8_t* data, unsigned len,
-       uint32_t flags, unsigned& copied)
+const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total*/, unsigned offset, const uint8_t* data,
+       unsigned len, uint32_t flags, unsigned& copied)
 {
     static THREAD_LOCAL StreamBuffer nhttp_buf;
     if (flags & PKT_PDU_HEAD) {

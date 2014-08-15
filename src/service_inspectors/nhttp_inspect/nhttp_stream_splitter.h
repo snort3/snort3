@@ -40,13 +40,13 @@ public:
        my_inspector(my_inspector_) {};
     ~NHttpStreamSplitter() { delete[] section_buffer; };
     PAF_Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flush_offset);
-    const StreamBuffer* reassemble(Flow* flow, unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
-       unsigned& copied);
+    const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const uint8_t* data, unsigned len,
+       uint32_t flags, unsigned& copied);
     bool is_paf() { return true; };
     uint32_t max() { return paf_max; };
 private:
-    void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SourceId source_id, NHttpEnums::SectionType section_type, bool tcp_close,
-          uint64_t infractions, uint32_t num_octets);
+    void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SourceId source_id,
+       NHttpEnums::SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets);
     void create_event(NHttpEnums::EventSid sid);
 
     NHttpInspect* const my_inspector;
