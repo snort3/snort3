@@ -5,6 +5,7 @@
    ips_replace
 -- stream workarounds for new packet / protocol foo and shutdown sequencing
 -- fixed end of rule parsing to not require ; and recognize incomplete rules
+-- fixed executing a command wile paused
 
 112
 -- initial action plugin - reject

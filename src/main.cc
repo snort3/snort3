@@ -445,6 +445,8 @@ static bool house_keeping()
 
 // FIXIT make these non-blocking
 // FIXIT allow at least 2 remote controls
+// FIXIT bind to configured ip including INADDR_ANY
+// (default is loopback if enabled)
 static int listener = -1;
 static int remote_control = -1;
 
@@ -456,21 +458,34 @@ static int socket_init()
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
     if (listener < 0) 
+    {
+        FatalError("socket failed: %s\n", strerror(errno));
         return -2;
+    }
+
+    // FIXIT does this disable time wait for us?
+    int on = 1;
+    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
 
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = htonl(0x7F000001);
     addr.sin_port = htons(snort_conf->remote_control);
 
     if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 ) 
+    {
+        FatalError("bind failed: %s\n", strerror(errno));
         return -3;
+    }
 
     // FIXIT configure max conns
     if ( listen(listener, 5) < 0 )
+    {
+        FatalError("listen failed: %s\n", strerror(errno));
         return -4;
+    }
 
     return 0;
 }
@@ -621,17 +636,20 @@ static bool set_mode()
         return false;
     }
 
+    if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
+    {
+        LogMessage("Paused; resume to start packet processing\n");
+        paused = true;
+    }
+    else
+        LogMessage("Commencing packet processing\n");
+
     if ( snort_conf->run_flags & RUN_FLAG__SHELL )
     {
         LogMessage("Entering command shell\n");
         request.set(STDOUT_FILENO, "");
         request.show_prompt();
     }
-
-    if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
-        paused = true;
-    else
-        LogMessage("Commencing packet processing\n");
 
     return true;
 }
