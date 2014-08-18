@@ -39,15 +39,15 @@
 class NHttpMsgStart: public NHttpMsgSection {
 public:
     void analyze();
-    void genEvents();
+    void gen_events();
 
 protected:
-    NHttpMsgStart(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_) :
-       NHttpMsgSection(buffer, bufSize, sessionData_, sourceId_) {};
-    virtual void parseStartLine() = 0;
-    void deriveVersionId();
+    NHttpMsgStart(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_) :
+       NHttpMsgSection(buffer, buf_size, session_data_, source_id_) {};
+    virtual void parse_start_line() = 0;
+    void derive_version_id();
 
-    Field startLine;
+    Field start_line;
     Field version;
 };
 

@@ -41,18 +41,21 @@
 
 class NHttpMsgRequest: public NHttpMsgStart {
 public:
-    NHttpMsgRequest(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
+    NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
     ~NHttpMsgRequest() { delete uri; };
-    void printSection(FILE *output);
-    void genEvents();
-    void updateFlow();
-    void legacyClients();
+    void print_section(FILE *output);
+    void gen_events();
+    void update_flow();
+    void legacy_clients();
+    const Field& get_method() { return method; };
+    const Field& get_uri();
+    const Field& get_uri_norm_legacy();
 
 private:
-    static const StrCode methodList[];
+    static const StrCode method_list[];
 
-    void parseStartLine();
-    void deriveMethodId();
+    void parse_start_line();
+    void derive_method_id();
 
     Field method;
     NHttpUri* uri = nullptr;

@@ -26,8 +26,8 @@
 //  @brief      NHttpMsgHeader class declaration
 //
 
-#ifndef NHTTP_MSG_HEAD_H
-#define NHTTP_MSG_HEAD_H
+#ifndef NHTTP_MSG_HEADER_H
+#define NHTTP_MSG_HEADER_H
 
 #include "nhttp_msg_head_shared.h"
 
@@ -37,10 +37,10 @@
 
 class NHttpMsgHeader: public NHttpMsgHeadShared {
 public:
-    NHttpMsgHeader(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
-    void printSection(FILE *output);
-    void genEvents();
-    void updateFlow();
+    NHttpMsgHeader(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    void print_section(FILE *output);
+    void gen_events();
+    void update_flow();
 };
 
 #endif

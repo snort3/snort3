@@ -40,40 +40,37 @@
 
 class NHttpMsgSection {
 public:
-    virtual ~NHttpMsgSection() { delete[] rawBuf; };
+    virtual ~NHttpMsgSection() { delete[] msg_text.start; };
     virtual void analyze() = 0;                           // Minimum necessary processing for every message
-    virtual void printSection(FILE *output) = 0;          // Test tool prints all derived message parts
-    virtual void genEvents() = 0;                         // Converts collected information into required preprocessor events
-    virtual void updateFlow() = 0;                        // Manages the splitter and communication between message sections
-    virtual void legacyClients() = 0;                     // Populates the raw and normalized buffer interface used by old Snort
+    virtual void print_section(FILE *output) = 0;         // Test tool prints all derived message parts
+    virtual void gen_events() = 0;                        // Converts collected information into required preprocessor events
+    virtual void update_flow() = 0;                       // Manages the splitter and communication between message sections
+    virtual void legacy_clients() = 0;                    // Populates the raw and normalized buffer interface used by old Snort
 
 protected:
-    NHttpMsgSection(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
+    NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
 
     // Convenience methods
-    static uint32_t findCrlf(const uint8_t* buffer, int32_t length, bool wrappable);
-    void printMessageTitle(FILE *output, const char *title) const;
-    void printMessageWrapup(FILE *output) const;
-    void createEvent(NHttpEnums::EventSid sid);
+    static uint32_t find_crlf(const uint8_t* buffer, int32_t length, bool wrappable);
+    void print_message_title(FILE *output, const char *title) const;
+    void print_message_wrapup(FILE *output) const;
+    void create_event(NHttpEnums::EventSid sid);
 
-    // The current strategy is to copy the entire raw message section into this object. Here it is.
-    uint8_t* rawBuf;
-    // This pseudonym for rawBuf isolates details of how the raw message is stored from everything else.
-    Field msgText;
+    Field msg_text;
 
-    NHttpFlowData* sessionData;
-    NHttpEnums::SourceId sourceId;
-    bool tcpClose;
-    ScratchPad scratchPad;
+    NHttpFlowData* session_data;
+    NHttpEnums::SourceId source_id;
+    bool tcp_close;
+    ScratchPad scratch_pad;
 
     // This is where all the derived values, extracted message parts, and normalized values are.
-    // These are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces) or the
-    // scratchPad (normalized pieces).
+    // These are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces)
+    // or the scratch_pad (normalized pieces).
     uint64_t infractions;
-    uint64_t eventsGenerated;
-    NHttpEnums::VersionId versionId;
-    NHttpEnums::MethodId methodId;
-    int32_t statusCodeNum;
+    uint64_t events_generated = 0;
+    NHttpEnums::VersionId version_id;
+    NHttpEnums::MethodId method_id;
+    int32_t status_code_num;
 };
 
 #endif

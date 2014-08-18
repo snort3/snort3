@@ -30,7 +30,7 @@
 #include "framework/inspector.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 #include "nhttp_msg_body.h"
 #include "nhttp_msg_chunk_head.h"
 #include "nhttp_msg_chunk_body.h"
@@ -42,7 +42,7 @@ class NHttpApi;
 
 class NHttpInspect : public Inspector {
 public:
-    NHttpInspect(bool test_input, bool _test_output);
+    NHttpInspect(bool test_input_, bool _test_output_);
     ~NHttpInspect();
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
@@ -50,24 +50,25 @@ public:
     bool configure(SnortConfig*);
     int verify(SnortConfig*);
     void show(SnortConfig*);
-    void eval(Packet*);
+    void eval(Packet*) { return; };
     bool enabled();
-    void tinit();
-    void tterm();
-    NHttpStreamSplitter* get_splitter(bool isClientToServer) { return new NHttpStreamSplitter(isClientToServer); };
+    void tinit() {};
+    void tterm() {};
+    NHttpStreamSplitter* get_splitter(bool is_client_to_server) { return new
+       NHttpStreamSplitter(is_client_to_server, this); };
 
 private:
     friend NHttpApi;
+    friend NHttpStreamSplitter;
 
-    void process(const uint8_t* data, const uint16_t dsize, Flow* const flow, NHttpEnums::SourceId sourceId_);
+    void process(const uint8_t* data, const uint16_t dsize, Flow* const flow, NHttpEnums::SourceId source_id_);
 
     // Test mode
     bool test_output;
-    const char *testInputFile = "nhttp_test_msgs.txt";
-    const char *testOutputPrefix = "nhttpresults/testcase";
-    FILE *testOut = nullptr;
-    int64_t testNumber = 0;
-    int64_t fileTestNumber = -1;
+    const char *test_input_file = "nhttp_test_msgs.txt";
+    const char *test_output_prefix = "nhttpresults/testcase";
+    FILE *test_out = nullptr;
+    int64_t file_test_number = -1;
 };
 
 #endif

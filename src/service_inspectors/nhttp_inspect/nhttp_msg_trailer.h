@@ -37,10 +37,10 @@
 
 class NHttpMsgTrailer: public NHttpMsgHeadShared {
 public:
-    NHttpMsgTrailer(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
-    void printSection(FILE *output);
-    void genEvents();
-    void updateFlow();
+    NHttpMsgTrailer(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    void print_section(FILE *output);
+    void gen_events();
+    void update_flow();
 };
 
 #endif

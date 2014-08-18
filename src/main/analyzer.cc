@@ -63,6 +63,21 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     done = true;
 }
 
+bool Analyzer::execute(AnalyzerCommand ac)
+{
+    if ( command && command != AC_PAUSE )
+        return false;
+
+    // FIXIT executing a command while paused
+    // will cause a resume
+    command = ac;
+    return true;
+}
+
+// clear pause in analyze() to avoid extra acquires
+// (eg stop while paused)
+// clear other commands here to avoid clearing an
+// unexecuted command received while paused
 bool Analyzer::handle(AnalyzerCommand ac)
 {
     switch ( ac )
@@ -72,16 +87,18 @@ bool Analyzer::handle(AnalyzerCommand ac)
 
     case AC_PAUSE:
         {
-            chrono::seconds sec(1);
-            this_thread::sleep_for(sec);
+            chrono::milliseconds ms(500);
+            this_thread::sleep_for(ms);
         }
         break;
 
     case AC_RESUME:
+        command = AC_NONE;
         break;
 
     case AC_ROTATE:
         snort_rotate();
+        command = AC_NONE;
         break;
 
     case AC_SWAP:
@@ -90,6 +107,7 @@ bool Analyzer::handle(AnalyzerCommand ac)
             swap->apply();
             swap = nullptr;
         }
+        command = AC_NONE;
         break;
 
     default:
@@ -109,8 +127,6 @@ void Analyzer::analyze()
 
             if ( command == AC_PAUSE )
                 continue;
-
-            command = AC_NONE;
         }
         if ( DAQ_Acquire(0, main_func, NULL) )
             break;

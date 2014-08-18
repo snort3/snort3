@@ -801,7 +801,7 @@ static ConfigFunc basic_opts[] =
       "dump the raw packet data starting at the link layer" },
 
     { "x", config_conf_error_out, 
-      "exit on misconfiguration (same as --conf-error-out)" },
+      "same as --conf-error-out" },
 
     { "y", ConfigShowYear, 
       "include year in timestamp in the alert and log files" },
@@ -817,7 +817,7 @@ static ConfigFunc basic_opts[] =
       "<filter options> are standard BPF options, as seen in TCPDump" },
 
     { "conf-error-out", config_conf_error_out, 
-      "exit if certain Snort configuration problems occur (same as -x)" },
+      "output error instead of warning if duplicate rules are found (same as -x)" },
 
     { "create-pidfile", ConfigCreatePidFile,
       "create PID file, even when not in Daemon mode" },
@@ -880,7 +880,7 @@ static ConfigFunc basic_opts[] =
       "list all known modules" },
 
     { "list-plugins", list_plugins,
-      "list all known modules" },
+      "list all known plugins" },
 
     { "lua", config_lua,
       "<chunk> extend/override conf with chunk; may be repeated" },

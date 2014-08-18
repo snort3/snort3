@@ -719,7 +719,8 @@ void ModuleManager::load_rules(SnortConfig* sc)
             // FIXIT builtins should have accurate proto
             //       (but ip winds up in all others)
             // FIXIT if msg has C escaped embedded quotes, we break
-            ss << "alert tcp any any -> any any ( ";
+            //ss << "alert tcp any any -> any any ( ";
+            ss << "alert ( ";
             ss << "gid:" << gid << "; ";
             ss << "sid:" << r->sid << "; ";
             ss << "msg:\"" << r->msg << "\"; )";
@@ -757,12 +758,8 @@ void ModuleManager::dump_rules(const char* pfx)
 
         while ( r->msg )
         {
-            // FIXIT move builtin generation to a better home
-            // FIXIT builtins should allow configurable nets and ports
-            // FIXIT builtins should have accurate proto
-            //       (but ip winds up in all others)
-            // FIXIT if msg has C escaped embedded quotes, we break
-            ss << "alert tcp any any -> any any ( ";
+            // FIXIT builtin gen should be in exactly one place
+            ss << "alert ( ";
             ss << "gid:" << gid << "; ";
             ss << "sid:" << r->sid << "; ";
             ss << "msg:\"" << r->msg << "\"; )";

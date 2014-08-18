@@ -1359,36 +1359,35 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
     if ( s_ignore )
         return;
 
-    rtn.proto = GetRuleProtocol(s);
-
-    switch (rtn.proto)
+    if ( !strcmp(s, "tcp") )
     {
-    case IPPROTO_TCP:
+        rtn.proto = IPPROTO_TCP;
         sc->ip_proto_array[IPPROTO_TCP] = 1;
-        break;
-
-    case IPPROTO_UDP:
+    }
+    else if ( !strcmp(s, "udp") )
+    {
+        rtn.proto = IPPROTO_UDP;
         sc->ip_proto_array[IPPROTO_UDP] = 1;
-        break;
-
-    case IPPROTO_ICMP:
+    }
+    else if ( !strcmp(s, "icmp") )
+    {
+        rtn.proto = IPPROTO_ICMP;
         sc->ip_proto_array[IPPROTO_ICMP] = 1;
         sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
-        break;
+    }
+    else if ( !strcmp(s, "ip") )
+    {
+        rtn.proto = ETHERNET_TYPE_IP;
 
-    case ETHERNET_TYPE_IP:
         /* This will be set via ip_protos */
         // FIXIT need to add these for a single ip any any rule?
         sc->ip_proto_array[IPPROTO_TCP] = 1;
         sc->ip_proto_array[IPPROTO_UDP] = 1;
         sc->ip_proto_array[IPPROTO_ICMP] = 1;
         sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
-        break;
-
-    default:
-        ParseError("bad protocol: %s", s);
-        break;
     }
+    else
+        ParseError("bad protocol: %s", s);
 }
 
 void parse_rule_nets(
@@ -1462,11 +1461,20 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
         otn->num_detection_opts++;
 }
 
-OptTreeNode* parse_rule_open(SnortConfig*, RuleTreeNode& rtn)
+OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 {
     if ( s_ignore )
         return nullptr;
 
+    if ( stub )
+    {
+        parse_rule_proto(sc, "tcp", rtn);
+        parse_rule_nets(sc, "any", true, rtn);
+        parse_rule_ports(sc, "any", true, rtn);
+        parse_rule_dir(sc, "->", rtn);
+        parse_rule_nets(sc, "any", false, rtn);
+        parse_rule_ports(sc, "any", false, rtn);
+    }
     OptTreeNode* otn = (OptTreeNode *)SnortAlloc(sizeof(OptTreeNode));
     otn->state = (OtnState*)SnortAlloc(sizeof(OtnState)*get_instance_max());
 

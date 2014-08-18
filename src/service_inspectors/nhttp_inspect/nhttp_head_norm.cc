@@ -40,87 +40,104 @@
 
 using namespace NHttpEnums;
 
-// This derivation removes embedded CRLFs (wrapping), omits leading and trailing linear white space, and replaces internal strings of <SP> and <LF> with a single <SP>
-int32_t HeaderNormalizer::deriveHeaderContent(const uint8_t *value, int32_t length, uint8_t *buffer) {
-    int32_t outLength = 0;
-    bool lastWhite = true;
+// This derivation removes embedded CRLFs (wrapping), omits leading and trailing linear white space, and replaces
+// internal strings of <SP> and <LF> with a single <SP>
+int32_t HeaderNormalizer::derive_header_content(const uint8_t *value, int32_t length, uint8_t *buffer) {
+    int32_t out_length = 0;
+    bool last_white = true;
     for (int32_t k=0; k < length; k++) {
         if ((value[k] == '\r') && (k+1 < length) && (value[k+1] == '\n')) k++;
         else if ((value[k] != ' ') && (value[k] != '\t')) {
-            lastWhite = false;
-            buffer[outLength++] = value[k];
+            last_white = false;
+            buffer[out_length++] = value[k];
         }
-        else if (!lastWhite) {
-            lastWhite = true;
-            buffer[outLength++] = ' ';
+        else if (!last_white) {
+            last_white = true;
+            buffer[out_length++] = ' ';
         }
     }
-    if ((outLength > 0) && (buffer[outLength - 1] == ' ')) outLength--;
-    return outLength;
+    if ((out_length > 0) && (buffer[out_length - 1] == ' ')) {
+        out_length--;
+    }
+    return out_length;
 }
 
 // This method normalizes the header field value for headId.
-int32_t HeaderNormalizer::normalize(const HeaderId headId, const int count, ScratchPad &scratchPad, uint64_t &infractions,
-        const HeaderId headerNameId[], const Field headerValue[], const int32_t numHeaders, Field &resultField) const {
-    if (resultField.length != STAT_NOTCOMPUTE) return resultField.length;
-    if (format == NORM_NULL) return resultField.length = STAT_NOTCONFIGURED;
-    if (count == 0) return resultField.length = STAT_NOSOURCE;
+int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count, ScratchPad &scratch_pad, uint64_t &infractions,
+        const HeaderId header_name_id[], const Field header_value[], const int32_t num_headers, Field &result_field) const {
+    if (result_field.length != STAT_NOTCOMPUTE) {
+        return result_field.length;
+    }
+    if (format == NORM_NULL) {
+        return result_field.length = STAT_NOTCONFIGURED;
+    }
+    if (count == 0) {
+        return result_field.length = STAT_NOSOURCE;
+    }
 
-    // Search Header IDs from all the headers in this message. concatenateRepeats means the header can properly be
+    // Search Header IDs from all the headers in this message. concatenate_repeats means the header can properly be
     // present more than once. The standard normalization is to concatenate all the repeated field values into a
     // comma-separated list. Otherwise only the first value will be normalized and the rest will be ignored.
 
-    int numMatches = 0;
-    int32_t bufferLength = 0;
-    int currMatch;
-    for (int k=0; k < numHeaders; k++) {
-        if (headerNameId[k] == headId) {
-            if (++numMatches == 1) currMatch = k;    // remembering location of the first matching header
-            bufferLength += headerValue[k].length;
-            if (!concatenateRepeats || (numMatches >= count)) break;
+    int num_matches = 0;
+    int32_t buffer_length = 0;
+    int curr_match;
+    for (int k=0; k < num_headers; k++) {
+        if (header_name_id[k] == head_id) {
+            if (++num_matches == 1) curr_match = k;    // remembering location of the first matching header
+            buffer_length += header_value[k].length;
+            if (!concatenate_repeats || (num_matches >= count)) break;
         }
     }
-    assert((!concatenateRepeats && (numMatches == 1)) || (concatenateRepeats && (numMatches == count)));
-    bufferLength += numMatches - 1;    // allow space for concatenation commas
+    assert((!concatenate_repeats && (num_matches == 1)) || (concatenate_repeats && (num_matches == count)));
+    buffer_length += num_matches - 1;    // allow space for concatenation commas
 
     // We are allocating twice as much memory as we need to store the normalized field value. The raw field value will
     // be copied into one half of the buffer. Concatenation and white space normalization happen during this step. Next
     // a series of normalization functions will transform the value into final form. Each normalization copies the value
     // from one half of the buffer to the other. Based on whether the number of normalization functions is odd or even,
     // the initial placement in the buffer is chosen so that the final normalization leaves the field value at the front
-    // of the buffer. The buffer space actually used is locked down in the scratchPad. The remainder of the first half
-    // and all of the second half are returned to the scratchPad for future use.
+    // of the buffer. The buffer space actually used is locked down in the scratch_pad. The remainder of the first half
+    // and all of the second half are returned to the scratch_pad for future use.
 
     // Round up to multiple of eight so that both halves are 64-bit aligned. 200 is a "way too big" fudge factor to allow
     // for modest expansion of field size during normalization.
-    bufferLength += (8-bufferLength%8)%8 + 200;
-    uint8_t* const scratch = scratchPad.request(2*bufferLength);
-    if (scratch == nullptr) return resultField.length = STAT_INSUFMEMORY;
+    buffer_length += (8-buffer_length%8)%8 + 200;
+    uint8_t* const scratch = scratch_pad.request(2*buffer_length);
+    if (scratch == nullptr) {
+        return result_field.length = STAT_INSUFMEMORY;
+    }
 
-    uint8_t* const frontHalf = scratch;
-    uint8_t* const backHalf = scratch + bufferLength;
-    uint8_t* working = (numNormalizers%2 == 0) ? frontHalf : backHalf;
-    int32_t dataLength = 0;
-    for (int j=0; j < numMatches; j++) {
+    uint8_t* const front_half = scratch;
+    uint8_t* const back_half = scratch + buffer_length;
+    uint8_t* working = (num_normalizers%2 == 0) ? front_half : back_half;
+    int32_t data_length = 0;
+    for (int j=0; j < num_matches; j++) {
         if (j >= 1) {
             *working++ = ',';
-            dataLength++;
-            while (headerNameId[++currMatch] != headId);
+            data_length++;
+            while (header_name_id[++curr_match] != head_id);
         }
-        int32_t growth = deriveHeaderContent(headerValue[currMatch].start, headerValue[currMatch].length, working);
+        int32_t growth = derive_header_content(header_value[curr_match].start, header_value[curr_match].length, working);
         working += growth;
-        dataLength += growth;
+        data_length += growth;
     }
 
-    for (int i=0; i < numNormalizers; i++) {
-        if (i%2 != numNormalizers%2) dataLength = normalizer[i](backHalf, dataLength, frontHalf, infractions, normArg[i]);
-        else                         dataLength = normalizer[i](frontHalf, dataLength, backHalf, infractions, normArg[i]);
-        if (dataLength <= 0) return resultField.length = dataLength;
+    for (int i=0; i < num_normalizers; i++) {
+        if (i%2 != num_normalizers%2) {
+            data_length = normalizer[i](back_half, data_length, front_half, infractions, norm_arg[i]);
+        }
+        else {
+            data_length = normalizer[i](front_half, data_length, back_half, infractions, norm_arg[i]);
+        }
+        if (data_length <= 0) {
+            return result_field.length = data_length;
+        }
     }
-    resultField.start = scratch;
-    resultField.length = dataLength;
-    scratchPad.commit(dataLength);
-    return resultField.length;
+    result_field.start = scratch;
+    result_field.length = data_length;
+    scratch_pad.commit(data_length);
+    return result_field.length;
 }
 
 

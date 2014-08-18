@@ -38,17 +38,17 @@
 
 class NHttpMsgBody : public NHttpMsgSection {
 public:
-    NHttpMsgBody(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, NHttpEnums::SourceId sourceId_);
+    NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
     void analyze();
-    void printSection(FILE *output);
-    void genEvents();
-    void updateFlow();
-    void legacyClients();
+    void print_section(FILE *output);
+    void gen_events();
+    void update_flow();
+    void legacy_clients();
 
 protected:
-    int64_t dataLength;
-    int64_t bodySections;
-    int64_t bodyOctets;
+    int64_t data_length;
+    int64_t body_sections;
+    int64_t body_octets;
 
     Field data;
 };

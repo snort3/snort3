@@ -887,45 +887,6 @@ ListHead * CreateRuleType(SnortConfig *sc, const char *name,
     return node->RuleList;
 }
 
-/****************************************************************************
- *
- * Function: GetRuleProtocol(char *)
- *
- * Purpose: Figure out which protocol the current rule is talking about
- *
- * Arguments: proto_str => the protocol string
- *
- * Returns: The integer value of the protocol
- *
- ***************************************************************************/
-int GetRuleProtocol(const char *proto_str)
-{
-    if (strcasecmp(proto_str, RULE_PROTO_OPT__TCP) == 0)
-    {
-        return IPPROTO_TCP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__UDP) == 0)
-    {
-        return IPPROTO_UDP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__ICMP) == 0)
-    {
-        return IPPROTO_ICMP;
-    }
-    else if (strcasecmp(proto_str, RULE_PROTO_OPT__IP) == 0)
-    {
-        return ETHERNET_TYPE_IP;
-    }
-    else
-    {
-        /* If we've gotten here, we have a protocol string we didn't recognize
-         * and should exit */
-        ParseError("bad protocol: %s.", proto_str);
-    }
-
-    return -1;
-}
-
 void FreeRuleLists(SnortConfig *sc)
 {
     if (sc == NULL)

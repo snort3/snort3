@@ -48,7 +48,8 @@ public:
     const char* get_source() { return source; };
 
     // FIXIT add asynchronous response too
-    void execute(AnalyzerCommand ac) { command = ac; };
+    bool execute(AnalyzerCommand);
+
     void set_config(Swapper* ps) { swap = ps; };
     bool swap_pending() { return swap != nullptr; };
 
@@ -60,7 +61,7 @@ private:
     bool done;
     uint64_t count;
     const char* source;
-    AnalyzerCommand command;
+    volatile AnalyzerCommand command;
     Swapper* swap;
 };
 

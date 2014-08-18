@@ -35,7 +35,7 @@
 #include "nhttp_msg_section.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
-#include "nhttp_msg_head.h"
+#include "nhttp_msg_header.h"
 
 using namespace NHttpEnums;
 
@@ -44,27 +44,28 @@ unsigned NHttpFlowData::nhttp_flow_id = 0;
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {}
 
 NHttpFlowData::~NHttpFlowData() {
+    delete request_line;
+    delete status_line;
     for(int k=0; k <= 1; k++) {
-        delete startLine[k];
         delete headers[k];
-        delete latestOther[k];
+        delete latest_other[k];
     }
 }
 
-void NHttpFlowData::halfReset(SourceId sourceId) {
-    assert((sourceId == SRC_CLIENT) || (sourceId == SRC_SERVER));
-    octetsExpected[sourceId] = STAT_NOTPRESENT;
+void NHttpFlowData::half_reset(SourceId source_id) {
+    assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
+    octets_expected[source_id] = STAT_NOTPRESENT;
 
-    versionId[sourceId] = VERS__NOTPRESENT;
-    methodId[sourceId] = METH__NOTPRESENT;
-    statusCodeNum[sourceId] = STAT_NOTPRESENT;
+    version_id[source_id] = VERS__NOTPRESENT;
+    method_id[source_id] = METH__NOTPRESENT;
+    status_code_num[source_id] = STAT_NOTPRESENT;
 
-    dataLength[sourceId] = STAT_NOTPRESENT;
-    bodySections[sourceId] = STAT_NOTPRESENT;
-    bodyOctets[sourceId] = STAT_NOTPRESENT;
-    numChunks[sourceId] = STAT_NOTPRESENT;
-    chunkSections[sourceId] = STAT_NOTPRESENT;
-    chunkOctets[sourceId] = STAT_NOTPRESENT;
+    data_length[source_id] = STAT_NOTPRESENT;
+    body_sections[source_id] = STAT_NOTPRESENT;
+    body_octets[source_id] = STAT_NOTPRESENT;
+    num_chunks[source_id] = STAT_NOTPRESENT;
+    chunk_sections[source_id] = STAT_NOTPRESENT;
+    chunk_octets[source_id] = STAT_NOTPRESENT;
 }
 
 

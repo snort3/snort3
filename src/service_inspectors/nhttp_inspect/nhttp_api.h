@@ -42,7 +42,7 @@ private:
     NHttpApi() = delete;
     static Module* nhttp_mod_ctor() { return new NHttpModule; };
     static void nhttp_mod_dtor(Module* m) { delete m; };
-    static const char* nhttp_myName;
+    static const char* nhttp_my_name;
     static void nhttp_init();
     static void nhttp_term() {};
     static Inspector* nhttp_ctor(Module* mod);

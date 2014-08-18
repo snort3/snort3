@@ -37,31 +37,31 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t *buffer, const uint16_t bufSize, NHttpFlowData *sessionData_, SourceId sourceId_) :
-   NHttpMsgHeadShared(buffer, bufSize, sessionData_, sourceId_) {
-    delete sessionData->latestOther[sourceId];
-    sessionData->latestOther[sourceId] = this;
+NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+   NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_) {
+    delete session_data->latest_other[source_id];
+    session_data->latest_other[source_id] = this;
 }
 
-void NHttpMsgTrailer::genEvents() {
-    NHttpMsgHeadShared::genEvents();
+void NHttpMsgTrailer::gen_events() {
+    NHttpMsgHeadShared::gen_events();
 }
 
-void NHttpMsgTrailer::printSection(FILE *output) {
-    NHttpMsgSection::printMessageTitle(output, "trailer");
-    NHttpMsgHeadShared::printHeaders(output);
-    NHttpMsgSection::printMessageWrapup(output);
+void NHttpMsgTrailer::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "trailer");
+    NHttpMsgHeadShared::print_headers(output);
+    NHttpMsgSection::print_message_wrapup(output);
 }
 
 
-void NHttpMsgTrailer::updateFlow() {
-    if (tcpClose) {
-        sessionData->typeExpected[sourceId] = SEC_CLOSED;
-        sessionData->halfReset(sourceId);
+void NHttpMsgTrailer::update_flow() {
+    if (tcp_close) {
+        session_data->type_expected[source_id] = SEC_CLOSED;
+        session_data->half_reset(source_id);
     }
     else {
-        sessionData->typeExpected[sourceId] = (sourceId == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
-        sessionData->halfReset(sourceId);
+        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
+        session_data->half_reset(source_id);
     }
 }
 

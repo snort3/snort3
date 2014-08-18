@@ -20,19 +20,14 @@
 #   \# - #
 #   \@ - @
 #   \xnn or \Xnn - where nn is a two-digit hexadecimal number. Insert an arbitrary 8-bit number as the next character. a-f and A-F are both acceptable.
-#   \/nnn/ - where nnn is a variable-length decimal number. Insert nnn octets of fill data. The fill characters are 'A' - 'Z' with the final two bytes
-#            "xy" for a normal body and "\r\n" for a chunk.
-#   \B, \C, and \T - bridge, cut, and TCP close. See below.
 
-# The default procedure for separating data into segments for presentation to PAF is 1) whenever a paragraph ends (blank line) and 2) every MSS octets,
-# where MSS is currently a source code constant set to 1460. The \C escape forces an immediate separation point even in the middle of a paragraph. It is
-# useful for testing PAF where message segments often arrive in pieces. \B causes prevents the immediately following blank line(s) from causing a
-# separation point. Data resumes with the next non-newline character as if there was no gap. This allows PAF to be tested with the end of a section and
-# the beginning of the next section or message in the same packet. Commands and comments following \B are not allowed. Data must resume immediately
-# following the blank lines.
+# Data is separated into segments for presentation to PAF whenever a paragraph ends (blank line).
 #
-# \T functions as \C but causes the TCP connection closed indication to be set. It only makes sense at the end of a paragraph. \C\T simulates a data
-# packet subsequently followed by a close with no more data.
+# Whenever a segment contains insufficient data to make up a body or chunk, fill data will be generated to make up the difference based on the
+# Content-Length field or chunk header. Specifically flushing more data than in the current segment will trigger filling. The user should include at
+# least one character of body/chunk data either as part of the previous header segment or at the beginning of a new segment following the headers.
+# All data bytes included in the file will be used followed by required fill data in the pattern ABC...XYZABC... The final two characters will be
+# determined by bodyend "xy" or chunkend "\r\n".
 
 
 # ***********************************************************************************************
@@ -486,14 +481,14 @@ HTTP/2.0 200 OK\r\nContent-type: text/plain\r\nTransfer-Encoding: gzip\r\nTransf
 @bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
-\/19/
+I'm a message body.
 
 @7002
 @break
 @bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
-\/10/
+12345
 
 @7003
 @break
@@ -501,7 +496,7 @@ HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 
-\/10/
+12345678
 
 @7004
 @break
@@ -509,7 +504,7 @@ HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 
-\/19/
+I'm a message body.
 
 @7005
 @break
@@ -520,7 +515,14 @@ Transfer-Encoding: identity\r\n
 CoNtEnT-lEnGtH:16382\r\n
 Content-type: text/plain\r\n
 \r\n
-\/800/
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
 
 @7006
 @break
@@ -530,7 +532,7 @@ POST /body/in/a/request/ HTTP/1.1\r\n
 Content-Length:16383\r\n
 \r\n
 
-\/1300/
+*
 
 @7007
 @break
@@ -539,7 +541,7 @@ Content-Length:16383\r\n
 POST /body/in/a/request/ HTTP/1.1\r\n
 Content-Length:16384\r\n
 \r\n
-\/1/
+*
 
 @7008
 @break
@@ -549,7 +551,7 @@ HTTP/1.0 408 barely too big for one section\r\n
 Content-Length:16385\r\n
 \r\n
 
-\/1/
+*
 
 @7009
 @break
@@ -558,7 +560,7 @@ Content-Length:16385\r\n
 HTTP/1.1 408 barely too big for two sections\r\n
 Content-Length:32772\r\n
 \r\n
-\/2/
+**
 
 @7010
 @break
@@ -568,7 +570,7 @@ HTTP/1.1 408 more than eight sections\r\n
 Content-Length:133072\r\n
 \r\n
 
-\/2/
+********
 
 # ***********************************************************************************************
 # Invalid Content-Length
@@ -594,14 +596,13 @@ HTTP/1.1 200 Silly gigantic length\r\nContent-type: \ttext/plain\t\r\nContent-LE
 HTTP/1.1 208 Example with chunks\r\nTransfer-Encoding: chunked\r\n\r\n
 
 64\r\n
-\/100/
+1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\r\n
 
 8A\r\n
-\/60/
 
-e6\r\n
+chunkoflength138
 
-\/1/
+e6\r\nchunkoflength230
 
 0\r\n
 
@@ -615,32 +616,34 @@ POST /request/with/chunks HTTP/1.1\r\n
 Content-Type:    text/plain\r\n
 Transfer-Encoding: compress\r\n
 Via: 1.1 proxy3.company.com\r\n
-tRaNsFeR-eNcO\CdInG: cHuNkEd   \r\n
+tRaNsFeR-eNcO
+
+dInG: cHuNkEd   \r\n
 Accept: *\r\n
 \r\n
 
 1C320\r\n
-\/1400/
+chunk1
 
 1F40; testing-the-extension-feature\r\n
-\/2/
+chunk2
 
 13FFE;  \r\n
 
-\/1460/
+chunk3
 
 4000;\r\n
-\/1460/
+chunk4
 
 3FFF;\r\n
 
-\/2/
+chunk5
 
 3FFE\r\n
-\/1454/
+chunk6
 
 4001;\r\n
-\/1/
+chunk7
 
 00000;chunkextension=3\r\n
 
@@ -679,6 +682,7 @@ Accept-Language: is\r\n
 @13001
 @break
 @request
+
 
 
 # ***********************************************************************************************
