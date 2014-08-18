@@ -74,7 +74,7 @@ static const RuleMap mpls_rules[] =
 class MplsModule : public DecodeModule
 {
 public:
-    MplsModule() : DecodeModule(CD_MPLS_NAME) {};
+    MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_params) {};
 
     const RuleMap* get_rules() const
     { return mpls_rules; }

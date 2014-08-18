@@ -361,15 +361,16 @@ struct IcmpHdr {
 
 
 
-bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
 {
-    uint8_t* p;
+    // FIXIT:  speak with Russ, then get rid of commented lines
+//    uint8_t* p;
     IcmpHdr* ho;
 
     if (!update_buffer(out, sizeof(*ho)))
         return false;
 
-    const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
+//    const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
     ho = reinterpret_cast<IcmpHdr*>(out->base);
 
     enc->proto = IPPROTO_ID_ICMPV4;

@@ -353,7 +353,7 @@ typedef struct {
 } // namespace
 
 
-bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
+bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
 {
     checksum::Pseudoheader6 ps6;
     IcmpHdr* ho;

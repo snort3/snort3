@@ -89,10 +89,9 @@ public:
 
 
 /* ESP constants */
-const uint16_t ESP_PROT_ID = 50;
-const uint32_t ESP_HEADER_LEN = 8;
-const uint32_t ESP_AUTH_DATA_LEN = 12;
-const uint32_t ESP_TRAILER_LEN = 2;
+constexpr uint32_t ESP_HEADER_LEN = 8;
+constexpr uint32_t ESP_AUTH_DATA_LEN = 12;
+constexpr uint32_t ESP_TRAILER_LEN = 2;
 
 } // anonymous namespace
 
@@ -100,7 +99,7 @@ const uint32_t ESP_TRAILER_LEN = 2;
 
 void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ESP_PROT_ID);
+    v.push_back(IPPROTO_ID_ESP);
 }
 
 
@@ -154,6 +153,9 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     pad_length = *(esp_payload + guessed_len);
     next_prot_id = *(esp_payload + guessed_len + 1);
 
+    // TODO:  Leftover from Snort. Do we really want thsi?
+    const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
+
     /* Adjust the packet length to account for the padding.
        If the padding length is too big, this is probably encrypted traffic. */
     if (pad_length < raw_len)
@@ -169,24 +171,21 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
 
+    /* Attempt to decode the inner payload.
+       There is a small chance that an encrypted next_header would become a
+       different valid next_header. The DECODE__UNSURE_ENCAP flag tells the next
+       decoder stage to silently ignore invalid headers. */
+
 
     if (PacketManager::has_codec(next_prot_id))
     {
-        /* Attempt to decode the inner payload.
-           There is a small chance that an encrypted next_header would become a
-           different valid next_header. The DECODE__UNSURE_ENCAP flag tells the next
-           decoder stage to silently ignore invalid headers. */
         p->decode_flags |= DECODE__UNSURE_ENCAP;
-        p->decode_flags |= DECODE__TRUST_ON_FAIL;
-        const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
     }
     else
     {
         // If we cant' decode the packet anymore, this is probably encrypted.
         // set the data pointers and pretend this is an ip datagram.
         p->packet_flags |= PKT_TRUST;
-        p->data = esp_payload;
-        p->dsize = (u_short) raw_len - lyr_len;
     }
 
     return true;

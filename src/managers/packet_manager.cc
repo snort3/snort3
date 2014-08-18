@@ -457,10 +457,17 @@ void PacketManager::decode(
             else
                 s_stats[other_codecs]++;
         }
+        else
+        {
+            // nested 'if' for when we have addtional code in UNSURE_ENCAP
 
-        if (p->decode_flags & DECODE__TRUST_ON_FAIL)
-            p->packet_flags |= PKT_TRUST;
+            // Hardcodec ESP because we trust if an only if the layer
+            // immediately following ESP fails.
+            if (p->layers[p->num_layers].prot_id == IPPROTO_ID_ESP)
+                p->packet_flags |= PKT_TRUST;
+        }
     }
+
 
     if (ScMaxEncapsulations() != -1 &&
         p->encapsulations > ScMaxEncapsulations())

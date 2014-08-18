@@ -697,7 +697,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     ho->th_sum = 0;
     const ip::IpApi * const ip_api = &enc->p->ip_api;
 
-    if (ip_api->is_ip4() == 4) {
+    if (ip_api->is_ip4()) {
         checksum::Pseudoheader ps;
         int len = buff_diff(out, (uint8_t*)ho);
 

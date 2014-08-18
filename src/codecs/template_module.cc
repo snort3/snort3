@@ -44,7 +44,7 @@ static const RuleMap codec_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-NameCodec::NameCodec() : DecodeModule(CODEC_NAME, codec_params, codec_rules)
+NameCodec::NameCodec() : DecodeModule(CODEC_NAME, codec_params)
 { }
 
 bool NameCodec::set(const char*, Value& v, SnortConfig* sc)
@@ -63,3 +63,6 @@ bool NameCodec::begin(const char*, int, SnortConfig*)
     option1 = false;
     return true;
 }
+
+const NameCodec::RuleMap* get_rules() const
+{ return codec_rules; }

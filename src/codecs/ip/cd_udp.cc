@@ -84,7 +84,7 @@ static const RuleMap udp_rules[] =
 class UdpModule : public DecodeModule
 {
 public:
-    UdpModule() : DecodeModule(CD_UDP_NAME) {}
+    UdpModule() : DecodeModule(CD_UDP_NAME, udp_params) {}
 
     const RuleMap* get_rules() const
     { return udp_rules; }
@@ -561,24 +561,16 @@ void UdpCodec::format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 
 
 static Module* mod_ctor()
-{
-    return new UdpModule;
-}
+{ return new UdpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new UdpCodec();
-}
+{ return new UdpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi udp_api =
