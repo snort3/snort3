@@ -62,15 +62,35 @@ if (APPLE)
 endif()
 
 
+include(CheckCXXCompilerFlag)
+
 
 # the Clang compiler on MacOS X may need the c++ library explicityly specified
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+
+    set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined -Wl,dynamic_lookup")
+    check_cxx_compiler_flag("" HAVE_DYNAMIC_LOOKUP)
+    if(HAVE_DYNAMIC_LOOKUP)
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+    endif()
+    set (CMAKE_REQUIRED_FLAGS "")
+
+
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 
         find_library(CLANG_CXX_LIBRARY 
             NAMES c++
         )
     endif()
 endif()
+
+set (CMAKE_REQUIRED_FLAGS "-Wl,-export-dynamic")
+check_cxx_compiler_flag ("" HAVE_EXPORT_DYNAMIC)
+if (HAVE_EXPORT_DYNAMIC)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -export-dynamic")
+endif ()
+
+
+unset(CMAKE_REQUIRED_FLAGS)

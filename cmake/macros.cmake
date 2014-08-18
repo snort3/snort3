@@ -53,7 +53,8 @@ macro (add_shared_library libname install_path)
         set_target_properties ( ${libname} 
             PROPERTIES
             COMPILE_FLAGS "-DBUILDING_SO"
-            LINK_FLAGS "-export-dynamic -shared"
+#            LINK_FLAGS "-export-dynamic -shared"
+            LINK_FLAGS "-shared"
         )
 
         #install into given library
