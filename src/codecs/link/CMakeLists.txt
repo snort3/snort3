@@ -46,4 +46,3 @@ if(STATIC_CODECS)
     )
 
 endif(STATIC_CODECS)
-

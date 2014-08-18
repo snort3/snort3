@@ -1,9 +1,10 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
+
+if STATIC_CODECS
 noinst_LIBRARIES = liblink_codecs.a
 
-
-plugin_list = \
+liblink_codecs_a_SOURCES = \
 cd_arp.cc \
 cd_eapol.cc \
 cd_erspan2.cc \
@@ -13,10 +14,6 @@ cd_ppp_encap.cc \
 cd_pppoe.cc \
 cd_trans_bridge.cc \
 cd_vlan.cc
-
-
-if STATIC_CODECS
-liblink_codecs_a_SOURCES = $(plugin_list)
 
 else
 

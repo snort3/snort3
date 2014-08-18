@@ -60,6 +60,7 @@ endif()
 if (STATIC_CODECS)
     set (STATIC_CODEC_LIBRARIES
         link_codecs
+        root_codecs
     )
 endif()
 
@@ -115,7 +116,6 @@ target_link_libraries( snort
     ips_actions
     managers
     codecs
-    root_codecs
     ip_codecs
     misc_codecs
     ${STATIC_CODEC_LIBRARIES}

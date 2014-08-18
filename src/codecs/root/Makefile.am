@@ -1,10 +1,7 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-noinst_LIBRARIES = libroot_codecs.a
-
-
-
 if STATIC_CODECS
+noinst_LIBRARIES = libroot_codecs.a
 
 libroot_codecs_a_SOURCES = \
 cd_eth.cc \
@@ -24,7 +21,6 @@ cd_wlan.cc
 #root_pppserial.cc \
 #root_chdlc.cc \
 #root_i4lciscoip.cc
-
 
 
 else

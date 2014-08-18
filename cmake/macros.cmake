@@ -55,8 +55,8 @@ macro (add_shared_library libname install_path)
             COMPILE_FLAGS "-DBUILDING_SO"
             LINK_FLAGS "-export-dynamic -shared"
         )
-        #INSTALL INTO STATIC LIBRARY
-        
+
+        #install into given library
         install (TARGETS ${libname}
             LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
         )

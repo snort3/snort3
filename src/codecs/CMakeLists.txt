@@ -23,12 +23,12 @@ add_library( codecs STATIC
 if (STATIC_CODECS)
     set (CODEC_PLUGIN_LIBRARIES
         link_codecs
+        root_codecs
     )
 endif(STATIC_CODECS)
 
 target_link_libraries( codecs
     ${CODEC_PLUGIN_LIBRARIES}
-    root_codecs
     ip_codecs
     misc_codecs
     protocols

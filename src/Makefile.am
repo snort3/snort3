@@ -17,6 +17,12 @@ service_inspectors/rpc_decode/librpc_decode.a \
 service_inspectors/wizard/libwizard.a
 endif
 
+if STATIC_CODECS
+codec_list = \
+codecs/root/libroot_codecs.a \
+codecs/link/liblink_codecs.a
+endif
+
 # order libs to avoid undefined symbols
 # from gnu linker
 snort_LDADD = \
@@ -26,9 +32,8 @@ main/libmain.a \
 loggers/libloggers.a \
 codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
-codecs/link/liblink_codecs.a \
 codecs/misc/libmisc_codecs.a \
-codecs/root/libroot_codecs.a \
+${codec_list} \
 codecs/libcodec_utils.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/binder/libbinder.a \
