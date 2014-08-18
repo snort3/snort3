@@ -38,6 +38,7 @@
 #include "stream/stream_api.h"
 #include "snort.h"
 
+#include "managers/action_manager.h"
 #include "managers/packet_manager.h"
 #include "packet_io/sfdaq.h"
 
@@ -55,9 +56,6 @@ THREAD_LOCAL int active_tunnel_bypass = 0;
 THREAD_LOCAL int active_suspend = 0;
 
 THREAD_LOCAL int active_have_rsp = 0;
-
-static THREAD_LOCAL void* s_rejData, *s_rspData;
-static THREAD_LOCAL Active_ResponseFunc s_rejFunc = NULL, s_rspFunc = NULL;
 
 static THREAD_LOCAL uint64_t s_injects = 0;
 
@@ -81,73 +79,6 @@ static inline PROTO_ID GetInnerProto (const Packet* p)
 {
     if ( !p->num_layers ) return PROTO_MAX;
     return ( p->layers[p->num_layers-1].proto );
-}
-
-//--------------------------------------------------------------------
-// this implementation ensures that flexible responses
-// take precedence over active responses.
-
-int Active_QueueReject (void)
-{
-    if ( Active_Suspended() )
-        return 0;
-
-    if ( !s_rejFunc )
-    {
-        s_rejFunc = (Active_ResponseFunc)Active_KillSession;
-        s_rejData = NULL;
-        active_have_rsp = 1;
-    }
-    return 0;
-}
-
-int Active_QueueResponse (Active_ResponseFunc f, void* pv)
-{
-    if ( Active_Suspended() )
-        return 0;
-
-    if ( !s_rspFunc )
-    {
-        s_rspFunc = f;
-        s_rspData = pv;
-        active_have_rsp = 1;
-    }
-    return 0;
-}
-
-// helper function
-static inline void Active_ClearQueue (void)
-{
-    s_rejFunc = s_rspFunc = NULL;
-    s_rejData = s_rspData = NULL;
-}
-
-int Active_ResetQueue ()
-{
-    Active_ClearQueue();
-    return 0;
-}
-
-int Active_SendResponses (Packet* p)
-{
-    if ( s_rspFunc )
-    {
-        s_rspFunc(p, s_rspData);
-    }
-    else if ( s_rejFunc )
-    {
-        s_rejFunc(p, s_rejData);
-    }
-    else
-    {
-        return 0;
-    }
-    if ( p->flow )
-    {
-        stream.init_active_response(p, p->flow);
-    }
-    Active_ClearQueue();
-    return 1;
 }
 
 //--------------------------------------------------------------------
@@ -435,7 +366,7 @@ static inline int _Active_DoReset(Packet *p)
     {
         case IPPROTO_TCP:
             if ( Active_IsRSTCandidate(p) )
-                Active_QueueReject();
+                ActionManager::queue_reject();
             break;
 
         // FIXIT send unr to udp/icmp4/icmp6 only or for all non-tcp?
@@ -443,7 +374,7 @@ static inline int _Active_DoReset(Packet *p)
         case IPPROTO_ICMP:
         case IPPROTO_ICMPV6:
             if ( Active_IsUNRCandidate(p) )
-                Active_QueueReject();
+                ActionManager::queue_reject();
             break;
     }
 

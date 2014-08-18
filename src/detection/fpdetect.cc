@@ -147,15 +147,15 @@ static inline void InitMatchInfo(OTNX_MATCH_DATA *o)
 static inline void fpLogOther (
     Packet* p, RuleTreeNode* rtn, OptTreeNode* otn, int action)
 {
-    // FIXIT some or all of these can be migrated to user defined actions
-    otn_trigger_actions(otn, p);
-
     if ( EventTrace_IsEnabled() )
         EventTrace_Log(p, otn, action);
 
-    // user defined actions are done here
+    // rule option actions are queued here (eg replace)
+    otn_trigger_actions(otn, p);
+
+    // rule actions are queued here (eg reject)
     if ( rtn->listhead->action )
-        rtn->listhead->action->exec(p);
+        ActionManager::queue(rtn->listhead->action);
 }
 
 /*

@@ -100,7 +100,6 @@ struct ReactData
     int rule_msg;        // 1=>use rule msg; 0=>use DEFAULT_MSG
     ssize_t buf_len;     // length of response
     char* resp_buf;      // response to send
-
 };
 
 static char* s_page = NULL;
@@ -108,7 +107,7 @@ static char* s_page = NULL;
 class ReactAction : public IpsAction
 {
 public:
-    ReactAction(ReactData* c) : IpsAction(s_name)
+    ReactAction(ReactData* c) : IpsAction(s_name, ACT_PROXY)
     { config = c; };
 
     ~ReactAction();
@@ -116,10 +115,11 @@ public:
     void exec(Packet*);
 
 private:
+    void send(Packet*);
+
+private:
     ReactData* config;
 };
-
-static void React_Send(Packet*,  void*);
 
 //-------------------------------------------------------------------------
 // class methods
@@ -144,10 +144,22 @@ void ReactAction::exec(Packet* p)
     MODULE_PROFILE_START(reactPerfStats);
 
     if ( Active_IsRSTCandidate(p) )
-        Active_QueueResponse(React_Send, config);
+        send(p);
 
     Active_DropSession();
     MODULE_PROFILE_END(reactPerfStats);
+}
+
+void ReactAction::send (Packet* p)
+{
+    EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
+    EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & config->buf_len);
+
+    Active_IgnoreSession(p);
+
+    Active_SendData(p, df, (uint8_t*)config->resp_buf, config->buf_len);
+    Active_SendReset(p, rf);
+    Active_SendReset(p, ENC_FLAG_FWD);
 }
 
 //-------------------------------------------------------------------------
@@ -210,23 +222,6 @@ static bool react_getpage (const char* file)
 }
 
 //--------------------------------------------------------------------
-
-static void React_Send (Packet* p,  void* pv)
-{
-    ReactData* rd = (ReactData*)pv;
-    EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
-    EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & rd->buf_len);
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(reactPerfStats);
-    Active_IgnoreSession(p);
-
-    Active_SendData(p, df, (uint8_t*)rd->resp_buf, rd->buf_len);
-    Active_SendReset(p, rf);
-    Active_SendReset(p, ENC_FLAG_FWD);
-
-    MODULE_PROFILE_END(reactPerfStats);
-}
 
 // format response buffer
 static void react_config (ReactData* rd)

@@ -33,9 +33,13 @@ using namespace std;
 #include "search_engines/search_engines.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+#include "actions/act_replace.h"
 
 typedef list<const ActionApi*> AList;
 static AList s_actors;
+
+static IpsAction* s_reject = nullptr;
+static THREAD_LOCAL IpsAction* s_action = nullptr;
 
 //-------------------------------------------------------------------------
 // engine plugins
@@ -78,10 +82,27 @@ void ActionManager::instantiate(
 
     if ( act )
     {
+        if ( !s_reject && !strcmp(act->get_name(), "reject") )
+            s_reject = act;
+
         ListHead* lh = CreateRuleType(sc, api->base.name, api->type, 0, nullptr);
         assert(lh);
         lh->action = act;
     }
+}
+
+void ActionManager::thread_init(SnortConfig*)
+{
+    for ( auto* p : s_actors )
+        if ( p->tinit )
+            p->tinit();
+}
+
+void ActionManager::thread_term(SnortConfig*)
+{
+    for ( auto* p : s_actors )
+        if ( p->tterm )
+            p->tterm();
 }
 
 #if 0
@@ -95,6 +116,30 @@ static const ActionApi* get_api(const char* keyword)
 }
 #endif
 
-void ActionManager::execute(Packet*)
-{ }
+void ActionManager::execute(Packet* p)
+{
+    if ( s_action )
+    {
+        s_action->exec(p);
+        s_action = nullptr;
+    }
+}
+
+void ActionManager::queue(IpsAction* a)
+{
+    if ( !s_action || a->get_action() > s_action->get_action() )
+        s_action = a;
+}
+
+void ActionManager::queue_reject()
+{
+    if ( s_reject )
+        queue(s_reject);
+}
+
+void ActionManager::reset_queue()
+{
+    s_action = nullptr;
+    Replace_ResetQueue();
+}
 

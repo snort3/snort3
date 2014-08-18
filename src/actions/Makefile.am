@@ -10,7 +10,8 @@ actions.h
 plugin_list = \
 act_react.cc \
 act_reject.cc \
-act_resp.cc
+act_replace.cc \
+act_replace.h
 
 libips_actions_a_SOURCES = \
 actions.cc \
@@ -32,10 +33,10 @@ libact_reject_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libact_reject_la_LDFLAGS = -export-dynamic -shared
 libact_reject_la_SOURCES = act_reject.cc
 
-actlib_LTLIBRARIES += libact_resp.la
-libact_resp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libact_resp_la_LDFLAGS = -export-dynamic -shared
-libact_resp_la_SOURCES = act_resp.cc
+actlib_LTLIBRARIES += libact_replace.la
+libact_replace_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libact_replace_la_LDFLAGS = -export-dynamic -shared
+libact_replace_la_SOURCES = act_replace.cc act_replace.h
 endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

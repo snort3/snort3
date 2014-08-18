@@ -619,8 +619,6 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
 
     OtnInit(sc);
 
-    InitVarTables(sc->policy_map->ips_policy[0]);
-
     sc->fast_pattern_config = FastPatternConfigNew();
     sc->event_queue_config = EventQueueConfigNew();
     sc->threshold_config = ThresholdConfigNew();
