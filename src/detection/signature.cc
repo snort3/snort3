@@ -337,20 +337,8 @@ void OtnLookupAdd(SFGHASH *otn_map, OptTreeNode *otn)
             break;
 
         case SFGHASH_INTABLE:
-            /* Assume it's a rule without an sid */
-            if (key.sid == 0)
-            {
-                // FIXIT should not be possible - sid is required
-                ParseError("duplicate rule with same gid (%u) and no sid.  To "
-                           "avoid this, make sure all of your rules define a "
-                           "sid.", key.gid);
-            }
-            else
-            {
-                ParseError("duplicate rule with same gid (%u) and sid (%u)",
-                           key.gid, key.sid);
-            }
-
+            ParseError("duplicate rule with same gid (%u) and sid (%u)",
+                key.gid, key.sid);
             break;
 
         case SFGHASH_NOMEM:

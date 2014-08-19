@@ -213,27 +213,6 @@ void EventManager::instantiate(
 
 void EventManager::configure_outputs(SnortConfig*)
 {
-#if 0
-    // FIXIT for reference only; need to convert ruletype foo
-    // to action plugins
-    OutputConfig *config;
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Output Plugin\n"););
-
-    /* Configure output plugins for user defined rule types */
-    for (config = sc->rule_type_output_configs; config != NULL; config = config->next)
-    {
-        push_parse_location(config->file_name, config->file_line);
-        Output* p = get_out(config->keyword);
-
-        if ( !p )
-            ParseError("unknown output plugin: '%s'", config->keyword);
-
-        /* Each user defined rule type has it's own rule list
-         * and the output plugin attaches to it here */
-        p->handler->configure(sc, config->opts);
-        pop_parse_location();
-    }
-#endif
 }
 
 //-------------------------------------------------------------------------

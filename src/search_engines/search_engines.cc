@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -29,8 +28,6 @@ const BaseApi* search_engines[] =
 {
 #ifdef STATIC_IPS_OPTIONS
     se_ac_banded,
-    se_ac_bnfa,
-    se_ac_bnfa_q,
     se_ac_full,
     se_ac_full_q,
     se_ac_sparse,
@@ -40,6 +37,8 @@ const BaseApi* search_engines[] =
     se_intel_cpm,
 #endif
 #endif
+    se_ac_bnfa,
+    se_ac_bnfa_q,
     nullptr
 };
 

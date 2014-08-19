@@ -65,7 +65,6 @@
 #include "util.h"
 #include "sflsq.h"
 #include "snort_bounds.h"
-#include "generators.h"
 #include "snort.h"
 #include "time/packet_time.h"
 #include "protocols/packet.h"

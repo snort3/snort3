@@ -24,12 +24,9 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
 #include "protocols/packet.h"  
 #include "static_include.h"
 #include "decoder_includes.h"
-
-
 
 static const uint16_t ETHERNET_TYPE_IPX = 0x8137;
 

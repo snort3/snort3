@@ -43,7 +43,6 @@
 
 #include "snort.h"
 #include "sfip/ipv6_port.h"
-#include "generators.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "util.h"

@@ -60,7 +60,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "generators.h"
 #include "hi_events.h"
 #include "protocols/packet.h"
 #include "snort.h"

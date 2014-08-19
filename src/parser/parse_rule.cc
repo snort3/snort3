@@ -39,7 +39,7 @@
 #include <fnmatch.h>
 
 #include "snort_bounds.h"
-#include "rules.h"
+#include "detection/rules.h"
 #include "treenodes.h"
 #include "parser.h"
 #include "cmd_line.h"
@@ -50,7 +50,6 @@
 #include "detect.h"
 #include "protocols/packet.h"
 #include "fpcreate.h"
-#include "generators.h"
 #include "tag.h"
 #include "signature.h"
 #include "filters/sfthreshold.h"
@@ -1511,7 +1510,8 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("SO rule %s not loaded.", otn->soid);
         else
         {
-            otn->sigInfo.generator = 3;  // FIXIT why isn't this set already? (don't hardcode)
+            // FIXIT why isn't this set already? (don't hardcode)
+            otn->sigInfo.generator = GENERATOR_SNORT_SHARED;
             entered = true;
             return so_opts;
         }
@@ -1548,7 +1548,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
         otn->sigInfo.text_rule = true;
         detect_rule_count++;
     }
-    else if ( otn->sigInfo.generator == 3 )
+    else if ( otn->sigInfo.generator == GENERATOR_SNORT_SHARED )
     {
         otn->sigInfo.text_rule = true;
         so_rule_count++;

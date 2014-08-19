@@ -47,7 +47,6 @@
 #include "mstring.h"
 #include "protocols/packet.h"
 #include "detect.h"
-#include "generators.h"
 #include "perf_monitor/perf.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"

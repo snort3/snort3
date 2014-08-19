@@ -90,8 +90,8 @@ typedef enum {
     ACT_UNESCAPE
 } ActionJSNorm;
 
-static int hex_lookup[256];  // FIXIT 1 / process
-static int valid_chars[256];  // FIXIT 1 / process
+static int hex_lookup[256];
+static int valid_chars[256];
 
 static THREAD_LOCAL char decoded_out[6335];
 
@@ -160,7 +160,7 @@ typedef struct {
 #define S3 S2+1
 #define S4 S3+1
 
-static const JSNorm sfcc_norm[] =   // FIXIT 1 / process
+static const JSNorm sfcc_norm[] =
 {
     { S0+0, '(', S0+1, S0+1, SFCC_ACT_NOP },
     { S0+1, '0', S0+2, S1+0, SFCC_ACT_NOP },

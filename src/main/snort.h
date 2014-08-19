@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
+#include "detection/rules.h"
 #include "snort_types.h"
 #include "sfip/sf_ipvar.h"
 #include "main/snort_config.h"
@@ -483,7 +484,7 @@ static inline int ScGid(void)
     return snort_conf->group_id;
 }
 
-// use of macro avoids depending on generators.h
+// FIXIT this should be feature of otn
 #define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)
 
 static inline void EnableInternalEvent(RateFilterConfig *config, uint32_t sid)

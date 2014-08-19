@@ -30,7 +30,6 @@ using namespace std;
 #include "util.h"
 #include "module_manager.h"
 #include "framework/ips_action.h"
-#include "search_engines/search_engines.h"
 #include "parser/parser.h"
 #include "log/messages.h"
 #include "actions/act_replace.h"

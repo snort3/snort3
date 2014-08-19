@@ -67,7 +67,6 @@
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_reader.h"
 #include "ppm.h"
-#include "generators.h"
 #include "detection_util.h"
 #include "detection_options.h"
 #include "actions/actions.h"

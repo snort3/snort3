@@ -7,6 +7,9 @@
 -- fixed end of rule parsing to not require ; and recognize incomplete rules
 -- fixed executing a command while paused
 -- added act_replace
+-- eliminated generators.h
+-- misc FIXIT cleanup
+-- made ac_bnfa/q mpse static only so dynamic build runs w/o any plugins
 
 112
 -- initial action plugin - reject

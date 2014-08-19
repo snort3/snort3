@@ -166,7 +166,6 @@ void ReactAction::send (Packet* p)
 // implementation foo
 //-------------------------------------------------------------------------
 
-// FIXIT this moves to module
 static bool react_getpage (const char* file)
 {
     char* msg;
