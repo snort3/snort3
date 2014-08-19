@@ -30,10 +30,10 @@ static const Parameter tkr_params[] =
 
 static const RuleMap tkr_rules[] =
 {
-    { DECODE_BAD_TRH, "(" CD_TR_NAME ") Bad Token Ring Header" },
-    { DECODE_BAD_TR_ETHLLC, "(" CD_TR_NAME ") Bad Token Ring ETHLLC Header" },
-    { DECODE_BAD_TR_MR_LEN, "(" CD_TR_NAME ") Bad Token Ring MRLENHeader" },
-    { DECODE_BAD_TRHMR, "(" CD_TR_NAME ") Bad Token Ring MR Header" },
+    { DECODE_BAD_TRH, "(" TR_NAME ") Bad Token Ring Header" },
+    { DECODE_BAD_TR_ETHLLC, "(" TR_NAME ") Bad Token Ring ETHLLC Header" },
+    { DECODE_BAD_TR_MR_LEN, "(" TR_NAME ") Bad Token Ring MRLENHeader" },
+    { DECODE_BAD_TRHMR, "(" TR_NAME ") Bad Token Ring MR Header" },
     { 0, nullptr }
 };
 
@@ -41,7 +41,7 @@ static const RuleMap tkr_rules[] =
 // token ring module
 //-------------------------------------------------------------------------
 
-TrCodecModule::TrCodecModule() : DecodeModule(CD_TR_NAME, tkr_params)
+TrCodecModule::TrCodecModule() : DecodeModule(TR_NAME, tkr_params)
 { }
 
 const RuleMap* TrCodecModule::get_rules() const

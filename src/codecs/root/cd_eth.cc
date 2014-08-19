@@ -24,9 +24,8 @@
 #endif
 
 #include <pcap.h>
-#include "codecs/root/cd_eth_module.h"
+#include "codecs/decode_module.h"
 #include "framework/codec.h"
-#include "time/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/eth.h"
 #include "codecs/codec_events.h"
@@ -35,6 +34,23 @@
 
 namespace
 {
+
+#define CD_ETH_NAME "eth"
+static const RuleMap eth_rules[] =
+{
+    { DECODE_ETH_HDR_TRUNC, "(" CD_ETH_NAME ") truncated eth header" },
+    { 0, nullptr }
+};
+
+class EthModule : public DecodeModule
+{
+public:
+    EthModule() : DecodeModule(CD_ETH_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return eth_rules; }
+};
+
 
 class EthCodec : public Codec
 {
@@ -88,7 +104,7 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 {
 
     /* do a little validation */
-    if(raw_len < eth::hdr_len())
+    if(raw_len < eth::ETH_HEADER_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated eth header (%d bytes).\n", raw_len););
@@ -115,10 +131,10 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             );
 
     next_prot_id = ntohs(eh->ether_type);
-    if (next_prot_id > eth::min_ethertype() )
+    if (next_prot_id > eth::MIN_ETHERTYPE )
     {
         p->proto_bits |= PROTO_BIT__ETH;
-        lyr_len = eth::hdr_len();
+        lyr_len = eth::ETH_HEADER_LEN;
         return true;
     }
 
@@ -243,4 +259,14 @@ static const CodecApi eth_api =
     dtor, // dtor
 };
 
+
+
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &eth_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_eth = &eth_api.base;
+#endif

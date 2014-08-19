@@ -32,7 +32,7 @@
 namespace
 {
 
-#define CD_PPPENCAP_NAME "pppencap"
+#define CD_PPPENCAP_NAME "ppp_encap"
 
 class PppEncap : public Codec
 {
@@ -148,7 +148,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
                 return false;
             }
 
-            ((IPHdr *)(raw_pkt + lyr_len))->ip_proto = IPPROTO_TCP;
+            ((IP4Hdr *)(raw_pkt + lyr_len))->ip_proto = IPPROTO_TCP;
             /* fall through */
 
         case PPP_IP:

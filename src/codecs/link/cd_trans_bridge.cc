@@ -36,7 +36,7 @@
 namespace
 {
 
-#define CD_TRANSBRIDGE_NAME "transbridge"
+#define CD_TRANSBRIDGE_NAME "trans_ether_bridging"
 
 class TransbridgeCodec : public Codec
 {
@@ -79,7 +79,7 @@ void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
 bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    if(raw_len < eth::hdr_len())
+    if(raw_len < eth::ETH_HEADER_LEN)
     {
         codec_events::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
                         raw_pkt, raw_len);
@@ -92,7 +92,7 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr*>(raw_pkt);
 
     p->proto_bits |= PROTO_BIT__ETH;
-    lyr_len = eth::hdr_len();
+    lyr_len = eth::ETH_HEADER_LEN;
     next_prot_id = ntohs(eh->ether_type);
 
     return true;

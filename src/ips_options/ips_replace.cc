@@ -32,7 +32,7 @@ using namespace std;
 #include "snort_debug.h"
 #include "protocols/packet.h"
 #include "parser.h"
-#include "parse_byte_code.h"
+#include "parser/parse_byte_code.h"
 #include "ips_content.h"
 #include "snort.h"
 #include "packet_io/sfdaq.h"

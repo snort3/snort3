@@ -259,7 +259,7 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
 
         if(p->ip_api.is_valid())
         {
-            const ip::IPHdr* const iph = p->ip_api.get_ip4h();
+            const ip::IP4Hdr* const iph = p->ip_api.get_ip4h();
             alertdata.ip_source = iph->get_src();
             alertdata.ip_destination = iph->get_dst();
             alertdata.protocol = GetEventProto(p);

@@ -117,8 +117,8 @@ int IcmpIdOption::eval(Cursor&, Packet *p)
 
     if ( (p->icmph->type == ICMP_ECHO || 
         p->icmph->type == ICMP_ECHOREPLY) ||
-        ((uint16_t)p->icmph->type == icmp6::Icmp6Types::ECHO ||
-         (uint16_t)p->icmph->type == icmp6::Icmp6Types::REPLY) )
+        ((uint16_t)p->icmph->type == icmp::Icmp6Types::ECHO_6 ||
+         (uint16_t)p->icmph->type == icmp::Icmp6Types::REPLY_6) )
     {
         if ( config.eval(p->icmph->s_icmp_id) )
         {

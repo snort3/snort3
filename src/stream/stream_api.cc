@@ -615,7 +615,7 @@ void Stream::call_handler (Packet* p, unsigned id)
 // other foo
 //-------------------------------------------------------------------------
 
-uint8_t Stream::get_session_ttl(Flow* flow, char dir, int outer)
+uint8_t Stream::get_session_ttl(Flow* flow, char dir, bool outer)
 {
     if ( !flow )
         return 0;

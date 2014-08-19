@@ -17,10 +17,11 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// udp.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef UDP_H
-#define UDP_H
+#ifndef PROTOCOLS_UDP_H
+#define PROTOCOLS_UDP_H
 
 #include <cstdint>
 
@@ -42,7 +43,6 @@ struct UDPHdr
     uint16_t uh_dport;
     uint16_t uh_len;
     uint16_t uh_chk;
-
 };
 
 

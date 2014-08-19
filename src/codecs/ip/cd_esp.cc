@@ -27,13 +27,52 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "codecs/ip/cd_esp_module.h"
 #include "managers/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 
 namespace
 {
+
+
+#define CD_ESP_NAME "esp"
+
+static const RuleMap esp_rules[] =
+{
+    { DECODE_ESP_HEADER_TRUNC, "(" CD_ESP_NAME ") truncated Encapsulated Security Payload (ESP) header" },
+    { 0, nullptr }
+};
+
+
+static const Parameter esp_params[] =
+{
+    { "decode_esp", Parameter::PT_BOOL, nullptr, "false",
+      "enable for inspection of esp traffic that has authentication but not encryption" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+
+class EspModule : public DecodeModule
+{
+public:
+    EspModule() : DecodeModule(CD_ESP_NAME, esp_params) {}
+
+    const RuleMap* get_rules() const
+    { return esp_rules; }
+
+
+    bool set(const char*, Value& v, SnortConfig* sc)
+    {
+        if ( v.is("decode_esp") )
+            sc->enable_esp = v.get_bool();
+        else
+            return false;
+
+        return true;
+    }
+};
+
 
 class EspCodec : public Codec
 {
@@ -50,10 +89,9 @@ public:
 
 
 /* ESP constants */
-const uint16_t ESP_PROT_ID = 50;
-const uint32_t ESP_HEADER_LEN = 8;
-const uint32_t ESP_AUTH_DATA_LEN = 12;
-const uint32_t ESP_TRAILER_LEN = 2;
+constexpr uint32_t ESP_HEADER_LEN = 8;
+constexpr uint32_t ESP_AUTH_DATA_LEN = 12;
+constexpr uint32_t ESP_TRAILER_LEN = 2;
 
 } // anonymous namespace
 
@@ -61,7 +99,7 @@ const uint32_t ESP_TRAILER_LEN = 2;
 
 void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(ESP_PROT_ID);
+    v.push_back(IPPROTO_ID_ESP);
 }
 
 
@@ -115,6 +153,9 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     pad_length = *(esp_payload + guessed_len);
     next_prot_id = *(esp_payload + guessed_len + 1);
 
+    // TODO:  Leftover from Snort. Do we really want thsi?
+    const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
+
     /* Adjust the packet length to account for the padding.
        If the padding length is too big, this is probably encrypted traffic. */
     if (pad_length < raw_len)
@@ -130,24 +171,21 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
 
+    /* Attempt to decode the inner payload.
+       There is a small chance that an encrypted next_header would become a
+       different valid next_header. The DECODE__UNSURE_ENCAP flag tells the next
+       decoder stage to silently ignore invalid headers. */
+
 
     if (PacketManager::has_codec(next_prot_id))
     {
-        /* Attempt to decode the inner payload.
-           There is a small chance that an encrypted next_header would become a
-           different valid next_header. The DECODE__UNSURE_ENCAP flag tells the next
-           decoder stage to silently ignore invalid headers. */
         p->decode_flags |= DECODE__UNSURE_ENCAP;
-        p->decode_flags |= DECODE__TRUST_ON_FAIL;
-        const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
     }
     else
     {
         // If we cant' decode the packet anymore, this is probably encrypted.
         // set the data pointers and pretend this is an ip datagram.
         p->packet_flags |= PKT_TRUST;
-        p->data = esp_payload;
-        p->dsize = (u_short) raw_len - lyr_len;
     }
 
     return true;

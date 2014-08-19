@@ -129,6 +129,7 @@
 #include "snort_types.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
+#include "protocols/udp.h"
 
 #define BO_DEFAULT_KEY     31337
 #define BO_MAGIC_SIZE      8

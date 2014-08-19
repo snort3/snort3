@@ -38,6 +38,7 @@ using namespace std;
 #include "log_text.h"
 #include "main/analyzer.h"
 #include "snort.h"
+#include "protocols/tcp.h"
 
 #define DEFAULT_DAEMON_ALERT_FILE  "alert"
 
@@ -159,7 +160,6 @@ void snort_print(Packet* p)
     {
         LogIPPkt(text_log, p->ip_api.proto(), p);
     }
-#ifndef NO_NON_ETHER_DECODER
     else if (p->proto_bits & PROTO_BIT__ARP)
     {
         log_mutex.lock();
@@ -176,7 +176,6 @@ void snort_print(Packet* p)
     {
         LogWifiPkt(text_log, p);
     }
-#endif
 #endif
 }
 

@@ -16,9 +16,7 @@ codec_api.h \
 sf_protocols.h
 
 libcodec_utils_a_SOURCES = \
-codec_events.cc \
-checksum.h \
-checksum.cc
+codec_events.cc
 
 SUBDIRS = \
 ip \

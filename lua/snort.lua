@@ -553,12 +553,12 @@ default_rules =
 
 #alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST User-Agent known malicious    user agent - SAH Agent"; flow:to_server,established; content:"User-Agent|3A| SAH Agent"; metadata: policy balanced-ips drop, policy connectivity-ips drop, policy security-ips drop, service http;    classtype:misc-activity; sid:5808; rev:9;)
 
-#alert tcp any any -> any 80 ( msg:"Sample rule for Snort++"; http_uri; content:"attack"; sid:1; )
+alert tcp any any -> any 80 ( msg:"Sample rule for Snort++"; http_uri; content:"attack"; sid:1; )
 #alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header:Transfer-Encoding; content:"chunk"; sid:2; )
 #alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header; content:"chunk"; sid:3; )
 #alert tcp any any -> any any ( msg:"Sample rule for Snort++"; content:"trigger"; sid:2; )
 
-alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request"; metadata:service http; reference:url,en.wikipedia.org/wiki/Vbs; classtype:misc-activity; sid:18758; rev:8; soid:3|18758;)
+#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request"; metadata:service http; reference:url,en.wikipedia.org/wiki/Vbs; classtype:misc-activity; sid:18758; rev:8; soid:3|18758;)
 ]]
 
 network =

@@ -55,8 +55,8 @@ public:
 //    IpApi();   constructor and destructor MUST remain a trivial. Adding
 //    ~IpApi();  any non-trivial code will cause a compilation failure.
 
-    void set(const IPHdr* h4);
-    void set(const ipv6::IP6RawHdr* h6);
+    void set(const IP4Hdr* h4);
+    void set(const IP6Hdr* h6);
     bool set(const uint8_t* raw_ip_data);
     void reset();
     const sfip_t *get_src();
@@ -86,10 +86,10 @@ public:
     inline bool is_ip4() const
     { return ip4h; }
 
-    inline const IPHdr* get_ip4h() const
+    inline const IP4Hdr* get_ip4h() const
     { return ip4h; }
 
-    inline const ipv6::IP6RawHdr* get_ip6h() const
+    inline const IP6Hdr* get_ip6h() const
     { return ip6h; }
 
     inline uint16_t tos() const
@@ -124,10 +124,10 @@ public:
     inline const uint8_t* get_ip_opt_data() const
     { return ip4h ? reinterpret_cast<const uint8_t*>(ip4h + IP4_HEADER_LEN) : nullptr; }
 
-    inline const ipv6::snort_in6_addr* get_ip6_src() const
+    inline const snort_in6_addr* get_ip6_src() const
     { return ip6h ? ip6h->get_src() : nullptr; }
 
-    inline const ipv6::snort_in6_addr* get_ip6_dst() const
+    inline const snort_in6_addr* get_ip6_dst() const
     { return ip6h ? ip6h->get_dst() : nullptr; }
 
 private:
@@ -135,8 +135,8 @@ private:
     sfip_t dst;
     const sfip_t *src_p;
     const sfip_t *dst_p;
-    const IPHdr* ip4h;
-    const ipv6::IP6RawHdr* ip6h;
+    const IP4Hdr* ip4h;
+    const IP6Hdr* ip6h;
 };
 
 

@@ -21,8 +21,9 @@
 
 
 #include <netinet/in.h>
-#include "protocols/packet.h"
 #include "protocols/layer.h"
+#include "protocols/protocol_ids.h"
+#include "protocols/packet.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "protocols/ip.h"
@@ -169,10 +170,10 @@ uint8_t get_outer_ip_next_pro(const Packet* const p)
         {
             case ETHERTYPE_IPV4:
             case IPPROTO_ID_IPIP:
-                return reinterpret_cast<IP4Hdr*>(layers[i].start)->ip_proto;
+                return reinterpret_cast<IP4Hdr*>(layers[i].start)->get_proto();
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
-                return reinterpret_cast<ipv6::IP6RawHdr*>(layers[i].start)->get_next();
+                return reinterpret_cast<ip::IP6Hdr*>(layers[i].start)->get_next();
             default:
                 break;
         }
@@ -216,8 +217,8 @@ bool set_inner_ip_api(const Packet* const p,
             case ETHERTYPE_IPV4:
             case IPPROTO_ID_IPIP:
             {
-                const ip::IPHdr* ip4h =
-                    reinterpret_cast<const ip::IPHdr*>(lyr->start);
+                const ip::IP4Hdr* ip4h =
+                    reinterpret_cast<const ip::IP4Hdr*>(lyr->start);
                 api.set(ip4h);
                 curr_layer--;
                 return true;
@@ -225,8 +226,8 @@ bool set_inner_ip_api(const Packet* const p,
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
             {
-                const ipv6::IP6RawHdr* ip6h =
-                    reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
+                const ip::IP6Hdr* ip6h =
+                    reinterpret_cast<const ip::IP6Hdr*>(lyr->start);
                 api.set(ip6h);
                 curr_layer--;
                 return true;
@@ -257,8 +258,8 @@ bool set_outer_ip_api(const Packet* const p,
             case ETHERTYPE_IPV4:
             case IPPROTO_ID_IPIP:
             {
-                const ip::IPHdr* ip4h =
-                    reinterpret_cast<const ip::IPHdr*>(lyr->start);
+                const ip::IP4Hdr* ip4h =
+                    reinterpret_cast<const ip::IP4Hdr*>(lyr->start);
                 api.set(ip4h);
                 curr_layer++;
                 return true;
@@ -266,8 +267,8 @@ bool set_outer_ip_api(const Packet* const p,
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
             {
-                const ipv6::IP6RawHdr* ip6h =
-                    reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
+                const ip::IP6Hdr* ip6h =
+                    reinterpret_cast<const ip::IP6Hdr*>(lyr->start);
                 api.set(ip6h);
                 curr_layer++;
                 return true;
@@ -296,15 +297,15 @@ bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
     {
         if (lyr->prot_id == IP_EMBEDDED_IN_ICMP4)
         {
-            const ip::IPHdr* ip4h =
-                reinterpret_cast<const ip::IPHdr*>(lyr->start);
+            const ip::IP4Hdr* ip4h =
+                reinterpret_cast<const ip::IP4Hdr*>(lyr->start);
             api.set(ip4h);
             return true;
         }
         else if (lyr->prot_id == IP_EMBEDDED_IN_ICMP6)
         {
-            const ipv6::IP6RawHdr* ip6h =
-                reinterpret_cast<const ipv6::IP6RawHdr*>(lyr->start);
+            const ip::IP6Hdr* ip6h =
+                reinterpret_cast<const ip::IP6Hdr*>(lyr->start);
             api.set(ip6h);
             return true;
         }
@@ -316,30 +317,15 @@ bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
     return false;
 }
 
-const uint8_t* get_prot_embed_icmp(const Packet* const p)
-{
-    return find_inner_layer(p->layers,
-                            p->num_layers,
-                            PROT_EMBEDDED_IN_ICMP);
-}
 
-const tcp::TCPHdr* get_tcp_embed_icmp(const Packet* const p)
-{
-    return reinterpret_cast<const tcp::TCPHdr*>(
-        get_prot_embed_icmp(p));
-}
+const tcp::TCPHdr* get_tcp_embed_icmp(const ip::IpApi& api)
+{ return reinterpret_cast<const tcp::TCPHdr*>(api.ip_data()); }
 
-const udp::UDPHdr* get_udp_embed_icmp(const Packet* const p)
-{
-    return reinterpret_cast<const udp::UDPHdr*>(
-        get_prot_embed_icmp(p));
-}
+const udp::UDPHdr* get_udp_embed_icmp(const ip::IpApi& api)
+{ return reinterpret_cast<const udp::UDPHdr*>(api.ip_data()); }
 
-const icmp::ICMPHdr* get_icmp_embed_icmp(const Packet* const p)
-{
-    return reinterpret_cast<const icmp::ICMPHdr*>(
-        get_prot_embed_icmp(p));
-}
+const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi& api)
+{ return reinterpret_cast<const icmp::ICMPHdr*>(api.ip_data()); }
 
 
 } // namespace layer

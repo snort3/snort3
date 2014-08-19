@@ -152,7 +152,7 @@ static int Norm_Eth (Packet * p, uint8_t layer, int changes)
 static int Norm_IP4 (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    IPHdr* h = (IPHdr*)(p->layers[layer].start);
+    IP4Hdr* h = (IP4Hdr*)(p->layers[layer].start);
     uint16_t fragbits = ntohs(h->ip_off);
     uint16_t origbits = fragbits;
 
@@ -256,13 +256,13 @@ static int Norm_ICMP4 (
 static int Norm_IP6 (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    ipv6::IP6RawHdr* h = (ipv6::IP6RawHdr*)(p->layers[layer].start);
+    ip::IP6Hdr* h = (ip::IP6Hdr*)(p->layers[layer].start);
 
     if ( Norm_IsEnabled(c, NORM_IP6_TTL) )
     {
-        if ( h->ip6hops < ScMinTTL() )
+        if ( h->ip6_hoplim < ScMinTTL() )
         {
-            h->ip6hops = ScNewTTL();
+            h->ip6_hoplim = ScNewTTL();
             p->error_flags &= ~PKT_ERR_BAD_TTL;
             normStats[PC_IP6_TTL]++;
             sfBase.iPegs[PERF_COUNT_IP6_TTL]++;
@@ -279,8 +279,8 @@ static int Norm_ICMP6 (
 {
     ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
 
-    if ( ((uint16_t)h->type == icmp6::Icmp6Types::ECHO ||
-          (uint16_t)h->type == icmp6::Icmp6Types::REPLY) &&
+    if ( ((uint16_t)h->type == icmp::Icmp6Types::ECHO_6 ||
+          (uint16_t)h->type == icmp::Icmp6Types::REPLY_6) &&
          (h->code != 0) )
     {
         h->code = static_cast<icmp::IcmpCode>(0);

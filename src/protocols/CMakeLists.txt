@@ -5,7 +5,6 @@ set (PROTOCOL_HEADERS
     eth.h
     icmp4.h
     icmp6.h
-    ip.cc
     ip.h
     ipv4.h
     ipv6.h
@@ -26,6 +25,7 @@ set (PROTOCOL_HEADERS
 add_library (protocols STATIC
     ${PROTOCOL_HEADERS}
     layer.cc
+    ip.cc
 )
 
 install (FILES ${PROTOCOL_HEADERS}

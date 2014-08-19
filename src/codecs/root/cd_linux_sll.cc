@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_linux_sll.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -47,15 +48,6 @@ public:
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 };
 
-// Create your own Hdr Struct for this layer!
-struct NameHdr
-{
-    uint8_t ver;
-    uint8_t next_protocol;
-    uint16_t len;
-    // additional or different data
-};
-
 } // namespace
 
 
@@ -72,11 +64,14 @@ bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
     /* do a little validation */
     if(raw_len < linux_sll::SLL_HDR_LEN)
     {
+        #if 0
+        //  How do we log from a plugin??
         if (ScLogVerbose())
         {
             ErrorMessage("Captured data length < SLL header length (your "
                          "libpcap is broken?)! (%d bytes)\n", raw_len);
         }
+        #endif
         return false;
     }
     /* lay the ethernet structure over the packet data */
@@ -95,14 +90,10 @@ bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new LinuxSllCodec();
-}
+{ return new LinuxSllCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi linux_ssl_api =

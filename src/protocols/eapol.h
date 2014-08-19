@@ -17,12 +17,11 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// eapol.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef EAPOL_H
-#define EAPOL_H
-
-#ifndef NO_NON_ETHER_DECODER
+#ifndef PROTOCOLS_EAPOL_H
+#define PROTOCOLS_EAPOL_H
 
 namespace eapol
 {
@@ -93,5 +92,4 @@ struct EapolKey
 
 }
 
-#endif /* NO_NON_ETHER_DECODER */
 #endif /* EAPOL_H */

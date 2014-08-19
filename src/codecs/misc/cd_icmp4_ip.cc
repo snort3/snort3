@@ -27,7 +27,6 @@
 
 #include "framework/codec.h"
 #include "protocols/ipv4.h"
-#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 
 
@@ -38,34 +37,35 @@ namespace
 //
 // this macros is defined in the module to ensure identical names. However,
 // if you don't want a module, define the name here.
-#ifndef IP4_EMBEDDED_IN_ICMP
-#define IP4_EMBEDDED_IN_ICMP "ip4_embedded_in_icmp"
+#ifndef ICMP4_IP_NAME
+#define ICMP4_IP_NAME "icmp4_ip"
 #endif
 
-class Ip4EmbeddedInIcmpCodec : public Codec
+class Icmp4IpCodec : public Codec
 {
 public:
-    Ip4EmbeddedInIcmpCodec() : Codec(IP4_EMBEDDED_IN_ICMP){};
-    ~Ip4EmbeddedInIcmpCodec() {};
+    Icmp4IpCodec() : Codec(ICMP4_IP_NAME){};
+    ~Icmp4IpCodec() {};
 
 
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual bool encode(EncState* enc, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
 
 };
 
 } // namespace
 
 
-void Ip4EmbeddedInIcmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IP_EMBEDDED_IN_ICMP4);
 }
 
-bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet* p, uint16_t& lyr_len, uint16_t& next_prot_id)
+bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
+        Packet* p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
 {
     uint32_t ip_len;       /* length from the start of the ip hdr to the
                              * pkt end */
@@ -83,7 +83,7 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
     }
 
     /* lay the IP struct over the raw data */
-    const IPHdr *ip4h = reinterpret_cast<const IPHdr *>(raw_pkt);
+    const IP4Hdr *ip4h = reinterpret_cast<const IP4Hdr *>(raw_pkt);
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -156,21 +156,31 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
             p->proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
-            next_prot_id = PROT_EMBEDDED_IN_ICMP;
             break;
 
         case IPPROTO_UDP:
             p->proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
-            next_prot_id = PROT_EMBEDDED_IN_ICMP;
             break;
 
         case IPPROTO_ICMP:
             p->proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
-            next_prot_id = PROT_EMBEDDED_IN_ICMP;
             break;
     }
 
+    // If you change this, change the buffer and
+    // memcpy length in encode() below !!
     lyr_len = ip::IP4_HEADER_LEN;
+    return true;
+}
+
+
+bool Icmp4IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
+{
+    // allocate space for this protocols encoded data
+    if (!update_buffer(out, ip::IP4_HEADER_LEN))
+        return false;
+
+    memcpy(out->base, raw_in, ip::IP4_HEADER_LEN);
     return true;
 }
 
@@ -181,7 +191,7 @@ bool Ip4EmbeddedInIcmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_
 
 static Codec* ctor(Module*)
 {
-    return new Ip4EmbeddedInIcmpCodec();
+    return new Icmp4IpCodec();
 }
 
 static void dtor(Codec *cd)
@@ -190,11 +200,11 @@ static void dtor(Codec *cd)
 }
 
 
-static const CodecApi ip4_embedded_in_icmp_api =
+static const CodecApi icmp4_ip_api =
 {
     {
         PT_CODEC,
-        IP4_EMBEDDED_IN_ICMP,
+        ICMP4_IP_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr, // module constructor
@@ -212,9 +222,9 @@ static const CodecApi ip4_embedded_in_icmp_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &ip4_embedded_in_icmp_api.base,
+    &icmp4_ip_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_ip4_embedded_in_icmp = &ip4_embedded_in_icmp_api.base;
+const BaseApi* cd_icmp4_ip = &icmp4_ip_api.base;
 #endif

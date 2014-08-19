@@ -17,7 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_dstopts.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_hopopts.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -27,54 +27,53 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
+#include "protocols/ipv6.h"
+#include "codecs/ip/ipv6_util.h"
 #include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "codecs/ip/ipv6_util.h"
-
 
 namespace
 {
 
-#define CD_DSTOPTS_NAME "ipv6_dstopts"
+#define CD_HOPOPTS_NAME "ipv6_hop_opts"
 
-class Ipv6DSTOptsCodec : public Codec
+class Ipv6HopOptsCodec : public Codec
 {
 public:
-    Ipv6DSTOptsCodec() : Codec(CD_DSTOPTS_NAME){};
-    ~Ipv6DSTOptsCodec() {};
-
+    Ipv6HopOptsCodec() : Codec(CD_HOPOPTS_NAME) {};
+    ~Ipv6HopOptsCodec() {};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool update(Packet*, Layer*, uint32_t* len);
-
 };
 
-struct IP6Dest
+
+struct IP6HopByHop
 {
-    uint8_t ip6dest_nxt;
-    uint8_t ip6dest_len;
+    uint8_t ip6hbh_nxt;
+    uint8_t ip6hbh_len;
     /* options follow */
-    uint8_t ip6dest_pad[6];
-} ;
+    uint8_t ip6hbh_pad[6];
+};
+
 
 } // anonymous namespace
 
 
-bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
+/*
+ * Class functions
+ */
+
+bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    const IP6Dest *dsthdr = reinterpret_cast<const IP6Dest *>(raw_pkt);
-
-    /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_DSTOPTS);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    const IP6HopByHop *hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw_pkt);
 
 
-    if(raw_len < sizeof(IP6Dest))
+    if (raw_len < sizeof(IP6HopByHop))
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -86,36 +85,35 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
-    }
+    /* See if there are any ip_proto only rules that match */
+    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_HOPOPTS);
+    ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
+    lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
+    next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
+
     if(lyr_len > raw_len)
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_DSTOPTS;
+    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_HOPOPTS;
     p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
-    next_prot_id = dsthdr->ip6dest_nxt;
+
 
     if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
         return true;
     return false;
 }
 
-
-void Ipv6DSTOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void Ipv6HopOptsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_ID_DSTOPTS);
+    v.push_back(IPPROTO_ID_HOPOPTS);
 }
 
-bool Ipv6DSTOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
+bool Ipv6HopOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
     if ( lyr == (p->layers + p->num_layers - 1) )
         *len += p->dsize;
@@ -130,7 +128,7 @@ bool Ipv6DSTOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 
 static Codec* ctor(Module*)
 {
-    return new Ipv6DSTOptsCodec();
+    return new Ipv6HopOptsCodec();
 }
 
 static void dtor(Codec *cd)
@@ -138,11 +136,11 @@ static void dtor(Codec *cd)
     delete cd;
 }
 
-static const CodecApi ipv6_dstopts_api =
+static const CodecApi ipv6_hopopts_api =
 {
     {
         PT_CODEC,
-        CD_DSTOPTS_NAME,
+        CD_HOPOPTS_NAME,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,
@@ -159,9 +157,12 @@ static const CodecApi ipv6_dstopts_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &ipv6_dstopts_api.base,
+    &ipv6_hopopts_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_dstopts = &ipv6_dstopts_api.base;
+const BaseApi* cd_hopopts = &ipv6_hopopts_api.base;
 #endif
+
+
+

@@ -88,17 +88,13 @@ public:
     // wrapper for encode response.  Ensure no payload is encoded.
     static inline const uint8_t* encode_reject( EncodeType type,
         EncodeFlags flags, const Packet* p, uint32_t* len)
-    {
-        return encode_response(type, flags, p, len, nullptr, 0);
-    }
+    { return encode_response(type, flags, p, len, nullptr, 0); }
 
     // for backwards compatability and convenience.
     static inline int encode_format_with_daq_info (
         EncodeFlags f, const Packet* orig, Packet* clone,
         PseudoPacketType type, uint32_t opaque)
-    {
-        return encode_format_with_daq_info(f, orig, clone, type, nullptr, opaque);
-    }
+    { return encode_format_with_daq_info(f, orig, clone, type, nullptr, opaque); }
 
 
     /* codec support and statistics */

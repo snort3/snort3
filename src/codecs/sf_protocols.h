@@ -53,7 +53,6 @@ typedef enum {
     PROTO_GTP,        // DecodeGTP
     PROTO_AH,         // DecodeAH - Authentication Header (IPSec stuff)
 
-#ifndef NO_NON_ETHER_DECODER
     PROTO_TR,         // DecodeTRPkt
     PROTO_FDDI,       // DecodeFDDIPkt
     PROTO_LSLL,       // DecodeLinuxSLLPkt sockaddr_ll for "any" device and 
@@ -84,7 +83,6 @@ typedef enum {
     PROTO_EAP,        // DecodeEAP
     PROTO_EAPOL,      // DecodeEapol - leaf decoder
     PROTO_EAPOL_KEY,  // DecodeEapolKey - leaf decoder
-#endif // NO_NON_ETHER_DECODER
 
     PROTO_MAX
 } PROTO_ID;

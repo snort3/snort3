@@ -307,8 +307,8 @@ public:
     static int set_ignore_direction(Flow*, int ignore_direction);
 
     // Get the TTL value used at session setup
-    // outer=0 to get inner ip ttl for ip in ip; else outer=1
-    static uint8_t get_session_ttl(Flow*, char dir, int outer);
+    // outer=false to get inner ip ttl for ip in ip; else outer=true
+    static uint8_t get_session_ttl(Flow*, char dir, bool outer);
 
     static bool expired_session (Flow*, Packet*);
     static bool ignored_session (Flow*, Packet*);

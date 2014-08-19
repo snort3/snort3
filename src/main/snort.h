@@ -134,9 +134,7 @@ typedef enum _OutputFlag
     OUTPUT_FLAG__APP_DATA          = 0x00000008,      /* -d */
 
     OUTPUT_FLAG__SHOW_DATA_LINK    = 0x00000010,      /* -e */
-#ifndef NO_NON_ETHER_DECODER
     OUTPUT_FLAG__SHOW_WIFI_MGMT    = 0x00000020,      /* -w */
-#endif
     OUTPUT_FLAG__USE_UTC           = 0x00000040,      /* -U */
     OUTPUT_FLAG__INCLUDE_YEAR      = 0x00000080,      /* -y */
 
@@ -432,12 +430,10 @@ static inline int ScPcapReset(void)
     return snort_conf->run_flags & RUN_FLAG__PCAP_RESET;
 }
 
-#ifndef NO_NON_ETHER_DECODER
 static inline int ScOutputWifiMgmt(void)
 {
     return snort_conf->output_flags & OUTPUT_FLAG__SHOW_WIFI_MGMT;
 }
-#endif
 
 static inline uint32_t ScMaxAttrHosts(void)
 {

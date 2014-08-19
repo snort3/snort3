@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_icmp6.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -29,16 +30,43 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
 
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
-#include "codecs/ip/cd_icmp6_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 
 
 namespace
 {
+
+#define CD_ICMP6_NAME "icmp6"
+static const RuleMap icmp6_rules[] =
+{
+    { DECODE_ICMP6_HDR_TRUNC, "(" CD_ICMP6_NAME ") truncated ICMP6 header" },
+    { DECODE_ICMP6_TYPE_OTHER, "(" CD_ICMP6_NAME ") ICMP6 type not decoded" },
+    { DECODE_ICMP6_DST_MULTICAST, "(" CD_ICMP6_NAME ") ICMP6 packet to multicast address" },
+    { DECODE_ICMPV6_TOO_BIG_BAD_MTU, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 2 (message too big) with MTU field < 1280" },
+    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 1 (destination unreachable) with non-RFC 2463 code" },
+    { DECODE_ICMPV6_SOLICITATION_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 router solicitation packet with a code not equal to 0" },
+    { DECODE_ICMPV6_ADVERT_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 router advertisement packet with a code not equal to 0" },
+    { DECODE_ICMPV6_SOLICITATION_BAD_RESERVED, "(" CD_ICMP6_NAME ") ICMPv6 router solicitation packet with the reserved field not equal to 0" },
+    { DECODE_ICMPV6_ADVERT_BAD_REACHABLE, "(" CD_ICMP6_NAME ") ICMPv6 router advertisement packet with the reachable time field set > 1 hour" },
+    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 1 (destination unreachable) with non-RFC 4443 code" },
+    { DECODE_ICMPV6_NODE_INFO_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 node info query/response packet with a code greater than 2" },
+    { 0, nullptr }
+};
+
+class Icmp6Module : public DecodeModule
+{
+public:
+    Icmp6Module() : DecodeModule(CD_ICMP6_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return icmp6_rules; }
+};
+
 
 class Icmp6Codec : public Codec
 {
@@ -72,7 +100,7 @@ void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
     Packet* p, uint16_t &lyr_len, uint16_t & next_prot_id )
 {
-    if(raw_len < icmp6::hdr_min_len())
+    if(raw_len < icmp::ICMP6_HEADER_MIN_LEN)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
             "WARNING: Truncated ICMP6 header (%d bytes).\n", raw_len););
@@ -81,7 +109,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    const icmp6::ICMP6Hdr* icmp6h = reinterpret_cast<const icmp6::ICMP6Hdr*>(raw_pkt);
+    const icmp::ICMP6Hdr* icmp6h = reinterpret_cast<const icmp::ICMP6Hdr*>(raw_pkt);
     p->icmph = reinterpret_cast<const ICMPHdr*>(raw_pkt); /* This is needed for icmp rules */
 
 
@@ -119,16 +147,16 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         }
     }
 
-    p->dsize = (u_short)(raw_len - icmp6::hdr_min_len());
-    p->data = raw_pkt + icmp6::hdr_min_len();
+    p->dsize = (u_short)(raw_len - icmp::ICMP6_HEADER_MIN_LEN);
+    p->data = raw_pkt + icmp::ICMP6_HEADER_MIN_LEN;
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP type: %d   code: %d\n",
                 icmp6h->type, icmp6h->code););
 
     switch(icmp6h->type)
     {
-        case icmp6::Icmp6Types::ECHO:
-        case icmp6::Icmp6Types::REPLY:
+        case icmp::Icmp6Types::ECHO_6:
+        case icmp::Icmp6Types::REPLY_6:
             if (p->dsize >= sizeof(ICMPHdr::icmp_hun.idseq))
             {
                 /* Set data pointer to that of the "echo message" */
@@ -137,7 +165,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 p->dsize -= sizeof(ICMPHdr::icmp_hun.idseq);
                 p->data += sizeof(ICMPHdr::icmp_hun.idseq);
 
-                if ( ipv6::is_multicast(p->ip_api.get_dst()->ip8[0]) )
+                if ( p->ip_api.get_ip6h()->is_dst_multicast() )
                     codec_events::decoder_event(p, DECODE_ICMP6_DST_MULTICAST);
             }
             else
@@ -152,10 +180,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::BIG:
-            if (p->dsize >= sizeof(ICMP6TooBig))
+        case icmp::Icmp6Types::BIG:
+            if (p->dsize >= sizeof(icmp::ICMP6TooBig))
             {
-                ICMP6TooBig *too_big = (ICMP6TooBig *)raw_pkt;
+                icmp::ICMP6TooBig *too_big = (icmp::ICMP6TooBig *)raw_pkt;
                 /* Set data pointer past MTU */
                 p->data += 4;
                 p->dsize -= 4;
@@ -164,7 +192,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
                 }
-                lyr_len = icmp6::hdr_normal_len();
+                lyr_len = icmp::ICMP6_HEADER_NORMAL_LEN;
                 next_prot_id = IP_EMBEDDED_IN_ICMP6;
             }
             else
@@ -179,16 +207,16 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::TIME:
-        case icmp6::Icmp6Types::PARAMS:
-        case icmp6::Icmp6Types::UNREACH:
+        case icmp::Icmp6Types::TIME:
+        case icmp::Icmp6Types::PARAMS:
+        case icmp::Icmp6Types::UNREACH:
             if (p->dsize >= 4)
             {
                 /* Set data pointer past the 'unused/mtu/pointer block */
                 p->data += 4;
                 p->dsize -= 4;
 
-                if (icmp6h->type == icmp6::Icmp6Types::UNREACH)
+                if (icmp6h->type == icmp::Icmp6Types::UNREACH)
                 {
                     if (icmp6h->code == 2)
                     {
@@ -199,7 +227,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                         codec_events::decoder_event(p, DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE);
                     }
                 }
-                lyr_len = icmp6::hdr_normal_len();
+                lyr_len = icmp::ICMP6_HEADER_NORMAL_LEN;
                 next_prot_id = IP_EMBEDDED_IN_ICMP6;
             }
             else
@@ -214,10 +242,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::ADVERTISEMENT:
-            if (p->dsize >= (sizeof(ICMP6RouterAdvertisement) - icmp6::hdr_min_len()))
+        case icmp::Icmp6Types::ADVERTISEMENT:
+            if (p->dsize >= (sizeof(icmp::ICMP6RouterAdvertisement) - icmp::ICMP6_HEADER_MIN_LEN))
             {
-                ICMP6RouterAdvertisement *ra = (ICMP6RouterAdvertisement *)raw_pkt;
+                icmp::ICMP6RouterAdvertisement *ra = (icmp::ICMP6RouterAdvertisement *)raw_pkt;
                 if (icmp6h->code != 0)
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_ADVERT_BAD_CODE);
@@ -226,7 +254,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
                 }
-                lyr_len = icmp6::hdr_min_len();
+                lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
@@ -240,10 +268,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::SOLICITATION:
-            if (p->dsize >= (sizeof(ICMP6RouterSolicitation) - icmp6::hdr_min_len()))
+        case icmp::Icmp6Types::SOLICITATION:
+            if (p->dsize >= (sizeof(icmp::ICMP6RouterSolicitation) - icmp::ICMP6_HEADER_MIN_LEN))
             {
-                ICMP6RouterSolicitation *rs = (ICMP6RouterSolicitation *)raw_pkt;
+                icmp::ICMP6RouterSolicitation *rs = (icmp::ICMP6RouterSolicitation *)raw_pkt;
                 if (rs->code != 0)
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
@@ -252,7 +280,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
                 }
-                lyr_len = icmp6::hdr_min_len();
+                lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
@@ -266,11 +294,11 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
             }
             break;
 
-        case icmp6::Icmp6Types::NODE_INFO_QUERY:
-        case icmp6::Icmp6Types::NODE_INFO_RESPONSE:
-            if (p->dsize >= (sizeof(ICMP6NodeInfo) - icmp6::hdr_min_len()))
+        case icmp::Icmp6Types::NODE_INFO_QUERY:
+        case icmp::Icmp6Types::NODE_INFO_RESPONSE:
+            if (p->dsize >= (sizeof(icmp::ICMP6NodeInfo) - icmp::ICMP6_HEADER_MIN_LEN))
             {
-                ICMP6NodeInfo *ni = (ICMP6NodeInfo *)raw_pkt;
+                icmp::ICMP6NodeInfo *ni = (icmp::ICMP6NodeInfo *)raw_pkt;
                 if (ni->code > 2)
                 {
                     codec_events::decoder_event(p, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
@@ -278,7 +306,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                 /* TODO: Add alert for INFO Response, code == 1 || code == 2)
                  * and there is data.
                  */
-                 lyr_len = icmp6::hdr_min_len();
+                 lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             }
             else
             {
@@ -297,7 +325,7 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
                     "WARNING: ICMP6_TYPE (type %d).\n", icmp6h->type););
             codec_events::decoder_event(p, DECODE_ICMP6_TYPE_OTHER);
 
-            lyr_len = icmp6::hdr_min_len();
+            lyr_len = icmp::ICMP6_HEADER_MIN_LEN;
             break;
     }
 
@@ -305,109 +333,6 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
     p->proto_bits &= ~(PROTO_BIT__UDP | PROTO_BIT__TCP);
     return true;
 }
-
-
-// TODO:  delete (along with any mention of this function)
-
-#if 0
-
-/*
- * Function: DecodeICMPEmbeddedIP6(uint8_t *, const uint32_t, Packet *)
- *
- * Purpose: Decode the ICMP embedded IP6 header + payload
- *
- * Arguments: pkt => ptr to the packet data
- *            len => length from here to the end of the packet
- *            p   => pointer to dummy packet decode struct
- *
- * Returns: void function
- */
-static void DecodeICMPEmbeddedIP6(const uint8_t *pkt, const uint32_t len, Packet *p)
-{
-//    uint16_t orig_frag_offset;
-
-    /* lay the IP struct over the raw data */
-    const ipv6::IP6RawHdr* hdr = reinterpret_cast<const ipv6::IP6RawHdr*>(pkt);
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP6: ip header"
-                    " starts at: %p, length is %lu\n", hdr,
-                    (unsigned long) len););
-
-    /* do a little validation */
-    if ( len < ipv6::hdr_len() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP6: IP short header (%d bytes)\n", len););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
-
-        return;
-    }
-
-    /*
-     * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
-     * So we are just ignoring non IP datagrams
-     */
-    if(IPRAW_HDR_VER(hdr) != 6)
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: not IPv6 datagram ([ver: 0x%x][len: 0x%x])\n",
-            IPRAW_HDR_VER(hdr), len););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
-
-        return;
-    }
-
-    if ( len < ipv6::hdr_len() )
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP6: IP6 len (%d bytes) < IP6 hdr len (%d bytes), packet discarded\n",
-            len, ipv6::hdr_len()););
-
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
-
-        return;
-    }
-    sfiph_orig_build(p, pkt, AF_INET6);
-
-//    orig_frag_offset = ntohs(GET_ORIG_IPH_OFF(p));
-//    orig_frag_offset &= 0x1FFF;
-
-    // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP6 Unreachable IP6 header length: "
-                            "%lu\n", (unsigned long)ipv6::hdr_len()););
-
-    switch(GET_ORIG_IPH_PROTO(p))
-    {
-        case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->orig_tcph = (TCPHdr *)(pkt + ipv6::hdr_len());
-
-            /* stuff more data into the printout data struct */
-            p->orig_sp = ntohs(p->orig_tcph->th_sport);
-            p->orig_dp = ntohs(p->orig_tcph->th_dport);
-
-            break;
-
-        case IPPROTO_UDP:
-            p->orig_udph = (udp::UDPHdr *)(pkt + ipv6::hdr_len());
-
-            /* fill in the printout data structs */
-            p->orig_sp = ntohs(p->orig_udph->uh_sport);
-            p->orig_dp = ntohs(p->orig_udph->uh_dport);
-
-            break;
-
-        case IPPROTO_ICMP:
-            p->orig_icmph = (ICMPHdr *)(pkt + ipv6::hdr_len());
-            break;
-    }
-
-    return;
-}
-
-#endif
 
 
 /******************************************************************
@@ -428,7 +353,7 @@ typedef struct {
 } // namespace
 
 
-bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
+bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
 {
     checksum::Pseudoheader6 ps6;
     IcmpHdr* ho;
@@ -437,36 +362,42 @@ bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t *raw_in)
     // may be intervening extension headers which aren't copied
 
 
+#if 0
+    // Now performed in cd_prot_embedded_in_icmp.cc
+
     // copy first 8 octets of original ip data (ie udp header)
     // TBD: copy up to minimum MTU worth of data
-    if (!update_buffer(out, icmp::unreach_data()))
+    if (!update_buffer(out, icmp::ICMP_UNREACH_DATA_LEN))
         return false;
-    memcpy(out->base, raw_in, icmp::unreach_data());
-
-
+    memcpy(out->base, raw_in, icmp::ICMP_UNREACH_DATA_LEN);
     // copy original ip header
     if (!update_buffer(out, enc->ip_len))
         return false;
 
+    // Now performed in cd_ip6_embedded_in_icmp.cc
     // TBD should be able to elminate enc->ip_hdr by using layer-2
     memcpy(out->base, enc->ip_hdr, enc->ip_len);
-    ((ipv6::IP6RawHdr*)out->base)->ip6nxt = IPPROTO_UDP;
+    ((ip::IP6Hdr*)out->base)->ip6_next = IPPROTO_UDP;
+
+#endif
 
 
     if (!update_buffer(out, sizeof(*ho)))
         return false;
 
     ho = reinterpret_cast<IcmpHdr*>(out->base);
-    ho->type = 1;   // dest unreachable
-    ho->code = 4;   // port unreachable
+    ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
+    ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));   // port unreachable
     ho->cksum = 0;
     ho->unused = 0;
 
     enc->proto = IPPROTO_ICMPV6;
     int len = buff_diff(out, (uint8_t *)ho);
 
-    memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
-    memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
+    const ip::IP6Hdr* const ip6h = enc->p->ip_api.get_ip6h();
+
+    memcpy(ps6.sip, ip6h->ip6_src.u6_addr8, sizeof(ps6.sip));
+    memcpy(ps6.dip, ip6h->ip6_dst.u6_addr8, sizeof(ps6.dip));
     ps6.zero = 0;
     ps6.protocol = IPPROTO_ICMPV6;
     ps6.len = htons((uint16_t)(len));
@@ -540,4 +471,12 @@ static const CodecApi ipv6_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &ipv6_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_icmp6 = &ipv6_api.base;
+#endif

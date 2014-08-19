@@ -1425,7 +1425,7 @@ static const char* iNames[PERF_COUNT_MAX] = {
     "icmp4::echo",
     "ip6::ttl",
     "ip6::opts",
-    "icmp6::echo",
+    "icmp::echo",
     "tcp::syn_opt",
     "tcp::opt",
     "tcp::pad",

@@ -57,6 +57,13 @@ if (STATIC_INSPECTORS)
     )
 endif()
 
+if (STATIC_CODECS)
+    set (STATIC_CODEC_LIBRARIES
+        link_codecs
+        root_codecs
+    )
+endif()
+
 if (BUILD_UNIT_TESTS)
     set( UNIT_TESTS_LIBRARIES unit_tests)
     add_subdirectory(test)
@@ -109,10 +116,9 @@ target_link_libraries( snort
     ips_actions
     managers
     codecs
-    root_codecs
-    link_codecs
     ip_codecs
     misc_codecs
+    ${STATIC_CODEC_LIBRARIES}
     ${STATIC_INSPECTOR_LIBRARIES}
     ${UNIT_TESTS_LIBRARIES}
     ${EXTERNAL_LIBRARIES}

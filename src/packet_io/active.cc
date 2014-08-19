@@ -41,6 +41,7 @@
 #include "managers/action_manager.h"
 #include "managers/packet_manager.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/tcp.h"
 
 #define MAX_ATTEMPTS 20
 
