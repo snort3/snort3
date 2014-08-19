@@ -150,7 +150,7 @@
 
 #define MEMASSERT(p,s) if(!p){FatalError("ACSM-No Memory: %s!\n",s);}
 
-static int acsm2_total_memory = 0;  // FIXIT 1 / process
+static int acsm2_total_memory = 0;
 static int acsm2_pattern_memory = 0;
 static int acsm2_matchlist_memory = 0;
 static int acsm2_transtable_memory = 0;
@@ -200,7 +200,7 @@ void acsm_init_summary(void)
 /*
 ** Case Translation Table
 */
-static unsigned char xlatcase[256];  // FIXIT 1 / process
+static unsigned char xlatcase[256];
 /*
 *
 */
@@ -2720,7 +2720,7 @@ int acsmPrintSummaryInfo2(void)
     LogMessage("%25.25s: %-12u\n", "transitions", summary.num_transitions);
 
     //LogMessage("%25.25s: %-12u\n", "", );
-#if 0  // FIXIT clean up format; not all this should be printed all the time
+#if 0  // FIXIT-L clean up format; not all this should be printed all the time
 //#ifndef VALGRIND_TESTING
     // valgrind on macos claims leakage here ...
     LogMessage("| State Density     : %.1f%%\n",

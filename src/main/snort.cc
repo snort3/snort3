@@ -311,15 +311,6 @@ static void SnortInit(int argc, char **argv)
     StoreSnortInfoStrings();
 #endif
 
-    InitProtoNames();
-    SFAT_Init();
-
-    if (snort_cmd_line_conf != NULL)  // FIXIT can this be deleted?
-    {
-        FatalError("%s(%d) Trying to parse the command line again.\n",
-                   __FILE__, __LINE__);
-    }
-
     /* chew up the command line */
     snort_cmd_line_conf = ParseCmdLine(argc, argv);
     snort_conf = snort_cmd_line_conf;
@@ -327,6 +318,9 @@ static void SnortInit(int argc, char **argv)
     /* Tell 'em who wrote it, and what "it" is */
     if (!ScLogQuiet())
         PrintVersion();
+
+    InitProtoNames();
+    SFAT_Init();
 
     LogMessage("--------------------------------------------------\n");
 
@@ -472,7 +466,7 @@ static void SnortUnprivilegedInit(void)
     snort_initializing = false;
 }
 
-void snort_setup(int argc, char *argv[])
+void snort_setup(int argc, char* argv[])
 {
     snort_argc = argc;
     snort_argv = argv;
@@ -501,15 +495,9 @@ void snort_setup(int argc, char *argv[])
 // termination
 //-------------------------------------------------------------------------
 
-static void CleanExit(int exit_val)
+static void CleanExit(int)
 {
     SnortConfig tmp;
-
-#ifdef DEBUG
-#if 0
-    SFLAT_dump();
-#endif
-#endif
 
     /* Have to trick LogMessage to log correctly after snort_conf
      * is freed */
@@ -531,8 +519,6 @@ static void CleanExit(int exit_val)
 
     LogMessage("Snort exiting\n");
     closelog();
-    //if ( !done_processing )  // FIXIT
-        exit(exit_val);
 }
 
 static void SnortCleanup()

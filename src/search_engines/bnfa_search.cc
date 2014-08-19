@@ -2356,7 +2356,7 @@ int bnfaPatternCount( bnfa_struct_t * p)
 /*
  *  Summary Info Data
  */
-static bnfa_struct_t summary;  // FIXIT 1 / process
+static bnfa_struct_t summary;
 static int summary_cnt=0;
 
 /*

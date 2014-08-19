@@ -40,7 +40,7 @@
 #include "log/log.h"
 
 SnortConfig* reload_config();
-void snort_setup(int argc, char *argv[]);
+void snort_setup(int argc, char* argv[]);
 void snort_cleanup();
 
 void snort_thread_init(const char* intf);
