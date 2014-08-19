@@ -105,12 +105,10 @@ typedef struct _TagNode
 } TagNode;
 
 /*  G L O B A L S  **************************************************/
-/**host tag cache */
-static THREAD_LOCAL SFXHASH *host_tag_cache_ptr = nullptr;  // FIXIT packet thread init
+static THREAD_LOCAL SFXHASH *host_tag_cache_ptr = nullptr;
 
-/**session tag cache */
 // FIXIT utilize Flow instead of separate cache
-static THREAD_LOCAL SFXHASH *ssn_tag_cache_ptr = nullptr;  // FIXIT packet thread init
+static THREAD_LOCAL SFXHASH *ssn_tag_cache_ptr = nullptr;
 
 static THREAD_LOCAL uint32_t last_prune_time = 0;
 static THREAD_LOCAL uint32_t tag_alloc_faults = 0;
