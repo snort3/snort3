@@ -69,7 +69,6 @@ set (IPS_SOURCES
     ips_pcre.cc 
     ips_pcre.h
     ips_replace.cc 
-    ips_replace.h
     ips_so.cc
 )
 
