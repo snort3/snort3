@@ -17,10 +17,11 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// vlan.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef VLAN_H
-#define VLAN_H
+#ifndef PROTOCOLS_VLAN_H
+#define PROTOCOLS_VLAN_H
 
 namespace vlan
 {

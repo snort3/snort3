@@ -56,10 +56,7 @@ void LogIPHeader(TextLog*, Packet*);
 void LogTCPHeader(TextLog*, Packet*);
 void LogUDPHeader(TextLog*, Packet*);
 void LogICMPHeader(TextLog*, Packet*);
-
-#ifndef NO_NON_ETHER_DECODER
 void LogArpHeader(TextLog*, Packet*);
-#endif
 
 #endif
 

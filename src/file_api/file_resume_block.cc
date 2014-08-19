@@ -35,6 +35,7 @@
 #include "protocols/packet.h"
 #include "packet_io/active.h"
 #include "libs/file_sha256.h"
+#include "managers/action_manager.h"
 
 /* The hash table of expected files */
 static THREAD_LOCAL_TBD SFXHASH *fileHash = NULL;
@@ -199,7 +200,7 @@ static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE 
     {
         Active_ForceDropPacket();
         Active_DropSession();
-        Active_QueueReject();
+        ActionManager::queue_reject();
         if (log_file_action)
         {
             log_file_action(p->flow, FILE_RESUME_BLOCK);
@@ -212,7 +213,7 @@ static inline File_Verdict checkVerdict(Packet *p, FileNode *node, SFXHASH_NODE 
         Active_ForceDropPacket();
         Active_DropSession();
         if (FILE_VERDICT_REJECT == node->verdict)
-            Active_QueueReject();
+            ActionManager::queue_reject();
         if (log_file_action)
         {
             log_file_action(p->flow, FILE_RESUME_BLOCK);

@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_eapol.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -25,7 +26,7 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/link/cd_eapol_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/eapol.h"
@@ -33,6 +34,24 @@
 
 namespace
 {
+
+#define CD_EAPOL_NAME "eapol"
+static const RuleMap eapol_rules[] =
+{
+    { DECODE_EAPOL_TRUNCATED, "(" CD_EAPOL_NAME ") Truncated EAP Header" },
+    { DECODE_EAPKEY_TRUNCATED, "(" CD_EAPOL_NAME ") EAP Key Truncated" },
+    { DECODE_EAP_TRUNCATED, "(" CD_EAPOL_NAME ") EAP Header Truncated" },
+    { 0, nullptr }
+};
+
+class EapolModule : public DecodeModule
+{
+public:
+    EapolModule() : DecodeModule(CD_EAPOL_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return eapol_rules; }
+};
 
 class EapolCodec : public Codec
 {

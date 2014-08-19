@@ -27,7 +27,7 @@
 
 #include "protocols/packet.h"
 #include "framework/codec.h"
-#include "codecs/link/cd_vlan_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/vlan.h"
 #include "protocols/protocol_ids.h"
@@ -35,6 +35,25 @@
 
 namespace
 {
+
+#define CD_VLAN_NAME "vlan"
+static const RuleMap vlan_rules[] =
+{
+    { DECODE_BAD_VLAN, "(" CD_VLAN_NAME ") Bad VLAN Frame" },
+    { DECODE_BAD_VLAN_ETHLLC, "(" CD_VLAN_NAME ") Bad LLC header" },
+    { DECODE_BAD_VLAN_OTHER, "(" CD_VLAN_NAME ") Bad Extra LLC Info" },
+    { 0, nullptr }
+};
+
+class VlanModule : public DecodeModule
+{
+public:
+    VlanModule() : DecodeModule(CD_VLAN_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return vlan_rules; }
+};
+
 
 class VlanCodec : public Codec
 {

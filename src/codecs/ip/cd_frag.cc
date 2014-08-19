@@ -61,12 +61,12 @@ public:
 bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    const IP6Frag* ip6frag_hdr = reinterpret_cast<const IP6Frag*>(raw_pkt);
+    const ip::IP6Frag* ip6frag_hdr = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
 
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_FRAGMENT);
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    if(raw_len < ipv6::min_ext_len() )
+    if(raw_len < ip::MIN_EXT_LEN )
     {
         codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
         return false;
@@ -79,7 +79,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     // already checked for short pacekt above
-    if (raw_len == sizeof(IP6Frag))
+    if (raw_len == sizeof(ip::IP6Frag))
     {
         codec_events::decoder_event(p, DECODE_ZERO_LENGTH_FRAG);
         return false;
@@ -87,15 +87,18 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* If this is an IP Fragment, set some data... */
     p->ip6_frag_index = p->ip6_extension_count;
-    p->ip_frag_start = raw_pkt + sizeof(IP6Frag);
+    p->ip_frag_start = raw_pkt + sizeof(ip::IP6Frag);
 
     p->decode_flags &= ~DECODE__DF;
 
-    if (ipv6::is_mf_set(ip6frag_hdr))
+    if (ntohs(ip6frag_hdr->ip6f_offlg) & ip::IP6F_MF_MASK)
         p->decode_flags |= DECODE__MF;
 
-    if (ipv6::is_res_set(ip6frag_hdr))
+#if 0
+    // reserved flag currently not used
+    if (ip6frag_hdr->get_res() != 0)))
         p->decode_flags |= DECODE__RF;
+#endif
 
     // three least signifigant bits are all flags
     p->frag_offset = ntohs(ip6frag_hdr->get_off()) >> 3;
@@ -118,7 +121,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     // check header ordering up thru frag header
     ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    lyr_len = sizeof(IP6Frag);
+    lyr_len = sizeof(ip::IP6Frag);
     p->ip_frag_len = (uint16_t)(raw_len - lyr_len);
 
     if ( (p->decode_flags & DECODE__FRAG) && ((p->frag_offset > 0) ||

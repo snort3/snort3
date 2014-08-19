@@ -52,10 +52,13 @@
 
 #include "sfip/sf_ip.h"
 
+#include "protocols/eth.h"
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
+#include "protocols/udp.h"
+#include "protocols/tcp.h"
 #include "protocols/gre.h"
 #include "protocols/token_ring.h"
 #include "protocols/wlan.h"
@@ -113,7 +116,6 @@ void LogPriorityData(TextLog* log, const Event* e, bool doNewLine)
  * Layer 2 header stuff cloned from log.c
  *--------------------------------------------------------------------
  */
-#ifndef NO_NON_ETHER_DECODER
 /*--------------------------------------------------------------------
  * Function: LogTrHeader(TextLog*, Packet*)
  *
@@ -164,7 +166,6 @@ void LogTrHeader(TextLog* log, Packet* p)
                 trhmr->rseg[6], trhmr->rseg[7]);
     }
 }
-#endif  // NO_NON_ETHER_DECODER
 
 /*--------------------------------------------------------------------
  * Function: LogEthHeader()
@@ -213,7 +214,6 @@ static void LogGREHeader(TextLog *log, Packet *p)
             greh->get_version(), greh->flags, greh->get_proto());
 }
 
-#ifndef NO_NON_ETHER_DECODER
 /*--------------------------------------------------------------------
  * Function: LogSLLHeader(TextLog* )
  *
@@ -390,7 +390,6 @@ static void LogWifiHeader(TextLog* log, Packet * p)
   if (wifih->frame_control & WLAN_FLAG_ORDER)   TextLog_Puts(log," Ord");
   TextLog_NewLine(log);
 }
-#endif  // NO_NON_ETHER_DECODER
 
 /*--------------------------------------------------------------------
  * Function: Log2ndHeader(TextLog* , Packet p)
@@ -411,7 +410,6 @@ void Log2ndHeader(TextLog* log, Packet* p)
             if(p && (p->num_layers > 0))
                 LogEthHeader(log, p);
             break;
-#ifndef NO_NON_ETHER_DECODER
 #ifdef DLT_IEEE802_11
         case DLT_IEEE802_11:
             if(p && (p->num_layers > 0))
@@ -428,7 +426,6 @@ void Log2ndHeader(TextLog* log, Packet* p)
                 LogSLLHeader(log, p);  /* Linux cooked sockets */
             break;
 #endif
-#endif  // NO_NON_ETHER_DECODER
         default:
             if (ScLogVerbose())
             {
@@ -998,7 +995,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
         {
             case IPPROTO_TCP:
             {
-                const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(p);
+                const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(op.ip_api);
                 if (tcph)
                 {
                     orig_p->sp = ntohs(tcph->th_sport);
@@ -1019,7 +1016,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 
             case IPPROTO_UDP:
             {
-                const udp::UDPHdr* udph = layer::get_udp_embed_icmp(p);
+                const udp::UDPHdr* udph = layer::get_udp_embed_icmp(op.ip_api);
                 if (udph)
                 {
                     orig_p->sp = ntohs(p->udph->uh_sport);
@@ -1042,7 +1039,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
 
-                const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(p);
+                const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(op.ip_api);
                 if(icmph != NULL)
                     LogEmbeddedICMPHeader(log, icmph);
                 break;
@@ -1805,7 +1802,6 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
     }
 }
 
-#ifndef NO_NON_ETHER_DECODER
 /*--------------------------------------------------------------------
  * ARP stuff cloned from log.c
  *--------------------------------------------------------------------
@@ -1814,13 +1810,11 @@ void LogArpHeader(TextLog*, Packet*)
 {
 // XXX-IPv6 "NOT YET IMPLEMENTED - printing ARP header"
 }
-#endif
 
 
 #if 0
 // these must be converted to use TextLog 
 // (or just deleted)
-#ifndef NO_NON_ETHER_DECODER
 /****************************************************************************
  *
  * Function: PrintEapolKey(FILE *)
@@ -2062,6 +2056,5 @@ void PrintWifiPkt(FILE * fp, Packet * p)
     fprintf(fp, "=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+"
             "=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+\n\n");
 }
-#endif
 #endif
 

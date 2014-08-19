@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_igmp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -25,12 +26,33 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/ip/cd_igmp_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 
 
 namespace
 {
+
+
+#define CD_IGMP_NAME "igmp"
+
+static const RuleMap igmp_rules[] =
+{
+    { DECODE_IGMP_OPTIONS_DOS, "(" CD_IGMP_NAME ") DOS IGMP IP Options validation attempt" },
+    { 0, nullptr }
+};
+
+
+class IgmpModule : public DecodeModule
+{
+public:
+    IgmpModule() : DecodeModule(CD_IGMP_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return igmp_rules; }
+};
+
+
 
 class IgmpCodec : public Codec
 {

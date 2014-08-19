@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_pgm.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 
@@ -25,13 +26,32 @@
 #endif
 
 #include "framework/codec.h"
-#include "codecs/ip/cd_pgm_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv4.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
 
 namespace
 {
+
+#define CD_PGM_NAME "pgm"
+
+static const RuleMap pgm_rules[] =
+{
+    { DECODE_PGM_NAK_OVERFLOW, "(" CD_PGM_NAME ") BAD-TRAFFIC PGM nak list overflow attempt" },
+    { 0, nullptr }
+};
+
+
+class PgmModule : public DecodeModule
+{
+public:
+    PgmModule() : DecodeModule(CD_PGM_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return pgm_rules; }
+};
+
 
 class PgmCodec : public Codec
 {
@@ -125,7 +145,7 @@ static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
 
         /* checksum is expensive... do that only if the length is bad */
         if (header->checksum != 0) {
-            checksum = checksum::cksum_add((unsigned short*)data, (int)length);
+            checksum = checksum::cksum_add((uint16_t*)data, (int)length);
             if (checksum != 0)
                 return PGM_NAK_ERR;
         }

@@ -19,8 +19,6 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "ips_replace.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,7 +32,7 @@ using namespace std;
 #include "snort_debug.h"
 #include "protocols/packet.h"
 #include "parser.h"
-#include "parse_byte_code.h"
+#include "parser/parse_byte_code.h"
 #include "ips_content.h"
 #include "snort.h"
 #include "packet_io/sfdaq.h"
@@ -43,8 +41,7 @@ using namespace std;
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "detection/detection_defines.h"
-
-#define MAX_PATTERN_SIZE 2048
+#include "actions/act_replace.h"
 
 static void replace_parse(const char* args, string& s)
 {
@@ -76,67 +73,6 @@ static bool replace_ok()
         return false;
     }
     return true;
-}
-
-//--------------------------------------------------------------------------
-// queue foo
-//--------------------------------------------------------------------------
-
-struct Replacement
-{
-    string data;
-    int offset;
-};
-
-#define MAX_REPLACEMENTS 32
-static THREAD_LOCAL Replacement* rpl;
-static THREAD_LOCAL int num_rpl = 0;
-
-void Replace_ResetQueue(void)
-{
-    num_rpl = 0;
-}
-
-void Replace_QueueChange(string& s, int off)
-{
-    Replacement* r;
-
-    if ( num_rpl == MAX_REPLACEMENTS )
-        return;
-
-    r = rpl + num_rpl++;
-
-    r->data = s;
-    r->offset = off;
-}
-
-static inline void Replace_ApplyChange(Packet *p, Replacement* r)
-{
-    uint8_t* start = (uint8_t*)p->data + r->offset;
-    const uint8_t* end = p->data + p->dsize;
-    unsigned len;
-
-    if ( (start + r->data.size()) >= end )
-        len = p->dsize - r->offset;
-    else
-        len = r->data.size();
-
-    memcpy(start, r->data.c_str(), len);
-}
-
-// FIXIT this could be ContentOption::action()
-// for a more general packet rewriting facility
-void Replace_ModifyPacket(Packet *p)
-{
-    if ( num_rpl == 0 )
-        return;
-
-    for ( int n = 0; n < num_rpl; n++ )
-    {
-        Replace_ApplyChange(p, rpl+n);
-    }
-    p->packet_flags |= PKT_MODIFIED;
-    num_rpl = 0;
 }
 
 //-------------------------------------------------------------------------
@@ -231,25 +167,22 @@ int ReplaceOption::eval(Cursor& c, Packet* p)
     if ( !c.is("pkt_data") )
         return DETECTION_OPTION_NO_MATCH;
 
-    if ( c.length() < repl.size() )
+    if ( c.get_pos() < repl.size() )
         return DETECTION_OPTION_NO_MATCH;
 
-    store(c.get_pos());
+    store(c.get_pos() - repl.size());
 
     MODULE_PROFILE_END(replacePerfStats);
     return DETECTION_OPTION_MATCH;
 }
 
-// FIXIT this may need to be apply change here
-// and queue change from some other point
-// (almost certainly broke)
 void ReplaceOption::action(Packet*)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(replacePerfStats);
 
     if ( pending() )
-        Replace_QueueChange(repl, pos());
+        Replace_QueueChange(repl, (unsigned)pos());
 
     MODULE_PROFILE_END(replacePerfStats);
 }
@@ -260,8 +193,8 @@ void ReplaceOption::action(Packet*)
 
 static const Parameter repl_params[] =
 {
-    { "~mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
-      "output format" },
+    { "~", Parameter::PT_STRING, nullptr, nullptr,
+      "byte code to replace with" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -288,7 +221,7 @@ bool ReplModule::begin(const char*, int, SnortConfig*)
 
 bool ReplModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~mode") )
+    if ( v.is("~") )
         replace_parse(v.get_string(), data);
 
     else
@@ -333,16 +266,6 @@ static void replace_dtor(IpsOption* p)
     delete p;
 }
 
-static void replace_tinit(SnortConfig*)
-{
-    rpl = new Replacement[MAX_REPLACEMENTS];
-}
-
-static void replace_tterm(SnortConfig*)
-{
-    delete[] rpl;
-}
-
 static const IpsApi replace_api =
 {
     {
@@ -357,8 +280,8 @@ static const IpsApi replace_api =
     0, 0,
     nullptr,
     nullptr,
-    replace_tinit,
-    replace_tterm,
+    nullptr,
+    nullptr,
     replace_ctor,
     replace_dtor,
     nullptr

@@ -85,9 +85,6 @@
 /* enable ha capable build */
 #cmakedefine ENABLE_HA 1
 
-/* do not build non-ethernet decoders */
-#cmakedefine NO_NON_ETHER_DECODER 1
-
 /* enable intel cpm support in build */
 #cmakedefine INTEL_SOFT_CPM 1
 

@@ -17,10 +17,11 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// protocol_ids.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef PROTOCOL_IDS_H
-#define PROTOCOL_IDS_H
+#ifndef PROTOCOLS_PROTOCOL_IDS_H
+#define PROTOCOLS_PROTOCOL_IDS_H
 
 /*****************************************************************
  *****  NOTE:   Protocols are only included in this file when ****
@@ -70,7 +71,6 @@ constexpr uint16_t PROTOCOL_TEREDO = 0x0101;
 constexpr uint16_t PROTOCOL_GTP = 0x0102;
 constexpr uint16_t IP_EMBEDDED_IN_ICMP4 = 0x0103;
 constexpr uint16_t IP_EMBEDDED_IN_ICMP6 = 0x0104;
-constexpr uint16_t PROT_EMBEDDED_IN_ICMP = 0x0105;
 
 
 

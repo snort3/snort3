@@ -25,9 +25,10 @@
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
+#include "protocols/packet.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/icmp4.h"
-#include "protocols/packet.h"
+#include "protocols/icmp6.h"
 
 struct Packet;
 struct Layer;
@@ -61,41 +62,78 @@ struct EncState{
 
     uint8_t layer;
     const Packet* p;
-    uint16_t ip_len;
-    uint8_t* ip_hdr;
 
-    const uint8_t* payLoad;
-    uint32_t payLen;
+    const uint8_t* payLoad; // for tcp
+    uint32_t payLen;        // payload length
     uint8_t proto;
-};
 
+    inline bool forward() const
+    { return flags & ENC_FLAG_FWD; }
+
+    inline bool reverse() const
+    { return !forward(); }
+};
 
 // Copied from dnet/blob.h
 // * base+off is start of packet
 // * base+end is start of current layer
 // * base+size-1 is last byte of packet (in) / buffer (out)
 struct Buffer {
-    uint8_t* base;          /* start of data */
+    uint8_t* base;     /* start of data */
     int off;           /* offset into data */
     int end;           /* end of data */
     int size;          /* size of allocation */
 };
 
 
+/*
+ * ENCODING HELPER FUNCTIONS */
+static inline bool forward (const EncState* const enc)
+{ return enc->flags & ENC_FLAG_FWD; }
+
+static inline bool reverse (EncodeFlags f)
+{ return !(f & ENC_FLAG_FWD); }
+
+
+static inline uint8_t buff_diff(Buffer *buf, uint8_t* ho)
+{ return (((uint8_t*)(buf->base+buf->end))-(uint8_t*)ho); }
+
 // Update's the buffer to contain an additional
 static inline bool update_buffer(Buffer* buf, size_t n)
 {
     if ( buf->end + n > (unsigned int)buf->size )
-    {
         return false;
-    }
 
     buf->end += n;
     buf->base -= n;
     return true;
 }
 
+static inline icmp::IcmpCode get_icmp4_code(EncodeType et)
+{
+    switch ( et )
+    {
+        case EncodeType::ENC_UNR_NET:  return icmp::IcmpCode::NET_UNREACH;
+        case EncodeType::ENC_UNR_HOST: return icmp::IcmpCode::HOST_UNREACH;
+        case EncodeType::ENC_UNR_PORT: return icmp::IcmpCode::PORT_UNREACH;
+        case EncodeType::ENC_UNR_FW:   return icmp::IcmpCode::PKT_FILTERED;
+        default: return icmp::IcmpCode::PORT_UNREACH;
+    }
+}
 
+static inline icmp::Icmp6Code get_icmp6_code(EncodeType et)
+{
+    switch ( et )
+    {
+        case EncodeType::ENC_UNR_NET:  return icmp::Icmp6Code::UNREACH_NET;
+        case EncodeType::ENC_UNR_HOST: return icmp::Icmp6Code::UNREACH_HOST;
+        case EncodeType::ENC_UNR_PORT: return icmp::Icmp6Code::UNREACH_PORT;
+        case EncodeType::ENC_UNR_FW:   return icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
+        default: return icmp::Icmp6Code::UNREACH_PORT;
+    }
+}
+
+/*  Codec Class */
 
 class Codec
 {
@@ -112,7 +150,7 @@ public:
      * ETHERNET_MTU == 1500
      * IP_MAXPACKET ==  65535
      */
-    static const uint32_t PKT_MAX = 14 + 4 + 1500 + 65535;
+    static constexpr uint32_t PKT_MAX = 14 + 4 + 1500 + 65535;
 
     // Get the codec's name
     inline const char* get_name(){return name; };
@@ -146,44 +184,7 @@ public:
 
 protected:
     Codec(const char* s)
-    {
-        name = s;
-    };
-
-
-    static inline bool forward(const EncState *e)
-    {
-        return e->flags & ENC_FLAG_FWD;
-    }
-
-    static inline bool reverse(const EncodeFlags f)
-    {
-        return !(f & ENC_FLAG_FWD);
-    }
-
-    static inline uint16_t get_decoded_length(EncState *enc)
-    {
-        return enc->p->layers[enc->layer-1].length;
-    }
-
-
-    static inline uint8_t buff_diff(Buffer *buf, uint8_t* ho)
-    {
-        return (((uint8_t*)(buf->base+buf->end))-(uint8_t*)ho);
-    }
-
-    static inline icmp::IcmpCode get_icmp_code (EncodeType et)
-    {
-        switch ( et ) {
-            case EncodeType::ENC_UNR_NET:  return icmp::IcmpCode::NET_UNREACH;
-            case EncodeType::ENC_UNR_HOST: return icmp::IcmpCode::HOST_UNREACH;
-            case EncodeType::ENC_UNR_PORT: return icmp::IcmpCode::PORT_UNREACH;
-            case EncodeType::ENC_UNR_FW:   return icmp::IcmpCode::PKT_FILTERED;
-            default: return icmp::IcmpCode::PORT_UNREACH;
-        }
-    }
-
-
+    { name = s; };
 
 private:
     const char* name;

@@ -558,7 +558,7 @@ static void config_test_mode(SnortConfig* sc, const char*)
     sc->run_flags |= RUN_FLAG__TEST;
 }
 
-#if !defined(NO_NON_ETHER_DECODER) && defined(DLT_IEEE802_11)
+#if defined(DLT_IEEE802_11)
 static void config_show_wifi_mgt(SnortConfig* sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__SHOW_WIFI_MGMT;
@@ -792,7 +792,7 @@ static ConfigFunc basic_opts[] =
     { "W", config_ignore, // spec opt
       "lists available interfaces" },
 
-#if !defined(NO_NON_ETHER_DECODER) && defined(DLT_IEEE802_11)
+#if defined(DLT_IEEE802_11)
     { "w", config_show_wifi_mgt, 
       "dump 802.11 management and control frames" },
 #endif
@@ -801,7 +801,7 @@ static ConfigFunc basic_opts[] =
       "dump the raw packet data starting at the link layer" },
 
     { "x", config_conf_error_out, 
-      "exit on misconfiguration (same as --conf-error-out)" },
+      "same as --conf-error-out" },
 
     { "y", ConfigShowYear, 
       "include year in timestamp in the alert and log files" },
@@ -817,7 +817,7 @@ static ConfigFunc basic_opts[] =
       "<filter options> are standard BPF options, as seen in TCPDump" },
 
     { "conf-error-out", config_conf_error_out, 
-      "exit if certain Snort configuration problems occur (same as -x)" },
+      "output error instead of warning if duplicate rules are found (same as -x)" },
 
     { "create-pidfile", ConfigCreatePidFile,
       "create PID file, even when not in Daemon mode" },
@@ -880,7 +880,7 @@ static ConfigFunc basic_opts[] =
       "list all known modules" },
 
     { "list-plugins", list_plugins,
-      "list all known modules" },
+      "list all known plugins" },
 
     { "lua", config_lua,
       "<chunk> extend/override conf with chunk; may be repeated" },

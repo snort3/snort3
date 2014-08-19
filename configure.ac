@@ -25,7 +25,7 @@
 # initialization
 #--------------------------------------------------------------------------
 
-AC_INIT([snort], [2.10.112])
+AC_INIT([snort], [2.10.113])
 AC_PREREQ([2.68])
 
 AC_CONFIG_SRCDIR([src/main.h])
@@ -387,17 +387,6 @@ AC_ARG_ENABLE(corefiles,
 if test "x$enable_corefiles" = "xno"; then
     AC_DEFINE(NOCOREFILE, [1], [do not generate a core file on segfault etc.])
 fi
-
-AC_ARG_ENABLE(non-ether-decoders,
-[  --enable-non-ether-decoders  Enable non Ethernet decoders.],
-       enable_non_ether_decoders="$enableval", enable_non_ether_decoders="no")
-
-if test "x$enable_non_ether_decoders" = "xno"; then
-    CPPFLAGS="$CPPFLAGS -DNO_NON_ETHER_DECODER"
-    AC_DEFINE(NO_NON_ETHER_DECODER, [1], [do not build non-ethernet decoders])
-fi
-  
-AM_CONDITIONAL(ENABLE_NON_ETHER_DECODER, test "x$enable_non_ether_decoders" = "xyes")
 
 AC_ARG_ENABLE(intel_soft_cpm,
 [  --enable-intel-soft-cpm  Enable Intel Soft CPM support],

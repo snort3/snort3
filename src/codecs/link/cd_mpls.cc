@@ -23,7 +23,6 @@
 
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
-#include "network_inspectors/perf_monitor/perf_base.h"
 #include "network_inspectors/perf_monitor/perf.h"
 #include "snort.h"
 #include "protocols/mpls.h"
@@ -31,11 +30,81 @@
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/mpls.h"
-#include "codecs/link/cd_mpls_module.h"
 #include "codecs/sf_protocols.h"
+#include "main/snort_config.h"
+#include "main/snort.h"
 
 namespace
 {
+#define CD_MPLS_NAME "mpls"
+
+static const Parameter mpls_params[] =
+{
+    { "enable_mpls_multicast", Parameter::PT_BOOL, nullptr, "false",
+      "enables support for MPLS multicast" },
+
+    { "enable_mpls_overlapping_ip", Parameter::PT_BOOL, nullptr, "false",
+      "enable if private network addresses overlap and must be differentiated by MPLS label(s)" },
+
+    { "max_mpls_stack_depth", Parameter::PT_INT, "-1:", "-1",
+      "set MPLS stack depth" },
+
+    { "mpls_payload_type", Parameter::PT_ENUM, "eth | ip4 | ip6", "ip4",
+      "set encapsulated payload type" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+
+// rules which will loaded into snort.
+// You can now reference these rules by calling a codec_event
+// in your main codec's functions
+static const RuleMap mpls_rules[] =
+{
+    { DECODE_BAD_MPLS, "(" CD_MPLS_NAME ") Bad MPLS Frame" },
+    { DECODE_BAD_MPLS_LABEL0, "(" CD_MPLS_NAME ") MPLS Label 0 Appears in Nonbottom Header" },
+    { DECODE_BAD_MPLS_LABEL1, "(" CD_MPLS_NAME ") MPLS Label 1 Appears in Bottom Header" },
+    { DECODE_BAD_MPLS_LABEL2, "(" CD_MPLS_NAME ") MPLS Label 2 Appears in Nonbottom Header" },
+    { DECODE_BAD_MPLS_LABEL3, "(" CD_MPLS_NAME ") MPLS Label 3 Appears in Header" },
+    { DECODE_MPLS_RESERVED_LABEL, "(" CD_MPLS_NAME ") MPLS Label 4, 5,.. or 15 Appears in Header" },
+    { DECODE_MPLS_LABEL_STACK, "(" CD_MPLS_NAME ") Too Many MPLS headers" },
+    { 0, nullptr }
+};
+
+class MplsModule : public DecodeModule
+{
+public:
+    MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_params) {};
+
+    const RuleMap* get_rules() const
+    { return mpls_rules; }
+
+    bool set(const char*, Value& v, SnortConfig* sc)
+    {
+        if ( v.is("enable_mpls_multicast") )
+        {
+            if ( v.get_bool() )
+                sc->run_flags |= RUN_FLAG__MPLS_MULTICAST; // FIXIT move to existing bitfield
+        }
+        else if ( v.is("enable_mpls_overlapping_ip") )
+        {
+            if ( v.get_bool() )
+                sc->run_flags |= RUN_FLAG__MPLS_OVERLAPPING_IP; // FIXIT move to existing bitfield
+        }
+        else if ( v.is("max_mpls_stack_depth") )
+        {
+            sc->mpls_stack_depth = v.get_long();
+        }
+        else if ( v.is("mpls_payload_type") )
+        {
+            sc->mpls_payload_type = v.get_long() + 1;
+        }
+        else
+            return false;
+
+        return true;
+    }
+};
 
 class MplsCodec : public Codec
 {

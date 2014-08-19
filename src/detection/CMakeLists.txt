@@ -19,7 +19,6 @@ add_library (detection STATIC
     fpcreate.h 
     fpdetect.cc 
     fpdetect.h 
-    generators.h 
     pcrm.cc 
     pcrm.h 
     sfrim.cc 

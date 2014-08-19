@@ -239,7 +239,7 @@ static int print_rule( int, RuleTreeNode*, OptTreeNode * o )
 }
 
 // FIXIT ppm_stats should be rolled into ppm module
-// (need module support)
+// (not just peg counts; need module support)
 
 void ppm_sum_stats()
 {
@@ -346,46 +346,13 @@ void ppm_init(ppm_cfg_t *ppm_cfg)
 
 void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
 {
-    int filterEvent = 0;
     if (!ppm_cfg->max_pkt_ticks)
         return;
 
     ppm_stats.pkt_event_cnt++;
 
     if (ppm_cfg->pkt_log & PPM_LOG_ALERT)
-    {
-        OptTreeNode* potn;
-
-        /* make sure we have an otn already in our table for this event */
-        // FIXIT should be able to remove this custom event processing
-        potn = OtnLookup(snort_conf->otn_map, GID_PPM, PPM_EVENT_PACKET_ABORTED);
-
-        if (potn == NULL)
-            return;
-
-        if ( p->ip_api.is_valid() )
-        {
-            filterEvent = sfthreshold_test(
-                        potn->sigInfo.generator,
-                        potn->sigInfo.id,
-                        p->ip_api.get_src(), p->ip_api.get_dst(),
-                        p->pkth->ts.tv_sec);
-        }
-        else
-        {
-            sfip_t cleared;
-            sfip_clear(cleared);
-
-            filterEvent = sfthreshold_test(
-                        potn->sigInfo.generator,
-                        potn->sigInfo.id,
-                        &cleared, &cleared,
-                        p->pkth->ts.tv_sec);
-        }
-
-        if(filterEvent >= 0)
-            AlertAction(p, potn);
-    }
+        SnortEventqAdd(GID_PPM, PPM_EVENT_PACKET_ABORTED);
 
     if (ppm_cfg->pkt_log & PPM_LOG_MESSAGE)
     {
@@ -424,9 +391,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
 void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
 {
     detection_option_tree_root_t *proot;
-    OptTreeNode *otn;
     char timestamp[TIMEBUF_SIZE];
-    int filterEvent = 0;
     *timestamp = '\0';
 
     if (!ppm_cfg->max_rule_ticks)
@@ -435,36 +400,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
     if (ppm_n_crules)
     {
         if (ppm_cfg->rule_log & PPM_LOG_ALERT)
-        {
-            // FIXIT should be able to remove this custom event processing
-            otn = GetOTN(GID_PPM, PPM_EVENT_RULE_TREE_ENABLED);
-
-            if (otn != NULL)
-            {
-                if ( p->ip_api.is_valid() )
-                {
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                p->ip_api.get_src(), p->ip_api.get_dst(),
-                                p->pkth->ts.tv_sec);
-                }
-                else
-                {
-                    sfip_t cleared;
-                    sfip_clear(cleared);
-
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                &cleared, &cleared,
-                                p->pkth->ts.tv_sec);
-                }
-
-                if(filterEvent >= 0)
-                    AlertAction(p, otn);
-            }
-        }
+            SnortEventqAdd(GID_PPM, PPM_EVENT_RULE_TREE_ENABLED);
 
         if (ppm_cfg->rule_log & PPM_LOG_MESSAGE)
         {
@@ -488,37 +424,7 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
     if (ppm_n_rules)
     {
         if (ppm_cfg->rule_log & PPM_LOG_ALERT)
-        {
-            // FIXIT should be able to remove this custom event processing
-            otn = GetOTN(GID_PPM, PPM_EVENT_RULE_TREE_DISABLED);
-
-            if (otn != NULL)
-            {
-                // FIXIT why was this done specially?
-                if ( p->ip_api.is_valid() )
-                {
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                p->ip_api.get_src(), p->ip_api.get_dst(),
-                                p->pkth->ts.tv_sec);
-                }
-                else
-                {
-                    sfip_t cleared;
-                    sfip_clear(cleared);
-
-                    filterEvent = sfthreshold_test(
-                                otn->sigInfo.generator,
-                                otn->sigInfo.id,
-                                &cleared, &cleared,
-                                p->pkth->ts.tv_sec);
-                }
-
-                if(filterEvent >= 0)
-                    AlertAction(p, otn);
-            }
-        }
+            SnortEventqAdd(GID_PPM, PPM_EVENT_RULE_TREE_DISABLED);
 
         if (ppm_cfg->rule_log & PPM_LOG_MESSAGE)
         {

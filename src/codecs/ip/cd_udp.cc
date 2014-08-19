@@ -38,16 +38,81 @@
 #include "protocols/icmp4.h"
 #include "protocols/ipv4.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/checksum.h"
+#include "codecs/ip/checksum.h"
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
 #include "codecs/codec_events.h"
-#include "codecs/ip/cd_udp_module.h"
 #include "codecs/sf_protocols.h"
+#include "snort_config.h"
+#include "parser/config_file.h"
 
 namespace
 {
+
+
+#define CD_UDP_NAME "udp"
+static const Parameter udp_params[] =
+{
+    { "deep_teredo_inspection", Parameter::PT_BOOL, nullptr, "false",
+      "look for Teredo on all UDP ports (default is only 3544)" },
+
+    { "enable_gtp", Parameter::PT_BOOL, nullptr, "false",
+      "decode GTP encapsulations" },
+
+    // FIXIT use PT_BIT_LIST
+    { "gtp_ports", Parameter::PT_STRING, nullptr,
+      "'2152 3386'", "set GTP ports" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+
+static const RuleMap udp_rules[] =
+{
+
+    { DECODE_UDP_DGRAM_LT_UDPHDR, "(" CD_UDP_NAME ") Truncated UDP Header" },
+    { DECODE_UDP_DGRAM_INVALID_LENGTH, "(" CD_UDP_NAME ") Invalid UDP header, length field < 8" },
+    { DECODE_UDP_DGRAM_SHORT_PACKET, "(" CD_UDP_NAME ") Short UDP packet, length field > payload length" },
+    { DECODE_UDP_DGRAM_LONG_PACKET, "(" CD_UDP_NAME ") Long UDP packet, length field < payload length" },
+    { DECODE_UDP_IPV6_ZERO_CHECKSUM, "(" CD_UDP_NAME ") Invalid IPv6 UDP packet, checksum zero" },
+    { DECODE_UDP_LARGE_PACKET, "(" CD_UDP_NAME ") MISC Large UDP Packet" },
+    { DECODE_UDP_PORT_ZERO, "(" CD_UDP_NAME ") BAD-TRAFFIC UDP port 0 traffic" },
+    { 0, nullptr }
+};
+
+class UdpModule : public DecodeModule
+{
+public:
+    UdpModule() : DecodeModule(CD_UDP_NAME, udp_params) {}
+
+    const RuleMap* get_rules() const
+    { return udp_rules; }
+
+    bool set(const char*, Value& v, SnortConfig* sc)
+    {
+        if ( v.is("deep_teredo_inspection") )
+        {
+            sc->enable_teredo = v.get_long();  // FIXIT move to existing bitfield
+        }
+        else if ( v.is("gtp_ports") )
+        {
+            ConfigGTPDecoding(sc, v.get_string());
+        }
+        else if ( v.is("enable_gtp") )
+        {
+            if ( v.get_bool() )
+                sc->enable_gtp = 1;  // FIXIT move to existing bitfield
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
+    }
+};
+
 
 class UdpCodec : public Codec
 {
@@ -163,7 +228,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             if( !fragmented_udp_flag && udph->uh_chk )
             {
                 checksum::Pseudoheader ph;
-                const ip::IPHdr* ip4h = p->ip_api.get_ip4h();
+                const ip::IP4Hdr* ip4h = p->ip_api.get_ip4h();
                 ph.sip = ip4h->get_src();
                 ph.dip = ip4h->get_dst();
                 ph.zero = 0;
@@ -192,7 +257,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             else if( !fragmented_udp_flag )
             {
                 checksum::Pseudoheader6 ph6;
-                const ipv6::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
+                const ip::IP6Hdr* ip6h = p->ip_api.get_ip6h();
                 COPY4(ph6.sip, ip6h->ip6_src.u6_addr32);
                 COPY4(ph6.dip, ip6h->ip6_dst.u6_addr32);
                 ph6.zero = 0;
@@ -304,6 +369,8 @@ typedef struct {
 
 bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 {   
+    const ip::IpApi* const ip_api = &enc->p->ip_api;
+
     if (enc->p->proto_bits & PROTO_BIT__GTP)
     {
         const udp::UDPHdr* hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);
@@ -329,13 +396,10 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         ho->uh_len = htons((uint16_t)len);
         ho->uh_chk = 0;
 
-
-        const ip::IpApi* ip_api = &enc->p->ip_api;
-
         if (ip_api->is_ip4())
         {
             checksum::Pseudoheader ps;
-            const IPHdr *ip4h = ip_api->get_ip4h();
+            const IP4Hdr* const ip4h = ip_api->get_ip4h();
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();
             ps.zero = 0;
@@ -346,9 +410,9 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
         else
         {
             checksum::Pseudoheader6 ps6;
-            const ipv6::IP6RawHdr *ip6h = ip_api->get_ip6h();
-            memcpy(ps6.sip, ip6h->ip6_src.u6_addr8, sizeof(ps6.sip));
-            memcpy(ps6.dip, ip6h->ip6_dst.u6_addr8, sizeof(ps6.dip));
+            const ip::IP6Hdr* const ip6h = ip_api->get_ip6h();
+            memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
+            memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
             ps6.zero = 0;
             ps6.protocol = IPPROTO_UDP;
             ps6.len = ho->uh_len;
@@ -359,31 +423,32 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     }
 
     // if this is not GTP, we want to return an ICMP unreachable packet
-    else if ( ip::is_ipv4(*(enc->ip_hdr)))
+    else if ( ip_api->is_ip4())
     {
         // copied directly from Icmp4Codec::encode()
         uint8_t* p;
         IcmpHdr* ho;
+        const uint8_t ip_len = ip_api->get_ip4h()->get_hlen() << 2;
 
-        if (!update_buffer(out, sizeof(*ho) + enc->ip_len + icmp::unreach_data()))
-        return false;
+        if (!update_buffer(out, sizeof(*ho) + ip_len + icmp::ICMP_UNREACH_DATA_LEN))
+            return false;
 
         const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
         ho = reinterpret_cast<IcmpHdr*>(out->base);
 
         enc->proto = IPPROTO_ID_ICMPV4;
         ho->type = icmp::IcmpType::DEST_UNREACH;
-        ho->code = get_icmp_code(enc->type);
+        ho->code = get_icmp4_code(enc->type);
         ho->cksum = 0;
         ho->unused = 0;
 
         // copy original ip header
         p = out->base + sizeof(IcmpHdr);
-        memcpy(p, enc->ip_hdr, enc->ip_len);
+        memcpy(p, ip_api->get_ip4h(), ip_len);
 
         // copy first 8 octets of original ip data (ie udp header)
-        p += enc->ip_len;
-        memcpy(p, hi, icmp::unreach_data());
+        p += ip_len;
+        memcpy(p, hi, icmp::ICMP_UNREACH_DATA_LEN);
 
         ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
     }
@@ -398,24 +463,24 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         // copy first 8 octets of original ip data (ie udp header)
         // TBD: copy up to minimum MTU worth of data
-        if (!update_buffer(out, icmp::unreach_data()))
+        if (!update_buffer(out, icmp::ICMP_UNREACH_DATA_LEN))
             return false;
-        memcpy(out->base, raw_in, icmp::unreach_data());
+        memcpy(out->base, raw_in, icmp::ICMP_UNREACH_DATA_LEN);
 
         // copy original ip header
-        if (!update_buffer(out, enc->ip_len))
+        if (!update_buffer(out, ip::IP6_HEADER_LEN))
             return false;
-        // TBD should be able to elminate enc->ip_hdr by using layer-2
-        memcpy(out->base, enc->ip_hdr, enc->ip_len);
-        ((ipv6::IP6RawHdr*)out->base)->ip6nxt = IPPROTO_UDP;
+
+        memcpy(out->base, ip_api->get_ip6h(), ip::IP6_HEADER_LEN);
+        ((ip::IP6Hdr*)out->base)->ip6_next = IPPROTO_UDP;
 
 
         if (!update_buffer(out, sizeof(*ho)))
             return false;
 
         ho = reinterpret_cast<IcmpHdr*>(out->base);
-        ho->type = 1;   // dest unreachable
-        ho->code = 4;   // port unreachable
+        ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
+        ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));
         ho->cksum = 0;
         ho->unused = 0;
 
@@ -424,8 +489,8 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
 
         int len = buff_diff(out, (uint8_t *)ho);
-        memcpy(ps6.sip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_src.u6_addr8, sizeof(ps6.sip));
-        memcpy(ps6.dip, ((ipv6::IP6RawHdr *)enc->ip_hdr)->ip6_dst.u6_addr8, sizeof(ps6.dip));
+        memcpy(ps6.sip, ip_api->get_ip6h()->get_src()->u6_addr8, sizeof(ps6.sip));
+        memcpy(ps6.dip, ip_api->get_ip6h()->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
         ps6.protocol = IPPROTO_ICMPV6;
         ps6.len = htons((uint16_t)(len));
@@ -449,7 +514,7 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 
         if (p->ip_api.is_ip4()) {
             checksum::Pseudoheader ps;
-            const ip::IPHdr* ip4h = p->ip_api.get_ip4h();
+            const ip::IP4Hdr* ip4h = p->ip_api.get_ip4h();
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();
             ps.zero = 0;
@@ -460,7 +525,7 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
         else
         {
             checksum::Pseudoheader6 ps6;
-            const ipv6::IP6RawHdr* ip6h = p->ip_api.get_ip6h();
+            const ip::IP6Hdr* ip6h = p->ip_api.get_ip6h();
             memcpy(ps6.sip, &ip6h->ip6_src.u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, &ip6h->ip6_dst.u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
@@ -490,207 +555,22 @@ void UdpCodec::format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     c->dp = ntohs(ch->uh_dport);
 }
 
-#if 0
-
-/*
- * CHECKSUMS  -- TODO::  delete
- */
-
-/*
-*  checksum udp
-*
-*  h    - pseudo header - 12 bytes
-*  d    - udp hdr + payload
-*  dlen - length of payload in bytes
-*
-*/
-static inline unsigned short in_chksum_udp6(pseudoheader6 *ph,
-    unsigned short * d, int dlen )
-{
-   uint16_t *h = (uint16_t *)ph;
-   unsigned int cksum;
-   unsigned short answer=0;
-
-   /* PseudoHeader must have  12 bytes */
-   cksum  = h[0];
-   cksum += h[1];
-   cksum += h[2];
-   cksum += h[3];
-   cksum += h[4];
-   cksum += h[5];
-   cksum += h[6];
-   cksum += h[7];
-   cksum += h[8];
-   cksum += h[9];
-   cksum += h[10];
-   cksum += h[11];
-   cksum += h[12];
-   cksum += h[13];
-   cksum += h[14];
-   cksum += h[15];
-   cksum += h[16];
-   cksum += h[17];
-
-   /* UDP must have 8 hdr bytes */
-   cksum += d[0];
-   cksum += d[1];
-   cksum += d[2];
-   cksum += d[3];
-
-   dlen  -= 8; /* bytes   */
-   d     += 4; /* short's */
-
-   while(dlen >=32)
-   {
-     cksum += d[0];
-     cksum += d[1];
-     cksum += d[2];
-     cksum += d[3];
-     cksum += d[4];
-     cksum += d[5];
-     cksum += d[6];
-     cksum += d[7];
-     cksum += d[8];
-     cksum += d[9];
-     cksum += d[10];
-     cksum += d[11];
-     cksum += d[12];
-     cksum += d[13];
-     cksum += d[14];
-     cksum += d[15];
-     d     += 16;
-     dlen  -= 32;
-   }
-
-   while(dlen >=8)
-   {
-     cksum += d[0];
-     cksum += d[1];
-     cksum += d[2];
-     cksum += d[3];
-     d     += 4;
-     dlen  -= 8;
-   }
-
-   while(dlen > 1)
-   {
-     cksum += *d++;
-     dlen  -= 2;
-   }
-
-   if( dlen == 1 )
-   {
-     *(unsigned char*)(&answer) = (*(unsigned char*)d);
-     cksum += answer;
-   }
-
-   cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
-   cksum += (cksum >> 16);
-
-   return (unsigned short)(~cksum);
-}
-
-
-
-static inline unsigned short in_chksum_udp(pseudoheader *ph,
-     unsigned short * d, int dlen )
-{
-   uint16_t *h = (uint16_t *)ph;
-   unsigned int cksum;
-   unsigned short answer=0;
-
-   /* PseudoHeader must have 36 bytes */
-   cksum  = h[0];
-   cksum += h[1];
-   cksum += h[2];
-   cksum += h[3];
-   cksum += h[4];
-   cksum += h[5];
-
-   /* UDP must have 8 hdr bytes */
-   cksum += d[0];
-   cksum += d[1];
-   cksum += d[2];
-   cksum += d[3];
-
-   dlen  -= 8; /* bytes   */
-   d     += 4; /* short's */
-
-   while(dlen >=32)
-   {
-     cksum += d[0];
-     cksum += d[1];
-     cksum += d[2];
-     cksum += d[3];
-     cksum += d[4];
-     cksum += d[5];
-     cksum += d[6];
-     cksum += d[7];
-     cksum += d[8];
-     cksum += d[9];
-     cksum += d[10];
-     cksum += d[11];
-     cksum += d[12];
-     cksum += d[13];
-     cksum += d[14];
-     cksum += d[15];
-     d     += 16;
-     dlen  -= 32;
-   }
-
-   while(dlen >=8)
-   {
-     cksum += d[0];
-     cksum += d[1];
-     cksum += d[2];
-     cksum += d[3];
-     d     += 4;
-     dlen  -= 8;
-   }
-
-   while(dlen > 1)
-   {
-     cksum += *d++;
-     dlen  -= 2;
-   }
-
-   if( dlen == 1 )
-   {
-     *(unsigned char*)(&answer) = (*(unsigned char*)d);
-     cksum += answer;
-   }
-
-   cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
-   cksum += (cksum >> 16);
-
-   return (unsigned short)(~cksum);
-}
-#endif
-
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 
 static Module* mod_ctor()
-{
-    return new UdpModule;
-}
+{ return new UdpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new UdpCodec();
-}
+{ return new UdpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi udp_api =
@@ -712,5 +592,12 @@ static const CodecApi udp_api =
 };
 
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+{
+    &udp_api.base,
+    nullptr
+};
+#else
 const BaseApi* cd_udp = &udp_api.base;
-
+#endif

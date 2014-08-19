@@ -33,7 +33,6 @@
 #include "treenodes.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "generators.h"
 #include "log.h"
 #include "snort.h"
 
@@ -50,6 +49,9 @@
  */
 #define TAG_PRUNE_QUANTUM   300
 #define TAG_MEMCAP          4194304  /* 4MB */
+
+#define GENERATOR_TAG       2
+#define TAG_LOG_PKT         1
 
 /*  D A T A   S T R U C T U R E S  **********************************/
 /**Key used for identifying a session or host.

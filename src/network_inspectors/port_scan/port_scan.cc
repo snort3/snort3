@@ -384,12 +384,12 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
 
     if(p->ip_api.is_ip4())
     {
-        ((IPHdr*)g_tmp_pkt->ip_api.get_ip4h())->set_proto(IPPROTO_PS);
+        ((IP4Hdr*)g_tmp_pkt->ip_api.get_ip4h())->set_proto(IPPROTO_PS);
     }
     else
     {
         // since ip_api.is_valid() && !ip4h, this is automatically ip6h
-        ((ipv6::IP6RawHdr*)g_tmp_pkt->ip_api.get_ip6h())->set_proto(IPPROTO_PS);
+        ((ip::IP6Hdr*)g_tmp_pkt->ip_api.get_ip6h())->set_proto(IPPROTO_PS);
     }
 
     switch(proto_type)
@@ -421,7 +421,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     // FIXIT: IP4 is gauranteed to have been set in update().  Is IP6()
     //        also gauranteed?
     if(g_tmp_pkt->ip_api.is_ip6())
-        ((ipv6::IP6RawHdr*)g_tmp_pkt->ip_api.get_ip6h())->set_len(htons((uint16_t)ip_size));
+        ((ip::IP6Hdr*)g_tmp_pkt->ip_api.get_ip6h())->set_len(htons((uint16_t)ip_size));
 
     return 0;
 }

@@ -26,14 +26,12 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
 #include "protocols/packet.h"  
 #include "static_include.h"
 
 #include "root_chdlc.h"
 #include "root_slip.h"
 #include "../decoder_includes.h"
-
 
 /*
  * Function: DecodeChdlcPkt(Packet *, char *,

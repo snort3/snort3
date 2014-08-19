@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// ipv4.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef PROTOCOLS_IPV4_H
 #define PROTOCOLS_IPV4_H
@@ -35,7 +36,6 @@
 #endif /* !IFNAMSIZ */
 #endif /* !WIN32 */
 
-#include "sfip/sfip_t.h"
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 
 
@@ -51,18 +51,12 @@
 namespace ip
 {
 
-namespace detail
-{
-/* ip option type codes */
-constexpr uint32_t IP4_THIS_NET  = 0x00;  // msb
-constexpr uint32_t IP4_MULTICAST = 0x0E;  // ms nibble
-constexpr uint32_t IP4_RESERVED = 0x0F;  // ms nibble
-constexpr uint32_t IP4_LOOPBACK = 0x7F;  // msb
 constexpr uint32_t IP4_BROADCAST = 0xffffffff;
-} // namespace detail
-
-// not included in details since this should not be hidden
 constexpr uint8_t IP4_HEADER_LEN = 20;
+constexpr uint8_t IP4_THIS_NET  = 0x00;  // msb
+constexpr uint8_t IP4_MULTICAST = 0x0E;  // ms nibble
+constexpr uint8_t IP4_RESERVED = 0x0F;  // ms nibble
+constexpr uint8_t IP4_LOOPBACK = 0x7F;  // msb
 
 
 enum class IPOptionCodes : std::uint8_t {
@@ -99,7 +93,7 @@ struct IpOptions
 
 
 // This must be a standard layour struct!
-struct IPHdr
+struct IP4Hdr
 {
     uint8_t ip_verhl;      /* version & header length */
     uint8_t ip_tos;        /* type of service */
@@ -151,10 +145,10 @@ struct IPHdr
 
     /* booleans */
     inline bool is_src_broadcast() const
-    { return ip_src == detail::IP4_BROADCAST; }
+    { return ip_src == IP4_BROADCAST; }
 
     inline bool is_dst_broadcast() const
-    { return ip_dst == detail::IP4_BROADCAST; }
+    { return ip_dst == IP4_BROADCAST; }
 
     /*  setters  */
     inline void set_hlen(uint8_t value)
@@ -166,24 +160,6 @@ struct IPHdr
     inline void set_proto(uint8_t prot)
     { ip_proto = prot; }
 } ;
-
-
-struct IP4Hdr
-{
-    uint8_t ip_verhl;      /* version & header length */
-    uint8_t ip_tos;        /* type of service */
-    uint16_t ip_len;       /* datagram length */
-    uint16_t ip_id;        /* identification  */
-    uint16_t ip_off;       /* fragment offset */
-    uint8_t ip_ttl;        /* time to live field */
-    uint8_t ip_proto;      /* datagram protocol */
-    uint16_t ip_csum;      /* checksum */
-    sfip_t ip_src;          /* source IP */
-    sfip_t ip_dst;          /* dest IP */
-};
-
-
-
 
 
 static inline bool isPrivateIP(uint32_t addr)
@@ -205,65 +181,6 @@ static inline bool isPrivateIP(uint32_t addr)
     return false;
 }
 
-static inline bool is_broadcast(uint32_t addr)
-{ 
-    return (addr == detail::IP4_BROADCAST);
-}
-
-static inline bool is_multicast(uint8_t addr)
-{
-    return (addr == detail::IP4_MULTICAST);
-}
-
-static inline bool is_ipv4(uint8_t ch)
-{
-    return (ch >> 4)  == 4;
-}
-
-static inline uint8_t get_pkt_len(const IP4Hdr* p)
-{
-    return (uint8_t)((p->ip_verhl & 0x0f) << 2);
-}
-
-static inline uint8_t get_pkt_len(const IPHdr* p)
-{
-    return (uint8_t)((p->ip_verhl & 0x0f) << 2);
-}
-
-static inline uint8_t get_version(IPHdr* p)
-{
-    return (p->ip_verhl & 0xf0) >> 4;
-}
-
-static inline uint8_t get_version(IP4Hdr* p)
-{
-    return (p->ip_verhl & 0xf0) >> 4;
-}
-
-static inline bool is_loopback(uint8_t addr)
-{
-    return addr == detail::IP4_LOOPBACK;
-}
-
-static inline bool is_this_net(uint8_t addr)
-{
-    return addr == detail::IP4_THIS_NET;
-}
-
-static inline bool is_reserved(uint8_t addr)
-{
-    return addr == detail::IP4_RESERVED;
-}
-
-static inline void set_version(IPHdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)((p->ip_verhl & 0x0f) | (value << 4));
-}
-
-static inline void set_version(IP4Hdr* p, uint8_t value)
-{
-    p->ip_verhl = (unsigned char)((p->ip_verhl & 0x0f) | (value << 4));
-}
 
 } /* namespace ip */
 
@@ -272,7 +189,6 @@ static inline void set_version(IP4Hdr* p, uint8_t value)
 /* we need to change them as well as get them */
 // TYPEDEF WHICH NEED TO BE DELETED
 
-typedef ip::IPHdr IPHdr;
 typedef ip::IP4Hdr IP4Hdr;
 
 

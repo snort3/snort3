@@ -58,6 +58,7 @@ endif ()
 # APPLE is defined by Cmake
 if (APPLE)
     set(MACOS 1)
+    set(CMAKE_MACOSX_RPATH OFF)
 endif()
 
 
@@ -66,6 +67,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 
         find_library(CLANG_CXX_LIBRARY 
             NAMES c++

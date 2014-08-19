@@ -22,13 +22,30 @@
 
 
 #include "framework/codec.h"
-#include "codecs/link/cd_erspan3_module.h"
+#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
 
 namespace
 {
+
+#define CD_ERSPAN3_NAME "erspan3"
+static const RuleMap erspan3_rules[] =
+{
+    { DECODE_ERSPAN3_DGRAM_LT_HDR, "(" CD_ERSPAN3_NAME ") captured < ERSpan Type3 Header Length" },
+    { 0, nullptr }
+};
+
+class Erspan3Module : public DecodeModule
+{
+public:
+    Erspan3Module() : DecodeModule(CD_ERSPAN3_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return erspan3_rules; }
+};
+
 
 class Erspan3Codec : public Codec
 {

@@ -55,7 +55,6 @@ using namespace std;
 
 #include "helpers/process.h"
 #include "protocols/packet.h"
-#include "managers/packet_manager.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
 #include "rules.h"
@@ -89,6 +88,7 @@ using namespace std;
 #include "managers/ips_manager.h"
 #include "managers/mpse_manager.h"
 #include "managers/packet_manager.h"
+#include "managers/action_manager.h"
 #include "detection/sfrim.h"
 #include "ppm.h"
 #include "profiler.h"
@@ -107,7 +107,7 @@ using namespace std;
 #include "target_based/sftarget_reader.h"
 #include "stream/stream_api.h"
 #include "stream/stream.h"
-#include "ips_options/ips_replace.h"
+#include "actions/act_replace.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"
@@ -285,6 +285,22 @@ static void register_profiles()
 // initialization
 //-------------------------------------------------------------------------
 
+static void init_policy(SnortConfig* sc)
+{
+    PolicyMode pm;
+
+    if ( sc->run_flags & RUN_FLAG__INLINE )
+        pm = POLICY_MODE__INLINE;
+
+    else if ( sc->run_flags & RUN_FLAG__INLINE_TEST )
+        pm =  POLICY_MODE__INLINE_TEST;
+
+    else
+        pm = POLICY_MODE__PASSIVE;
+
+    sc->get_ips_policy()->policy_mode = pm;
+}
+
 static void SnortInit(int argc, char **argv)
 {
     init_signals();
@@ -333,6 +349,7 @@ static void SnortInit(int argc, char **argv)
      * command line overriding config file.
      * Set the global snort_conf that will be used during run time */
     snort_conf = MergeSnortConfs(snort_cmd_line_conf, sc);
+    init_policy(snort_conf);
 
     if ( snort_conf->output )
         EventManager::instantiate(snort_conf->output, sc);
@@ -617,6 +634,7 @@ static SnortConfig * get_reload_config(void)
     SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
 
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
+    init_policy(sc);
 
 #ifdef PERF_PROFILING
     /* Parse profiling here because of file option and potential
@@ -888,16 +906,14 @@ DAQ_Verdict packet_callback(
 
     MODULE_PROFILE_START(eventqPerfStats);
     SnortEventqReset();
-    Replace_ResetQueue();
-    Active_ResetQueue();
     MODULE_PROFILE_END(eventqPerfStats);
+
+    ActionManager::reset_queue();
 
     verdict = ProcessPacket(&s_packet, pkthdr, pkt);
 
-    if ( Active_ResponseQueued() )
-    {
-        Active_SendResponses(&s_packet);
-    }
+    ActionManager::execute(&s_packet);
+
     if ( Active_PacketWasDropped() )
     {
         if ( verdict == DAQ_VERDICT_PASS )
@@ -905,8 +921,6 @@ DAQ_Verdict packet_callback(
     }
     else
     {
-        Replace_ModifyPacket(&s_packet);
-
         if ( s_packet.packet_flags & PKT_MODIFIED )
         {
             // this packet was normalized and/or has replacements
@@ -1003,6 +1017,7 @@ void snort_thread_init(const char* intf)
 
     EventManager::open_outputs();
     IpsManager::setup_options();
+    ActionManager::thread_init(snort_conf);
     InspectorManager::thread_init(snort_conf);
 }
 
@@ -1013,6 +1028,7 @@ void snort_thread_term()
 #endif
     ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
+    ActionManager::thread_term(snort_conf);
     IpsManager::clear_options();
     EventManager::close_outputs();
 

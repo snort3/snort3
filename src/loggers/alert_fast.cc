@@ -244,10 +244,10 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     {
         if(p->ip_api.is_valid())
             LogIPPkt(fast_log, p->ip_api.proto(), p);
-#ifndef NO_NON_ETHER_DECODER
+
         else if(p->proto_bits & PROTO_BIT__ARP)
             LogArpHeader(fast_log, p);
-#endif
+
     }
     TextLog_NewLine(fast_log);
     TextLog_Flush(fast_log);

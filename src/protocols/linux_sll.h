@@ -17,12 +17,11 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// linux_sll.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef LINUX_SLL_H
-#define LINUX_SLL_H
-
-#ifndef NO_NON_ETHER_DECODER
+#ifndef PROTOCOLS_LINUX_SLL_H
+#define PROTOCOLS_LINUX_SLL_H
 
 namespace linux_sll
 {
@@ -61,5 +60,4 @@ typedef struct _SLLHdr {
 
 } // namespace ssl
 
-#endif /* NO_NON_ETHER_DECODER */
 #endif /* LINUX_SLL_H */
