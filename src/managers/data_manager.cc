@@ -92,7 +92,7 @@ void DataManager::instantiate(
         b->data = api->ctor(mod);
 }
 
-PlugData* DataManager::acquire(const char* key)
+PlugData* DataManager::acquire(const char* key, SnortConfig* sc)
 {
     DataBlock* b = get_data(key);
     assert(b);
@@ -101,7 +101,7 @@ PlugData* DataManager::acquire(const char* key)
     {
         // create default instance
         Module* mod = ModuleManager::get_module(key);
-        mod->begin(key, 0, nullptr);  // FIXIT really need sc?
+        mod->begin(key, 0, sc);
         mod->end(key, 0, nullptr);
         b->data = b->api->ctor(mod);
     }

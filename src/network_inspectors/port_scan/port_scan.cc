@@ -56,6 +56,7 @@
 
 #include "main/analyzer.h"
 #include "protocols/packet.h"
+#include "managers/data_manager.h"
 #include "managers/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"
@@ -66,7 +67,6 @@
 #include "filters/sfthreshold.h"
 #include "sfsnprintfappend.h"
 #include "framework/inspector.h"
-#include "framework/share.h"
 #include "framework/plug_data.h"
 #include "profiler.h"
 #include "detection/detect.h"
@@ -849,15 +849,15 @@ PortScan::~PortScan()
         delete config;
 
     if ( global )
-        Share::release(global);
+        DataManager::release(global);
 }
 
-bool PortScan::configure(SnortConfig*)
+bool PortScan::configure(SnortConfig* sc)
 {
     // FIXIT use fixed base file name
     config->logfile = SnortStrdup("portscan.log");
 
-    global = (PsData*)Share::acquire(PS_GLOBAL);
+    global = (PsData*)DataManager::acquire(PS_GLOBAL, sc);
     config->common = global->data;
     return true;
 }

@@ -71,7 +71,7 @@
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
 #include "framework/inspector.h"
-#include "framework/share.h"
+#include "managers/data_manager.h"
 
 #define ERRSTRLEN 1000
 
@@ -264,7 +264,7 @@ HttpInspect::~HttpInspect ()
         delete config;
 
     if ( global )
-        Share::release(global);
+        DataManager::release(global);
 }
 
 bool HttpInspect::get_buf(
@@ -301,7 +301,7 @@ bool HttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 
 bool HttpInspect::configure (SnortConfig* sc)
 {
-    global = (HttpData*)Share::acquire(GLOBAL_KEYWORD);
+    global = (HttpData*)DataManager::acquire(GLOBAL_KEYWORD, sc);
     config->global = global->data;
 
     HttpInspectInitializeGlobalConfig(config->global);

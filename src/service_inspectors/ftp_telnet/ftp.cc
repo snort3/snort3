@@ -49,7 +49,7 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
+#include "managers/data_manager.h"
 #include "detection/detection_util.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
@@ -390,12 +390,12 @@ FtpServer::~FtpServer ()
 
     if ( ftp_client )
         // FIXIT make sure CleanupFTPClientConf() is called
-        Share::release(ftp_client);
+        DataManager::release(ftp_client);
 }
 
 bool FtpServer::configure (SnortConfig* sc)
 {
-    ftp_client = (ClientData*)Share::acquire(client_key);
+    ftp_client = (ClientData*)DataManager::acquire(client_key, sc);
 
     bind_server = ftp_server;
     bind_client = ftp_client->data;

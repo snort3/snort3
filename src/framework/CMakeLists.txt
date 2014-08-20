@@ -13,7 +13,6 @@ set (FRAMEWORK_INCLUDES
     mpse.h
     parameter.h
     plug_data.h
-    share.h
     so_rule.h
     value.h
 )

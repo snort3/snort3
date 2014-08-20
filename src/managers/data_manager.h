@@ -34,7 +34,7 @@ public:
 
     static void instantiate(const DataApi*, Module*, SnortConfig*);
 
-    static PlugData* acquire(const char* key);
+    static PlugData* acquire(const char* key, SnortConfig*);
     static void release(PlugData*);
 };
 

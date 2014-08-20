@@ -101,7 +101,6 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "framework/inspector.h"
-#include "framework/share.h"
 #include "flow/flow_control.h"
 
 /*  D E F I N E S  **************************************************/

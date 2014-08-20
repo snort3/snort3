@@ -49,7 +49,6 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
 #include "detection/detection_util.h"
 
 static const char* data_key = "ftp_data";
