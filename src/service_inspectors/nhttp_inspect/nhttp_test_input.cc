@@ -75,11 +75,11 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
             // Must present unflushed leftovers to PAF again.
             // If we don't take this opportunity to left justify our data in the buffer we may "walk" to the right until we run out of buffer space
             memmove(msg_buf, msg_buf+flush_octets, length);
-            tcp_close = tcp_already_closed;
+            tcp_close = tcp_closed;
             return;
         }
         // If we reach here then PAF has already flushed all the data we have read so far.
-        tcp_already_closed = false;
+        tcp_closed = false;
     }
     else {
         // The data we gave PAF last time was not flushed
@@ -135,6 +135,10 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                 }
                 else if ((command_length == strlen("break")) && !memcmp(command_value, "break", strlen("break"))) {
                     need_break = true;
+                }
+                else if ((command_length == strlen("tcpclose")) && !memcmp(command_value, "tcpclose", strlen("tcpclose"))) {
+                    tcp_close = true;
+                    tcp_closed = true;
                 }
                 else if ((command_length == strlen("bodyend")) && !memcmp(command_value, "bodyend", strlen("bodyend"))) {
                     term_bytes[0] = 'x';
