@@ -25,6 +25,8 @@
 # include "config.h"
 #endif
 
+#include <string>
+
 #include "snort_types.h"
 #include "framework/base_api.h"
 
@@ -35,7 +37,8 @@ class ScriptManager
 public:
     static void load_scripts(const char* paths);
     static void release_scripts();
-    static const BaseApi** get_ips_options();
+    static const BaseApi** get_plugins();
+    static std::string* get_chunk(const char* key);
 };
 
 #endif

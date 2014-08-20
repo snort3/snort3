@@ -79,7 +79,8 @@ using namespace std;
 #include "event_queue.h"
 #include "asn1.h"
 #include "framework/mpse.h"
-#include "managers/shell.h"
+#include "main/shell.h"
+#include "main/analyzer.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
@@ -98,7 +99,6 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
-#include "main/analyzer.h"
 #include "log/sf_textlog.h"
 #include "log/log_text.h"
 #include "time/periodic.h"
@@ -563,21 +563,6 @@ static void SnortCleanup()
 
     //MpseManager::print_search_engine_stats();
 
-    /* free allocated memory */
-    if (snort_conf == snort_cmd_line_conf)
-    {
-        SnortConfFree(snort_cmd_line_conf);
-        snort_cmd_line_conf = NULL;
-        snort_conf = NULL;
-    }
-    else
-    {
-        SnortConfFree(snort_cmd_line_conf);
-        snort_cmd_line_conf = NULL;
-        SnortConfFree(snort_conf);
-        snort_conf = NULL;
-    }
-
     close_fileAPI();
 
     sfthreshold_free();  // FIXDAQ etc.
@@ -596,6 +581,21 @@ static void SnortCleanup()
     ModuleManager::term();
     PluginManager::release_plugins();
     Shell::term();
+
+    /* free allocated memory */
+    if (snort_conf == snort_cmd_line_conf)
+    {
+        SnortConfFree(snort_cmd_line_conf);
+        snort_cmd_line_conf = NULL;
+        snort_conf = NULL;
+    }
+    else
+    {
+        SnortConfFree(snort_cmd_line_conf);
+        snort_cmd_line_conf = NULL;
+        SnortConfFree(snort_conf);
+        snort_conf = NULL;
+    }
 }
 
 void snort_cleanup()

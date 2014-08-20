@@ -2,6 +2,11 @@
 -- more FIXIT cleanup
 -- fixed flush bucket dumping
 -- fixed cmake ips_replace.h
+-- refactored script support
+-- added lua logger support
+-- added extra lualert (alert.lua) to demo lua loggers
+-- updated snort.lua
+-- pulled in Tom's latest as of 08/20-11:45
 
 113
 -- initial FlushBucket implementation

@@ -16,51 +16,67 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// ips_luajit.cc author Russ Combs <rucombs@cisco.com>
+// alert_luajit.cc author Russ Combs <rucombs@cisco.com>
 
 #include <lua.hpp>
 
+#include "events/event.h"
 #include "helpers/chunk.h"
-#include "managers/ips_manager.h"
+#include "managers/event_manager.h"
+#include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
-#include "framework/cursor.h"
+#include "framework/logger.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "time/profiler.h"
 
-static THREAD_LOCAL ProfileStats luaIpsPerfStats;
-
-static const char* opt_eval = "eval";
+static THREAD_LOCAL ProfileStats luaLogPerfStats;
 
 //-------------------------------------------------------------------------
 // ffi stuff
 //-------------------------------------------------------------------------
 
-struct SnortBuffer
+struct SnortEvent
 {
-    const char* type;
-    const uint8_t* data;
-    unsigned len;
+    unsigned gid;
+    unsigned sid;
+    unsigned rev;
+
+    uint32_t event_id;
+    uint32_t event_ref;
+
+    const char* msg;
+    const char* svc;
+    const char* os;
 };
 
 extern "C" {
 // ensure Lua can link with this
-const SnortBuffer* get_buffer();
+const SnortEvent* get_event();
 }
 
-static THREAD_LOCAL Cursor* cursor;
-static THREAD_LOCAL SnortBuffer buf;
+static THREAD_LOCAL Event* event;
+static THREAD_LOCAL SnortEvent lua_event;
 
-const SnortBuffer* get_buffer()
+const SnortEvent* get_event()
 {
-    assert(cursor);
-    buf.type = cursor->get_name();
-    buf.data = cursor->start();
-    buf.len = cursor->length();
-    return &buf;
+    assert(event);
+
+    lua_event.gid = event->sig_info->generator;
+    lua_event.sid = event->sig_info->id;
+    lua_event.rev = event->sig_info->rev;
+
+    lua_event.event_id = event->event_id;
+    lua_event.event_ref = event->event_reference;
+
+    lua_event.msg = event->sig_info->message;
+    lua_event.svc = event->sig_info->num_services ? event->sig_info->services[1].service : "n/a";
+    lua_event.os = event->sig_info->os ? event->sig_info->os : "n/a";
+
+    return &lua_event;
 }
 
 //-------------------------------------------------------------------------
@@ -69,74 +85,57 @@ const SnortBuffer* get_buffer()
 
 static const Parameter luajit_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr,
-      "luajit arguments" },
+    { "args", Parameter::PT_STRING, nullptr, nullptr,
+      "luajit logger arguments" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-class LuaJitModule : public Module
+class LuaLogModule : public Module
 {
 public:
-    LuaJitModule(const char* name) : Module(name, luajit_params)
+    LuaLogModule(const char* name) : Module(name, luajit_params)
     { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*)
+    {
+        args.clear();
+        return true;
+    };
+
+    bool set(const char*, Value& v, SnortConfig*)
+    {
+        args = v.get_string();
+        return true;
+    };
 
     ProfileStats* get_profile() const
-    { return &luaIpsPerfStats; };
+    { return &luaLogPerfStats; };
 
 public:
     std::string args;
 };
 
-bool LuaJitModule::begin(const char*, int, SnortConfig*)
-{
-    args.clear();
-    return true;
-}
-
-bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
-{
-    args = v.get_string();
-
-    // if args not empty, it has to be a quoted string
-    // so remove enclosing quotes
-    if ( args.size() > 1 )
-    {
-        args.erase(0, 1);
-        args.erase(args.size()-1);
-    }
-
-    return true;
-}
-
 //-------------------------------------------------------------------------
-// option stuff
+// logger stuff
 //-------------------------------------------------------------------------
 
-class LuaJitOption : public IpsOption
+class LuaJitLogger : public Logger
 {
 public:
-    LuaJitOption(const char* name, std::string& chunk, LuaJitModule*);
-    ~LuaJitOption();
+    LuaJitLogger(const char* name, std::string& chunk, class LuaLogModule*);
+    ~LuaJitLogger();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    void alert(Packet*, const char*, Event*);
 
-    int eval(Cursor&, Packet*);
+    static const struct LogApi* get_api();
 
 private:
-    void init(const char*, const char*);
-
     std::string config;
     struct lua_State** lua;
 };
 
-LuaJitOption::LuaJitOption(
-    const char* name, std::string& chunk, LuaJitModule* mod)
-    : IpsOption(name)
+LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* mod)
 {
     // create an args table with any rule options
     config = "args = { ";
@@ -147,11 +146,15 @@ LuaJitOption::LuaJitOption(
 
     lua = new lua_State*[max];
 
+    // FIXIT-L might make more sense to have one instance
+    // with one lua state in each thread instead of one
+    // instance with one lua state per thread
+    // (same for LuaJitOption)
     for ( unsigned i = 0; i < max; ++i )
         init_chunk(lua[i], chunk, name, config);
 }
 
-LuaJitOption::~LuaJitOption()
+LuaJitLogger::~LuaJitLogger()
 {
     unsigned max = get_instance_max();
 
@@ -161,52 +164,23 @@ LuaJitOption::~LuaJitOption()
     delete[] lua;
 }
 
-uint32_t LuaJitOption::hash() const
-{
-    uint32_t a = 0, b = 0, c = 0;
-    mix_str(a,b,c,get_name());
-    mix_str(a,b,c,config.c_str());
-    final(a,b,c);
-    return c;
-}
-
-bool LuaJitOption::operator==(const IpsOption& ips) const
-{
-    LuaJitOption& rhs = (LuaJitOption&)ips;
-
-    if ( strcmp(get_name(), rhs.get_name()) )
-        return false;
-
-    if ( config != rhs.config )
-        return false;
-
-    return true;
-}
-
-int LuaJitOption::eval(Cursor& c, Packet*)
+void LuaJitLogger::alert(Packet*, const char*, Event* e)
 {
     PROFILE_VARS;
-    MODULE_PROFILE_START(luaIpsPerfStats);
+    MODULE_PROFILE_START(luaLogPerfStats);
 
-    cursor = &c;
+    event = e;
 
     lua_State* L = lua[get_instance_id()];
-    lua_getglobal(L, opt_eval);
+    lua_getglobal(L, "alert");
 
     if ( lua_pcall(L, 0, 1, 0) )
     {
         const char* err = lua_tostring(L, -1);
         ErrorMessage("%s\n", err);
-        MODULE_PROFILE_END(luaIpsPerfStats);
-        return DETECTION_OPTION_NO_MATCH;
+        MODULE_PROFILE_END(luaLogPerfStats);
     }
-    bool result = lua_toboolean(L, -1);
-    lua_pop(L, 1);
-
-    int ret = result ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
-    MODULE_PROFILE_END(luaIpsPerfStats);
-
-    return ret;
+    MODULE_PROFILE_END(luaLogPerfStats);
 }
 
 //-------------------------------------------------------------------------
@@ -216,7 +190,7 @@ int LuaJitOption::eval(Cursor& c, Packet*)
 static Module* mod_ctor()
 {
     const char* key = PluginManager::get_current_plugin();
-    return new LuaJitModule(key);
+    return new LuaLogModule(key);
 }
 
 static void mod_dtor(Module* m)
@@ -224,43 +198,37 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, struct OptTreeNode*)
+static Logger* log_ctor(SnortConfig*, Module* m)
 {
-    const char* key = IpsManager::get_option_keyword();
+    const char* key = m->get_name();
     std::string* chunk = ScriptManager::get_chunk(key);
 
     if ( !chunk )
         return nullptr;
 
-    LuaJitModule* mod = (LuaJitModule*)m;
-    return new LuaJitOption(key, *chunk, mod);
+    LuaLogModule* mod = (LuaLogModule*)m;
+    return new LuaJitLogger(key, *chunk, mod);
 }
 
-static void opt_dtor(IpsOption* p)
+static void log_dtor(Logger* p)
 {
     delete p;
 }
 
-const IpsApi ips_lua_api =
+static const LogApi log_lua_api =
 {
     {
-        PT_IPS_OPTION,
+        PT_LOGGER,
         "tbd",
-        IPSAPI_PLUGIN_V0,
+        LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,
         mod_dtor
     },
-    OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    opt_ctor,
-    opt_dtor,
-    nullptr
+    OUTPUT_TYPE_FLAG__ALERT,
+    log_ctor,
+    log_dtor,
 };
 
-const IpsApi* ips_luajit = &ips_lua_api;
+const LogApi* log_luajit = &log_lua_api;
 

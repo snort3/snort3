@@ -63,7 +63,6 @@ set (IPS_SOURCES
     ips_ip_proto.cc 
     ips_ip_proto.h
     ips_luajit.cc 
-    ips_luajit.h
     ips_options.cc 
     ips_options.h
     ips_pcre.cc 

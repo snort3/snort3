@@ -74,7 +74,7 @@
 #include "actions/actions.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
-#include "managers/shell.h"
+#include "main/shell.h"
 #include "config_file.h"
 #include "keywords.h"
 #include "parse_conf.h"

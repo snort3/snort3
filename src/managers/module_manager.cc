@@ -27,12 +27,12 @@
 #include <sstream>
 #include <lua.hpp>
 
-#include "shell.h"
 #include "framework/base_api.h"
 #include "framework/module.h"
 #include "managers/plugin_manager.h"
 #include "main/snort_config.h"
 #include "main/modules.h"
+#include "main/shell.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
@@ -56,6 +56,7 @@ struct ModHook
 typedef list<ModHook*> ModuleList;
 static ModuleList s_modules;
 static unsigned s_errors = 0;
+static string s_current;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
@@ -356,15 +357,14 @@ bool open_table(const char* s, int idx)
         return false;
 
     Module* m = h->mod;
-    static string last;
 
-    if ( last != key )
+    if ( s_current != key )
     {
-        if ( !last.size() )
+        if ( !s_current.size() )
             LogMessage("Configuring modules:\n");
 
         LogMessage("\t %s\n", key.c_str());
-        last = key;
+        s_current = key;
     }
 
     m->begin(s, idx, s_config);
@@ -455,6 +455,9 @@ Module* ModuleManager::get_module(const char* s)
 
     return nullptr;
 }
+
+const char* ModuleManager::get_current_module()
+{ return s_current.c_str(); }
 
 void ModuleManager::set_config(SnortConfig* sc)
 { s_config = sc; }
