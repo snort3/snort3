@@ -44,7 +44,7 @@ private:
     FILE *test_data_file;
     uint8_t msg_buf[2 * NHttpEnums::MAXOCTETS];
     bool just_flushed = true;   // all octets sent to inspection and must resume reading the file
-    bool tcp_already_closed = false;  // so we can keep presenting a TCP close to PAF until all the remaining octets are consumed and flushed
+    bool tcp_closed = false;  // so we can keep presenting a TCP close to PAF until all the remaining octets are consumed and flushed
     uint32_t flush_octets = 0;  // number of octets that have been flushed and must go to inspection
     uint32_t previous_offset = 0;   // last character in the buffer shown to PAF but not flushed yet
     uint32_t end_offset = 0;   // last read character in the buffer

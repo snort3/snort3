@@ -24,7 +24,6 @@ macro (add_example_library libname install_path)
         set_target_properties ( ${libname}
             PROPERTIES
             COMPILE_FLAGS "-DBUILDING_SO"
-            LINK_FLAGS "-export-dynamic -shared"
         )
 
         # If we're testing plugins, set a variable for later use.
@@ -59,6 +58,7 @@ if (BUILD_EXTRA_PLUGINS)
     set (TEST_INSTALL_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test_install")
     set (EX_INSTALL_PATH "lib/snort")
     include_directories ("${TEST_INSTALL_DIRECTORY}/include/snort")
+    include_directories (${DAQ_INCLUDE_DIR})
 
     # reset this variable in case Cmake is reconfigured. i.e.,
     # we will keep appending the same libraries multiple times otherwise

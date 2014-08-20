@@ -33,15 +33,6 @@
 int Active_Init(SnortConfig*);
 int Active_Term(void);
 
-typedef void (*Active_ResponseFunc)(Packet*, void* data);
-
-int Active_QueueReject(void);
-int Active_QueueResponse(Active_ResponseFunc, void*);
-int Active_ResetQueue(void);
-
-// this must be called on the wire packet and not a
-// reassembled packet so that encoding is correct.
-int Active_SendResponses(Packet*);
 uint64_t Active_GetInjects(void);
 
 // NULL flags implies ENC_FLAG_FWD

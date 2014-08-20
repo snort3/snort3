@@ -13,6 +13,8 @@ add_library (main STATIC
     modules.h
     policy.h
     policy.cc
+    shell.h
+    shell.cc
     snort.h
     snort.cc
     snort_debug.cc

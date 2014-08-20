@@ -33,7 +33,6 @@
 
 #include <array>
 #include "snort.h"
-#include "generators.h"
 #include "fpdetect.h"
 
 

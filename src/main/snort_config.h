@@ -41,6 +41,7 @@
 #include "time/profiler.h"
 #include "utils/sflsq.h"
 #include "hash/sfxhash.h"
+#include "utils/util.h"
 #include "utils/sfportobject.h"
 #include "hash/sfghash.h"
 #include "main/policy.h"

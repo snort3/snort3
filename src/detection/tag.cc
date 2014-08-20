@@ -33,7 +33,6 @@
 #include "treenodes.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "generators.h"
 #include "log.h"
 #include "snort.h"
 
@@ -50,6 +49,9 @@
  */
 #define TAG_PRUNE_QUANTUM   300
 #define TAG_MEMCAP          4194304  /* 4MB */
+
+#define GENERATOR_TAG       2
+#define TAG_LOG_PKT         1
 
 /*  D A T A   S T R U C T U R E S  **********************************/
 /**Key used for identifying a session or host.
@@ -103,12 +105,10 @@ typedef struct _TagNode
 } TagNode;
 
 /*  G L O B A L S  **************************************************/
-/**host tag cache */
-static THREAD_LOCAL SFXHASH *host_tag_cache_ptr = nullptr;  // FIXIT packet thread init
+static THREAD_LOCAL SFXHASH *host_tag_cache_ptr = nullptr;
 
-/**session tag cache */
 // FIXIT utilize Flow instead of separate cache
-static THREAD_LOCAL SFXHASH *ssn_tag_cache_ptr = nullptr;  // FIXIT packet thread init
+static THREAD_LOCAL SFXHASH *ssn_tag_cache_ptr = nullptr;
 
 static THREAD_LOCAL uint32_t last_prune_time = 0;
 static THREAD_LOCAL uint32_t tag_alloc_faults = 0;

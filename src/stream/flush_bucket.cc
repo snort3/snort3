@@ -25,6 +25,7 @@
 
 #include <random>
 
+#include "snort.h"
 #include "protocols/packet.h"
 
 //-------------------------------------------------------------------------
@@ -33,9 +34,21 @@
 
 static THREAD_LOCAL FlushBucket* s_flush_bucket = nullptr;
 
-void FlushBucket::set(FlushBucket* fb)
+void FlushBucket::set(unsigned sz)
 {
-    s_flush_bucket = fb;
+    if ( s_flush_bucket )
+        return;
+
+    if ( sz )
+        s_flush_bucket = new ConstFlushBucket(sz);
+
+    else if ( ScStaticHash() )
+        s_flush_bucket = new StaticFlushBucket;
+
+    else
+        s_flush_bucket = new RandomFlushBucket;
+
+    assert(s_flush_bucket);
 }
 
 void FlushBucket::clear()

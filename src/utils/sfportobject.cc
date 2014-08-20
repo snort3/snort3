@@ -334,7 +334,7 @@ static int plx_keycmp( const void *a , const void *b, size_t )
 
 /* global for printing so we don't put so many bytes
  * on the stack */
-static char po_print_buf[MAXPORTS];  // FIXIT 1 / process
+static char po_print_buf[MAXPORTS];  // FIXIT-L delete this; replace with local stringstream
 
 /*
    PORT OBJECT FUNCTIONS

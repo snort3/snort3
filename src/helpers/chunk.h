@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -18,19 +16,15 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// chunk.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef REPLACE_H
-#define REPLACE_H
+#ifndef CHUNK_H
+#define CHUNK_H
 
-#include <assert.h>
-#include "ips_content.h"
-#include "main/thread.h"
+#include <string>
 
-void PayloadReplaceInit(PatternMatchData*, char*, OptTreeNode*);
-
-void Replace_ResetQueue(void);
-void Replace_QueueChange(PatternMatchData*);
-void Replace_ModifyPacket(Packet*);
+void init_chunk(struct lua_State*&, std::string& chunk, const char* name, std::string& args);
+void term_chunk(struct lua_State*&);
 
 #endif
 

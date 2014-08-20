@@ -50,12 +50,12 @@
 #include "file_resume_block.h"
 #include "framework/inspector.h"
 #include "detection_util.h"
-#include "service_inspectors/http_inspect/hi_main.h" // FIXIT bad dependency; use inspector::get_buf()
+#include "service_inspectors/http_inspect/hi_main.h" // FIXIT-M bad dependency; use inspector::get_buf()
 
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_reader.h"
 
-static bool file_type_id_enabled = false;  // FIXIT 1 / process
+static bool file_type_id_enabled = false;  // STATIC
 static bool file_signature_enabled = false;
 static bool file_processing_initiated = false;
 
@@ -102,7 +102,7 @@ static void render_block_verdict(void *ctx, void *p);
 FileAPI fileAPI;
 FileAPI* file_api = NULL;
 
-static unsigned s_cb_id = 0;  // FIXIT 1 / process
+static unsigned s_cb_id = 0;  // STATIC
 
 typedef struct _File_Stats {
 
@@ -189,7 +189,7 @@ static void start_file_processing(void)
     if (!file_processing_initiated)
     {
         file_resume_block_init();
-        //RegisterProfileStats("file", print_file_stats);  FIXIT not a preproc !
+        //RegisterProfileStats("file", print_file_stats);  FIXIT-M put in module
         file_processing_initiated = true;
     }
 }
@@ -439,7 +439,7 @@ static inline int check_http_partial_content(Packet *p)
     InspectionBuffer hb;
 
     if ( !p->flow || !p->flow->clouseau ||
-         // FIXIT cache id at parse time for runtime use
+         // FIXIT-P cache id at parse time for runtime use
          !p->flow->clouseau->get_buf("http_stat_code", p, hb) )
     {
         return 0;
@@ -851,7 +851,7 @@ static int64_t get_max_file_depth(void)
 
 static void set_file_name_from_log(FILE_LogState *log_state, void* pv)
 {
-    Flow* ssn = (Flow*)pv; // FIXIT eliminate need for cast
+    Flow* ssn = (Flow*)pv; // FIXIT-M eliminate need for cast
 
     if ((log_state) && (log_state->file_logged > log_state->file_current))
     {

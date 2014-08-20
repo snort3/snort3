@@ -25,8 +25,8 @@
 #include <string>
 #include <lua.hpp>
 
-#include "module_manager.h"
 #include "framework/module.h"
+#include "managers/module_manager.h"
 #include "parser/parser.h"
 
 using namespace std;

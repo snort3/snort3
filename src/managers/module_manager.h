@@ -23,7 +23,6 @@
 
 //-------------------------------------------------------------------------
 
-struct lua_State;
 struct SnortConfig;
 
 class ModuleManager
@@ -34,6 +33,7 @@ public:
 
     static void add_module(class Module*, const struct BaseApi* = nullptr);
     static Module* get_module(const char*);
+    static const char* get_current_module();
 
     static void list_modules();
     static void dump_modules();

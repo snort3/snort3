@@ -63,13 +63,11 @@ set (IPS_SOURCES
     ips_ip_proto.cc 
     ips_ip_proto.h
     ips_luajit.cc 
-    ips_luajit.h
     ips_options.cc 
     ips_options.h
     ips_pcre.cc 
     ips_pcre.h
     ips_replace.cc 
-    ips_replace.h
     ips_so.cc
 )
 
@@ -120,3 +118,6 @@ else (STATIC_IPS_OPTIONS)
 
 endif (STATIC_IPS_OPTIONS)
 
+target_link_libraries(ips_options
+    helpers
+)

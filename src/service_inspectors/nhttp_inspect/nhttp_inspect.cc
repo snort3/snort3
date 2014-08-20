@@ -136,7 +136,9 @@ void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
     msg_section->legacy_clients();
 
     if (test_output) {
-        if (!NHttpTestInput::test_input) msg_section->print_section(stdout);
+        if (!NHttpTestInput::test_input) {
+            msg_section->print_section(stdout);
+        }
         else {
             if (NHttpTestInput::test_input_source->get_test_number() != file_test_number) {
                 if (test_out) fclose (test_out);
@@ -148,6 +150,7 @@ void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
             msg_section->print_section(test_out);
             printf("Finished processing section from test %" PRIi64 "\n", file_test_number);
         }
+        fflush(nullptr);
     }
 }
 

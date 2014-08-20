@@ -17,6 +17,8 @@ modules.cc \
 modules.h \
 policy.cc \
 policy.h \
+shell.cc \
+shell.h \
 snort.cc \
 snort.h \
 snort_config.cc \

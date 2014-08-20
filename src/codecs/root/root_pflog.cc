@@ -26,7 +26,6 @@
 #include "config.h"
 #endif
 
-#include "generators.h"
 #include "protocols/packet.h"  
 #include "static_include.h"
 

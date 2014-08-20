@@ -65,7 +65,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
         section_buffer = new uint8_t[65536];
     }
 
-    SourceId source_id = (flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER;
+    SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
 
     copied = len;
 
@@ -97,23 +97,27 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
     return nullptr;
 }
 
-PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t flags, uint32_t* flush_offset) {
+PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t, uint32_t* flush_offset) {
     // When the system begins providing TCP connection close information this won't always be false. &&&
     bool tcp_close = false;
 
-    // This is the session state information we share with HTTP Inspect and store with stream. A session is defined by a TCP connection.
-    // Since PAF is the first to see a new TCP connection the new flow data object is created here.
+    // This is the session state information we share with HTTP Inspect and store with stream. A session is defined
+    // by a TCP connection. Since PAF is the first to see a new TCP connection the new flow data object is created here.
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     if (session_data == nullptr) flow->set_application_data(session_data = new NHttpFlowData);
     assert(session_data != nullptr);
 
-    SourceId source_id = (flags & PKT_FROM_CLIENT) ? SRC_CLIENT : SRC_SERVER;
+    SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
 
     if (NHttpTestInput::test_input) {
+        // This block substitutes a completely new data buffer supplied by the test tool in place of the "real" data.
+        // It also rewrites the buffer length, source ID, and TCP close indicator.
         *flush_offset = length;
         bool need_break;
-        NHttpTestInput::test_input_source->scan((uint8_t*&)data, length, source_id, tcp_close, need_break);
+        uint8_t* test_data = nullptr;
+        NHttpTestInput::test_input_source->scan(test_data, length, source_id, tcp_close, need_break);
         if (length == 0) return PAF_FLUSH;
+        data = test_data;
         if (need_break) flow->set_application_data(session_data = new NHttpFlowData);
     }
 
@@ -177,9 +181,13 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
       case SEC_BODY:
       case SEC_CHUNKBODY:
         paf_max = 16384;
-        prepare_flush(session_data, flush_offset, source_id, type,
-           tcp_close && (session_data->octets_expected[source_id] >= length),
-           0, session_data->octets_expected[source_id]);
+        if ((!tcp_close) || (length > session_data->octets_expected[source_id])) {
+            prepare_flush(session_data, flush_offset, source_id, type, false, 0, session_data->octets_expected[source_id]);
+        }
+        else {
+            // The TCP connection has closed and this is the possibly incomplete final section
+            prepare_flush(session_data, flush_offset, source_id, type, true,  0, length);
+        }
         return PAF_FLUSH;
       case SEC_ABORT:
         return PAF_ABORT;

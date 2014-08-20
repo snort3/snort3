@@ -38,6 +38,16 @@ struct Packet;
 // api for class
 //-------------------------------------------------------------------------
 
+enum ActionType
+{
+    ACT_LOCAL,
+    ACT_MODIFY,
+    ACT_PROXY,
+    ACT_RESET,
+    ACT_REMOTE,
+    ACT_MAX
+};
+
 struct SnortConfig;
 
 class IpsAction
@@ -48,13 +58,15 @@ public:
     virtual void exec(Packet*) = 0;
 
     const char* get_name() const { return name; };
+    ActionType get_action() { return action; }
 
 protected:
-    IpsAction(const char* s)
-    { name = s; };
+    IpsAction(const char* s, ActionType a)
+    { name = s; action = a; };
 
 private:
     const char* name;
+    ActionType action;
 };
 
 typedef void (*IpsActFunc)();

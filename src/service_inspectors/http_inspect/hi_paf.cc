@@ -60,7 +60,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "generators.h"
 #include "hi_events.h"
 #include "protocols/packet.h"
 #include "snort.h"
@@ -610,28 +609,28 @@ static inline void hi_paf_event_post ()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
-        HI_CLIENT_UNBOUNDED_POST+1);
+        HI_CLIENT_UNBOUNDED_POST);
 }
 
 static inline void hi_paf_event_simple ()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
-        HI_CLIENT_SIMPLE_REQUEST+1);
+        HI_CLIENT_SIMPLE_REQUEST);
 }
 
 static inline void hi_paf_event_msg_size ()
 {
     SnortEventqAdd(
         GID_HTTP_SERVER,
-        HI_CLISRV_MSG_SIZE_EXCEPTION+1);
+        HI_CLISRV_MSG_SIZE_EXCEPTION);
 }
 
 static inline void hi_paf_event_pipe ()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
-        HI_CLIENT_PIPELINE_MAX+1);
+        HI_CLIENT_PIPELINE_MAX);
 }
 
 static inline PAF_Status hi_exec (Hi5State* s, Action a, int c)
