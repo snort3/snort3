@@ -37,7 +37,6 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "managers/event_manager.h"
-#include "detection/generators.h"
 
 #include "event.h"
 #include "rules.h"

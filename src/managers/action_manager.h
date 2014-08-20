@@ -45,6 +45,13 @@ public:
     static RuleType get_action_type(const char*);
 
     static void instantiate(const ActionApi*, Module*, SnortConfig*);
+
+    static void thread_init(SnortConfig*);
+    static void thread_term(SnortConfig*);
+
+    static void reset_queue();
+    static void queue_reject();
+    static void queue(IpsAction*);
     static void execute(struct Packet*);
 };
 

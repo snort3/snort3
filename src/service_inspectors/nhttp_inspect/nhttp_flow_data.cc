@@ -41,7 +41,7 @@ using namespace NHttpEnums;
 
 unsigned NHttpFlowData::nhttp_flow_id = 0;
 
-NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) {}
+NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) { }
 
 NHttpFlowData::~NHttpFlowData() {
     delete request_line;

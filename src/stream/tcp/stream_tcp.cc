@@ -76,23 +76,13 @@ void StreamTcp::show(SnortConfig*)
 
 void StreamTcp::tinit()
 {
-    FlushBucket* fb;
-
-    if ( config->footprint )
-        fb = new ConstFlushBucket(config->footprint);
-
-    else if ( ScStaticHash() )
-        fb = new StaticFlushBucket;
-
-    else
-        fb = new RandomFlushBucket;
-
-    FlushBucket::set(fb);
+    FlushBucket::set(config->footprint);
 }
 
 void StreamTcp::tterm()
 {
-    //FlushBucket::clear();  FIXIT must be called after StreamBase::tterm()
+    // must be done after StreamBase::tterm(); see tcp_tterm()
+    //FlushBucket::clear();
 }
 
 void StreamTcp::eval(Packet*)
@@ -141,6 +131,7 @@ void tcp_tinit()
 void tcp_tterm()
 {
     tcp_sterm();
+    FlushBucket::clear();
 }
 
 static const InspectApi tcp_api =

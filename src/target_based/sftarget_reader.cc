@@ -417,6 +417,7 @@ void SFAT_Init()
 {
     curr_cfg = nullptr;
     next_cfg = new tTargetBasedConfig;
+    InitializeProtocolReferenceTable();
 }
 
 void SFAT_Start()

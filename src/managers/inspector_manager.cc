@@ -515,6 +515,7 @@ void InspectorManager::bumble(Packet* p)
         return;
 
 #if 0
+    // FIXIT-H call new splitter after wizard IDs service
     ins = get_inspector("stream_tcp");
 
     if ( ins )

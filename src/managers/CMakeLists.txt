@@ -29,8 +29,6 @@ add_library( managers
     script_manager.h
     so_manager.cc
     so_manager.h
-    shell.cc
-    shell.h
 )
 
 target_link_libraries(managers

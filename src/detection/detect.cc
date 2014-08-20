@@ -58,7 +58,6 @@
 #include "ppm.h"
 #include "snort_types.h"
 #include "detection_util.h"
-#include "generators.h"
 #include "managers/inspector_manager.h"
 #include "managers/event_manager.h"
 #include "target_based/sftarget_protocol_reference.h"
@@ -239,11 +238,14 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 
     pc.total_alert_pkts++;
 
+#if 0
+    // FIXIT this should be a generic feature of otn
     if ( otn->sigInfo.generator != GENERATOR_SPP_REPUTATION )
     {
         /* Don't include IP Reputation events in count */
         pc.alert_pkts++;
     }
+#endif
 
     OutputSet *idx = head ? head->AlertList : NULL;
     EventManager::call_alerters(idx, p, otn->sigInfo.message, &event);

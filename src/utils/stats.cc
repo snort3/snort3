@@ -371,8 +371,6 @@ void show_stats(
             continue;
 
         LogCount(s, c);
-        // FIXIT this has alignment issues for structs cast as arrays?
-        //LogCount(names[i], pegs[i]);
     }
 }
 

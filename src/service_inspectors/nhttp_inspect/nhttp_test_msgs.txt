@@ -4,6 +4,12 @@
 # Within a paragraph the placement of new lines does not have any effect. Format a paragraph any way you are comfortable. Extra blank lines
 # between paragraphs also do not have any effect.
 #
+# Each paragraph represents a TCP segment. The splitter can be tested by putting multiple sections in the same paragraph (splitter must split)
+# or continuing a section in the next paragraph (splitter must search and reassamble).
+#
+# It is not necessary to specify complete body and chunk body sections. Specify at least one octet that will begin the section and the
+# remainder will be autofilled in 16384-octet sections up to the length flushed.
+#
 # Lines beginning with # are comments. Lines beginning with @ are commands. This does not apply to lines in the middle of a paragraph.
 #
 # Command lines are left justified, lower case, with no whitespace:
@@ -683,6 +689,19 @@ Accept-Language: is\r\n
 @break
 @request
 
+POST /basic/request/response/pair/with/large/bodies/both/ways HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+Content-Length: 50000\r\n
+\r\n
+
+body1-start
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Length: 60000\r\n
+\r\n
+body2-start
 
 
 # ***********************************************************************************************

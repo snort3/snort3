@@ -1,5 +1,5 @@
 /*
-**  Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -315,6 +315,7 @@ static void unload_plugins()
 
 void PluginManager::load_plugins(const char* paths)
 {
+    // builtins
     load_list(codecs);
     load_list(ips_actions);
     load_list(ips_options);
@@ -323,8 +324,13 @@ void PluginManager::load_plugins(const char* paths)
     load_list(service_inspectors);
     load_list(search_engines);
     load_list(loggers);
+
+    // plugins
     ::load_plugins(paths);
-    load_list(ScriptManager::get_ips_options());
+
+    // scripts
+    load_list(ScriptManager::get_plugins());
+
     add_plugins();
 }
 
@@ -411,6 +417,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_IPS_OPTION:
+        // do not instantiate here; done later
         //IpsManager::instantiate((IpsApi*)api, mod, sc);
         break;
 
@@ -419,11 +426,13 @@ void PluginManager::instantiate(
         break;
 
     case PT_SO_RULE:
+        // do not instantiate here; done later
         //IpsManager::instantiate((SoApi*)api, mod, sc);
         break;
 
     case PT_LOGGER:
-        EventManager::instantiate((LogApi*)api, mod, sc);
+        // do not instantiate here; done later
+        //EventManager::instantiate((LogApi*)api, mod, sc);
         break;
 
     default:

@@ -155,6 +155,7 @@ void EventManager::instantiate(
     Output* p, Module* mod, SnortConfig* sc)
 {
     p->handler = p->api->ctor(sc, mod);
+    assert(p->handler);  // FIXIT must handle case where not configured
 
     if ( (p->api->flags & OUTPUT_TYPE_FLAG__ALERT) &&
         (p->api->flags & OUTPUT_TYPE_FLAG__LOG) )
@@ -190,9 +191,10 @@ void EventManager::instantiate(
         return;
     }
 
+    // FIXIT this loses args if set in conf
     // emulate a config like name = { }
-    mod->begin(name, 0, sc);
-    mod->end(name, 0, sc);
+    //mod->begin(name, 0, sc);
+    //mod->end(name, 0, sc);
 
     // override prior outputs
     // (last cmdline option wins)
@@ -213,27 +215,6 @@ void EventManager::instantiate(
 
 void EventManager::configure_outputs(SnortConfig*)
 {
-#if 0
-    // FIXIT for reference only; need to convert ruletype foo
-    // to action plugins
-    OutputConfig *config;
-    DEBUG_WRAP(DebugMessage(DEBUG_CONFIGRULES,"Output Plugin\n"););
-
-    /* Configure output plugins for user defined rule types */
-    for (config = sc->rule_type_output_configs; config != NULL; config = config->next)
-    {
-        push_parse_location(config->file_name, config->file_line);
-        Output* p = get_out(config->keyword);
-
-        if ( !p )
-            ParseError("unknown output plugin: '%s'", config->keyword);
-
-        /* Each user defined rule type has it's own rule list
-         * and the output plugin attaches to it here */
-        p->handler->configure(sc, config->opts);
-        pop_parse_location();
-    }
-#endif
 }
 
 //-------------------------------------------------------------------------

@@ -260,7 +260,6 @@ bool IpsManager::option_end(
     Option* opt = get_opt(key);
     assert(opt);
 
-    // FIXIT need to error out in the end if any errors
     IpsOption* ips = opt->api->ctor(mod, otn);
     type = opt->api->type;
     current_keyword = nullptr;

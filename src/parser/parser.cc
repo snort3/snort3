@@ -74,7 +74,7 @@
 #include "actions/actions.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
-#include "managers/shell.h"
+#include "main/shell.h"
 #include "config_file.h"
 #include "keywords.h"
 #include "parse_conf.h"
@@ -618,8 +618,6 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
     sc->port_tables = PortTablesNew();
 
     OtnInit(sc);
-
-    InitVarTables(sc->policy_map->ips_policy[0]);
 
     sc->fast_pattern_config = FastPatternConfigNew();
     sc->event_queue_config = EventQueueConfigNew();

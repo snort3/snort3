@@ -31,6 +31,31 @@ else (BUILD_EXTRA_PLUGINS)
     string (REPLACE "-DHAVE_CONFIG_H" " " CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
     message(STATUS "${CMAKE_CXX_FLAGS}")
 
+
+    # Some shared library flags for the two platforms which I am using
+    set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined,dynamic_lookup")
+    check_cxx_compiler_flag("" HAVE_DYNAMIC_LOOKUP)
+    if(HAVE_DYNAMIC_LOOKUP)
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,dynamic_lookup")
+    endif()
+    unset (CMAKE_REQUIRED_FLAGS)
+
+
+    set (CMAKE_REQUIRED_FLAGS "-Wl,-export-dynamic")
+    check_cxx_compiler_flag ("" HAVE_EXPORT_DYNAMIC)
+    if (HAVE_EXPORT_DYNAMIC)
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-export-dynamic")
+    endif ()
+    unset(CMAKE_REQUIRED_FLAGS)
+
+
+    set (CMAKE_REQUIRED_FLAGS "-Wl,-shared")
+    check_cxx_compiler_flag ("" HAVE_SHARED)
+    if (HAVE_SHARED)
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-shared")
+    endif ()
+    unset(CMAKE_REQUIRED_FLAGS)
+
     add_subdirectory(src)
 
 

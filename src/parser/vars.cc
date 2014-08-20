@@ -778,7 +778,7 @@ const char *VarGet(SnortConfig*, const char *name)
  ***************************************************************************/
 const char * ExpandVars(SnortConfig *sc, const char *string)
 {
-    static char estring[ PARSE_RULE_SIZE ];
+    static char estring[ 65536 ];  // FIXIT-L convert this foo to a std::string
 
     char rawvarname[128], varname[128], varaux[128], varbuffer[128];
     char varmodifier;
@@ -789,7 +789,7 @@ const char * ExpandVars(SnortConfig *sc, const char *string)
     if(!string || !*string || !strchr(string, '$'))
         return(string);
 
-    memset((char *) estring, 0, PARSE_RULE_SIZE);
+    memset((char *) estring, 0, sizeof(estring));
 
     i = j = 0;
     l_string = strlen(string);

@@ -49,7 +49,6 @@
 #include "ips_options/ips_flowbits.h"
 #include "ips_options/ips_content.h"
 #include "ips_options/ips_pcre.h"
-#include "ips_options/ips_replace.h"
 #include "fpdetect.h"
 #include "ppm.h"
 #include "profiler.h"
@@ -383,7 +382,7 @@ int detection_option_node_evaluate(
     detection_option_tree_node_t *node, detection_option_eval_data_t *eval_data,
     Cursor& orig_cursor)
 {
-    int i, result = 0; //, prior_result = 0;
+    int i, result = 0;
     int rval = DETECTION_OPTION_NO_MATCH;
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
@@ -722,20 +721,6 @@ int detection_option_node_evaluate(
             //for (i = 0; i < node->num_children; i++)
             //    node->children[i]->result;
         }
-
-#if 0
-        // FIXIT replace is broken now :(
-        if (result - prior_result > 0
-            && node->option_type == RULE_OPTION_TYPE_CONTENT
-            && Replace_OffsetStored(content_data) && ScInlineMode())
-        {
-            // FIXIT queuing replacements here is premature
-            // should be done if / when rule actually fires
-            // and at that point, the change can be applied
-            Replace_QueueChange(content_data);
-            prior_result = result;
-        }
-#endif
 
         NODE_PROFILE_TMPSTART(node);
 

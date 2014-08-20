@@ -40,7 +40,13 @@
 #define ANY_SRC_IP      0x0100
 #define ANY_DST_IP      0x0200
 
-#define PARSE_RULE_SIZE  65535
+#define GENERATOR_SNORT_ENGINE        1
+#define GENERATOR_SNORT_SHARED        3
+
+#define GENERATOR_INTERNAL          135
+#define INTERNAL_EVENT_SYN_RECEIVED   1
+#define INTERNAL_EVENT_SESSION_ADD    2
+#define INTERNAL_EVENT_SESSION_DEL    3
 
 /*  D A T A  S T R U C T U R E S  *********************************************/
 

@@ -35,7 +35,7 @@ using namespace std;
 #include "detection/detect.h"
 #include "helpers/process.h"
 #include "main/analyzer.h"
-#include "managers/shell.h"
+#include "main/shell.h"
 #include "managers/event_manager.h"
 #include "managers/so_manager.h"
 #include "managers/inspector_manager.h"
