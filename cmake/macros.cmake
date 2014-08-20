@@ -57,7 +57,6 @@ macro (add_shared_library libname install_path)
             LINK_FLAGS "-shared"
         )
 
-        #install into given library
         install (TARGETS ${libname}
             LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
         )

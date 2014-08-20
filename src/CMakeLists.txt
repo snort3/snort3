@@ -154,6 +154,6 @@ add_subdirectory(network_inspectors)
 add_subdirectory(search_engines)
 
 
-install(TARGETS snort
+install (TARGETS snort
     RUNTIME DESTINATION bin
 )

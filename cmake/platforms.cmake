@@ -69,12 +69,6 @@ include(CheckCXXCompilerFlag)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
-    set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined -Wl,dynamic_lookup")
-    check_cxx_compiler_flag("" HAVE_DYNAMIC_LOOKUP)
-    if(HAVE_DYNAMIC_LOOKUP)
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
-    endif()
-    set (CMAKE_REQUIRED_FLAGS "")
 
 
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -85,6 +79,15 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         )
     endif()
 endif()
+
+# More MacOS X fun
+set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined -Wl,dynamic_lookup")
+check_cxx_compiler_flag("" HAVE_DYNAMIC_LOOKUP)
+if(HAVE_DYNAMIC_LOOKUP)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+endif()
+set (CMAKE_REQUIRED_FLAGS "")
+
 
 set (CMAKE_REQUIRED_FLAGS "-Wl,-export-dynamic")
 check_cxx_compiler_flag ("" HAVE_EXPORT_DYNAMIC)

@@ -23,7 +23,7 @@ set(BUILT_SOURCES
 #   modules.txt         Requires Special formatting. manually added below.
 #   version.txt         Required special formatting. manually added below.
 #   config_changes.txt  If ruby executable found
-    CACHE INTERNAL "sources to be built" FORCE
+    CACHE INTERNAL "Snort++ manuals which can be built" FORCE
 )
 
 set (UNBUILT_SOURCES

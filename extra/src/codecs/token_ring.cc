@@ -31,11 +31,33 @@
 #include "protocols/token_ring.h"
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
-
-#include "token_ring_module.h"
+#include "codecs/decode_module.h"
 
 namespace
 {
+
+#define TR_NAME "token_ring"
+static const RuleMap tkr_rules[] =
+{
+    { DECODE_BAD_TRH, "(" TR_NAME ") Bad Token Ring Header" },
+    { DECODE_BAD_TR_ETHLLC, "(" TR_NAME ") Bad Token Ring ETHLLC Header" },
+    { DECODE_BAD_TR_MR_LEN, "(" TR_NAME ") Bad Token Ring MRLENHeader" },
+    { DECODE_BAD_TRHMR, "(" TR_NAME ") Bad Token Ring MR Header" },
+    { 0, nullptr }
+};
+
+
+class TrCodecModule : public DecodeModule
+{
+public:
+    TrCodecModule() : DecodeModule(TR_NAME) {}
+
+    const RuleMap* get_rules() const
+    { return tkr_rules; }
+};
+
+
+
 
 class TrCodec : public Codec
 {
