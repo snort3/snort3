@@ -35,7 +35,7 @@ namespace {
 class Deleted : public ConversionState
 {
 public:
-    Deleted(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Deleted() : ConversionState() {};
     virtual ~Deleted() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -50,17 +50,17 @@ bool Deleted::convert(std::istringstream& data_stream)
 }
 
 template<const std::string *snort_option>
-static ConversionState* deleted_ctor(Converter* cv, LuaData* ld)
+static ConversionState* deleted_ctor()
 {
-    // set here since not all delted configs have options
-    if (!ld->is_quiet_mode())
+    // set here since not all deleted configs have options
+    if (!data_api.is_quiet_mode())
     {
-        ld->open_table("deleted_snort_config_options");
-        ld->add_deleted_comment("config " + *snort_option + "[:.*]");
-        ld->close_table();
+        table_api.open_table("deleted_snort_config_options");
+        table_api.add_deleted_comment("config " + *snort_option + "[:.*]");
+        table_api.close_table();
     }
 
-    return new Deleted(cv, ld);
+    return new Deleted();
 }
 
 /*************************************************

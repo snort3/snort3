@@ -38,6 +38,7 @@ namespace util
 {
 
 
+
 std::vector<std::string> &split(const std::string &s, 
                                 char delim, 
                                 std::vector<std::string> &elems)
@@ -60,6 +61,37 @@ const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string
 
     return nullptr;
 }
+
+Table* find_table(std::vector<Table*> vec, std::string name)
+{
+    if(name.empty())
+        return nullptr;
+
+    for( auto *t : vec)
+        if(!name.compare(t->get_name()))
+            return t;
+
+    return nullptr;
+}
+
+
+
+std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+std::string &trim(std::string &s)
+{
+    return ltrim(rtrim(s));
+}
+
+
 
 std::string &sanitize_lua_string(std::string &s)
 {
@@ -182,5 +214,6 @@ bool case_compare(std::string arg1, std::string arg2)
         return true;
     return false;
 }
+
 
 } // namespace util

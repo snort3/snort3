@@ -23,8 +23,8 @@
 #include "utils/converter.h"
 #include "conversion_state.h"
 #include "utils/s2l_util.h"
-#include "data/dt_comment.h"
 
+Converter cv;
 
 Converter::Converter()
     :   state(nullptr),
@@ -42,11 +42,10 @@ Converter::~Converter()
         delete state;
 }
 
-bool Converter::initialize(conv_new_f func, LuaData* ld)
+bool Converter::initialize(conv_new_f func)
 {
     init_state_ctor = func;
-    this->ld = ld;
-    state = init_state_ctor(this, ld);
+    state = init_state_ctor();
 
     if (state == nullptr)
     {
@@ -68,8 +67,10 @@ void Converter::reset_state()
     if (state)
         delete state;
 
-    state = init_state_ctor(this, ld);
-    ld->reset_state();
+    state = init_state_ctor();
+    data_api.reset_state();
+    table_api.reset_state();
+    rule_api.reset_state();
 }
 
 void Converter::parse_include_file(std::string input_file)
@@ -86,26 +87,30 @@ void Converter::parse_include_file(std::string input_file)
     {
         comments = new Comments(start_comments, 0,
                     Comments::CommentType::MULTI_LINE);
-        ld->swap_conf_data(vars, tables, includes, comments);
+
+        data_api.swap_conf_data(vars, includes, comments);
+        table_api.swap_tables(tables);
     }
 
     if (convert_rules_mult_files)
-        ld->swap_rules(rules);
+        rule_api.swap_rules(rules);
 
     if (convert_file(input_file) < 0)
     {
         if (convert_conf_mult_files)
         {
-            ld->swap_conf_data(vars, tables, includes, comments);
+            // FIXIT:  This needs to tables, and data_api
+            data_api.swap_conf_data(vars, includes, comments);
+            table_api.swap_tables(tables);
             delete comments;
         }
 
         if (convert_rules_mult_files)
-            ld->swap_rules(rules);
+            rule_api.swap_rules(rules);
 
         // add this new file as a snort style rule
         error = true;
-        ld->add_hdr_data("include " + input_file);
+        rule_api.add_hdr_data("include " + input_file);
         return;
     }
 
@@ -115,12 +120,15 @@ void Converter::parse_include_file(std::string input_file)
         // print configuration file
         std::ofstream out;
         out.open(input_file + ".lua");
-        ld->print_conf_options(out);
+        data_api.print_data(out);
+        table_api.print_tables(out);
+        data_api.print_comments(out);
         out << std::endl;
         out.close();
 
-        ld->swap_conf_data(vars, tables, includes, comments);
-        ld->add_include_file(input_file + ".lua");
+        data_api.swap_conf_data(vars, includes, comments);
+        data_api.add_include_file(input_file + ".lua");
+        table_api.swap_tables(tables);
         delete comments;
     }
 
@@ -128,13 +136,13 @@ void Converter::parse_include_file(std::string input_file)
     {
         std::ofstream out;
         out.open(input_file + ".rules");
-        ld->print_rules(out, true); // true == output to rule file, NOT lua file
+        rule_api.print_rules(out, true); // true == output to rule file, NOT lua file
         out.close();
-        ld->swap_rules(rules);
+        rule_api.swap_rules(rules);
 
 
         // add this new file as a snort style rule
-        ld->add_hdr_data("include " + input_file + ".rules");
+        rule_api.add_hdr_data("include " + input_file + ".rules");
     }
 }
 
@@ -172,7 +180,7 @@ int Converter::convert_file(std::string input_file)
                 util::ltrim(tmp);
             }
 
-            ld->add_comment(tmp);
+            data_api.add_comment(tmp);
         }
         else if ( tmp[tmp.find_last_not_of(' ')] == '\\')
         {
@@ -188,7 +196,7 @@ int Converter::convert_file(std::string input_file)
             {
                 if ((state == nullptr) || !state->convert(data_stream))
                 {
-                    ld->failed_conversion(data_stream);
+                    data_api.failed_conversion(data_stream);
                     break;
                 }
             }

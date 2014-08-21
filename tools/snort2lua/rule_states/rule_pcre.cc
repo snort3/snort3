@@ -37,7 +37,7 @@ namespace {
 class Pcre : public ConversionState
 {
 public:
-    Pcre(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Pcre() : ConversionState() {};
     virtual ~Pcre() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -95,7 +95,7 @@ bool Pcre::convert(std::istringstream& data_stream)
                 std::string dlt_opt = "pcre: unkown option - '";
                 dlt_opt.append(1, c);
                 dlt_opt += "'";
-                ld->add_comment_to_rule(dlt_opt);
+                rule_api.add_comment_to_rule(dlt_opt);
                 retval = false;
                 break;
             }
@@ -103,16 +103,16 @@ bool Pcre::convert(std::istringstream& data_stream)
 
         if (!sticky_buffer.empty())
         {
-            ld->add_rule_option(sticky_buffer);
+            rule_api.add_rule_option(sticky_buffer);
 
             if (sticky_buffer_set)
-                ld->add_comment_to_rule("WARNING: Two sticky buffers set for this regular expression!");
+                rule_api.add_comment_to_rule("WARNING: Two sticky buffers set for this regular expression!");
             else
                 sticky_buffer_set = true;
         }
     }
 
-    ld->add_rule_option("pcre", pattern + new_opts + "\"");
+    rule_api.add_rule_option("pcre", pattern + new_opts + "\"");
     return set_next_rule_state(data_stream) && retval;
 }
 
@@ -121,9 +121,9 @@ bool Pcre::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Pcre(cv, ld);
+    return new Pcre();
 }
 
 

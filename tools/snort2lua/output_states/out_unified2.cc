@@ -20,7 +20,6 @@
 // out_unified2.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
-#include <vector>
 
 #include "conversion_state.h"
 #include "utils/converter.h"
@@ -37,9 +36,7 @@ template<const std::string* output_name>
 class Unified2 : public ConversionState
 {
 public:
-    Unified2( Converter* cv, LuaData* ld)
-        :   ConversionState(cv, ld)
-    { };
+    Unified2() : ConversionState() {};
     virtual ~Unified2() {};
 
     virtual bool convert(std::istringstream& data_stream)
@@ -47,10 +44,10 @@ public:
         std::string args;
         bool retval = true;
 
-        ld->open_table("unified2");
+        table_api.open_table("unified2");
 
         if (!(*output_name).compare("unified2"))
-            ld->add_diff_option_comment("output " + (*output_name), "unified2");
+            table_api.add_diff_option_comment("output " + (*output_name), "unified2");
 
         while (std::getline(data_stream, args, ','))
         {
@@ -64,24 +61,24 @@ public:
                 continue;
 
             else if (!keyword.compare("nostamp"))
-                tmpval = ld->add_option_to_table("nostamp", true);
+                tmpval = table_api.add_option("nostamp", true);
 
             else if (!keyword.compare("mpls_event_types"))
-                tmpval = ld->add_option_to_table("mpls_event_types", true);
+                tmpval = table_api.add_option("mpls_event_types", true);
 
             else if (!keyword.compare("vlan_event_types"))
-                tmpval = ld->add_option_to_table("vlan_event_types", true);
+                tmpval = table_api.add_option("vlan_event_types", true);
 
             else if (!keyword.compare("filename"))
             {
                 tmpval = parse_string_option("file", arg_stream);
-                ld->add_diff_option_comment("filename", "file");
+                table_api.add_diff_option_comment("filename", "file");
             }
 
             else if (!keyword.compare("limit"))
             {
                 tmpval = parse_int_option("limit", arg_stream);
-                tmpval = ld->add_option_to_table("units", "M") && tmpval;
+                tmpval = table_api.add_option("units", "M") && tmpval;
             }
 
             else
@@ -96,11 +93,11 @@ public:
 };
 
 template<const std::string* output_name>
-static ConversionState* unified2_ctor(Converter* cv, LuaData* ld)
+static ConversionState* unified2_ctor()
 {
-    ld->open_top_level_table("unified2"); // create table in case there are no arguments
-    ld->close_table();
-    return new Unified2<output_name>(cv, ld);
+    table_api.open_top_level_table("unified2"); // create table in case there are no arguments
+    table_api.close_table();
+    return new Unified2<output_name>();
 }
 
 } // namespace

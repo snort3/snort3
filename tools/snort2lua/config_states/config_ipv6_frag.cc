@@ -34,7 +34,7 @@ namespace {
 class Ipv6Frag : public ConversionState
 {
 public:
-    Ipv6Frag(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Ipv6Frag() : ConversionState() {};
     virtual ~Ipv6Frag() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -47,8 +47,8 @@ private:
 void Ipv6Frag::add_deleted_option(std::string dlt_opt)
 {
     // see comment in Ipv6Frag::convert
-    if (!ld->is_quiet_mode())
-        ld->add_deleted_comment("config ipv6_frag: " + dlt_opt);
+    if (!data_api.is_quiet_mode())
+        table_api.add_deleted_comment("config ipv6_frag: " + dlt_opt);
 }
 
 bool Ipv6Frag::convert(std::istringstream& data_stream)
@@ -58,8 +58,8 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
 
     // I'm checking here because I do not want to create this
     // table in quiet mode
-    if (!ld->is_quiet_mode())
-        ld->open_table("deleted_snort_config_options");
+    if (!data_api.is_quiet_mode())
+        table_api.open_table("deleted_snort_config_options");
 
     while (util::get_string(data_stream, arg, ","))
     {
@@ -84,9 +84,9 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("frag_timeout"))
         {
-            ld->open_top_level_table("ip_stream");
+            table_api.open_top_level_table("ip_stream");
             tmpval = parse_int_option("session_timeout", arg_stream);
-            ld->close_table();
+            table_api.close_table();
         }
 
         else
@@ -105,9 +105,9 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Ipv6Frag(cv, ld);
+    return new Ipv6Frag();
 }
 
 static const ConvertMap ipv6_frag_api =

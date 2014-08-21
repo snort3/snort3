@@ -34,7 +34,7 @@ namespace {
 class IgnorePorts : public ConversionState
 {
 public:
-    IgnorePorts(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    IgnorePorts() : ConversionState() {};
     virtual ~IgnorePorts() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,16 +47,16 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string port;
 
-    ld->open_table("binder");
-    ld->open_table(); // anonymouse table
+    table_api.open_table("binder");
+    table_api.open_table(); // anonymouse table
 
     // if the keyword is not 'tcp' or 'udp', return false;
     if (!(data_stream >> keyword) ||
         (keyword.compare("udp") && keyword.compare("tcp")) )
         return false;
 
-    ld->open_table("when");
-    ld->add_option_to_table("proto", keyword);
+    table_api.open_table("when");
+    table_api.add_option("proto", keyword);
 
     while (data_stream >> port)
     {
@@ -64,7 +64,7 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
         const std::size_t colon_pos = port.find(':');
         if (colon_pos == std::string::npos)
         {
-            tmpval = ld->add_list_to_table("ports", port);
+            tmpval = table_api.add_list("ports", port);
         }
 
         else if (colon_pos == 0)
@@ -72,7 +72,7 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
             int high = std::stoi(port.substr(1));
             for (int i = 0; i <= high; i++)
             {
-                bool tmpval2 = ld->add_list_to_table("ports", std::to_string(i));
+                bool tmpval2 = table_api.add_list("ports", std::to_string(i));
 
                 if (tmpval && !tmpval2)
                     tmpval = false;
@@ -86,7 +86,7 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
 
             for (int i = low; i <= high; i++)
             {
-                bool tmpval2 = ld->add_list_to_table("ports", std::to_string(i));
+                bool tmpval2 = table_api.add_list("ports", std::to_string(i));
 
                 if (tmpval && !tmpval2)
                     tmpval = false;
@@ -97,12 +97,12 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
             retval = false;
     }
 
-    ld->close_table();
-    ld->open_table("use");
-    ld->add_option_to_table("action", "allow");
-    ld->close_table(); // table = "use"
-    ld->close_table(); // table = anonymous
-    ld->close_table(); // table = "binder"
+    table_api.close_table();
+    table_api.open_table("use");
+    table_api.add_option("action", "allow");
+    table_api.close_table(); // table = "use"
+    table_api.close_table(); // table = anonymous
+    table_api.close_table(); // table = "binder"
     return retval;
 }
 
@@ -110,9 +110,9 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new IgnorePorts(cv, ld);
+    return new IgnorePorts();
 }
 
 static const ConvertMap config_ignore_ports =

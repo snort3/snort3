@@ -34,7 +34,7 @@ namespace {
 class Include : public ConversionState
 {
 public:
-    Include(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Include() : ConversionState() {};
     virtual ~Include() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -55,13 +55,13 @@ bool Include::convert(std::istringstream& data_stream)
         // if not parsing, assume its a regular rule file.
 
 
-        if (cv->should_convert_includes())
+        if (cv.should_convert_includes())
         {
-            cv->parse_include_file(ld->expand_vars(file));
+            cv.parse_include_file(data_api.expand_vars(file));
         }
         else
         {
-            ld->add_hdr_data("include " + file);
+            rule_api.add_hdr_data("include " + file);
         }
         return true;
     }
@@ -72,9 +72,9 @@ bool Include::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Include(cv, ld);
+    return new Include();
 }
 
 static const ConvertMap keyword_include = 

@@ -17,29 +17,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// converter.h author Josh Rosenbaum <jrosenba@cisco.com>
+// dt_rule_suboptions.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <sstream>
-#include <fstream>
-#include "conversion_state.h"
-#include "utils/converter.h"
+#ifndef DATA_DATA_TYPES_DT_RULE_SUBOPTIONS_H
+#define DATA_DATA_TYPES_DT_RULE_SUBOPTIONS_H
 
-#ifndef INIT_STATE_H
-#define INIT_STATE_H
+#include <string>
+#include <vector>
+#include <iostream>
 
-class InitState : public ConversionState
+class RuleSubOption
 {
 public:
-    InitState();
-    virtual ~InitState() {};
-    virtual bool convert(std::istringstream& data);
+    RuleSubOption(std::string name);
+    RuleSubOption(std::string name, std::string val);
+    virtual ~RuleSubOption();
+ 
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const RuleSubOption &);
 
+private:
+    std::string name;
+    std::string value;
 };
 
-
-static inline ConversionState* init_state_ctor()
-{
-    return new InitState();
-}
 
 #endif

@@ -34,7 +34,7 @@ namespace {
 class EventFilter : public ConversionState
 {
 public:
-    EventFilter(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    EventFilter() : ConversionState() {};
     virtual ~EventFilter() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,8 +46,8 @@ bool EventFilter::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    ld->open_table("event_filter");
-    ld->open_table();
+    table_api.open_table("event_filter");
+    table_api.open_table();
 
     while (std::getline(data_stream, args, ','))
     {
@@ -75,13 +75,13 @@ bool EventFilter::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("gen_id"))
         {
-            ld->add_diff_option_comment("gen_id", "gid");
+            table_api.add_diff_option_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", arg_stream);
         }
 
         else if (!keyword.compare("sig_id"))
         {
-            ld->add_diff_option_comment("sig_id", "sid");
+            table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", arg_stream);
         }
 
@@ -95,8 +95,8 @@ bool EventFilter::convert(std::istringstream& data_stream)
 
     }
 
-    ld->close_table();
-    ld->close_table();
+    table_api.close_table();
+    table_api.close_table();
 
     return retval;
 }
@@ -105,9 +105,9 @@ bool EventFilter::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new EventFilter(cv, ld);
+    return new EventFilter();
 }
 
 static const ConvertMap event_filter_api =

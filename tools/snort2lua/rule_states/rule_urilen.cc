@@ -36,7 +36,7 @@ namespace {
 class Urilen : public ConversionState
 {
 public:
-    Urilen(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Urilen() : ConversionState() {};
     virtual ~Urilen() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -56,21 +56,21 @@ bool Urilen::convert(std::istringstream& data_stream)
     // we are therefore done with this rule.
     if (util::get_string(arg_stream, value, ","))
     {
-        retval = ld->add_rule_option("urilen", value);
-        ld->select_option("urilen");
+        retval = rule_api.add_rule_option("urilen", value);
+        rule_api.select_option("urilen");
 
         if (util::get_string(arg_stream, value, ","))
         {
             bool tmpval = true;
 
             if (!value.compare("raw"))
-                tmpval = ld->add_rule_option_before_selected("http_raw_uri");
+                tmpval = rule_api.add_rule_option_before_selected("http_raw_uri");
 
             else if (!value.compare("norm"))
-                tmpval = ld->add_rule_option_before_selected("http_uri");
+                tmpval = rule_api.add_rule_option_before_selected("http_uri");
 
             else
-                ld->bad_rule(data_stream, "invalid arguments: " + args);
+                rule_api.bad_rule(data_stream, "invalid arguments: " + args);
 
             if (retval && !tmpval)
                 retval = false;
@@ -78,10 +78,10 @@ bool Urilen::convert(std::istringstream& data_stream)
     }
     else
     {
-        ld->bad_rule(data_stream, "urilen: option required");
+        rule_api.bad_rule(data_stream, "urilen: option required");
     }
 
-    ld->unselect_option();
+    rule_api.unselect_option();
     return set_next_rule_state(data_stream) && retval;
 }
 
@@ -90,9 +90,9 @@ bool Urilen::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Urilen(cv, ld);
+    return new Urilen();
 }
 
 static const std::string urilen = "urilen";

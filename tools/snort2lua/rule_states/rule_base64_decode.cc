@@ -36,7 +36,7 @@ namespace {
 class Base64Decode : public ConversionState
 {
 public:
-    Base64Decode(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Base64Decode() : ConversionState() {};
     virtual ~Base64Decode() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -60,7 +60,7 @@ bool Base64Decode::convert(std::istringstream& data_stream)
         // Therefore, if a colon is present, we are in the next rule option.
         if (args.find(":") != std::string::npos)
         {
-            retval = ld->add_rule_option("base64_decode");
+            retval = rule_api.add_rule_option("base64_decode");
             data_stream.seekg(pos);
         }
         else
@@ -74,12 +74,12 @@ bool Base64Decode::convert(std::istringstream& data_stream)
                 !tmp.compare("offset") ||
                 !tmp.compare("relative"))
             {
-                retval = ld->add_rule_option("base64_decode", args) && retval;
+                retval = rule_api.add_rule_option("base64_decode", args) && retval;
             }
             else
             {
                 data_stream.seekg(pos);
-                retval = ld->add_rule_option("base64_decode") && retval;
+                retval = rule_api.add_rule_option("base64_decode") && retval;
             }
         }
     }
@@ -91,9 +91,9 @@ bool Base64Decode::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Base64Decode(cv, ld);
+    return new Base64Decode();
 }
 
 static const std::string base64_decode = "base64_decode";

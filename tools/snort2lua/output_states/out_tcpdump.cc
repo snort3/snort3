@@ -34,7 +34,7 @@ namespace {
 class LogTcpDump : public ConversionState
 {
 public:
-    LogTcpDump(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    LogTcpDump() : ConversionState() {};
     virtual ~LogTcpDump() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,18 +47,18 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
     int limit;
     bool retval = true;
 
-    ld->open_top_level_table("log_tcpdump");
+    table_api.open_top_level_table("log_tcpdump");
 
     if (!(data_stream >> keyword))
         return true;
 
-    retval = ld->add_option_to_table("file", keyword);
+    retval = table_api.add_option("file", keyword);
 
 
     if (!(data_stream >> limit))
         return retval;
 
-    retval = ld->add_option_to_table("limit", limit) && retval;
+    retval = table_api.add_option("limit", limit) && retval;
 
     char c = '\0';
     std::string units = "B";
@@ -73,7 +73,7 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
     }
 
 
-    retval = ld->add_option_to_table("units", units) && retval;
+    retval = table_api.add_option("units", units) && retval;
 
     // If we read something, more data available and bad input
     if (data_stream >> keyword)
@@ -86,11 +86,11 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    ld->open_top_level_table("log_tcpdump"); // in case there are no arguments
-    ld->close_table();
-    return new LogTcpDump(cv, ld);
+    table_api.open_top_level_table("log_tcpdump"); // in case there are no arguments
+    table_api.close_table();
+    return new LogTcpDump();
 }
 
 static const ConvertMap log_tcpdump_api =

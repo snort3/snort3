@@ -29,7 +29,7 @@
 #include "keyword_states/keywords_api.h"
 
 
-InitState::InitState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
+InitState::InitState() : ConversionState() {}
 
 bool InitState::convert(std::istringstream& data_stream)
 {
@@ -41,7 +41,7 @@ bool InitState::convert(std::istringstream& data_stream)
     const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
     if (map)
     {
-        cv->set_state(map->ctor(cv, ld));
+        cv.set_state(map->ctor());
         return true;
     }
 

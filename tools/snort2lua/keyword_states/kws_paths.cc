@@ -36,10 +36,7 @@ template<const std::string *snort_option>
 class Paths : public ConversionState
 {
 public:
-    Paths( Converter* cv, LuaData* ld)
-                            : ConversionState(cv, ld)
-    {
-    };
+    Paths() : ConversionState() {};
 
     virtual ~Paths() {};
     virtual bool convert(std::istringstream& data_stream)
@@ -47,9 +44,9 @@ public:
         std::string arg1;
         std::string arg2;
 
-        ld->open_table("process");
-        ld->add_diff_option_comment(*snort_option, "plugin_path");
-        ld->add_comment_to_table("Since paths have changed between Snort and"
+        table_api.open_table("process");
+        table_api.add_diff_option_comment(*snort_option, "plugin_path");
+        table_api.add_comment("Since paths have changed between Snort and"
             "  Snort++, commenting out any plugin paths.  You must manually"
             " add them");
 
@@ -61,17 +58,17 @@ public:
 
         if (arg2.empty())
         {
-            ld->add_comment_to_table("Cannot add specific files to Snort++"
+            table_api.add_comment("Cannot add specific files to Snort++"
                 " plugin path.  Use 'plugin_path = "
                 "<dir>' instead of adding specific file: " + arg1);
         }
         else
         {
             if (!arg1.compare("directory"))
-                ld->add_option_to_table("--plugin_path", arg2);
+                table_api.add_option("--plugin_path", arg2);
 
             else if (!arg1.compare("file"))
-                ld->add_comment_to_table("Cannot add specific files to Snort++"
+                table_api.add_comment("Cannot add specific files to Snort++"
                 " plugin path.  Use 'plugin_path = "
                 "<dir>' instead of adding specific file: " + arg1);
 
@@ -85,9 +82,9 @@ public:
 
 
 template<const std::string *snort_option>
-static ConversionState* paths_ctor(Converter* cv, LuaData* ld)
+static ConversionState* paths_ctor()
 {
-    return new Paths<snort_option>(cv, ld);
+    return new Paths<snort_option>();
 }
 
 } // namespace

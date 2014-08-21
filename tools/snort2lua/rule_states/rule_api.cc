@@ -82,7 +82,7 @@ extern const ConvertMap* uricontent_map;
 extern const ConvertMap* urilen_map;
 extern const ConvertMap* window_map;
 
-const std::vector<const ConvertMap*> rule_api =
+const std::vector<const ConvertMap*> rule_options_api =
 {
     ack_map,
     asn1_map,

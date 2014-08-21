@@ -41,9 +41,7 @@ template<const std::string* rule_name, bool has_suboptions>
 class UnchangedRuleOption : public ConversionState
 {
 public:
-    UnchangedRuleOption( Converter* cv, LuaData* ld)
-        :   ConversionState(cv, ld)
-    { };
+    UnchangedRuleOption() : ConversionState() {};
     virtual ~UnchangedRuleOption() {};
     
     virtual bool convert(std::istringstream& stream)
@@ -53,11 +51,11 @@ public:
         if (has_suboptions)
         {
             std::string val = util::get_rule_option_args(stream);
-            retval = ld->add_rule_option(*rule_name, val);
+            retval = rule_api.add_rule_option(*rule_name, val);
         }
         else
         {
-            retval = ld->add_rule_option(*rule_name);
+            retval = rule_api.add_rule_option(*rule_name);
         }
 
         return set_next_rule_state(stream) && retval;
@@ -66,9 +64,9 @@ public:
 
 
 template<const std::string *rule_name,  bool has_suboptions = true>
-static ConversionState* unchanged_rule_ctor(Converter* cv, LuaData* ld)
+static ConversionState* unchanged_rule_ctor()
 {
-    return new UnchangedRuleOption<rule_name, has_suboptions>(cv, ld);
+    return new UnchangedRuleOption<rule_name, has_suboptions>();
 }
 
 /****************************************

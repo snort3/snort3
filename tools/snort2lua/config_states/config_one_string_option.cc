@@ -36,11 +36,10 @@ namespace
 class ConfigStringOption : public ConversionState
 {
 public:
-    ConfigStringOption( Converter* cv, LuaData* ld,
-                        const std::string* snort_option,
+    ConfigStringOption( const std::string* snort_option,
                         const std::string* lua_table,
                         const std::string* lua_option) :
-            ConversionState(cv, ld),
+            ConversionState(),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -74,20 +73,20 @@ public:
 
 
         bool retval;
-        ld->open_table(*lua_table);
+        table_api.open_table(*lua_table);
 
         if((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
-            ld->add_diff_option_comment("config " + *snort_option +
+            table_api.add_diff_option_comment("config " + *snort_option +
                 ":", *lua_option);
-            retval = ld->add_option_to_table(*lua_option, arg_s);
+            retval = table_api.add_option(*lua_option, arg_s);
         }
         else
         {
-            retval = ld->add_option_to_table(*snort_option, arg_s);
+            retval = table_api.add_option(*snort_option, arg_s);
         }
 
-        ld->close_table();
+        table_api.close_table();
         return retval;
     }
 
@@ -101,12 +100,11 @@ private:
 template<const std::string *snort_option,
         const std::string *lua_table,
         const std::string *lua_option = nullptr>
-static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_string_ctor()
 {
-    return new ConfigStringOption(cv, ld,
-                                     snort_option,
-                                     lua_table,
-                                     lua_option);
+    return new ConfigStringOption(  snort_option,
+                                    lua_table,
+                                    lua_option);
 }
 
 } // namespace

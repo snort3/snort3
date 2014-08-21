@@ -36,7 +36,7 @@ namespace {
 class HttpEncode : public ConversionState
 {
 public:
-    HttpEncode(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    HttpEncode() : ConversionState() {};
     virtual ~HttpEncode() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -46,7 +46,7 @@ public:
 bool HttpEncode::convert(std::istringstream& data_stream)
 {
     std::string tmp;
-    ld->add_comment_to_rule("option deleted: http_encode");
+    rule_api.add_comment_to_rule("option deleted: http_encode");
     tmp = util::get_rule_option_args(data_stream);
     return set_next_rule_state(data_stream);
 }
@@ -56,9 +56,9 @@ bool HttpEncode::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new HttpEncode(cv, ld);
+    return new HttpEncode();
 }
 
 static const std::string http_encode = "http_encode";

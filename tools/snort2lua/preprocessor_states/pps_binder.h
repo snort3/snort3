@@ -19,21 +19,19 @@
  */
 // pps_binder.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <cctype>
+#ifndef PREPROCESSOR_STATES_PPS_BINDER_H
+#define PREPROCESSOR_STATES_PPS_BINDER_H
+
+
 #include <string>
 #include <vector>
-
-#ifndef PPS_BINDER_H
-#define PPS_BINDER_H
-
-class LuaData;
 
 // If the user never adds add_to_configuration,
 //  the destructor will call the method
 class Binder
 {
 public:
-    Binder(LuaData* ld) :   ld(ld), printed(false){};
+    Binder();
     ~Binder();
 
     void add_to_configuration();
@@ -59,7 +57,6 @@ public:
 
 
 private:
-    LuaData* ld;
     bool printed; // ensures that the binding is added once,
                   // by either the destructor or user
 

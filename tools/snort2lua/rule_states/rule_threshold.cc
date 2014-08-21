@@ -36,7 +36,7 @@ namespace {
 class Threshold : public ConversionState
 {
 public:
-    Threshold(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Threshold() : ConversionState() {};
     virtual ~Threshold() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -53,9 +53,9 @@ bool Threshold::convert(std::istringstream& data_stream)
     std::istringstream arg_stream(args);
 
 
-    ld->open_table("event_filter");
-    ld->add_diff_option_comment("ips_option: threshold", "event_filter");
-    ld->open_table();
+    table_api.open_table("event_filter");
+    table_api.add_diff_option_comment("ips_option: threshold", "event_filter");
+    table_api.open_table();
 
     while (util::get_string(arg_stream, value, ","))
     {
@@ -68,16 +68,16 @@ bool Threshold::convert(std::istringstream& data_stream)
             tmpval = false;
 
         else if (!(keyword.compare("count")))
-            tmpval = ld->add_option_to_table("count", std::stoi(val));
+            tmpval = table_api.add_option("count", std::stoi(val));
 
         else if (!(keyword.compare("seconds")))
-            tmpval = ld->add_option_to_table("seconds", std::stoi(val));
+            tmpval = table_api.add_option("seconds", std::stoi(val));
 
         else if (!(keyword.compare("type")))
-            tmpval = ld->add_option_to_table("type", val);
+            tmpval = table_api.add_option("type", val);
 
         else if (!(keyword.compare("track")))
-            tmpval = ld->add_option_to_table("track", val);
+            tmpval = table_api.add_option("track", val);
 
         else
             retval = false;
@@ -118,13 +118,13 @@ bool Threshold::convert(std::istringstream& data_stream)
         if (!rule_keyword.compare("sid"))
         {
             std::string val = util::get_rule_option_args(data_stream);
-            ld->add_option_to_table("sid", std::stoi(val));
+            table_api.add_option("sid", std::stoi(val));
             found_sid = true;
         }
         else if (!rule_keyword.compare("gid"))
         {
             std::string val = util::get_rule_option_args(data_stream);
-            ld->add_option_to_table("gid", std::stoi(val));
+            table_api.add_option("gid", std::stoi(val));
             found_gid = true;
         }
         else  if (semi_colon_pos == std::string::npos)
@@ -138,8 +138,8 @@ bool Threshold::convert(std::istringstream& data_stream)
     }
 
 
-    ld->close_table();
-    ld->close_table();
+    table_api.close_table();
+    table_api.close_table();
     if (curr_pos != -1)
         data_stream.clear();
 
@@ -152,9 +152,9 @@ bool Threshold::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Threshold(cv, ld);
+    return new Threshold();
 }
 
 static const ConvertMap rule_threshold =

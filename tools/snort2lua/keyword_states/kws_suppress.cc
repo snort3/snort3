@@ -35,7 +35,7 @@ namespace {
 class Suppress : public ConversionState
 {
 public:
-    Suppress(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Suppress() : ConversionState() {};
     virtual ~Suppress() {};
     virtual bool convert(std::istringstream& data);
 
@@ -83,7 +83,7 @@ bool Suppress::parse_ip_list(std::istringstream& arg_stream, std::istringstream&
     if (arg_stream.bad() && data_stream.bad())
         return false;
 
-    ld->add_option_to_table("ip", fullIpList);
+    table_api.add_option("ip", fullIpList);
     return true;
 }
 
@@ -92,10 +92,10 @@ bool Suppress::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string args;
 
-    ld->open_table("suppress");
-    ld->add_diff_option_comment("gen_id", "gid");
-    ld->add_diff_option_comment("sig_id", "sid");
-    ld->open_table();
+    table_api.open_table("suppress");
+    table_api.add_diff_option_comment("gen_id", "gid");
+    table_api.add_diff_option_comment("sig_id", "sid");
+    table_api.open_table();
 
     while(std::getline(data_stream, args, ','))
     {
@@ -135,9 +135,9 @@ bool Suppress::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Suppress(cv, ld);
+    return new Suppress();
 }
 
 static const ConvertMap keyword_supress =

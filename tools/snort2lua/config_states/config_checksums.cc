@@ -34,11 +34,10 @@ namespace {
 class ConfigChecksum : public ConversionState
 {
 public:
-    ConfigChecksum( Converter* cv, LuaData* ld,
-                        const std::string* snort_option,
-                        const std::string* lua_table,
-                        const std::string* lua_option) :
-            ConversionState(cv, ld),
+    ConfigChecksum( const std::string* snort_option,
+                    const std::string* lua_table,
+                    const std::string* lua_option) :
+            ConversionState(),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -55,7 +54,7 @@ public:
             return false;
 
 
-        ld->open_table(*lua_table);
+        table_api.open_table(*lua_table);
 
 
         if(lua_option == nullptr)
@@ -64,11 +63,11 @@ public:
         }
         else if (snort_option->compare(*lua_option))
         {
-            ld->add_diff_option_comment(*snort_option, *lua_option);
+            table_api.add_diff_option_comment(*snort_option, *lua_option);
         }
 
         while (stream >> val)
-            retval = ld->add_list_to_table(*lua_option, val) && retval;
+            retval = table_api.add_list(*lua_option, val) && retval;
 
         return retval;
     }
@@ -83,9 +82,9 @@ private:
 template<const std::string *snort_option,
          const std::string *lua_name,
          const std::string *lua_option = nullptr>
-static ConversionState* config_checksum_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_checksum_ctor()
 {
-    return new ConfigChecksum(cv, ld, snort_option, lua_name, lua_option);
+    return new ConfigChecksum(snort_option, lua_name, lua_option);
 }
 
 

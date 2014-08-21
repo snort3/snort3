@@ -19,7 +19,7 @@
  */
 // dt_option.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "data/dt_option.h"
+#include "data/data_types/dt_option.h"
 
 
 Option::Option(std::string name, int val, int depth)
