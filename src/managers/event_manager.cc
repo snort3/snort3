@@ -193,8 +193,8 @@ void EventManager::instantiate(
 
     // FIXIT-H this loses args if set in conf
     // emulate a config like name = { }
-    //mod->begin(name, 0, sc);
-    //mod->end(name, 0, sc);
+    mod->begin(name, 0, sc);
+    mod->end(name, 0, sc);
 
     // override prior outputs
     // (last cmdline option wins)
