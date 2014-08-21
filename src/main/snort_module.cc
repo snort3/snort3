@@ -225,7 +225,7 @@ static const Parameter snort_params[] =
       "creates stub rule files of all loaded rules libraries" },
 
     { "--dump-dynamic-rules", Parameter::PT_STRING, nullptr, nullptr,
-      "<path> creates stub rule files of all loaded rules libraries" },
+      "<path> creates stub rule file of all loaded rules libraries" },
 
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets and release memory on shutdown" },
@@ -236,25 +236,25 @@ static const Parameter snort_params[] =
     { "--help", Parameter::PT_IMPLIED, nullptr, nullptr,
       "overview of help" },
 
-    { "--help-builtin", Parameter::PT_STRING, nullptr, nullptr,
+    { "--help-builtin", Parameter::PT_STRING, "(optional)", nullptr,
       "<module prefix> output matching builtin rules" },
 
     { "--help-buffers", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output available inspection buffers" },
 
-    { "--help-commands", Parameter::PT_STRING, nullptr, nullptr,
+    { "--help-commands", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching commands" },
 
-    { "--help-config", Parameter::PT_STRING, nullptr, nullptr,
+    { "--help-config", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching config options" },
 
-    { "--help-gids", Parameter::PT_STRING, nullptr, nullptr,
+    { "--help-gids", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching generators" },
 
     { "--help-module", Parameter::PT_STRING, nullptr, nullptr,
       "<module> output description of given module" },
 
-    { "--help-options", Parameter::PT_STRING, nullptr, nullptr,
+    { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help" },
 
     { "--help-signals", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -652,8 +652,14 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 // singleton
 //-------------------------------------------------------------------------
 
-static SnortModule snort_module;
+static SnortModule* snort_module = nullptr;
 
 Module* get_snort_module()
-{ return &snort_module; }
+{
+    if ( !snort_module )
+        snort_module = new SnortModule;
+
+    return snort_module;
+}
+
 

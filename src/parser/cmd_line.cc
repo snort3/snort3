@@ -24,33 +24,16 @@
 #include "config.h"
 #endif
 
-#include <syslog.h>
-#include <iostream>
 #include <string>
 using namespace std;
 
-#include "config_file.h"
-#include "vars.h"
-#include "detection/detect.h"
-#include "helpers/process.h"
-#include "main/analyzer.h"
-#include "main/snort.h"
 #include "main/snort_module.h"
-#include "main/shell.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
-#include "managers/event_manager.h"
-#include "managers/so_manager.h"
-#include "managers/inspector_manager.h"
-#include "managers/module_manager.h"
-#include "managers/plugin_manager.h"
 #include "packet_io/trough.h"
-#include "packet_io/sfdaq.h"
-#include "packet_io/intf.h"
 #include "parser/arg_list.h"
 #include "parser/parser.h"
 #include "utils/util.h"
-#include "helpers/markup.h"
 
 //-------------------------------------------------------------------------
 
@@ -95,8 +78,12 @@ static bool set_arg(
     bool ok = true;
 
     if ( p->type == Parameter::PT_IMPLIED )
-        v.set(true);
-
+    {
+        if ( *val )
+            ok = false;
+        else
+            v.set(true);
+    }
     else if ( p->type == Parameter::PT_INT )
     {
         char* end = nullptr;
@@ -144,10 +131,13 @@ static void set(
     p = Parameter::find(p, key);
 
     if ( !p )
-        ParseError("unknown option %s %s\n", key, val);
+        ParseError("unknown option %s %s", key, val);
     
     else if ( !set_arg(m, p, k.c_str(), val, sc) )
-        ParseError("can't set %s %s\n", key, val);
+    {
+        ParseError("can't set %s %s", key, val);
+        ParseError("usage: %s %s", key, p->help);
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -170,6 +160,10 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
         set(key, val, sc, true);
 
     check_flags(sc);
+
+    if ( int k = get_parse_errors() )
+        FatalError("see prioir %d errors\n", k);
+
     return sc;
 }
 

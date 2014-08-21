@@ -619,11 +619,10 @@ static bool set_mode()
     if ( unit_test_enabled() )
         exit(unit_test());
 #endif
-    unsigned n = get_parse_errors();
 
-    if ( n )
+    if ( int k = get_parse_errors() )
     {
-        ParseAbort("%d config errors found", n);
+        ParseAbort("see prior %d errors", k);
         return false;
     }
     if ( ScTestMode() ||

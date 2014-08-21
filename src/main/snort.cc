@@ -488,8 +488,8 @@ void snort_setup(int argc, char* argv[])
     InitGroups(ScUid(), ScGid());
     SnortUnprivilegedInit();
 
-    if ( get_parse_errors() )
-        FatalError("see prior %d errors\n", get_parse_errors());
+    if ( int k = get_parse_errors() )
+        FatalError("see prior %d errors\n", k);
 
     set_quick_exit(false);
 }

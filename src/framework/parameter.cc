@@ -101,6 +101,9 @@ static bool valid_real(Value& v, const char* r)
 
 static bool valid_string(Value& v, const char* r)
 {
+    if ( r && !strcmp(r, "(optional)") )
+        return true;
+
     unsigned len = strlen(v.get_string());
 
     if ( !r )
