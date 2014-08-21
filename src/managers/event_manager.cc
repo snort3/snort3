@@ -213,10 +213,6 @@ void EventManager::instantiate(
     instantiate(p, mod, sc);
 }
 
-void EventManager::configure_outputs(SnortConfig*)
-{
-}
-
 //-------------------------------------------------------------------------
 // execution
 

@@ -426,8 +426,6 @@ static void SnortInit(int argc, char **argv)
     else
         snort_conf->thiszone = gmt2local(0);
 #endif
-
-    EventManager::configure_outputs(snort_conf);
 }
 
 // this function should only include initialization that must be done as a

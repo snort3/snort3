@@ -44,7 +44,7 @@ struct Packet;
 
 //-------------------------------------------------------------------------
 // api for class
-// ctor, dtor, and configure are in main thread
+// ctor, dtor are in main thread
 // other methods are packet thread specific
 //-------------------------------------------------------------------------
 

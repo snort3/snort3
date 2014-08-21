@@ -51,7 +51,6 @@ public:
     static void instantiate(const LogApi*, Module*, SnortConfig*);
 
     static unsigned get_output_type_flags(char*);
-    static void configure_outputs(SnortConfig*);
 
     static void add_output(OutputSet**, class Logger*);
     static void copy_outputs(OutputSet* dst, OutputSet* src);
