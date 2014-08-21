@@ -29,10 +29,10 @@
 static THREAD_LOCAL uint8_t pdu_buf[65536];
 static THREAD_LOCAL StreamBuffer str_buf;
 
-uint32_t StreamSplitter::max()
+SO_PUBLIC uint32_t StreamSplitter::max()
 { return 16384; }  // FIXIT-H make default configurable
 
-const StreamBuffer* StreamSplitter::reassemble(
+SO_PUBLIC const StreamBuffer* StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 { 
