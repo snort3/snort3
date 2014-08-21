@@ -33,6 +33,7 @@
 #include "main/snort_config.h"
 #include "main/modules.h"
 #include "main/shell.h"
+#include "main/snort_types.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
@@ -343,7 +344,7 @@ extern "C"
     bool set_string(const char* fqn, const char* val);
 }
 
-bool open_table(const char* s, int idx)
+SO_PUBLIC bool open_table(const char* s, int idx)
 {
     string key = s;
     set_top(key);
@@ -371,7 +372,7 @@ bool open_table(const char* s, int idx)
     return true;
 }
 
-void close_table(const char* s, int idx)
+SO_PUBLIC void close_table(const char* s, int idx)
 {
     string key = s;
     set_top(key);
@@ -385,19 +386,19 @@ void close_table(const char* s, int idx)
     }
 }
 
-bool set_bool(const char* fqn, bool b)
+SO_PUBLIC bool set_bool(const char* fqn, bool b)
 {
     Value v(b);
     return set_value(fqn, v);
 }
 
-bool set_number(const char* fqn, double d)
+SO_PUBLIC bool set_number(const char* fqn, double d)
 {
     Value v(d);
     return set_value(fqn, v);
 }
 
-bool set_string(const char* fqn, const char* s)
+SO_PUBLIC bool set_string(const char* fqn, const char* s)
 {
     Value v(s);
     return set_value(fqn, v);

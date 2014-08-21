@@ -20,6 +20,7 @@
 
 #include <lua.hpp>
 
+#include "main/snort_types.h"
 #include "helpers/chunk.h"
 #include "managers/ips_manager.h"
 #include "managers/plugin_manager.h"
@@ -54,7 +55,7 @@ const SnortBuffer* get_buffer();
 static THREAD_LOCAL Cursor* cursor;
 static THREAD_LOCAL SnortBuffer buf;
 
-const SnortBuffer* get_buffer()
+SO_PUBLIC const SnortBuffer* get_buffer()
 {
     assert(cursor);
     buf.type = cursor->get_name();

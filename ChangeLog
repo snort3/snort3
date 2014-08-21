@@ -3,6 +3,7 @@
 -- observed memory corruption on Linux when loading dynamic plugins (not
 fixed)
 -- fixed action leak
+-- testing visibility=hidden
 
 115
 -- remove share.h
