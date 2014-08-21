@@ -115,13 +115,13 @@ static ConversionState* config_string_ctor(Converter* cv, LuaData* ld)
  *****************  STRUCT_NAMES  ****************
  *************************************************/
 
-static const std::string active = "active";
 static const std::string alerts = "alerts";
 static const std::string daq = "daq";
 static const std::string ips = "ips";
 static const std::string mode = "mode";
 static const std::string packets = "packets";
 static const std::string process = "process";
+static const std::string react = "react";
 static const std::string output = "output";
 
 
@@ -250,11 +250,12 @@ const ConvertMap* policy_mode_map = &policy_mode_api;
  ********************  react  ********************
  *************************************************/
 
-static const std::string react = "react";
+
+static const std::string page = "page";
 static const ConvertMap react_api =
 {
     react,
-    config_string_ctor<&react, &active>,
+    config_string_ctor<&react, &react, &page>,
 };
 
 const ConvertMap* react_map = &react_api;
