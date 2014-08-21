@@ -577,11 +577,6 @@ static void SnortCleanup()
     CleanupProfileStatsNodeList();
 #endif
 
-    CleanupProtoNames();
-    ModuleManager::term();
-    PluginManager::release_plugins();
-    Shell::term();
-
     /* free allocated memory */
     if (snort_conf == snort_cmd_line_conf)
     {
@@ -596,6 +591,10 @@ static void SnortCleanup()
         SnortConfFree(snort_conf);
         snort_conf = NULL;
     }
+    CleanupProtoNames();
+    ModuleManager::term();
+    PluginManager::release_plugins();
+    Shell::term();
 }
 
 void snort_cleanup()

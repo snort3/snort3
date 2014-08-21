@@ -568,9 +568,9 @@ default_rules =
 
 #alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request"; metadata:service http; reference:url,en.wikipedia.org/wiki/Vbs; classtype:misc-activity; sid:18758; rev:8; soid:3|18758;)
 
-#alert tcp any any -> any 80 ( sid:1; msg:"found!"; content:"GET"; )
+alert tcp any any -> any 80 ( sid:1; msg:"found!"; content:"GET"; )
 #alert tcp any any -> any 80 ( sid:2; msg:"found!"; http_method; content:"GET"; )
-alert tcp any any -> any 80 ( sid:3; msg:"found!"; content:"GET"; find:"pat=' HTTP/1%.%d'" ; )
+#alert tcp any any -> any 80 ( sid:3; msg:"found!"; content:"GET"; find:"pat=' HTTP/1%.%d'" ; )
 #alert tcp any any -> any any ( gid:123; sid:2; msg:"(stream_ip) Teardrop attack"; )
 #rewrite tcp any any -> any 80 ( sid:9; msg:"found!"; content:"GET"; replace:"GIT"; )
 ]]
