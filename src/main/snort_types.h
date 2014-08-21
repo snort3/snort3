@@ -111,7 +111,7 @@ typedef uint16_t Port;
 #  endif
 #  define DLL_LOCAL
 #else
-#  ifdef SF_VISIBILITY
+#  ifdef HAVE_VISIBILITY
 #    define SO_PUBLIC  __attribute__ ((visibility("default")))
 #    define SO_PRIVATE __attribute__ ((visibility("hidden")))
 #  else
