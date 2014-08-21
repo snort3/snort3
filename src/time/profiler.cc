@@ -47,7 +47,7 @@ using namespace std;
 #include "treenodes.h"
 #include "treenodes.h"
 #include "snort_types.h"
-#include "sf_textlog.h"
+#include "log/text_log.h"
 #include "detection_options.h"
 #include "fpdetect.h"
 #include "framework/module.h"

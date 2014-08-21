@@ -105,31 +105,14 @@ void IpsManager::delete_option(IpsOption* ips)
         api->dtor(ips);
 }
 
-    
 //-------------------------------------------------------------------------
-
-static bool is_positional(const Parameter* p)
-{
-    return ( p->name && *p->name == '~' );
-}
-
-static const Parameter* find_arg(const Parameter* p, const char* s)
-{
-    while ( p->name )
-    {
-        if ( !strcmp(p->name, s) || !strcmp(p->name, "*") )
-            return p;
-        ++p;
-    }
-    return nullptr;
-}
 
 static bool set_arg(
     Module* m, const Parameter* p, 
     const char* opt, const char* val, SnortConfig* sc)
 {
-    if ( !is_positional(p) )
-        p = find_arg(p, opt);
+    if ( !p->is_positional() )
+        p = Parameter::find(p, opt);
 
     if ( !p )
         return false;
@@ -160,7 +143,6 @@ static bool set_arg(
         if ( m->set(p->name, v, sc) )
             return true;
     }
-
     return false;
 }
 
@@ -216,7 +198,7 @@ bool IpsManager::option_set(
 
     assert(!strcmp(current_keyword, key));
 
-    if ( !*val && is_positional(current_params) )
+    if ( !*val && current_params->is_positional() )
     {
         val = opt;  // eg: gid:116; key="gid" and opt="116"
         opt = "";
@@ -225,7 +207,7 @@ bool IpsManager::option_set(
     if ( !set_arg(current_module, current_params, opt, val, sc) )
         ParseError("invalid argument %s:%s = %s\n", key, opt, val);
 
-    if ( is_positional(current_params) )
+    if ( current_params->is_positional() )
         ++current_params;
 
     return true;

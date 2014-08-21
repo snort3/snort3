@@ -19,6 +19,7 @@
 // module.h author Russ Combs <rucombs@cisco.com>
 
 // FIXIT 
+// -- add lua module default
 // -- add set_default method
 // -- add trace param(s)
 // -- add memcap related
@@ -121,8 +122,8 @@ public:
     virtual void reset_stats();
 
 protected:
-    Module(const char* s);
-    Module(const char* s, const Parameter* p, bool is_list = false);
+    Module(const char*);
+    Module(const char*, const Parameter*, bool is_list = false);
 
 private:
     friend class ModuleManager;

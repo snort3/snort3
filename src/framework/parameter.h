@@ -56,6 +56,11 @@ struct Parameter
     const char* get_type() const;
 
     bool validate(class Value&) const;
+
+    bool is_positional() const
+    { return ( name && *name == '~' ); };
+
+    static const Parameter* find(const Parameter*, const char*);
 };
 
 #endif

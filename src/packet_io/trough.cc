@@ -388,10 +388,11 @@ static int GetPcaps(SF_LIST *pol, SF_QUEUE *pcap_queue)
     return 0;
 }
 
+long Trough_GetLoopCount()
+{ return pcap_loop_count; }
+
 void Trough_SetLoopCount(long int c)
-{
-    pcap_loop_count = c;
-}
+{ pcap_loop_count = c; }
 
 void Trough_SetFilter (const char* f)
 {

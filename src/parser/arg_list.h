@@ -16,14 +16,31 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cmd_line.h author Russ Combs <rucombs@cisco.com>
+// arg_list.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef CMD_LINE_H
-#define CMD_LINE_H
+#ifndef ARG_LIST_H
+#define ARG_LIST_H
 
-struct SnortConfig* parse_cmd_line(int argc, char* argv[]);
+#include <string>
 
-void set_daemon_args(int argc, char* argv[]);
+class ArgList
+{
+public:
+    ArgList(int c, char* v[])
+    { argc = c; argv = v; reset(); };
+
+    void reset()
+    { idx = 0; arg = nullptr; };
+
+    bool get_arg(const char*& key, const char*& val);
+    void dump();
+
+private:
+    char** argv;
+    int argc, idx;
+    const char* arg;
+    std::string buf;
+};
 
 #endif
 

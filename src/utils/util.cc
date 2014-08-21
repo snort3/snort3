@@ -275,17 +275,6 @@ void strip(char *data)
     }
 }
 
-/****************************************************************************
- *
- * Function: CreatePidFile(char *)
- *
- * Purpose:  Creates a PID file
- *
- * Arguments: Interface opened.
- *
- * Returns: void function
- *
- ****************************************************************************/
 static FILE *pid_lockfile = NULL;
 static FILE *pid_file = NULL;
 
@@ -318,8 +307,9 @@ void CreatePidFile(pid_t pid)
             if (fcntl(lock_fd, F_SETLK, &lock) == -1)
             {
                 ClosePidFile();
-                FatalError("Failed to Lock PID File \"%s\" for PID \"%d\"\n",
+                ParseError("Failed to Lock PID File \"%s\" for PID \"%d\"\n",
                     snort_conf->pid_filename, (int)pid);
+                return;
             }
         }
     }
@@ -383,31 +373,27 @@ void SetUidGid(int user_id, int group_id)
     if ((group_id != -1) && (getgid() != (gid_t)group_id))
     {
         if ( !DAQ_Unprivileged() )
-        {
-            LogMessage("WARNING: cannot set uid and gid - %s DAQ does not"
+            ParseError("WARNING: cannot set uid and gid - %s DAQ does not"
                 " support unprivileged operation.\n", DAQ_GetType());
-            return;
-        }
 
-        if (setgid(group_id) < 0)
-            FatalError("Cannot set gid: %d\n", group_id);
+        else if (setgid(group_id) < 0)
+            ParseError("Cannot set gid: %d\n", group_id);
 
-        LogMessage("Set gid to %d\n", group_id);
+        else
+            LogMessage("Set gid to %d\n", group_id);
     }
 
     if ((user_id != -1) && (getuid() != (uid_t)user_id))
     {
         if ( !DAQ_Unprivileged() )
-        {
-            LogMessage("WARNING: cannot set uid and gid - %s DAQ does not"
+            ParseError("WARNING: cannot set uid and gid - %s DAQ does not"
                 " support unprivileged operation.\n", DAQ_GetType());
-            return;
-        }
 
-        if (setuid(user_id) < 0)
-            FatalError("Can not set uid: %d\n", user_id);
+        else if (setuid(user_id) < 0)
+            ParseError("Can not set uid: %d\n", user_id);
 
-        LogMessage("Set uid to %d\n", user_id);
+        else
+            LogMessage("Set uid to %d\n", user_id);
     }
 }
 
@@ -436,7 +422,7 @@ void InitGroups(int user_id, int group_id)
 
             if (initgroups(username, group_id) < 0)
             {
-                FatalError("Can not initgroups(%s,%d)", username, group_id);
+                ParseError("Can not initgroups(%s,%d)", username, group_id);
             }
 
             free(username);
@@ -518,20 +504,32 @@ char *read_infile(char *fname)
     fd = open(fname, O_RDONLY);
 
     if(fd < 0)
-        FatalError("can't open %s: %s\n", fname, get_error(errno));
+    {
+        ParseError("can't open %s: %s\n", fname, get_error(errno));
+        return nullptr;
+    }
 
     if(fstat(fd, &buf) < 0)
-        FatalError("can't stat %s: %s\n", fname, get_error(errno));
+    {
+        ParseError("can't stat %s: %s\n", fname, get_error(errno));
+        return nullptr;
+    }
 
     cp = (char *)SnortAlloc(((u_int)buf.st_size + 1) * sizeof(char));
 
     cc = read(fd, cp, (int) buf.st_size);
 
     if(cc < 0)
-        FatalError("read %s: %s\n", fname, get_error(errno));
+    {
+        ParseError("read %s: %s\n", fname, get_error(errno));
+        return nullptr;
+    }
 
     if(cc != buf.st_size)
-        FatalError("short read %s (%d != %d)\n", fname, cc, (int) buf.st_size);
+    {
+        ParseError("short read %s (%d != %d)\n", fname, cc, (int) buf.st_size);
+        return nullptr;
+    }
 
     cp[(int) buf.st_size] = '\0';
 
@@ -576,11 +574,11 @@ void CheckLogDir(void)
         return;
 
     if (stat(snort_conf->log_dir, &st) == -1)
-        FatalError("Stat check on log dir failed: %s.\n", get_error(errno));
+        ParseError("Stat check on log dir failed: %s.\n", get_error(errno));
 
-    if (!S_ISDIR(st.st_mode) || (access(snort_conf->log_dir, W_OK) == -1))
+    else if (!S_ISDIR(st.st_mode) || (access(snort_conf->log_dir, W_OK) == -1))
     {
-        FatalError("Can not get write access to logging directory \"%s\". "
+        ParseError("Can not get write access to logging directory \"%s\". "
                    "(directory doesn't exist or permissions are set incorrectly "
                    "or it is not a directory at all)\n",
                    snort_conf->log_dir);
@@ -870,31 +868,6 @@ const char *SnortStrcasestr(const char *s, int slen, const char *substr)
     return s;
 }
 
-void * SnortAlloc2(size_t size, const char *format, ...)
-{
-    void *tmp;
-
-    tmp = (void *)calloc(size, sizeof(char));
-
-    if(tmp == NULL)
-    {
-        va_list ap;
-        char buf[STD_BUF];
-
-        buf[STD_BUF - 1] = '\0';
-
-        va_start(ap, format);
-
-        vsnprintf(buf, STD_BUF - 1, format, ap);
-
-        va_end(ap);
-
-        FatalError("%s", buf);
-    }
-
-    return tmp;
-}
-
 /**
  * Chroot and adjust the snort_conf->log_dir reference
  *
@@ -909,14 +882,16 @@ void SetChroot(char *directory, char **logstore)
 
     if(!directory || !logstore)
     {
-        FatalError("Null parameter passed\n");
+        ParseError("Null parameter passed\n");
+        return;
     }
 
     logdir = *logstore;
 
     if(logdir == NULL || *logdir == '\0')
     {
-        FatalError("Null log directory\n");
+        ParseError("Null log directory\n");
+        return;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"SetChroot: %s\n",
@@ -936,8 +911,9 @@ void SetChroot(char *directory, char **logstore)
     /* change to the directory */
     if(chdir(directory) != 0)
     {
-        FatalError("SetChroot: Can not chdir to \"%s\": %s\n", directory,
+        ParseError("SetChroot: Can not chdir to \"%s\": %s\n", directory,
                    get_error(errno));
+        return;
     }
 
     /* always returns an absolute pathname */
@@ -945,7 +921,8 @@ void SetChroot(char *directory, char **logstore)
 
     if(absdir == NULL)
     {
-        FatalError("NULL Chroot found\n");
+        ParseError("NULL Chroot found\n");
+        return;
     }
 
     abslen = strlen(absdir);
@@ -955,8 +932,9 @@ void SetChroot(char *directory, char **logstore)
     /* make the chroot call */
     if(chroot(absdir) < 0)
     {
-        FatalError("Can not chroot to \"%s\": absolute: %s: %s\n",
+        ParseError("Can not chroot to \"%s\": absolute: %s: %s\n",
                    directory, absdir, get_error(errno));
+        return;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"chroot success (%s ->", absdir););
@@ -965,8 +943,9 @@ void SetChroot(char *directory, char **logstore)
     /* change to "/" in the new directory */
     if(chdir("/") < 0)
     {
-        FatalError("Can not chdir to \"/\" after chroot: %s\n",
+        ParseError("Can not chdir to \"/\" after chroot: %s\n",
                    get_error(errno));
+        return;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_INIT,"chdir success (%s)\n",
@@ -975,7 +954,8 @@ void SetChroot(char *directory, char **logstore)
 
     if(strncmp(absdir, logdir, strlen(absdir)))
     {
-        FatalError("Absdir is not a subset of the logdir");
+        ParseError("Absdir is not a subset of the logdir");
+        return;
     }
 
     if(abslen >= strlen(logdir))
@@ -1138,91 +1118,6 @@ char *fasthex(const u_char *xdata, int length)
     }
 
     return retbuf;
-}
-
-/*
- *   Fatal Integer Parser
- *   Ascii to Integer conversion with fatal error support
- */
-long int xatol(const char *s , const char *etext)
-{
-    long int val;
-    char *endptr;
-    const char *default_error = "xatol() error\n";
-
-    if (etext == NULL)
-        etext = default_error;
-
-    if (s == NULL)
-        FatalError("%s: String is NULL\n", etext);
-
-    while (isspace((int)*s))
-        s++;
-
-    if (strlen(s) == 0)
-        FatalError("%s: String is empty\n", etext);
-
-
-    /*
-     *  strtoul - errors on win32 : ERANGE (VS 6.0)
-     *            errors on linux : ERANGE, EINVAL
-     *               (for EINVAL, unsupported base which won't happen here)
-     */
-    val = SnortStrtol(s, &endptr, 0);
-
-    if ((errno == ERANGE) || (*endptr != '\0'))
-        FatalError("%s: Invalid integer input: %s\n", etext, s);
-
-    return val;
-}
-
-/*
- *   Fatal Integer Parser
- *   Ascii to Integer conversion with fatal error support
- */
-unsigned long int xatou(const char *s , const char *etext)
-{
-    unsigned long int val;
-    char *endptr;
-    const char *default_error = "xatou() error\n";
-
-    if (etext == NULL)
-        etext = default_error;
-
-    if (s == NULL)
-        FatalError("%s: String is NULL\n", etext);
-
-    while (isspace((int)*s))
-        s++;
-
-    if (strlen(s) == 0)
-        FatalError("%s: String is empty\n", etext);
-
-    if (*s == '-')
-    {
-        FatalError("%s: Invalid unsigned integer - negative sign found, "
-                   "input: %s\n", etext, s);
-    }
-
-
-    /*
-     *  strtoul - errors on win32 : ERANGE (VS 6.0)
-     *            errors on linux : ERANGE, EINVAL
-     */
-    val = SnortStrtoul(s, &endptr, 0);
-
-    if ((errno == ERANGE) || (*endptr != '\0'))
-        FatalError("%s: Invalid integer input: %s\n", etext, s);
-
-    return val;
-}
-
-unsigned long int xatoup(const char *s , const char *etext)
-{
-    unsigned long int val = xatou(s, etext);
-    if ( !val )
-        FatalError("%s: must be > 0\n", etext);
-    return val;
 }
 
 int CheckValueInRange(const char *value_str, const char *option,

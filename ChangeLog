@@ -1,6 +1,7 @@
 115
 -- remove share.h
 -- misc FIXITs
+-- refactored cmd line parsing and moved options to SnortModule
 
 114
 -- more FIXIT cleanup

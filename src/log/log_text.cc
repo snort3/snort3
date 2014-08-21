@@ -43,7 +43,7 @@
 #include "util_net.h"
 #include "protocols/packet.h"
 #include "snort.h"
-#include "sf_textlog.h"
+#include "log/text_log.h"
 #include "snort_bounds.h"
 #include "obfuscation.h"
 #include "detection_util.h"

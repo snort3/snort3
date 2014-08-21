@@ -39,8 +39,8 @@
 #include "util.h"
 #include "log.h"
 #include "snort.h"
-#include "sf_textlog.h"
-#include "log_text.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
 
 #define LOG_BUFFER (4*K_BYTES)
 

@@ -36,6 +36,7 @@ using namespace std;
 #include "main.h"
 #include "snort.h"
 #include "snort_config.h"
+#include "snort_module.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/config_file.h"
@@ -942,7 +943,7 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
             ConfigDecodeDataLink(sc, "");
     }
     else if ( v.is("snaplen") )
-        ConfigPacketSnaplen(sc, v.get_string());
+        sc->pkt_snaplen = v.get_long();
 
     else
         return false;
@@ -1625,33 +1626,6 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
-// snort module
-//-------------------------------------------------------------------------
-
-static const Command snort_cmds[] =
-{
-    { "show_plugins", main_dump_plugins, "show available plugins" },
-    { "dump_stats", main_dump_stats, "show summary statistics" },
-    { "rotate_stats", main_rotate_stats, "roll perfmonitor log files" },
-    { "reload_config", main_reload_config, "load new configuration" },
-    { "reload_attributes", main_reload_attributes, "load a new hosts.xml" },
-    { "process", main_process, "process given pcap" },
-    { "pause", main_pause, "suspend packet processing" },
-    { "resume", main_resume, "continue packet processing" },
-    { "quit", main_quit, "shutdown and dump-stats" },
-    { "help", main_help, "this output" },
-    { nullptr, nullptr, nullptr }
-};
-
-class SnortModule : public Module
-{
-public:
-    SnortModule() : Module("snort") { };
-    const Command* get_commands() const { return snort_cmds; };
-    bool set(const char*, Value&, SnortConfig*) { return false; };
-};
-
-//-------------------------------------------------------------------------
 // hosts module
 //-------------------------------------------------------------------------
 
@@ -1857,13 +1831,11 @@ bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
 
 void module_init()
 {
-    // make sure parameters can be set regardless of sequence
+    // parameters must be settable regardless of sequence
     // since Lua calls this by table hash key traversal
     // (which is effectively random)
     // so module interdependencies must come after this phase
-    //
-    // this module is special :)
-    ModuleManager::add_module(new SnortModule);
+    ModuleManager::add_module(get_snort_module());
 
     // these modules are not policy specific
     ModuleManager::add_module(new ClassificationsModule);

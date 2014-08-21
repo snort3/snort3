@@ -16,14 +16,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cmd_line.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef CMD_LINE_H
-#define CMD_LINE_H
+// snort_module.cc author Russ Combs <rucombs@cisco.com>
 
-struct SnortConfig* parse_cmd_line(int argc, char* argv[]);
+#ifndef SNORT_MODULE_H
+#define SNORT_MODULE_H
 
-void set_daemon_args(int argc, char* argv[]);
+class Module* get_snort_module();
 
 #endif
 

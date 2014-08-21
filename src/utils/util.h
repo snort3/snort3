@@ -105,7 +105,6 @@ const char *SnortStrcasestr(const char *s, int slen, const char *substr);
 int CheckValueInRange(const char *value_str, const char *option,
         unsigned long lo, unsigned long hi, unsigned long *value);
 
-void *SnortAlloc2(size_t, const char *, ...);
 char *CurrentWorkingDir(void);
 char *GetAbsolutePath(char *dir);
 char *StripPrefixDir(char *prefix, char *dir);
@@ -124,9 +123,6 @@ void SetNoCores(void);
 ***********************************************************/
 char *hex(const u_char *, int);
 char *fasthex(const u_char *, int);
-long int xatol(const char *, const char *);
-unsigned long int xatou(const char *, const char *);
-unsigned long int xatoup(const char *, const char *); // return > 0
 
 static inline void* SnortAlloc (unsigned long size)
 {

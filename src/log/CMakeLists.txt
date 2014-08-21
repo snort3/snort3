@@ -13,8 +13,8 @@ add_library ( log STATIC
     messages.cc
     obfuscation.cc 
     obfuscation.h 
-    sf_textlog.cc 
-    sf_textlog.h
+    text_log.cc 
+    text_log.h
 )
 
 set_default_visibility_compile_flag( log )

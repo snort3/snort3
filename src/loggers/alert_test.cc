@@ -37,7 +37,7 @@
 #include "parser.h"
 #include "util.h"
 #include "log/log_text.h"
-#include "log/sf_textlog.h"
+#include "log/text_log.h"
 #include "mstring.h"
 #include "snort.h"
 

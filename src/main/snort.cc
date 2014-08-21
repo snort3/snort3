@@ -99,7 +99,7 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
-#include "log/sf_textlog.h"
+#include "log/text_log.h"
 #include "log/log_text.h"
 #include "time/periodic.h"
 #include "parser/config_file.h"
@@ -312,7 +312,7 @@ static void SnortInit(int argc, char **argv)
 #endif
 
     /* chew up the command line */
-    snort_cmd_line_conf = ParseCmdLine(argc, argv);
+    snort_cmd_line_conf = parse_cmd_line(argc, argv);
     snort_conf = snort_cmd_line_conf;
 
     /* Tell 'em who wrote it, and what "it" is */
@@ -488,6 +488,9 @@ void snort_setup(int argc, char* argv[])
     InitGroups(ScUid(), ScGid());
     SnortUnprivilegedInit();
 
+    if ( get_parse_errors() )
+        FatalError("see prior %d errors\n", get_parse_errors());
+
     set_quick_exit(false);
 }
 
@@ -577,7 +580,6 @@ static void SnortCleanup()
 #endif
 
     CleanupProtoNames();
-    cmd_line_term();
     ModuleManager::term();
     PluginManager::release_plugins();
     Shell::term();

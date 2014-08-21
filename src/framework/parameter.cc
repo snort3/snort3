@@ -348,3 +348,14 @@ const char* Parameter::get_type() const
     return pt2str[type];
 }
 
+const Parameter* Parameter::find(const Parameter* p, const char* s)
+{
+    while ( p->name )
+    {
+        if ( !strcmp(p->name, s) || !strcmp(p->name, "*") )
+            return p;
+        ++p;
+    }
+    return nullptr;
+}
+
