@@ -345,7 +345,7 @@ SfSocketLogger::SfSocketLogger(SfSocketModule* m)
 {
     file = m->file;
 
-    for ( r : m->rulez )
+    for ( auto r : m->rulez )
         configure(r);
 }
 
