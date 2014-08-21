@@ -2247,7 +2247,7 @@ unsigned bnfaSearchX(
     return _process_queue( bnfa, Match, data );
 }
 
-// FIXIT eliminate the if-else-
+// FIXIT-L eliminate the if-else-
 unsigned bnfaSearch( bnfa_struct_t * bnfa, unsigned char *Tx, int n,
             int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
             void *data, unsigned sindex, int* current_state )

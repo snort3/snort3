@@ -33,7 +33,7 @@
 #include "config.h"
 #endif
 
-#include "sfrt.h"  // FIXIT these includes are circular
+#include "sfrt.h"  // FIXIT-L these includes are circular
 #include "sfrt_dir.h"
 
 #include <stdarg.h> /* For variadic */

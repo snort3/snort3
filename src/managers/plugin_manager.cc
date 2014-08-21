@@ -127,7 +127,7 @@ struct RefCount
 
     RefCount() { count = 0; };
 
-    // FIXIT fails on fatal error
+    // FIXIT-L fails on fatal error
     //~RefCount() { assert(!count); };
 };
 
@@ -334,8 +334,6 @@ void PluginManager::load_plugins(const char* paths)
     add_plugins();
 }
 
-// FIXIT some plugins don't have modules; consider adding them
-// for stray parameters, perfstats, documentation, etc.
 void PluginManager::list_plugins()
 {
     PlugMap::iterator it;

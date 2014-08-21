@@ -48,7 +48,7 @@ void snort_thread_term();
 
 void snort_rotate();
 
-// FIXIT may be inlined at some point; on lockdown for now
+// FIXIT-L may be inlined at some point; on lockdown for now
 NetworkPolicy* get_network_policy();
 InspectionPolicy* get_inspection_policy();
 IpsPolicy* get_ips_policy();
@@ -73,7 +73,7 @@ typedef void (*MainHook_f)(Packet*);
 void set_main_hook(MainHook_f);
 
 //-------------------------------------------------------------------------
-// FIXIT most of what follows belongs in snort_config.h
+// FIXIT-L most of what follows belongs in snort_config.h
 //-------------------------------------------------------------------------
 
 /*  D E F I N E S  ************************************************************/
@@ -204,7 +204,7 @@ static inline int ScLogQuiet(void)
 }
 
 //-------------------------------------------------------------------------
-// FIXIT should be calling NetworkPolicy methods
+// FIXIT-L should be calling NetworkPolicy methods
 
 static inline int ScIpChecksums(void)
 {
@@ -480,7 +480,7 @@ static inline int ScGid(void)
     return snort_conf->group_id;
 }
 
-// FIXIT this should be feature of otn
+// FIXIT-L this should be feature of otn
 #define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)
 
 static inline void EnableInternalEvent(RateFilterConfig *config, uint32_t sid)

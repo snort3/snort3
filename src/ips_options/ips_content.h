@@ -71,7 +71,7 @@ struct PatternMatchData
     uint8_t negated;        /* search for "not this pattern" */
     uint8_t pm_type;
 
-    // FIXIT wasting some memory here:
+    // FIXIT-L wasting some memory here:
     // - this is not used by content option logic directly
     // - and only used on current eval (not across packets)
     // (partly mitigated by only allocating if excpetion_flag is set)
@@ -89,7 +89,7 @@ int PatternMatchAdjustRelativeOffsets(
     void*, PatternMatchData *dup_pmd,
     const uint8_t *current_cursor, const uint8_t *orig_cursor);
 
-// FIXIT if really needed, would b better as specific method
+// FIXIT-L if really needed, would b better as specific method
 // so PMD isn't exposed
 PatternMatchData* get_pmd(OptFpList*);
 bool is_fast_pattern_only(OptFpList*);

@@ -293,7 +293,7 @@ static PHInstance* GetInstance(
 
     p = new PHInstance(*ppc);
 
-    if ( !p->handler )  // FIXIT is this even possible?
+    if ( !p->handler )  // FIXIT-M is this even possible?
     {
         delete p;
         return NULL;
@@ -302,10 +302,10 @@ static PHInstance* GetInstance(
     return p;
 }
 
-// FIXIT create a separate list for meta handlers?  is there really more than one?
+// FIXIT-M create a separate list for meta handlers?  is there really more than one?
 void InspectorManager::dispatch_meta (FrameworkPolicy* fp, int type, const uint8_t* data)
 {
-    // FIXIT change to select instance by policy and pass that in
+    // FIXIT-M change to select instance by policy and pass that in
     for ( auto* p : fp->ilist )
         p->handler->meta(type, data);
 }
@@ -379,7 +379,7 @@ static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
 // this is per thread
 void InspectorManager::thread_init(SnortConfig* sc)
 {
-    // FIXIT BIND the policy related logic herein moves to binder
+    // FIXIT-H BIND the policy related logic herein moves to binder
     Inspector::slot = get_instance_id();
 
     for ( auto* p : sc->framework_config->clist )
@@ -418,12 +418,12 @@ void InspectorManager::thread_term(SnortConfig* sc)
 void InspectorManager::instantiate(
     const InspectApi* api, Module*, SnortConfig* sc)
 {
-    // FIXIT only configures Lua inspectors in base policy; must be 
+    // FIXIT-H only configures Lua inspectors in base policy; must be 
     // revisited when bindings are implemented
     FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
 
-    // FIXIT should not need to lookup inspector etc
+    // FIXIT-H should not need to lookup inspector etc
     // since given api and mod
     const char* keyword = api->base.name;
 
@@ -446,7 +446,7 @@ bool InspectorManager::configure(SnortConfig *sc)
     Inspector::max_slots = sc->max_threads;
     s_handlers.sort(PHGlobal::comp);
 
-    // FIXIT use FrameworkConfig or FrameworkPolicy ?
+    // FIXIT-H use FrameworkConfig or FrameworkPolicy ?
     //FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
     bool ok = true;
@@ -485,7 +485,7 @@ static inline void execute(
 
         PHClass& ppc = (*prep)->pp_class;
 
-        // FIXIT these checks can eventually be optimized
+        // FIXIT-P these checks can eventually be optimized
 	    // but they are required to ensure that session and app
 	    // handlers aren't called w/o a session pointer
         if ( !p->flow && (ppc.api.type >= IT_SESSION) )
@@ -528,7 +528,7 @@ void InspectorManager::execute (Packet* p)
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
-    // FIXIT structure lists so stream, normalize, etc. aren't
+    // FIXIT-M structure lists so stream, normalize, etc. aren't
     // called on reassembled packets
     ::execute(p, fp->session.vec, fp->session.num);
     ::execute(p, fp->network.vec, fp->network.num);
@@ -544,7 +544,7 @@ void InspectorManager::execute (Packet* p)
         if ( flow->clouseau && (p->proto_bits & flow->clouseau->get_api()->proto_bits) )
             bumble(p);
 
-        // FIXIT BIND need more than one service inspector?
+        // FIXIT-H BIND need more than one service inspector?
         //::execute(p, fp->service.vec, fp->service.num);
         if ( flow->gadget && (p->proto_bits & flow->gadget->get_api()->proto_bits) )
             flow->gadget->eval(p);

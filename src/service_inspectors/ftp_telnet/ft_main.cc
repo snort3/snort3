@@ -67,7 +67,7 @@
 #include "sfsnprintfappend.h"
 
 #ifdef PERF_PROFILING
-// FIXIT ftp, http, etc. should not be calling Detect()
+// FIXIT-M ftp, http, etc. should not be calling Detect()
 static THREAD_LOCAL int ftppDetectCalled = 0;
 static THREAD_LOCAL ProfileStats ftppDetectPerfStats;
 
@@ -193,7 +193,7 @@ int CheckFTPServerConfigs(
  * Returns: None
  *
  */
-// FIXIT eliminate legacy void* cruft
+// FIXIT-L eliminate legacy void* cruft
 int FTPCheckConfigs(SnortConfig* sc, void* pData)
 {
     FTP_SERVER_PROTO_CONF* config = (FTP_SERVER_PROTO_CONF*)pData;
@@ -207,7 +207,7 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
 #if 0
     if ( file_api->get_max_file_depth() < 0 )
     {
-        // FIXIT need to change to IT_SERVICE and FTPTelnetChecks
+        // FIXIT-M need to change to IT_SERVICE and FTPTelnetChecks
         // for optimization
     }
 #endif

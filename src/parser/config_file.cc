@@ -61,16 +61,6 @@
 #include "managers/event_manager.h"
 #include "detection/detect.h"
 
-// FIXIT defines should be avoided here - the actual option
-// may be from command line (a-b) or from config file (a_b)
-// option should be passed into all parser function for error
-// messages
-#define CONFIG_OPT__POLICY_VERSION                  "policy_version"
-#ifdef PERF_PROFILING
-# define CONFIG_OPT__PROFILE_MODULES               "profile_preprocs"
-# define CONFIG_OPT__PROFILE_RULES                  "profile_rules"
-#endif
-
 #define LOG_NONE  "none"
 #define LOG_TEXT  "text"
 #define LOG_PCAP  "pcap"
@@ -83,7 +73,6 @@
 
 #define OUTPUT_AJK  "unified2"
 #define OUTPUT_CMG  "alert_fast"
-//#define OUTPUT_LOG  "alert_syslog"  // FIXIT should use?
 #define OUTPUT_PCAP "log_tcpdump"
 
 static std::string lua_conf;
@@ -571,23 +560,6 @@ void ConfigShowYear(SnortConfig *sc, const char*)
 {
     sc->output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
     DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n"););
-}
-
-// FIXIT-L who is calling this?  get rid of SnortStrtoul() etc. when
-// all are modularized
-void ConfigSoRuleMemcap(SnortConfig *sc, const char *args)
-{
-    char *endptr;
-
-    if ( !args )
-        return;
-
-    sc->so_rule_memcap = SnortStrtoul(args, &endptr, 0);
-    if ((errno == ERANGE) || (*endptr != '\0'))
-    {
-        ParseError("invalid so rule memcap: %s.  Memcap must be between "
-                   "0 and %u inclusive.", args, UINT32_MAX);
-    }
 }
 
 void ConfigTreatDropAsAlert(SnortConfig *sc, const char*)

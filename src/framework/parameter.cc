@@ -35,7 +35,7 @@ static bool valid_bool(Value& v, const char*)
     return v.get_type() == Value::VT_BOOL;
 }
 
-// FIXIT allow multiple , separated ranges
+// FIXIT-L allow multiple , separated ranges
 static bool valid_int(Value& v, const char* r)
 {
     if ( !r )
@@ -67,7 +67,7 @@ static bool valid_int(Value& v, const char* r)
     return true;
 }
 
-// FIXIT allow multiple , separated ranges
+// FIXIT-L allow multiple , separated ranges
 static bool valid_real(Value& v, const char* r)
 {
     if ( !r )

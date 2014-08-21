@@ -93,11 +93,11 @@ typedef uint16_t Port;
 /* utilities */
 
 #ifndef SIZE_MAX
-#define SIZE_MAX 0xFFFFFFFF  // FIXIT not defined for g++?
+#define SIZE_MAX 0xFFFFFFFF  // FIXIT-L use c++ define
 #endif
 
 #ifndef INT32_MAX
-#define INT32_MAX 0x7FFFFFFF  // FIXIT not defined for g++?
+#define INT32_MAX 0x7FFFFFFF  // FIXIT-L use c++ define
 #endif
 
 #define UNUSED(x) (void)(x)

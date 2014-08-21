@@ -131,7 +131,7 @@ static inline void* SnortAlloc (unsigned long size)
     if ( pv )
         return pv;
 
-    // FIXIT do not FatalError() on runtime allocation failures
+    // FIXIT-M do not FatalError() on runtime allocation failures
     FatalError("Unable to allocate memory!  (%lu requested)\n", size);
 
     return NULL;
@@ -266,11 +266,5 @@ const char* get_error(int errnum);
 // for new code.  get_tok() is thread safe but not
 // reentrant.
 char* get_tok(char* s, const char* delim);
-
-/* for getopt */
-extern char *optarg;  // FIXIT add header
-extern int optind;
-extern int opterr;
-extern int optopt;
 
 #endif /*__UTIL_H__*/

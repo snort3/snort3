@@ -237,7 +237,7 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("bleedover_warnings_enabled") )
     {
         if ( v.get_bool() )
-            fpDetectSetBleedOverWarnings(fp);  // FIXIT these should take arg
+            fpDetectSetBleedOverWarnings(fp);  // FIXIT-L these should take arg
     }
     else if ( v.is("enable_single_rule_group") )
     {
@@ -400,8 +400,8 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
         p->append = v.get_long() + 1;
 
     else if ( v.is("name") )
-        p->filename = SnortStrdup(v.get_string());  // FIXIT use c++ string
-        // FIXIT do this after log dir is set
+        p->filename = SnortStrdup(v.get_string());  // FIXIT-L use c++ string
+        // FIXIT-M do this after log dir is set
         //p->filename = ProcessFileOption(sc, v.get_string());
 
     else
@@ -414,7 +414,7 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // classification module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
+// FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
 static const Parameter classification_params[] =
@@ -482,7 +482,7 @@ bool ClassificationsModule::set(const char*, Value& v, SnortConfig*)
 //-------------------------------------------------------------------------
 // reference module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
+// FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
 static const Parameter reference_params[] =
@@ -546,7 +546,7 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 static const Parameter alerts_params[] =
 {
     { "alert_file", Parameter::PT_STRING, nullptr, nullptr,
-      "set the alert output file name (FIXIT delete if not used)" },
+      "set the alert output file name (FIXIT-H delete if not used)" },
 
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
       "include interface in alert info (fast, full, or syslog only)" },
@@ -720,7 +720,7 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("log_ipv6_extra_data") )
     {
         if ( v.get_bool() )
-        sc->log_ipv6_extra = 1; // FIXIT move to output|logging_flags
+        sc->log_ipv6_extra = 1; // FIXIT-M move to output|logging_flags
     }
     else if ( v.is("quiet") )
     {
@@ -884,7 +884,7 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter daq_params[] =
 {
-    // FIXIT should be a list?
+    // FIXIT-L should be a list?
     { "dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory where to search for DAQ plugins" },
 
@@ -894,11 +894,11 @@ static const Parameter daq_params[] =
     { "no_promisc", Parameter::PT_BOOL, nullptr, "false",
       "whether to put DAQ device into promiscuous mode" },
 
-    // FIXIT range determined by available plugins
+    // FIXIT-H range determined by available plugins
     { "name", Parameter::PT_STRING, nullptr, "pcap",
       "select name of DAQ" },
 
-    // FIXIT should be a list?
+    // FIXIT-L should be a list?
     { "var", Parameter::PT_STRING, nullptr, nullptr,
       "list of name=value DAQ-specific parameters" },
 
@@ -1207,7 +1207,7 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // vars module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
+// FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
 static const Parameter vars_params[] =
@@ -1494,7 +1494,7 @@ static const Parameter rate_filter_params[] =
       "count interval" },
 
     { "new_action", Parameter::PT_SELECT,
-      // FIXIT range based on available action plugins
+      // FIXIT-H range based on available action plugins
       "alert | drop | log | pass | | reject | sdrop", "alert",
       "restrict filter to these addresses according to track" },
 
@@ -1629,7 +1629,7 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 // hosts module
 //-------------------------------------------------------------------------
 
-// FIXIT these are cloned from ip_module.cc and tcp_module.cc
+// FIXIT-H these are cloned from ip_module.cc and tcp_module.cc
 
 static const char* ip_policies =
     "first | linux | bsd | bsd_right |last | windows | solaris";

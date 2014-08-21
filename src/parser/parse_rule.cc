@@ -1379,7 +1379,7 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         rtn.proto = ETHERNET_TYPE_IP;
 
         /* This will be set via ip_protos */
-        // FIXIT need to add these for a single ip any any rule?
+        // FIXIT-L need to add these for a single ip any any rule?
         sc->ip_proto_array[IPPROTO_TCP] = 1;
         sc->ip_proto_array[IPPROTO_UDP] = 1;
         sc->ip_proto_array[IPPROTO_ICMP] = 1;
@@ -1510,7 +1510,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("SO rule %s not loaded.", otn->soid);
         else
         {
-            // FIXIT why isn't this set already? (don't hardcode)
+            // FIXIT-L why isn't this set already? (don't hardcode)
             otn->sigInfo.generator = GENERATOR_SNORT_SHARED;
             entered = true;
             return so_opts;
@@ -1541,7 +1541,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     otn_count++;
     rule_count++;
 
-    // FIXIT need more reliable way of knowing type of rule instead of hard
+    // FIXIT-L need more reliable way of knowing type of rule instead of hard
     // coding these gids
     if ( otn->sigInfo.generator == 1 )
     {

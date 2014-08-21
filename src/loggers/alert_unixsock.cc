@@ -57,7 +57,7 @@ struct pcap_pkthdr32
 };
 
 /* this struct is for the alert socket code.... */
-// FIXIT alert unix sock supports l2-l3-l4 encapsulations
+// FIXIT-L alert unix sock supports l2-l3-l4 encapsulations
 
 const unsigned int ALERTMSG_LENGTH = 256;
 struct Alertpkt
@@ -74,7 +74,7 @@ struct Alertpkt
 #define NOPACKET_STRUCT 0x1
     /* no transport headers in packet */
 #define NO_TRANSHDR    0x2
-    uint8_t pkt[65535];       // FIXIT move to end and send actual size
+    uint8_t pkt[65535];       // FIXIT-L move to end and send actual size
 
     uint32_t gid;
     uint32_t sid;
@@ -102,7 +102,7 @@ static THREAD_LOCAL UnixSock us;
 
 static const Parameter unixsock_params[] =
 {
-    // FIXIT add name param?
+    // FIXIT-L add name param?
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -121,7 +121,7 @@ static void get_alert_pkt(
 {
     DEBUG_WRAP(DebugMessage(DEBUG_LOG, "Logging Alert data!\n"););
 
-    // FIXIT ugh ...
+    // FIXIT-L ugh ...
     memset((char *)&us.alert,0,sizeof(us.alert));
 
     us.alert.gid = event->sig_info->generator;
@@ -147,7 +147,7 @@ static void get_alert_pkt(
 
     if (msg)
     {
-        // FIXIT ugh ...
+        // FIXIT-L ugh ...
         memmove( (void *)us.alert.alertmsg, (const void *)msg,
                strlen(msg)>ALERTMSG_LENGTH-1 ? ALERTMSG_LENGTH - 1 : strlen(msg));
     }

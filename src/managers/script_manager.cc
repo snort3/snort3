@@ -32,7 +32,7 @@
 #include "parser/parser.h"
 #include "helpers/directory.h"
 
-// FIXIT this approach results in N * K lua states where
+// FIXIT-P this approach results in N * K lua states where
 // N ::= number of instances of script + args and
 // K ::= number of threads
 // change to create K lua states here for each script + args

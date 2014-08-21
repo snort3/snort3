@@ -21,9 +21,8 @@
 #ifndef RANGE_H
 #define RANGE_H
 
-// FIXIT ideally this would be in framework/ and we'd have just one copy
-// but that breaks dynamic builds so each dynamic ips option plugin has
-// its own copy for now.
+// FIXIT-M ideally this would be in framework/ and we'd have just one copy
+// but that breaks dynamic builds so each dynamic client has its own for now.
 
 // unfortunately, <> was implemented inconsistently.  eg:
 // dsize implements <> as ( a <= c && c <= b ) and
@@ -48,7 +47,7 @@ struct RangeCheck
     bool operator==(const RangeCheck&) const;
 
     void init();
-    // FIXIT add ttl style syntax
+    // FIXIT-L add ttl style syntax
     bool parse(const char* s); 
     bool eval(long);
 };

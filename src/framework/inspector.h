@@ -42,7 +42,7 @@ struct InspectionBuffer
     enum Type
     {
         IBT_KEY, IBT_HEADER, IBT_BODY, 
-        IBT_ALT, IBT_FILE, // FIXIT alt and file data are tbd
+        IBT_ALT, IBT_FILE, // FIXIT-M alt and file data are tbd
         IBT_MAX
     };
     const uint8_t* data;
@@ -140,7 +140,6 @@ typedef void (*InspectDelFunc)(Inspector*);
 typedef void (*InspectFunc)();
 typedef class Session* (*InspectSsnFunc)(class Flow*);
 
-// FIXIT ensure all provide stats
 struct InspectApi
 {
     BaseApi base;

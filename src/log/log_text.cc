@@ -429,7 +429,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
         default:
             if (ScLogVerbose())
             {
-                // FIXIT should only be output once!
+                // FIXIT-L should only be output once!
                 ErrorMessage("Datalink %i type 2nd layer display is not "
                              "supported\n", DAQ_GetBaseProtocol());
             }
@@ -1644,7 +1644,7 @@ static void LogPacketType(TextLog* log, Packet* p)
         TextLog_Print(log, "%s", "Frag reassembled packet");
         break;
     default:
-        // FIXIT do we get here for portscan or sdf?
+        // FIXIT-L do we get here for portscan or sdf?
         TextLog_Print(log, "%s", "Cooked packet");
         break;
     }
@@ -1691,7 +1691,7 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
         }
 
 
-        // FIXIT --> log everything in order!!
+        // FIXIT-J --> log everything in order!!
         ip::IpApi tmp_api = p->ip_api;
         int8_t num_layer = 0;
         bool first = true;

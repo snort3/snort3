@@ -61,7 +61,7 @@ using namespace std;
 // alert_sfsocket module
 //-------------------------------------------------------------------------
 
-// FIXIT this file will probably fail to compile on Linux
+// FIXIT-H this file will probably fail to compile on Linux
 
 static const Parameter sfsocket_params[] =
 {
@@ -301,7 +301,7 @@ static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
     if(sid == 0)
         return NULL;
 
-    // FIXIT wow - this should be encapsulated somewhere ...
+    // FIXIT-H wow - this should be encapsulated somewhere ...
     for (hashNode = sfghash_findfirst(snort_conf->otn_map);
             hashNode;
             hashNode = sfghash_findnext(snort_conf->otn_map))

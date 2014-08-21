@@ -53,6 +53,11 @@
 #define PCRE_STUDY_JIT_COMPILE 0
 #endif
 
+#define SNORT_PCRE_RELATIVE         0x00010 // relative to the end of the last match
+#define SNORT_PCRE_INVERT           0x00020 // invert detect
+#define SNORT_PCRE_ANCHORED         0x00040
+#define SNORT_OVERRIDE_MATCH_LIMIT  0x00080 // Override default limits on match & match recursion
+
 static const char* s_name = "pcre";
 
 /*
@@ -697,7 +702,7 @@ static void pcre_dtor(IpsOption* p)
     delete p;
 }
 
-// FIXIT the thread specific ovector can be allocated and deallocated 
+// FIXIT-L the thread specific ovector can be allocated and deallocated 
 // from the main thread since it isn't literally thread local
 void pcre_tinit(SnortConfig* sc)
 {

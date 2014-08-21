@@ -95,7 +95,7 @@ const HiSearchToken html_patterns[] =
     {NULL,               0, 0}
 };
 
-// FIXIT verify these don't need to be thread local
+// FIXIT-H verify these don't need to be thread local
 void *hi_javascript_search_mpse = NULL;
 void *hi_htmltype_search_mpse = NULL;
 
@@ -428,7 +428,7 @@ static inline FilePosition getFilePoistion(Packet *p)
     return position;
 }
 
-// FIXIT extra data masks should only be updated as extra data changes state
+// FIXIT-P extra data masks should only be updated as extra data changes state
 // eg just once when captured; this function is called on every packet and 
 // repeatedly sets the flags on session
 static inline void HttpLogFuncs(
@@ -679,7 +679,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
         if ( iInspectMode == HI_SI_CLIENT_MODE )
         {
             const HttpBuffer* hb;
-            ClearHttpBuffers();  // FIXIT needed here and right above??
+            ClearHttpBuffers();  // FIXIT-P needed here and right above??
 
             if ( session->client.request.uri_norm )
             {
@@ -1110,7 +1110,7 @@ void FreeHttpsessionData(void *data)
     file_api->free_mime_session(hsd->mime_ssn);
 }
 
-// FIXIT this should leverage inspector get_buf()
+// FIXIT-H this should leverage inspector get_buf()
 int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     HttpsessionData* hsd = get_session_data(flow);

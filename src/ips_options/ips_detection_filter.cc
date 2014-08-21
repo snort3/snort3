@@ -19,7 +19,7 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 // ips_detection_filter.cc author Russ Combs <rucombs@cisco.com>
-// FIXIT add DetectionFilterOption::eval() instead of special case
+// FIXIT-L add DetectionFilterOption::eval() instead of special case
 
 #include <sys/types.h>
 

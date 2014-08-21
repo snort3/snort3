@@ -24,7 +24,7 @@
 #include "snort.h"
 
 //-------------------------------------------------------------------------
-// FIXIT instance_id zero indicates main thread during parse time and the
+// FIXIT-L instance_id zero indicates main thread during parse time and the
 // first packet thread during runtime.  not sure if i'm ok with that.
 // works for now.
 //-------------------------------------------------------------------------
@@ -57,7 +57,7 @@ const char* get_instance_file(std::string& file, const char* name)
     struct stat s;
 
     if ( stat(file.c_str(), &s) )
-        // FIXIT getting random 0750 or 0700 (umask not thread local)?
+        // FIXIT-H getting random 0750 or 0700 (umask not thread local)?
         mkdir(file.c_str(), 0770);
 
     file += name;

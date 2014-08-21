@@ -368,7 +368,7 @@ static inline bool DataToFlush (const StreamTracker* st)
     if ( st->flush_policy )
         return ( SegsToFlush(st, 1) > 0 );
 
-    return ( SegsToFlush(st, 2) > 1 );  // FIXIT return false?
+    return ( SegsToFlush(st, 2) > 1 );  // FIXIT-L return false?
 }
 
 /*  P R O T O T Y P E S  ********************************************/
@@ -665,7 +665,7 @@ StreamTcpConfig::StreamTcpConfig()
 }
 
 //-------------------------------------------------------------------------
-// FIXIT directionality must be fixed per 297 bug fixes
+// FIXIT-L directionality must be fixed per 297 bug fixes
 //
 // when client ports are configured, that means c2s and is stored on the
 // client side; when the session starts, the server policy is obtained from
@@ -1306,7 +1306,7 @@ static inline int ValidTimestamp(StreamTracker *talker,
     if ( p->tcph->th_flags & TH_ACK &&
         Normalize_IsEnabled(p, NORM_TCP_OPT) )
     {
-        // FIXIT validate tsecr here (check that it was previously sent)
+        // FIXIT-L validate tsecr here (check that it was previously sent)
         // checking for the most recent ts is easy enough must check if
         // ts are up to date in retransmitted packets
     }
@@ -1582,7 +1582,7 @@ static inline void UpdateSsn(
 {
 #if 0
     if (
-         // FIXIT these checks are a hack to avoid off by one normalization
+         // FIXIT-L these checks are a hack to avoid off by one normalization
          // due to FIN ... if last segment filled a hole, r_nxt_ack is not at
          // end of data, FIN is ignored so sequence isn't bumped, and this
          // forces seq-- on ACK of FIN.  :(
@@ -1594,8 +1594,8 @@ static inline void UpdateSsn(
         // if a gap exists prior to ack, move ack back to start of gap
         StreamSegment* seg = snd->seglist;
 
-        // FIXIT must check ack oob with empty seglist
-        // FIXIT add lower gap bound to tracker for efficiency?
+        // FIXIT-L must check ack oob with empty seglist
+        // FIXIT-L add lower gap bound to tracker for efficiency?
         while ( seg )
         {
             uint32_t seq = seg->seq + seg->size;
@@ -1645,8 +1645,8 @@ static inline void UpdateSsn(
 void tcp_sinit()
 {
     s5_pkt = PacketManager::encode_new();
-    tcp_memcap = new Memcap(26214400); // FIXIT replace with session memcap
-    //AtomSplitter::init();  // FIXIT PAF implement
+    tcp_memcap = new Memcap(26214400); // FIXIT-M replace with session memcap
+    //AtomSplitter::init();  // FIXIT-L PAF implement
 }
 
 void tcp_sterm()
@@ -1858,7 +1858,7 @@ static inline void purge_all (StreamTracker *st)
 // * we may flush partial segments
 // * must adjust seq->seq and seg->size when a flush gets only the
 //   initial part of a segment
-// * FIXIT need flag to mark any reassembled packets that have a gap
+// * FIXIT-L need flag to mark any reassembled packets that have a gap
 //   (if we reassemble such)
 static inline int purge_flushed_ackd (TcpSession *tcpssn, StreamTracker *st)
 {
@@ -1967,7 +1967,7 @@ static int FlushStream(
         }
         else if ( !bytes_copied )
         {
-            // FIXIT change stream splitter default reassemble 
+            // FIXIT-P change stream splitter default reassemble 
             // to copy into external buffer to eliminate this special case
             memcpy(flushbuf, ss->payload, bytes_to_copy);
         }
@@ -1999,9 +1999,9 @@ static int FlushStream(
             break;
 
         /* Check for a gap/missing packet */
-        // FIXIT PAF should account for missing data and resume
+        // FIXIT-L PAF should account for missing data and resume
         // scanning at the start of next PDU instead of aborting.
-        // FIXIT FIN may be in toSeq causing bogus gap counts.
+        // FIXIT-L FIN may be in toSeq causing bogus gap counts.
         if ( (ss->next && (ss->seq + ss->size != ss->next->seq)) ||
             (!ss->next && (ss->seq + ss->size < toSeq)))
         {
@@ -2061,7 +2061,7 @@ static inline int _flush_to_seq (
     if ( !bytes && SEQ_GT(st->r_win_base, st->seglist_base_seq) )
         bytes = st->r_win_base - st->seglist_base_seq;
 
-    // FIXIT this should not be necessary here
+    // FIXIT-L this should not be necessary here
     st->seglist_base_seq = st->seglist_next->seq;
     stop_seq = st->seglist_base_seq + bytes;
 
@@ -2239,7 +2239,7 @@ static inline uint32_t get_q_footprint(StreamTracker *st)
     return fp;
 }
 
-// FIXIT get_q_sequenced() performance could possibly be
+// FIXIT-L get_q_sequenced() performance could possibly be
 // boosted by tracking sequenced bytes as seglist is updated
 // to avoid the while loop, etc. below.
 static inline uint32_t get_q_sequenced(StreamTracker *st)
@@ -2280,7 +2280,7 @@ static inline int flush_ackd(
     return flush_to_seq(tcpssn, st, bytes, p, dir);
 }
 
-// FIXIT flush_stream() calls should be replaced with calls to
+// FIXIT-L flush_stream() calls should be replaced with calls to
 // CheckFlushPolicyOn*() with the exception that for the *OnAck() case,
 // any available ackd data must be flushed in both directions.
 static inline int flush_stream(
@@ -2588,7 +2588,7 @@ static void CheckSegments (const StreamTracker* a)
 #define LCL(p, x)    (p->x - p->isn)
 #define RMT(p, x, q) (p->x - (q ? q->isn : 0))
 
-// FIXIT this should not be thread specific
+// FIXIT-L this should not be thread specific
 static THREAD_LOCAL int s5_trace_enabled = -1;
 
 static void TraceEvent (
@@ -3996,7 +3996,7 @@ static int ProcessTcpData(
         }
 
         /* move the ack boundry up, this is the only way we'll accept data */
-        // FIXIT for ips, must move all the way to first hole or right end
+        // FIXIT-L for ips, must move all the way to first hole or right end
         if (listener->s_mgr.state_queue == TCP_STATE_NONE)
             listener->r_nxt_ack = tdb->end_seq;
 
@@ -4047,7 +4047,7 @@ static int ProcessTcpData(
                 {
                     /* set next ack so we are within the window going forward on
                     * this side. */
-                    // FIXIT for ips, must move all the way to first hole or right end
+                    // FIXIT-L for ips, must move all the way to first hole or right end
                     listener->r_nxt_ack = tdb->end_seq;
                 }
             }
@@ -4262,7 +4262,7 @@ static int NewTcpSession(
 
 
         /* Set the StreamTcpConfig for each direction (pkt from client) */
-        tmp->client.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+        tmp->client.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
         tmp->server.config = dstPolicy;
 
         CopyMacAddr(p, tmp, FROM_CLIENT);
@@ -4312,7 +4312,7 @@ static int NewTcpSession(
         tmp->server.flags |= Stream5GetWscale(p, &tmp->server.wscale);
 
         /* Set the config for each direction (pkt from server) */
-        tmp->server.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+        tmp->server.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
         tmp->client.config = dstPolicy;
 
         CopyMacAddr(p, tmp, FROM_SERVER);
@@ -4359,7 +4359,7 @@ static int NewTcpSession(
         tmp->client.flags |= Stream5GetWscale(p, &tmp->client.wscale);
 
         /* Set the config for each direction (pkt from client) */
-        tmp->client.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+        tmp->client.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
         tmp->server.config = dstPolicy;
 
         CopyMacAddr(p, tmp, FROM_CLIENT);
@@ -4415,7 +4415,7 @@ static int NewTcpSession(
             tmp->client.flags |= Stream5GetWscale(p, &tmp->client.wscale);
 
             /* Set the config for each direction (pkt from client) */
-            tmp->client.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+            tmp->client.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
             tmp->server.config = dstPolicy;
 
             CopyMacAddr(p, tmp, FROM_CLIENT);
@@ -4457,7 +4457,7 @@ static int NewTcpSession(
             tmp->server.flags |= Stream5GetWscale(p, &tmp->server.wscale);
 
             /* Set the config for each direction (pkt from server) */
-            tmp->server.config = dstPolicy;  // FIXIT BINDING use external for both dirs
+            tmp->server.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
             tmp->client.config = dstPolicy;
 
             CopyMacAddr(p, tmp, FROM_SERVER);
@@ -4701,7 +4701,7 @@ static int ProcessTcp(
     if ( !tcpssn->tcp_init )
     {
         {
-            // FIXIT expected flow should be checked by flow_con before we
+            // FIXIT-L expected flow should be checked by flow_con before we
             // get here
             char ignore = flow_con->expected_flow(lwssn, p);
 
@@ -4997,7 +4997,7 @@ static int ProcessTcp(
                     "Got SYN pkt on reset ssn, re-SYN-ing\n"););
     }
 
-    // FIXIT why flush here instead of just purge?
+    // FIXIT-L why flush here instead of just purge?
     // s5_ignored_session() may be disabling detection too soon if we really want to flush
     if ( stream.ignored_session(lwssn, p) )
     {
@@ -5436,7 +5436,7 @@ static int ProcessTcp(
                         }
                         if ( lwssn->s5_state.session_flags & SSNFLAG_MIDSTREAM )
                         {
-                            // FIXIT this should be handled below in fin section
+                            // FIXIT-L this should be handled below in fin section
                             // but midstream sessions fail the seq test
                             listener->s_mgr.state_queue = TCP_STATE_TIME_WAIT;
                             listener->s_mgr.transition_seq = tdb->end_seq;
@@ -5487,7 +5487,7 @@ static int ProcessTcp(
                 break;
 
             default:
-                // FIXIT safe to ignore when inline?
+                // FIXIT-L safe to ignore when inline?
                 break;
         }
     }
@@ -5714,7 +5714,7 @@ dupfin:
 
                 if(flushed)
                 {
-                    // FIXIT - these calls redundant?
+                    // FIXIT-L - these calls redundant?
                     purge_alerts(talker, talker->r_win_base, tcpssn->flow);
                     purge_to_seq(tcpssn, talker, talker->seglist->seq + flushed);
                 }
@@ -5903,7 +5903,7 @@ static inline int CheckFlushPolicyOnData(
             while ( flush_amt > 0 )
             {
 #if 0
-                // FIXIT can't do this with new HI - copy is inevitable
+                // FIXIT-P can't do this with new HI - copy is inevitable
                 // if this payload is exactly one pdu, don't
                 // actually flush, just use the raw packet
                 if ( (tdb->seq == listener->seglist->seq) &&
@@ -5933,7 +5933,7 @@ static inline int CheckFlushPolicyOnData(
             }
             if ( !flags && listener->splitter->is_paf() )
             {
-                // FIXIT PAF auto disable with multiple splitters?
+                // FIXIT-L PAF auto disable with multiple splitters?
                 //if ( AutoDisable(listener, talker) )
                 //    return 0;
 
@@ -6063,7 +6063,7 @@ int CheckFlushPolicyOnAck(
             }
             if ( !flags && talker->splitter->is_paf() )
             {
-                // FIXIT PAF auto disable with multiple splitters?
+                // FIXIT-L PAF auto disable with multiple splitters?
                 //if ( AutoDisable(talker, listener) )
                 //    return 0;
 
@@ -6597,7 +6597,7 @@ bool TcpSession::setup (Packet* p)
 {
     if ( TCP_ISFLAGSET(p->tcph, TH_SYN) &&
         !TCP_ISFLAGSET(p->tcph, TH_ACK) )
-        flow->session_state = STREAM5_STATE_SYN;  // FIXIT same as line 4555
+        flow->session_state = STREAM5_STATE_SYN;  // FIXIT-L same as line 4555
 
     assert(flow->session == this);
     reset();
@@ -6614,7 +6614,7 @@ bool TcpSession::setup (Packet* p)
     return true;
 }
 
-// FIXIT diff betw TcpSessionCleanup() and TcpSessionClear() ?
+// FIXIT-L diff betw TcpSessionCleanup() and TcpSessionClear() ?
 // Cleanup() flushes data; Clear() does not flush data
 void TcpSession::cleanup()
 {
@@ -6622,7 +6622,7 @@ void TcpSession::cleanup()
     TcpSessionCleanup(flow, 1);
 }
 
-// FIXIT this was originally called by Stream::drop_packet()
+// FIXIT-L this was originally called by Stream::drop_packet()
 // which is now calling Session::clear()
 void TcpSession::clear()
 {
@@ -6707,7 +6707,7 @@ int TcpSession::process(Packet *p)
             !TCP_ISFLAGSET(p->tcph, TH_ACK))
         {
             /* SYN only */
-            flow->session_state = STREAM5_STATE_SYN;  // FIXIT same as line 4511
+            flow->session_state = STREAM5_STATE_SYN;  // FIXIT-L same as line 4511
         }
         else
         {

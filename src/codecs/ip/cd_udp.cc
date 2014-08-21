@@ -60,7 +60,7 @@ static const Parameter udp_params[] =
     { "enable_gtp", Parameter::PT_BOOL, nullptr, "false",
       "decode GTP encapsulations" },
 
-    // FIXIT use PT_BIT_LIST
+    // FIXIT-L use PT_BIT_LIST
     { "gtp_ports", Parameter::PT_STRING, nullptr,
       "'2152 3386'", "set GTP ports" },
 
@@ -93,7 +93,7 @@ public:
     {
         if ( v.is("deep_teredo_inspection") )
         {
-            sc->enable_teredo = v.get_long();  // FIXIT move to existing bitfield
+            sc->enable_teredo = v.get_long();  // FIXIT-L move to existing bitfield
         }
         else if ( v.is("gtp_ports") )
         {
@@ -102,7 +102,7 @@ public:
         else if ( v.is("enable_gtp") )
         {
             if ( v.get_bool() )
-                sc->enable_gtp = 1;  // FIXIT move to existing bitfield
+                sc->enable_gtp = 1;  // FIXIT-L move to existing bitfield
         }
         else
         {

@@ -42,7 +42,7 @@
 
 struct Packet;
 
-// FIXIT : can I assume api si always valid?  i.e. if not ip4, then ipv6?
+// FIXIT-J : can I assume api si always valid?  i.e. if not ip4, then ipv6?
 //          or if not ip4, also make sure its not ip6
 
 namespace ip

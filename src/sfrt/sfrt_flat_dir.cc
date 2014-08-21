@@ -25,7 +25,7 @@
 #include "config.h"
 #endif
 
-#include "sfrt_flat.h" // FIXIT these includes are circular
+#include "sfrt_flat.h" // FIXIT-L these includes are circular
 #include "sfrt_flat_dir.h"
 
 #include <stdarg.h> /* For variadic */

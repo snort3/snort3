@@ -26,7 +26,7 @@
  *          preprocessors and detection plugins.
  */
 
-// FIXIT stream_api should not be tied to a particular version of stream
+// FIXIT-L stream_api should not be tied to a particular version of stream
 
 #ifndef STREAM_API_H
 #define STREAM_API_H

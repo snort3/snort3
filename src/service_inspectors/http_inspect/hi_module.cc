@@ -76,7 +76,7 @@ static const Parameter hi_global_params[] =
     { "decompress_depth", Parameter::PT_INT, "1:65535", "2920",
       "maximum amount of decompressed data to process" },
 
-    // FIXIT does this work with bindings?
+    // FIXIT-L does this work with bindings?
     { "detect_anomalous_servers", Parameter::PT_BOOL, nullptr, "false",
       "inspect non-configured ports for HTTP - bad idea" },
 
@@ -250,7 +250,7 @@ bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
 
 static const char* profiles = "none | all | apache | iis | iis_40 | iis_50";
 
-// FIXIT refactor params to create a profile table so that user can define
+// FIXIT-L refactor params to create a profile table so that user can define
 // different profiles (like above) and use those.  rename existing profile
 // to profile_type.
 

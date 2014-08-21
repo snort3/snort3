@@ -41,25 +41,5 @@ void add_service_to_otn(SnortConfig*, OptTreeNode*, const char*);
 RuleType get_rule_type(const char*);
 ListHead* get_rule_list(SnortConfig*, const char*);
 
-#if 0
-// FIXIT delete this cruft
-#define ERR_PAIR_COUNT \
-        "%s has incorrect argument count; should be %d pairs.", ERR_KEY
-#define ERR_NOT_PAIRED \
-        "%s is missing an option or argument to go with: %s.", ERR_KEY, pairs[0]
-#define ERR_EXTRA_OPTION \
-        "%s has extra option of type: %s.", ERR_KEY, pairs[0]
-#define ERR_BAD_OPTION \
-        "%s has unknown option: %s.", ERR_KEY, pairs[0]
-#define ERR_BAD_VALUE \
-        "%s has unknown %s: %s.", ERR_KEY, pairs[0], pairs[1]
-#define ERR_BAD_ARG_COUNT \
-        "%s has incorrect argument count.", ERR_KEY
-#define ERR_CREATE \
-        "%s could not be created.", ERR_KEY
-#define ERR_CREATE_EX \
-        "%s could not be created: %s.", ERR_KEY
-#endif
-
 #endif
 

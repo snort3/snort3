@@ -175,7 +175,7 @@ void RateFilter_ResetActive (void)
 
 void RateFilter_PrintConfig(RateFilterConfig*)
 {
-    // FIXIT print from module
+    // FIXIT-L print from module
     //_printThresholdContext(config);
 }
 

@@ -88,7 +88,7 @@
 static uint32_t hi_cap = 0;
 
 // stats
-// FIXIT eliminate these counts
+// FIXIT-L eliminate these counts
 static THREAD_LOCAL uint32_t hi_paf_calls = 0;
 static THREAD_LOCAL uint32_t hi_paf_bytes = 0;
 

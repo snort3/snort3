@@ -48,7 +48,7 @@ void VarTablesFree(IpsPolicy*);
 
 VarEntry * VarDefine(SnortConfig *sc, const char *name, const char *value);
 int PortVarDefine(SnortConfig *sc, const char *name, const char *s);
-void ParseIpVar(SnortConfig *sc, const char *name, const char *s);  // FIXIT actually in parse_conf.cc
+void ParseIpVar(SnortConfig *sc, const char *name, const char *s);  // FIXIT-L actually in parse_conf.cc
 
 VarEntry *VarAlloc();
 void DeleteVars(VarEntry *var_table);

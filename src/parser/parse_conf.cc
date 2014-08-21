@@ -154,7 +154,7 @@ void parse_include(SnortConfig *sc, const char *arg)
 void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
 {
     int ret;
-    IpsPolicy* p = get_ips_policy(); // FIXIT double check, see below
+    IpsPolicy* p = get_ips_policy(); // FIXIT-M double check, see below
     DisallowCrossTableDuplicateVars(sc, var, VAR_TYPE__IPVAR);
 
     if((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
@@ -277,7 +277,7 @@ ListHead* get_rule_list(SnortConfig* sc, const char* s)
     return p ? p->RuleList : nullptr;
 }
 
-// FIXIT find this a better home
+// FIXIT-L find this a better home
 void AddRuleState(SnortConfig* sc, const RuleState& rs)
 {
     if (sc == NULL)

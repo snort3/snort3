@@ -50,7 +50,7 @@
 #define S5_TRACK_YES            1
 #define S5_TRACK_NO             0
 
-// FIXIT move to proto specific where possible
+// FIXIT-L move to proto specific where possible
 #define STREAM5_CONFIG_STATEFUL_INSPECTION      0x00000001
 #define STREAM5_CONFIG_LOG_STREAMS              0x00000004
 #define STREAM5_CONFIG_REASS_CLIENT             0x00000008
@@ -86,7 +86,7 @@ private:
 };
 
 /*  D A T A   S T R U C T U R E S  **********************************/
-// FIXIT some of this stuff can be better encapsulated
+// FIXIT-L some of this stuff can be better encapsulated
 
 struct Stream5GlobalConfig
 {

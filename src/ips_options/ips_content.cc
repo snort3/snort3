@@ -227,7 +227,7 @@ static PatternMatchData* new_pmd()
     return pmd;
 }
 
-// FIXIT must ensure that fast_pattern is applied to 
+// FIXIT-H must ensure that fast_pattern is applied to 
 // a fast_pattern inspection buffer
 static int fast_pattern_count(OptTreeNode *otn, int list_type)
 {
@@ -724,7 +724,7 @@ static void parse_fast_pattern_offset(PatternMatchData* pmd, const char *data)
     }
 
     pmd->fp_offset = offset;
-    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
+    pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
 }
 
 static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
@@ -744,7 +744,7 @@ static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
     }
 
     pmd->fp_length = length;
-    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
+    pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
 }
 
 //-------------------------------------------------------------------------
@@ -849,7 +849,7 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         pmd->no_case = 1;
 
     else if ( v.is("fast_pattern") )
-        pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
+        pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
 
     else if ( v.is("fast_pattern_offset") )
         parse_fast_pattern_offset(pmd, v.get_string());

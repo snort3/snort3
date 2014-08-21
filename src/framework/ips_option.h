@@ -98,9 +98,8 @@ private:
     option_type_t type;
 };
 
-enum RuleOptType // FIXIT is this still useful?
+enum RuleOptType
 {
-    OPT_TYPE_ACTION = 0,
     OPT_TYPE_LOGGING,
     OPT_TYPE_DETECTION,
     OPT_TYPE_META,
@@ -116,8 +115,9 @@ struct IpsApi
 {
     BaseApi base;
     RuleOptType type;
-    unsigned max_per_rule;  // FIXIT this must be enforced
-    unsigned protos;
+
+    unsigned max_per_rule;  // FIXIT-H this must be enforced
+    unsigned protos;        // FIXIT-H enforce or delete
 
     IpsOptFunc pinit;
     IpsOptFunc pterm;

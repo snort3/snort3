@@ -306,7 +306,7 @@ void DropStats()
     // ensure proper counting of log_limit
     SnortEventqResetCounts();
 
-    // FIXIT alert_pkts excludes rep hits
+    // FIXIT-L alert_pkts excludes rep hits
     if ( gpc.total_alert_pkts == gpc.alert_pkts )
         gpc.total_alert_pkts = 0;
 
@@ -327,7 +327,7 @@ void PrintStatistics (void)
     DropStats();
     timing_stats();
 
-    // FIXIT below stats need to be made consistent with above
+    // FIXIT-L below stats need to be made consistent with above
     fpShowEventStats(snort_conf);
     print_thresholding(snort_conf->threshold_config, 1);
 

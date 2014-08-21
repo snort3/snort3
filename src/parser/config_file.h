@@ -49,7 +49,6 @@ void ConfigObfuscate(SnortConfig*, const char*);
 void ConfigObfuscationMask(SnortConfig*, const char*);
 void ConfigQuiet(SnortConfig*, const char*);
 void ConfigShowYear(SnortConfig*, const char*);
-void ConfigSoRuleMemcap(SnortConfig*, const char*);
 void ConfigTreatDropAsAlert(SnortConfig*, const char*);
 void ConfigTreatDropAsIgnore(SnortConfig*, const char*);
 void ConfigProcessAllEvents(SnortConfig*, const char*);

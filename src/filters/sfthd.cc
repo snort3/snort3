@@ -656,7 +656,7 @@ int sfthd_create_threshold(
     sfthd_node.seconds   = seconds;
     sfthd_node.ip_address= ip_address;
 
-    // FIXIT convert to std::vector
+    // FIXIT-L convert to std::vector
     sfDynArrayCheckBounds ((void **)&thd_objs->sfthd_garray, policyId, &thd_objs->numPoliciesAllocated);
     if (thd_objs->sfthd_garray[policyId] == NULL)
     {

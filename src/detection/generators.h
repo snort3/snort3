@@ -22,7 +22,7 @@
 #ifndef GENERATORS_H
 #define GENERATORS_H
 
-// FIXIT migrate all defines to respective modules and delete this file
+// FIXIT-M migrate all defines to respective modules and delete this file
 
 #define GENERATOR_SNORT_ENGINE        1
 

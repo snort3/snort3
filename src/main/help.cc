@@ -83,7 +83,6 @@ static const char* snort_help =
 
 //-------------------------------------------------------------------------
 
-// FIXIT must use SnortModule params
 void help_args(const char* pfx)
 {
     Module* m = get_snort_module();

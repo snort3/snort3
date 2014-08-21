@@ -246,15 +246,15 @@ static const Parameter* get_params(string& sfx, const Parameter* p)
     return get_params(sfx,  p);
 }
 
-// FIXIT vars may have been defined on command line
+// FIXIT-M vars may have been defined on command line
 // that mechanism will be replaced with pulling a Lua
 // chunk from the command line and stuffing into L
 // before setting configs; that will overwrite
 //
-// FIXIT should only need one table with
+// FIXIT-M should only need one table with
 // dynamically typed vars
 //
-// FIXIT this is a hack to tell vars by naming
+// FIXIT-M this is a hack to tell vars by naming
 // convention; with one table this is obviated
 // but if multiple tables are kept might want
 // to change these to a module with parameters
@@ -700,7 +700,7 @@ void ModuleManager::show_rules(const char* pfx)
 
 void ModuleManager::load_rules(SnortConfig* sc)
 {
-    // FIXIT callers of ParseConfigString() should not have to push parse loc
+    // FIXIT-M callers of ParseConfigString() should not have to push parse loc
     push_parse_location("builtin");
 
     for ( auto p : s_modules )
@@ -717,11 +717,11 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            // FIXIT move builtin generation to a better home
-            // FIXIT builtins should allow configurable nets and ports
-            // FIXIT builtins should have accurate proto
+            // FIXIT-L move builtin generation to a better home
+            // FIXIT-L builtins should allow configurable nets and ports
+            // FIXIT-L builtins should have accurate proto
             //       (but ip winds up in all others)
-            // FIXIT if msg has C escaped embedded quotes, we break
+            // FIXIT-L if msg has C escaped embedded quotes, we break
             //ss << "alert tcp any any -> any any ( ";
             ss << "alert ( ";
             ss << "gid:" << gid << "; ";
@@ -761,7 +761,7 @@ void ModuleManager::dump_rules(const char* pfx)
 
         while ( r->msg )
         {
-            // FIXIT builtin gen should be in exactly one place
+            // FIXIT-L builtin gen should be in exactly one place
             ss << "alert ( ";
             ss << "gid:" << gid << "; ";
             ss << "sid:" << r->sid << "; ";

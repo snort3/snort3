@@ -117,7 +117,7 @@ Flow* FlowControl::new_flow (const FlowKey* key)
     return cache->get(key);
 }
 
-// FIXIT cache* can be put in flow so that lookups by
+// FIXIT-L cache* can be put in flow so that lookups by
 // protocol are obviated for existing / initialized flows
 void FlowControl::delete_flow (const FlowKey* key)
 {

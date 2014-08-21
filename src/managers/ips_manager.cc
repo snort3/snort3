@@ -176,7 +176,7 @@ bool IpsManager::option_begin(
             opt->api->pinit(sc);
         opt->init = true;
     }
-    // FIXIT verify api->protos and api->max_per_rule
+    // FIXIT-H verify api->protos and api->max_per_rule
     // before calling ctor
     current_module = ModuleManager::get_module(key);
 

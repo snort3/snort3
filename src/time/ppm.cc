@@ -114,7 +114,7 @@ typedef struct
 } ppm_rules_t;
 
 /* suspended rules */
-// FIXIT storing rule tree pointers is a bad idea
+// FIXIT-L storing rule tree pointers is a bad idea
 // - no accommodation for reload
 // - really not used except to log
 // - should be deleted
@@ -122,7 +122,7 @@ static THREAD_LOCAL ppm_rules_t ppm_rules[MAX_DP_NRULES];
 static THREAD_LOCAL int ppm_n_rules;
 
 /* cleared rules - re-enabled */
-// FIXIT see above re storing rule tree pointers
+// FIXIT-L see above re storing rule tree pointers
 static THREAD_LOCAL detection_option_tree_root_t * ppm_crules[MAX_DP_NRULES];
 static THREAD_LOCAL int ppm_n_crules;
 
@@ -238,7 +238,7 @@ static int print_rule( int, RuleTreeNode*, OptTreeNode * o )
     return 0;
 }
 
-// FIXIT ppm_stats should be rolled into ppm module
+// FIXIT-L ppm_stats should be rolled into ppm module
 // (not just peg counts; need module support)
 
 void ppm_sum_stats()

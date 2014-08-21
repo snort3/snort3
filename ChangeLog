@@ -2,6 +2,7 @@
 -- remove share.h
 -- misc FIXITs
 -- refactored cmd line parsing and moved options to SnortModule
+-- prioritized all FIXITs; FIXIT-J are for josh to reprioritize
 
 114
 -- more FIXIT cleanup

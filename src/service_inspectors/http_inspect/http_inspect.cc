@@ -171,7 +171,7 @@ static void updateConfigFromFileProcessing (HTTPINSPECT_CONF* ServerConf)
 
 static int HttpInspectVerifyPolicy(SnortConfig*, HTTPINSPECT_CONF* pData)
 {
-    HttpInspectRegisterXtraDataFuncs();  // FIXIT must be done once
+    HttpInspectRegisterXtraDataFuncs();  // FIXIT-L must be done once
 
     updateConfigFromFileProcessing(pData);
     return 0;
@@ -306,7 +306,6 @@ bool HttpInspect::configure (SnortConfig* sc)
 
     HttpInspectInitializeGlobalConfig(config->global);
 
-    // FIXIT must load default unicode map from const char*
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
 
@@ -423,7 +422,7 @@ static void hs_init()
 {
     HttpFlowData::init();
     HI_SearchInit();
-    hi_paf_init(0);  // FIXIT is cap needed?
+    hi_paf_init(0);  // FIXIT-L is cap needed?
     InitLookupTables();
     InitJSNormLookupTable();
 }

@@ -159,7 +159,7 @@ int HttpHeaderOption::eval(Cursor& c, Packet* p)
     if ( !p->flow || !p->flow->gadget )
         rval = DETECTION_OPTION_NO_MATCH;
 
-    // FIXIT cache id at parse time for runtime use
+    // FIXIT-P cache id at parse time for runtime use
     else if ( !p->flow->gadget->get_buf(s_name, p, hb) )
         rval = DETECTION_OPTION_NO_MATCH;
 

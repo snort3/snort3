@@ -239,7 +239,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     pc.total_alert_pkts++;
 
 #if 0
-    // FIXIT this should be a generic feature of otn
+    // FIXIT-M this should be a generic feature of otn
     if ( otn->sigInfo.generator != GENERATOR_SPP_REPUTATION )
     {
         /* Don't include IP Reputation events in count */
@@ -319,7 +319,7 @@ int Detect(Packet * p)
         return 0;
     }
 
-    // FIXIT:  Curently, if a rule is found on any IP layer, we
+    // FIXIT-M:  Curently, if a rule is found on any IP layer, we
     //          perform the detect routine on the entire packet.
     //          Instead, we should only perform detect on that
     //          layer!!

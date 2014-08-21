@@ -41,8 +41,8 @@
 #include "snort.h"
 
 #ifdef DEBUG_MSGS
-SO_PUBLIC const char *DebugMessageFile = NULL;  // FIXIT use access methods
-SO_PUBLIC int DebugMessageLine = 0;  // FIXIT use access methods
+SO_PUBLIC const char *DebugMessageFile = NULL;  // FIXIT-M use access methods
+SO_PUBLIC int DebugMessageLine = 0;  // FIXIT-M use access methods
 
 int DebugThis(uint64_t level)
 {

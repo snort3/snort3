@@ -69,7 +69,7 @@ static THREAD_LOCAL uint64_t prep_bytes = 0;
 
 // s5_len and s5_idx are used only during the
 // lifetime of s5_paf_check()
-// FIXIT these thread local should be moved into thread context
+// FIXIT-L these thread local should be moved into thread context
 static THREAD_LOCAL uint32_t s5_len;  // total bytes queued
 static THREAD_LOCAL uint32_t s5_idx;  // offset from start of queued bytes
 
@@ -132,7 +132,7 @@ static uint32_t s5_paf_flush (
 }
 
 //--------------------------------------------------------------------
-// FIXIT PAF support multiple scanners
+// FIXIT-L PAF support multiple scanners
 
 static bool s5_paf_callback (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
@@ -165,7 +165,7 @@ static inline bool s5_paf_eval (
         "%s: paf=%d, idx=%u, len=%u, fpt=%u\n",
         __FUNCTION__, ps->paf, s5_idx, s5_len, ps->fpt);)
 
-    uint16_t fuzz = 0; // FIXIT PAF add a little zippedy-do-dah
+    uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
 
     switch ( ps->paf )
     {
@@ -301,7 +301,7 @@ uint32_t s5_paf_check (
 
     } while ( 1 );
 
-    uint16_t fuzz = 0; // FIXIT PAF add a little zippedy-do-dah
+    uint16_t fuzz = 0; // FIXIT-L PAF add a little zippedy-do-dah
     if ( (ps->paf != PAF_FLUSH) && (s5_len > ss->max()+fuzz) )
     {
         uint32_t fp = s5_paf_flush(ss, ps, FT_MAX, flags);

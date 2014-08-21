@@ -27,7 +27,7 @@
 
 
 /* otherwise defined in /usr/include/ppp_defs.h */
-// FIXIT udph should not be set for udp tunnel
+// FIXIT-J udph should not be set for udp tunnel
 // (only if innermost layer == udp)
 #define IsUDP(p) (IsIP(p) && !IsTCP(p) && p->udph)
 

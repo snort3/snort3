@@ -28,7 +28,7 @@ void ArgList::dump()
         printf("argv[%d]='%s'\n", i, argv[i]);
 }
 
-// FIXIT this chokes on -n -4 because it thinks
+// FIXIT-L this chokes on -n -4 because it thinks
 // -4 is another arg instead of an option to -n
 bool ArgList::get_arg(const char*& key, const char*& val)
 {

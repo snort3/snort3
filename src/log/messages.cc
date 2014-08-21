@@ -249,7 +249,7 @@ NORETURN void FatalError(const char *format,...)
     }
 
 #if 0
-    // FIXIT need to stop analyzers / workers 
+    // FIXIT-H need to stop analyzers / workers 
     // and they should handle the DAQ break / abort
     if ( SnortIsInitializing() )
     {
@@ -259,8 +259,8 @@ NORETURN void FatalError(const char *format,...)
     else
 #endif
     {
-        // FIXIT this makes no sense from main thread
-        // FIXIT exit() segfaults too; looks like something borked in dylib
+        // FIXIT-H this makes no sense from main thread
+        // exit() segfaults too; looks like something borked in dylib
         exit(EXIT_FAILURE);
     }
 }

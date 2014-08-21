@@ -75,8 +75,8 @@ tTargetBasedConfig::tTargetBasedConfig()
 {
     /* Add 1 to max for table purposes
     * We use max_hosts to limit memcap, assume 16k per entry costs*/
-    // FIXIT 16k per host is no longer true
-    // FIXIT init before snort_conf; move to filename and load separately
+    // FIXIT-M 16k per host is no longer true
+    // FIXIT-M init before snort_conf; move to filename and load separately
     // this is a hack to get it going
     uint32_t max = snort_conf ? ScMaxAttrHosts() : DEFAULT_MAX_ATTRIBUTE_HOSTS;
     lookupTable = sfrt_new(DIR_8x16, IPv6, max + 1, (max>>6) + 1);
@@ -91,7 +91,7 @@ tTargetBasedConfig::~tTargetBasedConfig()
 static THREAD_LOCAL tTargetBasedConfig* curr_cfg = NULL;
 static tTargetBasedConfig* next_cfg = NULL;
 
-// FIXIT ensure these are not used by packet threads
+// FIXIT-H ensure these are not used by packet threads
 static HostAttributeEntry *current_host = NULL;
 static ApplicationEntry *current_app = NULL;
 

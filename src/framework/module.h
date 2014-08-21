@@ -18,11 +18,11 @@
 */
 // module.h author Russ Combs <rucombs@cisco.com>
 
-// FIXIT 
-// -- add lua module default
-// -- add set_default method
-// -- add trace param(s)
-// -- add memcap related
+// FIXIT-H add brief help string to modules
+// FIXIT-H add optional default config to modules
+// FIXIT-M add trace param(s)
+// FIXIT-M add memcap related
+// FIXIT-L add set_default method
 
 #ifndef MODULE_H
 #define MODULE_H
@@ -51,7 +51,6 @@ struct RuleMap
 
 struct ProfileStats;
 
-// FIXIT add brief help string to modules
 class Module
 {
 public:

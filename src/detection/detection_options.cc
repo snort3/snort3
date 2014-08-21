@@ -849,7 +849,7 @@ static void detection_option_node_update_otn_stats(
     if (node->option_type == RULE_OPTION_TYPE_LEAF_NODE)
     {
         /* Update stats for this otn */
-        // FIXIT should be sum of instances (only called from main thread)
+        // FIXIT-H should be sum of instances (only called from main thread)
         OptTreeNode *otn = (OptTreeNode *)node->option_data;
         OtnState* state = otn->state + get_instance_id();
         state->ticks += local_stats.ticks;

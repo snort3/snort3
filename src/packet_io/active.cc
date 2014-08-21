@@ -254,7 +254,7 @@ int Active_IsRSTCandidate(const Packet* p)
 
 int Active_IsUNRCandidate(const Packet* p)
 {
-    // FIXIT allow unr to tcp/udp/icmp4/icmp6 only or for all
+    // FIXIT-J allow unr to tcp/udp/icmp4/icmp6 only or for all
     switch ( GetInnerProto(p) ) {
     case PROTO_UDP:
     case PROTO_TCP:
@@ -370,7 +370,7 @@ static inline int _Active_DoReset(Packet *p)
                 ActionManager::queue_reject();
             break;
 
-        // FIXIT send unr to udp/icmp4/icmp6 only or for all non-tcp?
+        // FIXIT-J send unr to udp/icmp4/icmp6 only or for all non-tcp?
         case IPPROTO_UDP:
         case IPPROTO_ICMP:
         case IPPROTO_ICMPV6:

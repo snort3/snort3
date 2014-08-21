@@ -39,7 +39,7 @@
 
 static THREAD_LOCAL unsigned msize=0;
 
-void * xmalloc(size_t byteSize) // FIXIT eliminate this nonsense
+void * xmalloc(size_t byteSize) // FIXIT-L eliminate this nonsense
 {
 #ifdef MDEBUG
    int * data = (int*) malloc( byteSize + 4 );
