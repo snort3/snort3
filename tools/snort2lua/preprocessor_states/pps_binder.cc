@@ -24,14 +24,14 @@
 
 Binder::~Binder()
 {
-    if (!added_to_bindings)
+    if (!printed)
         add_to_configuration();
 
 }
 
 void Binder::add_to_configuration()
 {
-    added_to_bindings = true;
+    printed = true;
     ld->open_top_level_table("binder");
     ld->open_table();
 
@@ -45,6 +45,9 @@ void Binder::add_to_configuration()
 
     if (!when_proto.empty())
         ld->add_option_to_table("proto", when_proto);
+
+    if (!when_role.empty())
+        ld->add_option_to_table("role", when_role);
 
     for (auto p : ports)
         ld->add_list_to_table("ports", p);
@@ -86,48 +89,45 @@ void Binder::add_to_configuration()
 
 
 void Binder::set_when_policy_id(std::string id)
-{  when_policy_id = std::string(id);  }
+{ when_policy_id = std::string(id); }
 
 void Binder::set_when_service(std::string service)
-{  when_service = std::string(service);  }
+{ when_service = std::string(service); }
 
 void Binder::set_when_role(std::string role)
-{  when_role = std::string(role);  }
+{ when_role = std::string(role); }
 
 void Binder::set_when_proto(std::string proto)
-{  when_proto = std::string(proto);  }
+{ when_proto = std::string(proto); }
 
 void Binder::add_when_vlan(std::string vlan)
-{  vlans.push_back(std::string(vlan));  }
+{ vlans.push_back(std::string(vlan)); }
 
 void Binder::add_when_net(std::string net)
-{  nets.push_back(std::string(net));  }
-
-void Binder::add_when_port(uint16_t port)
-{  ports.push_back(std::to_string(port));  }
+{ nets.push_back(std::string(net)); }
 
 void Binder::add_when_port(std::string port)
-{  ports.push_back(std::string(port));  }
+{ ports.push_back(std::string(port)); }
 
 
 
 
 
 void Binder::set_use_type(std::string module_name)
-{  use_type = std::string(module_name);  }
+{ use_type = std::string(module_name); }
 
 void Binder::set_use_name(std::string struct_name)
-{  use_name = std::string(struct_name);  }
+{ use_name = std::string(struct_name); }
 
 void Binder::set_use_file(std::string file_name)
-{  use_file = std::string(file_name);  }
+{ use_file = std::string(file_name); }
 
 void Binder::set_use_service(std::string service_name)
-{  use_service = std::string(service_name);  }
+{ use_service = std::string(service_name); }
 
 void Binder::set_use_action(std::string action)
-{  use_action = std::string(action);  }
+{ use_action = std::string(action); }
 
 void Binder::set_use_policy_id(std::string id)
-{  use_policy_id = std::string(id);  }
+{ use_policy_id = std::string(id); }
 

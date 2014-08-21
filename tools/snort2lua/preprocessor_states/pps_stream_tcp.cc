@@ -21,10 +21,14 @@
 
 #include <sstream>
 #include <vector>
+#include <string>
 
 #include "conversion_state.h"
 #include "utils/s2l_util.h"
 #include "preprocessor_states/pps_binder.h"
+
+
+typedef void (Binder::*binder_func)(std::string);
 
 namespace preprocessors
 {
@@ -34,17 +38,41 @@ namespace {
 class StreamTcp : public ConversionState
 {
 public:
-    StreamTcp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    StreamTcp(Converter* cv, LuaData* ld);
     virtual ~StreamTcp() {};
     virtual bool convert(std::istringstream& data_stream);
 
 private:
+    Binder* bind_client;
+    Binder* bind_server;
+    Binder* bind_any;
+    bool binding_chosen;
+    std::vector<std::string> client_protocols;
+    std::vector<std::string> server_protocols;
+    std::vector<std::string> any_protocols;
+
     bool parse_small_segments(std::istringstream& data_stream);
     bool parse_ports(std::istringstream& data_stream);
     bool parse_protocol(std::istringstream& data_stream);
+    void add_to_bindings(binder_func, std::string param);
 };
 
 } // namespace
+
+StreamTcp::StreamTcp(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
+{
+    bind_client = nullptr;
+    bind_server = nullptr;
+    bind_any = nullptr;
+    binding_chosen = false;
+}
+
+void StreamTcp::add_to_bindings(binder_func func, std::string param)
+{
+    (bind_client->*func)(param);
+    (bind_server->*func)(param);
+    (bind_any->*func)(param);
+}
 
 bool StreamTcp::parse_small_segments(std::istringstream& stream)
 {
@@ -92,98 +120,144 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
 
 bool StreamTcp::parse_ports(std::istringstream& arg_stream)
 {
-    std::string s_val;
+    std::string port;
     std::string dir;
-    std::string opt_name;
-    bool retval = true;
+    Binder* bind;
 
     if(!(arg_stream >> dir))
         return false;
 
     if( !dir.compare("client"))
     {
-        ld->add_diff_option_comment("ports client", "client_ports");
-        opt_name = "client_ports";
+        ld->add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = client");
+        bind = bind_client;
     }
 
     else if( !dir.compare("server"))
     {
-        ld->add_diff_option_comment("ports server", "server_ports");
-        opt_name = "server_ports";
+        ld->add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = server");
+        bind = bind_server;
     }
 
     else if( !dir.compare("both"))
     {
-        ld->add_diff_option_comment("ports both", "both_ports");
-        opt_name = "both_ports";
+        ld->add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = any");
+        bind = bind_any;
     }
 
     else
-        return false;
-
-
-#if 0
-    // do nothing if no ports provided
-    if (stream >> protocol )
     {
-        ld->open_top_level_table("binder");
-        ld->open_table();
-        ld->open_table("when");
-        ld->add_option_to_table("proto", "tcp");
-
-
-        if (!protocol.compare("all"))
-
-        else if (!protocol.compare("none"))
-
-        else
-            do
-            {
-
-            }while(stream >> protocol);
-
-        while (stream >> protocol)
-            tmpval = ld->add_list_to_table(lua_dir, protocol) && tmpval;
+        return false;
     }
 
-    while(stream >> s_val)
-        retval = ld->add_list_to_table(opt_name, s_val) && retval;
+    // Ensure we only print the chosen bindings
+    if (!binding_chosen)
+    {
+        binding_chosen = true;
+        bind_client->print_binding(false);
+        bind_client->set_when_role("client");
+    }
+    bind->print_binding(true);
 
-    ld->add_diff_option_comment("port " + dir, opt_name);
+    // do nothing if no ports provided
+    if (arg_stream >> port )
+    {
+        // for all, don't set the ports variable
+        if (!port.compare("all"))
+            void(0);
 
-#endif
-    return retval;
+        // for none, don't print the binding
+        else if (!port.compare("none"))
+            bind->print_binding(false);
+
+        else
+        {
+            do
+            {
+                bind->add_when_port(port);
+            } while (arg_stream >> port);
+        }
+    }
+
+    return true;
 }
 
-bool StreamTcp::parse_protocol(std::istringstream& stream)
+bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
 {
     std::string dir;
     std::string lua_dir;
     std::string protocol;
     bool tmpval = true;
+    std::vector<std::string>* protocols;
+    Binder* bind;
 
     // this may seem idiotic, but Snort does not actually require
     // any keywords for the 'protocol' keyword.  So, this is
     // still technically correct.
-    if (!(stream >> dir))
+    if (!(arg_stream >> dir))
         return true;
 
 
     if (!dir.compare("client"))
-        lua_dir = "client_protocols";
+    {
+        ld->add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = client");
+        bind = bind_client;
+        protocols = &client_protocols;
+    }
 
     else if (!dir.compare("server"))
-        lua_dir = "server_protocols";
+    {
+        ld->add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = server");
+        bind = bind_server;
+        protocols = &server_protocols;
+    }
 
     else if (!dir.compare("both"))
-        lua_dir = "both_protocols";
+    {
+        ld->add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = any");
+        bind = bind_any;
+        protocols = &any_protocols;
+    }
 
     else
         return false;
 
 
-    while (stream >> protocol)
-        tmpval = ld->add_list_to_table(lua_dir, protocol) && tmpval;
+    // Ensure we only print the chosen bindings
+    if (!binding_chosen)
+    {
+        binding_chosen = true;
+        bind_client->print_binding(false);
+        bind_client->set_when_role("client");
+    }
+    bind->print_binding(true);
+
+    // do nothing if no ports provided
+    if (arg_stream >> protocol )
+    {
+        // for all, don't set the ports variable
+        if (!protocol.compare("all"))
+            void(0);
+
+        // for none, don't print the binding
+        else if (!protocol.compare("none"))
+            bind->print_binding(false);
+
+        else
+        {
+            do
+            {
+                // yes, I agree this may appear odd that I am
+                // adding the value to a vector rather than creating
+                // new binder.  The reasons is each binder may still
+                // change while parsing stream_tcp.  Since I don't want
+                // to create and save a new Binder for each protocol,
+                // lets save the different protocols and create new
+                // Binders at the very end of the convert() functions.
+                protocols->push_back(protocol);
+            } while (arg_stream >> protocol);
+        }
+    }
 
     return true;
 }
@@ -192,10 +266,32 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    Binder bind(ld);
 
-    bind.set_when_proto("tcp");
-    bind.set_use_type("stream_tcp");
+    Binder client(ld);
+    Binder server(ld);
+    Binder any(ld);
+
+    // by default, only print one binding
+    client.print_binding(true);
+    server.print_binding(false);
+    any.print_binding(false);
+    binding_chosen = false;
+
+    // Only set client if specified in ports or protocol.
+    // For now, client is the general binding for stream_tcp.
+//    client.set_when_role("client");
+    server.set_when_role("server");
+    any.set_when_role("any");
+
+
+    // create pointers so other member functinos can access binders
+    bind_client = &client;
+    bind_server = &server;
+    bind_any = &any;
+
+    add_to_bindings(&Binder::set_when_proto, "tcp");
+    add_to_bindings(&Binder::set_use_type, "stream_tcp");
+
     ld->open_table("stream_tcp");
 
 
@@ -251,7 +347,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
             std::string addr;
             if (arg_stream >> addr)
-                bind.add_when_net(addr);
+                add_to_bindings(&Binder::add_when_net, addr);
             else
                 tmpval = false;
         }
@@ -295,10 +391,49 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             tmpval = false;
         }
 
-        if (retval && !tmpval)
+        if (!tmpval)
+        {
+            ld->failed_conversion(data_stream, keyword);
             retval = false;
+        }
     }
 
+
+
+    if (!client_protocols.empty())
+    {
+        for (std::string s : client_protocols)
+        {
+            Binder b = client;
+            b.set_when_service(s);
+            b.add_to_configuration();
+        }
+        client.print_binding(false); // we just printed
+    }
+
+    if (!server_protocols.empty())
+    {
+        for (std::string s : server_protocols)
+        {
+            Binder b = server;
+            b.set_when_service(s);
+            b.add_to_configuration();
+        }
+        server.print_binding(false); // we just printed
+    }
+
+    if (!any_protocols.empty())
+    {
+        for (std::string s : any_protocols)
+        {
+            Binder b = any;
+            b.set_when_service(s);
+            b.add_to_configuration();
+        }
+        any.print_binding(false); // we just printed
+    }
+
+    ld->close_table(); // "tcp_stream"
     return retval;
 }
 

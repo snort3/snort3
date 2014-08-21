@@ -41,11 +41,9 @@ static const RuleMap tkr_rules[] =
 // token ring module
 //-------------------------------------------------------------------------
 
-TrCodecModule::TrCodecModule() : DecodeModule(TR_NAME, tkr_params)
+TrCodecModule::TrCodecModule() : DecodeModule(TR_NAME)
 { }
 
-const RuleMap* TrCodecModule::get_rules() const
-{ return tkr_rules; }
 
 bool TrCodecModule::set(const char*, Value&, SnortConfig*)
 {

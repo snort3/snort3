@@ -99,7 +99,7 @@ public:
     // stream == the stringstream object which failed to convert
     void failed_conversion(std::istringstream& stream);
     // same as above. unknown_option is the specific option which
-    // casue the failure.
+    // caused the failure.
     void failed_conversion(std::istringstream& stream, std::string unkown_option);
     // add a variable to this file
     bool add_variable(std::string name, std::string value);

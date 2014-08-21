@@ -134,9 +134,6 @@ change:  policy bsd-right ==> policy = bsd_right
 change:  policy_mode  ==> mode
 change:  ports ==> bindings
 change:  ports ==> gtp_ports
-change:  ports both ==> both_ports
-change:  ports client ==> client_ports
-change:  ports server ==> server_ports
 change:  post_depth [-1:65495] ==> post_depth [-1:65535]
 change:  preprocessor normalize_icmp4 ==> icmp4 == <bool>
 change:  preprocessor normalize_icmp6 ==> icmp6 == <bool>
@@ -161,6 +158,12 @@ change:  snortfile ==> file = true
 change:  sort avg_ticks_per_nomatch ==> sort = avg_ticks_per_no_match
 change:  split-any-any ==> split_any_any
 change:  srcport ==> src_port
+change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = any
+change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = client
+change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = server
+change:  stream_tcp: protocol ==> binder.when.proto; binder.when.role = any
+change:  stream_tcp: protocol ==> binder.when.proto; binder.when.role = client
+change:  stream_tcp: protocol ==> binder.when.proto; binder.when.role = server
 change:  suspend-expensive-rules ==> suspend_expensive_rules
 change:  suspend-timeout ==> suspend_timeout
 change:  tcp_cache_nominal_timeout ==> pruning_timeout

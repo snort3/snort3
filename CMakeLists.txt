@@ -52,3 +52,10 @@ configure_file(
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
+
+# Test Plugins!!
+if (BUILD_EXTRA_PLUGINS)
+    if (${CMAKE_GENERATOR} MATCHES "Make")
+        add_subdirectory(extra)
+    endif()
+endif (BUILD_EXTRA_PLUGINS)
