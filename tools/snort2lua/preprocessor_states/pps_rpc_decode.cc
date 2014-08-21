@@ -35,7 +35,7 @@ namespace {
 class RpcDecode : public ConversionState
 {
 public:
-    RpcDecode(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    RpcDecode() : ConversionState() {};
     virtual ~RpcDecode() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -49,28 +49,28 @@ bool RpcDecode::convert(std::istringstream& data_stream)
     std::string keyword;
 
     // adding the binder entry
-    Binder bind(ld);
+    Binder bind;
     bind.set_when_proto("tcp");
     bind.set_use_type("rpc_decode");
     std::string port_list = std::string();
 
-    ld->open_table("rpc_decode");
+    table_api.open_table("rpc_decode");
     
     while(data_stream >> keyword)
     {
         bool tmpval = true;
 
         if(!keyword.compare("no_alert_multiple_requests"))
-            ld->add_deleted_comment("no_alert_multiple_requests");
+            table_api.add_deleted_comment("no_alert_multiple_requests");
 
         else if(!keyword.compare("alert_fragments"))
-            ld->add_deleted_comment("alert_fragments");
+            table_api.add_deleted_comment("alert_fragments");
 
         else if(!keyword.compare("no_alert_large_fragments"))
-            ld->add_deleted_comment("no_alert_large_fragments");
+            table_api.add_deleted_comment("no_alert_large_fragments");
 
         else if(!keyword.compare("no_alert_incomplete"))
-            ld->add_deleted_comment("no_alert_incomplete");
+            table_api.add_deleted_comment("no_alert_incomplete");
 
         else if (isdigit(keyword[0]))
             bind.add_when_port(keyword);
@@ -78,8 +78,11 @@ bool RpcDecode::convert(std::istringstream& data_stream)
         else
             tmpval = false;
 
-        if (retval)
-            retval = tmpval;
+        if (!tmpval)
+        {
+            data_api.failed_conversion(data_stream, keyword);
+            retval = false;
+        }
     }
 
     return retval;   
@@ -89,9 +92,9 @@ bool RpcDecode::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new RpcDecode(cv, ld);
+    return new RpcDecode();
 }
 
 static const ConvertMap preprocessor_rpc_decode =

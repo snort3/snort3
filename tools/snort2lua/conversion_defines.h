@@ -17,29 +17,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_include.h author Josh Rosenbaum <jrosenba@cisco.com>
+// conversion_state.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef DT_INCLUDE_H
-#define DT_INCLUDE_H
+#ifndef CONVERSION_DEFINES_H
+#define CONVERSION_DEFINES_H
 
 #include <string>
-#include <iostream>
 
-class Include
+/*
+ * This file was specifically created to avoid cyclic depencies
+ * and should therefore avoid ANY local depencies.
+ */
+
+class ConversionState;
+typedef ConversionState* (*conv_new_f)(void);
+
+struct ConvertMap
 {
-public:
-
-    Include(std::string file_name);
-    virtual ~Include();
-
-    // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const Include &);
-
-    friend bool operator==(const Include& lhs, const Include& rhs);
-    friend bool operator!=(const Include& lhs, const Include& rhs);
-
-private:
-    std::string file_name;
+    std::string keyword;
+    conv_new_f ctor;
 };
 
 

@@ -34,7 +34,7 @@ namespace {
 class EventQueue : public ConversionState
 {
 public:
-    EventQueue(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    EventQueue() : ConversionState() {};
     virtual ~EventQueue() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,7 +46,7 @@ bool EventQueue::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    ld->open_table("event_queue");
+    table_api.open_table("event_queue");
 
     while (util::get_string(data_stream, keyword, ", "))
     {
@@ -54,14 +54,14 @@ bool EventQueue::convert(std::istringstream& data_stream)
 
 
         if (!keyword.compare("process_all_events"))
-            tmpval = ld->add_option_to_table("process_all_events", true);
+            tmpval = table_api.add_option("process_all_events", true);
 
         else if (!keyword.compare("max_queue"))
         {
             std::string val;
 
             if(util::get_string(data_stream, val, ", "))
-                tmpval = ld->add_option_to_table("max_queue", std::stoi(val));
+                tmpval = table_api.add_option("max_queue", std::stoi(val));
             else
                 tmpval = false;
         }
@@ -71,7 +71,7 @@ bool EventQueue::convert(std::istringstream& data_stream)
             std::string val;
 
             if(util::get_string(data_stream, val, ", "))
-                tmpval = ld->add_option_to_table("log", std::stoi(val));
+                tmpval = table_api.add_option("log", std::stoi(val));
             else
                 tmpval = false;
         }
@@ -80,7 +80,7 @@ bool EventQueue::convert(std::istringstream& data_stream)
         {
             std::string val;
             if(util::get_string(data_stream, val, ", "))
-                tmpval = ld->add_option_to_table("order_events", val);
+                tmpval = table_api.add_option("order_events", val);
             else
                 tmpval = false;
         }
@@ -99,9 +99,9 @@ bool EventQueue::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new EventQueue(cv, ld);
+    return new EventQueue();
 }
 
 static const ConvertMap event_queue_api =

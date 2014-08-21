@@ -34,7 +34,7 @@ namespace {
 class PafMax : public ConversionState
 {
 public:
-    PafMax(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    PafMax() : ConversionState() {};
     virtual ~PafMax() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,19 +46,19 @@ bool PafMax::convert(std::istringstream& data_stream)
     bool retval = true;
     int val;
 
-    ld->open_table("stream_tcp");
+    table_api.open_table("stream_tcp");
 
     if (data_stream >> val)
     {
         if (val < 1460)
-            retval = ld->add_diff_option_comment("paf_max [0:63780]", "paf_max [1460:63780]");
+            retval = table_api.add_diff_option_comment("paf_max [0:63780]", "paf_max [1460:63780]");
         else
-            retval = ld->add_option_to_table("paf_max", val);
+            retval = table_api.add_option("paf_max", val);
     }
     else
         retval = false;
 
-    ld->close_table();
+    table_api.close_table();
     return retval;
 }
 
@@ -66,9 +66,9 @@ bool PafMax::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new PafMax(cv, ld);
+    return new PafMax();
 }
 
 static const ConvertMap paf_max_api =

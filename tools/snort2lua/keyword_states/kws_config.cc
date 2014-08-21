@@ -35,7 +35,7 @@ namespace {
 class Config : public ConversionState
 {
 public:
-    Config(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Config() : ConversionState() {};
     virtual ~Config() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -56,7 +56,7 @@ bool Config::convert(std::istringstream& data_stream)
         const ConvertMap* map = util::find_map(config::config_api, keyword);
         if (map)
         {
-            cv->set_state(map->ctor(cv, ld));
+            cv.set_state(map->ctor());
             return true;
         }
     }
@@ -68,9 +68,9 @@ bool Config::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Config(cv, ld);
+    return new Config();
 }
 
 static const ConvertMap keyword_config = 

@@ -19,8 +19,8 @@
  */
 // dt_comment.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef DT_COMMENT_H
-#define DT_COMMENT_H
+#ifndef DATA_DATA_TYPES_DT_COMMENT_H
+#define DATA_DATA_TYPES_DT_COMMENT_H
 
 #include <string>
 #include <vector>

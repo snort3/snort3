@@ -34,7 +34,7 @@ namespace {
 class RuleState : public ConversionState
 {
 public:
-    RuleState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    RuleState() : ConversionState() {};
     virtual ~RuleState() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,8 +47,8 @@ bool RuleState::convert(std::istringstream& data_stream)
     bool retval = true;
     int count = 0;
 
-    ld->open_table("rule_state");
-    ld->open_table();
+    table_api.open_table("rule_state");
+    table_api.open_table();
 
     while (util::get_string(data_stream, arg, ", "))
     {
@@ -57,38 +57,38 @@ bool RuleState::convert(std::istringstream& data_stream)
         switch (count)
         {
             case 0:
-                tmpval = ld->add_option_to_table("sid", std::stoi(arg));
+                tmpval = table_api.add_option("sid", std::stoi(arg));
                 count++;
                 break;
             case 1:
-                tmpval = ld->add_option_to_table("gid", std::stoi(arg));
+                tmpval = table_api.add_option("gid", std::stoi(arg));
                 count++;
                 break;
             case 2:
                 if (!arg.compare("enabled"))
                 {
-                    ld->add_diff_option_comment("enabled", "enable");
-                    tmpval = ld->add_option_to_table("enable", true);
+                    table_api.add_diff_option_comment("enabled", "enable");
+                    tmpval = table_api.add_option("enable", true);
                 }
                 else if (!arg.compare("disabled"))
                 {
-                    ld->add_diff_option_comment("disabled", "enable");
-                    tmpval = ld->add_option_to_table("enable", false);
+                    table_api.add_diff_option_comment("disabled", "enable");
+                    tmpval = table_api.add_option("enable", false);
                 }
                 else
                 {
-                    ld->failed_conversion(data_stream, "third option must be {enabled|disabled|");
+                    data_api.failed_conversion(data_stream, "third option must be {enabled|disabled|");
                     retval = false;
                 }
 
                 count++;
                 break;
             case 3:
-                ld->add_deleted_comment("action");
+                table_api.add_deleted_comment("action");
                 count++;
                 break;
             default:
-                ld->failed_conversion(data_stream, "too many options!!");
+                data_api.failed_conversion(data_stream, "too many options! - " + arg);
 
         }
 
@@ -96,8 +96,8 @@ bool RuleState::convert(std::istringstream& data_stream)
             retval = false;
     }
 
-    ld->close_table();
-    ld->close_table();
+    table_api.close_table();
+    table_api.close_table();
     return retval;
 }
 
@@ -105,9 +105,9 @@ bool RuleState::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new RuleState(cv, ld);
+    return new RuleState();
 }
 
 static const ConvertMap rule_state_api =

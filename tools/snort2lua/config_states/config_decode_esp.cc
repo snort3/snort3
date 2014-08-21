@@ -35,7 +35,7 @@ namespace {
 class DecodeEsp : public ConversionState
 {
 public:
-    DecodeEsp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    DecodeEsp() : ConversionState() {};
     virtual ~DecodeEsp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -52,7 +52,7 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
         return false;
 
 
-    ld->open_table("esp");
+    table_api.open_table("esp");
 
     if (!type.compare("1") ||
         !type.compare("on") ||
@@ -60,8 +60,8 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
         !type.compare("true") ||
         !type.compare("enable"))
     {
-        ld->add_diff_option_comment("config decode_esp: " + type, "decode_esp = true");
-        retval = ld->add_option_to_table("decode_esp", true);
+        table_api.add_diff_option_comment("config decode_esp: " + type, "decode_esp = true");
+        retval = table_api.add_option("decode_esp", true);
     }
     else if (!type.compare("0") ||
         !type.compare("no") ||
@@ -69,8 +69,8 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
         !type.compare("false") ||
         !type.compare("disable"))
     {
-        ld->add_diff_option_comment("config decode_esp: " + type, "decode_esp = false");
-        retval = ld->add_option_to_table("decode_esp", false);
+        table_api.add_diff_option_comment("config decode_esp: " + type, "decode_esp = false");
+        retval = table_api.add_option("decode_esp", false);
     }
     else
         return false;
@@ -85,9 +85,9 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new DecodeEsp(cv, ld);
+    return new DecodeEsp();
 }
 
 static const ConvertMap decode_esp_api =

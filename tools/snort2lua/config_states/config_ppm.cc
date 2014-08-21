@@ -34,7 +34,7 @@ namespace {
 class Ppm : public ConversionState
 {
 public:
-    Ppm(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Ppm() : ConversionState() {};
     virtual ~Ppm() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,7 +47,7 @@ bool Ppm::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    ld->open_table("ppm");
+    table_api.open_table("ppm");
 
     while(data_stream >> keyword)
     {
@@ -72,70 +72,70 @@ bool Ppm::convert(std::istringstream& data_stream)
 
         else if(!keyword.compare("fastpath-expensive-packets"))
         {
-            ld->add_diff_option_comment("fastpath-expensive-packets", "fastpath_expensive_packets");
-            tmpval = ld->add_option_to_table("fastpath_expensive_packets", true);
+            table_api.add_diff_option_comment("fastpath-expensive-packets", "fastpath_expensive_packets");
+            tmpval = table_api.add_option("fastpath_expensive_packets", true);
         }
         
         else if(!keyword.compare("max-pkt-time"))
         {
-            ld->add_diff_option_comment("max-pkt-time", "max_pkt_time");
+            table_api.add_diff_option_comment("max-pkt-time", "max_pkt_time");
             tmpval = parse_int_option("max_pkt_time", data_stream);
         }
         
         else if(!keyword.compare("debug-pkts"))
         {
-            ld->add_diff_option_comment("debug-pkts", "debug_pkts");
-            tmpval = ld->add_option_to_table("debug_pkts", true);
+            table_api.add_diff_option_comment("debug-pkts", "debug_pkts");
+            tmpval = table_api.add_option("debug_pkts", true);
         }
         
         else if(!keyword.compare("max-rule-time"))
         {
-            ld->add_diff_option_comment("max-rule-time", "max_rule_time");
+            table_api.add_diff_option_comment("max-rule-time", "max_rule_time");
             tmpval = parse_int_option("max_rule_time", data_stream);
         }
         
         else if(!keyword.compare("suspend-expensive-rules"))
         {
-            ld->add_diff_option_comment("suspend-expensive-rules", "suspend_expensive_rules");
-            tmpval = ld->add_option_to_table("suspend_expensive_rules", true);
+            table_api.add_diff_option_comment("suspend-expensive-rules", "suspend_expensive_rules");
+            tmpval = table_api.add_option("suspend_expensive_rules", true);
         }
         
         else if(!keyword.compare("suspend-timeout"))
         {
-            ld->add_diff_option_comment("suspend-timeout", "suspend_timeout");
+            table_api.add_diff_option_comment("suspend-timeout", "suspend_timeout");
             tmpval = parse_int_option("suspend_timeout", data_stream);
         }
         
         else if(!keyword.compare("pkt-log"))
         {
-            ld->add_diff_option_comment("pkt-log ", "pkt_log");
+            table_api.add_diff_option_comment("pkt-log ", "pkt_log");
             std::string opt1;
             std::string opt2;
 
             if(popped_comma)
-                ld->add_option_to_table("pkt_log", "log");
+                table_api.add_option("pkt_log", "log");
 
             else if (!(data_stream >> opt1))
-                ld->add_option_to_table("pkt_log", "log");
+                table_api.add_option("pkt_log", "log");
 
             else if (opt1.back() == ',')
             {
                 opt1.pop_back();
-                tmpval = ld->add_option_to_table("pkt_log", opt1);
+                tmpval = table_api.add_option("pkt_log", opt1);
             }
 
             else if (!(data_stream >> opt2))
-                tmpval = ld->add_option_to_table("pkt_log", opt1);
+                tmpval = table_api.add_option("pkt_log", opt1);
 
             else
-                 tmpval = ld->add_option_to_table("pkt_log", "both");
+                 tmpval = table_api.add_option("pkt_log", "both");
         }
         
         else if(!keyword.compare("rule-log"))
         {
             std::string opt1;
             std::string opt2;
-            ld->add_diff_option_comment("rule-log", "rule_log");
+            table_api.add_diff_option_comment("rule-log", "rule_log");
 
             if (!(data_stream >> opt1))
                 tmpval = false;
@@ -143,14 +143,14 @@ bool Ppm::convert(std::istringstream& data_stream)
             else if (opt1.back() == ',')
             {
                 opt1.pop_back();
-                tmpval = ld->add_option_to_table("rule_log", opt1);
+                tmpval = table_api.add_option("rule_log", opt1);
             }
 
             else if (!(data_stream >> opt2))
-                tmpval = ld->add_option_to_table("rule_log", opt1);
+                tmpval = table_api.add_option("rule_log", opt1);
 
             else
-                tmpval = ld->add_option_to_table("rule_log", "both");
+                tmpval = table_api.add_option("rule_log", "both");
         }
         
         else
@@ -167,9 +167,9 @@ bool Ppm::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Ppm(cv, ld);
+    return new Ppm();
 }
 
 static const ConvertMap config_ppm_api =

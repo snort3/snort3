@@ -34,7 +34,7 @@ namespace {
 class AlertTest : public ConversionState
 {
 public:
-    AlertTest(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    AlertTest() : ConversionState() {};
     virtual ~AlertTest() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -48,7 +48,7 @@ bool AlertTest::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string units;
 
-    ld->open_top_level_table("alert_test");
+    table_api.open_top_level_table("alert_test");
 
 
 
@@ -68,16 +68,16 @@ bool AlertTest::convert(std::istringstream& data_stream)
 
 
         if (!keyword.compare("stdout"))
-            tmpval = ld->add_option_to_table("file", "stdout");
+            tmpval = table_api.add_option("file", "stdout");
 
         else if (!keyword.compare("session"))
-            tmpval = ld->add_option_to_table("session", true);
+            tmpval = table_api.add_option("session", true);
 
         else if (!keyword.compare("rebuilt"))
-            tmpval = ld->add_option_to_table("rebuilt", true);
+            tmpval = table_api.add_option("rebuilt", true);
 
         else if (!keyword.compare("msg"))
-            tmpval = ld->add_option_to_table("msg", true);
+            tmpval = table_api.add_option("msg", true);
 
         else if (!keyword.compare("file"))
         {
@@ -85,14 +85,14 @@ bool AlertTest::convert(std::istringstream& data_stream)
 
             if (arg_stream >> file_name)
             {
-                tmpval = ld->add_option_to_table("file", file_name);
+                tmpval = table_api.add_option("file", file_name);
             }
             else
             {
 #ifdef WIN32
-                tmpval = ld->add_option_to_table("file", "alert.ids");
+                tmpval = table_api.add_option("file", "alert.ids");
 #else
-                tmpval = ld->add_option_to_table("file", "alert");
+                tmpval = table_api.add_option("file", "alert");
 #endif
             }
         }
@@ -113,11 +113,11 @@ bool AlertTest::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    ld->open_top_level_table("alert_test"); // in case there are no arguments
-    ld->close_table();
-    return new AlertTest(cv, ld);
+    table_api.open_top_level_table("alert_test"); // in case there are no arguments
+    table_api.close_table();
+    return new AlertTest();
 }
 
 static const ConvertMap alert_test_api =

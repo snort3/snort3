@@ -34,7 +34,7 @@ namespace {
 class Gtp : public ConversionState
 {
 public:
-    Gtp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Gtp() : ConversionState() {};
     virtual ~Gtp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,7 +47,7 @@ bool Gtp::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    ld->open_table("udp");
+    table_api.open_table("udp");
 
     while (util::get_string(data_stream, args, ",;"))
     {
@@ -63,7 +63,7 @@ bool Gtp::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("ports"))
         {
-            ld->add_diff_option_comment("ports", "gtp_ports");
+            table_api.add_diff_option_comment("ports", "gtp_ports");
             tmpval = parse_curly_bracket_list("gtp_ports", arg_stream);
         }
 
@@ -77,7 +77,7 @@ bool Gtp::convert(std::istringstream& data_stream)
             retval = false;
     }
 
-    ld->close_table();
+    table_api.close_table();
     return retval;
 }
 
@@ -85,9 +85,9 @@ bool Gtp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Gtp(cv, ld);
+    return new Gtp();
 }
 
 static const ConvertMap preprocessor_gtp =

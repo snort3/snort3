@@ -19,7 +19,7 @@
  */
 // dt_var.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "data/dt_var.h"
+#include "data/data_types/dt_var.h"
 #include "data/dt_data.h"
 #include "utils/s2l_util.h"
 

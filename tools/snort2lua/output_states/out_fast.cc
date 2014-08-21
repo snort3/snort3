@@ -34,7 +34,7 @@ namespace {
 class AlertFast : public ConversionState
 {
 public:
-    AlertFast(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    AlertFast() : ConversionState() {};
     virtual ~AlertFast() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,12 +46,12 @@ bool AlertFast::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    ld->open_top_level_table("alert_fast");
+    table_api.open_top_level_table("alert_fast");
 
     if (!(data_stream >> keyword))
         return true;
 
-    retval = ld->add_option_to_table("file", keyword);
+    retval = table_api.add_option("file", keyword);
 
 
     if (!(data_stream >> keyword))
@@ -59,14 +59,14 @@ bool AlertFast::convert(std::istringstream& data_stream)
 
     if (!keyword.compare("packet"))
     {
-        retval = ld->add_option_to_table("packet", true) && retval;
+        retval = table_api.add_option("packet", true) && retval;
 
         if (!(data_stream >> keyword))
             return retval;
     }
     else
     {
-        ld->add_option_to_table("packet", false);
+        table_api.add_option("packet", false);
     }
 
 
@@ -87,8 +87,8 @@ bool AlertFast::convert(std::istringstream& data_stream)
     }
 
 
-    retval = ld->add_option_to_table("limit", limit) && retval;
-    retval = ld->add_option_to_table("units", units) && retval;
+    retval = table_api.add_option("limit", limit) && retval;
+    retval = table_api.add_option("units", units) && retval;
 
     // If we read something, more data available and bad input
     if (data_stream >> keyword)
@@ -101,11 +101,11 @@ bool AlertFast::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    ld->open_top_level_table("alert_fast"); // in case there are no arguments
-    ld->close_table();
-    return new AlertFast(cv, ld);
+    table_api.open_top_level_table("alert_fast"); // in case there are no arguments
+    table_api.close_table();
+    return new AlertFast();
 }
 
 static const ConvertMap alert_fast_api =

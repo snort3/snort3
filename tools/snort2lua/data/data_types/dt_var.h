@@ -17,38 +17,43 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_option.h author Josh Rosenbaum <jrosenba@cisco.com>
-
-#ifndef DT_OPTION_H
-#define DT_OPTION_H
+// dt_var.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-class Option
+#ifndef DATA_DATA_TYPES_DT_VAR_H
+#define DATA_DATA_TYPES_DT_VAR_H
+
+class LuaData;
+
+class Variable
 {
 public:
-    Option(std::string name, int val, int depth);
-    Option(std::string name, bool val, int depth);
-    Option(std::string name, std::string val, int depth);
-    virtual ~Option();
+    Variable(std::string name, int depth);
+    Variable(std::string name);
+    virtual ~Variable();
 
     inline std::string get_name(){ return name; };
- 
-    // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const Option &);
-    friend bool operator!=(const Option& lhs, const Option& rhs);
-    friend bool operator==(const Option& lhs, const Option& rhs);
+    std::string get_value(LuaData*);
+    bool add_value(std::string);
+    friend std::ostream &operator<<( std::ostream&, const Variable &);
+
 
 private:
-    enum class OptionType{ STRING, VAR, BOOL, INT};
+    enum class VarType { STRING, VARIABLE};
 
+    struct VarData
+    {
+        std::string data;
+        VarType type;
+    };
+
+    std::vector<VarData*> vars;
     std::string name;
-    std::string value;
     int depth;
-    OptionType type;
-
+    const std::size_t max_line_length = 77; // leave room for additional text
 
 };
 

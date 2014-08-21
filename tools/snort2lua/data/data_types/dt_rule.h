@@ -19,8 +19,8 @@
  */
 // dt_rule.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef DT_RULE_H
-#define DT_RULE_H
+#ifndef DATA_DATA_TYPES_DT_RULE_H
+#define DATA_DATA_TYPES_DT_RULE_H
 
 
 #include <string>
@@ -28,7 +28,7 @@
 #include <iostream>
 #include <array>
 
-#include "data/dt_rule_option.h"
+#include "data/data_types/dt_rule_option.h"
 
 class Rule
 {

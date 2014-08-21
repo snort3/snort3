@@ -176,8 +176,6 @@ int main (int argc, char* argv[])
     std::string rule_file = std::string();
     bool rule_file_specifed = false;
     bool fail = false;;
-    Converter cv;
-    LuaData ld;
 
     // increment past the program name
     argc -= (argc > 0) ? 1 : 0;
@@ -208,17 +206,17 @@ int main (int argc, char* argv[])
         {
             case PRINT_ALL:
                 quiet_mode = false;
-                ld.set_default_print();
+                data_api.set_default_print();
                 mode = "all";
                 break;
             case PRINT_QUIET:
                 quiet_mode = true;
-                ld.set_quiet_print();
+                data_api.set_quiet_print();
                 mode = "quiet";
                 break;
             case PRINT_DIFFERENCES:
                 quiet_mode = false;
-                ld.set_difference_print();
+                data_api.set_difference_print();
                 mode = "differences";
                 break;
         }
@@ -230,7 +228,7 @@ int main (int argc, char* argv[])
     else
     {
         quiet_mode = true;
-        ld.set_quiet_print();
+        data_api.set_quiet_print();
     }
 
     // Get the output file.  Warn the user if they provided multiple
@@ -338,7 +336,7 @@ int main (int argc, char* argv[])
 
 
 
-    cv.initialize(&init_state_ctor, &ld);
+    cv.initialize(&init_state_ctor);
 
     // MAIN LOOP!!   walk through every input file and begin converting!
     option::Option* opt = options[CONF_FILE];
@@ -355,32 +353,32 @@ int main (int argc, char* argv[])
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
     // now.  Otherwise, set up the include file.
-    if (ld.contains_rules())
+    if (rule_api.contains_rules())
     {
         if (rule_file.empty() || !rule_file.compare(output_file))
         {
             std::string s = std::string("$default_rules");
             rule_file_specifed = false;
 
-            ld.open_top_level_table("ips");
-            ld.add_option_to_table("rules", s);
-            ld.close_table();
+            table_api.open_top_level_table("ips");
+            table_api.add_option("rules", s);
+            table_api.close_table();
         }
         else
         {
             rule_file_specifed = true;
 
-            ld.open_top_level_table("ips");
-            ld.add_option_to_table("include", rule_file);
-            ld.close_table();
+            table_api.open_top_level_table("ips");
+            table_api.add_option("include", rule_file);
+            table_api.close_table();
         }
     }
 
     // Snort++ requires a binder table to be instantiated,
     // although not necessarily filled.  So, just add this table.
     // If its already added, these lines won't have any effect
-    ld.open_top_level_table("binder");
-    ld.close_table();
+    table_api.open_top_level_table("binder");
+    table_api.close_table();
 
     // finally, lets print the converter to file
 
@@ -390,16 +388,20 @@ int main (int argc, char* argv[])
 
     if (!rule_file_specifed)
     {
-        ld.print_rules(out, rule_file_specifed);
-        ld.print_conf_options(out);
+        data_api.print_data(out);
+        rule_api.print_rules(out, rule_file_specifed);
+        table_api.print_tables(out);
+        data_api.print_comments(out);
+
 
         out << std::endl;
 
-        if (ld.failed_conversions() && !ld.is_quiet_mode())
+        if ((data_api.failed_conversions() || rule_api.failed_conversions()) &&
+            !data_api.is_quiet_mode())
         {
             std::ofstream rejects;  // in this case, rejects are regular configuration options
             rejects.open(error_file, std::ifstream::out);
-            ld.print_rejects(rejects);
+            data_api.print_errors(rejects);
             rejects << std::endl;
             rejects.close();
         }
@@ -409,19 +411,22 @@ int main (int argc, char* argv[])
         std::ofstream rules;
         rules.open(rule_file, std::ifstream::out);
 
-        ld.print_rules(rules, rule_file_specifed);
-        ld.print_conf_options(out);
+        data_api.print_data(out);
+        rule_api.print_rules(rules, rule_file_specifed);
+        table_api.print_tables(out);
+        data_api.print_comments(out);
 
         // flush all data
         out << std::endl;
         rules << std::endl;
         rules.close();
 
-        if (ld.failed_conversions() && !ld.is_quiet_mode())
+        if ((data_api.failed_conversions() || rule_api.failed_conversions()) &&
+            !data_api.is_quiet_mode())
         {
             std::ofstream rejects;
             rejects.open(error_file, std::ifstream::out);
-            ld.print_rejects(rejects);
+            data_api.print_errors(rejects);
             rejects << std::endl;
             rejects.close();
         }
@@ -432,7 +437,7 @@ int main (int argc, char* argv[])
     delete[] options;
     delete[] buffer;
 
-    if (fail || ld.failed_conversions())
+    if (fail || data_api.failed_conversions() || rule_api.failed_conversions())
         return -2;
     return 0;
 }

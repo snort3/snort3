@@ -17,26 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_include.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// dt_option.h author Josh Rosenbaum <jrosenba@cisco.com>
 
+#ifndef DATA_DATA_TYPES_DT_OPTION_H
+#define DATA_DATA_TYPES_DT_OPTION_H
 
-#include "data/dt_include.h"
+#include <string>
+#include <vector>
+#include <iostream>
 
-Include::Include(std::string file_name) : file_name(file_name){}
-Include::~Include(){}
-
-// overloading operators
-std::ostream &operator<<( std::ostream& out, const Include &incl)
+class Option
 {
-    out << "include '" << incl.file_name << "'";
-    return out;
-}
+public:
+    Option(std::string name, int val, int depth);
+    Option(std::string name, bool val, int depth);
+    Option(std::string name, std::string val, int depth);
+    virtual ~Option();
 
-bool operator==(const Include& lhs, const Include& rhs)
-{
-    return !(lhs.file_name.compare(rhs.file_name));
-}
-bool operator!=(const Include& lhs, const Include& rhs)
-{
-    return !(lhs == rhs);
-}
+    inline std::string get_name(){ return name; };
+ 
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const Option &);
+    friend bool operator!=(const Option& lhs, const Option& rhs);
+    friend bool operator==(const Option& lhs, const Option& rhs);
+
+private:
+    enum class OptionType{ STRING, VAR, BOOL, INT};
+
+    std::string name;
+    std::string value;
+    int depth;
+    OptionType type;
+
+
+};
+
+
+#endif

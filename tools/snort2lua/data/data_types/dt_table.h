@@ -19,17 +19,17 @@
  */
 // dt_table.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef DT_TABLE_H
-#define DT_TABLE_H
+#ifndef DATA_DATA_TYPES_DT_TABLE_H
+#define DATA_DATA_TYPES_DT_TABLE_H
 
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "dt_option.h"
-#include "dt_var.h"
-#include "dt_comment.h"
+#include "data/data_types/dt_option.h"
+#include "data/data_types/dt_var.h"
+#include "data/data_types/dt_comment.h"
 
 class Table
 {

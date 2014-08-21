@@ -34,7 +34,7 @@ namespace {
 class EventTrace : public ConversionState
 {
 public:
-    EventTrace(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    EventTrace() : ConversionState() {};
     virtual ~EventTrace() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,8 +47,8 @@ bool EventTrace::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string arg;
 
-    ld->open_table("output");
-    ld->open_table("event_trace");
+    table_api.open_table("output");
+    table_api.open_table("event_trace");
 
     while (util::get_string(data_stream, keyword, ", ") &&
             util::get_string(data_stream, arg, ", "))
@@ -56,10 +56,10 @@ bool EventTrace::convert(std::istringstream& data_stream)
         bool tmpval = true;
 
         if (!keyword.compare("file"))
-            tmpval = ld->add_option_to_table("file", arg);
+            tmpval = table_api.add_option("file", arg);
 
         else if (!keyword.compare("max_data"))
-            tmpval = ld->add_option_to_table("max_data", std::stoi(arg));
+            tmpval = table_api.add_option("max_data", std::stoi(arg));
 
         else
             tmpval = false;
@@ -69,8 +69,8 @@ bool EventTrace::convert(std::istringstream& data_stream)
             retval = false;
     }
 
-    ld->close_table();
-    ld->close_table();
+    table_api.close_table();
+    table_api.close_table();
     return retval;
 }
 
@@ -78,9 +78,9 @@ bool EventTrace::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new EventTrace(cv, ld);
+    return new EventTrace();
 }
 
 static const ConvertMap event_trace_api =

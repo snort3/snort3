@@ -20,7 +20,7 @@
 // dt_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#include "data/dt_rule.h"
+#include "data/data_types/dt_rule.h"
 #include "data/dt_data.h"  // included for print mode
 #include "utils/s2l_util.h"
 
@@ -111,7 +111,7 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
     bool first_line = true;
 
     // don't print comment and tag in quiet mode
-    if (!LuaData::is_quiet_mode())
+    if (!data_api.is_quiet_mode())
     {
         if (rule.is_bad_rule)
             out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";

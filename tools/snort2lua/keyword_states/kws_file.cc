@@ -35,7 +35,7 @@ namespace {
 class File : public ConversionState
 {
 public:
-    File(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    File() : ConversionState() {};
     virtual ~File() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -50,7 +50,7 @@ bool File::convert(std::istringstream& data_stream)
 
 
     std::string data = data_stream.str();
-    ld->add_hdr_data(data);
+    rule_api.add_hdr_data(data);
     data_stream.setstate(std::ios_base::eofbit);
     return true;
 }
@@ -59,9 +59,9 @@ bool File::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new File(cv, ld);
+    return new File();
 }
 
 static const ConvertMap keyword_file =

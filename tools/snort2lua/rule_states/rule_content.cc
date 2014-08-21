@@ -37,7 +37,7 @@ template<const std::string *option_name>
 class Content : public ConversionState
 {
 public:
-    Content(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Content() : ConversionState() {};
     virtual ~Content() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -54,11 +54,11 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     std::streamoff pos;
 
     if (!(*option_name).compare("protected_content"))
-        ld->make_rule_a_comment();
+        rule_api.make_rule_a_comment();
 
     val = util::get_rule_option_args(data_stream);
-    retval = ld->add_rule_option(*option_name, val);
-    ld->select_option(*option_name);
+    retval = rule_api.add_rule_option(*option_name, val);
+    rule_api.select_option(*option_name);
 
     pos = data_stream.tellg();
     val = util::get_rule_option_args(data_stream);
@@ -79,63 +79,63 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         util::trim(val);
 
         if (!keyword.compare("offset"))
-            tmpval = ld->add_suboption("offset", val);
+            tmpval = rule_api.add_suboption("offset", val);
 
         else if (!keyword.compare("distance"))
-            tmpval = ld->add_suboption("distance", val);
+            tmpval = rule_api.add_suboption("distance", val);
 
         else if (!keyword.compare("within"))
-            tmpval = ld->add_suboption("within", val);
+            tmpval = rule_api.add_suboption("within", val);
 
         else if (!keyword.compare("depth"))
-            tmpval = ld->add_suboption("depth", val);
+            tmpval = rule_api.add_suboption("depth", val);
 
         else if (!keyword.compare("nocase"))
-            tmpval = ld->add_suboption("nocase");
+            tmpval = rule_api.add_suboption("nocase");
 
         else if (!keyword.compare("rawbytes"))
-            tmpval = ld->add_rule_option_before_selected("pkt_data");
+            tmpval = rule_api.add_rule_option_before_selected("pkt_data");
 
         else if (!keyword.compare("http_client_body"))
-            tmpval = ld->add_rule_option_before_selected("http_client_body");
+            tmpval = rule_api.add_rule_option_before_selected("http_client_body");
 
         else if (!keyword.compare("http_cookie"))
-            tmpval = ld->add_rule_option_before_selected("http_cookie");
+            tmpval = rule_api.add_rule_option_before_selected("http_cookie");
 
         else if (!keyword.compare("http_raw_cookie"))
-            tmpval = ld->add_rule_option_before_selected("http_raw_cookie");
+            tmpval = rule_api.add_rule_option_before_selected("http_raw_cookie");
 
         else if (!keyword.compare("http_header"))
-            tmpval = ld->add_rule_option_before_selected("http_header");
+            tmpval = rule_api.add_rule_option_before_selected("http_header");
 
         else if (!keyword.compare("http_raw_header"))
-            tmpval = ld->add_rule_option_before_selected("http_raw_header");
+            tmpval = rule_api.add_rule_option_before_selected("http_raw_header");
 
         else if (!keyword.compare("http_method"))
-            tmpval = ld->add_rule_option_before_selected("http_method");
+            tmpval = rule_api.add_rule_option_before_selected("http_method");
 
         else if (!keyword.compare("http_uri"))
-            tmpval = ld->add_rule_option_before_selected("http_uri");
+            tmpval = rule_api.add_rule_option_before_selected("http_uri");
 
         else if (!keyword.compare("http_raw_uri"))
-            tmpval = ld->add_rule_option_before_selected("http_raw_uri");
+            tmpval = rule_api.add_rule_option_before_selected("http_raw_uri");
 
         else if (!keyword.compare("http_stat_code"))
-            tmpval = ld->add_rule_option_before_selected("http_stat_code");
+            tmpval = rule_api.add_rule_option_before_selected("http_stat_code");
 
         else if (!keyword.compare("http_stat_msg"))
-            tmpval = ld->add_rule_option_before_selected("http_stat_msg");
+            tmpval = rule_api.add_rule_option_before_selected("http_stat_msg");
 
         else if (!keyword.compare("hash"))   // PROTECTED CONTENT
-            tmpval = ld->add_suboption("hash", val);
+            tmpval = rule_api.add_suboption("hash", val);
 
         else if (!keyword.compare("length"))  // PROTECTED CONTENT
-            tmpval = ld->add_suboption("length", val);
+            tmpval = rule_api.add_suboption("length", val);
 
         else if (!keyword.compare("fast_pattern"))
         {
             if (val.empty())
-                tmpval = ld->add_suboption("fast_pattern");
+                tmpval = rule_api.add_suboption("fast_pattern");
 
             else if(!val.compare("only"))
                 tmpval = true;  // deprecated.  ignore.
@@ -151,9 +151,9 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
                     {
                         pos++;
                         int length = std::stoi(val.substr(pos, std::string::npos));
-                        tmpval = ld->add_suboption("fast_pattern");
-                        tmpval = ld->add_suboption("fast_pattern_offset", std::to_string(offset));
-                        tmpval = ld->add_suboption("fast_pattern_length", std::to_string(length));
+                        tmpval = rule_api.add_suboption("fast_pattern");
+                        tmpval = rule_api.add_suboption("fast_pattern_offset", std::to_string(offset));
+                        tmpval = rule_api.add_suboption("fast_pattern_length", std::to_string(length));
                     }
                     else
                         tmpval = false;
@@ -168,7 +168,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         else
         {
             // since we don't know this next option, check for any other options
-            ld->unselect_option(); // don't reference this option anymore
+            rule_api.unselect_option(); // don't reference this option anymore
             data_stream.seekg(pos);
             data_stream.clear();  // Might have already hit end of stream
             return set_next_rule_state(data_stream) && retval;
@@ -194,9 +194,9 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
 
 
 template<const std::string *rule_name>
-static ConversionState* content_ctor(Converter* cv, LuaData* ld)
+static ConversionState* content_ctor()
 {
-    return new Content<rule_name>(cv, ld);
+    return new Content<rule_name>();
 }
 
 static const std::string content = "content";
@@ -206,11 +206,11 @@ static const std::string uricontent = "uricontent";
 
 //  Uricontent:"foo" --> http_uti; content:"foo".
 //  So, just add the 'http_uri' option first, then parse as if content
-static ConversionState* uricontent_ctor(Converter* cv, LuaData* ld)
+static ConversionState* uricontent_ctor()
 {
-    ld->add_rule_option("http_uri");
-    ld->add_comment_to_rule("uricontent deprecated --> 'http_uri: content:'foo'");
-    return new Content<&content>(cv, ld);
+    rule_api.add_rule_option("http_uri");
+    rule_api.add_comment_to_rule("uricontent deprecated --> 'http_uri: content:'foo'");
+    return new Content<&content>();
 }
 
 

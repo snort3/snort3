@@ -41,11 +41,10 @@ namespace
 class ConfigIntOption : public ConversionState
 {
 public:
-    ConfigIntOption(Converter* cv, LuaData* ld,
-                        const std::string* snort_option,
+    ConfigIntOption( const std::string* snort_option,
                         const std::string* lua_table,
                         const std::string* lua_option) :
-            ConversionState(cv, ld),
+            ConversionState(),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -60,19 +59,19 @@ public:
             (lua_table == nullptr)||
             (lua_table->empty()))
         {
-            ld->developer_error("Invalid Option!!  Missing either the Snort Option"
+            data_api.developer_error("Invalid Option!!  Missing either the Snort Option"
                 " or the corresponding lua table!!");
             return false;
         }
 
-        ld->open_table(*lua_table);
+        table_api.open_table(*lua_table);
         bool retval;
 
         // if the two names are not equal ...
         if ((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
             retval = parse_int_option(*lua_option, stream);
-            ld->add_diff_option_comment("config " + *snort_option +
+            table_api.add_diff_option_comment("config " + *snort_option +
                     ":", *lua_option);
         }
         else
@@ -80,7 +79,7 @@ public:
             retval = parse_int_option(*snort_option, stream);
         }
 
-        ld->close_table();
+        table_api.close_table();
         stream.setstate(std::ios::eofbit); // not interested in any additional arguments
         return retval;
     }
@@ -95,9 +94,9 @@ private:
 template<const std::string *snort_option,
         const std::string *lua_table,
         const std::string *lua_option = nullptr>
-static ConversionState* config_int_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_int_ctor()
 {
-    return new ConfigIntOption(cv, ld, snort_option,
+    return new ConfigIntOption( snort_option,
                                 lua_table,
                                 lua_option);
 }

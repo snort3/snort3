@@ -19,11 +19,11 @@
  */
 // output_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef OUTPUT_API_H
-#define OUTPUT_API_H
+#ifndef OUTPUT_STATES_OUTPUT_API_H
+#define OUTPUT_STATES_OUTPUT_API_H
 
 #include <vector>
-#include "conversion_state.h"
+#include "conversion_defines.h"
 
 namespace output
 {

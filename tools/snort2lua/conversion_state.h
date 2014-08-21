@@ -33,40 +33,19 @@
 #include "utils/s2l_util.h"
 #include "rule_states/rule_api.h"
 #include "utils/converter.h"
-
-class Converter;
-class ConversionState;
-typedef ConversionState* (*conv_new_f)(Converter*, LuaData* ld);
-
-struct ConvertMap
-{
-    std::string keyword;
-    conv_new_f ctor;
-};
-
-// yes, forward declaring.  Without some improvements to design, this needs to stay here.
-namespace rules
-{
-    extern const std::vector<const ConvertMap*> rule_api;
-} // namespace rules.
+#include "conversion_defines.h"
 
 
 class ConversionState
 {
 
 public:
-    ConversionState(Converter* cv, LuaData* ld)
-    {
-        this->cv = cv;
-        this->ld = ld;
-    }
+    ConversionState() {}
 
     virtual ~ConversionState() {};
     virtual bool convert(std::istringstream& data)=0;
 
 protected:
-    Converter* cv;
-    LuaData* ld;
 
 #if 0
     Forward declaration fo parsing methods. Since these are all inline,
@@ -118,14 +97,14 @@ protected:
             if(val.back() == ',')
                 val.pop_back();
 
-            ld->add_option_to_table(opt_name, val);
+            table_api.add_option(opt_name, val);
             return true;
         }
 
         if (!required)
             return true;
 
-        ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
@@ -137,14 +116,14 @@ protected:
 
         if(stream >> val)
         {
-            ld->add_option_to_table(opt_name, val);
+            table_api.add_option(opt_name, val);
             return true;
         }
 
         if (!required)
             return true;
 
-        ld->add_comment_to_table("snort.conf missing argument for: " + opt_name + " <int>");
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
     }
 
@@ -158,7 +137,7 @@ protected:
             return false;
 
         while (stream >> elem && elem != "}")
-            retval = ld->add_list_to_table(list_name, elem) && retval;
+            retval = table_api.add_list(list_name, elem) && retval;
 
         return retval;
     }
@@ -172,12 +151,12 @@ protected:
             return false;
 
         else if(!val.compare("yes"))
-            return ld->add_option_to_table(opt_name, true);
+            return table_api.add_option(opt_name, true);
 
         else if (!val.compare("no"))
-            return ld->add_option_to_table(opt_name, false);
+            return table_api.add_option(opt_name, false);
 
-        ld->add_comment_to_table("Unable to convert_option: " + opt_name + ' ' + val);
+        table_api.add_comment("Unable to convert_option: " + opt_name + ' ' + val);
         return false;
     }
 
@@ -205,12 +184,12 @@ protected:
             {
                 std::ostringstream tmp;
                 tmp << "0x" << std::hex << dig;
-                retval = ld->add_list_to_table(list_name, tmp.str()) && retval;
+                retval = table_api.add_list(list_name, tmp.str()) && retval;
 
             }
             else
             {
-                ld->add_comment_to_table("Unable to convert " + elem +
+                table_api.add_comment("Unable to convert " + elem +
                         "!!  The element must be a single charachter or number between 0 - 255 inclusive");
                 retval = false;
             }
@@ -235,7 +214,7 @@ protected:
         if(tmp.size() > 0)
             tmp.erase(tmp.begin());
 
-        return ld->add_option_to_table("--" + list_name, tmp );
+        return table_api.add_option("--" + list_name, tmp );
     }
 
 
@@ -244,7 +223,7 @@ protected:
                                         bool required = true)
     {
         std::string val;
-        ld->add_deleted_comment(opt_name);
+        table_api.add_deleted_comment(opt_name);
 
         if(stream >> val)
             return true;
@@ -275,16 +254,16 @@ protected:
 
             // now, lets get the next option.
             util::trim(keyword);
-            const ConvertMap* map = util::find_map(rules::rule_api, keyword);
+            const ConvertMap* map = util::find_map(rules::rule_options_api, keyword);
             if (map)
             {
-                ld->unselect_option(); // reset option data...just in case.
-                cv->set_state(map->ctor(cv, ld));
+                rule_api.unselect_option(); // reset option data...just in case.
+                cv.set_state(map->ctor());
                 break;
             }
             else
             {
-                ld->bad_rule(stream, keyword);
+                rule_api.bad_rule(stream, keyword);
 
                 // if there is data after this keyword,
                 //    eat everything until end of keyword

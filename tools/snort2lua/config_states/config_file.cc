@@ -23,8 +23,9 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
 #include "utils/s2l_util.h"
+#include "data/dt_table_api.h"
+
 
 namespace config
 {
@@ -34,7 +35,7 @@ namespace {
 class File : public ConversionState
 {
 public:
-    File(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    File() : ConversionState() {};
     virtual ~File() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,7 +47,7 @@ bool File::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    ld->open_table("file_id");
+    table_api.open_table("file_id");
     while(util::get_string(data_stream, args, ","))
     {
         std::istringstream arg_stream(args);
@@ -58,16 +59,16 @@ bool File::convert(std::istringstream& data_stream)
 
         // vvvvvvvv -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
         else if (!keyword.compare("file_capture_memcap"))
-            ld->add_unsupported_comment("file_capture_memcap");
+            table_api.add_unsupported_comment("file_capture_memcap");
 
         else if (!keyword.compare("file_capture_max"))
-            ld->add_unsupported_comment("file_capture_max");
+            table_api.add_unsupported_comment("file_capture_max");
 
         else if (!keyword.compare("file_capture_min"))
-            ld->add_unsupported_comment("file_capture_min");
+            table_api.add_unsupported_comment("file_capture_min");
 
         else if (!keyword.compare("file_capture_block_size"))
-            ld->add_unsupported_comment("file_capture_block_size");
+            table_api.add_unsupported_comment("file_capture_block_size");
         // ^^^^^^^^^ -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
 
         else if (!keyword.compare("show_data_depth"))
@@ -75,37 +76,37 @@ bool File::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("type_id"))
         {
-            ld->add_diff_option_comment("config file: type_id", "enable_type");
-            ld->add_option_to_table("enable_type", true);
+            table_api.add_diff_option_comment("config file: type_id", "enable_type");
+            table_api.add_option("enable_type", true);
         }
 
         else if (!keyword.compare("signature"))
         {
-            ld->add_diff_option_comment("config file: signature", "enable_signature");
-            ld->add_option_to_table("enable_signature", true);
+            table_api.add_diff_option_comment("config file: signature", "enable_signature");
+            table_api.add_option("enable_signature", true);
         }
 
         else if (!keyword.compare("file_type_depth"))
         {
-            ld->add_diff_option_comment("config file: file_type_depth", "type_depth");
+            table_api.add_diff_option_comment("config file: file_type_depth", "type_depth");
             tmpval = parse_int_option("type_depth", arg_stream);
         }
 
         else if (!keyword.compare("file_signature_depth"))
         {
-            ld->add_diff_option_comment("config file: file_signature_depth", "signature_depth");
+            table_api.add_diff_option_comment("config file: file_signature_depth", "signature_depth");
             tmpval = parse_int_option("signature_depth", arg_stream);
         }
 
         else if (!keyword.compare("file_block_timeout"))
         {
-            ld->add_diff_option_comment("config file: file_block_timeout", "block_timeout");
+            table_api.add_diff_option_comment("config file: file_block_timeout", "block_timeout");
             tmpval = parse_int_option("block_timeout", arg_stream);
         }
 
         else if (!keyword.compare("file_lookup_timeout"))
         {
-            ld->add_diff_option_comment("config file: file_lookup_timeout", "lookup_timeout");
+            table_api.add_diff_option_comment("config file: file_lookup_timeout", "lookup_timeout");
             tmpval = parse_int_option("lookup_timeout", arg_stream);
         }
 
@@ -123,9 +124,9 @@ bool File::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new File(cv, ld);
+    return new File();
 }
 
 static const ConvertMap file_api =

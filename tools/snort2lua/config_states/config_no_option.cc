@@ -34,7 +34,7 @@ namespace
 class DeadCode : public ConversionState
 {
 public:
-    DeadCode(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
+    DeadCode() : ConversionState() {}
     virtual ~DeadCode() {}
     virtual bool convert(std::istringstream& data_stream)
     {
@@ -48,52 +48,52 @@ public:
 template<const std::string* snort_option,
          const std::string* lua_table,
          const std::string* lua_option>
-static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_true_no_opt_ctor()
 {
-    ld->open_table(*lua_table);
+    table_api.open_table(*lua_table);
 
     if (snort_option->compare(*lua_option))
-        ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
+        table_api.add_diff_option_comment("config " + *snort_option + ":", *lua_option);
 
-    ld->add_option_to_table(*lua_option, true);
-    ld->close_table();
-    return new DeadCode(cv, ld);
+    table_api.add_option(*lua_option, true);
+    table_api.close_table();
+    return new DeadCode();
 }
 
 template<const std::string* snort_option,
          const std::string* lua_table>
-static ConversionState* config_true_no_opt_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_true_no_opt_ctor()
 {
-    ld->open_table(*lua_table);
-    ld->add_option_to_table(*snort_option, true);
-    ld->close_table();
-    return new DeadCode(cv, ld);
+    table_api.open_table(*lua_table);
+    table_api.add_option(*snort_option, true);
+    table_api.close_table();
+    return new DeadCode();
 }
 
 template<const std::string* snort_option,
          const std::string* lua_table,
          const std::string* lua_option>
-static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_false_no_opt_ctor()
 {
-    ld->open_table(*lua_table);
+    table_api.open_table(*lua_table);
 
     // WARNING:  THIS WILL SEGFAULT if any variable is nullptr!!
     if (snort_option->compare(*lua_option))
-        ld->add_diff_option_comment("config " + *snort_option + ":", *lua_option);
+        table_api.add_diff_option_comment("config " + *snort_option + ":", *lua_option);
 
-    ld->add_option_to_table(*lua_option, false);
-    ld->close_table();
-    return new DeadCode(cv, ld);
+    table_api.add_option(*lua_option, false);
+    table_api.close_table();
+    return new DeadCode();
 }
 
 template<const std::string* snort_option,
          const std::string* lua_table>
-static ConversionState* config_false_no_opt_ctor(Converter* cv, LuaData* ld)
+static ConversionState* config_false_no_opt_ctor()
 {
-    ld->open_table(*lua_table);
-    ld->add_option_to_table(*snort_option, false);
-    ld->close_table();
-    return new DeadCode(cv, ld);
+    table_api.open_table(*lua_table);
+    table_api.add_option(*snort_option, false);
+    table_api.close_table();
+    return new DeadCode();
 }
 
 } // namespace

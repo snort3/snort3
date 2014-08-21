@@ -20,7 +20,10 @@
 // pps_binder.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "preprocessor_states/pps_binder.h"
-#include "data/dt_data.h"
+#include "data/dt_table_api.h"
+
+
+Binder::Binder() : printed(false) {};
 
 Binder::~Binder()
 {
@@ -32,59 +35,59 @@ Binder::~Binder()
 void Binder::add_to_configuration()
 {
     printed = true;
-    ld->open_top_level_table("binder");
-    ld->open_table();
+    table_api.open_top_level_table("binder");
+    table_api.open_table();
 
-    ld->open_table("when");
+    table_api.open_table("when");
 
     if (!when_policy_id.empty())
-        ld->add_option_to_table("policy_id", when_policy_id);
+        table_api.add_option("policy_id", when_policy_id);
 
     if (!when_service.empty())
-        ld->add_option_to_table("service", when_service);
+        table_api.add_option("service", when_service);
 
     if (!when_proto.empty())
-        ld->add_option_to_table("proto", when_proto);
+        table_api.add_option("proto", when_proto);
 
     if (!when_role.empty())
-        ld->add_option_to_table("role", when_role);
+        table_api.add_option("role", when_role);
 
     for (auto p : ports)
-        ld->add_list_to_table("ports", p);
+        table_api.add_list("ports", p);
 
     for (auto s : vlans)
-        ld->add_list_to_table("vlans", s);
+        table_api.add_list("vlans", s);
 
     for (auto n : nets)
-        ld->add_list_to_table("nets", n);
+        table_api.add_list("nets", n);
 
-    ld->close_table(); // "when"
+    table_api.close_table(); // "when"
 
 
-    ld->open_table("use");
+    table_api.open_table("use");
 
     if (!use_policy_id.empty())
-        ld->add_option_to_table("policy_id", use_policy_id);
+        table_api.add_option("policy_id", use_policy_id);
 
     if (!use_action.empty())
-        ld->add_option_to_table("action", use_action);
+        table_api.add_option("action", use_action);
 
     if (!use_file.empty())
-        ld->add_option_to_table("file", use_file);
+        table_api.add_option("file", use_file);
 
     if (!use_service.empty())
-        ld->add_option_to_table("service", use_service);
+        table_api.add_option("service", use_service);
 
     if (!use_type.empty())
-        ld->add_option_to_table("type", use_type);
+        table_api.add_option("type", use_type);
 
     if (!use_name.empty())
-        ld->add_option_to_table("name", use_name);
+        table_api.add_option("name", use_name);
 
-    ld->close_table();  // "use"
+    table_api.close_table();  // "use"
 
-    ld->close_table();  // anonymous table
-    ld->close_table();  // "binder"
+    table_api.close_table();  // anonymous table
+    table_api.close_table();  // "binder"
 }
 
 
