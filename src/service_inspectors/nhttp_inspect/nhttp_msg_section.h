@@ -31,12 +31,15 @@
 
 #include "detection/detection_util.h"
 #include "nhttp_scratch_pad.h"
-#include "nhttp_flow_data.h"
 #include "nhttp_field.h"
+#include "nhttp_flow_data.h"
+#include "nhttp_transaction.h"
 
 //-------------------------------------------------------------------------
 // NHttpMsgSection class
 //-------------------------------------------------------------------------
+
+class NHttpMsgHeadShared;
 
 class NHttpMsgSection {
 public:
@@ -47,6 +50,8 @@ public:
     virtual void update_flow() = 0;                       // Manages the splitter and communication between message sections
     virtual void legacy_clients() = 0;                    // Populates the raw and normalized buffer interface used by old Snort
 
+    NHttpEnums::MethodId get_method_id() { return method_id; };
+
 protected:
     NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
 
@@ -55,11 +60,16 @@ protected:
     void print_message_title(FILE *output, const char *title) const;
     void print_message_wrapup(FILE *output) const;
     void create_event(NHttpEnums::EventSid sid);
+    void legacy_request();
+    void legacy_status();
+    void legacy_header(bool use_trailer);
+    void legacy_cookie(NHttpMsgHeadShared* header, NHttpEnums::SourceId source_id);
 
     Field msg_text;
 
     NHttpFlowData* session_data;
     NHttpEnums::SourceId source_id;
+    NHttpTransaction* transaction;
     bool tcp_close;
     ScratchPad scratch_pad;
 

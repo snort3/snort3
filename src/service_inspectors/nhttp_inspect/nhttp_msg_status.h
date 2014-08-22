@@ -45,13 +45,15 @@ public:
     void update_flow();
     void legacy_clients();
 
+    const Field& get_status_code() { return status_code; };
+    const Field& get_reason_phrase() { return reason_phrase; };
+
 private:
     void parse_start_line();
     void derive_status_code_num();
 
     Field status_code;
     Field reason_phrase;
-    NHttpMsgRequest* request;
 };
 
 #endif

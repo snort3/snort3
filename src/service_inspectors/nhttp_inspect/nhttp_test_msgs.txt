@@ -689,6 +689,22 @@ Accept-Language: is\r\n
 @break
 @request
 
+GET /basic/request/response/pair/with/large/body/returned HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Length: 60000\r\n
+\r\n
+body-start
+
+
+@13002
+@break
+@request
+
 POST /basic/request/response/pair/with/large/bodies/both/ways HTTP/1.1\r\n
 Host: www.testcase.com\r\n
 Content-Length: 50000\r\n
@@ -702,6 +718,52 @@ HTTP/1.1 200 OK\r\n
 Content-Length: 60000\r\n
 \r\n
 body2-start
+
+
+@13003
+@break
+@request
+
+HEAD /basic/request/response/pair/using/HEAD HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Length: 60000\r\n
+\r\n
+
+HTTP/1.1 400 If we see this HEAD worked\r\n\r\n
+
+
+@13004
+@break
+@request
+
+GET /basic/request/response/pair/with/chunked/returned HTTP/1.1\r\n
+Host: www.testcase.com\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Transfer-Encoding: chunked\r\n
+\r\n
+A000\r\n
+chunk1-start
+
+B000\r\n
+chunk2-start
+
+C000\r\n
+
+chunk3-start
+
+0\r\n
+date: Mon, 02 Oct 2000 20:25:00 GMT\r\n
+fakeheader: 1234\r\n
+\r\n
 
 
 # ***********************************************************************************************

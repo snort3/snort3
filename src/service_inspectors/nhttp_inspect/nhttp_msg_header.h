@@ -41,6 +41,7 @@ public:
     void print_section(FILE *output);
     void gen_events();
     void update_flow();
+    void legacy_clients();
 };
 
 #endif

@@ -32,10 +32,7 @@
 #include "snort.h"
 #include "nhttp_enum.h"
 #include "nhttp_flow_data.h"
-#include "nhttp_msg_section.h"
-#include "nhttp_msg_request.h"
-#include "nhttp_msg_status.h"
-#include "nhttp_msg_header.h"
+#include "nhttp_transaction.h"
 
 using namespace NHttpEnums;
 
@@ -44,12 +41,8 @@ unsigned NHttpFlowData::nhttp_flow_id = 0;
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) { }
 
 NHttpFlowData::~NHttpFlowData() {
-    delete request_line;
-    delete status_line;
-    for(int k=0; k <= 1; k++) {
-        delete headers[k];
-        delete latest_other[k];
-    }
+    delete transaction[SRC_CLIENT];
+    delete transaction[SRC_SERVER];
 }
 
 void NHttpFlowData::half_reset(SourceId source_id) {

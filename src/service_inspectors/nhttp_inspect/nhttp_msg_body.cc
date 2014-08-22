@@ -40,9 +40,9 @@ using namespace NHttpEnums;
 
 NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
    NHttpMsgSection(buffer, buf_size, session_data_, source_id_), data_length(session_data->data_length[source_id]),
-   body_sections(session_data->body_sections[source_id]), body_octets(session_data->body_octets[source_id]) {
-    delete session_data->latest_other[source_id];
-    session_data->latest_other[source_id] = this;
+   body_sections(session_data->body_sections[source_id]), body_octets(session_data->body_octets[source_id])
+{
+   transaction->set_other(this);
 }
 
 void NHttpMsgBody::analyze() {
@@ -87,6 +87,9 @@ void NHttpMsgBody::update_flow() {
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgBody::legacy_clients() {
     ClearHttpBuffers();
+    legacy_request();
+    legacy_status();
+    legacy_header(false);
     if (data.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, data.start, (unsigned)data.length);
 }
 

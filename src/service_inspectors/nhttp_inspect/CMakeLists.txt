@@ -41,6 +41,8 @@ set (FILE_LIST
     nhttp_test_input.h
     nhttp_flow_data.cc
     nhttp_flow_data.h
+    nhttp_transaction.cc
+    nhttp_transaction.h
     nhttp_scratch_pad.h
     nhttp_enum.h
     nhttp_field.cc

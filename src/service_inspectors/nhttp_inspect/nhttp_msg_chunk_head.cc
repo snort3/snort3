@@ -40,10 +40,11 @@ using namespace NHttpEnums;
 
 NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
    NHttpMsgSection(buffer, buf_size, session_data_, source_id_), body_sections(session_data->body_sections[source_id]),
-   num_chunks(session_data->num_chunks[source_id]) {
-    delete session_data->latest_other[source_id];
-    session_data->latest_other[source_id] = this;
+   num_chunks(session_data->num_chunks[source_id])
+{
+   transaction->set_other(this);
 }
+
 
 // Convert the hexadecimal chunk length.
 // RFC says that zero may be written with multiple digits "000000".
@@ -131,7 +132,6 @@ void NHttpMsgChunkHead::update_flow() {
     else {
         // This was zero-length last chunk, trailer comes next
         session_data->type_expected[source_id] = SEC_TRAILER;
-        session_data->half_reset(source_id);
     }
 }
 
@@ -139,6 +139,9 @@ void NHttpMsgChunkHead::update_flow() {
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgChunkHead::legacy_clients() {
     ClearHttpBuffers();
+    legacy_request();
+    legacy_status();
+    legacy_header(false);
     if (start_line.length > 0) SetHttpBuffer(HTTP_BUFFER_CLIENT_BODY, start_line.start, (unsigned)start_line.length);
 }
 

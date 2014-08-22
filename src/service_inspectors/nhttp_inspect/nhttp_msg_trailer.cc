@@ -38,9 +38,9 @@
 using namespace NHttpEnums;
 
 NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-   NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_) {
-    delete session_data->latest_other[source_id];
-    session_data->latest_other[source_id] = this;
+   NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_)
+{
+   transaction->set_trailer(this, source_id);
 }
 
 void NHttpMsgTrailer::gen_events() {
@@ -63,6 +63,14 @@ void NHttpMsgTrailer::update_flow() {
         session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
         session_data->half_reset(source_id);
     }
+}
+
+// Legacy support function. Puts message fields into the buffers used by old Snort.
+void NHttpMsgTrailer::legacy_clients() {
+    ClearHttpBuffers();
+    legacy_request();
+    legacy_status();
+    legacy_header(true);
 }
 
 

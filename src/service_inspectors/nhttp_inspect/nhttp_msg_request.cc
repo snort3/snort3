@@ -41,14 +41,11 @@
 using namespace NHttpEnums;
 
 NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-       NHttpMsgStart(buffer, buf_size, session_data_, source_id_) {
-    delete session_data->request_line;
-    session_data->request_line = this;
-    delete session_data->headers[SRC_CLIENT];
-    session_data->headers[SRC_CLIENT] = nullptr;
-    delete session_data->latest_other[SRC_CLIENT];
-    session_data->latest_other[SRC_CLIENT] = nullptr;
+       NHttpMsgStart(buffer, buf_size, session_data_, source_id_)
+{
+   transaction->set_request(this);
 }
+
 
 void NHttpMsgRequest::parse_start_line() {
     // There should be exactly two spaces. One following the method and one before "HTTP/".
@@ -169,9 +166,7 @@ void NHttpMsgRequest::update_flow() {
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgRequest::legacy_clients() {
     ClearHttpBuffers();
-    if (method.length > 0) SetHttpBuffer(HTTP_BUFFER_METHOD, method.start, (unsigned)method.length);
-    if (uri->get_uri().length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_URI, uri->get_uri().start, (unsigned)uri->get_uri().length);
-    if (uri->get_norm_legacy().length > 0) SetHttpBuffer(HTTP_BUFFER_URI, uri->get_norm_legacy().start, (unsigned)uri->get_norm_legacy().length);
+    legacy_request();
 }
 
 

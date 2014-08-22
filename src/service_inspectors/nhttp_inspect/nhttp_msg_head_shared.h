@@ -42,7 +42,14 @@ class NHttpMsgHeadShared: public NHttpMsgSection {
 public:
     void analyze();
     void gen_events();
-    void legacy_clients();
+
+    int32_t get_num_headers() const { return num_headers; };
+    const Field& get_headers() const { return headers; };
+    const Field& get_header_line(int k) const { return header_line[k]; };
+    const Field& get_header_name(int k) const { return header_name[k]; };
+    const Field& get_header_value(int k) const { return header_value[k]; };
+    NHttpEnums::HeaderId get_header_name_id(int k)  const { return header_name_id[k]; };
+    const Field& get_header_value_norm(NHttpEnums::HeaderId header_id);
 
 protected:
     NHttpMsgHeadShared(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
@@ -59,7 +66,6 @@ protected:
 
     // Master table of known header fields and their normalization strategies.
     static const HeaderNormalizer* const header_norms[];
-    static const int32_t num_norms;
 
     // Tables of header field names and header value names
     static const StrCode header_list[];

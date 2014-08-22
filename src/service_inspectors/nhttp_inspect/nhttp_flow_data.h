@@ -31,6 +31,8 @@
 
 #include "stream/stream_api.h"
 
+class NHttpTransaction;
+
 class NHttpFlowData : public FlowData
 {
 public:
@@ -50,6 +52,7 @@ public:
     friend class NHttpMsgChunkBody;
     friend class NHttpMsgTrailer;
     friend class NHttpStreamSplitter;
+    friend class NHttpTransaction;
 private:
     void half_reset(NHttpEnums::SourceId source_id);
 
@@ -81,13 +84,8 @@ private:
     int64_t chunk_sections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };  // number of sections seen so far in the current chunk
     int64_t chunk_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // number of user data octets seen so far in the current chunk including terminating CRLF
 
-    // Stored message sections from this session
-    // You must reset to nullptr after deleting a section
-    // Never put one section in two places. latestOther is only for things not otherwise listed
-    class NHttpMsgRequest* request_line = nullptr;
-    class NHttpMsgStatus* status_line = nullptr;
-    class NHttpMsgHeader* headers[2] = { nullptr, nullptr };
-    class NHttpMsgSection* latest_other[2] = { nullptr, nullptr };
+    // Phase 1: separate transactions in each direction. Need to combine them &&&
+    NHttpTransaction* transaction[2] = { nullptr, nullptr };
 };
 
 #endif

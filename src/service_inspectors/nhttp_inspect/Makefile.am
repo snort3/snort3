@@ -23,6 +23,7 @@ nhttp_uri_tables.cc \
 nhttp_module.cc nhttp_module.h \
 nhttp_test_input.cc nhttp_test_input.h \
 nhttp_flow_data.cc nhttp_flow_data.h \
+nhttp_transaction.cc nhttp_transaction.h \
 nhttp_stream_splitter.cc nhttp_stream_splitter.h \
 nhttp_scratch_pad.h nhttp_enum.h \
 nhttp_field.cc nhttp_field.h

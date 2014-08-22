@@ -142,36 +142,14 @@ void NHttpMsgHeadShared::derive_header_name_id(int index) {
     header_name_id[index] = (HeaderId) str_to_code(lower_name, header_name[index].length, header_list);
 }
 
-void NHttpMsgHeadShared::gen_events() {
-    if (infractions & INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
+const Field& NHttpMsgHeadShared::get_header_value_norm(NHttpEnums::HeaderId header_id) {
+    header_norms[header_id]->normalize(header_id, header_count[header_id], scratch_pad, infractions,
+          header_name_id, header_value, num_headers, header_value_norm[header_id]);
+    return header_value_norm[header_id];
 }
 
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgHeadShared::legacy_clients() {
-    ClearHttpBuffers();
-
-    if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, headers.start, (unsigned)headers.length);
-    if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_HEADER, headers.start, (unsigned)headers.length);
- 
-    for (int k=0; k < num_headers; k++) {
-        if (((header_name_id[k] == HEAD_COOKIE) && (source_id == SRC_CLIENT)) || ((header_name_id[k] == HEAD_SET_COOKIE) && (source_id == SRC_SERVER))) {
-            if (header_value[k].length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, header_value[k].start, (unsigned)header_value[k].length);
-            break;
-        }
-    }
-
-    if (source_id == SRC_CLIENT) {
-       if (header_norms[HEAD_COOKIE]->normalize(HEAD_COOKIE, header_count[HEAD_COOKIE], scratch_pad, infractions,
-          header_name_id, header_value, num_headers, header_value_norm[HEAD_COOKIE]) > 0) {
-           SetHttpBuffer(HTTP_BUFFER_COOKIE, header_value_norm[HEAD_COOKIE].start, (unsigned)header_value_norm[HEAD_COOKIE].length);
-       }
-    }
-    else {
-       if (header_norms[HEAD_SET_COOKIE]->normalize(HEAD_SET_COOKIE, header_count[HEAD_SET_COOKIE], scratch_pad, infractions,
-          header_name_id, header_value, num_headers, header_value_norm[HEAD_SET_COOKIE]) > 0) {
-           SetHttpBuffer(HTTP_BUFFER_COOKIE, header_value_norm[HEAD_SET_COOKIE].start, (unsigned)header_value_norm[HEAD_SET_COOKIE].length);
-       }
-    }
+void NHttpMsgHeadShared::gen_events() {
+    if (infractions & INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
 }
 
 void NHttpMsgHeadShared::print_headers(FILE *output) {
@@ -181,10 +159,10 @@ void NHttpMsgHeadShared::print_headers(FILE *output) {
         snprintf(title_buf, sizeof(title_buf), "Header ID %d", header_name_id[j]);
         header_value[j].print(output, title_buf);
     }
-    for (int k=1; k <= num_norms; k++) {
-        if (header_norms[k]->normalize((HeaderId)k, header_count[k], scratch_pad, infractions, header_name_id, header_value, num_headers, header_value_norm[k]) != STAT_NOSOURCE) {
+    for (int k=1; k <= HEAD__MAXVALUE-1; k++) {
+        if (get_header_value_norm((HeaderId)k).length != STAT_NOSOURCE) {
             snprintf(title_buf, sizeof(title_buf), "Normalized header %d", k);
-            header_value_norm[k].print(output, title_buf, true);
+            get_header_value_norm((HeaderId)k).print(output, title_buf, true);
         }
     }
 }

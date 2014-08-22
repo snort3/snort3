@@ -35,19 +35,14 @@
 #include "snort.h"
 #include "nhttp_enum.h"
 #include "nhttp_msg_status.h"
-#include "nhttp_msg_request.h"
 #include "nhttp_msg_header.h"
 
 using namespace NHttpEnums;
 
 NHttpMsgStatus::NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-       NHttpMsgStart(buffer, buf_size, session_data_, source_id_), request(session_data->request_line) {
-    delete session_data->status_line;
-    session_data->status_line = this;
-    delete session_data->headers[SRC_SERVER];
-    session_data->headers[SRC_SERVER] = nullptr;
-    delete session_data->latest_other[SRC_SERVER];
-    session_data->latest_other[SRC_SERVER] = nullptr;
+       NHttpMsgStart(buffer, buf_size, session_data_, source_id_)
+{
+   transaction->set_status(this);
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
@@ -133,21 +128,8 @@ void NHttpMsgStatus::update_flow() {
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgStatus::legacy_clients() {
     ClearHttpBuffers();
-    if ((request != nullptr) && (request->get_method().length > 0)) {
-        SetHttpBuffer(HTTP_BUFFER_METHOD, request->get_method().start, (unsigned)request->get_method().length);
-    }
-    if ((request != nullptr) && (request->get_uri().length > 0)) {
-        SetHttpBuffer(HTTP_BUFFER_RAW_URI, request->get_uri().start, (unsigned)request->get_uri().length);
-    }
-    if ((request != nullptr) && (request->get_uri_norm_legacy().length > 0)) {
-        SetHttpBuffer(HTTP_BUFFER_URI, request->get_uri_norm_legacy().start, (unsigned)request->get_uri_norm_legacy().length);
-    }
-    if (status_code.length > 0) {
-        SetHttpBuffer(HTTP_BUFFER_STAT_CODE, status_code.start, (unsigned)status_code.length);
-    }
-    if (reason_phrase.length > 0) {
-        SetHttpBuffer(HTTP_BUFFER_STAT_MSG, reason_phrase.start, (unsigned)reason_phrase.length);
-    }
+    legacy_request();
+    legacy_status();
 }
 
 

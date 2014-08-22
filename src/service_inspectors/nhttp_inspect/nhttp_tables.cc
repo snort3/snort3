@@ -233,8 +233,6 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] =
     [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC
 };
 
-const int32_t NHttpMsgHeadShared::num_norms = HEAD__MAXVALUE-1;
-
 const RuleMap NHttpModule::nhttp_events[] =
 {
     { EVENT_ASCII,                           "(nhttp_inspect) ascii encoding" },

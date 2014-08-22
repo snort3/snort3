@@ -33,18 +33,26 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
+#include "nhttp_transaction.h"
 #include "nhttp_msg_section.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_status.h"
+#include "nhttp_msg_head_shared.h"
 
 using namespace NHttpEnums;
 
 NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-   session_data(session_data_), source_id(source_id_), tcp_close(session_data->tcp_close[source_id]), scratch_pad(2*buf_size+500),
-   infractions(session_data->infractions[source_id]), version_id(session_data->version_id[source_id]),
-   method_id(session_data->method_id[source_id]), status_code_num(session_data->status_code_num[source_id])
-{
-    msg_text.start = buffer;
-    msg_text.length = buf_size;
-}
+   msg_text(buf_size, buffer),
+   session_data(session_data_),
+   source_id(source_id_),
+   transaction(NHttpTransaction::attach_my_transaction(session_data, source_id)),
+   tcp_close(session_data->tcp_close[source_id]),
+   scratch_pad(2*buf_size+500),
+   infractions(session_data->infractions[source_id]),
+   version_id(session_data->version_id[source_id]),
+   method_id(session_data->method_id[source_id]),
+   status_code_num(session_data->status_code_num[source_id])
+{}
 
 // Return the number of octets before the first CRLF. Return length if CRLF not present.
 //
@@ -79,15 +87,59 @@ void NHttpMsgSection::create_event(EventSid sid) {
     events_generated |= (1 << (sid-1));
 }
 
+void NHttpMsgSection::legacy_request() {
+    NHttpMsgRequest* request = transaction->get_request();
+    if (request == nullptr) return;
+    if (request->get_method().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_METHOD, request->get_method().start, (unsigned)request->get_method().length);
+    }
+    if (request->get_uri().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_RAW_URI, request->get_uri().start, (unsigned)request->get_uri().length);
+    }
+    if (request->get_uri_norm_legacy().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_URI, request->get_uri_norm_legacy().start, (unsigned)request->get_uri_norm_legacy().length);
+    }
+}
 
+void NHttpMsgSection::legacy_status() {
+    NHttpMsgStatus* status = transaction->get_status();
+    if (status == nullptr) return;
+    if (status->get_status_code().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_CODE, status->get_status_code().start, (unsigned)status->get_status_code().length);
+    }
+    if (status->get_reason_phrase().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_STAT_MSG, status->get_reason_phrase().start, (unsigned)status->get_reason_phrase().length);
+    }
+}
 
+void NHttpMsgSection::legacy_header(bool use_trailer) {
+    NHttpMsgHeadShared* header = use_trailer ?
+      (NHttpMsgHeadShared*)transaction->get_trailer(source_id) :
+      (NHttpMsgHeadShared*)transaction->get_header(source_id);
+    if (header == nullptr) return;
 
+    if (header->get_headers().length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, header->get_headers().start, (unsigned)header->get_headers().length);
+        SetHttpBuffer(HTTP_BUFFER_HEADER, header->get_headers().start, (unsigned)header->get_headers().length);
+    }
 
+    legacy_cookie(header, source_id);
+ }
 
+void NHttpMsgSection::legacy_cookie(NHttpMsgHeadShared* header, SourceId source_id) {
+    HeaderId cookie_head = (source_id == SRC_CLIENT) ? HEAD_COOKIE : HEAD_SET_COOKIE;
 
+    for (int k=0; k < header->get_num_headers(); k++) {
+        if (header->get_header_name_id(k) == cookie_head) {
+            if (header->get_header_value(k).length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, header->get_header_value(k).start, (unsigned)header->get_header_value(k).length);
+            break;
+        }
+    }
 
-
-
+    if (header->get_header_value_norm(cookie_head).length > 0) {
+        SetHttpBuffer(HTTP_BUFFER_COOKIE, header->get_header_value_norm(cookie_head).start, (unsigned)header->get_header_value_norm(cookie_head).length);
+    }
+}
 
 
 
