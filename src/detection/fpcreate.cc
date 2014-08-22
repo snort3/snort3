@@ -946,11 +946,12 @@ static PmType get_pm_type(CursorActionType cat)
     return PM_TYPE__MAX;
 }
 
-static PatternMatchData * get_fp_content(OptTreeNode *otn)
+void set_fp_content(OptTreeNode *otn)
 {
     OptFpList *ofl;
     CursorActionType curr_cat = CAT_SET_RAW;
     FpFoo best;
+    PatternMatchData* pmd = nullptr;
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
     {
@@ -970,8 +971,17 @@ static PatternMatchData * get_fp_content(OptTreeNode *otn)
 
         tmp->pm_type = get_pm_type(curr_cat);
 
-        if (tmp->fp)
-            return tmp;
+        if ( tmp->fp )
+        {
+            if ( pmd )
+                ParseError("only one fast_pattern content per rule allowed");
+
+            else if ( !pmd_can_be_fp(tmp, curr_cat) )
+                ParseError("content ineligible for fast_pattern matcher");
+
+            else
+                pmd = tmp;
+        }
 
         if ( !pmd_can_be_fp(tmp, curr_cat) )
             continue;
@@ -981,7 +991,29 @@ static PatternMatchData * get_fp_content(OptTreeNode *otn)
         if ( curr.is_better(best) )
             best = curr;
     }
-    return best.pmd;
+    if ( !pmd && best.pmd )
+        best.pmd->fp = 1;
+}
+
+static PatternMatchData* get_fp_content(OptTreeNode *otn)
+{
+    OptFpList *ofl;
+
+    for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
+    {
+        if ( !ofl->context )
+            continue;
+
+        if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
+            continue;
+
+        PatternMatchData* pmd = get_pmd(ofl);
+        assert(pmd);
+
+        if ( pmd->fp )
+            return pmd;
+    }
+    return nullptr;
 }
 
 static int fpFinishPortGroupRule(
@@ -1148,8 +1180,8 @@ static int fpAddPortGroupRule(
     if ( !pg || !otn )
         return -1;
 
-    // skip builtin rules
-    if ( !otn->sigInfo.text_rule )  // FIXIT-H must be set for so rules too!
+    // skip builtin rules, continue for text and so rules
+    if ( !otn->sigInfo.text_rule )
         return -1;
 
     /* Rule not enabled */

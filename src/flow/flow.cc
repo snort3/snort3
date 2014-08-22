@@ -34,13 +34,6 @@
 
 unsigned FlowData:: flow_id = 0;
 
-// FIXIT-H can't inline SO_PUBLIC ctor and dtor in header or we get problems:
-// ld: warning: direct access in FlowData::FlowData(unsigned int,
-// Inspector*) to global weak symbol vtable for FlowData means the weak
-// symbol cannot be overridden at runtime. This was likely caused by
-// different translation units being compiled with different visibility
-// settings.
-
 SO_PUBLIC FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);

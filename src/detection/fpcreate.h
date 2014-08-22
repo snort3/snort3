@@ -200,9 +200,11 @@ PORT_GROUP * fpGetServicePortGroupByOrdinal(sopg_table_t *, int, int, int16_t);
 **  Shows the event stats for the created FastPacketDetection
 */
 void fpShowEventStats(SnortConfig*);
-typedef int (*OtnWalkFcn)(int, struct RuleTreeNode *, struct OptTreeNode *);
+typedef int (*OtnWalkFcn)(int, struct RuleTreeNode *, struct OptTreeNode*);
 void fpWalkOtns(int, OtnWalkFcn);
 void fpDynamicDataFree(void *);
+
+void set_fp_content(struct OptTreeNode*);
 
 const char * PatternRawToContent(const char *pattern, int pattern_len);
 

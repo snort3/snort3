@@ -546,8 +546,9 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 static const Parameter alerts_params[] =
 {
     { "alert_file", Parameter::PT_STRING, nullptr, nullptr,
-      "set the alert output file name (FIXIT-H delete if not used)" },
+      "set the alert output file name" }, // FIXIT-H delete if not used
 
+    // FIXIT-L move to fast, full, syslog and delete from here
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
       "include interface in alert info (fast, full, or syslog only)" },
 

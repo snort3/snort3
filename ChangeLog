@@ -5,6 +5,7 @@ fixed)
 -- fixed action leak
 -- testing visibility=hidden
 -- more FIXITs
+-- fp related FIXITs
 
 115
 -- remove share.h
