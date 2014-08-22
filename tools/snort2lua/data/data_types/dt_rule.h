@@ -46,6 +46,7 @@ public:
     void add_comment(std::string comment);
     void bad_rule();
     void make_comment();
+    void update_rule_type(std::string);
 
     friend std::ostream &operator<<( std::ostream&, const Rule &);
 

@@ -97,6 +97,20 @@ bool RuleApi::add_hdr_data(std::string data)
     return curr_rule->add_hdr_data(data);
 }
 
+void RuleApi::update_rule_type(std::string new_type)
+{
+    if (!curr_rule)
+    {
+        begin_rule();
+        curr_rule->add_hdr_data(new_type);
+    }
+    else
+    {
+        curr_rule->update_rule_type(new_type);
+    }
+}
+
+
 bool RuleApi::add_rule_option(std::string opt_name)
 {
     if (!curr_rule)

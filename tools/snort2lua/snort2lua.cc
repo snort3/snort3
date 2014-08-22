@@ -25,6 +25,10 @@
 #include "utils/converter.h"
 #include "init_state.h"
 #include "utils/s2l_util.h"
+#include "utils/parse_cmd_line.h"
+
+
+#if 0
 #include "option_parser.h"
 
 
@@ -149,6 +153,7 @@ const option::Descriptor usage[] =
 
 } // anonymous
 
+#endif
 
 /*********************************************
  **************  MAIN FILES  *****************
@@ -171,15 +176,14 @@ static void mult_include_errors(std::string opt_type, std::string file_name)
 
 int main (int argc, char* argv[])
 {
-    std::string output_file = std::string();
-    std::string error_file = std::string();
-    std::string rule_file = std::string();
-    bool rule_file_specifed = false;
-    bool fail = false;;
+    bool fail = false;
 
+#if 0
+    bool rule_file_specifed = false;
     // increment past the program name
     argc -= (argc > 0) ? 1 : 0;
     argv += (argc > 0) ? 1 : 0;
+
 
     // Parse all options
     option::Stats stats(usage, argc, argv);
@@ -331,24 +335,43 @@ int main (int argc, char* argv[])
         std::cout << std::endl << "At least one input file required." << std::endl << std::endl;
         return -1;
     }
+#endif
 
+    if (!parser::parse_cmd_line(argc, argv))
+    {
+        print_line("ERROR:  Invalid command line options provided!");
+        return -1;
+    }
 
+    // Defaults are set in parse_cmd_line.cc
+    const std::string output_file = parser::get_out_file();
+    const std::string error_file = parser::get_error_file();
+    const std::string rule_file = parser::get_rule_file();
+    const std::string conf_file = parser::get_conf();
 
-
+    // configuration file is required and no default is provided
+    if (conf_file.empty())
+    {
+        print_line("ERROR:  Snort configuration file required!!");
+        print_line("        Use either '-c' or '--conf-file' option");
+        return -1;
+    }
 
     cv.initialize(&init_state_ctor);
 
     // MAIN LOOP!!   walk through every input file and begin converting!
-    option::Option* opt = options[CONF_FILE];
-    do {
-        if (cv.convert_file(std::string(opt->arg)) < 0)
-        {
-            print_line("Failed Conversion of file " + std::string(opt->arg));
-            fail = true;
-        }
-    } while ((opt = opt->next()));
+//    option::Option* opt = options[CONF_FILE];
 
+    if (cv.convert_file(conf_file) < 0)
+    {
+        print_line("Failed Conversion of file " + conf_file);
+        fail = true;
+    }
 
+//    } while ((opt = opt->next()));
+
+    // keep track whether we're printing rules into a seperate file.
+    bool rule_file_specifed = false;
 
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
@@ -434,8 +457,6 @@ int main (int argc, char* argv[])
 
 
     out.close();
-    delete[] options;
-    delete[] buffer;
 
     if (fail || data_api.failed_conversions() || rule_api.failed_conversions())
         return -2;

@@ -469,32 +469,6 @@ static const ConvertMap rule_session =
 const ConvertMap* session_map = &rule_session;
 
 /************************************
- *************** RESP  **************
- ************************************/
-
-static const std::string resp = "resp";
-static const ConvertMap rule_resp =
-{
-    resp,
-    unchanged_rule_ctor<&resp>,
-};
-
-const ConvertMap* resp_map = &rule_resp;
-
-/************************************
- **************  REACT  *************
- ************************************/
-
-static const std::string react = "react";
-static const ConvertMap rule_react =
-{
-    react,
-    unchanged_rule_ctor<&react>,
-};
-
-const ConvertMap* react_map = &rule_react;
-
-/************************************
  ***************  TAG  **************
  ************************************/
 

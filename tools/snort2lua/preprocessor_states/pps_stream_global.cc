@@ -199,7 +199,7 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
         if (!tmpval)
         {
             data_api.failed_conversion(data_stream, arg_stream.str());
-            retval = tmpval;
+            retval = false;
         }
     }
 

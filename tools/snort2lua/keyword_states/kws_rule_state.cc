@@ -52,28 +52,26 @@ bool RuleState::convert(std::istringstream& data_stream)
 
     while (util::get_string(data_stream, arg, ", "))
     {
-        bool tmpval = true;
-
         switch (count)
         {
             case 0:
-                tmpval = table_api.add_option("sid", std::stoi(arg));
+                table_api.add_option("sid", std::stoi(arg));
                 count++;
                 break;
             case 1:
-                tmpval = table_api.add_option("gid", std::stoi(arg));
+                table_api.add_option("gid", std::stoi(arg));
                 count++;
                 break;
             case 2:
                 if (!arg.compare("enabled"))
                 {
                     table_api.add_diff_option_comment("enabled", "enable");
-                    tmpval = table_api.add_option("enable", true);
+                    table_api.add_option("enable", true);
                 }
                 else if (!arg.compare("disabled"))
                 {
                     table_api.add_diff_option_comment("disabled", "enable");
-                    tmpval = table_api.add_option("enable", false);
+                    table_api.add_option("enable", false);
                 }
                 else
                 {
@@ -88,12 +86,10 @@ bool RuleState::convert(std::istringstream& data_stream)
                 count++;
                 break;
             default:
+                retval = false;
                 data_api.failed_conversion(data_stream, "too many options! - " + arg);
 
         }
-
-        if (retval && !tmpval)
-            retval = false;
     }
 
     table_api.close_table();

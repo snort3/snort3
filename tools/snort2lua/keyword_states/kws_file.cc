@@ -52,6 +52,8 @@ bool File::convert(std::istringstream& data_stream)
     std::string data = data_stream.str();
     rule_api.add_hdr_data(data);
     data_stream.setstate(std::ios_base::eofbit);
+    rule_api.make_rule_a_comment();
+    rule_api.add_comment_to_rule("file is currently unsupported");
     return true;
 }
 

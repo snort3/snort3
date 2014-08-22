@@ -41,9 +41,9 @@ public:
     // tells this class whether to parse include files.
     inline void set_parse_includes(bool val) { parse_includes = val; }
     // tells this class whether to convert a file inline or pull all data into one file.
-    inline void set_convert_rules_mult_files(bool var) { convert_rules_mult_files = var; }
+    inline void create_mult_rule_files(bool var) { convert_rules_mult_files = var; }
     // tells this class whether to convert a file inline or pull all data into one file.
-    inline void set_convert_conf_mult_files(bool var) { convert_conf_mult_files = var; }
+    inline void create_mult_conf_files(bool var) { convert_conf_mult_files = var; }
     // reset the current parsing state
     void reset_state();
     // convert the following file from a snort.conf into a lua.conf

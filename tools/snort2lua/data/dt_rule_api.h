@@ -103,6 +103,8 @@ public:
     bool add_suboption(std::string keyword, std::string val);
     // add a comment to a rule
     void add_comment_to_rule(std::string coment);
+    // Change the rule's type (i.e. from log to reject. Used for the 'resp' rule option.
+    void update_rule_type(std::string new_type);
 
 private:
     std::vector<Rule*> rules;

@@ -18,7 +18,7 @@ add_test (
         -o ${OPEN_SOURCE_LUA_CONF}
         -e ${OPEN_SOURCE_LUA_ERRORS}
         -r ${OPEN_SOURCE_LUA_RULES}
-        -a -p -s -t
+        -a -s -t   # output everything, right rules and data to a single out file
     WORKING_DIRECTORY ${CMAKE_CURENT_BINARY_DIR}
 )
 
@@ -40,6 +40,13 @@ set_tests_properties(ctest_snort2lua_rules PROPERTIES DEPENDS snort2lua )
 #  and then runs the resulting converted file through Snort++ as a
 #  a configuration file.
 
+if (UNIX)
+    execute_process (
+        COMMAND id -u
+        OUTPUT_VARIABLE UID
+    )
+endif()
+
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/snort.conf.in"
     "${CMAKE_CURRENT_BINARY_DIR}/snort.conf"
@@ -50,9 +57,14 @@ set (TEST_CONF_LUA "${CMAKE_CURRENT_BINARY_DIR}/snort.lua")
 set (TEST_CONF_REJ "${CMAKE_CURRENT_BINARY_DIR}/snort.rej")
 
 
-add_test (NAME ctest_snort2lua_conf
-            COMMAND $<TARGET_FILE:snort2lua> -c ${TEST_CONF_CONF} -o ${TEST_CONF_LUA} -e ${TEST_CONF_REJ} -a -p -s -t
-            WORKING_DIRECTORY ${CMAKE_CURENT_BINARY_DIR})
+add_test (
+    NAME ctest_snort2lua_conf
+    COMMAND $<TARGET_FILE:snort2lua>
+        -c ${TEST_CONF_CONF}
+        -o ${TEST_CONF_LUA}
+        -e ${TEST_CONF_REJ}
+        -a -s -t # output everything, right rules and data to a single out file
+    WORKING_DIRECTORY ${CMAKE_CURENT_BINARY_DIR})
 add_test (NAME ctest_snort_conf COMMAND $<TARGET_FILE:snort> -c ${TEST_CONF_LUA})
 
 # adding dependcies

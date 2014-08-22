@@ -570,7 +570,7 @@ default_rules =
 
 #alert tcp any any -> any 80 ( sid:1; msg:"found!"; content:"GET"; )
 #alert tcp any any -> any 80 ( sid:2; msg:"found!"; http_method; content:"GET"; )
-alert tcp any any -> any 80 ( sid:3; msg:"found!"; content:"GET"; find:"pat=' HTTP/1%.%d'" ; )
+#alert tcp any any -> any 80 ( sid:3; msg:"found!"; content:"GET"; find:"pat=' HTTP/1%.%d'" ; )
 #alert tcp any any -> any any ( gid:123; sid:2; msg:"(stream_ip) Teardrop attack"; )
 #rewrite tcp any any -> any 80 ( sid:9; msg:"found!"; content:"GET"; replace:"GIT"; )
 ]]

@@ -78,6 +78,23 @@ bool get_string(std::istringstream& data_stream,
 
 std::string get_rule_option_args(std::istringstream& data_stream);
 
+/*
+ * When converting rules, some options require information from
+ * a different options.  For instance, the rule options 'threshold'
+ * needs to know both the rule's gid and sid.  This function
+ * provides a simple way to get those values.
+ *
+ * PARAMS:
+ *          data_stream - the rule's data stream
+ *          opt_name - the option name for which to seach.
+ * RETURN:
+ *          the opt_names value or an empty string if the opt_name
+ *          is not found.
+ *
+ */
+std::string rule_option_find_val(std::istringstream& data_stream,
+                                 std::string opt_name);
+
 // remove any ']]' and double spaces from this string.
 std::string &sanitize_lua_string(std::string &s);
 

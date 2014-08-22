@@ -136,8 +136,9 @@ config daq_var: blah=hah
 
 # Configure specific UID and GID to run snort as after dropping privs. For more information see snort -h command line options
 #
-config set_gid: staff
-config set_uid: 1000
+#config set_gid: snort
+config set_uid: @UID@
+
 #config chroot: @CMAKE_CURRENT_BINARY_DIR@
 
 # Configure default bpf_file to use for filtering what traffic reaches snort. For more information see snort -h command line options (-F)
@@ -564,7 +565,6 @@ preprocessor http_inspect_server: server default \
     log_uri \
     log_hostname \
     whitespace_chars { a b c } \
-    decompress_swf { deflate lzma } \
     decompress_pdf { deflate }
 
 
@@ -1230,8 +1230,8 @@ alert tcp any any <> any any ( sid:1000029; msg:"x"; resp:rst_rcv; )
 alert tcp any any <> any any ( sid:1000030; msg:"x"; resp:rst_all; )
 alert tcp any any <> any any ( sid:1000031; msg:"x"; resp:icmp_net; )
 alert tcp any any <> any any ( sid:1000032; msg:"x"; resp:icmp_host; )
-alert tcp any any <> any any ( sid:1000033 msg:"x"; resp:icmp_port; )
-alert tcp any any <> any any ( sid:1000034 msg:"x"; resp:icmp_all; )
+alert tcp any any <> any any ( sid:1000033; msg:"x"; resp:icmp_port; )
+alert tcp any any <> any any ( sid:1000034; msg:"x"; resp:icmp_all; )
 alert tcp any any <> any any ( sid:1000035; msg:"x"; resp:reset_source, reset_dest, reset_both; )
 alert tcp any any <> any any ( sid:1000036; msg:"x"; resp:rst_snd, rst_rcv, rst_all; )
 alert tcp any any <> any any ( sid:1000037; msg:"x"; resp:icmp_net, icmp_host, icmp_port, icmp_all; )

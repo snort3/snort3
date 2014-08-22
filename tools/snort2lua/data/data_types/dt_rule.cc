@@ -50,10 +50,18 @@ bool Rule::add_hdr_data(std::string data)
 }
 
 
+void Rule::update_rule_type(std::string new_type)
+{ hdr_data[0] = new_type; }
+
 void Rule::bad_rule()
-{
-    is_bad_rule = true;
-}
+{ is_bad_rule = true; }
+
+void Rule::add_comment(std::string new_comment)
+{ comments.push_back("# " + new_comment); }
+
+void Rule::make_comment()
+{ is_comment = true; }
+
 
 bool Rule::add_option(std::string keyword)
 {
@@ -96,15 +104,7 @@ RuleOption* Rule::select_option(std::string opt_name)
 }
 
 
-void Rule::add_comment(std::string new_comment)
-{
-    comments.push_back("# " + new_comment);
-}
 
-void Rule::make_comment()
-{
-    is_comment = true;
-}
 
 std::ostream &operator<<( std::ostream& out, const Rule &rule)
 {
