@@ -116,8 +116,8 @@ struct IpsApi
     BaseApi base;
     RuleOptType type;
 
-    unsigned max_per_rule;  // FIXIT-H this must be enforced
-    unsigned protos;        // FIXIT-H enforce or delete
+    unsigned max_per_rule;
+    unsigned protos;
 
     IpsOptFunc pinit;
     IpsOptFunc pterm;
