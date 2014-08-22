@@ -137,7 +137,7 @@ static const IpsApi uri_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -177,7 +177,7 @@ static const IpsApi client_body_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -217,7 +217,7 @@ static const IpsApi method_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -257,7 +257,7 @@ static const IpsApi cookie_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -297,7 +297,7 @@ static const IpsApi stat_code_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -337,7 +337,7 @@ static const IpsApi stat_msg_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -377,7 +377,7 @@ static const IpsApi raw_uri_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -417,7 +417,7 @@ static const IpsApi raw_header_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,
@@ -457,7 +457,7 @@ static const IpsApi raw_cookie_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,

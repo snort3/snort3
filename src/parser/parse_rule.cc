@@ -120,6 +120,7 @@ static int builtin_rule_count = 0;
 static int so_rule_count = 0;
 static int head_count = 0;          /* number of header blocks (chain heads?) */
 static int otn_count = 0;           /* number of chains */
+static int rule_proto = 0;
 
 static rule_count_t tcpCnt;
 static rule_count_t udpCnt;
@@ -1276,6 +1277,7 @@ void parse_rule_init()
     so_rule_count = 0;
     head_count = 0;
     otn_count = 0;
+    rule_proto = 0;
 
     port_list_free(&port_list);
     memset(&port_list, 0, sizeof(port_list));
@@ -1362,17 +1364,20 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
     {
         rtn.proto = IPPROTO_TCP;
         sc->ip_proto_array[IPPROTO_TCP] = 1;
+        rule_proto = PROTO_BIT__TCP;
     }
     else if ( !strcmp(s, "udp") )
     {
         rtn.proto = IPPROTO_UDP;
         sc->ip_proto_array[IPPROTO_UDP] = 1;
+        rule_proto = PROTO_BIT__UDP;
     }
     else if ( !strcmp(s, "icmp") )
     {
         rtn.proto = IPPROTO_ICMP;
         sc->ip_proto_array[IPPROTO_ICMP] = 1;
         sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
+        rule_proto = PROTO_BIT__ICMP;
     }
     else if ( !strcmp(s, "ip") )
     {
@@ -1384,9 +1389,14 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         sc->ip_proto_array[IPPROTO_UDP] = 1;
         sc->ip_proto_array[IPPROTO_ICMP] = 1;
         sc->ip_proto_array[IPPROTO_ICMPV6] = 1;
+
+        rule_proto = PROTO_BIT__IP;
     }
     else
+    {
         ParseError("bad protocol: %s", s);
+        rule_proto = 0;
+    }
 }
 
 void parse_rule_nets(
@@ -1430,10 +1440,7 @@ void parse_rule_opt_begin(SnortConfig* sc, const char* key)
     if ( s_ignore )
         return;
 
-    if ( !IpsManager::option_begin(sc, key) )
-    {
-        ParseError("unknown rule keyword: %s.", key);
-    }
+    IpsManager::option_begin(sc, key, rule_proto);
 }
 
 void parse_rule_opt_set(
@@ -1442,10 +1449,7 @@ void parse_rule_opt_set(
     if ( s_ignore )
         return;
 
-    if ( !IpsManager::option_set(sc, key, opt, val) )
-    {
-        ParseError("unknown rule option: %s:%s.", key, opt);
-    }
+    IpsManager::option_set(sc, key, opt, val);
 }
 
 void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
@@ -1481,6 +1485,8 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
     otn->proto = rtn.proto;
     otn->enabled = ScDefaultRuleState();
+
+    IpsManager::reset_options();
 
     return otn;
 }

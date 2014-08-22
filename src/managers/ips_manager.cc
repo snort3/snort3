@@ -55,9 +55,10 @@ struct Option
 {
     const IpsApi* api;
     bool init;
+    unsigned count;
 
     Option(const IpsApi* p)
-    { api = p; init = false; };
+    { api = p; init = false; count = 0; };
 };
 
 typedef list<Option*> OptionList;
@@ -163,12 +164,15 @@ const char* IpsManager::get_option_keyword()
 }
 
 bool IpsManager::option_begin(
-    SnortConfig* sc, const char* key)
+    SnortConfig* sc, const char* key, int proto)
 {
     Option* opt = get_opt(key);
 
     if ( !opt )
+    {
+        ParseError("unknown rule keyword: %s.", key);
         return false;
+    }
 
     if ( !opt->init )
     {
@@ -176,8 +180,21 @@ bool IpsManager::option_begin(
             opt->api->pinit(sc);
         opt->init = true;
     }
-    // FIXIT-H verify api->protos and api->max_per_rule
-    // before calling ctor
+
+    if ( opt->api->max_per_rule && (++opt->count > opt->api->max_per_rule) )
+    {
+        ParseError("%s allowed only %d time(s) per rule",
+            opt->api->base.name, opt->api->max_per_rule);
+        return false;
+    }
+
+    if ( opt->api->protos && !(proto & opt->api->protos) )
+    {
+        ParseError("%s not allowed with given rule protocol",
+            opt->api->base.name);
+        return false;
+    }
+
     current_module = ModuleManager::get_module(key);
 
     if ( current_module && !current_module->begin(key, 0, sc) )
@@ -283,6 +300,12 @@ void IpsManager::global_term(SnortConfig* sc)
             p->api->pterm(sc);
             p->init = false;
         }
+}
+
+void IpsManager::reset_options()
+{
+    for ( auto* p : s_options )
+        p->count = 0;
 }
 
 void IpsManager::setup_options()
