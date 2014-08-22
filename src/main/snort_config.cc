@@ -30,7 +30,7 @@
 #include "detection/treenodes.h"
 #include "events/event_queue.h"
 #include "stream/stream_api.h"
-#include "port_scan/ps_detect.h"  // FIXIT for PS_PROTO_*
+#include "port_scan/ps_detect.h"  // FIXIT-L for PS_PROTO_*
 #include "utils/strvec.h"
 #include "file_api/file_service.h"
 #include "target_based/sftarget_reader.h"
@@ -166,7 +166,7 @@ SnortConfig * SnortConfNew(void)
     sc->tagged_packet_limit = 256;
     sc->default_rule_state = RULE_STATE_ENABLED;
 
-    // FIXIT pcre_match_limit* are interdependent
+    // FIXIT-L pcre_match_limit* are interdependent
     // somehow a packet thread needs a much lower setting 
     sc->pcre_match_limit = 1500;
     sc->pcre_match_limit_recursion = 1500;
@@ -468,7 +468,7 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
         config_file->max_encapsulations = cmd_line->max_encapsulations;
 
     // config file vars are stored differently
-    // FIXIT should config_file and cmd_line use the same var list / table?
+    // FIXIT-M should config_file and cmd_line use the same var list / table?
     config_file->var_list = NULL;
 
     free(config_file->state);

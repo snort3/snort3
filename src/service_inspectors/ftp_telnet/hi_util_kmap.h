@@ -31,7 +31,7 @@
 
 #ifndef HI_UTIL_KMAP_H
 #define HI_UTIL_KMAP_H
-// FIXIT this is a dup of the file in http_inspect
+// FIXIT-L this is a dup of the file in http_inspect
 
 #define ALPHABET_SIZE 256
 

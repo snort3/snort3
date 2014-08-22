@@ -30,7 +30,7 @@
 #include "snort_types.h"
 
 #ifndef SIZE_MAX
-#define SIZE_MAX 0xFFFFFFFF  // FIXIT use c++ value
+#define SIZE_MAX 0xFFFFFFFF  // FIXIT-L use c++ value
 #endif
 
 /*point to the start of the unused memory*/

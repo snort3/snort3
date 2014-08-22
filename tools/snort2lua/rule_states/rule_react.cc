@@ -112,7 +112,15 @@ bool React::convert(std::istringstream& data_stream)
                     std::string msg = util::rule_option_find_val(data_stream, "msg");
 
                     if (!msg.empty())
+                    {
+                        if (msg.front() == '"' && msg.back() == '"')
+                        {
+                            msg.erase(msg.begin());
+                            msg.pop_back();
+                        }
+
                         table_api.add_option("msg", msg);
+                    }
 
 #if 0
                     // save the current position

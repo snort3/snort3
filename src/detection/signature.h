@@ -63,7 +63,7 @@ void FPrintReference(FILE *, ReferenceNode *);
 /* struct for rule classification */
 typedef struct _ClassType
 {
-    // FIXIT type and name are backwards (name -> text, type -> name)
+    // FIXIT-L type and name are backwards (name -> text, type -> name)
     char *type;      /* classification type */
     int id;          /* classification id */
     char *name;      /* "pretty" classification name */

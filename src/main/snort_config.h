@@ -183,14 +183,14 @@ struct SnortConfig
 #endif
 
     //------------------------------------------------------
-    // FIXIT command line only stuff, add to conf / module
+    // FIXIT-L command line only stuff, add to conf / module
 
     uint32_t event_log_id;      /* -G */
     sfip_t obfuscation_net;  // -B
     char *bpf_filter;        // --bpf
 
     //------------------------------------------------------
-    // FIXIT non-module stuff - separate config from derived state?
+    // FIXIT-L non-module stuff - separate config from derived state?
 
     char pid_filename[STD_BUF];
     char *orig_log_dir;      /* set in case of chroot */

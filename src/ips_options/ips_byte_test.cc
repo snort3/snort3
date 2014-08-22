@@ -124,7 +124,6 @@ static THREAD_LOCAL ProfileStats byteTestPerfStats;
 
 static const char* s_name = "byte_test";
 
-// FIXIT cloned from sf_snort_plugin_api.h
 #define CHECK_EQ            0
 #define CHECK_NEQ           1
 #define CHECK_LT            2
@@ -134,19 +133,8 @@ static const char* s_name = "byte_test";
 #define CHECK_AND           6
 #define CHECK_XOR           7
 #define CHECK_ALL           8
-#define CHECK_ATLEASTONE    9
+#define CHECK_GT0    9
 #define CHECK_NONE          10
-
-#define BT_LESS_THAN            CHECK_LT
-#define BT_EQUALS               CHECK_EQ
-#define BT_GREATER_THAN         CHECK_GT
-#define BT_AND                  CHECK_AND
-#define BT_XOR                  CHECK_XOR
-#define BT_GREATER_THAN_EQUAL   CHECK_GTE
-#define BT_LESS_THAN_EQUAL      CHECK_LTE
-#define BT_CHECK_ALL            CHECK_ALL
-#define BT_CHECK_ATLEASTONE     CHECK_ATLEASTONE
-#define BT_CHECK_NONE           CHECK_NONE
 
 #define BIG    0
 #define LITTLE 1
@@ -335,45 +323,45 @@ int ByteTestOption::eval(Cursor& c, Packet*)
 
     switch(btd->opcode)
     {
-        case BT_LESS_THAN: if(value < cmp_value)
-                               success = 1;
-                           break;
+    case CHECK_LT:
+        success = (value < cmp_value);
+        break;
 
-        case BT_EQUALS: if(value == cmp_value)
-                            success = 1;
-                        break;
+    case CHECK_EQ:
+        success = (value == cmp_value);
+        break;
 
-        case BT_GREATER_THAN: if(value > cmp_value)
-                                  success = 1;
-                              break;
+    case CHECK_GT:
+        success = (value > cmp_value);
+        break;
 
-        case BT_AND: if ((value & cmp_value) > 0)
-                         success = 1;
-                     break;
+    case CHECK_AND:
+        success =  ((value & cmp_value) > 0);
+        break;
 
-        case BT_XOR: if ((value ^ cmp_value) > 0)
-                        success = 1;
-                    break;
+    case CHECK_XOR:
+        success =  ((value ^ cmp_value) > 0);
+        break;
 
-        case BT_GREATER_THAN_EQUAL: if (value >= cmp_value)
-                                        success = 1;
-                                    break;
+    case CHECK_GTE:
+        success =  (value >= cmp_value);
+        break;
 
-        case BT_LESS_THAN_EQUAL: if (value <= cmp_value)
-                                        success = 1;
-                                 break;
+    case CHECK_LTE:
+        success =  (value <= cmp_value);
+        break;
 
-        case BT_CHECK_ALL: if ((value & cmp_value) == cmp_value)
-                               success = 1;
-                           break;
+    case CHECK_ALL:
+        success =  ((value & cmp_value) == cmp_value);
+        break;
 
-        case BT_CHECK_ATLEASTONE: if ((value & cmp_value) != 0)
-                                      success = 1;
-                                  break;
+    case CHECK_GT0:
+        success =  ((value & cmp_value) != 0);
+        break;
 
-        case BT_CHECK_NONE: if ((value & cmp_value) == 0)
-                                success = 1;
-                            break;
+    case CHECK_NONE:
+        success =  ((value & cmp_value) == 0);
+        break;
     }
 
     if (btd->not_flag)
@@ -411,36 +399,36 @@ static void parse_operator(const char* cptr, ByteTestData& idx)
 
     if (idx.not_flag && strlen(cptr) == 0)
     {
-        idx.opcode = BT_EQUALS;
+        idx.opcode = CHECK_EQ;
     }
     else
     {
         /* set the opcode */
         switch(*cptr)
         {
-            case '<': idx.opcode = BT_LESS_THAN;
+            case '<': idx.opcode = CHECK_LT;
                       cptr++;
                       if (*cptr == '=')
-                          idx.opcode = BT_LESS_THAN_EQUAL;
+                          idx.opcode = CHECK_LTE;
                       else
                           cptr--;
                       break;
 
-            case '=': idx.opcode = BT_EQUALS;
+            case '=': idx.opcode = CHECK_EQ;
                       break;
 
-            case '>': idx.opcode = BT_GREATER_THAN;
+            case '>': idx.opcode = CHECK_GT;
                       cptr++;
                       if (*cptr == '=')
-                          idx.opcode = BT_GREATER_THAN_EQUAL;
+                          idx.opcode = CHECK_GTE;
                       else
                           cptr--;
                       break;
 
-            case '&': idx.opcode = BT_AND;
+            case '&': idx.opcode = CHECK_AND;
                       break;
 
-            case '^': idx.opcode = BT_XOR;
+            case '^': idx.opcode = CHECK_XOR;
                       break;
 
             default: ParseError(

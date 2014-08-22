@@ -627,16 +627,17 @@ the current event should be logged or dropped.
  --- Local and Global Thresholding is setup here  ---
 
 */
-int sfthd_create_threshold(SnortConfig *sc,
-                           ThresholdObjects *thd_objs,
-                           unsigned gen_id,
-                           unsigned sig_id,
-                           int tracking,
-                           int type,
-                           int priority,
-                           int count,
-                           int seconds,
-                           sfip_var_t* ip_address)
+int sfthd_create_threshold(
+    SnortConfig *sc,
+    ThresholdObjects *thd_objs,
+    unsigned gen_id,
+    unsigned sig_id,
+    int tracking,
+    int type,
+    int priority,
+    int count,
+    int seconds,
+    sfip_var_t* ip_address)
 {
     //allocate memory fpr sfthd_array if needed.
     PolicyId policyId = get_network_policy()->policy_id;
@@ -655,7 +656,7 @@ int sfthd_create_threshold(SnortConfig *sc,
     sfthd_node.seconds   = seconds;
     sfthd_node.ip_address= ip_address;
 
-    // FIXIT convert to std::vector
+    // FIXIT-L convert to std::vector
     sfDynArrayCheckBounds ((void **)&thd_objs->sfthd_garray, policyId, &thd_objs->numPoliciesAllocated);
     if (thd_objs->sfthd_garray[policyId] == NULL)
     {

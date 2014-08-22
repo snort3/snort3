@@ -1519,7 +1519,7 @@ static inline void HTTP_CopyUri(
 
     cur_ptr = start;
 
-    if(/*ServerConf->log_uri &&*/ !stream_ins && hsd)  // FIXIT move back to ServerConf?
+    if(/*ServerConf->log_uri &&*/ !stream_ins && hsd)  // FIXIT-L move back to ServerConf?
     {
         SkipBlankSpace(start,end,&cur_ptr);
 
@@ -2226,7 +2226,7 @@ static inline const u_char *extractHeaderFieldValues(HI_SESSION *session,
             else
             {
                 hdrs_args->hst_name_hdr = 1;
-                if ( hsd && !(hdrs_args->strm_ins) /*&& (ServerConf->log_hostname)*/)  // FIXIT move back to ServerConf?
+                if ( hsd && !(hdrs_args->strm_ins) /*&& (ServerConf->log_hostname)*/)  // FIXIT-L move back to ServerConf?
                 {
                     if(!SetLogBuffers(hsd))
                     {

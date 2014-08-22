@@ -64,7 +64,7 @@ HTTPINSPECT_GLOBAL_CONF::~HTTPINSPECT_GLOBAL_CONF()
 HTTPINSPECT_CONF::HTTPINSPECT_CONF()
 {
     // can't just zero the whole thing because of embedded objects
-    // FIXIT really need explicit assignments or refactor into substruct(s)
+    // FIXIT-L really need explicit assignments or refactor into substruct(s)
     // that can simply be zeroed
     uint8_t* end = (uint8_t*)&whitespace;
     unsigned len = end - (uint8_t*)this;
@@ -75,7 +75,7 @@ HTTPINSPECT_CONF::HTTPINSPECT_CONF()
 
 HTTPINSPECT_CONF::~HTTPINSPECT_CONF()
 {
-    // FIXIT xfree() etc should go
+    // FIXIT-L xfree() etc should go
     xfree(iis_unicode_map_filename);
     xfree(iis_unicode_map);
 

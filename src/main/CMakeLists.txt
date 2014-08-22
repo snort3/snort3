@@ -9,6 +9,8 @@ add_library (main STATIC
     analyzer.h
     analyzer.cc 
     build.h
+    help.cc
+    help.h
     modules.cc
     modules.h
     policy.h
@@ -20,6 +22,8 @@ add_library (main STATIC
     snort_debug.cc
     snort_config.h
     snort_config.cc
+    snort_module.h
+    snort_module.cc
     thread.cc 
 	${INCLUDES}
 )

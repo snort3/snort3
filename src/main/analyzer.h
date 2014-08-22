@@ -47,7 +47,7 @@ public:
     uint64_t get_count() { return count; };
     const char* get_source() { return source; };
 
-    // FIXIT add asynchronous response too
+    // FIXIT-M add asynchronous response too
     bool execute(AnalyzerCommand);
 
     void set_config(Swapper* ps) { swap = ps; };

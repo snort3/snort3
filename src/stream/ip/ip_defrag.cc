@@ -101,7 +101,6 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "framework/inspector.h"
-#include "framework/share.h"
 #include "flow/flow_control.h"
 
 /*  D E F I N E S  **************************************************/
@@ -227,7 +226,7 @@ static const char* peg_names[] =
 
 /*  G L O B A L S  **************************************************/
 
-// FIXIT convert to session memcap
+// FIXIT-M convert to session memcap
 static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for self pres */
 
 static THREAD_LOCAL FragStats t_stats;
@@ -1016,7 +1015,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         /* Set the 'next' protocol */
         if (p->ip6_frag_index > 0)
         {
-            // FIXIT use of last_extension works but is ugly
+            // FIXIT-J use of last_extension works but is ugly
             ip::IP6Extension *last_extension = (ip::IP6Extension *)
                 (dpkt->pkt + (p->ip6_extensions[p->ip6_frag_index -1].data - p->pkt));
             last_extension->ip6e_nxt = ft->protocol;
@@ -1056,7 +1055,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     SnortEventqPush();
     p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
     p->pseudo_type = PSEUDO_PKT_IP;
-    //Encode_SetPkt(p);  // FIXIT needed for responses to defragged packets
+    //Encode_SetPkt(p);  // FIXIT-J needed for responses to defragged packets
     ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt);
     SnortEventqPop();
 

@@ -618,7 +618,7 @@ static inline const u_char *extractHttpRespHeaderFieldValues(HTTPINSPECT_CONF *S
         }
 
         else if ( IsHeaderFieldName(p, end, HTTPRESP_HEADER_NAME__CONTENT_ENCODING,
-                    HTTPRESP_HEADER_LENGTH__CONTENT_ENCODING) /*&& ServerConf->extract_gzip*/ &&  // FIXIT move back to ServerConf?
+                    HTTPRESP_HEADER_LENGTH__CONTENT_ENCODING) /*&& ServerConf->extract_gzip*/ &&  // FIXIT-L move back to ServerConf?
                     parse_cont_encoding)
         {
             p = extract_http_content_encoding(ServerConf, p, start, end, header_ptr, header_field_ptr );

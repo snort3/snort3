@@ -16,7 +16,7 @@ endif()
 
 add_executable( snort2lua
     conversion_state.h
-    option_parser.h
+    conversion_defines.h
     init_state.h
     snort2lua.cc
     init_state.cc

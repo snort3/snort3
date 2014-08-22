@@ -108,8 +108,8 @@ static void config_lua(
 
     run_config(L);
 
-    if ( ModuleManager::get_errors() )
-        FatalError("%s\n", "see prior configuration errors");
+    if ( int k = ModuleManager::get_errors() )
+        FatalError("see prior %d errors\n", k);
 
     ModuleManager::set_config(nullptr);
 }

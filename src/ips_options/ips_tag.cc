@@ -17,7 +17,7 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 // ips_tag.cc author Russ Combs <rucombs@cisco.com>
-// FIXIT add TagOption::eval() instead of special case
+// FIXIT-L add TagOption::eval() instead of special case
 
 #include <sys/types.h>
 
@@ -95,7 +95,7 @@ bool TagModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-// FIXIT error if named option is set multiple times (general problem)
+// FIXIT-L error if named option is set multiple times (general problem)
 // eg: tag:session, packets 10, packets 20;
 bool TagModule::set(const char*, Value& v, SnortConfig*)
 {

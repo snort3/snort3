@@ -20,7 +20,7 @@
  */
 #ifndef HI_UTIL_XMALLOC_H
 #define HI_UTIL_XMALLOC_H
-// FIXIT this is a dup of the file in http_inspect
+// FIXIT-L this is a dup of the file in http_inspect
 
 #include <sys/types.h>
 

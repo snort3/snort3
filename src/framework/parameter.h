@@ -36,6 +36,7 @@ struct Parameter
         PT_REAL,       // double
         PT_PORT,       // 0 to 64K-1 unless specified otherwise
         PT_STRING,     // any string less than len chars
+                       // range = "(optional)" if not required (eg on cmd line)
         PT_SELECT,     // any string appearing in range
         PT_MULTI,      // one or more strings appearing in range
         PT_ENUM,       // string converted to unsigned by range sequence
@@ -50,12 +51,17 @@ struct Parameter
     const char* name;
     Type type;
     const void* range;  // nullptr|const char*|const Parameter*
-    const char* deflt;  // FIXIT add defaults for tables and lists
+    const char* deflt;
     const char* help;
 
     const char* get_type() const;
 
     bool validate(class Value&) const;
+
+    bool is_positional() const
+    { return ( name && *name == '~' ); };
+
+    static const Parameter* find(const Parameter*, const char*);
 };
 
 #endif

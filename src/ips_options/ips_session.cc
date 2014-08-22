@@ -40,7 +40,7 @@
  * Warning, this plugin may slow Snort *way* down!
  *
  */
-// FIXIT delete this (sp_session) and use session tag instead
+// FIXIT-L delete this (sp_session) and use session tag instead
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

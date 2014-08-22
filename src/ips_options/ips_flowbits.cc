@@ -295,7 +295,7 @@ static inline int boUnSetGrpBit(BITOP *BitOp, char *group)
     if( group == NULL )
         return 0;
 
-    // FIXIT why is the hash lookup done at runtime for flowbits groups?
+    // FIXIT-M why is the hash lookup done at runtime for flowbits groups?
     // a pointer to flowbis_grp should be in flowbits config data
     // this *should* be safe but iff splay mode is disabled
     flowbits_grp = (FLOWBITS_GRP *)sfghash_find(flowbits_grp_hash, group);
@@ -1205,14 +1205,14 @@ static void flowbits_dtor(IpsOption* p)
     delete p;
 }
 
-// FIXIT updating statics during reload is bad, mkay?
+// FIXIT-M updating statics during reload is bad, mkay?
 static void flowbits_verify(SnortConfig*)
 {
     FlowBitsVerify();
 }
 
 #if 0
-        // FIXIT if add_detection_option() finds a dup, then
+        // FIXIT-M if add_detection_option() finds a dup, then
         // we can leak the original group name if same as current
         // also, why use new group name instead of original?
         char *group_name =  ((FLOWBITS_OP *)idx_dup)->group;

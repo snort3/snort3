@@ -16,28 +16,13 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// share.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef SHARE_H
-#define SHARE_H
+// snort_module.cc author Russ Combs <rucombs@cisco.com>
 
-// FIXIT remove this dependency once stuff works
-// need to move below to share.cc or 
-// move below data mgr calls to share.cc
-// need to build dynamic plugins and on linux to verify
-#include "managers/data_manager.h"
+#ifndef SNORT_MODULE_H
+#define SNORT_MODULE_H
 
-class PlugData;
-
-class Share
-{
-public:
-    static PlugData* acquire(const char* key)
-    { return DataManager::acquire(key); };
-
-    static void release(PlugData* p)
-    { return DataManager::release(p); };
-};
+class Module* get_snort_module();
 
 #endif
 

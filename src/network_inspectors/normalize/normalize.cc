@@ -180,7 +180,7 @@ Normalizer::Normalizer(NormalizeModule* mod)
 
 bool Normalizer::configure(SnortConfig*)
 {
-    // FIXIT detection policy can't be used by normalizer
+    // FIXIT-M detection policy can't be used by normalizer
     // (not set until after normalizer runs)
     if ( get_ips_policy()->policy_mode != POLICY_MODE__INLINE )
     {

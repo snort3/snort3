@@ -93,7 +93,7 @@ bool StreamIp::configure(SnortConfig* sc)
 
 int StreamIp::verify_config(SnortConfig*)
 {
-    // FIXIT needed for defrag?
+    // FIXIT-L needed for defrag?
     return 0;
 }
 

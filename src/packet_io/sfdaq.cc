@@ -268,7 +268,7 @@ void DAQ_Abort ()
         DAQ_Stop();
 
     DAQ_Delete();
-    //DAQ_Term();  FIXIT this must be called from main thread on abort
+    //DAQ_Term();  FIXIT-H this must be called from main thread on abort
 }
 
 //--------------------------------------------------------------------

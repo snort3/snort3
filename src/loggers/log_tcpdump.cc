@@ -176,7 +176,7 @@ static void LogTcpdumpSingle(
     pcap_dump((u_char *)context.dumpd,(struct pcap_pkthdr*)p->pkth,p->pkt);
     context.size += dumpSize;
 
-    if (!ScLineBufferedLogging())  // FIXIT misnomer
+    if (!ScLineBufferedLogging())  // FIXIT-L misnomer
     {
         fflush( (FILE*) context.dumpd );
     }

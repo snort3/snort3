@@ -10,13 +10,13 @@ obfuscation.h
 
 liblog_a_SOURCES = \
 log.cc \
+log.h \
 log_text.cc \
+log_text.h \
 messages.cc \
 obfuscation.cc \
-sf_textlog.cc \
-log.h \
-log_text.h \
-sf_textlog.h
+text_log.cc \
+text_log.h
 
 liblog_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 

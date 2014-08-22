@@ -62,7 +62,7 @@ SO_PUBLIC bool Inspector::is_inactive()
     return true;
 }
 
-unsigned Inspector::get_buf_id(const char* key)
+SO_PUBLIC unsigned Inspector::get_buf_id(const char* key)
 {
     const char** p = api->buffers;
     unsigned id = 0;
@@ -76,7 +76,7 @@ unsigned Inspector::get_buf_id(const char* key)
     return p[id] ? id+1 : 0;
 }
 
-bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
+SO_PUBLIC bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
 {
     unsigned id = get_buf_id(key);
 
@@ -86,7 +86,7 @@ bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
     return get_buf(id, p, b);
 }
 
-StreamSplitter* Inspector::get_splitter(bool to_server)
+SO_PUBLIC StreamSplitter* Inspector::get_splitter(bool to_server)
 {
     if ( !api || api->type != IT_SERVICE )
         return nullptr;

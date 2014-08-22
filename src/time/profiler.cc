@@ -47,7 +47,7 @@ using namespace std;
 #include "treenodes.h"
 #include "treenodes.h"
 #include "snort_types.h"
-#include "sf_textlog.h"
+#include "log/text_log.h"
 #include "detection_options.h"
 #include "fpdetect.h"
 #include "framework/module.h"
@@ -255,7 +255,7 @@ void PrintWorstRules(int numToPrint)
 
     if (numToPrint != -1)
     {
-        // FIXIT this is fugly; should have a LogMessage() type "file" within
+        // FIXIT-L this is fugly; should have a LogMessage() type "file" within
         // TextLog so this if (log) TextLog_Print() else LogMessage() isn't
         // necessary.
         if(log)

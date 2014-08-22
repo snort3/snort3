@@ -20,6 +20,7 @@
 
 #include <lua.hpp>
 
+#include "main/snort_types.h"
 #include "events/event.h"
 #include "helpers/chunk.h"
 #include "managers/event_manager.h"
@@ -61,7 +62,7 @@ const SnortEvent* get_event();
 static THREAD_LOCAL Event* event;
 static THREAD_LOCAL SnortEvent lua_event;
 
-const SnortEvent* get_event()
+SO_PUBLIC const SnortEvent* get_event()
 {
     assert(event);
 

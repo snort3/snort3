@@ -78,7 +78,7 @@ typedef int (*MatchFunc)(void * id, void *tree, int index, void *data, void *neg
 
 
 /* GLOBALS ********************************************************************/
-static CpaInstanceHandle ipm_instance = NULL;  /* instance handle */  // FIXIT 1 / process
+static CpaInstanceHandle ipm_instance = NULL;  /* instance handle */
 static IntelPmHandles *ipm_handles = NULL;
 
 /* XXX Temporary stat for Intel */

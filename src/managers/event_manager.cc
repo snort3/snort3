@@ -155,7 +155,7 @@ void EventManager::instantiate(
     Output* p, Module* mod, SnortConfig* sc)
 {
     p->handler = p->api->ctor(sc, mod);
-    assert(p->handler);  // FIXIT must handle case where not configured
+    assert(p->handler);  // FIXIT-H must handle case where not configured
 
     if ( (p->api->flags & OUTPUT_TYPE_FLAG__ALERT) &&
         (p->api->flags & OUTPUT_TYPE_FLAG__LOG) )
@@ -191,10 +191,10 @@ void EventManager::instantiate(
         return;
     }
 
-    // FIXIT this loses args if set in conf
+    // FIXIT-H this loses args if set in conf
     // emulate a config like name = { }
-    //mod->begin(name, 0, sc);
-    //mod->end(name, 0, sc);
+    mod->begin(name, 0, sc);
+    mod->end(name, 0, sc);
 
     // override prior outputs
     // (last cmdline option wins)
@@ -211,10 +211,6 @@ void EventManager::instantiate(
 {
     Output* p = get_out(api->base.name);
     instantiate(p, mod, sc);
-}
-
-void EventManager::configure_outputs(SnortConfig*)
-{
 }
 
 //-------------------------------------------------------------------------

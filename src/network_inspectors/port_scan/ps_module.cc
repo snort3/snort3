@@ -118,7 +118,7 @@ const RuleMap* PortScanModule::get_rules() const
 { return port_scan_rules; }
 
 //-------------------------------------------------------------------------
-// FIXIT ipset_parse() format must be changed to remove comma
+// FIXIT-L ipset_parse() format must be changed to remove comma
 // separators between tokens which means using something other than
 // space between CIDR and port.  the current format is:
 // CIDR[ ports][,CIDR[ ports]]*

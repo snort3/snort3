@@ -83,7 +83,7 @@
 #include "target_based/sftarget_reader.h"
 #include "events/event_wrapper.h"  // see s_hack
 
-// FIXIT without s_hack, we get this error on Mac:
+// FIXIT-L without s_hack, we get this error on Mac:
 // Symbol not found: __Z18GenerateSnortEventP6Packetjj
 // Referenced from: /Users/rucombs/install/lib/snort/inspectors/libport_scan.0.dylib
 // Expected in: flat namespace
@@ -421,7 +421,7 @@ static void DefineIfaceVar(SnortConfig *sc, char *iname, uint8_t *network, uint8
  ****************************************************************************/
 static void DefineAllIfaceVars(SnortConfig *sc)
 {
-    // FIXIT don't come back here on reload unless we are going to find
+    // FIXIT-L don't come back here on reload unless we are going to find
     // new ifaces.
     /* Cache retrieved devs so if user is running with dropped privs and
      * does a reload, we can use previous values */

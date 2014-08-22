@@ -49,7 +49,7 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
+#include "managers/data_manager.h"
 #include "detection/detection_util.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
@@ -106,7 +106,7 @@ static int SnortFTP(
         DEBUG_WRAP(DebugMessage(DEBUG_FTPTELNET,
             "Server packet: %.*s\n", p->dsize, p->data));
 
-        // FIXIT breaks target-based non-standard ports
+        // FIXIT-L breaks target-based non-standard ports
         //if ( !ScPafEnabled() )
             /* Force flush of client side of stream  */
         stream.response_flush_stream(p);
@@ -284,7 +284,7 @@ static int ProcessFTPDataChanCmdsList(
 
             strcpy(FTPCmd->cmd_name, cmd);
 
-            // FIXIT make sure pulled from server conf when used if not
+            // FIXIT-L make sure pulled from server conf when used if not
             // overridden
             //FTPCmd->max_param_len = ServerConf->def_max_param_len;
 
@@ -374,7 +374,7 @@ public:
 
 private:
     FTP_SERVER_PROTO_CONF* ftp_server;
-    ClientData* ftp_client;  // FIXIT delete this when bindings implemented
+    ClientData* ftp_client;  // FIXIT-H delete this when bindings implemented
 };
 
 FtpServer::FtpServer(FTP_SERVER_PROTO_CONF* server)
@@ -389,13 +389,13 @@ FtpServer::~FtpServer ()
     delete ftp_server;
 
     if ( ftp_client )
-        // FIXIT make sure CleanupFTPClientConf() is called
-        Share::release(ftp_client);
+        // FIXIT-L make sure CleanupFTPClientConf() is called
+        DataManager::release(ftp_client);
 }
 
 bool FtpServer::configure (SnortConfig* sc)
 {
-    ftp_client = (ClientData*)Share::acquire(client_key);
+    ftp_client = (ClientData*)DataManager::acquire(client_key, sc);
 
     bind_server = ftp_server;
     bind_client = ftp_client->data;
@@ -429,7 +429,7 @@ void FtpServer::eval(Packet* p)
 // fc_ = ftp_client
 // fs_ = ftp_server
 //
-// FIXIT fc is a data module but may need to
+// FIXIT-L fc is a data module but may need to
 // be an inspector with separate bindings.
 //-------------------------------------------------------------------------
 
@@ -509,7 +509,6 @@ static const InspectApi fs_api =
         fs_mod_ctor,
         mod_dtor
     },
-    //IT_SESSION,  // FIXIT should be service only
     IT_SERVICE,
     PROTO_BIT__TCP,
     nullptr, // buffers

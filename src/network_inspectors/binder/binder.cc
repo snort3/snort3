@@ -44,7 +44,7 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 // helpers
 //-------------------------------------------------------------------------
 
-// FIXIT bind this is a temporary hack. note that both ends must be set
+// FIXIT-H bind this is a temporary hack. note that both ends must be set
 // independently and that we must ref count inspectors.
 static void set_session(Flow* flow, const char* key)
 {
@@ -61,7 +61,7 @@ static void set_session(Flow* flow)
     flow->clouseau = nullptr;
 }
 
-// FIXIT use IPPROTO_* directly (any == 0)
+// FIXIT-H use IPPROTO_* directly (any == 0)
 static bool check_proto(const Flow* flow, BindProto bp)
 {
     switch ( bp )
@@ -121,7 +121,7 @@ void Binder::eval(Packet* p)
     ++bstats.total_packets;
 }
 
-// FIXIT implement inspector lookup from policy / bindings
+// FIXIT-H implement inspector lookup from policy / bindings
 Inspector* Binder::find_inspector(const char* s)
 {
     Binding* pb;
@@ -167,7 +167,7 @@ int Binder::exec(int, void* pv)
     return 0;
 }
 
-// FIXIT bind services - this is a temporary hack that just looks at ports,
+// FIXIT-H bind services - this is a temporary hack that just looks at ports,
 // need to examine all key fields for matching.  ultimately need a routing
 // table, scapegoat tree, etc.
 int Binder::check_rules(Flow* flow, Packet* p)
@@ -175,8 +175,8 @@ int Binder::check_rules(Flow* flow, Packet* p)
     Binding* pb;
     unsigned i, sz = bindings.size();
 
-    // FIXIT called before stream runs - these flags aren't set
-    // (below is structed to work by accident on initial syn until fixed)
+    // FIXIT-H called before stream runs - these flags aren't set
+    // (below is structured to work by accident on initial syn until fixed)
     Port port = (p->packet_flags & PKT_FROM_SERVER) ? p->sp : p->dp;
 
     for ( i = 0; i < sz; i++ )
@@ -191,7 +191,7 @@ int Binder::check_rules(Flow* flow, Packet* p)
     }
         
     if ( i == sz )
-        return BA_ALLOW;  // default action FIXIT make configurable
+        return BA_ALLOW;  // default action FIXIT-H make configurable
 
     if ( pb->action != BA_INSPECT )
         return pb->action;

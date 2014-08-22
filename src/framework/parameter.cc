@@ -35,7 +35,7 @@ static bool valid_bool(Value& v, const char*)
     return v.get_type() == Value::VT_BOOL;
 }
 
-// FIXIT allow multiple , separated ranges
+// FIXIT-L allow multiple , separated ranges
 static bool valid_int(Value& v, const char* r)
 {
     if ( !r )
@@ -67,7 +67,7 @@ static bool valid_int(Value& v, const char* r)
     return true;
 }
 
-// FIXIT allow multiple , separated ranges
+// FIXIT-L allow multiple , separated ranges
 static bool valid_real(Value& v, const char* r)
 {
     if ( !r )
@@ -101,6 +101,9 @@ static bool valid_real(Value& v, const char* r)
 
 static bool valid_string(Value& v, const char* r)
 {
+    if ( r && !strcmp(r, "(optional)") )
+        return true;
+
     unsigned len = strlen(v.get_string());
 
     if ( !r )
@@ -346,5 +349,16 @@ const char* Parameter::get_type() const
 {
     assert(type < Parameter::PT_MAX);
     return pt2str[type];
+}
+
+const Parameter* Parameter::find(const Parameter* p, const char* s)
+{
+    while ( p->name )
+    {
+        if ( !strcmp(p->name, s) || !strcmp(p->name, "*") )
+            return p;
+        ++p;
+    }
+    return nullptr;
 }
 

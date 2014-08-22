@@ -101,7 +101,7 @@ static int TelnetStatefulsessionInspection(Packet *p,
         TelnetFlowData* fd = new TelnetFlowData;
         TELNET_SESSION* Newsession = &fd->session;
 
-        // FIXIT lots of redundancy; clean up and move to ctor
+        // FIXIT-L lots of redundancy; clean up and move to ctor
         TelnetResetsession(Newsession);
         Newsession->ft_ssn.proto = FTPP_SI_PROTO_TELNET;
         Newsession->telnet_conf = GlobalConf;
@@ -198,24 +198,13 @@ int FTPGetPacketDir(Packet *p)
     return FTPP_SI_NO_MODE;
 }
 
-/*
- * // FIXIT this goes away when bindings are implemented
- * Purpose: When a session is initialized, we must select the appropriate
- *          server configuration and select the type of inspection based
- *          on the source and destination ports.
- *
- * IMPORTANT NOTE:
- *   We should check to make sure that there are some unique configurations,
- *   otherwise we can just default to the global default and work some magic
- *   that way.
- */
 static int FTPInitConf(
     Packet *p, 
     FTP_CLIENT_PROTO_CONF **ClientConf,
     FTP_SERVER_PROTO_CONF **ServerConf,
     FTPP_SI_INPUT *SiInput, int *piInspectMode)
 {
-    // FIXIT BINDING ftp client and server must set by external bindings
+    // FIXIT-H BINDING ftp client and server must set by external bindings
     // at that point these get deleted
     FTP_CLIENT_PROTO_CONF *ClientConfSip = get_default_ftp_client();
     FTP_CLIENT_PROTO_CONF *ClientConfDip = get_default_ftp_client();
@@ -526,7 +515,7 @@ static int FTPStatefulsessionInspection(
             FtpFlowData* fd = new FtpFlowData;
             FTP_SESSION* Newsession = &fd->session;
 
-            // FIXIT lots of redundancy; clean up and move to ctor
+            // FIXIT-L lots of redundancy; clean up and move to ctor
             FTPResetsession(Newsession);
             Newsession->ft_ssn.proto = FTPP_SI_PROTO_FTP;
             Newsession->client_conf = ClientConf;

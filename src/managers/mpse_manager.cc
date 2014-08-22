@@ -158,7 +158,7 @@ bool MpseManager::search_engine_trim(const MpseApi* api)
 }
 
 // was called during drop stats but actually commented out
-// FIXIT this one has to accumulate across threads
+// FIXIT-M this one has to accumulate across threads
 #if 0
 void MpseManager::print_qinfo()
 {

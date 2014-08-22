@@ -479,7 +479,7 @@ void sfPerformanceStats(SFPERF *sfPerf, Packet *p)
             if (CheckSampleInterval(sfPerf, p))
             {
                 cnt = 0;
-                perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+                perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
                 if (!(sfPerf->perf_flags & SFPERF_SUMMARY_BASE))
                 {
@@ -552,7 +552,7 @@ static bool CheckSampleInterval(SFPERF *sfPerf, Packet *p)
 
 void InitPerfStats(SFPERF *sfPerf)
 {
-    perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+    perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
     if (sfPerf->perf_flags & SFPERF_BASE)
         InitBaseStats(&sfBase);
@@ -573,7 +573,7 @@ void InitPerfStats(SFPERF *sfPerf)
 
 static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
 {
-    perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+    perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
     bool rebuilt = PacketIsRebuilt(p);
 
     if (sfPerf->perf_flags & SFPERF_BASE)
@@ -671,7 +671,7 @@ void sfPerfStatsSummary(SFPERF *sfPerf)
     if (sfPerf == NULL)
         return;
 
-    perfmon_config = sfPerf;  // FIXIT sfPerf isn't propagated far enough
+    perfmon_config = sfPerf;  // FIXIT-L sfPerf isn't propagated far enough
 
     if (sfPerf->perf_flags & SFPERF_SUMMARY_BASE)
         sfProcessBaseStats(sfPerf);

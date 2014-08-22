@@ -53,7 +53,7 @@ int AlertAction(Packet* p, const OptTreeNode* otn)
     /* Call OptTreeNode specific output functions */
     if(otn->outputFuncs)
     {
-        ListHead lh;  // FIXIT "kinda hackish"
+        ListHead lh;  // FIXIT-L "kinda hackish"
         lh.LogList = otn->outputFuncs;
         CallLogFuncs(p, otn, &lh);
     }

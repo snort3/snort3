@@ -190,7 +190,7 @@ bool SyslogModule::end(const char*, int, SnortConfig*)
 // alert foo
 //-------------------------------------------------------------------------
 
-// FIXIT can't message be put in Event?
+// FIXIT-M can't message be put in Event?
 static void AlertSyslog(
     int priority, Packet *p, const char *msg, Event *event)
 {

@@ -31,7 +31,7 @@
 
 typedef unsigned int PolicyId;
 
-// FIXIT split into separate modules
+// FIXIT-H split into separate modules
 
 //-------------------------------------------------------------------------
 // traffic stuff
@@ -140,7 +140,7 @@ public:
 };
 
 //-------------------------------------------------------------------------
-// binding stuff - FIXIT tbd
+// binding stuff - FIXIT-H tbd
 //-------------------------------------------------------------------------
 
 class PolicyMap

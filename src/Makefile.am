@@ -40,7 +40,6 @@ network_inspectors/binder/libbinder.a \
 network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
 service_inspectors/libservice_inspectors.a \
-service_inspectors/http_inspect/libhttp_inspect.a \
 $(lib_list) \
 stream/base/libstream_base.a \
 stream/ip/libstream_ip.a \
@@ -50,6 +49,7 @@ stream/udp/libstream_udp.a \
 stream/libstream.a \
 file_api/libfile_api.a \
 file_api/libs/libfile.a \
+service_inspectors/http_inspect/libhttp_inspect.a \
 ips_options/libips_options.a \
 parser/libparser.a \
 search_engines/libsearch_engines.a \

@@ -198,7 +198,7 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
 bool Wizard::spellbind(
     const MagicPage* m, Flow* f, const uint8_t* data, unsigned len)
 {
-    // FIXIT convert to stateful find
+    // FIXIT-H convert to stateful find
     f->service = m->book.find_spell(data, len);
     return f->service != nullptr;
 }

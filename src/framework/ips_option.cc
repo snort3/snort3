@@ -34,7 +34,7 @@
 
 //-------------------------------------------------------------------------
 
-uint32_t IpsOption::hash() const
+SO_PUBLIC uint32_t IpsOption::hash() const
 {
     uint32_t a=0, b=0, c=0;
     mix_str(a,b,c,get_name());
@@ -42,6 +42,6 @@ uint32_t IpsOption::hash() const
     return c;
 }
 
-bool IpsOption::operator==(const IpsOption& ips) const
+SO_PUBLIC bool IpsOption::operator==(const IpsOption& ips) const
 { return !strcmp(get_name(), ips.get_name()); }
 

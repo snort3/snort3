@@ -33,6 +33,7 @@
 #include "main/snort_config.h"
 #include "main/modules.h"
 #include "main/shell.h"
+#include "main/snort_types.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
@@ -246,15 +247,15 @@ static const Parameter* get_params(string& sfx, const Parameter* p)
     return get_params(sfx,  p);
 }
 
-// FIXIT vars may have been defined on command line
+// FIXIT-M vars may have been defined on command line
 // that mechanism will be replaced with pulling a Lua
 // chunk from the command line and stuffing into L
 // before setting configs; that will overwrite
 //
-// FIXIT should only need one table with
+// FIXIT-M should only need one table with
 // dynamically typed vars
 //
-// FIXIT this is a hack to tell vars by naming
+// FIXIT-M this is a hack to tell vars by naming
 // convention; with one table this is obviated
 // but if multiple tables are kept might want
 // to change these to a module with parameters
@@ -343,7 +344,7 @@ extern "C"
     bool set_string(const char* fqn, const char* val);
 }
 
-bool open_table(const char* s, int idx)
+SO_PUBLIC bool open_table(const char* s, int idx)
 {
     string key = s;
     set_top(key);
@@ -371,7 +372,7 @@ bool open_table(const char* s, int idx)
     return true;
 }
 
-void close_table(const char* s, int idx)
+SO_PUBLIC void close_table(const char* s, int idx)
 {
     string key = s;
     set_top(key);
@@ -385,19 +386,19 @@ void close_table(const char* s, int idx)
     }
 }
 
-bool set_bool(const char* fqn, bool b)
+SO_PUBLIC bool set_bool(const char* fqn, bool b)
 {
     Value v(b);
     return set_value(fqn, v);
 }
 
-bool set_number(const char* fqn, double d)
+SO_PUBLIC bool set_number(const char* fqn, double d)
 {
     Value v(d);
     return set_value(fqn, v);
 }
 
-bool set_string(const char* fqn, const char* s)
+SO_PUBLIC bool set_string(const char* fqn, const char* s)
 {
     Value v(s);
     return set_value(fqn, v);
@@ -700,7 +701,7 @@ void ModuleManager::show_rules(const char* pfx)
 
 void ModuleManager::load_rules(SnortConfig* sc)
 {
-    // FIXIT callers of ParseConfigString() should not have to push parse loc
+    // FIXIT-M callers of ParseConfigString() should not have to push parse loc
     push_parse_location("builtin");
 
     for ( auto p : s_modules )
@@ -717,11 +718,11 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            // FIXIT move builtin generation to a better home
-            // FIXIT builtins should allow configurable nets and ports
-            // FIXIT builtins should have accurate proto
+            // FIXIT-L move builtin generation to a better home
+            // FIXIT-L builtins should allow configurable nets and ports
+            // FIXIT-L builtins should have accurate proto
             //       (but ip winds up in all others)
-            // FIXIT if msg has C escaped embedded quotes, we break
+            // FIXIT-L if msg has C escaped embedded quotes, we break
             //ss << "alert tcp any any -> any any ( ";
             ss << "alert ( ";
             ss << "gid:" << gid << "; ";
@@ -761,7 +762,7 @@ void ModuleManager::dump_rules(const char* pfx)
 
         while ( r->msg )
         {
-            // FIXIT builtin gen should be in exactly one place
+            // FIXIT-L builtin gen should be in exactly one place
             ss << "alert ( ";
             ss << "gid:" << gid << "; ";
             ss << "sid:" << r->sid << "; ";

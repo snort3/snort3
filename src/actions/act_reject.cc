@@ -61,14 +61,14 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-#define REJ_RST_SND  0x01
-#define REJ_RST_RCV  0x02
+#define REJ_RST_SRC  0x01
+#define REJ_RST_DST  0x02
 #define REJ_UNR_NET  0x04
 #define REJ_UNR_HOST 0x08
 #define REJ_UNR_PORT 0x10
 
-#define REJ_RST (REJ_RST_SND|REJ_RST_RCV)
-#define REJ_UNR (REJ_UNR_NET|REJ_UNR_HOST|REJ_UNR_PORT)
+#define REJ_RST_BOTH (REJ_RST_SRC|REJ_RST_DST)
+#define REJ_UNR_ALL  (REJ_UNR_NET|REJ_UNR_HOST|REJ_UNR_PORT)
 
 static const char* s_name = "reject";
 
@@ -108,15 +108,15 @@ void RejectAction::send(Packet* p)
     uint32_t flags = 0;
 
     if ( Active_IsRSTCandidate(p) )
-        flags |= (mask & REJ_RST);
+        flags |= (mask & REJ_RST_BOTH);
 
     if ( Active_IsUNRCandidate(p) )
-        flags |= (mask & REJ_UNR);
+        flags |= (mask & REJ_UNR_ALL);
 
-    if ( flags & REJ_RST_SND )
+    if ( flags & REJ_RST_SRC )
         Active_SendReset(p, 0);
 
-    if ( flags & REJ_RST_RCV )
+    if ( flags & REJ_RST_DST )
         Active_SendReset(p, ENC_FLAG_FWD);
 
     if ( flags & REJ_UNR_NET )
@@ -137,35 +137,11 @@ void RejectAction::send(Packet* p)
 
 static const Parameter rej_params[] =
 {
-    { "reset_source", Parameter::PT_STRING, nullptr, nullptr,
-      "reset sender" },
+    { "reset", Parameter::PT_ENUM, "source|dest|both", nullptr,
+      "send tcp reset to one or both ends" },
 
-    { "rst_snd", Parameter::PT_STRING, nullptr, nullptr,
-      "reset sender" },
-
-    { "reset_dest", Parameter::PT_STRING, nullptr, nullptr,
-      "reset receiver" },
-
-    { "rst_rcv", Parameter::PT_STRING, nullptr, nullptr,
-      "reset receiver" },
-
-    { "reset_both", Parameter::PT_STRING, nullptr, nullptr,
-      "reset both sender and receiver" },
-
-    { "rst_all", Parameter::PT_STRING, nullptr, nullptr,
-      "reset both sender and receiver" },
-
-    { "icmp_net", Parameter::PT_STRING, nullptr, nullptr,
-      "send icmp network unreachable to sender" },
-
-    { "icmp_host", Parameter::PT_STRING, nullptr, nullptr,
-      "send icmp host unreachable to sender" },
-
-    { "icmp_port", Parameter::PT_STRING, nullptr, nullptr,
-      "send icmp port unreachable to sender" },
-
-    { "icmp_all", Parameter::PT_STRING, nullptr, nullptr,
-      "send icmp net, host, and port unreachable to sender" },
+    { "control", Parameter::PT_ENUM, "network|host|port|all", nullptr,
+      "send icmp unreachable(s)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -176,6 +152,7 @@ public:
     RejectModule() : Module(s_name, rej_params) { };
 
     bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
 
     ProfileStats* get_profile() const
@@ -190,28 +167,33 @@ bool RejectModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
+bool RejectModule::end(const char*, int, SnortConfig*)
+{
+    return ( flags != 0 );
+}
+
+static const int rst[] =
+{
+    REJ_RST_SRC,
+    REJ_RST_DST,
+    REJ_RST_BOTH
+};
+
+static const int unr[] =
+{
+    REJ_UNR_PORT,
+    REJ_UNR_HOST,
+    REJ_UNR_NET,
+    REJ_UNR_ALL
+};
+
 bool RejectModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("reset_source") || v.is("rst_snd") )
-        flags |= REJ_RST_SND;
+    if ( v.is("reset") )
+        flags |= rst[v.get_long()];
 
-    else if ( v.is("reset_dest") || v.is("rst_rcv") )
-        flags |= REJ_RST_RCV;
-
-    else if ( v.is("reset_both") || v.is("rst_all") )
-        flags |= (REJ_RST_RCV | REJ_RST_SND);
-
-    else if ( v.is("icmp_net") )
-        flags |= REJ_UNR_NET;
-
-    else if ( v.is("icmp_host") )
-        flags |= REJ_UNR_HOST;
-
-    else if ( v.is("icmp_port") )
-        flags |= REJ_UNR_PORT;
-
-    else if ( v.is("icmp_all") )
-        flags |= (REJ_UNR_NET | REJ_UNR_HOST | REJ_UNR_PORT);
+    else if ( v.is("control") )
+        flags |= unr[v.get_long()];
 
     else
         return false;

@@ -44,7 +44,7 @@ struct Packet;
 
 //-------------------------------------------------------------------------
 // api for class
-// ctor, dtor, and configure are in main thread
+// ctor, dtor are in main thread
 // other methods are packet thread specific
 //-------------------------------------------------------------------------
 
@@ -67,7 +67,6 @@ protected:
 typedef Logger* (*LogNewFunc)(struct SnortConfig*, class Module*);
 typedef void (*LogDelFunc)(Logger*);
 
-// FIXIT ensure all eh provide stats
 struct LogApi
 {
     BaseApi base;

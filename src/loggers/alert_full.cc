@@ -53,8 +53,8 @@
 #include "util.h"
 #include "mstring.h"
 #include "snort.h"
-#include "sf_textlog.h"
-#include "log_text.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 

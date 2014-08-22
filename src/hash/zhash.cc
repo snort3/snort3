@@ -243,7 +243,7 @@ ZHash::ZHash(int rows, int keysz)
     sfhashfcn = sfhashfcn_new(rows);
 
     if ( !sfhashfcn )
-        return;  // FIXIT can't just return
+        return;  // FIXIT-H can't just return
 
     /* Allocate the array of node ptrs */
     table = new ZHashNode*[rows];

@@ -27,7 +27,7 @@
 
 class Flow;
 
-enum PAF_Status // FIXIT move inside StreamSplitter
+enum PAF_Status // FIXIT-H move inside StreamSplitter
 {
     PAF_ABORT,   // non-paf operation
     PAF_START,   // internal use only

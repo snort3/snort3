@@ -68,7 +68,7 @@ bool Analyzer::execute(AnalyzerCommand ac)
     if ( command && command != AC_PAUSE )
         return false;
 
-    // FIXIT executing a command while paused
+    // FIXIT-L executing a command while paused
     // will cause a resume
     command = ac;
     return true;

@@ -1,3 +1,18 @@
+116
+-- fixed valgrind leak
+-- observed memory corruption on Linux when loading dynamic plugins (not
+fixed)
+-- fixed action leak
+-- testing visibility=hidden
+-- more FIXITs
+
+115
+-- remove share.h
+-- misc FIXITs
+-- refactored cmd line parsing and moved options to SnortModule
+-- prioritized all FIXITs; FIXIT-J are for josh to reprioritize
+-- got latest from Josh
+
 114
 -- more FIXIT cleanup
 -- fixed flush bucket dumping

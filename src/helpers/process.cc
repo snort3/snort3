@@ -156,7 +156,7 @@ const char* get_signal_name(PigSignal s)
 // If check needed, also check whether previous signal_handler is neither
 // SIG_IGN nor SIG_DFL
 
-// FIXIT convert sigaction, etc. to c++11
+// FIXIT-L convert sigaction, etc. to c++11
 static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
 {
 #ifdef VALGRIND_TESTING
@@ -195,7 +195,7 @@ void init_signals(void)
     sigset_t set;
 
     sigemptyset(&set);
-    // FIXIT this is undefined for multithreaded apps
+    // FIXIT-L this is undefined for multithreaded apps
     sigprocmask(SIG_SETMASK, &set, NULL);
 # else
     sigsetmask(0);

@@ -23,8 +23,6 @@
 
 #include "framework/base_api.h"
 
-// FIXIT this must be tied to SnortConfig and moved to trash
-
 struct SnortConfig;
 
 // this is the current version of the api

@@ -32,6 +32,7 @@
 #include <sys/un.h>
 
 #include <string>
+#include <vector>
 
 #include "snort_types.h"
 #include "framework/logger.h"
@@ -53,19 +54,38 @@ struct SfSock
     struct sockaddr_un addr;
 };
 
+struct RuleId
+{
+    unsigned gid;
+    unsigned sid;
+};
+
 static THREAD_LOCAL SfSock context;
 
 using namespace std;
+typedef vector<RuleId> RuleVector;
 
 //-------------------------------------------------------------------------
 // alert_sfsocket module
 //-------------------------------------------------------------------------
 
-// FIXIT this file will probably fail to compile on Linux
+static const Parameter rule_params[] =
+{
+    { "gid", Parameter::PT_INT, "1:", "1",
+      "rule generator ID" },
+
+    { "sid", Parameter::PT_INT, "1:", "1",
+      "rule signature ID" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
 static const Parameter sfsocket_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, nullptr,
+      "name of unix socket file" },
+
+    { "rules", Parameter::PT_LIST, rule_params, nullptr,
       "name of unix socket file" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -77,9 +97,12 @@ public:
     SfSocketModule() : Module("alert_sfsocket", sfsocket_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
 
 public:
     string file;
+    RuleVector rulez;
+    RuleId rule;
 };
 
 bool SfSocketModule::set(const char*, Value& v, SnortConfig*)
@@ -87,8 +110,11 @@ bool SfSocketModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("file") )
         file = v.get_string();
 
-    else
-        return false;
+    else if ( v.is("gid") )
+        rule.gid = v.get_long();
+
+    else if ( v.is("sid") )
+        rule.sid = v.get_long();
 
     return true;
 }
@@ -96,98 +122,16 @@ bool SfSocketModule::set(const char*, Value& v, SnortConfig*)
 bool SfSocketModule::begin(const char*, int, SnortConfig*)
 {
     file.erase();
+    rule.gid = rule.sid = 1;
     return true;
 }
 
-//-------------------------------------------------------------------------
-// parsing stuff
-
-int String2ULong(char *string, unsigned long *result)
+bool SfSocketModule::end(const char* fqn, int, SnortConfig*)
 {
-    unsigned long value;
-    char *endptr;
-    if(!string)
-        return -1;
+    if ( !strcmp(fqn, "alert_sfsocket.rules") )
+            rulez.push_back(rule);
 
-    value = strtoul(string, &endptr, 10);
-    if(*endptr != '\0')
-        return -1;
-
-    *result = value;
-
-    return 0;
-}
-
-/*
- * Parse 'sidValue' or 'gidValue:sidValue'
- */
-int GidSid2UInt(char * args, uint32_t * sidValue, uint32_t * gidValue)
-{
-    char gbuff[80];
-    char sbuff[80];
-    int  i;
-    unsigned long glong,slong;
-
-    *gidValue=GENERATOR_SNORT_ENGINE;
-    *sidValue=0;
-
-    i=0;
-    while( args && *args && (i < 20) )
-    {
-        sbuff[i]=*args;
-        if( sbuff[i]==':' ) break;
-        args++;
-        i++;
-    }
-    sbuff[i]=0;
-
-    if( i >= 20 )
-    {
-       return -1;
-    }
-
-    if( *args == ':' )
-    {
-        memcpy(gbuff,sbuff,i);
-        gbuff[i]=0;
-
-        if(String2ULong(gbuff,&glong))
-        {
-            return -1;
-        }
-        *gidValue = (uint32_t)glong;
-
-        args++;
-        i=0;
-        while( args && *args && i < 20 )
-        {
-          sbuff[i]=*args;
-          args++;
-          i++;
-        }
-        sbuff[i]=0;
-
-        if( i >= 20 )
-        {
-          return -1;
-        }
-
-        if(String2ULong(sbuff,&slong))
-        {
-            return -1;
-        }
-        *sidValue = (uint32_t)slong;
-    }
-    else
-    {
-        if(String2ULong(sbuff,&slong))
-        {
-            return -1;
-        }
-        *sidValue=(uint32_t)slong;
-    }
-
-    return 0;
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -301,7 +245,7 @@ static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
     if(sid == 0)
         return NULL;
 
-    // FIXIT wow - this should be encapsulated somewhere ...
+    // FIXIT-H wow - this should be encapsulated somewhere ...
     for (hashNode = sfghash_findfirst(snort_conf->otn_map);
             hashNode;
             hashNode = sfghash_findnext(snort_conf->otn_map))
@@ -386,7 +330,7 @@ class SfSocketLogger : public Logger {
 public:
     SfSocketLogger(SfSocketModule*);
 
-    void configure(SnortConfig*, char*);
+    void configure(RuleId&);
 
     void open();
     void close();
@@ -400,19 +344,17 @@ private:
 SfSocketLogger::SfSocketLogger(SfSocketModule* m)
 {
     file = m->file;
+
+    for ( auto r : m->rulez )
+        configure(r);
 }
 
-void SfSocketLogger::configure(SnortConfig*, char *args)
+void SfSocketLogger::configure(RuleId& r)
 {
-    uint32_t gid, sid;
-
-    if ( GidSid2UInt((char*)args, &sid, &gid) )
-        FatalError("Invalid argument '%s' to alert_sf_socket_sid\n", args);
-
-    OptTreeNode* otn = OptTreeNode_Search(gid,sid);
+    OptTreeNode* otn = OptTreeNode_Search(r.gid, r.sid);
 
     if ( !otn )
-        LogMessage("Unable to find OptTreeNode for SID %u\n", sid);
+        ParseError("Unable to find OptTreeNode for %u:%u\n", r.gid, r.sid);
 
     else
         EventManager::add_output(&otn->outputFuncs, this);

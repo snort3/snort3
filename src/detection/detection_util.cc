@@ -24,7 +24,7 @@
 #include <time.h>
 
 #include "snort.h"
-#include "sf_textlog.h"
+#include "log/text_log.h"
 #include "actions/actions.h"
 
 THREAD_LOCAL uint32_t http_mask;

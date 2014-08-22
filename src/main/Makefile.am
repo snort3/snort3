@@ -13,6 +13,8 @@ libmain_a_SOURCES = \
 analyzer.cc \
 analyzer.h \
 build.h \
+help.cc \
+help.h \
 modules.cc \
 modules.h \
 policy.cc \
@@ -24,6 +26,8 @@ snort.h \
 snort_config.cc \
 snort_config.h \
 snort_debug.cc \
+snort_module.cc \
+snort_module.h \
 thread.cc
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

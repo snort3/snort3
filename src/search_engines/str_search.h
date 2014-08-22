@@ -35,7 +35,7 @@ typedef struct _search_api
     
 } SearchAPI;
 
-// FIXIT search_api should be turned into a class
+// FIXIT-L search_api should be turned into a class
 // (constructed of an Mpse, not subclassed)
 extern SearchAPI *search_api;
 

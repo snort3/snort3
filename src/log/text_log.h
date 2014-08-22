@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2003-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
  ****************************************************************************/
 
 /**
- * @file   sf_textlog.h
+ * @file   text_log.h
  * @author Russ Combs <rcombs@sourcefire.com>
  * @date   Fri Jun 27 10:34:37 2003
  *

@@ -38,7 +38,6 @@ const std::string get_conf_dir();
 const std::string get_error_file();
 const std::string get_out_file();
 const std::string get_rule_file();
-const bool rule_file_provided();
 
 } // namespace parser
 

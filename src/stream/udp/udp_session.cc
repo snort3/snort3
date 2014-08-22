@@ -81,8 +81,8 @@ static void UdpSessionCleanup(Flow *lwssn)
 static int ProcessUdp(
     Flow *lwssn, Packet *p, StreamUdpConfig*, SFXHASH_NODE*)
 {
-    if (lwssn->protocol != IPPROTO_UDP)  // FIXIT checked by tcp, icmp, and ip too?
-    // FIXIT need to free lwssn and get a new one
+    if (lwssn->protocol != IPPROTO_UDP)  // FIXIT-P checked by tcp, icmp, and ip too?
+    // FIXIT-L need to free lwssn and get a new one
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Lightweight session not UDP on UDP packet\n"););
@@ -236,7 +236,7 @@ int UdpSession::process(Packet *p)
 #if 0
 void udp_stats()
 {
-    // FIXIT need to get these before delete flow_con
+    // FIXIT-L need to get these before delete flow_con
     //flow_con->get_prunes(IPPROTO_UDP, udpStats.prunes);
 }
 #endif

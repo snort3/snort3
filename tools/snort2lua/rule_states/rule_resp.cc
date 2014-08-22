@@ -39,9 +39,18 @@ public:
     Resp() : ConversionState() {};
     virtual ~Resp() {};
     virtual bool convert(std::istringstream& data);
+private:
+    void add_diff_comment(std::string, std::string);
 };
 
 } // namespace
+
+
+void Resp::add_diff_comment(std::string old_v, std::string new_v)
+{
+    table_api.add_diff_option_comment("rule_type - resp:" + old_v,
+                                        "reject - " + new_v);
+}
 
 bool Resp::convert(std::istringstream& data_stream)
 {
@@ -85,39 +94,67 @@ bool Resp::convert(std::istringstream& data_stream)
 
                 do
                 {
-                    // FIXIT-1J If reject params are legitimately strings, these MUST
-                    //          change so users don't think 'reset_dest=false' turns
-                    //          the option off
+                    // FIXIT-?J Once bindings added for reject, this MUST change!
 
                     if (!tmp.compare("reset_dest"))
-                        table_api.add_option("reset_dest", "true");
-
-                    else if (!tmp.compare("reset_both"))
-                        table_api.add_option("reset_both", "true");
-
-                    else if (!tmp.compare("rst_snd"))
-                        table_api.add_option("rst_snd", "true");
+                    {
+                        add_diff_comment("reset_dest", "reset: dest");
+                        table_api.add_option("reset", "dest");
+                    }
 
                     else if (!tmp.compare("rst_rcv"))
-                        table_api.add_option("rst_rcv", "true");
+                    {
+                        add_diff_comment("rst_rcv", "reset: dest");
+                        table_api.add_option("reset", "dest");
+                    }
+
+                    else if (!tmp.compare("reset_both"))
+                    {
+                        add_diff_comment("reset_both", "reset: both");
+                        table_api.add_option("reset", "both");
+                    }
 
                     else if (!tmp.compare("rst_all"))
-                        table_api.add_option("rst_all", "true");
+                    {
+                        add_diff_comment("rst_all", "reset: both");
+                        table_api.add_option("reset", "both");
+                    }
 
-                    else if (!tmp.compare("icmp_net"))
-                        table_api.add_option("icmp_net", "true");
-
-                    else if (!tmp.compare("icmp_host"))
-                        table_api.add_option("icmp_host", "true");
-
-                    else if (!tmp.compare("icmp_all"))
-                        table_api.add_option("icmp_all", "true");
+                    else if (!tmp.compare("rst_snd"))
+                    {
+                        add_diff_comment("rst_snd", "reset: source");
+                        table_api.add_option("reset", "source");
+                    }
 
                     else if (!tmp.compare("reset_source"))
-                        table_api.add_option("reset_source", "true");
+                    {
+                        add_diff_comment("reset_source", "reset: source");
+                        table_api.add_option("reset", "source");
+                    }
+
+                    else if (!tmp.compare("icmp_net"))
+                    {
+                        add_diff_comment("icmp_net", "control: network");
+                        table_api.add_option("control", "network");
+                    }
+
+                    else if (!tmp.compare("icmp_host"))
+                    {
+                        add_diff_comment("icmp_host", "control: host");
+                        table_api.add_option("control", "host");
+                    }
+
+                    else if (!tmp.compare("icmp_all"))
+                    {
+                        add_diff_comment("icmp_all", "control: all");
+                        table_api.add_option("control", "all");
+                    }
 
                     else if (!tmp.compare("icmp_port"))
-                        table_api.add_option("icmp_port", "true");
+                    {
+                        add_diff_comment("icmp_port", "control: port");
+                        table_api.add_option("control", "port");
+                    }
 
                     else
                     {

@@ -21,14 +21,14 @@
  ****************************************************************************/
 
 /**
- * @file   sf_textlog.c
+ * @file   log/text_log.c
  * @author Russ Combs <rcombs@sourcefire.com>
  * @date
  *
  * @brief  implements buffered text stream for logging
  */
 
-#include "sf_textlog.h"
+#include "text_log.h"
 
 #include <stdarg.h>
 #include <stdio.h>
