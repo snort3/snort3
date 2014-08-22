@@ -703,50 +703,6 @@ static void parse_within(PatternMatchData* pmd, const char *data)
     pmd->relative = 1;
 }
 
-static const char* error_str = 
-    "fast_pattern_offset + fast_pattern_length must be less "
-    "than or equal to the actual pattern length which is %u.";
-
-static void parse_fast_pattern_offset(PatternMatchData* pmd, const char *data)
-{
-    if (data == NULL)
-    {
-        ParseError("missing argument to 'fast_pattern_offset' option");
-        return;
-    }
-
-    long offset = parse_int(data, "fast_pattern_offset", 0, UINT16_MAX);
-
-    if ((int)pmd->pattern_size < (offset + pmd->fp_length))
-    {
-        ParseError(error_str, data, pmd->pattern_size);
-        return;
-    }
-
-    pmd->fp_offset = offset;
-    pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
-}
-
-static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
-{
-    if (data == NULL)
-    {
-        ParseError("missing argument to 'fast_pattern_length' option");
-        return;
-    }
-
-    long length = parse_int(data, "fast_pattern_length", 0, UINT16_MAX);
-
-    if ((int)pmd->pattern_size < (pmd->fp_offset + length))
-    {
-        ParseError(error_str, data, pmd->pattern_size);
-        return;
-    }
-
-    pmd->fp_length = length;
-    pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
-}
-
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
@@ -820,6 +776,22 @@ bool ContentModule::begin(const char*, int, SnortConfig*)
 
 bool ContentModule::end(const char*, int, SnortConfig*)
 {
+    if ( (int)pmd->pattern_size <= pmd->fp_offset )
+    {
+        ParseError(
+            "fast_pattern_offset must be less "
+            "than the actual pattern length which is %u.",
+            pmd->pattern_size);
+        return false;
+    }
+    if ( (int)pmd->pattern_size < (pmd->fp_offset + pmd->fp_length) )
+    {
+        ParseError(
+            "fast_pattern_offset + fast_pattern_length must be less "
+            "than or equal to the actual pattern length which is %u.",
+            pmd->pattern_size);
+        return false;
+    }
     if ( pmd->no_case )
     {
         for ( unsigned i = 0; i < pmd->pattern_size; i++ )
@@ -852,11 +824,15 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
 
     else if ( v.is("fast_pattern_offset") )
-        parse_fast_pattern_offset(pmd, v.get_string());
-
+    {
+        pmd->fp_offset = v.get_long();
+        pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
+    }
     else if ( v.is("fast_pattern_length") )
-        parse_fast_pattern_length(pmd, v.get_string());
-
+    {
+        pmd->fp_length = v.get_long();
+        pmd->fp = 1;  // FIXIT-H must ensure current buffer is fp compatible
+    }
     else
         return false;
 
