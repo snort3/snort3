@@ -31,11 +31,6 @@
 #include "data/dt_table_api.h"
 #include "data/dt_rule_api.h"
 
-#include "data/data_types/dt_table.h"
-#include "data/data_types/dt_var.h"
-#include "data/data_types/dt_comment.h"
-#include "data/data_types/dt_rule.h"
-#include "data/data_types/dt_include.h"
 
 // TODO-1 - J:  Change name to data_api
 // TODO-1 - J:  Remove all unecessary includes
@@ -59,6 +54,9 @@
  * creating rules.
  */
 
+class Include;
+class Variable;
+class Comments;
 class LuaData;
 extern LuaData data_api;
 
@@ -77,7 +75,6 @@ public:
     inline bool is_quiet_mode() { return mode == PrintMode::QUIET; }
     inline void set_difference_print() {mode = PrintMode::DIFFERENCES; }
     inline bool is_difference_mode() { return mode == PrintMode::DIFFERENCES; }
-    inline bool failed_conversions() { return !errors->empty(); }
 
     // given a Snort-style variable, translate into a string.
     std::string expand_vars(std::string string);
@@ -95,6 +92,12 @@ public:
     void print_comments(std::ostream& out);
     // For problems with the Snort2Lua code, NOT with the snort configuration
     void developer_error(std::string comment);
+
+    // have there been any failed conversion?
+    bool failed_conversions();
+    // is there any actual data to print?
+    bool empty()
+    { return (vars.size() != 0 || includes.size() != 0);}
 
 
     // functions specifically usefull when parsing includes.

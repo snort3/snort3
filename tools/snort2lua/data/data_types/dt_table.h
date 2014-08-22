@@ -27,9 +27,9 @@
 #include <vector>
 #include <iostream>
 
-#include "data/data_types/dt_option.h"
-#include "data/data_types/dt_var.h"
-#include "data/data_types/dt_comment.h"
+class Option;
+class Variable;
+class Comments;
 
 class Table
 {

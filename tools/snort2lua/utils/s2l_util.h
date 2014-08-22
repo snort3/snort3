@@ -54,7 +54,7 @@ std::string &trim(std::string &s);
 
 
 // return true if this file exists. False otherwise.
-bool file_exists (const std::string& name);
+bool file_exists(const std::string& name);
 
 
 /* Takes in a stream and a string of delimeters. The function will extract the charachters

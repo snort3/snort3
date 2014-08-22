@@ -57,7 +57,8 @@ set (TEST_CONF_LUA "${CMAKE_CURRENT_BINARY_DIR}/snort.lua")
 set (TEST_CONF_REJ "${CMAKE_CURRENT_BINARY_DIR}/snort.rej")
 
 # so Snort++ won't choke on block.html
-execute_process (COMMAND {${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/block.html})
+execute_process (COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/block.html")
+execute_process (COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/filter")
 
 add_test (
     NAME ctest_snort2lua_conf

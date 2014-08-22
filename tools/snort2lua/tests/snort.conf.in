@@ -1100,7 +1100,7 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC
     content:"jedi request"; nocase; offset:4; depth:20; rawbytes; \
     content:"jedi request2"; nocase; distance:150; http_cookie; http_header; \
     content:"jedi request3"; within:150; http_client_body; \
-    sid:1000060; gid:1189; rev:6;)
+    sid:1000060; gid:1; rev:6;)
 
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; \
@@ -1114,43 +1114,43 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC
     content:"http_raw_uri"; http_raw_uri; \
     content:"http_stat_code"; http_stat_code; \
     content:"http_stat_msg"; http_stat_msg; \
-    sid:7034; gid:1189; rev:6;)
+    sid:7034; gid:1; rev:6;)
 
 
 alert tcp any any -> any any (msg:"la di da"; \
     content:"fast_parttern"; fast_pattern:only ; \
-    sid:7035; gid:1189; rev:6;)
+    sid:7035; gid:1; rev:6;)
 
 alert tcp any any -> any any (msg:"fast_pattern offset length"; \
     content:"fast_parttern"; fast_pattern:1,5; \
-    sid:7036; gid:1189; rev:6;)
+    sid:7036; gid:1; rev:6;)
 
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"uricontent"; \
     uricontent:"jedi request"; nocase; offset:4; depth:20; \
-    sid:7037; gid:1189; rev:6;)
+    sid:7037; gid:1; rev:6;)
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"uricontent"; \
     uricontent:"jedi request"; nocase; within:30; distance:50; \
-    sid:7038; gid:1189; rev:6;)
+    sid:7038; gid:1; rev:6;)
 
 alert tcp any any <> any 80 (msg:"MD5 Alert"; \
-    protected_content:"293C9EA246FF9985DC6F62A650F78986"; hash:md5; offset:0; length:4; gid:1189; sid:1000040)
+    protected_content:"293C9EA246FF9985DC6F62A650F78986"; hash:md5; offset:0; length:4; gid:1; sid:1000040)
     
 alert tcp any any <> any 80 (msg:"SHA256 Alert"; \
     protected_content:"56D6F32151AD8474F40D7B939C2161EE2BBF10023F4AF1DBB3E13260EBDC6342"; \
     hash:sha256; offset:0; length:4; gid:2; sid:1000041)
 
 
-alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; flow:to_server,established; content:"jedi request"; nocase;  sid:7033; rev:6; gid:1189 )
+alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; flow:to_server,established; content:"jedi request"; nocase;  sid:7033; rev:6; gid:1 )
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"WEB-CLIENT csv file download request"; flow:to_server, established; content:"GET"; nocase; uricontent:".csv"; nocase; flowbits:set,csv.download; flowbits:noalert; metadata:service http; reference:cve,2008-0112; reference:url,www.microsoft.com/technet/security/Bulletin/MS08-014.mspx; classtype:misc-activity; sid:13584; rev:2;)
 
 alert tcp $EXTERNAL_NET any -> $HOME_NET 3389 (msg:"APP-DETECT remote desktop protocol attempted administrator connection request"; content:"|E0|"; depth:1; offset:5; content:"mstshash=Administr"; distance:0; nocase; reference:bugtraq,14259; reference:cve,2005-1218; reference:url,technet.microsoft.com/en-us/security/bulletin/MS05-041; classtype:misc-activity; sid:4060; rev:8;)
 
 
-alert ( msg:"DECODE_ICMP4_DST_BROADCAST"; sid:1000042; gid:1189; rev:1; metadata:rule-type decode, service http, rule-flushing enabled; classtype:misc-activity; )
-alert ( msg:"DECODE_ICMP4_TYPE_OTHER"; sid:1000043; gid:1189; rev:1; metadata:rule-type decode; classtype:misc-activity; )
+alert ( msg:"DECODE_ICMP4_DST_BROADCAST"; sid:1000042; gid:1; rev:1; metadata:rule-type decode, service http, rule-flushing enabled; classtype:misc-activity; )
+alert ( msg:"DECODE_ICMP4_TYPE_OTHER"; sid:1000043; gid:1; rev:1; metadata:rule-type decode; classtype:misc-activity; )
 
 drop tcp $EXTERNAL_NET 554 -> $HOME_NET any (msg:"MULTIMEDIA Windows Media Player malicious playlist buffer overflow attempt"; sid:14252; gid:3; rev:9; classtype:attempted-user; flowbits:isset,file.wmp_playlist; reference:cve,2008-2253; reference:url,technet.microsoft.com/en-us/security/bulletin/MS08-054; metadata: engine shared, soid 3|14252, policy balanced-ips drop, policy security-ips drop;)
 
@@ -1182,31 +1182,31 @@ alert tcp $EXTERNAL_NET any -> $SMTP_SERVERS 25 \
         classtype:attempted-user; sid:23137; rev:7;)
 
 
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; sid:1000001; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; base64_data; sid:1000002; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:relative; base64_data; sid:1000003; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:bytes 12, offset 6, relative; base64_data; sid:1000004; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:offset 7; sid:1000005; gid:1189)
-alert tcp any any <> any any (base64_decode:bytes 10,offset 8,relative; sid:1000007; gid:1189)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; sid:1000001; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; base64_data; sid:1000002; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:relative; base64_data; sid:1000003; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:bytes 12, offset 6, relative; base64_data; sid:1000004; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:offset 7; sid:1000005; gid:1)
+alert tcp any any <> any any (base64_decode:bytes 10,offset 8,relative; sid:1000007; gid:1)
 
 
-alert tcp any any -> any any (msg:"test base64_decode"; asn1: bitstring_overflow; sid:1000010; gid:1189)
+alert tcp any any -> any any (msg:"test base64_decode"; asn1: bitstring_overflow; sid:1000010; gid:1)
 
 alert tcp any any <> any any (msg:"blahblahblah";file_data:mime;sid:1000045)
 alert tcp any any <> any any (file_data:mime;msg:"blahblahblah";sid:1000046)
 
 
-rule_state 1000001 1189 enabled drop
-rule_state 1000002,1189,disabled,alert
-rule_state 1000003 1189,disabled sdrop
-rule_state 1000004 1189, enabled sdrop
+rule_state 1000001 1 enabled drop
+rule_state 1000002,1,disabled,alert
+rule_state 1000003 1,disabled sdrop
+rule_state 1000004 1, enabled sdrop
 
 
 alert tcp any any -> any 80 ( sid:1000047; threshold:type limit, track by_src, count 1 , seconds 60; gid: 119;  )
-alert tcp any any -> any 80 ( sid:1000048; gid:1189; threshold:type limit, track by_src, count 1 , seconds 60 )
-alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000049; gid:1189 )
-alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000050; gid:1189 )
-alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; content:"blah"; gid:1189; sid:1000051 )
+alert tcp any any -> any 80 ( sid:1000048; gid:1; threshold:type limit, track by_src, count 1 , seconds 60 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000049; gid:1 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000050; gid:1 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; content:"blah"; gid:1; sid:1000051 )
 
 include @CMAKE_CURRENT_LIST_DIR@/file_magic.conf
 

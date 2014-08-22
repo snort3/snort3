@@ -22,6 +22,7 @@
 #include <iostream>
 #include "utils/converter.h"
 #include "conversion_state.h"
+#include "data/data_types/dt_comment.h"
 #include "utils/s2l_util.h"
 
 Converter cv;
@@ -97,6 +98,7 @@ void Converter::parse_include_file(std::string input_file)
 
     if (convert_file(input_file) < 0)
     {
+        error = true;
         if (convert_conf_mult_files)
         {
             // FIXIT:  This needs to tables, and data_api
@@ -109,7 +111,6 @@ void Converter::parse_include_file(std::string input_file)
             rule_api.swap_rules(rules);
 
         // add this new file as a snort style rule
-        error = true;
         rule_api.add_hdr_data("include " + input_file);
         return;
     }
@@ -118,13 +119,16 @@ void Converter::parse_include_file(std::string input_file)
     if (convert_conf_mult_files)
     {
         // print configuration file
-        std::ofstream out;
-        out.open(input_file + ".lua");
-        data_api.print_data(out);
-        table_api.print_tables(out);
-        data_api.print_comments(out);
-        out << std::endl;
-        out.close();
+        if (!table_api.empty() || data_api.empty())
+        {
+            std::ofstream out;
+            out.open(input_file + ".lua");
+            data_api.print_data(out);
+            table_api.print_tables(out);
+            data_api.print_comments(out);
+            out << std::endl;
+            out.close();
+        }
 
         data_api.swap_conf_data(vars, includes, comments);
         data_api.add_include_file(input_file + ".lua");
@@ -134,15 +138,22 @@ void Converter::parse_include_file(std::string input_file)
 
     if (convert_rules_mult_files)
     {
-        std::ofstream out;
-        out.open(input_file + ".rules");
-        rule_api.print_rules(out, true); // true == output to rule file, NOT lua file
-        out.close();
+        bool include_rule_file = false;
+
+        if (!rule_api.empty())
+        {
+            std::ofstream out;
+            out.open(input_file + ".rules");
+            rule_api.print_rules(out, true); // true == output to rule file, NOT lua file
+            out.close();
+            include_rule_file = true;
+        }
+
         rule_api.swap_rules(rules);
 
-
         // add this new file as a snort style rule
-        rule_api.add_hdr_data("include " + input_file + ".rules");
+        if (include_rule_file)
+            rule_api.add_hdr_data("include " + input_file + ".rules");
     }
 }
 

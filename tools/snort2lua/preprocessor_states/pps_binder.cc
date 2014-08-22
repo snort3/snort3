@@ -23,13 +23,12 @@
 #include "data/dt_table_api.h"
 
 
-Binder::Binder() : printed(false) {};
+Binder::Binder() : printed(false) {}
 
 Binder::~Binder()
 {
     if (!printed)
         add_to_configuration();
-
 }
 
 void Binder::add_to_configuration()

@@ -28,12 +28,6 @@
 #include <stack>
 
 
-#include "data/data_types/dt_table.h"
-#include "data/data_types/dt_var.h"
-#include "data/data_types/dt_comment.h"
-#include "data/data_types/dt_rule.h"
-#include "data/data_types/dt_include.h"
-
 /*
 *
 * As a heads up to whoever reads this file.  This one API is
@@ -53,6 +47,7 @@
 */
 // dt_table_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
+class Table;
 class TableApi;
 extern TableApi table_api;
 
@@ -66,6 +61,9 @@ virtual ~TableApi();
 void reset_state();
 friend std::ostream& operator<<( std::ostream &out, const TableApi& table);
 void print_tables( std::ostream &out);
+
+bool empty()
+{ return (tables.size() == 0); }
 
 // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
 void open_top_level_table(std::string name);

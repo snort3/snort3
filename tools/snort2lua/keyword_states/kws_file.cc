@@ -38,10 +38,14 @@ public:
     File() : ConversionState() {};
     virtual ~File() {};
     virtual bool convert(std::istringstream& data);
+
+private:
+    static bool printed_error;
 };
 
 } // namespace
 
+bool File::printed_error = false;
 
 bool File::convert(std::istringstream& data_stream)
 {
@@ -53,7 +57,11 @@ bool File::convert(std::istringstream& data_stream)
     rule_api.add_hdr_data(data);
     data_stream.setstate(std::ios_base::eofbit);
     rule_api.make_rule_a_comment();
-    rule_api.add_comment_to_rule("file is currently unsupported");
+
+    if (!printed_error)
+        rule_api.add_comment_to_rule("WARNING: file keyword is currently unsupported");
+    else
+        printed_error = true;
     return true;
 }
 

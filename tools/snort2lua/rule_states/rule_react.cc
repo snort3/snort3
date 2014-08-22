@@ -121,55 +121,6 @@ bool React::convert(std::istringstream& data_stream)
 
                         table_api.add_option("msg", msg);
                     }
-
-#if 0
-                    // save the current position
-                    const std::streamoff curr_pos = data_stream.tellg();
-
-                    if (curr_pos == -1)
-                        data_stream.clear();
-                    std::string rule_keyword;
-
-                    data_stream.seekg(0);
-                    std::getline(data_stream, rule_keyword, '(');
-                    std::streamoff tmp_pos = data_stream.tellg();
-
-                    while(std::getline(data_stream, rule_keyword, ':'))
-                    {
-                        std::size_t semi_colon_pos = rule_keyword.find(';');
-                        if (semi_colon_pos != std::string::npos)
-                        {
-                            // found an option without a colon, so set stream
-                            // to semi-colon
-                            std::streamoff off = 1 + (std::streamoff)(tmp_pos) +
-                                                 (std::streamoff)(semi_colon_pos);
-                            data_stream.seekg(off);
-                            rule_keyword = rule_keyword.substr(0, semi_colon_pos);
-                        }
-
-                        // now, lets get the next option.
-                        util::trim(rule_keyword);
-
-                        if (!rule_keyword.compare("msg"))
-                        {
-                            std::string val = util::get_rule_option_args(data_stream);
-                            table_api.add_option("msg", val);
-                            break;
-                        }
-                        else  if (semi_colon_pos == std::string::npos)
-                            std::getline(data_stream, rule_keyword, ';');
-
-
-                        tmp_pos = data_stream.tellg();
-                    }
-
-                    // if we're at the end of the rule, don't clear
-                    if (curr_pos != -1)
-                        data_stream.clear();
-
-
-                    data_stream.seekg(curr_pos);
-#endif
                 }
                 table_api.close_table(); // "react"
             }

@@ -28,7 +28,7 @@
 #include <iostream>
 #include <array>
 
-#include "data/data_types/dt_rule_option.h"
+class RuleOption;
 
 class Rule
 {

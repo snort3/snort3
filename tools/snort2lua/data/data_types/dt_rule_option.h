@@ -26,7 +26,7 @@
 #include <vector>
 #include <iostream>
 
-#include "data/data_types/dt_rule_suboption.h"
+class RuleSubOption;
 
 class RuleOption
 {

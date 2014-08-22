@@ -25,13 +25,18 @@
 #include <sstream>
 #include <cstring>
 
+#include "data/data_types/dt_table.h"
+#include "data/data_types/dt_var.h"
+#include "data/data_types/dt_comment.h"
+#include "data/data_types/dt_rule.h"
+#include "data/data_types/dt_include.h"
 
 LuaData data_api;
 
 
 LuaData::LuaData()
-    :   curr_data_bad(false),
-        mode(LuaData::PrintMode::QUIET)
+    :   mode(LuaData::PrintMode::QUIET),
+        curr_data_bad(false)
 {
     comments = new Comments(start_comments, 0,
                     Comments::CommentType::MULTI_LINE);
@@ -228,6 +233,8 @@ std::string LuaData::expand_vars(std::string string)
     return estring;
 }
 
+bool LuaData::failed_conversions()
+{ return !errors->empty(); }
 
 void LuaData::failed_conversion(std::istringstream& stream)
 {

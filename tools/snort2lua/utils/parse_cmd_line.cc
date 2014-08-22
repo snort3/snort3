@@ -357,11 +357,8 @@ bool parse_cmd_line(int argc, char* argv[])
     ArgList al(argc, argv);
     const char *key, *val;
 
-    al.dump();
-
     while ( al.get_arg(key, val) )
     {
-        std::cout << "KEY is " << key << std::endl;
         ConfigFunc* p = basic_opts;
 
         while ( p->name && strcmp(p->name, key) )

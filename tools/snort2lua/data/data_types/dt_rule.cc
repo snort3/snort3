@@ -23,6 +23,7 @@
 #include "data/data_types/dt_rule.h"
 #include "data/dt_data.h"  // included for print mode
 #include "utils/s2l_util.h"
+#include "data/data_types/dt_rule_option.h"
 
 
 Rule::Rule() :  num_hdr_data(0),

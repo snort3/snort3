@@ -63,18 +63,13 @@ int main (int argc, char* argv[])
         return -1;
     }
 
+    // MAIN CONVERSION FUNCTION!!
     cv.initialize(&init_state_ctor);
-
-    // MAIN LOOP!!   walk through every input file and begin converting!
-//    option::Option* opt = options[CONF_FILE];
-
     if (cv.convert_file(conf_file) < 0)
     {
         print_line("Failed Conversion of file " + conf_file);
         fail = true;
     }
-
-//    } while ((opt = opt->next()));
 
     // keep track whether we're printing rules into a seperate file.
     bool rule_file_specifed = false;
@@ -82,7 +77,7 @@ int main (int argc, char* argv[])
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
     // now.  Otherwise, set up the include file.
-    if (rule_api.contains_rules())
+    if (rule_api.empty())
     {
         if (rule_file.empty() || !rule_file.compare(output_file))
         {

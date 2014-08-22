@@ -33,6 +33,7 @@
 #include "utils/s2l_util.h"
 #include "conversion_state.h"
 #include "data/dt_data.h"
+#include "data/data_types/dt_table.h"
 
 namespace util
 {
@@ -216,7 +217,6 @@ std::string rule_option_find_val(std::istringstream& data_stream,
     std::streamoff tmp_pos = data_stream.tellg();
 
     // This loop is a near duplicate of set_next_rule_state.
-    //  TODO: refactor into one loop
     while(std::getline(data_stream, rule_keyword, ':'))
     {
         std::size_t semi_colon_pos = rule_keyword.find(';');
@@ -242,10 +242,8 @@ std::string rule_option_find_val(std::istringstream& data_stream,
             break;
         }
 
-
         if (semi_colon_pos == std::string::npos)
             std::getline(data_stream, rule_keyword, ';');
-
 
         tmp_pos = data_stream.tellg();
     }

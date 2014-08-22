@@ -27,13 +27,6 @@
 #include <vector>
 #include <stack>
 
-
-#include "data/data_types/dt_table.h"
-#include "data/data_types/dt_var.h"
-#include "data/data_types/dt_comment.h"
-#include "data/data_types/dt_rule.h"
-#include "data/data_types/dt_include.h"
-
 /*
  *
  * As a heads up to whoever reads this file.  This one API is
@@ -52,8 +45,13 @@
  * creating rules.
  */
 
+class Rule;
+class RuleOption;
+class Comments;
 class RuleApi;
 extern RuleApi rule_api;
+
+
 
 class RuleApi
 {
@@ -63,9 +61,10 @@ public:
     virtual ~RuleApi();
 
 
-    inline bool failed_conversions() { return !bad_rules->empty(); }
-    inline bool contains_rules()
-    { return rules.size() > 0; }
+    bool failed_conversions();
+
+    inline bool empty()
+    { return (rules.size() == 0); }
 
     friend std::ostream &operator<<(std::ostream&, const RuleApi &);
     void print_rules(std::ostream&, bool in_rule_file);

@@ -26,6 +26,10 @@
 #include "data/dt_data.h"
 
 #include "utils/s2l_util.h"
+#include "data/data_types/dt_comment.h"
+#include "data/data_types/dt_rule.h"
+#include "data/data_types/dt_rule_option.h"
+#include "data/data_types/dt_rule_suboption.h"
 
 
 RuleApi rule_api;
@@ -53,6 +57,8 @@ void RuleApi::reset_state()
     curr_data_bad = false;
 }
 
+bool RuleApi::failed_conversions()
+{ return !bad_rules->empty(); }
 
 void RuleApi::begin_rule()
 {

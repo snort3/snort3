@@ -21,6 +21,9 @@
 
 #include "data/data_types/dt_table.h"
 #include "data/dt_data.h"  // to check for print mode
+#include "data/data_types/dt_option.h"
+#include "data/data_types/dt_var.h"
+#include "data/data_types/dt_comment.h"
 
 static inline Table* find_table(std::vector<Table*> vec, std::string name)
 {

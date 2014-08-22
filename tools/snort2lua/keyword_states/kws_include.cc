@@ -25,6 +25,7 @@
 #include "conversion_state.h"
 #include "utils/converter.h"
 #include "utils/s2l_util.h"
+#include "utils/parse_cmd_line.h"
 
 namespace keywords
 {
@@ -57,7 +58,17 @@ bool Include::convert(std::istringstream& data_stream)
 
         if (cv.should_convert_includes())
         {
-            cv.parse_include_file(data_api.expand_vars(file));
+            std::string full_file = data_api.expand_vars(file);
+
+            if (!util::file_exists(full_file))
+                full_file = parser::get_conf_dir() + full_file;
+
+
+            // if we still can't find this file, add it as a snort file
+            if (!util::file_exists(full_file))
+                rule_api.add_hdr_data("include " + file);
+            else
+                cv.parse_include_file(full_file);
         }
         else
         {
