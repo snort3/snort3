@@ -46,9 +46,11 @@ using namespace std;
 #include "framework/parameter.h"
 
 static const char* snort_help =
+"\n"
 "Snort has several options to get more help:\n"
 "\n"
-"--help this overview of help\n"
+"--help list command line options\n"
+"--help! this overview of help\n"
 "--help-builtin [<module prefix>] output matching builtin rules\n"
 "--help-buffers output available inspection buffers\n"
 "--help-commands [<module prefix>] output matching commands\n"
@@ -63,7 +65,8 @@ static const char* snort_help =
 "\n"
 "--help* and --list* options preempt other processing so should be last on the\n"
 "command line since any following options are ignored.  To ensure options like\n"
-"--plugin-path take effect, place them ahead of the help or list options.\n"
+"--markup and --plugin-path take effect, place them ahead of the help or list\n"
+"options.\n"
 "\n"
 "Options that filter output based on a matching prefix, such as --help-config\n"
 "won't output anything if there is no match.  If no prefix is given, everything\n"
@@ -79,6 +82,7 @@ static const char* snort_help =
 "  The name does not appear in the rule.\n"
 "+ IPS rules may also have a wild card parameter, which is indicated by a *.\n"
 "  Only used for metadata that Snort ignores.\n"
+"+ The snort module has command line options starting with a -.\n"
 ;
 
 //-------------------------------------------------------------------------
@@ -110,13 +114,13 @@ void help_args(const char* pfx)
 
 void help_basic(SnortConfig*, const char*)
 {
-    fprintf(stdout, "Snort help: %s", snort_help);
+    fprintf(stdout, "%s\n", snort_help);
     exit(0);
 }
 
 void help_usage(SnortConfig*, const char* val)
 {
-    fprintf(stdout, "USAGE: %s [-options] <filter options>\n", "snort");
+    fprintf(stdout, "USAGE: %s [-options]\n", "snort");
     help_args(val);
     exit(1);
 }

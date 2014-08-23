@@ -67,14 +67,15 @@ static THREAD_LOCAL eth_t* s_link = NULL;
 static THREAD_LOCAL ip_t* s_ipnet = NULL;
 static THREAD_LOCAL send_t s_send = DAQ_Inject;
 
+// FIXIT-L these should not have to be thread local
+static THREAD_LOCAL uint8_t s_attempts = 0;
+static THREAD_LOCAL int s_enabled = 0;
+
 static int Active_Open(const char*);
 static int Active_Close(void);
 
 static int Active_SendEth(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 static int Active_SendIp(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
-
-static uint8_t s_attempts = 0;
-static int s_enabled = 0;
 
 static inline PROTO_ID GetInnerProto (const Packet* p)
 {

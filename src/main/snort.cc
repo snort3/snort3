@@ -353,19 +353,6 @@ static void SnortInit(int argc, char **argv)
     else
         asn1_init_mem(256);
 
-    if (snort_conf->alert_file != NULL)
-    {
-        char *tmp = snort_conf->alert_file;
-        snort_conf->alert_file = ProcessFileOption(snort_conf, snort_conf->alert_file);
-        free(tmp);
-    }
-
-#ifdef PERF_PROFILING
-    /* Parse profiling here because of file option and potential
-     * dependence on log directory */
-    ConfigProfiling(snort_conf);
-#endif
-
     if (ScAlertBeforePass())
     {
         OrderRuleLists(snort_conf, "activation dynamic drop sdrop reject alert pass log");
@@ -620,12 +607,6 @@ static SnortConfig * get_reload_config(void)
 
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
     init_policy(sc);
-
-#ifdef PERF_PROFILING
-    /* Parse profiling here because of file option and potential
-     * dependence on log directory */
-    ConfigProfiling(sc);
-#endif
 
     if (VerifyReload(sc) == -1)
     {

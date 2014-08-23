@@ -75,7 +75,7 @@ static const Command snort_cmds[] =
 static const Parameter snort_params[] =
 {
     { "-?", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "show usage" },
+      "list command line options (same as --help)" },
 
     { "-A", Parameter::PT_STRING, nullptr, nullptr, 
       "<mode> set alert mode: none, cmg, or alert_*" },
@@ -126,7 +126,7 @@ static const Parameter snort_params[] =
       "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
 
     { "-l", Parameter::PT_STRING, nullptr, nullptr, 
-      "<ld> log to directory <ld>" },
+      "<logdir> log to this directory instead of current director" },
 
     { "-M", Parameter::PT_IMPLIED, nullptr, nullptr,
       "log messages to syslog (not alerts)" },
@@ -234,6 +234,9 @@ static const Parameter snort_params[] =
       "enable Inline-Test Mode Operation" },
 
     { "--help", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list command line options (same as -?)" },
+
+    { "--help!", Parameter::PT_IMPLIED, nullptr, nullptr,
       "overview of help" },
 
     { "--help-builtin", Parameter::PT_STRING, "(optional)", nullptr,
@@ -259,6 +262,12 @@ static const Parameter snort_params[] =
 
     { "--help-signals", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump available control signals" },
+
+    { "--id-subdir", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "create/use instance subdirectories in logdir instead of instance filename prefix" },
+
+    { "--id-zero", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "use id prefix / subdirectory even with one packet thread" },
 
     { "--list-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all known modules" },
@@ -322,6 +331,9 @@ static const Parameter snort_params[] =
 
     { "--rule", Parameter::PT_STRING, nullptr, nullptr,
       "<rules> to be added to configuration; may be repeated" },
+
+    { "--run-prefix", Parameter::PT_STRING, nullptr, nullptr,
+      "<pfx> prepend this to each output file" },
 
     { "--script-path", Parameter::PT_STRING, nullptr, nullptr,
       "<path> where to find luajit scripts" },
@@ -533,6 +545,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
     else if ( v.is("--help") )
+        help_usage(sc, v.get_string());
+
+    else if ( v.is("--help!") )
         help_basic(sc, v.get_string());
 
     else if ( v.is("--help-builtin") )
@@ -558,6 +573,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--help-signals") )
         help_signals(sc, v.get_string());
+
+    else if ( v.is("--id-subdir") )
+        sc->id_subdir = true;
+
+    else if ( v.is("--id-zero") )
+        sc->id_zero = true;
 
     else if ( v.is("--list-modules") )
         list_modules(sc, v.get_string());
@@ -616,6 +637,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--rule") )
         parser_append_rules(v.get_string());
+
+    else if ( v.is("--run-prefix") )
+        sc->run_prefix = SnortStrdup(v.get_string());
 
     else if ( v.is("--script-path") )
         ConfigScriptPath(sc, v.get_string());

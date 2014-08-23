@@ -217,22 +217,11 @@ void SnortConfFree(SnortConfig *sc)
     if (sc->chroot_dir != NULL)
         free(sc->chroot_dir);
 
-    if (sc->alert_file != NULL)
-        free(sc->alert_file);
-
     if (sc->bpf_filter != NULL)
         free(sc->bpf_filter);
 
     if (sc->event_trace_file != NULL)
         free(sc->event_trace_file);
-
-#ifdef PERF_PROFILING
-    if (sc->profile_rules.filename != NULL)
-        free(sc->profile_rules.filename);
-
-    if (sc->profile_preprocs.filename != NULL)
-        free(sc->profile_preprocs.filename);
-#endif
 
     FreeRuleStateList(sc->rule_state_list);
     FreeClassifications(sc->classifications);
@@ -304,7 +293,7 @@ void SnortConfFree(SnortConfig *sc)
     free(sc);
 }
 
-SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
+SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 {
     /* Move everything from the command line config over to the
      * config_file config */
@@ -334,6 +323,12 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 
     if (config_file == NULL)
         return cmd_line;
+
+    config_file->run_prefix = cmd_line->run_prefix;
+    cmd_line->run_prefix = nullptr;
+
+    config_file->id_subdir = cmd_line->id_subdir;
+    config_file->id_zero = cmd_line->id_zero;
 
     /* Used because of a potential chroot */
     config_file->orig_log_dir = SnortStrdup(config_file->log_dir);
@@ -483,22 +478,6 @@ int VerifyReload(SnortConfig *sc)
     if (sc == NULL)
         return -1;
 
-    if ((snort_conf->alert_file != NULL) && (sc->alert_file != NULL))
-    {
-        if (strcasecmp(snort_conf->alert_file, sc->alert_file) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the alert file "
-                         "configuration requires a restart.\n");
-            return -1;
-        }
-    }
-    else if (snort_conf->alert_file != sc->alert_file)
-    {
-        ErrorMessage("Snort Reload: Changing the alert file "
-                     "configuration requires a restart.\n");
-        return -1;
-    }
-
     if (snort_conf->asn1_mem != sc->asn1_mem)
     {
         ErrorMessage("Snort Reload: Changing the asn1 memory configuration "
@@ -611,64 +590,6 @@ int VerifyReload(SnortConfig *sc)
     {
         ErrorMessage("Snort Reload: Changing the ppm rule_log "
                      "configuration requires a restart.\n");
-        return -1;
-    }
-#endif
-
-#ifdef PERF_PROFILING
-    if ((snort_conf->profile_rules.num != sc->profile_rules.num) ||
-        (snort_conf->profile_rules.sort != sc->profile_rules.sort) ||
-        (snort_conf->profile_rules.append != sc->profile_rules.append))
-    {
-        ErrorMessage("Snort Reload: Changing rule profiling number, sort "
-                     "or append configuration requires a restart.\n");
-        return -1;
-    }
-
-    if ((snort_conf->profile_rules.filename != NULL) &&
-        (sc->profile_rules.filename != NULL))
-    {
-        if (strcasecmp(snort_conf->profile_rules.filename,
-                       sc->profile_rules.filename) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the rule profiling filename "
-                         "configuration requires a restart.\n");
-            return -1;
-        }
-    }
-    else if (snort_conf->profile_rules.filename !=
-             sc->profile_rules.filename)
-    {
-        ErrorMessage("Snort Reload: Changing the rule profiling filename "
-                     "configuration requires a restart.\n");
-        return -1;
-    }
-
-    if ((snort_conf->profile_preprocs.num !=  sc->profile_preprocs.num) ||
-        (snort_conf->profile_preprocs.sort != sc->profile_preprocs.sort) ||
-        (snort_conf->profile_preprocs.append != sc->profile_preprocs.append))
-    {
-        ErrorMessage("Snort Reload: Changing preprocessor profiling number, "
-                     "sort or append configuration requires a restart.\n");
-        return -1;
-    }
-
-    if ((snort_conf->profile_preprocs.filename != NULL) &&
-        (sc->profile_preprocs.filename != NULL))
-    {
-        if (strcasecmp(snort_conf->profile_preprocs.filename,
-                       sc->profile_preprocs.filename) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the preprocessor profiling "
-                         "filename configuration requires a restart.\n");
-            return -1;
-        }
-    }
-    else if (snort_conf->profile_preprocs.filename !=
-             sc->profile_preprocs.filename)
-    {
-        ErrorMessage("Snort Reload: Changing the preprocessor profiling "
-                     "filename configuration requires a restart.\n");
         return -1;
     }
 #endif

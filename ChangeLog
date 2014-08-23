@@ -1,11 +1,14 @@
 116
 -- fixed valgrind leak
--- observed memory corruption on Linux when loading dynamic plugins (not
-fixed)
+-- observed memory corruption on Linux when loading dynamic plugins
+   (not fixed)
 -- fixed action leak
 -- testing visibility=hidden
 -- more FIXITs
 -- fp related FIXITs
+-- deleted profile.rules.file and profile.modules.file
+-- deleted alerts.alert_file
+-- changed --help to just cmd line options and added --help!
 
 115
 -- remove share.h
