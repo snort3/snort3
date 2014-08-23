@@ -181,7 +181,7 @@ void TestLogger::alert(Packet *p, const char *msg, Event *event)
     if (flags & TEST_FLAG_SESSION)
         LogIpAddrs(test_file, p);
 
-    if ( (flags & TEST_FLAG_REBUILT) && (p->packet_flags && PKT_PSEUDO) )
+    if ( (flags & TEST_FLAG_REBUILT) && (p->packet_flags & PKT_PSEUDO) )
     {
         const char* s;
         switch ( p->pseudo_type )

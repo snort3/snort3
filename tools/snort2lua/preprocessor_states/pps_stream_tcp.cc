@@ -187,7 +187,6 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
     std::string dir;
     std::string lua_dir;
     std::string protocol;
-    bool tmpval = true;
     std::vector<std::string>* protocols;
     Binder* bind;
 

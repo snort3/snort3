@@ -9,6 +9,7 @@
 -- deleted profile.rules.file and profile.modules.file
 -- deleted alerts.alert_file
 -- changed --help to just cmd line options and added --help!
+-- fixed Xcode warnings
 
 115
 -- remove share.h
