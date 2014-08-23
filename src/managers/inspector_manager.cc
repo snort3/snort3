@@ -283,7 +283,7 @@ static PHInstance* get_instance(
     return nullptr;
 }
 
-static PHInstance* GetInstance(
+static PHInstance* get_new(
     PHClass* ppc, FrameworkPolicy* fp, const char* keyword)
 {
     PHInstance* p = get_instance(fp, keyword);
@@ -434,7 +434,7 @@ void InspectorManager::instantiate(
 
     else
     {
-        PHInstance* ppi = GetInstance(ppc, fp, keyword);
+        PHInstance* ppi = get_new(ppc, fp, keyword);
 
         if ( !ppi )
             ParseError("can't instantiate inspector: '%s'.", keyword);

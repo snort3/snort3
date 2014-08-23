@@ -49,9 +49,13 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 static void set_session(Flow* flow, const char* key)
 {
     Inspector* pin = InspectorManager::get_inspector(key);
-    flow->set_client(pin);
-    flow->set_server(pin);
-    flow->clouseau = nullptr;
+
+    if ( pin )
+    {
+        flow->set_client(pin);
+        flow->set_server(pin);
+        flow->clouseau = nullptr;
+    }
 }
 
 static void set_session(Flow* flow)
