@@ -80,14 +80,15 @@ static SF_LIST * SortDirectory(const char *path)
     {
         char *node_entry_name, *dir_entry_name;
         SF_LNODE *node;
+        NODE_DATA ndata;
 
         dir_entry_name = SnortStrdup(direntry->d_name);
 
-        for (node = sflist_first_node(dir_entries);
-             node != NULL;
-             node = sflist_next_node(dir_entries))
+        for (ndata = sflist_first(dir_entries, &node);
+             ndata != NULL;
+             ndata = sflist_next(&node))
         {
-            node_entry_name = (char *)node->ndata;
+            node_entry_name = (char *)ndata;
             if (strcmp(dir_entry_name, node_entry_name) < 0)
                 break;
         }
@@ -137,10 +138,11 @@ int GetFilesUnderDir(const char *path, SF_QUEUE *dir_queue, const char *filter)
         ErrorMessage("Error sorting entries in directory: %s\n", path);
         return -1;
     }
+    SF_LNODE* cursor;
 
-    for (direntry = (char *)sflist_first(dir_entries);
+    for (direntry = (char *)sflist_first(dir_entries, &cursor);
          direntry != NULL;
-         direntry = (char *)sflist_next(dir_entries))
+         direntry = (char *)sflist_next(&cursor))
     {
         char path_buf[PATH_MAX];
         struct stat file_stat;
@@ -230,9 +232,11 @@ static int GetPcaps(SF_LIST *pol, SF_QUEUE *pcap_queue)
     if ((pol == NULL) || (pcap_queue == NULL))
         return -1;
 
-    for (pro = (PcapReadObject *)sflist_first(pol);
+    SF_LNODE* cursor;
+
+    for (pro = (PcapReadObject *)sflist_first(pol, &cursor);
          pro != NULL;
-         pro = (PcapReadObject *)sflist_next(pol))
+         pro = (PcapReadObject *)sflist_next(&cursor))
     {
         arg = pro->arg;
         filter = pro->filter;

@@ -529,9 +529,9 @@ int PortObjectAddItem( PortObject * po, PortObjectItem * poi, int *errflag)
     if(errflag) *errflag = 0;
 
     /* Make sure this is not a duplicate */
-    for(p=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+    for(p=(PortObjectItem*)sflist_first(po->item_list,&pos);
         p != 0;
-        p=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+        p=(PortObjectItem*)sflist_next(&pos) )
     {
         if((p->lport == poi->lport) && (p->hport == poi->hport))
         {
@@ -554,9 +554,9 @@ int PortObjectAddPortObject(PortObject * podst, PortObject * posrc, int *errflag
 
     if(errflag) *errflag = 0;
 
-    for(po=(PortObjectItem*)sflist_firstpos(posrc->item_list, &pos);
+    for(po=(PortObjectItem*)sflist_first(posrc->item_list, &pos);
         po != 0;
-        po=(PortObjectItem*)sflist_nextpos(posrc->item_list, &pos) )
+        po=(PortObjectItem*)sflist_next(&pos) )
     {
         PortObjectItem *poi = PortObjectItemDup(po);
         if((ret = PortObjectAddItem(podst, poi, errflag)) != 0)
@@ -620,9 +620,9 @@ PortObject * PortObjectDup( PortObject * po )
     /* Dup the Item List */
     if( po->item_list )
     {
-      for(poi =(PortObjectItem*)sflist_firstpos(po->item_list,&lpos);
+      for(poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
           poi != NULL;
-          poi =(PortObjectItem*)sflist_nextpos(po->item_list,&lpos) )
+          poi =(PortObjectItem*)sflist_next(&lpos) )
       {
         poinew = PortObjectItemDup( poi );
         if(!poinew)
@@ -639,9 +639,9 @@ PortObject * PortObjectDup( PortObject * po )
     /* Dup the input rule list */
     if( po->rule_list )
     {
-      for(prid  = (int*)sflist_firstpos(po->rule_list,&lpos);
+      for(prid  = (int*)sflist_first(po->rule_list,&lpos);
           prid != 0;
-          prid  = (int*)sflist_nextpos(po->rule_list,&lpos) )
+          prid  = (int*)sflist_next(&lpos) )
       {
           prule = (int*)calloc(1,sizeof(int));
           if(!prule)
@@ -687,9 +687,9 @@ PortObject * PortObjectDupPorts( PortObject * po )
     /* Dup the Item List */
     if( po->item_list )
     {
-      for(poi =(PortObjectItem*)sflist_firstpos(po->item_list,&lpos);
+      for(poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
           poi != NULL;
-          poi =(PortObjectItem*)sflist_nextpos(po->item_list,&lpos) )
+          poi =(PortObjectItem*)sflist_next(&lpos) )
       {
         poinew = PortObjectItemDup( poi );
         if(!poinew)
@@ -740,9 +740,9 @@ PortObject2 * PortObject2Dup( PortObject * po )
     /* Dup the Item List */
     if( po->item_list )
     {
-      for(poi =(PortObjectItem*)sflist_firstpos(po->item_list,&lpos);
+      for(poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
           poi != NULL;
-          poi =(PortObjectItem*)sflist_nextpos(po->item_list,&lpos) )
+          poi =(PortObjectItem*)sflist_next(&lpos) )
       {
         poinew = PortObjectItemDup( poi );
         if(!poinew)
@@ -755,9 +755,9 @@ PortObject2 * PortObject2Dup( PortObject * po )
     /* Dup the input rule list */
     if( po->rule_list )
     {
-        for(prid  = (int*)sflist_firstpos(po->rule_list,&lpos);
+        for(prid  = (int*)sflist_first(po->rule_list,&lpos);
             prid != 0;
-            prid  = (int*)sflist_nextpos(po->rule_list,&lpos) )
+            prid  = (int*)sflist_next(&lpos) )
         {
               prule = (int*)calloc(1,sizeof(int));
               if(!prule)
@@ -854,13 +854,14 @@ int PortObjectAddPortAny( PortObject * po )
 int PortObjectHasAny (PortObject * po )
 {
      PortObjectItem *poi;
+     SF_LNODE* cursor;
 
      if( !po )
          return 0;
 
-     for(poi=(PortObjectItem*)sflist_first(po->item_list);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
          poi != 0;
-         poi=(PortObjectItem*)sflist_next(po->item_list) )
+         poi=(PortObjectItem*)sflist_next(&cursor) )
      {
          if( poi->type == PORT_OBJECT_ANY )
              return 1;
@@ -870,13 +871,14 @@ int PortObjectHasAny (PortObject * po )
 int PortObjectHasNot (PortObject * po )
 {
      PortObjectItem *poi;
+     SF_LNODE* cursor;
 
      if( !po )
          return 0;
 
-     for(poi=(PortObjectItem*)sflist_first(po->item_list);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
          poi != 0;
-         poi=(PortObjectItem*)sflist_next(po->item_list) )
+         poi=(PortObjectItem*)sflist_next(&cursor) )
      {
          if ( poi->flags== PORT_OBJECT_NOT_FLAG) return 1;
      }
@@ -885,14 +887,15 @@ int PortObjectHasNot (PortObject * po )
 int PortObjectIsPureNot (PortObject * po )
 {
      PortObjectItem *poi;
+     SF_LNODE* cursor;
      int cnt=0;
 
      if( !po )
          return 0;
 
-     for(poi=(PortObjectItem*)sflist_first(po->item_list);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
          poi != 0;
-         poi=(PortObjectItem*)sflist_next(po->item_list) )
+         poi=(PortObjectItem*)sflist_next(&cursor) )
      {
          cnt++;
          if ( poi->flags != PORT_OBJECT_NOT_FLAG)
@@ -910,13 +913,14 @@ int PortObjectIsPureNot (PortObject * po )
 int PortObjectHasPort (PortObject * po, int port )
 {
      PortObjectItem *poi;
+     SF_LNODE* cursor;
 
      if( !po )
          return 0;
 
-     for(poi=(PortObjectItem*)sflist_first(po->item_list);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
          poi != 0;
-         poi=(PortObjectItem*)sflist_next(po->item_list) )
+         poi=(PortObjectItem*)sflist_next(&cursor) )
      {
         switch( poi->type )
         {
@@ -947,13 +951,14 @@ int PortObjectHasPort (PortObject * po, int port )
 int PortObjectIncludesPort (PortObject * po, int port )
 {
      PortObjectItem *poi;
+     SF_LNODE* cursor;
 
      if( !po )
          return 0;
 
-     for(poi=(PortObjectItem*)sflist_first(po->item_list);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
          poi != 0;
-         poi=(PortObjectItem*)sflist_next(po->item_list) )
+         poi=(PortObjectItem*)sflist_next(&cursor) )
      {
         switch( poi->type )
         {
@@ -988,9 +993,9 @@ PortObject * PortTableFindPortObjectByPort(  PortTable * p , int port )
     PortObject * po;
     SF_LNODE   * pos;
 
-    for(po =(PortObject*)sflist_firstpos(p->pt_polist,&pos);
+    for(po =(PortObject*)sflist_first(p->pt_polist,&pos);
        po != NULL;
-       po =(PortObject*)sflist_nextpos(p->pt_polist,&pos) )
+       po =(PortObject*)sflist_next(&pos) )
     {
         if( PortObjectHasPort ( po, port ) )
         {
@@ -1015,15 +1020,16 @@ PortObject * PortTableFindPortObjectByPort(  PortTable * p , int port )
 int PortObjectPortCount (PortObject * po )
 {
      PortObjectItem *poi;
+     SF_LNODE* cursor;
      int cnt=0;
      int nports;
 
      if( !po )
          return 0;
 
-     for(poi=(PortObjectItem*)sflist_first(po->item_list);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
          poi != 0;
-         poi=(PortObjectItem*)sflist_next(po->item_list) )
+         poi=(PortObjectItem*)sflist_next(&cursor) )
      {
         switch( poi->type )
         {
@@ -1094,9 +1100,9 @@ char * PortObjectCharPortArray ( char * parray, PortObject * po, int * nports )
              return 0;
      }
 
-     for(poi=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
          poi != 0;
-         poi=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+         poi=(PortObjectItem*)sflist_next(&pos) )
      {
          /* Add ports that are not NOT'd */
          if( poi->flags & PORT_OBJECT_NOT_FLAG  )
@@ -1126,9 +1132,9 @@ char * PortObjectCharPortArray ( char * parray, PortObject * po, int * nports )
      }
 
      /* Remove any NOT'd ports that may have been added above */
-     for(poi=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+     for(poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
          poi != 0;
-         poi=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+         poi=(PortObjectItem*)sflist_next(&pos) )
      {
          if( !( poi->flags & PORT_OBJECT_NOT_FLAG)  )
              continue;
@@ -1167,9 +1173,9 @@ char * PortObjectCharPortArray ( char * parray, PortObject * po, int * nports )
         }
 
         /* disable the NOT'd ports */
-        for(poi=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+        for(poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
             poi != 0;
-            poi=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+            poi=(PortObjectItem*)sflist_next(&pos) )
         {
             if( !( poi->flags & PORT_OBJECT_NOT_FLAG)  )
                 continue; /* should not happen */
@@ -1422,16 +1428,16 @@ int PortObjectEqual( PortObject * a, PortObject *b )
     if( a->item_list->count != b->item_list->count )
         return 0;
 
-    pa = (PortObjectItem*)sflist_firstpos(a->item_list,&posa);
-    pb = (PortObjectItem*)sflist_firstpos(b->item_list,&posb);
+    pa = (PortObjectItem*)sflist_first(a->item_list,&posa);
+    pb = (PortObjectItem*)sflist_first(b->item_list,&posb);
 
     while( pa && pb )
     {
       if( !PortObjectItemsEqual( pa, pb) )
           return 0;
 
-      pa = (PortObjectItem*)sflist_nextpos(a->item_list,&posa);
-      pb = (PortObjectItem*)sflist_nextpos(b->item_list,&posb);
+      pa = (PortObjectItem*)sflist_next(&posa);
+      pb = (PortObjectItem*)sflist_next(&posb);
     }
 
     if( pa || pb ) /* both are not done - cannot match */
@@ -1447,10 +1453,11 @@ PortObject * PortObjectAppend(PortObject * poa, PortObject * pob )
 {
    PortObjectItem * poia;
    PortObjectItem * poib;
+   SF_LNODE* cursor;
 
-   for( poib = (PortObjectItem*) sflist_first(pob->item_list);
+   for( poib = (PortObjectItem*) sflist_first(pob->item_list, &cursor);
         poib!= 0;
-        poib = (PortObjectItem*)sflist_next(pob->item_list) )
+        poib = (PortObjectItem*)sflist_next(&cursor) )
    {
        poia = PortObjectItemNew();
 
@@ -1470,9 +1477,9 @@ PortObject * PortObjectAppendPortObject(PortObject * poa, PortObject * pob )
    int * prid2;
    SF_LNODE * lpos;
 
-   for( prid = (int*) sflist_firstpos(pob->rule_list,&lpos);
+   for( prid = (int*) sflist_first(pob->rule_list,&lpos);
         prid!= 0;
-        prid = (int*)sflist_nextpos(pob->rule_list,&lpos) )
+        prid = (int*)sflist_next(&lpos) )
    {
        prid2 = (int*)calloc( 1, sizeof(int));
        if( !prid2 )
@@ -1489,9 +1496,9 @@ PortObject2 * PortObject2AppendPortObject(PortObject2 * poa, PortObject * pob )
    int * prid2;
    SF_LNODE * lpos;
 
-   for( prid = (int*) sflist_firstpos(pob->rule_list,&lpos);
+   for( prid = (int*) sflist_first(pob->rule_list,&lpos);
         prid!= 0;
-        prid = (int*)sflist_nextpos(pob->rule_list,&lpos) )
+        prid = (int*)sflist_next(&lpos) )
    {
        prid2 = (int*)calloc( 1, sizeof(int));
        if( !prid2 )
@@ -1652,9 +1659,9 @@ PortObject * PortTableFindInputPortObjectName(PortTable * pt, char * po_name)
     if( !po_name ) return NULL;
 
     /* Normalize each of the input port objects */
-    for(po =(PortObject*)sflist_firstpos(pt->pt_polist,&lpos);
+    for(po =(PortObject*)sflist_first(pt->pt_polist,&lpos);
         po!=0;
-        po =(PortObject*)sflist_nextpos(pt->pt_polist,&lpos) )
+        po =(PortObject*)sflist_next(&lpos) )
     {
         if( po->name )
         {
@@ -1678,9 +1685,9 @@ PortObject * PortTableFindInputPortObjectPorts( PortTable * pt, PortObject * pox
     if( !pt ) return NULL;
     if( !pox ) return NULL;
 
-    for(po =(PortObject*)sflist_firstpos(pt->pt_polist,&lpos);
+    for(po =(PortObject*)sflist_first(pt->pt_polist,&lpos);
         po!=0;
-        po =(PortObject*)sflist_nextpos(pt->pt_polist,&lpos) )
+        po =(PortObject*)sflist_next(&lpos) )
     {
         if( PortObjectEqual( po, pox ) )
         {
@@ -1697,9 +1704,9 @@ int PortTableNormalizeInputPortObjects( PortTable *p )
     PortObject * po;
 
     /* Normalize each of the input port objects */
-    for(po =(PortObject*)sflist_firstpos(p->pt_polist,&lpos);
+    for(po =(PortObject*)sflist_first(p->pt_polist,&lpos);
         po!=0;
-        po =(PortObject*)sflist_nextpos(p->pt_polist,&lpos) )
+        po =(PortObject*)sflist_next(&lpos) )
     {
         PortObjectNormalize(po);
     }
@@ -1743,9 +1750,9 @@ int PortTableAddObject( PortTable *p, PortObject * po )
 
 
     /* Search for the Port Object in the input list, by address */
-    for(pox =(PortObject*)sflist_firstpos(p->pt_polist,&lpos);
+    for(pox =(PortObject*)sflist_first(p->pt_polist,&lpos);
         pox!=0;
-        pox =(PortObject*)sflist_nextpos(p->pt_polist,&lpos) )
+        pox =(PortObject*)sflist_next(&lpos) )
     {
         if( pox == po )
         {
@@ -1782,9 +1789,9 @@ static unsigned PortObject_hash( SFHASHFCN * p, unsigned char *d, int )
     po = *(PortObject**) d;
 
     /* hash up each item */
-    for(poi =(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+    for(poi =(PortObjectItem*)sflist_first(po->item_list,&pos);
         poi != NULL;
-        poi =(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+        poi =(PortObjectItem*)sflist_next(&pos) )
     {
        switch(poi->type)
        {
@@ -2204,9 +2211,9 @@ int PortTableCompileMergePortObjects( PortTable * p )
 
         /* Build a list of port objects touching port 'i' */
         pol_cnt = 0;
-        for(po=(PortObject*)sflist_firstpos(p->pt_polist,&lpos);
+        for(po=(PortObject*)sflist_first(p->pt_polist,&lpos);
             po;
-            po=(PortObject*)sflist_nextpos(p->pt_polist,&lpos) )
+            po=(PortObject*)sflist_next(&lpos) )
         {
             if( PortObjectHasPort ( po, i  ) )
             {
@@ -2386,9 +2393,9 @@ static int _po2_include_po_rules( PortObject2 * po2, PortObject * po  )
     SF_LNODE * rpos;
 
     /* get each rule in po */
-    for(pid=(int*)sflist_firstpos(po->rule_list,&rpos);
+    for(pid=(int*)sflist_first(po->rule_list,&rpos);
         pid;
-        pid=(int*)sflist_nextpos(po->rule_list,&rpos) )
+        pid=(int*)sflist_next(&rpos) )
     {
        /* find it in po2 */
        id =(int*) sfghash_find(po2->rule_hash,pid);
@@ -2462,9 +2469,9 @@ int PortTableConsistencyCheck( PortTable *p )
     *    check that each port it reference has all of the rules
     *    referenced to that port in the composit object
     */
-    for(ipo=(PortObject*)sflist_firstpos(p->pt_polist,&pos);
+    for(ipo=(PortObject*)sflist_first(p->pt_polist,&pos);
         ipo;
-        ipo=(PortObject*)sflist_nextpos(p->pt_polist,&pos) )
+        ipo=(PortObject*)sflist_next(&pos) )
     {
         /*
          * for each port in this object get the composite port object
@@ -2472,9 +2479,9 @@ int PortTableConsistencyCheck( PortTable *p )
          * are in the composite object.  This verifies all rules are applied
          * to the originally intended port.
          */
-        for(poi=(PortObjectItem*)sflist_firstpos(ipo->item_list,&ipos);
+        for(poi=(PortObjectItem*)sflist_first(ipo->item_list,&ipos);
             poi;
-            poi=(PortObjectItem*)sflist_nextpos(ipo->item_list,&ipos) )
+            poi=(PortObjectItem*)sflist_next(&ipos) )
         {
             switch(poi->type)
             {
@@ -2566,9 +2573,9 @@ static int * RuleListToSortedArray( SF_LIST * rl )
 
     ra = (int *)SnortAlloc(rl->count * sizeof(int));
 
-    for( prid = (int*)sflist_firstpos(rl,&pos);
+    for( prid = (int*)sflist_first(rl,&pos);
          prid!= 0 && k < (int)rl->count;
-         prid = (int*)sflist_nextpos(rl,&pos) )
+         prid = (int*)sflist_next(&pos) )
     {
         ra[k++] = *prid;
     }
@@ -2598,7 +2605,7 @@ void RuleListSortUniq(
         return ;
     }
 
-    currNode = (int*)sflist_firstpos(rl,&pos);
+    currNode = (int*)sflist_first(rl,&pos);
     if (currNode == NULL)
         return;
 
@@ -2608,7 +2615,7 @@ void RuleListSortUniq(
         {
             *currNode = lastRuleIndex = rlist[i];
             //replace the next element in place
-            currNode = (int*)sflist_nextpos(rl,&pos);
+            currNode = (int*)sflist_next(&pos);
             uniqElements++;
         }
     }
@@ -2633,9 +2640,9 @@ void PortTableSortUniqRules(
     PortObject * po;
     SF_LNODE   *pos = NULL;
 
-    for(po =(PortObject*)sflist_firstpos(p->pt_polist,&pos);
+    for(po =(PortObject*)sflist_first(p->pt_polist,&pos);
         po != NULL;
-        po =(PortObject*)sflist_nextpos(p->pt_polist,&pos) )
+        po =(PortObject*)sflist_next(&pos) )
     {
         RuleListSortUniq(po->rule_list);
     }
@@ -2682,9 +2689,9 @@ void PortTablePrintInput( PortTable * p )
     SF_LNODE   * pos;
 
     LogMessage("*** %d PortObjects in Table\n",p->pt_polist->count);
-    for(po =(PortObject*)sflist_firstpos(p->pt_polist,&pos);
+    for(po =(PortObject*)sflist_first(p->pt_polist,&pos);
         po!=0;
-        po =(PortObject*)sflist_nextpos(p->pt_polist,&pos) )
+        po =(PortObject*)sflist_next(&pos) )
     {
         PortObjectPrint( po );
     }
@@ -2695,9 +2702,9 @@ void PortTablePrintInputEx( PortTable * p,
 {
     PortObject * po;
     SF_LNODE   * pos;
-    for(po =(PortObject*)sflist_firstpos(p->pt_polist,&pos);
+    for(po =(PortObject*)sflist_first(p->pt_polist,&pos);
         po != NULL;
-        po =(PortObject*)sflist_nextpos(p->pt_polist,&pos) )
+        po =(PortObject*)sflist_next(&pos) )
     {
         PortObjectPrintEx( po, print_index_map );
     }
@@ -2778,9 +2785,9 @@ void PortObjectPrintPortsRaw(PortObject * po )
 
     SnortSnprintfAppend(buf, bufsize, " [");
 
-    for(poi=(PortObjectItem*)sflist_firstpos(po->item_list, &pos);
+    for(poi=(PortObjectItem*)sflist_first(po->item_list, &pos);
         poi != 0;
-        poi=(PortObjectItem*)sflist_nextpos(po->item_list, &pos) )
+        poi=(PortObjectItem*)sflist_next(&pos) )
     {
         PortObjectItemPrint(poi, buf, bufsize);
     }
@@ -2818,9 +2825,9 @@ void PortObject2PrintPorts(PortObject2 * po )
     }
     else
     {
-        for(poi=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+        for(poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
             poi != 0;
-            poi=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+            poi=(PortObjectItem*)sflist_next(&pos) )
         {
             PortObjectItemPrint(poi, po_print_buf, bufsize);
         }
@@ -2876,9 +2883,9 @@ void PortObjectPrintEx(PortObject * po,
     }
     else
     {
-      for(poi=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+      for(poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
           poi != 0;
-          poi=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+          poi=(PortObjectItem*)sflist_next(&pos) )
           {
              PortObjectItemPrint(poi, po_print_buf, bufsize);
           }
@@ -2946,9 +2953,9 @@ void PortObject2PrintEx(PortObject2 * po,
     }
     else
     {
-        for(poi=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+        for(poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
             poi != 0;
-            poi=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+            poi=(PortObjectItem*)sflist_next(&pos) )
         {
             PortObjectItemPrint(poi, po_print_buf, bufsize);
         }
@@ -2995,12 +3002,13 @@ void PortObject2Print (PortObject2 * po )
 void PortTablePrintUserRules( PortTable * p )
 {
     PortObject * po;
+    SF_LNODE* cursor;
 
     /* normalized user PortObjects and rule ids */
     LogMessage(">>>PortTable - Rules\n");
-    for(po = (PortObject*)sflist_first(p->pt_polist);
+    for(po = (PortObject*)sflist_first(p->pt_polist, &cursor);
         po!= 0;
-        po = (PortObject*)sflist_next(p->pt_polist) )
+        po = (PortObject*)sflist_next(&cursor) )
     {
         PortObjectPrint( po );
     }
@@ -3052,10 +3060,11 @@ void PortTablePrintPortPortObjects( PortTable * p )
           continue;
 
       SnortSnprintfAppend(po_print_buf, bufsize, "---Port[%d] PortObjects [ ",i);
+      SF_LNODE* cursor;
 
-      for(po=(PortObject*)sflist_first(p->pt_port_lists[i]);
+      for(po=(PortObject*)sflist_first(p->pt_port_lists[i], &cursor);
           po != 0;
-          po=(PortObject*)sflist_next(p->pt_port_lists[i]) )
+          po=(PortObject*)sflist_next(&cursor) )
           {
             SnortSnprintfAppend(po_print_buf, bufsize, "%d ",po->id);
           }
@@ -3361,9 +3370,9 @@ static void _PONegateList(PortObject *po)
     if(!po) return;
 
     /* disable the NOT'd ports */
-    for(poi=(PortObjectItem*)sflist_firstpos(po->item_list,&pos);
+    for(poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
         poi != 0;
-        poi=(PortObjectItem*)sflist_nextpos(po->item_list,&pos) )
+        poi=(PortObjectItem*)sflist_next(&pos) )
     {
         poi->flags ^= PORT_OBJECT_NOT_FLAG;
     }

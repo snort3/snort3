@@ -66,6 +66,7 @@
 #include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_reader.h"
+#include "utils/sflsq.h"
 #include "ppm.h"
 #include "detection_util.h"
 #include "detection_options.h"
@@ -1569,11 +1570,12 @@ void fpEvalIpProtoOnlyRules(SF_LIST **ip_proto_only_lists, Packet *p, uint8_t pr
     {
         SF_LIST *l = ip_proto_only_lists[proto_id];
         OptTreeNode *otn;
+        SF_LNODE* cursor;
 
         /* If list is NULL, sflist_first returns NULL */
-        for (otn = (OptTreeNode *)sflist_first(l);
+        for (otn = (OptTreeNode *)sflist_first(l, &cursor);
              otn != NULL;
-             otn = (OptTreeNode *)sflist_next(l))
+             otn = (OptTreeNode *)sflist_next(&cursor))
         {
             if (fpEvalRTN(getRuntimeRtnFromOtn(otn), p, 0))
             {

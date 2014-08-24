@@ -1327,9 +1327,11 @@ static int fpCreateInitRuleMap(
         prm->prmNumSrcGroups++;
 
         /* Add this port group to the src table at each port that uses it */
-        for( poi = (PortObjectItem*)sflist_first(po->item_list);
+        SF_LNODE* cursor;
+
+        for( poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
              poi;
-             poi = (PortObjectItem*)sflist_next(po->item_list) )
+             poi = (PortObjectItem*)sflist_next(&cursor) )
         {
              switch(poi->type)
              {
@@ -1373,9 +1375,11 @@ static int fpCreateInitRuleMap(
         prm->prmNumDstGroups++;
 
         /* Add this port group to the src table at each port that uses it */
-        for( poi = (PortObjectItem*)sflist_first(po->item_list);
+        SF_LNODE* cursor;
+
+        for( poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
              poi;
-             poi = (PortObjectItem*)sflist_next(po->item_list) )
+             poi = (PortObjectItem*)sflist_next(&cursor) )
         {
              switch(poi->type)
              {
@@ -2141,9 +2145,11 @@ void fpBuildServicePortGroupByServiceOtnList(
      * add each rule to the port group pattern matchers,
      * or to the no-content rule list
      */
-    for (otn = (OptTreeNode*)sflist_first(list);
+    SF_LNODE* cursor;
+
+    for (otn = (OptTreeNode*)sflist_first(list, &cursor);
             otn;
-            otn = (OptTreeNode*)sflist_next(list))
+            otn = (OptTreeNode*)sflist_next(&cursor))
     {
         if (otn->proto == ETHERNET_TYPE_IP)
         {
@@ -2333,10 +2339,11 @@ PORT_GROUP * fpGetServicePortGroupByOrdinal(sopg_table_t *sopg, int proto, int d
 void fpPrintRuleList( SF_LIST * list )
 {
     OptTreeNode * otn;
+    SF_LNODE* cursor;
 
-    for( otn=(OptTreeNode*)sflist_first(list);
+    for( otn=(OptTreeNode*)sflist_first(list, &cursor);
          otn;
-         otn=(OptTreeNode*)sflist_next(list) )
+         otn=(OptTreeNode*)sflist_next(&cursor) )
     {
          LogMessage("|   %u:%u\n",otn->sigInfo.generator,otn->sigInfo.id);
     }
@@ -2601,9 +2608,11 @@ static void fpAddIpProtoOnlyRule(SF_LIST **ip_proto_only_lists, OptTreeNode *otn
             }
 
             /* Search for dups */
-            for (dup = (OptTreeNode *)sflist_first(ip_proto_only_lists[i]);
+            SF_LNODE* cursor;
+
+            for (dup = (OptTreeNode *)sflist_first(ip_proto_only_lists[i], &cursor);
                  dup != NULL;
-                 dup = (OptTreeNode *)sflist_next(ip_proto_only_lists[i]))
+                 dup = (OptTreeNode *)sflist_next(&cursor))
             {
                 if (dup == otn)
                     return;

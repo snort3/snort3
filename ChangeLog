@@ -10,6 +10,7 @@
 -- deleted alerts.alert_file
 -- changed --help to just cmd line options and added --help!
 -- fixed Xcode warnings
+-- fixed sflsq cursor
 
 115
 -- remove share.h

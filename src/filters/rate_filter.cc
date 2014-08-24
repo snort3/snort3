@@ -249,12 +249,13 @@ static int _printThresholdContext(RateFilterConfig *config)
 
             /* Check for any Permanent sid objects for this gid */
             sfrf_item = (tSFRFSidNode*)item_hash_node->data;
+            SF_LNODE* cursor;
 
             for ( sfrf_node  =
-                      (tSFRFConfigNode*)sflist_first(sfrf_item->configNodeList);
+                      (tSFRFConfigNode*)sflist_first(sfrf_item->configNodeList, &cursor);
                   sfrf_node != 0;
                   sfrf_node =
-                      (tSFRFConfigNode*)sflist_next(sfrf_item->configNodeList) )
+                      (tSFRFConfigNode*)sflist_next(&cursor) )
             {
                 if ( _logConfigNode( sfrf_node) != 0 )
                     lcnt++;

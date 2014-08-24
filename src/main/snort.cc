@@ -74,7 +74,7 @@ using namespace std;
 #include "packet_time.h"
 #include "perf_monitor/perf_base.h"
 #include "perf_monitor/perf.h"
-#include "sflsq.h"
+//#include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
 #include "asn1.h"
