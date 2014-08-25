@@ -137,6 +137,16 @@ bool Table::add_list(std::string name, std::string next_elem)
     return var->add_value(next_elem);
 }
 
+bool Table::has_option(const std::string opt_name)
+{
+    for (Option* o : options)
+        if (!opt_name.compare(o->get_name()))
+            return true;
+
+    return false;
+}
+
+
 bool Table::has_option(Option opt)
 {
     for (Option* o : options)

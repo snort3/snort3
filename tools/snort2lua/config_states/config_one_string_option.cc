@@ -58,36 +58,31 @@ public:
         }
 
         // get length (stringstream will not read spaces...which we want)
-        const std::streamoff pos = stream.tellg();
-        stream.seekg(0, stream.end);
-        const std::streamoff length = stream.tellg() - pos;
-        stream.seekg(pos);
-
-        // read argument
-        char *arg_c = new char[length + 1];
-        stream.read(arg_c, length);
-        arg_c[length] = '\0';
-        std::string arg_s(arg_c);
-        delete[] arg_c;
-        util::trim(arg_s);
+        std::string arg_s = util::get_remain_data(stream);
 
 
-        bool retval;
+        if (arg_s.empty())
+        {
+            data_api.failed_conversion(stream, "<missing_argument>");
+            return false;
+        }
+
         table_api.open_table(*lua_table);
 
         if((lua_option != nullptr) && snort_option->compare(*lua_option))
         {
             table_api.add_diff_option_comment("config " + *snort_option +
                 ":", *lua_option);
-            retval = table_api.add_option(*lua_option, arg_s);
+            table_api.add_option(*lua_option, arg_s);
         }
         else
         {
-            retval = table_api.add_option(*snort_option, arg_s);
+            table_api.add_option(*snort_option, arg_s);
         }
 
         table_api.close_table();
-        return retval;
+        stream.setstate(std::ios::eofbit); // done parsing this line
+        return true;
     }
 
 private:
@@ -122,21 +117,6 @@ static const std::string process = "process";
 static const std::string react = "react";
 static const std::string output = "output";
 
-
-
-/*************************************************
- ******************  alert_file  *****************
- *************************************************/
-
-static const std::string alertfile = "alertfile";
-static const std::string alert_file = "alert_file";
-static const ConvertMap alertfile_api =
-{
-    alertfile,
-    config_string_ctor<&alertfile, &alerts, &alert_file>,
-};
-
-const ConvertMap* alertfile_map = &alertfile_api;
 
 /*************************************************
  *******************  bpf_file  ******************
