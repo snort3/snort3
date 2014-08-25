@@ -269,6 +269,9 @@ void SnortConfFree(SnortConfig *sc)
     if (sc->gtp_ports)
         free(sc->gtp_ports);
 
+    if ( sc->output )
+        free(sc->output);
+
     free_file_config(sc->file_config);
 
     if ( sc->var_list )
@@ -344,6 +347,7 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 
     // only set by cmd_line to override other conf output settings
     config_file->output = cmd_line->output;
+    cmd_line->output = nullptr;
 
     /* Merge checksum flags.  If command line modified them, use from the
      * command line, else just use from config_file. */

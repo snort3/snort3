@@ -502,7 +502,7 @@ alert_fast = { }
 --alert_csv = { file = 'alert.csv' }
 
 -- to use -A lualert, this must be configured
-lualert = { args = "foo = 'bar'" }
+--lualert = { args = "foo = 'bar'" }
 
 -- pcap
 --log_tcpdump = { file = 'snort++.pcap' }

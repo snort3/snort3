@@ -61,15 +61,15 @@
 #include "managers/event_manager.h"
 #include "detection/detect.h"
 
-#define LOG_NONE  "none"
-#define LOG_TEXT  "text"
-#define LOG_PCAP  "pcap"
+#define LOG_NONE    "none"
+#define LOG_TEXT    "text"
+#define LOG_PCAP    "pcap"
 
-#define ALERT_NONE    "none"
-#define ALERT_CMG     "cmg"
-#define ALERT_JH      "jh"
-#define ALERT_DJR     "djr"
-#define ALERT_AJK     "ajk"
+#define ALERT_NONE  "none"
+#define ALERT_CMG   "cmg"
+#define ALERT_JH    "jh"
+#define ALERT_DJR   "djr"
+#define ALERT_AJK   "ajk"
 
 #define OUTPUT_AJK  "unified2"
 #define OUTPUT_CMG  "alert_fast"
@@ -270,7 +270,7 @@ void ConfigGTPDecoding(SnortConfig *sc, const char*)
 
     if (portObject)
     {
-       sc->gtp_ports =  PortObjectCharPortArray(sc->gtp_ports,portObject, &numberOfPorts);
+       sc->gtp_ports = PortObjectCharPortArray(sc->gtp_ports,portObject, &numberOfPorts);
     }
 
     if (!sc->gtp_ports || (0 == numberOfPorts))
@@ -680,16 +680,16 @@ void config_alert_mode(SnortConfig* sc, const char* val)
              (strcasecmp(val, ALERT_JH) == 0) ||
              (strcasecmp(val, ALERT_DJR) == 0))
     {
-        sc->output = OUTPUT_CMG;
+        sc->output = SnortStrdup(OUTPUT_CMG);
         sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
         sc->output_flags |= OUTPUT_FLAG__APP_DATA;
     }
     else if (strcasecmp(val, ALERT_AJK) == 0)
     {
-        sc->output = OUTPUT_AJK;
+        sc->output = SnortStrdup(OUTPUT_AJK);
     }
     else
-        sc->output = val;
+        sc->output = SnortStrdup(val);
 }
 
 void config_log_mode(SnortConfig* sc, const char* val)
@@ -706,7 +706,7 @@ void config_log_mode(SnortConfig* sc, const char* val)
     }
     else if (strcasecmp(val, LOG_PCAP) == 0)
     {
-        sc->output = OUTPUT_PCAP;
+        sc->output = SnortStrdup(OUTPUT_PCAP);
         set_main_hook(snort_log);
     }
     else

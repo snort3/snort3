@@ -175,7 +175,7 @@ void EventManager::instantiate(
             s_loggers.outputs.push_back(p->handler);
     }
     else
-        FatalError("logger has no type %s\n", p->api->base.name);
+        ParseError("logger has no type %s\n", p->api->base.name);
 }
 
 // command line outputs
@@ -187,7 +187,7 @@ void EventManager::instantiate(
 
     if ( !mod || !p )
     {
-        FatalError("unknown logger %s\n", name);
+        ParseError("unknown logger %s\n", name);
         return;
     }
 

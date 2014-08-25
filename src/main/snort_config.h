@@ -147,7 +147,7 @@ struct SnortConfig
     char* respond_device;
     uint8_t *eth_dst;
 
-    const char* output;
+    char* output;
 
     //------------------------------------------------------
     // attribute tables stuff
