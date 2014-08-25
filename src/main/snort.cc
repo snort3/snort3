@@ -960,12 +960,8 @@ void snort_rotate()
         SetRotatePerfFileFlag();
 }
 
-int wtf_start[8];
-int wtf_stop[8];
-
 void snort_thread_init(const char* intf)
 {
-++wtf_start[get_instance_id()];
     // FIXIT-H the start-up sequence is a little off due to dropping privs
     DAQ_New(snort_conf, intf);
     DAQ_Start();
@@ -990,12 +986,10 @@ void snort_thread_init(const char* intf)
     IpsManager::setup_options();
     ActionManager::thread_init(snort_conf);
     InspectorManager::thread_init(snort_conf);
-++wtf_start[get_instance_id()];
 }
 
 void snort_thread_term()
 {
-++wtf_stop[get_instance_id()];
 #ifdef PPM_MGR
     ppm_sum_stats();
 #endif
@@ -1025,6 +1019,5 @@ void snort_thread_term()
     SnortEventqFree();
     Active_Term();
     PacketManager::thread_term();
-++wtf_stop[get_instance_id()];
 }
 

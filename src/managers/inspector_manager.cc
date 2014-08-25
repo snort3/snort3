@@ -377,9 +377,6 @@ void InspectorManager::thread_init(SnortConfig* sc)
 {
     Inspector::slot = get_instance_id();
 
-    if ( wtf_init[get_instance_id()]++ )
-        return;
-
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )

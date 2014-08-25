@@ -35,7 +35,13 @@ yet firm so feedback is welcome to get something we can live with.
   med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
   Perf changes fall between alpha 1 and 2.
 
-==== Types
+=== Logging
+
+* Don't output messages for the coder.  Output messages that make
+  sense to the user.  The function name doesn't belong in the error
+  message.
+
+=== Types
 
 * Use logical types to make the code clearer and to help the compiler catch
   problems.  typedef uint16_t Port; bool foo(Port) is way better than
@@ -48,7 +54,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use const liberally.
 
-==== Formatting
+=== Formatting
 
 * Indent 4 space chars ... no tabs!
 
