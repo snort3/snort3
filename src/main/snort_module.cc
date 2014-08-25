@@ -503,11 +503,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigShowYear(sc, v.get_string());
 
     else if ( v.is("-z") || v.is("--max-packet-threads") )
-    {
-        sc->max_threads = v.get_long();
-        if ( !sc->max_threads )
-            sc->max_threads = -1; // max
-    }
+        set_instance_max(v.get_long());
+
     else if ( v.is("--alert-before-pass") )
         ConfigAlertBeforePass(sc, v.get_string());
 

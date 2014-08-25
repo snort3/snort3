@@ -24,8 +24,6 @@
 #include "config.h"
 #endif
 
-#include <thread>
-
 #include "snort_types.h"
 #include "detection/treenodes.h"
 #include "events/event_queue.h"
@@ -181,13 +179,11 @@ SnortConfig * SnortConfNew(void)
     sc->max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
     sc->mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
-    sc->max_threads = 1;
     InspectorManager::new_config(sc);
 
     sc->var_list = NULL;
 
-    sc->state = (SnortState*)SnortAlloc(
-        sizeof(SnortState)*sc->max_threads);
+    sc->state = (SnortState*)SnortAlloc(sizeof(SnortState)*get_instance_max());
 
     sc->policy_map = new PolicyMap();
 
@@ -450,12 +446,6 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
     if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
         config_file->event_queue_config->process_all_events = 1;
 
-    if ( cmd_line->max_threads )
-        config_file->max_threads = cmd_line->max_threads;
-
-    if ( config_file->max_threads <= 0 )
-        config_file->max_threads = std::thread::hardware_concurrency();
-
     if ( cmd_line->remote_control )
         config_file->remote_control = cmd_line->remote_control;
 
@@ -468,7 +458,7 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 
     free(config_file->state);
     config_file->state = (SnortState*)SnortAlloc(
-        sizeof(SnortState)*config_file->max_threads);
+        sizeof(SnortState)*get_instance_max());
 
     return config_file;
 }

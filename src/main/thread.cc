@@ -21,6 +21,7 @@
 #include "thread.h"
 
 #include <sys/stat.h>
+#include <thread>
 #include "snort.h"
 
 //-------------------------------------------------------------------------
@@ -29,11 +30,20 @@
 // works for now.
 //-------------------------------------------------------------------------
 
+static unsigned instance_max = 1;
 static THREAD_LOCAL unsigned instance_id = 0;
 
 void set_instance_id(unsigned id)
 {
     instance_id = id;
+}
+
+void set_instance_max(unsigned max)
+{
+    if ( max )
+        instance_max = max;
+    else
+        instance_max = std::thread::hardware_concurrency();
 }
 
 unsigned get_instance_id()
@@ -43,7 +53,7 @@ unsigned get_instance_id()
 
 unsigned get_instance_max()
 {
-    return snort_conf->max_threads;
+    return instance_max;
 }
 
 //-------------------------------------------------------------------------

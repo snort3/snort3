@@ -862,9 +862,6 @@ static bool pmd_can_be_fp(PatternMatchData* pmd, CursorActionType cat)
     if ( !pmd->pattern_buf || !pmd->pattern_size )
         return false;
 
-    if ( pmd->relative )
-        return false;
-
     if ( cat <= CAT_SET_OTHER )
         return false;
 

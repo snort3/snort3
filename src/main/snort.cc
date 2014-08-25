@@ -888,14 +888,16 @@ DAQ_Verdict packet_callback(
     }
     else
     {
+        Packet* p = &s_packet;
         if ( s_packet.packet_flags & PKT_MODIFIED )
         {
             // this packet was normalized and/or has replacements
             PacketManager::encode_update(&s_packet);
             verdict = DAQ_VERDICT_REPLACE;
         }
-        else if ( s_packet.packet_flags & PKT_RESIZED )
+        else if ( p->packet_flags & PKT_RESIZED )
         {
+            printf("packet flags = 0x%X\n", p->packet_flags);
             // we never increase, only trim, but
             // daq doesn't support resizing wire packet
             if ( !DAQ_Inject(s_packet.pkth, 0, s_packet.pkt, s_packet.pkth->pktlen) )

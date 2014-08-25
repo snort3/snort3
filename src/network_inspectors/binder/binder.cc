@@ -213,7 +213,7 @@ int Binder::check_rules(Flow* flow, Packet* p)
 
     if ( !pb->type.size() || pb->type == "wizard" )
     {
-        ins = InspectorManager::get_inspector("wizard");
+        ins = InspectorManager::get_wizard();
         flow->set_clouseau(ins);
     }
     else

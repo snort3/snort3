@@ -251,7 +251,6 @@ struct SnortConfig
 
     struct VarNode* var_list;
 
-    int max_threads;
     unsigned remote_control;
 
     SnortState* state;

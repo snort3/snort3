@@ -95,15 +95,15 @@ extern "C" {
 
 #define PKT_PSEUDO           0x00080000  /* is a pseudo packet */
 #define PKT_MODIFIED         0x00100000  /* packet had normalizations, etc. */
-#define PKT_RESIZED          0x00180000  /* packet has new size; must set modified too */
+#define PKT_RESIZED          0x00300000  /* packet has new size; must set modified too */
 
 // neither of these flags will be set for (full) retransmissions or non-data segments
 // a partial overlap results in out of sequence condition
 // out of sequence condition is sticky
-#define PKT_STREAM_ORDER_OK  0x00200000  /* this segment is in order, w/o gaps */
-#define PKT_STREAM_ORDER_BAD 0x00400000  /* this stream had at least one gap */
+#define PKT_STREAM_ORDER_OK  0x00400000  /* this segment is in order, w/o gaps */
+#define PKT_STREAM_ORDER_BAD 0x00800000  /* this stream had at least one gap */
 
-#define PKT_FILE_EVENT_SET   0x00800000
+#define PKT_FILE_EVENT_SET   0x01000000
 #define PKT_UNUSED_FLAGS     0xff000000
 
 // 0x40000000 are available

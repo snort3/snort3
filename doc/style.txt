@@ -37,9 +37,10 @@ yet firm so feedback is welcome to get something we can live with.
 
 === Logging
 
-* Don't output messages for the coder.  Output messages that make
-  sense to the user.  The function name doesn't belong in the error
-  message.
+* Messages intended for the user should not look like debug messages.  Eg,
+  the function name should not be included.
+
+* Most debug messages should just be deleted.
 
 === Types
 

@@ -12,6 +12,8 @@
 -- fixed Xcode warnings
 -- fixed sflsq cursor
 -- additional cleanup
+-- fixed --max-threads configuration
+-- fixed PKT_RESIZED bits
 
 115
 -- remove share.h

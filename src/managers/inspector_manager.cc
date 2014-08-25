@@ -138,6 +138,9 @@ struct FrameworkPolicy
     PHVector generic;
     PHVector service;
 
+    Inspector* binder;
+    Inspector* wizard;
+
     void vectorize();
 };
 
@@ -171,7 +174,13 @@ void FrameworkPolicy::vectorize()
             break;
 
         case IT_BINDER:
+            binder = p->handler;
+            break;
+
         case IT_WIZARD:
+            wizard = p->handler;
+            break;
+
         case IT_MAX:
             break;
         }
@@ -258,6 +267,9 @@ void InspectorManager::empty_trash()
 void InspectorManager::new_policy (InspectionPolicy* pi)
 {
     pi->framework_policy = new FrameworkPolicy;
+
+    pi->framework_policy->binder = nullptr;
+    pi->framework_policy->wizard = nullptr;
 }
 
 void InspectorManager::delete_policy (InspectionPolicy* pi)
@@ -296,6 +308,7 @@ static PHInstance* get_new(
         delete p;
         return NULL;
     }
+
     fp->ilist.push_back(p);
     return p;
 }
@@ -306,6 +319,26 @@ void InspectorManager::dispatch_meta (FrameworkPolicy* fp, int type, const uint8
     for ( auto* p : fp->ilist )
         p->handler->meta(type, data);
 }
+
+Inspector* InspectorManager::get_binder()
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi || !pi->framework_policy )
+        return nullptr;
+
+    return pi->framework_policy->binder;
+} 
+
+Inspector* InspectorManager::get_wizard()
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi || !pi->framework_policy )
+        return nullptr;
+
+    return pi->framework_policy->wizard;
+} 
 
 Inspector* InspectorManager::get_inspector(const char* key)
 {
@@ -377,24 +410,28 @@ void InspectorManager::thread_init(SnortConfig* sc)
 {
     Inspector::slot = get_instance_id();
 
+    for ( auto* p : sc->framework_config->clist )
+        if ( p->api.tinit )
+            p->api.tinit();
+
     InspectionPolicy* pi = get_inspection_policy();
 
-    if ( !pi || !pi->framework_policy )
-        return;
-
-    for ( auto* p : pi->framework_policy->ilist )
-        p->handler->tinit();
+    if ( pi && pi->framework_policy )
+    {
+        for ( auto* p : pi->framework_policy->ilist )
+            p->handler->tinit();
+    }
 }
 
 void InspectorManager::thread_term(SnortConfig* sc)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
-    if ( !pi || !pi->framework_policy )
-        return;
-
-    for ( auto* p : pi->framework_policy->ilist )
-        p->handler->tterm();
+    if ( pi && pi->framework_policy )
+    {
+        for ( auto* p : pi->framework_policy->ilist )
+            p->handler->tterm();
+    }
 
     for ( auto* p : sc->framework_config->clist )
         if ( p->api.tterm )
@@ -434,7 +471,6 @@ void InspectorManager::instantiate(
 
 bool InspectorManager::configure(SnortConfig *sc)
 {
-    Inspector::max_slots = sc->max_threads;
     sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
 
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
@@ -493,7 +529,7 @@ void InspectorManager::bumble(Packet* p)
     if ( !flow->service )
         return;
 
-    Inspector* ins = get_inspector("binder");
+    Inspector* ins = get_binder();
 
     if ( ins )
         ins->exec(0, flow);

@@ -96,7 +96,7 @@ public:
     { name = s; };
 
     CursorActionType get_cursor_type() const
-    { return CAT_SET_OTHER; };
+    { return CAT_SET_HEADER; };
 
     int eval(Cursor&, Packet*);
 
