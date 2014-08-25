@@ -30,10 +30,7 @@
 *
 *   11/05/2005 - man - Added sflist_firstx() and sflist_nextx() with user
 *   provided SF_NODE inputs for tracking the list position.  This allows
-*   multiple readers to traverse a list. The built in 'cur' field does not
-*   wrok for multiple readers.
-*
-*
+*   multiple readers to traverse a list.
 */
 
 #include "sflsq.h"
@@ -67,7 +64,7 @@ static void s_free (void *p)
 void sflist_init ( SF_LIST * s)
 {
   s->count=0;
-  s->head = s->tail = s->cur = 0;
+  s->head = s->tail = 0;
 }
 
 /*
@@ -199,83 +196,32 @@ int sfstack_add( SF_STACK* s, NODE_DATA ndata )
 /*
 *   List walk - First/Next - return the node data or NULL
 */
-NODE_DATA sflist_first( SF_LIST * s )
+NODE_DATA sflist_first(SF_LIST* s, SF_LNODE** v)
 {
-    if(!s)
-        return 0;
-
-    s->cur = s->head;
-    if( s->cur )
-        return s->cur->ndata;
-    return 0;
-}
-NODE_DATA sflist_next( SF_LIST * s )
-{
-    if(!s)
-        return 0;
-
-    if( s->cur )
+    if ( !s )
     {
-        s->cur = s->cur->next;
-        if( s->cur )
-            return s->cur->ndata;
+        *v = nullptr;
+        return nullptr;
     }
-    return 0;
-}
-NODE_DATA sflist_firstpos( SF_LIST * s, SF_LNODE ** v )
-{
-    if(!s)
-        return 0;
 
     *v = s->head;
 
-    if( *v )
+    if ( *v )
         return (*v)->ndata;
 
-    return 0;
+    return nullptr;
 }
-NODE_DATA sflist_nextpos( SF_LIST * s,  SF_LNODE ** v )
-{
-    if(!s)
-        return 0;
 
-    if(v)
+NODE_DATA sflist_next(SF_LNODE** v)
+{
+    if ( v && *v )
     {
-       if(*v)
-       {
           *v = (*v)->next;
-          if( *v )
+          if ( *v )
               return (*v)->ndata;
-       }
     }
-    return 0;
+    return nullptr;
 }
-/*
-*   List walk - First/Next - return the node data or NULL
-*/
-SF_LNODE * sflist_first_node( SF_LIST * s )
-{
-    if(!s)
-        return 0;
-
-    s->cur = s->head;
-    if( s->cur )
-        return s->cur;
-    return 0;
-}
-SF_LNODE * sflist_next_node( SF_LIST * s )
-{
-    if(!s)
-        return 0;
-    if( s->cur )
-    {
-        s->cur = s->cur->next;
-        if( s->cur )
-            return s->cur;
-    }
-    return 0;
-}
-
 /*
 *  Remove Head Item from list
 */

@@ -139,9 +139,6 @@ public:
     ReplaceAction(ReplaceModule*);
 
     void exec(Packet*);
-
-private:
-    unsigned flags;
 };
 
 ReplaceAction::ReplaceAction(ReplaceModule*) : 

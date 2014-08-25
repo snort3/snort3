@@ -46,8 +46,6 @@
 #include "hash/sfghash.h"
 #include "main/policy.h"
 
-#define MAX_PIDFILE_SUFFIX 11 /* uniqueness extension to PID file, see '-R' */
-
 #define DEFAULT_LOG_DIR "."
 
 #ifdef INTEL_SOFT_CPM
@@ -74,7 +72,6 @@ struct SnortConfig
 {
     //------------------------------------------------------
     // alert module stuff
-    char *alert_file;
     int default_rule_state;
 
     uint16_t flowbit_size;
@@ -191,6 +188,9 @@ struct SnortConfig
 
     //------------------------------------------------------
     // FIXIT-L non-module stuff - separate config from derived state?
+    char* run_prefix;
+    bool id_subdir;
+    bool id_zero;
 
     char pid_filename[STD_BUF];
     char *orig_log_dir;      /* set in case of chroot */
@@ -251,7 +251,6 @@ struct SnortConfig
 
     struct VarNode* var_list;
 
-    int max_threads;
     unsigned remote_control;
 
     SnortState* state;

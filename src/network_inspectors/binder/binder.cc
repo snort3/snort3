@@ -44,14 +44,26 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 // helpers
 //-------------------------------------------------------------------------
 
+Binding::Binding()
+{
+    role = BR_EITHER;
+    proto = BP_ANY;
+    action = BA_INSPECT;
+    ports.set();
+}
+
 // FIXIT-H bind this is a temporary hack. note that both ends must be set
 // independently and that we must ref count inspectors.
 static void set_session(Flow* flow, const char* key)
 {
     Inspector* pin = InspectorManager::get_inspector(key);
-    flow->set_client(pin);
-    flow->set_server(pin);
-    flow->clouseau = nullptr;
+
+    if ( pin )
+    {
+        flow->set_client(pin);
+        flow->set_server(pin);
+        flow->clouseau = nullptr;
+    }
 }
 
 static void set_session(Flow* flow)
@@ -201,7 +213,7 @@ int Binder::check_rules(Flow* flow, Packet* p)
 
     if ( !pb->type.size() || pb->type == "wizard" )
     {
-        ins = InspectorManager::get_inspector("wizard");
+        ins = InspectorManager::get_wizard();
         flow->set_clouseau(ins);
     }
     else

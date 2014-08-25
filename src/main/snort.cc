@@ -24,6 +24,7 @@
 # include "config.h"
 #endif
 
+#include <mutex>
 #include <string>
 using namespace std;
 
@@ -74,7 +75,7 @@ using namespace std;
 #include "packet_time.h"
 #include "perf_monitor/perf_base.h"
 #include "perf_monitor/perf.h"
-#include "sflsq.h"
+//#include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
 #include "asn1.h"
@@ -353,19 +354,6 @@ static void SnortInit(int argc, char **argv)
     else
         asn1_init_mem(256);
 
-    if (snort_conf->alert_file != NULL)
-    {
-        char *tmp = snort_conf->alert_file;
-        snort_conf->alert_file = ProcessFileOption(snort_conf, snort_conf->alert_file);
-        free(tmp);
-    }
-
-#ifdef PERF_PROFILING
-    /* Parse profiling here because of file option and potential
-     * dependence on log directory */
-    ConfigProfiling(snort_conf);
-#endif
-
     if (ScAlertBeforePass())
     {
         OrderRuleLists(snort_conf, "activation dynamic drop sdrop reject alert pass log");
@@ -621,12 +609,6 @@ static SnortConfig * get_reload_config(void)
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
     init_policy(sc);
 
-#ifdef PERF_PROFILING
-    /* Parse profiling here because of file option and potential
-     * dependence on log directory */
-    ConfigProfiling(sc);
-#endif
-
     if (VerifyReload(sc) == -1)
     {
         SnortConfFree(sc);
@@ -820,7 +802,7 @@ DAQ_Verdict ProcessPacket(
         p->proto_bits = PROTO_BIT__OTHER;
 
 #if 0
-    // FIXIT-H required until decoders are fixed (josh)
+    // FIXIT-J required until decoders are fixed
     else if ( !p->family && (p->proto_bits & PROTO_BIT__IP) )
         p->proto_bits &= ~PROTO_BIT__IP;
 #endif
@@ -906,14 +888,16 @@ DAQ_Verdict packet_callback(
     }
     else
     {
+        Packet* p = &s_packet;
         if ( s_packet.packet_flags & PKT_MODIFIED )
         {
             // this packet was normalized and/or has replacements
             PacketManager::encode_update(&s_packet);
             verdict = DAQ_VERDICT_REPLACE;
         }
-        else if ( s_packet.packet_flags & PKT_RESIZED )
+        else if ( p->packet_flags & PKT_RESIZED )
         {
+            printf("packet flags = 0x%X\n", p->packet_flags);
             // we never increase, only trim, but
             // daq doesn't support resizing wire packet
             if ( !DAQ_Inject(s_packet.pkth, 0, s_packet.pkt, s_packet.pkth->pktlen) )

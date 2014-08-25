@@ -153,7 +153,7 @@ StreamBase::StreamBase(const StreamConfig* c)
 void StreamBase::tinit()
 {
     assert(!flow_con);
-    Inspector* pi = InspectorManager::get_inspector("binder");
+    Inspector* pi = InspectorManager::get_binder();
     flow_con = new FlowControl(pi);
     InspectSsnFunc f;
 

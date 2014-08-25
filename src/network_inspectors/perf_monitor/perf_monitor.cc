@@ -53,7 +53,7 @@
 #include "profiler.h"
 #include "framework/inspector.h"
 
-THREAD_LOCAL SFPERF *perfmon_config = NULL;
+THREAD_LOCAL SFPERF* perfmon_config = nullptr;
 
 static const char* mod_name = "perf_monitor";
 

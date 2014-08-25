@@ -222,7 +222,7 @@ bool IpsManager::option_set(
     }
 
     if ( !set_arg(current_module, current_params, opt, val, sc) )
-        ParseError("invalid argument %s:%s = %s\n", key, opt, val);
+        ParseError("invalid argument %s:%s = %s", key, opt, val);
 
     if ( current_params->is_positional() )
         ++current_params;
@@ -251,7 +251,7 @@ bool IpsManager::option_end(
 
     if ( mod && !mod->end(key, 0, sc) )
     {
-        ParseError("can't finalize %s\n", key);
+        ParseError("can't finalize %s", key);
         current_keyword = nullptr;
         return false;
     }

@@ -430,25 +430,6 @@ PolicyMode GetPolicyMode(PolicyMode mode)
     return mode;
 }
 
-#ifdef PERF_PROFILING
-void ConfigProfiling(SnortConfig* sc)
-{   
-    if ( sc->profile_rules.filename )
-    {
-        char* fn = ProcessFileOption(sc, sc->profile_rules.filename);
-        free(sc->profile_rules.filename);
-        sc->profile_rules.filename = fn;
-    }
-    if ( sc->profile_preprocs.filename )
-    {
-        char* fn = ProcessFileOption(sc, sc->profile_preprocs.filename);
-        free(sc->profile_preprocs.filename);
-        sc->profile_preprocs.filename = fn;
-    }
-
-}
-#endif
-
 void ConfigQuiet(SnortConfig *sc, const char*)
 {
     sc->logging_flags |= LOGGING_FLAG__QUIET;

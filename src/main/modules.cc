@@ -303,17 +303,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 
 #ifdef PERF_PROFILING
-static const Parameter profile_file_params[] =
-{
-    { "name", Parameter::PT_STRING, "128", nullptr,
-      "output to file instead of log" },
-
-    { "append", Parameter::PT_BOOL, nullptr, "false",
-      "append or overwrite" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter profile_rule_params[] =
 {
     { "count", Parameter::PT_INT, "-1:", "-1",
@@ -323,9 +312,6 @@ static const Parameter profile_rule_params[] =
       "checks | avg_ticks | total_ticks | matches | no_matches | "
       "avg_ticks_per_match | avg_ticks_per_no_match",
       "avg_ticks", "sort by given field" },
-
-    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
-      "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -338,9 +324,6 @@ static const Parameter profile_module_params[] =
     { "sort", Parameter::PT_ENUM,
       "checks | avg_ticks | total_ticks", "avg_ticks",
       "sort by given field" },
-
-    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
-      "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -395,14 +378,6 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     else if ( v.is("sort") )
         p->sort = v.get_long() + 1;
-
-    else if ( v.is("append") )
-        p->append = v.get_long() + 1;
-
-    else if ( v.is("name") )
-        p->filename = SnortStrdup(v.get_string());  // FIXIT-L use c++ string
-        // FIXIT-M do this after log dir is set
-        //p->filename = ProcessFileOption(sc, v.get_string());
 
     else
         return false;
@@ -545,9 +520,7 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 
 static const Parameter alerts_params[] =
 {
-    { "alert_file", Parameter::PT_STRING, nullptr, nullptr,
-      "set the alert output file name (FIXIT-H delete if not used)" },
-
+    // FIXIT-L move to fast, full, syslog and delete from here
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
       "include interface in alert info (fast, full, or syslog only)" },
 
@@ -592,10 +565,7 @@ public:
 
 bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("alert_file") )
-        sc->alert_file = SnortStrdup(v.get_string());
-
-    else if ( v.is("alert_with_interface_name") )
+    if ( v.is("alert_with_interface_name") )
         sc->output_flags |= OUTPUT_FLAG__ALERT_IFACE;
 
     else if ( v.is("default_rule_state") )

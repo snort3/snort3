@@ -67,8 +67,7 @@ struct Binding
     std::string name;
     std::string file;
 
-    Binding()
-    { role = BR_EITHER; proto = BP_ANY; action = BA_INSPECT; };
+    Binding();
 };
 
 #endif

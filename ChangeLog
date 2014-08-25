@@ -1,10 +1,20 @@
 116
 -- fixed valgrind leak
--- observed memory corruption on Linux when loading dynamic plugins (not
-fixed)
+-- observed memory corruption on Linux when loading dynamic plugins
+   (not fixed)
 -- fixed action leak
 -- testing visibility=hidden
 -- more FIXITs
+-- fp related FIXITs
+-- deleted profile.rules.file and profile.modules.file
+-- deleted alerts.alert_file
+-- changed --help to just cmd line options and added --help!
+-- fixed Xcode warnings
+-- fixed sflsq cursor
+-- additional cleanup
+-- fixed --max-threads configuration
+-- fixed PKT_RESIZED bits
+-- pulled the latest from Josh
 
 115
 -- remove share.h

@@ -478,13 +478,14 @@ static int sfthd_create_threshold_local(
     else
     {
         SF_LNODE* lnode;
+        NODE_DATA ndata;
 
         /* Walk the list and insert based on priorities if suppress */
-        for( lnode = sflist_first_node(sfthd_item->sfthd_node_list);
-             lnode;
-             lnode = sflist_next_node(sfthd_item->sfthd_node_list) )
+        for( ndata = sflist_first(sfthd_item->sfthd_node_list, &lnode);
+             ndata;
+             ndata = sflist_next(&lnode) )
         {
-            THD_NODE* sfthd_n = (THD_NODE*)lnode->ndata;
+            THD_NODE* sfthd_n = (THD_NODE*)ndata;
 
             /* check if the new node is higher priority */
             if( sfthd_node->priority > sfthd_n->priority  )
@@ -1171,9 +1172,11 @@ int sfthd_test_threshold(
 #ifdef THD_DEBUG
     cnt=0;
 #endif
-    for (sfthd_node = (THD_NODE *)sflist_first(sfthd_item->sfthd_node_list);
+    SF_LNODE* cursor;
+
+    for (sfthd_node = (THD_NODE *)sflist_first(sfthd_item->sfthd_node_list, &cursor);
          sfthd_node != NULL;
-         sfthd_node = (THD_NODE *)sflist_next(sfthd_item->sfthd_node_list))
+         sfthd_node = (THD_NODE *)sflist_next(&cursor))
     {
 #ifdef THD_DEBUG
         cnt++;
@@ -1292,10 +1295,11 @@ int sfthd_show_objects(ThresholdObjects *thd_objs)
             /* For each permanent thresholding object, test/add/update the thd object */
             /* We maintain a list of thd objects for each gen_id+sig_id */
             /* each object has it's own unique thd_id */
+            SF_LNODE* cursor;
 
-            for( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list);
+            for( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list, &cursor);
                  sfthd_node != 0;
-                 sfthd_node = (THD_NODE*)sflist_next(sfthd_item->sfthd_node_list) )
+                 sfthd_node = (THD_NODE*)sflist_next(&cursor) )
             {
                 printf(".........THD_ID  =%d\n",sfthd_node->thd_id );
 

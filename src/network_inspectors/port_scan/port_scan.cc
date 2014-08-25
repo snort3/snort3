@@ -690,11 +690,14 @@ static void PrintIPPortSet(IP_PORT *p)
         ((p->ip.family == AF_INET ) && (p->ip.bits != 32 )))
         SnortSnprintfAppend(output_str, sizeof(output_str), "/%d", p->ip.bits);
 
-    pr=(PORTRANGE*)sflist_first(&p->portset.port_list);
+    SF_LNODE* cursor;
+    pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cursor);
+
     if ( pr && pr->port_lo != 0 )
         SnortSnprintfAppend(output_str, sizeof(output_str), " : ");
+
     for( ; pr != 0;
-        pr=(PORTRANGE*)sflist_next(&p->portset.port_list) )
+        pr=(PORTRANGE*)sflist_next(&cursor) )
     {
         if ( pr->port_lo != 0)
         {
@@ -772,9 +775,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->ignore_scanners)
         {
             LogMessage("    Ignore Scanner IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->ignore_scanners->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -783,9 +788,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->ignore_scanned)
         {
             LogMessage("    Ignore Scanned IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->ignore_scanned->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -794,9 +801,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->watch_ip)
         {
             LogMessage("    Watch IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->watch_ip->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }

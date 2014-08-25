@@ -37,8 +37,8 @@
 #include "fpcreate.h"
 #include "snort_debug.h"
 #include "protocols/packet.h"
-#include "sflsq.h"
 #include "time/profiler.h"
+#include "utils/sflsq.h"
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 

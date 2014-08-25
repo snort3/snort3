@@ -693,7 +693,7 @@ static void snort_main()
     socket_init();
     TimeStart();
 
-    max_pigs = snort_conf->max_threads;
+    max_pigs = get_instance_max();
     assert(max_pigs > 0);
 
     pigs = new Pig[max_pigs];

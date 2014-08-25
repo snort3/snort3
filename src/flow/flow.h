@@ -214,7 +214,7 @@ public:  // FIXIT-M privatize if possible
     Inspector* gadget;
     const char* service;
 
-    int flow_state;
+    int flow_state;  // FIXIT-H wow - this is poorly encapsulated!  did i do that?  :(
     FlowState s5_state;  // FIXIT-L rename this (s5 not appropriate)
 
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t

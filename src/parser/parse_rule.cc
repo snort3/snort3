@@ -1481,8 +1481,10 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     OptTreeNode* otn = (OptTreeNode *)SnortAlloc(sizeof(OptTreeNode));
     otn->state = (OtnState*)SnortAlloc(sizeof(OtnState)*get_instance_max());
 
+    if ( !stub )
+        otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
+
     otn->chain_node_number = otn_count;
-    otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
     otn->proto = rtn.proto;
     otn->enabled = ScDefaultRuleState();
 
@@ -1516,13 +1518,15 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("SO rule %s not loaded.", otn->soid);
         else
         {
-            // FIXIT-L why isn't this set already? (don't hardcode)
+            // FIXIT-L gid may be overwritten here
             otn->sigInfo.generator = GENERATOR_SNORT_SHARED;
             entered = true;
             return so_opts;
         }
     }
     
+    set_fp_content(otn);
+
     /* The IPs in the test node get free'd in ProcessHeadNode if there is
      * already a matching RTN.  The portobjects will get free'd when the
      * port var table is free'd */
@@ -1549,7 +1553,8 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
 
     // FIXIT-L need more reliable way of knowing type of rule instead of hard
     // coding these gids
-    if ( otn->sigInfo.generator == 1 )
+    // do GIDs actually matter anymore (w/o conflict with builtins)?
+    if ( otn->sigInfo.generator == GENERATOR_SNORT_ENGINE )
     {
         otn->sigInfo.text_rule = true;
         detect_rule_count++;
@@ -1561,6 +1566,9 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     }
     else
     {
+        if ( !otn->sigInfo.generator )
+            ParseError("gid must set in builtin rules");
+
         if ( otn->num_detection_opts )
             ParseError("%d:%d builtin rules do not support detection options",
                         otn->sigInfo.generator, otn->sigInfo.id);

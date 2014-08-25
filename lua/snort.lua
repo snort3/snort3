@@ -198,18 +198,8 @@ ppm =
 -- Configure Perf Profiling for debugging
 profile =
 {
-    rules =
-    {
-        count = 0,
-        sort = 'avg_ticks',
-        file = { append = true }
-    },
-    modules =
-    {
-        count = 0,
-        sort = 'avg_ticks',
-        file = { append = true }
-    }
+    rules = { count = 0, sort = 'avg_ticks' },
+    modules = { count = 0, sort = 'avg_ticks' }
 }
 
 ---------------------------------------------------------------------------
@@ -506,7 +496,7 @@ unified2 =
 
 -- text
 --alert_syslog = { mode = 'LOG_AUTH LOG_ALERT' }
---alert_fast = { }
+alert_fast = { }
 --alert_full = { }
 --alert_test = { file = 'alert.tsv' }
 --alert_csv = { file = 'alert.csv' }
@@ -522,7 +512,7 @@ lualert = { args = "foo = 'bar'" }
 ---------------------------------------------------------------------------
 
 --react = { }
---reject = { }
+reject = { reset = 'both', control = 'network' }
 rewrite = { }
 
 ---------------------------------------------------------------------------
@@ -568,7 +558,8 @@ default_rules =
 
 #alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request"; metadata:service http; reference:url,en.wikipedia.org/wiki/Vbs; classtype:misc-activity; sid:18758; rev:8; soid:3|18758;)
 
-alert tcp any any -> any 80 ( sid:1; msg:"found!"; content:"GET"; )
+alert tcp any any -> any 80 ( content:"test"; gid:1; sid:1000051)
+#alert tcp any any -> any 80 ( sid:1; msg:"found!"; content:"GET", nocase; content:"bck"; )
 #alert tcp any any -> any 80 ( sid:2; msg:"found!"; http_method; content:"GET"; )
 #alert tcp any any -> any 80 ( sid:3; msg:"found!"; content:"GET"; find:"pat=' HTTP/1%.%d'" ; )
 #alert tcp any any -> any any ( gid:123; sid:2; msg:"(stream_ip) Teardrop attack"; )
@@ -778,42 +769,3 @@ binder =
     { when = { proto = 'udp', ports = 'any' }, use = { type = 'wizard' } },
 }
  
----------------------------------------------------------------------------
--- error handling
----------------------------------------------------------------------------
-
---[[
--- parse error handled by lua:
-foo bar
-
-ERROR: can't load ../lua/snort.lua: ../lua/snort.lua:629: '=' expected near 'bar'
-Fatal Error, Quitting..
-
--- another:
-stream_xyz.foo = 'bar'
-
-ERROR: can't init ../lua/snort.lua: ../lua/snort.lua:635: attempt to index global 'stream_xyz' (a nil value)
-Fatal Error, Quitting..
-
--- semantic errors handled by Snort++ don't have file / line:
-stream_tcp.foo = 'bar'
-
-ERROR: can't find stream_tcp.foo
-Fatal Error, Quitting..
-
--- multiple range errors:
-stream_tcp.policy = 'bar'
-stream_tcp.paf_max = 123456
-
-ERROR invalid stream_tcp.policy = bar
-ERROR invalid stream_tcp.paf_max = 123456
-ERROR: see prior configuration errors
-Fatal Error, Quitting..
-
--- undetected error:
-suppress = { { gid = 116, sid = 408 } }
--- other foo
-suppress = { { gid = 116, sid = 412 } }
-}
---]]
-
