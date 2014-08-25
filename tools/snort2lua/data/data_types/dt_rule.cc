@@ -150,7 +150,7 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
             out << " " << (*r);
         }
 
-        out << " )";
+        out << "; )";
     }
 
     return out;
