@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 noinst_LIBRARIES = libconfig_states.a
 
 libconfig_states_a_SOURCES = \
+config_alertfile.cc \
 config_binding.cc \
 config_checksums.cc \
 config_classification.cc \

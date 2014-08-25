@@ -47,6 +47,7 @@ public:
     bool add_option(std::string, std::string val);
     bool add_list(std::string, std::string next_elem);
     void add_comment(std::string comment);
+    bool has_option(const std::string);
 
     friend std::ostream &operator<<( std::ostream&, const Table &);
 

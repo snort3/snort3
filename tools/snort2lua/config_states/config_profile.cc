@@ -62,6 +62,11 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
+        else if (!keyword.compare("filename"))
+        {
+            table_api.add_deleted_comment("profile_*: filename ...");
+        }
+
         else if (!keyword.compare("print"))
         {
             table_api.add_diff_option_comment("print", "count");
@@ -99,29 +104,16 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
                 tmpval = table_api.add_option("sort", val);
         }
 
-        else if (!keyword.compare("filename"))
-        {
-            table_api.open_table("file");
-            tmpval = parse_string_option("name", arg_stream);
-
-            std::string append;
-            if ((arg_stream >> append) &&
-                (!append.compare("append")))
-            {
-                if (!table_api.add_option("append", true))
-                    tmpval = false;
-            }
-
-            table_api.close_table();
-        }
-
         else
         {
             tmpval = false;
         }
 
-        if (retval && !tmpval)
+        if (!tmpval)
+        {
+            data_api.failed_conversion(data_stream, keyword);
             retval = false;
+        }
     }
 
     table_api.close_table();

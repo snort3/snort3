@@ -34,7 +34,8 @@ public:
     Option(std::string name, std::string val, int depth);
     virtual ~Option();
 
-    inline std::string get_name(){ return name; };
+    inline std::string get_name()
+    { return name; };
  
     // overloading operators
     friend std::ostream &operator<<( std::ostream&, const Option &);

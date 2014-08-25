@@ -65,6 +65,11 @@ void print_tables( std::ostream &out);
 bool empty()
 { return (tables.size() == 0); }
 
+
+/*
+ * Accessing and choosing specific tables.
+ */
+
 // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
 void open_top_level_table(std::string name);
 // open a nested named table --> 'name = {...}')
@@ -74,8 +79,14 @@ void open_table();
 // close the nested table.  go to previous table level
 void close_table();
 
-// ADDING DATA AND FIELDS TO CURRENT TABLE
 void swap_tables(std::vector<Table*>& new_tables);
+
+
+/*
+ * Adding/accessing data to the specific table chosen above!!
+ * These methods will all throw a developer warning if called without
+ * selecting a table!
+ */
 
 // add an string, bool, or int option to the table. --> table = { name = var |'var'};
 bool add_option(const std::string name, const std::string val);
@@ -94,6 +105,9 @@ bool add_deleted_comment(std::string dep_var);
 // attach an unsupported option comment to the current table
 bool add_unsupported_comment(std::string unsupported_var);
 
+
+// return true if this name exists as an option name for the selected table
+bool option_exists(const std::string name);
 
 
 private:

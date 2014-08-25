@@ -57,7 +57,8 @@ std::string &trim(std::string &s);
 bool file_exists(const std::string& name);
 
 
-/* Takes in a stream and a string of delimeters. The function will extract the charachters
+/*
+ * Takes in a stream and a string of delimeters. The function will extract the charachters
  * from the stream until it hits one of the delimeters.  The substring will be set to the
  * third parameter.  The stream itself will point to the chrachter after the first delim.
  *
@@ -75,6 +76,14 @@ bool get_string(std::istringstream& data_stream,
                 std::string& option,
                 const std::string delimeters);
 
+/*
+ * Returns the rest of the data_streams data as one argument.
+ * Usefule when parsing filenames with spaces or other
+ * characters which can get removed by c++ libraries
+ *
+ * NO SIDE EFFECTS
+ */
+std::string get_remain_data(std::istringstream& data_stream);
 
 std::string get_rule_option_args(std::istringstream& data_stream);
 

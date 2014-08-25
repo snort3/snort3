@@ -183,6 +183,26 @@ bool get_string(std::istringstream& stream,
     }
 }
 
+
+std::string get_remain_data(std::istringstream& stream)
+{
+    // get string length
+    const std::streamoff pos = stream.tellg();
+    stream.seekg(0, stream.end);
+    const std::streamoff length = stream.tellg() - pos;
+    stream.seekg(pos);
+
+    // read argument
+    char *arg_c = new char[length + 1];
+    stream.read(arg_c, length);
+    arg_c[length] = '\0';
+    std::string arg_s(arg_c);
+    delete[] arg_c;
+    util::trim(arg_s);
+    return arg_s;
+}
+
+
 std::string get_rule_option_args(std::istringstream& stream)
 {
     std::string args = std::string();

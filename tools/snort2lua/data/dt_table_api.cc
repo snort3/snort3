@@ -201,6 +201,17 @@ bool TableApi::add_comment(std::string comment)
     return true;
 }
 
+bool TableApi::option_exists(const std::string name)
+{
+    if (open_tables.size() == 0)
+    {
+        data_api.developer_error("Must open table before calling option_exists() !!");
+        return false;
+    }
+
+    return open_tables.top()->has_option(name);
+}
+
 bool TableApi::add_diff_option_comment(std::string orig_var, std::string new_var)
 {
     std::string error_string = "option change: '" + orig_var + "' --> '"

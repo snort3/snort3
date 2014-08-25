@@ -1,6 +1,7 @@
 
 
 add_library( config_states
+    config_alertfile.cc
     config_binding.cc
     config_checksums.cc
     config_classification.cc
