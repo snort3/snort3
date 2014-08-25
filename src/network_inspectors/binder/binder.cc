@@ -44,6 +44,14 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 // helpers
 //-------------------------------------------------------------------------
 
+Binding::Binding()
+{
+    role = BR_EITHER;
+    proto = BP_ANY;
+    action = BA_INSPECT;
+    ports.set();
+}
+
 // FIXIT-H bind this is a temporary hack. note that both ends must be set
 // independently and that we must ref count inspectors.
 static void set_session(Flow* flow, const char* key)

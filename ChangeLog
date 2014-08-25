@@ -11,6 +11,7 @@
 -- changed --help to just cmd line options and added --help!
 -- fixed Xcode warnings
 -- fixed sflsq cursor
+-- additional cleanup
 
 115
 -- remove share.h

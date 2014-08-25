@@ -244,9 +244,6 @@ public:
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
     bool get_buf(unsigned, Packet*, InspectionBuffer&);
 
-    void tinit();
-    void tterm();
-
 private:
     HTTPINSPECT_CONF* config;
     HttpData* global;
@@ -309,13 +306,6 @@ bool HttpInspect::configure (SnortConfig* sc)
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
 
-    return !HttpInspectVerifyPolicy(sc, config);
-}
-
-void HttpInspect::tinit()
-{
-    memset(&hi_stats, 0, sizeof(HIStats));
-
     config->global->decode_conf.file_depth = file_api->get_max_file_depth();
 
     if (config->global->decode_conf.file_depth > -1)
@@ -327,10 +317,7 @@ void HttpInspect::tinit()
         updateMaxDepth(config->global->decode_conf.file_depth, &config->global->decode_conf.max_depth);
 
     }
-}
-
-void HttpInspect::tterm()
-{
+    return !HttpInspectVerifyPolicy(sc, config);
 }
 
 void HttpInspect::show(SnortConfig*)
