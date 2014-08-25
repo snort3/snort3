@@ -471,8 +471,27 @@ preprocessor stream5_tcp: policy windows, \
     ignore_any_rules, \
     flush_factor 10, \
     protocol both ftp-data ftp http_inspect testing takes forever, \
-    protocol server ftp
+    protocol server ftp, \
+    policy bsd, \
+    policy first, \
+    policy irix, \
+    policy last, \
+    policy linux, \
+    policy macos, \
+    policy old-linux, \
+    policy solaris, \
+    policy windows, \
+    policy vista, \
+    policy unknown, \
+    policy noack, \
+    policy hpux, \
+    policy hpux10, \
+    policy win2003, \
+    policy win2k3, \
+    policy hpux11, \
+    policy grannysmith
 #    ignore_any_rules, \
+
 
 preprocessor stream5_tcp: policy windows, \
     bind_to 192.1.2.6

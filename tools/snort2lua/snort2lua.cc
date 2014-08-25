@@ -74,6 +74,8 @@ int main (int argc, char* argv[])
     // keep track whether we're printing rules into a seperate file.
     bool rule_file_specifed = false;
 
+// why print variable if there are no rules?
+#if 0
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
     // now.  Otherwise, set up the include file.
@@ -97,6 +99,7 @@ int main (int argc, char* argv[])
             table_api.close_table();
         }
     }
+#endif
 
     // Snort++ requires a binder table to be instantiated,
     // although not necessarily filled.  So, just add this table.

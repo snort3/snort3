@@ -91,7 +91,7 @@ void RuleApi::bad_rule(std::istringstream& stream, std::string bad_option)
         curr_rule->bad_rule();
         curr_data_bad = true;
     }
-    bad_rules->add_text("^^^^ unkown_option=" + bad_option);
+    bad_rules->add_text("^^^^ unknown_option=" + bad_option);
 }
 
 bool RuleApi::add_hdr_data(std::string data)

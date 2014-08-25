@@ -259,7 +259,7 @@ void LuaData::failed_conversion(std::istringstream& stream,
         errors->add_text(stream.str());
         curr_data_bad = true;
     }
-    errors->add_text("^^^^ unkown_option=" + unkown_option);
+    errors->add_text("^^^^ unknown_option=" + unkown_option);
 }
 
 

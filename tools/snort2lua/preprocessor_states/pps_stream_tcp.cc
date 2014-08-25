@@ -303,11 +303,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-
-        if (!keyword.compare("policy"))
-            tmpval = parse_string_option("policy", arg_stream);
-
-        else if (!keyword.compare("overlap_limit"))
+        if (!keyword.compare("overlap_limit"))
             tmpval = parse_int_option("overlap_limit", arg_stream);
 
         else if (!keyword.compare("max_window"))
@@ -385,6 +381,85 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
+        else if (!keyword.compare("policy"))
+        {
+            std::string policy;
+
+            if (!(arg_stream >> policy))
+                data_api.failed_conversion(data_stream,  "stream5_tcp: policy <missing_arg>");
+
+            else if (!policy.compare("bsd"))
+                    table_api.add_option("policy", "bsd");
+
+            else if (!policy.compare("first"))
+                table_api.add_option("policy", "first");
+
+            else if (!policy.compare("irix"))
+                table_api.add_option("policy", "irix");
+
+            else if (!policy.compare("last"))
+                table_api.add_option("policy", "last");
+
+            else if (!policy.compare("linux"))
+                table_api.add_option("policy", "linux");
+
+            else if (!policy.compare("macos"))
+                table_api.add_option("policy", "macos");
+
+            else if (!policy.compare("old-linux"))
+                table_api.add_option("policy", "old-linux");
+
+            else if (!policy.compare("solaris"))
+                table_api.add_option("policy", "solaris");
+
+            else if (!policy.compare("windows"))
+                table_api.add_option("policy", "windows");
+
+            else if (!policy.compare("vista"))
+                table_api.add_option("policy", "vista");
+
+            else if (!policy.compare("unknown"))
+                table_api.add_deleted_comment("stream5_tcp: policy unkown");
+
+            else if (!policy.compare("noack"))
+                table_api.add_deleted_comment("stream5_tcp: policy noack");
+
+            else if (!policy.compare("hpux"))
+                table_api.add_option("policy", "hpux");
+
+            else if (!policy.compare("hpux10"))
+                table_api.add_option("policy", "hpux10");
+
+            else if (!policy.compare("win2003"))
+            {
+                table_api.add_diff_option_comment("stream5_tcp: policy win2003", "stream_tcp.policy = win-2003");
+                table_api.add_option("policy", "win-2003");
+            }
+
+            else if (!policy.compare("win2k3"))
+            {
+                table_api.add_diff_option_comment("stream5_tcp: policy win2k3", "stream_tcp.policy = win-2003");
+                table_api.add_option("policy", "win-2003");
+            }
+
+            else if (!policy.compare("hpux11"))
+            {
+                table_api.add_diff_option_comment("stream5_tcp: policy hpux11", "stream_tcp.policy = hpux");
+                table_api.add_option("policy", "hpux");
+            }
+
+            else if (!policy.compare("grannysmith"))
+            {
+                table_api.add_diff_option_comment("stream5_tcp: policy grannysmith", "stream_tcp.policy = macos");
+                table_api.add_option("policy", "macos");
+            }
+
+            else
+            {
+                data_api.failed_conversion(data_stream, "stream5_tcp: policy " + policy);
+            }
+        }
+
         else
         {
             tmpval = false;
@@ -435,6 +510,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     table_api.close_table(); // "tcp_stream"
     return retval;
 }
+
 
 /**************************
  *******  A P I ***********

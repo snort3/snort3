@@ -59,6 +59,12 @@ bool Config::convert(std::istringstream& data_stream)
             cv.set_state(map->ctor());
             return true;
         }
+
+        data_api.failed_conversion(data_stream, keyword);
+    }
+    else
+    {
+        data_api.failed_conversion(data_stream);
     }
 
     return false;

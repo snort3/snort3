@@ -271,29 +271,53 @@ void AttributeTable::parse_os()
             else if (!policy.compare("vista"))
                 table_api.add_option("tcp_policy", "vista");
 
-            else if (!policy.compare("unknown"))
-                table_api.add_deleted_comment("Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>");
+            else if (!policy.compare("hpux10"))
+                table_api.add_option("tcp_policy", "hpux10");
 
             else if (!policy.compare("hpux"))
-            {
-                table_api.add_diff_option_comment("Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>", "hosts.tcp_policy = hpux10");
-                table_api.add_option("tcp_policy", "hpux10");
-            }
+                table_api.add_option("tcp_policy", "hpux");
+
+            else if (!policy.compare("macos"))
+                table_api.add_option("tcp_policy", "macos");
+
+            else if (!policy.compare("unknown"))
+                table_api.add_deleted_comment("Attribute_table: <STREAM_POLICY>unkown</STREAM_POLICY>");
+
+            else if (!policy.compare("noack"))
+                table_api.add_deleted_comment("Attribute_table: <STREAM_POLICY>noack</STREAM_POLICY>");
 
             else if (!policy.compare("hpux11"))
             {
-                table_api.add_diff_option_comment("Attribute_table: <FRAG_POLICY>hpux11</FRAG_POLICY>", "hosts.tcp_policy = hpux");
+                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>hpux11</STREAM_POLICY>", "hosts.tcp_policy = hpux");
                 table_api.add_option("tcp_policy", "hpux");
+            }
+
+            else if (!policy.compare("win2003"))
+            {
+                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>win2003</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
+                table_api.add_option("tcp_policy", "win-2003");
+            }
+
+            else if (!policy.compare("win2k3"))
+            {
+                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>win2k3</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
+                table_api.add_option("tcp_policy", "win-2003");
+            }
+
+            else if (!policy.compare("grannysmith"))
+            {
+                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>grannysmith</STREAM_POLICY>", "hosts.tcp_policy = macos");
+                table_api.add_option("tcp_policy", "macos");
             }
 
             else
             {
                 data_api.failed_conversion(*stream, "Attribute_Table: <STREAM_POLICY>" +
-                    policy + "</STREAM_POLICY>");                }
+                    policy + "</STREAM_POLICY>");
+            }
         }
     }
 }
-
 
 /*
  * Parse the 'HOST' element and add elements to Lua configuration

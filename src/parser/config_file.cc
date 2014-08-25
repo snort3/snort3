@@ -708,7 +708,7 @@ void config_alert_mode(SnortConfig* sc, const char* val)
         sc->output = OUTPUT_AJK;
     }
     else
-        sc->output = val;
+        sc->output = SnortStrdup(val);
 }
 
 void config_log_mode(SnortConfig* sc, const char* val)
