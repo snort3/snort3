@@ -34,7 +34,7 @@ namespace {
 class Binding : public ConversionState
 {
 public:
-    Binding(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Binding() : ConversionState() {};
     virtual ~Binding() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -70,20 +70,20 @@ bool Binding::convert(std::istringstream& data_stream)
     if (!util::get_string(data_stream, val, ","))
         return false;
 
-    ld->open_table("binder");
-    ld->open_table();
-    ld->open_table("when");
-    ld->add_list_to_table(when, val);
+    table_api.open_table("binder");
+    table_api.open_table();
+    table_api.open_table("when");
+    table_api.add_list(when, val);
 
     while (util::get_string(data_stream, val, ","))
-        ld->add_list_to_table(when, val);
+        table_api.add_list(when, val);
 
-    ld->close_table(); // "when"
-    ld->open_table("use");
-    ld->add_option_to_table("file", file);
-    ld->close_table(); // "use"
-    ld->close_table(); // anonymous table
-    ld->close_table(); // "binder"
+    table_api.close_table(); // "when"
+    table_api.open_table("use");
+    table_api.add_option("file", file);
+    table_api.close_table(); // "use"
+    table_api.close_table(); // anonymous table
+    table_api.close_table(); // "binder"
     return retval;
 }
 
@@ -91,9 +91,9 @@ bool Binding::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Binding(cv, ld);
+    return new Binding();
 }
 
 static const ConvertMap binding_api =

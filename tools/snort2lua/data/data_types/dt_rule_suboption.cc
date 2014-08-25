@@ -17,29 +17,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_rule_suboptions.h author Josh Rosenbaum <jrosenba@cisco.com>
-
-#ifndef DT_RULE_SUBOPTIONS_H
-#define DT_RULE_SUBOPTIONS_H
+// dt_rule_suboptions.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <string>
-#include <vector>
-#include <iostream>
+#include "data/data_types/dt_rule_suboption.h"
 
-class RuleSubOption
+
+RuleSubOption::RuleSubOption(std::string name)
+    :   name(name),
+        value(std::string())
 {
-public:
-    RuleSubOption(std::string name);
-    RuleSubOption(std::string name, std::string val);
-    virtual ~RuleSubOption();
- 
-    // overloading operators
-    friend std::ostream &operator<<( std::ostream&, const RuleSubOption &);
+}
 
-private:
-    std::string name;
-    std::string value;
-};
+RuleSubOption::RuleSubOption(std::string name, std::string value)
+    :   name(name),
+        value(value)
+{
+}
 
 
-#endif
+RuleSubOption::~RuleSubOption()
+{
+}
+
+// overloading operators
+std::ostream &operator<<( std::ostream& out, const RuleSubOption& subopt)
+{
+    out << subopt.name;
+
+    if (!subopt.value.empty())
+        out << " " << subopt.value;
+
+    return out;
+}

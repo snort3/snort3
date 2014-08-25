@@ -20,9 +20,10 @@
 // dt_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#include "data/dt_rule.h"
+#include "data/data_types/dt_rule.h"
 #include "data/dt_data.h"  // included for print mode
 #include "utils/s2l_util.h"
+#include "data/data_types/dt_rule_option.h"
 
 
 Rule::Rule() :  num_hdr_data(0),
@@ -50,10 +51,18 @@ bool Rule::add_hdr_data(std::string data)
 }
 
 
+void Rule::update_rule_type(std::string new_type)
+{ hdr_data[0] = new_type; }
+
 void Rule::bad_rule()
-{
-    is_bad_rule = true;
-}
+{ is_bad_rule = true; }
+
+void Rule::add_comment(std::string new_comment)
+{ comments.push_back("# " + new_comment); }
+
+void Rule::make_comment()
+{ is_comment = true; }
+
 
 bool Rule::add_option(std::string keyword)
 {
@@ -96,22 +105,14 @@ RuleOption* Rule::select_option(std::string opt_name)
 }
 
 
-void Rule::add_comment(std::string new_comment)
-{
-    comments.push_back("# " + new_comment);
-}
 
-void Rule::make_comment()
-{
-    is_comment = true;
-}
 
 std::ostream &operator<<( std::ostream& out, const Rule &rule)
 {
     bool first_line = true;
 
     // don't print comment and tag in quiet mode
-    if (!LuaData::is_quiet_mode())
+    if (!data_api.is_quiet_mode())
     {
         if (rule.is_bad_rule)
             out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";

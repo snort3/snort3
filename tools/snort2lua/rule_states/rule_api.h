@@ -20,20 +20,17 @@
 // converter.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 
-#ifndef RULE_API_H
-#define RULE_API_H
+#ifndef RULE_STATES_RULE_API_H
+#define RULE_STATES_RULE_API_H
 
-#include <sstream>
-#include <istream>
 #include <vector>
-
-#include "conversion_state.h"
+#include "conversion_defines.h"
 
 namespace rules
 {
 
 // vector containing all of the rule keywords
-extern const std::vector<const ConvertMap*> rule_api;
+extern const std::vector<const ConvertMap*> rule_options_api;
 
 } // namespace rules
 

@@ -34,7 +34,7 @@ namespace {
 class Frag3Engine : public ConversionState
 {
 public:
-    explicit Frag3Engine(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    explicit Frag3Engine() : ConversionState() {};
     virtual ~Frag3Engine() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -64,7 +64,7 @@ bool Frag3Engine::parse_ip_list(std::string list_name,
         prev = prev + ' ' + elem;
 
     prev = prev + "]";
-    return ld->add_option_to_table(list_name, prev);
+    return table_api.add_option(list_name, prev);
 
 }
 
@@ -74,7 +74,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    ld->open_table("stream_ip");
+    table_api.open_table("stream_ip");
 
     while(data_stream >> keyword)
     {
@@ -90,7 +90,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("min_ttl", data_stream);
 
         else if(!keyword.compare("detect_anomalies"))
-            ld->add_deleted_comment("detect_anomalies");
+            table_api.add_deleted_comment("detect_anomalies");
 
         else if(!keyword.compare("bind_to"))
             parse_ip_list("bind_to", data_stream);
@@ -98,32 +98,31 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
         else if(!keyword.compare("overlap_limit"))
         {
             tmpval = parse_int_option("max_overlaps", data_stream);
-            ld->add_diff_option_comment("overlap_limit", "max_overlaps");
+            table_api.add_diff_option_comment("overlap_limit", "max_overlaps");
         }
 
         else if(!keyword.compare("min_fragment_length"))
         {
             tmpval = parse_int_option("min_frag_length", data_stream);
-            ld->add_diff_option_comment("min_fragment_length", "min_frag_length");
+            table_api.add_diff_option_comment("min_fragment_length", "min_frag_length");
         }
 
         else if(!keyword.compare("timeout"))
         {
             std::string val;
-            ld->add_diff_option_comment("timeout", "session_timeout");
+            table_api.add_diff_option_comment("timeout", "session_timeout");
 
             if (data_stream >> val)
             {
                 int seconds = std::stoi(val);
                 if (seconds == 0)
                 {
-                    tmpval = ld->add_option_to_table("session_timeout", 256);
-                    ld->add_comment_to_table("preprocessor frag3_engine: "
-                        "timeout 0 ==> session_timeout 256");
+                    tmpval = table_api.add_option("session_timeout", 256);
+                    table_api.add_diff_option_comment("preprocessor frag3_engine: timeout 0", "session_timeout 256");
                 }
                 else
                 {
-                    tmpval = ld->add_option_to_table("session_timeout", seconds);
+                    tmpval = table_api.add_option("session_timeout", seconds);
                 }
             }
         }
@@ -137,27 +136,27 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 tmpval = false;
 
             else if (!policy.compare("first"))
-                tmpval = ld->add_option_to_table("policy", "first");
+                tmpval = table_api.add_option("policy", "first");
 
             else if (!policy.compare("bsd"))
-                tmpval = ld->add_option_to_table("policy", "bsd");
+                tmpval = table_api.add_option("policy", "bsd");
 
             else if (!policy.compare("last"))
-                tmpval = ld->add_option_to_table("policy", "last");
+                tmpval = table_api.add_option("policy", "last");
 
             else if (!policy.compare("windows"))
-                tmpval = ld->add_option_to_table("policy", "windows");
+                tmpval = table_api.add_option("policy", "windows");
 
             else if (!policy.compare("linux"))
-                tmpval = ld->add_option_to_table("policy", "linux");
+                tmpval = table_api.add_option("policy", "linux");
 
             else if (!policy.compare("solaris"))
-                tmpval = ld->add_option_to_table("policy", "solaris");
+                tmpval = table_api.add_option("policy", "solaris");
 
             else if (!policy.compare("bsd-right"))
             {
-                ld->add_diff_option_comment("policy bsd-right", "policy = bsd_right");
-                tmpval = ld->add_option_to_table("policy", "bsd_right");
+                table_api.add_diff_option_comment("policy bsd-right", "policy = bsd_right");
+                tmpval = table_api.add_option("policy", "bsd_right");
             }
 
             else
@@ -180,9 +179,9 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Frag3Engine(cv, ld);
+    return new Frag3Engine();
 }
 
 static const ConvertMap preprocessor_frag3_engine =

@@ -34,7 +34,7 @@ namespace {
 class Classification : public ConversionState
 {
  public:
-    Classification(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
+    Classification() : ConversionState() {}
     virtual ~Classification() {}
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,15 +46,15 @@ bool Classification::convert(std::istringstream& data_stream)
     std::string keyword;
     int priority;
 
-    ld->open_table("classifications");
-    ld->open_table();
+    table_api.open_table("classifications");
+    table_api.open_table();
     std::getline(data_stream, keyword, ',');
 
     if (data_stream.bad())
         return false;
 
     util::trim(keyword);
-    ld->add_option_to_table("name", keyword);
+    table_api.add_option("name", keyword);
     keyword.clear();
     std::getline(data_stream, keyword, ',');
 
@@ -62,12 +62,12 @@ bool Classification::convert(std::istringstream& data_stream)
         return false;
 
     util::trim(keyword);
-    ld->add_option_to_table("text", keyword);
+    table_api.add_option("text", keyword);
 
     if(!(data_stream >> priority))
         return false;
 
-    ld->add_option_to_table("priority", priority);
+    table_api.add_option("priority", priority);
     return true;
 }
 
@@ -75,9 +75,9 @@ bool Classification::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Classification(cv, ld);
+    return new Classification();
 }
 
 static const ConvertMap classification_api =

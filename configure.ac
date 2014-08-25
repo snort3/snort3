@@ -869,6 +869,7 @@ tools/u2spewfoo/Makefile \
 tools/snort2lua/Makefile \
 tools/snort2lua/config_states/Makefile \
 tools/snort2lua/data/Makefile \
+tools/snort2lua/data/data_types/Makefile \
 tools/snort2lua/keyword_states/Makefile \
 tools/snort2lua/output_states/Makefile \
 tools/snort2lua/preprocessor_states/Makefile \

@@ -34,7 +34,7 @@ namespace {
 class TunnelVerdicts : public ConversionState
 {
 public:
-    TunnelVerdicts(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    TunnelVerdicts() : ConversionState() {};
     virtual ~TunnelVerdicts() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,11 +46,11 @@ bool TunnelVerdicts::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string val;
 
-    ld->open_table("alerts");
+    table_api.open_table("alerts");
 
     while (util::get_string(data_stream, val, ", "))
     {
-        bool tmpval = ld->add_list_to_table("tunnel_verdicts", val);
+        bool tmpval = table_api.add_list("tunnel_verdicts", val);
 
         if (retval && !tmpval)
             retval = false;
@@ -63,9 +63,9 @@ bool TunnelVerdicts::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new TunnelVerdicts(cv, ld);
+    return new TunnelVerdicts();
 }
 
 static const ConvertMap tunnel_verdicts_api =

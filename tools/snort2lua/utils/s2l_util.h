@@ -32,41 +32,30 @@
 #include <sstream>
 
 struct ConvertMap;
+class Table;
 
 namespace util
 {
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+
+// Search through the vector for the map which matches keyword
 const ConvertMap* find_map(const std::vector<const ConvertMap*>, std::string keyword);
+Table* find_table(std::vector<Table*> vec, std::string name);
 
 // trim from begining
 std::string &ltrim(std::string &s);
+
 // trim from end
 std::string &rtrim(std::string &s);
+
 // trim from both ends
 std::string &trim(std::string &s);
 
 
-// trim from start
-inline std::string &ltrim(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        return s;
-}
-
-// trim from end
-inline std::string &rtrim(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-        return s;
-}
-
-// trim from both ends
-inline std::string &trim(std::string &s) {
-        return ltrim(rtrim(s));
-}
-
-
 // return true if this file exists. False otherwise.
-bool file_exists (const std::string& name);
+bool file_exists(const std::string& name);
+
 
 /* Takes in a stream and a string of delimeters. The function will extract the charachters
  * from the stream until it hits one of the delimeters.  The substring will be set to the
@@ -89,13 +78,30 @@ bool get_string(std::istringstream& data_stream,
 
 std::string get_rule_option_args(std::istringstream& data_stream);
 
+/*
+ * When converting rules, some options require information from
+ * a different options.  For instance, the rule options 'threshold'
+ * needs to know both the rule's gid and sid.  This function
+ * provides a simple way to get those values.
+ *
+ * PARAMS:
+ *          data_stream - the rule's data stream
+ *          opt_name - the option name for which to seach.
+ * RETURN:
+ *          the opt_names value or an empty string if the opt_name
+ *          is not found.
+ *
+ */
+std::string rule_option_find_val(std::istringstream& data_stream,
+                                 std::string opt_name);
+
 // remove any ']]' and double spaces from this string.
 std::string &sanitize_lua_string(std::string &s);
 
 // find the location of the first space before max_str_lenght.
 // if no space exists before max_str_length, return the first space
 // after max_length. Otherwise, return std::string::npos
-std::size_t  get_substr_length(std::string s, std::size_t max_length);
+std::size_t get_substr_length(std::string s, std::size_t max_length);
 
 bool case_compare(std::string, std::string);
 

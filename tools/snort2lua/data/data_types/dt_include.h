@@ -17,36 +17,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_rule_suboptions.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// dt_include.h author Josh Rosenbaum <jrosenba@cisco.com>
+
+#ifndef DATA_DATA_TYPES_DT_INCLUDE_H
+#define DATA_DATA_TYPES_DT_INCLUDE_H
 
 #include <string>
-#include "data/dt_rule_suboption.h"
+#include <iostream>
 
-
-RuleSubOption::RuleSubOption(std::string name)
-    :   name(name),
-        value(std::string())
+class Include
 {
-}
+public:
 
-RuleSubOption::RuleSubOption(std::string name, std::string value)
-    :   name(name),
-        value(value)
-{
-}
+    Include(std::string file_name);
+    virtual ~Include();
+
+    // overloading operators
+    friend std::ostream &operator<<( std::ostream&, const Include &);
+
+    friend bool operator==(const Include& lhs, const Include& rhs);
+    friend bool operator!=(const Include& lhs, const Include& rhs);
+
+private:
+    std::string file_name;
+};
 
 
-RuleSubOption::~RuleSubOption()
-{
-}
-
-// overloading operators
-std::ostream &operator<<( std::ostream& out, const RuleSubOption& subopt)
-{
-    out << subopt.name;
-
-    if (!subopt.value.empty())
-        out << " " << subopt.value;
-
-    return out;
-}
+#endif

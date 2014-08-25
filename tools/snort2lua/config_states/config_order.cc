@@ -34,7 +34,7 @@ namespace {
 class Order : public ConversionState
 {
 public:
-    Order(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Order() : ConversionState() {};
     virtual ~Order() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,17 +46,17 @@ bool Order::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string val;
 
-    ld->open_table("alerts");
+    table_api.open_table("alerts");
 
     while (data_stream >> val)
     {
-        bool tmpval = ld->add_list_to_table("order", val);
+        bool tmpval = table_api.add_list("order", val);
 
         if (retval && !tmpval)
             retval = false;
     }
 
-    ld->close_table();
+    table_api.close_table();
     return retval;
 }
 
@@ -64,9 +64,9 @@ bool Order::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Order(cv, ld);
+    return new Order();
 }
 
 static const ConvertMap order_api =

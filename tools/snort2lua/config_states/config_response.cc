@@ -34,7 +34,7 @@ namespace {
 class Response : public ConversionState
 {
 public:
-    Response(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Response() : ConversionState() {};
     virtual ~Response() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,7 +46,7 @@ bool Response::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    ld->open_table("active");
+    table_api.open_table("active");
 
     while (util::get_string(data_stream, keyword, ", "))
     {
@@ -57,13 +57,13 @@ bool Response::convert(std::istringstream& data_stream)
             tmpval = false;
 
         else if (!keyword.compare("attempts"))
-            tmpval = ld->add_option_to_table("attempts", std::stoi(val));
+            tmpval = table_api.add_option("attempts", std::stoi(val));
 
         else if (!keyword.compare("device"))
-            tmpval = ld->add_option_to_table("device", val);
+            tmpval = table_api.add_option("device", val);
 
         else if (!keyword.compare("dst_mac"))
-            tmpval = ld->add_option_to_table("dst_mac", val);
+            tmpval = table_api.add_option("dst_mac", val);
 
         else
             tmpval = false;
@@ -80,9 +80,9 @@ bool Response::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Response(cv, ld);
+    return new Response();
 }
 
 static const ConvertMap response_api =

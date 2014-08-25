@@ -25,6 +25,7 @@
 #include "conversion_state.h"
 #include "utils/converter.h"
 #include "utils/s2l_util.h"
+#include "utils/parse_cmd_line.h"
 
 namespace keywords
 {
@@ -34,7 +35,7 @@ namespace {
 class Include : public ConversionState
 {
 public:
-    Include(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Include() : ConversionState() {};
     virtual ~Include() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -55,13 +56,23 @@ bool Include::convert(std::istringstream& data_stream)
         // if not parsing, assume its a regular rule file.
 
 
-        if (cv->should_convert_includes())
+        if (cv.should_convert_includes())
         {
-            cv->parse_include_file(ld->expand_vars(file));
+            std::string full_file = data_api.expand_vars(file);
+
+            if (!util::file_exists(full_file))
+                full_file = parser::get_conf_dir() + full_file;
+
+
+            // if we still can't find this file, add it as a snort file
+            if (!util::file_exists(full_file))
+                rule_api.add_hdr_data("include " + file);
+            else
+                cv.parse_include_file(full_file);
         }
         else
         {
-            ld->add_hdr_data("include " + file);
+            rule_api.add_hdr_data("include " + file);
         }
         return true;
     }
@@ -72,9 +83,9 @@ bool Include::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Include(cv, ld);
+    return new Include();
 }
 
 static const ConvertMap keyword_include = 

@@ -20,10 +20,8 @@
 // pps_frag3_global.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
-#include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
 #include "utils/s2l_util.h"
 
 namespace preprocessors
@@ -34,7 +32,7 @@ namespace {
 class Frag3Global : public ConversionState
 {
 public:
-    Frag3Global(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Frag3Global() : ConversionState() {};
     virtual ~Frag3Global() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,7 +45,7 @@ bool Frag3Global::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    ld->open_table("stream_ip");
+    table_api.open_table("stream_ip");
 
 
     // full options are comma seperated
@@ -60,7 +58,7 @@ bool Frag3Global::convert(std::istringstream& data_stream)
         args_stream >> keyword;
         
         if(!keyword.compare("disabled"))
-            ld->add_deleted_comment("disabled");
+            table_api.add_deleted_comment("disabled");
 
         else if(!keyword.compare("max_frags"))
             tmpval = parse_int_option("max_frags", args_stream);
@@ -80,7 +78,7 @@ bool Frag3Global::convert(std::istringstream& data_stream)
 
         if (!tmpval)
         {
-            ld->failed_conversion(data_stream, "keyword");
+            data_api.failed_conversion(data_stream, "keyword");
             retval = false;
         }
     }
@@ -92,9 +90,9 @@ bool Frag3Global::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Frag3Global(cv, ld);
+    return new Frag3Global();
 }
 
 static const ConvertMap preprocessor_frag3_global =

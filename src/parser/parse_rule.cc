@@ -1570,7 +1570,8 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("gid must set in builtin rules");
 
         if ( otn->num_detection_opts )
-            ParseError("builtin rules do not support detection options");
+            ParseError("%d:%d builtin rules do not support detection options",
+                        otn->sigInfo.generator, otn->sigInfo.id);
 
         otn->sigInfo.text_rule = false;
         builtin_rule_count++;

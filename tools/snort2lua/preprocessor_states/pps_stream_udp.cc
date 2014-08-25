@@ -34,7 +34,7 @@ namespace {
 class StreamUdp : public ConversionState
 {
 public:
-    StreamUdp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    StreamUdp() : ConversionState() {};
     virtual ~StreamUdp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,7 +47,7 @@ bool StreamUdp::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string keyword;
 
-    ld->open_table("stream_udp");
+    table_api.open_table("stream_udp");
 
     while(data_stream >> keyword)
     {
@@ -60,11 +60,11 @@ bool StreamUdp::convert(std::istringstream& data_stream)
             continue;
         
         if(!keyword.compare("ignore_any_rules"))
-            tmpval = ld->add_option_to_table("ignore_any_rules", true);
+            tmpval = table_api.add_option("ignore_any_rules", true);
 
         else if(!keyword.compare("timeout"))
         {
-            ld->add_diff_option_comment("timeout", "session_timeout");
+            table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", data_stream);
         }
 
@@ -82,9 +82,9 @@ bool StreamUdp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new StreamUdp(cv, ld);
+    return new StreamUdp();
 }
 
 static const ConvertMap preprocessor_stream_udp =

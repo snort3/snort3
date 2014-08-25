@@ -35,7 +35,7 @@ namespace {
 class MplsPayloadType : public ConversionState
 {
 public:
-    MplsPayloadType(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    MplsPayloadType() : ConversionState() {};
     virtual ~MplsPayloadType() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -51,24 +51,24 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
     if (!(data_stream >> type))
         return false;
 
-    ld->open_table("mpls");
+    table_api.open_table("mpls");
 
 
     if (!type.compare("ethernet"))
     {
-        ld->add_diff_option_comment("config mpls_payload_type: ethernet", "mpls_payload_type = eth");
-        retval = ld->add_option_to_table("mpls_payload_type", "eth");
+        table_api.add_diff_option_comment("config mpls_payload_type: ethernet", "mpls_payload_type = eth");
+        retval = table_api.add_option("mpls_payload_type", "eth");
     }
     else if (!type.compare("ipv4"))
     {
-        ld->add_diff_option_comment("config mpls_payload_type: ipv4", "mpls_payload_type = ip4");
-        retval = ld->add_option_to_table("mpls_payload_type", "ip4");
+        table_api.add_diff_option_comment("config mpls_payload_type: ipv4", "mpls_payload_type = ip4");
+        retval = table_api.add_option("mpls_payload_type", "ip4");
     }
 
     else if (!type.compare("ipv6"))
     {
-        ld->add_diff_option_comment("config mpls_payload_type: ipv6", "mpls_payload_type = ip6");
-        retval = ld->add_option_to_table("mpls_payload_type", "ip6");
+        table_api.add_diff_option_comment("config mpls_payload_type: ipv6", "mpls_payload_type = ip6");
+        retval = table_api.add_option("mpls_payload_type", "ip6");
     }
     else
         return false;
@@ -82,9 +82,9 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new MplsPayloadType(cv, ld);
+    return new MplsPayloadType();
 }
 
 static const ConvertMap mpls_payload_type_api =

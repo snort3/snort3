@@ -136,8 +136,9 @@ config daq_var: blah=hah
 
 # Configure specific UID and GID to run snort as after dropping privs. For more information see snort -h command line options
 #
-config set_gid: staff
-config set_uid: 1000
+#config set_gid: snort
+config set_uid: @UID@
+
 #config chroot: @CMAKE_CURRENT_BINARY_DIR@
 
 # Configure default bpf_file to use for filtering what traffic reaches snort. For more information see snort -h command line options (-F)
@@ -235,7 +236,7 @@ config max_attribute_services_per_host: 80
 config min_ttl: 5
 config new_ttl: 8
 config nolog
-config react: block.html
+config react: @CMAKE_CURRENT_BINARY_DIR@/block.html
 config logdir: @CMAKE_CURRENT_BINARY_DIR@/
 config dirty_pig:
 config enable_gtp
@@ -564,7 +565,6 @@ preprocessor http_inspect_server: server default \
     log_uri \
     log_hostname \
     whitespace_chars { a b c } \
-    decompress_swf { deflate lzma } \
     decompress_pdf { deflate }
 
 
@@ -1077,7 +1077,7 @@ suppress gen_id 123, sig_id 9,track by_src, ip [192.168.1.9/24,192.168.1.10/24]
 # Why is this failing section
 
 
-alert tcp any 80 -> any any (msg:"content detected in chunk"; file_data;content:"nt network testing facility";within:30; sid:1;)
+alert tcp any 80 -> any any (msg:"content detected in chunk"; file_data;content:"nt network testing facility";within:30; sid:1000039;)
 
 
 
@@ -1100,7 +1100,7 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC
     content:"jedi request"; nocase; offset:4; depth:20; rawbytes; \
     content:"jedi request2"; nocase; distance:150; http_cookie; http_header; \
     content:"jedi request3"; within:150; http_client_body; \
-    sid:7033; gid:116; rev:6;)
+    sid:1000060; gid:1; rev:6;)
 
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; \
@@ -1114,43 +1114,43 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC
     content:"http_raw_uri"; http_raw_uri; \
     content:"http_stat_code"; http_stat_code; \
     content:"http_stat_msg"; http_stat_msg; \
-    sid:7034; gid:116; rev:6;)
+    sid:7034; gid:1; rev:6;)
 
 
 alert tcp any any -> any any (msg:"la di da"; \
     content:"fast_parttern"; fast_pattern:only ; \
-    sid:7035; gid:116; rev:6;)
+    sid:7035; gid:1; rev:6;)
 
 alert tcp any any -> any any (msg:"fast_pattern offset length"; \
     content:"fast_parttern"; fast_pattern:1,5; \
-    sid:7036; gid:116; rev:6;)
+    sid:7036; gid:1; rev:6;)
 
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"uricontent"; \
     uricontent:"jedi request"; nocase; offset:4; depth:20; \
-    sid:7037; gid:116; rev:6;)
+    sid:7037; gid:1; rev:6;)
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"uricontent"; \
     uricontent:"jedi request"; nocase; within:30; distance:50; \
-    sid:7038; gid:116; rev:6;)
+    sid:7038; gid:1; rev:6;)
 
 alert tcp any any <> any 80 (msg:"MD5 Alert"; \
-    protected_content:"293C9EA246FF9985DC6F62A650F78986"; hash:md5; offset:0; length:4; gid:116; sid:2)
+    protected_content:"293C9EA246FF9985DC6F62A650F78986"; hash:md5; offset:0; length:4; gid:1; sid:1000040)
     
 alert tcp any any <> any 80 (msg:"SHA256 Alert"; \
     protected_content:"56D6F32151AD8474F40D7B939C2161EE2BBF10023F4AF1DBB3E13260EBDC6342"; \
-    hash:sha256; offset:0; length:4; gid:2; sid:3)
+    hash:sha256; offset:0; length:4; gid:2; sid:1000041)
 
 
-alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; flow:to_server,established; content:"jedi request"; nocase;  sid:7033; rev:6;)
+alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; flow:to_server,established; content:"jedi request"; nocase;  sid:7033; rev:6; gid:1 )
 
 alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"WEB-CLIENT csv file download request"; flow:to_server, established; content:"GET"; nocase; uricontent:".csv"; nocase; flowbits:set,csv.download; flowbits:noalert; metadata:service http; reference:cve,2008-0112; reference:url,www.microsoft.com/technet/security/Bulletin/MS08-014.mspx; classtype:misc-activity; sid:13584; rev:2;)
 
 alert tcp $EXTERNAL_NET any -> $HOME_NET 3389 (msg:"APP-DETECT remote desktop protocol attempted administrator connection request"; content:"|E0|"; depth:1; offset:5; content:"mstshash=Administr"; distance:0; nocase; reference:bugtraq,14259; reference:cve,2005-1218; reference:url,technet.microsoft.com/en-us/security/bulletin/MS05-041; classtype:misc-activity; sid:4060; rev:8;)
 
 
-alert ( msg:"DECODE_ICMP4_DST_BROADCAST"; sid:416; gid:116; rev:1; metadata:rule-type decode, service http, rule-flushing enabled; classtype:misc-activity; )
-alert ( msg:"DECODE_ICMP4_TYPE_OTHER"; sid:418; gid:116; rev:1; metadata:rule-type decode; classtype:misc-activity; )
+alert ( msg:"DECODE_ICMP4_DST_BROADCAST"; sid:1000042; gid:1; rev:1; metadata:rule-type decode, service http, rule-flushing enabled; classtype:misc-activity; )
+alert ( msg:"DECODE_ICMP4_TYPE_OTHER"; sid:1000043; gid:1; rev:1; metadata:rule-type decode; classtype:misc-activity; )
 
 drop tcp $EXTERNAL_NET 554 -> $HOME_NET any (msg:"MULTIMEDIA Windows Media Player malicious playlist buffer overflow attempt"; sid:14252; gid:3; rev:9; classtype:attempted-user; flowbits:isset,file.wmp_playlist; reference:cve,2008-2253; reference:url,technet.microsoft.com/en-us/security/bulletin/MS08-054; metadata: engine shared, soid 3|14252, policy balanced-ips drop, policy security-ips drop;)
 
@@ -1166,7 +1166,7 @@ alert udp $HOME_NET any -> $EXTERNAL_NET 5060 (msg:"APP-DETECT Gizmo register VO
 
 
 # Fragbits
-alert ip $EXTERNAL_NET any -> $HOME_NET any (msg:"DOS IGMP dos attack"; fragbits:M+; ip_proto:2; reference:bugtraq,514; reference:cve,1999-0918; reference:url,www.microsoft.com/technet/security/bulletin/MS99-034.mspx; classtype:attempted-dos; sid:272; rev:11;)
+alert ip $EXTERNAL_NET any -> $HOME_NET any (msg:"DOS IGMP dos attack"; fragbits:M+; ip_proto:2; reference:bugtraq,514; reference:cve,1999-0918; reference:url,www.microsoft.com/technet/security/bulletin/MS99-034.mspx; classtype:attempted-dos; sid:1000044; rev:11;)
 
 alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"ET SCAN NMAP -f -sF"; fragbits:!M; dsize:0; flags:F,12; ack:0; window:2048; classtype:attempted-recon; reference:url,doc.emergingthreats.net/2000543; reference:url,www.emergingthreats.net/cgi-bin/cvsweb.cgi/sigs/SCAN/SCAN_NMAP; sid:2000543; rev:6;)
 
@@ -1182,32 +1182,57 @@ alert tcp $EXTERNAL_NET any -> $SMTP_SERVERS 25 \
         classtype:attempted-user; sid:23137; rev:7;)
 
 
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; sid:1000001; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; base64_data; sid:1000002; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:relative; base64_data; sid:1000003; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:bytes 12, offset 6, relative; base64_data; sid:1000004; gid:1189)
-alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:offset 7; sid:1000005; gid:1189)
-alert tcp any any <> any any (base64_decode:bytes 10,offset 8,relative; sid:1000007; gid:1189)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; sid:1000001; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; base64_data; sid:1000002; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:relative; base64_data; sid:1000003; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:bytes 12, offset 6, relative; base64_data; sid:1000004; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:offset 7; sid:1000005; gid:1)
+alert tcp any any <> any any (base64_decode:bytes 10,offset 8,relative; sid:1000007; gid:1)
 
 
-alert tcp any any -> any any (msg:"test base64_decode"; asn1: bitstring_overflow; sid:1000010; gid:1189)
+alert tcp any any -> any any (msg:"test base64_decode"; asn1: bitstring_overflow; sid:1000010; gid:1)
 
-alert tcp any any <> any any (msg:"blahblahblah";file_data:mime;sid:1)
-alert tcp any any <> any any (file_data:mime;msg:"blahblahblah";sid:1)
-
-
-rule_state 1000001 1189 enabled drop
-rule_state 1000002,1189,disabled,alert
-rule_state 1000003 1189,disabled sdrop
-rule_state 1000004 1189, enabled sdrop
+alert tcp any any <> any any (msg:"blahblahblah";file_data:mime;sid:1000045)
+alert tcp any any <> any any (file_data:mime;msg:"blahblahblah";sid:1000046)
 
 
-alert tcp any any -> any 80 ( sid:3; threshold:type limit, track by_src, count 1 , seconds 60; gid: 119;  )
-alert tcp any any -> any 80 ( sid:400; gid:119; threshold:type limit, track by_src, count 1 , seconds 60 )
-alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1; gid:119 )
-alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:2; gid:119 )
-alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; content:"blah"; gid:119; sid:4 )
+rule_state 1000001 1 enabled drop
+rule_state 1000002,1,disabled,alert
+rule_state 1000003 1,disabled sdrop
+rule_state 1000004 1, enabled sdrop
+
+
+alert tcp any any -> any 80 ( sid:1000047; threshold:type limit, track by_src, count 1 , seconds 60; gid: 119;  )
+alert tcp any any -> any 80 ( sid:1000048; gid:1; threshold:type limit, track by_src, count 1 , seconds 60 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000049; gid:1 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000050; gid:1 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; content:"blah"; gid:1; sid:1000051 )
 
 include @CMAKE_CURRENT_LIST_DIR@/file_magic.conf
 
-#alert tcp any any -> any any (msg:"pdf"; file_type:PDF; sid:2; flow:established,to_client;)
+
+#alert tcp any any -> any any (msg:"pdf"; file_type:PDF; sid:1000051; flow:established,to_client;)
+
+
+
+
+alert tcp any any <> any any ( sid:1000052; msg:"x"; resp:reset_source; )
+
+alert tcp any any <> any 80 ( sid:1000020; msg:"x"; react; )
+alert tcp any any <> any 80 ( sid:1000021; msg:"x"; react:; )
+alert tcp any any <> any 80 ( sid:1000022; msg:"x"; react:msg; )
+alert tcp any any <> any 80 ( sid:1000023; react; msg:"x"; )
+alert tcp any any <> any 80 ( sid:1000024; react:msg; msg:"x"; )
+alert tcp any any <> any any ( sid:1000027; msg:"x"; resp:reset_dest; )
+alert tcp any any <> any any ( sid:1000026; msg:"x"; resp:reset_both; )
+alert tcp any any <> any any ( sid:1000028; msg:"x"; resp:rst_snd; )
+alert tcp any any <> any any ( sid:1000029; msg:"x"; resp:rst_rcv; )
+alert tcp any any <> any any ( sid:1000030; msg:"x"; resp:rst_all; )
+alert tcp any any <> any any ( sid:1000031; msg:"x"; resp:icmp_net; )
+alert tcp any any <> any any ( sid:1000032; msg:"x"; resp:icmp_host; )
+alert tcp any any <> any any ( sid:1000033; msg:"x"; resp:icmp_port; )
+alert tcp any any <> any any ( sid:1000034; msg:"x"; resp:icmp_all; )
+alert tcp any any <> any any ( sid:1000035; msg:"x"; resp:reset_source, reset_dest, reset_both; )
+alert tcp any any <> any any ( sid:1000036; msg:"x"; resp:rst_snd, rst_rcv, rst_all; )
+alert tcp any any <> any any ( sid:1000037; msg:"x"; resp:icmp_net, icmp_host, icmp_port, icmp_all; )
+alert tcp any any <> any any ( sid:1000038; msg:"x"; resp:reset_source, reset_dest, reset_both, reset_dest; )

@@ -19,11 +19,11 @@
  */
 // preprocessor_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef PREPROCESSOR_API_H
-#define PREPROCESSOR_API_H
+#ifndef PREPROCESSOR_STATES_PREPROCESSOR_API_H
+#define PREPROCESSOR_STATES_PREPROCESSOR_API_H
 
 #include <vector>
-#include "conversion_state.h"
+#include "conversion_defines.h"
 
 namespace preprocessors
 {

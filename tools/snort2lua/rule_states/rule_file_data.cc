@@ -36,7 +36,7 @@ namespace {
 class FileData : public ConversionState
 {
 public:
-    FileData(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    FileData() : ConversionState() {};
     virtual ~FileData() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -50,7 +50,7 @@ bool FileData::convert(std::istringstream& data_stream)
     std::streamoff pos = data_stream.tellg();
     bool retval = true;
 
-    retval = ld->add_rule_option("file_data");
+    retval = rule_api.add_rule_option("file_data");
     args = util::get_rule_option_args(data_stream);
 
     // if there are no arguments, the option had a colon before a semicolon.
@@ -70,7 +70,7 @@ bool FileData::convert(std::istringstream& data_stream)
             std::istringstream(args) >> tmp;
 
             if (!tmp.compare("mime"))
-                ld->add_comment_to_rule("file_data's option 'mime' has been deleted");
+                rule_api.add_comment_to_rule("file_data's option 'mime' has been deleted");
             else
                 data_stream.seekg(pos);
         }
@@ -82,9 +82,9 @@ bool FileData::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* file_data_ctor(Converter* cv, LuaData* ld)
+static ConversionState* file_data_ctor()
 {
-    return new FileData(cv, ld);
+    return new FileData();
 }
 
 static const ConvertMap rule_file_data =

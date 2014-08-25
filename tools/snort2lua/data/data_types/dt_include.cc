@@ -17,45 +17,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_var.h author Josh Rosenbaum <jrosenba@cisco.com>
+// dt_include.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <string>
-#include <vector>
-#include <iostream>
 
-#ifndef DT_VAR_H
-#define DT_VAR_H
+#include "data/data_types/dt_include.h"
 
-class LuaData;
+Include::Include(std::string file_name) : file_name(file_name){}
+Include::~Include(){}
 
-class Variable
+// overloading operators
+std::ostream &operator<<( std::ostream& out, const Include &incl)
 {
-public:
-    Variable(std::string name, int depth);
-    Variable(std::string name);
-    virtual ~Variable();
+    out << "include '" << incl.file_name << "'";
+    return out;
+}
 
-    inline std::string get_name(){ return name; };
-    std::string get_value(LuaData*);
-    bool add_value(std::string);
-    friend std::ostream &operator<<( std::ostream&, const Variable &);
-
-
-private:
-    enum class VarType { STRING, VARIABLE};
-
-    struct VarData
-    {
-        std::string data;
-        VarType type;
-    };
-
-    std::vector<VarData*> vars;
-    std::string name;
-    int depth;
-    const std::size_t max_line_length = 77; // leave room for additional text
-
-};
-
-
-#endif
+bool operator==(const Include& lhs, const Include& rhs)
+{
+    return !(lhs.file_name.compare(rhs.file_name));
+}
+bool operator!=(const Include& lhs, const Include& rhs)
+{
+    return !(lhs == rhs);
+}

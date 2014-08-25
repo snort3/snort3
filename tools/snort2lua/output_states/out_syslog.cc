@@ -36,9 +36,7 @@ namespace
 class AlertSyslog : public ConversionState
 {
 public:
-    AlertSyslog( Converter* cv, LuaData* ld)
-        :   ConversionState(cv, ld)
-    { };
+    AlertSyslog() : ConversionState() {};
     virtual ~AlertSyslog() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -50,7 +48,7 @@ bool AlertSyslog::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    ld->open_table("alert_syslog");
+    table_api.open_table("alert_syslog");
     std::streamoff pos = data_stream.tellg();
 
     while (data_stream >> keyword)
@@ -72,157 +70,157 @@ bool AlertSyslog::convert(std::istringstream& data_stream)
             data_stream.seekg(pos);
             data_stream >> hostname;    // output previously confirmed
 
-            ld->add_comment_to_table("BINDINGS REQUIRED!! hostname --> --> " + hostname);
+            table_api.add_comment("BINDINGS REQUIRED!! hostname --> --> " + hostname);
         }
 
         else if (!keyword.compare("log_auth"))
         {
-            ld->add_diff_option_comment("log_auth", "facility = auth");
-            tmpval = ld->add_option_to_table("facility", "auth");
+            table_api.add_diff_option_comment("log_auth", "facility = auth");
+            tmpval = table_api.add_option("facility", "auth");
         }
 
         else if (!keyword.compare("log_auth"))
         {
-            ld->add_diff_option_comment("log_auth", "facility = auth");
-            tmpval = ld->add_option_to_table("facility", "auth");
+            table_api.add_diff_option_comment("log_auth", "facility = auth");
+            tmpval = table_api.add_option("facility", "auth");
         }
 
         else if (!keyword.compare("log_authpriv"))
         {
-            ld->add_diff_option_comment("log_authpriv", "facility = authpriv");
-            tmpval = ld->add_option_to_table("facility", "authpriv");
+            table_api.add_diff_option_comment("log_authpriv", "facility = authpriv");
+            tmpval = table_api.add_option("facility", "authpriv");
         }
 
         else if (!keyword.compare("log_daemon"))
         {
-            ld->add_diff_option_comment("log_daemon", "facility = daemon");
-            tmpval = ld->add_option_to_table("facility", "daemon");
+            table_api.add_diff_option_comment("log_daemon", "facility = daemon");
+            tmpval = table_api.add_option("facility", "daemon");
         }
 
         else if (!keyword.compare("log_user"))
         {
-            ld->add_diff_option_comment("log_user", "facility = user");
-            tmpval = ld->add_option_to_table("facility", "user");
+            table_api.add_diff_option_comment("log_user", "facility = user");
+            tmpval = table_api.add_option("facility", "user");
         }
 
         else if (!keyword.compare("log_local0"))
         {
-            ld->add_diff_option_comment("log_local0", "facility = local0");
-            tmpval = ld->add_option_to_table("facility", "local0");
+            table_api.add_diff_option_comment("log_local0", "facility = local0");
+            tmpval = table_api.add_option("facility", "local0");
         }
 
         else if (!keyword.compare("log_local1"))
         {
-            ld->add_diff_option_comment("log_local1", "facility = local1");
-            tmpval = ld->add_option_to_table("facility", "local1");
+            table_api.add_diff_option_comment("log_local1", "facility = local1");
+            tmpval = table_api.add_option("facility", "local1");
         }
 
         else if (!keyword.compare("log_local2"))
         {
-            ld->add_diff_option_comment("log_local2", "facility = local2");
-            tmpval = ld->add_option_to_table("facility", "local2");
+            table_api.add_diff_option_comment("log_local2", "facility = local2");
+            tmpval = table_api.add_option("facility", "local2");
         }
 
         else if (!keyword.compare("log_local3"))
         {
-            ld->add_diff_option_comment("log_local3", "facility = local3");
-            tmpval = ld->add_option_to_table("facility", "local3");
+            table_api.add_diff_option_comment("log_local3", "facility = local3");
+            tmpval = table_api.add_option("facility", "local3");
         }
 
         else if (!keyword.compare("log_local4"))
         {
-            ld->add_diff_option_comment("log_local4", "facility = local4");
-            tmpval = ld->add_option_to_table("facility", "local4");
+            table_api.add_diff_option_comment("log_local4", "facility = local4");
+            tmpval = table_api.add_option("facility", "local4");
         }
 
         else if (!keyword.compare("log_local5"))
         {
-            ld->add_diff_option_comment("log_local5", "facility = local5");
-            tmpval = ld->add_option_to_table("facility", "local5");
+            table_api.add_diff_option_comment("log_local5", "facility = local5");
+            tmpval = table_api.add_option("facility", "local5");
         }
 
         else if (!keyword.compare("log_local6"))
         {
-            ld->add_diff_option_comment("log_local6", "facility = local6");
-            tmpval = ld->add_option_to_table("facility", "local6");
+            table_api.add_diff_option_comment("log_local6", "facility = local6");
+            tmpval = table_api.add_option("facility", "local6");
         }
 
         else if (!keyword.compare("log_local7"))
         {
-            ld->add_diff_option_comment("log_local7", "facility = local7");
-            tmpval = ld->add_option_to_table("facility", "local7");
+            table_api.add_diff_option_comment("log_local7", "facility = local7");
+            tmpval = table_api.add_option("facility", "local7");
         }
 
         else if (!keyword.compare("log_err"))
         {
-            ld->add_diff_option_comment("log_err", "level = err");
-            tmpval = ld->add_option_to_table("level", "err");
+            table_api.add_diff_option_comment("log_err", "level = err");
+            tmpval = table_api.add_option("level", "err");
         }
 
         else if (!keyword.compare("log_emerg"))
         {
-            ld->add_diff_option_comment("log_emerg", "level = emerg");
-            tmpval = ld->add_option_to_table("level", "emerg");
+            table_api.add_diff_option_comment("log_emerg", "level = emerg");
+            tmpval = table_api.add_option("level", "emerg");
         }
 
         else if (!keyword.compare("log_alert"))
         {
-            ld->add_diff_option_comment("log_alert", "level = alert");
-            tmpval = ld->add_option_to_table("level", "alert");
+            table_api.add_diff_option_comment("log_alert", "level = alert");
+            tmpval = table_api.add_option("level", "alert");
         }
 
         else if (!keyword.compare("log_crit"))
         {
-            ld->add_diff_option_comment("log_crit", "level = crit");
-            tmpval = ld->add_option_to_table("level", "crit");
+            table_api.add_diff_option_comment("log_crit", "level = crit");
+            tmpval = table_api.add_option("level", "crit");
         }
 
         else if (!keyword.compare("log_warning"))
         {
-            ld->add_diff_option_comment("log_warning", "level = warning");
-            tmpval = ld->add_option_to_table("level", "warning");
+            table_api.add_diff_option_comment("log_warning", "level = warning");
+            tmpval = table_api.add_option("level", "warning");
         }
 
         else if (!keyword.compare("log_notice"))
         {
-            ld->add_diff_option_comment("log_notice", "level = notice");
-            tmpval = ld->add_option_to_table("level", "notice");
+            table_api.add_diff_option_comment("log_notice", "level = notice");
+            tmpval = table_api.add_option("level", "notice");
         }
 
         else if (!keyword.compare("log_info"))
         {
-            ld->add_diff_option_comment("log_info", "level = info");
-            tmpval = ld->add_option_to_table("level", "info");
+            table_api.add_diff_option_comment("log_info", "level = info");
+            tmpval = table_api.add_option("level", "info");
         }
 
         else if (!keyword.compare("log_debug"))
         {
-            ld->add_diff_option_comment("log_debug", "level = debug");
-            tmpval = ld->add_option_to_table("level", "debug");
+            table_api.add_diff_option_comment("log_debug", "level = debug");
+            tmpval = table_api.add_option("level", "debug");
         }
 
         else if (!keyword.compare("log_cons"))
         {
-            ld->add_diff_option_comment("log_cons", "options = cons");
-            tmpval = ld->add_option_to_table("options", "cons");
+            table_api.add_diff_option_comment("log_cons", "options = cons");
+            tmpval = table_api.add_option("options", "cons");
         }
 
         else if (!keyword.compare("log_ndelay"))
         {
-            ld->add_diff_option_comment("log_ndelay", "options = ndelay");
-            tmpval = ld->add_option_to_table("options", "ndelay");
+            table_api.add_diff_option_comment("log_ndelay", "options = ndelay");
+            tmpval = table_api.add_option("options", "ndelay");
         }
 
         else if (!keyword.compare("log_perror"))
         {
-            ld->add_diff_option_comment("log_perror", "options = perror");
-            tmpval = ld->add_option_to_table("options", "perror");
+            table_api.add_diff_option_comment("log_perror", "options = perror");
+            tmpval = table_api.add_option("options", "perror");
         }
 
         else if (!keyword.compare("log_pid"))
         {
-            ld->add_diff_option_comment("log_pid", "options = pid");
-            tmpval = ld->add_option_to_table("options", "pid");
+            table_api.add_diff_option_comment("log_pid", "options = pid");
+            tmpval = table_api.add_option("options", "pid");
         }
 
         else
@@ -241,11 +239,11 @@ bool AlertSyslog::convert(std::istringstream& data_stream)
 }
 
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    ld->open_top_level_table("alert_syslog"); // in case there are no arguments
-    ld->close_table();
-    return new AlertSyslog(cv, ld);
+    table_api.open_top_level_table("alert_syslog"); // in case there are no arguments
+    table_api.close_table();
+    return new AlertSyslog();
 }
 
 

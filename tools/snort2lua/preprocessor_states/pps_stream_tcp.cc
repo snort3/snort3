@@ -38,7 +38,7 @@ namespace {
 class StreamTcp : public ConversionState
 {
 public:
-    StreamTcp(Converter* cv, LuaData* ld);
+    StreamTcp();
     virtual ~StreamTcp() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -59,7 +59,7 @@ private:
 
 } // namespace
 
-StreamTcp::StreamTcp(Converter* cv, LuaData* ld) : ConversionState(cv, ld)
+StreamTcp::StreamTcp() : ConversionState()
 {
     bind_client = nullptr;
     bind_server = nullptr;
@@ -89,10 +89,10 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
 
 
 
-    ld->open_table("small_segments");
-    ld->add_option_to_table("count", consec_segs);
-    ld->add_option_to_table("maximum_size", min_bytes);
-    ld->close_table();
+    table_api.open_table("small_segments");
+    table_api.add_option("count", consec_segs);
+    table_api.add_option("maximum_size", min_bytes);
+    table_api.close_table();
 
 
     if (!(stream >> ignore_ports))
@@ -103,14 +103,14 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
         return false;
 
 
-    ld->open_table("small_segments");
+    table_api.open_table("small_segments");
     long long port;
 
     // extracting into an int since thats what they should be!
     while(stream >> port)
-        ld->add_list_to_table("ignore_ports", std::to_string(port));
+        table_api.add_list("ignore_ports", std::to_string(port));
 
-    ld->close_table();
+    table_api.close_table();
 
     if (!stream.eof())
         return false;
@@ -129,19 +129,19 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
 
     if( !dir.compare("client"))
     {
-        ld->add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = client");
+        table_api.add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = client");
         bind = bind_client;
     }
 
     else if( !dir.compare("server"))
     {
-        ld->add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = server");
+        table_api.add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = server");
         bind = bind_server;
     }
 
     else if( !dir.compare("both"))
     {
-        ld->add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = any");
+        table_api.add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = any");
         bind = bind_any;
     }
 
@@ -199,21 +199,21 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
 
     if (!dir.compare("client"))
     {
-        ld->add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = client");
+        table_api.add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = client");
         bind = bind_client;
         protocols = &client_protocols;
     }
 
     else if (!dir.compare("server"))
     {
-        ld->add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = server");
+        table_api.add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = server");
         bind = bind_server;
         protocols = &server_protocols;
     }
 
     else if (!dir.compare("both"))
     {
-        ld->add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = any");
+        table_api.add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = any");
         bind = bind_any;
         protocols = &any_protocols;
     }
@@ -247,7 +247,7 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
             do
             {
                 // yes, I agree this may appear odd that I am
-                // adding the value to a vector rather than creating
+                // adding the value to a vector rather than creating a
                 // new binder.  The reasons is each binder may still
                 // change while parsing stream_tcp.  Since I don't want
                 // to create and save a new Binder for each protocol,
@@ -266,9 +266,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    Binder client(ld);
-    Binder server(ld);
-    Binder any(ld);
+    Binder client;
+    Binder server;
+    Binder any;
 
     // by default, only print one binding
     client.print_binding(true);
@@ -291,7 +291,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     add_to_bindings(&Binder::set_when_proto, "tcp");
     add_to_bindings(&Binder::set_use_type, "stream_tcp");
 
-    ld->open_table("stream_tcp");
+    table_api.open_table("stream_tcp");
 
 
     while(util::get_string(data_stream, keyword, ","))
@@ -320,19 +320,19 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             tmpval = parse_small_segments(arg_stream);
 
         else if (!keyword.compare("ignore_any_rules"))
-            tmpval = ld->add_option_to_table("ignore_any_rules", true);
+            tmpval = table_api.add_option("ignore_any_rules", true);
 
         else if (!keyword.compare("ports"))
             tmpval = parse_ports(arg_stream);
 
         else if (!keyword.compare("detect_anomalies"))
-            ld->add_deleted_comment("detect_anomalies");
+            table_api.add_deleted_comment("detect_anomalies");
 
         else if (!keyword.compare("dont_store_large_packets"))
-            ld->add_deleted_comment("dont_store_large_packets");
+            table_api.add_deleted_comment("dont_store_large_packets");
 
         else if (!keyword.compare("check_session_hijacking"))
-            ld->add_deleted_comment("check_session_hijacking");
+            table_api.add_deleted_comment("check_session_hijacking");
 
         else if (!keyword.compare("flush_factor"))
             tmpval = parse_int_option("flush_factor", arg_stream);
@@ -342,7 +342,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("bind_to"))
         {
-            ld->add_diff_option_comment("bind_to", "bindings");
+            table_api.add_diff_option_comment("bind_to", "bindings");
 
             std::string addr;
             if (arg_stream >> addr)
@@ -353,36 +353,36 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("dont_reassemble_async"))
         {
-            ld->add_diff_option_comment("dont_reassemble_async", "reassemble_async");
-            tmpval = ld->add_option_to_table("reassemble_async", false);
+            table_api.add_diff_option_comment("dont_reassemble_async", "reassemble_async");
+            tmpval = table_api.add_option("reassemble_async", false);
         }
 
         else if (!keyword.compare("use_static_footprint_sizes"))
         {
-            ld->add_diff_option_comment("footprint", "use_static_footprint_sizes");
-            tmpval = ld->add_option_to_table("footprint", true);
+            table_api.add_diff_option_comment("footprint", "use_static_footprint_sizes");
+            tmpval = table_api.add_option("footprint", true);
         }
 
         else if (!keyword.compare("timeout"))
         {
-            ld->add_diff_option_comment("timeout", "session_timeout");
+            table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", arg_stream);
         }
 
         else if (!keyword.compare("max_queued_segs"))
         {
-            ld->add_diff_option_comment("max_queued_segs", "queue_limit.max_segments");
-            ld->open_table("queue_limit");
+            table_api.add_diff_option_comment("max_queued_segs", "queue_limit.max_segments");
+            table_api.open_table("queue_limit");
             tmpval = parse_int_option("max_segments", arg_stream);
-            ld->close_table();
+            table_api.close_table();
         }
 
         else if (!keyword.compare("max_queued_bytes"))
         {
-            ld->add_diff_option_comment("max_queued_bytes", "queue_limit.max_bytes");
-            ld->open_table("queue_limit");
+            table_api.add_diff_option_comment("max_queued_bytes", "queue_limit.max_bytes");
+            table_api.open_table("queue_limit");
             tmpval = parse_int_option("max_bytes", arg_stream);
-            ld->close_table();
+            table_api.close_table();
         }
 
         else
@@ -392,7 +392,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         if (!tmpval)
         {
-            ld->failed_conversion(data_stream, keyword);
+            data_api.failed_conversion(data_stream, arg_stream.str());
             retval = false;
         }
     }
@@ -432,7 +432,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         any.print_binding(false); // we just printed
     }
 
-    ld->close_table(); // "tcp_stream"
+    table_api.close_table(); // "tcp_stream"
     return retval;
 }
 
@@ -440,9 +440,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new StreamTcp(cv, ld);
+    return new StreamTcp();
 }
 
 static const ConvertMap preprocessor_stream_tcp = 

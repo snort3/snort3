@@ -17,45 +17,52 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// dt_rule.h author Josh Rosenbaum <jrosenba@cisco.com>
+// dt_table.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef DT_RULE_H
-#define DT_RULE_H
+#ifndef DATA_DATA_TYPES_DT_TABLE_H
+#define DATA_DATA_TYPES_DT_TABLE_H
 
 
 #include <string>
 #include <vector>
 #include <iostream>
-#include <array>
 
-#include "data/dt_rule_option.h"
+class Option;
+class Variable;
+class Comments;
 
-class Rule
+class Table
 {
 public:
-    Rule();
-    virtual ~Rule();
+    Table(int depth);
+    Table(std::string name, int depth);
+    virtual ~Table();
 
-    bool add_hdr_data(std::string data);
-    bool add_option(std::string keyword);
-    bool add_option(std::string keyword, std::string data);
-    RuleOption* select_option(std::string opt_name);
-    bool add_option_before_selected(RuleOption* selected_opt,
-                                    std::string keyword,
-                                    std::string val);
+    inline std::string get_name(){ return name; }
+    bool has_differences();
+    Table* open_table();
+    Table* open_table(std::string);
+    bool add_option(std::string, int val);
+    bool add_option(std::string, bool val);
+    bool add_option(std::string, std::string val);
+    bool add_list(std::string, std::string next_elem);
     void add_comment(std::string comment);
-    void bad_rule();
-    void make_comment();
 
-    friend std::ostream &operator<<( std::ostream&, const Rule &);
+    friend std::ostream &operator<<( std::ostream&, const Table &);
 
 private:
-    std::vector<std::string> comments;
-    std::array<std::string, 7> hdr_data;
-    std::vector<RuleOption*> options;
-    std::size_t num_hdr_data;
-    bool is_bad_rule;
-    bool is_comment;
+    std::string name;
+    int depth;
+    Comments* comments;
+    std::vector<Table*> tables;
+    std::vector<Option*> options;
+    std::vector<Variable*> lists;
+
+
+    bool has_option(std::string name, int val);
+    bool has_option(std::string name, bool val);
+    bool has_option(std::string name, std::string val);
+    bool has_option(Option o);
 };
 
 #endif

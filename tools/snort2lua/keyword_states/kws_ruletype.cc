@@ -35,7 +35,7 @@ namespace {
 class RuleType : public ConversionState
 {
 public:
-    RuleType(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    RuleType() : ConversionState() {};
     virtual ~RuleType() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -56,7 +56,7 @@ bool RuleType::convert(std::istringstream& data_stream)
         const ConvertMap* map = util::find_map(rules::rule_api, keyword);
         if (map)
         {
-            cv->set_state(map->ctor(cv, ld));
+            cv.set_state(map->ctor());
             return true;
         }
     }
@@ -68,9 +68,9 @@ bool RuleType::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new RuleType(cv, ld);
+    return new RuleType();
 }
 
 static const ConvertMap keyword_ruletype = 

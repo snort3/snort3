@@ -19,14 +19,14 @@
  */
 // dt_option.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef DT_RULE_OPTION_H
-#define DT_RULE_OPTION_H
+#ifndef DATA_DATA_TYPES_DT_RULE_OPTION_H
+#define DATA_DATA_TYPES_DT_RULE_OPTION_H
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "data/dt_rule_suboption.h"
+class RuleSubOption;
 
 class RuleOption
 {

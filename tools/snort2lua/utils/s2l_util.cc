@@ -33,9 +33,11 @@
 #include "utils/s2l_util.h"
 #include "conversion_state.h"
 #include "data/dt_data.h"
+#include "data/data_types/dt_table.h"
 
 namespace util
 {
+
 
 
 std::vector<std::string> &split(const std::string &s, 
@@ -60,6 +62,37 @@ const ConvertMap* find_map(const std::vector<const ConvertMap*> map, std::string
 
     return nullptr;
 }
+
+Table* find_table(std::vector<Table*> vec, std::string name)
+{
+    if(name.empty())
+        return nullptr;
+
+    for( auto *t : vec)
+        if(!name.compare(t->get_name()))
+            return t;
+
+    return nullptr;
+}
+
+
+
+std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+std::string &trim(std::string &s)
+{
+    return ltrim(rtrim(s));
+}
+
+
 
 std::string &sanitize_lua_string(std::string &s)
 {
@@ -168,6 +201,64 @@ std::string get_rule_option_args(std::istringstream& stream)
     return args;
 }
 
+std::string rule_option_find_val(std::istringstream& data_stream,
+                                 std::string opt_name)
+{
+    std::string rule_keyword;
+    std::string val = std::string();
+    const std::streamoff curr_pos = data_stream.tellg();
+
+    if (curr_pos == -1)
+        data_stream.clear();
+
+
+    data_stream.seekg(0);
+    std::getline(data_stream, rule_keyword, '(');
+    std::streamoff tmp_pos = data_stream.tellg();
+
+    // This loop is a near duplicate of set_next_rule_state.
+    while(std::getline(data_stream, rule_keyword, ':'))
+    {
+        std::size_t semi_colon_pos = rule_keyword.find(';');
+        if (semi_colon_pos != std::string::npos)
+        {
+            // found an option without a colon, so set stream
+            // to semi-colon
+            std::streamoff off = 1 + (std::streamoff)(tmp_pos) +
+                                 (std::streamoff)(semi_colon_pos);
+            data_stream.seekg(off);
+            rule_keyword = rule_keyword.substr(0, semi_colon_pos);
+        }
+
+        // now, lets get the next option.
+        util::trim(rule_keyword);
+
+        if (!rule_keyword.compare(opt_name))
+        {
+            // Get the value if there is one!
+            if (semi_colon_pos == std::string::npos)
+                val = util::get_rule_option_args(data_stream);
+
+            break;
+        }
+
+        if (semi_colon_pos == std::string::npos)
+            std::getline(data_stream, rule_keyword, ';');
+
+        tmp_pos = data_stream.tellg();
+    }
+
+
+    // reset the original state
+    if (curr_pos == -1)
+        data_stream.setstate(std::ios::eofbit);
+    else
+        data_stream.clear();
+
+    data_stream.seekg(curr_pos);
+    return val;
+}
+
 bool file_exists (const std::string& name) {
   struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0);
@@ -182,5 +273,6 @@ bool case_compare(std::string arg1, std::string arg2)
         return true;
     return false;
 }
+
 
 } // namespace util

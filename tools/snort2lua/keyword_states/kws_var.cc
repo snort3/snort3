@@ -35,17 +35,16 @@ namespace {
 class Var : public ConversionState
 {
 public:
-    Var(Converter* cv, LuaData* ld) : ConversionState(cv, ld){}
+    Var() : ConversionState(){}
     virtual ~Var() {};
     virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
-#include <iostream>
 bool Var::convert(std::istringstream& data_stream)
 {
-    std::string ports;//    cv->print_line(data_stream);
+    std::string ports;//    cv.print_line(data_stream);
     std::string keyword;
 
     if (!(data_stream >> keyword))
@@ -56,7 +55,7 @@ bool Var::convert(std::istringstream& data_stream)
 
     if (isdigit(keyword.front()))
     {
-        ld->add_comment("Bad variable name"
+        data_api.add_comment("Bad variable name"
             " - " + keyword + " begins with a number!");
         return false;
     }
@@ -74,13 +73,13 @@ bool Var::convert(std::istringstream& data_stream)
         util::split(ports, ',', port_list);
 
         for(std::string elem : port_list)
-            retval = ld->add_variable(keyword, elem) && retval;
+            retval = data_api.add_variable(keyword, elem) && retval;
 
         return retval;
     }
     else
     {
-        return ld->add_variable(keyword, ports);
+        return data_api.add_variable(keyword, ports);
     }
 }
 
@@ -88,9 +87,9 @@ bool Var::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Var(cv, ld);
+    return new Var();
 }
 
 static const ConvertMap keyword_portvar = 
