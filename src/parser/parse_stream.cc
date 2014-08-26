@@ -351,7 +351,7 @@ static bool exec(
     {
     case FSM_ACT:
         //printf("\nparse act = %s\n", tok.c_str());
-        if ( tok == "EOR" )
+        if ( tok == "END" )
             return true;
         parse_rule_type(sc, tok.c_str(), rps.rtn);
         break;
