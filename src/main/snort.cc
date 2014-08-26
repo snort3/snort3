@@ -837,7 +837,6 @@ DAQ_Verdict ProcessPacket(
     return verdict;
 }
 
-// FIXIT-H need to call fail open from a different thread
 DAQ_Verdict fail_open(
     void*, const DAQ_PktHdr_t*, const uint8_t*)
 {
