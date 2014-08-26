@@ -1,3 +1,7 @@
+117
+-- added --stdin-rules
+-- added #begin / #end comments for rules
+
 116
 -- fixed valgrind leak
 -- observed memory corruption on Linux when loading dynamic plugins

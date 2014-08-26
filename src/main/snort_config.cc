@@ -345,6 +345,8 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
         config_file->run_flags &= ~RUN_FLAG__DAEMON;
     }
 
+    config_file->stdin_rules = cmd_line->stdin_rules;
+
     // only set by cmd_line to override other conf output settings
     config_file->output = cmd_line->output;
     cmd_line->output = nullptr;
