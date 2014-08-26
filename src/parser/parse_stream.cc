@@ -202,6 +202,7 @@ static TokenType get_token(
                 s += c;
                 state = 6;
             }
+            break;
         case 8:
             if ( c == '\n' )
             {

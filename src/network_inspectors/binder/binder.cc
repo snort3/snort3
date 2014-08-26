@@ -47,7 +47,7 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 Binding::Binding()
 {
     role = BR_EITHER;
-    proto = BP_ANY;
+    protos = PROTO_BIT__ALL;
     action = BA_INSPECT;
     ports.set();
 }
@@ -73,18 +73,18 @@ static void set_session(Flow* flow)
     flow->clouseau = nullptr;
 }
 
-// FIXIT-H use IPPROTO_* directly (any == 0)
-static bool check_proto(const Flow* flow, BindProto bp)
+static bool check_proto(const Flow* flow, unsigned mask)
 {
-    switch ( bp )
+    unsigned bit = 0;
+
+    switch ( flow->protocol )
     {
-    case BP_ANY: return true;
-    case BP_IP:  return flow->protocol == IPPROTO_IP;
-    case BP_ICMP:return flow->protocol == IPPROTO_ICMP;
-    case BP_TCP: return flow->protocol == IPPROTO_TCP;
-    case BP_UDP: return flow->protocol == IPPROTO_UDP;
+    case IPPROTO_IP:   bit = PROTO_BIT__IP;   break;
+    case IPPROTO_ICMP: bit = PROTO_BIT__ICMP; break;
+    case IPPROTO_TCP:  bit = PROTO_BIT__TCP;  break;
+    case IPPROTO_UDP:  bit = PROTO_BIT__UDP;  break;
     }
-    return false;
+    return ( mask & bit ) != 0;
 }
 
 //-------------------------------------------------------------------------
@@ -195,7 +195,7 @@ int Binder::check_rules(Flow* flow, Packet* p)
     {
         pb = bindings[i];
 
-        if ( !check_proto(flow, pb->proto) )
+        if ( !check_proto(flow, pb->protos) )
             continue;
 
         if ( pb->ports.test(port) )
