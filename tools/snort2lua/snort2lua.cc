@@ -129,7 +129,13 @@ int main (int argc, char* argv[])
         {
             std::ofstream rejects;  // in this case, rejects are regular configuration options
             rejects.open(error_file, std::ifstream::out);
-            data_api.print_errors(rejects);
+
+            if (data_api.failed_conversions())
+                data_api.print_errors(rejects);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(rejects);
+
             rejects << std::endl;
             rejects.close();
         }
@@ -152,9 +158,15 @@ int main (int argc, char* argv[])
         if ((data_api.failed_conversions() || rule_api.failed_conversions()) &&
             !data_api.is_quiet_mode())
         {
-            std::ofstream rejects;
+            std::ofstream rejects;  // in this case, rejects are regular configuration options
             rejects.open(error_file, std::ifstream::out);
-            data_api.print_errors(rejects);
+
+            if (data_api.failed_conversions())
+                data_api.print_errors(rejects);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(rejects);
+
             rejects << std::endl;
             rejects.close();
         }
