@@ -43,6 +43,7 @@ NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) { }
 NHttpFlowData::~NHttpFlowData() {
     delete transaction[SRC_CLIENT];
     delete transaction[SRC_SERVER];
+    delete_pipeline();
 }
 
 void NHttpFlowData::half_reset(SourceId source_id) {
@@ -60,5 +61,44 @@ void NHttpFlowData::half_reset(SourceId source_id) {
     chunk_sections[source_id] = STAT_NOTPRESENT;
     chunk_octets[source_id] = STAT_NOTPRESENT;
 }
+
+bool NHttpFlowData::add_to_pipeline(NHttpTransaction* latest) {
+    assert(!pipeline_overflow && !pipeline_underflow);
+    int new_back = (pipeline_back+1) % MAX_PIPELINE;
+    if (new_back == pipeline_front) {
+        pipeline_overflow = true;
+        return false;
+    }
+    pipeline[pipeline_back] = latest;
+    pipeline_back = new_back;
+    return true;
+}
+
+NHttpTransaction* NHttpFlowData::take_from_pipeline() {
+    assert(!pipeline_underflow);
+    if (pipeline_back == pipeline_front) {
+        return nullptr;
+    }
+    int old_front = pipeline_front;
+    pipeline_front = (pipeline_front+1) % MAX_PIPELINE;
+    return pipeline[old_front];
+}
+
+void NHttpFlowData::delete_pipeline() {
+   for (int k=pipeline_front; k != pipeline_back; k = (k+1) % MAX_PIPELINE) {
+       delete pipeline[k];
+   }
+}
+
+
+
+
+
+
+
+
+
+
+
 
 

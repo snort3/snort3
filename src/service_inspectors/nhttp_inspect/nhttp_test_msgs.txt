@@ -781,8 +781,64 @@ GET /trigger/basic/normalized/URI/content/match/alert HTTP/1.1\r\n\r\n
 GET /%74%72%69%67%67%65%72/encoded/normalized/URI/content/match/alert HTTP/1.1\r\n\r\n
 
 
+# ***********************************************************************************************
+# Pipelining
+@15001
+@break
+@request
 
+GET /pipeline/test/1 HTTP/1.1\r\n
+Host: www.pipeline1.com\r\n
+\r\n
+GET /pipeline/test/2 HTTP/1.1\r\n
+Host: www.pipeline2.com\r\n
+\r\n
+GET /pipeline/test/3 HTTP/1.1\r\n
+Host: www.pipeline3.com\r\n
+\r\n
+GET /pipeline/test/4 HTTP/1.1\r\n
+Host: www.pipeline4.com\r\n
+\r\n
 
+GET /pipeline/test/5 HTTP/1.1\r\n
+Host: www.pipeline5.com\r\n
+\r\n
+GET /pipeline/test/6 HTTP/1.1\r\n
+Host: www.pipeline6.com\r\n
+\r\n
 
+@response
+
+HTTP/1.1 400 Response to pipeline 1\r\n
+Content-Length: 10000\r\n
+\r\n
+Data 1 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 2\r\n
+Content-Length: 20000\r\n
+\r\n
+Data 2 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 3\r\n
+Content-Length: 30000\r\n
+\r\n
+
+Data 3 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 4\r\n
+Content-Length: 40000\r\n
+\r\n
+Data 4 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 5\r\n
+Content-Length: 50000\r\n
+\r\n
+
+Data 5 from pipeline\r\n
+
+HTTP/1.1 400 Response to pipeline 6\r\n
+Content-Length: 60000\r\n
+\r\n
+Data 6 from pipeline\r\n
 
 

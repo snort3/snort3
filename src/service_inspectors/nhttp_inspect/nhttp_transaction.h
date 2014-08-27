@@ -55,7 +55,7 @@ public:
     NHttpMsgTrailer* get_trailer(NHttpEnums::SourceId source_id) const { return trailer[source_id]; };
     void set_trailer(NHttpMsgTrailer* trailer_, NHttpEnums::SourceId source_id) { trailer[source_id] = trailer_; };
 
-    void set_other(NHttpMsgSection* latest_other_) { latest_other = latest_other_; };
+    void set_body(NHttpMsgSection* latest_body_) { latest_body = latest_body_; };
 
 private:
     NHttpTransaction() = default;
@@ -64,7 +64,7 @@ private:
     NHttpMsgStatus* status = nullptr;
     NHttpMsgHeader* header[2] = { nullptr, nullptr };
     NHttpMsgTrailer* trailer[2] = { nullptr, nullptr };
-    NHttpMsgSection* latest_other = nullptr;
+    NHttpMsgSection* latest_body = nullptr;
 };
 
 #endif

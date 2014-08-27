@@ -42,7 +42,7 @@ NHttpMsgChunkBody::NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t buf_s
    NHttpMsgBody(buffer, buf_size, session_data_, source_id_), /* num_chunks(session_data->num_chunks[source_id]), &&& */
    chunk_sections(session_data->chunk_sections[source_id]), chunk_octets(session_data->chunk_octets[source_id])
 {
-   transaction->set_other(this);
+   transaction->set_body(this);
 }
 
 void NHttpMsgChunkBody::analyze() {

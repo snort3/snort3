@@ -42,7 +42,7 @@ NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_s
    NHttpMsgSection(buffer, buf_size, session_data_, source_id_), body_sections(session_data->body_sections[source_id]),
    num_chunks(session_data->num_chunks[source_id])
 {
-   transaction->set_other(this);
+   transaction->set_body(this);
 }
 
 

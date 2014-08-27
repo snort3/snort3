@@ -43,46 +43,68 @@ using namespace NHttpEnums;
 NHttpTransaction::~NHttpTransaction() {
     delete request;
     delete status;
-    delete latest_other;
-    for (int k=0; k <= 1; k++) {
-        delete header[k];
-        delete trailer[k];
-    }
+    delete header[0];
+    delete header[1];
+    delete trailer[0];
+    delete trailer[1];
+    delete latest_body;
 }
 
 NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session_data, SourceId source_id) {
-    SectionType section_type = session_data->section_type[source_id];
+    // This factory method:
+    // 1. garbage collects most recent body section which is no longer needed once another section arrives
+    // 2. creates new transactions for all request messages and orphaned response messages
+    // 3. associates requests and responses and supports pipelining
+    // 4. garbage collects unneeded transactions
+    // 5. returns the current transaction
 
-    // If this is a request section we replace the previous transaction with a new transaction
-    if (section_type == SEC_REQUEST) {
-        delete session_data->transaction[SRC_CLIENT];
+    if (session_data->transaction[SRC_CLIENT] != nullptr) {
+        delete session_data->transaction[SRC_CLIENT]->latest_body;
+        session_data->transaction[SRC_CLIENT]->latest_body = nullptr;
+    }
+    if (session_data->transaction[SRC_SERVER] != nullptr) {
+        delete session_data->transaction[SRC_SERVER]->latest_body;
+        session_data->transaction[SRC_SERVER]->latest_body = nullptr;
+    }
+
+    // Request section: put the old transaction in the pipeline and replace it with a new transaction. If the pipeline
+    // overflows or underflows we stop using it and just delete the old transaction.
+    if (session_data->section_type[source_id] == SEC_REQUEST) {
+        // When pipelining is not occurring the response should already have taken this tranaction and left nullptr.
+        if (session_data->transaction[SRC_CLIENT] != nullptr) {
+            if ((session_data->pipeline_overflow) || (session_data->pipeline_underflow)) {
+                delete session_data->transaction[SRC_CLIENT];
+            }
+            else if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT])) {
+                // The pipeline is full and just overflowed. FIXIT-M we should alert and set infraction.
+                delete session_data->transaction[SRC_CLIENT];
+            }
+        }
         session_data->transaction[SRC_CLIENT] = new NHttpTransaction;
     }
-    // If this is a status section we replace the previous transaction, taking the latest request transaction if possible
-    else if (section_type == SEC_STATUS) {
+    // Status section: delete the current transaction and get a new one from the pipeline. If the pipeline is empty
+    // check for a request-side transaction that just finished and take it. If there is no transaction available then
+    // declare an underflow and create a new transaction specifically for the response side.
+    else if (session_data->section_type[source_id] == SEC_STATUS) {
         delete session_data->transaction[SRC_SERVER];
-        if ((session_data->type_expected[SRC_CLIENT]) && (session_data->transaction[SRC_CLIENT] != nullptr)) {
-            session_data->transaction[SRC_SERVER] = session_data->transaction[SRC_CLIENT];
-            session_data->transaction[SRC_CLIENT] = nullptr;
-        }
-        else {
+        if (session_data->pipeline_underflow) {
             session_data->transaction[SRC_SERVER] = new NHttpTransaction;
         }
-    }
-    else {
-        delete session_data->transaction[source_id]->latest_other;
-        session_data->transaction[source_id]->latest_other = nullptr;
+        else if ((session_data->transaction[SRC_SERVER] = session_data->take_from_pipeline()) == nullptr) {
+            if ((session_data->transaction[SRC_CLIENT] != nullptr) &&
+                (session_data->type_expected[SRC_CLIENT] == SEC_REQUEST)) {
+                session_data->transaction[SRC_SERVER] = session_data->transaction[SRC_CLIENT];
+                session_data->transaction[SRC_CLIENT] = nullptr;
+            }
+            else {
+                session_data->pipeline_underflow = true;
+                session_data->transaction[SRC_SERVER] = new NHttpTransaction;
+            }
+        }
     }
 
     return session_data->transaction[source_id];
 }
-
-
-
-
-
-
-
 
 
 

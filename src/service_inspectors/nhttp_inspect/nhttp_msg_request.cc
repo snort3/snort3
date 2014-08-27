@@ -121,26 +121,28 @@ void NHttpMsgRequest::print_section(FILE *output) {
     NHttpMsgSection::print_message_title(output, "request line");
     fprintf(output, "Version Id: %d\n", version_id);
     fprintf(output, "Method Id: %d\n", method_id);
-    uri->get_uri().print(output, "URI");
-    if (uri->get_uri_type() != URI__NOSOURCE) fprintf(output, "URI Type: %d\n", uri->get_uri_type());
-    uri->get_scheme().print(output, "Scheme");
-    if (uri->get_scheme_id() != SCH__NOSOURCE) fprintf(output, "Scheme Id: %d\n", uri->get_scheme_id());
-    uri->get_authority().print(output, "Authority");
-    uri->get_host().print(output, "Host Name");
-    uri->get_norm_host().print(output, "Normalized Host Name");
-    uri->get_port().print(output, "Port");
-    if (uri->get_port_value() != STAT_NOSOURCE) fprintf(output, "Port Value: %d\n", uri->get_port_value());
-    uri->get_abs_path().print(output, "Absolute Path");
-    uri->get_path().print(output, "Path");
-    uri->get_norm_path().print(output, "Normalized Path");
-    uri->get_query().print(output, "Query");
-    uri->get_norm_query().print(output, "Normalized Query");
-    uri->get_fragment().print(output, "Fragment");
-    uri->get_norm_fragment().print(output, "Normalized Fragment");
-    fprintf(output, "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %" PRIx64 ", port %" PRIx64 ", path %"
-       PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
-       uri->get_uri_infractions(), uri->get_format_infractions(), uri->get_scheme_infractions(), uri->get_host_infractions(),
-       uri->get_port_infractions(), uri->get_path_infractions(), uri->get_query_infractions(), uri->get_fragment_infractions());
+    if (uri != nullptr) {
+        uri->get_uri().print(output, "URI");
+        if (uri->get_uri_type() != URI__NOSOURCE) fprintf(output, "URI Type: %d\n", uri->get_uri_type());
+        uri->get_scheme().print(output, "Scheme");
+        if (uri->get_scheme_id() != SCH__NOSOURCE) fprintf(output, "Scheme Id: %d\n", uri->get_scheme_id());
+        uri->get_authority().print(output, "Authority");
+        uri->get_host().print(output, "Host Name");
+        uri->get_norm_host().print(output, "Normalized Host Name");
+        uri->get_port().print(output, "Port");
+        if (uri->get_port_value() != STAT_NOSOURCE) fprintf(output, "Port Value: %d\n", uri->get_port_value());
+        uri->get_abs_path().print(output, "Absolute Path");
+        uri->get_path().print(output, "Path");
+        uri->get_norm_path().print(output, "Normalized Path");
+        uri->get_query().print(output, "Query");
+        uri->get_norm_query().print(output, "Normalized Query");
+        uri->get_fragment().print(output, "Fragment");
+        uri->get_norm_fragment().print(output, "Normalized Fragment");
+        fprintf(output, "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %" PRIx64 ", port %" PRIx64 ", path %"
+           PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
+           uri->get_uri_infractions(), uri->get_format_infractions(), uri->get_scheme_infractions(), uri->get_host_infractions(),
+           uri->get_port_infractions(), uri->get_path_infractions(), uri->get_query_infractions(), uri->get_fragment_infractions());
+    }
     NHttpMsgSection::print_message_wrapup(output);
  }
 

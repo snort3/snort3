@@ -42,7 +42,7 @@ NHttpMsgBody::NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttp
    NHttpMsgSection(buffer, buf_size, session_data_, source_id_), data_length(session_data->data_length[source_id]),
    body_sections(session_data->body_sections[source_id]), body_octets(session_data->body_octets[source_id])
 {
-   transaction->set_other(this);
+   transaction->set_body(this);
 }
 
 void NHttpMsgBody::analyze() {

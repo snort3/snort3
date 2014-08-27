@@ -29,6 +29,7 @@
 #ifndef NHTTP_FLOW_DATA_H
 #define NHTTP_FLOW_DATA_H
 
+#include <queue>
 #include "stream/stream_api.h"
 
 class NHttpTransaction;
@@ -84,8 +85,17 @@ private:
     int64_t chunk_sections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };  // number of sections seen so far in the current chunk
     int64_t chunk_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // number of user data octets seen so far in the current chunk including terminating CRLF
 
-    // Phase 1: separate transactions in each direction. Need to combine them &&&
+    // Transaction management including pipelining
     NHttpTransaction* transaction[2] = { nullptr, nullptr };
+    static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE
+    NHttpTransaction* pipeline[MAX_PIPELINE];
+    int pipeline_front = 0;
+    int pipeline_back = 0;
+    bool pipeline_overflow = false;
+    bool pipeline_underflow = false;
+    bool add_to_pipeline(NHttpTransaction* latest);
+    NHttpTransaction* take_from_pipeline();
+    void delete_pipeline();
 };
 
 #endif
