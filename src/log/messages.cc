@@ -244,7 +244,7 @@ NORETURN void FatalError(const char *format,...)
     }
     else
     {
-        fprintf(stderr, "ERROR: %s", buf);
+        fprintf(stderr, "FATAL: %s", buf);
         fprintf(stderr,"Fatal Error, Quitting..\n");
     }
 

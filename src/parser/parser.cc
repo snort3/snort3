@@ -1118,7 +1118,10 @@ SO_PUBLIC void ParseWarning(const char *format, ...)
     if (file_name != NULL)
         LogMessage("WARNING: %s(%d) %s\n", file_name, file_line, buf);
     else
-        LogMessage("%s\n", buf);
+        LogMessage("WARNING: %s\n", buf);
+
+    if ( ScConfErrorOut() )
+        parse_errors++;
 }
 
 SO_PUBLIC void ParseMessage(const char *format, ...)

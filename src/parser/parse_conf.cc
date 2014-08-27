@@ -165,7 +165,7 @@ void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
                 return;
 
             case SFIP_DUPLICATE:
-                ParseMessage("Var '%s' redefined.", var);
+                ParseWarning("Var '%s' redefined.", var);
                 break;
 
             case SFIP_CONFLICT:

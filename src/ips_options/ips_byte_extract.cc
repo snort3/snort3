@@ -558,7 +558,7 @@ static const IpsApi byte_extract_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    0, 0,
+    2, 0,
     nullptr,
     nullptr,
     byte_extract_tinit,

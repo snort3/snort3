@@ -201,7 +201,7 @@ int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
     }
     else if( rstat > 0 )
     {
-        ParseMessage("PortVar '%s', already defined.", po->name);
+        ParseWarning("PortVar '%s', already defined.", po->name);
     }
 
 #if 0
@@ -524,7 +524,7 @@ VarEntry * VarDefine(
                     break;
 
                 case SFIP_DUPLICATE:
-                    ParseMessage("Var '%s' redefined.", name);
+                    ParseWarning("Var '%s' redefined.", name);
                     break;
 
                 case SFIP_CONFLICT:

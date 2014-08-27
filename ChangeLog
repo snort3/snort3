@@ -3,6 +3,9 @@
 -- added #begin / #end comments for rules
 -- changed PAF_Status to StreamSplitter::Status
 -- removed target reader current host/app
+-- fixed error / warning line number issue
+-- changed --conf-error-out to --pedantic
+-- more FIXIT-H fixed
 
 116
 -- fixed valgrind leak
