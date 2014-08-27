@@ -57,12 +57,10 @@ void SunNdCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_SUN_ND);
 }
 
-bool SunNdCodec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
+bool SunNdCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
         Packet* p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
 {
     codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
-    p->data = raw_pkt;
-    p->dsize = (uint16_t)raw_len;
     return true;
 }
 
@@ -72,14 +70,10 @@ bool SunNdCodec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new SunNdCodec();
-}
+{ return new SunNdCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi sun_nd_api =

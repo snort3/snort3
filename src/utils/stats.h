@@ -33,11 +33,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "main/snort_types.h"
 #include "main/thread.h"
-#include "sfip/sf_ipvar.h"
-#include "sfip/ipv6_port.h"
-#include "utils/sflsq.h"
+#include "main/snort_types.h"
 #include "framework/counts.h"
 
 struct PacketCount
@@ -67,8 +64,8 @@ struct ProcessCount
     PegCount attribute_table_hosts;
 };
 
-extern ProcessCount proc_stats;
-extern THREAD_LOCAL PacketCount pc; 
+extern SO_PUBLIC ProcessCount proc_stats;
+extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
 
 void LogLabel(const char*);
 void LogCount(const char*, uint64_t);

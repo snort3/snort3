@@ -41,7 +41,6 @@
 **    - Stop using global variables so we can have multiple instances,
 **      but we don't need that functionality right now.
 */
-#include "asn1.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -53,7 +52,10 @@
 #include <ctype.h>
 #include <sys/types.h>
 
-#include "util.h"
+#include "utils/util.h"
+#include "ips_options/asn1_util.h"
+#include "main/thread.h"
+#include "main/snort_config.h"
 
 /*
 **  Macros
@@ -122,8 +124,15 @@ static ASN1_TYPE * asn1_node_alloc(void)
 **  @retval ASN1_ERR_MEM_ALLOC memory allocation failed
 **  @retval ASN1_ERR_INVALID_ARG invalid argument
 */
-void asn1_init_mem(int num_nodes)
+void asn1_init_mem(SnortConfig* sc)
 {
+    int num_nodes;
+
+    if (sc->asn1_mem != 0)
+        num_nodes = sc->asn1_mem;
+    else
+        num_nodes = 256;
+
     if (num_nodes <= 0)
         return;
 
@@ -143,7 +152,7 @@ void asn1_init_mem(int num_nodes)
 **  @return none
 **
 */
-void asn1_free_mem(void)
+void asn1_free_mem(SnortConfig*)
 {
     if (asn1_config.mem != NULL)
     {

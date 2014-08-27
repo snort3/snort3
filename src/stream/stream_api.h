@@ -37,9 +37,10 @@
 
 #include <sys/types.h>
 
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "protocols/packet.h"
 #include "flow/flow.h"
+#include "main/snort_types.h"
 
 #define SSN_MISSING_NONE   0x00
 #define SSN_MISSING_BEFORE 0x01
@@ -80,7 +81,7 @@ typedef void (*Stream_Callback)(Packet *);
 #define MAX_EVT_CB 32
 #define MAX_LOG_FN 32
 
-class Stream
+class SO_PUBLIC Stream
 {
 public:
     Stream();
@@ -327,7 +328,7 @@ private:
     unsigned stream_cb_idx;
 };
 
-extern Stream stream;
+SO_PUBLIC extern Stream stream;
 
 #endif
 

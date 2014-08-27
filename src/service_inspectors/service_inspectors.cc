@@ -25,13 +25,14 @@
 #endif
 #include "framework/inspector.h"
 
+extern const BaseApi* sin_http_global;
+extern const BaseApi* sin_http_server;
+
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* sin_bo;
 extern const BaseApi* sin_ftp_client;
 extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
-extern const BaseApi* sin_http_global;
-extern const BaseApi* sin_http_server;
 extern const BaseApi* sin_nhttp;
 extern const BaseApi* sin_rpc_decode;
 extern const BaseApi* sin_telnet;
@@ -40,13 +41,14 @@ extern const BaseApi* sin_wizard;
 
 const BaseApi* service_inspectors[] =
 {
+    sin_http_global,
+    sin_http_server,
+
 #ifdef STATIC_INSPECTORS
     sin_bo,
     sin_ftp_client,
     sin_ftp_server,
     sin_ftp_data,
-    sin_http_global,
-    sin_http_server,
     sin_nhttp,
     sin_rpc_decode,
     sin_telnet,

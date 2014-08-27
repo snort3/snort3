@@ -31,13 +31,21 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "detection/rules.h"
-#include "snort_types.h"
-#include "sfip/sf_ipvar.h"
 #include "main/snort_config.h"
-#include "snort_types.h"
-#include "protocols/packet.h"
-#include "log/log.h"
+#include "events/event_queue.h"
+#include "filters/sfrf.h"
+
+
+struct Packet;
+struct Flow;
+struct NetworkPolicy;
+struct InspectionPolicy;
+struct IpsPolicy;
+
+// defined in daq_common.h
+struct _daq_pkthdr;
+typedef _daq_pkthdr DAQ_PktHdr_t;
+
 
 SnortConfig* reload_config();
 void snort_setup(int argc, char* argv[]);
@@ -164,7 +172,7 @@ typedef enum {
 } TunnelFlags;
 
 /*  E X T E R N S  ************************************************************/
-extern THREAD_LOCAL SnortConfig* snort_conf;
+SO_PUBLIC extern THREAD_LOCAL SnortConfig* snort_conf;
 
 /*  P R O T O T Y P E S  ******************************************************/
 

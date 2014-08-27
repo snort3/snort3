@@ -33,20 +33,18 @@
 #endif
 
 
-#include "codecs/decode_module.h"
-#include "packet_io/sfdaq.h"
-#include "parser/parse_ip.h"
-#include "codecs/codec_events.h"
-#include "codecs/ip/checksum.h"
-
-#include "snort.h"
-#include "packet_io/active.h"
-#include "protocols/ipv6.h"
-#include "protocols/tcp.h"
-#include "protocols/packet.h"
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
+#include "codecs/ip/checksum.h"
 #include "codecs/sf_protocols.h"
+#include "protocols/tcp.h"
+#include "protocols/ipv6.h"
+#include "protocols/packet.h"
+#include "packet_io/active.h"
+#include "codecs/codec_events.h"
+#include "packet_io/sfdaq.h"
+#include "parser/parse_ip.h"
+#include "sfip/sf_ipvar.h"
 
 
 namespace
@@ -245,7 +243,13 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
                                     "0x%x versus 0x%x\n", csum,
                                     ntohs(p->tcph->th_sum)););
 
-            codec_events::exec_tcp_chksm_drop(p);
+
+            if( ScInlineMode() && ScTcpChecksumDrops() )
+            {
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                    "Dropping bad packet (TCP checksum)\n"););
+                Active_DropPacket();
+            }
         }
         else
         {
@@ -641,7 +645,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     tcp::TCPHdr* ho = reinterpret_cast<tcp::TCPHdr*>(out->base);
     ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
 
-    if ( forward(enc) )
+    if ( forward(enc->flags) )
     {
         ho->th_sport = hi->th_sport;
         ho->th_dport = hi->th_dport;
@@ -1072,14 +1076,10 @@ static void tcp_codec_gterm()
 }
 
 static Codec* ctor(Module*)
-{
-    return new TcpCodec();
-}
+{ return new TcpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi tcp_api =
 {
@@ -1099,12 +1099,4 @@ static const CodecApi tcp_api =
     dtor, // dtor
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &tcp_api.base,
-    nullptr
-};
-#else
 const BaseApi* cd_tcp = &tcp_api.base;
-#endif

@@ -25,6 +25,7 @@
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
+#include "protocols/packet.h"
 
 namespace
 {
@@ -105,8 +106,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     if (raw_len < sizeof(ERSpanType2Hdr))
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN2_DGRAM_LT_HDR,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(p, DECODE_ERSPAN2_DGRAM_LT_HDR);
         return false;
     }
 
@@ -117,8 +117,7 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if (erspan_version(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 
@@ -132,24 +131,16 @@ bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Erspan2Module;
-}
+{ return new Erspan2Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new Erspan2Codec();
-}
+{ return new Erspan2Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi erspan2_api =

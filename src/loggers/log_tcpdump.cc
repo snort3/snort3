@@ -50,6 +50,7 @@ extern "C" {
 #include "main/analyzer.h"
 #include "packet_io/sfdaq.h"
 #include "stream/stream_api.h"
+#include "utils/stats.h"
 
 /*
  * <pcap file> ::= <pcap file hdr> [<pcap pkt hdr> <packet>]*

@@ -34,6 +34,7 @@ if (STATIC_LOGGERS)
         ${PLUGIN_LIST}
     )
 
+
 else (STATIC_LOGGERS)
 
     add_library ( loggers STATIC
@@ -49,6 +50,10 @@ else (STATIC_LOGGERS)
     add_shared_library(log_null loggers log_null.cc)
     add_shared_library(log_tcpdump loggers log_tcpdump.cc)
     add_shared_library(unified2 loggers unified2.cc unified2_common.h)
+
+    if (LINUX)
+        add_shared_library(alert_sf_socket loggers alert_sf_socket.cc)
+    endif  (LINUX)
 
 endif (STATIC_LOGGERS)
 

@@ -50,7 +50,6 @@
 #include "perf_monitor/perf.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "ipv6_port.h"
 #include "ips_options/ips_flowbits.h"
 #include "snort_debug.h"
 #include "protocols/layer.h"

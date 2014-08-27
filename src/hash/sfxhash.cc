@@ -89,7 +89,6 @@
  *              themselves after the call - this is much more flexible.
  *  8/31/2006: man - changed to use prime table lookup.
  */
-#include "sfxhash.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -99,10 +98,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "sfxhash.h"
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "sfprimetable.h"
 #include "util.h"
+#include "hash/sfhashfcn.h"
 
 /**@defgroup sfxhash sourcefire.container.sfxhash
  * Implements SFXHASH as specialized hash container

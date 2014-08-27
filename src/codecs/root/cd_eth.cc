@@ -173,7 +173,7 @@ bool EthCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
         ho->ether_type = hi->ether_type;
         uint8_t *dst_mac = PacketManager::encode_get_dst_mac();
         
-        if ( forward(enc) )
+        if ( forward(enc->flags) )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
             /*If user configured remote MAC address, use it*/

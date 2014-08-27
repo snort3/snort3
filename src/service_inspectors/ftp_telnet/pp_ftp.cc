@@ -55,12 +55,12 @@
 #include "snort_debug.h"
 #include "stream/stream_api.h"
 #include "detection_util.h"
+#include "sfip/sfip_t.h"
 
 #ifndef MAXHOSTNAMELEN /* Why doesn't Windows define this? */
 #define MAXHOSTNAMELEN 256
 #endif
 
-#include "ipv6_port.h"
 
 static THREAD_LOCAL DataBuffer DecodeBuffer;
 

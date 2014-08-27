@@ -38,6 +38,9 @@
 #include "filters/rate_filter.h"
 #include "managers/mpse_manager.h"
 #include "managers/inspector_manager.h"
+#include "filters/sfthreshold.h"
+#include "filters/detection_filter.h"
+#include "detection/fpcreate.h"
 
 //-------------------------------------------------------------------------
 // private implementation

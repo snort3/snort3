@@ -25,9 +25,10 @@
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
+#include "framework/codec.h"
 
 
-namespace ipv6_util
+namespace ip_util
 {
 
 bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
@@ -44,6 +45,30 @@ static inline int IPV6ExtensionOrder(uint8_t type)
         case IPPROTO_ID_AH:        return 5;
         case IPPROTO_ID_ESP:       return 6;
         default:                   return 7;
+    }
+}
+
+static inline icmp::IcmpCode get_icmp4_code(EncodeType et)
+{
+    switch ( et )
+    {
+        case EncodeType::ENC_UNR_NET:  return icmp::IcmpCode::NET_UNREACH;
+        case EncodeType::ENC_UNR_HOST: return icmp::IcmpCode::HOST_UNREACH;
+        case EncodeType::ENC_UNR_PORT: return icmp::IcmpCode::PORT_UNREACH;
+        case EncodeType::ENC_UNR_FW:   return icmp::IcmpCode::PKT_FILTERED;
+        default: return icmp::IcmpCode::PORT_UNREACH;
+    }
+}
+
+static inline icmp::Icmp6Code get_icmp6_code(EncodeType et)
+{
+    switch ( et )
+    {
+        case EncodeType::ENC_UNR_NET:  return icmp::Icmp6Code::UNREACH_NET;
+        case EncodeType::ENC_UNR_HOST: return icmp::Icmp6Code::UNREACH_HOST;
+        case EncodeType::ENC_UNR_PORT: return icmp::Icmp6Code::UNREACH_PORT;
+        case EncodeType::ENC_UNR_FW:   return icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
+        default: return icmp::Icmp6Code::UNREACH_PORT;
     }
 }
 

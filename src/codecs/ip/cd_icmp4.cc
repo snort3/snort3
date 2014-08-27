@@ -26,14 +26,16 @@
 #endif
 
 #include "framework/codec.h"
-#include "snort.h"
+#include "main/snort.h"
 #include "protocols/icmp4.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
 #include "protocols/protocol_ids.h"
+#include "protocols/packet.h"
 #include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
-
+#include "codecs/ip/ip_util.h"
+#include "packet_io/active.h"
 
 namespace{
 
@@ -157,9 +159,6 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         case icmp::IcmpType::INFO_REPLY:
             if (raw_len < 8)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Truncated ICMP header(%d bytes)\n", raw_len););
-
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ICMPHDR);
 
                 p->icmph = NULL;
@@ -171,9 +170,6 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         case icmp::IcmpType::TIMESTAMPREPLY:
             if (raw_len < 20)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Truncated ICMP header(%d bytes)\n", raw_len););
-
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR);
 
                 p->icmph = NULL;
@@ -185,9 +181,6 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         case icmp::IcmpType::ADDRESSREPLY:
             if (raw_len < 12)
             {
-                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                    "Truncated ICMP header(%d bytes)\n", raw_len););
-
                 codec_events::decoder_event(p, DECODE_ICMP_DGRAM_LT_ADDRHDR);
                 p->icmph = NULL;
                 return false;
@@ -207,8 +200,10 @@ bool Icmp4Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         if(csum)
         {
             p->error_flags |= PKT_ERR_CKSUM_ICMP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad ICMP Checksum\n"););
-            codec_events::exec_icmp_chksm_drop(p);
+            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: BAD\n"););
+
+            if( ScInlineMode() && ScIcmpChecksumDrops() )
+                Active_DropPacket();
         }
         else
         {
@@ -375,7 +370,7 @@ bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
 
     enc->proto = IPPROTO_ID_ICMPV4;
     ho->type = icmp::IcmpType::DEST_UNREACH;
-    ho->code = get_icmp4_code(enc->type);
+    ho->code = ip_util::get_icmp4_code(enc->type);
     ho->cksum = 0;
     ho->unused = 0;
 

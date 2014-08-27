@@ -76,7 +76,6 @@
 #include "flow/flow_control.h"
 #include "flow/session.h"
 #include "profiler.h"
-#include "ipv6_port.h"
 #include "fpdetect.h"
 #include "detection_util.h"
 #include "file_api/file_api.h"

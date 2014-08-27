@@ -37,6 +37,7 @@ void Binder::add_to_configuration()
     table_api.open_top_level_table("binder");
     table_api.open_table();
 
+#if 0
     table_api.open_table("when");
 
     if (!when_policy_id.empty())
@@ -61,7 +62,7 @@ void Binder::add_to_configuration()
         table_api.add_list("nets", n);
 
     table_api.close_table(); // "when"
-
+#endif
 
     table_api.open_table("use");
 

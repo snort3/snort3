@@ -20,6 +20,7 @@
 #ifndef CONFIG_FILE_H
 #define CONFIG_FILE_H
 
+#include "main/snort_types.h"
 #include "main/policy.h"
 
 struct SnortConfig;
@@ -58,7 +59,7 @@ void ConfigPluginPath(SnortConfig*, const char*);
 void ConfigScriptPath(SnortConfig*, const char*);
 void ConfigDstMac(SnortConfig*, const char*);
 
-void ConfigGTPDecoding(SnortConfig*sc, const char*args);
+SO_PUBLIC void ConfigGTPDecoding(SnortConfig*sc, const char*args);
 void ConfigSetGid(SnortConfig*, const char*);
 void ConfigSetUid(SnortConfig*, const char*);
 void ConfigUmask(SnortConfig*, const char*);

@@ -108,8 +108,8 @@ NODE_DATA sflist_first(SF_LIST*, SF_LNODE**);
 NODE_DATA sflist_next(SF_LNODE**);
 void      sflist_free ( SF_LIST * s); 
 void      sflist_free_all( SF_LIST * s, void (*free)(void*) ); 
-void sflist_static_free_all(SF_LIST *, void(*nfree)(void *));
-void sflist_static_free(SF_LIST *);
+void      sflist_static_free_all(SF_LIST *, void(*nfree)(void *));
+void      sflist_static_free(SF_LIST *);
 
 /*
 *   Stack Interface ( LIFO - Last in, First out ) 

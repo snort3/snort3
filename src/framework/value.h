@@ -26,11 +26,13 @@
 #include <algorithm>
 #include <string>
 
+#include "main/snort_types.h"
 #include "framework/bits.h"
 #include "framework/parameter.h"
-#include "sfip/sfip_t.h"
 
-class Value
+struct sfip_t;
+
+class SO_PUBLIC Value
 {
 public:
     static const unsigned mask_bits = 52; // ieee 754 significand

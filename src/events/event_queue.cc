@@ -62,6 +62,7 @@
 #include "filters/sfthreshold.h"
 #include "sfeventq.h"
 #include "parser/parser.h"
+#include "utils/stats.h"
 
 typedef struct s_SNORT_EVENTQ_USER
 {

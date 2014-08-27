@@ -51,6 +51,9 @@ using namespace std;
 #include "time/ppm_module.h"
 #include "parser/parse_ip.h"
 #include "target_based/sftarget_data.h"
+#include "detection/fpcreate.h"
+#include "filters/detection_filter.h"
+#include "filters/sfthreshold.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"

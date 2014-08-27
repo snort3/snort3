@@ -27,6 +27,7 @@
 
 #include "framework/codec.h"
 #include "protocols/ipv4.h"
+#include "protocols/packet.h"
 #include "codecs/codec_events.h"
 
 
@@ -74,11 +75,7 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* do a little validation */
     if(raw_len < ip::IP4_HEADER_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP short header (%d bytes)\n", raw_len););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
-
         return false;
     }
 
@@ -91,12 +88,7 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if((ip4h->get_ver() != 4) && !p->ip_api.is_ip6())
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: not IPv4 datagram ([ver: 0x%x][len: 0x%x])\n",
-            ip4h->get_ver(), ntohs(ip4h->get_len())););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
-
         return false;
     }
 
@@ -105,10 +97,6 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     if(raw_len < hlen)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP len (%d bytes) < IP hdr len (%d bytes), packet discarded\n",
-            ip_len, hlen););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
         return false;
     }
@@ -143,8 +131,6 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP Unreachable IP header length: "
-                            "%lu\n", (unsigned long)hlen););
 
     // since we know the protocol ID in this layer (and NOT the
     // next layer), set the correct protocol here.  Normally,
@@ -190,14 +176,10 @@ bool Icmp4IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
 
 
 static Codec* ctor(Module*)
-{
-    return new Icmp4IpCodec();
-}
+{ return new Icmp4IpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi icmp4_ip_api =

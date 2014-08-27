@@ -19,11 +19,11 @@
 */
 // ipv6_util.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
 
-namespace ipv6_util
+namespace ip_util
 {
 
 bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)

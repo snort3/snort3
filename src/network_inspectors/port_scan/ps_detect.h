@@ -27,7 +27,7 @@
 #include <sys/time.h>
 
 #include "ipobj.h"
-#include "ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 #define PS_OPEN_PORTS 8
 
@@ -59,7 +59,7 @@ struct PortscanConfig
     ~PortscanConfig();
 };
 
-typedef struct s_PS_PROTO
+struct PS_PROTO
 {
     short          connection_count;
     short          priority_count;
@@ -84,17 +84,17 @@ typedef struct s_PS_PROTO
 
     time_t         window;
 
-} PS_PROTO;
+};
 
-typedef struct s_PS_TRACKER
+struct PS_TRACKER
 {
     int priority_node;
     int protocol;
     PS_PROTO proto;
 
-} PS_TRACKER;
+};
 
-typedef struct s_PS_PKT
+struct PS_PKT
 {
     void *pkt;
     int proto;
@@ -102,7 +102,7 @@ typedef struct s_PS_PKT
     PS_TRACKER *scanner;
     PS_TRACKER *scanned;
 
-} PS_PKT;
+};
 
 //-------------------------------------------------------------------------
 

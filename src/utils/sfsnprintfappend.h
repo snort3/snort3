@@ -33,6 +33,8 @@
 #ifndef SFSNPRINTFAPPEND_H
 #define SFSNPRINTFAPPEND_H
 
-int sfsnprintfappend(char *dest, int dsize, const char *format, ...);
+#include "main/snort_types.h"
+
+SO_PUBLIC int sfsnprintfappend(char *dest, int dsize, const char *format, ...);
 
 #endif /* SFSNPRINTFAPPEND_H */

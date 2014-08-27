@@ -32,6 +32,11 @@
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 
+
+#ifdef DEBUG_MSGS
+#include "log/log.h"
+#endif
+
 namespace
 {
 

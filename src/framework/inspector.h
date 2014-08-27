@@ -55,7 +55,7 @@ struct InspectApi;
 // api for class
 //-------------------------------------------------------------------------
 
-class Inspector
+class SO_PUBLIC Inspector
 {
 public:
     // main thread functions

@@ -28,20 +28,19 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "hash/sfghash.h"
 #include "main/snort_types.h"
 
 struct SnortConfig;
 struct OptTreeNode;
+struct SFGHASH;
 
 /* this contains a list of the URLs for various reference systems */
-typedef struct _ReferenceSystemNode
+struct ReferenceSystemNode
 {
     char *name;
     char *url;
-    struct _ReferenceSystemNode *next;
-
-} ReferenceSystemNode;
+    ReferenceSystemNode *next;
+};
 
 ReferenceSystemNode * ReferenceSystemAdd(SnortConfig*, const char*, const char*);
 ReferenceSystemNode * ReferenceSystemLookup(ReferenceSystemNode *, const char *);
@@ -49,27 +48,26 @@ void ParseReferenceSystemConfig(char *args);
 
 
 /* XXX: update to point to the ReferenceURLNode in the referenceURL list */
-typedef struct _ReferenceNode
+struct ReferenceNode
 {
     char *id;
     ReferenceSystemNode *system;
-    struct _ReferenceNode *next;
-
-} ReferenceNode;
+    ReferenceNode *next;
+};
 
 ReferenceNode * AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
 void FPrintReference(FILE *, ReferenceNode *);
 
 /* struct for rule classification */
-typedef struct _ClassType
+struct ClassType
 {
     // FIXIT-L type and name are backwards (name -> text, type -> name)
     char *type;      /* classification type */
     int id;          /* classification id */
     char *name;      /* "pretty" classification name */
     int priority;    /* priority */
-    struct _ClassType *next;
-} ClassType;
+    ClassType *next;
+};
 
 /* NOTE:  These methods can only be used during parse time */
 void AddClassification(
@@ -78,11 +76,11 @@ void AddClassification(
 ClassType * ClassTypeLookupByType(SnortConfig*, const char *);
 ClassType * ClassTypeLookupById(SnortConfig*, int);
 
-typedef struct _ServiceInfo
+struct ServiceInfo
 {
     char *service;
     int16_t service_ordinal;
-} ServiceInfo;
+};
 
 struct OtnKey
 {
@@ -90,7 +88,7 @@ struct OtnKey
    uint32_t sid;
 };
 
-typedef struct _SigInfo
+struct SigInfo
 {
     uint32_t generator;
     uint32_t id;
@@ -104,7 +102,7 @@ typedef struct _SigInfo
     unsigned int num_services;
     ServiceInfo *services;
     const char *os;
-} SigInfo;
+};
 
 SFGHASH * OtnLookupNew(void);
 void OtnLookupAdd(SFGHASH *, OptTreeNode *);

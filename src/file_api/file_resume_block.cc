@@ -29,7 +29,7 @@
 #include "snort_types.h"
 #include "file_api.h"
 #include "snort_bounds.h"
-#include "ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "sfxhash.h"
 #include "util.h"
 #include "protocols/packet.h"

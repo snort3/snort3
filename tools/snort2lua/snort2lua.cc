@@ -75,11 +75,12 @@ int main (int argc, char* argv[])
     bool rule_file_specifed = false;
 
 // why print variable if there are no rules?
-#if 0
+#if 1
+    // FIXIT-H
     // if no rule file is specified (or the same output and rule file specified),
     // rules will be printed in the 'default_rules' variable. Set that up
     // now.  Otherwise, set up the include file.
-    if (rule_api.empty())
+    if (!rule_api.empty())
     {
         if (rule_file.empty() || !rule_file.compare(output_file))
         {

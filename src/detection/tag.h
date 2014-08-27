@@ -26,10 +26,11 @@
 #include "config.h"
 #endif
 
-#include "rules.h"
-#include "treenodes.h"
-#include "event.h"
-#include "protocols/packet.h"
+#include <cstdint>
+
+struct Packet;
+struct OptTreeNode;
+struct Event;
 
 
 #define TAG_SESSION   1

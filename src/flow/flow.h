@@ -30,7 +30,7 @@
 #endif
 
 #include "utils/bitop.h"
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
 #include "normalize/normalize.h"

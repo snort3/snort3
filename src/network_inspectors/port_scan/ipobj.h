@@ -40,27 +40,26 @@
 #include <string.h>
 
 #include "sflsq.h"
+#include "sfip/sfip_t.h"
 
-#include "ipv6_port.h"
-
-typedef struct {
+struct PORTRANGE{
    unsigned port_lo;
    unsigned port_hi;
-}PORTRANGE;
+};
 
-typedef struct {
+struct PORTSET{
    SF_LIST port_list;
-}PORTSET;
+};
 
-typedef struct {
+struct IP_PORT{
     sfip_t ip;
     PORTSET portset;
     char notflag;
-} IP_PORT;
+};
 
-typedef struct {
+struct IPSET{
     SF_LIST ip_list;
-} IPSET;
+};
 
 
 /*

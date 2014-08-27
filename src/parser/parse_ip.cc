@@ -36,8 +36,8 @@
 #include "parser.h"
 #include "snort_debug.h"
 #include "snort.h"
-#include "ipv6_port.h"
 #include "sfip/sf_vartable.h"
+#include "sfip/sf_ipvar.h"
 
 sfip_var_t* sfip_var_from_string(const char *addr)
 {

@@ -32,6 +32,7 @@
 
 #include "protocols/eth.h"
 #include "protocols/protocol_ids.h"
+#include "protocols/packet.h"
 
 namespace
 {
@@ -81,8 +82,7 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 {
     if(raw_len < eth::ETH_HEADER_LEN)
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR);
         return false;
     }
 
@@ -104,14 +104,10 @@ bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new TransbridgeCodec();
-}
+{ return new TransbridgeCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi transbridge_api =
 {

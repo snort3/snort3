@@ -78,7 +78,6 @@ using namespace std;
 //#include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
-#include "asn1.h"
 #include "framework/mpse.h"
 #include "main/shell.h"
 #include "main/analyzer.h"
@@ -109,6 +108,7 @@ using namespace std;
 #include "stream/stream_api.h"
 #include "stream/stream.h"
 #include "actions/act_replace.h"
+#include "filters/detection_filter.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"
@@ -349,11 +349,6 @@ static void SnortInit(int argc, char **argv)
     if ( snort_conf->output )
         EventManager::instantiate(snort_conf->output, sc);
 
-    if (snort_conf->asn1_mem != 0)
-        asn1_init_mem(snort_conf->asn1_mem);
-    else
-        asn1_init_mem(256);
-
     if (ScAlertBeforePass())
     {
         OrderRuleLists(snort_conf, "activation dynamic drop sdrop reject alert pass log");
@@ -556,7 +551,6 @@ static void SnortCleanup()
 
     sfthreshold_free();  // FIXDAQ etc.
     RateFilter_Cleanup();
-    asn1_free_mem();
 
     periodic_release();
     ParserCleanup();

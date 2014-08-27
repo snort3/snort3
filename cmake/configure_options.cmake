@@ -4,15 +4,6 @@
 # into compiler flags
 #
 
-# FIX THIS!!
-# Setting visibility options.  
-#IF(UNIX)
-#    IF(CMAKE_COMPILER_IS_GNUCC)
-#         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-#         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-#    ENDIF(CMAKE_COMPILER_IS_GNUCC)
-#ENDIF(UNIX)
-
 
 # convert cmake options into compiler defines
 
@@ -104,3 +95,7 @@ else()
     set(STATIC_DAQ_PRREVIOUSLY_ENABLED "${ENABLE_STATIC_DAQ}" CACHE INTERNAL "save daq link type" FORCE)
 endif()
 
+
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wall -Wextra -pedantic -Wformat")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wformat-security -Wunused-but-set-variable")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-deprecated-declarations")

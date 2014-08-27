@@ -2,6 +2,7 @@
 set (TIME_INCLUDES
     cpuclock.h
     profiler.h
+    ppm.h
 )
 
 add_library( time  STATIC

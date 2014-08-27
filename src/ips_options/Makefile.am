@@ -7,12 +7,11 @@ plugin_list = \
 ips_ack.cc \
 ips_asn1.cc \
 asn1_detect.cc asn1_detect.h \
+asn1_util.cc asn1_util.h \
 ips_base64.cc \
 ips_byte_test.cc \
 ips_byte_jump.cc \
-ips_classtype.cc \
 ips_cvs.cc \
-ips_detection_filter.cc \
 ips_dsize.cc \
 ips_flags.cc \
 ips_fragbits.cc \
@@ -27,12 +26,9 @@ ips_id.cc \
 ips_ipopts.cc \
 ips_isdataat.cc \
 ips_itype.cc \
-ips_metadata.cc \
 ips_msg.cc \
-ips_pkt_data.cc \
 ips_priority.cc \
 ips_raw_data.cc \
-ips_reference.cc \
 ips_rem.cc \
 ips_rev.cc \
 ips_rpc.cc \
@@ -51,15 +47,20 @@ range.h
 libips_options_a_SOURCES = \
 ips_byte_extract.cc ips_byte_extract.h \
 extract.cc extract.h \
+ips_classtype.cc \
 ips_content.cc ips_content.h  \
+ips_detection_filter.cc \
 ips_file_data.cc \
 ips_flow.cc ips_flow.h \
 ips_flowbits.cc ips_flowbits.h \
 ips_ip_proto.cc ips_ip_proto.h \
 ips_luajit.cc \
+ips_metadata.cc \
 ips_options.cc ips_options.h \
+ips_pkt_data.cc \
 ips_pcre.cc ips_pcre.h \
-ips_replace.cc ips_replace.h \
+ips_reference.cc \
+ips_replace.cc \
 ips_so.cc
 
 if STATIC_IPS_OPTIONS
@@ -75,7 +76,7 @@ libips_ack_la_SOURCES = ips_ack.cc range.cc range.h
 optlib_LTLIBRARIES += libips_asn1.la
 libips_asn1_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_asn1_la_LDFLAGS = -export-dynamic -shared
-libips_asn1_la_SOURCES = ips_asn1.cc asn1_detect.cc asn1_detect.h
+libips_asn1_la_SOURCES = ips_asn1.cc asn1_detect.cc asn1_detect.h asn1_util.h asn1_util.cc
 
 optlib_LTLIBRARIES += libips_base64.la
 libips_base64_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -97,20 +98,10 @@ libips_byte_jump_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_byte_jump_la_LDFLAGS = -export-dynamic -shared
 libips_byte_jump_la_SOURCES = ips_byte_jump.cc
 
-optlib_LTLIBRARIES += libips_classtype.la
-libips_classtype_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_classtype_la_LDFLAGS = -export-dynamic -shared
-libips_classtype_la_SOURCES = ips_classtype.cc
-
 optlib_LTLIBRARIES += libips_cvs.la
 libips_cvs_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_cvs_la_LDFLAGS = -export-dynamic -shared
 libips_cvs_la_SOURCES = ips_cvs.cc
-
-optlib_LTLIBRARIES += libips_detection_filter.la
-libips_detection_filter_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_detection_filter_la_LDFLAGS = -export-dynamic -shared
-libips_detection_filter_la_SOURCES = ips_detection_filter.cc
 
 optlib_LTLIBRARIES += libips_dsize.la
 libips_dsize_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -182,20 +173,10 @@ libips_itype_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_itype_la_LDFLAGS = -export-dynamic -shared
 libips_itype_la_SOURCES = ips_itype.cc range.cc range.h
 
-optlib_LTLIBRARIES += libips_metadata.la
-libips_metadata_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_metadata_la_LDFLAGS = -export-dynamic -shared
-libips_metadata_la_SOURCES = ips_metadata.cc range.cc range.h
-
 optlib_LTLIBRARIES += libips_msg.la
 libips_msg_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_msg_la_LDFLAGS = -export-dynamic -shared
 libips_msg_la_SOURCES = ips_msg.cc range.cc range.h
-
-optlib_LTLIBRARIES += libips_pkt_data.la
-libips_pkt_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_pkt_data_la_LDFLAGS = -export-dynamic -shared
-libips_pkt_data_la_SOURCES = ips_pkt_data.cc
 
 optlib_LTLIBRARIES += libips_priority.la
 libips_priority_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -206,11 +187,6 @@ optlib_LTLIBRARIES += libips_raw_data.la
 libips_raw_data_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libips_raw_data_la_LDFLAGS = -export-dynamic -shared
 libips_raw_data_la_SOURCES = ips_raw_data.cc
-
-optlib_LTLIBRARIES += libips_reference.la
-libips_reference_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libips_reference_la_LDFLAGS = -export-dynamic -shared
-libips_reference_la_SOURCES = ips_reference.cc
 
 optlib_LTLIBRARIES += libips_rem.la
 libips_rem_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

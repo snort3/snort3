@@ -54,30 +54,24 @@ public:
 bool Raw6Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
         Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& next_prot_id)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP6 Packet!\n"););
     next_prot_id = ETHERTYPE_IPV6;
     return true;
 }
 
 
 void Raw6Codec::get_data_link_type(std::vector<int>&v)
-{
-    v.push_back(DLT_IPV6);
-}
+{ v.push_back(DLT_IPV6); }
+
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Raw6Codec();
-}
+{ return new Raw6Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi raw6_api =
 {

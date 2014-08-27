@@ -5,8 +5,9 @@ noinst_LIBRARIES = libip_codecs.a
 libip_codecs_a_SOURCES = \
 cd_ipv4.cc \
 cd_esp.cc \
-ipv6_util.h \
-ipv6_util.cc
+cd_tcp.cc \
+ip_util.h \
+ip_util.cc
 
 
 plugin_list = \
@@ -25,7 +26,6 @@ cd_pgm.cc \
 cd_routing.cc \
 cd_sun_nd.cc \
 cd_swipe.cc \
-cd_tcp.cc \
 cd_udp.cc \
 checksum.h
 
@@ -85,37 +85,32 @@ libcd_sun_nd_la_SOURCES = cd_sun_nd.cc
 ehlib_LTLIBRARIES += libcd_dst_opts.la
 libcd_dst_opts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_dst_opts_la_LDFLAGS = -export-dynamic -shared
-libcd_dst_opts_la_SOURCES = cd_dst_opts.cc ipv6_util.h ipv6_util.cc
+libcd_dst_opts_la_SOURCES = cd_dst_opts.cc ip_util.h ip_util.cc
 
 ehlib_LTLIBRARIES += libcd_frag.la
 libcd_frag_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_frag_la_LDFLAGS = -export-dynamic -shared
-libcd_frag_la_SOURCES = cd_frag.cc ipv6_util.h ipv6_util.cc
+libcd_frag_la_SOURCES = cd_frag.cc ip_util.h ip_util.cc
 
 ehlib_LTLIBRARIES += libcd_hop_opts.la
 libcd_hop_opts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_hop_opts_la_LDFLAGS = -export-dynamic -shared
-libcd_hop_opts_la_SOURCES = cd_hop_opts.cc ipv6_util.h ipv6_util.cc
+libcd_hop_opts_la_SOURCES = cd_hop_opts.cc ip_util.h ip_util.cc
 
 ehlib_LTLIBRARIES += libcd_no_next.la
 libcd_no_next_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_no_next_la_LDFLAGS = -export-dynamic -shared
-libcd_no_next_la_SOURCES = cd_no_next.cc ipv6_util.h ipv6_util.cc
+libcd_no_next_la_SOURCES = cd_no_next.cc ip_util.h ip_util.cc
 
 ehlib_LTLIBRARIES += libcd_routing.la
 libcd_routing_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_routing_la_LDFLAGS = -export-dynamic -shared
-libcd_routing_la_SOURCES = cd_routing.cc ipv6_util.h ipv6_util.cc
+libcd_routing_la_SOURCES = cd_routing.cc ip_util.h ip_util.cc
 
 ehlib_LTLIBRARIES += libcd_swipe.la
 libcd_swipe_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_swipe_la_LDFLAGS = -export-dynamic -shared
 libcd_swipe_la_SOURCES = cd_swipe.cc
-
-ehlib_LTLIBRARIES += libcd_tcp.la
-libcd_tcp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libcd_tcp_la_LDFLAGS = -export-dynamic -shared
-libcd_tcp_la_SOURCES = cd_tcp.cc checksum.h
 
 ehlib_LTLIBRARIES += libcd_udp.la
 libcd_udp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

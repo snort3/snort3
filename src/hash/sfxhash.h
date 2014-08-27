@@ -38,8 +38,10 @@
 #include <string.h>
 #include <time.h>
 
-#include "hash/sfhashfcn.h"
 #include "utils/sfmemcap.h"
+
+struct SFHASHFCN;
+
 /*
 *   ERROR DEFINES
 */
@@ -51,22 +53,22 @@
 /**
 *   HASH NODE
 */
-typedef struct _sfxhash_node
+struct SFXHASH_NODE
 {
-  struct _sfxhash_node * gnext, * gprev; /// global node list - used for ageing nodes
-  struct _sfxhash_node * next,  * prev;  /// row node list
+  struct SFXHASH_NODE * gnext, * gprev; /// global node list - used for ageing nodes
+  struct SFXHASH_NODE * next,  * prev;  /// row node list
 
   int    rindex; /// row index of table this node belongs to.
 
   void * key;   /// Pointer to the key.
   void * data;  /// Pointer to the users data, this is not copied !
 
-} SFXHASH_NODE;
+};
 
 /**
 *    SFGX HASH Table
 */
-typedef struct _sfxhash
+struct SFXHASH
 {
   SFHASHFCN     * sfhashfcn; /// hash function
   int             keysize;   /// bytes in key, if <= 0 -> keys are strings
@@ -99,7 +101,7 @@ typedef struct _sfxhash
 
   int (*anrfree)( void * key, void * data );
   int (*usrfree)( void * key, void * data );
-} SFXHASH;
+};
 
 
 /*

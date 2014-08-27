@@ -38,6 +38,7 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "managers/event_manager.h"
+#include "hash/sfghash.h"
 
 #include "event.h"
 #include "rules.h"

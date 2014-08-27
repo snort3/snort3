@@ -41,9 +41,10 @@
 #include "log/text_log.h"
 
 struct Packet;
+struct Event;
 
-void LogPriorityData(TextLog*, const struct _Event*, bool doNewLine);
-void LogXrefs(TextLog*, const struct _Event*, bool doNewLine);
+void LogPriorityData(TextLog*, const Event*, bool doNewLine);
+void LogXrefs(TextLog*, const Event*, bool doNewLine);
 
 void LogIPPkt(TextLog*, int type, Packet*);
 void LogNetData (TextLog*, const uint8_t* data, const int len, Packet*);

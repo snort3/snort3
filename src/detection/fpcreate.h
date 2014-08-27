@@ -104,7 +104,7 @@ struct FastPatternConfig
 /*
  *  Service Rule Map Master Table
  */
-typedef struct
+struct srmm_table_t
 {
   SFGHASH * tcp_to_srv;
   SFGHASH * tcp_to_cli;
@@ -118,12 +118,12 @@ typedef struct
   SFGHASH * ip_to_srv;
   SFGHASH * ip_to_cli;
 
-} srmm_table_t;
+};
 
 /*
  *  Service/Protocol Oridinal To PORT_GROUP table
  */
-typedef struct
+struct sopg_table_t
 {
   PORT_GROUP *tcp_to_srv[MAX_PROTOCOL_ORDINAL];
   PORT_GROUP *tcp_to_cli[MAX_PROTOCOL_ORDINAL];
@@ -137,7 +137,7 @@ typedef struct
   PORT_GROUP *ip_to_srv[MAX_PROTOCOL_ORDINAL];
   PORT_GROUP *ip_to_cli[MAX_PROTOCOL_ORDINAL];
 
-} sopg_table_t;
+};
 
 /*
 **  This function initializes the detection engine configuration

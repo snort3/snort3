@@ -31,6 +31,7 @@
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "time/profiler.h"
+#include "detection/detection_defines.h"
 
 static THREAD_LOCAL ProfileStats luaIpsPerfStats;
 

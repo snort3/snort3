@@ -28,6 +28,7 @@
 
 #include <string.h>
 
+#include "utils/stats.h"
 #include "perf_monitor/perf.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/ipv4.h"

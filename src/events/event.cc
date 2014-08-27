@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "snort.h"
+#include "detection/signature.h"
 
 THREAD_LOCAL uint16_t event_id; // FIXIT-M also incremented in fpLogEvent()
 THREAD_LOCAL SigInfo sig_info;  // FIXIT-M move to stack

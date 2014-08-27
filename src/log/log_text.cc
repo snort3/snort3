@@ -49,6 +49,7 @@
 #include "detection_util.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/layer.h"
+#include "service_inspectors/http_inspect/hi_main.h"
 
 #include "sfip/sf_ip.h"
 

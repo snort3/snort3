@@ -51,6 +51,7 @@
 #include "framework/plug_data.h"
 #include "managers/data_manager.h"
 #include "detection/detection_util.h"
+#include "target_based/sftarget_protocol_reference.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 

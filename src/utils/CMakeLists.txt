@@ -21,13 +21,12 @@ set( UTIL_INCLUDES
     sfportobject.h
     snort_bounds.h
     stats.h
+    util.h
 )
 
 ADD_LIBRARY( utils STATIC
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
-    asn1.cc 
-    asn1.h
     boyer_moore.cc 
     boyer_moore.h
     dyn_array.cc
@@ -48,7 +47,6 @@ ADD_LIBRARY( utils STATIC
     strvec.h
     stats.cc 
     util.cc 
-    util.h
     util_jsnorm.cc 
     util_jsnorm.h
     util_math.cc 

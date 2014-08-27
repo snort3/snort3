@@ -1,7 +1,6 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2010-2013 Sourcefire, Inc.
-** Author: Ryan Jordan <ryan.jordan@sourcefire.com>
+** Copyright (C) 2007-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -19,21 +18,28 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef IPS_BYTE_EXTRACT_H
-#define IPS_BYTE_EXTRACT_H
+#ifndef SF_RETURNS_H
+#define SF_RETURNS_H
 
-#include <stdint.h>
+enum SFIP_RET {
+    SFIP_SUCCESS=0,
+    SFIP_FAILURE,
+    SFIP_LESSER,
+    SFIP_GREATER,
+    SFIP_EQUAL,
+    SFIP_ARG_ERR,
+    SFIP_CIDR_ERR,
+    SFIP_INET_PARSE_ERR,
+    SFIP_INVALID_MASK,
+    SFIP_ALLOC_ERR,
+    SFIP_CONTAINS,
+    SFIP_NOT_CONTAINS,
+    SFIP_DUPLICATE,         /* Tried to add a duplicate variable name to table */
+    SFIP_LOOKUP_FAILURE,    /* Failed to lookup a variable from the table */
+    SFIP_UNMATCHED_BRACKET, /* IP lists that are missing a closing bracket */
+    SFIP_NOT_ANY,           /* For !any */
+    SFIP_CONFLICT           /* For IP conflicts in IP lists */
+};
 
-#include "main/snort_types.h"
-
-#define NUM_BYTE_EXTRACT_VARS 2
-#define BYTE_EXTRACT_NO_VAR -1
-#define BYTE_EXTRACT_INVALID_ERR_STR "Rule option uses an undefined byte_extract variable name."
-
-SO_PUBLIC int8_t GetVarByName(const char *name);
-
-SO_PUBLIC int GetByteExtractValue(uint32_t *dst, int8_t var_number);
-SO_PUBLIC int SetByteExtractValue(uint32_t value, int8_t var_number);
 
 #endif
-

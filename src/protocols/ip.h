@@ -38,6 +38,7 @@
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "sfip/sfip_t.h"
+#include "main/snort_types.h"
 
 
 struct Packet;
@@ -49,7 +50,7 @@ namespace ip
 {
 
 // keeping this as a class to avoid confusion.
-class IpApi
+class SO_PUBLIC IpApi
 {
 public:
 //    IpApi();   constructor and destructor MUST remain a trivial. Adding
@@ -71,6 +72,10 @@ public:
     uint16_t pay_len() const;
     // return the ip_len field in host byte order
     uint16_t actual_ip_len() const;
+    // true if the current source address ia the loopback address
+    bool is_src_loopback() const;
+    // true if the current source address ia the loopback address
+    bool is_dst_loopback() const;
     // overloaded == operators.
     friend bool operator==(const IpApi& lhs, const IpApi& rhs);
     friend bool operator!=(const IpApi& lhs, const IpApi& rhs);

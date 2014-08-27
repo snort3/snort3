@@ -22,14 +22,15 @@
 
 // zhash is based on sfxhash - see sfxhash.cc for details
 
-#include "zhash.h"
 
 #include <assert.h>
 #include <stdlib.h>
 
+#include "zhash.h"
 #include "snort_types.h"
 #include "snort_debug.h"
 #include "util.h"
+#include "hash/sfhashfcn.h"
 
 //-------------------------------------------------------------------------
 // private stuff

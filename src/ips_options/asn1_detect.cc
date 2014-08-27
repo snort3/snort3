@@ -71,7 +71,7 @@
 #define DEBUG_WRAP(x)
 #endif
 
-#include "utils/asn1.h"
+#include "ips_options/asn1_util.h"
 #include "snort.h"
 
 /*

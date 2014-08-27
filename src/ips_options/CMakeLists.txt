@@ -6,13 +6,13 @@ SET( PLUGIN_LIST
     ips_asn1.cc
     asn1_detect.cc
     asn1_detect.h
+    asn1_util.h
+    asn1_util.cc
     ips_base64.cc
     ips_bufferlen.cc
     ips_byte_test.cc
     ips_byte_jump.cc
-    ips_classtype.cc
     ips_cvs.cc
-    ips_detection_filter.cc
     ips_dsize.cc
     ips_flags.cc
     ips_fragbits.cc
@@ -25,14 +25,11 @@ SET( PLUGIN_LIST
     ips_icode.cc
     ips_id.cc
     ips_ipopts.cc
-    ips_isdataat.cc 
-    ips_itype.cc 
-    ips_metadata.cc 
+    ips_isdataat.cc
+    ips_itype.cc
     ips_msg.cc 
-    ips_pkt_data.cc
     ips_priority.cc
     ips_raw_data.cc
-    ips_reference.cc
     ips_rem.cc
     ips_rev.cc
     ips_rpc.cc
@@ -48,13 +45,16 @@ SET( PLUGIN_LIST
     range.h
 )
 
+
 set (IPS_SOURCES
     ips_byte_extract.cc 
     ips_byte_extract.h
     extract.cc 
     extract.h
+    ips_classtype.cc
     ips_content.cc 
     ips_content.h 
+    ips_detection_filter.cc
     ips_file_data.cc 
     ips_flow.cc 
     ips_flow.h
@@ -63,14 +63,16 @@ set (IPS_SOURCES
     ips_ip_proto.cc 
     ips_ip_proto.h
     ips_luajit.cc 
+    ips_metadata.cc
     ips_options.cc 
     ips_options.h
+    ips_pkt_data.cc
     ips_pcre.cc 
     ips_pcre.h
-    ips_replace.cc 
+    ips_reference.cc
+    ips_replace.cc
     ips_so.cc
 )
-
 
 
 if (STATIC_IPS_OPTIONS)
@@ -87,9 +89,9 @@ else (STATIC_IPS_OPTIONS)
     )
 
     add_shared_library(ips_ack ips_options ips_ack.cc range.cc range.h)
-    add_shared_library(ips_asn1 ips_options ips_asn1.cc asn1_detect.cc asn1_detect.h)
+    add_shared_library(ips_asn1 ips_options ips_asn1.cc asn1_detect.cc asn1_detect.h asn1_util.h asn1_util.cc)
     add_shared_library(ips_base64 ips_options ips_base64.cc)
-    add_shared_library(ips_bufferlen ips_options range.cc range.h)
+    add_shared_library(ips_bufferlen ips_options ips_bufferlen.cc range.cc range.h)
     add_shared_library(ips_byte_test ips_options ips_byte_test.cc)
     add_shared_library(ips_byte_jump ips_options ips_byte_jump.cc)
     add_shared_library(ips_cvs ips_options ips_cvs.cc)
@@ -97,6 +99,7 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_flags ips_options ips_flags.cc)
     add_shared_library(ips_fragbits ips_options ips_fragbits.cc)
     add_shared_library(ips_fragoffset ips_options ips_fragoffset.cc range.cc range.h)
+    add_shared_library(ips_gid ips_options ips_gid.cc)
     add_shared_library(ips_http ips_options ips_http.cc)
     add_shared_library(ips_http_header ips_options ips_http_header.cc)
     add_shared_library(ips_icode ips_options ips_icode.cc range.cc range.h)
@@ -106,15 +109,20 @@ else (STATIC_IPS_OPTIONS)
     add_shared_library(ips_ipopts ips_options ips_ipopts.cc)
     add_shared_library(ips_isdataat ips_options ips_isdataat.cc)
     add_shared_library(ips_itype ips_options ips_itype.cc range.cc range.h)
-    add_shared_library(ips_pkt_data ips_options ips_pkt_data.cc)
+    add_shared_library(ips_msg ips_options ips_msg.cc range.cc range.h)
+    add_shared_library(ips_priority ips_options ips_priority.cc)
     add_shared_library(ips_raw_data ips_options ips_raw_data.cc)
+    add_shared_library(ips_rem ips_options ips_rem.cc)
+    add_shared_library(ips_rev ips_options ips_rev.cc)
     add_shared_library(ips_rpc ips_options ips_rpc.cc)
+    add_shared_library(ips_sid ips_options ips_sid.cc)
     add_shared_library(ips_seq ips_options ips_seq.cc range.cc range.h)
     add_shared_library(ips_session ips_options ips_session.cc)
+    add_shared_library(ips_soid ips_options ips_soid.cc)
+    add_shared_library(ips_tag ips_options ips_tag.cc range.cc range.h)
     add_shared_library(ips_tos ips_options ips_tos.cc range.cc range.h)
     add_shared_library(ips_ttl ips_options ips_ttl.cc range.cc range.h)
     add_shared_library(ips_window ips_options ips_window.cc range.cc range.h)
-
 
 endif (STATIC_IPS_OPTIONS)
 

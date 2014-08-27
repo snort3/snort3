@@ -30,6 +30,7 @@
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
+#include "protocols/ipv6.h"
 
 namespace
 {

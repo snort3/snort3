@@ -37,7 +37,7 @@
 
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
 
@@ -475,7 +475,7 @@ void PacketManager::decode(
     }
 
     if (p->ip6_extension_count > 0)
-        ipv6_util::CheckIPv6ExtensionOrder(p);
+        ip_util::CheckIPv6ExtensionOrder(p);
 
     s_stats[mapped_prot + stat_offset]++;
 

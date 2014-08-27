@@ -54,7 +54,7 @@ typedef int (*mpse_build_f)(SnortConfig*, void *id, void **existing_tree);
 typedef int (*mpse_negate_f)(void *id, void **list);
 typedef int (*mpse_action_f)(void* id, void* tree, int index, void *data, void *neg_list);
 
-class Mpse
+class SO_PUBLIC Mpse
 {
 public:
     static Mpse* instantiate(
