@@ -4262,8 +4262,8 @@ static int NewTcpSession(
 
 
         /* Set the StreamTcpConfig for each direction (pkt from client) */
-        tmp->client.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
-        tmp->server.config = dstPolicy;
+        tmp->client.config = dstPolicy;  // FIXIT-H use external binding for both dirs
+        tmp->server.config = dstPolicy;  // (applies to all the blocks in this funk)
 
         CopyMacAddr(p, tmp, FROM_CLIENT);
     }
@@ -4312,7 +4312,7 @@ static int NewTcpSession(
         tmp->server.flags |= Stream5GetWscale(p, &tmp->server.wscale);
 
         /* Set the config for each direction (pkt from server) */
-        tmp->server.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
+        tmp->server.config = dstPolicy;
         tmp->client.config = dstPolicy;
 
         CopyMacAddr(p, tmp, FROM_SERVER);
@@ -4359,7 +4359,7 @@ static int NewTcpSession(
         tmp->client.flags |= Stream5GetWscale(p, &tmp->client.wscale);
 
         /* Set the config for each direction (pkt from client) */
-        tmp->client.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
+        tmp->client.config = dstPolicy;
         tmp->server.config = dstPolicy;
 
         CopyMacAddr(p, tmp, FROM_CLIENT);
@@ -4415,7 +4415,7 @@ static int NewTcpSession(
             tmp->client.flags |= Stream5GetWscale(p, &tmp->client.wscale);
 
             /* Set the config for each direction (pkt from client) */
-            tmp->client.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
+            tmp->client.config = dstPolicy;
             tmp->server.config = dstPolicy;
 
             CopyMacAddr(p, tmp, FROM_CLIENT);
@@ -4457,7 +4457,7 @@ static int NewTcpSession(
             tmp->server.flags |= Stream5GetWscale(p, &tmp->server.wscale);
 
             /* Set the config for each direction (pkt from server) */
-            tmp->server.config = dstPolicy;  // FIXIT-H BINDING use external for both dirs
+            tmp->server.config = dstPolicy;
             tmp->client.config = dstPolicy;
 
             CopyMacAddr(p, tmp, FROM_SERVER);
