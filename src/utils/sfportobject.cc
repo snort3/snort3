@@ -204,6 +204,7 @@
 #include "detection/sfrim.h"
 #include "parser.h"
 #include "util.h"
+#include "hash/sfhashfcn.h"
 
 #define PO_EXTRA_RULE_CNT 25
 #define PTBL_LRC_DEFAULT 10

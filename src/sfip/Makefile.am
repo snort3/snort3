@@ -5,7 +5,7 @@ noinst_LIBRARIES = libsfip.a
 x_includedir = $(pkgincludedir)/sfip
 
 x_include_HEADERS = \
-ipv6_port.h \
+sf_returns.h \
 sf_ip.h \
 sf_ipvar.h \
 sfip_t.h

@@ -57,7 +57,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "range.h"
+#include "framework/range.h"
 
 static const char* s_name = "icmp_seq";
 

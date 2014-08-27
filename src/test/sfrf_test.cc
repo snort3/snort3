@@ -37,6 +37,7 @@
 #include "parser/parse_ip.h"
 #include "filters/sfrf.h"
 #include "utils/util.h"
+#include "hash/sfghash.h"
 
 //---------------------------------------------------------------
 

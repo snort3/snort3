@@ -38,13 +38,14 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "managers/event_manager.h"
+#include "hash/sfghash.h"
 
 #include "event.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "snort.h"
+#include "main/snort.h"
 #include "parser.h"
 
 struct SfSock
@@ -407,15 +408,7 @@ static LogApi sf_sock_api
     sf_sock_dtor
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &sf_sock_api.base,
-    nullptr
-};
-#else
 const BaseApi* alert_sf_socket = &sf_sock_api.base;
-#endif
 
 #endif   /* LINUX */
 

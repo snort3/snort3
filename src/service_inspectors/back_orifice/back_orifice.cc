@@ -116,6 +116,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "snort.h"
 #include "snort_types.h"
 #include "detect.h"
 #include "protocols/packet.h"
@@ -124,7 +125,6 @@
 #include "snort_debug.h"
 #include "mstring.h"
 #include "util.h"
-#include "snort.h"
 #include "profiler.h"
 #include "snort_types.h"
 #include "framework/inspector.h"

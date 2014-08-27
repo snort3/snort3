@@ -27,8 +27,7 @@
 #endif
 
 #include "main/snort_types.h"
-#include "sfip/sf_ipvar.h"
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 #define LOG_DIV "--------------------------------------------------"
 

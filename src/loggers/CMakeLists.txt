@@ -1,13 +1,13 @@
 
 include_directories(${LUAJIT_INCLUDE_DIR})
 
-set ( LOGGER_SOURCES
+set (LOGGER_SOURCES
     alert_luajit.cc
     loggers.cc
     loggers.h
 )
 
-set ( PLUGIN_LIST
+set (PLUGIN_LIST
     alert_csv.cc
     alert_fast.cc
     alert_full.cc
@@ -20,9 +20,9 @@ set ( PLUGIN_LIST
     unified2_common.h
 )
 
-if( LINUX )
-    set ( PLUGIN_LIST
-        ${PLUGIN_LIST}
+if (LINUX)
+    set ( LOGGER_SOURCES
+        ${LOGGER_SOURCES}
         alert_sf_socket.cc
     )
 endif()
@@ -33,6 +33,7 @@ if (STATIC_LOGGERS)
         ${LOGGER_SOURCES}
         ${PLUGIN_LIST}
     )
+
 
 else (STATIC_LOGGERS)
 

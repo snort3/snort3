@@ -36,6 +36,8 @@
 #include <ctype.h>
 
 #include "snort_types.h"
+#include "sfip/sf_vartable.h"
+#include "sfip/sf_ipvar.h"
 #include "util.h"
 
 vartable_t * sfvt_alloc_table(void)

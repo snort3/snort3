@@ -35,6 +35,7 @@
 extern "C" {
 #include <daq.h>
 }
+#include "main/snort_types.h"
 
 #define PKT_TIMEOUT  1000  // ms, worst daq resolution is 1 sec
 
@@ -58,9 +59,9 @@ int DAQ_CanInject(void);
 int DAQ_CanWhitelist(void);
 int DAQ_RawInjection(void);
 
-const char* DAQ_GetInterfaceSpec(void);
-uint32_t DAQ_GetSnapLen(void);
-int DAQ_GetBaseProtocol(void);
+SO_PUBLIC const char* DAQ_GetInterfaceSpec(void);
+SO_PUBLIC uint32_t DAQ_GetSnapLen(void);
+SO_PUBLIC int DAQ_GetBaseProtocol(void);
 int DAQ_SetFilter(const char*);
 
 // total stats are accumulated when daq is deleted
@@ -79,7 +80,7 @@ int DAQ_BreakLoop(int error);
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
 void DAQ_Set_MetaCallback(DAQ_Meta_Func_t meta_callback);
 #endif
-DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t *h);
+SO_PUBLIC DAQ_Mode DAQ_GetInterfaceMode(const DAQ_PktHdr_t *h);
 
 int DAQ_ModifyFlow(const void* h, uint32_t id);
 

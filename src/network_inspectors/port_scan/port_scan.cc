@@ -70,6 +70,7 @@
 #include "framework/plug_data.h"
 #include "profiler.h"
 #include "detection/detect.h"
+#include "network_inspectors/port_scan/ipobj.h"
 
 #define DELIMITERS " \t\n"
 #define TOKEN_ARG_BEGIN "{"

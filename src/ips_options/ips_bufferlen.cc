@@ -33,7 +33,7 @@
 #include "profiler.h"
 #include "sfhashfcn.h"
 #include "detection/detection_defines.h"
-#include "range.h"
+#include "framework/range.h"
 #include "framework/ips_option.h"
 #include "framework/inspector.h"
 #include "framework/cursor.h"

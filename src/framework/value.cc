@@ -25,6 +25,7 @@
 #include <sstream>
 #include <string>
 
+#include "sfip/sfip_t.h"
 #include "sfip/sf_ip.h"
 
 using namespace std;

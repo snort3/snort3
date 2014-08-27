@@ -30,7 +30,7 @@
 #include "protocols/ipv6.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "framework/codec.h"
 #include "stream/stream_api.h"
 #include "main/snort.h"
@@ -127,15 +127,15 @@ uint8_t Ipv6Codec::GetTTL (const EncState* enc)
         return 0;
 
     if ( enc->p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(enc) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
+        dir = forward(enc->flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
     else
-        dir = forward(enc) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
+        dir = forward(enc->flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...
     ttl = stream.get_session_ttl(enc->p->flow, dir, outer);
 
-    // so if we don't get outer, we use inner
+    // if we don't get outer, we use inner
     if ( 0 == ttl && outer )
         ttl = stream.get_session_ttl(enc->p->flow, dir, false);
 
@@ -203,12 +203,9 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         goto decodeipv6_fail;
     }
 
-#if 0
-    // multiple encapsulations are now allowed.  this alert is no longer valid
-    if (p->encapsulations)
-        codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                        raw_pkt, raw_len);
-#endif
+    // comparable to snort
+    if (p->encapsulations > 1)
+        codec_events::decoder_event(p, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
 
     payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
@@ -619,7 +616,7 @@ bool Ipv6Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
         ho->ip6_next = hi->ip6_next;
     }
 
-    if ( forward(enc) )
+    if ( forward(enc->flags) )
     {
         memcpy(ho->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ho->ip6_src.u6_addr8));
         memcpy(ho->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ho->ip6_dst.u6_addr8));

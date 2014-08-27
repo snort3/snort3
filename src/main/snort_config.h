@@ -25,40 +25,61 @@
 #include "config.h"
 #endif
 
-#include "snort_types.h"
-#include "detection/fpcreate.h"
-#include "detection/pcrm.h"
-#include "events/event_queue.h"
-#include "events/sfeventq.h"
-#include "filters/sfthreshold.h"
-#include "filters/sfrf.h"
-#include "filters/detection_filter.h"
-#include "sfip/sf_ipvar.h"
-#include "sfip/sfip_t.h"
+#include <sys/stat.h>
 #include "detection/rules.h"
-#include "detection/signature.h"
+#include "sfip/sfip_t.h"
 #include "time/ppm.h"
-#include "time/profiler.h"
-#include "utils/sflsq.h"
-#include "hash/sfxhash.h"
-#include "utils/util.h"
-#include "utils/sfportobject.h"
-#include "hash/sfghash.h"
 #include "main/policy.h"
+#include "utils/util.h"
+#include "protocols/packet.h"
+#include "main/thread.h"
+
 
 #define DEFAULT_LOG_DIR "."
 
 #ifdef INTEL_SOFT_CPM
 struct _IntelPmHandles;
 #endif
-struct FrameworkConfig;
 
+#ifdef PERF_PROFILING
+#include "time/profiler.h"
+#endif
+
+struct FrameworkConfig;
+struct FastPatternConfig;
+struct EventQueueConfig;
+struct ThresholdConfig;
+struct RateFilterConfig;
+struct RuleState;
+struct ClassType;
+struct ReferenceSystemNode;
+struct SFGHASH;
+struct DetectionFilterConfig;
+struct RuleListNode;
+struct PORT_RULE_MAP;
+struct SFGHASH;
+struct SFXHASH;
+struct srmm_table_t;
+struct sopg_table_t;
+
+// defined in sfghash.h  forward declared here
+struct sf_list;
+typedef sf_list SF_LIST;
+
+// defined in sfportobject.h. forward declared here
+struct RulePortTables;
+typedef RulePortTables rule_port_tables_t;
+
+#if 0
+FIXIT-L
 typedef enum _PathType
 {
     PATH_TYPE__FILE,
     PATH_TYPE__DIRECTORY
 
 } PathType;
+
+#endif
 
 // SnortState members are updated during runtime
 // an array in SnortConfig is used instead of thread_locals because these

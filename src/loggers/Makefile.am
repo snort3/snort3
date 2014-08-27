@@ -18,12 +18,13 @@ log_tcpdump.cc \
 unified2.cc \
 unified2_common.h
 
-if STATIC_LOGGERS
-libloggers_a_SOURCES += $(plugin_list)
-
 if LINUX
 libloggers_a_SOURCES += alert_sf_socket.cc
 endif
+
+
+if STATIC_LOGGERS
+libloggers_a_SOURCES += $(plugin_list)
 
 else
 ehlibdir = $(pkglibdir)/loggers
@@ -42,13 +43,6 @@ ehlib_LTLIBRARIES += libalert_full.la
 libalert_full_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libalert_full_la_LDFLAGS = -export-dynamic -shared
 libalert_full_la_SOURCES = alert_full.cc
-
-if LINUX
-ehlib_LTLIBRARIES += libalert_sf_socket.la
-libalert_sf_socket_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libalert_sf_socket_la_LDFLAGS = -export-dynamic -shared
-libalert_sf_socket_la_SOURCES = alert_sf_socket.cc
-endif
 
 ehlib_LTLIBRARIES += libalert_syslog.la
 libalert_syslog_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

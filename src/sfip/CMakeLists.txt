@@ -1,7 +1,7 @@
 
 
 set(SFIP_INCLUDES
-    ipv6_port.h
+    sf_returns.h
     sf_ip.h
     sf_ipvar.h
     sfip_t.h

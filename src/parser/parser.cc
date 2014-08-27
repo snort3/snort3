@@ -56,14 +56,13 @@
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
 #include "snort.h"
-#include "asn1.h"
 #include "hash/sfghash.h"
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_content.h"
 #include "ips_options/ips_flowbits.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
 #include "sflsq.h"
 #include "ppm.h"
 #include "filters/rate_filter.h"
@@ -83,13 +82,6 @@
 #include "parse_stream.h"
 #include "vars.h"
 #include "target_based/sftarget_reader.h"
-#include "events/event_wrapper.h"  // see s_hack
-
-// FIXIT-L without s_hack, we get this error on Mac:
-// Symbol not found: __Z18GenerateSnortEventP6Packetjj
-// Referenced from: /Users/rucombs/install/lib/snort/inspectors/libport_scan.0.dylib
-// Expected in: flat namespace
-static uint32_t (*s_hack)(Packet*, uint32_t, uint32_t) = GenerateSnortEvent;
 
 static unsigned parse_errors = 0;
 
@@ -116,10 +108,6 @@ unsigned get_parse_errors()
 
 static void InitParser(void)
 {
-    if ( !s_hack )
-        LogMessage("This is an ineffective hack to make snort export "
-            "GenerateSnortEvent() for use by port_scan dynamic lib");
-
     parse_rule_init();
 
     if (ruleIndexMap != NULL)

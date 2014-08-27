@@ -28,6 +28,7 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
+#include "protocols/packet.h"
 
 
 namespace
@@ -125,24 +126,16 @@ void IgmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new IgmpModule;
-}
+{ return new IgmpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new IgmpCodec();
-}
+{ return new IgmpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi igmp_api =
 {

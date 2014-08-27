@@ -25,7 +25,6 @@
 
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "ipv6_port.h"
 #include "main/thread.h"
 #include "utils/stats.h"
 
@@ -33,7 +32,7 @@
 #define HI_POST_METHOD 2
 #define HI_GET_METHOD 4
 
-typedef struct _hi_stats {
+struct HIStats {
     PegCount total;
     PegCount get;              /* Number of GETs */
     PegCount post;             /* Number of POST methods encountered */
@@ -54,7 +53,7 @@ typedef struct _hi_stats {
     PegCount gzip_pkts;
     PegCount compr_bytes_read;
     PegCount decompr_bytes_read;
-} HIStats;
+};
 
 extern THREAD_LOCAL HIStats hi_stats;
 extern const char* peg_names[];

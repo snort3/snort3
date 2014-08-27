@@ -154,9 +154,9 @@ uint8_t Ipv4Codec::GetTTL (const EncState* enc)
         return 0;
 
     if ( enc->p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(enc) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
+        dir = forward(enc->flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
     else
-        dir = forward(enc) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
+        dir = forward(enc->flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...
@@ -227,14 +227,9 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    if (p->encapsulations)
-    {
-        if (p->encapsulations > 1) // comparable to Snort
-            codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                raw_pkt, raw_len);
-    }
-
-    p->encapsulations++;
+    // comparable to snort
+    if (p->encapsulations > 1)
+        codec_events::decoder_event(p, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
     /* lay the IP struct over the raw data */
     IP4Hdr* iph = reinterpret_cast<IP4Hdr*>(const_cast<uint8_t *>(raw_pkt));
@@ -318,7 +313,15 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         if(csum)
         {
             p->error_flags |= PKT_ERR_CKSUM_IP;
-            codec_events::exec_ip_chksm_drop(p);
+
+            // TBD only set policy csum drop if policy inline
+            // and delete this inline mode check
+            if( ScInlineMode() && ScIpChecksumDrops() )
+            {
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                    "Dropping bad packet (IP checksum)\n"););
+                Active_DropPacket();
+            }
         }
     }
 
@@ -727,7 +730,7 @@ bool Ipv4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
     ho->ip_len = htons((uint16_t)out->end);
     ho->ip_csum = 0;
 
-    if ( forward(enc) )
+    if ( forward(enc->flags) )
     {
         ho->ip_src = hi->ip_src;
         ho->ip_dst = hi->ip_dst;

@@ -34,7 +34,7 @@
 #endif
 
 #ifdef PPM_MGR
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "cpuclock.h"
 #include "detection/detection_options.h"

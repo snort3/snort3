@@ -52,6 +52,7 @@
 #include "snort.h"
 #include "profiler.h"
 #include "framework/inspector.h"
+#include "utils/stats.h"
 
 THREAD_LOCAL SFPERF* perfmon_config = nullptr;
 

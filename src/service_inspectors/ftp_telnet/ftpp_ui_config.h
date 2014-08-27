@@ -41,10 +41,10 @@
 
 #include "ftpp_include.h"
 #include "hi_util_kmap.h"
-#include "ipv6_port.h"
 #include "sfrt/sfrt.h"
 #include "snort_bounds.h"
 #include "framework/bits.h"
+#include "sfip/sfip_t.h"
 
 /*
  * Defines

@@ -42,6 +42,8 @@ using namespace std;
 #include "framework/module.h"
 #include "detection/detection_defines.h"
 #include "actions/act_replace.h"
+#include "hash/sfhashfcn.h"
+#include "time/profiler.h"
 
 static void replace_parse(const char* args, string& s)
 {

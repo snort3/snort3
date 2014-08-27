@@ -39,6 +39,7 @@
 #include "parser/vars.h"
 #include "time/profiler.h"
 #include "helpers/markup.h"
+#include "utils/stats.h"
 
 using namespace std;
 

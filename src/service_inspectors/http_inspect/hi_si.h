@@ -44,8 +44,8 @@
 #include "hi_server.h"
 #include "hi_ad.h"
 
-#include "ipv6_port.h"
-#include "protocols/packet.h"
+#include "sfip/sfip_t.h"
+struct Packet;
 
 /*
 **  These are the defines for the different types of
@@ -63,7 +63,7 @@
 **  gets sent through the detection engine process (Normalization, 
 **  Detection).
 */
-typedef struct s_HI_SESSION
+struct HI_SESSION
 {
     /*
     **  The client construct contains all the info associated with a 
@@ -95,7 +95,7 @@ typedef struct s_HI_SESSION
 
     uint32_t norm_flags;
 
-} HI_SESSION;
+};
 
 #define HI_BODY 1 
 

@@ -32,11 +32,16 @@
  * @{
  */
 
-#include "ipv6_port.h"
-#include "sfghash.h"
-#include "sfxhash.h"
 #include "main/policy.h"
-#include "detection/rules.h"
+#include "actions/actions.h"
+
+struct SFGHASH;
+struct sfip_t;
+struct SnortConfig;
+
+// defined in utils/sflsq.h
+struct sf_list;
+typedef sf_list SF_LIST;
 
 // define to use over rate threshold
 #define SFRF_OVER_RATE
@@ -71,7 +76,7 @@ typedef enum {
 /* A threshold configuration object, created for each configured rate_filter.
  * These are created at initialization, and remain static.
  */
-typedef struct
+struct tSFRFConfigNode
 {
     // Internally generated unique threshold identity
     int      tid;
@@ -103,13 +108,13 @@ typedef struct
     // ip set to restrict rate_filter
     sfip_var_t* applyTo;
 
-} tSFRFConfigNode;
+};
 
 /* tSFRFSidNode acts as a container of gid+sid based threshold objects,
  * this allows multiple threshold objects to be applied to a single
  * gid+sid pair. This is static data elements, built at initialization.
  */
-typedef struct
+struct tSFRFSidNode
 {
     // List of threshold configuration nodes of type tSFRFConfigNode
     PolicyId policyId;
@@ -123,9 +128,9 @@ typedef struct
     // List of threshold configuration nodes of type tSFRFConfigNode
     SF_LIST* configNodeList;
 
-} tSFRFSidNode;
+};
 
-typedef struct
+struct tSFRFGenHashKey
 {
     ///policy identifier
     PolicyId policyId;
@@ -133,12 +138,12 @@ typedef struct
     // Signature id from configured threshold
     unsigned sid;
 
-} tSFRFGenHashKey;
+};
 
 
 /* Single global context containing rate_filter configuration nodes.
  */
-typedef struct _RateFilterConfig
+struct RateFilterConfig
 {
     /* Array of hash, indexed by gid. Each array element is a hash, which
      * is keyed on sid/policyId and data is a tSFRFSidNode node.
@@ -155,15 +160,13 @@ typedef struct _RateFilterConfig
 
     int internal_event_mask;
 
-} RateFilterConfig;
+};
 
 /*
  * Prototypes
  */
 void SFRF_Delete(void);
 void SFRF_Flush(void);
-
-struct SnortConfig;
 int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig *, tSFRFConfigNode* );
 
 int SFRF_TestThreshold(

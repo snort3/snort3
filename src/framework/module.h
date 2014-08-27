@@ -30,6 +30,7 @@
 #include <vector>
 #include <lua.hpp>
 
+#include "main/snort_types.h"
 #include "framework/value.h"
 #include "framework/parameter.h"
 #include "framework/counts.h"
@@ -51,7 +52,7 @@ struct RuleMap
 
 struct ProfileStats;
 
-class Module
+class SO_PUBLIC Module
 {
 public:
     virtual ~Module() { };

@@ -59,6 +59,7 @@
 #include "snort.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
+#include "events/event.h"
 
 /* full buf was chosen to allow printing max size packets
  * in hex/ascii mode:

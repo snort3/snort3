@@ -44,7 +44,8 @@
 #include <string.h>
 #include <netinet/in.h>
 
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
+#include "sfip/sf_ipvar.h"
 #include "sflsq.h"
 #include "sfghash.h"
 #include "sfxhash.h"

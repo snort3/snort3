@@ -22,7 +22,7 @@
 #define EXPECT_CACHE_H
 
 #include "protocols/packet.h"
-#include "ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 class FlowData;
 

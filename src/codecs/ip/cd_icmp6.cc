@@ -28,14 +28,15 @@
 
 #include "snort.h"
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
-#include "codecs/ip/checksum.h"
-
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
 #include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
+#include "codecs/decode_module.h"
+#include "codecs/codec_events.h"
+#include "codecs/ip/checksum.h"
+#include "codecs/ip/ip_util.h"
+#include "packet_io/active.h"
 
 
 namespace
@@ -138,8 +139,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         if(csum)
         {
             p->error_flags |= PKT_ERR_CKSUM_ICMP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad ICMP Checksum\n"););
-            codec_events::exec_icmp_chksm_drop(p);
+            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: BAD\n"););
+
+            if( ScInlineMode() && ScIcmpChecksumDrops() )
+                Active_DropPacket();
         }
         else
         {
@@ -387,7 +390,7 @@ bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
 
     ho = reinterpret_cast<IcmpHdr*>(out->base);
     ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
-    ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));   // port unreachable
+    ho->code = static_cast<uint8_t>(ip_util::get_icmp6_code(enc->type));   // port unreachable
     ho->cksum = 0;
     ho->unused = 0;
 

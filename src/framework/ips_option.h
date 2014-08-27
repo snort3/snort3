@@ -53,7 +53,7 @@ enum CursorActionType
     CAT_SET_COMMAND,
 };
 
-class IpsOption
+class SO_PUBLIC IpsOption
 {
 public:
     virtual ~IpsOption() { };

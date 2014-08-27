@@ -3,6 +3,9 @@ set (INCLUDES
     thread.h
     snort_debug.h
     snort_types.h
+    snort.h
+    snort_config.h
+    policy.h
 )
 
 add_library (main STATIC
@@ -13,14 +16,12 @@ add_library (main STATIC
     help.h
     modules.cc
     modules.h
-    policy.h
     policy.cc
     shell.h
     shell.cc
     snort.h
     snort.cc
     snort_debug.cc
-    snort_config.h
     snort_config.cc
     snort_module.h
     snort_module.cc
@@ -33,6 +34,7 @@ target_link_libraries(main
     time
     codecs
     detection
+    packet_io
 )
 
 install (FILES ${INCLUDES}

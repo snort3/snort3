@@ -40,6 +40,7 @@
 #include "log/text_log.h"
 #include "mstring.h"
 #include "snort.h"
+#include "utils/stats.h"
 
 #include <stdio.h>
 #include <stdlib.h>

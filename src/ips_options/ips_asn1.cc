@@ -67,8 +67,7 @@
 #include "protocols/packet.h"
 #include "parser.h"
 #include "util.h"
-#include "asn1.h"
-#include "asn1.h"
+#include "ips_options/asn1_util.h"
 #include "asn1_detect.h"
 #include "sfhashfcn.h"
 #include "detection/detection_util.h"
@@ -304,8 +303,8 @@ static const IpsApi asn1_api =
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    nullptr,
-    nullptr,
+    asn1_init_mem,
+    asn1_free_mem,
     nullptr,
     nullptr,
     asn1_ctor,

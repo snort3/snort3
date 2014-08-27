@@ -50,8 +50,8 @@
 #include "perf_base.h"
 #include "perf_flow.h"
 #include "perf_event.h"
-#include "snort_types.h"
-#include "snort_debug.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "main/thread.h"
 
@@ -97,7 +97,7 @@ typedef struct _SFPERF
 } SFPERF;
 
 
-extern THREAD_LOCAL SFBASE sfBase;
+SO_PUBLIC extern THREAD_LOCAL SFBASE sfBase;
 extern THREAD_LOCAL SFFLOW sfFlow;
 extern THREAD_LOCAL SFEVENT sfEvent;
 extern THREAD_LOCAL SFPERF* perfmon_config;

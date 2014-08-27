@@ -22,6 +22,7 @@
 #define THREAD_H
 
 #include <string>
+#include "main/snort_types.h"
 
 #define THREAD_LOCAL_TBD
 //#define THREAD_LOCAL
@@ -37,10 +38,10 @@
 void set_instance_id(unsigned);
 void set_instance_max(unsigned);
 
-unsigned get_instance_id();
-unsigned get_instance_max();
+SO_PUBLIC unsigned get_instance_id();
+SO_PUBLIC unsigned get_instance_max();
 
-const char* get_instance_file(std::string&, const char* name);
+SO_PUBLIC const char* get_instance_file(std::string&, const char* name);
 
 #endif
 

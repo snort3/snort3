@@ -30,6 +30,7 @@
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/arp.h"
+#include "protocols/packet.h"
 
 namespace
 {
@@ -116,24 +117,16 @@ bool ArpCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new ArpModule;
-}
+{ return new ArpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new ArpCodec();
-}
+{ return new ArpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi arp_api =
 {

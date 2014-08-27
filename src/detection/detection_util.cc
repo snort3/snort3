@@ -26,6 +26,7 @@
 #include "snort.h"
 #include "log/text_log.h"
 #include "actions/actions.h"
+#include "utils/stats.h"
 
 THREAD_LOCAL uint32_t http_mask;
 THREAD_LOCAL HttpBuffer http_buffer[HTTP_BUFFER_MAX];

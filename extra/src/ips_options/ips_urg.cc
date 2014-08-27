@@ -34,7 +34,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
-//#include "framework/range.h"
+#include "framework/range.h"
 #include "hash/sfhashfcn.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"
@@ -46,31 +46,6 @@ static const char* s_name = "urg";
 //#undef PERF_PROFILING
 
 static THREAD_LOCAL ProfileStats tcpUrgPerfStats;
-
-//-------------------------------------------------------------------------
-// range check
-//-------------------------------------------------------------------------
-// FIXIT-L this is a stub until we can use range.{h,cc}
-
-struct RangeCheck
-{
-    unsigned op, min, max;
-
-    RangeCheck()
-    { init(); };
-
-    void init()
-    { op = min = max = 0; };
-
-    bool operator==(const RangeCheck& rhs) const
-    { return ( op == rhs.op && min == rhs.min && max == rhs.max ); };
-
-    bool eval(unsigned up)
-    { return up == min; };
-
-    bool parse(const char* s)
-    { min = atoi(s); return true; };
-};
 
 //-------------------------------------------------------------------------
 // option 

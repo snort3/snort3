@@ -48,6 +48,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
 
 static THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
 static THREAD_LOCAL uint32_t base64_decode_size;

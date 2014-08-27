@@ -9,7 +9,6 @@ main.h
 if STATIC_INSPECTORS
 lib_list = \
 network_inspectors/arp_spoof/libarp_spoof.a \
-network_inspectors/port_scan/libport_scan.a \
 service_inspectors/back_orifice/libback_orifice.a \
 service_inspectors/ftp_telnet/libftp_telnet.a \
 service_inspectors/nhttp_inspect/libnhttp_inspect.a \
@@ -34,13 +33,13 @@ codecs/libcodecs.a \
 codecs/ip/libip_codecs.a \
 codecs/misc/libmisc_codecs.a \
 ${codec_list} \
-codecs/libcodec_utils.a \
 network_inspectors/libnetwork_inspectors.a \
 network_inspectors/binder/libbinder.a \
 network_inspectors/normalize/libnormalize.a \
 network_inspectors/perf_monitor/libperf_monitor.a \
 service_inspectors/libservice_inspectors.a \
 $(lib_list) \
+network_inspectors/port_scan/libport_scan.a \
 stream/base/libstream_base.a \
 stream/ip/libstream_ip.a \
 stream/icmp/libstream_icmp.a \

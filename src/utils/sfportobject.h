@@ -88,21 +88,21 @@ typedef struct _PortObjectItem_s {
 *      List of Ports mixed with Port Ranges
 */
 
-typedef struct { /* not used yet */ 
+struct PortList_x{ /* not used yet */
 	char           * name;      /* user name - always use strdup or malloc for this*/
     SF_LIST        * item_list; /* list of port and port-range items */
-}PortList_x;
+};
 
-typedef struct { 
+struct PortObject{
 	char           * name;      /* user name - always use strdup or malloc for this*/
 	int              id;        /* internal tracking - compiling sets this value */
     SF_LIST        * item_list; /* list of port and port-range items */
     SF_LIST        * rule_list; /* list of rules  */
     void           * data;      /* user data, PORT_GROUP based on rule_list - only used by any-any ports */
     void           (*data_free)(void *);
-}PortObject;
+};
 
-typedef struct  {
+struct PortObject2{
 	char           * name;      /* user name - always use strdup or malloc for this*/
 	int              id;        /* internal tracking - compiling sets this value */
     SF_LIST        * item_list; /* list of port and port-range items */
@@ -111,12 +111,12 @@ typedef struct  {
     BITOP          * bitop;     /* for collecting ports that use this object */
     void           * data;      /* user data, PORT_GROUP based on rule_hash  */
     void           (*data_free)(void *);
-}PortObject2;
+};
 
 /*
     Port Table
 */
-typedef struct _PortTable_s {
+struct PortTable {
 
     /* turns on group optimization, better speed-but more memory 
      * otherwise a single merged rule group is used.
@@ -160,9 +160,9 @@ typedef struct _PortTable_s {
     int large_multi_merges; /* >1 large object merged + some small objects */
     int non_opt_merges;
 
-}PortTable;
+};
 
-typedef struct {
+typedef struct RulePortTables{
 
     PortTable * tcp_src, * tcp_dst;
     PortTable * udp_src, * udp_dst;
@@ -195,7 +195,7 @@ typedef struct {
 #define POPERR_BAD_VARIABLE       11
 
 #define POP_MAX_BUFFER_SIZE 256
-typedef struct {
+struct POParser{
     const char * s;         /* current string pointer */
     int    slen;      /* bytes left in string */
     int    pos;       /* position in string of last GetChar() */
@@ -205,7 +205,7 @@ typedef struct {
     PortObject   * po_ref;
     SF_LNODE     * poi_pos;
     PortVarTable * pvTable;
-}POParser;
+};
 
 /*
 	Prototypes

@@ -61,7 +61,6 @@
 #include "snort.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
 #include "utils/sfportobject.h"
 #include "packet_io/active.h"

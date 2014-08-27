@@ -48,9 +48,7 @@ public:
 
 
 void DefaultCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(FINISHED_DECODE);
-}
+{ v.push_back(FINISHED_DECODE); }
 
 
 
@@ -60,14 +58,10 @@ void DefaultCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 
 static Codec* ctor(Module*)
-{
-    return new DefaultCodec();
-}
+{ return new DefaultCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi default_api =

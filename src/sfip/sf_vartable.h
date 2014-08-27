@@ -30,8 +30,11 @@
 #ifndef SF_VARTABLE_H
 #define SF_VARTABLE_H
 
-#include "sfip/ipv6_port.h"
-#include "sfip/sf_ipvar.h"
+#include <cstdio>
+#include "sfip/sf_returns.h"
+
+struct sfip_var_t;
+struct vartable_t;
 
 /* Allocates new variable table */
 vartable_t * sfvt_alloc_table(void);

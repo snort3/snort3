@@ -105,15 +105,15 @@
 #include <sys/types.h>
 #include "main/snort_debug.h"
 #include "sfrt/sfrt_trie.h"
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 typedef sfip_t *IP;
 typedef void* GENERIC;   /* To be replaced with a pointer to a policy */
-typedef struct
+struct tuple_t
 {
     word index;
     word length;
-} tuple_t;
+} ;
 
 
 #include "sfrt/sfrt_dir.h"

@@ -284,11 +284,11 @@ int AddUDPSession(SFBASE *sfBase);
 int RemoveUDPSession(SFBASE *sfBase);
 
 void UpdateWireStats(SFBASE *sfBase, int len, int dropped, int injected);
-void UpdateMPLSStats(SFBASE *sfBase, int len, int dropped);
 void UpdateIPFragStats(SFBASE *sfBase, int len);
 void UpdateIPReassStats(SFBASE *sfBase, int len);
 void UpdateStreamReassStats(SFBASE *sfBase, int len);
 void UpdateFilteredPacketStats(SFBASE *sfBase, unsigned int proto);
+SO_PUBLIC void UpdateMPLSStats(SFBASE *sfBase, int len, int dropped);
 
 void LogBasePerfHeader(FILE*);
 #endif

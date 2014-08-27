@@ -110,13 +110,4 @@ static const IpsApi classtype_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &classtype_api.base,
-    nullptr
-};
-#else
 const BaseApi* ips_classtype = &classtype_api.base;
-#endif
-

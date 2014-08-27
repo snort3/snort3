@@ -31,7 +31,7 @@
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "protocols/packet.h"
 
 
@@ -64,7 +64,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     const ip::IP6Frag* ip6frag_hdr = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
 
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_FRAGMENT);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    ip_util::CheckIPv6ExtensionOrder(p);
 
     if(raw_len < ip::MIN_EXT_LEN )
     {
@@ -113,13 +113,13 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     if (!(p->frag_offset))
     {
         // check header ordering of fragged (next) header
-        if ( ipv6_util::IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
-             ipv6_util::IPV6ExtensionOrder(IPPROTO_FRAGMENT) )
+        if ( ip_util::IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
+             ip_util::IPV6ExtensionOrder(IPPROTO_FRAGMENT) )
             codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
     }
 
     // check header ordering up thru frag header
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    ip_util::CheckIPv6ExtensionOrder(p);
 
     lyr_len = sizeof(ip::IP6Frag);
     p->ip_frag_len = (uint16_t)(raw_len - lyr_len);

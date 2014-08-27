@@ -39,6 +39,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "filters/detection_filter.h"
+#include "filters/sfthd.h"
 
 static const char* s_name = "detection_filter";
 
@@ -138,13 +139,4 @@ static const IpsApi detection_filter_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &detection_filter_api.base,
-    nullptr
-};
-#else
 const BaseApi* ips_detection_filter = &detection_filter_api.base;
-#endif
-

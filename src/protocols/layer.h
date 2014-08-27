@@ -23,7 +23,9 @@
 #define PROTOCOLS_LAYER_H
 
 #include <cstdint>
+#include "main/snort_types.h"
 #include "codecs/sf_protocols.h"
+
 
 struct Layer {
     uint16_t prot_id;
@@ -88,18 +90,18 @@ namespace layer
 
 // all of these functions will begin search from layer 0,
 // and will return the first function they find.
-const uint8_t* get_inner_layer(const Packet*, uint16_t proto);
-const uint8_t* get_outer_layer(const Packet*, uint16_t proto);
+SO_PUBLIC const uint8_t* get_inner_layer(const Packet*, uint16_t proto);
+SO_PUBLIC const uint8_t* get_outer_layer(const Packet*, uint16_t proto);
 
 
-const arp::EtherARP* get_arp_layer(const Packet*);
-const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
-const gre::GREHdr* get_gre_layer(const Packet*);
-const eapol::EtherEapol* get_eapol_layer(const Packet*);
-const eth::EtherHdr* get_eth_layer(const Packet*);
-const uint8_t* get_root_layer(const Packet* const);
+SO_PUBLIC const arp::EtherARP* get_arp_layer(const Packet*);
+SO_PUBLIC const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
+SO_PUBLIC const gre::GREHdr* get_gre_layer(const Packet*);
+SO_PUBLIC const eapol::EtherEapol* get_eapol_layer(const Packet*);
+SO_PUBLIC const eth::EtherHdr* get_eth_layer(const Packet*);
+SO_PUBLIC const uint8_t* get_root_layer(const Packet* const);
 /* return a pointer to the outermost UDP layer */
-const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
+SO_PUBLIC const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
 
 
 // ICMP with Embedded IP layer
@@ -110,10 +112,10 @@ const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
 // RETURN:
 //          true - ip layer found and api set
 //          false - ip layer NOT found, api reset
-bool set_api_ip_embed_icmp(const Packet*, ip::IpApi& api);
+SO_PUBLIC bool set_api_ip_embed_icmp(const Packet*, ip::IpApi& api);
 
 // a helper function when the api to be set is inside the packet
-bool set_api_ip_embed_icmp(const Packet* p);
+SO_PUBLIC bool set_api_ip_embed_icmp(const Packet* p);
 
 /*
  *When a protocol is embedded in ICMP, these functions
@@ -121,13 +123,13 @@ bool set_api_ip_embed_icmp(const Packet* p);
  * proto_bits before calling these function to determine
  * what this layer is!
  */
-const tcp::TCPHdr* get_tcp_embed_icmp(const ip::IpApi&);
-const udp::UDPHdr* get_udp_embed_icmp(const ip::IpApi&);
-const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
+SO_PUBLIC const tcp::TCPHdr* get_tcp_embed_icmp(const ip::IpApi&);
+SO_PUBLIC const udp::UDPHdr* get_udp_embed_icmp(const ip::IpApi&);
+SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
 
 
 
-int get_inner_ip_lyr(const Packet* const p);
+SO_PUBLIC int get_inner_ip_lyr(const Packet* const p);
 
 /*
  * Starting from layer 'curr_layer', continuing looking at increasingly
@@ -157,7 +159,7 @@ int get_inner_ip_lyr(const Packet* const p);
  * NOTE: This functions is extremely useful in a loop
  *          while (set_inner_ip_api(p, api, layer)) { ... }
  */
-bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
+SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
 
 /*
  * Identical to above function except will begin searching from the
@@ -167,7 +169,7 @@ bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
  *       layers (starting from the OUTERMOST layer), during the first call
  *       'curr_layer == 0'.
  */
-bool set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
+SO_PUBLIC bool set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
 
 
 } // namespace layer

@@ -27,6 +27,7 @@
 #include <string.h> // memcpy
 #include "framework/codec.h"
 #include "codecs/template_module.h"
+#include "protocols/packet.h"
 
 
 namespace

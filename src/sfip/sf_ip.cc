@@ -542,36 +542,6 @@ void sfip_free(sfip_t *ip) {
     if(ip) free(ip);
 }
 
-/* Returns 1 if the IP is non-zero. 0 otherwise */
-int sfip_is_loopback(const sfip_t *ip) {
-    const unsigned int *p;
-
-    ARG_CHECK1(ip, 0);
-
-    if(sfip_family(ip) == AF_INET) {
-        // 127.0.0.0/8 is IPv4 loopback
-        return (ip->ip8[0] == 0x7f);
-    }
-
-    p = ip->ip32;
-
-    /* Check the first 64 bits in an IPv6 address, and */
-    /* verify they're zero.  If not, it's not a loopback */
-    if(p[0] || p[1]) return 0;
-
-    /* Check if the 3rd 32-bit int is zero */
-    if ( p[2] == 0 ) {
-        /* ::7f00:0/104 is ipv4 compatible ipv6 */
-        /* ::1 is the IPv6 loopback */
-        return ( (ip->ip8[12] == 0x7f) || (ntohl(p[3]) == 0x1) );
-    }
-    /* Check the 3rd 32-bit int for a mapped IPv4 address */
-    if ( ntohl(p[2]) == 0xffff ) {
-        /* ::ffff:127.0.0.0/104 is IPv4 loopback mapped over IPv6 */
-        return ( ip->ip8[12] == 0x7f );
-    }
-    return 0;
-}
 
 int sfip_ismapped(const sfip_t *ip) {
     const unsigned int *p;

@@ -58,6 +58,7 @@
 #include "framework/ips_option.h"
 #include "managers/mpse_manager.h"
 #include "bitop_funcs.h"
+#include "detection/detection_defines.h"
 
 #ifdef INTEL_SOFT_CPM
 #include "search/intel_soft_cpm.h"

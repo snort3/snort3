@@ -21,11 +21,14 @@
 
 
 
+#include <arpa/inet.h>
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
+#include "protocols/packet.h"
+
 
 namespace
 {
@@ -127,8 +130,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     if (raw_len < sizeof(ERSpanType3Hdr))
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN3_DGRAM_LT_HDR,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(p, DECODE_ERSPAN3_DGRAM_LT_HDR);
         return false;
     }
 
@@ -138,8 +140,7 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if (erspan_version(erSpan3Hdr) != 0x02) /* Type 3 == version 0x02 */
     {
-        codec_events::decoder_alert_encapsulated(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH,
-                        raw_pkt, raw_len);
+        codec_events::decoder_event(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 
@@ -153,24 +154,16 @@ bool Erspan3Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Erspan3Module;
-}
+{ return new Erspan3Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new Erspan3Codec();
-}
+{ return new Erspan3Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi erspan3_api =

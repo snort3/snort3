@@ -32,7 +32,7 @@
 #include "main/snort.h"
 #include "detection/fpdetect.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 
 namespace
 {
@@ -84,7 +84,7 @@ bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     const IP6Route *rte = reinterpret_cast<const IP6Route *>(raw_pkt);
 
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_ROUTING);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    ip_util::CheckIPv6ExtensionOrder(p);
 
 
     if(raw_len < ip::MIN_EXT_LEN)

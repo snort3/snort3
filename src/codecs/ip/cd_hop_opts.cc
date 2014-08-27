@@ -28,7 +28,7 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
@@ -87,7 +87,7 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_HOPOPTS);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+    ip_util::CheckIPv6ExtensionOrder(p);
 
     lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
     next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
@@ -103,7 +103,7 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     p->ip6_extension_count++;
 
 
-    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
+    if ( ip_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
         return true;
     return false;
 }

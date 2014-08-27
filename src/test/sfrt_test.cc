@@ -27,6 +27,7 @@
 
 #include "snort_types.h"
 #include "sfrt/sfrt.h"
+#include "sfip/sf_ip.h"
 
 #define NUM_IPS 32
 #define NUM_DATA 4

@@ -38,7 +38,7 @@ void InitializeProtocolReferenceTable(void);
 void FreeProtoocolReferenceTable(void);
 
 int16_t AddProtocolReference(const char *protocol);
-int16_t FindProtocolReference(const char *protocol);
+SO_PUBLIC int16_t FindProtocolReference(const char *protocol);
 
 int16_t GetProtocolReference(struct Packet*);
 

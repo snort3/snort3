@@ -26,8 +26,6 @@
 #ifndef SFTHD_H
 #define SFTHD_H
 
-#include "ipv6_port.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -36,6 +34,7 @@
 #include "sfghash.h"
 #include "sfxhash.h"
 #include "main/policy.h"
+#include "sfip/sfip_t.h"
 
 /*!
     Max GEN_ID value - Set this to the Max Used by Snort, this is used for the
@@ -168,7 +167,7 @@ typedef struct {
 } THD_ITEM;
 
 // Temporary structure useful when parsing the Snort rules
-typedef struct _THDX_STRUCT
+struct THDX_STRUCT
 {
     unsigned gen_id;
     unsigned sig_id;
@@ -178,8 +177,7 @@ typedef struct _THDX_STRUCT
     int  count;
     unsigned int  seconds;
     sfip_var_t* ip_address;
-
-} THDX_STRUCT;
+};
 
 typedef struct {
 
@@ -196,14 +194,14 @@ typedef struct {
     Local and global threshold thd_id's are all unqiue, so we use just one
     ip_nodes lookup table
  */
-typedef struct _THD_STRUCT
+struct THD_STRUCT
 {
     SFXHASH *ip_nodes;   /* Global hash of active IP's key=THD_IP_NODE_KEY, data=THD_IP_NODE */
     SFXHASH *ip_gnodes;  /* Global hash of active IP's key=THD_IP_GNODE_KEY, data=THD_IP_GNODE */
 
-} THD_STRUCT;
+};
 
-typedef struct _ThresholdObjects
+struct ThresholdObjects
 {
     int count;  /* Total number of thresholding/suppression objects */
     SFGHASH *sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id */
@@ -218,7 +216,7 @@ typedef struct _ThresholdObjects
     THD_NODE* **sfthd_garray;
     PolicyId numPoliciesAllocated;
 
-} ThresholdObjects;
+};
 
 
 /*

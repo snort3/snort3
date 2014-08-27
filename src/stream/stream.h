@@ -30,8 +30,9 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
+#include "target_based/sftarget_protocol_reference.h"
+#include "framework/counts.h"
 #include "utils/bitop_funcs.h"
-#include "sfip/ipv6_port.h"
 #include "framework/inspector.h"
 
 #include "snort_types.h"
@@ -105,11 +106,14 @@ struct Stream5Config
     uint8_t service_filter[MAX_PROTOCOL_ORDINAL];
 };
 
+#if 0
+FIXIT-1 delete?
 typedef struct {
     PegCount  filtered;
     PegCount  inspected;
     PegCount  session_tracked;
 } tPortFilterStats;
+#endif
 
 struct SessionStats
 {

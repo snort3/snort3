@@ -34,7 +34,7 @@ struct StreamBuffer
 
 //-------------------------------------------------------------------------
 
-class StreamSplitter
+class SO_PUBLIC StreamSplitter
 {
 public:
     virtual ~StreamSplitter() { };

@@ -36,10 +36,11 @@
 #include "log.h"
 #include "event.h"
 #include "utils/sfportobject.h"
+#include "main/snort_types.h"
 
 /*  P R O T O T Y P E S  ******************************************************/
-extern THREAD_LOCAL int do_detect;
-extern THREAD_LOCAL int do_detect_content;
+extern SO_PUBLIC THREAD_LOCAL int do_detect;
+extern SO_PUBLIC THREAD_LOCAL int do_detect_content;
 
 #ifdef PERF_PROFILING
 extern THREAD_LOCAL ProfileStats eventqPerfStats;
@@ -49,7 +50,7 @@ extern THREAD_LOCAL ProfileStats detectPerfStats;
 /* detection/manipulation funcs */
 void snort_ignore(Packet*);
 void snort_inspect(Packet*);
-int Detect(Packet *);
+SO_PUBLIC int Detect(Packet *);
 void CallOutputPlugins(Packet *);
 int EvalPacket(ListHead *, int, Packet * );
 int EvalHeader(RuleTreeNode *, Packet *, int);

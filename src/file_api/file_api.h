@@ -37,6 +37,7 @@
 
 #include "libs/file_lib.h"
 #include "stream/stream_api.h"
+#include "main/snort_types.h"
 
 #define     ENABLE_FILE_TYPE_IDENTIFICATION      0x1
 #define     ENABLE_FILE_SIGNATURE_SHA256         0x2
@@ -48,14 +49,14 @@
 #define     FILE_RESUME_BLOCK                    0x01
 #define     FILE_RESUME_LOG                      0x02
 
-typedef struct s_FILE_LogState
+struct FILE_LogState
 {
     uint8_t *filenames;
     uint16_t file_logged;
     uint16_t file_current;
-} FILE_LogState;
+};
 
-typedef struct s_MAIL_LogState
+struct MAIL_LogState
 {
     void *log_hdrs_bkt;
     unsigned char *emailHdrs;
@@ -66,9 +67,9 @@ typedef struct s_MAIL_LogState
     uint8_t *senders;
     uint16_t snds_logged;
     FILE_LogState file_log;
-}MAIL_LogState;
+};
 
-typedef struct s_MAIL_LogConfig
+struct MAIL_LogConfig
 {
     uint32_t  memcap;
     char  log_mailfrom;
@@ -76,19 +77,19 @@ typedef struct s_MAIL_LogConfig
     char  log_filename;
     char  log_email_hdrs;
     uint32_t   email_hdrs_log_depth;
-}MAIL_LogConfig;
+};
 
 #define MAX_MIME_BOUNDARY_LEN  70  /* Max length of boundary string, defined in RFC 2046 */
 
-typedef struct _MimeBoundary
+struct MimeBoundary
 {
     char   boundary[2 + MAX_MIME_BOUNDARY_LEN + 1];  /* '--' + MIME boundary string + '\0' */
     int    boundary_len;
     void  *boundary_search;
 
-} MimeBoundary;
+};
 
-typedef struct _DecodeConfig
+struct DecodeConfig
 {
     int  max_mime_mem;
     int max_depth;
@@ -97,9 +98,9 @@ typedef struct _DecodeConfig
     int bitenc_depth;
     int uu_depth;
     int64_t file_depth;
-} DecodeConfig;
+};
 
-typedef struct _MimeState
+struct MimeState
 {
     int data_state;
     int state_flags;
@@ -111,7 +112,7 @@ typedef struct _MimeState
     MAIL_LogState *log_state;
     void *decode_bkt;
     void *log_mempool;
-} MimeState;
+};
 
 #define FILE_API_VERSION5 2
 
@@ -203,7 +204,7 @@ typedef struct _file_api
 } FileAPI;
 
 /* To be set by Stream5 */
-extern FileAPI *file_api;
+SO_PUBLIC extern FileAPI *file_api;
 extern File_type_done_func file_type_done;
 extern File_signature_done_func file_signature_done;
 extern Log_file_action_func log_file_action;

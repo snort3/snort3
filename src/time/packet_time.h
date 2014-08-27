@@ -28,8 +28,7 @@
 #endif
 
 #include <sys/time.h>
-
-#include "snort_types.h"
+#include <cstdint>
 
 void packet_time_update(const struct timeval *cur_tv);
 time_t packet_time(void);

@@ -50,12 +50,14 @@ include_directories(utils)
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
         arp_spoof
-        port_scan
         back_orifice
         ftp_telnet
+        nhttp_inspect
         rpc_decode
+        wizard
     )
 endif()
+
 
 if (STATIC_CODECS)
     set (STATIC_CODEC_LIBRARIES
@@ -114,6 +116,7 @@ target_link_libraries( snort
     service_inspectors
     stream
     ips_actions
+    port_scan
     managers
     codecs
     ip_codecs

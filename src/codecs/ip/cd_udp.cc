@@ -46,6 +46,8 @@
 #include "codecs/sf_protocols.h"
 #include "snort_config.h"
 #include "parser/config_file.h"
+#include "codecs/ip/ip_util.h"
+
 
 namespace
 {
@@ -283,7 +285,13 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
             p->error_flags |= PKT_ERR_CKSUM_UDP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad UDP Checksum\n"););
-            codec_events::exec_udp_chksm_drop(p);
+
+            if( ScInlineMode() && ScUdpChecksumDrops() )
+            {
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                    "Dropping bad packet (UDP checksum)\n"););
+                Active_DropPacket();
+            }
         }
         else
         {
@@ -381,7 +389,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         ho = reinterpret_cast<udp::UDPHdr*>(out->base);
 
-        if ( forward(enc) )
+        if ( forward(enc->flags) )
         {
             ho->uh_sport = hi->uh_sport;
             ho->uh_dport = hi->uh_dport;
@@ -438,7 +446,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         enc->proto = IPPROTO_ID_ICMPV4;
         ho->type = icmp::IcmpType::DEST_UNREACH;
-        ho->code = get_icmp4_code(enc->type);
+        ho->code = ip_util::get_icmp4_code(enc->type);
         ho->cksum = 0;
         ho->unused = 0;
 
@@ -480,7 +488,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         ho = reinterpret_cast<IcmpHdr*>(out->base);
         ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
-        ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));
+        ho->code = static_cast<uint8_t>(ip_util::get_icmp6_code(enc->type));
         ho->cksum = 0;
         ho->unused = 0;
 

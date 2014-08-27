@@ -10,16 +10,19 @@ ps_module.h \
 ipobj.cc \
 ipobj.h
 
-if STATIC_INSPECTORS
+# static due to dependance on functions throughout Snort++
+#if STATIC_INSPECTORS
+
 noinst_LIBRARIES = libport_scan.a
 libport_scan_a_SOURCES = $(file_list)
-else
-shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libport_scan.la
-libport_scan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libport_scan_la_LDFLAGS = -export-dynamic -shared
-libport_scan_la_SOURCES = $(file_list)
-endif
+
+#else
+#shlibdir = $(pkglibdir)/inspectors
+#shlib_LTLIBRARIES = libport_scan.la
+#libport_scan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#libport_scan_la_LDFLAGS = -export-dynamic -shared
+#libport_scan_la_SOURCES = $(file_list)
+#endif
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

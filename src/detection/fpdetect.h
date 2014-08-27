@@ -103,7 +103,7 @@ void otnx_match_data_init(int);
 void otnx_match_data_term();
 
 int fpAddMatch( OTNX_MATCH_DATA *omd_local, int pLen, OptTreeNode *otn);
-void fpEvalIpProtoOnlyRules(SF_LIST **, Packet *, uint8_t proto_id);
+SO_PUBLIC void fpEvalIpProtoOnlyRules(SF_LIST **, Packet *, uint8_t proto_id);
 OptTreeNode * GetOTN(uint32_t gid, uint32_t sid);
 
 #define TO_SERVER 1

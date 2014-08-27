@@ -28,8 +28,8 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "protocols/ipv4.h"
 #include "codecs/ip/checksum.h"
+#include "protocols/packet.h"
 
 namespace
 {
