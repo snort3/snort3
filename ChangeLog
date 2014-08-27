@@ -6,6 +6,8 @@
 -- fixed error / warning line number issue
 -- changed --conf-error-out to --pedantic
 -- more FIXIT-H fixed
+-- removed process.plugin_path and process.script_path since they are
+   needed ahead of parsing
 
 116
 -- fixed valgrind leak

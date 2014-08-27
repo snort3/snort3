@@ -325,7 +325,6 @@ static void SnortInit(int argc, char **argv)
 
     LogMessage("--------------------------------------------------\n");
 
-    // FIXIT-H config plugin_path won't work like this
     Shell::init();
     ModuleManager::init();
 

@@ -31,7 +31,7 @@
 
 typedef unsigned int PolicyId;
 
-// FIXIT-H split into separate modules
+// FIXIT-L split into separate headers
 
 //-------------------------------------------------------------------------
 // traffic stuff

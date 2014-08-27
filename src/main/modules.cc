@@ -864,9 +864,8 @@ static const Parameter daq_params[] =
     { "no_promisc", Parameter::PT_BOOL, nullptr, "false",
       "whether to put DAQ device into promiscuous mode" },
 
-    // FIXIT-H range determined by available plugins
-    { "name", Parameter::PT_STRING, nullptr, "pcap",
-      "select name of DAQ" },
+    { "type", Parameter::PT_STRING, nullptr, "pcap",
+      "select type of DAQ" },
 
     // FIXIT-L should be a list?
     { "var", Parameter::PT_STRING, nullptr, nullptr,
@@ -901,7 +900,7 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             sc->run_flags |= RUN_FLAG__NO_PROMISCUOUS;
     }
-    else if ( v.is("name") )
+    else if ( v.is("type") )
         ConfigDaqType(sc, v.get_string());
 
     else if ( v.is("var") )
@@ -1111,12 +1110,6 @@ static const Parameter process_params[] =
     { "set_uid", Parameter::PT_STRING, nullptr, nullptr,
       "set user ID (same as -u)" },
 
-    { "plugin_path", Parameter::PT_STRING, nullptr, nullptr,
-      "directory containing plugins (same as --plugin-path)" },
-
-    { "script_path", Parameter::PT_STRING, nullptr, nullptr,
-      "directory containing scripts (same as --scripts-path)" },
-
     { "umask", Parameter::PT_STRING, nullptr, nullptr,
       "set process umask (same as -m)" },
 
@@ -1153,12 +1146,6 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("set_uid") )
         ConfigSetUid(sc, v.get_string());
-
-    else if ( v.is("plugin_path") )
-        ConfigPluginPath(sc, v.get_string());
-
-    else if ( v.is("script_path") )
-        ConfigScriptPath(sc, v.get_string());
 
     else if ( v.is("umask") )
         ConfigUmask(sc, v.get_string());
@@ -1464,9 +1451,9 @@ static const Parameter rate_filter_params[] =
       "count interval" },
 
     { "new_action", Parameter::PT_SELECT,
-      // FIXIT-H range based on available action plugins
+      // FIXIT-L this list should be defined globally
       "alert | drop | log | pass | | reject | sdrop", "alert",
-      "restrict filter to these addresses according to track" },
+      "take this action on future hits until timeout" },
 
     { "timeout", Parameter::PT_INT, "0:", "1",
       "count interval" },
@@ -1599,7 +1586,7 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 // hosts module
 //-------------------------------------------------------------------------
 
-// FIXIT-H these are cloned from ip_module.cc and tcp_module.cc
+// FIXIT-L these are cloned from ip_module.cc and tcp_module.cc
 
 static const char* ip_policies =
     "first | linux | bsd | bsd_right |last | windows | solaris";
