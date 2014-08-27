@@ -9,7 +9,7 @@
 -- removed process.plugin_path and process.script_path since they are
    needed ahead of parsing
 -- added idle processing, though still as sketchy as Snort until alpha 2
--- pulled latest from Josh - hidden symbols, yay!;
+-- pulled latest from Josh - snort2lua tweaks and ... hidden symbols, yay!;
 -- made ips_dsize static only and changed RangeCheck to SO_PUBLIC so we can
    use just one copy
 
