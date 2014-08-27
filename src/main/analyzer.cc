@@ -32,7 +32,8 @@ using namespace std;
 typedef DAQ_Verdict
     (*PacketCallback)(void*, const DAQ_PktHdr_t*, const uint8_t*);
 
-static THREAD_LOCAL PacketCallback main_func = fail_open;
+// FIXIT-M add fail open capability
+static THREAD_LOCAL PacketCallback main_func = packet_callback;
 
 //-------------------------------------------------------------------------
 // analyzer
@@ -53,7 +54,6 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     ps->apply();
 
     snort_thread_init(source);
-    main_func = packet_callback;
 
     analyze();
 

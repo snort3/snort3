@@ -347,6 +347,9 @@ static const Parameter snort_params[] =
     { "--snaplen", Parameter::PT_INT, "68:65535", nullptr,
       "<snap> set snaplen of packet (same as -s)", },
 
+    { "--stdin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "read rules from stdin until EOF or a line with EOR is read", },
+
     { "--treat-drop-as-alert", Parameter::PT_IMPLIED, nullptr, nullptr,
       "converts drop, sdrop, and reject rules into alert rules during startup" },
 
@@ -649,6 +652,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--snaplen") )
         sc->pkt_snaplen = v.get_long();
+
+    else if ( v.is("--stdin-rules") )
+        sc->stdin_rules = true;
 
     else if ( v.is("--treat-drop-as-alert") )
         ConfigTreatDropAsAlert(sc, v.get_string());

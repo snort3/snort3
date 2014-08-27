@@ -168,7 +168,7 @@ struct SnortConfig
     char* respond_device;
     uint8_t *eth_dst;
 
-    const char* output;
+    char* output;
 
     //------------------------------------------------------
     // attribute tables stuff
@@ -212,6 +212,8 @@ struct SnortConfig
     char* run_prefix;
     bool id_subdir;
     bool id_zero;
+
+    bool stdin_rules;
 
     char pid_filename[STD_BUF];
     char *orig_log_dir;      /* set in case of chroot */

@@ -54,7 +54,7 @@ public:
     HttpSplitter(bool c2s);
     ~HttpSplitter();
 
-    PAF_Status scan(Flow*, const uint8_t* data, uint32_t len,
+    Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp);
 
     virtual bool is_paf() { return true; };

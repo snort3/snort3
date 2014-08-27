@@ -38,6 +38,7 @@
 #include <pwd.h>
 #include <fnmatch.h>
 
+#include <iostream>
 #include <string>
 
 #include "snort_bounds.h"
@@ -78,6 +79,7 @@
 #include "keywords.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
+#include "parse_stream.h"
 #include "vars.h"
 #include "target_based/sftarget_reader.h"
 
@@ -784,6 +786,12 @@ void ParseRules(SnortConfig *sc)
         {
             push_parse_location("rules");
             ParseConfigString(sc, p->rules.c_str());
+            pop_parse_location();
+        }
+        if ( sc->stdin_rules )
+        {
+            push_parse_location("stdin");
+            parse_stream(std::cin, sc);
             pop_parse_location();
         }
     }

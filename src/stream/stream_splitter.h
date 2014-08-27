@@ -17,7 +17,6 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 // stream_splitter.h author Russ Combs <rucombs@cisco.com>
-// for protocol aware flushing (PAF)
 
 #ifndef TCP_SPLITTER_H
 #define TCP_SPLITTER_H
@@ -26,15 +25,6 @@
 #include "main/thread.h"
 
 class Flow;
-
-enum PAF_Status // FIXIT-H move inside StreamSplitter
-{
-    PAF_ABORT,   // non-paf operation
-    PAF_START,   // internal use only
-    PAF_SEARCH,  // searching for next flush point
-    PAF_FLUSH,   // flush at given offset
-    PAF_SKIP     // skip ahead to given offset
-};
 
 struct StreamBuffer
 {
@@ -49,7 +39,16 @@ class SO_PUBLIC StreamSplitter
 public:
     virtual ~StreamSplitter() { };
 
-    virtual PAF_Status scan(
+    enum Status // FIXIT-H move inside StreamSplitter
+    {
+        ABORT,  // non-paf operation
+        START,  // internal use only
+        SEARCH, // searching for next flush point
+        FLUSH,  // flush at given offset
+        SKIP    // skip ahead to given offset
+    };
+
+    virtual Status scan(
         Flow*,
         const uint8_t* data,   // in order segment data as it arrives
         uint32_t len,          // length of data
@@ -92,7 +91,7 @@ public:
     AtomSplitter(bool, uint32_t size = 0);
     ~AtomSplitter();
 
-    PAF_Status scan(
+    Status scan(
         Flow*,
         const uint8_t* data,
         uint32_t len,

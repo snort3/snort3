@@ -58,7 +58,7 @@ AtomSplitter::AtomSplitter(bool b, uint32_t sz) : StreamSplitter(b)
 
 AtomSplitter::~AtomSplitter() { }
 
-PAF_Status AtomSplitter::scan(
+StreamSplitter::Status AtomSplitter::scan(
     Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp
 ) {
     bytes += len;
@@ -67,9 +67,9 @@ PAF_Status AtomSplitter::scan(
     if ( segs >= 2 && bytes >= min )
     {
         *fp = len;
-        return PAF_FLUSH;
+        return FLUSH;
     }
-    return PAF_SEARCH;
+    return SEARCH;
 }
 
 void AtomSplitter::reset()

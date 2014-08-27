@@ -89,11 +89,12 @@ static TokenType get_token(
         case 0:  // idle
             if ( strchr(punct, c) )
             {
-                s += c;
+                s = c;
                 return TT_PUNCT;
             }
             else if ( c == '#' )
             {
+                s = c;
                 comments++;
                 state = 1;
             }
@@ -129,7 +130,14 @@ static TokenType get_token(
         case 1:  // comment
             if ( c == '\n' )
             {
+                s.clear();
                 state = 0;
+            }
+            else if ( s.size() < 6 )
+            {
+                s += c;
+                if ( s == "#begin" )
+                    state = 8;
             }
             break;
         case 2:  // list
@@ -194,6 +202,19 @@ static TokenType get_token(
                 s += c;
                 state = 6;
             }
+            break;
+        case 8:
+            if ( c == '\n' )
+            {
+                s.clear();
+            }
+            else if ( s.size() < 4 )
+            {
+                s += c;
+                if ( s == "#end" )
+                    state = 1;
+            }
+            break;
         }
         c = is.get();
         chars++;
@@ -323,7 +344,7 @@ struct RuleParseState
 
 static void parse_body(const char*, RuleParseState&, struct SnortConfig*);
 
-static void exec(
+static bool exec(
     FsmAction act, string& tok,
     RuleParseState& rps, SnortConfig* sc)
 {
@@ -331,6 +352,8 @@ static void exec(
     {
     case FSM_ACT:
         //printf("\nparse act = %s\n", tok.c_str());
+        if ( tok == "END" )
+            return true;
         parse_rule_type(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_PRO:
@@ -433,6 +456,7 @@ static void exec(
     default:
         break;
     }
+    return false;
 }
 
 // parse_body() is called at the end of a stub rule to parse the detection
@@ -455,6 +479,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
         const State* s = get_state(num, type, tok);
 
         exec(s->action, tok, rps, sc);
+
         num = s->next;
         esc = (rps.key == "pcre");
 
@@ -481,7 +506,9 @@ void parse_stream(istream& is, struct SnortConfig* sc)
         //printf("%d: %s = '%s' -> %s\n",
         //    num, toks[type], tok.c_str(), acts[s->action]);
 
-        exec(s->action, tok, rps, sc);
+        if ( exec(s->action, tok, rps, sc) )
+            break;
+
         num = s->next;
         esc = (rps.key == "pcre");
 

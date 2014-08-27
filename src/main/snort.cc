@@ -191,7 +191,7 @@ static void SetupMetadataCallback(void)  // FIXDAQ
 #endif
 
 #if 0
-// FIXIT-H not yet used
+// FIXIT-H restart foo
 static void restart()
 {
     int daemon_mode = ScDaemonMode();
@@ -831,7 +831,6 @@ DAQ_Verdict ProcessPacket(
     return verdict;
 }
 
-// FIXIT-H need to call fail open from a different thread
 DAQ_Verdict fail_open(
     void*, const DAQ_PktHdr_t*, const uint8_t*)
 {

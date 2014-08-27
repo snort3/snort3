@@ -28,6 +28,7 @@
 using namespace std;
 
 #include "binder.h"
+#include "protocols/packet.h"
 
 THREAD_LOCAL SimpleStats bstats;
 
@@ -127,8 +128,13 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->nets = v.get_string();
 
     else if ( v.is("proto") )
-        work->proto = (BindProto)v.get_long();
-
+    {
+        const unsigned mask[] =
+        { 
+            PROTO_BIT__ALL, PROTO_BIT__IP, PROTO_BIT__ICMP, PROTO_BIT__TCP, PROTO_BIT__UDP
+        };
+        work->protos = mask[v.get_long()];
+    }
     else if ( v.is("ports") )
         v.get_bits(work->ports);
 

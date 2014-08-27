@@ -975,9 +975,9 @@ public:
     RpcSplitter(bool c2s) : StreamSplitter(c2s) { };
     ~RpcSplitter() { };
 
-    PAF_Status scan(Flow*, const uint8_t*, uint32_t,
+    Status scan(Flow*, const uint8_t*, uint32_t,
         uint32_t, uint32_t*)
-    { return PAF_SEARCH; };
+    { return SEARCH; };
 
     uint32_t max() { return MIN_CALL_BODY_SZ; };
 };

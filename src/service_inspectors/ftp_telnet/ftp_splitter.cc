@@ -26,7 +26,7 @@ FtpSplitter::~FtpSplitter() { }
 
 // flush at last line feed in data
 // preproc will deal with any pipelined commands
-PAF_Status FtpSplitter::scan (
+StreamSplitter::Status FtpSplitter::scan (
     Flow*, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
@@ -44,9 +44,9 @@ PAF_Status FtpSplitter::scan (
 #endif
 
     if ( !lf )
-        return PAF_SEARCH;
+        return SEARCH;
 
     *fp = lf - data + 1;
-    return PAF_FLUSH;
+    return FLUSH;
 }
 

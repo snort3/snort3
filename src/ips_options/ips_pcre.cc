@@ -329,6 +329,10 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
  syntax:
     free(free_me);
 
+    // ensure integrity from parse error to fatal error
+    if ( !pcre_data->expression )
+        pcre_data->expression = SnortStrdup("");
+
     ParseError("unable to parse pcre regex %s", data);
 }
 
