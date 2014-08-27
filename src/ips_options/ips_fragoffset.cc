@@ -184,7 +184,7 @@ static const IpsApi fragoffset_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    0, 0,  // FIXIT more than one fragoffset per rule?
+    1, 0,
     nullptr,
     nullptr,
     nullptr,

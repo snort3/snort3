@@ -63,7 +63,7 @@
 // public methods other than ctor / dtor must all be declared SO_PUBLIC
 //-------------------------------------------------------------------------
 
-Stream stream;  // FIXIT global for SnortContext
+Stream stream;  // FIXIT-L global for SnortContext
 
 Stream::Stream()
 {
@@ -845,7 +845,7 @@ void Stream::set_extra_data(
     Stream5SetExtraDataTcp(flow, p, flag);
 }
 
-// FIXIT get pv/flow from packet directly?
+// FIXIT-L get pv/flow from packet directly?
 void Stream::clear_extra_data(
     Flow* pv, Packet* p, uint32_t flag)
 {

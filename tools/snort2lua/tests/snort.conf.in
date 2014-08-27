@@ -1,0 +1,1257 @@
+
+# NOTE:  THIS FILE IS A VALID SNORT CONFIGURATION
+#
+#       Seriously, as hard this may be to believe, every configuration
+#       in this file is valid.  If you add anything, please keep it that
+#       way since Snort2lua expect a valid snort configuration
+#
+
+###################################################
+# Step #1: Set the network variables.  For more information, see README.variables
+###################################################
+
+# Setup the network addresses you are protecting
+ipvar HOME_NET any
+
+# Set up the external network addresses. Leave as "any" in most situations
+ipvar EXTERNAL_NET any
+
+# List of DNS servers on your network 
+ipvar DNS_SERVERS $HOME_NET
+
+# List of SMTP servers on your network
+ipvar SMTP_SERVERS $HOME_NET
+
+# List of web servers on your network
+ipvar HTTP_SERVERS $HOME_NET
+
+# List of sql servers on your network 
+ipvar SQL_SERVERS $HOME_NET
+
+# List of telnet servers on your network
+ipvar TELNET_SERVERS $HOME_NET
+
+# List of ssh servers on your network
+ipvar SSH_SERVERS $HOME_NET
+
+# List of ftp servers on your network
+ipvar FTP_SERVERS $HOME_NET
+
+# List of sip servers on your network
+ipvar SIP_SERVERS $HOME_NET
+
+# List of ports you run web servers on
+portvar HTTP_PORTS [80,81,311,383,591,593,901,1220,1414,1741,1830,2301,2381,2809,3037,3128,3702,4343,4848,5250,6988,7000,7001,7144,7145,7510,7777,7779,8000,8008,8014,8028,8080,8085,8088,8090,8118,8123,8180,8181,8243,8280,8300,8800,8888,8899,9000,9060,9080,9090,9091,9443,9999,11371,34443,34444,41080,50002,55555]
+
+# List of ports you want to look for SHELLCODE on.
+portvar SHELLCODE_PORTS !80
+
+# List of ports you might see oracle attacks on
+portvar ORACLE_PORTS 1024:
+
+# List of ports you want to look for SSH connections on:
+portvar SSH_PORTS 22
+
+# List of ports you run ftp servers on
+portvar FTP_PORTS [21,2100,3535]
+
+# List of ports you run SIP servers on
+portvar SIP_PORTS [5060,5061,5600]
+
+# List of file data ports for file inspection
+portvar FILE_DATA_PORTS [$HTTP_PORTS,110,143]
+
+# List of GTP ports for GTP preprocessor
+portvar GTP_PORTS [2123,2152,3386]
+
+
+# Valid in Snort, not valid in Snort++.  will result in an error
+#var 3DMZ_NETS [[10.1.1.1,10.1.1.2,10.2.0.0/16]]
+#var 3DMZ_PORTS 1035
+
+# other variables, these should not be modified
+ipvar AIM_SERVERS [64.12.24.0/23,64.12.28.0/23,64.12.161.0/24,64.12.163.0/24,64.12.200.0/24,205.188.3.0/24,205.188.5.0/24,205.188.7.0/24,205.188.9.0/24,205.188.153.0/24,205.188.179.0/24,205.188.248.0/24]
+
+var TEST_VAR [$AIM_SERVERS,1,2,3,4,5,6,7,8,9,10,11,12,13,14,$FTP_PORTS,15,16,17,18,19,$ORACLE_PORTS,$SSH_PORTS,$SIP_PORTS,$FILE_DATA_PORTS]
+
+# Path to your rules files (this can be a relative path)
+# Note for Windows users:  You are advised to make this an absolute path,
+# such as:  c:\snort\rules
+var RULE_PATH  @CMAKE_CURRENT_BINARY_DIR@/snort/rules
+var SO_RULE_PATH  @CMAKE_CURRENT_BINARY_DIR@/snort/rules/so_rules
+var PREPROC_RULE_PATH  @CMAKE_CURRENT_BINARY_DIR@/snort/rules/preproc_rules
+
+# If you are using reputation preprocessor set these
+# Currently there is a bug with relative paths, they are relative to where snort is
+# not relative to snort.conf like the above variables
+# This is completely inconsistent with how other vars work, BUG 89986
+# Set the absolute path appropriately
+var WHITE_LIST_PATH  @CMAKE_CURRENT_BINARY_DIR@/snort/rules
+var BLACK_LIST_PATH  @CMAKE_CURRENT_BINARY_DIR@/snort/rules
+
+###################################################
+# Step #2: Configure the decoder.  For more information, see README.decode
+###################################################
+
+# Stop generic decode events:
+config autogenerate_preprocessor_decoder_rules
+
+
+# Stop Alerts on invalid ip options
+
+
+# Configure IP / TCP checksum mode
+config checksum_mode: noip notcp noudp noicmp none all
+config checksum_drop: none noip notcp noicmp noudp ip tcp udp icmp all 
+
+# Configure maximum number of flowbit references.  For more information, see README.flowbits
+ config flowbits_size: 64
+
+# Configure ports to ignore 
+ config ignore_ports: tcp 21 6667:6671 1356
+ config ignore_ports: udp 1:17 53
+
+# Configure default snaplen. Snort defaults to MTU of in use interface. For more information see README
+config snaplen: 1450
+
+# Configure active response for non inline operation. For more information, see REAMDE.active
+#config response: en1 attempts 2
+
+# Configure DAQ related options for inline operation. For more information, see README.daq
+#
+# config daq: <type>
+# config daq_dir: <dir>
+# config daq_mode: <mode>
+# config daq_var: <var>
+#
+# <type> ::= pcap | afpacket | dump | nfq | ipq | ipfw
+# <mode> ::= read-file | passive | inline
+# <var> ::= arbitrary <name>=<value passed to DAQ
+# <dir> ::= path as to where to look for DAQ module so's
+
+config daq: pcap
+config daq_dir: /usr/local/lib/daq/
+config daq_mode: read-file
+config daq_var: blah=hah
+
+# Configure specific UID and GID to run snort as after dropping privs. For more information see snort -h command line options
+#
+#config set_gid: snort
+config set_uid: @UID@
+
+#config chroot: @CMAKE_CURRENT_BINARY_DIR@
+
+# Configure default bpf_file to use for filtering what traffic reaches snort. For more information see snort -h command line options (-F)
+#
+# config bpf_file:
+#
+config bpf_file: @CMAKE_CURRENT_BINARY_DIR@/filter
+config ipv6_frag: max_frag_sessions 22, \
+    frag_timeout 55, \
+    drop_bad_ipv6_frag off,drop_bad_ipv6_frag on, \
+    bad_ipv6_frag_alert on, bad_ipv6_frag_alert off, \
+    bsd_icmp_frag_alert off, bsd_icmp_frag_alert on
+
+# Configure default log directory for snort to log to.  For more information see snort -h command line options (-l)
+#
+# config logdir:
+
+config asn1: 111
+config alert_with_interface_name
+#config alertfile: alert_file.out
+config decode_esp: enable
+config enable_mpls_multicast
+config max_mpls_labelchain_len: 3
+config enable_mpls_overlapping_ip
+#config mpls_payload_type
+#config mpls_payload_type:
+config mpls_payload_type: ethernet
+#config mpls_payload_type: ipv4
+#config mpls_payload_type: ipv6
+
+config interface: 1
+config policy_version: 123
+config disable_ipopt_drops
+config disable_tcpopt_drops
+config disable_tcpopt_experimental_drops
+config disable_tcpopt_obsolete_drops
+config disable_ttcp_drops
+config enable_decode_drops
+config enable_tcpopt_drops
+config enable_tcpopt_experimental_drops
+config enable_tcpopt_obsolete_drops
+config enable_ttcp_drops
+config enable_tcpopt_ttcp_drops
+
+config addressspace_agnostic
+config disable-attribute-reload-thread
+config stateful
+config layer2resets: all
+config include_vlan_in_alerts
+config reference_net: 192.168.192.8/24
+config disable_inline_init_failopen
+#config quiet
+config dump-dynamic-rules-path: /usr/local/lib
+config pkt_count: 400
+config verbose:
+config dump_chars_only
+config dump_payload: still testing for bad arguments
+config dump_payload_verbose: test for bad arguments
+config show_year: blahblah
+config default_rule_state: DiSaBlEd
+config umask: 127
+config utc
+config event_trace: file,event_trace.out max_data,128
+config decode_data_link
+config log_ipv6_extra_data
+config flexresp2_interface: eth0
+config flexresp2_attempts: 4
+config flexresp2_memcap: 1000000
+config flexresp2_rows: 1000
+config disable_decode_alerts
+config disable_decode_drops
+config disable_ipopt_alerts
+config disable_tcpopt_alerts
+config disable_tcpopt_experimental_alerts
+config disable_tcpopt_obsolete_alerts
+config disable_tcpopt_ttcp_alerts
+config disable_ttcp_alerts
+config enable_decode_oversized_alerts
+config enable_decode_oversized_drops
+config enable_ipopt_drops
+config nopcre:
+config obfuscate
+config no_promisc
+config enable_deep_teredo_inspection
+config order: log alert drop pass   
+config tagged_packet_limit: 14
+config tunnel_verdicts: 4in6 6in4 gtp teredo
+config event_filter: memcap 1000000
+config threshold: memcap 1000001
+config rate_filter: memcap 1000002
+config detection_filter: memcap 1000003
+config max_metadata_services: 10
+config max_attribute_hosts: 2700
+config max_attribute_services_per_host: 80
+config min_ttl: 5
+config new_ttl: 8
+config nolog
+config react: @CMAKE_CURRENT_BINARY_DIR@/block.html
+config logdir: @CMAKE_CURRENT_BINARY_DIR@/
+config dirty_pig:
+config enable_gtp
+config vlan_agnostic
+config file: type_id,  signature,  file_type_depth   104800,  file_signature_depth  0  , show_data_depth 1,  file_block_timeout 60, file_lookup_timeout 30
+#config file: file_capture_memcap 1024, file_capture_max 2048, file_capture_min 512,file_capture_block_size 8192
+
+config policy_mode: tap
+event_filter gen_id 119,sig_id 404,type limit, track by_src, count 10,seconds 20
+rate_filter gen_id 119,sig_id 404, track by_src, count 10,seconds 20, timeout 50, new_action reject, apply_to [[2.3.4.5/24],!3.3.4.5/24]
+config paf_max: 00
+config ignore_ports: tcp 21 6667:6671 1356
+config ignore_ports: udp 1:17 53
+
+###################################################
+# Step #3: Configure the base detection engine.  For more information, see  README.decode
+###################################################
+
+
+# Configure PCRE match limitations
+config pcre_match_limit: 3500
+config pcre_match_limit_recursion: 1500
+
+# Configure the detection engine  See the Snort Manual, Configuring Snort - Includes - Config
+config detection: search-method ac-split \
+    search-method ac \
+    search-method ac-q \
+    search-method ac-nq \
+    split-any-any \
+    search-optimize \
+    max-pattern-len 20 \
+    no_stream_inserts \
+    max_queue_events 21 \
+    enable-single-rule-group \
+    bleedover-port-limit 22 \
+    debug-print-nocontent-rule-tests \
+    debug-print-rule-group-build-details
+
+config detection: search-method ac-bnfa \
+    search-method ac-bnfa-q \
+    search-method ac-bnfa-nq \
+    debug-print-rule-groups-compiled \
+    debug-print-rule-groups-uncompiled \
+    debug-print-rule-groups-compiled \
+    bleedover-warnings-enabled \
+    debug-print-fast-pattern
+
+config detection: search-method lowmem \
+    search-method lowmem-q \
+    search-method lowmem-nq \
+    debug
+
+
+config detection: search-method lowmem \
+    search-method lowmem-q \
+    search-method lowmem-nq
+
+config detection: search-method ac-banded \
+    search-method ac-std \
+    search-method acs \
+    search-method ac-sparsebands \
+    search-method mwm
+
+
+# Configure the event queue.  For more information, see README.event_queue
+config event_queue: max_queue,8,log 5,order_events content_length,process_all_events
+
+###################################################
+## Configure GTP if it is to be used.
+## For more information, see README.GTP
+####################################################
+
+attribute_table filename @CMAKE_CURRENT_LIST_DIR@/attribute_table.xml
+
+
+###################################################
+# Per packet and rule latency enforcement
+# For more information see README.ppm
+###################################################
+
+# Per Packet latency configuration
+config ppm: max-pkt-time 250, \
+   fastpath-expensive-packets, \
+   pkt-log, \
+   debug-pkts
+
+config ppm: pkt-log log, rule-log log
+config ppm: pkt-log alert, rule-log alert
+config ppm: pkt-log log alert
+
+# Per Rule latency configuration
+config ppm: max-rule-time 200, \
+   threshold 3, \
+   suspend-expensive-rules, \
+   suspend-timeout 20, \
+   rule-log alert log
+
+
+
+###################################################
+# Configure Perf Profiling for debugging
+# For more information see README.PerfProfiling
+###################################################
+
+
+config profile_preprocs: print 2, filename @CMAKE_CURRENT_BINARY_DIR@/profile_preprocs.out, \
+    sort total_ticks, \
+    sort checks, \
+    sort avg_ticks, \
+    sort total_ticks
+
+config profile_rules: print all, sort avg_ticks, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules.out append, \
+    sort checks, \
+    sort total_ticks, \
+    sort matches, \
+    sort nomatches, \
+    sort avg_ticks_per_match, \
+    sort avg_ticks_per_nomatch
+#config profile_rules: print -1, sort checks, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out append
+#config profile_rules: print 0, sort total_ticks, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out append
+#config profile_rules: print 1, sort matches, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+#config profile_rules: print 2, sort nomatches, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+#config profile_rules: print 3, sort avg_ticks_per_match, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+#config profile_rules: print 3, sort avg_ticks_per_nomatch, filename @CMAKE_CURRENT_BINARY_DIR@/profile_rules1.out
+
+
+###################################################
+# Configure protocol aware flushing
+# For more information see README.stream5
+###################################################
+
+###################################################
+# Step #4: Configure dynamic loaded libraries.  
+# For more information, see Snort Manual, Configuring Snort - Dynamic Modules
+###################################################
+
+# path to dynamic preprocessor libraries
+dynamicpreprocessor directory @CMAKE_CURRENT_BINARY_DIR@/snort/lib/snort_dynamicpreprocessor
+
+# path to base preprocessor engine
+dynamicengine @CMAKE_CURRENT_BINARY_DIR@/snort/lib/snort_dynamicengine/libsf_engine.so
+
+# path to dynamic rules libraries
+dynamicdetection directory @CMAKE_CURRENT_BINARY_DIR@/snort/lib/snort_dynamicrules
+
+###################################################
+# Step #5: Configure preprocessors
+# For more information, see the Snort Manual, Configuring Snort - Preprocessors
+###################################################
+
+# GTP Control Channle Preprocessor. For more information, see README.GTP
+preprocessor gtp: ports { 2123 3386 2152 }
+
+# Inline packet normalization. For more information, see README.normalize
+# Does nothing in IDS mode
+preprocessor normalize_ip4: df rf tos trim
+preprocessor normalize_tcp: ips ecn stream ecn packet trim trim_rst trim_syn trim_mss trim_win opts \
+    req_urg req_pay req_urp urp pad rsv block, allow sack, md5, conn_count, echo, partial_order, alt_checksum 17 18 19 20
+preprocessor normalize_icmp4
+preprocessor normalize_ip6
+preprocessor normalize_icmp6
+
+# Target-based IP defragmentation.  For more inforation, see README.frag3
+preprocessor frag3_global : \
+    max_frags 8193,memcap 9008, \
+    prealloc_memcap 9009, \
+    prealloc_frags 9010, \
+    disabled
+
+preprocessor frag3_engine: \
+    policy last \
+    policy bsd \
+    policy bsd-right \
+    policy first \
+    policy windows \
+    policy linux \
+    policy solaris \
+    detect_anomalies \
+    overlap_limit 10 \
+    min_fragment_length 100 \
+    timeout 0 \
+    timeout 180 \
+    min_ttl 2 \
+    bind_to 192.1.2.7/24
+
+
+# Target-Based stateful inspection/stream reassembly.  For more inforation, see README.stream5
+preprocessor stream5_global: track_tcp yes, \
+    track_udp yes, \
+    track_icmp no, \
+    track_ip yes, \
+    max_tcp 130000, \
+    max_udp 130001, \
+    max_ip 130002, \
+    max_active_responses 2, \
+    min_response_seconds 5, \
+    memcap 1073741824, \
+    max_icmp 66666, \
+    flush_on_alert, \
+    show_rebuilt_packets, \
+    prune_log_max 2048, \
+    disabled, \
+    tcp_cache_nominal_timeout 180, \
+    tcp_cache_pruning_timeout 120, \
+    udp_cache_pruning_timeout 121, \
+    udp_cache_nominal_timeout 181
+#    enable_ha
+
+preprocessor stream5_tcp: policy windows, \
+   #preprocessor stream5_tcp: policy linux, detect_anomalies, require_3whs 180, \
+    detect_anomalies, \
+    require_3whs 180,require_3whs, \
+    overlap_limit 10, \
+    small_segments 3 bytes 160, \
+    small_segments 3 bytes 150 ignore_ports 33 44 55, \
+    small_segments 5 bytes 170 ignore_ports 66 77, \
+    max_window 256, \
+    timeout 180, \
+    use_static_footprint_sizes, \
+    dont_store_large_packets, \
+    check_session_hijacking, \
+    dont_reassemble_async, \
+    max_queued_bytes 4096, \
+    max_queued_segs 2048, \
+    ports client 21 22 23 25 42 53 79 109 110 111 113 119 135 136 137 139 143 \
+        161 445 513 514 587 593 691 1433 1521 1741 2100 3306 6070 6665 6666 6667 6668 6669 \
+        7000 8181 32770 32771 32772 32773 32774 32775 32776 32777 32778 32779, \
+    ports both 80 81 311 383 443 465 563 591 593 636 901 989 992 993 994 995 1220 1414 1830 2301 2381 2809 3037 3128 3702 4343 4848 5250 6988 7907 7000 7001 7144 7145 7510 7802 7777 7779 \
+        7801 7900 7901 7902 7903 7904 7905 7906 7908 7909 7910 7911 7912 7913 7914 7915 7916 \
+        7917 7918 7919 7920 8000 8008 8014 8028 8080 8085 8088 8090 8118 8123 8180 8243 8280 8300 8800 8888 8899 9000 9060 9080 9090 9091 9443 9999 11371 34443 34444 41080 50002 55555, \
+    ports server 66 77 88 99, \
+    ignore_any_rules, \
+    flush_factor 10, \
+    protocol both ftp-data ftp http_inspect testing takes forever, \
+    protocol server ftp, \
+    policy bsd, \
+    policy first, \
+    policy irix, \
+    policy last, \
+    policy linux, \
+    policy macos, \
+    policy old-linux, \
+    policy solaris, \
+    policy windows, \
+    policy vista, \
+    policy unknown, \
+    policy noack, \
+    policy hpux, \
+    policy hpux10, \
+    policy win2003, \
+    policy win2k3, \
+    policy hpux11, \
+    policy grannysmith
+#    ignore_any_rules, \
+
+
+preprocessor stream5_tcp: policy windows, \
+    bind_to 192.1.2.6
+
+preprocessor stream5_udp: timeout 180, ignore_any_rules
+
+preprocessor stream5_ip: timeout 180
+
+# performance statistics.  For more information, see the Snort Manual, Configuring Snort - Preprocessors - Performance Monitor
+preprocessor perfmonitor: \
+    flow \
+    file  @CMAKE_CURRENT_BINARY_DIR@/snort.stats.dlt \
+    flow-file    @CMAKE_CURRENT_BINARY_DIR@/snort.flow_file.dlt \
+    flow-ip-file @CMAKE_CURRENT_BINARY_DIR@/snort.flow_ip_file.dlt \
+    console \
+    max_file_size 210000000 \
+    time 300 \
+    pktcnt 10000 \
+    events \
+    max \
+    atexitonly base-stats flow-stats flow-ip-stats events-stats \
+    flow-ports 1021 \
+    accumulate \
+    flow-ip
+#    flow-ip-memcap 1000
+#    snortfile @CMAKE_CURRENT_BINARY_DIR@/snort.snotfile.dlt \
+#    reset
+
+# HTTP normalization and anomaly detection.  For more information, see README.http_inspect
+preprocessor http_inspect: global \
+    compress_depth 65535 \
+    decompress_depth 65535 \
+    b64_decode_depth 9000 \
+    qp_decode_depth 9001 \
+    bitenc_decode_depth 9002 \
+    uu_decode_depth 9003 \
+    max_mime_mem 9004 \
+    iis_unicode_map @CMAKE_CURRENT_LIST_DIR@/unicode.map 1252 \
+    detect_anomalous_servers \
+    proxy_alert \
+    memcap 9005 \
+    max_gzip_mem 9006 \
+    disabled 
+#    iis_unicode_map /etc/unicode.map 1252 \
+
+preprocessor http_inspect_server: server default \
+    iis_unicode_map @CMAKE_CURRENT_LIST_DIR@/unicode.map 1252 \
+    http_methods { GET POST PUT SEARCH MKCOL COPY MOVE LOCK UNLOCK NOTIFY POLL BCOPY BDELETE BMOVE LINK UNLINK OPTIONS HEAD DELETE TRACE TRACK CONNECT SOURCE SUBSCRIBE UNSUBSCRIBE PROPFIND PROPPATCH BPROPFIND BPROPPATCH RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA RPC_OUT_DATA RPC_ECHO_DATA } \
+    chunk_length 500000 \
+    flow_depth -1 \
+    server_flow_depth 0 \
+    client_flow_depth 0 \
+    post_depth 65495 \
+    oversize_dir_length 500 \
+    max_header_length 750 \
+    max_headers 100 \
+    max_spaces 200 \
+    small_chunk_length { 10 5 } \
+    ports { 80 81 311 383 591 593 901 1220 1414 1741 1830 2301 2381 2809 3037 3128 3702 4343 4848 5250 6988 7000 7001 7144 7145 7510 7777 7779 8000 8008 8014 8028 8080 8085 8088 8090 8118 8123 8180 8181 8243 8280 8300 8800 8888 8899 9000 9060 9080 9090 9091 9443 9999 11371 34443 34444 41080 50002 55555 } \
+    non_rfc_char { 0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 } \
+    enable_cookie \
+    extended_response_inspection \
+    inspect_gzip \
+    normalize_utf \
+    unlimited_decompress \
+    normalize_javascript \
+    apache_whitespace no \
+    ascii no \
+    bare_byte no \
+    directory no \
+    double_decode no \
+    iis_backslash no \
+    iis_delimiter no \
+    iis_unicode no \
+    multi_slash no \
+    utf_8 no \
+    u_encode yes \
+    webroot no \
+    enable_xff \
+    max_javascript_whitespaces 199 \
+    extended_ascii_uri \
+    no_pipeline_req \
+    non_strict \
+    allow_proxy_use \
+    no_alerts \
+    inspect_uri_only \
+    tab_uri_delimiter \
+    normalize_headers \
+    normalize_cookies \
+    log_uri \
+    log_hostname \
+    whitespace_chars { a b c } \
+    decompress_pdf { deflate }
+
+
+preprocessor http_inspect_server: server { 10.15.36.100/24 10.15.36.103 }  profile all ports { 80 8080 8180 } oversize_dir_length 200 normalize_headers normalize_cookies enable_cookie
+
+# ONC-RPC normalization and anomaly detection.  For more information, see the Snort Manual, Configuring Snort - Preprocessors - RPC Decode
+preprocessor rpc_decode: \
+    111 32770 32771 32772 32773 32774 32775 32776 32777 32778 32779 \
+    no_alert_multiple_requests \
+    alert_fragments \
+    no_alert_large_fragments \
+    no_alert_incomplete
+
+
+# Back Orifice detection.
+preprocessor bo
+
+# FTP / Telnet normalization and anomaly detection.  For more information, see README.ftptelnet
+preprocessor ftp_telnet: global inspection_type stateful encrypted_traffic no check_encrypted
+
+preprocessor ftp_telnet_protocol: telnet \
+    ayt_attack_thresh 20 \
+    normalize \
+    ports { 23 } \
+    detect_anomalies
+
+
+var BLAH1 ACCT
+
+preprocessor ftp_telnet_protocol: ftp server default \
+    def_max_param_len 100 \
+    ports { 21 2100 3535 } \
+    telnet_cmds no \
+    print_cmds \
+    ignore_telnet_erase_cmds yes \
+    data_chan \
+    ignore_data_chan yes \
+    ftp_cmds { ABOR $BLAH1 ADAT ALLO APPE AUTH CCC CDUP } \
+    ftp_cmds { CEL CLNT CMD CONF CWD DELE ENC EPRT } \
+    ftp_cmds { EPSV ESTA ESTP FEAT HELP LANG LIST LPRT } \
+    ftp_cmds { LPSV MACB MAIL MDTM MIC MKD MLSD MLST } \
+    ftp_cmds { MODE NLST NOOP OPTS PASS PASV PBSZ PORT } \
+    ftp_cmds { PROT PWD QUIT REIN REST RETR RMD RNFR } \
+    ftp_cmds { RNTO SDUP SITE SIZE SMNT STAT STOR STOU } \
+    ftp_cmds { STRU SYST TEST TYPE USER XCUP XCRC XCWD } \
+    ftp_cmds { XMAS XMD5 XMKD XPWD XRCP XRMD XRSQ XSEM } \
+    ftp_cmds { XSEN XSHA1 XSHA256 } \
+    alt_max_param_len 0 { ABOR CCC CDUP ESTA FEAT LPSV NOOP PASV PWD QUIT REIN STOU SYST XCUP XPWD } \
+    alt_max_param_len 200 { ALLO APPE CMD HELP NLST RETR RNFR STOR STOU XMKD } \
+    alt_max_param_len 256 { CWD RNTO } \
+    alt_max_param_len 400 { PORT } \
+    alt_max_param_len 512 { SIZE } \
+    chk_str_fmt { ACCT ADAT ALLO APPE AUTH CEL CLNT CMD } \
+    chk_str_fmt { CONF CWD DELE ENC EPRT EPSV ESTP HELP } \
+    chk_str_fmt { LANG LIST LPRT MACB MAIL MDTM MIC MKD } \
+    chk_str_fmt { MLSD MLST MODE NLST OPTS PASS PBSZ PORT } \
+    chk_str_fmt { PROT REST RETR RMD RNFR RNTO SDUP SITE } \
+    chk_str_fmt { SIZE SMNT STAT STOR STRU TEST TYPE USER } \
+    chk_str_fmt { XCRC XCWD XMAS XMD5 XMKD XRCP XRMD XRSQ } \ 
+    chk_str_fmt { XSEM XSEN XSHA1 XSHA256 } \
+    cmd_validity ALLO < int [ char R int ] > \    
+    cmd_validity EPSV < [ { char 12 | char A char L char L } ] > \
+    cmd_validity MACB < string > \
+    cmd_validity MDTM < [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string > \
+    cmd_validity MDTM < [ date nnnnnnnnnnnnnn[.n[n[n[.n]]]] ] string > \
+    cmd_validity MDTM < [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string > \
+    cmd_validity MODE < char ASBCZ > \
+    cmd_validity PORT < host_port > \
+    cmd_validity PROT < char CSEP > \
+    cmd_validity STRU < char FRPO [ string ] > \    
+    cmd_validity TYPE < { char AE [ char NTC ] | char I | char L [ number ] } > \
+    data_chan_cmds { PORT PASV EPSV } \
+    data_xfer_cmds { RETR STOR STOU } \
+    file_put_cmds { STOR STOU } \
+    file_get_cmds { RETR } \
+    alt_max_param_len 256 { MDTM }
+
+
+
+preprocessor ftp_telnet_protocol: ftp client default \
+    max_resp_len 256 \
+    bounce yes \
+    ignore_telnet_erase_cmds yes \
+    telnet_cmds yes \
+    bounce_to { 192.168.1.1,20020 192.168.1.2,20020,20040 fe8::5,59340 192.168.1.3,20020 192.168.1.4,20030  }
+
+preprocessor ftp_telnet_protocol: ftp client { \
+        10.4.11.91/24 10.4.11.91 } bounce yes
+
+
+preprocessor ftp_telnet_protocol: ftp client { 10.4.11.91/24 10.4.11.91 } \
+   bounce yes
+
+
+preprocessor ftp_telnet_protocol: ftp server { fe80::0219:b9ff:fe29:ffff:0a04:0b88/96 fe80::0219:b9ff:fe29:ffff:0a04:0b88 } \
+   def_max_param_len 100 \
+   alt_max_param_len 200 { CWD } \
+   chk_str_fmt { USER PASS RNFR RNTO SITE MKD } \
+   telnet_cmds yes \
+   data_chan
+
+# TODO:  add once this is included in Snort++
+#preprocessor smtp: \
+#    ports { 25 465 587 691 } \
+#    inspection_type stateful \
+#    b64_decode_depth 0 \
+#    qp_decode_depth 0 \
+#    bitenc_decode_depth 0 \
+#    uu_decode_depth 0 \
+#    log_mailfrom \
+#    log_rcptto \
+#    log_filename \
+#    log_email_hdrs \
+#    normalize cmds \
+#    normalize_cmds { ATRN AUTH BDAT CHUNKING DATA DEBUG EHLO EMAL ESAM ESND ESOM ETRN EVFY } \
+#    normalize_cmds { EXPN HELO HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SOML } \
+#    normalize_cmds { X-EXPS X-LINK2STATE XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR } \
+#    max_command_line_len 512 \
+#    max_header_line_len 1000 \
+#    max_response_line_len 512 \
+#    alt_max_command_line_len 260 { MAIL } \
+#    alt_max_command_line_len 300 { RCPT } \
+#    alt_max_command_line_len 500 { HELP HELO ETRN EHLO } \
+#    alt_max_command_line_len 255 { EXPN VRFY ATRN SIZE BDAT DEBUG EMAL ESAM ESND ESOM EVFY IDENT NOOP RSET } \
+#    alt_max_command_line_len 246 { SEND SAML SOML AUTH TURN ETRN DATA RSET QUIT ONEX QUEU STARTTLS TICK TIME TURNME VERB X-EXPS X-LINK2STATE XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR } \
+#    valid_cmds { ATRN AUTH BDAT CHUNKING DATA DEBUG EHLO EMAL ESAM ESND ESOM ETRN EVFY } \ 
+#    valid_cmds { EXPN HELO HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SOML } \
+#    valid_cmds { STARTTLS TICK TIME TURN TURNME VERB VRFY X-ADAT X-DRCP X-ERCP X-EXCH50 } \
+#    valid_cmds { X-EXPS X-LINK2STATE XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR } \
+#    xlink2state { enabled } \
+#    no_alerts
+
+# Portscan detection.  For more information, see README.sfportscan
+preprocessor sfportscan: \
+    proto  { tcp udp icmp ip all all } \
+    scan_type { portscan portsweep decoy_portscan distributed_portscan all } \
+    sense_level { low medium high } \
+    memcap  { 10000000 } \
+    watch_ip { !1.2.3.4,1.2.3.5,1.2.3.6 } \
+    ignore_scanners { [[2.3.4.5/24 6000],!3.3.4.5/24 7000-8000] }  \
+    ignore_scanned { !4.5.6.7/8 9-10 }\
+    disabled \
+    logfile { @CMAKE_CURRENT_BINARY_DIR@/portscan_test.log } \
+    include_midstream \
+    detect_ack_scans
+
+# at sense_level
+
+# ARP spoof detection.  For more information, see the Snort Manual - Configuring Snort - Preprocessors - ARP Spoof Preprocessor
+preprocessor arpspoof: -unicast
+preprocessor arpspoof_detect_host: 192.168.40.1 f0:0f:00:f0:0f:00
+preprocessor arpspoof_detect_host: 192.168.40.2 f0:0f:00:f0:0f:00
+preprocessor arpspoof_detect_host: 192.168.40.3 f0:0f:00:f0:0f:00
+
+# TODO:  add once this is included in Snort++
+#preprocessor ssh: server_ports { 22 } \
+#                  autodetect \
+#                  max_client_bytes 19600 \
+#                  max_encrypted_packets 20 \
+#                  max_server_version_len 100 \
+#                  enable_respoverflow enable_ssh1crc32 \
+#                  enable_srvoverflow enable_protomismatch
+
+# TODO: Add once this is included in Snort++
+#preprocessor dcerpc2: memcap 102400, events [co ]
+#preprocessor dcerpc2_server: default, policy WinXP, \
+#    detect [smb [139,445], tcp 135, udp 135, rpc-over-http-server 593], \
+#    autodetect [tcp 1025:, udp 1025:, rpc-over-http-server 1025:], \
+#    smb_max_chain 3, smb_invalid_shares ["C$", "D$", "ADMIN$"]
+
+#
+# TODO: Add once this is included in Snort++
+#preprocessor dns: ports { 53 } enable_rdata_overflow
+
+
+# TODO: Add once this is included in Snort++
+#preprocessor ssl: ports { 443 465 563 636 989 992 993 994 995 7801 7802 7900 7901 7902 7903 7904 7905 7906 7907 7908 7909 7910 7911 7912 7913 7914 7915 7916 7917 7918 #7919 7920 }, trustservers, noinspect_encrypted
+
+# TODO: Add once this is included in Snort++
+#preprocessor sensitive_data: alert_threshold 25
+
+# TODO: Add once this is included in Snort++
+#preprocessor sip: max_sessions 40000, \
+#   ports { 5060 5061 5600 }, \
+#   methods { invite \
+#             cancel \
+#             ack \
+#             bye \
+#             register \
+#             options \
+#             refer \
+#             subscribe \
+#             update \
+#             join \
+#             info \
+#             message \
+#             notify \
+#             benotify \
+#             do \
+#             qauth \
+#             sprack \
+#             publish \
+#             service \
+#             unsubscribe \
+#             prack }, \
+#   max_uri_len 512, \
+#   max_call_id_len 80, \
+#   max_requestName_len 20, \
+#   max_from_len 256, \
+#   max_to_len 256, \
+#   max_via_len 1024, \
+#   max_contact_len 512, \
+#   max_content_len 2048 
+
+# TODO:  add after imap is a part of Snort++
+#preprocessor imap: \
+#   ports { 143 } \
+#   b64_decode_depth 0 \
+#   qp_decode_depth 0 \
+#   bitenc_decode_depth 0 \
+#   uu_decode_depth 0
+
+# TODO:  add after pop is a part of Snort++
+#preprocessor pop: \
+#   ports { 110 } \
+#   b64_decode_depth 0 \
+#   qp_decode_depth 0 \
+#   bitenc_decode_depth 0 \
+#   uu_decode_depth 0
+
+# TODO:  add once this is included in Snort++
+#preprocessor modbus: ports { 502 }
+
+# TODO:  add once this is included in Snort++
+#preprocessor dnp3: ports { 20000 } \
+#   memcap 262144 \
+#   check_crc
+
+# TODO:  add after pop is a part of Snort++
+#preprocessor reputation: \
+#   memcap 500, \
+#   priority whitelist, \
+#   nested_ip inner, \
+#   whitelist $WHITE_LIST_PATH/white_list.rules, \
+#   blacklist $BLACK_LIST_PATH/black_list.rules 
+
+
+# TODO:  add after pop is a part of Snort++
+#preprocessor file_inspect: type_id,signature, \
+#    capture_memory; \
+#    capture_disk @CMAKE_CURRENT_BINARY_DIR@, \
+#    capture_disk @CMAKE_CURRENT_BINARY_DIR@ 2048, \
+#    capture_network localhost 8001;  \
+#    capture_queue_size 50001, \
+#    blacklist @CMAKE_CURRENT_BINARY_DIR@/tst.txt, \
+#    greylist @CMAKE_CURRENT_BINARY_DIR@/tst.txt;verdict_delay 400
+
+
+###################################################
+# Step #6: Configure output plugins
+# For more information, see Snort Manual, Configuring Snort - Output Modules
+###################################################
+
+# unified2 
+# Recommended for most installs
+output unified2: filename merged.log, limit 128, nostamp,mpls_event_types,, vlan_event_types
+
+# Additional configuration for specific types of installs
+output alert_unified2: filename snort.alert, limit 128, nostamp, mpls_event_types, vlan_event_types
+output log_unified2: filename snort.log, limit 128, nostamp, mpls_event_types, vlan_event_types
+
+output alert_syslog: host=10.1.1.1:514, log_auth log_alert log_pid
+output alert_syslog: host=10.1.1.2:514, log_auth log_alert
+output alert_syslog: host=10.1.1.3:514, log_auth 
+output alert_syslog: HOST=10.1.1.3:514
+output alert_syslog: log_auth log_alert log_pid
+output alert_syslog: log_auth log_alert
+output alert_syslog: log_auth
+output alert_syslog:
+
+output alert_syslog: log_auth log_emerg log_cons
+output alert_syslog: log_authpriv log_alert log_cons
+output alert_syslog: log_daemon log_crit log_ndelay
+output alert_syslog: log_local0 log_err log_ndelay
+output alert_syslog: log_local1 log_warning log_perror
+output alert_syslog: log_local2 log_notice log_perror
+output alert_syslog: log_local3 log_info log_pid
+output alert_syslog: log_local4 log_debug log_pid
+output alert_syslog: log_local5 log_notice log_perror
+output alert_syslog: log_local6 log_info log_pid
+output alert_syslog: log_local7 log_debug log_pid
+output alert_syslog: log_user log_info log_pid
+
+
+
+# syslog
+output alert_syslog: LOG_AUTH LOG_ALERT
+
+# pcap
+output log_tcpdump: tcpdump.log0 500
+output log_tcpdump: tcpdump.log1 500K
+output log_tcpdump: tcpdump.log2 500M
+output log_tcpdump: tcpdump.log3 500G
+output log_tcpdump: tcpdump.log4 501k
+output log_tcpdump: tcpdump.log5 501m
+output log_tcpdump: tcpdump.log6 501g
+output log_tcpdump: tcpdump.log7
+output log_tcpdump:
+
+
+output alert_fast: @CMAKE_CURRENT_BINARY_DIR@/alert_fast1.dlt packet 51K
+output alert_fast: @CMAKE_CURRENT_BINARY_DIR@/alert_fast2.dlt packet 52G
+output alert_fast: @CMAKE_CURRENT_BINARY_DIR@/alert_fast3.dlt 53M
+output alert_fast: @CMAKE_CURRENT_BINARY_DIR@/alert_fast4.dlt
+output alert_fast:
+output alert_fast: @CMAKE_CURRENT_BINARY_DIR@/alert_fast6.dlt 57
+
+
+output alert_full: @CMAKE_CURRENT_BINARY_DIR@/alert_full1.dlt 51
+output alert_full: @CMAKE_CURRENT_BINARY_DIR@/alert_full2.dlt 52K
+output alert_full: @CMAKE_CURRENT_BINARY_DIR@/alert_full3.dlt 53M
+output alert_full: @CMAKE_CURRENT_BINARY_DIR@/alert_full4.dlt 54G
+output alert_full: @CMAKE_CURRENT_BINARY_DIR@/alert_full5.dlt
+output alert_full:
+
+output alert_unixsock:
+
+output alert_csv:
+output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv1.dlt
+output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv2.dlt default
+output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv3.dlt timestamp,sig_generator,sid_id,sig_rev,msg,proto,src,srcport,dst,dstport,ethsrc,ethdst,ethlen,tcpflags,tcpseq,tcpack,tcplen,tcpwindow,ttl,tos,id,dgmlen,iplen,icmptype,icmpcode,icmpid,icmpseq  63
+output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv4.dlt default,icmptype,icmpcode,icmpid 64K
+output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv5.dlt default,icmptype,icmpcode,icmpid 65M
+output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv6.dlt default,icmptype,icmpcode,icmpid 66G
+
+output log_null:
+
+output alert_test:
+output alert_test: stdout,session ,   rebuilt,msg
+output alert_test: file @CMAKE_CURRENT_BINARY_DIR@/alert_test1.dlt,session,rebuilt,msg
+output alert_test: file,session,rebuilt,msg
+
+
+# metadata reference data.  do not modify these lines
+include @CMAKE_CURRENT_LIST_DIR@/classification.config
+include @CMAKE_CURRENT_LIST_DIR@/reference.config
+
+###################################################
+# Step #7: Customize your rule set
+# For more information, see Snort Manual, Writing Snort Rules
+#
+# NOTE: All categories are enabled in this conf file
+###################################################
+
+# site specific rules
+#include $RULE_PATH/local.rules
+
+#include $RULE_PATH/app-detect.rules
+#include $RULE_PATH/attack-responses.rules
+#include $RULE_PATH/backdoor.rules
+#include $RULE_PATH/bad-traffic.rules
+#include $RULE_PATH/blacklist.rules
+#include $RULE_PATH/botnet-cnc.rules
+#include $RULE_PATH/browser-chrome.rules
+#include $RULE_PATH/browser-firefox.rules
+#include $RULE_PATH/browser-ie.rules
+#include $RULE_PATH/browser-other.rules
+#include $RULE_PATH/browser-plugins.rules
+#include $RULE_PATH/browser-webkit.rules
+#include $RULE_PATH/chat.rules
+#include $RULE_PATH/content-replace.rules
+#include $RULE_PATH/ddos.rules
+#include $RULE_PATH/dns.rules
+#include $RULE_PATH/dos.rules
+#include $RULE_PATH/experimental.rules
+#include $RULE_PATH/exploit-kit.rules
+#include $RULE_PATH/exploit.rules
+#include $RULE_PATH/file-executable.rules
+#include $RULE_PATH/file-flash.rules
+#include $RULE_PATH/file-identify.rules
+#include $RULE_PATH/file-image.rules
+#include $RULE_PATH/file-multimedia.rules
+#include $RULE_PATH/file-office.rules
+#include $RULE_PATH/file-other.rules
+#include $RULE_PATH/file-pdf.rules
+#include $RULE_PATH/finger.rules
+#include $RULE_PATH/ftp.rules
+#include $RULE_PATH/icmp-info.rules
+#include $RULE_PATH/icmp.rules
+#include $RULE_PATH/imap.rules
+#include $RULE_PATH/indicator-compromise.rules
+#include $RULE_PATH/indicator-obfuscation.rules
+#include $RULE_PATH/indicator-shellcode.rules
+#include $RULE_PATH/info.rules
+#include $RULE_PATH/malware-backdoor.rules
+#include $RULE_PATH/malware-cnc.rules
+#include $RULE_PATH/malware-other.rules
+#include $RULE_PATH/malware-tools.rules
+#include $RULE_PATH/misc.rules
+#include $RULE_PATH/multimedia.rules
+#include $RULE_PATH/mysql.rules
+#include $RULE_PATH/netbios.rules
+#include $RULE_PATH/nntp.rules
+#include $RULE_PATH/oracle.rules
+#include $RULE_PATH/os-linux.rules
+#include $RULE_PATH/os-other.rules
+#include $RULE_PATH/os-solaris.rules
+#include $RULE_PATH/os-windows.rules
+#include $RULE_PATH/other-ids.rules
+#include $RULE_PATH/p2p.rules
+#include $RULE_PATH/phishing-spam.rules
+#include $RULE_PATH/policy-multimedia.rules
+#include $RULE_PATH/policy-other.rules
+#include $RULE_PATH/policy.rules
+#include $RULE_PATH/policy-social.rules
+#include $RULE_PATH/policy-spam.rules
+#include $RULE_PATH/pop2.rules
+#include $RULE_PATH/pop3.rules
+#include $RULE_PATH/protocol-finger.rules
+#include $RULE_PATH/protocol-ftp.rules
+#include $RULE_PATH/protocol-icmp.rules
+#include $RULE_PATH/protocol-imap.rules
+#include $RULE_PATH/protocol-pop.rules
+#include $RULE_PATH/protocol-services.rules
+#include $RULE_PATH/protocol-voip.rules
+#include $RULE_PATH/pua-adware.rules
+#include $RULE_PATH/pua-other.rules
+#include $RULE_PATH/pua-p2p.rules
+#include $RULE_PATH/pua-toolbars.rules
+#include $RULE_PATH/rpc.rules
+#include $RULE_PATH/rservices.rules
+#include $RULE_PATH/scada.rules
+#include $RULE_PATH/scan.rules
+#include $RULE_PATH/server-apache.rules
+#include $RULE_PATH/server-iis.rules
+#include $RULE_PATH/server-mail.rules
+#include $RULE_PATH/server-mssql.rules
+#include $RULE_PATH/server-mysql.rules
+#include $RULE_PATH/server-oracle.rules
+#include $RULE_PATH/server-other.rules
+#include $RULE_PATH/server-webapp.rules
+#include $RULE_PATH/shellcode.rules
+#include $RULE_PATH/smtp.rules
+#include $RULE_PATH/snmp.rules
+#include $RULE_PATH/specific-threats.rules
+#include $RULE_PATH/spyware-put.rules
+#include $RULE_PATH/sql.rules
+#include $RULE_PATH/telnet.rules
+#include $RULE_PATH/tftp.rules
+#include $RULE_PATH/virus.rules
+#include $RULE_PATH/voip.rules
+#include $RULE_PATH/web-activex.rules
+#include $RULE_PATH/web-attacks.rules
+#include $RULE_PATH/web-cgi.rules
+#include $RULE_PATH/web-client.rules
+#include $RULE_PATH/web-coldfusion.rules
+#include $RULE_PATH/web-frontpage.rules
+#include $RULE_PATH/web-iis.rules
+#include $RULE_PATH/web-misc.rules
+#include $RULE_PATH/web-php.rules
+#include $RULE_PATH/x11.rules
+
+###################################################
+# Step #8: Customize your preprocessor and decoder alerts
+# For more information, see README.decoder_preproc_rules
+###################################################
+
+# decoder and preprocessor event rules
+# include $PREPROC_RULE_PATH/preprocessor.rules
+# include $PREPROC_RULE_PATH/decoder.rules
+# include $PREPROC_RULE_PATH/sensitive-data.rules
+
+###################################################
+# Step #9: Customize your Shared Object Snort Rules
+# For more information, see http://vrt-blog.snort.org/2009/01/using-vrt-certified-shared-object-rules.html
+###################################################
+
+# dynamic library rules
+# include $SO_RULE_PATH/bad-traffic.rules
+# include $SO_RULE_PATH/chat.rules
+# include $SO_RULE_PATH/dos.rules
+# include $SO_RULE_PATH/exploit.rules
+# include $SO_RULE_PATH/icmp.rules
+# include $SO_RULE_PATH/imap.rules
+# include $SO_RULE_PATH/misc.rules
+# include $SO_RULE_PATH/multimedia.rules
+# include $SO_RULE_PATH/netbios.rules
+# include $SO_RULE_PATH/nntp.rules
+# include $SO_RULE_PATH/p2p.rules
+# include $SO_RULE_PATH/smtp.rules
+# include $SO_RULE_PATH/snmp.rules
+# include $SO_RULE_PATH/specific-threats.rules
+# include $SO_RULE_PATH/web-activex.rules
+# include $SO_RULE_PATH/web-client.rules
+# include $SO_RULE_PATH/web-iis.rules
+# include $SO_RULE_PATH/web-misc.rules
+
+# Event thresholding or suppression commands. See threshold.conf 
+#include threshold.conf
+###
+
+suppress gen_id 123,sig_id 3
+suppress gen_id 123, sig_id 4
+suppress gen_id 123, sig_id 5
+suppress gen_id 123, sig_id 8,track by_src, ip 192.168.1.9/24
+suppress gen_id 123, sig_id 9,track by_src, ip [192.168.1.9/24,192.168.1.10/24]
+
+
+
+# Why is this failing section
+
+
+alert tcp any 80 -> any any (msg:"content detected in chunk"; file_data;content:"nt network testing facility";within:30; sid:1000039;)
+
+
+
+
+alert tcp any any -> any 25 (                    \
+       msg:"Lorem Ipsum?";                      \
+       flow:established,to_server;              \
+       file_data; content:"sollicitudin"; nocase;          \
+       sid:42000009; rev:1; priority:1;         \
+)
+
+
+
+alert tcp $EXTERNAL_NET any -> $SMTP_SERVERS 25 (msg:"BROWSER-IE Microsoft Internet Explorer saveHistory use after free attempt"; flow:to_server,established; file_data; content:"behavior"; nocase; content:"url"; within:5; nocase; content:"#savehistory"; distance:0; fast_pattern; nocase; content:".outerHTML"; distance:0; nocase; pcre:"/<\s*meta[^>]*?(?>content\s*=\s*"history"[^>]*?name\s*=\s*"save"|name\s*=\s*"save"[^>]*?content\s*=\s*"history")\s*>.*?<\s*style[^>]*?>.*?\.(?P<class>\w+)\s*\{[^}]*?behavior\s*\:[^\;]*?url\s*\x28[^\x29]*?#savehistory[^\x29]*?\x29.*?(?P<element>\w+)\.outerHTML\s*=.*?id\s*=\s*[\x22\x27](?P=element)[\x22\x27].*?class=[\x22\x27]?(?P=class)[\x23\x27]?/ims"; metadata:policy balanced-ips drop, policy security-ips drop, service smtp; reference:cve,2013-0088; reference:url,technet.microsoft.com/en-us/security/bulletin/ms13-021; classtype:attempted-dos; sid:26133; rev:3;) 
+
+
+# content
+# rawbytes
+alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; \
+    content:"jedi request"; nocase; offset:4; depth:20; rawbytes; \
+    content:"jedi request2"; nocase; distance:150; http_cookie; http_header; \
+    content:"jedi request3"; within:150; http_client_body; \
+    sid:1000060; gid:1; rev:6;)
+
+
+alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; \
+    content:"http_client_body"; http_client_body; \
+    content:"http_cookie"; http_cookie; \
+    content:"http_raw_cookie"; http_raw_cookie; \
+    content:"http_header"; http_header; \
+    content:"http_raw_header"; http_raw_header; \
+    content:"http_method"; http_method; \
+    content:"http_uri"; http_uri; \
+    content:"http_raw_uri"; http_raw_uri; \
+    content:"http_stat_code"; http_stat_code; \
+    content:"http_stat_msg"; http_stat_msg; \
+    sid:7034; gid:1; rev:6;)
+
+
+alert tcp any any -> any any (msg:"la di da"; \
+    content:"fast_parttern"; fast_pattern:only ; \
+    sid:7035; gid:1; rev:6;)
+
+alert tcp any any -> any any (msg:"fast_pattern offset length"; \
+    content:"fast_parttern"; fast_pattern:1,5; \
+    sid:7036; gid:1; rev:6;)
+
+
+alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"uricontent"; \
+    uricontent:"jedi request"; nocase; offset:4; depth:20; \
+    sid:7037; gid:1; rev:6;)
+
+alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"uricontent"; \
+    uricontent:"jedi request"; nocase; within:30; distance:50; \
+    sid:7038; gid:1; rev:6;)
+
+alert tcp any any <> any 80 (msg:"MD5 Alert"; \
+    protected_content:"293C9EA246FF9985DC6F62A650F78986"; hash:md5; offset:0; length:4; gid:1; sid:1000040)
+    
+alert tcp any any <> any 80 (msg:"SHA256 Alert"; \
+    protected_content:"56D6F32151AD8474F40D7B939C2161EE2BBF10023F4AF1DBB3E13260EBDC6342"; \
+    hash:sha256; offset:0; length:4; gid:2; sid:1000041)
+
+
+alert tcp $HOME_NET any -> $EXTERNAL_NET [80,443,8200] (msg:"APP-DETECT GoToMyPC local service running"; flow:to_server,established; content:"jedi request"; nocase;  sid:7033; rev:6; gid:1 )
+
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"WEB-CLIENT csv file download request"; flow:to_server, established; content:"GET"; nocase; uricontent:".csv"; nocase; flowbits:set,csv.download; flowbits:noalert; metadata:service http; reference:cve,2008-0112; reference:url,www.microsoft.com/technet/security/Bulletin/MS08-014.mspx; classtype:misc-activity; sid:13584; rev:2;)
+
+alert tcp $EXTERNAL_NET any -> $HOME_NET 3389 (msg:"APP-DETECT remote desktop protocol attempted administrator connection request"; content:"|E0|"; depth:1; offset:5; content:"mstshash=Administr"; distance:0; nocase; reference:bugtraq,14259; reference:cve,2005-1218; reference:url,technet.microsoft.com/en-us/security/bulletin/MS05-041; classtype:misc-activity; sid:4060; rev:8;)
+
+
+alert ( msg:"DECODE_ICMP4_DST_BROADCAST"; sid:1000042; gid:1; rev:1; metadata:rule-type decode, service http, rule-flushing enabled; classtype:misc-activity; )
+alert ( msg:"DECODE_ICMP4_TYPE_OTHER"; sid:1000043; gid:1; rev:1; metadata:rule-type decode; classtype:misc-activity; )
+
+drop tcp $EXTERNAL_NET 554 -> $HOME_NET any (msg:"MULTIMEDIA Windows Media Player malicious playlist buffer overflow attempt"; sid:14252; gid:3; rev:9; classtype:attempted-user; flowbits:isset,file.wmp_playlist; reference:cve,2008-2253; reference:url,technet.microsoft.com/en-us/security/bulletin/MS08-054; metadata: engine shared, soid 3|14252, policy balanced-ips drop, policy security-ips drop;)
+
+
+# PCRE
+
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"APP-DETECT Amazon Kindle 3.0 User-Agent string requested"; flow:to_server,established; content:"Kindle/3.0+"; fast_pattern:only; http_header; pcre:"/^User-Agent\x3A[^\r\n]+Kindle\x2F3\x2E0\x2B/Hsmi"; flowbits:set,kindle.request; flowbits:noalert; metadata:service http; classtype:misc-activity; sid:23616; rev:4;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET 1978 (msg:"APP-DETECT Apple OSX Remote Mouse usage"; flow:to_server,established; content:"mos "; fast_pattern:only; pcre:"/mos\s{2}\dm\s\d/"; reference:url,pastebin.com/F81NCiYE; classtype:policy-violation; sid:20443; rev:2;)
+alert tcp $EXTERNAL_NET !22 -> $HOME_NET any (msg:"APP-DETECT SSH server detected on non-standard port"; flow:to_client,established; content:"SSH-"; depth:4; nocase; pcre:"/^SSH-[12]\.\d+/smi"; reference:url,www.ietf.org/rfc/rfc4251.txt; classtype:protocol-command-decode; sid:13586; rev:4;)
+alert tcp $HOME_NET 143 -> $EXTERNAL_NET any (msg:"APP-DETECT failed IMAP login attempt - invalid username/password"; flow:to_client,established; content:"NO LOGIN"; fast_pattern:only; pcre:"/^\s*\w+\s+NO LOGIN/smi"; metadata:policy security-ips alert, service imap; reference:url,www.ietf.org/rfc/rfc3501.txt; classtype:misc-activity; sid:13359; rev:7;)
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"APP-DETECT Google Desktop activity"; flow:to_server,established; content:"User-Agent|3A|"; nocase; http_header; content:"Google"; nocase; http_header; content:"Desktop"; nocase; http_header; pcre:"/User-Agent\x3A[^\n\r]+Google[^\n\r]+Desktop/smiH"; metadata:service http; classtype:policy-violation; sid:7861; rev:6;)
+alert udp $HOME_NET any -> $EXTERNAL_NET 5060 (msg:"APP-DETECT Gizmo register VOIP state"; content:"INVITE sip|3A|"; nocase; content:"User-Agent|3A|"; nocase; content:"Gizmo"; fast_pattern:only; pcre:"/^User-Agent\x3A[^\n\r]+Gizmo/smi"; reference:url,www.gizmoproject.com; classtype:policy-violation; sid:6407; rev:4;)
+
+
+# Fragbits
+alert ip $EXTERNAL_NET any -> $HOME_NET any (msg:"DOS IGMP dos attack"; fragbits:M+; ip_proto:2; reference:bugtraq,514; reference:cve,1999-0918; reference:url,www.microsoft.com/technet/security/bulletin/MS99-034.mspx; classtype:attempted-dos; sid:1000044; rev:11;)
+
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"ET SCAN NMAP -f -sF"; fragbits:!M; dsize:0; flags:F,12; ack:0; window:2048; classtype:attempted-recon; reference:url,doc.emergingthreats.net/2000543; reference:url,www.emergingthreats.net/cgi-bin/cvsweb.cgi/sigs/SCAN/SCAN_NMAP; sid:2000543; rev:6;)
+
+alert tcp $EXTERNAL_NET any -> $SMTP_SERVERS 25 \
+        (msg:"BROWSER-IE Microsoft multiple product toStaticHTML XSS attempt"; \
+        flow:to_server,established; file_data; content:"<style"; fast_pattern:only; \
+        pcre:"/<\s*style\s*>\s*\w+\s*\{\s*(\w+|\w+-\w+)\s*\:\s*\w+\s*\(.*?(\s*\x27\s*|\s*\&\#39\;\s*|\s*\&\#x27\;\s*|\s*\\u0027\;\s*){1}.*?\)\s*(\s*\x27\s*|\s*\&\#39\;\s*|\s*\&\#x27\;\s*|\s*\\u0027\;\s*){3,}.*?\}|(\s*\x27\s*|\s*\&\#39\;\s*|\s*\&\#x27\;\s*|\s*\\u0027\;\s*){1,}.*?\}\s*(\s*\x27\s*|\s*\&\#39\;\s*|\s*\&\#x27\;\s*|\s*\\u0027\;\s*){3,}/smi"; \
+        metadata:service smtp; reference:cve,2012-1858; reference:cve,2012-2520; \
+        reference:url,technet.microsoft.com/en-us/security/bulletin/MS12-037; \
+        reference:url,technet.microsoft.com/en-us/security/bulletin/MS12-039; \
+        reference:url,technet.microsoft.com/en-us/security/bulletin/MS12-050; \
+        reference:url,technet.microsoft.com/en-us/security/bulletin/MS12-066; \
+        classtype:attempted-user; sid:23137; rev:7;)
+
+
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; sid:1000001; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode; base64_data; sid:1000002; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:relative; base64_data; sid:1000003; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:bytes 12, offset 6, relative; base64_data; sid:1000004; gid:1)
+alert tcp any any -> any any (msg:"test base64_decode"; base64_decode:offset 7; sid:1000005; gid:1)
+alert tcp any any <> any any (base64_decode:bytes 10,offset 8,relative; sid:1000007; gid:1)
+
+
+alert tcp any any -> any any (msg:"test base64_decode"; asn1: bitstring_overflow; sid:1000010; gid:1)
+
+alert tcp any any <> any any (msg:"blahblahblah";file_data:mime;sid:1000045)
+alert tcp any any <> any any (file_data:mime;msg:"blahblahblah";sid:1000046)
+
+
+rule_state 1000001 1 enabled drop
+rule_state 1000002,1,disabled,alert
+rule_state 1000003 1,disabled sdrop
+rule_state 1000004 1, enabled sdrop
+
+
+alert tcp any any -> any 80 ( sid:1000047; threshold:type limit, track by_src, count 1 , seconds 60; gid: 119;  )
+alert tcp any any -> any 80 ( sid:1000048; gid:1; threshold:type limit, track by_src, count 1 , seconds 60 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000049; gid:1 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; sid:1000050; gid:1 )
+alert tcp any any -> any 80 ( threshold:type limit, track by_src, count 1 , seconds 60; content:"blah"; gid:1; sid:1000051 )
+
+include @CMAKE_CURRENT_LIST_DIR@/file_magic.conf
+
+
+#alert tcp any any -> any any (msg:"pdf"; file_type:PDF; sid:1000051; flow:established,to_client;)
+
+
+
+
+alert tcp any any <> any any ( sid:1000052; msg:"x"; resp:reset_source; )
+
+alert tcp any any <> any 80 ( sid:1000020; msg:"x"; react; )
+alert tcp any any <> any 80 ( sid:1000021; msg:"x"; react:; )
+alert tcp any any <> any 80 ( sid:1000022; msg:"x"; react:msg; )
+alert tcp any any <> any 80 ( sid:1000023; react; msg:"x"; )
+alert tcp any any <> any 80 ( sid:1000024; react:msg; msg:"x"; )
+alert tcp any any <> any any ( sid:1000027; msg:"x"; resp:reset_dest; )
+alert tcp any any <> any any ( sid:1000026; msg:"x"; resp:reset_both; )
+alert tcp any any <> any any ( sid:1000028; msg:"x"; resp:rst_snd; )
+alert tcp any any <> any any ( sid:1000029; msg:"x"; resp:rst_rcv; )
+alert tcp any any <> any any ( sid:1000030; msg:"x"; resp:rst_all; )
+alert tcp any any <> any any ( sid:1000031; msg:"x"; resp:icmp_net; )
+alert tcp any any <> any any ( sid:1000032; msg:"x"; resp:icmp_host; )
+alert tcp any any <> any any ( sid:1000033; msg:"x"; resp:icmp_port; )
+alert tcp any any <> any any ( sid:1000034; msg:"x"; resp:icmp_all; )
+alert tcp any any <> any any ( sid:1000035; msg:"x"; resp:reset_source, reset_dest, reset_both; )
+alert tcp any any <> any any ( sid:1000036; msg:"x"; resp:rst_snd, rst_rcv, rst_all; )
+alert tcp any any <> any any ( sid:1000037; msg:"x"; resp:icmp_net, icmp_host, icmp_port, icmp_all; )
+alert tcp any any <> any any ( sid:1000038; msg:"x"; resp:reset_source, reset_dest, reset_both, reset_dest; )

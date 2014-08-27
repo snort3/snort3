@@ -55,9 +55,10 @@ struct Option
 {
     const IpsApi* api;
     bool init;
+    unsigned count;
 
     Option(const IpsApi* p)
-    { api = p; init = false; };
+    { api = p; init = false; count = 0; };
 };
 
 typedef list<Option*> OptionList;
@@ -105,31 +106,14 @@ void IpsManager::delete_option(IpsOption* ips)
         api->dtor(ips);
 }
 
-    
 //-------------------------------------------------------------------------
-
-static bool is_positional(const Parameter* p)
-{
-    return ( p->name && *p->name == '~' );
-}
-
-static const Parameter* find_arg(const Parameter* p, const char* s)
-{
-    while ( p->name )
-    {
-        if ( !strcmp(p->name, s) || !strcmp(p->name, "*") )
-            return p;
-        ++p;
-    }
-    return nullptr;
-}
 
 static bool set_arg(
     Module* m, const Parameter* p, 
     const char* opt, const char* val, SnortConfig* sc)
 {
-    if ( !is_positional(p) )
-        p = find_arg(p, opt);
+    if ( !p->is_positional() )
+        p = Parameter::find(p, opt);
 
     if ( !p )
         return false;
@@ -160,7 +144,6 @@ static bool set_arg(
         if ( m->set(p->name, v, sc) )
             return true;
     }
-
     return false;
 }
 
@@ -181,12 +164,15 @@ const char* IpsManager::get_option_keyword()
 }
 
 bool IpsManager::option_begin(
-    SnortConfig* sc, const char* key)
+    SnortConfig* sc, const char* key, int proto)
 {
     Option* opt = get_opt(key);
 
     if ( !opt )
+    {
+        ParseError("unknown rule keyword: %s.", key);
         return false;
+    }
 
     if ( !opt->init )
     {
@@ -194,8 +180,21 @@ bool IpsManager::option_begin(
             opt->api->pinit(sc);
         opt->init = true;
     }
-    // FIXIT verify api->protos and api->max_per_rule
-    // before calling ctor
+
+    if ( opt->api->max_per_rule && (++opt->count > opt->api->max_per_rule) )
+    {
+        ParseError("%s allowed only %d time(s) per rule",
+            opt->api->base.name, opt->api->max_per_rule);
+        return false;
+    }
+
+    if ( opt->api->protos && !(proto & opt->api->protos) )
+    {
+        ParseError("%s not allowed with given rule protocol",
+            opt->api->base.name);
+        return false;
+    }
+
     current_module = ModuleManager::get_module(key);
 
     if ( current_module && !current_module->begin(key, 0, sc) )
@@ -216,16 +215,16 @@ bool IpsManager::option_set(
 
     assert(!strcmp(current_keyword, key));
 
-    if ( !*val && is_positional(current_params) )
+    if ( !*val && current_params->is_positional() )
     {
         val = opt;  // eg: gid:116; key="gid" and opt="116"
         opt = "";
     }
 
     if ( !set_arg(current_module, current_params, opt, val, sc) )
-        ParseError("invalid argument %s:%s = %s\n", key, opt, val);
+        ParseError("invalid argument %s:%s = %s", key, opt, val);
 
-    if ( is_positional(current_params) )
+    if ( current_params->is_positional() )
         ++current_params;
 
     return true;
@@ -252,7 +251,7 @@ bool IpsManager::option_end(
 
     if ( mod && !mod->end(key, 0, sc) )
     {
-        ParseError("can't finalize %s\n", key);
+        ParseError("can't finalize %s", key);
         current_keyword = nullptr;
         return false;
     }
@@ -301,6 +300,12 @@ void IpsManager::global_term(SnortConfig* sc)
             p->api->pterm(sc);
             p->init = false;
         }
+}
+
+void IpsManager::reset_options()
+{
+    for ( auto* p : s_options )
+        p->count = 0;
 }
 
 void IpsManager::setup_options()

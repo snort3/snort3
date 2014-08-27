@@ -39,8 +39,8 @@
 #include "util.h"
 #include "log.h"
 #include "snort.h"
-#include "sf_textlog.h"
-#include "log_text.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
 
 #define LOG_BUFFER (4*K_BYTES)
 
@@ -66,7 +66,7 @@ static const char* csv_deflt =
 
 static const Parameter csv_params[] =
 {
-    // FIXIT provide PT_FILE and PT_PATH and enforce no
+    // FIXIT-M provide PT_FILE and PT_PATH and enforce no
     // path chars in file (outputs file must be in instance dir)
     { "file", Parameter::PT_STRING, nullptr, "stdout",
       "name of alert file" },
@@ -77,7 +77,7 @@ static const Parameter csv_params[] =
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
 
-    // FIXIT provide PT_UNITS that converts to multiplier automatically
+    // FIXIT-M provide PT_UNITS that converts to multiplier automatically
     { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
       "bytes | KB | MB | GB" },
 

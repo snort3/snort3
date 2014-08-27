@@ -38,7 +38,7 @@
 #endif
 
 #include <stdint.h>
-#include "sf_textlog.h"
+#include "log/text_log.h"
 
 struct Packet;
 

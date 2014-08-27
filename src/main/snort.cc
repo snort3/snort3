@@ -24,6 +24,7 @@
 # include "config.h"
 #endif
 
+#include <mutex>
 #include <string>
 using namespace std;
 
@@ -74,12 +75,13 @@ using namespace std;
 #include "packet_time.h"
 #include "perf_monitor/perf_base.h"
 #include "perf_monitor/perf.h"
-#include "sflsq.h"
+//#include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
 #include "asn1.h"
 #include "framework/mpse.h"
-#include "managers/shell.h"
+#include "main/shell.h"
+#include "main/analyzer.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
@@ -98,8 +100,7 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "file_api/file_service.h"
 #include "flow/flow_control.h"
-#include "main/analyzer.h"
-#include "log/sf_textlog.h"
+#include "log/text_log.h"
 #include "log/log_text.h"
 #include "time/periodic.h"
 #include "parser/config_file.h"
@@ -132,8 +133,8 @@ static void SnortCleanup();
 //-------------------------------------------------------------------------
 // nascent policy management
 //-------------------------------------------------------------------------
-// FIXIT need stub binding rule to set these for runtime
-// FIXIT need to set these on load too somehow
+// FIXIT-H need stub binding rule to set these for runtime
+// FIXIT-H need to set these on load too somehow
 
 static THREAD_LOCAL NetworkPolicy* s_traffic_policy = nullptr;
 static THREAD_LOCAL InspectionPolicy* s_inspection_policy = nullptr;
@@ -190,7 +191,7 @@ static void SetupMetadataCallback(void)  // FIXDAQ
 #endif
 
 #if 0
-// FIXIT not yet used
+// FIXIT-H restart foo
 static void restart()
 {
     int daemon_mode = ScDaemonMode();
@@ -229,7 +230,7 @@ static void restart()
 
 //-------------------------------------------------------------------------
 // perf stats
-// FIXIT move these to appropriate modules
+// FIXIT-M move these to appropriate modules
 //-------------------------------------------------------------------------
 
 #ifdef PERF_PROFILING
@@ -311,26 +312,20 @@ static void SnortInit(int argc, char **argv)
     StoreSnortInfoStrings();
 #endif
 
-    InitProtoNames();
-    SFAT_Init();
-
-    if (snort_cmd_line_conf != NULL)  // FIXIT can this be deleted?
-    {
-        FatalError("%s(%d) Trying to parse the command line again.\n",
-                   __FILE__, __LINE__);
-    }
-
     /* chew up the command line */
-    snort_cmd_line_conf = ParseCmdLine(argc, argv);
+    snort_cmd_line_conf = parse_cmd_line(argc, argv);
     snort_conf = snort_cmd_line_conf;
 
     /* Tell 'em who wrote it, and what "it" is */
     if (!ScLogQuiet())
         PrintVersion();
 
+    InitProtoNames();
+    SFAT_Init();
+
     LogMessage("--------------------------------------------------\n");
 
-    // FIXIT config plugin_path won't work like this
+    // FIXIT-H config plugin_path won't work like this
     Shell::init();
     ModuleManager::init();
 
@@ -359,19 +354,6 @@ static void SnortInit(int argc, char **argv)
     else
         asn1_init_mem(256);
 
-    if (snort_conf->alert_file != NULL)
-    {
-        char *tmp = snort_conf->alert_file;
-        snort_conf->alert_file = ProcessFileOption(snort_conf, snort_conf->alert_file);
-        free(tmp);
-    }
-
-#ifdef PERF_PROFILING
-    /* Parse profiling here because of file option and potential
-     * dependence on log directory */
-    ConfigProfiling(snort_conf);
-#endif
-
     if (ScAlertBeforePass())
     {
         OrderRuleLists(snort_conf, "activation dynamic drop sdrop reject alert pass log");
@@ -384,7 +366,7 @@ static void SnortInit(int argc, char **argv)
 
     ParseRules(snort_conf);
 
-    // FIXIT print should be through generic module list 
+    // FIXIT-M print should be through generic module list 
     // and only print configured / active stuff
     //detection_filter_print_config(snort_conf->detection_filter_config);
     //RateFilter_PrintConfig(snort_conf->rate_filter_config);
@@ -418,7 +400,7 @@ static void SnortInit(int argc, char **argv)
     /* Finish up the pcap list and put in the queues */
     Trough_SetUp();
 
-    // FIXIT stuff like this that is also done in snort_config.cc::VerifyReload()
+    // FIXIT-L stuff like this that is also done in snort_config.cc::VerifyReload()
     // should be refactored
     if ((snort_conf->bpf_filter == NULL) && (snort_conf->bpf_file != NULL))
         snort_conf->bpf_filter = read_infile(snort_conf->bpf_file);
@@ -432,8 +414,6 @@ static void SnortInit(int argc, char **argv)
     else
         snort_conf->thiszone = gmt2local(0);
 #endif
-
-    EventManager::configure_outputs(snort_conf);
 }
 
 // this function should only include initialization that must be done as a
@@ -452,7 +432,7 @@ static void SnortInit(int argc, char **argv)
 // much initialization stuff in SnortInit() as possible and to restrict this
 // function to those things that depend on DAQ startup or non-root user/group.
 //
-// FIXIT breaks DAQ_New()/Start() because packet threads won't be root when
+// FIXIT-H breaks DAQ_New()/Start() because packet threads won't be root when
 // opening iface
 static void SnortUnprivilegedInit(void)
 {
@@ -472,7 +452,7 @@ static void SnortUnprivilegedInit(void)
     snort_initializing = false;
 }
 
-void snort_setup(int argc, char *argv[])
+void snort_setup(int argc, char* argv[])
 {
     snort_argc = argc;
     snort_argv = argv;
@@ -494,6 +474,9 @@ void snort_setup(int argc, char *argv[])
     InitGroups(ScUid(), ScGid());
     SnortUnprivilegedInit();
 
+    if ( int k = get_parse_errors() )
+        FatalError("see prior %d errors\n", k);
+
     set_quick_exit(false);
 }
 
@@ -501,15 +484,9 @@ void snort_setup(int argc, char *argv[])
 // termination
 //-------------------------------------------------------------------------
 
-static void CleanExit(int exit_val)
+static void CleanExit(int)
 {
     SnortConfig tmp;
-
-#ifdef DEBUG
-#if 0
-    SFLAT_dump();
-#endif
-#endif
 
     /* Have to trick LogMessage to log correctly after snort_conf
      * is freed */
@@ -531,8 +508,6 @@ static void CleanExit(int exit_val)
 
     LogMessage("Snort exiting\n");
     closelog();
-    //if ( !done_processing )  // FIXIT
-        exit(exit_val);
 }
 
 static void SnortCleanup()
@@ -577,6 +552,19 @@ static void SnortCleanup()
 
     //MpseManager::print_search_engine_stats();
 
+    close_fileAPI();
+
+    sfthreshold_free();  // FIXDAQ etc.
+    RateFilter_Cleanup();
+    asn1_free_mem();
+
+    periodic_release();
+    ParserCleanup();
+
+#ifdef PERF_PROFILING
+    CleanupProfileStatsNodeList();
+#endif
+
     /* free allocated memory */
     if (snort_conf == snort_cmd_line_conf)
     {
@@ -591,22 +579,7 @@ static void SnortCleanup()
         SnortConfFree(snort_conf);
         snort_conf = NULL;
     }
-
-    close_fileAPI();
-
-    sfthreshold_free();  // FIXDAQ etc.
-    RateFilter_Cleanup();
-    asn1_free_mem();
-
-    periodic_release();
-    ParserCleanup();
-
-#ifdef PERF_PROFILING
-    CleanupProfileStatsNodeList();
-#endif
-
     CleanupProtoNames();
-    cmd_line_term();
     ModuleManager::term();
     PluginManager::release_plugins();
     Shell::term();
@@ -616,7 +589,7 @@ void snort_cleanup()
 {
     DAQ_Term();
 
-    if ( !ScTestMode() )  // FIXIT ideally the check is in one place
+    if ( !ScTestMode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();
 
     CloseLogger();
@@ -627,7 +600,7 @@ void snort_cleanup()
 // reload foo
 //-------------------------------------------------------------------------
 
-// FIXIT refactor this so startup and reload call the same core function to
+// FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
 static SnortConfig * get_reload_config(void)
 {
@@ -635,12 +608,6 @@ static SnortConfig * get_reload_config(void)
 
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
     init_policy(sc);
-
-#ifdef PERF_PROFILING
-    /* Parse profiling here because of file option and potential
-     * dependence on log directory */
-    ConfigProfiling(sc);
-#endif
 
     if (VerifyReload(sc) == -1)
     {
@@ -664,7 +631,7 @@ static SnortConfig * get_reload_config(void)
     FlowbitResetCounts();
     ParseRules(sc);
 
-    // FIXIT see SnortInit() on config printing
+    // FIXIT-L see SnortInit() on config printing
     //detection_filter_print_config(sc->detection_filter_config);
     ////RateFilter_PrintConfig(sc->rate_filter_config);
     //print_thresholding(sc->threshold_config, 0);
@@ -746,7 +713,7 @@ void set_main_hook(MainHook_f f)
 Packet* get_current_packet()
 { return &s_packet; }
 
-// FIXIT for multiple packet threads
+// FIXIT-H for multiple packet threads
 // using thread locals for s_pkth and s_data won't work
 // will need array of s_packet, s_pkth, and s_data and 
 // capture all if it is not clear which thread crashed
@@ -835,7 +802,7 @@ DAQ_Verdict ProcessPacket(
         p->proto_bits = PROTO_BIT__OTHER;
 
 #if 0
-    // FIXIT required until decoders are fixed
+    // FIXIT-J required until decoders are fixed
     else if ( !p->family && (p->proto_bits & PROTO_BIT__IP) )
         p->proto_bits &= ~PROTO_BIT__IP;
 #endif
@@ -870,7 +837,6 @@ DAQ_Verdict ProcessPacket(
     return verdict;
 }
 
-// FIXIT need to call fail open from a different thread
 DAQ_Verdict fail_open(
     void*, const DAQ_PktHdr_t*, const uint8_t*)
 {
@@ -921,14 +887,16 @@ DAQ_Verdict packet_callback(
     }
     else
     {
+        Packet* p = &s_packet;
         if ( s_packet.packet_flags & PKT_MODIFIED )
         {
             // this packet was normalized and/or has replacements
             PacketManager::encode_update(&s_packet);
             verdict = DAQ_VERDICT_REPLACE;
         }
-        else if ( s_packet.packet_flags & PKT_RESIZED )
+        else if ( p->packet_flags & PKT_RESIZED )
         {
+            printf("packet flags = 0x%X\n", p->packet_flags);
             // we never increase, only trim, but
             // daq doesn't support resizing wire packet
             if ( !DAQ_Inject(s_packet.pkth, 0, s_packet.pkt, s_packet.pkth->pktlen) )
@@ -970,12 +938,12 @@ DAQ_Verdict packet_callback(
     Active_Reset();
     PacketManager::encode_reset();
 
-    if ( flow_con )  // FIXIT always instantiate
+    if ( flow_con )  // FIXIT-H always instantiate
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
 
 #if 0
-    // FIXIT do this when idle
-    if ( flow_con ) // FIXIT always instantiate
+    // FIXIT-H do this when idle
+    if ( flow_con ) // FIXIT-H always instantiate
         flow_con->timeout_flows(16384, time(NULL));
 #endif
 
@@ -995,7 +963,7 @@ void snort_rotate()
 
 void snort_thread_init(const char* intf)
 {
-    // FIXIT the start-up sequence is a little off due to dropping privs
+    // FIXIT-H the start-up sequence is a little off due to dropping privs
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 

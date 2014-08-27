@@ -31,12 +31,11 @@ public:
     virtual uint16_t get_next() = 0;
 
     static uint16_t get_size();
-    static void set(FlushBucket*);
+    static void set(unsigned sz);
     static void clear();
 
 protected:
     FlushBucket() { };
-    static FlushBucket* flush_bucket;
 };
 
 class ConstFlushBucket : public FlushBucket

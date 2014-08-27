@@ -25,9 +25,24 @@ yet firm so feedback is welcome to get something we can live with.
 * Function comment blocks are generally just noise that quickly becomes
   obsolete.  If you absolutely must comment on parameters, put each on a
   separate line along with the comment.  That way changing the signature
-  will cause a change to the comments too.
+  may prompt a change to the comments too.
 
-==== Types
+* Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left for a
+  day or even in just a minute.  That way we can find them easily and won't
+  lose track of them.
+
+* Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
+  med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
+  Perf changes fall between alpha 1 and 2.
+
+=== Logging
+
+* Messages intended for the user should not look like debug messages.  Eg,
+  the function name should not be included.
+
+* Most debug messages should just be deleted.
+
+=== Types
 
 * Use logical types to make the code clearer and to help the compiler catch
   problems.  typedef uint16_t Port; bool foo(Port) is way better than
@@ -40,7 +55,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use const liberally.
 
-==== Formatting
+=== Formatting
 
 * Indent 4 space chars ... no tabs!
 

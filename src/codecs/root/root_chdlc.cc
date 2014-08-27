@@ -33,6 +33,12 @@
 #include "root_slip.h"
 #include "../decoder_includes.h"
 
+#define CHDLC_HEADER_LEN        4
+#define CHDLC_ADDR_UNICAST      0x0f
+#define CHDLC_ADDR_MULTICAST    0x8f
+#define CHDLC_ADDR_BROADCAST    0xff
+#define CHDLC_CTRL_UNNUMBERED   0x03
+
 /*
  * Function: DecodeChdlcPkt(Packet *, char *,
  *                               DAQ_PktHdr_t*, uint8_t*)
@@ -48,17 +54,6 @@
  */
 void DecodeChdlcPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
 {
-    uint32_t cap_len = pkthdr->caplen;
-    PROFILE_VARS;
-
-    MODULE_PROFILE_START(decodePerfStats);
-
-    dc.total_processed++;
-
-    memset(p, 0, PKT_ZERO_LEN);
-
-    p->pkth = pkthdr;
-    p->pkt = pkt;
 
     if(cap_len < CHDLC_HEADER_LEN)
     {
@@ -83,7 +78,6 @@ void DecodeChdlcPkt(Packet *p, const DAQ_PktHdr_t *pkthdr, const uint8_t *pkt)
         dc.other++;
     }
 
-    MODULE_PROFILE_END(decodePerfStats);
     return;
 }
 

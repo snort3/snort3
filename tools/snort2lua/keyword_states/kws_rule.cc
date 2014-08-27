@@ -38,7 +38,7 @@ namespace
 class RuleHeader : public ConversionState
 {
 public:
-    explicit RuleHeader(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    explicit RuleHeader() : ConversionState() {};
     virtual ~RuleHeader() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -56,7 +56,7 @@ bool RuleHeader::convert(std::istringstream& data_stream)
 
     while (in >> hdr_data)
     {
-        ld->add_hdr_data(hdr_data);
+        rule_api.add_hdr_data(hdr_data);
     }
 
 
@@ -79,19 +79,19 @@ bool RuleHeader::convert(std::istringstream& data_stream)
  ********************************/
 
 template<const std::string *name>
-static ConversionState* rule_ctor(Converter* cv, LuaData* ld)
+static ConversionState* rule_ctor()
 {
-    ld->add_hdr_data(*name);
-    return new RuleHeader(cv, ld);
+    rule_api.add_hdr_data(*name);
+    return new RuleHeader();
 }
 
 template<const std::string *name>
-static ConversionState* dep_rule_ctor(Converter* cv, LuaData* ld)
+static ConversionState* dep_rule_ctor()
 {
-    ld->add_hdr_data(*name);
-    ld->make_rule_a_comment();
-    ld->add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
-    return new RuleHeader(cv, ld);
+    rule_api.add_hdr_data(*name);
+    rule_api.make_rule_a_comment();
+    rule_api.add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
+    return new RuleHeader();
 }
 
 static const std::string alert = "alert";

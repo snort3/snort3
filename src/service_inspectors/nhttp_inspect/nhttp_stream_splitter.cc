@@ -38,7 +38,7 @@
 
 using namespace NHttpEnums;
 
-// Convenience function. All the housekeeping that must be done before we can return PAF_FLUSH to stream.
+// Convenience function. All the housekeeping that must be done before we can return FLUSH to stream.
 void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, SourceId source_id,
       SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets) {
     session_data->section_type[source_id] = section_type;
@@ -97,7 +97,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
     return nullptr;
 }
 
-PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t, uint32_t* flush_offset) {
+StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t, uint32_t* flush_offset) {
     // When the system begins providing TCP connection close information this won't always be false. &&&
     bool tcp_close = false;
 
@@ -116,7 +116,7 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
         bool need_break;
         uint8_t* test_data = nullptr;
         NHttpTestInput::test_input_source->scan(test_data, length, source_id, tcp_close, need_break);
-        if (length == 0) return PAF_FLUSH;
+        if (length == 0) return StreamSplitter::FLUSH;
         data = test_data;
         if (need_break) flow->set_application_data(session_data = new NHttpFlowData);
     }
@@ -146,28 +146,28 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
                 prepare_flush(session_data, flush_offset, source_id,
                    ((type == SEC_REQUEST) || (type == SEC_STATUS)) ? SEC_DISCARD : type,
                    tcp_close && (k == length-1), 0, k+1);
-                return PAF_FLUSH;
+                return StreamSplitter::FLUSH;
             }
             // The start line and chunk header section always end with the first <CRLF>
             else if ((session_data->num_crlf[source_id] == 2) &&
                      ((type == SEC_REQUEST) || (type == SEC_STATUS) || (type == SEC_CHUNKHEAD))) {
                 prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (k == length-1), 0, k+1);
-                return PAF_FLUSH;
+                return StreamSplitter::FLUSH;
             }
             // The header and trailer sections always end with the first double <CRLF>
             else if (session_data->num_crlf[source_id] == 4) {
                 prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (k == length-1), 0, k+1);
-                return PAF_FLUSH;
+                return StreamSplitter::FLUSH;
             }
             // We must do this to protect ourself from buffer overrun.
             else if (session_data->octets_seen[source_id] >= 63780) {
                 prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (k == length-1), INF_HEADTOOLONG, k+1);
-                return PAF_FLUSH;
+                return StreamSplitter::FLUSH;
             }
         }
         // Incomplete headers wait patiently for more data
         if (!tcp_close) {
-            return PAF_SEARCH;
+            return StreamSplitter::SEARCH;
         }
         // Discard the oddball case where the new "message" starts with <CR><close>
         else if ((session_data->octets_seen[source_id] == 1) && (session_data->num_crlf[source_id] == 1)) {
@@ -177,7 +177,7 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
         else {
             prepare_flush(session_data, flush_offset, source_id, type, true, INF_TRUNCATED, length);
         }
-        return PAF_FLUSH;
+        return StreamSplitter::FLUSH;
       case SEC_BODY:
       case SEC_CHUNKBODY:
         paf_max = 16384;
@@ -188,12 +188,12 @@ PAF_Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t 
             // The TCP connection has closed and this is the possibly incomplete final section
             prepare_flush(session_data, flush_offset, source_id, type, true,  0, length);
         }
-        return PAF_FLUSH;
+        return StreamSplitter::FLUSH;
       case SEC_ABORT:
-        return PAF_ABORT;
+        return StreamSplitter::ABORT;
       default:
         assert(0);
-        return PAF_ABORT;
+        return StreamSplitter::ABORT;
     }
 }
 

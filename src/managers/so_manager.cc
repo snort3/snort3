@@ -77,7 +77,7 @@ void SoManager::dump_plugins()
 
 #define GZIP_WBITS 31
 
-// FIXIT make this into a general utility for one shot decompress
+// FIXIT-L make this into a general utility for one shot decompress
 // and add class for stream decompress
 const char*  uncompress(const uint8_t* data, unsigned len)
 {
@@ -133,7 +133,7 @@ const char* SoManager::get_so_options(const char* soid)
     if ( !rule )
         return nullptr;
 
-    // FIXIT this approach won't tolerate spaces and might get
+    // FIXIT-L this approach won't tolerate spaces and might get
     // fooled by matching content (should it precede this)
     char opt[32];
     snprintf(opt, sizeof(opt), "soid:%s;", soid);
@@ -175,7 +175,7 @@ void SoManager::dump_rule_stubs(const char* path)
         if ( !rule )
             continue;
 
-        // FIXIT need to properly parse rule to avoid
+        // FIXIT-L need to properly parse rule to avoid
         // confusing other text for soid option
         if ( !(s = strstr(rule, "soid:")) )
             continue;

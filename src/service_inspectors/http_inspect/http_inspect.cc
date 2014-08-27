@@ -71,7 +71,7 @@
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
 #include "framework/inspector.h"
-#include "framework/share.h"
+#include "managers/data_manager.h"
 
 #define ERRSTRLEN 1000
 
@@ -171,7 +171,7 @@ static void updateConfigFromFileProcessing (HTTPINSPECT_CONF* ServerConf)
 
 static int HttpInspectVerifyPolicy(SnortConfig*, HTTPINSPECT_CONF* pData)
 {
-    HttpInspectRegisterXtraDataFuncs();  // FIXIT must be done once
+    HttpInspectRegisterXtraDataFuncs();  // FIXIT-L must be done once
 
     updateConfigFromFileProcessing(pData);
     return 0;
@@ -244,9 +244,6 @@ public:
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
     bool get_buf(unsigned, Packet*, InspectionBuffer&);
 
-    void tinit();
-    void tterm();
-
 private:
     HTTPINSPECT_CONF* config;
     HttpData* global;
@@ -264,7 +261,7 @@ HttpInspect::~HttpInspect ()
         delete config;
 
     if ( global )
-        Share::release(global);
+        DataManager::release(global);
 }
 
 bool HttpInspect::get_buf(
@@ -301,21 +298,13 @@ bool HttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 
 bool HttpInspect::configure (SnortConfig* sc)
 {
-    global = (HttpData*)Share::acquire(GLOBAL_KEYWORD);
+    global = (HttpData*)DataManager::acquire(GLOBAL_KEYWORD, sc);
     config->global = global->data;
 
     HttpInspectInitializeGlobalConfig(config->global);
 
-    // FIXIT must load default unicode map from const char*
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
-
-    return !HttpInspectVerifyPolicy(sc, config);
-}
-
-void HttpInspect::tinit()
-{
-    memset(&hi_stats, 0, sizeof(HIStats));
 
     config->global->decode_conf.file_depth = file_api->get_max_file_depth();
 
@@ -328,10 +317,7 @@ void HttpInspect::tinit()
         updateMaxDepth(config->global->decode_conf.file_depth, &config->global->decode_conf.max_depth);
 
     }
-}
-
-void HttpInspect::tterm()
-{
+    return !HttpInspectVerifyPolicy(sc, config);
 }
 
 void HttpInspect::show(SnortConfig*)
@@ -423,7 +409,7 @@ static void hs_init()
 {
     HttpFlowData::init();
     HI_SearchInit();
-    hi_paf_init(0);  // FIXIT is cap needed?
+    hi_paf_init(0);  // FIXIT-L is cap needed?
     InitLookupTables();
     InitJSNormLookupTable();
 }

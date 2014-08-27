@@ -49,7 +49,6 @@
 #include "parser.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
 #include "detection/detection_util.h"
 
 static const char* data_key = "ftp_data";
@@ -290,7 +289,7 @@ const InspectApi fd_api =
         mod_ctor,
         mod_dtor
     },
-    IT_SERVICE,  // FIXIT does this still need to be session??
+    IT_SERVICE,  // FIXIT-M does this still need to be session??
     PROTO_BIT__TCP,
     nullptr, // buffers
     "ftp-data",

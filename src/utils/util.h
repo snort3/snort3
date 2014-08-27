@@ -105,7 +105,6 @@ const char *SnortStrcasestr(const char *s, int slen, const char *substr);
 int CheckValueInRange(const char *value_str, const char *option,
         unsigned long lo, unsigned long hi, unsigned long *value);
 
-void *SnortAlloc2(size_t, const char *, ...);
 char *CurrentWorkingDir(void);
 char *GetAbsolutePath(char *dir);
 char *StripPrefixDir(char *prefix, char *dir);
@@ -124,9 +123,6 @@ void SetNoCores(void);
 ***********************************************************/
 char *hex(const u_char *, int);
 char *fasthex(const u_char *, int);
-long int xatol(const char *, const char *);
-unsigned long int xatou(const char *, const char *);
-unsigned long int xatoup(const char *, const char *); // return > 0
 
 static inline void* SnortAlloc (unsigned long size)
 {
@@ -135,7 +131,7 @@ static inline void* SnortAlloc (unsigned long size)
     if ( pv )
         return pv;
 
-    // FIXIT do not FatalError() on runtime allocation failures
+    // FIXIT-M do not FatalError() on runtime allocation failures
     FatalError("Unable to allocate memory!  (%lu requested)\n", size);
 
     return NULL;
@@ -270,11 +266,5 @@ const char* get_error(int errnum);
 // for new code.  get_tok() is thread safe but not
 // reentrant.
 char* get_tok(char* s, const char* delim);
-
-/* for getopt */
-extern char *optarg;  // FIXIT add header
-extern int optind;
-extern int opterr;
-extern int optopt;
 
 #endif /*__UTIL_H__*/

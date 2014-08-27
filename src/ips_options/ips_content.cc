@@ -227,28 +227,6 @@ static PatternMatchData* new_pmd()
     return pmd;
 }
 
-// FIXIT must ensure that fast_pattern is applied to 
-// a fast_pattern inspection buffer
-static int fast_pattern_count(OptTreeNode *otn, int list_type)
-{
-    OptFpList* fpl = otn ? otn->opt_func : nullptr;
-    int c = 0;
-
-    while ( fpl )
-    {
-        if ( fpl->type == list_type )
-        {
-            ContentOption* opt = (ContentOption*)fpl->context;
-            PatternMatchData* pmd = opt->get_data();
-
-            if ( pmd->fp )
-                c++;
-        }
-        fpl = fpl->next;
-    }
-    return c;
-}
-
 static int32_t parse_int(
     const char* data, const char* tag, int low = -65535, int high = 65535)
 {
@@ -278,17 +256,11 @@ static int32_t parse_int(
     return value;
 }
 
-static void validate_content(
-    PatternMatchData* pmd, OptTreeNode* otn)
+static void finalize_content(PatternMatchData* pmd, OptTreeNode*)
 {
-    if ( fast_pattern_count(otn, RULE_OPTION_TYPE_CONTENT) > 1 )
-    {
-        ParseError("only one content per rule may be used for fast pattern matching.");
-        return;
-    }
-
     if ( pmd->negated )
-        pmd->last_check = (PmdLastCheck*)SnortAlloc(get_instance_max() * sizeof(*pmd->last_check));
+        pmd->last_check = (PmdLastCheck*)SnortAlloc(
+            get_instance_max() * sizeof(*pmd->last_check));
 }
 
 static void make_precomp(PatternMatchData * idx)
@@ -703,50 +675,6 @@ static void parse_within(PatternMatchData* pmd, const char *data)
     pmd->relative = 1;
 }
 
-static const char* error_str = 
-    "fast_pattern_offset + fast_pattern_length must be less "
-    "than or equal to the actual pattern length which is %u.";
-
-static void parse_fast_pattern_offset(PatternMatchData* pmd, const char *data)
-{
-    if (data == NULL)
-    {
-        ParseError("missing argument to 'fast_pattern_offset' option");
-        return;
-    }
-
-    long offset = parse_int(data, "fast_pattern_offset", 0, UINT16_MAX);
-
-    if ((int)pmd->pattern_size < (offset + pmd->fp_length))
-    {
-        ParseError(error_str, data, pmd->pattern_size);
-        return;
-    }
-
-    pmd->fp_offset = offset;
-    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
-}
-
-static void parse_fast_pattern_length(PatternMatchData* pmd, const char *data)
-{
-    if (data == NULL)
-    {
-        ParseError("missing argument to 'fast_pattern_length' option");
-        return;
-    }
-
-    long length = parse_int(data, "fast_pattern_length", 0, UINT16_MAX);
-
-    if ((int)pmd->pattern_size < (pmd->fp_offset + length))
-    {
-        ParseError(error_str, data, pmd->pattern_size);
-        return;
-    }
-
-    pmd->fp_length = length;
-    pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
-}
-
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
@@ -820,6 +748,22 @@ bool ContentModule::begin(const char*, int, SnortConfig*)
 
 bool ContentModule::end(const char*, int, SnortConfig*)
 {
+    if ( (int)pmd->pattern_size <= pmd->fp_offset )
+    {
+        ParseError(
+            "fast_pattern_offset must be less "
+            "than the actual pattern length which is %u.",
+            pmd->pattern_size);
+        return false;
+    }
+    if ( (int)pmd->pattern_size < (pmd->fp_offset + pmd->fp_length) )
+    {
+        ParseError(
+            "fast_pattern_offset + fast_pattern_length must be less "
+            "than or equal to the actual pattern length which is %u.",
+            pmd->pattern_size);
+        return false;
+    }
     if ( pmd->no_case )
     {
         for ( unsigned i = 0; i < pmd->pattern_size; i++ )
@@ -849,14 +793,18 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         pmd->no_case = 1;
 
     else if ( v.is("fast_pattern") )
-        pmd->fp = 1;  // FIXIT must ensure current buffer is fp compatible
+        pmd->fp = 1;
 
     else if ( v.is("fast_pattern_offset") )
-        parse_fast_pattern_offset(pmd, v.get_string());
-
+    {
+        pmd->fp_offset = v.get_long();
+        pmd->fp = 1;
+    }
     else if ( v.is("fast_pattern_length") )
-        parse_fast_pattern_length(pmd, v.get_string());
-
+    {
+        pmd->fp_length = v.get_long();
+        pmd->fp = 1;
+    }
     else
         return false;
 
@@ -881,7 +829,7 @@ static IpsOption* content_ctor(Module* p, OptTreeNode * otn)
 {
     ContentModule* m = (ContentModule*)p;
     PatternMatchData* pmd = m->get_data();
-    validate_content(pmd, otn);
+    finalize_content(pmd, otn);
     return new ContentOption(pmd);
 }
 

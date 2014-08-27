@@ -155,6 +155,7 @@ void EventManager::instantiate(
     Output* p, Module* mod, SnortConfig* sc)
 {
     p->handler = p->api->ctor(sc, mod);
+    assert(p->handler);  // FIXIT-H must handle case where not configured
 
     if ( (p->api->flags & OUTPUT_TYPE_FLAG__ALERT) &&
         (p->api->flags & OUTPUT_TYPE_FLAG__LOG) )
@@ -174,7 +175,7 @@ void EventManager::instantiate(
             s_loggers.outputs.push_back(p->handler);
     }
     else
-        FatalError("logger has no type %s\n", p->api->base.name);
+        ParseError("logger has no type %s\n", p->api->base.name);
 }
 
 // command line outputs
@@ -186,10 +187,11 @@ void EventManager::instantiate(
 
     if ( !mod || !p )
     {
-        FatalError("unknown logger %s\n", name);
+        ParseError("unknown logger %s\n", name);
         return;
     }
 
+    // FIXIT-H this loses args if set in conf
     // emulate a config like name = { }
     mod->begin(name, 0, sc);
     mod->end(name, 0, sc);
@@ -209,10 +211,6 @@ void EventManager::instantiate(
 {
     Output* p = get_out(api->base.name);
     instantiate(p, mod, sc);
-}
-
-void EventManager::configure_outputs(SnortConfig*)
-{
 }
 
 //-------------------------------------------------------------------------

@@ -34,7 +34,7 @@ namespace {
 class StreamIp : public ConversionState
 {
 public:
-    StreamIp(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    StreamIp() : ConversionState() {};
     virtual ~StreamIp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,7 +47,7 @@ bool StreamIp::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    ld->open_table("stream_ip");
+    table_api.open_table("stream_ip");
 
     while (util::get_string(data_stream, args, ","))
     {
@@ -62,7 +62,7 @@ bool StreamIp::convert(std::istringstream& data_stream)
         }
         else if (!keyword.compare("timeout"))
         {
-            ld->add_diff_option_comment("timeout", "session_timeout");
+            table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", arg_stream);
         }
         else
@@ -74,7 +74,7 @@ bool StreamIp::convert(std::istringstream& data_stream)
             retval = false;
     }
 
-    ld->close_table();
+    table_api.close_table();
     return retval;
 }
 
@@ -82,9 +82,9 @@ bool StreamIp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new StreamIp(cv, ld);
+    return new StreamIp();
 }
 
 static const ConvertMap preprocessor_stream_ip =

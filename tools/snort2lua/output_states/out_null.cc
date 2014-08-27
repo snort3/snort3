@@ -23,16 +23,15 @@
 #include <vector>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
+#include "data/dt_table_api.h"
 
 namespace output
 {
 
-static ConversionState* ctor(Converter* /*cv*/, LuaData* ld)
+static ConversionState* ctor()
 {
-    ld->open_table("alert_null"); // in case there are no arguments
-    ld->close_table();
+    table_api.open_table("alert_null"); // in case there are no arguments
+    table_api.close_table();
     return nullptr;
 }
 

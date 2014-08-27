@@ -19,25 +19,24 @@
  */
 // pps_binder.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <cctype>
+#ifndef PREPROCESSOR_STATES_PPS_BINDER_H
+#define PREPROCESSOR_STATES_PPS_BINDER_H
+
+
 #include <string>
 #include <vector>
-
-#ifndef PPS_BINDER_H
-#define PPS_BINDER_H
-
-class LuaData;
 
 // If the user never adds add_to_configuration,
 //  the destructor will call the method
 class Binder
 {
 public:
-    Binder(LuaData* ld) :   ld(ld),
-                            added_to_bindings(false){};
+    Binder();
     ~Binder();
 
     void add_to_configuration();
+    void print_binding(bool should_print)
+    { printed = !should_print; }
 
     void set_when_policy_id(std::string id);
     void set_when_service(std::string service);
@@ -45,7 +44,6 @@ public:
     void set_when_proto(std::string proto);
     void add_when_vlan(std::string vlan);
     void add_when_net(std::string net);
-    void add_when_port(uint16_t port);
     void add_when_port(std::string port);
 
 
@@ -59,9 +57,8 @@ public:
 
 
 private:
-    LuaData* ld;
-    bool added_to_bindings; // ensures that the binding is added once,
-                            // by either the destructor or user
+    bool printed; // ensures that the binding is added once,
+                  // by either the destructor or user
 
     std::string when_policy_id;
     std::string when_service;

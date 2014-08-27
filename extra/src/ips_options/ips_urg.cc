@@ -41,7 +41,7 @@
 
 static const char* s_name = "urg";
 
-// FIXIT profiling is desirable but must be refactored to
+// FIXIT-H profiling is desirable but must be refactored to
 // avoid dependence on snort_config.h which snowballs
 //#undef PERF_PROFILING
 
@@ -50,7 +50,7 @@ static THREAD_LOCAL ProfileStats tcpUrgPerfStats;
 //-------------------------------------------------------------------------
 // range check
 //-------------------------------------------------------------------------
-// FIXIT this is a stub until we can use range.{h,cc}
+// FIXIT-L this is a stub until we can use range.{h,cc}
 
 struct RangeCheck
 {

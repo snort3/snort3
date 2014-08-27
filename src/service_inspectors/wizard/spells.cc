@@ -152,10 +152,10 @@ MagicPage* SpellBook::find_spell(
         return p;
 }
 
-// FIXIT make this incremental based on last position
+// FIXIT-H make this incremental based on last position
 const char* SpellBook::find_spell(const uint8_t* data, unsigned len) const
 {
-    // FIXIT make configurable upper bound to limit globbing
+    // FIXIT-L make configurable upper bound to limit globbing
     unsigned max = 16;
 
     if ( len > max )

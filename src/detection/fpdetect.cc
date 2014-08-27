@@ -66,6 +66,7 @@
 #include "stream/stream_api.h"
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_reader.h"
+#include "utils/sflsq.h"
 #include "ppm.h"
 #include "detection_util.h"
 #include "detection_options.h"
@@ -847,7 +848,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA *o, Packet *p)
 **          1 if flagged
 **
 */
-// FIXIT this should include frags now that they are in session
+// FIXIT-H this should include frags now that they are in session
 static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
 {
     if ( !p->flow )
@@ -878,7 +879,7 @@ static inline int fpAddSessionAlert(Packet *p, OptTreeNode *otn)
 **          1 if alert previously generated
 **
 */
-// FIXIT this should include frags now that they are in session
+// FIXIT-H this should include frags now that they are in session
 static inline int fpSessionAlerted(Packet *p, OptTreeNode *otn)
 {
     SigInfo *si = &otn->sigInfo;
@@ -960,7 +961,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
 
     if (ip_rule)
     {
-        // FIXIT -- Copying p->ip_data may be unnecessary because when
+        // FIXIT-J -- Copying p->ip_data may be unnecessary because when
         //          finished evaluating, ip_api will be the innermost
         //          layer. Right now, ip_api should already be the
         //          innermost layer
@@ -1001,7 +1002,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
          **  re-inject the stream we have.
          */
 
-        // FIXIT sdf etc. runs here
+        // FIXIT-M sdf etc. runs here
 
         if ( fp->inspect_stream_insert || !(p->packet_flags & PKT_STREAM_INSERT) )
         {
@@ -1076,7 +1077,7 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
              **  payload, in case any of the rules have the
              **  'rawbytes' option.
              */
-            // FIXIT alt buf and file data should be obtained from 
+            // FIXIT-H alt buf and file data should be obtained from 
             // inspector gadget as an extension of above
             so = port_group->pgPms[PM_TYPE__CONTENT];
 
@@ -1569,11 +1570,12 @@ void fpEvalIpProtoOnlyRules(SF_LIST **ip_proto_only_lists, Packet *p, uint8_t pr
     {
         SF_LIST *l = ip_proto_only_lists[proto_id];
         OptTreeNode *otn;
+        SF_LNODE* cursor;
 
         /* If list is NULL, sflist_first returns NULL */
-        for (otn = (OptTreeNode *)sflist_first(l);
+        for (otn = (OptTreeNode *)sflist_first(l, &cursor);
              otn != NULL;
-             otn = (OptTreeNode *)sflist_next(l))
+             otn = (OptTreeNode *)sflist_next(&cursor))
         {
             if (fpEvalRTN(getRuntimeRtnFromOtn(otn), p, 0))
             {

@@ -23,11 +23,11 @@
 #include <assert.h>
 
 #include "time/packet_time.h"
-#include "stream/stream_api.h"  // FIXIT bad dependency
+#include "stream/stream_api.h"  // FIXIT-M bad dependency
 #include "zhash.h"
 
 /* Reasonably small, and prime */
-// FIXIT size based on max_tcp + max_udp?
+// FIXIT-L size based on max_tcp + max_udp?
 #define MAX_HASH 1021
 #define MAX_LIST    8
 #define MAX_DATA    4
@@ -64,8 +64,7 @@
 // -- matching expected sessions are pulled off from the head of the node's
 //    list struct chain
 //
-// FIXIT
-// -- expiration is by node struct but should be by list struct, ie 
+// FIXIT-M expiration is by node struct but should be by list struct, ie 
 //    individual sessions, not all sessions to a given 3-tuple
 //    (this would make pruning a little harder unless we add linkage
 //    a la FlowCache)

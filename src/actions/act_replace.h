@@ -22,7 +22,7 @@
 
 #include <string>
 
-// FIXIT these prevent ips replace option and action
+// FIXIT-M these prevent ips replace option and action
 // from being dynamically built
 void Replace_ResetQueue(void);
 void Replace_QueueChange(const std::string&, unsigned);

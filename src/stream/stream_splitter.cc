@@ -29,10 +29,10 @@
 static THREAD_LOCAL uint8_t pdu_buf[65536];
 static THREAD_LOCAL StreamBuffer str_buf;
 
-uint32_t StreamSplitter::max()
-{ return 16384; }  // FIXIT make default configurable
+SO_PUBLIC uint32_t StreamSplitter::max()
+{ return 16384; }  // FIXIT-H make default configurable
 
-const StreamBuffer* StreamSplitter::reassemble(
+SO_PUBLIC const StreamBuffer* StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 { 
@@ -58,7 +58,7 @@ AtomSplitter::AtomSplitter(bool b, uint32_t sz) : StreamSplitter(b)
 
 AtomSplitter::~AtomSplitter() { }
 
-PAF_Status AtomSplitter::scan(
+StreamSplitter::Status AtomSplitter::scan(
     Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp
 ) {
     bytes += len;
@@ -67,9 +67,9 @@ PAF_Status AtomSplitter::scan(
     if ( segs >= 2 && bytes >= min )
     {
         *fp = len;
-        return PAF_FLUSH;
+        return FLUSH;
     }
-    return PAF_SEARCH;
+    return SEARCH;
 }
 
 void AtomSplitter::reset()
@@ -84,7 +84,7 @@ void AtomSplitter::update()
 }
 
 #if 0
-// FIXIT this should be part of a new splitter
+// FIXIT-H this should be part of a new splitter
 static inline int CheckFlushCoercion (
     Packet* p, FlushMgr* fm, uint16_t flush_factor
 ) {

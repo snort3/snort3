@@ -85,7 +85,6 @@ SF_PSTACK;
 typedef struct sf_list
 {
     SF_LNODE *head, *tail;  
-    SF_LNODE *cur;  /* used for First/Next walking */
     unsigned count;
 }
 SF_QUEUE,SF_STACK,SF_LIST;
@@ -105,12 +104,8 @@ NODE_DATA sflist_remove_head ( SF_LIST * s);
 NODE_DATA sflist_remove_tail ( SF_LIST * s); 
 void      sflist_remove_node (SF_LIST * s, SF_LNODE * n, void (*free)(void*) );
 int       sflist_count ( SF_LIST* s); 
-NODE_DATA sflist_first( SF_LIST * s);
-NODE_DATA sflist_next( SF_LIST * s);
-SF_LNODE * sflist_first_node( SF_LIST * s );
-SF_LNODE * sflist_next_node( SF_LIST * s );
-NODE_DATA sflist_firstpos( SF_LIST * s, SF_LNODE ** v );
-NODE_DATA sflist_nextpos ( SF_LIST * s, SF_LNODE ** v );
+NODE_DATA sflist_first(SF_LIST*, SF_LNODE**);
+NODE_DATA sflist_next(SF_LNODE**);
 void      sflist_free ( SF_LIST * s); 
 void      sflist_free_all( SF_LIST * s, void (*free)(void*) ); 
 void sflist_static_free_all(SF_LIST *, void(*nfree)(void *));

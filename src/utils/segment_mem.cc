@@ -30,11 +30,11 @@
 #include "snort_types.h"
 
 #ifndef SIZE_MAX
-#define SIZE_MAX 0xFFFFFFFF  // FIXIT not defined for g++?
+#define SIZE_MAX 0xFFFFFFFF  // FIXIT-L use c++ value
 #endif
 
 /*point to the start of the unused memory*/
-static MEM_OFFSET unused_ptr = 0;  // FIXIT 1 / process
+static MEM_OFFSET unused_ptr = 0;
 static size_t unused_mem = 0;
 static void *base_ptr = NULL;
 

@@ -36,7 +36,7 @@ namespace {
 class Preprocessor : public ConversionState
 {
 public:
-    Preprocessor(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Preprocessor() : ConversionState() {};
     virtual ~Preprocessor() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -53,9 +53,14 @@ bool Preprocessor::convert(std::istringstream& data_stream)
         const ConvertMap* map = util::find_map(preprocessors::preprocessor_api, keyword);
         if (map)
         {
-            cv->set_state(map->ctor(cv, ld));
+            cv.set_state(map->ctor());
             return true;
         }
+        data_api.failed_conversion(data_stream, keyword);
+    }
+    else
+    {
+        data_api.failed_conversion(data_stream);
     }
 
     return false;    
@@ -65,9 +70,9 @@ bool Preprocessor::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Preprocessor(cv, ld);
+    return new Preprocessor();
 }
 
 static const ConvertMap keyword_preprocessor = 

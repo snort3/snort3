@@ -159,14 +159,11 @@ struct ProfileStats
 void ShowRuleProfiles(void);
 void ResetRuleProfiling(void);
 
-typedef struct _ProfileConfig
+struct ProfileConfig
 {
     int num;
     int sort;
-    int append;
-    char *filename;
-
-} ProfileConfig;
+};
 
 // thread local access method
 typedef ProfileStats* (*get_profile_func)(const char*);

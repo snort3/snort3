@@ -51,6 +51,9 @@ public:
     static void free_inspector(Inspector*);
     static InspectSsnFunc get_session(const char* key);
 
+    static Inspector* get_binder();
+    static Inspector* get_wizard();
+
     static bool configure(SnortConfig*);
     static void print_config(SnortConfig*);
 

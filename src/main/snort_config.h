@@ -41,11 +41,10 @@
 #include "time/profiler.h"
 #include "utils/sflsq.h"
 #include "hash/sfxhash.h"
+#include "utils/util.h"
 #include "utils/sfportobject.h"
 #include "hash/sfghash.h"
 #include "main/policy.h"
-
-#define MAX_PIDFILE_SUFFIX 11 /* uniqueness extension to PID file, see '-R' */
 
 #define DEFAULT_LOG_DIR "."
 
@@ -73,7 +72,6 @@ struct SnortConfig
 {
     //------------------------------------------------------
     // alert module stuff
-    char *alert_file;
     int default_rule_state;
 
     uint16_t flowbit_size;
@@ -149,7 +147,7 @@ struct SnortConfig
     char* respond_device;
     uint8_t *eth_dst;
 
-    const char* output;
+    char* output;
 
     //------------------------------------------------------
     // attribute tables stuff
@@ -182,14 +180,19 @@ struct SnortConfig
 #endif
 
     //------------------------------------------------------
-    // FIXIT command line only stuff, add to conf / module
+    // FIXIT-L command line only stuff, add to conf / module
 
     uint32_t event_log_id;      /* -G */
     sfip_t obfuscation_net;  // -B
     char *bpf_filter;        // --bpf
 
     //------------------------------------------------------
-    // FIXIT non-module stuff - separate config from derived state?
+    // FIXIT-L non-module stuff - separate config from derived state?
+    char* run_prefix;
+    bool id_subdir;
+    bool id_zero;
+
+    bool stdin_rules;
 
     char pid_filename[STD_BUF];
     char *orig_log_dir;      /* set in case of chroot */
@@ -250,7 +253,6 @@ struct SnortConfig
 
     struct VarNode* var_list;
 
-    int max_threads;
     unsigned remote_control;
 
     SnortState* state;

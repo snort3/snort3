@@ -42,11 +42,12 @@ using namespace std;
 #include "snort.h"
 #include "helpers/process.h"
 #include "main/snort_config.h"
+#include "main/shell.h"
+#include "main/analyzer.h"
 #include "framework/module.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/inspector_manager.h"
-#include "managers/shell.h"
 #include "util.h"
 #include "parser/parser.h"
 #include "profiler.h"
@@ -55,7 +56,6 @@ using namespace std;
 #include "control/idle_processing.h"
 #include "target_based/sftarget_reader.h"
 #include "flow/flow_control.h"
-#include "main/analyzer.h"
 #include "helpers/swapper.h"
 #include "time/periodic.h"
 
@@ -154,7 +154,7 @@ void Request::set(int f, const char* s)
     buf[sizeof(buf)-1] = '\0';
 }
 
-// FIXIT ignoring partial reads for now
+// FIXIT-L ignoring partial reads for now
 // using simple text for now so can use telnet as client
 // but must parse commands out of stream (ending with \n)
 void Request::read(int f)
@@ -167,7 +167,7 @@ void Request::read(int f)
     while ( n-- && isspace(buf[n]) );
 }
 
-// FIXIT supporting only simple strings for now
+// FIXIT-L supporting only simple strings for now
 // should support var args formats
 void Request::respond(const char* s) const
 {
@@ -177,7 +177,7 @@ void Request::respond(const char* s) const
         return;
     }
     if ( write(fd, s, strlen(s)) )
-        return;  // FIXIT count errors?
+        return;  // FIXIT-L count errors?
 }
 
 void Request::show_prompt() const
@@ -365,7 +365,7 @@ int main_quit(lua_State*)
 int main_help(lua_State*)
 {
 #if 0
-    // FIXIT this should be generic for all modules
+    // FIXIT-H this should be generic for all modules
     RequestMap* map = cmd_set;
 
     while ( map->name )
@@ -425,7 +425,7 @@ static int signal_check()
     return 1;
 }
 
-// FIXIT return true if something was done to avoid sleeping
+// FIXIT-L return true if something was done to avoid sleeping
 static bool house_keeping()
 {
     signal_check();
@@ -443,9 +443,9 @@ static bool house_keeping()
 // socket foo
 //-------------------------------------------------------------------------
 
-// FIXIT make these non-blocking
-// FIXIT allow at least 2 remote controls
-// FIXIT bind to configured ip including INADDR_ANY
+// FIXIT-M make these non-blocking
+// FIXIT-M allow at least 2 remote controls
+// FIXIT-M bind to configured ip including INADDR_ANY
 // (default is loopback if enabled)
 static int listener = -1;
 static int remote_control = -1;
@@ -463,7 +463,7 @@ static int socket_init()
         return -2;
     }
 
-    // FIXIT does this disable time wait for us?
+    // FIXIT-M does this disable time wait for us?
     int on = 1;
     setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
@@ -480,7 +480,7 @@ static int socket_init()
         return -3;
     }
 
-    // FIXIT configure max conns
+    // FIXIT-M configure max conns
     if ( listen(listener, 5) < 0 )
     {
         FatalError("listen failed: %s\n", strerror(errno));
@@ -513,7 +513,7 @@ static int socket_conn()
     if ( remote_control < 0 ) 
         return -1;
 
-    // FIXIT authenticate, use ssl ?
+    // FIXIT-L authenticate, use ssl ?
     return 0;
 }
 
@@ -619,11 +619,10 @@ static bool set_mode()
     if ( unit_test_enabled() )
         exit(unit_test());
 #endif
-    unsigned n = get_parse_errors();
 
-    if ( n )
+    if ( int k = get_parse_errors() )
     {
-        ParseAbort("%d config errors found", n);
+        ParseAbort("see prior %d errors", k);
         return false;
     }
     if ( ScTestMode() ||
@@ -694,7 +693,7 @@ static void snort_main()
     socket_init();
     TimeStart();
 
-    max_pigs = snort_conf->max_threads;
+    max_pigs = get_instance_max();
     assert(max_pigs > 0);
 
     pigs = new Pig[max_pigs];

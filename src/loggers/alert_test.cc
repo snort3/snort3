@@ -37,7 +37,7 @@
 #include "parser.h"
 #include "util.h"
 #include "log/log_text.h"
-#include "log/sf_textlog.h"
+#include "log/text_log.h"
 #include "mstring.h"
 #include "snort.h"
 
@@ -181,16 +181,24 @@ void TestLogger::alert(Packet *p, const char *msg, Event *event)
     if (flags & TEST_FLAG_SESSION)
         LogIpAddrs(test_file, p);
 
-#if 0
-    if (flags & TEST_FLAG_REBUILT)
+    if ( (flags & TEST_FLAG_REBUILT) && (p->packet_flags & PKT_PSEUDO) )
     {
-        if (p->packet_flags & PKT_REBUILT_FRAG)
-            //TextLog_Print(test_file, "F:" STDu64 "\t", pc.rebuilt_frags);  FIXIT count in f3
-            //
-        else if (p->packet_flags & PKT_REBUILT_STREAM)
-            //TextLog_Print(test_file, "S:" STDu64 "\t", pc.rebuilt_tcp);  FIXIT count in s5
+        const char* s;
+        switch ( p->pseudo_type )
+        {
+        case PSEUDO_PKT_IP: s = "ip-defrag"; break;
+        case PSEUDO_PKT_TCP: s = "tcp-deseg"; break;
+        case PSEUDO_PKT_DCE_RPKT: s = "dce-pkt"; break;
+        case PSEUDO_PKT_DCE_SEG: s = "dce-deseg"; break;
+        case PSEUDO_PKT_DCE_FRAG: s = "dec-defrag"; break;
+        case PSEUDO_PKT_SMB_SEG: s = "smb-deseg"; break;
+        case PSEUDO_PKT_SMB_TRANS: s = "smb-trans"; break;
+        case PSEUDO_PKT_PS: s = "port_scan"; break;
+        case PSEUDO_PKT_SDF: s = "sdf"; break;
+        default: s = "pseudo pkt"; break;
+        }
+        TextLog_Print(test_file, "%s", s);
     }
-#endif
     TextLog_Print(test_file, "\n");
     TextLog_Flush(test_file);
 }

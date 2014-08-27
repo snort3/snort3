@@ -56,6 +56,7 @@
 
 #include "main/analyzer.h"
 #include "protocols/packet.h"
+#include "managers/data_manager.h"
 #include "managers/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"
@@ -66,7 +67,6 @@
 #include "filters/sfthreshold.h"
 #include "sfsnprintfappend.h"
 #include "framework/inspector.h"
-#include "framework/share.h"
 #include "framework/plug_data.h"
 #include "profiler.h"
 #include "detection/detect.h"
@@ -418,7 +418,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     */
     PacketManager::encode_update(g_tmp_pkt);
 
-    // FIXIT: IP4 is gauranteed to have been set in update().  Is IP6()
+    // FIXIT-L: IP4 is gauranteed to have been set in update().  Is IP6()
     //        also gauranteed?
     if(g_tmp_pkt->ip_api.is_ip6())
         ((ip::IP6Hdr*)g_tmp_pkt->ip_api.get_ip6h())->set_len(htons((uint16_t)ip_size));
@@ -690,11 +690,14 @@ static void PrintIPPortSet(IP_PORT *p)
         ((p->ip.family == AF_INET ) && (p->ip.bits != 32 )))
         SnortSnprintfAppend(output_str, sizeof(output_str), "/%d", p->ip.bits);
 
-    pr=(PORTRANGE*)sflist_first(&p->portset.port_list);
+    SF_LNODE* cursor;
+    pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cursor);
+
     if ( pr && pr->port_lo != 0 )
         SnortSnprintfAppend(output_str, sizeof(output_str), " : ");
+
     for( ; pr != 0;
-        pr=(PORTRANGE*)sflist_next(&p->portset.port_list) )
+        pr=(PORTRANGE*)sflist_next(&cursor) )
     {
         if ( pr->port_lo != 0)
         {
@@ -772,9 +775,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->ignore_scanners)
         {
             LogMessage("    Ignore Scanner IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->ignore_scanners->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->ignore_scanners->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -783,9 +788,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->ignore_scanned)
         {
             LogMessage("    Ignore Scanned IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->ignore_scanned->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->ignore_scanned->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -794,9 +801,11 @@ static void PrintPortscanConf(PortscanConfig* config)
         if(config->watch_ip)
         {
             LogMessage("    Watch IP List:\n");
-            for(p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list);
+            SF_LNODE* cursor;
+
+            for(p = (IP_PORT*)sflist_first(&config->watch_ip->ip_list, &cursor);
                 p;
-                p = (IP_PORT*)sflist_next(&config->watch_ip->ip_list))
+                p = (IP_PORT*)sflist_next(&cursor))
             {
                 PrintIPPortSet(p);
             }
@@ -849,15 +858,15 @@ PortScan::~PortScan()
         delete config;
 
     if ( global )
-        Share::release(global);
+        DataManager::release(global);
 }
 
-bool PortScan::configure(SnortConfig*)
+bool PortScan::configure(SnortConfig* sc)
 {
-    // FIXIT use fixed base file name
+    // FIXIT-L use fixed base file name
     config->logfile = SnortStrdup("portscan.log");
 
-    global = (PsData*)Share::acquire(PS_GLOBAL);
+    global = (PsData*)DataManager::acquire(PS_GLOBAL, sc);
     config->common = global->data;
     return true;
 }
@@ -904,7 +913,7 @@ void PortScan::eval(Packet *p)
     MODULE_PROFILE_START(psPerfStats);
     ++spstats.total_packets;
 
-    memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT don't zap unless necessary
+    memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT-P don't zap unless necessary
     ps_pkt.pkt = (void *)p;
 
     /* See if there is already an exisiting node in the hash table */
@@ -991,7 +1000,7 @@ static const InspectApi sp_api =
         mod_dtor
     },
     IT_PROTOCOL,
-    PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT dynamic assign
+    PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT-L dynamic assign
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

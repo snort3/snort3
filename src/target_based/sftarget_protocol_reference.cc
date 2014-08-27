@@ -31,47 +31,20 @@
 #include "stream/stream_api.h"
 #include "sftarget_reader.h"
 #include "sftarget_hostentry.h"
+#include "sftarget_data.h"
+
+struct SFTargetProtocolReference
+{
+    char name[SFAT_BUFSZ];
+    int16_t ordinal;
+};
 
 int16_t protocolReferenceTCP;
 int16_t protocolReferenceUDP;
 int16_t protocolReferenceICMP;
 
-static SFGHASH *proto_reference_table = NULL;  // FIXIT 1 / process
+static SFGHASH *proto_reference_table = NULL;  // STATIC
 static int16_t protocol_number = 1;
-
-static const char *standard_protocols[] =
-{
-    /* Transport Protocols */
-    "ip",
-    "tcp",
-    "udp",
-    "icmp",
-#if 0  // FIXIT should be able to delete this and add only what is needed
-    /* Application Protocols */
-    "http",
-    "ftp",
-    "telnet",
-    "smtp",
-    "ssh",
-    "dcerpc",
-    "netbios-dgm",
-    "netbios-ns",
-    "netbios-ssn",
-    "nntp",
-    "dns",
-    "isakmp",
-    "finger",
-    "imap",
-    "oracle",
-    "pop2",
-    "pop3",
-    "snmp",
-    "tftp",
-    "x11",
-    "ftp-data",
-#endif
-    NULL
-};
 
 /* XXX XXX Probably need to do this during swap time since the
  * proto_reference_table is accessed during runtime */
@@ -81,11 +54,6 @@ int16_t AddProtocolReference(const char *protocol)
 
     if (!protocol)
         return SFTARGET_UNKNOWN_PROTOCOL;
-
-    if (!proto_reference_table)
-    {
-        InitializeProtocolReferenceTable();
-    }
 
     reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void *)protocol);
     if (reference)
@@ -134,11 +102,6 @@ int16_t FindProtocolReference(const char *protocol)
     if (!protocol)
         return SFTARGET_UNKNOWN_PROTOCOL;
 
-    if (!proto_reference_table)
-    {
-        InitializeProtocolReferenceTable();
-    }
-
     reference = (SFTargetProtocolReference*)sfghash_find(proto_reference_table, (void *)protocol);
 
     if (reference)
@@ -149,8 +112,6 @@ int16_t FindProtocolReference(const char *protocol)
 
 void InitializeProtocolReferenceTable(void)
 {
-    const char **protocol;
-
     /* If already initialized, we're done */
     if (proto_reference_table)
         return;
@@ -162,14 +123,11 @@ void InitializeProtocolReferenceTable(void)
         FatalError("Failed to Initialize Target-Based Protocol Reference Table\n");
     }
 
-    /* Initialize the standard protocols from the list above */
-    for (protocol = standard_protocols; *protocol; protocol++)
-    {
-        AddProtocolReference(*protocol);
-    }
-    protocolReferenceTCP = FindProtocolReference("tcp");
-    protocolReferenceUDP = FindProtocolReference("udp");
-    protocolReferenceICMP = FindProtocolReference("icmp");
+    AddProtocolReference("ip");
+
+    protocolReferenceTCP = AddProtocolReference("tcp");
+    protocolReferenceUDP = AddProtocolReference("udp");
+    protocolReferenceICMP = AddProtocolReference("icmp");
 }
 
 void FreeProtoocolReferenceTable(void)

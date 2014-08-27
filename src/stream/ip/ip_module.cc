@@ -189,7 +189,7 @@ bool StreamIpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("session_timeout") )
     {
-        // FIXIT need to integrate to eliminate redundant data
+        // FIXIT-L need to integrate to eliminate redundant data
         config->session_timeout = v.get_long();
         config->frag_engine.frag_timeout = v.get_long();
     }

@@ -231,10 +231,11 @@ static int print_thd_local(ThresholdObjects *thd_objs, PrintFormat type, unsigne
                 {
                     continue;
                 }
+                SF_LNODE* cursor;
 
-                for( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list);
+                for( sfthd_node  = (THD_NODE*)sflist_first(sfthd_item->sfthd_node_list, &cursor);
                         sfthd_node != 0;
-                        sfthd_node = (THD_NODE*)sflist_next(sfthd_item->sfthd_node_list) )
+                        sfthd_node = (THD_NODE*)sflist_next(&cursor) )
                 {
                     if (print_thd_node(sfthd_node, type, prnMode) != 0)
                         lcnt++;

@@ -84,12 +84,12 @@ public:
         if ( v.is("enable_mpls_multicast") )
         {
             if ( v.get_bool() )
-                sc->run_flags |= RUN_FLAG__MPLS_MULTICAST; // FIXIT move to existing bitfield
+                sc->run_flags |= RUN_FLAG__MPLS_MULTICAST; // FIXIT-L move to existing bitfield
         }
         else if ( v.is("enable_mpls_overlapping_ip") )
         {
             if ( v.get_bool() )
-                sc->run_flags |= RUN_FLAG__MPLS_OVERLAPPING_IP; // FIXIT move to existing bitfield
+                sc->run_flags |= RUN_FLAG__MPLS_OVERLAPPING_IP; // FIXIT-L move to existing bitfield
         }
         else if ( v.is("max_mpls_stack_depth") )
         {

@@ -36,6 +36,7 @@
 #include <pcap.h>
 #include <grp.h>
 #include <pwd.h>
+#include <syslog.h>
 
 #ifdef HAVE_DUMBNET_H
 #include <dumbnet.h>
@@ -56,18 +57,32 @@
 #include "ips_options/ips_flowbits.h"
 #include "file_api/file_service_config.h"
 #include "packet_io/sfdaq.h"
-
 #include "target_based/sftarget_reader.h"
+#include "managers/event_manager.h"
+#include "detection/detect.h"
 
-// FIXIT defines should be avoided here - the actual option
-// may be from command line (a-b) or from config file (a_b)
-// option should be passed into all parser function for error
-// messages
-#define CONFIG_OPT__POLICY_VERSION                  "policy_version"
-#ifdef PERF_PROFILING
-# define CONFIG_OPT__PROFILE_MODULES               "profile_preprocs"
-# define CONFIG_OPT__PROFILE_RULES                  "profile_rules"
-#endif
+#define LOG_NONE    "none"
+#define LOG_TEXT    "text"
+#define LOG_PCAP    "pcap"
+
+#define ALERT_NONE  "none"
+#define ALERT_CMG   "cmg"
+#define ALERT_JH    "jh"
+#define ALERT_DJR   "djr"
+#define ALERT_AJK   "ajk"
+
+#define OUTPUT_AJK  "unified2"
+#define OUTPUT_CMG  "alert_fast"
+#define OUTPUT_PCAP "log_tcpdump"
+
+static std::string lua_conf;
+static std::string snort_conf_dir;
+
+const char* get_snort_conf()
+{ return lua_conf.c_str(); }
+
+const char* get_snort_conf_dir()
+{ return snort_conf_dir.c_str(); }
 
 void ConfigAlertBeforePass(SnortConfig *sc, const char*)
 {
@@ -255,7 +270,7 @@ void ConfigGTPDecoding(SnortConfig *sc, const char*)
 
     if (portObject)
     {
-       sc->gtp_ports =  PortObjectCharPortArray(sc->gtp_ports,portObject, &numberOfPorts);
+       sc->gtp_ports = PortObjectCharPortArray(sc->gtp_ports,portObject, &numberOfPorts);
     }
 
     if (!sc->gtp_ports || (0 == numberOfPorts))
@@ -383,35 +398,6 @@ void ConfigObfuscationMask(SnortConfig *sc, const char *args)
     sfip_pton(args, &sc->obfuscation_net);
 }
 
-#define MIN_SNAPLEN  68
-#define MAX_SNAPLEN  UINT16_MAX
-
-void ConfigPacketSnaplen(SnortConfig *sc, const char *args)
-{
-    char *endptr;
-    uint32_t snaplen;
-
-    if ( !args )
-        return;
-
-    snaplen = SnortStrtoul(args, &endptr, 0);
-
-    if ((errno == ERANGE) || (*endptr != '\0') ||
-        ((snaplen != 0) && (snaplen < MIN_SNAPLEN)) ||
-        (snaplen > MAX_SNAPLEN) )
-    {
-        ParseError("invalid snaplen: %s.  Snaplen must be between "
-                   "%u and %u inclusive or 0 for default = %u.",
-                   args, MIN_SNAPLEN, MAX_SNAPLEN, DAQ_GetSnapLen());
-        return;
-    }
-
-    sc->pkt_snaplen = snaplen;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_INIT,
-        "Snap length of packets set to: %d\n", sc->pkt_snaplen););
-}
-
 PolicyMode GetPolicyMode(PolicyMode mode)
 {
     switch ( mode )
@@ -443,25 +429,6 @@ PolicyMode GetPolicyMode(PolicyMode mode)
     }
     return mode;
 }
-
-#ifdef PERF_PROFILING
-void ConfigProfiling(SnortConfig* sc)
-{   
-    if ( sc->profile_rules.filename )
-    {
-        char* fn = ProcessFileOption(sc, sc->profile_rules.filename);
-        free(sc->profile_rules.filename);
-        sc->profile_rules.filename = fn;
-    }
-    if ( sc->profile_preprocs.filename )
-    {
-        char* fn = ProcessFileOption(sc, sc->profile_preprocs.filename);
-        free(sc->profile_preprocs.filename);
-        sc->profile_preprocs.filename = fn;
-    }
-
-}
-#endif
 
 void ConfigQuiet(SnortConfig *sc, const char*)
 {
@@ -576,21 +543,6 @@ void ConfigShowYear(SnortConfig *sc, const char*)
     DEBUG_WRAP(DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n"););
 }
 
-void ConfigSoRuleMemcap(SnortConfig *sc, const char *args)
-{
-    char *endptr;
-
-    if ( !args )
-        return;
-
-    sc->so_rule_memcap = SnortStrtoul(args, &endptr, 0);
-    if ((errno == ERANGE) || (*endptr != '\0'))
-    {
-        ParseError("invalid so rule memcap: %s.  Memcap must be between "
-                   "0 and %u inclusive.", args, UINT32_MAX);
-    }
-}
-
 void ConfigTreatDropAsAlert(SnortConfig *sc, const char*)
 {
     sc->run_flags |= RUN_FLAG__TREAT_DROP_AS_ALERT;
@@ -685,5 +637,108 @@ void ConfigScriptPath(SnortConfig *sc, const char *args)
 {
     if ( sc && args )
         sc->script_path = SnortStrdup(args);
+}
+
+void config_syslog(SnortConfig* sc, const char*)
+{
+    static bool syslog_configured = false;
+
+    if (syslog_configured)
+        return;
+
+    /* If daemon or logging to syslog use "snort" as identifier and
+     * start logging there now */
+    openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
+
+    sc->logging_flags |= LOGGING_FLAG__SYSLOG;
+    syslog_configured = true;
+}
+
+void config_daemon(SnortConfig* sc, const char* val)
+{
+    static bool daemon_configured = false;
+
+    if (daemon_configured)
+        return;
+
+    /* If daemon or logging to syslog use "snort" as identifier and
+     * start logging there now */
+    openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
+
+    ConfigDaemon(sc, val);
+    daemon_configured = true;
+}
+
+void config_alert_mode(SnortConfig* sc, const char* val)
+{
+    if (strcasecmp(val, ALERT_NONE) == 0)
+    {
+        sc->output_flags |= OUTPUT_FLAG__NO_ALERT;
+        EventManager::enable_alerts(false);
+    }
+    else if ((strcasecmp(val, ALERT_CMG) == 0) ||
+             (strcasecmp(val, ALERT_JH) == 0) ||
+             (strcasecmp(val, ALERT_DJR) == 0))
+    {
+        sc->output = SnortStrdup(OUTPUT_CMG);
+        sc->output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
+        sc->output_flags |= OUTPUT_FLAG__APP_DATA;
+    }
+    else if (strcasecmp(val, ALERT_AJK) == 0)
+    {
+        sc->output = SnortStrdup(OUTPUT_AJK);
+    }
+    else
+        sc->output = SnortStrdup(val);
+}
+
+void config_log_mode(SnortConfig* sc, const char* val)
+{
+    if (strcasecmp(val, LOG_NONE) == 0)
+    {
+        sc->output_flags |= OUTPUT_FLAG__NO_LOG;
+        set_main_hook(snort_ignore);
+        EventManager::enable_logs(false);
+    }
+    else if (strcasecmp(val, LOG_TEXT) == 0)
+    {
+        set_main_hook(snort_print);
+    }
+    else if (strcasecmp(val, LOG_PCAP) == 0)
+    {
+        sc->output = SnortStrdup(OUTPUT_PCAP);
+        set_main_hook(snort_log);
+    }
+    else
+    {
+        FatalError("Unknown -K option: %s\n", val);
+    }
+}
+
+void config_conf(SnortConfig*, const char* val)
+{
+    lua_conf = val;
+    SetSnortConfDir(lua_conf.c_str());
+    set_main_hook(snort_inspect);
+}
+
+void SetSnortConfDir(const char* file)
+{
+    /* extract the config directory from the config filename */
+    if ( file )
+    {
+        const char *path_sep = strrchr(file, '/');
+
+        /* is there a directory seperator in the filename */
+        if (path_sep != NULL)
+        {
+            path_sep++;  /* include path separator */
+            snort_conf_dir.assign(file, path_sep - file);
+        }
+        else
+        {
+            snort_conf_dir = "./";
+        }
+    }
 }
 

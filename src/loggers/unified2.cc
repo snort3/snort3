@@ -183,7 +183,7 @@ static void Unified2InitFile(Unified2Config *config)
         fname_ptr = u2.filepath;
     }
 
-    // FIXIT should use open() instead of fopen()
+    // FIXIT-L should use open() instead of fopen()
     if ((u2.stream = fopen(fname_ptr, "wb")) == NULL)
     {
         FatalError("%s(%d) Could not open %s: %s\n",
@@ -200,7 +200,7 @@ static void Unified2InitFile(Unified2Config *config)
     }
 
     /* If test mode, close and delete the file */
-    if (ScTestMode())  // FIXIT eliminate test check; should always remove if empty
+    if (ScTestMode())  // FIXIT-L eliminate test check; should always remove if empty
     {
         fclose(u2.stream);
         u2.stream = NULL;

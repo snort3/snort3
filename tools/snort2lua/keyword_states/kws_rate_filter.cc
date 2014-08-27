@@ -35,7 +35,7 @@ namespace {
 class RateFilter : public ConversionState
 {
 public:
-    RateFilter(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    RateFilter() : ConversionState() {};
     virtual ~RateFilter() {};
     virtual bool convert(std::istringstream& data);
 
@@ -83,7 +83,7 @@ bool RateFilter::parse_ip_list(std::istringstream& arg_stream, std::istringstrea
     if (arg_stream.bad() && data_stream.bad())
         return false;
 
-    ld->add_option_to_table("apply_to", fullIpList);
+    table_api.add_option("apply_to", fullIpList);
     return true;
 }
 
@@ -93,7 +93,7 @@ bool RateFilter::convert(std::istringstream& data_stream)
     std::string args;
 
 
-    ld->open_table("rate_filter");
+    table_api.open_table("rate_filter");
 
     while(std::getline(data_stream, args, ','))
     {
@@ -127,13 +127,13 @@ bool RateFilter::convert(std::istringstream& data_stream)
 
         else if(!keyword.compare("gen_id"))
         {
-            ld->add_diff_option_comment("gen_id", "gid");
+            table_api.add_diff_option_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", arg_stream);
         }
 
         else if (!keyword.compare("sig_id"))
         {
-            ld->add_diff_option_comment("sig_id", "sid");
+            table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", arg_stream);
         }
 
@@ -151,9 +151,9 @@ bool RateFilter::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new RateFilter(cv, ld);
+    return new RateFilter();
 }
 
 static const ConvertMap keyword_rate_filter =

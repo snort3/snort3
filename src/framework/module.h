@@ -18,10 +18,11 @@
 */
 // module.h author Russ Combs <rucombs@cisco.com>
 
-// FIXIT 
-// -- add set_default method
-// -- add trace param(s)
-// -- add memcap related
+// FIXIT-H add brief help string to modules
+// FIXIT-H add optional default config to modules
+// FIXIT-M add trace param(s)
+// FIXIT-M add memcap related
+// FIXIT-L add set_default method
 
 #ifndef MODULE_H
 #define MODULE_H
@@ -50,7 +51,6 @@ struct RuleMap
 
 struct ProfileStats;
 
-// FIXIT add brief help string to modules
 class Module
 {
 public:
@@ -121,8 +121,8 @@ public:
     virtual void reset_stats();
 
 protected:
-    Module(const char* s);
-    Module(const char* s, const Parameter* p, bool is_list = false);
+    Module(const char*);
+    Module(const char*, const Parameter*, bool is_list = false);
 
 private:
     friend class ModuleManager;

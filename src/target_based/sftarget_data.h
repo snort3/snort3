@@ -93,7 +93,7 @@ typedef struct _HostAttributeEntry
 
 int SFAT_AddHost(HostAttributeEntry*);
 int SFAT_AddService(HostAttributeEntry*, ApplicationEntry*);
-int SFAT_AddHostEntryToMap(void);
+int SFAT_AddHostEntryToMap(HostAttributeEntry*);
 
 HostAttributeEntry * SFAT_CreateHostEntry(void);
 ApplicationEntry * SFAT_CreateApplicationEntry(void);

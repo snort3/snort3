@@ -19,22 +19,17 @@
  */
 // pps_bo.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <sstream>
-#include <vector>
-#include <iomanip>
 
 #include "conversion_state.h"
-#include "utils/converter.h"
-#include "utils/s2l_util.h"
-
+#include "data/dt_table_api.h"
 
 namespace preprocessors
 {
 
-static ConversionState* bo_ctor(Converter* /*cv*/, LuaData* ld)
+static ConversionState* bo_ctor()
 {
-    ld->open_table("bo");
-    ld->close_table();
+    table_api.open_table("bo");
+    table_api.close_table();
     return nullptr;
 }
 

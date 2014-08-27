@@ -32,7 +32,6 @@
 #include "snort_debug.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "framework/share.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "flow/flow_control.h"
@@ -154,7 +153,7 @@ StreamBase::StreamBase(const StreamConfig* c)
 void StreamBase::tinit()
 {
     assert(!flow_con);
-    Inspector* pi = InspectorManager::get_inspector("binder");
+    Inspector* pi = InspectorManager::get_binder();
     flow_con = new FlowControl(pi);
     InspectSsnFunc f;
 
@@ -197,7 +196,7 @@ void StreamBase::tterm()
 
 void StreamBase::show(SnortConfig*)
 {
-    // FIXIT SSN print 
+    // FIXIT-L SSN print 
     //Stream5PrintGlobalConfig(&config);
 }
 
@@ -240,7 +239,7 @@ void StreamBase::eval(Packet *p)
 }
 
 #if 0
-    // FIXIT add method to get exp cache?
+    // FIXIT-L add method to get exp cache?
     LogMessage("            Expected Flows\n");
     LogMessage("                  Expected: %lu\n", exp_cache->get_expects());
     LogMessage("                  Realized: %lu\n", exp_cache->get_realized());
@@ -280,7 +279,7 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__ALL,  // FIXIT which bits??
+    PROTO_BIT__IP | PROTO_BIT__ICMP | PROTO_BIT__TCP | PROTO_BIT__UDP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

@@ -34,7 +34,7 @@ namespace {
 class DefaultRuleState : public ConversionState
 {
 public:
-    DefaultRuleState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    DefaultRuleState() : ConversionState() {};
     virtual ~DefaultRuleState() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -46,20 +46,20 @@ bool DefaultRuleState::convert(std::istringstream& data_stream)
     bool retval = true;
     std::string val;
 
-    ld->open_table("alerts");
+    table_api.open_table("alerts");
 
     if (data_stream >> val &&
         util::case_compare(val, "disableD"))
     {
-        ld->add_option_to_table("default_rule_state", false);
+        table_api.add_option("default_rule_state", false);
     }
     else
     {
-        ld->add_option_to_table("default_rule_state", true);
+        table_api.add_option("default_rule_state", true);
     }
 
 
-    ld->close_table();
+    table_api.close_table();
     return retval;
 }
 
@@ -67,9 +67,9 @@ bool DefaultRuleState::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new DefaultRuleState(cv, ld);
+    return new DefaultRuleState();
 }
 
 static const ConvertMap default_rule_state_api =

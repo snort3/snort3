@@ -36,6 +36,7 @@ using namespace std;
 #include "main.h"
 #include "snort.h"
 #include "snort_config.h"
+#include "snort_module.h"
 #include "parser/parser.h"
 #include "parser/parse_conf.h"
 #include "parser/config_file.h"
@@ -236,7 +237,7 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("bleedover_warnings_enabled") )
     {
         if ( v.get_bool() )
-            fpDetectSetBleedOverWarnings(fp);  // FIXIT these should take arg
+            fpDetectSetBleedOverWarnings(fp);  // FIXIT-L these should take arg
     }
     else if ( v.is("enable_single_rule_group") )
     {
@@ -302,17 +303,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 
 #ifdef PERF_PROFILING
-static const Parameter profile_file_params[] =
-{
-    { "name", Parameter::PT_STRING, "128", nullptr,
-      "output to file instead of log" },
-
-    { "append", Parameter::PT_BOOL, nullptr, "false",
-      "append or overwrite" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter profile_rule_params[] =
 {
     { "count", Parameter::PT_INT, "-1:", "-1",
@@ -322,9 +312,6 @@ static const Parameter profile_rule_params[] =
       "checks | avg_ticks | total_ticks | matches | no_matches | "
       "avg_ticks_per_match | avg_ticks_per_no_match",
       "avg_ticks", "sort by given field" },
-
-    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
-      "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -337,9 +324,6 @@ static const Parameter profile_module_params[] =
     { "sort", Parameter::PT_ENUM,
       "checks | avg_ticks | total_ticks", "avg_ticks",
       "sort by given field" },
-
-    { "file", Parameter::PT_TABLE, profile_file_params, nullptr,
-      "file config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -395,14 +379,6 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( v.is("sort") )
         p->sort = v.get_long() + 1;
 
-    else if ( v.is("append") )
-        p->append = v.get_long() + 1;
-
-    else if ( v.is("name") )
-        p->filename = SnortStrdup(v.get_string());  // FIXIT use c++ string
-        // FIXIT do this after log dir is set
-        //p->filename = ProcessFileOption(sc, v.get_string());
-
     else
         return false;
 
@@ -413,7 +389,7 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // classification module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
+// FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
 static const Parameter classification_params[] =
@@ -481,7 +457,7 @@ bool ClassificationsModule::set(const char*, Value& v, SnortConfig*)
 //-------------------------------------------------------------------------
 // reference module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
+// FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
 static const Parameter reference_params[] =
@@ -544,9 +520,7 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 
 static const Parameter alerts_params[] =
 {
-    { "alert_file", Parameter::PT_STRING, nullptr, nullptr,
-      "set the alert output file name (FIXIT delete if not used)" },
-
+    // FIXIT-L move to fast, full, syslog and delete from here
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
       "include interface in alert info (fast, full, or syslog only)" },
 
@@ -591,10 +565,7 @@ public:
 
 bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("alert_file") )
-        sc->alert_file = SnortStrdup(v.get_string());
-
-    else if ( v.is("alert_with_interface_name") )
+    if ( v.is("alert_with_interface_name") )
         sc->output_flags |= OUTPUT_FLAG__ALERT_IFACE;
 
     else if ( v.is("default_rule_state") )
@@ -719,7 +690,7 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("log_ipv6_extra_data") )
     {
         if ( v.get_bool() )
-        sc->log_ipv6_extra = 1; // FIXIT move to output|logging_flags
+        sc->log_ipv6_extra = 1; // FIXIT-M move to output|logging_flags
     }
     else if ( v.is("quiet") )
     {
@@ -883,7 +854,7 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter daq_params[] =
 {
-    // FIXIT should be a list?
+    // FIXIT-L should be a list?
     { "dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory where to search for DAQ plugins" },
 
@@ -893,11 +864,11 @@ static const Parameter daq_params[] =
     { "no_promisc", Parameter::PT_BOOL, nullptr, "false",
       "whether to put DAQ device into promiscuous mode" },
 
-    // FIXIT range determined by available plugins
+    // FIXIT-H range determined by available plugins
     { "name", Parameter::PT_STRING, nullptr, "pcap",
       "select name of DAQ" },
 
-    // FIXIT should be a list?
+    // FIXIT-L should be a list?
     { "var", Parameter::PT_STRING, nullptr, nullptr,
       "list of name=value DAQ-specific parameters" },
 
@@ -942,7 +913,7 @@ bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
             ConfigDecodeDataLink(sc, "");
     }
     else if ( v.is("snaplen") )
-        ConfigPacketSnaplen(sc, v.get_string());
+        sc->pkt_snaplen = v.get_long();
 
     else
         return false;
@@ -1206,7 +1177,7 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 //-------------------------------------------------------------------------
 // vars module
 //-------------------------------------------------------------------------
-// FIXIT signature.{h,cc} has type and name confused
+// FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
 static const Parameter vars_params[] =
@@ -1493,7 +1464,7 @@ static const Parameter rate_filter_params[] =
       "count interval" },
 
     { "new_action", Parameter::PT_SELECT,
-      // FIXIT range based on available action plugins
+      // FIXIT-H range based on available action plugins
       "alert | drop | log | pass | | reject | sdrop", "alert",
       "restrict filter to these addresses according to track" },
 
@@ -1625,37 +1596,10 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
-// snort module
-//-------------------------------------------------------------------------
-
-static const Command snort_cmds[] =
-{
-    { "show_plugins", main_dump_plugins, "show available plugins" },
-    { "dump_stats", main_dump_stats, "show summary statistics" },
-    { "rotate_stats", main_rotate_stats, "roll perfmonitor log files" },
-    { "reload_config", main_reload_config, "load new configuration" },
-    { "reload_attributes", main_reload_attributes, "load a new hosts.xml" },
-    { "process", main_process, "process given pcap" },
-    { "pause", main_pause, "suspend packet processing" },
-    { "resume", main_resume, "continue packet processing" },
-    { "quit", main_quit, "shutdown and dump-stats" },
-    { "help", main_help, "this output" },
-    { nullptr, nullptr, nullptr }
-};
-
-class SnortModule : public Module
-{
-public:
-    SnortModule() : Module("snort") { };
-    const Command* get_commands() const { return snort_cmds; };
-    bool set(const char*, Value&, SnortConfig*) { return false; };
-};
-
-//-------------------------------------------------------------------------
 // hosts module
 //-------------------------------------------------------------------------
 
-// FIXIT these are cloned from ip_module.cc and tcp_module.cc
+// FIXIT-H these are cloned from ip_module.cc and tcp_module.cc
 
 static const char* ip_policies =
     "first | linux | bsd | bsd_right |last | windows | solaris";
@@ -1857,13 +1801,11 @@ bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
 
 void module_init()
 {
-    // make sure parameters can be set regardless of sequence
+    // parameters must be settable regardless of sequence
     // since Lua calls this by table hash key traversal
     // (which is effectively random)
     // so module interdependencies must come after this phase
-    //
-    // this module is special :)
-    ModuleManager::add_module(new SnortModule);
+    ModuleManager::add_module(get_snort_module());
 
     // these modules are not policy specific
     ModuleManager::add_module(new ClassificationsModule);

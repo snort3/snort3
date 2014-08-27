@@ -102,7 +102,7 @@ void detection_filter_init(DetectionFilterConfig* df_config)
         detection_filter_hash = sfthd_local_new(df_config->memcap);
 
         if ( detection_filter_hash == NULL )
-            return;  // FIXIT this is fatal
+            return;  // FIXIT-H this is fatal
     }
 }
 

@@ -91,16 +91,15 @@ static std::array<PegCount, s_stats.size()> g_stats{{0}};
 static THREAD_LOCAL rand_t* s_rand = NULL;
 static THREAD_LOCAL Packet *encode_pkt;
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
-static THREAD_LOCAL uint8_t* dst_mac = NULL;
 static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt{{0}};
 
-
+// FIXIT-L this shouldn't have to be thread lcoal
+static THREAD_LOCAL uint8_t* dst_mac = NULL;
 
 //-------------------------------------------------------------------------
 // Private helper functions
 //-------------------------------------------------------------------------
-
 
 static inline void push_layer(Packet *p,
                                 uint16_t prot_id,

@@ -29,15 +29,16 @@
 // packet handler stuff
 //-------------------------------------------------------------------------
 
-SO_PUBLIC unsigned Inspector::max_slots = 1;
 SO_PUBLIC unsigned THREAD_LOCAL Inspector::slot = 0;
+unsigned Inspector::max_slots = 1;
 
 SO_PUBLIC Inspector::Inspector()
 {
-    assert(slot < max_slots);
-    ref_count = new unsigned[max_slots];
+    unsigned max = get_instance_max();
+    assert(slot < max);
+    ref_count = new unsigned[max];
 
-    for ( unsigned i = 0; i < max_slots; ++i )
+    for ( unsigned i = 0; i < max; ++i )
         ref_count[i] = 0;
 }
 
@@ -45,7 +46,7 @@ SO_PUBLIC Inspector::~Inspector()
 {
     unsigned total = 0;
 
-    for (unsigned i = 0; i < max_slots; ++i )
+    for (unsigned i = 0; i < get_instance_max(); ++i )
         total += ref_count[i];
 
     assert(!total);
@@ -55,14 +56,14 @@ SO_PUBLIC Inspector::~Inspector()
 
 SO_PUBLIC bool Inspector::is_inactive()
 {
-    for (unsigned i = 0; i < max_slots; ++i )
+    for (unsigned i = 0; i < get_instance_max(); ++i )
         if ( ref_count[i] )
             return false;
     
     return true;
 }
 
-unsigned Inspector::get_buf_id(const char* key)
+SO_PUBLIC unsigned Inspector::get_buf_id(const char* key)
 {
     const char** p = api->buffers;
     unsigned id = 0;
@@ -76,7 +77,7 @@ unsigned Inspector::get_buf_id(const char* key)
     return p[id] ? id+1 : 0;
 }
 
-bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
+SO_PUBLIC bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
 {
     unsigned id = get_buf_id(key);
 
@@ -86,7 +87,7 @@ bool Inspector::get_buf(const char* key, Packet* p, InspectionBuffer& b)
     return get_buf(id, p, b);
 }
 
-StreamSplitter* Inspector::get_splitter(bool to_server)
+SO_PUBLIC StreamSplitter* Inspector::get_splitter(bool to_server)
 {
     if ( !api || api->type != IT_SERVICE )
         return nullptr;

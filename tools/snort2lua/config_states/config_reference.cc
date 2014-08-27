@@ -34,7 +34,7 @@ namespace {
 class Reference : public ConversionState
 {
 public:
-    Reference(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Reference() : ConversionState() {};
     virtual ~Reference() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -45,13 +45,13 @@ bool Reference::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
-    ld->open_table("references");
-    ld->open_table();
+    table_api.open_table("references");
+    table_api.open_table();
 
     if ((data_stream >> keyword) &&
-        ld->add_option_to_table("name", keyword) &&
+        table_api.add_option("name", keyword) &&
         (data_stream >> keyword) &&
-        ld->add_option_to_table("url", keyword))
+        table_api.add_option("url", keyword))
     {
         return true;
     }
@@ -62,9 +62,9 @@ bool Reference::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Reference(cv, ld);
+    return new Reference();
 }
 
 static const ConvertMap reference_api =

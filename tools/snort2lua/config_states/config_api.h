@@ -19,11 +19,11 @@
  */
 // config_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef CONFIG_API_H
-#define CONFIG_API_H
+#ifndef CONFIG_STATES_CONFIG_API_H
+#define CONFIG_STATES_CONFIG_API_H
 
 #include <vector>
-#include "../conversion_state.h"
+#include "conversion_defines.h"
 
 namespace config
 {

@@ -11,14 +11,12 @@ add_subdirectory(rule_states)
 add_subdirectory(utils)
 
 if (BUILD_UNIT_TESTS)
-if (0)
     add_subdirectory(tests)
-endif()
 endif()
 
 add_executable( snort2lua
     conversion_state.h
-    option_parser.h
+    conversion_defines.h
     init_state.h
     snort2lua.cc
     init_state.cc

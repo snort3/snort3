@@ -34,13 +34,6 @@
 
 unsigned FlowData:: flow_id = 0;
 
-// FIXIT can't inline SO_PUBLIC ctor and dtor in header or we get problems:
-// ld: warning: direct access in FlowData::FlowData(unsigned int,
-// Inspector*) to global weak symbol vtable for FlowData means the weak
-// symbol cannot be overridden at runtime. This was likely caused by
-// different translation units being compiled with different visibility
-// settings.
-
 SO_PUBLIC FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);
@@ -61,7 +54,7 @@ Flow::Flow (int proto)
     memset(this, 0, sizeof(*this));
     protocol = proto;
 
-    // FIXIT getFlowbitSizeInBytes() should be attribute of ???
+    // FIXIT-M getFlowbitSizeInBytes() should be attribute of ??? (or eliminate)
     /* use giFlowbitSize - 1, since there is already 1 byte in the
     * StreamFlowData structure */
     size_t sz = sizeof(StreamFlowData) + getFlowbitSizeInBytes() - 1;
@@ -92,7 +85,7 @@ void Flow::reset()
         session->cleanup();
         free_application_data();
     }
-    // FIXIT cleanup() winds up calling clear()
+    // FIXIT-H cleanup() winds up calling clear()
     if ( ssn_client )
     {
         ssn_client->rem_ref();
@@ -118,8 +111,6 @@ void Flow::reset()
 
 void Flow::clear(bool freeAppData)
 {
-    assert(flow_state < 3);
-
     if ( freeAppData )
         free_application_data();
 
@@ -427,7 +418,7 @@ void Flow::set_ttl (Packet* p, bool client)
      */
     if (outer_ip_api.is_valid())
     {
-        // FIXIT!! -- Do we want more than just the outermost
+        // FIXIT-J!! -- Do we want more than just the outermost
         //            and innermost ttl()?
         outer_ttl = outer_ip_api.ttl();
         inner_ttl = p->ip_api.ttl();

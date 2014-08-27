@@ -96,7 +96,7 @@ public:
     { name = s; };
 
     CursorActionType get_cursor_type() const
-    { return CAT_SET_OTHER; };
+    { return CAT_SET_HEADER; };
 
     int eval(Cursor&, Packet*);
 
@@ -159,7 +159,7 @@ int HttpHeaderOption::eval(Cursor& c, Packet* p)
     if ( !p->flow || !p->flow->gadget )
         rval = DETECTION_OPTION_NO_MATCH;
 
-    // FIXIT cache id at parse time for runtime use
+    // FIXIT-P cache id at parse time for runtime use
     else if ( !p->flow->gadget->get_buf(s_name, p, hb) )
         rval = DETECTION_OPTION_NO_MATCH;
 
@@ -214,7 +214,7 @@ static const IpsApi header_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    0, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,

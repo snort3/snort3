@@ -88,7 +88,7 @@
 static uint32_t hi_cap = 0;
 
 // stats
-// FIXIT eliminate these counts
+// FIXIT-L eliminate these counts
 static THREAD_LOCAL uint32_t hi_paf_calls = 0;
 static THREAD_LOCAL uint32_t hi_paf_bytes = 0;
 
@@ -609,31 +609,31 @@ static inline void hi_paf_event_post ()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
-        HI_CLIENT_UNBOUNDED_POST+1);
+        HI_CLIENT_UNBOUNDED_POST);
 }
 
 static inline void hi_paf_event_simple ()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
-        HI_CLIENT_SIMPLE_REQUEST+1);
+        HI_CLIENT_SIMPLE_REQUEST);
 }
 
 static inline void hi_paf_event_msg_size ()
 {
     SnortEventqAdd(
         GID_HTTP_SERVER,
-        HI_CLISRV_MSG_SIZE_EXCEPTION+1);
+        HI_CLISRV_MSG_SIZE_EXCEPTION);
 }
 
 static inline void hi_paf_event_pipe ()
 {
     SnortEventqAdd(
         GID_HTTP_CLIENT,
-        HI_CLIENT_PIPELINE_MAX+1);
+        HI_CLIENT_PIPELINE_MAX);
 }
 
-static inline PAF_Status hi_exec (Hi5State* s, Action a, int c)
+static inline StreamSplitter::Status hi_exec (Hi5State* s, Action a, int c)
 {
     switch ( a )
     {
@@ -687,7 +687,7 @@ static inline PAF_Status hi_exec (Hi5State* s, Action a, int c)
             {
                 hi_paf_event_msg_size();
                 s->flags |= HIF_ERR;
-                return PAF_FLUSH;
+                return StreamSplitter::FLUSH;
             }
             break;
         case ACT_LNB:
@@ -700,9 +700,9 @@ static inline PAF_Status hi_exec (Hi5State* s, Action a, int c)
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
                 "%s: lnc=%u\n", __FUNCTION__, s->len);)
             if ( s->len )
-                return PAF_SKIP;
+                return StreamSplitter::SKIP;
             else
-                return PAF_FLUSH;
+                return StreamSplitter::FLUSH;
             s->flags &= ~HIF_NOF;
             s->msg = 3;
             break;
@@ -719,7 +719,7 @@ static inline PAF_Status hi_exec (Hi5State* s, Action a, int c)
             s->len = 0;
             break;
     }
-    return PAF_SEARCH;
+    return StreamSplitter::SEARCH;
 }
 
 //--------------------------------------------------------------------
@@ -817,9 +817,9 @@ static inline bool paf_abort (Hi5State* s)
 
 // this is the 2nd step of stateful scanning, which executes
 // the fsm.
-static PAF_Status hi_scan_fsm (Hi5State* s, int c)
+static StreamSplitter::Status hi_scan_fsm (Hi5State* s, int c)
 {
-    PAF_Status status;
+    StreamSplitter::Status status;
     State* m = hi_fsm + s->fsm;
     Cell* cell = &m->cell[c];
 
@@ -844,7 +844,7 @@ static PAF_Status hi_scan_fsm (Hi5State* s, int c)
     return status;
 }
 
-static PAF_Status hi_eoh (Hi5State* s, Flow* ssn)
+static StreamSplitter::Status hi_eoh (Hi5State* s, Flow* ssn)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: flags=0x%X, len=%u\n", __FUNCTION__, s->flags, s->len);)
@@ -867,23 +867,23 @@ static PAF_Status hi_eoh (Hi5State* s, Flow* ssn)
             hi_paf_event_simple();
 
         hi_exec(s, ACT_LN0, 0);
-        return PAF_FLUSH;
+        return StreamSplitter::FLUSH;
     }
     if ( s->flags & HIF_CHK )
     {
         hi_exec(s, ACT_CK0, 0);
-        return PAF_SEARCH;
+        return StreamSplitter::SEARCH;
     }
     if ( (s->flags & (HIF_REQ|HIF_LEN)) )
-        return PAF_FLUSH;
+        return StreamSplitter::FLUSH;
 
     if ( (s->flags & HIF_V11) && (s->flags & HIF_RSP) )
     {
         hi_exec(s, ACT_LN0, 0);
         hi_paf_event_msg_size();
-        return PAF_FLUSH;
+        return StreamSplitter::FLUSH;
     }
-    return PAF_ABORT;
+    return StreamSplitter::ABORT;
 }
 
 // http messages are scanned statefully, char-by-char, in
@@ -893,10 +893,10 @@ static PAF_Status hi_eoh (Hi5State* s, Flow* ssn)
 // simplified version ignores \r (in the spirit of send strict,
 // recv tolerant, but it would only take 2 more states to check
 // for \r).  the 2nd step is hi_scan_fsm().
-static inline PAF_Status hi_scan_msg (
+static inline StreamSplitter::Status hi_scan_msg (
     Hi5State* s, int c, uint32_t* fp, Flow* ssn)
 {
-    PAF_Status paf = PAF_SEARCH;
+    StreamSplitter::Status paf = StreamSplitter::SEARCH;
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s[%d]: 0x%2X, '%c'\n", __FUNCTION__, s->msg, c, isgraph(c) ? c : '.');)
 
@@ -948,7 +948,7 @@ static inline PAF_Status hi_scan_msg (
         {
             paf = hi_scan_fsm(s, EOL);
 
-            if ( paf == PAF_SEARCH )
+            if ( paf == StreamSplitter::SEARCH )
                 paf = hi_scan_fsm(s, c);
         }
         s->msg = 0;
@@ -967,9 +967,9 @@ static inline PAF_Status hi_scan_msg (
         break; }
 
     if ( paf_abort(s) )
-        paf = PAF_ABORT;
+        paf = StreamSplitter::ABORT;
 
-    else if ( paf != PAF_SEARCH )
+    else if ( paf != StreamSplitter::SEARCH )
         *fp = s->len;
 
     return paf;
@@ -1013,12 +1013,12 @@ HttpSplitter::HttpSplitter(bool c2s) : StreamSplitter(c2s)
 
 HttpSplitter::~HttpSplitter() { }
 
-PAF_Status HttpSplitter::scan(
+StreamSplitter::Status HttpSplitter::scan(
     Flow* ssn, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
 {
     Hi5State* hip = &state;
-    PAF_Status paf = PAF_SEARCH;
+    Status paf = SEARCH;
 
     uint32_t n = 0;
     *fp = 0;
@@ -1028,12 +1028,12 @@ PAF_Status HttpSplitter::scan(
 
     if ( hip->flags & HIF_ERR )
     {
-        return PAF_ABORT;
+        return ABORT;
     }
 
     if ( hi_cap && (hi_paf_bytes > hi_cap) )
     {
-        return PAF_ABORT;
+        return ABORT;
     }
 
     while ( n < len )
@@ -1051,7 +1051,7 @@ PAF_Status HttpSplitter::scan(
         }
         paf = hi_scan_msg(hip, data[n++], fp, ssn);
 
-        if ( paf != PAF_SEARCH )
+        if ( paf != SEARCH )
         {
             if ( hip->flags & HIF_ERR )
             {
@@ -1060,7 +1060,7 @@ PAF_Status HttpSplitter::scan(
             }
             *fp += n;
 
-            if ( paf != PAF_SKIP )
+            if ( paf != SKIP )
                 hi_reset(hip, flags);
             break;
         }

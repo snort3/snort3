@@ -23,8 +23,7 @@
 #define KEYWORD_STATES_KEYWORDS_API_H
 
 #include <vector>
-#include <string>
-#include "../conversion_state.h"
+#include "conversion_defines.h"
 
 
 namespace keywords

@@ -1,6 +1,8 @@
 
 
 add_library (parser STATIC 
+    arg_list.cc 
+    arg_list.h 
     parser.cc 
     parser.h 
     parse_byte_code.cc 

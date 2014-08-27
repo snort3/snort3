@@ -34,8 +34,8 @@
 
 static const char* s_name = "rewrite";
 
-// FIXIT ips_replace.cc should part of this lib
-// FIXIT enforce that a rule with a replace option has a replace action
+// FIXIT-L ips_replace.cc should part of this lib
+// FIXIT-L enforce that a rule with a replace option has a replace action
 //       (and vice-versa)
 //--------------------------------------------------------------------------
 // queue foo
@@ -139,9 +139,6 @@ public:
     ReplaceAction(ReplaceModule*);
 
     void exec(Packet*);
-
-private:
-    unsigned flags;
 };
 
 ReplaceAction::ReplaceAction(ReplaceModule*) : 

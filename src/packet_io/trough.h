@@ -29,6 +29,7 @@ enum SourceType
 };
 
 void Trough_SetLoopCount(long int);
+long Trough_GetLoopCount();
 void Trough_SetFilter(const char*);
 void Trough_Multi(SourceType, const char* list);
 void Trough_SetUp(void);

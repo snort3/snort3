@@ -20,12 +20,27 @@
 ffi = require("ffi")
 
 ffi.cdef[[
-struct Buffer
+struct SnortBuffer
 {
     const char* type;
     const uint8_t* data;
     unsigned len;
 };
-const struct Buffer* get_buffer();
+const struct SnortBuffer* get_buffer();
+
+struct SnortEvent
+{
+    unsigned gid;
+    unsigned sid;
+    unsigned rev;
+
+    uint32_t event_id;
+    uint32_t event_ref;
+
+    const char* msg;
+    const char* svc;
+    const char* os;
+};
+const struct SnortEvent* get_event();
 ]]
 

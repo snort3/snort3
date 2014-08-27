@@ -862,9 +862,6 @@ static bool pmd_can_be_fp(PatternMatchData* pmd, CursorActionType cat)
     if ( !pmd->pattern_buf || !pmd->pattern_size )
         return false;
 
-    if ( pmd->relative )
-        return false;
-
     if ( cat <= CAT_SET_OTHER )
         return false;
 
@@ -946,11 +943,12 @@ static PmType get_pm_type(CursorActionType cat)
     return PM_TYPE__MAX;
 }
 
-static PatternMatchData * get_fp_content(OptTreeNode *otn)
+void set_fp_content(OptTreeNode *otn)
 {
     OptFpList *ofl;
     CursorActionType curr_cat = CAT_SET_RAW;
     FpFoo best;
+    PatternMatchData* pmd = nullptr;
 
     for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
     {
@@ -970,8 +968,17 @@ static PatternMatchData * get_fp_content(OptTreeNode *otn)
 
         tmp->pm_type = get_pm_type(curr_cat);
 
-        if (tmp->fp)
-            return tmp;
+        if ( tmp->fp )
+        {
+            if ( pmd )
+                ParseError("only one fast_pattern content per rule allowed");
+
+            else if ( !pmd_can_be_fp(tmp, curr_cat) )
+                ParseError("content ineligible for fast_pattern matcher");
+
+            else
+                pmd = tmp;
+        }
 
         if ( !pmd_can_be_fp(tmp, curr_cat) )
             continue;
@@ -981,7 +988,29 @@ static PatternMatchData * get_fp_content(OptTreeNode *otn)
         if ( curr.is_better(best) )
             best = curr;
     }
-    return best.pmd;
+    if ( !pmd && best.pmd )
+        best.pmd->fp = 1;
+}
+
+static PatternMatchData* get_fp_content(OptTreeNode *otn)
+{
+    OptFpList *ofl;
+
+    for (ofl = otn->opt_func; ofl != NULL; ofl = ofl->next)
+    {
+        if ( !ofl->context )
+            continue;
+
+        if ( ofl->type != RULE_OPTION_TYPE_CONTENT )
+            continue;
+
+        PatternMatchData* pmd = get_pmd(ofl);
+        assert(pmd);
+
+        if ( pmd->fp )
+            return pmd;
+    }
+    return nullptr;
 }
 
 static int fpFinishPortGroupRule(
@@ -1148,8 +1177,8 @@ static int fpAddPortGroupRule(
     if ( !pg || !otn )
         return -1;
 
-    // skip builtin rules
-    if ( !otn->sigInfo.text_rule )  // FIXIT must be set for so rules too!
+    // skip builtin rules, continue for text and so rules
+    if ( !otn->sigInfo.text_rule )
         return -1;
 
     /* Rule not enabled */
@@ -1295,9 +1324,11 @@ static int fpCreateInitRuleMap(
         prm->prmNumSrcGroups++;
 
         /* Add this port group to the src table at each port that uses it */
-        for( poi = (PortObjectItem*)sflist_first(po->item_list);
+        SF_LNODE* cursor;
+
+        for( poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
              poi;
-             poi = (PortObjectItem*)sflist_next(po->item_list) )
+             poi = (PortObjectItem*)sflist_next(&cursor) )
         {
              switch(poi->type)
              {
@@ -1341,9 +1372,11 @@ static int fpCreateInitRuleMap(
         prm->prmNumDstGroups++;
 
         /* Add this port group to the src table at each port that uses it */
-        for( poi = (PortObjectItem*)sflist_first(po->item_list);
+        SF_LNODE* cursor;
+
+        for( poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
              poi;
-             poi = (PortObjectItem*)sflist_next(po->item_list) )
+             poi = (PortObjectItem*)sflist_next(&cursor) )
         {
              switch(poi->type)
              {
@@ -2109,9 +2142,11 @@ void fpBuildServicePortGroupByServiceOtnList(
      * add each rule to the port group pattern matchers,
      * or to the no-content rule list
      */
-    for (otn = (OptTreeNode*)sflist_first(list);
+    SF_LNODE* cursor;
+
+    for (otn = (OptTreeNode*)sflist_first(list, &cursor);
             otn;
-            otn = (OptTreeNode*)sflist_next(list))
+            otn = (OptTreeNode*)sflist_next(&cursor))
     {
         if (otn->proto == ETHERNET_TYPE_IP)
         {
@@ -2301,10 +2336,11 @@ PORT_GROUP * fpGetServicePortGroupByOrdinal(sopg_table_t *sopg, int proto, int d
 void fpPrintRuleList( SF_LIST * list )
 {
     OptTreeNode * otn;
+    SF_LNODE* cursor;
 
-    for( otn=(OptTreeNode*)sflist_first(list);
+    for( otn=(OptTreeNode*)sflist_first(list, &cursor);
          otn;
-         otn=(OptTreeNode*)sflist_next(list) )
+         otn=(OptTreeNode*)sflist_next(&cursor) )
     {
          LogMessage("|   %u:%u\n",otn->sigInfo.generator,otn->sigInfo.id);
     }
@@ -2569,9 +2605,11 @@ static void fpAddIpProtoOnlyRule(SF_LIST **ip_proto_only_lists, OptTreeNode *otn
             }
 
             /* Search for dups */
-            for (dup = (OptTreeNode *)sflist_first(ip_proto_only_lists[i]);
+            SF_LNODE* cursor;
+
+            for (dup = (OptTreeNode *)sflist_first(ip_proto_only_lists[i], &cursor);
                  dup != NULL;
-                 dup = (OptTreeNode *)sflist_next(ip_proto_only_lists[i]))
+                 dup = (OptTreeNode *)sflist_next(&cursor))
             {
                 if (dup == otn)
                     return;

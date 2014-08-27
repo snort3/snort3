@@ -39,15 +39,6 @@ enum BindAction
     BA_INSPECT
 };
 
-enum BindProto
-{
-    BP_ANY,
-    BP_IP,
-    BP_ICMP,
-    BP_TCP,
-    BP_UDP
-};
-
 struct Binding
 {
     // when
@@ -55,7 +46,7 @@ struct Binding
     std::string when_svc;
     VlanList vlans;
     std::string nets;
-    BindProto proto;
+    unsigned protos;
     PortList ports;
     BindRole role;
 
@@ -67,8 +58,7 @@ struct Binding
     std::string name;
     std::string file;
 
-    Binding()
-    { role = BR_EITHER; proto = BP_ANY; action = BA_INSPECT; };
+    Binding();
 };
 
 #endif

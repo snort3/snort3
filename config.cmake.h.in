@@ -31,6 +31,9 @@
 /* include internal loggers in binary */
 #cmakedefine STATIC_LOGGERS 1
 
+/* include internal ips actions in binary */
+#cmakedefine STATIC_IPS_ACTIONS 1
+
 /* include internal ips options in binary */
 #cmakedefine STATIC_IPS_OPTIONS 1
 

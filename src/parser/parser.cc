@@ -38,6 +38,7 @@
 #include <pwd.h>
 #include <fnmatch.h>
 
+#include <iostream>
 #include <string>
 
 #include "snort_bounds.h"
@@ -74,16 +75,17 @@
 #include "actions/actions.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
-#include "managers/shell.h"
+#include "main/shell.h"
 #include "config_file.h"
 #include "keywords.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
+#include "parse_stream.h"
 #include "vars.h"
 #include "target_based/sftarget_reader.h"
 #include "events/event_wrapper.h"  // see s_hack
 
-// FIXIT without s_hack, we get this error on Mac:
+// FIXIT-L without s_hack, we get this error on Mac:
 // Symbol not found: __Z18GenerateSnortEventP6Packetjj
 // Referenced from: /Users/rucombs/install/lib/snort/inspectors/libport_scan.0.dylib
 // Expected in: flat namespace
@@ -421,7 +423,7 @@ static void DefineIfaceVar(SnortConfig *sc, char *iname, uint8_t *network, uint8
  ****************************************************************************/
 static void DefineAllIfaceVars(SnortConfig *sc)
 {
-    // FIXIT don't come back here on reload unless we are going to find
+    // FIXIT-L don't come back here on reload unless we are going to find
     // new ifaces.
     /* Cache retrieved devs so if user is running with dropped privs and
      * does a reload, we can use previous values */
@@ -796,6 +798,12 @@ void ParseRules(SnortConfig *sc)
         {
             push_parse_location("rules");
             ParseConfigString(sc, p->rules.c_str());
+            pop_parse_location();
+        }
+        if ( sc->stdin_rules )
+        {
+            push_parse_location("stdin");
+            parse_stream(std::cin, sc);
             pop_parse_location();
         }
     }

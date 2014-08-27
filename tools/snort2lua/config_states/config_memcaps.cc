@@ -38,7 +38,7 @@ template<const std::string *snort_option,
 class Memcap : public ConversionState
 {
 public:
-    Memcap(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Memcap() : ConversionState() {};
     virtual ~Memcap() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -57,10 +57,10 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
         return false;
     }
 
-    ld->open_table(*lua_table);
-    bool retval1 = ld->add_diff_option_comment("config " + *snort_option + ":", "event_filter_memcap");
+    table_api.open_table(*lua_table);
+    bool retval1 = table_api.add_diff_option_comment("config " + *snort_option + ":", "event_filter_memcap");
     bool retval2 = parse_int_option(*lua_option, data_stream);
-    ld->close_table();
+    table_api.close_table();
 
     // stop parsing, even if additional options available
     data_stream.setstate(std::ios::eofbit);
@@ -70,9 +70,9 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
 template<const std::string *snort_option,
         const std::string* lua_table,
         const std::string* lua_option>
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Memcap<snort_option, lua_table, lua_option>(cv, ld);
+    return new Memcap<snort_option, lua_table, lua_option>();
 }
 
 

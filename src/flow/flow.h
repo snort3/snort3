@@ -195,7 +195,7 @@ public:
         gadget = nullptr;
     };
 
-public:  // FIXIT privatize if possible
+public:  // FIXIT-M privatize if possible
     // these fields are const after initialization
     const FlowKey* key;
     class Session* session;
@@ -214,10 +214,10 @@ public:  // FIXIT privatize if possible
     Inspector* gadget;
     const char* service;
 
-    int flow_state;
-    FlowState s5_state;  // FIXIT rename this (s5 not appropriate)
+    int flow_state;  // FIXIT-H wow - this is poorly encapsulated!  did i do that?  :(
+    FlowState s5_state;  // FIXIT-L rename this (s5 not appropriate)
 
-    sfip_t client_ip; // FIXIT family and bits should be changed to uint16_t
+    sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
     sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
 
     uint64_t expire_time;

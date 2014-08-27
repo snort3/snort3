@@ -126,7 +126,7 @@ static const Parameter norm_tcp_params[] =
       "sack | echo | partial_order | conn_count | alt_checksum | md5", "false",
       "don't clear given option names" },
 
-    // FIXIT provide a byte list for stuff like this
+    // FIXIT-L provide a byte list for stuff like this
     { "allow_codes", Parameter::PT_STRING, nullptr, nullptr,
       "don't clear given option codes" },
 

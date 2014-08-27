@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <list>
-#include <mutex>
+#include <vector>
 
 #include "module_manager.h"
 #include "flow/flow.h"
@@ -98,9 +98,9 @@ PHInstance::~PHInstance()
     handler->rem_ref();
 }
 
-typedef list<PHGlobal*> PHGlobalList;
-typedef list<PHClass*> PHClassList;
-typedef list<PHInstance*> PHInstanceList;
+typedef vector<PHGlobal*> PHGlobalList;
+typedef vector<PHClass*> PHClassList;
+typedef vector<PHInstance*> PHInstanceList;
 typedef list<Inspector*> PHList;
 
 static PHGlobalList s_handlers;
@@ -138,6 +138,9 @@ struct FrameworkPolicy
     PHVector generic;
     PHVector service;
 
+    Inspector* binder;
+    Inspector* wizard;
+
     void vectorize();
 };
 
@@ -171,7 +174,13 @@ void FrameworkPolicy::vectorize()
             break;
 
         case IT_BINDER:
+            binder = p->handler;
+            break;
+
         case IT_WIZARD:
+            wizard = p->handler;
+            break;
+
         case IT_MAX:
             break;
         }
@@ -194,7 +203,7 @@ void InspectorManager::add_plugin(const InspectApi* api)
 static const InspectApi* get_plugin(const char* keyword)
 {
     for ( auto* p : s_handlers )
-        if ( !strcasecmp(p->api.base.name, keyword) )
+        if ( !strcmp(p->api.base.name, keyword) )
             return &p->api;
 
     return nullptr;
@@ -258,6 +267,9 @@ void InspectorManager::empty_trash()
 void InspectorManager::new_policy (InspectionPolicy* pi)
 {
     pi->framework_policy = new FrameworkPolicy;
+
+    pi->framework_policy->binder = nullptr;
+    pi->framework_policy->wizard = nullptr;
 }
 
 void InspectorManager::delete_policy (InspectionPolicy* pi)
@@ -275,15 +287,13 @@ static PHInstance* get_instance(
     FrameworkPolicy* fp, const char* keyword)
 {
     for ( auto* p : fp->ilist )
-        //if ( !strncasecmp(p->pp_class.api.base.name, keyword, 
-        //    strlen(p->pp_class.api.base.name)) )
-        if ( !strcasecmp(p->pp_class.api.base.name, keyword) )
+        if ( !strcmp(p->pp_class.api.base.name, keyword) )
             return p;
 
     return nullptr;
 }
 
-static PHInstance* GetInstance(
+static PHInstance* get_new(
     PHClass* ppc, FrameworkPolicy* fp, const char* keyword)
 {
     PHInstance* p = get_instance(fp, keyword);
@@ -293,22 +303,42 @@ static PHInstance* GetInstance(
 
     p = new PHInstance(*ppc);
 
-    if ( !p->handler )  // FIXIT is this even possible?
+    if ( !p->handler )
     {
         delete p;
         return NULL;
     }
+
     fp->ilist.push_back(p);
     return p;
 }
 
-// FIXIT create a separate list for meta handlers?  is there really more than one?
+// FIXIT-M create a separate list for meta handlers?  is there really more than one?
 void InspectorManager::dispatch_meta (FrameworkPolicy* fp, int type, const uint8_t* data)
 {
-    // FIXIT change to select instance by policy and pass that in
     for ( auto* p : fp->ilist )
         p->handler->meta(type, data);
 }
+
+Inspector* InspectorManager::get_binder()
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi || !pi->framework_policy )
+        return nullptr;
+
+    return pi->framework_policy->binder;
+} 
+
+Inspector* InspectorManager::get_wizard()
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi || !pi->framework_policy )
+        return nullptr;
+
+    return pi->framework_policy->wizard;
+} 
 
 Inspector* InspectorManager::get_inspector(const char* key)
 {
@@ -357,11 +387,11 @@ void InspectorManager::delete_config (SnortConfig* sc)
 static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
 {
     for ( auto* p : fc->clist )
-        if ( !strcasecmp(p->api.base.name, keyword) )
+        if ( !strcmp(p->api.base.name, keyword) )
             return p;
 
     for ( auto* p : s_handlers )
-        if ( !strcasecmp(p->api.base.name, keyword) )
+        if ( !strcmp(p->api.base.name, keyword) )
         {
             if ( p->init )
             {
@@ -376,10 +406,8 @@ static PHClass* GetClass(const char* keyword, FrameworkConfig* fc)
     return NULL;
 }
 
-// this is per thread
 void InspectorManager::thread_init(SnortConfig* sc)
 {
-    // FIXIT BIND the policy related logic herein moves to binder
     Inspector::slot = get_instance_id();
 
     for ( auto* p : sc->framework_config->clist )
@@ -388,22 +416,22 @@ void InspectorManager::thread_init(SnortConfig* sc)
 
     InspectionPolicy* pi = get_inspection_policy();
 
-    if ( !pi->framework_policy )
-        return;
-
-    for ( auto* p : pi->framework_policy->ilist )
-        p->handler->tinit();
+    if ( pi && pi->framework_policy )
+    {
+        for ( auto* p : pi->framework_policy->ilist )
+            p->handler->tinit();
+    }
 }
 
 void InspectorManager::thread_term(SnortConfig* sc)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
-    if ( !pi || !pi->framework_policy )
-        return;
-
-    for ( auto* p : pi->framework_policy->ilist )
-        p->handler->tterm();
+    if ( pi && pi->framework_policy )
+    {
+        for ( auto* p : pi->framework_policy->ilist )
+            p->handler->tterm();
+    }
 
     for ( auto* p : sc->framework_config->clist )
         if ( p->api.tterm )
@@ -418,12 +446,12 @@ void InspectorManager::thread_term(SnortConfig* sc)
 void InspectorManager::instantiate(
     const InspectApi* api, Module*, SnortConfig* sc)
 {
-    // FIXIT only configures Lua inspectors in base policy; must be 
+    // FIXIT-H only configures inspectors in base policy; must be 
     // revisited when bindings are implemented
     FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
 
-    // FIXIT should not need to lookup inspector etc
+    // FIXIT-H should not need to lookup inspector etc
     // since given api and mod
     const char* keyword = api->base.name;
 
@@ -434,7 +462,7 @@ void InspectorManager::instantiate(
 
     else
     {
-        PHInstance* ppi = GetInstance(ppc, fp, keyword);
+        PHInstance* ppi = get_new(ppc, fp, keyword);
 
         if ( !ppi )
             ParseError("can't instantiate inspector: '%s'.", keyword);
@@ -443,18 +471,15 @@ void InspectorManager::instantiate(
 
 bool InspectorManager::configure(SnortConfig *sc)
 {
-    Inspector::max_slots = sc->max_threads;
-    s_handlers.sort(PHGlobal::comp);
+    sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
 
-    // FIXIT use FrameworkConfig or FrameworkPolicy ?
-    //FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
     bool ok = true;
 
     for ( auto* p : fp->ilist )
         ok = p->handler->configure(sc) && ok;
 
-    fp->ilist.sort(PHInstance::comp);
+    sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize();
 
     return ok;
@@ -485,7 +510,7 @@ static inline void execute(
 
         PHClass& ppc = (*prep)->pp_class;
 
-        // FIXIT these checks can eventually be optimized
+        // FIXIT-P these checks can eventually be optimized
 	    // but they are required to ensure that session and app
 	    // handlers aren't called w/o a session pointer
         if ( !p->flow && (ppc.api.type >= IT_SESSION) )
@@ -504,7 +529,7 @@ void InspectorManager::bumble(Packet* p)
     if ( !flow->service )
         return;
 
-    Inspector* ins = get_inspector("binder");
+    Inspector* ins = get_binder();
 
     if ( ins )
         ins->exec(0, flow);
@@ -515,6 +540,7 @@ void InspectorManager::bumble(Packet* p)
         return;
 
 #if 0
+    // FIXIT-H call new splitter after wizard IDs service
     ins = get_inspector("stream_tcp");
 
     if ( ins )
@@ -527,7 +553,7 @@ void InspectorManager::execute (Packet* p)
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
-    // FIXIT structure lists so stream, normalize, etc. aren't
+    // FIXIT-M structure lists so stream, normalize, etc. aren't
     // called on reassembled packets
     ::execute(p, fp->session.vec, fp->session.num);
     ::execute(p, fp->network.vec, fp->network.num);
@@ -543,7 +569,9 @@ void InspectorManager::execute (Packet* p)
         if ( flow->clouseau && (p->proto_bits & flow->clouseau->get_api()->proto_bits) )
             bumble(p);
 
-        // FIXIT BIND need more than one service inspector?
+        // FIXIT-M need more than one service inspector?
+        // (should be daisy chained since inspector1 will generate PDUs for
+        // inspector2)
         //::execute(p, fp->service.vec, fp->service.num);
         if ( flow->gadget && (p->proto_bits & flow->gadget->get_api()->proto_bits) )
             flow->gadget->eval(p);

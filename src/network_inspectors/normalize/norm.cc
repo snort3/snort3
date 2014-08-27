@@ -540,7 +540,7 @@ int Norm_SetConfig (NormalizerConfig* nc)
 {
     if ( !DAQ_CanReplace() )
     {
-        // FIXIT output only once
+        // FIXIT-L output only once
         //LogMessage("WARNING: normalizations disabled because DAQ"
         //    " can't replace packets.\n");
         nc->normalizer_flags = 0x0;

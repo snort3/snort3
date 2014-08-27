@@ -36,7 +36,7 @@ template<const std::string* table_name>
 class Profilers : public ConversionState
 {
 public:
-    Profilers(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {};
+    Profilers() : ConversionState() {};
     virtual ~Profilers() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -50,8 +50,8 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    ld->open_table("profile");
-    ld->open_table(*table_name);
+    table_api.open_table("profile");
+    table_api.open_table(*table_name);
 
     while (util::get_string(data_stream, args, ","))
     {
@@ -62,21 +62,26 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
+        else if (!keyword.compare("filename"))
+        {
+            table_api.add_deleted_comment("profile_*: filename ...");
+        }
+
         else if (!keyword.compare("print"))
         {
-            ld->add_diff_option_comment("print", "count");
+            table_api.add_diff_option_comment("print", "count");
 
             std::string tmp_string;
             if (!(arg_stream >> tmp_string))
                 tmpval = false;
 
             else if (!tmp_string.compare("all"))
-                tmpval = ld->add_option_to_table("count", -1);
+                tmpval = table_api.add_option("count", -1);
 
             else if (isdigit(tmp_string[0]) ||
                      (tmp_string[0] == '-') ||
                      (tmp_string[0] == '+'))
-                tmpval = ld->add_option_to_table("count", std::stoi(tmp_string));
+                tmpval = table_api.add_option("count", std::stoi(tmp_string));
 
             else
                 tmpval = false;
@@ -91,28 +96,12 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
 
             else if (!val.compare("avg_ticks_per_nomatch"))
             {
-                ld->add_diff_option_comment("sort avg_ticks_per_nomatch", "sort = avg_ticks_per_no_match");
-                tmpval = ld->add_option_to_table("sort", "avg_ticks_per_no_match");
+                table_api.add_diff_option_comment("sort avg_ticks_per_nomatch", "sort = avg_ticks_per_no_match");
+                tmpval = table_api.add_option("sort", "avg_ticks_per_no_match");
             }
 
             else
-                tmpval = ld->add_option_to_table("sort", val);
-        }
-
-        else if (!keyword.compare("filename"))
-        {
-            ld->open_table("file");
-            tmpval = parse_string_option("name", arg_stream);
-
-            std::string append;
-            if ((arg_stream >> append) &&
-                (!append.compare("append")))
-            {
-                if (!ld->add_option_to_table("append", true))
-                    tmpval = false;
-            }
-
-            ld->close_table();
+                tmpval = table_api.add_option("sort", val);
         }
 
         else
@@ -120,18 +109,21 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
             tmpval = false;
         }
 
-        if (retval && !tmpval)
+        if (!tmpval)
+        {
+            data_api.failed_conversion(data_stream, keyword);
             retval = false;
+        }
     }
 
-    ld->close_table();
+    table_api.close_table();
     return retval;
 }
 
 template<const std::string* table_name>
-static ConversionState* ctor(Converter* cv, LuaData* ld)
+static ConversionState* ctor()
 {
-    return new Profilers<table_name>(cv, ld);
+    return new Profilers<table_name>();
 }
 
 /**************************

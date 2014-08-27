@@ -363,7 +363,7 @@ struct IcmpHdr {
 
 bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
 {
-    // FIXIT:  speak with Russ, then get rid of commented lines
+    // FIXIT-J:  speak with Russ, then get rid of commented lines
 //    uint8_t* p;
     IcmpHdr* ho;
 

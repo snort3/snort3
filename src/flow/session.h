@@ -43,7 +43,7 @@ protected:
     Session(Flow* f) { flow = f; };
 
 public:
-    Flow* flow;  // FIXIT use reference?
+    Flow* flow;  // FIXIT-L use reference?
 };
 
 #endif

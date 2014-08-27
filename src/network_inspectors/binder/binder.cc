@@ -44,14 +44,26 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 // helpers
 //-------------------------------------------------------------------------
 
-// FIXIT bind this is a temporary hack. note that both ends must be set
+Binding::Binding()
+{
+    role = BR_EITHER;
+    protos = PROTO_BIT__ALL;
+    action = BA_INSPECT;
+    ports.set();
+}
+
+// FIXIT-H bind this is a temporary hack. note that both ends must be set
 // independently and that we must ref count inspectors.
 static void set_session(Flow* flow, const char* key)
 {
     Inspector* pin = InspectorManager::get_inspector(key);
-    flow->set_client(pin);
-    flow->set_server(pin);
-    flow->clouseau = nullptr;
+
+    if ( pin )
+    {
+        flow->set_client(pin);
+        flow->set_server(pin);
+        flow->clouseau = nullptr;
+    }
 }
 
 static void set_session(Flow* flow)
@@ -61,18 +73,18 @@ static void set_session(Flow* flow)
     flow->clouseau = nullptr;
 }
 
-// FIXIT use IPPROTO_* directly (any == 0)
-static bool check_proto(const Flow* flow, BindProto bp)
+static bool check_proto(const Flow* flow, unsigned mask)
 {
-    switch ( bp )
+    unsigned bit = 0;
+
+    switch ( flow->protocol )
     {
-    case BP_ANY: return true;
-    case BP_IP:  return flow->protocol == IPPROTO_IP;
-    case BP_ICMP:return flow->protocol == IPPROTO_ICMP;
-    case BP_TCP: return flow->protocol == IPPROTO_TCP;
-    case BP_UDP: return flow->protocol == IPPROTO_UDP;
+    case IPPROTO_IP:   bit = PROTO_BIT__IP;   break;
+    case IPPROTO_ICMP: bit = PROTO_BIT__ICMP; break;
+    case IPPROTO_TCP:  bit = PROTO_BIT__TCP;  break;
+    case IPPROTO_UDP:  bit = PROTO_BIT__UDP;  break;
     }
-    return false;
+    return ( mask & bit ) != 0;
 }
 
 //-------------------------------------------------------------------------
@@ -121,7 +133,7 @@ void Binder::eval(Packet* p)
     ++bstats.total_packets;
 }
 
-// FIXIT implement inspector lookup from policy / bindings
+// FIXIT-H implement inspector lookup from policy / bindings
 Inspector* Binder::find_inspector(const char* s)
 {
     Binding* pb;
@@ -167,7 +179,7 @@ int Binder::exec(int, void* pv)
     return 0;
 }
 
-// FIXIT bind services - this is a temporary hack that just looks at ports,
+// FIXIT-H bind services - this is a temporary hack that just looks at ports,
 // need to examine all key fields for matching.  ultimately need a routing
 // table, scapegoat tree, etc.
 int Binder::check_rules(Flow* flow, Packet* p)
@@ -175,15 +187,15 @@ int Binder::check_rules(Flow* flow, Packet* p)
     Binding* pb;
     unsigned i, sz = bindings.size();
 
-    // FIXIT called before stream runs - these flags aren't set
-    // (below is structed to work by accident on initial syn until fixed)
+    // FIXIT-H called before stream runs - these flags aren't set
+    // (below is structured to work by accident on initial syn until fixed)
     Port port = (p->packet_flags & PKT_FROM_SERVER) ? p->sp : p->dp;
 
     for ( i = 0; i < sz; i++ )
     {
         pb = bindings[i];
 
-        if ( !check_proto(flow, pb->proto) )
+        if ( !check_proto(flow, pb->protos) )
             continue;
 
         if ( pb->ports.test(port) )
@@ -191,7 +203,7 @@ int Binder::check_rules(Flow* flow, Packet* p)
     }
         
     if ( i == sz )
-        return BA_ALLOW;  // default action FIXIT make configurable
+        return BA_ALLOW;  // default action FIXIT-H make configurable
 
     if ( pb->action != BA_INSPECT )
         return pb->action;
@@ -201,7 +213,7 @@ int Binder::check_rules(Flow* flow, Packet* p)
 
     if ( !pb->type.size() || pb->type == "wizard" )
     {
-        ins = InspectorManager::get_inspector("wizard");
+        ins = InspectorManager::get_wizard();
         flow->set_clouseau(ins);
     }
     else

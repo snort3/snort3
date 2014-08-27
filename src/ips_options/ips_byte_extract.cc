@@ -522,7 +522,7 @@ static IpsOption* byte_extract_ctor(Module* p, OptTreeNode* otn)
     ClearVarNames(otn->opt_func);
     data.var_number = AddVarNameToList(&data);
 
-    // FIXIT can this be handled by setting max_per_rule = 2?
+    // FIXIT-H can this be handled by setting max_per_rule = 2?
     if (data.var_number >= NUM_BYTE_EXTRACT_VARS)
     {
         ParseError("Rule has more than %d byte_extract variables.",

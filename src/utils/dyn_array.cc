@@ -30,7 +30,7 @@
 /**Number of additional policies allocated with each re-alloc operation. */
 #define POLICY_ALLOCATION_CHUNK 10
 
-// FIXIT replace with vector
+// FIXIT-L replace with vector
 int sfDynArrayCheckBounds (
         void ** dynArray,
         unsigned int index,

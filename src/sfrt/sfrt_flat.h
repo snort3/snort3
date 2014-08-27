@@ -49,7 +49,7 @@ typedef struct {
     int length;
 } tuple_flat_t;
 
-// FIXIT circular include here
+// FIXIT-L circular include here
 #include "sfrt/sfrt_flat_dir.h"
 
 /*******************************************************************/

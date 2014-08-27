@@ -23,13 +23,6 @@
 
 #include <stdint.h>
 
-// FIXIT poor encapsulation
-#define SNORT_PCRE_RELATIVE         0x00010 // relative to the end of the last match
-#define SNORT_PCRE_INVERT           0x00020 // invert detect
-#define SNORT_PCRE_RAWBYTES         0x00040 // Don't use decoded buffer (if available)
-#define SNORT_PCRE_ANCHORED         0x00080
-#define SNORT_OVERRIDE_MATCH_LIMIT  0x00100 // Override default limits on match & match recursion
-
 #include <pcre.h>
 
 struct PcreData

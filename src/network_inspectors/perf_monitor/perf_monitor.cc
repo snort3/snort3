@@ -53,7 +53,7 @@
 #include "profiler.h"
 #include "framework/inspector.h"
 
-THREAD_LOCAL SFPERF *perfmon_config = NULL;
+THREAD_LOCAL SFPERF* perfmon_config = nullptr;
 
 static const char* mod_name = "perf_monitor";
 
@@ -63,7 +63,7 @@ THREAD_LOCAL ProfileStats perfmonStats;
 /* This function changes the perfmon log files permission if exists.
    It is done in the  PerfMonitorInit() before Snort changed its user & group.
  */
-// FIXIT this should be deleted; was added as 1-time workaround to
+// FIXIT-L this should be deleted; was added as 1-time workaround to
 // get around the borked perms due to a bug that has been fixed
 static void PerfMonitorChangeLogFilesPermission(void)
 {
@@ -243,7 +243,7 @@ void PerfMonitor::show(SnortConfig*)
     PrintConfig(&config);
 }
 
-// FIXIT perfmonitor should be logging to one file and writing record type and
+// FIXIT-L perfmonitor should be logging to one file and writing record type and
 // version fields immediately after timestamp like
 // seconds, usec, type, version#, data1, data2, ...
 bool PerfMonitor::configure(SnortConfig*)

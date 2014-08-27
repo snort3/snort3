@@ -24,13 +24,11 @@
 #include "config.h"
 #endif
 
-#include <thread>
-
 #include "snort_types.h"
 #include "detection/treenodes.h"
 #include "events/event_queue.h"
 #include "stream/stream_api.h"
-#include "port_scan/ps_detect.h"  // FIXIT for PS_PROTO_*
+#include "port_scan/ps_detect.h"  // FIXIT-L for PS_PROTO_*
 #include "utils/strvec.h"
 #include "file_api/file_service.h"
 #include "target_based/sftarget_reader.h"
@@ -166,7 +164,7 @@ SnortConfig * SnortConfNew(void)
     sc->tagged_packet_limit = 256;
     sc->default_rule_state = RULE_STATE_ENABLED;
 
-    // FIXIT pcre_match_limit* are interdependent
+    // FIXIT-L pcre_match_limit* are interdependent
     // somehow a packet thread needs a much lower setting 
     sc->pcre_match_limit = 1500;
     sc->pcre_match_limit_recursion = 1500;
@@ -181,13 +179,11 @@ SnortConfig * SnortConfNew(void)
     sc->max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
     sc->mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
-    sc->max_threads = 1;
     InspectorManager::new_config(sc);
 
     sc->var_list = NULL;
 
-    sc->state = (SnortState*)SnortAlloc(
-        sizeof(SnortState)*sc->max_threads);
+    sc->state = (SnortState*)SnortAlloc(sizeof(SnortState)*get_instance_max());
 
     sc->policy_map = new PolicyMap();
 
@@ -217,22 +213,11 @@ void SnortConfFree(SnortConfig *sc)
     if (sc->chroot_dir != NULL)
         free(sc->chroot_dir);
 
-    if (sc->alert_file != NULL)
-        free(sc->alert_file);
-
     if (sc->bpf_filter != NULL)
         free(sc->bpf_filter);
 
     if (sc->event_trace_file != NULL)
         free(sc->event_trace_file);
-
-#ifdef PERF_PROFILING
-    if (sc->profile_rules.filename != NULL)
-        free(sc->profile_rules.filename);
-
-    if (sc->profile_preprocs.filename != NULL)
-        free(sc->profile_preprocs.filename);
-#endif
 
     FreeRuleStateList(sc->rule_state_list);
     FreeClassifications(sc->classifications);
@@ -284,6 +269,9 @@ void SnortConfFree(SnortConfig *sc)
     if (sc->gtp_ports)
         free(sc->gtp_ports);
 
+    if ( sc->output )
+        free(sc->output);
+
     free_file_config(sc->file_config);
 
     if ( sc->var_list )
@@ -304,7 +292,7 @@ void SnortConfFree(SnortConfig *sc)
     free(sc);
 }
 
-SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
+SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 {
     /* Move everything from the command line config over to the
      * config_file config */
@@ -335,6 +323,12 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
     if (config_file == NULL)
         return cmd_line;
 
+    config_file->run_prefix = cmd_line->run_prefix;
+    cmd_line->run_prefix = nullptr;
+
+    config_file->id_subdir = cmd_line->id_subdir;
+    config_file->id_zero = cmd_line->id_zero;
+
     /* Used because of a potential chroot */
     config_file->orig_log_dir = SnortStrdup(config_file->log_dir);
 
@@ -351,8 +345,11 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
         config_file->run_flags &= ~RUN_FLAG__DAEMON;
     }
 
+    config_file->stdin_rules = cmd_line->stdin_rules;
+
     // only set by cmd_line to override other conf output settings
     config_file->output = cmd_line->output;
+    cmd_line->output = nullptr;
 
     /* Merge checksum flags.  If command line modified them, use from the
      * command line, else just use from config_file. */
@@ -455,12 +452,6 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
     if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
         config_file->event_queue_config->process_all_events = 1;
 
-    if ( cmd_line->max_threads )
-        config_file->max_threads = cmd_line->max_threads;
-
-    if ( config_file->max_threads <= 0 )
-        config_file->max_threads = std::thread::hardware_concurrency();
-
     if ( cmd_line->remote_control )
         config_file->remote_control = cmd_line->remote_control;
 
@@ -468,12 +459,12 @@ SnortConfig * MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
         config_file->max_encapsulations = cmd_line->max_encapsulations;
 
     // config file vars are stored differently
-    // FIXIT should config_file and cmd_line use the same var list / table?
+    // FIXIT-M should config_file and cmd_line use the same var list / table?
     config_file->var_list = NULL;
 
     free(config_file->state);
     config_file->state = (SnortState*)SnortAlloc(
-        sizeof(SnortState)*config_file->max_threads);
+        sizeof(SnortState)*get_instance_max());
 
     return config_file;
 }
@@ -482,22 +473,6 @@ int VerifyReload(SnortConfig *sc)
 {
     if (sc == NULL)
         return -1;
-
-    if ((snort_conf->alert_file != NULL) && (sc->alert_file != NULL))
-    {
-        if (strcasecmp(snort_conf->alert_file, sc->alert_file) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the alert file "
-                         "configuration requires a restart.\n");
-            return -1;
-        }
-    }
-    else if (snort_conf->alert_file != sc->alert_file)
-    {
-        ErrorMessage("Snort Reload: Changing the alert file "
-                     "configuration requires a restart.\n");
-        return -1;
-    }
 
     if (snort_conf->asn1_mem != sc->asn1_mem)
     {
@@ -611,64 +586,6 @@ int VerifyReload(SnortConfig *sc)
     {
         ErrorMessage("Snort Reload: Changing the ppm rule_log "
                      "configuration requires a restart.\n");
-        return -1;
-    }
-#endif
-
-#ifdef PERF_PROFILING
-    if ((snort_conf->profile_rules.num != sc->profile_rules.num) ||
-        (snort_conf->profile_rules.sort != sc->profile_rules.sort) ||
-        (snort_conf->profile_rules.append != sc->profile_rules.append))
-    {
-        ErrorMessage("Snort Reload: Changing rule profiling number, sort "
-                     "or append configuration requires a restart.\n");
-        return -1;
-    }
-
-    if ((snort_conf->profile_rules.filename != NULL) &&
-        (sc->profile_rules.filename != NULL))
-    {
-        if (strcasecmp(snort_conf->profile_rules.filename,
-                       sc->profile_rules.filename) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the rule profiling filename "
-                         "configuration requires a restart.\n");
-            return -1;
-        }
-    }
-    else if (snort_conf->profile_rules.filename !=
-             sc->profile_rules.filename)
-    {
-        ErrorMessage("Snort Reload: Changing the rule profiling filename "
-                     "configuration requires a restart.\n");
-        return -1;
-    }
-
-    if ((snort_conf->profile_preprocs.num !=  sc->profile_preprocs.num) ||
-        (snort_conf->profile_preprocs.sort != sc->profile_preprocs.sort) ||
-        (snort_conf->profile_preprocs.append != sc->profile_preprocs.append))
-    {
-        ErrorMessage("Snort Reload: Changing preprocessor profiling number, "
-                     "sort or append configuration requires a restart.\n");
-        return -1;
-    }
-
-    if ((snort_conf->profile_preprocs.filename != NULL) &&
-        (sc->profile_preprocs.filename != NULL))
-    {
-        if (strcasecmp(snort_conf->profile_preprocs.filename,
-                       sc->profile_preprocs.filename) != 0)
-        {
-            ErrorMessage("Snort Reload: Changing the preprocessor profiling "
-                         "filename configuration requires a restart.\n");
-            return -1;
-        }
-    }
-    else if (snort_conf->profile_preprocs.filename !=
-             sc->profile_preprocs.filename)
-    {
-        ErrorMessage("Snort Reload: Changing the preprocessor profiling "
-                     "filename configuration requires a restart.\n");
         return -1;
     }
 #endif

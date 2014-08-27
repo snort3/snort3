@@ -37,7 +37,7 @@ static const Parameter client_bounce_params[] =
     { "address", Parameter::PT_ADDR, nullptr, nullptr,
       "allowed ip address in CIDR format" },
 
-    // FIXIT port and last_port should be replaced with a port list
+    // FIXIT-L port and last_port should be replaced with a port list
     { "port", Parameter::PT_PORT, "1:", nullptr,
       "allowed port" },
 
@@ -221,14 +221,13 @@ FtpCmd::FtpCmd(std::string& key, std::string& fmt, int num)
 #define FTP_EVASIVE_TELNET_CMD_STR               \
         "(ftp) Evasive (incomplete) TELNET CMD on FTP Command Channel"
 
-// FIXIT convert to Lua and use as module default settings
+// FIXIT-H convert to Lua and use as module default settings
 #if 0
 static const char* DEFAULT_FTP_CONF[] =
 {
     "hardcoded_config "
     "def_max_param_len 100 "
 
-    // FIXIT should not have to list commands more than once
     // eg must appear in at least one *_cmds parameter
     "ftp_cmds { USER PASS ACCT CWD CDUP SMNT QUIT REIN TYPE STRU"
               " MODE RETR STOR STOU APPE ALLO REST RNFR RNTO ABOR"

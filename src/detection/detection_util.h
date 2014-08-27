@@ -153,7 +153,7 @@ static inline void DetectReset()
     ClearHttpBuffers();
 }
 
-int IsGzipData(Flow*);  // FIXIT these from HI
+int IsGzipData(Flow*);  // FIXIT-M these from HI
 int IsJSNormData(Flow*);
 
 #endif

@@ -27,22 +27,29 @@
 #include "init_state.h"
 #include "utils/s2l_util.h"
 #include "keyword_states/keywords_api.h"
+#include "data/dt_data.h"
 
 
-InitState::InitState(Converter* cv, LuaData* ld) : ConversionState(cv, ld) {}
+InitState::InitState() : ConversionState() {}
 
 bool InitState::convert(std::istringstream& data_stream)
 {
     std::string keyword;
 
-    if (!(data_stream >> keyword))
-        return false;
-
-    const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
-    if (map)
+    if (data_stream >> keyword)
     {
-        cv->set_state(map->ctor(cv, ld));
-        return true;
+        const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
+        if (map)
+        {
+            cv.set_state(map->ctor());
+            return true;
+        }
+
+        data_api.failed_conversion(data_stream, keyword);
+    }
+    else
+    {
+        data_api.failed_conversion(data_stream);
     }
 
     return false;

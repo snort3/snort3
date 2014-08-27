@@ -34,23 +34,36 @@ using namespace std;
 #include "log/messages.h"
 #include "actions/act_replace.h"
 
-typedef list<const ActionApi*> AList;
+struct Actor
+{
+    const ActionApi* api;
+    IpsAction* act;
+
+    Actor(const ActionApi* p)
+    { api = p; act = nullptr; };
+};
+
+typedef list<Actor> AList;
 static AList s_actors;
 
 static IpsAction* s_reject = nullptr;
 static THREAD_LOCAL IpsAction* s_action = nullptr;
 
 //-------------------------------------------------------------------------
-// engine plugins
+// action plugins
 //-------------------------------------------------------------------------
 
 void ActionManager::add_plugin(const ActionApi* api)
 {
-    s_actors.push_back(api);
+    Actor a(api);
+    s_actors.push_back(a);
 }
 
 void ActionManager::release_plugins()
 {
+    for ( auto& p : s_actors )
+        p.api->dtor(p.act);
+
     s_actors.clear();
 }
 
@@ -58,18 +71,29 @@ void ActionManager::dump_plugins()
 {
     Dumper d("IPS Actions");
 
-    for ( auto* p : s_actors )
-        d.dump(p->base.name, p->base.version);
+    for ( auto& p : s_actors )
+        d.dump(p.api->base.name, p.api->base.version);
+}
+
+static void store(const ActionApi* api, IpsAction* act)
+{
+    for ( auto& p : s_actors )
+        if ( p.api == api )
+        {
+            assert(!p.act);
+            p.act = act;
+            break;
+        }
 }
 
 //-------------------------------------------------------------------------
 
 RuleType ActionManager::get_action_type(const char* s)
 {
-    for ( auto* p : s_actors )
+    for ( auto& p : s_actors )
     {
-        if ( !strcmp(p->base.name, s) )
-            return p->type;
+        if ( !strcmp(p.api->base.name, s) )
+            return p.api->type;
     }
     return RULE_TYPE__NONE;
 }
@@ -87,33 +111,24 @@ void ActionManager::instantiate(
         ListHead* lh = CreateRuleType(sc, api->base.name, api->type, 0, nullptr);
         assert(lh);
         lh->action = act;
+
+        store(api, act);
     }
 }
 
 void ActionManager::thread_init(SnortConfig*)
 {
-    for ( auto* p : s_actors )
-        if ( p->tinit )
-            p->tinit();
+    for ( auto& p : s_actors )
+        if ( p.api->tinit )
+            p.api->tinit();
 }
 
 void ActionManager::thread_term(SnortConfig*)
 {
-    for ( auto* p : s_actors )
-        if ( p->tterm )
-            p->tterm();
+    for ( auto& p : s_actors )
+        if ( p.api->tterm )
+            p.api->tterm();
 }
-
-#if 0
-static const ActionApi* get_api(const char* keyword)
-{
-    for ( auto* p : s_actors )
-        if ( !strcasecmp(p->base.name, keyword) )
-            return p;
-
-    return nullptr;
-}
-#endif
 
 void ActionManager::execute(Packet* p)
 {

@@ -542,9 +542,11 @@ int SFRF_TestThreshold(
     /* For each permanent thresholding object, test/add/update the config object */
     /* We maintain a list of thd objects for each gid+sid */
     /* each object has it's own unique thd_id */
-    for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidNode->configNodeList);
+    SF_LNODE* cursor;
+
+    for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidNode->configNodeList, &cursor);
           cfgNode != 0;
-          cfgNode  = (tSFRFConfigNode*)sflist_next(pSidNode->configNodeList) )
+          cfgNode  = (tSFRFConfigNode*)sflist_next(&cursor) )
     {
         switch (cfgNode->tracking)
         {
@@ -627,10 +629,11 @@ void SFRF_ShowObjects(RateFilterConfig *config)
             /* For each permanent thresholding object, test/add/update the thd object */
             /* We maintain a list of thd objects for each gid+sid */
             /* each object has it's own unique thd_id */
+            SF_LNODE* cursor;
 
-            for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidnode->configNodeList);
+            for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidnode->configNodeList, &cursor);
                   cfgNode != 0;
-                  cfgNode = (tSFRFConfigNode*)sflist_next(pSidnode->configNodeList) )
+                  cfgNode = (tSFRFConfigNode*)sflist_next(&cursor) )
             {
                 printf(".........SFRF_ID  =%d\n",cfgNode->tid );
                 printf(".........tracking =%d\n",cfgNode->tracking);

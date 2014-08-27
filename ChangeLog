@@ -1,3 +1,44 @@
+117
+-- added --stdin-rules
+-- added #begin / #end comments for rules
+-- changed PAF_Status to StreamSplitter::Status
+-- removed target reader current host/app
+
+116
+-- fixed valgrind leak
+-- observed memory corruption on Linux when loading dynamic plugins
+   (not fixed)
+-- fixed action leak
+-- testing visibility=hidden
+-- more FIXITs
+-- fp related FIXITs
+-- deleted profile.rules.file and profile.modules.file
+-- deleted alerts.alert_file
+-- changed --help to just cmd line options and added --help!
+-- fixed Xcode warnings
+-- fixed sflsq cursor
+-- additional cleanup
+-- fixed --max-threads configuration
+-- fixed PKT_RESIZED bits
+-- pulled the latest from Josh
+
+115
+-- remove share.h
+-- misc FIXITs
+-- refactored cmd line parsing and moved options to SnortModule
+-- prioritized all FIXITs; FIXIT-J are for josh to reprioritize
+-- got latest from Josh
+
+114
+-- more FIXIT cleanup
+-- fixed flush bucket dumping
+-- fixed cmake ips_replace.h
+-- refactored script support
+-- added lua logger support
+-- added extra lualert (alert.lua) to demo lua loggers
+-- updated snort.lua
+-- pulled in Tom's latest as of 08/20-11:45
+
 113
 -- initial FlushBucket implementation
 -- converted ips_resp and ips_react to actions

@@ -135,9 +135,9 @@ cd_udp = { gtp_ports = GTP_PORTS }
 -- Configure active response for non inline operation.
 active =
 {
-    device = 'eth0',
+    --device = 'eth0',
     attempts = 2,
-    max_responses = 0,
+    max_responses = 1,
     min_interval = 1
 }
 
@@ -161,15 +161,14 @@ detection =
     pcre_match_limit_recursion = limit
 }
 
+log_limit = 4
+
 -- Configure the detection engine
 search_engine =
 {
-    search_method = 'ac_full_q',
-    --search_method = 'lowmem_q',
+    search_method = 'ac_bnfa_q',
     split_any_any = true,
-    search_optimize = true,
-    max_pattern_len = 20,
-    max_queue_events = 16
+    max_queue_events = 4 * log_limit
 }
 
 -- Configure the event queue.
@@ -199,18 +198,8 @@ ppm =
 -- Configure Perf Profiling for debugging
 profile =
 {
-    rules =
-    {
-        count = 0,
-        sort = 'avg_ticks',
-        file = { append = true }
-    },
-    modules =
-    {
-        count = 0,
-        sort = 'avg_ticks',
-        file = { append = true }
-    }
+    rules = { count = 0, sort = 'avg_ticks' },
+    modules = { count = 0, sort = 'avg_ticks' }
 }
 
 ---------------------------------------------------------------------------
@@ -298,11 +287,11 @@ default_http_methods =
 
 http_inspect =
 {
-    unicode_map =
-    {
-        map_file = '/etc/unicode.map',
-        code_page = 1252
-    },
+    --unicode_map =
+    --{
+    --    map_file = '/etc/unicode.map',
+    --    code_page = 1252
+    --},
     compress_depth = 65535,
     decompress_depth = 65535
 }
@@ -313,7 +302,7 @@ http_server =
     chunk_length = 500000,
     server_flow_depth = 0,
     client_flow_depth = 0,
-    post_depth = 65495,
+    post_depth = 0,
 }
 
 hi_x =
@@ -424,13 +413,11 @@ ftp_client =
     ignore_telnet_erase_cmds = true,
     telnet_cmds = true,
 
---[[
     bounce_to =
     {
         { address = '192.168.1.1', port = 12345 },
         { address = '192.168.144.120', port = 50010, last_port = 50020 }
     }
---]]
 }
 
 ftp_data = { }
@@ -509,13 +496,24 @@ unified2 =
 
 -- text
 --alert_syslog = { mode = 'LOG_AUTH LOG_ALERT' }
---alert_fast = { }
+alert_fast = { }
 --alert_full = { }
 --alert_test = { file = 'alert.tsv' }
 --alert_csv = { file = 'alert.csv' }
 
+-- to use -A lualert, this must be configured
+--lualert = { args = "foo = 'bar'" }
+
 -- pcap
 --log_tcpdump = { file = 'snort++.pcap' }
+
+---------------------------------------------------------------------------
+-- actions
+---------------------------------------------------------------------------
+
+--react = { }
+reject = { reset = 'both', control = 'network' }
+rewrite = { }
 
 ---------------------------------------------------------------------------
 -- ips rules and filters
@@ -553,12 +551,19 @@ default_rules =
 
 #alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST User-Agent known malicious    user agent - SAH Agent"; flow:to_server,established; content:"User-Agent|3A| SAH Agent"; metadata: policy balanced-ips drop, policy connectivity-ips drop, policy security-ips drop, service http;    classtype:misc-activity; sid:5808; rev:9;)
 
-alert tcp any any -> any 80 ( msg:"Sample rule for Snort++"; http_uri; content:"attack"; sid:1; )
+#alert tcp any any -> any 80 ( msg:"Sample rule for Snort++"; http_uri; content:"attack"; sid:1; )
 #alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header:Transfer-Encoding; content:"chunk"; sid:2; )
 #alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header; content:"chunk"; sid:3; )
 #alert tcp any any -> any any ( msg:"Sample rule for Snort++"; content:"trigger"; sid:2; )
 
 #alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request"; metadata:service http; reference:url,en.wikipedia.org/wiki/Vbs; classtype:misc-activity; sid:18758; rev:8; soid:3|18758;)
+
+alert tcp any any -> any 80 ( content:"test"; gid:1; sid:1000051)
+#alert tcp any any -> any 80 ( sid:1; msg:"found!"; content:"GET", nocase; content:"bck"; )
+#alert tcp any any -> any 80 ( sid:2; msg:"found!"; http_method; content:"GET"; )
+#alert tcp any any -> any 80 ( sid:3; msg:"found!"; content:"GET"; find:"pat=' HTTP/1%.%d'" ; )
+#alert tcp any any -> any any ( gid:123; sid:2; msg:"(stream_ip) Teardrop attack"; )
+#rewrite tcp any any -> any 80 ( sid:9; msg:"found!"; content:"GET"; replace:"GIT"; )
 ]]
 
 network =
@@ -739,8 +744,8 @@ binder =
     -- FIXIT these should be defaults when inspector configured
     { when = { service = 'ftp-data' }, use = { type = 'ftp_data' } },
     { when = { service = 'ftp' }, use = { type = 'ftp_server' } },
-    --{ when = { service = 'http' }, use = { type = 'http_server' } },
-    { when = { service = 'http' }, use = { type = 'nhttp_inspect' } },
+    { when = { service = 'http' }, use = { type = 'http_server' } },
+    --{ when = { service = 'http' }, use = { type = 'nhttp_inspect' } },
     { when = { service = 'sunrpc' }, use = { type = 'rpc_decode' } },
     { when = { service = 'telnet' }, use = { type = 'telnet' } },
 
@@ -764,42 +769,3 @@ binder =
     { when = { proto = 'udp', ports = 'any' }, use = { type = 'wizard' } },
 }
  
----------------------------------------------------------------------------
--- error handling
----------------------------------------------------------------------------
-
---[[
--- parse error handled by lua:
-foo bar
-
-ERROR: can't load ../lua/snort.lua: ../lua/snort.lua:629: '=' expected near 'bar'
-Fatal Error, Quitting..
-
--- another:
-stream_xyz.foo = 'bar'
-
-ERROR: can't init ../lua/snort.lua: ../lua/snort.lua:635: attempt to index global 'stream_xyz' (a nil value)
-Fatal Error, Quitting..
-
--- semantic errors handled by Snort++ don't have file / line:
-stream_tcp.foo = 'bar'
-
-ERROR: can't find stream_tcp.foo
-Fatal Error, Quitting..
-
--- multiple range errors:
-stream_tcp.policy = 'bar'
-stream_tcp.paf_max = 123456
-
-ERROR invalid stream_tcp.policy = bar
-ERROR invalid stream_tcp.paf_max = 123456
-ERROR: see prior configuration errors
-Fatal Error, Quitting..
-
--- undetected error:
-suppress = { { gid = 116, sid = 408 } }
--- other foo
-suppress = { { gid = 116, sid = 412 } }
-}
---]]
-

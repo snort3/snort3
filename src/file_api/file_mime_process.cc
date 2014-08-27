@@ -1063,7 +1063,7 @@ void init_mime(void)
     mime_hdr_search_mpse = search_api->search_instance_new();
     if (mime_hdr_search_mpse == NULL)
     {
-        // FIXIT make configurable or at least fall back to any
+        // FIXIT-M make configurable or at least fall back to any
         // available search engine
         FatalError("Could not instantiate ac_bnfa search engine.\n");
     }
