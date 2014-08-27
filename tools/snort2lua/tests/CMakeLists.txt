@@ -3,7 +3,7 @@
 
 set (OPEN_SOURCE_RULES "${CMAKE_CURRENT_LIST_DIR}/open_source.rule")
 set (OPEN_SOURCE_LUA_CONF "${CMAKE_CURRENT_BINARY_DIR}/open_source_rules.lua")
-set (OPEN_SOURCE_LUA_RULES "${CMAKE_CURRENT_BINARY_DIR}/ofpen_source_rules.rules")
+set (OPEN_SOURCE_LUA_RULES "${CMAKE_CURRENT_BINARY_DIR}/open_source_rules.rules")
 set (OPEN_SOURCE_LUA_ERRORS "${CMAKE_CURRENT_BINARY_DIR}/open_source_rules.rej")
 
 add_custom_target (open_source_rules
