@@ -21,8 +21,8 @@ set (PLUGIN_LIST
 )
 
 if (LINUX)
-    set ( PLUGIN_LIST
-        ${PLUGIN_LIST}
+    set ( LOGGER_SOURCES
+        ${LOGGER_SOURCES}
         alert_sf_socket.cc
     )
 endif()
@@ -50,10 +50,6 @@ else (STATIC_LOGGERS)
     add_shared_library(log_null loggers log_null.cc)
     add_shared_library(log_tcpdump loggers log_tcpdump.cc)
     add_shared_library(unified2 loggers unified2.cc unified2_common.h)
-
-    if (LINUX)
-        add_shared_library(alert_sf_socket loggers alert_sf_socket.cc)
-    endif  (LINUX)
 
 endif (STATIC_LOGGERS)
 

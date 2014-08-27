@@ -27,7 +27,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "linux")
 endif ()
 
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-    set(LINUX "YES")
+    set(LINUX "1")
 endif("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "openbsd")

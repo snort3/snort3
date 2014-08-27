@@ -141,8 +141,8 @@ AC_DEFUN([CC_VISIBILITY],
     CFLAGS="$gl_save_CFLAGS"
     if test "x$gl_cv_cc_visibility" = "xyes"; then
         # FIXIT should be hidden, default (visible) is workaround
-        #AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=hidden"
-        AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=default"
+        AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=hidden"
+        #AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=default"
         AC_DEFINE([HAVE_VISIBILITY],[1],
             [Define if the compiler supports visibility declarations.])
     fi

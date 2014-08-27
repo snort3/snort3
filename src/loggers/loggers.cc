@@ -26,13 +26,14 @@
 
 #include "framework/logger.h"
 
+#ifdef LINUX
+extern const BaseApi* alert_sf_socket;
+#endif
+
 #ifdef STATIC_LOGGERS
 extern const BaseApi* alert_csv;
 extern const BaseApi* alert_fast;
 extern const BaseApi* alert_full;
-#ifdef LINUX
-extern const BaseApi* alert_sf_socket;
-#endif
 extern const BaseApi* alert_syslog;
 extern const BaseApi* alert_test;
 extern const BaseApi* alert_unix_sock;
@@ -43,6 +44,10 @@ extern const BaseApi* eh_unified2;
 
 const BaseApi* loggers[] =
 {
+#ifdef LINUX
+    alert_sf_socket,
+#endif
+
 #ifdef STATIC_LOGGERS
     // alerters
     alert_fast,
@@ -50,9 +55,6 @@ const BaseApi* loggers[] =
     alert_syslog,
     alert_test,
     alert_csv,
-#ifdef LINUX
-    alert_sf_socket,
-#endif
     alert_unix_sock,
     // loggers
     log_null,
