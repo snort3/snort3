@@ -213,6 +213,7 @@ static const char* pc_names[] =
     "alert limit",
     "internal blacklist",
     "internal whitelist",
+    "idle"
 };
 
 static const char* proc_names[] =

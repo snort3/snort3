@@ -46,6 +46,7 @@ void snort_cleanup();
 void snort_thread_init(const char* intf);
 void snort_thread_term();
 
+void snort_idle();
 void snort_rotate();
 
 // FIXIT-L may be inlined at some point; on lockdown for now

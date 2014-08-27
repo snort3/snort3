@@ -712,7 +712,7 @@ void set_main_hook(MainHook_f f)
 Packet* get_current_packet()
 { return &s_packet; }
 
-// FIXIT-H for multiple packet threads
+// FIXIT-M for multiple packet threads
 // using thread locals for s_pkth and s_data won't work
 // will need array of s_packet, s_pkth, and s_data and 
 // capture all if it is not clear which thread crashed
@@ -937,14 +937,10 @@ DAQ_Verdict packet_callback(
     Active_Reset();
     PacketManager::encode_reset();
 
-    if ( flow_con )  // FIXIT-H always instantiate
-        flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
-
-#if 0
-    // FIXIT-H do this when idle
     if ( flow_con ) // FIXIT-H always instantiate
-        flow_con->timeout_flows(16384, time(NULL));
-#endif
+    {
+        flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
+    }
 
     s_packet.pkth = NULL;  // no longer avail on segv
 
@@ -955,9 +951,16 @@ DAQ_Verdict packet_callback(
     return verdict;
 }
 
+void snort_idle()
+{
+    if ( flow_con )
+        flow_con->timeout_flows(16384, time(NULL));
+    pc.idle++;
+}
+
 void snort_rotate()
 {
-        SetRotatePerfFileFlag();
+    SetRotatePerfFileFlag();
 }
 
 void snort_thread_init(const char* intf)

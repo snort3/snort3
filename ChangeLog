@@ -8,6 +8,7 @@
 -- more FIXIT-H fixed
 -- removed process.plugin_path and process.script_path since they are
    needed ahead of parsing
+-- added idle processing, though still as sketchy as Snort until alpha 2
 
 116
 -- fixed valgrind leak
