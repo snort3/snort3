@@ -50,11 +50,6 @@
 #include "snort.h"
 #include "snort_debug.h"
 
-#define SFAT_CHECKHOST \
-    if (!current_host) return SFAT_ERROR;
-#define SFAT_CHECKAPP \
-    if (!current_app) return SFAT_ERROR;
-
 #define ATTRIBUTE_MAP_MAX_ROWS 1024
 
 struct tTargetBasedConfig
@@ -91,16 +86,8 @@ tTargetBasedConfig::~tTargetBasedConfig()
 static THREAD_LOCAL tTargetBasedConfig* curr_cfg = NULL;
 static tTargetBasedConfig* next_cfg = NULL;
 
-// FIXIT-H ensure these are not used by packet threads
-static HostAttributeEntry *current_host = NULL;
-static ApplicationEntry *current_app = NULL;
-
-ServiceClient sfat_client_or_service;
-
-static char sfat_error_message[SFAT_BUFSZ];
-static char sfat_grammar_error_printed=0;
-static char sfat_insufficient_space_logged=0;
-static char sfat_fatal_error=1;
+static bool sfat_grammar_error_printed = false;
+static bool sfat_insufficient_space_logged = false;
 
 /*****TODO: cleanup to use config directive *******/
 uint32_t SFAT_NumberOfHosts(void)
@@ -122,30 +109,12 @@ void FreeApplicationEntry(ApplicationEntry *app)
 
 ApplicationEntry * SFAT_CreateApplicationEntry(void)
 {
-    if (current_app)
-    {
-        /* Something went wrong */
-        FreeApplicationEntry(current_app);
-        current_app = NULL;
-    }
-
-    current_app = (ApplicationEntry*)SnortAlloc(sizeof(ApplicationEntry));
-
-    return current_app;
+    return (ApplicationEntry*)SnortAlloc(sizeof(ApplicationEntry));
 }
 
 HostAttributeEntry* SFAT_CreateHostEntry(void)
 {
-    if (current_host)
-    {
-        /* Something went wrong */
-        FreeHostEntry(current_host);
-        current_host = NULL;
-    }
-
-    current_host = (HostAttributeEntry*)SnortAlloc(sizeof(HostAttributeEntry));
-
-    return current_host;
+    return (HostAttributeEntry*)SnortAlloc(sizeof(HostAttributeEntry));
 }
 
 void FreeHostEntry(HostAttributeEntry *host)
@@ -185,64 +154,41 @@ void FreeHostEntry(HostAttributeEntry *host)
     free(host);
 }
 
-static void AppendApplicationData(ApplicationList **list)
+static void AppendApplicationData(ApplicationList **list, ApplicationEntry* app)
 {
     if (!list)
         return;
 
     if (*list)
     {
-        current_app->next = *list;
+        app->next = *list;
     }
-    *list = current_app;
-    current_app = NULL;
+    *list = app;
 }
 
 int SFAT_AddService(HostAttributeEntry* host, ApplicationEntry* app)
 {
-    current_host = host;
-    current_app = app;
-    AppendApplicationData(&host->services);
+    AppendApplicationData(&host->services, app);
     return SFAT_OK;
 }
 
-int SFAT_AddApplicationData(void)
+int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 {
-    uint8_t required_fields;
-    SFAT_CHECKAPP;
-    SFAT_CHECKHOST;
+    uint8_t required_fields = 
+        (APPLICATION_ENTRY_PORT |
+         APPLICATION_ENTRY_IPPROTO |
+         APPLICATION_ENTRY_PROTO);
 
-    if (sfat_client_or_service == ATTRIBUTE_SERVICE)
+    if ((app->fields & required_fields) != required_fields)
     {
-        required_fields = (APPLICATION_ENTRY_PORT |
-                          APPLICATION_ENTRY_IPPROTO |
-                          APPLICATION_ENTRY_PROTO);
-        if ((current_app->fields & required_fields) != required_fields)
-        {
-            sfip_t host_addr;
-            sfip_set_ip(&host_addr, &current_host->ipAddr);
-            host_addr.ip32[0] = ntohl(host_addr.ip32[0]);
-            ParseError("Missing required field in Service attribute table for host %s",
-                inet_ntoa(&host_addr));
-        }
-
-        AppendApplicationData(&current_host->services);
+        sfip_t host_addr;
+        sfip_set_ip(&host_addr, &host->ipAddr);
+        host_addr.ip32[0] = ntohl(host_addr.ip32[0]);
+        ParseError("Missing required field in Service attribute table for host %s",
+            inet_ntoa(&host_addr));
     }
-    else
-    {
-        required_fields = (APPLICATION_ENTRY_PROTO);
-        /* Currently, client data only includes PROTO, not IPPROTO */
-        if ((current_app->fields & required_fields) != required_fields)
-        {
-            sfip_t host_addr;
-            sfip_set_ip(&host_addr, &current_host->ipAddr);
-            host_addr.ip32[0] = ntohl(host_addr.ip32[0]);
-            ParseError("Missing required field in Client attribute table for host %s",
-                inet_ntoa(&host_addr));
-        }
+    AppendApplicationData(&host->services, app);
 
-        AppendApplicationData(&current_host->clients);
-    }
     return SFAT_OK;
 }
 
@@ -297,17 +243,13 @@ void PrintHostAttributeEntry(HostAttributeEntry *host)
 
 int SFAT_AddHost(HostAttributeEntry* host)
 {
-    current_host = host;
-    return SFAT_AddHostEntryToMap();
+    return SFAT_AddHostEntryToMap(host);
 }
 
-int SFAT_AddHostEntryToMap(void)
+int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
 {
-    HostAttributeEntry *host = current_host;
     int ret;
     sfip_t *ipAddr;
-
-    SFAT_CHECKHOST;
 
     DEBUG_WRAP(PrintHostAttributeEntry(host););
 
@@ -320,31 +262,27 @@ int SFAT_AddHostEntryToMap(void)
     {
         if (ret == RT_POLICY_TABLE_EXCEEDED)
         {
-            if (!sfat_insufficient_space_logged)
+            if ( !sfat_insufficient_space_logged )
             {
-                SnortSnprintf(sfat_error_message, SFAT_BUFSZ,
+                ParseWarning(
                     "AttributeTable insertion failed: %d Insufficient "
                     "space in attribute table, only configured to store %d hosts\n",
                     ret, ScMaxAttrHosts());
-                sfat_grammar_error_printed = 1;
-                sfat_insufficient_space_logged = 1;
-                sfat_fatal_error = 0;
+                sfat_insufficient_space_logged = true;
             }
             /* Reset return value and continue w/ only snort_conf->max_attribute_hosts */
             ret = RT_SUCCESS;
         }
-        else
+        else if ( !sfat_grammar_error_printed )
         {
-            SnortSnprintf(sfat_error_message, SFAT_BUFSZ,
+            ParseWarning(
                 "AttributeTable insertion failed: %d '%s'\n",
                 ret, rt_error_messages[ret]);
-            sfat_grammar_error_printed = 1;
+            sfat_grammar_error_printed = true;
         }
 
         FreeHostEntry(host);
     }
-
-    current_host = NULL;
 
     return ret == RT_SUCCESS ? SFAT_OK : SFAT_ERROR;
 }

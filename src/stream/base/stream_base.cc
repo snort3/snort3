@@ -279,7 +279,7 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__ALL,  // FIXIT-H which bits??
+    PROTO_BIT__IP | PROTO_BIT__ICMP | PROTO_BIT__TCP | PROTO_BIT__UDP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

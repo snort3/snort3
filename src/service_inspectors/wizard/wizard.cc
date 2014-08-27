@@ -77,7 +77,7 @@ public:
     MagicSplitter(bool, class Wizard*);
     ~MagicSplitter();
 
-    PAF_Status scan(Flow*, const uint8_t* data, uint32_t len,
+    Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp);
 
     bool is_paf() { return true; };
@@ -130,7 +130,7 @@ MagicSplitter::~MagicSplitter()
     wizard->rem_ref();
 }
 
-PAF_Status MagicSplitter::scan (
+StreamSplitter::Status MagicSplitter::scan (
     Flow* f, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)
 {
@@ -139,7 +139,7 @@ PAF_Status MagicSplitter::scan (
     if ( wizard->cast_spell(wand, f, data, len) )
         ++tstats.tcp_hits;
 
-    return PAF_SEARCH;
+    return SEARCH;
 }
 
 //-------------------------------------------------------------------------

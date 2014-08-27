@@ -569,7 +569,9 @@ void InspectorManager::execute (Packet* p)
         if ( flow->clouseau && (p->proto_bits & flow->clouseau->get_api()->proto_bits) )
             bumble(p);
 
-        // FIXIT-H BIND need more than one service inspector?
+        // FIXIT-M need more than one service inspector?
+        // (should be daisy chained since inspector1 will generate PDUs for
+        // inspector2)
         //::execute(p, fp->service.vec, fp->service.num);
         if ( flow->gadget && (p->proto_bits & flow->gadget->get_api()->proto_bits) )
             flow->gadget->eval(p);

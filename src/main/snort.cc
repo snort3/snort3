@@ -191,7 +191,7 @@ static void SetupMetadataCallback(void)  // FIXDAQ
 #endif
 
 #if 0
-// FIXIT-H not yet used
+// FIXIT-H restart foo
 static void restart()
 {
     int daemon_mode = ScDaemonMode();
