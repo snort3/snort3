@@ -245,7 +245,7 @@ void ArpSpoof::eval(Packet *p)
         return;
 
     if ((ipme = LookupIPMacEntryByIP(config->ipmel,
-                                     *(uint32_t *)&ah->arp_spa)) == NULL)
+                                     ah->arp_spa32)) == NULL)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,
                 "MODNAME: LookupIPMacEntryByIp returned NULL\n"););

@@ -37,7 +37,7 @@
 
 
 struct Packet;
-struct Flow;
+class Flow;
 struct NetworkPolicy;
 struct InspectionPolicy;
 struct IpsPolicy;
