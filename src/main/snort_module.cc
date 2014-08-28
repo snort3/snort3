@@ -294,7 +294,7 @@ static const Parameter snort_params[] =
       "do not try to lock Snort PID file" },
 
     { "--pause", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "load config and wait for further commands before processing packets", },
+      "wait for resume/quit command before processing packets/terminating", },
 
     { "--pcap-file", Parameter::PT_STRING, nullptr, nullptr,
       "<file> file that contains a list of pcaps to read - read mode is implied" },

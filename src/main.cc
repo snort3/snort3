@@ -663,7 +663,7 @@ static bool set_mode()
 
 static inline bool dont_stop()
 {
-    return ( Trough_Next() || snort_conf->run_flags & RUN_FLAG__SHELL );
+    return ( Trough_Next() || snort_conf->run_flags & RUN_FLAG__PAUSE );
 }
 
 static void main_loop()
