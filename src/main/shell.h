@@ -21,6 +21,8 @@
 #ifndef SHELL_H
 #define SHELL_H
 
+#include <string>
+
 class Shell
 {
 public:
@@ -30,7 +32,7 @@ public:
     static void set_overrides(const char*);
     static void configure(struct SnortConfig* sc, const char* file);
     static void install(const char*, const struct luaL_Reg*);
-    static void execute(const char*);
+    static void execute(const char*, std::string&);
 };
 
 #endif
