@@ -13,6 +13,7 @@ set (FRAMEWORK_INCLUDES
     mpse.h
     parameter.h
     plug_data.h
+    range.h
     so_rule.h
     value.h
 )
@@ -25,6 +26,7 @@ add_library ( framework STATIC
     parameter.cc
     module.cc
     mpse.cc
+    range.cc
     value.cc
 )
 
