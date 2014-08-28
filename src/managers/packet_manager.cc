@@ -32,14 +32,12 @@
 
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
-#include "time/profiler.h"
 #include "parser/parser.h"
+#include "time/profiler.h"
 
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
 #include "codecs/ip/ip_util.h"
-#include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+#include "codecs/codec_events.h"
 
 // Encoder FOO
 #ifdef HAVE_DUMBNET_H
@@ -353,7 +351,7 @@ void PacketManager::thread_term()
     }
 }
 
-SO_PUBLIC Packet* PacketManager::encode_new ()
+Packet* PacketManager::encode_new()
 {
     Packet* p = (Packet*)SnortAlloc(sizeof(*p));
     uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + Codec::PKT_MAX + SPARC_TWIDDLE);
@@ -369,7 +367,7 @@ SO_PUBLIC Packet* PacketManager::encode_new ()
     return p;
 }
 
-SO_PUBLIC void PacketManager::encode_delete (Packet* p)
+void PacketManager::encode_delete (Packet* p)
 {
     free((void*)p->pkth);  // cast away const!
     free(p);
@@ -528,7 +526,7 @@ bool PacketManager::has_codec(uint16_t cd_id)
 // * if next layer is tcp, it becomes a tcp rst or tcp fin w/opt data
 //-------------------------------------------------------------------------
 
-SO_PUBLIC const uint8_t* PacketManager::encode_response(
+const uint8_t* PacketManager::encode_response(
     EncodeType type, EncodeFlags flags, const Packet* p, uint32_t* len,
     const uint8_t* payLoad, uint32_t payLen)
 {
@@ -555,7 +553,7 @@ SO_PUBLIC const uint8_t* PacketManager::encode_response(
 // - inner layer header is very similar but payload differs
 // - original ttl is always used
 //-------------------------------------------------------------------------
-SO_PUBLIC int PacketManager::encode_format_with_daq_info (
+int PacketManager::encode_format_with_daq_info (
     EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
@@ -643,17 +641,17 @@ SO_PUBLIC int PacketManager::encode_format_with_daq_info (
 
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-SO_PUBLIC int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
+int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
 {
     return encode_format_with_daq_info(f, p, c, type, p->pkth, p->pkth->opaque);
 }
 #elif defined(HAVE_DAQ_ACQUIRE_WITH_META)
-SO_PUBLIC int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
+int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
 {
     return encode_format_with_daq_info(f, p, c, type, nullptr, p->pkth->opaque);
 }
 #else
-SO_PUBLIC int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
+int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type)
 {
     return encode_format_with_daq_info(f, p, c, type, nullptr, 0);
 }
@@ -666,7 +664,7 @@ SO_PUBLIC int PacketManager::encode_format(EncodeFlags f, const Packet* p, Packe
 // checking each time if needed.
 //-------------------------------------------------------------------------
 
-SO_PUBLIC void PacketManager::encode_update (Packet* p)
+void PacketManager::encode_update (Packet* p)
 {
     int i;
     uint32_t len = 0;
@@ -718,22 +716,14 @@ void PacketManager::dump_stats()
         "codec");
 }
 
-SO_PUBLIC void PacketManager::encode_set_dst_mac(uint8_t *mac)
-{
-   dst_mac = mac;
-}
+void PacketManager::encode_set_dst_mac(uint8_t *mac)
+{ dst_mac = mac; }
 
-SO_PUBLIC uint8_t *PacketManager::encode_get_dst_mac()
-{
-   return dst_mac;
-}
+uint8_t *PacketManager::encode_get_dst_mac()
+{ return dst_mac; }
 
 uint64_t PacketManager::get_rebuilt_packet_count(void)
-{
-    return total_rebuilt_pkts;
-}
+{ return total_rebuilt_pkts; }
 
 void PacketManager::encode_set_pkt(Packet* p)
-{
-    encode_pkt = p;
-}
+{ encode_pkt = p; }

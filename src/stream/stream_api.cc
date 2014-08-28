@@ -58,9 +58,6 @@
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_hostentry.h"
 
-//-------------------------------------------------------------------------
-// public methods other than ctor / dtor must all be declared SO_PUBLIC
-//-------------------------------------------------------------------------
 
 Stream stream;  // FIXIT-L global for SnortContext
 

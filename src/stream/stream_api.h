@@ -81,11 +81,15 @@ typedef void (*Stream_Callback)(Packet *);
 #define MAX_EVT_CB 32
 #define MAX_LOG_FN 32
 
+//-------------------------------------------------------------------------
+// public methods other than ctor / dtor must all be declared SO_PUBLIC
+//-------------------------------------------------------------------------
+
 class SO_PUBLIC Stream
 {
 public:
-    Stream();
-    ~Stream();
+    SO_PRIVATE Stream();
+    SO_PRIVATE ~Stream();
 
     static Flow* get_session(const FlowKey*);
     static Flow* new_session(const FlowKey*);

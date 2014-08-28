@@ -53,7 +53,7 @@
  * DO NOT ACCESS STRUCT MEMBERS DIRECTLY
  * EXCEPT FROM WITHIN THE IMPLEMENTATION!
  */
-typedef struct _TextLog
+struct TextLog
 {
 /* private: */
 /* file attributes: */
@@ -68,7 +68,7 @@ typedef struct _TextLog
     unsigned int maxBuf;
     char buf[1];
 
-} TextLog;
+};
 
 TextLog* TextLog_Init (
     const char* name, unsigned int maxBuf = 0, size_t maxFile = 0

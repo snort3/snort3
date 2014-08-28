@@ -113,7 +113,7 @@ int main()
  *      array.
  *
  ****************************************************************/
-SO_PUBLIC char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
+char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
                int *num_toks, const char meta_char)
 {
     size_t cur_tok = 0;  /* current token index into array of strings */
@@ -462,7 +462,7 @@ static char * mSplitAddTok(const char *str, const int len, const char *sep_chars
  * At this point, toks is again NULL.
  *
  ****************************************************************/
-SO_PUBLIC void mSplitFree(char ***pbuf, int num_toks)
+void mSplitFree(char ***pbuf, int num_toks)
 {
     int i;
     char** buf;  /* array of string pointers */
@@ -505,7 +505,7 @@ SO_PUBLIC void mSplitFree(char ***pbuf, int num_toks)
  *      failure (substr not in str)
  *
  ****************************************************************/
-SO_PUBLIC int mContainsSubstr(const char *buf, int b_len, const char *pat, int p_len)
+int mContainsSubstr(const char *buf, int b_len, const char *pat, int p_len)
 {
     const char *b_idx;  /* index ptr into the data buffer */
     const char *p_idx;  /* index ptr into the pattern buffer */

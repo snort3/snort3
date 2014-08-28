@@ -42,23 +42,23 @@ extern THREAD_LOCAL ProfileStats decodePerfStats;
 /*
  *  PacketManager class
  */
-class PacketManager
+class SO_PUBLIC PacketManager
 {
 public:
     /* constructors, destructors, and statistics */
 
     // global plugin initializer. Called by LUA to add register codecs
-    static void add_plugin(const struct CodecApi*);
+    SO_PRIVATE static void add_plugin(const struct CodecApi*);
     // instantiate a specific codec with a codec specific Module
-    static void instantiate(const CodecApi*, Module*, SnortConfig*);
+    SO_PRIVATE static void instantiate(const CodecApi*, Module*, SnortConfig*);
     // instantiate any codec for which a module has not been provided.
-    static void instantiate();
+    SO_PRIVATE static void instantiate();
     // destroy all global codec related information
-    static void release_plugins();
+    SO_PRIVATE static void release_plugins();
     // initialize the current threads codecs
-    static void thread_init();
+    SO_PRIVATE static void thread_init();
     // destroy thread_local data
-    static void thread_term();
+    SO_PRIVATE static void thread_term();
     // allocate a Packet for later formatting (cloning)
     static Packet* encode_new(void);
     // release the allocated Packet
@@ -119,9 +119,7 @@ public:
 
     // reset the current 'clone' packet
     static inline void encode_reset(void)
-    {
-        encode_set_pkt(NULL);
-    }
+    { encode_set_pkt(NULL); }
 };
 
 #endif

@@ -19,4 +19,3 @@ sf_vartable.h
 libsfip_a_CXXFLAGS = $(AM_CXXFLAGS) -fvisibility=default
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
-

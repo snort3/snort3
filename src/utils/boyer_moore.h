@@ -22,6 +22,7 @@
 #ifndef BOYER_MOORE_H
 #define BOYER_MOORE_H
 
+#include "main/snort_types.h"
 // boyer_moore.h was split out of mstring.h
 
 int *make_skip(char *, int);

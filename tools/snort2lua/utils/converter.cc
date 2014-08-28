@@ -50,7 +50,7 @@ bool Converter::initialize(conv_new_f func)
 
     if (state == nullptr)
     {
-        std::cout << "Failed Converter initialization!" << std::endl;
+        data_api.developer_error("Failed Converter initialization!");
         return false;
     }
 
@@ -96,24 +96,10 @@ void Converter::parse_include_file(std::string input_file)
     if (convert_rules_mult_files)
         rule_api.swap_rules(rules);
 
+
+    // MAIN CONVERSION!!
     if (convert_file(input_file) < 0)
-    {
-        error = true;
-        if (convert_conf_mult_files)
-        {
-            // FIXIT:  This needs to tables, and data_api
-            data_api.swap_conf_data(vars, includes, comments);
-            table_api.swap_tables(tables);
-            delete comments;
-        }
-
-        if (convert_rules_mult_files)
-            rule_api.swap_rules(rules);
-
-        // add this new file as a snort style rule
-        rule_api.add_hdr_data("include " + input_file);
-        return;
-    }
+        error = true; // return a negative number to main snort2lua method
 
 
     if (convert_conf_mult_files)
@@ -128,32 +114,29 @@ void Converter::parse_include_file(std::string input_file)
             data_api.print_comments(out);
             out << std::endl;
             out.close();
+
+            data_api.add_include_file(input_file + ".lua");
         }
 
         data_api.swap_conf_data(vars, includes, comments);
-        data_api.add_include_file(input_file + ".lua");
         table_api.swap_tables(tables);
         delete comments;
     }
 
+
     if (convert_rules_mult_files)
     {
-        bool include_rule_file = false;
-
         if (!rule_api.empty())
         {
             std::ofstream out;
             out.open(input_file + ".rules");
             rule_api.print_rules(out, true); // true == output to rule file, NOT lua file
             out.close();
-            include_rule_file = true;
+
+            rule_api.add_hdr_data("include " + input_file + ".rules");
         }
 
         rule_api.swap_rules(rules);
-
-        // add this new file as a snort style rule
-        if (include_rule_file)
-            rule_api.add_hdr_data("include " + input_file + ".rules");
     }
 }
 

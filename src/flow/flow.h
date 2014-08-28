@@ -90,7 +90,7 @@ struct StreamFlowData
     unsigned char flowb[1];
 };
 
-class FlowData
+class SO_PUBLIC FlowData
 {
 public:
     FlowData(unsigned u, Inspector* = nullptr);

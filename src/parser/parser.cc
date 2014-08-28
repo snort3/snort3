@@ -1044,7 +1044,7 @@ void OrderRuleLists(SnortConfig *sc, const char *order)
     sc->rule_lists = ordered_list;
 }
 
-SO_PUBLIC NORETURN void ParseAbort(const char *format, ...)
+NORETURN void ParseAbort(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -1065,7 +1065,7 @@ SO_PUBLIC NORETURN void ParseAbort(const char *format, ...)
         FatalError("%s\n", buf);
 }
 
-SO_PUBLIC void ParseError(const char *format, ...)
+void ParseError(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -1088,7 +1088,7 @@ SO_PUBLIC void ParseError(const char *format, ...)
     parse_errors++;
 }
 
-SO_PUBLIC void ParseWarning(const char *format, ...)
+void ParseWarning(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -1109,7 +1109,7 @@ SO_PUBLIC void ParseWarning(const char *format, ...)
         LogMessage("%s\n", buf);
 }
 
-SO_PUBLIC void ParseMessage(const char *format, ...)
+void ParseMessage(const char *format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
