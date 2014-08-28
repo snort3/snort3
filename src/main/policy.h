@@ -29,11 +29,10 @@ struct vartable_t;
 struct sfip_var_t;
 typedef unsigned int PolicyId;
 
-// defined in sfportobject.h.
-struct SFGHASH;
-typedef SFGHASH PortVarTable;
+// defined in sfportobject.h
+typedef struct SFGHASH PortVarTable;
 
-// FIXIT-H split into separate modules
+// FIXIT-L split into separate headers
 
 //-------------------------------------------------------------------------
 // traffic stuff

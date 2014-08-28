@@ -185,7 +185,7 @@ static const Parameter snort_params[] =
       "dump the raw packet data starting at the link layer" },
 
     { "-x", Parameter::PT_IMPLIED, nullptr, nullptr, 
-      "same as --conf-error-out" },
+      "same as --pedantic" },
 
     { "-y", Parameter::PT_IMPLIED, nullptr, nullptr, 
       "include year in timestamp in the alert and log files" },
@@ -200,8 +200,8 @@ static const Parameter snort_params[] =
     { "--bpf", Parameter::PT_STRING, nullptr, nullptr,
       "<filter options> are standard BPF options, as seen in TCPDump" },
 
-    { "--conf-error-out", Parameter::PT_IMPLIED, nullptr, nullptr, 
-      "output error instead of warning if duplicate rules are found (same as -x)" },
+    { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr, 
+      "warnings are fatal" },
 
     { "--create-pidfile", Parameter::PT_IMPLIED, nullptr, nullptr,
       "create PID file, even when not in Daemon mode" },
@@ -499,7 +499,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("-X") )
         ConfigDumpPayloadVerbose(sc, v.get_string());
 
-    else if ( v.is("-x") || v.is("--conf-error-out") )
+    else if ( v.is("-x") || v.is("--pedantic") )
         sc->run_flags |= RUN_FLAG__CONF_ERROR_OUT;
 
     else if ( v.is("-y") )

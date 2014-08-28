@@ -325,7 +325,6 @@ static void SnortInit(int argc, char **argv)
 
     LogMessage("--------------------------------------------------\n");
 
-    // FIXIT-H config plugin_path won't work like this
     Shell::init();
     ModuleManager::init();
 
@@ -427,7 +426,7 @@ static void SnortInit(int argc, char **argv)
 // much initialization stuff in SnortInit() as possible and to restrict this
 // function to those things that depend on DAQ startup or non-root user/group.
 //
-// FIXIT-H breaks DAQ_New()/Start() because packet threads won't be root when
+// FIXIT-J breaks DAQ_New()/Start() because packet threads won't be root when
 // opening iface
 static void SnortUnprivilegedInit(void)
 {
@@ -707,7 +706,7 @@ void set_main_hook(MainHook_f f)
 Packet* get_current_packet()
 { return &s_packet; }
 
-// FIXIT-H for multiple packet threads
+// FIXIT-J for multiple packet threads
 // using thread locals for s_pkth and s_data won't work
 // will need array of s_packet, s_pkth, and s_data and 
 // capture all if it is not clear which thread crashed
@@ -932,14 +931,10 @@ DAQ_Verdict packet_callback(
     Active_Reset();
     PacketManager::encode_reset();
 
-    if ( flow_con )  // FIXIT-H always instantiate
-        flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
-
-#if 0
-    // FIXIT-H do this when idle
     if ( flow_con ) // FIXIT-H always instantiate
-        flow_con->timeout_flows(16384, time(NULL));
-#endif
+    {
+        flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
+    }
 
     s_packet.pkth = NULL;  // no longer avail on segv
 
@@ -950,14 +945,21 @@ DAQ_Verdict packet_callback(
     return verdict;
 }
 
+void snort_idle()
+{
+    if ( flow_con )
+        flow_con->timeout_flows(16384, time(NULL));
+    pc.idle++;
+}
+
 void snort_rotate()
 {
-        SetRotatePerfFileFlag();
+    SetRotatePerfFileFlag();
 }
 
 void snort_thread_init(const char* intf)
 {
-    // FIXIT-H the start-up sequence is a little off due to dropping privs
+    // FIXIT-J the start-up sequence is a little off due to dropping privs
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 

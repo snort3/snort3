@@ -21,8 +21,7 @@
 #ifndef RANGE_H
 #define RANGE_H
 
-// FIXIT-M ideally this would be in framework/ and we'd have just one copy
-// but that breaks dynamic builds so each dynamic client has its own for now.
+#include "main/snort_types.h"
 
 // unfortunately, <> was implemented inconsistently.  eg:
 // dsize implements <> as ( a <= c && c <= b ) and
@@ -32,7 +31,7 @@
 // <=> for dsize style and >< for icode style so rule options
 // can coerce <> if needed for backwards compatibility
 
-struct RangeCheck
+struct SO_PUBLIC RangeCheck
 {
     enum Op
     {

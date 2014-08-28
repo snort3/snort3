@@ -85,9 +85,12 @@
 #define DEBUG_SMTP            0x0001000000000000LL
 #define DEBUG_PP_EXP          0x8000000000000000LL
 
+#if 0
+// FIXIT delete duplicate declarations
 SO_PUBLIC void DebugMessageFunc(uint64_t dbg, const char *fmt, ...);
 #ifdef SF_WCHAR
 void DebugWideMessageFunc(uint64_t dbg, const wchar_t *fmt, ...);
+#endif
 #endif
 
 #ifdef DEBUG_MSGS

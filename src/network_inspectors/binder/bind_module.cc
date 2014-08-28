@@ -30,7 +30,16 @@ using namespace std;
 #include "binder.h"
 #include "protocols/packet.h"
 
-THREAD_LOCAL SimpleStats bstats;
+THREAD_LOCAL BindStats bstats;
+
+static const char* bind_pegs[] =
+{
+    "packets",
+    "blocks",
+    "allows",
+    "inspects",
+    nullptr
+};
 
 //-------------------------------------------------------------------------
 // binder module
@@ -64,7 +73,7 @@ static const Parameter binder_when_params[] =
 
 static const Parameter binder_use_params[] =
 {
-    { "action", Parameter::PT_ENUM, "inspect | allow | block", "inspect",
+    { "action", Parameter::PT_ENUM, "block | allow | inspect", "inspect",
       "what to do with matching traffic" },
 
     { "file", Parameter::PT_STRING, nullptr, nullptr,
@@ -146,7 +155,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 
     // use
     else if ( v.is("action") )
-        work->action = (BindAction)v.get_long();
+        work->action = (BindAction)(v.get_long() + 1);
 
     else if ( v.is("file") )
         work->file = v.get_string();
@@ -187,7 +196,7 @@ vector<Binding*> BinderModule::get_data()
 }
 
 const char** BinderModule::get_pegs() const
-{ return simple_pegs; }
+{ return bind_pegs; }
 
 PegCount* BinderModule::get_counts() const
 { return (PegCount*)&bstats; }

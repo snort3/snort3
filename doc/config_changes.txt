@@ -1,6 +1,8 @@
 change:  Attribute_table: <FRAG_POLICY>bsd-right</FRAG_POLICY> ==> hosts.frag_policy = bsd_right
-change:  Attribute_table: <FRAG_POLICY>hpux11</FRAG_POLICY> ==> hosts.tcp_policy = hpux
-change:  Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY> ==> hosts.tcp_policy = hpux10
+change:  Attribute_table: <STREAM_POLICY>grannysmith</STREAM_POLICY> ==> hosts.tcp_policy = macos
+change:  Attribute_table: <STREAM_POLICY>hpux11</STREAM_POLICY> ==> hosts.tcp_policy = hpux
+change:  Attribute_table: <STREAM_POLICY>win2003</STREAM_POLICY> ==> hosts.tcp_policy = win-2003
+change:  Attribute_table: <STREAM_POLICY>win2k3</STREAM_POLICY> ==> hosts.tcp_policy = win-2003
 change:  Attribute_table: STREAM_POLICY ==> hosts: tcp_policy
 change:  ac ==> ac_full_q
 change:  ac-banded ==> ac_banded
@@ -17,7 +19,6 @@ change:  accumulate ==> reset = false
 change:  acs ==> ac_sparse
 change:  addressspace_agnostic  ==> address_space_agnostic
 change:  alert_unified2 ==> unified2
-change:  alertfile  ==> alert_file
 change:  alt_max_param_len ==> cmd_validity
 change:  autogenerate_preprocessor_decoder_rules  ==> enable_builtin_rules
 change:  bind_to ==> bindings
@@ -25,6 +26,8 @@ change:  bleedover-port-limit ==> bleedover_port_limit
 change:  bleedover-warnings-enabled ==> bleedover_warnings_enabled
 change:  block ==> base
 change:  checksum_mode  ==> checksum_eval
+change:  config alertfile: ==> alert_fast.file
+change:  config alertfile: ==> alert_full.file
 change:  config file: file_block_timeout ==> block_timeout
 change:  config file: file_lookup_timeout ==> lookup_timeout
 change:  config file: file_signature_depth ==> signature_depth
@@ -143,6 +146,7 @@ change:  print ==> count
 change:  proto ==> protos
 change:  prune_log_max ==> histogram
 change:  rate_filter  ==> rate_filter_memcap
+change:  react  ==> page
 change:  req_pay ==> base
 change:  req_urg ==> base
 change:  req_urp ==> base
@@ -159,6 +163,10 @@ change:  snortfile ==> file = true
 change:  sort avg_ticks_per_nomatch ==> sort = avg_ticks_per_no_match
 change:  split-any-any ==> split_any_any
 change:  srcport ==> src_port
+change:  stream5_tcp: policy grannysmith ==> stream_tcp.policy = macos
+change:  stream5_tcp: policy hpux11 ==> stream_tcp.policy = hpux
+change:  stream5_tcp: policy win2003 ==> stream_tcp.policy = win-2003
+change:  stream5_tcp: policy win2k3 ==> stream_tcp.policy = win-2003
 change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = any
 change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = client
 change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = server
@@ -188,6 +196,8 @@ deleted: Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>
 deleted: Attribute_table: <FRAG_POLICY>irix</FRAG_POLICY>
 deleted: Attribute_table: <FRAG_POLICY>old-linux</FRAG_POLICY>
 deleted: Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>
+deleted: Attribute_table: <STREAM_POLICY>noack</STREAM_POLICY>
+deleted: Attribute_table: <STREAM_POLICY>unkown</STREAM_POLICY>
 deleted: action
 deleted: alert_fragments
 deleted: atexitonly
@@ -195,6 +205,7 @@ deleted: atexitonly: base-stats
 deleted: atexitonly: events-stats
 deleted: atexitonly: flow-ip-stats
 deleted: atexitonly: flow-stats
+deleted: block
 deleted: check_session_hijacking
 deleted: config cs_dir
 deleted: config disable_attribute_reload_thread
@@ -243,4 +254,7 @@ deleted: no_alert_large_fragments
 deleted: no_alert_multiple_requests
 deleted: no_alerts
 deleted: no_midstream_drop_alerts
+deleted: stream5_tcp: policy noack
+deleted: stream5_tcp: policy unkown
 deleted: unicast
+deleted: warn

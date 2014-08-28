@@ -52,6 +52,7 @@ struct PacketCount
     PegCount alert_limit;
     PegCount internal_blacklist;
     PegCount internal_whitelist;
+    PegCount idle;
 };
 
 struct ProcessCount

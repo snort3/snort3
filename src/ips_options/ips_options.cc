@@ -29,6 +29,7 @@ extern const BaseApi* ips_byte_extract;
 extern const BaseApi* ips_classtype;
 extern const BaseApi* ips_content;
 extern const BaseApi* ips_detection_filter;
+extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_file_data;
 extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
@@ -48,7 +49,6 @@ extern const BaseApi* ips_base64_decode;
 extern const BaseApi* ips_byte_jump;
 extern const BaseApi* ips_byte_test;
 extern const BaseApi* ips_cvs;
-extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_flags;
 extern const BaseApi* ips_fragbits;
 extern const BaseApi* ips_fragoffset;
@@ -93,6 +93,7 @@ const BaseApi* ips_options[] =
     ips_classtype,
     ips_content,
     ips_detection_filter,
+    ips_dsize,
     ips_file_data,
     ips_flow,
     ips_flowbits,
@@ -111,7 +112,6 @@ const BaseApi* ips_options[] =
     ips_byte_jump,
     ips_byte_test,
     ips_cvs,
-    ips_dsize,
     ips_flags,
     ips_fragbits,
     ips_fragoffset,

@@ -130,6 +130,13 @@ void Analyzer::analyze()
         }
         if ( DAQ_Acquire(0, main_func, NULL) )
             break;
+
+        // FIXIT-M acquire(0) won't return until no packets, signal, etc.
+        // which makes this idle unlikely to execute under high traffic 
+        // conditions; that means the idle processing may not be useful
+        // or that we need a hook to do things periodically even when
+        // traffic is available
+        snort_idle();
     }
 }
 

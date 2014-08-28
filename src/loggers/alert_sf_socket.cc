@@ -237,6 +237,8 @@ void send_sar(uint8_t* data, unsigned len)
 // sig stuff
 
 /* search for an OptTreeNode by sid in specific policy*/
+// FIXIT-L wow - this should be encapsulated somewhere ...
+// (actually, the whole reason for doing this needs to be rethought)
 static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
 {
     SFGHASH_NODE *hashNode;
@@ -246,7 +248,6 @@ static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
     if(sid == 0)
         return NULL;
 
-    // FIXIT-H wow - this should be encapsulated somewhere ...
     for (hashNode = sfghash_findfirst(snort_conf->otn_map);
             hashNode;
             hashNode = sfghash_findnext(snort_conf->otn_map))

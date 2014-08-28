@@ -59,17 +59,17 @@ public:
     SO_PRIVATE static void thread_init();
     // destroy thread_local data
     SO_PRIVATE static void thread_term();
-    // allocate a Packet for later formatting (cloning)
-    static Packet* encode_new(void);
-    // release the allocated Packet
-    static void encode_delete(Packet*);
 
 
     /* main encode and decode functions */
 
-
     // decode this packet and set all relevent packet fields.
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
+
+    // allocate a Packet for later formatting (cloning)
+    SO_PUBLIC static Packet* encode_new(void);
+    // release the allocated Packet
+    SO_PUBLIC static void encode_delete(Packet*);
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet
     static void encode_update(Packet*);
@@ -84,6 +84,12 @@ public:
     static const uint8_t* encode_response(
         EncodeType, EncodeFlags, const Packet* orig, uint32_t* len,
         const uint8_t* payLoad, uint32_t payLen);
+    // when encoding, rather than copy the destination MAC address from the
+    // inbound packet, manually set the MAC address.
+    SO_PUBLIC static void encode_set_dst_mac(uint8_t* );
+    // get the MAC address which has been set using encode_set_dst_mac().
+    // Useful for root decoders setting the MAC address
+    SO_PUBLIC static uint8_t *encode_get_dst_mac();
 
     // wrapper for encode response.  Ensure no payload is encoded.
     static inline const uint8_t* encode_reject( EncodeType type,
@@ -108,12 +114,6 @@ public:
     static PegCount get_rebuilt_packet_count(void);
     // check if a codec has been register for the specified protocol number
     static bool has_codec(uint16_t protocol);
-    // when encoding, rather than copy the destination MAC address from the
-    // inbound packet, manually set the MAC address.
-    static void encode_set_dst_mac(uint8_t* );
-    // get the MAC address which has been set using encode_set_dst_mac().
-    // Useful for root decoders setting the MAC address
-    static uint8_t *encode_get_dst_mac();
     // set the packet to be encoded.
     static void encode_set_pkt(Packet* p);
 

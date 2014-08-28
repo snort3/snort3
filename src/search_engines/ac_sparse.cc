@@ -73,7 +73,6 @@ public:
         const unsigned char* T, int n, mpse_action_f action,
         void* data, int* current_state)
     {
-        // FIXIT-H make sure DFA and NFA flavors aren't swapped
         return acsmSearchSparseDFA(
             obj, (unsigned char *)T, n, action, data, current_state);
     };

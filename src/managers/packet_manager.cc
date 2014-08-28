@@ -32,12 +32,12 @@
 
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
-#include "parser/parser.h"
 #include "time/profiler.h"
+#include "parser/parser.h"
 
 #include "codecs/ip/ip_util.h"
-#include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
+#include "codecs/decode_module.h"
 
 // Encoder FOO
 #ifdef HAVE_DUMBNET_H
@@ -351,7 +351,7 @@ void PacketManager::thread_term()
     }
 }
 
-Packet* PacketManager::encode_new()
+Packet* PacketManager::encode_new ()
 {
     Packet* p = (Packet*)SnortAlloc(sizeof(*p));
     uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + Codec::PKT_MAX + SPARC_TWIDDLE);
