@@ -108,7 +108,8 @@ public:
     { bindings.push_back(b); };
 
 private:
-    int check_rules(Flow*, Packet*);
+    Binding* get_binding(Flow*, Packet*);
+    BindAction apply(Flow*, Binding*);
     void init_flow(Flow*);
 
 private:
@@ -129,8 +130,12 @@ Binder::~Binder()
 void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
-    flow->flow_state = check_rules(flow, p);
-    ++bstats.total_packets;
+
+    Binding* pb = get_binding(flow, p);
+    flow->flow_state = apply(flow, pb);
+
+    ++bstats.verdicts[flow->flow_state - 1];
+    ++bstats.packets;
 }
 
 // FIXIT-H implement inspector lookup from policy / bindings
@@ -182,7 +187,7 @@ int Binder::exec(int, void* pv)
 // FIXIT-H bind services - this is a temporary hack that just looks at ports,
 // need to examine all key fields for matching.  ultimately need a routing
 // table, scapegoat tree, etc.
-int Binder::check_rules(Flow* flow, Packet* p)
+Binding* Binder::get_binding(Flow* flow, Packet* p)
 {
     Binding* pb;
     unsigned i, sz = bindings.size();
@@ -201,12 +206,26 @@ int Binder::check_rules(Flow* flow, Packet* p)
         if ( pb->ports.test(port) )
             break;
     }
-        
+
+    // absent a specific rule, we must choose a course of action
+    // so we act as if binder wasn't configured at all
     if ( i == sz )
-        return BA_ALLOW;  // default action FIXIT-H make configurable
+        return nullptr;
+    
+    return pb;
+}
+    
+BindAction Binder::apply(Flow* flow, Binding* pb)
+{
+    if ( !pb )
+        return BA_ALLOW;
 
     if ( pb->action != BA_INSPECT )
+    {
+        if ( pb->action == BA_BLOCK )
+            stream.drop_traffic(flow, SSN_DIR_BOTH);
         return pb->action;
+    }
 
     init_flow(flow);
     Inspector* ins;

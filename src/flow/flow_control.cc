@@ -274,6 +274,7 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
     switch ( flow->flow_state )
     {
     case 1: // block
+        // FIXIT-H this clears flow state!
         stream.drop_packet(p);
         break;
 

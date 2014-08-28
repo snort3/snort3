@@ -1,3 +1,6 @@
+118
+-- fixed bind action
+
 117
 -- added --stdin-rules
 -- added #begin / #end comments for rules

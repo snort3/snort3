@@ -117,7 +117,7 @@ public:
 
     /* Drop traffic arriving on session.
      */
-    static void drop_traffic(Packet*, Flow*, char dir);
+    static void drop_traffic(Flow*, char dir);
 
     /* Drop retransmitted packet arriving on session.
      */

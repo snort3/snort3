@@ -273,8 +273,7 @@ uint32_t Stream::get_packet_direction(Packet *p)
     return (p->packet_flags & (PKT_FROM_SERVER|PKT_FROM_CLIENT));
 }
 
-void Stream::drop_traffic(
-    Packet*, Flow* flow, char dir)
+void Stream::drop_traffic(Flow* flow, char dir)
 {
     if (!flow)
         return;
@@ -305,7 +304,7 @@ void Stream::drop_packet(Packet *p)
     flow->session->clear();
 
     if (!(p->packet_flags & PKT_STATELESS))
-        drop_traffic(p, flow, SSN_DIR_BOTH);
+        drop_traffic(flow, SSN_DIR_BOTH);
 }
 
 uint32_t Stream::set_session_flags(Flow* flow, uint32_t flags)
