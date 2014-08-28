@@ -1,5 +1,6 @@
 118
 -- fixed bind action
+-- tweaked main loop
 
 117
 -- added --stdin-rules
