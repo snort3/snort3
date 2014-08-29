@@ -41,7 +41,7 @@ using namespace std;
 #include "ips_manager.h"
 #include "module_manager.h"
 #include "mpse_manager.h"
-#include "packet_manager.h"
+#include "codec_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
 
@@ -230,7 +230,7 @@ static void add_plugin(Plugin& p)
         break;
 
     case PT_CODEC:
-        PacketManager::add_plugin((CodecApi*)p.api);
+        CodecManager::add_plugin((CodecApi*)p.api);
         break;
 
     case PT_INSPECTOR:
@@ -352,7 +352,7 @@ void PluginManager::list_plugins()
 void PluginManager::dump_plugins()
 {
     DataManager::dump_plugins();
-    PacketManager::dump_plugins();
+    CodecManager::dump_plugins();
     InspectorManager::dump_plugins();
     MpseManager::dump_plugins();
     IpsManager::dump_plugins();
@@ -369,7 +369,7 @@ void PluginManager::release_plugins ()
     IpsManager::release_plugins();
     SoManager::release_plugins();
     MpseManager::release_plugins();
-    PacketManager::release_plugins();
+    CodecManager::release_plugins();
 
     // must follow the above
     DataManager::release_plugins();
@@ -403,7 +403,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_CODEC:
-        PacketManager::instantiate((CodecApi*)api, mod, sc);
+        CodecManager::instantiate((CodecApi*)api, mod, sc);
         break;
 
     case PT_INSPECTOR:

@@ -34,6 +34,7 @@
 #include "target_based/sftarget_reader.h"
 #include "managers/module_manager.h"
 #include "managers/packet_manager.h"
+#include "managers/codec_manager.h"
 #include "detection/fpcreate.h"
 #include "filters/sfthreshold.h"
 
@@ -304,7 +305,7 @@ void DropStats()
     //mpse_print_qinfo();
 
     LogLabel("Modules");
-    ModuleManager::dump_stats(snort_conf);
+ModuleManager::dump_stats(snort_conf);
 
     // ensure proper counting of log_limit
     SnortEventqResetCounts();

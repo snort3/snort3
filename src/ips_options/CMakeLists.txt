@@ -124,5 +124,6 @@ else (STATIC_IPS_OPTIONS)
 endif (STATIC_IPS_OPTIONS)
 
 target_link_libraries(ips_options
+    framework
     helpers
 )

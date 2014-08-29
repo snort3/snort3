@@ -30,11 +30,6 @@ add_library ( framework STATIC
     value.cc
 )
 
-target_link_libraries( framework
-    detection
-    ${LUAJIT_LIBRARIES}
-)
-
 
 install (FILES ${FRAMEWORK_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/framework"

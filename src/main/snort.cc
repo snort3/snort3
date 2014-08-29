@@ -89,6 +89,7 @@ using namespace std;
 #include "managers/ips_manager.h"
 #include "managers/mpse_manager.h"
 #include "managers/packet_manager.h"
+#include "managers/codec_manager.h"
 #include "managers/action_manager.h"
 #include "detection/sfrim.h"
 #include "ppm.h"
@@ -384,7 +385,7 @@ static void SnortInit(int argc, char **argv)
 
     fpCreateFastPacketDetection(snort_conf);
     MpseManager::activate_search_engine(snort_conf);
-    PacketManager::instantiate();
+    CodecManager::instantiate();
     SFAT_Start();
 
 #ifdef PPM_MGR
@@ -963,7 +964,7 @@ void snort_thread_init(const char* intf)
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 
-    PacketManager::thread_init();
+    CodecManager::thread_init();
     FileAPIPostInit();
 
     // this depends on instantiated daq capabilities
@@ -1015,6 +1016,6 @@ void snort_thread_term()
 
     SnortEventqFree();
     Active_Term();
-    PacketManager::thread_term();
+    CodecManager::thread_term();
 }
 

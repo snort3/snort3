@@ -102,6 +102,7 @@
 #include "packet_io/sfdaq.h"
 #include "framework/inspector.h"
 #include "flow/flow_control.h"
+#include "framework/codec.h"
 
 /*  D E F I N E S  **************************************************/
 

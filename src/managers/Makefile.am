@@ -11,6 +11,7 @@ snort_plugin.lua
 libmanagers_a_SOURCES = \
 action_manager.cc action_manager.h \
 data_manager.cc data_manager.h \
+codec_manager.cc codec_manager.h \
 event_manager.cc event_manager.h \
 inspector_manager.cc inspector_manager.h \
 ips_manager.cc ips_manager.h \
