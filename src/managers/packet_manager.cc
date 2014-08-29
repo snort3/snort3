@@ -58,9 +58,11 @@ std::array<PegCount, PacketManager::s_stats.size()> PacketManager::g_stats;
 // in s_stats/g_stats
 const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_names =
 {
-    "total",
-    "other",
-    "discards"
+    {
+        "total",
+        "other",
+        "discards"
+    }
 };
 
 

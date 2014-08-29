@@ -28,10 +28,10 @@
 
 #include "main/thread.h"
 
-struct Module;
 struct SnortConfig;
 struct CodecApi;
-struct Codec;
+class Codec;
+class Module;
 class PacketManager;
 
 
