@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -30,6 +29,8 @@
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/gre.h"
+#include "log/text_log.h"
+#include "protocols/packet_manager.h"
 
 namespace
 {
@@ -71,6 +72,8 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+     void log(TextLog* /*log*/, const uint8_t* /*raw_pkt*/,
+                    const Packet* const);
 
 
 };
@@ -100,9 +103,7 @@ static const uint32_t GRE_V1_ACK_LEN = 4;
 
 
 void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_GRE);
-}
+{ v.push_back(IPPROTO_ID_GRE); }
 
 
 /*
@@ -242,30 +243,33 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 }
 
 
+void GreCodec::log(TextLog* log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+    const gre::GREHdr *greh = reinterpret_cast<const gre::GREHdr *>(raw_pkt);
+
+    TextLog_Print(log, "GRE  version:%u flags:0x%02X ether-type:%s(0x%04X)\n",
+            greh->get_version(), greh->flags,
+            PacketManager::get_proto_name(greh->get_proto()),
+            greh->get_proto());
+}
+
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new GreModule;
-}
+{ return new GreModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new GreCodec();
-}
+{ return new GreCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi gre_api =
 {

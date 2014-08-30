@@ -27,7 +27,7 @@
 #include "framework/base_api.h"
 #include "codecs/sf_protocols.h"
 
-
+struct TextLog;
 struct Packet;
 struct Layer;
 
@@ -117,7 +117,9 @@ public:
      * ETHERNET_MTU == 1500
      * IP_MAXPACKET ==  65535
      */
-    static constexpr uint32_t PKT_MAX = 14 + 4 + 1500 + 65535;
+    static const uint32_t PKT_MAX = 14 + 4 + 1500 + 65535;
+
+    /*  Codec Initialization */
 
     // Get the codec's name
     inline const char* get_name(){return name; };
@@ -127,20 +129,35 @@ public:
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes
     virtual void get_protocol_ids(std::vector<uint16_t>&) {};
-    // decode function
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id) = 0;
 
-    // 
-    // Encode the current packet. Encoding starts with the innermost
-    // layer and working outwards.  All encoders MUST call the update
-    // bound function before writing to output buffer.
-    // PARAMS:
-    //        EncStats * = The current EncState struct
-    //        Buffer *out = the buffer struct. When called, out->base pointers
-    //              to the already encoded packet! to create more memory, call
-    //              update_buffer function!
-    //        uint8_t* raw_in =  A pointer to the raw input which was decoded
+    /* Maom decodomg fimctopm */
+    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)=0;
+
+    /*
+     *  Log this layer's information
+     *  PARAMS:
+     *          TextLog* = the logger. Defined in "text_log.h"
+     *          const uint8_t *raw_pkt = the same data seen during decode
+     *          Packet *p = pointer to the packet struct.
+     */
+    virtual void log(TextLog* /*log*/, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) {}
+
+
+    /*
+     * Encoding -- active response!!
+     *
+     * Encode the current packet. Encoding starts with the innermost
+     * layer and working outwards.  All encoders MUST call the update
+     * bound function before writing to output buffer.
+     * PARAMS:
+     *        EncStats * = The current EncState struct
+     *        Buffer *out = the buffer struct. When called, out->base pointers
+     *              to the already encoded packet! to create more memory, call
+     *              update_buffer function!
+     *        uint8_t* raw_in =  A pointer to the raw input which was decoded
+     */
     virtual bool encode(EncState*, Buffer* /*out*/, const uint8_t* /*raw_in*/)
     { return true; };
     // update function

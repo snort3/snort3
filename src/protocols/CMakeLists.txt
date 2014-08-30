@@ -13,6 +13,7 @@ set (PROTOCOL_HEADERS
     linux_sll.h
     mpls.h
     packet.h
+    packet_manager.h
     protocol_ids.h
     tcp.h
     teredo.h
@@ -26,6 +27,7 @@ add_library (protocols STATIC
     ${PROTOCOL_HEADERS}
     layer.cc
     ip.cc
+    packet_manager.cc
 )
 
 install (FILES ${PROTOCOL_HEADERS}

@@ -150,7 +150,7 @@ uint32_t IpApi::id(const Packet* const p) const
 uint16_t IpApi::off(const Packet* const p) const
 {
     if (ip4h)
-        return ip4h->get_id();
+        return (uint32_t)ip4h->get_id();
 
     // ensure we have an ipv6 frag
     if (p->ip6_extension_count == 0 || p->ip_frag_start == 0 || !ip6h)

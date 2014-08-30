@@ -33,6 +33,8 @@
 #include "detection/fpdetect.h"
 #include "codecs/ip/ip_util.h"
 #include "protocols/packet.h"
+#include "log/text_log.h"
+#include "protocols/packet_manager.h"
 
 
 namespace
@@ -50,6 +52,8 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
+    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/,
+                    const Packet* const);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     
 };
@@ -101,8 +105,9 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 #endif
 
     // three least signifigant bits are all flags
-    p->frag_offset = ntohs(ip6frag_hdr->get_off()) >> 3;
-    if (p->frag_offset || (p->decode_flags & DECODE__MF))
+    const uint16_t frag_offset =  ntohs(ip6frag_hdr->get_off()) >> 3;
+    p->frag_offset = frag_offset;
+    if (frag_offset || (p->decode_flags & DECODE__MF))
     {
         p->decode_flags |= DECODE__FRAG;
     }
@@ -110,7 +115,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     {
         codec_events::decoder_event(p, DECODE_IPV6_BAD_FRAG_PKT);
     }
-    if (!(p->frag_offset))
+    if (!(frag_offset))
     {
         // check header ordering of fragged (next) header
         if ( ip_util::IPV6ExtensionOrder(ip6frag_hdr->ip6f_nxt) <
@@ -124,7 +129,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     lyr_len = sizeof(ip::IP6Frag);
     p->ip_frag_len = (uint16_t)(raw_len - lyr_len);
 
-    if ( (p->decode_flags & DECODE__FRAG) && ((p->frag_offset > 0) ||
+    if ( (p->decode_flags & DECODE__FRAG) && ((frag_offset > 0) ||
          (ip6frag_hdr->ip6f_nxt != IPPROTO_UDP)) )
     {
         /* For non-zero offset frags, we stop decoding after the
@@ -148,25 +153,35 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
 void Ipv6FragCodec::get_protocol_ids(std::vector<uint16_t>& v)
+{ v.push_back(IPPROTO_ID_FRAGMENT); }
+
+
+void Ipv6FragCodec::log(TextLog* log, const uint8_t* raw_pkt,
+                    const Packet* const)
 {
-    v.push_back(IPPROTO_ID_FRAGMENT);
+    const ip::IP6Frag* fragh = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
+    const uint16_t offlg = ntohs(fragh->get_off());
+
+
+    TextLog_Print(log, "Frag6: Next:%s(%02X) Off:%u ID:%u",
+            PacketManager::get_proto_name(fragh->ip6f_nxt), fragh->ip6f_nxt,
+            (offlg >> 3), ntohl(fragh->get_id()));
+
+    if (offlg & ip::IP6F_MF_MASK)
+        TextLog_Puts(log, " MF");
+
+    TextLog_NewLine(log);
 }
-
-
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6FragCodec();
-}
+{ return new Ipv6FragCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_frag_api =
 {

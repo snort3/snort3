@@ -51,6 +51,7 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
+    virtual void log(TextLog* /*log*/, const uint8_t* /*raw_in*/);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);

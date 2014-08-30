@@ -88,7 +88,7 @@ using namespace std;
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/mpse_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/action_manager.h"
 #include "detection/sfrim.h"

@@ -45,6 +45,10 @@
 #include "packet_io/sfdaq.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ipvar.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
+#include "log/log.h"
+#include "protocols/packet_manager.h"
 
 
 namespace
@@ -103,6 +107,8 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_TCP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
+    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) ;
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &);
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
@@ -159,7 +165,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     /* lay TCP on top of the data cause there is enough of it! */
-    tcp::TCPHdr* tcph = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(raw_pkt));
+    const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw_pkt);
     p->tcph = tcph;
 
     /* multiply the payload offset value by 4 */
@@ -606,9 +612,45 @@ static inline void TCPMiscTests(Packet *p)
         codec_events::decoder_event(p, DECODE_TCP_PORT_ZERO);
 }
 
+/******************************************************************
+ ************************  L O G G E R   **************************
+ ******************************************************************/
+
+
+void TcpCodec::log(TextLog* log, const uint8_t* raw_pkt,
+                    const Packet* const p)
+{
+    char tcpFlags[9];
+
+    const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw_pkt);
+    TextLog_Puts(log, "TCP  ");
+
+    /* print TCP flags */
+    CreateTCPFlagString(tcph, tcpFlags);
+    TextLog_Puts(log, tcpFlags); /* We don't care about the NULL */
+
+    /* print other TCP info */
+    TextLog_Print(log, " SrcPort:%u  DstPort:%u  Seq: 0x%lX  Ack: 0x%lX  "
+            "Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
+            ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
+            (u_long) ntohl(tcph->th_ack),
+            ntohs(tcph->th_win), TCP_OFFSET(tcph) << 2);
+
+    if((tcph->th_flags & TH_URG) != 0)
+        TextLog_Print(log, "  UrgPtr: 0x%X\n", (uint16_t) ntohs(tcph->th_urp));
+
+    TextLog_NewLine(log);
+
+    /* dump the TCP options */
+    if(p->tcp_option_count > 0)
+    {
+        LogTcpOptions(log, p);
+    }
+}
+
 
 /******************************************************************
- ******************** E N C O D E R  ******************************
+ ************************* E N C O D E R  *************************
  ******************************************************************/
 
 //-------------------------------------------------------------------------
@@ -1045,14 +1087,10 @@ static inline unsigned short in_chksum_tcp6(pseudoheader6 *ph,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new TcpModule;
-}
+{ return new TcpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 /*
  * Static api functions.  there are NOT part of the TCPCodec class,

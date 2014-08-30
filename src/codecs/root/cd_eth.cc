@@ -29,8 +29,9 @@
 #include "protocols/packet.h"
 #include "protocols/eth.h"
 #include "codecs/codec_events.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "codecs/sf_protocols.h"
+#include "log/text_log.h"
 
 namespace
 {
@@ -60,8 +61,9 @@ public:
 
 
     virtual PROTO_ID get_proto_id() { return PROTO_ETH; };
-    virtual void get_protocol_ids(std::vector<uint16_t>&) {};
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
+    virtual void log(TextLog* /*log*/, const uint8_t* /*raw_pkt*/, const Packet*const );
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -80,6 +82,11 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
 {
     v.push_back(DLT_PPP_ETHER);
     v.push_back(DLT_EN10MB);
+}
+
+void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
+{
+    v.push_back(ETHERNET_802_3);
 }
 
 
@@ -142,6 +149,26 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     return false;
 }
 
+
+void EthCodec::log(TextLog* log, const uint8_t* raw_pkt, const Packet* const)
+{
+    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
+
+    /* src addr */
+    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
+        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+        eh->ether_src[4], eh->ether_src[5]);
+
+    /* dest addr */
+    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X ", eh->ether_dst[0],
+        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+        eh->ether_dst[4], eh->ether_dst[5]);
+
+    /* protocol and pkt size */
+    TextLog_Print(log, "type:0x%X", ntohs(eh->ether_type));
+
+    // FIXIT-L - J Log length in PacketManager
+}
 
 //-------------------------------------------------------------------------
 // ethernet

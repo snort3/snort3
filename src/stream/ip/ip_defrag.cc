@@ -86,7 +86,7 @@
 #include "log_text.h"
 #include "detect.h"
 #include "protocols/packet.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "event.h"
 #include "util.h"
 #include "snort_debug.h"

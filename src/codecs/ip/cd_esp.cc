@@ -27,7 +27,7 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 

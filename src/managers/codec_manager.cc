@@ -25,7 +25,7 @@
 #include <algorithm>
 #include "framework/codec.h"
 #include "managers/codec_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "log/messages.h"
 #include "parser/parser.h"
 #include "packet_io/sfdaq.h"
@@ -92,7 +92,7 @@ CodecManager::CodecApiWrapper& CodecManager::get_api_wrapper(const CodecApi* cd_
     }
 
 
-    ParseAbort("Attempting to instantiate Codec '%s',"
+    ParseAbort("Attempting to instantiate Codec '%s', "
                 "but codec has not been added!!", cd_api->base.name);
 }
 
@@ -118,7 +118,10 @@ void CodecManager::release_plugins()
     for ( CodecApiWrapper& wrap : s_codecs )
     {
         if(wrap.api->pterm)
+        {
             wrap.api->pterm();
+            wrap.init = false; // Future proofing this functin.
+        }
 
         uint8_t index = get_codec(wrap.api->base.name);
         if( index != 0)
@@ -129,21 +132,17 @@ void CodecManager::release_plugins()
     }
 
     // The default codec is NOT part of the plugin list
-    // Free this memory seperately
-    CodecApiWrapper& wrap = get_api_wrapper(default_codec);
+    if(default_codec->pterm)
+        default_codec->pterm();
 
-    if(wrap.api->pterm)
-        wrap.api->pterm();
-
-    uint8_t index = get_codec(wrap.api->base.name);
-    if( index != 0)
+    if (s_protocols[0])
     {
-        wrap.api->dtor(s_protocols[index]);
-        s_protocols[index] = nullptr;
+        default_codec->dtor(s_protocols[0]);
+        s_protocols[0] = nullptr;
     }
 
+
     s_codecs.clear();
-    s_protocols[0] = nullptr;
     s_proto_map.fill(0);
 }
 
@@ -191,8 +190,10 @@ void CodecManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig* 
 void CodecManager::instantiate()
 {
     // hard code the default codec into the zero index
-    add_plugin(default_codec);
-    instantiate(default_codec, nullptr, nullptr);
+    CodecApiWrapper tmp_wrap;
+    tmp_wrap.api = default_codec;
+    tmp_wrap.init = false;
+    instantiate(tmp_wrap, nullptr, nullptr);
     s_protocols[0] = s_protocols[get_codec(default_codec->base.name)];
 
     // and instantiate every codec which does not have a module
