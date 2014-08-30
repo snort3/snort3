@@ -97,6 +97,10 @@ public:
 
     // print codec information.  MUST be called after thread_term.
     static void dump_stats();
+    // Get the name of the given protocol
+    static const char* get_proto_name(uint16_t protocol);
+    // Get the name of the given protocol
+    static const char* get_proto_name(uint8_t protocol);
 
 private:
     //  STATISTICS!!

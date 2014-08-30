@@ -1,22 +1,24 @@
-/*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License Version 2 as
-** published by the Free Software Foundation.  You may not use, modify or
-** distribute this program under any other version of the GNU General
-** Public License.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public LicenseUpdateMPLSStats
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+/****************************************************************************
+ *
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2003-2013 Sourcefire, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 2 as
+ * published by the Free Software Foundation.  You may not use, modify or
+ * distribute this program under any other version of the GNU General
+ * Public License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ ****************************************************************************/
 // cd_mpls.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
@@ -33,6 +35,7 @@
 #include "codecs/sf_protocols.h"
 #include "main/snort_config.h"
 #include "main/snort.h"
+#include "log/text_log.h"
 
 namespace
 {
@@ -115,7 +118,8 @@ public:
     virtual PROTO_ID get_proto_id() { return PROTO_MPLS; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);    
+        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
 
 };
 
@@ -155,7 +159,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     int iRet = 0;
 
     UpdateMPLSStats(&sfBase, raw_len, Active_PacketWasDropped());
-    tmpMplsHdr = (const uint32_t *) raw_pkt;
+    tmpMplsHdr = reinterpret_cast<const uint32_t *>(raw_pkt);
 
     while (!bos)
     {
@@ -310,29 +314,28 @@ static int checkMplsHdr(
     return iRet;
 }
 
+void MplsCodec::log(TextLog* log, const uint8_t* /*raw_pkt*/,
+        const Packet* const p)
+{
+    TextLog_Print(log,"MPLS  label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
+        p->mplsHdr.label, p->mplsHdr.exp, p->mplsHdr.bos, p->mplsHdr.ttl);
+}
+
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new MplsModule;
-}
+{ return new MplsModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new MplsCodec();
-}
+{ return new MplsCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi mpls_api =
 {

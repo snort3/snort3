@@ -25,7 +25,7 @@
 
 #include "framework/codec.h"
 #include "managers/codec_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "main/snort.h"
 #include "main/thread.h"
 #include "log/messages.h"
@@ -509,3 +509,9 @@ void PacketManager::accumulate()
     stats_mutex.unlock();
 }
 
+
+const char* PacketManager::get_proto_name(uint16_t protocol)
+{ return CodecManager::s_protocols[CodecManager::s_proto_map[protocol]]->get_name(); }
+
+const char* PacketManager::get_proto_name(uint8_t protocol)
+{ return CodecManager::s_protocols[CodecManager::s_proto_map[protocol]]->get_name(); }

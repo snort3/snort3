@@ -23,8 +23,15 @@
 #define LOG_H
 
 #include "protocols/packet.h"
+#include "main/snort_types.h"
 
-void CreateTCPFlagString(Packet *, char *);
+namespace tcp
+{
+struct TCPHdr;
+} // namespace tcp
+
+
+SO_PUBLIC void CreateTCPFlagString(const tcp::TCPHdr* const, char *);
 
 FILE *OpenAlertFile(const char *);
 int RollAlertFile(const char *);

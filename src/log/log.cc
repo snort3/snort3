@@ -45,17 +45,17 @@ using namespace std;
 /* Input is packet and an nine-byte (including NULL) character array.  Results
  * are put into the character array.
  */
-void CreateTCPFlagString(Packet * p, char *flagBuffer)
+void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char *flagBuffer)
 {
     /* parse TCP flags */
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_RES1) ? '1' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_RES2) ? '2' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_URG)  ? 'U' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_ACK)  ? 'A' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_PUSH) ? 'P' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_RST)  ? 'R' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_SYN)  ? 'S' : '*');
-    *flagBuffer++ = (char) ((p->tcph->th_flags & TH_FIN)  ? 'F' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_RES1) ? '1' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_RES2) ? '2' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_URG)  ? 'U' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_ACK)  ? 'A' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_PUSH) ? 'P' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_RST)  ? 'R' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_SYN)  ? 'S' : '*');
+    *flagBuffer++ = (char) ((tcph->th_flags & TH_FIN)  ? 'F' : '*');
     *flagBuffer = '\0';
 
 }

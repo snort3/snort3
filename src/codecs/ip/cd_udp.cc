@@ -39,6 +39,7 @@
 #include "protocols/ipv4.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/ip/checksum.h"
+#include "log/text_log.h"
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
@@ -131,6 +132,7 @@ public:
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
     
 };
 
@@ -355,6 +357,15 @@ static inline void PopUdp (Packet* p)
     // required for detect.c to short-circuit preprocessing
     if ( !p->dsize )
         p->dsize = p->ip_api.pay_len();
+}
+
+void UdpCodec::log(TextLog* log, const uint8_t* raw_pkt, const Packet* const)
+{
+    const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
+
+    TextLog_Print(log, "UDP  SourcePort:%d DestPort:%d Len:%d\n",
+            ntohs(udph->uh_sport), ntohs(udph->uh_dport),
+            ntohs(udph->uh_len) - udp::UDP_HEADER_LEN);
 }
 
 /******************************************************************
