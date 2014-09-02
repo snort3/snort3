@@ -75,33 +75,33 @@ TextLog* TextLog_Init (
 );
 void TextLog_Term (TextLog*);
 
-bool TextLog_Putc(TextLog*, char);
-bool TextLog_Quote(TextLog*, const char*);
-bool TextLog_Write(TextLog*, const char*, int len);
-bool TextLog_Print(TextLog*, const char* format, ...);
-bool TextLog_Flush(TextLog*);
+bool TextLog_Putc(TextLog* const, char);
+bool TextLog_Quote(TextLog* const, const char*);
+bool TextLog_Write(TextLog* const, const char*, int len);
+bool TextLog_Print(TextLog* const, const char* format, ...);
+bool TextLog_Flush(TextLog* const);
 
 /*-------------------------------------------------------------------
   * helper functions
   *-------------------------------------------------------------------
   */
- static inline int TextLog_Tell (TextLog* txt)
+ static inline int TextLog_Tell (TextLog* const txt)
  {
      return txt->pos;
  }
 
- static inline int TextLog_Avail (TextLog* txt)
+ static inline int TextLog_Avail (TextLog* const txt)
  {
      return txt->maxBuf - txt->pos - 1;
  }
 
- static inline void TextLog_Reset (TextLog* txt)
+ static inline void TextLog_Reset (TextLog* const txt)
  {
      txt->pos = 0;
      txt->buf[txt->pos] = '\0';
  }
 
-static inline bool TextLog_NewLine (TextLog* txt)
+static inline bool TextLog_NewLine (TextLog* const txt)
 {
     return TextLog_Putc(txt, '\n');
 }

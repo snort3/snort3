@@ -1889,11 +1889,6 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
  * ARP stuff cloned from log.c
  *--------------------------------------------------------------------
  */
-void LogArpHeader(TextLog*, Packet*)
-{
-// XXX-IPv6 "NOT YET IMPLEMENTED - printing ARP header"
-}
-
 
 #if 0
 // these must be converted to use TextLog 

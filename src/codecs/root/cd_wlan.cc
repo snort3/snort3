@@ -99,7 +99,7 @@ void WlanCodec::get_data_link_type(std::vector<int>&v)
 }
 
 bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+        Packet*, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint32_t cap_len = raw_len;
     // reinterpret the raw data into this codec's data format

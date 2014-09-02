@@ -54,7 +54,8 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 };
 
@@ -130,12 +131,13 @@ bool LlcCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     return true;
 }
 
-void LlcCodec::log(TextLog* text_log, const uint8_t* raw_pkt,
-    const Packet* const)
+void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
 {
     const EthLlc *ehllc = reinterpret_cast<const EthLlc *>(raw_pkt);
 
-    TextLog_Print(text_log, "LLC  DSAP:0x%X SSAP:0x%X CTRL:0x%X",
+    TextLog_Putc(text_log, '\t');
+    TextLog_Print(text_log, "DSAP:0x%X SSAP:0x%X CTRL:0x%X",
         ehllc->dsap, ehllc->ssap, ehllc->ctrl);
 
     // Assuming that if these three conditions are met, this is SNAP.
@@ -147,9 +149,9 @@ void LlcCodec::log(TextLog* text_log, const uint8_t* raw_pkt,
         const EthLlcOther *other = reinterpret_cast<const EthLlcOther *>(raw_pkt + sizeof(EthLlc));
         const uint16_t proto = ntohs(other->proto_id);
 
-        TextLog_Print(text_log, " ORG:0x%02X%02X%02X PROTO:0x%s(%04X)",
+        TextLog_Print(text_log, " ORG:0x%02X%02X%02X PROTO:0x%04X",
             other->org_code[0], other->org_code[1], other->org_code[2],
-            PacketManager::get_proto_name(proto), proto);
+            proto);
     }
 }
 

@@ -33,6 +33,7 @@
 
 
 struct _daq_pkthdr;
+struct TextLog;
 
 
 /*
@@ -102,6 +103,8 @@ public:
     static const char* get_proto_name(uint16_t protocol);
     // Get the name of the given protocol
     static const char* get_proto_name(uint8_t protocol);
+    // print this packets information, layer by layer
+    static void log_protocols(TextLog* const, const Packet* const);
 
 private:
     //  STATISTICS!!

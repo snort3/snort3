@@ -63,7 +63,8 @@ public:
     virtual PROTO_ID get_proto_id() { return PROTO_ETH; };
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
-    virtual void log(TextLog* /*log*/, const uint8_t* /*raw_pkt*/, const Packet*const );
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet*const );
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -113,29 +114,13 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* do a little validation */
     if(raw_len < eth::ETH_HEADER_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "WARNING: Truncated eth header (%d bytes).\n", raw_len););
-
         codec_events::decoder_event(p, DECODE_ETH_HDR_TRUNC);
-
         return false;
     }
 
     /* lay the ethernet structure over the packet data */
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
 
-    DEBUG_WRAP(
-            DebugMessage(DEBUG_DECODE, "%X:%X:%X:%X:%X:%X -> %X:%X:%X:%X:%X:%X\n",
-                eh->ether_src[0],
-                eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
-                eh->ether_src[4], eh->ether_src[5], eh->ether_dst[0],
-                eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
-                eh->ether_dst[4], eh->ether_dst[5]);
-            );
-    DEBUG_WRAP(
-            DebugMessage(DEBUG_DECODE, "type:0x%X len:0x%X\n",
-                ntohs(eh->ether_type), p->pkth->pktlen)
-            );
 
     next_prot_id = ntohs(eh->ether_type);
     if (next_prot_id > eth::MIN_ETHERTYPE )
@@ -149,26 +134,27 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 }
 
 
-void EthCodec::log(TextLog* log, const uint8_t* raw_pkt, const Packet* const)
+void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
 {
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
 
     /* src addr */
-    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
+    TextLog_Print(text_log, "\t%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
         eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
         eh->ether_src[4], eh->ether_src[5]);
 
     /* dest addr */
-    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
+    TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
         eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
         eh->ether_dst[4], eh->ether_dst[5]);
 
     const uint16_t prot = ntohs(eh->ether_type);
 
     if (prot <= eth::MIN_ETHERTYPE)
-        TextLog_Print(log, " len:0x%04X", prot);
+        TextLog_Print(text_log, "  len:0x%04X", prot);
     else
-        TextLog_Print(log, "type:0x%04X", prot);
+        TextLog_Print(text_log, "  type:0x%04X", prot);
 }
 
 //-------------------------------------------------------------------------

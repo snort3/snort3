@@ -60,7 +60,5 @@ void LogTCPHeader(TextLog*, Packet*);
 SO_PUBLIC void LogTcpOptions(TextLog*,  const Packet* const);
 void LogUDPHeader(TextLog*, Packet*);
 void LogICMPHeader(TextLog*, Packet*);
-void LogArpHeader(TextLog*, Packet*);
 
 #endif
-

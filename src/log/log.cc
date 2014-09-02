@@ -160,13 +160,17 @@ void snort_print(Packet* p)
     {
         LogIPPkt(text_log, p->ip_api.proto(), p);
     }
+#if 0
+    // ARP not impelemted
     else if (p->proto_bits & PROTO_BIT__ARP)
     {
+
         log_mutex.lock();
         LogArpHeader(text_log, p);
         TextLog_Flush(text_log);
         log_mutex.unlock();
     }
+#endif
 #if 0
     else if (p->eplh != NULL)
     {

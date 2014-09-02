@@ -52,7 +52,7 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/,
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     
@@ -152,21 +152,18 @@ void Ipv6FragCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(IPPROTO_ID_FRAGMENT); }
 
 
-void Ipv6FragCodec::log(TextLog* log, const uint8_t* raw_pkt,
+void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     const Packet* const)
 {
     const ip::IP6Frag* fragh = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
     const uint16_t offlg = ntohs(fragh->get_off());
 
 
-    TextLog_Print(log, "Frag6: Next:%s(%02X) Off:%u ID:%u",
-            PacketManager::get_proto_name(fragh->ip6f_nxt), fragh->ip6f_nxt,
-            (offlg >> 3), ntohl(fragh->get_id()));
+    TextLog_Print(text_log, "\tNext:0x%02X Off:%u ID:%u",
+            fragh->ip6f_nxt, (offlg >> 3), ntohl(fragh->get_id()));
 
     if (offlg & ip::IP6F_MF_MASK)
-        TextLog_Puts(log, " MF");
-
-    TextLog_NewLine(log);
+        TextLog_Puts(text_log, " MF");
 }
 
 //-------------------------------------------------------------------------

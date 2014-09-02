@@ -119,8 +119,8 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
-
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
 };
 
 
@@ -314,10 +314,10 @@ static int checkMplsHdr(
     return iRet;
 }
 
-void MplsCodec::log(TextLog* log, const uint8_t* /*raw_pkt*/,
+void MplsCodec::log(TextLog* const text_log, const uint8_t* /*raw_pkt*/,
         const Packet* const p)
 {
-    TextLog_Print(log,"MPLS  label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
+    TextLog_Print(text_log,"\tlabel:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
         p->mplsHdr.label, p->mplsHdr.exp, p->mplsHdr.bos, p->mplsHdr.ttl);
 }
 

@@ -122,7 +122,7 @@ public:
     /*  Codec Initialization */
 
     // Get the codec's name
-    inline const char* get_name(){return name; };
+    inline const char* get_name() const {return name; };
     // used for backwards compatability.
     virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     // Registers this Codec's data link type (as defined by libpcap)
@@ -141,7 +141,7 @@ public:
      *          const uint8_t *raw_pkt = the same data seen during decode
      *          Packet *p = pointer to the packet struct.
      */
-    virtual void log(TextLog* /*log*/, const uint8_t* /*raw_pkt*/,
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const) {}
 
 

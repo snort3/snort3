@@ -68,7 +68,8 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
 };
 
 
@@ -116,24 +117,25 @@ bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     return true;
 }
 
-void VlanCodec::log(TextLog* text_log, const uint8_t* raw_pkt, const Packet* const)
+void VlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
 {
     const vlan::VlanTagHdr *vh = reinterpret_cast<const vlan::VlanTagHdr *>(raw_pkt);
     const uint16_t proto = ntohs(vh->vth_proto);
     const uint16_t vid = vlan::vth_vlan(vh);
-    uint16_t proto_name;
+
+
+    TextLog_Putc(text_log, '\t');
+    TextLog_Print(text_log, "Priority:%d(0x%X) CFI:%d "
+        "Vlan_ID:%d(0x%04X)",
+        vlan::vth_priority(vh), vlan::vth_priority(vh),
+        vlan::vth_cfi(vh), vid, vid);
+
 
     if (proto <= ETHERNET_MAX_LEN_ENCAP)
-        proto_name = ETHERNET_LLC;
+        TextLog_Print(text_log, "  Len:0x%04X", proto);
     else
-        proto_name = proto;
-
-
-    TextLog_Print(text_log, "VLAN  Priority:%d(0x%X) CFI:%d "
-        "Vlan_ID:%d(0x%04X) Next:%s(%04X)",
-        vlan::vth_priority(vh), vlan::vth_cfi(vh),
-        vid, vid, PacketManager::get_proto_name(proto_name),
-        proto);
+        TextLog_Print(text_log, "  Next:0x%04X", proto);
 }
 
 

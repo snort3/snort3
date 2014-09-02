@@ -108,7 +108,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/,
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -608,7 +608,7 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
             byte_skip = 1;
             break;
         default:
-            /* handle all the dynamic features */
+            /* FIXIT-L - J ip option validation should be updated.  3 of these fields are useless */
             code = OptLenValidate(option_ptr, end_ptr, len_ptr, -1,
                     reinterpret_cast<Options *>(&p->ip_options[opt_count]), &byte_skip);
         }
@@ -702,14 +702,16 @@ struct ip4_addr
     };
 };
 
-void Ipv4Codec::log(TextLog* log, const uint8_t* raw_pkt, const Packet* const p)
+void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+    const Packet* const p)
 {
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
+    TextLog_Putc(text_log, '\t');
 
     // FIXIT-H  -->  This does NOT obfuscate correctly
     if (ScObfuscate())
     {
-        TextLog_Print(log, "IPv4  xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
+        TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
     }
     else
     {
@@ -717,48 +719,51 @@ void Ipv4Codec::log(TextLog* log, const uint8_t* raw_pkt, const Packet* const p)
         src.addr32 = ip4h->get_src();
         dst.addr32 = ip4h->get_dst();
 
-        TextLog_Print(log, "%d.%d.%d.%d -> %d.%d.%d.%d",
+        TextLog_Print(text_log, "%d.%d.%d.%d -> %d.%d.%d.%d",
             (int)src.addr8[0], (int)src.addr8[1],
             (int)src.addr8[2], (int)src.addr8[3],
             (int)dst.addr8[0], (int)dst.addr8[1],
             (int)dst.addr8[2], (int)dst.addr8[3]);
     }
 
-    TextLog_NewLine(log);
+    TextLog_NewLine(text_log);
+    TextLog_Putc(text_log, '\t');
+
 
     const uint16_t hlen = ip4h->get_hlen() << 2;
     const uint16_t len = ntohs(ip4h->get_len());
     const uint16_t frag_off = ntohs(ip4h->get_off());
 
-    TextLog_Print(log, "\tNext:%s(%02X) TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            PacketManager::get_proto_name(ip4h->get_proto()),
+    TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
             ip4h->get_proto(), ip4h->get_ttl(), ip4h->get_tos(),
             ip4h->get_id(), hlen, len);
 
 
     /* print the reserved bit if it's set */
     if(frag_off & 0x8000)
-        TextLog_Puts(log, " RB");
+        TextLog_Puts(text_log, " RB");
 
     /* printf more frags/don't frag bits */
     if(frag_off & 0x4000)
-        TextLog_Puts(log, " DF");
+        TextLog_Puts(text_log, " DF");
 
     if(frag_off & 0x2000)
-        TextLog_Puts(log, " MF");
-
-    TextLog_NewLine(log);
+        TextLog_Puts(text_log, " MF");
 
     /* print IP options */
     if(p->ip_option_count > 0)
     {
-        LogIpOptions(log, p);
+        TextLog_Putc(text_log, '\t');
+        TextLog_NewLine(text_log);
+        LogIpOptions(text_log, p);
     }
 
 
     if( p->decode_flags & DECODE__FRAG)
     {
-        TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
+        TextLog_NewLine(text_log);
+        TextLog_Putc(text_log, '\t');
+        TextLog_Print(text_log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
                 (frag_off & 0x1FFF), (len - hlen));
     }
 }

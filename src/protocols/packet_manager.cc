@@ -32,6 +32,7 @@
 
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
+#include "protocols/eth.h"
 #include "time/profiler.h"
 #include "parser/parser.h"
 
@@ -39,6 +40,7 @@
 #include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
 #include "utils/stats.h"
+#include "log/text_log.h"
 
 
 #ifdef PERF_PROFILING
@@ -141,10 +143,6 @@ void PacketManager::decode(
     uint16_t lyr_len = 0;
     uint32_t len;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n");
-            DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
-                (unsigned long)pkthdr->caplen, (unsigned long)pkthdr->pktlen);
-            );
 
     MODULE_PROFILE_START(decodePerfStats);
 
@@ -501,9 +499,10 @@ void PacketManager::accumulate()
 {
     static std::mutex stats_mutex;
 
-    stats_mutex.lock();
+    std::lock_guard<std::mutex> lock(stats_mutex);
     sum_stats(&g_stats[0], &s_stats[0], s_stats.size());
-    stats_mutex.unlock();
+
+    // mutex is automatically unlocked
 }
 
 
@@ -512,3 +511,56 @@ const char* PacketManager::get_proto_name(uint16_t protocol)
 
 const char* PacketManager::get_proto_name(uint8_t protocol)
 { return CodecManager::s_protocols[CodecManager::s_proto_map[protocol]]->get_name(); }
+
+
+void PacketManager::log_protocols(TextLog* const text_log,
+                                        const Packet* const p)
+{
+    uint8_t num_layers = p->num_layers;
+    const Layer* const lyr = p->layers;
+//    int pos = TextLog_Tell(text_log);
+
+    if (num_layers != 0)
+    {
+        // Grinder is not in the layer array
+        Codec* const cd = CodecManager::s_protocols[CodecManager::grinder];
+        TextLog_Print(text_log, "DLT %s", cd->get_name());
+        TextLog_NewLine(text_log);
+
+        const int dlt_pos = TextLog_Tell(text_log);
+        cd->log(text_log, lyr[0].start, p);
+
+        if (dlt_pos != TextLog_Tell(text_log))
+            TextLog_NewLine(text_log);
+
+
+        for (int i = 1; i < num_layers; i++)
+        {
+            const uint16_t protocol = lyr[i].prot_id;
+            const uint8_t codec_offset =  CodecManager::s_proto_map[protocol];
+            Codec* const cd = CodecManager::s_protocols[codec_offset];
+
+
+            TextLog_Print(text_log, "%s", cd->get_name(), protocol);
+
+            // don't print the type if this is a custom type.  Look
+            // in protocol_ids.h for more details.
+            if (protocol <= 0xFF || protocol >= eth::MIN_ETHERTYPE)
+                TextLog_Print(text_log, "(0x%04x)", protocol);
+
+
+            TextLog_NewLine(text_log);
+            const int pos = TextLog_Tell(text_log);
+
+            cd->log(text_log, lyr[i].start, p);
+
+            // Don't print a newline if nothing has been printed or
+            // this is the last line
+            if (pos != TextLog_Tell(text_log) && ((i + 1) < num_layers))
+                TextLog_NewLine(text_log);
+
+            TextLog_Flush(text_log);
+        }
+    }
+
+}

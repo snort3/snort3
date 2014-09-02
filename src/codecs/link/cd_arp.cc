@@ -31,6 +31,7 @@
 #include "codecs/sf_protocols.h"
 #include "protocols/arp.h"
 #include "protocols/packet.h"
+#include "log/text_log.h"
 
 namespace
 {
@@ -65,7 +66,6 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &);
-    
 };
 
 
@@ -109,8 +109,6 @@ bool ArpCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
     
     return true;
 }
-
-
 
 //-------------------------------------------------------------------------
 // api

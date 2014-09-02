@@ -107,8 +107,8 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_TCP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/,
-                    const Packet* const) ;
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &);
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
@@ -618,34 +618,35 @@ static inline void TCPMiscTests(Packet *p)
  ******************************************************************/
 
 
-void TcpCodec::log(TextLog* log, const uint8_t* raw_pkt,
+void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     const Packet* const p)
 {
     char tcpFlags[9];
 
     const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw_pkt);
-    TextLog_Puts(log, "TCP  ");
+    TextLog_Putc(text_log, '\t');
 
     /* print TCP flags */
     CreateTCPFlagString(tcph, tcpFlags);
-    TextLog_Puts(log, tcpFlags); /* We don't care about the NULL */
+    TextLog_Puts(text_log, tcpFlags); /* We don't care about the NULL */
 
     /* print other TCP info */
-    TextLog_Print(log, " SrcPort:%u  DstPort:%u  Seq: 0x%lX  Ack: 0x%lX  "
+    TextLog_Print(text_log, "  SrcPort:%u  DstPort:%u  Seq: 0x%lX  Ack: 0x%lX  "
             "Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
             ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
             (u_long) ntohl(tcph->th_ack),
             ntohs(tcph->th_win), TCP_OFFSET(tcph) << 2);
 
     if((tcph->th_flags & TH_URG) != 0)
-        TextLog_Print(log, "  UrgPtr: 0x%X\n", (uint16_t) ntohs(tcph->th_urp));
+        TextLog_Print(text_log, "UrgPtr: 0x%X", (uint16_t) ntohs(tcph->th_urp));
 
-    TextLog_NewLine(log);
 
     /* dump the TCP options */
     if(p->tcp_option_count > 0)
     {
-        LogTcpOptions(log, p);
+        TextLog_NewLine(text_log);
+        TextLog_Putc(text_log, '\t');
+        LogTcpOptions(text_log, p);
     }
 }
 

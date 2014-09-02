@@ -72,7 +72,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-     void log(TextLog* /*log*/, const uint8_t* /*raw_pkt*/,
+     void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
 
 
@@ -243,12 +243,13 @@ bool GreCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 }
 
 
-void GreCodec::log(TextLog* log, const uint8_t* raw_pkt,
+void GreCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     const Packet* const)
 {
     const gre::GREHdr *greh = reinterpret_cast<const gre::GREHdr *>(raw_pkt);
 
-    TextLog_Print(log, "GRE  version:%u flags:0x%02X ether-type:%s(0x%04X)\n",
+    TextLog_Putc(text_log, '\t');
+    TextLog_Print(text_log, "version:%u flags:0x%02X ether-type:%s(0x%04X)",
             greh->get_version(), greh->flags,
             PacketManager::get_proto_name(greh->get_proto()),
             greh->get_proto());
