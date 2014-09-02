@@ -26,13 +26,17 @@
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
 #include "framework/codec.h"
+#include "main/snort_types.h"
 
 
 namespace ip_util
 {
 
-bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
-void CheckIPv6ExtensionOrder(Packet *p);
+const int IPV6_ORDER_MAX = 7;
+
+SO_PUBLIC bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
+SO_PUBLIC void CheckIPv6ExtensionOrder(Packet* p, uint8_t proto, uint8_t next);
+
 
 static inline int IPV6ExtensionOrder(uint8_t type)
 {
@@ -42,9 +46,9 @@ static inline int IPV6ExtensionOrder(uint8_t type)
         case IPPROTO_ID_DSTOPTS:   return 2;
         case IPPROTO_ID_ROUTING:   return 3;
         case IPPROTO_ID_FRAGMENT:  return 4;
-        case IPPROTO_ID_AH:        return 5;
+        case IPPROTO_ID_AUTH:      return 5;
         case IPPROTO_ID_ESP:       return 6;
-        default:                   return 7;
+        default:                   return IPV6_ORDER_MAX;
     }
 }
 

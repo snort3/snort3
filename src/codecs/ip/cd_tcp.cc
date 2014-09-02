@@ -244,6 +244,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
                 return false;
             }
 
+
             p->error_flags |= PKT_ERR_CKSUM_TCP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad TCP checksum\n",
                                     "0x%x versus 0x%x\n", csum,
@@ -774,7 +775,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
 bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
-    tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(lyr->start);
+    tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(lyr->start));
 
     *len += h->hdr_len() + p->dsize;
 

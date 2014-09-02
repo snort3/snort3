@@ -219,10 +219,9 @@ struct Packet
     uint16_t dsize;             /* packet payload size */
 
     ip::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
-    ip::IP6Option ip6_extensions[IP6_EXTMAX];  /* IPv6 Extension References */
     Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
 
-
+    uint8_t curr_ip6_extension_order;
 
     const uint8_t *ip_frag_start;
 
@@ -274,6 +273,7 @@ struct Packet
 #define DECODE__TRUST_ON_FAIL 0x08  /* if decode fails, set the PKT_TRUST flag */
 #define DECODE__UNSURE_ENCAP  0x10  /* packet may have incorrect encapsulation layer. */
                                     /* don't alert if "next layer" is invalid. */
+#define DECODE__ROUTING_SEEN  0X20
 #define DECODE__FREE    0xE0
 
 #define IsIP(p) (p->ip_api.is_valid())

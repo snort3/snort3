@@ -54,6 +54,7 @@ extern const BaseApi* cd_icmp6;
 extern const BaseApi* cd_icmp6_ip;
 extern const BaseApi* cd_ipv6;
 extern const BaseApi* cd_igmp;
+extern const BaseApi* cd_llc;
 extern const BaseApi* cd_mobility;
 extern const BaseApi* cd_mpls;
 extern const BaseApi* cd_no_next;
@@ -105,6 +106,7 @@ const BaseApi* codecs[] =
     cd_icmp6_ip,
     cd_ipv6,
     cd_igmp,
+    cd_llc,
     cd_mobility,
     cd_mpls,
     cd_no_next,

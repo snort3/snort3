@@ -170,10 +170,10 @@ uint8_t get_outer_ip_next_pro(const Packet* const p)
         {
             case ETHERTYPE_IPV4:
             case IPPROTO_ID_IPIP:
-                return reinterpret_cast<IP4Hdr*>(layers[i].start)->get_proto();
+                return reinterpret_cast<const IP4Hdr*>(layers[i].start)->get_proto();
             case ETHERTYPE_IPV6:
             case IPPROTO_ID_IPV6:
-                return reinterpret_cast<ip::IP6Hdr*>(layers[i].start)->get_next();
+                return reinterpret_cast<const ip::IP6Hdr*>(layers[i].start)->get_next();
             default:
                 break;
         }

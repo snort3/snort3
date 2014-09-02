@@ -89,11 +89,12 @@ static inline void push_layer(Packet *p,
         Layer& lyr = p->layers[p->num_layers++];
         lyr.proto = cd->get_proto_id();
         lyr.prot_id = prot_id;
-        lyr.start = (uint8_t*)hdr_start;
+        lyr.start = hdr_start;
         lyr.length = (uint16_t)len;
     }
     else
     {
+        //FIXIT-M   Alert when max layers maxed out.
         LogMessage("(packet_manager) WARNING: decoder has too many layers;"
             " next proto is something.\n");
     }
@@ -216,6 +217,7 @@ void PacketManager::decode(
                 p->packet_flags |= PKT_TRUST;
         }
     }
+    s_stats[mapped_prot + stat_offset]++;
 
 
     if (ScMaxEncapsulations() != -1 &&
@@ -223,11 +225,6 @@ void PacketManager::decode(
     {
         codec_events::decoder_event(p, DECODE_IP_MULTIPLE_ENCAPSULATION);
     }
-
-    if (p->ip6_extension_count > 0)
-        ip_util::CheckIPv6ExtensionOrder(p);
-
-    s_stats[mapped_prot + stat_offset]++;
 
     /*
      * NOTE:  NEVER RETURN BEFORE SETTING THESE TWO VARIABLES!!
@@ -496,8 +493,8 @@ void PacketManager::dump_stats()
     for(int i = 0; CodecManager::s_protocols[i] != 0; i++)
         pkt_names.push_back(CodecManager::s_protocols[i]->get_name());
 
-    show_percent_stats((PegCount*) &g_stats, &pkt_names[0], (unsigned int) pkt_names.size(),
-        "codec");
+    show_percent_stats((PegCount*) &g_stats, &pkt_names[0],
+        (unsigned int) pkt_names.size(), "codec");
 }
 
 void PacketManager::accumulate()

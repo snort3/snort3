@@ -142,7 +142,7 @@ uint32_t IpApi::id(const Packet* const p) const
         return 0;
 
     const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(
-            p->ip6_extensions[p->ip6_frag_index].data);
+            p->layers[p->ip6_frag_index].start);
 
     return frag_hdr->get_id();
 }
@@ -157,7 +157,7 @@ uint16_t IpApi::off(const Packet* const p) const
         return 0;
 
     const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(
-            p->ip6_extensions[p->ip6_frag_index].data);
+            p->layers[p->ip6_frag_index].start);
 
     return frag_hdr->get_off();
 }

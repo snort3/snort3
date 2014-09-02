@@ -138,15 +138,15 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             );
 
     next_prot_id = ntohs(eh->ether_type);
+
     if (next_prot_id > eth::MIN_ETHERTYPE )
-    {
         p->proto_bits |= PROTO_BIT__ETH;
-        lyr_len = eth::ETH_HEADER_LEN;
-        return true;
-    }
+    else
+        next_prot_id = ETHERNET_LLC;
 
 
-    return false;
+    lyr_len = eth::ETH_HEADER_LEN;
+    return true;
 }
 
 
@@ -160,14 +160,16 @@ void EthCodec::log(TextLog* log, const uint8_t* raw_pkt, const Packet* const)
         eh->ether_src[4], eh->ether_src[5]);
 
     /* dest addr */
-    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X ", eh->ether_dst[0],
+    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
         eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
         eh->ether_dst[4], eh->ether_dst[5]);
 
-    /* protocol and pkt size */
-    TextLog_Print(log, "type:0x%X", ntohs(eh->ether_type));
+    const uint16_t prot = ntohs(eh->ether_type);
 
-    // FIXIT-L - J Log length in PacketManager
+    if (prot <= eth::MIN_ETHERTYPE)
+        TextLog_Print(log, " len:0x%04X", prot);
+    else
+        TextLog_Print(log, "type:0x%04X", prot);
 }
 
 //-------------------------------------------------------------------------

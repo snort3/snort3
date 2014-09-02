@@ -68,7 +68,6 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     const ip::IP6Frag* ip6frag_hdr = reinterpret_cast<const ip::IP6Frag*>(raw_pkt);
 
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_FRAGMENT);
-    ip_util::CheckIPv6ExtensionOrder(p);
 
     if(raw_len < ip::MIN_EXT_LEN )
     {
@@ -90,7 +89,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     /* If this is an IP Fragment, set some data... */
-    p->ip6_frag_index = p->ip6_extension_count;
+    p->ip6_frag_index = p->num_layers;
     p->ip_frag_start = raw_pkt + sizeof(ip::IP6Frag);
 
     p->decode_flags &= ~DECODE__DF;
@@ -123,11 +122,13 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
             codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
     }
 
-    // check header ordering up thru frag header
-    ip_util::CheckIPv6ExtensionOrder(p);
 
     lyr_len = sizeof(ip::IP6Frag);
+    next_prot_id = ip6frag_hdr->ip6f_nxt;
     p->ip_frag_len = (uint16_t)(raw_len - lyr_len);
+
+    // check header ordering up thru frag header
+    ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_FRAGMENT, next_prot_id);
 
     if ( (p->decode_flags & DECODE__FRAG) && ((frag_offset > 0) ||
          (ip6frag_hdr->ip6f_nxt != IPPROTO_UDP)) )
@@ -141,12 +142,7 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_FRAGMENT;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
-
-    next_prot_id = ip6frag_hdr->ip6f_nxt;
     return true;
 }
 
