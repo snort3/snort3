@@ -184,7 +184,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         uint16_t ip_len = ntohs(p->ip_api.len());
         /* subtract the distance from udp header to 1st ip6 extension */
         /* This gives the length of the UDP "payload", when fragmented */
-        uhlen = ip_len - ((u_char *)udph - (u_char *)p->ip6_extensions[0].data);
+        uhlen = ip_len - ((u_char *)udph - (u_char *)p->ip_api.ip_data());
     }
     else
     {

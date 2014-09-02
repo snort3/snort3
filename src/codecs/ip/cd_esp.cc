@@ -30,6 +30,7 @@
 #include "protocols/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/ip/ip_util.h"
 
 namespace
 {
@@ -152,6 +153,12 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     esp_payload = raw_pkt + ESP_HEADER_LEN;
     pad_length = *(esp_payload + guessed_len);
     next_prot_id = *(esp_payload + guessed_len + 1);
+
+
+    if (p->ip_api.is_ip6())
+        ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_ESP, next_prot_id);
+
+
 
     // TODO:  Leftover from Snort. Do we really want thsi?
     const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);

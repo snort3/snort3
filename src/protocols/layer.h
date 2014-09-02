@@ -31,7 +31,7 @@ struct Layer {
     uint16_t prot_id;
     PROTO_ID proto;
     uint16_t length;
-    uint8_t* start;
+    const uint8_t* start;
 };
 
 

@@ -153,7 +153,7 @@ static int Norm_Eth (Packet * p, uint8_t layer, int changes)
 static int Norm_IP4 (
     NormalizerConfig* c, Packet * p, uint8_t layer, int changes)
 {
-    IP4Hdr* h = (IP4Hdr*)(p->layers[layer].start);
+    IP4Hdr* h = (IP4Hdr*)const_cast<uint8_t*>(p->layers[layer].start);
     uint16_t fragbits = ntohs(h->ip_off);
     uint16_t origbits = fragbits;
 
@@ -223,7 +223,7 @@ static int Norm_IP4 (
     }
     if ( p->layers[layer].length > ip::IP4_HEADER_LEN )
     {
-        uint8_t* opts = p->layers[layer].start + ip::IP4_HEADER_LEN;
+        uint8_t* opts = const_cast<uint8_t*>(p->layers[layer].start) + ip::IP4_HEADER_LEN;
         uint8_t len = p->layers[layer].length - ip::IP4_HEADER_LEN;
         // expect len > 0 because IHL yields a multiple of 4
         memset(opts, IPOPT_NOP, len);
@@ -309,7 +309,7 @@ typedef struct
 static int Norm_IP6_Opts (
     NormalizerConfig*, Packet * p, uint8_t layer, int changes)
 {
-    uint8_t* b = p->layers[layer].start;
+    uint8_t* b = const_cast<uint8_t*>(p->layers[layer].start);
     ExtOpt* x = (ExtOpt*)b;
 
     // whatever was here, turn it into one PADN option
@@ -499,7 +499,7 @@ static int Norm_TCP (
     uint8_t tcp_options_len = p->tcph->options_len();
     if ( tcp_options_len > 0 )
     {
-        uint8_t* opts = p->layers[layer].start + tcp::TCP_HEADER_LEN;
+        uint8_t* opts = const_cast<uint8_t*>(p->layers[layer].start) + tcp::TCP_HEADER_LEN;
 
         if ( Norm_IsEnabled(c, NORM_TCP_OPT) )
         {

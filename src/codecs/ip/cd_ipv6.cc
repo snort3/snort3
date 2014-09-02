@@ -254,6 +254,8 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     IPV6CheckIsatap(ip6h, p);
 
     p->ip_api.set(ip6h);
+    p->curr_ip6_extension_order = 0;
+    p->decode_flags &= ~DECODE__ROUTING_SEEN;
 
     IPV6MiscTests(p);
     CheckIPV6Multicast(ip6h, p);
@@ -746,7 +748,7 @@ void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
         int i = lyr - c->layers;
         if ( i + 1 == p->num_layers )
         {
-            uint8_t* b = (uint8_t*)p->ip6_extensions[p->ip6_frag_index].data;
+            const uint8_t* b = (uint8_t*)p->layers[p->ip6_frag_index].start;
             if ( b ) lyr->length = b - p->layers[i].start;
         }
     }

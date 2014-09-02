@@ -34,6 +34,7 @@
 
 struct _daq_pkthdr;
 
+
 /*
  *  PacketManager class
  */

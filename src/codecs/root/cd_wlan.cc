@@ -105,10 +105,6 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
     // reinterpret the raw data into this codec's data format
 
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n"););
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
-                (unsigned long)cap_len, (unsigned long)raw_len););
-
     /* do a little validation */
     if(cap_len < MINIMAL_IEEE80211_HEADER_LEN)
     {
@@ -164,7 +160,9 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         case WLAN_TYPE_DATA_DTACKPL:
         case WLAN_TYPE_DATA_DATA:
         {
-
+            lyr_len = IEEE802_11_DATA_HDR_LEN;
+            next_prot_id = ETHERNET_LLC;
+#if 0
             if(cap_len < IEEE802_11_DATA_HDR_LEN + sizeof(EthLlc))
             {
                 codec_events::decoder_event(p, DECODE_BAD_80211_ETHLLC);
@@ -218,6 +216,7 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
                         return false;
                 }
             }
+#endif
             break;
         }
         default:
@@ -234,24 +233,16 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new WlanCodecModule;
-}
+{ return new WlanCodecModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new WlanCodec();
-}
+{ return new WlanCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi wlan_api =
