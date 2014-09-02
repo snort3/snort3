@@ -89,7 +89,7 @@ static const RuleMap codec_rules[] =
 NameModule::NameModule() : DecodeModule(CODEC_NAME, codec_params)
 { }
 
-bool NameModule::set(const char*, Value& v, SnortConfig* sc)
+bool NameModule::set(const char* /*fqn*/, Value& v, SnortConfig* /*sc*/)
 {
     if ( v.is("parameter1") )
         option1 = v.get_bool();
