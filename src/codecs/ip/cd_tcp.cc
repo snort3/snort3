@@ -25,18 +25,6 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc99-extensions"
-#pragma clang diagnostic ignored "-Wflexible-array-extensions"
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-#pragma clang diagnostic pop
-
 
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
@@ -722,7 +710,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     }
 
     ho->th_offx2 = 0;
-    tcp::set_tcp_offset(ho, (TCP_HDR_LEN >> 2));
+    tcp::set_tcp_offset(ho, (tcp::TCP_HEADER_LEN >> 2));
     ho->th_win = ho->th_urp = 0;
 
     if ( attach_payload )

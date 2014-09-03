@@ -66,18 +66,6 @@
 #include "protocols/linux_sll.h"
 #include "protocols/eapol.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc99-extensions"
-#pragma clang diagnostic ignored "-Wflexible-array-extensions"
-
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-
-#pragma clang diagnostic pop
-
 /*--------------------------------------------------------------------
  * utility functions
  *--------------------------------------------------------------------

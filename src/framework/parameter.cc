@@ -22,13 +22,7 @@
 
 #include <assert.h>
 #include <string.h>
-
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc99-extensions"
-#pragma clang diagnostic ignored "-Wflexible-array-extensions"
-#include <dnet.h>
-#pragma clang diagnostic pop
+#include "utils/dnet_header.h"
 
 #include <string>
 #include <iomanip>
