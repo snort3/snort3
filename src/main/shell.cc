@@ -142,16 +142,16 @@ void Shell::install(const char* name, const luaL_reg* reg)
         luaL_register(s_lua, name, reg);
 }
 
-void Shell::execute(const char* s)
+void Shell::execute(const char* cmd, string& rsp)
 {
-    int err = luaL_loadbuffer(s_lua, s, strlen(s), "shell");
+    int err = luaL_loadbuffer(s_lua, cmd, strlen(cmd), "shell");
     
     if ( !err )
         err = lua_pcall(s_lua, 0, 0, 0);
 
     if (err)
     {
-        fprintf(stderr, "%s", lua_tostring(s_lua, -1));
+        rsp = lua_tostring(s_lua, -1);
         lua_pop(s_lua, 1);
     }
 }
