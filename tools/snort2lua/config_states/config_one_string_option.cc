@@ -148,11 +148,11 @@ const ConvertMap* chroot_map = &chroot_api;
  *********************  daq  *********************
  *************************************************/
 
-static const std::string name = "name";
+static const std::string type = "type";
 static const ConvertMap daq_api =
 {
     daq,
-    config_string_ctor<&daq, &daq, &name>,
+    config_string_ctor<&daq, &daq, &type>,
 };
 
 const ConvertMap* daq_map = &daq_api;

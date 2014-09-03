@@ -37,7 +37,7 @@ change:  config file: type_id ==> enable_type
 change:  config mpls_payload_type: ethernet ==> mpls_payload_type = eth
 change:  config mpls_payload_type: ipv4 ==> mpls_payload_type = ip4
 change:  config mpls_payload_type: ipv6 ==> mpls_payload_type = ip6
-change:  daq  ==> name
+change:  daq  ==> type
 change:  daq_dir  ==> dir
 change:  daq_mode  ==> mode
 change:  daq_var  ==> var

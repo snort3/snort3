@@ -1056,7 +1056,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     SnortEventqPush();
     p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
     p->pseudo_type = PSEUDO_PKT_IP;
-    //Encode_SetPkt(p);  // FIXIT-J needed for responses to defragged packets
+    PacketManager::encode_set_pkt(p);
     ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt);
     SnortEventqPop();
 
