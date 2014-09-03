@@ -317,7 +317,7 @@ static int checkMplsHdr(
 void MplsCodec::log(TextLog* const text_log, const uint8_t* /*raw_pkt*/,
         const Packet* const p)
 {
-    TextLog_Print(text_log,"\tlabel:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
+    TextLog_Print(text_log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
         p->mplsHdr.label, p->mplsHdr.exp, p->mplsHdr.bos, p->mplsHdr.ttl);
 }
 

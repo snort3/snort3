@@ -524,14 +524,10 @@ void PacketManager::log_protocols(TextLog* const text_log,
     {
         // Grinder is not in the layer array
         Codec* const cd = CodecManager::s_protocols[CodecManager::grinder];
-        TextLog_Print(text_log, "DLT %s", cd->get_name());
-        TextLog_NewLine(text_log);
 
-        const int dlt_pos = TextLog_Tell(text_log);
+        TextLog_Print(text_log, "%-.6s(DLT):  ", cd->get_name());
         cd->log(text_log, lyr[0].start, p);
 
-        if (dlt_pos != TextLog_Tell(text_log))
-            TextLog_NewLine(text_log);
 
 
         for (int i = 1; i < num_layers; i++)
@@ -541,26 +537,18 @@ void PacketManager::log_protocols(TextLog* const text_log,
             Codec* const cd = CodecManager::s_protocols[codec_offset];
 
 
-            TextLog_Print(text_log, "%s", cd->get_name(), protocol);
+            TextLog_NewLine(text_log);
+            TextLog_Print(text_log, "%-.*s", 6, cd->get_name());
 
             // don't print the type if this is a custom type.  Look
             // in protocol_ids.h for more details.
-            if (protocol <= 0xFF || protocol >= eth::MIN_ETHERTYPE)
+            if (protocol <= 0xFF)
+                TextLog_Print(text_log, "(0x%02x)", protocol);
+            else if (protocol >= eth::MIN_ETHERTYPE)
                 TextLog_Print(text_log, "(0x%04x)", protocol);
 
-
-            TextLog_NewLine(text_log);
-            const int pos = TextLog_Tell(text_log);
-
+            TextLog_Puts(text_log, ":  ");
             cd->log(text_log, lyr[i].start, p);
-
-            // Don't print a newline if nothing has been printed or
-            // this is the last line
-            if (pos != TextLog_Tell(text_log) && ((i + 1) < num_layers))
-                TextLog_NewLine(text_log);
-
-            TextLog_Flush(text_log);
         }
     }
-
 }

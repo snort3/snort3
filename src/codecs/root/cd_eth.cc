@@ -140,7 +140,7 @@ void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
 
     /* src addr */
-    TextLog_Print(text_log, "\t%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
+    TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
         eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
         eh->ether_src[4], eh->ether_src[5]);
 

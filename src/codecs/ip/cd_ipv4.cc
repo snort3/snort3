@@ -706,7 +706,6 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const Packet* const p)
 {
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
-    TextLog_Putc(text_log, '\t');
 
     // FIXIT-H  -->  This does NOT obfuscate correctly
     if (ScObfuscate())

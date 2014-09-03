@@ -364,7 +364,7 @@ void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt, const Packet
 {
     const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
 
-    TextLog_Print(text_log, "\tSourcePort:%d DestPort:%d Len:%d",
+    TextLog_Print(text_log, "SrcPort:%d DstPort:%d Len:%d",
             ntohs(udph->uh_sport), ntohs(udph->uh_dport),
             ntohs(udph->uh_len) - udp::UDP_HEADER_LEN);
 }

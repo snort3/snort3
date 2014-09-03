@@ -125,7 +125,6 @@ void VlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t vid = vlan::vth_vlan(vh);
 
 
-    TextLog_Putc(text_log, '\t');
     TextLog_Print(text_log, "Priority:%d(0x%X) CFI:%d "
         "Vlan_ID:%d(0x%04X)",
         vlan::vth_priority(vh), vlan::vth_priority(vh),

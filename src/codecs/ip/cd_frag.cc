@@ -159,7 +159,7 @@ void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t offlg = ntohs(fragh->get_off());
 
 
-    TextLog_Print(text_log, "\tNext:0x%02X Off:%u ID:%u",
+    TextLog_Print(text_log, "Next:0x%02X Off:%u ID:%u",
             fragh->ip6f_nxt, (offlg >> 3), ntohl(fragh->get_id()));
 
     if (offlg & ip::IP6F_MF_MASK)

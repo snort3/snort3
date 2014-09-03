@@ -73,7 +73,6 @@ struct EthLlcOther
     uint16_t proto_id;
 };
 
-const uint8_t UNNUMBERED_INFORMATION = 3;
 #define ETH_DSAP_SNA                  0x08    /* SNA */
 #define ETH_SSAP_SNA                  0x00    /* SNA */
 #define ETH_DSAP_STP                  0x42    /* Spanning Tree Protocol */
@@ -107,8 +106,7 @@ bool LlcCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
     if(ehllc->dsap == ETH_DSAP_IP &&
-        ehllc->ssap == ETH_SSAP_IP &&
-        ehllc->ctrl == UNNUMBERED_INFORMATION)
+        ehllc->ssap == ETH_SSAP_IP)
     {
         if (raw_len <  sizeof(EthLlc) + sizeof(EthLlcOther))
         {
@@ -127,7 +125,6 @@ bool LlcCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         }
     }
 
-
     return true;
 }
 
@@ -136,14 +133,12 @@ void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 {
     const EthLlc *ehllc = reinterpret_cast<const EthLlc *>(raw_pkt);
 
-    TextLog_Putc(text_log, '\t');
     TextLog_Print(text_log, "DSAP:0x%X SSAP:0x%X CTRL:0x%X",
         ehllc->dsap, ehllc->ssap, ehllc->ctrl);
 
     // Assuming that if these three conditions are met, this is SNAP.
     if(ehllc->dsap == ETH_DSAP_IP &&
-        ehllc->ssap == ETH_SSAP_IP &&
-        ehllc->ctrl == UNNUMBERED_INFORMATION)
+        ehllc->ssap == ETH_SSAP_IP)
     {
 
         const EthLlcOther *other = reinterpret_cast<const EthLlcOther *>(raw_pkt + sizeof(EthLlc));

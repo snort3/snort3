@@ -349,7 +349,7 @@ void Icmp6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                 const Packet* const)
 {
     const icmp::ICMP6Hdr* const icmph = reinterpret_cast<const icmp::ICMP6Hdr*>(raw_pkt);
-    TextLog_Print(text_log, "\tsType:%d  Code:%d  ", icmph->type, icmph->code);
+    TextLog_Print(text_log, "sType:%d  Code:%d  ", icmph->type, icmph->code);
 }
 
 /******************************************************************

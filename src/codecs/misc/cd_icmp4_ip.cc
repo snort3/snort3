@@ -170,7 +170,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     const Packet* const)
 {
     const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
-    TextLog_Puts(text_log, "\t**** ORIGINAL DATAGRAM DUMP: ****");
+    TextLog_Puts(text_log, "\n\t**** ORIGINAL DATAGRAM DUMP: ****");
     TextLog_NewLine(text_log);
     TextLog_Puts(text_log, "\tIPv4\n\t\t");
 

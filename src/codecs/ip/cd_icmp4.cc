@@ -347,9 +347,9 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
 
     /* 32 digits plus 7 colons and a NULL byte */
     char buf[8*4 + 7 + 1];
-
-    TextLog_Putc(log, '\t');
     TextLog_Print(log, "Type:%d  Code:%d  ", icmph->type, icmph->code);
+    TextLog_Puts(log, "\n\t");
+
 
     switch(icmph->type)
     {
@@ -380,7 +380,7 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
                     break;
 
                 case icmp::IcmpCode::FRAG_NEEDED:
-                    TextLog_Print(log, "FRAGMENTATION NEEDED,\n\tDF SET,"
+                    TextLog_Print(log, "FRAGMENTATION NEEDED, DF SET,"
                             " NEXT LINK MTU: %u",
                             ntohs(icmph->s_icmp_nextmtu));
                     break;
@@ -418,7 +418,7 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
                     break;
 
                 case icmp::IcmpCode::PKT_FILTERED:
-                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED,\n\tPACKET FILTERED");
+                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED, PACKET FILTERED");
                     break;
 
                 case icmp::IcmpCode::PREC_VIOLATION:
@@ -540,7 +540,7 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
             break;
 
         case icmp::IcmpType::TIMESTAMPREPLY:
-            TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REPLY:\n\t"
+            TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REPLY: "
                     "Orig: %u Rtime: %u  Ttime: %u",
                     ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq),
                     icmph->s_icmp_otime, icmph->s_icmp_rtime,

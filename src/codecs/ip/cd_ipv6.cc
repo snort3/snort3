@@ -605,9 +605,6 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     const Packet* const)
 {
     const ip::IP6Hdr* const ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
-    TextLog_Putc(text_log, '\t');
-
-    //FIXIT-H  -->  This does NOT obfuscate correctly
 
     // FIXIT-H  -->  This does NOT obfuscate correctly
     if (ScObfuscate())

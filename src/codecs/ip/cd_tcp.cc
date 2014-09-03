@@ -624,14 +624,13 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     char tcpFlags[9];
 
     const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw_pkt);
-    TextLog_Putc(text_log, '\t');
 
     /* print TCP flags */
     CreateTCPFlagString(tcph, tcpFlags);
     TextLog_Puts(text_log, tcpFlags); /* We don't care about the NULL */
 
     /* print other TCP info */
-    TextLog_Print(text_log, "  SrcPort:%u  DstPort:%u  Seq: 0x%lX  Ack: 0x%lX  "
+    TextLog_Print(text_log, "  SrcPort:%u  DstPort:%u\n\tSeq: 0x%lX  Ack: 0x%lX  "
             "Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
             ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
             (u_long) ntohl(tcph->th_ack),
@@ -644,8 +643,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     /* dump the TCP options */
     if(p->tcp_option_count > 0)
     {
-        TextLog_NewLine(text_log);
-        TextLog_Putc(text_log, '\t');
+        TextLog_Puts(text_log, "\n\t");
         LogTcpOptions(text_log, p);
     }
 }

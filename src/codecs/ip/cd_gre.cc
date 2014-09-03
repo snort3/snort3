@@ -248,10 +248,8 @@ void GreCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 {
     const gre::GREHdr *greh = reinterpret_cast<const gre::GREHdr *>(raw_pkt);
 
-    TextLog_Putc(text_log, '\t');
-    TextLog_Print(text_log, "version:%u flags:0x%02X ether-type:%s(0x%04X)",
+    TextLog_Print(text_log, "version:%u flags:0x%02X ethertype:(0x%04X)",
             greh->get_version(), greh->flags,
-            PacketManager::get_proto_name(greh->get_proto()),
             greh->get_proto());
 }
 
