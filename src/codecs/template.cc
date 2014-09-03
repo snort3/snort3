@@ -29,6 +29,7 @@
 #include "codecs/decode_module.h"
 #include "protocols/packet.h"
 #include "framework/module.h"
+#include "log/text_log.h"
 
 namespace
 {
@@ -166,6 +167,12 @@ bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t& /*raw_len*/,
     return true;
 }
 
+void NameCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+    const NameHdr *hdr = reinterpret_cast<const NameHdr *>(raw_pkt);
+    TextLog_Print(text_log, "Next:0x%04x", hdr->next_protocol);
+}
 
 bool NameCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
 {
