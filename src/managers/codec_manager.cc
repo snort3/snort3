@@ -30,12 +30,17 @@
 #include "parser/parser.h"
 #include "packet_io/sfdaq.h"
 
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc99-extensions"
+#pragma clang diagnostic ignored "-Wflexible-array-extensions"
 // Encoder FOO
 #ifdef HAVE_DUMBNET_H
 #include <dumbnet.h>
 #else
 #include <dnet.h>
 #endif
+#pragma clang diagnostic pop
 
 
 struct CodecManager::CodecApiWrapper

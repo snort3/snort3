@@ -26,11 +26,16 @@
 #endif
 
 #include <string.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc99-extensions"
+#pragma clang diagnostic ignored "-Wflexible-array-extensions"
 #ifdef HAVE_DUMBNET_H
 #include <dumbnet.h>
 #else
 #include <dnet.h>
 #endif
+#pragma clang diagnostic pop
 
 
 #include "framework/codec.h"

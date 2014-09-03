@@ -23,7 +23,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #include <check.h>
+#pragma clang diagnostic pop
 
 #include "snort_types.h"
 #include "sfip/sf_ip.h"
