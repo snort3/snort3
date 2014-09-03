@@ -112,7 +112,6 @@ public:
 
     void open();
     void close();
-    virtual void alert(Packet*, const char* msg, Event*);
     virtual void log(Packet*, const char*, Event*);
 
 public:
@@ -135,35 +134,6 @@ void CodecLogger::open()
 void CodecLogger::close()
 { TextLog_Term(test_file); }
 
-void CodecLogger::alert(Packet* p, const char* msg, Event* e)
-{
-    log(p, msg, e);
-#if 0
-    std::string s = std::string(msg);
-
-    if (e != NULL)
-    {
-        TextLog_Print(test_file, "%lu\t%lu\t%lu\t",
-                (unsigned long) e->sig_info->generator,
-                (unsigned long) e->sig_info->id,
-                (unsigned long) e->sig_info->rev);
-    }
-
-    if (flags & ALERT_FLAG_MSG)
-    {
-        if (msg != NULL)
-            TextLog_Print(test_file, "%s\t", msg);
-    }
-
-
-    TextLog_NewLine(test_file);
-    TextLog_Print(test_file, " **** DUMPING PACKET ****");
-    TextLog_NewLine(test_file);
-    PacketManager::log_protocols(test_file, p);
-    TextLog_Print(test_file, " **** FINISHED DUMPING ****");
-    TextLog_NewLine(test_file);
-#endif
-}
 
 void CodecLogger::log(Packet* p, const char* msg, Event* e)
 {
