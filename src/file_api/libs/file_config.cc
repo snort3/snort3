@@ -314,6 +314,7 @@ static uint8_t* convertTextToHex(char *text, int *size)
             ParseError("content hexmode argument has invalid "
                     "number of hex digits.  The argument '%s' "
                     "must contain a full even byte string.", current_ptr);
+            free(hex);
             return (uint8_t*)"";
         }
 
@@ -324,7 +325,8 @@ static uint8_t* convertTextToHex(char *text, int *size)
         else
         {
             ParseError("'%c' is not a valid hex value, please input hex values (0x0 - 0xF)",
-                    (char) *current_ptr);
+                       (char) *current_ptr);
+            free(hex);
             return (uint8_t*)"";
         }
 
@@ -337,7 +339,8 @@ static uint8_t* convertTextToHex(char *text, int *size)
         else
         {
             ParseError("'%c' is not a valid hex value, please input hex values (0x0 - 0xF)",
-                    (char) *current_ptr);
+                       (char) *current_ptr);
+            free(hex);
             return (uint8_t*)"";
         }
         DEBUG_WRAP(DebugMessage(DEBUG_FILE,"Hex buffer: %s\n", hex_buf););
@@ -604,6 +607,7 @@ void parse_file_rule(const char *args, void **conf)
     if (file_config->FileRules[rule->id])
     {
         ParseError("file type: duplicated rule id %d defined!", rule->id);
+        free(rule);
         return;
     }
     file_config->FileRules[rule->id] = rule;

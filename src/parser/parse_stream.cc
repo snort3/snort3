@@ -175,9 +175,7 @@ static TokenType get_token(
             state = 3;
             break;
         case 5:  // unquoted escape
-            if ( c == '\n' )
-                state = 0;
-            else if ( c != '\r' )
+            if ( c != '\n' && c != '\r' )
                 printf("error: invalid escape on line %d\n", lines);
             state = 0;
             break;
