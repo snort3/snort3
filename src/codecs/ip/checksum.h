@@ -36,7 +36,8 @@ namespace checksum
 
 struct Pseudoheader6
 {
-    uint32_t sip[4], dip[4];
+    uint32_t sip[4];
+    uint32_t dip[4];
     uint8_t  zero;
     uint8_t  protocol;
     uint16_t len;
@@ -45,7 +46,9 @@ struct Pseudoheader6
 
 struct Pseudoheader
 {
-    uint32_t sip, dip;
+
+    uint32_t sip;
+    uint32_t dip;
     uint8_t  zero;
     uint8_t  protocol;
     uint16_t len;
@@ -77,6 +80,25 @@ inline uint16_t ip_cksum(const uint16_t *buf, std::size_t len);
  */
 namespace detail
 {
+
+
+struct PsuedoheaderUnion
+{
+    union
+    {
+        Pseudoheader ph4;
+        uint16_t ph4_arr[12];
+    };
+};
+
+struct Psuedoheader6Union
+{
+    union
+    {
+        Pseudoheader ph6;
+        uint16_t ph6_arr[18];
+    };
+};
 
 static inline uint16_t cksum_add(const uint16_t *buf, std::size_t len, uint32_t cksum)
 {
@@ -158,9 +180,17 @@ static inline uint16_t cksum_add(const uint16_t *buf, std::size_t len, uint32_t 
 }
 
 
-static inline void add_ipv4_pseudoheader(const uint16_t* const h,
+static inline void add_ipv4_pseudoheader(const Pseudoheader* const ph4,
                                          uint32_t &cksum)
 {
+    /*
+     * This mess is necessary to make static analyzers happy.
+     * Otherwise they assume we are reading garbage values
+     */
+    const PsuedoheaderUnion* const ph4_u = reinterpret_cast
+        <const PsuedoheaderUnion* const>(ph4);
+    const uint16_t* const h = ph4_u->ph4_arr;
+
     /* ipv4 pseudo header must have 12 bytes */
     cksum += h[0];
     cksum += h[1];
@@ -171,28 +201,36 @@ static inline void add_ipv4_pseudoheader(const uint16_t* const h,
 }
 
 
-static inline void add_ipv6_pseudoheader(const uint16_t* const h,
+static inline void add_ipv6_pseudoheader(const Pseudoheader6* const ph6,
                                          uint32_t &cksum)
 {
-   /* PseudoHeader must have 36 bytes */
-   cksum += h[0];
-   cksum += h[1];
-   cksum += h[2];
-   cksum += h[3];
-   cksum += h[4];
-   cksum += h[5];
-   cksum += h[6];
-   cksum += h[7];
-   cksum += h[8];
-   cksum += h[9];
-   cksum += h[10];
-   cksum += h[11];
-   cksum += h[12];
-   cksum += h[13];
-   cksum += h[14];
-   cksum += h[15];
-   cksum += h[16];
-   cksum += h[17];
+    /*
+     * This mess is necessary to make static analyzers happy.
+     * Otherwise they assume we are reading garbage values
+     */
+    const Psuedoheader6Union* const ph6_u = reinterpret_cast
+        <const Psuedoheader6Union* const>(ph6);
+    const uint16_t* const h = ph6_u->ph6_arr;
+
+    /* PseudoHeader must have 36 bytes */
+    cksum += h[0];
+    cksum += h[1];
+    cksum += h[2];
+    cksum += h[3];
+    cksum += h[4];
+    cksum += h[5];
+    cksum += h[6];
+    cksum += h[7];
+    cksum += h[8];
+    cksum += h[9];
+    cksum += h[10];
+    cksum += h[11];
+    cksum += h[12];
+    cksum += h[13];
+    cksum += h[14];
+    cksum += h[15];
+    cksum += h[16];
+    cksum += h[17];
 }
 
 
@@ -256,7 +294,7 @@ inline uint16_t icmp_cksum(const uint16_t *buf,
 {
     uint32_t cksum = 0;
 
-    detail::add_ipv6_pseudoheader((const uint16_t* const)ph, cksum);
+    detail::add_ipv6_pseudoheader(ph, cksum);
     return detail::cksum_add(buf, len, cksum);
 }
 
@@ -272,7 +310,7 @@ inline uint16_t tcp_cksum(const uint16_t *h,
 {
     uint32_t cksum = 0;
 
-    detail::add_ipv4_pseudoheader((const uint16_t* const)ph, cksum);
+    detail::add_ipv4_pseudoheader(ph, cksum);
     detail::add_tcp_header(h, len, cksum);
     return detail::cksum_add(h, len, cksum);
 }
@@ -284,7 +322,7 @@ inline uint16_t tcp_cksum(const uint16_t *buf,
 {
     uint32_t cksum = 0;
 
-    detail::add_ipv6_pseudoheader((const uint16_t* const)ph, cksum);
+    detail::add_ipv6_pseudoheader(ph, cksum);
     detail::add_tcp_header(buf, len, cksum);
     return detail::cksum_add(buf, len, cksum);
 }
@@ -296,7 +334,7 @@ inline uint16_t udp_cksum(const uint16_t *buf,
 {
     uint32_t cksum = 0;
 
-    detail::add_ipv4_pseudoheader((const uint16_t* const)ph, cksum);
+    detail::add_ipv4_pseudoheader(ph, cksum);
     detail::add_udp_header(buf, len, cksum);
     return detail::cksum_add(buf, len, cksum);
 }
@@ -308,7 +346,7 @@ inline uint16_t udp_cksum(const uint16_t *buf,
 {
     uint32_t cksum = 0;
 
-    detail::add_ipv6_pseudoheader((const uint16_t* const)ph, cksum);
+    detail::add_ipv6_pseudoheader(ph, cksum);
     detail::add_udp_header(buf, len, cksum);
     return detail::cksum_add(buf, len, cksum);
 }

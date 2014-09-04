@@ -888,7 +888,7 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
                         }
 
                         if (j < opts_len)
-                            TextLog_Print(log, "%02x", opts[i].data[j]);
+                            TextLog_Print(log, "%02x", 0);
                     }
 
                     TextLog_Putc(log, ' ');

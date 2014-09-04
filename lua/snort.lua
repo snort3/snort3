@@ -1,5 +1,6 @@
 ---------------------------------------------------------------------------
--- Snort++ prototype configuration
+-- This file contains a sample snort configuration.  You should follow
+-- the steps to create your own custom configuration.
 --
 -- let install_dir be a variable indicating where you installed Snort++.
 -- then do:
@@ -8,7 +9,7 @@
 -- export SNORT_LUA_PATH=$install_dir/conf/
 ---------------------------------------------------------------------------
 
-require('snort_config')  -- for loading
+require('snort_config')
 
 -- useful constants
 K = 1024
@@ -16,7 +17,7 @@ M = K * K
 G = M * K
 
 ---------------------------------------------------------------------------
--- Set paths, ports, and nets:
+-- Step #1: Set paths, ports, and nets:
 --
 -- variables with 'PATH' in the name are vars
 -- variables with 'PORT' in the name are portvars
@@ -28,6 +29,8 @@ G = M * K
 -- paths
 ---------------------------------------------------------------------------
 -- Path to your rules files (this can be a relative path)
+-- Note for Windows users:  You are advised to make this an absolute path,
+-- such as:  c:\snort\rules
 
 RULE_PATH = '../rules'
 BUILTIN_RULE_PATH = '../preproc_rules'
@@ -126,19 +129,39 @@ GTP_PORTS = ' 2123 2152 3386'
 RPC_PORTS = 
     ' 111 32770 32771 32772 32773 32774 32775 32776 32777 32778 32779'
 
----------------------------------------------------------------------------
--- configure builtin features
----------------------------------------------------------------------------
+-- Configure ports to ignore 
+--[[
+ignore_ports =
+{
+    tcp = ' 21 6667:6671 1356'
+    udp = ' 1:17 53'
+}
+--]]
 
-cd_udp = { gtp_ports = GTP_PORTS }
+tcp_client_ports = SSH_PORTS .. FTP_PORTS .. MAIL_PORTS .. RPC_PORTS ..
+[[
+    23 25 42 53 79 109 113 119 135 136 137 139 161 445 513 514 587 593 691
+    1433 1521 1741 3306 6070 6665 6666 6667 6668 6669 7000 8181 
+]]
+tcp_server_ports = ''
+tcp_both_ports = HTTP_PORTS ..
+[[
+    443 465 563 636 989 992 993 994 995 7907 7802 7801 7900 7901 7902 7903
+    7904 7905 7906 7908 7909 7910 7911 7912 7913 7914 7915 7916 7917 7918
+    7919 7920
+]]
+
+---------------------------------------------------------------------------
+-- Step #2: configure builtin features
+---------------------------------------------------------------------------
 
 -- Configure active response for non inline operation.
 active =
 {
-    --device = 'eth0',
+    device = 'eth0',
     attempts = 2,
-    max_responses = 1,
-    min_interval = 1
+    --max_active_responses = 2,
+    --min_response_seconds = 5
 }
 
 -- Configure DAQ related options for inline operation.
@@ -161,34 +184,34 @@ detection =
     pcre_match_limit_recursion = limit
 }
 
-log_limit = 4
-
 -- Configure the detection engine
 search_engine =
 {
-    search_method = 'ac_bnfa_q',
+    search_method = 'ac_full_q',
+    --search_method = 'lowmem_q',
     split_any_any = true,
-    max_queue_events = 4 * log_limit
+    search_optimize = true,
+    max_pattern_len = 20
 }
 
 -- Configure the event queue.
 event_queue =
 {
-    max_queue = 16,
-    log = 16,
-    order_events = 'priority'
+    max_queue = 8,
+    log = 5,
+    order_events = 'content_length'
 }
 
 -- Per packet and rule latency enforcement
 ppm =
 {
 -- Per Packet latency configuration
-    max_pkt_time = 0,
+    max_pkt_time = 250,
     fastpath_expensive_packets = true,
     pkt_log = 'log',
 
 -- Per Rule latency configuration
-    max_rule_time = 0,
+    max_rule_time = 200,
     threshold = 3,
     suspend_expensive_rules = true,
     suspend_timeout = 20,
@@ -198,14 +221,23 @@ ppm =
 -- Configure Perf Profiling for debugging
 profile =
 {
-    rules = { count = 0, sort = 'avg_ticks' },
-    modules = { count = 0, sort = 'avg_ticks' }
+    rules =
+    {
+        count = 10,
+        sort = 'avg_ticks',
+        file = { append = true }
+    },
+    preprocs =
+    {
+        count = 10,
+        sort = 'avg_ticks',
+        file = { append = true }
+    }
 }
 
 ---------------------------------------------------------------------------
--- configure inspectors
+-- Step #3: Configure inspectors
 ---------------------------------------------------------------------------
-
 normalize =
 { 
     ip4 = 
@@ -224,8 +256,20 @@ normalize =
     icmp6 = true
 }
 
+--defrag_global = { max_frags = 65536 }
+
+defrag_engine =
+{
+    policy = 'windows', 
+    detect_anomalies = true,
+    overlap_limit = 10,
+    min_frag_length = 100,
+    timeout = 180
+}
+
 arp_spoof =
 {
+    unicast = true,
     hosts =
     {
         { ip = '192.168.40.1', mac = 'f0:0f:00:f0:0f:00' },
@@ -235,7 +279,10 @@ arp_spoof =
 
 back_orifice = { }
 
-rpc_decode = { }
+rpc_decode =
+{
+    ports = RPC_PORTS
+}
 
 port_scan_global = { memcap = 10000000 }
 
@@ -273,8 +320,19 @@ perf_monitor =
 }
 
 ---------------------------------------------------------------------------
--- http normalization and anomaly detection
+-- HTTP normalization and anomaly detection.
 ---------------------------------------------------------------------------
+
+http_global =
+{
+    unicode_map =
+    {
+        map_file = '/etc/unicode.map',
+        code_page = 1252
+    },
+    compress_depth = 65535,
+    decompress_depth = 65535
+}
 
 default_http_methods =
 [[
@@ -285,39 +343,47 @@ default_http_methods =
     RPC_OUT_DATA RPC_ECHO_DATA
 ]]
 
-http_inspect =
-{
-    --unicode_map =
-    --{
-    --    map_file = '/etc/unicode.map',
-    --    code_page = 1252
-    --},
-    compress_depth = 65535,
-    decompress_depth = 65535
-}
-
 http_server =
 {
+    unicode_map =
+    {
+        map_file = '/etc/unicode.map',
+        code_page = 1252
+    },
     http_methods = default_http_methods,
     chunk_length = 500000,
     server_flow_depth = 0,
     client_flow_depth = 0,
-    post_depth = 0,
-}
-
-hi_x =
-{
-    http_methods = default_http_methods,
-    chunk_length = 500000,
-    server_flow_depth = 1460,
-    client_flow_depth = 1460,
     post_depth = 65495,
+    oversize_dir_length = 500,
+    max_header_length = 750,
+    max_headers = 100,
+    max_spaces = 200,
+    small_chunk_length = { size = 10, count = 5 },
+    ports = HTTP_PORTS,
+    non_rfc_chars = '0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07',
+    enable_cookies = true,
+    extended_response_inspection = true,
+    inspect_gzip = true,
+    normalize_utf = true,
+    unlimited_decompress = true,
+    normalize_javascript = true,
+    apache_whitespace = false,
+    ascii = false,
+    bare_byte = false,
+    directory = false,
+    double_decode = false,
+    iis_backslash = false,
+    iis_delimiter = false,
+    iis_unicode = false,
+    multi_slash = false,
+    utf_8 = false,
+    u_encode = true,
+    webroot = false
 }
-
-nhttp_inspect = { }
 
 ---------------------------------------------------------------------------
--- ftp / telnet normalization and anomaly detection
+-- FTP / Telnet normalization and anomaly detection.
 ---------------------------------------------------------------------------
 
 telnet =
@@ -326,6 +392,14 @@ telnet =
     check_encrypted = true,
     ayt_attack_thresh = 20,
     normalize = true,
+    ports = '23',
+    detect_anomalies = true
+}
+
+ftp_global =
+{
+    encrypted_traffic = false,
+    check_encrypted = true,
 }
 
 ftp_default_commands =
@@ -349,6 +423,7 @@ ftp_format_commands =
 
 ftp_server =
 {
+    ports = FTP_PORTS,
     def_max_param_len = 100,
 
     encrypted_traffic = false,
@@ -361,48 +436,31 @@ ftp_server =
     ftp_cmds = ftp_default_commands,
     chk_str_fmt = ftp_format_commands,
 
+    alt_max_param =
+    {
+        { length = 0, 
+          commands = [[ ABOR CCC CDUP ESTA FEAT LPSV
+                    NOOP PASV PWD QUIT REIN STOU SYST XCUP XPWD ]] },
+
+        { length = 200, 
+          commands = 'ALLO APPE CMD HELP NLST RETR RNFR STOR STOU XMKD' },
+
+        { length = 256, commands = 'CWD RNTO' },
+        { length = 400, commands = 'PORT' },
+        { length = 512, commands = 'SIZE' },
+    },
+
     cmd_validity =
     {
-        { command = 'ABOR', length = 0 },
-        { command = 'CCC', length = 0 },
-        { command = 'CDUP', length = 0 },
-        { command = 'ESTA', length = 0 },
-        { command = 'FEAT', length = 0 },
-        { command = 'LPSV', length = 0 },
-        { command = 'NOOP', length = 0 },
-        { command = 'PASV', length = 0 },
-        { command = 'PWD', length = 0 },
-        { command = 'QUIT', length = 0 },
-        { command = 'REIN', length = 0 },
-        { command = 'SYST', length = 0 },
-        { command = 'XCUP', length = 0 },
-        { command = 'XPWD', length = 0 },
-
-        { command = 'APPE', length = 200 },
-        { command = 'CMD', length = 200 },
-        { command = 'HELP', length = 200 },
-        { command = 'NLST', length = 200 },
-        { command = 'RETR', length = 200 },
-        { command = 'RNFR', length = 200 },
-        { command = 'STOR', length = 200 },
-        { command = 'STOU', length = 200 },
-        { command = 'XMKD', length = 200 },
-
-        { command = 'CWD', length = 256 },
-        { command = 'RNTO', length = 256 },
-        { command = 'SIZE', length = 512 },
-
-        { command = 'ALLO', length = 200, format = '< int [ char R int ] >' },
-        { command = 'PORT', length = 400, format = '< host_port >' },
-
+        { command = 'ALLO', format = '< int [ char R int ] >' },
         { command = 'EPSV', format = '< [ { char 12 | char A char L char L } ] >' },
         { command = 'MACB', format = '< string >' },
         { command = 'MDTM', format = '< [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string >' },
         { command = 'MODE', format = '< char ASBCZ >' },
+        { command = 'PORT', format = '< host_port >' },
         { command = 'PROT', format = '< char CSEP >' },
         { command = 'STRU', format = '< char FRPO [ string ] >' },
-        { command = 'TYPE', 
-          format = '< { char AE [ char NTC ] | char I | char L [ number ] } >' }
+        { command = 'TYPE', format = '< { char AE [ char NTC ] | char I | char L [ number ] } >' }
     },
 }
 
@@ -413,63 +471,71 @@ ftp_client =
     ignore_telnet_erase_cmds = true,
     telnet_cmds = true,
 
+--[[
     bounce_to =
     {
         { address = '192.168.1.1', port = 12345 },
         { address = '192.168.144.120', port = 50010, last_port = 50020 }
     }
+--]]
 }
-
-ftp_data = { }
 
 ---------------------------------------------------------------------------
--- stream reassembly and anomaly detection
+-- the following inspector configs are just prototypes
+-- they are nominally validated but they are not actually loaded
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Target-Based stateful inspection/stream reassembly.
 ---------------------------------------------------------------------------
 
-stream =
+stream_global =
 {
-    ip_cache = { max_sessions = 64000 },
-    icmp_cache = { max_sessions = 0 },
-    tcp_cache = { max_sessions = 256000, idle_timeout = 60 },
-    udp_cache = { max_sessions = 128000, pruning_timeout = 30 },
-}
+    tcp_memcap = 123456789,
+    show_rebuilt_packets = false,
+    prune_log_max = 0,
+    paf_max = 16384,
+    
+    tcp_cache = { max_sessions = 256 * K, idle_timeout = 60 },
+    udp_cache = { max_sessions = 128 * K, pruning_timeout = 30 },
+    ip_cache = { max_sessions = 64 * K },
+    icmp_cache = { max_sessions = 32 * K },
 
-stream_ip =
-{
-    session_timeout = 980,
-    policy = 'windows', 
-    max_overlaps = 10,
-    max_frags = 8191,
-    min_frag_length = 100
-}
-
-stream_icmp =
-{
-    session_timeout = 180,
+    active_response = 
+    {
+        max_responses = 0,
+        min_interval = 1
+    }
 }
 
 stream_tcp =
 {
     policy = 'windows',
-    paf_max = 16384,
 
     session_timeout = 180,
-    --require_3whs = -1,
-    show_rebuilt_packets = false,
-
+    require_3whs = 180,
     flush_factor = 0,
+
     overlap_limit = 10,
 
-    footprint = 0,
-    reassemble_async = true,
-    ignore_any_rules = false,
-}
+    queue_limit =
+    {
+        max_bytes = 3,
+        max_segments = 1300,
+    },
+    small_segments = 
+    {
+        count = 10,
+        maximum_size = 128,
+        ignore_ports = '1 2 3'
+    },
 
-tcp_x =
-{
-    policy = 'linux',
-    paf_max = 16384,
-    session_timeout = 180,
+    footprint = 0,
+    reassemble_async = false,
+    ignore_any_rules = false,
+
+    client_ports = tcp_client_ports,
+    server_ports = tcp_server_ports,
+    both_ports = tcp_both_ports,
 }
 
 stream_udp =
@@ -478,47 +544,45 @@ stream_udp =
     ignore_any_rules = false,
 }
 
+stream_icmp =
+{
+    session_timeout = 180,
+}
+
+stream_ip =
+{
+    session_timeout = 180,
+}
+
 ---------------------------------------------------------------------------
--- loggers
+-- Step #4: Configure loggers
 ---------------------------------------------------------------------------
 
 -- alerts + packets
---[[
 unified2 =
 {
     file = 'u2.log',
-    limit = 128 * M,
+    limit = 128,
+    units = 'M',
     nostamp = true,
     mpls_event_types = true,
     vlan_event_types = true
 }
---]]
 
 -- text
 --alert_syslog = { mode = 'LOG_AUTH LOG_ALERT' }
 alert_fast = { }
---alert_full = { }
---alert_test = { file = 'alert.tsv' }
+alert_full = { }
+--alert_test = { file = 'alert.tsv', session = false, msg = true }
 --alert_csv = { file = 'alert.csv' }
 
--- to use -A lualert, this must be configured
---lualert = { args = "foo = 'bar'" }
-
 -- pcap
---log_tcpdump = { file = 'snort++.pcap' }
-
-alert_codecs = { }
+log_tcpdump = { file = 'snort++.pcap' }
 
 ---------------------------------------------------------------------------
--- actions
----------------------------------------------------------------------------
-
---react = { }
-reject = { reset = 'both', control = 'network' }
-rewrite = { }
-
----------------------------------------------------------------------------
--- ips rules and filters
+-- Step #6: Customize your rule set
+--
+-- NOTE: All categories are enabled in this conf file
 ---------------------------------------------------------------------------
 
 dir = os.getenv('SNORT_LUA_PATH')
@@ -530,8 +594,24 @@ end
 dofile(dir .. 'classification.lua')
 dofile(dir .. 'reference.lua')
 
+--[[
+event_filter =
+{
+    { gid = 1, sid = 2, type = 'both', count = 1, seconds = 5 },
+    { gid = 1, sid = 1, type = 'both', count = 1, seconds = 5 }
+}
+--]]
+--
+suppress =
+{
+    { gid = 116, sid = 408 },
+    { gid = 116, sid = 412 },
+    { gid = 116, sid = 414 },
+}
+
 default_rules =
 [[
+#output unified2: filename snort.alert, limit 128, nostamp
 # snort-classic comments, includes, and rules with $VARIABLES
 # (rules files support the same syntax)
 
@@ -542,32 +622,17 @@ default_rules =
 
 # text rules
 #include $RULE_PATH/local.rules
+#include $RULE_PATH/app-detect.rules
+#include $RULE_PATH/attack-responses.rules
+#include $RULE_PATH/backdoor.rules
 
 # so rules
+#include $PLUGIN_RULE_PATH/bad-traffic.rules
+#include $PLUGIN_RULE_PATH/chat.rules
 #include $PLUGIN_RULE_PATH/dos.rules
 
-# no metadata:service:
-#alert http ( sid:1; msg:"1"; content:"HTTP"; )
-#alert http any -> 1.2.3.4 ( sid:2; msg:"2"; content:"HTTP"; )
-#alert http any any -> 1.2.3.4 80 ( sid:3; msg:"3"; content:"HTTP"; )
-
-#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"BLACKLIST User-Agent known malicious    user agent - SAH Agent"; flow:to_server,established; content:"User-Agent|3A| SAH Agent"; metadata: policy balanced-ips drop, policy connectivity-ips drop, policy security-ips drop, service http;    classtype:misc-activity; sid:5808; rev:9;)
-
-#alert tcp any any -> any 80 ( msg:"Sample rule for Snort++"; http_uri; content:"attack"; sid:1; )
-#alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header:Transfer-Encoding; content:"chunk"; sid:2; )
-#alert tcp any 80 -> any any ( msg:"Sample rule for Snort++"; http_header; content:"chunk"; sid:3; )
-#alert tcp any any -> any any ( msg:"Sample rule for Snort++"; content:"trigger"; sid:2; )
-
-#alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"FILE-IDENTIFY Microsoft Windows Visual Basic script file download request"; metadata:service http; reference:url,en.wikipedia.org/wiki/Vbs; classtype:misc-activity; sid:18758; rev:8; soid:3|18758;)
-
-#alert tcp any any -> any 80 ( content:"test"; gid:1; sid:1000051)
-#alert tcp any any -> any 80 ( sid:1; msg:"found!"; content:"GET", nocase; content:"bck"; )
-#alert tcp any any -> any 80 ( sid:2; msg:"found!"; http_method; content:"GET"; )
-#alert tcp any any -> any 80 ( sid:3; msg:"found!"; content:"GET"; find:"pat=' HTTP/1%.%d'" ; )
-#alert tcp any any -> any any ( gid:123; sid:2; msg:"(stream_ip) Teardrop attack"; )
-#rewrite tcp any any -> any 80 ( sid:9; msg:"found!"; content:"GET"; replace:"GIT"; )
-alert ip any any -> any any (sid:10; gid:1; msg:"TEST"; )
-alert icmp any any -> any any (sid:11; gid:1; msg:"TEST"; )
+alert tcp any any -> any 80 ( sid:1; msg:"1"; content:"HTTP"; )
+alert tcp any 80 -> any any ( sid:2; msg:"2"; content:"HTTP"; )
 ]]
 
 network =
@@ -578,198 +643,59 @@ network =
 -- put classic rules and includes in the include file and/or rules string
 ips =
 {
-    --include = '../test.rules',
-    --include = 'active.rules',
-    rules = default_rules,
-    --enable_builtin_rules = true
+    --include = '../active.rules',
+    --rules = default_rules,
+    enable_builtin_rules = true
 }
 
---[[
-event_filter =
-{
-    { gid = 1, sid = 2, type = 'both', count = 1, seconds = 5 },
-    { gid = 1, sid = 1, type = 'both', count = 1, seconds = 5 }
-}
---]]
-
-suppress =
-{
-    { gid = 116, sid = 408 },
-    { gid = 116, sid = 412 },
-    { gid = 116, sid = 414 },
-}
-
----------------------------------------------------------------------------
--- net map attributes (replaces attribte table)
----------------------------------------------------------------------------
-
-hosts = 
-{
-    {
-        ip = '1.2.3.4',
-        frag_policy = 'linux',
-        tcp_policy = 'linux',
-        services =
-        {
-            { name = 'ftp', proto = 'tcp', port = 21 },
-            { name = 'smtp', proto = 'tcp', port = 25 },
-            { name = 'http', proto = 'tcp', port = 80 }
-        }
-    },
-    {
-        ip = '2.4.6.8',
-        frag_policy = 'windows',
-        tcp_policy = 'windows',
-        services =
-        {
-            { name = 'netbios', proto = 'tcp', port = 137 },
-            { name = 'imap', proto = 'tcp', port = 143 },
-        }
-    }
-}
-
----------------------------------------------------------------------------
--- prototype wizard
----------------------------------------------------------------------------
-
-http_methods = { 'GIT', 'GET', 'POST', 'HEAD' } -- build from default_http_methods
-ftp_commands = { 'USER' } -- add others
-sip_methods = { 'INVITE', 'NOTIFY' } -- add others
-isakmp_hex = { '?????????????????|01|', '?????????????????|10|' }
-
-telnet_commands =
-{
-    '|FF F0|', '|FF F1|', '|FF F2|', '|FF F3|',
-    '|FF F4|', '|FF F5|', '|FF F6|', '|FF F7|',
-    '|FF F8|', '|FF F9|', '|FF FA|', '|FF FB|',
-    '|FF FC|', '|FF FD|', '|FF FE|', '|FF FF|'
-}
-
-wizard =
-{
-    spells =
-    {
-        { service = 'ftp', proto = 'tcp', client_first = false,
-          to_server = ftp_commands, to_client = { '220*FTP' } },
-
-        { service = 'http', proto = 'tcp', client_first = true,
-          to_server = http_methods, to_client = { 'HTTP/' } },
-
-        { service = 'imap', proto = 'tcp', client_first = false,
-          to_server = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
-          to_client = { '**OK', '**BYE' } },
-
-        { service = 'pop3', proto = 'tcp', client_first = false,
-          to_server = { 'USER', 'APOP' },
-          to_client = { '+OK', '-ERR' } },
-
-        { service = 'sip', proto = 'tcp', client_first = true,
-          to_server = sip_methods, to_client = { 'SIP/' } },
-
-        { service = 'smtp', proto = 'tcp', client_first = false,
-          to_server = { 'HELO', 'EHLO' },
-          to_client = { '220*SMTP', '220*MAIL' } },
-
-        { service = 'ssh', proto = 'tcp', client_first = true,
-          to_server = { '*SSH' }, to_client = { '*SSH' } }
-    },
-    hexes =
-    {
-        { service = 'dcerpc', proto = 'tcp', client_first = true, 
-          to_server = { '|05 00|' }, to_client = { '|05 00|' } },
-
-        { service = 'dnp3', proto = 'tcp', client_first = true, 
-          to_server = { '|05 64|' }, to_client = { '|05 64|' } },
-
-        { service = 'isakmp',  proto = 'udp', client_first = true,
-          to_server = isakmp_hex, to_client = isakmp_hex },
---[[
-        { service = 'modbus', proto = 'tcp', client_first = true,
-          to_server = { '??|0 0|' } },
-
-        { service = 'rpc', proto = 'tcp', client_first = true,
-          to_server = { '????|0 0 0 0 0 0 0 1|' },
-          to_client = { '????|0 0 0 0 0 0 0 1|' } },
---]]
-        { service = 'smb', proto = 'tcp', client_first = true,
-          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
-
-        { service = 'smb', proto = 'udp', client_first = true,
-          to_server = { '|FF|SMB' }, to_client = { '|FF|SMB' } },
-
-        { service = 'ssl', proto = 'tcp', client_first = true,
-          to_server = { '|16 03|' }, to_client = { '|16 03|' } },
-
-        { service = 'telnet', proto = 'tcp', client_first = true,
-          to_server = telnet_commands, to_client = telnet_commands },
-    }
-}
-
----------------------------------------------------------------------------
 -- prototype bindings:
---
 -- nets and ports move out of inspector configurations
 -- only need to specify non-default bindings
--- when: policy_id, vlans, nets, proto, ports, roles, service
--- use: action | file | type,name | policy_id [,service]
--- when: days, times are tbd
----------------------------------------------------------------------------
+-- match = id | ((vlans | networks) [protocol [ports]])
+-- config = type [name [direction]]
+-- type = module | 'file'
+-- name = type (default) | instance | filename
+-- action = block | allow | inspect (default)
+-- direction = from client | from server | any (default) | none
 
--- define a target selector
-target_x = { nets = HTTP_SERVERS, proto = 'tcp', ports = HTTP_PORTS } 
-
-binder =
+bindings =
 {
-    -- policy selected by firewall
     {
-        when = { policy_id = 'uuid' },
-        use = { file = 'uuid.lua' }
+        match = { id = 5 },
+        config = { type = 'bo', name = 'bo2' }
     },
-    -- policy based on vlan
-    {
-        when = { vlans = '123' },
-        use = { file = 'vlan.lua' }
-    },
-    -- policy based on cidr
-    {
-        when = { nets = HOME_NET },
-        use = { file = 'net.lua' }
-    },
-    -- targeted config
-    --{ when = target_x, use = { type = 'stream_tcp', name = 'tcp_x' } },
-    --{ when = target_x, use = { type = 'http_server', name = 'hi_x' } },
 
-    -- classic ports only config
-    --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'http_server' } },
-    --{ when = { proto = 'tcp', ports = HTTP_PORTS }, use = { type = 'nhttp_inspect' } },
-    { when = { proto = 'tcp', ports = FTP_PORTS }, use = { type = 'ftp_server' } },
-    { when = { proto = 'tcp', ports = RPC_PORTS }, use = { type = 'rpc_decode' } },
+    {
+        match = { id = 4 },
+        config = { type = 'file', name = '4.lua' }
+    },
 
-    -- FIXIT these should be defaults when inspector configured
-    { when = { service = 'ftp-data' }, use = { type = 'ftp_data' } },
-    { when = { service = 'ftp' }, use = { type = 'ftp_server' } },
-    { when = { service = 'http' }, use = { type = 'http_server' } },
-    --{ when = { service = 'http' }, use = { type = 'nhttp_inspect' } },
-    { when = { service = 'sunrpc' }, use = { type = 'rpc_decode' } },
-    { when = { service = 'telnet' }, use = { type = 'telnet' } },
+    {
+        match = { vlans = '123' },
+        config = { type = 'detect', name = '123.detect' }
+    },
 
-    -- auto service id override
     {
-        when = { nets = '3.4.5.0/24', proto = 'tcp', ports = '80', role = 'any' },
-        use = { service = 'http' }
+        match = { networks = '1.2.3.0/24', protocol = 'tcp' },
+        config = { type = 'stream_tcp', name = 'last', direction = 'any' }
     },
-    -- allow rule - replaces config ignore_ports
+
     {
-        when = { nets = '4.5.6.7', proto = 'udp', ports = '53' },
-        use = { action = 'allow' }
+        match = { networks = '1.2.3.4', protocol = 'tcp', ports = '80 8080' },
+        config = { type = 'http_inspect' },
+        action = 'inspect'
     },
-    { when = { proto = 'tcp', ports = SSH_PORTS }, use = { action = 'allow' } },
-    -- block rule
+
     {
-        when = { nets = '5.6.7.8', proto = 'tcp', ports = '8' },
-        use = { action = 'block' }
+        match = { networks = '1.2.3.4', protocol = 'tcp', ports = '88 8088' },
+        config = { type = 'http', name = 'iis' },
     },
-    { when = { proto = 'tcp', ports = 'any' }, use = { type = 'wizard' } },
-    { when = { proto = 'udp', ports = 'any' }, use = { type = 'wizard' } },
+
+    {
+        match = { networks = '192.168.1.0/24', protocol = 'udp', ports = '53' },
+        action = 'block'
+    }
 }
  
+-- lowmem_q = { var = "test" }
+

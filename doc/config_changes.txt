@@ -17,30 +17,42 @@ change:  ac-split ==> split_any_any
 change:  ac-std ==> ac_std
 change:  accumulate ==> reset = false
 change:  acs ==> ac_sparse
-change:  addressspace_agnostic  ==> address_space_agnostic
 change:  alert_unified2 ==> unified2
 change:  alt_max_param_len ==> cmd_validity
-change:  autogenerate_preprocessor_decoder_rules  ==> enable_builtin_rules
 change:  bind_to ==> bindings
 change:  bleedover-port-limit ==> bleedover_port_limit
 change:  bleedover-warnings-enabled ==> bleedover_warnings_enabled
 change:  block ==> base
-change:  checksum_mode  ==> checksum_eval
+change:  config addressspace_agnostic  ==> packets.address_space_agnostic
 change:  config alertfile: ==> alert_fast.file
 change:  config alertfile: ==> alert_full.file
+change:  config autogenerate_preprocessor_decoder_rules  ==> ips.enable_builtin_rules
+change:  config checksum_mode  ==> network.checksum_eval
+change:  config daq  ==> daq.type
+change:  config daq_dir  ==> daq.dir
+change:  config daq_mode  ==> daq.mode
+change:  config daq_var  ==> daq.var
+change:  config detection_filter  ==> alerts.detection_filter_memcap
+change:  config disable_inline_init_failopen  ==> packets.enable_inline_init_failopen
+change:  config enable_deep_teredo_inspection  ==> udp.deep_teredo_inspection
+change:  config event_filter  ==> alerts.event_filter_memcap
 change:  config file: file_block_timeout ==> block_timeout
 change:  config file: file_lookup_timeout ==> lookup_timeout
 change:  config file: file_signature_depth ==> signature_depth
 change:  config file: file_type_depth ==> type_depth
 change:  config file: signature ==> enable_signature
 change:  config file: type_id ==> enable_type
+change:  config max_attribute_hosts  ==> attribute_table.max_hosts
+change:  config max_attribute_services_per_host  ==> attribute_table.max_services_per_host
 change:  config mpls_payload_type: ethernet ==> mpls_payload_type = eth
 change:  config mpls_payload_type: ipv4 ==> mpls_payload_type = ip4
 change:  config mpls_payload_type: ipv6 ==> mpls_payload_type = ip6
-change:  daq  ==> type
-change:  daq_dir  ==> dir
-change:  daq_mode  ==> mode
-change:  daq_var  ==> var
+change:  config nopcre  ==> detection.pcre_enable
+change:  config pkt_count  ==> packets.limit
+change:  config policy_mode  ==> ips.mode
+change:  config rate_filter  ==> alerts.rate_filter_memcap
+change:  config react  ==> react.page
+change:  config threshold  ==> alerts.event_filter_memcap
 change:  data_chan ==> ignore_data_chan
 change:  debug-pkts ==> debug_pkts
 change:  debug-print-fast-pattern ==> debug_print_fast_pattern
@@ -48,9 +60,7 @@ change:  debug-print-nocontent-rule-tests ==> debug_print_nocontent_rule_tests
 change:  debug-print-rule-group-build-details ==> debug_print_rule_group_build_details
 change:  debug-print-rule-groups-compiled ==> debug_print_rule_groups_compiled
 change:  debug-print-rule-groups-uncompiled ==> debug_print_rule_groups_uncompiled
-change:  detection_filter  ==> detection_filter_memcap
 change:  dgmlen ==> dgm_len
-change:  disable_inline_init_failopen  ==> enable_inline_init_failopen
 change:  disabled ==> enable
 change:  dont_reassemble_async ==> reassemble_async
 change:  dstport ==> dst_port
@@ -60,12 +70,10 @@ change:  dynamicpreprocessor ==> plugin_path
 change:  dynamicsidechannel ==> plugin_path
 change:  enable-single-rule-group ==> enable_single_rule_group
 change:  enable_cookie ==> enable_cookies
-change:  enable_deep_teredo_inspection  ==> deep_teredo_inspection
 change:  enabled ==> enable
 change:  ethdst ==> eth_dst
 change:  ethlen ==> eth_len
 change:  ethsrc ==> eth_src
-change:  event_filter  ==> event_filter_memcap
 change:  fastpath-expensive-packets ==> fastpath_expensive_packets
 change:  filename ==> file
 change:  flow-file ==> flow_file = true
@@ -115,8 +123,6 @@ change:  max-pattern-len ==> max_pattern_len
 change:  max-pkt-time ==> max_pkt_time
 change:  max-rule-time ==> max_rule_time
 change:  max_active_responses ==> max_responses
-change:  max_attribute_hosts  ==> max_hosts
-change:  max_attribute_services_per_host  ==> max_services_per_host
 change:  max_icmp ==> max_sessions
 change:  max_ip ==> max_sessions
 change:  max_queued_bytes ==> queue_limit.max_bytes
@@ -126,27 +132,22 @@ change:  max_udp ==> max_sessions
 change:  min_fragment_length ==> min_frag_length
 change:  min_response_seconds ==> min_interval
 change:  non_rfc_char ==> non_rfc_chars
-change:  nopcre  ==> pcre_enable
 change:  overlap_limit ==> max_overlaps
 change:  pad ==> base
 change:  paf_max [0:63780] ==> paf_max [1460:63780]
 change:  pkt-log  ==> pkt_log
-change:  pkt_count  ==> limit
 change:  pktcnt ==> packets
 change:  policy bsd-right ==> policy = bsd_right
-change:  policy_mode  ==> mode
 change:  ports ==> bindings
 change:  ports ==> gtp_ports
 change:  post_depth [-1:65495] ==> post_depth [-1:65535]
 change:  preprocessor frag3_engine: timeout 0 ==> session_timeout 256
-change:  preprocessor normalize_icmp4 ==> icmp4 == <bool>
-change:  preprocessor normalize_icmp6 ==> icmp6 == <bool>
-change:  preprocessor normalize_ip6 ==> ip6 == <bool>
+change:  preprocessor normalize_icmp4 ==> normalize.icmp4
+change:  preprocessor normalize_icmp6 ==> normalize.icmp6
+change:  preprocessor normalize_ip6 ==> normalize.ip6
 change:  print ==> count
 change:  proto ==> protos
 change:  prune_log_max ==> histogram
-change:  rate_filter  ==> rate_filter_memcap
-change:  react  ==> page
 change:  req_pay ==> base
 change:  req_urg ==> base
 change:  req_urp ==> base
@@ -182,7 +183,6 @@ change:  tcpflags ==> tcp_flags
 change:  tcplen ==> tcp_len
 change:  tcpseq ==> tcp_seq
 change:  tcpwindow ==> tcp_win
-change:  threshold  ==> event_filter_memcap
 change:  time ==> seconds
 change:  timeout ==> session_timeout
 change:  trim_mss ==> trim

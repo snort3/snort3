@@ -89,7 +89,6 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    ip_len = ntohs(ip4h->get_len());/* set the IP datagram length */
     hlen = ip4h->get_hlen() << 2;    /* set the IP header length */
 
     if(raw_len < hlen)

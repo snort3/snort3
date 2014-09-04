@@ -193,10 +193,10 @@ static const LogApi log_codecs_api =
         mod_ctor,
         mod_dtor
     },
-    (OUTPUT_TYPE_FLAG__LOG | OUTPUT_TYPE_FLAG__ALERT),
+    OUTPUT_TYPE_FLAG__LOG,
     codec_log_ctor,
     codec_log_dtor
 };
 
 
-const BaseApi* eh_codecs = &log_codecs_api.base;
+const BaseApi* log_codecs = &log_codecs_api.base;
