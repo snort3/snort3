@@ -186,16 +186,16 @@ void AttributeTable::parse_os()
                     " <FRAG_POLICY>**missing policy**</FRAG_POLICY>");
 
             else if (!policy.compare("unknown"))
-                    table_api.add_deleted_comment("Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>");
+                    table_api.add_deleted_comment("<FRAG_POLICY>unkown</FRAG_POLICY>");
 
             else if (!policy.compare("hpux"))
-                table_api.add_deleted_comment("Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>");
+                table_api.add_deleted_comment("<FRAG_POLICY>hpux</FRAG_POLICY>");
 
             else if (!policy.compare("irix"))
-                table_api.add_deleted_comment("Attribute_table: <FRAG_POLICY>irix</FRAG_POLICY>");
+                table_api.add_deleted_comment("<FRAG_POLICY>irix</FRAG_POLICY>");
 
             else if (!policy.compare("old-linux"))
-                table_api.add_deleted_comment("Attribute_table: <FRAG_POLICY>old-linux</FRAG_POLICY>");
+                table_api.add_deleted_comment("<FRAG_POLICY>old-linux</FRAG_POLICY>");
 
             else if (!policy.compare("bsd"))
                 table_api.add_option("frag_policy", "bsd");
@@ -218,13 +218,13 @@ void AttributeTable::parse_os()
             else if (!policy.compare("bsd-right"))
             {
                 // keep this on one line so data miner can find it
-                table_api.add_diff_option_comment("Attribute_table: <FRAG_POLICY>bsd-right</FRAG_POLICY>", "hosts.frag_policy = bsd_right");
+                table_api.add_diff_option_comment("<FRAG_POLICY>bsd-right</FRAG_POLICY>", "hosts.frag_policy = bsd_right");
                 table_api.add_option("frag_policy", "bsd_right");
             }
 
             else
             {
-                data_api.failed_conversion(*stream, "Attribute_Table: <FRAG_POLICY>" +
+                data_api.failed_conversion(*stream, "<FRAG_POLICY>" +
                     policy + "</FRAG_POLICY>");
             }
         }
@@ -281,38 +281,38 @@ void AttributeTable::parse_os()
                 table_api.add_option("tcp_policy", "macos");
 
             else if (!policy.compare("unknown"))
-                table_api.add_deleted_comment("Attribute_table: <STREAM_POLICY>unkown</STREAM_POLICY>");
+                table_api.add_deleted_comment("<STREAM_POLICY>unkown</STREAM_POLICY>");
 
             else if (!policy.compare("noack"))
-                table_api.add_deleted_comment("Attribute_table: <STREAM_POLICY>noack</STREAM_POLICY>");
+                table_api.add_deleted_comment("<STREAM_POLICY>noack</STREAM_POLICY>");
 
             else if (!policy.compare("hpux11"))
             {
-                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>hpux11</STREAM_POLICY>", "hosts.tcp_policy = hpux");
+                table_api.add_diff_option_comment("<STREAM_POLICY>hpux11</STREAM_POLICY>", "hosts.tcp_policy = hpux");
                 table_api.add_option("tcp_policy", "hpux");
             }
 
             else if (!policy.compare("win2003"))
             {
-                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>win2003</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
+                table_api.add_diff_option_comment("<STREAM_POLICY>win2003</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
                 table_api.add_option("tcp_policy", "win-2003");
             }
 
             else if (!policy.compare("win2k3"))
             {
-                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>win2k3</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
+                table_api.add_diff_option_comment("<STREAM_POLICY>win2k3</STREAM_POLICY>", "hosts.tcp_policy = win-2003");
                 table_api.add_option("tcp_policy", "win-2003");
             }
 
             else if (!policy.compare("grannysmith"))
             {
-                table_api.add_diff_option_comment("Attribute_table: <STREAM_POLICY>grannysmith</STREAM_POLICY>", "hosts.tcp_policy = macos");
+                table_api.add_diff_option_comment("<STREAM_POLICY>grannysmith</STREAM_POLICY>", "hosts.tcp_policy = macos");
                 table_api.add_option("tcp_policy", "macos");
             }
 
             else
             {
-                data_api.failed_conversion(*stream, "Attribute_Table: <STREAM_POLICY>" +
+                data_api.failed_conversion(*stream, "<STREAM_POLICY>" +
                     policy + "</STREAM_POLICY>");
             }
         }
@@ -325,7 +325,7 @@ void AttributeTable::parse_os()
 void AttributeTable::parse_host()
 {
     table_api.open_table("hosts");
-    table_api.add_diff_option_comment("Attribute_table: STREAM_POLICY", "hosts: tcp_policy");
+    table_api.add_diff_option_comment("STREAM_POLICY", "hosts: tcp_policy");
     table_api.open_table();
 
     std::string elem;
@@ -442,8 +442,13 @@ bool AttributeTable::convert(std::istringstream& data_stream)
     {
         table_api.open_table("hosts");
         table_api.add_comment("unable to open the attribute file: " + file);
+        table_api.close_table();
         return false;
     }
+
+    table_api.open_table("hosts");
+    table_api.add_diff_option_comment("filename <file_name>", "hosts[]");
+    table_api.close_table();
 
     attr_file.open(file, std::ifstream::in);
     std::string elem;
