@@ -45,10 +45,13 @@ static const RuleMap vlan_rules[] =
     { 0, nullptr }
 };
 
+static const char* vlan_help =
+    "support for virtual local area network";
+
 class VlanModule : public DecodeModule
 {
 public:
-    VlanModule() : DecodeModule(CD_VLAN_NAME) {}
+    VlanModule() : DecodeModule(CD_VLAN_NAME, vlan_help) {}
 
     const RuleMap* get_rules() const
     { return vlan_rules; }

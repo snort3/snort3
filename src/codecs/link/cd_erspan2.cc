@@ -39,10 +39,13 @@ static const RuleMap erspan2_rules[] =
     { 0, nullptr }
 };
 
+static const char* erspan2_help =
+    "support for encapsulated remote switched port analyzer - type 2";
+
 class Erspan2Module : public DecodeModule
 {
 public:
-    Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME) {}
+    Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME, erspan2_help) {}
 
     const RuleMap* get_rules() const
     { return erspan2_rules; }

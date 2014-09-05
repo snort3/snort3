@@ -44,10 +44,13 @@ static const RuleMap auth_rules[] =
     { 0, nullptr }
 };
 
+static const char* s_help =
+    "support for IP authentication header";
+
 class AuthModule : public DecodeModule
 {
 public:
-    AuthModule() : DecodeModule(CD_AUTH_NAME) {}
+    AuthModule() : DecodeModule(CD_AUTH_NAME, s_help) {}
 
     const RuleMap* get_rules() const
     { return auth_rules; }
@@ -57,7 +60,6 @@ public:
 //-------------------------------------------------------------------------
 // auth module
 //-------------------------------------------------------------------------
-
 
 class AuthCodec : public Codec
 {

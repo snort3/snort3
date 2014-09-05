@@ -146,10 +146,13 @@ static const Parameter rej_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* rej_help =
+    "terminate session with TCP reset or ICMP unreachable";
+
 class RejectModule : public Module
 {
 public:
-    RejectModule() : Module(s_name, rej_params) { };
+    RejectModule() : Module(s_name, rej_help, rej_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);

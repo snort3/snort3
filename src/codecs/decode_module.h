@@ -213,11 +213,11 @@ enum CodecSid {
 class DecodeModule : public Module
 {
 public:
-    DecodeModule(const char* s) : Module(s)
+    DecodeModule(const char* s, const char* h) : Module(s, h)
     { };
 
-    DecodeModule(const char* s, const Parameter* p, bool is_list = false)
-    : Module(s, p, is_list) { };
+    DecodeModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
+    : Module(s, h, p, is_list) { };
 
     unsigned get_gid() const
     { return GID_DECODE; };

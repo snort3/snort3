@@ -44,10 +44,13 @@ static const RuleMap eapol_rules[] =
     { 0, nullptr }
 };
 
+static const char* eapol_help =
+    "support for extensible authentication protocol over LAN";
+
 class EapolModule : public DecodeModule
 {
 public:
-    EapolModule() : DecodeModule(CD_EAPOL_NAME) {}
+    EapolModule() : DecodeModule(CD_EAPOL_NAME, eapol_help) {}
 
     const RuleMap* get_rules() const
     { return eapol_rules; }

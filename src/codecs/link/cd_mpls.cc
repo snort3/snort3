@@ -71,10 +71,13 @@ static const RuleMap mpls_rules[] =
     { 0, nullptr }
 };
 
+static const char* mpls_help =
+    "support for multiprotocol label switching";
+
 class MplsModule : public DecodeModule
 {
 public:
-    MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_params) {};
+    MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_help, mpls_params) {};
 
     const RuleMap* get_rules() const
     { return mpls_rules; }

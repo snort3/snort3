@@ -261,10 +261,13 @@ static const Parameter react_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* react_help =
+    "send response to client and terminate session";
+
 class ReactModule : public Module
 {
 public:
-    ReactModule() : Module(s_name, react_params) { };
+    ReactModule() : Module(s_name, react_help, react_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

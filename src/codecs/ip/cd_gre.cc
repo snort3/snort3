@@ -47,19 +47,17 @@ static const RuleMap gre_rules[] =
     { 0, nullptr }
 };
 
+static const char* gre_help =
+    "support for generic routing encapsulation";
 
 class GreModule : public DecodeModule
 {
 public:
-    GreModule() : DecodeModule(CD_GRE_NAME) {}
+    GreModule() : DecodeModule(CD_GRE_NAME, gre_help) {}
 
     const RuleMap* get_rules() const
     { return gre_rules; }
 };
-
-
-
-
 
 class GreCodec : public Codec
 {

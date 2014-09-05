@@ -43,11 +43,13 @@ static const RuleMap igmp_rules[] =
     { 0, nullptr }
 };
 
+static const char* igmp_help =
+    "support for internet group management protocol";
 
 class IgmpModule : public DecodeModule
 {
 public:
-    IgmpModule() : DecodeModule(CD_IGMP_NAME) {}
+    IgmpModule() : DecodeModule(CD_IGMP_NAME, igmp_help) {}
 
     const RuleMap* get_rules() const
     { return igmp_rules; }

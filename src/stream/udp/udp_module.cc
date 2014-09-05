@@ -31,7 +31,7 @@ using namespace std;
 // stream_udp module
 //-------------------------------------------------------------------------
 
-static const Parameter stream_udp_params[] =
+static const Parameter s_params[] =
 {
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
@@ -42,8 +42,11 @@ static const Parameter stream_udp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help = 
+    "stream inspector for UDP flow tracking";
+
 StreamUdpModule::StreamUdpModule() :
-    Module(MOD_NAME, stream_udp_params)
+    Module(MOD_NAME, s_help, s_params)
 {
     config = nullptr;
 }

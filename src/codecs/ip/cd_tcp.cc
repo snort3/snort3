@@ -79,17 +79,17 @@ static const RuleMap tcp_rules[] =
     { 0, nullptr }
 };
 
+static const char* tcp_help =
+    "support for transmission control protocol";
 
 class TcpModule : public DecodeModule
 {
 public:
-    TcpModule() : DecodeModule(CD_TCP_NAME) {}
+    TcpModule() : DecodeModule(CD_TCP_NAME, tcp_help) {}
 
     const RuleMap* get_rules() const
     { return tcp_rules; }
 };
-
-
 
 class TcpCodec : public Codec
 {

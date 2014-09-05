@@ -71,16 +71,17 @@ static const RuleMap icmp4_rules[] =
     { 0, nullptr }
 };
 
+static const char* icmp4_help =
+    "support for internet control message protocol v4";
+
 class Icmp4Module : public DecodeModule
 {
 public:
-    Icmp4Module() : DecodeModule(CD_ICMP4_NAME) {}
+    Icmp4Module() : DecodeModule(CD_ICMP4_NAME, icmp4_help) {}
 
     const RuleMap* get_rules() const
     { return icmp4_rules; }
 };
-
-
 
 class Icmp4Codec : public Codec{
 

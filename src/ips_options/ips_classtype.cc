@@ -42,7 +42,7 @@ static const char* s_name = "classtype";
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter classtype_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
       "classification for this rule" },
@@ -50,10 +50,13 @@ static const Parameter classtype_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "general rule option for rule classification";
+
 class ClassTypeModule : public Module
 {
 public:
-    ClassTypeModule() : Module(s_name, classtype_params) { };
+    ClassTypeModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     ClassType* type;
 };

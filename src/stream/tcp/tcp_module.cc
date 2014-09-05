@@ -102,7 +102,7 @@ static const Parameter stream_queue_limit_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter stream_tcp_params[] =
+static const Parameter s_params[] =
 {
     { "flush_factor", Parameter::PT_INT, "0:", "0",
       "flush upon seeing a drop in segment size after given number of non-decreasing segments" },
@@ -172,8 +172,11 @@ static const RuleMap stream_tcp_rules[] =
     { 0, nullptr }
 };
 
+static const char* s_help = 
+    "stream inspector for TCP flow tracking and stream normalization and reassembly";
+
 StreamTcpModule::StreamTcpModule() :
-    Module(MOD_NAME, stream_tcp_params)
+    Module(MOD_NAME, s_help, s_params)
 {
     config = nullptr;
 }

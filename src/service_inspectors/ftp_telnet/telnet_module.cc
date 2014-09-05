@@ -25,6 +25,11 @@
 
 using namespace std;
 
+static const char* s_name = "telnet";
+
+static const char* s_help = 
+    "telnet inspector";
+
 //-------------------------------------------------------------------------
 // telnet module
 //-------------------------------------------------------------------------
@@ -36,7 +41,7 @@ using namespace std;
 #define TELNET_SB_NO_SE_STR                      \
         "(telnet) Telnet Subnegotiation Begin Command without Subnegotiation End"
 
-static const Parameter telnet_params[] =
+static const Parameter s_params[] =
 {
     { "ayt_attack_thresh", Parameter::PT_INT, "-1:", "-1",
       "alert on this number of consecutive telnet AYT commands" },
@@ -63,7 +68,7 @@ static const RuleMap telnet_rules[] =
 };
 
 TelnetModule::TelnetModule() :
-    Module("telnet", telnet_params)
+    Module(s_name, s_help, s_params)
 {
     conf = nullptr;
 }

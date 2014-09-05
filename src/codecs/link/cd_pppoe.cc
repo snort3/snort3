@@ -64,10 +64,13 @@ static const RuleMap pppoe_rules[] =
     { 0, nullptr }
 };
 
+static const char* pppoe_help =
+    "support for point-to-point protocol over ethernet";
+
 class PPPoEModule : public DecodeModule
 {
 public:
-    PPPoEModule() : DecodeModule(CD_PPPOE_NAME) {}
+    PPPoEModule() : DecodeModule(CD_PPPOE_NAME, pppoe_help) {}
 
     const RuleMap* get_rules() const
     { return pppoe_rules; }

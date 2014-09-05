@@ -31,7 +31,7 @@ using namespace std;
 // stream_icmp module
 //-------------------------------------------------------------------------
 
-static const Parameter stream_icmp_params[] =
+static const Parameter s_params[] =
 {
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
@@ -39,8 +39,11 @@ static const Parameter stream_icmp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "stream inspector for ICMP flow tracking";
+
 StreamIcmpModule::StreamIcmpModule() :
-    Module(MOD_NAME, stream_icmp_params)
+    Module(MOD_NAME, s_help, s_params)
 {
     config = nullptr;
 }

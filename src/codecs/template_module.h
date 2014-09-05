@@ -27,6 +27,9 @@
 
 #define CODEC_NAME "name"
 
+static const char* name_help =
+    "support for name protocol";
+
 // inherit from DecodeModule rather than Module so the GID for
 // all codecs are identical. Additionally, all of the SIDS are
 // defined in DecodeModule. So, when creating new events, you
@@ -34,7 +37,7 @@
 class NameModule : public DecodeModule
 {
 public:
-    NameModule();
+    NameModule() : Module("name", name_help) { };
 
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);

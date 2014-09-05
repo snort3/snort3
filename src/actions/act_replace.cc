@@ -105,10 +105,13 @@ static const Parameter rep_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* rep_help =
+    "overwrite packet contents";
+
 class ReplaceModule : public Module
 {
 public:
-    ReplaceModule() : Module(s_name, rep_params) { };
+    ReplaceModule() : Module(s_name, rep_help, rep_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);

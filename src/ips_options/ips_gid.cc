@@ -39,7 +39,7 @@ static const char* s_name = "gid";
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter gid_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_INT, "1:", nullptr,
       "generator id" },
@@ -47,10 +47,13 @@ static const Parameter gid_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option specifying rule generator";
+
 class GidModule : public Module
 {
 public:
-    GidModule() : Module(s_name, gid_params) { };
+    GidModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     int gid;
 };

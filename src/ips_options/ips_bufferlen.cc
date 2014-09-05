@@ -104,7 +104,7 @@ int LenOption::eval(Cursor& c, Packet*)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter len_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "min<>max | <max | >min" },
@@ -112,10 +112,13 @@ static const Parameter len_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check length of current buffer";
+
 class LenModule : public Module
 {
 public:
-    LenModule() : Module(s_name, len_params) { };
+    LenModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

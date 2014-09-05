@@ -48,10 +48,13 @@ static const RuleMap wlan_rules[] =
     { 0, nullptr }
 };
 
+static const char* wlan_help =
+    "support for wireless local area network protocol";
+
 class WlanCodecModule : public DecodeModule
 {
 public:
-    WlanCodecModule() : DecodeModule(CD_WLAN_NAME) {}
+    WlanCodecModule() : DecodeModule(CD_WLAN_NAME, wlan_help) {}
 
     const RuleMap* get_rules() const
     { return wlan_rules; }

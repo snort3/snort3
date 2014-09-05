@@ -84,7 +84,7 @@ SO_PUBLIC const SnortEvent* get_event()
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter luajit_params[] =
+static const Parameter s_params[] =
 {
     { "args", Parameter::PT_STRING, nullptr, nullptr,
       "luajit logger arguments" },
@@ -92,10 +92,13 @@ static const Parameter luajit_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event from custom Lua script";
+
 class LuaLogModule : public Module
 {
 public:
-    LuaLogModule(const char* name) : Module(name, luajit_params)
+    LuaLogModule(const char* name) : Module(name, s_help, s_params)
     { };
 
     bool begin(const char*, int, SnortConfig*)
@@ -220,7 +223,7 @@ static const LogApi log_lua_api =
 {
     {
         PT_LOGGER,
-        "tbd",
+        "luajit",
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

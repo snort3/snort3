@@ -42,10 +42,13 @@ static const RuleMap eth_rules[] =
     { 0, nullptr }
 };
 
+static const char* eth_help =
+    "support for ethernet protocol";
+
 class EthModule : public DecodeModule
 {
 public:
-    EthModule() : DecodeModule(CD_ETH_NAME) {}
+    EthModule() : DecodeModule(CD_ETH_NAME, eth_help) {}
 
     const RuleMap* get_rules() const
     { return eth_rules; }

@@ -102,7 +102,7 @@ int TcpSeqOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter seq_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
@@ -110,10 +110,13 @@ static const Parameter seq_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check TCP sequence number";
+
 class SeqModule : public Module
 {
 public:
-    SeqModule() : Module(s_name, seq_params) { };
+    SeqModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

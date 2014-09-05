@@ -42,11 +42,13 @@ static const RuleMap pgm_rules[] =
     { 0, nullptr }
 };
 
+static const char* pgm_help =
+    "support for pragmatic general multicast";
 
 class PgmModule : public DecodeModule
 {
 public:
-    PgmModule() : DecodeModule(CD_PGM_NAME) {}
+    PgmModule() : DecodeModule(CD_PGM_NAME, pgm_help) {}
 
     const RuleMap* get_rules() const
     { return pgm_rules; }

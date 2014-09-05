@@ -136,18 +136,21 @@ int IcmpSeqOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter icmp_id_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if icmp sequence number is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check ICMP sequence number";
+
 class IcmpSeqModule : public Module
 {
 public:
-    IcmpSeqModule() : Module(s_name, icmp_id_params) { };
+    IcmpSeqModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

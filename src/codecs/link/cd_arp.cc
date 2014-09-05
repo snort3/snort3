@@ -19,11 +19,6 @@
 */
 // cd_arp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
-
-
-
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
@@ -43,11 +38,13 @@ static const RuleMap arp_rules[] =
     { 0, nullptr }
 };
 
+static const char* arp_help =
+    "support for address resolution protocol";
 
 class ArpModule : public DecodeModule
 {
 public:
-    ArpModule() : DecodeModule(CD_ARP_NAME) {}
+    ArpModule() : DecodeModule(CD_ARP_NAME, arp_help) {}
 
     const RuleMap* get_rules() const
     { return arp_rules; }

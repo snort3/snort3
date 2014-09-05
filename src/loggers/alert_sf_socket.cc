@@ -66,6 +66,8 @@ static THREAD_LOCAL SfSock context;
 using namespace std;
 typedef vector<RuleId> RuleVector;
 
+static const char* s_name = "alert_sfsocket";
+
 //-------------------------------------------------------------------------
 // alert_sfsocket module
 //-------------------------------------------------------------------------
@@ -81,7 +83,7 @@ static const Parameter rule_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter sfsocket_params[] =
+static const Parameter s_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "name of unix socket file" },
@@ -92,10 +94,13 @@ static const Parameter sfsocket_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event over socket";
+
 class SfSocketModule : public Module
 {
 public:
-    SfSocketModule() : Module("alert_sfsocket", sfsocket_params) { };
+    SfSocketModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -398,7 +403,7 @@ static LogApi sf_sock_api
 {
     {
         PT_LOGGER,
-        "alert_sfsocket",
+        s_name,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

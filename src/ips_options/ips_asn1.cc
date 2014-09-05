@@ -191,7 +191,7 @@ int Asn1Option::eval(Cursor& c, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter asn1_params[] =
+static const Parameter s_params[] =
 {
     { BITSTRING_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
       "Detects invalid bitstring encodings that are known to be remotely exploitable." },
@@ -214,10 +214,13 @@ static const Parameter asn1_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option for asn1 detection";
+
 class Asn1Module : public Module
 {
 public:
-    Asn1Module() : Module(s_name, asn1_params) { };
+    Asn1Module() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

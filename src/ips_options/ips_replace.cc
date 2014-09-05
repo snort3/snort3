@@ -193,7 +193,7 @@ void ReplaceOption::action(Packet*)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter repl_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
       "byte code to replace with" },
@@ -201,10 +201,13 @@ static const Parameter repl_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to overwrite payload data; use with rewrite action";
+
 class ReplModule : public Module
 {
 public:
-    ReplModule() : Module(s_name, repl_params) { };
+    ReplModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

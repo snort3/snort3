@@ -84,16 +84,17 @@ static const RuleMap ipv4_rules[] =
     { 0, nullptr }
 };
 
+static const char* ipv4_help =
+    "support for internet protocol v4";
+
 class Ipv4Module : public DecodeModule
 {
 public:
-    Ipv4Module() : DecodeModule(CD_IPV4_NAME) {}
+    Ipv4Module() : DecodeModule(CD_IPV4_NAME, ipv4_help) {}
 
     const RuleMap* get_rules() const
     { return ipv4_rules; }
 };
-
-
 
 class Ipv4Codec : public Codec
 {

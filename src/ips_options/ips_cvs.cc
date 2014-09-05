@@ -429,7 +429,7 @@ static void CvsGetEOL(const uint8_t *ptr, const uint8_t *end,
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter cvs_params[] =
+static const Parameter s_params[] =
 {
     { CVS_CONF_INVALID_ENTRY_STR, Parameter::PT_IMPLIED, nullptr, nullptr,
       "looks for an invalid Entry string" },
@@ -437,10 +437,13 @@ static const Parameter cvs_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "payload rule option for detecting specific attacks";
+
 class CvsModule : public Module
 {
 public:
-    CvsModule() : Module(s_name, cvs_params) { };
+    CvsModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

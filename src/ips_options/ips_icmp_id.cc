@@ -134,18 +134,21 @@ int IcmpIdOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter icmp_id_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if icmp id is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check ICMP ID";
+
 class IcmpIdModule : public Module
 {
 public:
-    IcmpIdModule() : Module(s_name, icmp_id_params) { };
+    IcmpIdModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

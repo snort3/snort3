@@ -41,7 +41,7 @@ static const char* s_name = "http_header";
 
 static THREAD_LOCAL ProfileStats httpHeaderPerfStats;
 
-static const Parameter hh_params[] =
+static const Parameter s_params[] =
 {
     { "~name", Parameter::PT_STRING, nullptr, nullptr,
       "restrict to given header" },
@@ -53,10 +53,13 @@ static const Parameter hh_params[] =
 // module
 //-------------------------------------------------------------------------
 
+static const char* s_help =
+    "rule option to set the detection cursor to the normalized header(s)";
+
 class HttpHeaderModule : public Module
 {
 public:
-    HttpHeaderModule() : Module(s_name, hh_params) { };
+    HttpHeaderModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

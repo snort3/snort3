@@ -71,11 +71,13 @@ static const RuleMap ipv6_rules[] =
     { 0, nullptr }
 };
 
+static const char* ipv6_help =
+    "support for internet protocol v6";
 
 class Ipv6Module : public DecodeModule
 {
 public:
-    Ipv6Module() : DecodeModule(CD_IPV6_NAME) {}
+    Ipv6Module() : DecodeModule(CD_IPV6_NAME, ipv6_help) {}
 
     const RuleMap* get_rules() const
     { return ipv6_rules; }

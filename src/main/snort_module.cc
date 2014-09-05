@@ -72,7 +72,7 @@ static const Command snort_cmds[] =
 // parameters
 //-------------------------------------------------------------------------
 
-static const Parameter snort_params[] =
+static const Parameter s_params[] =
 {
     { "-?", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list command line options (same as --help)" },
@@ -257,6 +257,9 @@ static const Parameter snort_params[] =
     { "--help-module", Parameter::PT_STRING, nullptr, nullptr,
       "<module> output description of given module" },
 
+    { "--help-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list all modules with brief help" },
+
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help" },
 
@@ -370,10 +373,15 @@ static const Parameter snort_params[] =
 // module
 //-------------------------------------------------------------------------
 
+static const char* s_name = "snort";
+
+static const char* s_help =
+    "command line configuration and shell commands";
+
 class SnortModule : public Module
 {
 public:
-    SnortModule() : Module("snort", snort_params)
+    SnortModule() : Module(s_name, s_help, s_params)
     { };
 
     const Command* get_commands() const
@@ -567,6 +575,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--help-module") )
         help_module(sc, v.get_string());
+
+    else if ( v.is("--help-modules") )
+        help_modules(sc, v.get_string());
 
     else if ( v.is("--help-options") )
         help_options(sc, v.get_string());

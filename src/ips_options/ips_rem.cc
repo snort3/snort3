@@ -38,7 +38,7 @@ static const char* s_name = "rem";
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter rem_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
       "comment" },
@@ -46,10 +46,13 @@ static const Parameter rem_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to convey an arbitrary comment in the rule body";
+
 class RemModule : public Module
 {
 public:
-    RemModule() : Module(s_name, rem_params) { };
+    RemModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 

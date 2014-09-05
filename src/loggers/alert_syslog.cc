@@ -51,6 +51,8 @@
 
 using namespace std;
 
+static const char* s_name = "alert_syslog";
+
 //-------------------------------------------------------------------------
 // translation stuff
 //-------------------------------------------------------------------------
@@ -125,7 +127,7 @@ static int get_options(const char* s)
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter syslog_params[] =
+static const Parameter s_params[] =
 {
     { "facility", Parameter::PT_ENUM, syslog_facilities, "auth",
       "part of priority applied to each message" },
@@ -139,10 +141,13 @@ static const Parameter syslog_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event to syslog";
+
 class SyslogModule : public Module
 {
 public:
-    SyslogModule() : Module("alert_syslog", syslog_params) { };
+    SyslogModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -344,7 +349,7 @@ static LogApi syslog_api
 {
     {
         PT_LOGGER,
-        "alert_syslog",
+        s_name,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

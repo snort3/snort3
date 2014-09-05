@@ -122,7 +122,7 @@ int DsizeOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter dsize_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
@@ -130,10 +130,13 @@ static const Parameter dsize_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to test payload size";
+
 class DsizeModule : public Module
 {
 public:
-    DsizeModule() : Module(s_name, dsize_params) { };
+    DsizeModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

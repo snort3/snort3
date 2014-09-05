@@ -34,7 +34,7 @@ static const char* protos =
 static const char* scans =
     "portscan | portsweep | decoy_portscan | distributed_portscan | all";
 
-static const Parameter port_scan_params[] =
+static const Parameter ps_params[] =
 {
     { "protos", Parameter::PT_MULTI, protos, "all",
       "choose the protocols to monitor" },
@@ -102,8 +102,13 @@ static const RuleMap port_scan_rules[] =
 // port_scan module
 //-------------------------------------------------------------------------
 
+static const char* ps_name = "port_scan";
+
+static const char* ps_help =
+    "port scan detection";
+
 PortScanModule::PortScanModule() :
-    Module("port_scan", port_scan_params)
+    Module(ps_name, ps_help, ps_params)
 {
     config = nullptr;
 }
@@ -198,7 +203,11 @@ PortscanConfig* PortScanModule::get_data()
 // port_scan module
 //-------------------------------------------------------------------------
 
-static const Parameter ps_global_params[] =
+static const char* psg_name = "port_scan_global";
+static const char* psg_help =
+    "shared settings for port_scan inspectors";
+
+static const Parameter psg_params[] =
 {
     { "memcap", Parameter::PT_INT, "1:", "1048576",
       "maxium tracker memory" },
@@ -207,7 +216,7 @@ static const Parameter ps_global_params[] =
 };
 
 PortScanGlobalModule::PortScanGlobalModule() :
-    Module("port_scan_global", ps_global_params)
+    Module(psg_name, psg_help, psg_params)
 { 
     common = nullptr;
 }

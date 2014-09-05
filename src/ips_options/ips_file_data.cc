@@ -86,10 +86,13 @@ int FileDataOption::eval(Cursor& c, Packet*)
 // module
 //-------------------------------------------------------------------------
 
+static const char* s_help =
+    "rule option to set detection cursor to file data";
+
 class FileDataModule : public Module
 {
 public:
-    FileDataModule() : Module(s_name) { };
+    FileDataModule() : Module(s_name, s_help) { };
 
     ProfileStats* get_profile() const
     { return &fileDataPerfStats; };

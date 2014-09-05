@@ -679,7 +679,7 @@ static void parse_within(PatternMatchData* pmd, const char *data)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter content_params[] =
+static const Parameter s_params[] =
 {
     { "~data", Parameter::PT_STRING, nullptr, nullptr,
       "data to match" },
@@ -711,10 +711,13 @@ static const Parameter content_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "payload rule option for basic pattern matching";
+
 class ContentModule : public Module
 {
 public:
-    ContentModule() : Module(s_name, content_params)
+    ContentModule() : Module(s_name, s_help, s_params)
     { pmd = nullptr; };
 
     ~ContentModule()

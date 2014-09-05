@@ -83,10 +83,13 @@ static const RuleMap udp_rules[] =
     { 0, nullptr }
 };
 
+static const char* udp_help =
+    "support for user datagram protocol";
+
 class UdpModule : public DecodeModule
 {
 public:
-    UdpModule() : DecodeModule(CD_UDP_NAME, udp_params) {}
+    UdpModule() : DecodeModule(CD_UDP_NAME, udp_help, udp_params) {}
 
     const RuleMap* get_rules() const
     { return udp_rules; }

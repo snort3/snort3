@@ -59,10 +59,13 @@ static const RuleMap icmp6_rules[] =
     { 0, nullptr }
 };
 
+static const char* icmp6_help =
+    "support for internet control message protocol v6";
+
 class Icmp6Module : public DecodeModule
 {
 public:
-    Icmp6Module() : DecodeModule(CD_ICMP6_NAME) {}
+    Icmp6Module() : DecodeModule(CD_ICMP6_NAME, icmp6_help) {}
 
     const RuleMap* get_rules() const
     { return icmp6_rules; }

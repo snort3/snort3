@@ -97,7 +97,7 @@ static const RuleMap stream_ip_rules[] =
     { 0, nullptr }
 };
 
-static const Parameter stream_ip_params[] =
+static const Parameter s_params[] =
 {
     { "max_frags", Parameter::PT_INT, "1:", "8192",
       "maximum number of simultaneous fragments being tracked" },
@@ -120,8 +120,11 @@ static const Parameter stream_ip_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "stream inspector for IP flow tracking";
+
 StreamIpModule::StreamIpModule() :
-    Module(MOD_NAME, stream_ip_params)
+    Module(MOD_NAME, s_help, s_params)
 {
     config = nullptr;
 }

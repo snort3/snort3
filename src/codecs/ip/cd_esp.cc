@@ -52,11 +52,13 @@ static const Parameter esp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* esp_help =
+    "support for encapsulating security payload";
 
 class EspModule : public DecodeModule
 {
 public:
-    EspModule() : DecodeModule(CD_ESP_NAME, esp_params) {}
+    EspModule() : DecodeModule(CD_ESP_NAME, esp_help, esp_params) {}
 
     const RuleMap* get_rules() const
     { return esp_rules; }

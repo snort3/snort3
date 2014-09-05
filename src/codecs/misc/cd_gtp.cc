@@ -47,10 +47,13 @@ static const RuleMap gtp_rules[] =
     { 0, nullptr }
 };
 
+static const char* gtp_help =
+    "support for general-packet-radio-service tunnelling protocol";
+
 class GtpModule : public DecodeModule
 {
 public:
-    GtpModule() : DecodeModule(CD_GTP_NAME) {};
+    GtpModule() : DecodeModule(CD_GTP_NAME, gtp_help) {};
 
     const RuleMap* get_rules() const
     { return gtp_rules; }

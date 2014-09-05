@@ -398,7 +398,7 @@ static void flags_parse_mask(const char *rule, TcpFlagCheckData *idx)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter flags_params[] =
+static const Parameter s_params[] =
 {
     { "~test_flags", Parameter::PT_STRING, nullptr, nullptr,
       "these flags are tested" },
@@ -409,10 +409,13 @@ static const Parameter flags_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to test TCP control flags";
+
 class FlagsModule : public Module
 {
 public:
-    FlagsModule() : Module(s_name, flags_params) { };
+    FlagsModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

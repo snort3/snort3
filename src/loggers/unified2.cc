@@ -67,6 +67,8 @@
 
 using namespace std;
 
+static const char* s_name = "unified2";
+
 /* ------------------ Data structures --------------------------*/
 typedef struct _Unified2Config
 {
@@ -1026,7 +1028,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
 // unified2 module
 //-------------------------------------------------------------------------
 
-static const Parameter u2_params[] =
+static const Parameter s_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, "unified2.log",
       "name of alert file" },
@@ -1049,10 +1051,13 @@ static const Parameter u2_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "ouput event and packet in unified2 format file";
+
 class U2Module : public Module
 {
 public:
-    U2Module() : Module("unified2", u2_params) { };
+    U2Module() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1245,7 +1250,7 @@ static LogApi u2_api
 {
     {
         PT_LOGGER,
-        "unified2",
+        s_name,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,
