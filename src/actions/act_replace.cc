@@ -34,6 +34,9 @@
 
 static const char* s_name = "rewrite";
 
+static const char* s_help =
+    "overwrite packet contents";
+
 // FIXIT-L ips_replace.cc should part of this lib
 // FIXIT-L enforce that a rule with a replace option has a replace action
 //       (and vice-versa)
@@ -100,18 +103,15 @@ static void Replace_ModifyPacket(Packet *p)
 // replace module
 //-------------------------------------------------------------------------
 
-static const Parameter rep_params[] =
+static const Parameter s_params[] =
 {
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* rep_help =
-    "overwrite packet contents";
-
 class ReplaceModule : public Module
 {
 public:
-    ReplaceModule() : Module(s_name, rep_help, rep_params) { };
+    ReplaceModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -183,6 +183,7 @@ static ActionApi rep_api
     {
         PT_IPS_ACTION,
         s_name,
+        s_help,
         ACTAPI_PLUGIN_V0,
         0,
         mod_ctor,

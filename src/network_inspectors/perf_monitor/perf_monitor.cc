@@ -56,8 +56,6 @@
 
 THREAD_LOCAL SFPERF* perfmon_config = nullptr;
 
-static const char* mod_name = "perf_monitor";
-
 THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
 
@@ -379,7 +377,8 @@ static const InspectApi pm_api =
 {
     {
         PT_INSPECTOR,
-        mod_name,
+        PERF_NAME,
+        PERF_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -30,10 +30,6 @@ using namespace std;
 #include "wizard.h"
 #include "magic.h"
 
-static const char* s_name = "wizard";
-static const char* s_help = 
-    "inspector that implements port-independent protocol identification";
-
 //-------------------------------------------------------------------------
 // wizard module
 //-------------------------------------------------------------------------
@@ -105,7 +101,7 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-WizardModule::WizardModule() : Module(s_name, s_help, s_params)
+WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params)
 {
     c2s_hexes = nullptr;
     s2c_hexes = nullptr;

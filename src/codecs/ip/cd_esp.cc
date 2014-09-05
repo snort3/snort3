@@ -32,11 +32,11 @@
 #include "protocols/protocol_ids.h"
 #include "codecs/ip/ip_util.h"
 
+#define CD_ESP_NAME "esp"
+#define CD_ESP_HELP "support for encapsulating security payload"
+
 namespace
 {
-
-
-#define CD_ESP_NAME "esp"
 
 static const RuleMap esp_rules[] =
 {
@@ -53,13 +53,10 @@ static const Parameter esp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* esp_help =
-    "support for encapsulating security payload";
-
 class EspModule : public DecodeModule
 {
 public:
-    EspModule() : DecodeModule(CD_ESP_NAME, esp_help, esp_params) {}
+    EspModule() : DecodeModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) {}
 
     const RuleMap* get_rules() const
     { return esp_rules; }
@@ -221,6 +218,7 @@ static const CodecApi esp_api =
     {
         PT_CODEC,
         CD_ESP_NAME,
+        CD_ESP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

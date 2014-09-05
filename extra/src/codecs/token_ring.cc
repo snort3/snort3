@@ -234,6 +234,7 @@ static const CodecApi tr_api =
     {
         PT_CODEC,
         TR_NAME,
+        TR_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

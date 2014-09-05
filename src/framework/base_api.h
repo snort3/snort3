@@ -52,6 +52,7 @@ struct BaseApi
 {
     PlugType type;
     const char* name;
+    const char* help;
     unsigned api_version;
     unsigned version;
     ModNewFunc mod_ctor;

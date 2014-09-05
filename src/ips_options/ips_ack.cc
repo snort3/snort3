@@ -44,6 +44,9 @@
 
 static const char* s_name = "ack";
 
+static const char* s_help =
+    "rule option to match on TCP ack numbers";
+
 static THREAD_LOCAL ProfileStats tcpAckPerfStats;
 
 class TcpAckOption : public IpsOption
@@ -118,9 +121,6 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to match on TCP ack numbers";
-
 class AckModule : public Module
 {
 public:
@@ -179,6 +179,7 @@ static const IpsApi ack_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

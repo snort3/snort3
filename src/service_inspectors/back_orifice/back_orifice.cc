@@ -146,6 +146,9 @@
 
 static const char* s_name = "back_orifice";
 
+static const char* s_help =
+    "back orifice detection";
+
 /* global keyvalue for the BoRand() function */
 static THREAD_LOCAL long holdrand = 1L;
 
@@ -185,9 +188,6 @@ static const RuleMap bo_rules[] =
 
     { 0, nullptr }
 };
-
-static const char* s_help =
-    "back orifice detection";
 
 class BoModule : public Module
 {
@@ -600,6 +600,7 @@ static const InspectApi bo_api =
     {
         PT_INSPECTOR,
         s_name,
+        s_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

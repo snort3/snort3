@@ -21,11 +21,6 @@
 
 #include "arp_module.h"
 
-static const char* s_name = MOD_NAME;
-
-static const char* s_help = 
-    "detect ARP attacks and anomalies";
-
 #define ARPSPOOF_UNICAST_ARP_REQUEST_STR \
     "(arp_spoof) Unicast ARP request"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR \
@@ -82,7 +77,7 @@ static const RuleMap s_rules[] =
 //-------------------------------------------------------------------------
 
 ArpSpoofModule::ArpSpoofModule() : 
-    Module(s_name, s_help, s_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = new ArpSpoofConfig;
     config->check_overwrite = false;

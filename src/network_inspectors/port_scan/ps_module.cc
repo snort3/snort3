@@ -102,13 +102,8 @@ static const RuleMap port_scan_rules[] =
 // port_scan module
 //-------------------------------------------------------------------------
 
-static const char* ps_name = "port_scan";
-
-static const char* ps_help =
-    "port scan detection";
-
 PortScanModule::PortScanModule() :
-    Module(ps_name, ps_help, ps_params)
+    Module(PS_NAME, PS_HELP, ps_params)
 {
     config = nullptr;
 }
@@ -203,10 +198,6 @@ PortscanConfig* PortScanModule::get_data()
 // port_scan module
 //-------------------------------------------------------------------------
 
-static const char* psg_name = "port_scan_global";
-static const char* psg_help =
-    "shared settings for port_scan inspectors";
-
 static const Parameter psg_params[] =
 {
     { "memcap", Parameter::PT_INT, "1:", "1048576",
@@ -216,7 +207,7 @@ static const Parameter psg_params[] =
 };
 
 PortScanGlobalModule::PortScanGlobalModule() :
-    Module(psg_name, psg_help, psg_params)
+    Module(PSG_NAME, PSG_HELP, psg_params)
 { 
     common = nullptr;
 }

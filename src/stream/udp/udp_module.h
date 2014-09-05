@@ -40,6 +40,7 @@ extern THREAD_LOCAL ProfileStats udp_perf_stats;
 //-------------------------------------------------------------------------
 
 #define MOD_NAME "stream_udp"
+#define MOD_HELP "stream inspector for UDP flow tracking"
 
 struct StreamUdpConfig;
 

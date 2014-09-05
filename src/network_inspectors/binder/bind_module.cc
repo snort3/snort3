@@ -41,11 +41,6 @@ static const char* bind_pegs[] =
     nullptr
 };
 
-static const char* s_name = "binder";
-
-static const char* s_help =
-    "configure processing based on CIDRs, ports, services, etc.";
-
 //-------------------------------------------------------------------------
 // binder module
 //-------------------------------------------------------------------------
@@ -110,7 +105,7 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-BinderModule::BinderModule() : Module(s_name, s_help, s_params)
+BinderModule::BinderModule() : Module(BIND_NAME, BIND_HELP, s_params)
 { work = nullptr; }
 
 BinderModule::~BinderModule()
@@ -179,7 +174,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 
 bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
 {
-    if ( idx && !strcmp(fqn, s_name) )
+    if ( idx && !strcmp(fqn, BIND_NAME) )
         work = new Binding;
 
     return true;
@@ -187,7 +182,7 @@ bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
 
 bool BinderModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( idx && !strcmp(fqn, s_name) )
+    if ( idx && !strcmp(fqn, BIND_NAME) )
     {
         bindings.push_back(work);
         work = nullptr;

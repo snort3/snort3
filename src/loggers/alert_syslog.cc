@@ -350,6 +350,7 @@ static LogApi syslog_api
     {
         PT_LOGGER,
         s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

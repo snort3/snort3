@@ -94,6 +94,9 @@ static THREAD_LOCAL ProfileStats asn1PerfStats;
 
 static const char* s_name = "asn1";
 
+static const char* s_help =
+    "rule option for asn1 detection";
+
 class Asn1Option : public IpsOption
 {
 public:
@@ -214,9 +217,6 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option for asn1 detection";
-
 class Asn1Module : public Module
 {
 public:
@@ -299,6 +299,7 @@ static const IpsApi asn1_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

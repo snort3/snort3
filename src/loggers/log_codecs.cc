@@ -190,6 +190,7 @@ static const LogApi log_codecs_api =
     {
         PT_LOGGER,
         LOG_CODECS_NAME,
+        LOG_CODECS_HELP,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

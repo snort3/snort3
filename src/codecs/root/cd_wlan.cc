@@ -37,10 +37,12 @@
 #include "log/log.h"
 #endif
 
+#define CD_WLAN_NAME "wlan"
+#define CD_WLAN_HELP "support for wireless local area network protocol"
+
 namespace
 {
 
-#define CD_WLAN_NAME "wlan"
 static const RuleMap wlan_rules[] =
 {
     { DECODE_BAD_80211_ETHLLC, "(" CD_WLAN_NAME ") Bad 802.11 LLC header" },
@@ -48,13 +50,10 @@ static const RuleMap wlan_rules[] =
     { 0, nullptr }
 };
 
-static const char* wlan_help =
-    "support for wireless local area network protocol";
-
 class WlanCodecModule : public DecodeModule
 {
 public:
-    WlanCodecModule() : DecodeModule(CD_WLAN_NAME, wlan_help) {}
+    WlanCodecModule() : DecodeModule(CD_WLAN_NAME, CD_WLAN_HELP) {}
 
     const RuleMap* get_rules() const
     { return wlan_rules; }
@@ -253,6 +252,7 @@ static const CodecApi wlan_api =
     {
         PT_CODEC,
         CD_WLAN_NAME,
+        CD_WLAN_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

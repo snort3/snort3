@@ -39,11 +39,12 @@
 #include "packet_io/active.h"
 #include "log/text_log.h"
 
+#define CD_ICMP6_NAME "icmp6"
+#define CD_ICMP6_HELP "support for internet control message protocol v6"
 
 namespace
 {
 
-#define CD_ICMP6_NAME "icmp6"
 static const RuleMap icmp6_rules[] =
 {
     { DECODE_ICMP6_HDR_TRUNC, "(" CD_ICMP6_NAME ") truncated ICMP6 header" },
@@ -60,13 +61,10 @@ static const RuleMap icmp6_rules[] =
     { 0, nullptr }
 };
 
-static const char* icmp6_help =
-    "support for internet control message protocol v6";
-
 class Icmp6Module : public DecodeModule
 {
 public:
-    Icmp6Module() : DecodeModule(CD_ICMP6_NAME, icmp6_help) {}
+    Icmp6Module() : DecodeModule(CD_ICMP6_NAME, CD_ICMP6_HELP) {}
 
     const RuleMap* get_rules() const
     { return icmp6_rules; }
@@ -469,6 +467,7 @@ static const CodecApi ipv6_api =
     {
         PT_CODEC,
         CD_ICMP6_NAME,
+        CD_ICMP6_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

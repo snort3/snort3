@@ -42,11 +42,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help = 
-    "stream inspector for UDP flow tracking";
-
 StreamUdpModule::StreamUdpModule() :
-    Module(MOD_NAME, s_help, s_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = nullptr;
 }

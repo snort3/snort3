@@ -36,8 +36,6 @@ using namespace std;
 #include "utils/stats.h"
 #include "log/messages.h"
 
-static const char* mod_name = "wizard";
-
 THREAD_LOCAL ProfileStats wizPerfStats;
 
 struct WizStats
@@ -241,7 +239,8 @@ static const InspectApi wiz_api =
 {
     {
         PT_INSPECTOR,
-        mod_name,
+        WIZ_NAME,
+        WIZ_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

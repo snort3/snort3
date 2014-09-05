@@ -303,6 +303,7 @@ namespace
 
 const uint16_t ETHERNET_TYPE_PPPoE_DISC =  0x8863; /* discovery stage */
 #define CD_PPPOEPKT_DISC_NAME "pppoe_disc"
+#define CD_PPPOEPKT_DISC_HELP "support for point-to-point discovery"
 
 class PPPoEDiscCodec : public Codec
 {
@@ -375,6 +376,7 @@ static const CodecApi pppoepkt_disc_api =
     {
         PT_CODEC,
         CD_PPPOEPKT_DISC_NAME,
+        CD_PPPOEPKT_DISC_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -404,6 +406,7 @@ namespace
 
 
 #define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
+#define CD_PPPOEPKT_SESS_HELP "support for point-to-point session"
 
 const uint16_t ETHERNET_TYPE_PPPoE_SESS =  0x8864; /* session stage */
 
@@ -466,6 +469,7 @@ static const CodecApi pppoepkt_sess_api =
     {
         PT_CODEC,
         CD_PPPOEPKT_SESS_NAME,
+        CD_PPPOEPKT_SESS_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

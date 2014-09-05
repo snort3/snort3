@@ -36,8 +36,6 @@ using namespace std;
 #include "utils/stats.h"
 #include "log/messages.h"
 
-static const char* mod_name = "binder";
-
 THREAD_LOCAL ProfileStats bindPerfStats;
 
 //-------------------------------------------------------------------------
@@ -294,7 +292,8 @@ static const InspectApi bind_api =
 {
     {
         PT_INSPECTOR,
-        mod_name,
+        BIND_NAME,
+        BIND_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

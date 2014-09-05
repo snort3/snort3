@@ -76,11 +76,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "base stream inspector for flow tracking";
-
 StreamModule::StreamModule() :
-    Module(MOD_NAME, s_help, s_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     proto = &stream_cfg.ip_cfg;
 }

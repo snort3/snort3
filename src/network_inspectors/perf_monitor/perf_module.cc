@@ -77,13 +77,8 @@ static const Parameter s_params[] =
 // perf attributes
 //-------------------------------------------------------------------------
 
-static const char* s_name = "perf_monitor";
-
-static const char* s_help =
-    "performance monitoring and flow statistics collection";
-
 PerfMonModule::PerfMonModule() :
-    Module(s_name, s_help, s_params)
+    Module(PERF_NAME, PERF_HELP, s_params)
 { }
 
 ProfileStats* PerfMonModule::get_profile() const

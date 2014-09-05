@@ -37,10 +37,11 @@
 #include "protocols/teredo.h"
 #include "protocols/protocol_ids.h"
 
+#define CD_TEREDO_NAME "teredo"
+#define CD_TEREDO_HELP "support for teredo"
+
 namespace
 {
-
-#define CD_TEREDO_NAME "teredo"
 
 class TeredoCodec : public Codec
 {
@@ -127,6 +128,7 @@ static const CodecApi teredo_api =
     {
         PT_CODEC,
         CD_TEREDO_NAME,
+        CD_TEREDO_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

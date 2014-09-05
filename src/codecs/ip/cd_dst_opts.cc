@@ -33,11 +33,11 @@
 #include "detection/fpdetect.h"
 #include "codecs/ip/ip_util.h"
 
+#define CD_DSTOPTS_NAME "ipv6_dst_opts"
+#define CD_DSTOPTS_HELP "support for ipv6 destination options"
 
 namespace
 {
-
-#define CD_DSTOPTS_NAME "ipv6_dst_opts"
 
 class Ipv6DSTOptsCodec : public Codec
 {
@@ -136,6 +136,7 @@ static const CodecApi ipv6_dstopts_api =
     {
         PT_CODEC,
         CD_DSTOPTS_NAME,
+        CD_DSTOPTS_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

@@ -157,13 +157,8 @@ static const Parameter s_params[] =
 // normalize parameters
 //-------------------------------------------------------------------------
 
-static const char* s_name = "normalize";
-
-static const char* s_help =
-    "packet scrubbing for inline mode";
-
 NormalizeModule::NormalizeModule() :
-    Module(s_name, s_help, s_params)
+    Module(NORM_NAME, NORM_HELP, s_params)
 {
     memset(&config, 0, sizeof(config));
 }
@@ -259,7 +254,7 @@ bool NormalizeModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
 bool NormalizeModule::begin(const char* fqn, int, SnortConfig*)
 {
-    if ( !strcmp(fqn, s_name) )
+    if ( !strcmp(fqn, NORM_NAME) )
     {
         NetworkPolicy* policy = get_network_policy();
 

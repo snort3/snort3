@@ -251,6 +251,7 @@ const IpsApi ips_lua_api =
     {
         PT_IPS_OPTION,
         "tbd",
+        "Lua JIT script for IPS rule option",
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

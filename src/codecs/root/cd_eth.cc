@@ -33,23 +33,22 @@
 #include "codecs/sf_protocols.h"
 #include "log/text_log.h"
 
+#define CD_ETH_NAME "eth"
+#define CD_ETH_HELP "support for ethernet protocol"
+
 namespace
 {
 
-#define CD_ETH_NAME "eth"
 static const RuleMap eth_rules[] =
 {
     { DECODE_ETH_HDR_TRUNC, "(" CD_ETH_NAME ") truncated eth header" },
     { 0, nullptr }
 };
 
-static const char* eth_help =
-    "support for ethernet protocol";
-
 class EthModule : public DecodeModule
 {
 public:
-    EthModule() : DecodeModule(CD_ETH_NAME, eth_help) {}
+    EthModule() : DecodeModule(CD_ETH_NAME, CD_ETH_HELP) {}
 
     const RuleMap* get_rules() const
     { return eth_rules; }
@@ -263,6 +262,7 @@ static const CodecApi eth_api =
     { 
         PT_CODEC,
         CD_ETH_NAME,
+        CD_ETH_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

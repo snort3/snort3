@@ -172,11 +172,8 @@ static const RuleMap stream_tcp_rules[] =
     { 0, nullptr }
 };
 
-static const char* s_help = 
-    "stream inspector for TCP flow tracking and stream normalization and reassembly";
-
 StreamTcpModule::StreamTcpModule() :
-    Module(MOD_NAME, s_help, s_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = nullptr;
 }

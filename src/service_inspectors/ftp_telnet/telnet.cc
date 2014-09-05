@@ -46,8 +46,6 @@
 #include "framework/inspector.h"
 #include "utils/sfsnprintfappend.h"
 
-static const char* tn_name = "telnet";
-
 THREAD_LOCAL ProfileStats telnetPerfStats;
 THREAD_LOCAL SimpleStats tnstats;
 
@@ -301,7 +299,8 @@ const InspectApi tn_api =
 {
     {
         PT_INSPECTOR,
-        tn_name,
+        TEL_NAME,
+        TEL_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

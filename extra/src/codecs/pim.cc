@@ -34,6 +34,7 @@ namespace
 
 // yes, macros are necessary. The API and class constructor require different strings.
 #define CD_PIM_NAME "pim"
+#define CD_PIM_HELP "support for protocol independent multicast"
 
 class PimCodec : public Codec
 {
@@ -82,6 +83,7 @@ static const CodecApi pim_api =
     {
         PT_CODEC,
         CD_PIM_NAME,
+        CD_PIM_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

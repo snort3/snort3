@@ -29,6 +29,9 @@
 #include "framework/module.h"
 #include "norm.h"
 
+#define NORM_NAME "normalizer"
+#define NORM_HELP "packet scrubbing for inline mode"
+
 extern THREAD_LOCAL ProfileStats norm_perf_stats;
 
 class NormalizeModule : public Module

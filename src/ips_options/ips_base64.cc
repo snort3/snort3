@@ -57,6 +57,9 @@ static THREAD_LOCAL ProfileStats base64PerfStats;
 
 static const char* s_name = "base64_decode";
 
+static const char* s_help =
+    "rule option to decode base64 data - must be used with base64_data option";
+
 //-------------------------------------------------------------------------
 // base64_decode
 //-------------------------------------------------------------------------
@@ -199,9 +202,6 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to decode base64 data - must be used with base64_data option";
-
 class B64DecodeModule : public Module
 {
 public:
@@ -269,6 +269,7 @@ static const IpsApi base64_decode_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -290,6 +291,7 @@ static const IpsApi base64_decode_api =
 //-------------------------------------------------------------------------
 
 static const char* s_data_name = "base64_data";
+static const char* s_data_help = "set detection cursor to decoded Base64 data";
 
 class Base64DataOption : public IpsOption
 {
@@ -348,6 +350,7 @@ static const IpsApi base64_data_api =
     {
         PT_IPS_OPTION,
         s_data_name,
+        s_data_help,
         IPSAPI_PLUGIN_V0,
         0,
         nullptr,

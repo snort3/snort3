@@ -28,10 +28,11 @@
 #include "protocols/packet.h"
 #include "log/text_log.h"
 
+#define CD_ARP_NAME "arp"
+#define CD_ARP_HELP "support for address resolution protocol"
+
 namespace
 {
-
-#define CD_ARP_NAME "arp"
 
 static const RuleMap arp_rules[] =
 {
@@ -39,13 +40,10 @@ static const RuleMap arp_rules[] =
     { 0, nullptr }
 };
 
-static const char* arp_help =
-    "support for address resolution protocol";
-
 class ArpModule : public DecodeModule
 {
 public:
-    ArpModule() : DecodeModule(CD_ARP_NAME, arp_help) {}
+    ArpModule() : DecodeModule(CD_ARP_NAME, CD_ARP_HELP) {}
 
     const RuleMap* get_rules() const
     { return arp_rules; }
@@ -128,6 +126,7 @@ static const CodecApi arp_api =
     {
         PT_CODEC,
         CD_ARP_NAME,
+        CD_ARP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

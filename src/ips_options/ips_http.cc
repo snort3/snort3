@@ -134,6 +134,7 @@ static const IpsApi uri_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        uri_help,
         IPSAPI_PLUGIN_V0,
         0,
         uri_mod_ctor,
@@ -177,6 +178,7 @@ static const IpsApi client_body_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        cb_help,
         IPSAPI_PLUGIN_V0,
         0,
         client_body_mod_ctor,
@@ -220,6 +222,7 @@ static const IpsApi method_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        meth_help,
         IPSAPI_PLUGIN_V0,
         0,
         method_mod_ctor,
@@ -263,6 +266,7 @@ static const IpsApi cookie_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        cookie_help,
         IPSAPI_PLUGIN_V0,
         0,
         cookie_mod_ctor,
@@ -306,6 +310,7 @@ static const IpsApi stat_code_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        stat_code_help,
         IPSAPI_PLUGIN_V0,
         0,
         stat_code_mod_ctor,
@@ -349,6 +354,7 @@ static const IpsApi stat_msg_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        stat_msg_help,
         IPSAPI_PLUGIN_V0,
         0,
         stat_msg_mod_ctor,
@@ -392,6 +398,7 @@ static const IpsApi raw_uri_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        raw_uri_help,
         IPSAPI_PLUGIN_V0,
         0,
         raw_uri_mod_ctor,
@@ -435,6 +442,7 @@ static const IpsApi raw_header_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        raw_header_help,
         IPSAPI_PLUGIN_V0,
         0,
         raw_header_mod_ctor,
@@ -478,6 +486,7 @@ static const IpsApi raw_cookie_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        raw_cookie_help,
         IPSAPI_PLUGIN_V0,
         0,
         raw_cookie_mod_ctor,

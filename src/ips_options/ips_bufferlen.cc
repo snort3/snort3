@@ -41,6 +41,9 @@
 
 static const char* s_name = "bufferlen";
 
+static const char* s_help =
+    "rule option to check length of current buffer";
+
 static THREAD_LOCAL ProfileStats lenCheckPerfStats;
 
 class LenOption : public IpsOption
@@ -112,9 +115,6 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check length of current buffer";
-
 class LenModule : public Module
 {
 public:
@@ -173,6 +173,7 @@ static const IpsApi len_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

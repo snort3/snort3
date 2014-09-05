@@ -58,6 +58,9 @@ int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 static const char* client_key = "ftp_client";
 static const char* server_key = "ftp_server";
 
+static const char* client_help = "FTP inspector client module";
+static const char* server_help = "FTP inspector server module";
+
 THREAD_LOCAL ProfileStats ftpPerfStats;
 THREAD_LOCAL SimpleStats ftstats;
 
@@ -463,6 +466,7 @@ static const DataApi fc_api =
     {
         PT_DATA,
         client_key,
+        client_help,
         MODAPI_PLUGIN_V0,
         0,
         fc_mod_ctor,
@@ -505,6 +509,7 @@ static const InspectApi fs_api =
     {
         PT_INSPECTOR,
         server_key,
+        server_help,
         INSAPI_PLUGIN_V0,
         0,
         fs_mod_ctor,

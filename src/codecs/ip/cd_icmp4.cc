@@ -38,9 +38,10 @@
 #include "packet_io/active.h"
 #include "log/text_log.h"
 
-namespace{
-
 #define CD_ICMP4_NAME "icmp4"
+#define CD_ICMP4_HELP "support for internet control message protocol v4"
+
+namespace{
 
 static const RuleMap icmp4_rules[] =
 {
@@ -72,13 +73,10 @@ static const RuleMap icmp4_rules[] =
     { 0, nullptr }
 };
 
-static const char* icmp4_help =
-    "support for internet control message protocol v4";
-
 class Icmp4Module : public DecodeModule
 {
 public:
-    Icmp4Module() : DecodeModule(CD_ICMP4_NAME, icmp4_help) {}
+    Icmp4Module() : DecodeModule(CD_ICMP4_NAME, CD_ICMP4_HELP) {}
 
     const RuleMap* get_rules() const
     { return icmp4_rules; }
@@ -682,6 +680,7 @@ static const CodecApi icmp4_api =
     {
         PT_CODEC,
         CD_ICMP4_NAME,
+        CD_ICMP4_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

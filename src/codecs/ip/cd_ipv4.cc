@@ -47,9 +47,11 @@
 #include "log/text_log.h"
 #include "log/log_text.h"
 
+#define CD_IPV4_NAME "ipv4"
+#define CD_IPV4_HELP "support for internet protocol v4"
+
 namespace{
 
-#define CD_IPV4_NAME "ipv4"
 static const RuleMap ipv4_rules[] =
 {
     { DECODE_NOT_IPV4_DGRAM, "(" CD_IPV4_NAME ") Not IPv4 datagram" },
@@ -82,13 +84,10 @@ static const RuleMap ipv4_rules[] =
     { 0, nullptr }
 };
 
-static const char* ipv4_help =
-    "support for internet protocol v4";
-
 class Ipv4Module : public DecodeModule
 {
 public:
-    Ipv4Module() : DecodeModule(CD_IPV4_NAME, ipv4_help) {}
+    Ipv4Module() : DecodeModule(CD_IPV4_NAME, CD_IPV4_HELP) {}
 
     const RuleMap* get_rules() const
     { return ipv4_rules; }
@@ -937,6 +936,7 @@ static const CodecApi ipv4_api =
     { 
         PT_CODEC,
         CD_IPV4_NAME,
+        CD_IPV4_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

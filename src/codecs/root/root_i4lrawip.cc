@@ -26,19 +26,19 @@
 
 #include "framework/codec.h"
 
+#ifndef I4L_RAW_IP_NAME
+#define I4L_RAW_IP_NAME "i4l_raw_ip"
+#endif
+
+#define I4L_RAW_IP_HELP "support for I4L IP"
 
 namespace
 {
 
-
-#ifndef I4L_RAW_IP
-#define I4L_RAW_IP "i4l_raw_ip"
-#endif
-
 class I4LRawIpCodec : public Codec
 {
 public:
-    I4LRawIpCodec() : Codec(I4L_RAW_IP){};
+    I4LRawIpCodec() : Codec(I4L_RAW_IP_NAME){};
     ~I4LRawIpCodec() {};
 
 
@@ -105,7 +105,8 @@ static const CodecApi i4l_raw_ip_api =
 {
     {
         PT_CODEC,
-        I4L_RAW_IP,
+        I4L_RAW_IP_NAME,
+        I4L_RAW_IP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr, // mod_ctor

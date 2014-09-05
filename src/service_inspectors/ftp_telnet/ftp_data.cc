@@ -282,6 +282,7 @@ const InspectApi fd_api =
     {
         PT_INSPECTOR,
         s_name,
+        s_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -37,9 +37,11 @@
 #include "main/snort.h"
 #include "log/text_log.h"
 
+#define CD_MPLS_NAME "mpls"
+#define CD_MPLS_HELP "support for multiprotocol label switching"
+
 namespace
 {
-#define CD_MPLS_NAME "mpls"
 
 static const Parameter mpls_params[] =
 {
@@ -58,7 +60,6 @@ static const Parameter mpls_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-
 // rules which will loaded into snort.
 // You can now reference these rules by calling a codec_event
 // in your main codec's functions
@@ -74,13 +75,10 @@ static const RuleMap mpls_rules[] =
     { 0, nullptr }
 };
 
-static const char* mpls_help =
-    "support for multiprotocol label switching";
-
 class MplsModule : public DecodeModule
 {
 public:
-    MplsModule() : DecodeModule(CD_MPLS_NAME, mpls_help, mpls_params) {};
+    MplsModule() : DecodeModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) {};
 
     const RuleMap* get_rules() const
     { return mpls_rules; }
@@ -345,6 +343,7 @@ static const CodecApi mpls_api =
     {
         PT_CODEC,
         CD_MPLS_NAME,
+        CD_MPLS_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -32,6 +32,9 @@
 #define TELNET_ENCRYPTED      2
 #define TELNET_SB_NO_SE       3
 
+#define TEL_NAME "telnet"
+#define TEL_HELP "telnet inspection and normalization"
+
 struct SnortConfig;
 
 extern THREAD_LOCAL SimpleStats tnstats;

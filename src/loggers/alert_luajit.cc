@@ -224,6 +224,7 @@ static const LogApi log_lua_api =
     {
         PT_LOGGER,
         "luajit",
+        "Lua JIT script for logging events",
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

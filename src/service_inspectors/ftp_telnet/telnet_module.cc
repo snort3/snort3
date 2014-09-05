@@ -25,11 +25,6 @@
 
 using namespace std;
 
-static const char* s_name = "telnet";
-
-static const char* s_help = 
-    "telnet inspector";
-
 //-------------------------------------------------------------------------
 // telnet module
 //-------------------------------------------------------------------------
@@ -68,7 +63,7 @@ static const RuleMap telnet_rules[] =
 };
 
 TelnetModule::TelnetModule() :
-    Module(s_name, s_help, s_params)
+    Module(TEL_NAME, TEL_HELP, s_params)
 {
     conf = nullptr;
 }

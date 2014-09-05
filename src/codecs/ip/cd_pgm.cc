@@ -35,6 +35,7 @@ namespace
 {
 
 #define CD_PGM_NAME "pgm"
+#define CD_PGM_HELP "support for pragmatic general multicast"
 
 static const RuleMap pgm_rules[] =
 {
@@ -42,13 +43,10 @@ static const RuleMap pgm_rules[] =
     { 0, nullptr }
 };
 
-static const char* pgm_help =
-    "support for pragmatic general multicast";
-
 class PgmModule : public DecodeModule
 {
 public:
-    PgmModule() : DecodeModule(CD_PGM_NAME, pgm_help) {}
+    PgmModule() : DecodeModule(CD_PGM_NAME, CD_PGM_HELP) {}
 
     const RuleMap* get_rules() const
     { return pgm_rules; }
@@ -209,6 +207,7 @@ static const CodecApi pgm_api =
     {
         PT_CODEC,
         CD_PGM_NAME,
+        CD_PGM_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

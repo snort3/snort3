@@ -41,10 +41,12 @@
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
 
+#define CD_IPV6_NAME "ipv6"
+#define CD_IPV6_HELP "support for internet protocol v6"
+
 namespace
 {
 
-#define CD_IPV6_NAME "ipv6"
 static const RuleMap ipv6_rules[] =
 {
     { DECODE_IPV6_MIN_TTL, "(" CD_IPV6_NAME ") IPv6 packet below TTL limit" },
@@ -73,13 +75,10 @@ static const RuleMap ipv6_rules[] =
     { 0, nullptr }
 };
 
-static const char* ipv6_help =
-    "support for internet protocol v6";
-
 class Ipv6Module : public DecodeModule
 {
 public:
-    Ipv6Module() : DecodeModule(CD_IPV6_NAME, ipv6_help) {}
+    Ipv6Module() : DecodeModule(CD_IPV6_NAME, CD_IPV6_HELP) {}
 
     const RuleMap* get_rules() const
     { return ipv6_rules; }
@@ -773,6 +772,7 @@ static const CodecApi ipv6_api =
     {
         PT_CODEC,
         CD_IPV6_NAME,
+        CD_IPV6_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,
