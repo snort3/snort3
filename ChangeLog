@@ -2,6 +2,7 @@
 -- fixed bind action
 -- tweaked main loop
 -- added module 1-line help
+-- latest from josh
 
 117
 -- added --stdin-rules
