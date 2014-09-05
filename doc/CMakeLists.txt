@@ -118,7 +118,7 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
                 ${CMAKE_SOURCE_DIR}/tools/snort2lua
                 > ${input}
             COMMAND ${CMAKE_COMMAND} -E copy ${input} ${output}
-            DEPENDS snort2lua
+            DEPENDS snort2lua ${CMAKE_CURRENT_LIST_DIR}/get_differences.rb
             COMMENT "Documents: building config_changes.txt"
         )
         list (APPEND ALL_SOURCES ${output})

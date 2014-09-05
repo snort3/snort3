@@ -107,7 +107,7 @@ TextLog* TextLog_Init (
  * TextLog_Term: destructor
  *-------------------------------------------------------------------
  */
-void TextLog_Term (TextLog* txt)
+void TextLog_Term (TextLog* const txt)
 {
     if ( !txt ) return;
 
@@ -124,7 +124,7 @@ void TextLog_Term (TextLog* txt)
  * than resolution of filename discriminator
  *-------------------------------------------------------------------
  */
-static void TextLog_Roll (TextLog* txt)
+static void TextLog_Roll (TextLog* const txt)
 {
     if ( txt->file == stdout ) return;
     if ( txt->last >= time(NULL) ) return;
@@ -141,7 +141,7 @@ static void TextLog_Roll (TextLog* txt)
  * TextLog_Flush: write buffered stream to file
  *-------------------------------------------------------------------
  */
-bool TextLog_Flush(TextLog* txt)
+bool TextLog_Flush(TextLog* const txt)
 {
     int ok;
 
@@ -163,7 +163,7 @@ bool TextLog_Flush(TextLog* txt)
  * TextLog_Putc: append char to buffer
  *-------------------------------------------------------------------
  */
-bool TextLog_Putc (TextLog* txt, char c)
+bool TextLog_Putc (TextLog* const txt, char c)
 {
     if ( TextLog_Avail(txt) < 1 )
     {
@@ -179,7 +179,7 @@ bool TextLog_Putc (TextLog* txt, char c)
  * TextLog_Write: append string to buffer
  *-------------------------------------------------------------------
  */
-bool TextLog_Write (TextLog* txt, const char* str, int len)
+bool TextLog_Write (TextLog* const txt, const char* str, int len)
 {
     int avail = TextLog_Avail(txt);
 
@@ -208,7 +208,7 @@ bool TextLog_Write (TextLog* txt, const char* str, int len)
  * TextLog_Printf: append formatted string to buffer
  *-------------------------------------------------------------------
  */
-bool TextLog_Print (TextLog* txt, const char* fmt, ...)
+bool TextLog_Print (TextLog* const txt, const char* fmt, ...)
 {
     int avail = TextLog_Avail(txt);
     int len;
@@ -247,7 +247,7 @@ bool TextLog_Print (TextLog* txt, const char* fmt, ...)
  * checking for 3
  *-------------------------------------------------------------------
  */
-bool TextLog_Quote (TextLog* txt, const char* qs)
+bool TextLog_Quote (TextLog* const txt, const char* qs)
 {
     int pos = txt->pos;
 
@@ -272,4 +272,3 @@ bool TextLog_Quote (TextLog* txt, const char* qs)
 
     return true;
 }
-

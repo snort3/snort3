@@ -129,19 +129,19 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
 
     if( !dir.compare("client"))
     {
-        table_api.add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = client");
+        table_api.add_diff_option_comment("client ports", "binder.when.ports; binder.when.role = client");
         bind = bind_client;
     }
 
     else if( !dir.compare("server"))
     {
-        table_api.add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = server");
+        table_api.add_diff_option_comment("server ports", "binder.when.ports; binder.when.role = server");
         bind = bind_server;
     }
 
     else if( !dir.compare("both"))
     {
-        table_api.add_diff_option_comment("stream_tcp: ports", "binder.when.ports; binder.when.role = any");
+        table_api.add_diff_option_comment("both ports", "binder.when.ports; binder.when.role = any");
         bind = bind_any;
     }
 
@@ -199,21 +199,21 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
 
     if (!dir.compare("client"))
     {
-        table_api.add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = client");
+        table_api.add_diff_option_comment("client protocol", "binder.when.proto; binder.when.role = client");
         bind = bind_client;
         protocols = &client_protocols;
     }
 
     else if (!dir.compare("server"))
     {
-        table_api.add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = server");
+        table_api.add_diff_option_comment("server protocol", "binder.when.proto; binder.when.role = server");
         bind = bind_server;
         protocols = &server_protocols;
     }
 
     else if (!dir.compare("both"))
     {
-        table_api.add_diff_option_comment("stream_tcp: protocol", "binder.when.proto; binder.when.role = any");
+        table_api.add_diff_option_comment("both protocol", "binder.when.proto; binder.when.role = any");
         bind = bind_any;
         protocols = &any_protocols;
     }
@@ -419,10 +419,10 @@ bool StreamTcp::convert(std::istringstream& data_stream)
                 table_api.add_option("policy", "vista");
 
             else if (!policy.compare("unknown"))
-                table_api.add_deleted_comment("stream5_tcp: policy unkown");
+                table_api.add_deleted_comment("policy unkown");
 
             else if (!policy.compare("noack"))
-                table_api.add_deleted_comment("stream5_tcp: policy noack");
+                table_api.add_deleted_comment("policy noack");
 
             else if (!policy.compare("hpux"))
                 table_api.add_option("policy", "hpux");
@@ -432,25 +432,25 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
             else if (!policy.compare("win2003"))
             {
-                table_api.add_diff_option_comment("stream5_tcp: policy win2003", "stream_tcp.policy = win-2003");
+                table_api.add_diff_option_comment("policy win2003", "stream_tcp.policy = win-2003");
                 table_api.add_option("policy", "win-2003");
             }
 
             else if (!policy.compare("win2k3"))
             {
-                table_api.add_diff_option_comment("stream5_tcp: policy win2k3", "stream_tcp.policy = win-2003");
+                table_api.add_diff_option_comment("policy win2k3", "stream_tcp.policy = win-2003");
                 table_api.add_option("policy", "win-2003");
             }
 
             else if (!policy.compare("hpux11"))
             {
-                table_api.add_diff_option_comment("stream5_tcp: policy hpux11", "stream_tcp.policy = hpux");
+                table_api.add_diff_option_comment("policy hpux11", "stream_tcp.policy = hpux");
                 table_api.add_option("policy", "hpux");
             }
 
             else if (!policy.compare("grannysmith"))
             {
-                table_api.add_diff_option_comment("stream5_tcp: policy grannysmith", "stream_tcp.policy = macos");
+                table_api.add_diff_option_comment("policy grannysmith", "stream_tcp.policy = macos");
                 table_api.add_option("policy", "macos");
             }
 

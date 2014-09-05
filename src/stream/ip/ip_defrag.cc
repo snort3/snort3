@@ -86,7 +86,7 @@
 #include "log_text.h"
 #include "detect.h"
 #include "protocols/packet.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "event.h"
 #include "util.h"
 #include "snort_debug.h"
@@ -102,6 +102,7 @@
 #include "packet_io/sfdaq.h"
 #include "framework/inspector.h"
 #include "flow/flow_control.h"
+#include "framework/codec.h"
 
 /*  D E F I N E S  **************************************************/
 
@@ -1017,7 +1018,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         {
             // FIXIT-J use of last_extension works but is ugly
             ip::IP6Extension *last_extension = (ip::IP6Extension *)
-                (dpkt->pkt + (p->ip6_extensions[p->ip6_frag_index -1].data - p->pkt));
+                (dpkt->pkt + (p->layers[p->ip6_frag_index].start - p->pkt));
             last_extension->ip6e_nxt = ft->protocol;
         }
         else
@@ -1055,7 +1056,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     SnortEventqPush();
     p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
     p->pseudo_type = PSEUDO_PKT_IP;
-    //Encode_SetPkt(p);  // FIXIT-J needed for responses to defragged packets
+    PacketManager::encode_set_pkt(p);
     ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt);
     SnortEventqPop();
 
@@ -1556,7 +1557,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
 
     if (p->ip_api.is_ip6() && (p->frag_offset == 0))
     {
-        ip::IP6Frag *fragHdr = (ip::IP6Frag *)p->ip6_extensions[p->ip6_frag_index].data;
+        ip::IP6Frag *fragHdr = (ip::IP6Frag *)p->layers[p->ip6_frag_index].start;
         if (ft->protocol != fragHdr->ip6f_nxt)
         {
             ft->protocol = fragHdr->ip6f_nxt;
@@ -2303,7 +2304,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         if (p->frag_offset == 0)
         {
-            ip::IP6Frag *fragHdr = (ip::IP6Frag *)p->ip6_extensions[p->ip6_frag_index].data;
+            ip::IP6Frag *fragHdr = (ip::IP6Frag *)p->layers[p->ip6_frag_index].start;
             ft->protocol = fragHdr->ip6f_nxt;
         }
     }

@@ -25,13 +25,6 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-
 
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
@@ -45,6 +38,10 @@
 #include "packet_io/sfdaq.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ipvar.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
+#include "log/log.h"
+#include "protocols/packet_manager.h"
 
 
 namespace
@@ -103,6 +100,8 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_TCP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &);
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
@@ -159,7 +158,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     /* lay TCP on top of the data cause there is enough of it! */
-    tcp::TCPHdr* tcph = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(raw_pkt));
+    const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw_pkt);
     p->tcph = tcph;
 
     /* multiply the payload offset value by 4 */
@@ -237,6 +236,7 @@ bool TcpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
                 p->tcph = NULL;
                 return false;
             }
+
 
             p->error_flags |= PKT_ERR_CKSUM_TCP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad TCP checksum\n",
@@ -606,9 +606,44 @@ static inline void TCPMiscTests(Packet *p)
         codec_events::decoder_event(p, DECODE_TCP_PORT_ZERO);
 }
 
+/******************************************************************
+ ************************  L O G G E R   **************************
+ ******************************************************************/
+
+
+void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const p)
+{
+    char tcpFlags[9];
+
+    const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>(raw_pkt);
+
+    /* print TCP flags */
+    CreateTCPFlagString(tcph, tcpFlags);
+    TextLog_Puts(text_log, tcpFlags); /* We don't care about the NULL */
+
+    /* print other TCP info */
+    TextLog_Print(text_log, "  SrcPort:%u  DstPort:%u\n\tSeq: 0x%lX  Ack: 0x%lX  "
+            "Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
+            ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
+            (u_long) ntohl(tcph->th_ack),
+            ntohs(tcph->th_win), TCP_OFFSET(tcph) << 2);
+
+    if((tcph->th_flags & TH_URG) != 0)
+        TextLog_Print(text_log, "UrgPtr: 0x%X", (uint16_t) ntohs(tcph->th_urp));
+
+
+    /* dump the TCP options */
+    if(p->tcp_option_count > 0)
+    {
+        TextLog_Puts(text_log, "\n\t");
+        LogTcpOptions(text_log, p);
+    }
+}
+
 
 /******************************************************************
- ******************** E N C O D E R  ******************************
+ ************************* E N C O D E R  *************************
  ******************************************************************/
 
 //-------------------------------------------------------------------------
@@ -675,7 +710,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
     }
 
     ho->th_offx2 = 0;
-    tcp::set_tcp_offset(ho, (TCP_HDR_LEN >> 2));
+    tcp::set_tcp_offset(ho, (tcp::TCP_HEADER_LEN >> 2));
     ho->th_win = ho->th_urp = 0;
 
     if ( attach_payload )
@@ -732,7 +767,7 @@ bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
 bool TcpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 {
-    tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(lyr->start);
+    tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(lyr->start));
 
     *len += h->hdr_len() + p->dsize;
 
@@ -1045,14 +1080,10 @@ static inline unsigned short in_chksum_tcp6(pseudoheader6 *ph,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new TcpModule;
-}
+{ return new TcpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 /*
  * Static api functions.  there are NOT part of the TCPCodec class,

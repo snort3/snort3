@@ -37,6 +37,7 @@
 #include "codecs/ip/checksum.h"
 #include "codecs/ip/ip_util.h"
 #include "packet_io/active.h"
+#include "log/text_log.h"
 
 
 namespace
@@ -85,6 +86,8 @@ public:
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
 };
 
 
@@ -342,7 +345,18 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 
 
 /******************************************************************
- ******************** E N C O D E R  ******************************
+ *************************  L O G G E R   *************************
+ ******************************************************************/
+
+void Icmp6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                const Packet* const)
+{
+    const icmp::ICMP6Hdr* const icmph = reinterpret_cast<const icmp::ICMP6Hdr*>(raw_pkt);
+    TextLog_Print(text_log, "sType:%d  Code:%d  ", icmph->type, icmph->code);
+}
+
+/******************************************************************
+ ************************* E N C O D E R  *************************
  ******************************************************************/
 
 
@@ -439,24 +453,16 @@ bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Icmp6Module;
-}
+{ return new Icmp6Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new Icmp6Codec();
-}
+{ return new Icmp6Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_api =
 {

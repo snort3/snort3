@@ -29,17 +29,13 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
 
+#include "utils/dnet_header.h"
 #include "stream/stream_api.h"
 #include "snort.h"
 
 #include "managers/action_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/tcp.h"
 

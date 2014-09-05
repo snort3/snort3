@@ -38,6 +38,8 @@
 #include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"
+#include "protocols/packet_manager.h"
+#include "log/text_log.h"
 
 namespace
 {
@@ -97,6 +99,8 @@ public:
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) ;
 
 private:
 
@@ -183,7 +187,7 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* lay the IP struct over the raw data */
     const ip::IP6Hdr* const ip6h =
-        reinterpret_cast<ip::IP6Hdr*>(const_cast<uint8_t*>(raw_pkt));
+        reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
 
     if(raw_len < ip::IP6_HEADER_LEN)
     {
@@ -252,6 +256,8 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     IPV6CheckIsatap(ip6h, p);
 
     p->ip_api.set(ip6h);
+    p->curr_ip6_extension_order = 0;
+    p->decode_flags &= ~DECODE__ROUTING_SEEN;
 
     IPV6MiscTests(p);
     CheckIPV6Multicast(ip6h, p);
@@ -592,9 +598,56 @@ static inline int CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
     return 0;
 }
 
-/*
- * Encoders
- */
+
+/******************************************************************
+ *********************  L O G G E R  ******************************
+*******************************************************************/
+
+void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+    const ip::IP6Hdr* const ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
+
+    // FIXIT-H  -->  This does NOT obfuscate correctly
+    if (ScObfuscate())
+    {
+        TextLog_Print(text_log, "x:x:x:x::x:x:x:x -> x:x:x:x::x:x:x:x");
+    }
+    else
+    {
+        const ip::snort_in6_addr* const src = ip6h->get_src();
+        const ip::snort_in6_addr* const dst = ip6h->get_dst();
+
+        TextLog_Print(text_log, "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:"
+                            "%02X%02X:%02X%02X:%02X%02X -> %02X%02X:%02X%02X:"
+                            "%02X%02X:%02X%02X:%02X%02X:%02X%02X",
+            (int)src->u6_addr8[0], (int)src->u6_addr8[1], (int)src->u6_addr8[2],
+            (int)src->u6_addr8[3], (int)src->u6_addr8[4], (int)src->u6_addr8[5],
+            (int)src->u6_addr8[6], (int)src->u6_addr8[7], (int)src->u6_addr8[8],
+            (int)src->u6_addr8[9], (int)src->u6_addr8[10], (int)src->u6_addr8[11],
+            (int)src->u6_addr8[12], (int)src->u6_addr8[13], (int)src->u6_addr8[14],
+            (int)src->u6_addr8[15], (int)dst->u6_addr8[0], (int)dst->u6_addr8[1],
+            (int)dst->u6_addr8[2], (int)dst->u6_addr8[3], (int)dst->u6_addr8[4],
+            (int)dst->u6_addr8[5], (int)dst->u6_addr8[6], (int)dst->u6_addr8[7],
+            (int)dst->u6_addr8[8], (int)dst->u6_addr8[9], (int)dst->u6_addr8[10],
+            (int)dst->u6_addr8[11], (int)dst->u6_addr8[12], (int)dst->u6_addr8[13],
+            (int)dst->u6_addr8[14], (int)dst->u6_addr8[15]);
+    }
+
+
+    TextLog_NewLine(text_log);
+    TextLog_Putc(text_log, '\t');
+
+
+    TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X DgmLen:%u",
+            ip6h->get_next(), ip6h->get_hop_lim(), ip6h->get_tos(),
+            ntohs(ip6h->get_len()));
+}
+
+
+/******************************************************************
+ *************************  E N C O D E R  ************************
+ ******************************************************************/
 
 bool Ipv6Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {
@@ -690,7 +743,7 @@ void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
         int i = lyr - c->layers;
         if ( i + 1 == p->num_layers )
         {
-            uint8_t* b = (uint8_t*)p->ip6_extensions[p->ip6_frag_index].data;
+            const uint8_t* b = (uint8_t*)p->layers[p->ip6_frag_index].start;
             if ( b ) lyr->length = b - p->layers[i].start;
         }
     }
@@ -704,24 +757,16 @@ void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Ipv6Module;
-}
+{ return new Ipv6Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6Codec();
-}
+{ return new Ipv6Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_api =
 {

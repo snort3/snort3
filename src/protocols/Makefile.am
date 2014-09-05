@@ -17,6 +17,7 @@ gre.h \
 layer.h \
 mpls.h \
 packet.h \
+packet_manager.h \
 protocol_ids.h \
 tcp.h \
 teredo.h \
@@ -27,6 +28,7 @@ wlan.h
 
 libprotocols_a_SOURCES = \
 layer.cc \
+packet_manager.cc \
 ip.cc
 
 

@@ -39,6 +39,7 @@
 
 #include <stdint.h>
 #include "log/text_log.h"
+#include "main/snort_types.h"
 
 struct Packet;
 struct Event;
@@ -53,11 +54,11 @@ void LogTimeStamp(TextLog*, Packet*);
 void LogTrHeader(TextLog*, Packet*);
 void Log2ndHeader(TextLog*, Packet*);
 void LogIpAddrs(TextLog*, Packet*);
+SO_PUBLIC void LogIpOptions(TextLog*, const Packet* const);
 void LogIPHeader(TextLog*, Packet*);
 void LogTCPHeader(TextLog*, Packet*);
+SO_PUBLIC void LogTcpOptions(TextLog*,  const Packet* const);
 void LogUDPHeader(TextLog*, Packet*);
 void LogICMPHeader(TextLog*, Packet*);
-void LogArpHeader(TextLog*, Packet*);
 
 #endif
-

@@ -146,7 +146,8 @@ static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
     if (data_left > header->nak.opt.len) {
 
         /* checksum is expensive... do that only if the length is bad */
-        if (header->checksum != 0) {
+        if (header->checksum != 0)
+        {
             checksum = checksum::cksum_add((uint16_t*)data, (int)length);
             if (checksum != 0)
                 return PGM_NAK_ERR;

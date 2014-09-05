@@ -11,6 +11,8 @@ add_library( managers
     action_manager.cc
     data_manager.h
     data_manager.cc
+    codec_manager.h
+    codec_manager.cc
     event_manager.cc
     event_manager.h
     inspector_manager.cc
@@ -21,8 +23,6 @@ add_library( managers
     module_manager.h
     mpse_manager.cc
     mpse_manager.h
-    packet_manager.cc
-    packet_manager.h
     plugin_manager.cc
     plugin_manager.h
     script_manager.cc

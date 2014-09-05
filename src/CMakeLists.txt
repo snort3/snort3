@@ -69,7 +69,7 @@ endif()
 if (BUILD_UNIT_TESTS)
     set( UNIT_TESTS_LIBRARIES unit_tests)
     add_subdirectory(test)
-endif( BUILD_UNIT_TESTS)
+endif (BUILD_UNIT_TESTS)
 
 
 #  The main Snort executableRA

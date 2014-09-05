@@ -581,7 +581,7 @@ static int PNorm_scan_fsm(PNormState* s, int c, JSState *js)
 
 int PNormDecode(char *src, uint16_t srclen, char *dst, uint16_t dstlen, uint16_t *bytes_copied, JSState *js)
 {
-    int iRet;
+    int iRet = RET_OK;
     const char *end;
     char *ptr;
     PNormState s;
@@ -1218,7 +1218,7 @@ static int JSNorm_scan_fsm (JSNormState* s, int c, char *src, uint16_t srclen, c
 
 int JSNormalizeDecode(char *src, uint16_t srclen, char *dst, uint16_t destlen, char **ptr, int *bytes_copied, JSState *js, uint8_t* iis_unicode_map)
 {
-    int iRet;
+    int iRet = RET_OK;
     const char *start, *end;
     JSNormState s;
 

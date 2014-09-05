@@ -27,7 +27,6 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "codecs/ip/ip_util.h"
 #include "protocols/protocol_ids.h"
 #include "detection/fpdetect.h"
 #include "main/snort.h"
@@ -59,7 +58,9 @@ bool Ipv6NoNextCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len
 {
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_NONEXT);
-    ip_util::CheckIPv6ExtensionOrder(p);
+
+    // No need ot check IPv6 extension order since this is automatically
+    // the last extension.
 
     // I want the dsize to be zero, so set the raw_length the
     // length to be zero.

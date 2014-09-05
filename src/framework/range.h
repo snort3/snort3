@@ -18,8 +18,8 @@
 */
 // range.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef RANGE_H
-#define RANGE_H
+#ifndef FRAMEWORK_RANGE_H
+#define FRAMEWORK_RANGE_H
 
 #include "main/snort_types.h"
 
@@ -31,8 +31,9 @@
 // <=> for dsize style and >< for icode style so rule options
 // can coerce <> if needed for backwards compatibility
 
-struct SO_PUBLIC RangeCheck
+class SO_PUBLIC RangeCheck
 {
+public:
     enum Op
     {
         // =  !  <   <=  >   >=  <>  ><  <=>

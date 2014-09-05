@@ -388,7 +388,7 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         {
             if (p->tcph != NULL)
             {
-                CreateTCPFlagString(p, tcpFlags);
+                CreateTCPFlagString(p->tcph, tcpFlags);
                 TextLog_Print(csv_log, "%s", tcpFlags);
             }
         }

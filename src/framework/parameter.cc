@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <dnet.h>
+#include "utils/dnet_header.h"
 
 #include <string>
 #include <iomanip>

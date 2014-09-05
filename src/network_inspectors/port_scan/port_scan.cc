@@ -57,7 +57,7 @@
 #include "main/analyzer.h"
 #include "protocols/packet.h"
 #include "managers/data_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"
 #include "util.h"

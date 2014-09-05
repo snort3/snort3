@@ -23,14 +23,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
 #include <string.h>
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
 
+#include "utils/dnet_header.h"
 #include "codecs/decode_module.h"
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
@@ -39,6 +34,7 @@
 #include "protocols/ipv4.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/ip/checksum.h"
+#include "log/text_log.h"
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
@@ -134,6 +130,8 @@ public:
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
     
 };
 
@@ -185,7 +183,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         uint16_t ip_len = ntohs(p->ip_api.len());
         /* subtract the distance from udp header to 1st ip6 extension */
         /* This gives the length of the UDP "payload", when fragmented */
-        uhlen = ip_len - ((u_char *)udph - (u_char *)p->ip6_extensions[0].data);
+        uhlen = ip_len - ((u_char *)udph - (u_char *)p->ip_api.ip_data());
     }
     else
     {
@@ -358,6 +356,15 @@ static inline void PopUdp (Packet* p)
     // required for detect.c to short-circuit preprocessing
     if ( !p->dsize )
         p->dsize = p->ip_api.pay_len();
+}
+
+void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt, const Packet* const)
+{
+    const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
+
+    TextLog_Print(text_log, "SrcPort:%d DstPort:%d Len:%d",
+            ntohs(udph->uh_sport), ntohs(udph->uh_dport),
+            ntohs(udph->uh_len) - udp::UDP_HEADER_LEN);
 }
 
 /******************************************************************

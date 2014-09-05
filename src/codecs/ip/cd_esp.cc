@@ -27,9 +27,10 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/ip/ip_util.h"
 
 namespace
 {
@@ -86,7 +87,6 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    
 };
 
 
@@ -155,6 +155,12 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     pad_length = *(esp_payload + guessed_len);
     next_prot_id = *(esp_payload + guessed_len + 1);
 
+
+    if (p->ip_api.is_ip6())
+        ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_ESP, next_prot_id);
+
+
+
     // TODO:  Leftover from Snort. Do we really want thsi?
     const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
@@ -199,24 +205,16 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new EspModule;
-}
+{ return new EspModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new EspCodec();
-}
+{ return new EspCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi esp_api =
 {

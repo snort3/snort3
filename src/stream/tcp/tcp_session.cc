@@ -68,7 +68,7 @@
 #include "snort.h"
 #include "time/packet_time.h"
 #include "protocols/packet.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "log_text.h"
 #include "packet_io/active.h"
 #include "normalize/normalize.h"
@@ -6682,7 +6682,7 @@ int TcpSession::process(Packet *p)
 
     STREAM5_DEBUG_WRAP(
         char flagbuf[9];
-        CreateTCPFlagString(p, flagbuf);
+        CreateTCPFlagString(p->tcph, flagbuf);
         DebugMessage((DEBUG_STREAM|DEBUG_STREAM_STATE),
             "Got TCP Packet 0x%X:%d ->  0x%X:%d %s\nseq: 0x%X   ack:0x%X  dsize: %u\n",
             p->ip_api.get_src(), p->sp, p->ip_api.get_dst(), p->dp, flagbuf,

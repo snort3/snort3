@@ -26,6 +26,10 @@
 
 #include "framework/logger.h"
 
+// to ensure PacketManager::log_protocols() is built into Snort++
+extern const BaseApi* log_codecs;
+extern const BaseApi* log_luajit;
+
 #ifdef LINUX
 extern const BaseApi* alert_sf_socket;
 #endif
@@ -50,11 +54,11 @@ const BaseApi* loggers[] =
 
 #ifdef STATIC_LOGGERS
     // alerters
+    alert_csv,
     alert_fast,
     alert_full,
     alert_syslog,
     alert_test,
-    alert_csv,
     alert_unix_sock,
     // loggers
     log_null,
@@ -63,6 +67,9 @@ const BaseApi* loggers[] =
     // both
     eh_unified2,
 #endif
+    // loggers
+    log_codecs,
+    log_luajit,
+    // both
     nullptr
 };
-

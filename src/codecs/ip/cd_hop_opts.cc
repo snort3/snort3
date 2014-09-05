@@ -87,7 +87,6 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_HOPOPTS);
-    ip_util::CheckIPv6ExtensionOrder(p);
 
     lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
     next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
@@ -98,13 +97,12 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_HOPOPTS;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
 
-
+    ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_HOPOPTS, next_prot_id);
     if ( ip_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
         return true;
+
     return false;
 }
 
