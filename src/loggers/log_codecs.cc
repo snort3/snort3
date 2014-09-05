@@ -45,6 +45,8 @@ static THREAD_LOCAL TextLog* test_file = nullptr;
 //-------------------------------------------------------------------------
 
 #define LOG_CODECS_NAME "log_codecs"
+#define LOG_CODECS_HELP "log protocols in packet by layer"
+
 static const unsigned ALERT_FLAG_MSG = 0x01;
 
 static const Parameter ex_params[] =
@@ -64,7 +66,7 @@ namespace
 class LogCodecModule : public Module
 {
 public:
-    LogCodecModule() : Module(LOG_CODECS_NAME, ex_params) { };
+    LogCodecModule() : Module(LOG_CODECS_NAME, LOG_CODECS_HELP, ex_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
