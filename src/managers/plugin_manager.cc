@@ -349,6 +349,17 @@ void PluginManager::list_plugins()
     }
 }
 
+void PluginManager::show_plugins()
+{
+    PlugMap::iterator it;
+
+    for ( it = plug_map.begin(); it != plug_map.end(); ++it )
+    {
+        Plugin& p = it->second;
+        cout << p.key << ": " << p.api->help << endl;
+    }
+}
+
 void PluginManager::dump_plugins()
 {
     DataManager::dump_plugins();

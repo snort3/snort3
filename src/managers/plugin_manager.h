@@ -47,6 +47,7 @@ public:
     // plugin methods
     static void load_plugins(const char* lib_paths);
     static void list_plugins();
+    static void show_plugins();
     static void dump_plugins();
     static void release_plugins();
     static const BaseApi* get_api(PlugType, const char* name);
