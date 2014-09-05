@@ -40,6 +40,7 @@
 #include "time/profiler.h"
 
 static const char* s_name = "urg";
+static const char* s_help = "detection for TCP urgent pointer";
 
 // FIXIT-H profiling is desirable but must be refactored to
 // avoid dependence on snort_config.h which snowballs
@@ -107,7 +108,7 @@ int TcpUrgOption::eval(Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter urg_params[] =
+static const Parameter s_params[] =
 {
     { "*range", Parameter::PT_STRING, nullptr, nullptr,
       "check if urgent offset is min<>max | <max | >min" },
@@ -118,7 +119,7 @@ static const Parameter urg_params[] =
 class UrgModule : public Module
 {
 public:
-    UrgModule() : Module(s_name, urg_params) { };
+    UrgModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);

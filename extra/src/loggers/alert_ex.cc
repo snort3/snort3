@@ -37,11 +37,14 @@ using namespace std;
 #include "protocols/packet.h"
 #include "detection/signature.h"
 
+static const char* s_name = "alert_ex";
+static const char* s_help = "output gid:sid:rev for alerts";
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter ex_params[] =
+static const Parameter s_params[] =
 {
     { "upper", Parameter::PT_BOOL, nullptr, "false",
       "true/false -> convert to upper/lower case" },
@@ -52,7 +55,7 @@ static const Parameter ex_params[] =
 class ExModule : public Module
 {
 public:
-    ExModule() : Module("alert_ex", ex_params) { };
+    ExModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
@@ -129,7 +132,7 @@ static const LogApi ex_api =
 {
     {
         PT_LOGGER,
-        "alert_ex",
+        s_name,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

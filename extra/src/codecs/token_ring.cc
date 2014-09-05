@@ -37,6 +37,8 @@ namespace
 {
 
 #define TR_NAME "token_ring"
+#define TR_HELP "support for token ring decoding"
+
 static const RuleMap tkr_rules[] =
 {
     { DECODE_BAD_TRH, "(" TR_NAME ") Bad Token Ring Header" },
@@ -50,7 +52,7 @@ static const RuleMap tkr_rules[] =
 class TrCodecModule : public DecodeModule
 {
 public:
-    TrCodecModule() : DecodeModule(TR_NAME) {}
+    TrCodecModule() : DecodeModule(TR_NAME, TR_HELP) {}
 
     const RuleMap* get_rules() const
     { return tkr_rules; }

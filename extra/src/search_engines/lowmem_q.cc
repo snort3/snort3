@@ -46,11 +46,14 @@ using namespace std;
 
 static string s_var;
 
+static const char* s_name = "lowmem_q";
+static const char* s_help = "MPSE that minimizes memory used";
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter lowmem_q_params[] =
+static const Parameter s_params[] =
 {
     { "var", Parameter::PT_STRING, nullptr, nullptr,
       "additional print text" },
@@ -61,7 +64,7 @@ static const Parameter lowmem_q_params[] =
 class LowmemQModule : public Module
 {
 public:
-    LowmemQModule() : Module("lowmem_q", lowmem_q_params) { };
+    LowmemQModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
@@ -101,7 +104,7 @@ public:
         void (*user_free)(void*),
         void (*tree_free)(void**),
         void (*list_free)(void**))
-    : Mpse("lowmem_q", use_gc)
+    : Mpse(s_name, use_gc)
     {
         obj = KTrieNew(1, user_free, tree_free, list_free);
     };
@@ -194,7 +197,7 @@ static const MpseApi lmq_api =
 {
     {
         PT_SEARCH_ENGINE,
-        "lowmem_q",
+        s_name,
         SEAPI_PLUGIN_V0,
         0,
         mod_ctor,

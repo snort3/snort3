@@ -55,6 +55,7 @@
 #endif
 
 static const char* s_name = "dpx";
+static const char* s_help = "dynamic inspector example";
 
 static THREAD_LOCAL ProfileStats dpxPerfStats;
 
@@ -108,7 +109,7 @@ void DpxPH::eval(Packet* p)
 class DpxModule : public Module
 {
 public:
-    DpxModule() : Module(s_name)
+    DpxModule() : Module(s_name, s_help)
     { };
 
     const char** get_pegs() const
