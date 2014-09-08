@@ -43,17 +43,20 @@ class NHttpMsgHeadShared;
 
 class NHttpMsgSection {
 public:
-    virtual ~NHttpMsgSection() { delete[] msg_text.start; };
-    virtual void analyze() = 0;                           // Minimum necessary processing for every message
-    virtual void print_section(FILE *output) = 0;         // Test tool prints all derived message parts
-    virtual void gen_events() = 0;                        // Converts collected information into required preprocessor events
-    virtual void update_flow() = 0;                       // Manages the splitter and communication between message sections
-    virtual void legacy_clients() = 0;                    // Populates the raw and normalized buffer interface used by old Snort
+    virtual ~NHttpMsgSection() { if (delete_msg_on_destruct) delete[] msg_text.start; };
+    virtual void analyze() = 0;                         // Minimum necessary processing for every message
+    virtual void print_section(FILE *output) = 0;       // Test tool prints all derived message parts
+    virtual void gen_events() = 0;                      // Converts collected information into required preprocessor events
+    virtual void update_flow() = 0;                     // Manages the splitter and communication between message sections
+    virtual void legacy_clients() = 0;                  // Populates the raw and normalized buffer interface used by old Snort
+    virtual NHttpEnums::ProcessResult worth_detection() // What should we do with this section after processing?
+       { return NHttpEnums::RES_INSPECT; };
 
     NHttpEnums::MethodId get_method_id() { return method_id; };
 
 protected:
-    NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
 
     // Convenience methods
     static uint32_t find_crlf(const uint8_t* buffer, int32_t length, bool wrappable);
@@ -65,12 +68,12 @@ protected:
     void legacy_header(bool use_trailer);
     void legacy_cookie(NHttpMsgHeadShared* header, NHttpEnums::SourceId source_id);
 
-    Field msg_text;
+    const Field msg_text;
 
-    NHttpFlowData* session_data;
-    NHttpEnums::SourceId source_id;
+    NHttpFlowData* const session_data;
+    const NHttpEnums::SourceId source_id;
     NHttpTransaction* transaction;
-    bool tcp_close;
+    const bool tcp_close;
     ScratchPad scratch_pad;
 
     // This is where all the derived values, extracted message parts, and normalized values are.
@@ -81,6 +84,9 @@ protected:
     NHttpEnums::VersionId version_id;
     NHttpEnums::MethodId method_id;
     int32_t status_code_num;
+
+private:
+    const bool delete_msg_on_destruct;
 };
 
 #endif

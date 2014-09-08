@@ -40,8 +40,9 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-       NHttpMsgStart(buffer, buf_size, session_data_, source_id_)
+NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+    SourceId source_id_, bool buf_owner) :
+    NHttpMsgStart(buffer, buf_size, session_data_, source_id_, buf_owner)
 {
    transaction->set_request(this);
 }

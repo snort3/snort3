@@ -38,7 +38,8 @@
 
 class NHttpMsgStatus: public NHttpMsgStart {
 public:
-    NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
     void analyze();
     void print_section(FILE *output);
     void gen_events();

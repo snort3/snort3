@@ -61,7 +61,8 @@ private:
     friend NHttpApi;
     friend NHttpStreamSplitter;
 
-    void process(const uint8_t* data, const uint16_t dsize, Flow* const flow, NHttpEnums::SourceId source_id_);
+    NHttpEnums::ProcessResult process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
 
     // Test mode
     bool test_output;

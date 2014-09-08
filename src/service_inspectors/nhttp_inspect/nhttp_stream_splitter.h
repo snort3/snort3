@@ -31,6 +31,7 @@
 
 #include "stream/stream_splitter.h"
 #include "nhttp_flow_data.h"
+#include "nhttp_test_input.h"
 
 class NHttpInspect;
 
@@ -38,12 +39,11 @@ class NHttpStreamSplitter : public StreamSplitter {
 public:
     NHttpStreamSplitter(bool is_client_to_server, NHttpInspect* my_inspector_) : StreamSplitter(is_client_to_server),
        my_inspector(my_inspector_) { };
-    ~NHttpStreamSplitter() { delete[] section_buffer; };
     Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used, uint32_t* flush_offset);
     const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const uint8_t* data, unsigned len,
        uint32_t flags, unsigned& copied);
     bool is_paf() { return true; };
-    uint32_t max() { return paf_max; };
+    uint32_t max() { return NHttpTestInput::test_input ? 16384 : paf_max; };
 private:
     void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SourceId source_id,
        NHttpEnums::SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets);
@@ -51,7 +51,6 @@ private:
 
     NHttpInspect* const my_inspector;
 
-    uint8_t *section_buffer = nullptr;
     uint32_t paf_max = 63780;
 };
 

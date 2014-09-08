@@ -38,12 +38,14 @@
 
 class NHttpMsgChunkHead : public NHttpMsgSection {
 public:
-    NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
     void analyze();
     void print_section(FILE *output);
     void gen_events();
     void update_flow();
     void legacy_clients();
+    NHttpEnums::ProcessResult worth_detection();
 
 private:
     void derive_chunk_length();
@@ -53,7 +55,6 @@ private:
     Field chunk_extensions;
 
     int64_t data_length = NHttpEnums::STAT_NOTCOMPUTE;
-    int64_t body_sections;
     int64_t num_chunks;
 };
 

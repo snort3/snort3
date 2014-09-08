@@ -15,7 +15,6 @@
 # Command lines are left justified, lower case, with no whitespace:
 #   @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent unrelated tests from interfering with each other.
 #   @request and @response set the message direction. Applies to subsequent sections until changed.
-#   @bodyend and @chunkend set the final two characters of a body or chunk to "xy" or "\r\n".
 #   @<decimal number> sets the test number and hence the test output file name. Applies to subsequent sections until changed. Don't reuse numbers.
 #
 # Escape sequences begin with '\'. They may be used within a paragraph or to begin a paragraph.
@@ -32,8 +31,7 @@
 # Whenever a segment contains insufficient data to make up a body or chunk, fill data will be generated to make up the difference based on the
 # Content-Length field or chunk header. Specifically flushing more data than in the current segment will trigger filling. The user should include at
 # least one character of body/chunk data either as part of the previous header segment or at the beginning of a new segment following the headers.
-# All data bytes included in the file will be used followed by required fill data in the pattern ABC...XYZABC... The final two characters will be
-# determined by bodyend "xy" or chunkend "\r\n".
+# All data bytes included in the file will be used followed by required fill data in the pattern ABC...XYZABC...
 
 
 # ***********************************************************************************************
@@ -484,21 +482,18 @@ HTTP/2.0 200 OK\r\nContent-type: text/plain\r\nTransfer-Encoding: gzip\r\nTransf
 # Valid Content-Length and body
 @7001
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 I'm a message body.
 
 @7002
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 12345
 
 @7003
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 
@@ -506,7 +501,6 @@ HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 
 @7004
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\nContent-type: \ttext/plain\t\r\nContent-LENGTH: 19\r\n\r\n
 
@@ -514,7 +508,6 @@ I'm a message body.
 
 @7005
 @break
-@bodyend
 @response
 HTTP/1.1 200 OK\r\n
 Transfer-Encoding: identity\r\n
@@ -532,7 +525,6 @@ abcdefghijklmnopqrstuvwxyz
 
 @7006
 @break
-@bodyend
 @request
 POST /body/in/a/request/ HTTP/1.1\r\n
 Content-Length:16383\r\n
@@ -542,7 +534,6 @@ Content-Length:16383\r\n
 
 @7007
 @break
-@bodyend
 @request
 POST /body/in/a/request/ HTTP/1.1\r\n
 Content-Length:16384\r\n
@@ -551,7 +542,6 @@ Content-Length:16384\r\n
 
 @7008
 @break
-@bodyend
 @response
 HTTP/1.0 408 barely too big for one section\r\n
 Content-Length:16385\r\n
@@ -561,7 +551,6 @@ Content-Length:16385\r\n
 
 @7009
 @break
-@bodyend
 @response
 HTTP/1.1 408 barely too big for two sections\r\n
 Content-Length:32772\r\n
@@ -570,7 +559,6 @@ Content-Length:32772\r\n
 
 @7010
 @break
-@bodyend
 @response
 HTTP/1.1 408 more than eight sections\r\n
 Content-Length:133072\r\n
@@ -597,7 +585,6 @@ HTTP/1.1 200 Silly gigantic length\r\nContent-type: \ttext/plain\t\r\nContent-LE
 # Remember chunk lengths are required to be specified in hex
 @9001
 @break
-@chunkend
 @response
 HTTP/1.1 208 Example with chunks\r\nTransfer-Encoding: chunked\r\n\r\n
 
@@ -616,7 +603,6 @@ e6\r\nchunkoflength230
 
 @9002
 @break
-@chunkend
 @request
 POST /request/with/chunks HTTP/1.1\r\n
 Content-Type:    text/plain\r\n

@@ -54,12 +54,17 @@ public:
     friend class NHttpMsgTrailer;
     friend class NHttpStreamSplitter;
     friend class NHttpTransaction;
+    friend class NHttpTestInput;
 private:
     void half_reset(NHttpEnums::SourceId source_id);
 
     // StreamSplitter internal data
     int64_t octets_seen[2] = { 0, 0 };
     int num_crlf[2] = { 0, 0 };
+    uint8_t *section_buffer[2] = { nullptr, nullptr };
+    int32_t section_buffer_length[2] = { 0, 0 };
+    uint8_t *chunk_buffer[2] = { nullptr, nullptr };
+    int32_t chunk_buffer_length[2] = { 0, 0 };
     
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
@@ -69,7 +74,7 @@ private:
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
-    int64_t octets_expected[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT }; // expected size of the upcoming body or chunk body section
+    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // length of the data from Content-Length field or chunk header.      
 
     // Inspector's internal data about the current message
     // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize
@@ -78,12 +83,8 @@ private:
     NHttpEnums::MethodId method_id[2] = { NHttpEnums::METH__NOTPRESENT, NHttpEnums::METH__NOTPRESENT };
     int32_t status_code_num[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
-    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // length of the data from Content-Length field or chunk header.      
-    int64_t body_sections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // number of body sections seen so far including chunk headers
-    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };     // number of user data octets seen so far (either regular body or chunks)
-    int64_t num_chunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };      // number of chunks seen so far
-    int64_t chunk_sections[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };  // number of sections seen so far in the current chunk
-    int64_t chunk_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // number of user data octets seen so far in the current chunk including terminating CRLF
+    int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // number of user data octets seen so far (regular body or chunks)
+    int64_t num_chunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // number of chunks seen so far
 
     // Transaction management including pipelining
     NHttpTransaction* transaction[2] = { nullptr, nullptr };

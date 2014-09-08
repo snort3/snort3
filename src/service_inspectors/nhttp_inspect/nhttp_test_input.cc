@@ -140,14 +140,6 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                     tcp_close = true;
                     tcp_closed = true;
                 }
-                else if ((command_length == strlen("bodyend")) && !memcmp(command_value, "bodyend", strlen("bodyend"))) {
-                    term_bytes[0] = 'x';
-                    term_bytes[1] = 'y';
-                }
-                else if ((command_length == strlen("chunkend")) && !memcmp(command_value, "chunkend", strlen("chunkend"))) {
-                    term_bytes[0] = '\r';
-                    term_bytes[1] = '\n';
-                }
                 else if (command_length > 0) {
                     // Look for a test number
                     bool is_number = true;
@@ -159,6 +151,10 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                         for (int j=0; j < command_length; j++) {
                             test_number = test_number * 10 + (command_value[j] - '0');
                         }
+                    }
+                    else {
+                        // Bad command in test file
+                        assert(0);
                     }
                 }
             }
@@ -227,7 +223,7 @@ void NHttpTestInput::flush(uint32_t length) {
 }
 
 
-void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &source_id) {
+void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &source_id, NHttpFlowData* session_data) {
     source_id = last_source_id;
     *buffer = msg_buf;
 
@@ -236,25 +232,14 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &so
         length = flush_octets;
     }
     else {
-        // We need to generate additional data to fill out the body or chunk section
-        // We may come through here multiple times as we generate all the PAF max body sections needed for a single flush
-        length = (flush_octets <= 16384) ? flush_octets : 16384;
+        // We need to generate additional data to fill out the body or chunk section. We may come through here
+        // multiple times as we generate all the maximum size body sections needed for a single flush.
+        uint32_t paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        length = (flush_octets <= paf_max) ? flush_octets : paf_max;
         for (uint32_t k = end_offset; k < length; k++) {
             msg_buf[k] = 'A' + k % 26;
         }
-
         flush_octets -= length;
-
-        if (flush_octets == 0) {
-            if (length-end_offset > 1) {
-                msg_buf[length-2] = term_bytes[0];
-            }
-            msg_buf[length-1] = term_bytes[1];
-        }
-        else if (flush_octets == 1) {
-             msg_buf[length-1] = term_bytes[0];
-        }
-
         end_offset = 0;
     }
 }

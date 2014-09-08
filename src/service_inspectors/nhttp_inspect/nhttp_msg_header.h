@@ -37,7 +37,8 @@
 
 class NHttpMsgHeader: public NHttpMsgHeadShared {
 public:
-    NHttpMsgHeader(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    NHttpMsgHeader(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
     void print_section(FILE *output);
     void gen_events();
     void update_flow();

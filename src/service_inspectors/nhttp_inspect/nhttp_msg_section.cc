@@ -41,7 +41,8 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
+NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+   SourceId source_id_, bool buf_owner) :
    msg_text(buf_size, buffer),
    session_data(session_data_),
    source_id(source_id_),
@@ -51,7 +52,8 @@ NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size,
    infractions(session_data->infractions[source_id]),
    version_id(session_data->version_id[source_id]),
    method_id(session_data->method_id[source_id]),
-   status_code_num(session_data->status_code_num[source_id])
+   status_code_num(session_data->status_code_num[source_id]),
+   delete_msg_on_destruct(buf_owner)
 {}
 
 // Return the number of octets before the first CRLF. Return length if CRLF not present.

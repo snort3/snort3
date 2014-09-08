@@ -111,7 +111,7 @@ void NHttpInspect::show(SnortConfig*)
     LogMessage("NHttpInspect\n");
 }
 
-void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id)
+ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id, bool buf_owner)
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(session_data);
@@ -119,21 +119,25 @@ void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
     NHttpMsgSection *msg_section = nullptr;
 
     switch (session_data->section_type[source_id]) {
-      case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id); break;
-      case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id); break;
-      case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id); break;
-      case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id); break;
-      case SEC_CHUNKHEAD: msg_section = new NHttpMsgChunkHead(data, dsize, session_data, source_id); break;
-      case SEC_CHUNKBODY: msg_section = new NHttpMsgChunkBody(data, dsize, session_data, source_id); break;
-      case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id); break;
-      case SEC_DISCARD: delete[] data; return;
-      default: assert(0); delete[] data; return;
+      case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_CHUNKHEAD: msg_section = new NHttpMsgChunkHead(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_CHUNKBODY: msg_section = new NHttpMsgChunkBody(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_DISCARD: if (buf_owner) delete[] data; return RES_IGNORE;
+      default: assert(0); if (buf_owner) delete[] data; return RES_IGNORE;
     }
 
     msg_section->analyze();
     msg_section->update_flow();
     msg_section->gen_events();
-    msg_section->legacy_clients();
+
+    ProcessResult return_value = msg_section->worth_detection();
+    if (return_value == RES_INSPECT) {
+        msg_section->legacy_clients();
+    }
 
     if (test_output) {
         if (!NHttpTestInput::test_input) {
@@ -152,8 +156,7 @@ void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
         }
         fflush(nullptr);
     }
+
+    return return_value;
 }
-
-
-
 

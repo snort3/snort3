@@ -83,3 +83,7 @@ void NHttpMsgStart::derive_version_id() {
 
 void NHttpMsgStart::gen_events() {}
 
+ProcessResult NHttpMsgStart::worth_detection() {
+    return RES_INSPECT;
+}
+

@@ -39,8 +39,9 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgHeader::NHttpMsgHeader(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-       NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_)
+NHttpMsgHeader::NHttpMsgHeader(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+   SourceId source_id_, bool buf_owner) :
+   NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner)
 {
    transaction->set_header(this, source_id);
 }
@@ -86,7 +87,6 @@ void NHttpMsgHeader::update_flow() {
              (get_header_value_norm(HEAD_TRANSFER_ENCODING).length - 8))) == TRANSCODE_CHUNKED) ) {
         // Chunked body
         session_data->type_expected[source_id] = SEC_CHUNKHEAD;
-        session_data->body_sections[source_id] = 0;
         session_data->body_octets[source_id] = 0;
         session_data->num_chunks[source_id] = 0;
     }
@@ -94,9 +94,7 @@ void NHttpMsgHeader::update_flow() {
             (*(int64_t*)header_value_norm[HEAD_CONTENT_LENGTH].start > 0)) {
         // Regular body
         session_data->type_expected[source_id] = SEC_BODY;
-        session_data->octets_expected[source_id] = *(int64_t*)get_header_value_norm(HEAD_CONTENT_LENGTH).start;
         session_data->data_length[source_id] = *(int64_t*)get_header_value_norm(HEAD_CONTENT_LENGTH).start;
-        session_data->body_sections[source_id] = 0;
         session_data->body_octets[source_id] = 0;
     }
     else {

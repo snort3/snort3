@@ -61,12 +61,9 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
        unsigned len, uint32_t flags, unsigned& copied)
 {
     static THREAD_LOCAL StreamBuffer nhttp_buf;
-    if (flags & PKT_PDU_HEAD) {
-        section_buffer = new uint8_t[65536];
-    }
 
+    NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
-
     copied = len;
 
     if (NHttpTestInput::test_input) {
@@ -74,31 +71,95 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
         {
             return nullptr;
         }
-        uint8_t* buffer;
-        NHttpTestInput::test_input_source->reassemble(&buffer, len, source_id);
+        uint8_t* test_buffer;
+        NHttpTestInput::test_input_source->reassemble(&test_buffer, len, source_id, session_data);
         if (len == 0) {
             // There is no more test data
-            delete[] section_buffer;
-            section_buffer = nullptr;
             return nullptr;
         }
-        data = buffer;
+        data = test_buffer;
         offset = 0;
     }
 
-    memcpy(section_buffer+offset, data, len);
+    bool is_chunk_body = session_data->section_type[source_id] == SEC_CHUNKBODY;
+
+    uint8_t*& chunk_buffer = session_data->chunk_buffer[source_id];
+    int32_t& chunk_buffer_length = session_data->chunk_buffer_length[source_id];
+    uint8_t*& buffer = !is_chunk_body ? session_data->section_buffer[source_id] : chunk_buffer;
+    int32_t& buffer_length = !is_chunk_body ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
+
+    if (buffer == nullptr) {
+        buffer = new uint8_t[65536];
+    }
+
+    memcpy(buffer + buffer_length + offset, data, len);
     if (flags & PKT_PDU_TAIL) {
-        my_inspector->process(section_buffer, offset + len, flow, source_id);
-        nhttp_buf.data = section_buffer;
-        nhttp_buf.length = offset + len;
-        section_buffer = nullptr;   // the buffer is the responsibility of the inspector now
-        return &nhttp_buf;
+        ProcessResult send_to_detection;
+        if (!is_chunk_body) {
+            // start line/headers/body individual section processing with aggregation prior to being sent to detection
+            // only the last section added to the buffer goes to the inspector
+            send_to_detection = my_inspector->process(buffer + buffer_length, offset + len, flow, source_id,
+               buffer_length == 0);
+        }
+        else {
+            // Because of aggregation chunk body sections do not go to Inspector on schedule or in chronological order
+            // with respect to otherchunks. That means NHttpMsgChunkBody::update_flow() cannot do it design-intended
+            // job of updating type_expected in time for StreamSplitter to find the next chunk header. So we do it here.
+            session_data->type_expected[source_id] = SEC_CHUNKHEAD;
+
+            // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
+            // all the chunks in the buffer go to the inspector together
+            int32_t total_chunk_len = chunk_buffer_length + offset + len;
+            if (total_chunk_len < 16384) {
+                paf_max = 16384 - total_chunk_len;
+                chunk_buffer_length = total_chunk_len;
+                return nullptr;
+            }
+            else {
+                paf_max = 16384;
+            }
+            send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow, source_id, true);
+        }
+
+        // Buffers are reset to nullptr without delete[] because NHttpMsgSection holds the pointer and is responsible
+        switch (send_to_detection) {
+          case RES_INSPECT:
+            nhttp_buf.data = buffer;
+            nhttp_buf.length = buffer_length + offset + len;
+            buffer = nullptr;
+            buffer_length = 0;
+            return &nhttp_buf;
+          case RES_IGNORE:
+            buffer = nullptr;
+            buffer_length = 0;
+            return nullptr;
+          case RES_AGGREGATE:
+            buffer_length += offset + len;
+            return nullptr;
+          case RES_FLUSHCHUNKS:
+            buffer = nullptr;
+            buffer_length = 0;
+            if (chunk_buffer != nullptr) {
+                // FIXIT-M these three variables about the buffered chunks need to be managed properly
+                session_data->section_type[source_id] = SEC_CHUNKBODY;
+                session_data->tcp_close[source_id] = false;
+                session_data->infractions[source_id] = 0;
+
+                my_inspector->process(chunk_buffer, chunk_buffer_length, flow, source_id, true);
+                nhttp_buf.data = chunk_buffer;
+                nhttp_buf.length = chunk_buffer_length;
+                chunk_buffer = nullptr;
+                chunk_buffer_length = 0;
+                return &nhttp_buf;
+            }
+            return nullptr;
+        }
     }
     return nullptr;
 }
 
 StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t, uint32_t* flush_offset) {
-    // When the system begins providing TCP connection close information this won't always be false. &&&
+    // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
     bool tcp_close = false;
 
     // This is the session state information we share with HTTP Inspect and store with stream. A session is defined
@@ -116,9 +177,13 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         bool need_break;
         uint8_t* test_data = nullptr;
         NHttpTestInput::test_input_source->scan(test_data, length, source_id, tcp_close, need_break);
-        if (length == 0) return StreamSplitter::FLUSH;
+        if (length == 0) {
+            return StreamSplitter::FLUSH;
+        }
         data = test_data;
-        if (need_break) flow->set_application_data(session_data = new NHttpFlowData);
+        if (need_break) {
+            flow->set_application_data(session_data = new NHttpFlowData);
+        }
     }
 
     switch (SectionType type = session_data->type_expected[source_id]) {
@@ -139,12 +204,12 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
                 session_data->num_crlf[source_id] = 0;
             }
 
-            // Check start line for leading CRLF because some 1.0 implementations put extra blank lines between messages.
-            // We tolerate this by quietly ignoring them. Header/trailer may also have leading CRLF. That is completely
-            // normal and means there are no header/trailer lines.
-            if ((session_data->num_crlf[source_id] == 2) && (session_data->octets_seen[source_id] == 2) && (type != SEC_CHUNKHEAD)) {
+            // If the first two octets are CRLF then flush them separately. We are 1) DISCARDing CRLF some
+            // 1.0 implementation put following previous message, 2) DISCARDing CRLF between chunk and following
+            // chunk header, and 3) flushing normal empty header or trailer.
+            if ((session_data->num_crlf[source_id] == 2) && (session_data->octets_seen[source_id] == 2)) {
                 prepare_flush(session_data, flush_offset, source_id,
-                   ((type == SEC_REQUEST) || (type == SEC_STATUS)) ? SEC_DISCARD : type,
+                   ((type == SEC_REQUEST) || (type == SEC_STATUS) || (type == SEC_CHUNKHEAD)) ? SEC_DISCARD : type,
                    tcp_close && (k == length-1), 0, k+1);
                 return StreamSplitter::FLUSH;
             }
@@ -180,9 +245,9 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         return StreamSplitter::FLUSH;
       case SEC_BODY:
       case SEC_CHUNKBODY:
-        paf_max = 16384;
-        if ((!tcp_close) || (length > session_data->octets_expected[source_id])) {
-            prepare_flush(session_data, flush_offset, source_id, type, false, 0, session_data->octets_expected[source_id]);
+        paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        if ((!tcp_close) || (length > session_data->data_length[source_id])) {
+            prepare_flush(session_data, flush_offset, source_id, type, false, 0, session_data->data_length[source_id]);
         }
         else {
             // The TCP connection has closed and this is the possibly incomplete final section

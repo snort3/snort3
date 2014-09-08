@@ -41,25 +41,24 @@ unsigned NHttpFlowData::nhttp_flow_id = 0;
 NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) { }
 
 NHttpFlowData::~NHttpFlowData() {
-    delete transaction[SRC_CLIENT];
-    delete transaction[SRC_SERVER];
+    for (int k=0; k <= 1; k++) {
+        delete[] section_buffer[k];
+        delete[] chunk_buffer[k];
+        delete transaction[k];
+    }
     delete_pipeline();
 }
 
 void NHttpFlowData::half_reset(SourceId source_id) {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
-    octets_expected[source_id] = STAT_NOTPRESENT;
 
     version_id[source_id] = VERS__NOTPRESENT;
     method_id[source_id] = METH__NOTPRESENT;
     status_code_num[source_id] = STAT_NOTPRESENT;
 
     data_length[source_id] = STAT_NOTPRESENT;
-    body_sections[source_id] = STAT_NOTPRESENT;
     body_octets[source_id] = STAT_NOTPRESENT;
     num_chunks[source_id] = STAT_NOTPRESENT;
-    chunk_sections[source_id] = STAT_NOTPRESENT;
-    chunk_octets[source_id] = STAT_NOTPRESENT;
 }
 
 bool NHttpFlowData::add_to_pipeline(NHttpTransaction* latest) {

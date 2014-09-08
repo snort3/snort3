@@ -38,8 +38,9 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-   NHttpMsgSection(buffer, buf_size, session_data_, source_id_), body_sections(session_data->body_sections[source_id]),
+NHttpMsgChunkHead::NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+   SourceId source_id_, bool buf_owner) :
+   NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner),
    num_chunks(session_data->num_chunks[source_id])
 {
    transaction->set_body(this);
@@ -79,7 +80,6 @@ void NHttpMsgChunkHead::derive_chunk_length() {
 }
 
 void NHttpMsgChunkHead::analyze() {
-    body_sections++;
     // First section in a new chunk is just the start line.
     num_chunks++;
     start_line.start = msg_text.start;
@@ -122,19 +122,18 @@ void NHttpMsgChunkHead::update_flow() {
     }
     else if (data_length > 0) {
         session_data->type_expected[source_id] = SEC_CHUNKBODY;
-        session_data->octets_expected[source_id] = data_length+2;
-        session_data->body_sections[source_id] = body_sections;
         session_data->num_chunks[source_id] = num_chunks;
         session_data->data_length[source_id] = data_length;
-        session_data->chunk_sections[source_id] = 0;
-        session_data->chunk_octets[source_id] = 0;
     }
-    else {
+    else { // FIXIT-H what if data_length is bad (probable loss of sync)?
         // This was zero-length last chunk, trailer comes next
         session_data->type_expected[source_id] = SEC_TRAILER;
     }
 }
 
+ProcessResult NHttpMsgChunkHead::worth_detection() {
+    return ((data_length > 0) && !tcp_close) ? RES_IGNORE : RES_FLUSHCHUNKS;
+}
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgChunkHead::legacy_clients() {
