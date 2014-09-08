@@ -29,13 +29,16 @@
 #include "protocols/packet.h"
 #include "protocols/eth.h"
 #include "codecs/codec_events.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "codecs/sf_protocols.h"
+#include "log/text_log.h"
+
+#define CD_ETH_NAME "eth"
+#define CD_ETH_HELP "support for ethernet protocol"
 
 namespace
 {
 
-#define CD_ETH_NAME "eth"
 static const RuleMap eth_rules[] =
 {
     { DECODE_ETH_HDR_TRUNC, "(" CD_ETH_NAME ") truncated eth header" },
@@ -45,7 +48,7 @@ static const RuleMap eth_rules[] =
 class EthModule : public DecodeModule
 {
 public:
-    EthModule() : DecodeModule(CD_ETH_NAME) {}
+    EthModule() : DecodeModule(CD_ETH_NAME, CD_ETH_HELP) {}
 
     const RuleMap* get_rules() const
     { return eth_rules; }
@@ -60,8 +63,10 @@ public:
 
 
     virtual PROTO_ID get_proto_id() { return PROTO_ETH; };
-    virtual void get_protocol_ids(std::vector<uint16_t>&) {};
+    virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet*const );
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -80,6 +85,11 @@ void EthCodec::get_data_link_type(std::vector<int>&v)
 {
     v.push_back(DLT_PPP_ETHER);
     v.push_back(DLT_EN10MB);
+}
+
+void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
+{
+    v.push_back(ETHERNET_802_3);
 }
 
 
@@ -106,42 +116,48 @@ bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* do a little validation */
     if(raw_len < eth::ETH_HEADER_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "WARNING: Truncated eth header (%d bytes).\n", raw_len););
-
         codec_events::decoder_event(p, DECODE_ETH_HDR_TRUNC);
-
         return false;
     }
 
     /* lay the ethernet structure over the packet data */
     const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
 
-    DEBUG_WRAP(
-            DebugMessage(DEBUG_DECODE, "%X:%X:%X:%X:%X:%X -> %X:%X:%X:%X:%X:%X\n",
-                eh->ether_src[0],
-                eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
-                eh->ether_src[4], eh->ether_src[5], eh->ether_dst[0],
-                eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
-                eh->ether_dst[4], eh->ether_dst[5]);
-            );
-    DEBUG_WRAP(
-            DebugMessage(DEBUG_DECODE, "type:0x%X len:0x%X\n",
-                ntohs(eh->ether_type), p->pkth->pktlen)
-            );
 
     next_prot_id = ntohs(eh->ether_type);
     if (next_prot_id > eth::MIN_ETHERTYPE )
-    {
         p->proto_bits |= PROTO_BIT__ETH;
-        lyr_len = eth::ETH_HEADER_LEN;
-        return true;
-    }
+    else
+        next_prot_id = ETHERNET_LLC;
 
 
-    return false;
+    lyr_len = eth::ETH_HEADER_LEN;
+    return true;
 }
 
+
+void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
+
+    /* src addr */
+    TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
+        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+        eh->ether_src[4], eh->ether_src[5]);
+
+    /* dest addr */
+    TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
+        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+        eh->ether_dst[4], eh->ether_dst[5]);
+
+    const uint16_t prot = ntohs(eh->ether_type);
+
+    if (prot <= eth::MIN_ETHERTYPE)
+        TextLog_Print(text_log, "  len:0x%04X", prot);
+    else
+        TextLog_Print(text_log, "  type:0x%04X", prot);
+}
 
 //-------------------------------------------------------------------------
 // ethernet
@@ -173,7 +189,7 @@ bool EthCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
         ho->ether_type = hi->ether_type;
         uint8_t *dst_mac = PacketManager::encode_get_dst_mac();
         
-        if ( forward(enc) )
+        if ( forward(enc->flags) )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
             /*If user configured remote MAC address, use it*/
@@ -246,6 +262,7 @@ static const CodecApi eth_api =
     { 
         PT_CODEC,
         CD_ETH_NAME,
+        CD_ETH_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

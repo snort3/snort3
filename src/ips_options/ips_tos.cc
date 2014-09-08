@@ -31,7 +31,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "range.h"
+#include "framework/range.h"
 
 static const char* s_name = "tos";
 
@@ -105,7 +105,7 @@ int IpTosOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter tos_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
@@ -113,10 +113,13 @@ static const Parameter tos_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check type of service field";
+
 class TosModule : public Module
 {
 public:
-    TosModule() : Module(s_name, tos_params) { };
+    TosModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -171,6 +174,7 @@ static const IpsApi tos_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

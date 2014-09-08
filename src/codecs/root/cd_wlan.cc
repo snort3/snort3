@@ -32,10 +32,17 @@
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 
+
+#ifdef DEBUG_MSGS
+#include "log/log.h"
+#endif
+
+#define CD_WLAN_NAME "wlan"
+#define CD_WLAN_HELP "support for wireless local area network protocol"
+
 namespace
 {
 
-#define CD_WLAN_NAME "wlan"
 static const RuleMap wlan_rules[] =
 {
     { DECODE_BAD_80211_ETHLLC, "(" CD_WLAN_NAME ") Bad 802.11 LLC header" },
@@ -46,7 +53,7 @@ static const RuleMap wlan_rules[] =
 class WlanCodecModule : public DecodeModule
 {
 public:
-    WlanCodecModule() : DecodeModule(CD_WLAN_NAME) {}
+    WlanCodecModule() : DecodeModule(CD_WLAN_NAME, CD_WLAN_HELP) {}
 
     const RuleMap* get_rules() const
     { return wlan_rules; }
@@ -94,15 +101,11 @@ void WlanCodec::get_data_link_type(std::vector<int>&v)
 }
 
 bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+        Packet*, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
     uint32_t cap_len = raw_len;
     // reinterpret the raw data into this codec's data format
 
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Packet!\n"););
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "caplen: %lu    pktlen: %lu\n",
-                (unsigned long)cap_len, (unsigned long)raw_len););
 
     /* do a little validation */
     if(cap_len < MINIMAL_IEEE80211_HEADER_LEN)
@@ -159,7 +162,9 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         case WLAN_TYPE_DATA_DTACKPL:
         case WLAN_TYPE_DATA_DATA:
         {
-
+            lyr_len = IEEE802_11_DATA_HDR_LEN;
+            next_prot_id = ETHERNET_LLC;
+#if 0
             if(cap_len < IEEE802_11_DATA_HDR_LEN + sizeof(EthLlc))
             {
                 codec_events::decoder_event(p, DECODE_BAD_80211_ETHLLC);
@@ -213,6 +218,7 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
                         return false;
                 }
             }
+#endif
             break;
         }
         default:
@@ -229,24 +235,16 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new WlanCodecModule;
-}
+{ return new WlanCodecModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new WlanCodec();
-}
+{ return new WlanCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi wlan_api =
@@ -254,6 +252,7 @@ static const CodecApi wlan_api =
     {
         PT_CODEC,
         CD_WLAN_NAME,
+        CD_WLAN_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -16,60 +16,40 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// codec_manager.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-// packet_manager.h author Josh Rosenbaum <jrosenba@cisco.com>
-
-#ifndef PACKET_MANAGER_H
-#define PACKET_MANAGER_H
+#ifndef MANAGERS_PACKET_MANAGER_H
+#define MANAGERS_PACKET_MANAGER_H
 
 #include <array>
 #include <list>
+
+#include "main/snort_types.h"
 #include "framework/codec.h"
-#include "time/profiler.h"
-#include "utils/stats.h"
-#include "snort_config.h"
+#include "protocols/packet.h"
+#include "framework/counts.h"
+#include "managers/codec_manager.h"
+#include "main/thread.h"
 
 
-struct Packet;
-
-//-------------------------------------------------------------------------
-
-#ifdef PERF_PROFILING
-extern THREAD_LOCAL ProfileStats decodePerfStats;
-#endif
+struct _daq_pkthdr;
+struct TextLog;
 
 
 /*
  *  PacketManager class
  */
-class PacketManager
+class SO_PUBLIC PacketManager
 {
 public:
-    /* constructors, destructors, and statistics */
 
-    // global plugin initializer. Called by LUA to add register codecs
-    static void add_plugin(const struct CodecApi*);
-    // instantiate a specific codec with a codec specific Module
-    static void instantiate(const CodecApi*, Module*, SnortConfig*);
-    // instantiate any codec for which a module has not been provided.
-    static void instantiate();
-    // destroy all global codec related information
-    static void release_plugins();
-    // initialize the current threads codecs
-    static void thread_init();
-    // destroy thread_local data
-    static void thread_term();
+    // decode this packet and set all relevent packet fields.
+    static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
+
     // allocate a Packet for later formatting (cloning)
     static Packet* encode_new(void);
     // release the allocated Packet
     static void encode_delete(Packet*);
-
-
-    /* main encode and decode functions */
-
-
-    // decode this packet and set all relevent packet fields.
-    static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet
     static void encode_update(Packet*);
@@ -84,6 +64,12 @@ public:
     static const uint8_t* encode_response(
         EncodeType, EncodeFlags, const Packet* orig, uint32_t* len,
         const uint8_t* payLoad, uint32_t payLen);
+    // when encoding, rather than copy the destination MAC address from the
+    // inbound packet, manually set the MAC address.
+    static void encode_set_dst_mac(uint8_t* );
+    // get the MAC address which has been set using encode_set_dst_mac().
+    // Useful for root decoders setting the MAC address
+    static uint8_t *encode_get_dst_mac();
 
     // wrapper for encode response.  Ensure no payload is encoded.
     static inline const uint8_t* encode_reject( EncodeType type,
@@ -100,28 +86,44 @@ public:
     /* codec support and statistics */
 
 
-    // print all of the codec plugins
-    static void dump_plugins();
-    // print codec information.  MUST be called after thread_term.
-    static void dump_stats();
     // get the number of packets which have been rebuilt by this thread
     static PegCount get_rebuilt_packet_count(void);
     // check if a codec has been register for the specified protocol number
     static bool has_codec(uint16_t protocol);
-    // when encoding, rather than copy the destination MAC address from the
-    // inbound packet, manually set the MAC address.
-    static void encode_set_dst_mac(uint8_t* );
-    // get the MAC address which has been set using encode_set_dst_mac().
-    // Useful for root decoders setting the MAC address
-    static uint8_t *encode_get_dst_mac();
     // set the packet to be encoded.
     static void encode_set_pkt(Packet* p);
-
     // reset the current 'clone' packet
     static inline void encode_reset(void)
-    {
-        encode_set_pkt(NULL);
-    }
+    { encode_set_pkt(NULL); }
+
+
+    // print codec information.  MUST be called after thread_term.
+    static void dump_stats();
+    // Get the name of the given protocol
+    static const char* get_proto_name(uint16_t protocol);
+    // Get the name of the given protocol
+    static const char* get_proto_name(uint8_t protocol);
+    // print this packets information, layer by layer
+    static void log_protocols(TextLog* const, const Packet* const);
+
+private:
+    //  STATISTICS!!
+
+    // The only time we should accumulate is when CodecManager tells us too
+    friend void CodecManager::thread_term();
+    static void accumulate();
+
+    // constant offsets into the s_stats array.  Notice the stat_offset
+    // constant which is used when adding a protocol specific codec
+    static const uint8_t total_processed = 0;
+    static const uint8_t other_codecs = 1;
+    static const uint8_t discards = 2;
+    static const uint8_t stat_offset = 3;
+
+    // declared in header so it can access s_protocols
+    static THREAD_LOCAL std::array<PegCount, stat_offset + CodecManager::s_protocols.size()> s_stats;
+    static std::array<PegCount, s_stats.size()> g_stats;
+    static const std::array<const char*, stat_offset> stat_names;
 };
 
 #endif

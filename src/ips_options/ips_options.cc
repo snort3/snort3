@@ -26,12 +26,18 @@
 #include "framework/ips_option.h"
 
 extern const BaseApi* ips_byte_extract;
+extern const BaseApi* ips_classtype;
 extern const BaseApi* ips_content;
+extern const BaseApi* ips_detection_filter;
+extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_file_data;
 extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
 extern const BaseApi* ips_ip_proto;
+extern const BaseApi* ips_metadata;
 extern const BaseApi* ips_pcre;
+extern const BaseApi* ips_pkt_data;
+extern const BaseApi* ips_reference;
 extern const BaseApi* ips_replace;
 extern const BaseApi* ips_so;
 
@@ -42,10 +48,7 @@ extern const BaseApi* ips_base64_data;
 extern const BaseApi* ips_base64_decode;
 extern const BaseApi* ips_byte_jump;
 extern const BaseApi* ips_byte_test;
-extern const BaseApi* ips_classtype;
 extern const BaseApi* ips_cvs;
-extern const BaseApi* ips_detection_filter;
-extern const BaseApi* ips_dsize;
 extern const BaseApi* ips_flags;
 extern const BaseApi* ips_fragbits;
 extern const BaseApi* ips_fragoffset;
@@ -67,12 +70,9 @@ extern const BaseApi* ips_id;
 extern const BaseApi* ips_ipopts;
 extern const BaseApi* ips_isdataat;
 extern const BaseApi* ips_itype;
-extern const BaseApi* ips_metadata;
 extern const BaseApi* ips_msg;
-extern const BaseApi* ips_pkt_data;
 extern const BaseApi* ips_priority;
 extern const BaseApi* ips_raw_data;
-extern const BaseApi* ips_reference;
 extern const BaseApi* ips_rem;
 extern const BaseApi* ips_rev;
 extern const BaseApi* ips_rpc;
@@ -90,12 +90,18 @@ extern const BaseApi* ips_window;
 const BaseApi* ips_options[] =
 {
     ips_byte_extract,
+    ips_classtype,
     ips_content,
+    ips_detection_filter,
+    ips_dsize,
     ips_file_data,
     ips_flow,
     ips_flowbits,
     ips_ip_proto,
+    ips_metadata,
     ips_pcre,
+    ips_pkt_data,
+    ips_reference,
     ips_replace,
     ips_so,
 #ifdef STATIC_IPS_OPTIONS
@@ -105,10 +111,7 @@ const BaseApi* ips_options[] =
     ips_base64_decode,
     ips_byte_jump,
     ips_byte_test,
-    ips_classtype,
     ips_cvs,
-    ips_detection_filter,
-    ips_dsize,
     ips_flags,
     ips_fragbits,
     ips_fragoffset,
@@ -130,12 +133,9 @@ const BaseApi* ips_options[] =
     ips_ipopts,
     ips_isdataat,
     ips_itype,
-    ips_metadata,
     ips_msg,
-    ips_pkt_data,
     ips_priority,
     ips_raw_data,
-    ips_reference,
     ips_rem,
     ips_rev,
     ips_rpc,

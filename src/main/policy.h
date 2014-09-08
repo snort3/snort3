@@ -24,14 +24,15 @@
 #include <string>
 #include <vector>
 
-#include "snort_types.h"
-#include "sfip/sf_ipvar.h"
-#include "utils/sfportobject.h"
-#include "sfip/ipv6_port.h"
-
+struct PortTable;
+struct vartable_t;
+struct sfip_var_t;
 typedef unsigned int PolicyId;
 
-// FIXIT-H split into separate modules
+// defined in sfportobject.h
+typedef struct SFGHASH PortVarTable;
+
+// FIXIT-L split into separate headers
 
 //-------------------------------------------------------------------------
 // traffic stuff

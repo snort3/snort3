@@ -29,12 +29,16 @@
 #include "main/snort_config.h"
 #include "main/snort.h"
 
+static const char* s_name = "ppm";
+static const char* s_help = 
+    "packet and rule latency monitoring and control";
+
 //-------------------------------------------------------------------------
 // ppm attributes
 //-------------------------------------------------------------------------
 
 #ifdef PPM_MGR
-static const Parameter ppm_params[] =
+static const Parameter s_params[] =
 {
     { "max_pkt_time", Parameter::PT_INT, "0:", "0",
       "enable packet latency thresholding (usec), 0 = off" },
@@ -88,7 +92,7 @@ static const RuleMap ppm_rules[] =
 // ppm module
 //-------------------------------------------------------------------------
 
-PpmModule::PpmModule() : Module("ppm", ppm_params) { }
+PpmModule::PpmModule() : Module(s_name, s_help, s_params) { }
 
 const RuleMap* PpmModule::get_rules() const
 { return ppm_rules; }

@@ -441,7 +441,7 @@ static void parse_operator(const char* cptr, ByteTestData& idx)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter jump_params[] =
+static const Parameter s_params[] =
 {
     { "~count", Parameter::PT_INT, "1:10", nullptr,
       "number of bytes to pick up from the buffer" },
@@ -482,10 +482,13 @@ static const Parameter jump_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to convert data to integer and compare";
+
 class ByteTestModule : public Module
 {
 public:
-    ByteTestModule() : Module(s_name, jump_params) { };
+    ByteTestModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -628,6 +631,7 @@ static const IpsApi byte_test_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

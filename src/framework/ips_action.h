@@ -50,7 +50,7 @@ enum ActionType
 
 struct SnortConfig;
 
-class IpsAction
+class SO_PUBLIC IpsAction
 {
 public:
     virtual ~IpsAction() { };

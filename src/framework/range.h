@@ -16,34 +16,41 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// range.h author Russ Combs <rucombs@cisco.com>
 
-// template_module.h author Josh Rosenbaum <jrosenba@cisco.com>
+#ifndef FRAMEWORK_RANGE_H
+#define FRAMEWORK_RANGE_H
 
-#ifndef TEMPLATE_MODULE_H
-#define TEMPLATE_MODULE_H
+#include "main/snort_types.h"
 
-#include "codecs/decode_module.h"
+// unfortunately, <> was implemented inconsistently.  eg:
+// dsize implements <> as ( a <= c && c <= b ) and
+// icode implements <> as ( a < c && c < b )
 
+// <> is implemented icode style but we add explicit options
+// <=> for dsize style and >< for icode style so rule options
+// can coerce <> if needed for backwards compatibility
 
-#define CODEC_NAME "name"
-
-// inherit from DecodeModule rather than Module so the GID for
-// all codecs are identical. Additionally, all of the SIDS are
-// defined in DecodeModule. So, when creating new events, you
-// only need to look for codec SID collisions in one locations
-class NameModule : public DecodeModule
+class SO_PUBLIC RangeCheck
 {
 public:
-    NameModule();
+    enum Op
+    {
+        // =  !  <   <=  >   >=  <>  ><  <=>
+        EQ, NOT, LT, LE, GT, GE, LG, GL, LEG, MAX
+    };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    Op op;
+    long min;
+    long max;
 
-private:
-    // any structs or options which will be used when constructing
-    // the Codec
-    bool option1;
+    bool operator==(const RangeCheck&) const;
 
+    void init();
+    // FIXIT-L add ttl style syntax
+    bool parse(const char* s); 
+    bool eval(long);
 };
 
 #endif
+

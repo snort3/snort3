@@ -28,11 +28,11 @@
 #include "protocols/protocol_ids.h"
 #include <pcap.h>
 
+#define CD_RAW4_NAME "raw4"
+#define CD_RAW4_HELP "support for unencapsulated IPv4"
 
 namespace
 {
-
-#define CD_RAW4_NAME "raw4"
 
 class Raw4Codec : public Codec
 {
@@ -73,7 +73,6 @@ public:
 bool Raw4Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
         Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t &next_prot_id)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Raw IP4 Packet!\n"););
     next_prot_id = ETHERTYPE_IPV4;
     return true;
 }
@@ -105,6 +104,7 @@ static const CodecApi raw4_api =
     {
         PT_CODEC,
         CD_RAW4_NAME,
+        CD_RAW4_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

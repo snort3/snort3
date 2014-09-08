@@ -25,13 +25,18 @@
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
+#include "framework/codec.h"
+#include "main/snort_types.h"
 
 
-namespace ipv6_util
+namespace ip_util
 {
 
-bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
-void CheckIPv6ExtensionOrder(Packet *p);
+const int IPV6_ORDER_MAX = 7;
+
+SO_PUBLIC bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
+SO_PUBLIC void CheckIPv6ExtensionOrder(Packet* p, uint8_t proto, uint8_t next);
+
 
 static inline int IPV6ExtensionOrder(uint8_t type)
 {
@@ -41,9 +46,33 @@ static inline int IPV6ExtensionOrder(uint8_t type)
         case IPPROTO_ID_DSTOPTS:   return 2;
         case IPPROTO_ID_ROUTING:   return 3;
         case IPPROTO_ID_FRAGMENT:  return 4;
-        case IPPROTO_ID_AH:        return 5;
+        case IPPROTO_ID_AUTH:      return 5;
         case IPPROTO_ID_ESP:       return 6;
-        default:                   return 7;
+        default:                   return IPV6_ORDER_MAX;
+    }
+}
+
+static inline icmp::IcmpCode get_icmp4_code(EncodeType et)
+{
+    switch ( et )
+    {
+        case EncodeType::ENC_UNR_NET:  return icmp::IcmpCode::NET_UNREACH;
+        case EncodeType::ENC_UNR_HOST: return icmp::IcmpCode::HOST_UNREACH;
+        case EncodeType::ENC_UNR_PORT: return icmp::IcmpCode::PORT_UNREACH;
+        case EncodeType::ENC_UNR_FW:   return icmp::IcmpCode::PKT_FILTERED;
+        default: return icmp::IcmpCode::PORT_UNREACH;
+    }
+}
+
+static inline icmp::Icmp6Code get_icmp6_code(EncodeType et)
+{
+    switch ( et )
+    {
+        case EncodeType::ENC_UNR_NET:  return icmp::Icmp6Code::UNREACH_NET;
+        case EncodeType::ENC_UNR_HOST: return icmp::Icmp6Code::UNREACH_HOST;
+        case EncodeType::ENC_UNR_PORT: return icmp::Icmp6Code::UNREACH_PORT;
+        case EncodeType::ENC_UNR_FW:   return icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
+        default: return icmp::Icmp6Code::UNREACH_PORT;
     }
 }
 

@@ -27,19 +27,18 @@
 
 #include "framework/codec.h"
 #include "protocols/ipv4.h"
+#include "protocols/packet.h"
 #include "codecs/codec_events.h"
-
+#include "log/text_log.h"
+#include "main/snort.h"
+#include "log/messages.h"
+#include "protocols/packet_manager.h"
 
 namespace
 {
 
-// yes, macros are necessary. The API and class constructor require different strings.
-//
-// this macros is defined in the module to ensure identical names. However,
-// if you don't want a module, define the name here.
-#ifndef ICMP4_IP_NAME
 #define ICMP4_IP_NAME "icmp4_ip"
-#endif
+#define ICMP4_IP_HELP "support for IP in ICMPv4"
 
 class Icmp4IpCodec : public Codec
 {
@@ -52,8 +51,8 @@ public:
     virtual bool encode(EncState* enc, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
-
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const);
 };
 
 } // namespace
@@ -74,11 +73,7 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* do a little validation */
     if(raw_len < ip::IP4_HEADER_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP short header (%d bytes)\n", raw_len););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
-
         return false;
     }
 
@@ -91,24 +86,14 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if((ip4h->get_ver() != 4) && !p->ip_api.is_ip6())
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: not IPv4 datagram ([ver: 0x%x][len: 0x%x])\n",
-            ip4h->get_ver(), ntohs(ip4h->get_len())););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
-
         return false;
     }
 
-    ip_len = ntohs(ip4h->get_len());/* set the IP datagram length */
     hlen = ip4h->get_hlen() << 2;    /* set the IP header length */
 
     if(raw_len < hlen)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: IP len (%d bytes) < IP hdr len (%d bytes), packet discarded\n",
-            ip_len, hlen););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
         return false;
     }
@@ -143,8 +128,6 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP Unreachable IP header length: "
-                            "%lu\n", (unsigned long)hlen););
 
     // since we know the protocol ID in this layer (and NOT the
     // next layer), set the correct protocol here.  Normally,
@@ -174,6 +157,181 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 }
 
 
+struct ip4_addr
+{
+    union
+    {
+        uint32_t addr32;
+        uint8_t addr8[4];
+    };
+};
+
+void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+    const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
+    TextLog_Puts(text_log, "\n\t**** ORIGINAL DATAGRAM DUMP: ****");
+    TextLog_NewLine(text_log);
+    TextLog_Puts(text_log, "\tIPv4\n\t\t");
+
+    // COPIED DIRECTLY FROM ipv4 CODEC.  This is specificially replicated since
+    //      the two are not necessarily the same.
+
+    // FIXIT-H  -->  This does NOT obfuscate correctly
+    if (ScObfuscate())
+    {
+        TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
+    }
+    else
+    {
+        ip4_addr src, dst;
+        src.addr32 = ip4h->get_src();
+        dst.addr32 = ip4h->get_dst();
+
+        TextLog_Print(text_log, "%d.%d.%d.%d -> %d.%d.%d.%d",
+            (int)src.addr8[0], (int)src.addr8[1],
+            (int)src.addr8[2], (int)src.addr8[3],
+            (int)dst.addr8[0], (int)dst.addr8[1],
+            (int)dst.addr8[2], (int)dst.addr8[3]);
+    }
+
+    TextLog_NewLine(text_log);
+    TextLog_Puts(text_log, "\t\t");
+
+    const uint16_t hlen = ip4h->get_hlen() << 2;
+    const uint16_t len = ntohs(ip4h->get_len());
+    const uint16_t frag_off = ntohs(ip4h->get_off());
+
+    TextLog_Print(text_log, "Next:%s(%02X) TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
+            PacketManager::get_proto_name(ip4h->get_proto()),
+            ip4h->get_proto(), ip4h->get_ttl(), ip4h->get_tos(),
+            ip4h->get_id(), hlen, len);
+
+
+    /* print the reserved bit if it's set */
+    if(frag_off & 0x8000)
+        TextLog_Puts(text_log, " RB");
+
+    /* printf more frags/don't frag bits */
+    if(frag_off & 0x4000)
+        TextLog_Puts(text_log, " DF");
+
+    bool mf = false;
+    if(frag_off & 0x2000)
+    {
+        mf = true;
+        TextLog_Puts(text_log, " MF");
+    }
+
+
+#if 0
+    // FIXIT-L - J  more ip options fixits
+    /* print IP options */
+    if(p->ip_option_count > 0)
+    {
+        LogIpOptions(text_log, p);
+    }
+#endif
+
+    if( mf && (frag_off & 0x1FFF) && ((len - hlen > 0)))
+    {
+        TextLog_NewLine(text_log);
+        TextLog_Puts(text_log, "\t\t");
+        TextLog_Print(text_log, "Frag Offset: 0x%04X   Frag Size: 0x%04X",
+                (frag_off & 0x1FFF), (len - hlen));
+    }
+
+    TextLog_NewLine(text_log);
+    TextLog_Putc(text_log, '\t');
+
+
+    /*  EMBEDDED PROTOCOL */
+    switch(ip4h->get_proto())
+    {
+        case IPPROTO_TCP: /* decode the interesting part of the header */
+        {
+            const tcp::TCPHdr* tcph = reinterpret_cast<const tcp::TCPHdr*>
+                (raw_pkt + hlen);
+            TextLog_Puts(text_log, "TCP\n\t\t");
+            TextLog_Print(text_log, "SrcPort:%u  DstPort:%u  Seq: 0x%lX  "
+                    "Ack: 0x%lX  Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
+                    ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
+                    (u_long) ntohl(tcph->th_ack),
+                    ntohs(tcph->th_win), TCP_OFFSET(tcph) << 2);
+
+            break;
+        }
+
+        case IPPROTO_UDP:
+        {
+            const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>
+                (raw_pkt + hlen);
+            TextLog_Puts(text_log, "UDP\n\t\t");
+            TextLog_Print(text_log, "SourcePort:%d DestPort:%d Len:%d",
+                    ntohs(udph->uh_sport), ntohs(udph->uh_dport),
+                ntohs(udph->uh_len) - udp::UDP_HEADER_LEN);
+            break;
+        }
+
+        case IPPROTO_ICMP:
+        {
+            const icmp::ICMPHdr* icmph = reinterpret_cast<const icmp::ICMPHdr*>
+                (raw_pkt + hlen);
+
+            TextLog_Puts(text_log, "ICMPv4\n\t\t");
+            TextLog_Print(text_log, "Type:%d  Code:%d  Csum:%u",
+                    icmph->type, icmph->code, ntohs(icmph->csum));
+
+            switch (icmph->type)
+            {
+                case icmp::IcmpType::DEST_UNREACH:
+                case icmp::IcmpType::TIME_EXCEEDED:
+                case icmp::IcmpType::SOURCE_QUENCH:
+                    break;
+
+                case icmp::IcmpType::PARAMETERPROB:
+                    if (icmph->code == 0)
+                        TextLog_Print(text_log, "  Ptr: %u", icmph->s_icmp_pptr);
+                    break;
+
+                case ICMP_REDIRECT:
+        // XXX-IPv6 "NOT YET IMPLEMENTED - ICMP printing"
+                    break;
+
+                case icmp::IcmpType::ECHO_4:
+                case icmp::IcmpType::ECHOREPLY:
+                case icmp::IcmpType::TIMESTAMP:
+                case icmp::IcmpType::TIMESTAMPREPLY:
+                case icmp::IcmpType::INFO_REQUEST:
+                case icmp::IcmpType::INFO_REPLY:
+                case icmp::IcmpType::ADDRESS:
+                case icmp::IcmpType::ADDRESSREPLY:
+                    TextLog_Print(text_log, "  Id: %u  SeqNo: %u",
+                            ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq));
+                    break;
+
+                case icmp::IcmpType::ROUTER_ADVERTISE:
+                    TextLog_Print(text_log, "  Addrs: %u  Size: %u  Lifetime: %u",
+                            icmph->s_icmp_num_addrs, icmph->s_icmp_wpa,
+                            ntohs(icmph->s_icmp_lifetime));
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+        }
+        default:
+        {
+            TextLog_Print(text_log, "Protocol:%s(%02X)",
+                PacketManager::get_proto_name(ip4h->get_proto()),
+                ip4h->get_proto());
+            break;
+        }
+    }
+}
+
+
 bool Icmp4IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
 {
     // allocate space for this protocols encoded data
@@ -190,14 +348,10 @@ bool Icmp4IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
 
 
 static Codec* ctor(Module*)
-{
-    return new Icmp4IpCodec();
-}
+{ return new Icmp4IpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi icmp4_ip_api =
@@ -205,6 +359,7 @@ static const CodecApi icmp4_ip_api =
     {
         PT_CODEC,
         ICMP4_IP_NAME,
+        ICMP4_IP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr, // module constructor

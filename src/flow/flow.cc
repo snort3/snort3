@@ -34,14 +34,14 @@
 
 unsigned FlowData:: flow_id = 0;
 
-SO_PUBLIC FlowData::FlowData(unsigned u, Inspector* ph)
+FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);
     id = u;  handler = ph;
     if ( handler ) handler->add_ref();
 }
 
-SO_PUBLIC FlowData::~FlowData()
+FlowData::~FlowData()
 { if ( handler ) handler->rem_ref(); }
 
 Flow::Flow ()

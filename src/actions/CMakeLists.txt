@@ -17,14 +17,9 @@ set( PLUGIN_LIST
     )
 
 if (STATIC_IPS_ACTIONS)
-
     add_library ( ips_actions STATIC
         ${IPS_ACTION_SOURCES}
         ${PLUGIN_LIST}
-    )
-
-    target_link_libraries(ips_actions
-        packet_io
     )
 
 else (STATIC_IPS_ACTIONS)

@@ -53,20 +53,20 @@
   c ^= b; c -= rot(b,24); \
 }   
 
-void mix_str(
+SO_PUBLIC void mix_str(
     uint32_t& a, uint32_t& b, uint32_t& c,
     // n == 0 => strlen(s)
     const char* s, unsigned n = 0);
 
-typedef struct _SFHASHFCN {
+struct SFHASHFCN {
 
     unsigned seed;
     unsigned scale;
     unsigned hardener;
-    unsigned (*hash_fcn)(struct _SFHASHFCN*, unsigned char* d, int n);
+    unsigned (*hash_fcn)(SFHASHFCN*, unsigned char* d, int n);
     int (*keycmp_fcn)(const void *s1, const void *s2, size_t n);
 
-} SFHASHFCN;
+};
 
 SFHASHFCN * sfhashfcn_new( int nrows );
 void sfhashfcn_free( SFHASHFCN * p );

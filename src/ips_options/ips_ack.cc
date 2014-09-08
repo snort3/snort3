@@ -40,9 +40,12 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
-#include "range.h"
+#include "framework/range.h"
 
 static const char* s_name = "ack";
+
+static const char* s_help =
+    "rule option to match on TCP ack numbers";
 
 static THREAD_LOCAL ProfileStats tcpAckPerfStats;
 
@@ -110,7 +113,7 @@ int TcpAckOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter ack_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
@@ -121,7 +124,7 @@ static const Parameter ack_params[] =
 class AckModule : public Module
 {
 public:
-    AckModule() : Module(s_name, ack_params) { };
+    AckModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -176,6 +179,7 @@ static const IpsApi ack_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

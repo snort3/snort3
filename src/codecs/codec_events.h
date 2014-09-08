@@ -21,20 +21,26 @@
 #ifndef CODEC_EVENTS_H
 #define CODEC_EVENTS_H
 
-#include "protocols/packet.h"
 #include "codecs/decode_module.h"
+#include "events/event_queue.h"
+
+struct Packet;
 
 namespace codec_events
 {
 
-void exec_ip_chksm_drop (const Packet* const);
-void exec_udp_chksm_drop (const Packet*const);
-void exec_tcp_chksm_drop (const Packet* const);
-void exec_icmp_chksm_drop (const Packet* const);
-void decoder_event(const Packet* p, CodecSid const);
-void decoder_alert_encapsulated(
-    Packet* const, CodecSid, const uint8_t* pkt, uint32_t len);
+inline void decoder_event(const Packet* /*p*/, CodecSid const sid)
+{
+#if 0
+    // FIXIT-M
+    /* Can this return statement ever be true? */
+    /* Remove function if so */
+    if ( p->packet_flags & PKT_REBUILT_STREAM )
+        return;
+#endif
 
+    SnortEventqAdd(GID_DECODE, sid);
+}
 
 } //namespace codec_events
 

@@ -30,6 +30,7 @@
 #include <vector>
 #include <lua.hpp>
 
+#include "main/snort_types.h"
 #include "framework/value.h"
 #include "framework/parameter.h"
 #include "framework/counts.h"
@@ -51,7 +52,7 @@ struct RuleMap
 
 struct ProfileStats;
 
-class Module
+class SO_PUBLIC Module
 {
 public:
     virtual ~Module() { };
@@ -92,6 +93,9 @@ public:
             return params->type;
     };
 
+    const char* get_help() const
+    { return help; };
+
     const Parameter* get_parameters() const
     { return params; };
 
@@ -116,23 +120,30 @@ public:
         unsigned /*index*/, const char*& /*name*/, const char*& /*parent*/) const
     { return nullptr; };
 
+    virtual const char* get_defaults() const
+    { return nullptr; };
+
     virtual void sum_stats();
     virtual void show_stats();
     virtual void reset_stats();
 
 protected:
-    Module(const char*);
-    Module(const char*, const Parameter*, bool is_list = false);
+    Module(const char* name, const char* help);
+    Module(const char* name, const char* help, const Parameter*, bool is_list = false);
 
 private:
     friend class ModuleManager;
-    void init(const char* s);
+    void init(const char*, const char* = nullptr);
 
-    bool list;
     const char* name;
+    const char* help;
+
     const Parameter* params;
+    bool list;
+
     const Command* cmds;
     const RuleMap* rules;
+
     std::vector<PegCount> counts;
     int num_counts;
 };

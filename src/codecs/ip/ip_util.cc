@@ -19,11 +19,11 @@
 */
 // ipv6_util.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
 
-namespace ipv6_util
+namespace ip_util
 {
 
 bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
@@ -74,6 +74,36 @@ bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
 }
 
 /* Check for out-of-order IPv6 Extension Headers */
+void CheckIPv6ExtensionOrder(Packet* p, uint8_t proto, uint8_t next)
+{
+    const uint8_t current_order = IPV6ExtensionOrder(proto);
+    const uint8_t next_order = IPV6ExtensionOrder(next);
+
+    if (current_order <= p->curr_ip6_extension_order)
+    {
+        /* A second "Destination Options" header is allowed iff:
+           1) A routing header was already seen, and
+           2) The second destination header is the last one before the upper layer.
+        */
+        if (!((p->decode_flags & DECODE__ROUTING_SEEN) &&
+              (proto == IPPROTO_ID_DSTOPTS) &&
+              (next_order == IPV6_ORDER_MAX)))
+        {
+            codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
+        }
+    }
+    else
+    {
+        p->curr_ip6_extension_order = current_order;
+    }
+
+    if (proto == IPPROTO_ID_ROUTING)
+        p->decode_flags &= DECODE__ROUTING_SEEN;
+}
+
+#if 0
+// FIXIT-M Delete after testing.  Currently comment for reference
+/* Check for out-of-order IPv6 Extension Headers */
 void CheckIPv6ExtensionOrder(Packet *p)
 {
     int routing_seen = 0;
@@ -106,6 +136,7 @@ void CheckIPv6ExtensionOrder(Packet *p)
         current_type_order = next_type_order;
     }
 }
+#endif
 
 
 } // namespace ipv6_util

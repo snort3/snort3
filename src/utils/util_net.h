@@ -33,11 +33,10 @@
 #ifndef UTIL_NET_H
 #define UTIL_NET_H
 
-#include "snort_types.h"
-#include "ipv6_port.h"
+#include "main/snort_types.h"
+#include "sfip/sfip_t.h"
 
-char *inet_ntoax(const sfip_t *);
-
-char * mktcpflag_str(int flags);
+SO_PUBLIC char *inet_ntoax(const sfip_t *);
+SO_PUBLIC char * mktcpflag_str(int flags);
 
 #endif /* UTIL_NET_H */

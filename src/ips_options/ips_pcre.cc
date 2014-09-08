@@ -627,7 +627,7 @@ bool pcre_next(PcreData* pcre)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter pcre_params[] =
+static const Parameter s_params[] =
 {
     { "~regex", Parameter::PT_STRING, nullptr, nullptr,
       "Snort regular expression" },
@@ -635,10 +635,13 @@ static const Parameter pcre_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option for matching payload data with regex";
+
 class PcreModule : public Module
 {
 public:
-    PcreModule() : Module(s_name, pcre_params)
+    PcreModule() : Module(s_name, s_help, s_params)
     { data = nullptr; };
 
     ~PcreModule()
@@ -747,6 +750,7 @@ static const IpsApi pcre_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -32,12 +32,13 @@
 #include "main/snort.h"
 #include "detection/fpdetect.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
+
+#define CD_IPV6_ROUTING_NAME "ipv6_routing"
+#define CD_IPV6_ROUTING_HELP "support for IPv6 routing extension"
 
 namespace
 {
-
-#define CD_IPV6_ROUTING_NAME "ipv6_routing"
 
 class Ipv6RoutingCodec : public Codec
 {
@@ -84,7 +85,7 @@ bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     const IP6Route *rte = reinterpret_cast<const IP6Route *>(raw_pkt);
 
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_ROUTING);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
+
 
 
     if(raw_len < ip::MIN_EXT_LEN)
@@ -107,18 +108,14 @@ bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* Routing type 0 extension headers are evil creatures. */
     if (rte->ip6rte_type == 0)
-    {
         codec_events::decoder_event(p, DECODE_IPV6_ROUTE_ZERO);
-    }
 
     if (rte->ip6rte_nxt == IPPROTO_ID_HOPOPTS)
-    {
         codec_events::decoder_event(p, DECODE_IPV6_ROUTE_AND_HOPBYHOP);
-    }
+
     if (rte->ip6rte_nxt == IPPROTO_ID_ROUTING)
-    {
         codec_events::decoder_event(p, DECODE_IPV6_TWO_ROUTE_HEADERS);
-    }
+
     
     lyr_len = ip::MIN_EXT_LEN + (rte->ip6rte_len << 3);
     if(lyr_len > raw_len)
@@ -128,10 +125,12 @@ bool Ipv6RoutingCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
 
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_ROUTING;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
     next_prot_id = rte->ip6rte_nxt;
+
+    // check header ordering up thru frag header
+    ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_ROUTING, next_prot_id);
+    p->decode_flags &= DECODE__ROUTING_SEEN;
 
     return true;
 }
@@ -148,20 +147,17 @@ void Ipv6RoutingCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6RoutingCodec();
-}
+{ return new Ipv6RoutingCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_routing_api =
 {
     {
         PT_CODEC,
         CD_IPV6_ROUTING_NAME,
+        CD_IPV6_ROUTING_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

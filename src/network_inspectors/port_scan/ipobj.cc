@@ -42,6 +42,7 @@
 
 #include "util.h"
 #include "snort_bounds.h"
+#include "sfip/sf_ip.h"
 
 /*
    IP COLLECTION INTERFACE

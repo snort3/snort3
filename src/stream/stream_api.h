@@ -37,9 +37,10 @@
 
 #include <sys/types.h>
 
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "protocols/packet.h"
 #include "flow/flow.h"
+#include "main/snort_types.h"
 
 #define SSN_MISSING_NONE   0x00
 #define SSN_MISSING_BEFORE 0x01
@@ -80,11 +81,15 @@ typedef void (*Stream_Callback)(Packet *);
 #define MAX_EVT_CB 32
 #define MAX_LOG_FN 32
 
-class Stream
+//-------------------------------------------------------------------------
+// public methods other than ctor / dtor must all be declared SO_PUBLIC
+//-------------------------------------------------------------------------
+
+class SO_PUBLIC Stream
 {
 public:
-    Stream();
-    ~Stream();
+    SO_PRIVATE Stream();
+    SO_PRIVATE ~Stream();
 
     static Flow* get_session(const FlowKey*);
     static Flow* new_session(const FlowKey*);
@@ -116,7 +121,7 @@ public:
 
     /* Drop traffic arriving on session.
      */
-    static void drop_traffic(Packet*, Flow*, char dir);
+    static void drop_traffic(Flow*, char dir);
 
     /* Drop retransmitted packet arriving on session.
      */
@@ -327,7 +332,7 @@ private:
     unsigned stream_cb_idx;
 };
 
-extern Stream stream;
+SO_PUBLIC extern Stream stream;
 
 #endif
 

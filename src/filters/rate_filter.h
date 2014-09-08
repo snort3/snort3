@@ -32,10 +32,12 @@
 /* @ingroup rate_filter
  * @{
  */
-#include "protocols/packet.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "filters/sfrf.h"
+
+struct RateFilterConfig;
+struct SnortConfig;
+struct tSFRFConfigNode;
+struct Packet;
+struct OptTreeNode;
 
 RateFilterConfig * RateFilter_ConfigNew(void);
 void RateFilter_ConfigFree(RateFilterConfig *);

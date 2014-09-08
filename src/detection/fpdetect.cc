@@ -71,7 +71,7 @@
 #include "detection_util.h"
 #include "detection_options.h"
 #include "actions/actions.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "managers/action_manager.h"
 
 /*

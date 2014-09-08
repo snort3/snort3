@@ -26,19 +26,88 @@
 
 #include <string.h> // memcpy
 #include "framework/codec.h"
-#include "codecs/template_module.h"
-
-
-namespace
-{
+#include "codecs/decode_module.h"
+#include "protocols/packet.h"
+#include "framework/module.h"
+#include "log/text_log.h"
 
 // yes, macros are necessary. The API and class constructor require different strings.
 //
 // this macros is defined in the module to ensure identical names. However,
 // if you don't want a module, define the name here.
-#ifndef CODEC_NAME
 #define CODEC_NAME "name"
-#endif
+#define CODEC_NAME "one line help for this codec"
+
+namespace
+{
+
+// inherit from DecodeModule rather than Module so the GID for
+// all codecs are identical. Additionally, all of the SIDS are
+// defined in DecodeModule. So, when creating new events, you
+// only need to look for codec SID collisions in one locations
+class NameModule : public DecodeModule
+{
+public:
+    NameModule();
+
+    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*);
+    const RuleMap* get_rules() const;
+
+private:
+    // any structs or options which will be used when constructing
+    // the Codec
+    bool option1;
+
+};
+
+
+static const Parameter codec_params[] =
+{
+    { "parameter1", Parameter::PT_BOOL, nullptr, "false",
+      "This is a boolean parameter" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+
+// rules which will loaded into snort.
+// You can now reference these rules by calling a codec_event
+// in your main codec's functions
+const unsigned sid = 1;
+static const RuleMap codec_rules[] =
+{
+    { sid, "(" CODEC_NAME ") alert message" },
+    { 0, nullptr }
+};
+
+//-------------------------------------------------------------------------
+// template module
+//-------------------------------------------------------------------------
+
+NameModule::NameModule() : DecodeModule(CODEC_NAME, codec_params)
+{ }
+
+bool NameModule::set(const char* /*fqn*/, Value& v, SnortConfig* /*sc*/)
+{
+    if ( v.is("parameter1") )
+        option1 = v.get_bool();
+
+    else
+        return false;
+
+    return true;
+}
+
+bool NameModule::begin(const char*, int, SnortConfig*)
+{
+    option1 = false;
+    return true;
+}
+
+const RuleMap* NameModule::get_rules() const
+{ return codec_rules; }
+
 
 class NameCodec : public Codec
 {
@@ -50,6 +119,7 @@ public:
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
 
+    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -95,6 +165,12 @@ bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t& /*raw_len*/,
     return true;
 }
 
+void NameCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+    const NameHdr *hdr = reinterpret_cast<const NameHdr *>(raw_pkt);
+    TextLog_Print(text_log, "Next:0x%04x", hdr->next_protocol);
+}
 
 bool NameCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
 {
@@ -145,44 +221,32 @@ void NameCodec::format(EncodeFlags,
  * details regarding Modules
  */
 static Module* mod_ctor()
-{
-    return new NameModule;
-}
+{ return new NameModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
+// initialize global variables
 static void ginit()
-{
-    // initialize global variables
-}
+{ }
 
+// cleanup any global variables
 static void gterm()
-{
-    // cleanup any global variables
-}
+{ }
 
+// initialize thread_local variables
 static void tinit()
-{
-    // initialize thread_local variables
-}
+{ }
 
+// cleanup any thread_local variables
 static void tterm()
-{
-    // cleanup any thread_local variables
-}
+{ }
 
 static Codec* ctor(Module*)
-{
-    return new NameCodec();
-}
+{ return new NameCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi name_api =
@@ -190,6 +254,7 @@ static const CodecApi name_api =
     {
         PT_CODEC,
         CODEC_NAME,
+        CODEC_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor, // module constructor ( see function for details )

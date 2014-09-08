@@ -244,12 +244,12 @@ NORETURN void FatalError(const char *format,...)
     }
     else
     {
-        fprintf(stderr, "ERROR: %s", buf);
+        fprintf(stderr, "FATAL: %s", buf);
         fprintf(stderr,"Fatal Error, Quitting..\n");
     }
 
 #if 0
-    // FIXIT-H need to stop analyzers / workers 
+    // FIXIT-M need to stop analyzers / workers 
     // and they should handle the DAQ break / abort
     if ( SnortIsInitializing() )
     {
@@ -259,8 +259,7 @@ NORETURN void FatalError(const char *format,...)
     else
 #endif
     {
-        // FIXIT-H this makes no sense from main thread
-        // exit() segfaults too; looks like something borked in dylib
+        // FIXIT-M this makes no sense from main thread
         exit(EXIT_FAILURE);
     }
 }

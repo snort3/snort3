@@ -18,13 +18,12 @@
 */
 // range.cc author Russ Combs <rucombs@cisco.com>
 
-#include "range.h"
+#include "framework/range.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <string>
-using namespace std;
 
 void RangeCheck::init()
 {

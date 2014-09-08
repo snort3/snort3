@@ -23,9 +23,9 @@
 #ifndef SF_BASE64DECODE_H
 #define SF_BASE64DECODE_H
 
-#include "snort_types.h"
+#include "main/snort_types.h"
 #include "util_unfold.h"
 
-int sf_base64decode(uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*); 
+SO_PUBLIC int sf_base64decode(uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t*);
 
 #endif

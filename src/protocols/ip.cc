@@ -142,7 +142,7 @@ uint32_t IpApi::id(const Packet* const p) const
         return 0;
 
     const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(
-            p->ip6_extensions[p->ip6_frag_index].data);
+            p->layers[p->ip6_frag_index].start);
 
     return frag_hdr->get_id();
 }
@@ -150,14 +150,14 @@ uint32_t IpApi::id(const Packet* const p) const
 uint16_t IpApi::off(const Packet* const p) const
 {
     if (ip4h)
-        return ip4h->get_id();
+        return (uint32_t)ip4h->get_id();
 
     // ensure we have an ipv6 frag
     if (p->ip6_extension_count == 0 || p->ip_frag_start == 0 || !ip6h)
         return 0;
 
     const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(
-            p->ip6_extensions[p->ip6_frag_index].data);
+            p->layers[p->ip6_frag_index].start);
 
     return frag_hdr->get_off();
 }
@@ -206,5 +206,53 @@ uint16_t IpApi::pay_len() const
 
     return 0;
 }
+
+static bool is_ip6_loopback(const snort_in6_addr* const ip)
+{
+    const uint32_t* p = ip->u6_addr32;
+
+    /* Check the first 64 bits in an IPv6 address, and */
+    /* verify they're zero.  If not, it's not a loopback */
+    if(p[0] || p[1])
+        return false;
+
+    /* Check if the 3rd 32-bit int is zero */
+    if ( p[2] == 0 ) {
+        /* ::7f00:0/104 is ipv4 compatible ipv6 */
+        /* ::1 is the IPv6 loopback */
+        return ( (ip->u6_addr8[12] == 0x7f) || (ntohl(p[3]) == 0x1) );
+    }
+
+    /* Check the 3rd 32-bit int for a mapped IPv4 address */
+    if ( ntohl(p[2]) == 0xffff ) {
+        /* ::ffff:127.0.0.0/104 is IPv4 loopback mapped over IPv6 */
+        return ( ip->u6_addr8[12] == 0x7f );
+    }
+    return false;
+}
+
+bool IpApi::is_src_loopback() const
+{
+    if (ip4h)
+        return ((ntohl(ip4h->get_src())) >> 24) == 0x7f;
+
+    if (ip6h)
+        return is_ip6_loopback(ip6h->get_src());
+
+    return false;
+}
+
+    // true if the current source address ia the loopback address
+bool IpApi::is_dst_loopback() const
+{
+    if (ip4h)
+        return ((ntohl(ip4h->get_dst())) >> 24) == 0x7f;
+
+    if (ip6h)
+        return is_ip6_loopback(ip6h->get_dst());
+
+    return false;
+}
+
 
 } // namespace ip

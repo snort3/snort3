@@ -41,7 +41,7 @@ static const char* s_name = "metadata";
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter metadata_params[] =
+static const Parameter s_params[] =
 {
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "service name" },
@@ -52,10 +52,13 @@ static const Parameter metadata_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option for conveying arbitrary name, value data within the rule text";
+
 class MetadataModule : public Module
 {
 public:
-    MetadataModule() : Module(s_name, metadata_params)
+    MetadataModule() : Module(s_name, s_help, s_params)
     { snort_config = nullptr; };
 
     bool set(const char*, Value&, SnortConfig*);
@@ -112,6 +115,7 @@ static const IpsApi metadata_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -128,13 +132,4 @@ static const IpsApi metadata_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &metadata_api.base,
-    nullptr
-};
-#else
 const BaseApi* ips_metadata = &metadata_api.base;
-#endif
-

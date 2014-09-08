@@ -74,12 +74,8 @@ int main (int argc, char* argv[])
     // keep track whether we're printing rules into a seperate file.
     bool rule_file_specifed = false;
 
-// why print variable if there are no rules?
-#if 0
-    // if no rule file is specified (or the same output and rule file specified),
-    // rules will be printed in the 'default_rules' variable. Set that up
-    // now.  Otherwise, set up the include file.
-    if (rule_api.empty())
+
+    if (!rule_api.empty())
     {
         if (rule_file.empty() || !rule_file.compare(output_file))
         {
@@ -99,7 +95,7 @@ int main (int argc, char* argv[])
             table_api.close_table();
         }
     }
-#endif
+
 
     // Snort++ requires a binder table to be instantiated,
     // although not necessarily filled.  So, just add this table.
@@ -108,7 +104,6 @@ int main (int argc, char* argv[])
     table_api.close_table();
 
     // finally, lets print the converter to file
-
     std::ofstream out;
     out.open(output_file,  std::ifstream::out);
     out << "require(\"snort_config\")  -- for loading\n\n";
@@ -128,7 +123,13 @@ int main (int argc, char* argv[])
         {
             std::ofstream rejects;  // in this case, rejects are regular configuration options
             rejects.open(error_file, std::ifstream::out);
-            data_api.print_errors(rejects);
+
+            if (data_api.failed_conversions())
+                data_api.print_errors(rejects);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(rejects);
+
             rejects << std::endl;
             rejects.close();
         }
@@ -151,9 +152,15 @@ int main (int argc, char* argv[])
         if ((data_api.failed_conversions() || rule_api.failed_conversions()) &&
             !data_api.is_quiet_mode())
         {
-            std::ofstream rejects;
+            std::ofstream rejects;  // in this case, rejects are regular configuration options
             rejects.open(error_file, std::ifstream::out);
-            data_api.print_errors(rejects);
+
+            if (data_api.failed_conversions())
+                data_api.print_errors(rejects);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(rejects);
+
             rejects << std::endl;
             rejects.close();
         }

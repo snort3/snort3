@@ -36,6 +36,8 @@ void help_gids(SnortConfig* sc, const char*);
 void help_buffers(SnortConfig* sc, const char*);
 void help_builtin(SnortConfig* sc, const char*);
 void help_module(SnortConfig* sc, const char*);
+void help_modules(SnortConfig* sc, const char*);
+void help_plugins(SnortConfig* sc, const char*);
 void help_version(SnortConfig*, const char*);
 
 void list_modules(SnortConfig* sc, const char*);

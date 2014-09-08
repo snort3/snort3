@@ -28,12 +28,10 @@
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/ipv6.h"
+#include "protocols/packet.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 
-
-namespace
-{
 
 // yes, macros are necessary. The API and class constructor require different strings.
 //
@@ -42,6 +40,11 @@ namespace
 #ifndef ICMP6_IP_NAME
 #define ICMP6_IP_NAME "icmp6_ip"
 #endif
+
+#define ICMP6_IP_HELP "support for IP in ICMPv6"
+
+namespace
+{
 
 class Icmp6IpCodec : public Codec
 {
@@ -71,18 +74,11 @@ bool Icmp6IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* lay the IP struct over the raw data */
     const ip::IP6Hdr* ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "DecodeICMPEmbeddedIP6: ip header"
-                    " starts at: %p, length is %lu\n", ip6h,
-                    (unsigned long) raw_len););
 
     /* do a little validation */
     if ( raw_len < ip::IP6_HEADER_LEN )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP6: IP short header (%d bytes)\n", raw_len););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
-
         return false;
     }
 
@@ -92,23 +88,13 @@ bool Icmp6IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if(ip6h->get_ver() != 6)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP: not IPv6 datagram ([ver: 0x%x][len: 0x%x])\n",
-            ip6h->get_ver(), raw_len););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
-
         return false;
     }
 
     if ( raw_len < ip::IP6_HEADER_LEN )
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "ICMP6: IP6 len (%d bytes) < IP6 hdr len (%d bytes), packet discarded\n",
-            raw_len, ip::IP6_HEADER_LEN););
-
         codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
-
         return false;
     }
 
@@ -117,8 +103,6 @@ bool Icmp6IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     // XXX NOT YET IMPLEMENTED - fragments inside ICMP payload
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "ICMP6 Unreachable IP6 header length: "
-                            "%lu\n", (unsigned long)ip::IP6_HEADER_LEN););
 
     // since we know the protocol ID in this layer (and NOT the
     // next layer), set the correct protocol here.  Normally,
@@ -165,14 +149,10 @@ bool Icmp6IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Icmp6IpCodec();
-}
+{ return new Icmp6IpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi icmp6_ip_api =
@@ -180,6 +160,7 @@ static const CodecApi icmp6_ip_api =
     {
         PT_CODEC,
         ICMP6_IP_NAME,
+        ICMP6_IP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr, // module constructor

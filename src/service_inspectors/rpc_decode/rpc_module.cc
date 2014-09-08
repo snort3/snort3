@@ -33,7 +33,7 @@
 #define RPC_ZERO_LENGTH_FRAGMENT_STR \
     "(rpc_decode) Zero-length RPC Fragment"
 
-static const Parameter rpc_params[] =
+static const Parameter s_params[] =
 {
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -53,7 +53,10 @@ static const RuleMap rpc_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-RpcDecodeModule::RpcDecodeModule() : Module("rpc_decode", rpc_params)
+static const char* s_name = "rpc_decode";
+static const char* s_help = "RPC inspector";
+
+RpcDecodeModule::RpcDecodeModule() : Module(s_name, s_help, s_params)
 { }
 
 const RuleMap* RpcDecodeModule::get_rules() const

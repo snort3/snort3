@@ -27,17 +27,16 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
 #include "protocols/protocol_ids.h"
-#include "main/snort.h"
 #include "detection/fpdetect.h"
+#include "main/snort.h"
 
 
 namespace
 {
 
 #define CD_NO_NEXT_NAME "ipv6_no_next"
+#define CD_NO_NEXT_HELP "sentinel codec"
 
 class Ipv6NoNextCodec : public Codec
 {
@@ -55,23 +54,25 @@ public:
 } // namespace
 
 
-bool Ipv6NoNextCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet *p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
+bool Ipv6NoNextCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
+        Packet* p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
 {
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_NONEXT);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
 
-    p->dsize = 0;
+    // No need ot check IPv6 extension order since this is automatically
+    // the last extension.
+
+    // I want the dsize to be zero, so set the raw_length the
+    // length to be zero.
+    const_cast<uint32_t&>(raw_len) = ip::MIN_EXT_LEN;
     lyr_len = ip::MIN_EXT_LEN;
     return true;
 }
 
 
 void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_NONEXT);
-}
+{ v.push_back(IPPROTO_ID_NONEXT); }
 
 
 
@@ -80,20 +81,17 @@ void Ipv6NoNextCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6NoNextCodec();
-}
+{ return new Ipv6NoNextCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi no_next_api =
 {
     {
         PT_CODEC,
         CD_NO_NEXT_NAME,
+        CD_NO_NEXT_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

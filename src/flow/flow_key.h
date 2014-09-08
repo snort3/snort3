@@ -25,7 +25,7 @@
 
 #include "main/snort_types.h"
 #include "hash/sfhashfcn.h"
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 struct FlowKey
 {

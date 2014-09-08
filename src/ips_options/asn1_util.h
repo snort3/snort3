@@ -86,23 +86,21 @@
 #define SF_BER_LEN_DEF_LONG  2
 #define SF_BER_LEN_INDEF     3
 
-typedef struct s_ASN1_LEN
+struct ASN1_LEN
 {
     unsigned char type;
     unsigned int  size;
+};
 
-} ASN1_LEN;
-
-typedef struct s_ASN1_IDENT
+struct ASN1_IDENT
 {
     unsigned char  asn1_class;
     unsigned char  flag;
     unsigned char  tag_type;
     unsigned int   tag;
+};
 
-} ASN1_IDENT;
-
-typedef struct s_ASN1_TYPE
+struct ASN1_TYPE
 {
     ASN1_IDENT ident;
     ASN1_LEN   len;
@@ -112,26 +110,27 @@ typedef struct s_ASN1_TYPE
 
     unsigned char     eoc;
 
-    struct s_ASN1_TYPE  *next;
-    struct s_ASN1_TYPE  *cnext;
+    struct ASN1_TYPE  *next;
+    struct ASN1_TYPE  *cnext;
     
-} ASN1_TYPE;
+};
 
-typedef struct s_ASN1_DATA
+struct ASN1_DATA
 {
     const unsigned char *data;
     const unsigned char *start;
     const unsigned char *end;
     unsigned int   len;
+};
 
-} ASN1_DATA;
-
-typedef struct s_ASN1_CONFIG
+struct ASN1_CONFIG
 {
     ASN1_TYPE *mem;
     int num_nodes;
 
-} ASN1_CONFIG;
+};
+
+struct SnortConfig;
 
 
 /*
@@ -151,8 +150,8 @@ typedef struct s_ASN1_CONFIG
 #define ASN1_ERR_INVALID_ARG         -7
 #define ASN1_ERR_STACK               -8
 
-void asn1_init_mem(int);
-void asn1_free_mem(void);
+void asn1_init_mem(SnortConfig*);
+void asn1_free_mem(SnortConfig*);
 int asn1_decode(const unsigned char *data, unsigned int len, ASN1_TYPE **asn1_type);
 int asn1_print_types(ASN1_TYPE *asn1_type, void *user);
 int asn1_traverse(ASN1_TYPE *asn1, void * user, 

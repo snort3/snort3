@@ -66,6 +66,7 @@ extern THREAD_LOCAL ProfileStats fragRebuildPerfStats;
 //-------------------------------------------------------------------------
 
 #define MOD_NAME "stream_ip"
+#define MOD_HELP "stream inspector for IP flow tracking and defragmentation"
 
 struct StreamIpConfig;
 

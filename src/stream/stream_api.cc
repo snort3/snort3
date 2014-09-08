@@ -50,7 +50,6 @@
 #include "perf_monitor/perf.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "ipv6_port.h"
 #include "ips_options/ips_flowbits.h"
 #include "snort_debug.h"
 #include "protocols/layer.h"
@@ -59,9 +58,6 @@
 #include "target_based/sftarget_protocol_reference.h"
 #include "target_based/sftarget_hostentry.h"
 
-//-------------------------------------------------------------------------
-// public methods other than ctor / dtor must all be declared SO_PUBLIC
-//-------------------------------------------------------------------------
 
 Stream stream;  // FIXIT-L global for SnortContext
 
@@ -274,8 +270,7 @@ uint32_t Stream::get_packet_direction(Packet *p)
     return (p->packet_flags & (PKT_FROM_SERVER|PKT_FROM_CLIENT));
 }
 
-void Stream::drop_traffic(
-    Packet*, Flow* flow, char dir)
+void Stream::drop_traffic(Flow* flow, char dir)
 {
     if (!flow)
         return;
@@ -306,7 +301,7 @@ void Stream::drop_packet(Packet *p)
     flow->session->clear();
 
     if (!(p->packet_flags & PKT_STATELESS))
-        drop_traffic(p, flow, SSN_DIR_BOTH);
+        drop_traffic(flow, SSN_DIR_BOTH);
 }
 
 uint32_t Stream::set_session_flags(Flow* flow, uint32_t flags)

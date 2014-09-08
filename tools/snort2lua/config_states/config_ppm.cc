@@ -108,7 +108,7 @@ bool Ppm::convert(std::istringstream& data_stream)
         
         else if(!keyword.compare("pkt-log"))
         {
-            table_api.add_diff_option_comment("pkt-log ", "pkt_log");
+            table_api.add_diff_option_comment("pkt-log", "pkt_log");
             std::string opt1;
             std::string opt2;
 

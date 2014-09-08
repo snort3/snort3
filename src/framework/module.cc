@@ -27,9 +27,10 @@ static const Parameter null_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-void Module::init(const char* s)
+void Module::init(const char* s, const char* h)
 {
     name = s;
+    help = h;
     params = null_params;
     list = false;
     cmds = nullptr;
@@ -37,19 +38,17 @@ void Module::init(const char* s)
     num_counts = -1;
 }
 
-SO_PUBLIC Module::Module(const char* s)
-{
-    init(s);
-}
+Module::Module(const char* s, const char* h)
+{ init(s, h); }
 
-SO_PUBLIC Module::Module(const char* s, const Parameter* p, bool is_list)
+Module::Module(const char* s, const char* h, const Parameter* p, bool is_list)
 {
-    init(s);
+    init(s, h);
     params = p;
     list = is_list;
 }
 
-SO_PUBLIC void Module::sum_stats()
+void Module::sum_stats()
 {
     if ( num_counts < 0 )
         reset_stats();
@@ -66,13 +65,13 @@ SO_PUBLIC void Module::sum_stats()
     }
 }
 
-SO_PUBLIC void Module::show_stats()
+void Module::show_stats()
 {
     if ( num_counts > 0 )
         ::show_stats(&counts[0], get_pegs(), num_counts, get_name());
 }
 
-SO_PUBLIC void Module::reset_stats()
+void Module::reset_stats()
 {
     num_counts = 0;
     const char** pegs = get_pegs();
@@ -89,7 +88,7 @@ SO_PUBLIC void Module::reset_stats()
         counts[i] = 0;
 }
 
-SO_PUBLIC const char* simple_pegs[] =
+const char* simple_pegs[] =
 {
     "packets",
     nullptr

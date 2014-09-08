@@ -37,12 +37,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <syslog.h>
-
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
+#include "utils/dnet_header.h"
 
 #include "snort_types.h"
 #include "snort_bounds.h"

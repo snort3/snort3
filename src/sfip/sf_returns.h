@@ -1,5 +1,6 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+** Copyright (C) 2007-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,38 +18,28 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// udp_module.h author Russ Combs <rucombs@cisco.com>
+#ifndef SF_RETURNS_H
+#define SF_RETURNS_H
 
-#ifndef UDP_MODULE_H
-#define UDP_MODULE_H
-
-#include <string>
-#include <vector>
-
-#include "main/snort_types.h"
-#include "framework/module.h"
-
-struct SnortConfig;
-
-//-------------------------------------------------------------------------
-// dpx module
-//-------------------------------------------------------------------------
-
-#define MOD_NAME "dpx"
-
-class DpxModule : public Module
-{
-public:
-    DpxModule();
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
-
-    StreamUdpConfig* get_data();
-
-private:
-    StreamUdpConfig* config;
+enum SFIP_RET {
+    SFIP_SUCCESS=0,
+    SFIP_FAILURE,
+    SFIP_LESSER,
+    SFIP_GREATER,
+    SFIP_EQUAL,
+    SFIP_ARG_ERR,
+    SFIP_CIDR_ERR,
+    SFIP_INET_PARSE_ERR,
+    SFIP_INVALID_MASK,
+    SFIP_ALLOC_ERR,
+    SFIP_CONTAINS,
+    SFIP_NOT_CONTAINS,
+    SFIP_DUPLICATE,         /* Tried to add a duplicate variable name to table */
+    SFIP_LOOKUP_FAILURE,    /* Failed to lookup a variable from the table */
+    SFIP_UNMATCHED_BRACKET, /* IP lists that are missing a closing bracket */
+    SFIP_NOT_ANY,           /* For !any */
+    SFIP_CONFLICT           /* For IP conflicts in IP lists */
 };
 
-#endif
 
+#endif

@@ -50,6 +50,7 @@ extern "C" {
 #include "main/analyzer.h"
 #include "packet_io/sfdaq.h"
 #include "stream/stream_api.h"
+#include "utils/stats.h"
 
 /*
  * <pcap file> ::= <pcap file hdr> [<pcap pkt hdr> <packet>]*
@@ -82,11 +83,13 @@ static THREAD_LOCAL LtdContext context;
 
 static void TcpdumpRollLogFile(LtdConfig*);
 
+static const char* s_name = "log_tcpdump";
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter tcpdump_params[] =
+static const Parameter s_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, "snort.pcap",
       "name of alert file" },
@@ -100,10 +103,13 @@ static const Parameter tcpdump_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "log packet in pcap format";
+
 class TcpdumpModule : public Module
 {
 public:
-    TcpdumpModule() : Module("log_tcpdump", tcpdump_params) { };
+    TcpdumpModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -232,14 +238,14 @@ static void TcpdumpInitLogFile(LtdConfig* data, int /*nostamps?*/)
         pcap = pcap_open_dead(dlt, DAQ_GetSnapLen());
 
         if ( !pcap )
-            FatalError("log_tcpdump: can't get pcap context\n");
+            FatalError("%s: can't get pcap context\n", s_name);
 
         context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : NULL;
 
         if(context.dumpd == NULL)
         {
-            FatalError("log_tcpdump: can't open %s: %s\n",
-                file.c_str(), pcap_geterr(pcap));
+            FatalError("%s: can't open %s: %s\n",
+                s_name, file.c_str(), pcap_geterr(pcap));
         }
         pcap_close(pcap);
     }
@@ -371,7 +377,8 @@ static LogApi tcpdump_api
 {
     {
         PT_LOGGER,
-        "log_tcpdump",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

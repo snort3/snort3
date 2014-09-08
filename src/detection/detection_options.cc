@@ -57,7 +57,8 @@
 #include "framework/ips_option.h"
 #include "framework/cursor.h"
 #include "managers/ips_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
+#include "detection/detection_defines.h"
 
 typedef struct _detection_option_key
 {

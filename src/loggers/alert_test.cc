@@ -40,6 +40,7 @@
 #include "log/text_log.h"
 #include "mstring.h"
 #include "snort.h"
+#include "utils/stats.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,11 +57,13 @@ static THREAD_LOCAL TextLog* test_file = nullptr;
 
 using namespace std;
 
+static const char* s_name = "alert_test";
+
 //-------------------------------------------------------------------------
 // alert_test module
 //-------------------------------------------------------------------------
 
-static const Parameter test_params[] =
+static const Parameter s_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, "stdout",
       "name of tsv alert file or 'stdout'" },
@@ -77,10 +80,13 @@ static const Parameter test_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event in custom tsv format";
+
 class TestModule : public Module
 {
 public:
-    TestModule() : Module("alert_test", test_params) { };
+    TestModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -221,7 +227,8 @@ static LogApi test_api
 {
     {
         PT_LOGGER,
-        "alert_test",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

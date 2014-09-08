@@ -30,7 +30,7 @@
 #endif
 
 #include "utils/bitop.h"
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
 #include "normalize/normalize.h"
@@ -90,7 +90,7 @@ struct StreamFlowData
     unsigned char flowb[1];
 };
 
-class FlowData
+class SO_PUBLIC FlowData
 {
 public:
     FlowData(unsigned u, Inspector* = nullptr);
@@ -161,7 +161,10 @@ public:
 
     void set_ttl(Packet*, bool client);
 
-    bool was_blocked()
+    void block()
+    { s5_state.session_flags |= SSNFLAG_BLOCK; };
+
+    bool was_blocked() const
     { return (s5_state.session_flags & SSNFLAG_BLOCK) != 0; };
 
     void set_client(Inspector* ins)

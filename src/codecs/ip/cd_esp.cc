@@ -27,15 +27,16 @@
 
 #include "framework/codec.h"
 #include "snort.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
+#include "codecs/ip/ip_util.h"
+
+#define CD_ESP_NAME "esp"
+#define CD_ESP_HELP "support for encapsulating security payload"
 
 namespace
 {
-
-
-#define CD_ESP_NAME "esp"
 
 static const RuleMap esp_rules[] =
 {
@@ -52,11 +53,10 @@ static const Parameter esp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-
 class EspModule : public DecodeModule
 {
 public:
-    EspModule() : DecodeModule(CD_ESP_NAME, esp_params) {}
+    EspModule() : DecodeModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) {}
 
     const RuleMap* get_rules() const
     { return esp_rules; }
@@ -84,7 +84,6 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-    
 };
 
 
@@ -153,6 +152,12 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     pad_length = *(esp_payload + guessed_len);
     next_prot_id = *(esp_payload + guessed_len + 1);
 
+
+    if (p->ip_api.is_ip6())
+        ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_ESP, next_prot_id);
+
+
+
     // TODO:  Leftover from Snort. Do we really want thsi?
     const_cast<uint32_t&>(raw_len) -= (ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN);
 
@@ -197,30 +202,23 @@ bool EspCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new EspModule;
-}
+{ return new EspModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new EspCodec();
-}
+{ return new EspCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi esp_api =
 {
     {
         PT_CODEC,
         CD_ESP_NAME,
+        CD_ESP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

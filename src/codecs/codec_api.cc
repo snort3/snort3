@@ -33,6 +33,8 @@
 // ip codecs
 extern const BaseApi* cd_esp;
 extern const BaseApi* cd_ipv4; // static due to dependence on fpdetect
+extern const BaseApi* cd_tcp;  // static because only file that specific functions
+                               //     (symbols will be removed from final executabel)
 
 // link codecs
 
@@ -52,6 +54,7 @@ extern const BaseApi* cd_icmp6;
 extern const BaseApi* cd_icmp6_ip;
 extern const BaseApi* cd_ipv6;
 extern const BaseApi* cd_igmp;
+extern const BaseApi* cd_llc;
 extern const BaseApi* cd_mobility;
 extern const BaseApi* cd_mpls;
 extern const BaseApi* cd_no_next;
@@ -62,7 +65,6 @@ extern const BaseApi* cd_pppoepkt_sess;
 extern const BaseApi* cd_routing;
 extern const BaseApi* cd_sun_nd;
 extern const BaseApi* cd_swipe;
-extern const BaseApi* cd_tcp;
 extern const BaseApi* cd_teredo;
 extern const BaseApi* cd_transbridge;
 extern const BaseApi* cd_udp;
@@ -86,6 +88,7 @@ const BaseApi* codecs[] =
     // non root codecs
     cd_esp,
     cd_ipv4,
+    cd_tcp,
 
 #ifdef STATIC_CODECS
     cd_ah,
@@ -103,6 +106,7 @@ const BaseApi* codecs[] =
     cd_icmp6_ip,
     cd_ipv6,
     cd_igmp,
+    cd_llc,
     cd_mobility,
     cd_mpls,
     cd_no_next,
@@ -113,7 +117,6 @@ const BaseApi* codecs[] =
     cd_routing,
     cd_sun_nd,
     cd_swipe,
-    cd_tcp,
     cd_teredo,
     cd_transbridge,
     cd_udp,

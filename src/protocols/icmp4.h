@@ -212,10 +212,10 @@ constexpr uint8_t ICMP_ECHOREPLY = 0;    /* Echo Reply                   */
 constexpr uint8_t ICMP_DEST_UNREACH = 3;    /* Destination Unreachable      */
 constexpr uint8_t ICMP_SOURCE_QUENCH = 4;    /* Source Quench                */
 #ifndef ICMP_REDIRECT
-const uint8_t ICMP_REDIRECT = 5;    /* Redirect (change route)      */
+constexpr uint8_t ICMP_REDIRECT = 5;    /* Redirect (change route)      */
 #endif
 #ifndef ICMP_ECHO
-const uint8_t ICMP_ECHO = 8;    /* Echo Request                 */
+constexpr uint8_t ICMP_ECHO = 8;    /* Echo Request                 */
 #endif
 constexpr uint8_t ICMP_ROUTER_ADVERTISE = 9;    /* Router Advertisement         */
 constexpr uint8_t ICMP_ROUTER_SOLICIT = 10;    /* Router Solicitation          */
@@ -246,8 +246,6 @@ constexpr uint8_t ICMP_HOST_UNR_TOS = 12;
 constexpr uint8_t ICMP_PKT_FILTERED = 13;    /* Packet filtered */
 constexpr uint8_t ICMP_PREC_VIOLATION = 14;    /* Precedence violation */
 constexpr uint8_t ICMP_PREC_CUTOFF = 15;    /* Precedence cut off */
-constexpr uint8_t NR_ICMP_UNREACH = 15;   /* instead of hardcoding immediate
-                                       * value */
 
 constexpr uint8_t ICMP_REDIR_NET = 0;
 constexpr uint8_t ICMP_REDIR_HOST = 1;

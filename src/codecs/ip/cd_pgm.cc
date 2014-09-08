@@ -28,13 +28,14 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-#include "protocols/ipv4.h"
 #include "codecs/ip/checksum.h"
+#include "protocols/packet.h"
 
 namespace
 {
 
 #define CD_PGM_NAME "pgm"
+#define CD_PGM_HELP "support for pragmatic general multicast"
 
 static const RuleMap pgm_rules[] =
 {
@@ -42,11 +43,10 @@ static const RuleMap pgm_rules[] =
     { 0, nullptr }
 };
 
-
 class PgmModule : public DecodeModule
 {
 public:
-    PgmModule() : DecodeModule(CD_PGM_NAME) {}
+    PgmModule() : DecodeModule(CD_PGM_NAME, CD_PGM_HELP) {}
 
     const RuleMap* get_rules() const
     { return pgm_rules; }
@@ -144,7 +144,8 @@ static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
     if (data_left > header->nak.opt.len) {
 
         /* checksum is expensive... do that only if the length is bad */
-        if (header->checksum != 0) {
+        if (header->checksum != 0)
+        {
             checksum = checksum::cksum_add((uint16_t*)data, (int)length);
             if (checksum != 0)
                 return PGM_NAK_ERR;
@@ -206,6 +207,7 @@ static const CodecApi pgm_api =
     {
         PT_CODEC,
         CD_PGM_NAME,
+        CD_PGM_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

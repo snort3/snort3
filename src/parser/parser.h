@@ -64,10 +64,10 @@ void parser_append_rules(const char*);
 
 void ConfigureSideChannelModules(SnortConfig *);
 
-NORETURN void ParseAbort(const char *, ...);
-void ParseError(const char *, ...);
-void ParseWarning(const char *, ...);
-void ParseMessage(const char *, ...);
+SO_PUBLIC NORETURN void ParseAbort(const char *, ...);
+SO_PUBLIC void ParseError(const char *, ...);
+SO_PUBLIC void ParseWarning(const char *, ...);
+SO_PUBLIC void ParseMessage(const char *, ...);
 
 int ParseBool(const char *arg);
 

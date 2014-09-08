@@ -202,6 +202,8 @@ int GetHttpHostnameData(Flow*, uint8_t **buf, uint32_t *len, uint32_t *type);
 void HI_SearchInit(void);
 void HI_SearchFree(void);
 int HI_SearchStrFound(void *, void *, int , void *, void *);
+int IsJSNormData(Flow* flow);
+int IsGzipData(Flow* flow);
 
 static inline void ResetGzipState(DECOMPRESS_STATE *ds)
 {

@@ -32,6 +32,7 @@
 #include "main/snort_types.h"
 #include "main/thread.h"
 
+struct SigInfo;
 extern THREAD_LOCAL uint16_t event_id;
 
 /* we must use fixed size of 32 bits, because on-disk
@@ -43,16 +44,16 @@ struct sf_timeval32
     uint32_t tv_usec;     /* microseconds */
 };
 
-typedef struct _Event
+struct Event
 {
-    const struct _SigInfo* sig_info;
+    const SigInfo* sig_info;
     uint32_t event_id;        /* event ID */
     uint32_t event_reference; /* reference to other events that have gone off,
                                 * such as in the case of tagged packets...
                                 */
     struct sf_timeval32 ref_time;   /* reference time for the event reference */
     const char* alt_msg;
-} Event;
+};
 
 void SetEvent(
     Event *, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);

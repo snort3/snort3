@@ -30,16 +30,16 @@
 #include "protocols/linux_sll.h"
 #include "main/snort.h"
 
+#define CD_LINUX_SLL_NAME "linux_sll"
+#define CD_LINUX_SLL_HELP "support for Linux SLL"
 
 namespace
 {
 
-#define CD_LINUX_SSL_NAME "linux_sll"
-
 class LinuxSllCodec : public Codec
 {
 public:
-    LinuxSllCodec() : Codec(CD_LINUX_SSL_NAME){};
+    LinuxSllCodec() : Codec(CD_LINUX_SLL_NAME){};
     ~LinuxSllCodec() {};
 
 
@@ -100,7 +100,8 @@ static const CodecApi linux_ssl_api =
 {
     {
         PT_CODEC,
-        CD_LINUX_SSL_NAME,
+        CD_LINUX_SLL_NAME,
+        CD_LINUX_SLL_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

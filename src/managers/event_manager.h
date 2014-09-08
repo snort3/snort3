@@ -33,7 +33,7 @@
 #define OUTPUT_TYPE_FLAG__LOG   0x2
 
 struct Packet;
-struct _Event;
+struct Event;
 struct OutputSet;
 struct SnortConfig;
 struct LogApi;
@@ -59,8 +59,8 @@ public:
     static void open_outputs();
     static void close_outputs();
 
-    static void call_alerters(OutputSet*, Packet*, const char* message, struct _Event*);
-    static void call_loggers(OutputSet*, Packet*, const char* message, struct _Event*);
+    static void call_alerters(OutputSet*, Packet*, const char* message, Event*);
+    static void call_loggers(OutputSet*, Packet*, const char* message, Event*);
 
     static void enable_alerts(bool b) { alert_enabled = b; };
     static void enable_logs(bool b) { log_enabled = b; };

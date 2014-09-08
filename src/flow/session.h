@@ -23,7 +23,7 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include "sfip/ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 struct Packet;
 class Flow;

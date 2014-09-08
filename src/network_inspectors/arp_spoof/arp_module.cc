@@ -21,8 +21,6 @@
 
 #include "arp_module.h"
 
-static const char* mod_name = "arp_spoof";
-
 #define ARPSPOOF_UNICAST_ARP_REQUEST_STR \
     "(arp_spoof) Unicast ARP request"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR \
@@ -49,7 +47,7 @@ static const Parameter arp_spoof_hosts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter arp_spoof_params[] =
+static const Parameter s_params[] =
 {
     { "hosts", Parameter::PT_LIST, arp_spoof_hosts_params, nullptr,
       "configure ARP cache overwrite attacks" },
@@ -57,7 +55,7 @@ static const Parameter arp_spoof_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap arp_spoof_rules[] =
+static const RuleMap s_rules[] =
 {
     { ARPSPOOF_UNICAST_ARP_REQUEST,
         ARPSPOOF_UNICAST_ARP_REQUEST_STR },
@@ -79,7 +77,7 @@ static const RuleMap arp_spoof_rules[] =
 //-------------------------------------------------------------------------
 
 ArpSpoofModule::ArpSpoofModule() : 
-    Module(mod_name, arp_spoof_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = new ArpSpoofConfig;
     config->check_overwrite = false;
@@ -92,7 +90,7 @@ ArpSpoofModule::~ArpSpoofModule()
 }
 
 const RuleMap* ArpSpoofModule::get_rules() const
-{ return arp_spoof_rules; }
+{ return s_rules; }
 
 ProfileStats* ArpSpoofModule::get_profile() const
 { return &arpPerfStats; }

@@ -72,7 +72,7 @@ static const Command snort_cmds[] =
 // parameters
 //-------------------------------------------------------------------------
 
-static const Parameter snort_params[] =
+static const Parameter s_params[] =
 {
     { "-?", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list command line options (same as --help)" },
@@ -185,7 +185,7 @@ static const Parameter snort_params[] =
       "dump the raw packet data starting at the link layer" },
 
     { "-x", Parameter::PT_IMPLIED, nullptr, nullptr, 
-      "same as --conf-error-out" },
+      "same as --pedantic" },
 
     { "-y", Parameter::PT_IMPLIED, nullptr, nullptr, 
       "include year in timestamp in the alert and log files" },
@@ -200,8 +200,8 @@ static const Parameter snort_params[] =
     { "--bpf", Parameter::PT_STRING, nullptr, nullptr,
       "<filter options> are standard BPF options, as seen in TCPDump" },
 
-    { "--conf-error-out", Parameter::PT_IMPLIED, nullptr, nullptr, 
-      "output error instead of warning if duplicate rules are found (same as -x)" },
+    { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr, 
+      "warnings are fatal" },
 
     { "--create-pidfile", Parameter::PT_IMPLIED, nullptr, nullptr,
       "create PID file, even when not in Daemon mode" },
@@ -257,6 +257,12 @@ static const Parameter snort_params[] =
     { "--help-module", Parameter::PT_STRING, nullptr, nullptr,
       "<module> output description of given module" },
 
+    { "--help-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list all available modules with brief help" },
+
+    { "--help-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list all available plugins with brief help" },
+
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help" },
 
@@ -294,7 +300,7 @@ static const Parameter snort_params[] =
       "do not try to lock Snort PID file" },
 
     { "--pause", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "load config and wait for further commands before processing packets", },
+      "wait for resume/quit command before processing packets/terminating", },
 
     { "--pcap-file", Parameter::PT_STRING, nullptr, nullptr,
       "<file> file that contains a list of pcaps to read - read mode is implied" },
@@ -370,10 +376,15 @@ static const Parameter snort_params[] =
 // module
 //-------------------------------------------------------------------------
 
+static const char* s_name = "snort";
+
+static const char* s_help =
+    "command line configuration and shell commands";
+
 class SnortModule : public Module
 {
 public:
-    SnortModule() : Module("snort", snort_params)
+    SnortModule() : Module(s_name, s_help, s_params)
     { };
 
     const Command* get_commands() const
@@ -499,7 +510,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("-X") )
         ConfigDumpPayloadVerbose(sc, v.get_string());
 
-    else if ( v.is("-x") || v.is("--conf-error-out") )
+    else if ( v.is("-x") || v.is("--pedantic") )
         sc->run_flags |= RUN_FLAG__CONF_ERROR_OUT;
 
     else if ( v.is("-y") )
@@ -567,6 +578,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--help-module") )
         help_module(sc, v.get_string());
+
+    else if ( v.is("--help-modules") )
+        help_modules(sc, v.get_string());
+
+    else if ( v.is("--help-plugins") )
+        help_plugins(sc, v.get_string());
 
     else if ( v.is("--help-options") )
         help_options(sc, v.get_string());

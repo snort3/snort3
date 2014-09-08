@@ -34,6 +34,7 @@ struct SnortConfig;
 //-------------------------------------------------------------------------
 
 #define MOD_NAME "stream"
+#define MOD_HELP "common flow tracking"
 
 struct StreamConfig
 {

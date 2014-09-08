@@ -25,11 +25,9 @@
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
-#include "protocols/packet.h"
 #include "codecs/sf_protocols.h"
-#include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
 
+struct TextLog;
 struct Packet;
 struct Layer;
 
@@ -55,6 +53,12 @@ constexpr uint32_t ENC_FLAG_RAW = 0x04000000;  // don't encode outer eth header 
 constexpr uint32_t ENC_FLAG_RES = 0x03000000;  // bits reserved for future use
 constexpr uint32_t ENC_FLAG_VAL = 0x00FFFFFF;  // bits for adjusting seq and/or ack
 
+static inline bool forward (const EncodeFlags f)
+{ return f & ENC_FLAG_FWD; }
+
+static inline bool reverse (const EncodeFlags f)
+{ return !forward(f); }
+
 
 struct EncState{
     EncodeType type;
@@ -66,13 +70,8 @@ struct EncState{
     const uint8_t* payLoad; // for tcp
     uint32_t payLen;        // payload length
     uint8_t proto;
-
-    inline bool forward() const
-    { return flags & ENC_FLAG_FWD; }
-
-    inline bool reverse() const
-    { return !forward(); }
 };
+
 
 // Copied from dnet/blob.h
 // * base+off is start of packet
@@ -84,15 +83,6 @@ struct Buffer {
     int end;           /* end of data */
     int size;          /* size of allocation */
 };
-
-
-/*
- * ENCODING HELPER FUNCTIONS */
-static inline bool forward (const EncState* const enc)
-{ return enc->flags & ENC_FLAG_FWD; }
-
-static inline bool reverse (EncodeFlags f)
-{ return !(f & ENC_FLAG_FWD); }
 
 
 static inline uint8_t buff_diff(Buffer *buf, uint8_t* ho)
@@ -109,33 +99,10 @@ static inline bool update_buffer(Buffer* buf, size_t n)
     return true;
 }
 
-static inline icmp::IcmpCode get_icmp4_code(EncodeType et)
-{
-    switch ( et )
-    {
-        case EncodeType::ENC_UNR_NET:  return icmp::IcmpCode::NET_UNREACH;
-        case EncodeType::ENC_UNR_HOST: return icmp::IcmpCode::HOST_UNREACH;
-        case EncodeType::ENC_UNR_PORT: return icmp::IcmpCode::PORT_UNREACH;
-        case EncodeType::ENC_UNR_FW:   return icmp::IcmpCode::PKT_FILTERED;
-        default: return icmp::IcmpCode::PORT_UNREACH;
-    }
-}
-
-static inline icmp::Icmp6Code get_icmp6_code(EncodeType et)
-{
-    switch ( et )
-    {
-        case EncodeType::ENC_UNR_NET:  return icmp::Icmp6Code::UNREACH_NET;
-        case EncodeType::ENC_UNR_HOST: return icmp::Icmp6Code::UNREACH_HOST;
-        case EncodeType::ENC_UNR_PORT: return icmp::Icmp6Code::UNREACH_PORT;
-        case EncodeType::ENC_UNR_FW:   return icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
-        default: return icmp::Icmp6Code::UNREACH_PORT;
-    }
-}
 
 /*  Codec Class */
 
-class Codec
+class SO_PUBLIC Codec
 {
 public:
     virtual ~Codec() { };
@@ -150,34 +117,52 @@ public:
      * ETHERNET_MTU == 1500
      * IP_MAXPACKET ==  65535
      */
-    static constexpr uint32_t PKT_MAX = 14 + 4 + 1500 + 65535;
+    static const uint32_t PKT_MAX = 14 + 4 + 1500 + 65535;
+
+    /*  Codec Initialization */
 
     // Get the codec's name
-    inline const char* get_name(){return name; };
+    inline const char* get_name() const {return name; };
     // used for backwards compatability.
     virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     // Registers this Codec's data link type (as defined by libpcap)
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes
     virtual void get_protocol_ids(std::vector<uint16_t>&) {};
-    // decode function
+
+    /* Maom decodomg fimctopm */
     virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id) = 0;
+        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)=0;
 
-    // 
-    // Encode the current packet. Encoding starts with the innermost
-    // layer and working outwards.  All encoders MUST call the update
-    // bound function before writing to output buffer.
-    // PARAMS:
-    //        EncStats * = The current EncState struct
-    //        Buffer *out = the buffer struct. When called, out->base pointers
-    //              to the already encoded packet! to create more memory, call
-    //              update_buffer function!
-    //        uint8_t* raw_in =  A pointer to the raw input which was decoded
-    virtual bool encode(EncState*, Buffer* /*out*/, const uint8_t* /*raw_in*/) { return true; };
+    /*
+     *  Log this layer's information
+     *  PARAMS:
+     *          TextLog* = the logger. Defined in "text_log.h"
+     *          const uint8_t *raw_pkt = the same data seen during decode
+     *          Packet *p = pointer to the packet struct.
+     */
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) {}
 
+
+    /*
+     * Encoding -- active response!!
+     *
+     * Encode the current packet. Encoding starts with the innermost
+     * layer and working outwards.  All encoders MUST call the update
+     * bound function before writing to output buffer.
+     * PARAMS:
+     *        EncStats * = The current EncState struct
+     *        Buffer *out = the buffer struct. When called, out->base pointers
+     *              to the already encoded packet! to create more memory, call
+     *              update_buffer function!
+     *        uint8_t* raw_in =  A pointer to the raw input which was decoded
+     */
+    virtual bool encode(EncState*, Buffer* /*out*/, const uint8_t* /*raw_in*/)
+    { return true; };
     // update function
-    virtual bool update(Packet*, Layer*, uint32_t* /*len*/) { return true; };
+    virtual bool update(Packet*, Layer*, uint32_t* /*len*/)
+    { return true; };
     // formatter
     virtual void format(EncodeFlags, const Packet* /*orig*/, Packet* /*clone*/, Layer*) {};
 

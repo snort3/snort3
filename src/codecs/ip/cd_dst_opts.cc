@@ -31,13 +31,13 @@
 #include "protocols/packet.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 
+#define CD_DSTOPTS_NAME "ipv6_dst_opts"
+#define CD_DSTOPTS_HELP "support for ipv6 destination options"
 
 namespace
 {
-
-#define CD_DSTOPTS_NAME "ipv6_dst_opts"
 
 class Ipv6DSTOptsCodec : public Codec
 {
@@ -71,8 +71,6 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_DSTOPTS);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
-
 
     if(raw_len < sizeof(IP6Dest))
     {
@@ -99,12 +97,11 @@ bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
 
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_DSTOPTS;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
     next_prot_id = dsthdr->ip6dest_nxt;
 
-    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
+    ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_DSTOPTS, next_prot_id);
+    if ( ip_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
         return true;
     return false;
 }
@@ -129,20 +126,17 @@ bool Ipv6DSTOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6DSTOptsCodec();
-}
+{ return new Ipv6DSTOptsCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_dstopts_api =
 {
     {
         PT_CODEC,
         CD_DSTOPTS_NAME,
+        CD_DSTOPTS_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

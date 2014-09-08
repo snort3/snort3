@@ -39,6 +39,7 @@
 #include "parser/vars.h"
 #include "time/profiler.h"
 #include "helpers/markup.h"
+#include "utils/stats.h"
 
 using namespace std;
 
@@ -478,6 +479,14 @@ void ModuleManager::list_modules()
         LogMessage("%s\n", p->mod->get_name());
 }
 
+void ModuleManager::show_modules()
+{
+    s_modules.sort(comp_mods);
+
+    for ( auto* p : s_modules )
+        LogMessage("%s: %s\n", p->mod->get_name(), p->mod->get_help());
+}
+
 void ModuleManager::dump_modules()
 {
     s_modules.sort(comp_mods);
@@ -514,32 +523,36 @@ void ModuleManager::show_module(const char* name)
             continue;
 
         cout << endl << Markup::head() << name << endl << endl;
-        cout << "Type: "  << mod_type(p->api) << endl << endl;
+
+        if ( const char* h = m->get_help() )
+            cout << "What: " << h << endl;
+
+        cout << "Type: "  << mod_type(p->api) << endl;
 
         if ( const Parameter* p = m->get_parameters() )
         {
             if ( p->type < Parameter::PT_MAX )
             {
-                cout << endl << "Configuration: "  << endl << endl;
+                cout << endl << "Configuration: " << endl;
                 show_configs(name, true);
             }
         }
 
         if ( m->get_commands() )
         {
-            cout << endl << "Commands: "  << endl << endl;
+            cout << endl << "Commands: " << endl;
             show_commands(name);
         }
 
         if ( m->get_rules() )
         {
-            cout << endl << "Rules: "  << endl << endl;
+            cout << endl << "Rules: " << endl;
             show_rules(name);
         }
 
         if ( m->get_pegs() )
         {
-            cout << endl << "Peg counts: "  << endl << endl;
+            cout << endl << "Peg counts: " << endl;
             show_pegs(name);
         }
     }

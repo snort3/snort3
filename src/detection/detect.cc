@@ -54,7 +54,6 @@
 #include "stream/stream_api.h"
 #include "packet_io/active.h"
 #include "signature.h"
-#include "ipv6_port.h"
 #include "ppm.h"
 #include "snort_types.h"
 #include "detection_util.h"
@@ -63,6 +62,7 @@
 #include "target_based/sftarget_protocol_reference.h"
 #include "detection_defines.h"
 #include "protocols/ip.h"
+#include "sfip/sf_ipvar.h"
 
 #ifdef PORTLISTS
 #include "utils/sfportobject.h"

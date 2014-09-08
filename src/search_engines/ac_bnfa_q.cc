@@ -144,6 +144,7 @@ static const MpseApi bnfaq_api =
     {
         PT_SEARCH_ENGINE,
         "ac_bnfa_q",
+        "Aho-Corasick Binary NFA (low memory, high performance) with queued events",
         SEAPI_PLUGIN_V0,
         0,
         nullptr,

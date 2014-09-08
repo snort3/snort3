@@ -38,13 +38,14 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "managers/event_manager.h"
+#include "hash/sfghash.h"
 
 #include "event.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "snort_debug.h"
 #include "util.h"
-#include "snort.h"
+#include "main/snort.h"
 #include "parser.h"
 
 struct SfSock
@@ -65,6 +66,8 @@ static THREAD_LOCAL SfSock context;
 using namespace std;
 typedef vector<RuleId> RuleVector;
 
+static const char* s_name = "alert_sfsocket";
+
 //-------------------------------------------------------------------------
 // alert_sfsocket module
 //-------------------------------------------------------------------------
@@ -80,7 +83,7 @@ static const Parameter rule_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter sfsocket_params[] =
+static const Parameter s_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "name of unix socket file" },
@@ -91,10 +94,13 @@ static const Parameter sfsocket_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event over socket";
+
 class SfSocketModule : public Module
 {
 public:
-    SfSocketModule() : Module("alert_sfsocket", sfsocket_params) { };
+    SfSocketModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -236,6 +242,8 @@ void send_sar(uint8_t* data, unsigned len)
 // sig stuff
 
 /* search for an OptTreeNode by sid in specific policy*/
+// FIXIT-L wow - this should be encapsulated somewhere ...
+// (actually, the whole reason for doing this needs to be rethought)
 static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
 {
     SFGHASH_NODE *hashNode;
@@ -245,7 +253,6 @@ static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
     if(sid == 0)
         return NULL;
 
-    // FIXIT-H wow - this should be encapsulated somewhere ...
     for (hashNode = sfghash_findfirst(snort_conf->otn_map);
             hashNode;
             hashNode = sfghash_findnext(snort_conf->otn_map))
@@ -396,7 +403,8 @@ static LogApi sf_sock_api
 {
     {
         PT_LOGGER,
-        "alert_sfsocket",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -407,15 +415,7 @@ static LogApi sf_sock_api
     sf_sock_dtor
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &sf_sock_api.base,
-    nullptr
-};
-#else
 const BaseApi* alert_sf_socket = &sf_sock_api.base;
-#endif
 
 #endif   /* LINUX */
 

@@ -50,12 +50,14 @@ include_directories(utils)
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_LIBRARIES
         arp_spoof
-        port_scan
         back_orifice
         ftp_telnet
+        nhttp_inspect
         rpc_decode
+        wizard
     )
 endif()
+
 
 if (STATIC_CODECS)
     set (STATIC_CODEC_LIBRARIES
@@ -67,7 +69,7 @@ endif()
 if (BUILD_UNIT_TESTS)
     set( UNIT_TESTS_LIBRARIES unit_tests)
     add_subdirectory(test)
-endif( BUILD_UNIT_TESTS)
+endif (BUILD_UNIT_TESTS)
 
 
 #  The main Snort executableRA
@@ -114,6 +116,7 @@ target_link_libraries( snort
     service_inspectors
     stream
     ips_actions
+    port_scan
     managers
     codecs
     ip_codecs

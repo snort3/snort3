@@ -30,7 +30,7 @@
 
 #include "snort_types.h"
 #include "sfxhash.h"
-#include "ipv6_port.h"
+#include "sfip/sfip_t.h"
 #include "protocols/packet.h"
 
 #define SF_MAX_PKT_LEN  9000

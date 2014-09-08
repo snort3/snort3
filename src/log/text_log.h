@@ -53,7 +53,7 @@
  * DO NOT ACCESS STRUCT MEMBERS DIRECTLY
  * EXCEPT FROM WITHIN THE IMPLEMENTATION!
  */
-typedef struct _TextLog
+struct TextLog
 {
 /* private: */
 /* file attributes: */
@@ -68,45 +68,45 @@ typedef struct _TextLog
     unsigned int maxBuf;
     char buf[1];
 
-} TextLog;
+};
 
 TextLog* TextLog_Init (
     const char* name, unsigned int maxBuf = 0, size_t maxFile = 0
 );
 void TextLog_Term (TextLog*);
 
-bool TextLog_Putc(TextLog*, char);
-bool TextLog_Quote(TextLog*, const char*);
-bool TextLog_Write(TextLog*, const char*, int len);
-bool TextLog_Print(TextLog*, const char* format, ...);
-bool TextLog_Flush(TextLog*);
+bool TextLog_Putc(TextLog* const, char);
+bool TextLog_Quote(TextLog* const, const char*);
+bool TextLog_Write(TextLog* const, const char*, int len);
+bool TextLog_Print(TextLog* const, const char* format, ...);
+bool TextLog_Flush(TextLog* const);
 
 /*-------------------------------------------------------------------
   * helper functions
   *-------------------------------------------------------------------
   */
- static inline int TextLog_Tell (TextLog* txt)
+ static inline int TextLog_Tell (TextLog* const txt)
  {
      return txt->pos;
  }
 
- static inline int TextLog_Avail (TextLog* txt)
+ static inline int TextLog_Avail (TextLog* const txt)
  {
      return txt->maxBuf - txt->pos - 1;
  }
 
- static inline void TextLog_Reset (TextLog* txt)
+ static inline void TextLog_Reset (TextLog* const txt)
  {
      txt->pos = 0;
      txt->buf[txt->pos] = '\0';
  }
 
-static inline bool TextLog_NewLine (TextLog* txt)
+static inline bool TextLog_NewLine (TextLog* const txt)
 {
     return TextLog_Putc(txt, '\n');
 }
 
-static inline bool TextLog_Puts (TextLog* txt, const char* str)
+static inline bool TextLog_Puts (TextLog* const txt, const char* str)
 {
     return TextLog_Write(txt, str, strlen(str));
 }

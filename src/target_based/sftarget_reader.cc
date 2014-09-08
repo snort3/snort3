@@ -49,6 +49,7 @@
 #include "perf_monitor/perf.h"
 #include "snort.h"
 #include "snort_debug.h"
+#include "utils/stats.h"
 
 #define ATTRIBUTE_MAP_MAX_ROWS 1024
 

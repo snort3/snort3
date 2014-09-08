@@ -32,6 +32,7 @@ using namespace std;
 #include "framework/mpse.h"
 #include "parser/parser.h"
 #include "log/messages.h"
+#include "detection/fpcreate.h"
 
 typedef list<const MpseApi*> EngineList;
 static EngineList s_engines;

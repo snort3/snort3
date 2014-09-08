@@ -31,6 +31,7 @@
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "time/profiler.h"
+#include "detection/detection_defines.h"
 
 static THREAD_LOCAL ProfileStats luaIpsPerfStats;
 
@@ -68,7 +69,7 @@ SO_PUBLIC const SnortBuffer* get_buffer()
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter luajit_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
       "luajit arguments" },
@@ -76,10 +77,13 @@ static const Parameter luajit_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option for detecting with Lua scripts";
+
 class LuaJitModule : public Module
 {
 public:
-    LuaJitModule(const char* name) : Module(name, luajit_params)
+    LuaJitModule(const char* name) : Module(name, s_help, s_params)
     { };
 
     bool begin(const char*, int, SnortConfig*);
@@ -247,6 +251,7 @@ const IpsApi ips_lua_api =
     {
         PT_IPS_OPTION,
         "tbd",
+        "Lua JIT script for IPS rule option",
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

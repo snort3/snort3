@@ -25,19 +25,15 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
-
 #include <array>
-#include "snort.h"
+#include "utils/dnet_header.h"
+#include "main/snort.h"
 #include "fpdetect.h"
 
 
 #include "protocols/tcp.h"
 #include "protocols/ipv4.h"
+#include "protocols/packet_manager.h"
 
 #include "utils/stats.h"
 #include "packet_io/active.h"
@@ -48,10 +44,14 @@
 #include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/ip.h"
+#include "log/text_log.h"
+#include "log/log_text.h"
+
+#define CD_IPV4_NAME "ipv4"
+#define CD_IPV4_HELP "support for internet protocol v4"
 
 namespace{
 
-#define CD_IPV4_NAME "ipv4"
 static const RuleMap ipv4_rules[] =
 {
     { DECODE_NOT_IPV4_DGRAM, "(" CD_IPV4_NAME ") Not IPv4 datagram" },
@@ -87,13 +87,11 @@ static const RuleMap ipv4_rules[] =
 class Ipv4Module : public DecodeModule
 {
 public:
-    Ipv4Module() : DecodeModule(CD_IPV4_NAME) {}
+    Ipv4Module() : DecodeModule(CD_IPV4_NAME, CD_IPV4_HELP) {}
 
     const RuleMap* get_rules() const
     { return ipv4_rules; }
 };
-
-
 
 class Ipv4Codec : public Codec
 {
@@ -105,6 +103,8 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
@@ -114,7 +114,6 @@ private:
     static uint8_t RevTTL (const EncState* enc, uint8_t ttl);
     static uint8_t FwdTTL (const EncState* enc, uint8_t ttl);
     static uint8_t GetTTL (const EncState* enc);
-    
 };
 
 /* Last updated 5/2/2014.
@@ -154,9 +153,9 @@ uint8_t Ipv4Codec::GetTTL (const EncState* enc)
         return 0;
 
     if ( enc->p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(enc) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
+        dir = forward(enc->flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
     else
-        dir = forward(enc) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
+        dir = forward(enc->flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
 
     // outermost ip is considered to be outer here,
     // even if it is the only ip layer ...
@@ -227,17 +226,12 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    if (p->encapsulations)
-    {
-        if (p->encapsulations > 1) // comparable to Snort
-            codec_events::decoder_alert_encapsulated(p, DECODE_IP_MULTIPLE_ENCAPSULATION,
-                raw_pkt, raw_len);
-    }
-
-    p->encapsulations++;
+    // comparable to snort
+    if (p->encapsulations > 1)
+        codec_events::decoder_event(p, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
     /* lay the IP struct over the raw data */
-    IP4Hdr* iph = reinterpret_cast<IP4Hdr*>(const_cast<uint8_t *>(raw_pkt));
+    const IP4Hdr* const iph = reinterpret_cast<const IP4Hdr*>(raw_pkt);
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -318,7 +312,15 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         if(csum)
         {
             p->error_flags |= PKT_ERR_CKSUM_IP;
-            codec_events::exec_ip_chksm_drop(p);
+
+            // TBD only set policy csum drop if policy inline
+            // and delete this inline mode check
+            if( ScInlineMode() && ScIpChecksumDrops() )
+            {
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                    "Dropping bad packet (IP checksum)\n"););
+                Active_DropPacket();
+            }
         }
     }
 
@@ -601,7 +603,7 @@ static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
             byte_skip = 1;
             break;
         default:
-            /* handle all the dynamic features */
+            /* FIXIT-L - J ip option validation should be updated.  3 of these fields are useless */
             code = OptLenValidate(option_ptr, end_ptr, len_ptr, -1,
                     reinterpret_cast<Options *>(&p->ip_options[opt_count]), &byte_skip);
         }
@@ -682,6 +684,83 @@ static int OptLenValidate(const uint8_t *option_ptr,
     return 0;
 }
 
+/******************************************************************
+ *********************  L O G G E R  ******************************
+*******************************************************************/
+
+struct ip4_addr
+{
+    union
+    {
+        uint32_t addr32;
+        uint8_t addr8[4];
+    };
+};
+
+void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+    const Packet* const p)
+{
+    const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
+
+    // FIXIT-H  -->  This does NOT obfuscate correctly
+    if (ScObfuscate())
+    {
+        TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
+    }
+    else
+    {
+        ip4_addr src, dst;
+        src.addr32 = ip4h->get_src();
+        dst.addr32 = ip4h->get_dst();
+
+        TextLog_Print(text_log, "%d.%d.%d.%d -> %d.%d.%d.%d",
+            (int)src.addr8[0], (int)src.addr8[1],
+            (int)src.addr8[2], (int)src.addr8[3],
+            (int)dst.addr8[0], (int)dst.addr8[1],
+            (int)dst.addr8[2], (int)dst.addr8[3]);
+    }
+
+    TextLog_NewLine(text_log);
+    TextLog_Putc(text_log, '\t');
+
+
+    const uint16_t hlen = ip4h->get_hlen() << 2;
+    const uint16_t len = ntohs(ip4h->get_len());
+    const uint16_t frag_off = ntohs(ip4h->get_off());
+
+    TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
+            ip4h->get_proto(), ip4h->get_ttl(), ip4h->get_tos(),
+            ip4h->get_id(), hlen, len);
+
+
+    /* print the reserved bit if it's set */
+    if(frag_off & 0x8000)
+        TextLog_Puts(text_log, " RB");
+
+    /* printf more frags/don't frag bits */
+    if(frag_off & 0x4000)
+        TextLog_Puts(text_log, " DF");
+
+    if(frag_off & 0x2000)
+        TextLog_Puts(text_log, " MF");
+
+    /* print IP options */
+    if(p->ip_option_count > 0)
+    {
+        TextLog_Putc(text_log, '\t');
+        TextLog_NewLine(text_log);
+        LogIpOptions(text_log, p);
+    }
+
+
+    if( p->decode_flags & DECODE__FRAG)
+    {
+        TextLog_NewLine(text_log);
+        TextLog_Putc(text_log, '\t');
+        TextLog_Print(text_log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
+                (frag_off & 0x1FFF), (len - hlen));
+    }
+}
 
 /******************************************************************
  ******************** E N C O D E R  ******************************
@@ -727,7 +806,7 @@ bool Ipv4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
     ho->ip_len = htons((uint16_t)out->end);
     ho->ip_csum = 0;
 
-    if ( forward(enc) )
+    if ( forward(enc->flags) )
     {
         ho->ip_src = hi->ip_src;
         ho->ip_dst = hi->ip_dst;
@@ -809,14 +888,10 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Ipv4Module;
-}
+{ return new Ipv4Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 //-------------------------------------------------------------------------
 // ip id considerations:
@@ -851,20 +926,17 @@ static void ipv4_codec_gterm()
 
 
 static Codec *ctor(Module*)
-{
-    return new Ipv4Codec;
-}
+{ return new Ipv4Codec; }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv4_api =
 {
     { 
         PT_CODEC,
         CD_IPV4_NAME,
+        CD_IPV4_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

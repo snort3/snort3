@@ -62,11 +62,13 @@ static TokenType get_token(
     static int prev = EOF;
     int c, list, state = 0;
     s.clear();
+    bool inc = true;
 
     if ( prev != EOF )
     {
         c = prev;
         prev = EOF;
+        inc = ( c != '\n' );
     }
     else
     {
@@ -81,7 +83,10 @@ static TokenType get_token(
         if ( c == '\n' )
         {
             lines++;
-            inc_parse_position();
+            if ( inc )
+                inc_parse_position();
+            else
+                inc = true;
         }
 
         switch ( state )
@@ -170,9 +175,7 @@ static TokenType get_token(
             state = 3;
             break;
         case 5:  // unquoted escape
-            if ( c == '\n' )
-                state = 0;
-            else if ( c != '\r' )
+            if ( c != '\n' && c != '\r' )
                 printf("error: invalid escape on line %d\n", lines);
             state = 0;
             break;

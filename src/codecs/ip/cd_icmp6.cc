@@ -28,20 +28,23 @@
 
 #include "snort.h"
 #include "framework/codec.h"
-#include "codecs/decode_module.h"
-#include "codecs/codec_events.h"
-#include "codecs/ip/checksum.h"
-
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
 #include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
+#include "codecs/decode_module.h"
+#include "codecs/codec_events.h"
+#include "codecs/ip/checksum.h"
+#include "codecs/ip/ip_util.h"
+#include "packet_io/active.h"
+#include "log/text_log.h"
 
+#define CD_ICMP6_NAME "icmp6"
+#define CD_ICMP6_HELP "support for internet control message protocol v6"
 
 namespace
 {
 
-#define CD_ICMP6_NAME "icmp6"
 static const RuleMap icmp6_rules[] =
 {
     { DECODE_ICMP6_HDR_TRUNC, "(" CD_ICMP6_NAME ") truncated ICMP6 header" },
@@ -61,7 +64,7 @@ static const RuleMap icmp6_rules[] =
 class Icmp6Module : public DecodeModule
 {
 public:
-    Icmp6Module() : DecodeModule(CD_ICMP6_NAME) {}
+    Icmp6Module() : DecodeModule(CD_ICMP6_NAME, CD_ICMP6_HELP) {}
 
     const RuleMap* get_rules() const
     { return icmp6_rules; }
@@ -81,6 +84,8 @@ public:
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
 };
 
 
@@ -138,8 +143,10 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
         if(csum)
         {
             p->error_flags |= PKT_ERR_CKSUM_ICMP;
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad ICMP Checksum\n"););
-            codec_events::exec_icmp_chksm_drop(p);
+            DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: BAD\n"););
+
+            if( ScInlineMode() && ScIcmpChecksumDrops() )
+                Active_DropPacket();
         }
         else
         {
@@ -336,7 +343,18 @@ bool Icmp6Codec::decode(const uint8_t* raw_pkt, const uint32_t& raw_len,
 
 
 /******************************************************************
- ******************** E N C O D E R  ******************************
+ *************************  L O G G E R   *************************
+ ******************************************************************/
+
+void Icmp6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                const Packet* const)
+{
+    const icmp::ICMP6Hdr* const icmph = reinterpret_cast<const icmp::ICMP6Hdr*>(raw_pkt);
+    TextLog_Print(text_log, "sType:%d  Code:%d  ", icmph->type, icmph->code);
+}
+
+/******************************************************************
+ ************************* E N C O D E R  *************************
  ******************************************************************/
 
 
@@ -387,7 +405,7 @@ bool Icmp6Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
 
     ho = reinterpret_cast<IcmpHdr*>(out->base);
     ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
-    ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));   // port unreachable
+    ho->code = static_cast<uint8_t>(ip_util::get_icmp6_code(enc->type));   // port unreachable
     ho->cksum = 0;
     ho->unused = 0;
 
@@ -433,30 +451,23 @@ bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new Icmp6Module;
-}
+{ return new Icmp6Module; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new Icmp6Codec();
-}
+{ return new Icmp6Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_api =
 {
     {
         PT_CODEC,
         CD_ICMP6_NAME,
+        CD_ICMP6_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

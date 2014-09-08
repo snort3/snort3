@@ -67,8 +67,7 @@
 #include "protocols/packet.h"
 #include "parser.h"
 #include "util.h"
-#include "asn1.h"
-#include "asn1.h"
+#include "ips_options/asn1_util.h"
 #include "asn1_detect.h"
 #include "sfhashfcn.h"
 #include "detection/detection_util.h"
@@ -94,6 +93,9 @@
 static THREAD_LOCAL ProfileStats asn1PerfStats;
 
 static const char* s_name = "asn1";
+
+static const char* s_help =
+    "rule option for asn1 detection";
 
 class Asn1Option : public IpsOption
 {
@@ -192,7 +194,7 @@ int Asn1Option::eval(Cursor& c, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter asn1_params[] =
+static const Parameter s_params[] =
 {
     { BITSTRING_OPT, Parameter::PT_IMPLIED, nullptr, nullptr,
       "Detects invalid bitstring encodings that are known to be remotely exploitable." },
@@ -218,7 +220,7 @@ static const Parameter asn1_params[] =
 class Asn1Module : public Module
 {
 public:
-    Asn1Module() : Module(s_name, asn1_params) { };
+    Asn1Module() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -297,6 +299,7 @@ static const IpsApi asn1_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -304,8 +307,8 @@ static const IpsApi asn1_api =
     },
     OPT_TYPE_DETECTION,
     0, 0,
-    nullptr,
-    nullptr,
+    asn1_init_mem,
+    asn1_free_mem,
     nullptr,
     nullptr,
     asn1_ctor,

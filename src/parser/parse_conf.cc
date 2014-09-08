@@ -61,7 +61,6 @@
 #include "snort.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
 #include "utils/sfportobject.h"
 #include "packet_io/active.h"
@@ -165,7 +164,7 @@ void ParseIpVar(SnortConfig *sc, const char* var, const char* val)
                 return;
 
             case SFIP_DUPLICATE:
-                ParseMessage("Var '%s' redefined.", var);
+                ParseWarning("Var '%s' redefined.", var);
                 break;
 
             case SFIP_CONFLICT:

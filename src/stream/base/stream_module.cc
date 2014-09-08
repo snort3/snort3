@@ -59,7 +59,7 @@ static const Parameter proto_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter stream_params[] =
+static const Parameter s_params[] =
 {
     { "icmp_cache", Parameter::PT_TABLE, proto_params, nullptr,
       "configure icmp cache limits" },
@@ -77,7 +77,7 @@ static const Parameter stream_params[] =
 };
 
 StreamModule::StreamModule() :
-    Module(MOD_NAME, stream_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     proto = &stream_cfg.ip_cfg;
 }

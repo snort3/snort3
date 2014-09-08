@@ -64,6 +64,7 @@
 #include "snort_bounds.h"
 #include "perf.h"
 #include "stream/stream_api.h"
+#include "utils/stats.h"
 
 static void GetPktDropStats(SFBASE *, SFBASE_STATS *);
 static void DisplayBasePerfStatsConsole(SFBASE_STATS *, int);

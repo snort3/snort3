@@ -28,7 +28,6 @@
 #endif
 #include "snort_types.h"
 #include "snort_debug.h"
-#include "sfip/ipv6_port.h"
 
 /* Create new lookup table
  * @param   table_flat_type Type of table. Uses the types enumeration in route.h

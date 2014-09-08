@@ -98,7 +98,7 @@ const char* get_instance_file(std::string& file, const char* name)
         struct stat s;
 
         if ( stat(file.c_str(), &s) )
-            // FIXIT-H getting random 0750 or 0700 (umask not thread local)?
+            // FIXIT-J getting random 0750 or 0700 (umask not thread local)?
             mkdir(file.c_str(), 0770);
     }
 

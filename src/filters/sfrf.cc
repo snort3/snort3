@@ -42,10 +42,13 @@
 #include <arpa/inet.h>
 
 #include "snort.h"
-#include "sfip/ipv6_port.h"
 #include "rules.h"
 #include "treenodes.h"
 #include "util.h"
+#include "utils/sflsq.h"
+#include "hash/sfghash.h"
+#include "hash/sfxhash.h"
+#include "sfip/sf_ipvar.h"
 
 // Number of hash rows for gid 1 (rules)
 #define SFRF_GEN_ID_1_ROWS 4096

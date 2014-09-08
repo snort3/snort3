@@ -31,11 +31,12 @@
 #include "protocols/protocol_ids.h"
 #include "protocols/eapol.h"
 
+#define CD_EAPOL_NAME "eapol"
+#define CD_EAPOL_HELP "support for extensible authentication protocol over LAN"
 
 namespace
 {
 
-#define CD_EAPOL_NAME "eapol"
 static const RuleMap eapol_rules[] =
 {
     { DECODE_EAPOL_TRUNCATED, "(" CD_EAPOL_NAME ") Truncated EAP Header" },
@@ -47,7 +48,7 @@ static const RuleMap eapol_rules[] =
 class EapolModule : public DecodeModule
 {
 public:
-    EapolModule() : DecodeModule(CD_EAPOL_NAME) {}
+    EapolModule() : DecodeModule(CD_EAPOL_NAME, CD_EAPOL_HELP) {}
 
     const RuleMap* get_rules() const
     { return eapol_rules; }
@@ -185,6 +186,7 @@ static const CodecApi eapol_api =
     {
         PT_CODEC,
         CD_EAPOL_NAME,
+        CD_EAPOL_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

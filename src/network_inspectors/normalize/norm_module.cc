@@ -133,7 +133,7 @@ static const Parameter norm_tcp_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter normalize_params[] =
+static const Parameter s_params[] =
 {
     { "ip4", Parameter::PT_TABLE, norm_ip4_params, nullptr,
       "set ip4 normalization options" },
@@ -158,7 +158,7 @@ static const Parameter normalize_params[] =
 //-------------------------------------------------------------------------
 
 NormalizeModule::NormalizeModule() :
-    Module("normalize", normalize_params)
+    Module(NORM_NAME, NORM_HELP, s_params)
 {
     memset(&config, 0, sizeof(config));
 }
@@ -254,7 +254,7 @@ bool NormalizeModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
 bool NormalizeModule::begin(const char* fqn, int, SnortConfig*)
 {
-    if ( !strcmp(fqn, "normalize") )
+    if ( !strcmp(fqn, NORM_NAME) )
     {
         NetworkPolicy* policy = get_network_policy();
 

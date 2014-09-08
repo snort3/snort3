@@ -49,6 +49,7 @@
 #include "detection_util.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/layer.h"
+#include "service_inspectors/http_inspect/hi_main.h"
 
 #include "sfip/sf_ip.h"
 
@@ -64,12 +65,6 @@
 #include "protocols/wlan.h"
 #include "protocols/linux_sll.h"
 #include "protocols/eapol.h"
-
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
 
 /*--------------------------------------------------------------------
  * utility functions
@@ -440,21 +435,18 @@ void Log2ndHeader(TextLog* log, Packet* p)
  * IP stuff cloned from log.c
  *-------------------------------------------------------------------
  */
-static void LogIpOptions(TextLog*  log, Packet * p)
+
+void LogIpOptions(TextLog*  log, const Packet* const p)
 {
-    int i;
-    int j;
+    uint8_t i, j;
     u_long init_offset;
     u_long print_offset;
+    const uint8_t option_count = p->ip_option_count;
 
     init_offset = TextLog_Tell(log);
+    TextLog_Print(log, "IP Options (%d) => ", option_count);
 
-    if(!p->ip_option_count || p->ip_option_count > 40)
-        return;
-
-    TextLog_Print(log, "IP Options (%d) => ", p->ip_option_count);
-
-    for(i = 0; i < (int) p->ip_option_count; i++)
+    for(i = 0; i < option_count; i++)
     {
         print_offset = TextLog_Tell(log);
 
@@ -510,17 +502,35 @@ static void LogIpOptions(TextLog*  log, Packet * p)
             default:
                 TextLog_Print(log, "Opt %d: ", p->ip_options[i].code);
 
-                if(p->ip_options[i].len)
-                {
-                    for(j = 0; j < p->ip_options[i].len; j++)
-                    {
-                        if (p->ip_options[i].data)
-                            TextLog_Print(log, "%02X", p->ip_options[i].data[j]);
-                        else
-                            TextLog_Print(log, "%02X", 0);
+                const ip::IpOptions* const ip_opt = &(p->ip_options[i]);
+                const uint8_t opt_len = ip_opt->len;
 
-                        if((j % 2) == 0)
-                            TextLog_Putc(log, ' ');
+                if(opt_len)
+                {
+                    if (ip_opt->data)
+                    {
+                        for(j = 0; (j + 1) < opt_len; j += 2)
+                        {
+                            TextLog_Print(log, "%02X%02X ",ip_opt->data[j],
+                                                           ip_opt->data[j+1]);
+                        }
+
+                        // since we're skipping by two, if (j+1) == opt_len,
+                        // we will not have printed j
+                        if (j < opt_len)
+                            TextLog_Print(log, "%02X",ip_opt->data[j]);
+                    }
+                    else
+                    {
+                        for(j = 0; (j + 1) < opt_len; j += 2)
+                        {
+                            TextLog_Print(log, "%02X%02X ", 0, 0);
+                        }
+
+                        // since we're skipping by two, if (j+1) == opt_len,
+                        // we will not have printed j
+                        if (j < opt_len)
+                            TextLog_Print(log, "%02X",0);
                     }
                 }
                 break;
@@ -685,24 +695,22 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
  * TCP stuff cloned from log.c
  *-------------------------------------------------------------------
  */
-static void LogTcpOptions(TextLog*  log, Packet * p)
+inline uint16_t extract_16_bits(const uint8_t* const buf)
+{ return ntohs(* ((uint16_t*)(buf)) ); }
+
+inline uint32_t extract_32_bits(const uint8_t* const buf)
+{ return ntohl(* ((uint32_t*)(buf)) ); }
+
+void LogTcpOptions(TextLog*  log, const Packet* const p)
 {
-    int i;
+    uint8_t i;
     int j;
-    uint8_t tmp[5];
-#if 0
-    u_long init_offset;
-    u_long print_offset;
+    const uint8_t option_count = p->tcp_option_count;
+    const Options* const opts = p->tcp_options;
 
-    init_offset = TextLog_Tell(log);
-#endif
+    TextLog_Print(log, "TCP Options (%d) => ", option_count);
 
-    TextLog_Print(log, "TCP Options (%d) => ", p->tcp_option_count);
-
-    if(p->tcp_option_count > 40 || !p->tcp_option_count)
-        return;
-
-    for(i = 0; i < (int) p->tcp_option_count; i++)
+    for(i = 0; i < option_count; i++)
     {
 #if 0
         print_offset = TextLog_Tell(log);
@@ -713,16 +721,21 @@ static void LogTcpOptions(TextLog*  log, Packet * p)
             init_offset = TextLog_Tell(log);
         }
 #endif
-        switch(p->tcp_options[i].code)
+        switch(opts[i].code)
         {
             case TCPOPT_MAXSEG:
-                memset((char*)tmp, 0, sizeof(tmp));
+            {
+                uint16_t val;
                 TextLog_Puts(log, "MSS: ");
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, p->tcp_options[i].data, 2);
-                TextLog_Print(log, "%u ", EXTRACT_16BITS(tmp));
-                break;
 
+                if (opts[i].data)
+                    val = extract_16_bits(opts[i].data);
+                else
+                    val = 0;
+
+                TextLog_Print(log, "%u ", val);
+                break;
+            }
             case TCPOPT_EOL:
                 TextLog_Puts(log, "EOL ");
                 break;
@@ -732,87 +745,150 @@ static void LogTcpOptions(TextLog*  log, Packet * p)
                 break;
 
             case TCPOPT_WSCALE:
-                if (p->tcp_options[i].data)
-                    TextLog_Print(log, "WS: %u ", p->tcp_options[i].data[0]);
-                else
-                    TextLog_Print(log, "WS: %u ", 0);
-                break;
-            case TCPOPT_SACK:
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data && (p->tcp_options[i].len >= 2))
-                    memcpy(tmp, p->tcp_options[i].data, 2);
-                TextLog_Print(log, "Sack: %u@", EXTRACT_16BITS(tmp));
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data && (p->tcp_options[i].len >= 4))
-                    memcpy(tmp, (p->tcp_options[i].data) + 2, 2);
-                TextLog_Print(log, "%u ", EXTRACT_16BITS(tmp));
-                break;
+            {
+                uint8_t val;
 
+                if (opts[i].data)
+                    val = opts[i].data[0];
+                else
+                    val = 0;
+
+                TextLog_Print(log, "WS: %u ", val);
+                break;
+            }
+            case TCPOPT_SACK:
+            {
+                uint16_t val1, val2;
+
+                if (opts[i].data && (opts[i].len >= 4))
+                {
+                    val1 = extract_16_bits(opts[i].data);
+                    val2 = extract_16_bits(opts[i].data + 2);
+                }
+                else if (opts[i].data && (opts[i].len >= 2))
+                {
+                    val1 = extract_16_bits(opts[i].data);
+                    val2 = 0;
+                }
+                else
+                {
+                    val1 = 0;
+                    val2 = 0;
+                }
+
+                TextLog_Print(log, "Sack: %u@%u", val1, val2);
+                break;
+            }
             case TCPOPT_SACKOK:
                 TextLog_Puts(log, "SackOK ");
                 break;
 
             case TCPOPT_ECHO:
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, p->tcp_options[i].data, 4);
-                TextLog_Print(log, "Echo: %u ", EXTRACT_32BITS(tmp));
-                break;
+            {
+                uint32_t val;
 
+                if (opts[i].data)
+                    val = extract_32_bits(opts[i].data);
+                else
+                    val = 0;
+
+                TextLog_Print(log, "Echo: %u ", val);
+                break;
+            }
             case TCPOPT_ECHOREPLY:
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, p->tcp_options[i].data, 4);
-                TextLog_Print(log, "Echo Rep: %u ", EXTRACT_32BITS(tmp));
-                break;
+            {
+                uint32_t val;
 
+                if (opts[i].data)
+                    val = extract_32_bits(opts[i].data);
+                else
+                    val = 0;
+
+                TextLog_Print(log, "Echo Rep: %u ", val);
+                break;
+            }
             case TCPOPT_TIMESTAMP:
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, p->tcp_options[i].data, 4);
-                TextLog_Print(log, "TS: %u ", EXTRACT_32BITS(tmp));
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, (p->tcp_options[i].data) + 4, 4);
-                TextLog_Print(log, "%u ", EXTRACT_32BITS(tmp));
-                break;
+            {
+                uint32_t val1, val2;
 
-            case TCPOPT_CC:
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, p->tcp_options[i].data, 4);
-                TextLog_Print(log, "CC %u ", EXTRACT_32BITS(tmp));
-                break;
-
-            case TCPOPT_CC_NEW:
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, p->tcp_options[i].data, 4);
-                TextLog_Print(log, "CCNEW: %u ", EXTRACT_32BITS(tmp));
-                break;
-
-            case TCPOPT_CC_ECHO:
-                memset((char*)tmp, 0, sizeof(tmp));
-                if (p->tcp_options[i].data)
-                    memcpy(tmp, p->tcp_options[i].data, 4);
-                TextLog_Print(log, "CCECHO: %u ", EXTRACT_32BITS(tmp));
-                break;
-
-            default:
-                if(p->tcp_options[i].len)
+                if (opts[i].data)
                 {
-                    TextLog_Print(log, "Opt %d (%d): ", p->tcp_options[i].code,
-                            (int) p->tcp_options[i].len);
+                    val1 = extract_32_bits(opts[i].data);
+                    val2 = extract_32_bits(opts[i].data + 4);
+                }
+                else
+                {
+                    val1 = 0;
+                    val2 = 0;
+                }
+                TextLog_Print(log, "TS: %u %u ", val1, val2);
+                break;
+            }
+            case TCPOPT_CC:
+            {
+                uint32_t val;
 
-                    for(j = 0; j < p->tcp_options[i].len; j++)
+                if (opts[i].data)
+                    val = extract_32_bits(opts[i].data);
+                else
+                    val = 0;
+
+                TextLog_Print(log, "CC %u ", val);
+                break;
+            }
+            case TCPOPT_CC_NEW:
+            {
+                uint32_t val;
+
+                if (opts[i].data)
+                    val = extract_32_bits(opts[i].data);
+                else
+                    val = 0;
+
+                TextLog_Print(log, "CCNEW: %u ", val);
+                break;
+            }
+            case TCPOPT_CC_ECHO:
+            {
+                uint32_t val;
+
+                if (opts[i].data)
+                    val = extract_32_bits(opts[i].data);
+                else
+                    val = 0;
+
+                TextLog_Print(log, "CCECHO: %u ", val);
+                break;
+            }
+            default:
+            {
+                const uint8_t opts_len = opts[i].len;
+
+                if(opts_len)
+                {
+                    TextLog_Print(log, "Opt %d (%d): ", opts[i].code,
+                            (int) opts_len);
+
+                    if (opts[i].data)
                     {
-                        if (p->tcp_options[i].data)
-                            TextLog_Print(log, "%02X", p->tcp_options[i].data[j]);
-                        else
-                            TextLog_Print(log, "%02X", 0);
+                        for(j = 0; (j +1) < opts_len; j += 2)
+                        {
+                            TextLog_Print(log, "%02X%02X ",  opts[i].data[j],
+                                                             opts[i].data[j+1]);
+                        }
 
-                        if ((j + 1) % 2 == 0)
-                            TextLog_Putc(log, ' ');
+                        if (j < opts_len)
+                            TextLog_Print(log, "%02x", opts[i].data[j]);
+                    }
+                    else
+                    {
+                        for(j = 0; (j +1) < opts_len; j += 2)
+                        {
+                            TextLog_Print(log, "%02X%02X ", 0, 0);
+                        }
+
+                        if (j < opts_len)
+                            TextLog_Print(log, "%02x", 0);
                     }
 
                     TextLog_Putc(log, ' ');
@@ -822,11 +898,12 @@ static void LogTcpOptions(TextLog*  log, Packet * p)
                     TextLog_Print(log, "Opt %d ", p->tcp_options[i].code);
                 }
                 break;
+            }
         }
     }
-
     TextLog_NewLine(log);
 }
+
 
 /*--------------------------------------------------------------------
  * Function: LogTCPHeader(TextLog* )
@@ -848,7 +925,7 @@ void LogTCPHeader(TextLog*  log, Packet * p)
         return;
     }
     /* print TCP flags */
-    CreateTCPFlagString(p, tcpFlags);
+    CreateTCPFlagString(p->tcph, tcpFlags);
     TextLog_Puts(log, tcpFlags); /* We don't care about the NULL */
 
     /* print other TCP info */
@@ -1806,11 +1883,6 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
  * ARP stuff cloned from log.c
  *--------------------------------------------------------------------
  */
-void LogArpHeader(TextLog*, Packet*)
-{
-// XXX-IPv6 "NOT YET IMPLEMENTED - printing ARP header"
-}
-
 
 #if 0
 // these must be converted to use TextLog 

@@ -27,7 +27,16 @@
 #include "framework/module.h"
 #include "main/thread.h"
 
-extern THREAD_LOCAL SimpleStats bstats;
+#define BIND_NAME "binder"
+#define BIND_HELP "configure processing based on CIDRs, ports, services, etc."
+
+struct BindStats
+{
+    PegCount packets;
+    PegCount verdicts[3];
+};
+
+extern THREAD_LOCAL BindStats bstats;
 extern THREAD_LOCAL ProfileStats bindPerfStats;
 struct Binding;
 

@@ -37,6 +37,7 @@ public:
 
     static void list_modules();
     static void dump_modules();
+    static void show_modules();
 
     static void show_module(const char*);
     static void show_configs(const char* = nullptr, bool exact = false);

@@ -35,10 +35,11 @@
 #include "protocols/protocol_ids.h"
 #include "codecs/decode_module.h"
 
+#define CD_GTP_NAME "gtp"
+#define CD_GTP_HELP "support for general-packet-radio-service tunnelling protocol"
+
 namespace
 {
-
-#define CD_GTP_NAME "gtp"
 
 static const RuleMap gtp_rules[] =
 {
@@ -50,7 +51,7 @@ static const RuleMap gtp_rules[] =
 class GtpModule : public DecodeModule
 {
 public:
-    GtpModule() : DecodeModule(CD_GTP_NAME) {};
+    GtpModule() : DecodeModule(CD_GTP_NAME, CD_GTP_HELP) {};
 
     const RuleMap* get_rules() const
     { return gtp_rules; }
@@ -321,6 +322,7 @@ static const CodecApi gtp_api =
     {
         PT_CODEC,
         CD_GTP_NAME,
+        CD_GTP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

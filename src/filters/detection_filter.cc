@@ -97,12 +97,15 @@ void detection_filter_init(DetectionFilterConfig* df_config)
     if ( !df_config->enabled )
         return;
 
-    if ( detection_filter_hash == NULL )
+    if ( !detection_filter_hash )
     {
         detection_filter_hash = sfthd_local_new(df_config->memcap);
 
-        if ( detection_filter_hash == NULL )
-            return;  // FIXIT-H this is fatal
+        if ( !detection_filter_hash )
+        {
+            FatalError("can't allocate detection filter cache\n");
+            return;
+        }
     }
 }
 

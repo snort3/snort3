@@ -24,8 +24,7 @@
 #include <sys/types.h>
 #include "snort_types.h"
 
-#include "ipv6_port.h"
-#include "sfip/sf_ipvar.h"
+struct sfip_var_t;
 
 sfip_var_t* sfip_var_from_string(const char*);
 

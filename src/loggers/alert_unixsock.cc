@@ -96,21 +96,26 @@ struct UnixSock
 
 static THREAD_LOCAL UnixSock us;
 
+static const char* s_name = "alert_unixsock";
+
 //-------------------------------------------------------------------------
 // alert_unixsock module
 //-------------------------------------------------------------------------
 
-static const Parameter unixsock_params[] =
+static const Parameter s_params[] =
 {
     // FIXIT-L add name param?
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event over unix socket";
+
 class UnixSockModule : public Module
 {
 public:
-    UnixSockModule() : Module("alert_unixsock", unixsock_params) { };
+    UnixSockModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*) { return false; };
 };
 
@@ -285,7 +290,8 @@ static LogApi unix_sock_api
 {
     {
         PT_LOGGER,
-        "alert_unixsock",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

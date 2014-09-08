@@ -41,7 +41,7 @@ static const char* s_name = "msg";
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter msg_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
       "message describing rule" },
@@ -49,10 +49,13 @@ static const Parameter msg_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option summarizing rule purpose output with events";
+
 class MsgModule : public Module
 {
 public:
-    MsgModule() : Module(s_name, msg_params) { };
+    MsgModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     std::string msg;
 };
@@ -92,6 +95,7 @@ static const IpsApi msg_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

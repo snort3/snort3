@@ -522,12 +522,14 @@ char *read_infile(char *fname)
     if(cc < 0)
     {
         ParseError("read %s: %s\n", fname, get_error(errno));
+        free(cp);
         return nullptr;
     }
 
     if(cc != buf.st_size)
     {
         ParseError("short read %s (%d != %d)\n", fname, cc, (int) buf.st_size);
+        free(cp);
         return nullptr;
     }
 
@@ -913,6 +915,7 @@ void SetChroot(char *directory, char **logstore)
     {
         ParseError("SetChroot: Can not chdir to \"%s\": %s\n", directory,
                    get_error(errno));
+        free(logdir);
         return;
     }
 
@@ -922,6 +925,7 @@ void SetChroot(char *directory, char **logstore)
     if(absdir == NULL)
     {
         ParseError("NULL Chroot found\n");
+        free(logdir);
         return;
     }
 
@@ -934,6 +938,7 @@ void SetChroot(char *directory, char **logstore)
     {
         ParseError("Can not chroot to \"%s\": absolute: %s: %s\n",
                    directory, absdir, get_error(errno));
+        free(logdir);
         return;
     }
 
@@ -945,6 +950,7 @@ void SetChroot(char *directory, char **logstore)
     {
         ParseError("Can not chdir to \"/\" after chroot: %s\n",
                    get_error(errno));
+        free(logdir);
         return;
     }
 
@@ -955,6 +961,7 @@ void SetChroot(char *directory, char **logstore)
     if(strncmp(absdir, logdir, strlen(absdir)))
     {
         ParseError("Absdir is not a subset of the logdir");
+        free(logdir);
         return;
     }
 
@@ -971,6 +978,7 @@ void SetChroot(char *directory, char **logstore)
                             logdir, *logstore));
 
     LogMessage("Chroot directory = %s\n", directory);
+    free(logdir);
 }
 
 

@@ -28,13 +28,14 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
-
-
-namespace
-{
+#include "protocols/packet.h"
 
 
 #define CD_IGMP_NAME "igmp"
+#define CD_IGMP_HELP "support for internet group management protocol"
+
+namespace
+{
 
 static const RuleMap igmp_rules[] =
 {
@@ -42,11 +43,10 @@ static const RuleMap igmp_rules[] =
     { 0, nullptr }
 };
 
-
 class IgmpModule : public DecodeModule
 {
 public:
-    IgmpModule() : DecodeModule(CD_IGMP_NAME) {}
+    IgmpModule() : DecodeModule(CD_IGMP_NAME, CD_IGMP_HELP) {}
 
     const RuleMap* get_rules() const
     { return igmp_rules; }
@@ -125,30 +125,23 @@ void IgmpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new IgmpModule;
-}
+{ return new IgmpModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new IgmpCodec();
-}
+{ return new IgmpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi igmp_api =
 {
     {
         PT_CODEC,
         CD_IGMP_NAME,
+        CD_IGMP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

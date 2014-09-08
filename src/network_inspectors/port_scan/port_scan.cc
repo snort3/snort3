@@ -57,7 +57,7 @@
 #include "main/analyzer.h"
 #include "protocols/packet.h"
 #include "managers/data_manager.h"
-#include "managers/packet_manager.h"
+#include "protocols/packet_manager.h"
 #include "event.h"
 #include "event_wrapper.h"
 #include "util.h"
@@ -70,6 +70,7 @@
 #include "framework/plug_data.h"
 #include "profiler.h"
 #include "detection/detect.h"
+#include "network_inspectors/port_scan/ipobj.h"
 
 #define DELIMITERS " \t\n"
 #define TOKEN_ARG_BEGIN "{"
@@ -866,7 +867,7 @@ bool PortScan::configure(SnortConfig* sc)
     // FIXIT-L use fixed base file name
     config->logfile = SnortStrdup("portscan.log");
 
-    global = (PsData*)DataManager::acquire(PS_GLOBAL, sc);
+    global = (PsData*)DataManager::acquire(PSG_NAME, sc);
     config->common = global->data;
     return true;
 }
@@ -959,7 +960,8 @@ static const DataApi sd_api =
 {
     {
         PT_DATA,
-        PS_GLOBAL,
+        PSG_NAME,
+        PSG_HELP,
         PDAPI_PLUGIN_V0,
         0,
         gmod_ctor,
@@ -993,7 +995,8 @@ static const InspectApi sp_api =
 {
     {
         PT_INSPECTOR,
-        PS_MODULE,
+        PS_NAME,
+        PS_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

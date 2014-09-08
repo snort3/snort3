@@ -54,11 +54,10 @@
 #include "filters/sfthreshold.h"
 #include "filters/sfthd.h"
 #include "snort.h"
-#include "asn1.h"
 #include "hash/sfghash.h"
 #include "sf_vartable.h"
-#include "ipv6_port.h"
 #include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
 #include "sflsq.h"
 #include "ppm.h"
 #include "filters/rate_filter.h"
@@ -201,7 +200,7 @@ int PortVarDefine(SnortConfig *sc, const char *name, const char *s)
     }
     else if( rstat > 0 )
     {
-        ParseMessage("PortVar '%s', already defined.", po->name);
+        ParseWarning("PortVar '%s', already defined.", po->name);
     }
 
 #if 0
@@ -524,7 +523,7 @@ VarEntry * VarDefine(
                     break;
 
                 case SFIP_DUPLICATE:
-                    ParseMessage("Var '%s' redefined.", name);
+                    ParseWarning("Var '%s' redefined.", name);
                     break;
 
                 case SFIP_CONFLICT:

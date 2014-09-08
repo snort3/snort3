@@ -42,6 +42,7 @@ using namespace std;
 #include "snort.h"
 #include "helpers/process.h"
 #include "main/snort_config.h"
+#include "main/snort_module.h"
 #include "main/shell.h"
 #include "main/analyzer.h"
 #include "framework/module.h"
@@ -168,7 +169,7 @@ void Request::read(int f)
 }
 
 // FIXIT-L supporting only simple strings for now
-// should support var args formats
+// could support var args formats
 void Request::respond(const char* s) const
 {
     if ( fd < 1 )
@@ -180,9 +181,12 @@ void Request::respond(const char* s) const
         return;  // FIXIT-L count errors?
 }
 
+// FIXIT-L would like to flush prompt w/o \n
 void Request::show_prompt() const
 {
-    respond(prompt);
+    string s = prompt;
+    s += "\n";
+    respond(s.c_str());
 }
 
 static Request request;
@@ -364,21 +368,17 @@ int main_quit(lua_State*)
 
 int main_help(lua_State*)
 {
-#if 0
-    // FIXIT-H this should be generic for all modules
-    RequestMap* map = cmd_set;
+    const Command* cmd = get_snort_module()->get_commands();
 
-    while ( map->name )
+    while ( cmd->name )
     {
-        string info = map->name;
+        string info = cmd->name;
         info += ": ";
-        info += map->help;
+        info += cmd->help;
         info += "\n";
         request.respond(info.c_str());
-        ++map;
+        ++cmd;
     }
-    return 0;
-#endif
     return 0;
 }
 
@@ -463,7 +463,7 @@ static int socket_init()
         return -2;
     }
 
-    // FIXIT-M does this disable time wait for us?
+    // FIXIT-M want to disable time wait
     int on = 1;
     setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
@@ -517,6 +517,18 @@ static int socket_conn()
     return 0;
 }
 
+static void shell(int fd)
+{
+    string rsp;
+    request.read(fd);
+    Shell::execute(request.get(), rsp);
+
+    if ( rsp.size() )
+        request.respond(rsp.c_str());
+
+    request.show_prompt();
+}
+
 static bool service_users()
 {
     fd_set inputs;
@@ -549,17 +561,13 @@ static bool service_users()
     {
         if ( FD_ISSET(STDIN_FILENO, &inputs) )
         {
-            request.read(STDIN_FILENO);
-            Shell::execute(request.get());
-            request.show_prompt();
+            shell(STDIN_FILENO);
             proc_stats.local_commands++;
             return true;
         }
         else if ( remote_control > 0 && FD_ISSET(remote_control, &inputs) )
         {
-            request.read(remote_control);
-            Shell::execute(request.get());
-            request.show_prompt();
+            shell(remote_control);
             proc_stats.remote_commands++;
             return true;
         }
@@ -655,7 +663,7 @@ static bool set_mode()
 
 static inline bool dont_stop()
 {
-    return ( Trough_Next() || snort_conf->run_flags & RUN_FLAG__SHELL );
+    return ( Trough_Next() || snort_conf->run_flags & RUN_FLAG__PAUSE );
 }
 
 static void main_loop()
@@ -671,12 +679,15 @@ static void main_loop()
         {
             Pig& pig = pigs[idx];
 
-            if ( pig.analyzer && pig.analyzer->is_done() )
+            if ( pig.analyzer )
             {
-                pig.stop(idx);
-                --swine;
+                if ( pig.analyzer->is_done() )
+                {
+                    pig.stop(idx);
+                    --swine;
+                }
             }
-            if ( !pig.analyzer && Trough_Next() )
+            else if ( Trough_Next() )
             {
                 Swapper* swapper = new Swapper(snort_conf, SFAT_GetConfig());
                 pig.start(idx, Trough_First(), swapper);
@@ -700,7 +711,7 @@ static void snort_main()
 
     main_loop();
 
-    for ( unsigned idx = 0; pigs && idx < max_pigs; ++idx )
+    for ( unsigned idx = 0; idx < max_pigs; ++idx )
     {
         Pig& pig = pigs[idx];
 

@@ -35,10 +35,10 @@
 #include "util.h"
 #include "log.h"
 #include "snort.h"
+#include "event.h"
 
 #include "sfxhash.h"
-
-#include "ipv6_port.h"
+#include "sfip/sfip_t.h"
 
 /*  D E F I N E S  **************************************************/
 #define MAX_TAG_NODES   256

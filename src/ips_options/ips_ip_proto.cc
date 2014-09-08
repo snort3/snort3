@@ -284,7 +284,7 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter ip_proto_params[] =
+static const Parameter s_params[] =
 {
     { "~proto", Parameter::PT_STRING, nullptr, nullptr, 
       "[!|>|<] name or number" },
@@ -292,10 +292,13 @@ static const Parameter ip_proto_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check the IP protocol number";
+
 class IpProtoModule : public Module
 {
 public:
-    IpProtoModule() : Module(s_name, ip_proto_params) { };
+    IpProtoModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -353,6 +356,7 @@ static const IpsApi ip_proto_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -39,11 +39,13 @@
 
 #include <stdint.h>
 #include "log/text_log.h"
+#include "main/snort_types.h"
 
 struct Packet;
+struct Event;
 
-void LogPriorityData(TextLog*, const struct _Event*, bool doNewLine);
-void LogXrefs(TextLog*, const struct _Event*, bool doNewLine);
+void LogPriorityData(TextLog*, const Event*, bool doNewLine);
+void LogXrefs(TextLog*, const Event*, bool doNewLine);
 
 void LogIPPkt(TextLog*, int type, Packet*);
 void LogNetData (TextLog*, const uint8_t* data, const int len, Packet*);
@@ -52,11 +54,11 @@ void LogTimeStamp(TextLog*, Packet*);
 void LogTrHeader(TextLog*, Packet*);
 void Log2ndHeader(TextLog*, Packet*);
 void LogIpAddrs(TextLog*, Packet*);
+SO_PUBLIC void LogIpOptions(TextLog*, const Packet* const);
 void LogIPHeader(TextLog*, Packet*);
 void LogTCPHeader(TextLog*, Packet*);
+SO_PUBLIC void LogTcpOptions(TextLog*,  const Packet* const);
 void LogUDPHeader(TextLog*, Packet*);
 void LogICMPHeader(TextLog*, Packet*);
-void LogArpHeader(TextLog*, Packet*);
 
 #endif
-

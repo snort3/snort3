@@ -28,19 +28,20 @@
 
 //#include "prot_ipv6.h"
 
+#include "framework/codec.h"
+#include "packet_io/active.h"
 #include "snort_types.h"
 #include "protocols/packet.h"
 #include "snort.h"
 #include "main/snort_config.h"
-#include "packet_io/active.h"
-#include "protocols/ipv6.h"
 #include "protocols/teredo.h"
 #include "protocols/protocol_ids.h"
 
+#define CD_TEREDO_NAME "teredo"
+#define CD_TEREDO_HELP "support for teredo"
+
 namespace
 {
-
-#define CD_TEREDO_NAME "teredo"
 
 class TeredoCodec : public Codec
 {
@@ -117,20 +118,17 @@ bool TeredoCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new TeredoCodec();
-}
+{ return new TeredoCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi teredo_api =
 {
     {
         PT_CODEC,
         CD_TEREDO_NAME,
+        CD_TEREDO_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,
@@ -154,8 +152,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* cd_teredo = &teredo_api.base;
 #endif
-
-
-
-
-

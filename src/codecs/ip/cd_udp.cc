@@ -23,14 +23,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
 #include <string.h>
-#ifdef HAVE_DUMBNET_H
-#include <dumbnet.h>
-#else
-#include <dnet.h>
-#endif
 
+#include "utils/dnet_header.h"
 #include "codecs/decode_module.h"
 #include "protocols/udp.h"
 #include "protocols/teredo.h"
@@ -39,6 +34,7 @@
 #include "protocols/ipv4.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/ip/checksum.h"
+#include "log/text_log.h"
 
 #include "framework/codec.h"
 #include "packet_io/active.h"
@@ -46,12 +42,14 @@
 #include "codecs/sf_protocols.h"
 #include "snort_config.h"
 #include "parser/config_file.h"
+#include "codecs/ip/ip_util.h"
+
+#define CD_UDP_NAME "udp"
+#define CD_UDP_HELP "support for user datagram protocol"
 
 namespace
 {
 
-
-#define CD_UDP_NAME "udp"
 static const Parameter udp_params[] =
 {
     { "deep_teredo_inspection", Parameter::PT_BOOL, nullptr, "false",
@@ -84,7 +82,7 @@ static const RuleMap udp_rules[] =
 class UdpModule : public DecodeModule
 {
 public:
-    UdpModule() : DecodeModule(CD_UDP_NAME, udp_params) {}
+    UdpModule() : DecodeModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) {}
 
     const RuleMap* get_rules() const
     { return udp_rules; }
@@ -129,6 +127,8 @@ public:
     virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const);
     
 };
 
@@ -180,7 +180,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         uint16_t ip_len = ntohs(p->ip_api.len());
         /* subtract the distance from udp header to 1st ip6 extension */
         /* This gives the length of the UDP "payload", when fragmented */
-        uhlen = ip_len - ((u_char *)udph - (u_char *)p->ip6_extensions[0].data);
+        uhlen = ip_len - ((u_char *)udph - (u_char *)p->ip_api.ip_data());
     }
     else
     {
@@ -283,7 +283,13 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
             p->error_flags |= PKT_ERR_CKSUM_UDP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad UDP Checksum\n"););
-            codec_events::exec_udp_chksm_drop(p);
+
+            if( ScInlineMode() && ScUdpChecksumDrops() )
+            {
+                DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
+                    "Dropping bad packet (UDP checksum)\n"););
+                Active_DropPacket();
+            }
         }
         else
         {
@@ -349,6 +355,15 @@ static inline void PopUdp (Packet* p)
         p->dsize = p->ip_api.pay_len();
 }
 
+void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt, const Packet* const)
+{
+    const udp::UDPHdr* udph = reinterpret_cast<const udp::UDPHdr*>(raw_pkt);
+
+    TextLog_Print(text_log, "SrcPort:%d DstPort:%d Len:%d",
+            ntohs(udph->uh_sport), ntohs(udph->uh_dport),
+            ntohs(udph->uh_len) - udp::UDP_HEADER_LEN);
+}
+
 /******************************************************************
  ******************** E N C O D E R  ******************************
  ******************************************************************/
@@ -381,7 +396,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         ho = reinterpret_cast<udp::UDPHdr*>(out->base);
 
-        if ( forward(enc) )
+        if ( forward(enc->flags) )
         {
             ho->uh_sport = hi->uh_sport;
             ho->uh_dport = hi->uh_dport;
@@ -438,7 +453,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         enc->proto = IPPROTO_ID_ICMPV4;
         ho->type = icmp::IcmpType::DEST_UNREACH;
-        ho->code = get_icmp4_code(enc->type);
+        ho->code = ip_util::get_icmp4_code(enc->type);
         ho->cksum = 0;
         ho->unused = 0;
 
@@ -480,7 +495,7 @@ bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
 
         ho = reinterpret_cast<IcmpHdr*>(out->base);
         ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
-        ho->code = static_cast<uint8_t>(get_icmp6_code(enc->type));
+        ho->code = static_cast<uint8_t>(ip_util::get_icmp6_code(enc->type));
         ho->cksum = 0;
         ho->unused = 0;
 
@@ -578,6 +593,7 @@ static const CodecApi udp_api =
     {
         PT_CODEC,
         CD_UDP_NAME,
+        CD_UDP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

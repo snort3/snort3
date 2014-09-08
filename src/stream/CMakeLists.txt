@@ -32,4 +32,3 @@ target_link_libraries( stream
 install (FILES ${STREAM_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/stream"
 )
-

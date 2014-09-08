@@ -46,6 +46,8 @@
 
 static THREAD_LOCAL TextLog* csv_log;
 
+static const char* s_name = "alert_csv";
+
 using namespace std;
 
 //-------------------------------------------------------------------------
@@ -64,7 +66,7 @@ static const char* csv_range =
 static const char* csv_deflt =
     "timestamp gid sid rev src_addr src_port dst_addr dst_port";
 
-static const Parameter csv_params[] =
+static const Parameter s_params[] =
 {
     // FIXIT-M provide PT_FILE and PT_PATH and enforce no
     // path chars in file (outputs file must be in instance dir)
@@ -84,10 +86,13 @@ static const Parameter csv_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event in csv format";
+
 class CsvModule : public Module
 {
 public:
-    CsvModule() : Module("alert_csv", csv_params) { };
+    CsvModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -383,7 +388,7 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         {
             if (p->tcph != NULL)
             {
-                CreateTCPFlagString(p, tcpFlags);
+                CreateTCPFlagString(p->tcph, tcpFlags);
                 TextLog_Print(csv_log, "%s", tcpFlags);
             }
         }
@@ -416,7 +421,8 @@ static LogApi csv_api
 {
     {
         PT_LOGGER,
-        "alert_csv",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

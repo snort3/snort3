@@ -30,11 +30,15 @@
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/sf_protocols.h"
+#include "protocols/ipv6.h"
+#include "protocols/packet.h"
+#include "codecs/ip/ip_util.h"
+
+#define CD_AUTH_NAME "auth"
+#define CD_AUTH_HELP "support for IP authentication header"
 
 namespace
 {
-
-#define CD_AUTH_NAME "auth"
 
 static const RuleMap auth_rules[] =
 {
@@ -46,7 +50,7 @@ static const RuleMap auth_rules[] =
 class AuthModule : public DecodeModule
 {
 public:
-    AuthModule() : DecodeModule(CD_AUTH_NAME) {}
+    AuthModule() : DecodeModule(CD_AUTH_NAME, CD_AUTH_HELP) {}
 
     const RuleMap* get_rules() const
     { return auth_rules; }
@@ -56,7 +60,6 @@ public:
 //-------------------------------------------------------------------------
 // auth module
 //-------------------------------------------------------------------------
-
 
 class AuthCodec : public Codec
 {
@@ -77,7 +80,7 @@ public:
 
 void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_ID_AH);
+    v.push_back(IPPROTO_ID_AUTH);
 }
 
 bool AuthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
@@ -101,6 +104,9 @@ bool AuthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     next_prot_id = ah->ip6e_nxt;
+
+    if (p->ip_api.is_ip6())
+        ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_AUTH, next_prot_id);
     return true;
 }
 
@@ -111,30 +117,23 @@ bool AuthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new AuthModule;
-}
+{ return new AuthModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new AuthCodec();
-}
+{ return new AuthCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ah_api =
 {
     {
         PT_CODEC,
         CD_AUTH_NAME,
+        CD_AUTH_HELP,
         CDAPI_PLUGIN_V0, 
         0,
         mod_ctor,

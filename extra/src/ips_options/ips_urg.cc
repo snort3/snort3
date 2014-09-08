@@ -34,43 +34,19 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
-//#include "framework/range.h"
+#include "framework/range.h"
 #include "hash/sfhashfcn.h"
 #include "protocols/packet.h"
 #include "time/profiler.h"
 
 static const char* s_name = "urg";
+static const char* s_help = "detection for TCP urgent pointer";
 
 // FIXIT-H profiling is desirable but must be refactored to
 // avoid dependence on snort_config.h which snowballs
 //#undef PERF_PROFILING
 
 static THREAD_LOCAL ProfileStats tcpUrgPerfStats;
-
-//-------------------------------------------------------------------------
-// range check
-//-------------------------------------------------------------------------
-// FIXIT-L this is a stub until we can use range.{h,cc}
-
-struct RangeCheck
-{
-    unsigned op, min, max;
-
-    RangeCheck()
-    { init(); };
-
-    void init()
-    { op = min = max = 0; };
-
-    bool operator==(const RangeCheck& rhs) const
-    { return ( op == rhs.op && min == rhs.min && max == rhs.max ); };
-
-    bool eval(unsigned up)
-    { return up == min; };
-
-    bool parse(const char* s)
-    { min = atoi(s); return true; };
-};
 
 //-------------------------------------------------------------------------
 // option 
@@ -132,7 +108,7 @@ int TcpUrgOption::eval(Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter urg_params[] =
+static const Parameter s_params[] =
 {
     { "*range", Parameter::PT_STRING, nullptr, nullptr,
       "check if urgent offset is min<>max | <max | >min" },
@@ -143,7 +119,7 @@ static const Parameter urg_params[] =
 class UrgModule : public Module
 {
 public:
-    UrgModule() : Module(s_name, urg_params) { };
+    UrgModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -198,6 +174,7 @@ static const IpsApi urg_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

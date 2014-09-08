@@ -28,15 +28,16 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 #include "protocols/ipv6.h"
-#include "codecs/ip/ipv6_util.h"
+#include "codecs/ip/ip_util.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
 #include "detection/fpdetect.h"
 
+#define CD_HOPOPTS_NAME "ipv6_hop_opts"
+#define CD_HOPOPTS_HELP "support for IPv6 hop options"
+
 namespace
 {
-
-#define CD_HOPOPTS_NAME "ipv6_hop_opts"
 
 class Ipv6HopOptsCodec : public Codec
 {
@@ -87,7 +88,6 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_HOPOPTS);
-    ipv6_util::CheckIPv6ExtensionOrder(p);
 
     lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
     next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
@@ -98,13 +98,12 @@ bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    p->ip6_extensions[p->ip6_extension_count].type = IPPROTO_ID_HOPOPTS;
-    p->ip6_extensions[p->ip6_extension_count].data = raw_pkt;
     p->ip6_extension_count++;
 
-
-    if ( ipv6_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
+    ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_HOPOPTS, next_prot_id);
+    if ( ip_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
         return true;
+
     return false;
 }
 
@@ -141,6 +140,7 @@ static const CodecApi ipv6_hopopts_api =
     {
         PT_CODEC,
         CD_HOPOPTS_NAME,
+        CD_HOPOPTS_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

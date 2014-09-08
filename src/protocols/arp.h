@@ -44,7 +44,11 @@ struct EtherARP
 {
     ARPHdr ea_hdr;      /* fixed-size header */
     uint8_t arp_sha[6];    /* sender hardware address */
-    uint8_t arp_spa[4];    /* sender protocol address */
+    union
+    {
+        uint8_t arp_spa[4];    /* sender protocol address */
+        uint32_t arp_spa32;
+    };
     uint8_t arp_tha[6];    /* target hardware address */
     uint8_t arp_tpa[4];    /* target protocol address */
 };

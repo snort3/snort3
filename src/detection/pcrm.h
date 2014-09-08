@@ -121,7 +121,7 @@ typedef struct {
 
 
 
-typedef struct {
+struct PORT_RULE_MAP{
 
   int        prmNumDstRules;
   int        prmNumSrcRules;
@@ -135,7 +135,7 @@ typedef struct {
   /* char       prmConflicts[MAX_PORTS]; */
   PORT_GROUP *prmGeneric;
 
-} PORT_RULE_MAP ;
+};
 
 
 typedef struct {

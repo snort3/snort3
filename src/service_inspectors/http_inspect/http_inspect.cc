@@ -389,6 +389,7 @@ static const DataApi hg_api =
     {
         PT_DATA,
         GLOBAL_KEYWORD,
+        GLOBAL_HELP,
         MODAPI_PLUGIN_V0,
         0,
         hg_mod_ctor,
@@ -453,6 +454,7 @@ static const InspectApi hs_api =
     {
         PT_INSPECTOR,
         SERVER_KEYWORD,
+        SERVER_HELP,
         INSAPI_PLUGIN_V0,
         0,
         hs_mod_ctor,

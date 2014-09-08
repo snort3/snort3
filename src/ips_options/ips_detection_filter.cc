@@ -39,6 +39,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "filters/detection_filter.h"
+#include "filters/sfthd.h"
 
 static const char* s_name = "detection_filter";
 
@@ -46,7 +47,7 @@ static const char* s_name = "detection_filter";
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter detection_filter_params[] =
+static const Parameter s_params[] =
 {
     { "track", Parameter::PT_ENUM, "by_src | by_dst", nullptr,
       "track hits by source or destination IP address" },
@@ -60,10 +61,13 @@ static const Parameter detection_filter_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to require multiple hits before a rule generates an event";
+
 class DetectionFilterModule : public Module
 {
 public:
-    DetectionFilterModule() : Module(s_name, detection_filter_params) { };
+    DetectionFilterModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 
@@ -122,6 +126,7 @@ static const IpsApi detection_filter_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,
@@ -138,13 +143,4 @@ static const IpsApi detection_filter_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-{
-    &detection_filter_api.base,
-    nullptr
-};
-#else
 const BaseApi* ips_detection_filter = &detection_filter_api.base;
-#endif
-

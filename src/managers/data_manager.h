@@ -21,6 +21,7 @@
 #ifndef DATA_MANAGER_H
 #define DATA_MANAGER_H
 
+#include "main/snort_types.h"
 #include "framework/plug_data.h"
 
 struct SnortConfig;
@@ -34,8 +35,8 @@ public:
 
     static void instantiate(const DataApi*, Module*, SnortConfig*);
 
-    static PlugData* acquire(const char* key, SnortConfig*);
-    static void release(PlugData*);
+    SO_PUBLIC static PlugData* acquire(const char* key, SnortConfig*);
+    SO_PUBLIC static void release(PlugData*);
 };
 
 #endif

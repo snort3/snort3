@@ -17,6 +17,7 @@ module.h \
 mpse.h \
 parameter.h \
 plug_data.h \
+range.h \
 so_rule.h \
 value.h
 
@@ -27,6 +28,7 @@ ips_option.cc \
 parameter.cc \
 module.cc \
 mpse.cc \
+range.cc \
 value.cc
 
 AM_CXXFLAGS = @AM_CXXFLAGS@

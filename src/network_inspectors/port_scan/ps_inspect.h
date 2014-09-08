@@ -27,12 +27,16 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "ipv6_port.h"
-#include "ipobj.h"
 #include "framework/inspector.h"
 #include "framework/plug_data.h"
-#include "ps_detect.h"
 
+//#include "ipobj.h"
+//#include "ps_detect.h"
+
+struct sfip_t;
+struct PS_PROTO;
+struct PS_TRACKER;
+struct PS_PKT;
 typedef PlugDataType<PsCommon> PsData;
 
 class PortScan : public Inspector
