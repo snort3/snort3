@@ -1,260 +1,274 @@
-change:  Attribute_table: <FRAG_POLICY>bsd-right</FRAG_POLICY> ==> hosts.frag_policy = bsd_right
-change:  Attribute_table: <STREAM_POLICY>grannysmith</STREAM_POLICY> ==> hosts.tcp_policy = macos
-change:  Attribute_table: <STREAM_POLICY>hpux11</STREAM_POLICY> ==> hosts.tcp_policy = hpux
-change:  Attribute_table: <STREAM_POLICY>win2003</STREAM_POLICY> ==> hosts.tcp_policy = win-2003
-change:  Attribute_table: <STREAM_POLICY>win2k3</STREAM_POLICY> ==> hosts.tcp_policy = win-2003
-change:  Attribute_table: STREAM_POLICY ==> hosts: tcp_policy
-change:  ac ==> ac_full_q
-change:  ac-banded ==> ac_banded
-change:  ac-bnfa ==> ac_bnfa_q
-change:  ac-bnfa-nq ==> ac_bnfa
-change:  ac-bnfa-q ==> ac_bnfa_q
-change:  ac-nq ==> ac_full
-change:  ac-q ==> ac_full_q
-change:  ac-sparsebands ==> ac_sparse_bands
-change:  ac-split ==> ac_full_q
-change:  ac-split ==> split_any_any
-change:  ac-std ==> ac_std
-change:  accumulate ==> reset = false
-change:  acs ==> ac_sparse
-change:  addressspace_agnostic  ==> address_space_agnostic
-change:  alert_unified2 ==> unified2
-change:  alt_max_param_len ==> cmd_validity
-change:  autogenerate_preprocessor_decoder_rules  ==> enable_builtin_rules
-change:  bind_to ==> bindings
-change:  bleedover-port-limit ==> bleedover_port_limit
-change:  bleedover-warnings-enabled ==> bleedover_warnings_enabled
-change:  block ==> base
-change:  checksum_mode  ==> checksum_eval
-change:  config alertfile: ==> alert_fast.file
-change:  config alertfile: ==> alert_full.file
-change:  config file: file_block_timeout ==> block_timeout
-change:  config file: file_lookup_timeout ==> lookup_timeout
-change:  config file: file_signature_depth ==> signature_depth
-change:  config file: file_type_depth ==> type_depth
-change:  config file: signature ==> enable_signature
-change:  config file: type_id ==> enable_type
-change:  config mpls_payload_type: ethernet ==> mpls_payload_type = eth
-change:  config mpls_payload_type: ipv4 ==> mpls_payload_type = ip4
-change:  config mpls_payload_type: ipv6 ==> mpls_payload_type = ip6
-change:  daq  ==> type
-change:  daq_dir  ==> dir
-change:  daq_mode  ==> mode
-change:  daq_var  ==> var
-change:  data_chan ==> ignore_data_chan
-change:  debug-pkts ==> debug_pkts
-change:  debug-print-fast-pattern ==> debug_print_fast_pattern
-change:  debug-print-nocontent-rule-tests ==> debug_print_nocontent_rule_tests
-change:  debug-print-rule-group-build-details ==> debug_print_rule_group_build_details
-change:  debug-print-rule-groups-compiled ==> debug_print_rule_groups_compiled
-change:  debug-print-rule-groups-uncompiled ==> debug_print_rule_groups_uncompiled
-change:  detection_filter  ==> detection_filter_memcap
-change:  dgmlen ==> dgm_len
-change:  disable_inline_init_failopen  ==> enable_inline_init_failopen
-change:  disabled ==> enable
-change:  dont_reassemble_async ==> reassemble_async
-change:  dstport ==> dst_port
-change:  dynamicdetection ==> plugin_path
-change:  dynamicengine ==> plugin_path
-change:  dynamicpreprocessor ==> plugin_path
-change:  dynamicsidechannel ==> plugin_path
-change:  enable-single-rule-group ==> enable_single_rule_group
-change:  enable_cookie ==> enable_cookies
-change:  enable_deep_teredo_inspection  ==> deep_teredo_inspection
-change:  enabled ==> enable
-change:  ethdst ==> eth_dst
-change:  ethlen ==> eth_len
-change:  ethsrc ==> eth_src
-change:  event_filter  ==> event_filter_memcap
-change:  fastpath-expensive-packets ==> fastpath_expensive_packets
-change:  filename ==> file
-change:  flow-file ==> flow_file = true
-change:  flow-ip ==> flow_ip
-change:  flow-ip-file ==> flow_ip_file = true
-change:  flow-ip-memcap ==> flow_ip_memcap
-change:  flow-ports ==> flow_ports
-change:  flow_depth ==> server_flow_depth
-change:  footprint ==> use_static_footprint_sizes
-change:  gen_id ==> gid
-change:  icmpcode ==> icmp_code
-change:  icmpid ==> icmp_id
-change:  icmpseq ==> icmp_seq
-change:  icmptype ==> icmp_type
-change:  intel-cpm ==> intel_cpm
-change:  iplen ==> ip_len
-change:  ips_option: threshold ==> event_filter
-change:  log_alert ==> level = alert
-change:  log_auth ==> facility = auth
-change:  log_authpriv ==> facility = authpriv
-change:  log_cons ==> options = cons
-change:  log_crit ==> level = crit
-change:  log_daemon ==> facility = daemon
-change:  log_debug ==> level = debug
-change:  log_emerg ==> level = emerg
-change:  log_err ==> level = err
-change:  log_info ==> level = info
-change:  log_local0 ==> facility = local0
-change:  log_local1 ==> facility = local1
-change:  log_local2 ==> facility = local2
-change:  log_local3 ==> facility = local3
-change:  log_local4 ==> facility = local4
-change:  log_local5 ==> facility = local5
-change:  log_local6 ==> facility = local6
-change:  log_local7 ==> facility = local7
-change:  log_ndelay ==> options = ndelay
-change:  log_notice ==> level = notice
-change:  log_perror ==> options = perror
-change:  log_pid ==> options = pid
-change:  log_unified2 ==> unified2
-change:  log_user ==> facility = user
-change:  log_warning ==> level = warning
-change:  lowmem ==> lowmem_q
-change:  lowmem-nq ==> lowmem
-change:  lowmem-q ==> lowmem_q
-change:  max-pattern-len ==> max_pattern_len
-change:  max-pkt-time ==> max_pkt_time
-change:  max-rule-time ==> max_rule_time
-change:  max_active_responses ==> max_responses
-change:  max_attribute_hosts  ==> max_hosts
-change:  max_attribute_services_per_host  ==> max_services_per_host
-change:  max_icmp ==> max_sessions
-change:  max_ip ==> max_sessions
-change:  max_queued_bytes ==> queue_limit.max_bytes
-change:  max_queued_segs ==> queue_limit.max_segments
-change:  max_tcp ==> max_sessions
-change:  max_udp ==> max_sessions
-change:  min_fragment_length ==> min_frag_length
-change:  min_response_seconds ==> min_interval
-change:  non_rfc_char ==> non_rfc_chars
-change:  nopcre  ==> pcre_enable
-change:  overlap_limit ==> max_overlaps
-change:  pad ==> base
-change:  paf_max [0:63780] ==> paf_max [1460:63780]
-change:  pkt-log  ==> pkt_log
-change:  pkt_count  ==> limit
-change:  pktcnt ==> packets
-change:  policy bsd-right ==> policy = bsd_right
-change:  policy_mode  ==> mode
-change:  ports ==> bindings
-change:  ports ==> gtp_ports
-change:  post_depth [-1:65495] ==> post_depth [-1:65535]
-change:  preprocessor frag3_engine: timeout 0 ==> session_timeout 256
-change:  preprocessor normalize_icmp4 ==> icmp4 == <bool>
-change:  preprocessor normalize_icmp6 ==> icmp6 == <bool>
-change:  preprocessor normalize_ip6 ==> ip6 == <bool>
-change:  print ==> count
-change:  proto ==> protos
-change:  prune_log_max ==> histogram
-change:  rate_filter  ==> rate_filter_memcap
-change:  react  ==> page
-change:  req_pay ==> base
-change:  req_urg ==> base
-change:  req_urp ==> base
-change:  rsv ==> base
-change:  rule-log ==> rule_log
-change:  scan_type ==> scan_types
-change:  search-method ==> search_method
-change:  search-optimize ==> search_optimize
-change:  sid_id ==> sid
-change:  sig_generator ==> gid
-change:  sig_id ==> sid
-change:  sig_rev ==> rev
-change:  snortfile ==> file = true
-change:  sort avg_ticks_per_nomatch ==> sort = avg_ticks_per_no_match
-change:  split-any-any ==> split_any_any
-change:  srcport ==> src_port
-change:  stream5_tcp: policy grannysmith ==> stream_tcp.policy = macos
-change:  stream5_tcp: policy hpux11 ==> stream_tcp.policy = hpux
-change:  stream5_tcp: policy win2003 ==> stream_tcp.policy = win-2003
-change:  stream5_tcp: policy win2k3 ==> stream_tcp.policy = win-2003
-change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = any
-change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = client
-change:  stream_tcp: ports ==> binder.when.ports; binder.when.role = server
-change:  stream_tcp: protocol ==> binder.when.proto; binder.when.role = any
-change:  stream_tcp: protocol ==> binder.when.proto; binder.when.role = client
-change:  stream_tcp: protocol ==> binder.when.proto; binder.when.role = server
-change:  suspend-expensive-rules ==> suspend_expensive_rules
-change:  suspend-timeout ==> suspend_timeout
-change:  tcp_cache_nominal_timeout ==> pruning_timeout
-change:  tcp_cache_pruning_timeout ==> idle_timeout
-change:  tcpack ==> tcp_ack
-change:  tcpflags ==> tcp_flags
-change:  tcplen ==> tcp_len
-change:  tcpseq ==> tcp_seq
-change:  tcpwindow ==> tcp_win
-change:  threshold  ==> event_filter_memcap
-change:  time ==> seconds
-change:  timeout ==> session_timeout
-change:  trim_mss ==> trim
-change:  trim_rst ==> trim
-change:  trim_syn ==> trim
-change:  trim_win ==> trim
-change:  udp_cache_nominal_timeout ==> idle_timeout
-change:  udp_cache_pruning_timeout ==> pruning_timeout
-change:  unified2 ==> unified2
-deleted: Attribute_table: <FRAG_POLICY>hpux</FRAG_POLICY>
-deleted: Attribute_table: <FRAG_POLICY>irix</FRAG_POLICY>
-deleted: Attribute_table: <FRAG_POLICY>old-linux</FRAG_POLICY>
-deleted: Attribute_table: <FRAG_POLICY>unkown</FRAG_POLICY>
-deleted: Attribute_table: <STREAM_POLICY>noack</STREAM_POLICY>
-deleted: Attribute_table: <STREAM_POLICY>unkown</STREAM_POLICY>
-deleted: action
-deleted: alert_fragments
-deleted: atexitonly
-deleted: atexitonly: base-stats
-deleted: atexitonly: events-stats
-deleted: atexitonly: flow-ip-stats
-deleted: atexitonly: flow-stats
-deleted: block
-deleted: check_session_hijacking
-deleted: config cs_dir
-deleted: config disable_attribute_reload_thread
-deleted: config disable_decode_alerts
-deleted: config disable_decode_drops
-deleted: config disable_ipopt_alerts
-deleted: config disable_ipopt_drops
-deleted: config disable_tcpopt_alerts
-deleted: config disable_tcpopt_drops
-deleted: config disable_tcpopt_experimental_alerts
-deleted: config disable_tcpopt_experimental_drops
-deleted: config disable_tcpopt_obsolete_alerts
-deleted: config disable_tcpopt_obsolete_drops
-deleted: config disable_tcpopt_ttcp_alerts
-deleted: config disable_ttcp_alerts
-deleted: config disable_ttcp_drops
-deleted: config dump_dynamic_rules_path
-deleted: config enable_decode_drops
-deleted: config enable_decode_oversized_alerts
-deleted: config enable_decode_oversized_drops
-deleted: config enable_ipopt_drops
-deleted: config enable_tcpopt_drops
-deleted: config enable_tcpopt_experimental_drops
-deleted: config enable_tcpopt_obsolete_drops
-deleted: config enable_tcpopt_ttcp_drops
-deleted: config enable_ttcp_drops
-deleted: config flexresp2_attempts
-deleted: config flexresp2_interface
-deleted: config flexresp2_memcap
-deleted: config flexresp2_rows
-deleted: config include_vlan_in_alerts
-deleted: config interface
-deleted: config layer2resets
-deleted: config policy_version
-deleted: config so_rule_memcap
-deleted: default
-deleted: detect_ack_scans
-deleted: detect_anomalies
-deleted: disabled
-deleted: dont_store_large_packets
-deleted: flush_on_alert
-deleted: logfile
-deleted: mwm
-deleted: no_alert_incomplete
-deleted: no_alert_large_fragments
-deleted: no_alert_multiple_requests
-deleted: no_alerts
-deleted: no_midstream_drop_alerts
-deleted: stream5_tcp: policy noack
-deleted: stream5_tcp: policy unkown
-deleted: unicast
-deleted: warn
+change -> alertfile: 'config alertfile:' ==> 'alert_fast.file'
+change -> alertfile: 'config alertfile:' ==> 'alert_full.file'
+change -> attribute_table: '<FRAG_POLICY>bsd-right</FRAG_POLICY>' ==> 'hosts.frag_policy = bsd_right'
+change -> attribute_table: '<STREAM_POLICY>grannysmith</STREAM_POLICY>' ==> 'hosts.tcp_policy = macos'
+change -> attribute_table: '<STREAM_POLICY>hpux11</STREAM_POLICY>' ==> 'hosts.tcp_policy = hpux'
+change -> attribute_table: '<STREAM_POLICY>win2003</STREAM_POLICY>' ==> 'hosts.tcp_policy = win-2003'
+change -> attribute_table: '<STREAM_POLICY>win2k3</STREAM_POLICY>' ==> 'hosts.tcp_policy = win-2003'
+change -> attribute_table: 'STREAM_POLICY' ==> 'hosts: tcp_policy'
+change -> attribute_table: 'filename <file_name>' ==> 'hosts[]'
+change -> config 'addressspace_agnostic'  ==> 'packets.address_space_agnostic'
+change -> config 'autogenerate_preprocessor_decoder_rules'  ==> 'ips.enable_builtin_rules'
+change -> config 'checksum_mode'  ==> 'network.checksum_eval'
+change -> config 'daq'  ==> 'daq.type'
+change -> config 'daq_dir'  ==> 'daq.dir'
+change -> config 'daq_mode'  ==> 'daq.mode'
+change -> config 'daq_var'  ==> 'daq.var'
+change -> config 'detection_filter'  ==> 'alerts.detection_filter_memcap'
+change -> config 'disable_inline_init_failopen'  ==> 'packets.enable_inline_init_failopen'
+change -> config 'enable_deep_teredo_inspection'  ==> 'udp.deep_teredo_inspection'
+change -> config 'event_filter'  ==> 'alerts.event_filter_memcap'
+change -> config 'max_attribute_hosts'  ==> 'attribute_table.max_hosts'
+change -> config 'max_attribute_services_per_host'  ==> 'attribute_table.max_services_per_host'
+change -> config 'nopcre'  ==> 'detection.pcre_enable'
+change -> config 'pkt_count'  ==> 'packets.limit'
+change -> config 'policy_mode'  ==> 'ips.mode'
+change -> config 'rate_filter'  ==> 'alerts.rate_filter_memcap'
+change -> config 'react'  ==> 'react.page'
+change -> config 'threshold'  ==> 'alerts.event_filter_memcap'
+change -> csv: 'dgmlen' ==> 'dgm_len'
+change -> csv: 'dstport' ==> 'dst_port'
+change -> csv: 'ethdst' ==> 'eth_dst'
+change -> csv: 'ethlen' ==> 'eth_len'
+change -> csv: 'ethsrc' ==> 'eth_src'
+change -> csv: 'icmpcode' ==> 'icmp_code'
+change -> csv: 'icmpid' ==> 'icmp_id'
+change -> csv: 'icmpseq' ==> 'icmp_seq'
+change -> csv: 'icmptype' ==> 'icmp_type'
+change -> csv: 'iplen' ==> 'ip_len'
+change -> csv: 'sid_id' ==> 'sid'
+change -> csv: 'sig_generator' ==> 'gid'
+change -> csv: 'sig_rev' ==> 'rev'
+change -> csv: 'srcport' ==> 'src_port'
+change -> csv: 'tcpack' ==> 'tcp_ack'
+change -> csv: 'tcpflags' ==> 'tcp_flags'
+change -> csv: 'tcplen' ==> 'tcp_len'
+change -> csv: 'tcpseq' ==> 'tcp_seq'
+change -> csv: 'tcpwindow' ==> 'tcp_win'
+change -> detection: 'ac' ==> 'ac_full_q'
+change -> detection: 'ac-banded' ==> 'ac_banded'
+change -> detection: 'ac-bnfa' ==> 'ac_bnfa_q'
+change -> detection: 'ac-bnfa-nq' ==> 'ac_bnfa'
+change -> detection: 'ac-bnfa-q' ==> 'ac_bnfa_q'
+change -> detection: 'ac-nq' ==> 'ac_full'
+change -> detection: 'ac-q' ==> 'ac_full_q'
+change -> detection: 'ac-sparsebands' ==> 'ac_sparse_bands'
+change -> detection: 'ac-split' ==> 'ac_full_q'
+change -> detection: 'ac-split' ==> 'split_any_any'
+change -> detection: 'ac-std' ==> 'ac_std'
+change -> detection: 'acs' ==> 'ac_sparse'
+change -> detection: 'bleedover-port-limit' ==> 'bleedover_port_limit'
+change -> detection: 'bleedover-warnings-enabled' ==> 'bleedover_warnings_enabled'
+change -> detection: 'debug-print-fast-pattern' ==> 'debug_print_fast_pattern'
+change -> detection: 'debug-print-nocontent-rule-tests' ==> 'debug_print_nocontent_rule_tests'
+change -> detection: 'debug-print-rule-group-build-details' ==> 'debug_print_rule_group_build_details'
+change -> detection: 'debug-print-rule-groups-compiled' ==> 'debug_print_rule_groups_compiled'
+change -> detection: 'debug-print-rule-groups-uncompiled' ==> 'debug_print_rule_groups_uncompiled'
+change -> detection: 'enable-single-rule-group' ==> 'enable_single_rule_group'
+change -> detection: 'intel-cpm' ==> 'intel_cpm'
+change -> detection: 'lowmem' ==> 'lowmem_q'
+change -> detection: 'lowmem-nq' ==> 'lowmem'
+change -> detection: 'lowmem-q' ==> 'lowmem_q'
+change -> detection: 'max-pattern-len' ==> 'max_pattern_len'
+change -> detection: 'search-method' ==> 'search_method'
+change -> detection: 'search-optimize' ==> 'search_optimize'
+change -> detection: 'split-any-any' ==> 'split_any_any'
+change -> dynamicdetection ==> 'snort.--plugin_path=<path>'
+change -> dynamicengine ==> 'snort.--plugin_path=<path>'
+change -> dynamicpreprocessor ==> 'snort.--plugin_path=<path>'
+change -> dynamicsidechannel ==> 'snort.--plugin_path=<path>'
+change -> event_filter: 'gen_id' ==> 'gid'
+change -> event_filter: 'sig_id' ==> 'sid'
+change -> file: 'config file: file_block_timeout' ==> 'block_timeout'
+change -> file: 'config file: file_lookup_timeout' ==> 'lookup_timeout'
+change -> file: 'config file: file_signature_depth' ==> 'signature_depth'
+change -> file: 'config file: file_type_depth' ==> 'type_depth'
+change -> file: 'config file: signature' ==> 'enable_signature'
+change -> file: 'config file: type_id' ==> 'enable_type'
+change -> frag3_engine: 'min_fragment_length' ==> 'min_frag_length'
+change -> frag3_engine: 'overlap_limit' ==> 'max_overlaps'
+change -> frag3_engine: 'policy bsd-right' ==> 'policy = bsd_right'
+change -> frag3_engine: 'preprocessor frag3_engine: timeout 0' ==> 'session_timeout 256'
+change -> frag3_engine: 'timeout' ==> 'session_timeout'
+change -> ftp_telnet_protocol: 'alt_max_param_len' ==> 'cmd_validity'
+change -> ftp_telnet_protocol: 'data_chan' ==> 'ignore_data_chan'
+change -> ftp_telnet_protocol: 'ports' ==> 'bindings'
+change -> gtp: 'ports' ==> 'gtp_ports'
+change -> http_inspect_server: 'enable_cookie' ==> 'enable_cookies'
+change -> http_inspect_server: 'flow_depth' ==> 'server_flow_depth'
+change -> http_inspect_server: 'non_rfc_char' ==> 'non_rfc_chars'
+change -> http_inspect_server: 'ports' ==> 'bindings'
+change -> http_inspect_server: 'post_depth [-1:65495]' ==> 'post_depth [-1:65535]'
+change -> mpls_payload_type: 'config mpls_payload_type: ethernet' ==> 'mpls_payload_type = eth'
+change -> mpls_payload_type: 'config mpls_payload_type: ipv4' ==> 'mpls_payload_type = ip4'
+change -> mpls_payload_type: 'config mpls_payload_type: ipv6' ==> 'mpls_payload_type = ip6'
+change -> normalizers: 'block' ==> 'base'
+change -> normalizers: 'pad' ==> 'base'
+change -> normalizers: 'req_pay' ==> 'base'
+change -> normalizers: 'req_urg' ==> 'base'
+change -> normalizers: 'req_urp' ==> 'base'
+change -> normalizers: 'rsv' ==> 'base'
+change -> normalizers: 'trim_mss' ==> 'trim'
+change -> normalizers: 'trim_rst' ==> 'trim'
+change -> normalizers: 'trim_syn' ==> 'trim'
+change -> normalizers: 'trim_win' ==> 'trim'
+change -> paf_max: 'paf_max [0:63780]' ==> 'paf_max [1460:63780]'
+change -> perfmonitor: 'accumulate' ==> 'reset = false'
+change -> perfmonitor: 'flow-file' ==> 'flow_file = true'
+change -> perfmonitor: 'flow-ip' ==> 'flow_ip'
+change -> perfmonitor: 'flow-ip-file' ==> 'flow_ip_file = true'
+change -> perfmonitor: 'flow-ip-memcap' ==> 'flow_ip_memcap'
+change -> perfmonitor: 'flow-ports' ==> 'flow_ports'
+change -> perfmonitor: 'pktcnt' ==> 'packets'
+change -> perfmonitor: 'snortfile' ==> 'file = true'
+change -> perfmonitor: 'time' ==> 'seconds'
+change -> ppm: 'debug-pkts' ==> 'debug_pkts'
+change -> ppm: 'fastpath-expensive-packets' ==> 'fastpath_expensive_packets'
+change -> ppm: 'max-pkt-time' ==> 'max_pkt_time'
+change -> ppm: 'max-rule-time' ==> 'max_rule_time'
+change -> ppm: 'pkt-log' ==> 'pkt_log'
+change -> ppm: 'rule-log' ==> 'rule_log'
+change -> ppm: 'suspend-expensive-rules' ==> 'suspend_expensive_rules'
+change -> ppm: 'suspend-timeout' ==> 'suspend_timeout'
+change -> preprocessor 'normalize_icmp4' ==> 'normalize.icmp4'
+change -> preprocessor 'normalize_icmp6' ==> 'normalize.icmp6'
+change -> preprocessor 'normalize_ip6' ==> 'normalize.ip6'
+change -> profile: 'print' ==> 'count'
+change -> profile: 'sort avg_ticks_per_nomatch' ==> 'sort = avg_ticks_per_no_match'
+change -> rate_filter: 'gen_id' ==> 'gid'
+change -> rate_filter: 'sig_id' ==> 'sid'
+change -> rule_state: 'disabled' ==> 'enable'
+change -> rule_state: 'enabled' ==> 'enable'
+change -> sfportscan: 'proto' ==> 'protos'
+change -> sfportscan: 'scan_type' ==> 'scan_types'
+change -> stream5_global: 'max_active_responses' ==> 'max_responses'
+change -> stream5_global: 'max_icmp' ==> 'max_sessions'
+change -> stream5_global: 'max_ip' ==> 'max_sessions'
+change -> stream5_global: 'max_tcp' ==> 'max_sessions'
+change -> stream5_global: 'max_udp' ==> 'max_sessions'
+change -> stream5_global: 'min_response_seconds' ==> 'min_interval'
+change -> stream5_global: 'prune_log_max' ==> 'histogram'
+change -> stream5_global: 'tcp_cache_nominal_timeout' ==> 'pruning_timeout'
+change -> stream5_global: 'tcp_cache_pruning_timeout' ==> 'idle_timeout'
+change -> stream5_global: 'udp_cache_nominal_timeout' ==> 'idle_timeout'
+change -> stream5_global: 'udp_cache_pruning_timeout' ==> 'pruning_timeout'
+change -> stream5_ip: 'timeout' ==> 'session_timeout'
+change -> stream5_tcp: 'bind_to' ==> 'bindings'
+change -> stream5_tcp: 'both ports' ==> 'binder.when.ports; binder.when.role = any'
+change -> stream5_tcp: 'both protocol' ==> 'binder.when.proto; binder.when.role = any'
+change -> stream5_tcp: 'client ports' ==> 'binder.when.ports; binder.when.role = client'
+change -> stream5_tcp: 'client protocol' ==> 'binder.when.proto; binder.when.role = client'
+change -> stream5_tcp: 'dont_reassemble_async' ==> 'reassemble_async'
+change -> stream5_tcp: 'footprint' ==> 'use_static_footprint_sizes'
+change -> stream5_tcp: 'max_queued_bytes' ==> 'queue_limit.max_bytes'
+change -> stream5_tcp: 'max_queued_segs' ==> 'queue_limit.max_segments'
+change -> stream5_tcp: 'policy grannysmith' ==> 'stream_tcp.policy = macos'
+change -> stream5_tcp: 'policy hpux11' ==> 'stream_tcp.policy = hpux'
+change -> stream5_tcp: 'policy win2003' ==> 'stream_tcp.policy = win-2003'
+change -> stream5_tcp: 'policy win2k3' ==> 'stream_tcp.policy = win-2003'
+change -> stream5_tcp: 'server ports' ==> 'binder.when.ports; binder.when.role = server'
+change -> stream5_tcp: 'server protocol' ==> 'binder.when.proto; binder.when.role = server'
+change -> stream5_tcp: 'timeout' ==> 'session_timeout'
+change -> stream5_udp: 'timeout' ==> 'session_timeout'
+change -> suppress: 'gen_id' ==> 'gid'
+change -> suppress: 'sig_id' ==> 'sid'
+change -> syslog: 'log_alert' ==> 'level = alert'
+change -> syslog: 'log_auth' ==> 'facility = auth'
+change -> syslog: 'log_authpriv' ==> 'facility = authpriv'
+change -> syslog: 'log_cons' ==> 'options = cons'
+change -> syslog: 'log_crit' ==> 'level = crit'
+change -> syslog: 'log_daemon' ==> 'facility = daemon'
+change -> syslog: 'log_debug' ==> 'level = debug'
+change -> syslog: 'log_emerg' ==> 'level = emerg'
+change -> syslog: 'log_err' ==> 'level = err'
+change -> syslog: 'log_info' ==> 'level = info'
+change -> syslog: 'log_local0' ==> 'facility = local0'
+change -> syslog: 'log_local1' ==> 'facility = local1'
+change -> syslog: 'log_local2' ==> 'facility = local2'
+change -> syslog: 'log_local3' ==> 'facility = local3'
+change -> syslog: 'log_local4' ==> 'facility = local4'
+change -> syslog: 'log_local5' ==> 'facility = local5'
+change -> syslog: 'log_local6' ==> 'facility = local6'
+change -> syslog: 'log_local7' ==> 'facility = local7'
+change -> syslog: 'log_ndelay' ==> 'options = ndelay'
+change -> syslog: 'log_notice' ==> 'level = notice'
+change -> syslog: 'log_perror' ==> 'options = perror'
+change -> syslog: 'log_pid' ==> 'options = pid'
+change -> syslog: 'log_user' ==> 'facility = user'
+change -> syslog: 'log_warning' ==> 'level = warning'
+change -> threshold: 'ips_option: threshold' ==> 'event_filter'
+change -> unified2: 'alert_unified2' ==> 'unified2'
+change -> unified2: 'filename' ==> 'file'
+change -> unified2: 'log_unified2' ==> 'unified2'
+change -> unified2: 'unified2' ==> 'unified2'
+deleted -> arpspoof: 'unicast'
+deleted -> attribute_table: '<FRAG_POLICY>hpux</FRAG_POLICY>'
+deleted -> attribute_table: '<FRAG_POLICY>irix</FRAG_POLICY>'
+deleted -> attribute_table: '<FRAG_POLICY>old-linux</FRAG_POLICY>'
+deleted -> attribute_table: '<FRAG_POLICY>unkown</FRAG_POLICY>'
+deleted -> attribute_table: '<STREAM_POLICY>noack</STREAM_POLICY>'
+deleted -> attribute_table: '<STREAM_POLICY>unkown</STREAM_POLICY>'
+deleted -> config 'cs_dir'
+deleted -> config 'disable_attribute_reload_thread'
+deleted -> config 'disable_decode_alerts'
+deleted -> config 'disable_decode_drops'
+deleted -> config 'disable_ipopt_alerts'
+deleted -> config 'disable_ipopt_drops'
+deleted -> config 'disable_tcpopt_alerts'
+deleted -> config 'disable_tcpopt_drops'
+deleted -> config 'disable_tcpopt_experimental_alerts'
+deleted -> config 'disable_tcpopt_experimental_drops'
+deleted -> config 'disable_tcpopt_obsolete_alerts'
+deleted -> config 'disable_tcpopt_obsolete_drops'
+deleted -> config 'disable_tcpopt_ttcp_alerts'
+deleted -> config 'disable_ttcp_alerts'
+deleted -> config 'disable_ttcp_drops'
+deleted -> config 'dump_dynamic_rules_path'
+deleted -> config 'enable_decode_drops'
+deleted -> config 'enable_decode_oversized_alerts'
+deleted -> config 'enable_decode_oversized_drops'
+deleted -> config 'enable_ipopt_drops'
+deleted -> config 'enable_tcpopt_drops'
+deleted -> config 'enable_tcpopt_experimental_drops'
+deleted -> config 'enable_tcpopt_obsolete_drops'
+deleted -> config 'enable_tcpopt_ttcp_drops'
+deleted -> config 'enable_ttcp_drops'
+deleted -> config 'flexresp2_attempts'
+deleted -> config 'flexresp2_interface'
+deleted -> config 'flexresp2_memcap'
+deleted -> config 'flexresp2_rows'
+deleted -> config 'include_vlan_in_alerts'
+deleted -> config 'interface'
+deleted -> config 'layer2resets'
+deleted -> config 'policy_version'
+deleted -> config 'so_rule_memcap'
+deleted -> csv: 'default'
+deleted -> detection: 'mwm'
+deleted -> frag3_engine: 'detect_anomalies'
+deleted -> frag3_global: 'disabled'
+deleted -> ftp_telnet_protocol: 'detect_anomalies'
+deleted -> http_inspect: 'disabled'
+deleted -> http_inspect_server: 'no_alerts'
+deleted -> perfmonitor: 'atexitonly'
+deleted -> perfmonitor: 'atexitonly: base-stats'
+deleted -> perfmonitor: 'atexitonly: events-stats'
+deleted -> perfmonitor: 'atexitonly: flow-ip-stats'
+deleted -> perfmonitor: 'atexitonly: flow-stats'
+deleted -> react: 'block'
+deleted -> react: 'warn'
+deleted -> rpc_decode: 'alert_fragments'
+deleted -> rpc_decode: 'no_alert_incomplete'
+deleted -> rpc_decode: 'no_alert_large_fragments'
+deleted -> rpc_decode: 'no_alert_multiple_requests'
+deleted -> rule_state: 'action'
+deleted -> sfportscan: 'detect_ack_scans'
+deleted -> sfportscan: 'disabled'
+deleted -> sfportscan: 'logfile'
+deleted -> stream5_global: 'disabled'
+deleted -> stream5_global: 'flush_on_alert'
+deleted -> stream5_global: 'no_midstream_drop_alerts'
+deleted -> stream5_tcp: 'check_session_hijacking'
+deleted -> stream5_tcp: 'detect_anomalies'
+deleted -> stream5_tcp: 'dont_store_large_packets'
+deleted -> stream5_tcp: 'policy noack'
+deleted -> stream5_tcp: 'policy unkown'

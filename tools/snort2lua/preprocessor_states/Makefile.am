@@ -19,10 +19,10 @@ pps_normalizers.cc \
 pps_perfmonitor.cc \
 pps_rpc_decode.cc \
 pps_sfportscan.cc \
-pps_stream_ip.cc \
-pps_stream_global.cc \
-pps_stream_tcp.cc \
-pps_stream_udp.cc \
+pps_stream5_ip.cc \
+pps_stream5_global.cc \
+pps_stream5_tcp.cc \
+pps_stream5_udp.cc \
 preprocessor_api.h \
 preprocessor_api.cc
 
