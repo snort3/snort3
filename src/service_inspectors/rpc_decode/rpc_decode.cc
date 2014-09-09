@@ -123,6 +123,7 @@ static THREAD_LOCAL const uint32_t rpc_memcap = 1048510;
 static THREAD_LOCAL uint32_t rpc_memory = 0;
 
 static const char* mod_name = "rpc_decode";
+static const char* mod_help = "RPC inspector";
 
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 THREAD_LOCAL SimpleStats rdstats;
@@ -1103,6 +1104,7 @@ static const InspectApi rd_api =
     {
         PT_INSPECTOR,
         mod_name,
+        mod_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

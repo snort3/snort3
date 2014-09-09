@@ -132,6 +132,7 @@ static const MpseApi ac_api =
     {
         PT_SEARCH_ENGINE,
         "ac_std",
+        "Aho-Corasick Full (high memory, best performance) MPSE",
         SEAPI_PLUGIN_V0,
         0,
         nullptr,

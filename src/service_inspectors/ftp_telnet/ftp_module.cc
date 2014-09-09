@@ -28,6 +28,12 @@ using namespace std;
 #define FTP_CLIENT "ftp_client"
 #define FTP_SERVER "ftp_server"
 
+static const char* ftp_client_help =
+    "FTP client configuration module";
+
+static const char* ftp_server_help =
+    "main FTP module";
+
 //-------------------------------------------------------------------------
 // client stuff
 //-------------------------------------------------------------------------
@@ -68,7 +74,7 @@ static const Parameter ftp_client_params[] =
 };
 
 FtpClientModule::FtpClientModule() :
-    Module(FTP_CLIENT, ftp_client_params)
+    Module(FTP_CLIENT, ftp_client_help, ftp_client_params)
 {
     conf = nullptr;
 }
@@ -361,7 +367,7 @@ static const RuleMap ftp_server_rules[] =
 //-------------------------------------------------------------------------
 
 FtpServerModule::FtpServerModule() :
-    Module(FTP_SERVER, ftp_server_params)
+    Module(FTP_SERVER, ftp_server_help, ftp_server_params)
 {
     conf = nullptr;
 }

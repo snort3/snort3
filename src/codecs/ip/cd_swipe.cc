@@ -28,10 +28,10 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 
-namespace{
-
 #define CD_SWIPE_NAME "swipe"
+#define CD_SWIPE_HELP "support for Swipe"
 
+namespace{
 
 class SwipeCodec : public Codec
 {
@@ -80,6 +80,7 @@ static const CodecApi swipe_api =
     {
         PT_CODEC,
         CD_SWIPE_NAME,
+        CD_SWIPE_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

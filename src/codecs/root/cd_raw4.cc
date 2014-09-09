@@ -28,11 +28,11 @@
 #include "protocols/protocol_ids.h"
 #include <pcap.h>
 
+#define CD_RAW4_NAME "raw4"
+#define CD_RAW4_HELP "support for unencapsulated IPv4"
 
 namespace
 {
-
-#define CD_RAW4_NAME "raw4"
 
 class Raw4Codec : public Codec
 {
@@ -104,6 +104,7 @@ static const CodecApi raw4_api =
     {
         PT_CODEC,
         CD_RAW4_NAME,
+        CD_RAW4_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

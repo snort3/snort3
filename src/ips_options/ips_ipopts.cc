@@ -216,7 +216,7 @@ static void ipopts_parse(const char* data, IpOptionData* ds_ptr)
 static const char* s_opts =
     "rr|eol|nop|ts|sec|esec|lsrr|lsrre|ssrr|satid|any";
 
-static const Parameter ipopt_params[] =
+static const Parameter s_params[] =
 {
     { "~opt", Parameter::PT_SELECT, s_opts, nullptr,
       "output format" },
@@ -224,10 +224,13 @@ static const Parameter ipopt_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check for IP options";
+
 class IpOptModule : public Module
 {
 public:
-    IpOptModule() : Module(s_name, ipopt_params) { };
+    IpOptModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -285,6 +288,7 @@ static const IpsApi ipopts_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -27,6 +27,9 @@
 #include "framework/module.h"
 #include "main/thread.h"
 
+#define WIZ_NAME "wizard"
+#define WIZ_HELP "inspector that implements port-independent protocol identification"
+
 extern const char* wiz_pegs[];
 extern THREAD_LOCAL struct WizStats tstats;
 extern THREAD_LOCAL ProfileStats wizPerfStats;

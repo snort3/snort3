@@ -36,10 +36,12 @@
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
 
+#define CD_VLAN_NAME "vlan"
+#define CD_VLAN_HELP "support for virtual local area network"
+
 namespace
 {
 
-#define CD_VLAN_NAME "vlan"
 static const RuleMap vlan_rules[] =
 {
     { DECODE_BAD_VLAN, "(" CD_VLAN_NAME ") Bad VLAN Frame" },
@@ -51,7 +53,7 @@ static const RuleMap vlan_rules[] =
 class VlanModule : public DecodeModule
 {
 public:
-    VlanModule() : DecodeModule(CD_VLAN_NAME) {}
+    VlanModule() : DecodeModule(CD_VLAN_NAME, CD_VLAN_HELP) {}
 
     const RuleMap* get_rules() const
     { return vlan_rules; }
@@ -159,6 +161,7 @@ static const CodecApi vlan_api =
     {
         PT_CODEC,
         CD_VLAN_NAME,
+        CD_VLAN_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

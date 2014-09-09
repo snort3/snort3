@@ -27,10 +27,11 @@
 #include "codecs/sf_protocols.h"
 #include "protocols/packet.h"
 
+#define CD_ERSPAN2_NAME "erspan2"
+#define CD_ERSPAN2_HELP "support for encapsulated remote switched port analyzer - type 2"
+
 namespace
 {
-
-#define CD_ERSPAN2_NAME "erspan2"
 
 static const RuleMap erspan2_rules[] =
 {
@@ -42,7 +43,7 @@ static const RuleMap erspan2_rules[] =
 class Erspan2Module : public DecodeModule
 {
 public:
-    Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME) {}
+    Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) {}
 
     const RuleMap* get_rules() const
     { return erspan2_rules; }
@@ -148,6 +149,7 @@ static const CodecApi erspan2_api =
     {
         PT_CODEC,
         CD_ERSPAN2_NAME,
+        CD_ERSPAN2_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

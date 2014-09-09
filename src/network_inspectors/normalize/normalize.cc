@@ -32,8 +32,6 @@
 
 #define PROTO_BITS (PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP)
 
-static const char* name = "normalize";
-
 THREAD_LOCAL ProfileStats norm_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -246,7 +244,8 @@ static const InspectApi no_api =
 {
     {
         PT_INSPECTOR,
-        name,
+        NORM_NAME,
+        NORM_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

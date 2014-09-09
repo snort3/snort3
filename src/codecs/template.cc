@@ -31,17 +31,15 @@
 #include "framework/module.h"
 #include "log/text_log.h"
 
-namespace
-{
-
 // yes, macros are necessary. The API and class constructor require different strings.
 //
 // this macros is defined in the module to ensure identical names. However,
 // if you don't want a module, define the name here.
 #define CODEC_NAME "name"
+#define CODEC_NAME "one line help for this codec"
 
-
-
+namespace
+{
 
 // inherit from DecodeModule rather than Module so the GID for
 // all codecs are identical. Additionally, all of the SIDS are
@@ -256,6 +254,7 @@ static const CodecApi name_api =
     {
         PT_CODEC,
         CODEC_NAME,
+        CODEC_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor, // module constructor ( see function for details )

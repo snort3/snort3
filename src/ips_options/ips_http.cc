@@ -41,8 +41,8 @@
 class HttpCursorModule : public Module
 {
 public:
-    HttpCursorModule(const char* s, ProfileStats& p) :
-        Module(s), ps(p) { };
+    HttpCursorModule(const char* s, const char* h, ProfileStats& p) :
+        Module(s, h), ps(p) { };
 
     ProfileStats* get_profile() const
     { return &ps; };
@@ -114,11 +114,14 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
 #undef IPS_OPT
 #define IPS_OPT "http_uri"
 
+static const char* uri_help =
+    "rule option to set the detection cursor to the normalized URI buffer";
+
 static THREAD_LOCAL ProfileStats uri_ps;
 
 static Module* uri_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, uri_ps);
+    return new HttpCursorModule(IPS_OPT, uri_help, uri_ps);
 }
 
 static IpsOption* uri_opt_ctor(Module*, OptTreeNode*)
@@ -131,6 +134,7 @@ static const IpsApi uri_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        uri_help,
         IPSAPI_PLUGIN_V0,
         0,
         uri_mod_ctor,
@@ -154,16 +158,19 @@ static const IpsApi uri_api =
 #undef IPS_OPT
 #define IPS_OPT "http_client_body"
 
-static THREAD_LOCAL ProfileStats client_body_ps;
+static const char* cb_help =
+    "rule option to set the detection cursor to the request body";
+
+static THREAD_LOCAL ProfileStats cb_ps;
 
 static Module* client_body_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, client_body_ps);
+    return new HttpCursorModule(IPS_OPT, cb_help, cb_ps);
 }
 
 static IpsOption* client_body_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, client_body_ps, CAT_SET_BODY);
+    return new HttpIpsOption(IPS_OPT, cb_ps, CAT_SET_BODY);
 }
 
 static const IpsApi client_body_api =
@@ -171,6 +178,7 @@ static const IpsApi client_body_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        cb_help,
         IPSAPI_PLUGIN_V0,
         0,
         client_body_mod_ctor,
@@ -194,16 +202,19 @@ static const IpsApi client_body_api =
 #undef IPS_OPT
 #define IPS_OPT "http_method"
 
-static THREAD_LOCAL ProfileStats method_ps;
+static const char* meth_help =
+    "rule option to set the detection cursor to the HTTP request method";
+
+static THREAD_LOCAL ProfileStats meth_ps;
 
 static Module* method_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, method_ps);
+    return new HttpCursorModule(IPS_OPT, meth_help, meth_ps);
 }
 
 static IpsOption* method_opt_ctor(Module*, OptTreeNode*)
 {
-    return new HttpIpsOption(IPS_OPT, method_ps);
+    return new HttpIpsOption(IPS_OPT, meth_ps);
 }
 
 static const IpsApi method_api =
@@ -211,6 +222,7 @@ static const IpsApi method_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        meth_help,
         IPSAPI_PLUGIN_V0,
         0,
         method_mod_ctor,
@@ -234,11 +246,14 @@ static const IpsApi method_api =
 #undef IPS_OPT
 #define IPS_OPT "http_cookie"
 
+static const char* cookie_help = 
+    "rule option to set the detection cursor to the HTTP cookie";
+
 static THREAD_LOCAL ProfileStats cookie_ps;
 
 static Module* cookie_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, cookie_ps);
+    return new HttpCursorModule(IPS_OPT, cookie_help, cookie_ps);
 }
 
 static IpsOption* cookie_opt_ctor(Module*, OptTreeNode*)
@@ -251,6 +266,7 @@ static const IpsApi cookie_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        cookie_help,
         IPSAPI_PLUGIN_V0,
         0,
         cookie_mod_ctor,
@@ -274,11 +290,14 @@ static const IpsApi cookie_api =
 #undef IPS_OPT
 #define IPS_OPT "http_stat_code"
 
+static const char* stat_code_help = 
+    "rule option to set the detection cursor to the HTTP status code";
+
 static THREAD_LOCAL ProfileStats stat_code_ps;
 
 static Module* stat_code_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, stat_code_ps);
+    return new HttpCursorModule(IPS_OPT, stat_code_help, stat_code_ps);
 }
 
 static IpsOption* stat_code_opt_ctor(Module*, OptTreeNode*)
@@ -291,6 +310,7 @@ static const IpsApi stat_code_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        stat_code_help,
         IPSAPI_PLUGIN_V0,
         0,
         stat_code_mod_ctor,
@@ -314,11 +334,14 @@ static const IpsApi stat_code_api =
 #undef IPS_OPT
 #define IPS_OPT "http_stat_msg"
 
+static const char* stat_msg_help = 
+    "rule option to set the detection cursor to the HTTP status message";
+
 static THREAD_LOCAL ProfileStats stat_msg_ps;
 
 static Module* stat_msg_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, stat_msg_ps);
+    return new HttpCursorModule(IPS_OPT, stat_msg_help, stat_msg_ps);
 }
 
 static IpsOption* stat_msg_opt_ctor(Module*, OptTreeNode*)
@@ -331,6 +354,7 @@ static const IpsApi stat_msg_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        stat_msg_help,
         IPSAPI_PLUGIN_V0,
         0,
         stat_msg_mod_ctor,
@@ -354,11 +378,14 @@ static const IpsApi stat_msg_api =
 #undef IPS_OPT
 #define IPS_OPT "http_raw_uri"
 
+static const char* raw_uri_help = 
+    "rule option to set the detection cursor to the unnormalized URI";
+
 static THREAD_LOCAL ProfileStats raw_uri_ps;
 
 static Module* raw_uri_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_uri_ps);
+    return new HttpCursorModule(IPS_OPT, raw_uri_help, raw_uri_ps);
 }
 
 static IpsOption* raw_uri_opt_ctor(Module*, OptTreeNode*)
@@ -371,6 +398,7 @@ static const IpsApi raw_uri_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        raw_uri_help,
         IPSAPI_PLUGIN_V0,
         0,
         raw_uri_mod_ctor,
@@ -394,11 +422,14 @@ static const IpsApi raw_uri_api =
 #undef IPS_OPT
 #define IPS_OPT "http_raw_header"
 
+static const char* raw_header_help = 
+    "rule option to set the detection cursor to the unnormalized headers";
+
 static THREAD_LOCAL ProfileStats raw_header_ps;
 
 static Module* raw_header_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_header_ps);
+    return new HttpCursorModule(IPS_OPT, raw_header_help, raw_header_ps);
 }
 
 static IpsOption* raw_header_opt_ctor(Module*, OptTreeNode*)
@@ -411,6 +442,7 @@ static const IpsApi raw_header_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        raw_header_help,
         IPSAPI_PLUGIN_V0,
         0,
         raw_header_mod_ctor,
@@ -434,11 +466,14 @@ static const IpsApi raw_header_api =
 #undef IPS_OPT
 #define IPS_OPT "http_raw_cookie"
 
+static const char* raw_cookie_help = 
+    "rule option to set the detection cursor to the unnormalized cookie";
+
 static THREAD_LOCAL ProfileStats raw_cookie_ps;
 
 static Module* raw_cookie_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, raw_cookie_ps);
+    return new HttpCursorModule(IPS_OPT, raw_cookie_help, raw_cookie_ps);
 }
 
 static IpsOption* raw_cookie_opt_ctor(Module*, OptTreeNode*)
@@ -451,6 +486,7 @@ static const IpsApi raw_cookie_api =
     {
         PT_IPS_OPTION,
         IPS_OPT,
+        raw_cookie_help,
         IPSAPI_PLUGIN_V0,
         0,
         raw_cookie_mod_ctor,

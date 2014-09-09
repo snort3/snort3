@@ -38,6 +38,7 @@ namespace
 {
 
 #define ICMP4_IP_NAME "icmp4_ip"
+#define ICMP4_IP_HELP "support for IP in ICMPv4"
 
 class Icmp4IpCodec : public Codec
 {
@@ -358,6 +359,7 @@ static const CodecApi icmp4_ip_api =
     {
         PT_CODEC,
         ICMP4_IP_NAME,
+        ICMP4_IP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr, // module constructor

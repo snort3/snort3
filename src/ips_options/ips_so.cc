@@ -109,7 +109,7 @@ int SoOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter so_params[] =
+static const Parameter s_params[] =
 {
     { "~func", Parameter::PT_STRING, nullptr, nullptr,
       "name of eval function" },
@@ -117,10 +117,13 @@ static const Parameter so_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to call custom eval function";
+
 class SoModule : public Module
 {
 public:
-    SoModule() : Module(s_name, so_params) { };
+    SoModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -188,6 +191,7 @@ static const IpsApi so_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

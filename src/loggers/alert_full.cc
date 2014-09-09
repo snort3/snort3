@@ -64,11 +64,13 @@ static THREAD_LOCAL TextLog* full_log = nullptr;
 
 using namespace std;
 
+static const char* s_name = "alert_full";
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter full_params[] =
+static const Parameter s_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "name of alert file" },
@@ -82,10 +84,13 @@ static const Parameter full_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event with full packet dump";
+
 class FullModule : public Module
 {
 public:
-    FullModule() : Module("alert_full", full_params) { };
+    FullModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -266,7 +271,8 @@ static LogApi full_api
 {
     {
         PT_LOGGER,
-        "alert_full",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

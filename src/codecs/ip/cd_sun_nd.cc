@@ -33,6 +33,7 @@ namespace
 
 // yes, macros are necessary. The API and class constructor require different strings.
 #define CD_SUN_ND_NAME "sun_nd"
+#define CD_SUN_ND_HELP "support for Sun ND"
 
 class SunNdCodec : public Codec
 {
@@ -81,6 +82,7 @@ static const CodecApi sun_nd_api =
     {
         PT_CODEC,
         CD_SUN_ND_NAME,
+        CD_SUN_ND_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

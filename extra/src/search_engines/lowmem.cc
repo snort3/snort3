@@ -131,6 +131,7 @@ static const MpseApi lm_api =
     {
         PT_SEARCH_ENGINE,
         "lowmem",
+        "Keyword Trie (low memory, moderate performance) MPSE",
         SEAPI_PLUGIN_V0,
         0,
         nullptr,

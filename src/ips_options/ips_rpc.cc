@@ -245,7 +245,7 @@ int RpcOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter rpc_params[] =
+static const Parameter s_params[] =
 {
     { "~app", Parameter::PT_STRING, nullptr, nullptr,
       "application number" },
@@ -259,10 +259,13 @@ static const Parameter rpc_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check SUNRPC CALL parameters";
+
 class RpcModule : public Module
 {
 public:
-    RpcModule() : Module(s_name, rpc_params) { };
+    RpcModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -334,6 +337,7 @@ static const IpsApi rpc_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

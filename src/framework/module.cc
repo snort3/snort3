@@ -27,9 +27,10 @@ static const Parameter null_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-void Module::init(const char* s)
+void Module::init(const char* s, const char* h)
 {
     name = s;
+    help = h;
     params = null_params;
     list = false;
     cmds = nullptr;
@@ -37,12 +38,12 @@ void Module::init(const char* s)
     num_counts = -1;
 }
 
-Module::Module(const char* s)
-{ init(s); }
+Module::Module(const char* s, const char* h)
+{ init(s, h); }
 
-Module::Module(const char* s, const Parameter* p, bool is_list)
+Module::Module(const char* s, const char* h, const Parameter* p, bool is_list)
 {
-    init(s);
+    init(s, h);
     params = p;
     list = is_list;
 }

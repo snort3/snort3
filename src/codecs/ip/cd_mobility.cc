@@ -27,11 +27,12 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 
-namespace
-{
-
 // yes, macros are necessary. The API and class constructor require different strings.
 #define CD_MOBILE_NAME "mobility"
+#define CD_MOBILE_HELP "support for mobility"
+
+namespace
+{
 
 class MobilityCodec : public Codec
 {
@@ -43,7 +44,6 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
 };
 
 const uint16_t IPPROTO_ID_MOBILITY = 55;
@@ -84,6 +84,7 @@ static const CodecApi mobility_api =
     {
         PT_CODEC,
         CD_MOBILE_NAME,
+        CD_MOBILE_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

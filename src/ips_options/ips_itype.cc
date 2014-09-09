@@ -105,18 +105,21 @@ int IcmpTypeOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter itype_params[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if icmp type is min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check ICMP type";
+
 class ItypeModule : public Module
 {
 public:
-    ItypeModule() : Module(s_name, itype_params) { };
+    ItypeModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -171,6 +174,7 @@ static const IpsApi itype_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

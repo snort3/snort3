@@ -65,6 +65,9 @@
 
 static const char* s_name = "react";
 
+static const char* s_help =
+    "send response to client and terminate session";
+
 static THREAD_LOCAL ProfileStats reactPerfStats;
 
 static const char* MSG_KEY = "<>";
@@ -250,7 +253,7 @@ static void react_config (ReactData* rd)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter react_params[] =
+static const Parameter s_params[] =
 {
     { "msg", Parameter::PT_IMPLIED, nullptr, nullptr,
       " use rule message in response page" },
@@ -264,7 +267,7 @@ static const Parameter react_params[] =
 class ReactModule : public Module
 {
 public:
-    ReactModule() : Module(s_name, react_params) { };
+    ReactModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -336,6 +339,7 @@ static const ActionApi react_api =
     {
         PT_IPS_ACTION,
         s_name,
+        s_help,
         ACTAPI_PLUGIN_V0,
         0,
         mod_ctor,

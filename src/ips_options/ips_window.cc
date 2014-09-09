@@ -102,7 +102,7 @@ int TcpWinOption::eval(Cursor&, Packet *p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter window[] =
+static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
       "check if packet payload size is min<>max | <max | >min" },
@@ -110,10 +110,13 @@ static const Parameter window[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check TCP window field";
+
 class WindowModule : public Module
 {
 public:
-    WindowModule() : Module(s_name, window) { };
+    WindowModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -168,6 +171,7 @@ static const IpsApi window_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

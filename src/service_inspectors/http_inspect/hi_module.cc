@@ -137,8 +137,11 @@ static const RuleMap hi_global_rules[] =
     { 0, nullptr }
 };
 
+static const char* hi_global_help =
+    "http inspector global configuration and client rules";
+
 HttpInspectModule::HttpInspectModule() :
-    Module(GLOBAL_KEYWORD, hi_global_params)
+    Module(GLOBAL_KEYWORD, hi_global_help, hi_global_params)
 {
     config = nullptr;
 }
@@ -410,8 +413,11 @@ static const RuleMap hi_server_rules[] =
     { 0, nullptr }
 };
 
+static const char* hi_server_help = 
+    "http inspection and server rules";
+
 HttpServerModule::HttpServerModule() :
-    Module(SERVER_KEYWORD, hi_server_params)
+    Module(SERVER_KEYWORD, hi_server_help, hi_server_params)
 { 
     server = nullptr;
 }

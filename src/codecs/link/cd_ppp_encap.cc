@@ -30,10 +30,11 @@
 #include "codecs/sf_protocols.h"
 #include "main/snort_debug.h"
 
+#define CD_PPPENCAP_NAME "ppp_encap"
+#define CD_PPPENCAP_HELP "support for point-to-point encapsulation"
+
 namespace
 {
-
-#define CD_PPPENCAP_NAME "ppp_encap"
 
 class PppEncap : public Codec
 {
@@ -179,6 +180,7 @@ static const CodecApi pppencap_api =
     {
         PT_CODEC,
         CD_PPPENCAP_NAME,
+        CD_PPPENCAP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

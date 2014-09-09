@@ -41,7 +41,7 @@ static const char* s_name = "tag";
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter tag_params[] =
+static const Parameter s_params[] =
 {
     { "~", Parameter::PT_ENUM, "session|host_src|host_dst", nullptr,
       "log all packets in session or all packets to or from host" },
@@ -58,10 +58,13 @@ static const Parameter tag_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to log additional packets";
+
 class TagModule : public Module
 {
 public:
-    TagModule() : Module(s_name, tag_params)
+    TagModule() : Module(s_name, s_help, s_params)
     { tag = nullptr; };
 
     bool set(const char*, Value&, SnortConfig*);
@@ -162,6 +165,7 @@ static const IpsApi tag_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

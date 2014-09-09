@@ -26,7 +26,7 @@
 // perf attributes
 //-------------------------------------------------------------------------
 
-static const Parameter perf_params[] =
+static const Parameter s_params[] =
 {
     { "packets", Parameter::PT_INT, "0:", "10000",
       "minim packets to report" },
@@ -78,7 +78,7 @@ static const Parameter perf_params[] =
 //-------------------------------------------------------------------------
 
 PerfMonModule::PerfMonModule() :
-    Module("perf_monitor", perf_params)
+    Module(PERF_NAME, PERF_HELP, s_params)
 { }
 
 ProfileStats* PerfMonModule::get_profile() const

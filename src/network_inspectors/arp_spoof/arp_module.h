@@ -28,6 +28,7 @@
 #include "main/thread.h"
 
 #define MOD_NAME "arp_spoof"
+#define MOD_HELP "detect ARP attacks and anomalies"
 
 #define GID_ARP_SPOOF 112
 

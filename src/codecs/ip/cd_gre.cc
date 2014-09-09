@@ -32,10 +32,11 @@
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
 
+#define CD_GRE_NAME "gre"
+#define CD_GRE_HELP "support for generic routing encapsulation"
+
 namespace
 {
-
-#define CD_GRE_NAME "gre"
 
 static const RuleMap gre_rules[] =
 {
@@ -48,19 +49,14 @@ static const RuleMap gre_rules[] =
     { 0, nullptr }
 };
 
-
 class GreModule : public DecodeModule
 {
 public:
-    GreModule() : DecodeModule(CD_GRE_NAME) {}
+    GreModule() : DecodeModule(CD_GRE_NAME, CD_GRE_HELP) {}
 
     const RuleMap* get_rules() const
     { return gre_rules; }
 };
-
-
-
-
 
 class GreCodec : public Codec
 {
@@ -275,6 +271,7 @@ static const CodecApi gre_api =
     {
         PT_CODEC,
         CD_GRE_NAME,
+        CD_GRE_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

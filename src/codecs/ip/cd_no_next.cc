@@ -36,6 +36,7 @@ namespace
 {
 
 #define CD_NO_NEXT_NAME "ipv6_no_next"
+#define CD_NO_NEXT_HELP "sentinel codec"
 
 class Ipv6NoNextCodec : public Codec
 {
@@ -90,6 +91,7 @@ static const CodecApi no_next_api =
     {
         PT_CODEC,
         CD_NO_NEXT_NAME,
+        CD_NO_NEXT_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

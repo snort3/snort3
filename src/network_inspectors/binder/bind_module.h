@@ -27,6 +27,9 @@
 #include "framework/module.h"
 #include "main/thread.h"
 
+#define BIND_NAME "binder"
+#define BIND_HELP "configure processing based on CIDRs, ports, services, etc."
+
 struct BindStats
 {
     PegCount packets;
