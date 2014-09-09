@@ -1,6 +1,6 @@
 /****************************************************************************
  *
-** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+ * Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
  * Copyright (C) 2013-2013 Sourcefire, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -217,9 +217,12 @@ public:  // FIXIT-M privatize if possible
     Inspector* gadget;
     const char* service;
 
+    unsigned policy_id;
+
     int flow_state;  // FIXIT-H wow - this is poorly encapsulated!  did i do that?  :(
     FlowState s5_state;  // FIXIT-L rename this (s5 not appropriate)
 
+    // FIXIT-L can client and server ip and port be removed from flow?
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t
     sfip_t server_ip; // or uint8_t to reduce sizeof from 24 to 20
 

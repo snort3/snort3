@@ -24,6 +24,9 @@
 #include <string>
 
 #include "framework/bits.h"
+#include "sfip/sf_ipvar.h"
+
+class Flow;
 
 enum BindRole
 {
@@ -39,26 +42,40 @@ enum BindAction
     BA_INSPECT
 };
 
-struct Binding
+struct BindWhen
 {
-    // when
-    std::string when_id;
-    std::string when_svc;
+    unsigned id;
+    std::string svc;
     VlanList vlans;
-    std::string nets;
+    sfip_var_t* nets;
     unsigned protos;
     PortList ports;
     BindRole role;
+};
 
-    // use
+struct BindUse
+{
     BindAction action;
-    std::string use_id;
-    std::string use_svc;
+    std::string svc;
     std::string type;
     std::string name;
     std::string file;
+};
+
+struct Binding
+{
+    BindWhen when;
+    BindUse use;
 
     Binding();
+    ~Binding();
+
+    bool check_port(const Flow*) const;
+    bool check_vlan(const Flow*) const;
+    bool check_addr(const Flow*) const;
+    bool check_proto(const Flow*) const;
+    bool check_policy(const Flow*) const;
+    bool check_service(const Flow*) const;
 };
 
 #endif

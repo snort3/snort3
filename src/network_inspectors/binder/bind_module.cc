@@ -27,8 +27,9 @@
 #include <string>
 using namespace std;
 
-#include "binder.h"
+#include "binding.h"
 #include "protocols/packet.h"
+#include "parser/parse_ip.h"
 
 THREAD_LOCAL BindStats bstats;
 
@@ -47,7 +48,9 @@ static const char* bind_pegs[] =
 
 static const Parameter binder_when_params[] =
 {
-    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
+    // FIXIT when.policy_id should be an arbitrary string auto converted
+    // into index for binder matching and lookups
+    { "policy_id", Parameter::PT_INT, "0:", nullptr,
       "unique ID for selection of this config by external logic" },
 
     { "vlans", Parameter::PT_BIT_LIST, "4095", nullptr,
@@ -78,9 +81,6 @@ static const Parameter binder_use_params[] =
 
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "use configuration in given file" },
-
-    { "policy_id", Parameter::PT_STRING, nullptr, nullptr,
-      "use configuration in given policy" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "override automatic service identification" },
@@ -120,21 +120,18 @@ ProfileStats* BinderModule::get_profile() const
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     // both
-    if ( !strcmp(fqn, "binder.when.policy_id") )
-        work->when_id = v.get_string();
-
-    else if ( !strcmp(fqn, "binder.use.policy_id") )
-        work->use_id = v.get_string();
-
-    else if ( !strcmp(fqn, "binder.when.service") )
-        work->when_svc = v.get_string();
+    if ( !strcmp(fqn, "binder.when.service") )
+        work->when.svc = v.get_string();
 
     else if ( !strcmp(fqn, "binder.use.service") )
-        work->use_svc = v.get_string();
+        work->use.svc = v.get_string();
 
     // when
+    else if ( v.is("policy_id") )
+        work->when.id = v.get_long();
+
     else if ( v.is("nets") )
-        work->nets = v.get_string();
+        work->when.nets = sfip_var_from_string(v.get_string());
 
     else if ( v.is("proto") )
     {
@@ -142,29 +139,29 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         { 
             PROTO_BIT__ALL, PROTO_BIT__IP, PROTO_BIT__ICMP, PROTO_BIT__TCP, PROTO_BIT__UDP
         };
-        work->protos = mask[v.get_long()];
+        work->when.protos = mask[v.get_long()];
     }
     else if ( v.is("ports") )
-        v.get_bits(work->ports);
+        v.get_bits(work->when.ports);
 
     else if ( v.is("role") )
-        work->role = (BindRole)v.get_long();
+        work->when.role = (BindRole)v.get_long();
 
     else if ( v.is("vlans") )
-        v.get_bits(work->vlans);
+        v.get_bits(work->when.vlans);
 
     // use
     else if ( v.is("action") )
-        work->action = (BindAction)(v.get_long() + 1);
+        work->use.action = (BindAction)(v.get_long() + 1);
 
     else if ( v.is("file") )
-        work->file = v.get_string();
+        work->use.file = v.get_string();
 
     else if ( v.is("name") )
-        work->name = v.get_string();
+        work->use.name = v.get_string();
 
     else if ( v.is("type") )
-        work->type = v.get_string();
+        work->use.type = v.get_string();
 
     else
         return false;

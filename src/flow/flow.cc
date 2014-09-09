@@ -245,7 +245,7 @@ void Flow::set_direction(Packet* p)
         {
             if (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_sport == client_port)
+                if (p->sp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -256,7 +256,7 @@ void Flow::set_direction(Packet* p)
             }
             else if (proto == IPPROTO_UDP && p->udph )
             {
-                if (p->udph->uh_sport == client_port)
+                if (p->sp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -274,7 +274,7 @@ void Flow::set_direction(Packet* p)
         {
             if  (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_dport == client_port)
+                if (p->dp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
@@ -285,7 +285,7 @@ void Flow::set_direction(Packet* p)
             }
             else if (proto == IPPROTO_UDP && p->udph )
             {
-                if (p->udph->uh_dport == client_port)
+                if (p->dp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
@@ -297,8 +297,7 @@ void Flow::set_direction(Packet* p)
             else
             {
                 p->packet_flags |= PKT_FROM_SERVER;
-            }
-        }
+            } }
     }
     else /* IS_IP6(p) */
     {
@@ -308,7 +307,7 @@ void Flow::set_direction(Packet* p)
         {
             if (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_sport == client_port)
+                if (p->sp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -319,7 +318,7 @@ void Flow::set_direction(Packet* p)
             }
             else if (proto == IPPROTO_UDP && p->udph )
             {
-                if (p->udph->uh_sport == client_port)
+                if (p->sp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -337,7 +336,7 @@ void Flow::set_direction(Packet* p)
         {
             if  (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_dport == client_port)
+                if (p->dp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
@@ -348,7 +347,7 @@ void Flow::set_direction(Packet* p)
             }
             else if (proto == IPPROTO_UDP && p->udph )
             {
-                if (p->udph->uh_dport == client_port)
+                if (p->dp == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }

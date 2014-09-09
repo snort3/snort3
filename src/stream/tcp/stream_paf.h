@@ -73,7 +73,7 @@ static inline uint32_t s5_paf_active (PAF_State* ps)
 uint32_t s5_paf_check(
     StreamSplitter* paf_config, PAF_State*, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
-    uint32_t seq, uint16_t port, uint32_t* flags);
+    uint32_t seq, uint32_t* flags);
 
 #endif
 
