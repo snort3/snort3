@@ -318,4 +318,3 @@ static inline uint16_t EXTRACT_16BITS(const uint8_t* const p)
 #endif /* WORDS_MUSTALIGN */
 
 #endif
-
