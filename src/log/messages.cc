@@ -48,6 +48,8 @@
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "time/packet_time.h"
+#include "main/snort_debug.h"
+#include "sfip/sf_ip.h"
 
 static int already_fatal = 0;
 

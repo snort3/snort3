@@ -46,8 +46,8 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
     unsigned idx = 0, len = strlen(in);
     negate = false;
 
-    uint8_t hex;
-    unsigned nx;
+    uint8_t hex = 0;
+    unsigned nx = 0;
     bool ok = true;
 
     while ( ok && (idx < len) )

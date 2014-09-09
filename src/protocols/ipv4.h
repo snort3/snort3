@@ -39,8 +39,6 @@
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 
 
-
-
 #define ETHERNET_TYPE_IP 0x0800
 
 #ifndef IP_MAXPACKET
@@ -58,38 +56,6 @@ constexpr uint8_t IP4_MULTICAST = 0x0E;  // ms nibble
 constexpr uint8_t IP4_RESERVED = 0x0F;  // ms nibble
 constexpr uint8_t IP4_LOOPBACK = 0x7F;  // msb
 
-
-enum class IPOptionCodes : std::uint8_t {
-    EOL = 0x00,
-    NOP = 0x01,
-    RR = 0x07,
-    TS = 0x44,
-    SECURITY = 0x82,
-    LSRR = 0x83,
-    LSRR_E = 0x84,
-    ESEC = 0x85,
-    SATID = 0x88,
-    SSRR = 0x89,
-    RTRALT = 0x94,
-    ANY = 0xff,
-};
-
-
-struct IpOptions
-{
-    uint8_t code;
-    uint8_t len; /* length of the data section */
-    const uint8_t *data;
-
-    inline bool is_opt_rtralt() const
-    { return code == static_cast<uint8_t>(IPOptionCodes::RTRALT); }
-
-    inline bool is_opt_ts() const
-    { return code == static_cast<uint8_t>(IPOptionCodes::TS); }
-
-    inline bool is_opt_rr() const
-    { return code == static_cast<uint8_t>(IPOptionCodes::RR); }
-};
 
 
 // This must be a standard layour struct!
@@ -150,6 +116,9 @@ struct IP4Hdr
     inline bool is_dst_broadcast() const
     { return ip_dst == IP4_BROADCAST; }
 
+    inline bool has_options() const
+    { return get_hlen() > 5; }
+
     /*  setters  */
     inline void set_hlen(uint8_t value)
     { ip_verhl = (ip_verhl & 0xf0) | (value & 0x0f); }
@@ -160,6 +129,7 @@ struct IP4Hdr
     inline void set_proto(uint8_t prot)
     { ip_proto = prot; }
 } ;
+
 
 
 static inline bool isPrivateIP(uint32_t addr)
@@ -184,26 +154,14 @@ static inline bool isPrivateIP(uint32_t addr)
 
 } /* namespace ip */
 
+
+
 /* tcpdump shows us the way to cross platform compatibility */
 
 /* we need to change them as well as get them */
 // TYPEDEF WHICH NEED TO BE DELETED
-
 typedef ip::IP4Hdr IP4Hdr;
 
-
-constexpr uint8_t IPOPT_EOL = 0x00;
-constexpr uint8_t IPOPT_NOP = 0x01;
-constexpr uint8_t IPOPT_RR = 0x07;
-constexpr uint8_t IPOPT_TS = 0x44;
-constexpr uint8_t IPOPT_SECURITY = 0x82;
-constexpr uint8_t IPOPT_LSRR = 0x83;
-constexpr uint8_t IPOPT_LSRR_E = 0x84;
-constexpr uint8_t IPOPT_ESEC = 0x85;
-constexpr uint8_t IPOPT_SATID = 0x88;
-constexpr uint8_t IPOPT_SSRR = 0x89;
-constexpr uint8_t IPOPT_RTRALT = 0x94;
-constexpr uint8_t IPOPT_ANY = 0xff;
 
 /* #define IP_HEADER_LEN ip::ip4_hdr_len() */
 

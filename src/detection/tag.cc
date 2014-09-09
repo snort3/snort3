@@ -39,6 +39,7 @@
 
 #include "sfxhash.h"
 #include "sfip/sfip_t.h"
+#include "sfip/sf_ip.h"
 
 /*  D E F I N E S  **************************************************/
 #define MAX_TAG_NODES   256

@@ -28,6 +28,7 @@
 #include "protocols/protocol_ids.h"
 #include "snort.h"
 #include "codecs/sf_protocols.h"
+#include "main/snort_debug.h"
 
 namespace
 {
@@ -101,14 +102,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      *
      */
     if(raw_len < 2)
-    {
-        if (ScLogVerbose())
-        {
-            ErrorMessage("Length not big enough for even a single "
-                         "header or a one byte payload\n");
-        }
         return false;
-    }
 
 
     if(raw_pkt[0] & 0x01)
@@ -175,14 +169,10 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new PppEncap();
-}
+{ return new PppEncap(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi pppencap_api =
 {

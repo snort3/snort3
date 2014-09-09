@@ -44,6 +44,7 @@
 #include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/ip.h"
+#include "protocols/ipv4_options.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
 
@@ -129,15 +130,9 @@ static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 
 
 static inline void IP4AddrTests (const IP4Hdr*, const Packet* p);
-static inline void IPMiscTests(Packet *);
-static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p);
+static inline void IPMiscTests(Packet *, const IP4Hdr* const, uint16_t len);
+static void DecodeIPOptions(const uint8_t *start, uint8_t& o_len, Packet *p);
 
-static int OptLenValidate(const uint8_t *option_ptr,
-                                 const uint8_t *end,
-                                 const uint8_t *len_ptr,
-                                 int expected_len,
-                                 Options *tcpopt,
-                                 uint8_t *byte_skip);
 
 /*******************************************
  ************  PRIVATE FUNCTIONS ***********
@@ -325,22 +320,10 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
     /* test for IP options */
-    uint16_t ip_opt_len = (uint16_t)(hlen - ip::IP4_HEADER_LEN);
+    uint8_t ip_opt_len = (uint8_t)(hlen - ip::IP4_HEADER_LEN);
 
     if(ip_opt_len > 0)
-    {
         DecodeIPOptions((raw_pkt + ip::IP4_HEADER_LEN), ip_opt_len, p);
-    }
-    else
-    {
-        /* If delivery header for GRE encapsulated packet is IP and it
-         * had options, the packet's ip options will be refering to this
-         * outer IP's options
-         * Zero these options so they aren't associated with this inner IP
-         * since p->iph will be pointing to this inner IP
-         */
-        p->ip_option_count = 0;
-    }
 
     /* set the remaining packet length */
     const_cast<uint32_t&>(raw_len) = ip_len;
@@ -386,8 +369,6 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         {
             /* set the packet fragment flag */
             p->decode_flags |= DECODE__FRAG;
-            p->ip_frag_start = raw_pkt + hlen;
-            p->ip_frag_len = (uint16_t)ip_len;
         }
     }
     else
@@ -400,24 +381,20 @@ bool Ipv4Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         codec_events::decoder_event(p, DECODE_BAD_FRAGBITS);
     }
 
-    p->frag_offset = frag_off;
-
     /* See if there are any ip_proto only rules that match */
     fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, iph->get_proto());
 
     p->proto_bits |= PROTO_BIT__IP;
-    IPMiscTests(p);
+    IPMiscTests(p, iph, ip::IP4_HEADER_LEN + ip_opt_len);
     lyr_len = hlen;
+
 
     /* if this packet isn't a fragment
      * or if it is, its a UDP packet and offset is 0 */
     if(!(p->decode_flags & DECODE__FRAG) ||
-            ((p->decode_flags & DECODE__FRAG) && (frag_off == 0) &&
-            (iph->get_proto() == IPPROTO_UDP)))
+        ((frag_off == 0) &&
+         (iph->get_proto() == IPPROTO_UDP)))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "IP header length: %lu\n",
-                    (unsigned long)hlen););
-
         if (iph->get_proto() >= MIN_UNASSIGNED_IP_PROTO)
             codec_events::decoder_event(p, DECODE_IP_UNASSIGNED_PROTO);
         else
@@ -486,70 +463,60 @@ static inline void IP4AddrTests(const IP4Hdr* iph, const Packet* p)
 
 
 /* IPv4-layer decoder rules */
-static inline void IPMiscTests(Packet *p)
+static inline void IPMiscTests(Packet *p, const IP4Hdr* const ip4h, uint16_t len)
 {
 
     /* Yes, it's an ICMP-related vuln in IP options. */
-    uint8_t i, length, pointer;
+    uint8_t length, pointer;
+
 
     /* Alert on IP packets with either 0x07 (Record Route) or 0x44 (Timestamp)
        options that are specially crafted. */
-    for (i = 0; i < p->ip_option_count; i++)
+    ip::IpOptionIterator iter(ip4h, (uint8_t)(len - ip::IP4_HEADER_LEN));
+    for (const ip::IpOptions& opt : iter)
     {
-        if (p->ip_options[i].data == NULL)
-            continue;
-
-        if (p->ip_options[i].is_opt_rr())
+        if (opt.code == ip::IPOptionCodes::RR)
         {
-            length = p->ip_options[i].len;
-            if (length < 1)
+            length = opt.len;
+            if (length < 3)
                 continue;
 
-            pointer = p->ip_options[i].data[0];
+            pointer = opt.data[0];
 
             /* If the pointer goes past the end of the data, then the data
                is full. That's okay. */
-            if (pointer >= length + 2)
+            if (pointer >= length)
                 continue;
             /* If the remaining space in the option isn't a multiple of 4
                bytes, alert. */
-            if (((length + 3) - pointer) % 4)
+            if (((length + 1) - pointer) % 4)
                 codec_events::decoder_event(p, DECODE_ICMP_DOS_ATTEMPT);
         }
-        else if (p->ip_options[i].is_opt_ts())
+        else if (opt.code == ip::IPOptionCodes::TS)
         {
-            length = p->ip_options[i].len;
+            length = opt.get_len();
             if (length < 2)
                 continue;
 
-            pointer = p->ip_options[i].data[0];
+            pointer = opt.data[0];
 
             /* If the pointer goes past the end of the data, then the data
                is full. That's okay. */
-            if (pointer >= length + 2)
+            if (pointer >= length)
                 continue;
             /* If the remaining space in the option isn't a multiple of 4
                bytes, alert. */
-            if (((length + 3) - pointer) % 4)
+            if (((length + 1) - pointer) % 4)
                 codec_events::decoder_event(p, DECODE_ICMP_DOS_ATTEMPT);
             /* If there is a timestamp + address, we need a multiple of 8
                bytes instead. */
-            if ((p->ip_options[i].data[1] & 0x01) && /* address flag */
-               (((length + 3) - pointer) % 8))
+            if ((opt.data[1] & 0x01) && /* address flag */
+               (((length + 1) - pointer) % 8))
                 codec_events::decoder_event(p, DECODE_ICMP_DOS_ATTEMPT);
         }
     }
 }
 
-
-
-// TODO :: delete.  IN TCP
-int OptLenValidate(const uint8_t *option_ptr,
-                                 const uint8_t *end,
-                                 const uint8_t *len_ptr,
-                                 int expected_len,
-                                 Options *tcpopt,
-                                 uint8_t *byte_skip);
 
 /*
  * Function: DecodeIPOptions(uint8_t *, uint32_t, Packet *)
@@ -562,127 +529,69 @@ int OptLenValidate(const uint8_t *option_ptr,
  *
  * Returns: void function
  */
-static void DecodeIPOptions(const uint8_t *start, uint32_t o_len, Packet *p)
+static void DecodeIPOptions(const uint8_t *start, uint8_t& o_len, Packet *p)
 {
-    const uint8_t *option_ptr = start;
-    u_char done = 0; /* have we reached IP_OPTEOL yet? */
-    const uint8_t *end_ptr = start + o_len;
-    uint8_t opt_count = 0; /* what option are we processing right now */
-    uint8_t byte_skip;
-    const uint8_t *len_ptr;
+    uint32_t tot_len = 0;
     int code = 0;  /* negative error codes are returned from bad options */
 
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE,  "Decoding %d bytes of IP options\n", o_len););
 
+    const ip::IpOptions* option = reinterpret_cast<const ip::IpOptions*>(start);
 
-    while((option_ptr < end_ptr) && (opt_count < IP_OPTMAX) && (code >= 0))
+
+    while(tot_len < o_len)
     {
-        p->ip_options[opt_count].code = *option_ptr;
-
-        if((option_ptr + 1) < end_ptr)
+        switch(option->code)
         {
-            len_ptr = option_ptr + 1;
+            case ip::IPOptionCodes::EOL:
+                /* if we hit an EOL, we're done */
+                tot_len++;
+                p->byte_skip = o_len - tot_len;
+                o_len = tot_len;
+                return;
+                // fall through
+
+            case ip::IPOptionCodes::NOP:
+                tot_len++;
+                break;
+
+            default:
+
+                if((tot_len + 1) >= o_len)
+                    code = tcp::OPT_TRUNC;
+
+                /* RFC sez that we MUST have atleast this much data */
+                else if (option->get_len() < 2)
+                    code = tcp::OPT_BADLEN;
+
+                else if (tot_len + option->get_len() > o_len)
+                    /* not enough data to read in a perfect world */
+                    code = tcp::OPT_TRUNC;
+
+
+
+                if(code < 0)
+                {
+                    /* Yes, we use TCP_OPT_* for the IP option decoder. */
+                    if(code == tcp::OPT_BADLEN)
+                        codec_events::decoder_event(p, DECODE_IPV4OPT_BADLEN);
+                    else if(code == tcp::OPT_TRUNC)
+                        codec_events::decoder_event(p, DECODE_IPV4OPT_TRUNCATED);
+
+                    p->byte_skip = o_len - tot_len;
+                    o_len = tot_len;
+                    return;
+                }
+
+                tot_len += option->len;
         }
-        else
-        {
-            len_ptr = NULL;
-        }
 
-        switch(static_cast<ip::IPOptionCodes>(*option_ptr))
-        {
-        case ip::IPOptionCodes::EOL:
-            done = 1;
-            // fall through
-        
-        case ip::IPOptionCodes::NOP:
-            /* if we hit an EOL, we're done */
 
-            p->ip_options[opt_count].len = 0;
-            p->ip_options[opt_count].data = NULL;
-            byte_skip = 1;
-            break;
-        default:
-            /* FIXIT-L - J ip option validation should be updated.  3 of these fields are useless */
-            code = OptLenValidate(option_ptr, end_ptr, len_ptr, -1,
-                    reinterpret_cast<Options *>(&p->ip_options[opt_count]), &byte_skip);
-        }
-
-        if(code < 0)
-        {
-            /* Yes, we use TCP_OPT_* for the IP option decoder.
-            */
-            if(code == tcp::OPT_BADLEN)
-            {
-                codec_events::decoder_event(p, DECODE_IPV4OPT_BADLEN);
-            }
-            else if(code == tcp::OPT_TRUNC)
-            {
-                codec_events::decoder_event(p, DECODE_IPV4OPT_TRUNCATED);
-            }
-            return;
-        }
-
-        if(!done)
-            opt_count++;
-
-        option_ptr += byte_skip;
+        option = &(option->next());
     }
-
-    p->ip_option_count = opt_count;
-
-    return;
 }
 
-
-static int OptLenValidate(const uint8_t *option_ptr,
-                                 const uint8_t *end,
-                                 const uint8_t *len_ptr,
-                                 int expected_len,
-                                 Options *tcpopt,
-                                 uint8_t *byte_skip)
-{
-    *byte_skip = 0;
-
-    if(len_ptr == NULL)
-        return tcp::OPT_TRUNC;
-
-
-    if(*len_ptr == 0 || expected_len == 0 || expected_len == 1)
-    {
-        return tcp::OPT_BADLEN;
-    }
-    else if(expected_len > 1)
-    {
-        /* not enough data to read in a perfect world */
-        if((option_ptr + expected_len) > end)
-            return tcp::OPT_TRUNC;
-
-        if(*len_ptr != expected_len)
-            return tcp::OPT_BADLEN;
-    }
-    else /* expected_len < 0 (i.e. variable length) */
-    {
-        /* RFC sez that we MUST have atleast this much data */
-        if(*len_ptr < 2)
-            return tcp::OPT_BADLEN;
-
-        /* not enough data to read in a perfect world */
-        if((option_ptr + *len_ptr) > end)
-            return tcp::OPT_TRUNC;
-    }
-
-    tcpopt->len = *len_ptr - 2;
-
-    if(*len_ptr == 2)
-        tcpopt->data = NULL;
-    else
-        tcpopt->data = option_ptr + 2;
-
-    *byte_skip = *len_ptr;
-
-    return 0;
-}
 
 /******************************************************************
  *********************  L O G G E R  ******************************
@@ -745,11 +654,11 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         TextLog_Puts(text_log, " MF");
 
     /* print IP options */
-    if(p->ip_option_count > 0)
+    if (ip4h->has_options())
     {
         TextLog_Putc(text_log, '\t');
         TextLog_NewLine(text_log);
-        LogIpOptions(text_log, p);
+        LogIpOptions(text_log, ip4h, p);
     }
 
 
@@ -871,6 +780,12 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     }
     if ( f & ENC_FLAG_DEF )
     {
+        lyr->length = ip::IP4_HEADER_LEN;
+        ch->set_ip_len(htons(ip::IP4_HEADER_LEN));
+        ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
+
+#if 0
+        // FIXIT-L - J why did Snort check for this?
         int i = lyr - c->layers;
         if ( i + 1 == p->num_layers )
         {
@@ -878,6 +793,7 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
             ch->set_ip_len(htons(ip::IP4_HEADER_LEN));
             ch->set_hlen(ip::IP4_HEADER_LEN >> 2);
         }
+#endif
     }
 
     c->ip_api.set(ch);

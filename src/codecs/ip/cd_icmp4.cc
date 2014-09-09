@@ -30,13 +30,16 @@
 #include "protocols/icmp4.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
 #include "codecs/decode_module.h"
 #include "codecs/sf_protocols.h"
 #include "codecs/ip/ip_util.h"
+#include "protocols/protocol_ids.h"
+#include "protocols/packet.h"
+#include "protocols/ipv4_options.h"
 #include "packet_io/active.h"
 #include "log/text_log.h"
+#include "main/snort_debug.h"
+#include "sfip/sf_ip.h"
 
 namespace{
 
@@ -304,11 +307,14 @@ void Icmp4Codec::ICMP4MiscTests (Packet *p)
 
     if (p->icmph->type == icmp::IcmpType::ECHOREPLY)
     {
-        int i;
-        for (i = 0; i < p->ip_option_count; i++)
+        if (p->ip_api.is_ip4())
         {
-            if (p->ip_options[i].is_opt_rr())
-                codec_events::decoder_event(p, DECODE_ICMP_TRACEROUTE_IPOPTS);
+            ip::IpOptionIterator iter(p->ip_api.get_ip4h(), p);
+            for (const ip::IpOptions& opt : iter)
+            {
+                if (opt.code == ip::IPOptionCodes::RR)
+                    codec_events::decoder_event(p, DECODE_ICMP_TRACEROUTE_IPOPTS);
+            }
         }
     }
 

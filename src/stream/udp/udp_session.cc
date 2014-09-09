@@ -44,6 +44,7 @@
 #include "packet_io/active.h"
 #include "perf_monitor/perf.h"
 #include "profiler.h"
+#include "sfip/sf_ip.h"
 
 /* sender/responder ip/port dereference */
 #define udp_sender_ip flow->client_ip

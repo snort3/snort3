@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 noinst_LIBRARIES = libloggers.a
 libloggers_a_SOURCES = \
 alert_luajit.cc \
+log_codecs.cc \
 loggers.cc \
 loggers.h
 

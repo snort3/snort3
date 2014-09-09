@@ -43,6 +43,7 @@
 #include "snort_config.h"
 #include "parser/config_file.h"
 #include "codecs/ip/ip_util.h"
+#include "main/snort_debug.h"
 
 
 namespace
@@ -158,11 +159,7 @@ bool UdpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     if(raw_len < sizeof(udp::UDPHdr))
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-                "Truncated UDP header (%d bytes)\n", raw_len););
-
         codec_events::decoder_event(p, DECODE_UDP_DGRAM_LT_UDPHDR);
-
         PopUdp(p);
         return false;
     }
@@ -349,6 +346,7 @@ static inline void UDPMiscTests(Packet *p)
  */
 static inline void PopUdp (Packet* p)
 {
+    //FIXIT-J-H
 
     // required for detect.c to short-circuit preprocessing
     if ( !p->dsize )
@@ -382,7 +380,7 @@ typedef struct {
 
 
 
-bool UdpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool UdpCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
 {   
     const ip::IpApi* const ip_api = &enc->p->ip_api;
 

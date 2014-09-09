@@ -32,6 +32,7 @@
 #include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "time/profiler.h"
+#include "sfip/sf_ip.h"
 
 enum SsodOp
 {

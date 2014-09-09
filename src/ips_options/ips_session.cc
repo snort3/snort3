@@ -69,6 +69,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "sfip/sf_ip.h"
 
 static const char* s_name = "session";
 

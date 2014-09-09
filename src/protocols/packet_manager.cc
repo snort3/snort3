@@ -41,6 +41,7 @@
 #include "codecs/decode_module.h"
 #include "utils/stats.h"
 #include "log/text_log.h"
+#include "main/snort_debug.h"
 
 
 #ifdef PERF_PROFILING
@@ -86,20 +87,14 @@ static inline void push_layer(Packet *p,
                                 uint32_t len,
                                 Codec *const cd)
 {
-    if ( p->num_layers < LAYER_MAX )
-    {
-        Layer& lyr = p->layers[p->num_layers++];
-        lyr.proto = cd->get_proto_id();
-        lyr.prot_id = prot_id;
-        lyr.start = hdr_start;
-        lyr.length = (uint16_t)len;
-    }
-    else
-    {
-        //FIXIT-M   Alert when max layers maxed out.
-        LogMessage("(packet_manager) WARNING: decoder has too many layers;"
-            " next proto is something.\n");
-    }
+
+    // We check to ensure num_layer < MAX_LAYERS before this function call
+    Layer& lyr = p->layers[p->num_layers++];
+    lyr.proto = cd->get_proto_id();
+    lyr.prot_id = prot_id;
+    lyr.start = hdr_start;
+    lyr.length = (uint16_t)len;
+//    lyr.invalid_bits = p->byte_skip;  -- currently unused
 }
 
 //-------------------------------------------------------------------------
@@ -181,11 +176,14 @@ void PacketManager::decode(
         mapped_prot = CodecManager::s_proto_map[prot_id];
         prev_prot_id = prot_id;
 
+        lyr_len += p->byte_skip;
+
         // set for next call
         prot_id = FINISHED_DECODE;
         len -= lyr_len;
         pkt += lyr_len;
         lyr_len = 0;
+        p->byte_skip = 0;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
@@ -360,7 +358,7 @@ int PacketManager::encode_format_with_daq_info (
 
     if ( f & ENC_FLAG_NET )
     {
-        num_layers = layer::get_inner_ip_lyr(p) + 1;
+        num_layers = layer::get_inner_ip_lyr_index(p) + 1;
 
         // TBD:  is this an extraneous check?
         if (num_layers == 0)

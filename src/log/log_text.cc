@@ -65,6 +65,8 @@
 #include "protocols/wlan.h"
 #include "protocols/linux_sll.h"
 #include "protocols/eapol.h"
+#include "protocols/ipv4_options.h"
+#include "protocols/tcp_options.h"
 
 /*--------------------------------------------------------------------
  * utility functions
@@ -436,17 +438,18 @@ void Log2ndHeader(TextLog* log, Packet* p)
  *-------------------------------------------------------------------
  */
 
-void LogIpOptions(TextLog*  log, const Packet* const p)
+void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
 {
-    uint8_t i, j;
     u_long init_offset;
     u_long print_offset;
-    const uint8_t option_count = p->ip_option_count;
+
 
     init_offset = TextLog_Tell(log);
-    TextLog_Print(log, "IP Options (%d) => ", option_count);
+    TextLog_Puts(log, "IP Options => ");
 
-    for(i = 0; i < option_count; i++)
+    ip::IpOptionIterator options(ip4h, p);
+
+    for (auto op : options)
     {
         print_offset = TextLog_Tell(log);
 
@@ -456,84 +459,67 @@ void LogIpOptions(TextLog*  log, const Packet* const p)
             init_offset = TextLog_Tell(log);
         }
 
-        switch(p->ip_options[i].code)
+        switch(op.code)
         {
-            case IPOPT_RR:
+            case ip::IPOptionCodes::RR:
                 TextLog_Puts(log, "RR ");
                 break;
 
-            case IPOPT_EOL:
+            case ip::IPOptionCodes::EOL:
                 TextLog_Puts(log, "EOL ");
                 break;
 
-            case IPOPT_NOP:
+            case ip::IPOptionCodes::NOP:
                 TextLog_Puts(log, "NOP ");
                 break;
 
-            case IPOPT_TS:
+            case ip::IPOptionCodes::TS:
                 TextLog_Puts(log, "TS ");
                 break;
 
-            case IPOPT_ESEC:
+            case ip::IPOptionCodes::ESEC:
                 TextLog_Puts(log, "ESEC ");
                 break;
 
-            case IPOPT_SECURITY:
+            case ip::IPOptionCodes::SECURITY:
                 TextLog_Puts(log, "SEC ");
                 break;
 
-            case IPOPT_LSRR:
-            case IPOPT_LSRR_E:
+            case ip::IPOptionCodes::LSRR:
+            case ip::IPOptionCodes::LSRR_E:
                 TextLog_Puts(log, "LSRR ");
                 break;
 
-            case IPOPT_SATID:
+            case ip::IPOptionCodes::SATID:
                 TextLog_Puts(log, "SID ");
                 break;
 
-            case IPOPT_SSRR:
+            case ip::IPOptionCodes::SSRR:
                 TextLog_Puts(log, "SSRR ");
                 break;
 
-            case IPOPT_RTRALT:
+            case ip::IPOptionCodes::RTRALT:
                 TextLog_Puts(log, "RTRALT ");
                 break;
 
             default:
-                TextLog_Print(log, "Opt %d: ", p->ip_options[i].code);
+                TextLog_Print(log, "Opt %d: ", (int)op.code);
 
-                const ip::IpOptions* const ip_opt = &(p->ip_options[i]);
-                const uint8_t opt_len = ip_opt->len;
+                // the only cases where len is invalid were handled aboved
+                const uint8_t opt_len = op.len;
+                int j;
 
-                if(opt_len)
+                for(j = 0; (j + 1) < opt_len; j += 2)
                 {
-                    if (ip_opt->data)
-                    {
-                        for(j = 0; (j + 1) < opt_len; j += 2)
-                        {
-                            TextLog_Print(log, "%02X%02X ",ip_opt->data[j],
-                                                           ip_opt->data[j+1]);
-                        }
-
-                        // since we're skipping by two, if (j+1) == opt_len,
-                        // we will not have printed j
-                        if (j < opt_len)
-                            TextLog_Print(log, "%02X",ip_opt->data[j]);
-                    }
-                    else
-                    {
-                        for(j = 0; (j + 1) < opt_len; j += 2)
-                        {
-                            TextLog_Print(log, "%02X%02X ", 0, 0);
-                        }
-
-                        // since we're skipping by two, if (j+1) == opt_len,
-                        // we will not have printed j
-                        if (j < opt_len)
-                            TextLog_Print(log, "%02X",0);
-                    }
+                    TextLog_Print(log, "%02X%02X ",op.data[j],
+                                                   op.data[j+1]);
                 }
-                break;
+
+                // since we're skipping by two, if (j+1) == opt_len,
+                // we will not have printed j
+                if (j < opt_len)
+                    TextLog_Print(log, "%02X", op.data[j]);
+            break;
         }
     }
     TextLog_NewLine(log);
@@ -631,42 +617,45 @@ void LogIPHeader(TextLog*  log, Packet * p)
             p->ip_api.hlen() << 2,
             p->ip_api.dgram_len());
 
+    const uint16_t frag_off = ntohs(p->ip_api.off(p));
+
     /* print the reserved bit if it's set */
-    if((uint8_t)((ntohs(p->ip_api.off(p)) & 0x8000) >> 15) == 1)
+    if(frag_off & 0x8000)
         TextLog_Puts(log, " RB");
 
     /* printf more frags/don't frag bits */
-    if((uint8_t)((ntohs(p->ip_api.off(p)) & 0x4000) >> 14) == 1)
+    if(frag_off & 0x4000)
         TextLog_Puts(log, " DF");
 
-    if((uint8_t)((ntohs(p->ip_api.off(p)) & 0x2000) >> 13) == 1)
+    if(frag_off & 0x2000)
         TextLog_Puts(log, " MF");
 
     TextLog_NewLine(log);
 
     /* print IP options */
-    if(p->ip_option_count != 0)
+    if(p->ip_api.is_ip4())
     {
-        LogIpOptions(log, p);
+        const ip::IP4Hdr* const ip4h = p->ip_api.get_ip4h();
+
+        if (ip4h->has_options())
+          LogIpOptions(log, ip4h, p);
     }
 
     /* print fragment info if necessary */
     if(p->decode_flags & DECODE__FRAG)
     {
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
-                (p->frag_offset & 0x1FFF),
+                (frag_off & 0x1FFF),
                 p->ip_api.pay_len());
     }
 }
 
 static void LogOuterIPHeader(TextLog *log, Packet *p)
 {
-    uint8_t save_ip_option_count = p->ip_option_count;
     uint8_t save_frag_flag = (p->decode_flags & DECODE__FRAG);
     uint16_t save_sp, save_dp;
     ip::IpApi save_ip_api = p->ip_api;
 
-    p->ip_option_count = 0;
     p->decode_flags &= ~DECODE__FRAG;
 
     if (p->proto_bits & PROTO_BIT__TEREDO)
@@ -687,7 +676,6 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
         LogIPHeader(log, p);
 
     p->ip_api = save_ip_api;
-    p->ip_option_count = save_ip_option_count;
     p->decode_flags |= save_frag_flag;
 }
 
@@ -703,14 +691,12 @@ inline uint32_t extract_32_bits(const uint8_t* const buf)
 
 void LogTcpOptions(TextLog*  log, const Packet* const p)
 {
-    uint8_t i;
-    int j;
-    const uint8_t option_count = p->tcp_option_count;
-    const Options* const opts = p->tcp_options;
+    tcp::TcpOptIterator opt_iter(p->tcph, p);
 
-    TextLog_Print(log, "TCP Options (%d) => ", option_count);
 
-    for(i = 0; i < option_count; i++)
+    TextLog_Print(log, "TCP Options =>");
+
+    for (const tcp::TcpOption& opt : opt_iter)
     {
 #if 0
         print_offset = TextLog_Tell(log);
@@ -721,53 +707,37 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
             init_offset = TextLog_Tell(log);
         }
 #endif
-        switch(opts[i].code)
+        switch(opt.code)
         {
-            case TCPOPT_MAXSEG:
+            case tcp::TcpOptCode::MAXSEG:
+                TextLog_Print(log, "  MSS: %u", extract_16_bits(opt.data));
+                break;
+
+            case tcp::TcpOptCode::EOL:
+                TextLog_Puts(log, "  EOL");
+                break;
+
+            case tcp::TcpOptCode::NOP:
+                TextLog_Puts(log, "  NOP");
+                break;
+
+            case tcp::TcpOptCode::WSCALE:
+                TextLog_Print(log, "  WS: %u", opt.data[0]);
+                break;
+
+            case tcp::TcpOptCode::SACK:
             {
-                uint16_t val;
-                TextLog_Puts(log, "MSS: ");
-
-                if (opts[i].data)
-                    val = extract_16_bits(opts[i].data);
-                else
-                    val = 0;
-
-                TextLog_Print(log, "%u ", val);
-                break;
-            }
-            case TCPOPT_EOL:
-                TextLog_Puts(log, "EOL ");
-                break;
-
-            case TCPOPT_NOP:
-                TextLog_Puts(log, "NOP ");
-                break;
-
-            case TCPOPT_WSCALE:
-            {
-                uint8_t val;
-
-                if (opts[i].data)
-                    val = opts[i].data[0];
-                else
-                    val = 0;
-
-                TextLog_Print(log, "WS: %u ", val);
-                break;
-            }
-            case TCPOPT_SACK:
-            {
+                /* This length was not check during tcp decode */
                 uint16_t val1, val2;
 
-                if (opts[i].data && (opts[i].len >= 4))
+                if (opt.len >= 4)
                 {
-                    val1 = extract_16_bits(opts[i].data);
-                    val2 = extract_16_bits(opts[i].data + 2);
+                    val1 = extract_16_bits(opt.data);
+                    val2 = extract_16_bits(opt.data + 2);
                 }
-                else if (opts[i].data && (opts[i].len >= 2))
+                else if (opt.len >= 2)
                 {
-                    val1 = extract_16_bits(opts[i].data);
+                    val1 = extract_16_bits(opt.data);
                     val2 = 0;
                 }
                 else
@@ -776,126 +746,59 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
                     val2 = 0;
                 }
 
-                TextLog_Print(log, "Sack: %u@%u", val1, val2);
+                TextLog_Print(log, "  Sack: %u@%u", val1, val2);
                 break;
             }
-            case TCPOPT_SACKOK:
+            case tcp::TcpOptCode::SACKOK:
                 TextLog_Puts(log, "SackOK ");
                 break;
 
-            case TCPOPT_ECHO:
-            {
-                uint32_t val;
-
-                if (opts[i].data)
-                    val = extract_32_bits(opts[i].data);
-                else
-                    val = 0;
-
-                TextLog_Print(log, "Echo: %u ", val);
+            case tcp::TcpOptCode::ECHO:
+                TextLog_Print(log, "Echo: %u", extract_32_bits(opt.data));
                 break;
-            }
-            case TCPOPT_ECHOREPLY:
-            {
-                uint32_t val;
 
-                if (opts[i].data)
-                    val = extract_32_bits(opts[i].data);
-                else
-                    val = 0;
-
-                TextLog_Print(log, "Echo Rep: %u ", val);
+            case tcp::TcpOptCode::ECHOREPLY:
+                TextLog_Print(log, "Echo Rep: %u", extract_32_bits(opt.data));
                 break;
-            }
-            case TCPOPT_TIMESTAMP:
-            {
-                uint32_t val1, val2;
 
-                if (opts[i].data)
-                {
-                    val1 = extract_32_bits(opts[i].data);
-                    val2 = extract_32_bits(opts[i].data + 4);
-                }
-                else
-                {
-                    val1 = 0;
-                    val2 = 0;
-                }
-                TextLog_Print(log, "TS: %u %u ", val1, val2);
+            case tcp::TcpOptCode::TIMESTAMP:
+                TextLog_Print(log, "TS: %u %u", extract_32_bits(opt.data), opt.data + 4);
                 break;
-            }
-            case TCPOPT_CC:
-            {
-                uint32_t val;
 
-                if (opts[i].data)
-                    val = extract_32_bits(opts[i].data);
-                else
-                    val = 0;
-
-                TextLog_Print(log, "CC %u ", val);
+            case tcp::TcpOptCode::CC:
+                TextLog_Print(log, "CC %u", extract_32_bits(opt.data));
                 break;
-            }
-            case TCPOPT_CC_NEW:
-            {
-                uint32_t val;
 
-                if (opts[i].data)
-                    val = extract_32_bits(opts[i].data);
-                else
-                    val = 0;
-
-                TextLog_Print(log, "CCNEW: %u ", val);
+            case tcp::TcpOptCode::CC_NEW:
+                TextLog_Print(log, "CCNEW: %u", extract_32_bits(opt.data));
                 break;
-            }
-            case TCPOPT_CC_ECHO:
-            {
-                uint32_t val;
 
-                if (opts[i].data)
-                    val = extract_32_bits(opts[i].data);
-                else
-                    val = 0;
-
-                TextLog_Print(log, "CCECHO: %u ", val);
+            case tcp::TcpOptCode::CC_ECHO:
+                TextLog_Print(log, "CCECHO: %u", extract_32_bits(opt.data));
                 break;
-            }
+
             default:
             {
-                const uint8_t opts_len = opts[i].len;
+                const int opt_len = opt.len - 2;
 
-                if(opts_len)
+                if(opt_len > 0)
                 {
-                    TextLog_Print(log, "Opt %d (%d): ", opts[i].code,
-                            (int) opts_len);
+                    TextLog_Print(log, "  Opt %d (%d):", opt.code,
+                            (int) opt_len);
 
-                    if (opts[i].data)
+                    for (int i = 0; (i + 1) < opt_len; i += 2)
                     {
-                        for(j = 0; (j +1) < opts_len; j += 2)
-                        {
-                            TextLog_Print(log, "%02X%02X ",  opts[i].data[j],
-                                                             opts[i].data[j+1]);
-                        }
-
-                        if (j < opts_len)
-                            TextLog_Print(log, "%02x", opts[i].data[j]);
-                    }
-                    else
-                    {
-                        for(j = 0; (j +1) < opts_len; j += 2)
-                        {
-                            TextLog_Print(log, "%02X%02X ", 0, 0);
-                        }
-
-                        if (j < opts_len)
-                            TextLog_Print(log, "%02x", 0);
+                            TextLog_Print(log, " %02X%02X",  opt.data[i],
+                                                             opt.data[i+1]);
                     }
 
-                    TextLog_Putc(log, ' ');
+                    // if there is an odd number of bytes
+                    if (opt_len & 1)
+                        TextLog_Print(log, " %02x", opt.data[opt_len - 1]);
                 }
                 else
                 {
-                    TextLog_Print(log, "Opt %d ", p->tcp_options[i].code);
+                    TextLog_Print(log, "  Opt %d", opt.code);
                 }
                 break;
             }
@@ -918,25 +821,26 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
 void LogTCPHeader(TextLog*  log, Packet * p)
 {
     char tcpFlags[9];
+    const tcp::TCPHdr* tcph = p->tcph;
 
-    if(p->tcph == NULL)
+    if(tcph == NULL)
     {
         TextLog_Print(log, "TCP header truncated\n");
         return;
     }
     /* print TCP flags */
-    CreateTCPFlagString(p->tcph, tcpFlags);
+    CreateTCPFlagString(tcph, tcpFlags);
     TextLog_Puts(log, tcpFlags); /* We don't care about the NULL */
 
     /* print other TCP info */
     TextLog_Print(log, " Seq: 0x%lX  Ack: 0x%lX  Win: 0x%X  TcpLen: %d",
-            (u_long) ntohl(p->tcph->th_seq),
-            (u_long) ntohl(p->tcph->th_ack),
-            ntohs(p->tcph->th_win), TCP_OFFSET(p->tcph) << 2);
+            (u_long) ntohl(tcph->th_seq),
+            (u_long) ntohl(tcph->th_ack),
+            ntohs(tcph->th_win), tcph->off() << 2);
 
-    if((p->tcph->th_flags & TH_URG) != 0)
+    if((tcph->th_flags & TH_URG) != 0)
     {
-        TextLog_Print(log, "  UrgPtr: 0x%X\n", (uint16_t) ntohs(p->tcph->th_urp));
+        TextLog_Print(log, "  UrgPtr: 0x%X\n", (uint16_t) ntohs(tcph->th_urp));
     }
     else
     {
@@ -944,7 +848,7 @@ void LogTCPHeader(TextLog*  log, Packet * p)
     }
 
     /* dump the TCP options */
-    if(p->tcp_option_count != 0)
+    if(tcph->has_options())
     {
         LogTcpOptions(log, p);
     }
