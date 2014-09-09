@@ -108,7 +108,7 @@ public:
     { return ip4h ? ip4h->get_ttl() : ip6h ? ip6h->get_hop_lim() : 0; }
 
     inline uint8_t proto() const
-    { return ip4h ? ip4h->get_proto() : ip6h ? ip6h->get_next() : 0; }
+    { return ip4h ? ip4h->get_proto() : ip6h ? ip6h->get_next() : 0xFF; }
 
     inline uint16_t len() const
     { return ip4h ? ip4h->get_len() : ip6h ? ip6h->get_len() : 0; }
