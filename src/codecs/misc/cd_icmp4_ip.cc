@@ -256,7 +256,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     "Ack: 0x%lX  Win: 0x%X  TcpLen: %d",ntohs(tcph->th_sport),
                     ntohs(tcph->th_dport), (u_long) ntohl(tcph->th_seq),
                     (u_long) ntohl(tcph->th_ack),
-                    ntohs(tcph->th_win), TCP_OFFSET(tcph) << 2);
+                    ntohs(tcph->th_win), tcph->off() << 2);
 
             break;
         }

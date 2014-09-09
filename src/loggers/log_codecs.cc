@@ -199,4 +199,4 @@ static const LogApi log_codecs_api =
 };
 
 
-const BaseApi* eh_codecs = &log_codecs_api.base;
+const BaseApi* log_codecs = &log_codecs_api.base;

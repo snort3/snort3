@@ -372,7 +372,7 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         else if (!strcasecmp("tcp_len", type))
         {
             if (p->tcph != NULL)
-                TextLog_Print(csv_log, "%d", TCP_OFFSET(p->tcph) << 2);
+                TextLog_Print(csv_log, "%d", (p->tcph->off()) << 2);
         }
         else if (!strcasecmp("tcp_win", type))
         {

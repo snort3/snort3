@@ -115,6 +115,7 @@
 #include "sfxhash.h"
 #include "ipobj.h"
 #include "stream/stream_api.h"
+#include "sfip/sf_ip.h"
 
 typedef struct s_PS_HASH_KEY
 {

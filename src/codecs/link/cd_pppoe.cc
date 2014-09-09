@@ -27,6 +27,7 @@
 #include "protocols/packet.h"
 #include "codecs/sf_protocols.h"
 #include "protocols/layer.h"
+#include "main/snort_debug.h"
 
 namespace
 {
@@ -437,9 +438,7 @@ bool PPPoESessCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
 bool PPPoESessCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
-{
-    return pppoepkt_encode(enc, out, raw_in);
-}
+{ return pppoepkt_encode(enc, out, raw_in); }
 
 
 //-------------------------------------------------------------------------
@@ -448,14 +447,10 @@ bool PPPoESessCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
 
 
 static Codec* sess_ctor(Module*)
-{
-    return new PPPoESessCodec();
-}
+{ return new PPPoESessCodec(); }
 
 static void sess_dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi pppoepkt_sess_api =

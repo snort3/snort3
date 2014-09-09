@@ -32,7 +32,7 @@ libcd_icmp6_ip_la_SOURCES = cd_icmp6_ip.cc
 ehlib_LTLIBRARIES += libcd_llc.la
 libcd_llc_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_llc_la_LDFLAGS = -export-dynamic -shared
-libcd_llc_la_SOURCES = libcd_llc.cc
+libcd_llc_la_SOURCES = cd_llc.cc
 
 ehlib_LTLIBRARIES += libcd_gtp.la
 libcd_gtp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

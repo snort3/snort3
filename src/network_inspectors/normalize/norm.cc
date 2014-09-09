@@ -32,7 +32,9 @@
 #include "perf_monitor/perf.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/ipv4.h"
+#include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
+#include "protocols/tcp_options.h"
 #include "stream/stream.h"
 
 typedef enum {
@@ -226,7 +228,7 @@ static int Norm_IP4 (
         uint8_t* opts = const_cast<uint8_t*>(p->layers[layer].start) + ip::IP4_HEADER_LEN;
         uint8_t len = p->layers[layer].length - ip::IP4_HEADER_LEN;
         // expect len > 0 because IHL yields a multiple of 4
-        memset(opts, IPOPT_NOP, len);
+        memset(opts, static_cast<uint8_t>(ip::IPOptionCodes::NOP), len);
         normStats[PC_IP4_OPTS]++;
         sfBase.iPegs[PERF_COUNT_IP4_OPTS]++;
         changes++;
@@ -337,7 +339,7 @@ static int Norm_UDP (Packet * p, uint8_t layer, int changes)
 
 static inline void NopDaOpt (uint8_t* opt, uint8_t len)
 {
-    memset(opt, TCPOPT_NOP, len);
+    memset(opt, (uint8_t)tcp::TcpOptCode::NOP , len);
 }
 
 #define TS_ECR_OFFSET 6
@@ -345,13 +347,13 @@ static inline void NopDaOpt (uint8_t* opt, uint8_t len)
 
 static inline int Norm_TCPOptions (
     NormalizerConfig* config,
-    uint8_t* opts, size_t len, const tcp::TCPHdr* h, uint8_t numOpts, int changes)
+    uint8_t* opts, size_t len, const tcp::TCPHdr* h, uint8_t validated_len, int changes)
 {
     size_t i = 0;
-    uint8_t c = 0;
 
-    while ( (i < len) && (opts[i] != TCPOPT_EOL) &&
-        (c++ < numOpts) )
+    while ( (i < len) &&
+            (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
+            (i < validated_len) )
     {
         uint8_t olen = ( opts[i] <= 1 ) ? 1 : opts[i+1];
 
@@ -361,13 +363,13 @@ static inline int Norm_TCPOptions (
         if ( i + olen > len)
             break;
 
-        switch ( opts[i] )
+        switch ( static_cast<tcp::TcpOptCode>(opts[i]) )
         {
-        case TCPOPT_NOP:
+        case tcp::TcpOptCode::NOP:
             break;
 
-        case TCPOPT_MAXSEG:
-        case TCPOPT_WSCALE:
+        case tcp::TcpOptCode::MAXSEG:
+        case tcp::TcpOptCode::WSCALE:
             if ( !(h->th_flags & TH_SYN) )
             {
                 NopDaOpt(opts+i, olen);
@@ -377,7 +379,7 @@ static inline int Norm_TCPOptions (
             }
             break;
 
-        case TCPOPT_TIMESTAMP:
+        case tcp::TcpOptCode::TIMESTAMP:
             if ( !(h->th_flags & TH_ACK) &&
                 // use memcmp because opts have arbitrary alignment
                 memcmp(opts+i+TS_ECR_OFFSET, MAX_EOL_PAD, TS_ECR_LENGTH) )
@@ -412,12 +414,13 @@ static inline int Norm_TCPOptions (
 }
 
 static inline int Norm_TCPPadding (
-    uint8_t* opts, size_t len, uint8_t numOpts, int changes)
+    uint8_t* opts, size_t len, uint8_t validated_len, int changes)
 {
     size_t i = 0;
-    uint8_t c = 0;
 
-    while ( (i < len) && (opts[i] != TCPOPT_EOL) && (c++ < numOpts) )
+    while ( (i < len) &&
+            (opts[i] != (uint8_t)tcp::TcpOptCode::EOL) &&
+            (i < validated_len) )
     {
         i += ( opts[i] <= 1 ) ? 1 : opts[i+1];
     }
@@ -496,20 +499,24 @@ static int Norm_TCP (
         changes++;
     }
 
-    uint8_t tcp_options_len = p->tcph->options_len();
+    uint8_t tcp_options_len = h->options_len();
+
     if ( tcp_options_len > 0 )
     {
-        uint8_t* opts = const_cast<uint8_t*>(p->layers[layer].start) + tcp::TCP_HEADER_LEN;
+        const Layer& lyr = p->layers[layer];
+        uint8_t* opts = const_cast<uint8_t*>(lyr.start) + tcp::TCP_HEADER_LEN;
+        // lyr.length only includes valid tcp options
+        uint8_t valid_opts_len = lyr.length - tcp::TCP_HEADER_LEN;
 
         if ( Norm_IsEnabled(c, NORM_TCP_OPT) )
         {
             changes = Norm_TCPOptions(c, opts, tcp_options_len,
-                h, p->tcp_option_count, changes);
+                h, valid_opts_len, changes);
         }
         else
         {
             changes = Norm_TCPPadding(opts, tcp_options_len,
-                p->tcp_option_count, changes);
+                valid_opts_len, changes);
         }
     }
     return changes;

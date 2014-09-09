@@ -75,6 +75,7 @@
 #include "actions/actions.h"
 #include "protocols/packet.h"
 #include "utils/stats.h"
+#include "sfip/sf_ip.h"
 
 #ifdef PPM_MGR
 

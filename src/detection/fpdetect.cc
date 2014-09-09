@@ -73,6 +73,7 @@
 #include "actions/actions.h"
 #include "protocols/packet_manager.h"
 #include "managers/action_manager.h"
+#include "sfip/sf_ip.h"
 
 /*
 **  Static function prototypes
