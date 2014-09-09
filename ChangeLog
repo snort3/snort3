@@ -1,6 +1,9 @@
 118
 -- fixed bind action
 -- tweaked main loop
+-- added module 1-line help
+-- latest from josh
+-- added plugin 1-line help (should be same as module, if plugin has module)
 
 117
 -- added --stdin-rules

@@ -130,6 +130,7 @@ static const InspectApi udp_api =
     {
         PT_INSPECTOR,
         MOD_NAME,
+        MOD_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

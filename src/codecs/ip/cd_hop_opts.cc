@@ -33,10 +33,11 @@
 #include "main/snort.h"
 #include "detection/fpdetect.h"
 
+#define CD_HOPOPTS_NAME "ipv6_hop_opts"
+#define CD_HOPOPTS_HELP "support for IPv6 hop options"
+
 namespace
 {
-
-#define CD_HOPOPTS_NAME "ipv6_hop_opts"
 
 class Ipv6HopOptsCodec : public Codec
 {
@@ -139,6 +140,7 @@ static const CodecApi ipv6_hopopts_api =
     {
         PT_CODEC,
         CD_HOPOPTS_NAME,
+        CD_HOPOPTS_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

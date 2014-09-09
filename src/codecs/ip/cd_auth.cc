@@ -34,10 +34,11 @@
 #include "protocols/packet.h"
 #include "codecs/ip/ip_util.h"
 
+#define CD_AUTH_NAME "auth"
+#define CD_AUTH_HELP "support for IP authentication header"
+
 namespace
 {
-
-#define CD_AUTH_NAME "auth"
 
 static const RuleMap auth_rules[] =
 {
@@ -49,7 +50,7 @@ static const RuleMap auth_rules[] =
 class AuthModule : public DecodeModule
 {
 public:
-    AuthModule() : DecodeModule(CD_AUTH_NAME) {}
+    AuthModule() : DecodeModule(CD_AUTH_NAME, CD_AUTH_HELP) {}
 
     const RuleMap* get_rules() const
     { return auth_rules; }
@@ -59,7 +60,6 @@ public:
 //-------------------------------------------------------------------------
 // auth module
 //-------------------------------------------------------------------------
-
 
 class AuthCodec : public Codec
 {
@@ -133,6 +133,7 @@ static const CodecApi ah_api =
     {
         PT_CODEC,
         CD_AUTH_NAME,
+        CD_AUTH_HELP,
         CDAPI_PLUGIN_V0, 
         0,
         mod_ctor,

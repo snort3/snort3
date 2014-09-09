@@ -30,8 +30,6 @@ using namespace std;
 #include "wizard.h"
 #include "magic.h"
 
-static const char* s_name = "wizard";
-
 //-------------------------------------------------------------------------
 // wizard module
 //-------------------------------------------------------------------------
@@ -92,7 +90,7 @@ static const Parameter wizard_spells_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter wizard_params[] =
+static const Parameter s_params[] =
 {
     { "hexes", Parameter::PT_LIST, wizard_hexes_params, nullptr,
       "criteria for binary service identification" },
@@ -103,7 +101,7 @@ static const Parameter wizard_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-WizardModule::WizardModule() : Module(s_name, wizard_params)
+WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params)
 {
     c2s_hexes = nullptr;
     s2c_hexes = nullptr;

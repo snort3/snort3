@@ -63,10 +63,13 @@ int PktDataOption::eval(Cursor& c, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+static const char* s_help =
+    "rule option to set the detection cursor to the normalized packet data";
+
 class PktDataModule : public Module
 {
 public:
-    PktDataModule() : Module(s_name) { };
+    PktDataModule() : Module(s_name, s_help) { };
 
     ProfileStats* get_profile() const
     { return &pktDataPerfStats; };
@@ -101,6 +104,7 @@ static const IpsApi pkt_data_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -319,7 +319,7 @@ static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter ssn_params[] =
+static const Parameter s_params[] =
 {
     { "~mode", Parameter::PT_ENUM, "printable|binary|all", nullptr,
       "output format" },
@@ -327,10 +327,13 @@ static const Parameter ssn_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check user data from TCP sessions";
+
 class SsnModule : public Module
 {
 public:
-    SsnModule() : Module(s_name, ssn_params) { };
+    SsnModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -388,6 +391,7 @@ static const IpsApi session_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

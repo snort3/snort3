@@ -37,6 +37,7 @@ struct SnortConfig;
 //-------------------------------------------------------------------------
 
 #define MOD_NAME "stream_icmp"
+#define MOD_HELP "stream inspector for ICMP flow tracking"
 
 struct StreamIcmpConfig;
 

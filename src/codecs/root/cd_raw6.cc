@@ -28,11 +28,11 @@
 #include "protocols/protocol_ids.h"
 #include <pcap.h>
 
+#define CD_RAW6_NAME "raw6"
+#define CD_RAW6_HELP "support for unencapsulated IPv6"
 
 namespace
 {
-
-#define CD_RAW6_NAME "raw6"
 
 class Raw6Codec : public Codec
 {
@@ -78,6 +78,7 @@ static const CodecApi raw6_api =
     {
         PT_CODEC,
         CD_RAW6_NAME,
+        CD_RAW6_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

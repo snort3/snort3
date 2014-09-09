@@ -331,7 +331,7 @@ static void flow_verify(FlowCheckData* fcd)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter flow_params[] =
+static const Parameter s_params[] =
 {
     { "to_client", Parameter::PT_IMPLIED, nullptr, nullptr,
       "match on server responses" },
@@ -369,10 +369,13 @@ static const Parameter flow_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to check session properties";
+
 class FlowModule : public Module
 {
 public:
-    FlowModule() : Module(s_name, flow_params) { };
+    FlowModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -480,6 +483,7 @@ static const IpsApi flow_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

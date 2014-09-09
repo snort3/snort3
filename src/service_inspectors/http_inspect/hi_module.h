@@ -29,6 +29,9 @@
 #define GLOBAL_KEYWORD "http_inspect"
 #define SERVER_KEYWORD "http_server"
 
+#define GLOBAL_HELP "shared HTTP inspector settings"
+#define SERVER_HELP "main HTTP inspector module"
+
 extern THREAD_LOCAL ProfileStats hiPerfStats;
 
 class HttpInspectModule : public Module

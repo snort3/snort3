@@ -72,11 +72,13 @@ static THREAD_LOCAL TextLog* fast_log = nullptr;
 
 using namespace std;
 
+static const char* s_name = "alert_fast";
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-static const Parameter fast_params[] =
+static const Parameter s_params[] =
 {
     { "file", Parameter::PT_STRING, nullptr, "stdout",
       "name of alert file" },
@@ -93,10 +95,13 @@ static const Parameter fast_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "output event with brief text format";
+
 class FastModule : public Module
 {
 public:
-    FastModule() : Module("alert_fast", fast_params) { };
+    FastModule() : Module(s_name, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -275,7 +280,8 @@ static LogApi fast_api
 {
     {
         PT_LOGGER,
-        "alert_fast",
+        s_name,
+        s_help,
         LOGAPI_PLUGIN_V0,
         0,
         mod_ctor,

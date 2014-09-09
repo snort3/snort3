@@ -33,16 +33,15 @@
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
 
-namespace
-{
-
 // yes, macros are necessary. The API and class constructor require different strings.
 //
 // this macros is defined in the module to ensure identical names. However,
 // if you don't want a module, define the name here.
 #define LLC_NAME "llc"
+#define LLC_HELP "support for logical link control"
 
-
+namespace
+{
 
 class LlcCodec : public Codec
 {
@@ -167,6 +166,7 @@ static const CodecApi llc_api =
     {
         PT_CODEC,
         LLC_NAME,
+        LLC_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

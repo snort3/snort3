@@ -32,11 +32,11 @@
 #include "protocols/ipv4_options.h"
 
 
+#define CD_IGMP_NAME "igmp"
+#define CD_IGMP_HELP "support for internet group management protocol"
+
 namespace
 {
-
-
-#define CD_IGMP_NAME "igmp"
 
 static const RuleMap igmp_rules[] =
 {
@@ -44,11 +44,10 @@ static const RuleMap igmp_rules[] =
     { 0, nullptr }
 };
 
-
 class IgmpModule : public DecodeModule
 {
 public:
-    IgmpModule() : DecodeModule(CD_IGMP_NAME) {}
+    IgmpModule() : DecodeModule(CD_IGMP_NAME, CD_IGMP_HELP) {}
 
     const RuleMap* get_rules() const
     { return igmp_rules; }
@@ -144,6 +143,7 @@ static const CodecApi igmp_api =
     {
         PT_CODEC,
         CD_IGMP_NAME,
+        CD_IGMP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

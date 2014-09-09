@@ -300,7 +300,7 @@ void fragbits_parse(const char *data, FragBitsData *ds_ptr)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter fragbits_params[] =
+static const Parameter s_params[] =
 {
     { "~flags", Parameter::PT_STRING, nullptr, nullptr,
       "these flags are tested" },
@@ -308,10 +308,13 @@ static const Parameter fragbits_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to test IP frag flags";
+
 class FragBitsModule : public Module
 {
 public:
-    FragBitsModule() : Module(s_name, fragbits_params) { };
+    FragBitsModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -375,6 +378,7 @@ static const IpsApi fragbits_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

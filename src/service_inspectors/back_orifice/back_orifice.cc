@@ -144,7 +144,10 @@
 #define BO_BUF_SIZE         8
 #define BO_BUF_ATTACK_SIZE  1024
 
-static const char* mod_name = "back_orifice";
+static const char* s_name = "back_orifice";
+
+static const char* s_help =
+    "back orifice detection";
 
 /* global keyvalue for the BoRand() function */
 static THREAD_LOCAL long holdrand = 1L;
@@ -189,7 +192,7 @@ static const RuleMap bo_rules[] =
 class BoModule : public Module
 {
 public:
-    BoModule() : Module(mod_name)
+    BoModule() : Module(s_name, s_help)
     { };
 
     const RuleMap* get_rules() const
@@ -459,7 +462,7 @@ public:
 
 void BackOrifice::show(SnortConfig*)
 {
-    LogMessage("%s\n", mod_name);
+    LogMessage("%s\n", s_name);
 }
 
 void BackOrifice::eval(Packet *p)
@@ -596,7 +599,8 @@ static const InspectApi bo_api =
 {
     {
         PT_INSPECTOR,
-        mod_name,
+        s_name,
+        s_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

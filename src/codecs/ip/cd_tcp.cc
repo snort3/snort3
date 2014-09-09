@@ -43,14 +43,13 @@
 #include "log/log.h"
 #include "protocols/packet_manager.h"
 
+#define CD_TCP_NAME "tcp"
+#define CD_TCP_HELP "support for transmission control protocol"
 
 using namespace tcp;
 
 namespace
 {
-
-
-#define CD_TCP_NAME "tcp"
 
 static const RuleMap tcp_rules[] =
 {
@@ -78,17 +77,14 @@ static const RuleMap tcp_rules[] =
     { 0, nullptr }
 };
 
-
 class TcpModule : public DecodeModule
 {
 public:
-    TcpModule() : DecodeModule(CD_TCP_NAME) {}
+    TcpModule() : DecodeModule(CD_TCP_NAME, CD_TCP_HELP) {}
 
     const RuleMap* get_rules() const
     { return tcp_rules; }
 };
-
-
 
 class TcpCodec : public Codec
 {
@@ -840,6 +836,7 @@ static const CodecApi tcp_api =
     {
         PT_CODEC,
         CD_TCP_NAME,
+        CD_TCP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

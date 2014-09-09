@@ -31,10 +31,12 @@
 
 #include "framework/module.h"
 
+#define NHTTP_HELP "new HTTP inspector"
+
 class NHttpModule : public Module
 {
 public:
-    NHttpModule() : Module("nhttp_inspect", nhttp_params) {};
+    NHttpModule() : Module("nhttp_inspect", NHTTP_HELP, nhttp_params) {};
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*) { return true; };
     bool set(const char*, Value&, SnortConfig*);

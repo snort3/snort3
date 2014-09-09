@@ -71,6 +71,7 @@ extern THREAD_LOCAL ProfileStats streamSizePerfStats;
 //-------------------------------------------------------------------------
 
 #define MOD_NAME "stream_tcp"
+#define MOD_HELP "stream inspector for TCP flow tracking and stream normalization and reassembly"
 
 struct SnortConfig;
 struct StreamTcpConfig;

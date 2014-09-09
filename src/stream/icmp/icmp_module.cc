@@ -31,7 +31,7 @@ using namespace std;
 // stream_icmp module
 //-------------------------------------------------------------------------
 
-static const Parameter stream_icmp_params[] =
+static const Parameter s_params[] =
 {
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
@@ -40,7 +40,7 @@ static const Parameter stream_icmp_params[] =
 };
 
 StreamIcmpModule::StreamIcmpModule() :
-    Module(MOD_NAME, stream_icmp_params)
+    Module(MOD_NAME, MOD_HELP, s_params)
 {
     config = nullptr;
 }

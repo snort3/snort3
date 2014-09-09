@@ -33,9 +33,6 @@
 #include "codecs/codec_events.h"
 
 
-namespace
-{
-
 // yes, macros are necessary. The API and class constructor require different strings.
 //
 // this macros is defined in the module to ensure identical names. However,
@@ -43,6 +40,11 @@ namespace
 #ifndef ICMP6_IP_NAME
 #define ICMP6_IP_NAME "icmp6_ip"
 #endif
+
+#define ICMP6_IP_HELP "support for IP in ICMPv6"
+
+namespace
+{
 
 class Icmp6IpCodec : public Codec
 {
@@ -158,6 +160,7 @@ static const CodecApi icmp6_ip_api =
     {
         PT_CODEC,
         ICMP6_IP_NAME,
+        ICMP6_IP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr, // module constructor

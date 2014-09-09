@@ -28,10 +28,11 @@
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
 
+#define CD_DEFAULT_NAME "unknown"
+#define CD_DEFAULT_HELP "support for unkown protocols"
+
 namespace
 {
-
-#define CD_DEFAULT_NAME "unknown"
 
 class DefaultCodec : public Codec
 {
@@ -69,6 +70,7 @@ static const CodecApi default_api =
     {
         PT_CODEC,
         CD_DEFAULT_NAME,
+        CD_DEFAULT_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

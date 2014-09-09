@@ -25,6 +25,9 @@
 #include "perf.h"
 #include "framework/module.h"
 
+#define PERF_NAME "perf_monitor"
+#define PERF_HELP "performance monitoring and flow statistics collection"
+
 extern THREAD_LOCAL SimpleStats pmstats;
 extern THREAD_LOCAL ProfileStats perfmonStats;
 

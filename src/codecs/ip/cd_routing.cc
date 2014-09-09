@@ -34,10 +34,11 @@
 #include "protocols/ipv6.h"
 #include "codecs/ip/ip_util.h"
 
+#define CD_IPV6_ROUTING_NAME "ipv6_routing"
+#define CD_IPV6_ROUTING_HELP "support for IPv6 routing extension"
+
 namespace
 {
-
-#define CD_IPV6_ROUTING_NAME "ipv6_routing"
 
 class Ipv6RoutingCodec : public Codec
 {
@@ -156,6 +157,7 @@ static const CodecApi ipv6_routing_api =
     {
         PT_CODEC,
         CD_IPV6_ROUTING_NAME,
+        CD_IPV6_ROUTING_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

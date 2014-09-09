@@ -63,10 +63,13 @@ int RawDataOption::eval(Cursor& c, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+static const char* s_help =
+    "rule option to set the detection cursor to the raw packet data";
+
 class RawDataModule : public Module
 {
 public:
-    RawDataModule() : Module(s_name) { };
+    RawDataModule() : Module(s_name, s_help) { };
 
     ProfileStats* get_profile() const
     { return &rawDataPerfStats; };
@@ -101,6 +104,7 @@ static const IpsApi raw_data_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

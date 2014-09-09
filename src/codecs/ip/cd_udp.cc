@@ -45,12 +45,12 @@
 #include "codecs/ip/ip_util.h"
 #include "main/snort_debug.h"
 
+#define CD_UDP_NAME "udp"
+#define CD_UDP_HELP "support for user datagram protocol"
 
 namespace
 {
 
-
-#define CD_UDP_NAME "udp"
 static const Parameter udp_params[] =
 {
     { "deep_teredo_inspection", Parameter::PT_BOOL, nullptr, "false",
@@ -83,7 +83,7 @@ static const RuleMap udp_rules[] =
 class UdpModule : public DecodeModule
 {
 public:
-    UdpModule() : DecodeModule(CD_UDP_NAME, udp_params) {}
+    UdpModule() : DecodeModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) {}
 
     const RuleMap* get_rules() const
     { return udp_rules; }
@@ -591,6 +591,7 @@ static const CodecApi udp_api =
     {
         PT_CODEC,
         CD_UDP_NAME,
+        CD_UDP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

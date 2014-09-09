@@ -86,10 +86,13 @@ int FileDataOption::eval(Cursor& c, Packet*)
 // module
 //-------------------------------------------------------------------------
 
+static const char* s_help =
+    "rule option to set detection cursor to file data";
+
 class FileDataModule : public Module
 {
 public:
-    FileDataModule() : Module(s_name) { };
+    FileDataModule() : Module(s_name, s_help) { };
 
     ProfileStats* get_profile() const
     { return &fileDataPerfStats; };
@@ -124,6 +127,7 @@ static const IpsApi file_data_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

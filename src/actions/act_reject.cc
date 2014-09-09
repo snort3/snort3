@@ -72,6 +72,9 @@
 
 static const char* s_name = "reject";
 
+static const char* s_help =
+    "terminate session with TCP reset or ICMP unreachable";
+
 static THREAD_LOCAL ProfileStats rejPerfStats;
 
 class RejectAction : public IpsAction
@@ -135,7 +138,7 @@ void RejectAction::send(Packet* p)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter rej_params[] =
+static const Parameter s_params[] =
 {
     { "reset", Parameter::PT_ENUM, "source|dest|both", nullptr,
       "send tcp reset to one or both ends" },
@@ -149,7 +152,7 @@ static const Parameter rej_params[] =
 class RejectModule : public Module
 {
 public:
-    RejectModule() : Module(s_name, rej_params) { };
+    RejectModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -236,6 +239,7 @@ static const ActionApi rej_api =
     {
         PT_IPS_ACTION,
         s_name,
+        s_help,
         ACTAPI_PLUGIN_V0,
         0,
         mod_ctor,

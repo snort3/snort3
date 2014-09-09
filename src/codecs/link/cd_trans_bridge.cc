@@ -38,6 +38,7 @@ namespace
 {
 
 #define CD_TRANSBRIDGE_NAME "trans_bridge"
+#define CD_TRANSBRIDGE_HELP "support for trans-bridging"
 
 class TransbridgeCodec : public Codec
 {
@@ -114,6 +115,7 @@ static const CodecApi transbridge_api =
     {
         PT_CODEC,
         CD_TRANSBRIDGE_NAME,
+        CD_TRANSBRIDGE_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

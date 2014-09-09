@@ -28,11 +28,6 @@
 #include "framework/codec.h"
 #include "main/snort.h"
 
-
-
-namespace
-{
-
 // yes, macros are necessary. The API and class constructor require different strings.
 //
 // this macros is defined in the module to ensure identical names. However,
@@ -40,6 +35,11 @@ namespace
 #ifndef PPP_NAME
 #define PPP_NAME "ppp"
 #endif
+
+#define PPP_HELP "support for point-to-point encapsulation"
+
+namespace
+{
 
 class PPPCodec : public Codec
 {
@@ -117,6 +117,7 @@ static const CodecApi ppp_api =
     {
         PT_CODEC,
         PPP_NAME,
+        PPP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr, // mod_ctor

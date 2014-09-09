@@ -37,7 +37,9 @@
 // stream_reassemble
 //-------------------------------------------------------------------------
 
-#define IPS_REASS "stream_reassemble"
+static const char* s_name = "stream_reassemble";
+static const char* s_help =
+    "detection option for stream reassembly control";
 
 static THREAD_LOCAL ProfileStats streamReassembleRuleOptionPerfStats;
 
@@ -53,7 +55,7 @@ class ReassembleOption : public IpsOption
 {
 public:
     ReassembleOption(const StreamReassembleRuleOptionData& c) :
-        IpsOption(IPS_REASS)
+        IpsOption(s_name)
     { srod = c; };
 
     uint32_t hash() const;
@@ -153,7 +155,7 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
 // stream_reassemble module
 //-------------------------------------------------------------------------
 
-static const Parameter reassemble_params[] =
+static const Parameter s_params[] =
 {
     { "*action", Parameter::PT_ENUM, "disable|enable", nullptr,
       "stop or start stream reassembly" },
@@ -173,7 +175,7 @@ static const Parameter reassemble_params[] =
 class ReassembleModule : public Module
 {
 public:
-    ReassembleModule() : Module(IPS_REASS, reassemble_params) { };
+    ReassembleModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -242,7 +244,8 @@ static const IpsApi reassemble_api =
 {
     {
         PT_IPS_OPTION,
-        IPS_REASS,
+        s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         reassemble_mod_ctor,

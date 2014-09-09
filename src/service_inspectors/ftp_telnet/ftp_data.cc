@@ -51,7 +51,10 @@
 #include "framework/plug_data.h"
 #include "detection/detection_util.h"
 
-static const char* data_key = "ftp_data";
+static const char* s_name = "ftp_data";
+
+static const char* s_help =
+    "FTP data channel handler";
 
 static THREAD_LOCAL ProfileStats ftpdataPerfStats;
 static THREAD_LOCAL SimpleStats fdstats;
@@ -209,15 +212,10 @@ public:
     void eval(Packet*);
 };
 
-static const Parameter fd_params[] =
-{
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 class FtpDataModule : public Module
 {
 public:
-    FtpDataModule() : Module(data_key, fd_params) { };
+    FtpDataModule() : Module(s_name, s_help) { };
 
     const char** get_pegs() const;
     PegCount* get_counts() const;
@@ -283,7 +281,8 @@ const InspectApi fd_api =
 {
     {
         PT_INSPECTOR,
-        data_key,
+        s_name,
+        s_help,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -30,10 +30,11 @@
 #include <pcap.h>
 
 
+#define CD_NULL_NAME "null"
+#define CD_NULL_HELP "support for null encapsulation"
+
 namespace
 {
-
-#define CD_NULL_NAME "null"
 
 class NullCodec : public Codec
 {
@@ -99,6 +100,7 @@ static const CodecApi null_api =
     {
         PT_CODEC,
         CD_NULL_NAME,
+        CD_NULL_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

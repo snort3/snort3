@@ -81,10 +81,13 @@ static const Parameter detection_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* detection_help =
+    "configure general IPS rule processing parameters";
+
 class DetectionModule : public Module
 {
 public:
-    DetectionModule() : Module("detection", detection_params) { };
+    DetectionModule() : Module("detection", detection_help, detection_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -134,10 +137,13 @@ static const Parameter event_queue_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* event_queue_help =
+    "configure event queue parameters";
+
 class EventQueueModule : public Module
 {
 public:
-    EventQueueModule() : Module("event_queue", event_queue_params) { };
+    EventQueueModule() : Module("event_queue", event_queue_help, event_queue_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -224,10 +230,13 @@ static const Parameter search_engine_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* search_engine_help =
+    "configure fast pattern matcher";
+
 class SearchEngineModule : public Module
 {
 public:
-    SearchEngineModule() : Module("search_engine", search_engine_params) { };
+    SearchEngineModule() : Module("search_engine", search_engine_help, search_engine_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -343,10 +352,13 @@ static const Parameter profile_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* profile_help =
+    "configure profiling of rules and/or modules";
+
 class ProfileModule : public Module
 {
 public:
-    ProfileModule() : Module("profile", profile_params) { };
+    ProfileModule() : Module("profile", profile_help, profile_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
 };
@@ -396,6 +408,9 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 // FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
+static const char* classifications_help =
+    "define rule categories with priority";
+
 static const Parameter classification_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
@@ -414,7 +429,7 @@ class ClassificationsModule : public Module
 {
 public:
     ClassificationsModule() : 
-        Module("classifications", classification_params, true) { };
+        Module("classifications", classifications_help, classification_params, true) { };
 
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
@@ -461,13 +476,14 @@ bool ClassificationsModule::set(const char*, Value& v, SnortConfig*)
 //-------------------------------------------------------------------------
 // reference module
 //-------------------------------------------------------------------------
-// FIXIT-L signature.{h,cc} has type and name confused
-// the keys here make more sense
+
+static const char* reference_help =
+    "define reference systems used in rules";
 
 static const Parameter reference_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
-      "name used with classtype rule option" },
+      "name used with reference rule option" },
 
     { "url", Parameter::PT_STRING, nullptr, nullptr,
       "where this reference is defined" },
@@ -479,7 +495,7 @@ class ReferencesModule : public Module
 {
 public:
     ReferencesModule() : 
-        Module("references", reference_params, true) { };
+        Module("references", reference_help, reference_params, true) { };
 
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
@@ -560,10 +576,13 @@ static const Parameter alerts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* alerts_help =
+    "configure alerts";
+
 class AlertsModule : public Module
 {
 public:
-    AlertsModule() : Module("alerts", alerts_params) { };
+    AlertsModule() : Module("alerts", alerts_help, alerts_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -664,10 +683,13 @@ static const Parameter output_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* output_help =
+    "configure general output parameters";
+
 class OutputModule : public Module
 {
 public:
-    OutputModule() : Module("output", output_params) { };
+    OutputModule() : Module("output", output_help, output_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -760,10 +782,13 @@ static const Parameter active_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* active_help =
+    "configure responses";
+
 class ActiveModule : public Module
 {
 public:
-    ActiveModule() : Module("active", active_params) { };
+    ActiveModule() : Module("active", active_help, active_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -817,10 +842,13 @@ static const Parameter packets_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* packets_help =
+    "configure basic packet handling";
+
 class PacketsModule : public Module
 {
 public:
-    PacketsModule() : Module("packets", packets_params) { };
+    PacketsModule() : Module("packets", packets_help, packets_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -884,10 +912,13 @@ static const Parameter daq_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* daq_help =
+    "configure packet acquisition interface";
+
 class DaqModule : public Module
 {
 public:
-    DaqModule() : Module("daq", daq_params) { };
+    DaqModule() : Module("daq", daq_help, daq_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -942,10 +973,14 @@ static const Parameter attribute_table_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+const char* attribute_table_help = 
+    "configure hosts loading";
+
 class AttributeTableModule : public Module
 {
 public:
-    AttributeTableModule() : Module("attribute_table", attribute_table_params) { };
+    AttributeTableModule() : 
+        Module("attribute_table", attribute_table_help, attribute_table_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -999,10 +1034,13 @@ static const Parameter network_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* network_help =
+    "configure basic network parameters";
+
 class NetworkModule : public Module
 {
 public:
-    NetworkModule() : Module("network", network_params) { };
+    NetworkModule() : Module("network", network_help, network_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -1061,10 +1099,13 @@ static const Parameter ips_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* ips_help =
+    "configure IPS rule processing";
+
 class IpsModule : public Module
 {
 public:
-    IpsModule() : Module("ips", ips_params) { };
+    IpsModule() : Module("ips", ips_help, ips_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -1123,10 +1164,13 @@ static const Parameter process_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* process_help =
+    "configure basic process setup";
+
 class ProcessModule : public Module
 {
 public:
-    ProcessModule() : Module("process", process_params) { };
+    ProcessModule() : Module("process", process_help, process_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -1166,37 +1210,6 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
-// vars module
-//-------------------------------------------------------------------------
-// FIXIT-L signature.{h,cc} has type and name confused
-// the keys here make more sense
-
-static const Parameter vars_params[] =
-{
-    { nullptr, Parameter::PT_STRING, nullptr, nullptr,
-      "port, ip, or path variable" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-class VarsModule : public Module
-{
-public:
-    VarsModule() : 
-        Module("vars", vars_params, true) { };
-
-    bool set(const char*, Value&, SnortConfig*);
-};
-
-#include <iostream>
-bool VarsModule::set(const char* fqn, Value& v, SnortConfig*)
-{
-    cout << fqn << " = " << v.get_name() << endl;
-
-    return true;
-}
-
-//-------------------------------------------------------------------------
 // file_id module
 //-------------------------------------------------------------------------
 
@@ -1230,10 +1243,13 @@ static const Parameter file_id_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* file_id_help =
+    "configure file identification";
+
 class FileIdModule : public Module
 {
 public:
-    FileIdModule() : Module("file_id", file_id_params) { };
+    FileIdModule() : Module("file_id", file_id_help, file_id_params) { };
     bool set(const char*, Value&, SnortConfig*);
 };
 
@@ -1294,10 +1310,13 @@ static const Parameter suppress_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* suppress_help =
+    "configure event suppressions";
+
 class SuppressModule : public Module
 {
 public:
-    SuppressModule() : Module("suppress", suppress_params, true) { };
+    SuppressModule() : Module("suppress", suppress_help, suppress_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1373,10 +1392,14 @@ static const Parameter event_filter_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* event_filter_help =
+    "configure thresholding of events";
+
 class EventFilterModule : public Module
 {
 public:
-    EventFilterModule() : Module("event_filter", event_filter_params, true) { };
+    EventFilterModule() : 
+        Module("event_filter", event_filter_help, event_filter_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1468,10 +1491,13 @@ static const Parameter rate_filter_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* rate_filter_help =
+    "configure rate filters (which change rule actions)";
+
 class RateFilterModule : public Module
 {
 public:
-    RateFilterModule() : Module("rate_filter", rate_filter_params, true) { };
+    RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1544,10 +1570,13 @@ static const Parameter rule_state_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* rule_state_help =
+    "enable/disable specific IPS rules";
+
 class RuleStateModule : public Module
 {
 public:
-    RuleStateModule() : Module("rule_state", rule_state_params) { };
+    RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
@@ -1630,10 +1659,13 @@ static const Parameter hosts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* hosts_help =
+    "configure hosts";
+
 class HostsModule : public Module
 {
 public:
-    HostsModule() : Module("hosts", hosts_params, true) { };
+    HostsModule() : Module("hosts", hosts_help, hosts_params, true) { };
     ~HostsModule() { assert(!host && !app); };
 
     bool set(const char*, Value&, SnortConfig*);
@@ -1728,10 +1760,13 @@ static const Parameter xxx_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* _help =
+    "configure ";
+
 class XXXModule : public Module
 {
 public:
-    XXXModule() : Module("xxx", xxx_params) { };
+    XXXModule() : Module("xxx", xxx_help, xxx_params) { };
     const RuleMap* get_rules() { return xxx_rules; };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
@@ -1758,34 +1793,8 @@ bool XXXModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
-
-static const Parameter xxx_params[] =
-{
-    { "name", Parameter::PT_INT, "range", "deflt",
-      "help" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-class XXXModule : public Module
-{
-public:
-    XXXModule() : Module("xxx", xxx_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-};
-
-bool XXXModule::set(const char*, Value& v, SnortConfig* sc)
-{
-    if ( v.is("name") )
-        sc->pkt_cnt = v.get_long();
-
-    else
-        return false;
-
-    return true;
-}
-
 #endif
+
 //-------------------------------------------------------------------------
 // module manager stuff - move to framework/module_manager.cc
 //-------------------------------------------------------------------------
@@ -1829,7 +1838,6 @@ void module_init()
     ModuleManager::add_module(new EventFilterModule);
     ModuleManager::add_module(new RateFilterModule);
     ModuleManager::add_module(new SuppressModule);
-    ModuleManager::add_module(new VarsModule);
 
     // these are preliminary policies
     ModuleManager::add_module(new NetworkModule);

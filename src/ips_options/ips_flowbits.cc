@@ -1128,7 +1128,7 @@ static void flowbits_gterm(SnortConfig*)
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter flowbits_params[] =
+static const Parameter s_params[] =
 {
     { "~command", Parameter::PT_STRING, nullptr, nullptr,
       "set|reset|isset|etc." },
@@ -1142,10 +1142,13 @@ static const Parameter flowbits_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const char* s_help =
+    "rule option to set and test arbitrary boolean flags";
+
 class FlowbitsModule : public Module
 {
 public:
-    FlowbitsModule() : Module(s_name, flowbits_params) { };
+    FlowbitsModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
@@ -1231,6 +1234,7 @@ static const IpsApi flowbits_api =
     {
         PT_IPS_OPTION,
         s_name,
+        s_help,
         IPSAPI_PLUGIN_V0,
         0,
         mod_ctor,

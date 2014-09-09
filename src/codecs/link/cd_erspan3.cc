@@ -29,11 +29,12 @@
 #include "codecs/sf_protocols.h"
 #include "protocols/packet.h"
 
+#define CD_ERSPAN3_NAME "erspan3"
+#define CD_ERSPAN3_HELP "support for encapsulated remote switched port analyzer - type 3"
 
 namespace
 {
 
-#define CD_ERSPAN3_NAME "erspan3"
 static const RuleMap erspan3_rules[] =
 {
     { DECODE_ERSPAN3_DGRAM_LT_HDR, "(" CD_ERSPAN3_NAME ") captured < ERSpan Type3 Header Length" },
@@ -43,7 +44,7 @@ static const RuleMap erspan3_rules[] =
 class Erspan3Module : public DecodeModule
 {
 public:
-    Erspan3Module() : DecodeModule(CD_ERSPAN3_NAME) {}
+    Erspan3Module() : DecodeModule(CD_ERSPAN3_NAME, CD_ERSPAN3_HELP) {}
 
     const RuleMap* get_rules() const
     { return erspan3_rules; }
@@ -171,6 +172,7 @@ static const CodecApi erspan3_api =
     {
         PT_CODEC,
         CD_ERSPAN3_NAME,
+        CD_ERSPAN3_HELP,
         CDAPI_PLUGIN_V0,
         0,
         mod_ctor,

@@ -36,11 +36,11 @@
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
 
+#define CD_IPV6_FRAG_NAME "ipv6_frag"
+#define CD_IPV6_FRAG_HELP "support for IPv6 fragment decoding"
 
 namespace
 {
-
-#define CD_IPV6_FRAG_NAME "ipv6_frag"
 
 class Ipv6FragCodec : public Codec
 {
@@ -177,6 +177,7 @@ static const CodecApi ipv6_frag_api =
     {
         PT_CODEC,
         CD_IPV6_FRAG_NAME,
+        CD_IPV6_FRAG_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,

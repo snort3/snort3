@@ -867,7 +867,7 @@ bool PortScan::configure(SnortConfig* sc)
     // FIXIT-L use fixed base file name
     config->logfile = SnortStrdup("portscan.log");
 
-    global = (PsData*)DataManager::acquire(PS_GLOBAL, sc);
+    global = (PsData*)DataManager::acquire(PSG_NAME, sc);
     config->common = global->data;
     return true;
 }
@@ -960,7 +960,8 @@ static const DataApi sd_api =
 {
     {
         PT_DATA,
-        PS_GLOBAL,
+        PSG_NAME,
+        PSG_HELP,
         PDAPI_PLUGIN_V0,
         0,
         gmod_ctor,
@@ -994,7 +995,8 @@ static const InspectApi sp_api =
 {
     {
         PT_INSPECTOR,
-        PS_MODULE,
+        PS_NAME,
+        PS_HELP,
         INSAPI_PLUGIN_V0,
         0,
         mod_ctor,

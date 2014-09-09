@@ -58,6 +58,7 @@ static const SoApi so_api =
     {
         PT_SO_RULE,
         "3|18758",
+        "SO rule example",
         IPSAPI_PLUGIN_V0,
         8,
         nullptr,
