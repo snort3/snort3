@@ -5777,9 +5777,8 @@ static inline uint32_t GetForwardDir (const Packet* p)
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
 static inline uint32_t flush_pdu_ips (
-    TcpSession* ssn, StreamTracker* trk, Packet* pkt, uint32_t* flags)
+    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
-    bool to_srv = ( *flags == PKT_FROM_CLIENT );
     uint32_t total = 0, avail;
     StreamSegment* seg;
     PROFILE_VARS;
@@ -5849,7 +5848,7 @@ static inline int CheckFlushPolicyOnData(
         case STREAM_FLPOLICY_ON_DATA:
         {
             uint32_t flags = GetForwardDir(p);
-            uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
+            uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
             uint32_t this_flush;
 
             while ( flush_amt > 0 )
@@ -5881,7 +5880,7 @@ static inline int CheckFlushPolicyOnData(
 
                 flushed += this_flush;
                 flags = GetForwardDir(p);
-                flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
+                flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
             }
             if ( !flags && listener->splitter->is_paf() )
             {
@@ -5916,9 +5915,8 @@ static inline int CheckFlushPolicyOnData(
 //   know where we left off and can resume scanning the remainder
 
 static inline uint32_t flush_pdu_ackd (
-    TcpSession* ssn, StreamTracker* trk, Packet* pkt, uint32_t* flags)
+    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
-    bool to_srv = ( *flags == PKT_FROM_CLIENT );
     uint32_t total = 0;
     StreamSegment* seg;
     PROFILE_VARS;
@@ -5988,7 +5986,7 @@ int CheckFlushPolicyOnAck(
         case STREAM_FLPOLICY_ON_ACK:
         {
             uint32_t flags = GetReverseDir(p);
-            uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
+            uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
 
             while ( flush_amt > 0 )
             {
@@ -6010,7 +6008,7 @@ int CheckFlushPolicyOnAck(
                     break;
 
                 flags = GetReverseDir(p);
-                flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
+                flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
             }
             if ( !flags && talker->splitter->is_paf() )
             {

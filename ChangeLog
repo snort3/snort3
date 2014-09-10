@@ -3,6 +3,7 @@
 -- fixed packet direction
 -- added default service bindings when wizard is configured but binder is not
 -- updated snort.lua
+-- latest from Josh
 
 118
 -- fixed bind action

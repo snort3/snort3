@@ -494,7 +494,7 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
     if ( tcp )
         m->add(PROTO_BIT__TCP, wiz_id);
 
-//    if ( udp )
+    if ( udp )
         m->add(PROTO_BIT__UDP, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);

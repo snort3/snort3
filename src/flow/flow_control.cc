@@ -37,6 +37,7 @@
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 #include "managers/inspector_manager.h"
+#include "sfip/sf_ip.h"
 
 FlowControl::FlowControl(Inspector* pi)
 {
