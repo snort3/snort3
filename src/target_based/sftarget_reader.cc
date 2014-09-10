@@ -50,6 +50,7 @@
 #include "snort.h"
 #include "snort_debug.h"
 #include "utils/stats.h"
+#include "sfip/sf_ip.h"
 
 #define ATTRIBUTE_MAP_MAX_ROWS 1024
 

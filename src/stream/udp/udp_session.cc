@@ -44,6 +44,7 @@
 #include "packet_io/active.h"
 #include "perf_monitor/perf.h"
 #include "profiler.h"
+#include "sfip/sf_ip.h"
 
 // NOTE:  sender is assumed to be client
 //        responder is assumed to be server

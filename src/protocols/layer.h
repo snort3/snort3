@@ -28,10 +28,22 @@
 
 
 struct Layer {
-    uint16_t prot_id;
-    PROTO_ID proto;
-    uint16_t length;
     const uint8_t* start;
+    uint16_t prot_id;
+    uint16_t length;
+//    uint16_t invalid_bytes;  -- Commented out since nothing uses this
+                              /*
+                               * Data which should not be considered part of
+                               * this layer's valid data, but must be skipped
+                               * before the next layer. For instance, an invalid
+                               * ip option. It should not be part of length but
+                               * must be skipped before the next layer.
+                               *
+                               * Generally calculated by
+                               *    (layers_entire_length) - length;
+                               *     (ip::IP4Hdr*) ip4h->get_hlen() * 4 - length;
+                               */
+    PROTO_ID proto;
 };
 
 
@@ -102,6 +114,9 @@ SO_PUBLIC const eth::EtherHdr* get_eth_layer(const Packet*);
 SO_PUBLIC const uint8_t* get_root_layer(const Packet* const);
 /* return a pointer to the outermost UDP layer */
 SO_PUBLIC const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
+// return the inner ip layer's index in the p->layers array
+SO_PUBLIC int get_inner_ip_lyr_index(const Packet* const p);
+
 
 
 // ICMP with Embedded IP layer
@@ -113,7 +128,6 @@ SO_PUBLIC const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
 //          true - ip layer found and api set
 //          false - ip layer NOT found, api reset
 SO_PUBLIC bool set_api_ip_embed_icmp(const Packet*, ip::IpApi& api);
-
 // a helper function when the api to be set is inside the packet
 SO_PUBLIC bool set_api_ip_embed_icmp(const Packet* p);
 
@@ -126,11 +140,6 @@ SO_PUBLIC bool set_api_ip_embed_icmp(const Packet* p);
 SO_PUBLIC const tcp::TCPHdr* get_tcp_embed_icmp(const ip::IpApi&);
 SO_PUBLIC const udp::UDPHdr* get_udp_embed_icmp(const ip::IpApi&);
 SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
-
-
-
-SO_PUBLIC int get_inner_ip_lyr(const Packet* const p);
-
 /*
  * Starting from layer 'curr_layer', continuing looking at increasingly
  * outermost layer for another IP protocol.  If an IP protocol is found,

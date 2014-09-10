@@ -31,6 +31,7 @@
 #include "utils/bitop_funcs.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
+#include "sfip/sf_ip.h"
 
 unsigned FlowData:: flow_id = 0;
 

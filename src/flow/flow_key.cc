@@ -28,6 +28,7 @@
 #include "protocols/packet.h"
 #include "snort.h"
 #include "utils/util.h"
+#include "sfip/sf_ip.h"
 
 //-------------------------------------------------------------------------
 // init foo

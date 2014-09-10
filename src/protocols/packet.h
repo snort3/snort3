@@ -47,7 +47,6 @@ extern "C" {
 }
 
 #include "main/snort_types.h"
-#include "sfip/sf_ip.h"
 
 
 #include "protocols/tcp.h"
@@ -162,15 +161,6 @@ constexpr uint8_t LAYER_MAX = 32;
 class Flow;
 
 
-struct Options
-{
-    uint8_t code;
-    uint8_t len; /* length of the data section */
-    const uint8_t *data;
-} ;
-
-
-
 struct Packet
 {
 
@@ -194,17 +184,6 @@ struct Packet
     uint16_t sp;                /* source port (TCP/UDP) */
     uint16_t dp;                /* dest port (TCP/UDP) */
 
-
-    uint16_t frag_offset;       /* fragment offset number */
-    uint16_t ip_frag_len;
-
-
-
-    uint8_t ip_option_count;    /* number of options in this packet */
-    uint8_t tcp_option_count;
-    uint8_t ip6_extension_count;
-    uint8_t ip6_frag_index;
-
     uint8_t error_flags;        /* flags indicate checksum errors, bad TTLs, etc. */
     uint8_t num_layers;         /* index into layers for next encap */
     uint8_t decode_flags;       /* flags used while decoding */
@@ -218,12 +197,11 @@ struct Packet
     const uint8_t* data;        /* packet payload pointer */
     uint16_t dsize;             /* packet payload size */
 
-    ip::IpOptions ip_options[IP_OPTMAX];         /* ip options decode structure */
-    Options tcp_options[TCP_OPTLENMAX];    /* tcp options decode struct */
 
+    uint8_t ip6_frag_index;
     uint8_t curr_ip6_extension_order;
-
-    const uint8_t *ip_frag_start;
+    uint8_t ip6_extension_count;
+    uint8_t byte_skip;      /* when decoding, there are <byte_skip> bytes between the end of the layer and the start of the next layer */
 
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
@@ -239,7 +217,6 @@ struct Packet
     uint16_t user_policy_id;
 
     uint32_t iplist_id;
-    unsigned char iprep_layer;
 
     uint8_t ps_proto;  // Used for portscan and unified2 logging
 
@@ -341,4 +318,3 @@ static inline uint16_t EXTRACT_16BITS(const uint8_t* const p)
 #endif /* WORDS_MUSTALIGN */
 
 #endif
-

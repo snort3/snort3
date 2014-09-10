@@ -20,6 +20,7 @@
 // ip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <arpa/inet.h>
+#include <limits>
 #include "protocols/ip.h"
 #include "protocols/packet.h"
 
@@ -38,16 +39,34 @@ void IpApi::set(const IP4Hdr* h4)
 {
     ip4h = h4;
     ip6h = nullptr;
-    src_p = nullptr;
-    dst_p = nullptr;
+
+    src.family = AF_INET;
+    src.bits = 32;
+    src.ip32[0] = *(uint32_t*)(&ip4h->ip_src);
+    std::memset(&(src.ip32[1]), 0, 12);
+    src_p = &src;
+
+    dst.family = AF_INET;
+    dst.bits = 32;
+    dst.ip32[0] = *(uint32_t*)(&ip4h->ip_dst);
+    std::memset(&(dst.ip32[1]), 0, 12);
+    dst_p = &dst;
 }
 
 void IpApi::set(const ip::IP6Hdr* h6)
 {
     ip6h = h6;
     ip4h = nullptr;
-    src_p = nullptr;
-    dst_p = nullptr;
+
+    src.family = AF_INET6;
+    src.bits = 128;
+    std::memcpy(&(src.ip8), &(ip6h->ip6_src), 16);
+    src_p = &src;
+
+    dst.family = AF_INET6;
+    dst.bits = 128;
+    std::memcpy(&(dst.ip8), &(ip6h->ip6_dst), 16);
+    dst_p = &dst;
 }
 
 bool IpApi::set(const uint8_t* raw_ip_data)
@@ -59,77 +78,15 @@ bool IpApi::set(const uint8_t* raw_ip_data)
         return true;
     }
 
-    const ip::IP6Hdr* h6 =
-        reinterpret_cast<const ip::IP6Hdr*>(raw_ip_data);
+    const IP6Hdr* h6 = reinterpret_cast<const IP6Hdr*>(raw_ip_data);
 
-    if (h6->get_ver() != 6)
-        return false;
-
-    set(h6);
-    return true;
-}
-
-const sfip_t *IpApi::get_src()
-{
-    if (src_p)
-        return src_p;
-
-    if(ip4h)
+    if (h6->get_ver() == 6)
     {
-        src.family = AF_INET;
-        src.bits = 32;
-
-        // TODO:  Make this a pointer rather than copying
-        //          will likely need to change Snort++
-        src.ip32[0] = *(uint32_t*)(&ip4h->ip_src);
-        std::memset(&(src.ip32[1]), 0, 12);
-    }
-    else if (ip6h)
-    {
-        src.family = AF_INET6;
-        src.bits = 128;
-
-        std::memcpy(&(src.ip8), &(ip6h->ip6_src), 16);
-    }
-    else
-    {
-        return nullptr;
+        set(h6);
+        return true;
     }
 
-    src_p = &src;
-    return src_p;
-}
-
-
-const sfip_t *IpApi::get_dst()
-{
-    if (dst_p)
-        return dst_p;
-
-    if(ip4h)
-    {
-        dst.family = AF_INET;
-        dst.bits = 32;
-
-        // TODO:  Make this a pointer rather than copying
-        //          will likely need to change Snort++
-        dst.ip32[0] = *(uint32_t*)(&ip4h->ip_dst);
-        std::memset(&(dst.ip32[1]), 0, 12);
-    }
-    else if (ip6h)
-    {
-        dst.family = AF_INET6;
-        dst.bits = 128;
-        std::memcpy(&(dst.ip8), &(ip6h->ip6_dst), 16);
-    }
-    else
-    {
-        return nullptr;
-    }
-
-    dst_p = &dst;
-    return dst_p;
-
+    return false;
 }
 
 uint32_t IpApi::id(const Packet* const p) const
@@ -138,7 +95,7 @@ uint32_t IpApi::id(const Packet* const p) const
         return ip4h->get_id();
 
     // ensure we have an ipv6 frag
-    if (p->ip6_extension_count == 0 || p->ip_frag_start == 0 || !ip6h )
+    if (!ip6h || p->ip6_frag_index == std::numeric_limits<uint8_t>::max())
         return 0;
 
     const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(
@@ -150,10 +107,10 @@ uint32_t IpApi::id(const Packet* const p) const
 uint16_t IpApi::off(const Packet* const p) const
 {
     if (ip4h)
-        return (uint32_t)ip4h->get_id();
+        return (uint32_t)ip4h->get_off();
 
     // ensure we have an ipv6 frag
-    if (p->ip6_extension_count == 0 || p->ip_frag_start == 0 || !ip6h)
+    if (!ip6h || p->ip6_frag_index == std::numeric_limits<uint8_t>::max())
         return 0;
 
     const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(

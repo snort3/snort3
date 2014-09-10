@@ -16,10 +16,10 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// codec_manager.h author Josh Rosenbaum <jrosenba@cisco.com>
+// packet_manager.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef MANAGERS_PACKET_MANAGER_H
-#define MANAGERS_PACKET_MANAGER_H
+#ifndef PROTOCOLS_PACKET_MANAGER_H
+#define PROTOCOLS_PACKET_MANAGER_H
 
 #include <array>
 #include <list>
@@ -50,6 +50,13 @@ public:
     static Packet* encode_new(void);
     // release the allocated Packet
     static void encode_delete(Packet*);
+
+    // when encoding, rather than copy the destination MAC address from the
+    // inbound packet, manually set the MAC address.
+    static void encode_set_dst_mac(uint8_t* );
+    // get the MAC address which has been set using encode_set_dst_mac().
+    // Useful for root decoders setting the MAC address
+    static uint8_t *encode_get_dst_mac();
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet
     static void encode_update(Packet*);
@@ -64,12 +71,6 @@ public:
     static const uint8_t* encode_response(
         EncodeType, EncodeFlags, const Packet* orig, uint32_t* len,
         const uint8_t* payLoad, uint32_t payLen);
-    // when encoding, rather than copy the destination MAC address from the
-    // inbound packet, manually set the MAC address.
-    static void encode_set_dst_mac(uint8_t* );
-    // get the MAC address which has been set using encode_set_dst_mac().
-    // Useful for root decoders setting the MAC address
-    static uint8_t *encode_get_dst_mac();
 
     // wrapper for encode response.  Ensure no payload is encoded.
     static inline const uint8_t* encode_reject( EncodeType type,

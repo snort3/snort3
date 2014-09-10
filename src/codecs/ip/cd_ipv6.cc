@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#include <limits>
 #include "detection/fpdetect.h"
 
 #include "protocols/ipv6.h"
@@ -40,6 +41,7 @@
 #include "protocols/protocol_ids.h"
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
+#include "sfip/sf_ip.h"
 
 #define CD_IPV6_NAME "ipv6"
 #define CD_IPV6_HELP "support for internet protocol v6"
@@ -242,10 +244,6 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     }
 
 
-
-    /* Remove outer IP options */
-    p->ip_option_count = 0;
-
     /* set the real IP length for logging */
     p->proto_bits |= PROTO_BIT__IP;
     // extra ipv6 header will be removed in PacketManager
@@ -256,6 +254,8 @@ bool Ipv6Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     p->ip_api.set(ip6h);
     p->curr_ip6_extension_order = 0;
+    p->ip6_extension_count = 0;
+    p->ip6_frag_index = std::numeric_limits<uint8_t>::max();
     p->decode_flags &= ~DECODE__ROUTING_SEEN;
 
     IPV6MiscTests(p);

@@ -69,6 +69,7 @@
 #include "time/packet_time.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
+#include "protocols/tcp_options.h"
 #include "log_text.h"
 #include "packet_io/active.h"
 #include "normalize/normalize.h"
@@ -81,6 +82,7 @@
 #include "file_api/file_api.h"
 #include "tcp_module.h"
 #include "stream/stream_splitter.h"
+#include "sfip/sf_ip.h"
 
 using namespace tcp;
 
@@ -1018,26 +1020,11 @@ static inline int NormalDropPacketIf (Packet* p, NormFlags f)
     return 0;
 }
 
-static inline void NormalStripTimeStamp (Packet* p, int i)
+static inline void NormalStripTimeStamp (Packet* p, const TcpOption* opt)
 {
-    uint8_t* opt;
+    // set raw option bytes to nops
+    memset((uint8_t*)(opt), (uint8_t)tcp::TcpOptCode::NOP, TCPOLEN_TIMESTAMP);
 
-    if ( i < 0 )
-    {
-        for ( i = 0; i < p->tcp_option_count; i++ )
-        {
-            if ( p->tcp_options[i].code == TCPOPT_TIMESTAMP )
-                break;
-        }
-        if ( i == p->tcp_option_count )
-            return;
-    }
-    // first set raw option bytes to nops
-    opt = (uint8_t*)p->tcp_options[i].data - 2;
-    memset(opt, TCPOPT_NOP, TCPOLEN_TIMESTAMP);
-
-    // then nop decoded option code only
-    p->tcp_options[i].code = TCPOPT_NOP;
 
     p->packet_flags |= PKT_MODIFIED;
     normStats[PC_TCP_TS_NOP]++;
@@ -2753,28 +2740,29 @@ static inline void S5TraceTCP (
 
 static uint32_t Stream5GetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
 {
-    unsigned int i = 0;
-
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Getting timestamp...\n"););
-    while(i < p->tcp_option_count && i < TCP_OPTLENMAX)
+
+    TcpOptIterator iter(p->tcph, p);
+
+    // using const because non-const is not supported
+    for (const TcpOption& opt : iter)
     {
-        if(p->tcp_options[i].code == TCPOPT_TIMESTAMP)
+        if(opt.code == TcpOptCode::TIMESTAMP)
         {
             if ( strip && Normalize_IsEnabled(p, NORM_TCP_OPT) )
             {
-                NormalStripTimeStamp(p, i);
+                NormalStripTimeStamp(p, &opt);
             }
             else
             {
-                *ts = EXTRACT_32BITS(p->tcp_options[i].data);
+                *ts = EXTRACT_32BITS(opt.data);
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                                 "Found timestamp %lu\n", *ts););
 
                 return TF_TSTAMP;
             }
         }
-        i++;
     }
     *ts = 0;
 
@@ -2786,21 +2774,19 @@ static uint32_t Stream5GetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
 
 static uint32_t Stream5GetMss(Packet *p, uint16_t *value)
 {
-    unsigned int i = 0;
-
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Getting MSS...\n"););
-    while(i < p->tcp_option_count && i < TCP_OPTLENMAX)
+
+    TcpOptIterator iter(p->tcph, p);
+    for (const TcpOption& opt : iter)
     {
-        if(p->tcp_options[i].code == TCPOPT_MAXSEG)
+        if(opt.code == TcpOptCode::MAXSEG)
         {
-            *value = EXTRACT_16BITS(p->tcp_options[i].data);
+            *value = EXTRACT_16BITS(opt.data);
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Found MSS %u\n", *value););
             return TF_MSS;
         }
-
-        i++;
     }
 
     *value = 0;
@@ -2812,15 +2798,18 @@ static uint32_t Stream5GetMss(Packet *p, uint16_t *value)
 
 static uint32_t Stream5GetWscale(Packet *p, uint16_t *value)
 {
-    unsigned int i = 0;
-
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Getting wscale...\n"););
-    while(i < p->tcp_option_count && i < TCP_OPTLENMAX)
+
+
+    TcpOptIterator iter(p->tcph, p);
+
+    // using const because non-const is not supported
+    for (const TcpOption& opt : iter)
     {
-        if(p->tcp_options[i].code == TCPOPT_WSCALE)
+        if(opt.code == TcpOptCode::WSCALE)
         {
-            *value = (uint16_t) p->tcp_options[i].data[0];
+            *value = (uint16_t) opt.data[0];
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Found wscale %d\n", *value););
 
@@ -2837,8 +2826,6 @@ static uint32_t Stream5GetWscale(Packet *p, uint16_t *value)
 
             return TF_WSCALE;
         }
-
-        i++;
     }
 
     *value = 0;

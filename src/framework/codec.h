@@ -31,6 +31,24 @@ struct TextLog;
 struct Packet;
 struct Layer;
 
+namespace ip
+{
+    class IpApi;
+}
+namespace tcp
+{
+    struct TCPHdr;
+}
+namespace udp
+{
+    struct UDPHdr;
+}
+namespace icmp
+{
+    struct ICMPHdr;
+}
+
+
 enum EncodeType{
     ENC_TCP_FIN,
     ENC_TCP_RST,
@@ -99,6 +117,28 @@ static inline bool update_buffer(Buffer* buf, size_t n)
     return true;
 }
 
+
+struct CodecData
+{
+    /*  Convenience Pointers.  These will be passed to the rest of Snort++ */
+    const tcp::TCPHdr* tcph;
+    const udp::UDPHdr* udph;
+    const icmp::ICMPHdr* icmph;
+    uint16_t sp;                /* source port (TCP/UDP) */
+    uint16_t dp;                /* dest port (TCP/UDP) */
+
+    /*  Flags which will be sent to the rest of Snort++ */
+    uint32_t packet_flags;      /* TODO:  delete */
+    uint16_t proto_bits;        /* protocols contained within this packet */
+    uint8_t error_flags;        /* flags indicate checksum errors, bad TTLs, etc. */
+
+
+    uint8_t ip6_frag_index;
+    uint8_t curr_ip6_extension_order;
+    uint8_t ip6_extension_count;
+    uint8_t byte_skip;      /* when decoding, there are <byte_skip> bytes between the end of the layer and the start of the next layer */
+    ip::IpApi* ip_api;
+};
 
 /*  Codec Class */
 

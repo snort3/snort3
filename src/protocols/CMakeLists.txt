@@ -7,6 +7,7 @@ set (PROTOCOL_HEADERS
     icmp6.h
     ip.h
     ipv4.h
+    ipv4_options.h
     ipv6.h
     gre.h
     layer.h
@@ -16,6 +17,7 @@ set (PROTOCOL_HEADERS
     packet_manager.h
     protocol_ids.h
     tcp.h
+    tcp_options.h
     teredo.h
     token_ring.h
     udp.h
@@ -27,6 +29,8 @@ add_library (protocols STATIC
     ${PROTOCOL_HEADERS}
     layer.cc
     ip.cc
+    ipv4_options.cc
+    tcp_options.cc
     packet_manager.cc
 )
 
