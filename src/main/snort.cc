@@ -351,7 +351,7 @@ static void SnortInit(int argc, char **argv)
 
     if (ScAlertBeforePass())
     {
-        OrderRuleLists(snort_conf, "activation dynamic drop sdrop reject alert pass log");
+        OrderRuleLists(snort_conf, "drop sdrop reject alert pass log");
     }
     if ( !InspectorManager::configure(snort_conf) )
         FatalError("can't initialize inspectors\n");

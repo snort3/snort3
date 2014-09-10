@@ -35,8 +35,13 @@
 #include "snort.h"
 #include "log/messages.h"
 #include "target_based/sftarget_protocol_reference.h"
+#include "binder/bind_module.h"
 
 using namespace std;
+
+// FIXIT-L should be using IT_* instead or at least define once
+static const char* bind_id = "binder";
+static const char* wiz_id = "wizard";
 
 //-------------------------------------------------------------------------
 // list stuff
@@ -469,10 +474,40 @@ void InspectorManager::instantiate(
     }
 }
 
+// create default binding for wizard and configured services
+static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
+{
+    BinderModule* m = (BinderModule*)ModuleManager::get_module(bind_id);
+    bool tcp = false, udp = false;
+
+    for ( unsigned i = 0; i < fp->service.num; i++ )
+    {
+        const InspectApi& api = fp->service.vec[i]->pp_class.api;
+
+        const char* s = api.service;
+        const char* t = api.base.name;
+        m->add(s, t);
+
+        tcp = tcp || (api.proto_bits & PROTO_BIT__TCP);
+        udp = udp || (api.proto_bits & PROTO_BIT__UDP);
+    }
+    if ( tcp )
+        m->add(PROTO_BIT__TCP, wiz_id);
+
+//    if ( udp )
+        m->add(PROTO_BIT__UDP, wiz_id);
+
+    const InspectApi* api = get_plugin(bind_id);
+    InspectorManager::instantiate(api, nullptr, sc);
+    fp->binder = get_instance(fp, bind_id)->handler;
+}
+
 bool InspectorManager::configure(SnortConfig *sc)
 {
     sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
 
+    // FIXIT-H do we need more than one framework policy?
+    // if so, must vectorize(), etc. multiple times
     FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
     bool ok = true;
 
@@ -481,6 +516,9 @@ bool InspectorManager::configure(SnortConfig *sc)
 
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize();
+
+    if ( fp->service.num && !fp->binder && get_wizard() )
+        instantiate_binder(sc, fp);
 
     return ok;
 }

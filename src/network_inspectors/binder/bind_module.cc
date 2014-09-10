@@ -187,6 +187,22 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
+void BinderModule::add(const char* svc, const char* type)
+{
+    Binding* b = new Binding;
+    b->when.svc = svc;
+    b->use.type = type;
+    bindings.push_back(b);
+}
+
+void BinderModule::add(unsigned proto, const char* type)
+{
+    Binding* b = new Binding;
+    b->when.protos = proto;
+    b->use.type = type;
+    bindings.push_back(b);
+}
+
 vector<Binding*> BinderModule::get_data()
 {
     return bindings;  // move semantics

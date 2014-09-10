@@ -1,6 +1,8 @@
 119
 -- updated binder
 -- fixed packet direction
+-- added default service bindings when wizard is configured but binder is not
+-- updated snort.lua
 
 118
 -- fixed bind action
