@@ -224,6 +224,7 @@ ProfileStats* PortScanGlobalModule::get_profile() const
 bool PortScanGlobalModule::begin(const char*, int, SnortConfig*)
 {
     common = new PsCommon;
+    common->memcap = 1048576;
     return true;
 }
 
