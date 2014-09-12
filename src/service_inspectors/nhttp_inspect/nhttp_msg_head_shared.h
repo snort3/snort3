@@ -42,7 +42,6 @@ class NHttpMsgHeadShared: public NHttpMsgSection {
 public:
     void analyze();
     void gen_events();
-    NHttpEnums::ProcessResult worth_detection();
 
     int32_t get_num_headers() const { return num_headers; };
     const Field& get_headers() const { return headers; };

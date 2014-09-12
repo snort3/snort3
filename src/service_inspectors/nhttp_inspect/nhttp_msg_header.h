@@ -42,6 +42,7 @@ public:
     void print_section(FILE *output);
     void gen_events();
     void update_flow();
+    NHttpEnums::ProcessResult worth_detection();
     void legacy_clients();
 };
 

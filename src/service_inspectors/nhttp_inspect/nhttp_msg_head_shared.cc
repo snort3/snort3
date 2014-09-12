@@ -152,11 +152,6 @@ void NHttpMsgHeadShared::gen_events() {
     if (infractions & INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
 }
 
-ProcessResult NHttpMsgHeadShared::worth_detection() {
-    // Do not send empty headers or trailers to detection
-    return (headers.length != STAT_NOTPRESENT) ? RES_INSPECT : RES_IGNORE;
-}
-
 void NHttpMsgHeadShared::print_headers(FILE *output) {
     char title_buf[100];
     if (num_headers != STAT_NOSOURCE) fprintf(output, "Number of headers: %d\n", num_headers);

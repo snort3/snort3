@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      Converts protocol constant string to enum
+//  @brief      Repository of state information shared by NHttpStreamSplitter and NHttpInspect classes
 //
 
 #ifndef NHTTP_FLOW_DATA_H
@@ -61,6 +61,9 @@ private:
     // StreamSplitter internal data
     int64_t octets_seen[2] = { 0, 0 };
     int num_crlf[2] = { 0, 0 };
+    uint32_t peek_ahead_octets[2] = { 0, 0 };
+    uint32_t unused_octets_visible[2] = { 0, 0 };
+    uint32_t header_octets_visible[2] = { 0, 0 };
     uint8_t *section_buffer[2] = { nullptr, nullptr };
     int32_t section_buffer_length[2] = { 0, 0 };
     uint8_t *chunk_buffer[2] = { nullptr, nullptr };

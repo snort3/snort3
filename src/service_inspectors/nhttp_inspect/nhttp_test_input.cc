@@ -33,13 +33,9 @@
 #include <stdexcept>
 #include <stdint.h>
 
-#include "nhttp_enum.h"
 #include "nhttp_test_input.h"
 
 using namespace NHttpEnums;
-
-bool NHttpTestInput::test_input = false;
-NHttpTestInput *NHttpTestInput::test_input_source = nullptr;
 
 NHttpTestInput::NHttpTestInput(const char *file_name) {
     if ((test_data_file = fopen(file_name, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");

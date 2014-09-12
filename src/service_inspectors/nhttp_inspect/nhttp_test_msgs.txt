@@ -14,6 +14,7 @@
 #
 # Command lines are left justified, lower case, with no whitespace:
 #   @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent unrelated tests from interfering with each other.
+#   @tcpclose simulates a half-duplex TCP close following the next paragraph of data.
 #   @request and @response set the message direction. Applies to subsequent sections until changed.
 #   @<decimal number> sets the test number and hence the test output file name. Applies to subsequent sections until changed. Don't reuse numbers.
 #
@@ -32,6 +33,15 @@
 # Content-Length field or chunk header. Specifically flushing more data than in the current segment will trigger filling. The user should include at
 # least one character of body/chunk data either as part of the previous header segment or at the beginning of a new segment following the headers.
 # All data bytes included in the file will be used followed by required fill data in the pattern ABC...XYZABC...
+#
+# There must not be excess data for a test case. Once a data stream ends with a TCP close there must be a break command before further data is sent.
+# Similarly a message section that triggers an abort of processing must end the paragraph and be followed by a break. These rules apply half-duplex
+# so it would be possible to send data in the opposite direction before the break.
+#
+# FIXIT-L it would be useful if a paragraph could continue following an abort to simulate a processing abort mid-segment.
+#
+# This test tool does not implement the feature of being hardened against bad input. If you write a badly formatted or improper test case the
+# program may assert or crash. The responsibility is on the developer to get it right. Currently that is the best use of resources.
 
 
 # ***********************************************************************************************
@@ -78,12 +88,12 @@ HTTP/1.1 301 \r\n\r\n
 @response
 HTTP/1.1 560  \r\n\r\n
 
-@1010
+@1009
 @break
 @response
 HTTP/1.1 111     \r\n\r\n
 
-@1011
+@1010
 @break
 @response
 HTTP/1.1 234 qwertyuiopasdfghjklzxcvbnmABCDEFGHIJKLMNOPQRSTUVWXYZ qwertyuiopasdfghjklzxcvbnmABCDEFGHIJKLMNOPQRSTUVWXYZqwertyuiopasdfghjklzxcvbnmABCDE{}[]

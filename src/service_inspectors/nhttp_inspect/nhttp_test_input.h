@@ -29,6 +29,7 @@
 #ifndef NHTTP_TEST_INPUT_H
 #define NHTTP_TEST_INPUT_H
 
+#include "nhttp_enum.h"
 #include "nhttp_flow_data.h"
 
 class NHttpTestInput {
@@ -39,8 +40,6 @@ public:
     void flush(uint32_t length);
     void reassemble(uint8_t **buffer, unsigned &length, NHttpEnums::SourceId &source_id, NHttpFlowData* session_data);
 
-    static bool test_input;
-    static NHttpTestInput *test_input_source;
     int64_t get_test_number() { return test_number; };
 private:
     FILE *test_data_file;

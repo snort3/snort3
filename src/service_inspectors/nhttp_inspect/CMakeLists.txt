@@ -44,6 +44,8 @@ set (FILE_LIST
     nhttp_transaction.cc
     nhttp_transaction.h
     nhttp_scratch_pad.h
+    nhttp_test_manager.cc
+    nhttp_test_manager.h
     nhttp_enum.h
     nhttp_field.cc
     nhttp_field.h

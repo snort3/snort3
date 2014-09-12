@@ -31,7 +31,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include <stdexcept>
 
 #include "snort.h"
 #include "stream/stream_api.h"
@@ -42,21 +41,10 @@
 
 using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(bool test_input_, bool test_output_) : test_output(test_output_)
+NHttpInspect::NHttpInspect(bool test_input, bool test_output) : test_manager(test_output)
 {
-    NHttpTestInput::test_input = test_input_;
-    if (NHttpTestInput::test_input) {
-        NHttpTestInput::test_input_source = new NHttpTestInput(test_input_file);
-    }
-}
-
-NHttpInspect::~NHttpInspect ()
-{
-    if (NHttpTestInput::test_input) {
-        delete NHttpTestInput::test_input_source;
-        if (test_out) {
-            fclose(test_out);
-        }
+    if (test_input) {
+        NHttpTestManager::activate_test_input();
     }
 }
 
@@ -139,20 +127,14 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
         msg_section->legacy_clients();
     }
 
-    if (test_output) {
-        if (!NHttpTestInput::test_input) {
+    if (test_manager.use_test_output()) {
+        if (!NHttpTestManager::use_test_input()) {
             msg_section->print_section(stdout);
         }
         else {
-            if (NHttpTestInput::test_input_source->get_test_number() != file_test_number) {
-                if (test_out) fclose (test_out);
-                file_test_number = NHttpTestInput::test_input_source->get_test_number();
-                char file_name[100];
-                snprintf(file_name, sizeof(file_name), "%s%" PRIi64 ".txt", test_output_prefix, file_test_number);
-                if ((test_out = fopen(file_name, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
-            }
-            msg_section->print_section(test_out);
-            printf("Finished processing section from test %" PRIi64 "\n", file_test_number);
+            test_manager.update_test_number(NHttpTestManager::get_test_input_source()->get_test_number());
+            msg_section->print_section(test_manager.get_output_file());
+            printf("Finished processing section from test %" PRIi64 "\n", test_manager.get_test_number());
         }
         fflush(nullptr);
     }

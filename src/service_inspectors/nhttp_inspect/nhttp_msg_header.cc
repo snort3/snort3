@@ -104,6 +104,22 @@ void NHttpMsgHeader::update_flow() {
     }
 }
 
+ProcessResult NHttpMsgHeader::worth_detection() {
+    // We can combine with body when sending to detection if the entire body is already available and the combined
+    // size does exceed paf_max.
+    if ((session_data->type_expected[source_id] == SEC_BODY) &&
+        (session_data->data_length[source_id] <= session_data->unused_octets_visible[source_id]) &&
+        (session_data->data_length[source_id] <= 16384) &&
+        (session_data->section_buffer_length[source_id] + msg_text.length + session_data->data_length[source_id] <= 63780))
+    {
+        return RES_AGGREGATE;
+    }
+
+    // Do not send empty headers by themselves to detection
+    return ((headers.length != STAT_NOTPRESENT) || (session_data->section_buffer_length[source_id] > 0))
+       ? RES_INSPECT : RES_IGNORE;
+}
+
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgHeader::legacy_clients() {
     ClearHttpBuffers();
@@ -111,5 +127,11 @@ void NHttpMsgHeader::legacy_clients() {
     legacy_status();
     legacy_header(false);
 }
+
+
+
+
+
+
 
 

@@ -23,28 +23,67 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgTrailer class declaration
+//  @brief      NHttpTestManager class declaration
 //
 
-#ifndef NHTTP_MSG_TRAILER_H
-#define NHTTP_MSG_TRAILER_H
+#ifndef NHTTP_TEST_MANAGER_H
+#define NHTTP_TEST_MANAGER_H
 
-#include "nhttp_msg_head_shared.h"
+#include <sys/types.h>
+#include <assert.h>
+#include <stdio.h>
 
 //-------------------------------------------------------------------------
-// NHttpMsgTrailer class
+// NHttpTestManager class
 //-------------------------------------------------------------------------
 
-class NHttpMsgTrailer: public NHttpMsgHeadShared {
+class NHttpTestInput;
+
+class NHttpTestManager {
+    friend class NHttpStreamSplitter;
+    friend class NHttpInspect;
+
 public:
-    NHttpMsgTrailer(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-       NHttpEnums::SourceId source_id_, bool buf_owner);
-    void print_section(FILE *output);
-    void gen_events();
-    void update_flow();
-    NHttpEnums::ProcessResult worth_detection();
-    void legacy_clients();
+    static bool use_test_input() { return test_input; };
+    static void activate_test_input() { test_input = true; };
+    static NHttpTestInput *get_test_input_source() { return &test_input_source; };
+
+    NHttpTestManager(bool test_output_) : test_output(test_output_) {};
+    ~NHttpTestManager() { if (test_out != nullptr) fclose(test_out); };
+    bool use_test_output() const { return test_output; };
+    void update_test_number(int64_t new_test_number);
+    FILE* get_output_file() { assert(test_out != nullptr); return test_out; };
+    int64_t get_test_number() const { return test_number; };
+
+private:
+    // Test input read from file
+    static bool test_input;
+    static NHttpTestInput test_input_source;
+
+    // Printing results of message processing
+    const bool test_output;
+    static const char* test_output_prefix;
+    FILE* test_out = nullptr;
+    int64_t test_number = -1;
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
