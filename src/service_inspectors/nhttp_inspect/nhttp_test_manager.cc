@@ -31,8 +31,11 @@
 #include "nhttp_test_input.h"
 
 bool NHttpTestManager::test_input = false;
+bool NHttpTestManager::test_output = false;
 NHttpTestInput NHttpTestManager::test_input_source("nhttp_test_msgs.txt");
 const char* NHttpTestManager::test_output_prefix = "nhttpresults/testcase";
+int64_t NHttpTestManager::test_number = -1;
+FILE* NHttpTestManager::test_out = nullptr;
 
 void NHttpTestManager::update_test_number(int64_t new_test_number) {
     if (new_test_number != test_number) {

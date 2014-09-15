@@ -33,6 +33,7 @@
 #include <stdexcept>
 #include <stdint.h>
 
+#include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 
 using namespace NHttpEnums;
@@ -72,10 +73,12 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
             // If we don't take this opportunity to left justify our data in the buffer we may "walk" to the right until we run out of buffer space
             memmove(msg_buf, msg_buf+flush_octets, length);
             tcp_close = tcp_closed;
+            flush_octets = 0;
             return;
         }
         // If we reach here then PAF has already flushed all the data we have read so far.
         tcp_closed = false;
+        flush_octets = 0;
     }
     else {
         // The data we gave PAF last time was not flushed
@@ -143,10 +146,11 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                         is_number = (command_value[k] >= '0') && (command_value[k] <= '9');
                     }
                     if (is_number) {
-                        test_number = 0;
+                        int64_t test_number = 0;
                         for (int j=0; j < command_length; j++) {
                             test_number = test_number * 10 + (command_value[j] - '0');
                         }
+                        NHttpTestManager::update_test_number(test_number);
                     }
                     else {
                         // Bad command in test file

@@ -63,7 +63,6 @@ private:
 
     NHttpEnums::ProcessResult process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
        NHttpEnums::SourceId source_id_, bool buf_owner);
-    NHttpTestManager test_manager;
 };
 
 #endif

@@ -81,6 +81,8 @@ void NHttpMsgSection::print_message_wrapup(FILE *output) const {
         if ((1 << i) & http_mask) Field(http_buffer[i].length, http_buffer[i].buf).print(output, http_buffer_name[i]);
     }
     fprintf(output, "\n");
+    session_data->show(output);
+    fprintf(output, "\n");
 }
 
 void NHttpMsgSection::create_event(EventSid sid) {

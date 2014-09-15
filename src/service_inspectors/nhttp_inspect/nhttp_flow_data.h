@@ -29,7 +29,7 @@
 #ifndef NHTTP_FLOW_DATA_H
 #define NHTTP_FLOW_DATA_H
 
-#include <queue>
+#include <stdio.h>
 #include "stream/stream_api.h"
 
 class NHttpTransaction;
@@ -39,6 +39,7 @@ class NHttpFlowData : public FlowData
 public:
     NHttpFlowData();
     ~NHttpFlowData();
+    void show(FILE* out_file) const;
     static unsigned nhttp_flow_id;
     static void init() { nhttp_flow_id = FlowData::get_flow_id(); };
 
@@ -97,6 +98,7 @@ private:
     int pipeline_back = 0;
     bool pipeline_overflow = false;
     bool pipeline_underflow = false;
+
     bool add_to_pipeline(NHttpTransaction* latest);
     NHttpTransaction* take_from_pipeline();
     void delete_pipeline();

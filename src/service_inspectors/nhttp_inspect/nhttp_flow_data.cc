@@ -61,6 +61,25 @@ void NHttpFlowData::half_reset(SourceId source_id) {
     num_chunks[source_id] = STAT_NOTPRESENT;
 }
 
+void NHttpFlowData::show(FILE* out_file) const {
+    assert(out_file != nullptr);
+    fprintf(out_file, "Diagnostic outout from NHttpFlowData (Client/Server):\n");
+    fprintf(out_file, "Version ID: %d/%d\n", version_id[0], version_id[1]);
+    fprintf(out_file, "Method ID: %d\n", method_id[0]);
+    fprintf(out_file, "Status code: %d\n", status_code_num[1]);
+    fprintf(out_file, "Type expected: %d/%d\n", type_expected[0], type_expected[1]);
+    fprintf(out_file, "Data length: %" PRIi64 "/%" PRIi64 "\n", data_length[0], data_length[1]);
+    fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
+    fprintf(out_file, "Number of chunks: %" PRIi64 "/%" PRIi64 "\n", num_chunks[0], num_chunks[1]);
+    fprintf(out_file, "Peek ahead octets: %u/%u\n", peek_ahead_octets[0], peek_ahead_octets[1]);
+    fprintf(out_file, "Unused octets visible: %u/%u\n", unused_octets_visible[0], unused_octets_visible[1]);
+    fprintf(out_file, "Header octets visible: %u/%u\n", header_octets_visible[0], header_octets_visible[1]);
+    fprintf(out_file, "Section buffer length: %d/%d\n", section_buffer_length[0], section_buffer_length[1]);
+    fprintf(out_file, "Chunk buffer length: %d/%d\n", chunk_buffer_length[0], chunk_buffer_length[1]);
+    fprintf(out_file, "Pipelining: front %d back %d overflow %d underflow %d\n", pipeline_front, pipeline_back,
+       pipeline_overflow, pipeline_underflow);
+}
+
 bool NHttpFlowData::add_to_pipeline(NHttpTransaction* latest) {
     assert(!pipeline_overflow && !pipeline_underflow);
     int new_back = (pipeline_back+1) % MAX_PIPELINE;

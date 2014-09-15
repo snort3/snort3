@@ -483,7 +483,7 @@ HTTP/2.0 200 OK\r\nContent-type: text/plain\r\nTransfer-Encoding: gzip\r\nTransf
 
 # ***********************************************************************************************
 # Invalid headers without body
-@6001
+# @6001
 @break
 @request
 
@@ -657,7 +657,7 @@ Accept-Language: is\r\n
 
 # ***********************************************************************************************
 # Invalid chunks
-@10001
+# @10001
 @break
 @request
 
@@ -665,7 +665,7 @@ Accept-Language: is\r\n
 
 # ***********************************************************************************************
 # Valid trailers
-@11001
+# @11001
 @break
 @request
 
@@ -673,7 +673,7 @@ Accept-Language: is\r\n
 
 # ***********************************************************************************************
 # Invalid trailers
-@12001
+# @12001
 @break
 @request
 
@@ -837,4 +837,291 @@ Content-Length: 60000\r\n
 \r\n
 Data 6 from pipeline\r\n
 
+
+# ***********************************************************************************************
+# Section aggregation test cases
+@16001
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16002
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16003
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456
+
+789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16004
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16005
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r
+
+\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16006
+@break
+@response
+
+HTTP/1.1 200 OK
+
+ Let's pad this out 1234567890123456789012345678
+
+9012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16007
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16008
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16009
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16010
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r
+
+\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16011
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain
+
+\r
+
+\n
+
+\r
+
+\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+
+@16012
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain
+
+\r
+
+\n
+
+\r
+
+\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxy
+
+@16013
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 
+
+12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16014
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 
+
+12345678901234567890123456789012345678901234567890\r\n
+
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+
+@16101
+@break
+@response
+
+HTTP/1.1 200 OK Let's pad this out 12345678901234567890123456789012345678901234567890\r\n
+Content-length:208\r\n
+Content-type: text/plain\r\n
+\r\n
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmnopqrstuvwxyz
 

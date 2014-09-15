@@ -40,7 +40,6 @@ public:
     void flush(uint32_t length);
     void reassemble(uint8_t **buffer, unsigned &length, NHttpEnums::SourceId &source_id, NHttpFlowData* session_data);
 
-    int64_t get_test_number() { return test_number; };
 private:
     FILE *test_data_file;
     uint8_t msg_buf[2 * NHttpEnums::MAXOCTETS];
@@ -49,7 +48,6 @@ private:
     uint32_t flush_octets = 0;  // number of octets that have been flushed and must go to inspection
     uint32_t previous_offset = 0;   // last character in the buffer shown to PAF but not flushed yet
     uint32_t end_offset = 0;   // last read character in the buffer
-    int64_t test_number = 0;   // for numbering test output files
     NHttpEnums::SourceId last_source_id = NHttpEnums::SRC_CLIENT;   // current direction of traffic flow. Toggled by commands in file.
 };
 

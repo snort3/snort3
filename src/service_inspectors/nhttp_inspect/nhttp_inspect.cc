@@ -41,10 +41,13 @@
 
 using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(bool test_input, bool test_output) : test_manager(test_output)
+NHttpInspect::NHttpInspect(bool test_input, bool test_output)
 {
     if (test_input) {
         NHttpTestManager::activate_test_input();
+    }
+    if (test_output) {
+        NHttpTestManager::activate_test_output();
     }
 }
 
@@ -127,14 +130,10 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
         msg_section->legacy_clients();
     }
 
-    if (test_manager.use_test_output()) {
-        if (!NHttpTestManager::use_test_input()) {
-            msg_section->print_section(stdout);
-        }
-        else {
-            test_manager.update_test_number(NHttpTestManager::get_test_input_source()->get_test_number());
-            msg_section->print_section(test_manager.get_output_file());
-            printf("Finished processing section from test %" PRIi64 "\n", test_manager.get_test_number());
+    if (NHttpTestManager::use_test_output()) {
+        msg_section->print_section(NHttpTestManager::get_output_file());
+        if (NHttpTestManager::use_test_input()) {
+             printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
         }
         fflush(nullptr);
     }

@@ -40,31 +40,27 @@
 class NHttpTestInput;
 
 class NHttpTestManager {
-    friend class NHttpStreamSplitter;
-    friend class NHttpInspect;
-
 public:
     static bool use_test_input() { return test_input; };
     static void activate_test_input() { test_input = true; };
+    static void activate_test_output() { test_output = true; };
     static NHttpTestInput *get_test_input_source() { return &test_input_source; };
-
-    NHttpTestManager(bool test_output_) : test_output(test_output_) {};
-    ~NHttpTestManager() { if (test_out != nullptr) fclose(test_out); };
-    bool use_test_output() const { return test_output; };
-    void update_test_number(int64_t new_test_number);
-    FILE* get_output_file() { assert(test_out != nullptr); return test_out; };
-    int64_t get_test_number() const { return test_number; };
-
+    static void update_test_number(int64_t new_test_number);
+    static bool use_test_output() { return test_output || test_input; };
+    static FILE* get_output_file() { return (test_out != nullptr) ? test_out : stdout; };
+    static int64_t get_test_number() { return test_number; };
 private:
+    NHttpTestManager() = delete;
     // Test input read from file
+
     static bool test_input;
     static NHttpTestInput test_input_source;
 
     // Printing results of message processing
-    const bool test_output;
+    static bool test_output;
     static const char* test_output_prefix;
-    FILE* test_out = nullptr;
-    int64_t test_number = -1;
+    static FILE* test_out;
+    static int64_t test_number;
 };
 
 #endif

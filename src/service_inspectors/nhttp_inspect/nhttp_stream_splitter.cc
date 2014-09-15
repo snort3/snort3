@@ -272,9 +272,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
             nhttp_buf.length = buffer_length + offset + len;
             buffer = nullptr;
             buffer_length = 0;
-            if (my_inspector->test_manager.use_test_output()) {
-                FILE* out_file = NHttpTestManager::use_test_input() ? my_inspector->test_manager.get_output_file() : stdout;
-                fprintf(out_file, "Sent to detection %u octets\n\n", nhttp_buf.length);
+            if (NHttpTestManager::use_test_output()) {
+                fprintf(NHttpTestManager::get_output_file(), "Sent to detection %u octets\n\n", nhttp_buf.length);
             }
             return &nhttp_buf;
           case RES_IGNORE:
@@ -298,9 +297,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
                 nhttp_buf.length = chunk_buffer_length;
                 chunk_buffer = nullptr;
                 chunk_buffer_length = 0;
-                if (my_inspector->test_manager.use_test_output()) {
-                    FILE* out_file = NHttpTestManager::use_test_input() ? my_inspector->test_manager.get_output_file() : stdout;
-                    fprintf(out_file, "Flushed chunks for detection %u octets\n\n", nhttp_buf.length);
+                if (NHttpTestManager::use_test_output()) {
+                    fprintf(NHttpTestManager::get_output_file(), "Flushed chunks for detection %u octets\n\n", nhttp_buf.length);
                 }
                 return &nhttp_buf;
             }
