@@ -107,7 +107,7 @@ void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  */
 
-bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
     uint8_t  next_hdr_type;
     uint8_t  version;
