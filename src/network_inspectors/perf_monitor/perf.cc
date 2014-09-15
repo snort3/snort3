@@ -586,12 +586,12 @@ static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
     {
         SFSType type = SFS_TYPE_OTHER;
 
-        if (p->tcph != NULL)
+        if (p->ptrs.tcph != NULL)
             type = SFS_TYPE_TCP;
-        else if (p->udph != NULL)
+        else if (p->ptrs.udph != NULL)
             type = SFS_TYPE_UDP;
 
-        UpdateFlowIPStats(&sfFlow, p->ip_api.get_src(), p->ip_api.get_dst(), p->pkth->caplen, type);
+        UpdateFlowIPStats(&sfFlow, p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(), p->pkth->caplen, type);
     }
 }
 

@@ -68,8 +68,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_VLAN; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
 };
@@ -86,51 +85,52 @@ void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool VlanCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool VlanCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    if(raw_len < sizeof(vlan::VlanTagHdr))
+    if(raw.len < sizeof(vlan::VlanTagHdr))
     {
-        codec_events::decoder_event(p, DECODE_BAD_VLAN);
+        codec_events::decoder_event(DECODE_BAD_VLAN);
         return false;
     }
 
-    const vlan::VlanTagHdr *vh = reinterpret_cast<const vlan::VlanTagHdr *>(raw_pkt);
-    const uint16_t proto = ntohs(vh->vth_proto);
+    const vlan::VlanTagHdr* const vh =
+        reinterpret_cast<const vlan::VlanTagHdr *>(raw.data);
 
+
+    const uint16_t proto = vh->proto();
 
     /* check to see if we've got an encapsulated LLC layer
      * http://www.geocities.com/billalexander/ethernet.html
      */
     if(proto <= ETHERNET_MAX_LEN_ENCAP)
-        next_prot_id = ETHERNET_LLC;
+        codec.next_prot_id = ETHERNET_LLC;
     else
-        next_prot_id = proto;
+        codec.next_prot_id = proto;
 
 
     // Vlan IDs 0 and 4095 are reserved.
-    const uint16_t vid = vlan::vth_vlan(vh);
+    const uint16_t vid = vh->vid();
     if (vid == 0 || vid == 4095)
-        codec_events::decoder_event(p, DECODE_BAD_VLAN);
+        codec_events::decoder_event(DECODE_BAD_VLAN);
 
 
-    lyr_len = sizeof(vlan::VlanTagHdr);
-    p->proto_bits |= PROTO_BIT__VLAN;
+    codec.lyr_len = sizeof(vlan::VlanTagHdr);
+    codec.proto_bits |= PROTO_BIT__VLAN;
     return true;
 }
 
 void VlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
                     const Packet* const)
 {
-    const vlan::VlanTagHdr *vh = reinterpret_cast<const vlan::VlanTagHdr *>(raw_pkt);
+    const vlan::VlanTagHdr* const vh = reinterpret_cast<const vlan::VlanTagHdr *>(raw_pkt);
     const uint16_t proto = ntohs(vh->vth_proto);
-    const uint16_t vid = vlan::vth_vlan(vh);
-
+    const uint16_t vid = vh->vid();
+    const uint16_t priority = vh->priority();
 
     TextLog_Print(text_log, "Priority:%d(0x%X) CFI:%d "
         "Vlan_ID:%d(0x%04X)",
-        vlan::vth_priority(vh), vlan::vth_priority(vh),
-        vlan::vth_cfi(vh), vid, vid);
+        priority, priority,
+        vh->cfi(), vid, vid);
 
 
     if (proto <= ETHERNET_MAX_LEN_ENCAP)

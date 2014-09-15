@@ -192,7 +192,7 @@ Binding* Binder::get_binding(Flow* flow, Packet* p)
 
     // FIXIT-H called before stream runs - these flags aren't set
     // (below is structured to work by accident on initial syn until fixed)
-    Port port = (p->packet_flags & PKT_FROM_SERVER) ? p->sp : p->dp;
+    Port port = (p->packet_flags & PKT_FROM_SERVER) ? p->ptrs.sp : p->ptrs.dp;
 
     for ( i = 0; i < sz; i++ )
     {

@@ -49,8 +49,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool encode(EncState* enc, Buffer* out, const uint8_t* raw_in);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
 };
@@ -63,43 +62,41 @@ void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IP_EMBEDDED_IN_ICMP4);
 }
 
-bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet* p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
+bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 {
     uint32_t ip_len;       /* length from the start of the ip hdr to the
                              * pkt end */
-    uint32_t hlen;          /* ip header length */
 
     /* do a little validation */
-    if(raw_len < ip::IP4_HEADER_LEN)
+    if(raw.len < ip::IP4_HEADER_LEN)
     {
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
+        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_TRUNCATED);
         return false;
     }
 
     /* lay the IP struct over the raw data */
-    const IP4Hdr *ip4h = reinterpret_cast<const IP4Hdr *>(raw_pkt);
+    const IP4Hdr *ip4h = reinterpret_cast<const IP4Hdr *>(raw.data);
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
      * So we are just ignoring non IP datagrams
      */
-    if((ip4h->get_ver() != 4) && !p->ip_api.is_ip6())
+    if((ip4h->get_ver() != 4) && !snort.ip_api.is_ip6())
     {
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
+        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
     }
 
-    hlen = ip4h->get_hlen() << 2;    /* set the IP header length */
+    const uint32_t hlen = ip4h->get_hlen() << 2;    /* set the IP header length */
 
-    if(raw_len < hlen)
+    if(raw.len < hlen)
     {
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
+        codec_events::decoder_event(DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
         return false;
     }
 
     /* set the remaining packet length */
-    ip_len = raw_len - hlen;
+    ip_len = raw.len - hlen;
 
     uint16_t orig_frag_offset = ntohs(ip4h->get_off());
     orig_frag_offset &= 0x1FFF;
@@ -109,22 +106,22 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         /* Original IP payload should be 64 bits */
         if (ip_len < 8)
         {
-            codec_events::decoder_event(p, DECODE_ICMP_ORIG_PAYLOAD_LT_64);
+            codec_events::decoder_event(DECODE_ICMP_ORIG_PAYLOAD_LT_64);
 
             return false;
         }
         /* ICMP error packets could contain as much of original payload
          * as possible, but not exceed 576 bytes
          */
-        else if (ntohs(p->ip_api.len()) > 576)
+        else if (ntohs(snort.ip_api.len()) > 576)
         {
-            codec_events::decoder_event(p, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
+            codec_events::decoder_event(DECODE_ICMP_ORIG_PAYLOAD_GT_576);
         }
     }
     else
     {
         /* RFC states that only first frag will get an ICMP response */
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
+        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
         return false;
     }
 
@@ -138,21 +135,21 @@ bool Icmp4IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     switch(ip4h->get_proto())
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
+            codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
             break;
 
         case IPPROTO_UDP:
-            p->proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
+            codec.proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
             break;
 
         case IPPROTO_ICMP:
-            p->proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
+            codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
             break;
     }
 
     // If you change this, change the buffer and
     // memcpy length in encode() below !!
-    lyr_len = ip::IP4_HEADER_LEN;
+    codec.lyr_len = ip::IP4_HEADER_LEN;
     return true;
 }
 

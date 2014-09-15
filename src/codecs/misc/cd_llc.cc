@@ -50,8 +50,7 @@ public:
     ~LlcCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
@@ -90,37 +89,36 @@ void LlcCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(ETHERNET_LLC);
 }
 
-bool LlcCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet* p, uint16_t& lyr_len, uint16_t& next_prot_id)
+bool LlcCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    if(raw_len < sizeof(EthLlc))
+    if(raw.len < sizeof(EthLlc))
     {
         // FIXIT-L - J - Need a better alert
-        codec_events::decoder_event(p, DECODE_BAD_VLAN_ETHLLC);
+        codec_events::decoder_event(DECODE_BAD_VLAN_ETHLLC);
         return false;
     }
 
-     const EthLlc *ehllc = reinterpret_cast<const EthLlc *>(raw_pkt);
+     const EthLlc *ehllc = reinterpret_cast<const EthLlc *>(raw.data);
 
 
 
     if(ehllc->dsap == ETH_DSAP_IP &&
         ehllc->ssap == ETH_SSAP_IP)
     {
-        if (raw_len <  sizeof(EthLlc) + sizeof(EthLlcOther))
+        if (raw.len <  sizeof(EthLlc) + sizeof(EthLlcOther))
         {
-            codec_events::decoder_event(p, DECODE_BAD_VLAN_ETHLLC);
+            codec_events::decoder_event(DECODE_BAD_VLAN_ETHLLC);
             return false;
         }
 
-        const EthLlcOther *ehllcother = reinterpret_cast<const EthLlcOther *>(raw_pkt + sizeof(EthLlc));
+        const EthLlcOther *ehllcother = reinterpret_cast<const EthLlcOther *>(raw.data + sizeof(EthLlc));
 
         if (ehllcother->org_code[0] == 0 &&
             ehllcother->org_code[1] == 0 &&
             ehllcother->org_code[2] == 0)
         {
-            lyr_len = sizeof(EthLlc) + sizeof(EthLlcOther);
-            next_prot_id = ntohs(ehllcother->proto_id);
+            codec.lyr_len = sizeof(EthLlc) + sizeof(EthLlcOther);
+            codec.next_prot_id = ntohs(ehllcother->proto_id);
         }
     }
 

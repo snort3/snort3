@@ -99,7 +99,7 @@ int TcpAckOption::eval(Cursor&, Packet *p)
 
     int rval;
 
-    if ( p->tcph && config.eval(p->tcph->th_ack) )
+    if ( p->ptrs.tcph && config.eval(p->ptrs.tcph->th_ack) )
         rval = DETECTION_OPTION_MATCH;
 
     else

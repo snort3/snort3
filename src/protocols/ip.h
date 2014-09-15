@@ -60,10 +60,11 @@ public:
     void set(const IP6Hdr* h6);
     bool set(const uint8_t* raw_ip_data);
     void reset();
-    uint32_t id(const Packet* const p) const;
-    uint16_t off(const Packet* const p) const;
-    // returns a pointer to this ip layer's data
-    const uint8_t* ip_data() const;
+    uint32_t id() const;  // return the frag_id
+    uint16_t off() const; // return the frag_offset
+    const uint8_t* ip_data() const; // return a pointer to the ip layers data
+
+    // FIXIT-L J get rid of the unnecessary ones
     // returns the length of the ip header + length in host byte order
     uint16_t dgram_len() const;
     // returns this ip layer's payload length in host byte order
@@ -119,11 +120,6 @@ public:
     inline uint8_t ver() const
     { return ip4h ? ip4h->get_ver() : ip6h ? ip6h->get_ver() : 0; }
 
-    inline uint32_t get_ip4_src() const
-    { return ip4h ? ip4h->get_src() : 0; }
-
-    inline uint32_t get_ip4_dst() const
-    { return ip4h ? ip4h->get_dst() : 0; }
 
     // only relevent to IP4.
     inline uint8_t get_ip_opt_len() const

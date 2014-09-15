@@ -46,8 +46,7 @@ public:
     ~Ipv6HopOptsCodec() {};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
 };
 
@@ -68,40 +67,38 @@ struct IP6HopByHop
  * Class functions
  */
 
-bool Ipv6HopOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    const IP6HopByHop *hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw_pkt);
+    const IP6HopByHop *hbh_hdr = reinterpret_cast<const IP6HopByHop*>(raw.data);
 
 
-    if (raw_len < sizeof(IP6HopByHop))
+    if (raw.len < sizeof(IP6HopByHop))
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    if ( p->ip6_extension_count >= IP6_EXTMAX )
+    if ( codec.ip6_extension_count >= IP6_EXTMAX )
     {
-        codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_events::decoder_event(DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
-    /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_HOPOPTS);
 
-    lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
-    next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
-
-    if(lyr_len > raw_len)
+    codec.lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
+    if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    p->ip6_extension_count++;
+    codec.next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
+    codec.ip6_extension_count++;
+    codec.proto_bits |= PROTO_BIT__IP6_EXT;
 
-    ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_HOPOPTS, next_prot_id);
-    if ( ip_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
+    // must be called AFTER setting next_prot_id
+    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_HOPOPTS);
+    if ( ip_util::CheckIPV6HopOptions(raw))
         return true;
 
     return false;

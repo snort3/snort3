@@ -316,18 +316,18 @@ HostAttributeEntry *SFAT_LookupHostEntryByIP(const sfip_t *ipAddr)
 
 HostAttributeEntry *SFAT_LookupHostEntryBySrc(Packet *p)
 {
-    if (!p || !p->ip_api.is_valid())
+    if (!p || !p->ptrs.ip_api.is_valid())
         return NULL;
 
-    return SFAT_LookupHostEntryByIP(p->ip_api.get_src());
+    return SFAT_LookupHostEntryByIP(p->ptrs.ip_api.get_src());
 }
 
 HostAttributeEntry *SFAT_LookupHostEntryByDst(Packet *p)
 {
-    if (!p || !p->ip_api.is_valid())
+    if (!p || !p->ptrs.ip_api.is_valid())
         return NULL;
 
-    return SFAT_LookupHostEntryByIP(p->ip_api.get_dst());
+    return SFAT_LookupHostEntryByIP(p->ptrs.ip_api.get_dst());
 }
 
 void SFAT_Cleanup(void)

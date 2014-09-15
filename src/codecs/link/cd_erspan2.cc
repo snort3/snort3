@@ -58,8 +58,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     
 };
 
@@ -69,16 +68,15 @@ struct ERSpanType2Hdr
     uint16_t ver_vlan;
     uint16_t flags_spanId;
     uint32_t pad;
+
+    uint16_t version() const
+    { return ntohs(ver_vlan) >> 12; }
 } ;
 
 const uint16_t ETHERTYPE_ERSPAN_TYPE2 = 0x88be;
 } // namespace
 
 
-static inline uint16_t erspan_version(ERSpanType2Hdr *hdr)
-{
-    return (ntohs(hdr->ver_vlan) & 0xf000) >> 12;
-}
 
 void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
 {
@@ -99,30 +97,27 @@ void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  *
  */
-bool Erspan2Codec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, SnortData& )
 {
-    lyr_len = sizeof(ERSpanType2Hdr);
-    ERSpanType2Hdr *erSpan2Hdr = (ERSpanType2Hdr *)raw_pkt;
+    const ERSpanType2Hdr* const erSpan2Hdr =
+        reinterpret_cast<const ERSpanType2Hdr*>(raw.data);
 
-    if (raw_len < sizeof(ERSpanType2Hdr))
+    if (raw.len < sizeof(ERSpanType2Hdr))
     {
-        codec_events::decoder_event(p, DECODE_ERSPAN2_DGRAM_LT_HDR);
+        codec_events::decoder_event(DECODE_ERSPAN2_DGRAM_LT_HDR);
         return false;
     }
-
-    p->encapsulations++;
-
 
     /* Check that this is in fact ERSpan Type 2.
      */
-    if (erspan_version(erSpan2Hdr) != 0x01) /* Type 2 == version 0x01 */
+    if (erSpan2Hdr->version() != 0x01) /* Type 2 == version 0x01 */
     {
-        codec_events::decoder_event(p, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
+        codec_events::decoder_event(DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 
-    next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+    codec.lyr_len = sizeof(ERSpanType2Hdr);
+    codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
     return true;
 }
 

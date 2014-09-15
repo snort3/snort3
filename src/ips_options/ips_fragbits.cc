@@ -151,12 +151,12 @@ int FragBitsOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!p->ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_valid())
     {
         return rval;
     }
 
-    const uint16_t frag_offset = ntohs(p->ip_api.off(p));
+    const uint16_t frag_offset = ntohs(p->ptrs.ip_api.off());
     MODULE_PROFILE_START(fragBitsPerfStats);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckFragBits: ");

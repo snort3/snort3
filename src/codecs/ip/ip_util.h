@@ -34,23 +34,11 @@ namespace ip_util
 
 const int IPV6_ORDER_MAX = 7;
 
-SO_PUBLIC bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p);
-SO_PUBLIC void CheckIPv6ExtensionOrder(Packet* p, uint8_t proto, uint8_t next);
+SO_PUBLIC bool CheckIPV6HopOptions(const RawData&);
 
+// NOTE:: data.next_prot_id MUST be set before calling this!!
+void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto);
 
-static inline int IPV6ExtensionOrder(uint8_t type)
-{
-    switch (type)
-    {
-        case IPPROTO_ID_HOPOPTS:   return 1;
-        case IPPROTO_ID_DSTOPTS:   return 2;
-        case IPPROTO_ID_ROUTING:   return 3;
-        case IPPROTO_ID_FRAGMENT:  return 4;
-        case IPPROTO_ID_AUTH:      return 5;
-        case IPPROTO_ID_ESP:       return 6;
-        default:                   return IPV6_ORDER_MAX;
-    }
-}
 
 static inline icmp::IcmpCode get_icmp4_code(EncodeType et)
 {

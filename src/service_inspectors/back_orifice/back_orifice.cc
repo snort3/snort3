@@ -334,11 +334,11 @@ static int BoGetDirection(Packet *p, char *pkt_data)
     char plaintext;
 
     /* Check for the default port on either side */
-    if ( p->dp == BO_DEFAULT_PORT )
+    if ( p->ptrs.dp == BO_DEFAULT_PORT )
     {
         return BO_FROM_CLIENT;
     }
-    else if ( p->sp == BO_DEFAULT_PORT )
+    else if ( p->ptrs.sp == BO_DEFAULT_PORT )
     {
         return BO_FROM_SERVER;
     }

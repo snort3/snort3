@@ -31,7 +31,8 @@
 #include "main/snort.h"
 
 #define CD_LINUX_SLL_NAME "linux_sll"
-#define CD_LINUX_SLL_HELP "support for Linux SLL"
+#define CD_LINUX_SLL_HELP_STR "support for Linux SLL"
+#define CD_LINUX_SLL_HELP ADD_DLT(CD_LINUX_SLL_HELP_STR, DLT_LINUX_SLL)
 
 namespace
 {
@@ -44,8 +45,7 @@ public:
 
 
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
 
 } // namespace
@@ -58,28 +58,18 @@ void LinuxSllCodec::get_data_link_type(std::vector<int>&v)
 #endif
 }
 
-bool LinuxSllCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, SnortData&)
 {
     /* do a little validation */
-    if(raw_len < linux_sll::SLL_HDR_LEN)
-    {
-        #if 0
-        //  How do we log from a plugin??
-        if (ScLogVerbose())
-        {
-            ErrorMessage("Captured data length < SLL header length (your "
-                         "libpcap is broken?)! (%d bytes)\n", raw_len);
-        }
-        #endif
+    if(raw.len < linux_sll::SLL_HDR_LEN)
         return false;
-    }
+
     /* lay the ethernet structure over the packet data */
-    const linux_sll::SLLHdr* sllh = reinterpret_cast<const linux_sll::SLLHdr*>(raw_pkt);
+    const linux_sll::SLLHdr* const sllh = reinterpret_cast<const linux_sll::SLLHdr*>(raw.data);
 
     /* grab out the network type */
-    next_prot_id = ntohs(sllh->sll_protocol);
-    lyr_len = linux_sll::SLL_HDR_LEN;
+    data.next_prot_id = ntohs(sllh->sll_protocol);
+    data.lyr_len = linux_sll::SLL_HDR_LEN;
     return true;
 }
 

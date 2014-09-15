@@ -107,13 +107,13 @@ void base_reset()
 
 static inline bool is_eligible(Packet* p)
 {
-    if ( p->error_flags & PKT_ERR_CKSUM_IP )
+    if ( p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP )
         return false;
 
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return false;
 
-    if ( !p->ip_api.is_valid() )
+    if ( !p->ptrs.ip_api.is_valid() )
         return false;
 
     return true;
@@ -209,28 +209,28 @@ void StreamBase::eval(Packet *p)
 
     MODULE_PROFILE_START(s5PerfStats);
 
-    switch ( p->ip_api.proto() )
+    switch ( p->ptrs.ip_api.proto() )
     {
     case IPPROTO_TCP:
-        if ( p->tcph )
+        if ( p->ptrs.tcph )
             flow_con->process_tcp(p);
         break;
 
     case IPPROTO_UDP:
-        if ( p->decode_flags & DECODE__FRAG )
+        if ( p->ptrs.decode_flags & DECODE_FRAG )
             flow_con->process_ip(p);
 
-        if ( p->udph )
+        if ( p->ptrs.udph )
             flow_con->process_udp(p);
         break;
 
     case IPPROTO_ICMP:
-        if ( p->icmph )
+        if ( p->ptrs.icmph )
             flow_con->process_icmp(p);
         break;
 
     case IPPROTO_IP:
-        if ( p->ip_api.is_valid() )
+        if ( p->ptrs.ip_api.is_valid() )
             flow_con->process_ip(p);
         break;
     }

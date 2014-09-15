@@ -734,8 +734,8 @@ static void set_policy(Packet*)  // FIX SSN implement based on bindings
    // for now need to just get stream_* inspectors and call appropriately 
 #if 0
     int vlanId = (p->vh) ? vlan::vth_vlan(p->vh) : -1;
-    const sfip_t *srcIp = p->ip_api.get_src(); // returns nullptr if not set
-    const sfip_t *dstIp = p->ip_api.get_dst();
+    const sfip_t *srcIp = p->ptrs.ip_api.get_src(); // returns nullptr if not set
+    const sfip_t *dstIp = p->ptrs.ip_api.get_dst();
 
     //set policy id for this packet
     setCurrentPolicy(snort_conf, sfGetApplicablePolicyId(
@@ -914,7 +914,7 @@ DAQ_Verdict packet_callback(
                     pc.internal_whitelist++;
                 }
             }
-            else if ( s_packet.packet_flags & PKT_TRUST )
+            else if ( s_packet.ptrs.decode_flags & DECODE_PKT_TRUST )
             {
                 stream.set_ignore_direction(s_packet.flow, SSN_DIR_BOTH);
 

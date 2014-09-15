@@ -46,7 +46,6 @@ struct EventNode
     struct OptTreeNode* otn;
     struct RuleTreeNode* rtn;
     RuleType type;
-
 };
 
 EventQueueConfig* EventQueueConfigNew(void);

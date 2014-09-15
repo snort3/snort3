@@ -23,6 +23,7 @@
 #define PROTOCOLS_TCP_H
 
 #include <cstdint>
+#include <arpa/inet.h>
 
 // these are bits in th_flags:
 #define TH_FIN  0x01
@@ -86,6 +87,7 @@ struct TCPHdr
     uint16_t th_sum;       /* checksum */
     uint16_t th_urp;       /* urgent pointer */
 
+    /* Fomatted data access and booleans */
     inline uint8_t hdr_len() const
     { return (th_offx2 & 0xf0) >> 2; }
 
@@ -95,11 +97,34 @@ struct TCPHdr
     inline uint8_t options_len() const
     { return hdr_len() - TCP_HEADER_LEN; }
 
+    inline uint16_t src_port() const
+    { return ntohs(th_sport); }
+
+    inline uint16_t dst_port() const
+    { return ntohs(th_dport); }
+
+    inline uint32_t seq() const
+    { return ntohl(th_seq); }
+
     inline bool has_options() const
     { return (th_offx2 & 0xf0) == 0x50; }
 
     inline bool are_flags_set(uint8_t flags) const
     { return (th_flags & flags) == flags; }
+
+
+    /*  raw data access */
+    inline uint8_t raw_src_port() const
+    { return th_sport; }
+
+    inline uint8_t raw_dst_len() const
+    { return th_dport; }
+
+    inline uint32_t raw_seq() const
+    { return th_seq; }
+
+    inline uint8_t raw_hdr_len() const
+    { return th_offx2 >> 4; }
 
     // setters
     inline void set_offset(uint8_t val)

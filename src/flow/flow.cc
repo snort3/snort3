@@ -236,17 +236,17 @@ void Flow::markup_packet_flags(Packet* p)
 
 void Flow::set_direction(Packet* p)
 {
-    ip::IpApi* ip_api = &p->ip_api;
+    ip::IpApi* ip_api = &p->ptrs.ip_api;
 
     if(ip_api->is_ip4())
     {
-        uint8_t proto = p->ip_api.proto();
+        uint8_t proto = p->ptrs.ip_api.proto();
 
         if (sfip_fast_eq4(ip_api->get_src(), &client_ip))
         {
             if (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_sport == client_port)
+                if (p->ptrs.tcph->th_sport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -255,9 +255,9 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
             }
-            else if (proto == IPPROTO_UDP && p->udph )
+            else if (proto == IPPROTO_UDP && p->ptrs.udph )
             {
-                if (p->udph->uh_sport == client_port)
+                if (p->ptrs.udph->uh_sport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -275,7 +275,7 @@ void Flow::set_direction(Packet* p)
         {
             if  (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_dport == client_port)
+                if (p->ptrs.tcph->th_dport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
@@ -284,9 +284,9 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
             }
-            else if (proto == IPPROTO_UDP && p->udph )
+            else if (proto == IPPROTO_UDP && p->ptrs.udph )
             {
-                if (p->udph->uh_dport == client_port)
+                if (p->ptrs.udph->uh_dport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
@@ -309,7 +309,7 @@ void Flow::set_direction(Packet* p)
         {
             if (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_sport == client_port)
+                if (p->ptrs.tcph->th_sport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -318,9 +318,9 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
             }
-            else if (proto == IPPROTO_UDP && p->udph )
+            else if (proto == IPPROTO_UDP && p->ptrs.udph )
             {
-                if (p->udph->uh_sport == client_port)
+                if (p->ptrs.udph->uh_sport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
@@ -338,7 +338,7 @@ void Flow::set_direction(Packet* p)
         {
             if  (proto == IPPROTO_TCP)
             {
-                if (p->tcph->th_dport == client_port)
+                if (p->ptrs.tcph->th_dport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
@@ -347,9 +347,9 @@ void Flow::set_direction(Packet* p)
                     p->packet_flags |= PKT_FROM_CLIENT;
                 }
             }
-            else if (proto == IPPROTO_UDP && p->udph )
+            else if (proto == IPPROTO_UDP && p->ptrs.udph )
             {
-                if (p->udph->uh_dport == client_port)
+                if (p->ptrs.udph->uh_dport == client_port)
                 {
                     p->packet_flags |= PKT_FROM_SERVER;
                 }
@@ -422,7 +422,7 @@ void Flow::set_ttl (Packet* p, bool client)
         // FIXIT-J!! -- Do we want more than just the outermost
         //            and innermost ttl()?
         outer_ttl = outer_ip_api.ttl();
-        inner_ttl = p->ip_api.ttl();
+        inner_ttl = p->ptrs.ip_api.ttl();
     }
 
     if ( client )

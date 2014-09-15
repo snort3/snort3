@@ -210,19 +210,19 @@ void FlowControl::reset_prunes (int proto)
 
 void FlowControl::set_key(FlowKey* key, Packet* p)
 {
-    ip::IpApi* ip_api = &p->ip_api;
-    uint8_t proto = ip_api->proto();
+    const ip::IpApi& ip_api = p->ptrs.ip_api;
+    uint8_t proto = ip_api.proto();
     uint32_t mplsId;
     uint16_t vlanId;
     uint16_t addressSpaceId;
 
     if ( p->proto_bits & PROTO_BIT__VLAN )
-        vlanId = vlan::vth_vlan(layer::get_vlan_layer(p));
+        vlanId = layer::get_vlan_layer(p)->vid();
     else
         vlanId = 0;
 
     if ( p->proto_bits & PROTO_BIT__MPLS )
-        mplsId = p->mplsHdr.label;
+        mplsId = p->ptrs.mplsHdr.label;
     else
         mplsId = 0;
 
@@ -232,19 +232,19 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     addressSpaceId = 0;
 #endif
 
-    if ( (p->decode_flags & DECODE__FRAG) )
+    if ( (p->ptrs.decode_flags & DECODE_FRAG) )
     {
-        key->init(ip_api->get_src(), ip_api->get_dst(), ip_api->id(p),
+        key->init(ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
             proto, vlanId, mplsId, addressSpaceId);
     }
     else if ((proto == IPPROTO_ICMP) || (proto == IPPROTO_ICMPV6))
     {
-        key->init(ip_api->get_src(), p->icmph->type, ip_api->get_dst(), 0,
+        key->init(ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
             proto, vlanId, mplsId, addressSpaceId);
     }
     else
     {
-        key->init(ip_api->get_src(), p->sp, ip_api->get_dst(), p->dp,
+        key->init(ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
             proto, vlanId, mplsId, addressSpaceId);
     }
 }

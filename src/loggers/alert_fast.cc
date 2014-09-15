@@ -238,17 +238,17 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     }
 
     /* print the packet header to the alert file */
-    if (p->ip_api.is_valid())
+    if (p->ptrs.ip_api.is_valid())
     {
         LogPriorityData(fast_log, event, 0);
-        TextLog_Print(fast_log, "{%s} ", protocol_names[p->ip_api.proto()]);
+        TextLog_Print(fast_log, "{%s} ", protocol_names[p->ptrs.ip_api.proto()]);
         LogIpAddrs(fast_log, p);
     }
 
     if(packet)
     {
-        if(p->ip_api.is_valid())
-            LogIPPkt(fast_log, p->ip_api.proto(), p);
+        if(p->ptrs.ip_api.is_valid())
+            LogIPPkt(fast_log, p->ptrs.ip_api.proto(), p);
 
 #if 0
         // FIXIT-L -J LogArpHeader unimplemented

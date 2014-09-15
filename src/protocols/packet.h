@@ -48,7 +48,7 @@ extern "C" {
 
 #include "main/snort_types.h"
 
-
+#include "framework/codec.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/eth.h"
@@ -64,46 +64,54 @@ extern "C" {
 /*  D E F I N E S  ************************************************************/
 
 /* packet status flags */
-#define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */
-#define PKT_REBUILT_STREAM   0x00000002  /* is a rebuilt stream */
-#define PKT_STREAM_UNEST_UNI 0x00000004  /* is from an unestablished stream and
+#if 0
+#define PKT_TRUST            0x00000001  /* this packet should fallback to being whitelisted if no other verdict was specified */
+                                         /* this flag must equal DECODE_PKT_TRUST*/
+#define PKT_FRAG             0x00000002  /* flag to indicate a fragmented packet */
+                                         /* this flag must equal DECODE_FRAG */
+#define PKT_FRAG_MF          0x00000004  /* flag to indicate the 'more frag' flag is set */
+                                         /* this flag must be equal to DECODE_MF */
+#endif
+
+#define PKT_REBUILT_FRAG     0x00000008  /* is a rebuilt fragment */
+#define PKT_REBUILT_STREAM   0x00000010  /* is a rebuilt stream */
+#define PKT_STREAM_UNEST_UNI 0x00000020  /* is from an unestablished stream and
                                           * we've only seen traffic in one direction */
-#define PKT_STREAM_EST       0x00000008  /* is from an established stream */
+#define PKT_STREAM_EST       0x00000040  /* is from an established stream */
 
-#define PKT_STREAM_INSERT    0x00000010  /* this packet has been queued for stream reassembly */
-#define PKT_STREAM_TWH       0x00000020  /* packet completes the 3-way handshake */
-#define PKT_FROM_SERVER      0x00000040  /* this packet came from the server
+#define PKT_STREAM_INSERT    0x00000080  /* this packet has been queued for stream reassembly */
+#define PKT_STREAM_TWH       0x00000100  /* packet completes the 3-way handshake */
+#define PKT_FROM_SERVER      0x00000200  /* this packet came from the server
                                             side of a connection (TCP) */
-#define PKT_FROM_CLIENT      0x00000080  /* this packet came from the client
+#define PKT_FROM_CLIENT      0x00000400  /* this packet came from the client
                                             side of a connection (TCP) */
 
-#define PKT_PDU_HEAD         0x00000100  /* start of PDU */
-#define PKT_PDU_TAIL         0x00000200  /* end of PDU */
-#define PKT_HTTP_DECODE      0x00000400  /* this packet has normalized http */
+#define PKT_PDU_HEAD         0x00000800  /* start of PDU */
+#define PKT_PDU_TAIL         0x00001000  /* end of PDU */
+#define PKT_HTTP_DECODE      0x00002000  /* this packet has normalized http */
 
-#define PKT_IGNORE           0x00000800  /* this packet should be ignored, based on port */
-#define PKT_TRUST            0x00001000  /* this packet should fallback to being whitelisted if no other verdict was specified */
-#define PKT_ALLOW_MULTIPLE_DETECT 0x00002000  /* packet has either pipelined mime attachements */
+#define PKT_ALLOW_MULTIPLE_DETECT 0x00004000  /* packet has either pipelined mime attachements */
                                               /* or pipeline http requests */
-#define PKT_PAYLOAD_OBFUSCATE     0x00004000
+#define PKT_PAYLOAD_OBFUSCATE     0x00008000
 
-#define PKT_STATELESS        0x00008000  /* Packet has matched a stateless rule */
-#define PKT_PASS_RULE        0x00010000  /* this packet has matched a pass rule */
-#define PKT_IP_RULE          0x00020000  /* this packet is being evaluated against an IP rule */
-#define PKT_IP_RULE_2ND      0x00040000  /* this packet is being evaluated against an IP rule */
+#define PKT_STATELESS        0x00010000  /* Packet has matched a stateless rule */
+#define PKT_PASS_RULE        0x00020000  /* this packet has matched a pass rule */
+#define PKT_IP_RULE          0x00040000  /* this packet is being evaluated against an IP rule */
+#define PKT_IP_RULE_2ND      0x00080000  /* this packet is being evaluated against an IP rule */
 
-#define PKT_PSEUDO           0x00080000  /* is a pseudo packet */
-#define PKT_MODIFIED         0x00100000  /* packet had normalizations, etc. */
-#define PKT_RESIZED          0x00300000  /* packet has new size; must set modified too */
+#define PKT_PSEUDO           0x00100000  /* is a pseudo packet */
+#define PKT_MODIFIED         0x00200000  /* packet had normalizations, etc. */
+#define PKT_RESIZED          0x00600000  /* packet has new size; must set modified too */
 
 // neither of these flags will be set for (full) retransmissions or non-data segments
 // a partial overlap results in out of sequence condition
 // out of sequence condition is sticky
-#define PKT_STREAM_ORDER_OK  0x00400000  /* this segment is in order, w/o gaps */
-#define PKT_STREAM_ORDER_BAD 0x00800000  /* this stream had at least one gap */
+#define PKT_STREAM_ORDER_OK  0x00800000  /* this segment is in order, w/o gaps */
+#define PKT_STREAM_ORDER_BAD 0x01000000  /* this stream had at least one gap */
 
-#define PKT_FILE_EVENT_SET   0x01000000
-#define PKT_UNUSED_FLAGS     0xff000000
+#define PKT_FILE_EVENT_SET   0x02000000
+#define PKT_IGNORE           0x04000000  /* this packet should be ignored, based on port */
+#define PKT_UNUSED_FLAGS     0xf8000000
 
 // 0x40000000 are available
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
@@ -121,14 +129,6 @@ enum PseudoPacketType{
     PSEUDO_PKT_SDF,
     PSEUDO_PKT_MAX
 } ;
-
-/* error flags */
-#define PKT_ERR_CKSUM_IP     0x01
-#define PKT_ERR_CKSUM_TCP    0x02
-#define PKT_ERR_CKSUM_UDP    0x04
-#define PKT_ERR_CKSUM_ICMP   0x08
-#define PKT_ERR_CKSUM_ANY    0x0F
-#define PKT_ERR_BAD_TTL      0x10
 
 
 /* We must twiddle to align the offset the ethernet header and align
@@ -163,13 +163,6 @@ class Flow;
 
 struct Packet
 {
-
-    /* these four pounters are each referenced literally
-     * hundreds of times.  NOTHING else should be added!!
-     */
-    const tcp::TCPHdr* tcph;
-    const udp::UDPHdr* udph;
-    const icmp::ICMPHdr* icmph;
     Flow* flow;   /* for session tracking */
 
 
@@ -181,15 +174,12 @@ struct Packet
 
 
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
-    uint16_t sp;                /* source port (TCP/UDP) */
-    uint16_t dp;                /* dest port (TCP/UDP) */
-
-    uint8_t error_flags;        /* flags indicate checksum errors, bad TTLs, etc. */
     uint8_t num_layers;         /* index into layers for next encap */
-    uint8_t decode_flags;       /* flags used while decoding */
-    uint8_t encapsulations;     /* the curent number of encapsulations */
+
 
     // nothing after this point is zeroed ...
+
+    // Everything beyond this point is set by PacketManager::decode()
     const DAQ_PktHdr_t *pkth;    // packet meta data
     const uint8_t *pkt;         // raw packet data
 
@@ -197,16 +187,9 @@ struct Packet
     const uint8_t* data;        /* packet payload pointer */
     uint16_t dsize;             /* packet payload size */
 
-
-    uint8_t ip6_frag_index;
-    uint8_t curr_ip6_extension_order;
-    uint8_t ip6_extension_count;
-    uint8_t byte_skip;      /* when decoding, there are <byte_skip> bytes between the end of the layer and the start of the next layer */
-
+    SnortData ptrs; // convenience pointers used throughout Snort++
     Layer layers[LAYER_MAX];    /* decoded encapsulations */
 
-    ip::IpApi ip_api;
-    mpls::MplsHdr mplsHdr;
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
     uint16_t max_dsize;
@@ -219,44 +202,16 @@ struct Packet
     uint32_t iplist_id;
 
     uint8_t ps_proto;  // Used for portscan and unified2 logging
-
 };
 
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
 
-#define PROTO_BIT__NONE     0x0000
-#define PROTO_BIT__IP       0x0001
-#define PROTO_BIT__ARP      0x0002
-#define PROTO_BIT__TCP      0x0004
-#define PROTO_BIT__UDP      0x0008
-#define PROTO_BIT__ICMP     0x0010
-#define PROTO_BIT__TEREDO   0x0020
-#define PROTO_BIT__GTP      0x0040
-#define PROTO_BIT__MPLS     0x0080
-#define PROTO_BIT__VLAN     0x0100
-#define PROTO_BIT__ETH      0x0200
-#define PROTO_BIT__TCP_EMBED_ICMP  0x0400
-#define PROTO_BIT__UDP_EMBED_ICMP  0x0800
-#define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
-#define PROTO_BIT__FREE     0x6000
-#define PROTO_BIT__OTHER    0x8000
-#define PROTO_BIT__ALL      0xffff
 
-/*  Decode Flags */
-#define DECODE__FRAG    0x01  /* flag to indicate a fragmented packet */
-#define DECODE__MF      0x02  /* more fragments flag */
-#define DECODE__DF      0x04  /* don't fragment flag */
-//#define DECODE__RF      0x08  /* IP reserved bit */
-#define DECODE__TRUST_ON_FAIL 0x08  /* if decode fails, set the PKT_TRUST flag */
-#define DECODE__UNSURE_ENCAP  0x10  /* packet may have incorrect encapsulation layer. */
-                                    /* don't alert if "next layer" is invalid. */
-#define DECODE__ROUTING_SEEN  0X20
-#define DECODE__FREE    0xE0
 
-#define IsIP(p) (p->ip_api.is_valid())
-#define IsTCP(p) (IsIP(p) && p->tcph)
-#define IsICMP(p) (IsIP(p) && p->icmph)
-#define GET_PKT_SEQ(p) (ntohl(p->tcph->th_seq))
+#define IsIP(p) (p->ptrs.ip_api.is_valid())
+#define IsTCP(p) (IsIP(p) && p->ptrs.tcph)
+#define IsICMP(p) (IsIP(p) && p->ptrs.icmph)
+#define GET_PKT_SEQ(p) (ntohl(p->ptrs.tcph->th_seq))
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
 #define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)
@@ -277,7 +232,7 @@ static inline uint8_t GetEventProto(const Packet* const p)
 {
     if (IsPortscanPacket(p))
         return p->ps_proto;
-    return p->ip_api.proto(); // return 0 if invalid
+    return p->ptrs.ip_api.proto(); // return 0 if invalid
 }
 
 static inline bool PacketHasFullPDU (const Packet* const p)

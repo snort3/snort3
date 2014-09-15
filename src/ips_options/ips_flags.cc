@@ -131,7 +131,7 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
 
     MODULE_PROFILE_START(tcpFlagsPerfStats);
 
-    if(!p->tcph)
+    if(!p->ptrs.tcph)
     {
         /* if error appeared when tcp header was processed,
          * test fails automagically */
@@ -142,7 +142,7 @@ int TcpFlagOption::eval(Cursor&, Packet *p)
     /* the flags we really want to check are all the ones
      */
 
-    tcp_flags = p->tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
+    tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "           <!!> CheckTcpFlags: "););
 

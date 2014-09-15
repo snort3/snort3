@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,7 +16,6 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
 
 
 #ifdef HAVE_CONFIG_H
@@ -116,8 +114,8 @@ public:
     ~NameCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    // decode(...) must be implemented!!
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 
     virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
@@ -150,17 +148,17 @@ void NameCodec::get_protocol_ids(std::vector<uint16_t>&/*v*/)
 //    v.push_back(PROTO_TYPE);
 }
 
-bool NameCodec::decode(const uint8_t *raw_pkt, const uint32_t& /*raw_len*/,
-        Packet* /*p*/, uint16_t& lyr_len, uint16_t& next_prot_id)
+bool NameCodec::decode(const RawData& raw, CodecData& data, SnortData&)
 {
     // reinterpret the raw data into this codec's data format
-    const NameHdr *hdr = reinterpret_cast<const NameHdr *>(raw_pkt);
+    const NameHdr* const hdr =
+        reinterpret_cast<const NameHdr *>(raw.data);
 
     // DO SOME STUFF
 
     // set the fields which will be sent back to the packet manager
-    lyr_len = hdr->len;
-    next_prot_id = hdr->next_protocol;
+    data.lyr_len = hdr->len;
+    data.next_prot_id = hdr->next_protocol;
 
     return true;
 }

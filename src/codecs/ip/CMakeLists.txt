@@ -5,6 +5,7 @@ if( STATIC_CODECS )
     set( PLUGIN_SOURCES
         cd_auth.cc
         cd_dst_opts.cc
+        cd_esp.cc
         cd_frag.cc
         cd_gre.cc
         cd_hop_opts.cc
@@ -24,6 +25,8 @@ if( STATIC_CODECS )
 else()
     add_shared_library(cd_auth codecs cd_auth.cc)
     add_shared_library(cd_dst_opts codecs cd_dst_opts.cc ip_util.h ip_util.cc)
+    add_shared_library(cd_gre codecs cd_gre.cc)
+    add_shared_library(cd_esp codecs cd_esp.cc ip_util.h ip_util.cc)
     add_shared_library(cd_frag codecs cd_frag.cc ip_util.h ip_util.cc)
     add_shared_library(cd_gre codecs cd_gre.cc)
     add_shared_library(cd_hop_opts codecs cd_hop_opts.cc ip_util.h ip_util.cc)
@@ -45,7 +48,6 @@ endif()
 
 
 add_library( ip_codecs STATIC
-    cd_esp.cc  # statically linked due to its dependance on the packet manager.
     cd_ipv4.cc # Static due to its dependence on fpdetect
     cd_tcp.cc  # Only file to use some functions.  Must be included in binary.
     checksum.h

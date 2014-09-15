@@ -217,7 +217,7 @@ static int Norm_IP4 (
         if ( h->ip_ttl < ScMinTTL() )
         {
             h->ip_ttl = ScNewTTL();
-            p->error_flags &= ~PKT_ERR_BAD_TTL;
+            p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
             normStats[PC_IP4_TTL]++;
             sfBase.iPegs[PERF_COUNT_IP4_TTL]++;
             changes++;
@@ -266,7 +266,7 @@ static int Norm_IP6 (
         if ( h->ip6_hoplim < ScMinTTL() )
         {
             h->ip6_hoplim = ScNewTTL();
-            p->error_flags &= ~PKT_ERR_BAD_TTL;
+            p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
             normStats[PC_IP6_TTL]++;
             sfBase.iPegs[PERF_COUNT_IP6_TTL]++;
             changes++;

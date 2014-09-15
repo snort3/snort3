@@ -62,8 +62,7 @@ public:
     ~IgmpCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&){};
@@ -77,39 +76,27 @@ public:
 
 
 
-bool IgmpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool IgmpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 {
-    if (raw_len >= 1 && raw_pkt[0] == 0x11)
+    if (snort.ip_api.is_ip4() && raw.len >= 1 && raw.data[0] == 0x11)
     {
-        const uint8_t* ip_opt_data = p->ip_api.get_ip_opt_data();
+        const uint8_t* ip_opt_data = snort.ip_api.get_ip_opt_data();
 
         if (ip_opt_data != nullptr) {
-            if (p->ip_api.get_ip_opt_len() >= 2) {
+            if (snort.ip_api.get_ip_opt_len() >= 2) {
                 if (*(ip_opt_data) == 0 && *(ip_opt_data+1) == 0)
                 {
-                    codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
+                    codec_events::decoder_event(DECODE_IGMP_OPTIONS_DOS);
                     return false;
                 }
             }
         }
 
 
-        ip::IpOptionIterator iter(p->ip_api.get_ip4h(), p);
-        for (const ip::IpOptions& opt : iter)
+        if ((!(codec.codec_flags & CODEC_IPOPT_RTRALT_SEEN)) &&
+            (codec.codec_flags & CODEC_IPOPT_LEN_THREE))
         {
-            /* All IGMPv2 packets contain IP option code 148 (router alert).
-               This vulnerability only applies to IGMPv3, so return early. */
-            if (opt.code == ip::IPOptionCodes::RTRALT)
-            {
-                return true; /* No alert. */
-            }
-
-            if (opt.len == 3)
-            {
-                codec_events::decoder_event(p, DECODE_IGMP_OPTIONS_DOS);
-                return true;
-            }
+            codec_events::decoder_event(DECODE_IGMP_OPTIONS_DOS);
         }
     }
     return true;

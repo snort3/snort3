@@ -196,7 +196,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig *rconfig,
 {
     const uint8_t *data = p->data;
     uint16_t dsize = p->dsize;
-    uint32_t seq = ntohl(p->tcph->th_seq);
+    uint32_t seq = ntohl(p->ptrs.tcph->th_seq);
     int need;
     RpcStatus status;
 

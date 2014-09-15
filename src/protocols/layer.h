@@ -78,6 +78,7 @@ struct EtherHdr;
 namespace ip
 {
 class IpApi;
+struct IP6Frag;
 }
 
 namespace tcp
@@ -100,6 +101,9 @@ struct Packet;
 namespace layer
 {
 
+//  These are for internal use
+void set_packet_pointer(const Packet* const);
+
 // all of these functions will begin search from layer 0,
 // and will return the first function they find.
 SO_PUBLIC const uint8_t* get_inner_layer(const Packet*, uint16_t proto);
@@ -116,6 +120,12 @@ SO_PUBLIC const uint8_t* get_root_layer(const Packet* const);
 SO_PUBLIC const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
 // return the inner ip layer's index in the p->layers array
 SO_PUBLIC int get_inner_ip_lyr_index(const Packet* const p);
+
+// Two versions of this because ip_defrag:: wants to call this on
+// its rebuilt packet, not on the current packet.  Extra function
+// header will be removed once layer is a part of the Packet struct
+SO_PUBLIC const ip::IP6Frag* get_inner_ip6_frag();
+SO_PUBLIC const ip::IP6Frag* get_inner_ip6_frag(const Packet* const p);
 
 
 

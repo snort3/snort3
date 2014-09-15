@@ -86,12 +86,12 @@ int TcpWinOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!p->tcph)
+    if(!p->ptrs.tcph)
         return rval;
 
     MODULE_PROFILE_START(tcpWinPerfStats);
 
-    if ( config.eval(p->tcph->th_win) )
+    if ( config.eval(p->ptrs.tcph->th_win) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(tcpWinPerfStats);

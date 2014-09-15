@@ -26,15 +26,36 @@
 namespace ip_util
 {
 
-bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
+
+static inline int IPV6ExtensionOrder(uint8_t type)
 {
-    ip::IP6Extension *exthdr = (ip::IP6Extension *)pkt;
-    uint32_t total_octets = (exthdr->ip6e_len * 8) + 8;
+    switch (type)
+    {
+        case IPPROTO_ID_HOPOPTS:   return 1;
+        case IPPROTO_ID_DSTOPTS:   return 2;
+        case IPPROTO_ID_ROUTING:   return 3;
+        case IPPROTO_ID_FRAGMENT:  return 4;
+        case IPPROTO_ID_AUTH:      return 5;
+        case IPPROTO_ID_ESP:       return 6;
+        default:                   return IPV6_ORDER_MAX;
+    }
+}
+
+
+bool CheckIPV6HopOptions(const RawData& raw)
+{
+    const ip::IP6Extension* const exthdr =
+        reinterpret_cast<const ip::IP6Extension*>(raw.data);
+
+    const uint8_t* pkt =
+        reinterpret_cast<const uint8_t*>(raw.data);
+
+    const uint32_t total_octets = (exthdr->ip6e_len * 8) + 8;
     const uint8_t *hdr_end = pkt + total_octets;
     uint8_t oplen;
 
-    if (len < total_octets)
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+    if (raw.len < total_octets)
+        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
 
     /* Skip to the options */
     pkt += 2;
@@ -59,13 +80,13 @@ bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
                 oplen = *(++pkt);
                 if ((pkt + oplen + 1) > hdr_end)
                 {
-                    codec_events::decoder_event(p, DECODE_IPV6_BAD_OPT_LEN);
+                    codec_events::decoder_event(DECODE_IPV6_BAD_OPT_LEN);
                     return false;
                 }
                 pkt += oplen + 1;
                 break;
             default:
-                codec_events::decoder_event(p, DECODE_IPV6_BAD_OPT_TYPE);
+                codec_events::decoder_event(DECODE_IPV6_BAD_OPT_TYPE);
                 return false;
         }
     }
@@ -74,31 +95,31 @@ bool CheckIPV6HopOptions(const uint8_t *pkt, uint32_t len, Packet *p)
 }
 
 /* Check for out-of-order IPv6 Extension Headers */
-void CheckIPv6ExtensionOrder(Packet* p, uint8_t proto, uint8_t next)
+void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
 {
     const uint8_t current_order = IPV6ExtensionOrder(proto);
-    const uint8_t next_order = IPV6ExtensionOrder(next);
+    const uint8_t next_order = IPV6ExtensionOrder(codec.next_prot_id);
 
-    if (current_order <= p->curr_ip6_extension_order)
+    if (current_order <= codec.curr_ip6_extension)
     {
         /* A second "Destination Options" header is allowed iff:
            1) A routing header was already seen, and
            2) The second destination header is the last one before the upper layer.
         */
-        if (!((p->decode_flags & DECODE__ROUTING_SEEN) &&
+        if (!((codec.codec_flags & CODEC_ROUTING_SEEN) &&
               (proto == IPPROTO_ID_DSTOPTS) &&
               (next_order == IPV6_ORDER_MAX)))
         {
-            codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
+            codec_events::decoder_event(DECODE_IPV6_UNORDERED_EXTENSIONS);
         }
     }
     else
     {
-        p->curr_ip6_extension_order = current_order;
+        codec.curr_ip6_extension = current_order;
     }
 
     if (proto == IPPROTO_ID_ROUTING)
-        p->decode_flags &= DECODE__ROUTING_SEEN;
+        codec.codec_flags |= CODEC_ROUTING_SEEN;
 }
 
 #if 0
@@ -129,7 +150,7 @@ void CheckIPv6ExtensionOrder(Packet *p)
                 !(p->ip6_extensions[i].type == IPPROTO_DSTOPTS) ||
                 !(i+1 == p->ip6_extension_count))
             {
-                codec_events::decoder_event(p, DECODE_IPV6_UNORDERED_EXTENSIONS);
+                codec_events::decoder_event(DECODE_IPV6_UNORDERED_EXTENSIONS);
             }
         }
 

@@ -143,7 +143,7 @@ bool UdpSession::setup(Packet* p)
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
-    flow->protocol = p->ip_api.proto();
+    flow->protocol = p->ptrs.ip_api.proto();
     flow->s5_state.direction = FROM_SENDER;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
@@ -157,10 +157,10 @@ bool UdpSession::setup(Packet* p)
             &flow->server_ip, SFS_STATE_UDP_CREATED);
 
     flow->s5_state.direction = FROM_SENDER;
-    sfip_copy(flow->client_ip, p->ip_api.get_src());
-    flow->client_port = p->udph->uh_sport;
-    sfip_copy(flow->server_ip, p->ip_api.get_dst());
-    flow->server_port = p->udph->uh_dport;
+    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+    flow->client_port = p->ptrs.udph->uh_sport;
+    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+    flow->server_port = p->ptrs.udph->uh_dport;
 
     if ( flow_con->expected_flow(flow, p) )
         return false;

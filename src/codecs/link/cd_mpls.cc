@@ -118,8 +118,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_MPLS; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
 };
@@ -133,7 +132,7 @@ constexpr int MPLS_PAYLOADTYPE_ERROR = -1;
 
 } // namespace
 
-static int checkMplsHdr(uint32_t, uint8_t, uint8_t, uint8_t, Packet *);
+static int checkMplsHdr(uint32_t label, uint8_t bos);
 
 
 void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
@@ -143,30 +142,28 @@ void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool MplsCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 {
-    const uint32_t* tmpMplsHdr;
     uint32_t mpls_h;
     uint32_t label;
-    lyr_len= 0;
 
     uint8_t exp;
     uint8_t bos = 0;
     uint8_t ttl;
     uint8_t chainLen = 0;
-    uint32_t stack_len = raw_len;
+    uint32_t stack_len = raw.len;
 
     int iRet = 0;
 
-    UpdateMPLSStats(&sfBase, raw_len, Active_PacketWasDropped());
-    tmpMplsHdr = reinterpret_cast<const uint32_t *>(raw_pkt);
+    UpdateMPLSStats(&sfBase, raw.len, Active_PacketWasDropped());
+    const uint32_t* tmpMplsHdr =
+        reinterpret_cast<const uint32_t *>(raw.data);
 
     while (!bos)
     {
         if(stack_len < MPLS_HEADER_LEN)
         {
-            codec_events::decoder_event(p, DECODE_BAD_MPLS);
+            codec_events::decoder_event(DECODE_BAD_MPLS);
             return false;
         }
 
@@ -177,19 +174,19 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         exp = (uint8_t)(mpls_h & 0x0000000E);
         label = (mpls_h>>4) & 0x000FFFFF;
 
-        if((label<NUM_RESERVED_LABELS)&&((iRet = checkMplsHdr(label, exp, bos, ttl, p)) < 0))
+        if((label<NUM_RESERVED_LABELS)&&((iRet = checkMplsHdr(label, bos)) < 0))
             return false;
 
         if( bos )
         {
-            p->mplsHdr.label = label;
-            p->mplsHdr.exp = exp;
-            p->mplsHdr.bos = bos;
-            p->mplsHdr.ttl = ttl;
+            snort.mplsHdr.label = label;
+            snort.mplsHdr.exp = exp;
+            snort.mplsHdr.bos = bos;
+            snort.mplsHdr.ttl = ttl;
             /**
-            p->mpls = &(p->mplsHdr);
+            p->mpls = &(snort.mplsHdr);
       **/
-            p->proto_bits |= PROTO_BIT__MPLS;
+            codec.proto_bits |= PROTO_BIT__MPLS;
             if(!iRet)
             {
                 iRet = ScMplsPayloadType();
@@ -200,27 +197,27 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
         if ((ScMplsStackDepth() != -1) && (chainLen++ >= ScMplsStackDepth()))
         {
-            codec_events::decoder_event(p, DECODE_MPLS_LABEL_STACK);
+            codec_events::decoder_event(DECODE_MPLS_LABEL_STACK);
 
-            p->proto_bits &= ~PROTO_BIT__MPLS;
+            codec.proto_bits &= ~PROTO_BIT__MPLS;
             return false;
         }
     }   /* while bos not 1, peel off more labels */
 
-    lyr_len = (uint8_t*)tmpMplsHdr - raw_pkt;
+    codec.lyr_len = (uint8_t*)tmpMplsHdr - raw.data;
 
     switch (iRet)
     {
         case MPLS_PAYLOADTYPE_IPV4:
-            next_prot_id = ETHERTYPE_IPV4;
+            codec.next_prot_id = ETHERTYPE_IPV4;
             break;
 
         case MPLS_PAYLOADTYPE_IPV6:
-            next_prot_id = ETHERTYPE_IPV6;
+            codec.next_prot_id = ETHERTYPE_IPV6;
             break;
 
         case MPLS_PAYLOADTYPE_ETHERNET:
-            next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
+            codec.next_prot_id = ETHERTYPE_TRANS_ETHER_BRIDGING;
             break;
 
         default:
@@ -234,8 +231,7 @@ bool MplsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 /*
  * check if reserved labels are used properly
  */
-static int checkMplsHdr(
-    uint32_t label, uint8_t, uint8_t bos, uint8_t, Packet *p)
+static int checkMplsHdr(uint32_t label, uint8_t bos)
 {
     int iRet = 0;
     switch(label)
@@ -257,9 +253,9 @@ static int checkMplsHdr(
                        ||((!label)&&(ScMplsPayloadType() != MPLS_PAYLOADTYPE_IPV4)))
                    {
                         if( !label )
-                            codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL0);
+                            codec_events::decoder_event(DECODE_BAD_MPLS_LABEL0);
                         else
-                            codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL2);
+                            codec_events::decoder_event(DECODE_BAD_MPLS_LABEL2);
                    }
                    break;
                }
@@ -269,9 +265,9 @@ static int checkMplsHdr(
                 * and move on to the next one.
                 */
                if( !label )
-                   codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL0);
+                   codec_events::decoder_event(DECODE_BAD_MPLS_LABEL0);
                else
-                   codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL2);
+                   codec_events::decoder_event(DECODE_BAD_MPLS_LABEL2);
 
                p->iph = NULL;
                p->family = NO_IP;
@@ -281,13 +277,13 @@ static int checkMplsHdr(
         case 1:
                if(!bos) break;
 
-               codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL1);
+               codec_events::decoder_event(DECODE_BAD_MPLS_LABEL1);
 
                iRet = MPLS_PAYLOADTYPE_ERROR;
                break;
 
       case 3:
-               codec_events::decoder_event(p, DECODE_BAD_MPLS_LABEL3);
+               codec_events::decoder_event(DECODE_BAD_MPLS_LABEL3);
 
                iRet = MPLS_PAYLOADTYPE_ERROR;
                break;
@@ -303,7 +299,7 @@ static int checkMplsHdr(
         case 13:
         case 14:
         case 15:
-                codec_events::decoder_event(p, DECODE_MPLS_RESERVED_LABEL);
+                codec_events::decoder_event(DECODE_MPLS_RESERVED_LABEL);
                 break;
         default:
                 break;
@@ -319,7 +315,7 @@ void MplsCodec::log(TextLog* const text_log, const uint8_t* /*raw_pkt*/,
         const Packet* const p)
 {
     TextLog_Print(text_log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
-        p->mplsHdr.label, p->mplsHdr.exp, p->mplsHdr.bos, p->mplsHdr.ttl);
+        p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
 }
 
 //-------------------------------------------------------------------------

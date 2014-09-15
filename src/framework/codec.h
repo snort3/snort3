@@ -17,15 +17,20 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef CODEC_H
-#define CODEC_H
+#ifndef FRAMEWORK_CODEC_H
+#define FRAMEWORK_CODEC_H
 
 #include <vector>
 #include <cstdint>
+#include <cstddef>
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
 #include "codecs/sf_protocols.h"
+
+// unfortunately necessary due to use of Ipapi in struct
+#include "protocols/ip.h"
+#include "protocols/mpls.h"  // FIXIT-M remove MPLS from Convenience pointers
 
 struct TextLog;
 struct Packet;
@@ -47,6 +52,11 @@ namespace icmp
 {
     struct ICMPHdr;
 }
+
+// Used by root codecs to add their DLT to their HELP string
+#define STRINGIFY(x) #x
+#define ARG_STRINGIFY(x) STRINGIFY(x)
+#define ADD_DLT(help, x) help " (DLT " ARG_STRINGIFY(x) ")"
 
 
 enum EncodeType{
@@ -117,28 +127,131 @@ static inline bool update_buffer(Buffer* buf, size_t n)
     return true;
 }
 
-
-struct CodecData
+struct RawData
 {
-    /*  Convenience Pointers.  These will be passed to the rest of Snort++ */
+    const uint8_t* data;
+    uint32_t len;
+};
+
+struct SnortData
+{
+    /*  Pointers which will be used by Snort++. (starting with uint16_t so tcph is 64 bytes from start*/
+
+    /*
+     * these four pounters are each referenced literally
+     * dozens if not hundreds of times.  NOTHING else should be added!!
+     */
     const tcp::TCPHdr* tcph;
     const udp::UDPHdr* udph;
     const icmp::ICMPHdr* icmph;
     uint16_t sp;                /* source port (TCP/UDP) */
     uint16_t dp;                /* dest port (TCP/UDP) */
+    uint8_t decode_flags;       /* decoder flags including checksum errors, bad TTLs, frag, etc. */
 
-    /*  Flags which will be sent to the rest of Snort++ */
-    uint32_t packet_flags;      /* TODO:  delete */
-    uint16_t proto_bits;        /* protocols contained within this packet */
-    uint8_t error_flags;        /* flags indicate checksum errors, bad TTLs, etc. */
+    ip::IpApi ip_api;
+    mpls::MplsHdr mplsHdr;
 
-
-    uint8_t ip6_frag_index;
-    uint8_t curr_ip6_extension_order;
-    uint8_t ip6_extension_count;
-    uint8_t byte_skip;      /* when decoding, there are <byte_skip> bytes between the end of the layer and the start of the next layer */
-    ip::IpApi* ip_api;
+    inline void reset()
+    {
+        memset((char*)tcph, '\0', offsetof(SnortData, ip_api));
+        ip_api.reset();
+    }
 };
+
+/* error flags */
+constexpr uint8_t DECODE_ERR_CKSUM_IP = 0x01;
+constexpr uint8_t DECODE_ERR_CKSUM_TCP = 0x02;
+constexpr uint8_t DECODE_ERR_CKSUM_UDP = 0x04;
+constexpr uint8_t DECODE_ERR_CKSUM_ICMP = 0x08;
+constexpr uint8_t DECODE_ERR_CKSUM_ANY = 0x0F;
+constexpr uint8_t DECODE_ERR_BAD_TTL = 0x10;
+constexpr uint8_t DECODE_PKT_TRUST = 0x20;    /* Tell Snort++ to whitelist this packet */
+constexpr uint8_t DECODE_FRAG = 0x40;  /* flag to indicate a fragmented packet */
+constexpr uint8_t DECODE_MF = 0x80;
+
+constexpr uint8_t DECODE_ERR_FLAGS = DECODE_ERR_CKSUM_IP |
+    DECODE_ERR_CKSUM_TCP |
+    DECODE_ERR_CKSUM_UDP |
+    DECODE_ERR_CKSUM_UDP |
+    DECODE_ERR_CKSUM_ICMP |
+    DECODE_ERR_CKSUM_ANY |
+    DECODE_ERR_BAD_TTL;
+
+
+struct CodecData
+{
+    /* This section will get reset before every decode() function call */
+    uint16_t next_prot_id;      /* protocol type of the next layer */
+    uint16_t lyr_len;           /* The length of the valid part layer */
+    uint16_t invalid_bytes;     /* the length of the INVALID part of this layer */
+
+    /* Reset before each decode of packet begins */
+
+    /*  Codec specific fields.  These fields are only relevent to codecs. */
+    uint16_t proto_bits;    /* protocols contained within this packet */
+                            /*   -- will be propogated to Snort++ Packet struct*/
+    uint8_t codec_flags;    /* flags used while decoding */
+    uint8_t ip_layer_cnt;
+    uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
+    uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
+
+    // FIXIT-H-J - most of these don't needs to be zeroed
+    CodecData(uint16_t init_prot) : lyr_len(0),
+                                    invalid_bytes(0),
+                                    proto_bits(0),
+                                    codec_flags(0),
+                                    ip_layer_cnt(0)
+    { next_prot_id = init_prot; }
+};
+
+#define PROTO_BIT__NONE     0x0000
+#define PROTO_BIT__IP       0x0001
+#define PROTO_BIT__ARP      0x0002
+#define PROTO_BIT__TCP      0x0004
+#define PROTO_BIT__UDP      0x0008
+#define PROTO_BIT__ICMP     0x0010
+#define PROTO_BIT__TEREDO   0x0020
+#define PROTO_BIT__GTP      0x0040
+#define PROTO_BIT__MPLS     0x0080
+#define PROTO_BIT__VLAN     0x0100
+#define PROTO_BIT__ETH      0x0200
+#define PROTO_BIT__TCP_EMBED_ICMP  0x0400
+#define PROTO_BIT__UDP_EMBED_ICMP  0x0800
+#define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
+#define PROTO_BIT__IP6_EXT  0x2000
+#define PROTO_BIT__FREE     0x4000
+#define PROTO_BIT__OTHER    0x8000
+#define PROTO_BIT__ALL      0xffff
+
+
+/*  Decode Flags */
+constexpr uint8_t CODEC_DF = 0x01;    /* don't fragment flag */
+constexpr uint8_t CODEC_UNSURE_ENCAP = 0x02;  /* packet may have incorrect encapsulation layer.
+                                             * don't alert if "next layer" is invalid.
+                                             * If decode fails with this bit set, PacketManager
+                                             *          will back out to the previous layer.
+                                             * IMPORTANT:  This bit can ONLY be set if the
+                                             *              DECODE_ENCAP_LAYER flag was
+                                             *              was previously set.
+                                             */
+constexpr uint8_t CODEC_SAVE_LAYER = 0x04;    /* DO NOT USE THIS LAYER!!
+                                             *  --  use DECODE_ENCAP_LAYER
+                                             */
+constexpr uint8_t CODEC_ENCAP_LAYER = (CODEC_SAVE_LAYER | CODEC_UNSURE_ENCAP );
+                                            /* If encapsulation decode fails, back out to this layer
+                                             * This will be cleared by PacketManager between decodes
+                                             * This flag automatically sets DECODE_ENCAP_LAYER for
+                                             *      the next layer (and only the next layer).
+                                             */
+constexpr uint8_t CODEC_ROUTING_SEEN = 0X08; /* used to check ip6 extensino order */
+constexpr uint8_t CODEC_IPOPT_RR_SEEN = 0x10; /* used by icmp4 for alerting */
+constexpr uint8_t CODEC_IPOPT_RTRALT_SEEN = 0x20;  /* used by IGMP for alerting */
+constexpr uint8_t CODEC_IPOPT_LEN_THREE = 0x40; /* used by IGMP for alerting */
+constexpr uint8_t CODEC_TEREDO_SEEN = 0x80; /* used in IPv6 Codec */
+
+constexpr uint8_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
+                                        CODEC_IPOPT_RTRALT_SEEN |
+                                        CODEC_IPOPT_LEN_THREE);
 
 /*  Codec Class */
 
@@ -170,9 +283,31 @@ public:
     // Register the code's protocol ID's and Ethertypes
     virtual void get_protocol_ids(std::vector<uint16_t>&) {};
 
-    /* Maom decodomg fimctopm */
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)=0;
+    /*
+     * Main decoding function!  Will get called when decoding a packet.
+     *
+     * PARAMS:
+     *      const RawData& = struct containing informatin about the
+     *                      current packet's raw data
+     *
+     *      CodecData& = Pass information the PacketManager and other
+     *              codecs. IMPORTANT FIELDS TO SET IN YOUR CODEC -
+     *         next_prot_id   = protocol type of the next layer
+     *         lyr_len        = The length of the valid part layer
+     *         invalid bytes  = number of invalid bytes between the end of
+     *                          the this layer's valid length and the next
+     *                           layer. For instance,
+     *                          when decoding IP, if there are 20 bytes of
+     *                          options but only 12 bytes are valid.
+     *
+     *                          data.lyr_len = MIN_IP_HEADER_LEN + 12;
+     *                          data.invalid_bytes = 8    === 20 - 12
+     *
+     *      SnortData& = Data which will be sent to the rest of Snort++.
+     *                      contains convenience pointers and information
+     *                      about this packet.
+     **/
+    virtual bool decode(const RawData&, CodecData&, SnortData&)=0;
 
     /*
      *  Log this layer's information

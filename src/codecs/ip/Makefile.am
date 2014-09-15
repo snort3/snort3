@@ -4,7 +4,6 @@ noinst_LIBRARIES = libip_codecs.a
 
 libip_codecs_a_SOURCES = \
 cd_ipv4.cc \
-cd_esp.cc \
 cd_tcp.cc \
 ip_util.h \
 ip_util.cc
@@ -13,6 +12,7 @@ ip_util.cc
 plugin_list = \
 cd_auth.cc \
 cd_dst_opts.cc \
+cd_esp.cc \
 cd_frag.cc \
 cd_gre.cc \
 cd_hop_opts.cc \
@@ -41,6 +41,11 @@ ehlib_LTLIBRARIES = libcd_auth.la
 libcd_auth_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_auth_la_LDFLAGS = -export-dynamic -shared
 libcd_auth_la_SOURCES = cd_auth.cc
+
+ehlib_LTLIBRARIES += libcd_esp.la
+libcd_esp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_esp_la_LDFLAGS = -export-dynamic -shared
+libcd_esp_la_SOURCES = cd_esp.cc
 
 ehlib_LTLIBRARIES += libcd_gre.la
 libcd_gre_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

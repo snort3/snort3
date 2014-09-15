@@ -25,11 +25,6 @@
 
 namespace mpls{
 
-namespace detail{
-
-} // namespace detail
-
-
 struct MplsHdr
 {
     uint32_t label;

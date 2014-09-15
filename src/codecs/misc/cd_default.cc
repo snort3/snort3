@@ -17,13 +17,8 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// cd_null.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_default.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
@@ -40,17 +35,14 @@ public:
     DefaultCodec() : Codec(CD_DEFAULT_NAME){};
     ~DefaultCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t*, const uint32_t&,
-        Packet*, uint16_t&, uint16_t&) { return false; };
+    virtual void get_protocol_ids(std::vector<uint16_t>& v)
+    { v.push_back(FINISHED_DECODE); }
+
+    virtual bool decode(const RawData&, CodecData&, SnortData&)
+    { return false; };
 };
 
 } // namespace
-
-
-void DefaultCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{ v.push_back(FINISHED_DECODE); }
-
 
 
 //-------------------------------------------------------------------------

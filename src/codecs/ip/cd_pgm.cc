@@ -59,12 +59,8 @@ public:
     PgmCodec() : Codec(CD_PGM_NAME){};
     ~PgmCodec() {};
 
-
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    
 };
 
 
@@ -73,15 +69,15 @@ static const int PGM_NAK_ERR = -1;
 static const int PGM_NAK_OK = 0;
 static const int PGM_NAK_VULN = 1;
 
-typedef struct _PGM_NAK_OPT
+struct PGM_NAK_OPT
 {
     uint8_t type;     /* 02 = vuln */
     uint8_t len;
     uint8_t res[2];
     uint32_t seq[1];    /* could be many many more, but 1 is sufficient */
-} PGM_NAK_OPT;
+};
 
-typedef struct _PGM_NAK
+struct PGM_NAK
 {
     uint32_t  seqnum;
     uint16_t  afil1;
@@ -91,9 +87,9 @@ typedef struct _PGM_NAK
     uint16_t  res2;
     uint32_t  multi;
     PGM_NAK_OPT opt;
-} PGM_NAK;
+};
 
-typedef struct _PGM_HEADER
+struct PgmHeader
 {
     uint16_t srcport;
     uint16_t dstport;
@@ -103,50 +99,43 @@ typedef struct _PGM_HEADER
     uint8_t  gsd[6];
     uint16_t length;
     PGM_NAK  nak;
-} PGM_HEADER;
+};
 
 
 } // namespace
 
 /* This PGM NAK function started off as an SO rule, sid 8351. */
-static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
-    uint16_t data_left;
-    uint16_t  checksum;
-    PGM_HEADER *header;
-
-    if (NULL == data) {
-        return PGM_NAK_ERR;
-    }
-
+static inline int pgm_nak_detect (const RawData& raw)
+{
     /* request must be bigger than 44 bytes to cause vuln */
-    if (length <= sizeof(PGM_HEADER)) {
+    if (raw.len <= sizeof(PgmHeader)) {
         return PGM_NAK_ERR;
     }
 
-    header = (PGM_HEADER *) data;
+     const PgmHeader* const header =
+        reinterpret_cast<const PgmHeader* const>(raw.data);
 
-    if (8 != header->type) {
+    if (8 != header->type)
         return PGM_NAK_ERR;
-    }
 
-    if (2 != header->nak.opt.type) {
+    if (2 != header->nak.opt.type)
         return PGM_NAK_ERR;
-    }
 
 
     /*
      * alert if the amount of data after the options is more than the length
      * specified.
      */
+    const uint16_t data_left = raw.len - 36;
 
-
-    data_left = length - 36;
     if (data_left > header->nak.opt.len) {
 
         /* checksum is expensive... do that only if the length is bad */
         if (header->checksum != 0)
         {
-            checksum = checksum::cksum_add((uint16_t*)data, (int)length);
+            const uint16_t checksum =
+                checksum::cksum_add((uint16_t*)raw.data, raw.len);
+
             if (checksum != 0)
                 return PGM_NAK_ERR;
         }
@@ -162,11 +151,10 @@ static inline int pgm_nak_detect (uint8_t *data, uint16_t length) {
 // private functions
 //-------------------------------------------------------------------------
 
-bool PgmCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool PgmCodec::decode(const RawData& raw, CodecData&, SnortData&)
 {
-    if ( pgm_nak_detect((uint8_t *)p->data, p->dsize) == PGM_NAK_VULN )
-        codec_events::decoder_event(p, DECODE_PGM_NAK_OVERFLOW);
+    if ( pgm_nak_detect(raw) == PGM_NAK_VULN )
+        codec_events::decoder_event(DECODE_PGM_NAK_OVERFLOW);
     return true;
 }
 
@@ -182,24 +170,16 @@ void PgmCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new PgmModule;
-}
+{ return new PgmModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new PgmCodec();
-}
+{ return new PgmCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi pgm_api =

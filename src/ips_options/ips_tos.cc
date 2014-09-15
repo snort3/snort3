@@ -89,12 +89,12 @@ int IpTosOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!p->ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_valid())
         return rval;
 
     MODULE_PROFILE_START(ipTosPerfStats);
 
-    if ( config.eval(p->ip_api.tos()) )
+    if ( config.eval(p->ptrs.ip_api.tos()) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(ipTosPerfStats);

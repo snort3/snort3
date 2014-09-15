@@ -75,6 +75,7 @@
 #include <ctype.h>
 #include <rpc/types.h>
 #include <errno.h>
+#include <array>
 
 
 #include "framework/codec.h"
@@ -226,10 +227,11 @@ static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for sel
 static THREAD_LOCAL FragStats t_stats;
 static FragStats g_stats;
 
-static THREAD_LOCAL Packet* defrag_pkt = NULL;
-static THREAD_LOCAL Packet* encap_defrag_pkt = NULL;
+//static THREAD_LOCAL Packet* defrag_pkt = NULL;
+//static THREAD_LOCAL Packet* encap_defrag_pkt = NULL;
 
 static THREAD_LOCAL uint32_t pkt_snaplen = 0;
+static THREAD_LOCAL std::array<Packet*, LAYER_MAX> defrag_pkts{{0}};
 
 /* enum for policy names */
 static const char *frag_policy_names[] =
@@ -527,13 +529,13 @@ static inline int FragCheckFirstLast(const Packet* const p,
     uint16_t endOfThisFrag;
 
     /* set the frag flag if this is the first fragment */
-    if((p->decode_flags & DECODE__MF) && frag_offset == 0)
+    if((p->ptrs.decode_flags & DECODE_MF) && frag_offset == 0)
     {
         ft->frag_flags |= FRAG_GOT_FIRST;
 
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG, "Got first frag\n"););
     }
-    else if((!(p->decode_flags & DECODE__MF)) && (frag_offset > 0)) /* set for last frag too */
+    else if((!(p->ptrs.decode_flags & DECODE_MF)) && (frag_offset > 0)) /* set for last frag too */
     {
         /* Use the actual length here because packet may have been
          * truncated.  Don't want to try to copy more than we actually
@@ -643,8 +645,8 @@ static int FragHandleIPOptions(FragTracker *ft,
                                const Packet* const p)
 {
     // FIXIT-J pass in frag_offset as a parameter
-    const uint16_t frag_offset = ntohs(p->ip_api.off(p));
-    const uint16_t ip_options_len = p->ip_api.get_ip_opt_len();
+    const uint16_t frag_offset = ntohs(p->ptrs.ip_api.off());
+    const uint16_t ip_options_len = p->ptrs.ip_api.get_ip_opt_len();
 
     if(frag_offset == 0)
     {
@@ -667,7 +669,7 @@ static int FragHandleIPOptions(FragTracker *ft,
             {
                 /* Allocate and copy in the options */
                 ft->ip_options_data = (uint8_t*)SnortAlloc(ip_options_len);
-                memcpy(ft->ip_options_data, p->ip_api.get_ip_opt_data(), ip_options_len);
+                memcpy(ft->ip_options_data, p->ptrs.ip_api.get_ip_opt_data(), ip_options_len);
                 ft->ip_options_len = ip_options_len;
             }
         }
@@ -692,7 +694,7 @@ static int FragHandleIPOptions(FragTracker *ft,
         {
             ft->copied_ip_options_len = ip_options_len;
 
-            ip::IpOptionIterator iter(p->ip_api.get_ip4h(), p);
+            ip::IpOptionIterator iter(p->ptrs.ip_api.get_ip4h(), p);
 
             for (ip::IpOptions opt : iter)
             {
@@ -755,7 +757,7 @@ static inline int checkTinyFragments(
 {
     //Snort may need to raise a separate event if
     //only trimmed length is tiny.
-    if(p->decode_flags & DECODE__MF)
+    if(p->ptrs.decode_flags & DECODE_MF)
     {
         ///detect tiny fragments before processing overlaps.
         if (engine->min_fragment_length)
@@ -879,6 +881,7 @@ static inline int FragIsComplete(FragTracker *ft)
  */
 static void FragRebuild(FragTracker *ft, Packet *p)
 {
+    static THREAD_LOCAL uint8_t encap_frag_cnt = 0;
     uint8_t *rebuild_ptr = NULL;  /* ptr to the start of the reassembly buffer */
     const uint8_t *rebuild_end;  /* ptr to the end of the reassembly buffer */
     Fragment *frag;    /* frag pointer for managing fragments */
@@ -890,10 +893,11 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
     MODULE_PROFILE_START(fragRebuildPerfStats);
 
-    if ( p->encapsulations )
-        dpkt = encap_defrag_pkt;
-    else
-        dpkt = defrag_pkt;
+
+    if (!defrag_pkts[encap_frag_cnt])
+        defrag_pkts[encap_frag_cnt] = PacketManager::encode_new();
+
+    dpkt = defrag_pkts[encap_frag_cnt];
 
     PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
     /*
@@ -903,9 +907,9 @@ static void FragRebuild(FragTracker *ft, Packet *p)
     // the encoder ensures enough space for a maximum datagram
     rebuild_end = (uint8_t*)dpkt->data + IP_MAXPACKET;
 
-    if (p->ip_api.is_ip4())
+    if (p->ptrs.ip_api.is_ip4())
     {
-        ip::IP4Hdr* iph = const_cast<ip::IP4Hdr*>(dpkt->ip_api.get_ip4h());
+        ip::IP4Hdr* iph = const_cast<ip::IP4Hdr*>(dpkt->ptrs.ip_api.get_ip4h());
 
         /*
          * if there are IP options, copy those in as well
@@ -943,7 +947,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
          * clear the packet fragment fields
          */
         iph->ip_off = 0x0000;
-        dpkt->decode_flags &= ~DECODE__FRAG;
+        dpkt->ptrs.decode_flags &= ~DECODE_FRAG;
 
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                     "[^^] Walking fraglist:\n"););
@@ -988,20 +992,21 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         }
     }
 
-    if (p->ip_api.is_ip4())
+    if (p->ptrs.ip_api.is_ip4())
     {
         /*
          * tell the rest of the system that this is a rebuilt fragment
          */
         dpkt->packet_flags |= PKT_REBUILT_FRAG;
-        dpkt->decode_flags &= ~DECODE__FRAG;
+        dpkt->packet_flags &= ~DECODE_FRAG;
         dpkt->dsize = (uint16_t)ft->calculated_size;
 
         PacketManager::encode_update(dpkt);
     }
     else /* Inner/only is IP6 */
     {
-        ip::IP6Hdr* rawHdr = const_cast<ip::IP6Hdr*>(dpkt->ip_api.get_ip6h());
+        ip::IP6Hdr* const rawHdr =
+            const_cast<ip::IP6Hdr* const>(dpkt->ptrs.ip_api.get_ip6h());
 
         if ( !rawHdr )
         {
@@ -1012,19 +1017,15 @@ static void FragRebuild(FragTracker *ft, Packet *p)
 
         /* IPv6 Header is already copied over, as are all of the extensions
          * that were not part of the fragmented piece. */
+        ip::IP6Frag* const fragh =
+            const_cast<ip::IP6Frag* const>(layer::get_inner_ip6_frag(dpkt));
 
         /* Set the 'next' protocol */
-        if (p->ip6_frag_index > 0)
-        {
-            // FIXIT-J use of last_extension works but is ugly
-            ip::IP6Extension *last_extension = (ip::IP6Extension *)
-                (dpkt->pkt + (p->layers[p->ip6_frag_index].start - p->pkt));
-            last_extension->ip6e_nxt = ft->protocol;
-        }
+        if (fragh != nullptr)
+            fragh->ip6f_nxt = ft->protocol;
         else
-        {
             rawHdr->ip6_next = ft->protocol;
-        }
+
         dpkt->dsize = (uint16_t)ft->calculated_size;
         PacketManager::encode_update(dpkt);
     }
@@ -1053,12 +1054,15 @@ static void FragRebuild(FragTracker *ft, Packet *p)
         LogIPPkt(dpkt->iph->ip_proto, &dpkt);
 
 #endif
+
+    encap_frag_cnt++;
     SnortEventqPush();
     p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
     p->pseudo_type = PSEUDO_PKT_IP;
     PacketManager::encode_set_pkt(p);
     ProcessPacket(dpkt, dpkt->pkth, dpkt->pkt);
     SnortEventqPop();
+    encap_frag_cnt--;
 
     DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                 "Done with rebuilt packet, marking rebuilt...\n"););
@@ -1237,17 +1241,17 @@ int fragGetApplicationProtocolId(Packet *p)
         return ft->application_protocol;
     }
 
-    switch (p->ip_api.proto())
+    switch (p->ptrs.ip_api.proto())
     {
         case IPPROTO_TCP:
             ft->ipprotocol = protocolReferenceTCP;
-            src_port = p->sp;
-            dst_port = p->dp;
+            src_port = p->ptrs.sp;
+            dst_port = p->ptrs.dp;
             break;
         case IPPROTO_UDP:
             ft->ipprotocol = protocolReferenceUDP;
-            src_port = p->sp;
-            dst_port = p->dp;
+            src_port = p->ptrs.sp;
+            dst_port = p->ptrs.dp;
             break;
         case IPPROTO_ICMP:
             ft->ipprotocol = protocolReferenceICMP;
@@ -1296,18 +1300,20 @@ bool Defrag::configure(SnortConfig*)
 
 void Defrag::tinit()
 {
-    defrag_pkt = PacketManager::encode_new();
-    encap_defrag_pkt = PacketManager::encode_new();
+    defrag_pkts[0] = PacketManager::encode_new();
     pkt_snaplen = DAQ_GetSnapLen();
 }
 
 void Defrag::tterm()
 {
-    PacketManager::encode_delete(defrag_pkt);
-    defrag_pkt = NULL;
-
-    PacketManager::encode_delete(encap_defrag_pkt);
-    encap_defrag_pkt = NULL;
+    for (std::size_t i = 0; i < defrag_pkts.size(); i++)
+    {
+        if (defrag_pkts[i] != nullptr)
+        {
+            PacketManager::encode_delete(defrag_pkts[i]);
+            defrag_pkts[i] = nullptr;
+        }
+    }
 }
 
 void Defrag::show(SnortConfig*)
@@ -1330,10 +1336,10 @@ void Defrag::process(Packet* p, FragTracker* ft)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(p->ip_api.is_valid() && !(p->error_flags & PKT_ERR_CKSUM_IP));
-    assert(p->decode_flags & DECODE__FRAG);
+    assert(p->ptrs.ip_api.is_valid() && !(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
+    assert(p->packet_flags & DECODE_FRAG);
 
-    const uint16_t frag_offset = ntohs(p->ip_api.off(p));
+    const uint16_t frag_offset = ntohs(p->ptrs.ip_api.off());
 
     /*
      * First case: if frag offset is 0 & UDP, let that packet go
@@ -1354,7 +1360,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
      *    a rebuilt packet later.  So don't process it further.
      */
     if ((frag_offset != 0) ||
-        ((p->ip_api.proto() != IPPROTO_UDP) && (p->decode_flags & DECODE__MF)))
+        ((p->ptrs.ip_api.proto() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
     {
         DisableDetect(p);
     }
@@ -1362,14 +1368,14 @@ void Defrag::process(Packet* p, FragTracker* ft)
     /*
      * pkt's not going to make it to the engine, bail
      */
-    if(p->ip_api.ttl() < fe->min_ttl)
+    if(p->ptrs.ip_api.ttl() < fe->min_ttl)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                 "[FRAG3] Fragment discarded due to low TTL "
                 "[0x%X->0x%X], TTL: %d  " "Offset: %d Length: %d\n",
-                ntohl(p->ip_api.get_ip4h()->get_src()),
-                ntohl(p->ip_api.get_ip4h()->get_dst()),
-                p->ip_api.ttl(), frag_offset,
+                ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
+                ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
+                p->ptrs.ip_api.ttl(), frag_offset,
                 p->dsize););
 
         EventAnomScMinTTL(fe);
@@ -1401,7 +1407,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
          * timeout frags not getting purged correctly when
          * the entire set of frags show up later. */
 
-        ft->ttl = p->ip_api.ttl(); /* store the first ttl we got */
+        ft->ttl = p->ptrs.ip_api.ttl(); /* store the first ttl we got */
         ft->engine = nullptr;
     }
 
@@ -1440,9 +1446,9 @@ void Defrag::process(Packet* p, FragTracker* ft)
                         "[FRAG3] Fragment discarded due to large TTL Delta "
                         "[0x%X->0x%X], TTL: %d  orig TTL: %d "
                         "Offset: %d Length: %d\n",
-                        ntohl(p->ip_api.get_ip4h()->get_src()),
-                        ntohl(p->ip_api.get_ip4h()->get_dst()),
-                        p->ip_api.ttl(), ft->ttl, frag_offset,
+                        ntohl(p->ptrs.ip_api.get_ip4h()->get_src()),
+                        ntohl(p->ptrs.ip_api.get_ip4h()->get_dst()),
+                        p->ptrs.ip_api.ttl(), ft->ttl, frag_offset,
                         p->dsize););
                 t_stats.discards++;
                 MODULE_PROFILE_END(fragPerfStats);
@@ -1463,7 +1469,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
 #ifdef DEBUG
                 LogMessage("WARNING: Excessive IP fragment overlap, "
                            "(More: %u, offset: %u, offsetSize: %u).\n",
-                           (p->decode_flags & DECODE__MF),
+                           (p->ptrs.decode_flags & DECODE_MF),
                            (frag_offset << 3), p->dsize);
 #endif
                 t_stats.discards++;
@@ -1491,7 +1497,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
             FragRebuild(ft, p);
 
             if (frag_offset != 0 ||
-                (p->ip_api.proto() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
+                (p->ptrs.ip_api.proto() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
             {
                 /* Need to reset some things here because the
                  * rebuilt packet will have reset the do_detect
@@ -1552,15 +1558,16 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
     const uint8_t *fragStart;
     int16_t fragLength;
     PROFILE_VARS;
-    const uint16_t net_frag_offset = ntohs(p->ip_api.off(p));
+    const uint16_t net_frag_offset = ntohs(p->ptrs.ip_api.off());
 
     sfBase.iFragInserts++;
 
     MODULE_PROFILE_START(fragInsertPerfStats);
 
-    if (p->ip_api.is_ip6() && (net_frag_offset == 0))
+    if (p->ptrs.ip_api.is_ip6() && (net_frag_offset == 0))
     {
-        ip::IP6Frag *fragHdr = (ip::IP6Frag *)p->layers[p->ip6_frag_index].start;
+
+        const ip::IP6Frag* const fragHdr = layer::get_inner_ip6_frag();
         if (ft->protocol != fragHdr->ip6f_nxt)
         {
             ft->protocol = fragHdr->ip6f_nxt;
@@ -1585,12 +1592,12 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
     len = fragLength = p->dsize;
 
 #ifdef DEBUG_MSGS
-    if (p->ip_api.actual_ip_len() != ntohs(p->ip_api.len()))
+    if (p->ptrs.ip_api.actual_ip_len() != ntohs(p->ptrs.ip_api.len()))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
             "IP Actual Length (%d) != specified length (%d), "
             "truncated packet (%d)?\n",
-            p->ip_api.actual_ip_len(), ntohs(p->ip_api.len()), pkt_snaplen););
+            p->ptrs.ip_api.actual_ip_len(), ntohs(p->ptrs.ip_api.len()), pkt_snaplen););
     }
 #endif
 
@@ -1606,7 +1613,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
     /*
      * might have last frag...
      */
-    if(!(p->decode_flags & DECODE__MF))
+    if(!(p->ptrs.decode_flags & DECODE_MF))
     {
         if ((frag_end > ft->calculated_size) &&
             (firstLastOk == FRAG_LAST_OFFSET_ADJUST))
@@ -1761,7 +1768,7 @@ int Defrag::insert(Packet *p, FragTracker *ft, FragEngine *fe)
                     ((ft->frag_flags & FRAG_GOT_LAST) &&
                      frag_end != ft->calculated_size))
             {
-                if (!(p->decode_flags & DECODE__MF))
+                if (!(p->ptrs.decode_flags & DECODE_MF))
                 {
                     /*
                      * teardrop attack...
@@ -1914,7 +1921,7 @@ left_overlap_last:
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
                     "Overly large fragment %d 0x%x 0x%x %d\n",
-                    fragLength, ntohs(p->ip_api.len()), p->ip_api.off(p),
+                    fragLength, ntohs(p->ptrs.ip_api.len()), p->ptrs.ip_api.off(),
                     net_frag_offset << 3););
         MODULE_PROFILE_END(fragInsertPerfStats);
         return FRAG_INSERT_FAILED;
@@ -1941,7 +1948,7 @@ left_overlap_last:
                     ((ft->frag_flags & FRAG_GOT_LAST) &&
                      frag_end != ft->calculated_size))
             {
-                if (!(p->decode_flags & DECODE__MF))
+                if (!(p->ptrs.decode_flags & DECODE_MF))
                 {
                     /*
                      * teardrop attack...
@@ -2298,8 +2305,8 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FRAG,
             "Overly large fragment length:%d(0x%x) off:0x%x(%d)\n",
-            fragLength, ntohs(p->ip_api.len()), ntohs(p->ip_api.off(p)) << 3,
-            ntohs(p->ip_api.off(p)) << 3););
+            fragLength, ntohs(p->ptrs.ip_api.len()), ntohs(p->ptrs.ip_api.off()) << 3,
+            ntohs(p->ptrs.ip_api.off()) << 3););
 
         /* Ah, crap.  Return that tracker. */
         return 0;
@@ -2307,9 +2314,9 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
 
     memset(ft, 0, sizeof(*ft));
     
-    if (p->ip_api.is_ip4())
+    if (p->ptrs.ip_api.is_ip4())
     {
-        ft->protocol = p->ip_api.proto();
+        ft->protocol = p->ptrs.ip_api.proto();
 
         const ip::IP4Hdr *ip4h = reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
         frag_off = ntohs(ip4h->get_off());
@@ -2323,7 +2330,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
             ft->protocol = fragHdr->ip6f_nxt;
     }
 
-    ft->ttl = p->ip_api.ttl(); /* store the first ttl we got */
+    ft->ttl = p->ptrs.ip_api.ttl(); /* store the first ttl we got */
     ft->calculated_size = 0;
     ft->alerted = 0;
     ft->frag_flags = 0;
@@ -2375,7 +2382,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     frag_end = f->offset + fragLength;
     f->ord = ft->ordinal++;
     f->data = f->fptr;     /* ptr to adjusted start position */
-    if (!(p->decode_flags & DECODE__MF))
+    if (!(p->ptrs.decode_flags & DECODE_MF))
     {
         f->last = 1;
     }

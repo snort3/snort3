@@ -29,7 +29,8 @@
 #include <pcap.h>
 
 #define CD_RAW6_NAME "raw6"
-#define CD_RAW6_HELP "support for unencapsulated IPv6"
+#define CD_RAW6_HELP_STR "support for unencapsulated IPv6"
+#define CD_RAW6_HELP ADD_DLT(CD_RAW6_HELP_STR, DLT_IPV6)
 
 namespace
 {
@@ -40,8 +41,7 @@ public:
     Raw6Codec() : Codec(CD_RAW6_NAME){};
     ~Raw6Codec() {};
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void get_data_link_type(std::vector<int>&);
 
 };
@@ -51,10 +51,9 @@ public:
 
 
 // raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
-bool Raw6Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t& next_prot_id)
+bool Raw6Codec::decode(const RawData&, CodecData& data, SnortData&)
 {
-    next_prot_id = ETHERTYPE_IPV6;
+    data.next_prot_id = ETHERTYPE_IPV6;
     return true;
 }
 

@@ -92,12 +92,12 @@ int IcodeOption::eval(Cursor&, Packet *p)
     PROFILE_VARS;
 
     /* return 0  if we don't have an icmp header */
-    if(!p->icmph)
+    if(!p->ptrs.icmph)
         return rval;
 
     MODULE_PROFILE_START(icmpCodePerfStats);
 
-    if ( config.eval(p->icmph->code) )
+    if ( config.eval(p->ptrs.icmph->code) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(icmpCodePerfStats);
