@@ -31,6 +31,7 @@
 #include "utils/bitop_funcs.h"
 #include "utils/util.h"
 #include "protocols/packet.h"
+#include "sfip/sf_ip.h"
 
 unsigned FlowData:: flow_id = 0;
 
@@ -239,128 +240,52 @@ void Flow::set_direction(Packet* p)
 
     if(ip_api->is_ip4())
     {
-        uint8_t proto = p->ip_api.proto();
-
         if (sfip_fast_eq4(ip_api->get_src(), &client_ip))
         {
-            if (proto == IPPROTO_TCP)
-            {
-                if (p->tcph->th_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else if (proto == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else
-            {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
-            }
+
+            else if (p->sp == client_port)
+                p->packet_flags |= PKT_FROM_CLIENT;
+
+            else
+                p->packet_flags |= PKT_FROM_SERVER;
         }
         else if (sfip_fast_eq4(ip_api->get_dst(), &client_ip))
         {
-            if  (proto == IPPROTO_TCP)
-            {
-                if (p->tcph->th_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
-            else if (proto == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
-            else
-            {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_SERVER;
-            }
+
+            else if (p->dp == client_port)
+                p->packet_flags |= PKT_FROM_SERVER;
+
+            else
+                p->packet_flags |= PKT_FROM_CLIENT;
         }
     }
     else /* IS_IP6(p) */
     {
-        uint16_t proto = ip_api->proto();
-
         if (sfip_fast_eq6(ip_api->get_src(), &client_ip))
         {
-            if (proto == IPPROTO_TCP)
-            {
-                if (p->tcph->th_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else if (proto == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_sport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-            }
-            else
-            {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
-            }
+
+            else if (p->sp == client_port)
+                p->packet_flags |= PKT_FROM_CLIENT;
+
+            else
+                p->packet_flags |= PKT_FROM_SERVER;
         }
         else if (sfip_fast_eq6(ip_api->get_dst(), &client_ip))
         {
-            if  (proto == IPPROTO_TCP)
-            {
-                if (p->tcph->th_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
-            else if (proto == IPPROTO_UDP && p->udph )
-            {
-                if (p->udph->uh_dport == client_port)
-                {
-                    p->packet_flags |= PKT_FROM_SERVER;
-                }
-                else
-                {
-                    p->packet_flags |= PKT_FROM_CLIENT;
-                }
-            }
-            else
-            {
+            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_SERVER;
-            }
+
+            else if (p->dp == client_port)
+                p->packet_flags |= PKT_FROM_SERVER;
+
+            else
+                p->packet_flags |= PKT_FROM_CLIENT;
         }
     }
 }

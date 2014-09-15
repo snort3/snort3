@@ -55,6 +55,7 @@
 #include "target_based/sftarget_reader.h"
 #include "managers/event_manager.h"
 #include "detection/detect.h"
+#include "sfip/sf_ip.h"
 
 #define LOG_NONE    "none"
 #define LOG_TEXT    "text"

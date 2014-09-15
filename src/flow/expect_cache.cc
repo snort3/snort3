@@ -25,6 +25,7 @@
 #include "time/packet_time.h"
 #include "stream/stream_api.h"  // FIXIT-M bad dependency
 #include "zhash.h"
+#include "sfip/sf_ip.h"
 
 /* Reasonably small, and prime */
 // FIXIT-L size based on max_tcp + max_udp?

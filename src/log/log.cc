@@ -39,6 +39,7 @@ using namespace std;
 #include "main/analyzer.h"
 #include "snort.h"
 #include "protocols/tcp.h"
+#include "main/snort_debug.h"
 
 #define DEFAULT_DAEMON_ALERT_FILE  "alert"
 

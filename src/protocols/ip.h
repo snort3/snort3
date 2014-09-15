@@ -60,8 +60,6 @@ public:
     void set(const IP6Hdr* h6);
     bool set(const uint8_t* raw_ip_data);
     void reset();
-    const sfip_t *get_src();
-    const sfip_t *get_dst();
     uint32_t id(const Packet* const p) const;
     uint16_t off(const Packet* const p) const;
     // returns a pointer to this ip layer's data
@@ -96,6 +94,12 @@ public:
 
     inline const IP6Hdr* get_ip6h() const
     { return ip6h; }
+
+    inline const sfip_t *get_src() const
+    { return src_p; }
+
+    inline const sfip_t *get_dst() const
+    { return dst_p; }
 
     inline uint16_t tos() const
     { return ip4h ? ip4h->get_tos() : ip6h ? ip6h->get_tos() : 0; }

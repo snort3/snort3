@@ -46,6 +46,7 @@
 #include "sfrf.h"
 #include "snort.h"
 #include "sfthd.h"
+#include "sfip/sf_ip.h"
 
 //static int _printThresholdContext(RateFilterConfig*);
 

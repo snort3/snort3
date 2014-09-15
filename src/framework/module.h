@@ -18,7 +18,6 @@
 */
 // module.h author Russ Combs <rucombs@cisco.com>
 
-// FIXIT-H add brief help string to modules
 // FIXIT-H add optional default config to modules
 // FIXIT-M add trace param(s)
 // FIXIT-M add memcap related

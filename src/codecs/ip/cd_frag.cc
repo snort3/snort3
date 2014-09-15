@@ -90,8 +90,6 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     /* If this is an IP Fragment, set some data... */
     p->ip6_frag_index = p->num_layers;
-    p->ip_frag_start = raw_pkt + sizeof(ip::IP6Frag);
-
     p->decode_flags &= ~DECODE__DF;
 
     if (ntohs(ip6frag_hdr->ip6f_offlg) & ip::IP6F_MF_MASK)
@@ -105,7 +103,6 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     // three least signifigant bits are all flags
     const uint16_t frag_offset =  ntohs(ip6frag_hdr->get_off()) >> 3;
-    p->frag_offset = frag_offset;
     if (frag_offset || (p->decode_flags & DECODE__MF))
     {
         p->decode_flags |= DECODE__FRAG;
@@ -125,7 +122,6 @@ bool Ipv6FragCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
     lyr_len = sizeof(ip::IP6Frag);
     next_prot_id = ip6frag_hdr->ip6f_nxt;
-    p->ip_frag_len = (uint16_t)(raw_len - lyr_len);
 
     // check header ordering up thru frag header
     ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_FRAGMENT, next_prot_id);

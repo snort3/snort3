@@ -76,7 +76,6 @@ constexpr uint16_t ETHERNET_LLC = 0x0106;
 
 
 
-
 /*
  * Below is a partial list of ethertypes.
  *  Defined at:

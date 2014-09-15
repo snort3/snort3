@@ -31,11 +31,7 @@
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "main/snort.h"
-
-
-#ifdef DEBUG_MSGS
-#include "log/log.h"
-#endif
+#include "log/text_log.h"
 
 #define CD_WLAN_NAME "wlan"
 #define CD_WLAN_HELP "support for wireless local area network protocol"
@@ -69,22 +65,9 @@ public:
 
     virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
     virtual void get_data_link_type(std::vector<int>&);
-
-};
-
-struct EthLlc
-{
-    uint8_t dsap;
-    uint8_t ssap;
-} ;
-
-struct EthLlcOther
-{
-    uint8_t ctrl;
-    uint8_t org_code[3];
-    uint16_t proto_id;
+    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const);
 };
 
 #define MINIMAL_IEEE80211_HEADER_LEN    10    /* Ack frames and others */
@@ -103,27 +86,13 @@ void WlanCodec::get_data_link_type(std::vector<int>&v)
 bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         Packet*, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    uint32_t cap_len = raw_len;
-    // reinterpret the raw data into this codec's data format
-
-
     /* do a little validation */
-    if(cap_len < MINIMAL_IEEE80211_HEADER_LEN)
-    {
-        if (ScLogVerbose())
-        {
-            ErrorMessage("Captured data length < IEEE 802.11 header length! "
-                         "(%d bytes)\n", cap_len);
-        }
-
+    if(raw_len < MINIMAL_IEEE80211_HEADER_LEN)
         return false;
-    }
 
     /* lay the wireless structure over the packet data */
     const wlan::WifiHdr *wifih = reinterpret_cast<const wlan::WifiHdr *>(raw_pkt);
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "%X   %X\n", *wifih->addr1,
-                *wifih->addr2););
 
     /* determine frame type */
     switch(wifih->frame_control & 0x00ff)
@@ -164,61 +133,7 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         {
             lyr_len = IEEE802_11_DATA_HDR_LEN;
             next_prot_id = ETHERNET_LLC;
-#if 0
-            if(cap_len < IEEE802_11_DATA_HDR_LEN + sizeof(EthLlc))
-            {
-                codec_events::decoder_event(p, DECODE_BAD_80211_ETHLLC);
-                return false;
-            }
 
-            const EthLlc *ehllc = reinterpret_cast<const EthLlc*>(raw_pkt + IEEE802_11_DATA_HDR_LEN);
-
-#ifdef DEBUG_MSGS
-            LogNetData((uint8_t*) ehllc, sizeof(EthLlc), NULL);
-
-            printf("LLC Header:\n");
-            printf("   DSAP: 0x%X\n", ehllc->dsap);
-            printf("   SSAP: 0x%X\n", ehllc->ssap);
-#endif
-
-            if(ehllc->dsap == ETH_DSAP_IP && ehllc->ssap == ETH_SSAP_IP)
-            {
-                if(cap_len < IEEE802_11_DATA_HDR_LEN +
-                   sizeof(EthLlc) + sizeof(EthLlcOther))
-                {
-                    codec_events::decoder_event(p, DECODE_BAD_80211_OTHER);
-                    return false;
-                }
-
-                const EthLlcOther *ehllcother = reinterpret_cast<const EthLlcOther *>(raw_pkt + IEEE802_11_DATA_HDR_LEN + sizeof(EthLlc));
-#ifdef DEBUG_MSGS
-                LogNetData((uint8_t*)ehllcother, sizeof(EthLlcOther), NULL);
-
-                printf("LLC Other Header:\n");
-                printf("   CTRL: 0x%X\n", ehllcother->ctrl);
-                printf("   ORG: 0x%02X%02X%02X\n", ehllcother->org_code[0],
-                        ehllcother->org_code[1], ehllcother->org_code[2]);
-                printf("   PROTO: 0x%04X\n", ntohs(ehllcother->proto_id));
-#endif
-                next_prot_id = ntohs(ehllcother->proto_id);
-
-                switch(ntohs(ehllcother->proto_id))
-                {
-                    case ETHERTYPE_IPV4:
-                    case ETHERTYPE_ARP:
-                    case ETHERTYPE_REVARP:
-                    case ETHERTYPE_EAPOL:
-                        lyr_len = IEEE802_11_DATA_HDR_LEN + sizeof(EthLlc) + sizeof(EthLlcOther);
-
-
-                    case ETHERTYPE_8021Q:
-                    case ETHERTYPE_IPV6:
-                        lyr_len = IEEE802_11_DATA_HDR_LEN;
-                    default:
-                        return false;
-                }
-            }
-#endif
             break;
         }
         default:
@@ -228,6 +143,27 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
     return true;
 }
 
+void WlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+                    const Packet* const)
+{
+    const wlan::WifiHdr *wifih = reinterpret_cast<const wlan::WifiHdr *>(raw_pkt);
+
+    /* src addr */
+    TextLog_Print(text_log, "addr1(%02X:%02X:%02X:%02X:%02X:%02X) -> ",
+        wifih->addr1[0], wifih->addr1[1], wifih->addr1[2],
+        wifih->addr1[3], wifih->addr1[4], wifih->addr1[5]);
+
+    /* dest addr */
+    TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X)",
+        wifih->addr2[0], wifih->addr2[1], wifih->addr2[2],
+        wifih->addr2[3], wifih->addr2[4], wifih->addr2[5]);
+
+    TextLog_NewLine(text_log);
+    TextLog_Putc(text_log, '\t');
+    TextLog_Print(text_log, "frame_control:%02x  duration_id:%02x  "
+        "seq_control:%02x", ntohs(wifih->frame_control),
+        ntohs(wifih->duration_id), ntohs(wifih->seq_control));
+}
 
 
 //-------------------------------------------------------------------------

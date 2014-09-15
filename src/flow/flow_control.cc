@@ -26,6 +26,7 @@
 #endif
 
 #include <assert.h>
+#include <arpa/inet.h>
 
 #include "flow/flow_cache.h"
 #include "flow/expect_cache.h"
@@ -36,6 +37,7 @@
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
 #include "managers/inspector_manager.h"
+#include "sfip/sf_ip.h"
 
 FlowControl::FlowControl(Inspector* pi)
 {
@@ -208,6 +210,10 @@ void FlowControl::reset_prunes (int proto)
         cache->reset_prunes();
 }
 
+//-------------------------------------------------------------------------
+// packet foo
+//-------------------------------------------------------------------------
+
 void FlowControl::set_key(FlowKey* key, Packet* p)
 {
     ip::IpApi* ip_api = &p->ip_api;
@@ -249,10 +255,66 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     }
 }
 
-static bool is_bidirectional(Flow* flow)
+static bool is_bidirectional(const Flow* flow)
 {
     constexpr unsigned bidir = SSNFLAG_SEEN_CLIENT | SSNFLAG_SEEN_SERVER;
     return (flow->s5_state.session_flags & bidir) == bidir;
+}
+
+// FIXIT-L init_roles* should take const Packet*
+static void init_roles_tcp(Packet* p, Flow* flow)
+{
+    if (TCP_ISFLAGSET(p->tcph, TH_SYN) &&
+        !TCP_ISFLAGSET(p->tcph, TH_ACK))
+    {
+        flow->s5_state.direction = FROM_CLIENT;
+        sfip_copy(flow->client_ip, p->ip_api.get_src());
+        flow->client_port = ntohs(p->tcph->th_sport);
+        sfip_copy(flow->server_ip, p->ip_api.get_dst());
+        flow->server_port = ntohs(p->tcph->th_dport);
+    }
+    else if (TCP_ISFLAGSET(p->tcph, (TH_SYN|TH_ACK)))
+    {
+        flow->s5_state.direction = FROM_SERVER;
+        sfip_copy(flow->client_ip, p->ip_api.get_dst());
+        flow->client_port = ntohs(p->tcph->th_dport);
+        sfip_copy(flow->server_ip, p->ip_api.get_src());
+        flow->server_port = ntohs(p->tcph->th_sport);
+    }
+    else if (p->sp > p->dp)
+    {
+        flow->s5_state.direction = FROM_CLIENT;
+        sfip_copy(flow->client_ip, p->ip_api.get_src());
+        flow->client_port = ntohs(p->tcph->th_sport);
+        sfip_copy(flow->server_ip, p->ip_api.get_dst());
+        flow->server_port = ntohs(p->tcph->th_dport);
+    }
+    else
+    {
+        flow->s5_state.direction = FROM_SERVER;
+        sfip_copy(flow->client_ip, p->ip_api.get_dst());
+        flow->client_port = ntohs(p->tcph->th_dport);
+        sfip_copy(flow->server_ip, p->ip_api.get_src());
+        flow->server_port = ntohs(p->tcph->th_sport);
+    }
+}
+
+static void init_roles_udp(Packet* p, Flow* flow)
+{
+    flow->s5_state.direction = FROM_SENDER;
+    sfip_copy(flow->client_ip, p->ip_api.get_src());
+    flow->client_port = ntohs(p->udph->uh_sport);
+    sfip_copy(flow->server_ip, p->ip_api.get_dst());
+    flow->server_port = ntohs(p->udph->uh_dport); 
+}
+
+static void init_roles(Packet* p, Flow* flow)
+{
+    if ( flow->protocol == IPPROTO_TCP )
+        init_roles_tcp(p, flow);
+
+    else if ( flow->protocol == IPPROTO_UDP )
+        init_roles_udp(p, flow);
 }
 
 unsigned FlowControl::process(FlowCache* cache, Packet* p)
@@ -269,7 +331,11 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
     p->flow = flow;
 
     if ( !flow->flow_state )
+    {
+        init_roles(p, flow);
         binder->eval(p);
+        ++news;
+    }
 
     switch ( flow->flow_state )
     {

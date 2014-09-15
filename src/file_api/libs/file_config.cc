@@ -35,10 +35,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "snort_types.h"
+#include "main/snort_types.h"
+#include "main/snort_debug.h"
 #include "util.h"
 #include "mstring.h"
-#include "parser.h"
+#include "parser/parser.h"
 
 #include "file_lib.h"
 #include "file_identifier.h"

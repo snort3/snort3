@@ -36,6 +36,7 @@
 #include "packet_io/active.h"
 #include "libs/file_sha256.h"
 #include "managers/action_manager.h"
+#include "sfip/sf_ip.h"
 
 /* The hash table of expected files */
 static THREAD_LOCAL_TBD SFXHASH *fileHash = NULL;

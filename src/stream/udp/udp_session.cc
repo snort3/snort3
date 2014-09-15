@@ -44,12 +44,10 @@
 #include "packet_io/active.h"
 #include "perf_monitor/perf.h"
 #include "profiler.h"
+#include "sfip/sf_ip.h"
 
-/* sender/responder ip/port dereference */
-#define udp_sender_ip flow->client_ip
-#define udp_sender_port flow->client_port
-#define udp_responder_ip flow->server_ip
-#define udp_responder_port flow->server_port
+// NOTE:  sender is assumed to be client
+//        responder is assumed to be server
 
 THREAD_LOCAL SessionStats udpStats;
 THREAD_LOCAL ProfileStats udp_perf_stats;
@@ -156,10 +154,6 @@ bool UdpSession::setup(Packet* p)
             &flow->server_ip, SFS_STATE_UDP_CREATED);
 
     flow->s5_state.direction = FROM_SENDER;
-    sfip_copy(flow->client_ip, p->ip_api.get_src());
-    flow->client_port = p->udph->uh_sport;
-    sfip_copy(flow->server_ip, p->ip_api.get_dst());
-    flow->server_port = p->udph->uh_dport;
 
     if ( flow_con->expected_flow(flow, p) )
         return false;
@@ -179,7 +173,7 @@ void UdpSession::update_direction(
     sfip_t tmpIp;
     uint16_t tmpPort;
 
-    if (sfip_equals(&udp_sender_ip, ip) && (udp_sender_port == port))
+    if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
         if ((dir == SSN_DIR_SENDER) && (flow->s5_state.direction == SSN_DIR_SENDER))
         {
@@ -187,7 +181,7 @@ void UdpSession::update_direction(
             return;
         }
     }
-    else if (sfip_equals(&udp_responder_ip, ip) && (udp_responder_port == port))
+    else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
         if ((dir == SSN_DIR_RESPONDER) && (flow->s5_state.direction == SSN_DIR_RESPONDER))
         {
@@ -197,12 +191,12 @@ void UdpSession::update_direction(
     }
 
     /* Swap them -- leave flow->s5_state.direction the same */
-    tmpIp = udp_sender_ip;
-    tmpPort = udp_sender_port;
-    udp_sender_ip = udp_responder_ip;
-    udp_sender_port = udp_responder_port;
-    udp_responder_ip = tmpIp;
-    udp_responder_port = tmpPort;
+    tmpIp = flow->client_ip;
+    tmpPort = flow->client_port;
+    flow->client_ip = flow->server_ip;
+    flow->client_port = flow->server_port;
+    flow->server_ip = tmpIp;
+    flow->server_port = tmpPort;
 }
 
 int UdpSession::process(Packet *p)

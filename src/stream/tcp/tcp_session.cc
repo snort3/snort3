@@ -69,6 +69,7 @@
 #include "time/packet_time.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
+#include "protocols/tcp_options.h"
 #include "log_text.h"
 #include "packet_io/active.h"
 #include "normalize/normalize.h"
@@ -81,6 +82,7 @@
 #include "file_api/file_api.h"
 #include "tcp_module.h"
 #include "stream/stream_splitter.h"
+#include "sfip/sf_ip.h"
 
 using namespace tcp;
 
@@ -310,12 +312,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #else
 #define STREAM5_DEBUG_WRAP(x)
 #endif
-
-/* client/server ip/port dereference */
-#define tcp_client_ip flow->client_ip
-#define tcp_client_port flow->client_port
-#define tcp_server_ip flow->server_ip
-#define tcp_server_port flow->server_port
 
 #define SL_BUF_FLUSHED 1
 
@@ -768,13 +764,13 @@ static void PrintTcpSession(TcpSession *ts)
     char buf[64];
 
     LogMessage("TcpSession:\n");
-    sfip_ntop(&ts->tcp_server_ip, buf, sizeof(buf));
+    sfip_ntop(&ts->flow->server_ip, buf, sizeof(buf));
     LogMessage("    server IP:          %s\n", buf);
-    sfip_ntop(&ts->tcp_client_ip, buf, sizeof(buf));
+    sfip_ntop(&ts->flow->client_ip, buf, sizeof(buf));
     LogMessage("    client IP:          %s\n", buf);
 
-    LogMessage("    server port:        %d\n", ts->tcp_server_port);
-    LogMessage("    client port:        %d\n", ts->tcp_client_port);
+    LogMessage("    server port:        %d\n", ts->flow->server_port);
+    LogMessage("    client port:        %d\n", ts->flow->client_port);
 
     LogMessage("    flags:              0x%X\n", ts->flow->s5_state.session_flags);
 
@@ -1024,26 +1020,11 @@ static inline int NormalDropPacketIf (Packet* p, NormFlags f)
     return 0;
 }
 
-static inline void NormalStripTimeStamp (Packet* p, int i)
+static inline void NormalStripTimeStamp (Packet* p, const TcpOption* opt)
 {
-    uint8_t* opt;
+    // set raw option bytes to nops
+    memset((uint8_t*)(opt), (uint8_t)tcp::TcpOptCode::NOP, TCPOLEN_TIMESTAMP);
 
-    if ( i < 0 )
-    {
-        for ( i = 0; i < p->tcp_option_count; i++ )
-        {
-            if ( p->tcp_options[i].code == TCPOPT_TIMESTAMP )
-                break;
-        }
-        if ( i == p->tcp_option_count )
-            return;
-    }
-    // first set raw option bytes to nops
-    opt = (uint8_t*)p->tcp_options[i].data - 2;
-    memset(opt, TCPOPT_NOP, TCPOLEN_TIMESTAMP);
-
-    // then nop decoded option code only
-    p->tcp_options[i].code = TCPOPT_NOP;
 
     p->packet_flags |= PKT_MODIFIED;
     normStats[PC_TCP_TS_NOP]++;
@@ -2626,7 +2607,7 @@ static void TraceSession (const Flow* lws)
 {
     fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n",
         (unsigned)lws->session_state, lws->s5_state.session_flags,
-        (unsigned)ntohs(lws->client_port), (unsigned)ntohs(lws->server_port)
+        lws->client_port, lws->server_port
     );
 }
 
@@ -2759,28 +2740,29 @@ static inline void S5TraceTCP (
 
 static uint32_t Stream5GetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
 {
-    unsigned int i = 0;
-
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Getting timestamp...\n"););
-    while(i < p->tcp_option_count && i < TCP_OPTLENMAX)
+
+    TcpOptIterator iter(p->tcph, p);
+
+    // using const because non-const is not supported
+    for (const TcpOption& opt : iter)
     {
-        if(p->tcp_options[i].code == TCPOPT_TIMESTAMP)
+        if(opt.code == TcpOptCode::TIMESTAMP)
         {
             if ( strip && Normalize_IsEnabled(p, NORM_TCP_OPT) )
             {
-                NormalStripTimeStamp(p, i);
+                NormalStripTimeStamp(p, &opt);
             }
             else
             {
-                *ts = EXTRACT_32BITS(p->tcp_options[i].data);
+                *ts = EXTRACT_32BITS(opt.data);
                 STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                                 "Found timestamp %lu\n", *ts););
 
                 return TF_TSTAMP;
             }
         }
-        i++;
     }
     *ts = 0;
 
@@ -2792,21 +2774,19 @@ static uint32_t Stream5GetTcpTimestamp(Packet *p, uint32_t *ts, int strip)
 
 static uint32_t Stream5GetMss(Packet *p, uint16_t *value)
 {
-    unsigned int i = 0;
-
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Getting MSS...\n"););
-    while(i < p->tcp_option_count && i < TCP_OPTLENMAX)
+
+    TcpOptIterator iter(p->tcph, p);
+    for (const TcpOption& opt : iter)
     {
-        if(p->tcp_options[i].code == TCPOPT_MAXSEG)
+        if(opt.code == TcpOptCode::MAXSEG)
         {
-            *value = EXTRACT_16BITS(p->tcp_options[i].data);
+            *value = EXTRACT_16BITS(opt.data);
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Found MSS %u\n", *value););
             return TF_MSS;
         }
-
-        i++;
     }
 
     *value = 0;
@@ -2818,15 +2798,18 @@ static uint32_t Stream5GetMss(Packet *p, uint16_t *value)
 
 static uint32_t Stream5GetWscale(Packet *p, uint16_t *value)
 {
-    unsigned int i = 0;
-
     STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Getting wscale...\n"););
-    while(i < p->tcp_option_count && i < TCP_OPTLENMAX)
+
+
+    TcpOptIterator iter(p->tcph, p);
+
+    // using const because non-const is not supported
+    for (const TcpOption& opt : iter)
     {
-        if(p->tcp_options[i].code == TCPOPT_WSCALE)
+        if(opt.code == TcpOptCode::WSCALE)
         {
-            *value = (uint16_t) p->tcp_options[i].data[0];
+            *value = (uint16_t) opt.data[0];
             STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                             "Found wscale %d\n", *value););
 
@@ -2843,8 +2826,6 @@ static uint32_t Stream5GetWscale(Packet *p, uint16_t *value)
 
             return TF_WSCALE;
         }
-
-        i++;
     }
 
     *value = 0;
@@ -4720,10 +4701,6 @@ static int ProcessTcp(
                     "session direction.\n"););
             /* SYN packet from client */
             lwssn->s5_state.direction = FROM_CLIENT;
-            sfip_copy(lwssn->client_ip, p->ip_api.get_src());
-            lwssn->client_port = p->tcph->th_sport;
-            sfip_copy(lwssn->server_ip, p->ip_api.get_dst());
-            lwssn->server_port = p->tcph->th_dport;
             lwssn->session_state |= STREAM5_STATE_SYN;
 
             if (require3Way || (Stream5PacketHasWscale(p) & TF_WSCALE) ||
@@ -4755,10 +4732,6 @@ static int ProcessTcp(
                         "Stream5 SYN|ACK PACKET, establishing lightweight"
                         "session direction.\n"););
                 lwssn->s5_state.direction = FROM_SERVER;
-                sfip_copy(lwssn->client_ip, p->ip_api.get_dst());
-                lwssn->client_port = p->tcph->th_dport;
-                sfip_copy(lwssn->server_ip, p->ip_api.get_src());
-                lwssn->server_port = p->tcph->th_sport;
             }
             lwssn->session_state |= STREAM5_STATE_SYN_ACK;
 
@@ -4788,21 +4761,10 @@ static int ProcessTcp(
             /* create session on data, need to figure out direction, etc */
             /* Assume from client, can update later */
             if (p->sp > p->dp)
-            {
                 lwssn->s5_state.direction = FROM_CLIENT;
-                sfip_copy(lwssn->client_ip, p->ip_api.get_src());
-                lwssn->client_port = p->tcph->th_sport;
-                sfip_copy(lwssn->server_ip, p->ip_api.get_dst());
-                lwssn->server_port = p->tcph->th_dport;
-            }
             else
-            {
                 lwssn->s5_state.direction = FROM_SERVER;
-                sfip_copy(lwssn->client_ip, p->ip_api.get_dst());
-                lwssn->client_port = p->tcph->th_dport;
-                sfip_copy(lwssn->server_ip, p->ip_api.get_src());
-                lwssn->server_port = p->tcph->th_sport;
-            }
+
             lwssn->session_state |= STREAM5_STATE_MIDSTREAM;
             lwssn->s5_state.session_flags |= SSNFLAG_MIDSTREAM;
 
@@ -4955,10 +4917,6 @@ static int ProcessTcp(
                      !TCP_ISFLAGSET(p->tcph, TH_ACK))
             {
                 lwssn->s5_state.direction = FROM_CLIENT;
-                sfip_copy(lwssn->client_ip, p->ip_api.get_src());
-                lwssn->client_port = p->tcph->th_sport;
-                sfip_copy(lwssn->server_ip, p->ip_api.get_dst());
-                lwssn->server_port = p->tcph->th_dport;
                 lwssn->session_state = STREAM5_STATE_SYN;
                 lwssn->set_ttl(p, true);
                 NewTcpSession(p, lwssn, tdb, config);
@@ -4974,10 +4932,6 @@ static int ProcessTcp(
             else if (TCP_ISFLAGSET(p->tcph, (TH_SYN|TH_ACK)))
             {
                 lwssn->s5_state.direction = FROM_SERVER;
-                sfip_copy(lwssn->client_ip, p->ip_api.get_dst());
-                lwssn->client_port = p->tcph->th_dport;
-                sfip_copy(lwssn->server_ip, p->ip_api.get_src());
-                lwssn->server_port = p->tcph->th_sport;
                 lwssn->session_state = STREAM5_STATE_SYN_ACK;
                 lwssn->set_ttl(p, false);
                 NewTcpSession(p, lwssn, tdb, config);
@@ -5823,10 +5777,8 @@ static inline uint32_t GetForwardDir (const Packet* p)
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
 static inline uint32_t flush_pdu_ips (
-    TcpSession* ssn, StreamTracker* trk, Packet* pkt, uint32_t* flags)
+    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
-    bool to_srv = ( *flags == PKT_FROM_CLIENT );
-    uint16_t srv_port = ( to_srv ? pkt->dp : pkt->sp );
     uint32_t total = 0, avail;
     StreamSegment* seg;
     PROFILE_VARS;
@@ -5853,7 +5805,7 @@ static inline uint32_t flush_pdu_ips (
 
         flush_pt = s5_paf_check(
             trk->splitter, &trk->paf_state, ssn->flow,
-            seg->payload, size, total, seg->seq, srv_port, flags);
+            seg->payload, size, total, seg->seq, flags);
 
         if ( flush_pt > 0 )
         {
@@ -5896,7 +5848,7 @@ static inline int CheckFlushPolicyOnData(
         case STREAM_FLPOLICY_ON_DATA:
         {
             uint32_t flags = GetForwardDir(p);
-            uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
+            uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
             uint32_t this_flush;
 
             while ( flush_amt > 0 )
@@ -5928,7 +5880,7 @@ static inline int CheckFlushPolicyOnData(
 
                 flushed += this_flush;
                 flags = GetForwardDir(p);
-                flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
+                flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
             }
             if ( !flags && listener->splitter->is_paf() )
             {
@@ -5963,10 +5915,8 @@ static inline int CheckFlushPolicyOnData(
 //   know where we left off and can resume scanning the remainder
 
 static inline uint32_t flush_pdu_ackd (
-    TcpSession* ssn, StreamTracker* trk, Packet* pkt, uint32_t* flags)
+    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
-    bool to_srv = ( *flags == PKT_FROM_CLIENT );
-    uint16_t srv_port = ( to_srv ? pkt->sp : pkt->dp );
     uint32_t total = 0;
     StreamSegment* seg;
     PROFILE_VARS;
@@ -5997,7 +5947,7 @@ static inline uint32_t flush_pdu_ackd (
 
         flush_pt = s5_paf_check(
             trk->splitter, &trk->paf_state, ssn->flow,
-            seg->payload, size, total, seg->seq, srv_port, flags);
+            seg->payload, size, total, seg->seq, flags);
 
         if ( flush_pt > 0 )
         {
@@ -6036,7 +5986,7 @@ int CheckFlushPolicyOnAck(
         case STREAM_FLPOLICY_ON_ACK:
         {
             uint32_t flags = GetReverseDir(p);
-            uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
+            uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
 
             while ( flush_amt > 0 )
             {
@@ -6058,7 +6008,7 @@ int CheckFlushPolicyOnAck(
                     break;
 
                 flags = GetReverseDir(p);
-                flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
+                flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
             }
             if ( !flags && talker->splitter->is_paf() )
             {
@@ -6196,7 +6146,7 @@ int GetTcpRebuiltPackets(Packet *p, Flow *ssn,
 
     /* StreamTracker is the opposite of the ip of the reassembled
      * packet --> it came out the queue for the other side */
-    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6244,7 +6194,7 @@ int GetTcpStreamSegments(Packet *p, Flow *ssn,
 
     /* StreamTracker is the opposite of the ip of the reassembled
      * packet --> it came out the queue for the other side */
-    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->flow->client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6283,7 +6233,7 @@ int Stream5AddSessionAlertTcp(
     Stream5AlertInfo* ai;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(),&tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6321,7 +6271,7 @@ int Stream5CheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t s
         return 0;
     }
 
-    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6355,7 +6305,7 @@ int Stream5UpdateSessionAlertTcp (
     uint32_t seq_num;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(), &tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6390,7 +6340,7 @@ void Stream5SetExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
     StreamTracker *st;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(),&tcpssn->flow->client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6403,7 +6353,7 @@ void Stream5ClearExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
     StreamTracker *st;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ip_api.get_src(),&tcpssn->flow->client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6636,7 +6586,7 @@ void TcpSession::update_direction(
     uint16_t tmpPort;
     StreamTracker tmpTracker;
 
-    if (sfip_equals(&tcp_client_ip, ip) && (tcp_client_port == port))
+    if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
         if ((dir == SSN_DIR_CLIENT) && (flow->s5_state.direction == SSN_DIR_CLIENT))
         {
@@ -6644,7 +6594,7 @@ void TcpSession::update_direction(
             return;
         }
     }
-    else if (sfip_equals(&tcp_server_ip, ip) && (tcp_server_port == port))
+    else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
         if ((dir == SSN_DIR_SERVER) && (flow->s5_state.direction == SSN_DIR_SERVER))
         {
@@ -6656,12 +6606,12 @@ void TcpSession::update_direction(
     /* Swap them -- leave flow->s5_state.direction the same */
 
     /* XXX: Gotta be a more efficient way to do this without the memcpy */
-    tmpIp = tcp_client_ip;
-    tmpPort = tcp_client_port;
-    tcp_client_ip = tcp_server_ip;
-    tcp_client_port = tcp_server_port;
-    tcp_server_ip = tmpIp;
-    tcp_server_port = tmpPort;
+    tmpIp = flow->client_ip;
+    tmpPort = flow->client_port;
+    flow->client_ip = flow->server_ip;
+    flow->client_port = flow->server_port;
+    flow->server_ip = tmpIp;
+    flow->server_port = tmpPort;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     SwapPacketHeaderFoo(this);

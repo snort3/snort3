@@ -36,7 +36,7 @@
 // this macros is defined in the module to ensure identical names. However,
 // if you don't want a module, define the name here.
 #define CODEC_NAME "name"
-#define CODEC_NAME "one line help for this codec"
+#define CODEC_HELP "one line help for this codec"
 
 namespace
 {
@@ -85,7 +85,7 @@ static const RuleMap codec_rules[] =
 // template module
 //-------------------------------------------------------------------------
 
-NameModule::NameModule() : DecodeModule(CODEC_NAME, codec_params)
+NameModule::NameModule() : DecodeModule(CODEC_NAME, CODEC_HELP, codec_params)
 { }
 
 bool NameModule::set(const char* /*fqn*/, Value& v, SnortConfig* /*sc*/)

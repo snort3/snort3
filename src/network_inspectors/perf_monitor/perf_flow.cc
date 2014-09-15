@@ -57,6 +57,7 @@
 #include "util.h"
 #include "snort_types.h"
 #include "perf.h"
+#include "sfip/sf_ip.h"
 
 static void DisplayFlowStats(SFFLOW_STATS *sfFlowStats);
 static void WriteFlowStats(SFFLOW_STATS *, FILE *);

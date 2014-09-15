@@ -38,6 +38,7 @@
 #include "codecs/ip/ip_util.h"
 #include "packet_io/active.h"
 #include "log/text_log.h"
+#include "main/snort_debug.h"
 
 #define CD_ICMP6_NAME "icmp6"
 #define CD_ICMP6_HELP "support for internet control message protocol v6"

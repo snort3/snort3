@@ -54,6 +54,7 @@ using namespace std;
 #include "detection/fpcreate.h"
 #include "filters/detection_filter.h"
 #include "filters/sfthreshold.h"
+#include "sfip/sf_ip.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"

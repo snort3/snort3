@@ -71,18 +71,9 @@ static const uint16_t NULL_HDRLEN = 4;
 bool NullCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
         Packet* /*p*/, uint16_t &lyr_len, uint16_t &next_prot_id)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "NULL Packet!\n"); );
-
     /* do a little validation */
     if(raw_len < NULL_HDRLEN)
-    {
-        if (ScLogVerbose())
-        {
-            ErrorMessage("NULL header length < captured len! (%d bytes)\n",
-                    raw_len);
-        }
         return false;
-    }
 
     lyr_len = NULL_HDRLEN;
     next_prot_id = ETHERTYPE_IPV4;
@@ -99,14 +90,10 @@ void NullCodec::get_data_link_type(std::vector<int>&v)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new NullCodec();
-}
+{ return new NullCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi null_api =
 {

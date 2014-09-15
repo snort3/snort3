@@ -59,6 +59,15 @@ The following pointers will help you get started:
     git checkout master
     git merge brname
 
+* check the commit history for a <file>:
+
+    git log <file>
+
+* diff specific committed versions of a <file> (using the unambiguous
+  commit prefixes):
+
+git diff f072c3... ff38ce...  lua/snort.lua
+
 === Building
 
 * you need luajit from luajit.org; build from source.

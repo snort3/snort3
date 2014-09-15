@@ -44,13 +44,13 @@ static StreamConfig stream_cfg =
 
 static const Parameter proto_params[] =
 {
-    { "memcap", Parameter::PT_INT, "0:", "262144",
-      "maximum simultaneous tcp sessions tracked before pruning" },
+    { "memcap", Parameter::PT_INT, "0:", nullptr,
+      "maximum cache memory" },
 
-    { "idle_timeout", Parameter::PT_INT, "1:", nullptr,
+    { "idle_timeout", Parameter::PT_INT, "1:", "60",
       "maximum inactive time before retiring session tracker" },
 
-    { "pruning_timeout", Parameter::PT_INT, "1:", nullptr,
+    { "pruning_timeout", Parameter::PT_INT, "1:", "30",
       "minimum inactive time before being eligible for pruning" },
 
     { "max_sessions", Parameter::PT_INT, "0:", "262144",

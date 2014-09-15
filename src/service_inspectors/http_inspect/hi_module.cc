@@ -253,6 +253,13 @@ bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
 
 static const char* profiles = "none | all | apache | iis | iis_40 | iis_50";
 
+static const char* default_methods =
+    "GET POST PUT SEARCH MKCOL COPY MOVE LOCK UNLOCK NOTIFY POLL BCOPY "
+    "BDELETE BMOVE LINK UNLINK OPTIONS HEAD DELETE TRACE TRACK CONNECT "
+    "SOURCE SUBSCRIBE UNSUBSCRIBE PROPFIND PROPPATCH BPROPFIND BPROPPATCH "
+    "RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA "
+    "RPC_OUT_DATA RPC_ECHO_DATA";
+
 // FIXIT-L refactor params to create a profile table so that user can define
 // different profiles (like above) and use those.  rename existing profile
 // to profile_type.
@@ -295,7 +302,7 @@ static const Parameter hi_server_params[] =
     { "extended_response_inspection", Parameter::PT_BOOL, nullptr, "false",
       "extract resonse headers" },
 
-    { "http_methods", Parameter::PT_STRING, nullptr, nullptr,
+    { "http_methods", Parameter::PT_STRING, nullptr, default_methods,
       "request methods allowed in addition to GET and POST" },
 
     { "iis_backslash", Parameter::PT_BOOL, nullptr, "false",
@@ -480,16 +487,8 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
         server->enable_xff = v.get_bool();
 
     else if ( v.is("http_methods") )
-    {
-        std::string tok;
-        v.set_first_token();
+        methods = v.get_string();
 
-        while ( v.get_next_token(tok) )
-        {
-            char* s = SnortStrdup(tok.c_str());
-            http_cmd_lookup_add(server->cmd_lookup, s, strlen(s), (HTTP_CMD_CONF*)s);
-        }
-    }
     else if ( v.is("iis_backslash") )
         server->iis_backslash.on = v.get_bool();
 
@@ -595,8 +594,10 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
 bool HttpServerModule::begin(const char*, int, SnortConfig*)
 {
     if ( !server )
+    {
         server = new HTTPINSPECT_CONF;
-
+        methods = default_methods;
+    }
     return true;
 }
 
@@ -611,6 +612,17 @@ bool HttpServerModule::end(const char* fqn, int, SnortConfig*)
             &server->iis_unicode_map,
             server->iis_unicode_map_filename,
             server->iis_unicode_codepage);
+    }
+    {
+        Value v(methods.c_str());
+        std::string tok;
+        v.set_first_token();
+
+        while ( v.get_next_token(tok) )
+        {
+            char* s = SnortStrdup(tok.c_str());
+            http_cmd_lookup_add(server->cmd_lookup, s, strlen(s), (HTTP_CMD_CONF*)s);
+        }
     }
     return true;
 }

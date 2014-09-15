@@ -32,6 +32,7 @@
 #include "stream/stream.h"
 #include "perf_monitor/perf.h"
 #include "flow/flow_control.h"
+#include "sfip/sf_ip.h"
 
 THREAD_LOCAL SessionStats ipStats;
 THREAD_LOCAL ProfileStats ip_perf_stats;
