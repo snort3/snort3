@@ -368,11 +368,11 @@ static void AddTagNode(Packet *p, TagData *tag, int mode, uint32_t now,
         return;
     }
 
-    sfip_copy(idx->key.sip, p->ip_api.get_src());
-    sfip_copy(idx->key.dip, p->ip_api.get_dst());
-    idx->key.sp = p->sp;
-    idx->key.dp = p->dp;
-    idx->proto = p->ip_api.proto();
+    sfip_copy(idx->key.sip, p->ptrs.ip_api.get_src());
+    sfip_copy(idx->key.dip, p->ptrs.ip_api.get_dst());
+    idx->key.sp = p->ptrs.sp;
+    idx->key.dp = p->ptrs.dp;
+    idx->proto = p->ptrs.ip_api.proto();
     idx->metric = tag->tag_metric;
     idx->last_access = now;
     idx->event_id = event_id;
@@ -458,7 +458,7 @@ int CheckTagList(Packet *p, Event *event)
         return 0;
     }
 
-    if(p == NULL || !p->ip_api.is_valid())
+    if(p == NULL || !p->ptrs.ip_api.is_valid())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "bailing from CheckTagList, p->iph == NULL\n"););
         return 0;
@@ -469,20 +469,20 @@ int CheckTagList(Packet *p, Event *event)
 
     DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "[*] Checking session tag list (forward)...\n"););
 
-    sfip_copy(idx.key.sip, p->ip_api.get_src());
-    sfip_copy(idx.key.dip, p->ip_api.get_dst());
-    idx.key.sp = p->sp;
-    idx.key.dp = p->dp;
+    sfip_copy(idx.key.sip, p->ptrs.ip_api.get_src());
+    sfip_copy(idx.key.dip, p->ptrs.ip_api.get_dst());
+    idx.key.sp = p->ptrs.sp;
+    idx.key.dp = p->ptrs.dp;
 
     /* check for session tags... */
     returned = (TagNode *) sfxhash_find(ssn_tag_cache_ptr, &idx);
 
     if(returned == NULL)
     {
-        sfip_copy(idx.key.dip, p->ip_api.get_src());
-        sfip_copy(idx.key.sip, p->ip_api.get_dst());
-        idx.key.dp = p->sp;
-        idx.key.sp = p->dp;
+        sfip_copy(idx.key.dip, p->ptrs.ip_api.get_src());
+        sfip_copy(idx.key.sip, p->ptrs.ip_api.get_dst());
+        idx.key.dp = p->ptrs.sp;
+        idx.key.sp = p->ptrs.dp;
 
         DEBUG_WRAP(DebugMessage(DEBUG_FLOW, "   Checking session tag list (reverse)...\n"););
         returned = (TagNode *) sfxhash_find(ssn_tag_cache_ptr, &idx);
@@ -500,7 +500,7 @@ int CheckTagList(Packet *p, Event *event)
                 **  Only switch sip, because that's all we check for
                 **  the host tags.
                 */
-                sfip_copy(idx.key.sip, p->ip_api.get_src());
+                sfip_copy(idx.key.sip, p->ptrs.ip_api.get_src());
 
                 returned = (TagNode *) sfxhash_find(host_tag_cache_ptr, &idx);
             }
@@ -551,7 +551,7 @@ int CheckTagList(Packet *p, Event *event)
 
         if(returned->metric & TAG_METRIC_BYTES)
         {
-            returned->bytes -= (int) ntohs(p->ip_api.len());
+            returned->bytes -= (int) ntohs(p->ptrs.ip_api.len());
 
             if(returned->bytes < 0)
             {
@@ -698,17 +698,17 @@ void SetTags(Packet *p, OptTreeNode *otn, uint16_t event_id)
                 case TAG_SESSION:
                     DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Setting session tag:\n");
 			            DebugMessage(DEBUG_FLOW,"SIP: %s  SP: %d   ",
-                            sfip_ntoa(p->ip_api.get_src()), p->sp);
+                            sfip_ntoa(p->ptrs.ip_api.get_src()), p->ptrs.sp);
                         DebugMessage(DEBUG_FLOW,"DIP: %s  DP: %d\n",
-					        sfip_ntoa(p->ip_api.get_dst()),p->dp););
+					        sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp););
                     TagSession(p, otn->tag, p->pkth->ts.tv_sec, event_id);
                     break;
                 case TAG_HOST:
                     DEBUG_WRAP(DebugMessage(DEBUG_FLOW,"Setting host tag:\n");
     			        DebugMessage(DEBUG_FLOW,"SIP: %s  SP: %d   ",
-				        sfip_ntoa(p->ip_api.get_src()),p->sp);
+				        sfip_ntoa(p->ptrs.ip_api.get_src()),p->ptrs.sp);
                         DebugMessage(DEBUG_FLOW, "DIP: %s  DP: %d\n",
-                            sfip_ntoa(p->ip_api.get_dst()),p->dp););
+                            sfip_ntoa(p->ptrs.ip_api.get_dst()),p->ptrs.dp););
                     TagHost(p, otn->tag, p->pkth->ts.tv_sec, event_id);
                     break;
 

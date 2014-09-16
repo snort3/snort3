@@ -93,7 +93,6 @@ target_link_libraries( snort
     stream_tcp
     stream_udp
     http_inspect
-    nhttp_inspect
     flow
     parser
     file_api

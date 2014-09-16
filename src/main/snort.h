@@ -553,10 +553,5 @@ static inline bool ScTunnelBypassEnabled(uint8_t proto)
     return !(snort_conf->tunnel_mask & proto);
 }
 
-static inline int8_t ScMaxEncapsulations(void)
-{
-    return snort_conf->max_encapsulations;
-}
-
 #endif
 

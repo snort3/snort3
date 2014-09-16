@@ -214,12 +214,12 @@ int fpLogEvent(RuleTreeNode *rtn, OptTreeNode *otn, Packet *p)
 
     // When rate filters kick in, event filters are still processed.
     // perform event filtering tests - impacts logging
-    if ( p->ip_api.is_valid() )
+    if ( p->ptrs.ip_api.is_valid() )
     {
         filterEvent = sfthreshold_test(
             otn->sigInfo.generator,
             otn->sigInfo.id,
-            p->ip_api.get_src(), p->ip_api.get_dst(),
+            p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
             p->pkth->ts.tv_sec);
     }
     else
@@ -553,13 +553,13 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
      * the inner IP offset as well */
     if (eval_data.p->packet_flags & PKT_IP_RULE)
     {
-        ip::IpApi tmp_api = eval_data.p->ip_api;
+        ip::IpApi tmp_api = eval_data.p->ptrs.ip_api;
         int8_t curr_layer = eval_data.p->num_layers - 1;
 
         if (layer::set_inner_ip_api(eval_data.p,
-                                    eval_data.p->ip_api,
+                                    eval_data.p->ptrs.ip_api,
                                     curr_layer) &&
-                (eval_data.p->ip_api != tmp_api))
+                (eval_data.p->ptrs.ip_api != tmp_api))
         {
             const uint8_t *tmp_data = eval_data.p->data;
             uint16_t tmp_dsize = eval_data.p->dsize;
@@ -570,17 +570,17 @@ static int rule_tree_match( void * id, void *tree, int index, void * data, void 
 
             do
             {
-                eval_data.p->data = eval_data.p->ip_api.ip_data();
-                eval_data.p->dsize = eval_data.p->ip_api.pay_len();
+                eval_data.p->data = eval_data.p->ptrs.ip_api.ip_data();
+                eval_data.p->dsize = eval_data.p->ptrs.ip_api.pay_len();
 
                 /* Recurse, and evaluate with the inner IP */
                 rule_tree_match(id, tree, index, data, NULL);
 
 
             } while (layer::set_inner_ip_api(eval_data.p,
-                                             eval_data.p->ip_api,
+                                             eval_data.p->ptrs.ip_api,
                                              curr_layer) &&
-                        (eval_data.p->ip_api != tmp_api));
+                        (eval_data.p->ptrs.ip_api != tmp_api));
 
             /*  cleanup restore original data & dsize */
             eval_data.p->packet_flags &= ~PKT_IP_RULE_2ND;
@@ -966,15 +966,15 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
         //          finished evaluating, ip_api will be the innermost
         //          layer. Right now, ip_api should already be the
         //          innermost layer
-        tmp_api = p->ip_api;
+        tmp_api = p->ptrs.ip_api;
 
         tmp_payload = p->data;
         tmp_dsize = p->dsize;
 
-        if (layer::set_outer_ip_api(p, p->ip_api, curr_ip_layer))
+        if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
         {
-            p->data = p->ip_api.ip_data();
-            p->dsize = p->ip_api.pay_len();
+            p->data = p->ptrs.ip_api.ip_data();
+            p->dsize = p->ptrs.ip_api.pay_len();
             p->packet_flags |= PKT_IP_RULE;
             repeat = true;
         }
@@ -1205,10 +1205,10 @@ static inline int fpEvalHeaderSW(PORT_GROUP *port_group, Packet *p,
         {
 
             /* Evaluate again with the next IP layer */
-            if (layer::set_outer_ip_api(p, p->ip_api, curr_ip_layer))
+            if (layer::set_outer_ip_api(p, p->ptrs.ip_api, curr_ip_layer))
             {
-                p->data = p->ip_api.ip_data();
-                p->dsize = p->ip_api.pay_len();
+                p->data = p->ptrs.ip_api.ip_data();
+                p->dsize = p->ptrs.ip_api.pay_len();
                 p->packet_flags |= PKT_IP_RULE_2ND | PKT_IP_RULE;
             }
             else
@@ -1258,26 +1258,26 @@ static inline int fpEvalHeaderUdp(Packet *p, OTNX_MATCH_DATA *omd)
             DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
                         "fpEvalHeaderUdpp:targetbased-ordinal-lookup: "
                         "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
-                        "dst:%x, gen:%x\n",p->sp,p->dp,proto_ordinal,src,dst,gen););
+                        "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen););
         }
     }
 
     if ((src == NULL) && (dst == NULL))
     {
         /* we did not have a target based port group, use ports */
-        if (!prmFindRuleGroupUdp(snort_conf->prmUdpRTNX, p->dp, p->sp, &src, &dst, &gen))
+        if (!prmFindRuleGroupUdp(snort_conf->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &gen))
             return 0;
 
         DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
                     "fpEvalHeaderUdp: sport=%d, dport=%d, "
-                    "src:%x, dst:%x, gen:%x\n",p->sp,p->dp,src,dst,gen););
+                    "src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen););
     }
 
     if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
     {
         LogMessage(
             "fpEvalHeaderUdp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
-             p->sp, p->dp, (void*)src, (void*)dst, (void*)gen);
+             p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
     }
 
     InitMatchInfo(omd);
@@ -1340,26 +1340,26 @@ static inline int fpEvalHeaderTcp(Packet *p, OTNX_MATCH_DATA *omd)
             DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
                         "fpEvalHeaderTcp:targetbased-ordinal-lookup: "
                         "sport=%d, dport=%d, proto_ordinal=%d, src:%x, "
-                        "dst:%x, gen:%x\n",p->sp,p->dp,proto_ordinal,src,dst,gen););
+                        "dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,src,dst,gen););
         }
     }
 
     if ((src == NULL) && (dst == NULL))
     {
         /* grab the src/dst groups from the lookup above */
-        if (!prmFindRuleGroupTcp(snort_conf->prmTcpRTNX, p->dp, p->sp, &src, &dst, &gen))
+        if (!prmFindRuleGroupTcp(snort_conf->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &gen))
             return 0;
 
         DEBUG_WRAP(DebugMessage(DEBUG_ATTRIBUTE,
                     "fpEvalHeaderTcp: sport=%d, "
-                    "dport=%d, src:%x, dst:%x, gen:%x\n",p->sp,p->dp,src,dst,gen););
+                    "dport=%d, src:%x, dst:%x, gen:%x\n",p->ptrs.sp,p->ptrs.dp,src,dst,gen););
     }
 
     if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
     {
         LogMessage(
             "fpEvalHeaderTcp: sport=%d, dport=%d, src:%p, dst:%p, gen:%p\n",
-             p->sp, p->dp, (void*)src, (void*)dst, (void*)gen);
+             p->ptrs.sp, p->ptrs.dp, (void*)src, (void*)dst, (void*)gen);
     }
 
     InitMatchInfo(omd);
@@ -1392,14 +1392,14 @@ static inline int fpEvalHeaderIcmp(Packet *p, OTNX_MATCH_DATA *omd)
 {
     PORT_GROUP *gen = NULL, *type = NULL;
 
-    if (!prmFindRuleGroupIcmp(snort_conf->prmIcmpRTNX, p->icmph->type, &type, &gen))
+    if (!prmFindRuleGroupIcmp(snort_conf->prmIcmpRTNX, p->ptrs.icmph->type, &type, &gen))
         return 0;
 
     if (fpDetectGetDebugPrintNcRules(snort_conf->fast_pattern_config))
     {
         LogMessage(
             "fpEvalHeaderIcmp: icmp->type=%d type=%p gen=%p\n",
-            p->icmph->type, (void*)type, (void*)gen);
+            p->ptrs.icmph->type, (void*)type, (void*)gen);
     }
 
     InitMatchInfo(omd);
@@ -1476,24 +1476,24 @@ static inline int fpEvalHeaderIp(Packet *p, int ip_proto, OTNX_MATCH_DATA *omd)
 */
 int fpEvalPacket(Packet *p)
 {
-    int ip_proto = p->ip_api.proto();
+    int ip_proto = p->ptrs.ip_api.proto();
     OTNX_MATCH_DATA *omd = &t_omd;
 
     /* Run UDP rules against the UDP header of Teredo packets */
-    if ( p->udph && (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
+    if ( p->ptrs.udph && (p->proto_bits & (PROTO_BIT__TEREDO | PROTO_BIT__GTP)) )
     {
-        uint16_t tmp_sp = p->sp;
-        uint16_t tmp_dp = p->dp;
-        const udp::UDPHdr *tmp_udph = p->udph;
+        uint16_t tmp_sp = p->ptrs.sp;
+        uint16_t tmp_dp = p->ptrs.dp;
+        const udp::UDPHdr *tmp_udph = p->ptrs.udph;
         const uint8_t *tmp_data = p->data;
         int tmp_do_detect_content = do_detect_content;
         uint16_t tmp_dsize = p->dsize;
 
         const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
 
-        p->udph = udph;
-        p->sp = ntohs(udph->uh_sport);
-        p->dp = ntohs(udph->uh_dport);
+        p->ptrs.udph = udph;
+        p->ptrs.sp = ntohs(udph->uh_sport);
+        p->ptrs.dp = ntohs(udph->uh_dport);
         p->data = (const uint8_t *)udph + udp::UDP_HEADER_LEN;
 
         ip::IpApi tmp_api;
@@ -1508,9 +1508,9 @@ int fpEvalPacket(Packet *p)
 
         fpEvalHeaderUdp(p, omd);
 
-        p->sp = tmp_sp;
-        p->dp = tmp_dp;
-        p->udph = tmp_udph;
+        p->ptrs.sp = tmp_sp;
+        p->ptrs.dp = tmp_dp;
+        p->ptrs.udph = tmp_udph;
         p->data = tmp_data;
         p->dsize = tmp_dsize;
         do_detect_content = tmp_do_detect_content;
@@ -1522,7 +1522,7 @@ int fpEvalPacket(Packet *p)
             DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
                         "Detecting on TcpList\n"););
 
-            if(p->tcph == NULL)
+            if(p->ptrs.tcph == NULL)
             {
                 ip_proto = -1;
                 break;
@@ -1534,7 +1534,7 @@ int fpEvalPacket(Packet *p)
             DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
                         "Detecting on UdpList\n"););
 
-            if(p->udph == NULL)
+            if(p->ptrs.udph == NULL)
             {
                 ip_proto = -1;
                 break;
@@ -1547,7 +1547,7 @@ int fpEvalPacket(Packet *p)
             DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
                         "Detecting on IcmpList\n"););
 
-            if(p->icmph == NULL)
+            if(p->ptrs.icmph == NULL)
             {
                 ip_proto = -1;
                 break;
@@ -1565,11 +1565,11 @@ int fpEvalPacket(Packet *p)
     return fpEvalHeaderIp(p, ip_proto, omd);
 }
 
-void fpEvalIpProtoOnlyRules(SF_LIST **ip_proto_only_lists, Packet *p, uint8_t proto_id)
+void fpEvalIpProtoOnlyRules(Packet *p, uint8_t proto_id)
 {
-    if ((p != NULL) && p->ip_api.is_valid())
+    if ((p != NULL) && p->ptrs.ip_api.is_valid())
     {
-        SF_LIST *l = ip_proto_only_lists[proto_id];
+        SF_LIST *l = snort_conf->ip_proto_only_lists[proto_id];
         OptTreeNode *otn;
         SF_LNODE* cursor;
 

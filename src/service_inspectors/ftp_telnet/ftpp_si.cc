@@ -585,10 +585,10 @@ int FTPsessionInspection(
  */
 int SetSiInput(FTPP_SI_INPUT *SiInput, Packet *p)
 {   
-    sfip_copy(SiInput->sip, p->ip_api.get_src());
-    sfip_copy(SiInput->dip, p->ip_api.get_dst());
-    SiInput->sport = p->sp;
-    SiInput->dport = p->dp;
+    sfip_copy(SiInput->sip, p->ptrs.ip_api.get_src());
+    sfip_copy(SiInput->dip, p->ptrs.ip_api.get_dst());
+    SiInput->sport = p->ptrs.sp;
+    SiInput->dport = p->ptrs.dp;
         
     /* 
      * We now set the packet direction

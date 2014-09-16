@@ -23,6 +23,8 @@
 #ifndef PROTOCOLS_VLAN_H
 #define PROTOCOLS_VLAN_H
 
+#include <arpa/inet.h>
+
 namespace vlan
 {
 
@@ -30,23 +32,19 @@ struct VlanTagHdr
 {
     uint16_t vth_pri_cfi_vlan;
     uint16_t vth_proto;  /* protocol field... */
+
+    inline uint16_t priority() const
+    { return ntohs(vth_pri_cfi_vlan) >> 13; }
+
+    inline uint16_t cfi() const
+    { return (ntohs(vth_pri_cfi_vlan) & 0x1000) >> 12; }
+
+    inline uint16_t vid() const
+    { return ntohs(vth_pri_cfi_vlan) & 0x0FFF; }
+
+    inline uint16_t proto() const
+    { return ntohs(vth_proto); }
 };
-
-
-static inline uint16_t vth_priority(const VlanTagHdr* vh)
-{
-    return (ntohs((vh)->vth_pri_cfi_vlan) & 0xe000) >> 13;
-}
-
-static inline uint16_t vth_cfi(const VlanTagHdr* vh)
-{
-    return (ntohs((vh)->vth_pri_cfi_vlan) & 0x1000) >> 12;
-}
-
-static inline uint16_t vth_vlan(const VlanTagHdr* vh)
-{
-    return ntohs((vh)->vth_pri_cfi_vlan) & 0x0FFF;
-}
 
 } // namespace vlan
 

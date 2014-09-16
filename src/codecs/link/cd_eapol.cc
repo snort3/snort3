@@ -61,11 +61,8 @@ public:
     ~EapolCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    
 };
 
 } // namespace
@@ -85,19 +82,10 @@ public:
  *
  * Returns: void function
  */
-void DecodeEAP(const uint8_t * pkt, const uint32_t len, Packet * p)
+void DecodeEAP(const RawData& raw)
 {
-    const eapol::EAPHdr *eaph = reinterpret_cast<const eapol::EAPHdr*>(pkt);
-
-    if(len < sizeof(eapol::EAPHdr))
-    {
-        codec_events::decoder_event(p, DECODE_EAP_TRUNCATED);
-        return;
-    }
-    if (eaph->code == EAP_CODE_REQUEST ||
-            eaph->code == EAP_CODE_RESPONSE) {
-    }
-    return;
+    if(raw.len < sizeof(eapol::EAPHdr))
+        codec_events::decoder_event(DECODE_EAP_TRUNCATED);
 }
 
 
@@ -112,14 +100,10 @@ void DecodeEAP(const uint8_t * pkt, const uint32_t len, Packet * p)
  *
  * Returns: void function
  */
-void DecodeEapolKey(const uint8_t* /*pkt*/, uint32_t len, Packet * p)
+void DecodeEapolKey(const RawData& raw)
 {
-    if(len < sizeof(eapol::EapolKey))
-    {
-        codec_events::decoder_event(p, DECODE_EAPKEY_TRUNCATED);
-    }
-
-    return;
+    if(raw.len < sizeof(eapol::EapolKey))
+        codec_events::decoder_event(DECODE_EAPKEY_TRUNCATED);
 }
 
 
@@ -127,23 +111,22 @@ void DecodeEapolKey(const uint8_t* /*pkt*/, uint32_t len, Packet * p)
  ************** main codec functions  ************
  *************************************************/
 
-bool EapolCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t & /*lyr_len*/, uint16_t &/*next_prot_id */)
+bool EapolCodec::decode(const RawData& raw, CodecData&, SnortData&)
 {
-    const eapol::EtherEapol* eplh = reinterpret_cast<const eapol::EtherEapol*>(raw_pkt);
+    const eapol::EtherEapol* const eplh =
+        reinterpret_cast<const eapol::EtherEapol*>(raw.data);
 
-    if(raw_len < sizeof(eapol::EtherEapol))
+    if(raw.len < sizeof(eapol::EtherEapol))
     {
-        codec_events::decoder_event(p, DECODE_EAPOL_TRUNCATED);
+        codec_events::decoder_event(DECODE_EAPOL_TRUNCATED);
         return false;
     }
 
-    if (eplh->eaptype == EAPOL_TYPE_EAP) {
-        DecodeEAP(raw_pkt + sizeof(eapol::EtherEapol), raw_len - sizeof(eapol::EtherEapol), p);
-    }
-    else if(eplh->eaptype == EAPOL_TYPE_KEY) {
-        DecodeEapolKey(raw_pkt + sizeof(eapol::EtherEapol), raw_len - sizeof(eapol::EtherEapol), p);
-    }
+    if (eplh->eaptype == EAPOL_TYPE_EAP)
+        DecodeEAP(raw);
+
+    else if(eplh->eaptype == EAPOL_TYPE_KEY)
+        DecodeEapolKey(raw);
 
     return true;
 }
@@ -161,24 +144,16 @@ void EapolCodec::get_protocol_ids(std::vector<uint16_t>& v)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new EapolModule;
-}
+{ return new EapolModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new EapolCodec();
-}
+{ return new EapolCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi eapol_api =

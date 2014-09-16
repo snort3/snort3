@@ -96,7 +96,7 @@ void DpxPH::eval(Packet* p)
     // precondition - what we registered for
     assert(IsUDP(p));
 
-    if ( p->dp == port && p->dsize > max )
+    if ( p->ptrs.dp == port && p->dsize > max )
         SnortEventqAdd(DPX_GID, DPX_SID);
 
     ++dpxstats.total_packets;

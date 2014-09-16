@@ -229,7 +229,7 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         else if (!strcasecmp("proto", type))
         {
             // api returns zero if invalid
-            switch (p->ip_api.proto())
+            switch (p->ptrs.ip_api.proto())
             {
                 case IPPROTO_UDP:
                     TextLog_Puts(csv_log, "UDP");
@@ -274,17 +274,17 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("udp_len", type))
         {
-            if (p->udph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->udph->uh_len));
+            if (p->ptrs.udph != NULL)
+                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.udph->uh_len));
         }
         else if (!strcasecmp("src_port", type))
         {
             // api return 0 if invalid
-            switch (p->ip_api.proto())
+            switch (p->ptrs.ip_api.proto())
             {
                 case IPPROTO_UDP:
                 case IPPROTO_TCP:
-                    TextLog_Print(csv_log, "%d", p->sp);
+                    TextLog_Print(csv_log, "%d", p->ptrs.sp);
                     break;
                 default:
                     break;
@@ -292,11 +292,11 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("dst_port", type))
         {
-            switch (p->ip_api.proto())
+            switch (p->ptrs.ip_api.proto())
             {
                 case IPPROTO_UDP:
                 case IPPROTO_TCP:
-                    TextLog_Print(csv_log, "%d", p->dp);
+                    TextLog_Print(csv_log, "%d", p->ptrs.dp);
                     break;
                 default:
                     break;
@@ -304,91 +304,91 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("src_addr", type))
         {
-            if (p->ip_api.is_valid())
-                TextLog_Puts(csv_log, inet_ntoa(p->ip_api.get_src()));
+            if (p->ptrs.ip_api.is_valid())
+                TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_src()));
         }
         else if (!strcasecmp("dst_addr", type))
         {
-            if (p->ip_api.is_valid())
-                TextLog_Puts(csv_log, inet_ntoa(p->ip_api.get_dst()));
+            if (p->ptrs.ip_api.is_valid())
+                TextLog_Puts(csv_log, inet_ntoa(p->ptrs.ip_api.get_dst()));
         }
         else if (!strcasecmp("icmp_type", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", p->icmph->type);
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", p->ptrs.icmph->type);
         }
         else if (!strcasecmp("icmp_code", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", p->icmph->code);
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", p->ptrs.icmph->code);
         }
         else if (!strcasecmp("icmp_id", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->icmph->s_icmp_id));
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.icmph->s_icmp_id));
         }
         else if (!strcasecmp("icmp_seq", type))
         {
-            if (p->icmph != NULL)
-                TextLog_Print(csv_log, "%d", ntohs(p->icmph->s_icmp_seq));
+            if (p->ptrs.icmph != NULL)
+                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.icmph->s_icmp_seq));
         }
         else if (!strcasecmp("ttl", type))
         {
-            if (p->ip_api.is_valid())
-                TextLog_Print(csv_log, "%d",p->ip_api.ttl());
+            if (p->ptrs.ip_api.is_valid())
+                TextLog_Print(csv_log, "%d",p->ptrs.ip_api.ttl());
         }
         else if (!strcasecmp("tos", type))
         {
-            if (p->ip_api.is_valid())
-                TextLog_Print(csv_log, "%d", p->ip_api.tos());
+            if (p->ptrs.ip_api.is_valid())
+                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.tos());
         }
         else if (!strcasecmp("id", type))
         {
-            if (p->ip_api.is_valid())
+            if (p->ptrs.ip_api.is_valid())
             {
-                TextLog_Print(csv_log, "%u", p->ip_api.is_ip6()
-                        ? ntohl(p->ip_api.id(p))
-                        : ntohs((uint16_t)p->ip_api.id(p)));
+                TextLog_Print(csv_log, "%u", p->ptrs.ip_api.is_ip6()
+                        ? ntohl(p->ptrs.ip_api.id())
+                        : ntohs((uint16_t)p->ptrs.ip_api.id()));
             }
         }
         else if (!strcasecmp("ip_len", type))
         {
-            if (p->ip_api.is_valid())
-                TextLog_Print(csv_log, "%d", p->ip_api.len() << 2);
+            if (p->ptrs.ip_api.is_valid())
+                TextLog_Print(csv_log, "%d", p->ptrs.ip_api.len() << 2);
         }
         else if (!strcasecmp("dgm_len", type))
         {
-            if (p->ip_api.is_valid())
+            if (p->ptrs.ip_api.is_valid())
             {
                 // XXX might cause a bug when IPv6 is printed?
-                TextLog_Print(csv_log, "%d", ntohs(p->ip_api.len()));
+                TextLog_Print(csv_log, "%d", ntohs(p->ptrs.ip_api.len()));
             }
         }
         else if (!strcasecmp("tcp_seq", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->tcph->th_seq));
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->ptrs.tcph->th_seq));
         }
         else if (!strcasecmp("tcp_ack", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->tcph->th_ack));
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "0x%lX", (u_long)ntohl(p->ptrs.tcph->th_ack));
         }
         else if (!strcasecmp("tcp_len", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "%d", (p->tcph->off()) << 2);
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "%d", (p->ptrs.tcph->off()) << 2);
         }
         else if (!strcasecmp("tcp_win", type))
         {
-            if (p->tcph != NULL)
-                TextLog_Print(csv_log, "0x%X", ntohs(p->tcph->th_win));
+            if (p->ptrs.tcph != NULL)
+                TextLog_Print(csv_log, "0x%X", ntohs(p->ptrs.tcph->th_win));
         }
         else if (!strcasecmp("tcp_flags",type))
         {
-            if (p->tcph != NULL)
+            if (p->ptrs.tcph != NULL)
             {
-                CreateTCPFlagString(p->tcph, tcpFlags);
+                CreateTCPFlagString(p->ptrs.tcph, tcpFlags);
                 TextLog_Print(csv_log, "%s", tcpFlags);
             }
         }

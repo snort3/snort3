@@ -70,43 +70,58 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
 
+/*  Valid for both IPv4 and IPv6 */
+struct AuthHdr
+{
+    uint8_t next;
+    uint8_t len;
+    uint16_t rsv;   /* reserved */
+    uint32_t spi;   /* Security Parameters Index */
+    uint32_t seq;   /* Sequence Number */
+    uint32_t icv[1]; /* VARIABLE LENGTH!! -- specified by len field*/
+};
 
+const uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
+                                 // no relatino to the AuthHdr.len field.
 
 } // anonymous namespace
+
 
 void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
     v.push_back(IPPROTO_ID_AUTH);
 }
 
-bool AuthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool AuthCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 {
 
-    ip::IP6Extension *ah = (ip::IP6Extension *)raw_pkt;
+    const AuthHdr* const ah = reinterpret_cast<const AuthHdr* const>(raw.data);
 
-    if (raw_len < ip::MIN_EXT_LEN)
+    if (raw.len < MIN_AUTH_LEN)
     {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_TRUNC);
+        codec_events::decoder_event(DECODE_AUTH_HDR_TRUNC);
         return false;
     }
 
-    lyr_len = sizeof(*ah) + (ah->ip6e_len << 2);
+    // 8 is the number of bytes excluded in the length. Check out IPv6 Options length
+    // fields for a better explanation
+    codec.lyr_len = 8 + (ah->len << 2);
 
-    if (lyr_len > raw_len)
+    if (codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(p, DECODE_AUTH_HDR_BAD_LEN);
+        codec_events::decoder_event(DECODE_AUTH_HDR_BAD_LEN);
         return false;
     }
 
-    next_prot_id = ah->ip6e_nxt;
+    codec.next_prot_id = ah->next;
 
-    if (p->ip_api.is_ip6())
-        ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_AUTH, next_prot_id);
+
+    // must be called AFTER setting next_prot_id
+    if (snort.ip_api.is_ip6())
+        ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_AUTH);
     return true;
 }
 

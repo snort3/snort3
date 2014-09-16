@@ -112,17 +112,17 @@ int IcmpSeqOption::eval(Cursor&, Packet *p)
 {
     PROFILE_VARS;
 
-    if(!p->icmph)
+    if(!p->ptrs.icmph)
         return DETECTION_OPTION_NO_MATCH;
 
     MODULE_PROFILE_START(icmpSeqPerfStats);
 
-    if ( (p->icmph->type == ICMP_ECHO ||
-          p->icmph->type == ICMP_ECHOREPLY) ||
-        ((uint16_t)p->icmph->type == icmp::Icmp6Types::ECHO_6 ||
-         (uint16_t)p->icmph->type == icmp::Icmp6Types::REPLY_6) )
+    if ( (p->ptrs.icmph->type == ICMP_ECHO ||
+          p->ptrs.icmph->type == ICMP_ECHOREPLY) ||
+        ((uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_6 ||
+         (uint16_t)p->ptrs.icmph->type == icmp::Icmp6Types::REPLY_6) )
     {
-        if ( config.eval(p->icmph->s_icmp_seq) )
+        if ( config.eval(p->ptrs.icmph->s_icmp_seq) )
         {
             MODULE_PROFILE_END(icmpSeqPerfStats);
             return DETECTION_OPTION_MATCH;

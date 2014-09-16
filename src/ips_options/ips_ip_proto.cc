@@ -124,7 +124,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!p->ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_valid())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Not IP\n"););
         return rval;
@@ -135,22 +135,22 @@ int IpProtoOption::eval(Cursor&, Packet *p)
     switch (ipd->comparison_flag)
     {
         case IP_PROTO__EQUAL:
-            if (p->ip_api.proto() == ipd->protocol)
+            if (p->ptrs.ip_api.proto() == ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 
         case IP_PROTO__NOT_EQUAL:
-            if (p->ip_api.proto() != ipd->protocol)
+            if (p->ptrs.ip_api.proto() != ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 
         case IP_PROTO__GREATER_THAN:
-            if (p->ip_api.proto() > ipd->protocol)
+            if (p->ptrs.ip_api.proto() > ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 
         case IP_PROTO__LESS_THAN:
-            if (p->ip_api.proto() < ipd->protocol)
+            if (p->ptrs.ip_api.proto() < ipd->protocol)
                 rval = DETECTION_OPTION_MATCH;
             break;
 

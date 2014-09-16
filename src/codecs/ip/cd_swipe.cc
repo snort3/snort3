@@ -40,9 +40,9 @@ public:
     virtual ~SwipeCodec(){};
     
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t* raw_packet, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
+
 } // namespace
 
 static const uint16_t SWIPE_PROT_ID = 53;
@@ -53,11 +53,10 @@ void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
 }
 
 
-bool SwipeCodec::decode(const uint8_t* /*raw_packet*/, const uint32_t& /*raw_len*/,
-        Packet *p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool SwipeCodec::decode(const RawData&, CodecData&, SnortData&)
 {
     // currently unsupported
-    codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
+    codec_events::decoder_event(DECODE_IP_BAD_PROTO);
     return true;
 }
 
@@ -66,14 +65,10 @@ bool SwipeCodec::decode(const uint8_t* /*raw_packet*/, const uint32_t& /*raw_len
 //-------------------------------------------------------------------------
 
 static Codec *ctor(Module*)
-{
-    return new SwipeCodec();
-}
+{ return new SwipeCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi swipe_api =
 {

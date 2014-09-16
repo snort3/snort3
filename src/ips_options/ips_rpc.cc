@@ -136,8 +136,8 @@ int RpcOption::eval(Cursor&, Packet *p)
 #endif
     PROFILE_VARS;
 
-    if(!p->ip_api.is_valid() || (IsTCP(p) && !p->tcph)
-       || (IsUDP(p) && !p->udph))
+    if(!p->ptrs.ip_api.is_valid() || (IsTCP(p) && !p->ptrs.tcph)
+       || (IsUDP(p) && !p->ptrs.udph))
         return 0; /* if error occured while ip header
                    * was processed, return 0 automagically.  */
 

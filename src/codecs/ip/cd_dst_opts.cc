@@ -25,12 +25,11 @@
 #include "config.h"
 #endif
 
+#include "main/snort.h"
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
-#include "main/snort.h"
-#include "detection/fpdetect.h"
+#include "codecs/codec_events.h"
 #include "codecs/ip/ip_util.h"
 
 #define CD_DSTOPTS_NAME "ipv6_dst_opts"
@@ -47,8 +46,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
 
 };
@@ -64,44 +62,42 @@ struct IP6Dest
 } // anonymous namespace
 
 
-bool Ipv6DSTOptsCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    const IP6Dest *dsthdr = reinterpret_cast<const IP6Dest *>(raw_pkt);
+    const IP6Dest* const dsthdr = reinterpret_cast<const IP6Dest *>(raw.data);
 
-    /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_DSTOPTS);
-
-    if(raw_len < sizeof(IP6Dest))
+    if(raw.len < sizeof(IP6Dest))
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
-    if ( p->ip6_extension_count >= IP6_EXTMAX )
+    if ( codec.ip6_extension_count >= IP6_EXTMAX )
     {
-        codec_events::decoder_event(p, DECODE_IP6_EXCESS_EXT_HDR);
+        codec_events::decoder_event(DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
     if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
-    {
-        codec_events::decoder_event(p, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
-    }
+        codec_events::decoder_event(DECODE_IPV6_DSTOPTS_WITH_ROUTING);
 
-    lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
-    if(lyr_len > raw_len)
+
+    codec.lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
+    if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(p, DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
+    codec.proto_bits |= PROTO_BIT__IP6_EXT;
+    codec.ip6_extension_count++;
+    codec.next_prot_id = dsthdr->ip6dest_nxt;
 
-    p->ip6_extension_count++;
-    next_prot_id = dsthdr->ip6dest_nxt;
 
-    ip_util::CheckIPv6ExtensionOrder(p, IPPROTO_ID_DSTOPTS, next_prot_id);
-    if ( ip_util::CheckIPV6HopOptions(raw_pkt, raw_len, p))
+    // must be called AFTER setting next_prot_id
+    ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_DSTOPTS);
+
+    if ( ip_util::CheckIPV6HopOptions(raw))
         return true;
     return false;
 }

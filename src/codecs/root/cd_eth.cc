@@ -17,6 +17,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// cd_eth.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
 #ifdef HAVE_CONFIG_H
@@ -34,7 +35,8 @@
 #include "log/text_log.h"
 
 #define CD_ETH_NAME "eth"
-#define CD_ETH_HELP "support for ethernet protocol"
+#define CD_ETH_HELP_STR "support for ethernet protocol"
+#define CD_ETH_HELP ADD_DLT(ADD_DLT(CD_ETH_HELP_STR, DLT_EN10MB), DLT_PPP_ETHER)
 
 namespace
 {
@@ -67,8 +69,7 @@ public:
     virtual void get_data_link_type(std::vector<int>&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet*const );
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
@@ -109,29 +110,28 @@ void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
  *
  * Returns: void function
  */
-bool EthCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t& next_prot_id)
+bool EthCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
 
     /* do a little validation */
-    if(raw_len < eth::ETH_HEADER_LEN)
+    if(raw.len < eth::ETH_HEADER_LEN)
     {
-        codec_events::decoder_event(p, DECODE_ETH_HDR_TRUNC);
+        codec_events::decoder_event(DECODE_ETH_HDR_TRUNC);
         return false;
     }
 
     /* lay the ethernet structure over the packet data */
-    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw_pkt);
+    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr *>(raw.data);
 
 
-    next_prot_id = ntohs(eh->ether_type);
-    if (next_prot_id > eth::MIN_ETHERTYPE )
-        p->proto_bits |= PROTO_BIT__ETH;
+    uint16_t next_prot = ntohs(eh->ether_type);
+    if (next_prot > eth::MIN_ETHERTYPE )
+        codec.proto_bits |= PROTO_BIT__ETH;
     else
-        next_prot_id = ETHERNET_LLC;
+        next_prot = ETHERNET_LLC;
 
-
-    lyr_len = eth::ETH_HEADER_LEN;
+    codec.next_prot_id = next_prot;
+    codec.lyr_len = eth::ETH_HEADER_LEN;
     return true;
 }
 

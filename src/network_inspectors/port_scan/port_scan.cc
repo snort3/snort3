@@ -193,12 +193,12 @@ static int LogPortscanAlert(Packet *p, uint32_t event_id,
     const sfip_t *src_addr;
     const sfip_t *dst_addr;
 
-    if(!p->ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_valid())
         return -1;
 
     /* Do not log if being suppressed */
-    src_addr = p->ip_api.get_src();
-    dst_addr = p->ip_api.get_dst();
+    src_addr = p->ptrs.ip_api.get_src();
+    dst_addr = p->ptrs.ip_api.get_dst();
 
     if( sfthreshold_test(gen_id, sig_id, src_addr, dst_addr, p->pkth->ts.tv_sec) )
     {
@@ -214,8 +214,8 @@ static int LogPortscanAlert(Packet *p, uint32_t event_id,
     else
         fprintf(g_logfile, "event_ref: %u\n", event_ref);
 
-    fprintf(g_logfile, "%s ", inet_ntoa(p->ip_api.get_src()));
-    fprintf(g_logfile, "-> %s\n", inet_ntoa(p->ip_api.get_dst()));
+    fprintf(g_logfile, "%s ", inet_ntoa(p->ptrs.ip_api.get_src()));
+    fprintf(g_logfile, "-> %s\n", inet_ntoa(p->ptrs.ip_api.get_dst()));
     fprintf(g_logfile, "%.*s\n", p->dsize, p->data);
 
     fflush(g_logfile);
@@ -277,8 +277,8 @@ static int GenerateOpenPortEvent(Packet *p, uint32_t gen_id, uint32_t sig_id,
          * here since these are tagged packets, which aren't subject to thresholding,
          * but we want to do it for open port events.
          */
-        if( sfthreshold_test(gen_id, sig_id, p->ip_api.get_src(),
-                            p->ip_api.get_dst(), p->pkth->ts.tv_sec) )
+        if( sfthreshold_test(gen_id, sig_id, p->ptrs.ip_api.get_src(),
+                            p->ptrs.ip_api.get_dst(), p->pkth->ts.tv_sec) )
         {
             return 0;
         }
@@ -377,20 +377,20 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
             g_tmp_pkt->ps_proto = IPPROTO_IP;
             break;
         case PS_PROTO_OPEN_PORT:
-            g_tmp_pkt->ps_proto = p->ip_api.proto();
+            g_tmp_pkt->ps_proto = p->ptrs.ip_api.proto();
             break;
         default:
             return -1;
     }
 
-    if(p->ip_api.is_ip4())
+    if(p->ptrs.ip_api.is_ip4())
     {
-        ((IP4Hdr*)g_tmp_pkt->ip_api.get_ip4h())->set_proto(IPPROTO_PS);
+        ((IP4Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip4h())->set_proto(IPPROTO_PS);
     }
     else
     {
         // since ip_api.is_valid() && !ip4h, this is automatically ip6h
-        ((ip::IP6Hdr*)g_tmp_pkt->ip_api.get_ip6h())->set_proto(IPPROTO_PS);
+        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_proto(IPPROTO_PS);
     }
 
     switch(proto_type)
@@ -421,8 +421,8 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
 
     // FIXIT-L: IP4 is gauranteed to have been set in update().  Is IP6()
     //        also gauranteed?
-    if(g_tmp_pkt->ip_api.is_ip6())
-        ((ip::IP6Hdr*)g_tmp_pkt->ip_api.get_ip6h())->set_len(htons((uint16_t)ip_size));
+    if(g_tmp_pkt->ptrs.ip_api.is_ip6())
+        ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_len(htons((uint16_t)ip_size));
 
     return 0;
 }
@@ -639,7 +639,7 @@ static int PortscanAlert(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type)
 
     if(proto->alerts == PS_ALERT_OPEN_PORT)
     {
-        if(MakePortscanPkt(ps_pkt, proto, PS_PROTO_OPEN_PORT, (void *)&p->sp))
+        if(MakePortscanPkt(ps_pkt, proto, PS_PROTO_OPEN_PORT, (void *)&p->ptrs.sp))
             return -1;
 
         GenerateOpenPortEvent(g_tmp_pkt,GID_PORT_SCAN,PSNG_OPEN_PORT,0,0,3,
@@ -906,7 +906,7 @@ void PortScan::eval(Packet *p)
     PS_PKT ps_pkt;
     PROFILE_VARS;
 
-    assert(p->ip_api.is_valid());
+    assert(p->ptrs.ip_api.is_valid());
 
     if ( p->packet_flags & PKT_REBUILT_STREAM )
         return;

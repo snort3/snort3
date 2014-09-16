@@ -253,9 +253,9 @@ void UpdateBaseStats(SFBASE *sfBase, Packet *p, bool rebuilt)
     if (!rebuilt)
     {
         // For SYN to SYN/ACK counts to help determine if traffic is asynchronous
-        if ((p->tcph != NULL) && (p->tcph->th_flags & TH_SYN))
+        if ((p->ptrs.tcph != NULL) && (p->ptrs.tcph->th_flags & TH_SYN))
         {
-            if (p->tcph->th_flags & TH_ACK)
+            if (p->ptrs.tcph->th_flags & TH_ACK)
                 sfBase->iSynAcks++;
             else
                 sfBase->iSyns++;

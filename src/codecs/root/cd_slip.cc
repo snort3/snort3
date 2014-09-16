@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -19,46 +18,51 @@
 */
 
 
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
+#include <pcap.h>
+#include <cstdint>
 #include "framework/codec.h"
-#include "codecs/codec_events.h"
+#include "protocols/protocol_ids.h"
 
-// yes, macros are necessary. The API and class constructor require different strings.
-#define CD_MOBILE_NAME "mobility"
-#define CD_MOBILE_HELP "support for mobility"
+
+#define CD_SLIP_NAME "slip"
+#define CD_SLIP_HELP_STR "support for slip protocol"
+#define CD_SLIP_HELP ADD_DLT(CD_SLIP_HELP_STR, DLT_SLIP)
+
+const uint16_t SLIP_HEADER_LEN = 16;
+
 
 namespace
 {
 
-class MobilityCodec : public Codec
+class SlipCodec : public Codec
 {
 public:
-    MobilityCodec() : Codec(CD_MOBILE_NAME){};
-    ~MobilityCodec() {};
+    SlipCodec() : Codec(CD_SLIP_NAME){};
+    ~SlipCodec() {};
 
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual void get_data_link_type(std::vector<int>&);
 };
-
-const uint16_t IPPROTO_ID_MOBILITY = 55;
 
 } // namespace
 
 
-void MobilityCodec::get_protocol_ids(std::vector<uint16_t>& v)
+void SlipCodec::get_data_link_type(std::vector<int>& v)
 {
-    v.push_back(IPPROTO_ID_MOBILITY);
+#if DLT_SLIP
+    v.push_back(DLT_SLIP);
+#endif
 }
 
-bool MobilityCodec::decode(const RawData&, CodecData& codec, SnortData&)
+
+bool SlipCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    codec_events::decoder_event(DECODE_IP_BAD_PROTO);
-    codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
+    if (raw.len < SLIP_HEADER_LEN)
+        return false;
+
+    // set the fields which will be sent back to the packet manager
+    codec.lyr_len = SLIP_HEADER_LEN;
+    codec.next_prot_id = ETHERTYPE_IPV4;
     return true;
 }
 
@@ -67,19 +71,20 @@ bool MobilityCodec::decode(const RawData&, CodecData& codec, SnortData&)
 // api
 //-------------------------------------------------------------------------
 
+
 static Codec* ctor(Module*)
-{ return new MobilityCodec(); }
+{ return new SlipCodec(); }
 
 static void dtor(Codec *cd)
 { delete cd; }
 
 
-static const CodecApi mobility_api =
+static const CodecApi slip_api =
 {
     {
         PT_CODEC,
-        CD_MOBILE_NAME,
-        CD_MOBILE_HELP,
+        CD_SLIP_NAME,
+        CD_SLIP_HELP,
         CDAPI_PLUGIN_V0,
         0,
         nullptr,
@@ -90,16 +95,16 @@ static const CodecApi mobility_api =
     nullptr,
     nullptr,
     ctor,
-    dtor,
+    dtor
 };
 
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
-    &mobility_api.base,
+    &slip_api.base,
     nullptr
 };
 #else
-const BaseApi* cd_mobility = &mobility_api.base;
+const BaseApi* cd_slip = &slip_api.base;
 #endif

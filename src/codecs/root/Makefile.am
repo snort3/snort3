@@ -10,9 +10,9 @@ cd_null.cc \
 cd_ppp.cc \
 cd_raw4.cc \
 cd_raw6.cc \
+cd_slip.cc \
 cd_wlan.cc
 #root_fddi.cc \
-#root_slip.cc \
 #root_i4lrawip.cc \
 #root_oldpflog.cc \
 #root_enc.cc \
@@ -55,6 +55,11 @@ ehlib_LTLIBRARIES += libcd_raw6.la
 libcd_raw6_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_raw6_la_LDFLAGS = -export-dynamic -shared
 libcd_raw6_la_SOURCES =  cd_raw6.cc
+
+ehlib_LTLIBRARIES += libcd_slip.la
+libcd_slip_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+libcd_slip_la_LDFLAGS = -export-dynamic -shared
+libcd_slip_la_SOURCES =  cd_slip.cc
 
 ehlib_LTLIBRARIES += libcd_wlan.la
 libcd_wlan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

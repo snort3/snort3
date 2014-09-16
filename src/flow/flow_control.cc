@@ -216,19 +216,19 @@ void FlowControl::reset_prunes (int proto)
 
 void FlowControl::set_key(FlowKey* key, Packet* p)
 {
-    ip::IpApi* ip_api = &p->ip_api;
-    uint8_t proto = ip_api->proto();
+    const ip::IpApi& ip_api = p->ptrs.ip_api;
+    uint8_t proto = ip_api.proto();
     uint32_t mplsId;
     uint16_t vlanId;
     uint16_t addressSpaceId;
 
     if ( p->proto_bits & PROTO_BIT__VLAN )
-        vlanId = vlan::vth_vlan(layer::get_vlan_layer(p));
+        vlanId = layer::get_vlan_layer(p)->vid();
     else
         vlanId = 0;
 
     if ( p->proto_bits & PROTO_BIT__MPLS )
-        mplsId = p->mplsHdr.label;
+        mplsId = p->ptrs.mplsHdr.label;
     else
         mplsId = 0;
 
@@ -238,19 +238,19 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     addressSpaceId = 0;
 #endif
 
-    if ( (p->decode_flags & DECODE__FRAG) )
+    if ( (p->ptrs.decode_flags & DECODE_FRAG) )
     {
-        key->init(ip_api->get_src(), ip_api->get_dst(), ip_api->id(p),
+        key->init(ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
             proto, vlanId, mplsId, addressSpaceId);
     }
     else if ((proto == IPPROTO_ICMP) || (proto == IPPROTO_ICMPV6))
     {
-        key->init(ip_api->get_src(), p->icmph->type, ip_api->get_dst(), 0,
+        key->init(ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
             proto, vlanId, mplsId, addressSpaceId);
     }
     else
     {
-        key->init(ip_api->get_src(), p->sp, ip_api->get_dst(), p->dp,
+        key->init(ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
             proto, vlanId, mplsId, addressSpaceId);
     }
 }
@@ -264,48 +264,48 @@ static bool is_bidirectional(const Flow* flow)
 // FIXIT-L init_roles* should take const Packet*
 static void init_roles_tcp(Packet* p, Flow* flow)
 {
-    if (TCP_ISFLAGSET(p->tcph, TH_SYN) &&
-        !TCP_ISFLAGSET(p->tcph, TH_ACK))
+    if (TCP_ISFLAGSET(p->ptrs.tcph, TH_SYN) &&
+        !TCP_ISFLAGSET(p->ptrs.tcph, TH_ACK))
     {
         flow->s5_state.direction = FROM_CLIENT;
-        sfip_copy(flow->client_ip, p->ip_api.get_src());
-        flow->client_port = ntohs(p->tcph->th_sport);
-        sfip_copy(flow->server_ip, p->ip_api.get_dst());
-        flow->server_port = ntohs(p->tcph->th_dport);
+        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+        flow->client_port = ntohs(p->ptrs.tcph->th_sport);
+        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+        flow->server_port = ntohs(p->ptrs.tcph->th_dport);
     }
-    else if (TCP_ISFLAGSET(p->tcph, (TH_SYN|TH_ACK)))
+    else if (TCP_ISFLAGSET(p->ptrs.tcph, (TH_SYN|TH_ACK)))
     {
         flow->s5_state.direction = FROM_SERVER;
-        sfip_copy(flow->client_ip, p->ip_api.get_dst());
-        flow->client_port = ntohs(p->tcph->th_dport);
-        sfip_copy(flow->server_ip, p->ip_api.get_src());
-        flow->server_port = ntohs(p->tcph->th_sport);
+        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
+        flow->client_port = ntohs(p->ptrs.tcph->th_dport);
+        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
+        flow->server_port = ntohs(p->ptrs.tcph->th_sport);
     }
-    else if (p->sp > p->dp)
+    else if (p->ptrs.sp > p->ptrs.dp)
     {
         flow->s5_state.direction = FROM_CLIENT;
-        sfip_copy(flow->client_ip, p->ip_api.get_src());
-        flow->client_port = ntohs(p->tcph->th_sport);
-        sfip_copy(flow->server_ip, p->ip_api.get_dst());
-        flow->server_port = ntohs(p->tcph->th_dport);
+        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+        flow->client_port = ntohs(p->ptrs.tcph->th_sport);
+        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+        flow->server_port = ntohs(p->ptrs.tcph->th_dport);
     }
     else
     {
         flow->s5_state.direction = FROM_SERVER;
-        sfip_copy(flow->client_ip, p->ip_api.get_dst());
-        flow->client_port = ntohs(p->tcph->th_dport);
-        sfip_copy(flow->server_ip, p->ip_api.get_src());
-        flow->server_port = ntohs(p->tcph->th_sport);
+        sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
+        flow->client_port = ntohs(p->ptrs.tcph->th_dport);
+        sfip_copy(flow->server_ip, p->ptrs.ip_api.get_src());
+        flow->server_port = ntohs(p->ptrs.tcph->th_sport);
     }
 }
 
 static void init_roles_udp(Packet* p, Flow* flow)
 {
     flow->s5_state.direction = FROM_SENDER;
-    sfip_copy(flow->client_ip, p->ip_api.get_src());
-    flow->client_port = ntohs(p->udph->uh_sport);
-    sfip_copy(flow->server_ip, p->ip_api.get_dst());
-    flow->server_port = ntohs(p->udph->uh_dport); 
+    sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
+    flow->client_port = ntohs(p->ptrs.udph->uh_sport);
+    sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
+    flow->server_port = ntohs(p->ptrs.udph->uh_dport);
 }
 
 static void init_roles(Packet* p, Flow* flow)

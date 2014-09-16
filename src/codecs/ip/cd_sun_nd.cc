@@ -43,8 +43,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 
 };
 
@@ -58,10 +57,9 @@ void SunNdCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_SUN_ND);
 }
 
-bool SunNdCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet* p, uint16_t& /*lyr_len*/, uint16_t& /*next_prot_id*/)
+bool SunNdCodec::decode(const RawData&, CodecData&, SnortData&)
 {
-    codec_events::decoder_event(p, DECODE_IP_BAD_PROTO);
+    codec_events::decoder_event(DECODE_IP_BAD_PROTO);
     return true;
 }
 

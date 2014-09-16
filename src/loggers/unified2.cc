@@ -259,33 +259,33 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(p->ip_api.is_valid())
+        if(p->ptrs.ip_api.is_valid())
         {
-            const ip::IP4Hdr* const iph = p->ip_api.get_ip4h();
+            const ip::IP4Hdr* const iph = p->ptrs.ip_api.get_ip4h();
             alertdata.ip_source = iph->get_src();
             alertdata.ip_destination = iph->get_dst();
             alertdata.protocol = GetEventProto(p);
 
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->icmph)
+            if ((alertdata.protocol == IPPROTO_ICMP) && p->ptrs.icmph)
             {
-                alertdata.sport_itype = htons(p->icmph->type);
-                alertdata.dport_icode = htons(p->icmph->code);
+                alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                alertdata.dport_icode = htons(p->ptrs.icmph->code);
             }
             else if (!IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->sp);
-                alertdata.dport_icode = htons(p->dp);
+                alertdata.sport_itype = htons(p->ptrs.sp);
+                alertdata.dport_icode = htons(p->ptrs.dp);
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
             {
-                alertdata.mpls_label = htonl(p->mplsHdr.label);
+                alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
             }
             if(config->vlan_event_types)
             {
                 if(p->proto_bits & PROTO_BIT__VLAN)
                 {
-                    alertdata.vlanId = htons(vlan::vth_vlan(layer::get_vlan_layer(p)));
+                    alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
                 }
 
                 alertdata.pad2 = htons(p->user_policy_id);
@@ -357,38 +357,38 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(p->ip_api.is_valid())
+        if(p->ptrs.ip_api.is_valid())
         {
             const sfip_t *ip;
 
-            ip = p->ip_api.get_src();
+            ip = p->ptrs.ip_api.get_src();
             alertdata.ip_source = *(struct in6_addr*)ip->ip32;
 
-            ip = p->ip_api.get_dst();
+            ip = p->ptrs.ip_api.get_dst();
             alertdata.ip_destination = *(struct in6_addr*)ip->ip32;
 
             alertdata.protocol = GetEventProto(p);
 
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->icmph)
+            if ((alertdata.protocol == IPPROTO_ICMP) && p->ptrs.icmph)
             {
-                alertdata.sport_itype = htons(p->icmph->type);
-                alertdata.dport_icode = htons(p->icmph->code);
+                alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                alertdata.dport_icode = htons(p->ptrs.icmph->code);
             }
             else if (!IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->sp);
-                alertdata.dport_icode = htons(p->dp);
+                alertdata.sport_itype = htons(p->ptrs.sp);
+                alertdata.dport_icode = htons(p->ptrs.dp);
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
             {
-                alertdata.mpls_label = htonl(p->mplsHdr.label);
+                alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
             }
             if(config->vlan_event_types)
             {
                 if(p->proto_bits & PROTO_BIT__VLAN)
                 {
-                    alertdata.vlanId = htons(vlan::vth_vlan(layer::get_vlan_layer(p)));
+                    alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
                 }
 
                 alertdata.pad2 = htons(p->user_policy_id);
@@ -1176,7 +1176,7 @@ void U2Logger::close()
 
 void U2Logger::alert(Packet *p, const char *msg, Event *event)
 {
-    if(p->ip_api.is_ip4())
+    if(p->ptrs.ip_api.is_ip4())
     {
         _AlertIP4_v2(p, msg, &config, event);
     }
@@ -1184,12 +1184,12 @@ void U2Logger::alert(Packet *p, const char *msg, Event *event)
     {
         _AlertIP6_v2(p, msg, &config, event);
 
-        if(ScLogIPv6Extra() && p->ip_api.is_ip6())
+        if(ScLogIPv6Extra() && p->ptrs.ip_api.is_ip6())
         {
-            const sfip_t *ip = p->ip_api.get_src();
+            const sfip_t *ip = p->ptrs.ip_api.get_src();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
                 &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_SRC);
-            ip = p->ip_api.get_dst();
+            ip = p->ptrs.ip_api.get_dst();
             _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
                 &ip->ip8[0], sizeof(struct in6_addr),  EVENT_INFO_IPV6_DST);
         }

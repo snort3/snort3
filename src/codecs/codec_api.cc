@@ -31,7 +31,6 @@
 
 
 // ip codecs
-extern const BaseApi* cd_esp;
 extern const BaseApi* cd_ipv4; // static due to dependence on fpdetect
 extern const BaseApi* cd_tcp;  // static because only file that specific functions
                                //     (symbols will be removed from final executabel)
@@ -43,7 +42,8 @@ extern const BaseApi* cd_ah;
 extern const BaseApi* cd_arp;
 extern const BaseApi* cd_dstopts;
 extern const BaseApi* cd_erspan2;
-extern const BaseApi* cd_erspan3; 
+extern const BaseApi* cd_erspan3;
+extern const BaseApi* cd_esp;
 extern const BaseApi* cd_frag; 
 extern const BaseApi* cd_gre;
 extern const BaseApi* cd_gtp;
@@ -86,7 +86,6 @@ extern const BaseApi* cd_wlan;
 const BaseApi* codecs[] =
 {
     // non root codecs
-    cd_esp,
     cd_ipv4,
     cd_tcp,
 
@@ -96,6 +95,7 @@ const BaseApi* codecs[] =
     cd_dstopts,
     cd_erspan2,
     cd_erspan3,
+    cd_esp,
     cd_frag,
     cd_gre,
     cd_gtp,

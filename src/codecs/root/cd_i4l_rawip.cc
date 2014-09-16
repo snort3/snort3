@@ -24,13 +24,15 @@
 #include "config.h"
 #endif
 
+#include <pcap.h>
 #include "framework/codec.h"
 
-#ifndef I4L_RAW_IP_NAME
-#define I4L_RAW_IP_NAME "i4l_raw_ip"
-#endif
 
-#define I4L_RAW_IP_HELP "support for I4L IP"
+#ifdef DLT_I4L_RAWIP
+
+#define I4L_RAW_IP_NAME "i4l_rawip"
+#define I4L_RAW_IP_HELP_STR "support for I4L IP"
+#define I4L_RAW_IP_HELP ADD_DLT(I4L_RAW_IP_HELP_STR, DLT_I4L_RAWIP)
 
 namespace
 {
@@ -43,8 +45,7 @@ public:
 
 
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
 
 
@@ -52,9 +53,7 @@ public:
 
 
 void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
-{
-    v.push_back(DLT_ID);
-}
+{ v.push_back(DLT_I4L_RAWIP); }
 
 /*
  * Function: DecodeI4LRawIPPkt(Packet *, char *, DAQ_PktHdr_t*, uint8_t*)
@@ -71,16 +70,13 @@ void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
  * Returns: void function
  */
 
-bool I4LRawIpCodec::decode(const uint8_t *raw_pkt, const uint32_t& /*raw_len*/,
-        Packet* /*p*/, uint16_t& lyr_len, uint16_t& next_prot_id)
+bool I4LRawIpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    if(raw_len < 2)
-    {
+    if(raw.len < 2)
         return false;
-    }
 
-    lyr_len = 2;
-    next_prot_id = ETHERTYPE_IPV4;
+    codec.lyr_len = 2;
+    codec.next_prot_id = ETHERTYPE_IPV4;
     return true;
 }
 
@@ -91,14 +87,10 @@ bool I4LRawIpCodec::decode(const uint8_t *raw_pkt, const uint32_t& /*raw_len*/,
 
 
 static Codec* ctor(Module*)
-{
-    return new NameCodec();
-}
+{ return new I4LRawIpCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi i4l_raw_ip_api =
@@ -131,3 +123,4 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 const BaseApi* cd_name = &i4l_raw_ip_api.base;
 #endif
 
+#endif /* DLT_I4L_RAWIP */

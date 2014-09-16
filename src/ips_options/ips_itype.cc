@@ -89,12 +89,12 @@ int IcmpTypeOption::eval(Cursor&, Packet *p)
     PROFILE_VARS;
 
     /* return 0  if we don't have an icmp header */
-    if(!p->icmph)
+    if(!p->ptrs.icmph)
         return rval;
 
     MODULE_PROFILE_START(icmpTypePerfStats);
 
-    if ( config.eval(p->icmph->type) )
+    if ( config.eval(p->ptrs.icmph->type) )
         rval = DETECTION_OPTION_MATCH;
 
     MODULE_PROFILE_END(icmpTypePerfStats);

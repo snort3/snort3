@@ -34,7 +34,8 @@
 #include "log/text_log.h"
 
 #define CD_WLAN_NAME "wlan"
-#define CD_WLAN_HELP "support for wireless local area network protocol"
+#define CD_WLAN_HELP_STR "support for wireless local area network protocol"
+#define CD_WLAN_HELP ADD_DLT(CD_WLAN_HELP_STR, DLT_IEEE802_11)
 
 namespace
 {
@@ -63,8 +64,7 @@ public:
     ~WlanCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void get_data_link_type(std::vector<int>&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
@@ -83,15 +83,14 @@ void WlanCodec::get_data_link_type(std::vector<int>&v)
 #endif
 }
 
-bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet*, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool WlanCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
     /* do a little validation */
-    if(raw_len < MINIMAL_IEEE80211_HEADER_LEN)
+    if(raw.len < MINIMAL_IEEE80211_HEADER_LEN)
         return false;
 
     /* lay the wireless structure over the packet data */
-    const wlan::WifiHdr *wifih = reinterpret_cast<const wlan::WifiHdr *>(raw_pkt);
+    const wlan::WifiHdr *wifih = reinterpret_cast<const wlan::WifiHdr *>(raw.data);
 
 
     /* determine frame type */
@@ -131,8 +130,8 @@ bool WlanCodec::decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
         case WLAN_TYPE_DATA_DTACKPL:
         case WLAN_TYPE_DATA_DATA:
         {
-            lyr_len = IEEE802_11_DATA_HDR_LEN;
-            next_prot_id = ETHERNET_LLC;
+            codec.lyr_len = IEEE802_11_DATA_HDR_LEN;
+            codec.next_prot_id = ETHERNET_LLC;
 
             break;
         }

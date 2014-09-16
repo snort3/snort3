@@ -20,7 +20,6 @@
 // ip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <arpa/inet.h>
-#include <limits>
 #include "protocols/ip.h"
 #include "protocols/packet.h"
 
@@ -89,34 +88,36 @@ bool IpApi::set(const uint8_t* raw_ip_data)
     return false;
 }
 
-uint32_t IpApi::id(const Packet* const p) const
+uint32_t IpApi::id() const
 {
     if (ip4h)
         return ip4h->get_id();
 
     // ensure we have an ipv6 frag
-    if (!ip6h || p->ip6_frag_index == std::numeric_limits<uint8_t>::max())
+    if (!ip6h)
         return 0;
 
-    const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(
-            p->layers[p->ip6_frag_index].start);
+    const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
 
-    return frag_hdr->get_id();
+    if (frag_hdr)
+        return frag_hdr->get_id();
+    return 0;
 }
 
-uint16_t IpApi::off(const Packet* const p) const
+uint16_t IpApi::off() const
 {
     if (ip4h)
         return (uint32_t)ip4h->get_off();
 
     // ensure we have an ipv6 frag
-    if (!ip6h || p->ip6_frag_index == std::numeric_limits<uint8_t>::max())
+    if (!ip6h)
         return 0;
 
-    const IP6Frag* const frag_hdr = reinterpret_cast<const IP6Frag* const>(
-            p->layers[p->ip6_frag_index].start);
+    const IP6Frag* const frag_hdr = layer::get_inner_ip6_frag();
 
-    return frag_hdr->get_off();
+    if (frag_hdr)
+        return frag_hdr->get_off();
+    return 0;
 }
 
 
@@ -148,7 +149,7 @@ uint16_t IpApi::dgram_len() const
         return ntohs(ip4h->get_len());
 
     if (ip6h)
-        return ntohs(ip6h->get_len()) + (ip6h->get_hlen() << 2);
+        return ntohs(ip6h->get_len()) + IP6_HEADER_LEN;
 
     return 0;
 }
@@ -156,7 +157,7 @@ uint16_t IpApi::dgram_len() const
 uint16_t IpApi::pay_len() const
 {
     if (ip4h)
-        return ntohs(ip4h->get_len()) - (ip4h->get_hlen() << 2);
+        return ntohs(ip4h->get_len()) - IP6_HEADER_LEN;
 
     if (ip6h)
         return ntohs(ip6h->get_len());

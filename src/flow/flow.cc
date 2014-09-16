@@ -236,7 +236,7 @@ void Flow::markup_packet_flags(Packet* p)
 
 void Flow::set_direction(Packet* p)
 {
-    ip::IpApi* ip_api = &p->ip_api;
+    ip::IpApi* ip_api = &p->ptrs.ip_api;
 
     if(ip_api->is_ip4())
     {
@@ -245,7 +245,7 @@ void Flow::set_direction(Packet* p)
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
 
-            else if (p->sp == client_port)
+            else if (p->ptrs.sp == client_port)
                 p->packet_flags |= PKT_FROM_CLIENT;
 
             else
@@ -256,7 +256,7 @@ void Flow::set_direction(Packet* p)
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_SERVER;
 
-            else if (p->dp == client_port)
+            else if (p->ptrs.dp == client_port)
                 p->packet_flags |= PKT_FROM_SERVER;
 
             else
@@ -270,7 +270,7 @@ void Flow::set_direction(Packet* p)
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_CLIENT;
 
-            else if (p->sp == client_port)
+            else if (p->ptrs.sp == client_port)
                 p->packet_flags |= PKT_FROM_CLIENT;
 
             else
@@ -281,7 +281,7 @@ void Flow::set_direction(Packet* p)
             if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
                 p->packet_flags |= PKT_FROM_SERVER;
 
-            else if (p->dp == client_port)
+            else if (p->ptrs.dp == client_port)
                 p->packet_flags |= PKT_FROM_SERVER;
 
             else
@@ -346,7 +346,7 @@ void Flow::set_ttl (Packet* p, bool client)
         // FIXIT-J!! -- Do we want more than just the outermost
         //            and innermost ttl()?
         outer_ttl = outer_ip_api.ttl();
-        inner_ttl = p->ip_api.ttl();
+        inner_ttl = p->ptrs.ip_api.ttl();
     }
 
     if ( client )

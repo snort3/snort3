@@ -119,13 +119,13 @@ int IpOptOption::eval(Cursor&, Packet *p)
     PROFILE_VARS;
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "CheckIpOptions:"););
-    if(!p->ip_api.is_ip4())
+    if(!p->ptrs.ip_api.is_ip4())
         return rval; /* if error occured while ip header
                    * was processed, return 0 automatically.  */
 
     MODULE_PROFILE_START(ipOptionPerfStats);
 
-    const ip::IP4Hdr* const ip4h = p->ip_api.get_ip4h();
+    const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h();
     const uint8_t option_len = ip4h->get_opt_len();
 
     if((ipOptionData->any_flag == 1) && (option_len > 0))

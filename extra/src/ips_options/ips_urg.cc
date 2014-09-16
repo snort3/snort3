@@ -97,7 +97,7 @@ int TcpUrgOption::eval(Packet *p)
 
     int rval = DETECTION_OPTION_NO_MATCH;
 
-    if ( p->tcph && config.eval(p->tcph->th_ack) )
+    if ( p->ptrs.tcph && config.eval(p->ptrs.tcph->th_ack) )
         rval = DETECTION_OPTION_MATCH;
 
     //MODULE_PROFILE_END(tcpUrgPerfStats);

@@ -337,10 +337,10 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
 
     p = (Packet *)ps_pkt->pkt;
 
-    if(!p->ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_valid())
         return 1;
 
-    if(p->tcph)
+    if(p->ptrs.tcph)
     {
         if(!(config->detect_scans & PS_PROTO_TCP))
             return 1;
@@ -359,7 +359,7 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
         **  stream.
         */
         if(((p->packet_flags & (PKT_STREAM_EST | PKT_STREAM_TWH))
-                == PKT_STREAM_EST) && !(p->tcph->th_flags & TH_RST))
+                == PKT_STREAM_EST) && !(p->ptrs.tcph->th_flags & TH_RST))
         {
             return 1;
         }
@@ -369,7 +369,7 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
         **  the connection.
         */
         /*
-        if(!(p->tcph->th_flags & TH_RST) &&
+        if(!(p->ptrs.tcph->th_flags & TH_RST) &&
            !(p->packet_flags & (PKT_STREAM_EST)) &&
             (p->packet_flags & PKT_FROM_SERVER))
         {
@@ -377,14 +377,14 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
         }
         */
     }
-    else if(p->udph)
+    else if(p->ptrs.udph)
     {
         if(!(config->detect_scans & PS_PROTO_UDP))
             return 1;
     }
-    else if(p->icmph)
+    else if(p->ptrs.icmph)
     {
-        if(p->icmph->type != ICMP_DEST_UNREACH &&
+        if(p->ptrs.icmph->type != ICMP_DEST_UNREACH &&
            !(config->detect_scans & PS_PROTO_ICMP))
         {
             return 1;
@@ -403,27 +403,27 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
     {
         reverse_pkt = 1;
     }
-    else if(p->icmph && p->icmph->type == ICMP_DEST_UNREACH)
+    else if(p->ptrs.icmph && p->ptrs.icmph->type == ICMP_DEST_UNREACH)
     {
         reverse_pkt = 1;
     }
-    else if (p->udph && p->flow)
+    else if (p->ptrs.udph && p->flow)
     {
         if (stream.get_packet_direction(p) & PKT_FROM_SERVER)
             reverse_pkt = 1;
     }
 
-    scanner = p->ip_api.get_src();
-    scanned = p->ip_api.get_dst();
+    scanner = p->ptrs.ip_api.get_src();
+    scanned = p->ptrs.ip_api.get_dst();
 
     if(reverse_pkt)
     {
-        if(ps_ignore_ip(scanned, p->dp, scanner, p->sp))
+        if(ps_ignore_ip(scanned, p->ptrs.dp, scanner, p->ptrs.sp))
             return 1;
     }
     else
     {
-        if(ps_ignore_ip(scanner, p->sp, scanned, p->dp))
+        if(ps_ignore_ip(scanner, p->ptrs.sp, scanned, p->ptrs.dp))
             return 1;
     }
 
@@ -431,9 +431,9 @@ int PortScan::ps_filter_ignore(PS_PKT *ps_pkt)
 
     if(config->watch_ip)
     {
-        if(ipset_contains(config->watch_ip, scanner, &(p->sp)))
+        if(ipset_contains(config->watch_ip, scanner, &(p->ptrs.sp)))
             return 0;
-        if(ipset_contains(config->watch_ip, scanned, &(p->dp)))
+        if(ipset_contains(config->watch_ip, scanned, &(p->ptrs.dp)))
             return 0;
 
         return 1;
@@ -515,9 +515,9 @@ int PortScan::ps_tracker_lookup(PS_PKT *ps_pkt, PS_TRACKER **scanner,
         sfip_clear(key.scanner);
 
         if(ps_pkt->reverse_pkt)
-            sfip_copy(key.scanned, p->ip_api.get_src());
+            sfip_copy(key.scanned, p->ptrs.ip_api.get_src());
         else
-            sfip_copy(key.scanned, p->ip_api.get_dst());
+            sfip_copy(key.scanned, p->ptrs.ip_api.get_dst());
 
         /*
         **  Get the scanned tracker.
@@ -533,9 +533,9 @@ int PortScan::ps_tracker_lookup(PS_PKT *ps_pkt, PS_TRACKER **scanner,
         sfip_clear(key.scanned);
 
         if(ps_pkt->reverse_pkt)
-            sfip_copy(key.scanner, p->ip_api.get_dst());
+            sfip_copy(key.scanner, p->ptrs.ip_api.get_dst());
         else
-            sfip_copy(key.scanner, p->ip_api.get_src());
+            sfip_copy(key.scanner, p->ptrs.ip_api.get_src());
 
         /*
         **  Get the scanner tracker
@@ -570,10 +570,10 @@ int PortScan::ps_get_proto(PS_PKT *ps_pkt, int *proto)
 
     if (config->detect_scans & PS_PROTO_TCP)
     {
-        if ((p->tcph != NULL)
-                || ((p->icmph != NULL) && (p->icmph->type == ICMP_DEST_UNREACH)
-                    && ((p->icmph->code == ICMP_PORT_UNREACH)
-                        || (p->icmph->code == ICMP_PKT_FILTERED))
+        if ((p->ptrs.tcph != NULL)
+                || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
+                    && ((p->ptrs.icmph->code == ICMP_PORT_UNREACH)
+                        || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))
                     && (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)))
         {
             *proto = PS_PROTO_TCP;
@@ -583,10 +583,10 @@ int PortScan::ps_get_proto(PS_PKT *ps_pkt, int *proto)
 
     if (config->detect_scans & PS_PROTO_UDP)
     {
-        if ((p->udph != NULL)
-                || ((p->icmph != NULL) && (p->icmph->type == ICMP_DEST_UNREACH)
-                    && ((p->icmph->code == ICMP_PORT_UNREACH)
-                        || (p->icmph->code == ICMP_PKT_FILTERED))
+        if ((p->ptrs.udph != NULL)
+                || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
+                    && ((p->ptrs.icmph->code == ICMP_PORT_UNREACH)
+                        || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))
                     && (p->proto_bits & PROTO_BIT__UDP_EMBED_ICMP)))
         {
             *proto = PS_PROTO_UDP;
@@ -596,10 +596,10 @@ int PortScan::ps_get_proto(PS_PKT *ps_pkt, int *proto)
 
     if (config->detect_scans & PS_PROTO_IP)
     {
-        if ((p->ip_api.is_valid() && (p->icmph == NULL))
-                || ((p->icmph != NULL) && (p->icmph->type == ICMP_DEST_UNREACH)
-                    && ((p->icmph->code == ICMP_PROT_UNREACH)
-                        || (p->icmph->code == ICMP_PKT_FILTERED))))
+        if ((p->ptrs.ip_api.is_valid() && (p->ptrs.icmph == NULL))
+                || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
+                    && ((p->ptrs.icmph->code == ICMP_PROT_UNREACH)
+                        || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))))
         {
             *proto = PS_PROTO_IP;
             return 0;
@@ -608,7 +608,7 @@ int PortScan::ps_get_proto(PS_PKT *ps_pkt, int *proto)
 
     if (config->detect_scans & PS_PROTO_ICMP)
     {
-        if (p->icmph != NULL)
+        if (p->ptrs.icmph != NULL)
         {
             *proto = PS_PROTO_ICMP;
             return 0;
@@ -860,13 +860,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
             if(scanned)
             {
                 ps_proto_update(&scanned->proto,1,0,
-                                 p->ip_api.get_src(),p->dp, packet_time());
+                                 p->ptrs.ip_api.get_src(),p->ptrs.dp, packet_time());
             }
 
             if(scanner)
             {
                 ps_proto_update(&scanner->proto,1,0,
-                                 p->ip_api.get_dst(),p->dp, packet_time());
+                                 p->ptrs.ip_api.get_dst(),p->ptrs.dp, packet_time());
             }
         }
         /*
@@ -888,7 +888,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
         **  RST packet on unestablished streams
         */
         else if((p->packet_flags & PKT_FROM_SERVER) &&
-                (p->tcph && (p->tcph->th_flags & TH_RST)) &&
+                (p->ptrs.tcph && (p->ptrs.tcph->th_flags & TH_RST)) &&
                 (!(p->packet_flags & PKT_STREAM_EST) ||
                 (session_flags & SSNFLAG_MIDSTREAM)))
         {
@@ -916,7 +916,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
         {
             if(scanned)
             {
-                ps_update_open_ports(&scanned->proto, p->sp);
+                ps_update_open_ports(&scanned->proto, p->ptrs.sp);
             }
 
             if(scanner)
@@ -930,7 +930,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     ** Stream didn't create a session on the SYN packet,
     ** so check specifically for SYN here.
     */
-    else if (p->tcph && (p->tcph->th_flags == TH_SYN))
+    else if (p->ptrs.tcph && (p->ptrs.tcph->th_flags == TH_SYN))
     {
         /* No session established, packet only has SYN.  SYN only
         ** packet always from client, so use dp.
@@ -938,13 +938,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
         if(scanned)
         {
             ps_proto_update(&scanned->proto,1,0,
-                             p->ip_api.get_src(),p->dp, packet_time());
+                             p->ptrs.ip_api.get_src(),p->ptrs.dp, packet_time());
         }
 
         if(scanner)
         {
             ps_proto_update(&scanner->proto,1,0,
-                             p->ip_api.get_dst(),p->dp, packet_time());
+                             p->ptrs.ip_api.get_dst(),p->ptrs.dp, packet_time());
         }
     }
     /*
@@ -952,7 +952,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     ** so check specifically for SYN & ACK here.  Clear based
     ** on the 'completion' of three-way handshake.
     */
-    else if(p->tcph && (p->tcph->th_flags == (TH_SYN|TH_ACK)))
+    else if(p->ptrs.tcph && (p->ptrs.tcph->th_flags == (TH_SYN|TH_ACK)))
     {
         if(scanned)
         {
@@ -968,7 +968,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     ** No session created, clear based on the RST on non
     ** established session.
     */
-    else if (p->tcph && (p->tcph->th_flags & TH_RST))
+    else if (p->ptrs.tcph && (p->ptrs.tcph->th_flags & TH_RST))
     {
         if(scanned)
         {
@@ -985,7 +985,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
     /*
     **  If we are an icmp unreachable, deal with it here.
     */
-    else if(p->icmph)
+    else if(p->ptrs.icmph)
     {
         if(scanned)
         {
@@ -1011,9 +1011,9 @@ int PortScan::ps_tracker_update_ip(PS_PKT *ps_pkt, PS_TRACKER *scanner,
 
     p = (Packet *)ps_pkt->pkt;
 
-    if(p->ip_api.is_valid())
+    if(p->ptrs.ip_api.is_valid())
     {
-        if(p->icmph)
+        if(p->ptrs.icmph)
         {
             if(scanned)
             {
@@ -1043,7 +1043,7 @@ int PortScan::ps_tracker_update_udp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
 
     p = (Packet *)ps_pkt->pkt;
 
-    if(p->icmph)
+    if(p->ptrs.icmph)
     {
         if(scanned)
         {
@@ -1057,7 +1057,7 @@ int PortScan::ps_tracker_update_udp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
             scanner->priority_node = 1;
         }
     }
-    else if(p->udph)
+    else if(p->ptrs.udph)
     {
         if ( p->flow )
         {
@@ -1068,13 +1068,13 @@ int PortScan::ps_tracker_update_udp(PS_PKT *ps_pkt, PS_TRACKER *scanner,
                 if(scanned)
                 {
                     ps_proto_update(&scanned->proto,1,0,
-                                     p->ip_api.get_src(),p->dp, packet_time());
+                                     p->ptrs.ip_api.get_src(),p->ptrs.dp, packet_time());
                 }
 
                 if(scanner)
                 {
                     ps_proto_update(&scanner->proto,1,0,
-                                     p->ip_api.get_dst(),p->dp, packet_time());
+                                     p->ptrs.ip_api.get_dst(),p->ptrs.dp, packet_time());
                 }
             }
             else if (direction == PKT_FROM_SERVER)
@@ -1100,9 +1100,9 @@ int PortScan::ps_tracker_update_icmp(
 
     p = (Packet *)ps_pkt->pkt;
 
-    if(p->icmph)
+    if(p->ptrs.icmph)
     {
-        switch(p->icmph->type)
+        switch(p->ptrs.icmph->type)
         {
             case ICMP_ECHO:
             case ICMP_TIMESTAMP:
@@ -1112,7 +1112,7 @@ int PortScan::ps_tracker_update_icmp(
                 if(scanner)
                 {
                     ps_proto_update(&scanner->proto,1,0,
-                                     p->ip_api.get_dst(), 0, packet_time());
+                                     p->ptrs.ip_api.get_dst(), 0, packet_time());
                 }
 
                 break;
@@ -1702,7 +1702,7 @@ int PortScan::ps_detect(PS_PKT *ps_pkt)
 
         /* This is added to address the case of no
          * session and a RST packet going back from the Server. */
-        if ( p->tcph && (p->tcph->th_flags & TH_RST) && !p->flow )
+        if ( p->ptrs.tcph && (p->ptrs.tcph->th_flags & TH_RST) && !p->flow )
         {
             if (ps_pkt->reverse_pkt == 1)
             {

@@ -372,12 +372,12 @@ void UpdateFlowStats(SFFLOW *sfFlow, Packet *p)
 {
     uint32_t len = p->pkth->caplen;
 
-    if (p->tcph != NULL)
-        UpdateTCPFlowStats(sfFlow, p->sp, p->dp, len);
-    else if (p->udph != NULL)
-        UpdateUDPFlowStats(sfFlow, p->sp, p->dp, len);
-    else if (p->icmph != NULL)
-        UpdateICMPFlowStats(sfFlow, p->icmph->type, len);
+    if (p->ptrs.tcph != NULL)
+        UpdateTCPFlowStats(sfFlow, p->ptrs.sp, p->ptrs.dp, len);
+    else if (p->ptrs.udph != NULL)
+        UpdateUDPFlowStats(sfFlow, p->ptrs.sp, p->ptrs.dp, len);
+    else if (p->ptrs.icmph != NULL)
+        UpdateICMPFlowStats(sfFlow, p->ptrs.icmph->type, len);
 
     // Track how many packets of each length
     if (len <= SF_MAX_PKT_LEN)

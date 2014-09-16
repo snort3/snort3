@@ -1028,9 +1028,6 @@ static const Parameter network_params[] =
     { "new_ttl", Parameter::PT_INT, "1:255", "1",
       "use this value for responses and when normalizing" },
 
-    { "max_encapsulations", Parameter::PT_INT, "-1:32", "-1",
-      "maximum number of encapsulations per packet" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1065,9 +1062,6 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("new_ttl") )
         p->new_ttl = (uint8_t)v.get_long();
-
-    else if ( v.is("max_encapsulations") )
-        sc->max_encapsulations = v.get_long();
 
     else
         return false;

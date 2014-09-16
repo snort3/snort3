@@ -45,8 +45,7 @@ public:
     ~Ipv6NoNextCodec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void get_protocol_ids(std::vector<uint16_t>&);    
 };
 
@@ -54,19 +53,18 @@ public:
 } // namespace
 
 
-bool Ipv6NoNextCodec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& raw_len,
-        Packet* p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
+bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    /* See if there are any ip_proto only rules that match */
-    fpEvalIpProtoOnlyRules(snort_conf->ip_proto_only_lists, p, IPPROTO_ID_NONEXT);
-
     // No need ot check IPv6 extension order since this is automatically
     // the last extension.
+    if (raw.len < ip::MIN_EXT_LEN)
+        return false;
 
-    // I want the dsize to be zero, so set the raw_length the
-    // length to be zero.
-    const_cast<uint32_t&>(raw_len) = ip::MIN_EXT_LEN;
-    lyr_len = ip::MIN_EXT_LEN;
+    // The size of this packets data should be zero.  So, set this layer's
+    // length and the packet's remaining length to the same number.
+    const_cast<uint32_t&>(raw.len) = ip::MIN_EXT_LEN;
+    codec.lyr_len = ip::MIN_EXT_LEN;
+    codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
     return true;
 }
 

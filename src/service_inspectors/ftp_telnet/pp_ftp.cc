@@ -791,11 +791,11 @@ static int validate_param(Packet *p,
             {
                 // actually, we expect no addr in 229 responses, which is
                 // understood to be server address, so we set that here
-                ipAddr = *p->ip_api.get_src();
+                ipAddr = *p->ptrs.ip_api.get_src();
             }
             if ( session->client_conf->bounce )
             {
-                if (!sfip_equals(&ipAddr, p->ip_api.get_src()))
+                if (!sfip_equals(&ipAddr, p->ptrs.ip_api.get_src()))
                 {
                     int alert = 1;
 
@@ -1125,13 +1125,13 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                         if (iRet == FTPP_SUCCESS)
                         {
                             if (!sfip_is_set(ipAddr))
-                                sfip_copy(session->serverIP, p->ip_api.get_src());
+                                sfip_copy(session->serverIP, p->ptrs.ip_api.get_src());
                             else
                             {
                                 session->serverIP = ipAddr;
                             }
                             session->serverPort = port;
-                            sfip_copy(session->clientIP, p->ip_api.get_dst());
+                            sfip_copy(session->clientIP, p->ptrs.ip_api.get_dst());
                             session->clientPort = 0;
 
                             if ((file_api->get_max_file_depth() > 0) || !(session->server_conf->data_chan))
@@ -1148,7 +1148,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                                 result = stream.set_application_protocol_id_expected(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    (uint8_t)(p->ip_api.proto()), ftp_data_app_id, fd);
+                                    (uint8_t)(p->ptrs.ip_api.proto()), ftp_data_app_id, fd);
 
                                 if (result < 0)
                                     delete fd;
@@ -1160,7 +1160,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                                 stream.ignore_session(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    (uint8_t)(p->ip_api.proto()),
+                                    (uint8_t)(p->ptrs.ip_api.proto()),
                                     FtpDataFlowData::flow_id, SSN_DIR_BOTH);
                             }
                         }
@@ -1195,7 +1195,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                         /* Server is listening/sending from its own IP,
                          * FTP Port -1 */
                         /* Client IP, Port specified via PORT command */
-                        sfip_copy(session->serverIP, p->ip_api.get_src());
+                        sfip_copy(session->serverIP, p->ptrs.ip_api.get_src());
 
                         /* Can't necessarily guarantee this, especially
                          * in the case of a proxy'd connection where the
@@ -1203,7 +1203,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                          * port-1).  Comment it out for now.
                          */
                         /*
-                        session->serverPort = ntohs(p->tcph->th_sport) -1;
+                        session->serverPort = ntohs(p->ptrs.tcph->th_sport) -1;
                         */
                         if ((file_api->get_max_file_depth() > 0) || !(session->server_conf->data_chan))
                         {
@@ -1219,7 +1219,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                             result = stream.set_application_protocol_id_expected(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                (uint8_t)(p->ip_api.proto()), ftp_data_app_id, fd);
+                                (uint8_t)(p->ptrs.ip_api.proto()), ftp_data_app_id, fd);
 
                             if (result < 0)
                                 delete fd;
@@ -1231,7 +1231,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                             stream.ignore_session(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                (uint8_t)(p->ip_api.proto()),
+                                (uint8_t)(p->ptrs.ip_api.proto()),
                                 FtpDataFlowData::flow_id, SSN_DIR_BOTH);
                         }
                     }

@@ -28,15 +28,10 @@
 #include "framework/codec.h"
 #include "main/snort.h"
 
-// yes, macros are necessary. The API and class constructor require different strings.
-//
-// this macros is defined in the module to ensure identical names. However,
-// if you don't want a module, define the name here.
-#ifndef PPP_NAME
-#define PPP_NAME "ppp"
-#endif
 
-#define PPP_HELP "support for point-to-point encapsulation"
+#define PPP_NAME "ppp"
+#define PPP_HELP_STR "support for point-to-point encapsulation"
+#define PPP_HELP ADD_DLT(PPP_HELP_STR, DLT_PPP)
 
 namespace
 {
@@ -48,8 +43,7 @@ public:
     ~PPPCodec() {}
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void get_data_link_type(std::vector<int>&);
 };
 
@@ -69,28 +63,20 @@ void PPPCodec::get_data_link_type(std::vector<int>& v)
 }
 
 
-bool PPPCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet* /*p*/, uint16_t& lyr_len, uint16_t& next_prot_id)
+bool PPPCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    if(raw_len < 2)
-    {
-        if (ScLogVerbose())
-        {
-            ErrorMessage("Length not big enough for even a single "
-                         "header or a one byte payload\n");
-        }
+    if(raw.len < 2)
         return false;
-    }
 
-    if(raw_pkt[0] == CHDLC_ADDR_BROADCAST && raw_pkt[1] == CHDLC_CTRL_UNNUMBERED)
+    if(raw.data[0] == CHDLC_ADDR_BROADCAST && raw.data[1] == CHDLC_CTRL_UNNUMBERED)
     {
         /*
          * Check for full HDLC header (rfc1662 section 3.2)
          */
-        lyr_len = 2;
+        codec.lyr_len = 2;
     }
 
-    next_prot_id = ETHERTYPE_PPP;
+    codec.next_prot_id = ETHERTYPE_PPP;
     return true;
 }
 
@@ -102,14 +88,10 @@ bool PPPCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
 static Codec* ctor(Module*)
-{
-    return new PPPCodec();
-}
+{ return new PPPCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi ppp_api =
