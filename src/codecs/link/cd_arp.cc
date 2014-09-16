@@ -89,7 +89,7 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 {
     if(raw.len < sizeof(arp::EtherARP))
     {
@@ -99,7 +99,8 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 
     codec.proto_bits |= PROTO_BIT__ARP;
     codec.lyr_len = sizeof(arp::EtherARP);
-    
+    snort.packet_type = PKT_TYPE__ARP;
+
     return true;
 }
 

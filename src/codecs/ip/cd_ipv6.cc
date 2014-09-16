@@ -258,6 +258,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         IPV6MiscTests(snort);
         CheckIPV6Multicast(ip6h);
 
+        snort.packet_type = PKT_TYPE__IP;
         codec.next_prot_id = ip6h->get_next();
         codec.lyr_len = ip::IP6_HEADER_LEN;
 

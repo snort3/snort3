@@ -202,6 +202,11 @@ struct Packet
     uint32_t iplist_id;
 
     uint8_t ps_proto;  // Used for portscan and unified2 logging
+
+    /*  Access methods */
+
+    inline uint8_t type() const
+    { return ptrs.packet_type; }
 };
 
 #define PKT_ZERO_LEN offsetof(Packet, pkth)

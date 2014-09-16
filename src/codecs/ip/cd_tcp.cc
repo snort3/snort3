@@ -279,6 +279,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.tcph = tcph;
     snort.sp = tcph->src_port();
     snort.dp = tcph->dst_port();
+    snort.packet_type = PKT_TYPE__TCP;
 
     TCPMiscTests(snort, tcph);
 

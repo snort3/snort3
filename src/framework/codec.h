@@ -23,6 +23,7 @@
 #include <vector>
 #include <cstdint>
 #include <cstddef>
+#include <type_traits> // static_assert
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
@@ -133,30 +134,7 @@ struct RawData
     uint32_t len;
 };
 
-struct SnortData
-{
-    /*  Pointers which will be used by Snort++. (starting with uint16_t so tcph is 64 bytes from start*/
-
-    /*
-     * these four pounters are each referenced literally
-     * dozens if not hundreds of times.  NOTHING else should be added!!
-     */
-    const tcp::TCPHdr* tcph;
-    const udp::UDPHdr* udph;
-    const icmp::ICMPHdr* icmph;
-    uint16_t sp;                /* source port (TCP/UDP) */
-    uint16_t dp;                /* dest port (TCP/UDP) */
-    uint8_t decode_flags;       /* decoder flags including checksum errors, bad TTLs, frag, etc. */
-
-    ip::IpApi ip_api;
-    mpls::MplsHdr mplsHdr;
-
-    inline void reset()
-    {
-        memset((char*)tcph, '\0', offsetof(SnortData, ip_api));
-        ip_api.reset();
-    }
-};
+/*  SnortData Flags */
 
 /* error flags */
 constexpr uint8_t DECODE_ERR_CKSUM_IP = 0x01;
@@ -176,6 +154,42 @@ constexpr uint8_t DECODE_ERR_FLAGS = DECODE_ERR_CKSUM_IP |
     DECODE_ERR_CKSUM_ICMP |
     DECODE_ERR_CKSUM_ANY |
     DECODE_ERR_BAD_TTL;
+
+
+constexpr uint8_t PKT_TYPE__UNKOWN = 0x00;
+constexpr uint8_t PKT_TYPE__IP = 0x01;
+constexpr uint8_t PKT_TYPE__TCP = 0x02;
+constexpr uint8_t PKT_TYPE__UDP = 0x04;
+constexpr uint8_t PKT_TYPE__ICMP4 = 0x08;
+constexpr uint8_t PKT_TYPE__ICMP6 = 0x10;
+constexpr uint8_t PKT_TYPE__ARP = 0x10;
+
+struct SnortData
+{
+    /*  Pointers which will be used by Snort++. (starting with uint16_t so tcph is 64 bytes from start*/
+
+    /*
+     * these four pounters are each referenced literally
+     * dozens if not hundreds of times.  NOTHING else should be added!!
+     */
+    const tcp::TCPHdr* tcph;
+    const udp::UDPHdr* udph;
+    const icmp::ICMPHdr* icmph;
+    uint16_t sp;                /* source port (TCP/UDP) */
+    uint16_t dp;                /* dest port (TCP/UDP) */
+    uint8_t decode_flags;       /* decoder flags including checksum errors, bad TTLs, frag, etc. */
+    uint8_t packet_type;
+
+    ip::IpApi ip_api;
+    mpls::MplsHdr mplsHdr;
+
+    inline void reset()
+    {
+        static_assert(PKT_TYPE__UNKOWN == 0, "PKT_TYPE__UNKOWN must be zero!!");
+        memset((char*)tcph, '\0', offsetof(SnortData, ip_api));
+        ip_api.reset();
+    }
+};
 
 
 struct CodecData
@@ -222,6 +236,8 @@ struct CodecData
 #define PROTO_BIT__FREE     0x4000
 #define PROTO_BIT__OTHER    0x8000
 #define PROTO_BIT__ALL      0xffff
+
+
 
 
 /*  Decode Flags */

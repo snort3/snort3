@@ -290,6 +290,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.dp = dst_port;
     codec.lyr_len = udp::UDP_HEADER_LEN;
     codec.proto_bits |= PROTO_BIT__UDP;
+    snort.packet_type = PKT_TYPE__UDP;
 
     // set in packet manager
     UDPMiscTests(snort, uhlen - udp::UDP_HEADER_LEN);
