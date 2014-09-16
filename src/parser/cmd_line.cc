@@ -162,7 +162,7 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
     check_flags(sc);
 
     if ( int k = get_parse_errors() )
-        FatalError("see prioir %d errors\n", k);
+        FatalError("see prior %d errors\n", k);
 
     return sc;
 }
