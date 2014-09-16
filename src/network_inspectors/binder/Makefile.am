@@ -1,8 +1,10 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
 file_list = \
-binder.cc binder.h \
-bind_module.cc bind_module.h
+binder.cc \
+binding.h \
+bind_module.cc \
+bind_module.h
 
 #if STATIC_INSPECTORS
 noinst_LIBRARIES = libbinder.a

@@ -158,8 +158,7 @@ static bool s5_paf_callback (
 
 static inline bool s5_paf_eval (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
-    uint16_t, uint32_t flags, 
-    const uint8_t* data, uint32_t len, FlushType* ft)
+    uint32_t flags, const uint8_t* data, uint32_t len, FlushType* ft)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: paf=%d, idx=%u, len=%u, fpt=%u\n",
@@ -236,7 +235,7 @@ void s5_paf_clear (PAF_State* ps)
 uint32_t s5_paf_check (
     StreamSplitter* ss, PAF_State* ps, Flow* ssn,
     const uint8_t* data, uint32_t len, uint32_t total,
-    uint32_t seq, uint16_t port, uint32_t* flags)
+    uint32_t seq, uint32_t* flags)
 {
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM_PAF,
         "%s: len=%u, amt=%u, seq=%u, cur=%u, pos=%u, fpt=%u, tot=%u, paf=%d\n",
@@ -276,7 +275,7 @@ uint32_t s5_paf_check (
         uint32_t idx = s5_idx;
         uint32_t shift, fp;
 
-        bool cont = s5_paf_eval(ss, ps, ssn, port, *flags, data, len, &ft);
+        bool cont = s5_paf_eval(ss, ps, ssn, *flags, data, len, &ft);
 
         if ( ft != FT_NOP )
         {

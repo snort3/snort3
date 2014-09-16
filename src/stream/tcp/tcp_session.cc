@@ -313,12 +313,6 @@ THREAD_LOCAL Memcap* tcp_memcap = nullptr;
 #define STREAM5_DEBUG_WRAP(x)
 #endif
 
-/* client/server ip/port dereference */
-#define tcp_client_ip flow->client_ip
-#define tcp_client_port flow->client_port
-#define tcp_server_ip flow->server_ip
-#define tcp_server_port flow->server_port
-
 #define SL_BUF_FLUSHED 1
 
 struct TcpDataBlock
@@ -770,13 +764,13 @@ static void PrintTcpSession(TcpSession *ts)
     char buf[64];
 
     LogMessage("TcpSession:\n");
-    sfip_ntop(&ts->tcp_server_ip, buf, sizeof(buf));
+    sfip_ntop(&ts->flow->server_ip, buf, sizeof(buf));
     LogMessage("    server IP:          %s\n", buf);
-    sfip_ntop(&ts->tcp_client_ip, buf, sizeof(buf));
+    sfip_ntop(&ts->flow->client_ip, buf, sizeof(buf));
     LogMessage("    client IP:          %s\n", buf);
 
-    LogMessage("    server port:        %d\n", ts->tcp_server_port);
-    LogMessage("    client port:        %d\n", ts->tcp_client_port);
+    LogMessage("    server port:        %d\n", ts->flow->server_port);
+    LogMessage("    client port:        %d\n", ts->flow->client_port);
 
     LogMessage("    flags:              0x%X\n", ts->flow->s5_state.session_flags);
 
@@ -2613,7 +2607,7 @@ static void TraceSession (const Flow* lws)
 {
     fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%u SP=%u\n",
         (unsigned)lws->session_state, lws->s5_state.session_flags,
-        (unsigned)ntohs(lws->client_port), (unsigned)ntohs(lws->server_port)
+        lws->client_port, lws->server_port
     );
 }
 
@@ -4253,7 +4247,7 @@ static int NewTcpSession(
 
         CopyMacAddr(p, tmp, FROM_CLIENT);
     }
-    else if (TCP_ISFLAGSET(p->ptrs.tcph, (TH_SYN|TH_ACK)))
+    else if (p->ptrs.tcph->are_flags_set(TH_SYN|TH_ACK))
     {
         /******************************************************************
          * start new sessions on SYN/ACK from server
@@ -4707,10 +4701,6 @@ static int ProcessTcp(
                     "session direction.\n"););
             /* SYN packet from client */
             lwssn->s5_state.direction = FROM_CLIENT;
-            sfip_copy(lwssn->client_ip, p->ptrs.ip_api.get_src());
-            lwssn->client_port = p->ptrs.tcph->th_sport;
-            sfip_copy(lwssn->server_ip, p->ptrs.ip_api.get_dst());
-            lwssn->server_port = p->ptrs.tcph->th_dport;
             lwssn->session_state |= STREAM5_STATE_SYN;
 
             if (require3Way || (Stream5PacketHasWscale(p) & TF_WSCALE) ||
@@ -4742,10 +4732,6 @@ static int ProcessTcp(
                         "Stream5 SYN|ACK PACKET, establishing lightweight"
                         "session direction.\n"););
                 lwssn->s5_state.direction = FROM_SERVER;
-                sfip_copy(lwssn->client_ip, p->ptrs.ip_api.get_dst());
-                lwssn->client_port = p->ptrs.tcph->th_dport;
-                sfip_copy(lwssn->server_ip, p->ptrs.ip_api.get_src());
-                lwssn->server_port = p->ptrs.tcph->th_sport;
             }
             lwssn->session_state |= STREAM5_STATE_SYN_ACK;
 
@@ -4775,21 +4761,9 @@ static int ProcessTcp(
             /* create session on data, need to figure out direction, etc */
             /* Assume from client, can update later */
             if (p->ptrs.sp > p->ptrs.dp)
-            {
                 lwssn->s5_state.direction = FROM_CLIENT;
-                sfip_copy(lwssn->client_ip, p->ptrs.ip_api.get_src());
-                lwssn->client_port = p->ptrs.tcph->th_sport;
-                sfip_copy(lwssn->server_ip, p->ptrs.ip_api.get_dst());
-                lwssn->server_port = p->ptrs.tcph->th_dport;
-            }
             else
-            {
                 lwssn->s5_state.direction = FROM_SERVER;
-                sfip_copy(lwssn->client_ip, p->ptrs.ip_api.get_dst());
-                lwssn->client_port = p->ptrs.tcph->th_dport;
-                sfip_copy(lwssn->server_ip, p->ptrs.ip_api.get_src());
-                lwssn->server_port = p->ptrs.tcph->th_sport;
-            }
             lwssn->session_state |= STREAM5_STATE_MIDSTREAM;
             lwssn->s5_state.session_flags |= SSNFLAG_MIDSTREAM;
 
@@ -4942,10 +4916,6 @@ static int ProcessTcp(
                      !TCP_ISFLAGSET(p->ptrs.tcph, TH_ACK))
             {
                 lwssn->s5_state.direction = FROM_CLIENT;
-                sfip_copy(lwssn->client_ip, p->ptrs.ip_api.get_src());
-                lwssn->client_port = p->ptrs.tcph->th_sport;
-                sfip_copy(lwssn->server_ip, p->ptrs.ip_api.get_dst());
-                lwssn->server_port = p->ptrs.tcph->th_dport;
                 lwssn->session_state = STREAM5_STATE_SYN;
                 lwssn->set_ttl(p, true);
                 NewTcpSession(p, lwssn, tdb, config);
@@ -4961,10 +4931,6 @@ static int ProcessTcp(
             else if (TCP_ISFLAGSET(p->ptrs.tcph, (TH_SYN|TH_ACK)))
             {
                 lwssn->s5_state.direction = FROM_SERVER;
-                sfip_copy(lwssn->client_ip, p->ptrs.ip_api.get_dst());
-                lwssn->client_port = p->ptrs.tcph->th_dport;
-                sfip_copy(lwssn->server_ip, p->ptrs.ip_api.get_src());
-                lwssn->server_port = p->ptrs.tcph->th_sport;
                 lwssn->session_state = STREAM5_STATE_SYN_ACK;
                 lwssn->set_ttl(p, false);
                 NewTcpSession(p, lwssn, tdb, config);
@@ -5810,10 +5776,8 @@ static inline uint32_t GetForwardDir (const Packet* p)
 // the key difference is that we operate on forward moving data
 // because we don't wait until it is acknowledged
 static inline uint32_t flush_pdu_ips (
-    TcpSession* ssn, StreamTracker* trk, Packet* pkt, uint32_t* flags)
+    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
-    bool to_srv = ( *flags == PKT_FROM_CLIENT );
-    uint16_t srv_port = ( to_srv ? pkt->ptrs.dp : pkt->ptrs.sp );
     uint32_t total = 0, avail;
     StreamSegment* seg;
     PROFILE_VARS;
@@ -5840,7 +5804,7 @@ static inline uint32_t flush_pdu_ips (
 
         flush_pt = s5_paf_check(
             trk->splitter, &trk->paf_state, ssn->flow,
-            seg->payload, size, total, seg->seq, srv_port, flags);
+            seg->payload, size, total, seg->seq, flags);
 
         if ( flush_pt > 0 )
         {
@@ -5883,7 +5847,7 @@ static inline int CheckFlushPolicyOnData(
         case STREAM_FLPOLICY_ON_DATA:
         {
             uint32_t flags = GetForwardDir(p);
-            uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
+            uint32_t flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
             uint32_t this_flush;
 
             while ( flush_amt > 0 )
@@ -5915,7 +5879,7 @@ static inline int CheckFlushPolicyOnData(
 
                 flushed += this_flush;
                 flags = GetForwardDir(p);
-                flush_amt = flush_pdu_ips(tcpssn, listener, p, &flags);
+                flush_amt = flush_pdu_ips(tcpssn, listener, &flags);
             }
             if ( !flags && listener->splitter->is_paf() )
             {
@@ -5950,10 +5914,8 @@ static inline int CheckFlushPolicyOnData(
 //   know where we left off and can resume scanning the remainder
 
 static inline uint32_t flush_pdu_ackd (
-    TcpSession* ssn, StreamTracker* trk, Packet* pkt, uint32_t* flags)
+    TcpSession* ssn, StreamTracker* trk, uint32_t* flags)
 {
-    bool to_srv = ( *flags == PKT_FROM_CLIENT );
-    uint16_t srv_port = ( to_srv ? pkt->ptrs.sp : pkt->ptrs.dp );
     uint32_t total = 0;
     StreamSegment* seg;
     PROFILE_VARS;
@@ -5984,7 +5946,7 @@ static inline uint32_t flush_pdu_ackd (
 
         flush_pt = s5_paf_check(
             trk->splitter, &trk->paf_state, ssn->flow,
-            seg->payload, size, total, seg->seq, srv_port, flags);
+            seg->payload, size, total, seg->seq, flags);
 
         if ( flush_pt > 0 )
         {
@@ -6023,7 +5985,7 @@ int CheckFlushPolicyOnAck(
         case STREAM_FLPOLICY_ON_ACK:
         {
             uint32_t flags = GetReverseDir(p);
-            uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
+            uint32_t flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
 
             while ( flush_amt > 0 )
             {
@@ -6045,7 +6007,7 @@ int CheckFlushPolicyOnAck(
                     break;
 
                 flags = GetReverseDir(p);
-                flush_amt = flush_pdu_ackd(tcpssn, talker, p, &flags);
+                flush_amt = flush_pdu_ackd(tcpssn, talker, &flags);
             }
             if ( !flags && talker->splitter->is_paf() )
             {
@@ -6183,7 +6145,7 @@ int GetTcpRebuiltPackets(Packet *p, Flow *ssn,
 
     /* StreamTracker is the opposite of the ip of the reassembled
      * packet --> it came out the queue for the other side */
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6231,7 +6193,7 @@ int GetTcpStreamSegments(Packet *p, Flow *ssn,
 
     /* StreamTracker is the opposite of the ip of the reassembled
      * packet --> it came out the queue for the other side */
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6270,7 +6232,7 @@ int Stream5AddSessionAlertTcp(
     Stream5AlertInfo* ai;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6308,7 +6270,7 @@ int Stream5CheckSessionAlertTcp(Flow *lwssn, Packet *p, uint32_t gid, uint32_t s
         return 0;
     }
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6342,7 +6304,7 @@ int Stream5UpdateSessionAlertTcp (
     uint32_t seq_num;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ptrs.ip_api.get_src(), &tcpssn->flow->client_ip))
     {
         st = &tcpssn->server;
     }
@@ -6377,7 +6339,7 @@ void Stream5SetExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
     StreamTracker *st;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6390,7 +6352,7 @@ void Stream5ClearExtraDataTcp (Flow* lwssn, Packet* p, uint32_t xid)
     StreamTracker *st;
     TcpSession *tcpssn = (TcpSession*)lwssn->session;
 
-    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->tcp_client_ip))
+    if (sfip_equals(p->ptrs.ip_api.get_src(),&tcpssn->flow->client_ip))
         st = &tcpssn->server;
     else
         st = &tcpssn->client;
@@ -6623,7 +6585,7 @@ void TcpSession::update_direction(
     uint16_t tmpPort;
     StreamTracker tmpTracker;
 
-    if (sfip_equals(&tcp_client_ip, ip) && (tcp_client_port == port))
+    if (sfip_equals(&flow->client_ip, ip) && (flow->client_port == port))
     {
         if ((dir == SSN_DIR_CLIENT) && (flow->s5_state.direction == SSN_DIR_CLIENT))
         {
@@ -6631,7 +6593,7 @@ void TcpSession::update_direction(
             return;
         }
     }
-    else if (sfip_equals(&tcp_server_ip, ip) && (tcp_server_port == port))
+    else if (sfip_equals(&flow->server_ip, ip) && (flow->server_port == port))
     {
         if ((dir == SSN_DIR_SERVER) && (flow->s5_state.direction == SSN_DIR_SERVER))
         {
@@ -6643,12 +6605,12 @@ void TcpSession::update_direction(
     /* Swap them -- leave flow->s5_state.direction the same */
 
     /* XXX: Gotta be a more efficient way to do this without the memcpy */
-    tmpIp = tcp_client_ip;
-    tmpPort = tcp_client_port;
-    tcp_client_ip = tcp_server_ip;
-    tcp_client_port = tcp_server_port;
-    tcp_server_ip = tmpIp;
-    tcp_server_port = tmpPort;
+    tmpIp = flow->client_ip;
+    tmpPort = flow->client_port;
+    flow->client_ip = flow->server_ip;
+    flow->client_port = flow->server_port;
+    flow->server_ip = tmpIp;
+    flow->server_port = tmpPort;
 
 #ifdef HAVE_DAQ_ADDRESS_SPACE_ID
     SwapPacketHeaderFoo(this);

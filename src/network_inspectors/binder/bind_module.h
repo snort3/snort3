@@ -50,6 +50,9 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
+    void add(const char* service, const char* type);
+    void add(unsigned proto, const char* type);
+
     const char** get_pegs() const;
     PegCount* get_counts() const;
     ProfileStats* get_profile() const;

@@ -209,6 +209,7 @@ void StreamBase::eval(Packet *p)
 
     MODULE_PROFILE_START(s5PerfStats);
 
+    // FIXIT-H need new packet_type (may need to use it elsewhere too)
     switch ( p->ptrs.ip_api.proto() )
     {
     case IPPROTO_TCP:

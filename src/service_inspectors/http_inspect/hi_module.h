@@ -22,6 +22,8 @@
 #ifndef HI_MODULE_H
 #define HI_MODULE_H
 
+#include <string>
+
 #include "framework/module.h"
 #include "hi_ui_config.h"
 #include "hi_events.h"
@@ -77,6 +79,7 @@ public:
 
 private:
     HTTPINSPECT_CONF* server;
+    std::string methods;
 };
 
 #endif
