@@ -2,6 +2,7 @@
 -- tweaked --help!
 -- added unused stringify(enum)
 -- fixed piroir typo
+-- fixed normalizer.tcp.ips
 
 119
 -- updated binder
