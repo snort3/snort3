@@ -63,11 +63,11 @@ namespace icmp
 enum EncodeType{
     ENC_TCP_FIN,
     ENC_TCP_RST,
+    ENC_TCP_PUSH,
     ENC_UNR_NET,
     ENC_UNR_HOST,
     ENC_UNR_PORT,
     ENC_UNR_FW,
-    ENC_TCP_PUSH,
     ENC_MAX
 };
 
@@ -162,7 +162,7 @@ constexpr uint8_t PKT_TYPE__TCP = 0x02;
 constexpr uint8_t PKT_TYPE__UDP = 0x04;
 constexpr uint8_t PKT_TYPE__ICMP4 = 0x08;
 constexpr uint8_t PKT_TYPE__ICMP6 = 0x10;
-constexpr uint8_t PKT_TYPE__ARP = 0x10;
+constexpr uint8_t PKT_TYPE__ARP = 0x20;
 
 struct SnortData
 {
@@ -186,7 +186,7 @@ struct SnortData
     inline void reset()
     {
         static_assert(PKT_TYPE__UNKOWN == 0, "PKT_TYPE__UNKOWN must be zero!!");
-        memset((char*)tcph, '\0', offsetof(SnortData, ip_api));
+        memset((char*)&tcph, '\0', offsetof(SnortData, ip_api));
         ip_api.reset();
     }
 };

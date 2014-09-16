@@ -55,6 +55,7 @@ class SO_PUBLIC IpApi
 public:
 //    IpApi();   constructor and destructor MUST remain a trivial. Adding
 //    ~IpApi();  any non-trivial code will cause a compilation failure.
+    IpApi() = default ;
 
     void set(const IP4Hdr* h4);
     void set(const IP6Hdr* h6);

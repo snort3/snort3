@@ -148,7 +148,7 @@ void PacketManager::decode(
     uint16_t prev_prot_id = FINISHED_DECODE;
 
 
-    assert(!(p->packet_flags & PKT_REBUILT_STREAM));
+//    assert(!(p->packet_flags & PKT_REBUILT_STREAM));
 
 
     // initialize all Packet information
