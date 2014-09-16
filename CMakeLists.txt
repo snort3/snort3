@@ -21,9 +21,6 @@ include (cmake/CheckCXX11Features.cmake)
 include (cmake/sanity_checks.cmake)
 
 
-include(GenerateExportHeader)
-#set (CMAKE_CXX_VISIBILITY_PRESET hidden)  # TODO:  using this provides more symbols
-#set (CMAKE_VISIBILITY_INLINES_HIDDEN 1)   #  setting hidden on my own. Why???
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}") # c++11 flag
 
 
