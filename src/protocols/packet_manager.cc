@@ -84,13 +84,11 @@ static THREAD_LOCAL SnortData tmp_ptrs;
 static inline void push_layer(Packet *p,
                                 uint16_t prot_id,
                                 const uint8_t *hdr_start,
-                                uint32_t len,
-                                Codec *const cd)
+                                uint32_t len)
 {
 
     // We check to ensure num_layer < MAX_LAYERS before this function call
     Layer& lyr = p->layers[p->num_layers++];
-    lyr.proto = cd->get_proto_id();
     lyr.prot_id = prot_id;
     lyr.start = hdr_start;
     lyr.length = (uint16_t)len;
@@ -207,7 +205,7 @@ void PacketManager::decode(
 
 
         // internal statistics and record keeping
-        push_layer(p, prev_prot_id, pkt, codec_data.lyr_len, CodecManager::s_protocols[mapped_prot]);
+        push_layer(p, prev_prot_id, pkt, codec_data.lyr_len);
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
         mapped_prot = CodecManager::s_proto_map[codec_data.next_prot_id];
         prev_prot_id = codec_data.next_prot_id;
@@ -401,7 +399,6 @@ int PacketManager::encode_format_with_daq_info (
         const uint8_t* b = c->pkt + (p->layers[i].start - p->pkt); // == c->pkt + p->layers[i].len
         lyr = c->layers + i;
 
-        lyr->proto = p->layers[i].proto;
         lyr->prot_id = p->layers[i].prot_id;
         lyr->length = p->layers[i].length;
         lyr->start = (uint8_t*)b;

@@ -37,7 +37,6 @@
 #include "main/snort.h"
 #include "packet_io/active.h"
 #include "codecs/decode_module.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
@@ -93,7 +92,6 @@ public:
     Ipv6Codec() : Codec(CD_IPV6_NAME){};
     ~Ipv6Codec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_IP6; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
