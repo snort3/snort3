@@ -119,7 +119,7 @@ public:
      * this function will return the 'ID' of the Codec to which the proto belongs.
      * If none of the loaded Codecs registered that proto, this function will
      * return zero. */
-    static inline uint8_t proto_id(uint16_t proto)
+    static uint8_t proto_id(uint16_t proto)
     { return CodecManager::s_proto_map[proto]; }
 
 private:
