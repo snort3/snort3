@@ -367,7 +367,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         codec_events::decoder_event(DECODE_BAD_FRAGBITS);
 
 
-    snort.packet_type = PKT_TYPE__IP;
+    snort.set_pkt_type(PktType::IP);
     codec.proto_bits |= PROTO_BIT__IP;
     IPMiscTests(iph, ip::IP4_HEADER_LEN + ip_opt_len);
     codec.lyr_len = hlen;

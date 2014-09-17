@@ -21,7 +21,17 @@
 #include "unit_test.h"
 
 #include <stdlib.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #include <check.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include "suite_decl.h"
 

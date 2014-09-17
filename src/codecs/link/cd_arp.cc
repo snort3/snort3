@@ -99,7 +99,7 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
     codec.proto_bits |= PROTO_BIT__ARP;
     codec.lyr_len = sizeof(arp::EtherARP);
-    snort.packet_type = PKT_TYPE__ARP;
+    snort.set_pkt_type(PktType::ARP);
 
     return true;
 }

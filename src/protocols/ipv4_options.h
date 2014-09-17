@@ -32,7 +32,8 @@ namespace ip
 
 struct IP4Hdr;
 
-enum class IPOptionCodes : std::uint8_t {
+enum class IPOptionCodes : std::uint8_t
+{
     EOL = 0x00,
     NOP = 0x01,
     RR = 0x07,

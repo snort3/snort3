@@ -156,7 +156,6 @@ constexpr uint8_t MAX_TTL = 255;
 constexpr uint8_t LAYER_MAX = 32;
 
 
-
 /*  D A T A  S T R U C T U R E S  *********************************************/
 class Flow;
 
@@ -205,8 +204,8 @@ struct Packet
 
     /*  Access methods */
 
-    inline uint8_t type() const
-    { return ptrs.packet_type; }
+    inline PktType type() const
+    { return ptrs.get_pkt_type(); } // defined in codec.h
 };
 
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
