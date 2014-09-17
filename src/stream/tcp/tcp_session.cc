@@ -137,7 +137,8 @@ const char* tcp_pegs[] =
     "gaps",
     "internal events",
     "client cleanup flushes",
-    "server cleanup flushes"
+    "server cleanup flushes",
+    nullptr
 };
 
 THREAD_LOCAL TcpStats tcpStats;
