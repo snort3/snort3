@@ -42,6 +42,7 @@ using namespace NHttpEnums;
 // Convenience function. All the housekeeping that must be done before we can return FLUSH to stream.
 void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, SourceId source_id,
       SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length) {
+    assert(num_octets > 0);
     session_data->section_type[source_id] = section_type;
     session_data->tcp_close[source_id] = tcp_close;
     session_data->infractions[source_id] = infractions;
@@ -98,7 +99,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
     if ((type == SEC_HEADER) && (session_data->header_octets_visible[source_id] > 0)) {
         prepare_flush(session_data, flush_offset, source_id, type,
            tcp_close && (session_data->header_octets_visible[source_id] == length),
-           0, session_data->peek_ahead_octets[source_id], length);
+           0, session_data->header_octets_visible[source_id], length);
         return StreamSplitter::FLUSH;
     }
 

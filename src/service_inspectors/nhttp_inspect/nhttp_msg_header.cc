@@ -62,6 +62,8 @@ void NHttpMsgHeader::update_flow() {
     const uint64_t disaster_mask = 0;
 
     // The following logic to determine body type is by no means the last word on this topic.
+    // FIXIT-H need to distinguish methods such as POST that should have a body from those that should not.
+    // FIXIT-H need to support old implementations that don't use Content-Length but just disconnect the connection.
     if (tcp_close) {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
@@ -72,6 +74,7 @@ void NHttpMsgHeader::update_flow() {
     }
     else if ((source_id == SRC_SERVER) && ((status_code_num <= 199) || (status_code_num == 204) || (status_code_num == 304))) {
         // No body allowed by RFC for these response codes
+        // FIXIT-M inspect for Content-Length and Transfer-Encoding headers which should not be present
         session_data->type_expected[SRC_SERVER] = SEC_STATUS;
         session_data->half_reset(SRC_SERVER);
     }
@@ -85,6 +88,7 @@ void NHttpMsgHeader::update_flow() {
     else if ((get_header_value_norm(HEAD_TRANSFER_ENCODING).length > 0)                     &&
              ((*(int64_t *)(get_header_value_norm(HEAD_TRANSFER_ENCODING).start + 
              (get_header_value_norm(HEAD_TRANSFER_ENCODING).length - 8))) == TRANSCODE_CHUNKED) ) {
+        // FIXIT-M inspect for Content-Length header which should not be present
         // Chunked body
         session_data->type_expected[source_id] = SEC_CHUNKHEAD;
         session_data->body_octets[source_id] = 0;
