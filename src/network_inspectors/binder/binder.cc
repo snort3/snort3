@@ -49,6 +49,7 @@ Binding::Binding()
     when.vlans.set();
     when.ports.set();
 
+    when.id = 0;
     when.role = BR_EITHER;
     use.action = BA_INSPECT;
 }

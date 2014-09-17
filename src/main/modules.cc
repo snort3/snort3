@@ -1659,7 +1659,8 @@ static const char* hosts_help =
 class HostsModule : public Module
 {
 public:
-    HostsModule() : Module("hosts", hosts_help, hosts_params, true) { };
+    HostsModule() : Module("hosts", hosts_help, hosts_params, true)
+    { app = nullptr; host = nullptr; };
     ~HostsModule() { assert(!host && !app); };
 
     bool set(const char*, Value&, SnortConfig*);
