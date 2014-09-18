@@ -1755,7 +1755,7 @@ static const Parameter xxx_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* _help =
+static const char* xxx_help =
     "configure ";
 
 class XXXModule : public Module

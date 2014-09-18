@@ -123,14 +123,10 @@ bool Ipv6HopOptsCodec::update(Packet* p, Layer* lyr, uint32_t* len)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Ipv6HopOptsCodec();
-}
+{ return new Ipv6HopOptsCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi ipv6_hopopts_api =
 {

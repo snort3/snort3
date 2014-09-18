@@ -27,7 +27,6 @@
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
-#include "codecs/sf_protocols.h"
 
 // unfortunately necessary due to use of Ipapi in struct
 #include "protocols/ip.h"
@@ -330,8 +329,6 @@ public:
 
     // Get the codec's name
     inline const char* get_name() const {return name; };
-    // used for backwards compatability.
-    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     // Registers this Codec's data link type (as defined by libpcap)
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes

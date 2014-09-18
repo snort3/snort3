@@ -38,6 +38,7 @@
 #include "protocols/packet_manager.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/tcp.h"
+#include "protocols/protocol_ids.h"
 
 #define MAX_ATTEMPTS 20
 
@@ -73,10 +74,12 @@ static int Active_Close(void);
 static int Active_SendEth(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 static int Active_SendIp(const DAQ_PktHdr_t*, int, const uint8_t*, uint32_t);
 
-static inline PROTO_ID GetInnerProto (const Packet* p)
+static inline uint16_t GetInnerProto (const Packet* p)
 {
-    if ( !p->num_layers ) return PROTO_MAX;
-    return ( p->layers[p->num_layers-1].proto );
+    if ( !p->num_layers )
+        return FINISHED_DECODE;
+
+    return ( p->layers[p->num_layers-1].prot_id );
 }
 
 //--------------------------------------------------------------------
@@ -235,7 +238,7 @@ void Active_InjectData (
 
 int Active_IsRSTCandidate(const Packet* p)
 {
-    if ( GetInnerProto(p) != PROTO_TCP )
+    if ( GetInnerProto(p) != IPPROTO_ID_TCP )
         return 0;
 
     if ( !p->ptrs.tcph )
@@ -252,15 +255,16 @@ int Active_IsRSTCandidate(const Packet* p)
 int Active_IsUNRCandidate(const Packet* p)
 {
     // FIXIT-J allow unr to tcp/udp/icmp4/icmp6 only or for all
-    switch ( GetInnerProto(p) ) {
-    case PROTO_UDP:
-    case PROTO_TCP:
-    case PROTO_ICMP4:
-    case PROTO_ICMP6:
-        return 1;
+    switch ( GetInnerProto(p) )
+    {
+        case IPPROTO_ID_UDP:
+        case IPPROTO_ID_TCP:
+        case IPPROTO_ID_ICMPV4:
+        case IPPROTO_ID_ICMPV6:
+            return 1;
 
-    default:
-        break;
+        default:
+            break;
     }
     return 0;
 }

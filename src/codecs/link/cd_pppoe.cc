@@ -25,7 +25,6 @@
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/layer.h"
 #include "main/snort_debug.h"
 
@@ -300,7 +299,6 @@ public:
     ~PPPoEDiscCodec() {};
 
 
-    virtual PROTO_ID get_proto_id() { return PROTO_PPPOE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -394,7 +392,6 @@ public:
     ~PPPoESessCodec() {};
 
 
-    virtual PROTO_ID get_proto_id() { return PROTO_PPPOE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);

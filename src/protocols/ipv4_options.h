@@ -23,6 +23,7 @@
 #define PROTOCOLS_IP_OPTIONS_H
 
 #include <cstdint>
+#include "main/snort_types.h"
 
 struct Packet;
 
@@ -85,7 +86,7 @@ struct IpOptions
  * relly creative name ... right
  * Use IpOptionIter ... this is the placehold
  */
-class IpOptionIteratorIter
+class SO_PUBLIC IpOptionIteratorIter
 {
 public:
     IpOptionIteratorIter(const IpOptions*);
@@ -120,7 +121,7 @@ private:
  *          do_something
  *      }
  */
-class IpOptionIterator
+class SO_PUBLIC IpOptionIterator
 {
 public:
     /* CONSTRUCTOR VALID AFTER DECODE()

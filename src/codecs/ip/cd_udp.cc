@@ -39,7 +39,6 @@
 #include "framework/codec.h"
 #include "packet_io/active.h"
 #include "codecs/codec_events.h"
-#include "codecs/sf_protocols.h"
 #include "snort_config.h"
 #include "parser/config_file.h"
 #include "codecs/ip/ip_util.h"
@@ -120,7 +119,6 @@ public:
     ~UdpCodec(){};
 
 
-    virtual PROTO_ID get_proto_id() { return PROTO_UDP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
 

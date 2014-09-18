@@ -69,7 +69,6 @@ public:
     // print all of the codec plugins
     static void dump_plugins();
 
-
 private:
     struct CodecApiWrapper;
 
