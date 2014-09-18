@@ -34,6 +34,7 @@
 #include "nhttp_enum.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
+#include "nhttp_splitter.h"
 #include "nhttp_stream_splitter.h"
 #include "nhttp_inspect.h"
 
@@ -55,14 +56,14 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     else {
         NHttpTestManager::get_test_input_source()->flush(num_octets);
     }
-    session_data->octets_seen[source_id] = 0;
-    session_data->num_crlf[source_id] = 0;
     session_data->peek_ahead_octets[source_id] = 0;
     session_data->unused_octets_visible[source_id] = length - num_octets;
     session_data->header_octets_visible[source_id] = 0;
 }
 
 StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t, uint32_t* flush_offset) {
+    assert(length <= 63780);
+
     // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
     bool tcp_close = false;
 
@@ -102,86 +103,64 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
            0, session_data->header_octets_visible[source_id], length);
         return StreamSplitter::FLUSH;
     }
+    // Did we peek ahead and not find the complete headers?
+    if (session_data->peek_ahead_octets[source_id] > 0) {
+        assert(length == session_data->peek_ahead_octets[source_id]);
+        session_data->peek_ahead_octets[source_id] = 0;
+        return StreamSplitter::SEARCH;
+    }
 
     switch (type) {
       case SEC_REQUEST:
       case SEC_STATUS:
-      case SEC_HEADER:
       case SEC_CHUNKHEAD:
-      case SEC_TRAILER:
+      case SEC_HEADER:
+      case SEC_TRAILER: {
         paf_max = 63780;
-        for (uint32_t k = session_data->peek_ahead_octets[source_id]; k < length; k++) {
-            session_data->octets_seen[source_id]++;
-            // Count the alternating <CR> and <LF> characters we have seen in a row
-            if (((data[k] == '\r') && (session_data->num_crlf[source_id]%2 == 0)) ||
-                ((data[k] == '\n') && (session_data->num_crlf[source_id]%2 == 1))) {
-                session_data->num_crlf[source_id]++;
-            }
-            else {
-                session_data->num_crlf[source_id] = 0;
-            }
-
-            // If the first two octets are CRLF then flush them separately. We are 1) DISCARDing CRLF some
-            // 1.0 implementation put following previous message, 2) DISCARDing CRLF between chunk and following
-            // chunk header, and 3) flushing normal empty header or trailer.
-            if ((session_data->num_crlf[source_id] == 2) && (session_data->octets_seen[source_id] == 2)) {
-                prepare_flush(session_data, flush_offset, source_id,
-                   ((type == SEC_REQUEST) || (type == SEC_STATUS) || (type == SEC_CHUNKHEAD)) ? SEC_DISCARD : type,
-                   tcp_close && (k == length-1), 0, k+1, length);
-                return StreamSplitter::FLUSH;
-            }
-            // The start line and chunk header section always end with the first <CRLF>
-            else if ((session_data->num_crlf[source_id] == 2) &&
-                     ((type == SEC_REQUEST) || (type == SEC_STATUS) || (type == SEC_CHUNKHEAD))) {
-                prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (k == length-1), 0, k+1, length);
-                if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
-                    // Look ahead to see if entire header section is already here so we can aggregate it for detection.
-                    for (uint32_t m = k+1; m < length; m++) {
-                        session_data->octets_seen[source_id]++;
-                        // Count the alternating <CR> and <LF> characters we have seen in a row
-                        if (((data[m] == '\r') && (session_data->num_crlf[source_id]%2 == 0)) ||
-                            ((data[m] == '\n') && (session_data->num_crlf[source_id]%2 == 1))) {
-                            session_data->num_crlf[source_id]++;
-                        }
-                        else {
-                            session_data->num_crlf[source_id] = 0;
-                        }
-                        if ( (session_data->num_crlf[source_id] == 4) || 
-                            ((session_data->num_crlf[source_id] == 2) && (session_data->octets_seen[source_id] == 2))) {
-                            session_data->header_octets_visible[source_id] = m-k;
-                            return StreamSplitter::FLUSH;
-                        }
-                    }
-                    session_data->peek_ahead_octets[source_id] = length - (k+1);
-                }
-                return StreamSplitter::FLUSH;
-            }
-            // The header and trailer sections always end with the first double <CRLF>
-            else if (session_data->num_crlf[source_id] == 4) {
-                prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (k == length-1), 0, k+1, length);
-                return StreamSplitter::FLUSH;
-            }
-            // We must do this to protect ourself from buffer overrun.
-            else if (session_data->octets_seen[source_id] >= 63780) {
+        NHttpSplitter* splitter = ((type == SEC_HEADER) || (type == SEC_TRAILER)) ?
+           (NHttpSplitter*)&session_data->header_splitter[source_id] :
+           (NHttpSplitter*)&session_data->start_splitter[source_id];
+        const uint32_t max_length = (length <= (63780 - splitter->get_octets_seen())) ? length :
+           (63780 - splitter->get_octets_seen());
+        const SectionType split_result = splitter->split(data, max_length);
+        if (split_result == SEC__NOTPRESENT) {
+            if (splitter->get_octets_seen() == 63780) {
                 // FIXIT-M need to implement processing and detection instead of just discarding this data
                 session_data->type_expected[source_id] = SEC_ABORT;
                 return StreamSplitter::ABORT;
             }
-        }
-        session_data->peek_ahead_octets[source_id] = 0;
-        // Incomplete headers wait patiently for more data
-        if (!tcp_close) {
-            return StreamSplitter::SEARCH;
-        }
-        // Discard the oddball case where the new "message" starts with <CR><close>
-        else if ((session_data->octets_seen[source_id] == 1) && (session_data->num_crlf[source_id] == 1)) {
-            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, true, 0, length, length);
-        }
-        // TCP connection close, flush the partial header
-        else {
+            if (!tcp_close) {
+                // Incomplete headers wait patiently for more data
+                return StreamSplitter::SEARCH;
+            }
             prepare_flush(session_data, flush_offset, source_id, type, true, INF_TRUNCATED, length, length);
+            splitter->reset();
+            return StreamSplitter::FLUSH;
+        }
+        const uint32_t flush_octets = session_data->peek_ahead_octets[source_id] + splitter->get_num_flush();
+        if (split_result == SEC_DISCARD) {
+            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close && (flush_octets == length), 0,
+               flush_octets, length);
+            splitter->reset();
+            return StreamSplitter::FLUSH;
+        }
+        prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (flush_octets == length), 0,
+           flush_octets, length);
+        splitter->reset();
+        if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
+            // Look ahead to see if entire header section is already here so we can aggregate it for detection.
+            NHttpSplitter* peek_splitter = &session_data->header_splitter[source_id];
+            const SectionType peek_result = peek_splitter->split(data + flush_octets, length - flush_octets);
+            if (peek_result == SEC_HEADER) {
+                session_data->header_octets_visible[source_id] = peek_splitter->get_num_flush();
+                peek_splitter->reset();
+            }
+            else {
+                session_data->peek_ahead_octets[source_id] = length - flush_octets;
+            }
         }
         return StreamSplitter::FLUSH;
+      }
       case SEC_BODY:
       case SEC_CHUNKBODY:
         paf_max = 16384 - session_data->chunk_buffer_length[source_id];
@@ -191,7 +170,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         }
         else {
             // The TCP connection has closed and this is the possibly incomplete final section
-            prepare_flush(session_data, flush_offset, source_id, type, true,  0, length, length);
+            prepare_flush(session_data, flush_offset, source_id, type, true, 0, length, length);
         }
         return StreamSplitter::FLUSH;
       case SEC_ABORT:

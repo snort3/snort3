@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include "stream/stream_api.h"
+#include "nhttp_splitter.h"
 
 class NHttpTransaction;
 
@@ -60,8 +61,8 @@ private:
     void half_reset(NHttpEnums::SourceId source_id);
 
     // StreamSplitter internal data
-    int64_t octets_seen[2] = { 0, 0 };
-    int num_crlf[2] = { 0, 0 };
+    NHttpStartSplitter start_splitter[2];
+    NHttpHeaderSplitter header_splitter[2];
     uint32_t peek_ahead_octets[2] = { 0, 0 };
     uint32_t unused_octets_visible[2] = { 0, 0 };
     uint32_t header_octets_visible[2] = { 0, 0 };
