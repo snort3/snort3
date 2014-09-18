@@ -45,12 +45,13 @@ enum BindAction
 struct BindWhen
 {
     unsigned id;
-    std::string svc;
-    VlanList vlans;
-    sfip_var_t* nets;
     unsigned protos;
-    PortList ports;
     BindRole role;
+    std::string svc;
+    sfip_var_t* nets;
+    ByteList ifaces;
+    VlanList vlans;
+    PortList ports;
 };
 
 struct BindUse
@@ -59,7 +60,7 @@ struct BindUse
     std::string svc;
     std::string type;
     std::string name;
-    std::string file;
+    unsigned index;
 };
 
 struct Binding
@@ -70,10 +71,11 @@ struct Binding
     Binding();
     ~Binding();
 
-    bool check_port(const Flow*) const;
+    bool check_iface(const Flow*) const;
     bool check_vlan(const Flow*) const;
     bool check_addr(const Flow*) const;
     bool check_proto(const Flow*) const;
+    bool check_port(const Flow*) const;
     bool check_policy(const Flow*) const;
     bool check_service(const Flow*) const;
 };

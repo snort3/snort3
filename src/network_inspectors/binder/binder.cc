@@ -48,9 +48,12 @@ Binding::Binding()
 
     when.vlans.set();
     when.ports.set();
+    when.ifaces.set();
 
     when.id = 0;
     when.role = BR_EITHER;
+
+    use.index = 0;
     use.action = BA_INSPECT;
 }
 
@@ -98,6 +101,21 @@ bool Binding::check_proto(const Flow* flow) const
     case IPPROTO_UDP:  bit = PROTO_BIT__UDP;  break;
     }
     return ( mask & bit ) != 0;
+}
+
+bool Binding::check_iface(const Flow* flow) const
+{
+    int i = flow->iface_in < 0 ? 0 : flow->iface_in;
+
+    if ( when.ifaces.test(i) )
+        return true;
+
+    i = flow->iface_out < 0 ? 0 : flow->iface_out;
+
+    if ( when.ifaces.test(i) )
+        return true;
+
+    return false;
 }
 
 bool Binding::check_vlan(const Flow* flow) const
@@ -190,6 +208,8 @@ Binder::~Binder()
 void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
+    flow->iface_in = p->pkth->ingress_index;
+    flow->iface_out = p->pkth->egress_index;
 
     Binding* pb = get_binding(flow);
     flow->flow_state = apply(flow, pb);
@@ -248,12 +268,10 @@ Binding* Binder::get_binding(const Flow* flow)
     {
         pb = bindings[i];
 
-        // FIXIT-H file must be implemented and should not be in runtime
-        // list of bindings
-        if ( pb->use.file.size() )
+        if ( !pb->check_policy(flow) )
             continue;
 
-        if ( !pb->check_policy(flow) )
+        if ( !pb->check_iface(flow) )
             continue;
 
         if ( !pb->check_vlan(flow) )

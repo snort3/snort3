@@ -30,6 +30,9 @@ using namespace std;
 #include "binding.h"
 #include "protocols/packet.h"
 #include "parser/parse_ip.h"
+#include "main/policy.h"
+#include "main/snort_config.h"
+#include "main/shell.h"
 
 THREAD_LOCAL BindStats bstats;
 
@@ -52,6 +55,9 @@ static const Parameter binder_when_params[] =
     // into index for binder matching and lookups
     { "policy_id", Parameter::PT_INT, "0:", nullptr,
       "unique ID for selection of this config by external logic" },
+
+    { "ifaces", Parameter::PT_BIT_LIST, "255", nullptr,
+      "list of interface indices" },
 
     { "vlans", Parameter::PT_BIT_LIST, "4095", nullptr,
       "list of VLAN IDs" },
@@ -117,7 +123,7 @@ BinderModule::~BinderModule()
 ProfileStats* BinderModule::get_profile() const
 { return &bindPerfStats; }
 
-bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
+bool BinderModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
     // both
     if ( !strcmp(fqn, "binder.when.service") )
@@ -127,11 +133,14 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->use.svc = v.get_string();
 
     // when
-    else if ( v.is("policy_id") )
-        work->when.id = v.get_long();
+    else if ( v.is("ifaces") )
+        v.get_bits(work->when.ifaces);
 
     else if ( v.is("nets") )
         work->when.nets = sfip_var_from_string(v.get_string());
+
+    else if ( v.is("policy_id") )
+        work->when.id = v.get_long();
 
     else if ( v.is("proto") )
     {
@@ -155,8 +164,10 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->use.action = (BindAction)(v.get_long() + 1);
 
     else if ( v.is("file") )
-        work->use.file = v.get_string();
-
+    {
+        Shell* sh = new Shell(v.get_string());
+        work->use.index = sc->policy_map->add_shell(sh);
+    }
     else if ( v.is("name") )
         work->use.name = v.get_string();
 

@@ -229,6 +229,9 @@ public:  // FIXIT-M privatize if possible
     uint64_t expire_time;
     uint32_t normal_mask;
 
+    int32_t iface_in;
+    int32_t iface_out;
+
     uint16_t client_port;
     uint16_t server_port;
 

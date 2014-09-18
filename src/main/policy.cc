@@ -26,6 +26,7 @@
 
 #include "managers/inspector_manager.h"
 #include "parser/vars.h"
+#include "main/shell.h"
 #include "snort.h"
 
 //-------------------------------------------------------------------------
@@ -96,6 +97,7 @@ IpsPolicy::~IpsPolicy()
 
 PolicyMap::PolicyMap()
 {
+    shells.push_back(new Shell);
     inspection_policy.push_back(new InspectionPolicy);
     ips_policy.push_back(new IpsPolicy);
     network_policy.push_back(new NetworkPolicy);
@@ -107,6 +109,9 @@ PolicyMap::PolicyMap()
 
 PolicyMap::~PolicyMap()
 {
+    for ( auto p : shells )
+        delete p;
+
     for ( auto p : inspection_policy )
         delete p;
 
@@ -116,6 +121,7 @@ PolicyMap::~PolicyMap()
     for ( auto p : network_policy )
         delete p;
 
+    shells.clear();
     inspection_policy.clear();
     ips_policy.clear();
     network_policy.clear();

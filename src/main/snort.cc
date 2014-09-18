@@ -326,16 +326,13 @@ static void SnortInit(int argc, char **argv)
 
     LogMessage("--------------------------------------------------\n");
 
-    Shell::init();
     ModuleManager::init();
-
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
-
     ModuleManager::dump_modules();
     PluginManager::dump_plugins();
-    FileAPIInit();
 
+    FileAPIInit();
     register_profiles();
 
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
@@ -576,7 +573,6 @@ static void SnortCleanup()
     CleanupProtoNames();
     ModuleManager::term();
     PluginManager::release_plugins();
-    Shell::term();
 }
 
 void snort_cleanup()

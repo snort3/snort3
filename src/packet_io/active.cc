@@ -252,7 +252,8 @@ int Active_IsRSTCandidate(const Packet* p)
 int Active_IsUNRCandidate(const Packet* p)
 {
     // FIXIT-J allow unr to tcp/udp/icmp4/icmp6 only or for all
-    switch ( GetInnerProto(p) ) {
+    switch ( GetInnerProto(p) )
+    {
     case PROTO_UDP:
     case PROTO_TCP:
     case PROTO_ICMP4:

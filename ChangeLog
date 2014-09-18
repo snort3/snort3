@@ -4,6 +4,8 @@
 -- fixed piroir typo
 -- fixed normalizer.tcp.ips
 -- pulled in latest from Josh
+-- fixed valgrind issues
+-- refactored Shells to support multiple files/policies
 
 119
 -- updated binder
