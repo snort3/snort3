@@ -27,11 +27,13 @@
 #endif
 
 #include <pcap.h>
-#include "protocols/packet.h"
 #include "protocols/token_ring.h"
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
+
+
+#ifdef DLT_IEEE802
 
 namespace
 {
@@ -69,8 +71,7 @@ public:
 
 
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
 
 
@@ -99,23 +100,20 @@ public:
 
 void TrCodec::get_data_link_type(std::vector<int>&v)
 {
-#ifdef DLT_IEEE802
     v.push_back(DLT_IEEE802);
-#endif
 }
 
 
 //void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
-bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool TrCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
 
-    uint32_t cap_len = raw_len;
+    const uint32_t cap_len = raw.len;
     uint32_t dataoff;      /* data offset is variable here */
 
     if(cap_len < sizeof(token_ring::Trh_hdr))
     {
-        codec_events::decoder_event(p, DECODE_BAD_TRH);
+        codec_events::decoder_event(DECODE_BAD_TRH);
         return false;
     }
 
@@ -141,12 +139,12 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc)))
     {
-        codec_events::decoder_event(p, DECODE_BAD_TR_ETHLLC);
+        codec_events::decoder_event(DECODE_BAD_TR_ETHLLC);
         return false;
     }
 
     const token_ring::Trh_llc *trhllc =
-        reinterpret_cast<const token_ring::Trh_llc *>(raw_pkt + sizeof(token_ring::Trh_hdr));
+        reinterpret_cast<const token_ring::Trh_llc *>(raw.data + sizeof(token_ring::Trh_hdr));
 
     if(trhllc->dsap != IPARP_SAP && trhllc->ssap != IPARP_SAP)
     {
@@ -158,22 +156,22 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
         if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) + sizeof(token_ring::Trh_mr)))
         {
-            codec_events::decoder_event(p, DECODE_BAD_TRHMR);
+            codec_events::decoder_event(DECODE_BAD_TRHMR);
             return false;
         }
 
-        const token_ring::Trh_mr* trhmr =
-            reinterpret_cast<const token_ring::Trh_mr *>(raw_pkt + sizeof(token_ring::Trh_hdr));
+        const token_ring::Trh_mr* const trhmr =
+            reinterpret_cast<const token_ring::Trh_mr *>(raw.data + sizeof(token_ring::Trh_hdr));
 
 
         if(cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +
                       sizeof(token_ring::Trh_mr) + TRH_MR_LEN(trhmr)))
         {
-            codec_events::decoder_event(p, DECODE_BAD_TR_MR_LEN);
+            codec_events::decoder_event(DECODE_BAD_TR_MR_LEN);
             return false;
         }
 
-        dataoff   = sizeof(token_ring::Trh_hdr) + TRH_MR_LEN(trhmr) + sizeof(token_ring::Trh_llc);
+        dataoff = sizeof(token_ring::Trh_hdr) + TRH_MR_LEN(trhmr) + sizeof(token_ring::Trh_llc);
 
     }
     else
@@ -196,8 +194,8 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         return false;
     }
 
-    lyr_len = dataoff;
-    next_prot_id = htons(trhllc->ethertype);
+    codec.lyr_len = dataoff;
+    codec.next_prot_id = htons(trhllc->ethertype);
     return true;
 }
 
@@ -209,24 +207,16 @@ bool TrCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
 
 
 static Module* mod_ctor()
-{
-    return new TrCodecModule;
-}
+{ return new TrCodecModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new TrCodec();
-}
+{ return new TrCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi tr_api =
@@ -254,3 +244,5 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     &tr_api.base,
     nullptr
 };
+
+#endif

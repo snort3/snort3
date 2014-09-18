@@ -27,10 +27,12 @@
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "protocols/ip.h"
+#include "main/thread.h"
 
 
 namespace layer
 {
+static THREAD_LOCAL const Packet* p;
 
 static inline const uint8_t* find_outer_layer(const Layer* lyr,
                                 uint8_t num_layers,
@@ -80,6 +82,9 @@ static inline const uint8_t* find_inner_layer(const Layer* lyr,
     return nullptr;
 }
 
+
+void set_packet_pointer(const Packet* const curr_pkt)
+{ p = curr_pkt; }
 
 const uint8_t* get_inner_layer(const Packet* p, uint16_t proto)
 { return find_inner_layer(p->layers, p->num_layers, proto); }
@@ -141,6 +146,39 @@ const eth::EtherHdr* get_eth_layer(const Packet* const p)
     // if no inner eth layer, assume root layer is eth (callers job to confirm)
     return eh ? eh : reinterpret_cast<const eth::EtherHdr*>(get_root_layer(p));
 }
+
+
+const ip::IP6Frag* get_inner_ip6_frag()
+{ return get_inner_ip6_frag(p); }
+
+
+const ip::IP6Frag* get_inner_ip6_frag(const Packet* const pkt)
+{
+    // get_ip6h returns null if this is ipv4
+    const ip::IP6Hdr* const ip6h = pkt->ptrs.ip_api.get_ip6h();
+
+    if (ip6h)
+    {
+        const int max_layer = pkt->num_layers-1;
+        const Layer* lyr = &(pkt->layers[max_layer]);
+
+        for(int i = max_layer; i >= 0; i--)
+        {
+            if (lyr->prot_id == IPPROTO_ID_FRAGMENT)
+                return reinterpret_cast<const ip::IP6Frag*>(lyr->start);
+
+            // Only check until current ip6h header
+            if (lyr->start == (const uint8_t* const)ip6h)
+                return nullptr;
+
+            lyr--;
+        }
+    }
+
+    return nullptr;
+}
+
+
 
 
 const udp::UDPHdr* get_outer_udp_lyr(const Packet* const p)
@@ -285,7 +323,7 @@ bool set_outer_ip_api(const Packet* const p,
 
 
 bool set_api_ip_embed_icmp(Packet* const p)
-{ return set_api_ip_embed_icmp(p, p->ip_api); }
+{ return set_api_ip_embed_icmp(p, p->ptrs.ip_api); }
 
 bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
 {

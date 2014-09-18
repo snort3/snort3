@@ -157,9 +157,9 @@ void LogIPPkt(int type, Packet* p)
 
 void snort_print(Packet* p)
 {
-    if (p->ip_api.is_valid())
+    if (p->ptrs.ip_api.is_valid())
     {
-        LogIPPkt(text_log, p->ip_api.proto(), p);
+        LogIPPkt(text_log, p->ptrs.ip_api.proto(), p);
     }
 #if 0
     // ARP not impelemted

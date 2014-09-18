@@ -24,6 +24,9 @@
 #define PROTOCOLS_ETH_H
 
 
+#include <arpa/inet.h>
+
+
 #define ETHERNET_HEADER_LEN 14
 #define ETHERNET_MTU                  1500
 
@@ -42,6 +45,14 @@ struct EtherHdr
     uint8_t ether_dst[6];
     uint8_t ether_src[6];
     uint16_t ether_type;
+
+    /* return data in byte order */
+    inline uint16_t ethertype() const
+    { return ntohs(ether_type); }
+
+    /* return data in network order */
+    inline uint16_t raw_ethertype() const
+    { return ether_type; }
 };
 
 } // namespace eth

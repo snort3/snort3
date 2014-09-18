@@ -44,8 +44,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_PPP_ENCAP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     
 };
 
@@ -75,8 +74,7 @@ void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool PppEncap::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
     static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;
@@ -88,13 +86,7 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
                             "PPP is only 1 or 2 bytes and will throw off "
                             "alignment on this architecture when decoding IP, "
                             "causing a bus error - stop decoding packet.\n"););
-
-    p->data = raw_pkt;
-    p->dsize = (uint16_t)len;
     return true;
-
-#else  /* WORDS_MUSTALIGN */
-    UNUSED(p);
 
 #endif  /* WORDS_MUSTALIGN */
 
@@ -102,22 +94,22 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     /* do a little validation:
      *
      */
-    if(raw_len < 2)
+    if(raw.len < 2)
         return false;
 
 
-    if(raw_pkt[0] & 0x01)
+    if(raw.data[0] & 0x01)
     {
         /* Check for protocol compression rfc1661 section 5
          *
          */
-        lyr_len = 1;
-        protocol = raw_pkt[0];
+        codec.lyr_len = 1;
+        protocol = raw.data[0];
     }
     else
     {
-        protocol = ntohs(*((uint16_t *)raw_pkt));
-        lyr_len = 2;
+        protocol = ntohs(*((uint16_t *)raw.data));
+        codec.lyr_len = 2;
     }
 
     /*
@@ -135,27 +127,27 @@ bool PppEncap::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
         case PPP_VJ_UCOMP:
             /* VJ compression modifies the protocol field. It must be set
              * to tcp (only TCP packets can be VJ compressed) */
-            if(raw_len < (uint32_t)(lyr_len + ip::IP4_HEADER_LEN))
+            if(raw.len < (uint32_t)(codec.lyr_len + ip::IP4_HEADER_LEN))
             {
                 if (ScLogVerbose())
                     ErrorMessage("PPP VJ min packet length > captured len! "
-                                 "(%d bytes)\n", raw_len);
+                                 "(%d bytes)\n", raw.len);
                 return false;
             }
 
-            ((IP4Hdr *)(raw_pkt + lyr_len))->ip_proto = IPPROTO_TCP;
+            ((IP4Hdr *)(raw.data + codec.lyr_len))->set_proto(IPPROTO_TCP);
             /* fall through */
 
         case PPP_IP:
-            next_prot_id = ETHERTYPE_IPV4;
+            codec.next_prot_id = ETHERTYPE_IPV4;
             break;
 
         case PPP_IPV6:
-            next_prot_id = ETHERTYPE_IPV6;
+            codec.next_prot_id = ETHERTYPE_IPV6;
             break;
 
         case PPP_IPX:
-            next_prot_id = ETHERTYPE_IPX;
+            codec.next_prot_id = ETHERTYPE_IPX;
             break;
 
         default:

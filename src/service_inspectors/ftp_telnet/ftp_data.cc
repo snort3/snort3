@@ -102,7 +102,7 @@ static int SnortFTPData(Packet *p)
         return -2;
 
     /* Do this now before splitting the work for rebuilt and raw packets. */
-    if ((p->packet_flags & PKT_PDU_TAIL) || (p->tcph->th_flags & TH_FIN))
+    if ((p->packet_flags & PKT_PDU_TAIL) || (p->ptrs.tcph->th_flags & TH_FIN))
         SetFTPDataEOFDirection(p, data_ssn);
 
     /*

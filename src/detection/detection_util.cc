@@ -106,7 +106,7 @@ void EventTrace_Log (const Packet* p, OptTreeNode* otn, int action)
     );
     TextLog_Print(tlog,
         "Pkt Bits: Flags=0x%X, Proto=0x%X, Err=0x%X\n",
-        p->packet_flags, (unsigned)p->proto_bits, (unsigned)p->error_flags
+        p->packet_flags, (unsigned)p->proto_bits, (unsigned)p->ptrs.decode_flags
     );
     TextLog_Print(tlog,
         "Pkt Cnts: Dsz=%u, Alt=%u, Uri=0x%X\n",

@@ -29,7 +29,8 @@
 #include <pcap.h>
 
 #define CD_RAW4_NAME "raw4"
-#define CD_RAW4_HELP "support for unencapsulated IPv4"
+#define CD_RAW4_HELP_STR "support for unencapsulated IPv4"
+#define CD_RAW4_HELP ADD_DLT(ADD_DLT(CD_RAW4_HELP_STR, DLT_RAW), DLT_IPV4)
 
 namespace
 {
@@ -41,9 +42,7 @@ public:
     ~Raw4Codec() {};
 
 
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
-
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void get_data_link_type(std::vector<int>&);
 
 };
@@ -70,10 +69,9 @@ public:
  *
  * Returns: void function
  */
-bool Raw4Codec::decode(const uint8_t* /*raw_pkt*/, const uint32_t& /*raw_len*/,
-        Packet* /*p*/, uint16_t& /*lyr_len*/, uint16_t &next_prot_id)
+bool Raw4Codec::decode(const RawData&, CodecData& data, SnortData&)
 {
-    next_prot_id = ETHERTYPE_IPV4;
+    data.next_prot_id = ETHERTYPE_IPV4;
     return true;
 }
 
@@ -90,14 +88,10 @@ void Raw4Codec::get_data_link_type(std::vector<int>&v)
 //-------------------------------------------------------------------------
 
 static Codec* ctor(Module*)
-{
-    return new Raw4Codec();
-}
+{ return new Raw4Codec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi raw4_api =
 {

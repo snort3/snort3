@@ -150,7 +150,7 @@ int SessionOption::eval(Cursor&, Packet *p)
     /* if there's data in this packet */
     if(p != NULL)
     {
-        if((p->dsize != 0 && p->data != NULL) || (!(p->decode_flags & DECODE__FRAG)))
+        if((p->dsize != 0 && p->data != NULL) || (!(p->ptrs.decode_flags & DECODE_FRAG)))
         {
              session = OpenSessionFile(p);
 
@@ -182,7 +182,7 @@ static FILE *OpenSessionFile(Packet *p)
 
     FILE *ret;
 
-    if(p->decode_flags & DECODE__FRAG)
+    if(p->ptrs.decode_flags & DECODE_FRAG)
     {
         return NULL;
     }
@@ -190,25 +190,25 @@ static FILE *OpenSessionFile(Packet *p)
     memset((char *)session_file, 0, STD_BUF);
 
     /* figure out which way this packet is headed in relation to the homenet */
-    dst = p->ip_api.get_dst();
-    src = p->ip_api.get_src();
+    dst = p->ptrs.ip_api.get_dst();
+    src = p->ptrs.ip_api.get_src();
 
     const char* addr;
 
     if(sfip_contains(&snort_conf->homenet, dst) == SFIP_CONTAINS) {
         if(sfip_contains(&snort_conf->homenet, src) == SFIP_NOT_CONTAINS)
         {
-            addr = inet_ntoa(p->ip_api.get_src());
+            addr = inet_ntoa(p->ptrs.ip_api.get_src());
         }
         else
         {
-            if(p->sp >= p->dp)
+            if(p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = inet_ntoa(p->ip_api.get_src());
+                addr = inet_ntoa(p->ptrs.ip_api.get_src());
             }
             else
             {
-                addr = inet_ntoa(p->ip_api.get_dst());
+                addr = inet_ntoa(p->ptrs.ip_api.get_dst());
             }
         }
     }
@@ -216,17 +216,17 @@ static FILE *OpenSessionFile(Packet *p)
     {
         if(sfip_contains(&snort_conf->homenet, src) == SFIP_CONTAINS)
         {
-            addr = inet_ntoa(p->ip_api.get_dst());
+            addr = inet_ntoa(p->ptrs.ip_api.get_dst());
         }
         else
         {
-            if(p->sp >= p->dp)
+            if(p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = inet_ntoa(p->ip_api.get_src());
+                addr = inet_ntoa(p->ptrs.ip_api.get_src());
             }
             else
             {
-                addr = inet_ntoa(p->ip_api.get_dst());
+                addr = inet_ntoa(p->ptrs.ip_api.get_dst());
             }
         }
     }
@@ -243,11 +243,11 @@ static FILE *OpenSessionFile(Packet *p)
         }
     }
 
-    if(p->sp >= p->dp)
-        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->sp, p->dp);
+    if(p->ptrs.sp >= p->ptrs.dp)
+        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.sp, p->ptrs.dp);
 
     else
-        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->dp, p->sp);
+        SnortSnprintf(session_file, STD_BUF, "%s/SESSION:%d-%d", log_path, p->ptrs.dp, p->ptrs.sp);
 
 
     strncpy(filename, session_file, STD_BUF - 1);
@@ -271,7 +271,7 @@ static void DumpSessionData(FILE *fp, Packet *p, SessionData *sessionData)
     const u_char *end;
     char conv[] = "0123456789ABCDEF"; /* xlation lookup table */
 
-    if(p->dsize == 0 || p->data == NULL || (p->decode_flags & DECODE__FRAG))
+    if(p->dsize == 0 || p->data == NULL || (p->ptrs.decode_flags & DECODE_FRAG))
         return;
 
     idx = p->data;

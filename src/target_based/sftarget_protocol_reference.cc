@@ -160,7 +160,7 @@ int16_t GetProtocolReference(Packet *p)
             }
         }
 
-        switch (p->ip_api.proto())
+        switch (p->ptrs.ip_api.proto())
         {
         case IPPROTO_TCP:
             ipprotocol = protocolReferenceTCP;
@@ -181,7 +181,7 @@ int16_t GetProtocolReference(Packet *p)
         {
             protocol = getApplicationProtocolId(host_entry,
                             ipprotocol,
-                            p->dp,
+                            p->ptrs.dp,
                             SFAT_SERVICE);
         }
 
@@ -197,7 +197,7 @@ int16_t GetProtocolReference(Packet *p)
         {
             protocol = getApplicationProtocolId(host_entry,
                             ipprotocol,
-                            p->sp,
+                            p->ptrs.sp,
                             SFAT_SERVICE);
         }
         if (protocol != 0)

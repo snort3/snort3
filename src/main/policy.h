@@ -53,8 +53,8 @@ enum DecodeEventFlag
     DECODE_EVENT_FLAG__DEFAULT = 0x00000001
 };
 
-// Snort ac-split creates the nap
-// Snort++ breaks that into network and inspection
+// Snort ac-split creates the nap (network analysis policy)
+// Snort++ breaks the nap into network and inspection
 struct NetworkPolicy
 {
 public:
@@ -144,6 +144,8 @@ public:
 // binding stuff - FIXIT-H tbd
 //-------------------------------------------------------------------------
 
+class Shell;
+
 class PolicyMap
 {
 public:
@@ -159,7 +161,17 @@ public:
     NetworkPolicy* get_network_policy()
     { return network_policy[0]; };
 
-public:
+    unsigned add_shell(Shell* sh)
+    { 
+        shells.push_back(sh);
+        return shells.size() - 1;
+    };
+
+    Shell* get_shell()
+    { return shells[0]; };
+
+public:  // FIXTHIS-H make impl private
+    std::vector<Shell*> shells;
     std::vector<InspectionPolicy*> inspection_policy;
     std::vector<IpsPolicy*> ips_policy;
     std::vector<NetworkPolicy*> network_policy;

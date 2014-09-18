@@ -82,8 +82,8 @@ alert tcp any any -> any 80 ( http_method; content:"GIT"; gid:1; sid:1000051)
 ips =
 {
     --include = '../test.rules',
-    include = 'rules/active.rules',
+    --include = 'rules/active.rules',
     --rules = local_rules,
-    --enable_builtin_rules = true
+    enable_builtin_rules = true
 }
 

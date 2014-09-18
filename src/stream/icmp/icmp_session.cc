@@ -148,7 +148,7 @@ static int ProcessIcmpUnreach(Packet *p)
     }
 
     if (p->proto_bits & PROTO_BIT__VLAN)
-        skey.vlan_tag = vlan::vth_vlan(layer::get_vlan_layer(p));
+        skey.vlan_tag = layer::get_vlan_layer(p)->vid();
     else
         skey.vlan_tag = 0;
 
@@ -207,7 +207,7 @@ int IcmpSession::process(Packet* p)
 {
     int status;
 
-    switch (p->icmph->type)
+    switch (p->ptrs.icmph->type)
     {
     case ICMP_DEST_UNREACH:
         status = ProcessIcmpUnreach(p);

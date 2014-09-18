@@ -98,9 +98,9 @@ void ModHook::init()
         n++;
 
     // constructing reg here may seem like overkill
-    // why not just typedef Command to luaL_reg?
+    // ... why not just typedef Command to luaL_reg?
     // because the help would not be supplied or it
-    // would be out of data, out of sync, etc. QED
+    // would be out of date, out of sync, etc. QED
     reg = new luaL_reg[++n];
     unsigned k = 0;
 
@@ -308,8 +308,8 @@ static bool set_value(const char* fqn, Value& v)
  
     if ( !p )
     {
-        FatalError("can't find %s\n", fqn);
-        // error messg
+        ErrorMessage("ERROR can't find %s\n", fqn);
+        ++s_errors;
         return false;
     }
 
@@ -442,7 +442,10 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     s_modules.push_back(mh);
 
     if ( mh->reg )
-        Shell::install(m->get_name(), mh->reg);
+    {
+        SnortConfig* sc = snort_conf;
+        sc->policy_map->get_shell()->install(m->get_name(), mh->reg);
+    }
 
 #ifdef PERF_PROFILING
     RegisterProfile(m);

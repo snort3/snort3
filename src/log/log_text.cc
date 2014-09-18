@@ -197,7 +197,7 @@ static void LogMPLSHeader(TextLog* log, Packet* p)
 {
 
     TextLog_Print(log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
-        p->mplsHdr.label, p->mplsHdr.exp, p->mplsHdr.bos, p->mplsHdr.ttl);
+        p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
 }
 
 static void LogGREHeader(TextLog *log, Packet *p)
@@ -539,26 +539,26 @@ void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
  */
 void LogIpAddrs(TextLog *log, Packet *p)
 {
-    if (!p->ip_api.is_valid())
+    if (!p->ptrs.ip_api.is_valid())
         return;
 
-    if ((p->decode_flags & DECODE__FRAG)
-            || ((p->ip_api.proto() != IPPROTO_TCP)
-                && (p->ip_api.proto() != IPPROTO_UDP)))
+    if ((p->ptrs.decode_flags & DECODE_FRAG)
+            || ((p->ptrs.ip_api.proto() != IPPROTO_TCP)
+                && (p->ptrs.ip_api.proto() != IPPROTO_UDP)))
     {
         const char *ip_fmt = "%s -> %s";
 
         if (ScObfuscate())
         {
             TextLog_Print(log, ip_fmt,
-                    ObfuscateIpToText(p->ip_api.get_src()),
-                    ObfuscateIpToText(p->ip_api.get_dst()));
+                    ObfuscateIpToText(p->ptrs.ip_api.get_src()),
+                    ObfuscateIpToText(p->ptrs.ip_api.get_dst()));
         }
         else
         {
             TextLog_Print(log, ip_fmt,
-                    inet_ntoax(p->ip_api.get_src()),
-                    inet_ntoax((p->ip_api.get_dst())));
+                    inet_ntoax(p->ptrs.ip_api.get_src()),
+                    inet_ntoax((p->ptrs.ip_api.get_dst())));
         }
     }
     else
@@ -568,14 +568,14 @@ void LogIpAddrs(TextLog *log, Packet *p)
         if (ScObfuscate())
         {
             TextLog_Print(log, ip_fmt,
-                    ObfuscateIpToText(p->ip_api.get_src()), p->sp,
-                    ObfuscateIpToText(p->ip_api.get_dst()), p->dp);
+                    ObfuscateIpToText(p->ptrs.ip_api.get_src()), p->ptrs.sp,
+                    ObfuscateIpToText(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
         }
         else
         {
             TextLog_Print(log, ip_fmt,
-                    inet_ntoax(p->ip_api.get_src()), p->sp,
-                    inet_ntoax(p->ip_api.get_dst()), p->dp);
+                    inet_ntoax(p->ptrs.ip_api.get_src()), p->ptrs.sp,
+                    inet_ntoax(p->ptrs.ip_api.get_dst()), p->ptrs.dp);
         }
     }
 }
@@ -592,7 +592,7 @@ void LogIpAddrs(TextLog *log, Packet *p)
  */
 void LogIPHeader(TextLog*  log, Packet * p)
 {
-    if(!p->ip_api.is_valid())
+    if(!p->ptrs.ip_api.is_valid())
     {
         TextLog_Print(log, "IP header truncated\n");
         return;
@@ -609,15 +609,43 @@ void LogIPHeader(TextLog*  log, Packet * p)
         TextLog_Putc(log, ' ');
     }
 
-    TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            protocol_names[p->ip_api.proto()],
-            p->ip_api.ttl(),
-            p->ip_api.tos(),
-            p->ip_api.is_ip6() ? ntohl(p->ip_api.id(p)) : ntohs((uint16_t)p->ip_api.id(p)),
-            p->ip_api.hlen() << 2,
-            p->ip_api.dgram_len());
+    // ip_api will return nullptr
+    const bool is_ip6 = p->ptrs.ip_api.is_ip6();
+    const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h(); // nullptr if ipv6
+    const ip::IP6Hdr* const ip6h = p->ptrs.ip_api.get_ip6h(); // nullptr if ipv4
+    const ip::IP6Frag* const ip6_frag = // nullptr if ipv4
+        (is_ip6 ? layer::get_inner_ip6_frag() : nullptr);
+    uint16_t frag_off;
 
-    const uint16_t frag_off = ntohs(p->ip_api.off(p));
+    /* Since the ip_api needs to do an 'if' statement every time to
+     * determine if this is ip6 vs ip4, I'm optimizing this print
+     * statement by checking only once
+     */
+    if (is_ip6)
+    {
+        TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
+                protocol_names[ip6h->get_next()],
+                ip6h->get_hop_lim(),
+                ip6h->get_tos(),
+                (ip6_frag ? ntohl(ip6_frag->get_id()) : 0),
+                ip::IP6_HEADER_LEN,
+                (ip6h->get_len() + ip::IP6_HEADER_LEN));
+
+        frag_off = ip6_frag ? ip6_frag->get_off() : 0;
+    }
+    else
+    {
+        TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
+                protocol_names[ip4h->get_proto()],
+                ip4h->get_ttl(),
+                ip4h->get_tos(),
+                ntohs((uint16_t)ip4h->get_id()),
+                ip4h->get_hlen() << 2,
+                ntohs(ip4h->get_len()));
+
+        frag_off = ntohs(ip4h->get_off());
+    }
+
 
     /* print the reserved bit if it's set */
     if(frag_off & 0x8000)
@@ -633,50 +661,49 @@ void LogIPHeader(TextLog*  log, Packet * p)
     TextLog_NewLine(log);
 
     /* print IP options */
-    if(p->ip_api.is_ip4())
+    if(!is_ip6)
     {
-        const ip::IP4Hdr* const ip4h = p->ip_api.get_ip4h();
 
         if (ip4h->has_options())
           LogIpOptions(log, ip4h, p);
     }
 
     /* print fragment info if necessary */
-    if(p->decode_flags & DECODE__FRAG)
+    if(p->ptrs.decode_flags & DECODE_FRAG)
     {
         TextLog_Print(log, "Frag Offset: 0x%04X   Frag Size: 0x%04X\n",
                 (frag_off & 0x1FFF),
-                p->ip_api.pay_len());
+                p->ptrs.ip_api.pay_len());
     }
 }
 
 static void LogOuterIPHeader(TextLog *log, Packet *p)
 {
-    uint8_t save_frag_flag = (p->decode_flags & DECODE__FRAG);
+    uint8_t save_frag_flag = (p->ptrs.decode_flags & DECODE_FRAG);
     uint16_t save_sp, save_dp;
-    ip::IpApi save_ip_api = p->ip_api;
+    ip::IpApi save_ip_api = p->ptrs.ip_api;
 
-    p->decode_flags &= ~DECODE__FRAG;
+    p->packet_flags &= ~DECODE_FRAG;
 
     if (p->proto_bits & PROTO_BIT__TEREDO)
     {
-        save_sp = p->sp;
-        save_dp = p->dp;
+        save_sp = p->ptrs.sp;
+        save_dp = p->ptrs.dp;
 
         const udp::UDPHdr *udph = layer::get_outer_udp_lyr(p);
-        p->sp = ntohs(udph->uh_sport);
-        p->dp = ntohs(udph->uh_dport);
+        p->ptrs.sp = ntohs(udph->uh_sport);
+        p->ptrs.dp = ntohs(udph->uh_dport);
 
         LogIPHeader(log, p);
 
-        p->sp = save_sp;
-        p->dp = save_dp;
+        p->ptrs.sp = save_sp;
+        p->ptrs.dp = save_dp;
     }
     else
         LogIPHeader(log, p);
 
-    p->ip_api = save_ip_api;
-    p->decode_flags |= save_frag_flag;
+    p->ptrs.ip_api = save_ip_api;
+    p->packet_flags |= save_frag_flag;
 }
 
 /*-------------------------------------------------------------------
@@ -691,7 +718,7 @@ inline uint32_t extract_32_bits(const uint8_t* const buf)
 
 void LogTcpOptions(TextLog*  log, const Packet* const p)
 {
-    tcp::TcpOptIterator opt_iter(p->tcph, p);
+    tcp::TcpOptIterator opt_iter(p->ptrs.tcph, p);
 
 
     TextLog_Print(log, "TCP Options =>");
@@ -821,7 +848,7 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
 void LogTCPHeader(TextLog*  log, Packet * p)
 {
     char tcpFlags[9];
-    const tcp::TCPHdr* tcph = p->tcph;
+    const tcp::TCPHdr* tcph = p->ptrs.tcph;
 
     if(tcph == NULL)
     {
@@ -871,13 +898,13 @@ void LogTCPHeader(TextLog*  log, Packet * p)
 void LogUDPHeader(TextLog* log, Packet* p)
 {
 
-    if(p->udph == NULL)
+    if(p->ptrs.udph == NULL)
     {
         TextLog_Print(log, "UDP header truncated\n");
         return;
     }
     /* not much to do here... */
-    TextLog_Print(log, "Len: %d\n", ntohs(p->udph->uh_len) - udp::UDP_HEADER_LEN);
+    TextLog_Print(log, "Len: %d\n", ntohs(p->ptrs.udph->uh_len) - udp::UDP_HEADER_LEN);
 }
 
 /*--------------------------------------------------------------------
@@ -970,18 +997,18 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
     memset((char*)&op, 0, sizeof(op));
     orig_p = &op;
 
-    if (!layer::set_api_ip_embed_icmp(p, op.ip_api))
+    if (!layer::set_api_ip_embed_icmp(p, op.ptrs.ip_api))
     {
-        switch(orig_p->ip_api.proto())
+        switch(orig_p->ptrs.ip_api.proto())
         {
             case IPPROTO_TCP:
             {
-                const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(op.ip_api);
+                const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(op.ptrs.ip_api);
                 if (tcph)
                 {
-                    orig_p->sp = ntohs(tcph->th_sport);
-                    orig_p->dp = ntohs(tcph->th_dport);
-                    orig_p->tcph = tcph;
+                    orig_p->ptrs.sp = ntohs(tcph->th_sport);
+                    orig_p->ptrs.dp = ntohs(tcph->th_dport);
+                    orig_p->ptrs.tcph = tcph;
                 }
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
@@ -990,19 +1017,19 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                 if(tcph != NULL)
                 {
                     TextLog_Print(log, "Seq: 0x%lX\n",
-                            (u_long)ntohl(orig_p->tcph->th_seq));
+                            (u_long)ntohl(orig_p->ptrs.tcph->th_seq));
                 }
                 break;
             }
 
             case IPPROTO_UDP:
             {
-                const udp::UDPHdr* udph = layer::get_udp_embed_icmp(op.ip_api);
+                const udp::UDPHdr* udph = layer::get_udp_embed_icmp(op.ptrs.ip_api);
                 if (udph)
                 {
-                    orig_p->sp = ntohs(p->udph->uh_sport);
-                    orig_p->dp = ntohs(p->udph->uh_dport);
-                    orig_p->udph = udph;
+                    orig_p->ptrs.sp = ntohs(p->ptrs.udph->uh_sport);
+                    orig_p->ptrs.dp = ntohs(p->ptrs.udph->uh_dport);
+                    orig_p->ptrs.udph = udph;
                 }
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
@@ -1010,8 +1037,8 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 
                 if(udph != NULL)
                     TextLog_Print(log, "Len: %d  Csum: %d\n",
-                            ntohs(orig_p->udph->uh_len) - udp::UDP_HEADER_LEN,
-                            ntohs(orig_p->udph->uh_chk));
+                            ntohs(orig_p->ptrs.udph->uh_len) - udp::UDP_HEADER_LEN,
+                            ntohs(orig_p->ptrs.udph->uh_chk));
                 break;
             }
 
@@ -1020,7 +1047,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
 
-                const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(op.ip_api);
+                const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(op.ptrs.ip_api);
                 if(icmph != NULL)
                     LogEmbeddedICMPHeader(log, icmph);
                 break;
@@ -1031,12 +1058,12 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                 LogIPHeader(log, orig_p);
 
                 TextLog_Print(log, "Protocol: 0x%X (unknown or "
-                        "header truncated)", orig_p->ip_api.proto());
+                        "header truncated)", orig_p->ptrs.ip_api.proto());
                 break;
         }       /* switch */
 
         /* if more than 8 bytes of original IP payload sent */
-        uint32_t orig_ip_hlen = p->ip_api.hlen() << 2;
+        uint32_t orig_ip_hlen = p->ptrs.ip_api.hlen() << 2;
         if (p->dsize - orig_ip_hlen > 8)
         {
             TextLog_Print(log, "(%d more bytes of original packet)\n",
@@ -1066,25 +1093,25 @@ void LogICMPHeader(TextLog*  log, Packet * p)
     /* 32 digits plus 7 colons and a NULL byte */
     char buf[8*4 + 7 + 1];
 
-    if(p->icmph == NULL)
+    if(p->ptrs.icmph == NULL)
     {
         TextLog_Puts(log, "ICMP header truncated\n");
         return;
     }
 
-    TextLog_Print(log, "Type:%d  Code:%d  ", p->icmph->type, p->icmph->code);
+    TextLog_Print(log, "Type:%d  Code:%d  ", p->ptrs.icmph->type, p->ptrs.icmph->code);
 
-    switch(p->icmph->type)
+    switch(p->ptrs.icmph->type)
     {
         case ICMP_ECHOREPLY:
-            TextLog_Print(log, "ID:%d  Seq:%d  ", ntohs(p->icmph->s_icmp_id),
-                    ntohs(p->icmph->s_icmp_seq));
+            TextLog_Print(log, "ID:%d  Seq:%d  ", ntohs(p->ptrs.icmph->s_icmp_id),
+                    ntohs(p->ptrs.icmph->s_icmp_seq));
             TextLog_Puts(log, "ECHO REPLY");
             break;
 
         case ICMP_DEST_UNREACH:
             TextLog_Puts(log, "DESTINATION UNREACHABLE: ");
-            switch(p->icmph->code)
+            switch(p->ptrs.icmph->code)
             {
                 case ICMP_NET_UNREACH:
                     TextLog_Puts(log, "NET UNREACHABLE");
@@ -1105,7 +1132,7 @@ void LogICMPHeader(TextLog*  log, Packet * p)
                 case ICMP_FRAG_NEEDED:
                     TextLog_Print(log, "FRAGMENTATION NEEDED, DF SET\n"
                             "NEXT LINK MTU: %u",
-                            ntohs(p->icmph->s_icmp_nextmtu));
+                            ntohs(p->ptrs.icmph->s_icmp_nextmtu));
                     break;
 
                 case ICMP_SR_FAILED:
@@ -1172,7 +1199,7 @@ void LogICMPHeader(TextLog*  log, Packet * p)
 
         case ICMP_REDIRECT:
             TextLog_Puts(log, "REDIRECT");
-            switch(p->icmph->code)
+            switch(p->ptrs.icmph->code)
             {
                 case ICMP_REDIR_NET:
                     TextLog_Puts(log, " NET");
@@ -1201,7 +1228,7 @@ void LogICMPHeader(TextLog*  log, Packet * p)
 // XXX-IPv6 NOT YET IMPLEMENTED - IPV6 addresses technically not supported - need to change ICMP
 
             /* no inet_ntop in Windows */
-            sfip_raw_ntop(AF_INET, (const void *)(&p->icmph->s_icmp_gwaddr.s_addr),
+            sfip_raw_ntop(AF_INET, (const void *)(&p->ptrs.icmph->s_icmp_gwaddr.s_addr),
                           buf, sizeof(buf));
             TextLog_Print(log, " NEW GW: %s", buf);
 
@@ -1210,16 +1237,16 @@ void LogICMPHeader(TextLog*  log, Packet * p)
             break;
 
         case ICMP_ECHO:
-            TextLog_Print(log, "ID:%d   Seq:%d  ", ntohs(p->icmph->s_icmp_id),
-                    ntohs(p->icmph->s_icmp_seq));
+            TextLog_Print(log, "ID:%d   Seq:%d  ", ntohs(p->ptrs.icmph->s_icmp_id),
+                    ntohs(p->ptrs.icmph->s_icmp_seq));
             TextLog_Puts(log, "ECHO");
             break;
 
         case ICMP_ROUTER_ADVERTISE:
             TextLog_Print(log, "ROUTER ADVERTISMENT: "
                     "Num addrs: %d Addr entry size: %d Lifetime: %u",
-                    p->icmph->s_icmp_num_addrs, p->icmph->s_icmp_wpa,
-                    ntohs(p->icmph->s_icmp_lifetime));
+                    p->ptrs.icmph->s_icmp_num_addrs, p->ptrs.icmph->s_icmp_wpa,
+                    ntohs(p->ptrs.icmph->s_icmp_lifetime));
             break;
 
         case ICMP_ROUTER_SOLICIT:
@@ -1228,7 +1255,7 @@ void LogICMPHeader(TextLog*  log, Packet * p)
 
         case ICMP_TIME_EXCEEDED:
             TextLog_Puts(log, "TTL EXCEEDED");
-            switch(p->icmph->code)
+            switch(p->ptrs.icmph->code)
             {
                 case ICMP_TIMEOUT_TRANSIT:
                     TextLog_Puts(log, " IN TRANSIT");
@@ -1248,11 +1275,11 @@ void LogICMPHeader(TextLog*  log, Packet * p)
 
         case ICMP_PARAMETERPROB:
             TextLog_Puts(log, "PARAMETER PROBLEM");
-            switch(p->icmph->code)
+            switch(p->ptrs.icmph->code)
             {
                 case ICMP_PARAM_BADIPHDR:
                     TextLog_Print(log, ": BAD IP HEADER BYTE %u",
-                            p->icmph->s_icmp_pptr);
+                            p->ptrs.icmph->s_icmp_pptr);
                     break;
 
                 case ICMP_PARAM_OPTMISSING:
@@ -1273,36 +1300,36 @@ void LogICMPHeader(TextLog*  log, Packet * p)
 
         case ICMP_TIMESTAMP:
             TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REQUEST",
-                    ntohs(p->icmph->s_icmp_id), ntohs(p->icmph->s_icmp_seq));
+                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
             break;
 
         case ICMP_TIMESTAMPREPLY:
             TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REPLY:\n"
                     "Orig: %u Rtime: %u  Ttime: %u",
-                    ntohs(p->icmph->s_icmp_id), ntohs(p->icmph->s_icmp_seq),
-                    p->icmph->s_icmp_otime, p->icmph->s_icmp_rtime,
-                    p->icmph->s_icmp_ttime);
+                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq),
+                    p->ptrs.icmph->s_icmp_otime, p->ptrs.icmph->s_icmp_rtime,
+                    p->ptrs.icmph->s_icmp_ttime);
             break;
 
         case ICMP_INFO_REQUEST:
             TextLog_Print(log, "ID: %u  Seq: %u  INFO REQUEST",
-                    ntohs(p->icmph->s_icmp_id), ntohs(p->icmph->s_icmp_seq));
+                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
             break;
 
         case ICMP_INFO_REPLY:
             TextLog_Print(log, "ID: %u  Seq: %u  INFO REPLY",
-                    ntohs(p->icmph->s_icmp_id), ntohs(p->icmph->s_icmp_seq));
+                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
             break;
 
         case ICMP_ADDRESS:
             TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REQUEST",
-                    ntohs(p->icmph->s_icmp_id), ntohs(p->icmph->s_icmp_seq));
+                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
             break;
 
         case ICMP_ADDRESSREPLY:
             TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REPLY: 0x%08X",
-                    ntohs(p->icmph->s_icmp_id), ntohs(p->icmph->s_icmp_seq),
-                    (u_int) ntohl(p->icmph->s_icmp_mask));
+                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq),
+                    (u_int) ntohl(p->ptrs.icmph->s_icmp_mask));
             break;
 
         default:
@@ -1646,7 +1673,7 @@ static void LogPacketType(TextLog* log, Packet* p)
  */
 
 #define DATA_LEN(p) \
-    (p->ip_api.actual_ip_len() - (p->ip_api.hlen() << 2))
+    (p->ptrs.ip_api.actual_ip_len() - (p->ptrs.ip_api.hlen() << 2))
 
 void LogIPPkt(TextLog* log, int type, Packet * p)
 {
@@ -1673,12 +1700,12 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
 
 
         // FIXIT-J --> log everything in order!!
-        ip::IpApi tmp_api = p->ip_api;
+        ip::IpApi tmp_api = p->ptrs.ip_api;
         int8_t num_layer = 0;
         bool first = true;
 
-        while (layer::set_outer_ip_api(p, p->ip_api, num_layer) &&
-            tmp_api != p->ip_api)
+        while (layer::set_outer_ip_api(p, p->ptrs.ip_api, num_layer) &&
+            tmp_api != p->ptrs.ip_api)
         {
             LogOuterIPHeader(log, p);
 
@@ -1689,48 +1716,48 @@ void LogIPPkt(TextLog* log, int type, Packet * p)
 
         }
 
-        p->ip_api = tmp_api;
+        p->ptrs.ip_api = tmp_api;
     }
 
     LogIPHeader(log, p);
 
     /* if this isn't a fragment, print the other header info */
-    if (!(p->decode_flags & DECODE__FRAG))
+    if (!(p->ptrs.decode_flags & DECODE_FRAG))
     {
-        switch (p->ip_api.proto())
+        switch (p->ptrs.ip_api.proto())
         {
             case IPPROTO_TCP:
-                if ( p->tcph != NULL )
+                if ( p->ptrs.tcph != NULL )
                 {
                     LogTCPHeader(log, p);
                 }
                 else
                 {
-                    LogNetData(log, p->ip_api.ip_data(), p->ip_api.pay_len(), NULL);
+                    LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
                 }
                 break;
 
             case IPPROTO_UDP:
-                if ( p->udph != NULL )
+                if ( p->ptrs.udph != NULL )
                 {
                     // for consistency, nothing to log (tcp doesn't log paylen)
                     //LogUDPHeader(log, p);
                 }
                 else
                 {
-                    LogNetData(log, p->ip_api.ip_data(), p->ip_api.pay_len(), NULL);
+                    LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
                 }
 
                 break;
 
             case IPPROTO_ICMP:
-                if ( p->icmph != NULL )
+                if ( p->ptrs.icmph != NULL )
                 {
                     LogICMPHeader(log, p);
                 }
                 else
                 {
-                    LogNetData(log, p->ip_api.ip_data(), p->ip_api.pay_len(), NULL);
+                    LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
                 }
                 break;
 

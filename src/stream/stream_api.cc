@@ -113,12 +113,12 @@ void Stream::populate_session_key(Packet *p, FlowKey *key)
 #endif
 
     key->init(
-        p->ip_api.get_src(), p->sp,
-        p->ip_api.get_dst(), p->dp,
-        p->ip_api.proto(),
+        p->ptrs.ip_api.get_src(), p->ptrs.sp,
+        p->ptrs.ip_api.get_dst(), p->ptrs.dp,
+        p->ptrs.ip_api.proto(),
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
-        (p->proto_bits & PROTO_BIT__VLAN) ? vlan::vth_vlan(layer::get_vlan_layer(p)) : 0,
-        (p->proto_bits & PROTO_BIT__MPLS) ? p->mplsHdr.label : 0,
+        (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
+        (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
         addressSpaceId);
 }
 
@@ -792,7 +792,7 @@ int Stream::add_session_alert(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( p->ip_api.proto() != IPPROTO_TCP )
+    if ( p->ptrs.ip_api.proto() != IPPROTO_TCP )
         return 0;
 
     return Stream5AddSessionAlertTcp(flow, p, gid, sid);
@@ -807,7 +807,7 @@ int Stream::check_session_alerted(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( p->ip_api.proto() != IPPROTO_TCP )
+    if ( p->ptrs.ip_api.proto() != IPPROTO_TCP )
         return 0;
 
     return Stream5CheckSessionAlertTcp(flow, p, gid, sid);
@@ -823,7 +823,7 @@ int Stream::update_session_alert(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( p->ip_api.proto() != IPPROTO_TCP )
+    if ( p->ptrs.ip_api.proto() != IPPROTO_TCP )
         return 0;
 
     return Stream5UpdateSessionAlertTcp(flow, p, gid, sid, event_id, event_second);

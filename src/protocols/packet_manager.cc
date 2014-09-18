@@ -22,6 +22,7 @@
 #include <cstring>
 #include <mutex>
 #include <algorithm>
+#include <type_traits> // static_assert
 
 #include "framework/codec.h"
 #include "managers/codec_manager.h"
@@ -36,12 +37,12 @@
 #include "time/profiler.h"
 #include "parser/parser.h"
 
-#include "codecs/ip/ip_util.h"
 #include "codecs/codec_events.h"
 #include "codecs/decode_module.h"
 #include "utils/stats.h"
 #include "log/text_log.h"
 #include "main/snort_debug.h"
+#include "detection/fpdetect.h"
 
 
 #ifdef PERF_PROFILING
@@ -70,12 +71,11 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
 
 
 // Encoder Foo
-static THREAD_LOCAL Packet *encode_pkt;
+static THREAD_LOCAL Packet *encode_pkt = nullptr;
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
 static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt{{0}};
-
-// FIXIT-L this shouldn't have to be thread lcoal
-static THREAD_LOCAL uint8_t* dst_mac = NULL;
+static THREAD_LOCAL uint8_t* dst_mac = nullptr;
+static THREAD_LOCAL SnortData tmp_ptrs;
 
 //-------------------------------------------------------------------------
 // Private helper functions
@@ -119,9 +119,21 @@ Packet* PacketManager::encode_new ()
 
 void PacketManager::encode_delete (Packet* p)
 {
-    free((void*)p->pkth);  // cast away const!
-    free(p);
+    if (p)
+    {
+        if (p->pkth)
+            free((void*)p->pkth);  // cast away const!
+
+        free(p);
+    }
 }
+
+// Assertions required for this code to work
+
+//  Look below inside main decode() loop for these static_asserts
+static_assert(CODEC_ENCAP_LAYER == (CODEC_UNSURE_ENCAP | CODEC_SAVE_LAYER),
+    "If this is an encapsulated layer, you must also set UNSURE_ENCAP"
+    " and SAVE_LAYER");
 
 
 //-------------------------------------------------------------------------
@@ -132,70 +144,107 @@ void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     PROFILE_VARS;
-    uint16_t prot_id;
     uint8_t mapped_prot = CodecManager::grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
-    uint16_t lyr_len = 0;
-    uint32_t len;
 
 
-    MODULE_PROFILE_START(decodePerfStats);
+//    assert(!(p->packet_flags & PKT_REBUILT_STREAM));
 
-    // initialize all of the relevent data to decode this packet
+
+    // initialize all Packet information
     memset(p, 0, PKT_ZERO_LEN);
-    p->ip_api.reset();
-
     p->pkth = pkthdr;
     p->pkt = pkt;
-    len = pkthdr->caplen;
+    p->ptrs.reset();
+    layer::set_packet_pointer(p);
 
+
+    RawData raw{pkt, pkthdr->caplen};
+    CodecData codec_data(FINISHED_DECODE);
+
+    MODULE_PROFILE_START(decodePerfStats);
     s_stats[total_processed]++;
 
     // loop until the protocol id is no longer valid
-    while(CodecManager::s_protocols[mapped_prot]->decode(pkt, len, p, lyr_len, prot_id))
+    while(CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %u:"
                 "ip header starts at: %p, length is %lu\n",
-                CodecManager::s_protocols[mapped_prot]->get_name(), prot_id, pkt,
-                (unsigned long) len););
+                CodecManager::s_protocols[mapped_prot]->get_name(),
+                codec_data.next_prot_id, pkt, codec_data.lyr_len););
 
         // must be done here after decode and before push for case layer
         // LAYER_MAX+1 is invalid or the default codec
         if ( p->num_layers == LAYER_MAX )
         {
-            codec_events::decoder_event(p, DECODE_TOO_MANY_LAYERS);
-            p->dsize = (uint16_t)len;
-            p->data = pkt;
+            SnortEventqAdd(GID_DECODE, DECODE_TOO_MANY_LAYERS);
+            p->data = raw.data;
+            p->dsize = (uint16_t)raw.len;
             MODULE_PROFILE_END(decodePerfStats);
             return /*false */;
         }
 
-        // internal statistics and record keeping
-        push_layer(p, prev_prot_id, pkt, lyr_len, CodecManager::s_protocols[mapped_prot]);
-        s_stats[mapped_prot + stat_offset]++;
-        mapped_prot = CodecManager::s_proto_map[prot_id];
-        prev_prot_id = prot_id;
 
-        lyr_len += p->byte_skip;
+        /*
+         * We only want the layer immediately following SAVE_LAYER to have the
+         * UNSURE_ENCAP flag set.  So, if this is a SAVE_LAYER, zero out the
+         * bit and the next time around, when this is no longer SAVE_LAYER,
+         * we will zero out the UNSURE_ENCAP flag.
+         */
+        if (codec_data.codec_flags & CODEC_SAVE_LAYER)
+        {
+            codec_data.codec_flags &= ~CODEC_SAVE_LAYER;
+            tmp_ptrs = p->ptrs;
+        }
+        else
+        {
+            // faster to just get rid fo bit than test & set
+            codec_data.codec_flags &= ~CODEC_UNSURE_ENCAP;
+        }
+
+        if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
+            fpEvalIpProtoOnlyRules(p, codec_data.next_prot_id);
+
+
+        // internal statistics and record keeping
+        push_layer(p, prev_prot_id, pkt, codec_data.lyr_len, CodecManager::s_protocols[mapped_prot]);
+        s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
+        mapped_prot = CodecManager::s_proto_map[codec_data.next_prot_id];
+        prev_prot_id = codec_data.next_prot_id;
+
+
 
         // set for next call
-        prot_id = FINISHED_DECODE;
-        len -= lyr_len;
-        pkt += lyr_len;
-        lyr_len = 0;
-        p->byte_skip = 0;
+        const uint16_t curr_lyr_len = codec_data.lyr_len + codec_data.invalid_bytes;
+        raw.len -= curr_lyr_len;
+        raw.data += curr_lyr_len;
+        p->proto_bits |= codec_data.proto_bits;
+        codec_data.next_prot_id = FINISHED_DECODE;
+        codec_data.lyr_len = 0;
+        codec_data.invalid_bytes = 0;
+        codec_data.proto_bits = 0;
     }
 
     DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
                     " starts at: %p, length is %lu\n",
                      CodecManager::s_protocols[mapped_prot]->get_name(),
-                     prot_id, pkt, (unsigned long) len););
+                     prev_prot_id, pkt, (unsigned long) codec_data.lyr_len););
 
+    s_stats[mapped_prot + stat_offset]++;
 
     // if the final protocol ID is not the default codec, a Codec failed
     if (prev_prot_id != FINISHED_DECODE)
     {
-        if (!(p->decode_flags & DECODE__UNSURE_ENCAP))
+        if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
+        {
+            p->ptrs = tmp_ptrs;
+
+            // Hardcodec ESP because we trust iff the layer
+            // immediately preceding the fail is ESP.
+            if (p->layers[p->num_layers].prot_id == IPPROTO_ID_ESP)
+                p->ptrs.decode_flags |= DECODE_PKT_TRUST;
+        }
+        else
         {
             // if the codec exists, it failed
             if(CodecManager::s_proto_map[prev_prot_id])
@@ -203,38 +252,14 @@ void PacketManager::decode(
             else
                 s_stats[other_codecs]++;
         }
-        else
-        {
-            // nested 'if' for when we have addtional code in UNSURE_ENCAP
-
-            // Hardcodec ESP because we trust if an only if the layer
-            // immediately following ESP fails.
-            if (p->layers[p->num_layers].prot_id == IPPROTO_ID_ESP)
-                p->packet_flags |= PKT_TRUST;
-        }
-    }
-    s_stats[mapped_prot + stat_offset]++;
-
-
-    if (ScMaxEncapsulations() != -1 &&
-        p->encapsulations > ScMaxEncapsulations())
-    {
-        codec_events::decoder_event(p, DECODE_IP_MULTIPLE_ENCAPSULATION);
     }
 
-    /*
-     * NOTE:  NEVER RETURN BEFORE SETTING THESE TWO VARIABLES!!
-     *        they are no longer zeroed above, which means if they
-     *        unset, undefined behavior will ensure
-     */
-    p->dsize = (uint16_t)len;
-    p->data = pkt;
-
+    // set any final Packet fields
+    p->proto_bits |= codec_data.proto_bits;
+    p->data = raw.data;
+    p->dsize = (uint16_t)raw.len;
     MODULE_PROFILE_END(decodePerfStats);
 }
-
-bool PacketManager::has_codec(uint16_t cd_id)
-{ return CodecManager::s_protocols[cd_id] != 0; }
 
 
 //-------------------------------------------------------------------------
@@ -406,6 +431,8 @@ int PacketManager::encode_format_with_daq_info (
     pkth->pktlen = len;
     pkth->ts = p->pkth->ts;
 
+
+    layer::set_packet_pointer(c);  // set layer pointer to ensure lookin at the new packet
     total_rebuilt_pkts++;  // update local counter
     return 0;
 }
@@ -451,10 +478,14 @@ void PacketManager::encode_update (Packet* p)
         CodecManager::s_protocols[mapped_prot]->update(p, l, &len);
     }
     // see IP6_Update() for an explanation of this ...
+    // FIXIT-L J   is this second statement really necessary?
+    // PKT_RESIZED include PKT_MODIFIED ... so get rid of that extra flag
     if ( !(p->packet_flags & PKT_MODIFIED)
-        || (p->packet_flags & PKT_RESIZED)
+        || (p->packet_flags & (PKT_RESIZED & ~PKT_MODIFIED))
     )
+    {
         pkth->caplen = pkth->pktlen = len;
+    }
 }
 
 //-------------------------------------------------------------------------

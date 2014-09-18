@@ -178,6 +178,13 @@ const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_DECIMAL {NORM_INT64, false
 const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, true, norm_remove_lws, nullptr,
    norm_to_lower, nullptr, norm_seq_str_code, NHttpMsgHeadShared::trans_code_list};
 
+#if defined(__clang__)
+// designated initializers are not supported in C++11.  However,
+// but we're going to play compilation roulette and hopes this works.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc99-extensions"
+#endif
+
 const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] = { [0] = &NORMALIZER_NIL,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
     [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
@@ -232,6 +239,10 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] =
     [HEAD_X_FORWARDED_FOR] = &NORMALIZER_CAT,
     [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 const RuleMap NHttpModule::nhttp_events[] =
 {

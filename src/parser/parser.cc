@@ -632,7 +632,10 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
     }
 
     if ( *fname )
-        Shell::configure(sc, fname);
+    {
+        Shell* sh = sc->policy_map->get_shell();
+        sh->configure(sc, fname);
+    }
 
     pop_parse_location();
     return sc;

@@ -106,7 +106,7 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
 
 int ReassembleOption::eval(Cursor&, Packet* pkt)
 {
-    if (!pkt->flow || !pkt->tcph)
+    if (!pkt->flow || !pkt->ptrs.tcph)
         return 0;
 
     PROFILE_VARS;

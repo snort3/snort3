@@ -31,9 +31,6 @@
 
 using namespace std;
 
-static lua_State* s_lua = nullptr;
-static string s_overrides;
-
 static const char* required = "require('snort_config'); ";
 
 //-------------------------------------------------------------------------
@@ -66,9 +63,9 @@ static void load_config(lua_State* L, const char* file)
     }
 }
 
-static void load_overrides(lua_State* L)
+static void load_overrides(lua_State* L, string& s)
 {
-    if ( luaL_loadstring(L, s_overrides.c_str()) )
+    if ( luaL_loadstring(L, s.c_str()) )
     {
         FatalError("can't load overrides: %s\n", lua_tostring(L, -1));
         return;
@@ -96,15 +93,14 @@ static void run_config(lua_State* L)
 }
 
 static void config_lua(
-    lua_State* L, SnortConfig* sc, const char* file)
+    lua_State* L, const char* file, string& s)
 {
-    ModuleManager::set_config(sc);
 
     if ( file && *file )
         load_config(L, file);
 
-    if ( s_overrides.size() )
-        load_overrides(L);
+    if ( s.size() )
+        load_overrides(L, s);
 
     run_config(L);
 
@@ -118,49 +114,59 @@ static void config_lua(
 // public metods
 //-------------------------------------------------------------------------
 
-void Shell::init()
+Shell::Shell(const char* s)
 {
-    s_lua = luaL_newstate();
-    luaL_openlibs(s_lua);
+    lua = luaL_newstate();
+    luaL_openlibs(lua);
+
+    if ( s )
+        file = s;
 }
 
-void Shell::term()
+Shell::~Shell()
 {
-    if ( s_lua )
-        lua_close(s_lua);
+    lua_close(lua);
 }
 
-void Shell::configure(SnortConfig* sc, const char* file)
+void Shell::configure(SnortConfig* sc)
 {
-    assert(s_lua);
-    config_lua(s_lua, sc, file);
+    assert(file.size());
+    ModuleManager::set_config(sc);
+    config_lua(lua, file.c_str(), overrides);
+}
+
+void Shell::configure(SnortConfig* sc, const char* s)
+{
+    assert(!file.size());
+    file = s;
+    ModuleManager::set_config(sc);
+    config_lua(lua, s, overrides);
 }
 
 void Shell::install(const char* name, const luaL_reg* reg)
 {
-    if ( s_lua )
-        luaL_register(s_lua, name, reg);
+    luaL_register(lua, name, reg);
 }
 
 void Shell::execute(const char* cmd, string& rsp)
 {
-    int err = luaL_loadbuffer(s_lua, cmd, strlen(cmd), "shell");
+    int err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
     
     if ( !err )
-        err = lua_pcall(s_lua, 0, 0, 0);
+        err = lua_pcall(lua, 0, 0, 0);
 
     if (err)
     {
-        rsp = lua_tostring(s_lua, -1);
-        lua_pop(s_lua, 1);
+        rsp = lua_tostring(lua, -1);
+        lua_pop(lua, 1);
     }
 }
 
 void Shell::set_overrides(const char* s)
 {
-    if ( s_overrides.empty() )
-        s_overrides += required;
+    if ( overrides.empty() )
+        overrides += required;
 
-    s_overrides += s;
+    overrides += s;
 }
 

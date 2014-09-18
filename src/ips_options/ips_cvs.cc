@@ -176,7 +176,7 @@ int CvsOption::eval(Cursor&, Packet *p)
         return rval;
     }
 
-    if ((p->tcph == NULL) || (p->data == NULL) || (p->dsize == 0))
+    if ((p->ptrs.tcph == NULL) || (p->data == NULL) || (p->dsize == 0))
     {
         return rval;
     }

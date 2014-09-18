@@ -48,8 +48,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     
 };
 
@@ -78,24 +77,23 @@ void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
  * convention needed to be changed and the stuff at the beginning
  * wasn't needed since we are already deep into the packet
  */
-bool TransbridgeCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
-    if(raw_len < eth::ETH_HEADER_LEN)
+    if(raw.len < eth::ETH_HEADER_LEN)
     {
-        codec_events::decoder_event(p, DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR);
+        codec_events::decoder_event(DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR);
         return false;
     }
 
     /* The Packet struct's ethernet header will now point to the inner ethernet
      * header of the packet
      */
-    const eth::EtherHdr *eh = reinterpret_cast<const eth::EtherHdr*>(raw_pkt);
+    const eth::EtherHdr* const eh =
+        reinterpret_cast<const eth::EtherHdr*>(raw.data);
 
-    p->proto_bits |= PROTO_BIT__ETH;
-    lyr_len = eth::ETH_HEADER_LEN;
-    next_prot_id = ntohs(eh->ether_type);
-
+    codec.proto_bits |= PROTO_BIT__ETH;
+    codec.lyr_len = eth::ETH_HEADER_LEN;
+    codec.next_prot_id = ntohs(eh->ether_type);
     return true;
 }
 

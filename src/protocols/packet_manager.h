@@ -89,8 +89,6 @@ public:
 
     // get the number of packets which have been rebuilt by this thread
     static PegCount get_rebuilt_packet_count(void);
-    // check if a codec has been register for the specified protocol number
-    static bool has_codec(uint16_t protocol);
     // set the packet to be encoded.
     static void encode_set_pkt(Packet* p);
     // reset the current 'clone' packet

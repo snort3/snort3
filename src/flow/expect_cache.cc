@@ -388,11 +388,11 @@ bool ExpectCache::is_expected(Packet* p)
     if ( !hash_table->get_count() )
         return false;
 
-    const sfip_t *srcIP = p->ip_api.get_src();
-    const sfip_t *dstIP = p->ip_api.get_dst();
+    const sfip_t *srcIP = p->ptrs.ip_api.get_src();
+    const sfip_t *dstIP = p->ptrs.ip_api.get_dst();
 
     ExpectKey key;
-    bool reversed_key = key.set(dstIP, p->dp, srcIP, p->sp, p->ip_api.proto());
+    bool reversed_key = key.set(dstIP, p->ptrs.dp, srcIP, p->ptrs.sp, p->ptrs.ip_api.proto());
 
     uint16_t port1;
     uint16_t port2;
@@ -401,12 +401,12 @@ bool ExpectCache::is_expected(Packet* p)
     {
         key.port2 = 0;
         port1 = 0;
-        port2 = p->sp;
+        port2 = p->ptrs.sp;
     }
     else
     {
         key.port1 = 0;
-        port1 = p->sp;
+        port1 = p->ptrs.sp;
         port2 = 0;
     }
 

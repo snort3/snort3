@@ -140,7 +140,7 @@ bool UdpSession::setup(Packet* p)
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
-    flow->protocol = p->ip_api.proto();
+    flow->protocol = p->ptrs.ip_api.proto();
     flow->s5_state.direction = FROM_SENDER;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);

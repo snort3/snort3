@@ -88,7 +88,7 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
     if ( !IsIP(p) )
         return;
 
-    switch ( p->ip_api.proto() )
+    switch ( p->ptrs.ip_api.proto() )
     {
         case IPPROTO_TCP:
             Active_SendReset(p, 0);
@@ -238,7 +238,7 @@ int Active_IsRSTCandidate(const Packet* p)
     if ( GetInnerProto(p) != PROTO_TCP )
         return 0;
 
-    if ( !p->tcph )
+    if ( !p->ptrs.tcph )
         return 0;
 
     /*
@@ -246,13 +246,14 @@ int Active_IsRSTCandidate(const Packet* p)
     **  spoofed ourselves, thus inflicting a self-induced DOS
     **  attack.
     */
-    return ( !(p->tcph->th_flags & TH_RST) );
+    return ( !(p->ptrs.tcph->th_flags & TH_RST) );
 }
 
 int Active_IsUNRCandidate(const Packet* p)
 {
     // FIXIT-J allow unr to tcp/udp/icmp4/icmp6 only or for all
-    switch ( GetInnerProto(p) ) {
+    switch ( GetInnerProto(p) )
+    {
     case PROTO_UDP:
     case PROTO_TCP:
     case PROTO_ICMP4:
@@ -298,7 +299,7 @@ static uint32_t Strafe (int i, uint32_t flags, const Packet* p)
         break;
 
     default:
-        flags += (ntohs(p->tcph->th_win) >> 1);
+        flags += (ntohs(p->ptrs.tcph->th_win) >> 1);
         flags &= ENC_FLAG_VAL;
         flags |= ENC_FLAG_SEQ;
         break;
@@ -339,7 +340,7 @@ int Active_ForceDropAction(Packet *p)
     // explicitly drop packet
     Active_ForceDropPacket();
 
-    switch ( p->ip_api.proto() )
+    switch ( p->ptrs.ip_api.proto() )
     {
         case IPPROTO_TCP:
         case IPPROTO_UDP:
@@ -357,10 +358,10 @@ static inline int _Active_DoReset(Packet *p)
     if ( Active_PacketWouldBeDropped() )
         return 0;
 
-    if ( !p->ip_api.is_valid() )
+    if ( !p->ptrs.ip_api.is_valid() )
         return 0;
 
-    switch ( p->ip_api.proto() )
+    switch ( p->ptrs.ip_api.proto() )
     {
         case IPPROTO_TCP:
             if ( Active_IsRSTCandidate(p) )

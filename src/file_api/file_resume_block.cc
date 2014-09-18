@@ -105,8 +105,8 @@ int file_resume_block_add_file(void *pkt, uint32_t file_sig, uint32_t timeout,
     Packet *p = (Packet *)pkt;
     time_t now = p->pkth->ts.tv_sec;
 
-    srcIP = p->ip_api.get_src();
-    dstIP = p->ip_api.get_dst();
+    srcIP = p->ptrs.ip_api.get_src();
+    dstIP = p->ptrs.ip_api.get_dst();
     sfip_copy(hashKey.dip, dstIP);
     sfip_copy(hashKey.sip, srcIP);
     hashKey.file_sig = file_sig;
@@ -241,8 +241,8 @@ File_Verdict file_resume_block_check(void *pkt, uint32_t file_sig)
         DEBUG_WRAP(DebugMessage(DEBUG_FILE, "No expected sessions\n"););
         return verdict;
     }
-    srcIP = p->ip_api.get_src();
-    dstIP = p->ip_api.get_dst();
+    srcIP = p->ptrs.ip_api.get_src();
+    dstIP = p->ptrs.ip_api.get_dst();
     sfip_copy(hashKey.dip, dstIP);
     sfip_copy(hashKey.sip, srcIP);
     hashKey.file_sig = file_sig;

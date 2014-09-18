@@ -23,6 +23,8 @@
 #ifndef PROTOCOLS_TOKEN_RING_H
 #define PROTOCOLS_TOKEN_RING_H
 
+#include <cstdint>
+
 namespace token_ring{
 
 /* LLC structure */

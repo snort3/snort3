@@ -105,34 +105,21 @@ const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
 #endif
 
 
-static inline bool pppoepkt_decode(const uint8_t *raw_pkt,
-                                    const uint32_t len,
-                                    Packet *p,
-                                    PppoepktType ppp_type,
-                                    uint16_t &lyr_len,
-                                    uint16_t &next_prot_id)
+static inline bool pppoepkt_decode(const RawData& raw,
+                                    CodecData& codec,
+                                    SnortData&,
+                                    PppoepktType ppp_type)
 {
-    //PPPoE_Tag *ppppoe_tag=0;
-    //PPPoE_Tag tag;  /* needed to avoid alignment problems */
-
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "PPPoE with len: %lu\n",
-        (unsigned long)len););
-
     /* do a little validation */
-    if(len < PPPOE_HEADER_LEN)
+    if(raw.len < PPPOE_HEADER_LEN)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_DECODE,
-            "Captured data length < PPPoE header length! "
-            "(%d bytes)\n", len););
-
-        codec_events::decoder_event(p, DECODE_BAD_PPPOE);
-
+        codec_events::decoder_event(DECODE_BAD_PPPOE);
         return false;
     }
 
 
     /* lay the PPP over ethernet structure over the packet data */
-    const PPPoEHdr *pppoeh = reinterpret_cast<const PPPoEHdr*>(raw_pkt);
+    const PPPoEHdr* const pppoeh = reinterpret_cast<const PPPoEHdr*>(raw.data);
 
     /* grab out the network type */
     switch(ppp_type)
@@ -258,15 +245,15 @@ static inline bool pppoepkt_decode(const uint8_t *raw_pkt,
     UNUSED(PPPoE_CODE_PADT);
 #endif
 
-    if (ppp_type != PppoepktType::DISCOVERY)
+    if (ppp_type == PppoepktType::DISCOVERY)
     {
-        lyr_len = PPPOE_HEADER_LEN;
-        next_prot_id = ETHERTYPE_PPP;
+        DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Returning early on PPPOE discovery packet\n"););
         return true;
     }
 
 
-    DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Returning early on PPPOE discovery packet\n"););
+    codec.lyr_len = PPPOE_HEADER_LEN;
+    codec.next_prot_id = ETHERTYPE_PPP;
     return true;
 }
 
@@ -315,8 +302,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_PPPOE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
 };
 
@@ -329,11 +315,9 @@ void PPPoEDiscCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool PPPoEDiscCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
+bool PPPoEDiscCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 {
-    return pppoepkt_decode(raw_pkt, raw_len, p, PppoepktType::DISCOVERY,
-        lyr_len, next_prot_id);
+    return pppoepkt_decode(raw, codec, snort, PppoepktType::DISCOVERY);
 }
 
 bool PPPoEDiscCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
@@ -352,24 +336,16 @@ bool PPPoEDiscCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
 // used for configurtion, it doesn't matter.  If you want to use the module
 // for configuration, ensure the names are identical before continuing!
 static Module* mod_ctor()
-{
-    return new PPPoEModule;
-}
+{ return new PPPoEModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* disc_ctor(Module*)
-{
-    return new PPPoEDiscCodec();
-}
+{ return new PPPoEDiscCodec(); }
 
 static void disc_dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 
 static const CodecApi pppoepkt_disc_api =
@@ -420,8 +396,7 @@ public:
 
     virtual PROTO_ID get_proto_id() { return PROTO_PPPOE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
 };
 
@@ -429,17 +404,11 @@ public:
 } // namespace
 
 void PPPoESessCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERNET_TYPE_PPPoE_SESS);
-}
+{ v.push_back(ETHERNET_TYPE_PPPoE_SESS); }
 
 
-bool PPPoESessCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet *p, uint16_t &lyr_len, uint16_t &next_prot_id)
-{
-    return pppoepkt_decode(raw_pkt, raw_len, p, PppoepktType::SESSION,
-        lyr_len, next_prot_id);
-}
+bool PPPoESessCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+{ return pppoepkt_decode(raw, codec, snort, PppoepktType::SESSION); }
 
 
 

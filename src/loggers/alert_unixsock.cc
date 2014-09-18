@@ -170,30 +170,30 @@ static void get_alert_pkt(
             }
 
             /* we don't log any headers besides eth yet */
-            if (p->ip_api.is_ip4() && p->pkt)
+            if (p->ptrs.ip_api.is_ip4() && p->pkt)
             {
-                us.alert.nethdr=(char *)p->ip_api.get_ip4h()-(char *)p->pkt;
+                us.alert.nethdr=(char *)p->ptrs.ip_api.get_ip4h()-(char *)p->pkt;
 
-                switch(p->ip_api.proto())
+                switch(p->ptrs.ip_api.proto())
                 {
                     case IPPROTO_TCP:
-                       if (p->tcph)
+                       if (p->ptrs.tcph)
                        {
-                           us.alert.transhdr=(char *)p->tcph-(char *)p->pkt;
+                           us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
                        }
                        break;
 
                     case IPPROTO_UDP:
-                        if (p->udph)
+                        if (p->ptrs.udph)
                         {
-                            us.alert.transhdr=(char *)p->udph-(char *)p->pkt;
+                            us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
                         }
                         break;
 
                     case IPPROTO_ICMP:
-                       if (p->icmph)
+                       if (p->ptrs.icmph)
                        {
-                           us.alert.transhdr=(char *)p->icmph-(char *)p->pkt;
+                           us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;
                        }
                        break;
 

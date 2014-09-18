@@ -360,10 +360,10 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
         char src[INET6_ADDRSTRLEN];
         char dst[INET6_ADDRSTRLEN];
 
-        const sfip_t *addr = p->ip_api.get_src();
+        const sfip_t *addr = p->ptrs.ip_api.get_src();
         sfip_ntop(addr, src, sizeof(src));
 
-        addr = p->ip_api.get_dst();
+        addr = p->ptrs.ip_api.get_dst();
         sfip_ntop(addr, dst, sizeof(dst));
 
         if (ppm_abort_this_pkt)
@@ -372,7 +372,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
                        ppm_pt->pktcnt,
                        ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
                        ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
-                       src, p->sp, dst, p->dp);
+                       src, p->ptrs.sp, dst, p->ptrs.dp);
         }
         else
         {
@@ -380,7 +380,7 @@ void ppm_pkt_log(ppm_cfg_t *ppm_cfg, Packet* p)
                        ppm_pt->pktcnt,
                        ppm_ticks_to_usecs((PPM_TICKS)ppm_pt->tot),
                        ppm_pt->rule_tests, ppm_pt->nc_rule_tests,
-                       src, p->sp, dst, p->dp);
+                       src, p->ptrs.sp, dst, p->ptrs.dp);
         }
     }
 }
@@ -433,13 +433,13 @@ void ppm_rule_log(ppm_cfg_t *ppm_cfg, uint64_t pktcnt, Packet *p)
             char src[INET6_ADDRSTRLEN];
             char dst[INET6_ADDRSTRLEN];
 
-            const sfip_t *addr = p->ip_api.get_src();
+            const sfip_t *addr = p->ptrs.ip_api.get_src();
             sfip_ntop(addr, src, sizeof(src));
 
-            addr = p->ip_api.get_dst();
+            addr = p->ptrs.ip_api.get_dst();
             sfip_ntop(addr, dst, sizeof(dst));
 
-            LogMessage(PPM_FMT_SUS_PKT, pktcnt, src, p->sp, dst, p->dp);
+            LogMessage(PPM_FMT_SUS_PKT, pktcnt, src, p->ptrs.sp, dst, p->ptrs.dp);
 
             if(!*timestamp)
                 ts_print((struct timeval*)&p->pkth->ts, timestamp);

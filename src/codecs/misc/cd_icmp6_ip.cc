@@ -55,8 +55,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool encode(EncState *enc, Buffer* out, const uint8_t* raw_in);
-    virtual bool decode(const uint8_t *raw_pkt, const uint32_t &raw_len,
-        Packet *, uint16_t &lyr_len, uint16_t &next_prot_id);
+    virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
 
 } // namespace
@@ -66,19 +65,18 @@ void Icmp6IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IP_EMBEDDED_IN_ICMP6);
 }
 
-bool Icmp6IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
-        Packet* p, uint16_t& lyr_len, uint16_t& /*next_prot_id*/)
+bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
 //    uint16_t orig_frag_offset;
 
     /* lay the IP struct over the raw data */
-    const ip::IP6Hdr* ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw_pkt);
+    const ip::IP6Hdr* ip6h = reinterpret_cast<const ip::IP6Hdr*>(raw.data);
 
 
     /* do a little validation */
-    if ( raw_len < ip::IP6_HEADER_LEN )
+    if ( raw.len < ip::IP6_HEADER_LEN )
     {
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_TRUNCATED);
+        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_TRUNCATED);
         return false;
     }
 
@@ -88,13 +86,13 @@ bool Icmp6IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
      */
     if(ip6h->get_ver() != 6)
     {
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
+        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
     }
 
-    if ( raw_len < ip::IP6_HEADER_LEN )
+    if ( raw.len < ip::IP6_HEADER_LEN )
     {
-        codec_events::decoder_event(p, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
+        codec_events::decoder_event(DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
         return false;
     }
 
@@ -113,21 +111,21 @@ bool Icmp6IpCodec::decode(const uint8_t *raw_pkt, const uint32_t& raw_len,
     switch(ip6h->get_next())
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */
-            p->proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
+            codec.proto_bits |= PROTO_BIT__TCP_EMBED_ICMP;
             break;
 
         case IPPROTO_UDP:
-            p->proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
+            codec.proto_bits |= PROTO_BIT__UDP_EMBED_ICMP;
             break;
 
         case IPPROTO_ICMP:
-            p->proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
+            codec.proto_bits |= PROTO_BIT__ICMP_EMBED_ICMP;
             break;
     }
 
     // if you changed lyr_len, you MUST change the encode()
     // function below to copy and update_buffer() correctly!
-    lyr_len = ip::IP6_HEADER_LEN;
+    codec.lyr_len = ip::IP6_HEADER_LEN;
     return true;
 }
 

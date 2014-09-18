@@ -495,7 +495,7 @@ int detection_option_node_evaluate(
                         if ( !otn->detection_filter ||
                              !detection_filter_test(
                                  otn->detection_filter,
-                                 eval_data->p->ip_api.get_src(), eval_data->p->ip_api.get_dst(),
+                                 eval_data->p->ptrs.ip_api.get_src(), eval_data->p->ptrs.ip_api.get_dst(),
                                  eval_data->p->pkth->ts.tv_sec) )
                         {
 #ifdef PERF_PROFILING

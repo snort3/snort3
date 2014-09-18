@@ -64,7 +64,7 @@ struct Option
 typedef list<Option*> OptionList;
 static OptionList s_options;
 
-static const char* current_keyword = nullptr;
+static std::string current_keyword = std::string();
 static Module* current_module = nullptr;
 static const Parameter* current_params = nullptr;
 
@@ -160,7 +160,7 @@ static Option* get_opt(const char *keyword)
 
 const char* IpsManager::get_option_keyword()
 {
-    return current_keyword;
+    return current_keyword.c_str();
 }
 
 bool IpsManager::option_begin(
@@ -210,10 +210,10 @@ bool IpsManager::option_begin(
 bool IpsManager::option_set(
     SnortConfig* sc, const char* key, const char* opt, const char* val)
 {
-    if ( !current_module || !current_keyword )
+    if ( !current_module || current_keyword.empty() )
         return false;
 
-    assert(!strcmp(current_keyword, key));
+    assert(!strcmp(current_keyword.c_str(), key));
 
     if ( !*val && current_params->is_positional() )
     {
@@ -234,10 +234,10 @@ bool IpsManager::option_end(
     SnortConfig* sc, OptTreeNode* otn, int proto,
     const char* key, RuleOptType& type)
 {
-    if ( !current_keyword )
+    if ( current_keyword.empty() )
         return false;
 
-    assert(!strcmp(current_keyword, key));
+    assert(!strcmp(current_keyword.c_str(), key));
 
 #ifdef NDEBUG
     UNUSED(proto);
@@ -252,7 +252,7 @@ bool IpsManager::option_end(
     if ( mod && !mod->end(key, 0, sc) )
     {
         ParseError("can't finalize %s", key);
-        current_keyword = nullptr;
+        current_keyword.clear();
         return false;
     }
     
@@ -261,7 +261,7 @@ bool IpsManager::option_end(
 
     IpsOption* ips = opt->api->ctor(mod, otn);
     type = opt->api->type;
-    current_keyword = nullptr;
+    current_keyword.clear();
 
     if ( !ips )
         return ( type == OPT_TYPE_META );

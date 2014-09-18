@@ -117,10 +117,11 @@ void snort_inspect(Packet* p)
 #endif
 
     // If the packet has errors, we won't analyze it.
-    if ( p->error_flags )
+    if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-            "Packet errors = 0x%x, ignoring traffic!\n", p->error_flags););
+            "Packet errors = 0x%x, ignoring traffic!\n",
+            (p->ptrs.decode_flags & DECODE_ERR_FLAGS)););
     }
     else
     {
@@ -162,7 +163,7 @@ void snort_inspect(Packet* p)
     ** By checking tagging here, we make sure that we log the
     ** tagged packet whether it generates an alert or not.
     */
-    if (p->ip_api.is_valid())
+    if (p->ptrs.ip_api.is_valid())
         CheckTagging(p);
 
 #ifdef PPM_MGR
@@ -306,7 +307,7 @@ int Detect(Packet * p)
     int detected = 0;
     PROFILE_VARS;
 
-    if ((p == NULL) || !p->ip_api.is_valid())
+    if ((p == NULL) || !p->ptrs.ip_api.is_valid())
     {
         return 0;
     }
@@ -381,8 +382,8 @@ int CheckAddrPort(
     /* set up the packet particulars */
     if(mode & CHECK_SRC_IP)
     {
-        pkt_addr = p->ip_api.get_src();
-        pkt_port = p->sp;
+        pkt_addr = p->ptrs.ip_api.get_src();
+        pkt_port = p->ptrs.sp;
 
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"SRC "););
 
@@ -401,8 +402,8 @@ int CheckAddrPort(
     }
     else
     {
-        pkt_addr = p->ip_api.get_dst();
-        pkt_port = p->dp;
+        pkt_addr = p->ptrs.ip_api.get_dst();
+        pkt_port = p->ptrs.dp;
 
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "DST "););
 
@@ -611,7 +612,7 @@ int CheckSrcIP(Packet * p, RuleTreeNode * rtn_idx, RuleFpList * fp_list, int che
 
     if(!(rtn_idx->flags & EXCEPT_SRC_IP))
     {
-        if( sfvar_ip_in(rtn_idx->sip, p->ip_api.get_src()) )
+        if( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) )
         {
             /* the packet matches this test, proceed to the next test */
             return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -624,7 +625,7 @@ int CheckSrcIP(Packet * p, RuleTreeNode * rtn_idx, RuleFpList * fp_list, int che
          */
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"  global exception flag, \n"););
 
-        if( sfvar_ip_in(rtn_idx->sip, p->ip_api.get_src()) ) return 0;
+        if( sfvar_ip_in(rtn_idx->sip, p->ptrs.ip_api.get_src()) ) return 0;
 
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
@@ -658,7 +659,7 @@ int CheckDstIP(Packet *p, RuleTreeNode *rtn_idx, RuleFpList *fp_list, int check_
 
     if(!(rtn_idx->flags & EXCEPT_DST_IP))
     {
-        if( sfvar_ip_in(rtn_idx->dip, p->ip_api.get_dst()) )
+        if( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) )
         {
             /* the packet matches this test, proceed to the next test */
             return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -670,7 +671,7 @@ int CheckDstIP(Packet *p, RuleTreeNode *rtn_idx, RuleFpList *fp_list, int check_
          * of the source addresses */
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT,"  global exception flag, \n"););
 
-        if( sfvar_ip_in(rtn_idx->dip, p->ip_api.get_dst()) ) return 0;
+        if( sfvar_ip_in(rtn_idx->dip, p->ptrs.ip_api.get_dst()) ) return 0;
 
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
     }
@@ -700,7 +701,7 @@ int CheckSrcPortEqual(Packet *p, RuleTreeNode *rtn_idx,
                 "target-based-protocol=%d,not ignoring ports\n",
                 GetProtocolReference(p)););
     }
-    if( PortObjectHasPort(rtn_idx->src_portobject,p->sp) )
+    if( PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "  SP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -734,7 +735,7 @@ int CheckSrcPortNotEq(Packet *p, RuleTreeNode *rtn_idx,
                 "target-based-protocol=%d,not ignoring ports\n",
                 GetProtocolReference(p)););
     }
-    if( !PortObjectHasPort(rtn_idx->src_portobject,p->sp) )
+    if( !PortObjectHasPort(rtn_idx->src_portobject,p->ptrs.sp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "  !SP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -768,7 +769,7 @@ int CheckDstPortEqual(Packet *p, RuleTreeNode *rtn_idx,
             "target-based-protocol=%d,not ignoring ports\n",
             GetProtocolReference(p)););
     }
-    if( PortObjectHasPort(rtn_idx->dst_portobject,p->dp) )
+    if( PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, " DP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
@@ -802,7 +803,7 @@ int CheckDstPortNotEq(Packet *p, RuleTreeNode *rtn_idx,
             "target-based-protocol=%d,not ignoring ports\n",
             GetProtocolReference(p)););
     }
-    if( !PortObjectHasPort(rtn_idx->dst_portobject,p->dp) )
+    if( !PortObjectHasPort(rtn_idx->dst_portobject,p->ptrs.dp) )
     {
         DEBUG_WRAP(DebugMessage(DEBUG_DETECT, " !DP match!\n"););
         return fp_list->next->RuleHeadFunc(p, rtn_idx, fp_list->next, check_ports);
