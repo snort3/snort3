@@ -112,7 +112,7 @@ static inline bool pppoepkt_decode(const RawData& raw,
     /* do a little validation */
     if(raw.len < PPPOE_HEADER_LEN)
     {
-        codec_events::decoder_event(DECODE_BAD_PPPOE);
+        codec_events::decoder_event(codec, DECODE_BAD_PPPOE);
         return false;
     }
 

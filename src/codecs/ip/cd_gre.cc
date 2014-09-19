@@ -115,7 +115,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
     if (raw.len < GRE_HEADER_LEN)
     {
-        codec_events::decoder_event(DECODE_GRE_DGRAM_LT_GREHDR);
+        codec_events::decoder_event(codec, DECODE_GRE_DGRAM_LT_GREHDR);
         return false;
     }
 
@@ -133,7 +133,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
             /* these must not be set */
             if (GRE_RECUR(greh) || GRE_FLAGS(greh))
             {
-                codec_events::decoder_event(DECODE_GRE_INVALID_HEADER);
+                codec_events::decoder_event(codec, DECODE_GRE_INVALID_HEADER);
                 return false;
             }
 
@@ -187,21 +187,21 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
             if (GRE_CHKSUM(greh) || GRE_ROUTE(greh) || GRE_SSR(greh) ||
                 GRE_RECUR(greh) || GRE_V1_FLAGS(greh))
             {
-                codec_events::decoder_event(DECODE_GRE_V1_INVALID_HEADER);
+                codec_events::decoder_event(codec, DECODE_GRE_V1_INVALID_HEADER);
                 return false;
             }
 
             /* protocol must be 0x880B - PPP */
             if (greh->get_proto() != ETHERTYPE_PPP)
             {
-                codec_events::decoder_event(DECODE_GRE_V1_INVALID_HEADER);
+                codec_events::decoder_event(codec, DECODE_GRE_V1_INVALID_HEADER);
                 return false;
             }
 
             /* this flag should always be present */
             if (!(GRE_KEY(greh)))
             {
-                codec_events::decoder_event(DECODE_GRE_V1_INVALID_HEADER);
+                codec_events::decoder_event(codec, DECODE_GRE_V1_INVALID_HEADER);
                 return false;
             }
 
@@ -216,13 +216,13 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
             break;
 
         default:
-            codec_events::decoder_event(DECODE_GRE_INVALID_VERSION);
+            codec_events::decoder_event(codec, DECODE_GRE_INVALID_VERSION);
             return false;
     }
 
     if (len > raw.len)
     {
-        codec_events::decoder_event(DECODE_GRE_DGRAM_LT_GREHDR);
+        codec_events::decoder_event(codec, DECODE_GRE_DGRAM_LT_GREHDR);
         return false;
     }
 

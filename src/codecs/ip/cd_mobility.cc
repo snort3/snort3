@@ -57,7 +57,7 @@ void MobilityCodec::get_protocol_ids(std::vector<uint16_t>& v)
 
 bool MobilityCodec::decode(const RawData&, CodecData& codec, SnortData&)
 {
-    codec_events::decoder_event(DECODE_IP_BAD_PROTO);
+    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
     codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
     return true;
 }

@@ -114,7 +114,7 @@ bool EthCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
     /* do a little validation */
     if(raw.len < eth::ETH_HEADER_LEN)
     {
-        codec_events::decoder_event(DECODE_ETH_HDR_TRUNC);
+        codec_events::decoder_event(codec, DECODE_ETH_HDR_TRUNC);
         return false;
     }
 

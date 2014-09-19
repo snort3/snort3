@@ -293,10 +293,13 @@ struct CodecData
     /*  Codec specific fields.  These fields are only relevent to codecs. */
     uint16_t proto_bits;    /* protocols contained within this packet */
                             /*   -- will be propogated to Snort++ Packet struct*/
-    uint8_t codec_flags;    /* flags used while decoding */
+    uint16_t codec_flags;   /* flags used while decoding */
     uint8_t ip_layer_cnt;
+
+    /*  The following values have junk values after initialization */
     uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
     uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
+    uint8_t ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
 
     // FIXIT-H-J - most of these don't needs to be zeroed
     CodecData(uint16_t init_prot) : lyr_len(0),
@@ -330,31 +333,32 @@ struct CodecData
 
 
 /*  Decode Flags */
-constexpr uint8_t CODEC_DF = 0x01;    /* don't fragment flag */
-constexpr uint8_t CODEC_UNSURE_ENCAP = 0x02;  /* packet may have incorrect encapsulation layer.
-                                             * don't alert if "next layer" is invalid.
-                                             * If decode fails with this bit set, PacketManager
-                                             *          will back out to the previous layer.
-                                             * IMPORTANT:  This bit can ONLY be set if the
-                                             *              DECODE_ENCAP_LAYER flag was
-                                             *              was previously set.
-                                             */
-constexpr uint8_t CODEC_SAVE_LAYER = 0x04;    /* DO NOT USE THIS LAYER!!
-                                             *  --  use DECODE_ENCAP_LAYER
-                                             */
-constexpr uint8_t CODEC_ENCAP_LAYER = (CODEC_SAVE_LAYER | CODEC_UNSURE_ENCAP );
+constexpr uint16_t CODEC_DF = 0x0001;    /* don't fragment flag */
+constexpr uint16_t CODEC_UNSURE_ENCAP = 0x0002; /* packet may have incorrect encapsulation layer.
+                                                 * don't alert if "next layer" is invalid.
+                                                 * If decode fails with this bit set, PacketManager
+                                                 *          will back out to the previous layer.
+                                                 * IMPORTANT:  This bit can ONLY be set if the
+                                                 *              DECODE_ENCAP_LAYER flag was
+                                                 *              was previously set.
+                                                 */
+constexpr uint16_t CODEC_SAVE_LAYER = 0x0004;   /* DO NOT USE THIS LAYER!!
+                                                 *  --  use DECODE_ENCAP_LAYER
+                                                 */
+constexpr uint16_t CODEC_ENCAP_LAYER = (CODEC_SAVE_LAYER | CODEC_UNSURE_ENCAP );
                                             /* If encapsulation decode fails, back out to this layer
                                              * This will be cleared by PacketManager between decodes
                                              * This flag automatically sets DECODE_ENCAP_LAYER for
                                              *      the next layer (and only the next layer).
                                              */
-constexpr uint8_t CODEC_ROUTING_SEEN = 0X08; /* used to check ip6 extensino order */
-constexpr uint8_t CODEC_IPOPT_RR_SEEN = 0x10; /* used by icmp4 for alerting */
-constexpr uint8_t CODEC_IPOPT_RTRALT_SEEN = 0x20;  /* used by IGMP for alerting */
-constexpr uint8_t CODEC_IPOPT_LEN_THREE = 0x40; /* used by IGMP for alerting */
-constexpr uint8_t CODEC_TEREDO_SEEN = 0x80; /* used in IPv6 Codec */
+constexpr uint16_t CODEC_ROUTING_SEEN = 0x0008; /* used to check ip6 extensino order */
+constexpr uint16_t CODEC_IPOPT_RR_SEEN = 0x0010; /* used by icmp4 for alerting */
+constexpr uint16_t CODEC_IPOPT_RTRALT_SEEN = 0x0020;  /* used by IGMP for alerting */
+constexpr uint16_t CODEC_IPOPT_LEN_THREE = 0x0040; /* used by IGMP for alerting */
+constexpr uint16_t CODEC_TEREDO_SEEN = 0x0080; /* used in IPv6 Codec */
+constexpr uint16_t CODEC_STREAM_REBUILT = 0x0100; /* Set by PacketManager. used by codec_event */
 
-constexpr uint8_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
+constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
                                         CODEC_IPOPT_RTRALT_SEEN |
                                         CODEC_IPOPT_LEN_THREE);
 

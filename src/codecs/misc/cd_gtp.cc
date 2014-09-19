@@ -138,7 +138,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
         /*Check header fields*/
         if (raw.len < len)
         {
-            codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -147,7 +147,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
                     raw.len - len, ntohs(hdr->length)););
-            codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -164,7 +164,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
             /*Check optional fields*/
             if (raw.len < GTP_V1_HEADER_LEN)
             {
-                codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                 return false;
             }
             next_hdr_type = *(raw.data + len - 1);
@@ -176,7 +176,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
                 /*check length before reading data*/
                 if (raw.len < (uint32_t)(len + 4))
                 {
-                    codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
 
@@ -184,7 +184,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 
                 if (!ext_hdr_len)
                 {
-                    codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
                 /*Extension header length is a unit of 4 octets*/
@@ -193,7 +193,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
                 /*check length before reading data*/
                 if (raw.len < len)
                 {
-                    codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
                 next_hdr_type = *(raw.data + len - 1);
@@ -211,7 +211,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
                     raw.len - GTP_MIN_LEN, ntohs(hdr->length)););
-            codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 

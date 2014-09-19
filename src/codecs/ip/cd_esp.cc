@@ -125,7 +125,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     if (raw.len < (ESP_HEADER_LEN + ESP_AUTH_DATA_LEN + ESP_TRAILER_LEN))
     {
         /* Truncated ESP traffic. Bail out here and inspect the rest as payload. */
-        codec_events::decoder_event(DECODE_ESP_HEADER_TRUNC);
+        codec_events::decoder_event(codec, DECODE_ESP_HEADER_TRUNC);
         return false;
     }
 
@@ -145,8 +145,11 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
+    {
         ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_ESP);
-
+        codec.proto_bits |= PROTO_BIT__IP6_EXT;
+        codec.ip6_csum_proto = codec.next_prot_id;
+    }
 
 
     // TODO:  Leftover from Snort. Do we really want thsi?

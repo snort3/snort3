@@ -33,7 +33,7 @@ namespace ip_util
 {
 
 
-SO_PUBLIC bool CheckIPV6HopOptions(const RawData&);
+SO_PUBLIC bool CheckIPV6HopOptions(const RawData&, const CodecData& codec);
 
 // NOTE:: data.next_prot_id MUST be set before calling this!!
 void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto);

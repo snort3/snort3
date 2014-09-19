@@ -137,7 +137,9 @@ public:
 
 
 
-static inline void UDPMiscTests(SnortData& snort, uint32_t pay_len);
+static inline void UDPMiscTests(const SnortData&,
+                                const CodecData&,
+                                uint32_t pay_len);
 
 
 
@@ -155,7 +157,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
     if(raw.len < sizeof(udp::UDPHdr))
     {
-        codec_events::decoder_event(DECODE_UDP_DGRAM_LT_UDPHDR);
+        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_LT_UDPHDR);
         return false;
     }
 
@@ -186,19 +188,19 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     /* verify that the header raw.len is a valid value */
     if(uhlen < udp::UDP_HEADER_LEN)
     {
-        codec_events::decoder_event(DECODE_UDP_DGRAM_INVALID_LENGTH);
+        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_INVALID_LENGTH);
         return false;
     }
 
     /* make sure there are enough bytes as designated by length field */
     if(uhlen > raw.len)
     {
-        codec_events::decoder_event(DECODE_UDP_DGRAM_SHORT_PACKET);
+        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_SHORT_PACKET);
         return false;
     }
     else if(uhlen < raw.len)
     {
-        codec_events::decoder_event(DECODE_UDP_DGRAM_LONG_PACKET);
+        codec_events::decoder_event(codec, DECODE_UDP_DGRAM_LONG_PACKET);
         return false;
     }
 
@@ -235,7 +237,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
             if(!udph->uh_chk)
             {
                 csum = 1;
-                codec_events::decoder_event(DECODE_UDP_IPV6_ZERO_CHECKSUM);
+                codec_events::decoder_event(codec, DECODE_UDP_IPV6_ZERO_CHECKSUM);
             }
             /* Don't do checksum calculation if
              * 1) Fragmented
@@ -248,7 +250,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
                 COPY4(ph6.sip, ip6h->ip6_src.u6_addr32);
                 COPY4(ph6.dip, ip6h->ip6_dst.u6_addr32);
                 ph6.zero = 0;
-                ph6.protocol = ip6h->get_next();
+                ph6.protocol = codec.ip6_csum_proto;
                 ph6.len = htons((u_short)raw.len);
 
                 csum = checksum::udp_cksum((uint16_t *)(udph), uhlen, &ph6);
@@ -292,7 +294,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.set_pkt_type(PktType::UDP);
 
     // set in packet manager
-    UDPMiscTests(snort, uhlen - udp::UDP_HEADER_LEN);
+    UDPMiscTests(snort, codec, uhlen - udp::UDP_HEADER_LEN);
 
     if (ScGTPDecoding() &&
          (ScIsGTPPort(src_port)||ScIsGTPPort(dst_port)))
@@ -314,13 +316,15 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
 
 /* UDP-layer decoder alerts */
-static inline void UDPMiscTests(SnortData& snort, uint32_t pay_len)
+static inline void UDPMiscTests(const SnortData& snort,
+                                const CodecData& codec,
+                                uint32_t pay_len)
 {
     if (pay_len > 4000)
-        codec_events::decoder_event(DECODE_UDP_LARGE_PACKET);
+        codec_events::decoder_event(codec, DECODE_UDP_LARGE_PACKET);
 
     if (snort.sp == 0 || snort.dp == 0)
-        codec_events::decoder_event(DECODE_UDP_PORT_ZERO);
+        codec_events::decoder_event(codec, DECODE_UDP_PORT_ZERO);
 }
 
 void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt, const Packet* const)

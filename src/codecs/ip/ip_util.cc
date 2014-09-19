@@ -43,7 +43,7 @@ static inline int IPV6ExtensionOrder(uint8_t type)
 }
 
 
-bool CheckIPV6HopOptions(const RawData& raw)
+bool CheckIPV6HopOptions(const RawData& raw, const CodecData& codec)
 {
     const ip::IP6Extension* const exthdr =
         reinterpret_cast<const ip::IP6Extension*>(raw.data);
@@ -56,7 +56,7 @@ bool CheckIPV6HopOptions(const RawData& raw)
     uint8_t oplen;
 
     if (raw.len < total_octets)
-        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
 
     /* Skip to the options */
     pkt += 2;
@@ -81,13 +81,13 @@ bool CheckIPV6HopOptions(const RawData& raw)
                 oplen = *(++pkt);
                 if ((pkt + oplen + 1) > hdr_end)
                 {
-                    codec_events::decoder_event(DECODE_IPV6_BAD_OPT_LEN);
+                    codec_events::decoder_event(codec, DECODE_IPV6_BAD_OPT_LEN);
                     return false;
                 }
                 pkt += oplen + 1;
                 break;
             default:
-                codec_events::decoder_event(DECODE_IPV6_BAD_OPT_TYPE);
+                codec_events::decoder_event(codec, DECODE_IPV6_BAD_OPT_TYPE);
                 return false;
         }
     }
@@ -111,7 +111,7 @@ void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto)
               (proto == IPPROTO_ID_DSTOPTS) &&
               (next_order == IPV6_ORDER_MAX)))
         {
-            codec_events::decoder_event(DECODE_IPV6_UNORDERED_EXTENSIONS);
+            codec_events::decoder_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
         }
     }
     else
@@ -151,7 +151,7 @@ void CheckIPv6ExtensionOrder(Packet *p)
                 !(p->ip6_extensions[i].type == IPPROTO_DSTOPTS) ||
                 !(i+1 == p->ip6_extension_count))
             {
-                codec_events::decoder_event(DECODE_IPV6_UNORDERED_EXTENSIONS);
+                codec_events::decoder_event(codec, DECODE_IPV6_UNORDERED_EXTENSIONS);
             }
         }
 

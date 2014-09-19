@@ -67,20 +67,20 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, SnortData& snor
 
     if(raw.len < ip::MIN_EXT_LEN )
     {
-        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     if ( codec.ip6_extension_count >= IP6_EXTMAX )
     {
-        codec_events::decoder_event(DECODE_IP6_EXCESS_EXT_HDR);
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
     // already checked for short pacekt above
     if (raw.len == sizeof(ip::IP6Frag))
     {
-        codec_events::decoder_event(DECODE_ZERO_LENGTH_FRAG);
+        codec_events::decoder_event(codec, DECODE_ZERO_LENGTH_FRAG);
         return false;
     }
 
@@ -102,11 +102,12 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, SnortData& snor
     if (frag_offset || (snort.decode_flags & DECODE_MF))
         snort.decode_flags |= DECODE_FRAG;
     else
-        codec_events::decoder_event(DECODE_IPV6_BAD_FRAG_PKT);
+        codec_events::decoder_event(codec, DECODE_IPV6_BAD_FRAG_PKT);
 
 
     codec.lyr_len = sizeof(ip::IP6Frag);
     codec.next_prot_id = ip6frag_hdr->ip6f_nxt;
+    codec.ip6_csum_proto = ip6frag_hdr->ip6f_nxt;
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
     codec.ip6_extension_count++;
 

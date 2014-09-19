@@ -94,7 +94,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
     if(raw.len < sizeof(EthLlc))
     {
         // FIXIT-L - J - Need a better alert
-        codec_events::decoder_event(DECODE_BAD_VLAN_ETHLLC);
+        codec_events::decoder_event(codec, DECODE_BAD_VLAN_ETHLLC);
         return false;
     }
 
@@ -107,7 +107,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
     {
         if (raw.len <  sizeof(EthLlc) + sizeof(EthLlcOther))
         {
-            codec_events::decoder_event(DECODE_BAD_VLAN_ETHLLC);
+            codec_events::decoder_event(codec, DECODE_BAD_VLAN_ETHLLC);
             return false;
         }
 

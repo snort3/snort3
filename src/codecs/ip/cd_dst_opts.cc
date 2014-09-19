@@ -68,36 +68,37 @@ bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 
     if(raw.len < sizeof(IP6Dest))
     {
-        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     if ( codec.ip6_extension_count >= IP6_EXTMAX )
     {
-        codec_events::decoder_event(DECODE_IP6_EXCESS_EXT_HDR);
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
     if (dsthdr->ip6dest_nxt == IPPROTO_ROUTING)
-        codec_events::decoder_event(DECODE_IPV6_DSTOPTS_WITH_ROUTING);
+        codec_events::decoder_event(codec, DECODE_IPV6_DSTOPTS_WITH_ROUTING);
 
 
     codec.lyr_len = sizeof(IP6Dest) + (dsthdr->ip6dest_len << 3);
     if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
     codec.ip6_extension_count++;
     codec.next_prot_id = dsthdr->ip6dest_nxt;
+    codec.ip6_csum_proto = dsthdr->ip6dest_nxt;
 
 
     // must be called AFTER setting next_prot_id
     ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_DSTOPTS);
 
-    if ( ip_util::CheckIPV6HopOptions(raw))
+    if ( ip_util::CheckIPV6HopOptions(raw, codec))
         return true;
     return false;
 }

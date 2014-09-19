@@ -74,13 +74,13 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 
     if (raw.len < sizeof(IP6HopByHop))
     {
-        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     if ( codec.ip6_extension_count >= IP6_EXTMAX )
     {
-        codec_events::decoder_event(DECODE_IP6_EXCESS_EXT_HDR);
+        codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
@@ -88,17 +88,18 @@ bool Ipv6HopOptsCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
     codec.lyr_len = sizeof(IP6HopByHop) + (hbh_hdr->ip6hbh_len << 3);
     if(codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(DECODE_IPV6_TRUNCATED_EXT);
+        codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED_EXT);
         return false;
     }
 
     codec.next_prot_id = (uint16_t) hbh_hdr->ip6hbh_nxt;
+    codec.ip6_csum_proto = hbh_hdr->ip6hbh_nxt;
     codec.ip6_extension_count++;
     codec.proto_bits |= PROTO_BIT__IP6_EXT;
 
     // must be called AFTER setting next_prot_id
     ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_HOPOPTS);
-    if ( ip_util::CheckIPV6HopOptions(raw))
+    if ( ip_util::CheckIPV6HopOptions(raw, codec))
         return true;
 
     return false;

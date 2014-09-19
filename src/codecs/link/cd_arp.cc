@@ -90,7 +90,7 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 {
     if(raw.len < sizeof(arp::EtherARP))
     {
-        codec_events::decoder_event(DECODE_ARP_TRUNCATED);
+        codec_events::decoder_event(codec, DECODE_ARP_TRUNCATED);
         return false;
     }
 

@@ -162,6 +162,9 @@ void PacketManager::decode(
     RawData raw{pkt, pkthdr->caplen};
     CodecData codec_data(FINISHED_DECODE);
 
+    if (p->packet_flags & PKT_REBUILT_STREAM)
+        codec_data.codec_flags |= CODEC_STREAM_REBUILT;
+
     MODULE_PROFILE_START(decodePerfStats);
     s_stats[total_processed]++;
 
