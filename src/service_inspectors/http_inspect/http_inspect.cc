@@ -228,7 +228,8 @@ static inline void InitLookupTables(void)
 
 typedef PlugDataType<HTTPINSPECT_GLOBAL_CONF> HttpData;
 
-class HttpInspect : public Inspector {
+class HttpInspect : public Inspector
+{
 public:
     HttpInspect(HTTPINSPECT_CONF*);
     ~HttpInspect();
