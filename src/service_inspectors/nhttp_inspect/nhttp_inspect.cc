@@ -61,8 +61,7 @@ bool NHttpInspect::configure (SnortConfig *)
     return true;
 }
 
-bool NHttpInspect::get_buf(
-    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     switch ( ibt )
     {
