@@ -141,7 +141,6 @@ void snort_inspect(Packet* p)
         **  Reset the appropriate application-layer protocol fields
         */
         p->alt_dsize = 0;
-        DetectReset();
 
         InspectorManager::execute(p);
 
