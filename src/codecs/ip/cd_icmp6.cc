@@ -31,7 +31,6 @@
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
 #include "codecs/decode_module.h"
-#include "codecs/sf_protocols.h"
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
@@ -79,7 +78,6 @@ public:
     ~Icmp6Codec(){};
 
 
-    virtual PROTO_ID get_proto_id() { return PROTO_ICMP6; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -92,11 +90,8 @@ public:
 
 } // anonymous namespace
 
-
 void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ICMPV6);
-}
+{ v.push_back(IPPROTO_ID_ICMPV6); }
 
 //--------------------------------------------------------------------
 // decode.c::ICMP6
@@ -277,7 +272,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     codec.lyr_len = len;
     codec.proto_bits |= PROTO_BIT__ICMP;
     snort.icmph = reinterpret_cast<const icmp::ICMPHdr*>(icmp6h);
-    snort.packet_type = PKT_TYPE__ICMP6;
+    snort.set_pkt_type(PktType::ICMP6);
     return true;
 }
 

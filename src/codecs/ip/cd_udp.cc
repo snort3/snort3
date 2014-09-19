@@ -39,7 +39,6 @@
 #include "framework/codec.h"
 #include "packet_io/active.h"
 #include "codecs/codec_events.h"
-#include "codecs/sf_protocols.h"
 #include "snort_config.h"
 #include "parser/config_file.h"
 #include "codecs/ip/ip_util.h"
@@ -120,7 +119,6 @@ public:
     ~UdpCodec(){};
 
 
-    virtual PROTO_ID get_proto_id() { return PROTO_UDP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
 
@@ -290,7 +288,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.dp = dst_port;
     codec.lyr_len = udp::UDP_HEADER_LEN;
     codec.proto_bits |= PROTO_BIT__UDP;
-    snort.packet_type = PKT_TYPE__UDP;
+    snort.set_pkt_type(PktType::UDP);
 
     // set in packet manager
     UDPMiscTests(snort, uhlen - udp::UDP_HEADER_LEN);

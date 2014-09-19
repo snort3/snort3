@@ -27,7 +27,6 @@
 #include "framework/codec.h"
 #include "protocols/protocol_ids.h"
 #include "snort.h"
-#include "codecs/sf_protocols.h"
 #include "main/snort_debug.h"
 
 #define CD_PPPENCAP_NAME "ppp_encap"
@@ -42,10 +41,8 @@ public:
     PppEncap() : Codec(CD_PPPENCAP_NAME){};
     ~PppEncap(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_PPP_ENCAP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    
 };
 
 const static uint16_t PPP_IP = 0x0021;       /* Internet Protocol */

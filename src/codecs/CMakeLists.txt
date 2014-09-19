@@ -8,7 +8,6 @@ add_subdirectory(misc)
 set(CODEC_INCLUDES
     decode_module.h
     codec_events.h
-    sf_protocols.h
 )
 
 add_library( codecs STATIC

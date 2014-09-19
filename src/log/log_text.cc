@@ -67,6 +67,7 @@
 #include "protocols/eapol.h"
 #include "protocols/ipv4_options.h"
 #include "protocols/tcp_options.h"
+#include "protocols/packet_manager.h"
 
 /*--------------------------------------------------------------------
  * utility functions
@@ -1468,6 +1469,9 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
     const uint8_t* pb = data;
     const uint8_t* end = data + len;
 
+    const uint8_t ipv4_id = PacketManager::proto_id(IPPROTO_ID_IPIP);
+    const uint8_t ipv6_id = PacketManager::proto_id(IPPROTO_ID_IPV6);
+
     int offset = 0;
     char conv[] = "0123456789ABCDEF";   /* xlation lookup table */
     int ip_ob_start, ip_ob_end, byte_pos, char_pos;
@@ -1503,11 +1507,13 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
     if(p && ScObfuscate() )
     {
         int num_layers =  p->num_layers;
+        uint8_t lyr_proto = 0;
+
         for ( i = 0; i < num_layers; i++ )
         {
-            if ( p->layers[i].proto == PROTO_IP4
-                  || p->layers[i].proto == PROTO_IP6
-                )
+            lyr_proto = PacketManager::proto_id(p->layers[i].prot_id);
+
+            if ( lyr_proto == ipv4_id || lyr_proto == ipv6_id)
             {
                 if(p->layers[i].length && p->layers[i].start)
                 break;
@@ -1519,7 +1525,7 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
         if(ip_start > 0 )
         {
             ip_ob_start = ip_start + 10;
-            if(p->layers[i].proto == PROTO_IP4)
+            if(lyr_proto == ipv4_id)
                 ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in_addr));
             else
                 ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in6_addr));

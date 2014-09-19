@@ -31,7 +31,6 @@
 #include "protocols/packet.h"
 #include "codecs/codec_events.h"
 #include "packet_io/active.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"
 #include "codecs/decode_module.h"
 
@@ -70,7 +69,6 @@ public:
     GtpCodec() : Codec(CD_GTP_NAME){};
     ~GtpCodec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_GTP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);

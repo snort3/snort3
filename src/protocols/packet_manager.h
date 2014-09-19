@@ -26,7 +26,7 @@
 
 #include "main/snort_types.h"
 #include "framework/codec.h"
-#include "protocols/packet.h"
+#include "protocols/packet.h" // FIXIT-L remove
 #include "framework/counts.h"
 #include "managers/codec_manager.h"
 #include "main/thread.h"
@@ -104,6 +104,23 @@ public:
     static const char* get_proto_name(uint8_t protocol);
     // print this packets information, layer by layer
     static void log_protocols(TextLog* const, const Packet* const);
+
+
+
+
+    /* Accessor functions -- any object in Snort++ can now convert a
+     * protocol to its mapped value.
+     *
+     * The equivelant of Snort's PROTO_ID */
+    static constexpr std::size_t max_protocols() // compile time constant
+    { return CodecManager::s_protocols.size(); }
+
+    /* If a proto was registered in a Codec's get_protocol_ids() function,
+     * this function will return the 'ID' of the Codec to which the proto belongs.
+     * If none of the loaded Codecs registered that proto, this function will
+     * return zero. */
+    static uint8_t proto_id(uint16_t proto)
+    { return CodecManager::s_proto_map[proto]; }
 
 private:
     //  STATISTICS!!

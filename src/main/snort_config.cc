@@ -188,7 +188,7 @@ SnortConfig * SnortConfNew(void)
 
     sc->state = (SnortState*)SnortAlloc(sizeof(SnortState)*get_instance_max());
 
-    sc->policy_map = new PolicyMap();
+    sc->policy_map = new PolicyMap;
 
     set_inspection_policy(sc->get_inspection_policy());
     set_ips_policy(sc->get_ips_policy());
@@ -277,8 +277,8 @@ void SnortConfFree(SnortConfig *sc)
     if ( sc->var_list )
         FreeVarList(sc->var_list);
 
-    if ( !snort_conf || sc == snort_conf ||
-         (sc->fast_pattern_config &&
+    if ( sc->fast_pattern_config &&
+         (!snort_conf || sc == snort_conf ||
          (sc->fast_pattern_config->search_api !=
              snort_conf->fast_pattern_config->search_api)) )
     {

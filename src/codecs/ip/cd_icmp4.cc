@@ -31,7 +31,6 @@
 #include "codecs/codec_events.h"
 #include "codecs/ip/checksum.h"
 #include "codecs/decode_module.h"
-#include "codecs/sf_protocols.h"
 #include "codecs/ip/ip_util.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet.h"
@@ -91,7 +90,6 @@ public:
     Icmp4Codec() : Codec(CD_ICMP4_NAME){};
     ~Icmp4Codec() {};
     
-    virtual PROTO_ID get_proto_id() { return PROTO_ICMP4; };
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -242,7 +240,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,SnortData& snort)
     /* Run a bunch of ICMP decoder rules */
     ICMP4MiscTests(icmph, codec, (uint16_t)raw.len - len);
 
-    snort.packet_type = PKT_TYPE__ICMP4;
+    snort.set_pkt_type(PktType::ICMP4);
     snort.icmph = icmph;
     codec.proto_bits |= PROTO_BIT__ICMP;
     codec.lyr_len = len;

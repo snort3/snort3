@@ -27,7 +27,6 @@
 
 #include "main/snort_types.h"
 #include "framework/base_api.h"
-#include "codecs/sf_protocols.h"
 
 // unfortunately necessary due to use of Ipapi in struct
 #include "protocols/ip.h"
@@ -134,35 +133,62 @@ struct RawData
     uint32_t len;
 };
 
-/*  SnortData Flags */
 
-/* error flags */
-constexpr uint8_t DECODE_ERR_CKSUM_IP = 0x01;
-constexpr uint8_t DECODE_ERR_CKSUM_TCP = 0x02;
-constexpr uint8_t DECODE_ERR_CKSUM_UDP = 0x04;
-constexpr uint8_t DECODE_ERR_CKSUM_ICMP = 0x08;
-constexpr uint8_t DECODE_ERR_CKSUM_ANY = 0x0F;
-constexpr uint8_t DECODE_ERR_BAD_TTL = 0x10;
-constexpr uint8_t DECODE_PKT_TRUST = 0x20;    /* Tell Snort++ to whitelist this packet */
-constexpr uint8_t DECODE_FRAG = 0x40;  /* flag to indicate a fragmented packet */
-constexpr uint8_t DECODE_MF = 0x80;
+enum DecodeFlags : std::uint16_t
+{
+    /*
+     * DO NOT USE PKT_TYPE_* directly!! Use PktType enum and
+     *      access methods to get/set.
+     *
+     * NOTE: While using the first bits as an
+     *      enumerated type (i.e., not as flags) is asking
+     *      for trouble, creating a seperate PktType entity would
+     *      waste five perfectly good bits. Additionally,
+     *      those wated bits would be needlesly zero before
+     *      decoding every packet.  So, I'm living dangerously
+     *      and going with the bad idea .. I'm also hoping this
+     *      grouping shows the connection betwee PktTypes
+     *      and regular DecodeFlags
+     */
+    PKT_TYPE_UNKOWN = 0x00,
+    PKT_TYPE_IP = 0x01,
+    PKT_TYPE_TCP = 0x02,
+    PKT_TYPE_UDP = 0x03,
+    PKT_TYPE_ICMP4 = 0x04,
+    PKT_TYPE_ICMP6 = 0x05,
+    PKT_TYPE_ARP = 0x06,
+    PKT_TYPE_FREE = 0x07, /* If protocol is added, update enum class PktType below. */
+    PKT_TYPE_MASK = 0x07,
 
-constexpr uint8_t DECODE_ERR_FLAGS = DECODE_ERR_CKSUM_IP |
-    DECODE_ERR_CKSUM_TCP |
-    DECODE_ERR_CKSUM_UDP |
-    DECODE_ERR_CKSUM_UDP |
-    DECODE_ERR_CKSUM_ICMP |
-    DECODE_ERR_CKSUM_ANY |
-    DECODE_ERR_BAD_TTL;
+    /* error flags */
+    DECODE_ERR_CKSUM_IP = 0x0008,
+    DECODE_ERR_CKSUM_TCP = 0x0010,
+    DECODE_ERR_CKSUM_UDP = 0x0020,
+    DECODE_ERR_CKSUM_ICMP = 0x0040,
+    DECODE_ERR_CKSUM_ANY = 0x0080,
+    DECODE_ERR_BAD_TTL = 0x0100,
+    DECODE_ERR_FLAGS = (DECODE_ERR_CKSUM_IP | DECODE_ERR_CKSUM_TCP |
+                        DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_UDP |
+                        DECODE_ERR_CKSUM_ICMP | DECODE_ERR_CKSUM_ANY |
+                        DECODE_ERR_BAD_TTL),
 
 
-constexpr uint8_t PKT_TYPE__UNKOWN = 0x00;
-constexpr uint8_t PKT_TYPE__IP = 0x01;
-constexpr uint8_t PKT_TYPE__TCP = 0x02;
-constexpr uint8_t PKT_TYPE__UDP = 0x04;
-constexpr uint8_t PKT_TYPE__ICMP4 = 0x08;
-constexpr uint8_t PKT_TYPE__ICMP6 = 0x10;
-constexpr uint8_t PKT_TYPE__ARP = 0x20;
+    DECODE_PKT_TRUST = 0x0200,    /* Tell Snort++ to whitelist this packet */
+    DECODE_FRAG = 0x0400,  /* flag to indicate a fragmented packet */
+    DECODE_MF = 0x0800,
+};
+
+/* NOTE: if A protocol is added, update DecodeFlags! */
+enum class PktType : std::uint8_t
+{
+    UNKOWN = PKT_TYPE_UNKOWN,
+    IP = PKT_TYPE_IP,
+    TCP = PKT_TYPE_TCP,
+    UDP = PKT_TYPE_UDP,
+    ICMP4 = PKT_TYPE_ICMP4,
+    ICMP6 = PKT_TYPE_ICMP6,
+    ARP = PKT_TYPE_ARP,
+};
 
 struct SnortData
 {
@@ -175,20 +201,31 @@ struct SnortData
     const tcp::TCPHdr* tcph;
     const udp::UDPHdr* udph;
     const icmp::ICMPHdr* icmph;
-    uint16_t sp;                /* source port (TCP/UDP) */
-    uint16_t dp;                /* dest port (TCP/UDP) */
-    uint8_t decode_flags;       /* decoder flags including checksum errors, bad TTLs, frag, etc. */
-    uint8_t packet_type;
+    uint16_t sp;            /* source port (TCP/UDP) */
+    uint16_t dp;            /* dest port (TCP/UDP) */
+    uint16_t decode_flags;  /* First bits (currently 3), which are masked using the constant
+                             * DECODE_PKT_TYPE_MASK defined above, are specifically
+                             * for the PktType. Everything else is fair game flag.
+                             *
+                             */
 
     ip::IpApi ip_api;
     mpls::MplsHdr mplsHdr;
 
     inline void reset()
     {
-        static_assert(PKT_TYPE__UNKOWN == 0, "PKT_TYPE__UNKOWN must be zero!!");
+        static_assert(PKT_TYPE_UNKOWN == 0,
+            "The Packets 'type' gets resets to zero - "
+            "which means zero is unkown");
         memset((char*)&tcph, '\0', offsetof(SnortData, ip_api));
         ip_api.reset();
     }
+
+    inline void set_pkt_type(PktType pkt_type)
+    { decode_flags = (decode_flags & ~PKT_TYPE_MASK) | static_cast<uint16_t>(pkt_type); }
+
+    inline PktType get_pkt_type() const
+    { return static_cast<PktType>(decode_flags & PKT_TYPE_MASK); }
 };
 
 
@@ -292,8 +329,6 @@ public:
 
     // Get the codec's name
     inline const char* get_name() const {return name; };
-    // used for backwards compatability.
-    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     // Registers this Codec's data link type (as defined by libpcap)
     virtual void get_data_link_type(std::vector<int>&) {};
     // Register the code's protocol ID's and Ethertypes

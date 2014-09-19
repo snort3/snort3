@@ -29,7 +29,6 @@
 #include "framework/codec.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/ipv6.h"
 #include "protocols/packet.h"
 #include "codecs/ip/ip_util.h"
@@ -67,8 +66,6 @@ public:
     AuthCodec() : Codec(CD_AUTH_NAME){};
     ~AuthCodec(){};
 
-
-    virtual PROTO_ID get_proto_id() { return PROTO_AH; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
