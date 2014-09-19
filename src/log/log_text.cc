@@ -684,7 +684,7 @@ static void LogOuterIPHeader(TextLog *log, Packet *p)
     uint16_t save_sp, save_dp;
     ip::IpApi save_ip_api = p->ptrs.ip_api;
 
-    p->packet_flags &= ~DECODE_FRAG;
+    p->ptrs.decode_flags &= ~DECODE_FRAG;
 
     if (p->proto_bits & PROTO_BIT__TEREDO)
     {

@@ -764,8 +764,8 @@ void DetectRebuiltPacket (Packet* p)
     SnortEventqPush();
     main_hook(p);
     SnortEventqPop();
-    DetectReset();
 
+    DetectReset();
     do_detect = tmp_do_detect;
     do_detect_content = tmp_do_detect_content;
 }
@@ -803,7 +803,10 @@ DAQ_Verdict ProcessPacket(
 
     /* just throw away the packet if we are configured to ignore this port */
     if ( !(p->packet_flags & PKT_IGNORE) )
+    {
+        DetectReset();
         main_hook(p);
+    }
 
     if ( Active_SessionWasDropped() )
     {

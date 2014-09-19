@@ -998,7 +998,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
          * tell the rest of the system that this is a rebuilt fragment
          */
         dpkt->packet_flags |= PKT_REBUILT_FRAG;
-        dpkt->packet_flags &= ~DECODE_FRAG;
+        dpkt->ptrs.decode_flags &= ~DECODE_FRAG;
         dpkt->dsize = (uint16_t)ft->calculated_size;
 
         PacketManager::encode_update(dpkt);
@@ -1337,7 +1337,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
 
     // preconditions - what we registered for
     assert(p->ptrs.ip_api.is_valid() && !(p->ptrs.decode_flags & DECODE_ERR_CKSUM_IP));
-    assert(p->packet_flags & DECODE_FRAG);
+    assert(p->ptrs.decode_flags & DECODE_FRAG);
 
     const uint16_t frag_offset = ntohs(p->ptrs.ip_api.off());
 
