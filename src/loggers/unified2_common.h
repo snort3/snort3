@@ -62,7 +62,7 @@ typedef struct _Serial_Unified2_Header
 
 //UNIFIED2_IDS_EVENT_VLAN = type 104
 //comes from SFDC to EStreamer archive in serialized form with the extended header
-typedef struct _Unified2IDSEvent
+struct Unified2IDSEvent
 {
     uint32_t sensor_id;
     uint32_t event_id;
@@ -84,7 +84,7 @@ typedef struct _Unified2IDSEvent
     uint32_t mpls_label;
     uint16_t vlanId;
     uint16_t pad2;//Policy ID
-} Unified2IDSEvent;
+} ;
 
 
 //UNIFIED2_IDS_EVENT_IPV6_VLAN = type 105

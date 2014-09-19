@@ -92,7 +92,6 @@ public:
     
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
@@ -574,42 +573,6 @@ struct IcmpHdr {
 
 } // namespace
 
-
-
-bool Icmp4Codec::encode(EncState* enc, Buffer* out, const uint8_t* /*raw_in*/)
-{
-    // FIXIT-J:  speak with Russ, then get rid of commented lines
-//    uint8_t* p;
-    IcmpHdr* ho;
-
-    if (!update_buffer(out, sizeof(*ho)))
-        return false;
-
-//    const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
-    ho = reinterpret_cast<IcmpHdr*>(out->base);
-
-    enc->proto = IPPROTO_ID_ICMPV4;
-    ho->type = icmp::IcmpType::DEST_UNREACH;
-    ho->code = ip_util::get_icmp4_code(enc->type);
-    ho->cksum = 0;
-    ho->unused = 0;
-
-#if 0
-    // copy original ip header
-    p = out->base + sizeof(IcmpHdr);
-    memcpy(p, enc->ip_hdr, enc->ip_len);
-
-    // Now performed in cd_prot_embedded_in_icmp.cc
-
-    // copy first 8 octets of original ip data (ie udp header)
-    p += enc->ip_len;
-    memcpy(p, hi, icmp::ICMP_UNREACH_DATA_LEN);
-#endif
-
-    ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
-
-    return true;
-}
 
 bool Icmp4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {

@@ -48,7 +48,6 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool encode(EncState* enc, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
@@ -328,16 +327,6 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     }
 }
 
-
-bool Icmp4IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
-{
-    // allocate space for this protocols encoded data
-    if (!update_buffer(out, ip::IP4_HEADER_LEN))
-        return false;
-
-    memcpy(out->base, raw_in, ip::IP4_HEADER_LEN);
-    return true;
-}
 
 //-------------------------------------------------------------------------
 // api

@@ -103,15 +103,11 @@ public:
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
-
-private:
-    static uint8_t RevTTL (const EncState* enc, uint8_t ttl);
-    static uint8_t FwdTTL (const EncState* enc, uint8_t ttl);
-    static uint8_t GetTTL (const EncState* enc);
 };
 
 /* Last updated 5/2/2014.
@@ -129,54 +125,6 @@ static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool{{0}};
 static inline void IP4AddrTests (const IP4Hdr*);
 static inline void IPMiscTests(const IP4Hdr* const, uint16_t len);
 static void DecodeIPOptions(const uint8_t *start, uint8_t& o_len, CodecData& data);
-
-
-/*******************************************
- ************  PRIVATE FUNCTIONS ***********
- *******************************************/
-
-uint8_t Ipv4Codec::GetTTL (const EncState* enc)
-{
-    char dir;
-    uint8_t ttl;
-    const bool outer = enc->p->ptrs.ip_api.is_valid();
-
-    if ( !enc->p->flow )
-        return 0;
-
-    if ( enc->p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(enc->flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
-    else
-        dir = forward(enc->flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
-
-    // outermost ip is considered to be outer here,
-    // even if it is the only ip layer ...
-    ttl = stream.get_session_ttl(enc->p->flow, dir, outer);
-
-    // so if we don't get outer, we use inner
-    if ( 0 == ttl && outer )
-        ttl = stream.get_session_ttl(enc->p->flow, dir, false);
-
-    return ttl;
-}
-
-uint8_t Ipv4Codec::FwdTTL (const EncState* enc, uint8_t ttl)
-{
-    uint8_t new_ttl = GetTTL(enc);
-    if ( !new_ttl )
-        new_ttl = ttl;
-    return new_ttl;
-}
-
-uint8_t Ipv4Codec::RevTTL (const EncState* enc, uint8_t ttl)
-{
-    uint8_t new_ttl = GetTTL(enc);
-    if ( !new_ttl )
-        new_ttl = ( MAX_TTL - ttl );
-    if ( new_ttl < MIN_TTL )
-        new_ttl = MIN_TTL;
-    return new_ttl;
-}
 
 
 
@@ -686,52 +634,50 @@ static inline uint16_t IpId_Next ()
 /******************************************************************
  ******************** E N C O D E R  ******************************
  ******************************************************************/
-
-bool Ipv4Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
+                        EncState& enc, Buffer& buf)
 {
-    IP4Hdr *ho;
-
-    if (!update_buffer(out, sizeof(*ho)))
+    if (!buf.allocate(sizeof(IP4Hdr)))
         return false;
 
 
-    const IP4Hdr *hi = reinterpret_cast<const IP4Hdr*>(raw_in);
-    ho = reinterpret_cast<IP4Hdr*>(out->base);
+    const ip::IP4Hdr* const ip4h_in = reinterpret_cast<const IP4Hdr*>(raw_in);
+    ip::IP4Hdr* const ip4h_out = reinterpret_cast<IP4Hdr*>(buf.base);
 
     /* IPv4 encoded header is hardcoded 20 bytes */
-    ho->ip_verhl = 0x45;
-    ho->ip_off = 0;
-    ho->ip_id = IpId_Next();
-    ho->ip_tos = hi->ip_tos;
-    ho->ip_proto = hi->ip_proto;
-    ho->ip_len = htons((uint16_t)out->end);
-    ho->ip_csum = 0;
+    ip4h_out->ip_verhl = 0x45;
+    ip4h_out->ip_off = 0;
+    ip4h_out->ip_id = IpId_Next();
+    ip4h_out->ip_tos = ip4h_in->ip_tos;
+    ip4h_out->ip_proto = ip4h_in->ip_proto;
+    ip4h_out->ip_len = htons((uint16_t)buf.size());
+    ip4h_out->ip_csum = 0;
 
-    if ( forward(enc->flags) )
+    if ( forward(enc.flags) )
     {
-        ho->ip_src = hi->ip_src;
-        ho->ip_dst = hi->ip_dst;
-        ho->ip_ttl = FwdTTL(enc, hi->ip_ttl);
+        ip4h_out->ip_src = ip4h_in->ip_src;
+        ip4h_out->ip_dst = ip4h_in->ip_dst;
+        ip4h_out->ip_ttl = enc.get_ttl(ip4h_in->ip_ttl);
     }
     else
     {
-        ho->ip_src = hi->ip_dst;
-        ho->ip_dst = hi->ip_src;
-        ho->ip_ttl = RevTTL(enc, hi->ip_ttl);
+        ip4h_out->ip_src = ip4h_in->ip_dst;
+        ip4h_out->ip_dst = ip4h_in->ip_src;
+        ip4h_out->ip_ttl = enc.get_ttl(ip4h_in->ip_ttl);
     }
 
-    if ( enc->proto )
-    {
-        ho->ip_proto = enc->proto;
-        enc->proto = 0;
-    }
-
+    if ( enc.next_proto_set() )
+        ip4h_out->ip_proto = enc.next_proto;
 
     /* IPv4 encoded header is hardcoded 20 bytes, we save some
      * cycles and use the literal header size for checksum */
-    ho->ip_csum = checksum::ip_cksum((uint16_t *)ho, ip::IP4_HEADER_LEN);
+    ip4h_out->ip_csum = checksum::ip_cksum((uint16_t *)ip4h_out, ip::IP4_HEADER_LEN);
+
+    enc.next_proto = IPPROTO_ID_IPIP;
+    enc.next_ethertype = ETHERTYPE_IPV4;
     return true;
 }
+
 
 bool Ipv4Codec::update(Packet* p, Layer* lyr, uint32_t* len)
 {

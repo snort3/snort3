@@ -27,6 +27,7 @@ namespace ip_util
 {
 
 
+constexpr int IPV6_ORDER_MAX = 7;
 static inline int IPV6ExtensionOrder(uint8_t type)
 {
     switch (type)

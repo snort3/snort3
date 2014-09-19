@@ -163,7 +163,7 @@ void CodecManager::instantiate(CodecApiWrapper& wrap,
         for (auto id : ids)
         {
             if(s_proto_map[id] != 0)
-                WarningMessage("The Codecs %s and %s have both been registered "
+                ErrorMessage("The Codecs %s and %s have both been registered "
                     "for protocol_id %d. Codec %s will be used\n",
                     s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
                     id, cd->get_name());

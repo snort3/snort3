@@ -94,18 +94,12 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const) ;
-
-private:
-
-    static uint8_t RevTTL (const EncState* const enc, uint8_t ttl);
-    static uint8_t FwdTTL (const EncState* const enc, uint8_t ttl);
-    static uint8_t GetTTL (const EncState* const enc);
-
 };
 
 
@@ -116,56 +110,6 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const, const SnortData&);
 static inline void IPV6MiscTests(const SnortData&);
 static void CheckIPV6Multicast(const ip::IP6Hdr* const);
 static inline int CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
-
-/********************************************************************
- *************************   PRIVATE FUNCTIONS **********************
- ********************************************************************/
-
-uint8_t Ipv6Codec::GetTTL (const EncState* const enc)
-{
-    char dir;
-    uint8_t ttl;
-    const bool outer = enc->p->ptrs.ip_api.is_valid();
-
-    if ( !enc->p->flow )
-        return 0;
-
-    if ( enc->p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(enc->flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
-    else
-        dir = forward(enc->flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
-
-    // outermost ip is considered to be outer here,
-    // even if it is the only ip layer ...
-    ttl = stream.get_session_ttl(enc->p->flow, dir, outer);
-
-    // if we don't get outer, we use inner
-    if ( 0 == ttl && outer )
-        ttl = stream.get_session_ttl(enc->p->flow, dir, false);
-
-    return ttl;
-}
-
-uint8_t Ipv6Codec::FwdTTL (const EncState* const enc, uint8_t ttl)
-{
-    uint8_t new_ttl = GetTTL(enc);
-    if ( !new_ttl )
-        new_ttl = ttl;
-    return new_ttl;
-}
-
-uint8_t Ipv6Codec::RevTTL (const EncState* const enc, uint8_t ttl)
-{
-    uint8_t new_ttl = GetTTL(enc);
-    if ( !new_ttl )
-        new_ttl = ( MAX_TTL - ttl );
-    if ( new_ttl < MIN_TTL )
-        new_ttl = MIN_TTL;
-    return new_ttl;
-}
-
-
-
 
 /********************************************************************
  *************************   CLASS FUNCTIONS ************************
@@ -281,7 +225,7 @@ decodeipv6_fail:
 static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h, const SnortData& snort)
 {
     /* Only check for IPv6 over IPv4 */
-    if (snort.ip_api.is_ip4() && snort.ip_api.proto() == IPPROTO_IPV6)
+    if (snort.ip_api.is_ip4() && snort.ip_api.proto() == IPPROTO_ID_IPV6)
     {
         uint32_t isatap_interface_id = ntohl(ip6h->ip6_src.u6_addr32[2]) & 0xFCFFFFFF;
 
@@ -645,45 +589,43 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
  *************************  E N C O D E R  ************************
  ******************************************************************/
 
-bool Ipv6Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
+                        EncState& enc, Buffer& buf)
 {
-    if (!update_buffer(out, sizeof(ip::IP6Hdr)))
+    if (!buf.allocate(sizeof(ip::IP6Hdr)))
         return false;
 
-    const ip::IP6Hdr* hi = reinterpret_cast<const ip::IP6Hdr*>(raw_in);
-    ip::IP6Hdr* ho = (ip::IP6Hdr*)(out->base);
+    const ip::IP6Hdr* const hi = reinterpret_cast<const ip::IP6Hdr*>(raw_in);
+    ip::IP6Hdr* const ipvh_out = reinterpret_cast<ip::IP6Hdr*>(buf.base);
 
 
-    ho->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
 
 
-    if ( enc->proto )
+    if ( enc.next_proto_set() )
+        ipvh_out->ip6_next = enc.next_proto;
+    else
+        ipvh_out->ip6_next = hi->ip6_next;
+
+
+    if ( forward(enc.flags) )
     {
-        ho->ip6_next = enc->proto;
-        enc->proto = 0;
+        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ipvh_out->ip6_src.u6_addr8));
+        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ipvh_out->ip6_dst.u6_addr8));
+        ipvh_out->ip6_hoplim = enc.get_ttl(hi->ip6_hoplim);
     }
     else
     {
-        ho->ip6_next = hi->ip6_next;
-    }
-
-    if ( forward(enc->flags) )
-    {
-        memcpy(ho->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ho->ip6_src.u6_addr8));
-        memcpy(ho->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ho->ip6_dst.u6_addr8));
-
-        ho->ip6_hoplim = FwdTTL(enc, hi->ip6_hoplim);
-    }
-    else
-    {
-        memcpy(ho->ip6_src.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ho->ip6_src.u6_addr8));
-        memcpy(ho->ip6_dst.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ho->ip6_dst.u6_addr8));
-
-        ho->ip6_hoplim = RevTTL(enc, hi->ip6_hoplim);
+        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ipvh_out->ip6_src.u6_addr8));
+        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ipvh_out->ip6_dst.u6_addr8));
+        ipvh_out->ip6_hoplim = enc.get_ttl(hi->ip6_hoplim);
     }
 
     
-    ho->ip6_payload_len = htons((uint16_t)(out->end - sizeof(*ho)));
+    ipvh_out->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
+    ipvh_out->ip6_payload_len = htons(buf.size());
+
+    enc.next_proto = IPPROTO_ID_IPV6;
+    enc.next_ethertype = ETHERTYPE_IPV6;
     return true;
 }
 

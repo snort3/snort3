@@ -229,15 +229,16 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         else if (!strcasecmp("proto", type))
         {
             // api returns zero if invalid
-            switch (p->ptrs.ip_api.proto())
+            switch (p->type())
             {
-                case IPPROTO_UDP:
+                case PktType::UDP:
                     TextLog_Puts(csv_log, "UDP");
                     break;
-                case IPPROTO_TCP:
+                case PktType::TCP:
                     TextLog_Puts(csv_log, "TCP");
                     break;
-                case IPPROTO_ICMP:
+                case PktType::ICMP4:
+                case PktType::ICMP6:
                     TextLog_Puts(csv_log, "ICMP");
                     break;
                 default:
@@ -280,10 +281,10 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         else if (!strcasecmp("src_port", type))
         {
             // api return 0 if invalid
-            switch (p->ptrs.ip_api.proto())
+            switch (p->type())
             {
-                case IPPROTO_UDP:
-                case IPPROTO_TCP:
+                case PktType::UDP:
+                case PktType::TCP:
                     TextLog_Print(csv_log, "%d", p->ptrs.sp);
                     break;
                 default:
@@ -292,10 +293,10 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
         }
         else if (!strcasecmp("dst_port", type))
         {
-            switch (p->ptrs.ip_api.proto())
+            switch (p->type())
             {
-                case IPPROTO_UDP:
-                case IPPROTO_TCP:
+                case PktType::UDP:
+                case PktType::TCP:
                     TextLog_Print(csv_log, "%d", p->ptrs.dp);
                     break;
                 default:

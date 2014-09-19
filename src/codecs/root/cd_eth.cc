@@ -67,7 +67,8 @@ public:
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet*const );
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 };
@@ -160,33 +161,42 @@ void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 // ethernet
 //-------------------------------------------------------------------------
 
-bool EthCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
+                      EncState& enc, Buffer& buf)
 {
     // not raw ip -> encode layer 2
-    int raw = ( enc->flags & ENC_FLAG_RAW );
+    int raw = ( enc.flags & ENC_FLAG_RAW );
     const eth::EtherHdr* hi = reinterpret_cast<const eth::EtherHdr*>(raw_in);
     eth::EtherHdr* ho;
 
     // if not raw ip AND out buf is empty
-    if ( !raw && (out->off == out->end) )
+    if ( !raw && (buf.size() == 0) )
     {
         // for alignment
-        out->off = out->end = SPARC_TWIDDLE;
+        if (!buf.allocate(SPARC_TWIDDLE))
+            return false;
+
+        buf.off = SPARC_TWIDDLE;
     }
 
     // if not raw ip OR out buf is not empty
-    if ( !raw || (out->off != out->end) )
+    if ( !raw || (buf.size() != 0) )
     {
         // we get here for outer-most layer when not raw ip
         // we also get here for any encapsulated ethernet layer.
-        if (!update_buffer(out, sizeof(*ho)))
+        if (!buf.allocate(sizeof(*ho)))
             return false;
 
-        ho = reinterpret_cast<eth::EtherHdr*>(out->base);
-        ho->ether_type = hi->ether_type;
+        ho = reinterpret_cast<eth::EtherHdr*>(buf.base);
+
+        if (enc.ethertype_set())
+            ho->ether_type = enc.next_ethertype;
+        else
+            ho->ether_type = hi->ether_type;
+
         uint8_t *dst_mac = PacketManager::encode_get_dst_mac();
         
-        if ( forward(enc->flags) )
+        if ( forward(enc.flags) )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
             /*If user configured remote MAC address, use it*/
@@ -206,6 +216,8 @@ bool EthCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
         }
     }
 
+    enc.next_ethertype = 0;
+    enc.next_proto = ENC_PROTO_UNSET;
     return true;
 }
 
@@ -235,24 +247,16 @@ void EthCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{
-    return new EthModule;
-}
+{ return new EthModule; }
 
 static void mod_dtor(Module* m)
-{
-    delete m;
-}
+{ delete m; }
 
 static Codec* ctor(Module*)
-{
-    return new EthCodec();
-}
+{ return new EthCodec(); }
 
 static void dtor(Codec *cd)
-{
-    delete cd;
-}
+{ delete cd; }
 
 static const CodecApi eth_api =
 {

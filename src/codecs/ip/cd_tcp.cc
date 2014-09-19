@@ -98,7 +98,8 @@ public:
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 };
@@ -588,107 +589,99 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 // acknowledges the SYN.
 //-------------------------------------------------------------------------
 
-bool TcpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
+                        EncState& enc, Buffer& buf)
 {
-    int ctl;
-    const tcp::TCPHdr* hi = reinterpret_cast<const tcp::TCPHdr*>(raw_in);
-    bool attach_payload = (enc->type == EncodeType::ENC_TCP_FIN || 
-        enc->type == EncodeType::ENC_TCP_PUSH);
+    const tcp::TCPHdr* const hi = reinterpret_cast<const tcp::TCPHdr*>(raw_in);
+//    bool attach_payload = (enc->type == EncodeType::ENC_TCP_FIN ||  enc->type == EncodeType::ENC_TCP_PUSH);
 
-    // working our way backwards throught he packet. First, attach a payload
-    if ( attach_payload && enc->payLoad && enc->payLen > 0 )
-    {
-        if (!update_buffer(out, enc->payLen))
-            return false;
-        memcpy(out->base, enc->payLoad, enc->payLen);
-    }
-
-    if (!update_buffer(out, hi->hdr_len()))
+    if (!buf.allocate(sizeof(tcp::TCPHdr)))
         return false;
 
-    tcp::TCPHdr* ho = reinterpret_cast<tcp::TCPHdr*>(out->base);
-    ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
+    tcp::TCPHdr* tcph_out = reinterpret_cast<tcp::TCPHdr*>(buf.base);
+    const int ctl = (hi->th_flags & TH_SYN) ? 1 : 0;
 
-    if ( forward(enc->flags) )
+    if ( forward(enc.flags) )
     {
-        ho->th_sport = hi->th_sport;
-        ho->th_dport = hi->th_dport;
+        tcph_out->th_sport = hi->th_sport;
+        tcph_out->th_dport = hi->th_dport;
 
         // th_seq depends on whether the data passes or drops
-        if ( DAQ_GetInterfaceMode(enc->p->pkth) != DAQ_MODE_INLINE )
-            ho->th_seq = htonl(ntohl(hi->th_seq) + enc->p->dsize + ctl);
+        if (enc.flags & ENC_FLAG_INLINE)
+            tcph_out->th_seq = hi->th_seq;
         else
-            ho->th_seq = hi->th_seq;
+            tcph_out->th_seq = htonl(ntohl(hi->th_seq) + enc.dsize + ctl);
 
-        ho->th_ack = hi->th_ack;
+        tcph_out->th_ack = hi->th_ack;
     }
     else
     {
-        ho->th_sport = hi->th_dport;
-        ho->th_dport = hi->th_sport;
+        tcph_out->th_sport = hi->th_dport;
+        tcph_out->th_dport = hi->th_sport;
 
-        ho->th_seq = hi->th_ack;
-        ho->th_ack = htonl(ntohl(hi->th_seq) + enc->p->dsize + ctl);
+        tcph_out->th_seq = hi->th_ack;
+        tcph_out->th_ack = htonl(ntohl(hi->th_seq) + enc.dsize + ctl);
     }
 
-    if ( enc->flags & ENC_FLAG_SEQ )
+    if ( enc.flags & ENC_FLAG_SEQ )
     {
-        uint32_t seq = ntohl(ho->th_seq);
-        seq += (enc->flags & ENC_FLAG_VAL);
-        ho->th_seq = htonl(seq);
+        uint32_t seq = ntohl(tcph_out->th_seq);
+        seq += (enc.flags & ENC_FLAG_VAL);
+        tcph_out->th_seq = htonl(seq);
     }
 
-    ho->th_offx2 = 0;
-    ho->set_offset(tcp::TCP_HEADER_LEN >> 2);
-    ho->th_win = ho->th_urp = 0;
+    tcph_out->th_offx2 = 0;
+    tcph_out->set_offset(tcp::TCP_HEADER_LEN >> 2);
+    tcph_out->th_win = 0;
+    tcph_out->th_urp = 0;
 
-    if ( attach_payload )
+    if ( (enc.flags & (ENC_FLAG_PSH | ENC_FLAG_FIN)) )
     {
-        ho->th_flags = TH_ACK;
-        if ( enc->type == EncodeType::ENC_TCP_PUSH )
+        tcph_out->th_flags = TH_ACK;
+        if ( enc.flags & ENC_FLAG_PSH )
         {
-            ho->th_flags |= TH_PUSH;
-            ho->th_win = htons(65535);
+            tcph_out->th_flags |= TH_PUSH;
+            tcph_out->th_win = htons(65535);
         }
         else
         {
-            ho->th_flags |= TH_FIN;
+            tcph_out->th_flags |= TH_FIN;
         }
     }
     else
     {
-        ho->th_flags = TH_RST | TH_ACK;
+        tcph_out->th_flags = TH_RST | TH_ACK;
     }
 
     // in case of ip6 extension headers, this gets next correct
-    enc->proto = IPPROTO_TCP;
-    ho->th_sum = 0;
-    const ip::IpApi* const ip_api = &enc->p->ptrs.ip_api;
+    enc.next_proto = IPPROTO_ID_TCP;
+    tcph_out->th_sum = 0;
+    const ip::IpApi& ip_api = enc.ip_api;
 
-    if (ip_api->is_ip4()) {
+    if (ip_api.is_ip4()) {
         checksum::Pseudoheader ps;
-        int len = buff_diff(out, (uint8_t*)ho);
+        int len = buf.size();
 
-        const IP4Hdr* const ip4h = ip_api->get_ip4h();
+        const IP4Hdr* const ip4h = ip_api.get_ip4h();
         ps.sip = ip4h->get_src();
         ps.dip = ip4h->get_dst();
         ps.zero = 0;
-        ps.protocol = IPPROTO_TCP;
+        ps.protocol = IPPROTO_ID_TCP;
         ps.len = htons((uint16_t)len);
-        ho->th_sum = checksum::tcp_cksum((uint16_t *)ho, len, &ps);
+        tcph_out->th_sum = checksum::tcp_cksum((uint16_t *)tcph_out, len, &ps);
     }
     else
     {
         checksum::Pseudoheader6 ps6;
-        int len = buff_diff(out, (uint8_t*) ho);
+        int len = buf.size();
 
-        const ip::IP6Hdr* const ip6h = ip_api->get_ip6h();
+        const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();
         memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
         memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
-        ps6.protocol = IPPROTO_TCP;
+        ps6.protocol = IPPROTO_ID_TCP;
         ps6.len = htons((uint16_t)len);
-        ho->th_sum = checksum::tcp_cksum((uint16_t *)ho, len, &ps6);
+        tcph_out->th_sum = checksum::tcp_cksum((uint16_t *)tcph_out, len, &ps6);
     }
 
     return true;

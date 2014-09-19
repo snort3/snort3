@@ -383,7 +383,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
             return -1;
     }
 
-    if(p->ptrs.ip_api.is_ip4())
+    if(g_tmp_pkt->is_ip4())
     {
         ((IP4Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip4h())->set_proto(IPPROTO_PS);
     }

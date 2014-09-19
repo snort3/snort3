@@ -122,7 +122,8 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
 
-    virtual bool encode(EncState*, Buffer* out, const uint8_t *raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
@@ -143,7 +144,7 @@ static inline void UDPMiscTests(SnortData& snort, uint32_t pay_len);
 
 void UdpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_UDP);
+    v.push_back(IPPROTO_ID_UDP);
 }
 
 
@@ -335,151 +336,59 @@ void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt, const Packet
  ******************** E N C O D E R  ******************************
  ******************************************************************/
 
-namespace
-{
 
-typedef struct {
-    uint8_t type;
-    uint8_t code;
-    uint16_t cksum;
-    uint32_t unused;
-} IcmpHdr;
-
-} // namespace
-
-
-
-bool UdpCodec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
+                        EncState& enc, Buffer& buf)
 {   
-    const ip::IpApi& ip_api = enc->p->ptrs.ip_api;
+    // If we enter this function, this packe is some sort of tunnel.
 
-    if (enc->p->proto_bits & PROTO_BIT__GTP)
+    if(!buf.allocate(sizeof(udp::UDPHdr)))
+        return false;
+
+    const udp::UDPHdr* const hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);
+    udp::UDPHdr* const udph_out = reinterpret_cast<udp::UDPHdr*>(buf.base);
+
+    if ( forward(enc.flags) )
     {
-        const udp::UDPHdr* hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);
-        udp::UDPHdr* ho;
-
-        if (!update_buffer(out, sizeof(*ho)))
-            return false;
-
-        ho = reinterpret_cast<udp::UDPHdr*>(out->base);
-
-        if ( forward(enc->flags) )
-        {
-            ho->uh_sport = hi->uh_sport;
-            ho->uh_dport = hi->uh_dport;
-        }
-        else
-        {
-            ho->uh_sport = hi->uh_dport;
-            ho->uh_dport = hi->uh_sport;
-        }
-
-        uint16_t len = htons((uint16_t)out->end);
-        ho->uh_len = htons((uint16_t)len);
-        ho->uh_chk = 0;
-
-        if (ip_api.is_ip4())
-        {
-            checksum::Pseudoheader ps;
-            const IP4Hdr* const ip4h = ip_api.get_ip4h();
-            ps.sip = ip4h->get_src();
-            ps.dip = ip4h->get_dst();
-            ps.zero = 0;
-            ps.protocol = IPPROTO_UDP;
-            ps.len = ho->uh_len;
-            ho->uh_chk = checksum::udp_cksum((uint16_t *)ho, len, &ps);
-        }
-        else
-        {
-            checksum::Pseudoheader6 ps6;
-            const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();
-            memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
-            memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
-            ps6.zero = 0;
-            ps6.protocol = IPPROTO_UDP;
-            ps6.len = ho->uh_len;
-            ho->uh_chk = checksum::udp_cksum((uint16_t *)ho, len, &ps6);
-        }
-
-        return true;
+        udph_out->uh_sport = hi->uh_sport;
+        udph_out->uh_dport = hi->uh_dport;
+    }
+    else
+    {
+        udph_out->uh_sport = hi->uh_dport;
+        udph_out->uh_dport = hi->uh_sport;
     }
 
-    // if this is not GTP, we want to return an ICMP unreachable packet
-    else if ( ip_api.is_ip4())
+    const uint16_t len = (uint16_t)buf.size();
+    udph_out->uh_len = htons((uint16_t)len);
+    udph_out->uh_chk = 0;
+
+    const ip::IpApi& ip_api = enc.ip_api;
+    if (ip_api.is_ip4())
     {
-        // copied directly from Icmp4Codec::encode()
-        uint8_t* p;
-        IcmpHdr* ho;
-        const uint8_t ip_len = ip_api.get_ip4h()->get_hlen() << 2;
-
-        if (!update_buffer(out, sizeof(*ho) + ip_len + icmp::ICMP_UNREACH_DATA_LEN))
-            return false;
-
-        const uint16_t *hi = reinterpret_cast<const uint16_t*>(raw_in);
-        ho = reinterpret_cast<IcmpHdr*>(out->base);
-
-        enc->proto = IPPROTO_ID_ICMPV4;
-        ho->type = icmp::IcmpType::DEST_UNREACH;
-        ho->code = ip_util::get_icmp4_code(enc->type);
-        ho->cksum = 0;
-        ho->unused = 0;
-
-        // copy original ip header
-        p = out->base + sizeof(IcmpHdr);
-        memcpy(p, ip_api.get_ip4h(), ip_len);
-
-        // copy first 8 octets of original ip data (ie udp header)
-        p += ip_len;
-        memcpy(p, hi, icmp::ICMP_UNREACH_DATA_LEN);
-
-        ho->cksum = checksum::icmp_cksum((uint16_t *)ho, buff_diff(out, (uint8_t *)ho));
+        checksum::Pseudoheader ps;
+        const IP4Hdr* const ip4h = ip_api.get_ip4h();
+        ps.sip = ip4h->get_src();
+        ps.dip = ip4h->get_dst();
+        ps.zero = 0;
+        ps.protocol = IPPROTO_ID_UDP;
+        ps.len = udph_out->uh_len;
+        udph_out->uh_chk = checksum::udp_cksum((uint16_t *)udph_out, len, &ps);
     }
     else
     {
         checksum::Pseudoheader6 ps6;
-        IcmpHdr* ho;
-
-        // ip + udp headers are copied separately because there
-        // may be intervening extension headers which aren't copied
-
-
-        // copy first 8 octets of original ip data (ie udp header)
-        // TBD: copy up to minimum MTU worth of data
-        if (!update_buffer(out, icmp::ICMP_UNREACH_DATA_LEN))
-            return false;
-        memcpy(out->base, raw_in, icmp::ICMP_UNREACH_DATA_LEN);
-
-        // copy original ip header
-        if (!update_buffer(out, ip::IP6_HEADER_LEN))
-            return false;
-
-        memcpy(out->base, ip_api.get_ip6h(), ip::IP6_HEADER_LEN);
-        ((ip::IP6Hdr*)out->base)->ip6_next = IPPROTO_UDP;
-
-
-        if (!update_buffer(out, sizeof(*ho)))
-            return false;
-
-        ho = reinterpret_cast<IcmpHdr*>(out->base);
-        ho->type = static_cast<uint8_t>(icmp::Icmp6Types::UNREACH);
-        ho->code = static_cast<uint8_t>(ip_util::get_icmp6_code(enc->type));
-        ho->cksum = 0;
-        ho->unused = 0;
-
-        // tell next layer this is ICMP6, not udp
-        enc->proto = IPPROTO_ID_ICMPV6;
-
-
-        int len = buff_diff(out, (uint8_t *)ho);
-        memcpy(ps6.sip, ip_api.get_ip6h()->get_src()->u6_addr8, sizeof(ps6.sip));
-        memcpy(ps6.dip, ip_api.get_ip6h()->get_dst()->u6_addr8, sizeof(ps6.dip));
+        const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();
+        memcpy(ps6.sip, ip6h->get_src()->u6_addr8, sizeof(ps6.sip));
+        memcpy(ps6.dip, ip6h->get_dst()->u6_addr8, sizeof(ps6.dip));
         ps6.zero = 0;
-        ps6.protocol = IPPROTO_ICMPV6;
-        ps6.len = htons((uint16_t)(len));
-
-        ho->cksum = checksum::icmp_cksum((uint16_t *)ho, len, &ps6);
-
+        ps6.protocol = IPPROTO_ID_UDP;
+        ps6.len = udph_out->uh_len;
+        udph_out->uh_chk = checksum::udp_cksum((uint16_t*)udph_out, len, &ps6);
     }
+
+    enc.next_proto = IPPROTO_ID_UDP;
+    enc.next_ethertype = 0;
     return true;
 }
 
@@ -502,7 +411,7 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
             ps.sip = ip4h->get_src();
             ps.dip = ip4h->get_dst();
             ps.zero = 0;
-            ps.protocol = IPPROTO_UDP;
+            ps.protocol = IPPROTO_ID_UDP;
             ps.len = htons((uint16_t)*len);
             h->uh_chk = checksum::udp_cksum((uint16_t *)h, *len, &ps);
         }
@@ -513,7 +422,7 @@ bool UdpCodec::update(Packet* p, Layer* lyr, uint32_t* len)
             memcpy(ps6.sip, &ip6h->ip6_src.u6_addr32, sizeof(ps6.sip));
             memcpy(ps6.dip, &ip6h->ip6_dst.u6_addr32, sizeof(ps6.dip));
             ps6.zero = 0;
-            ps6.protocol = IPPROTO_UDP;
+            ps6.protocol = IPPROTO_ID_UDP;
             ps6.len = htons((uint16_t)*len);
             h->uh_chk = checksum::udp_cksum((uint16_t *)h, *len, &ps6);
         }

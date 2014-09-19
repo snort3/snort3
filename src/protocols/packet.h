@@ -151,8 +151,6 @@ constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
 constexpr uint8_t IP_OPTMAX = 40;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 constexpr uint8_t IP6_EXTMAX = 8;
-constexpr uint8_t MIN_TTL = 64;
-constexpr uint8_t MAX_TTL = 255;
 constexpr uint8_t LAYER_MAX = 32;
 
 
@@ -206,6 +204,15 @@ struct Packet
 
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
+
+    inline bool is_ip4() const
+    { return ptrs.ip_api.is_ip4(); }
+
+    inline bool is_ip6() const
+    { return ptrs.ip_api.is_ip6(); }
+
+    inline bool has_valid_ip() const
+    { return ptrs.ip_api.is_valid(); }
 };
 
 #define PKT_ZERO_LEN offsetof(Packet, pkth)

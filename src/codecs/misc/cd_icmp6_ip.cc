@@ -54,7 +54,6 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool encode(EncState *enc, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
 
@@ -126,18 +125,6 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
     // if you changed lyr_len, you MUST change the encode()
     // function below to copy and update_buffer() correctly!
     codec.lyr_len = ip::IP6_HEADER_LEN;
-    return true;
-}
-
-
-bool Icmp6IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
-{
-    if (!update_buffer(out, ip::IP6_HEADER_LEN))
-        return false;
-
-
-    memcpy(out->base, raw_in, ip::IP6_HEADER_LEN);
-    ((ip::IP6Hdr*)out->base)->ip6_next = IPPROTO_UDP;
     return true;
 }
 
