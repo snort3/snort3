@@ -257,14 +257,14 @@ int Active_IsUNRCandidate(const Packet* p)
     // FIXIT-J allow unr to tcp/udp/icmp4/icmp6 only or for all
     switch ( GetInnerProto(p) )
     {
-        case IPPROTO_ID_UDP:
-        case IPPROTO_ID_TCP:
-        case IPPROTO_ID_ICMPV4:
-        case IPPROTO_ID_ICMPV6:
-            return 1;
+    case IPPROTO_ID_UDP:
+    case IPPROTO_ID_TCP:
+    case IPPROTO_ID_ICMPV4:
+    case IPPROTO_ID_ICMPV6:
+        return 1;
 
-        default:
-            break;
+    default:
+        break;
     }
     return 0;
 }

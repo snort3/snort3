@@ -98,9 +98,9 @@ void ModHook::init()
         n++;
 
     // constructing reg here may seem like overkill
-    // why not just typedef Command to luaL_reg?
+    // ... why not just typedef Command to luaL_reg?
     // because the help would not be supplied or it
-    // would be out of data, out of sync, etc. QED
+    // would be out of date, out of sync, etc. QED
     reg = new luaL_reg[++n];
     unsigned k = 0;
 
@@ -308,8 +308,8 @@ static bool set_value(const char* fqn, Value& v)
  
     if ( !p )
     {
-        FatalError("can't find %s\n", fqn);
-        // error messg
+        ErrorMessage("ERROR can't find %s\n", fqn);
+        ++s_errors;
         return false;
     }
 
@@ -362,9 +362,6 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
     if ( s_current != key )
     {
-        if ( !s_current.size() )
-            LogMessage("Configuring modules:\n");
-
         LogMessage("\t %s\n", key.c_str());
         s_current = key;
     }
@@ -442,7 +439,10 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     s_modules.push_back(mh);
 
     if ( mh->reg )
-        Shell::install(m->get_name(), mh->reg);
+    {
+        SnortConfig* sc = snort_conf;
+        sc->policy_map->get_shell()->install(m->get_name(), mh->reg);
+    }
 
 #ifdef PERF_PROFILING
     RegisterProfile(m);
@@ -712,6 +712,10 @@ void ModuleManager::show_rules(const char* pfx)
     }    
 }
 
+// FIXIT-L currently no way to know whether a module was activated or not
+// so modules with common rules will cause duplicate sid warnings
+// eg http_inspect and nhttp_inspect both have 119:1-34
+// only to avoid that now is to not load plugins with common rules
 void ModuleManager::load_rules(SnortConfig* sc)
 {
     // FIXIT-M callers of ParseConfigString() should not have to push parse loc

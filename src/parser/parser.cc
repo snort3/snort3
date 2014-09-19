@@ -598,7 +598,6 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
     if ( !fname )
         fname = "";
 
-    push_parse_location(fname);
     InitParser();
 
     /* Setup the default rule action anchor points
@@ -632,9 +631,24 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
     }
 
     if ( *fname )
-        Shell::configure(sc, fname);
+    {
+        Shell* sh = sc->policy_map->get_shell();
+        sh->set_file(fname);
+    }
 
-    pop_parse_location();
+    for ( unsigned i = 0; true; i++ )
+    {
+        Shell* sh = sc->policy_map->get_shell(i);
+
+        if ( !sh )
+            break;
+
+        fname = sh->get_file();
+        LogMessage("Loading %s:\n", fname);
+        push_parse_location(fname);
+        sh->configure(sc);
+        pop_parse_location();
+    }
     return sc;
 }
 

@@ -26,13 +26,27 @@
 class Shell
 {
 public:
-    static void init();
-    static void term();
+    Shell(const char* file = nullptr);
+    ~Shell();
 
-    static void set_overrides(const char*);
-    static void configure(struct SnortConfig* sc, const char* file);
-    static void install(const char*, const struct luaL_Reg*);
-    static void execute(const char*, std::string&);
+    void set_file(const char*);
+    void set_overrides(const char*);
+
+    void configure(struct SnortConfig*);
+    void install(const char*, const struct luaL_Reg*);
+    void execute(const char*, std::string&);
+
+    const char* get_file() const
+    { return file.c_str(); };
+
+    bool get_loaded() const
+    { return loaded; };
+
+private:
+    bool loaded;
+    struct lua_State* lua;
+    std::string file;
+    std::string overrides;
 };
 
 #endif

@@ -604,7 +604,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         list_plugins(sc, v.get_string());
 
     else if ( v.is("--lua") )
-        Shell::set_overrides(v.get_string());
+        sc->policy_map->get_shell()->set_overrides(v.get_string());
 
     else if ( v.is("--markup") )
         config_markup(sc, v.get_string());

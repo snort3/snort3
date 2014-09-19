@@ -39,14 +39,13 @@
 #include "managers/inspector_manager.h"
 #include "sfip/sf_ip.h"
 
-FlowControl::FlowControl(Inspector* pi)
+FlowControl::FlowControl()
 {
     ip_cache = nullptr;
     icmp_cache = nullptr;
     tcp_cache = nullptr;
     udp_cache = nullptr;
     exp_cache = nullptr;
-    binder = pi;
 }
 
 FlowControl::~FlowControl()
@@ -333,7 +332,7 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
     if ( !flow->flow_state )
     {
         init_roles(p, flow);
-        binder->eval(p);
+        InspectorManager::get_binder()->eval(p);
         ++news;
     }
 

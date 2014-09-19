@@ -521,7 +521,9 @@ static void shell(int fd)
 {
     string rsp;
     request.read(fd);
-    Shell::execute(request.get(), rsp);
+
+    SnortConfig* sc = snort_conf;
+    sc->policy_map->get_shell()->execute(request.get(), rsp);
 
     if ( rsp.size() )
         request.respond(rsp.c_str());
