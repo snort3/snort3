@@ -643,6 +643,8 @@ static inline uint16_t GetTcpReassemblyPolicy(int os_policy)
 // config methods
 //-------------------------------------------------------------------------
 
+
+
 StreamTcpConfig::StreamTcpConfig()
 {
     policy = STREAM_POLICY_DEFAULT;
@@ -652,6 +654,14 @@ StreamTcpConfig::StreamTcpConfig()
     max_window = 0;
     hs_timeout = -1;
     flags = 0;
+
+    flush_factor = 0;
+    session_on_syn = 0;  // FIXIT-L configurable via module?
+    overlap_limit = 0;
+
+    hs_timeout = 0;
+    footprint = 0;
+    paf_max = 16384;
 
     max_queued_bytes = S5_DEFAULT_MAX_QUEUED_BYTES;
     max_queued_segs = S5_DEFAULT_MAX_QUEUED_SEGS;

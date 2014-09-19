@@ -207,7 +207,7 @@ void PacketManager::decode(
 
 
         // internal statistics and record keeping
-        push_layer(p, prev_prot_id, pkt, codec_data.lyr_len);
+        push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
         mapped_prot = CodecManager::s_proto_map[codec_data.next_prot_id];
         prev_prot_id = codec_data.next_prot_id;

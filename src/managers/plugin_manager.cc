@@ -79,9 +79,11 @@ struct Symbol
     unsigned version;
 };
 
+#if 1
+// sequence must match PlugType definition
+// compiler catches too many but not too few
 static Symbol symbols[PT_MAX] =
 {
-    // sequence must match PlugType definition
     { "data", 0 },
     { "codec", CDAPI_VERSION },
     { "inspector", INSAPI_VERSION },
@@ -91,7 +93,23 @@ static Symbol symbols[PT_MAX] =
     { "so_rule", SOAPI_VERSION },
     { "logger", LOGAPI_VERSION }
 };
- 
+#else 
+// this gets around the sequence issue with some compilers
+// but does not fail if we are missing an entry :(
+#define stringify(name) # name
+static Symbol symbols[PT_MAX] =
+{
+    [PT_DATA] = { stringify(PT_DATA), 0 },
+    [PT_CODEC] = { stringify(PT_CODEC), CDAPI_VERSION },
+    [PT_INSPECTOR] = { stringify(PT_INSPECTOR), INSAPI_VERSION },
+    [PT_IPS_ACTION] = { stringify(PT_IPS_ACTION), ACTAPI_VERSION },
+    [PT_IPS_OPTION] = { stringify(PT_IPS_OPTION), IPSAPI_VERSION },
+    [PT_SEARCH_ENGINE] = { stringify(PT_SEARCH_ENGINE), SEAPI_VERSION },
+    [PT_SO_RULE] = { stringify(PT_SO_RULE), SOAPI_VERSION },
+    [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION }
+};
+#endif
+
 const char* PluginManager::get_type_name(PlugType pt)
 {
     if ( pt >= PT_MAX )

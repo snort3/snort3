@@ -202,7 +202,7 @@ bool IpsManager::option_begin(
         ParseError("can't initialize %s", key);
         return false;
     }
-    current_keyword = std::string(key);
+    current_keyword = key;
     current_params = current_module ? current_module->get_parameters() : nullptr;
     return true;
 }

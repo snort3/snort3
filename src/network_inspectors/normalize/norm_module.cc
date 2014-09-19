@@ -228,8 +228,8 @@ bool NormalizeModule::set_tcp(const char*, Value& v, SnortConfig*)
 
 bool NormalizeModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
-    const char* ip4 = "normalize.ip4";
-    const char* tcp = "normalize.tcp";
+    const char* ip4 = NORM_NAME ".ip4";
+    const char* tcp = NORM_NAME ".tcp";
 
     if ( !strncmp(fqn, ip4, strlen(ip4)) )
         return set_ip4(fqn, v, sc);
