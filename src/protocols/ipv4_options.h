@@ -23,6 +23,7 @@
 #define PROTOCOLS_IP_OPTIONS_H
 
 #include <cstdint>
+#include "main/snort_types.h"
 
 struct Packet;
 
@@ -32,7 +33,8 @@ namespace ip
 
 struct IP4Hdr;
 
-enum class IPOptionCodes : std::uint8_t {
+enum class IPOptionCodes : std::uint8_t
+{
     EOL = 0x00,
     NOP = 0x01,
     RR = 0x07,
@@ -84,7 +86,7 @@ struct IpOptions
  * relly creative name ... right
  * Use IpOptionIter ... this is the placehold
  */
-class IpOptionIteratorIter
+class SO_PUBLIC IpOptionIteratorIter
 {
 public:
     IpOptionIteratorIter(const IpOptions*);
@@ -119,7 +121,7 @@ private:
  *          do_something
  *      }
  */
-class IpOptionIterator
+class SO_PUBLIC IpOptionIterator
 {
 public:
     /* CONSTRUCTOR VALID AFTER DECODE()

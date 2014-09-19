@@ -23,7 +23,6 @@
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/arp.h"
 #include "protocols/packet.h"
 #include "log/text_log.h"
@@ -56,8 +55,6 @@ public:
     ArpCodec() : Codec(CD_ARP_NAME){};
     ~ArpCodec(){};
 
-
-    virtual PROTO_ID get_proto_id() { return PROTO_ARP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
@@ -99,7 +96,7 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
     codec.proto_bits |= PROTO_BIT__ARP;
     codec.lyr_len = sizeof(arp::EtherARP);
-    snort.packet_type = PKT_TYPE__ARP;
+    snort.set_pkt_type(PktType::ARP);
 
     return true;
 }

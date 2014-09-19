@@ -23,6 +23,7 @@
 #define PROTOCOLS_TCP_OPTIONS_H
 
 #include <cstdint>
+#include "main/snort_types.h"
 
 struct Packet;
 
@@ -131,7 +132,7 @@ struct TcpOption
  * Use TcpOptIterator ... this should NOT be called directly
  * unless you want to an actual iterator or some buggy code.
  */
-class TcpOptIteratorIter
+class SO_PUBLIC TcpOptIteratorIter
 {
 public:
     TcpOptIteratorIter(const TcpOption*);
@@ -163,7 +164,7 @@ private:
  *          do_something
  *      }
  */
-class TcpOptIterator
+class SO_PUBLIC TcpOptIterator
 {
 public:
     /* CONSTRUCTOR VALID AFTER DECODE()

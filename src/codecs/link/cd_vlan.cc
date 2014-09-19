@@ -32,7 +32,6 @@
 #include "protocols/vlan.h"
 #include "protocols/eth.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
 
@@ -66,7 +65,6 @@ public:
     VlanCodec() : Codec(CD_VLAN_NAME){};
     ~VlanCodec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_VLAN; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,

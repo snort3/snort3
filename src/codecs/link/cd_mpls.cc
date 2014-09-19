@@ -32,7 +32,6 @@
 #include "packet_io/active.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/mpls.h"
-#include "codecs/sf_protocols.h"
 #include "main/snort_config.h"
 #include "main/snort.h"
 #include "log/text_log.h"
@@ -116,7 +115,6 @@ public:
     MplsCodec() : Codec(CD_MPLS_NAME){};
     ~MplsCodec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_MPLS; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,

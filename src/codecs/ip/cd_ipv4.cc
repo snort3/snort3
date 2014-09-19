@@ -42,7 +42,6 @@
 #include "main/thread.h"
 #include "stream/stream_api.h"
 #include "codecs/decode_module.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/ip.h"
 #include "protocols/ipv4_options.h"
 #include "log/text_log.h"
@@ -100,7 +99,6 @@ public:
     Ipv4Codec() : Codec(CD_IPV4_NAME){};
     ~Ipv4Codec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_IP4; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
@@ -367,7 +365,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         codec_events::decoder_event(DECODE_BAD_FRAGBITS);
 
 
-    snort.packet_type = PKT_TYPE__IP;
+    snort.set_pkt_type(PktType::IP);
     codec.proto_bits |= PROTO_BIT__IP;
     IPMiscTests(iph, ip::IP4_HEADER_LEN + ip_opt_len);
     codec.lyr_len = hlen;

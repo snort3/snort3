@@ -24,7 +24,6 @@
 #include "codecs/decode_module.h"
 #include "codecs/codec_events.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/packet.h"
 
 #define CD_ERSPAN2_NAME "erspan2"
@@ -56,7 +55,6 @@ public:
     Erspan2Codec() : Codec(CD_ERSPAN2_NAME){};
     ~Erspan2Codec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_ERSPAN; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     

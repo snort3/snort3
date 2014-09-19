@@ -29,14 +29,21 @@ public:
     Shell(const char* file = nullptr);
     ~Shell();
 
-    void configure(struct SnortConfig*);
-    void configure(struct SnortConfig*, const char* file);
-
+    void set_file(const char*);
     void set_overrides(const char*);
+
+    void configure(struct SnortConfig*);
     void install(const char*, const struct luaL_Reg*);
     void execute(const char*, std::string&);
 
+    const char* get_file() const
+    { return file.c_str(); };
+
+    bool get_loaded() const
+    { return loaded; };
+
 private:
+    bool loaded;
     struct lua_State* lua;
     std::string file;
     std::string overrides;

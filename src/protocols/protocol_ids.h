@@ -1,6 +1,5 @@
 /*
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -51,6 +50,8 @@
 constexpr uint16_t IPPROTO_ID_HOPOPTS = 0;
 constexpr uint16_t IPPROTO_ID_ICMPV4 = 1;
 constexpr uint16_t IPPROTO_ID_IPIP = 4;
+constexpr uint16_t IPPROTO_ID_TCP = 6;
+constexpr uint16_t IPPROTO_ID_UDP = 17;
 constexpr uint16_t IPPROTO_ID_IPV6 = 41;
 constexpr uint16_t IPPROTO_ID_ROUTING = 43;
 constexpr uint16_t IPPROTO_ID_FRAGMENT = 44;

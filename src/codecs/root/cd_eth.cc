@@ -31,7 +31,6 @@
 #include "protocols/eth.h"
 #include "codecs/codec_events.h"
 #include "protocols/packet_manager.h"
-#include "codecs/sf_protocols.h"
 #include "log/text_log.h"
 
 #define CD_ETH_NAME "eth"
@@ -63,8 +62,6 @@ public:
     EthCodec() : Codec(CD_ETH_NAME){};
     ~EthCodec(){};
 
-
-    virtual PROTO_ID get_proto_id() { return PROTO_ETH; };
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,

@@ -26,11 +26,16 @@
 #include <string.h>
 
 
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#include <check.h>
-#pragma clang diagnostic pop
+#endif
 
+#include <check.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include "snort.h"
 #include "sfip/sf_ip.h"

@@ -37,7 +37,6 @@
 #include "main/snort.h"
 #include "packet_io/active.h"
 #include "codecs/decode_module.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/packet_manager.h"
 #include "log/text_log.h"
@@ -93,7 +92,6 @@ public:
     Ipv6Codec() : Codec(CD_IPV6_NAME){};
     ~Ipv6Codec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_IP6; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
@@ -258,7 +256,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         IPV6MiscTests(snort);
         CheckIPV6Multicast(ip6h);
 
-        snort.packet_type = PKT_TYPE__IP;
+        snort.set_pkt_type(PktType::IP);
         codec.next_prot_id = ip6h->get_next();
         codec.lyr_len = ip::IP6_HEADER_LEN;
 
@@ -270,6 +268,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 decodeipv6_fail:
     /* If this was Teredo, back up and treat the packet as normal UDP. */
 
+    // FIXIT-L  handle active bypass without a global variable
     if (codec.codec_flags & CODEC_TEREDO_SEEN)
     {
         if ( ScTunnelBypassEnabled(TUNNEL_TEREDO) )

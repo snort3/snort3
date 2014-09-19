@@ -28,7 +28,6 @@
 #include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "codecs/ip/checksum.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
 #include "protocols/ipv6.h"
@@ -95,8 +94,6 @@ public:
     };
     virtual ~TcpCodec(){};
 
-
-    virtual PROTO_ID get_proto_id() { return PROTO_TCP; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
@@ -123,7 +120,7 @@ static inline void TCPMiscTests(const SnortData& codec,
 
 void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 {
-    v.push_back(IPPROTO_TCP);
+    v.push_back(IPPROTO_ID_TCP);
 }
 
 bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
@@ -279,7 +276,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.tcph = tcph;
     snort.sp = tcph->src_port();
     snort.dp = tcph->dst_port();
-    snort.packet_type = PKT_TYPE__TCP;
+    snort.set_pkt_type(PktType::TCP);
 
     TCPMiscTests(snort, tcph);
 

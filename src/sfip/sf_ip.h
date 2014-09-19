@@ -644,7 +644,7 @@ static inline void sfip_copy(sfip_t& lhs, const sfip_t* const rhs)
 /* Printing ************************************************************/
 
 /* Uses a static buffer to return a string representation of the IP */
-void sfip_raw_ntop(int family, const void *ip_raw, char *buf, int bufsize);
+SO_PUBLIC void sfip_raw_ntop(int family, const void *ip_raw, char *buf, int bufsize);
 void sfip_ntop(const sfip_t *ip, char *buf, int bufsize);
 
 #endif // SF_IP_H

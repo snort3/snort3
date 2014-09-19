@@ -106,8 +106,6 @@ static void config_lua(
 
     if ( int k = ModuleManager::get_errors() )
         FatalError("see prior %d errors\n", k);
-
-    ModuleManager::set_config(nullptr);
 }
 
 //-------------------------------------------------------------------------
@@ -121,6 +119,8 @@ Shell::Shell(const char* s)
 
     if ( s )
         file = s;
+
+    loaded = false;
 }
 
 Shell::~Shell()
@@ -128,19 +128,27 @@ Shell::~Shell()
     lua_close(lua);
 }
 
+void Shell::set_file(const char* s)
+{
+    assert(!file.size());
+    file = s;
+}
+
+void Shell::set_overrides(const char* s)
+{
+    if ( overrides.empty() )
+        overrides = required;
+
+    overrides += s;
+}
+
 void Shell::configure(SnortConfig* sc)
 {
     assert(file.size());
     ModuleManager::set_config(sc);
     config_lua(lua, file.c_str(), overrides);
-}
-
-void Shell::configure(SnortConfig* sc, const char* s)
-{
-    assert(!file.size());
-    file = s;
-    ModuleManager::set_config(sc);
-    config_lua(lua, s, overrides);
+    ModuleManager::set_config(nullptr);
+    loaded = true;
 }
 
 void Shell::install(const char* name, const luaL_reg* reg)
@@ -160,13 +168,5 @@ void Shell::execute(const char* cmd, string& rsp)
         rsp = lua_tostring(lua, -1);
         lua_pop(lua, 1);
     }
-}
-
-void Shell::set_overrides(const char* s)
-{
-    if ( overrides.empty() )
-        overrides += required;
-
-    overrides += s;
 }
 

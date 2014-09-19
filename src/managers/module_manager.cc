@@ -362,9 +362,6 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
     if ( s_current != key )
     {
-        if ( !s_current.size() )
-            LogMessage("Configuring modules:\n");
-
         LogMessage("\t %s\n", key.c_str());
         s_current = key;
     }
@@ -715,6 +712,10 @@ void ModuleManager::show_rules(const char* pfx)
     }    
 }
 
+// FIXIT-L currently no way to know whether a module was activated or not
+// so modules with common rules will cause duplicate sid warnings
+// eg http_inspect and nhttp_inspect both have 119:1-34
+// only to avoid that now is to not load plugins with common rules
 void ModuleManager::load_rules(SnortConfig* sc)
 {
     // FIXIT-M callers of ParseConfigString() should not have to push parse loc

@@ -27,7 +27,6 @@
 #include "codecs/codec_events.h"
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
-#include "codecs/sf_protocols.h"
 #include "protocols/gre.h"
 #include "log/text_log.h"
 #include "protocols/packet_manager.h"
@@ -64,13 +63,10 @@ public:
     GreCodec() : Codec(CD_GRE_NAME){};
     ~GreCodec(){};
 
-    virtual PROTO_ID get_proto_id() { return PROTO_GRE; };
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
      void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
-
-
 };
 
 static const uint32_t GRE_HEADER_LEN = 4;

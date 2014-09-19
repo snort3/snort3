@@ -167,8 +167,8 @@ public:
         return shells.size() - 1;
     };
 
-    Shell* get_shell()
-    { return shells[0]; };
+    Shell* get_shell(unsigned i = 0)
+    { return i < shells.size() ? shells[i] : nullptr; };
 
 public:  // FIXTHIS-H make impl private
     std::vector<Shell*> shells;

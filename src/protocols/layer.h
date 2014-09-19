@@ -24,7 +24,6 @@
 
 #include <cstdint>
 #include "main/snort_types.h"
-#include "codecs/sf_protocols.h"
 
 
 struct Layer {
@@ -43,7 +42,6 @@ struct Layer {
                                *    (layers_entire_length) - length;
                                *     (ip::IP4Hdr*) ip4h->get_hlen() * 4 - length;
                                */
-    PROTO_ID proto;
 };
 
 
