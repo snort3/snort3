@@ -227,11 +227,8 @@ static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for sel
 static THREAD_LOCAL FragStats t_stats;
 static FragStats g_stats;
 
-//static THREAD_LOCAL Packet* defrag_pkt = NULL;
-//static THREAD_LOCAL Packet* encap_defrag_pkt = NULL;
-
 static THREAD_LOCAL uint32_t pkt_snaplen = 0;
-static THREAD_LOCAL std::array<Packet*, LAYER_MAX> defrag_pkts{{0}};
+static THREAD_LOCAL Packet** defrag_pkts;  // An array of Packet pointers
 
 /* enum for policy names */
 static const char *frag_policy_names[] =
@@ -1291,22 +1288,28 @@ int fragGetApplicationProtocolId(Packet *p)
 // Defrag methods
 //-------------------------------------------------------------------------
 
-Defrag::Defrag(FragEngine& e) : engine(e) { }
+Defrag::Defrag(FragEngine& e) : engine(e), layers(DEFAULT_LAYERMAX) { }
 
-bool Defrag::configure(SnortConfig*)
+bool Defrag::configure(SnortConfig* sc)
 {
+    layers = sc->get_num_layers();
     return true;
 }
 
 void Defrag::tinit()
 {
+    defrag_pkts = new Packet*[layers];
+
+    for (int i = 1; i < layers; i++)
+        defrag_pkts[i] = nullptr;
+
     defrag_pkts[0] = PacketManager::encode_new();
     pkt_snaplen = DAQ_GetSnapLen();
 }
 
 void Defrag::tterm()
 {
-    for (std::size_t i = 0; i < defrag_pkts.size(); i++)
+    for (int i = 0; i < layers; i++)
     {
         if (defrag_pkts[i] != nullptr)
         {
@@ -1314,6 +1317,9 @@ void Defrag::tterm()
             defrag_pkts[i] = nullptr;
         }
     }
+
+    delete defrag_pkts;
+    defrag_pkts = nullptr;
 }
 
 void Defrag::show(SnortConfig*)

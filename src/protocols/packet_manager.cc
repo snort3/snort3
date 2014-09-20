@@ -101,29 +101,36 @@ static inline void push_layer(Packet *p,
 // Initialization and setup
 //-------------------------------------------------------------------------
 
-Packet* PacketManager::encode_new ()
+Packet* PacketManager::encode_new()
 {
     Packet* p = (Packet*)SnortAlloc(sizeof(*p));
     uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + Codec::PKT_MAX + SPARC_TWIDDLE);
+    Layer* lyr = (Layer*)SnortAlloc(sizeof(Layer) * CodecManager::max_layers);
 
-    if ( !p || !b )
+    if ( !p || !b || !lyr)
         FatalError("encode_new() => Failed to allocate packet\n");
 
     p->pkth = (DAQ_PktHdr_t*)b;
     b += sizeof(*p->pkth);
     b += SPARC_TWIDDLE;
     p->pkt = b;
+    p->layers = lyr;
 
     return p;
 }
 
-void PacketManager::encode_delete (Packet* p)
+void PacketManager::encode_delete(Packet* p)
 {
     if (p)
     {
-        if (p->pkth)
+        if(p->pkth)
             free((void*)p->pkth);  // cast away const!
 
+        if(p->layers)
+            free(p->layers);
+
+        p->pkth = nullptr;
+        p->layers = nullptr;
         free(p);
     }
 }
@@ -178,7 +185,7 @@ void PacketManager::decode(
 
         // must be done here after decode and before push for case layer
         // LAYER_MAX+1 is invalid or the default codec
-        if ( p->num_layers == LAYER_MAX )
+        if ( p->num_layers == CodecManager::max_layers )
         {
             SnortEventqAdd(GID_DECODE, DECODE_TOO_MANY_LAYERS);
             p->data = raw.data;

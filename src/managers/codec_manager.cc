@@ -46,6 +46,7 @@ std::vector<CodecManager::CodecApiWrapper> CodecManager::s_codecs;
 std::array<uint8_t, max_protocol_id> CodecManager::s_proto_map{{0}};
 std::array<Codec*, UINT8_MAX> CodecManager::s_protocols{{0}};
 THREAD_LOCAL uint8_t CodecManager::grinder = 0;
+THREAD_LOCAL uint8_t CodecManager::max_layers = DEFAULT_LAYERMAX;
 
 
 // This is hardcoded into Snort++
@@ -196,8 +197,11 @@ void CodecManager::instantiate()
         instantiate(wrap, nullptr, nullptr);
 }
 
-void CodecManager::thread_init(void)
+void CodecManager::thread_init(const SnortConfig* const sc, Packet& p)
 {
+    max_layers = sc->get_num_layers();
+    p.layers = new Layer[max_layers];
+
     for ( CodecApiWrapper& wrap : s_codecs )
         if (wrap.api->tinit)
             wrap.api->tinit();
@@ -247,7 +251,7 @@ void CodecManager::thread_init(void)
 #endif
 }
 
-void CodecManager::thread_term()
+void CodecManager::thread_term(Packet& p)
 {
     PacketManager::accumulate(); // statistics
 
@@ -261,6 +265,12 @@ void CodecManager::thread_term()
     {
         rand_close(s_rand);
         s_rand = NULL;
+    }
+
+    if (p.layers != nullptr)
+    {
+        free(p.layers);
+        p.layers = nullptr;
     }
 }
 

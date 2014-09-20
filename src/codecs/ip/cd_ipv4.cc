@@ -151,10 +151,8 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         return false;
     }
 
-    // comparable to snort
-    codec.ip_layer_cnt++;
-    // FIXIT-H  -j  allow configure IP and IP6 encapsulation limits
-    if (codec.ip_layer_cnt > 1)
+
+    if (++codec.ip_layer_cnt > snort_conf->get_ip_maxlayers())
         codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
     /* lay the IP struct over the raw data */

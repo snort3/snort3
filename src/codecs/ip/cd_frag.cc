@@ -71,7 +71,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, SnortData& snor
         return false;
     }
 
-    if ( codec.ip6_extension_count >= IP6_EXTMAX )
+    if ( codec.ip6_extension_count >= snort_conf->get_ip6_maxopts() )
     {
         codec_events::decoder_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;

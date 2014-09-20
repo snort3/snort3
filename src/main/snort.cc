@@ -117,6 +117,7 @@ using namespace std;
 
 //-------------------------------------------------------------------------
 
+static THREAD_LOCAL Packet s_packet; // runtime variable.
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 static SnortConfig* snort_cmd_line_conf = nullptr;
 
@@ -690,7 +691,7 @@ SnortConfig* reload_config()
 //-------------------------------------------------------------------------
 
 // non-local for easy access from core
-static THREAD_LOCAL Packet s_packet;
+//static THREAD_LOCAL Packet s_packet;  declared above due to initalization in CodecManager
 static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
 static THREAD_LOCAL uint8_t s_data[65536];
 
@@ -963,7 +964,7 @@ void snort_thread_init(const char* intf)
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 
-    CodecManager::thread_init();
+    CodecManager::thread_init(snort_conf, s_packet);
     FileAPIPostInit();
 
     // this depends on instantiated daq capabilities
@@ -995,6 +996,7 @@ void snort_thread_term()
     ActionManager::thread_term(snort_conf);
     IpsManager::clear_options();
     EventManager::close_outputs();
+    CodecManager::thread_term(s_packet);
 
     if ( DAQ_WasStarted() )
         DAQ_Stop();
@@ -1015,6 +1017,5 @@ void snort_thread_term()
 
     SnortEventqFree();
     Active_Term();
-    CodecManager::thread_term();
 }
 

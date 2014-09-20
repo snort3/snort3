@@ -139,10 +139,11 @@ enum PseudoPacketType{
 constexpr int32_t MAX_PORTS = 65536;
 constexpr uint16_t NUM_IP_PROTOS = 256;
 constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
-constexpr uint8_t IP_OPTMAX = 40;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
-constexpr uint8_t IP6_EXTMAX = 8;
-constexpr uint8_t LAYER_MAX = 32;
+constexpr uint8_t DEFAULT_IPMAX = 2;
+constexpr uint8_t DEFAULT_IP6_EXTMAX = 8;
+constexpr uint8_t DEFAULT_LAYERMAX = 40;
+
 
 
 /*  D A T A  S T R U C T U R E S  *********************************************/
@@ -176,7 +177,7 @@ struct Packet
     uint16_t dsize;             /* packet payload size */
 
     SnortData ptrs; // convenience pointers used throughout Snort++
-    Layer layers[LAYER_MAX];    /* decoded encapsulations */
+    Layer* layers;    /* decoded encapsulations */
 
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set

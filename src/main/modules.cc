@@ -1028,6 +1028,17 @@ static const Parameter network_params[] =
     { "new_ttl", Parameter::PT_INT, "1:255", "1",
       "use this value for responses and when normalizing" },
 
+    { "layers", Parameter::PT_INT, "3:255", "40",
+      "The maximum number of protocols that Snort can correctly decode" },
+
+    { "max_ip6_options", Parameter::PT_INT, "1:255", "8",
+      "The number of IP6 options following an IPv6 layer Snort must see "
+      "before alerting *gid 119: sid XXX" }, //FIXIT-H J --fIll in SID
+
+    { "max_ip_layers", Parameter::PT_INT, "1:255", "2",
+      "The number of IPv4 and IPv6 layer Snort must see "
+      "before alerting (gid 119: sid XXX" }, //FIXIT-H J --fIll in SID
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1062,6 +1073,15 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("new_ttl") )
         p->new_ttl = (uint8_t)v.get_long();
+
+    else if (v.is("layers"))
+        sc->num_layers = (uint8_t)v.get_long();
+
+    else if (v.is("max_ip6_options"))
+        sc->max_ip6_options = (uint8_t)v.get_long();
+
+    else if (v.is("max_ip_layers"))
+        sc->max_ip_layers = (uint8_t)v.get_long();
 
     else
         return false;

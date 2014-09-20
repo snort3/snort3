@@ -62,10 +62,10 @@ public:
     static void instantiate();
     // destroy all global codec related information
     static void release_plugins();
-    // initialize the current threads codecs
-    static void thread_init();
+    // initialize the current threads DLT and Packet struct
+    static void thread_init(const SnortConfig* const, Packet&);
     // destroy thread_local data
-    static void thread_term();
+    static void thread_term(Packet&);
     // print all of the codec plugins
     static void dump_plugins();
 
@@ -76,6 +76,7 @@ private:
     static std::array<uint8_t, max_protocol_id> s_proto_map;
     static std::array<Codec*, UINT8_MAX> s_protocols;
     static THREAD_LOCAL uint8_t grinder;
+    static THREAD_LOCAL uint8_t max_layers;
 
     /*
      * Private helper functions.  These are all declared here

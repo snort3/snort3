@@ -152,8 +152,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
             goto decodeipv6_fail;
         }
 
-        // FIXIT-H -J  alert on user configured encapsulated
-        if (codec.ip_layer_cnt++ > 1)
+        if (++codec.ip_layer_cnt > snort_conf->get_ip_maxlayers())
             codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
 

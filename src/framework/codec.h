@@ -145,7 +145,7 @@ struct EncState
 // * base+size-1 is last byte of packet (in) / buffer (out)
 struct Buffer
 {
-    uint8_t* base; /* start of data */
+    uint8_t* base; /* start of data */ /* FIXIT-L J - make this private. Ppl should be to access, not manipulate */
     uint32_t off;       /* offset into data */
 private:
     uint32_t end;       /* end of data */

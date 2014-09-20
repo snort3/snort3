@@ -152,13 +152,13 @@ public:
     PolicyMap();
     ~PolicyMap();
 
-    InspectionPolicy* get_inspection_policy()
+    InspectionPolicy* get_inspection_policy() const
     { return inspection_policy[0]; };
 
-    IpsPolicy* get_ips_policy()
+    IpsPolicy* get_ips_policy() const
     { return ips_policy[0]; };
     
-    NetworkPolicy* get_network_policy()
+    NetworkPolicy* get_network_policy() const
     { return network_policy[0]; };
 
     unsigned add_shell(Shell* sh)
