@@ -7,6 +7,7 @@
 -- fixed valgrind issues
 -- refactored Shells to support multiple files/policies
 -- changed detect reset to accommodate buffer population before reassembly
+-- initial multiple policy binding
 
 119
 -- updated binder

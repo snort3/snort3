@@ -451,10 +451,8 @@ void InspectorManager::thread_term(SnortConfig* sc)
 void InspectorManager::instantiate(
     const InspectApi* api, Module*, SnortConfig* sc)
 {
-    // FIXIT-H only configures inspectors in base policy; must be 
-    // revisited when bindings are implemented
     FrameworkConfig* fc = sc->framework_config;
-    FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
+    FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
 
     // FIXIT-H should not need to lookup inspector etc
     // since given api and mod
@@ -502,13 +500,8 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
     fp->binder = get_instance(fp, bind_id)->handler;
 }
 
-bool InspectorManager::configure(SnortConfig *sc)
+static bool configure(SnortConfig* sc, FrameworkPolicy* fp)
 {
-    sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
-
-    // FIXIT-H do we need more than one framework policy?
-    // if so, must vectorize(), etc. multiple times
-    FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
     bool ok = true;
 
     for ( auto* p : fp->ilist )
@@ -517,8 +510,19 @@ bool InspectorManager::configure(SnortConfig *sc)
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize();
 
-    if ( fp->service.num && !fp->binder && get_wizard() )
+    if ( fp->service.num && !fp->binder && InspectorManager::get_wizard() )
         instantiate_binder(sc, fp);
+
+    return ok;
+}
+
+bool InspectorManager::configure(SnortConfig *sc)
+{
+    sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
+    bool ok = true;
+
+    for ( auto* p : sc->policy_map->inspection_policy )
+        ok = ::configure(sc, p->framework_policy) && ok;
 
     return ok;
 }

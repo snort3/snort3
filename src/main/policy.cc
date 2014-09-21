@@ -97,10 +97,7 @@ IpsPolicy::~IpsPolicy()
 
 PolicyMap::PolicyMap()
 {
-    shells.push_back(new Shell);
-    inspection_policy.push_back(new InspectionPolicy);
-    ips_policy.push_back(new IpsPolicy);
-    network_policy.push_back(new NetworkPolicy);
+    add_shell(new Shell);
 
     set_inspection_policy(inspection_policy[0]);
     set_ips_policy(ips_policy[0]);
@@ -125,5 +122,59 @@ PolicyMap::~PolicyMap()
     inspection_policy.clear();
     ips_policy.clear();
     network_policy.clear();
+}
+
+unsigned PolicyMap::add_shell(Shell* sh)
+{ 
+    shells.push_back(sh);
+    inspection_policy.push_back(new InspectionPolicy);
+    ips_policy.push_back(new IpsPolicy);
+    network_policy.push_back(new NetworkPolicy);
+    return shells.size() - 1;
+}
+
+//-------------------------------------------------------------------------
+// policy nav
+//-------------------------------------------------------------------------
+
+static THREAD_LOCAL NetworkPolicy* s_traffic_policy = nullptr;
+static THREAD_LOCAL InspectionPolicy* s_inspection_policy = nullptr;
+static THREAD_LOCAL IpsPolicy* s_detection_policy = nullptr;
+
+NetworkPolicy* get_network_policy()
+{ return s_traffic_policy; }
+
+InspectionPolicy* get_inspection_policy()
+{ return s_inspection_policy; }
+
+IpsPolicy* get_ips_policy()
+{ return s_detection_policy; }
+
+void set_network_policy(NetworkPolicy* p)
+{ s_traffic_policy = p; }
+
+void set_inspection_policy(InspectionPolicy* p)
+{ s_inspection_policy = p; }
+
+void set_ips_policy(IpsPolicy* p)
+{ s_detection_policy = p; }
+
+void set_policies(SnortConfig* sc, unsigned i)
+{
+    PolicyMap* pm = sc->policy_map;
+
+    if ( i < pm->shells.size() )
+    {
+        set_network_policy(pm->network_policy[i]);
+        set_inspection_policy(pm->inspection_policy[i]);
+        set_ips_policy(pm->ips_policy[i]);
+    }
+}
+
+void set_default_policy()
+{
+    set_network_policy(snort_conf->policy_map->network_policy[0]);
+    set_ips_policy(snort_conf->policy_map->ips_policy[0]);
+    set_inspection_policy(snort_conf->policy_map->inspection_policy[0]);
 }
 

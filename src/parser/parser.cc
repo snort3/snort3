@@ -565,6 +565,15 @@ static void IntegrityCheckRules(SnortConfig *sc)
     //DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "OK\n"););
 }
 
+static void parse_file(SnortConfig* sc, Shell* sh)
+{
+    const char* fname = sh->get_file();
+    LogMessage("Loading %s:\n", fname);
+    push_parse_location(fname);
+    sh->configure(sc);
+    pop_parse_location();
+}
+
 //-------------------------------------------------------------------------
 // public methods
 //-------------------------------------------------------------------------
@@ -643,12 +652,10 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
         if ( !sh )
             break;
 
-        fname = sh->get_file();
-        LogMessage("Loading %s:\n", fname);
-        push_parse_location(fname);
-        sh->configure(sc);
-        pop_parse_location();
+        set_policies(sc, i);
+        parse_file(sc, sh);
     }
+    set_policies(sc);
     return sc;
 }
 

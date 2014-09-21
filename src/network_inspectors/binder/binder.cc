@@ -172,7 +172,7 @@ static void set_session(Flow* flow)
 class Binder : public Inspector
 {
 public:
-    Binder(vector<Binding*>);
+    Binder(vector<Binding*>&);
     ~Binder();
 
     void show(SnortConfig*)
@@ -194,9 +194,9 @@ private:
     vector<Binding*> bindings;
 };
 
-Binder::Binder(vector<Binding*> v)
+Binder::Binder(vector<Binding*>& v)
 {
-    bindings = v;
+    bindings = std::move(v);
 }
 
 Binder::~Binder()
@@ -364,7 +364,7 @@ static void mod_dtor(Module* m)
 static Inspector* bind_ctor(Module* m)
 {
     BinderModule* mod = (BinderModule*)m;
-    vector<Binding*> pb = mod->get_data();
+    vector<Binding*>& pb = mod->get_data();
     return new Binder(pb);
 }
 

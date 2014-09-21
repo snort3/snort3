@@ -214,7 +214,7 @@ void BinderModule::add(unsigned proto, const char* type)
     bindings.push_back(b);
 }
 
-vector<Binding*> BinderModule::get_data()
+vector<Binding*>& BinderModule::get_data()
 {
     return bindings;  // move semantics
 }

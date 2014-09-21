@@ -282,13 +282,13 @@ struct SnortConfig
 #endif
 
     InspectionPolicy* get_inspection_policy()
-    { return policy_map->get_inspection_policy(); };
+    { return policy_map->inspection_policy[0]; };
 
     IpsPolicy* get_ips_policy()
-    { return policy_map->get_ips_policy(); };
+    { return policy_map->ips_policy[0]; };
 
     NetworkPolicy* get_network_policy()
-    { return policy_map->get_network_policy(); };
+    { return policy_map->network_policy[0]; };
 };
 
 SnortConfig* SnortConfNew(void);

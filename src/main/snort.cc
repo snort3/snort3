@@ -132,34 +132,6 @@ static void CleanExit(int);
 static void SnortCleanup();
 
 //-------------------------------------------------------------------------
-// nascent policy management
-//-------------------------------------------------------------------------
-// FIXIT-H need stub binding rule to set these for runtime
-// FIXIT-H need to set these on load too somehow
-
-static THREAD_LOCAL NetworkPolicy* s_traffic_policy = nullptr;
-static THREAD_LOCAL InspectionPolicy* s_inspection_policy = nullptr;
-static THREAD_LOCAL IpsPolicy* s_detection_policy = nullptr;
-
-NetworkPolicy* get_network_policy()
-{ return s_traffic_policy; }
-
-InspectionPolicy* get_inspection_policy()
-{ return s_inspection_policy; }
-
-IpsPolicy* get_ips_policy()
-{ return s_detection_policy; }
-
-void set_network_policy(NetworkPolicy* p)
-{ s_traffic_policy = p; }
-
-void set_inspection_policy(InspectionPolicy* p)
-{ s_inspection_policy = p; }
-
-void set_ips_policy(IpsPolicy* p)
-{ s_detection_policy = p; }
-
-//-------------------------------------------------------------------------
 // utility
 //-------------------------------------------------------------------------
 
@@ -300,7 +272,7 @@ static void init_policy(SnortConfig* sc)
     else
         pm = POLICY_MODE__PASSIVE;
 
-    sc->get_ips_policy()->policy_mode = pm;
+    get_ips_policy()->policy_mode = pm;
 }
 
 static void SnortInit(int argc, char **argv)
@@ -718,27 +690,10 @@ void CapturePacket()
     }
 }
 
-void set_default_policy()
+static void set_policy(Packet* p)  // FIXIT-H delete this?
 {
-    set_network_policy(snort_conf->policy_map->network_policy[0]);
-    set_ips_policy(snort_conf->policy_map->ips_policy[0]);
-    set_inspection_policy(snort_conf->policy_map->inspection_policy[0]);
-}
-
-static void set_policy(Packet*)  // FIX SSN implement based on bindings
-{
-   // for now need to just get stream_* inspectors and call appropriately 
-#if 0
-    int vlanId = (p->vh) ? vlan::vth_vlan(p->vh) : -1;
-    const sfip_t *srcIp = p->ptrs.ip_api.get_src(); // returns nullptr if not set
-    const sfip_t *dstIp = p->ptrs.ip_api.get_dst();
-
-    //set policy id for this packet
-    setCurrentPolicy(snort_conf, sfGetApplicablePolicyId(
-        snort_conf->policy_config, vlanId, srcIp, dstIp));
-#else
     set_default_policy();
-#endif
+    p->user_policy_id = get_ips_policy()->user_policy_id;
 }
 
 void DecodeRebuiltPacket (
@@ -750,8 +705,7 @@ void DecodeRebuiltPacket (
 
     p->flow = lws;
 
-    set_policy(p);  // FIX SSN rebuilt should reuse original bindings
-    p->user_policy_id = get_ips_policy()->user_policy_id;
+    set_policy(p);  // FIXIT-H rebuilt should reuse original bindings from flow
 
     SnortEventqPop();
 }
@@ -797,9 +751,7 @@ DAQ_Verdict ProcessPacket(
         p->proto_bits &= ~PROTO_BIT__IP;
 #endif
 
-    set_policy(p);
-
-    p->user_policy_id = get_ips_policy()->user_policy_id;
+    set_policy(p);  // FIXIT-H should not need this here
 
     /* just throw away the packet if we are configured to ignore this port */
     if ( !(p->packet_flags & PKT_IGNORE) )
