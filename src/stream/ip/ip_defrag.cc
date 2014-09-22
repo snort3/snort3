@@ -1318,7 +1318,7 @@ void Defrag::tterm()
         }
     }
 
-    delete defrag_pkts;
+    delete[] defrag_pkts;
     defrag_pkts = nullptr;
 }
 

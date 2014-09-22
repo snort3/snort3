@@ -205,6 +205,12 @@ struct Packet
 
     inline bool has_valid_ip() const
     { return ptrs.ip_api.is_valid(); }
+
+    inline void reset()
+    {
+        memset(&flow, '\0', offsetof(Packet, pkth));
+        ptrs.reset();
+    }
 };
 
 #define PKT_ZERO_LEN offsetof(Packet, pkth)

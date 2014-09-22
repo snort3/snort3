@@ -166,7 +166,9 @@ void PacketManager::decode(
     layer::set_packet_pointer(p);
 
 
-    RawData raw{pkt, pkthdr->caplen};
+    RawData raw;
+    raw.data = pkt;
+    raw.len = pkthdr->caplen;
     CodecData codec_data(FINISHED_DECODE);
 
     if (p->packet_flags & PKT_REBUILT_STREAM)
