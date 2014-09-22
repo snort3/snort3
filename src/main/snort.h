@@ -57,15 +57,6 @@ void snort_thread_term();
 void snort_idle();
 void snort_rotate();
 
-// FIXIT-L may be inlined at some point; on lockdown for now
-NetworkPolicy* get_network_policy();
-InspectionPolicy* get_inspection_policy();
-IpsPolicy* get_ips_policy();
-
-void set_network_policy(NetworkPolicy*);
-void set_inspection_policy(InspectionPolicy*);
-void set_ips_policy(IpsPolicy*);
-
 void CapturePacket();
 void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
 void DetectRebuiltPacket (Packet*);
@@ -75,8 +66,6 @@ DAQ_Verdict ProcessPacket(Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt);
 
 DAQ_Verdict fail_open(void*, const DAQ_PktHdr_t*, const uint8_t*);
 DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
-
-void set_default_policy();
 
 typedef void (*MainHook_f)(Packet*);
 void set_main_hook(MainHook_f);
@@ -217,62 +206,62 @@ static inline int ScLogQuiet(void)
 
 static inline int ScIpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP;
 }
 
 static inline int ScIpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP;
 }
 
 static inline int ScUdpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP;
 }
 
 static inline int ScUdpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP;
 }
 
 static inline int ScTcpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP;
 }
 
 static inline int ScTcpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP;
 }
 
 static inline int ScIcmpChecksums(void)
 {
-    return snort_conf->get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP;
+    return get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP;
 }
 
 static inline int ScIcmpChecksumDrops(void)
 {
-    return snort_conf->get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP;
+    return get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP;
 }
 
 static inline uint8_t ScMinTTL(void)
 {
-    return snort_conf->get_network_policy()->min_ttl;
+    return get_network_policy()->min_ttl;
 }
 
 static inline uint8_t ScNewTTL(void)
 {
-    return snort_conf->get_network_policy()->new_ttl;
+    return get_network_policy()->new_ttl;
 }
 
 static inline int ScInlineMode(void)
 {
-    return ((snort_conf->get_ips_policy()->policy_mode) == POLICY_MODE__INLINE );
+    return ((get_ips_policy()->policy_mode) == POLICY_MODE__INLINE );
 }
 
 static inline int ScInlineTestMode(void)
 {
-    return ((snort_conf->get_ips_policy()->policy_mode) == POLICY_MODE__INLINE_TEST );
+    return ((get_ips_policy()->policy_mode) == POLICY_MODE__INLINE_TEST );
 }
 
 //-------------------------------------------------------------------------
@@ -346,7 +335,8 @@ static inline int ScProfileRules(void)
 
 static inline int ScStaticHash(void)
 {
-    return snort_conf->run_flags & RUN_FLAG__STATIC_HASH;
+    // FIXIT-L snort_conf needed for static hash before initialized
+    return snort_conf && snort_conf->run_flags & RUN_FLAG__STATIC_HASH;
 }
 
 static inline int ScAdapterInlineTestMode(void)

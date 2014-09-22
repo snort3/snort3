@@ -57,7 +57,7 @@ public:
     PegCount* get_counts() const;
     ProfileStats* get_profile() const;
 
-    std::vector<Binding*> get_data();
+    std::vector<Binding*>& get_data();
 private:
     Binding* work;
     std::vector<Binding*> bindings;

@@ -565,6 +565,15 @@ static void IntegrityCheckRules(SnortConfig *sc)
     //DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "OK\n"););
 }
 
+static void parse_file(SnortConfig* sc, Shell* sh)
+{
+    const char* fname = sh->get_file();
+    LogMessage("Loading %s:\n", fname);
+    push_parse_location(fname);
+    sh->configure(sc);
+    pop_parse_location();
+}
+
 //-------------------------------------------------------------------------
 // public methods
 //-------------------------------------------------------------------------
@@ -615,8 +624,6 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
     sc->detection_filter_config = DetectionFilterConfigNew();
     sc->ip_proto_only_lists = (SF_LIST **)SnortAlloc(NUM_IP_PROTOS * sizeof(SF_LIST *));
 
-    InitVarTables(get_ips_policy());
-
     /* If snort is not run with root privileges, no interfaces will be defined,
      * so user beware if an iface_ADDRESS variable is used in snort.conf and
      * snort is not run as root (even if just in read mode) */
@@ -643,12 +650,10 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
         if ( !sh )
             break;
 
-        fname = sh->get_file();
-        LogMessage("Loading %s:\n", fname);
-        push_parse_location(fname);
-        sh->configure(sc);
-        pop_parse_location();
+        set_policies(sc, i);
+        parse_file(sc, sh);
     }
+    set_policies(sc);
     return sc;
 }
 
@@ -779,11 +784,11 @@ void ParserCleanup(void)
 
 void ParseRules(SnortConfig *sc)
 {
-    std::string& s = sc->policy_map->ips_policy[0]->rules;
-    s += s_aux_rules;
-
-    for ( auto p : sc->policy_map->ips_policy )
+    for ( unsigned idx = 0; idx < sc->policy_map->ips_policy.size(); ++idx )
     {
+        set_policies(sc, idx);
+        IpsPolicy* p = sc->policy_map->ips_policy[idx];
+
         if ( p->enable_builtin_rules )
             ModuleManager::load_rules(sc);
 
@@ -796,13 +801,16 @@ void ParseRules(SnortConfig *sc)
             pop_parse_location();
         }
 
+        if ( !idx )
+            p->rules += s_aux_rules;
+
         if ( !p->rules.empty() )
         {
             push_parse_location("rules");
             ParseConfigString(sc, p->rules.c_str());
             pop_parse_location();
         }
-        if ( sc->stdin_rules )
+        if ( !idx && sc->stdin_rules )
         {
             push_parse_location("stdin");
             parse_stream(std::cin, sc);

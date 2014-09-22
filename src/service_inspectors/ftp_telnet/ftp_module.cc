@@ -227,43 +227,6 @@ FtpCmd::FtpCmd(std::string& key, std::string& fmt, int num)
 #define FTP_EVASIVE_TELNET_CMD_STR               \
         "(ftp) Evasive (incomplete) TELNET CMD on FTP Command Channel"
 
-// FIXIT-H convert to Lua and use as module default settings
-#if 0
-static const char* DEFAULT_FTP_CONF[] =
-{
-    "hardcoded_config "
-    "def_max_param_len 100 "
-
-    // eg must appear in at least one *_cmds parameter
-    "ftp_cmds { USER PASS ACCT CWD CDUP SMNT QUIT REIN TYPE STRU"
-              " MODE RETR STOR STOU APPE ALLO REST RNFR RNTO ABOR"
-              " DELE RMD MKD PWD LIST NLST SITE SYST STAT HELP NOOP } "
-    "ftp_cmds { AUTH ADAT PROT PBSZ CONF ENC } "
-    "ftp_cmds { PORT PASV LPRT LPSV EPRT EPSV } "
-    "ftp_cmds { FEAT OPTS } "
-    "ftp_cmds { MDTM REST SIZE MLST MLSD } "
-
-    "alt_max_param_len 0 { CDUP QUIT REIN PASV STOU ABOR PWD SYST NOOP } ",
-
-    "cmd_validity MODE < char SBC > "
-    "cmd_validity STRU < char FRPO [ string ] > "
-    "cmd_validity ALLO < int [ char R int ] > "
-    "cmd_validity TYPE < { char AE [ char NTC ] | char I | char L [ number ] } > "
-    "cmd_validity PORT < host_port > "
-    "cmd_validity LPRT < long_host_port > "
-    "cmd_validity EPRT < extd_host_port > "
-    "cmd_validity EPSV < [ { '1' | '2' | 'ALL' } ] > ",
-
-    "data_chan_cmds { PORT PASV LPRT LPSV EPRT EPSV } "
-    "data_xfer_cmds { RETR STOR STOU APPE LIST NLST } "
-    "file_put_cmds { STOR STOU } "
-    "file_get_cmds { RETR } "
-    "login_cmds { USER PASS } "
-    "dir_cmds { CWD 250 CDUP 250 PWD 257 } "
-    "encr_cmds { AUTH } "
-};
-#endif
-
 //-------------------------------------------------------------------------
 
 static const Parameter ftp_server_validity_params[] =

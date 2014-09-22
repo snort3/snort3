@@ -166,7 +166,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( v.is("file") )
     {
         Shell* sh = new Shell(v.get_string());
-        work->use.index = sc->policy_map->add_shell(sh);
+        work->use.index = sc->policy_map->add_shell(sh) + 1;
     }
     else if ( v.is("name") )
         work->use.name = v.get_string();
@@ -214,7 +214,7 @@ void BinderModule::add(unsigned proto, const char* type)
     bindings.push_back(b);
 }
 
-vector<Binding*> BinderModule::get_data()
+vector<Binding*>& BinderModule::get_data()
 {
     return bindings;  // move semantics
 }
