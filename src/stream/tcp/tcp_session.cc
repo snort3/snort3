@@ -2492,7 +2492,7 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
 
 static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
 {
-    DAQ_PktHdr_t tmp_pcap_hdr;
+    DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     /* Flush ack'd data on both sides as necessary */
@@ -2504,12 +2504,12 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         {
             tcpStats.s5tcp1++;
             /* Do each field individually because of size differences on 64bit OS */
-            tmp_pcap_hdr.ts.tv_sec = tcpssn->client.seglist->tv.tv_sec;
-            tmp_pcap_hdr.ts.tv_usec = tcpssn->client.seglist->tv.tv_usec;
-            tmp_pcap_hdr.caplen = tcpssn->client.seglist->caplen;
-            tmp_pcap_hdr.pktlen = tcpssn->client.seglist->pktlen;
+            tmp_pcap_hdr->ts.tv_sec = tcpssn->client.seglist->tv.tv_sec;
+            tmp_pcap_hdr->ts.tv_usec = tcpssn->client.seglist->tv.tv_usec;
+            tmp_pcap_hdr->caplen = tcpssn->client.seglist->caplen;
+            tmp_pcap_hdr->pktlen = tcpssn->client.seglist->pktlen;
 
-            DecodeRebuiltPacket(cleanup_pkt, &tmp_pcap_hdr, tcpssn->client.seglist->pkt, lwssn);
+            DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, tcpssn->client.seglist->pkt, lwssn);
 
             if ( !cleanup_pkt->ptrs.tcph )
             {
@@ -2534,12 +2534,12 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         {
             tcpStats.s5tcp2++;
             /* Do each field individually because of size differences on 64bit OS */
-            tmp_pcap_hdr.ts.tv_sec = tcpssn->server.seglist->tv.tv_sec;
-            tmp_pcap_hdr.ts.tv_usec = tcpssn->server.seglist->tv.tv_usec;
-            tmp_pcap_hdr.caplen = tcpssn->server.seglist->caplen;
-            tmp_pcap_hdr.pktlen = tcpssn->server.seglist->pktlen;
+            tmp_pcap_hdr->ts.tv_sec = tcpssn->server.seglist->tv.tv_sec;
+            tmp_pcap_hdr->ts.tv_usec = tcpssn->server.seglist->tv.tv_usec;
+            tmp_pcap_hdr->caplen = tcpssn->server.seglist->caplen;
+            tmp_pcap_hdr->pktlen = tcpssn->server.seglist->pktlen;
 
-            DecodeRebuiltPacket(cleanup_pkt, &tmp_pcap_hdr, tcpssn->server.seglist->pkt, lwssn);
+            DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, tcpssn->server.seglist->pkt, lwssn);
 
             if ( !cleanup_pkt->ptrs.tcph )
             {
