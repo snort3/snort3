@@ -329,10 +329,15 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
 
     p->flow = flow;
 
-    if ( !flow->flow_state )
+    if ( flow->flow_state )
+        set_policies(snort_conf, flow->policy_id);
+
+    else
     {
         init_roles(p, flow);
-        InspectorManager::get_binder()->eval(p);
+        Inspector* b = InspectorManager::get_binder();
+        if ( b )
+            b->eval(p);
         ++news;
     }
 

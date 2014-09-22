@@ -143,7 +143,7 @@ private:
     //  STATISTICS!!
 
     // The only time we should accumulate is when CodecManager tells us too
-    friend void CodecManager::thread_term(Packet&);
+    friend void CodecManager::thread_term();
     static void accumulate();
     static bool encode(const Packet* p, EncodeFlags,
         uint8_t lyr_start, uint8_t next_prot, Buffer& buf);

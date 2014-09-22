@@ -105,7 +105,7 @@ Packet* PacketManager::encode_new()
 {
     Packet* p = (Packet*)SnortAlloc(sizeof(*p));
     uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + Codec::PKT_MAX + SPARC_TWIDDLE);
-    Layer* lyr = (Layer*)SnortAlloc(sizeof(Layer) * CodecManager::max_layers);
+    Layer* lyr = new Layer[CodecManager::max_layers];
 
     if ( !p || !b || !lyr)
         FatalError("encode_new() => Failed to allocate packet\n");
@@ -127,7 +127,7 @@ void PacketManager::encode_delete(Packet* p)
             free((void*)p->pkth);  // cast away const!
 
         if(p->layers)
-            free(p->layers);
+            delete[] p->layers;
 
         p->pkth = nullptr;
         p->layers = nullptr;

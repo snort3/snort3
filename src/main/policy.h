@@ -141,7 +141,7 @@ public:
 };
 
 //-------------------------------------------------------------------------
-// binding stuff - FIXIT-H tbd
+// binding stuff
 //-------------------------------------------------------------------------
 
 class Shell;
@@ -152,20 +152,7 @@ public:
     PolicyMap();
     ~PolicyMap();
 
-    InspectionPolicy* get_inspection_policy() const
-    { return inspection_policy[0]; };
-
-    IpsPolicy* get_ips_policy() const
-    { return ips_policy[0]; };
-    
-    NetworkPolicy* get_network_policy() const
-    { return network_policy[0]; };
-
-    unsigned add_shell(Shell* sh)
-    { 
-        shells.push_back(sh);
-        return shells.size() - 1;
-    };
+    unsigned add_shell(Shell*);
 
     Shell* get_shell(unsigned i = 0)
     { return i < shells.size() ? shells[i] : nullptr; };
@@ -176,6 +163,22 @@ public:  // FIXTHIS-H make impl private
     std::vector<IpsPolicy*> ips_policy;
     std::vector<NetworkPolicy*> network_policy;
 };
+
+//-------------------------------------------------------------------------
+// navigator stuff
+//-------------------------------------------------------------------------
+
+// FIXIT-L may be inlined at some point; on lockdown for now
+NetworkPolicy* get_network_policy();
+InspectionPolicy* get_inspection_policy();
+IpsPolicy* get_ips_policy();
+
+void set_network_policy(NetworkPolicy*);
+void set_inspection_policy(InspectionPolicy*);
+void set_ips_policy(IpsPolicy*);
+
+void set_policies(struct SnortConfig*, unsigned = 0);
+void set_default_policy();
 
 #endif
 

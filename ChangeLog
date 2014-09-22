@@ -7,6 +7,8 @@
 -- fixed valgrind issues
 -- refactored Shells to support multiple files/policies
 -- changed detect reset to accommodate buffer population before reassembly
+-- initial multiple policy binding
+-- pulled in codec Makefile fix from Josh
 
 119
 -- updated binder

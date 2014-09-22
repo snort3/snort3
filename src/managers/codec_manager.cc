@@ -197,11 +197,8 @@ void CodecManager::instantiate()
         instantiate(wrap, nullptr, nullptr);
 }
 
-void CodecManager::thread_init(const SnortConfig* const sc, Packet& p)
+void CodecManager::thread_init()
 {
-    max_layers = sc->get_num_layers();
-    p.layers = new Layer[max_layers];
-
     for ( CodecApiWrapper& wrap : s_codecs )
         if (wrap.api->tinit)
             wrap.api->tinit();
@@ -251,7 +248,7 @@ void CodecManager::thread_init(const SnortConfig* const sc, Packet& p)
 #endif
 }
 
-void CodecManager::thread_term(Packet& p)
+void CodecManager::thread_term()
 {
     PacketManager::accumulate(); // statistics
 
@@ -265,12 +262,6 @@ void CodecManager::thread_term(Packet& p)
     {
         rand_close(s_rand);
         s_rand = NULL;
-    }
-
-    if (p.layers != nullptr)
-    {
-        free(p.layers);
-        p.layers = nullptr;
     }
 }
 

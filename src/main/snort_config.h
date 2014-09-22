@@ -284,14 +284,14 @@ struct SnortConfig
     bool unit_test;
 #endif
 
-    InspectionPolicy* get_inspection_policy() const
-    { return policy_map->get_inspection_policy(); };
+    InspectionPolicy* get_inspection_policy()
+    { return policy_map->inspection_policy[0]; };
 
-    IpsPolicy* get_ips_policy() const
-    { return policy_map->get_ips_policy(); };
+    IpsPolicy* get_ips_policy()
+    { return policy_map->ips_policy[0]; };
 
-    NetworkPolicy* get_network_policy() const
-    { return policy_map->get_network_policy(); };
+    NetworkPolicy* get_network_policy()
+    { return policy_map->network_policy[0]; };
 
     inline uint8_t get_num_layers() const
     { return num_layers; }

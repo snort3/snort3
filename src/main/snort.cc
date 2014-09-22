@@ -117,7 +117,7 @@ using namespace std;
 
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL Packet s_packet; // runtime variable.
+static THREAD_LOCAL Packet* s_packet; // runtime variable.
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 static SnortConfig* snort_cmd_line_conf = nullptr;
 
@@ -131,34 +131,6 @@ static char** snort_argv = NULL;
 
 static void CleanExit(int);
 static void SnortCleanup();
-
-//-------------------------------------------------------------------------
-// nascent policy management
-//-------------------------------------------------------------------------
-// FIXIT-H need stub binding rule to set these for runtime
-// FIXIT-H need to set these on load too somehow
-
-static THREAD_LOCAL NetworkPolicy* s_traffic_policy = nullptr;
-static THREAD_LOCAL InspectionPolicy* s_inspection_policy = nullptr;
-static THREAD_LOCAL IpsPolicy* s_detection_policy = nullptr;
-
-NetworkPolicy* get_network_policy()
-{ return s_traffic_policy; }
-
-InspectionPolicy* get_inspection_policy()
-{ return s_inspection_policy; }
-
-IpsPolicy* get_ips_policy()
-{ return s_detection_policy; }
-
-void set_network_policy(NetworkPolicy* p)
-{ s_traffic_policy = p; }
-
-void set_inspection_policy(InspectionPolicy* p)
-{ s_inspection_policy = p; }
-
-void set_ips_policy(IpsPolicy* p)
-{ s_detection_policy = p; }
 
 //-------------------------------------------------------------------------
 // utility
@@ -301,7 +273,7 @@ static void init_policy(SnortConfig* sc)
     else
         pm = POLICY_MODE__PASSIVE;
 
-    sc->get_ips_policy()->policy_mode = pm;
+    get_ips_policy()->policy_mode = pm;
 }
 
 static void SnortInit(int argc, char **argv)
@@ -702,7 +674,7 @@ void set_main_hook(MainHook_f f)
 { main_hook = f; }
 
 Packet* get_current_packet()
-{ return &s_packet; }
+{ return s_packet; }
 
 // FIXIT-J for multiple packet threads
 // using thread locals for s_pkth and s_data won't work
@@ -710,39 +682,22 @@ Packet* get_current_packet()
 // capture all if it is not clear which thread crashed
 void CapturePacket()
 {
-    if ( s_packet.pkth )
+    if ( s_packet->pkth )
     {
-        s_pkth = *s_packet.pkth;
+        s_pkth = *(s_packet->pkth);
 
-        if ( s_packet.pkt )
+        if ( s_packet->pkt )
         {
-            memcpy(s_data, s_packet.pkt, 0xFFFF & s_packet.pkth->caplen);
-            s_packet.pkt = s_data;
+            memcpy(s_data, s_packet->pkt, 0xFFFF & s_packet->pkth->caplen);
+            s_packet->pkt = s_data;
         }
     }
 }
 
-void set_default_policy()
+static void set_policy(Packet* p)  // FIXIT-H delete this?
 {
-    set_network_policy(snort_conf->policy_map->network_policy[0]);
-    set_ips_policy(snort_conf->policy_map->ips_policy[0]);
-    set_inspection_policy(snort_conf->policy_map->inspection_policy[0]);
-}
-
-static void set_policy(Packet*)  // FIX SSN implement based on bindings
-{
-   // for now need to just get stream_* inspectors and call appropriately 
-#if 0
-    int vlanId = (p->vh) ? vlan::vth_vlan(p->vh) : -1;
-    const sfip_t *srcIp = p->ptrs.ip_api.get_src(); // returns nullptr if not set
-    const sfip_t *dstIp = p->ptrs.ip_api.get_dst();
-
-    //set policy id for this packet
-    setCurrentPolicy(snort_conf, sfGetApplicablePolicyId(
-        snort_conf->policy_config, vlanId, srcIp, dstIp));
-#else
     set_default_policy();
-#endif
+    p->user_policy_id = get_ips_policy()->user_policy_id;
 }
 
 void DecodeRebuiltPacket (
@@ -754,8 +709,7 @@ void DecodeRebuiltPacket (
 
     p->flow = lws;
 
-    set_policy(p);  // FIX SSN rebuilt should reuse original bindings
-    p->user_policy_id = get_ips_policy()->user_policy_id;
+    set_policy(p);  // FIXIT-H rebuilt should reuse original bindings from flow
 
     SnortEventqPop();
 }
@@ -801,9 +755,7 @@ DAQ_Verdict ProcessPacket(
         p->proto_bits &= ~PROTO_BIT__IP;
 #endif
 
-    set_policy(p);
-
-    p->user_policy_id = get_ips_policy()->user_policy_id;
+    set_policy(p);  // FIXIT-H should not need this here
 
     /* just throw away the packet if we are configured to ignore this port */
     if ( !(p->packet_flags & PKT_IGNORE) )
@@ -873,9 +825,9 @@ DAQ_Verdict packet_callback(
 
     ActionManager::reset_queue();
 
-    verdict = ProcessPacket(&s_packet, pkthdr, pkt);
+    verdict = ProcessPacket(s_packet, pkthdr, pkt);
 
-    ActionManager::execute(&s_packet);
+    ActionManager::execute(s_packet);
 
     if ( Active_PacketWasDropped() )
     {
@@ -884,19 +836,18 @@ DAQ_Verdict packet_callback(
     }
     else
     {
-        Packet* p = &s_packet;
-        if ( s_packet.packet_flags & PKT_MODIFIED )
+        if ( s_packet->packet_flags & PKT_MODIFIED )
         {
             // this packet was normalized and/or has replacements
-            PacketManager::encode_update(&s_packet);
+            PacketManager::encode_update(s_packet);
             verdict = DAQ_VERDICT_REPLACE;
         }
-        else if ( p->packet_flags & PKT_RESIZED )
+        else if ( s_packet->packet_flags & PKT_RESIZED )
         {
-            printf("packet flags = 0x%X\n", p->packet_flags);
+            printf("packet flags = 0x%X\n", s_packet->packet_flags);
             // we never increase, only trim, but
             // daq doesn't support resizing wire packet
-            if ( !DAQ_Inject(s_packet.pkth, 0, s_packet.pkt, s_packet.pkth->pktlen) )
+            if ( !DAQ_Inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
             {
                 verdict = DAQ_VERDICT_BLOCK;
                 inject = 1;
@@ -904,8 +855,8 @@ DAQ_Verdict packet_callback(
         }
         else
         {
-            if ( (s_packet.packet_flags & PKT_IGNORE) ||
-                (stream.get_ignore_direction(s_packet.flow) == SSN_DIR_BOTH) )
+            if ( (s_packet->packet_flags & PKT_IGNORE) ||
+                (stream.get_ignore_direction(s_packet->flow) == SSN_DIR_BOTH) )
             {
                 if ( !Active_GetTunnelBypass() )
                 {
@@ -917,9 +868,9 @@ DAQ_Verdict packet_callback(
                     pc.internal_whitelist++;
                 }
             }
-            else if ( s_packet.ptrs.decode_flags & DECODE_PKT_TRUST )
+            else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
             {
-                stream.set_ignore_direction(s_packet.flow, SSN_DIR_BOTH);
+                stream.set_ignore_direction(s_packet->flow, SSN_DIR_BOTH);
 
                 verdict = DAQ_VERDICT_WHITELIST;
             }
@@ -940,7 +891,7 @@ DAQ_Verdict packet_callback(
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
 
-    s_packet.pkth = NULL;  // no longer avail on segv
+    s_packet->pkth = NULL;  // no longer avail on segv
 
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);
@@ -967,7 +918,8 @@ void snort_thread_init(const char* intf)
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 
-    CodecManager::thread_init(snort_conf, s_packet);
+    s_packet = PacketManager::encode_new();
+    CodecManager::thread_init();
     FileAPIPostInit();
 
     // this depends on instantiated daq capabilities
@@ -999,7 +951,13 @@ void snort_thread_term()
     ActionManager::thread_term(snort_conf);
     IpsManager::clear_options();
     EventManager::close_outputs();
-    CodecManager::thread_term(s_packet);
+    CodecManager::thread_term();
+
+    if (s_packet)
+    {
+        PacketManager::encode_delete(s_packet);
+        s_packet = nullptr;
+    }
 
     if ( DAQ_WasStarted() )
         DAQ_Stop();

@@ -1125,7 +1125,7 @@ public:
 
 bool IpsModule::set(const char*, Value& v, SnortConfig*)
 {
-    IpsPolicy* p = snort_conf->get_ips_policy();
+    IpsPolicy* p = get_ips_policy();
 
     if ( v.is("enable_builtin_rules") )
         p->enable_builtin_rules = v.get_bool();
