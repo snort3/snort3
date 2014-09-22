@@ -56,7 +56,6 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     else {
         NHttpTestManager::get_test_input_source()->flush(num_octets);
     }
-    session_data->peek_ahead_octets[source_id] = 0;
     session_data->unused_octets_visible[source_id] = length - num_octets;
     session_data->header_octets_visible[source_id] = 0;
 }
@@ -96,30 +95,24 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
 
     SectionType type = session_data->type_expected[source_id];
 
-    // Check for header section previously found during peek ahead
-    if ((type == SEC_HEADER) && (session_data->header_octets_visible[source_id] > 0)) {
-        prepare_flush(session_data, flush_offset, source_id, type,
-           tcp_close && (session_data->header_octets_visible[source_id] == length),
-           0, session_data->header_octets_visible[source_id], length);
-        return StreamSplitter::FLUSH;
-    }
-    // Did we peek ahead and not find the complete headers?
-    if (session_data->peek_ahead_octets[source_id] > 0) {
-        assert(length == session_data->peek_ahead_octets[source_id]);
-        session_data->peek_ahead_octets[source_id] = 0;
-        return StreamSplitter::SEARCH;
-    }
-
     switch (type) {
       case SEC_REQUEST:
       case SEC_STATUS:
       case SEC_CHUNKHEAD:
       case SEC_HEADER:
-      case SEC_TRAILER: {
+      case SEC_TRAILER:
+      {
         paf_max = 63780;
-        NHttpSplitter* splitter = ((type == SEC_HEADER) || (type == SEC_TRAILER)) ?
-           (NHttpSplitter*)&session_data->header_splitter[source_id] :
-           (NHttpSplitter*)&session_data->start_splitter[source_id];
+        NHttpSplitter* splitter;
+        switch (type) {
+          case SEC_REQUEST: splitter = (NHttpSplitter*)&session_data->request_splitter[source_id]; break;
+          case SEC_STATUS: splitter = (NHttpSplitter*)&session_data->status_splitter[source_id]; break;
+          case SEC_CHUNKHEAD: splitter = (NHttpSplitter*)&session_data->chunkhead_splitter[source_id]; break;
+          case SEC_HEADER: splitter = (NHttpSplitter*)&session_data->header_splitter[source_id]; break;
+          case SEC_TRAILER: splitter = (NHttpSplitter*)&session_data->trailer_splitter[source_id]; break;
+          default: assert(0); break;
+        }
+
         const uint32_t max_length = (length <= (63780 - splitter->get_octets_seen())) ? length :
            (63780 - splitter->get_octets_seen());
         const SectionType split_result = splitter->split(data, max_length);
@@ -137,7 +130,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
             splitter->reset();
             return StreamSplitter::FLUSH;
         }
-        const uint32_t flush_octets = session_data->peek_ahead_octets[source_id] + splitter->get_num_flush();
+        const uint32_t flush_octets = splitter->get_num_flush();
         if (split_result == SEC_DISCARD) {
             prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close && (flush_octets == length), 0,
                flush_octets, length);
@@ -149,14 +142,9 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         splitter->reset();
         if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
             // Look ahead to see if entire header section is already here so we can aggregate it for detection.
-            NHttpSplitter* peek_splitter = &session_data->header_splitter[source_id];
-            const SectionType peek_result = peek_splitter->split(data + flush_octets, length - flush_octets);
-            if (peek_result == SEC_HEADER) {
-                session_data->header_octets_visible[source_id] = peek_splitter->get_num_flush();
-                peek_splitter->reset();
-            }
-            else {
-                session_data->peek_ahead_octets[source_id] = length - flush_octets;
+            const uint32_t peek_max_length = ((length - flush_octets <= 63780)) ? (length - flush_octets) : 63780;
+            if (session_data->header_splitter[source_id].peek(data + flush_octets, peek_max_length) == SEC_HEADER) {
+                session_data->header_octets_visible[source_id] = session_data->header_splitter[source_id].get_num_flush();
             }
         }
         return StreamSplitter::FLUSH;

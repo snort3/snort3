@@ -71,7 +71,6 @@ void NHttpFlowData::show(FILE* out_file) const {
     fprintf(out_file, "Data length: %" PRIi64 "/%" PRIi64 "\n", data_length[0], data_length[1]);
     fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);
     fprintf(out_file, "Number of chunks: %" PRIi64 "/%" PRIi64 "\n", num_chunks[0], num_chunks[1]);
-    fprintf(out_file, "Peek ahead octets: %u/%u\n", peek_ahead_octets[0], peek_ahead_octets[1]);
     fprintf(out_file, "Unused octets visible: %u/%u\n", unused_octets_visible[0], unused_octets_visible[1]);
     fprintf(out_file, "Header octets visible: %u/%u\n", header_octets_visible[0], header_octets_visible[1]);
     fprintf(out_file, "Section buffer length: %d/%d\n", section_buffer_length[0], section_buffer_length[1]);

@@ -61,9 +61,11 @@ private:
     void half_reset(NHttpEnums::SourceId source_id);
 
     // StreamSplitter internal data
-    NHttpStartSplitter start_splitter[2];
+    NHttpRequestSplitter request_splitter[2];
+    NHttpStatusSplitter status_splitter[2];
     NHttpHeaderSplitter header_splitter[2];
-    uint32_t peek_ahead_octets[2] = { 0, 0 };
+    NHttpChunkHeaderSplitter chunkhead_splitter[2];
+    NHttpTrailerSplitter trailer_splitter[2];
     uint32_t unused_octets_visible[2] = { 0, 0 };
     uint32_t header_octets_visible[2] = { 0, 0 };
     uint8_t *section_buffer[2] = { nullptr, nullptr };

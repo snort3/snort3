@@ -29,6 +29,7 @@
 #ifndef NHTTP_SPLITTER_H
 #define NHTTP_SPLITTER_H
 
+#include <assert.h>
 #include "nhttp_enum.h"
 
 //-------------------------------------------------------------------------
@@ -37,11 +38,12 @@
 
 class NHttpSplitter {
 public:
+    virtual ~NHttpSplitter() = default;
     virtual void reset() { octets_seen = 0; num_crlf = 0; num_flush = 0; };
     virtual NHttpEnums::SectionType split(const uint8_t* buffer, uint32_t length) = 0;
-    virtual ~NHttpSplitter() = default;
+    virtual NHttpEnums::SectionType peek(const uint8_t*, uint32_t) { assert(0); return NHttpEnums::SEC_ABORT; };
     uint32_t get_num_flush() { return num_flush; };
-    uint32_t get_octets_seen() { return octets_seen; };
+    virtual uint32_t get_octets_seen() { return octets_seen; };
 
 protected:
     uint32_t octets_seen = 0;
@@ -49,12 +51,33 @@ protected:
     uint32_t num_flush = 0;
 };
 
-class NHttpStartSplitter : public NHttpSplitter {
+class NHttpRequestSplitter : public NHttpSplitter {
+public:
+    NHttpEnums::SectionType split(const uint8_t* buffer, uint32_t length);
+};
+
+class NHttpStatusSplitter : public NHttpSplitter {
 public:
     NHttpEnums::SectionType split(const uint8_t* buffer, uint32_t length);
 };
 
 class NHttpHeaderSplitter : public NHttpSplitter {
+public:
+    NHttpEnums::SectionType split(const uint8_t* buffer, uint32_t length);
+    NHttpEnums::SectionType peek(const uint8_t* buffer, uint32_t length);
+    void reset() { NHttpSplitter::reset(); peek_octets = 0; peek_status = NHttpEnums::SEC__NOTPRESENT; };
+    uint32_t get_octets_seen() { return octets_seen - peek_octets; };
+private:
+    uint32_t peek_octets = 0;
+    NHttpEnums::SectionType peek_status = NHttpEnums::SEC__NOTPRESENT;
+};
+
+class NHttpChunkHeaderSplitter : public NHttpSplitter {
+public:
+    NHttpEnums::SectionType split(const uint8_t* buffer, uint32_t length);
+};
+
+class NHttpTrailerSplitter : public NHttpSplitter {
 public:
     NHttpEnums::SectionType split(const uint8_t* buffer, uint32_t length);
 };
