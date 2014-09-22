@@ -30,7 +30,7 @@
 
 using namespace NHttpEnums;
 
-SectionType NHttpRequestSplitter::split(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpRequestSplitter::split(const uint8_t* buffer, uint32_t length) {
     for (uint32_t k = 0; k < length; k++) {
         // Count the alternating <CR> and <LF> characters we have seen in a row
         if (((buffer[k] == '\r') && (num_crlf == 0)) ||
@@ -46,13 +46,13 @@ SectionType NHttpRequestSplitter::split(const uint8_t* buffer, uint32_t length) 
         }
         num_flush = k+1;
         // If the first two octets are CRLF then they must be discarded.
-        return ((octets_seen + k + 1) == 2) ? SEC_DISCARD : SEC_REQUEST;
+        return ((octets_seen + k + 1) == 2) ? SCAN_DISCARD : SCAN_FOUND;
     }
     octets_seen += length;
-    return SEC__NOTPRESENT;
+    return SCAN_NOTFOUND;
 }
 
-SectionType NHttpStatusSplitter::split(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpStatusSplitter::split(const uint8_t* buffer, uint32_t length) {
     for (uint32_t k = 0; k < length; k++) {
         // Count the alternating <CR> and <LF> characters we have seen in a row
         if (((buffer[k] == '\r') && (num_crlf == 0)) ||
@@ -68,13 +68,13 @@ SectionType NHttpStatusSplitter::split(const uint8_t* buffer, uint32_t length) {
         }
         num_flush = k+1;
         // If the first two octets are CRLF then they must be discarded.
-        return ((octets_seen + k + 1) == 2) ? SEC_DISCARD : SEC_STATUS;
+        return ((octets_seen + k + 1) == 2) ? SCAN_DISCARD : SCAN_FOUND;
     }
     octets_seen += length;
-    return SEC__NOTPRESENT;
+    return SCAN_NOTFOUND;
 }
 
-SectionType NHttpChunkHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpChunkHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
     for (uint32_t k = 0; k < length; k++) {
         // Count the alternating <CR> and <LF> characters we have seen in a row
         if (((buffer[k] == '\r') && (num_crlf == 0)) ||
@@ -90,15 +90,15 @@ SectionType NHttpChunkHeaderSplitter::split(const uint8_t* buffer, uint32_t leng
         }
         num_flush = k+1;
         // If the first two octets are CRLF then they must be discarded.
-        return ((octets_seen + k + 1) == 2) ? SEC_DISCARD : SEC_CHUNKHEAD;
+        return ((octets_seen + k + 1) == 2) ? SCAN_DISCARD : SCAN_FOUND;
     }
     octets_seen += length;
-    return SEC__NOTPRESENT;
+    return SCAN_NOTFOUND;
 }
 
-SectionType NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
-    if (peek_status == SEC_HEADER) {
-        return SEC_HEADER;
+ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
+    if (peek_status == SCAN_FOUND) {
+        return SCAN_FOUND;
     }
     buffer += peek_octets;
     length -= peek_octets;
@@ -110,7 +110,7 @@ SectionType NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
             num_crlf++;
             if ((num_crlf == 2) && (octets_seen + k + 1) == 2) {
                 num_flush = k+1;
-                return SEC_HEADER;
+                return SCAN_FOUND;
             }
             if (num_crlf < 4) {
                 continue;
@@ -121,13 +121,13 @@ SectionType NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
             continue;
         }
         num_flush = k + 1 + peek_octets;
-        return SEC_HEADER;
+        return SCAN_FOUND;
     }
     octets_seen += length;
-    return SEC__NOTPRESENT;
+    return SCAN_NOTFOUND;
 }
 
-SectionType NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length) {
     assert(octets_seen == 0);
     peek_status = split(buffer, length);
     peek_octets = length;
@@ -135,7 +135,7 @@ SectionType NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length) {
 }
 
 
-SectionType NHttpTrailerSplitter::split(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpTrailerSplitter::split(const uint8_t* buffer, uint32_t length) {
     for (uint32_t k = 0; k < length; k++) {
         // Count the alternating <CR> and <LF> characters we have seen in a row
         if (((buffer[k] == '\r') && (num_crlf%2 == 0)) ||
@@ -143,7 +143,7 @@ SectionType NHttpTrailerSplitter::split(const uint8_t* buffer, uint32_t length) 
             num_crlf++;
             if ((num_crlf == 2) && (octets_seen + k + 1) == 2) {
                 num_flush = k+1;
-                return SEC_TRAILER;
+                return SCAN_FOUND;
             }
             if (num_crlf < 4) {
                 continue;
@@ -154,10 +154,10 @@ SectionType NHttpTrailerSplitter::split(const uint8_t* buffer, uint32_t length) 
             continue;
         }
         num_flush = k+1;
-        return SEC_TRAILER;
+        return SCAN_FOUND;
     }
     octets_seen += length;
-    return SEC__NOTPRESENT;
+    return SCAN_NOTFOUND;
 }
 
 

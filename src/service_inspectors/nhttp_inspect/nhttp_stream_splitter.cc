@@ -60,14 +60,32 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     session_data->header_octets_visible[source_id] = 0;
 }
 
-StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t, uint32_t* flush_offset) {
+// Convenience function. Size buffer required to accommodate the current section plus possible aggregation.
+uint32_t NHttpStreamSplitter::size_buffer_needed(unsigned total, NHttpEnums::SectionType type,
+   uint32_t possible_additional) {
+    switch (type) {
+      case SEC_CHUNKBODY:
+        return 16384;
+      case SEC_REQUEST:
+      case SEC_STATUS:
+      case SEC_HEADER:
+        return total + possible_additional;
+      default:
+        return total;
+    }
+}
+
+StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t,
+   uint32_t* flush_offset) {
+
     assert(length <= 63780);
 
     // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
     bool tcp_close = false;
 
     // This is the session state information we share with HTTP Inspect and store with stream. A session is defined
-    // by a TCP connection. Since PAF is the first to see a new TCP connection the new flow data object is created here.
+    // by a TCP connection. Since scan() is the first to see a new TCP connection the new flow data object is created
+    // here.
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     if (session_data == nullptr) flow->set_application_data(session_data = new NHttpFlowData);
     assert(session_data != nullptr);
@@ -115,8 +133,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
 
         const uint32_t max_length = (length <= (63780 - splitter->get_octets_seen())) ? length :
            (63780 - splitter->get_octets_seen());
-        const SectionType split_result = splitter->split(data, max_length);
-        if (split_result == SEC__NOTPRESENT) {
+        const ScanResult split_result = splitter->split(data, max_length);
+        if (split_result == SCAN_NOTFOUND) {
             if (splitter->get_octets_seen() == 63780) {
                 // FIXIT-M need to implement processing and detection instead of just discarding this data
                 session_data->type_expected[source_id] = SEC_ABORT;
@@ -131,7 +149,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
             return StreamSplitter::FLUSH;
         }
         const uint32_t flush_octets = splitter->get_num_flush();
-        if (split_result == SEC_DISCARD) {
+        if (split_result == SCAN_DISCARD) {
             prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close && (flush_octets == length), 0,
                flush_octets, length);
             splitter->reset();
@@ -143,7 +161,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
             // Look ahead to see if entire header section is already here so we can aggregate it for detection.
             const uint32_t peek_max_length = ((length - flush_octets <= 63780)) ? (length - flush_octets) : 63780;
-            if (session_data->header_splitter[source_id].peek(data + flush_octets, peek_max_length) == SEC_HEADER) {
+            if (session_data->header_splitter[source_id].peek(data + flush_octets, peek_max_length) == SCAN_FOUND) {
                 session_data->header_octets_visible[source_id] = session_data->header_splitter[source_id].get_num_flush();
             }
         }
@@ -169,7 +187,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
     }
 }
 
-const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total FIXIT-H */, unsigned offset, const uint8_t* data,
+const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned offset, const uint8_t* data,
        unsigned len, uint32_t flags, unsigned& copied)
 {
     static THREAD_LOCAL StreamBuffer nhttp_buf;
@@ -191,7 +209,11 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
         }
         data = test_buffer;
         offset = 0;
+        total = len;
     }
+
+    assert(total <= 63780);
+    assert(offset+len <= total);
 
     bool is_chunk_body = session_data->section_type[source_id] == SEC_CHUNKBODY;
 
@@ -201,7 +223,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
     int32_t& buffer_length = !is_chunk_body ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
 
     if (buffer == nullptr) {
-        buffer = new uint8_t[65536];
+        buffer = new uint8_t[size_buffer_needed(total, session_data->section_type[source_id],
+           session_data->unused_octets_visible[source_id])];
     }
 
     memcpy(buffer + buffer_length + offset, data, len);
@@ -215,7 +238,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /*total
         }
         else {
             // Because of aggregation chunk body sections do not go to Inspector on schedule or in chronological order
-            // with respect to otherchunks. That means NHttpMsgChunkBody::update_flow() cannot do it design-intended
+            // with respect to chunk header sections. That means NHttpMsgChunkBody::update_flow() cannot do it design-intended
             // job of updating type_expected in time for StreamSplitter to find the next chunk header. So we do it here.
             session_data->type_expected[source_id] = SEC_CHUNKHEAD;
 

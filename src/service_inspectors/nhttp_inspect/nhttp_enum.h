@@ -49,6 +49,9 @@ typedef enum { SRC__NOTCOMPUTE=-4, SRC_CLIENT=0, SRC_SERVER=1 } SourceId;
 typedef enum { SEC_DISCARD = -10, SEC_CLOSED = -9, SEC_ABORT = -8, SEC__NOTCOMPUTE=-4, SEC__NOTPRESENT=-1, SEC_REQUEST = 2,
    SEC_STATUS, SEC_HEADER, SEC_BODY, SEC_CHUNKHEAD, SEC_CHUNKBODY, SEC_TRAILER } SectionType;
 
+// Result of scanning by splitter
+typedef enum { SCAN_NOTFOUND, SCAN_FOUND, SCAN_DISCARD } ScanResult;
+
 // Result of processing a message section--what needs to happen next
 typedef enum { RES_INSPECT, RES_IGNORE, RES_AGGREGATE, RES_FLUSHCHUNKS } ProcessResult;
 
