@@ -715,7 +715,10 @@ void CapturePacket()
         s_pkth = *s_packet.pkth;
 
         if ( s_packet.pkt )
+        {
             memcpy(s_data, s_packet.pkt, 0xFFFF & s_packet.pkth->caplen);
+            s_packet.pkt = s_data;
+        }
     }
 }
 

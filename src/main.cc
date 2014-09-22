@@ -671,6 +671,7 @@ static inline bool dont_stop()
 static void main_loop()
 {
     unsigned idx = max_pigs, swine = 0;
+    init_main_thread_sig();
 
     while ( !exit_logged && (dont_stop() || swine) )
     {

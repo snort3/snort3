@@ -142,7 +142,6 @@ static_assert(CODEC_ENCAP_LAYER == (CODEC_UNSURE_ENCAP | CODEC_SAVE_LAYER),
     "If this is an encapsulated layer, you must also set UNSURE_ENCAP"
     " and SAVE_LAYER");
 
-
 //-------------------------------------------------------------------------
 // Encode/Decode functions
 //-------------------------------------------------------------------------
@@ -153,10 +152,6 @@ void PacketManager::decode(
     PROFILE_VARS;
     uint8_t mapped_prot = CodecManager::grinder;
     uint16_t prev_prot_id = FINISHED_DECODE;
-
-
-//    assert(!(p->packet_flags & PKT_REBUILT_STREAM));
-
 
     // initialize all Packet information
     memset(p, 0, PKT_ZERO_LEN);
