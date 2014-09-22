@@ -455,7 +455,8 @@ static const char* flush_policy_names[] =
 };
 #endif
 
-static THREAD_LOCAL Packet *s5_pkt = NULL;
+static THREAD_LOCAL Packet *s5_pkt = nullptr;
+static THREAD_LOCAL Packet *cleanup_pkt = nullptr;
 
 /*  F U N C T I O N S  **********************************************/
 static inline void init_flush_policy(Flow* flow, StreamTracker* trk)
@@ -1636,6 +1637,7 @@ static inline void UpdateSsn(
 void tcp_sinit()
 {
     s5_pkt = PacketManager::encode_new();
+    cleanup_pkt = PacketManager::encode_new();
     tcp_memcap = new Memcap(26214400); // FIXIT-M replace with session memcap
     //AtomSplitter::init();  // FIXIT-L PAF implement
 }
@@ -1645,7 +1647,13 @@ void tcp_sterm()
     if (s5_pkt)
     {
         PacketManager::encode_delete(s5_pkt);
-        s5_pkt = NULL;
+        s5_pkt = nullptr;
+    }
+
+    if (cleanup_pkt)
+    {
+        PacketManager::encode_delete(cleanup_pkt);
+        cleanup_pkt = nullptr;
     }
     delete tcp_memcap;
     tcp_memcap = nullptr;
@@ -2484,12 +2492,11 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
 
 static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
 {
-    DAQ_PktHdr_t tmp_pcap_hdr;
+    DAQ_PktHdr_t* const tmp_pcap_hdr = const_cast<DAQ_PktHdr_t*>(cleanup_pkt->pkth);
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
 
     /* Flush ack'd data on both sides as necessary */
     {
-        Packet p;
         int flushed;
 
         /* Flush the client */
@@ -2497,27 +2504,27 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         {
             tcpStats.s5tcp1++;
             /* Do each field individually because of size differences on 64bit OS */
-            tmp_pcap_hdr.ts.tv_sec = tcpssn->client.seglist->tv.tv_sec;
-            tmp_pcap_hdr.ts.tv_usec = tcpssn->client.seglist->tv.tv_usec;
-            tmp_pcap_hdr.caplen = tcpssn->client.seglist->caplen;
-            tmp_pcap_hdr.pktlen = tcpssn->client.seglist->pktlen;
+            tmp_pcap_hdr->ts.tv_sec = tcpssn->client.seglist->tv.tv_sec;
+            tmp_pcap_hdr->ts.tv_usec = tcpssn->client.seglist->tv.tv_usec;
+            tmp_pcap_hdr->caplen = tcpssn->client.seglist->caplen;
+            tmp_pcap_hdr->pktlen = tcpssn->client.seglist->pktlen;
 
-            DecodeRebuiltPacket(&p, &tmp_pcap_hdr, tcpssn->client.seglist->pkt, lwssn);
+            DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, tcpssn->client.seglist->pkt, lwssn);
 
-            if ( !p.ptrs.tcph )
+            if ( !cleanup_pkt->ptrs.tcph )
             {
                 flushed = 0;
             }
             else
             {
                 tcpssn->client.flags |= TF_FORCE_FLUSH;
-                flushed = flush_stream(tcpssn, &tcpssn->client, &p,
+                flushed = flush_stream(tcpssn, &tcpssn->client, cleanup_pkt,
                             PKT_FROM_SERVER);
             }
             if (flushed)
                 purge_flushed_ackd(tcpssn, &tcpssn->client);
             else
-                LogRebuiltPacket(&p);
+                LogRebuiltPacket(cleanup_pkt);
 
             tcpssn->client.flags &= ~TF_FORCE_FLUSH;
         }
@@ -2527,27 +2534,27 @@ static void TcpSessionCleanup(Flow *lwssn, int freeApplicationData)
         {
             tcpStats.s5tcp2++;
             /* Do each field individually because of size differences on 64bit OS */
-            tmp_pcap_hdr.ts.tv_sec = tcpssn->server.seglist->tv.tv_sec;
-            tmp_pcap_hdr.ts.tv_usec = tcpssn->server.seglist->tv.tv_usec;
-            tmp_pcap_hdr.caplen = tcpssn->server.seglist->caplen;
-            tmp_pcap_hdr.pktlen = tcpssn->server.seglist->pktlen;
+            tmp_pcap_hdr->ts.tv_sec = tcpssn->server.seglist->tv.tv_sec;
+            tmp_pcap_hdr->ts.tv_usec = tcpssn->server.seglist->tv.tv_usec;
+            tmp_pcap_hdr->caplen = tcpssn->server.seglist->caplen;
+            tmp_pcap_hdr->pktlen = tcpssn->server.seglist->pktlen;
 
-            DecodeRebuiltPacket(&p, &tmp_pcap_hdr, tcpssn->server.seglist->pkt, lwssn);
+            DecodeRebuiltPacket(cleanup_pkt, tmp_pcap_hdr, tcpssn->server.seglist->pkt, lwssn);
 
-            if ( !p.ptrs.tcph )
+            if ( !cleanup_pkt->ptrs.tcph )
             {
                 flushed = 0;
             }
             else
             {
                 tcpssn->server.flags |= TF_FORCE_FLUSH;
-                flushed = flush_stream(tcpssn, &tcpssn->server, &p,
+                flushed = flush_stream(tcpssn, &tcpssn->server, cleanup_pkt,
                             PKT_FROM_CLIENT);
             }
             if (flushed)
                 purge_flushed_ackd(tcpssn, &tcpssn->server);
             else
-                LogRebuiltPacket(&p);
+                LogRebuiltPacket(cleanup_pkt);
 
             tcpssn->server.flags &= ~TF_FORCE_FLUSH;
         }

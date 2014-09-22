@@ -360,7 +360,7 @@ void PluginManager::list_plugins()
     {
         Plugin& p = it->second;
         cout << Markup::item();
-        cout << p.key;
+        cout << Markup::sanitize(p.key);
         if ( p.api->mod_ctor )
             cout << " (module)";
         cout << endl;

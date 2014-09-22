@@ -123,13 +123,13 @@ void RejectAction::send(Packet* p)
         Active_SendReset(p, ENC_FLAG_FWD);
 
     if ( flags & REJ_UNR_NET )
-        Active_SendUnreach(p, ENC_UNR_NET);
+        Active_SendUnreach(p, UnreachResponse::NET);
 
     if ( flags & REJ_UNR_HOST )
-        Active_SendUnreach(p, ENC_UNR_HOST);
+        Active_SendUnreach(p, UnreachResponse::HOST);
 
     if ( flags & REJ_UNR_PORT )
-        Active_SendUnreach(p, ENC_UNR_PORT);
+        Active_SendUnreach(p, UnreachResponse::PORT);
 
     Active_IgnoreSession(p);
 }

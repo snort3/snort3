@@ -104,10 +104,10 @@ void help_args(const char* pfx)
 
             //const char* prefix = strlen(p->name) > 1 ? "--" : "-";
             //cout << prefix << p->name;
-            cout << p->name;
+            cout << Markup::sanitize(p->name);
             cout << Markup::emphasis_off();
 
-            cout << " " << p->help;
+            cout << " " << Markup::sanitize(p->help);
             cout << endl;
         }
         ++p;

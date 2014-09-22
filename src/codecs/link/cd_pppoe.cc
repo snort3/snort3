@@ -79,28 +79,28 @@ public:
 } // namespace
 
 
-const uint16_t PPPOE_HEADER_LEN = 6;
+constexpr uint16_t PPPOE_HEADER_LEN = 6;
 
 /* PPPoE types */
-const uint16_t PPPoE_CODE_SESS = 0x00; /* PPPoE session */
-const uint16_t PPPoE_CODE_PADI = 0x09; /* PPPoE Active Discovery Initiation */
-const uint16_t PPPoE_CODE_PADO = 0x07; /* PPPoE Active Discovery Offer */
-const uint16_t PPPoE_CODE_PADR = 0x19; /* PPPoE Active Discovery Request */
-const uint16_t PPPoE_CODE_PADS = 0x65; /* PPPoE Active Discovery Session-confirmation */
-const uint16_t PPPoE_CODE_PADT = 0xa7; /* PPPoE Active Discovery Terminate */
+constexpr uint16_t PPPoE_CODE_SESS = 0x00; /* PPPoE session */
+constexpr uint16_t PPPoE_CODE_PADI = 0x09; /* PPPoE Active Discovery Initiation */
+constexpr uint16_t PPPoE_CODE_PADO = 0x07; /* PPPoE Active Discovery Offer */
+constexpr uint16_t PPPoE_CODE_PADR = 0x19; /* PPPoE Active Discovery Request */
+constexpr uint16_t PPPoE_CODE_PADS = 0x65; /* PPPoE Active Discovery Session-confirmation */
+constexpr uint16_t PPPoE_CODE_PADT = 0xa7; /* PPPoE Active Discovery Terminate */
 
 #if 0
 /* PPPoE tag types  -  currently not used*/
-const uint16_t PPPoE_TAG_END_OF_LIST = 0x0000;
-const uint16_t PPPoE_TAG_SERVICE_NAME = 0x0101;
-const uint16_t PPPoE_TAG_AC_NAME = 0x0102;
-const uint16_t PPPoE_TAG_HOST_UNIQ = 0x0103;
-const uint16_t PPPoE_TAG_AC_COOKIE = 0x0104;
-const uint16_t PPPoE_TAG_VENDOR_SPECIFIC = 0x0105;
-const uint16_t PPPoE_TAG_RELAY_SESSION_ID = 0x0110;
-const uint16_t PPPoE_TAG_SERVICE_NAME_ERROR = 0x0201;
+constexpr uint16_t PPPoE_TAG_END_OF_LIST = 0x0000;
+constexpr uint16_t PPPoE_TAG_SERVICE_NAME = 0x0101;
+constexpr uint16_t PPPoE_TAG_AC_NAME = 0x0102;
+constexpr uint16_t PPPoE_TAG_HOST_UNIQ = 0x0103;
+constexpr uint16_t PPPoE_TAG_AC_COOKIE = 0x0104;
+constexpr uint16_t PPPoE_TAG_VENDOR_SPECIFIC = 0x0105;
+constexpr uint16_t PPPoE_TAG_RELAY_SESSION_ID = 0x0110;
+constexpr uint16_t PPPoE_TAG_SERVICE_NAME_ERROR = 0x0201;
 const uint16_t PPPoE_TAG_AC_SYSTEM_ERROR = 0x0202;
-const uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
+constexpr uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
 #endif
 
 
@@ -112,7 +112,7 @@ static inline bool pppoepkt_decode(const RawData& raw,
     /* do a little validation */
     if(raw.len < PPPOE_HEADER_LEN)
     {
-        codec_events::decoder_event(DECODE_BAD_PPPOE);
+        codec_events::decoder_event(codec, DECODE_BAD_PPPOE);
         return false;
     }
 
@@ -261,18 +261,15 @@ static inline bool pppoepkt_decode(const RawData& raw,
  ******************** E N C O D E R  ******************************
  ******************************************************************/
 
-static inline bool pppoepkt_encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+static inline bool pppoepkt_encode(const uint8_t* const raw_in,
+        const uint16_t raw_len, Buffer& buf)
 {
-    int lyr_len = enc->p->layers[enc->layer-1].length;
-
-    if (!update_buffer(out, lyr_len))
+    if (!buf.allocate(raw_len))
         return false;
 
-    const PPPoEHdr* hi = reinterpret_cast<const PPPoEHdr*>(raw_in);
-    PPPoEHdr* ho = reinterpret_cast<PPPoEHdr*>(out->base);
-
-    memcpy(ho, hi, lyr_len);
-    ho->length = htons((uint16_t)out->end);
+    memcpy(buf.base, raw_in, raw_len);
+    PPPoEHdr* const ppph = reinterpret_cast<PPPoEHdr*>(buf.base);
+    ppph->length = htons((uint16_t)buf.size());
 
     return true;
 }
@@ -301,7 +298,8 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
 };
 
 
@@ -318,9 +316,10 @@ bool PPPoEDiscCodec::decode(const RawData& raw, CodecData& codec, SnortData& sno
     return pppoepkt_decode(raw, codec, snort, PppoepktType::DISCOVERY);
 }
 
-bool PPPoEDiscCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
+bool PPPoEDiscCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                            EncState&, Buffer& buf)
 {
-    return pppoepkt_encode(enc, out, raw_in);
+    return pppoepkt_encode(raw_in, raw_len, buf);
 }
 
 
@@ -394,7 +393,8 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
 };
 
 
@@ -409,8 +409,9 @@ bool PPPoESessCodec::decode(const RawData& raw, CodecData& codec, SnortData& sno
 
 
 
-bool PPPoESessCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
-{ return pppoepkt_encode(enc, out, raw_in); }
+bool PPPoESessCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                            EncState&, Buffer& buf)
+{ return pppoepkt_encode(raw_in, raw_len, buf); }
 
 
 //-------------------------------------------------------------------------

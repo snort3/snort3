@@ -117,6 +117,7 @@ using namespace std;
 
 //-------------------------------------------------------------------------
 
+static THREAD_LOCAL Packet* s_packet; // runtime variable.
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 static SnortConfig* snort_cmd_line_conf = nullptr;
 
@@ -662,7 +663,7 @@ SnortConfig* reload_config()
 //-------------------------------------------------------------------------
 
 // non-local for easy access from core
-static THREAD_LOCAL Packet s_packet;
+//static THREAD_LOCAL Packet s_packet;  declared above due to initalization in CodecManager
 static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
 static THREAD_LOCAL uint8_t s_data[65536];
 
@@ -673,7 +674,7 @@ void set_main_hook(MainHook_f f)
 { main_hook = f; }
 
 Packet* get_current_packet()
-{ return &s_packet; }
+{ return s_packet; }
 
 // FIXIT-J for multiple packet threads
 // using thread locals for s_pkth and s_data won't work
@@ -681,12 +682,15 @@ Packet* get_current_packet()
 // capture all if it is not clear which thread crashed
 void CapturePacket()
 {
-    if ( s_packet.pkth )
+    if ( s_packet->pkth )
     {
-        s_pkth = *s_packet.pkth;
+        s_pkth = *(s_packet->pkth);
 
-        if ( s_packet.pkt )
-            memcpy(s_data, s_packet.pkt, 0xFFFF & s_packet.pkth->caplen);
+        if ( s_packet->pkt )
+        {
+            memcpy(s_data, s_packet->pkt, 0xFFFF & s_packet->pkth->caplen);
+            s_packet->pkt = s_data;
+        }
     }
 }
 
@@ -821,9 +825,9 @@ DAQ_Verdict packet_callback(
 
     ActionManager::reset_queue();
 
-    verdict = ProcessPacket(&s_packet, pkthdr, pkt);
+    verdict = ProcessPacket(s_packet, pkthdr, pkt);
 
-    ActionManager::execute(&s_packet);
+    ActionManager::execute(s_packet);
 
     if ( Active_PacketWasDropped() )
     {
@@ -832,19 +836,18 @@ DAQ_Verdict packet_callback(
     }
     else
     {
-        Packet* p = &s_packet;
-        if ( s_packet.packet_flags & PKT_MODIFIED )
+        if ( s_packet->packet_flags & PKT_MODIFIED )
         {
             // this packet was normalized and/or has replacements
-            PacketManager::encode_update(&s_packet);
+            PacketManager::encode_update(s_packet);
             verdict = DAQ_VERDICT_REPLACE;
         }
-        else if ( p->packet_flags & PKT_RESIZED )
+        else if ( s_packet->packet_flags & PKT_RESIZED )
         {
-            printf("packet flags = 0x%X\n", p->packet_flags);
+            printf("packet flags = 0x%X\n", s_packet->packet_flags);
             // we never increase, only trim, but
             // daq doesn't support resizing wire packet
-            if ( !DAQ_Inject(s_packet.pkth, 0, s_packet.pkt, s_packet.pkth->pktlen) )
+            if ( !DAQ_Inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
             {
                 verdict = DAQ_VERDICT_BLOCK;
                 inject = 1;
@@ -852,8 +855,8 @@ DAQ_Verdict packet_callback(
         }
         else
         {
-            if ( (s_packet.packet_flags & PKT_IGNORE) ||
-                (stream.get_ignore_direction(s_packet.flow) == SSN_DIR_BOTH) )
+            if ( (s_packet->packet_flags & PKT_IGNORE) ||
+                (stream.get_ignore_direction(s_packet->flow) == SSN_DIR_BOTH) )
             {
                 if ( !Active_GetTunnelBypass() )
                 {
@@ -865,9 +868,9 @@ DAQ_Verdict packet_callback(
                     pc.internal_whitelist++;
                 }
             }
-            else if ( s_packet.ptrs.decode_flags & DECODE_PKT_TRUST )
+            else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
             {
-                stream.set_ignore_direction(s_packet.flow, SSN_DIR_BOTH);
+                stream.set_ignore_direction(s_packet->flow, SSN_DIR_BOTH);
 
                 verdict = DAQ_VERDICT_WHITELIST;
             }
@@ -888,7 +891,7 @@ DAQ_Verdict packet_callback(
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
 
-    s_packet.pkth = NULL;  // no longer avail on segv
+    s_packet->pkth = NULL;  // no longer avail on segv
 
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);
@@ -915,6 +918,7 @@ void snort_thread_init(const char* intf)
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 
+    s_packet = PacketManager::encode_new();
     CodecManager::thread_init();
     FileAPIPostInit();
 
@@ -947,6 +951,13 @@ void snort_thread_term()
     ActionManager::thread_term(snort_conf);
     IpsManager::clear_options();
     EventManager::close_outputs();
+    CodecManager::thread_term();
+
+    if (s_packet)
+    {
+        PacketManager::encode_delete(s_packet);
+        s_packet = nullptr;
+    }
 
     if ( DAQ_WasStarted() )
         DAQ_Stop();
@@ -967,6 +978,5 @@ void snort_thread_term()
 
     SnortEventqFree();
     Active_Term();
-    CodecManager::thread_term();
 }
 

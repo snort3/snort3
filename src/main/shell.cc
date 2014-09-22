@@ -144,7 +144,7 @@ void Shell::set_overrides(const char* s)
 
 void Shell::configure(SnortConfig* sc)
 {
-    assert(file.size());
+    assert(file.size()); // FIXIT-M -- provide detailed error message. Will be confusing for an end user
     ModuleManager::set_config(sc);
     config_lua(lua, file.c_str(), overrides);
     ModuleManager::set_config(nullptr);

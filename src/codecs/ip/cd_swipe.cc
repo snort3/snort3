@@ -53,10 +53,10 @@ void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
 }
 
 
-bool SwipeCodec::decode(const RawData&, CodecData&, SnortData&)
+bool SwipeCodec::decode(const RawData&, CodecData& codec, SnortData&)
 {
     // currently unsupported
-    codec_events::decoder_event(DECODE_IP_BAD_PROTO);
+    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
 

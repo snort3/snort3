@@ -181,30 +181,30 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     {
 #if 1
         cout << Markup::item();
-        cout << p->get_type();
-        cout << " " << Markup::emphasis(key);
+        cout << Markup::sanitize(p->get_type());
+        cout << " " << Markup::emphasis(Markup::sanitize(key));
 
         if ( p->deflt )
-            cout << " = " << (char*)p->deflt;
+            cout << " = " << Markup::sanitize((char*)p->deflt);
 
         cout << ": " << p->help;
 
         if ( p->range )
-            cout << " { " << (char*)p->range << " }";
+            cout << " { " << Markup::sanitize((char*)p->range) << " }";
 #else
         cout << Markup::item();
         cout << p->get_type();
-        cout << "\t" << Markup::emphasis(key);
+        cout << "\t" << Markup::emphasis(Markup::sanitize(key));
 
         if ( p->deflt )
-            cout << "\t" << (char*)p->deflt;
+            cout << "\t" << Markup::sanitize((char*)p->deflt);
         else
             cout << "\t";
 
         cout << "\t" << p->help;
 
         if ( p->range )
-            cout << "\t" << (const char*)p->range;
+            cout << "\t" << Markup::sanitize((char*)p->range);
         else
             cout << "\t";
 
@@ -522,10 +522,10 @@ void ModuleManager::show_module(const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        cout << endl << Markup::head() << name << endl << endl;
+        cout << endl << Markup::head() << Markup::sanitize(name) << endl << endl;
 
         if ( const char* h = m->get_help() )
-            cout << "What: " << h << endl;
+            cout << "What: " << Markup::sanitize(h) << endl;
 
         cout << "Type: "  << mod_type(p->api) << endl;
 
@@ -614,10 +614,10 @@ void ModuleManager::show_commands(const char* pfx)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << p->mod->get_name();
-            cout << "." << c->name;
+            cout << Markup::sanitize(p->mod->get_name());
+            cout << "." << Markup::sanitize(c->name);
             cout << Markup::emphasis_off();
-            cout << "(): " << c->help;
+            cout << "(): " << Markup::sanitize(c->help);
             cout << endl;
             c++;
         }
@@ -645,7 +645,7 @@ void ModuleManager::show_gids(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid;
             cout << Markup::emphasis_off();
-            cout << ": " << m->get_name();
+            cout << ": " << Markup::sanitize(m->get_name());
             cout << endl;
         }
     }    
@@ -673,7 +673,7 @@ void ModuleManager::show_pegs(const char* pfx)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << *pegs;
+            cout << Markup::sanitize(*pegs);
             cout << Markup::emphasis_off();
             cout << endl;
             ++pegs;
@@ -705,7 +705,7 @@ void ModuleManager::show_rules(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid << ":" << r->sid;
             cout << Markup::emphasis_off();
-            cout << " " << r->msg;
+            cout << " " << Markup::sanitize(r->msg);
             cout << endl;
             r++;
         }

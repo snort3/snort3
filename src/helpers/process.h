@@ -48,6 +48,7 @@ void help_signals();
 
 void daemonize();
 void set_quick_exit(bool);
+void init_main_thread_sig();
 
 #endif
 

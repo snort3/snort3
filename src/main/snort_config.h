@@ -157,6 +157,9 @@ struct SnortConfig
     char *gtp_ports;
     uint8_t enable_esp;
 
+    uint8_t num_layers;
+    uint8_t max_ip6_options;
+    uint8_t max_ip_layers;
     int pkt_snaplen;
 
     //------------------------------------------------------
@@ -289,6 +292,15 @@ struct SnortConfig
 
     NetworkPolicy* get_network_policy()
     { return policy_map->network_policy[0]; };
+
+    inline uint8_t get_num_layers() const
+    { return num_layers; }
+
+    inline uint8_t get_ip6_maxopts() const
+    { return max_ip6_options; }
+
+    inline uint8_t get_ip_maxlayers() const
+    { return max_ip_layers; }
 };
 
 SnortConfig* SnortConfNew(void);

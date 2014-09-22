@@ -48,3 +48,26 @@ const string& Markup::emphasis(const string& s)
     return m;
 }
 
+const std::string& Markup::sanitize(const char* const c)
+{ return sanitize(std::string(c)); }
+
+const std::string& Markup::sanitize(const std::string& s)
+{
+    const char* const asciidoc_chars = "~*<>^'";
+    static std::string m;
+    m.clear();
+    m += s;
+
+    if (enabled)
+    {
+        for (std::size_t found = m.find_first_of(asciidoc_chars, 0);
+             found != std::string::npos;
+             found = m.find_first_of(asciidoc_chars, found))
+        {
+            m.insert(found, "\\");
+            found +=2;
+        }
+    }
+
+    return m;
+}

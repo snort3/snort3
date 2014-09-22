@@ -94,78 +94,24 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const) ;
-
-private:
-
-    static uint8_t RevTTL (const EncState* const enc, uint8_t ttl);
-    static uint8_t FwdTTL (const EncState* const enc, uint8_t ttl);
-    static uint8_t GetTTL (const EncState* const enc);
-
 };
 
 
 } // namespace
 
 
-static inline void IPV6CheckIsatap(const ip::IP6Hdr* const, const SnortData&);
-static inline void IPV6MiscTests(const SnortData&);
-static void CheckIPV6Multicast(const ip::IP6Hdr* const);
-static inline int CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
-
-/********************************************************************
- *************************   PRIVATE FUNCTIONS **********************
- ********************************************************************/
-
-uint8_t Ipv6Codec::GetTTL (const EncState* const enc)
-{
-    char dir;
-    uint8_t ttl;
-    const bool outer = enc->p->ptrs.ip_api.is_valid();
-
-    if ( !enc->p->flow )
-        return 0;
-
-    if ( enc->p->packet_flags & PKT_FROM_CLIENT )
-        dir = forward(enc->flags) ? SSN_DIR_CLIENT : SSN_DIR_SERVER;
-    else
-        dir = forward(enc->flags) ? SSN_DIR_SERVER : SSN_DIR_CLIENT;
-
-    // outermost ip is considered to be outer here,
-    // even if it is the only ip layer ...
-    ttl = stream.get_session_ttl(enc->p->flow, dir, outer);
-
-    // if we don't get outer, we use inner
-    if ( 0 == ttl && outer )
-        ttl = stream.get_session_ttl(enc->p->flow, dir, false);
-
-    return ttl;
-}
-
-uint8_t Ipv6Codec::FwdTTL (const EncState* const enc, uint8_t ttl)
-{
-    uint8_t new_ttl = GetTTL(enc);
-    if ( !new_ttl )
-        new_ttl = ttl;
-    return new_ttl;
-}
-
-uint8_t Ipv6Codec::RevTTL (const EncState* const enc, uint8_t ttl)
-{
-    uint8_t new_ttl = GetTTL(enc);
-    if ( !new_ttl )
-        new_ttl = ( MAX_TTL - ttl );
-    if ( new_ttl < MIN_TTL )
-        new_ttl = MIN_TTL;
-    return new_ttl;
-}
-
-
-
+static inline void IPV6CheckIsatap(const ip::IP6Hdr* const,
+                                    const SnortData&,
+                                    const CodecData&);
+static inline void IPV6MiscTests(const SnortData&, const CodecData&);
+static void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
+static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 
 /********************************************************************
  *************************   CLASS FUNCTIONS ************************
@@ -189,10 +135,10 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         if(raw.len < ip::IP6_HEADER_LEN)
         {
             if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-                codec_events::decoder_event(DECODE_IPV6_TRUNCATED);
+                codec_events::decoder_event(codec, DECODE_IPV6_TRUNCATED);
 
             // Taken from prot_ipv4.cc
-            codec_events::decoder_event(DECODE_IPV6_TUNNELED_IPV4_TRUNCATED);
+            codec_events::decoder_event(codec, DECODE_IPV6_TUNNELED_IPV4_TRUNCATED);
             goto decodeipv6_fail;
         }
 
@@ -201,14 +147,13 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         if(ip6h->get_ver() != 6)
         {
             if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-                codec_events::decoder_event(DECODE_IPV6_IS_NOT);
+                codec_events::decoder_event(codec, DECODE_IPV6_IS_NOT);
 
             goto decodeipv6_fail;
         }
 
-        // FIXIT-H -J  alert on user configured encapsulated
-        if (codec.ip_layer_cnt > 1)
-            codec_events::decoder_event(DECODE_IP_MULTIPLE_ENCAPSULATION);
+        if (++codec.ip_layer_cnt > snort_conf->get_ip_maxlayers())
+            codec_events::decoder_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
 
 
         const uint32_t payload_len = ntohs(ip6h->ip6_payload_len) + ip::IP6_HEADER_LEN;
@@ -218,7 +163,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
             if (payload_len > raw.len)
             {
                 if ((codec.codec_flags & CODEC_UNSURE_ENCAP) == 0)
-                    codec_events::decoder_event(DECODE_IPV6_DGRAM_GT_CAPLEN);
+                    codec_events::decoder_event(codec, DECODE_IPV6_DGRAM_GT_CAPLEN);
 
                 goto decodeipv6_fail;
             }
@@ -234,7 +179,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
            If we ever start decoding more than 2 layers of IP in a packet, this
            check against snort.proto_bits will need to be refactored. */
-        if ((codec.codec_flags & CODEC_TEREDO_SEEN) && (CheckTeredoPrefix(ip6h) == 0))
+        if ((codec.codec_flags & CODEC_TEREDO_SEEN) && (!CheckTeredoPrefix(ip6h)))
         {
             goto decodeipv6_fail;
         }
@@ -246,23 +191,23 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         const_cast<uint32_t&>(raw.len) = ntohs(ip6h->get_len()) + ip::IP6_HEADER_LEN;
 
         // check for isatap before overwriting the ip_api.
-        IPV6CheckIsatap(ip6h, snort);
+        IPV6CheckIsatap(ip6h, snort, codec);
 
         snort.ip_api.set(ip6h);
-        codec.curr_ip6_extension = 0;
-        codec.ip6_extension_count = 0;
-        codec.codec_flags &= ~CODEC_ROUTING_SEEN;
 
-        IPV6MiscTests(snort);
-        CheckIPV6Multicast(ip6h);
+        IPV6MiscTests(snort, codec);
+        CheckIPV6Multicast(ip6h, codec);
 
         snort.set_pkt_type(PktType::IP);
         codec.next_prot_id = ip6h->get_next();
         codec.lyr_len = ip::IP6_HEADER_LEN;
+        codec.curr_ip6_extension = 0;
+        codec.ip6_extension_count = 0;
+        codec.ip6_csum_proto = ip6h->get_next();
+        codec.codec_flags &= ~CODEC_ROUTING_SEEN;
 
         // FIXIT-M J  tunnel-byppas is NOT checked!!
         return true;
-
     }
 
 decodeipv6_fail:
@@ -278,10 +223,12 @@ decodeipv6_fail:
     return false;
 }
 
-static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h, const SnortData& snort)
+static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
+                                    const SnortData& snort,
+                                    const CodecData& codec)
 {
     /* Only check for IPv6 over IPv4 */
-    if (snort.ip_api.is_ip4() && snort.ip_api.proto() == IPPROTO_IPV6)
+    if (snort.ip_api.is_ip4() && snort.ip_api.proto() == IPPROTO_ID_IPV6)
     {
         uint32_t isatap_interface_id = ntohl(ip6h->ip6_src.u6_addr32[2]) & 0xFCFFFFFF;
 
@@ -290,7 +237,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h, const SnortData
         if (isatap_interface_id == 0x00005EFE)
         {
             if (snort.ip_api.get_src()->ip32[0] != ip6h->ip6_src.u6_addr32[3])
-                codec_events::decoder_event(DECODE_IPV6_ISATAP_SPOOF);
+                codec_events::decoder_event(codec, DECODE_IPV6_ISATAP_SPOOF);
         }
     }
 }
@@ -303,7 +250,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h, const SnortData
  *
  * Returns: void function
  */
-static inline void IPV6MiscTests(const SnortData& snort)
+static inline void IPV6MiscTests(const SnortData& snort, const CodecData& codec)
 {
     const sfip_t *ip_src = snort.ip_api.get_src();
     const sfip_t *ip_dst = snort.ip_api.get_dst();
@@ -319,32 +266,32 @@ static inline void IPV6MiscTests(const SnortData& snort)
      * is used here in the interrim. */
     if( sfip_contains(ip_src, ip_dst) == SFIP_CONTAINS)
     {
-        codec_events::decoder_event(DECODE_BAD_TRAFFIC_SAME_SRCDST);
+        codec_events::decoder_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
     }
 
     if(sfip_is_loopback(ip_src) || sfip_is_loopback(ip_dst))
     {
-        codec_events::decoder_event(DECODE_BAD_TRAFFIC_LOOPBACK);
+        codec_events::decoder_event(codec, DECODE_BAD_TRAFFIC_LOOPBACK);
     }
 
     /* Other decoder alerts for IPv6 addresses
        Added: 5/24/10 (Snort 2.9.0) */
     if (!sfip_is_set(ip_dst))
     {
-        codec_events::decoder_event(DECODE_IPV6_DST_ZERO);
+        codec_events::decoder_event(codec, DECODE_IPV6_DST_ZERO);
     }
 }
 
 
 
 /* Check for multiple IPv6 Multicast-related alerts */
-static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
+static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData& codec)
 {
     ip::MulticastScope multicast_scope;
 
     if (ip6h->is_src_multicast())
     {
-        codec_events::decoder_event(DECODE_IPV6_SRC_MULTICAST);
+        codec_events::decoder_event(codec, DECODE_IPV6_SRC_MULTICAST);
     }
     if (!ip6h->is_dst_multicast())
     {
@@ -364,7 +311,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
             break;
 
         default:
-            codec_events::decoder_event(DECODE_IPV6_BAD_MULTICAST_SCOPE);
+            codec_events::decoder_event(codec, DECODE_IPV6_BAD_MULTICAST_SCOPE);
     }
 
     /* Check against assigned multicast addresses. These are listed at:
@@ -378,7 +325,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
         (ip6h->ip6_dst.u6_addr16[4] != 0) ||
         (ip6h->ip6_dst.u6_addr8[10] != 0))
     {
-        codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+        codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         return;
     }
 
@@ -393,7 +340,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
             (ip6h->ip6_dst.u6_addr16[6] != 0))
         {
 
-            codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+            codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
         else
         {
@@ -404,7 +351,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
                 case 0x000000FB: // mDNSv6
                     break;
                 default:
-                    codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+                    codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
             }
         }
     }
@@ -452,7 +399,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
                 {
                     break; // Node Information Queries
                 }
-                codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+                codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if (ip6h->is_dst_multicast_scope_site())
@@ -467,7 +414,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
             case 0x00010005: // SL-MANET-ROUTERS
                 break;
             default:
-                codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+                codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if ((ip6h->ip6_dst.u6_addr8[1] & 0xF0) == 0)
@@ -520,7 +467,7 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
                     break; // SAP Dynamic Assignments
                 }
 
-                codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+                codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else if ((ip6h->ip6_dst.u6_addr8[1] & 0xF0) == 0x30)
@@ -539,27 +486,27 @@ static void CheckIPV6Multicast(const ip::IP6Hdr* const ip6h)
         else
         {
             // Other addresses in this block are reserved.
-            codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+            codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
         }
     }
     else
     {
         /* Addresses not listed above are reserved. */
-        codec_events::decoder_event(DECODE_IPV6_DST_RESERVED_MULTICAST);
+        codec_events::decoder_event(codec, DECODE_IPV6_DST_RESERVED_MULTICAST);
     }
 }
 
 
 /* Teredo packets need to have one of their IPs use either the Teredo prefix,
    or a link-local prefix (in the case of Router Solicitation messages) */
-static inline int CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
+static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
 {
     /* Check if src address matches 2001::/32 */
     if ((hdr->ip6_src.u6_addr8[0] == 0x20) &&
         (hdr->ip6_src.u6_addr8[1] == 0x01) &&
         (hdr->ip6_src.u6_addr8[2] == 0x00) &&
         (hdr->ip6_src.u6_addr8[3] == 0x00))
-        return 1;
+        return true;
 
     /* Check if src address matches fe80::/64 */
     if ((hdr->ip6_src.u6_addr8[0] == 0xfe) &&
@@ -570,14 +517,14 @@ static inline int CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
         (hdr->ip6_src.u6_addr8[5] == 0x00) &&
         (hdr->ip6_src.u6_addr8[6] == 0x00) &&
         (hdr->ip6_src.u6_addr8[7] == 0x00))
-        return 1;
+        return true;
 
     /* Check if dst address matches 2001::/32 */
     if ((hdr->ip6_dst.u6_addr8[0] == 0x20) &&
         (hdr->ip6_dst.u6_addr8[1] == 0x01) &&
         (hdr->ip6_dst.u6_addr8[2] == 0x00) &&
         (hdr->ip6_dst.u6_addr8[3] == 0x00))
-        return 1;
+        return true;
 
     /* Check if dst address matches fe80::/64 */
     if ((hdr->ip6_dst.u6_addr8[0] == 0xfe) &&
@@ -588,10 +535,10 @@ static inline int CheckTeredoPrefix(const ip::IP6Hdr* const hdr)
         (hdr->ip6_dst.u6_addr8[5] == 0x00) &&
         (hdr->ip6_dst.u6_addr8[6] == 0x00) &&
         (hdr->ip6_dst.u6_addr8[7] == 0x00))
-        return 1;
+        return true;
 
     /* No Teredo prefix found. */
-    return 0;
+    return false;
 }
 
 
@@ -645,45 +592,43 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
  *************************  E N C O D E R  ************************
  ******************************************************************/
 
-bool Ipv6Codec::encode(EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool Ipv6Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
+                        EncState& enc, Buffer& buf)
 {
-    if (!update_buffer(out, sizeof(ip::IP6Hdr)))
+    if (!buf.allocate(sizeof(ip::IP6Hdr)))
         return false;
 
-    const ip::IP6Hdr* hi = reinterpret_cast<const ip::IP6Hdr*>(raw_in);
-    ip::IP6Hdr* ho = (ip::IP6Hdr*)(out->base);
+    const ip::IP6Hdr* const hi = reinterpret_cast<const ip::IP6Hdr*>(raw_in);
+    ip::IP6Hdr* const ipvh_out = reinterpret_cast<ip::IP6Hdr*>(buf.base);
 
 
-    ho->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
 
 
-    if ( enc->proto )
+    if ( enc.next_proto_set() )
+        ipvh_out->ip6_next = enc.next_proto;
+    else
+        ipvh_out->ip6_next = hi->ip6_next;
+
+
+    if ( forward(enc.flags) )
     {
-        ho->ip6_next = enc->proto;
-        enc->proto = 0;
+        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ipvh_out->ip6_src.u6_addr8));
+        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ipvh_out->ip6_dst.u6_addr8));
+        ipvh_out->ip6_hoplim = enc.get_ttl(hi->ip6_hoplim);
     }
     else
     {
-        ho->ip6_next = hi->ip6_next;
-    }
-
-    if ( forward(enc->flags) )
-    {
-        memcpy(ho->ip6_src.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ho->ip6_src.u6_addr8));
-        memcpy(ho->ip6_dst.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ho->ip6_dst.u6_addr8));
-
-        ho->ip6_hoplim = FwdTTL(enc, hi->ip6_hoplim);
-    }
-    else
-    {
-        memcpy(ho->ip6_src.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ho->ip6_src.u6_addr8));
-        memcpy(ho->ip6_dst.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ho->ip6_dst.u6_addr8));
-
-        ho->ip6_hoplim = RevTTL(enc, hi->ip6_hoplim);
+        memcpy(ipvh_out->ip6_src.u6_addr8, hi->ip6_dst.u6_addr8, sizeof(ipvh_out->ip6_src.u6_addr8));
+        memcpy(ipvh_out->ip6_dst.u6_addr8, hi->ip6_src.u6_addr8, sizeof(ipvh_out->ip6_dst.u6_addr8));
+        ipvh_out->ip6_hoplim = enc.get_ttl(hi->ip6_hoplim);
     }
 
     
-    ho->ip6_payload_len = htons((uint16_t)(out->end - sizeof(*ho)));
+    ipvh_out->ip6_vtf = htonl(ntohl(hi->ip6_vtf) & 0xFFF00000);
+    ipvh_out->ip6_payload_len = htons(buf.size());
+
+    enc.next_proto = IPPROTO_ID_IPV6;
+    enc.next_ethertype = ETHERTYPE_IPV6;
     return true;
 }
 

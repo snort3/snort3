@@ -71,7 +71,8 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
 };
 
@@ -137,7 +138,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
         /*Check header fields*/
         if (raw.len < len)
         {
-            codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -146,7 +147,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
                     raw.len - len, ntohs(hdr->length)););
-            codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -163,7 +164,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
             /*Check optional fields*/
             if (raw.len < GTP_V1_HEADER_LEN)
             {
-                codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                 return false;
             }
             next_hdr_type = *(raw.data + len - 1);
@@ -175,7 +176,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
                 /*check length before reading data*/
                 if (raw.len < (uint32_t)(len + 4))
                 {
-                    codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
 
@@ -183,7 +184,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 
                 if (!ext_hdr_len)
                 {
-                    codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
                 /*Extension header length is a unit of 4 octets*/
@@ -192,7 +193,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
                 /*check length before reading data*/
                 if (raw.len < len)
                 {
-                    codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+                    codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
                     return false;
                 }
                 next_hdr_type = *(raw.data + len - 1);
@@ -210,7 +211,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Calculated length %d != %d in header.\n",
                     raw.len - GTP_MIN_LEN, ntohs(hdr->length)););
-            codec_events::decoder_event(DECODE_GTP_BAD_LEN);
+            codec_events::decoder_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
@@ -244,37 +245,33 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
  ******************** E N C O D E R  ******************************
  ******************************************************************/
  
-static inline bool update_GTP_length(GTPHdr* h, int gtp_total_len )
+static inline bool update_GTP_length(GTPHdr* const gtph, int gtp_total_len )
 {
     /*The first 3 bits are version number*/
-    uint8_t version = (h->flag & 0xE0) >> 5;
+    const uint8_t version = (gtph->flag & 0xE0) >> 5;
     switch (version)
     {
     case 0: /*GTP v0*/
-        h->length = htons((uint16_t)(gtp_total_len - GTP_V0_HEADER_LEN));
+        gtph->length = htons((uint16_t)(gtp_total_len - GTP_V0_HEADER_LEN));
         break;
     case 1: /*GTP v1*/
-        h->length = htons((uint16_t)(gtp_total_len - GTP_MIN_LEN));
+        gtph->length = htons((uint16_t)(gtp_total_len - GTP_MIN_LEN));
         break;
     default:
         return false;
     }
     return false;
-
 }
 
-bool GtpCodec::encode (EncState* enc, Buffer* out, const uint8_t* raw_in)
+bool GtpCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer& buf)
 {
-    int n = enc->p->layers[enc->layer-1].length;
-
-    if (!update_buffer(out, n))
+    if (buf.allocate(raw_len))
         return false;
 
-    const GTPHdr *hi = reinterpret_cast<const GTPHdr*>(raw_in);
-    GTPHdr *ho = reinterpret_cast<GTPHdr*>(out->base);
-    memcpy(ho, hi, n);
-
-    return update_GTP_length(ho, out->end);
+    GTPHdr* const gtph = reinterpret_cast<GTPHdr*>(buf.base);
+    memcpy(gtph, raw_in, raw_len);
+    return update_GTP_length(gtph, buf.size());
 }
 
 bool GtpCodec::update (Packet*, Layer* lyr, uint32_t* len)

@@ -156,18 +156,15 @@ SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
  *          Packet* = packet struct containing data
  *          ip::Api = ip api to be set
  *          int8_t curr_layer = the current, zero based layer from which to
- *                              start searching outwards. Afte the fucntions,
+ *                              start searching inward. After the function returs,
  *                              This field will be set to the layer before
  *                              the Ip Api.  If no IP layer is found,
- *                              it will be set to zero.
+ *                              it will be set to -1.
  *
  *                               0 <= curr_layer < p->num_layers
  * RETURNS:
  *          true:  if the api is set
  *          false: if the api has NOT been set
- *
- * NOTE: curr_layer should NOT be p->num_layers.  the curr_layer field
- *       will be reset in this function and num_layers should be constant
  *
  * NOTE: curr_layer is zero based.  That means to get all of the ip
  *       layers (starting from teh innermost layer), during the first call
@@ -177,6 +174,7 @@ SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
  *          while (set_inner_ip_api(p, api, layer)) { ... }
  */
 SO_PUBLIC bool set_inner_ip_api(const Packet* const, ip::IpApi&, int8_t& curr_layer);
+
 
 /*
  * Identical to above function except will begin searching from the

@@ -21,6 +21,7 @@
 #ifndef CODEC_EVENTS_H
 #define CODEC_EVENTS_H
 
+#include "framework/codec.h"
 #include "codecs/decode_module.h"
 #include "events/event_queue.h"
 
@@ -28,15 +29,10 @@
 namespace codec_events
 {
 
-inline void decoder_event(CodecSid const sid)
+inline void decoder_event(const CodecData& codec, CodecSid const sid)
 {
-#if 0
-    // FIXIT-H -J  Remove this function if PacketManager::decode() - assert never occurs
-    /* Can this return statement ever be true? */
-    /* Remove function if so */
-    if ( p->packet_flags & PKT_REBUILT_STREAM )
+    if ( codec.codec_flags & CODEC_STREAM_REBUILT )
         return;
-#endif
 
     SnortEventqAdd(GID_DECODE, sid);
 }

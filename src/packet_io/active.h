@@ -28,8 +28,8 @@
 
 #include "main/snort_types.h"
 #include "protocols/packet.h"
+#include "protocols/packet_manager.h"
 #include "main/snort.h"
-#include "framework/codec.h"
 #include "utils/stats.h"
 
 struct Packet;
@@ -43,7 +43,7 @@ SO_PUBLIC uint64_t Active_GetInjects(void);
 SO_PUBLIC void Active_KillSession(Packet*, EncodeFlags*);
 
 SO_PUBLIC void Active_SendReset(Packet*, EncodeFlags);
-SO_PUBLIC void Active_SendUnreach(Packet*, EncodeType);
+SO_PUBLIC void Active_SendUnreach(Packet*, UnreachResponse);
 SO_PUBLIC void Active_SendData(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
 SO_PUBLIC void Active_InjectData(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
 
@@ -53,12 +53,13 @@ SO_PUBLIC int Active_IsUNRCandidate(const Packet*);
 SO_PUBLIC int Active_IsEnabled(void);
 SO_PUBLIC void Active_SetEnabled(int on_off);
 
-typedef enum {
+enum tActiveDrop
+{
     ACTIVE_ALLOW = 0,
     ACTIVE_DROP = 1,
     ACTIVE_WOULD_DROP = 2,
     ACTIVE_FORCE_DROP = 3
-} tActiveDrop;
+};
 
 SO_PUBLIC extern THREAD_LOCAL tActiveDrop active_drop_pkt;
 SO_PUBLIC extern THREAD_LOCAL int active_drop_ssn;
