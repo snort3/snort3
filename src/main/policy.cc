@@ -84,6 +84,8 @@ IpsPolicy::IpsPolicy(PolicyId id)
     nonamePortVarTable = nullptr;
 
     enable_builtin_rules = false;
+
+    InitVarTables(this);
 }
 
 IpsPolicy::~IpsPolicy()
@@ -126,11 +128,12 @@ PolicyMap::~PolicyMap()
 
 unsigned PolicyMap::add_shell(Shell* sh)
 { 
+    unsigned idx = shells.size();
     shells.push_back(sh);
-    inspection_policy.push_back(new InspectionPolicy);
-    ips_policy.push_back(new IpsPolicy);
-    network_policy.push_back(new NetworkPolicy);
-    return shells.size() - 1;
+    inspection_policy.push_back(new InspectionPolicy);  // FIXIT-H need id?
+    ips_policy.push_back(new IpsPolicy(idx));
+    network_policy.push_back(new NetworkPolicy(idx));
+    return idx;
 }
 
 //-------------------------------------------------------------------------

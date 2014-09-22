@@ -34,6 +34,8 @@ using namespace std;
 #include "time/profiler.h"
 #include "utils/stats.h"
 #include "log/messages.h"
+#include "main/snort.h"
+#include "main/policy.h"
 
 THREAD_LOCAL ProfileStats bindPerfStats;
 
@@ -186,9 +188,9 @@ public:
 
 private:
     void init_flow(Flow*);
-    Binding* get_binding(const Flow*);
+    Binding* get_binding(Flow*);
     BindAction apply(Flow*, Binding*);
-    Inspector* find_inspector(const Flow*);
+    Inspector* find_inspector(Flow*);
 
 private:
     vector<Binding*> bindings;
@@ -218,8 +220,7 @@ void Binder::eval(Packet* p)
     ++bstats.packets;
 }
 
-// FIXIT-H implement inspector lookup from policy / bindings
-Inspector* Binder::find_inspector(const Flow* flow)
+Inspector* Binder::find_inspector(Flow* flow)
 {
     Binding* pb = get_binding(flow);
 
@@ -259,7 +260,7 @@ int Binder::exec(int, void* pv)
 // down.  performance could be improved by breaking bindings up into
 // multiple lists by proto and service or by using a more sophisticated
 // approach like routing tables, avl or scapegoat tree, etc.
-Binding* Binder::get_binding(const Flow* flow)
+Binding* Binder::get_binding(Flow* flow)
 {
     Binding* pb;
     unsigned i, sz = bindings.size();
@@ -290,7 +291,16 @@ Binding* Binder::get_binding(const Flow* flow)
         if ( !pb->check_service(flow) )
             continue;
 
-        return pb;
+        if ( !pb->use.index )
+            return pb;
+
+        set_policies(snort_conf, pb->use.index - 1);
+        flow->policy_id = pb->use.index - 1;
+
+        Binder* sub = (Binder*)InspectorManager::get_binder();
+
+        if ( sub )
+            return sub->get_binding(flow);
     }
 
     // absent a specific rule, we must choose a course of action
@@ -301,7 +311,7 @@ Binding* Binder::get_binding(const Flow* flow)
 BindAction Binder::apply(Flow* flow, Binding* pb)
 {
     if ( !pb )
-        return BA_ALLOW;
+        return BA_INSPECT;
 
     if ( pb->use.action != BA_INSPECT )
     {

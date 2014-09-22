@@ -521,9 +521,14 @@ bool InspectorManager::configure(SnortConfig *sc)
     sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
     bool ok = true;
 
-    for ( auto* p : sc->policy_map->inspection_policy )
+    for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy.size(); ++idx )
+    {
+        set_policies(sc, idx);
+        InspectionPolicy* p = sc->policy_map->inspection_policy[idx];
         ok = ::configure(sc, p->framework_policy) && ok;
+    }
 
+    set_policies(sc);
     return ok;
 }
 

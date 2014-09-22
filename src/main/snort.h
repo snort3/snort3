@@ -335,7 +335,8 @@ static inline int ScProfileRules(void)
 
 static inline int ScStaticHash(void)
 {
-    return snort_conf->run_flags & RUN_FLAG__STATIC_HASH;
+    // FIXIT-L snort_conf needed for static hash before initialized
+    return snort_conf && snort_conf->run_flags & RUN_FLAG__STATIC_HASH;
 }
 
 static inline int ScAdapterInlineTestMode(void)
