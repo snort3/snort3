@@ -99,6 +99,20 @@ void CleanupFTPServerConf(void *serverConf)
         return;
 
     /* Iterate through each cmd_lookup for this server */
+#if 0
+    int iRet = FTPP_SUCCESS;
+    FTP_CMD_CONF* cmdConf = ftp_cmd_lookup_first(ServerConf->cmd_lookup, &iRet);
+
+    while (cmdConf && (iRet == FTPP_SUCCESS))
+    {
+        if ( cmdConf->param_format )
+        {
+            free(cmdConf->param_format);
+            cmdConf->param_format = nullptr;
+        }
+        cmdConf = ftp_cmd_lookup_next(ServerConf->cmd_lookup, &iRet);
+    }
+#endif
     ftp_cmd_lookup_cleanup(&ServerConf->cmd_lookup);
 }
 

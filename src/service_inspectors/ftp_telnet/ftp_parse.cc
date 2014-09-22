@@ -50,7 +50,7 @@
 #include "mstring.h"
 #include "sfsnprintfappend.h"
 
-#define CONF_SEPARATORS " \t\n\r"
+#define CONF_SEPARATORS " "
 
 #define ALLOW_BOUNCE      "bounce_to"
 #define CMD_VALIDITY      "cmd_validity"
@@ -112,11 +112,11 @@
  *
  */
 
-THREAD_LOCAL char *maxToken = NULL;
+static char *maxToken = NULL;
 
 static char* mystrtok (char* s, const char* delim)
 {
-    static THREAD_LOCAL char* last = NULL;
+    static char* last = NULL;
     if ( s || last )
         last = strtok(s, delim);
     return last;
@@ -125,7 +125,7 @@ static char* mystrtok (char* s, const char* delim)
 static char *NextToken(const char *delimiters)
 {
     char *retTok = mystrtok(NULL, delimiters);
-    if (retTok > maxToken)
+    if ( maxToken && retTok > maxToken)
         return NULL;
 
     return retTok;

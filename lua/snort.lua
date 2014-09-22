@@ -67,7 +67,7 @@ react = { }
 reject = { }
 rewrite = { }
 
-wizard = default_wizard
+--wizard = default_wizard
 
 ---------------------------------------------------------------------------
 -- ips rules and filters
