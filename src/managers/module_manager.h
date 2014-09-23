@@ -47,6 +47,7 @@ public:
     static void show_rules(const char* = nullptr);
     static void dump_rules(const char* = nullptr);
 
+    static void load_commands(SnortConfig*);
     static void load_rules(SnortConfig*);
     static void set_config(SnortConfig*);
     static unsigned get_errors();

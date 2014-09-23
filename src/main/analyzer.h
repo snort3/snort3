@@ -50,7 +50,7 @@ public:
     bool execute(AnalyzerCommand);
 
     void set_config(Swapper* ps) { swap = ps; };
-    bool swap_pending() { return swap != nullptr; };
+    bool swap_pending() { return command == AC_SWAP; };
 
 private:
     void analyze();

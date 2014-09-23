@@ -438,12 +438,6 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     ModHook* mh = new ModHook(m, b);
     s_modules.push_back(mh);
 
-    if ( mh->reg )
-    {
-        SnortConfig* sc = snort_conf;
-        sc->policy_map->get_shell()->install(m->get_name(), mh->reg);
-    }
-
 #ifdef PERF_PROFILING
     RegisterProfile(m);
 #endif
@@ -710,6 +704,19 @@ void ModuleManager::show_rules(const char* pfx)
             r++;
         }
     }    
+}
+
+void ModuleManager::load_commands(SnortConfig* sc)
+{
+    // FIXIT-L ideally only install commands from configured modules
+    // FIXIT-L install commands into working shell
+    Shell* sh = sc->policy_map->get_shell();
+
+    for ( auto p : s_modules )
+    {
+        if ( p->reg )
+            sh->install(p->mod->get_name(), p->reg);
+    }
 }
 
 // FIXIT-L currently no way to know whether a module was activated or not

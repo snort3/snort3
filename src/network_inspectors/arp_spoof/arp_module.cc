@@ -79,8 +79,7 @@ static const RuleMap s_rules[] =
 ArpSpoofModule::ArpSpoofModule() : 
     Module(MOD_NAME, MOD_HELP, s_params)
 {
-    config = new ArpSpoofConfig;
-    config->check_overwrite = false;
+    config = nullptr;
 }
 
 ArpSpoofModule::~ArpSpoofModule()
@@ -109,8 +108,20 @@ bool ArpSpoofModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
+ArpSpoofConfig* ArpSpoofModule::get_config()
+{
+    ArpSpoofConfig* temp = config;
+    config = nullptr;
+    return temp;
+}
+
 bool ArpSpoofModule::begin(const char*, int, SnortConfig*)
 {
+    if ( !config )
+    {
+        config = new ArpSpoofConfig;
+        config->check_overwrite = false;
+    }
     memset(&host, 0, sizeof(host));
     return true;
 }

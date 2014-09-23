@@ -2220,29 +2220,29 @@ void fpBuildServicePortGroups(
                     FatalError("Could not AddProtocolReference!\n");
 
                 else if( id >= MAX_PROTOCOL_ORDINAL )
-                    LogMessage("protocol-ordinal=%d exceeds "
+                    ParseWarning("protocol-ordinal=%d exceeds "
                         "limit of %d for service=%s\n",id,MAX_PROTOCOL_ORDINAL,srvc);
             }
             else if( id > 0 )
             {
                 if( id < MAX_PROTOCOL_ORDINAL )
                 {
-                    LogMessage("adding protocol-ordinal=%d as service=%s\n",id,srvc);
+                    //LogMessage("adding protocol-ordinal=%d as service=%s\n",id,srvc);
                     sopg[ id ] = pg;
                 }
                 else
-                    LogMessage("protocol-ordinal=%d exceeds "
+                    ParseError("protocol-ordinal=%d exceeds "
                         "limit of %d for service=%s\n",id,MAX_PROTOCOL_ORDINAL,srvc);
             }
             else /* id < 0 */
             {
-                LogMessage("adding protocol-ordinal=%d for "
+                ParseError("adding protocol-ordinal=%d for "
                     "service=%s, can't use that !!!\n",id,srvc);
             }
         }
         else
         {
-            LogMessage("*** failed to create and find a port group for '%s' !!! \n",srvc );
+            ParseError("*** failed to create and find a port group for '%s' !!! \n",srvc );
         }
     }
 }

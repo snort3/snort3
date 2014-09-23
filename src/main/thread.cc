@@ -57,6 +57,25 @@ unsigned get_instance_max()
 }
 
 //-------------------------------------------------------------------------
+// union rules
+//-------------------------------------------------------------------------
+
+static unsigned g_breaks = 0;
+static THREAD_LOCAL unsigned t_breaks = 0;
+
+void take_break()
+{ g_breaks++; }
+
+bool break_time()
+{
+    if ( t_breaks == g_breaks )
+        return false;
+
+    t_breaks = g_breaks;
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // format is:
 //     <logdir>/[<run_prefix>][<id#>][<X>]<name>
 //

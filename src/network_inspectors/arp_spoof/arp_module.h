@@ -65,12 +65,7 @@ public:
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
-    ArpSpoofConfig* get_config()
-    {
-        ArpSpoofConfig* temp = config;
-        config = nullptr;
-        return temp;
-    };
+    ArpSpoofConfig* get_config();
 
     const char** get_pegs() const;
     PegCount* get_counts() const;

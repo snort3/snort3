@@ -118,14 +118,13 @@ void* get_rule_type_data(OptTreeNode* otn, const char* name)
 
     while ( fpl )
     {
-        if ( !fpl->context )
-            continue;
+        if ( fpl->context )
+        {
+            IpsOption* opt = (IpsOption*)fpl->context;
 
-        IpsOption* opt = (IpsOption*)fpl->context;
-
-        if ( !strcmp(opt->get_name(), name) )
-            return fpl->context;
-
+            if ( !strcmp(opt->get_name(), name) )
+                return fpl->context;
+        }
         fpl = fpl->next;
     }
     return nullptr;

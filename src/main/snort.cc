@@ -343,18 +343,19 @@ static void SnortInit(int argc, char **argv)
      */
     SetRuleStates(snort_conf);
 
-    /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::verify(snort_conf);
-
     if (snort_conf->file_mask != 0)
         umask(snort_conf->file_mask);
     else
         umask(077);    /* set default to be sane */
 
+    /* Need to do this after dynamic detection stuff is initialized, too */
+    IpsManager::verify(snort_conf);
     IpsManager::global_init(snort_conf);
+    ModuleManager::load_commands(snort_conf);
 
     fpCreateFastPacketDetection(snort_conf);
     MpseManager::activate_search_engine(snort_conf);
+
     CodecManager::instantiate();
     SFAT_Start();
 
@@ -604,6 +605,7 @@ static SnortConfig * get_reload_config(void)
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(sc);
+    ModuleManager::load_commands(snort_conf);
 
     if ((sc->file_mask != 0) && (sc->file_mask != snort_conf->file_mask))
         umask(sc->file_mask);
@@ -895,6 +897,9 @@ DAQ_Verdict packet_callback(
 
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);
+
+    if ( break_time() )
+        DAQ_BreakLoop(0);
 
     MODULE_PROFILE_END(totalPerfStats);
     return verdict;

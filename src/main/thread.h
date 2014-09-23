@@ -43,5 +43,8 @@ SO_PUBLIC unsigned get_instance_max();
 
 SO_PUBLIC const char* get_instance_file(std::string&, const char* name);
 
+void take_break();
+bool break_time();
+
 #endif
 
