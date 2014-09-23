@@ -208,15 +208,14 @@ void StreamBase::eval(Packet *p)
 
     MODULE_PROFILE_START(s5PerfStats);
 
-    // FIXIT-H need new packet_type (may need to use it elsewhere too)
-    switch ( p->ptrs.ip_api.proto() )
+    switch ( p->type() )
     {
-    case IPPROTO_TCP:
+    case PktType::TCP:
         if ( p->ptrs.tcph )
             flow_con->process_tcp(p);
         break;
 
-    case IPPROTO_UDP:
+    case PktType::UDP:
         if ( p->ptrs.decode_flags & DECODE_FRAG )
             flow_con->process_ip(p);
 
@@ -224,14 +223,18 @@ void StreamBase::eval(Packet *p)
             flow_con->process_udp(p);
         break;
 
-    case IPPROTO_ICMP:
+    case PktType::ICMP4:
+    case PktType::ICMP6:
         if ( p->ptrs.icmph )
             flow_con->process_icmp(p);
         break;
 
-    case IPPROTO_IP:
+    case PktType::IP:
         if ( p->ptrs.ip_api.is_valid() )
             flow_con->process_ip(p);
+        break;
+
+    default:
         break;
     }
 

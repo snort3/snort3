@@ -118,7 +118,7 @@ static void reload_config_handler(int /*signal*/)
 
 static void reload_attrib_handler(int /*signal*/)
 {
-    sig_ring.put(PIG_SIG_RELOAD_ATTRIBUTES);
+    sig_ring.put(PIG_SIG_RELOAD_HOSTS);
 }
 
 static void ignore_handler(int /*signal*/)
@@ -133,7 +133,7 @@ static void child_ready_handler(int /*signal*/)
 static void oops_handler(int signal)
 {
     // FIXIT-L what should we capture if this is the main thread?
-    if (!is_main_thread)
+    if ( !is_main_thread )
         CapturePacket();
 
     add_signal(signal, SIG_DFL, 0);

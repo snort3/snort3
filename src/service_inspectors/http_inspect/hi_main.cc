@@ -95,7 +95,6 @@ const HiSearchToken html_patterns[] =
     {NULL,               0, 0}
 };
 
-// FIXIT-H verify these don't need to be thread local
 void *hi_javascript_search_mpse = NULL;
 void *hi_htmltype_search_mpse = NULL;
 
@@ -1110,7 +1109,6 @@ void FreeHttpsessionData(void *data)
     file_api->free_mime_session(hsd->mime_ssn);
 }
 
-// FIXIT-H this should leverage inspector get_buf()
 int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     HttpsessionData* hsd = get_session_data(flow);

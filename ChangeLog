@@ -1,6 +1,8 @@
 121
 -- valgrind fixes
 -- basic reload restoration
+-- support cmd() form of snort.cmd()
+-- misc FIXITs
 
 120
 -- tweaked --help!

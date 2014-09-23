@@ -59,7 +59,7 @@ static const Command snort_cmds[] =
     { "dump_stats", main_dump_stats, "show summary statistics" },
     { "rotate_stats", main_rotate_stats, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, "load new configuration" },
-    { "reload_attributes", main_reload_attributes, "load a new hosts.xml" },
+    { "reload_hosts", main_reload_hosts, "load a new hosts.xml" },
     { "process", main_process, "process given pcap" },
     { "pause", main_pause, "suspend packet processing" },
     { "resume", main_resume, "continue packet processing" },

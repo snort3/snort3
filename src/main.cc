@@ -303,7 +303,7 @@ int main_reload_config(lua_State*)
     return 0;
 }
 
-int main_reload_attributes(lua_State*)
+int main_reload_hosts(lua_State*)
 {
     if ( swapper )
     {
@@ -407,8 +407,8 @@ static int signal_check()
         main_reload_config();
         break;
 
-    case PIG_SIG_RELOAD_ATTRIBUTES:
-        main_reload_attributes();
+    case PIG_SIG_RELOAD_HOSTS:
+        main_reload_hosts();
         break;
 
     case PIG_SIG_DUMP_STATS:

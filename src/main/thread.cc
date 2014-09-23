@@ -57,7 +57,7 @@ unsigned get_instance_max()
 }
 
 //-------------------------------------------------------------------------
-// union rules
+// union rules - breaks are mandatory and must be taken in daq thread
 //-------------------------------------------------------------------------
 
 static unsigned g_breaks = 0;
