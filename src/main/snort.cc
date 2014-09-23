@@ -951,6 +951,7 @@ void snort_thread_term()
 #ifdef PPM_MGR
     ppm_sum_stats();
 #endif
+    // FIXIT-H accumulate inspectors in thread_term to get cleanup counts
     ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
     ActionManager::thread_term(snort_conf);

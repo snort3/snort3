@@ -586,13 +586,10 @@ void InspectorManager::bumble(Packet* p)
     if ( !flow->gadget || flow->protocol != IPPROTO_TCP )
         return;
 
-#if 0
-    // FIXIT-H call new splitter after wizard IDs service
     ins = get_inspector("stream_tcp");
 
     if ( ins )
         ins->exec(0, p);
-#endif
 }
 
 void InspectorManager::execute (Packet* p)

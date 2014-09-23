@@ -1173,7 +1173,7 @@ static inline void ResetState (HttpsessionData* sd)
     ResetRespState(&(sd->resp_state));
 }
 
-int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *data,
+static int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned char *data,
         int dsize, HttpsessionData *sd)
 {
     HTTPINSPECT_CONF *ServerConf;

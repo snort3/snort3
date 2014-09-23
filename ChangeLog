@@ -4,6 +4,7 @@
 -- support cmd() form of snort.cmd()
 -- misc FIXITs
 -- converted wizard to fully stateful
+-- implemented paf rescan upon auto service id
 
 120
 -- tweaked --help!

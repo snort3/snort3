@@ -374,11 +374,9 @@ static inline void SetupTcpDataBlock(TcpDataBlock *, Packet *);
 static int ProcessTcp(Flow *, Packet *, TcpDataBlock *,
         StreamTcpConfig *);
 static inline int CheckFlushPolicyOnData(
-    TcpSession *, StreamTracker *, StreamTracker *,
-    TcpDataBlock *, Packet *);
+    TcpSession *, StreamTracker *, StreamTracker *, Packet *);
 static inline int CheckFlushPolicyOnAck(
-    TcpSession *, StreamTracker *, StreamTracker *,
-    TcpDataBlock *, Packet *);
+    TcpSession *, StreamTracker *, StreamTracker *, Packet *);
 static void Stream5SeglistAddNode(StreamTracker *, StreamSegment *,
                 StreamSegment *);
 static int Stream5SeglistDeleteNode(StreamTracker*, StreamSegment*);
@@ -2391,6 +2389,29 @@ int Stream5FlushListener(Packet *p, Flow *lwssn)
     return flushed;
 }
 
+void TcpSession::restart_paf(Packet* p)
+{
+    StreamTracker* talker, * listener;
+    TcpSession* tcpssn = (TcpSession*)p->flow->session;
+
+    if ( p->packet_flags & PKT_FROM_SERVER )
+    {
+        talker = &tcpssn->server;
+        listener = &tcpssn->client;
+    }
+    else
+    {
+        talker = &tcpssn->client;
+        listener = &tcpssn->server;
+    }
+
+    if ( p->dsize > 0 )
+        CheckFlushPolicyOnData(this, talker, listener, p);
+
+    if ( p->ptrs.tcph->th_flags & TH_ACK )
+        CheckFlushPolicyOnAck(this, talker, listener, p);
+
+}
 int Stream5FlushTalker(Packet *p, Flow *lwssn)
 {
     StreamTracker *talker = NULL;
@@ -5597,7 +5618,7 @@ static int ProcessTcp(
                     }
                     talker->s_mgr.state = TCP_STATE_FIN_WAIT_1;
                     if ( !p->dsize )
-                        CheckFlushPolicyOnData(tcpssn, talker, listener, tdb, p);
+                        CheckFlushPolicyOnData(tcpssn, talker, listener, p);
 
                     Stream5UpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSING);
                     break;
@@ -5748,10 +5769,10 @@ dupfin:
     }
 
     if ( p->dsize > 0 )
-        CheckFlushPolicyOnData(tcpssn, talker, listener, tdb, p);
+        CheckFlushPolicyOnData(tcpssn, talker, listener, p);
 
     if ( p->ptrs.tcph->th_flags & TH_ACK )
-        CheckFlushPolicyOnAck(tcpssn, talker, listener, tdb, p);
+        CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
 
     LogTcpEvents(eventcode);
     MODULE_PROFILE_END(s5TcpStatePerfStats);
@@ -5838,7 +5859,7 @@ static inline uint32_t flush_pdu_ips (
 
 static inline int CheckFlushPolicyOnData(
     TcpSession *tcpssn, StreamTracker *talker,
-    StreamTracker *listener, TcpDataBlock *tdb, Packet *p)
+    StreamTracker *listener, Packet *p)
 {
     uint32_t flushed = 0;
 
@@ -5908,7 +5929,7 @@ static inline int CheckFlushPolicyOnData(
                 delete listener->splitter;
                 listener->splitter = new AtomSplitter(true, listener->config->paf_max);
 
-                return CheckFlushPolicyOnData(tcpssn, talker, listener, tdb, p);
+                return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
             }
         }
         break;
@@ -5980,7 +6001,7 @@ static inline uint32_t flush_pdu_ackd (
 
 int CheckFlushPolicyOnAck(
     TcpSession *tcpssn, StreamTracker *talker,
-    StreamTracker *listener, TcpDataBlock *tdb, Packet *p)
+    StreamTracker *listener, Packet *p)
 {
     uint32_t flushed = 0;
 
@@ -6036,7 +6057,7 @@ int CheckFlushPolicyOnAck(
                 delete talker->splitter;
                 talker->splitter = new AtomSplitter(false, talker->config->paf_max);
 
-                return CheckFlushPolicyOnAck(tcpssn, talker, listener, tdb, p);
+                return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
             }
         }
         break;

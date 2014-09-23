@@ -503,13 +503,6 @@ static inline void setFileName(Packet *p)
 **  @retval <0 fatal error
 **  @retval >0 non-fatal error
 */
-#define HTTP_BUF_URI_FLAG           0x01
-#define HTTP_BUF_HEADER_FLAG        0x02
-#define HTTP_BUF_CLIENT_BODY_FLAG   0x04
-#define HTTP_BUF_METHOD_FLAG        0x08
-#define HTTP_BUF_COOKIE_FLAG        0x10
-#define HTTP_BUF_STAT_CODE          0x20
-#define HTTP_BUF_STAT_MSG           0x40
 int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
 {
     HI_SESSION  *session;

@@ -186,7 +186,7 @@ struct StreamTracker
 
 };
 
-// FIXIT-L ideally, session tracking would be split from reassembly 
+// FIXIT-L session tracking must be split from reassembly 
 // into a separate module a la ip_session.cc and ip_defrag.cc
 // (of course defrag should also be cleaned up)
 class TcpSession : public Session
@@ -195,8 +195,10 @@ public:
     TcpSession(Flow*);
 
     bool setup (Packet*);
-    void update_direction(char dir, const sfip_t*, uint16_t port);
     int process(Packet*);
+    void restart_paf(Packet*);
+
+    void update_direction(char dir, const sfip_t*, uint16_t port);
 
     void reset();
     void clear();
