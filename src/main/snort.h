@@ -46,10 +46,11 @@ struct IpsPolicy;
 struct _daq_pkthdr;
 typedef _daq_pkthdr DAQ_PktHdr_t;
 
-
-SnortConfig* reload_config();
+SnortConfig* get_reload_config();
 void snort_setup(int argc, char* argv[]);
 void snort_cleanup();
+
+bool snort_is_starting();
 
 void snort_thread_init(const char* intf);
 void snort_thread_term();

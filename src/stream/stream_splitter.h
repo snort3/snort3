@@ -39,7 +39,7 @@ class SO_PUBLIC StreamSplitter
 public:
     virtual ~StreamSplitter() { };
 
-    enum Status // FIXIT-H move inside StreamSplitter
+    enum Status
     {
         ABORT,  // non-paf operation
         START,  // internal use only
@@ -67,7 +67,7 @@ public:
     );
 
     virtual bool is_paf() { return false; };
-    virtual uint32_t max();
+    virtual unsigned max();
 
     virtual void reset() { };
     virtual void update() { };
@@ -79,6 +79,7 @@ protected:
     StreamSplitter(bool b) { c2s = b; };
 
 private:
+    static unsigned s_max;
     bool c2s;
 };
 

@@ -366,7 +366,11 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         s_current = key;
     }
 
-    m->begin(s, idx, s_config);
+    if ( !m->begin(s, idx, s_config) )
+    {
+        ParseError("can't open %s", m->get_name());
+        return false;
+    }
     return true;
 }
 
@@ -377,7 +381,11 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
     if ( ModHook* h = get_hook(key.c_str()) )
     {
-        h->mod->end(s, idx, s_config);
+        if ( !h->mod->end(s, idx, s_config) )
+        {
+            ParseError("can't close %s", h->mod->get_name());
+            return;
+        }
 
         if ( !idx && h->api && (key == s) )
             PluginManager::instantiate(h->api, h->mod, s_config);
@@ -458,12 +466,11 @@ const char* ModuleManager::get_current_module()
 void ModuleManager::set_config(SnortConfig* sc)
 { s_config = sc; }
 
+void ModuleManager::reset_errors()
+{ s_errors = 0; }
+
 unsigned ModuleManager::get_errors()
-{
-    unsigned err = s_errors;
-    s_errors = 0;
-    return err;
-}
+{ return s_errors; }
 
 void ModuleManager::list_modules()
 {

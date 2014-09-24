@@ -155,7 +155,6 @@ public:
     RejectModule() : Module(s_name, s_help, s_params) { };
 
     bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
     bool set(const char*, Value&, SnortConfig*);
 
     ProfileStats* get_profile() const
@@ -168,11 +167,6 @@ bool RejectModule::begin(const char*, int, SnortConfig*)
 {
     flags = 0;
     return true;
-}
-
-bool RejectModule::end(const char*, int, SnortConfig*)
-{
-    return ( flags != 0 );
 }
 
 static const int rst[] =

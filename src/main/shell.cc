@@ -105,7 +105,10 @@ static void config_lua(
     run_config(L);
 
     if ( int k = ModuleManager::get_errors() )
-        FatalError("see prior %d errors\n", k);
+    {
+        if ( snort_is_starting() )
+            FatalError("see prior %d errors\n", k);
+    }
 }
 
 //-------------------------------------------------------------------------

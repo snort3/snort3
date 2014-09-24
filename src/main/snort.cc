@@ -136,6 +136,9 @@ static void SnortCleanup();
 // utility
 //-------------------------------------------------------------------------
 
+bool snort_is_starting()
+{ return snort_initializing; }
+
 #if 0
 #ifdef HAVE_DAQ_ACQUIRE_WITH_META
 static int MetaCallback(
@@ -165,7 +168,7 @@ static void SetupMetadataCallback(void)  // FIXDAQ
 #endif
 
 #if 0
-// FIXIT-H restart foo
+// FIXIT-L restart foo
 static void restart()
 {
     int daemon_mode = ScDaemonMode();
@@ -440,9 +443,6 @@ void snort_setup(int argc, char* argv[])
     InitGroups(ScUid(), ScGid());
     SnortUnprivilegedInit();
 
-    if ( int k = get_parse_errors() )
-        FatalError("see prior %d errors\n", k);
-
     set_quick_exit(false);
 }
 
@@ -566,14 +566,15 @@ void snort_cleanup()
 
 // FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
-static SnortConfig * get_reload_config(void)
+SnortConfig* get_reload_config()
 {
-    SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
+    ModuleManager::reset_errors();
 
+    SnortConfig *sc = ParseSnortConf(snort_cmd_line_conf);
     sc = MergeSnortConfs(snort_cmd_line_conf, sc);
     init_policy(sc);
 
-    if (VerifyReload(sc) == -1)
+    if ( ModuleManager::get_errors() || VerifyReload(sc) == -1 )
     {
         SnortConfFree(sc);
         return NULL;
@@ -592,7 +593,7 @@ static SnortConfig * get_reload_config(void)
         return NULL;
     }
 
-    FlowbitResetCounts();
+    FlowbitResetCounts();  // FIXIT-L updates global hash, put in sc
     ParseRules(sc);
 
     // FIXIT-L see SnortInit() on config printing
@@ -605,11 +606,12 @@ static SnortConfig * get_reload_config(void)
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(sc);
-    ModuleManager::load_commands(snort_conf);
+    ModuleManager::load_commands(sc);
 
     if ((sc->file_mask != 0) && (sc->file_mask != snort_conf->file_mask))
         umask(sc->file_mask);
 
+    // FIXIT-L is this still needed?
     /* Transfer any user defined rule type outputs to the new rule list */
     {
         RuleListNode *cur = snort_conf->rule_lists;
@@ -646,18 +648,6 @@ static SnortConfig * get_reload_config(void)
 #endif
 
     return sc;
-}
-
-SnortConfig* reload_config()
-{
-    SnortConfig* new_conf = get_reload_config();
-
-    if ( new_conf )
-    {
-        proc_stats.conf_reloads++;
-        snort_conf = new_conf;
-    }
-    return new_conf;
 }
 
 //-------------------------------------------------------------------------

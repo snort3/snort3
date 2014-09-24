@@ -597,7 +597,6 @@ static void parse_file(SnortConfig* sc, Shell* sh)
 SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
 {
     SnortConfig *sc = SnortConfNew();
-    snort_conf = sc;
 
     sc->logging_flags = boot_conf->logging_flags;
     VarNode* tmp = boot_conf->var_list;

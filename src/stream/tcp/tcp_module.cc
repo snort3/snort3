@@ -116,7 +116,7 @@ static const Parameter s_params[] =
     { "overlap_limit", Parameter::PT_INT, "0:255", "0",
       "maximum number of allowed overlapping segments per session" },
 
-    { "paf_max", Parameter::PT_INT, "1460:63780", "16384",
+    { "max_pdu", Parameter::PT_INT, "1460:63780", "16384",
       "maximum reassembled PDU size" },
 
     { "policy", Parameter::PT_ENUM, policies, "linux",
@@ -274,7 +274,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("max_window") )
         config->max_window = v.get_long();
 
-    else if ( v.is("paf_max") )
+    else if ( v.is("max_pdu") )
         config->paf_max = v.get_long();
 
     else if ( v.is("policy") )
