@@ -224,6 +224,11 @@ void NHttpTestInput::flush(uint32_t length) {
 
 
 void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &source_id, NHttpFlowData* session_data) {
+    if (!just_flushed) {
+        length = 0;
+        *buffer = nullptr;
+        return;
+    }
     source_id = last_source_id;
     *buffer = msg_buf;
 

@@ -43,28 +43,42 @@ using namespace NHttpEnums;
 // Convenience function. All the housekeeping that must be done before we can return FLUSH to stream.
 void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, SourceId source_id,
       SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length) {
-    assert(num_octets > 0);
     session_data->section_type[source_id] = section_type;
     session_data->tcp_close[source_id] = tcp_close;
     session_data->infractions[source_id] = infractions;
+    switch (section_type) {
+      case SEC_BODY:
+        paf_max = 16384;
+        break;
+      case SEC_CHUNK:
+        paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        if (num_octets == 0) {
+            session_data->type_expected[source_id] = SEC_TRAILER;
+        }
+        break;
+      default:
+        paf_max = 63780;
+        break;
+    }
     if (tcp_close) {
         session_data->type_expected[source_id] = SEC_CLOSED;
     }
     if (!NHttpTestManager::use_test_input()) {
-        *flush_offset = num_octets;
+        // when TCP connection closes do not flush octets that have not arrived yet
+        *flush_offset = (!tcp_close || (num_octets <= length)) ? num_octets : length;
     }
     else {
-        NHttpTestManager::get_test_input_source()->flush(num_octets);
+        NHttpTestManager::get_test_input_source()->flush((!tcp_close || (num_octets <= length)) ? num_octets : length);
     }
-    session_data->unused_octets_visible[source_id] = length - num_octets;
+    session_data->unused_octets_visible[source_id] = (length >= num_octets) ? length - num_octets : 0;
     session_data->header_octets_visible[source_id] = 0;
 }
 
-// Convenience function. Size buffer required to accommodate the current section plus possible aggregation.
+// Convenience function. Size buffer required to reassemble the current section plus possible aggregation.
 uint32_t NHttpStreamSplitter::size_buffer_needed(unsigned total, NHttpEnums::SectionType type,
    uint32_t possible_additional) {
     switch (type) {
-      case SEC_CHUNKBODY:
+      case SEC_CHUNK:
         return 16384;
       case SEC_REQUEST:
       case SEC_STATUS:
@@ -116,16 +130,15 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
     switch (type) {
       case SEC_REQUEST:
       case SEC_STATUS:
-      case SEC_CHUNKHEAD:
+      case SEC_CHUNK:
       case SEC_HEADER:
       case SEC_TRAILER:
       {
-        paf_max = 63780;
         NHttpSplitter* splitter;
         switch (type) {
           case SEC_REQUEST: splitter = (NHttpSplitter*)&session_data->request_splitter[source_id]; break;
           case SEC_STATUS: splitter = (NHttpSplitter*)&session_data->status_splitter[source_id]; break;
-          case SEC_CHUNKHEAD: splitter = (NHttpSplitter*)&session_data->chunkhead_splitter[source_id]; break;
+          case SEC_CHUNK: splitter = (NHttpSplitter*)&session_data->chunk_splitter[source_id]; break;
           case SEC_HEADER: splitter = (NHttpSplitter*)&session_data->header_splitter[source_id]; break;
           case SEC_TRAILER: splitter = (NHttpSplitter*)&session_data->trailer_splitter[source_id]; break;
           default: assert(0); break;
@@ -134,42 +147,45 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         const uint32_t max_length = (length <= (63780 - splitter->get_octets_seen())) ? length :
            (63780 - splitter->get_octets_seen());
         const ScanResult split_result = splitter->split(data, max_length);
-        if (split_result == SCAN_NOTFOUND) {
+        switch (split_result) {
+          case SCAN_NOTFOUND:
             if (splitter->get_octets_seen() == 63780) {
-                // FIXIT-M need to implement processing and detection instead of just discarding this data
+                prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, false, 0, 0, length);
                 session_data->type_expected[source_id] = SEC_ABORT;
                 return StreamSplitter::ABORT;
             }
-            if (!tcp_close) {
-                // Incomplete headers wait patiently for more data
-                return StreamSplitter::SEARCH;
+            if (tcp_close) {
+                prepare_flush(session_data, flush_offset, source_id, type, true, INF_TRUNCATED, length, length);
+                return StreamSplitter::FLUSH;
             }
-            prepare_flush(session_data, flush_offset, source_id, type, true, INF_TRUNCATED, length, length);
-            splitter->reset();
+            // Incomplete headers wait patiently for more data
+            return StreamSplitter::SEARCH;
+          case SCAN_ABORT:
+            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, false, 0, 0, length);
+            session_data->type_expected[source_id] = SEC_ABORT;
             return StreamSplitter::FLUSH;
-        }
-        const uint32_t flush_octets = splitter->get_num_flush();
-        if (split_result == SCAN_DISCARD) {
-            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close && (flush_octets == length), 0,
+          case SCAN_DISCARD: {
+            const uint32_t flush_octets = splitter->get_num_flush();
+            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close && (flush_octets >= length), 0,
                flush_octets, length);
-            splitter->reset();
             return StreamSplitter::FLUSH;
-        }
-        prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (flush_octets == length), 0,
-           flush_octets, length);
-        splitter->reset();
-        if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
-            // Look ahead to see if entire header section is already here so we can aggregate it for detection.
-            const uint32_t peek_max_length = ((length - flush_octets <= 63780)) ? (length - flush_octets) : 63780;
-            if (session_data->header_splitter[source_id].peek(data + flush_octets, peek_max_length) == SCAN_FOUND) {
-                session_data->header_octets_visible[source_id] = session_data->header_splitter[source_id].get_num_flush();
+          }
+          case SCAN_FOUND: {
+            const uint32_t flush_octets = splitter->get_num_flush();
+            prepare_flush(session_data, flush_offset, source_id, type, tcp_close && (flush_octets == length), 0,
+               flush_octets, length);
+            if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
+                // Look ahead to see if entire header section is already here so we can aggregate it for detection.
+                const uint32_t peek_max_length = ((length - flush_octets <= 63780)) ? (length - flush_octets) : 63780;
+                if (session_data->header_splitter[source_id].peek(data + flush_octets, peek_max_length) == SCAN_FOUND) {
+                    session_data->header_octets_visible[source_id] = session_data->header_splitter[source_id].get_num_flush();
+                }
             }
+            return StreamSplitter::FLUSH;
+          }
         }
-        return StreamSplitter::FLUSH;
       }
       case SEC_BODY:
-      case SEC_CHUNKBODY:
-        paf_max = 16384 - session_data->chunk_buffer_length[source_id];
         if ((!tcp_close) || (length > session_data->data_length[source_id])) {
             prepare_flush(session_data, flush_offset, source_id, type, false, 0, session_data->data_length[source_id],
                length);
@@ -203,7 +219,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         }
         uint8_t* test_buffer;
         NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id, session_data);
-        if (len == 0) {
+        if (test_buffer == nullptr) {
             // There is no more test data
             return nullptr;
         }
@@ -215,12 +231,12 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     assert(total <= 63780);
     assert(offset+len <= total);
 
-    bool is_chunk_body = session_data->section_type[source_id] == SEC_CHUNKBODY;
+    bool is_chunk = session_data->section_type[source_id] == SEC_CHUNK;
 
     uint8_t*& chunk_buffer = session_data->chunk_buffer[source_id];
     int32_t& chunk_buffer_length = session_data->chunk_buffer_length[source_id];
-    uint8_t*& buffer = !is_chunk_body ? session_data->section_buffer[source_id] : chunk_buffer;
-    int32_t& buffer_length = !is_chunk_body ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
+    uint8_t*& buffer = !is_chunk ? session_data->section_buffer[source_id] : chunk_buffer;
+    int32_t& buffer_length = !is_chunk ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
 
     if (buffer == nullptr) {
         buffer = new uint8_t[size_buffer_needed(total, session_data->section_type[source_id],
@@ -230,29 +246,28 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     memcpy(buffer + buffer_length + offset, data, len);
     if (flags & PKT_PDU_TAIL) {
         ProcessResult send_to_detection;
-        if (!is_chunk_body) {
+        if (!is_chunk) {
             // start line/headers/body individual section processing with aggregation prior to being sent to detection
             // only the last section added to the buffer goes to the inspector
             send_to_detection = my_inspector->process(buffer + buffer_length, offset + len, flow, source_id,
                buffer_length == 0);
         }
         else {
-            // Because of aggregation chunk body sections do not go to Inspector on schedule or in chronological order
-            // with respect to chunk header sections. That means NHttpMsgChunkBody::update_flow() cannot do it design-intended
-            // job of updating type_expected in time for StreamSplitter to find the next chunk header. So we do it here.
-            session_data->type_expected[source_id] = SEC_CHUNKHEAD;
-
             // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
-            // all the chunks in the buffer go to the inspector together
+            // all the chunks in the buffer go to the inspector together. Zero-length chunk flushes accumulated chunks.
             int32_t total_chunk_len = chunk_buffer_length + offset + len;
-            if (total_chunk_len < 16384) {
-                paf_max = 16384 - total_chunk_len;
+            if ((total_chunk_len < 16384) && (len != 0)) {
                 chunk_buffer_length = total_chunk_len;
                 return nullptr;
             }
-            else {
-                paf_max = 16384;
+            if (total_chunk_len == 0) {
+                // Zero-length chunk cannot be processed by itself.
+                delete[] chunk_buffer;
+                chunk_buffer = nullptr;
+                chunk_buffer_length = 0;
+                return nullptr;
             }
+            paf_max = 16384;
             send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow, source_id, true);
         }
 
@@ -273,26 +288,6 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             return nullptr;
           case RES_AGGREGATE:
             buffer_length += offset + len;
-            return nullptr;
-          case RES_FLUSHCHUNKS:
-            buffer = nullptr;
-            buffer_length = 0;
-            if (chunk_buffer != nullptr) {
-                // FIXIT-M these three variables about the buffered chunks need to be managed properly
-                session_data->section_type[source_id] = SEC_CHUNKBODY;
-                session_data->tcp_close[source_id] = false;
-                session_data->infractions[source_id] = 0;
-
-                my_inspector->process(chunk_buffer, chunk_buffer_length, flow, source_id, true);
-                nhttp_buf.data = chunk_buffer;
-                nhttp_buf.length = chunk_buffer_length;
-                chunk_buffer = nullptr;
-                chunk_buffer_length = 0;
-                if (NHttpTestManager::use_test_output()) {
-                    fprintf(NHttpTestManager::get_output_file(), "Flushed chunks for detection %u octets\n\n", nhttp_buf.length);
-                }
-                return &nhttp_buf;
-            }
             return nullptr;
         }
     }

@@ -33,9 +33,6 @@
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"
 #include "nhttp_msg_header.h"
-#include "nhttp_msg_body.h"
-#include "nhttp_msg_chunk_head.h"
-#include "nhttp_msg_chunk_body.h"
 #include "nhttp_msg_trailer.h"
 
 using namespace NHttpEnums;
@@ -105,7 +102,5 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
 
     return session_data->transaction[source_id];
 }
-
-
 
 

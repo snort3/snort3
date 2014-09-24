@@ -51,8 +51,7 @@ public:
     friend class NHttpMsgRequest;
     friend class NHttpMsgStatus;
     friend class NHttpMsgBody;
-    friend class NHttpMsgChunkHead;
-    friend class NHttpMsgChunkBody;
+    friend class NHttpMsgChunk;
     friend class NHttpMsgTrailer;
     friend class NHttpStreamSplitter;
     friend class NHttpTransaction;
@@ -64,7 +63,7 @@ private:
     NHttpRequestSplitter request_splitter[2];
     NHttpStatusSplitter status_splitter[2];
     NHttpHeaderSplitter header_splitter[2];
-    NHttpChunkHeaderSplitter chunkhead_splitter[2];
+    NHttpChunkSplitter chunk_splitter[2];
     NHttpTrailerSplitter trailer_splitter[2];
     uint32_t unused_octets_visible[2] = { 0, 0 };
     uint32_t header_octets_visible[2] = { 0, 0 };
@@ -81,7 +80,7 @@ private:
 
     // Inspector => StreamSplitter (facts about the message section that is coming next)
     NHttpEnums::SectionType type_expected[2] = { NHttpEnums::SEC_REQUEST, NHttpEnums::SEC_STATUS };
-    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // length of the data from Content-Length field or chunk header.      
+    int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // length of the data from Content-Length field      
 
     // Inspector's internal data about the current message
     // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize
@@ -91,7 +90,6 @@ private:
     int32_t status_code_num[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
 
     int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // number of user data octets seen so far (regular body or chunks)
-    int64_t num_chunks[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };    // number of chunks seen so far
 
     // Transaction management including pipelining
     NHttpTransaction* transaction[2] = { nullptr, nullptr };

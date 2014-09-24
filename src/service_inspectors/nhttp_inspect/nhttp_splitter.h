@@ -39,16 +39,20 @@
 class NHttpSplitter {
 public:
     virtual ~NHttpSplitter() = default;
-    virtual void reset() { octets_seen = 0; num_crlf = 0; num_flush = 0; };
     virtual NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) = 0;
     virtual NHttpEnums::ScanResult peek(const uint8_t*, uint32_t) { assert(0); return NHttpEnums::SCAN_NOTFOUND; };
     uint32_t get_num_flush() { return num_flush; };
     virtual uint32_t get_octets_seen() { return octets_seen; };
 
 protected:
+    static const int8_t as_hex[256];
+
     uint32_t octets_seen = 0;
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;
+    bool complete = false;
+
+    virtual void conditional_reset();
 };
 
 class NHttpRequestSplitter : public NHttpSplitter {
@@ -65,16 +69,23 @@ class NHttpHeaderSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length);
     NHttpEnums::ScanResult peek(const uint8_t* buffer, uint32_t length);
-    void reset() { NHttpSplitter::reset(); peek_octets = 0; peek_status = NHttpEnums::SCAN_NOTFOUND; };
+    void conditional_reset();
     uint32_t get_octets_seen() { return octets_seen - peek_octets; };
 private:
     uint32_t peek_octets = 0;
     NHttpEnums::ScanResult peek_status = NHttpEnums::SCAN_NOTFOUND;
 };
 
-class NHttpChunkHeaderSplitter : public NHttpSplitter {
+class NHttpChunkSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length);
+    void conditional_reset();
+private:
+    uint32_t expected_length = 0;
+    bool length_started = false;
+    uint32_t digits_seen = 0;
+    bool semicolon = false;
+    bool header_complete = false;
 };
 
 class NHttpTrailerSplitter : public NHttpSplitter {

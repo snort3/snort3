@@ -1,11 +1,11 @@
-# Enter HTTP test message text as you want it to be presented to PAF.
+# Enter HTTP test message text as you want it to be presented to the StreamSplitter.
 #
-# The easiest way to format is to put a blank line between message sections so that each message section is its own "paragraph".
-# Within a paragraph the placement of new lines does not have any effect. Format a paragraph any way you are comfortable. Extra blank lines
-# between paragraphs also do not have any effect.
+# The easiest way to format is to put a blank line between message sections so that each message section is its own "paragraph". Within a paragraph
+# the placement of single new lines does not have any effect. Format a paragraph any way you are comfortable. Extra blank lines between paragraphs
+# also do not have any effect.
 #
 # Each paragraph represents a TCP segment. The splitter can be tested by putting multiple sections in the same paragraph (splitter must split)
-# or continuing a section in the next paragraph (splitter must search and reassamble).
+# or continuing a section in the next paragraph (splitter must search and reassemble).
 #
 # It is not necessary to specify complete body and chunk body sections. Specify at least one octet that will begin the section and the
 # remainder will be autofilled in 16384-octet sections up to the length flushed.
@@ -34,11 +34,11 @@
 # least one character of body/chunk data either as part of the previous header segment or at the beginning of a new segment following the headers.
 # All data bytes included in the file will be used followed by required fill data in the pattern ABC...XYZABC...
 #
+# Fill data will not be provided for a paragraph that is preceded by tcpclose. The body or chunk will terminate at the end of the paragraph.
+#
 # There must not be excess data for a test case. Once a data stream ends with a TCP close there must be a break command before further data is sent.
 # Similarly a message section that triggers an abort of processing must end the paragraph and be followed by a break. These rules apply half-duplex
 # so it would be possible to send data in the opposite direction before the break.
-#
-# FIXIT-L it would be useful if a paragraph could continue following an abort to simulate a processing abort mid-segment.
 #
 # This test tool does not implement the feature of being hardened against bad input. If you write a badly formatted or improper test case the
 # program may assert or crash. The responsibility is on the developer to get it right. Currently that is the best use of resources.
@@ -605,9 +605,9 @@ HTTP/1.1 208 Example with chunks\r\nTransfer-Encoding: chunked\r\n\r\n
 
 chunkoflength138
 
-e6\r\nchunkoflength230
+\r\ne6\r\nchunkoflength230
 
-0\r\n
+\r\n0\r\n
 
 \r\n
 
@@ -627,27 +627,27 @@ Accept: *\r\n
 1C320\r\n
 chunk1
 
-1F40; testing-the-extension-feature\r\n
+\r\n1F40; testing-the-extension-feature\r\n
 chunk2
 
-13FFE;  \r\n
+\r\n13FFE;  \r\n
 
 chunk3
 
-4000;\r\n
+\r\n4000;\r\n
 chunk4
 
-3FFF;\r\n
+\r\n3FFF;\r\n
 
 chunk5
 
-3FFE\r\n
+\r\n3FFE\r\n
 chunk6
 
-4001;\r\n
+\r\n4001;\r\n
 chunk7
 
-00000;chunkextension=3\r\n
+\r\n00000;chunkextension=3\r\n
 
 date: Sun, 01 Oct 2000 23:25:17 GMT\r\n
 X-madeupdate: Mon, 02 Oct 2000 23:25:17 GMT\r\n
@@ -749,12 +749,14 @@ Transfer-Encoding: chunked\r\n
 A000\r\n
 chunk1-start
 
-B000\r\n
+\r\nB000\r\n
 chunk2-start
 
-C000\r\n
+\r\nC000\r\n
 
 chunk3-start
+
+\r\n
 
 0\r\n
 date: Mon, 02 Oct 2000 20:25:00 GMT\r\n

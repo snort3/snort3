@@ -90,9 +90,8 @@ void NHttpMsgHeader::update_flow() {
              (get_header_value_norm(HEAD_TRANSFER_ENCODING).length - 8))) == TRANSCODE_CHUNKED) ) {
         // FIXIT-M inspect for Content-Length header which should not be present
         // Chunked body
-        session_data->type_expected[source_id] = SEC_CHUNKHEAD;
+        session_data->type_expected[source_id] = SEC_CHUNK;
         session_data->body_octets[source_id] = 0;
-        session_data->num_chunks[source_id] = 0;
     }
     else if ((get_header_value_norm(HEAD_CONTENT_LENGTH).length > 0) &&
             (*(int64_t*)header_value_norm[HEAD_CONTENT_LENGTH].start > 0)) {

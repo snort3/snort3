@@ -23,7 +23,7 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgChunkBody class analyzes data portion (not start line) of an HTTP chunk.
+//  @brief      NHttpMsgChunk class analyzes HTTP chunked body.
 //
 
 
@@ -34,41 +34,32 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_msg_chunk_body.h"
+#include "nhttp_msg_chunk.h"
 
 using namespace NHttpEnums;
 
-NHttpMsgChunkBody::NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+NHttpMsgChunk::NHttpMsgChunk(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
    SourceId source_id_, bool buf_owner) : NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner)
 {
    transaction->set_body(this);
 }
 
-void NHttpMsgChunkBody::analyze() {
-    body_octets += msg_text.length;
+void NHttpMsgChunk::gen_events() {}
 
-    data.start = msg_text.start;
-    data.length = msg_text.length;
-
-    if (tcp_close) infractions |= INF_TRUNCATED;
-}
-
-
-void NHttpMsgChunkBody::gen_events() {}
-
-void NHttpMsgChunkBody::print_section(FILE *output) {
-    NHttpMsgSection::print_message_title(output, "chunk body");
+void NHttpMsgChunk::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "chunk");
     fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
     data.print(output, "Data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
-void NHttpMsgChunkBody::update_flow() {
+void NHttpMsgChunk::update_flow() {
     if (tcp_close) {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
     }
     else {
+        // Zero-length chunk is not visible here. StreamSplitter updates expected_type to SEC_TRAILER when necessary.
         session_data->body_octets[source_id] = body_octets;
     }
 }

@@ -16,10 +16,8 @@ set (FILE_LIST
     nhttp_msg_header.h
     nhttp_msg_body.cc
     nhttp_msg_body.h
-    nhttp_msg_chunk_head.cc
-    nhttp_msg_chunk_head.h
-    nhttp_msg_chunk_body.cc
-    nhttp_msg_chunk_body.h
+    nhttp_msg_chunk.cc
+    nhttp_msg_chunk.h
     nhttp_msg_trailer.cc
     nhttp_msg_trailer.h
     nhttp_head_norm.cc
