@@ -53,7 +53,7 @@ typedef ip::IP4Hdr IP4Hdr;
 void LogPriorityData(TextLog*, const Event*, bool doNewLine);
 void LogXrefs(TextLog*, const Event*, bool doNewLine);
 
-void LogIPPkt(TextLog*, int type, Packet*);
+void LogIPPkt(TextLog*, Packet*);
 void LogNetData (TextLog*, const uint8_t* data, const int len, Packet*);
 
 void LogTimeStamp(TextLog*, Packet*);
