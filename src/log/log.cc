@@ -147,10 +147,10 @@ void CloseLogger()
     TextLog_Term(text_log);
 }
 
-void LogIPPkt(int type, Packet* p)
+void LogIPPkt(Packet* p)
 {
     log_mutex.lock();
-    LogIPPkt(text_log, type, p);
+    LogIPPkt(text_log, p);
     TextLog_Flush(text_log);
     log_mutex.unlock();
 }
@@ -159,7 +159,7 @@ void snort_print(Packet* p)
 {
     if (p->ptrs.ip_api.is_valid())
     {
-        LogIPPkt(text_log, p->ptrs.ip_api.proto(), p);
+        LogIPPkt(text_log, p);
     }
 #if 0
     // ARP not impelemted

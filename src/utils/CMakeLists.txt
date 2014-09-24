@@ -61,17 +61,9 @@ ADD_LIBRARY( utils STATIC
     util_unfold.h
 )
 
-
-set_default_visibility_compile_flag(utils)
-
 target_link_libraries(utils
     log
-    ${CMAKE_THREAD_LIBS_INIT}
-)
-
-set_target_properties( utils PROPERTIES
-    COMPILE_FLAGS "-std=c++11 -DHAVE_PTHREADS  -pthread"
-    LINK_FLAGS "-pthread -lpthread pthreads -lpthreads"
+#
 )
 
 install (FILES ${UTIL_INCLUDES}

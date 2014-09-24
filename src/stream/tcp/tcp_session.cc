@@ -1890,7 +1890,7 @@ static void ShowRebuiltPacket (TcpSession* ssn, Packet* pkt)
 {
     if ( (ssn->client.config->flags & STREAM5_CONFIG_SHOW_PACKETS) ||
          (ssn->server.config->flags & STREAM5_CONFIG_SHOW_PACKETS) )
-        LogIPPkt(IPPROTO_TCP, pkt);
+        LogIPPkt(pkt);
 }
 
 static inline unsigned int getSegmentFlushSize(

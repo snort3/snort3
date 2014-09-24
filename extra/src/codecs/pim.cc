@@ -58,9 +58,9 @@ void PimCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_PIM);
 }
 
-bool PimCodec::decode(const RawData&, CodecData&, SnortData&)
+bool PimCodec::decode(const RawData&, CodecData& codec, SnortData&)
 {
-    codec_events::decoder_event(DECODE_IP_BAD_PROTO);
+    codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);
     return true;
 }
 

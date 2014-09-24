@@ -1048,7 +1048,7 @@ static void FragRebuild(FragTracker *ft, Packet *p)
      * data that is established when the packet is decoded.
      */
     if (DEBUG_FRAG & GetDebugLevel())
-        LogIPPkt(dpkt->iph->ip_proto, &dpkt);
+        LogIPPkt(&dpkt);
 
 #endif
 

@@ -248,7 +248,7 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     if(packet)
     {
         if(p->ptrs.ip_api.is_valid())
-            LogIPPkt(fast_log, p->ptrs.ip_api.proto(), p);
+            LogIPPkt(fast_log, p);
 
 #if 0
         // FIXIT-L -J LogArpHeader unimplemented
