@@ -1275,9 +1275,6 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
             ParseError("%s - cpu must be an integer in the range"
                 " of 0 < cpu < max_cpus", fqn, cpu);
 
-        else if (cpu >= CPU_SETSIZE)
-            ParseError("cpu must be between 0 and %d", INT8_MAX);
-
         else if ((source.empty()) && (thread == -1))
             ParseError("%s - must have either a source or a thread!", fqn);
 

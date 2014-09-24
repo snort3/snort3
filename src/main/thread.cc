@@ -47,8 +47,6 @@
 static unsigned instance_max = 1;
 static THREAD_LOCAL unsigned instance_id = 0;
 
-static THREAD_LOCAL cpu_set_t cpu_set;
-
 
 void set_instance_id(unsigned id)
 {
@@ -134,6 +132,8 @@ void pin_thread_to_cpu(const char* source)
 // PREPROCESSOR MACROS -- these are not actually if statements!
 #       if LINUX
         {
+            static THREAD_LOCAL cpu_set_t cpu_set;
+
             if (cpu >= CPU_SETSIZE)
                 FatalError("Maximum CPU value for this Operating System is %d",
                     CPU_SETSIZE);
