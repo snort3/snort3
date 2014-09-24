@@ -151,10 +151,10 @@ static inline int pgm_nak_detect (const RawData& raw)
 // private functions
 //-------------------------------------------------------------------------
 
-bool PgmCodec::decode(const RawData& raw, CodecData&, SnortData&)
+bool PgmCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
     if ( pgm_nak_detect(raw) == PGM_NAK_VULN )
-        codec_events::decoder_event(DECODE_PGM_NAK_OVERFLOW);
+        codec_events::decoder_event(codec, DECODE_PGM_NAK_OVERFLOW);
     return true;
 }
 

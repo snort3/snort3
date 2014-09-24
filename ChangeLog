@@ -1,3 +1,19 @@
+122
+-- pulled thread pinning from Josh
+-- snort.lua tweaks to back out random test foo
+
+121
+-- valgrind fixes
+-- basic reload restoration
+-- support cmd() form of snort.cmd()
+-- misc FIXITs
+-- converted wizard to fully stateful
+-- implemented paf rescan upon auto service id
+-- changed StreamSplitter::max() from uint32_t to unsigned
+-- changed stream_tcp.paf_max to max_pdu
+-- added parse errors for module begin()/end() fails
+-- changed reload to not fatal on parse errors
+
 120
 -- tweaked --help!
 -- added unused stringify(enum)
@@ -7,6 +23,8 @@
 -- fixed valgrind issues
 -- refactored Shells to support multiple files/policies
 -- changed detect reset to accommodate buffer population before reassembly
+-- initial multiple policy binding
+-- pulled in codec Makefile fix from Josh
 
 119
 -- updated binder

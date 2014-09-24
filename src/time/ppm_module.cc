@@ -29,15 +29,18 @@
 #include "main/snort_config.h"
 #include "main/snort.h"
 
-static const char* s_name = "ppm";
-static const char* s_help = 
-    "packet and rule latency monitoring and control";
 
 //-------------------------------------------------------------------------
 // ppm attributes
 //-------------------------------------------------------------------------
 
 #ifdef PPM_MGR
+
+static const char* s_name = "ppm";
+static const char* s_help =
+    "packet and rule latency monitoring and control";
+
+
 static const Parameter s_params[] =
 {
     { "max_pkt_time", Parameter::PT_INT, "0:", "0",

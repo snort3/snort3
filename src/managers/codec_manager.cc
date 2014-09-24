@@ -46,6 +46,7 @@ std::vector<CodecManager::CodecApiWrapper> CodecManager::s_codecs;
 std::array<uint8_t, max_protocol_id> CodecManager::s_proto_map{{0}};
 std::array<Codec*, UINT8_MAX> CodecManager::s_protocols{{0}};
 THREAD_LOCAL uint8_t CodecManager::grinder = 0;
+THREAD_LOCAL uint8_t CodecManager::max_layers = DEFAULT_LAYERMAX;
 
 
 // This is hardcoded into Snort++
@@ -163,7 +164,7 @@ void CodecManager::instantiate(CodecApiWrapper& wrap,
         for (auto id : ids)
         {
             if(s_proto_map[id] != 0)
-                WarningMessage("The Codecs %s and %s have both been registered "
+                ErrorMessage("The Codecs %s and %s have both been registered "
                     "for protocol_id %d. Codec %s will be used\n",
                     s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
                     id, cd->get_name());
@@ -196,7 +197,7 @@ void CodecManager::instantiate()
         instantiate(wrap, nullptr, nullptr);
 }
 
-void CodecManager::thread_init(void)
+void CodecManager::thread_init()
 {
     for ( CodecApiWrapper& wrap : s_codecs )
         if (wrap.api->tinit)

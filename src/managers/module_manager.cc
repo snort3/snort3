@@ -181,30 +181,30 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     {
 #if 1
         cout << Markup::item();
-        cout << p->get_type();
-        cout << " " << Markup::emphasis(key);
+        cout << Markup::sanitize(p->get_type());
+        cout << " " << Markup::emphasis(Markup::sanitize(key));
 
         if ( p->deflt )
-            cout << " = " << (char*)p->deflt;
+            cout << " = " << Markup::sanitize((char*)p->deflt);
 
         cout << ": " << p->help;
 
         if ( p->range )
-            cout << " { " << (char*)p->range << " }";
+            cout << " { " << Markup::sanitize((char*)p->range) << " }";
 #else
         cout << Markup::item();
         cout << p->get_type();
-        cout << "\t" << Markup::emphasis(key);
+        cout << "\t" << Markup::emphasis(Markup::sanitize(key));
 
         if ( p->deflt )
-            cout << "\t" << (char*)p->deflt;
+            cout << "\t" << Markup::sanitize((char*)p->deflt);
         else
             cout << "\t";
 
         cout << "\t" << p->help;
 
         if ( p->range )
-            cout << "\t" << (const char*)p->range;
+            cout << "\t" << Markup::sanitize((char*)p->range);
         else
             cout << "\t";
 
@@ -366,7 +366,11 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         s_current = key;
     }
 
-    m->begin(s, idx, s_config);
+    if ( !m->begin(s, idx, s_config) )
+    {
+        ParseError("can't open %s", m->get_name());
+        return false;
+    }
     return true;
 }
 
@@ -377,7 +381,11 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
     if ( ModHook* h = get_hook(key.c_str()) )
     {
-        h->mod->end(s, idx, s_config);
+        if ( !h->mod->end(s, idx, s_config) )
+        {
+            ParseError("can't close %s", h->mod->get_name());
+            return;
+        }
 
         if ( !idx && h->api && (key == s) )
             PluginManager::instantiate(h->api, h->mod, s_config);
@@ -438,12 +446,6 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
     ModHook* mh = new ModHook(m, b);
     s_modules.push_back(mh);
 
-    if ( mh->reg )
-    {
-        SnortConfig* sc = snort_conf;
-        sc->policy_map->get_shell()->install(m->get_name(), mh->reg);
-    }
-
 #ifdef PERF_PROFILING
     RegisterProfile(m);
 #endif
@@ -464,12 +466,11 @@ const char* ModuleManager::get_current_module()
 void ModuleManager::set_config(SnortConfig* sc)
 { s_config = sc; }
 
+void ModuleManager::reset_errors()
+{ s_errors = 0; }
+
 unsigned ModuleManager::get_errors()
-{
-    unsigned err = s_errors;
-    s_errors = 0;
-    return err;
-}
+{ return s_errors; }
 
 void ModuleManager::list_modules()
 {
@@ -522,10 +523,10 @@ void ModuleManager::show_module(const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        cout << endl << Markup::head() << name << endl << endl;
+        cout << endl << Markup::head() << Markup::sanitize(name) << endl << endl;
 
         if ( const char* h = m->get_help() )
-            cout << "What: " << h << endl;
+            cout << "What: " << Markup::sanitize(h) << endl;
 
         cout << "Type: "  << mod_type(p->api) << endl;
 
@@ -614,10 +615,10 @@ void ModuleManager::show_commands(const char* pfx)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << p->mod->get_name();
-            cout << "." << c->name;
+            cout << Markup::sanitize(p->mod->get_name());
+            cout << "." << Markup::sanitize(c->name);
             cout << Markup::emphasis_off();
-            cout << "(): " << c->help;
+            cout << "(): " << Markup::sanitize(c->help);
             cout << endl;
             c++;
         }
@@ -645,7 +646,7 @@ void ModuleManager::show_gids(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid;
             cout << Markup::emphasis_off();
-            cout << ": " << m->get_name();
+            cout << ": " << Markup::sanitize(m->get_name());
             cout << endl;
         }
     }    
@@ -673,7 +674,7 @@ void ModuleManager::show_pegs(const char* pfx)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << *pegs;
+            cout << Markup::sanitize(*pegs);
             cout << Markup::emphasis_off();
             cout << endl;
             ++pegs;
@@ -705,17 +706,31 @@ void ModuleManager::show_rules(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid << ":" << r->sid;
             cout << Markup::emphasis_off();
-            cout << " " << r->msg;
+            cout << " " << Markup::sanitize(r->msg);
             cout << endl;
             r++;
         }
     }    
 }
 
+void ModuleManager::load_commands(SnortConfig* sc)
+{
+    // FIXIT-L ideally only install commands from configured modules
+    // FIXIT-L install commands into working shell
+    Shell* sh = sc->policy_map->get_shell();
+
+    for ( auto p : s_modules )
+    {
+        if ( p->reg )
+            sh->install(p->mod->get_name(), p->reg);
+    }
+}
+
 // FIXIT-L currently no way to know whether a module was activated or not
 // so modules with common rules will cause duplicate sid warnings
 // eg http_inspect and nhttp_inspect both have 119:1-34
-// only to avoid that now is to not load plugins with common rules
+// only way to avoid that now is to not load plugins with common rules
+// (we don't want to suppress it because it could mean something is broken)
 void ModuleManager::load_rules(SnortConfig* sc)
 {
     // FIXIT-M callers of ParseConfigString() should not have to push parse loc

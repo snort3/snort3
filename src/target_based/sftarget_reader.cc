@@ -381,10 +381,10 @@ tTargetBasedConfig* SFAT_Swap()
 
 int IsAdaptiveConfigured()
 {
-    if ( !curr_cfg )
-        return 0;
+    if ( curr_cfg || next_cfg )
+        return 1;
 
-    return 1;
+    return 0;
 }
 
 void SFAT_UpdateApplicationProtocol(sfip_t *ipAddr, uint16_t port, uint16_t protocol, uint16_t id)

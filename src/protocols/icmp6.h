@@ -33,12 +33,46 @@ constexpr uint16_t ICMP6_HEADER_MIN_LEN = 4;
 constexpr uint16_t ICMP6_HEADER_NORMAL_LEN = 8;
 
 
-struct ICMP6Hdr
+//enum class Icmp6Types : std::uint8_t
+enum Icmp6Types : std::uint8_t
 {
-    uint8_t type;
-    uint8_t code;
+    UNREACH = 1,
+    BIG = 2,
+    TIME = 3,
+    PARAMS = 4,
+    ECHO_6 = 128,
+    REPLY_6 = 129,
+    SOLICITATION = 133,
+    ADVERTISEMENT = 134,
+    NODE_INFO_QUERY = 139,
+    NODE_INFO_RESPONSE = 140,
+};
+
+enum class Icmp6Code : std::uint8_t
+{
+    /* Type == 1 */
+    UNREACH_NET = 0x00,
+    UNREACH_FILTER_PROHIB = 0x01,
+    UNREACH_INVALID = 0x02,
+    UNREACH_HOST = 0x03,
+    UNREACH_PORT = 0x04,
+
+    /* Type == ADVERTISEMENT */
+    ADVERTISEMENT = 0X00,
+};
+
+struct Icmp6Hdr
+{
+    Icmp6Types type;
+    Icmp6Code code;
     uint16_t csum;
 
+    union
+    {
+        uint32_t opt32;
+        uint16_t opt16[2];
+        uint8_t opt8[4];
+    };
 };
 
 struct ICMP6TooBig
@@ -79,30 +113,6 @@ struct ICMP6NodeInfo
     uint64_t nonce;
 } ;
 
-
-//enum class Icmp6Types : std::uint8_t
-enum Icmp6Types : std::uint8_t
-{
-    UNREACH = 1,
-    BIG = 2,
-    TIME = 3,
-    PARAMS = 4,
-    ECHO_6 = 128,
-    REPLY_6 = 129,
-    SOLICITATION = 133,
-    ADVERTISEMENT = 134,
-    NODE_INFO_QUERY = 139,
-    NODE_INFO_RESPONSE = 140,
-};
-
-enum class Icmp6Code : std::uint8_t
-{
-    /* Type == 1 */
-    UNREACH_NET = 0x00,
-    UNREACH_FILTER_PROHIB = 0x01,
-    UNREACH_HOST = 0x03,
-    UNREACH_PORT = 0x04,
-};
 
 }  // namespace icmp6
 

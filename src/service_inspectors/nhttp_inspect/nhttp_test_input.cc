@@ -239,7 +239,7 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &so
     else {
         // We need to generate additional data to fill out the body or chunk section. We may come through here
         // multiple times as we generate all the maximum size body sections needed for a single flush.
-        uint32_t paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        unsigned paf_max = 16384 - session_data->chunk_buffer_length[source_id];
         length = (flush_octets <= paf_max) ? flush_octets : paf_max;
         for (uint32_t k = end_offset; k < length; k++) {
             msg_buf[k] = 'A' + k % 26;

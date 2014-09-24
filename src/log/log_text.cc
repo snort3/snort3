@@ -989,14 +989,13 @@ static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr *icmph)
  */
 static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 {
-    Packet op;
-    Packet *orig_p;
-
     if (log == NULL || p == NULL)
         return;
 
-    memset((char*)&op, 0, sizeof(op));
-    orig_p = &op;
+    // FIXIT-L -J  -- Allocating a new Packet here is ridiculously excessive.
+    Packet *orig_p = PacketManager::encode_new();
+    orig_p->reset();
+    Packet& op = *orig_p;
 
     if (!layer::set_api_ip_embed_icmp(p, op.ptrs.ip_api))
     {
@@ -1077,6 +1076,8 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
     {
         TextLog_Puts(log, "\nORIGINAL DATAGRAM TRUNCATED");
     }
+
+    PacketManager::encode_delete(orig_p);
 }
 
 /*--------------------------------------------------------------------

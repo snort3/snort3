@@ -24,6 +24,7 @@
 #include <array>
 #include <list>
 
+// FIXIT-L J  update this includes
 #include "main/snort_types.h"
 #include "framework/codec.h"
 #include "protocols/packet.h" // FIXIT-L remove
@@ -35,6 +36,20 @@
 struct _daq_pkthdr;
 struct TextLog;
 
+enum class TcpResponse
+{
+    FIN,
+    RST,
+    PUSH,
+};
+
+enum class UnreachResponse
+{
+    NET,
+    HOST,
+    PORT,
+    FWD,
+};
 
 /*
  *  PacketManager class
@@ -68,14 +83,16 @@ public:
         EncodeFlags f, const Packet* p, Packet* c, PseudoPacketType type,
         const DAQ_PktHdr_t*, uint32_t opaque);
     // orig is the wire pkt; clone was obtained with New()
-    static const uint8_t* encode_response(
-        EncodeType, EncodeFlags, const Packet* orig, uint32_t* len,
-        const uint8_t* payLoad, uint32_t payLen);
 
-    // wrapper for encode response.  Ensure no payload is encoded.
-    static inline const uint8_t* encode_reject( EncodeType type,
-        EncodeFlags flags, const Packet* p, uint32_t* len)
-    { return encode_response(type, flags, p, len, nullptr, 0); }
+    // Send a TCP reponse.  TcpResponse params determined the type
+    // of response. Len will be set to the response's length.
+    // payload && payload_len are optional.
+    static const uint8_t* encode_response(
+        TcpResponse, EncodeFlags, const Packet* orig, uint32_t& len,
+        const uint8_t* const payload = nullptr, uint32_t payload_len = 0);
+    // Send an ICMP unreachable response!
+    static const uint8_t* encode_reject( UnreachResponse type,
+        EncodeFlags flags, const Packet* p, uint32_t& len);
 
     // for backwards compatability and convenience.
     static inline int encode_format_with_daq_info (
@@ -128,6 +145,8 @@ private:
     // The only time we should accumulate is when CodecManager tells us too
     friend void CodecManager::thread_term();
     static void accumulate();
+    static bool encode(const Packet* p, EncodeFlags,
+        uint8_t lyr_start, uint8_t next_prot, Buffer& buf);
 
     // constant offsets into the s_stats array.  Notice the stat_offset
     // constant which is used when adding a protocol specific codec

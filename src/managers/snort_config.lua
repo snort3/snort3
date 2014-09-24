@@ -16,6 +16,7 @@
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ---------------------------------------------------------------------------
+-- snort_config.lua author Russ Combs <rucombs@cisco.com>
 
 ---------------------------------------------------------------------------
 -- Snort uses this to configure Lua settings into C++

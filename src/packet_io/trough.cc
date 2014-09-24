@@ -31,13 +31,13 @@
 #include "sfdaq.h"
 #include "utils/util.h"
 
-typedef struct _PcapReadObject
+struct PcapReadObject
 {
     SourceType type;
     char *arg;
     char *filter;
 
-} PcapReadObject;
+};
 
 static SF_LIST *pcap_object_list = NULL;
 static SF_QUEUE *pcap_queue = NULL;

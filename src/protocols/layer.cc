@@ -247,15 +247,15 @@ bool set_inner_ip_api(const Packet* const p,
 
     do
     {
-        const Layer* lyr = &p->layers[curr_layer];
+        const Layer& lyr = p->layers[curr_layer];
 
-        switch (lyr->prot_id)
+        switch (lyr.prot_id)
         {
             case ETHERTYPE_IPV4:
             case IPPROTO_ID_IPIP:
             {
                 const ip::IP4Hdr* ip4h =
-                    reinterpret_cast<const ip::IP4Hdr*>(lyr->start);
+                    reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
                 api.set(ip4h);
                 curr_layer--;
                 return true;
@@ -264,7 +264,7 @@ bool set_inner_ip_api(const Packet* const p,
             case IPPROTO_ID_IPV6:
             {
                 const ip::IP6Hdr* ip6h =
-                    reinterpret_cast<const ip::IP6Hdr*>(lyr->start);
+                    reinterpret_cast<const ip::IP6Hdr*>(lyr.start);
                 api.set(ip6h);
                 curr_layer--;
                 return true;
@@ -288,15 +288,15 @@ bool set_outer_ip_api(const Packet* const p,
 
     do
     {
-        const Layer* lyr = &p->layers[curr_layer];
+        const Layer& lyr = p->layers[curr_layer];
 
-        switch (lyr->prot_id)
+        switch (lyr.prot_id)
         {
             case ETHERTYPE_IPV4:
             case IPPROTO_ID_IPIP:
             {
                 const ip::IP4Hdr* ip4h =
-                    reinterpret_cast<const ip::IP4Hdr*>(lyr->start);
+                    reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
                 api.set(ip4h);
                 curr_layer++;
                 return true;
@@ -305,7 +305,7 @@ bool set_outer_ip_api(const Packet* const p,
             case IPPROTO_ID_IPV6:
             {
                 const ip::IP6Hdr* ip6h =
-                    reinterpret_cast<const ip::IP6Hdr*>(lyr->start);
+                    reinterpret_cast<const ip::IP6Hdr*>(lyr.start);
                 api.set(ip6h);
                 curr_layer++;
                 return true;
@@ -328,26 +328,25 @@ bool set_api_ip_embed_icmp(Packet* const p)
 bool set_api_ip_embed_icmp(const Packet* p, ip::IpApi& api)
 {
     int num_layers = p->num_layers - 1;
-    const Layer* lyr = &p->layers[num_layers];
 
-    for(int i = num_layers; i >= 0; i--)
+    for(int i = num_layers; i >= 0; --i)
     {
-        if (lyr->prot_id == IP_EMBEDDED_IN_ICMP4)
+        const Layer& lyr = p->layers[i];
+
+        if (lyr.prot_id == IP_EMBEDDED_IN_ICMP4)
         {
             const ip::IP4Hdr* ip4h =
-                reinterpret_cast<const ip::IP4Hdr*>(lyr->start);
+                reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
             api.set(ip4h);
             return true;
         }
-        else if (lyr->prot_id == IP_EMBEDDED_IN_ICMP6)
+        else if (lyr.prot_id == IP_EMBEDDED_IN_ICMP6)
         {
             const ip::IP6Hdr* ip6h =
-                reinterpret_cast<const ip::IP6Hdr*>(lyr->start);
+                reinterpret_cast<const ip::IP6Hdr*>(lyr.start);
             api.set(ip6h);
             return true;
         }
-
-        lyr--;
     }
 
     api.reset();

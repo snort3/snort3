@@ -160,7 +160,10 @@ default_ftp_server =
 
     ftp_cmds = ftp_default_commands,
     chk_str_fmt = ftp_format_commands,
+}
 
+ignore =
+{
     cmd_validity =
     {
         { command = 'ABOR', length = 0 },
@@ -282,4 +285,3 @@ default_wizard =
           to_server = telnet_commands, to_client = telnet_commands },
     }
 }
-

@@ -99,7 +99,7 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
     if (raw.len < MIN_AUTH_LEN)
     {
-        codec_events::decoder_event(DECODE_AUTH_HDR_TRUNC);
+        codec_events::decoder_event(codec, DECODE_AUTH_HDR_TRUNC);
         return false;
     }
 
@@ -109,7 +109,7 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
     if (codec.lyr_len > raw.len)
     {
-        codec_events::decoder_event(DECODE_AUTH_HDR_BAD_LEN);
+        codec_events::decoder_event(codec, DECODE_AUTH_HDR_BAD_LEN);
         return false;
     }
 
@@ -118,7 +118,11 @@ bool AuthCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
     // must be called AFTER setting next_prot_id
     if (snort.ip_api.is_ip6())
+    {
         ip_util::CheckIPv6ExtensionOrder(codec, IPPROTO_ID_AUTH);
+        codec.proto_bits |= PROTO_BIT__IP6_EXT;
+        codec.ip6_csum_proto = ah->next;
+    }
     return true;
 }
 

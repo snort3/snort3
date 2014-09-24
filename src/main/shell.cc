@@ -105,7 +105,10 @@ static void config_lua(
     run_config(L);
 
     if ( int k = ModuleManager::get_errors() )
-        FatalError("see prior %d errors\n", k);
+    {
+        if ( snort_is_starting() )
+            FatalError("see prior %d errors\n", k);
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -144,7 +147,7 @@ void Shell::set_overrides(const char* s)
 
 void Shell::configure(SnortConfig* sc)
 {
-    assert(file.size());
+    assert(file.size()); // FIXIT-M -- provide detailed error message. Will be confusing for an end user
     ModuleManager::set_config(sc);
     config_lua(lua, file.c_str(), overrides);
     ModuleManager::set_config(nullptr);
@@ -153,6 +156,9 @@ void Shell::configure(SnortConfig* sc)
 
 void Shell::install(const char* name, const luaL_reg* reg)
 {
+    if ( !strcmp(name, "snort") )
+        luaL_register(lua, "_G", reg);
+
     luaL_register(lua, name, reg);
 }
 

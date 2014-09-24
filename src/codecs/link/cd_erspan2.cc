@@ -102,7 +102,7 @@ bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, SnortData& )
 
     if (raw.len < sizeof(ERSpanType2Hdr))
     {
-        codec_events::decoder_event(DECODE_ERSPAN2_DGRAM_LT_HDR);
+        codec_events::decoder_event(codec, DECODE_ERSPAN2_DGRAM_LT_HDR);
         return false;
     }
 
@@ -110,7 +110,7 @@ bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, SnortData& )
      */
     if (erSpan2Hdr->version() != 0x01) /* Type 2 == version 0x01 */
     {
-        codec_events::decoder_event(DECODE_ERSPAN_HDR_VERSION_MISMATCH);
+        codec_events::decoder_event(codec, DECODE_ERSPAN_HDR_VERSION_MISMATCH);
         return false;
     }
 

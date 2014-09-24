@@ -86,7 +86,7 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
             if (snort.ip_api.get_ip_opt_len() >= 2) {
                 if (*(ip_opt_data) == 0 && *(ip_opt_data+1) == 0)
                 {
-                    codec_events::decoder_event(DECODE_IGMP_OPTIONS_DOS);
+                    codec_events::decoder_event(codec, DECODE_IGMP_OPTIONS_DOS);
                     return false;
                 }
             }
@@ -96,7 +96,7 @@ bool IgmpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         if ((!(codec.codec_flags & CODEC_IPOPT_RTRALT_SEEN)) &&
             (codec.codec_flags & CODEC_IPOPT_LEN_THREE))
         {
-            codec_events::decoder_event(DECODE_IGMP_OPTIONS_DOS);
+            codec_events::decoder_event(codec, DECODE_IGMP_OPTIONS_DOS);
         }
     }
     return true;

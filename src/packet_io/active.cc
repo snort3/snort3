@@ -101,9 +101,9 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
 
         default:
             if ( Active_PacketForceDropped() )
-                Active_SendUnreach(p, ENC_UNR_FW);
+                Active_SendUnreach(p, UnreachResponse::FWD);
             else
-                Active_SendUnreach(p, ENC_UNR_PORT);
+                Active_SendUnreach(p, UnreachResponse::PORT);
             break;
     }
 }
@@ -148,9 +148,9 @@ void Active_SetEnabled (int on_off)
         s_enabled = on_off;
 }
 
-static inline uint32_t GetFlags (void)
+static inline EncodeFlags GetFlags (void)
 {
-    uint32_t flags = ENC_FLAG_ID;
+    EncodeFlags flags = ENC_FLAG_ID;
     if ( DAQ_RawInjection() || s_ipnet ) flags |= ENC_FLAG_RAW;
     return flags;
 }
@@ -162,33 +162,33 @@ static uint32_t Strafe(int, uint32_t, const Packet*);
 void Active_SendReset(Packet* p, EncodeFlags ef)
 {
     int i;
-    uint32_t flags = (GetFlags() | ef) & ~ENC_FLAG_VAL;
-    uint32_t value = ef & ENC_FLAG_VAL;
+    EncodeFlags flags = (GetFlags() | ef) & ~ENC_FLAG_VAL;
+    EncodeFlags value = ef & ENC_FLAG_VAL;
 
     for ( i = 0; i < s_attempts; i++ )
     {
-        uint32_t len = 0;
+        uint32_t len;
         const uint8_t* rej;
 
         value = Strafe(i, value, p);
 
-        rej = PacketManager::encode_reject(ENC_TCP_RST, flags|value, p, &len);
+        rej = PacketManager::encode_response(TcpResponse::RST, flags|value, p, len);
         if ( !rej ) return;
 
         s_send(p->pkth, !(ef & ENC_FLAG_FWD), rej, len);
     }
 }
 
-void Active_SendUnreach(Packet* p, EncodeType type)
+void Active_SendUnreach(Packet* p, UnreachResponse type)
 {
     uint32_t len;
     const uint8_t* rej;
-    uint32_t flags = GetFlags();
+    EncodeFlags flags = GetFlags();
 
     if ( !s_attempts )
         return;
 
-    rej = PacketManager::encode_reject(type, flags, p, &len);
+    rej = PacketManager::encode_reject(type, flags, p, len);
     if ( !rej ) return;
 
     s_send(p->pkth, 1, rej, len);
@@ -202,13 +202,13 @@ void Active_SendData (
 
     for ( i = 0; i < s_attempts; i++ )
     {
-        uint32_t plen = 0;
+        uint32_t plen;
         const uint8_t* seg;
 
         flags &= ~ENC_FLAG_VAL;
         flags |= (i & ENC_FLAG_VAL);
 
-        seg = PacketManager::encode_response(ENC_TCP_FIN, flags, p, &plen, buf, blen);
+        seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, buf, blen);
 
         if ( !seg ) return;
         s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
@@ -218,7 +218,7 @@ void Active_SendData (
 void Active_InjectData (
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
-    uint32_t plen = 0;
+    uint32_t plen;
     const uint8_t* seg;
 
     if ( !s_attempts )
@@ -227,7 +227,7 @@ void Active_InjectData (
     flags |= GetFlags();
     flags &= ~ENC_FLAG_VAL;
 
-    seg = PacketManager::encode_response(ENC_TCP_PUSH, flags, p, &plen, buf, blen);
+    seg = PacketManager::encode_response(TcpResponse::PUSH, flags, p, plen, buf, blen);
     if ( !seg )
         return;
 

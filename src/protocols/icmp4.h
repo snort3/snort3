@@ -102,12 +102,18 @@ enum IcmpCode : std::uint8_t
     PARAM_BAD_LENGTH = 2,
 };
 
-struct ICMPbaseHdr
+struct Icmp4Base
 {
     IcmpType type;
     IcmpCode code;
     uint16_t csum;
 
+    union
+    {
+        uint32_t opt32;
+        uint16_t opt16[2];
+        uint8_t opt8[4];
+    };
 };
 
 struct ICMPHdr
@@ -202,7 +208,6 @@ struct ICMPHdr
 
 
 
-typedef icmp::ICMPbaseHdr ICMPbaseHdr;
 typedef icmp::ICMPHdr ICMPHdr;
 
 #ifndef ICMP_ECHOREPLY

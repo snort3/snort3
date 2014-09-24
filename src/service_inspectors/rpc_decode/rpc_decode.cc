@@ -980,7 +980,7 @@ public:
         uint32_t, uint32_t*)
     { return SEARCH; };
 
-    uint32_t max() { return MIN_CALL_BODY_SZ; };
+    unsigned max() { return MIN_CALL_BODY_SZ; };
 };
 
 //-------------------------------------------------------------------------

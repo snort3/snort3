@@ -287,13 +287,14 @@ int main_reload_config(lua_State*)
     }
     request.respond(".. reloading configuration\n");
     SnortConfig* old = snort_conf;
-    SnortConfig* sc = reload_config();
+    SnortConfig* sc = get_reload_config();
 
     if ( !sc )
     {
         request.respond("== reload failed\n");
         return 0;
     }
+    proc_stats.conf_reloads++;
     request.respond(".. swapping configuration\n");
     swapper = new Swapper(old, sc);
 
@@ -303,7 +304,7 @@ int main_reload_config(lua_State*)
     return 0;
 }
 
-int main_reload_attributes(lua_State*)
+int main_reload_hosts(lua_State*)
 {
     if ( swapper )
     {
@@ -407,8 +408,8 @@ static int signal_check()
         main_reload_config();
         break;
 
-    case PIG_SIG_RELOAD_ATTRIBUTES:
-        main_reload_attributes();
+    case PIG_SIG_RELOAD_HOSTS:
+        main_reload_hosts();
         break;
 
     case PIG_SIG_DUMP_STATS:
@@ -632,7 +633,7 @@ static bool set_mode()
 
     if ( int k = get_parse_errors() )
     {
-        ParseAbort("see prior %d errors", k);
+        FatalError("see prior %d errors\n", k);
         return false;
     }
     if ( ScTestMode() ||
@@ -671,6 +672,7 @@ static inline bool dont_stop()
 static void main_loop()
 {
     unsigned idx = max_pigs, swine = 0;
+    init_main_thread_sig();
 
     while ( !exit_logged && (dont_stop() || swine) )
     {

@@ -49,6 +49,7 @@ public:
     void tterm();
 
     void eval(Packet*);
+    int exec(int, void*);
 
 public:
     StreamTcpConfig* config;
@@ -89,6 +90,18 @@ void StreamTcp::eval(Packet*)
 {
     // uses session::process() instead
     assert(false);
+}
+
+int StreamTcp::exec(int, void* v)
+{
+    Packet* p = (Packet*)v;
+    assert(p && p->flow);
+
+    TcpSession* ssn = (TcpSession*)p->flow->session;
+    assert(ssn);
+
+    ssn->restart_paf(p);
+    return 0;
 }
 
 StreamTcpConfig* get_tcp_cfg(Inspector* ins)

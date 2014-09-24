@@ -125,8 +125,8 @@ bool HexBook::add_spell(const char* key, const char* val)
     return true;
 }
 
-MagicPage* HexBook::find_spell(
-    const uint8_t* s, unsigned n, MagicPage* p, unsigned i) const
+const MagicPage* HexBook::find_spell(
+    const uint8_t* s, unsigned n, const MagicPage* p, unsigned i) const
 {
     while ( i < n )
     {
@@ -136,7 +136,7 @@ MagicPage* HexBook::find_spell(
         {
             if ( p->any )
             {
-                if ( MagicPage* q = find_spell(s, n, p->next[c], i+1) )
+                if ( const MagicPage* q = find_spell(s, n, p->next[c], i+1) )
                     return q;
             }
             else
@@ -148,23 +148,22 @@ MagicPage* HexBook::find_spell(
         }
         if ( p->any )
         {
-            if ( MagicPage* q = find_spell(s, n, p->any, i+1) )
+            if ( const MagicPage* q = find_spell(s, n, p->any, i+1) )
                 return q;
         }
         break;
     }
-    if ( p->key.empty() )
-        return nullptr;
-    else
-        return p;
+    return p;
 }
 
-// FIXIT-H make this incremental based on last position
-const char* HexBook::find_spell(const uint8_t* data, unsigned len) const
+const char* HexBook::find_spell(
+    const uint8_t* data, unsigned len, const MagicPage*& p) const
 {
-    if ( MagicPage* p = find_spell(data, len, root) )
+    p = find_spell(data, len, p, 0);
+
+    if ( !p->value.empty() )
         return p->value.c_str();
-    else
-        return nullptr;
+
+    return nullptr;
 }
  

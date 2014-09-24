@@ -299,7 +299,7 @@ static const Parameter hi_server_params[] =
     { "extended_ascii_uri", Parameter::PT_BOOL, nullptr, "false",
       "allow extended ASCII codes in the request URI" },
 
-    { "extended_response_inspection", Parameter::PT_BOOL, nullptr, "false",
+    { "extended_response_inspection", Parameter::PT_BOOL, nullptr, "true",
       "extract resonse headers" },
 
     { "http_methods", Parameter::PT_STRING, nullptr, default_methods,
@@ -596,6 +596,7 @@ bool HttpServerModule::begin(const char*, int, SnortConfig*)
     if ( !server )
     {
         server = new HTTPINSPECT_CONF;
+        server->inspect_response = true;
         methods = default_methods;
     }
     return true;

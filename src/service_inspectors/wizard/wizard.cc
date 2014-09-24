@@ -99,7 +99,7 @@ public:
 
     void reset(Wand&, bool tcp, bool c2s);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
-    bool spellbind(const MagicPage*, Flow*, const uint8_t*, unsigned);
+    bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
 
 public:
     MagicBook* c2s_hexes;
@@ -194,10 +194,9 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
 }
 
 bool Wizard::spellbind(
-    const MagicPage* m, Flow* f, const uint8_t* data, unsigned len)
+    const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
 {
-    // FIXIT-H convert to stateful find
-    f->service = m->book.find_spell(data, len);
+    f->service = m->book.find_spell(data, len, m);
     return f->service != nullptr;
 }
 

@@ -107,7 +107,7 @@ struct TCPHdr
     { return ntohl(th_seq); }
 
     inline bool has_options() const
-    { return (th_offx2 & 0xf0) == 0x50; }
+    { return ((th_offx2 & 0xf0) > 0x50); }
 
     inline bool are_flags_set(uint8_t flags) const
     { return (th_flags & flags) == flags; }

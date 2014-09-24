@@ -29,8 +29,8 @@
 static THREAD_LOCAL uint8_t pdu_buf[65536];
 static THREAD_LOCAL StreamBuffer str_buf;
 
-uint32_t StreamSplitter::max()
-{ return 16384; }  // FIXIT-H make default configurable
+unsigned StreamSplitter::max()
+{ return 16384; }  // subclasses should override this
 
 const StreamBuffer* StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,

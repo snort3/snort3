@@ -120,7 +120,8 @@ public:
     virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool encode(EncState*, Buffer* out, const uint8_t* raw_in);
+    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
 
@@ -146,6 +147,7 @@ void NameCodec::get_data_link_type(std::vector<int>&/*v*/)
 void NameCodec::get_protocol_ids(std::vector<uint16_t>&/*v*/)
 {
 //    v.push_back(PROTO_TYPE);
+//    v.push_back(ETHERTYPE);
 }
 
 bool NameCodec::decode(const RawData& raw, CodecData& data, SnortData&)
@@ -170,27 +172,34 @@ void NameCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     TextLog_Print(text_log, "Next:0x%04x", hdr->next_protocol);
 }
 
-bool NameCodec::encode(EncState *enc, Buffer* out, const uint8_t* raw_in)
+bool NameCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState& enc, Buffer& buf)
 {
-    // get the length of the decoded protocol
-
-    uint16_t decoded_length = enc->p->layers[enc->layer-1].length;
 
     // allocate space for this protocols encoded data
-    if (!update_buffer(out, decoded_length))
+    if (buf.allocate(raw_len))
         return false;
 
     // ALTERNATIVELY, if you knwo the exact length you want to add
-    // update_buffer(enc, sizeof(NameHdr));
+    // if (!buf.allocate(sizeof(NameHdr))
+    //      return nullptr;
 
     // MUST BE DONE AFTER UPDATE_BUFFER!!
     // get a pointer to the raw packet input and output buffer.  
-    const NameHdr *hi = reinterpret_cast<const NameHdr*>(raw_in);
-    NameHdr *ho = reinterpret_cast<NameHdr*>(out->base);
 
     // copy raw input and new output.  You probably want to do
     // something slightly more useful.
-    memcpy(ho, hi, decoded_length);
+    memcpy(buf.base, raw_in, raw_len);
+
+    // set any fields that we want
+    NameHdr* const hdr = reinterpret_cast<NameHdr*>(buf.base);
+    hdr->next_protocol = enc.next_proto; // set the 'next' field to the appropriate value.
+                                      // The origin next may not have been copied
+    hdr->len = buf.size();  // set the size to be the length from the begining of this
+                            // packet to the end of the struct.
+
+//    enc.next_proto = PROTO_TYPE;
+//    enc.next_ethertype = ETHERTYPE;
     return true;
 }
 

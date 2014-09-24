@@ -305,7 +305,7 @@ void DropStats()
     //mpse_print_qinfo();
 
     LogLabel("Modules");
-ModuleManager::dump_stats(snort_conf);
+    ModuleManager::dump_stats(snort_conf);
 
     // ensure proper counting of log_limit
     SnortEventqResetCounts();

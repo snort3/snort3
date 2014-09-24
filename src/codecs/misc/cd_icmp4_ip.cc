@@ -48,7 +48,6 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool encode(EncState* enc, Buffer* out, const uint8_t* raw_in);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
@@ -70,7 +69,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort
     /* do a little validation */
     if(raw.len < ip::IP4_HEADER_LEN)
     {
-        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_TRUNCATED);
+        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_TRUNCATED);
         return false;
     }
 
@@ -83,7 +82,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort
      */
     if((ip4h->get_ver() != 4) && !snort.ip_api.is_ip6())
     {
-        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_VER_MISMATCH);
+        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_VER_MISMATCH);
         return false;
     }
 
@@ -91,7 +90,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort
 
     if(raw.len < hlen)
     {
-        codec_events::decoder_event(DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
+        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
         return false;
     }
 
@@ -106,7 +105,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort
         /* Original IP payload should be 64 bits */
         if (ip_len < 8)
         {
-            codec_events::decoder_event(DECODE_ICMP_ORIG_PAYLOAD_LT_64);
+            codec_events::decoder_event(codec, DECODE_ICMP_ORIG_PAYLOAD_LT_64);
 
             return false;
         }
@@ -115,13 +114,13 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort
          */
         else if (ntohs(snort.ip_api.len()) > 576)
         {
-            codec_events::decoder_event(DECODE_ICMP_ORIG_PAYLOAD_GT_576);
+            codec_events::decoder_event(codec, DECODE_ICMP_ORIG_PAYLOAD_GT_576);
         }
     }
     else
     {
         /* RFC states that only first frag will get an ICMP response */
-        codec_events::decoder_event(DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
+        codec_events::decoder_event(codec, DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET);
         return false;
     }
 
@@ -328,16 +327,6 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     }
 }
 
-
-bool Icmp4IpCodec::encode(EncState* /*enc*/, Buffer* out, const uint8_t* raw_in)
-{
-    // allocate space for this protocols encoded data
-    if (!update_buffer(out, ip::IP4_HEADER_LEN))
-        return false;
-
-    memcpy(out->base, raw_in, ip::IP4_HEADER_LEN);
-    return true;
-}
 
 //-------------------------------------------------------------------------
 // api

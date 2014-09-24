@@ -37,7 +37,7 @@ using namespace std;
 struct Actor
 {
     const ActionApi* api;
-    IpsAction* act;
+    IpsAction* act;  // FIXIT-H must move to SnortConfig for reload?
 
     Actor(const ActionApi* p)
     { api = p; act = nullptr; };
@@ -80,7 +80,7 @@ static void store(const ActionApi* api, IpsAction* act)
     for ( auto& p : s_actors )
         if ( p.api == api )
         {
-            assert(!p.act);
+            //assert(!p.act);  FIXIT-H memory leak on reload
             p.act = act;
             break;
         }

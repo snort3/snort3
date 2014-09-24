@@ -47,9 +47,11 @@ public:
     static void delete_config(SnortConfig*);
 
     static void instantiate(const InspectApi*, Module*, SnortConfig*);
-    static Inspector* get_inspector(const char* key);
     static void free_inspector(Inspector*);
     static InspectSsnFunc get_session(const char* key);
+
+    // FIXIT-P cache get_inspector() returns or provide indexed lookup
+    static Inspector* get_inspector(const char* key);
 
     static Inspector* get_binder();
     static Inspector* get_wizard();

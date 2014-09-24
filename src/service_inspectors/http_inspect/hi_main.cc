@@ -95,7 +95,6 @@ const HiSearchToken html_patterns[] =
     {NULL,               0, 0}
 };
 
-// FIXIT-H verify these don't need to be thread local
 void *hi_javascript_search_mpse = NULL;
 void *hi_htmltype_search_mpse = NULL;
 
@@ -504,13 +503,6 @@ static inline void setFileName(Packet *p)
 **  @retval <0 fatal error
 **  @retval >0 non-fatal error
 */
-#define HTTP_BUF_URI_FLAG           0x01
-#define HTTP_BUF_HEADER_FLAG        0x02
-#define HTTP_BUF_CLIENT_BODY_FLAG   0x04
-#define HTTP_BUF_METHOD_FLAG        0x08
-#define HTTP_BUF_COOKIE_FLAG        0x10
-#define HTTP_BUF_STAT_CODE          0x20
-#define HTTP_BUF_STAT_MSG           0x40
 int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet *p)
 {
     HI_SESSION  *session;
@@ -1110,7 +1102,6 @@ void FreeHttpsessionData(void *data)
     file_api->free_mime_session(hsd->mime_ssn);
 }
 
-// FIXIT-H this should leverage inspector get_buf()
 int GetHttpTrueIP(Flow* flow, uint8_t **buf, uint32_t *len, uint32_t *type)
 {
     HttpsessionData* hsd = get_session_data(flow);

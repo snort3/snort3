@@ -32,6 +32,7 @@ using namespace std;
 
 #include "utils/util.h"
 #include "main/analyzer.h"
+#include "main/thread.h"
 #include "snort.h"
 #include "utils/ring.h"
 
@@ -63,6 +64,7 @@ const char* pig_sig_names[PIG_SIG_MAX] =
 
 static Ring<PigSignal> sig_ring(4);
 static volatile sig_atomic_t child_ready_signal = 0;
+static THREAD_LOCAL volatile bool is_main_thread = false;
 
 typedef void (*sighandler_t)(int);
 static int add_signal(int sig, sighandler_t, int check_needed);
@@ -71,6 +73,9 @@ static bool exit_pronto = true;
 
 void set_quick_exit(bool b)
 { exit_pronto = b; }
+
+void init_main_thread_sig()
+{ is_main_thread = true; }
 
 static void exit_handler(int signal)
 {
@@ -113,7 +118,7 @@ static void reload_config_handler(int /*signal*/)
 
 static void reload_attrib_handler(int /*signal*/)
 {
-    sig_ring.put(PIG_SIG_RELOAD_ATTRIBUTES);
+    sig_ring.put(PIG_SIG_RELOAD_HOSTS);
 }
 
 static void ignore_handler(int /*signal*/)
@@ -127,7 +132,10 @@ static void child_ready_handler(int /*signal*/)
 
 static void oops_handler(int signal)
 {
-    CapturePacket();
+    // FIXIT-L what should we capture if this is the main thread?
+    if ( !is_main_thread )
+        CapturePacket();
+
     add_signal(signal, SIG_DFL, 0);
     raise(signal);
 }

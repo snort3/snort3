@@ -70,6 +70,7 @@ private:
 
 private:
     FragEngine& engine;
+    uint8_t layers;
 };
 
 #endif

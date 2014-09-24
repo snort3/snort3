@@ -76,7 +76,7 @@ wizard = default_wizard
 local_rules =
 [[
 # snort-classic comments, includes, and rules with $VARIABLES
-alert tcp any any -> any 80 ( http_method; content:"GIT"; gid:1; sid:1000051)
+alert tcp any any -> any 80 ( http_method; content:"GET"; gid:1; sid:1000051)
 ]]
 
 ips =

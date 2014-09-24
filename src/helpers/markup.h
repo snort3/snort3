@@ -34,6 +34,8 @@ public:
     static const char* emphasis_on();
     static const char* emphasis_off();
     static const std::string& emphasis(const std::string&);
+    static const std::string& sanitize(const char* const);
+    static const std::string& sanitize(const std::string&);
 
 private:
     static bool enabled;

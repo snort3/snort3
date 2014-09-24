@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <vector>
+#include <map>
 #include <sys/stat.h>
 #include "detection/rules.h"
 #include "sfip/sfip_t.h"
@@ -157,6 +159,9 @@ struct SnortConfig
     char *gtp_ports;
     uint8_t enable_esp;
 
+    uint8_t num_layers;
+    uint8_t max_ip6_options;
+    uint8_t max_ip_layers;
     int pkt_snaplen;
 
     //------------------------------------------------------
@@ -281,14 +286,27 @@ struct SnortConfig
     bool unit_test;
 #endif
 
+
+    std::map<const std::string, int>* source_affinity;
+    std::vector<int>* thread_affinity;
+
     InspectionPolicy* get_inspection_policy()
-    { return policy_map->get_inspection_policy(); };
+    { return policy_map->inspection_policy[0]; };
 
     IpsPolicy* get_ips_policy()
-    { return policy_map->get_ips_policy(); };
+    { return policy_map->ips_policy[0]; };
 
     NetworkPolicy* get_network_policy()
-    { return policy_map->get_network_policy(); };
+    { return policy_map->network_policy[0]; };
+
+    inline uint8_t get_num_layers() const
+    { return num_layers; }
+
+    inline uint8_t get_ip6_maxopts() const
+    { return max_ip6_options; }
+
+    inline uint8_t get_ip_maxlayers() const
+    { return max_ip_layers; }
 };
 
 SnortConfig* SnortConfNew(void);

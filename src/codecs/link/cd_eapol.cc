@@ -82,10 +82,10 @@ public:
  *
  * Returns: void function
  */
-void DecodeEAP(const RawData& raw)
+void DecodeEAP(const RawData& raw, const CodecData& codec)
 {
     if(raw.len < sizeof(eapol::EAPHdr))
-        codec_events::decoder_event(DECODE_EAP_TRUNCATED);
+        codec_events::decoder_event(codec, DECODE_EAP_TRUNCATED);
 }
 
 
@@ -100,10 +100,10 @@ void DecodeEAP(const RawData& raw)
  *
  * Returns: void function
  */
-void DecodeEapolKey(const RawData& raw)
+void DecodeEapolKey(const RawData& raw, const CodecData& codec)
 {
     if(raw.len < sizeof(eapol::EapolKey))
-        codec_events::decoder_event(DECODE_EAPKEY_TRUNCATED);
+        codec_events::decoder_event(codec, DECODE_EAPKEY_TRUNCATED);
 }
 
 
@@ -111,22 +111,22 @@ void DecodeEapolKey(const RawData& raw)
  ************** main codec functions  ************
  *************************************************/
 
-bool EapolCodec::decode(const RawData& raw, CodecData&, SnortData&)
+bool EapolCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
 {
     const eapol::EtherEapol* const eplh =
         reinterpret_cast<const eapol::EtherEapol*>(raw.data);
 
     if(raw.len < sizeof(eapol::EtherEapol))
     {
-        codec_events::decoder_event(DECODE_EAPOL_TRUNCATED);
+        codec_events::decoder_event(codec, DECODE_EAPOL_TRUNCATED);
         return false;
     }
 
     if (eplh->eaptype == EAPOL_TYPE_EAP)
-        DecodeEAP(raw);
+        DecodeEAP(raw, codec);
 
     else if(eplh->eaptype == EAPOL_TYPE_KEY)
-        DecodeEapolKey(raw);
+        DecodeEapolKey(raw, codec);
 
     return true;
 }

@@ -31,10 +31,18 @@ using namespace std;
 struct DataBlock
 {
     const DataApi* api;
+
+    // FIXIT-H move data to snort config for reload
     PlugData* data;
 
     DataBlock(const DataApi* p)
     { api = p; data = nullptr; };
+
+    ~DataBlock()
+    {
+        if ( data )
+            api->dtor(data);
+    }
 };
     
 static list<DataBlock*> s_data;
@@ -114,7 +122,11 @@ PlugData* DataManager::acquire(const char* key, SnortConfig* sc)
 void DataManager::release(PlugData* p)
 {
     DataBlock* b = get_data(p);
-    assert(b && b->data);
+
+    // FIXIT-H this implementation can't reload
+    //assert(b && b->data);
+    if ( !b )
+        return;
 
     b->data->rem_ref();
 

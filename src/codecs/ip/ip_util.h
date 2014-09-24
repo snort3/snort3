@@ -32,37 +32,11 @@
 namespace ip_util
 {
 
-const int IPV6_ORDER_MAX = 7;
 
-SO_PUBLIC bool CheckIPV6HopOptions(const RawData&);
+SO_PUBLIC bool CheckIPV6HopOptions(const RawData&, const CodecData& codec);
 
 // NOTE:: data.next_prot_id MUST be set before calling this!!
 void CheckIPv6ExtensionOrder(CodecData& codec, const uint8_t proto);
-
-
-static inline icmp::IcmpCode get_icmp4_code(EncodeType et)
-{
-    switch ( et )
-    {
-        case EncodeType::ENC_UNR_NET:  return icmp::IcmpCode::NET_UNREACH;
-        case EncodeType::ENC_UNR_HOST: return icmp::IcmpCode::HOST_UNREACH;
-        case EncodeType::ENC_UNR_PORT: return icmp::IcmpCode::PORT_UNREACH;
-        case EncodeType::ENC_UNR_FW:   return icmp::IcmpCode::PKT_FILTERED;
-        default: return icmp::IcmpCode::PORT_UNREACH;
-    }
-}
-
-static inline icmp::Icmp6Code get_icmp6_code(EncodeType et)
-{
-    switch ( et )
-    {
-        case EncodeType::ENC_UNR_NET:  return icmp::Icmp6Code::UNREACH_NET;
-        case EncodeType::ENC_UNR_HOST: return icmp::Icmp6Code::UNREACH_HOST;
-        case EncodeType::ENC_UNR_PORT: return icmp::Icmp6Code::UNREACH_PORT;
-        case EncodeType::ENC_UNR_FW:   return icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
-        default: return icmp::Icmp6Code::UNREACH_PORT;
-    }
-}
 
 } // namespace ipv6_util
 

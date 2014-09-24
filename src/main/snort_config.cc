@@ -158,6 +158,9 @@ SnortConfig * SnortConfNew(void)
     sc->pkt_skip = 0;
     sc->pkt_snaplen = -1;
     sc->output_flags = 0;
+    sc->num_layers = DEFAULT_LAYERMAX;
+    sc->max_ip6_options = DEFAULT_IP6_EXTMAX;
+    sc->max_ip_layers = DEFAULT_IPMAX;
 
     /*user_id and group_id should be initialized to -1 by default, because
      * chown() use this later, -1 means no change to user_id/group_id*/
@@ -193,6 +196,11 @@ SnortConfig * SnortConfNew(void)
     set_inspection_policy(sc->get_inspection_policy());
     set_ips_policy(sc->get_ips_policy());
     set_network_policy(sc->get_network_policy());
+
+
+    sc->source_affinity = new std::map<const std::string, int>;
+    sc->thread_affinity = new std::vector<int>(32, -1);
+
     return sc;
 }
 
@@ -289,6 +297,13 @@ void SnortConfFree(SnortConfig *sc)
     delete sc->policy_map;
 
     free(sc->state);
+
+    if (sc->source_affinity)
+        delete sc->source_affinity;
+
+    if (sc->thread_affinity)
+        delete sc->thread_affinity;
+
     free(sc);
 }
 
@@ -365,6 +380,11 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
         if ( !(cl_drop & CHECKSUM_FLAG__DEF) )
             p->checksum_eval = cl_drop;
     }
+
+    /* FIXIT-L J do these belong in network policy? */
+    config_file->num_layers = cmd_line->num_layers;
+    config_file->max_ip6_options = cmd_line->max_ip6_options;
+    config_file->max_ip_layers = cmd_line->max_ip_layers;
 
     if (cmd_line->obfuscation_net.family != 0)
         memcpy(&config_file->obfuscation_net, &cmd_line->obfuscation_net, sizeof(sfip_t));
