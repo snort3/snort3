@@ -62,7 +62,7 @@ public:
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*);
 
     // allocate a Packet for later formatting (cloning)
-    static Packet* encode_new(void);
+    static Packet* encode_new(bool allocate_packet_data = true);
     // release the allocated Packet
     static void encode_delete(Packet*);
 
