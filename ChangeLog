@@ -1,6 +1,7 @@
 122
 -- pulled thread pinning from Josh
 -- snort.lua tweaks to back out random test foo
+-- additional valgrind tweaks
 
 121
 -- valgrind fixes

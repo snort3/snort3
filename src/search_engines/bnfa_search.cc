@@ -177,13 +177,18 @@
 * Case Translation Table - this guarantees we use
 * indexed lookups for case conversion
 */
+static unsigned xlatinit = 1;
 static unsigned char xlatcase[BNFA_MAX_ALPHABET_SIZE];
 
-void bnfa_init_xlatcase(void)
+void bnfa_init_xlatcase()
 {
+    if ( !xlatinit )
+        return;
+
     for(int i=0; i<BNFA_MAX_ALPHABET_SIZE; i++) {
         xlatcase[i] = (unsigned char)toupper(i);
     }
+    xlatinit = 0;
 }
 
 /*
