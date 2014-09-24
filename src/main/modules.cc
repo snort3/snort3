@@ -1163,6 +1163,8 @@ static const Parameter thread_pinning_params[] =
 
     { "thread", Parameter::PT_INT, "0:", nullptr,
         "set cpu affinity for the <cur_thread_num> thread that runs"},
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const Parameter process_params[] =

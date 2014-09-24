@@ -101,21 +101,33 @@ static inline void push_layer(Packet *p,
 // Initialization and setup
 //-------------------------------------------------------------------------
 
-Packet* PacketManager::encode_new()
+Packet* PacketManager::encode_new(bool packet_data)
 {
     Packet* p = (Packet*)SnortAlloc(sizeof(*p));
-    uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + Codec::PKT_MAX + SPARC_TWIDDLE);
     Layer* lyr = new Layer[CodecManager::max_layers];
 
-    if ( !p || !b || !lyr)
+    if ( !p || !lyr)
         FatalError("encode_new() => Failed to allocate packet\n");
 
-    p->pkth = (DAQ_PktHdr_t*)b;
-    b += sizeof(*p->pkth);
-    b += SPARC_TWIDDLE;
-    p->pkt = b;
-    p->layers = lyr;
+    if (!packet_data)
+    {
+        p->pkt = nullptr;
+        p->pkth = nullptr;
+    }
+    else
+    {
+        uint8_t* b = (uint8_t*)SnortAlloc(sizeof(*p->pkth) + Codec::PKT_MAX + SPARC_TWIDDLE);
 
+        if (!b)
+            FatalError("encode_new() => Failed to allocate packet\n");
+
+        p->pkth = (DAQ_PktHdr_t*)b;
+        b += sizeof(*p->pkth);
+        b += SPARC_TWIDDLE;
+        p->pkt = b;
+    }
+
+    p->layers = lyr;
     return p;
 }
 
@@ -124,7 +136,7 @@ void PacketManager::encode_delete(Packet* p)
     if (p)
     {
         if(p->pkth)
-            free((void*)p->pkth);  // cast away const!
+            free((void*)p->pkth);
 
         if(p->layers)
             delete[] p->layers;
