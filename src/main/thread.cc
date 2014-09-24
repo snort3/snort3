@@ -35,7 +35,7 @@
 
 #include "main/snort.h"
 #include "parser/parser.h"
-
+#include "log/messages.h"
 
 
 //-------------------------------------------------------------------------
@@ -134,15 +134,20 @@ void pin_thread_to_cpu(const char* source)
 // PREPROCESSOR MACROS -- these are not actually if statements!
 #       if LINUX
         {
-            CPU_ZERO(&cpu_set);
             if (cpu >= CPU_SETSIZE)
-            {
                 FatalError("Maximum CPU value for this Operating System is %d",
                     CPU_SETSIZE);
-            }
 
+            CPU_ZERO(&cpu_set);
+            if (!sched_getaffinity(0, sizeof(cpu_set), &cpu_set))
+                if (!CPU_ISSET(cpu, &cpu_set))
+                    FatalError("CPU %d is not part of source %s's and thread "
+                        "%d's CPU set!\n", cpu, source, instance_id);
+
+            CPU_ZERO(&cpu_set);
             CPU_SET(cpu, &cpu_set);
-            sched_setaffinity(0, sizeof(cpu_set), &cpu_set);
+            if (sched_setaffinity(0, sizeof(cpu_set), &cpu_set))
+                FatalError("Unable to pin source %s to CPU %d! %s\n", source, cpu, std::strerror(errno));
 
         }
 #       else
@@ -150,7 +155,7 @@ void pin_thread_to_cpu(const char* source)
             static bool warning_printed = false;
             if (!warning_printed)
             {
-                LogWarning("Thread Pinning / CPU affinity support is currently"
+                WarningMessage("Thread Pinning / CPU affinity support is currently"
                     " unsupported for this Operating System");
                 warning_printed = true;
             }
