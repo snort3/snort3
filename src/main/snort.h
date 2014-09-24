@@ -87,7 +87,7 @@ void set_main_hook(MainHook_f);
 
 /*  D A T A  S T R U C T U R E S  *********************************************/
 
-typedef enum _RunFlag
+enum RunFlag
 {
     RUN_FLAG__READ                = 0x00000001,     /* -r --pcap-dir, etc. */
     RUN_FLAG__DAEMON              = 0x00000002,     /* -D */
@@ -123,9 +123,9 @@ typedef enum _RunFlag
     RUN_FLAG__SHELL               = 0x40000000,     /* --shell */
     RUN_FLAG__TEST                = 0x80000000      /* -T */
 
-} RunFlag;
+};
 
-typedef enum _OutputFlag
+enum OutputFlag
 {
     OUTPUT_FLAG__LINE_BUFFER       = 0x00000001,      /* -f */
     OUTPUT_FLAG__VERBOSE_DUMP      = 0x00000002,      /* -X */
@@ -145,22 +145,22 @@ typedef enum _OutputFlag
     OUTPUT_FLAG__NO_ALERT          = 0x00001000,      /* -A none */
     OUTPUT_FLAG__NO_LOG            = 0x00002000,      /* -K none */
 
-} OutputFlag;
+};
 
-typedef enum _LoggingFlag
+enum LoggingFlag
 {
     LOGGING_FLAG__VERBOSE         = 0x00000001,      /* -v */
     LOGGING_FLAG__QUIET           = 0x00000002,      /* -q */
     LOGGING_FLAG__SYSLOG          = 0x00000004       /* -M */
 
-} LoggingFlag;
+};
 
-typedef enum {
+enum TunnelFlags{
     TUNNEL_GTP    = 0x01,
     TUNNEL_TEREDO = 0x02,
     TUNNEL_6IN4   = 0x04,
     TUNNEL_4IN6   = 0x08
-} TunnelFlags;
+};
 
 /*  E X T E R N S  ************************************************************/
 SO_PUBLIC extern THREAD_LOCAL SnortConfig* snort_conf;

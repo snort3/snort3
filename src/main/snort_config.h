@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <vector>
+#include <map>
 #include <sys/stat.h>
 #include "detection/rules.h"
 #include "sfip/sfip_t.h"
@@ -283,6 +285,10 @@ struct SnortConfig
 #ifdef UNIT_TEST
     bool unit_test;
 #endif
+
+
+    std::map<const std::string, int>* source_affinity;
+    std::vector<int>* thread_affinity;
 
     InspectionPolicy* get_inspection_policy()
     { return policy_map->inspection_policy[0]; };

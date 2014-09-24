@@ -285,4 +285,3 @@ default_wizard =
           to_server = telnet_commands, to_client = telnet_commands },
     }
 }
-

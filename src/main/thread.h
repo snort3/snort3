@@ -38,6 +38,12 @@
 void set_instance_id(unsigned);
 void set_instance_max(unsigned);
 
+
+struct SnortConfig;
+bool set_cpu_affinity(SnortConfig*, const std::string&, int cpu);
+bool set_cpu_affinity(SnortConfig*, int thread, int cpu);
+void pin_thread_to_cpu(const char* source);
+
 SO_PUBLIC unsigned get_instance_id();
 SO_PUBLIC unsigned get_instance_max();
 

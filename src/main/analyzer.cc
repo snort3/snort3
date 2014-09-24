@@ -53,6 +53,7 @@ void Analyzer::operator()(unsigned id, Swapper* ps)
     set_instance_id(id);
     ps->apply();
 
+    pin_thread_to_cpu(source);
     snort_thread_init(source);
 
     analyze();

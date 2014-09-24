@@ -18,11 +18,25 @@
 */
 // thread.cc author Russ Combs <rucombs@cisco.com>
 
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "thread.h"
+
+#ifdef LINUX
+# include <sched.h>
+#endif
 
 #include <sys/stat.h>
 #include <thread>
-#include "snort.h"
+#include <vector>
+
+#include "main/snort.h"
+#include "parser/parser.h"
+
+
 
 //-------------------------------------------------------------------------
 // FIXIT-L instance_id zero indicates main thread during parse time and the
@@ -32,6 +46,9 @@
 
 static unsigned instance_max = 1;
 static THREAD_LOCAL unsigned instance_id = 0;
+
+static THREAD_LOCAL cpu_set_t cpu_set;
+
 
 void set_instance_id(unsigned id)
 {
@@ -54,6 +71,92 @@ unsigned get_instance_id()
 unsigned get_instance_max()
 {
     return instance_max;
+}
+
+
+
+
+bool set_cpu_affinity(SnortConfig* sc, const std::string& str, int cpu)
+{
+    std::map<const std::string, int>& sa = *(sc->source_affinity);
+
+    auto search = sa.find(str);
+    if(search != sa.end())
+        ParseError("Multiple CPU's set for interface %s", str.c_str());
+
+    sa[std::string(str)] = cpu;
+    return false;
+}
+
+bool set_cpu_affinity(SnortConfig* sc, int thread, int cpu)
+{
+    std::vector<int>& ta = *(sc->thread_affinity);
+
+    if (ta.size() <= (unsigned)thread)
+    {
+        const std::size_t curr_size = ta.size();
+        const std::size_t new_size = curr_size * 2;
+        ta.resize(new_size);
+
+        for (std::size_t i = curr_size; i < new_size; ++i)
+            ta[i] = -1;
+    }
+
+    if (ta[thread] >= 0)
+        ParseError("Multiple CPU's set for thread %d", thread);
+
+    ta[thread] = cpu;
+    return true;
+}
+
+void pin_thread_to_cpu(const char* source)
+{
+    std::vector<int>& ta = *(snort_conf->thread_affinity);
+    std::map<const std::string, int>& sa = *(snort_conf->source_affinity);
+    const std::string src = source;
+    int cpu = -1;
+
+    ta.shrink_to_fit();
+    auto search = sa.find(src);
+
+    if(search != sa.end())
+    {
+        cpu = sa[src];
+    }
+    else if (ta[instance_id] != -1)
+    {
+        cpu = ta[instance_id];
+    }
+
+
+    if (cpu != -1)
+    {
+// PREPROCESSOR MACROS -- these are not actually if statements!
+#       if LINUX
+        {
+            CPU_ZERO(&cpu_set);
+            if (cpu >= CPU_SETSIZE)
+            {
+                FatalError("Maximum CPU value for this Operating System is %d",
+                    CPU_SETSIZE);
+            }
+
+            CPU_SET(cpu, &cpu_set);
+            sched_setaffinity(0, sizeof(cpu_set), &cpu_set);
+
+        }
+#       else
+        {
+            static bool warning_printed = false;
+            if (!warning_printed)
+            {
+                LogWarning("Thread Pinning / CPU affinity support is currently"
+                    " unsupported for this Operating System");
+                warning_printed = true;
+            }
+        }
+#       endif
+    }
 }
 
 //-------------------------------------------------------------------------

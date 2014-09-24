@@ -55,6 +55,7 @@ using namespace std;
 #include "filters/detection_filter.h"
 #include "filters/sfthreshold.h"
 #include "sfip/sf_ip.h"
+#include "main/thread.h"
 
 #if defined(DEBUG_MSGS) || defined (REG_TEST)
 #include "file_api/file_api.h"
@@ -1152,10 +1153,25 @@ bool IpsModule::set(const char*, Value& v, SnortConfig*)
 // process module
 //-------------------------------------------------------------------------
 
+static const Parameter thread_pinning_params[] =
+{
+    { "cpu", Parameter::PT_INT, "0:127", nullptr,
+        "pin the associated source/thread to this cpu"},
+
+    { "source", Parameter::PT_STRING, nullptr, nullptr,
+        "set cpu affinity for this source (either pcap or <iface>"},
+
+    { "thread", Parameter::PT_INT, "0:", nullptr,
+        "set cpu affinity for the <cur_thread_num> thread that runs"},
+};
+
 static const Parameter process_params[] =
 {
     { "chroot", Parameter::PT_STRING, nullptr, nullptr,
       "set chroot directory (same as -t)" },
+
+    { "threads", Parameter::PT_LIST, thread_pinning_params, nullptr,
+        "thread pinning parameters"},
 
     { "daemon", Parameter::PT_BOOL, nullptr, "false",
       "fork as a daemon (same as -D)" },
@@ -1186,6 +1202,13 @@ class ProcessModule : public Module
 public:
     ProcessModule() : Module("process", process_help, process_params) { };
     bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*);
+    bool end(const char*, int, SnortConfig*);
+
+private:
+    std::string source;
+    int thread;
+    int cpu;
 };
 
 bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1217,8 +1240,57 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         if ( v.get_bool() )
             ConfigUtc(sc, "");
     }
+
+    else if (v.is("cpu"))
+        cpu = v.get_long();
+
+    else if (v.is("source"))
+        source = v.get_string();
+
+    else if (v.is("thread"))
+        thread = v.get_long();
+
     else
         return false;
+
+    return true;
+}
+
+bool ProcessModule::begin(const char*, int, SnortConfig*)
+{
+    source.clear();
+    thread = -1;
+    cpu = -1;
+    return true;
+}
+
+bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
+{
+    if ( !idx )
+        return true;
+
+    if (!strcmp(fqn, "process.threads"))
+    {
+        if (cpu == -1)
+            ParseError("%s - cpu must be an integer in the range"
+                " of 0 < cpu < max_cpus", fqn, cpu);
+
+        else if (cpu >= CPU_SETSIZE)
+            ParseError("cpu must be between 0 and %d", INT8_MAX);
+
+        else if ((source.empty()) && (thread == -1))
+            ParseError("%s - must have either a source or a thread!", fqn);
+
+        else if ((!source.empty()) && (thread >= 0))
+            ParseError("%s - must have either a source or a thread!"
+                " Both thread(%d) and source(%s) are set", fqn, thread, source.c_str());
+
+        else if (!source.empty())
+            set_cpu_affinity(sc, source, cpu);
+
+        else 
+            set_cpu_affinity(sc, thread, cpu);
+    }
 
     return true;
 }

@@ -196,6 +196,11 @@ SnortConfig * SnortConfNew(void)
     set_inspection_policy(sc->get_inspection_policy());
     set_ips_policy(sc->get_ips_policy());
     set_network_policy(sc->get_network_policy());
+
+
+    sc->source_affinity = new std::map<const std::string, int>;
+    sc->thread_affinity = new std::vector<int>(32, -1);
+
     return sc;
 }
 
@@ -292,6 +297,13 @@ void SnortConfFree(SnortConfig *sc)
     delete sc->policy_map;
 
     free(sc->state);
+
+    if (sc->source_affinity)
+        delete sc->source_affinity;
+
+    if (sc->thread_affinity)
+        delete sc->thread_affinity;
+
     free(sc);
 }
 
