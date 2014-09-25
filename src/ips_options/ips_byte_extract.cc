@@ -562,8 +562,8 @@ static const IpsApi byte_extract_api =
     },
     OPT_TYPE_DETECTION,
     NUM_BYTE_EXTRACT_VARS, 0,
-    nullptr,
-    nullptr,
+    byte_extract_tinit,  // do for global what we do for threads
+    byte_extract_tterm,  // since the names are used during parsing too
     byte_extract_tinit,
     byte_extract_tterm,
     byte_extract_ctor,
