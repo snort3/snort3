@@ -454,18 +454,7 @@ static int sfthd_create_threshold_local(
     }
 
     /*
-      If sfthd_node list is empty - add as head node
-    */
-    if( !sfthd_item->sfthd_node_list->count )
-    {
-#ifdef THD_DEBUG
-            printf("Threshold node added to head of list\n");fflush(stdout);
-#endif
-        sflist_add_head(sfthd_item->sfthd_node_list,sfthd_node);
-    }
-
-    /*
-      else add the sfthd_node using priority to determine where in the list
+      add the sfthd_node using priority to determine where in the list
       it belongs
 
       3.0 we can have only 1 threshold object but several suppression objects
@@ -476,7 +465,6 @@ static int sfthd_create_threshold_local(
       list, the tail node is either a supprssion node or the only pure
       thresholding node.
     */
-    else
     {
         SF_LNODE* lnode;
         NODE_DATA ndata;
@@ -510,6 +498,17 @@ static int sfthd_create_threshold_local(
                 return 0;
             }
         }
+    }
+
+    /*
+     sfthd_node list is empty - add as head node
+     */
+    assert( !sfthd_item->sfthd_node_list->count );
+    {
+#ifdef THD_DEBUG
+        printf("Threshold node added to head of list\n");fflush(stdout);
+#endif
+        sflist_add_head(sfthd_item->sfthd_node_list,sfthd_node);
     }
 
     return 0;

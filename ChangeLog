@@ -2,6 +2,7 @@
 -- pulled thread pinning from Josh
 -- snort.lua tweaks to back out random test foo
 -- additional valgrind tweaks
+-- fixed several Xcode static analysis warnings
 
 121
 -- valgrind fixes

@@ -256,6 +256,7 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
     DEBUG_WRAP(PrintHostAttributeEntry(host););
 
     ipAddr = &host->ipAddr;
+    assert(ipAddr);
 
     ret = sfrt_insert(ipAddr, (unsigned char)ipAddr->bits, host,
                         RT_FAVOR_SPECIFIC, next_cfg->lookupTable);

@@ -1574,7 +1574,7 @@ static int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned
                 alt_dsize = sizeof(HttpDecodeBuf.data);
             }
             /* not checking if sd== NULL as the body_ptr.uri = NULL when sd === NULL in hi_server_inspect_body */
-            if(sd->decomp_state && sd->decomp_state->decompress_data)
+            if(sd && sd->decomp_state && sd->decomp_state->decompress_data)
             {
                 status = SafeMemcpy(HttpDecodeBuf.data, Server->response.body,
                                             alt_dsize, HttpDecodeBuf.data, HttpDecodeBuf.data + sizeof(HttpDecodeBuf.data));
@@ -1588,7 +1588,7 @@ static int HttpResponseInspection(HI_SESSION *session, Packet *p, const unsigned
             }
             else
             {
-                if(sd->resp_state.last_pkt_chunked)
+                if(sd && sd->resp_state.last_pkt_chunked)
                 {
                     SetHttpDecode((uint16_t)alt_dsize);
                     Server->response.body = HttpDecodeBuf.data;

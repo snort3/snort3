@@ -249,13 +249,13 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 OptFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (OptFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
@@ -280,12 +280,11 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
                 CurrFmt->format_string = curr_format;
-                curr_len = 0;
             }
             *format = curr_ch;
             return FTPP_SUCCESS;
@@ -297,7 +296,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 NewFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (NewFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 if (curr_len > 0)
@@ -305,7 +304,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                     curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                     if (curr_format == NULL)
                     {
-                        ParseError("Failed to allocate memory");
+                        FatalError("Failed to allocate memory");
                     }
 
                     strncpy(curr_format, start_ch, curr_len);
@@ -326,7 +325,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 NewFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (NewFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 NewFmt->prev = LastNonOptFmt;
@@ -340,7 +339,7 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 NewFmt = (FTP_DATE_FMT *)calloc(1, sizeof(FTP_DATE_FMT));
                 if (NewFmt == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 NewFmt->prev = CurrFmt;
@@ -359,12 +358,11 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
                 CurrFmt->format_string = curr_format;
-                curr_len = 0;
                 *format = curr_ch;
                 return FTPP_SUCCESS;
             }
@@ -382,12 +380,11 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
                 curr_format = (char *)calloc(curr_len + 1, sizeof(char));
                 if (curr_format == NULL)
                 {
-                    ParseError("Failed to allocate memory");
+                    FatalError("Failed to allocate memory");
                 }
 
                 strncpy(curr_format, start_ch, curr_len);
                 CurrFmt->format_string = curr_format;
-                curr_len = 0;
                 *format = curr_ch;
                 return FTPP_SUCCESS;
             }
@@ -410,13 +407,11 @@ static int ProcessDateFormat(FTP_DATE_FMT *dateFmt,
         curr_format = (char *)calloc(curr_len + 1, sizeof(char));
         if (curr_format == NULL)
         {
-            ParseError("Failed to allocate memory");
+            FatalError("Failed to allocate memory");
         }
 
         strncpy(curr_format, start_ch, curr_len);
         CurrFmt->format_string = curr_format;
-        start_ch = curr_ch;
-        curr_len = 0;
     }
 
     /* Should've closed all options & ORs  */
@@ -701,7 +696,7 @@ int ProcessFTPCmdValidity(
     HeadFmt = (FTP_PARAM_FMT *)calloc(1, sizeof(FTP_PARAM_FMT));
     if (HeadFmt == NULL)
     {
-        ParseError("Failed to allocate memory");
+        FatalError("Failed to allocate memory");
     }
 
     HeadFmt->type = e_head;
@@ -725,7 +720,7 @@ int ProcessFTPCmdValidity(
         FTPCmd = (FTP_CMD_CONF *)calloc(1, sizeof(FTP_CMD_CONF)+strlen(cmd));
         if (FTPCmd == NULL)
         {
-            ParseError("Failed to allocate memory");
+            FatalError("Failed to allocate memory");
         }
 
         strcpy(FTPCmd->cmd_name, cmd);
