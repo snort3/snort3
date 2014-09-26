@@ -51,8 +51,8 @@ NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size,
    scratch_pad(2*buf_size+500),
    infractions(session_data->infractions[source_id]),
    version_id(session_data->version_id[source_id]),
-   method_id(session_data->method_id[source_id]),
-   status_code_num(session_data->status_code_num[source_id]),
+   method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOTPRESENT),
+   status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOTPRESENT),
    delete_msg_on_destruct(buf_owner)
 {}
 

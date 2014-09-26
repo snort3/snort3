@@ -53,9 +53,12 @@ void NHttpFlowData::half_reset(SourceId source_id) {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 
     version_id[source_id] = VERS__NOTPRESENT;
-    method_id[source_id] = METH__NOTPRESENT;
-    status_code_num[source_id] = STAT_NOTPRESENT;
-
+    if (source_id == SRC_CLIENT) {
+        method_id = METH__NOTPRESENT;
+    }
+    else {
+        status_code_num = STAT_NOTPRESENT;
+    }
     data_length[source_id] = STAT_NOTPRESENT;
     body_octets[source_id] = STAT_NOTPRESENT;
 }
@@ -64,8 +67,8 @@ void NHttpFlowData::show(FILE* out_file) const {
     assert(out_file != nullptr);
     fprintf(out_file, "Diagnostic outout from NHttpFlowData (Client/Server):\n");
     fprintf(out_file, "Version ID: %d/%d\n", version_id[0], version_id[1]);
-    fprintf(out_file, "Method ID: %d\n", method_id[0]);
-    fprintf(out_file, "Status code: %d\n", status_code_num[1]);
+    fprintf(out_file, "Method ID: %d\n", method_id);
+    fprintf(out_file, "Status code: %d\n", status_code_num);
     fprintf(out_file, "Type expected: %d/%d\n", type_expected[0], type_expected[1]);
     fprintf(out_file, "Data length: %" PRIi64 "/%" PRIi64 "\n", data_length[0], data_length[1]);
     fprintf(out_file, "Body octets: %" PRIi64 "/%" PRIi64 "\n", body_octets[0], body_octets[1]);

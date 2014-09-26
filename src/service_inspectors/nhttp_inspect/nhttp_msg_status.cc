@@ -122,7 +122,7 @@ void NHttpMsgStatus::update_flow() {
     else {
         session_data->type_expected[source_id] = SEC_HEADER;
         session_data->version_id[source_id] = version_id;
-        session_data->status_code_num[source_id] = status_code_num;
+        session_data->status_code_num = status_code_num;
     }
 }
 

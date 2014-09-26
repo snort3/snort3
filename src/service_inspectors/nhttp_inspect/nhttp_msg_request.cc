@@ -162,7 +162,7 @@ void NHttpMsgRequest::update_flow() {
     else {
         session_data->type_expected[source_id] = SEC_HEADER;
         session_data->version_id[source_id] = version_id;
-        session_data->method_id[source_id] = method_id;
+        session_data->method_id = method_id;
     }
 }
 

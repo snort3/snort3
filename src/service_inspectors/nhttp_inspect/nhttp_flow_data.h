@@ -83,11 +83,9 @@ private:
     int64_t data_length[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // length of the data from Content-Length field      
 
     // Inspector's internal data about the current message
-    // Some items don't apply in both directions. Have two copies anyway just to simplify code and minimize
-    // hard-to-find bugs
     NHttpEnums::VersionId version_id[2] = { NHttpEnums::VERS__NOTPRESENT, NHttpEnums::VERS__NOTPRESENT };
-    NHttpEnums::MethodId method_id[2] = { NHttpEnums::METH__NOTPRESENT, NHttpEnums::METH__NOTPRESENT };
-    int32_t status_code_num[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };
+    NHttpEnums::MethodId method_id = NHttpEnums::METH__NOTPRESENT;
+    int32_t status_code_num = NHttpEnums::STAT_NOTPRESENT;
 
     int64_t body_octets[2] = { NHttpEnums::STAT_NOTPRESENT, NHttpEnums::STAT_NOTPRESENT };   // number of user data octets seen so far (regular body or chunks)
 
