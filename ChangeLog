@@ -5,6 +5,7 @@
 -- fixed several Xcode static analysis warnings
 -- updated config_changes
 -- commented out pcre_free_study() - issue on mac
+-- patched cd_tcp.cc and packet_manager.cc for length underflow issue
 
 121
 -- valgrind fixes
