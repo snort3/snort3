@@ -466,11 +466,11 @@ PcreOption::~PcreOption()
         free(config->expression);
 
     if (config->pe)
-#ifdef PCRE_CONFIG_JIT
-        pcre_free_study(config->pe);
-#else
+//#ifdef PCRE_CONFIG_JIT  FIXIT-L
+//        pcre_free_study(config->pe);
+//#else
         pcre_free(config->pe);
-#endif
+//#endif
 
     if (config->re)
         free(config->re);
