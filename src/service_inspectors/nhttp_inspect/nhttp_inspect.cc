@@ -115,7 +115,6 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
       case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner); break;
       case SEC_CHUNK: msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner); break;
       case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner); break;
-      case SEC_DISCARD: if (buf_owner) delete[] data; return RES_IGNORE;
       default: assert(0); if (buf_owner) delete[] data; return RES_IGNORE;
     }
 

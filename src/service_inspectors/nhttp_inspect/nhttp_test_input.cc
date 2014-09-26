@@ -50,15 +50,15 @@ NHttpTestInput::~NHttpTestInput() {
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
 void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id, bool &tcp_close, bool &need_break) {
-    source_id = last_source_id;
-    tcp_close = false;
-    need_break = false;
-
-    // Need to create and inspect additional message section(s) from the previous flush before we read new stuff
-    if ((end_offset == 0) && (flush_octets > 0)) {
+    if (flushed) {
+        // Previously flushed data not reassembled yet
         length = 0;
         return;
     }
+
+    source_id = last_source_id;
+    tcp_close = false;
+    need_break = false;
 
     if (just_flushed) {
         // PAF just flushed and it has all been sent to inspection. There may or may not be leftover data from the
@@ -219,22 +219,22 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
 
 void NHttpTestInput::flush(uint32_t length) {
     flush_octets = previous_offset + length;
-    just_flushed = true;
+    flushed = true;
 }
 
 
-void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &source_id, NHttpFlowData* session_data) {
-    if (!just_flushed) {
-        length = 0;
+void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId source_id, const NHttpFlowData* session_data) {
+    if (!flushed || (source_id != last_source_id)) {
         *buffer = nullptr;
         return;
     }
-    source_id = last_source_id;
     *buffer = msg_buf;
 
     if (flush_octets <= end_offset) {
         // All the data we need comes from the file
         length = flush_octets;
+        just_flushed = true;
+        flushed = false;
     }
     else {
         // We need to generate additional data to fill out the body or chunk section. We may come through here
@@ -246,7 +246,13 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &so
         }
         flush_octets -= length;
         end_offset = 0;
+        if (flush_octets == 0) {
+            just_flushed = true;
+            flushed = false;
+        }
     }
 }
+
+
 
 

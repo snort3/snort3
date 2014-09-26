@@ -185,16 +185,12 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           }
         }
       }
-      case SEC_BODY:
-        if ((!tcp_close) || (length > session_data->data_length[source_id])) {
-            prepare_flush(session_data, flush_offset, source_id, type, false, 0, session_data->data_length[source_id],
-               length);
-        }
-        else {
-            // The TCP connection has closed and this is the possibly incomplete final section
-            prepare_flush(session_data, flush_offset, source_id, type, true, 0, length, length);
-        }
+      case SEC_BODY: {
+        prepare_flush(session_data, flush_offset, source_id, type,
+           tcp_close && (length <= session_data->data_length[source_id]),
+           0, session_data->data_length[source_id], length);
         return StreamSplitter::FLUSH;
+      }
       case SEC_ABORT:
         return StreamSplitter::ABORT;
       default:
@@ -220,7 +216,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         uint8_t* test_buffer;
         NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id, session_data);
         if (test_buffer == nullptr) {
-            // There is no more test data
+            // Source ID does not match test data or there is no more test data
             return nullptr;
         }
         data = test_buffer;
@@ -230,6 +226,12 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
 
     assert(total <= 63780);
     assert(offset+len <= total);
+
+    // FIXIT-P stream should be enhanced to do discarding for us
+    // For now flush-then-discard here is how scan() handles things we don't need to examine.
+    if (session_data->section_type[source_id] == SEC_DISCARD) {
+        return nullptr;
+    }
 
     bool is_chunk = session_data->section_type[source_id] == SEC_CHUNK;
 
