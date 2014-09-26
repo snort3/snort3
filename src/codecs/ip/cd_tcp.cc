@@ -366,7 +366,7 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, CodecData& codec)
         {
         case tcp::TcpOptCode::EOL:
             done = true; /* fall through to the NOP case */
-            codec.invalid_bytes = o_len - tot_len;
+            //codec.invalid_bytes = o_len - tot_len;  // FIXIT-H this leads to underflow
         case tcp::TcpOptCode::NOP:
             code = 0;
             break;
