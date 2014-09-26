@@ -3,6 +3,8 @@
 -- snort.lua tweaks to back out random test foo
 -- additional valgrind tweaks
 -- fixed several Xcode static analysis warnings
+-- updated config_changes
+-- commented out pcre_free_study() - issue on mac
 
 121
 -- valgrind fixes
