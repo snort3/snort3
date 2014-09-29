@@ -6531,6 +6531,7 @@ char Stream5PacketsMissingTcp(Flow *lwssn, char dir)
 
 TcpSession::TcpSession(Flow* flow) : Session(flow)
 {
+    tcp_init = false;
     reset();
 }
 
