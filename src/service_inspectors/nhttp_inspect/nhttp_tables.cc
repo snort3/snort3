@@ -302,7 +302,7 @@ const RuleMap NHttpModule::nhttp_events[] =
     { 0, nullptr }
 };
 
-const int8_t NHttpSplitter::as_hex[256] = {
+const int8_t NHttpEnums::as_hex[256] = {
    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 

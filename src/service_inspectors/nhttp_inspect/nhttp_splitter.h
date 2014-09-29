@@ -45,8 +45,6 @@ public:
     virtual uint32_t get_octets_seen() { return octets_seen; };
 
 protected:
-    static const int8_t as_hex[256];
-
     uint32_t octets_seen = 0;
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;

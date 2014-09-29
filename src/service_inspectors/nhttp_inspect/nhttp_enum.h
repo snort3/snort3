@@ -165,6 +165,8 @@ typedef enum
     EVENT_MAXVALUE
 } EventSid;
 
+extern const int8_t as_hex[256];
+
 } // end namespace NHttpEnums
 
 #endif
