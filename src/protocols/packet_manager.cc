@@ -235,6 +235,7 @@ void PacketManager::decode(
 
         // set for next call
         const uint16_t curr_lyr_len = codec_data.lyr_len + codec_data.invalid_bytes;
+        assert(curr_lyr_len <= raw.len);
         raw.len -= curr_lyr_len;
         raw.data += curr_lyr_len;
         p->proto_bits |= codec_data.proto_bits;

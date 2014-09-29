@@ -6,6 +6,7 @@
 -- updated config_changes
 -- commented out pcre_free_study() - issue on mac
 -- more refactoring of tcp session - still incomplete
+-- patched cd_tcp.cc and packet_manager.cc for length underflow issue
 
 121
 -- valgrind fixes
