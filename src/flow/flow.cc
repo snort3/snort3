@@ -67,6 +67,9 @@ Flow::Flow (int proto)
 
 Flow::~Flow ()
 {
+    if ( session )
+        delete session;
+
     free_application_data();
 
     if ( clouseau )
@@ -77,9 +80,6 @@ Flow::~Flow ()
 
     if ( flowdata )
         free(flowdata);
-
-    if ( session )
-        delete session;
 }
 
 void Flow::reset()

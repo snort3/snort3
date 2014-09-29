@@ -6537,7 +6537,7 @@ TcpSession::TcpSession(Flow* flow) : Session(flow)
 TcpSession::~TcpSession()
 {
     if ( tcp_init )
-        TcpSessionClear(flow, (TcpSession*)flow->session, 2);
+        TcpSessionClear(flow, (TcpSession*)flow->session, 1);
 }
 
 void TcpSession::reset()
