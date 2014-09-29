@@ -1682,13 +1682,8 @@ static void LogPacketType(TextLog* log, Packet* p)
 #define DATA_LEN(p) \
     (p->ptrs.ip_api.actual_ip_len() - (p->ptrs.ip_api.hlen() << 2))
 
-void LogIPPkt(TextLog* log, int type, Packet * p)
+void LogIPPkt(TextLog* log, Packet * p)
 {
-#ifdef DEBUG_MSGS
-    DEBUG_WRAP(DebugMessage(DEBUG_LOG, "LogIPPkt type = %d\n", type););
-#else
-    UNUSED(type);
-#endif
     LogPacketType(log, p);
     TextLog_Print(log, "%s\n", SEPARATOR);
 

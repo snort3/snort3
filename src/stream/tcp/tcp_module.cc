@@ -311,13 +311,18 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool StreamTcpModule::begin(const char*, int, SnortConfig*)
+bool StreamTcpModule::begin(const char* fqn, int, SnortConfig*)
 {
+    if ( !strcmp(fqn, "stream_tcp.small_segments") ||
+         !strcmp(fqn, "stream_tcp.queue_limit"))
+    {
+        return true;
+    }
+
     if ( config )
         return false;
 
     config = new StreamTcpConfig;
-
     return true;
 }
 

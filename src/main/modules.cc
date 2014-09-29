@@ -1803,9 +1803,6 @@ bool HostsModule::begin(const char* fqn, int idx, SnortConfig*)
     else if ( idx && !strcmp(fqn, "hosts") )
         host = SFAT_CreateHostEntry();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1821,8 +1818,6 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
         SFAT_AddHost(host);
         host = nullptr;
     }
-    else
-        return false;
 
     return true;
 }
