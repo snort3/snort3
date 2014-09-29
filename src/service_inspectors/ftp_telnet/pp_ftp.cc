@@ -942,7 +942,6 @@ static int check_ftp_param_validity(Packet *p,
                 if (iRet == FTPP_SUCCESS)
                 {
                     this_param = NextFmt->next_param+1;
-                    valid = 1;
                     break;
                 }
             }

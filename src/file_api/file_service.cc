@@ -324,15 +324,11 @@ static void printFileContext (FileContext* context)
         cur += used;
     }
 
-#if 0
     if (unused > 0)
     {
-        used = snprintf(cur, unused, "\nProcessed size: %u\n",
+        snprintf(cur, unused, "\nProcessed size: %u\n",
                 (unsigned int)context->processed_bytes);
-        //unused -= used;
-        //cur += used;
     }
-#endif
 
     buf[sizeof(buf) - 1] = '\0';
     printf("%s", buf);

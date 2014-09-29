@@ -94,13 +94,18 @@ PHInstance::PHInstance(PHClass& p) : pp_class(p)
 {
     Module* mod = ModuleManager::get_module(p.api.base.name);
     handler = p.api.ctor(mod);
-    handler->set_api(&p.api);
-    handler->add_ref();
+
+    if ( handler )
+    {
+        handler->set_api(&p.api);
+        handler->add_ref();
+    }
 }
 
 PHInstance::~PHInstance()
 {
-    handler->rem_ref();
+    if ( handler )
+        handler->rem_ref();
 }
 
 typedef vector<PHGlobal*> PHGlobalList;

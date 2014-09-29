@@ -177,13 +177,18 @@
 * Case Translation Table - this guarantees we use
 * indexed lookups for case conversion
 */
+static unsigned xlatinit = 1;
 static unsigned char xlatcase[BNFA_MAX_ALPHABET_SIZE];
 
-void bnfa_init_xlatcase(void)
+void bnfa_init_xlatcase()
 {
+    if ( !xlatinit )
+        return;
+
     for(int i=0; i<BNFA_MAX_ALPHABET_SIZE; i++) {
         xlatcase[i] = (unsigned char)toupper(i);
     }
+    xlatinit = 0;
 }
 
 /*
@@ -191,6 +196,8 @@ void bnfa_init_xlatcase(void)
 */
 static void * bnfa_alloc( int n, int * m )
 {
+    if ( !n )
+        return nullptr;
     void * p = calloc(1,n);
     if( p ) {
         if(m) {
@@ -1014,6 +1021,7 @@ static int _bnfa_conv_list_to_csparse_array(bnfa_struct_t * bnfa)
     /* sanity check we have not overflowed our buffer */
     if( ps_index > nps ) {
         /* Fatal */
+        BNFA_FREE(pi,bnfa->bnfaNumStates*sizeof(bnfa_state_t),bnfa->nextstate_memory);
         return -1;
     }
 
@@ -1069,6 +1077,7 @@ static int _bnfa_conv_list_to_csparse_array(bnfa_struct_t * bnfa)
         /* check for buffer overflow again */
         if( ps_index > nps ) {
             /* Fatal */
+            BNFA_FREE(pi,bnfa->bnfaNumStates*sizeof(bnfa_state_t),bnfa->nextstate_memory);
             return -1;
         }
 
@@ -2252,6 +2261,7 @@ unsigned bnfaSearch( bnfa_struct_t * bnfa, unsigned char *Tx, int n,
             int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
             void *data, unsigned sindex, int* current_state )
 {
+    assert(current_state);
     int ret = 0;
 
     if (current_state) {

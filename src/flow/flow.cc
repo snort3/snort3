@@ -39,11 +39,14 @@ FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);
     id = u;  handler = ph;
-    if ( handler ) handler->add_ref();
+    if ( handler ) 
+        handler->add_ref();
 }
 
 FlowData::~FlowData()
-{ if ( handler ) handler->rem_ref(); }
+{
+    if ( handler )
+        handler->rem_ref(); }
 
 Flow::Flow ()
 {

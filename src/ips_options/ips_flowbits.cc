@@ -190,7 +190,7 @@ FlowBitsOption::~FlowBitsOption()
     if (config->group)
         free(config->group);
 
-    delete config;
+    free(config);
 }
 
 uint32_t FlowBitsOption::hash() const

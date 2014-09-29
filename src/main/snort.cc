@@ -949,7 +949,7 @@ void snort_thread_term()
     EventManager::close_outputs();
     CodecManager::thread_term();
 
-    if (s_packet)
+    if ( s_packet )
     {
         PacketManager::encode_delete(s_packet);
         s_packet = nullptr;
