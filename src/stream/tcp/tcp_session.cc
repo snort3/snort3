@@ -6540,7 +6540,6 @@ void TcpSession::reset()
     {
         // FIXIT-L need to refactor around flow_state for simplicity
         TcpSessionClear(flow, (TcpSession*)flow->session, 2);
-        tcpStats.trackers_released++;
         return;
     }
 
