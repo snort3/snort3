@@ -60,7 +60,6 @@ public:
     ~StreamIp();
 
     bool configure(SnortConfig*);
-    int verify_config(SnortConfig*);
     void show(SnortConfig*);
 
     void tinit();
@@ -89,12 +88,6 @@ bool StreamIp::configure(SnortConfig* sc)
 {
     defrag->configure(sc);
     return true;
-}
-
-int StreamIp::verify_config(SnortConfig*)
-{
-    // FIXIT-L needed for defrag?
-    return 0;
 }
 
 void StreamIp::tinit()

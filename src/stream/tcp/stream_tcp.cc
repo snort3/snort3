@@ -42,7 +42,6 @@ public:
     StreamTcp(StreamTcpConfig*);
     ~StreamTcp();
 
-    int verify_config(SnortConfig*);
     void show(SnortConfig*);
 
     void tinit();
@@ -63,11 +62,6 @@ StreamTcp::StreamTcp (StreamTcpConfig* c)
 StreamTcp::~StreamTcp()
 {
     delete config;
-}
-
-int StreamTcp::verify_config(SnortConfig* sc)
-{
-    return Stream5VerifyTcpConfig(sc, config);
 }
 
 void StreamTcp::show(SnortConfig*)
