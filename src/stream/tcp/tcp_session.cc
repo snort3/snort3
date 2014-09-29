@@ -4305,7 +4305,6 @@ static void NewTcpSession(
         assert(!tmp->tcp_init);
         tmp->tcp_init = true;
         tcpStats.trackers_created++;
-        //assert(tcpStats.trackers_created <= tcpStats.sessions);
     }
 }
 
@@ -6533,6 +6532,12 @@ TcpSession::TcpSession(Flow* flow) : Session(flow)
 {
     tcp_init = false;
     reset();
+}
+
+TcpSession::~TcpSession()
+{
+    if ( tcp_init )
+        TcpSessionClear(flow, (TcpSession*)flow->session, 2);
 }
 
 void TcpSession::reset()

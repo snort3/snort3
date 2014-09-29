@@ -193,6 +193,7 @@ class TcpSession : public Session
 {
 public:
     TcpSession(Flow*);
+    ~TcpSession();
 
     bool setup (Packet*);
     int process(Packet*);
