@@ -5,6 +5,7 @@
 -- fixed several Xcode static analysis warnings
 -- updated config_changes
 -- commented out pcre_free_study() - issue on mac
+-- more refactoring of tcp session - still incomplete
 
 121
 -- valgrind fixes

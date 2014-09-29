@@ -266,6 +266,7 @@ void InspectorManager::empty_trash()
             return;
 
         free_inspector(p);
+
         s_trash.pop_front();
     }
 }

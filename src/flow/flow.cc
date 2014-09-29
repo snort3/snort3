@@ -113,10 +113,23 @@ void Flow::reset()
         &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
 }
 
-void Flow::clear(bool freeAppData)
+void Flow::restart(bool freeAppData)
 {
     if ( freeAppData )
         free_application_data();
+
+    boResetBITOP(&(flowdata->boFlowbits));
+
+    s5_state.ignore_direction = 0;
+    s5_state.session_flags = SSNFLAG_NONE;
+
+    session_state = STREAM5_STATE_NONE;
+    expire_time = 0;
+}
+
+void Flow::clear(bool freeAppData)
+{
+    restart(freeAppData);
 
     if ( ssn_client )
     {
@@ -133,14 +146,6 @@ void Flow::clear(bool freeAppData)
         clouseau->rem_ref();
         clouseau = nullptr;
     }
-
-    boResetBITOP(&(flowdata->boFlowbits));
-
-    s5_state.ignore_direction = 0;
-    s5_state.session_flags = SSNFLAG_NONE;
-
-    session_state = STREAM5_STATE_NONE;
-    expire_time = 0;
 }
 
 int Flow::set_application_data(FlowData* fd)

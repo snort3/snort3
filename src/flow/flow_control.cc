@@ -263,8 +263,7 @@ static bool is_bidirectional(const Flow* flow)
 // FIXIT-L init_roles* should take const Packet*
 static void init_roles_tcp(Packet* p, Flow* flow)
 {
-    if (TCP_ISFLAGSET(p->ptrs.tcph, TH_SYN) &&
-        !TCP_ISFLAGSET(p->ptrs.tcph, TH_ACK))
+    if ( p->ptrs.tcph->is_syn_only() )
     {
         flow->s5_state.direction = FROM_CLIENT;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
@@ -272,7 +271,7 @@ static void init_roles_tcp(Packet* p, Flow* flow)
         sfip_copy(flow->server_ip, p->ptrs.ip_api.get_dst());
         flow->server_port = ntohs(p->ptrs.tcph->th_dport);
     }
-    else if (TCP_ISFLAGSET(p->ptrs.tcph, (TH_SYN|TH_ACK)))
+    else if ( p->ptrs.tcph->is_syn_ack() )
     {
         flow->s5_state.direction = FROM_SERVER;
         sfip_copy(flow->client_ip, p->ptrs.ip_api.get_dst());
@@ -344,8 +343,8 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
     switch ( flow->flow_state )
     {
     case 1: // block
-        // FIXIT-H this clears flow state!
         stream.drop_packet(p);
+        flow->flow_state = 1;
         break;
 
     case 2: // allow

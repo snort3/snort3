@@ -220,6 +220,9 @@ public:
     uint8_t ecn;
     bool lws_init;
     bool tcp_init;
+
+private:
+    int process_dis(Packet*);
 };
 
 void tcp_sum();
