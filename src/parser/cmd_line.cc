@@ -151,13 +151,13 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
 
     // get special options first
     while ( al.get_arg(key, val) )
-        set(key, val, sc, false);
+        ::set(key, val, sc, false);
 
     // now get the rest
     al.reset();
 
     while ( al.get_arg(key, val) )
-        set(key, val, sc, true);
+        ::set(key, val, sc, true);
 
     check_flags(sc);
 
