@@ -224,16 +224,17 @@ static void dump_table(string& key, const char* pfx, const Parameter* p, bool li
 // set methods
 //-------------------------------------------------------------------------
 
-static const Parameter* get_params(string& sfx, const Parameter* p)
+static const Parameter* get_params(const string& sfx, const Parameter* p)
 {
     size_t pos = sfx.find_first_of('.');
+    std::string new_fqn;
 
     if ( pos == string::npos )
-        return p;
+        new_fqn = sfx;
+    else
+        new_fqn = sfx.substr(pos + 1);
 
-    sfx.erase(0, pos+1);
-    string name = sfx.substr(0, sfx.find_first_of('.'));
-
+    string name = new_fqn.substr(0, new_fqn.find_first_of('.'));
     while ( p->name && name != p->name )
         ++p;
 
@@ -244,8 +245,11 @@ static const Parameter* get_params(string& sfx, const Parameter* p)
          p->type != Parameter::PT_LIST )
         return p;
 
+    if (new_fqn.find_first_of('.') == std::string::npos)
+        return p;
+
     p = (const Parameter*)p->range;
-    return get_params(sfx,  p);
+    return get_params(new_fqn, p);
 }
 
 // FIXIT-M vars may have been defined on command line
@@ -359,6 +363,23 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         return false;
 
     Module* m = h->mod;
+
+    if (strcmp(m->get_name(), s))
+    {
+        std::string fqn = s;
+        const Parameter* const p = get_params(fqn, m->get_parameters());
+
+        if ( !p )
+        {
+            ParseError("can't find %s\n", s);
+            return false;
+        }
+        else if ((idx > 0) && (p->type == Parameter::PT_TABLE))
+        {
+            ParseError("%s is a table. All elements must be name\n", s);
+            return false;
+        }
+    }
 
     if ( s_current != key )
     {

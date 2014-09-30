@@ -1274,7 +1274,7 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
     if (!strcmp(fqn, "process.threads"))
     {
         if (cpu == -1)
-            ParseError("%s - cpu must be an integer in the range"
+            ParseError("%s - cpu(%d) must be an integer in the range"
                 " of 0 < cpu < max_cpus", fqn, cpu);
 
         else if ((source.empty()) && (thread == -1))
