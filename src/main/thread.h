@@ -25,11 +25,11 @@
 #include "main/snort_types.h"
 
 #define THREAD_LOCAL_TBD
-#define THREAD_LOCAL // for single-threaded debugging
+//#define THREAD_LOCAL // for single-threaded debugging
 
 // this is a gnu extension that at present is slightly faster than the 
 // c++11 form
-//#define THREAD_LOCAL __thread
+#define THREAD_LOCAL __thread
 
 // the c++11 form currently seems to be slightly slower than __thread
 // possibly due to dynamic initialization requirements 
