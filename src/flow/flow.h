@@ -79,6 +79,8 @@
 #define STREAM5_STATE_TIMEDOUT          0x0080
 #define STREAM5_STATE_UNREACH           0x0100
 #define STREAM5_STATE_CLOSED            0x0800
+#define STREAM5_STATE_IGNORE            0x1000
+#define STREAM5_STATE_NO_PICKUP         0x2000
 
 struct Packet;
 
@@ -138,6 +140,7 @@ public:
     ~Flow();
 
     void reset();
+    void restart(bool freeAppData = true);
     void clear(bool freeAppData = true);
 
     int set_application_data(FlowData*);

@@ -42,12 +42,6 @@
 #define TH_RSV  0x0E  // reserved bits
 #define TH_NS   0x01  // ECN nonce bit
 
-
-/* Why are these lil buggers here? Never Used. -- cmg */
-#define TCPOLEN_TSTAMP_APPA     (TCPOLEN_TIMESTAMP+2)    /* appendix A / rfc 1323 */
-#define TCPOPT_TSTAMP_HDR    \
-    (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
-
 /*
  * Default maximum segment size for TCP.
  * With an IP MSS of 576, this is 536,
@@ -112,6 +106,20 @@ struct TCPHdr
     inline bool are_flags_set(uint8_t flags) const
     { return (th_flags & flags) == flags; }
 
+    inline bool is_syn() const
+    { return (th_flags & TH_SYN); }
+
+    inline bool is_syn_only() const
+    { return (th_flags & (TH_SYN|TH_ACK)) == TH_SYN; }
+
+    inline bool is_syn_ack() const
+    { return are_flags_set(TH_SYN|TH_ACK); }
+
+    inline bool is_ack() const
+    { return (th_flags & TH_ACK); }
+
+    inline bool is_rst() const
+    { return (th_flags & TH_RST); }
 
     /*  raw data access */
     inline uint8_t raw_src_port() const
@@ -131,13 +139,6 @@ struct TCPHdr
     { th_offx2 = (uint8_t)((th_offx2 & 0x0f) | (val << 4)); }
 };
 
-
-/* more macros for TCP offset */
-#define TCP_ISFLAGSET(tcph, flags) (((tcph)->th_flags & (flags)) == (flags))
-
-
 }  // namespace tcp
-
-
 
 #endif /* TCP_H */

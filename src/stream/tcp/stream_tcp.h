@@ -32,9 +32,9 @@ struct StreamTcpConfig
 {
     uint16_t policy;
     uint16_t reassembly_policy;
+
     uint16_t flags;
     uint16_t flush_factor;
-    uint16_t session_on_syn;
 
     uint32_t session_timeout;
     uint32_t max_window;
@@ -54,14 +54,11 @@ struct StreamTcpConfig
 
     StreamTcpConfig();
 
-    void set_port(Port port, bool c2s, bool s2c);
-    void set_proto(unsigned proto_ordinal, bool c2s, bool s2c);
-    void add_proto(const char* svc, bool c2s, bool s2c);
+    bool require_3whs();
+    bool midstream_allowed(Packet*);
 };
 
 // misc stuff
-int Stream5VerifyTcpConfig(SnortConfig*, StreamTcpConfig *);
-
 Session* get_tcp_session(Flow*);
 StreamTcpConfig* get_tcp_cfg(Inspector*);
 
@@ -103,9 +100,6 @@ StreamSplitter* Stream5GetSplitterTcp(Flow*, bool c2s);
 
 int GetTcpRebuiltPackets(Packet*, Flow*, PacketIterator, void *userdata);
 int GetTcpStreamSegments(Packet*, Flow*, StreamSegmentIterator, void *userdata);
-
-void s5TcpSetSynSessionStatus(SnortConfig*, uint16_t status);
-void s5TcpUnsetSynSessionStatus(SnortConfig*, uint16_t status);
 
 #endif
 

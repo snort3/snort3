@@ -254,8 +254,6 @@ void SnortConfFree(SnortConfig *sc)
 
     fpDeleteFastPacketDetection(sc);
 
-    InspectorManager::delete_config(sc);
-
     if ( sc->daq_type )
         free(sc->daq_type);
 
@@ -295,6 +293,7 @@ void SnortConfFree(SnortConfig *sc)
     FastPatternConfigFree(sc->fast_pattern_config);
 
     delete sc->policy_map;
+    InspectorManager::delete_config(sc);
 
     free(sc->state);
 

@@ -39,6 +39,7 @@
 #include "packet_io/sfdaq.h"
 #include "protocols/tcp.h"
 #include "protocols/protocol_ids.h"
+#include "parser/parser.h"
 
 #define MAX_ATTEMPTS 20
 
@@ -121,8 +122,8 @@ int Active_Init (SnortConfig* sc)
 
         if ( ScReadMode() || Active_Open(sc->respond_device) )
         {
-            LogMessage("WARNING: active responses disabled since DAQ "
-                "can't inject packets.\n");
+            ParseWarning("active responses disabled since DAQ "
+                "can't inject packets.");
 #ifndef REG_TEST
             s_attempts = 0;
 #endif

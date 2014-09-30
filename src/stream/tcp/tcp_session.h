@@ -193,6 +193,7 @@ class TcpSession : public Session
 {
 public:
     TcpSession(Flow*);
+    ~TcpSession();
 
     bool setup (Packet*);
     int process(Packet*);
@@ -220,6 +221,9 @@ public:
     uint8_t ecn;
     bool lws_init;
     bool tcp_init;
+
+private:
+    int process_dis(Packet*);
 };
 
 void tcp_sum();
