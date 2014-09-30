@@ -63,7 +63,7 @@ ADD_LIBRARY( utils STATIC
 
 target_link_libraries(utils
     log
-#
+#    
 )
 
 install (FILES ${UTIL_INCLUDES}

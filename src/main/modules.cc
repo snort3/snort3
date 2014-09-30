@@ -1274,15 +1274,23 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
     if (!strcmp(fqn, "process.threads"))
     {
         if (cpu == -1)
-            ParseError("%s - cpu(%d) must be an integer in the range"
-                " of 0 < cpu < max_cpus", fqn, cpu);
-
+        {
+            ParseError("%s - cpu(%d) for thread (%d) and source (%s) "
+            "must be an integer in the range "
+            "of 0 < cpu < max_cpus", fqn, cpu);
+            return false;
+        }
         else if ((source.empty()) && (thread == -1))
+        {
             ParseError("%s - must have either a source or a thread!", fqn);
-
+            return false;
+        }
         else if ((!source.empty()) && (thread >= 0))
+        {
             ParseError("%s - must have either a source or a thread!"
                 " Both thread(%d) and source(%s) are set", fqn, thread, source.c_str());
+            return false;
+        }
 
         else if (!source.empty())
             set_cpu_affinity(sc, source, cpu);

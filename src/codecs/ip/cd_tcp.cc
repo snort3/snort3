@@ -273,7 +273,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
         codec_events::decoder_event(codec, DECODE_TCP_BAD_URP);
 
     // Now that we are returning true, set the tcp header
-    codec.lyr_len = tcph_len;
+    codec.lyr_len = tcph_len - codec.invalid_bytes; // set in DecodeTCPOptions()
     codec.proto_bits |= PROTO_BIT__TCP;
     snort.tcph = tcph;
     snort.sp = tcph->src_port();
@@ -288,7 +288,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
 
 /*
- * Function: DecodeTCPOptions(uint8_t *, uint32_t, Packet *)
+ * Function: DecodeTCPOptions()
  *
  * Purpose: Fairly self explainatory name, don't you think?
  *
@@ -365,8 +365,9 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, CodecData& codec)
         switch(opt->code)
         {
         case tcp::TcpOptCode::EOL:
-            done = true; /* fall through to the NOP case */
-            //codec.invalid_bytes = o_len - tot_len;  // FIXIT-H this leads to underflow
+            done = true;
+            codec.invalid_bytes = o_len - tot_len;
+            /* fall through to the NOP case */
         case tcp::TcpOptCode::NOP:
             code = 0;
             break;
@@ -472,7 +473,6 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, CodecData& codec)
              * some implementations (BSD and Linux) ignore
              * the bad ones, but accept the good ones */
             codec.invalid_bytes = o_len - tot_len;
-
             return;
         }
 
@@ -481,15 +481,10 @@ void DecodeTCPOptions(const uint8_t *start, uint32_t o_len, CodecData& codec)
     }
 
     if (experimental_option_found)
-    {
         codec_events::decoder_event(codec, DECODE_TCPOPT_EXPERIMENTAL);
-    }
-    else if (obsolete_option_found)
-    {
-        codec_events::decoder_event(codec, DECODE_TCPOPT_OBSOLETE);
-    }
 
-    return;
+    else if (obsolete_option_found)
+        codec_events::decoder_event(codec, DECODE_TCPOPT_OBSOLETE);
 }
 
 

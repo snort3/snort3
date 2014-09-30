@@ -181,6 +181,7 @@ struct Packet
 
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
+    uint32_t iplist_id;
     uint16_t max_dsize;
 
     /**policyId provided in configuration file. Used for correlating configuration
@@ -188,9 +189,13 @@ struct Packet
      */
     uint16_t user_policy_id;
 
-    uint32_t iplist_id;
 
     uint8_t ps_proto;  // Used for portscan and unified2 logging
+    uint8_t ip_proto_next;      /* This is different than the ip_api.proto() function -
+                                 * this variable hold the first non-ip and non-ipv6 extension
+                                 * protocols, while proto() returns the next or proto() field
+                                 * of the raw IP header
+                                 */
 
     /*  Access methods */
 

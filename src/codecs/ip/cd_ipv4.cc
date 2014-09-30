@@ -314,7 +314,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.set_pkt_type(PktType::IP);
     codec.proto_bits |= PROTO_BIT__IP;
     IPMiscTests(iph, codec, ip::IP4_HEADER_LEN + ip_opt_len);
-    codec.lyr_len = hlen;
+    codec.lyr_len = hlen - codec.invalid_bytes;
 
 
     /* if this packet isn't a fragment

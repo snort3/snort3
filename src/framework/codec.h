@@ -260,7 +260,6 @@ struct SnortData
                              * for the PktType. Everything else is fair game flag.
                              *
                              */
-
     ip::IpApi ip_api;
     mpls::MplsHdr mplsHdr;
 
