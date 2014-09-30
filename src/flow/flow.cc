@@ -34,7 +34,6 @@
 #include "sfip/sf_ip.h"
 
 unsigned FlowData:: flow_id = 0;
-unsigned long fdc = 0;
 
 FlowData::FlowData(unsigned u, Inspector* ph)
 {
@@ -42,14 +41,12 @@ FlowData::FlowData(unsigned u, Inspector* ph)
     id = u;  handler = ph;
     if ( handler ) 
         handler->add_ref();
-    ++fdc;
 }
 
 FlowData::~FlowData()
 {
     if ( handler )
         handler->rem_ref();
-    --fdc;
 }
 
 Flow::Flow ()
@@ -75,6 +72,12 @@ Flow::~Flow ()
         delete session;
 
     free_application_data();
+
+    if ( ssn_client )
+        ssn_client->rem_ref();
+
+    if ( ssn_server )
+        ssn_server->rem_ref();
 
     if ( clouseau )
         clouseau->rem_ref();
@@ -111,6 +114,7 @@ void Flow::reset()
         clear_gadget();
 
     constexpr size_t offset = offsetof(Flow, appDataList);
+    // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
     boInitStaticBITOP(
@@ -146,10 +150,10 @@ void Flow::clear(bool freeAppData)
         ssn_server = nullptr;
     }
     if ( clouseau )
-    {
-        clouseau->rem_ref();
-        clouseau = nullptr;
-    }
+        clear_clouseau();
+
+    if ( gadget )
+        clear_gadget();
 }
 
 int Flow::set_application_data(FlowData* fd)

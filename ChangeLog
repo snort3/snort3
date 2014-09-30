@@ -9,6 +9,8 @@
 -- patched cd_tcp.cc and packet_manager.cc for length underflow issue
 -- fix active.max_responses default, etc.
 -- always change both directions to atom splitter
+-- fixed byte_extract leak, session flow data leak
+-- changed pcre JIT to be optional by #define; need autofoo
 
 121
 -- valgrind fixes
