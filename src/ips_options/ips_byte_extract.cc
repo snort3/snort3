@@ -48,7 +48,7 @@ static const char* s_help =
 
 #define MAX_BYTES_TO_GRAB 4
 
-typedef struct _ByteExtractData
+struct ByteExtractData
 {
     uint32_t bytes_to_grab;
     int32_t offset;
@@ -60,11 +60,11 @@ typedef struct _ByteExtractData
     uint32_t multiplier;
     int8_t var_number;
     char *name;
-} ByteExtractData;
+};
 
 /* Storage for extracted variables */
+static char *variable_names[NUM_BYTE_EXTRACT_VARS];
 static THREAD_LOCAL uint32_t extracted_values[NUM_BYTE_EXTRACT_VARS];
-static THREAD_LOCAL char *variable_names[NUM_BYTE_EXTRACT_VARS];
 
 class ByteExtractOption : public IpsOption
 {
@@ -258,7 +258,7 @@ int8_t GetVarByName(const char *name)
 }
 
 /* If given an OptFpList with no byte_extracts, clear the variable_names array */
-void ClearVarNames(OptFpList *fpl)
+static void ClearVarNames(OptFpList *fpl)
 {
     while (fpl != NULL)
     {
@@ -275,7 +275,7 @@ void ClearVarNames(OptFpList *fpl)
 /* Add a variable's name to the variable_names array
    Returns: variable index
 */
-int8_t AddVarNameToList(ByteExtractData *data)
+static int8_t AddVarNameToList(ByteExtractData *data)
 {
     int i;
 
@@ -539,12 +539,12 @@ static void byte_extract_dtor(IpsOption* p)
     delete p;
 }
 
-static void byte_extract_tinit(SnortConfig*)
+static void byte_extract_init(SnortConfig*)
 {
     init_var_names();
 }
 
-static void byte_extract_tterm(SnortConfig*)
+static void byte_extract_term(SnortConfig*)
 {
     clear_var_names();
 }
@@ -562,10 +562,10 @@ static const IpsApi byte_extract_api =
     },
     OPT_TYPE_DETECTION,
     NUM_BYTE_EXTRACT_VARS, 0,
-    byte_extract_tinit,  // do for global what we do for threads
-    byte_extract_tterm,  // since the names are used during parsing too
-    byte_extract_tinit,
-    byte_extract_tterm,
+    byte_extract_init,
+    byte_extract_term,
+    nullptr,  // tinit
+    nullptr,  // tterm
     byte_extract_ctor,
     byte_extract_dtor,
     nullptr

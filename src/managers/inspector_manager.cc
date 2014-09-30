@@ -247,6 +247,12 @@ void InspectorManager::release_plugins ()
 {
     empty_trash();
 
+    for ( auto* p : s_trash )
+    {
+        if ( !p->is_inactive() )
+            printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
+    }
+
     for ( auto* p : s_handlers )
     {
         if ( !p->init && p->api.pterm )
