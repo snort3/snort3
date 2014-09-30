@@ -8,6 +8,7 @@
 -- more refactoring of tcp session - still incomplete
 -- patched cd_tcp.cc and packet_manager.cc for length underflow issue
 -- fix active.max_responses default, etc.
+-- always change both directions to atom splitter
 
 121
 -- valgrind fixes

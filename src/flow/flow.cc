@@ -34,6 +34,7 @@
 #include "sfip/sf_ip.h"
 
 unsigned FlowData:: flow_id = 0;
+unsigned long fdc = 0;
 
 FlowData::FlowData(unsigned u, Inspector* ph)
 {
@@ -41,12 +42,15 @@ FlowData::FlowData(unsigned u, Inspector* ph)
     id = u;  handler = ph;
     if ( handler ) 
         handler->add_ref();
+    ++fdc;
 }
 
 FlowData::~FlowData()
 {
     if ( handler )
-        handler->rem_ref(); }
+        handler->rem_ref();
+    --fdc;
+}
 
 Flow::Flow ()
 {
@@ -84,11 +88,11 @@ Flow::~Flow ()
 
 void Flow::reset()
 {
-    if ( ssn_client )
-    {
+    free_application_data();
+
+    if ( session )
         session->cleanup();
-        free_application_data();
-    }
+
     // FIXIT-H cleanup() winds up calling clear()
     if ( ssn_client )
     {

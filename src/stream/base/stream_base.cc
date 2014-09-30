@@ -191,6 +191,9 @@ void StreamBase::tterm()
 
     delete flow_con;
     flow_con = nullptr;
+
+    extern unsigned long fdc;
+    printf("fdc = %ld\n", fdc);
 }
 
 void StreamBase::show(SnortConfig*)
