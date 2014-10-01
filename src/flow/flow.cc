@@ -39,11 +39,15 @@ FlowData::FlowData(unsigned u, Inspector* ph)
 {
     assert(u > 0);
     id = u;  handler = ph;
-    if ( handler ) handler->add_ref();
+    if ( handler ) 
+        handler->add_ref();
 }
 
 FlowData::~FlowData()
-{ if ( handler ) handler->rem_ref(); }
+{
+    if ( handler )
+        handler->rem_ref();
+}
 
 Flow::Flow ()
 {
@@ -64,7 +68,16 @@ Flow::Flow (int proto)
 
 Flow::~Flow ()
 {
+    if ( session )
+        delete session;
+
     free_application_data();
+
+    if ( ssn_client )
+        ssn_client->rem_ref();
+
+    if ( ssn_server )
+        ssn_server->rem_ref();
 
     if ( clouseau )
         clouseau->rem_ref();
@@ -74,18 +87,15 @@ Flow::~Flow ()
 
     if ( flowdata )
         free(flowdata);
-
-    if ( session )
-        delete session;
 }
 
 void Flow::reset()
 {
-    if ( ssn_client )
-    {
+    free_application_data();
+
+    if ( session )
         session->cleanup();
-        free_application_data();
-    }
+
     // FIXIT-H cleanup() winds up calling clear()
     if ( ssn_client )
     {
@@ -104,16 +114,30 @@ void Flow::reset()
         clear_gadget();
 
     constexpr size_t offset = offsetof(Flow, appDataList);
+    // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
     boInitStaticBITOP(
         &(flowdata->boFlowbits), getFlowbitSizeInBytes(), flowdata->flowb);
 }
 
-void Flow::clear(bool freeAppData)
+void Flow::restart(bool freeAppData)
 {
     if ( freeAppData )
         free_application_data();
+
+    boResetBITOP(&(flowdata->boFlowbits));
+
+    s5_state.ignore_direction = 0;
+    s5_state.session_flags = SSNFLAG_NONE;
+
+    session_state = STREAM5_STATE_NONE;
+    expire_time = 0;
+}
+
+void Flow::clear(bool freeAppData)
+{
+    restart(freeAppData);
 
     if ( ssn_client )
     {
@@ -126,18 +150,10 @@ void Flow::clear(bool freeAppData)
         ssn_server = nullptr;
     }
     if ( clouseau )
-    {
-        clouseau->rem_ref();
-        clouseau = nullptr;
-    }
+        clear_clouseau();
 
-    boResetBITOP(&(flowdata->boFlowbits));
-
-    s5_state.ignore_direction = 0;
-    s5_state.session_flags = SSNFLAG_NONE;
-
-    session_state = STREAM5_STATE_NONE;
-    expire_time = 0;
+    if ( gadget )
+        clear_gadget();
 }
 
 int Flow::set_application_data(FlowData* fd)

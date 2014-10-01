@@ -53,6 +53,16 @@
 #define PCRE_STUDY_JIT_COMPILE 0
 #endif
 
+//#define NO_JIT // uncomment to disable JIT
+
+#ifdef NO_JIT
+#define PCRE_STUDY_FLAGS 0
+#define pcre_release(x) pcre_free(x)
+#else
+#define PCRE_STUDY_FLAGS PCRE_STUDY_JIT_COMPILE
+#define pcre_release(x) pcre_free_study(x)
+#endif
+
 #define SNORT_PCRE_RELATIVE         0x00010 // relative to the end of the last match
 #define SNORT_PCRE_INVERT           0x00020 // invert detect
 #define SNORT_PCRE_ANCHORED         0x00040
@@ -260,7 +270,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     }
 
     /* now study it... */
-    pcre_data->pe = pcre_study(pcre_data->re, PCRE_STUDY_JIT_COMPILE, &error);
+    pcre_data->pe = pcre_study(pcre_data->re, PCRE_STUDY_FLAGS, &error);
 
     if (pcre_data->pe)
     {
@@ -466,11 +476,7 @@ PcreOption::~PcreOption()
         free(config->expression);
 
     if (config->pe)
-#ifdef PCRE_CONFIG_JIT
-        pcre_free_study(config->pe);
-#else
-        pcre_free(config->pe);
-#endif
+        pcre_release(config->pe);
 
     if (config->re)
         free(config->re);

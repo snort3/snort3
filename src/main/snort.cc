@@ -913,7 +913,7 @@ void snort_thread_init(const char* intf)
     DAQ_New(snort_conf, intf);
     DAQ_Start();
 
-    s_packet = PacketManager::encode_new();
+    s_packet = PacketManager::encode_new(false);
     CodecManager::thread_init();
     FileAPIPostInit();
 
@@ -941,15 +941,15 @@ void snort_thread_term()
 #ifdef PPM_MGR
     ppm_sum_stats();
 #endif
-    // FIXIT-H accumulate inspectors in thread_term to get cleanup counts
-    ModuleManager::accumulate(snort_conf);
     InspectorManager::thread_term(snort_conf);
+    ModuleManager::accumulate(snort_conf);
     ActionManager::thread_term(snort_conf);
+
     IpsManager::clear_options();
     EventManager::close_outputs();
     CodecManager::thread_term();
 
-    if (s_packet)
+    if ( s_packet )
     {
         PacketManager::encode_delete(s_packet);
         s_packet = nullptr;

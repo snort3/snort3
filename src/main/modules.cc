@@ -774,7 +774,7 @@ static const Parameter active_params[] =
     { "dst_mac", Parameter::PT_STRING, nullptr, nullptr,
       "use format '01:23:45:67:89:ab'" },
 
-    { "max_responses", Parameter::PT_INT, "0:", "255",
+    { "max_responses", Parameter::PT_INT, "0:", "0",
       "maximum number of responses" },
 
     { "min_interval", Parameter::PT_INT, "1:", "255",
@@ -1803,9 +1803,6 @@ bool HostsModule::begin(const char* fqn, int idx, SnortConfig*)
     else if ( idx && !strcmp(fqn, "hosts") )
         host = SFAT_CreateHostEntry();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1821,8 +1818,6 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig*)
         SFAT_AddHost(host);
         host = nullptr;
     }
-    else
-        return false;
 
     return true;
 }

@@ -262,7 +262,7 @@ uint32_t FlowCache::prune_excess(bool memCheck, Flow *save_me)
             }
             else
             {
-                if ( flow->was_blocked() )
+                if ( flow && flow->was_blocked() )
                     blocks++;
 
                 if ( !hash_table->touch() )

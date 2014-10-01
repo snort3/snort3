@@ -94,13 +94,18 @@ PHInstance::PHInstance(PHClass& p) : pp_class(p)
 {
     Module* mod = ModuleManager::get_module(p.api.base.name);
     handler = p.api.ctor(mod);
-    handler->set_api(&p.api);
-    handler->add_ref();
+
+    if ( handler )
+    {
+        handler->set_api(&p.api);
+        handler->add_ref();
+    }
 }
 
 PHInstance::~PHInstance()
 {
-    handler->rem_ref();
+    if ( handler )
+        handler->rem_ref();
 }
 
 typedef vector<PHGlobal*> PHGlobalList;
@@ -242,6 +247,12 @@ void InspectorManager::release_plugins ()
 {
     empty_trash();
 
+    for ( auto* p : s_trash )
+    {
+        if ( !p->is_inactive() )
+            printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
+    }
+
     for ( auto* p : s_handlers )
     {
         if ( !p->init && p->api.pterm )
@@ -261,6 +272,7 @@ void InspectorManager::empty_trash()
             return;
 
         free_inspector(p);
+
         s_trash.pop_front();
     }
 }

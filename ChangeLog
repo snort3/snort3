@@ -1,6 +1,16 @@
 122
 -- pulled thread pinning from Josh
 -- snort.lua tweaks to back out random test foo
+-- additional valgrind tweaks
+-- fixed several Xcode static analysis warnings
+-- updated config_changes
+-- commented out pcre_free_study() - issue on mac
+-- more refactoring of tcp session - still incomplete
+-- patched cd_tcp.cc and packet_manager.cc for length underflow issue
+-- fix active.max_responses default, etc.
+-- always change both directions to atom splitter
+-- fixed byte_extract leak, session flow data leak
+-- changed pcre JIT to be optional by #define; need autofoo
 
 121
 -- valgrind fixes
