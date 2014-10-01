@@ -78,14 +78,15 @@ static void load_overrides(lua_State* L, string& s)
     }
 }
 
-static void run_config(lua_State* L)
+static void run_config(lua_State* L, const char* t)
 {
     lua_getglobal(L, "snort_config");
+    lua_getglobal(L, t);
 
-    if ( !lua_isfunction(L, -1) )
+    if ( !lua_isfunction(L, -2) )
         FatalError("%s\n", "snort_config is required");
 
-    else if ( lua_pcall(L, 0, 1, 0) )
+    else if ( lua_pcall(L, 1, 1, 0) )
     {
         const char* err = lua_tostring(L, -1);
         FatalError("%s\n", err);
@@ -95,14 +96,13 @@ static void run_config(lua_State* L)
 static void config_lua(
     lua_State* L, const char* file, string& s)
 {
-
     if ( file && *file )
         load_config(L, file);
 
     if ( s.size() )
         load_overrides(L, s);
 
-    run_config(L);
+    run_config(L, "_G");
 
     if ( int k = ModuleManager::get_errors() )
     {
@@ -147,7 +147,7 @@ void Shell::set_overrides(const char* s)
 
 void Shell::configure(SnortConfig* sc)
 {
-    assert(file.size()); // FIXIT-M -- provide detailed error message. Will be confusing for an end user
+    assert(file.size());
     ModuleManager::set_config(sc);
     config_lua(lua, file.c_str(), overrides);
     ModuleManager::set_config(nullptr);

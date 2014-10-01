@@ -59,6 +59,8 @@ typedef list<ModHook*> ModuleList;
 static ModuleList s_modules;
 static unsigned s_errors = 0;
 static string s_current;
+static string s_name;
+static string s_type;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
@@ -115,6 +117,19 @@ void ModHook::init()
 //-------------------------------------------------------------------------
 // helper functions
 //-------------------------------------------------------------------------
+
+static void set_type(string& fqn)
+{
+    if ( s_type.empty() )
+        return;
+
+    size_t pos = fqn.find_first_of('.');
+
+    if ( pos == fqn.npos )
+        pos = fqn.size();
+
+    fqn.replace(0, pos, s_type);
+}
 
 static void set_top(string& fqn)
 {
@@ -294,10 +309,14 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
 
 static bool set_value(const char* fqn, Value& v)
 {
-    string mod_name = fqn;
-    set_top(mod_name);
+    string t = fqn;
+    set_type(t);
+    fqn = t.c_str();
 
-    Module* mod = ModuleManager::get_module(mod_name.c_str());
+    string key = t;
+    set_top(key);
+
+    Module* mod = ModuleManager::get_module(key.c_str());
 
     if ( !mod )
         return set_var(fqn, v);
@@ -343,11 +362,24 @@ extern "C"
     bool set_bool(const char* fqn, bool val);
     bool set_number(const char* fqn, double val);
     bool set_string(const char* fqn, const char* val);
+    bool set_alias(const char* from, const char* to);
+}
+
+SO_PUBLIC bool set_alias(const char* from, const char* to)
+{
+    s_name = from;
+    s_type = to;
+    return true;
 }
 
 SO_PUBLIC bool open_table(const char* s, int idx)
 {
-    string key = s;
+    const char* orig = s;
+    string fqn = s;
+    set_type(fqn);
+    s = fqn.c_str();
+
+    string key = fqn;
     set_top(key);
 
     // ips option parameters only using in rules which
@@ -362,7 +394,10 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
     if ( s_current != key )
     {
-        LogMessage("\t %s\n", key.c_str());
+        if ( fqn != orig )
+            LogMessage("\t%s (%s)\n", key.c_str(), orig);
+        else
+            LogMessage("\t%s\n", key.c_str());
         s_current = key;
     }
 
@@ -376,20 +411,26 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
 SO_PUBLIC void close_table(const char* s, int idx)
 {
-    string key = s;
+    string fqn = s;
+    set_type(fqn);
+    s = fqn.c_str();
+
+    string key = fqn;
     set_top(key);
 
     if ( ModHook* h = get_hook(key.c_str()) )
     {
         if ( !h->mod->end(s, idx, s_config) )
-        {
             ParseError("can't close %s", h->mod->get_name());
-            return;
-        }
 
-        if ( !idx && h->api && (key == s) )
+        else if ( !s_name.empty() )
+            PluginManager::instantiate(h->api, h->mod, s_config, s_name.c_str());
+
+        else if ( !idx && h->api && (key == s) )
             PluginManager::instantiate(h->api, h->mod, s_config);
     }
+    s_name.clear();
+    s_type.clear();
 }
 
 SO_PUBLIC bool set_bool(const char* fqn, bool b)

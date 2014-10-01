@@ -33,6 +33,8 @@ using namespace std;
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "main/shell.h"
+#include "managers/module_manager.h"
+#include "parser/parser.h"
 
 THREAD_LOCAL BindStats bstats;
 
@@ -123,7 +125,7 @@ BinderModule::~BinderModule()
 ProfileStats* BinderModule::get_profile() const
 { return &bindPerfStats; }
 
-bool BinderModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     // both
     if ( !strcmp(fqn, "binder.when.service") )
@@ -165,15 +167,26 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     else if ( v.is("file") )
     {
-        Shell* sh = new Shell(v.get_string());
-        work->use.index = sc->policy_map->add_shell(sh) + 1;
+        if ( !work->use.name.empty() || !work->use.type.empty() )
+            ParseError("you can't set binder.use.file with type or name");
+
+        work->use.name = v.get_string();
+        work->use.type = ".file";
     }
     else if ( v.is("name") )
+    {
+        if ( !work->use.name.empty() )
+            ParseError("you can't set binder.use.file with type or name");
+
         work->use.name = v.get_string();
-
+    }
     else if ( v.is("type") )
-        work->use.type = v.get_string();
+    {
+        if ( !work->use.type.empty() )
+            ParseError("you can't set binder.use.file with type or name");
 
+        work->use.type = v.get_string();
+    }
     else
         return false;
 
@@ -188,10 +201,18 @@ bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool BinderModule::end(const char* fqn, int idx, SnortConfig*)
+bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if ( idx && !strcmp(fqn, BIND_NAME) )
     {
+        if ( work->use.type == ".file" )
+        {
+            Shell* sh = new Shell(work->use.name.c_str());
+            work->use.index = sc->policy_map->add_shell(sh) + 1;
+        }
+        if ( !work->use.name.size() )
+            work->use.name = work->use.type;
+
         bindings.push_back(work);
         work = nullptr;
     }

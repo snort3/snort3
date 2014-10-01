@@ -468,3 +468,10 @@ void PluginManager::instantiate(
     }
 }
 
+void PluginManager::instantiate(
+    const BaseApi* api, Module* mod, SnortConfig* sc, const char* name)
+{
+    assert(api->type == PT_INSPECTOR);
+    InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
+}
+

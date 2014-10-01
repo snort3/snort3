@@ -227,7 +227,7 @@ Inspector* Binder::find_inspector(Flow* flow)
     if ( !pb )
         return nullptr;
 
-    Inspector* ins = InspectorManager::get_inspector(pb->use.type.c_str());
+    Inspector* ins = InspectorManager::get_inspector(pb->use.name.c_str());
     return ins;
 }
 
@@ -323,14 +323,14 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
     init_flow(flow);
     Inspector* ins;
 
-    if ( !pb->use.type.size() || pb->use.type == "wizard" )
+    if ( !pb->use.name.size() || pb->use.name == "wizard" )
     {
         ins = InspectorManager::get_wizard();
         flow->set_clouseau(ins);
     }
     else
     {
-        ins = InspectorManager::get_inspector(pb->use.type.c_str()); 
+        ins = InspectorManager::get_inspector(pb->use.name.c_str()); 
         flow->set_gadget(ins);
     }
     return BA_INSPECT;
