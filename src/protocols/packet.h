@@ -227,7 +227,7 @@ struct SO_PUBLIC Packet
      *          eth::ip6::hop_opts::ipv6_routing::UDP
      * this function return 17 == IPPROTO_UDP == IPPROTO_ID_UDP
      */
-    uint8_t ip_next_proto() const;
+    uint8_t ip_proto_next() const;
 
     inline void reset()
     {

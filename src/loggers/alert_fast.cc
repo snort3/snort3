@@ -238,10 +238,10 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     }
 
     /* print the packet header to the alert file */
-    if (p->ptrs.ip_api.is_valid())
+    if (p->has_ip())
     {
         LogPriorityData(fast_log, event, 0);
-        TextLog_Print(fast_log, "{%s} ", protocol_names[p->ptrs.ip_api.proto()]);
+        TextLog_Print(fast_log, "{%s} ", protocol_names[p->ip_proto_next()]);
         LogIpAddrs(fast_log, p);
     }
 

@@ -328,7 +328,7 @@ static void SnortInit(int argc, char **argv)
         OrderRuleLists(snort_conf, "drop sdrop reject alert pass log");
     }
 
-    // Must be after CodecManagers
+    // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
         FatalError("can't initialize inspectors\n");
 

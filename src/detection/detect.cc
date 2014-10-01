@@ -329,6 +329,7 @@ int Detect(Packet * p)
 
     while (layer::set_inner_ip_api(p, tmp_api, curr_layer))
     {
+        // FIXIT-H J   We may be checking for an IP6 extension!
         if (snort_conf->ip_proto_array[tmp_api.proto()])
         {
             proto_found = true;

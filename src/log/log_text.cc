@@ -1002,7 +1002,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
         {
             case PROTO_BIT__TCP_EMBED_ICMP:
             {
-                const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(op.ptrs.ip_api);
+                const tcp::TCPHdr* const tcph = layer::get_tcp_embed_icmp(op.ptrs.ip_api);
                 if (tcph)
                 {
                     orig_p->ptrs.sp = tcph->src_port();
@@ -1020,7 +1020,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 
             case PROTO_BIT__UDP_EMBED_ICMP:
             {
-                const udp::UDPHdr* udph = layer::get_udp_embed_icmp(op.ptrs.ip_api);
+                const udp::UDPHdr* const udph = layer::get_udp_embed_icmp(op.ptrs.ip_api);
                 if (udph)
                 {
                     orig_p->ptrs.sp = udph->src_port();
@@ -1031,8 +1031,9 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
                     LogIPHeader(log, orig_p);
 
                     TextLog_Print(log, "Len: %d  Csum: %d\n",
-                            ntohs(orig_p->ptrs.udph->uh_len) - udp::UDP_HEADER_LEN,
-                            ntohs(orig_p->ptrs.udph->uh_chk));
+                            udph->len() - udp::UDP_HEADER_LEN,
+                            udph->cksum());
+                }
                 break;
             }
 

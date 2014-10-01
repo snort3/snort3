@@ -1366,7 +1366,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
      *    a rebuilt packet later.  So don't process it further.
      */
     if ((frag_offset != 0) ||
-        ((p->ptrs.ip_api.proto() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
+        ((p->ip_proto_next() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
     {
         DisableDetect(p);
     }
@@ -1503,7 +1503,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
             FragRebuild(ft, p);
 
             if (frag_offset != 0 ||
-                (p->ptrs.ip_api.proto() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
+                (p->ip_proto_next() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
             {
                 /* Need to reset some things here because the
                  * rebuilt packet will have reset the do_detect
@@ -2322,7 +2322,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     
     if (p->ptrs.ip_api.is_ip4())
     {
-        ft->protocol = p->ptrs.ip_api.proto();
+        ft->protocol = p->ptrs.ip_api.get_ip4h()->get_proto();
 
         const ip::IP4Hdr *ip4h = reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
         frag_off = ntohs(ip4h->get_off());

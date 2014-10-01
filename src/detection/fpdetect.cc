@@ -1476,7 +1476,6 @@ static inline int fpEvalHeaderIp(Packet *p, int ip_proto, OTNX_MATCH_DATA *omd)
 */
 int fpEvalPacket(Packet *p)
 {
-    int ip_proto = p->ptrs.ip_api.proto();
     OTNX_MATCH_DATA *omd = &t_omd;
 
     /* Run UDP rules against the UDP header of Teredo packets */
@@ -1516,53 +1515,27 @@ int fpEvalPacket(Packet *p)
         do_detect_content = tmp_do_detect_content;
     }
 
-    switch(ip_proto)
+    switch(p->type())
     {
-        case IPPROTO_TCP:
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                        "Detecting on TcpList\n"););
-
-            if(p->ptrs.tcph == NULL)
-            {
-                ip_proto = -1;
-                break;
-            }
-
+        case PktType::TCP:
             return fpEvalHeaderTcp(p, omd);
 
-        case IPPROTO_UDP:
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                        "Detecting on UdpList\n"););
-
-            if(p->ptrs.udph == NULL)
-            {
-                ip_proto = -1;
-                break;
-            }
-
+        case PktType::UDP:
             return fpEvalHeaderUdp(p, omd);
 
-        case IPPROTO_ICMPV6:
-        case IPPROTO_ICMP:
+        case PktType::ICMP:
             DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
                         "Detecting on IcmpList\n"););
-
-            if(p->ptrs.icmph == NULL)
-            {
-                ip_proto = -1;
-                break;
-            }
-
             return fpEvalHeaderIcmp(p, omd);
 
+        /*
+        **  No Match on TCP/UDP, Do IP
+        */
         default:
+            return fpEvalHeaderIp(p, -1, omd);
             break;
     }
 
-    /*
-    **  No Match on TCP/UDP, Do IP
-    */
-    return fpEvalHeaderIp(p, ip_proto, omd);
 }
 
 void fpEvalIpProtoOnlyRules(Packet *p, uint8_t proto_id)
