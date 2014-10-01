@@ -145,6 +145,11 @@ void Shell::set_overrides(const char* s)
     overrides += s;
 }
 
+void Shell::set_overrides(Shell* sh)
+{
+    overrides += sh->overrides;
+}
+
 void Shell::configure(SnortConfig* sc)
 {
     assert(file.size());

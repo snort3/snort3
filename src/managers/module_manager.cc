@@ -244,7 +244,12 @@ static const Parameter* get_params(string& sfx, const Parameter* p)
     size_t pos = sfx.find_first_of('.');
 
     if ( pos == string::npos )
-        return p;
+    {
+        if ( p[0].name && !p[1].name )
+            return p;
+        else
+            return nullptr;
+    }
 
     sfx.erase(0, pos+1);
     string name = sfx.substr(0, sfx.find_first_of('.'));

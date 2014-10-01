@@ -636,6 +636,10 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
         tmp = tmp->next;
     }
 
+    // get overrides from cmd line
+    Shell* sh = boot_conf->policy_map->get_shell();
+    sc->policy_map->get_shell()->set_overrides(sh);
+
     if ( *fname )
     {
         Shell* sh = sc->policy_map->get_shell();

@@ -18,6 +18,7 @@
 -- fix -A log_null etc (ie w/o module)
 -- fixed --help-module format for asciidoc (again)
 -- tweaked snort.lua snort_defaults.lua
+-- parsing fixes
 
 121
 -- valgrind fixes
