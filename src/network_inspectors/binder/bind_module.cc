@@ -224,6 +224,7 @@ void BinderModule::add(const char* svc, const char* type)
     Binding* b = new Binding;
     b->when.svc = svc;
     b->use.type = type;
+    b->use.name = type;
     bindings.push_back(b);
 }
 
@@ -232,6 +233,7 @@ void BinderModule::add(unsigned proto, const char* type)
     Binding* b = new Binding;
     b->when.protos = proto;
     b->use.type = type;
+    b->use.name = type;
     bindings.push_back(b);
 }
 
