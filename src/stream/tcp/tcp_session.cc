@@ -2468,7 +2468,7 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     // update stats
     if ( tcpssn->tcp_init )
         tcpStats.trackers_released++;
-    else
+    else if ( tcpssn->lws_init )
         tcpStats.no_pickups++;
 
     Stream5UpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSED);

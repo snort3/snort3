@@ -13,6 +13,8 @@
 -- changed pcre JIT to be optional by #define; need autofoo
 -- added support for name / type bindings
 -- added value type checks
+-- updated tips
+-- updated stream_tcp counts
 
 121
 -- valgrind fixes
