@@ -237,8 +237,7 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
                 case PktType::TCP:
                     TextLog_Puts(csv_log, "TCP");
                     break;
-                case PktType::ICMP4:
-                case PktType::ICMP6:
+                case PktType::ICMP:
                     TextLog_Puts(csv_log, "ICMP");
                     break;
                 default:

@@ -53,7 +53,7 @@ Flow::Flow ()
     memset(this, 0, sizeof(*this));
 }
 
-Flow::Flow (int proto)
+Flow::Flow (PktType proto)
 {
     memset(this, 0, sizeof(*this));
     protocol = proto;

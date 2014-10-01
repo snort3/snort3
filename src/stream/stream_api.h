@@ -113,7 +113,7 @@ public:
      */
     int ignore_session(
         const sfip_t *addr1, uint16_t p1, const sfip_t *addr2, uint16_t p2,
-        uint8_t proto, char dir, uint32_t ppId);
+        PktType proto, char dir, uint32_t ppId);
 
     /* Resume inspection for session.
      */
@@ -241,7 +241,7 @@ public:
      *     -1 on failure
      */
     int set_application_protocol_id_expected(
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, uint8_t proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, PktType proto,
         int16_t appId, FlowData*);
 
     /** Retrieve application session data based on the lookup tuples for
@@ -252,7 +252,7 @@ public:
      *     Application Data reference (pointer)
      */
     static FlowData* get_application_data_from_ip_port(
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, char proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, PktType proto,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
 
     /*  Get the application data from the session key
@@ -276,7 +276,7 @@ public:
      *     Stream session pointer
      */
     static Flow* get_session_ptr_from_ip_port(
-        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, char proto,
+        const sfip_t *a1, uint16_t p1, const sfip_t *a2, uint16_t p2, PktType proto,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     /* Delete the session if it is in the closed session state.

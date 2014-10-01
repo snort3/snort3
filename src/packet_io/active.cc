@@ -89,12 +89,13 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
 {
     EncodeFlags flags = pf ? *pf : ENC_FLAG_FWD;
 
-    if ( !IsIP(p) )
-        return;
-
-    switch ( p->ptrs.ip_api.proto() )
+    switch ( p->type() )
     {
-        case IPPROTO_TCP:
+        case PktType::UNKNOWN:
+            // Can only occur if we have never seen IP
+            return;
+
+        case PktType::TCP:
             Active_SendReset(p, 0);
             if ( flags & ENC_FLAG_FWD )
                 Active_SendReset(p, ENC_FLAG_FWD);
@@ -338,16 +339,16 @@ int Active_IgnoreSession (Packet* p)
 
 int Active_ForceDropAction(Packet *p)
 {
-    if ( !IsIP(p) )
+    if ( p->has_ip() )
         return 0;
 
     // explicitly drop packet
     Active_ForceDropPacket();
 
-    switch ( p->ptrs.ip_api.proto() )
+    switch ( p->type() )
     {
-        case IPPROTO_TCP:
-        case IPPROTO_UDP:
+        case PktType::TCP:
+        case PktType::UDP:
             Active_DropSession();
             _Active_ForceIgnoreSession(p);
     }
@@ -365,19 +366,24 @@ static inline int _Active_DoReset(Packet *p)
     if ( !p->ptrs.ip_api.is_valid() )
         return 0;
 
-    switch ( p->ptrs.ip_api.proto() )
+    switch ( p->type() )
     {
-        case IPPROTO_TCP:
+        case PktType::TCP:
             if ( Active_IsRSTCandidate(p) )
                 ActionManager::queue_reject();
             break;
 
         // FIXIT-J send unr to udp/icmp4/icmp6 only or for all non-tcp?
-        case IPPROTO_UDP:
-        case IPPROTO_ICMP:
-        case IPPROTO_ICMPV6:
+        case PktType::UDP:
+        case PktType::ICMP:
+        case PktType::IP:
             if ( Active_IsUNRCandidate(p) )
                 ActionManager::queue_reject();
+            break;
+
+        case PktType::UNKNOWN:
+        case PktType::ARP:
+            //  No IP layer or this is an ARP packet
             break;
     }
 

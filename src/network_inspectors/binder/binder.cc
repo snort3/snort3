@@ -97,10 +97,11 @@ bool Binding::check_proto(const Flow* flow) const
 
     switch ( flow->protocol )
     {
-    case IPPROTO_IP:   bit = PROTO_BIT__IP;   break;
-    case IPPROTO_ICMP: bit = PROTO_BIT__ICMP; break;
-    case IPPROTO_TCP:  bit = PROTO_BIT__TCP;  break;
-    case IPPROTO_UDP:  bit = PROTO_BIT__UDP;  break;
+    case PktType::IP:   bit = PROTO_BIT__IP;   break;
+    case PktType::ICMP: bit = PROTO_BIT__ICMP; break;
+    case PktType::TCP:  bit = PROTO_BIT__TCP;  break;
+    case PktType::UDP:  bit = PROTO_BIT__UDP;  break;
+    default: break;
     }
     return ( mask & bit ) != 0;
 }
@@ -239,7 +240,7 @@ int Binder::exec(int, void* pv)
     if ( ins )
         flow->set_gadget(ins);
 
-    if ( flow->protocol != IPPROTO_TCP )
+    if ( flow->protocol != PktType::TCP )
         return 0;
 
     if ( ins )
@@ -340,19 +341,19 @@ void Binder::init_flow(Flow* flow)
 {
     switch ( flow->protocol )
     {
-    case IPPROTO_IP:
+    case PktType::IP:
         set_session(flow, "stream_ip");
         break;
 
-    case IPPROTO_ICMP:
+    case PktType::ICMP:
         set_session(flow, "stream_icmp");
         break;
 
-    case IPPROTO_TCP:
+    case PktType::TCP:
         set_session(flow, "stream_tcp");
         break;
 
-    case IPPROTO_UDP:
+    case PktType::UDP:
         set_session(flow, "stream_udp");
         break;
 

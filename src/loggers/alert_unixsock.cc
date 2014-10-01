@@ -174,23 +174,23 @@ static void get_alert_pkt(
             {
                 us.alert.nethdr=(char *)p->ptrs.ip_api.get_ip4h()-(char *)p->pkt;
 
-                switch(p->ptrs.ip_api.proto())
+                switch(p->type())
                 {
-                    case IPPROTO_TCP:
+                    case PktType::TCP:
                        if (p->ptrs.tcph)
                        {
                            us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
                        }
                        break;
 
-                    case IPPROTO_UDP:
+                    case PktType::UDP:
                         if (p->ptrs.udph)
                         {
                             us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
                         }
                         break;
 
-                    case IPPROTO_ICMP:
+                    case PktType::ICMP:
                        if (p->ptrs.icmph)
                        {
                            us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;

@@ -107,6 +107,8 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
     // decode the next layer. However, I  can't set the next_prot_id in
     // this case because I don't want this going to the TCP, UDP, or
     // ICMP codec. Therefore, doing a minor decode here.
+
+    // FIXIT-J L   Will fail to decode Ipv6 options
     switch(ip6h->get_next())
     {
         case IPPROTO_TCP: /* decode the interesting part of the header */

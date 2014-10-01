@@ -1020,7 +1020,7 @@ void RpcDecode::eval(Packet *p)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(IsTCP(p) && p->dsize);
+    assert(p->is_tcp() && p->dsize);
 
     /* If we're stateful that means stream5 has been configured.
      * In this case we don't look at server packets.

@@ -95,9 +95,7 @@ constexpr uint32_t ESP_TRAILER_LEN = 2;
 
 
 void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_ESP);
-}
+{ v.push_back(IPPROTO_ID_ESP); }
 
 
 

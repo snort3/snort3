@@ -201,15 +201,22 @@ enum DecodeFlags : std::uint16_t
     /*
      * DO NOT USE PKT_TYPE_* directly!! Use PktType enum and
      *      access methods to get/set.
+     *
+     * Since there are so few Packet Types, I decided to save
+     * some bytes (these get zeroes for every packet), and use
+     * the three least signfignat bits of 'decode_flags' as
+     * the packet_type. Unless you are adding a new PktType,
+     * I highly suggest you ignore this section and use
+     * the SnortData::xxx_pkt_type() setter and getter methods.
      */
-    PKT_TYPE_UNKOWN = 0x00,
+    PKT_TYPE_UNKNOWN = 0x00,
     PKT_TYPE_IP = 0x01,
     PKT_TYPE_TCP = 0x02,
     PKT_TYPE_UDP = 0x03,
-    PKT_TYPE_ICMP4 = 0x04,
-    PKT_TYPE_ICMP6 = 0x05,
-    PKT_TYPE_ARP = 0x06,
-    PKT_TYPE_FREE = 0x07, /* If protocol is added, update enum class PktType below. */
+    PKT_TYPE_ICMP = 0x04,
+    PKT_TYPE_ARP = 0x05,
+    PKT_TYPE_FREE1 = 0x06, /* If protocol is added, update enum class PktType below. */
+    PKT_TYPE_FREE2 = 0x07, /* If protocol is added, update enum class PktType below. */
     PKT_TYPE_MASK = 0x07,
 
     /* error flags */
@@ -233,12 +240,11 @@ enum DecodeFlags : std::uint16_t
 /* NOTE: if A protocol is added, update DecodeFlags! */
 enum class PktType : std::uint8_t
 {
-    UNKOWN = PKT_TYPE_UNKOWN,
+    UNKNOWN = PKT_TYPE_UNKNOWN,
     IP = PKT_TYPE_IP,
     TCP = PKT_TYPE_TCP,
     UDP = PKT_TYPE_UDP,
-    ICMP4 = PKT_TYPE_ICMP4,
-    ICMP6 = PKT_TYPE_ICMP6,
+    ICMP = PKT_TYPE_ICMP,
     ARP = PKT_TYPE_ARP,
 };
 
@@ -265,7 +271,7 @@ struct SnortData
 
     inline void reset()
     {
-        static_assert(PKT_TYPE_UNKOWN == 0,
+        static_assert(PKT_TYPE_UNKNOWN == 0,
             "The Packets 'type' gets resets to zero - "
             "which means zero is unkown");
         memset((char*)&tcph, '\0', offsetof(SnortData, ip_api));
@@ -323,6 +329,7 @@ struct CodecData
 #define PROTO_BIT__TCP_EMBED_ICMP  0x0400
 #define PROTO_BIT__UDP_EMBED_ICMP  0x0800
 #define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
+#define PROTO_BIT__ICMP_EMBED (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_ICMP)
 #define PROTO_BIT__IP6_EXT  0x2000
 #define PROTO_BIT__FREE     0x4000
 #define PROTO_BIT__OTHER    0x8000

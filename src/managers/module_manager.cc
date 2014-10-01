@@ -376,7 +376,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         }
         else if ((idx > 0) && (p->type == Parameter::PT_TABLE))
         {
-            ParseError("%s is a table. All elements must be name\n", s);
+            ParseError("%s is a table. All elements must be named\n", s);
             return false;
         }
     }

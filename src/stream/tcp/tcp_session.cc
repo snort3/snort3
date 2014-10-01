@@ -3026,7 +3026,7 @@ static inline StreamSegment* SegmentAlloc (
             tcp_memcap->dealloc(size);
             return NULL;
         }
-        flow_con->prune_flows(IPPROTO_TCP, p);
+        flow_con->prune_flows(PktType::TCP, p);
     }
 
     ss = (StreamSegment*)SnortAlloc(size);
@@ -4245,7 +4245,7 @@ static void NewTcpSession(
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "adding TcpSession to lightweight session\n"););
-        lwssn->protocol = p->ptrs.ip_api.proto();
+        lwssn->protocol = p->type();
         tmp->flow = lwssn;
 
         /* New session, previous was marked as reset.  Clear the
@@ -4731,7 +4731,7 @@ static int ProcessTcp(
     STREAM5_DEBUG_WRAP(char *t = NULL; char *l = NULL;)
     PROFILE_VARS;
 
-    if (lwssn->protocol != IPPROTO_TCP)
+    if (lwssn->protocol != PktType::TCP)
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Lightweight session not TCP on TCP packet\n"););
@@ -6748,7 +6748,7 @@ int TcpSession::process(Packet *p)
 
 void tcp_reset()
 {
-    flow_con->reset_prunes(IPPROTO_TCP);
+    flow_con->reset_prunes(PktType::TCP);
 }
 
 void tcp_show(StreamTcpConfig* tcp_config)

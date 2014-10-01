@@ -183,7 +183,6 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
             ph6.protocol = codec.ip6_csum_proto;
             ph6.len = htons((uint16_t)raw.len);
 
-
             csum = checksum::tcp_cksum((uint16_t *)(tcph), raw.len, &ph6);
         }
 

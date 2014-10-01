@@ -787,7 +787,7 @@ int  drop_all_fragments(
         Packet *p
         )
 {
-    if ( !p->flow || p->flow->protocol != IPPROTO_IP )
+    if ( !p->flow || p->flow->protocol != PktType::IP )
         return -1;
 
     FragTracker *ft = &((IpSession*)p->flow->session)->tracker;
@@ -1220,7 +1220,7 @@ int fragGetApplicationProtocolId(Packet *p)
     uint16_t src_port = 0;
     uint16_t dst_port = 0;
 
-    if ( !p->flow || p->flow->protocol != IPPROTO_IP )
+    if ( !p->flow || p->flow->protocol != PktType::IP )
     {
         return 0;
     }
@@ -1238,19 +1238,19 @@ int fragGetApplicationProtocolId(Packet *p)
         return ft->application_protocol;
     }
 
-    switch (p->ptrs.ip_api.proto())
+    switch (p->type())
     {
-        case IPPROTO_TCP:
+        case PktType::TCP:
             ft->ipprotocol = protocolReferenceTCP;
             src_port = p->ptrs.sp;
             dst_port = p->ptrs.dp;
             break;
-        case IPPROTO_UDP:
+        case PktType::UDP:
             ft->ipprotocol = protocolReferenceUDP;
             src_port = p->ptrs.sp;
             dst_port = p->ptrs.dp;
             break;
-        case IPPROTO_ICMP:
+        case PktType::ICMP:
             ft->ipprotocol = protocolReferenceICMP;
             break;
     }
@@ -2357,7 +2357,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         f = (Fragment *) SnortAlloc(sizeof(Fragment));
@@ -2506,7 +2506,7 @@ int Defrag::add_frag_node(FragTracker *ft,
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         /*
@@ -2593,7 +2593,7 @@ int Defrag::dup_frag_node(
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         /*

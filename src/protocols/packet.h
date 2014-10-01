@@ -150,7 +150,7 @@ constexpr uint8_t DEFAULT_LAYERMAX = 40;
 class Flow;
 
 
-struct Packet
+struct SO_PUBLIC Packet
 {
     Flow* flow;   /* for session tracking */
 
@@ -191,16 +191,14 @@ struct Packet
 
 
     uint8_t ps_proto;  // Used for portscan and unified2 logging
-    uint8_t ip_proto_next;      /* This is different than the ip_api.proto() function -
-                                 * this variable hold the first non-ip and non-ipv6 extension
-                                 * protocols, while proto() returns the next or proto() field
-                                 * of the raw IP header
-                                 */
 
-    /*  Access methods */
 
+    /*  Boolean functions - general information about this packet */
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
+
+    inline bool has_ip() const
+    { return ptrs.ip_api.is_valid(); }
 
     inline bool is_ip4() const
     { return ptrs.ip_api.is_ip4(); }
@@ -208,8 +206,28 @@ struct Packet
     inline bool is_ip6() const
     { return ptrs.ip_api.is_ip6(); }
 
-    inline bool has_valid_ip() const
-    { return ptrs.ip_api.is_valid(); }
+    inline bool is_ip() const
+    { return ptrs.get_pkt_type() == PktType::IP; }
+
+    inline bool is_tcp() const
+    { return ptrs.get_pkt_type() == PktType::TCP; }
+
+    inline bool is_udp() const
+    { return ptrs.get_pkt_type() == PktType::UDP; }
+
+
+    /* Get general, non-boolean information */
+
+
+    /* the ip_api return the protocol_ID of the protocol directly the
+     * innermost IP layer.  However, especially in IPv6, the next protocol
+     * can frequently be an IP extension.  Therefore, this function
+     * return the protocol ID of the first protocol after all the
+     * IP layers.  For instance, if the stack is
+     *          eth::ip6::hop_opts::ipv6_routing::UDP
+     * this function return 17 == IPPROTO_UDP == IPPROTO_ID_UDP
+     */
+    uint8_t ip_next_proto() const;
 
     inline void reset()
     {
@@ -221,10 +239,6 @@ struct Packet
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
 
 
-
-#define IsIP(p) (p->ptrs.ip_api.is_valid())
-#define IsTCP(p) (IsIP(p) && p->ptrs.tcph)
-#define IsICMP(p) (IsIP(p) && p->ptrs.icmph)
 #define GET_PKT_SEQ(p) (ntohl(p->ptrs.tcph->th_seq))
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
@@ -241,13 +255,6 @@ static inline int PacketWasCooked(const Packet* const p)
 
 static inline bool IsPortscanPacket(const Packet* const p)
 { return ( PacketWasCooked(p) && (p->pseudo_type == PSEUDO_PKT_PS)); }
-
-static inline uint8_t GetEventProto(const Packet* const p)
-{
-    if (IsPortscanPacket(p))
-        return p->ps_proto;
-    return p->ptrs.ip_api.proto(); // return 0 if invalid
-}
 
 static inline bool PacketHasFullPDU (const Packet* const p)
 { return ( (p->packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL ); }

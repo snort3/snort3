@@ -45,8 +45,6 @@ public:
     virtual bool decode(const RawData&, CodecData&, SnortData&);
 };
 
-const uint16_t IPPROTO_ID_MOBILITY = 55;
-
 } // namespace
 
 

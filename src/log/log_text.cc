@@ -544,8 +544,7 @@ void LogIpAddrs(TextLog *log, Packet *p)
         return;
 
     if ((p->ptrs.decode_flags & DECODE_FRAG)
-            || ((p->ptrs.ip_api.proto() != IPPROTO_TCP)
-                && (p->ptrs.ip_api.proto() != IPPROTO_UDP)))
+           || ( !p->is_tcp() && !p->is_udp()))
     {
         const char *ip_fmt = "%s -> %s";
 
@@ -999,50 +998,45 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 
     if (!layer::set_api_ip_embed_icmp(p, op.ptrs.ip_api))
     {
-        switch(orig_p->ptrs.ip_api.proto())
+        switch(p->proto_bits & PROTO_BIT__ICMP_EMBED)
         {
-            case IPPROTO_TCP:
+            case PROTO_BIT__TCP_EMBED_ICMP:
             {
                 const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(op.ptrs.ip_api);
                 if (tcph)
                 {
-                    orig_p->ptrs.sp = ntohs(tcph->th_sport);
-                    orig_p->ptrs.dp = ntohs(tcph->th_dport);
+                    orig_p->ptrs.sp = tcph->src_port();
+                    orig_p->ptrs.dp = tcph->dst_port();
                     orig_p->ptrs.tcph = tcph;
-                }
 
-                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-                LogIPHeader(log, orig_p);
+                    TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+                    LogIPHeader(log, orig_p);
 
-                if(tcph != NULL)
-                {
                     TextLog_Print(log, "Seq: 0x%lX\n",
                             (u_long)ntohl(orig_p->ptrs.tcph->th_seq));
                 }
                 break;
             }
 
-            case IPPROTO_UDP:
+            case PROTO_BIT__UDP_EMBED_ICMP:
             {
                 const udp::UDPHdr* udph = layer::get_udp_embed_icmp(op.ptrs.ip_api);
                 if (udph)
                 {
-                    orig_p->ptrs.sp = ntohs(p->ptrs.udph->uh_sport);
-                    orig_p->ptrs.dp = ntohs(p->ptrs.udph->uh_dport);
+                    orig_p->ptrs.sp = udph->src_port();
+                    orig_p->ptrs.dp = udph->dst_port();
                     orig_p->ptrs.udph = udph;
-                }
 
-                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-                LogIPHeader(log, orig_p);
+                    TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+                    LogIPHeader(log, orig_p);
 
-                if(udph != NULL)
                     TextLog_Print(log, "Len: %d  Csum: %d\n",
                             ntohs(orig_p->ptrs.udph->uh_len) - udp::UDP_HEADER_LEN,
                             ntohs(orig_p->ptrs.udph->uh_chk));
                 break;
             }
 
-            case IPPROTO_ICMP:
+            case PROTO_BIT__ICMP_EMBED_ICMP:
             {
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
@@ -1054,13 +1048,15 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
             }
 
             default:
+            {
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
 
                 TextLog_Print(log, "Protocol: 0x%X (unknown or "
                         "header truncated)", orig_p->ptrs.ip_api.proto());
                 break;
-        }       /* switch */
+            }
+        } /* switch */
 
         /* if more than 8 bytes of original IP payload sent */
         uint32_t orig_ip_hlen = p->ptrs.ip_api.hlen() << 2;
@@ -1726,9 +1722,9 @@ void LogIPPkt(TextLog* log, Packet * p)
     /* if this isn't a fragment, print the other header info */
     if (!(p->ptrs.decode_flags & DECODE_FRAG))
     {
-        switch (p->ptrs.ip_api.proto())
+        switch (p->type())
         {
-            case IPPROTO_TCP:
+            case PktType::TCP:
                 if ( p->ptrs.tcph != NULL )
                 {
                     LogTCPHeader(log, p);
@@ -1739,7 +1735,7 @@ void LogIPPkt(TextLog* log, Packet * p)
                 }
                 break;
 
-            case IPPROTO_UDP:
+            case PktType::UDP:
                 if ( p->ptrs.udph != NULL )
                 {
                     // for consistency, nothing to log (tcp doesn't log paylen)
@@ -1752,7 +1748,7 @@ void LogIPPkt(TextLog* log, Packet * p)
 
                 break;
 
-            case IPPROTO_ICMP:
+            case PktType::ICMP:
                 if ( p->ptrs.icmph != NULL )
                 {
                     LogICMPHeader(log, p);

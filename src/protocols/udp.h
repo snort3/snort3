@@ -61,16 +61,16 @@ struct UDPHdr
 
     /*  Raw access to fields */
     inline uint16_t raw_src_port() const
-    { return ntohs(uh_sport); }
+    { return uh_sport; }
 
     inline uint16_t raw_dst_port() const
-    { return ntohs(uh_dport); }
+    { return uh_dport; }
 
     inline uint16_t raw_len() const
-    { return ntohs(uh_len); }
+    { return uh_len; }
 
     inline uint16_t raw_cksum() const
-    { return ntohs(uh_chk); }
+    { return uh_chk; }
 };
 
 

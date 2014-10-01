@@ -327,11 +327,13 @@ int Detect(Packet * p)
     ip::IpApi tmp_api;
     int8_t curr_layer = p->num_layers - 1;
 
-    while (!proto_found &&
-            layer::set_inner_ip_api(p, tmp_api, curr_layer))
+    while (layer::set_inner_ip_api(p, tmp_api, curr_layer))
     {
         if (snort_conf->ip_proto_array[tmp_api.proto()])
+        {
             proto_found = true;
+            break;
+        }
     }
 
     if (!proto_found)

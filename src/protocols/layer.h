@@ -99,11 +99,10 @@ struct Packet;
 namespace layer
 {
 
-//  These are for internal use
+//  Set by PacketManager.  Ensure you can call layer:: without a packet pointers
 void set_packet_pointer(const Packet* const);
 
-// all of these functions will begin search from layer 0,
-// and will return the first function they find.
+
 SO_PUBLIC const uint8_t* get_inner_layer(const Packet*, uint16_t proto);
 SO_PUBLIC const uint8_t* get_outer_layer(const Packet*, uint16_t proto);
 

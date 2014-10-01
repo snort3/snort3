@@ -79,7 +79,7 @@ static void UdpSessionCleanup(Flow *lwssn)
 static int ProcessUdp(
     Flow *lwssn, Packet *p, StreamUdpConfig*, SFXHASH_NODE*)
 {
-    if (lwssn->protocol != IPPROTO_UDP)  // FIXIT-P checked by tcp, icmp, and ip too?
+    if (lwssn->protocol != PktType::UDP)  // FIXIT-P checked by tcp, icmp, and ip too?
     // FIXIT-L need to free lwssn and get a new one
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -140,7 +140,7 @@ bool UdpSession::setup(Packet* p)
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
     flow->s5_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
-    flow->protocol = p->ptrs.ip_api.proto();
+    flow->protocol = p->type();
     flow->s5_state.direction = FROM_SENDER;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
@@ -237,6 +237,6 @@ void udp_stats()
 
 void udp_reset()
 {
-    flow_con->reset_prunes(IPPROTO_UDP);
+    flow_con->reset_prunes(PktType::UDP);
 }
 

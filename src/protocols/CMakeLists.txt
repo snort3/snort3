@@ -28,6 +28,7 @@ set (PROTOCOL_HEADERS
 add_library (protocols STATIC
     ${PROTOCOL_HEADERS}
     layer.cc
+    packet.cc
     ip.cc
     ipv4_options.cc
     tcp_options.cc
