@@ -94,8 +94,7 @@ local_rules =
 
 ips =
 {
-    --include = '../test.rules',
-    --include = 'rules/active.rules',
+    --include = 'active.rules',
     --rules = local_rules,
     --enable_builtin_rules = true
 }
