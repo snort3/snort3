@@ -47,7 +47,6 @@ NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size,
    transaction->set_request(this);
 }
 
-
 void NHttpMsgRequest::parse_start_line() {
     // There should be exactly two spaces. One following the method and one before "HTTP/".
     // Additional spaces located within the URI are not allowed but we will tolerate it

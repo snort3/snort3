@@ -52,10 +52,12 @@ void NHttpMsgHeadShared::analyze() {
 void NHttpMsgHeadShared::parse_header_block() {
     int32_t bytes_used = 0;
     num_headers = 0;
+    int num_seps;
     while (bytes_used < msg_text.length) {
         header_line[num_headers].start = msg_text.start + bytes_used;
-        header_line[num_headers].length = find_crlf(header_line[num_headers].start, msg_text.length - bytes_used);
-        bytes_used += header_line[num_headers++].length + 2;
+        header_line[num_headers].length = find_header_end(header_line[num_headers].start, msg_text.length - bytes_used,
+           &num_seps);
+        bytes_used += header_line[num_headers++].length + num_seps;
         if (num_headers >= MAXHEADERS) {
              break;
         }
@@ -63,6 +65,32 @@ void NHttpMsgHeadShared::parse_header_block() {
     if (bytes_used < msg_text.length) {
         infractions |= INF_TOOMANYHEADERS;
     }
+}
+
+// Return the number of octets before the CRLF that ends a header. CRLF does not count when immediately followed by
+// <SP> or <LF>. These whitespace characters at the beginning of the next line indicate that the previous header has
+// wrapped and is continuing on the next line.
+// 
+// The final header in the block will not be terminated by CRLF (splitter design) but will terminate at the end of the
+// buffer. length is returned.
+//
+// Bare LF without CR is accepted as the terminator unless preceded by backslash character. FIXIT-L this does not
+// consider whether \LF is contained within a quoted string and perhaps this should be revisited. The current
+// approach errs in the direction of not incorrectly dividing a single header into two headers.
+//
+// FIXIT-M any abuse of backslashes in headers should be a preprocessor alarm.
+
+uint32_t NHttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t length, int* const num_seps) {
+    for (int32_t k=0; k < length-1; k++) {
+        if ((buffer[k] != '\\') && (buffer[k+1] == '\n')) {
+            if ((k+2 >= length) || ((buffer[k+2] != ' ') && (buffer[k+2] != '\t'))) {
+                *num_seps = (buffer[k] == '\r') ? 2 : 1;
+                return k + 2 - *num_seps;
+            }
+        }
+    }
+    *num_seps = 0;
+    return length;
 }
 
 // Divide header field lines into field name and field value

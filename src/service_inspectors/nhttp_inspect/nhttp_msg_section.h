@@ -59,7 +59,6 @@ protected:
        NHttpEnums::SourceId source_id_, bool buf_owner);
 
     // Convenience methods
-    static uint32_t find_crlf(const uint8_t* buffer, int32_t length);
     void print_message_title(FILE *output, const char *title) const;
     void print_message_wrapup(FILE *output) const;
     void create_event(NHttpEnums::EventSid sid);

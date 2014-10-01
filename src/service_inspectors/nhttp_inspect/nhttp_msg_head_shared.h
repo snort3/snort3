@@ -73,6 +73,7 @@ protected:
     static const StrCode trans_code_list[];
 
     void parse_header_block();
+    static uint32_t find_header_end(const uint8_t* buffer, int32_t length, int* const num_seps);
     void parse_header_lines();
     void derive_header_name_id(int index);
 
