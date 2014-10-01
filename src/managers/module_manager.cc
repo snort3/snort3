@@ -340,7 +340,7 @@ static bool set_value(const char* fqn, Value& v)
     }
 
     if ( v.get_type() == Value::VT_STR )
-        ErrorMessage("ERROR invalid %s = %s\n", fqn, v.get_string());
+        ErrorMessage("ERROR invalid %s = '%s'\n", fqn, v.get_string());
     else if ( v.get_real() == v.get_long() )
         ErrorMessage("ERROR invalid %s = %ld\n", fqn, v.get_long());
     else

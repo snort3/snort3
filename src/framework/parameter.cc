@@ -38,6 +38,9 @@ static bool valid_bool(Value& v, const char*)
 // FIXIT-L allow multiple , separated ranges
 static bool valid_int(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_NUM )
+        return false;
+
     if ( !r )
         return true;
 
@@ -70,6 +73,9 @@ static bool valid_int(Value& v, const char* r)
 // FIXIT-L allow multiple , separated ranges
 static bool valid_real(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_NUM )
+        return false;
+
     if ( !r )
         return true;
 
@@ -101,6 +107,9 @@ static bool valid_real(Value& v, const char* r)
 
 static bool valid_string(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     if ( r && !strcmp(r, "(optional)") )
         return true;
 
@@ -115,6 +124,9 @@ static bool valid_string(Value& v, const char* r)
 
 static bool valid_select(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     if ( !r )
         return false;
 
@@ -142,6 +154,9 @@ static unsigned get_index(const char* r, const char* t)
 
 static bool valid_enum(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     if ( !r )
         return false;
 
@@ -182,6 +197,9 @@ static unsigned split(const string& txt, vector<string>& strs)
 
 static bool valid_multi(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     if ( !r )
         return false;
 
@@ -208,6 +226,9 @@ static bool valid_multi(Value& v, const char* r)
 
 static bool valid_mac(Value& v, const char*)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     struct addr a;
 
     if ( addr_pton(v.get_string(), &a) )
@@ -224,6 +245,9 @@ static bool valid_mac(Value& v, const char*)
 
 static bool valid_ip4(Value& v, const char*)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     uint32_t ip4 = inet_addr(v.get_string());
 
     if ( ip4 == INADDR_NONE )
@@ -235,6 +259,9 @@ static bool valid_ip4(Value& v, const char*)
 
 static bool valid_addr(Value& v, const char*)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     struct addr a;
 
     if ( addr_pton(v.get_string(), &a) )
@@ -254,6 +281,9 @@ static bool valid_addr(Value& v, const char*)
 
 static bool valid_bit_list(Value& v, const char* r)
 {
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
     string pl = v.get_string();
     string bs;
 

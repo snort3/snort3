@@ -12,6 +12,7 @@
 -- fixed byte_extract leak, session flow data leak
 -- changed pcre JIT to be optional by #define; need autofoo
 -- added support for name / type bindings
+-- added value type checks
 
 121
 -- valgrind fixes
