@@ -185,16 +185,19 @@ void EventManager::instantiate(
     Module* mod = ModuleManager::get_module(name);
     Output* p = get_out(name);
 
-    if ( !mod || !p )
+    if ( !p )
     {
         ParseError("unknown logger %s\n", name);
         return;
     }
 
-    // FIXIT-H this loses args if set in conf
-    // emulate a config like name = { }
-    mod->begin(name, 0, sc);
-    mod->end(name, 0, sc);
+    if ( mod )
+    {
+        // FIXIT-H this loses args if set in conf
+        // emulate a config like name = { }
+        mod->begin(name, 0, sc);
+        mod->end(name, 0, sc);
+    }
 
     // override prior outputs
     // (last cmdline option wins)
