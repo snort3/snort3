@@ -68,7 +68,7 @@ void NHttpMsgTrailer::update_flow() {
 
 ProcessResult NHttpMsgTrailer::worth_detection() {
     // Do not send empty trailers to detection
-    return (headers.length != STAT_NOTPRESENT) ? RES_INSPECT : RES_IGNORE;
+    return (msg_text.length > 0) ? RES_INSPECT : RES_IGNORE;
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.

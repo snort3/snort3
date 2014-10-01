@@ -46,7 +46,8 @@ public:
     unsigned max() { return NHttpTestManager::use_test_input() ? 16384 : paf_max; };
 private:
     void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SourceId source_id,
-       NHttpEnums::SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length);
+       NHttpEnums::SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length,
+       uint32_t num_excess);
     void create_event(NHttpEnums::EventSid sid);
     uint32_t size_buffer_needed(unsigned total, NHttpEnums::SectionType type, uint32_t possible_additional);
     NHttpInspect* const my_inspector;

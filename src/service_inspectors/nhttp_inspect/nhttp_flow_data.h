@@ -60,8 +60,7 @@ private:
     void half_reset(NHttpEnums::SourceId source_id);
 
     // StreamSplitter internal data
-    NHttpRequestSplitter request_splitter[2];
-    NHttpStatusSplitter status_splitter[2];
+    NHttpStartSplitter start_splitter[2];
     NHttpHeaderSplitter header_splitter[2];
     NHttpChunkSplitter chunk_splitter[2];
     NHttpTrailerSplitter trailer_splitter[2];
@@ -75,6 +74,7 @@ private:
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response
     NHttpEnums::SectionType section_type[2] = { NHttpEnums::SEC__NOTCOMPUTE, NHttpEnums::SEC__NOTCOMPUTE };
+    uint32_t num_excess[2] = { 0, 0 };
     bool tcp_close[2] = { false, false };
     uint64_t infractions[2] = { 0, 0 };
 

@@ -40,7 +40,6 @@ using namespace NHttpEnums;
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgHeadShared::analyze() {
-    parse_whole();
     parse_header_block();
     parse_header_lines();
     for (int j=0; j < num_headers; j++) {
@@ -49,64 +48,19 @@ void NHttpMsgHeadShared::analyze() {
     }
 }
 
-void NHttpMsgHeadShared::parse_whole() {
-    // Normal case with header fields
-    if (!tcp_close && (msg_text.length >= 5)) {
-        headers.start = msg_text.start;
-        headers.length = msg_text.length - 4;
-        assert(!memcmp(msg_text.start+msg_text.length-4, "\r\n\r\n", 4));
-    }
-    // Normal case no header fields
-    else if (!tcp_close) {
-        headers.length = STAT_NOTPRESENT;
-        assert((msg_text.length == 2) && !memcmp(msg_text.start, "\r\n", 2));
-    }
-    // Normal case with header fields and TCP connection close
-    else if ((msg_text.length >= 5) && !memcmp(msg_text.start+msg_text.length-4, "\r\n\r\n", 4)) {
-        headers.start = msg_text.start;
-        headers.length = msg_text.length - 4;
-    }
-    // Normal case no header fields and TCP connection close
-    else if ((msg_text.length == 2) && !memcmp(msg_text.start, "\r\n", 2)) {
-        headers.length = STAT_NOTPRESENT;
-    }
-    // Abnormal cases truncated by TCP connection close
-    else {
-        infractions |= INF_TRUNCATED;
-        // Lone <CR>
-        if ((msg_text.length == 1) && (msg_text.start[0] == '\r')) {
-            headers.length = STAT_NOTPRESENT;
-        }
-        // Truncation occurred somewhere in the header fields
-        else {
-            headers.start = msg_text.start;
-            headers.length = msg_text.length;
-            // When present, remove partial <CR><LF><CR><LF> sequence from the end
-            if ((msg_text.length >= 4) && !memcmp(msg_text.start+msg_text.length-3, "\r\n\r", 3)) headers.length -= 3;
-            else if ((msg_text.length >= 3) && !memcmp(msg_text.start+msg_text.length-2, "\r\n", 2)) headers.length -= 2;
-            else if ((msg_text.length >= 2) && (msg_text.start[msg_text.length-1] == '\r')) headers.length -= 1;
-        }
-    }
-}
-
 // Divide up the block of header fields into individual header field lines.
 void NHttpMsgHeadShared::parse_header_block() {
-    if (headers.length < 0) {
-        num_headers = STAT_NOSOURCE;
-        return;
-    }
-
     int32_t bytes_used = 0;
     num_headers = 0;
-    while (bytes_used < headers.length) {
-        header_line[num_headers].start = headers.start + bytes_used;
-        header_line[num_headers].length = find_crlf(header_line[num_headers].start, headers.length - bytes_used, true);
+    while (bytes_used < msg_text.length) {
+        header_line[num_headers].start = msg_text.start + bytes_used;
+        header_line[num_headers].length = find_crlf(header_line[num_headers].start, msg_text.length - bytes_used);
         bytes_used += header_line[num_headers++].length + 2;
         if (num_headers >= MAXHEADERS) {
              break;
         }
     }
-    if (bytes_used < headers.length) {
+    if (bytes_used < msg_text.length) {
         infractions |= INF_TOOMANYHEADERS;
     }
 }

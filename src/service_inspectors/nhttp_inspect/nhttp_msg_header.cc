@@ -119,7 +119,7 @@ ProcessResult NHttpMsgHeader::worth_detection() {
     }
 
     // Do not send empty headers by themselves to detection
-    return ((headers.length != STAT_NOTPRESENT) || (session_data->section_buffer_length[source_id] > 0))
+    return ((msg_text.length > 0) || (session_data->section_buffer_length[source_id] > 0))
        ? RES_INSPECT : RES_IGNORE;
 }
 

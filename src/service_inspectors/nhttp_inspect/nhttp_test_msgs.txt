@@ -36,10 +36,6 @@
 #
 # Fill data will not be provided for a paragraph that is preceded by tcpclose. The body or chunk will terminate at the end of the paragraph.
 #
-# There must not be excess data for a test case. Once a data stream ends with a TCP close there must be a break command before further data is sent.
-# Similarly a message section that triggers an abort of processing must end the paragraph and be followed by a break. These rules apply half-duplex
-# so it would be possible to send data in the opposite direction before the break.
-#
 # This test tool does not implement the feature of being hardened against bad input. If you write a badly formatted or improper test case the
 # program may assert or crash. The responsibility is on the developer to get it right. Currently that is the best use of resources.
 

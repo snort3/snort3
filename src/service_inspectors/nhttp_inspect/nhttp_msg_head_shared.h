@@ -44,7 +44,7 @@ public:
     void gen_events();
 
     int32_t get_num_headers() const { return num_headers; };
-    const Field& get_headers() const { return headers; };
+    const Field& get_headers() const { return msg_text; };
     const Field& get_header_line(int k) const { return header_line[k]; };
     const Field& get_header_name(int k) const { return header_name[k]; };
     const Field& get_header_value(int k) const { return header_value[k]; };
@@ -72,14 +72,11 @@ protected:
     static const StrCode header_list[];
     static const StrCode trans_code_list[];
 
-    void parse_whole();
     void parse_header_block();
     void parse_header_lines();
     void derive_header_name_id(int index);
 
     void print_headers(FILE *output);
-
-    Field headers;
 
     // All of these are indexed by the relative position of the header field in the message
     static const int MAXHEADERS = 200;  // I'm an arbitrary number. Need to revisit.

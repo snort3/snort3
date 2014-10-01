@@ -40,48 +40,44 @@ void NHttpSplitter::conditional_reset() {
     }
 }
 
-ScanResult NHttpRequestSplitter::split(const uint8_t* buffer, uint32_t length) {
+ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
     conditional_reset();
     for (uint32_t k = 0; k < length; k++) {
-        // Count the alternating <CR> and <LF> characters we have seen in a row
-        if (((buffer[k] == '\r') && (num_crlf == 0)) ||
-            ((buffer[k] == '\n') && (num_crlf == 1))) {
-            num_crlf++;
-            if (num_crlf < 2) {
-                continue;
+        // Discard magic six white space characters CR, LF, Tab, VT, FF, and SP when they occur before the start line.
+        // If we have seen nothing but white space so far ...
+        if (num_crlf == octets_seen + k) {
+            if ((buffer[k] == 32) || ((buffer[k] >= 9) && (buffer[k] <= 13))) {
+                if (num_crlf < MAX_LEADING_WHITESPACE) {
+                    num_crlf++;
+                    continue;
+                }
+                else {
+                    complete = true;
+                    return SCAN_ABORT;
+                }
+            }
+            if (num_crlf > 0) {
+                num_flush = k;           // current octet not flushed with white space
+                complete = true;
+                return SCAN_DISCARD;
             }
         }
-        else {
-            num_crlf = 0;
-            continue;
-        }
-        num_flush = k+1;
-        // If the first two octets are CRLF then they must be discarded.
-        complete = true;
-        return ((octets_seen + k + 1) == 2) ? SCAN_DISCARD : SCAN_FOUND;
-    }
-    octets_seen += length;
-    return SCAN_NOTFOUND;
-}
 
-ScanResult NHttpStatusSplitter::split(const uint8_t* buffer, uint32_t length) {
-    conditional_reset();
-    for (uint32_t k = 0; k < length; k++) {
-        // Count the alternating <CR> and <LF> characters we have seen in a row
-        if (((buffer[k] == '\r') && (num_crlf == 0)) ||
-            ((buffer[k] == '\n') && (num_crlf == 1))) {
+        // If we get this far then the leading white space issue is behind us and num_crlf was reset to zero
+        if (buffer[k] == '\n') {
             num_crlf++;
-            if (num_crlf < 2) {
-                continue;
-            }
+            num_flush = k+1;
+            complete = true;
+            return SCAN_FOUND;
         }
-        else {
-            num_crlf = 0;
-            continue;
+        if (num_crlf == 1) {
+            // CR not followed by LF
+            complete = true;
+            return SCAN_ABORT;
         }
-        num_flush = k+1;
-        // If the first two octets are CRLF then they must be discarded.
-        return ((octets_seen + k + 1) == 2) ? SCAN_DISCARD : SCAN_FOUND;
+        if (buffer[k] == '\r') {
+            num_crlf = 1;
+        }
     }
     octets_seen += length;
     return SCAN_NOTFOUND;
@@ -96,13 +92,9 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
         return SCAN_FOUND;
     }
     for (uint32_t k = 0; k < length; k++) {
-        if (buffer[k] == '\r') {
-            num_crlf = 1;
-            continue;
-        }
-        if ((buffer[k] == '\n') && (num_crlf == 1)) {
-            if ((octets_seen + k + 1) == 2) {
-                // \r\n leftover from previous chunk
+        if (buffer[k] == '\n') {
+            if (octets_seen + k == num_crlf) {
+                // \r\n or \n leftover from previous chunk
                 complete = true;
                 num_flush = k+1;
                 return SCAN_DISCARD;
@@ -117,7 +109,15 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
             num_flush = k+1;
             return SCAN_DISCARD;
         }
-        num_crlf = 0;
+        if (num_crlf == 1) {
+            // CR not followed by LF
+            complete = true;
+            return SCAN_ABORT;
+        }
+        if (buffer[k] == '\r') {
+            num_crlf = 1;
+            continue;
+        }
         if (buffer[k] == ';') {
             semicolon = true;
         }
@@ -164,29 +164,33 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
     }
     buffer += peek_octets;
     length -= peek_octets;
-    peek_octets = 0;
     for (uint32_t k = 0; k < length; k++) {
-        // Count the alternating <CR> and <LF> characters we have seen in a row
-        if (((buffer[k] == '\r') && (num_crlf%2 == 0)) ||
-            ((buffer[k] == '\n') && (num_crlf%2 == 1))) {
+        if (buffer[k] == '\n') {
             num_crlf++;
-            if ((num_crlf == 2) && (octets_seen + k + 1) == 2) {
-                num_flush = k+1;
+            if ((first_lf == 0) && (num_crlf < octets_seen + k + 1)) {
+                first_lf = num_crlf;
+            }
+            else {
+                num_flush = k + 1 + peek_octets;
                 complete = true;
                 return SCAN_FOUND;
             }
-            if (num_crlf < 4) {
-                continue;
+        }
+        else if (buffer[k] == '\r') {
+            if (num_crlf == first_lf) {
+                num_crlf++;
+            }
+            else {
+                num_crlf = 1;
+                first_lf = 0;
             }
         }
         else {
             num_crlf = 0;
-            continue;
+            first_lf = 0;
         }
-        num_flush = k + 1 + peek_octets;
-        complete = true;
-        return SCAN_FOUND;
     }
+    peek_octets = 0;
     octets_seen += length;
     return SCAN_NOTFOUND;
 }
@@ -202,6 +206,7 @@ void NHttpHeaderSplitter::conditional_reset() {
     if (complete) {
         peek_octets = 0;
         peek_status = SCAN_NOTFOUND;
+        first_lf = 0;
     }
     NHttpSplitter::conditional_reset();
 }
@@ -209,30 +214,40 @@ void NHttpHeaderSplitter::conditional_reset() {
 ScanResult NHttpTrailerSplitter::split(const uint8_t* buffer, uint32_t length) {
     conditional_reset();
     for (uint32_t k = 0; k < length; k++) {
-        // Count the alternating <CR> and <LF> characters we have seen in a row
-        if (((buffer[k] == '\r') && (num_crlf%2 == 0)) ||
-            ((buffer[k] == '\n') && (num_crlf%2 == 1))) {
+        if (buffer[k] == '\n') {
             num_crlf++;
-            if ((num_crlf == 2) && (octets_seen + k + 1) == 2) {
-                num_flush = k+1;
+            if ((first_lf == 0) && (num_crlf < octets_seen + k + 1)) {
+                first_lf = num_crlf;
+            }
+            else {
+                num_flush = k + 1;
                 complete = true;
                 return SCAN_FOUND;
             }
-            if (num_crlf < 4) {
-                continue;
+        }
+        else if (buffer[k] == '\r') {
+            if (num_crlf == first_lf) {
+                num_crlf++;
+            }
+            else {
+                num_crlf = 1;
+                first_lf = 0;
             }
         }
         else {
             num_crlf = 0;
-            continue;
+            first_lf = 0;
         }
-        num_flush = k+1;
-        complete = true;
-        return SCAN_FOUND;
     }
     octets_seen += length;
     return SCAN_NOTFOUND;
 }
 
+void NHttpTrailerSplitter::conditional_reset() {
+    if (complete) {
+        first_lf = 0;
+    }
+    NHttpSplitter::conditional_reset();
+}
 
 

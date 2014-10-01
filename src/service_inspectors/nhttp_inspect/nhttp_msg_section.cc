@@ -56,14 +56,13 @@ NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size,
    delete_msg_on_destruct(buf_owner)
 {}
 
-// Return the number of octets before the first CRLF. Return length if CRLF not present.
-//
-// wrappable: CRLF does not count in a header field when immediately followed by <SP> or <LF>. These whitespace characters
-// at the beginning of the next line indicate that the previous header has wrapped and is continuing on the next line.
-uint32_t NHttpMsgSection::find_crlf(const uint8_t* buffer, int32_t length, bool wrappable) {
+// Return the number of octets before the CRLF that ends a header. Return length if CRLF not present. CRLF does not
+// count when immediately followed by <SP> or <LF>. These whitespace characters at the beginning of the next line
+// indicate that the previous header has wrapped and is continuing on the next line.
+uint32_t NHttpMsgSection::find_crlf(const uint8_t* buffer, int32_t length) {
     for (int32_t k=0; k < length-1; k++) {
         if ((buffer[k] == '\r') && (buffer[k+1] == '\n'))
-            if (!wrappable || (k+2 >= length) || ((buffer[k+2] != ' ') && (buffer[k+2] != '\t'))) return k;
+            if ((k+2 >= length) || ((buffer[k+2] != ' ') && (buffer[k+2] != '\t'))) return k;
     }
     return length;
 }

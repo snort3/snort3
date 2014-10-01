@@ -40,9 +40,7 @@ using namespace NHttpEnums;
 
 void NHttpMsgStart::analyze() {
     start_line.start = msg_text.start;
-    start_line.length = find_crlf(start_line.start, msg_text.length, false);
-    // special case of TCP close between CR and LF
-    if (tcp_close && (msg_text.length == start_line.length) && (start_line.start[start_line.length-1] == '\r')) start_line.length--;
+    start_line.length = msg_text.length;
     parse_start_line();
     derive_version_id();
 }
