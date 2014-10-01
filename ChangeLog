@@ -16,6 +16,7 @@
 -- updated tips
 -- updated stream_tcp counts
 -- fix -A log_null etc (ie w/o module)
+-- fixed --help-module format for asciidoc (again)
 
 121
 -- valgrind fixes
