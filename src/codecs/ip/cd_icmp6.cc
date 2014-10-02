@@ -271,7 +271,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     codec.lyr_len = len;
     codec.proto_bits |= PROTO_BIT__ICMP;
     snort.icmph = reinterpret_cast<const icmp::ICMPHdr*>(icmp6h);
-    snort.set_pkt_type(PktType::ICMP6);
+    snort.set_pkt_type(PktType::ICMP);
     return true;
 }
 

@@ -57,8 +57,8 @@ public:
 
     void delete_flow(const FlowKey*);
     void delete_flow(Flow*, const char* why);
-    void purge_flows(int proto);
-    void prune_flows(int proto, Packet*);
+    void purge_flows(PktType proto);
+    void prune_flows(PktType proto, Packet*);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
     char expected_flow (Flow*, Packet*);
@@ -67,24 +67,24 @@ public:
     int add_expected(
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
-        uint8_t protocol, char direction,
+        PktType protocol, char direction,
         FlowData*);
 
     int add_expected(
         const sfip_t *srcIP, uint16_t srcPort,
         const sfip_t *dstIP, uint16_t dstPort,
-        uint8_t protocol, int16_t appId,
+        PktType protocol, int16_t appId,
         FlowData*);
 
-    uint32_t max_flows(int proto);
-    void get_prunes(int proto, PegCount&);
-    void reset_prunes(int proto);
+    uint32_t max_flows(PktType proto);
+    void get_prunes(PktType proto, PegCount&);
+    void reset_prunes(PktType proto);
 
-    PegCount get_flow_count(int proto);
+    PegCount get_flow_count(PktType);
     void clear_flow_counts();
 
 private:
-    class FlowCache* get_cache(int proto);
+    class FlowCache* get_cache(PktType);
     void set_key(FlowKey*, Packet*);
 
     unsigned process(FlowCache*, Packet*);

@@ -239,7 +239,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,SnortData& snort)
     /* Run a bunch of ICMP decoder rules */
     ICMP4MiscTests(icmph, codec, (uint16_t)raw.len - len);
 
-    snort.set_pkt_type(PktType::ICMP4);
+    snort.set_pkt_type(PktType::ICMP);
     snort.icmph = icmph;
     codec.proto_bits |= PROTO_BIT__ICMP;
     codec.lyr_len = len;

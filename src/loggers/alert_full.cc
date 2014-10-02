@@ -222,22 +222,22 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         /* if this isn't a fragment, print the other header info */
         if(!(p->ptrs.decode_flags & DECODE_FRAG))
         {
-            switch(p->ptrs.ip_api.proto())
+            switch(p->type())
             {
-                case IPPROTO_TCP:
-                   LogTCPHeader(full_log, p);
-                    break;
+            case PktType::TCP:
+               LogTCPHeader(full_log, p);
+                break;
 
-                case IPPROTO_UDP:
-                   LogUDPHeader(full_log, p);
-                    break;
+            case PktType::UDP:
+               LogUDPHeader(full_log, p);
+                break;
 
-                case IPPROTO_ICMP:
-                   LogICMPHeader(full_log, p);
-                    break;
+            case PktType::ICMP:
+               LogICMPHeader(full_log, p);
+                break;
 
-                default:
-                    break;
+            default:
+                break;
             }
         }
         LogXrefs(full_log, event, 1);

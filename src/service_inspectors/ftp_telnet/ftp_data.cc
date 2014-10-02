@@ -237,7 +237,7 @@ ProfileStats* FtpDataModule::get_profile() const
 void FtpData::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsTCP(p));
+    assert(p->is_tcp());
 
     if ( file_api->get_max_file_depth() < 0 )
         return;

@@ -229,26 +229,27 @@ static void LogSLLHeader(TextLog* log, Packet* p)
     const linux_sll::SLLHdr* sllh =
         reinterpret_cast<const linux_sll::SLLHdr*>(layer::get_root_layer(p));
 
-    switch (ntohs(sllh->sll_pkttype)) {
-        case LINUX_SLL_HOST:
-            TextLog_Puts(log, "< ");
-            break;
-        case LINUX_SLL_BROADCAST:
-            TextLog_Puts(log, "B ");
-            break;
-        case LINUX_SLL_MULTICAST:
-            TextLog_Puts(log, "M ");
-            break;
-        case LINUX_SLL_OTHERHOST:
-            TextLog_Puts(log, "P ");
-            break;
-        case LINUX_SLL_OUTGOING:
-            TextLog_Puts(log, "> ");
-            break;
-        default:
-            TextLog_Puts(log, "? ");
-            break;
-        }
+    switch (ntohs(sllh->sll_pkttype))
+    {
+    case LINUX_SLL_HOST:
+        TextLog_Puts(log, "< ");
+        break;
+    case LINUX_SLL_BROADCAST:
+        TextLog_Puts(log, "B ");
+        break;
+    case LINUX_SLL_MULTICAST:
+        TextLog_Puts(log, "M ");
+        break;
+    case LINUX_SLL_OTHERHOST:
+        TextLog_Puts(log, "P ");
+        break;
+    case LINUX_SLL_OUTGOING:
+        TextLog_Puts(log, "> ");
+        break;
+    default:
+        TextLog_Puts(log, "? ");
+        break;
+    }
 
     /* mac addr */
     TextLog_Print(log, "l/l len: %i l/l type: 0x%X %02X:%02X:%02X:%02X:%02X:%02X\n",
@@ -462,65 +463,65 @@ void LogIpOptions(TextLog*  log, const IP4Hdr* ip4h, const Packet* const p)
 
         switch(op.code)
         {
-            case ip::IPOptionCodes::RR:
-                TextLog_Puts(log, "RR ");
-                break;
-
-            case ip::IPOptionCodes::EOL:
-                TextLog_Puts(log, "EOL ");
-                break;
-
-            case ip::IPOptionCodes::NOP:
-                TextLog_Puts(log, "NOP ");
-                break;
-
-            case ip::IPOptionCodes::TS:
-                TextLog_Puts(log, "TS ");
-                break;
-
-            case ip::IPOptionCodes::ESEC:
-                TextLog_Puts(log, "ESEC ");
-                break;
-
-            case ip::IPOptionCodes::SECURITY:
-                TextLog_Puts(log, "SEC ");
-                break;
-
-            case ip::IPOptionCodes::LSRR:
-            case ip::IPOptionCodes::LSRR_E:
-                TextLog_Puts(log, "LSRR ");
-                break;
-
-            case ip::IPOptionCodes::SATID:
-                TextLog_Puts(log, "SID ");
-                break;
-
-            case ip::IPOptionCodes::SSRR:
-                TextLog_Puts(log, "SSRR ");
-                break;
-
-            case ip::IPOptionCodes::RTRALT:
-                TextLog_Puts(log, "RTRALT ");
-                break;
-
-            default:
-                TextLog_Print(log, "Opt %d: ", (int)op.code);
-
-                // the only cases where len is invalid were handled aboved
-                const uint8_t opt_len = op.len;
-                int j;
-
-                for(j = 0; (j + 1) < opt_len; j += 2)
-                {
-                    TextLog_Print(log, "%02X%02X ",op.data[j],
-                                                   op.data[j+1]);
-                }
-
-                // since we're skipping by two, if (j+1) == opt_len,
-                // we will not have printed j
-                if (j < opt_len)
-                    TextLog_Print(log, "%02X", op.data[j]);
+        case ip::IPOptionCodes::RR:
+            TextLog_Puts(log, "RR ");
             break;
+
+        case ip::IPOptionCodes::EOL:
+            TextLog_Puts(log, "EOL ");
+            break;
+
+        case ip::IPOptionCodes::NOP:
+            TextLog_Puts(log, "NOP ");
+            break;
+
+        case ip::IPOptionCodes::TS:
+            TextLog_Puts(log, "TS ");
+            break;
+
+        case ip::IPOptionCodes::ESEC:
+            TextLog_Puts(log, "ESEC ");
+            break;
+
+        case ip::IPOptionCodes::SECURITY:
+            TextLog_Puts(log, "SEC ");
+            break;
+
+        case ip::IPOptionCodes::LSRR:
+        case ip::IPOptionCodes::LSRR_E:
+            TextLog_Puts(log, "LSRR ");
+            break;
+
+        case ip::IPOptionCodes::SATID:
+            TextLog_Puts(log, "SID ");
+            break;
+
+        case ip::IPOptionCodes::SSRR:
+            TextLog_Puts(log, "SSRR ");
+            break;
+
+        case ip::IPOptionCodes::RTRALT:
+            TextLog_Puts(log, "RTRALT ");
+            break;
+
+        default:
+            TextLog_Print(log, "Opt %d: ", (int)op.code);
+
+            // the only cases where len is invalid were handled aboved
+            const uint8_t opt_len = op.len;
+            int j;
+
+            for(j = 0; (j + 1) < opt_len; j += 2)
+            {
+                TextLog_Print(log, "%02X%02X ",op.data[j],
+                                               op.data[j+1]);
+            }
+
+            // since we're skipping by two, if (j+1) == opt_len,
+            // we will not have printed j
+            if (j < opt_len)
+                TextLog_Print(log, "%02X", op.data[j]);
+        break;
         }
     }
     TextLog_NewLine(log);
@@ -544,8 +545,7 @@ void LogIpAddrs(TextLog *log, Packet *p)
         return;
 
     if ((p->ptrs.decode_flags & DECODE_FRAG)
-            || ((p->ptrs.ip_api.proto() != IPPROTO_TCP)
-                && (p->ptrs.ip_api.proto() != IPPROTO_UDP)))
+           || ( !p->is_tcp() && !p->is_udp()))
     {
         const char *ip_fmt = "%s -> %s";
 
@@ -737,98 +737,98 @@ void LogTcpOptions(TextLog*  log, const Packet* const p)
 #endif
         switch(opt.code)
         {
-            case tcp::TcpOptCode::MAXSEG:
-                TextLog_Print(log, "  MSS: %u", extract_16_bits(opt.data));
-                break;
+        case tcp::TcpOptCode::MAXSEG:
+            TextLog_Print(log, "  MSS: %u", extract_16_bits(opt.data));
+            break;
 
-            case tcp::TcpOptCode::EOL:
-                TextLog_Puts(log, "  EOL");
-                break;
+        case tcp::TcpOptCode::EOL:
+            TextLog_Puts(log, "  EOL");
+            break;
 
-            case tcp::TcpOptCode::NOP:
-                TextLog_Puts(log, "  NOP");
-                break;
+        case tcp::TcpOptCode::NOP:
+            TextLog_Puts(log, "  NOP");
+            break;
 
-            case tcp::TcpOptCode::WSCALE:
-                TextLog_Print(log, "  WS: %u", opt.data[0]);
-                break;
+        case tcp::TcpOptCode::WSCALE:
+            TextLog_Print(log, "  WS: %u", opt.data[0]);
+            break;
 
-            case tcp::TcpOptCode::SACK:
+        case tcp::TcpOptCode::SACK:
+        {
+            /* This length was not check during tcp decode */
+            uint16_t val1, val2;
+
+            if (opt.len >= 4)
             {
-                /* This length was not check during tcp decode */
-                uint16_t val1, val2;
-
-                if (opt.len >= 4)
-                {
-                    val1 = extract_16_bits(opt.data);
-                    val2 = extract_16_bits(opt.data + 2);
-                }
-                else if (opt.len >= 2)
-                {
-                    val1 = extract_16_bits(opt.data);
-                    val2 = 0;
-                }
-                else
-                {
-                    val1 = 0;
-                    val2 = 0;
-                }
-
-                TextLog_Print(log, "  Sack: %u@%u", val1, val2);
-                break;
+                val1 = extract_16_bits(opt.data);
+                val2 = extract_16_bits(opt.data + 2);
             }
-            case tcp::TcpOptCode::SACKOK:
-                TextLog_Puts(log, "SackOK ");
-                break;
-
-            case tcp::TcpOptCode::ECHO:
-                TextLog_Print(log, "Echo: %u", extract_32_bits(opt.data));
-                break;
-
-            case tcp::TcpOptCode::ECHOREPLY:
-                TextLog_Print(log, "Echo Rep: %u", extract_32_bits(opt.data));
-                break;
-
-            case tcp::TcpOptCode::TIMESTAMP:
-                TextLog_Print(log, "TS: %u %u", extract_32_bits(opt.data), opt.data + 4);
-                break;
-
-            case tcp::TcpOptCode::CC:
-                TextLog_Print(log, "CC %u", extract_32_bits(opt.data));
-                break;
-
-            case tcp::TcpOptCode::CC_NEW:
-                TextLog_Print(log, "CCNEW: %u", extract_32_bits(opt.data));
-                break;
-
-            case tcp::TcpOptCode::CC_ECHO:
-                TextLog_Print(log, "CCECHO: %u", extract_32_bits(opt.data));
-                break;
-
-            default:
+            else if (opt.len >= 2)
             {
-                const int opt_len = opt.len - 2;
+                val1 = extract_16_bits(opt.data);
+                val2 = 0;
+            }
+            else
+            {
+                val1 = 0;
+                val2 = 0;
+            }
 
-                if(opt_len > 0)
+            TextLog_Print(log, "  Sack: %u@%u", val1, val2);
+            break;
+        }
+        case tcp::TcpOptCode::SACKOK:
+            TextLog_Puts(log, "SackOK ");
+            break;
+
+        case tcp::TcpOptCode::ECHO:
+            TextLog_Print(log, "Echo: %u", extract_32_bits(opt.data));
+            break;
+
+        case tcp::TcpOptCode::ECHOREPLY:
+            TextLog_Print(log, "Echo Rep: %u", extract_32_bits(opt.data));
+            break;
+
+        case tcp::TcpOptCode::TIMESTAMP:
+            TextLog_Print(log, "TS: %u %u", extract_32_bits(opt.data), opt.data + 4);
+            break;
+
+        case tcp::TcpOptCode::CC:
+            TextLog_Print(log, "CC %u", extract_32_bits(opt.data));
+            break;
+
+        case tcp::TcpOptCode::CC_NEW:
+            TextLog_Print(log, "CCNEW: %u", extract_32_bits(opt.data));
+            break;
+
+        case tcp::TcpOptCode::CC_ECHO:
+            TextLog_Print(log, "CCECHO: %u", extract_32_bits(opt.data));
+            break;
+
+        default:
+        {
+            const int opt_len = opt.len - 2;
+
+            if(opt_len > 0)
+            {
+                TextLog_Print(log, "  Opt %d (%d):", opt.code,
+                        (int) opt_len);
+
+                for (int i = 0; (i + 1) < opt_len; i += 2)
                 {
-                    TextLog_Print(log, "  Opt %d (%d):", opt.code,
-                            (int) opt_len);
-
-                    for (int i = 0; (i + 1) < opt_len; i += 2)
-                    {
-                            TextLog_Print(log, " %02X%02X",  opt.data[i],
-                                                             opt.data[i+1]);
-                    }
-
-                    // if there is an odd number of bytes
-                    if (opt_len & 1)
-                        TextLog_Print(log, " %02x", opt.data[opt_len - 1]);
+                        TextLog_Print(log, " %02X%02X",  opt.data[i],
+                                                         opt.data[i+1]);
                 }
-                else
-                {
-                    TextLog_Print(log, "  Opt %d", opt.code);
-                }
-                break;
+
+                // if there is an odd number of bytes
+                if (opt_len & 1)
+                    TextLog_Print(log, " %02x", opt.data[opt_len - 1]);
+            }
+            else
+            {
+                TextLog_Print(log, "  Opt %d", opt.code);
+            }
+            break;
             }
         }
     }
@@ -934,40 +934,40 @@ static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr *icmph)
 
     switch (icmph->type)
     {
-        case ICMP_DEST_UNREACH:
-        case ICMP_TIME_EXCEEDED:
-        case ICMP_SOURCE_QUENCH:
-            break;
+    case ICMP_DEST_UNREACH:
+    case ICMP_TIME_EXCEEDED:
+    case ICMP_SOURCE_QUENCH:
+        break;
 
-        case ICMP_PARAMETERPROB:
-            if (icmph->code == 0)
-                TextLog_Print(log, "  Ptr: %u", icmph->s_icmp_pptr);
-            break;
+    case ICMP_PARAMETERPROB:
+        if (icmph->code == 0)
+            TextLog_Print(log, "  Ptr: %u", icmph->s_icmp_pptr);
+        break;
 
-        case ICMP_REDIRECT:
+    case ICMP_REDIRECT:
 // XXX-IPv6 "NOT YET IMPLEMENTED - ICMP printing"
-            break;
+        break;
 
-        case ICMP_ECHO:
-        case ICMP_ECHOREPLY:
-        case ICMP_TIMESTAMP:
-        case ICMP_TIMESTAMPREPLY:
-        case ICMP_INFO_REQUEST:
-        case ICMP_INFO_REPLY:
-        case ICMP_ADDRESS:
-        case ICMP_ADDRESSREPLY:
-            TextLog_Print(log, "  Id: %u  SeqNo: %u",
-                    ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq));
-            break;
+    case ICMP_ECHO:
+    case ICMP_ECHOREPLY:
+    case ICMP_TIMESTAMP:
+    case ICMP_TIMESTAMPREPLY:
+    case ICMP_INFO_REQUEST:
+    case ICMP_INFO_REPLY:
+    case ICMP_ADDRESS:
+    case ICMP_ADDRESSREPLY:
+        TextLog_Print(log, "  Id: %u  SeqNo: %u",
+                ntohs(icmph->s_icmp_id), ntohs(icmph->s_icmp_seq));
+        break;
 
-        case ICMP_ROUTER_ADVERTISE:
-            TextLog_Print(log, "  Addrs: %u  Size: %u  Lifetime: %u",
-                    icmph->s_icmp_num_addrs, icmph->s_icmp_wpa,
-                    ntohs(icmph->s_icmp_lifetime));
-            break;
+    case ICMP_ROUTER_ADVERTISE:
+        TextLog_Print(log, "  Addrs: %u  Size: %u  Lifetime: %u",
+                icmph->s_icmp_num_addrs, icmph->s_icmp_wpa,
+                ntohs(icmph->s_icmp_lifetime));
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     TextLog_NewLine(log);
@@ -999,68 +999,66 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet *p)
 
     if (!layer::set_api_ip_embed_icmp(p, op.ptrs.ip_api))
     {
-        switch(orig_p->ptrs.ip_api.proto())
+        switch(p->proto_bits & PROTO_BIT__ICMP_EMBED)
         {
-            case IPPROTO_TCP:
+        case PROTO_BIT__TCP_EMBED_ICMP:
+        {
+            const tcp::TCPHdr* const tcph = layer::get_tcp_embed_icmp(op.ptrs.ip_api);
+            if (tcph)
             {
-                const tcp::TCPHdr* tcph = layer::get_tcp_embed_icmp(op.ptrs.ip_api);
-                if (tcph)
-                {
-                    orig_p->ptrs.sp = ntohs(tcph->th_sport);
-                    orig_p->ptrs.dp = ntohs(tcph->th_dport);
-                    orig_p->ptrs.tcph = tcph;
-                }
+                orig_p->ptrs.sp = tcph->src_port();
+                orig_p->ptrs.dp = tcph->dst_port();
+                orig_p->ptrs.tcph = tcph;
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
 
-                if(tcph != NULL)
-                {
-                    TextLog_Print(log, "Seq: 0x%lX\n",
-                            (u_long)ntohl(orig_p->ptrs.tcph->th_seq));
-                }
-                break;
+                TextLog_Print(log, "Seq: 0x%lX\n",
+                        (u_long)ntohl(orig_p->ptrs.tcph->th_seq));
             }
+            break;
+        }
 
-            case IPPROTO_UDP:
+        case PROTO_BIT__UDP_EMBED_ICMP:
+        {
+            const udp::UDPHdr* const udph = layer::get_udp_embed_icmp(op.ptrs.ip_api);
+            if (udph)
             {
-                const udp::UDPHdr* udph = layer::get_udp_embed_icmp(op.ptrs.ip_api);
-                if (udph)
-                {
-                    orig_p->ptrs.sp = ntohs(p->ptrs.udph->uh_sport);
-                    orig_p->ptrs.dp = ntohs(p->ptrs.udph->uh_dport);
-                    orig_p->ptrs.udph = udph;
-                }
+                orig_p->ptrs.sp = udph->src_port();
+                orig_p->ptrs.dp = udph->dst_port();
+                orig_p->ptrs.udph = udph;
 
                 TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
                 LogIPHeader(log, orig_p);
 
-                if(udph != NULL)
-                    TextLog_Print(log, "Len: %d  Csum: %d\n",
-                            ntohs(orig_p->ptrs.udph->uh_len) - udp::UDP_HEADER_LEN,
-                            ntohs(orig_p->ptrs.udph->uh_chk));
-                break;
+                TextLog_Print(log, "Len: %d  Csum: %d\n",
+                        udph->len() - udp::UDP_HEADER_LEN,
+                        udph->cksum());
             }
+            break;
+        }
 
-            case IPPROTO_ICMP:
-            {
-                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-                LogIPHeader(log, orig_p);
+        case PROTO_BIT__ICMP_EMBED_ICMP:
+        {
+            TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+            LogIPHeader(log, orig_p);
 
-                const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(op.ptrs.ip_api);
-                if(icmph != NULL)
-                    LogEmbeddedICMPHeader(log, icmph);
-                break;
-            }
+            const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(op.ptrs.ip_api);
+            if(icmph != NULL)
+                LogEmbeddedICMPHeader(log, icmph);
+            break;
+        }
 
-            default:
-                TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
-                LogIPHeader(log, orig_p);
+        default:
+        {
+            TextLog_Print(log, "\n** ORIGINAL DATAGRAM DUMP:\n");
+            LogIPHeader(log, orig_p);
 
-                TextLog_Print(log, "Protocol: 0x%X (unknown or "
-                        "header truncated)", orig_p->ptrs.ip_api.proto());
-                break;
-        }       /* switch */
+            TextLog_Print(log, "Protocol: 0x%X (unknown or "
+                    "header truncated)", orig_p->ptrs.ip_api.proto());
+            break;
+        }
+        } /* switch */
 
         /* if more than 8 bytes of original IP payload sent */
         uint32_t orig_ip_hlen = p->ptrs.ip_api.hlen() << 2;
@@ -1105,240 +1103,240 @@ void LogICMPHeader(TextLog*  log, Packet * p)
 
     switch(p->ptrs.icmph->type)
     {
-        case ICMP_ECHOREPLY:
-            TextLog_Print(log, "ID:%d  Seq:%d  ", ntohs(p->ptrs.icmph->s_icmp_id),
-                    ntohs(p->ptrs.icmph->s_icmp_seq));
-            TextLog_Puts(log, "ECHO REPLY");
-            break;
+    case ICMP_ECHOREPLY:
+        TextLog_Print(log, "ID:%d  Seq:%d  ", ntohs(p->ptrs.icmph->s_icmp_id),
+                ntohs(p->ptrs.icmph->s_icmp_seq));
+        TextLog_Puts(log, "ECHO REPLY");
+        break;
 
-        case ICMP_DEST_UNREACH:
-            TextLog_Puts(log, "DESTINATION UNREACHABLE: ");
-            switch(p->ptrs.icmph->code)
-            {
-                case ICMP_NET_UNREACH:
-                    TextLog_Puts(log, "NET UNREACHABLE");
-                    break;
+    case ICMP_DEST_UNREACH:
+        TextLog_Puts(log, "DESTINATION UNREACHABLE: ");
+        switch(p->ptrs.icmph->code)
+        {
+            case ICMP_NET_UNREACH:
+                TextLog_Puts(log, "NET UNREACHABLE");
+                break;
 
-                case ICMP_HOST_UNREACH:
-                    TextLog_Puts(log, "HOST UNREACHABLE");
-                    break;
+            case ICMP_HOST_UNREACH:
+                TextLog_Puts(log, "HOST UNREACHABLE");
+                break;
 
-                case ICMP_PROT_UNREACH:
-                    TextLog_Puts(log, "PROTOCOL UNREACHABLE");
-                    break;
+            case ICMP_PROT_UNREACH:
+                TextLog_Puts(log, "PROTOCOL UNREACHABLE");
+                break;
 
-                case ICMP_PORT_UNREACH:
-                    TextLog_Puts(log, "PORT UNREACHABLE");
-                    break;
+            case ICMP_PORT_UNREACH:
+                TextLog_Puts(log, "PORT UNREACHABLE");
+                break;
 
-                case ICMP_FRAG_NEEDED:
-                    TextLog_Print(log, "FRAGMENTATION NEEDED, DF SET\n"
-                            "NEXT LINK MTU: %u",
-                            ntohs(p->ptrs.icmph->s_icmp_nextmtu));
-                    break;
+            case ICMP_FRAG_NEEDED:
+                TextLog_Print(log, "FRAGMENTATION NEEDED, DF SET\n"
+                        "NEXT LINK MTU: %u",
+                        ntohs(p->ptrs.icmph->s_icmp_nextmtu));
+                break;
 
-                case ICMP_SR_FAILED:
-                    TextLog_Puts(log, "SOURCE ROUTE FAILED");
-                    break;
+            case ICMP_SR_FAILED:
+                TextLog_Puts(log, "SOURCE ROUTE FAILED");
+                break;
 
-                case ICMP_NET_UNKNOWN:
-                    TextLog_Puts(log, "NET UNKNOWN");
-                    break;
+            case ICMP_NET_UNKNOWN:
+                TextLog_Puts(log, "NET UNKNOWN");
+                break;
 
-                case ICMP_HOST_UNKNOWN:
-                    TextLog_Puts(log, "HOST UNKNOWN");
-                    break;
+            case ICMP_HOST_UNKNOWN:
+                TextLog_Puts(log, "HOST UNKNOWN");
+                break;
 
-                case ICMP_HOST_ISOLATED:
-                    TextLog_Puts(log, "HOST ISOLATED");
-                    break;
+            case ICMP_HOST_ISOLATED:
+                TextLog_Puts(log, "HOST ISOLATED");
+                break;
 
-                case ICMP_PKT_FILTERED_NET:
-                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED NETWORK FILTERED");
-                    break;
+            case ICMP_PKT_FILTERED_NET:
+                TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED NETWORK FILTERED");
+                break;
 
-                case ICMP_PKT_FILTERED_HOST:
-                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED HOST FILTERED");
-                    break;
+            case ICMP_PKT_FILTERED_HOST:
+                TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED HOST FILTERED");
+                break;
 
-                case ICMP_NET_UNR_TOS:
-                    TextLog_Puts(log, "NET UNREACHABLE FOR TOS");
-                    break;
+            case ICMP_NET_UNR_TOS:
+                TextLog_Puts(log, "NET UNREACHABLE FOR TOS");
+                break;
 
-                case ICMP_HOST_UNR_TOS:
-                    TextLog_Puts(log, "HOST UNREACHABLE FOR TOS");
-                    break;
+            case ICMP_HOST_UNR_TOS:
+                TextLog_Puts(log, "HOST UNREACHABLE FOR TOS");
+                break;
 
-                case ICMP_PKT_FILTERED:
-                    TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED,\nPACKET FILTERED");
-                    break;
+            case ICMP_PKT_FILTERED:
+                TextLog_Puts(log, "ADMINISTRATIVELY PROHIBITED,\nPACKET FILTERED");
+                break;
 
-                case ICMP_PREC_VIOLATION:
-                    TextLog_Puts(log, "PREC VIOLATION");
-                    break;
+            case ICMP_PREC_VIOLATION:
+                TextLog_Puts(log, "PREC VIOLATION");
+                break;
 
-                case ICMP_PREC_CUTOFF:
-                    TextLog_Puts(log, "PREC CUTOFF");
-                    break;
+            case ICMP_PREC_CUTOFF:
+                TextLog_Puts(log, "PREC CUTOFF");
+                break;
 
-                default:
-                    TextLog_Puts(log, "UNKNOWN");
-                    break;
+            default:
+                TextLog_Puts(log, "UNKNOWN");
+                break;
 
-            }
+        }
 
 
-            LogICMPEmbeddedIP(log, p);
+        LogICMPEmbeddedIP(log, p);
 
-            break;
+        break;
 
-        case ICMP_SOURCE_QUENCH:
-            TextLog_Puts(log, "SOURCE QUENCH");
+    case ICMP_SOURCE_QUENCH:
+        TextLog_Puts(log, "SOURCE QUENCH");
 
-            LogICMPEmbeddedIP(log, p);
+        LogICMPEmbeddedIP(log, p);
 
-            break;
+        break;
 
-        case ICMP_REDIRECT:
-            TextLog_Puts(log, "REDIRECT");
-            switch(p->ptrs.icmph->code)
-            {
-                case ICMP_REDIR_NET:
-                    TextLog_Puts(log, " NET");
-                    break;
+    case ICMP_REDIRECT:
+        TextLog_Puts(log, "REDIRECT");
+        switch(p->ptrs.icmph->code)
+        {
+            case ICMP_REDIR_NET:
+                TextLog_Puts(log, " NET");
+                break;
 
-                case ICMP_REDIR_HOST:
-                    TextLog_Puts(log, " HOST");
-                    break;
+            case ICMP_REDIR_HOST:
+                TextLog_Puts(log, " HOST");
+                break;
 
-                case ICMP_REDIR_TOS_NET:
-                    TextLog_Puts(log, " TOS NET");
-                    break;
+            case ICMP_REDIR_TOS_NET:
+                TextLog_Puts(log, " TOS NET");
+                break;
 
-                case ICMP_REDIR_TOS_HOST:
-                    TextLog_Puts(log, " TOS HOST");
-                    break;
+            case ICMP_REDIR_TOS_HOST:
+                TextLog_Puts(log, " TOS HOST");
+                break;
 
-                default:
-                    break;
-            }
+            default:
+                break;
+        }
 
 /* written this way since inet_ntoa was typedef'ed to use sfip_ntoa
- * which requires sfip_t instead of inaddr's.  This call to inet_ntoa
- * is a rare case that doesn't use sfip_t's. */
+* which requires sfip_t instead of inaddr's.  This call to inet_ntoa
+* is a rare case that doesn't use sfip_t's. */
 
 // XXX-IPv6 NOT YET IMPLEMENTED - IPV6 addresses technically not supported - need to change ICMP
 
-            /* no inet_ntop in Windows */
-            sfip_raw_ntop(AF_INET, (const void *)(&p->ptrs.icmph->s_icmp_gwaddr.s_addr),
-                          buf, sizeof(buf));
-            TextLog_Print(log, " NEW GW: %s", buf);
+        /* no inet_ntop in Windows */
+        sfip_raw_ntop(AF_INET, (const void *)(&p->ptrs.icmph->s_icmp_gwaddr.s_addr),
+                      buf, sizeof(buf));
+        TextLog_Print(log, " NEW GW: %s", buf);
 
-            LogICMPEmbeddedIP(log, p);
+        LogICMPEmbeddedIP(log, p);
 
-            break;
+        break;
 
-        case ICMP_ECHO:
-            TextLog_Print(log, "ID:%d   Seq:%d  ", ntohs(p->ptrs.icmph->s_icmp_id),
-                    ntohs(p->ptrs.icmph->s_icmp_seq));
-            TextLog_Puts(log, "ECHO");
-            break;
+    case ICMP_ECHO:
+        TextLog_Print(log, "ID:%d   Seq:%d  ", ntohs(p->ptrs.icmph->s_icmp_id),
+                ntohs(p->ptrs.icmph->s_icmp_seq));
+        TextLog_Puts(log, "ECHO");
+        break;
 
-        case ICMP_ROUTER_ADVERTISE:
-            TextLog_Print(log, "ROUTER ADVERTISMENT: "
-                    "Num addrs: %d Addr entry size: %d Lifetime: %u",
-                    p->ptrs.icmph->s_icmp_num_addrs, p->ptrs.icmph->s_icmp_wpa,
-                    ntohs(p->ptrs.icmph->s_icmp_lifetime));
-            break;
+    case ICMP_ROUTER_ADVERTISE:
+        TextLog_Print(log, "ROUTER ADVERTISMENT: "
+                "Num addrs: %d Addr entry size: %d Lifetime: %u",
+                p->ptrs.icmph->s_icmp_num_addrs, p->ptrs.icmph->s_icmp_wpa,
+                ntohs(p->ptrs.icmph->s_icmp_lifetime));
+        break;
 
-        case ICMP_ROUTER_SOLICIT:
-            TextLog_Puts(log, "ROUTER SOLICITATION");
-            break;
+    case ICMP_ROUTER_SOLICIT:
+        TextLog_Puts(log, "ROUTER SOLICITATION");
+        break;
 
-        case ICMP_TIME_EXCEEDED:
-            TextLog_Puts(log, "TTL EXCEEDED");
-            switch(p->ptrs.icmph->code)
-            {
-                case ICMP_TIMEOUT_TRANSIT:
-                    TextLog_Puts(log, " IN TRANSIT");
-                    break;
+    case ICMP_TIME_EXCEEDED:
+        TextLog_Puts(log, "TTL EXCEEDED");
+        switch(p->ptrs.icmph->code)
+        {
+            case ICMP_TIMEOUT_TRANSIT:
+                TextLog_Puts(log, " IN TRANSIT");
+                break;
 
-                case ICMP_TIMEOUT_REASSY:
-                    TextLog_Puts(log, " TIME EXCEEDED IN FRAG REASSEMBLY");
-                    break;
+            case ICMP_TIMEOUT_REASSY:
+                TextLog_Puts(log, " TIME EXCEEDED IN FRAG REASSEMBLY");
+                break;
 
-                default:
-                    break;
-            }
+            default:
+                break;
+        }
 
-            LogICMPEmbeddedIP(log, p);
+        LogICMPEmbeddedIP(log, p);
 
-            break;
+        break;
 
-        case ICMP_PARAMETERPROB:
-            TextLog_Puts(log, "PARAMETER PROBLEM");
-            switch(p->ptrs.icmph->code)
-            {
-                case ICMP_PARAM_BADIPHDR:
-                    TextLog_Print(log, ": BAD IP HEADER BYTE %u",
-                            p->ptrs.icmph->s_icmp_pptr);
-                    break;
+    case ICMP_PARAMETERPROB:
+        TextLog_Puts(log, "PARAMETER PROBLEM");
+        switch(p->ptrs.icmph->code)
+        {
+            case ICMP_PARAM_BADIPHDR:
+                TextLog_Print(log, ": BAD IP HEADER BYTE %u",
+                        p->ptrs.icmph->s_icmp_pptr);
+                break;
 
-                case ICMP_PARAM_OPTMISSING:
-                    TextLog_Puts(log, ": OPTION MISSING");
-                    break;
+            case ICMP_PARAM_OPTMISSING:
+                TextLog_Puts(log, ": OPTION MISSING");
+                break;
 
-                case ICMP_PARAM_BAD_LENGTH:
-                    TextLog_Puts(log, ": BAD LENGTH");
-                    break;
+            case ICMP_PARAM_BAD_LENGTH:
+                TextLog_Puts(log, ": BAD LENGTH");
+                break;
 
-                default:
-                    break;
-            }
+            default:
+                break;
+        }
 
-            LogICMPEmbeddedIP(log, p);
+        LogICMPEmbeddedIP(log, p);
 
-            break;
+        break;
 
-        case ICMP_TIMESTAMP:
-            TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REQUEST",
-                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
-            break;
+    case ICMP_TIMESTAMP:
+        TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REQUEST",
+                ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
+        break;
 
-        case ICMP_TIMESTAMPREPLY:
-            TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REPLY:\n"
-                    "Orig: %u Rtime: %u  Ttime: %u",
-                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq),
-                    p->ptrs.icmph->s_icmp_otime, p->ptrs.icmph->s_icmp_rtime,
-                    p->ptrs.icmph->s_icmp_ttime);
-            break;
+    case ICMP_TIMESTAMPREPLY:
+        TextLog_Print(log, "ID: %u  Seq: %u  TIMESTAMP REPLY:\n"
+                "Orig: %u Rtime: %u  Ttime: %u",
+                ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq),
+                p->ptrs.icmph->s_icmp_otime, p->ptrs.icmph->s_icmp_rtime,
+                p->ptrs.icmph->s_icmp_ttime);
+        break;
 
-        case ICMP_INFO_REQUEST:
-            TextLog_Print(log, "ID: %u  Seq: %u  INFO REQUEST",
-                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
-            break;
+    case ICMP_INFO_REQUEST:
+        TextLog_Print(log, "ID: %u  Seq: %u  INFO REQUEST",
+                ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
+        break;
 
-        case ICMP_INFO_REPLY:
-            TextLog_Print(log, "ID: %u  Seq: %u  INFO REPLY",
-                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
-            break;
+    case ICMP_INFO_REPLY:
+        TextLog_Print(log, "ID: %u  Seq: %u  INFO REPLY",
+                ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
+        break;
 
-        case ICMP_ADDRESS:
-            TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REQUEST",
-                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
-            break;
+    case ICMP_ADDRESS:
+        TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REQUEST",
+                ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq));
+        break;
 
-        case ICMP_ADDRESSREPLY:
-            TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REPLY: 0x%08X",
-                    ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq),
-                    (u_int) ntohl(p->ptrs.icmph->s_icmp_mask));
-            break;
+    case ICMP_ADDRESSREPLY:
+        TextLog_Print(log, "ID: %u  Seq: %u  ADDRESS REPLY: 0x%08X",
+                ntohs(p->ptrs.icmph->s_icmp_id), ntohs(p->ptrs.icmph->s_icmp_seq),
+                (u_int) ntohl(p->ptrs.icmph->s_icmp_mask));
+        break;
 
-        default:
-            TextLog_Puts(log, "UNKNOWN");
+    default:
+        TextLog_Puts(log, "UNKNOWN");
 
-            break;
-    }
+        break;
+    } /* switch */
 
     TextLog_NewLine(log);
 
@@ -1636,7 +1634,8 @@ static void LogPacketType(TextLog* log, Packet* p)
     if ( !p->dsize || !PacketWasCooked(p) )
         return;
 
-    switch ( p->pseudo_type ) {
+    switch ( p->pseudo_type )
+    {
     case PSEUDO_PKT_SMB_SEG:
         TextLog_Print(log, "%s", "SMB desegmented packet");
         break;
@@ -1662,7 +1661,7 @@ static void LogPacketType(TextLog* log, Packet* p)
         // FIXIT-L do we get here for portscan or sdf?
         TextLog_Print(log, "%s", "Cooked packet");
         break;
-    }
+    } /* switch */
     TextLog_NewLine(log);
 }
 
@@ -1726,20 +1725,16 @@ void LogIPPkt(TextLog* log, Packet * p)
     /* if this isn't a fragment, print the other header info */
     if (!(p->ptrs.decode_flags & DECODE_FRAG))
     {
-        switch (p->ptrs.ip_api.proto())
+        switch (p->type())
         {
-            case IPPROTO_TCP:
+            case PktType::TCP:
                 if ( p->ptrs.tcph != NULL )
-                {
                     LogTCPHeader(log, p);
-                }
                 else
-                {
                     LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
-                }
                 break;
 
-            case IPPROTO_UDP:
+            case PktType::UDP:
                 if ( p->ptrs.udph != NULL )
                 {
                     // for consistency, nothing to log (tcp doesn't log paylen)
@@ -1752,15 +1747,11 @@ void LogIPPkt(TextLog* log, Packet * p)
 
                 break;
 
-            case IPPROTO_ICMP:
+            case PktType::ICMP:
                 if ( p->ptrs.icmph != NULL )
-                {
                     LogICMPHeader(log, p);
-                }
                 else
-                {
                     LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), NULL);
-                }
                 break;
 
             default:

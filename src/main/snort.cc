@@ -320,6 +320,7 @@ static void SnortInit(int argc, char **argv)
      * Set the global snort_conf that will be used during run time */
     snort_conf = MergeSnortConfs(snort_cmd_line_conf, sc);
     init_policy(snort_conf);
+    CodecManager::instantiate();
 
     if ( snort_conf->output )
         EventManager::instantiate(snort_conf->output, sc);
@@ -328,6 +329,8 @@ static void SnortInit(int argc, char **argv)
     {
         OrderRuleLists(snort_conf, "drop sdrop reject alert pass log");
     }
+
+    // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
         FatalError("can't initialize inspectors\n");
 
@@ -361,7 +364,6 @@ static void SnortInit(int argc, char **argv)
     fpCreateFastPacketDetection(snort_conf);
     MpseManager::activate_search_engine(snort_conf);
 
-    CodecManager::instantiate();
     SFAT_Start();
 
 #ifdef PPM_MGR

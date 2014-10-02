@@ -787,7 +787,7 @@ int  drop_all_fragments(
         Packet *p
         )
 {
-    if ( !p->flow || p->flow->protocol != IPPROTO_IP )
+    if ( !p->flow || p->flow->protocol != PktType::IP )
         return -1;
 
     FragTracker *ft = &((IpSession*)p->flow->session)->tracker;
@@ -1220,7 +1220,7 @@ int fragGetApplicationProtocolId(Packet *p)
     uint16_t src_port = 0;
     uint16_t dst_port = 0;
 
-    if ( !p->flow || p->flow->protocol != IPPROTO_IP )
+    if ( !p->flow || p->flow->protocol != PktType::IP )
     {
         return 0;
     }
@@ -1238,21 +1238,21 @@ int fragGetApplicationProtocolId(Packet *p)
         return ft->application_protocol;
     }
 
-    switch (p->ptrs.ip_api.proto())
+    switch (p->type())
     {
-        case IPPROTO_TCP:
-            ft->ipprotocol = protocolReferenceTCP;
-            src_port = p->ptrs.sp;
-            dst_port = p->ptrs.dp;
-            break;
-        case IPPROTO_UDP:
-            ft->ipprotocol = protocolReferenceUDP;
-            src_port = p->ptrs.sp;
-            dst_port = p->ptrs.dp;
-            break;
-        case IPPROTO_ICMP:
-            ft->ipprotocol = protocolReferenceICMP;
-            break;
+    case PktType::TCP:
+        ft->ipprotocol = protocolReferenceTCP;
+        src_port = p->ptrs.sp;
+        dst_port = p->ptrs.dp;
+        break;
+    case PktType::UDP:
+        ft->ipprotocol = protocolReferenceUDP;
+        src_port = p->ptrs.sp;
+        dst_port = p->ptrs.dp;
+        break;
+    case PktType::ICMP:
+        ft->ipprotocol = protocolReferenceICMP;
+        break;
     }
 
     host_entry = SFAT_LookupHostEntryBySrc(p);
@@ -1366,7 +1366,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
      *    a rebuilt packet later.  So don't process it further.
      */
     if ((frag_offset != 0) ||
-        ((p->ptrs.ip_api.proto() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
+        ((p->ip_proto_next() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
     {
         DisableDetect(p);
     }
@@ -1503,7 +1503,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
             FragRebuild(ft, p);
 
             if (frag_offset != 0 ||
-                (p->ptrs.ip_api.proto() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
+                (p->ip_proto_next() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
             {
                 /* Need to reset some things here because the
                  * rebuilt packet will have reset the do_detect
@@ -2322,7 +2322,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     
     if (p->ptrs.ip_api.is_ip4())
     {
-        ft->protocol = p->ptrs.ip_api.proto();
+        ft->protocol = p->ptrs.ip_api.get_ip4h()->get_proto();
 
         const ip::IP4Hdr *ip4h = reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
         frag_off = ntohs(ip4h->get_off());
@@ -2357,7 +2357,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         f = (Fragment *) SnortAlloc(sizeof(Fragment));
@@ -2506,7 +2506,7 @@ int Defrag::add_frag_node(FragTracker *ft,
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         /*
@@ -2593,7 +2593,7 @@ int Defrag::dup_frag_node(
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(IPPROTO_IP, p);
+            flow_con->prune_flows(PktType::IP, p);
         }
 
         /*

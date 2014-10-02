@@ -173,7 +173,7 @@ void Wizard::reset(Wand& w, bool /*tcp*/, bool c2s)
 
 void Wizard::eval(Packet* p)
 {
-    if ( !IsUDP(p) )
+    if ( !p->is_udp() )
         return;
 
     if ( !p->data || !p->dsize )

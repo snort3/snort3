@@ -31,6 +31,7 @@ wlan.h
 libprotocols_a_SOURCES = \
 layer.cc \
 packet_manager.cc \
+packet.cc \
 ip.cc \
 ipv4_options.cc \
 tcp_options.cc

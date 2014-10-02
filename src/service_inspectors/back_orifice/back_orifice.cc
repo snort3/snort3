@@ -480,7 +480,7 @@ void BackOrifice::eval(Packet *p)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(IsUDP(p));
+    assert(p->is_udp());
 
     /* make sure it's at least 19 bytes long */
     if(p->dsize < BO_MIN_SIZE)

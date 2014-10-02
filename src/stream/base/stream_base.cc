@@ -80,10 +80,10 @@ static const char* base_pegs[] =
 
 void base_sum()
 {   
-    t_stats.tcp = flow_con->get_flow_count(IPPROTO_TCP);
-    t_stats.udp = flow_con->get_flow_count(IPPROTO_UDP);
-    t_stats.icmp = flow_con->get_flow_count(IPPROTO_ICMP);
-    t_stats.ip = flow_con->get_flow_count(IPPROTO_IP);
+    t_stats.tcp = flow_con->get_flow_count(PktType::TCP);
+    t_stats.udp = flow_con->get_flow_count(PktType::UDP);
+    t_stats.icmp = flow_con->get_flow_count(PktType::ICMP);
+    t_stats.ip = flow_con->get_flow_count(PktType::IP);
 
     sum_stats((PegCount*)&g_stats, (PegCount*)&t_stats,
         array_size(base_pegs));
@@ -184,10 +184,10 @@ void StreamBase::tinit()
 
 void StreamBase::tterm()
 {
-    flow_con->purge_flows(IPPROTO_TCP);
-    flow_con->purge_flows(IPPROTO_UDP);
-    flow_con->purge_flows(IPPROTO_ICMP);
-    flow_con->purge_flows(IPPROTO_IP);
+    flow_con->purge_flows(PktType::TCP);
+    flow_con->purge_flows(PktType::UDP);
+    flow_con->purge_flows(PktType::ICMP);
+    flow_con->purge_flows(PktType::IP);
 
     delete flow_con;
     flow_con = nullptr;
@@ -223,8 +223,7 @@ void StreamBase::eval(Packet *p)
             flow_con->process_udp(p);
         break;
 
-    case PktType::ICMP4:
-    case PktType::ICMP6:
+    case PktType::ICMP:
         if ( p->ptrs.icmph )
             flow_con->process_icmp(p);
         break;

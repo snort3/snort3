@@ -607,7 +607,7 @@ void InspectorManager::bumble(Packet* p)
 
     flow->clear_clouseau();
 
-    if ( !flow->gadget || flow->protocol != IPPROTO_TCP )
+    if ( !flow->gadget || flow->protocol != PktType::TCP )
         return;
 
     ins = get_inspector("stream_tcp");

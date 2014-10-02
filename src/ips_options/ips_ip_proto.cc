@@ -124,7 +124,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
     int rval = DETECTION_OPTION_NO_MATCH;
     PROFILE_VARS;
 
-    if(!p->ptrs.ip_api.is_valid())
+    if (!p->has_ip())
     {
         DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN,"Not IP\n"););
         return rval;
@@ -132,32 +132,34 @@ int IpProtoOption::eval(Cursor&, Packet *p)
 
     MODULE_PROFILE_START(ipProtoPerfStats);
 
+    const uint8_t ip_proto = p->ip_proto_next();
+
     switch (ipd->comparison_flag)
     {
-        case IP_PROTO__EQUAL:
-            if (p->ptrs.ip_api.proto() == ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__EQUAL:
+        if (ip_proto == ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__NOT_EQUAL:
-            if (p->ptrs.ip_api.proto() != ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__NOT_EQUAL:
+        if (ip_proto != ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__GREATER_THAN:
-            if (p->ptrs.ip_api.proto() > ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__GREATER_THAN:
+        if (ip_proto > ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__LESS_THAN:
-            if (p->ptrs.ip_api.proto() < ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__LESS_THAN:
+        if (ip_proto < ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        default:
-            ErrorMessage("%s(%d) Invalid comparison flag.\n",
-                         __FILE__, __LINE__);
-            break;
+    default:
+        ErrorMessage("%s(%d) Invalid comparison flag.\n",
+                     __FILE__, __LINE__);
+        break;
     }
 
     /* if the test isn't successful, this function *must* return 0 */

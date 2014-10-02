@@ -351,7 +351,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     Packet* p = (Packet *)ps_pkt->pkt;
     EncodeFlags flags = ENC_FLAG_NET;
 
-    if (!IsIP(p))
+    if (!p->has_ip())
         return -1;
 
     if ( !ps_pkt->reverse_pkt )
@@ -377,7 +377,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
             g_tmp_pkt->ps_proto = IPPROTO_IP;
             break;
         case PS_PROTO_OPEN_PORT:
-            g_tmp_pkt->ps_proto = p->ptrs.ip_api.proto();
+            g_tmp_pkt->ps_proto = p->ip_proto_next();
             break;
         default:
             return -1;

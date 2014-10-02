@@ -34,6 +34,7 @@
 #include "flow/flow_key.h"
 #include "framework/inspector.h"
 #include "normalize/normalize.h"
+#include "framework/codec.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
@@ -136,7 +137,7 @@ class Flow
 {
 public:
     Flow();
-    Flow(int proto);
+    Flow(PktType);
     ~Flow();
 
     void reset();
@@ -206,7 +207,7 @@ public:  // FIXIT-M privatize if possible
     const FlowKey* key;
     class Session* session;
     StreamFlowData* flowdata;
-    uint8_t protocol;
+    PktType protocol;
 
     // these fields are always set; not zeroed
     Flow* prev, * next;

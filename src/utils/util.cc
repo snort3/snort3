@@ -436,6 +436,7 @@ void InitGroups(int user_id, int group_id)
 
 //-------------------------------------------------------------------------
 
+// FIXIT-L  This is a duplicate of PacketManager::get_proto_name().0
 void InitProtoNames(void)
 {
     int i;

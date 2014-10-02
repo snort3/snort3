@@ -35,8 +35,8 @@
 
 struct CodecManager::CodecApiWrapper
 {
-    bool init;
     const CodecApi* api;
+    bool init;
 };
 
 //  CodecManager Private Data
@@ -164,12 +164,12 @@ void CodecManager::instantiate(CodecApiWrapper& wrap,
         for (auto id : ids)
         {
             if(s_proto_map[id] != 0)
-                ErrorMessage("The Codecs %s and %s have both been registered "
+                ParseError("The Codecs %s and %s have both been registered "
                     "for protocol_id %d. Codec %s will be used\n",
                     s_protocols[s_proto_map[id]]->get_name(), cd->get_name(),
                     id, cd->get_name());
 
-            s_proto_map[id] = (uint8_t)codec_id;
+            s_proto_map[id] = (decltype(s_proto_map[id]))codec_id; // future proofing
         }
 
         wrap.init = true;
@@ -185,11 +185,12 @@ void CodecManager::instantiate(const CodecApi* cd_api , Module* m, SnortConfig* 
 
 void CodecManager::instantiate()
 {
-    // hard code the default codec into the zero index
     CodecApiWrapper tmp_wrap;
     tmp_wrap.api = default_codec;
     tmp_wrap.init = false;
     instantiate(tmp_wrap, nullptr, nullptr);
+
+    // default codec is the api ... I want the codec.
     s_protocols[0] = s_protocols[get_codec(default_codec->base.name)];
 
     // and instantiate every codec which does not have a module

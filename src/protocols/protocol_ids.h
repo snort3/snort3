@@ -58,10 +58,11 @@ constexpr uint16_t IPPROTO_ID_FRAGMENT = 44;
 constexpr uint16_t IPPROTO_ID_GRE = 47;
 constexpr uint16_t IPPROTO_ID_ESP = 50;
 constexpr uint16_t IPPROTO_ID_AUTH = 51; // RFC 4302
+constexpr uint16_t IPPROTO_ID_MOBILITY = 55;
 constexpr uint16_t IPPROTO_ID_ICMPV6 = 58;
 constexpr uint16_t IPPROTO_ID_NONEXT = 59;
 constexpr uint16_t IPPROTO_ID_DSTOPTS = 60;
-
+constexpr uint16_t IPPROTO_ID_RESERVED = 255; // == 0xFF
 
 /*
  *  Undefined Protocol!

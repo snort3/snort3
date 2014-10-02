@@ -259,22 +259,31 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(p->ptrs.ip_api.is_valid())
+        if(p->has_ip())
         {
             const ip::IP4Hdr* const iph = p->ptrs.ip_api.get_ip4h();
             alertdata.ip_source = iph->get_src();
             alertdata.ip_destination = iph->get_dst();
-            alertdata.protocol = GetEventProto(p);
 
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->ptrs.icmph)
+            if (IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                alertdata.protocol = p->ps_proto;
             }
-            else if (!IsPortscanPacket(p))
+            else
             {
-                alertdata.sport_itype = htons(p->ptrs.sp);
-                alertdata.dport_icode = htons(p->ptrs.dp);
+                alertdata.protocol = p->ip_proto_next();
+
+                if ( p->type() == PktType::ICMP)
+                {
+                    // If PktType == ICMP, icmph is set
+                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                }
+                else if (!IsPortscanPacket(p))
+                {
+                    alertdata.sport_itype = htons(p->ptrs.sp);
+                    alertdata.dport_icode = htons(p->ptrs.dp);
+                }
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
@@ -367,17 +376,25 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
             ip = p->ptrs.ip_api.get_dst();
             alertdata.ip_destination = *(struct in6_addr*)ip->ip32;
 
-            alertdata.protocol = GetEventProto(p);
-
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->ptrs.icmph)
+            if (IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                alertdata.protocol = p->ps_proto;
             }
-            else if (!IsPortscanPacket(p))
+            else
             {
-                alertdata.sport_itype = htons(p->ptrs.sp);
-                alertdata.dport_icode = htons(p->ptrs.dp);
+                alertdata.protocol = p->ip_proto_next();
+
+                if ( p->type() == PktType::ICMP)
+                {
+                    // If PktType == ICMP, icmph is set
+                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                }
+                else if (!IsPortscanPacket(p))
+                {
+                    alertdata.sport_itype = htons(p->ptrs.sp);
+                    alertdata.dport_icode = htons(p->ptrs.dp);
+                }
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))

@@ -150,7 +150,7 @@ constexpr uint8_t DEFAULT_LAYERMAX = 40;
 class Flow;
 
 
-struct Packet
+struct SO_PUBLIC Packet
 {
     Flow* flow;   /* for session tracking */
 
@@ -181,6 +181,7 @@ struct Packet
 
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
+    uint32_t iplist_id;
     uint16_t max_dsize;
 
     /**policyId provided in configuration file. Used for correlating configuration
@@ -188,14 +189,16 @@ struct Packet
      */
     uint16_t user_policy_id;
 
-    uint32_t iplist_id;
 
     uint8_t ps_proto;  // Used for portscan and unified2 logging
 
-    /*  Access methods */
 
+    /*  Boolean functions - general information about this packet */
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
+
+    inline bool has_ip() const
+    { return ptrs.ip_api.is_valid(); }
 
     inline bool is_ip4() const
     { return ptrs.ip_api.is_ip4(); }
@@ -203,8 +206,46 @@ struct Packet
     inline bool is_ip6() const
     { return ptrs.ip_api.is_ip6(); }
 
-    inline bool has_valid_ip() const
-    { return ptrs.ip_api.is_valid(); }
+    inline bool is_ip() const
+    { return ptrs.get_pkt_type() == PktType::IP; }
+
+    inline bool is_tcp() const
+    { return ptrs.get_pkt_type() == PktType::TCP; }
+
+    inline bool is_udp() const
+    { return ptrs.get_pkt_type() == PktType::UDP; }
+
+
+    /* Get general, non-boolean information */
+
+
+    /* the ip_api return the protocol_ID of the protocol directly the
+     * innermost IP layer.  However, especially in IPv6, the next protocol
+     * can frequently be an IP extension.  Therefore, this function
+     * return the protocol ID of the first protocol after all the
+     * IP layers.  For instance, if the stack is
+     *     eth::ip4::udp::teredo::ip6::hop_opts::ipv6_routing::tcp
+     * this function return 6 == IPPROTO_TCP == IPPROTO_ID_TCP
+     */
+    uint8_t ip_proto_next() const;
+
+    /* Similar to above. However, this function
+     * can be called in a loop to get all of the ip_proto's.
+     * NOTE: Will only return protocols of validly decoded layers.
+     *
+     * PARAMS:
+     *          lyr - zero based layer from which to start searching outward.
+     *                  will always point to an IP protocol or IP extension.
+     *          ip_proto - the ip_proto (read above) for the next, outermost IP layer
+     * EXAMPLE:
+     *
+     * int lyr = p->num_layers - 1;
+     * while ( ip_proto_next(lyr, ip_proto))
+     * {
+     *    ....
+     * }
+     */
+    bool ip_proto_next(int &lyr, uint8_t& proto) const;
 
     inline void reset()
     {
@@ -216,10 +257,6 @@ struct Packet
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
 
 
-
-#define IsIP(p) (p->ptrs.ip_api.is_valid())
-#define IsTCP(p) (IsIP(p) && p->ptrs.tcph)
-#define IsICMP(p) (IsIP(p) && p->ptrs.icmph)
 #define GET_PKT_SEQ(p) (ntohl(p->ptrs.tcph->th_seq))
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
@@ -236,13 +273,6 @@ static inline int PacketWasCooked(const Packet* const p)
 
 static inline bool IsPortscanPacket(const Packet* const p)
 { return ( PacketWasCooked(p) && (p->pseudo_type == PSEUDO_PKT_PS)); }
-
-static inline uint8_t GetEventProto(const Packet* const p)
-{
-    if (IsPortscanPacket(p))
-        return p->ps_proto;
-    return p->ptrs.ip_api.proto(); // return 0 if invalid
-}
 
 static inline bool PacketHasFullPDU (const Packet* const p)
 { return ( (p->packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL ); }
