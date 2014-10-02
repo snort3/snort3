@@ -268,7 +268,17 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
         return p;
 
     if (new_fqn.find_first_of('.') == std::string::npos)
+    {
+        if (p->type == Parameter::PT_LIST)
+        {
+            const Parameter* tmp_p =
+                reinterpret_cast<const Parameter*>(p->range);
+
+            if ( tmp_p[0].name && !tmp_p[1].name )
+                return tmp_p;
+        }
         return p;
+    }
 
     p = (const Parameter*)p->range;
     return get_params(new_fqn, p);
