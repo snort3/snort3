@@ -61,7 +61,6 @@ using namespace std;
 #include "rules.h"
 #include "treenodes.h"
 #include "snort_debug.h"
-#include "main/snort_config.h"
 #include "util.h"
 #include "parser.h"
 #include "packet_io/trough.h"
@@ -75,10 +74,11 @@ using namespace std;
 #include "packet_time.h"
 #include "perf_monitor/perf_base.h"
 #include "perf_monitor/perf.h"
-//#include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
 #include "framework/mpse.h"
+#include "main/build.h"
+#include "main/snort_config.h"
 #include "main/shell.h"
 #include "main/analyzer.h"
 #include "managers/module_manager.h"
@@ -293,20 +293,22 @@ static void SnortInit(int argc, char **argv)
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     snort_conf = snort_cmd_line_conf;
 
-    /* Tell 'em who wrote it, and what "it" is */
-    if (!ScLogQuiet())
-        PrintVersion();
-
-    InitProtoNames();
-    SFAT_Init();
-
+    LogMessage("--------------------------------------------------\n");
+    LogMessage("o\")~  Snort++ %s-%s\n", VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
-    ModuleManager::dump_modules();
-    PluginManager::dump_plugins();
+
+    if ( snort_conf->run_flags & RUN_FLAG__SHOW_PLUGINS )
+    {
+        ModuleManager::dump_modules();
+        PluginManager::dump_plugins();
+    }
+
+    InitProtoNames();
+    SFAT_Init();
 
     FileAPIInit();
     register_profiles();

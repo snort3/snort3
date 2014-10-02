@@ -116,7 +116,8 @@ enum RunFlag
     RUN_FLAG__NO_PCRE             = 0x01000000,
     /* If stream5 is configured, the STATEFUL flag is set.  This is
      * somewhat misnamed and is used to assure a session is established */
-    RUN_FLAG__ASSURE_EST          = 0x02000000      /* config stateful */
+    RUN_FLAG__ASSURE_EST          = 0x02000000,
+    RUN_FLAG__SHOW_PLUGINS        = 0x04000000      // --show-plugins
 
    ,RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x10000000,     /* --treat-drop-as-ignore */
     RUN_FLAG__PCAP_RELOAD         = 0x20000000,     /* --pcap-reload */

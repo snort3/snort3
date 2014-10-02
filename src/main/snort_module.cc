@@ -347,6 +347,9 @@ static const Parameter s_params[] =
     { "--shell", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable the interactive command line", },
 
+    { "--show-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list module and plugin versions", },
+
     { "--skip", Parameter::PT_INT, "0:", nullptr,
       "<n> skip 1st n packets", },
 
@@ -396,7 +399,7 @@ public:
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("-?") )
-        help_usage(sc, v.get_string());
+        help_options(sc, v.get_string());
 
     else if ( v.is("-A") )
         config_alert_mode(sc, v.get_string());
@@ -556,9 +559,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
     else if ( v.is("--help") )
-        help_usage(sc, v.get_string());
-
-    else if ( v.is("--help!") )
         help_basic(sc, v.get_string());
 
     else if ( v.is("--help-builtin") )
@@ -663,6 +663,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--shell") )
         sc->run_flags |= RUN_FLAG__SHELL;
+
+    else if ( v.is("--show-plugins") )
+        sc->run_flags |= RUN_FLAG__SHOW_PLUGINS;
 
     else if ( v.is("--skip") )
         sc->pkt_skip = v.get_long();

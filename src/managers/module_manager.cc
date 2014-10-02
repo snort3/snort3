@@ -560,6 +560,7 @@ void ModuleManager::show_module(const char* name)
         return;
     }
     s_modules.sort(comp_gids);
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -602,12 +603,16 @@ void ModuleManager::show_module(const char* name)
             cout << endl << "Peg counts: " << endl << endl;
             show_pegs(name);
         }
+        c++;
     }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_configs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_mods);
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -637,13 +642,18 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         }
         if ( !pfx )
             cout << endl;
+
+        c++;
     }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_commands(const char* pfx)
 {
     s_modules.sort(comp_mods);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned n = 0;
 
     for ( auto p : s_modules )
     {
@@ -668,13 +678,17 @@ void ModuleManager::show_commands(const char* pfx)
             cout << endl;
             c++;
         }
+        n++;
     }
+    if ( !n )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_gids(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -695,13 +709,17 @@ void ModuleManager::show_gids(const char* pfx)
             cout << ": " << Markup::sanitize(m->get_name());
             cout << endl;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_pegs(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -725,13 +743,17 @@ void ModuleManager::show_pegs(const char* pfx)
             cout << endl;
             ++pegs;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_rules(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -756,7 +778,10 @@ void ModuleManager::show_rules(const char* pfx)
             cout << endl;
             r++;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::load_commands(SnortConfig* sc)
@@ -822,6 +847,7 @@ void ModuleManager::dump_rules(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -849,7 +875,10 @@ void ModuleManager::dump_rules(const char* pfx)
 
             r++;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::dump_stats (SnortConfig*)

@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -17,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+// help.cc author Russ Combs <rucombs@cisco.com>
 
 #include "help.h"
 
@@ -29,6 +29,7 @@
 #include <string>
 using namespace std;
 
+#include "main.h"
 #include "config_file.h"
 #include "helpers/process.h"
 #include "main/snort.h"
@@ -49,8 +50,8 @@ static const char* snort_help =
 "\n"
 "Snort has several options to get more help:\n"
 "\n"
-"--help list command line options\n"
-"--help! this overview of help\n"
+"-? list command line options\n"
+"--help this overview of help\n"
 "--help-builtin [<module prefix>] output matching builtin rules\n"
 "--help-buffers output available inspection buffers\n"
 "--help-commands [<module prefix>] output matching commands\n"
@@ -85,6 +86,8 @@ static const char* snort_help =
 "++ IPS rules may also have a wild card parameter, which is indicated by a *.\n"
 "   Only used for metadata that Snort ignores.\n"
 "++ The snort module has command line options starting with a -.\n"
+"\n"
+"Report bugs to bugs@snort.org.\n"
 ;
 
 //-------------------------------------------------------------------------
@@ -120,10 +123,12 @@ void help_basic(SnortConfig*, const char*)
     exit(0);
 }
 
-void help_usage(SnortConfig*, const char* val)
+void help_usage(SnortConfig*, const char*)
 {
-    fprintf(stdout, "USAGE: %s [-options]\n", "snort");
-    help_args(val);
+    fprintf(stdout, "usage:\n");
+    fprintf(stdout, "%s [-options] -c conf [-T]: validate conf\n", "snort");
+    fprintf(stdout, "%s [-options] -c conf -i iface: process live\n", "snort");
+    fprintf(stdout, "%s [-options] -c conf -r pcap: process readback\n", "snort");
     exit(1);
 }
 
@@ -269,7 +274,6 @@ void help_version(SnortConfig*, const char*)
 
 void list_interfaces(SnortConfig*, const char*)
 {
-    DisplayBanner();
     PrintAllInterfaces();
     exit(0);
 }

@@ -153,8 +153,6 @@ bool UdpSession::setup(Packet* p)
         UpdateFlowIPState(&sfFlow, &flow->client_ip,
             &flow->server_ip, SFS_STATE_UDP_CREATED);
 
-    flow->s5_state.direction = FROM_SENDER;
-
     if ( flow_con->expected_flow(flow, p) )
         return false;
 
