@@ -20,6 +20,7 @@
 -- tweaked snort.lua snort_defaults.lua
 -- parsing fixes
 -- updated config_changes.txt
+-- fixed doc format and added errors.txt
 
 121
 -- valgrind fixes
