@@ -37,6 +37,12 @@ static const char* required = "require('snort_config'); ";
 // helper functions
 //-------------------------------------------------------------------------
 
+// FIXIT-L lua_pcall()s should be done safely to prevent panics from 
+// aborting process.
+
+// FIXIT-L --shell --pause should stop before loading config so Lua state
+// can be examined and modified.
+
 #if 0
 // :( it does not look possible to get file and line after load
 static int get_line_number(lua_State* L)

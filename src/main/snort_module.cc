@@ -354,7 +354,7 @@ static const Parameter s_params[] =
       "<snap> set snaplen of packet (same as -s)", },
 
     { "--stdin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "read rules from stdin until EOF or a line with EOR is read", },
+      "read rules from stdin until EOF or a line starting with END is read", },
 
     { "--treat-drop-as-alert", Parameter::PT_IMPLIED, nullptr, nullptr,
       "converts drop, sdrop, and reject rules into alert rules during startup" },

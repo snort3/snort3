@@ -568,6 +568,10 @@ static void IntegrityCheckRules(SnortConfig *sc)
 static void parse_file(SnortConfig* sc, Shell* sh)
 {
     const char* fname = sh->get_file();
+
+    if ( !fname || !*fname )
+        return;
+
     LogMessage("Loading %s:\n", fname);
     push_parse_location(fname);
     sh->configure(sc);

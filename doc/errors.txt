@@ -35,3 +35,7 @@ _FATAL: can't load lua/errors.lua: lua/errors.lua:68: '=' expected near
 
 * this is a syntax error reported by Lua to Snort on line 68 of errors.lua.
 
+_ERROR: rules(2) unknown rule keyword: find._
+
+* this was due to not including the --script-path.
+
