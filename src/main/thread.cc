@@ -208,16 +208,13 @@ const char* get_instance_file(std::string& file, const char* name)
         sep = true;
     }
 
-    if ( get_instance_id() || snort_conf->id_zero )
+    if ( (get_instance_max() > 1) || snort_conf->id_zero )
     {
         char id[8];
         snprintf(id, sizeof(id), "%u", get_instance_id());
         file += id;
         sep = true;
     }
-
-    if ( sep )
-        file += '_';
 
     if ( snort_conf->id_subdir )
     {
@@ -228,6 +225,8 @@ const char* get_instance_file(std::string& file, const char* name)
             // FIXIT-J getting random 0750 or 0700 (umask not thread local)?
             mkdir(file.c_str(), 0770);
     }
+    else if ( sep )
+        file += '_';
 
     file += name;
 

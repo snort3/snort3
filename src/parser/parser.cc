@@ -819,6 +819,7 @@ void ParseRules(SnortConfig *sc)
         }
         if ( !idx && sc->stdin_rules )
         {
+            LogMessage("Reading rules until EOF or a line starting with END\n");
             push_parse_location("stdin");
             parse_stream(std::cin, sc);
             pop_parse_location();
