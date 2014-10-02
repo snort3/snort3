@@ -338,8 +338,6 @@ int main_process(lua_State* L)
     }
     request.respond("== queuing pcap\n");
     Trough_Multi(SOURCE_LIST, f);
-    broadcast(AC_PAUSE);
-    paused = true;
     return 0;
 }
 
@@ -400,8 +398,14 @@ static int signal_check()
     {
     case PIG_SIG_QUIT:
     case PIG_SIG_TERM:
-    case PIG_SIG_INT:
         main_quit();
+        break;
+
+    case PIG_SIG_INT:
+        if ( paused )
+            main_resume(nullptr);
+        else
+            main_quit();
         break;
 
     case PIG_SIG_RELOAD_CONFIG:
@@ -666,7 +670,17 @@ static bool set_mode()
 
 static inline bool dont_stop()
 {
-    return ( Trough_Next() || snort_conf->run_flags & RUN_FLAG__PAUSE );
+    if ( paused || Trough_Next() )
+        return true;
+
+    if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
+    {
+        LogMessage("== pausing\n");
+        snort_conf->run_flags &= ~RUN_FLAG__PAUSE;
+        paused = true;
+        return true;
+    }
+    return false;
 }
 
 static void main_loop()
