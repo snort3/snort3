@@ -1517,23 +1517,23 @@ int fpEvalPacket(Packet *p)
 
     switch(p->type())
     {
-        case PktType::TCP:
-            return fpEvalHeaderTcp(p, omd);
+    case PktType::TCP:
+        return fpEvalHeaderTcp(p, omd);
 
-        case PktType::UDP:
-            return fpEvalHeaderUdp(p, omd);
+    case PktType::UDP:
+        return fpEvalHeaderUdp(p, omd);
 
-        case PktType::ICMP:
-            DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
-                        "Detecting on IcmpList\n"););
-            return fpEvalHeaderIcmp(p, omd);
+    case PktType::ICMP:
+        DEBUG_WRAP(DebugMessage(DEBUG_DETECT,
+                    "Detecting on IcmpList\n"););
+        return fpEvalHeaderIcmp(p, omd);
 
-        /*
-        **  No Match on TCP/UDP, Do IP
-        */
-        default:
-            return fpEvalHeaderIp(p, -1, omd);
-            break;
+    /*
+    **  No Match on TCP/UDP, Do IP
+    */
+    default:
+        return fpEvalHeaderIp(p, -1, omd);
+        break;
     }
 
 }

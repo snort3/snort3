@@ -224,20 +224,20 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         {
             switch(p->type())
             {
-                case PktType::TCP:
-                   LogTCPHeader(full_log, p);
-                    break;
+            case PktType::TCP:
+               LogTCPHeader(full_log, p);
+                break;
 
-                case PktType::UDP:
-                   LogUDPHeader(full_log, p);
-                    break;
+            case PktType::UDP:
+               LogUDPHeader(full_log, p);
+                break;
 
-                case PktType::ICMP:
-                   LogICMPHeader(full_log, p);
-                    break;
+            case PktType::ICMP:
+               LogICMPHeader(full_log, p);
+                break;
 
-                default:
-                    break;
+            default:
+                break;
             }
         }
         LogXrefs(full_log, event, 1);

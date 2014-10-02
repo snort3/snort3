@@ -70,11 +70,11 @@ PegCount FlowControl::get_flow_count(PktType proto)
 {
     switch ( proto )
     {
-        case PktType::TCP:  return tcp_count;
-        case PktType::UDP:  return udp_count;
-        case PktType::ICMP: return icmp_count;
-        case PktType::IP:   return ip_count;
-        default:            return 0;
+    case PktType::TCP:  return tcp_count;
+    case PktType::UDP:  return udp_count;
+    case PktType::ICMP: return icmp_count;
+    case PktType::IP:   return ip_count;
+    default:            return 0;
     }
 }
 
@@ -92,11 +92,11 @@ inline FlowCache* FlowControl::get_cache (PktType proto)
 {
     switch ( proto )
     {
-        case PktType::TCP:  return tcp_cache;
-        case PktType::UDP:  return udp_cache;
-        case PktType::ICMP: return icmp_cache;
-        case PktType::IP:   return ip_cache;
-        default:            return nullptr;
+    case PktType::TCP:  return tcp_cache;
+    case PktType::UDP:  return udp_cache;
+    case PktType::ICMP: return icmp_cache;
+    case PktType::IP:   return ip_cache;
+    default:            return nullptr;
     }
 }
 

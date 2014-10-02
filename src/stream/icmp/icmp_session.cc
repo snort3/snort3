@@ -154,18 +154,18 @@ static int ProcessIcmpUnreach(Packet *p)
 
     switch (skey.protocol)
     {
-        case PktType::TCP:
-            /* Lookup a TCP session */
-            ssn = Stream::get_session(&skey);
-            break;
-        case PktType::UDP:
-            /* Lookup a UDP session */
-            ssn = Stream::get_session(&skey);
-            break;
-        case PktType::ICMP:
-            /* Lookup a ICMP session */
-            ssn = Stream::get_session(&skey);
-            break;
+    case PktType::TCP:
+        /* Lookup a TCP session */
+        ssn = Stream::get_session(&skey);
+        break;
+    case PktType::UDP:
+        /* Lookup a UDP session */
+        ssn = Stream::get_session(&skey);
+        break;
+    case PktType::ICMP:
+        /* Lookup a ICMP session */
+        ssn = Stream::get_session(&skey);
+        break;
     }
 
     if (ssn)

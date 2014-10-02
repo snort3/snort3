@@ -22,76 +22,61 @@
 #include "protocols/protocol_ids.h"
 
 
-uint8_t Packet::ip_proto_next() const
-{
-    if (ptrs.ip_api.is_ip4())
-    {
-        return ptrs.ip_api.get_ip4h()->get_proto();
-    }
-    else if (ptrs.ip_api.is_ip6())
-    {
-        const ip::IP6Hdr* const ip6h = ptrs.ip_api.get_ip6h();
-        int lyr = num_layers-1;
-
-        uint8_t ip_proto = ip6h->get_next();
-
-        for (; lyr >= 0; lyr--)
-            if (layers[lyr].start == (uint8_t*)(ip6h))
-                break;
-
-#if 0
-        if this packet is_ip6, we are gauranteed to find the layer
-        if (lyr < 0)
-            return IPPROTO_ID_RESERVED;
-#endif
-
-        for (; lyr < num_layers; lyr++)
-        {
-            switch(ip_proto)
-            {
-                case IPPROTO_ID_HOPOPTS:
-                case IPPROTO_ID_DSTOPTS:
-                case IPPROTO_ID_ROUTING:
-                case IPPROTO_ID_FRAGMENT:
-                case IPPROTO_ID_AUTH:
-                case IPPROTO_ID_ESP:
-                case IPPROTO_ID_MOBILITY:
-                {
-                    const ip::IP6Extension* const ip6_ext =
-                        reinterpret_cast<const ip::IP6Extension*>(layers[lyr].start);
-                    ip_proto = ip6_ext->ip6e_nxt;
-                    break;
-                }
-                default:
-                {
-                    return ip_proto;
-                }
-            }
-        }
-    }
-
-    return IPPROTO_ID_RESERVED;
-}
-
 static inline bool is_ip_protocol(const uint16_t proto)
 {
     switch(proto)
     {
-        case IPPROTO_ID_HOPOPTS:
-        case IPPROTO_ID_DSTOPTS:
-        case IPPROTO_ID_ROUTING:
-        case IPPROTO_ID_FRAGMENT:
-        case IPPROTO_ID_AUTH:
-        case IPPROTO_ID_ESP:
-        case IPPROTO_ID_MOBILITY:
-        case IPPROTO_ID_IPIP:
-        case IPPROTO_ID_IPV6:
-        case ETHERTYPE_IPV4:
-        case ETHERTYPE_IPV6:
-            return true;
-        default:
-            return false;
+    case IPPROTO_ID_HOPOPTS:
+    case IPPROTO_ID_DSTOPTS:
+    case IPPROTO_ID_ROUTING:
+    case IPPROTO_ID_FRAGMENT:
+    case IPPROTO_ID_AUTH:
+    case IPPROTO_ID_ESP:
+    case IPPROTO_ID_MOBILITY:
+    case IPPROTO_ID_IPIP:
+    case IPPROTO_ID_IPV6:
+    case ETHERTYPE_IPV4:
+    case ETHERTYPE_IPV6:
+        return true;
+    default:
+        return false;
     }
+}
+
+uint8_t Packet::ip_proto_next() const
+{
+    if (is_ip4())
+    {
+        return ptrs.ip_api.get_ip4h()->get_proto();
+    }
+    else if (is_ip6())
+    {
+        const ip::IP6Hdr* const ip6h = ptrs.ip_api.get_ip6h();
+        int lyr = num_layers-1;
+
+
+        for (; lyr >= 0; lyr--)
+            if (layers[lyr].start == (const uint8_t*)(ip6h))
+                break;
+
+#if 0
+        Since this packet 'is_ip6()', we ar gauranteed to find the layer
+        if (lyr < 0)
+            return IPPROTO_ID_RESERVED;
+#endif
+
+        while (lyr < num_layers)
+        {
+            const uint16_t prot = layers[lyr].prot_id;
+
+            if (!is_ip_protocol(prot))
+                return (uint8_t)prot;
+
+            ++lyr;
+        }
+    }
+
+    return IPPROTO_ID_RESERVED;
 }
 
 bool Packet::ip_proto_next(int &lyr, uint8_t& proto) const
