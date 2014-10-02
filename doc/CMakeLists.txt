@@ -28,6 +28,7 @@ set(BUILT_SOURCES
 
 set (UNBUILT_SOURCES
     snort_manual.txt
+    errors.txt
     differences.txt
     style.txt
     tips.txt

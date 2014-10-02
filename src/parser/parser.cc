@@ -568,6 +568,10 @@ static void IntegrityCheckRules(SnortConfig *sc)
 static void parse_file(SnortConfig* sc, Shell* sh)
 {
     const char* fname = sh->get_file();
+
+    if ( !fname || !*fname )
+        return;
+
     LogMessage("Loading %s:\n", fname);
     push_parse_location(fname);
     sh->configure(sc);
@@ -635,6 +639,10 @@ SnortConfig * ParseSnortConf(const SnortConfig* boot_conf)
         AddVarToTable(sc, tmp->name, tmp->value);
         tmp = tmp->next;
     }
+
+    // get overrides from cmd line
+    Shell* sh = boot_conf->policy_map->get_shell();
+    sc->policy_map->get_shell()->set_overrides(sh);
 
     if ( *fname )
     {
@@ -811,6 +819,7 @@ void ParseRules(SnortConfig *sc)
         }
         if ( !idx && sc->stdin_rules )
         {
+            LogMessage("Reading rules until EOF or a line starting with END\n");
             push_parse_location("stdin");
             parse_stream(std::cin, sc);
             pop_parse_location();

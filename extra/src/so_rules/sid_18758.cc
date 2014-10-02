@@ -74,6 +74,8 @@ static const SoApi so_api =
     dtor,
 };
 
+// other snort plugins can be put in this list as needed
+// eg multiple rules in one so, custom rule options, etc.
 SO_PUBLIC const BaseApi* snort_plugins[] =
 {
     &so_api.base,

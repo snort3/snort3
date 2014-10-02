@@ -31,6 +31,7 @@ public:
 
     void set_file(const char*);
     void set_overrides(const char*);
+    void set_overrides(Shell*);
 
     void configure(struct SnortConfig*);
     void install(const char*, const struct luaL_Reg*);

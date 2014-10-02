@@ -168,7 +168,7 @@ static TokenType get_token(
             else if ( c == '\\' )
                 state = 4;
             else if ( c == '\n' )
-                printf("warning: line break in string on line %d\n", lines-1);
+                ParseWarning("line break in string on line %d\n", lines-1);
             break;
         case 4:  // quoted escape
             s += c;
@@ -176,7 +176,7 @@ static TokenType get_token(
             break;
         case 5:  // unquoted escape
             if ( c != '\n' && c != '\r' )
-                printf("error: invalid escape on line %d\n", lines);
+                ParseWarning("invalid escape on line %d\n", lines);
             state = 0;
             break;
         case 6:  // token
@@ -354,33 +354,28 @@ static bool exec(
     switch ( act )
     {
     case FSM_ACT:
-        //printf("\nparse act = %s\n", tok.c_str());
+        // FIXIT-L if non-rule tok != "END", parsing goes bad
+        // (need ctl-D to terminate)
         if ( tok == "END" )
             return true;
         parse_rule_type(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_PRO:
-        //printf("parse pro = %s\n", tok.c_str());
         parse_rule_proto(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_SIP:
-        //printf("parse sip = %s\n", tok.c_str());
         parse_rule_nets(sc, tok.c_str(), true, rps.rtn);
         break;
     case FSM_SP:
-        //printf("parse sp = %s\n", tok.c_str());
         parse_rule_ports(sc, tok.c_str(), true, rps.rtn);
         break;
     case FSM_DIR:
-        //printf("parse dir = %s\n", tok.c_str());
         parse_rule_dir(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_DIP:
-        //printf("parse dip = %s\n", tok.c_str());
         parse_rule_nets(sc, tok.c_str(), false, rps.rtn);
         break;
     case FSM_DP:
-        //printf("parse dp = %s\n", tok.c_str());
         parse_rule_ports(sc, tok.c_str(), false, rps.rtn);
         break;
     case FSM_STB:
@@ -421,14 +416,12 @@ static bool exec(
         rps.tbd = true;
         break;
     case FSM_SET:
-        //printf("parse %s:%s = %s\n", rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         parse_rule_opt_set(sc, rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         rps.opt.clear();
         rps.val.clear();
         rps.tbd = false;
         break;
     case FSM_END:
-        //printf("parse %s:%s = %s\n", rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         if ( rps.opt.size() )
             parse_rule_opt_set(sc, rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         parse_rule_opt_end(sc, rps.key.c_str(), rps.otn);
@@ -449,13 +442,11 @@ static bool exec(
         rps.tbd = true;
         break;
     case FSM_INC:
-        //printf("\nparse %s = %s\n", rps.key.c_str(), tok.c_str());
         parse_include(sc, tok.c_str());
         break;
     case FSM_NOP:
         break;
     case FSM_ERR:
-        //printf("error\n");
     default:
         break;
     }

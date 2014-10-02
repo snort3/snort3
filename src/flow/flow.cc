@@ -46,7 +46,8 @@ FlowData::FlowData(unsigned u, Inspector* ph)
 FlowData::~FlowData()
 {
     if ( handler )
-        handler->rem_ref(); }
+        handler->rem_ref();
+}
 
 Flow::Flow ()
 {
@@ -72,6 +73,12 @@ Flow::~Flow ()
 
     free_application_data();
 
+    if ( ssn_client )
+        ssn_client->rem_ref();
+
+    if ( ssn_server )
+        ssn_server->rem_ref();
+
     if ( clouseau )
         clouseau->rem_ref();
 
@@ -84,11 +91,11 @@ Flow::~Flow ()
 
 void Flow::reset()
 {
-    if ( ssn_client )
-    {
+    free_application_data();
+
+    if ( session )
         session->cleanup();
-        free_application_data();
-    }
+
     // FIXIT-H cleanup() winds up calling clear()
     if ( ssn_client )
     {
@@ -107,6 +114,7 @@ void Flow::reset()
         clear_gadget();
 
     constexpr size_t offset = offsetof(Flow, appDataList);
+    // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 
     boInitStaticBITOP(
@@ -142,10 +150,10 @@ void Flow::clear(bool freeAppData)
         ssn_server = nullptr;
     }
     if ( clouseau )
-    {
-        clouseau->rem_ref();
-        clouseau = nullptr;
-    }
+        clear_clouseau();
+
+    if ( gadget )
+        clear_gadget();
 }
 
 int Flow::set_application_data(FlowData* fd)

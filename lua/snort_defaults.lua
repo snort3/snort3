@@ -211,7 +211,7 @@ default_ftp_server =
 -- default wizard
 ---------------------------------------------------------------------------
 
-http_methods = { 'GIT', 'GET', 'POST', 'HEAD' } -- build from default_http_methods
+http_methods = { 'GET', 'POST', 'HEAD' } -- build from default_http_methods
 ftp_commands = { 'USER' } -- add others
 sip_methods = { 'INVITE', 'NOTIFY' } -- add others
 isakmp_hex = { '?????????????????|01|', '?????????????????|10|' }
@@ -283,3 +283,4 @@ default_wizard =
           to_server = telnet_commands, to_client = telnet_commands },
     }
 }
+

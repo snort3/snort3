@@ -2468,7 +2468,7 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     // update stats
     if ( tcpssn->tcp_init )
         tcpStats.trackers_released++;
-    else
+    else if ( tcpssn->lws_init )
         tcpStats.no_pickups++;
 
     Stream5UpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSED);
@@ -5921,8 +5921,13 @@ static inline int CheckFlushPolicyOnData(
                 //if ( AutoDisable(listener, talker) )
                 //    return 0;
 
+                delete talker->splitter;
                 delete listener->splitter;
-                listener->splitter = new AtomSplitter(true, listener->config->paf_max);
+
+                bool c2s = (p->packet_flags & PKT_FROM_CLIENT) != 0;
+
+                talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
+                listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
 
                 return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
             }
@@ -6050,7 +6055,12 @@ int CheckFlushPolicyOnAck(
                 //    return 0;
 
                 delete talker->splitter;
-                talker->splitter = new AtomSplitter(false, talker->config->paf_max);
+                delete listener->splitter;
+
+                bool c2s = (p->packet_flags & PKT_FROM_CLIENT) != 0;
+
+                talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
+                listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
 
                 return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
             }

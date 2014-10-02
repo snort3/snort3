@@ -82,12 +82,16 @@ struct PHInstance
 {
     PHClass& pp_class;
     Inspector* handler;
+    string name;
 
     PHInstance(PHClass&);
     ~PHInstance();
 
     static bool comp (PHInstance* a, PHInstance* b)
     { return ( a->pp_class.api.type < b->pp_class.api.type ); };
+
+    void set_name(const char* s)
+    { name = s; };
 };
 
 PHInstance::PHInstance(PHClass& p) : pp_class(p)
@@ -247,6 +251,12 @@ void InspectorManager::release_plugins ()
 {
     empty_trash();
 
+    for ( auto* p : s_trash )
+    {
+        if ( !p->is_inactive() )
+            printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
+    }
+
     for ( auto* p : s_handlers )
     {
         if ( !p->init && p->api.pterm )
@@ -298,8 +308,13 @@ static PHInstance* get_instance(
     FrameworkPolicy* fp, const char* keyword)
 {
     for ( auto* p : fp->ilist )
-        if ( !strcmp(p->pp_class.api.base.name, keyword) )
+    {
+        if ( p->name.size() && p->name == keyword )
             return p;
+
+        else if ( !strcmp(p->pp_class.api.base.name, keyword) )
+            return p;
+    }
 
     return nullptr;
 }
@@ -455,7 +470,7 @@ void InspectorManager::thread_term(SnortConfig* sc)
 
 // new configuration
 void InspectorManager::instantiate(
-    const InspectApi* api, Module*, SnortConfig* sc)
+    const InspectApi* api, Module*, SnortConfig* sc, const char* name)
 {
     FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
@@ -475,6 +490,9 @@ void InspectorManager::instantiate(
 
         if ( !ppi )
             ParseError("can't instantiate inspector: '%s'.", keyword);
+
+        else if ( name )
+            ppi->set_name(name);
     }
 }
 

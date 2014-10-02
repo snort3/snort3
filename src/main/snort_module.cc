@@ -126,7 +126,7 @@ static const Parameter s_params[] =
       "<mode> checksum mode (all,noip,notcp,noudp,noicmp,none)" },
 
     { "-l", Parameter::PT_STRING, nullptr, nullptr, 
-      "<logdir> log to this directory instead of current director" },
+      "<logdir> log to this directory instead of current directory" },
 
     { "-M", Parameter::PT_IMPLIED, nullptr, nullptr,
       "log messages to syslog (not alerts)" },
@@ -199,9 +199,6 @@ static const Parameter s_params[] =
 
     { "--bpf", Parameter::PT_STRING, nullptr, nullptr,
       "<filter options> are standard BPF options, as seen in TCPDump" },
-
-    { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr, 
-      "warnings are fatal" },
 
     { "--create-pidfile", Parameter::PT_IMPLIED, nullptr, nullptr,
       "create PID file, even when not in Daemon mode" },
@@ -329,6 +326,9 @@ static const Parameter s_params[] =
     { "--pcap-show", Parameter::PT_IMPLIED, nullptr, nullptr,
       "print a line saying what pcap is currently being read" },
 
+    { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr, 
+      "warnings are fatal" },
+
     { "--plugin-path", Parameter::PT_STRING, nullptr, nullptr,
       "<path> where to find plugins" },
 
@@ -354,7 +354,7 @@ static const Parameter s_params[] =
       "<snap> set snaplen of packet (same as -s)", },
 
     { "--stdin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "read rules from stdin until EOF or a line with EOR is read", },
+      "read rules from stdin until EOF or a line starting with END is read", },
 
     { "--treat-drop-as-alert", Parameter::PT_IMPLIED, nullptr, nullptr,
       "converts drop, sdrop, and reject rules into alert rules during startup" },

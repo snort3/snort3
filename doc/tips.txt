@@ -1,127 +1,40 @@
 The following pointers will help you get started:
 
-=== Using git
-
-* for help do:
-
-    git --help
-    git <command> --help
-
-* create a git repo called Snort++ in your working directory:
-
-    git clone /nfs/home/rucombs/Snort++
-
-* check the status of your repo and files:
-
-    git status
-
-* add a remote repo:
-
-    git remote add <name> <username>@<host>:/nfs/home/rcombs/Snort++
-
-* check the status of your remotes:
-
-    git remote -v
-
-* add new files to the repo:
-
-    git add <files>
-
-* stage changed file for commit:
-
-    git add -u 
-    git add -p
-
-* commit staged files:
-
-    git commit -m 'description'
-
-* pull changes from a remote:
-
-    git pull <name>
-    git pull <name> <branch>
-
-* push changes to remote:
-
-    git push <name>
-    git push <username>@<host>:Snort++
-    git push <name> <branch>
-
-* create a branch and switch to it:
-
-    git branch -a brname
-    git checkout brname
-
-* commit branch and then merge branch into head:
-
-    git add -u
-    git commit -m 'why'
-    git checkout master
-    git merge brname
-
-* check the commit history for a <file>:
-
-    git log <file>
-
-* diff specific committed versions of a <file> (using the unambiguous
-  commit prefixes):
-
-git diff f072c3... ff38ce...  lua/snort.lua
-
 === Building
 
-* you need luajit from luajit.org; build from source.
+* You need luajit from luajit.org; build from source.
 
-* you should build Snort++ with --prefix $install_dir where install_dir is
+* You should build Snort++ with --prefix $install_dir where install_dir is
   something you can easily delete.
 
-* don't try to build the control socket, it is broken.  I'll fix it but it
-  but really plan to delete it.
+* If you want to build the documentation, you will need to install
+  asciidoc.  You will also need dblatex to build the pdf manual.
 
-* here are the configure options I typically use for reference:
+* To build with cmake and make, first create a separate directory for the
+  build and cd into that directory.  Then:
 
-    ./configure --enable-inline-init-failopen --enable-option-checking=fatal
-        --enable-pthread --with-libpcap-includes=/usr/local/include
-        --with-pcap-libraries=/usr/local/lib
-        --with-dnet-includes=/usr/local/include
-        --with-dnet-libraries=/usr/local/lib --enable-sourcefire
-        --with-luajit-includes=/usr/local/include/luajit-2.0
-        --with-luajit-libraries=/usr/local/lib --enable-non-ether-decoders
-        --enable-ha --prefix=/home/rcombs/install --enable-debug
-        --enable-debug-msgs
-
-* extra/README explains how to build the example plugins.
-
-* if you want to build the documentation, you will need to install
-  asciidoc.  you will also need dblatex to build the pdf manual.
-
-* to build with cmake and make, first create a separate directory for the
-  build and cd into that directory.  then:
-
-    cd Snort++
-    mkdir Cbuild
-    cd Cbuild
-    cmake ..
+    mkdir -p /path/to/my_build
+    cd /path/to/my_build
+    cmake /path/to/Snort++
 
 * An alternate method for building with cmake and make is to run the
   configure_cmake.sh script.  It will automatically create and populate
-  a new directory named 'build'.
+  a new subdirectory named 'build'.
 
+    cd /path/to/Snort++
     ./configure_cmake.sh --prefix=/home/rcombs/install
 
-* build with Xcode, do this:
+* Build with Xcode like this:
 
-    cd Snort++
-    mkdir Xcode
-    cd Xcode
-    cmake .. -G Xcode
-    open snort.xcodeproj
+    mkdir -p /path/to/my_build
+    cd /path/to/my_build
+    cmake /path/to/Snort++ -G Xcode
 
-*
- An alternate method for building with xcode is to run the
+* An alternate method for building with xcode is to run the
   configure_cmake.sh script.  It will automatically create and populate
   a new durectory named 'build'.
 
+    cd /path/to/Snort++
     ./configure_cmake --generator=Xcode --prefix=/home/rcombs/install
 
 
@@ -132,38 +45,64 @@ git diff f072c3... ff38ce...  lua/snort.lua
 
 * lua/snort.lua is always the latest working example configuration.
 
-* you need to export LUA_PATH=$install_dir/include/snort/lua/?.lua\;\;
+* You need to export LUA_PATH=$install_dir/include/snort/lua/?.lua\;\;
 
 * In addition to LUA_PATH which is required to get to the load scripts,
   you can export SNORT_LUA_PATH to allow dofile() loading of
   classification.lua etc. w/o hard coding the path in snort.lua.
 
-* or you may edit snort.lua to set the path to classification.lua and
+* Or you may edit snort.lua to set the path to classification.lua and
   reference.lua.
 
-* not everything in the conf is converted to Lua yet, in particular, not
-  inspetors.
-
-* 'classic' preprocessors must be put in legacy = 'filename'.  they will
-  eventually be moved to the Lua config.
-
-* 'classic' rules and includes must be put in ips.include = 'filename'
+* 'Classic' rules and includes must be put in ips.include = 'filename'
   and/or ips.rules = 'string' or [[ multi line string ]].  
+
+* You can also use snort2lua to convert your Snort classic conf file into a
+  Snort++ lua file.
+
+* You can override or add to your lua config with the --lua command line
+  option.  You can even add rules to your config via the command line.
+
+* The Lua config is a 'live' script that is executed when loaded.  You can
+  add functions, grab environment variables, compute values, etc.  Symbols
+  unknown to Snort++ are silently ignored.
+
 
 === Running
 
-* unit tests are configured with --enable-unit-tests (libcheck is
+* Use snort --help! for an overview of the help available.
+
+* Load plugins from the command line with --plugin-path /path/to/install/lib.
+
+* Snort++ tries hard not to error out too quickly.  It will report multiple
+  semantic errors.  It always assumes the simplest mode of operation.
+
+* You can process multiple sources at one time by using the -z or
+  --max-threads option.
+
+* Unit tests are configured with --enable-unit-tests (libcheck is
   required).  They can then be run with snort --unit-test [<mode>] where mode
   is a libcheck print_mode (silent, minimal, normal, etc.).
 
-* use snort --help to list command line options
-  the optional option, or option prefix, will restrict output to only
-  matching options.
 
-* use snort --help-config [<module>] to list configuration options
-  the optional module, or module prefix, will restrict output to only
-  matching modules.
+=== Extending
 
-* use snort --help-rules [<module>] or --help-module <module> to get info
-  on rules or modules.
+* Snort++ has several types of plugins.  extra/README explains how to build
+  the example plugins.
+
+* You can code your plugins in C++ by using the examples as a template.
+
+* Snort classic dynamic libraries are NOT compatible with Snort++.
+
+* Snort classic SO rules are likewise not compatible with Snort++.
+
+
+=== Gotchas
+
+* A table with a nil key will not caught, eg: 
+
+    stream_tcp = { show_rebuilt_packets }
+
+* Snort can't tell you the exact filename or line number of a semantic
+  error but it will tell you the fully qualified name.
 

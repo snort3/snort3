@@ -46,7 +46,9 @@ public:
     static void new_config(SnortConfig*);
     static void delete_config(SnortConfig*);
 
-    static void instantiate(const InspectApi*, Module*, SnortConfig*);
+    static void instantiate(
+        const InspectApi*, Module*, SnortConfig*, const char* name = nullptr);
+
     static void free_inspector(Inspector*);
     static InspectSsnFunc get_session(const char* key);
 

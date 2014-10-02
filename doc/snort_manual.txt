@@ -20,7 +20,13 @@ include::differences.txt[]
 
 === Configuration Changes
 
-include::config_changes.txt
+----
+include::config_changes.txt[]
+----
+
+== Common Errors
+
+include::errors.txt[]
 
 == Modules
 
