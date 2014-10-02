@@ -72,3 +72,47 @@ uint8_t Packet::ip_proto_next() const
 
     return IPPROTO_ID_RESERVED;
 }
+
+static inline bool is_ip_protocol(const uint16_t proto)
+{
+    switch(proto)
+    {
+        case IPPROTO_ID_HOPOPTS:
+        case IPPROTO_ID_DSTOPTS:
+        case IPPROTO_ID_ROUTING:
+        case IPPROTO_ID_FRAGMENT:
+        case IPPROTO_ID_AUTH:
+        case IPPROTO_ID_ESP:
+        case IPPROTO_ID_MOBILITY:
+        case IPPROTO_ID_IPIP:
+        case IPPROTO_ID_IPV6:
+        case ETHERTYPE_IPV4:
+        case ETHERTYPE_IPV6:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool Packet::ip_proto_next(int &lyr, uint8_t& proto) const
+{
+    if (lyr < 0)
+        return false;
+
+    // lyr[0] will always return false
+    // walk past any ip6 options/IP protocols
+    while (is_ip_protocol(layers[lyr].prot_id))
+        --lyr;
+
+    while (lyr >= 0)
+    {
+        if (is_ip_protocol(layers[lyr].prot_id))
+            return true;
+        else
+            proto = layers[lyr].prot_id;
+
+        --lyr;
+    }
+
+    return false;
+}

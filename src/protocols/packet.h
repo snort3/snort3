@@ -224,10 +224,28 @@ struct SO_PUBLIC Packet
      * can frequently be an IP extension.  Therefore, this function
      * return the protocol ID of the first protocol after all the
      * IP layers.  For instance, if the stack is
-     *          eth::ip6::hop_opts::ipv6_routing::UDP
-     * this function return 17 == IPPROTO_UDP == IPPROTO_ID_UDP
+     *     eth::ip4::udp::teredo::ip6::hop_opts::ipv6_routing::tcp
+     * this function return 6 == IPPROTO_TCP == IPPROTO_ID_TCP
      */
     uint8_t ip_proto_next() const;
+
+    /* Similar to above. However, this function
+     * can be called in a loop to get all of the ip_proto's.
+     * NOTE: Will only return protocols of validly decoded layers.
+     *
+     * PARAMS:
+     *          lyr - zero based layer from which to start searching outward.
+     *                  will always point to an IP protocol or IP extension.
+     *          ip_proto - the ip_proto (read above) for the next, outermost IP layer
+     * EXAMPLE:
+     *
+     * int lyr = p->num_layers - 1;
+     * while ( ip_proto_next(lyr, ip_proto))
+     * {
+     *    ....
+     * }
+     */
+    bool ip_proto_next(int &lyr, uint8_t& proto) const;
 
     inline void reset()
     {
