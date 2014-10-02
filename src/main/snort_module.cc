@@ -239,17 +239,11 @@ static const Parameter s_params[] =
     { "--help-builtin", Parameter::PT_STRING, "(optional)", nullptr,
       "<module prefix> output matching builtin rules" },
 
-    { "--help-buffers", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "output available inspection buffers" },
-
     { "--help-commands", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching commands" },
 
     { "--help-config", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching config options" },
-
-    { "--help-gids", Parameter::PT_STRING, "(optional)", nullptr,
-      "[<module prefix>] output matching generators" },
 
     { "--help-module", Parameter::PT_STRING, nullptr, nullptr,
       "<module> output description of given module" },
@@ -271,6 +265,12 @@ static const Parameter s_params[] =
 
     { "--id-zero", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use id prefix / subdirectory even with one packet thread" },
+
+    { "--list-gids", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module prefix>] output matching generators" },
+
+    { "--list-buffers", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output available inspection buffers" },
 
     { "--list-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all known modules" },
@@ -564,17 +564,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--help-builtin") )
         help_builtin(sc, v.get_string());
 
-    else if ( v.is("--help-buffers") )
-        help_buffers(sc, v.get_string());
-
     else if ( v.is("--help-commands") )
         help_commands(sc, v.get_string());
 
     else if ( v.is("--help-config") )
         help_config(sc, v.get_string());
-
-    else if ( v.is("--help-gids") )
-        help_gids(sc, v.get_string());
 
     else if ( v.is("--help-module") )
         help_module(sc, v.get_string());
@@ -596,6 +590,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--id-zero") )
         sc->id_zero = true;
+
+    else if ( v.is("--list-buffers") )
+        help_buffers(sc, v.get_string());
+
+    else if ( v.is("--list-gids") )
+        help_gids(sc, v.get_string());
 
     else if ( v.is("--list-modules") )
         list_modules(sc, v.get_string());
