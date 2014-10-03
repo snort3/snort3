@@ -21,7 +21,6 @@
 #ifndef EXPECT_CACHE_H
 #define EXPECT_CACHE_H
 
-#include "framework/codec.h"
 #include "sfip/sfip_t.h"
 
 class FlowData;
@@ -36,7 +35,7 @@ public:
     int add_flow(
         const sfip_t *cliIP, uint16_t cliPort,
         const sfip_t *srvIP, uint16_t srvPort,
-        PktType protocol, char direction,
+        uint8_t protocol, char direction,
         FlowData*, int16_t appId = 0);
 
     bool is_expected(Packet*);

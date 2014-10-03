@@ -153,6 +153,7 @@ struct SO_PUBLIC Packet
 
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
     uint8_t num_layers;         /* index into layers for next encap */
+    uint8_t ip_proto_next; /* the protocol ID after IP and all IP6 extension */
 
 
     // nothing after this point is zeroed ...
@@ -216,7 +217,8 @@ struct SO_PUBLIC Packet
      *     eth::ip4::udp::teredo::ip6::hop_opts::ipv6_routing::tcp
      * this function return 6 == IPPROTO_TCP == IPPROTO_ID_TCP
      */
-    uint8_t ip_proto_next() const;
+    inline uint8_t get_ip_proto_next() const
+    { return ip_proto_next; }
 
     /* Similar to above. However, this function
      * can be called in a loop to get all of the ip_proto's.
@@ -234,7 +236,7 @@ struct SO_PUBLIC Packet
      *    ....
      * }
      */
-    bool ip_proto_next(int &lyr, uint8_t& proto) const;
+    bool get_ip_proto_next(int &lyr, uint8_t& proto) const;
 
     inline void reset()
     {

@@ -42,7 +42,7 @@ static inline bool is_ip_protocol(const uint16_t proto)
         return false;
     }
 }
-
+#if 0
 uint8_t Packet::ip_proto_next() const
 {
     if (is_ip4())
@@ -78,8 +78,9 @@ uint8_t Packet::ip_proto_next() const
 
     return IPPROTO_ID_RESERVED;
 }
+#endif
 
-bool Packet::ip_proto_next(int &lyr, uint8_t& proto) const
+bool Packet::get_ip_proto_next(int &lyr, uint8_t& proto) const
 {
     if (lyr < 0)
         return false;

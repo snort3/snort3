@@ -132,7 +132,7 @@ int IpProtoOption::eval(Cursor&, Packet *p)
 
     MODULE_PROFILE_START(ipProtoPerfStats);
 
-    const uint8_t ip_proto = p->ip_proto_next();
+    const uint8_t ip_proto = p->get_ip_proto_next();
 
     switch (ipd->comparison_flag)
     {

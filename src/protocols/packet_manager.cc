@@ -224,7 +224,10 @@ void PacketManager::decode(
         }
 
         if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
+        {
             fpEvalIpProtoOnlyRules(p, codec_data.next_prot_id);
+            p->ip_proto_next = codec_data.next_prot_id;
+        }
 
         // internal statistics and record keeping
         push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);

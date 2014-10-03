@@ -70,14 +70,14 @@ static THREAD_LOCAL PegCount udp_count = 0;
 static THREAD_LOCAL PegCount icmp_count = 0;
 static THREAD_LOCAL PegCount ip_count = 0;
 
-PegCount FlowControl::get_flow_count(PktType proto)
+PegCount FlowControl::get_flow_count(uint8_t proto)
 {
     switch ( proto )
     {
-    case PktType::TCP:  return tcp_count;
-    case PktType::UDP:  return udp_count;
-    case PktType::ICMP: return icmp_count;
-    case PktType::IP:   return ip_count;
+    case IPPROTO_TCP:  return tcp_count;
+    case IPPROTO_UDP:  return udp_count;
+    case IPPROTO_ICMP: return icmp_count;
+    case IPPROTO_IP:   return ip_count;
     default:            return 0;
     }
 }
@@ -92,15 +92,15 @@ void FlowControl::clear_flow_counts()
 // cache foo
 //-------------------------------------------------------------------------
 
-inline FlowCache* FlowControl::get_cache (PktType proto)
+inline FlowCache* FlowControl::get_cache (uint8_t proto)
 {
     switch ( proto )
     {
-    case PktType::TCP:  return tcp_cache;
-    case PktType::UDP:  return udp_cache;
-    case PktType::ICMP: return icmp_cache;
-    case PktType::IP:   return ip_cache;
-    default:            return nullptr;
+    case IPPROTO_TCP:    return tcp_cache;
+    case IPPROTO_UDP:    return udp_cache;
+    case IPPROTO_ICMP:   return icmp_cache;
+    case IPPROTO_IP:     return ip_cache;
+    default:              return nullptr;
     }
 }
 
@@ -141,13 +141,13 @@ void FlowControl::delete_flow (const FlowKey* key)
 
 void FlowControl::delete_flow (Flow* flow, const char* why)
 {
-    FlowCache* cache = get_cache(flow->protocol);
+    FlowCache* cache = get_cache(flow->ip_proto);
 
     if ( cache )
         cache->release(flow, why);
 }
 
-void FlowControl::purge_flows (PktType proto)
+void FlowControl::purge_flows (uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -155,7 +155,7 @@ void FlowControl::purge_flows (PktType proto)
         cache->purge();
 }
 
-void FlowControl::prune_flows (PktType proto, Packet* p)
+void FlowControl::prune_flows (uint8_t proto, Packet* p)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -189,7 +189,7 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
     Active_Resume();
 }
 
-uint32_t FlowControl::max_flows(PktType proto)
+uint32_t FlowControl::max_flows(uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -199,7 +199,7 @@ uint32_t FlowControl::max_flows(PktType proto)
     return 0;
 }
 
-void FlowControl::get_prunes (PktType proto, PegCount& prunes)
+void FlowControl::get_prunes (uint8_t proto, PegCount& prunes)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -207,7 +207,7 @@ void FlowControl::get_prunes (PktType proto, PegCount& prunes)
         prunes = cache->get_prunes();
 }
 
-void FlowControl::reset_prunes (PktType proto)
+void FlowControl::reset_prunes (uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -225,7 +225,7 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     uint32_t mplsId;
     uint16_t vlanId;
     uint16_t addressSpaceId;
-    PktType proto = p->type();
+    uint8_t proto = p->get_ip_proto_next();
 
     if ( p->proto_bits & PROTO_BIT__VLAN )
         vlanId = layer::get_vlan_layer(p)->vid();
@@ -248,14 +248,9 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
         key->init(ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
             proto, vlanId, mplsId, addressSpaceId);
     }
-    else if (proto == PktType::ICMP)
+    else if (proto == IPPROTO_ICMP)
     {
         key->init(ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
-            proto, vlanId, mplsId, addressSpaceId);
-    }
-    else if (proto == PktType::IP)
-    {
-        key->init(ip_api.get_src(), ip_api.proto(), ip_api.get_dst(), p->ptrs.dp,
             proto, vlanId, mplsId, addressSpaceId);
     }
     else
@@ -548,7 +543,7 @@ char FlowControl::expected_flow (Flow* flow, Packet* p)
 int FlowControl::add_expected(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType protocol, char direction,
+    uint8_t protocol, char direction,
     FlowData* fd)
 {
     return exp_cache->add_flow(
@@ -558,7 +553,7 @@ int FlowControl::add_expected(
 int FlowControl::add_expected(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType protocol, int16_t appId,
+    uint8_t protocol, int16_t appId,
     FlowData* fd)
 {
     return exp_cache->add_flow(

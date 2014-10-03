@@ -93,7 +93,7 @@ static int ProcessIcmpUnreach(Packet *p)
     /* Get IP/TCP/UDP/ICMP session from original protocol/port info
      * embedded in the ICMP Unreach message.
      */
-    skey.protocol = p->type();
+    skey.protocol = p->get_ip_proto_next();
     src = iph.get_src();
     dst = iph.get_dst();
 
@@ -154,7 +154,7 @@ static int ProcessIcmpUnreach(Packet *p)
     else
         skey.vlan_tag = 0;
 
-    switch (skey.protocol)
+    switch (p->type())
     {
     case PktType::TCP:
         /* Lookup a TCP session */
@@ -268,6 +268,6 @@ void icmp_stats()
 void icmp_reset()
 {
     memset(&icmpStats, 0, sizeof(icmpStats));
-    flow_con->reset_prunes(PktType::ICMP);
+    flow_con->reset_prunes(IPPROTO_ICMP);
 }
 

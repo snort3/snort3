@@ -327,7 +327,7 @@ bool Detect(Packet * p)
     int curr_layer = p->num_layers - 1;
     uint8_t ip_proto; // set in function
 
-    while (p->ip_proto_next(curr_layer, ip_proto))
+    while (p->get_ip_proto_next(curr_layer, ip_proto))
     {
         if (snort_conf->ip_proto_array[ip_proto])
         {

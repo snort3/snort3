@@ -3028,7 +3028,7 @@ static inline StreamSegment* SegmentAlloc (
             tcp_memcap->dealloc(size);
             return NULL;
         }
-        flow_con->prune_flows(PktType::TCP, p);
+        flow_con->prune_flows(IPPROTO_TCP, p);
     }
 
     ss = (StreamSegment*)SnortAlloc(size);
@@ -6760,7 +6760,7 @@ int TcpSession::process(Packet *p)
 
 void tcp_reset()
 {
-    flow_con->reset_prunes(PktType::TCP);
+    flow_con->reset_prunes(IPPROTO_TCP);
 }
 
 void tcp_show(StreamTcpConfig* tcp_config)

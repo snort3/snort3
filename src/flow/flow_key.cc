@@ -39,12 +39,12 @@
 inline void FlowKey::init4(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType proto, uint32_t mplsId, bool order)
+    uint8_t proto, uint32_t mplsId, bool order)
 {
     const uint32_t *src;
     const uint32_t *dst;
 
-    if ( proto ==  PktType::ICMP )
+    if ( proto ==  IPPROTO_ICMP )
     {
         if (srcPort == ICMP_ECHOREPLY)
         {
@@ -100,31 +100,11 @@ inline void FlowKey::init4(
 inline void FlowKey::init6(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType proto, uint32_t mplsId, bool order)
+    uint8_t proto, uint32_t mplsId, bool order)
 {
     const sfip_t *src;
     const sfip_t *dst;
 
-    if (proto == PktType::ICMP)
-    {
-        // FIXIT-M J  Need to determine specific protocol
-        if ( srcPort == ICMP_ECHOREPLY )
-        {
-            dstPort = ICMP_ECHO; /* Treat ICMP echo reply the same as request */
-            srcPort = 0;
-        }
-        else if (srcPort == icmp::Icmp6Types::REPLY_6)
-        {
-            dstPort = icmp::Icmp6Types::ECHO_6; /* Treat ICMPv6 echo reply the same as request */
-            srcPort = 0;
-        }
-        else /* otherwise, every ICMP type gets different key */
-        {
-            dstPort = 0;
-        }
-    }
-
-#if 0 /* FIXIT-M J  Delete after this has been proven to work */
     if ( proto == IPPROTO_ICMP )
     {
             if (srcPort == ICMP_ECHOREPLY)
@@ -149,7 +129,6 @@ inline void FlowKey::init6(
             dstPort = 0;
         }
     }
-#endif
 
     src = srcIP;
     dst = dstIP;
@@ -193,7 +172,7 @@ inline void FlowKey::init6(
 void FlowKey::init(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType proto, uint16_t vlan,
+    uint8_t proto, uint16_t vlan,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
     /* Because the key is going to be used for hash lookups,
@@ -229,7 +208,7 @@ void FlowKey::init(
 
 void FlowKey::init(
     const sfip_t *srcIP, const sfip_t *dstIP,
-    uint32_t id, PktType proto, uint16_t vlan,
+    uint32_t id, uint8_t proto, uint16_t vlan,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
     // to avoid confusing 2 different datagrams or confusing a datagram
@@ -246,7 +225,7 @@ void FlowKey::init(
     else
     {
         version = 6;
-        protocol = PktType::UNKNOWN;
+        protocol = 0;
         init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId, false);
     }
 

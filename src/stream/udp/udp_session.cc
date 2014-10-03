@@ -237,6 +237,6 @@ void udp_stats()
 
 void udp_reset()
 {
-    flow_con->reset_prunes(PktType::UDP);
+    flow_con->reset_prunes(IPPROTO_UDP);
 }
 
