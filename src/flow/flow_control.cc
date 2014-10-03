@@ -249,11 +249,17 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
         key->init(ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
             proto, vlanId, mplsId, addressSpaceId);
     }
+    else if (proto == PktType::IP)
+    {
+        key->init(ip_api.get_src(), ip_api.proto(), ip_api.get_dst(), p->ptrs.dp,
+            proto, vlanId, mplsId, addressSpaceId);
+    }
     else
     {
         key->init(ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
-            proto, vlanId, mplsId, addressSpaceId);
+                  proto, vlanId, mplsId, addressSpaceId);
     }
+
 }
 
 static bool is_bidirectional(const Flow* flow)
