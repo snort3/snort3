@@ -66,7 +66,7 @@ public:
     virtual void get_data_link_type(std::vector<int>&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet*const );
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -108,7 +108,7 @@ void EthCodec::get_protocol_ids(std::vector<uint16_t>&v)
  *
  * Returns: void function
  */
-bool EthCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool EthCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
 
     /* do a little validation */

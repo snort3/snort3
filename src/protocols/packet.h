@@ -47,19 +47,8 @@ extern "C" {
 }
 
 #include "main/snort_types.h"
-
-#include "framework/codec.h"
-#include "protocols/tcp.h"
-#include "protocols/udp.h"
-#include "protocols/eth.h"
-#include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
-#include "protocols/mpls.h"
-#include "protocols/ip.h"
+#include "framework/decode_data.h"
 #include "protocols/layer.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
-
 
 /*  D E F I N E S  ************************************************************/
 
@@ -176,7 +165,7 @@ struct SO_PUBLIC Packet
     const uint8_t* data;        /* packet payload pointer */
     uint16_t dsize;             /* packet payload size */
 
-    SnortData ptrs; // convenience pointers used throughout Snort++
+    DecodeData ptrs; // convenience pointers used throughout Snort++
     Layer* layers;    /* decoded encapsulations */
 
 
@@ -257,7 +246,6 @@ struct SO_PUBLIC Packet
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
 
 
-#define GET_PKT_SEQ(p) (ntohl(p->ptrs.tcph->th_seq))
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
 #define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)

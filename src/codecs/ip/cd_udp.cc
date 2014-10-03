@@ -120,7 +120,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
@@ -137,7 +137,7 @@ public:
 
 
 
-static inline void UDPMiscTests(const SnortData&,
+static inline void UDPMiscTests(const DecodeData&,
                                 const CodecData&,
                                 uint32_t pay_len);
 
@@ -150,7 +150,7 @@ void UdpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     uint16_t uhlen;
     bool fragmented_udp_flag = false;
@@ -316,7 +316,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
 
 /* UDP-layer decoder alerts */
-static inline void UDPMiscTests(const SnortData& snort,
+static inline void UDPMiscTests(const DecodeData& snort,
                                 const CodecData& codec,
                                 uint32_t pay_len)
 {

@@ -42,6 +42,7 @@
 #include "framework/ips_option.h"
 #include "framework/parameter.h"
 #include "framework/module.h"
+#include "protocols/tcp.h"
 
 #define M_NORMAL  0
 #define M_ALL     1

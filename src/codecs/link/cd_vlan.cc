@@ -66,7 +66,7 @@ public:
     ~VlanCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
 };
@@ -83,7 +83,7 @@ void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool VlanCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < sizeof(vlan::VlanTagHdr))
     {

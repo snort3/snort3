@@ -33,6 +33,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "framework/range.h"
+#include "protocols/tcp.h"
 
 static const char* s_name = "seq";
 

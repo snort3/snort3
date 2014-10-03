@@ -115,7 +115,7 @@ public:
 
 
     // decode(...) must be implemented!!
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 
     virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
@@ -150,7 +150,7 @@ void NameCodec::get_protocol_ids(std::vector<uint16_t>&/*v*/)
 //    v.push_back(ETHERTYPE);
 }
 
-bool NameCodec::decode(const RawData& raw, CodecData& data, SnortData&)
+bool NameCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
     // reinterpret the raw data into this codec's data format
     const NameHdr* const hdr =

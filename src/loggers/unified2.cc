@@ -64,6 +64,7 @@
 #include "stream/stream_api.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "protocols/icmp4.h"
 
 using namespace std;
 

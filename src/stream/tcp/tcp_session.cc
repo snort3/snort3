@@ -83,6 +83,8 @@
 #include "tcp_module.h"
 #include "stream/stream_splitter.h"
 #include "sfip/sf_ip.h"
+#include "protocols/tcp.h"
+#include "protocols/eth.h"
 
 using namespace tcp;
 

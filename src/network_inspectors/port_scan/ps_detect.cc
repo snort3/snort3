@@ -116,6 +116,11 @@
 #include "ipobj.h"
 #include "stream/stream_api.h"
 #include "sfip/sf_ip.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
+#include "protocols/eth.h"
 
 typedef struct s_PS_HASH_KEY
 {

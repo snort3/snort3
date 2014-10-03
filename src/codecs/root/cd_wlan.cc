@@ -64,7 +64,7 @@ public:
     ~WlanCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_data_link_type(std::vector<int>&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
@@ -83,7 +83,7 @@ void WlanCodec::get_data_link_type(std::vector<int>&v)
 #endif
 }
 
-bool WlanCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     /* do a little validation */
     if(raw.len < MINIMAL_IEEE80211_HEADER_LEN)

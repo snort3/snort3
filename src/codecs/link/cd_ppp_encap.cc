@@ -42,7 +42,7 @@ public:
     ~PppEncap(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 const static uint16_t PPP_IP = 0x0021;       /* Internet Protocol */
@@ -71,7 +71,7 @@ void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool PppEncap::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;

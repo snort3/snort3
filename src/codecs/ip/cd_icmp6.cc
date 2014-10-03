@@ -79,7 +79,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet*, Packet*, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
@@ -97,7 +97,7 @@ void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 // decode.c::ICMP6
 //--------------------------------------------------------------------
 
-bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if(raw.len < icmp::ICMP6_HEADER_MIN_LEN)
     {

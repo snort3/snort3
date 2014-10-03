@@ -40,7 +40,7 @@ public:
     SlipCodec() : Codec(CD_SLIP_NAME){};
     ~SlipCodec() {};
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_data_link_type(std::vector<int>&);
 };
 
@@ -55,7 +55,7 @@ void SlipCodec::get_data_link_type(std::vector<int>& v)
 }
 
 
-bool SlipCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool SlipCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < SLIP_HEADER_LEN)
         return false;

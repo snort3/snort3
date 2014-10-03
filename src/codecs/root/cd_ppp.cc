@@ -43,7 +43,7 @@ public:
     ~PPPCodec() {}
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_data_link_type(std::vector<int>&);
 };
 
@@ -63,7 +63,7 @@ void PPPCodec::get_data_link_type(std::vector<int>& v)
 }
 
 
-bool PPPCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool PPPCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < 2)
         return false;
