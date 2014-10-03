@@ -154,17 +154,13 @@ struct SO_PUBLIC Packet
 {
     Flow* flow;   /* for session tracking */
 
-
-
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
     uint16_t proto_bits;        /* protocols contained within this packet */
     int16_t application_protocol_ordinal;
 
-
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
     uint8_t num_layers;         /* index into layers for next encap */
-
 
     // nothing after this point is zeroed ...
 
@@ -179,7 +175,6 @@ struct SO_PUBLIC Packet
     SnortData ptrs; // convenience pointers used throughout Snort++
     Layer* layers;    /* decoded encapsulations */
 
-
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
     uint32_t iplist_id;
     uint16_t max_dsize;
@@ -189,14 +184,9 @@ struct SO_PUBLIC Packet
      */
     uint16_t user_policy_id;
 
-
     uint8_t ps_proto;  // Used for portscan and unified2 logging
 
-
     /*  Boolean functions - general information about this packet */
-    inline PktType type() const
-    { return ptrs.get_pkt_type(); } // defined in codec.h
-
     inline bool has_ip() const
     { return ptrs.ip_api.is_valid(); }
 
@@ -215,9 +205,9 @@ struct SO_PUBLIC Packet
     inline bool is_udp() const
     { return ptrs.get_pkt_type() == PktType::UDP; }
 
-
     /* Get general, non-boolean information */
-
+    inline PktType type() const
+    { return ptrs.get_pkt_type(); } // defined in codec.h
 
     /* the ip_api return the protocol_ID of the protocol directly the
      * innermost IP layer.  However, especially in IPv6, the next protocol
