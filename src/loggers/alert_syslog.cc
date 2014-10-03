@@ -241,7 +241,7 @@ static void AlertSyslog(
                     "<%s> ", PRINT_INTERFACE(DAQ_GetInterfaceSpec()));
         }
 
-        uint16_t proto = p->ip_proto_next();
+        uint16_t proto = p->get_ip_proto_next();
         if (protocol_names[proto] != NULL)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),

@@ -65,6 +65,7 @@
 #include "perf.h"
 #include "stream/stream_api.h"
 #include "utils/stats.h"
+#include "protocols/tcp.h"
 
 static void GetPktDropStats(SFBASE *, SFBASE_STATS *);
 static void DisplayBasePerfStatsConsole(SFBASE_STATS *, int);

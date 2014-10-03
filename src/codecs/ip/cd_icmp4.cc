@@ -91,14 +91,14 @@ public:
     ~Icmp4Codec() {};
     
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
 
 private:
-    void ICMP4AddrTests(const SnortData& snort, const CodecData& codec);
+    void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);
     void ICMP4MiscTests(const ICMPHdr* const, const CodecData&, const uint16_t);
 
 };
@@ -126,7 +126,7 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
  *
  * Returns: void function
  */
-bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,SnortData& snort)
+bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {
 
     if(raw.len < icmp::ICMP_HEADER_LEN)
@@ -246,7 +246,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,SnortData& snort)
     return true;
 }
 
-void Icmp4Codec::ICMP4AddrTests(const SnortData& snort, const CodecData& codec)
+void Icmp4Codec::ICMP4AddrTests(const DecodeData& snort, const CodecData& codec)
 {
     uint32_t dst = snort.ip_api.get_dst()->ip32[0];
 

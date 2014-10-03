@@ -34,6 +34,8 @@
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/eth.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 #include "time/profiler.h"
 #include "parser/parser.h"
 
@@ -161,7 +163,7 @@ void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     PROFILE_VARS;
-    SnortData unsure_encap_ptrs;
+    DecodeData unsure_encap_ptrs;
     uint16_t prev_prot_id = FINISHED_DECODE;
     uint8_t mapped_prot = CodecManager::grinder;
 
@@ -222,7 +224,10 @@ void PacketManager::decode(
         }
 
         if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
+        {
             fpEvalIpProtoOnlyRules(p, codec_data.next_prot_id);
+            p->ip_proto_next = codec_data.next_prot_id;
+        }
 
         // internal statistics and record keeping
         push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);

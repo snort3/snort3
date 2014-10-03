@@ -75,6 +75,10 @@
 #include "managers/action_manager.h"
 #include "sfip/sf_ip.h"
 
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/icmp4.h"
+
 /*
 **  Static function prototypes
 */

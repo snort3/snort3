@@ -207,7 +207,8 @@ public:  // FIXIT-M privatize if possible
     const FlowKey* key;
     class Session* session;
     StreamFlowData* flowdata;
-    PktType protocol;
+    uint8_t ip_proto; // FIXIT-M  -- do we need both of these?
+    PktType protocol; // ^^
 
     // these fields are always set; not zeroed
     Flow* prev, * next;

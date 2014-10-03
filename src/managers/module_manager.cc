@@ -249,12 +249,12 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
         if ( p[0].name && !p[1].name )
             return p;
         else
-	        new_fqn = sfx;
+            new_fqn = sfx;
     }
     else
-	{
+    {
         new_fqn = sfx.substr(pos + 1);
-	}
+    }
 
     string name = new_fqn.substr(0, new_fqn.find_first_of('.'));
     while ( p->name && name != p->name )
@@ -274,6 +274,8 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
             const Parameter* tmp_p =
                 reinterpret_cast<const Parameter*>(p->range);
 
+            // FIXIT -- this will fail if we are opening a
+            // a list with only one Parameter
             if ( tmp_p[0].name && !tmp_p[1].name )
                 return tmp_p;
         }

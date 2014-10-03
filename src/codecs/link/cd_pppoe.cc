@@ -106,7 +106,7 @@ constexpr uint16_t PPPoE_TAG_GENERIC_ERROR = 0x0203;
 
 static inline bool pppoepkt_decode(const RawData& raw,
                                     CodecData& codec,
-                                    SnortData&,
+                                    DecodeData&,
                                     PppoepktType ppp_type)
 {
     /* do a little validation */
@@ -297,7 +297,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
 };
@@ -311,7 +311,7 @@ void PPPoEDiscCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool PPPoEDiscCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool PPPoEDiscCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     return pppoepkt_decode(raw, codec, snort, PppoepktType::DISCOVERY);
 }
@@ -392,7 +392,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
 };
@@ -404,7 +404,7 @@ void PPPoESessCodec::get_protocol_ids(std::vector<uint16_t>& v)
 { v.push_back(ETHERNET_TYPE_PPPoE_SESS); }
 
 
-bool PPPoESessCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool PPPoESessCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 { return pppoepkt_decode(raw, codec, snort, PppoepktType::SESSION); }
 
 

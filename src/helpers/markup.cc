@@ -54,7 +54,7 @@ const string& Markup::sanitize(const char* const c)
 // FIXIT-L these escapes are emitted directly by asciidoc 8.6.9.
 const string& Markup::sanitize(const string& s)
 {
-    const char* const asciidoc_chars = "~*<>^'";
+    const char* const asciidoc_chars = "*<>^'";
     static string m;
     m.clear();
     m += s;

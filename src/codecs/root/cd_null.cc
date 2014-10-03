@@ -45,7 +45,7 @@ public:
     ~NullCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_data_link_type(std::vector<int>&);
 
 };
@@ -68,7 +68,7 @@ static const uint16_t NULL_HDRLEN = 4;
  *
  * Returns: void function
  */
-bool NullCodec::decode(const RawData& raw, CodecData& data, SnortData&)
+bool NullCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
     /* do a little validation */
     if(raw.len < NULL_HDRLEN)

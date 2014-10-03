@@ -91,7 +91,7 @@ void Stream::delete_session(const FlowKey* key)
 Flow* Stream::get_session_ptr_from_ip_port(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType ip_protocol, uint16_t vlan, uint32_t mplsId,
+    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceId)
 {
     FlowKey key;
@@ -115,7 +115,7 @@ void Stream::populate_session_key(Packet *p, FlowKey *key)
     key->init(
         p->ptrs.ip_api.get_src(), p->ptrs.sp,
         p->ptrs.ip_api.get_dst(), p->ptrs.dp,
-        p->type(),
+        p->get_ip_proto_next(),
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
@@ -148,7 +148,7 @@ FlowData* Stream::get_application_data_from_key(
 FlowData* Stream::get_application_data_from_ip_port(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType ip_protocol, uint16_t vlan, uint32_t mplsId,
+    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
     Flow* flow;
@@ -182,7 +182,7 @@ void Stream::check_session_closed(Packet* p)
 int Stream::ignore_session(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType protocol, char direction,
+    uint8_t protocol, char direction,
     uint32_t flow_id)
 {
     assert(flow_con);
@@ -376,7 +376,7 @@ void Stream::init_active_response(Packet* p, Flow* flow)
 int Stream::set_application_protocol_id_expected(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    PktType protocol, int16_t appId,
+    uint8_t protocol, int16_t appId,
     FlowData* fd) 
 {
     assert(flow_con);

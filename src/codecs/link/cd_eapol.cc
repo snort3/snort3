@@ -61,7 +61,7 @@ public:
     ~EapolCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 };
 
@@ -111,7 +111,7 @@ void DecodeEapolKey(const RawData& raw, const CodecData& codec)
  ************** main codec functions  ************
  *************************************************/
 
-bool EapolCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool EapolCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const eapol::EtherEapol* const eplh =
         reinterpret_cast<const eapol::EtherEapol*>(raw.data);

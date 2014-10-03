@@ -64,6 +64,7 @@
 #include "stream/stream_api.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "protocols/icmp4.h"
 
 using namespace std;
 
@@ -271,7 +272,7 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
             }
             else
             {
-                alertdata.protocol = p->ip_proto_next();
+                alertdata.protocol = p->get_ip_proto_next();
 
                 if ( p->type() == PktType::ICMP)
                 {
@@ -382,7 +383,7 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
             }
             else
             {
-                alertdata.protocol = p->ip_proto_next();
+                alertdata.protocol = p->get_ip_proto_next();
 
                 if ( p->type() == PktType::ICMP)
                 {

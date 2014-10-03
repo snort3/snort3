@@ -100,7 +100,7 @@ public:
     ~Ipv4Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
@@ -135,7 +135,7 @@ void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
     uint16_t hlen;  /* ip header length */

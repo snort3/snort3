@@ -34,9 +34,7 @@ add_subdirectory (lua)
 add_subdirectory (doc)
 
 
-
 # Miscelaneous stuff.  Does NOT directly effect snort's building environment
-
 include (cmake/packaging_data.cmake)
 include (cmake/create_pkg_config.cmake)
 
@@ -51,7 +49,7 @@ add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 
-# Test Plugins!!
+# Test plugins in the 'Extra' directory!!
 if (BUILD_EXTRA_PLUGINS)
     if (${CMAKE_GENERATOR} MATCHES "Make")
         add_subdirectory(extra)

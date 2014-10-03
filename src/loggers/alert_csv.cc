@@ -41,6 +41,11 @@
 #include "snort.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
+#include "protocols/eth.h"
 
 #define LOG_BUFFER (4*K_BYTES)
 

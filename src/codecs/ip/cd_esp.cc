@@ -81,7 +81,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 
@@ -109,7 +109,7 @@ void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *          the encryption type (or lack thereof).
  *
  */
-bool EspCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const uint8_t *esp_payload;
     uint8_t pad_length;

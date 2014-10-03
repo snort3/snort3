@@ -80,6 +80,7 @@
 #include "loggers/unified2_common.h"
 #include "file_api/file_api.h"
 #include "sf_email_attach_decode.h"
+#include "protocols/tcp.h"
 
 const HiSearchToken hi_patterns[] =
 {

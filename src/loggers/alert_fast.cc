@@ -241,7 +241,7 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     if (p->has_ip())
     {
         LogPriorityData(fast_log, event, 0);
-        TextLog_Print(fast_log, "{%s} ", protocol_names[p->ip_proto_next()]);
+        TextLog_Print(fast_log, "{%s} ", protocol_names[p->get_ip_proto_next()]);
         LogIpAddrs(fast_log, p);
     }
 

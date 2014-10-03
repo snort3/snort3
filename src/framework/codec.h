@@ -32,6 +32,7 @@
 // unfortunately necessary due to use of Ipapi in struct
 #include "protocols/ip.h"
 #include "protocols/mpls.h"  // FIXIT-M remove MPLS from Convenience pointers
+#include "framework/decode_data.h"
 
 struct TextLog;
 struct Packet;
@@ -196,96 +197,6 @@ struct RawData
 };
 
 
-enum DecodeFlags : std::uint16_t
-{
-    /*
-     * DO NOT USE PKT_TYPE_* directly!! Use PktType enum and
-     *      access methods to get/set.
-     *
-     * Since there are so few Packet Types, I decided to save
-     * some bytes (these get zeroes for every packet), and use
-     * the three least signfignat bits of 'decode_flags' as
-     * the packet_type. Unless you are adding a new PktType,
-     * I highly suggest you ignore this section and use
-     * the SnortData::xxx_pkt_type() setter and getter methods.
-     */
-    PKT_TYPE_UNKNOWN = 0x00,
-    PKT_TYPE_IP = 0x01,
-    PKT_TYPE_TCP = 0x02,
-    PKT_TYPE_UDP = 0x03,
-    PKT_TYPE_ICMP = 0x04,
-    PKT_TYPE_ARP = 0x05,
-    PKT_TYPE_FREE1 = 0x06, /* If protocol is added, update enum class PktType below. */
-    PKT_TYPE_FREE2 = 0x07, /* If protocol is added, update enum class PktType below. */
-    PKT_TYPE_MASK = 0x07,
-
-    /* error flags */
-    DECODE_ERR_CKSUM_IP = 0x0008,
-    DECODE_ERR_CKSUM_TCP = 0x0010,
-    DECODE_ERR_CKSUM_UDP = 0x0020,
-    DECODE_ERR_CKSUM_ICMP = 0x0040,
-    DECODE_ERR_CKSUM_ANY = 0x0080,
-    DECODE_ERR_BAD_TTL = 0x0100,
-    DECODE_ERR_FLAGS = (DECODE_ERR_CKSUM_IP | DECODE_ERR_CKSUM_TCP |
-                        DECODE_ERR_CKSUM_UDP | DECODE_ERR_CKSUM_UDP |
-                        DECODE_ERR_CKSUM_ICMP | DECODE_ERR_CKSUM_ANY |
-                        DECODE_ERR_BAD_TTL),
-
-
-    DECODE_PKT_TRUST = 0x0200,    /* Tell Snort++ to whitelist this packet */
-    DECODE_FRAG = 0x0400,  /* flag to indicate a fragmented packet */
-    DECODE_MF = 0x0800,
-};
-
-/* NOTE: if A protocol is added, update DecodeFlags! */
-enum class PktType : std::uint8_t
-{
-    UNKNOWN = PKT_TYPE_UNKNOWN,
-    IP = PKT_TYPE_IP,
-    TCP = PKT_TYPE_TCP,
-    UDP = PKT_TYPE_UDP,
-    ICMP = PKT_TYPE_ICMP,
-    ARP = PKT_TYPE_ARP,
-};
-
-struct SnortData
-{
-    /*  Pointers which will be used by Snort++. (starting with uint16_t so tcph is 64 bytes from start*/
-
-    /*
-     * these four pounters are each referenced literally
-     * dozens if not hundreds of times.  NOTHING else should be added!!
-     */
-    const tcp::TCPHdr* tcph;
-    const udp::UDPHdr* udph;
-    const icmp::ICMPHdr* icmph;
-    uint16_t sp;            /* source port (TCP/UDP) */
-    uint16_t dp;            /* dest port (TCP/UDP) */
-    uint16_t decode_flags;  /* First bits (currently 3), which are masked using the constant
-                             * DECODE_PKT_TYPE_MASK defined above, are specifically
-                             * for the PktType. Everything else is fair game flag.
-                             *
-                             */
-    ip::IpApi ip_api;
-    mpls::MplsHdr mplsHdr;
-
-    inline void reset()
-    {
-        static_assert(PKT_TYPE_UNKNOWN == 0,
-            "The Packets 'type' gets resets to zero - "
-            "which means zero is unkown");
-        memset((char*)&tcph, '\0', offsetof(SnortData, ip_api));
-        ip_api.reset();
-    }
-
-    inline void set_pkt_type(PktType pkt_type)
-    { decode_flags = (decode_flags & ~PKT_TYPE_MASK) | static_cast<uint16_t>(pkt_type); }
-
-    inline PktType get_pkt_type() const
-    { return static_cast<PktType>(decode_flags & PKT_TYPE_MASK); }
-};
-
-
 struct CodecData
 {
     /* This section will get reset before every decode() function call */
@@ -314,26 +225,6 @@ struct CodecData
                                     ip_layer_cnt(0)
     { next_prot_id = init_prot; }
 };
-
-#define PROTO_BIT__NONE     0x0000
-#define PROTO_BIT__IP       0x0001
-#define PROTO_BIT__ARP      0x0002
-#define PROTO_BIT__TCP      0x0004
-#define PROTO_BIT__UDP      0x0008
-#define PROTO_BIT__ICMP     0x0010
-#define PROTO_BIT__TEREDO   0x0020
-#define PROTO_BIT__GTP      0x0040
-#define PROTO_BIT__MPLS     0x0080
-#define PROTO_BIT__VLAN     0x0100
-#define PROTO_BIT__ETH      0x0200
-#define PROTO_BIT__TCP_EMBED_ICMP  0x0400
-#define PROTO_BIT__UDP_EMBED_ICMP  0x0800
-#define PROTO_BIT__ICMP_EMBED_ICMP 0x1000
-#define PROTO_BIT__ICMP_EMBED (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_ICMP)
-#define PROTO_BIT__IP6_EXT  0x2000
-#define PROTO_BIT__FREE     0x4000
-#define PROTO_BIT__OTHER    0x8000
-#define PROTO_BIT__ALL      0xffff
 
 
 
@@ -419,11 +310,11 @@ public:
      *                          data.lyr_len = MIN_IP_HEADER_LEN + 12;
      *                          data.invalid_bytes = 8    === 20 - 12
      *
-     *      SnortData& = Data which will be sent to the rest of Snort++.
+     *      DecodeData& = Data which will be sent to the rest of Snort++.
      *                      contains convenience pointers and information
      *                      about this packet.
      **/
-    virtual bool decode(const RawData&, CodecData&, SnortData&)=0;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&)=0;
 
     /*
      *  Log this layer's information
