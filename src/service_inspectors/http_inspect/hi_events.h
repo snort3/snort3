@@ -91,101 +91,101 @@ typedef enum _HI_EVENTS
 **  These defines are the alert names for each event
 */
 #define HI_CLIENT_ASCII_STR                          \
-    "(http_inspect) ascii encoding"
+    "ascii encoding"
 #define HI_CLIENT_DOUBLE_DECODE_STR                  \
-    "(http_inspect) double decoding attack"
+    "double decoding attack"
 #define HI_CLIENT_U_ENCODE_STR                       \
-    "(http_inspect) u encoding"
+    "u encoding"
 #define HI_CLIENT_BARE_BYTE_STR                      \
-    "(http_inspect) bare byte unicode encoding"
+    "bare byte unicode encoding"
 /* Base36 is deprecated - leave here so events keep the same number */
 #define HI_CLIENT_BASE36_STR                         \
-    "(http_inspect) base36 encoding"
+    "base36 encoding"
 #define HI_CLIENT_UTF_8_STR                          \
-    "(http_inspect) utf-8 encoding"
+    "UTF-8 encoding"
 #define HI_CLIENT_IIS_UNICODE_STR                    \
-    "(http_inspect) iis unicode codepoint encoding"
+    "IIS unicode codepoint encoding"
 #define HI_CLIENT_MULTI_SLASH_STR                    \
-    "(http_inspect) multi_slash encoding"
+    "multi_slash encoding"
 #define HI_CLIENT_IIS_BACKSLASH_STR                  \
-    "(http_inspect) iis backslash evasion"
+    "IIS backslash evasion"
 #define HI_CLIENT_SELF_DIR_TRAV_STR                  \
-    "(http_inspect) self directory traversal"
+    "self directory traversal"
 #define HI_CLIENT_DIR_TRAV_STR                       \
-    "(http_inspect) directory traversal"
+    "directory traversal"
 #define HI_CLIENT_APACHE_WS_STR                      \
-    "(http_inspect) apache whitespace (tab)"
+    "apache whitespace (tab)"
 #define HI_CLIENT_IIS_DELIMITER_STR                  \
-    "(http_inspect) non-rfc http delimiter"
+    "non-RFC http delimiter"
 #define HI_CLIENT_NON_RFC_CHAR_STR                   \
-    "(http_inspect) non-rfc defined char"
+    "non-RFC defined char"
 #define HI_CLIENT_OVERSIZE_DIR_STR                   \
-    "(http_inspect) oversize request-uri directory"
+    "oversize request-URI directory"
 #define HI_CLIENT_LARGE_CHUNK_STR                    \
-    "(http_inspect) oversize chunk encoding"
+    "oversize chunk encoding"
 #define HI_CLIENT_PROXY_USE_STR                      \
-    "(http_inspect) unauthorized proxy use detected"
+    "unauthorized proxy use detected"
 #define HI_CLIENT_WEBROOT_DIR_STR                    \
-    "(http_inspect) webroot directory traversal"
+    "webroot directory traversal"
 #define HI_CLIENT_LONG_HDR_STR                       \
-    "(http_inspect) long header"
+    "long header"
 #define HI_CLIENT_MAX_HEADERS_STR                    \
-    "(http_inspect) max header fields"
+    "max header fields"
 #define HI_CLIENT_MULTIPLE_CONTLEN_STR               \
-    "(http_inspect) multiple content length"
+    "multiple content length"
 #define HI_CLIENT_CHUNK_SIZE_MISMATCH_STR            \
-    "(http_inspect) chunk size mismatch detected"
+    "chunk size mismatch detected"
 #define HI_CLIENT_MULTIPLE_HOST_HDRS_STR             \
-    "(http_inspect) multiple host hdrs detected"
+    "multiple host hdrs detected"
 #define HI_CLIENT_INVALID_TRUEIP_STR                 \
-    "(http_inspect) invalid ip in true-client-ip/xff header"
+    "invalid ip in true-client-IP/XFF header"
 #define HI_CLIENT_LONG_HOSTNAME_STR                  \
-    "(http_inspect) hostname exceeds 255 characters"
+    "hostname exceeds 255 characters"
 #define HI_CLIENT_EXCEEDS_SPACES_STR                 \
-    "(http_inspect) header parsing space saturation"
+    "header parsing space saturation"
 #define HI_CLIENT_CONSECUTIVE_SMALL_CHUNKS_STR       \
-    "(http_inspect) client consecutive small chunk sizes"
+    "client consecutive small chunk sizes"
 #define HI_CLIENT_UNBOUNDED_POST_STR                 \
-    "(http_inspect) post w/o content-length or chunks"
+    "post w/o content-length or chunks"
 #define HI_CLIENT_MULTIPLE_TRUEIP_IN_SESSION_STR     \
-    "(http_inspect) multiple true ips in a session"
+    "multiple true IPs in a session"
 #define HI_CLIENT_BOTH_TRUEIP_XFF_HDRS_STR           \
-    "(http_inspect) both true_client_ip and xff hdrs present"
+    "both true-client-IP and XFF hdrs present"
 #define HI_CLIENT_UNKNOWN_METHOD_STR                 \
-    "(http_inspect) unknown method"
+    "unknown method"
 #define HI_CLIENT_SIMPLE_REQUEST_STR                 \
-    "(http_inspect) simple request"
+    "simple request"
 #define HI_CLIENT_UNESCAPED_SPACE_URI_STR            \
-    "(http_inspect) unescaped space in http uri"
+    "unescaped space in http URI"
 #define HI_CLIENT_PIPELINE_MAX_STR                   \
-    "(http_inspect) too many pipelined requests"
+    "too many pipelined requests"
 
 /*
 **  Server Events
 */
 
 #define HI_ANOM_SERVER_STR                           \
-    "(http_inspect) anomalous http server on undefined http port"
+    "anomalous http server on undefined HTTP port"
 #define HI_SERVER_INVALID_STATCODE_STR               \
-    "(http_inspect) invalid status code in http response"
+    "invalid status code in HTTP response"
 #define HI_SERVER_NO_CONTLEN_STR                     \
-    "(http_inspect) no content-length or transfer-encoding in http response"
+    "no content-length or transfer-encoding in HTTP response"
 #define HI_SERVER_UTF_NORM_FAIL_STR                  \
-    "(http_inspect) http response has utf charset which failed to normalize"
+    "HTTP response has UTF charset which failed to normalize"
 #define HI_SERVER_UTF7_STR                           \
-    "(http_inspect) http response has utf-7 charset"
+    "HTTP response has UTF-7 charset"
 #define HI_SERVER_DECOMPR_FAILED_STR                 \
-    "(http_inspect) http response gzip decompression failed"
+    "HTTP response gzip decompression failed"
 #define HI_SERVER_CONSECUTIVE_SMALL_CHUNKS_STR       \
-    "(http_inspect) server consecutive small chunk sizes"
+    "server consecutive small chunk sizes"
 #define HI_CLISRV_MSG_SIZE_EXCEPTION_STR             \
-    "(http_inspect) invalid content-length or chunk size"
+    "invalid content-length or chunk size"
 #define HI_SERVER_JS_OBFUSCATION_EXCD_STR            \
-    "(http_inspect) javascript obfuscation levels exceeds 1"
+    "javascript obfuscation levels exceeds 1"
 #define HI_SERVER_JS_EXCESS_WS_STR                   \
-    "(http_inspect) javascript whitespaces exceeds max allowed"
+    "javascript whitespaces exceeds max allowed"
 #define HI_SERVER_MIXED_ENCODINGS_STR                \
-    "(http_inspect) multiple encodings within javascript obfuscated data"
+    "multiple encodings within javascript obfuscated data"
 
 #endif
 

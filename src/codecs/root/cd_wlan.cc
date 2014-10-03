@@ -42,8 +42,8 @@ namespace
 
 static const RuleMap wlan_rules[] =
 {
-    { DECODE_BAD_80211_ETHLLC, "(" CD_WLAN_NAME ") Bad 802.11 LLC header" },
-    { DECODE_BAD_80211_OTHER, "(" CD_WLAN_NAME ") Bad 802.11 Extra LLC Info" },
+    { DECODE_BAD_80211_ETHLLC, "bad 802.11 LLC header" },
+    { DECODE_BAD_80211_OTHER, "bad 802.11 extra LLC info" },
     { 0, nullptr }
 };
 

@@ -40,7 +40,7 @@ namespace
 
 static const RuleMap igmp_rules[] =
 {
-    { DECODE_IGMP_OPTIONS_DOS, "(" CD_IGMP_NAME ") DOS IGMP IP Options validation attempt" },
+    { DECODE_IGMP_OPTIONS_DOS, "DOS IGMP IP options validation attempt" },
     { 0, nullptr }
 };
 

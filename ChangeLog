@@ -24,6 +24,8 @@
 -- revised help options (again) to be more consistent with other (gnu style) programs
 -- added overview page to documentation
 -- pulled in latest from Josh
+-- reworked pkt type vs proto bits
+-- updated builtin rules for consistent format
 
 121
 -- valgrind fixes

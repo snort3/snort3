@@ -385,7 +385,7 @@ static const InspectApi pm_api =
         mod_dtor
     },
     IT_PACKET,
-    PROTO_BIT__ALL,
+    (uint16_t)PktType::ANY,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

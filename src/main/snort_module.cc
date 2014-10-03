@@ -236,9 +236,6 @@ static const Parameter s_params[] =
     { "--help!", Parameter::PT_IMPLIED, nullptr, nullptr,
       "overview of help" },
 
-    { "--help-builtin", Parameter::PT_STRING, "(optional)", nullptr,
-      "<module prefix> output matching builtin rules" },
-
     { "--help-commands", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching commands" },
 
@@ -266,11 +263,14 @@ static const Parameter s_params[] =
     { "--id-zero", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use id prefix / subdirectory even with one packet thread" },
 
-    { "--list-gids", Parameter::PT_STRING, "(optional)", nullptr,
-      "[<module prefix>] output matching generators" },
-
     { "--list-buffers", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output available inspection buffers" },
+
+    { "--list-builtin", Parameter::PT_STRING, "(optional)", nullptr,
+      "<module prefix> output matching builtin rules" },
+
+    { "--list-gids", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module prefix>] output matching generators" },
 
     { "--list-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all known modules" },
@@ -561,9 +561,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--help") )
         help_basic(sc, v.get_string());
 
-    else if ( v.is("--help-builtin") )
-        help_builtin(sc, v.get_string());
-
     else if ( v.is("--help-commands") )
         help_commands(sc, v.get_string());
 
@@ -593,6 +590,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--list-buffers") )
         help_buffers(sc, v.get_string());
+
+    else if ( v.is("--list-builtin") )
+        help_builtin(sc, v.get_string());
 
     else if ( v.is("--list-gids") )
         help_gids(sc, v.get_string());

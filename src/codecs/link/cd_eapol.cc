@@ -39,9 +39,9 @@ namespace
 
 static const RuleMap eapol_rules[] =
 {
-    { DECODE_EAPOL_TRUNCATED, "(" CD_EAPOL_NAME ") Truncated EAP Header" },
-    { DECODE_EAPKEY_TRUNCATED, "(" CD_EAPOL_NAME ") EAP Key Truncated" },
-    { DECODE_EAP_TRUNCATED, "(" CD_EAPOL_NAME ") EAP Header Truncated" },
+    { DECODE_EAPOL_TRUNCATED, "truncated EAP header" },
+    { DECODE_EAPKEY_TRUNCATED, "EAP key truncated" },
+    { DECODE_EAP_TRUNCATED, "EAP header truncated" },
     { 0, nullptr }
 };
 

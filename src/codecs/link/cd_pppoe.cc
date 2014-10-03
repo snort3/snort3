@@ -60,7 +60,7 @@ struct PPPoEHdr
 #define CD_PPPOE_NAME "pppoe"
 static const RuleMap pppoe_rules[] =
 {
-    { DECODE_BAD_PPPOE, "(" CD_PPPOE_NAME ") Bad PPPOE frame detected" },
+    { DECODE_BAD_PPPOE, "bad PPPOE frame detected" },
     { 0, nullptr }
 };
 

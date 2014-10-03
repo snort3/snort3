@@ -39,7 +39,7 @@ namespace
 
 static const RuleMap esp_rules[] =
 {
-    { DECODE_ESP_HEADER_TRUNC, "(" CD_ESP_NAME ") truncated Encapsulated Security Payload (ESP) header" },
+    { DECODE_ESP_HEADER_TRUNC, "truncated encapsulated security payload header" },
     { 0, nullptr }
 };
 

@@ -1112,7 +1112,7 @@ static const InspectApi rd_api =
         mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "sunrpc",
     rd_init,

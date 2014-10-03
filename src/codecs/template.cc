@@ -75,7 +75,7 @@ static const Parameter codec_params[] =
 const unsigned sid = 1;
 static const RuleMap codec_rules[] =
 {
-    { sid, "(" CODEC_NAME ") alert message" },
+    { sid, "alert message" },
     { 0, nullptr }
 };
 

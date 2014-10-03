@@ -809,6 +809,7 @@ void ModuleManager::show_rules(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid << ":" << r->sid;
             cout << Markup::emphasis_off();
+            cout << " (" << m->get_name() << ")";
             cout << " " << Markup::sanitize(r->msg);
             cout << endl;
             r++;
@@ -832,6 +833,22 @@ void ModuleManager::load_commands(SnortConfig* sc)
     }
 }
 
+// move builtin generation to a better home?
+// FIXIT-L builtins should allow configurable nets and ports
+// FIXIT-L builtins should have accurate proto
+//       (but ip winds up in all others)
+// FIXIT-L if msg has C escaped embedded quotes, we break
+//ss << "alert tcp any any -> any any ( ";
+static void make_rule(ostream& os, const Module* m, const RuleMap* r)
+{
+    os << "alert ( ";
+    os << "gid:" << m->get_gid() << "; ";
+    os << "sid:" << r->sid << "; ";
+    os << "msg:\"" << "(" << m->get_name() << ") ";
+    os << r->msg << "\"; )";
+    os << endl;
+}
+
 // FIXIT-L currently no way to know whether a module was activated or not
 // so modules with common rules will cause duplicate sid warnings
 // eg http_inspect and nhttp_inspect both have 119:1-34
@@ -846,7 +863,6 @@ void ModuleManager::load_rules(SnortConfig* sc)
     {
         const Module* m = p->mod;
         const RuleMap* r = m->get_rules();
-        unsigned gid = m->get_gid();
 
         if ( !r )
             continue;
@@ -856,17 +872,7 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            // FIXIT-L move builtin generation to a better home
-            // FIXIT-L builtins should allow configurable nets and ports
-            // FIXIT-L builtins should have accurate proto
-            //       (but ip winds up in all others)
-            // FIXIT-L if msg has C escaped embedded quotes, we break
-            //ss << "alert tcp any any -> any any ( ";
-            ss << "alert ( ";
-            ss << "gid:" << gid << "; ";
-            ss << "sid:" << r->sid << "; ";
-            ss << "msg:\"" << r->msg << "\"; )";
-            ss << endl;
+            make_rule(ss, m, r);
 
             // note:  you can NOT do ss.str().c_str() here
             const string& rule = ss.str();
@@ -892,7 +898,6 @@ void ModuleManager::dump_rules(const char* pfx)
             continue;
 
         const RuleMap* r = m->get_rules();
-        unsigned gid = m->get_gid();
 
         if ( !r )
             continue;
@@ -901,13 +906,7 @@ void ModuleManager::dump_rules(const char* pfx)
 
         while ( r->msg )
         {
-            // FIXIT-L builtin gen should be in exactly one place
-            ss << "alert ( ";
-            ss << "gid:" << gid << "; ";
-            ss << "sid:" << r->sid << "; ";
-            ss << "msg:\"" << r->msg << "\"; )";
-            ss << endl;
-
+            make_rule(ss, m, r);
             r++;
         }
         c++;

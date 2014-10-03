@@ -69,13 +69,13 @@ static const Parameter udp_params[] =
 static const RuleMap udp_rules[] =
 {
 
-    { DECODE_UDP_DGRAM_LT_UDPHDR, "(" CD_UDP_NAME ") Truncated UDP Header" },
-    { DECODE_UDP_DGRAM_INVALID_LENGTH, "(" CD_UDP_NAME ") Invalid UDP header, length field < 8" },
-    { DECODE_UDP_DGRAM_SHORT_PACKET, "(" CD_UDP_NAME ") Short UDP packet, length field > payload length" },
-    { DECODE_UDP_DGRAM_LONG_PACKET, "(" CD_UDP_NAME ") Long UDP packet, length field < payload length" },
-    { DECODE_UDP_IPV6_ZERO_CHECKSUM, "(" CD_UDP_NAME ") Invalid IPv6 UDP packet, checksum zero" },
-    { DECODE_UDP_LARGE_PACKET, "(" CD_UDP_NAME ") MISC Large UDP Packet" },
-    { DECODE_UDP_PORT_ZERO, "(" CD_UDP_NAME ") BAD-TRAFFIC UDP port 0 traffic" },
+    { DECODE_UDP_DGRAM_LT_UDPHDR, "truncated UDP Header" },
+    { DECODE_UDP_DGRAM_INVALID_LENGTH, "invalid UDP header, length field < 8" },
+    { DECODE_UDP_DGRAM_SHORT_PACKET, "short UDP packet, length field > payload length" },
+    { DECODE_UDP_DGRAM_LONG_PACKET, "long UDP packet, length field < payload length" },
+    { DECODE_UDP_IPV6_ZERO_CHECKSUM, "invalid IPv6 UDP packet, checksum zero" },
+    { DECODE_UDP_LARGE_PACKET, "misc large UDP Packet" },
+    { DECODE_UDP_PORT_ZERO, "BAD-TRAFFIC UDP port 0 traffic" },
     { 0, nullptr }
 };
 

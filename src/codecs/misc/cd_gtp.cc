@@ -42,8 +42,8 @@ namespace
 
 static const RuleMap gtp_rules[] =
 {
-    { DECODE_GTP_MULTIPLE_ENCAPSULATION, "(" CD_GTP_NAME ") Two or more GTP encapsulation layers present" },
-    { DECODE_GTP_BAD_LEN, "(" CD_GTP_NAME ") GTP header length is invalid" },
+    { DECODE_GTP_MULTIPLE_ENCAPSULATION, "two or more GTP encapsulation layers present" },
+    { DECODE_GTP_BAD_LEN, "GTP header length is invalid" },
     { 0, nullptr }
 };
 

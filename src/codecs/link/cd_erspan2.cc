@@ -34,8 +34,8 @@ namespace
 
 static const RuleMap erspan2_rules[] =
 {
-    { DECODE_ERSPAN_HDR_VERSION_MISMATCH, "(codec_erspan) ERSpan Header version mismatch" },
-    { DECODE_ERSPAN2_DGRAM_LT_HDR, "(" CD_ERSPAN2_NAME ") captured < ERSpan Type2 Header Length" },
+    { DECODE_ERSPAN_HDR_VERSION_MISMATCH, "ERSpan header version mismatch" },
+    { DECODE_ERSPAN2_DGRAM_LT_HDR, "captured < ERSpan type2 header length" },
     { 0, nullptr }
 };
 

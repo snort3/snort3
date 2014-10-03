@@ -30,45 +30,45 @@ using namespace std;
 #include "stream/stream.h"
 
 #define DEFRAG_IPOPTIONS_STR \
-    "(stream_ip) Inconsistent IP Options on Fragmented Packets"
+    "inconsistent IP options on fragmented packets"
 
 #define DEFRAG_TEARDROP_STR \
-    "(stream_ip) Teardrop attack"
+    "teardrop attack"
 
 #define DEFRAG_SHORT_FRAG_STR \
-    "(stream_ip) Short fragment, possible DoS attempt"
+    "short fragment, possible DOS attempt"
 
 #define DEFRAG_ANOMALY_OVERSIZE_STR \
-    "(stream_ip) Fragment packet ends after defragmented packet"
+    "fragment packet ends after defragmented packet"
 
 #define DEFRAG_ANOMALY_ZERO_STR \
-    "(stream_ip) Zero-byte fragment packet"
+    "zero-byte fragment packet"
 
 #define DEFRAG_ANOMALY_BADSIZE_SM_STR \
-    "(stream_ip) Bad fragment size, packet size is negative"
+    "bad fragment size, packet size is negative"
 
 #define DEFRAG_ANOMALY_BADSIZE_LG_STR \
-    "(stream_ip) Bad fragment size, packet size is greater than 65536"
+    "bad fragment size, packet size is greater than 65536"
 
 #define DEFRAG_ANOMALY_OVLP_STR \
-    "(stream_ip) Fragmentation overlap"
+    "fragmentation overlap"
 
 #if 0  // OBE
 #define DEFRAG_IPV6_BSD_ICMP_FRAG_STR
-    "(stream_ip) IPv6 BSD mbufs remote kernel buffer overflow"
+    "IPv6 BSD mbufs remote kernel buffer overflow"
 
 #define DEFRAG_IPV6_BAD_FRAG_PKT_STR
-    "(stream_ip) Bogus fragmentation packet. Possible BSD attack"
+    "bogus fragmentation packet, possible BSD attack"
 #endif
 
 #define DEFRAG_MIN_TTL_EVASION_STR \
-    "(stream_ip) TTL value less than configured minimum, not using for reassembly"
+    "TTL value less than configured minimum, not using for reassembly"
 
 #define DEFRAG_EXCESSIVE_OVERLAP_STR \
-    "(stream_ip) Excessive fragment overlap"
+    ",xcessive fragment overlap"
 
 #define DEFRAG_TINY_FRAGMENT_STR \
-    "(stream_ip) Tiny fragment"
+    ",iny fragment"
 
 FragEngine::FragEngine()
 { memset(this, 0, sizeof(*this)); }

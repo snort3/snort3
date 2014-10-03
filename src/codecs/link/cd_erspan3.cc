@@ -36,7 +36,7 @@ namespace
 
 static const RuleMap erspan3_rules[] =
 {
-    { DECODE_ERSPAN3_DGRAM_LT_HDR, "(" CD_ERSPAN3_NAME ") captured < ERSpan Type3 Header Length" },
+    { DECODE_ERSPAN3_DGRAM_LT_HDR, "captured < ERSpan type3 header length" },
     { 0, nullptr }
 };
 

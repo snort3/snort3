@@ -46,7 +46,7 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 Binding::Binding()
 {
     when.nets = nullptr;
-    when.protos = PROTO_BIT__ALL;
+    when.protos = (unsigned)PktType::ANY;
 
     when.vlans.set();
     when.ports.set();
@@ -92,18 +92,10 @@ bool Binding::check_addr(const Flow* flow) const
 
 bool Binding::check_proto(const Flow* flow) const
 {
-    unsigned mask = when.protos;
-    unsigned bit = 0;
+    if ( when.protos & (unsigned)flow->protocol )
+        return true;
 
-    switch ( flow->protocol )
-    {
-    case PktType::IP:   bit = PROTO_BIT__IP;   break;
-    case PktType::ICMP: bit = PROTO_BIT__ICMP; break;
-    case PktType::TCP:  bit = PROTO_BIT__TCP;  break;
-    case PktType::UDP:  bit = PROTO_BIT__UDP;  break;
-    default: break;
-    }
-    return ( mask & bit ) != 0;
+    return false;
 }
 
 bool Binding::check_iface(const Flow* flow) const
@@ -396,7 +388,7 @@ static const InspectApi bind_api =
         mod_dtor
     },
     IT_BINDER, 
-    PROTO_BIT__ALL,
+    (uint16_t)PktType::ANY,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

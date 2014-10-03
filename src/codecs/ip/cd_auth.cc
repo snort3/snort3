@@ -41,8 +41,8 @@ namespace
 
 static const RuleMap auth_rules[] =
 {
-    { DECODE_AUTH_HDR_TRUNC, "(" CD_AUTH_NAME ") Truncated authentication header"},
-    { DECODE_AUTH_HDR_BAD_LEN, "(" CD_AUTH_NAME ") Bad authentication header length"},
+    { DECODE_AUTH_HDR_TRUNC, "truncated authentication header"},
+    { DECODE_AUTH_HDR_BAD_LEN, "bad authentication header length"},
     { 0, nullptr }
 };
 

@@ -180,63 +180,63 @@ struct PS_PKT
 //-------------------------------------------------------------------------
 
 #define PSNG_TCP_PORTSCAN_STR \
-    "(port_scan) TCP Portscan"
+    "TCP portscan"
 #define PSNG_TCP_DECOY_PORTSCAN_STR \
-    "(port_scan) TCP Decoy Portscan"
+    "TCP decoy portscan"
 #define PSNG_TCP_PORTSWEEP_STR \
-    "(port_scan) TCP Portsweep"
+    "TCP portsweep"
 #define PSNG_TCP_DISTRIBUTED_PORTSCAN_STR \
-    "(port_scan) TCP Distributed Portscan"
+    "TCP distributed portscan"
 #define PSNG_TCP_FILTERED_PORTSCAN_STR \
-    "(port_scan) TCP Filtered Portscan"
+    "TCP filtered portscan"
 #define PSNG_TCP_FILTERED_DECOY_PORTSCAN_STR \
-    "(port_scan) TCP Filtered Decoy Portscan"
+    "TCP filtered decoy portscan"
 #define PSNG_TCP_FILTERED_DISTRIBUTED_PORTSCAN_STR \
-    "(port_scan) TCP Filtered Distributed Portscan"
+    "TCP filtered distributed portscan"
 #define PSNG_TCP_PORTSWEEP_FILTERED_STR \
-    "(port_scan) TCP Filtered Portsweep"
+    "TCP filtered portsweep"
 
 #define PSNG_IP_PORTSCAN_STR \
-    "(port_scan) IP Protocol Scan"
+    "IP protocol scan"
 #define PSNG_IP_DECOY_PORTSCAN_STR \
-     "(port_scan) IP Decoy Protocol Scan"
+     "IP decoy protocol scan"
 #define PSNG_IP_PORTSWEEP_STR \
-    "(port_scan) IP Protocol Sweep"
+    "IP protocol sweep"
 #define PSNG_IP_DISTRIBUTED_PORTSCAN_STR \
-    "(port_scan) IP Distributed Protocol Scan"
+    "IP distributed protocol scan"
 #define PSNG_IP_FILTERED_PORTSCAN_STR \
-    "(port_scan) IP Filtered Protocol Scan"
+    "IP filtered protocol scan"
 #define PSNG_IP_FILTERED_DECOY_PORTSCAN_STR \
-    "(port_scan) IP Filtered Decoy Protocol Scan"
+    "IP filtered decoy protocol scan"
 #define PSNG_IP_FILTERED_DISTRIBUTED_PORTSCAN_STR \
-    "(port_scan) IP Filtered Distributed Protocol Scan"
+    "IP filtered distributed protocol scan"
 #define PSNG_IP_PORTSWEEP_FILTERED_STR \
-    "(port_scan) IP Filtered Protocol Sweep"
+    "IP filtered protocol sweep"
 
 #define PSNG_UDP_PORTSCAN_STR \
-    "(port_scan) UDP Portscan"
+    "UDP portscan"
 #define PSNG_UDP_DECOY_PORTSCAN_STR \
-    "(port_scan) UDP Decoy Portscan"
+    "UDP decoy portscan"
 #define PSNG_UDP_PORTSWEEP_STR \
-    "(port_scan) UDP Portsweep"
+    "UDP portsweep"
 #define PSNG_UDP_DISTRIBUTED_PORTSCAN_STR \
-    "(port_scan) UDP Distributed Portscan"
+    "UDP distributed portscan"
 #define PSNG_UDP_FILTERED_PORTSCAN_STR \
-    "(port_scan) UDP Filtered Portscan"
+    "UDP filtered portscan"
 #define PSNG_UDP_FILTERED_DECOY_PORTSCAN_STR \
-    "(port_scan) UDP Filtered Decoy Portscan"
+    "UDP filtered decoy portscan"
 #define PSNG_UDP_FILTERED_DISTRIBUTED_PORTSCAN_STR \
-    "(port_scan) UDP Filtered Distributed Portscan"
+    "UDP filtered distributed portscan"
 #define PSNG_UDP_PORTSWEEP_FILTERED_STR \
-    "(port_scan) UDP Filtered Portsweep"
+    "UDP filtered portsweep"
 
 #define PSNG_ICMP_PORTSWEEP_STR \
-    "(port_scan) ICMP Sweep"
+    "ICMP sweep"
 #define PSNG_ICMP_PORTSWEEP_FILTERED_STR \
-    "(port_scan) ICMP Filtered Sweep"
+    "ICMP filtered sweep"
 
 #define PSNG_OPEN_PORT_STR \
-    "(port_scan) Open Port"
+    "open port"
 
 #endif
 

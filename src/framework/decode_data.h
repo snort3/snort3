@@ -49,6 +49,8 @@ enum class PktType : std::uint8_t
     UDP = 0x04,
     ICMP = 0x08,
     ARP = 0x10,
+    ANY = 0x1F,
+    ANY_IP = 0x0F,
 //    FREE = 0xE0,
 };
 

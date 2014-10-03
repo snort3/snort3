@@ -35,7 +35,7 @@ namespace
 
 static const RuleMap arp_rules[] =
 {
-    { DECODE_ARP_TRUNCATED, "(" CD_ARP_NAME ") Truncated ARP" },
+    { DECODE_ARP_TRUNCATED, "truncated ARP" },
     { 0, nullptr }
 };
 

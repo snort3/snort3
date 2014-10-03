@@ -22,13 +22,13 @@
 #include "arp_module.h"
 
 #define ARPSPOOF_UNICAST_ARP_REQUEST_STR \
-    "(arp_spoof) Unicast ARP request"
+    "unicast ARP request"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR \
-    "(arp_spoof) Ethernet/ARP Mismatch request for Source"
+    "ethernet/ARP mismatch request for source"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST_STR \
-    "(arp_spoof) Ethernet/ARP Mismatch request for Destination"
+    "ethernet/ARP mismatch request for destination"
 #define ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK_STR \
-    "(arp_spoof) Attempted ARP cache overwrite attack"
+    "attempted ARP cache overwrite attack"
 
 THREAD_LOCAL SimpleStats asstats;
 
