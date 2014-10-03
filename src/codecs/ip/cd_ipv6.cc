@@ -696,6 +696,7 @@ void Ipv6Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
 
     // set outer to inner so this will always wind pointing to inner
     c->ptrs.ip_api.set(ch);
+    c->ptrs.set_pkt_type(PktType::IP);
 }
 
 //-------------------------------------------------------------------------

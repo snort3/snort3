@@ -594,6 +594,7 @@ void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 {
     // TBD handle nested icmp4 layers
     c->ptrs.icmph = (ICMPHdr*)lyr->start;
+    c->ptrs.set_pkt_type(PktType::ICMP);
 }
 
 
