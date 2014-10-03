@@ -450,6 +450,7 @@ void UdpCodec::format (EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     }
     c->ptrs.sp = ntohs(ch->uh_sport);
     c->ptrs.dp = ntohs(ch->uh_dport);
+    c->ptrs.set_pkt_type(PktType::UDP);
 }
 
 //-------------------------------------------------------------------------

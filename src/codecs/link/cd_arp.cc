@@ -57,6 +57,7 @@ public:
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*);
 };
 
 
@@ -99,6 +100,11 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.set_pkt_type(PktType::ARP);
 
     return true;
+}
+
+void ArpCodec::format(EncodeFlags, const Packet*, Packet* c, Layer*)
+{
+    c->ptrs.set_pkt_type(PktType::ARP);
 }
 
 //-------------------------------------------------------------------------

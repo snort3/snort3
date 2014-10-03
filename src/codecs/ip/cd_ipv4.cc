@@ -733,6 +733,7 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     }
 
     c->ptrs.ip_api.set(ch);
+    c->ptrs.set_pkt_type(PktType::IP);
 }
 
 //-------------------------------------------------------------------------

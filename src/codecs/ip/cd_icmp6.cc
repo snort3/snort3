@@ -81,6 +81,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual bool decode(const RawData&, CodecData&, SnortData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
 };
@@ -324,6 +325,14 @@ bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
     }
 
     return true;
+}
+
+
+
+void Icmp6Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+{
+    c->ptrs.icmph = (ICMPHdr*)lyr->start;
+    c->ptrs.set_pkt_type(PktType::ICMP);
 }
 
 //-------------------------------------------------------------------------

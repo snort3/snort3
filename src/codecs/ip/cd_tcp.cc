@@ -736,6 +736,7 @@ void TcpCodec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     }
     c->ptrs.sp = ch->src_port();
     c->ptrs.dp = ch->dst_port();
+    c->ptrs.set_pkt_type(PktType::TCP);
 }
 
 
