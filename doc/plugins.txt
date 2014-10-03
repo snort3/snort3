@@ -1,4 +1,4 @@
-Snort++ uses a variety of plugins to accomplish much of its processing
+Snort\++ uses a variety of plugins to accomplish much of its processing
 objectives, including:
 
 * Codec - to decode and encode packets
@@ -19,7 +19,7 @@ The BaseApi includes type, name, API version, plugin version, and function
 pointers for constructing and destructing a Module.  The specific API add
 various other data and functions for their given roles.
 
-The Module is pervasive in Snort\+\+.  It is how everything, including
+The Module is pervasive in Snort++.  It is how everything, including
 plugins, are configured.  It also provides access to builtin rules.  And as
 the glue that binds functionality to Snort++, the capabilities of a Module
 are expected to grow to include statistics support, etc.

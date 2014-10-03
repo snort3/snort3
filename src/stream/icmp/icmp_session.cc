@@ -166,6 +166,8 @@ static int ProcessIcmpUnreach(Packet *p)
         /* Lookup a ICMP session */
         ssn = Stream::get_session(&skey);
         break;
+    default:
+        break;
     }
 
     if (ssn)

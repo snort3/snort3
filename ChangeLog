@@ -22,6 +22,8 @@
 -- updated config_changes.txt
 -- fixed doc format and added errors.txt
 -- revised help options (again) to be more consistent with other (gnu style) programs
+-- added overview page to documentation
+-- pulled in latest from Josh
 
 121
 -- valgrind fixes

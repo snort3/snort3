@@ -749,6 +749,9 @@ void Stream::set_ip_protocol(Flow* flow)
     case PktType::ICMP:
         flow->s5_state.ipprotocol = protocolReferenceICMP;
         break;
+
+    default:
+        break;
     }
 }
 

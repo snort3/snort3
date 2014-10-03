@@ -13,6 +13,7 @@ version.txt
 
 unbuilt_sources = \
 snort_manual.txt \
+overview.txt \
 config_changes.txt \
 errors.txt \
 differences.txt \
@@ -54,7 +55,7 @@ config.txt: $(snort)
 	$(snort) --markup --help-config | sort -k 3 > $@
 
 gids.txt: $(snort)
-	$(snort) --markup --help-gids | sort -n  -k 1.4 > $@
+	$(snort) --markup --list-gids | sort -n  -k 1.4 > $@
 
 modules.txt: $(snort)
 	for m in `$(snort) --list-modules` ; do \

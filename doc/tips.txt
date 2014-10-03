@@ -1,14 +1,38 @@
 The following pointers will help you get started:
 
-=== Building
+=== Dependencies
 
-* You need luajit from luajit.org; build from source.
+Required:
+
+* autotools or cmake to build from source.
+
+* daq from snort.org for packet IO.
+
+* luajit from luajit.org for configuration and scripting.
+
+* pcap from http://www.tcpdump.org for tcpdump logging.
+
+* pcre from http://www.pcre.org for regex pattern matching.
+
+* dnet from http://code.google.com/p/libdnet/ for network utility
+  functions.
+
+* zlib from http://www.zlib.net for decompression.
+
+Optional:
+
+* asciidoc from http://www.methods.co.nz/asciidoc/ to build the html
+  manual.
+
+* dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
+  addition to asciidoc).
+
+* check from http://check.sourceforge.net to build unit tests.
+
+=== Building
 
 * You should build Snort++ with --prefix $install_dir where install_dir is
   something you can easily delete.
-
-* If you want to build the documentation, you will need to install
-  asciidoc.  You will also need dblatex to build the pdf manual.
 
 * To build with cmake and make, first create a separate directory for the
   build and cd into that directory.  Then:

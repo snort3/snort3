@@ -1253,6 +1253,8 @@ int fragGetApplicationProtocolId(Packet *p)
     case PktType::ICMP:
         ft->ipprotocol = protocolReferenceICMP;
         break;
+    default:
+        break;
     }
 
     host_entry = SFAT_LookupHostEntryBySrc(p);

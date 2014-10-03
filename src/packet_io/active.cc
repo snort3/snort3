@@ -351,6 +351,8 @@ int Active_ForceDropAction(Packet *p)
     case PktType::UDP:
         Active_DropSession();
         _Active_ForceIgnoreSession(p);
+    default:
+        break;
     }
     return 0;
 }
