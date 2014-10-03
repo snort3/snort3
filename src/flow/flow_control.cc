@@ -38,6 +38,10 @@
 #include "protocols/vlan.h"
 #include "managers/inspector_manager.h"
 #include "sfip/sf_ip.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 
 FlowControl::FlowControl()
 {

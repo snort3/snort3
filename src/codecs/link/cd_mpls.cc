@@ -116,7 +116,7 @@ public:
     ~MplsCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
 };
@@ -140,7 +140,7 @@ void MplsCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool MplsCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     uint32_t mpls_h;
     uint32_t label;

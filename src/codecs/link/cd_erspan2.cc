@@ -56,7 +56,7 @@ public:
     ~Erspan2Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     
 };
 
@@ -95,7 +95,7 @@ void Erspan2Codec::get_protocol_ids(std::vector<uint16_t>& v)
  * Returns: void function
  *
  */
-bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, SnortData& )
+bool Erspan2Codec::decode(const RawData& raw, CodecData& codec, DecodeData& )
 {
     const ERSpanType2Hdr* const erSpan2Hdr =
         reinterpret_cast<const ERSpanType2Hdr*>(raw.data);

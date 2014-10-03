@@ -44,6 +44,8 @@
 #include "protocols/vlan.h"
 #include "protocols/ip.h"
 #include "protocols/icmp4.h"
+#include "protocols/udp.h"
+#include "protocols/tcp.h"
 #include "sfip/sf_ip.h"
 
 THREAD_LOCAL SessionStats icmpStats;

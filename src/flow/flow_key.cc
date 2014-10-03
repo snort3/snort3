@@ -29,6 +29,8 @@
 #include "snort.h"
 #include "utils/util.h"
 #include "sfip/sf_ip.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 
 //-------------------------------------------------------------------------
 // init foo

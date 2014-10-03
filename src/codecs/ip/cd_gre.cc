@@ -64,7 +64,7 @@ public:
     ~GreCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
      void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
 };
@@ -111,7 +111,7 @@ void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Notes: see RFCs 1701, 2784 and 2637
  */
-bool GreCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < GRE_HEADER_LEN)
     {

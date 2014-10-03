@@ -28,11 +28,14 @@
 #include "framework/codec.h"
 #include "protocols/ipv4.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
 #include "codecs/codec_events.h"
 #include "log/text_log.h"
 #include "main/snort.h"
 #include "log/messages.h"
 #include "protocols/packet_manager.h"
+#include "protocols/icmp4.h"
+#include "protocols/udp.h"
 
 namespace
 {
@@ -48,7 +51,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
 };
@@ -61,7 +64,7 @@ void Icmp4IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IP_EMBEDDED_IN_ICMP4);
 }
 
-bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     uint32_t ip_len;       /* length from the start of the ip hdr to the
                              * pkt end */

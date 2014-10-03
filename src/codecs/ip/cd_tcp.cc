@@ -97,7 +97,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -117,7 +117,7 @@ static int OptLenValidate(const tcp::TcpOption* const opt,
 
 static void DecodeTCPOptions(const uint8_t *, uint32_t, CodecData&);
 static inline void TCPMiscTests(const tcp::TCPHdr* const tcph,
-                                const SnortData& snort,
+                                const DecodeData& snort,
                                 const CodecData& codec);
 
 void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
@@ -125,7 +125,7 @@ void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_TCP);
 }
 
-bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if(raw.len < tcp::TCP_HEADER_LEN)
     {
@@ -521,7 +521,7 @@ static int OptLenValidate(const tcp::TcpOption* const opt,
 
 /* TCP-layer decoder alerts */
 static inline void TCPMiscTests(const tcp::TCPHdr* const tcph,
-                                const SnortData& snort,
+                                const DecodeData& snort,
                                 const CodecData& codec)
 {
     if ( ((tcph->th_flags & TH_NORESERVED) == TH_SYN ) &&

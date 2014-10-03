@@ -34,6 +34,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "framework/range.h"
+#include "protocols/icmp4.h"
 
 static const char* s_name = "itype";
 

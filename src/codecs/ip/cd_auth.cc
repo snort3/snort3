@@ -67,7 +67,7 @@ public:
     ~AuthCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 /*  Valid for both IPv4 and IPv6 */
@@ -92,7 +92,7 @@ void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_AUTH);
 }
 
-bool AuthCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
 
     const AuthHdr* const ah = reinterpret_cast<const AuthHdr* const>(raw.data);

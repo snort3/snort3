@@ -54,7 +54,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 } // namespace
@@ -64,7 +64,7 @@ void Icmp6IpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IP_EMBEDDED_IN_ICMP6);
 }
 
-bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
 //    uint16_t orig_frag_offset;
 

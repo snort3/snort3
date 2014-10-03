@@ -59,7 +59,7 @@ public:
     PgmCodec() : Codec(CD_PGM_NAME){};
     ~PgmCodec() {};
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 };
 
@@ -151,7 +151,7 @@ static inline int pgm_nak_detect (const RawData& raw)
 // private functions
 //-------------------------------------------------------------------------
 
-bool PgmCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool PgmCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if ( pgm_nak_detect(raw) == PGM_NAK_VULN )
         codec_events::decoder_event(codec, DECODE_PGM_NAK_OVERFLOW);

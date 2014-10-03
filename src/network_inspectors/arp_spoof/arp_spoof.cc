@@ -94,6 +94,7 @@
 #include "protocols/layer.h"
 #include "protocols/arp.h"
 #include "sfip/sf_ip.h"
+#include "protocols/eth.h"
 
 static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 

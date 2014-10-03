@@ -46,7 +46,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
 
 };
@@ -62,7 +62,7 @@ struct IP6Dest
 } // anonymous namespace
 
 
-bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool Ipv6DSTOptsCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const IP6Dest* const dsthdr = reinterpret_cast<const IP6Dest *>(raw.data);
 

@@ -93,7 +93,7 @@ public:
     ~Ipv6Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -107,9 +107,9 @@ public:
 
 
 static inline void IPV6CheckIsatap(const ip::IP6Hdr* const,
-                                    const SnortData&,
+                                    const DecodeData&,
                                     const CodecData&);
-static inline void IPV6MiscTests(const SnortData&, const CodecData&);
+static inline void IPV6MiscTests(const DecodeData&, const CodecData&);
 static void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
 static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 
@@ -124,7 +124,7 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     // FIXIT-L -J necessary for scoping until the 'goto' statements are deleted
     {
@@ -224,7 +224,7 @@ decodeipv6_fail:
 }
 
 static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
-                                    const SnortData& snort,
+                                    const DecodeData& snort,
                                     const CodecData& codec)
 {
     /* Only check for IPv6 over IPv4 */
@@ -250,7 +250,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
  *
  * Returns: void function
  */
-static inline void IPV6MiscTests(const SnortData& snort, const CodecData& codec)
+static inline void IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
 {
     const sfip_t *ip_src = snort.ip_api.get_src();
     const sfip_t *ip_dst = snort.ip_api.get_dst();

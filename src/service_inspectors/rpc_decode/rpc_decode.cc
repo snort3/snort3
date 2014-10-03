@@ -62,6 +62,7 @@
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "target_based/sftarget_protocol_reference.h"
+#include "protocols/tcp.h"
 
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
