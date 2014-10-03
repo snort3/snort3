@@ -176,32 +176,26 @@ static void get_alert_pkt(
 
                 switch(p->type())
                 {
-                    case PktType::TCP:
-                       if (p->ptrs.tcph)
-                       {
-                           us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
-                       }
-                       break;
+                case PktType::TCP:
+                   if (p->ptrs.tcph)
+                       us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
+                   break;
 
-                    case PktType::UDP:
-                        if (p->ptrs.udph)
-                        {
-                            us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
-                        }
-                        break;
+                case PktType::UDP:
+                    if (p->ptrs.udph)
+                        us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
+                    break;
 
-                    case PktType::ICMP:
-                       if (p->ptrs.icmph)
-                       {
-                           us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;
-                       }
-                       break;
+                case PktType::ICMP:
+                   if (p->ptrs.icmph)
+                       us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;
+                   break;
 
-                    default:
-                        /* us.alert.transhdr is null due to initial memset */
-                        us.alert.val|=NO_TRANSHDR;
-                        break;
-                }
+                default:
+                    /* us.alert.transhdr is null due to initial memset */
+                    us.alert.val|=NO_TRANSHDR;
+                    break;
+                } /* switch */
             }
 
             if (p->data && p->pkt) us.alert.data=p->data - p->pkt;

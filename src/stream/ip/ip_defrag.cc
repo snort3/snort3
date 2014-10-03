@@ -1240,19 +1240,19 @@ int fragGetApplicationProtocolId(Packet *p)
 
     switch (p->type())
     {
-        case PktType::TCP:
-            ft->ipprotocol = protocolReferenceTCP;
-            src_port = p->ptrs.sp;
-            dst_port = p->ptrs.dp;
-            break;
-        case PktType::UDP:
-            ft->ipprotocol = protocolReferenceUDP;
-            src_port = p->ptrs.sp;
-            dst_port = p->ptrs.dp;
-            break;
-        case PktType::ICMP:
-            ft->ipprotocol = protocolReferenceICMP;
-            break;
+    case PktType::TCP:
+        ft->ipprotocol = protocolReferenceTCP;
+        src_port = p->ptrs.sp;
+        dst_port = p->ptrs.dp;
+        break;
+    case PktType::UDP:
+        ft->ipprotocol = protocolReferenceUDP;
+        src_port = p->ptrs.sp;
+        dst_port = p->ptrs.dp;
+        break;
+    case PktType::ICMP:
+        ft->ipprotocol = protocolReferenceICMP;
+        break;
     }
 
     host_entry = SFAT_LookupHostEntryBySrc(p);

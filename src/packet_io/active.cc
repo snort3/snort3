@@ -91,22 +91,22 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
 
     switch ( p->type() )
     {
-        case PktType::UNKNOWN:
-            // Can only occur if we have never seen IP
-            return;
+    case PktType::UNKNOWN:
+        // Can only occur if we have never seen IP
+        return;
 
-        case PktType::TCP:
-            Active_SendReset(p, 0);
-            if ( flags & ENC_FLAG_FWD )
-                Active_SendReset(p, ENC_FLAG_FWD);
-            break;
+    case PktType::TCP:
+        Active_SendReset(p, 0);
+        if ( flags & ENC_FLAG_FWD )
+            Active_SendReset(p, ENC_FLAG_FWD);
+        break;
 
-        default:
-            if ( Active_PacketForceDropped() )
-                Active_SendUnreach(p, UnreachResponse::FWD);
-            else
-                Active_SendUnreach(p, UnreachResponse::PORT);
-            break;
+    default:
+        if ( Active_PacketForceDropped() )
+            Active_SendUnreach(p, UnreachResponse::FWD);
+        else
+            Active_SendUnreach(p, UnreachResponse::PORT);
+        break;
     }
 }
 
@@ -347,10 +347,10 @@ int Active_ForceDropAction(Packet *p)
 
     switch ( p->type() )
     {
-        case PktType::TCP:
-        case PktType::UDP:
-            Active_DropSession();
-            _Active_ForceIgnoreSession(p);
+    case PktType::TCP:
+    case PktType::UDP:
+        Active_DropSession();
+        _Active_ForceIgnoreSession(p);
     }
     return 0;
 }
@@ -368,23 +368,23 @@ static inline int _Active_DoReset(Packet *p)
 
     switch ( p->type() )
     {
-        case PktType::TCP:
-            if ( Active_IsRSTCandidate(p) )
-                ActionManager::queue_reject();
-            break;
+    case PktType::TCP:
+        if ( Active_IsRSTCandidate(p) )
+            ActionManager::queue_reject();
+        break;
 
-        // FIXIT-J send unr to udp/icmp4/icmp6 only or for all non-tcp?
-        case PktType::UDP:
-        case PktType::ICMP:
-        case PktType::IP:
-            if ( Active_IsUNRCandidate(p) )
-                ActionManager::queue_reject();
-            break;
+    // FIXIT-J send unr to udp/icmp4/icmp6 only or for all non-tcp?
+    case PktType::UDP:
+    case PktType::ICMP:
+    case PktType::IP:
+        if ( Active_IsUNRCandidate(p) )
+            ActionManager::queue_reject();
+        break;
 
-        case PktType::UNKNOWN:
-        case PktType::ARP:
-            //  No IP layer or this is an ARP packet
-            break;
+    case PktType::UNKNOWN:
+    case PktType::ARP:
+        //  No IP layer or this is an ARP packet
+        break;
     }
 
     return 0;

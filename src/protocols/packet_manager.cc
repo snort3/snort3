@@ -260,19 +260,19 @@ void PacketManager::decode(
 
             switch (p->layers[p->num_layers].prot_id)
             {
-                case IPPROTO_ID_ESP:
-                    // Hardcoding ESP because we trust iff the layer
-                    // immediately preceding the fail is ESP.
-                    p->ptrs.decode_flags |= DECODE_PKT_TRUST;
-                    break;
+            case IPPROTO_ID_ESP:
+                // Hardcoding ESP because we trust iff the layer
+                // immediately preceding the fail is ESP.
+                p->ptrs.decode_flags |= DECODE_PKT_TRUST;
+                break;
 
-                case PROTOCOL_TEREDO:
-                    // if we just decodec teredo and the next
-                    // layer fails, we made a mistake. Therefore,
-                    // remove this bit.
-                    p->proto_bits &= ~PROTO_BIT__TEREDO;
-                    break;
-            }
+            case PROTOCOL_TEREDO:
+                // if we just decoded teredo and the next
+                // layer fails, we made a mistake. Therefore,
+                // remove this bit.
+                p->proto_bits &= ~PROTO_BIT__TEREDO;
+                break;
+            } /* switch */
         }
         else
         {

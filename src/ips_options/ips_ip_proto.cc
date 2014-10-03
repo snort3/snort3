@@ -136,30 +136,30 @@ int IpProtoOption::eval(Cursor&, Packet *p)
 
     switch (ipd->comparison_flag)
     {
-        case IP_PROTO__EQUAL:
-            if (ip_proto == ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__EQUAL:
+        if (ip_proto == ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__NOT_EQUAL:
-            if (ip_proto != ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__NOT_EQUAL:
+        if (ip_proto != ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__GREATER_THAN:
-            if (ip_proto > ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__GREATER_THAN:
+        if (ip_proto > ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        case IP_PROTO__LESS_THAN:
-            if (ip_proto < ipd->protocol)
-                rval = DETECTION_OPTION_MATCH;
-            break;
+    case IP_PROTO__LESS_THAN:
+        if (ip_proto < ipd->protocol)
+            rval = DETECTION_OPTION_MATCH;
+        break;
 
-        default:
-            ErrorMessage("%s(%d) Invalid comparison flag.\n",
-                         __FILE__, __LINE__);
-            break;
+    default:
+        ErrorMessage("%s(%d) Invalid comparison flag.\n",
+                     __FILE__, __LINE__);
+        break;
     }
 
     /* if the test isn't successful, this function *must* return 0 */

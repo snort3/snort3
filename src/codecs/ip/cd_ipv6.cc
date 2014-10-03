@@ -228,7 +228,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
                                     const CodecData& codec)
 {
     /* Only check for IPv6 over IPv4 */
-    if (snort.ip_api.is_ip4() && snort.ip_api.proto() == IPPROTO_ID_IPV6)
+    if (snort.ip_api.is_ip4() && snort.ip_api.get_ip4h()->get_proto() == IPPROTO_ID_IPV6)
     {
         uint32_t isatap_interface_id = ntohl(ip6h->ip6_src.u6_addr32[2]) & 0xFCFFFFFF;
 
