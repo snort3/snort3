@@ -53,7 +53,7 @@ const string& Markup::sanitize(const char* const c)
 
 const string& Markup::sanitize(const string& s)
 {
-    const char* const asciidoc_chars = "~*<>^'";
+    const char* const asciidoc_chars = "*<>^'";
     static string m;
     m.clear();
     m += s;
