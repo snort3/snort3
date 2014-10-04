@@ -73,7 +73,11 @@ SO_PUBLIC const SnortEvent* get_event()
     lua_event.event_id = event->event_id;
     lua_event.event_ref = event->event_reference;
 
-    lua_event.msg = event->sig_info->message;
+    if ( event->sig_info->message )
+        lua_event.msg = event->sig_info->message;
+    else
+        lua_event.msg = "";
+
     lua_event.svc = event->sig_info->num_services ? event->sig_info->services[1].service : "n/a";
     lua_event.os = event->sig_info->os ? event->sig_info->os : "n/a";
 

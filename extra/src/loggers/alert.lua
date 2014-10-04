@@ -41,10 +41,10 @@ end
 
 -- alert() is required
 function alert ()
-    -- buf is a luajit cdata
+    -- evt is a luajit SnortEvent
     local evt = ffi.C.get_event()
 
-    -- str is a lua string
+    -- str is a luajit string
     local str = ffi.string(evt.msg)
 
     print(string.format('%d:%d:%d:%s', evt.gid, evt.sid, evt.rev, str))

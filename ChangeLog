@@ -9,6 +9,7 @@
 -- moved log_tcpdump to log_pcap
 -- changed all output filename configs to be based on module name
 -- fixed -K handling
+-- fixed laulert when rule has no msg
 
 122
 -- pulled thread pinning from Josh
