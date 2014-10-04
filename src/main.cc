@@ -643,7 +643,7 @@ static bool set_mode()
     if ( ScTestMode() ||
         (!Trough_GetQCount() && !(snort_conf->run_flags & RUN_FLAG__SHELL)) )
     {
-        LogMessage("\nSnort successfully validated the configuration!\n");
+        LogMessage("\nSnort successfully validated the configuration.\n");
 
         // force test mode to exit w/o stats
         snort_conf->run_flags |= RUN_FLAG__TEST;

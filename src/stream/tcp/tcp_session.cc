@@ -409,7 +409,7 @@ void s5TcpStreamReassembleRuleOptionCleanup(void *dataPtr);
 
 /* enum for policy names */
 static const char *reassembly_policy_names[] = {
-    "no policy!",
+    "no policy",
     "FIRST",
     "LINUX",
     "BSD",
@@ -3083,7 +3083,7 @@ static int AddStreamNode(
                         i, idx, idx->seq, idx->size, idx->next, idx->prev););
 
                 if(st->seg_count < i)
-                    FatalError("Circular list, WTF?\n");
+                    FatalError("Circular list\n");
 
                 idx = idx->next;
             }

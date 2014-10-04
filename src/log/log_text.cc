@@ -1497,7 +1497,7 @@ void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
         {
             TextLog_Print(
                 log, "Got bogus buffer length (%d) for LogNetData, "
-                "defaulting to %d bytes!\n", len, BYTES_PER_FRAME
+                "defaulting to %d bytes\n", len, BYTES_PER_FRAME
             );
         }
         end = data + BYTES_PER_FRAME;

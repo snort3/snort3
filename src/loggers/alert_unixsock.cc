@@ -211,7 +211,7 @@ static void OpenAlertSock(void)
     get_instance_file(name, UNSOCK_FILE);
 
     if ( access(name.c_str(), W_OK) )
-       ErrorMessage("%s file doesn't exist or isn't writable!\n", name.c_str());
+       ErrorMessage("%s file doesn't exist or isn't writable\n", name.c_str());
 
     memset((char *) &us.addr, 0, sizeof(us.addr));
     us.addr.sun_family = AF_UNIX;

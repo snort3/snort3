@@ -585,7 +585,7 @@ static void parse_depth(PatternMatchData* pmd, const char *data)
         /* check to make sure that this the depth allows this rule to fire */
         if (pmd->depth < (int)pmd->pattern_size)
         {
-            ParseError("the depth (%d) is less than the size of the content(%u)!",
+            ParseError("the depth (%d) is less than the size of the content(%u)",
                     pmd->depth, pmd->pattern_size);
             return;
         }

@@ -4,6 +4,7 @@
 -- disabled markup sanitizer() for correct asciidoc results
 -- tweaked snort.lua and snort_defaults.lua
 -- updated usage
+-- removed ! from error messages
 
 122
 -- pulled thread pinning from Josh

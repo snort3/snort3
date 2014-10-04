@@ -1257,7 +1257,7 @@ int main ( int argc, char ** argv )
                      1);      /* Recycle nodes */
     if(!t)
     {
-        printf("Low Memory!\n");
+        printf("Low Memory\n");
         exit(0);
     }
     /* Add Nodes to the Hash Table */
@@ -1301,7 +1301,7 @@ int main ( int argc, char ** argv )
         */
         if( sfxhash_remove(t,n->key) )
         {
-            printf("...ERROR: Could not remove the key node!\n");
+            printf("...ERROR: Could not remove the key node\n");
         }
         else
         {

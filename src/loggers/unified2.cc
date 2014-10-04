@@ -941,7 +941,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                         ((ffstatus = fflush(u2.stream)) == 0))
                     {
-                        ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                        ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                      __FILE__, __LINE__);
                         error = 0;
                         break;
@@ -949,7 +949,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                 }
                 else if ((ffstatus = fflush(u2.stream)) == 0)
                 {
-                    ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                    ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                  __FILE__, __LINE__);
                     error = 0;
                     break;
@@ -993,7 +993,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                         ((ffstatus = fflush(u2.stream)) == 0))
                     {
-                        ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                        ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                      __FILE__, __LINE__);
                         error = 0;
                         break;

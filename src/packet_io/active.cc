@@ -418,7 +418,7 @@ static int Active_Open (const char* dev)
         s_link = eth_open(dev);
 
         if ( !s_link )
-            FatalError("%s: can't open %s!\n",
+            FatalError("%s: can't open %s\n",
                 "Active response", dev);
         s_send = Active_SendEth;
     }
@@ -427,7 +427,7 @@ static int Active_Open (const char* dev)
         s_ipnet = ip_open();
 
         if ( !s_ipnet )
-            FatalError("%s: can't open ip!\n",
+            FatalError("%s: can't open ip\n",
                 "Active response");
         s_send = Active_SendIp;
     }

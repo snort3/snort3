@@ -226,7 +226,7 @@ const char* file_info_from_ID(void* conf, uint32_t id)
     RuleInfo *info;
 
     if (SNORT_FILE_TYPE_UNKNOWN == id)
-        return "Unknown file type, done!";
+        return "Unknown file type, done";
 
     else if (SNORT_FILE_TYPE_CONTINUE == id)
         return "Undecided file type, continue...";

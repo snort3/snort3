@@ -1012,7 +1012,7 @@ int asn1_print_types(ASN1_TYPE *asn1_type, void *user)
     printf("\n");
     //if(BitStringOverflow(asn1_type))
     //{
-    //    printf("!! BITSTRING OVERFLOW\n");
+    //    printf("BITSTRING OVERFLOW\n");
     //}
     printf("\n");
 

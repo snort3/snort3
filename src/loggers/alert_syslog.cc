@@ -293,7 +293,7 @@ static void AlertSyslog(
     }
     else
     {
-        syslog(priority, "%s", msg == NULL ? "ALERT!" : msg);
+        syslog(priority, "%s", msg == NULL ? "ALERT" : msg);
     }
 }
 

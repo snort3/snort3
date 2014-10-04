@@ -89,17 +89,17 @@ CodecManager::CodecApiWrapper& CodecManager::get_api_wrapper(const CodecApi* cd_
 
 
     ParseAbort("Attempting to instantiate Codec '%s', "
-                "but codec has not been added!!", cd_api->base.name);
+                "but codec has not been added", cd_api->base.name);
 }
 
 
 void CodecManager::add_plugin(const CodecApi* api)
 {
     if (!api->ctor)
-        FatalError("CodecApi ctor() for Codec %s: ctor() must be implemented!!\n",
+        FatalError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
                         api->base.name);
     if (!api->dtor)
-        FatalError("CodecApi ctor() for Codec %s: ctor() must be implemented!!\n",
+        FatalError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
                         api->base.name);
 
     CodecApiWrapper wrap;
@@ -227,7 +227,7 @@ void CodecManager::thread_init()
     }
 
     if(!grinder)
-        FatalError("PacketManager: Unable to find a Codec with data link type %d!!\n", daq_dlt);
+        FatalError("PacketManager: Unable to find a Codec with data link type %d\n", daq_dlt);
 
     if ( !ScReadMode() || ScPcapShow() )
         LogMessage("Decoding with %s\n", s_protocols[grinder]->get_name());

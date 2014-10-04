@@ -80,7 +80,7 @@ bool set_cpu_affinity(SnortConfig* sc, const std::string& str, int cpu)
 
     auto search = sa.find(str);
     if(search != sa.end())
-        ParseError("Multiple CPU's set for interface %s", str.c_str());
+        ParseError("multiple CPUs set for interface %s", str.c_str());
 
     sa[std::string(str)] = cpu;
     return false;
@@ -126,42 +126,39 @@ void pin_thread_to_cpu(const char* source)
         cpu = ta[instance_id];
     }
 
+    if ( cpu < 0 )
+        return;
 
-    if (cpu != -1)
+#if LINUX
+    static THREAD_LOCAL cpu_set_t cpu_set;
+
+    if (cpu >= CPU_SETSIZE)
+        FatalError("Maximum CPU value for this Operating System is %d",
+            CPU_SETSIZE);
+
+    CPU_ZERO(&cpu_set);
+
+    if (!sched_getaffinity(0, sizeof(cpu_set), &cpu_set))
+        if (!CPU_ISSET(cpu, &cpu_set))
+            FatalError("CPU %d is not part of source %s's and thread "
+                "%d's CPU set\n", cpu, source, instance_id);
+
+    CPU_ZERO(&cpu_set);
+    CPU_SET(cpu, &cpu_set);
+
+    if (sched_setaffinity(0, sizeof(cpu_set), &cpu_set))
+        FatalError("Unable to pin source %s to CPU %d: %s\n",
+            source, cpu, std::strerror(errno));
+#else
+    static bool warning_printed = false;
+
+    if (!warning_printed)
     {
-// PREPROCESSOR MACROS -- these are not actually if statements!
-#       if LINUX
-        {
-            static THREAD_LOCAL cpu_set_t cpu_set;
-
-            if (cpu >= CPU_SETSIZE)
-                FatalError("Maximum CPU value for this Operating System is %d",
-                    CPU_SETSIZE);
-
-            CPU_ZERO(&cpu_set);
-            if (!sched_getaffinity(0, sizeof(cpu_set), &cpu_set))
-                if (!CPU_ISSET(cpu, &cpu_set))
-                    FatalError("CPU %d is not part of source %s's and thread "
-                        "%d's CPU set!\n", cpu, source, instance_id);
-
-            CPU_ZERO(&cpu_set);
-            CPU_SET(cpu, &cpu_set);
-            if (sched_setaffinity(0, sizeof(cpu_set), &cpu_set))
-                FatalError("Unable to pin source %s to CPU %d! %s\n", source, cpu, std::strerror(errno));
-
-        }
-#       else
-        {
-            static bool warning_printed = false;
-            if (!warning_printed)
-            {
-                WarningMessage("Thread Pinning / CPU affinity support is currently"
-                    " unsupported for this Operating System");
-                warning_printed = true;
-            }
-        }
-#       endif
+        WarningMessage("Thread Pinning / CPU affinity support is currently"
+            " unsupported for this Operating System");
+        warning_printed = true;
     }
+#endif
 }
 
 //-------------------------------------------------------------------------

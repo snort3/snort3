@@ -42,6 +42,10 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Most debug messages should just be deleted.
 
+* Don't bang your messages (no !).  The user feels bad enough about the
+  problem already w/o you shouting at him.
+
+
 ==== Types
 
 * Use logical types to make the code clearer and to help the compiler catch

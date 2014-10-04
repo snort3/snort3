@@ -233,7 +233,7 @@ static THREAD_LOCAL Packet** defrag_pkts;  // An array of Packet pointers
 /* enum for policy names */
 static const char *frag_policy_names[] =
 {
-    "no policy!",
+    "no policy",
     "FIRST",
     "LINUX",
     "BSD",

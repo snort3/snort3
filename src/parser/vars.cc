@@ -497,7 +497,7 @@ VarEntry * VarDefine(
 
     if(value == NULL)
     {
-        ParseAbort("bad value in variable definition!  Make sure you don't "
+        ParseAbort("bad value in variable definition.  Make sure you don't "
                    "have a '$' in the var name.");
     }
 
@@ -533,7 +533,7 @@ VarEntry * VarDefine(
                     break;
 
                 case SFIP_NOT_ANY:
-                    ParseAbort("!any is not allowed in %s.", name);
+                    ParseAbort("!any is not allowed in %s", name);
                     break;
 
                 default:
