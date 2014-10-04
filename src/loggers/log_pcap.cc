@@ -83,7 +83,8 @@ static THREAD_LOCAL LtdContext context;
 
 static void TcpdumpRollLogFile(LtdConfig*);
 
-static const char* s_name = "log_tcpdump";
+#define S_NAME "log_pcap"
+#define F_NAME S_NAME "log.pcap"
 
 //-------------------------------------------------------------------------
 // module stuff
@@ -91,9 +92,6 @@ static const char* s_name = "log_tcpdump";
 
 static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "snort.pcap",
-      "name of alert file" },
-
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
 
@@ -109,23 +107,19 @@ static const char* s_help =
 class TcpdumpModule : public Module
 {
 public:
-    TcpdumpModule() : Module(s_name, s_help, s_params) { };
+    TcpdumpModule() : Module(S_NAME, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
 public:
-    string file;
     unsigned limit;
     unsigned units;
 };
 
 bool TcpdumpModule::set(const char*, Value& v, SnortConfig*)
 {
-   if ( v.is("file") )
-        file = v.get_string();
-
-    else if ( v.is("limit") )
+    if ( v.is("limit") )
         limit = v.get_long();
 
     else if ( v.is("units") )
@@ -139,7 +133,6 @@ bool TcpdumpModule::set(const char*, Value& v, SnortConfig*)
 
 bool TcpdumpModule::begin(const char*, int, SnortConfig*)
 {
-    file = "snort.pcap";
     limit = 0;
     units = 0;
     return true;
@@ -219,12 +212,12 @@ static void LogTcpdumpStream(
     }
 }
 
-static void TcpdumpInitLogFile(LtdConfig* data, int /*nostamps?*/)
+static void TcpdumpInitLogFile(LtdConfig*, int /*nostamps?*/)
 {
     context.lastTime = time(NULL);
 
     string file;
-    get_instance_file(file, data->file.c_str());
+    get_instance_file(file, F_NAME);
 
     {
         pcap_t* pcap;
@@ -238,14 +231,14 @@ static void TcpdumpInitLogFile(LtdConfig* data, int /*nostamps?*/)
         pcap = pcap_open_dead(dlt, DAQ_GetSnapLen());
 
         if ( !pcap )
-            FatalError("%s: can't get pcap context\n", s_name);
+            FatalError("%s: can't get pcap context\n", S_NAME);
 
         context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : NULL;
 
         if(context.dumpd == NULL)
         {
             FatalError("%s: can't open %s: %s\n",
-                s_name, file.c_str(), pcap_geterr(pcap));
+                S_NAME, file.c_str(), pcap_geterr(pcap));
         }
         pcap_close(pcap);
     }
@@ -318,7 +311,6 @@ private:
 PcapLogger::PcapLogger(TcpdumpModule* m)
 {
     config = new LtdConfig;
-    config->file = m->file;
     config->limit = m->limit;
 }
 
@@ -377,7 +369,7 @@ static LogApi tcpdump_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,
@@ -396,6 +388,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     nullptr
 };
 #else
-const BaseApi* log_tcpdump = &tcpdump_api.base;
+const BaseApi* log_pcap = &tcpdump_api.base;
 #endif
 

@@ -58,7 +58,8 @@ static THREAD_LOCAL TextLog* test_file = nullptr;
 
 using namespace std;
 
-static const char* s_name = "alert_test";
+#define S_NAME "alert_test"
+#define F_NAME S_NAME ".txt"
 
 //-------------------------------------------------------------------------
 // alert_test module
@@ -67,7 +68,7 @@ static const char* s_name = "alert_test";
 static const Parameter s_params[] =
 {
     { "file", Parameter::PT_BOOL, nullptr, "false",
-      "if true, output to alert_csv.txt instead of stdout" },
+      "output to " F_NAME " instead of stdout" },
 
     { "rebuilt", Parameter::PT_BOOL, nullptr, "false",
       "include type:count where type is S for stream and F for frag" },
@@ -87,7 +88,7 @@ static const char* s_help =
 class TestModule : public Module
 {
 public:
-    TestModule() : Module(s_name, s_help, s_params) { };
+    TestModule() : Module(S_NAME, s_help, s_params) { };
 
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
@@ -152,7 +153,7 @@ TestLogger::TestLogger(TestModule* m)
 
 void TestLogger::open()
 {
-    const char* f =  (flags & TEST_FLAG_FILE) ? "alert_csv.txt" : "stdout";
+    const char* f =  (flags & TEST_FLAG_FILE) ? F_NAME : "stdout";
     test_file = TextLog_Init(f);
 }
 
@@ -222,7 +223,7 @@ static LogApi test_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,

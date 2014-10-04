@@ -68,12 +68,12 @@
 
 using namespace std;
 
-static const char* s_name = "unified2";
+#define S_NAME "unified2"
+#define F_NAME S_NAME "log.u2"
 
 /* ------------------ Data structures --------------------------*/
 typedef struct _Unified2Config
 {
-    string base_filename;
     unsigned int limit;
     int nostamp;
     int mpls_event_types;
@@ -1048,9 +1048,6 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
 
 static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "unified2.log",
-      "name of alert file" },
-
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
 
@@ -1075,13 +1072,12 @@ static const char* s_help =
 class U2Module : public Module
 {
 public:
-    U2Module() : Module(s_name, s_help, s_params) { };
+    U2Module() : Module(S_NAME, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
 public:
-    string file;
     unsigned limit;
     unsigned units;
     bool nostamp;
@@ -1091,10 +1087,7 @@ public:
 
 bool U2Module::set(const char*, Value& v, SnortConfig*)
 {
-   if ( v.is("file") )
-        file = v.get_string();
-
-    else if ( v.is("limit") )
+    if ( v.is("limit") )
         limit = v.get_long();
 
     else if ( v.is("units") )
@@ -1117,7 +1110,6 @@ bool U2Module::set(const char*, Value& v, SnortConfig*)
 
 bool U2Module::begin(const char*, int, SnortConfig*)
 {
-    file = "unified2.log";
     limit = 0;
     units = 0;
     nostamp = ScNoOutputTimestamp();
@@ -1154,7 +1146,6 @@ private:
 
 U2Logger::U2Logger(U2Module* m)
 {
-    config.base_filename = m->file;
     config.limit = m->limit;
     config.nostamp = m->nostamp;
     config.mpls_event_types = m->mpls;
@@ -1169,7 +1160,7 @@ void U2Logger::open()
     int status;
 
     std::string name;
-    get_instance_file(name, config.base_filename.c_str());
+    get_instance_file(name, F_NAME);
 
     status = SnortSnprintf(
         u2.filepath, sizeof(u2.filepath), "%s", name.c_str());
@@ -1268,7 +1259,7 @@ static LogApi u2_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,
