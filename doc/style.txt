@@ -1,13 +1,13 @@
 All new code should try to follow these style guidelines.  These are not
 yet firm so feedback is welcome to get something we can live with.
 
-=== General
+==== General
 
 * Generally try to follow
   http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml, 
   but there are a few differences.
 
-=== Naming
+==== Naming
 
 * Use camel case for namespaces, classes, and types like WhizBangPdfChecker.
 
@@ -16,7 +16,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use lower case filenames with underscores.
 
-=== Comments
+==== Comments
 
 * Write comments sparingly with a mind towards future proofing.  Often the
   comments can be obviated with better code.  Clear code is better than a
@@ -35,14 +35,14 @@ yet firm so feedback is welcome to get something we can live with.
   med, or low priority.  For now, H, M, or L can indicate alpha 1, 2, or 3.
   Perf changes fall between alpha 1 and 2.
 
-=== Logging
+==== Logging
 
 * Messages intended for the user should not look like debug messages.  Eg,
   the function name should not be included.
 
 * Most debug messages should just be deleted.
 
-=== Types
+==== Types
 
 * Use logical types to make the code clearer and to help the compiler catch
   problems.  typedef uint16_t Port; bool foo(Port) is way better than
@@ -55,7 +55,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use const liberally.
 
-=== Formatting
+==== Formatting
 
 * Indent 4 space chars ... no tabs!
 
@@ -88,7 +88,7 @@ yet firm so feedback is welcome to get something we can live with.
         inline bool foo()
         { // ...
 
-=== Headers
+==== Headers
 
 * Don't hesitate to create a new header if it is needed.  Don't lump
   unrelated stuff into a header because it is convenient.
@@ -138,7 +138,7 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Do not put using statements in headers.
 
-=== Warnings
+==== Warnings
 
 * With g++, use at least these compiler flags:
 

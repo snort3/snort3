@@ -1,14 +1,13 @@
-Snort\++ uses a variety of plugins to accomplish much of its processing
+Snort++ uses a variety of plugins to accomplish much of its processing
 objectives, including:
 
 * Codec - to decode and encode packets
 * Inspector - like the prior preprocessors, for normalization, etc.
 * IpsOption - for detection in Snort++ rules
+* IpsAction - for custom actions
 * Logger - for handling events
 * Mpse - for fast pattern matching
 * So - for dynamic rules
-
-Additional plugins, like rule actions, are planned.
 
 Plugins have an associated API defined for each type, all of which share a
 common 'header', called the BaseApi.  A dynamic library makes its plugins
@@ -62,5 +61,5 @@ the plugin instance which takes ownership.
 
 Note that there is at most one instance of a given Module, even if multiple
 plugin instances are created which use that Module.  (Multiple instances
-require Snort++ binding configurations not yet implemented.)
+require Snort++ binding configuration.)
 

@@ -7,6 +7,7 @@ builtin.txt \
 commands.txt \
 config.txt \
 gids.txt \
+help.txt \
 modules.txt \
 options.txt \
 version.txt
@@ -17,7 +18,9 @@ overview.txt \
 config_changes.txt \
 errors.txt \
 differences.txt \
+extending.txt \
 plugins.txt \
+reference.txt \
 style.txt \
 tips.txt \
 images/snort.png
@@ -46,7 +49,7 @@ dist_doc_DATA += $(EXTRA_DIST)
 snort = $(top_srcdir)/src/snort
 
 builtin.txt: $(snort)
-	$(snort) --markup --help-builtin | sort -n -t : -k 1.4 -k 2 > $@
+	$(snort) --markup --list-builtin | sort -n -t : -k 1.4 -k 2 > $@
 
 commands.txt: $(snort)
 	$(snort) --markup --help-commands | sort > $@
@@ -56,6 +59,9 @@ config.txt: $(snort)
 
 gids.txt: $(snort)
 	$(snort) --markup --list-gids | sort -n  -k 1.4 > $@
+
+help.txt: $(snort)
+	$(snort) --help > $@
 
 modules.txt: $(snort)
 	for m in `$(snort) --list-modules` ; do \

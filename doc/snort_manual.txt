@@ -22,45 +22,15 @@ include::tips.txt[]
 
 include::differences.txt[]
 
-=== Configuration Changes
-
-----
-include::config_changes.txt[]
-----
-
-== Common Errors
-
-include::errors.txt[]
-
 == Modules
 
 include::modules.txt[]
 
-== Command Line Options
+== Reference
 
-include::options.txt[]
+include::reference.txt[]
 
-== Configuration
+== Extending Snort++
 
-include::config.txt[]
-
-== Generators
-
-include::gids.txt[]
-
-== Builtin Rules
-
-include::builtin.txt[]
-
-== Command Set
-
-include::commands.txt[]
-
-== Plugins
-
-include::plugins.txt[]
-
-== Coding Style
-
-include::style.txt[]
+include::extending.txt[]
 

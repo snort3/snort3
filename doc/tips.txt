@@ -109,16 +109,16 @@ Optional:
   is a libcheck print_mode (silent, minimal, normal, etc.).
 
 
-=== Extending
+=== Help
 
-* Snort++ has several types of plugins.  extra/README explains how to build
-  the example plugins.
+----
+include::help.txt[]
+----
 
-* You can code your plugins in C++ by using the examples as a template.
 
-* Snort classic dynamic libraries are NOT compatible with Snort++.
+=== Common Errors
 
-* Snort classic SO rules are likewise not compatible with Snort++.
+include::errors.txt[]
 
 
 === Gotchas

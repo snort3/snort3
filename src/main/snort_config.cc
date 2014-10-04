@@ -159,7 +159,7 @@ SnortConfig * SnortConfNew(void)
     sc->pkt_snaplen = -1;
     sc->output_flags = 0;
     sc->num_layers = DEFAULT_LAYERMAX;
-    sc->max_ip6_options = DEFAULT_IP6_EXTMAX;
+    sc->max_ip6_extensions = DEFAULT_IP6_EXTMAX;
     sc->max_ip_layers = DEFAULT_IPMAX;
 
     /*user_id and group_id should be initialized to -1 by default, because
@@ -382,7 +382,7 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
 
     /* FIXIT-L J do these belong in network policy? */
     config_file->num_layers = cmd_line->num_layers;
-    config_file->max_ip6_options = cmd_line->max_ip6_options;
+    config_file->max_ip6_extensions = cmd_line->max_ip6_extensions;
     config_file->max_ip_layers = cmd_line->max_ip_layers;
 
     if (cmd_line->obfuscation_net.family != 0)

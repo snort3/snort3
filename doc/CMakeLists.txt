@@ -31,7 +31,9 @@ set (UNBUILT_SOURCES
     overview.txt
     errors.txt
     differences.txt
+    extending.txt
     plugins.txt
+    reference.txt
     style.txt
     tips.txt
 #   config_changes.txt  If ruby executable is NOT found
