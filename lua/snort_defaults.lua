@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------
--- Snort++ defaults
+-- Snort++ defaults -- DO NOT EDIT
 --
 -- include in your snort.lua with a dofile statement
 -- after you set HOME_NET and EXTERNAL_NET
@@ -38,11 +38,6 @@ BLACK_LIST_PATH = '../lists'
 ---------------------------------------------------------------------------
 -- default networks
 ---------------------------------------------------------------------------
--- Setup the network addresses you are protecting
-HOME_NET = 'any'
-
--- Set up the external network addresses. Leave as "any" in most situations
-EXTERNAL_NET = 'any'
 
 -- List of DNS servers on your network 
 DNS_SERVERS = HOME_NET

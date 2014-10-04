@@ -5,12 +5,14 @@
 ---------------------------------------------------------------------------
 -- setup environment
 ---------------------------------------------------------------------------
+-- given:
+-- export DIR=/install/path
+-- configure --prefix=$DIR
+-- make install
 --
--- let install_dir be a variable indicating where you installed Snort++.
--- then do:
---
--- export LUA_PATH=$install_dir/include/snort/lua/?.lua\;\;
--- export SNORT_LUA_PATH=$install_dir/conf/
+-- then:
+-- export LUA_PATH=$DIR/include/snort/lua/?.lua\;\;
+-- export SNORT_LUA_PATH=$DIR/conf/
 ---------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------
@@ -89,13 +91,14 @@ wizard = default_wizard
 local_rules =
 [[
 # snort-classic comments, includes, and rules with $VARIABLES
-#alert tcp any any -> any 80 ( sid:1; http_method; content:"GET"; )
+alert tcp any any -> any 80 ( sid:1; http_method; content:"GET"; )
 ]]
 
 ips =
 {
-    --include = 'active.rules',
-    --rules = local_rules,
+    --include = '../test.rules',
+    --include = '../rules/active.rules',
+    rules = local_rules,
     --enable_builtin_rules = true
 }
 
