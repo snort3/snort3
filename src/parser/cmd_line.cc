@@ -168,7 +168,7 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
     }
 
     if ( !c )
-        help_usage(sc, "");
+        help_usage(sc, argv[0]);
     else
         check_flags(sc);
 

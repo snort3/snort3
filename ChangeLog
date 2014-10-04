@@ -3,6 +3,7 @@
 -- changed max_ip6_options to max_ip6_extensions to avoid confusion
 -- disabled markup sanitizer() for correct asciidoc results
 -- tweaked snort.lua and snort_defaults.lua
+-- updated usage
 
 122
 -- pulled thread pinning from Josh

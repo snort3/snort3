@@ -123,12 +123,14 @@ void help_basic(SnortConfig*, const char*)
     exit(0);
 }
 
-void help_usage(SnortConfig*, const char*)
+void help_usage(SnortConfig*, const char* s)
 {
     fprintf(stdout, "usage:\n");
-    fprintf(stdout, "%s [-options] -c conf [-T]: validate conf\n", "snort");
-    fprintf(stdout, "%s [-options] -c conf -i iface: process live\n", "snort");
-    fprintf(stdout, "%s [-options] -c conf -r pcap: process readback\n", "snort");
+    fprintf(stdout, "    %s -?: list options\n", s);
+    fprintf(stdout, "    %s -V: output version\n", s);
+    fprintf(stdout, "    %s [-options] -c conf [-T]: validate conf\n", s);
+    fprintf(stdout, "    %s [-options] -c conf -i iface: process live\n", s);
+    fprintf(stdout, "    %s [-options] -c conf -r pcap: process readback\n", s);
     exit(1);
 }
 
