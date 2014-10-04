@@ -162,7 +162,7 @@ void snort_print(Packet* p)
         LogIPPkt(text_log, p);
     }
 #if 0
-    // ARP not impelemted
+    // FIXIT-L ARP logging not impelemted
     else if (p->proto_bits & PROTO_BIT__ARP)
     {
 

@@ -84,7 +84,7 @@ static THREAD_LOCAL LtdContext context;
 static void TcpdumpRollLogFile(LtdConfig*);
 
 #define S_NAME "log_pcap"
-#define F_NAME S_NAME "log.pcap"
+#define F_NAME "log.pcap"
 
 //-------------------------------------------------------------------------
 // module stuff

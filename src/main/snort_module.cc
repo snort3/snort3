@@ -119,7 +119,7 @@ static const Parameter s_params[] =
     { "-j", Parameter::PT_PORT, nullptr, nullptr,
       "<port> to listen for telnet connections" },
 
-    { "-K", Parameter::PT_ENUM, "none|text|pcap", "none", 
+    { "-K", Parameter::PT_SELECT, "none|text|pcap", "none", 
       "<mode> logging mode" },
 
     { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all", 
