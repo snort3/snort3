@@ -30,9 +30,9 @@ longer-term goals are:
 * Simplify memory management
 * Provide all of Snort's functionality
 
-This first alpha release excludes all but one of Snort's dynamic
-preprocessors.  Work is underway to port that functionality and additions
-will be rolled out as they become available.
+This first alpha release is based on Snort 2.9.6-9 and excludes all but one
+of Snort's dynamic preprocessors.  Work is underway to port that
+functionality and additions will be rolled out as they become available.
 
 === Configuration
 
