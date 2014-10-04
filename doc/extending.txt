@@ -1,0 +1,8 @@
+=== Plugins
+
+include::plugins.txt[]
+
+=== Coding Style
+
+include::style.txt[]
+
