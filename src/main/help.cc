@@ -128,6 +128,7 @@ void help_usage(SnortConfig*, const char* s)
     fprintf(stdout, "usage:\n");
     fprintf(stdout, "    %s -?: list options\n", s);
     fprintf(stdout, "    %s -V: output version\n", s);
+    fprintf(stdout, "    %s --help: help summary\n", s);
     fprintf(stdout, "    %s [-options] -c conf [-T]: validate conf\n", s);
     fprintf(stdout, "    %s [-options] -c conf -i iface: process live\n", s);
     fprintf(stdout, "    %s [-options] -c conf -r pcap: process readback\n", s);
