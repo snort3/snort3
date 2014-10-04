@@ -457,8 +457,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_LOGGER:
-        // do not instantiate here; done later
-        //EventManager::instantiate((LogApi*)api, mod, sc);
+        EventManager::instantiate((LogApi*)api, mod, sc);
         break;
 
     default:

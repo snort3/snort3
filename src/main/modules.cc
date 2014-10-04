@@ -823,7 +823,7 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 static const Parameter packets_params[] =
 {
     { "address_space_agnostic", Parameter::PT_BOOL, nullptr, "false",
-      "file with BPF to select traffic for Snort" },
+      "determines whether DAQ address space info is used to track fragments and connections" },
 
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
       "file with BPF to select traffic for Snort" },

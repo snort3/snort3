@@ -48,6 +48,8 @@ struct Packet;
 // other methods are packet thread specific
 //-------------------------------------------------------------------------
 
+struct LogApi;
+
 class SO_PUBLIC Logger
 {
 public:
@@ -60,8 +62,17 @@ public:
     virtual void alert(Packet*, const char*, Event*) { };
     virtual void log(Packet*, const char*, Event*) { };
 
+    void set_api(const LogApi* p)
+    { api = p; };
+
+    const LogApi* get_api()
+    { return api; };
+
 protected:
     Logger() { };
+
+private:
+    const LogApi* api;
 };
 
 typedef Logger* (*LogNewFunc)(struct SnortConfig*, class Module*);

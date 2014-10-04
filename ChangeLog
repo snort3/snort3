@@ -5,6 +5,7 @@
 -- tweaked snort.lua and snort_defaults.lua
 -- updated usage
 -- removed ! from error messages
+-- fixed command line vs conf output configs
 
 122
 -- pulled thread pinning from Josh

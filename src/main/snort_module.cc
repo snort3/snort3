@@ -219,10 +219,11 @@ static const Parameter s_params[] =
       "<name=value> specify extra DAQ configuration variable" },
 
     { "--dump-builtin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "creates stub rule files of all loaded rules libraries" },
+      "[<module prefix>] output stub rules for selected modules" },
 
-    { "--dump-dynamic-rules", Parameter::PT_STRING, nullptr, nullptr,
-      "<path> creates stub rule file of all loaded rules libraries" },
+    // FIXIT-L add --list-dynamic-rules like --list-builtin-rules
+    { "--dump-dynamic-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output stub rules for all loaded rules libraries" },
 
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets and release memory on shutdown" },
