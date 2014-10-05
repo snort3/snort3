@@ -49,9 +49,6 @@ end
 -- eval() is required
 -- eval must return a bool (match == true)
 function eval ()
-    -- you can access a snort buffer as follows
-    -- see snort.lua for available buffers
-
     -- buf is a luajit cdata
     local buf = ffi.C.get_buffer()
 

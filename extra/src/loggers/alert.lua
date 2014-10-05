@@ -50,9 +50,11 @@ function alert ()
 
     -- FIXIT - this gets:
     -- bad argument #2 to 'format' (number expected, got cdata)
-    --print(string.format('%ld %d:%d:%d %s', pkt.num, evt.gid, evt.sid, evt.rev, str))
+    --print(string.format('%ld %d:%d:%d %s',
+    --    pkt.num, evt.gid, evt.sid, evt.rev, str))
 
-    print(string.format('%d:%d:%d %s', evt.gid, evt.sid, evt.rev, str))
+    print(string.format('%d:%d:%d %s',
+        evt.gid, evt.sid, evt.rev, str))
 end
 
 -- plugin table is required
