@@ -6581,12 +6581,20 @@ bool TcpSession::setup (Packet*)
     reset();
 
     Inspector* ins = flow->clouseau;
+
     if ( !ins )
         ins = flow->gadget;
-    assert(ins);
 
-    stream.set_splitter(flow, true, ins->get_splitter(true));
-    stream.set_splitter(flow, false, ins->get_splitter(false));
+    if ( ins )
+    {
+        stream.set_splitter(flow, true, ins->get_splitter(true));
+        stream.set_splitter(flow, false, ins->get_splitter(false));
+    }
+    else
+    {
+        stream.set_splitter(flow, true, new AtomSplitter(true));
+        stream.set_splitter(flow, false, new AtomSplitter(false));
+    }
 
     tcpStats.sessions++;
     return true;

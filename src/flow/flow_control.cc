@@ -368,6 +368,8 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
         // now process
 
     case 4: // inspect
+        assert(flow->ssn_client);
+        assert(flow->ssn_server);
         flow->session->process(p);
         break;
     }

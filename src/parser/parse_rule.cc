@@ -1295,13 +1295,13 @@ void parse_rule_term()
 
 void parse_rule_print()
 {
+    if ( !rule_count )
+        return;
+
     LogMessage("%s\n", LOG_DIV);
     LogMessage("rule counts\n");
 
     LogMessage("%25.25s: %-12u\n", "total rules loaded", rule_count);
-
-    if ( !rule_count )
-        return;
 
     LogMessage("%25.25s: %-12u\n", "text rules", detect_rule_count);
     LogMessage("%25.25s: %-12u\n", "builtin rules", builtin_rule_count);

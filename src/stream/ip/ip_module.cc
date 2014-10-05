@@ -220,11 +220,20 @@ PegCount* StreamIpModule::get_counts() const
 { return (PegCount*)&ipStats; }
 
 void StreamIpModule::sum_stats()
-{ Defrag::sum(); }
+{
+    Module::sum_stats();
+    Defrag::sum();
+}
 
 void StreamIpModule::show_stats()
-{ Defrag::stats(); }
+{
+    Module::show_stats();
+    Defrag::stats();
+}
 
 void StreamIpModule::reset_stats()
-{ Defrag::reset(); }
+{
+    Module::reset_stats();
+    Defrag::reset();
+}
 

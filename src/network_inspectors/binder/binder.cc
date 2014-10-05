@@ -304,7 +304,10 @@ Binding* Binder::get_binding(Flow* flow)
 BindAction Binder::apply(Flow* flow, Binding* pb)
 {
     if ( !pb )
+    {
+        init_flow(flow);
         return BA_INSPECT;
+    }
 
     if ( pb->use.action != BA_INSPECT )
     {
