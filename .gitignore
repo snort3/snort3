@@ -10,7 +10,7 @@
 *.libs/
 ._Xcode*
 Cbuild/
-Xcode/
+Xcode*/
 aclocal.m4
 autom4te.cache/
 automake*
