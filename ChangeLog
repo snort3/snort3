@@ -10,6 +10,7 @@
 -- changed all output filename configs to be based on module name
 -- fixed -K handling
 -- fixed laulert when rule has no msg
+-- made some packet data available to alert_luajit
 
 122
 -- pulled thread pinning from Josh

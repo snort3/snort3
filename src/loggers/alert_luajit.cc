@@ -29,15 +29,20 @@
 #include "managers/script_manager.h"
 #include "hash/sfhashfcn.h"
 #include "parser/parser.h"
+#include "protocols/packet.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "time/profiler.h"
+#include "utils/stats.h"
 
 static THREAD_LOCAL ProfileStats luaLogPerfStats;
 
 //-------------------------------------------------------------------------
 // ffi stuff
+//
+// IMPORTANT - if you change these structs, you must also update
+// snort_plugins.lua.
 //-------------------------------------------------------------------------
 
 struct SnortEvent
@@ -54,13 +59,26 @@ struct SnortEvent
     const char* os;
 };
 
+struct SnortPacket
+{
+    // FIXIT-L add ip addrs and other useful foo to lua packet
+    const char* type;
+    uint64_t num;
+    unsigned sp;
+    unsigned dp;
+};
+
 extern "C" {
 // ensure Lua can link with this
 const SnortEvent* get_event();
+const SnortPacket* get_packet();
 }
 
 static THREAD_LOCAL Event* event;
 static THREAD_LOCAL SnortEvent lua_event;
+
+static THREAD_LOCAL Packet* packet;
+static THREAD_LOCAL SnortPacket lua_packet;
 
 SO_PUBLIC const SnortEvent* get_event()
 {
@@ -82,6 +100,26 @@ SO_PUBLIC const SnortEvent* get_event()
     lua_event.os = event->sig_info->os ? event->sig_info->os : "n/a";
 
     return &lua_event;
+}
+
+SO_PUBLIC const SnortPacket* get_packet()
+{
+    assert(packet);
+
+    switch ( packet->type() )
+    {
+    case PktType::IP: lua_packet.type = "IP"; break;
+    case PktType::TCP: lua_packet.type = "TCP"; break;
+    case PktType::UDP: lua_packet.type = "UDP"; break;
+    case PktType::ICMP: lua_packet.type = "ICMP"; break;
+    default: lua_packet.type = "OTHER";
+    }
+
+    lua_packet.num = pc.total_from_daq;
+    lua_packet.sp = packet->ptrs.sp;
+    lua_packet.dp = packet->ptrs.dp;
+
+    return &lua_packet;
 }
 
 //-------------------------------------------------------------------------
@@ -172,11 +210,12 @@ LuaJitLogger::~LuaJitLogger()
     delete[] lua;
 }
 
-void LuaJitLogger::alert(Packet*, const char*, Event* e)
+void LuaJitLogger::alert(Packet* p, const char*, Event* e)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(luaLogPerfStats);
 
+    packet = p;
     event = e;
 
     lua_State* L = lua[get_instance_id()];
