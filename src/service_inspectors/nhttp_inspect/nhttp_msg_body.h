@@ -38,7 +38,8 @@
 
 class NHttpMsgBody : public NHttpMsgSection {
 public:
-    NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    NHttpMsgBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
     void analyze();
     void print_section(FILE *output);
     void gen_events();
@@ -47,7 +48,6 @@ public:
 
 protected:
     int64_t data_length;
-    int64_t body_sections;
     int64_t body_octets;
 
     Field data;

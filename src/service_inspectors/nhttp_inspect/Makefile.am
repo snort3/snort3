@@ -9,8 +9,7 @@ nhttp_msg_status.cc nhttp_msg_status.h \
 nhttp_msg_head_shared.cc nhttp_msg_head_shared.h \
 nhttp_msg_header.cc nhttp_msg_header.h \
 nhttp_msg_body.cc nhttp_msg_body.h \
-nhttp_msg_chunk_head.cc nhttp_msg_chunk_head.h \
-nhttp_msg_chunk_body.cc nhttp_msg_chunk_body.h \
+nhttp_msg_chunk.cc nhttp_msg_chunk.h \
 nhttp_msg_trailer.cc nhttp_msg_trailer.h \
 nhttp_head_norm.cc nhttp_head_norm.h \
 nhttp_uri.cc nhttp_uri.h \
@@ -23,8 +22,12 @@ nhttp_uri_tables.cc \
 nhttp_module.cc nhttp_module.h \
 nhttp_test_input.cc nhttp_test_input.h \
 nhttp_flow_data.cc nhttp_flow_data.h \
+nhttp_transaction.cc nhttp_transaction.h \
 nhttp_stream_splitter.cc nhttp_stream_splitter.h \
-nhttp_scratch_pad.h nhttp_enum.h \
+nhttp_splitter.cc nhttp_splitter.h \
+nhttp_scratch_pad.h \
+nhttp_enum.h \
+nhttp_test_manager.cc nhttp_test_manager.h \
 nhttp_field.cc nhttp_field.h
 
 if STATIC_INSPECTORS

@@ -40,9 +40,7 @@ using namespace NHttpEnums;
 
 void NHttpMsgStart::analyze() {
     start_line.start = msg_text.start;
-    start_line.length = find_crlf(start_line.start, msg_text.length, false);
-    // special case of TCP close between CR and LF
-    if (tcp_close && (msg_text.length == start_line.length) && (start_line.start[start_line.length-1] == '\r')) start_line.length--;
+    start_line.length = msg_text.length;
     parse_start_line();
     derive_version_id();
 }
@@ -82,4 +80,41 @@ void NHttpMsgStart::derive_version_id() {
 }
 
 void NHttpMsgStart::gen_events() {}
+
+ProcessResult NHttpMsgStart::worth_detection() {
+    // We combine the start line with the headers for sending to detection if they are already available and we will
+    // not exceed paf_max.
+    if ((session_data->header_octets_visible[source_id] > 0) &&
+        (session_data->type_expected[source_id] == SEC_HEADER) &&
+        (msg_text.length + session_data->header_octets_visible[source_id]) <= 63780) {
+        return RES_AGGREGATE;
+    }
+    else {
+        return RES_INSPECT;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -41,7 +41,8 @@
 
 class NHttpMsgRequest: public NHttpMsgStart {
 public:
-    NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
     ~NHttpMsgRequest() { delete uri; };
     void print_section(FILE *output);
     void gen_events();

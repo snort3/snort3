@@ -23,55 +23,27 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgChunkHead class declaration
+//  @brief      Control NHttpInspect test tools
 //
 
-#ifndef NHTTP_MSG_CHUNK_HEAD_H
-#define NHTTP_MSG_CHUNK_HEAD_H
+#include <stdexcept>
+#include "nhttp_test_manager.h"
+#include "nhttp_test_input.h"
 
-#include "nhttp_msg_section.h"
-#include "nhttp_field.h"
+bool NHttpTestManager::test_input = false;
+bool NHttpTestManager::test_output = false;
+NHttpTestInput NHttpTestManager::test_input_source("nhttp_test_msgs.txt");
+const char* NHttpTestManager::test_output_prefix = "nhttpresults/testcase";
+int64_t NHttpTestManager::test_number = -1;
+FILE* NHttpTestManager::test_out = nullptr;
 
-//-------------------------------------------------------------------------
-// NHttpMsgChunkHead class
-//-------------------------------------------------------------------------
-
-class NHttpMsgChunkHead : public NHttpMsgSection {
-public:
-    NHttpMsgChunkHead(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
-    void analyze();
-    void print_section(FILE *output);
-    void gen_events();
-    void update_flow();
-    void legacy_clients();
-
-private:
-    void derive_chunk_length();
-
-    Field start_line;
-    Field chunk_size;
-    Field chunk_extensions;
-
-    int64_t data_length = NHttpEnums::STAT_NOTCOMPUTE;
-    int64_t body_sections;
-    int64_t num_chunks;
-};
-
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void NHttpTestManager::update_test_number(int64_t new_test_number) {
+    if (new_test_number != test_number) {
+        if (test_out != nullptr) fclose (test_out);
+        test_number = new_test_number;
+        char file_name[100];
+        snprintf(file_name, sizeof(file_name), "%s%" PRIi64 ".txt", test_output_prefix, test_number);
+        if ((test_out = fopen(file_name, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
+    }
+}
 

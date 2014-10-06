@@ -23,30 +23,25 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgChunkBody class declaration
+//  @brief      NHttpMsgChunk class declaration
 //
 
-#ifndef NHTTP_MSG_CHUNK_BODY_H
-#define NHTTP_MSG_CHUNK_BODY_H
+#ifndef NHTTP_MSG_CHUNK_H
+#define NHTTP_MSG_CHUNK_H
 
 #include "nhttp_msg_body.h"
 
 //-------------------------------------------------------------------------
-// NHttpMsgChunkBody class
+// NHttpMsgChunk class
 //-------------------------------------------------------------------------
 
-class NHttpMsgChunkBody : public NHttpMsgBody {
+class NHttpMsgChunk : public NHttpMsgBody {
 public:
-    NHttpMsgChunkBody(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
-    void analyze();
+    NHttpMsgChunk(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
     void print_section(FILE *output);
     void gen_events();
     void update_flow();
-
-private:
-    // int64_t num_chunks;    // will be needed in future commented out to please compiler &&&
-    int64_t chunk_sections;
-    int64_t chunk_octets;
 };
 
 #endif

@@ -32,9 +32,9 @@
 #include "nhttp_msg_status.h"
 #include "nhttp_msg_header.h"
 #include "nhttp_msg_body.h"
-#include "nhttp_msg_chunk_head.h"
-#include "nhttp_msg_chunk_body.h"
+#include "nhttp_msg_chunk.h"
 #include "nhttp_msg_trailer.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_stream_splitter.h"
 #include "nhttp_test_input.h"
 
@@ -43,7 +43,6 @@ class NHttpApi;
 class NHttpInspect : public Inspector {
 public:
     NHttpInspect(bool test_input_, bool _test_output_);
-    ~NHttpInspect();
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
     bool get_buf(unsigned, Packet*, InspectionBuffer&);
@@ -61,14 +60,8 @@ private:
     friend NHttpApi;
     friend NHttpStreamSplitter;
 
-    void process(const uint8_t* data, const uint16_t dsize, Flow* const flow, NHttpEnums::SourceId source_id_);
-
-    // Test mode
-    bool test_output;
-    const char *test_input_file = "nhttp_test_msgs.txt";
-    const char *test_output_prefix = "nhttpresults/testcase";
-    FILE *test_out = nullptr;
-    int64_t file_test_number = -1;
+    NHttpEnums::ProcessResult process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
 };
 
 #endif

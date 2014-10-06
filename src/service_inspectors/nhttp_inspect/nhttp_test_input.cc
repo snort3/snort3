@@ -33,13 +33,10 @@
 #include <stdexcept>
 #include <stdint.h>
 
-#include "nhttp_enum.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 
 using namespace NHttpEnums;
-
-bool NHttpTestInput::test_input = false;
-NHttpTestInput *NHttpTestInput::test_input_source = nullptr;
 
 NHttpTestInput::NHttpTestInput(const char *file_name) {
     if ((test_data_file = fopen(file_name, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
@@ -53,15 +50,15 @@ NHttpTestInput::~NHttpTestInput() {
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
 void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id, bool &tcp_close, bool &need_break) {
-    source_id = last_source_id;
-    tcp_close = false;
-    need_break = false;
-
-    // Need to create and inspect additional message section(s) from the previous flush before we read new stuff
-    if ((end_offset == 0) && (flush_octets > 0)) {
+    if (flushed) {
+        // Previously flushed data not reassembled yet
         length = 0;
         return;
     }
+
+    source_id = last_source_id;
+    tcp_close = false;
+    need_break = false;
 
     if (just_flushed) {
         // PAF just flushed and it has all been sent to inspection. There may or may not be leftover data from the
@@ -76,10 +73,12 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
             // If we don't take this opportunity to left justify our data in the buffer we may "walk" to the right until we run out of buffer space
             memmove(msg_buf, msg_buf+flush_octets, length);
             tcp_close = tcp_closed;
+            flush_octets = 0;
             return;
         }
         // If we reach here then PAF has already flushed all the data we have read so far.
         tcp_closed = false;
+        flush_octets = 0;
     }
     else {
         // The data we gave PAF last time was not flushed
@@ -140,14 +139,6 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                     tcp_close = true;
                     tcp_closed = true;
                 }
-                else if ((command_length == strlen("bodyend")) && !memcmp(command_value, "bodyend", strlen("bodyend"))) {
-                    term_bytes[0] = 'x';
-                    term_bytes[1] = 'y';
-                }
-                else if ((command_length == strlen("chunkend")) && !memcmp(command_value, "chunkend", strlen("chunkend"))) {
-                    term_bytes[0] = '\r';
-                    term_bytes[1] = '\n';
-                }
                 else if (command_length > 0) {
                     // Look for a test number
                     bool is_number = true;
@@ -155,10 +146,15 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                         is_number = (command_value[k] >= '0') && (command_value[k] <= '9');
                     }
                     if (is_number) {
-                        test_number = 0;
+                        int64_t test_number = 0;
                         for (int j=0; j < command_length; j++) {
                             test_number = test_number * 10 + (command_value[j] - '0');
                         }
+                        NHttpTestManager::update_test_number(test_number);
+                    }
+                    else {
+                        // Bad command in test file
+                        assert(0);
                     }
                 }
             }
@@ -223,40 +219,40 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
 
 void NHttpTestInput::flush(uint32_t length) {
     flush_octets = previous_offset + length;
-    just_flushed = true;
+    flushed = true;
 }
 
 
-void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId &source_id) {
-    source_id = last_source_id;
+void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId source_id, const NHttpFlowData* session_data) {
+    if (!flushed || (source_id != last_source_id)) {
+        *buffer = nullptr;
+        return;
+    }
     *buffer = msg_buf;
 
     if (flush_octets <= end_offset) {
         // All the data we need comes from the file
         length = flush_octets;
+        just_flushed = true;
+        flushed = false;
     }
     else {
-        // We need to generate additional data to fill out the body or chunk section
-        // We may come through here multiple times as we generate all the PAF max body sections needed for a single flush
-        length = (flush_octets <= 16384) ? flush_octets : 16384;
+        // We need to generate additional data to fill out the body or chunk section. We may come through here
+        // multiple times as we generate all the maximum size body sections needed for a single flush.
+        unsigned paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        length = (flush_octets <= paf_max) ? flush_octets : paf_max;
         for (uint32_t k = end_offset; k < length; k++) {
             msg_buf[k] = 'A' + k % 26;
         }
-
         flush_octets -= length;
-
-        if (flush_octets == 0) {
-            if (length-end_offset > 1) {
-                msg_buf[length-2] = term_bytes[0];
-            }
-            msg_buf[length-1] = term_bytes[1];
-        }
-        else if (flush_octets == 1) {
-             msg_buf[length-1] = term_bytes[0];
-        }
-
         end_offset = 0;
+        if (flush_octets == 0) {
+            just_flushed = true;
+            flushed = false;
+        }
     }
 }
+
+
 
 

@@ -38,7 +38,6 @@ public:
 
 private:
     static const NHttpEnums::CharAction uri_char[256];
-    static const int8_t as_hex[256];
     static const bool good_percent[256];
 
     static bool no_path_check(const uint8_t* in_buf, int32_t in_length, uint64_t& infractions);

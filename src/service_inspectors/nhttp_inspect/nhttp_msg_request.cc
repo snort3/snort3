@@ -40,14 +40,11 @@
 
 using namespace NHttpEnums;
 
-NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, SourceId source_id_) :
-       NHttpMsgStart(buffer, buf_size, session_data_, source_id_) {
-    delete session_data->request_line;
-    session_data->request_line = this;
-    delete session_data->headers[SRC_CLIENT];
-    session_data->headers[SRC_CLIENT] = nullptr;
-    delete session_data->latest_other[SRC_CLIENT];
-    session_data->latest_other[SRC_CLIENT] = nullptr;
+NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+    SourceId source_id_, bool buf_owner) :
+    NHttpMsgStart(buffer, buf_size, session_data_, source_id_, buf_owner)
+{
+   transaction->set_request(this);
 }
 
 void NHttpMsgRequest::parse_start_line() {
@@ -124,26 +121,28 @@ void NHttpMsgRequest::print_section(FILE *output) {
     NHttpMsgSection::print_message_title(output, "request line");
     fprintf(output, "Version Id: %d\n", version_id);
     fprintf(output, "Method Id: %d\n", method_id);
-    uri->get_uri().print(output, "URI");
-    if (uri->get_uri_type() != URI__NOSOURCE) fprintf(output, "URI Type: %d\n", uri->get_uri_type());
-    uri->get_scheme().print(output, "Scheme");
-    if (uri->get_scheme_id() != SCH__NOSOURCE) fprintf(output, "Scheme Id: %d\n", uri->get_scheme_id());
-    uri->get_authority().print(output, "Authority");
-    uri->get_host().print(output, "Host Name");
-    uri->get_norm_host().print(output, "Normalized Host Name");
-    uri->get_port().print(output, "Port");
-    if (uri->get_port_value() != STAT_NOSOURCE) fprintf(output, "Port Value: %d\n", uri->get_port_value());
-    uri->get_abs_path().print(output, "Absolute Path");
-    uri->get_path().print(output, "Path");
-    uri->get_norm_path().print(output, "Normalized Path");
-    uri->get_query().print(output, "Query");
-    uri->get_norm_query().print(output, "Normalized Query");
-    uri->get_fragment().print(output, "Fragment");
-    uri->get_norm_fragment().print(output, "Normalized Fragment");
-    fprintf(output, "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %" PRIx64 ", port %" PRIx64 ", path %"
-       PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
-       uri->get_uri_infractions(), uri->get_format_infractions(), uri->get_scheme_infractions(), uri->get_host_infractions(),
-       uri->get_port_infractions(), uri->get_path_infractions(), uri->get_query_infractions(), uri->get_fragment_infractions());
+    if (uri != nullptr) {
+        uri->get_uri().print(output, "URI");
+        if (uri->get_uri_type() != URI__NOSOURCE) fprintf(output, "URI Type: %d\n", uri->get_uri_type());
+        uri->get_scheme().print(output, "Scheme");
+        if (uri->get_scheme_id() != SCH__NOSOURCE) fprintf(output, "Scheme Id: %d\n", uri->get_scheme_id());
+        uri->get_authority().print(output, "Authority");
+        uri->get_host().print(output, "Host Name");
+        uri->get_norm_host().print(output, "Normalized Host Name");
+        uri->get_port().print(output, "Port");
+        if (uri->get_port_value() != STAT_NOSOURCE) fprintf(output, "Port Value: %d\n", uri->get_port_value());
+        uri->get_abs_path().print(output, "Absolute Path");
+        uri->get_path().print(output, "Path");
+        uri->get_norm_path().print(output, "Normalized Path");
+        uri->get_query().print(output, "Query");
+        uri->get_norm_query().print(output, "Normalized Query");
+        uri->get_fragment().print(output, "Fragment");
+        uri->get_norm_fragment().print(output, "Normalized Fragment");
+        fprintf(output, "URI infractions: overall %" PRIx64 ", format %" PRIx64 ", scheme %" PRIx64 ", host %" PRIx64 ", port %" PRIx64 ", path %"
+           PRIx64 ", query %" PRIx64 ", fragment %" PRIx64 "\n",
+           uri->get_uri_infractions(), uri->get_format_infractions(), uri->get_scheme_infractions(), uri->get_host_infractions(),
+           uri->get_port_infractions(), uri->get_path_infractions(), uri->get_query_infractions(), uri->get_fragment_infractions());
+    }
     NHttpMsgSection::print_message_wrapup(output);
  }
 
@@ -162,16 +161,14 @@ void NHttpMsgRequest::update_flow() {
     else {
         session_data->type_expected[source_id] = SEC_HEADER;
         session_data->version_id[source_id] = version_id;
-        session_data->method_id[source_id] = method_id;
+        session_data->method_id = method_id;
     }
 }
 
 // Legacy support function. Puts message fields into the buffers used by old Snort.
 void NHttpMsgRequest::legacy_clients() {
     ClearHttpBuffers();
-    if (method.length > 0) SetHttpBuffer(HTTP_BUFFER_METHOD, method.start, (unsigned)method.length);
-    if (uri->get_uri().length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_URI, uri->get_uri().start, (unsigned)uri->get_uri().length);
-    if (uri->get_norm_legacy().length > 0) SetHttpBuffer(HTTP_BUFFER_URI, uri->get_norm_legacy().start, (unsigned)uri->get_norm_legacy().length);
+    legacy_request();
 }
 
 

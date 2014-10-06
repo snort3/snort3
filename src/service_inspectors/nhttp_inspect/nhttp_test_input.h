@@ -29,28 +29,27 @@
 #ifndef NHTTP_TEST_INPUT_H
 #define NHTTP_TEST_INPUT_H
 
+#include "nhttp_enum.h"
+#include "nhttp_flow_data.h"
+
 class NHttpTestInput {
 public:
     NHttpTestInput(const char *fileName);
     ~NHttpTestInput();
     void scan(uint8_t*& data, uint32_t &length, NHttpEnums::SourceId &source_id, bool &tcp_close, bool &need_break);
     void flush(uint32_t length);
-    void reassemble(uint8_t **buffer, unsigned &length, NHttpEnums::SourceId &source_id);
+    void reassemble(uint8_t **buffer, unsigned &length, NHttpEnums::SourceId source_id, const NHttpFlowData* session_data);
 
-    static bool test_input;
-    static NHttpTestInput *test_input_source;
-    int64_t get_test_number() { return test_number; };
 private:
     FILE *test_data_file;
     uint8_t msg_buf[2 * NHttpEnums::MAXOCTETS];
+    bool flushed = false;
+    NHttpEnums::SourceId last_source_id = NHttpEnums::SRC_CLIENT;   // current direction of traffic flow. Toggled by commands in file.
     bool just_flushed = true;   // all octets sent to inspection and must resume reading the file
     bool tcp_closed = false;  // so we can keep presenting a TCP close to PAF until all the remaining octets are consumed and flushed
     uint32_t flush_octets = 0;  // number of octets that have been flushed and must go to inspection
     uint32_t previous_offset = 0;   // last character in the buffer shown to PAF but not flushed yet
     uint32_t end_offset = 0;   // last read character in the buffer
-    int64_t test_number = 0;   // for numbering test output files
-    NHttpEnums::SourceId last_source_id = NHttpEnums::SRC_CLIENT;   // current direction of traffic flow. Toggled by commands in file.
-    uint8_t term_bytes[2] = { 'x', 'y' };
 };
 
 #endif

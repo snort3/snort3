@@ -40,7 +40,6 @@ using namespace NHttpEnums;
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void NHttpMsgHeadShared::analyze() {
-    parse_whole();
     parse_header_block();
     parse_header_lines();
     for (int j=0; j < num_headers; j++) {
@@ -49,66 +48,49 @@ void NHttpMsgHeadShared::analyze() {
     }
 }
 
-void NHttpMsgHeadShared::parse_whole() {
-    // Normal case with header fields
-    if (!tcp_close && (msg_text.length >= 5)) {
-        headers.start = msg_text.start;
-        headers.length = msg_text.length - 4;
-        assert(!memcmp(msg_text.start+msg_text.length-4, "\r\n\r\n", 4));
-    }
-    // Normal case no header fields
-    else if (!tcp_close) {
-        headers.length = STAT_NOTPRESENT;
-        assert((msg_text.length == 2) && !memcmp(msg_text.start, "\r\n", 2));
-    }
-    // Normal case with header fields and TCP connection close
-    else if ((msg_text.length >= 5) && !memcmp(msg_text.start+msg_text.length-4, "\r\n\r\n", 4)) {
-        headers.start = msg_text.start;
-        headers.length = msg_text.length - 4;
-    }
-    // Normal case no header fields and TCP connection close
-    else if ((msg_text.length == 2) && !memcmp(msg_text.start, "\r\n", 2)) {
-        headers.length = STAT_NOTPRESENT;
-    }
-    // Abnormal cases truncated by TCP connection close
-    else {
-        infractions |= INF_TRUNCATED;
-        // Lone <CR>
-        if ((msg_text.length == 1) && (msg_text.start[0] == '\r')) {
-            headers.length = STAT_NOTPRESENT;
-        }
-        // Truncation occurred somewhere in the header fields
-        else {
-            headers.start = msg_text.start;
-            headers.length = msg_text.length;
-            // When present, remove partial <CR><LF><CR><LF> sequence from the end
-            if ((msg_text.length >= 4) && !memcmp(msg_text.start+msg_text.length-3, "\r\n\r", 3)) headers.length -= 3;
-            else if ((msg_text.length >= 3) && !memcmp(msg_text.start+msg_text.length-2, "\r\n", 2)) headers.length -= 2;
-            else if ((msg_text.length >= 2) && (msg_text.start[msg_text.length-1] == '\r')) headers.length -= 1;
-        }
-    }
-}
-
 // Divide up the block of header fields into individual header field lines.
 void NHttpMsgHeadShared::parse_header_block() {
-    if (headers.length < 0) {
-        num_headers = STAT_NOSOURCE;
-        return;
-    }
-
     int32_t bytes_used = 0;
     num_headers = 0;
-    while (bytes_used < headers.length) {
-        header_line[num_headers].start = headers.start + bytes_used;
-        header_line[num_headers].length = find_crlf(header_line[num_headers].start, headers.length - bytes_used, true);
-        bytes_used += header_line[num_headers++].length + 2;
+    int num_seps;
+    while (bytes_used < msg_text.length) {
+        header_line[num_headers].start = msg_text.start + bytes_used;
+        header_line[num_headers].length = find_header_end(header_line[num_headers].start, msg_text.length - bytes_used,
+           &num_seps);
+        bytes_used += header_line[num_headers++].length + num_seps;
         if (num_headers >= MAXHEADERS) {
              break;
         }
     }
-    if (bytes_used < headers.length) {
+    if (bytes_used < msg_text.length) {
         infractions |= INF_TOOMANYHEADERS;
     }
+}
+
+// Return the number of octets before the CRLF that ends a header. CRLF does not count when immediately followed by
+// <SP> or <LF>. These whitespace characters at the beginning of the next line indicate that the previous header has
+// wrapped and is continuing on the next line.
+// 
+// The final header in the block will not be terminated by CRLF (splitter design) but will terminate at the end of the
+// buffer. length is returned.
+//
+// Bare LF without CR is accepted as the terminator unless preceded by backslash character. FIXIT-L this does not
+// consider whether \LF is contained within a quoted string and perhaps this should be revisited. The current
+// approach errs in the direction of not incorrectly dividing a single header into two headers.
+//
+// FIXIT-M any abuse of backslashes in headers should be a preprocessor alarm.
+
+uint32_t NHttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t length, int* const num_seps) {
+    for (int32_t k=0; k < length-1; k++) {
+        if ((buffer[k] != '\\') && (buffer[k+1] == '\n')) {
+            if ((k+2 >= length) || ((buffer[k+2] != ' ') && (buffer[k+2] != '\t'))) {
+                *num_seps = (buffer[k] == '\r') ? 2 : 1;
+                return k + 2 - *num_seps;
+            }
+        }
+    }
+    *num_seps = 0;
+    return length;
 }
 
 // Divide header field lines into field name and field value
@@ -142,36 +124,14 @@ void NHttpMsgHeadShared::derive_header_name_id(int index) {
     header_name_id[index] = (HeaderId) str_to_code(lower_name, header_name[index].length, header_list);
 }
 
-void NHttpMsgHeadShared::gen_events() {
-    if (infractions & INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
+const Field& NHttpMsgHeadShared::get_header_value_norm(NHttpEnums::HeaderId header_id) {
+    header_norms[header_id]->normalize(header_id, header_count[header_id], scratch_pad, infractions,
+          header_name_id, header_value, num_headers, header_value_norm[header_id]);
+    return header_value_norm[header_id];
 }
 
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgHeadShared::legacy_clients() {
-    ClearHttpBuffers();
-
-    if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_HEADER, headers.start, (unsigned)headers.length);
-    if (headers.length > 0) SetHttpBuffer(HTTP_BUFFER_HEADER, headers.start, (unsigned)headers.length);
- 
-    for (int k=0; k < num_headers; k++) {
-        if (((header_name_id[k] == HEAD_COOKIE) && (source_id == SRC_CLIENT)) || ((header_name_id[k] == HEAD_SET_COOKIE) && (source_id == SRC_SERVER))) {
-            if (header_value[k].length > 0) SetHttpBuffer(HTTP_BUFFER_RAW_COOKIE, header_value[k].start, (unsigned)header_value[k].length);
-            break;
-        }
-    }
-
-    if (source_id == SRC_CLIENT) {
-       if (header_norms[HEAD_COOKIE]->normalize(HEAD_COOKIE, header_count[HEAD_COOKIE], scratch_pad, infractions,
-          header_name_id, header_value, num_headers, header_value_norm[HEAD_COOKIE]) > 0) {
-           SetHttpBuffer(HTTP_BUFFER_COOKIE, header_value_norm[HEAD_COOKIE].start, (unsigned)header_value_norm[HEAD_COOKIE].length);
-       }
-    }
-    else {
-       if (header_norms[HEAD_SET_COOKIE]->normalize(HEAD_SET_COOKIE, header_count[HEAD_SET_COOKIE], scratch_pad, infractions,
-          header_name_id, header_value, num_headers, header_value_norm[HEAD_SET_COOKIE]) > 0) {
-           SetHttpBuffer(HTTP_BUFFER_COOKIE, header_value_norm[HEAD_SET_COOKIE].start, (unsigned)header_value_norm[HEAD_SET_COOKIE].length);
-       }
-    }
+void NHttpMsgHeadShared::gen_events() {
+    if (infractions & INF_TOOMANYHEADERS) create_event(EVENT_MAX_HEADERS);
 }
 
 void NHttpMsgHeadShared::print_headers(FILE *output) {
@@ -181,10 +141,10 @@ void NHttpMsgHeadShared::print_headers(FILE *output) {
         snprintf(title_buf, sizeof(title_buf), "Header ID %d", header_name_id[j]);
         header_value[j].print(output, title_buf);
     }
-    for (int k=1; k <= num_norms; k++) {
-        if (header_norms[k]->normalize((HeaderId)k, header_count[k], scratch_pad, infractions, header_name_id, header_value, num_headers, header_value_norm[k]) != STAT_NOSOURCE) {
+    for (int k=1; k <= HEAD__MAXVALUE-1; k++) {
+        if (get_header_value_norm((HeaderId)k).length != STAT_NOSOURCE) {
             snprintf(title_buf, sizeof(title_buf), "Normalized header %d", k);
-            header_value_norm[k].print(output, title_buf, true);
+            get_header_value_norm((HeaderId)k).print(output, title_buf, true);
         }
     }
 }
