@@ -70,10 +70,7 @@ public:
                 tmpval = table_api.add_option("vlan_event_types", true);
 
             else if (!keyword.compare("filename"))
-            {
-                tmpval = parse_string_option("file", arg_stream);
-                table_api.add_diff_option_comment("filename", "file");
-            }
+                table_api.add_deleted_comment("filename");
 
             else if (!keyword.compare("limit"))
             {

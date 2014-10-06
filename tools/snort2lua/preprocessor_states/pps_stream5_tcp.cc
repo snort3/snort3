@@ -355,8 +355,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("use_static_footprint_sizes"))
         {
-            table_api.add_diff_option_comment("footprint", "use_static_footprint_sizes");
-            tmpval = table_api.add_option("footprint", true);
+            table_api.add_diff_option_comment("use_static_footprint_sizes", "footprint");
+            table_api.add_comment("default footprint == 2^14");
+            tmpval = table_api.add_option("footprint", 0x4000); // default == 2^14
         }
 
         else if (!keyword.compare("timeout"))

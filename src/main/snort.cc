@@ -118,7 +118,7 @@ using namespace std;
 
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL Packet* s_packet; // runtime variable.
+static THREAD_LOCAL Packet* s_packet = nullptr; // runtime variable.
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 static SnortConfig* snort_cmd_line_conf = nullptr;
 
@@ -679,7 +679,7 @@ Packet* get_current_packet()
 // capture all if it is not clear which thread crashed
 void CapturePacket()
 {
-    if ( s_packet->pkth )
+    if ( s_packet && s_packet->pkth )
     {
         s_pkth = *(s_packet->pkth);
 
@@ -888,7 +888,7 @@ DAQ_Verdict packet_callback(
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
 
-    s_packet->pkth = NULL;  // no longer avail on segv
+    s_packet->pkth = nullptr;  // no longer avail on segv
 
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);
