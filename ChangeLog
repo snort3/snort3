@@ -14,6 +14,7 @@
 -- fixed flow init when not bound
 -- tweaked stats output - no section if all counts zero
 -- fixed pause/resume
+-- comment out assert that doesn't apply to alert_sf_socket
 
 122
 -- pulled thread pinning from Josh
