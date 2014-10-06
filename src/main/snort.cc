@@ -77,6 +77,7 @@ using namespace std;
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
 #include "framework/mpse.h"
+#include "main.h"
 #include "main/build.h"
 #include "main/snort_config.h"
 #include "main/shell.h"
@@ -294,7 +295,7 @@ static void SnortInit(int argc, char **argv)
     snort_conf = snort_cmd_line_conf;
 
     LogMessage("--------------------------------------------------\n");
-    LogMessage("o\")~  Snort++ %s-%s\n", VERSION, BUILD);
+    LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
 
     ModuleManager::init();
@@ -476,7 +477,7 @@ static void CleanExit(int)
     SnortCleanup();
     snort_conf = &tmp;
 
-    LogMessage("Snort exiting\n");
+    LogMessage("%s  Snort exiting\n", get_prompt());
     closelog();
 }
 
@@ -899,14 +900,14 @@ DAQ_Verdict packet_callback(
     return verdict;
 }
 
-void snort_idle()
+void snort_thread_idle()
 {
     if ( flow_con )
         flow_con->timeout_flows(16384, time(NULL));
     pc.idle++;
 }
 
-void snort_rotate()
+void snort_thread_rotate()
 {
     SetRotatePerfFileFlag();
 }

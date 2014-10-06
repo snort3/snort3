@@ -73,9 +73,15 @@ static Swapper* swapper = NULL;
 static int exit_logged = 0;
 static bool paused = false;
 
+static bool pause_enabled = false;
+static bool shell_enabled = false;
+
 const struct timespec main_sleep = { 0, 100000000 }; // 0.1 sec
 
 static const char* prompt = "o\")~ ";
+
+const char* get_prompt()
+{ return prompt; }
 
 //-------------------------------------------------------------------------
 // swap foo
@@ -542,7 +548,7 @@ static bool service_users()
     FD_ZERO(&inputs);
     int max_fd = -1;
 
-    if ( snort_conf->run_flags & RUN_FLAG__SHELL )
+    if ( shell_enabled )
     {
         FD_SET(STDIN_FILENO, &inputs);
         max_fd = STDIN_FILENO;
@@ -653,7 +659,7 @@ static bool set_mode()
     if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
     {
         LogMessage("Paused; resume to start packet processing\n");
-        paused = true;
+        paused = pause_enabled = true;
     }
     else
         LogMessage("Commencing packet processing\n");
@@ -661,6 +667,7 @@ static bool set_mode()
     if ( snort_conf->run_flags & RUN_FLAG__SHELL )
     {
         LogMessage("Entering command shell\n");
+        shell_enabled = true;
         request.set(STDOUT_FILENO, "");
         request.show_prompt();
     }
@@ -673,10 +680,10 @@ static inline bool dont_stop()
     if ( paused || Trough_Next() )
         return true;
 
-    if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
+    if ( pause_enabled )
     {
         LogMessage("== pausing\n");
-        snort_conf->run_flags &= ~RUN_FLAG__PAUSE;
+        pause_enabled = false;
         paused = true;
         return true;
     }
@@ -688,7 +695,7 @@ static void main_loop()
     unsigned idx = max_pigs, swine = 0;
     init_main_thread_sig();
 
-    while ( !exit_logged && (dont_stop() || swine) )
+    while ( !exit_logged && (swine || dont_stop()) )
     {
         if ( ++idx >= max_pigs )
             idx = 0;

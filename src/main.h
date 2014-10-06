@@ -23,6 +23,8 @@
 
 struct lua_State;
 
+const char* get_prompt();
+
 int main_dump_plugins(lua_State* = nullptr);
 int main_dump_stats(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);

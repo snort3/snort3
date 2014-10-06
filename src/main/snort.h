@@ -55,8 +55,8 @@ bool snort_is_starting();
 void snort_thread_init(const char* intf);
 void snort_thread_term();
 
-void snort_idle();
-void snort_rotate();
+void snort_thread_idle();
+void snort_thread_rotate();
 
 void CapturePacket();
 void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);

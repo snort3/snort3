@@ -13,6 +13,7 @@
 -- made some packet data available to alert_luajit
 -- fixed flow init when not bound
 -- tweaked stats output - no section if all counts zero
+-- fixed pause/resume
 
 122
 -- pulled thread pinning from Josh

@@ -413,6 +413,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
         return false;
 
+    //printf("open %s %d\n", s, idx);
     Module* m = h->mod;
 
     if (strcmp(m->get_name(), s))
@@ -458,6 +459,8 @@ SO_PUBLIC void close_table(const char* s, int idx)
     string key = fqn;
     set_top(key);
 
+    //printf("close %s %d\n", s, idx);
+
     if ( ModHook* h = get_hook(key.c_str()) )
     {
         if ( !h->mod->end(s, idx, s_config) )
@@ -475,18 +478,21 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
 SO_PUBLIC bool set_bool(const char* fqn, bool b)
 {
+    //printf("bool %s %d\n", fqn, b);
     Value v(b);
     return set_value(fqn, v);
 }
 
 SO_PUBLIC bool set_number(const char* fqn, double d)
 {
+    //printf("real %s %f\n", fqn, d);
     Value v(d);
     return set_value(fqn, v);
 }
 
 SO_PUBLIC bool set_string(const char* fqn, const char* s)
 {
+    //printf("string %s %s\n", fqn, s);
     Value v(s);
     return set_value(fqn, v);
 }
