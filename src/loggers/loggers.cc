@@ -28,7 +28,6 @@
 
 // to ensure PacketManager::log_protocols() is built into Snort++
 extern const BaseApi* log_codecs;
-extern const BaseApi* log_luajit;
 
 #ifdef LINUX
 extern const BaseApi* alert_sf_socket;
@@ -69,7 +68,7 @@ const BaseApi* loggers[] =
 #endif
     // loggers
     log_codecs,
-    log_luajit,
     // both
     nullptr
 };
+

@@ -39,6 +39,7 @@ using namespace std;
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
+#include "managers/script_manager.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 #include "utils/util.h"
@@ -156,6 +157,7 @@ enum HelpType {
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
     snort_conf = SnortConfNew();
+    ScriptManager::load_scripts(sc->script_path);
     PluginManager::load_plugins(sc->plugin_path);
     ModuleManager::init();
 

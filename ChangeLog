@@ -17,6 +17,7 @@
 -- comment out assert that doesn't apply to alert_sf_socket
 -- split parse warning count out of error count
 -- added workaround and FIXIT-T for nhttp test
+-- added path to dynamically loaded plugins output with --list-plugins
 
 122
 -- pulled thread pinning from Josh
