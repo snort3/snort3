@@ -284,7 +284,9 @@ void DropStats()
         daq_stats.skipped = snort_conf->pkt_skip; 
 #endif
 
-        LogLabel("daq");
+        if ( pkts_recv )
+            LogLabel("daq");
+
         PegCount pcaps = Trough_GetFileCount();
         if ( pcaps )
             LogCount("pcaps", pcaps);
