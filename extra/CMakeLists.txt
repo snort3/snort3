@@ -15,6 +15,9 @@ else (BUILD_EXTRA_PLUGINS)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(SNORT_PKG_MODULE snort)
 
+    if (APPLE)
+        set(CMAKE_MACOSX_RPATH OFF)
+    endif(APPLE)
 
     if (SNORT_PKG_MODULE_FOUND)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SNORT_PKG_MODULE_CFLAGS}")
