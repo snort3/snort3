@@ -76,11 +76,11 @@ public:
     inline void set_difference_print() {mode = PrintMode::DIFFERENCES; }
     inline bool is_difference_mode() { return mode == PrintMode::DIFFERENCES; }
 
-    // given a Snort-style variable, translate into a string.
-    std::string expand_vars(std::string string);
+    // given a Snort-style string, replace all of the variables with their values.
+    std::string expand_vars(const std::string&);
     // translate a given variable into a string
     // spaces will appear if multiple values added to variable
-    std::string translate_variable(std::string);
+    std::string translate_variable(const std::string&);
 
 
     // reset any open tables.

@@ -16,6 +16,6 @@ add_library( rule_states
 )
 
 target_link_libraries( rule_states
-    util
+    snort2lua_utils
     conversion_data
 )

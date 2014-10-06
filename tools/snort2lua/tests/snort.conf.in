@@ -108,8 +108,8 @@ config checksum_drop: none noip notcp noicmp noudp ip tcp udp icmp all
  config flowbits_size: 64
 
 # Configure ports to ignore 
- config ignore_ports: tcp 21 6667:6671 1356
- config ignore_ports: udp 1:17 53
+ config ignore_ports: tcp 21 any 6667:6671 1356 :14
+ config ignore_ports: udp 1:17 53 65530:
 
 # Configure default snaplen. Snort defaults to MTU of in use interface. For more information see README
 config snaplen: 1450

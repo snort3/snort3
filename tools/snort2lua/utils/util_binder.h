@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-// pps_binder.h author Josh Rosenbaum <jrosenba@cisco.com>
+// util_binder.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifndef PREPROCESSOR_STATES_PPS_BINDER_H
-#define PREPROCESSOR_STATES_PPS_BINDER_H
+#ifndef UTILS_PPS_BINDER_H
+#define UTILS_PPS_BINDER_H
 
 
 #include <string>

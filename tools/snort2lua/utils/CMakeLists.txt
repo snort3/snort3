@@ -7,6 +7,8 @@ add_library( snort2lua_utils
     s2l_util.cc
     parse_cmd_line.h
     parse_cmd_line.cc
+    util_binder.h
+    util_binder.cc
 )
 
 target_link_libraries( snort2lua_utils
