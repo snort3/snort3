@@ -582,7 +582,7 @@ static void UpdatePerfStats(SFPERF *sfPerf, Packet *p)
     if ((sfPerf->perf_flags & SFPERF_FLOW) && !rebuilt)
         UpdateFlowStats(&sfFlow, p);
 
-    if ((sfPerf->perf_flags & SFPERF_FLOWIP) && IsIP(p) && !rebuilt)
+    if ((sfPerf->perf_flags & SFPERF_FLOWIP) && p->has_ip() && !rebuilt)
     {
         SFSType type = SFS_TYPE_OTHER;
 

@@ -40,7 +40,7 @@ namespace
 
 static const RuleMap igmp_rules[] =
 {
-    { DECODE_IGMP_OPTIONS_DOS, "(" CD_IGMP_NAME ") DOS IGMP IP Options validation attempt" },
+    { DECODE_IGMP_OPTIONS_DOS, "DOS IGMP IP options validation attempt" },
     { 0, nullptr }
 };
 
@@ -62,7 +62,7 @@ public:
     ~IgmpCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);
     virtual void get_data_link_type(std::vector<int>&){};
@@ -76,7 +76,7 @@ public:
 
 
 
-bool IgmpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool IgmpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if (snort.ip_api.is_ip4() && raw.len >= 1 && raw.data[0] == 0x11)
     {

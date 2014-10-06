@@ -30,8 +30,6 @@
 #include "snort.h"
 #include "framework/inspector.h"
 
-#define PROTO_BITS (PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP)
-
 THREAD_LOCAL ProfileStats norm_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -252,7 +250,7 @@ static const InspectApi no_api =
         mod_dtor
     },
     IT_PACKET,
-    PROTO_BITS,
+    (uint16_t)PktType::ANY_IP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

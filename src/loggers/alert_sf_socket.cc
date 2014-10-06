@@ -278,7 +278,7 @@ static OptTreeNode *OptTreeNode_Search(uint32_t, uint32_t sid)
 //-------------------------------------------------------------------------
 // sar stuff
 
-typedef struct _SnortActionRequest
+struct SnortActionRequest
 {
     uint32_t event_id;
     uint32_t tv_sec;
@@ -289,10 +289,9 @@ typedef struct _SnortActionRequest
     uint16_t sport;
     uint16_t dport;
     uint8_t  protocol;
-} SnortActionRequest;
+};
 
 void load_sar(Packet *packet, Event *event, SnortActionRequest& sar)
-
 {
     if(!event || !packet || !packet->ptrs.ip_api.is_valid())
         return;
@@ -317,9 +316,9 @@ void load_sar(Packet *packet, Event *event, SnortActionRequest& sar)
     //   and only 1st 8 used for ip4
     sar.src_ip =  ntohl(packet->ptrs.ip_api.get_src()->ip32[0]);
     sar.dest_ip = ntohl(packet->ptrs.ip_api.get_dst()->ip32[0]);
-    sar.protocol = packet->ptrs.ip_api.proto();
+    sar.protocol = packet->get_ip_proto_next();
 
-    if(sar.protocol == IPPROTO_UDP || sar.protocol == IPPROTO_TCP)
+    if(packet->is_tcp() || packet->is_udp())
     {
         sar.sport = packet->ptrs.sp;
         sar.dport = packet->ptrs.dp;

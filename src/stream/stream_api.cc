@@ -91,7 +91,7 @@ void Stream::delete_session(const FlowKey* key)
 Flow* Stream::get_session_ptr_from_ip_port(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    char ip_protocol, uint16_t vlan, uint32_t mplsId,
+    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceId)
 {
     FlowKey key;
@@ -115,7 +115,7 @@ void Stream::populate_session_key(Packet *p, FlowKey *key)
     key->init(
         p->ptrs.ip_api.get_src(), p->ptrs.sp,
         p->ptrs.ip_api.get_dst(), p->ptrs.dp,
-        p->ptrs.ip_api.proto(),
+        p->get_ip_proto_next(),
         // if the vlan protocol bit is defined, vlan layer gauranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
@@ -148,7 +148,7 @@ FlowData* Stream::get_application_data_from_key(
 FlowData* Stream::get_application_data_from_ip_port(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    char ip_protocol, uint16_t vlan, uint32_t mplsId,
+    uint8_t ip_protocol, uint16_t vlan, uint32_t mplsId,
     uint16_t addressSpaceID, unsigned flow_id)
 {
     Flow* flow;
@@ -182,7 +182,7 @@ void Stream::check_session_closed(Packet* p)
 int Stream::ignore_session(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    uint8_t protocol, char direction, 
+    uint8_t protocol, char direction,
     uint32_t flow_id)
 {
     assert(flow_con);
@@ -213,7 +213,7 @@ void Stream::stop_inspection(
     }
 
     /* Flush any queued data on the client and/or server */
-    if (flow->protocol == IPPROTO_TCP)
+    if (flow->protocol == PktType::TCP)
     {
         if (flow->s5_state.ignore_direction & SSN_DIR_CLIENT)
         {
@@ -738,16 +738,19 @@ void Stream::set_ip_protocol(Flow* flow)
 {
     switch (flow->protocol)
     {
-    case IPPROTO_TCP:
+    case PktType::TCP:
         flow->s5_state.ipprotocol = protocolReferenceTCP;
         break;
 
-    case IPPROTO_UDP:
+    case PktType::UDP:
         flow->s5_state.ipprotocol = protocolReferenceUDP;
         break;
 
-    case IPPROTO_ICMP:
+    case PktType::ICMP:
         flow->s5_state.ipprotocol = protocolReferenceICMP;
+        break;
+
+    default:
         break;
     }
 }
@@ -769,7 +772,7 @@ int Stream::response_flush_stream(Packet *p)
 
     flow = p->flow;
 
-    if ((flow->protocol != IPPROTO_TCP) ||
+    if ((flow->protocol != PktType::TCP) ||
         (p->packet_flags & PKT_REBUILT_STREAM))
     {
         DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
@@ -792,7 +795,7 @@ int Stream::add_session_alert(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( p->ptrs.ip_api.proto() != IPPROTO_TCP )
+    if ( p->type() != PktType::TCP )
         return 0;
 
     return Stream5AddSessionAlertTcp(flow, p, gid, sid);
@@ -807,7 +810,7 @@ int Stream::check_session_alerted(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( p->ptrs.ip_api.proto() != IPPROTO_TCP )
+    if ( p->type() != PktType::TCP )
         return 0;
 
     return Stream5CheckSessionAlertTcp(flow, p, gid, sid);
@@ -823,7 +826,7 @@ int Stream::update_session_alert(
 
     /* Don't need to do this for other protos because they don't
        do any reassembly. */
-    if ( p->ptrs.ip_api.proto() != IPPROTO_TCP )
+    if ( p->type() != PktType::TCP )
         return 0;
 
     return Stream5UpdateSessionAlertTcp(flow, p, gid, sid, event_id, event_second);
@@ -857,7 +860,7 @@ int Stream::traverse_reassembled(
 {
     Flow* flow = p->flow;
 
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return 0;
 
     /* Only if this is a rebuilt packet */
@@ -872,7 +875,7 @@ int Stream::traverse_stream_segments(
 {
     Flow* flow = p->flow;
 
-    if ((flow == NULL) || (flow->protocol != IPPROTO_TCP))
+    if ((flow == NULL) || (flow->protocol != PktType::TCP))
         return -1;
 
     /* Only if this is a rebuilt packet */
@@ -884,7 +887,7 @@ int Stream::traverse_stream_segments(
 
 char Stream::get_reassembly_direction(Flow* flow)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return SSN_DIR_NONE;
 
     return Stream5GetReassemblyDirectionTcp(flow);
@@ -892,7 +895,7 @@ char Stream::get_reassembly_direction(Flow* flow)
 
 char Stream::is_stream_sequenced(Flow* flow, char dir)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return 1;
 
     return Stream5IsStreamSequencedTcp(flow, dir);
@@ -900,7 +903,7 @@ char Stream::is_stream_sequenced(Flow* flow, char dir)
 
 int Stream::missing_in_reassembled(Flow* flow, char dir)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return SSN_MISSING_NONE;
 
     return Stream5MissingInReassembledTcp(flow, dir);
@@ -908,7 +911,7 @@ int Stream::missing_in_reassembled(Flow* flow, char dir)
 
 char Stream::missed_packets(Flow* flow, char dir)
 {
-    if (!flow || flow->protocol != IPPROTO_TCP)
+    if (!flow || flow->protocol != PktType::TCP)
         return 1;
 
     return Stream5PacketsMissingTcp(flow, dir);

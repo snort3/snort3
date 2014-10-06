@@ -47,31 +47,31 @@ namespace{
 
 static const RuleMap icmp4_rules[] =
 {
-    { DECODE_ICMP_DGRAM_LT_ICMPHDR, "(" CD_ICMP4_NAME ") ICMP Header Truncated" },
-    { DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR, "(" CD_ICMP4_NAME ") ICMP Timestamp Header Truncated" },
-    { DECODE_ICMP_DGRAM_LT_ADDRHDR, "(" CD_ICMP4_NAME ") ICMP Address Header Truncated" },
-    { DECODE_ICMP_ORIG_IP_TRUNCATED, "(" CD_ICMP4_NAME ") ICMP Original IP Header Truncated" },
-    { DECODE_ICMP_ORIG_IP_VER_MISMATCH, "(" CD_ICMP4_NAME ") ICMP version and Original IP Header versions differ" },
-    { DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP, "(" CD_ICMP4_NAME ") ICMP Original Datagram Length < Original IP Header Length" },
-    { DECODE_ICMP_ORIG_PAYLOAD_LT_64, "(" CD_ICMP4_NAME ") ICMP Original IP Payload < 64 bits" },
-    { DECODE_ICMP_ORIG_PAYLOAD_GT_576, "(" CD_ICMP4_NAME ") ICMP Origianl IP Payload > 576 bytes" },
-    { DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET, "(" CD_ICMP4_NAME ") ICMP Original IP Fragmented and Offset Not 0" },
-    { DECODE_ICMP4_DST_MULTICAST, "(" CD_ICMP4_NAME ") ICMP4 packet to multicast dest address" },
-    { DECODE_ICMP4_DST_BROADCAST, "(" CD_ICMP4_NAME ") ICMP4 packet to broadcast dest address" },
-    { DECODE_ICMP4_TYPE_OTHER, "(" CD_ICMP4_NAME ") ICMP4 type other" },
-    { DECODE_ICMP_PING_NMAP, "(" CD_ICMP4_NAME ") ICMP PING NMAP" },
-    { DECODE_ICMP_ICMPENUM, "(" CD_ICMP4_NAME ") ICMP icmpenum v1.1.1" },
-    { DECODE_ICMP_REDIRECT_HOST, "(" CD_ICMP4_NAME ") ICMP redirect host" },
-    { DECODE_ICMP_REDIRECT_NET, "(" CD_ICMP4_NAME ") ICMP redirect net" },
-    { DECODE_ICMP_TRACEROUTE_IPOPTS, "(" CD_ICMP4_NAME ") ICMP traceroute ipopts" },
-    { DECODE_ICMP_SOURCE_QUENCH, "(" CD_ICMP4_NAME ") ICMP Source Quench" },
-    { DECODE_ICMP_BROADSCAN_SMURF_SCANNER, "(" CD_ICMP4_NAME ") Broadscan Smurf Scanner" },
-    { DECODE_ICMP_DST_UNREACH_ADMIN_PROHIBITED, "(" CD_ICMP4_NAME ") ICMP Destination Unreachable Communication Administratively Prohibited" },
-    { DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED, "(" CD_ICMP4_NAME ") ICMP Destination Unreachable Communication with Destination Host is Administratively Prohibited" },
-    { DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED, "(" CD_ICMP4_NAME ") ICMP Destination Unreachable Communication with Destination Network is Administratively Prohibited" },
-    { DECODE_ICMP_PATH_MTU_DOS, "(" CD_ICMP4_NAME ") ICMP PATH MTU denial of service attempt" },
-    { DECODE_ICMP_DOS_ATTEMPT, "(" CD_ICMP4_NAME ") BAD-TRAFFIC linux ICMP header dos attempt" },
-    { DECODE_ICMP4_HDR_TRUNC, "(" CD_ICMP4_NAME ") truncated ICMP4 header" },
+    { DECODE_ICMP_DGRAM_LT_ICMPHDR, "ICMP header truncated" },
+    { DECODE_ICMP_DGRAM_LT_TIMESTAMPHDR, "ICMP timestamp header truncated" },
+    { DECODE_ICMP_DGRAM_LT_ADDRHDR, "ICMP address header truncated" },
+    { DECODE_ICMP_ORIG_IP_TRUNCATED, "ICMP original IP header truncated" },
+    { DECODE_ICMP_ORIG_IP_VER_MISMATCH, "ICMP version and original IP header versions differ" },
+    { DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP, "ICMP original datagram length < original IP header length" },
+    { DECODE_ICMP_ORIG_PAYLOAD_LT_64, "ICMP original IP payload < 64 bits" },
+    { DECODE_ICMP_ORIG_PAYLOAD_GT_576, "ICMP original IP payload > 576 bytes" },
+    { DECODE_ICMP_ORIG_IP_WITH_FRAGOFFSET, "ICMP original IP fragmented and offset not 0" },
+    { DECODE_ICMP4_DST_MULTICAST, "ICMP4 packet to multicast dest address" },
+    { DECODE_ICMP4_DST_BROADCAST, "ICMP4 packet to broadcast dest address" },
+    { DECODE_ICMP4_TYPE_OTHER, "ICMP4 type other" },
+    { DECODE_ICMP_PING_NMAP, "ICMP ping NMAP" },
+    { DECODE_ICMP_ICMPENUM, "ICMP icmpenum v1.1.1" },
+    { DECODE_ICMP_REDIRECT_HOST, "ICMP redirect host" },
+    { DECODE_ICMP_REDIRECT_NET, "ICMP redirect net" },
+    { DECODE_ICMP_TRACEROUTE_IPOPTS, "ICMP traceroute ipopts" },
+    { DECODE_ICMP_SOURCE_QUENCH, "ICMP source quench" },
+    { DECODE_ICMP_BROADSCAN_SMURF_SCANNER, "broadscan smurf scanner" },
+    { DECODE_ICMP_DST_UNREACH_ADMIN_PROHIBITED, "ICMP destination unreachable communication administratively prohibited" },
+    { DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED, "ICMP destination unreachable communication with destination host is administratively prohibited" },
+    { DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED, "ICMP destination unreachable communication with destination network is administratively prohibited" },
+    { DECODE_ICMP_PATH_MTU_DOS, "ICMP path MTU denial of service attempt" },
+    { DECODE_ICMP_DOS_ATTEMPT, "BAD-TRAFFIC linux ICMP header DOS attempt" },
+    { DECODE_ICMP4_HDR_TRUNC, "truncated ICMP4 header" },
     { 0, nullptr }
 };
 
@@ -91,14 +91,14 @@ public:
     ~Icmp4Codec() {};
     
     virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
     virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
 
 private:
-    void ICMP4AddrTests(const SnortData& snort, const CodecData& codec);
+    void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);
     void ICMP4MiscTests(const ICMPHdr* const, const CodecData&, const uint16_t);
 
 };
@@ -126,7 +126,7 @@ void Icmp4Codec::get_protocol_ids(std::vector<uint16_t> &v)
  *
  * Returns: void function
  */
-bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,SnortData& snort)
+bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 {
 
     if(raw.len < icmp::ICMP_HEADER_LEN)
@@ -239,14 +239,14 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,SnortData& snort)
     /* Run a bunch of ICMP decoder rules */
     ICMP4MiscTests(icmph, codec, (uint16_t)raw.len - len);
 
-    snort.set_pkt_type(PktType::ICMP4);
+    snort.set_pkt_type(PktType::ICMP);
     snort.icmph = icmph;
     codec.proto_bits |= PROTO_BIT__ICMP;
     codec.lyr_len = len;
     return true;
 }
 
-void Icmp4Codec::ICMP4AddrTests(const SnortData& snort, const CodecData& codec)
+void Icmp4Codec::ICMP4AddrTests(const DecodeData& snort, const CodecData& codec)
 {
     uint32_t dst = snort.ip_api.get_dst()->ip32[0];
 
@@ -594,6 +594,7 @@ void Icmp4Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
 {
     // TBD handle nested icmp4 layers
     c->ptrs.icmph = (ICMPHdr*)lyr->start;
+    c->ptrs.set_pkt_type(PktType::ICMP);
 }
 
 

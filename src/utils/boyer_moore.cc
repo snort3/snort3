@@ -337,7 +337,9 @@ int mSearchREG(
                     }
                 }
 
-		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, "got wildcard final char match! (b[%d]: %c -> p[%d]: %c\n", b_idx, buf[b_idx], p_idx, ptrn[p_idx]););
+		DEBUG_WRAP(DebugMessage(DEBUG_PATTERN_MATCH, 
+            "got wildcard final char match! (b[%d]: %c -> p[%d]: %c\n",
+            b_idx, buf[b_idx], p_idx, ptrn[p_idx]););
             }
 
             if(p_idx == 0)

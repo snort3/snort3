@@ -351,7 +351,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
     Packet* p = (Packet *)ps_pkt->pkt;
     EncodeFlags flags = ENC_FLAG_NET;
 
-    if (!IsIP(p))
+    if (!p->has_ip())
         return -1;
 
     if ( !ps_pkt->reverse_pkt )
@@ -377,7 +377,7 @@ static int MakePortscanPkt(PS_PKT *ps_pkt, PS_PROTO *proto, int proto_type,
             g_tmp_pkt->ps_proto = IPPROTO_IP;
             break;
         case PS_PROTO_OPEN_PORT:
-            g_tmp_pkt->ps_proto = p->ptrs.ip_api.proto();
+            g_tmp_pkt->ps_proto = p->get_ip_proto_next();
             break;
         default:
             return -1;
@@ -817,26 +817,26 @@ static void PrintPortscanConf(PortscanConfig* config)
 #if 0
 static int PortscanGetProtoBits(int detect_scans)
 {
-    int proto_bits = PROTO_BIT__IP;
+    unsigned proto_bits = PktType::IP;
 
     if (detect_scans & PS_PROTO_IP)
     {
-        proto_bits |= PROTO_BIT__ICMP;
+        proto_bits |= PktType::ICMP;
     }
 
     if (detect_scans & PS_PROTO_UDP)
     {
-        proto_bits |= PROTO_BIT__ICMP;
-        proto_bits |= PROTO_BIT__UDP;
+        proto_bits |= PktType::ICMP;
+        proto_bits |= PktType::UDP;
     }
 
     if (detect_scans & PS_PROTO_ICMP)
-        proto_bits |= PROTO_BIT__ICMP;
+        proto_bits |= PktType::ICMP;
 
     if (detect_scans & PS_PROTO_TCP)
     {
-        proto_bits |= PROTO_BIT__ICMP;
-        proto_bits |= PROTO_BIT__TCP;
+        proto_bits |= PktType::ICMP;
+        proto_bits |= PktType::TCP;
     }
 
     return proto_bits;
@@ -1003,7 +1003,7 @@ static const InspectApi sp_api =
         mod_dtor
     },
     IT_PROTOCOL,
-    PROTO_BIT__IP|PROTO_BIT__ICMP|PROTO_BIT__TCP|PROTO_BIT__UDP,  // FIXIT-L dynamic assign
+    (uint16_t)PktType::ANY_IP,  // FIXIT-L dynamic assign
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

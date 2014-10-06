@@ -174,34 +174,28 @@ static void get_alert_pkt(
             {
                 us.alert.nethdr=(char *)p->ptrs.ip_api.get_ip4h()-(char *)p->pkt;
 
-                switch(p->ptrs.ip_api.proto())
+                switch(p->type())
                 {
-                    case IPPROTO_TCP:
-                       if (p->ptrs.tcph)
-                       {
-                           us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
-                       }
-                       break;
+                case PktType::TCP:
+                   if (p->ptrs.tcph)
+                       us.alert.transhdr=(char *)p->ptrs.tcph-(char *)p->pkt;
+                   break;
 
-                    case IPPROTO_UDP:
-                        if (p->ptrs.udph)
-                        {
-                            us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
-                        }
-                        break;
+                case PktType::UDP:
+                    if (p->ptrs.udph)
+                        us.alert.transhdr=(char *)p->ptrs.udph-(char *)p->pkt;
+                    break;
 
-                    case IPPROTO_ICMP:
-                       if (p->ptrs.icmph)
-                       {
-                           us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;
-                       }
-                       break;
+                case PktType::ICMP:
+                   if (p->ptrs.icmph)
+                       us.alert.transhdr=(char *)p->ptrs.icmph-(char *)p->pkt;
+                   break;
 
-                    default:
-                        /* us.alert.transhdr is null due to initial memset */
-                        us.alert.val|=NO_TRANSHDR;
-                        break;
-                }
+                default:
+                    /* us.alert.transhdr is null due to initial memset */
+                    us.alert.val|=NO_TRANSHDR;
+                    break;
+                } /* switch */
             }
 
             if (p->data && p->pkt) us.alert.data=p->data - p->pkt;
@@ -217,7 +211,7 @@ static void OpenAlertSock(void)
     get_instance_file(name, UNSOCK_FILE);
 
     if ( access(name.c_str(), W_OK) )
-       ErrorMessage("%s file doesn't exist or isn't writable!\n", name.c_str());
+       ErrorMessage("%s file doesn't exist or isn't writable\n", name.c_str());
 
     memset((char *) &us.addr, 0, sizeof(us.addr));
     us.addr.sun_family = AF_UNIX;

@@ -52,12 +52,14 @@
 #define TEST_FLAG_MSG      0x01
 #define TEST_FLAG_SESSION  0x02
 #define TEST_FLAG_REBUILT  0x04
+#define TEST_FLAG_FILE     0x08
 
 static THREAD_LOCAL TextLog* test_file = nullptr;
 
 using namespace std;
 
-static const char* s_name = "alert_test";
+#define S_NAME "alert_test"
+#define F_NAME S_NAME ".txt"
 
 //-------------------------------------------------------------------------
 // alert_test module
@@ -65,8 +67,8 @@ static const char* s_name = "alert_test";
 
 static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "stdout",
-      "name of tsv alert file or 'stdout'" },
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "output to " F_NAME " instead of stdout" },
 
     { "rebuilt", Parameter::PT_BOOL, nullptr, "false",
       "include type:count where type is S for stream and F for frag" },
@@ -86,21 +88,22 @@ static const char* s_help =
 class TestModule : public Module
 {
 public:
-    TestModule() : Module(s_name, s_help, s_params) { };
+    TestModule() : Module(S_NAME, s_help, s_params) { };
+
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
 
 public:
-    string file;
     unsigned flags;
 };
 
 bool TestModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
-
+    {
+        if ( v.get_bool() )
+            flags |= TEST_FLAG_FILE;
+    }
     else if ( v.is("rebuilt") )
     {
         if ( v.get_bool() )
@@ -124,13 +127,7 @@ bool TestModule::set(const char*, Value& v, SnortConfig*)
 
 bool TestModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
     flags = 0;
-    return true;
-}
-
-bool TestModule::end(const char*, int, SnortConfig*)
-{
     return true;
 }
 
@@ -146,19 +143,18 @@ public:
     void alert(Packet*, const char* msg, Event*);
 
 private:
-    string file;
     unsigned flags;
 };
 
 TestLogger::TestLogger(TestModule* m)
 {
-    file = m->file;
     flags = m->flags;
 }
 
 void TestLogger::open()
 {
-    test_file = TextLog_Init(file.c_str());
+    const char* f =  (flags & TEST_FLAG_FILE) ? F_NAME : "stdout";
+    test_file = TextLog_Init(f);
 }
 
 void TestLogger::close()
@@ -227,7 +223,7 @@ static LogApi test_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,

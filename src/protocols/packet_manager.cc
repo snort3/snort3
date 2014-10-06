@@ -34,6 +34,8 @@
 #include "protocols/packet.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/eth.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 #include "time/profiler.h"
 #include "parser/parser.h"
 
@@ -77,7 +79,6 @@ static THREAD_LOCAL Packet *encode_pkt = nullptr;
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
 static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt{{0}};
 static THREAD_LOCAL uint8_t* dst_mac = nullptr;
-static THREAD_LOCAL SnortData tmp_ptrs;
 
 //-------------------------------------------------------------------------
 // Private helper functions
@@ -162,8 +163,9 @@ void PacketManager::decode(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     PROFILE_VARS;
-    uint8_t mapped_prot = CodecManager::grinder;
+    DecodeData unsure_encap_ptrs;
     uint16_t prev_prot_id = FINISHED_DECODE;
+    uint8_t mapped_prot = CodecManager::grinder;
 
     // initialize all Packet information
     memset(p, 0, PKT_ZERO_LEN);
@@ -213,7 +215,7 @@ void PacketManager::decode(
         if (codec_data.codec_flags & CODEC_SAVE_LAYER)
         {
             codec_data.codec_flags &= ~CODEC_SAVE_LAYER;
-            tmp_ptrs = p->ptrs;
+            unsure_encap_ptrs = p->ptrs;
         }
         else
         {
@@ -222,8 +224,10 @@ void PacketManager::decode(
         }
 
         if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
+        {
             fpEvalIpProtoOnlyRules(p, codec_data.next_prot_id);
-
+            p->ip_proto_next = codec_data.next_prot_id;
+        }
 
         // internal statistics and record keeping
         push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
@@ -257,12 +261,23 @@ void PacketManager::decode(
     {
         if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
         {
-            p->ptrs = tmp_ptrs;
+            p->ptrs = unsure_encap_ptrs;
 
-            // Hardcodec ESP because we trust iff the layer
-            // immediately preceding the fail is ESP.
-            if (p->layers[p->num_layers].prot_id == IPPROTO_ID_ESP)
+            switch (p->layers[p->num_layers].prot_id)
+            {
+            case IPPROTO_ID_ESP:
+                // Hardcoding ESP because we trust iff the layer
+                // immediately preceding the fail is ESP.
                 p->ptrs.decode_flags |= DECODE_PKT_TRUST;
+                break;
+
+            case PROTOCOL_TEREDO:
+                // if we just decoded teredo and the next
+                // layer fails, we made a mistake. Therefore,
+                // remove this bit.
+                p->proto_bits &= ~PROTO_BIT__TEREDO;
+                break;
+            } /* switch */
         }
         else
         {

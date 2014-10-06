@@ -61,7 +61,6 @@ using namespace std;
 #include "rules.h"
 #include "treenodes.h"
 #include "snort_debug.h"
-#include "main/snort_config.h"
 #include "util.h"
 #include "parser.h"
 #include "packet_io/trough.h"
@@ -75,10 +74,12 @@ using namespace std;
 #include "packet_time.h"
 #include "perf_monitor/perf_base.h"
 #include "perf_monitor/perf.h"
-//#include "sflsq.h"
 #include "ips_options/ips_flowbits.h"
 #include "event_queue.h"
 #include "framework/mpse.h"
+#include "main.h"
+#include "main/build.h"
+#include "main/snort_config.h"
 #include "main/shell.h"
 #include "main/analyzer.h"
 #include "managers/module_manager.h"
@@ -293,20 +294,22 @@ static void SnortInit(int argc, char **argv)
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     snort_conf = snort_cmd_line_conf;
 
-    /* Tell 'em who wrote it, and what "it" is */
-    if (!ScLogQuiet())
-        PrintVersion();
-
-    InitProtoNames();
-    SFAT_Init();
-
+    LogMessage("--------------------------------------------------\n");
+    LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
 
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
-    ModuleManager::dump_modules();
-    PluginManager::dump_plugins();
+
+    if ( snort_conf->run_flags & RUN_FLAG__SHOW_PLUGINS )
+    {
+        ModuleManager::dump_modules();
+        PluginManager::dump_plugins();
+    }
+
+    InitProtoNames();
+    SFAT_Init();
 
     FileAPIInit();
     register_profiles();
@@ -318,6 +321,7 @@ static void SnortInit(int argc, char **argv)
      * Set the global snort_conf that will be used during run time */
     snort_conf = MergeSnortConfs(snort_cmd_line_conf, sc);
     init_policy(snort_conf);
+    CodecManager::instantiate();
 
     if ( snort_conf->output )
         EventManager::instantiate(snort_conf->output, sc);
@@ -326,6 +330,8 @@ static void SnortInit(int argc, char **argv)
     {
         OrderRuleLists(snort_conf, "drop sdrop reject alert pass log");
     }
+
+    // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
         FatalError("can't initialize inspectors\n");
 
@@ -359,7 +365,6 @@ static void SnortInit(int argc, char **argv)
     fpCreateFastPacketDetection(snort_conf);
     MpseManager::activate_search_engine(snort_conf);
 
-    CodecManager::instantiate();
     SFAT_Start();
 
 #ifdef PPM_MGR
@@ -472,7 +477,7 @@ static void CleanExit(int)
     SnortCleanup();
     snort_conf = &tmp;
 
-    LogMessage("Snort exiting\n");
+    LogMessage("%s  Snort exiting\n", get_prompt());
     closelog();
 }
 
@@ -895,14 +900,14 @@ DAQ_Verdict packet_callback(
     return verdict;
 }
 
-void snort_idle()
+void snort_thread_idle()
 {
     if ( flow_con )
         flow_con->timeout_flows(16384, time(NULL));
     pc.idle++;
 }
 
-void snort_rotate()
+void snort_thread_rotate()
 {
     SetRotatePerfFileFlag();
 }

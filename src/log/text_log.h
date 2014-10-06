@@ -38,8 +38,8 @@
  * name plus a timestamp.
  */
 
-#ifndef SF_TEXTLOG_H
-#define SF_TEXTLOG_H
+#ifndef TEXT_LOG_H
+#define TEXT_LOG_H
 
 #include <stdio.h>
 #include <string.h>
@@ -48,6 +48,9 @@
 #define K_BYTES (1024)
 #define M_BYTES (K_BYTES*K_BYTES)
 #define G_BYTES (K_BYTES*M_BYTES)
+
+// FIXIT-L need a LogMessage based subclass of TextLog
+// or some such to get stdout or syslog
 
 /*
  * DO NOT ACCESS STRUCT MEMBERS DIRECTLY
@@ -111,5 +114,5 @@ static inline bool TextLog_Puts (TextLog* const txt, const char* str)
     return TextLog_Write(txt, str, strlen(str));
 }
 
-#endif /* SF_TEXTLOG_H */
+#endif
 

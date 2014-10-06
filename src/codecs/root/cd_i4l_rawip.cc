@@ -45,7 +45,7 @@ public:
 
 
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 
@@ -70,7 +70,7 @@ void I4LRawIpCodec::get_data_link_type(std::vector<int>& v)
  * Returns: void function
  */
 
-bool I4LRawIpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool I4LRawIpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < 2)
         return false;

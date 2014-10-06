@@ -58,6 +58,8 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 #include "framework/range.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 
 static const char* s_name = "icmp_id";
 

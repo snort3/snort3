@@ -126,6 +126,7 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("service") )
         service = v.get_string();
 
+    // FIXIT-L implement proto and client_first
     else if ( v.is("proto") )
         return true;
 

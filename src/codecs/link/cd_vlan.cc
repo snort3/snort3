@@ -43,9 +43,9 @@ namespace
 
 static const RuleMap vlan_rules[] =
 {
-    { DECODE_BAD_VLAN, "(" CD_VLAN_NAME ") Bad VLAN Frame" },
-    { DECODE_BAD_VLAN_ETHLLC, "(" CD_VLAN_NAME ") Bad LLC header" },
-    { DECODE_BAD_VLAN_OTHER, "(" CD_VLAN_NAME ") Bad Extra LLC Info" },
+    { DECODE_BAD_VLAN, "bad VLAN frame" },
+    { DECODE_BAD_VLAN_ETHLLC, "bad LLC header" },
+    { DECODE_BAD_VLAN_OTHER, "bad extra LLC info" },
     { 0, nullptr }
 };
 
@@ -66,7 +66,7 @@ public:
     ~VlanCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
 };
@@ -83,7 +83,7 @@ void VlanCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool VlanCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool VlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < sizeof(vlan::VlanTagHdr))
     {

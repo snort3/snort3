@@ -38,7 +38,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v)
     { v.push_back(FINISHED_DECODE); }
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&)
+    virtual bool decode(const RawData&, CodecData&, DecodeData&)
     { return false; };
 };
 

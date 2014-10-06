@@ -72,7 +72,8 @@ static THREAD_LOCAL TextLog* fast_log = nullptr;
 
 using namespace std;
 
-static const char* s_name = "alert_fast";
+#define S_NAME "alert_fast"
+#define F_NAME S_NAME ".txt"
 
 //-------------------------------------------------------------------------
 // module stuff
@@ -80,8 +81,8 @@ static const char* s_name = "alert_fast";
 
 static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "stdout",
-      "name of alert file" },
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "output to " F_NAME " instead of stdout" },
 
     { "packet", Parameter::PT_BOOL, nullptr, "true",
       "output packet dump with alert" },
@@ -101,13 +102,13 @@ static const char* s_help =
 class FastModule : public Module
 {
 public:
-    FastModule() : Module(s_name, s_help, s_params) { };
+    FastModule() : Module(S_NAME, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
 public:
-    string file;
+    bool file;
     unsigned long limit;
     unsigned units;
     bool packet;
@@ -116,7 +117,7 @@ public:
 bool FastModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
+        file = v.get_bool();
 
     else if ( v.is("packet") )
         packet = v.get_bool();
@@ -135,7 +136,7 @@ bool FastModule::set(const char*, Value& v, SnortConfig*)
 
 bool FastModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
+    file = false;
     limit = 0;
     units = 0;
     packet = true;
@@ -171,7 +172,7 @@ private:
 
 FastLogger::FastLogger(FastModule* m)
 {
-    file = m->file;
+    file = m->file ? F_NAME : "stdout";
     limit = m->limit;
     packet = m->packet;
 }
@@ -238,10 +239,10 @@ void FastLogger::alert(Packet *p, const char *msg, Event *event)
     }
 
     /* print the packet header to the alert file */
-    if (p->ptrs.ip_api.is_valid())
+    if (p->has_ip())
     {
         LogPriorityData(fast_log, event, 0);
-        TextLog_Print(fast_log, "{%s} ", protocol_names[p->ptrs.ip_api.proto()]);
+        TextLog_Print(fast_log, "{%s} ", protocol_names[p->get_ip_proto_next()]);
         LogIpAddrs(fast_log, p);
     }
 
@@ -280,7 +281,7 @@ static LogApi fast_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,

@@ -155,7 +155,7 @@ struct InspectApi
     InspectFunc tterm;     // cleanup tinit()
     InspectNew ctor;       // instantiate inspector from Module data
     InspectDelFunc dtor;   // release inspector instance
-    InspectSsnFunc ssn;    // purge caches
+    InspectSsnFunc ssn;    // get new session tracker
     InspectFunc reset;     // clear stats
 };
 

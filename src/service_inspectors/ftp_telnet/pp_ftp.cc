@@ -1147,7 +1147,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                                 result = stream.set_application_protocol_id_expected(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    (uint8_t)(p->ptrs.ip_api.proto()), ftp_data_app_id, fd);
+                                    p->get_ip_proto_next(), ftp_data_app_id, fd);
 
                                 if (result < 0)
                                     delete fd;
@@ -1159,8 +1159,8 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                                 stream.ignore_session(
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    (uint8_t)(p->ptrs.ip_api.proto()),
-                                    FtpDataFlowData::flow_id, SSN_DIR_BOTH);
+                                    p->get_ip_proto_next(), FtpDataFlowData::flow_id,
+                                    SSN_DIR_BOTH);
                             }
                         }
                     }
@@ -1218,7 +1218,7 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                             result = stream.set_application_protocol_id_expected(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                (uint8_t)(p->ptrs.ip_api.proto()), ftp_data_app_id, fd);
+                                p->get_ip_proto_next(), ftp_data_app_id, fd);
 
                             if (result < 0)
                                 delete fd;
@@ -1230,8 +1230,8 @@ static int do_stateful_checks(FTP_SESSION *session, Packet *p,
                             stream.ignore_session(
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                (uint8_t)(p->ptrs.ip_api.proto()),
-                                FtpDataFlowData::flow_id, SSN_DIR_BOTH);
+                                p->get_ip_proto_next(), FtpDataFlowData::flow_id,
+                                SSN_DIR_BOTH);
                         }
                     }
                 }

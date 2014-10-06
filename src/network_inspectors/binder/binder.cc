@@ -46,7 +46,7 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 Binding::Binding()
 {
     when.nets = nullptr;
-    when.protos = PROTO_BIT__ALL;
+    when.protos = (unsigned)PktType::ANY;
 
     when.vlans.set();
     when.ports.set();
@@ -92,17 +92,10 @@ bool Binding::check_addr(const Flow* flow) const
 
 bool Binding::check_proto(const Flow* flow) const
 {
-    unsigned mask = when.protos;
-    unsigned bit = 0;
+    if ( when.protos & (unsigned)flow->protocol )
+        return true;
 
-    switch ( flow->protocol )
-    {
-    case IPPROTO_IP:   bit = PROTO_BIT__IP;   break;
-    case IPPROTO_ICMP: bit = PROTO_BIT__ICMP; break;
-    case IPPROTO_TCP:  bit = PROTO_BIT__TCP;  break;
-    case IPPROTO_UDP:  bit = PROTO_BIT__UDP;  break;
-    }
-    return ( mask & bit ) != 0;
+    return false;
 }
 
 bool Binding::check_iface(const Flow* flow) const
@@ -227,7 +220,7 @@ Inspector* Binder::find_inspector(Flow* flow)
     if ( !pb )
         return nullptr;
 
-    Inspector* ins = InspectorManager::get_inspector(pb->use.type.c_str());
+    Inspector* ins = InspectorManager::get_inspector(pb->use.name.c_str());
     return ins;
 }
 
@@ -239,7 +232,7 @@ int Binder::exec(int, void* pv)
     if ( ins )
         flow->set_gadget(ins);
 
-    if ( flow->protocol != IPPROTO_TCP )
+    if ( flow->protocol != PktType::TCP )
         return 0;
 
     if ( ins )
@@ -311,7 +304,10 @@ Binding* Binder::get_binding(Flow* flow)
 BindAction Binder::apply(Flow* flow, Binding* pb)
 {
     if ( !pb )
+    {
+        init_flow(flow);
         return BA_INSPECT;
+    }
 
     if ( pb->use.action != BA_INSPECT )
     {
@@ -323,14 +319,14 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
     init_flow(flow);
     Inspector* ins;
 
-    if ( !pb->use.type.size() || pb->use.type == "wizard" )
+    if ( !pb->use.name.size() || pb->use.name == "wizard" )
     {
         ins = InspectorManager::get_wizard();
         flow->set_clouseau(ins);
     }
     else
     {
-        ins = InspectorManager::get_inspector(pb->use.type.c_str()); 
+        ins = InspectorManager::get_inspector(pb->use.name.c_str()); 
         flow->set_gadget(ins);
     }
     return BA_INSPECT;
@@ -340,19 +336,19 @@ void Binder::init_flow(Flow* flow)
 {
     switch ( flow->protocol )
     {
-    case IPPROTO_IP:
+    case PktType::IP:
         set_session(flow, "stream_ip");
         break;
 
-    case IPPROTO_ICMP:
+    case PktType::ICMP:
         set_session(flow, "stream_icmp");
         break;
 
-    case IPPROTO_TCP:
+    case PktType::TCP:
         set_session(flow, "stream_tcp");
         break;
 
-    case IPPROTO_UDP:
+    case PktType::UDP:
         set_session(flow, "stream_udp");
         break;
 
@@ -395,7 +391,7 @@ static const InspectApi bind_api =
         mod_dtor
     },
     IT_BINDER, 
-    PROTO_BIT__ALL,
+    (uint16_t)PktType::ANY,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

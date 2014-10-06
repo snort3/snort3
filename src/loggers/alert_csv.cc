@@ -41,12 +41,18 @@
 #include "snort.h"
 #include "log/text_log.h"
 #include "log/log_text.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
+#include "protocols/eth.h"
 
 #define LOG_BUFFER (4*K_BYTES)
 
 static THREAD_LOCAL TextLog* csv_log;
 
-static const char* s_name = "alert_csv";
+#define S_NAME "alert_csv"
+#define F_NAME S_NAME ".txt"
 
 using namespace std;
 
@@ -68,10 +74,8 @@ static const char* csv_deflt =
 
 static const Parameter s_params[] =
 {
-    // FIXIT-M provide PT_FILE and PT_PATH and enforce no
-    // path chars in file (outputs file must be in instance dir)
-    { "file", Parameter::PT_STRING, nullptr, "stdout",
-      "name of alert file" },
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "output to " F_NAME " instead of stdout" },
 
     { "csv", Parameter::PT_MULTI, csv_range, csv_deflt,
       "selected fields will be output in given order left to right" },
@@ -92,13 +96,13 @@ static const char* s_help =
 class CsvModule : public Module
 {
 public:
-    CsvModule() : Module(s_name, s_help, s_params) { };
+    CsvModule() : Module(S_NAME, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
 public:
-    string file;
+    bool file;
     string csvargs;
     unsigned long limit;
     unsigned units;
@@ -107,7 +111,7 @@ public:
 bool CsvModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
+        file = v.get_bool();
 
     else if ( v.is("csv") )
         csvargs = SnortStrdup(v.get_string());
@@ -126,7 +130,7 @@ bool CsvModule::set(const char*, Value& v, SnortConfig*)
 
 bool CsvModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
+    file = false;
     limit = 0;
     units = 0;
     csvargs = csv_deflt;
@@ -165,7 +169,7 @@ public:
 
 CsvLogger::CsvLogger(CsvModule* m)
 {
-    file = m->file;
+    file = m->file ? F_NAME : "stdout";
     limit = m->limit;
     args = mSplit(m->csvargs.c_str(), " \n\t", 0, &numargs, 0);
 }
@@ -237,8 +241,7 @@ void CsvLogger::alert(Packet *p, const char *msg, Event *event)
                 case PktType::TCP:
                     TextLog_Puts(csv_log, "TCP");
                     break;
-                case PktType::ICMP4:
-                case PktType::ICMP6:
+                case PktType::ICMP:
                     TextLog_Puts(csv_log, "ICMP");
                     break;
                 default:
@@ -422,7 +425,7 @@ static LogApi csv_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,

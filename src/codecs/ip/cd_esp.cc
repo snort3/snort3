@@ -39,7 +39,7 @@ namespace
 
 static const RuleMap esp_rules[] =
 {
-    { DECODE_ESP_HEADER_TRUNC, "(" CD_ESP_NAME ") truncated Encapsulated Security Payload (ESP) header" },
+    { DECODE_ESP_HEADER_TRUNC, "truncated encapsulated security payload header" },
     { 0, nullptr }
 };
 
@@ -81,7 +81,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 
@@ -95,9 +95,7 @@ constexpr uint32_t ESP_TRAILER_LEN = 2;
 
 
 void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(IPPROTO_ID_ESP);
-}
+{ v.push_back(IPPROTO_ID_ESP); }
 
 
 
@@ -111,7 +109,7 @@ void EspCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *          the encryption type (or lack thereof).
  *
  */
-bool EspCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const uint8_t *esp_payload;
     uint8_t pad_length;

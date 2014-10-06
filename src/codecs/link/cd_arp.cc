@@ -35,7 +35,7 @@ namespace
 
 static const RuleMap arp_rules[] =
 {
-    { DECODE_ARP_TRUNCATED, "(" CD_ARP_NAME ") Truncated ARP" },
+    { DECODE_ARP_TRUNCATED, "truncated ARP" },
     { 0, nullptr }
 };
 
@@ -56,7 +56,8 @@ public:
     ~ArpCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*);
 };
 
 
@@ -86,7 +87,7 @@ void ArpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if(raw.len < sizeof(arp::EtherARP))
     {
@@ -99,6 +100,11 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.set_pkt_type(PktType::ARP);
 
     return true;
+}
+
+void ArpCodec::format(EncodeFlags, const Packet*, Packet* c, Layer*)
+{
+    c->ptrs.set_pkt_type(PktType::ARP);
 }
 
 //-------------------------------------------------------------------------

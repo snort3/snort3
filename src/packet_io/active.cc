@@ -89,23 +89,24 @@ void Active_KillSession (Packet* p, EncodeFlags* pf)
 {
     EncodeFlags flags = pf ? *pf : ENC_FLAG_FWD;
 
-    if ( !IsIP(p) )
+    switch ( p->type() )
+    {
+    case PktType::UNKNOWN:
+        // Can only occur if we have never seen IP
         return;
 
-    switch ( p->ptrs.ip_api.proto() )
-    {
-        case IPPROTO_TCP:
-            Active_SendReset(p, 0);
-            if ( flags & ENC_FLAG_FWD )
-                Active_SendReset(p, ENC_FLAG_FWD);
-            break;
+    case PktType::TCP:
+        Active_SendReset(p, 0);
+        if ( flags & ENC_FLAG_FWD )
+            Active_SendReset(p, ENC_FLAG_FWD);
+        break;
 
-        default:
-            if ( Active_PacketForceDropped() )
-                Active_SendUnreach(p, UnreachResponse::FWD);
-            else
-                Active_SendUnreach(p, UnreachResponse::PORT);
-            break;
+    default:
+        if ( Active_PacketForceDropped() )
+            Active_SendUnreach(p, UnreachResponse::FWD);
+        else
+            Active_SendUnreach(p, UnreachResponse::PORT);
+        break;
     }
 }
 
@@ -255,13 +256,15 @@ int Active_IsRSTCandidate(const Packet* p)
 
 int Active_IsUNRCandidate(const Packet* p)
 {
-    // FIXIT-J allow unr to tcp/udp/icmp4/icmp6 only or for all
     switch ( GetInnerProto(p) )
     {
     case IPPROTO_ID_UDP:
     case IPPROTO_ID_TCP:
+        return 1;
+
     case IPPROTO_ID_ICMPV4:
     case IPPROTO_ID_ICMPV6:
+        // FIXIT-L return false for icmp unreachables
         return 1;
 
     default:
@@ -338,18 +341,20 @@ int Active_IgnoreSession (Packet* p)
 
 int Active_ForceDropAction(Packet *p)
 {
-    if ( !IsIP(p) )
+    if ( p->has_ip() )
         return 0;
 
     // explicitly drop packet
     Active_ForceDropPacket();
 
-    switch ( p->ptrs.ip_api.proto() )
+    switch ( p->type() )
     {
-        case IPPROTO_TCP:
-        case IPPROTO_UDP:
-            Active_DropSession();
-            _Active_ForceIgnoreSession(p);
+    case PktType::TCP:
+    case PktType::UDP:
+        Active_DropSession();
+        _Active_ForceIgnoreSession(p);
+    default:
+        break;
     }
     return 0;
 }
@@ -365,20 +370,22 @@ static inline int _Active_DoReset(Packet *p)
     if ( !p->ptrs.ip_api.is_valid() )
         return 0;
 
-    switch ( p->ptrs.ip_api.proto() )
+    switch ( p->type() )
     {
-        case IPPROTO_TCP:
-            if ( Active_IsRSTCandidate(p) )
-                ActionManager::queue_reject();
-            break;
+    case PktType::TCP:
+        if ( Active_IsRSTCandidate(p) )
+            ActionManager::queue_reject();
+        break;
 
-        // FIXIT-J send unr to udp/icmp4/icmp6 only or for all non-tcp?
-        case IPPROTO_UDP:
-        case IPPROTO_ICMP:
-        case IPPROTO_ICMPV6:
-            if ( Active_IsUNRCandidate(p) )
-                ActionManager::queue_reject();
-            break;
+    case PktType::UDP:
+    case PktType::ICMP:
+    case PktType::IP:
+        if ( Active_IsUNRCandidate(p) )
+            ActionManager::queue_reject();
+        break;
+
+    default:
+        break;
     }
 
     return 0;
@@ -411,7 +418,7 @@ static int Active_Open (const char* dev)
         s_link = eth_open(dev);
 
         if ( !s_link )
-            FatalError("%s: can't open %s!\n",
+            FatalError("%s: can't open %s\n",
                 "Active response", dev);
         s_send = Active_SendEth;
     }
@@ -420,7 +427,7 @@ static int Active_Open (const char* dev)
         s_ipnet = ip_open();
 
         if ( !s_ipnet )
-            FatalError("%s: can't open ip!\n",
+            FatalError("%s: can't open ip\n",
                 "Active response");
         s_send = Active_SendIp;
     }

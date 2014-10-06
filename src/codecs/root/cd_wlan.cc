@@ -42,8 +42,8 @@ namespace
 
 static const RuleMap wlan_rules[] =
 {
-    { DECODE_BAD_80211_ETHLLC, "(" CD_WLAN_NAME ") Bad 802.11 LLC header" },
-    { DECODE_BAD_80211_OTHER, "(" CD_WLAN_NAME ") Bad 802.11 Extra LLC Info" },
+    { DECODE_BAD_80211_ETHLLC, "bad 802.11 LLC header" },
+    { DECODE_BAD_80211_OTHER, "bad 802.11 extra LLC info" },
     { 0, nullptr }
 };
 
@@ -64,7 +64,7 @@ public:
     ~WlanCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_data_link_type(std::vector<int>&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
@@ -83,7 +83,7 @@ void WlanCodec::get_data_link_type(std::vector<int>&v)
 #endif
 }
 
-bool WlanCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool WlanCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     /* do a little validation */
     if(raw.len < MINIMAL_IEEE80211_HEADER_LEN)

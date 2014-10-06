@@ -42,7 +42,7 @@ public:
     ~Raw4Codec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_data_link_type(std::vector<int>&);
 
 };
@@ -69,7 +69,7 @@ public:
  *
  * Returns: void function
  */
-bool Raw4Codec::decode(const RawData&, CodecData& data, SnortData&)
+bool Raw4Codec::decode(const RawData&, CodecData& data, DecodeData&)
 {
     data.next_prot_id = ETHERTYPE_IPV4;
     return true;

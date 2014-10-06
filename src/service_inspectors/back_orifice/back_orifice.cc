@@ -171,13 +171,13 @@ static THREAD_LOCAL SimpleStats bostats;
 #define BO_SNORT_BUFFER_ATTACK    4
 
 #define BO_TRAFFIC_DETECT_STR \
-    "(back_orifice) BO Traffic detected"
+    "BO traffic detected"
 #define BO_CLIENT_TRAFFIC_DETECT_STR \
-    "(back_orifice) BO Client Traffic detected"
+    "BO client traffic detected"
 #define BO_SERVER_TRAFFIC_DETECT_STR \
-    "(back_orifice) BO Server Traffic detected"
+    "BO server traffic detected"
 #define BO_SNORT_BUFFER_ATTACK_STR \
-    "(back_orifice) BO Snort buffer attack"
+    "BO Snort buffer attack"
 
 static const RuleMap bo_rules[] =
 {
@@ -480,7 +480,7 @@ void BackOrifice::eval(Packet *p)
     PROFILE_VARS;
 
     // preconditions - what we registered for
-    assert(IsUDP(p));
+    assert(p->is_udp());
 
     /* make sure it's at least 19 bytes long */
     if(p->dsize < BO_MIN_SIZE)
@@ -607,7 +607,7 @@ static const InspectApi bo_api =
         mod_dtor
     },
     IT_PROTOCOL, 
-    PROTO_BIT__UDP,
+    (uint16_t)PktType::UDP,
     nullptr, // buffers
     nullptr, // service
     bo_init,

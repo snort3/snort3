@@ -49,7 +49,7 @@ public:
     ~Ipv6FragCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
@@ -61,7 +61,7 @@ public:
 } // namespace
 
 
-bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const ip::IP6Frag* const ip6frag_hdr = reinterpret_cast<const ip::IP6Frag*>(raw.data);
 

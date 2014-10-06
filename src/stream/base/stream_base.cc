@@ -223,8 +223,7 @@ void StreamBase::eval(Packet *p)
             flow_con->process_udp(p);
         break;
 
-    case PktType::ICMP4:
-    case PktType::ICMP6:
+    case PktType::ICMP:
         if ( p->ptrs.icmph )
             flow_con->process_icmp(p);
         break;
@@ -283,7 +282,7 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__IP | PROTO_BIT__ICMP | PROTO_BIT__TCP | PROTO_BIT__UDP,
+    (unsigned)PktType::ANY_IP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

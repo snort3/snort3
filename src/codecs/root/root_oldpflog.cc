@@ -68,7 +68,7 @@ void DecodeOldPflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt
     {
         if (ScLogVerbose())
         {
-            ErrorMessage("Captured data length < Pflog header length! "
+            ErrorMessage("Captured data length < Pflog header length "
                     "(%d bytes)\n", cap_len);
         }
         MODULE_PROFILE_END(decodePerfStats);

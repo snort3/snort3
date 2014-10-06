@@ -1,11 +1,22 @@
 ---------------------------------------------------------------------------
 -- Snort++ prototype configuration
+---------------------------------------------------------------------------
+
+---------------------------------------------------------------------------
+-- setup environment
+---------------------------------------------------------------------------
+-- given:
+-- export DIR=/install/path
+-- configure --prefix=$DIR
+-- make install
 --
--- let install_dir be a variable indicating where you installed Snort++.
--- then do:
---
--- export LUA_PATH=$install_dir/include/snort/lua/?.lua\;\;
--- export SNORT_LUA_PATH=$install_dir/conf/
+-- then:
+-- export LUA_PATH=$DIR/include/snort/lua/?.lua\;\;
+-- export SNORT_LUA_PATH=$DIR/conf/
+---------------------------------------------------------------------------
+
+---------------------------------------------------------------------------
+-- setup the basics
 ---------------------------------------------------------------------------
 
 require('snort_config')  -- for loading
@@ -29,9 +40,13 @@ dofile(dir .. 'reference.lua')
 
 ---------------------------------------------------------------------------
 -- configure modules
+---------------------------------------------------------------------------
+--
 -- mod = { } uses internal defaults
 -- you can see them with --help-module mod
 -- comment or delete to disable mod functionality
+--
+-- you can also use default_ftp_server and default_wizard
 ---------------------------------------------------------------------------
 
 ppm = { }
@@ -65,25 +80,25 @@ stream_udp = { }
 
 react = { }
 reject = { }
-rewrite = { }
+--rewrite = { }
 
 wizard = default_wizard
 
 ---------------------------------------------------------------------------
--- ips rules and filters
+-- define / load rules and filters
 ---------------------------------------------------------------------------
 
 local_rules =
 [[
 # snort-classic comments, includes, and rules with $VARIABLES
-alert tcp any any -> any 80 ( http_method; content:"GET"; gid:1; sid:1000051)
+alert tcp any any -> any 80 ( sid:1; http_method; content:"GET"; )
 ]]
 
 ips =
 {
     --include = '../test.rules',
-    --include = 'rules/active.rules',
-    --rules = local_rules,
-    enable_builtin_rules = true
+    --include = '../rules/active.rules',
+    rules = local_rules,
+    --enable_builtin_rules = true
 }
 

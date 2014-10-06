@@ -29,6 +29,8 @@
 #include "snort.h"
 #include "utils/util.h"
 #include "sfip/sf_ip.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 
 //-------------------------------------------------------------------------
 // init foo
@@ -37,12 +39,12 @@
 inline void FlowKey::init4(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    char proto, uint32_t mplsId, bool order)
+    uint8_t proto, uint32_t mplsId, bool order)
 {
     const uint32_t *src;
     const uint32_t *dst;
 
-    if ( proto == IPPROTO_ICMP )
+    if ( proto ==  IPPROTO_ICMP )
     {
         if (srcPort == ICMP_ECHOREPLY)
         {
@@ -98,7 +100,7 @@ inline void FlowKey::init4(
 inline void FlowKey::init6(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    char proto, uint32_t mplsId, bool order)
+    uint8_t proto, uint32_t mplsId, bool order)
 {
     const sfip_t *src;
     const sfip_t *dst;
@@ -170,7 +172,7 @@ inline void FlowKey::init6(
 void FlowKey::init(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
-    char proto, uint16_t vlan, 
+    uint8_t proto, uint16_t vlan,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
     /* Because the key is going to be used for hash lookups,
@@ -206,7 +208,7 @@ void FlowKey::init(
 
 void FlowKey::init(
     const sfip_t *srcIP, const sfip_t *dstIP,
-    uint32_t id, char proto, uint16_t vlan, 
+    uint32_t id, uint8_t proto, uint16_t vlan,
     uint32_t mplsId, uint16_t addrSpaceId)
 {
     // to avoid confusing 2 different datagrams or confusing a datagram

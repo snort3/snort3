@@ -82,12 +82,16 @@ struct PHInstance
 {
     PHClass& pp_class;
     Inspector* handler;
+    string name;
 
     PHInstance(PHClass&);
     ~PHInstance();
 
     static bool comp (PHInstance* a, PHInstance* b)
     { return ( a->pp_class.api.type < b->pp_class.api.type ); };
+
+    void set_name(const char* s)
+    { name = s; };
 };
 
 PHInstance::PHInstance(PHClass& p) : pp_class(p)
@@ -304,8 +308,13 @@ static PHInstance* get_instance(
     FrameworkPolicy* fp, const char* keyword)
 {
     for ( auto* p : fp->ilist )
-        if ( !strcmp(p->pp_class.api.base.name, keyword) )
+    {
+        if ( p->name.size() && p->name == keyword )
             return p;
+
+        else if ( !strcmp(p->pp_class.api.base.name, keyword) )
+            return p;
+    }
 
     return nullptr;
 }
@@ -461,7 +470,7 @@ void InspectorManager::thread_term(SnortConfig* sc)
 
 // new configuration
 void InspectorManager::instantiate(
-    const InspectApi* api, Module*, SnortConfig* sc)
+    const InspectApi* api, Module*, SnortConfig* sc, const char* name)
 {
     FrameworkConfig* fc = sc->framework_config;
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
@@ -481,6 +490,9 @@ void InspectorManager::instantiate(
 
         if ( !ppi )
             ParseError("can't instantiate inspector: '%s'.", keyword);
+
+        else if ( name )
+            ppi->set_name(name);
     }
 }
 
@@ -498,14 +510,14 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
         const char* t = api.base.name;
         m->add(s, t);
 
-        tcp = tcp || (api.proto_bits & PROTO_BIT__TCP);
-        udp = udp || (api.proto_bits & PROTO_BIT__UDP);
+        tcp = tcp || (api.proto_bits & (unsigned)PktType::TCP);
+        udp = udp || (api.proto_bits & (unsigned)PktType::UDP);
     }
     if ( tcp )
-        m->add(PROTO_BIT__TCP, wiz_id);
+        m->add((unsigned)PktType::TCP, wiz_id);
 
     if ( udp )
-        m->add(PROTO_BIT__UDP, wiz_id);
+        m->add((unsigned)PktType::UDP, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, nullptr, sc);
@@ -575,7 +587,7 @@ static inline void execute(
         if ( !p->flow && (ppc.api.type >= IT_SESSION) )
             break;
 
-        if ( (p->proto_bits & ppc.api.proto_bits) )
+        if ( ((unsigned)p->type() & ppc.api.proto_bits) )
             (*prep)->handler->eval(p);
     }
 }
@@ -595,7 +607,7 @@ void InspectorManager::bumble(Packet* p)
 
     flow->clear_clouseau();
 
-    if ( !flow->gadget || flow->protocol != IPPROTO_TCP )
+    if ( !flow->gadget || flow->protocol != PktType::TCP )
         return;
 
     ins = get_inspector("stream_tcp");
@@ -622,14 +634,14 @@ void InspectorManager::execute (Packet* p)
         if ( !flow )
             return;
 
-        if ( flow->clouseau && (p->proto_bits & flow->clouseau->get_api()->proto_bits) )
+        if ( flow->clouseau && ((unsigned)p->type() & flow->clouseau->get_api()->proto_bits) )
             bumble(p);
 
         // FIXIT-M need more than one service inspector?
         // (should be daisy chained since inspector1 will generate PDUs for
         // inspector2)
         //::execute(p, fp->service.vec, fp->service.num);
-        if ( flow->gadget && (p->proto_bits & flow->gadget->get_api()->proto_bits) )
+        if ( flow->gadget && ((unsigned)p->type() & flow->gadget->get_api()->proto_bits) )
             flow->gadget->eval(p);
     }
     else

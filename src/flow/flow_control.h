@@ -57,8 +57,8 @@ public:
 
     void delete_flow(const FlowKey*);
     void delete_flow(Flow*, const char* why);
-    void purge_flows(int proto);
-    void prune_flows(int proto, Packet*);
+    void purge_flows(uint8_t proto);
+    void prune_flows(uint8_t proto, Packet*);
     void timeout_flows(uint32_t flowCount, time_t cur_time);
 
     char expected_flow (Flow*, Packet*);
@@ -76,15 +76,15 @@ public:
         uint8_t protocol, int16_t appId,
         FlowData*);
 
-    uint32_t max_flows(int proto);
-    void get_prunes(int proto, PegCount&);
-    void reset_prunes(int proto);
+    uint32_t max_flows(uint8_t proto);
+    void get_prunes(uint8_t proto, PegCount&);
+    void reset_prunes(uint8_t proto);
 
-    PegCount get_flow_count(int proto);
+    PegCount get_flow_count(uint8_t);
     void clear_flow_counts();
 
 private:
-    class FlowCache* get_cache(int proto);
+    class FlowCache* get_cache(uint8_t);
     void set_key(FlowKey*, Packet*);
 
     unsigned process(FlowCache*, Packet*);

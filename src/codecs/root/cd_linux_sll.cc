@@ -45,7 +45,7 @@ public:
 
 
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 } // namespace
@@ -58,7 +58,7 @@ void LinuxSllCodec::get_data_link_type(std::vector<int>&v)
 #endif
 }
 
-bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, SnortData&)
+bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
 {
     /* do a little validation */
     if(raw.len < linux_sll::SLL_HDR_LEN)

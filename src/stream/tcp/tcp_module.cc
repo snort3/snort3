@@ -33,45 +33,45 @@ using namespace std;
 //-------------------------------------------------------------------------
 
 #define STREAM_TCP_SYN_ON_EST_STR \
-    "(stream_tcp) Syn on established session"
+    "SYN on established session"
 #define STREAM_TCP_DATA_ON_SYN_STR \
-    "(stream_tcp) Data on SYN packet"
+    "data on SYN packet"
 #define STREAM_TCP_DATA_ON_CLOSED_STR \
-    "(stream_tcp) Data sent on stream not accepting data"
+    "data sent on stream not accepting data"
 #define STREAM_TCP_BAD_TIMESTAMP_STR \
-    "(stream_tcp) TCP Timestamp is outside of PAWS window"
+    "TCP timestamp is outside of PAWS window"
 #define STREAM_TCP_BAD_SEGMENT_STR \
-    "(stream_tcp) Bad segment, adjusted size <= 0"
+    "bad segment, adjusted size <= 0"
 #define STREAM_TCP_WINDOW_TOO_LARGE_STR \
-    "(stream_tcp) Window size (after scaling) larger than policy allows"
+    "window size (after scaling) larger than policy allows"
 #define STREAM_TCP_EXCESSIVE_TCP_OVERLAPS_STR \
-    "(stream_tcp) Limit on number of overlapping TCP packets reached"
+    "limit on number of overlapping TCP packets reached"
 #define STREAM_TCP_DATA_AFTER_RESET_STR \
-    "(stream_tcp) Data sent on stream after TCP Reset sent"
+    "data sent on stream after TCP Reset sent"
 #define STREAM_TCP_SESSION_HIJACKED_CLIENT_STR \
-    "(stream_tcp) TCP Client possibly hijacked, different Ethernet Address"
+    "TCP client possibly hijacked, different ethernet address"
 #define STREAM_TCP_SESSION_HIJACKED_SERVER_STR \
-    "(stream_tcp) TCP Server possibly hijacked, different Ethernet Address"
+    "TCP Server possibly hijacked, different ethernet address"
 #define STREAM_TCP_DATA_WITHOUT_FLAGS_STR \
-    "(stream_tcp) TCP Data with no TCP Flags set"
+    "TCP data with no TCP flags set"
 #define STREAM_TCP_SMALL_SEGMENT_STR \
-    "(stream_tcp) Consecutive TCP small segments exceeding threshold"
+    "consecutive TCP small segments exceeding threshold"
 #define STREAM_TCP_4WAY_HANDSHAKE_STR \
-    "(stream_tcp) 4-way handshake detected"
+    "4-way handshake detected"
 #define STREAM_TCP_NO_TIMESTAMP_STR \
-    "(stream_tcp) TCP Timestamp is missing"
+    "TCP timestamp is missing"
 #define STREAM_TCP_BAD_RST_STR \
-    "(stream_tcp) Reset outside window"
+    "reset outside window"
 #define STREAM_TCP_BAD_FIN_STR \
-    "(stream_tcp) FIN number is greater than prior FIN"
+    "FIN number is greater than prior FIN"
 #define STREAM_TCP_BAD_ACK_STR \
-    "(stream_tcp) ACK number is greater than prior FIN"
+    "ACK number is greater than prior FIN"
 #define STREAM_TCP_DATA_AFTER_RST_RCVD_STR \
-    "(stream_tcp) Data sent on stream after TCP Reset received"
+    "data sent on stream after TCP Reset received"
 #define STREAM_TCP_WINDOW_SLAM_STR \
-    "(stream_tcp) TCP window closed before receiving data"
+    "TCP window closed before receiving data"
 #define STREAM_TCP_NO_3WHS_STR \
-    "(stream_tcp) TCP session without 3-way handshake"
+    "TCP session without 3-way handshake"
 
 static const char* policies =
     "first | last | bsd | linux | old-linux | windows | win-2003 | vista | "

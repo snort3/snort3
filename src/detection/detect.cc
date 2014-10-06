@@ -301,14 +301,14 @@ int CheckTagging(Packet *p)
  *          0 == no detection
  *
  ***************************************************************************/
-int Detect(Packet * p)
+bool Detect(Packet * p)
 {
     int detected = 0;
     PROFILE_VARS;
 
     if ((p == NULL) || !p->ptrs.ip_api.is_valid())
     {
-        return 0;
+        return false;
     }
 
     if (p->packet_flags & PKT_PASS_RULE)
@@ -316,52 +316,49 @@ int Detect(Packet * p)
         /* If we've already seen a pass rule on this,
          * no need to continue do inspection.
          */
-        return 0;
+        return false;
     }
 
     // FIXIT-M:  Curently, if a rule is found on any IP layer, we
     //          perform the detect routine on the entire packet.
     //          Instead, we should only perform detect on that
     //          layer!!
-    bool proto_found = false;
-    ip::IpApi tmp_api;
-    int8_t curr_layer = p->num_layers - 1;
 
-    while (!proto_found &&
-            layer::set_inner_ip_api(p, tmp_api, curr_layer))
+    int curr_layer = p->num_layers - 1;
+    uint8_t ip_proto; // set in function
+
+    while (p->get_ip_proto_next(curr_layer, ip_proto))
     {
-        if (snort_conf->ip_proto_array[tmp_api.proto()])
-            proto_found = true;
+        if (snort_conf->ip_proto_array[ip_proto])
+        {
+#           ifdef PPM_MGR
+                /*
+                 * Packet Performance Monitoring
+                 * (see if preprocessing took too long)
+                 */
+                if( PPM_PKTS_ENABLED() )
+                {
+                    PPM_GET_TIME();
+                    PPM_PACKET_TEST();
+
+                    if( PPM_PACKET_ABORT_FLAG() )
+                        return false;
+                }
+#           endif /* PPM_MGR */
+
+            /*
+            **  This is where we short circuit so
+            **  that we can do IP checks.
+            */
+            MODULE_PROFILE_START(detectPerfStats);
+            detected = fpEvalPacket(p);
+            MODULE_PROFILE_END(detectPerfStats);
+
+            return detected;
+        }
     }
 
-    if (!proto_found)
-        return 0;
-
-
-#ifdef PPM_MGR
-    /*
-     * Packet Performance Monitoring
-     * (see if preprocessing took too long)
-     */
-    if( PPM_PKTS_ENABLED() )
-    {
-        PPM_GET_TIME();
-        PPM_PACKET_TEST();
-
-        if( PPM_PACKET_ABORT_FLAG() )
-            return 0;
-    }
-#endif
-
-    /*
-    **  This is where we short circuit so
-    **  that we can do IP checks.
-    */
-    MODULE_PROFILE_START(detectPerfStats);
-    detected = fpEvalPacket(p);
-    MODULE_PROFILE_END(detectPerfStats);
-
-    return detected;
+    return false;
 }
 
 int CheckAddrPort(

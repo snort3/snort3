@@ -47,17 +47,17 @@ namespace
 
 static const RuleMap icmp6_rules[] =
 {
-    { DECODE_ICMP6_HDR_TRUNC, "(" CD_ICMP6_NAME ") truncated ICMP6 header" },
-    { DECODE_ICMP6_TYPE_OTHER, "(" CD_ICMP6_NAME ") ICMP6 type not decoded" },
-    { DECODE_ICMP6_DST_MULTICAST, "(" CD_ICMP6_NAME ") ICMP6 packet to multicast address" },
-    { DECODE_ICMPV6_TOO_BIG_BAD_MTU, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 2 (message too big) with MTU field < 1280" },
-    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 1 (destination unreachable) with non-RFC 2463 code" },
-    { DECODE_ICMPV6_SOLICITATION_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 router solicitation packet with a code not equal to 0" },
-    { DECODE_ICMPV6_ADVERT_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 router advertisement packet with a code not equal to 0" },
-    { DECODE_ICMPV6_SOLICITATION_BAD_RESERVED, "(" CD_ICMP6_NAME ") ICMPv6 router solicitation packet with the reserved field not equal to 0" },
-    { DECODE_ICMPV6_ADVERT_BAD_REACHABLE, "(" CD_ICMP6_NAME ") ICMPv6 router advertisement packet with the reachable time field set > 1 hour" },
-    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE, "(" CD_ICMP6_NAME ") ICMPv6 packet of type 1 (destination unreachable) with non-RFC 4443 code" },
-    { DECODE_ICMPV6_NODE_INFO_BAD_CODE, "(" CD_ICMP6_NAME ") ICMPv6 node info query/response packet with a code greater than 2" },
+    { DECODE_ICMP6_HDR_TRUNC, "truncated ICMP6 header" },
+    { DECODE_ICMP6_TYPE_OTHER, "ICMP6 type not decoded" },
+    { DECODE_ICMP6_DST_MULTICAST, "ICMP6 packet to multicast address" },
+    { DECODE_ICMPV6_TOO_BIG_BAD_MTU, "ICMPv6 packet of type 2 (message too big) with MTU field < 1280" },
+    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_2463_CODE, "ICMPv6 packet of type 1 (destination unreachable) with non-RFC 2463 code" },
+    { DECODE_ICMPV6_SOLICITATION_BAD_CODE, "ICMPv6 router solicitation packet with a code not equal to 0" },
+    { DECODE_ICMPV6_ADVERT_BAD_CODE, "ICMPv6 router advertisement packet with a code not equal to 0" },
+    { DECODE_ICMPV6_SOLICITATION_BAD_RESERVED, "ICMPv6 router solicitation packet with the reserved field not equal to 0" },
+    { DECODE_ICMPV6_ADVERT_BAD_REACHABLE, "ICMPv6 router advertisement packet with the reachable time field set > 1 hour" },
+    { DECODE_ICMPV6_UNREACHABLE_NON_RFC_4443_CODE, "ICMPv6 packet of type 1 (destination unreachable) with non-RFC 4443 code" },
+    { DECODE_ICMPV6_NODE_INFO_BAD_CODE, "ICMPv6 node info query/response packet with a code greater than 2" },
     { 0, nullptr }
 };
 
@@ -79,8 +79,9 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
 };
@@ -96,7 +97,7 @@ void Icmp6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 // decode.c::ICMP6
 //--------------------------------------------------------------------
 
-bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if(raw.len < icmp::ICMP6_HEADER_MIN_LEN)
     {
@@ -271,7 +272,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     codec.lyr_len = len;
     codec.proto_bits |= PROTO_BIT__ICMP;
     snort.icmph = reinterpret_cast<const icmp::ICMPHdr*>(icmp6h);
-    snort.set_pkt_type(PktType::ICMP6);
+    snort.set_pkt_type(PktType::ICMP);
     return true;
 }
 
@@ -324,6 +325,14 @@ bool Icmp6Codec::update (Packet* p, Layer* lyr, uint32_t* len)
     }
 
     return true;
+}
+
+
+
+void Icmp6Codec::format(EncodeFlags, const Packet*, Packet* c, Layer* lyr)
+{
+    c->ptrs.icmph = (ICMPHdr*)lyr->start;
+    c->ptrs.set_pkt_type(PktType::ICMP);
 }
 
 //-------------------------------------------------------------------------

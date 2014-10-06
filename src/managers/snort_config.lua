@@ -30,6 +30,7 @@ void close_table(const char*, int);
 bool set_bool(const char*, bool);
 bool set_number(const char*, double);
 bool set_string(const char*, const char*);
+bool set_alias(const char*, const char*);
 ]]
 
 function include(file)
@@ -80,7 +81,26 @@ function snort_set(fqn, key, val)
     end
 end
 
-function snort_config()
-    snort_traverse(_G)
+function load_aliases()
+    for i,v in ipairs(binder) do
+        if ( v.use and type(v.use) == "table" ) then
+            if ( v.use.name and v.use.type ) then
+                ffi.C.set_alias(v.use.name, v.use.type)
+                tab = _G[v.use.name]
+
+                if ( tab ) then
+                    snort_set(nil, v.use.name, _G[v.use.name])
+                end
+            end
+        end
+    end
+end
+
+function snort_config(tab)
+    snort_traverse(tab)
+
+    if ( binder and type(binder) == 'table' ) then
+        load_aliases()
+    end
 end
 

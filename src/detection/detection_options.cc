@@ -478,7 +478,8 @@ int detection_option_node_evaluate(
 
                         if (otn->sigInfo.num_services && check_ports) /* none of the services match */
                         {
-                            DEBUG_WRAP(DebugMessage(DEBUG_DETECT, "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
+                            DEBUG_WRAP(DebugMessage(DEBUG_DETECT, 
+                                "[**] SID %d not matched because of service mismatch (%d!=%d [**]\n",
                                 otn->sigInfo.id,
                                 eval_data->p->application_protocol_ordinal,
                                 otn->sigInfo.services[0].service_ordinal););

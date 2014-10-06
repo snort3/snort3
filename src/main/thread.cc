@@ -135,19 +135,22 @@ void pin_thread_to_cpu(const char* source)
             static THREAD_LOCAL cpu_set_t cpu_set;
 
             if (cpu >= CPU_SETSIZE)
-                FatalError("Maximum CPU value for this Operating System is %d",
+                FatalError("maximum CPU value for this Operating System is %d",
                     CPU_SETSIZE);
 
             CPU_ZERO(&cpu_set);
+
             if (!sched_getaffinity(0, sizeof(cpu_set), &cpu_set))
                 if (!CPU_ISSET(cpu, &cpu_set))
                     FatalError("CPU %d is not part of source %s's and thread "
-                        "%d's CPU set!\n", cpu, source, instance_id);
+                        "%d's CPU set\n", cpu, source, instance_id);
 
             CPU_ZERO(&cpu_set);
             CPU_SET(cpu, &cpu_set);
+
             if (sched_setaffinity(0, sizeof(cpu_set), &cpu_set))
-                FatalError("Unable to pin source %s to CPU %d! %s\n", source, cpu, std::strerror(errno));
+                FatalError("unable to pin source %s to CPU %d: %s\n",
+                    source, cpu, std::strerror(errno));
 
         }
 #       else
@@ -155,8 +158,8 @@ void pin_thread_to_cpu(const char* source)
             static bool warning_printed = false;
             if (!warning_printed)
             {
-                WarningMessage("Thread Pinning / CPU affinity support is currently"
-                    " unsupported for this Operating System");
+                WarningMessage("thread pinning / CPU affinity support is currently"
+                    " unsupported for this operating system");
                 warning_printed = true;
             }
         }
@@ -208,16 +211,13 @@ const char* get_instance_file(std::string& file, const char* name)
         sep = true;
     }
 
-    if ( get_instance_id() || snort_conf->id_zero )
+    if ( (get_instance_max() > 1) || snort_conf->id_zero )
     {
         char id[8];
         snprintf(id, sizeof(id), "%u", get_instance_id());
         file += id;
         sep = true;
     }
-
-    if ( sep )
-        file += '_';
 
     if ( snort_conf->id_subdir )
     {
@@ -228,6 +228,8 @@ const char* get_instance_file(std::string& file, const char* name)
             // FIXIT-J getting random 0750 or 0700 (umask not thread local)?
             mkdir(file.c_str(), 0770);
     }
+    else if ( sep )
+        file += '_';
 
     file += name;
 

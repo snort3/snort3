@@ -71,7 +71,7 @@ public:
 
 
     virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 
@@ -105,7 +105,7 @@ void TrCodec::get_data_link_type(std::vector<int>&v)
 
 
 //void DecodeTRPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
-bool TrCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
 
     const uint32_t cap_len = raw.len;

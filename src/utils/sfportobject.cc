@@ -2459,7 +2459,8 @@ int PortTableConsistencyCheck( PortTable *p )
         }
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,"***\n***Port Table Compiler Consistency Check Phase-I Passed !\n"););
+    DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS,
+        "***\n***Port Table Compiler Consistency Check Phase-I Passed !\n"););
 
 
     /*
@@ -2492,7 +2493,7 @@ int PortTableConsistencyCheck( PortTable *p )
                 case PORT_OBJECT_PORT:
                 if( _po2_include_po_rules( p->pt_port_object[ poi->lport ], ipo  ) )
                 {
-                    FatalError("InputPortObject<->CompositePortObject consistency Check II failed!\n");
+                    FatalError("InputPortObject<->CompositePortObject consistency Check II failed\n");
                 }
                 break;
 
@@ -2505,7 +2506,7 @@ int PortTableConsistencyCheck( PortTable *p )
                         {
                             if( _po2_include_po_rules( p->pt_port_object[ i ], ipo  ) )
                             {
-                                FatalError("InputPortObject<->CompositePortObject consistency Check II failed!\n");
+                                FatalError("InputPortObject<->CompositePortObject consistency Check II failed\n");
                             }
                             lastpo = p->pt_port_object[ i ];
                         }

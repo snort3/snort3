@@ -130,7 +130,7 @@ static inline void* SnortAlloc (unsigned long size)
         return pv;
 
     // FIXIT-M do not FatalError() on runtime allocation failures
-    FatalError("Unable to allocate memory!  (%lu requested)\n", size);
+    FatalError("Unable to allocate memory (%lu requested)\n", size);
 
     return NULL;
 }

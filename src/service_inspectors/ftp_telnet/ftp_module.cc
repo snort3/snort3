@@ -209,23 +209,23 @@ FtpCmd::FtpCmd(std::string& key, std::string& fmt, int num)
 //-------------------------------------------------------------------------
 
 #define FTP_TELNET_CMD_STR                       \
-        "(ftp) TELNET CMD on FTP Command Channel"
+        "TELNET cmd on FTP command channel"
 #define FTP_INVALID_CMD_STR                      \
-        "(ftp) Invalid FTP Command"
+        "invalid FTP command"
 #define FTP_PARAMETER_LENGTH_OVERFLOW_STR        \
-        "(ftp) FTP command parameters were too long"
+        "FTP command parameters were too long"
 #define FTP_MALFORMED_PARAMETER_STR              \
-        "(ftp) FTP command parameters were malformed"
+        "FTP command parameters were malformed"
 #define FTP_PARAMETER_STR_FORMAT_STR             \
-        "(ftp) FTP command parameters contained potential string format"
+        "FTP command parameters contained potential string format"
 #define FTP_RESPONSE_LENGTH_OVERFLOW_STR         \
-        "(ftp) FTP response message was too long"
+        "FTP response message was too long"
 #define FTP_ENCRYPTED_STR                        \
-        "(ftp) FTP traffic encrypted"
+        "FTP traffic encrypted"
 #define FTP_BOUNCE_STR                           \
-        "(ftp) FTP bounce attempt"
+        "FTP bounce attempt"
 #define FTP_EVASIVE_TELNET_CMD_STR               \
-        "(ftp) Evasive (incomplete) TELNET CMD on FTP Command Channel"
+        "evasive (incomplete) TELNET cmd on FTP command channel"
 
 //-------------------------------------------------------------------------
 

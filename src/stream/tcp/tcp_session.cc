@@ -83,6 +83,8 @@
 #include "tcp_module.h"
 #include "stream/stream_splitter.h"
 #include "sfip/sf_ip.h"
+#include "protocols/tcp.h"
+#include "protocols/eth.h"
 
 using namespace tcp;
 
@@ -407,7 +409,7 @@ void s5TcpStreamReassembleRuleOptionCleanup(void *dataPtr);
 
 /* enum for policy names */
 static const char *reassembly_policy_names[] = {
-    "no policy!",
+    "no policy",
     "FIRST",
     "LINUX",
     "BSD",
@@ -2468,7 +2470,7 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     // update stats
     if ( tcpssn->tcp_init )
         tcpStats.trackers_released++;
-    else
+    else if ( tcpssn->lws_init )
         tcpStats.no_pickups++;
 
     Stream5UpdatePerfBaseState(&sfBase, tcpssn->flow, TCP_STATE_CLOSED);
@@ -3081,7 +3083,7 @@ static int AddStreamNode(
                         i, idx, idx->seq, idx->size, idx->next, idx->prev););
 
                 if(st->seg_count < i)
-                    FatalError("Circular list, WTF?\n");
+                    FatalError("Circular list\n");
 
                 idx = idx->next;
             }
@@ -4245,7 +4247,7 @@ static void NewTcpSession(
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "adding TcpSession to lightweight session\n"););
-        lwssn->protocol = p->ptrs.ip_api.proto();
+        lwssn->protocol = p->type();
         tmp->flow = lwssn;
 
         /* New session, previous was marked as reset.  Clear the
@@ -4731,7 +4733,7 @@ static int ProcessTcp(
     STREAM5_DEBUG_WRAP(char *t = NULL; char *l = NULL;)
     PROFILE_VARS;
 
-    if (lwssn->protocol != IPPROTO_TCP)
+    if (lwssn->protocol != PktType::TCP)
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Lightweight session not TCP on TCP packet\n"););
@@ -6579,12 +6581,20 @@ bool TcpSession::setup (Packet*)
     reset();
 
     Inspector* ins = flow->clouseau;
+
     if ( !ins )
         ins = flow->gadget;
-    assert(ins);
 
-    stream.set_splitter(flow, true, ins->get_splitter(true));
-    stream.set_splitter(flow, false, ins->get_splitter(false));
+    if ( ins )
+    {
+        stream.set_splitter(flow, true, ins->get_splitter(true));
+        stream.set_splitter(flow, false, ins->get_splitter(false));
+    }
+    else
+    {
+        stream.set_splitter(flow, true, new AtomSplitter(true));
+        stream.set_splitter(flow, false, new AtomSplitter(false));
+    }
 
     tcpStats.sessions++;
     return true;

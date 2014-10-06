@@ -103,7 +103,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
     {
         if (ScLogVerbose())
         {
-            ErrorMessage("Captured data length < FDDI header length! "
+            ErrorMessage("Captured data length < FDDI header length "
                          "(%d %d bytes)\n", cap_len, dataoff);
             MODULE_PROFILE_END(decodePerfStats);
             return;
@@ -129,7 +129,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
         {
             if (ScLogVerbose())
             {
-                ErrorMessage("Captured data length < FDDI header length! "
+                ErrorMessage("Captured data length < FDDI header length "
                              "(%d %d bytes)\n", cap_len, dataoff);
                 MODULE_PROFILE_END(decodePerfStats);
                 return;
@@ -147,7 +147,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
         {
             if (ScLogVerbose())
             {
-                ErrorMessage("Captured data length < FDDI header length! "
+                ErrorMessage("Captured data length < FDDI header length "
                              "(%d %d bytes)\n", cap_len, dataoff);
                 MODULE_PROFILE_END(decodePerfStats);
                 return;
@@ -167,7 +167,7 @@ void DecodeFDDIPkt(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
         {
             if (ScLogVerbose())
             {
-                ErrorMessage("Captured data length < FDDI header length! "
+                ErrorMessage("Captured data length < FDDI header length "
                              "(%d %d bytes)\n", cap_len, dataoff);
                 MODULE_PROFILE_END(decodePerfStats);
                 return;

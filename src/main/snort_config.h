@@ -160,7 +160,7 @@ struct SnortConfig
     uint8_t enable_esp;
 
     uint8_t num_layers;
-    uint8_t max_ip6_options;
+    uint8_t max_ip6_extensions;
     uint8_t max_ip_layers;
     int pkt_snaplen;
 
@@ -303,7 +303,7 @@ struct SnortConfig
     { return num_layers; }
 
     inline uint8_t get_ip6_maxopts() const
-    { return max_ip6_options; }
+    { return max_ip6_extensions; }
 
     inline uint8_t get_ip_maxlayers() const
     { return max_ip_layers; }

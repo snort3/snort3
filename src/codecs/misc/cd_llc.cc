@@ -50,7 +50,7 @@ public:
     ~LlcCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
@@ -89,7 +89,7 @@ void LlcCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(ETHERNET_LLC);
 }
 
-bool LlcCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < sizeof(EthLlc))
     {

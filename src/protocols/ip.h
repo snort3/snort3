@@ -109,6 +109,10 @@ public:
     inline uint8_t ttl() const
     { return ip4h ? ip4h->get_ttl() : ip6h ? ip6h->get_hop_lim() : 0; }
 
+    /* This is different than the Packet's ip_proto_next field - this
+     * variable hold the first non-ip and non-ipv6 extension protocols,
+     * while proto() returns the next or proto() field of the raw IP
+     * header */
     inline uint8_t proto() const
     { return ip4h ? ip4h->get_proto() : ip6h ? ip6h->get_next() : 0xFF; }
 

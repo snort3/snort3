@@ -64,15 +64,16 @@
 #include "stream/stream_api.h"
 #include "protocols/layer.h"
 #include "protocols/vlan.h"
+#include "protocols/icmp4.h"
 
 using namespace std;
 
-static const char* s_name = "unified2";
+#define S_NAME "unified2"
+#define F_NAME S_NAME "log.u2"
 
 /* ------------------ Data structures --------------------------*/
 typedef struct _Unified2Config
 {
-    string base_filename;
     unsigned int limit;
     int nostamp;
     int mpls_event_types;
@@ -259,22 +260,31 @@ static void _AlertIP4_v2(Packet *p, const char*, Unified2Config *config, Event *
             alertdata.blocked = U2_BLOCKED_FLAG_WDROP;
         }
 
-        if(p->ptrs.ip_api.is_valid())
+        if(p->has_ip())
         {
             const ip::IP4Hdr* const iph = p->ptrs.ip_api.get_ip4h();
             alertdata.ip_source = iph->get_src();
             alertdata.ip_destination = iph->get_dst();
-            alertdata.protocol = GetEventProto(p);
 
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->ptrs.icmph)
+            if (IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                alertdata.protocol = p->ps_proto;
             }
-            else if (!IsPortscanPacket(p))
+            else
             {
-                alertdata.sport_itype = htons(p->ptrs.sp);
-                alertdata.dport_icode = htons(p->ptrs.dp);
+                alertdata.protocol = p->get_ip_proto_next();
+
+                if ( p->type() == PktType::ICMP)
+                {
+                    // If PktType == ICMP, icmph is set
+                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                }
+                else if (!IsPortscanPacket(p))
+                {
+                    alertdata.sport_itype = htons(p->ptrs.sp);
+                    alertdata.dport_icode = htons(p->ptrs.dp);
+                }
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
@@ -367,17 +377,25 @@ static void _AlertIP6_v2(Packet *p, const char*, Unified2Config *config, Event *
             ip = p->ptrs.ip_api.get_dst();
             alertdata.ip_destination = *(struct in6_addr*)ip->ip32;
 
-            alertdata.protocol = GetEventProto(p);
-
-            if ((alertdata.protocol == IPPROTO_ICMP) && p->ptrs.icmph)
+            if (IsPortscanPacket(p))
             {
-                alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                alertdata.protocol = p->ps_proto;
             }
-            else if (!IsPortscanPacket(p))
+            else
             {
-                alertdata.sport_itype = htons(p->ptrs.sp);
-                alertdata.dport_icode = htons(p->ptrs.dp);
+                alertdata.protocol = p->get_ip_proto_next();
+
+                if ( p->type() == PktType::ICMP)
+                {
+                    // If PktType == ICMP, icmph is set
+                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
+                }
+                else if (!IsPortscanPacket(p))
+                {
+                    alertdata.sport_itype = htons(p->ptrs.sp);
+                    alertdata.dport_icode = htons(p->ptrs.dp);
+                }
             }
 
             if((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
@@ -923,7 +941,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                         ((ffstatus = fflush(u2.stream)) == 0))
                     {
-                        ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                        ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                      __FILE__, __LINE__);
                         error = 0;
                         break;
@@ -931,7 +949,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                 }
                 else if ((ffstatus = fflush(u2.stream)) == 0)
                 {
-                    ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                    ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                  __FILE__, __LINE__);
                     error = 0;
                     break;
@@ -975,7 +993,7 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                         ((ffstatus = fflush(u2.stream)) == 0))
                     {
-                        ErrorMessage("%s(%d) Write to unified2 file succeeded!\n",
+                        ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
                                      __FILE__, __LINE__);
                         error = 0;
                         break;
@@ -1030,9 +1048,6 @@ static void Unified2Write(uint8_t *buf, uint32_t buf_len, Unified2Config *config
 
 static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "unified2.log",
-      "name of alert file" },
-
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
 
@@ -1057,13 +1072,12 @@ static const char* s_help =
 class U2Module : public Module
 {
 public:
-    U2Module() : Module(s_name, s_help, s_params) { };
+    U2Module() : Module(S_NAME, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
 public:
-    string file;
     unsigned limit;
     unsigned units;
     bool nostamp;
@@ -1073,10 +1087,7 @@ public:
 
 bool U2Module::set(const char*, Value& v, SnortConfig*)
 {
-   if ( v.is("file") )
-        file = v.get_string();
-
-    else if ( v.is("limit") )
+    if ( v.is("limit") )
         limit = v.get_long();
 
     else if ( v.is("units") )
@@ -1099,7 +1110,6 @@ bool U2Module::set(const char*, Value& v, SnortConfig*)
 
 bool U2Module::begin(const char*, int, SnortConfig*)
 {
-    file = "unified2.log";
     limit = 0;
     units = 0;
     nostamp = ScNoOutputTimestamp();
@@ -1136,7 +1146,6 @@ private:
 
 U2Logger::U2Logger(U2Module* m)
 {
-    config.base_filename = m->file;
     config.limit = m->limit;
     config.nostamp = m->nostamp;
     config.mpls_event_types = m->mpls;
@@ -1151,7 +1160,7 @@ void U2Logger::open()
     int status;
 
     std::string name;
-    get_instance_file(name, config.base_filename.c_str());
+    get_instance_file(name, F_NAME);
 
     status = SnortSnprintf(
         u2.filepath, sizeof(u2.filepath), "%s", name.c_str());
@@ -1250,7 +1259,7 @@ static LogApi u2_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,

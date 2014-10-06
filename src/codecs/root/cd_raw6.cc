@@ -41,7 +41,7 @@ public:
     Raw6Codec() : Codec(CD_RAW6_NAME){};
     ~Raw6Codec() {};
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_data_link_type(std::vector<int>&);
 
 };
@@ -51,7 +51,7 @@ public:
 
 
 // raw packets are predetermined to be ip4 (above) or ip6 (below) by the DLT
-bool Raw6Codec::decode(const RawData&, CodecData& data, SnortData&)
+bool Raw6Codec::decode(const RawData&, CodecData& data, DecodeData&)
 {
     data.next_prot_id = ETHERTYPE_IPV6;
     return true;

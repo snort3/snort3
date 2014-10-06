@@ -156,7 +156,7 @@ inline bool ExpectKey::set(
         port2 = cliPort;
         reverse = true;
     }
-    protocol = (uint32_t)proto;
+    protocol = static_cast<uint32_t>(proto);
     return reverse;
 }
 
@@ -392,7 +392,7 @@ bool ExpectCache::is_expected(Packet* p)
     const sfip_t *dstIP = p->ptrs.ip_api.get_dst();
 
     ExpectKey key;
-    bool reversed_key = key.set(dstIP, p->ptrs.dp, srcIP, p->ptrs.sp, p->ptrs.ip_api.proto());
+    bool reversed_key = key.set(dstIP, p->ptrs.dp, srcIP, p->ptrs.sp, p->get_ip_proto_next());
 
     uint16_t port1;
     uint16_t port2;

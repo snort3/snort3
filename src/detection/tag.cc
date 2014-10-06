@@ -57,7 +57,7 @@
 /*  D A T A   S T R U C T U R E S  **********************************/
 /**Key used for identifying a session or host.
  */
-typedef struct _tagFlowKey
+struct tTagFlowKey
 {
     sfip_t sip;  ///source IP address
     sfip_t dip;  ///destination IP address
@@ -66,17 +66,14 @@ typedef struct _tagFlowKey
     uint16_t sp; ///source port
     uint16_t dp; ///destination port
 
-} tTagFlowKey;
+};
 
 /**Node identifying a session or host based tagging.
  */
-typedef struct _TagNode
+struct TagNode
 {
     /**key identifying a session or host. */
     tTagFlowKey key;
-
-    /** transport proto */
-    uint8_t proto;
 
     /** number of packets/seconds/bytes to tag for */
     int seconds;
@@ -103,7 +100,7 @@ typedef struct _TagNode
     /** for later expansion... */
     OptTreeNode *otn;
 
-} TagNode;
+};
 
 /*  G L O B A L S  **************************************************/
 static THREAD_LOCAL SFXHASH *host_tag_cache_ptr = nullptr;
@@ -372,7 +369,6 @@ static void AddTagNode(Packet *p, TagData *tag, int mode, uint32_t now,
     sfip_copy(idx->key.dip, p->ptrs.ip_api.get_dst());
     idx->key.sp = p->ptrs.sp;
     idx->key.dp = p->ptrs.dp;
-    idx->proto = p->ptrs.ip_api.proto();
     idx->metric = tag->tag_metric;
     idx->last_access = now;
     idx->event_id = event_id;

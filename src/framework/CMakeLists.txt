@@ -6,6 +6,7 @@ set (FRAMEWORK_INCLUDES
     codec.h
     counts.h
     cursor.h
+    decode_data.h
     logger.h
     inspector.h
     ips_option.h

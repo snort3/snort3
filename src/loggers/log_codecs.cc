@@ -39,6 +39,7 @@
 
 
 static THREAD_LOCAL TextLog* test_file = nullptr;
+#define F_NAME "dump.txt"
 
 //-------------------------------------------------------------------------
 // module stuff
@@ -48,11 +49,12 @@ static THREAD_LOCAL TextLog* test_file = nullptr;
 #define LOG_CODECS_HELP "log protocols in packet by layer"
 
 static const unsigned ALERT_FLAG_MSG = 0x01;
+static const unsigned ALERT_FLAG_FILE = 0x02;
 
 static const Parameter ex_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, "stdout",
-      "name of tsv alert file or 'stdout'" },
+    { "file", Parameter::PT_BOOL, nullptr, "stdout",
+      "output to " F_NAME " instead of stdout" },
 
     { "msg", Parameter::PT_BOOL, nullptr, "false",
       "include alert msg" },
@@ -71,7 +73,6 @@ public:
     bool begin(const char*, int, SnortConfig*);
 
 public:
-    std::string file;
     uint8_t flags;
 };
 
@@ -80,8 +81,10 @@ public:
 bool LogCodecModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
-
+    {
+        if ( v.get_bool() )
+            flags |= ALERT_FLAG_FILE;
+    }
     else if ( v.is("msg") )
     {
         if ( v.get_bool() )
@@ -96,7 +99,6 @@ bool LogCodecModule::set(const char*, Value& v, SnortConfig*)
 
 bool LogCodecModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
     flags = 0;
     return true;
 }
@@ -126,7 +128,6 @@ public:
 
 CodecLogger::CodecLogger(LogCodecModule* m)
 {
-    file = m->file;
     flags = m->flags;
 }
 
@@ -157,16 +158,8 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
     }
 
     TextLog_NewLine(test_file);
-    TextLog_Print(test_file, " **** DUMPING PACKET ****");
-    TextLog_NewLine(test_file);
     PacketManager::log_protocols(test_file, p);
     TextLog_NewLine(test_file);
-    TextLog_Print(test_file, " **** FINISHED DUMPING ****");
-    TextLog_NewLine(test_file);
-    TextLog_NewLine(test_file);
-    TextLog_NewLine(test_file);
-    TextLog_NewLine(test_file);
-
 }
 
 //-------------------------------------------------------------------------

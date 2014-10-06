@@ -42,7 +42,7 @@ extern const BaseApi* alert_syslog;
 extern const BaseApi* alert_test;
 extern const BaseApi* alert_unix_sock;
 extern const BaseApi* log_null;
-extern const BaseApi* log_tcpdump;
+extern const BaseApi* log_pcap;
 extern const BaseApi* eh_unified2;
 #endif
 
@@ -62,7 +62,7 @@ const BaseApi* loggers[] =
     alert_unix_sock,
     // loggers
     log_null,
-    log_tcpdump,
+    log_pcap,
 
     // both
     eh_unified2,

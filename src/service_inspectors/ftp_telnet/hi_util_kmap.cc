@@ -56,7 +56,7 @@
 
 #include "hi_util_xmalloc.h"
 
-//#define MEMASSERT(p) if(!p){printf("KMAP-No Memory: File: %s Line:%d!\n",__FILE__,__LINE__);exit(0);}
+//#define MEMASSERT(p) if(!p){printf("KMAP-No Memory: File: %s Line:%d\n",__FILE__,__LINE__);exit(0);}
 #define MEMASSERT(p)
 
 

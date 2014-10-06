@@ -44,6 +44,8 @@
 #include "protocols/vlan.h"
 #include "protocols/ip.h"
 #include "protocols/icmp4.h"
+#include "protocols/udp.h"
+#include "protocols/tcp.h"
 #include "sfip/sf_ip.h"
 
 THREAD_LOCAL SessionStats icmpStats;
@@ -91,7 +93,7 @@ static int ProcessIcmpUnreach(Packet *p)
     /* Get IP/TCP/UDP/ICMP session from original protocol/port info
      * embedded in the ICMP Unreach message.
      */
-    skey.protocol = iph.proto();
+    skey.protocol = p->get_ip_proto_next();
     src = iph.get_src();
     dst = iph.get_dst();
 
@@ -152,19 +154,21 @@ static int ProcessIcmpUnreach(Packet *p)
     else
         skey.vlan_tag = 0;
 
-    switch (skey.protocol)
+    switch (p->type())
     {
-    case IPPROTO_TCP:
+    case PktType::TCP:
         /* Lookup a TCP session */
         ssn = Stream::get_session(&skey);
         break;
-    case IPPROTO_UDP:
+    case PktType::UDP:
         /* Lookup a UDP session */
         ssn = Stream::get_session(&skey);
         break;
-    case IPPROTO_ICMP:
+    case PktType::ICMP:
         /* Lookup a ICMP session */
         ssn = Stream::get_session(&skey);
+        break;
+    default:
         break;
     }
 

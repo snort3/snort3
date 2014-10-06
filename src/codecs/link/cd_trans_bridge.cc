@@ -48,7 +48,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     
 };
 
@@ -77,7 +77,7 @@ void TransbridgeCodec::get_protocol_ids(std::vector<uint16_t>& v)
  * convention needed to be changed and the stuff at the beginning
  * wasn't needed since we are already deep into the packet
  */
-bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if(raw.len < eth::ETH_HEADER_LEN)
     {

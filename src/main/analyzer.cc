@@ -99,7 +99,7 @@ bool Analyzer::handle(AnalyzerCommand ac)
         break;
 
     case AC_ROTATE:
-        snort_rotate();
+        snort_thread_rotate();
         command = AC_NONE;
         break;
 
@@ -138,7 +138,7 @@ void Analyzer::analyze()
         // conditions; that means the idle processing may not be useful
         // or that we need a hook to do things periodically even when
         // traffic is available
-        snort_idle();
+        snort_thread_idle();
     }
 }
 

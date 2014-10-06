@@ -54,33 +54,33 @@ namespace{
 
 static const RuleMap ipv4_rules[] =
 {
-    { DECODE_NOT_IPV4_DGRAM, "(" CD_IPV4_NAME ") Not IPv4 datagram" },
-    { DECODE_IPV4_INVALID_HEADER_LEN, "(" CD_IPV4_NAME ") hlen < IP_HEADER_LEN" },
-    { DECODE_IPV4_DGRAM_LT_IPHDR, "(" CD_IPV4_NAME ") IP dgm len < IP Hdr len" },
-    { DECODE_IPV4OPT_BADLEN, "(" CD_IPV4_NAME ") Ipv4 Options found with bad lengths" },
-    { DECODE_IPV4OPT_TRUNCATED, "(" CD_IPV4_NAME ") Truncated Ipv4 Options" },
-    { DECODE_IPV4_DGRAM_GT_CAPLEN, "(" CD_IPV4_NAME ") IP dgm len > captured len" },
-    { DECODE_ZERO_TTL, "(" CD_IPV4_NAME ") IPV4 packet with zero TTL" },
-    { DECODE_BAD_FRAGBITS, "(" CD_IPV4_NAME ") IPV4 packet with bad frag bits (Both MF and DF set)" },
-    { DECODE_IP4_LEN_OFFSET, "(" CD_IPV4_NAME ") IPV4 packet frag offset + length exceed maximum" },
-    { DECODE_IP4_SRC_THIS_NET, "(" CD_IPV4_NAME ") IPV4 packet from 'current net' source address" },
-    { DECODE_IP4_DST_THIS_NET, "(" CD_IPV4_NAME ") IPV4 packet to 'current net' dest address" },
-    { DECODE_IP4_SRC_MULTICAST, "(" CD_IPV4_NAME ") IPV4 packet from multicast source address" },
-    { DECODE_IP4_SRC_RESERVED, "(" CD_IPV4_NAME ") IPV4 packet from reserved source address" },
-    { DECODE_IP4_DST_RESERVED, "(" CD_IPV4_NAME ") IPV4 packet to reserved dest address" },
-    { DECODE_IP4_SRC_BROADCAST, "(" CD_IPV4_NAME ") IPV4 packet from broadcast source address" },
-    { DECODE_IP4_DST_BROADCAST, "(" CD_IPV4_NAME ") IPV4 packet to broadcast dest address" },
-    { DECODE_IP4_MIN_TTL, "(" CD_IPV4_NAME ") IPV4 packet below TTL limit" },
-    { DECODE_IP4_DF_OFFSET, "(" CD_IPV4_NAME ") IPV4 packet both DF and offset set" },
-    { DECODE_IP_RESERVED_FRAG_BIT, "(" CD_IPV4_NAME ") BAD-TRAFFIC IP reserved bit set" },
-    { DECODE_IP_UNASSIGNED_PROTO, "(" CD_IPV4_NAME ") BAD-TRAFFIC Unassigned/Reserved IP protocol" },
-    { DECODE_IP_BAD_PROTO, "(" CD_IPV4_NAME ") BAD-TRAFFIC Bad IP protocol" },
-    { DECODE_IP_OPTION_SET, "(" CD_IPV4_NAME ") MISC IP option set" },
-    { DECODE_IP_MULTIPLE_ENCAPSULATION, "(" CD_IPV4_NAME ") Two or more IP (v4 and/or v6) encapsulation layers present" },
-    { DECODE_ZERO_LENGTH_FRAG, "(" CD_IPV4_NAME ") fragment with zero length" },
-    { DECODE_IP4_HDR_TRUNC, "(" CD_IPV4_NAME ") truncated IP4 header" },
-    { DECODE_BAD_TRAFFIC_LOOPBACK, "(" CD_IPV4_NAME ") Bad Traffic Loopback IP" },
-    { DECODE_BAD_TRAFFIC_SAME_SRCDST, "(" CD_IPV4_NAME ") Bad Traffic Same Src/Dst IP" },
+    { DECODE_NOT_IPV4_DGRAM, "Not IPv4 datagram" },
+    { DECODE_IPV4_INVALID_HEADER_LEN, "hlen < minimum" },
+    { DECODE_IPV4_DGRAM_LT_IPHDR, "IP dgm len < IP Hdr len" },
+    { DECODE_IPV4OPT_BADLEN, "Ipv4 Options found with bad lengths" },
+    { DECODE_IPV4OPT_TRUNCATED, "Truncated Ipv4 Options" },
+    { DECODE_IPV4_DGRAM_GT_CAPLEN, "IP dgm len > captured len" },
+    { DECODE_ZERO_TTL, "IPV4 packet with zero TTL" },
+    { DECODE_BAD_FRAGBITS, "IPV4 packet with bad frag bits (both MF and DF set)" },
+    { DECODE_IP4_LEN_OFFSET, "IPV4 packet frag offset + length exceed maximum" },
+    { DECODE_IP4_SRC_THIS_NET, "IPV4 packet from 'current net' source address" },
+    { DECODE_IP4_DST_THIS_NET, "IPV4 packet to 'current net' dest address" },
+    { DECODE_IP4_SRC_MULTICAST, "IPV4 packet from multicast source address" },
+    { DECODE_IP4_SRC_RESERVED, "IPV4 packet from reserved source address" },
+    { DECODE_IP4_DST_RESERVED, "IPV4 packet to reserved dest address" },
+    { DECODE_IP4_SRC_BROADCAST, "IPV4 packet from broadcast source address" },
+    { DECODE_IP4_DST_BROADCAST, "IPV4 packet to broadcast dest address" },
+    { DECODE_IP4_MIN_TTL, "IPV4 packet below TTL limit" },
+    { DECODE_IP4_DF_OFFSET, "IPV4 packet both DF and offset set" },
+    { DECODE_IP_RESERVED_FRAG_BIT, "BAD-TRAFFIC IP reserved bit set" },
+    { DECODE_IP_UNASSIGNED_PROTO, "BAD-TRAFFIC unassigned/reserved IP protocol" },
+    { DECODE_IP_BAD_PROTO, "BAD-TRAFFIC bad IP protocol" },
+    { DECODE_IP_OPTION_SET, "MISC IP option set" },
+    { DECODE_IP_MULTIPLE_ENCAPSULATION, "two or more IP (v4 and/or v6) encapsulation layers present" },
+    { DECODE_ZERO_LENGTH_FRAG, "fragment with zero length" },
+    { DECODE_IP4_HDR_TRUNC, "truncated IP4 header" },
+    { DECODE_BAD_TRAFFIC_LOOPBACK, "bad traffic loopback IP" },
+    { DECODE_BAD_TRAFFIC_SAME_SRCDST, "bad traffic same src/dst IP" },
     { 0, nullptr }
 };
 
@@ -100,7 +100,7 @@ public:
     ~Ipv4Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
@@ -135,7 +135,7 @@ void Ipv4Codec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     uint32_t ip_len; /* length from the start of the ip hdr to the pkt end */
     uint16_t hlen;  /* ip header length */
@@ -314,7 +314,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
     snort.set_pkt_type(PktType::IP);
     codec.proto_bits |= PROTO_BIT__IP;
     IPMiscTests(iph, codec, ip::IP4_HEADER_LEN + ip_opt_len);
-    codec.lyr_len = hlen;
+    codec.lyr_len = hlen - codec.invalid_bytes;
 
 
     /* if this packet isn't a fragment
@@ -733,6 +733,7 @@ void Ipv4Codec::format(EncodeFlags f, const Packet* p, Packet* c, Layer* lyr)
     }
 
     c->ptrs.ip_api.set(ch);
+    c->ptrs.set_pkt_type(PktType::IP);
 }
 
 //-------------------------------------------------------------------------

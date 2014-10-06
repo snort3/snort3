@@ -160,16 +160,18 @@ int16_t GetProtocolReference(Packet *p)
             }
         }
 
-        switch (p->ptrs.ip_api.proto())
+        switch (p->type())
         {
-        case IPPROTO_TCP:
+        case PktType::TCP:
             ipprotocol = protocolReferenceTCP;
             break;
-        case IPPROTO_UDP:
+        case PktType::UDP:
             ipprotocol = protocolReferenceUDP;
             break;
-        case IPPROTO_ICMP:
+        case PktType::ICMP:
             ipprotocol = protocolReferenceICMP;
+            break;
+        default: /* so compiler doesn't complain about unhandled cases */
             break;
         }
 

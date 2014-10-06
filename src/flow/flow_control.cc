@@ -38,6 +38,10 @@
 #include "protocols/vlan.h"
 #include "managers/inspector_manager.h"
 #include "sfip/sf_ip.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 
 FlowControl::FlowControl()
 {
@@ -66,15 +70,16 @@ static THREAD_LOCAL PegCount udp_count = 0;
 static THREAD_LOCAL PegCount icmp_count = 0;
 static THREAD_LOCAL PegCount ip_count = 0;
 
-PegCount FlowControl::get_flow_count(int proto)
+PegCount FlowControl::get_flow_count(uint8_t proto)
 {
-    switch ( proto ) {
+    switch ( proto )
+    {
     case IPPROTO_TCP:  return tcp_count;
     case IPPROTO_UDP:  return udp_count;
     case IPPROTO_ICMP: return icmp_count;
     case IPPROTO_IP:   return ip_count;
+    default:            return 0;
     }
-    return 0;
 }
 
 void FlowControl::clear_flow_counts()
@@ -87,15 +92,16 @@ void FlowControl::clear_flow_counts()
 // cache foo
 //-------------------------------------------------------------------------
 
-inline FlowCache* FlowControl::get_cache (int proto)
+inline FlowCache* FlowControl::get_cache (uint8_t proto)
 {
-    switch ( proto ) {
-    case IPPROTO_TCP:  return tcp_cache;
-    case IPPROTO_UDP:  return udp_cache;
-    case IPPROTO_ICMP: return icmp_cache;
-    case IPPROTO_IP:   return ip_cache;
+    switch ( proto )
+    {
+    case IPPROTO_TCP:    return tcp_cache;
+    case IPPROTO_UDP:    return udp_cache;
+    case IPPROTO_ICMP:   return icmp_cache;
+    case IPPROTO_IP:     return ip_cache;
+    default:              return nullptr;
     }
-    return NULL;
 }
 
 Flow* FlowControl::find_flow (const FlowKey* key)
@@ -135,13 +141,13 @@ void FlowControl::delete_flow (const FlowKey* key)
 
 void FlowControl::delete_flow (Flow* flow, const char* why)
 {
-    FlowCache* cache = get_cache(flow->protocol);
+    FlowCache* cache = get_cache(flow->ip_proto);
 
     if ( cache )
         cache->release(flow, why);
 }
 
-void FlowControl::purge_flows (int proto)
+void FlowControl::purge_flows (uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -149,7 +155,7 @@ void FlowControl::purge_flows (int proto)
         cache->purge();
 }
 
-void FlowControl::prune_flows (int proto, Packet* p)
+void FlowControl::prune_flows (uint8_t proto, Packet* p)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -183,7 +189,7 @@ void FlowControl::timeout_flows(uint32_t flowCount, time_t cur_time)
     Active_Resume();
 }
 
-uint32_t FlowControl::max_flows(int proto)
+uint32_t FlowControl::max_flows(uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -193,7 +199,7 @@ uint32_t FlowControl::max_flows(int proto)
     return 0;
 }
 
-void FlowControl::get_prunes (int proto, PegCount& prunes)
+void FlowControl::get_prunes (uint8_t proto, PegCount& prunes)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -201,7 +207,7 @@ void FlowControl::get_prunes (int proto, PegCount& prunes)
         prunes = cache->get_prunes();
 }
 
-void FlowControl::reset_prunes (int proto)
+void FlowControl::reset_prunes (uint8_t proto)
 {
     FlowCache* cache = get_cache(proto);
 
@@ -216,10 +222,10 @@ void FlowControl::reset_prunes (int proto)
 void FlowControl::set_key(FlowKey* key, Packet* p)
 {
     const ip::IpApi& ip_api = p->ptrs.ip_api;
-    uint8_t proto = ip_api.proto();
     uint32_t mplsId;
     uint16_t vlanId;
     uint16_t addressSpaceId;
+    uint8_t proto = p->get_ip_proto_next();
 
     if ( p->proto_bits & PROTO_BIT__VLAN )
         vlanId = layer::get_vlan_layer(p)->vid();
@@ -242,7 +248,7 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
         key->init(ip_api.get_src(), ip_api.get_dst(), ip_api.id(),
             proto, vlanId, mplsId, addressSpaceId);
     }
-    else if ((proto == IPPROTO_ICMP) || (proto == IPPROTO_ICMPV6))
+    else if (proto == IPPROTO_ICMP)
     {
         key->init(ip_api.get_src(), p->ptrs.icmph->type, ip_api.get_dst(), 0,
             proto, vlanId, mplsId, addressSpaceId);
@@ -250,8 +256,9 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     else
     {
         key->init(ip_api.get_src(), p->ptrs.sp, ip_api.get_dst(), p->ptrs.dp,
-            proto, vlanId, mplsId, addressSpaceId);
+                  proto, vlanId, mplsId, addressSpaceId);
     }
+
 }
 
 static bool is_bidirectional(const Flow* flow)
@@ -308,10 +315,10 @@ static void init_roles_udp(Packet* p, Flow* flow)
 
 static void init_roles(Packet* p, Flow* flow)
 {
-    if ( flow->protocol == IPPROTO_TCP )
+    if ( flow->protocol == PktType::TCP )
         init_roles_tcp(p, flow);
 
-    else if ( flow->protocol == IPPROTO_UDP )
+    else if ( flow->protocol == PktType::UDP )
         init_roles_udp(p, flow);
 }
 
@@ -361,6 +368,8 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
         // now process
 
     case 4: // inspect
+        assert(flow->ssn_client);
+        assert(flow->ssn_server);
         flow->session->process(p);
         break;
     }
@@ -389,7 +398,7 @@ void FlowControl::init_tcp(
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_TCP);
+        Flow* flow = new Flow(PktType::TCP);
         flow->session = get_ssn(flow);
         tcp_cache->push(flow);
     }
@@ -421,7 +430,7 @@ void FlowControl::init_udp(
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_UDP);
+        Flow* flow = new Flow(PktType::UDP);
         flow->session = get_ssn(flow);
         udp_cache->push(flow);
     }
@@ -453,7 +462,7 @@ void FlowControl::init_icmp(
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_ICMP);
+        Flow* flow = new Flow(PktType::ICMP);
         flow->session = get_ssn(flow);
         icmp_cache->push(flow);
     }
@@ -486,7 +495,7 @@ void FlowControl::init_ip(
 
     for ( unsigned i = 0; i < fc.max_sessions; ++i )
     {
-        Flow* flow = new Flow(IPPROTO_IP);
+        Flow* flow = new Flow(PktType::IP);
         flow->session = get_ssn(flow);
         ip_cache->push(flow);
     }

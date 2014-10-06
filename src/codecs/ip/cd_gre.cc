@@ -39,12 +39,12 @@ namespace
 
 static const RuleMap gre_rules[] =
 {
-    { DECODE_GRE_DGRAM_LT_GREHDR, "(" CD_GRE_NAME ") GRE header length > payload length" },
-    { DECODE_GRE_MULTIPLE_ENCAPSULATION, "(" CD_GRE_NAME ") Multiple encapsulations in packet" },
-    { DECODE_GRE_INVALID_VERSION, "(" CD_GRE_NAME ") Invalid GRE version" },
-    { DECODE_GRE_INVALID_HEADER, "(" CD_GRE_NAME ") Invalid GRE header" },
-    { DECODE_GRE_V1_INVALID_HEADER, "(" CD_GRE_NAME ") Invalid GRE v.1 PPTP header" },
-    { DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR, "(" CD_GRE_NAME ") GRE Trans header length > payload length" },
+    { DECODE_GRE_DGRAM_LT_GREHDR, "GRE header length > payload length" },
+    { DECODE_GRE_MULTIPLE_ENCAPSULATION, "multiple encapsulations in packet" },
+    { DECODE_GRE_INVALID_VERSION, "invalid GRE version" },
+    { DECODE_GRE_INVALID_HEADER, "invalid GRE header" },
+    { DECODE_GRE_V1_INVALID_HEADER, "invalid GRE v.1 PPTP header" },
+    { DECODE_GRE_TRANS_DGRAM_LT_TRANSHDR, "GRE trans header length > payload length" },
     { 0, nullptr }
 };
 
@@ -64,7 +64,7 @@ public:
     ~GreCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
      void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
 };
@@ -111,7 +111,7 @@ void GreCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Notes: see RFCs 1701, 2784 and 2637
  */
-bool GreCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < GRE_HEADER_LEN)
     {

@@ -436,6 +436,7 @@ void InitGroups(int user_id, int group_id)
 
 //-------------------------------------------------------------------------
 
+// FIXIT-L  This is a duplicate of PacketManager::get_proto_name().0
 void InitProtoNames(void)
 {
     int i;
@@ -762,14 +763,14 @@ char * SnortStrdup(const char *str)
 
     if (!str)
     {
-        FatalError("Unable to duplicate string: NULL!\n");
+        FatalError("Unable to duplicate string: NULL\n");
     }
 
     copy = strdup(str);
 
     if (copy == NULL)
     {
-        FatalError("Unable to duplicate string: %s!\n", str);
+        FatalError("Unable to duplicate string: %s\n", str);
     }
 
     return copy;

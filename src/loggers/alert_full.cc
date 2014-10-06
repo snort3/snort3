@@ -64,7 +64,8 @@ static THREAD_LOCAL TextLog* full_log = nullptr;
 
 using namespace std;
 
-static const char* s_name = "alert_full";
+#define S_NAME "alert_full"
+#define F_NAME S_NAME ".txt"
 
 //-------------------------------------------------------------------------
 // module stuff
@@ -72,8 +73,8 @@ static const char* s_name = "alert_full";
 
 static const Parameter s_params[] =
 {
-    { "file", Parameter::PT_STRING, nullptr, nullptr,
-      "name of alert file" },
+    { "file", Parameter::PT_BOOL, nullptr, "false",
+      "output to " F_NAME " instread of stdout" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },
@@ -90,13 +91,13 @@ static const char* s_help =
 class FullModule : public Module
 {
 public:
-    FullModule() : Module(s_name, s_help, s_params) { };
+    FullModule() : Module(S_NAME, s_help, s_params) { };
     bool set(const char*, Value&, SnortConfig*);
     bool begin(const char*, int, SnortConfig*);
     bool end(const char*, int, SnortConfig*);
 
 public:
-    string file;
+    bool file;
     unsigned long limit;
     unsigned units;
 };
@@ -104,7 +105,7 @@ public:
 bool FullModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("file") )
-        file = v.get_string();
+        file = v.get_bool();
 
     else if ( v.is("limit") )
         limit = v.get_long();
@@ -120,7 +121,7 @@ bool FullModule::set(const char*, Value& v, SnortConfig*)
 
 bool FullModule::begin(const char*, int, SnortConfig*)
 {
-    file = "stdout";
+    file = false;
     limit = 0;
     units = 0;
     return true;
@@ -154,7 +155,7 @@ private:
 
 FullLogger::FullLogger(FullModule* m)
 {
-    file = m->file;
+    file = m->file ? F_NAME : "stdout";
     limit = m->limit;
 }
 
@@ -222,22 +223,22 @@ void FullLogger::alert(Packet *p, const char *msg, Event *event)
         /* if this isn't a fragment, print the other header info */
         if(!(p->ptrs.decode_flags & DECODE_FRAG))
         {
-            switch(p->ptrs.ip_api.proto())
+            switch(p->type())
             {
-                case IPPROTO_TCP:
-                   LogTCPHeader(full_log, p);
-                    break;
+            case PktType::TCP:
+               LogTCPHeader(full_log, p);
+                break;
 
-                case IPPROTO_UDP:
-                   LogUDPHeader(full_log, p);
-                    break;
+            case PktType::UDP:
+               LogUDPHeader(full_log, p);
+                break;
 
-                case IPPROTO_ICMP:
-                   LogICMPHeader(full_log, p);
-                    break;
+            case PktType::ICMP:
+               LogICMPHeader(full_log, p);
+                break;
 
-                default:
-                    break;
+            default:
+                break;
             }
         }
         LogXrefs(full_log, event, 1);
@@ -271,7 +272,7 @@ static LogApi full_api
 {
     {
         PT_LOGGER,
-        s_name,
+        S_NAME,
         s_help,
         LOGAPI_PLUGIN_V0,
         0,

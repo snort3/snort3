@@ -35,6 +35,8 @@
 #include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 #include "stream/stream.h"
 
 typedef enum {

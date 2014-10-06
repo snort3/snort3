@@ -47,7 +47,7 @@ public:
     ~Ipv6RoutingCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 
     virtual void get_protocol_ids(std::vector<uint16_t>&);    
 };
@@ -78,7 +78,7 @@ struct IP6Route0
 } // namespace
 
 
-bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool Ipv6RoutingCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const IP6Route* const rte = reinterpret_cast<const IP6Route *>(raw.data);
 

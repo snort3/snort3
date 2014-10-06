@@ -262,7 +262,7 @@ void Telnet::show(SnortConfig*)
 void Telnet::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsTCP(p) && p->dsize && p->data);
+    assert(p->is_tcp() && p->dsize && p->data);
 
     ++tnstats.total_packets;
     snort_telnet(config, p);
@@ -307,7 +307,7 @@ const InspectApi tn_api =
         mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "telnet",
     tn_init,

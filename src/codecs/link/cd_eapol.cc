@@ -39,9 +39,9 @@ namespace
 
 static const RuleMap eapol_rules[] =
 {
-    { DECODE_EAPOL_TRUNCATED, "(" CD_EAPOL_NAME ") Truncated EAP Header" },
-    { DECODE_EAPKEY_TRUNCATED, "(" CD_EAPOL_NAME ") EAP Key Truncated" },
-    { DECODE_EAP_TRUNCATED, "(" CD_EAPOL_NAME ") EAP Header Truncated" },
+    { DECODE_EAPOL_TRUNCATED, "truncated EAP header" },
+    { DECODE_EAPKEY_TRUNCATED, "EAP key truncated" },
+    { DECODE_EAP_TRUNCATED, "EAP header truncated" },
     { 0, nullptr }
 };
 
@@ -61,7 +61,7 @@ public:
     ~EapolCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_protocol_ids(std::vector<uint16_t>&);
 };
 
@@ -111,7 +111,7 @@ void DecodeEapolKey(const RawData& raw, const CodecData& codec)
  ************** main codec functions  ************
  *************************************************/
 
-bool EapolCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool EapolCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     const eapol::EtherEapol* const eplh =
         reinterpret_cast<const eapol::EtherEapol*>(raw.data);

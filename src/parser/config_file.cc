@@ -69,7 +69,7 @@
 
 #define OUTPUT_AJK  "unified2"
 #define OUTPUT_CMG  "alert_fast"
-#define OUTPUT_PCAP "log_tcpdump"
+#define OUTPUT_PCAP "log_pcap"
 
 static std::string lua_conf;
 static std::string snort_conf_dir;

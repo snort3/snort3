@@ -4,11 +4,10 @@ objectives, including:
 * Codec - to decode and encode packets
 * Inspector - like the prior preprocessors, for normalization, etc.
 * IpsOption - for detection in Snort++ rules
+* IpsAction - for custom actions
 * Logger - for handling events
 * Mpse - for fast pattern matching
 * So - for dynamic rules
-
-Additional plugins, like rule actions, are planned.
 
 Plugins have an associated API defined for each type, all of which share a
 common 'header', called the BaseApi.  A dynamic library makes its plugins
@@ -19,7 +18,7 @@ The BaseApi includes type, name, API version, plugin version, and function
 pointers for constructing and destructing a Module.  The specific API add
 various other data and functions for their given roles.
 
-The Module is pervasive in Snort\+\+.  It is how everything, including
+The Module is pervasive in Snort++.  It is how everything, including
 plugins, are configured.  It also provides access to builtin rules.  And as
 the glue that binds functionality to Snort++, the capabilities of a Module
 are expected to grow to include statistics support, etc.
@@ -62,5 +61,5 @@ the plugin instance which takes ownership.
 
 Note that there is at most one instance of a given Module, even if multiple
 plugin instances are created which use that Module.  (Multiple instances
-require Snort++ binding configurations not yet implemented.)
+require Snort++ binding configuration.)
 

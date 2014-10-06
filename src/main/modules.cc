@@ -823,7 +823,7 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 static const Parameter packets_params[] =
 {
     { "address_space_agnostic", Parameter::PT_BOOL, nullptr, "false",
-      "file with BPF to select traffic for Snort" },
+      "determines whether DAQ address space info is used to track fragments and connections" },
 
     { "bpf_file", Parameter::PT_STRING, nullptr, nullptr,
       "file with BPF to select traffic for Snort" },
@@ -1032,13 +1032,13 @@ static const Parameter network_params[] =
     { "layers", Parameter::PT_INT, "3:255", "40",
       "The maximum number of protocols that Snort can correctly decode" },
 
-    { "max_ip6_options", Parameter::PT_INT, "1:255", "8",
+    { "max_ip6_extensions", Parameter::PT_INT, "1:255", "8",
       "The number of IP6 options following an IPv6 layer Snort must see "
-      "before alerting *gid 119: sid XXX" }, //FIXIT-H J --fIll in SID
+      "before triggering 116:456" },
 
     { "max_ip_layers", Parameter::PT_INT, "1:255", "2",
       "The number of IPv4 and IPv6 layer Snort must see "
-      "before alerting (gid 119: sid XXX" }, //FIXIT-H J --fIll in SID
+      "before triggering 116:293" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1078,8 +1078,8 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
     else if (v.is("layers"))
         sc->num_layers = (uint8_t)v.get_long();
 
-    else if (v.is("max_ip6_options"))
-        sc->max_ip6_options = (uint8_t)v.get_long();
+    else if (v.is("max_ip6_extensions"))
+        sc->max_ip6_extensions = (uint8_t)v.get_long();
 
     else if (v.is("max_ip_layers"))
         sc->max_ip_layers = (uint8_t)v.get_long();
@@ -1274,15 +1274,22 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
     if (!strcmp(fqn, "process.threads"))
     {
         if (cpu == -1)
-            ParseError("%s - cpu must be an integer in the range"
-                " of 0 < cpu < max_cpus", fqn, cpu);
-
+        {
+            ParseError("%s - cpu(%d) for thread (%d) and source (%s) "
+                "must be an integer in the range of 0 < cpu < max_cpus", fqn, cpu);
+            return false;
+        }
         else if ((source.empty()) && (thread == -1))
-            ParseError("%s - must have either a source or a thread!", fqn);
-
+        {
+            ParseError("%s - must have either a source or a thread", fqn);
+            return false;
+        }
         else if ((!source.empty()) && (thread >= 0))
-            ParseError("%s - must have either a source or a thread!"
-                " Both thread(%d) and source(%s) are set", fqn, thread, source.c_str());
+        {
+            ParseError("%s - cannot set both thread(%d) and source(%s)",
+                fqn, thread, source.c_str());
+            return false;
+        }
 
         else if (!source.empty())
             set_cpu_affinity(sc, source, cpu);
