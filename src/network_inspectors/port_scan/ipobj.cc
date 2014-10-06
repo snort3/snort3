@@ -495,7 +495,7 @@ void test_ip4_parsing(void)
             printf("%c", not_flag ? '!' : ' ');
             printf("%s/", inet_ntoa(*(struct in_addr *) &host));
             printf("%s", inet_ntoa(*(struct in_addr *) &mask));
-            printf(" parsed successfully!\n");
+            printf(" parsed successfully\n");
         }
 
         /* host byte order stuff */

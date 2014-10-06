@@ -15,7 +15,7 @@ alert_syslog.cc \
 alert_test.cc \
 alert_unixsock.cc \
 log_null.cc \
-log_tcpdump.cc \
+log_pcap.cc \
 unified2.cc \
 unified2_common.h
 
@@ -65,10 +65,10 @@ liblog_null_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 liblog_null_la_LDFLAGS = -export-dynamic -shared
 liblog_null_la_SOURCES = log_null.cc
 
-ehlib_LTLIBRARIES += liblog_tcpdump.la
-liblog_tcpdump_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-liblog_tcpdump_la_LDFLAGS = -export-dynamic -shared
-liblog_tcpdump_la_SOURCES = log_tcpdump.cc
+ehlib_LTLIBRARIES += liblog_pcap.la
+liblog_pcap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+liblog_pcap_la_LDFLAGS = -export-dynamic -shared
+liblog_pcap_la_SOURCES = log_pcap.cc
 
 ehlib_LTLIBRARIES += libunified2.la
 libunified2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

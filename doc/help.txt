@@ -1,0 +1,42 @@
+
+Snort has several options to get more help:
+
+-? list command line options
+--help this overview of help
+--help-commands [<module prefix>] output matching commands
+--help-config [<module prefix>] output matching config options
+--help-module <module> output description of given module
+--help-modules list all available modules with brief help
+--help-plugins list all available plugins with brief help
+--help-options [<option prefix>] output matching command line options
+--help-signals dump available control signals
+--list-buffers output available inspection buffers
+--list-builtin [<module prefix>] output matching builtin rules
+--list-gids [<module prefix>] output matching generators
+--list-modules list all known modules
+--list-plugins list all known modules
+--markup output help in asciidoc compatible format
+
+--help* and --list* options preempt other processing so should be last on the
+command line since any following options are ignored.  To ensure options like
+--markup and --plugin-path take effect, place them ahead of the help or list
+options.
+
+Options that filter output based on a matching prefix, such as --help-config
+won't output anything if there is no match.  If no prefix is given, everything
+matches.
+
+Parameters are given with this format:
+
+    type name = default: help { range }
+
+++ For Lua configuration (not IPS rules), if the name ends with [] it is a
+   list item and can be repeated.
+++ For IPS rules only, names starting with ~ indicate positional parameters.
+   The name does not appear in the rule.
+++ IPS rules may also have a wild card parameter, which is indicated by a *.
+   Only used for metadata that Snort ignores.
+++ The snort module has command line options starting with a -.
+
+Report bugs to bugs@snort.org.
+

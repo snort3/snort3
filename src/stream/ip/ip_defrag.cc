@@ -233,7 +233,7 @@ static THREAD_LOCAL Packet** defrag_pkts;  // An array of Packet pointers
 /* enum for policy names */
 static const char *frag_policy_names[] =
 {
-    "no policy!",
+    "no policy",
     "FIRST",
     "LINUX",
     "BSD",
@@ -1253,6 +1253,8 @@ int fragGetApplicationProtocolId(Packet *p)
     case PktType::ICMP:
         ft->ipprotocol = protocolReferenceICMP;
         break;
+    default:
+        break;
     }
 
     host_entry = SFAT_LookupHostEntryBySrc(p);
@@ -1366,7 +1368,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
      *    a rebuilt packet later.  So don't process it further.
      */
     if ((frag_offset != 0) ||
-        ((p->ip_proto_next() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
+        ((p->get_ip_proto_next() != IPPROTO_UDP) && (p->ptrs.decode_flags & DECODE_MF)))
     {
         DisableDetect(p);
     }
@@ -1503,7 +1505,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
             FragRebuild(ft, p);
 
             if (frag_offset != 0 ||
-                (p->ip_proto_next() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
+                (p->get_ip_proto_next() != IPPROTO_UDP && ft->frag_flags & FRAG_REBUILT))
             {
                 /* Need to reset some things here because the
                  * rebuilt packet will have reset the do_detect
@@ -2357,7 +2359,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(PktType::IP, p);
+            flow_con->prune_flows(IPPROTO_IP, p);
         }
 
         f = (Fragment *) SnortAlloc(sizeof(Fragment));
@@ -2506,7 +2508,7 @@ int Defrag::add_frag_node(FragTracker *ft,
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(PktType::IP, p);
+            flow_con->prune_flows(IPPROTO_IP, p);
         }
 
         /*
@@ -2593,7 +2595,7 @@ int Defrag::dup_frag_node(
     {
         if(mem_in_use > FRAG_MEMCAP)
         {
-            flow_con->prune_flows(PktType::IP, p);
+            flow_con->prune_flows(IPPROTO_IP, p);
         }
 
         /*

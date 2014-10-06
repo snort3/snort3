@@ -50,7 +50,7 @@ public:
     ~TeredoCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 } // anonymous namespace
@@ -61,7 +61,7 @@ void TeredoCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(PROTOCOL_TEREDO);
 }
 
-bool TeredoCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const uint8_t* raw_pkt = raw.data;
 

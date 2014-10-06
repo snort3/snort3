@@ -516,7 +516,7 @@ static const InspectApi fs_api =
         mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "ftp",
     fs_init,

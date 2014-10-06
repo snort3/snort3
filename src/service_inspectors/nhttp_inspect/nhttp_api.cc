@@ -78,7 +78,7 @@ const InspectApi NHttpApi::nhttp_api =
         NHttpApi::nhttp_mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     buffers,
     "http",
     NHttpApi::nhttp_init,

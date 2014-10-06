@@ -83,6 +83,8 @@
 #include "tcp_module.h"
 #include "stream/stream_splitter.h"
 #include "sfip/sf_ip.h"
+#include "protocols/tcp.h"
+#include "protocols/eth.h"
 
 using namespace tcp;
 
@@ -407,7 +409,7 @@ void s5TcpStreamReassembleRuleOptionCleanup(void *dataPtr);
 
 /* enum for policy names */
 static const char *reassembly_policy_names[] = {
-    "no policy!",
+    "no policy",
     "FIRST",
     "LINUX",
     "BSD",
@@ -3026,7 +3028,7 @@ static inline StreamSegment* SegmentAlloc (
             tcp_memcap->dealloc(size);
             return NULL;
         }
-        flow_con->prune_flows(PktType::TCP, p);
+        flow_con->prune_flows(IPPROTO_TCP, p);
     }
 
     ss = (StreamSegment*)SnortAlloc(size);
@@ -3081,7 +3083,7 @@ static int AddStreamNode(
                         i, idx, idx->seq, idx->size, idx->next, idx->prev););
 
                 if(st->seg_count < i)
-                    FatalError("Circular list, WTF?\n");
+                    FatalError("Circular list\n");
 
                 idx = idx->next;
             }
@@ -6579,12 +6581,20 @@ bool TcpSession::setup (Packet*)
     reset();
 
     Inspector* ins = flow->clouseau;
+
     if ( !ins )
         ins = flow->gadget;
-    assert(ins);
 
-    stream.set_splitter(flow, true, ins->get_splitter(true));
-    stream.set_splitter(flow, false, ins->get_splitter(false));
+    if ( ins )
+    {
+        stream.set_splitter(flow, true, ins->get_splitter(true));
+        stream.set_splitter(flow, false, ins->get_splitter(false));
+    }
+    else
+    {
+        stream.set_splitter(flow, true, new AtomSplitter(true));
+        stream.set_splitter(flow, false, new AtomSplitter(false));
+    }
 
     tcpStats.sessions++;
     return true;
@@ -6758,7 +6768,7 @@ int TcpSession::process(Packet *p)
 
 void tcp_reset()
 {
-    flow_con->reset_prunes(PktType::TCP);
+    flow_con->reset_prunes(IPPROTO_TCP);
 }
 
 void tcp_show(StreamTcpConfig* tcp_config)

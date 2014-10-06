@@ -50,29 +50,29 @@ namespace
 
 static const RuleMap ipv6_rules[] =
 {
-    { DECODE_IPV6_MIN_TTL, "(" CD_IPV6_NAME ") IPv6 packet below TTL limit" },
-    { DECODE_IPV6_IS_NOT, "(" CD_IPV6_NAME ") IPv6 header claims to not be IPv6" },
-    { DECODE_IPV6_TRUNCATED_EXT, "(" CD_IPV6_NAME ") IPV6 truncated extension header" },
-    { DECODE_IPV6_TRUNCATED, "(" CD_IPV6_NAME ") IPV6 truncated header" },
-    { DECODE_IPV6_DGRAM_LT_IPHDR, "(" CD_IPV6_NAME ") IP dgm len < IP Hdr len" },
-    { DECODE_IPV6_DGRAM_GT_CAPLEN, "(" CD_IPV6_NAME ") IP dgm len > captured len" },
-    { DECODE_IPV6_DST_ZERO, "(" CD_IPV6_NAME ") IPv6 packet with destination address ::0" },
-    { DECODE_IPV6_SRC_MULTICAST, "(" CD_IPV6_NAME ") IPv6 packet with multicast source address" },
-    { DECODE_IPV6_DST_RESERVED_MULTICAST, "(" CD_IPV6_NAME ") IPv6 packet with reserved multicast destination address" },
-    { DECODE_IPV6_BAD_OPT_TYPE, "(" CD_IPV6_NAME ") IPv6 header includes an undefined option type" },
-    { DECODE_IPV6_BAD_MULTICAST_SCOPE, "(" CD_IPV6_NAME ") IPv6 address includes an unassigned multicast scope value" },
-    { DECODE_IPV6_BAD_NEXT_HEADER, "(" CD_IPV6_NAME ") IPv6 header includes an invalid value for the 'next header' field" },
-    { DECODE_IPV6_ROUTE_AND_HOPBYHOP, "(" CD_IPV6_NAME ") IPv6 header includes a routing extension header followed by a hop-by-hop header" },
-    { DECODE_IPV6_TWO_ROUTE_HEADERS, "(" CD_IPV6_NAME ") IPv6 header includes two routing extension headers" },
-    { DECODE_IPV6_DSTOPTS_WITH_ROUTING, "(" CD_IPV6_NAME ") IPv6 header has destination options followed by a routing header" },
-    { DECODE_IPV6_TUNNELED_IPV4_TRUNCATED, "(" CD_IPV6_NAME ") IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux Kernel attack" },
-    { DECODE_IPV6_BAD_OPT_LEN, "(" CD_IPV6_NAME ") IPv6 header includes an option which is too big for the containing header" },
-    { DECODE_IPV6_UNORDERED_EXTENSIONS, "(" CD_IPV6_NAME ") IPv6 packet includes out-of-order extension headers" },
-    { DECODE_IP6_ZERO_HOP_LIMIT, "(" CD_IPV6_NAME ") IPV6 packet has zero hop limit" },
-    { DECODE_IPV6_ISATAP_SPOOF, "(" CD_IPV6_NAME ") BAD-TRAFFIC ISATAP-addressed IPv6 traffic spoofing attempt" },
-    { DECODE_IPV6_BAD_FRAG_PKT, "(" CD_IPV6_NAME ") bogus fragmentation packet. Possible BSD attack" },
-    { DECODE_IPV6_ROUTE_ZERO, "(" CD_IPV6_NAME ") IPV6 routing type 0 extension header" },
-    { DECODE_IP6_EXCESS_EXT_HDR, "(" CD_IPV6_NAME ") too many IP6 extension headers" },
+    { DECODE_IPV6_MIN_TTL, "IPv6 packet below TTL limit" },
+    { DECODE_IPV6_IS_NOT, "IPv6 header claims to not be IPv6" },
+    { DECODE_IPV6_TRUNCATED_EXT, "IPV6 truncated extension header" },
+    { DECODE_IPV6_TRUNCATED, "IPV6 truncated header" },
+    { DECODE_IPV6_DGRAM_LT_IPHDR, "IP dgm len < IP Hdr len" },
+    { DECODE_IPV6_DGRAM_GT_CAPLEN, "IP dgm len > captured len" },
+    { DECODE_IPV6_DST_ZERO, "IPv6 packet with destination address ::0" },
+    { DECODE_IPV6_SRC_MULTICAST, "IPv6 packet with multicast source address" },
+    { DECODE_IPV6_DST_RESERVED_MULTICAST, "IPv6 packet with reserved multicast destination address" },
+    { DECODE_IPV6_BAD_OPT_TYPE, "IPv6 header includes an undefined option type" },
+    { DECODE_IPV6_BAD_MULTICAST_SCOPE, "IPv6 address includes an unassigned multicast scope value" },
+    { DECODE_IPV6_BAD_NEXT_HEADER, "IPv6 header includes an invalid value for the 'next header' field" },
+    { DECODE_IPV6_ROUTE_AND_HOPBYHOP, "IPv6 header includes a routing extension header followed by a hop-by-hop header" },
+    { DECODE_IPV6_TWO_ROUTE_HEADERS, "IPv6 header includes two routing extension headers" },
+    { DECODE_IPV6_DSTOPTS_WITH_ROUTING, "IPv6 header has destination options followed by a routing header" },
+    { DECODE_IPV6_TUNNELED_IPV4_TRUNCATED, "IPV6 tunneled over IPv4, IPv6 header truncated, possible linux kernel attack" },
+    { DECODE_IPV6_BAD_OPT_LEN, "IPv6 header includes an option which is too big for the containing header" },
+    { DECODE_IPV6_UNORDERED_EXTENSIONS, "IPv6 packet includes out-of-order extension headers" },
+    { DECODE_IP6_ZERO_HOP_LIMIT, "IPV6 packet has zero hop limit" },
+    { DECODE_IPV6_ISATAP_SPOOF, "BAD-TRAFFIC ISATAP-addressed IPv6 traffic spoofing attempt" },
+    { DECODE_IPV6_BAD_FRAG_PKT, "bogus fragmentation packet, possible BSD attack" },
+    { DECODE_IPV6_ROUTE_ZERO, "IPV6 routing type 0 extension header" },
+    { DECODE_IP6_EXCESS_EXT_HDR, "too many IP6 extension headers" },
     { 0, nullptr }
 };
 
@@ -93,7 +93,7 @@ public:
     ~Ipv6Codec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -107,9 +107,9 @@ public:
 
 
 static inline void IPV6CheckIsatap(const ip::IP6Hdr* const,
-                                    const SnortData&,
+                                    const DecodeData&,
                                     const CodecData&);
-static inline void IPV6MiscTests(const SnortData&, const CodecData&);
+static inline void IPV6MiscTests(const DecodeData&, const CodecData&);
 static void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
 static inline bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 
@@ -124,7 +124,7 @@ void Ipv6Codec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     // FIXIT-L -J necessary for scoping until the 'goto' statements are deleted
     {
@@ -224,7 +224,7 @@ decodeipv6_fail:
 }
 
 static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
-                                    const SnortData& snort,
+                                    const DecodeData& snort,
                                     const CodecData& codec)
 {
     /* Only check for IPv6 over IPv4 */
@@ -250,7 +250,7 @@ static inline void IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
  *
  * Returns: void function
  */
-static inline void IPV6MiscTests(const SnortData& snort, const CodecData& codec)
+static inline void IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
 {
     const sfip_t *ip_src = snort.ip_api.get_src();
     const sfip_t *ip_dst = snort.ip_api.get_dst();

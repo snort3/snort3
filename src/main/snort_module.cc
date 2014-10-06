@@ -119,7 +119,7 @@ static const Parameter s_params[] =
     { "-j", Parameter::PT_PORT, nullptr, nullptr,
       "<port> to listen for telnet connections" },
 
-    { "-K", Parameter::PT_ENUM, "none|text|pcap", "none", 
+    { "-K", Parameter::PT_SELECT, "none|text|pcap", "none", 
       "<mode> logging mode" },
 
     { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all", 
@@ -219,10 +219,11 @@ static const Parameter s_params[] =
       "<name=value> specify extra DAQ configuration variable" },
 
     { "--dump-builtin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "creates stub rule files of all loaded rules libraries" },
+      "[<module prefix>] output stub rules for selected modules" },
 
-    { "--dump-dynamic-rules", Parameter::PT_STRING, nullptr, nullptr,
-      "<path> creates stub rule file of all loaded rules libraries" },
+    // FIXIT-L add --list-dynamic-rules like --list-builtin-rules
+    { "--dump-dynamic-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output stub rules for all loaded rules libraries" },
 
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets and release memory on shutdown" },
@@ -236,20 +237,11 @@ static const Parameter s_params[] =
     { "--help!", Parameter::PT_IMPLIED, nullptr, nullptr,
       "overview of help" },
 
-    { "--help-builtin", Parameter::PT_STRING, "(optional)", nullptr,
-      "<module prefix> output matching builtin rules" },
-
-    { "--help-buffers", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "output available inspection buffers" },
-
     { "--help-commands", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching commands" },
 
     { "--help-config", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching config options" },
-
-    { "--help-gids", Parameter::PT_STRING, "(optional)", nullptr,
-      "[<module prefix>] output matching generators" },
 
     { "--help-module", Parameter::PT_STRING, nullptr, nullptr,
       "<module> output description of given module" },
@@ -271,6 +263,15 @@ static const Parameter s_params[] =
 
     { "--id-zero", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use id prefix / subdirectory even with one packet thread" },
+
+    { "--list-buffers", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output available inspection buffers" },
+
+    { "--list-builtin", Parameter::PT_STRING, "(optional)", nullptr,
+      "<module prefix> output matching builtin rules" },
+
+    { "--list-gids", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module prefix>] output matching generators" },
 
     { "--list-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all known modules" },
@@ -347,6 +348,9 @@ static const Parameter s_params[] =
     { "--shell", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable the interactive command line", },
 
+    { "--show-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list module and plugin versions", },
+
     { "--skip", Parameter::PT_INT, "0:", nullptr,
       "<n> skip 1st n packets", },
 
@@ -396,7 +400,7 @@ public:
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("-?") )
-        help_usage(sc, v.get_string());
+        help_options(sc, v.get_string());
 
     else if ( v.is("-A") )
         config_alert_mode(sc, v.get_string());
@@ -556,25 +560,13 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
     else if ( v.is("--help") )
-        help_usage(sc, v.get_string());
-
-    else if ( v.is("--help!") )
         help_basic(sc, v.get_string());
-
-    else if ( v.is("--help-builtin") )
-        help_builtin(sc, v.get_string());
-
-    else if ( v.is("--help-buffers") )
-        help_buffers(sc, v.get_string());
 
     else if ( v.is("--help-commands") )
         help_commands(sc, v.get_string());
 
     else if ( v.is("--help-config") )
         help_config(sc, v.get_string());
-
-    else if ( v.is("--help-gids") )
-        help_gids(sc, v.get_string());
 
     else if ( v.is("--help-module") )
         help_module(sc, v.get_string());
@@ -596,6 +588,15 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--id-zero") )
         sc->id_zero = true;
+
+    else if ( v.is("--list-buffers") )
+        help_buffers(sc, v.get_string());
+
+    else if ( v.is("--list-builtin") )
+        help_builtin(sc, v.get_string());
+
+    else if ( v.is("--list-gids") )
+        help_gids(sc, v.get_string());
 
     else if ( v.is("--list-modules") )
         list_modules(sc, v.get_string());
@@ -663,6 +664,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--shell") )
         sc->run_flags |= RUN_FLAG__SHELL;
+
+    else if ( v.is("--show-plugins") )
+        sc->run_flags |= RUN_FLAG__SHOW_PLUGINS;
 
     else if ( v.is("--skip") )
         sc->pkt_skip = v.get_long();

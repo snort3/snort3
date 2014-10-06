@@ -27,6 +27,7 @@
 #include <string>
 using namespace std;
 
+#include "main/help.h"
 #include "main/snort_module.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
@@ -148,18 +149,28 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
 
     ArgList al(argc, argv);
     const char* key, *val;
+    unsigned c = 0;
 
     // get special options first
     while ( al.get_arg(key, val) )
+    {
         ::set(key, val, sc, false);
+        c++;
+    }
 
     // now get the rest
     al.reset();
 
     while ( al.get_arg(key, val) )
+    {
         ::set(key, val, sc, true);
+        c++;
+    }
 
-    check_flags(sc);
+    if ( !c )
+        help_usage(sc, argv[0]);
+    else
+        check_flags(sc);
 
     if ( int k = get_parse_errors() )
         FatalError("see prior %d errors\n", k);

@@ -47,19 +47,8 @@ extern "C" {
 }
 
 #include "main/snort_types.h"
-
-#include "framework/codec.h"
-#include "protocols/tcp.h"
-#include "protocols/udp.h"
-#include "protocols/eth.h"
-#include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
-#include "protocols/mpls.h"
-#include "protocols/ip.h"
+#include "framework/decode_data.h"
 #include "protocols/layer.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
-
 
 /*  D E F I N E S  ************************************************************/
 
@@ -154,17 +143,14 @@ struct SO_PUBLIC Packet
 {
     Flow* flow;   /* for session tracking */
 
-
-
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
     uint16_t proto_bits;        /* protocols contained within this packet */
     int16_t application_protocol_ordinal;
 
-
     uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
     uint8_t num_layers;         /* index into layers for next encap */
-
+    uint8_t ip_proto_next; /* the protocol ID after IP and all IP6 extension */
 
     // nothing after this point is zeroed ...
 
@@ -176,9 +162,8 @@ struct SO_PUBLIC Packet
     const uint8_t* data;        /* packet payload pointer */
     uint16_t dsize;             /* packet payload size */
 
-    SnortData ptrs; // convenience pointers used throughout Snort++
+    DecodeData ptrs; // convenience pointers used throughout Snort++
     Layer* layers;    /* decoded encapsulations */
-
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
     uint32_t iplist_id;
@@ -189,14 +174,9 @@ struct SO_PUBLIC Packet
      */
     uint16_t user_policy_id;
 
-
     uint8_t ps_proto;  // Used for portscan and unified2 logging
 
-
     /*  Boolean functions - general information about this packet */
-    inline PktType type() const
-    { return ptrs.get_pkt_type(); } // defined in codec.h
-
     inline bool has_ip() const
     { return ptrs.ip_api.is_valid(); }
 
@@ -215,9 +195,9 @@ struct SO_PUBLIC Packet
     inline bool is_udp() const
     { return ptrs.get_pkt_type() == PktType::UDP; }
 
-
     /* Get general, non-boolean information */
-
+    inline PktType type() const
+    { return ptrs.get_pkt_type(); } // defined in codec.h
 
     /* the ip_api return the protocol_ID of the protocol directly the
      * innermost IP layer.  However, especially in IPv6, the next protocol
@@ -227,7 +207,8 @@ struct SO_PUBLIC Packet
      *     eth::ip4::udp::teredo::ip6::hop_opts::ipv6_routing::tcp
      * this function return 6 == IPPROTO_TCP == IPPROTO_ID_TCP
      */
-    uint8_t ip_proto_next() const;
+    inline uint8_t get_ip_proto_next() const
+    { return ip_proto_next; }
 
     /* Similar to above. However, this function
      * can be called in a loop to get all of the ip_proto's.
@@ -245,7 +226,7 @@ struct SO_PUBLIC Packet
      *    ....
      * }
      */
-    bool ip_proto_next(int &lyr, uint8_t& proto) const;
+    bool get_ip_proto_next(int &lyr, uint8_t& proto) const;
 
     inline void reset()
     {
@@ -257,7 +238,6 @@ struct SO_PUBLIC Packet
 #define PKT_ZERO_LEN offsetof(Packet, pkth)
 
 
-#define GET_PKT_SEQ(p) (ntohl(p->ptrs.tcph->th_seq))
 
 /* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
 #define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)

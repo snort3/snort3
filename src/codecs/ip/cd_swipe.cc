@@ -40,7 +40,7 @@ public:
     virtual ~SwipeCodec(){};
     
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 } // namespace
@@ -53,7 +53,7 @@ void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
 }
 
 
-bool SwipeCodec::decode(const RawData&, CodecData& codec, SnortData&)
+bool SwipeCodec::decode(const RawData&, CodecData& codec, DecodeData&)
 {
     // currently unsupported
     codec_events::decoder_event(codec, DECODE_IP_BAD_PROTO);

@@ -34,7 +34,7 @@
 #include <zlib.h>
 
 #include <list>
-#include <fstream>
+#include <iostream>
 using namespace std;
 
 #include "snort_types.h"
@@ -162,10 +162,9 @@ void SoManager::delete_so_data(const char* soid, void* pv)
 
 //-------------------------------------------------------------------------
 
-void SoManager::dump_rule_stubs(const char* path)
+void SoManager::dump_rule_stubs(const char*)
 {
     unsigned c = 0;
-    std::ofstream ofs(path);
 
     for ( auto* p : s_rules )
     {
@@ -183,10 +182,12 @@ void SoManager::dump_rule_stubs(const char* path)
         if ( !(s = strchr(s, ';')) )
             continue;
 
+        // FIXIT-L strip newlines (optional?)
         string stub(rule, ++s-rule);
-        ofs << stub << ")" << endl;
+        cout << stub << ")" << endl;
         ++c;
     }
-    LogMessage("%u rule stubs dumped.\n", c);
+    if ( !c )
+        cerr << "no rules to dump" << endl;
 }
 

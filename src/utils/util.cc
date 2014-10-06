@@ -763,14 +763,14 @@ char * SnortStrdup(const char *str)
 
     if (!str)
     {
-        FatalError("Unable to duplicate string: NULL!\n");
+        FatalError("Unable to duplicate string: NULL\n");
     }
 
     copy = strdup(str);
 
     if (copy == NULL)
     {
-        FatalError("Unable to duplicate string: %s!\n", str);
+        FatalError("Unable to duplicate string: %s\n", str);
     }
 
     return copy;

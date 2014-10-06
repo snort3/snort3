@@ -78,9 +78,9 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-#define PPM_EVENT_RULE_TREE_DISABLED_STR "(ppm) Rule Options Disabled by Rule Latency"
-#define PPM_EVENT_RULE_TREE_ENABLED_STR  "(ppm) Rule Options Re-enabled by Rule Latency"
-#define PPM_EVENT_PACKET_ABORTED_STR     "(ppm) Packet Aborted due to Latency"
+#define PPM_EVENT_RULE_TREE_DISABLED_STR "rule options disabled by rule latency"
+#define PPM_EVENT_RULE_TREE_ENABLED_STR  "rule options re-enabled by rule latency"
+#define PPM_EVENT_PACKET_ABORTED_STR     "packet aborted due to latency"
 
 static const RuleMap ppm_rules[] =
 {

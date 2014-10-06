@@ -55,8 +55,8 @@ bool snort_is_starting();
 void snort_thread_init(const char* intf);
 void snort_thread_term();
 
-void snort_idle();
-void snort_rotate();
+void snort_thread_idle();
+void snort_thread_rotate();
 
 void CapturePacket();
 void DecodeRebuiltPacket (Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, Flow*);
@@ -116,7 +116,8 @@ enum RunFlag
     RUN_FLAG__NO_PCRE             = 0x01000000,
     /* If stream5 is configured, the STATEFUL flag is set.  This is
      * somewhat misnamed and is used to assure a session is established */
-    RUN_FLAG__ASSURE_EST          = 0x02000000      /* config stateful */
+    RUN_FLAG__ASSURE_EST          = 0x02000000,
+    RUN_FLAG__SHOW_PLUGINS        = 0x04000000      // --show-plugins
 
    ,RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x10000000,     /* --treat-drop-as-ignore */
     RUN_FLAG__PCAP_RELOAD         = 0x20000000,     /* --pcap-reload */

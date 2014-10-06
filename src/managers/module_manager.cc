@@ -249,12 +249,12 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
         if ( p[0].name && !p[1].name )
             return p;
         else
-	        new_fqn = sfx;
+            new_fqn = sfx;
     }
     else
-	{
+    {
         new_fqn = sfx.substr(pos + 1);
-	}
+    }
 
     string name = new_fqn.substr(0, new_fqn.find_first_of('.'));
     while ( p->name && name != p->name )
@@ -274,6 +274,8 @@ static const Parameter* get_params(const string& sfx, const Parameter* p)
             const Parameter* tmp_p =
                 reinterpret_cast<const Parameter*>(p->range);
 
+            // FIXIT -- this will fail if we are opening a
+            // a list with only one Parameter
             if ( tmp_p[0].name && !tmp_p[1].name )
                 return tmp_p;
         }
@@ -411,6 +413,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
         return false;
 
+    //printf("open %s %d\n", s, idx);
     Module* m = h->mod;
 
     if (strcmp(m->get_name(), s))
@@ -456,6 +459,8 @@ SO_PUBLIC void close_table(const char* s, int idx)
     string key = fqn;
     set_top(key);
 
+    //printf("close %s %d\n", s, idx);
+
     if ( ModHook* h = get_hook(key.c_str()) )
     {
         if ( !h->mod->end(s, idx, s_config) )
@@ -473,18 +478,21 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
 SO_PUBLIC bool set_bool(const char* fqn, bool b)
 {
+    //printf("bool %s %d\n", fqn, b);
     Value v(b);
     return set_value(fqn, v);
 }
 
 SO_PUBLIC bool set_number(const char* fqn, double d)
 {
+    //printf("real %s %f\n", fqn, d);
     Value v(d);
     return set_value(fqn, v);
 }
 
 SO_PUBLIC bool set_string(const char* fqn, const char* s)
 {
+    //printf("string %s %s\n", fqn, s);
     Value v(s);
     return set_value(fqn, v);
 }
@@ -593,6 +601,7 @@ void ModuleManager::show_module(const char* name)
         return;
     }
     s_modules.sort(comp_gids);
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -635,12 +644,16 @@ void ModuleManager::show_module(const char* name)
             cout << endl << "Peg counts: " << endl << endl;
             show_pegs(name);
         }
+        c++;
     }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_configs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_mods);
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -670,13 +683,18 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         }
         if ( !pfx )
             cout << endl;
+
+        c++;
     }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_commands(const char* pfx)
 {
     s_modules.sort(comp_mods);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned n = 0;
 
     for ( auto p : s_modules )
     {
@@ -701,13 +719,17 @@ void ModuleManager::show_commands(const char* pfx)
             cout << endl;
             c++;
         }
+        n++;
     }
+    if ( !n )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_gids(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -728,13 +750,17 @@ void ModuleManager::show_gids(const char* pfx)
             cout << ": " << Markup::sanitize(m->get_name());
             cout << endl;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_pegs(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -758,13 +784,17 @@ void ModuleManager::show_pegs(const char* pfx)
             cout << endl;
             ++pegs;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_rules(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -785,11 +815,15 @@ void ModuleManager::show_rules(const char* pfx)
             cout << Markup::emphasis_on();
             cout << gid << ":" << r->sid;
             cout << Markup::emphasis_off();
+            cout << " (" << m->get_name() << ")";
             cout << " " << Markup::sanitize(r->msg);
             cout << endl;
             r++;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::load_commands(SnortConfig* sc)
@@ -803,6 +837,22 @@ void ModuleManager::load_commands(SnortConfig* sc)
         if ( p->reg )
             sh->install(p->mod->get_name(), p->reg);
     }
+}
+
+// move builtin generation to a better home?
+// FIXIT-L builtins should allow configurable nets and ports
+// FIXIT-L builtins should have accurate proto
+//       (but ip winds up in all others)
+// FIXIT-L if msg has C escaped embedded quotes, we break
+//ss << "alert tcp any any -> any any ( ";
+static void make_rule(ostream& os, const Module* m, const RuleMap* r)
+{
+    os << "alert ( ";
+    os << "gid:" << m->get_gid() << "; ";
+    os << "sid:" << r->sid << "; ";
+    os << "msg:\"" << "(" << m->get_name() << ") ";
+    os << r->msg << "\"; )";
+    os << endl;
 }
 
 // FIXIT-L currently no way to know whether a module was activated or not
@@ -819,7 +869,6 @@ void ModuleManager::load_rules(SnortConfig* sc)
     {
         const Module* m = p->mod;
         const RuleMap* r = m->get_rules();
-        unsigned gid = m->get_gid();
 
         if ( !r )
             continue;
@@ -829,17 +878,7 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            // FIXIT-L move builtin generation to a better home
-            // FIXIT-L builtins should allow configurable nets and ports
-            // FIXIT-L builtins should have accurate proto
-            //       (but ip winds up in all others)
-            // FIXIT-L if msg has C escaped embedded quotes, we break
-            //ss << "alert tcp any any -> any any ( ";
-            ss << "alert ( ";
-            ss << "gid:" << gid << "; ";
-            ss << "sid:" << r->sid << "; ";
-            ss << "msg:\"" << r->msg << "\"; )";
-            ss << endl;
+            make_rule(ss, m, r);
 
             // note:  you can NOT do ss.str().c_str() here
             const string& rule = ss.str();
@@ -855,6 +894,7 @@ void ModuleManager::dump_rules(const char* pfx)
 {
     s_modules.sort(comp_gids);
     unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
 
     for ( auto p : s_modules )
     {
@@ -864,7 +904,6 @@ void ModuleManager::dump_rules(const char* pfx)
             continue;
 
         const RuleMap* r = m->get_rules();
-        unsigned gid = m->get_gid();
 
         if ( !r )
             continue;
@@ -873,16 +912,13 @@ void ModuleManager::dump_rules(const char* pfx)
 
         while ( r->msg )
         {
-            // FIXIT-L builtin gen should be in exactly one place
-            ss << "alert ( ";
-            ss << "gid:" << gid << "; ";
-            ss << "sid:" << r->sid << "; ";
-            ss << "msg:\"" << r->msg << "\"; )";
-            ss << endl;
-
+            make_rule(ss, m, r);
             r++;
         }
+        c++;
     }    
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::dump_stats (SnortConfig*)

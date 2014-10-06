@@ -22,6 +22,10 @@
 #include "perf_module.h"
 #include "utils/util.h"
 
+#define PERF_FILE "perf_monitor.csv"
+#define FLOW_FILE "perf_monitor_flow.csv"
+#define FLIP_FILE "perf_monitor_flow_ip.csv"
+
 //-------------------------------------------------------------------------
 // perf attributes
 //-------------------------------------------------------------------------
@@ -56,19 +60,19 @@ static const Parameter s_params[] =
       "report on qualified vs non-qualified events" },
 
     { "file", Parameter::PT_BOOL, nullptr, "false",
-      "otuput base stats to a csv file" },
+      "otuput base stats to " PERF_FILE " instead of stdout" },
 
     { "flow", Parameter::PT_BOOL, nullptr, "false",
       "enable traffic statistics" },
 
     { "flow_file", Parameter::PT_BOOL, nullptr, "false",
-      "output traffic statistics to a csv file" },
+      "output traffic statistics to a " FLOW_FILE " instead of stdout" },
 
     { "flow_ip", Parameter::PT_BOOL, nullptr, "false",
       "enable statistics on host pairs" },
 
     { "flow_ip_file", Parameter::PT_BOOL, nullptr, "false",
-      "output host pair statistics to csv file" },
+      "output host pair statistics to " FLIP_FILE " instead of stdout" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -128,7 +132,7 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("file") )
     {
         if ( v.get_bool() )
-            config.file = SnortStrdup("perf_monitor.csv");
+            config.file = SnortStrdup(PERF_FILE);
     }
     else if ( v.is("flow") )
     {
@@ -140,7 +144,7 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
         if ( v.get_bool() )
         {
             config.perf_flags |= SFPERF_FLOW;
-            config.flow_file = SnortStrdup("perf_monitor_flow.csv");
+            config.flow_file = SnortStrdup(FLOW_FILE);
         }
     }
     else if ( v.is("flow_ip") )
@@ -153,7 +157,7 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
         if ( v.get_bool() )
         {
             config.perf_flags |= SFPERF_FLOWIP;
-            config.flowip_file = SnortStrdup("perf_monitor_flow_ip.csv");
+            config.flowip_file = SnortStrdup(FLIP_FILE);
         }
     }
     else

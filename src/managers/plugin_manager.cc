@@ -361,8 +361,7 @@ void PluginManager::list_plugins()
         Plugin& p = it->second;
         cout << Markup::item();
         cout << Markup::sanitize(p.key);
-        if ( p.api->mod_ctor )
-            cout << " (module)";
+        cout << " v" << p.api->version;
         cout << endl;
     }
 }
@@ -458,8 +457,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_LOGGER:
-        // do not instantiate here; done later
-        //EventManager::instantiate((LogApi*)api, mod, sc);
+        EventManager::instantiate((LogApi*)api, mod, sc);
         break;
 
     default:

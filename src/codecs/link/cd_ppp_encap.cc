@@ -42,7 +42,7 @@ public:
     ~PppEncap(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 const static uint16_t PPP_IP = 0x0021;       /* Internet Protocol */
@@ -71,7 +71,7 @@ void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
  *
  * Returns: void function
  */
-bool PppEncap::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     static THREAD_LOCAL bool had_vj = false;
     uint16_t protocol;
@@ -118,7 +118,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, SnortData&)
         case PPP_VJ_COMP:
             if (!had_vj)
                 ErrorMessage("PPP link seems to use VJ compression, "
-                        "cannot handle compressed packets!\n");
+                        "cannot handle compressed packets\n");
             had_vj = true;
             return false;
         case PPP_VJ_UCOMP:
@@ -127,7 +127,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, SnortData&)
             if(raw.len < (uint32_t)(codec.lyr_len + ip::IP4_HEADER_LEN))
             {
                 if (ScLogVerbose())
-                    ErrorMessage("PPP VJ min packet length > captured len! "
+                    ErrorMessage("PPP VJ min packet length > captured len"
                                  "(%d bytes)\n", raw.len);
                 return false;
             }

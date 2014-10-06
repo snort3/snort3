@@ -94,6 +94,7 @@
 #include "protocols/layer.h"
 #include "protocols/arp.h"
 #include "sfip/sf_ip.h"
+#include "protocols/eth.h"
 
 static const uint8_t bcast[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -184,7 +185,8 @@ void ArpSpoof::eval(Packet *p)
     const eth::EtherHdr *eh;
 
     // preconditions - what we registered for
-    assert((p->proto_bits & PROTO_BIT__ETH) && (p->proto_bits & PROTO_BIT__ARP));
+    assert(p->type() == PktType::ARP);
+    assert(p->proto_bits & PROTO_BIT__ETH);
 
     ah = layer::get_arp_layer(p);
     eh = layer::get_eth_layer(p);
@@ -306,7 +308,7 @@ static const InspectApi as_api =
         mod_dtor
     },
     IT_PROTOCOL, 
-    PROTO_BIT__ARP,
+    (uint16_t)PktType::ARP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

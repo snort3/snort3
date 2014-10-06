@@ -146,11 +146,11 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 
     else if ( v.is("proto") )
     {
-        const unsigned mask[] =
+        const PktType mask[] =
         { 
-            PROTO_BIT__ALL, PROTO_BIT__IP, PROTO_BIT__ICMP, PROTO_BIT__TCP, PROTO_BIT__UDP
+            PktType::ANY, PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP
         };
-        work->when.protos = mask[v.get_long()];
+        work->when.protos = (unsigned)mask[v.get_long()];
     }
     else if ( v.is("ports") )
         v.get_bits(work->when.ports);

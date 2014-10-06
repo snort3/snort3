@@ -37,6 +37,7 @@
 #include "framework/range.h"
 #include "hash/sfhashfcn.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
 #include "time/profiler.h"
 
 static const char* s_name = "urg";

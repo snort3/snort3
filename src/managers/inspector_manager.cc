@@ -510,14 +510,14 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
         const char* t = api.base.name;
         m->add(s, t);
 
-        tcp = tcp || (api.proto_bits & PROTO_BIT__TCP);
-        udp = udp || (api.proto_bits & PROTO_BIT__UDP);
+        tcp = tcp || (api.proto_bits & (unsigned)PktType::TCP);
+        udp = udp || (api.proto_bits & (unsigned)PktType::UDP);
     }
     if ( tcp )
-        m->add(PROTO_BIT__TCP, wiz_id);
+        m->add((unsigned)PktType::TCP, wiz_id);
 
     if ( udp )
-        m->add(PROTO_BIT__UDP, wiz_id);
+        m->add((unsigned)PktType::UDP, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, nullptr, sc);
@@ -587,7 +587,7 @@ static inline void execute(
         if ( !p->flow && (ppc.api.type >= IT_SESSION) )
             break;
 
-        if ( (p->proto_bits & ppc.api.proto_bits) )
+        if ( ((unsigned)p->type() & ppc.api.proto_bits) )
             (*prep)->handler->eval(p);
     }
 }
@@ -634,14 +634,14 @@ void InspectorManager::execute (Packet* p)
         if ( !flow )
             return;
 
-        if ( flow->clouseau && (p->proto_bits & flow->clouseau->get_api()->proto_bits) )
+        if ( flow->clouseau && ((unsigned)p->type() & flow->clouseau->get_api()->proto_bits) )
             bumble(p);
 
         // FIXIT-M need more than one service inspector?
         // (should be daisy chained since inspector1 will generate PDUs for
         // inspector2)
         //::execute(p, fp->service.vec, fp->service.num);
-        if ( flow->gadget && (p->proto_bits & flow->gadget->get_api()->proto_bits) )
+        if ( flow->gadget && ((unsigned)p->type() & flow->gadget->get_api()->proto_bits) )
             flow->gadget->eval(p);
     }
     else

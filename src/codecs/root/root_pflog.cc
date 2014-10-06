@@ -179,7 +179,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
     {
         if (ScLogVerbose())
         {
-            ErrorMessage("Captured data length < minimum Pflog length! "
+            ErrorMessage("Captured data length < minimum Pflog length "
                     "(%d < %lu)\n", cap_len, (unsigned long)PFLOG2_HDRMIN);
         }
         MODULE_PROFILE_END(decodePerfStats);
@@ -211,7 +211,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
         default:
             if (ScLogVerbose())
             {
-                ErrorMessage("unrecognized pflog header length! (%d)\n",
+                ErrorMessage("unrecognized pflog header length (%d)\n",
                     *((uint8_t*)pkt));
             }
             dc.discards++;
@@ -224,7 +224,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
     {
         if (ScLogVerbose())
         {
-            ErrorMessage("Captured data length < Pflog header length! "
+            ErrorMessage("Captured data length < Pflog header length "
                     "(%d < %d)\n", cap_len, hlen);
         }
         dc.discards++;
@@ -236,7 +236,7 @@ void DecodePflog(Packet * p, const DAQ_PktHdr_t * pkthdr, const uint8_t * pkt)
     {
         if (ScLogVerbose())
         {
-            ErrorMessage("Bad Pflog header length! (%d bytes)\n", pflen);
+            ErrorMessage("Bad Pflog header length (%d bytes)\n", pflen);
         }
         dc.discards++;
         MODULE_PROFILE_END(decodePerfStats);

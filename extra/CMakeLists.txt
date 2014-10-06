@@ -33,6 +33,7 @@ else (BUILD_EXTRA_PLUGINS)
 
 
     # Some shared library flags for the two platforms which I am using
+    include(CheckCXXCompilerFlag)
     set(CMAKE_REQUIRED_FLAGS "-Wl,-undefined,dynamic_lookup")
     check_cxx_compiler_flag("" HAVE_DYNAMIC_LOOKUP)
     if(HAVE_DYNAMIC_LOOKUP)

@@ -28,11 +28,14 @@ set(BUILT_SOURCES
 
 set (UNBUILT_SOURCES
     snort_manual.txt
+    overview.txt
     errors.txt
     differences.txt
+    extending.txt
+    plugins.txt
+    reference.txt
     style.txt
     tips.txt
-    plugins.txt
 #   config_changes.txt  If ruby executable is NOT found
 )
 

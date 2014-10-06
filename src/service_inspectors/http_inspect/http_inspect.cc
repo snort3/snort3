@@ -462,7 +462,7 @@ static const InspectApi hs_api =
         mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     buffers,
     "http",
     hs_init,

@@ -62,7 +62,7 @@ void IpSessionCleanup (Flow* lws, FragTracker* tracker)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    lws->clear();
+    lws->restart();
 }
 
 //-------------------------------------------------------------------------

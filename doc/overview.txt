@@ -1,0 +1,125 @@
+Snort\++ is an updated version of the Snort IPS (intrusion prevention
+system).  This document assumes you have some familiarity with Snort and
+are looking to see what Snort++ has to offer.
+
+=== Goals
+
+The Snort architecture has accommadated increasingly complex packet
+processing.  However a new design is needed to become more scalable for
+today's many-core CPUs and multi-CPU platforms.  Here are some of the basic
+goals for Snort++:
+
+* Support multiple packet processing threads
+* Use a shared configuration and attribute table
+* Use a simple, scriptable configuration
+* Make key components pluggable
+* Autogenerate low-level documentation
+* Autodetect services for portless configuration
+* Support sticky buffers in rules
+* Provide better cross platform support
+
+The above goals are met with this first alpha release.  Additional,
+longer-term goals are:
+
+* Use a shared network map
+* Support pipelining of packet processing
+* Support hardware offload and data plane integration
+* Rewrite critical modules like TCP reassembly and HTTP inpsection
+* Support proxy mode
+* Facilitate component testing
+* Simplify memory management
+* Provide all of Snort's functionality
+
+This first alpha release is based on Snort 2.9.6-9 and excludes all but one
+of Snort's dynamic preprocessors.  Work is underway to port that
+functionality and additions will be rolled out as they become available.
+
+=== Configuration
+
+Note that retaining backwards compatibility is not a goal.  While Snort\++
+leverages some of the Snort code base, a lot has changed.  The
+configuration of Snort++ is done with Lua, so your old conf won't work as
+is.  Rules are still text based but nonetheless incompatible.  However,
+snort2lua will help you convert your conf and rules to the new format.
+
+The original Snort manual may be useful for some background information not
+yet documented for Snort++.  The configuration differences are given in
+this manual.
+
+=== Modules
+
+Snort++ is organized into a collection of builtin and plugin modules.
+If a module has parameters, it is configured by a Lua table of the same
+name.  For example, we can see what the active module has to offer with
+this command:
+
+    $ snort --help-module active
+
+    What: configure responses
+
+    Type: basic
+
+    Configuration: 
+
+    int active.attempts = 0: number of TCP packets sent per response (with
+    varying sequence numbers) { 0:20 }
+
+    string active.device: use 'ip' for network layer responses or 'eth0' etc
+    for link layer
+
+    string active.dst_mac: use format '01:23:45:67:89:ab'
+
+    int active.max_responses = 0: maximum number of responses { 0: }
+
+    int active.min_interval = 255: minimum number of seconds between
+    responses { 1: }
+
+This says active is a basic module that has several parameters.  For each,
+you will see:
+
+    type module.name = default: help { range }
+    
+For example, the active module has a max_responses parameter that takes
+non-negative integer values and defaults to zero.  We can change that in
+Lua as follows:
+
+    active = { max_responses = 1 }
+
+or:
+
+    active = { }
+    active.max_responses = 1
+
+If we also wanted to limit retries to at least 5 seconds, we could do:
+
+    active = { max_responses = 1, min_interval = 5 }
+
+=== Plugins
+
+There are several plugin types:
+
+* Codec - to decode and encode packets
+* Inspector - like the prior preprocessors, for normalization, etc.
+* IpsOption - for detection in Snort++ IPS rules
+* IpsAction - for custom rule actions
+* Logger - for handling events
+* Mpse - for fast pattern matching
+* So - for dynamic rules
+
+Most plugins can be built statically or dynamically.  By default they are
+all static.  There is no difference in functionality between static or
+dynamic plugins but the dynamic build generates a slightly lighter weight
+binary.  Either way you can add dynamic plugins with --plugin-path and
+newer versions will replace older versions, even when built statically.
+
+The power of plugins is that they have a very focused purpose and can be
+created with relative ease.  For example, you can extend the rule language
+by writing your own IpsOption and it will plug in and function just like
+existing options.  The extra diectory has examples of each type of plugin.
+
+=== Scripts
+
+Some things just need to be tweaked or prototyped quickly.  In addition to
+the Lua conf, which is a script that can contain functions to compute
+settings, etc., you can also script Loggers and IpsOptions.
+

@@ -45,7 +45,7 @@ public:
     ~Ipv6NoNextCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual void get_protocol_ids(std::vector<uint16_t>&);    
 };
 
@@ -53,7 +53,7 @@ public:
 } // namespace
 
 
-bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     // No need ot check IPv6 extension order since this is automatically
     // the last extension.

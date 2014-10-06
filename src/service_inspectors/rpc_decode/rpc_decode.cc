@@ -62,6 +62,7 @@
 #include "stream/stream_api.h"
 #include "stream/stream_splitter.h"
 #include "target_based/sftarget_protocol_reference.h"
+#include "protocols/tcp.h"
 
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
@@ -1111,7 +1112,7 @@ static const InspectApi rd_api =
         mod_dtor
     },
     IT_SERVICE,
-    PROTO_BIT__TCP,
+    (uint16_t)PktType::TCP,
     nullptr, // buffers
     "sunrpc",
     rd_init,

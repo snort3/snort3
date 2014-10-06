@@ -52,27 +52,27 @@ namespace
 
 static const RuleMap tcp_rules[] =
 {
-    { DECODE_TCP_DGRAM_LT_TCPHDR, "(" CD_TCP_NAME ") TCP packet len is smaller than 20 bytes" },
-    { DECODE_TCP_INVALID_OFFSET, "(" CD_TCP_NAME ") TCP Data Offset is less than 5" },
-    { DECODE_TCP_LARGE_OFFSET, "(" CD_TCP_NAME ") TCP Header length exceeds packet length" },
+    { DECODE_TCP_DGRAM_LT_TCPHDR, "TCP packet len is smaller than 20 bytes" },
+    { DECODE_TCP_INVALID_OFFSET, "TCP data offset is less than 5" },
+    { DECODE_TCP_LARGE_OFFSET, "TCP header length exceeds packet length" },
 
-    { DECODE_TCPOPT_BADLEN, "(" CD_TCP_NAME ") Tcp Options found with bad lengths" },
-    { DECODE_TCPOPT_TRUNCATED, "(" CD_TCP_NAME ") Truncated Tcp Options" },
-    { DECODE_TCPOPT_TTCP, "(" CD_TCP_NAME ") T/TCP Detected" },
-    { DECODE_TCPOPT_OBSOLETE, "(" CD_TCP_NAME ") Obsolete TCP Options found" },
-    { DECODE_TCPOPT_EXPERIMENTAL, "(" CD_TCP_NAME ") Experimental Tcp Options found" },
-    { DECODE_TCPOPT_WSCALE_INVALID, "(" CD_TCP_NAME ") Tcp Window Scale Option found with length > 14" },
-    { DECODE_TCP_XMAS, "(" CD_TCP_NAME ") XMAS Attack Detected" },
-    { DECODE_TCP_NMAP_XMAS, "(" CD_TCP_NAME ") Nmap XMAS Attack Detected" },
-    { DECODE_TCP_BAD_URP, "(" CD_TCP_NAME ") TCP urgent pointer exceeds payload length or no payload" },
-    { DECODE_TCP_SYN_FIN, "(" CD_TCP_NAME ") TCP SYN with FIN" },
-    { DECODE_TCP_SYN_RST, "(" CD_TCP_NAME ") TCP SYN with RST" },
-    { DECODE_TCP_MUST_ACK, "(" CD_TCP_NAME ") TCP PDU missing ack for established session" },
-    { DECODE_TCP_NO_SYN_ACK_RST, "(" CD_TCP_NAME ") TCP has no SYN, ACK, or RST" },
-    { DECODE_TCP_SHAFT_SYNFLOOD, "(" CD_TCP_NAME ") DDOS shaft synflood" },
-    { DECODE_TCP_PORT_ZERO, "(" CD_TCP_NAME ") BAD-TRAFFIC TCP port 0 traffic" },
-    { DECODE_DOS_NAPTHA, "(decode) DOS NAPTHA Vulnerability Detected" },
-    { DECODE_SYN_TO_MULTICAST, "(decode) Bad Traffic SYN to multicast address" },
+    { DECODE_TCPOPT_BADLEN, "TCP options found with bad lengths" },
+    { DECODE_TCPOPT_TRUNCATED, "truncated TCP options" },
+    { DECODE_TCPOPT_TTCP, "T/TCP detected" },
+    { DECODE_TCPOPT_OBSOLETE, "obsolete TCP options found" },
+    { DECODE_TCPOPT_EXPERIMENTAL, "experimental TCP options found" },
+    { DECODE_TCPOPT_WSCALE_INVALID, "TCP window scale option found with length > 14" },
+    { DECODE_TCP_XMAS, "XMAS attack detected" },
+    { DECODE_TCP_NMAP_XMAS, "Nmap XMAS attack detected" },
+    { DECODE_TCP_BAD_URP, "TCP urgent pointer exceeds payload length or no payload" },
+    { DECODE_TCP_SYN_FIN, "TCP SYN with FIN" },
+    { DECODE_TCP_SYN_RST, "TCP SYN with RST" },
+    { DECODE_TCP_MUST_ACK, "TCP PDU missing ack for established session" },
+    { DECODE_TCP_NO_SYN_ACK_RST, "TCP has no SYN, ACK, or RST" },
+    { DECODE_TCP_SHAFT_SYNFLOOD, "DDOS shaft SYN flood" },
+    { DECODE_TCP_PORT_ZERO, "BAD-TRAFFIC TCP port 0 traffic" },
+    { DECODE_DOS_NAPTHA, "DOS NAPTHA vulnerability detected" },
+    { DECODE_SYN_TO_MULTICAST, "bad traffic SYN to multicast address" },
     { 0, nullptr }
 };
 
@@ -97,7 +97,7 @@ public:
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -117,7 +117,7 @@ static int OptLenValidate(const tcp::TcpOption* const opt,
 
 static void DecodeTCPOptions(const uint8_t *, uint32_t, CodecData&);
 static inline void TCPMiscTests(const tcp::TCPHdr* const tcph,
-                                const SnortData& snort,
+                                const DecodeData& snort,
                                 const CodecData& codec);
 
 void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
@@ -125,7 +125,7 @@ void TcpCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_TCP);
 }
 
-bool TcpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     if(raw.len < tcp::TCP_HEADER_LEN)
     {
@@ -521,7 +521,7 @@ static int OptLenValidate(const tcp::TcpOption* const opt,
 
 /* TCP-layer decoder alerts */
 static inline void TCPMiscTests(const tcp::TCPHdr* const tcph,
-                                const SnortData& snort,
+                                const DecodeData& snort,
                                 const CodecData& codec)
 {
     if ( ((tcph->th_flags & TH_NORESERVED) == TH_SYN ) &&

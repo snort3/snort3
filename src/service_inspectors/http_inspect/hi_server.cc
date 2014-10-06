@@ -55,6 +55,7 @@ static THREAD_LOCAL uint8_t dechunk_buffer[65535];
 #include "snort_bounds.h"
 #include "detection_util.h"
 #include "utils/util_unfold.h"
+#include "protocols/tcp.h"
 
 #define STAT_END 100
 #define HTTPRESP_HEADER_NAME__COOKIE "Set-Cookie"

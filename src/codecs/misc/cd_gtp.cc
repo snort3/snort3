@@ -42,8 +42,8 @@ namespace
 
 static const RuleMap gtp_rules[] =
 {
-    { DECODE_GTP_MULTIPLE_ENCAPSULATION, "(" CD_GTP_NAME ") Two or more GTP encapsulation layers present" },
-    { DECODE_GTP_BAD_LEN, "(" CD_GTP_NAME ") GTP header length is invalid" },
+    { DECODE_GTP_MULTIPLE_ENCAPSULATION, "two or more GTP encapsulation layers present" },
+    { DECODE_GTP_BAD_LEN, "GTP header length is invalid" },
     { 0, nullptr }
 };
 
@@ -70,7 +70,7 @@ public:
     ~GtpCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
     virtual bool update(Packet*, Layer*, uint32_t* len);
@@ -106,7 +106,7 @@ void GtpCodec::get_protocol_ids(std::vector<uint16_t>& v)
  *
  */
 
-bool GtpCodec::decode(const RawData& raw, CodecData& codec, SnortData&)
+bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     uint8_t  next_hdr_type;
     uint8_t  version;

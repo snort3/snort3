@@ -1856,7 +1856,7 @@ static int fpCreatePortGroups(
     /* convert the tcp-any-any to a PortObject2 creature */
     po2 = PortObject2Dup(p->tcp_anyany);
     if (po2 == NULL)
-        FatalError("Could not create a PortObject version 2 for tcp-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for tcp-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -1899,7 +1899,7 @@ static int fpCreatePortGroups(
     /* UDP */
     po2 = PortObject2Dup(p->udp_anyany);
     if (po2 == NULL )
-        FatalError("Could not create a PortObject version 2 for udp-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for udp-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -1940,7 +1940,7 @@ static int fpCreatePortGroups(
     /* ICMP */
     po2 = PortObject2Dup(p->icmp_anyany);
     if (po2 == NULL)
-        FatalError("Could not create a PortObject version 2 for icmp-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for icmp-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -1981,7 +1981,7 @@ static int fpCreatePortGroups(
     /* IP */
     po2 = PortObject2Dup(p->ip_anyany);
     if (po2 == NULL)
-        FatalError("Could not create a PortObject version 2 for ip-any-any rules\n!");
+        FatalError("Could not create a PortObject version 2 for ip-any-any rules\n");
 
     if (!fpDetectSplitAnyAny(fp))
         add_any_any = po2;
@@ -2217,7 +2217,7 @@ void fpBuildServicePortGroups(
                 id = AddProtocolReference(srvc);
 
                 if(id <=0 )
-                    FatalError("Could not AddProtocolReference!\n");
+                    FatalError("Could not AddProtocolReference\n");
 
                 else if( id >= MAX_PROTOCOL_ORDINAL )
                     ParseWarning("protocol-ordinal=%d exceeds "
@@ -2237,12 +2237,12 @@ void fpBuildServicePortGroups(
             else /* id < 0 */
             {
                 ParseError("adding protocol-ordinal=%d for "
-                    "service=%s, can't use that !!!\n",id,srvc);
+                    "service=%s, can't use that\n",id,srvc);
             }
         }
         else
         {
-            ParseError("*** failed to create and find a port group for '%s' !!! \n",srvc );
+            ParseError("*** failed to create and find a port group for '%s'\n",srvc );
         }
     }
 }

@@ -94,7 +94,7 @@ void DpxPH::show(SnortConfig*)
 void DpxPH::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert(IsUDP(p));
+    assert(p->is_udp());
 
     if ( p->ptrs.dp == port && p->dsize > max )
         SnortEventqAdd(DPX_GID, DPX_SID);

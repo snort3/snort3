@@ -153,7 +153,7 @@ static const InspectApi tcp_api =
         mod_dtor
     },
     IT_STREAM,
-    PROTO_BIT__TCP,
+    (unsigned)PktType::TCP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

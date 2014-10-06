@@ -82,7 +82,7 @@ void LogLabel(const char* s)
     else
     {
         LogSeparator();
-        LogMessage("%s statistics\n", s);
+        LogMessage("%s\n", s);
     }
 }
 
@@ -255,7 +255,7 @@ void DropStats()
 {
     const DAQ_Stats_t* pkt_stats = &g_daq_stats;
 
-    LogLabel("Basic");
+    LogLabel("Packet Statistics");
 
     {
         uint64_t pkts_out, pkts_inj;
@@ -304,7 +304,7 @@ void DropStats()
     PacketManager::dump_stats();
     //mpse_print_qinfo();
 
-    LogLabel("Modules");
+    LogLabel("Module Statistics");
     ModuleManager::dump_stats(snort_conf);
 
     // ensure proper counting of log_limit
@@ -314,7 +314,7 @@ void DropStats()
     if ( gpc.total_alert_pkts == gpc.alert_pkts )
         gpc.total_alert_pkts = 0;
 
-    LogLabel("Summary");
+    LogLabel("Summary Statistics");
     show_stats((PegCount*)&gpc, pc_names, array_size(pc_names), "detection");
 
 #ifdef PPM_MGR
@@ -363,16 +363,21 @@ void sum_stats(
 void show_stats(
     PegCount* pegs, const char* names[], unsigned n, const char* module_name)
 {
-    if ( module_name )
-        LogLabel(module_name);
+    bool head = false;
 
     for ( unsigned i = 0; i < n; ++i )
     {
         PegCount c = pegs[i];
         const char* s = names[i];
 
-        if ( (!module_name || i) && !c )
+        if ( !c )
             continue;
+
+        if ( module_name && !head )
+        {
+            LogLabel(module_name);
+            head = true;
+        }
 
         LogCount(s, c);
     }
@@ -381,16 +386,22 @@ void show_stats(
 void show_percent_stats(
     PegCount* pegs, const char* names[], unsigned n, const char* module_name)
 {
-    if ( module_name )
-        LogLabel(module_name);
+    bool head = false;
+
 
     for ( unsigned i = 0; i < n; ++i )
     {
         PegCount c = pegs[i];
         const char* s = names[i];
 
-        if ( i && !c )
+        if ( !c )
             continue;
+
+        if ( module_name && !head )
+        {
+            LogLabel(module_name);
+            head = true;
+        }
 
         LogStat(s, c, pegs[0]);
     }

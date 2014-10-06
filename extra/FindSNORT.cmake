@@ -20,6 +20,7 @@ set(ERROR_MESSAGE
           -DSNORT_INCLUDE_DIR:PATH=/full/path/to/snort/include/dir
 
     3)  set the environment variable SNORT_DIR
+
     "
 )
 

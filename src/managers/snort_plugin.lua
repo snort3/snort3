@@ -42,5 +42,14 @@ struct SnortEvent
     const char* os;
 };
 const struct SnortEvent* get_event();
+
+struct SnortPacket
+{
+    const char* type;
+    uint64_t num;
+    unsigned sp;
+    unsigned dp;
+};
+const struct SnortPacket* get_packet();
 ]]
 

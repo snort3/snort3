@@ -69,13 +69,13 @@ static const Parameter udp_params[] =
 static const RuleMap udp_rules[] =
 {
 
-    { DECODE_UDP_DGRAM_LT_UDPHDR, "(" CD_UDP_NAME ") Truncated UDP Header" },
-    { DECODE_UDP_DGRAM_INVALID_LENGTH, "(" CD_UDP_NAME ") Invalid UDP header, length field < 8" },
-    { DECODE_UDP_DGRAM_SHORT_PACKET, "(" CD_UDP_NAME ") Short UDP packet, length field > payload length" },
-    { DECODE_UDP_DGRAM_LONG_PACKET, "(" CD_UDP_NAME ") Long UDP packet, length field < payload length" },
-    { DECODE_UDP_IPV6_ZERO_CHECKSUM, "(" CD_UDP_NAME ") Invalid IPv6 UDP packet, checksum zero" },
-    { DECODE_UDP_LARGE_PACKET, "(" CD_UDP_NAME ") MISC Large UDP Packet" },
-    { DECODE_UDP_PORT_ZERO, "(" CD_UDP_NAME ") BAD-TRAFFIC UDP port 0 traffic" },
+    { DECODE_UDP_DGRAM_LT_UDPHDR, "truncated UDP Header" },
+    { DECODE_UDP_DGRAM_INVALID_LENGTH, "invalid UDP header, length field < 8" },
+    { DECODE_UDP_DGRAM_SHORT_PACKET, "short UDP packet, length field > payload length" },
+    { DECODE_UDP_DGRAM_LONG_PACKET, "long UDP packet, length field < payload length" },
+    { DECODE_UDP_IPV6_ZERO_CHECKSUM, "invalid IPv6 UDP packet, checksum zero" },
+    { DECODE_UDP_LARGE_PACKET, "misc large UDP Packet" },
+    { DECODE_UDP_PORT_ZERO, "BAD-TRAFFIC UDP port 0 traffic" },
     { 0, nullptr }
 };
 
@@ -120,7 +120,7 @@ public:
 
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&);
@@ -137,7 +137,7 @@ public:
 
 
 
-static inline void UDPMiscTests(const SnortData&,
+static inline void UDPMiscTests(const DecodeData&,
                                 const CodecData&,
                                 uint32_t pay_len);
 
@@ -150,7 +150,7 @@ void UdpCodec::get_protocol_ids(std::vector<uint16_t>& v)
 }
 
 
-bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     uint16_t uhlen;
     bool fragmented_udp_flag = false;
@@ -316,7 +316,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
 
 
 /* UDP-layer decoder alerts */
-static inline void UDPMiscTests(const SnortData& snort,
+static inline void UDPMiscTests(const DecodeData& snort,
                                 const CodecData& codec,
                                 uint32_t pay_len)
 {

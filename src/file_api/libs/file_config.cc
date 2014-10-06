@@ -607,7 +607,7 @@ void parse_file_rule(const char *args, void **conf)
 
     if (file_config->FileRules[rule->id])
     {
-        ParseError("file type: duplicated rule id %d defined!", rule->id);
+        ParseError("file type: duplicated rule id %d defined", rule->id);
         free(rule);
         return;
     }

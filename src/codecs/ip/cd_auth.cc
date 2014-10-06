@@ -41,8 +41,8 @@ namespace
 
 static const RuleMap auth_rules[] =
 {
-    { DECODE_AUTH_HDR_TRUNC, "(" CD_AUTH_NAME ") Truncated authentication header"},
-    { DECODE_AUTH_HDR_BAD_LEN, "(" CD_AUTH_NAME ") Bad authentication header length"},
+    { DECODE_AUTH_HDR_TRUNC, "truncated authentication header"},
+    { DECODE_AUTH_HDR_BAD_LEN, "bad authentication header length"},
     { 0, nullptr }
 };
 
@@ -67,7 +67,7 @@ public:
     ~AuthCodec(){};
 
     virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, SnortData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&);
 };
 
 /*  Valid for both IPv4 and IPv6 */
@@ -92,7 +92,7 @@ void AuthCodec::get_protocol_ids(std::vector<uint16_t>& v)
     v.push_back(IPPROTO_ID_AUTH);
 }
 
-bool AuthCodec::decode(const RawData& raw, CodecData& codec, SnortData& snort)
+bool AuthCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
 
     const AuthHdr* const ah = reinterpret_cast<const AuthHdr* const>(raw.data);

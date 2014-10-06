@@ -162,11 +162,11 @@ DAQ_Mode DAQ_GetMode (const SnortConfig* sc)
             if ( !strcasecmp(daq_mode_string((DAQ_Mode)i), sc->daq_mode) )
             {
                 if ( ScAdapterInlineMode() && (i != DAQ_MODE_INLINE) )
-                    FatalError("DAQ '%s' mode incompatible with -Q!\n", sc->daq_mode);
+                    FatalError("DAQ '%s' mode incompatible with -Q\n", sc->daq_mode);
                 return (DAQ_Mode)i;
             }
         }
-        FatalError("Bad DAQ mode '%s'!\n", sc->daq_mode);
+        FatalError("Bad DAQ mode '%s'\n", sc->daq_mode);
     }
     if ( ScAdapterInlineMode() )
         return DAQ_MODE_INLINE;
@@ -240,7 +240,7 @@ void DAQ_Init (const SnortConfig* sc)
     daq_mod = daq_find_module(type);
 
     if ( !daq_mod )
-        FatalError("Can't find %s DAQ!\n", type);
+        FatalError("Can't find %s DAQ\n", type);
 
     snap = ( sc->pkt_snaplen > 0 ) ? sc->pkt_snaplen : PKT_SNAPLEN;
     daq_mode = DAQ_GetMode(sc);
@@ -350,7 +350,7 @@ int DAQ_SetFilter(const char* bpf)
     bpf_gate.unlock();
 
     if ( err )
-        FatalError("Can't set DAQ BPF filter to '%s' (%s)!\n",
+        FatalError("Can't set DAQ BPF filter to '%s' (%s)\n",
             bpf, daq_get_error(daq_mod, daq_hand));
 
     return err;
@@ -409,7 +409,7 @@ int DAQ_New (const SnortConfig* sc, const char* intf)
     DAQ_Config_t cfg;
 
     if ( !daq_mod )
-        FatalError("DAQ_Init not called!\n");
+        FatalError("DAQ_Init not called\n");
 
     if ( intf )
         interface_spec = SnortStrdup(intf);
@@ -471,7 +471,7 @@ int DAQ_Start ()
     int err = daq_start(daq_mod, daq_hand);
 
     if ( err )
-        FatalError("Can't start DAQ (%d) - %s!\n",
+        FatalError("Can't start DAQ (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     else if ( !DAQ_UnprivilegedStart() )
@@ -497,7 +497,7 @@ int DAQ_Stop ()
     int err = daq_stop(daq_mod, daq_hand);
 
     if ( err )
-        LogMessage("Can't stop DAQ (%d) - %s!\n",
+        LogMessage("Can't stop DAQ (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     return err;
@@ -522,7 +522,7 @@ int DAQ_Acquire (int max, DAQ_Analysis_Func_t callback, uint8_t* user)
 #endif
 
     if ( err && err != DAQ_READFILE_EOF )
-        LogMessage("Can't acquire (%d) - %s!\n",
+        LogMessage("Can't acquire (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     if ( s_error != DAQ_SUCCESS )
@@ -538,7 +538,7 @@ int DAQ_Inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len)
     int err = daq_inject(daq_mod, daq_hand, (DAQ_PktHdr_t*)h, buf, len, rev);
 #ifdef DEBUG
     if ( err )
-        LogMessage("Can't inject (%d) - %s!\n",
+        LogMessage("Can't inject (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 #endif
     return err;
@@ -581,7 +581,7 @@ const DAQ_Stats_t* DAQ_GetStats (void)
     err = daq_get_stats(daq_mod, daq_hand, &daq_stats);
 
     if ( err )
-        LogMessage("Can't get DAQ stats (%d) - %s!\n",
+        LogMessage("Can't get DAQ stats (%d) - %s\n",
             err, daq_get_error(daq_mod, daq_hand));
 
     if ( !daq_stats.hw_packets_received )
