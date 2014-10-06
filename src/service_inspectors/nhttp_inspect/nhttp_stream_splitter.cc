@@ -162,7 +162,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
                 return StreamSplitter::FLUSH;
             }
             // Incomplete headers wait patiently for more data
-            return StreamSplitter::SEARCH;
+            return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
           case SCAN_ABORT:
             prepare_flush(session_data, flush_offset, source_id, SEC_ABORT, false, 0, length, length, 0);
             session_data->type_expected[source_id] = SEC_ABORT;
