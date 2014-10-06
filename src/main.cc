@@ -646,6 +646,15 @@ static bool set_mode()
         FatalError("see prior %d errors\n", k);
         return false;
     }
+    if ( ScConfErrorOut() )
+    {
+        if ( int k = get_parse_warnings() )
+        {
+            FatalError("see prior %d warnings\n", k);
+            return false;
+        }
+    }
+
     if ( ScTestMode() ||
         (!Trough_GetQCount() && !(snort_conf->run_flags & RUN_FLAG__SHELL)) )
     {

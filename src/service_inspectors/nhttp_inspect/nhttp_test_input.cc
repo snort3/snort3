@@ -39,6 +39,8 @@
 using namespace NHttpEnums;
 
 NHttpTestInput::NHttpTestInput(const char *file_name) {
+    if ( !NHttpTestManager::use_test_input() )  // FIXIT-T workaround
+        return;
     if ((test_data_file = fopen(file_name, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
 }
 

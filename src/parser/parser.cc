@@ -84,6 +84,7 @@
 #include "target_based/sftarget_reader.h"
 
 static unsigned parse_errors = 0;
+static unsigned parse_warnings = 0;
 
 rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
 
@@ -99,6 +100,13 @@ unsigned get_parse_errors()
 { 
     unsigned tmp = parse_errors;
     parse_errors = 0;
+    return tmp;
+}
+
+unsigned get_parse_warnings()
+{
+    unsigned tmp = parse_warnings;
+    parse_warnings = 0;
     return tmp;
 }
 
@@ -1138,8 +1146,7 @@ void ParseWarning(const char *format, ...)
     else
         LogMessage("WARNING: %s\n", buf);
 
-    if ( ScConfErrorOut() )
-        parse_errors++;
+    parse_warnings++;
 }
 
 void ParseMessage(const char *format, ...)
