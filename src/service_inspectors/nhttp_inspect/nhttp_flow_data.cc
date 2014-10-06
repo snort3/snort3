@@ -65,7 +65,7 @@ void NHttpFlowData::half_reset(SourceId source_id) {
 
 void NHttpFlowData::show(FILE* out_file) const {
     assert(out_file != nullptr);
-    fprintf(out_file, "Diagnostic outout from NHttpFlowData (Client/Server):\n");
+    fprintf(out_file, "Diagnostic output from NHttpFlowData (Client/Server):\n");
     fprintf(out_file, "Version ID: %d/%d\n", version_id[0], version_id[1]);
     fprintf(out_file, "Method ID: %d\n", method_id);
     fprintf(out_file, "Status code: %d\n", status_code_num);
