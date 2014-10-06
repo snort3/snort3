@@ -12,21 +12,17 @@ else (BUILD_EXTRA_PLUGINS)
     set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 
     # Look for Snort using pkg-config and our own find-snort module
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SNORT_PKG_MODULE snort)
 
     if (APPLE)
         set(CMAKE_MACOSX_RPATH OFF)
     endif(APPLE)
 
-    if (SNORT_PKG_MODULE_FOUND)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SNORT_PKG_MODULE_CFLAGS}")
-        find_package(SNORT QUIET)
-    else()
-        find_package(SNORT REQUIRED)
-    endif()
+    find_package(SNORT REQUIRED)
+
+
 
     if ((NOT SNORT_FOUND) AND (NOT SNORT_PKG_MODULE_FOUND))
+        find_package(SNORT REQUIRED) # to print the helpful Snort message
         message(FATAL_ERROR "Unable to find Snort includes!!")
     endif()
 
