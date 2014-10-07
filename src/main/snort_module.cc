@@ -63,6 +63,7 @@ static const Command snort_cmds[] =
     { "process", main_process, "process given pcap" },
     { "pause", main_pause, "suspend packet processing" },
     { "resume", main_resume, "continue packet processing" },
+    { "detach", main_detach, "exit shell w/o shutdown" },
     { "quit", main_quit, "shutdown and dump-stats" },
     { "help", main_help, "this output" },
     { nullptr, nullptr, nullptr }

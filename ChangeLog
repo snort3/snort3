@@ -19,6 +19,7 @@
 -- added workaround and FIXIT-T for nhttp test
 -- added path to dynamically loaded plugins output with --list-plugins
 -- commented out mpse start up foo - needs reformatting
+-- added snort.detach() and fixed -j parsing
 
 122
 -- pulled thread pinning from Josh

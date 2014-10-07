@@ -363,6 +363,13 @@ int main_resume(lua_State*)
     return 0;
 }
 
+int main_detach(lua_State*)
+{
+    shell_enabled = false;
+    request.respond("== detaching\n");
+    return 0;
+}
+
 int main_quit(lua_State*)
 {
     exit_logged = 1;
