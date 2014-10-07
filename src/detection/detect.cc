@@ -90,12 +90,11 @@ void snort_ignore(Packet*) { }
 
 void snort_inspect(Packet* p)
 {
-#ifdef PPM_MGR
-    uint64_t pktcnt=0;
-#endif
     PROFILE_VARS;
 
 #ifdef PPM_MGR
+    uint64_t pktcnt=0;
+
     /* Begin Packet Performance Monitoring  */
     if( PPM_PKTS_ENABLED() )
     {
