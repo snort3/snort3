@@ -64,7 +64,11 @@ port_scan = { }
 
 http_inspect = { }
 http_server = { }
---nhttp_inspect = { }
+--nhttp_inspect =
+--{
+--    test_input = false,
+--    test_output = false
+--}
 
 telnet = { }
 
