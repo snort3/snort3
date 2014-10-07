@@ -159,7 +159,7 @@ void Shell::configure(SnortConfig* sc)
     loaded = true;
 }
 
-void Shell::install(const char* name, const luaL_reg* reg)
+void Shell::install(const char* name, const luaL_Reg* reg)
 {
     if ( !strcmp(name, "snort") )
         luaL_register(lua, "_G", reg);

@@ -47,7 +47,7 @@ struct ModHook
 {
     Module* mod;
     const BaseApi* api;
-    luaL_reg* reg;
+    luaL_Reg* reg;
 
     ModHook(Module*, const BaseApi*);
     ~ModHook();
@@ -100,10 +100,10 @@ void ModHook::init()
         n++;
 
     // constructing reg here may seem like overkill
-    // ... why not just typedef Command to luaL_reg?
+    // ... why not just typedef Command to luaL_Reg?
     // because the help would not be supplied or it
     // would be out of date, out of sync, etc. QED
-    reg = new luaL_reg[++n];
+    reg = new luaL_Reg[++n];
     unsigned k = 0;
 
     while ( k < n )

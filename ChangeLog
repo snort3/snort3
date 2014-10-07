@@ -24,6 +24,7 @@
 -- fixed some Xcode analyzer issues
 -- pulled in cmake updates from Josh
 -- pulled in nhttp updates from Tom
+-- applied cmake inc dir order patch from Josh
 
 122
 -- pulled thread pinning from Josh

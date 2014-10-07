@@ -55,11 +55,6 @@ struct ProfileStats
 #define PROFILE_VARS_NAMED(name) uint64_t name##_ticks_start, name##_ticks_end
 #define PROFILE_VARS PROFILE_VARS_NAMED(snort)
 
-// we could use PROFILE_START_NAMED(node) instead
-// but that confuses static analysis
-#define PROFILE_START_NODE \
-    get_clockticks(node_ticks_start)
-
 #define PROFILE_START_NAMED(name) \
     get_clockticks(name##_ticks_start)
 
@@ -74,13 +69,14 @@ struct ProfileStats
 #define PROFILING_RULES ScProfileRules()
 #endif
 
-#define NODE_PROFILE_VARS uint64_t node_ticks_start, node_ticks_end, node_ticks_delta, node_deltas = 0
+#define NODE_PROFILE_VARS \
+    uint64_t node_ticks_start = 0, node_ticks_end, node_ticks_delta, node_deltas = 0
 
 #define NODE_PROFILE_START(node) \
     if (PROFILING_RULES) { \
         unsigned id = get_instance_id(); \
         node->state[id].checks++; \
-        PROFILE_START_NODE; \
+        PROFILE_START_NAMED(node); \
     }
 
 #define NODE_PROFILE_END_MATCH(node) \
@@ -101,7 +97,7 @@ struct ProfileStats
 
 #define NODE_PROFILE_TMPSTART(node) \
     if (PROFILING_RULES) { \
-        PROFILE_START_NODE; \
+        PROFILE_START_NAMED(node); \
     }
 
 #define NODE_PROFILE_TMPEND(node) \

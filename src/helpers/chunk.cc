@@ -21,6 +21,10 @@
 #include "chunk.h"
 
 #include <lua.hpp>
+extern "C"
+{
+    int lua_load(lua_State*, lua_Reader, void*, const char*);
+}
 
 #include "managers/ips_manager.h"
 #include "hash/sfhashfcn.h"
@@ -43,7 +47,7 @@ struct Loader
     bool done;
 };
 
-static const char* load(lua_State*, void* ud, size_t* size)
+static const char* ldchunk(lua_State*, void* ud, size_t* size)
 {
     Loader* ldr = (Loader*)ud;
 
@@ -66,7 +70,7 @@ void init_chunk(
     Loader ldr(chunk);
 
     // first load the chunk
-    if ( lua_load(L, load, &ldr, name) )
+    if ( lua_load(L, (lua_Reader)ldchunk, (void*)&ldr, name) )
     {
         ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
         return;
