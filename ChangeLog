@@ -22,6 +22,8 @@
 -- added snort.detach() and fixed -j parsing
 -- various parsing changes for improved error handling
 -- fixed some Xcode analyzer issues
+-- pulled in cmake updates from Josh
+-- pulled in nhttp updates from Tom
 
 122
 -- pulled thread pinning from Josh
