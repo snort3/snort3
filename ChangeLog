@@ -18,6 +18,7 @@
 -- split parse warning count out of error count
 -- added workaround and FIXIT-T for nhttp test
 -- added path to dynamically loaded plugins output with --list-plugins
+-- commented out mpse start up foo - needs reformatting
 
 122
 -- pulled thread pinning from Josh
