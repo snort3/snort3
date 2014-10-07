@@ -32,7 +32,7 @@
 
 bool NHttpTestManager::test_input = false;
 bool NHttpTestManager::test_output = false;
-NHttpTestInput NHttpTestManager::test_input_source("nhttp_test_msgs.txt");
+NHttpTestInput* NHttpTestManager::test_input_source = nullptr;
 const char* NHttpTestManager::test_output_prefix = "nhttpresults/testcase";
 int64_t NHttpTestManager::test_number = -1;
 FILE* NHttpTestManager::test_out = nullptr;
@@ -44,6 +44,13 @@ void NHttpTestManager::update_test_number(int64_t new_test_number) {
         char file_name[100];
         snprintf(file_name, sizeof(file_name), "%s%" PRIi64 ".txt", test_output_prefix, test_number);
         if ((test_out = fopen(file_name, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
+    }
+}
+
+void NHttpTestManager::activate_test_input() {
+    test_input = true;
+    if (test_input_source == nullptr) {
+        test_input_source = new NHttpTestInput("nhttp_test_msgs.txt");
     }
 }
 
