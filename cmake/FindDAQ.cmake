@@ -23,8 +23,8 @@ set (ERROR_MESSAGE
 
 
 find_path(DAQ_INCLUDE_DIR
-    NAMES  daq.h 
-    HINTS  ENV DAQ_DIR
+    NAMES daq.h
+    HINTS ENV DAQ_DIR
     PATH_SUFFIXES daq
 )
 

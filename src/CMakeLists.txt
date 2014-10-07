@@ -2,12 +2,12 @@
 
 # keeping track of external libraries seperately for use in pkg-config.
 set(EXTERNAL_LIBRARIES
+    ${LUAJIT_LIBRARIES}
     ${PCRE_LIBRARIES}
     ${PCAP_LIBRARIES}
     ${OPENSSL_LIBRARIES}
     ${ZLIB_LIBRARIES}
 #    ${OPENSSL_CRYPTO_LIBRARY}  -- part of OPENSSL_LIBRARIES
-    ${LUAJIT_LIBRARIES}
     ${DAQ_LIBRARIES}
     ${DNET_LIBRARIES}
     ${CLANG_CXX_LIBRARY}
@@ -25,7 +25,7 @@ set(EXTERNAL_INCLUDES
     ${ZLIB_INCLUDE_DIRS}
     CACHE INTERNAL "external INCLUDES" FORCE
 )
-include_directories(${EXTERNAL_INCLUDES})
+include_directories(BEFORE SYSTEM ${EXTERNAL_INCLUDES})
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

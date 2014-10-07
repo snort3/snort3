@@ -29,6 +29,7 @@ set(ERROR_MESSAGE
 find_path (SNORT_INCLUDE_DIR
     NAMES main/snort_types.h
     HINTS ENV SNORT_DIR
+    PATH_SUFFIXES snort include/snort
 )
 
 if (NOT SNORT_INCLUDE_DIR)
@@ -42,7 +43,6 @@ if (NOT SNORT_INCLUDE_DIR)
         endif (SNORT_PKG_MODULE_FOUND)
     endif (PKG_CONFIG_FOUND)
 endif (NOT SNORT_INCLUDE_DIR)
-
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SNORT
