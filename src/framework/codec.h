@@ -407,5 +407,5 @@ struct CodecApi
     CdDelFunc dtor;   // clean up instance data
 };
 
-#endif
+#endif /* FRAMEWORK_CODEC_H */
 

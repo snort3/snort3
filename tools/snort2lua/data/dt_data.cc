@@ -58,7 +58,7 @@ LuaData::~LuaData()
 
 
 
-std::string LuaData::translate_variable(std::string var_name)
+std::string LuaData::translate_variable(const std::string& var_name)
 {
     for (auto v : vars)
         if (!var_name.compare(v->get_name()))
@@ -77,7 +77,7 @@ std::string LuaData::translate_variable(std::string var_name)
  * Given a Snort style string to expand, this funcion will return
  * the expanded string
  */
-std::string LuaData::expand_vars(std::string string)
+std::string LuaData::expand_vars(const std::string &string)
 {
     std::string estring;
     estring.resize(1024, '\0');

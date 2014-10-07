@@ -19,7 +19,7 @@
  */
 // pps_binder.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "preprocessor_states/pps_binder.h"
+#include "utils/util_binder.h"
 #include "data/dt_table_api.h"
 
 
@@ -37,7 +37,6 @@ void Binder::add_to_configuration()
     table_api.open_top_level_table("binder");
     table_api.open_table();
 
-#if 0
     table_api.open_table("when");
 
     if (!when_policy_id.empty())
@@ -62,7 +61,6 @@ void Binder::add_to_configuration()
         table_api.add_list("nets", n);
 
     table_api.close_table(); // "when"
-#endif
 
     table_api.open_table("use");
 

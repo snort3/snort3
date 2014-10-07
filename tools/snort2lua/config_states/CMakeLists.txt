@@ -29,3 +29,8 @@ add_library( config_states
     config_api.h
     config_api.cc
 )
+
+target_link_libraries( config_states
+    snort2lua_utils
+    conversion_data
+)
