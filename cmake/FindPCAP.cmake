@@ -35,8 +35,9 @@ find_path(PCAP_INCLUDE_DIR
 # call find_library twice. First search custom path, then search standard paths
 find_library(PCAP_LIBRARIES 
     NAMES pcap
-    PATHS ${PCAP_LIBRARIES_DIR}
+    HINTS ${PCAP_LIBRARIES_DIR} # user specified option in ./configure_cmake.sh
     NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
 )
 find_library(PCAP_LIBRARIES 
     NAMES pcap
