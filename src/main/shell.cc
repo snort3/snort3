@@ -109,12 +109,6 @@ static void config_lua(
         load_overrides(L, s);
 
     run_config(L, "_G");
-
-    if ( int k = ModuleManager::get_errors() )
-    {
-        if ( snort_is_starting() )
-            FatalError("see prior %d errors\n", k);
-    }
 }
 
 //-------------------------------------------------------------------------

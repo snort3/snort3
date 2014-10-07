@@ -487,7 +487,7 @@ void CleanupProtoNames(void)
 
 /****************************************************************************
  *
- * Function: read_infile(char *)
+ * Function: read_infile(const char* key, const char* file)
  *
  * Purpose: Reads the BPF filters in from a file.  Ripped from tcpdump.
  *
@@ -496,7 +496,7 @@ void CleanupProtoNames(void)
  * Returns: the processed BPF string
  *
  ****************************************************************************/
-char *read_infile(char *fname)
+char *read_infile(const char* key, const char* fname)
 {
     int fd, cc;
     char *cp, *cmt;
@@ -506,7 +506,7 @@ char *read_infile(char *fname)
 
     if(fd < 0)
     {
-        ParseError("can't open %s: %s\n", fname, get_error(errno));
+        ParseError("can't open %s = %s: %s\n", key, fname, get_error(errno));
         return nullptr;
     }
 

@@ -580,7 +580,6 @@ static void parse_file(SnortConfig* sc, Shell* sh)
     if ( !fname || !*fname )
         return;
 
-    LogMessage("Loading %s:\n", fname);
     push_parse_location(fname);
     sh->configure(sc);
     pop_parse_location();
@@ -1118,8 +1117,8 @@ void ParseError(const char *format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    if (file_name != NULL)
-        LogMessage("ERROR: %s(%d) %s\n", file_name, file_line, buf);
+    if (file_line )
+        LogMessage("ERROR: %s:%d %s\n", file_name, file_line, buf);
     else
         LogMessage("ERROR: %s\n", buf);
 
@@ -1141,8 +1140,8 @@ void ParseWarning(const char *format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    if (file_name != NULL)
-        LogMessage("WARNING: %s(%d) %s\n", file_name, file_line, buf);
+    if ( file_line )
+        LogMessage("WARNING: %s:%d %s\n", file_name, file_line, buf);
     else
         LogMessage("WARNING: %s\n", buf);
 

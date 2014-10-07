@@ -475,7 +475,14 @@ void PluginManager::instantiate(
 void PluginManager::instantiate(
     const BaseApi* api, Module* mod, SnortConfig* sc, const char* name)
 {
-    assert(api->type == PT_INSPECTOR);
-    InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
+    if ( api->type == PT_INSPECTOR )
+        InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
+
+    else if ( api->type == PT_DATA )
+        // FIXIT-H instantiate PT_DATA with name
+        DataManager::instantiate((DataApi*)api, mod, sc/*, name*/);
+
+    else
+        assert(false);
 }
 

@@ -333,9 +333,9 @@ static void SnortInit(int argc, char **argv)
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
-        FatalError("can't initialize inspectors\n");
+        ParseError("can't initialize inspectors");
 
-    if ( ScLogVerbose() )
+    else if ( ScLogVerbose() )
         InspectorManager::print_config(snort_conf);
 
     ParseRules(snort_conf);
@@ -368,7 +368,7 @@ static void SnortInit(int argc, char **argv)
     SFAT_Start();
 
 #ifdef PPM_MGR
-    PPM_PRINT_CFG(&snort_conf->ppm_cfg);
+    //PPM_PRINT_CFG(&snort_conf->ppm_cfg);
 #endif
 
     /* Finish up the pcap list and put in the queues */
@@ -377,7 +377,7 @@ static void SnortInit(int argc, char **argv)
     // FIXIT-L stuff like this that is also done in snort_config.cc::VerifyReload()
     // should be refactored
     if ((snort_conf->bpf_filter == NULL) && (snort_conf->bpf_file != NULL))
-        snort_conf->bpf_filter = read_infile(snort_conf->bpf_file);
+        snort_conf->bpf_filter = read_infile("packets.bpf_file", snort_conf->bpf_file);
 
     if (snort_conf->bpf_filter != NULL)
         LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter);
@@ -649,7 +649,7 @@ SnortConfig* get_reload_config()
     }
 
 #ifdef PPM_MGR
-    PPM_PRINT_CFG(&sc->ppm_cfg);
+    //PPM_PRINT_CFG(&sc->ppm_cfg);
 #endif
 
     return sc;

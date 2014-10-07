@@ -42,7 +42,7 @@ unsigned get_parse_warnings();
 
 const char* get_parse_file();
 void get_parse_location(const char*& name, unsigned& line);
-void push_parse_location(const char* name, unsigned line = 1);
+void push_parse_location(const char* name, unsigned line = 0);
 
 void pop_parse_location();
 void inc_parse_position();
