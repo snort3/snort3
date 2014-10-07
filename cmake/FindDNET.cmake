@@ -30,8 +30,9 @@ find_path(DNET_INCLUDE_DIR
 # using standard paths
 find_library(DNET_LIBRARIES
     NAMES dnet dumbnet
-    PATHS ${DNET_LIBRARIES_DIR}
+    HINTS ${DNET_LIBRARIES_DIR} # user specified option in ./configure_cmake.sh
     NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
 )
 find_library(DNET_LIBRARIES
     NAMES dnet dumbnet
