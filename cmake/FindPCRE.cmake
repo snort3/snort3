@@ -1,5 +1,3 @@
-# $Id$
-#
 # - Find pcre
 # Find the native PCRE includes and library
 #
@@ -17,12 +15,14 @@ find_path(PCRE_INCLUDE_DIR
 )
 
 
-#find_library(PCRE_LIBRARIES 
-#    NAMES pcre
-#    PATHS ${PCRE_LIBRARIES_DIR}
-#    NO_DEFAULT_PATH
-#)
 find_library(PCRE_LIBRARIES 
+    NAMES pcre
+    HINTS ${PCRE_LIBRARIES_DIR} # from ./configure_cmake.sh script
+    NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+)
+
+find_library(PCRE_LIBRARIES
     NAMES pcre
 )
 

@@ -35,9 +35,10 @@ find_path(LUAJIT_INCLUDE_DIR
 
 find_library(LUAJIT_LIBRARIES
     NAMES luajit-5.1
-    ${LUAJIT_LIBRARIES_DIR}
+    HINTS ${LUAJIT_LIBRARIES_DIR}
     DOC "Lua Libraries"
     NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
 )
 find_library(LUAJIT_LIBRARIES
     NAMES luajit-5.1
