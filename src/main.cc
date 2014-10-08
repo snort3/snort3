@@ -300,8 +300,10 @@ int main_reload_config(lua_State*)
         request.respond("== reload failed\n");
         return 0;
     }
-    proc_stats.conf_reloads++;
     request.respond(".. swapping configuration\n");
+    snort_conf = sc;
+    proc_stats.conf_reloads++;
+
     swapper = new Swapper(old, sc);
 
     for ( unsigned idx = 0; idx < max_pigs; ++idx )

@@ -1,6 +1,7 @@
 124
 -- valgrind cleanup
 -- fixed incorrect casting of ftp, ftp-data, and telnet flow data
+-- fixed reload_config()
 
 123
 -- refactored documentation
