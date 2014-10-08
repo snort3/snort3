@@ -38,12 +38,16 @@
 
 class NHttpMsgStatus: public NHttpMsgStart {
 public:
-    NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_, NHttpEnums::SourceId source_id_);
+    NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+       NHttpEnums::SourceId source_id_, bool buf_owner);
     void analyze();
     void print_section(FILE *output);
     void gen_events();
     void update_flow();
     void legacy_clients();
+
+    const Field& get_status_code() { return status_code; };
+    const Field& get_reason_phrase() { return reason_phrase; };
 
 private:
     void parse_start_line();
@@ -51,7 +55,6 @@ private:
 
     Field status_code;
     Field reason_phrase;
-    NHttpMsgRequest* request;
 };
 
 #endif

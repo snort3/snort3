@@ -498,7 +498,7 @@ int VerifyReload(SnortConfig *sc)
     }
 
     if ((sc->bpf_filter == NULL) && (sc->bpf_file != NULL))
-        sc->bpf_filter = read_infile(sc->bpf_file);
+        sc->bpf_filter = read_infile("packets.bpf_file", sc->bpf_file);
 
     if ((sc->bpf_filter != NULL) && (snort_conf->bpf_filter != NULL))
     {

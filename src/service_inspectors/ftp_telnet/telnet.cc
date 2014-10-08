@@ -130,8 +130,10 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
 
     if (p->flow)
     {
-        ft_ssn = (FTP_TELNET_SESSION *)
+        TelnetFlowData* fd = (TelnetFlowData*)
             p->flow->get_application_data(FtpFlowData::flow_id);
+
+        ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
 
         if (ft_ssn != NULL)
         {
@@ -157,6 +159,7 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet *p)
             }
             else
             {
+                assert(false);
                 p->flow->free_application_data(FtpFlowData::flow_id);
                 return 0;
             }

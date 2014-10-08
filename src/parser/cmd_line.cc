@@ -78,14 +78,17 @@ static bool set_arg(
     Value v(key);
     bool ok = true;
 
-    if ( p->type == Parameter::PT_IMPLIED )
+    switch ( p->type )
     {
+    case Parameter::PT_IMPLIED:
         if ( *val )
             ok = false;
         else
             v.set(true);
-    }
-    else if ( p->type == Parameter::PT_INT )
+        break;
+
+    case Parameter::PT_INT:
+    case Parameter::PT_PORT:
     {
         char* end = nullptr;
         long n = strtol(val, &end, 0);
@@ -94,9 +97,22 @@ static bool set_arg(
             v.set(n);
         else
             ok = false;
+        break;
     }
-    else
+    case Parameter::PT_REAL:
+    {
+        char* end = nullptr;
+        double d = strtod(val, &end);
+
+        if ( !*end )
+            v.set(d);
+        else
+            ok = false;
+        break;
+    }
+    default:
         v.set(val);
+    }
 
     if ( ok && p->validate(v) )
     {

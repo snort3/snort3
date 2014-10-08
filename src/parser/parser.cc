@@ -84,6 +84,7 @@
 #include "target_based/sftarget_reader.h"
 
 static unsigned parse_errors = 0;
+static unsigned parse_warnings = 0;
 
 rule_index_map_t *ruleIndexMap = NULL;   /* rule index -> sid:gid map */
 
@@ -99,6 +100,13 @@ unsigned get_parse_errors()
 { 
     unsigned tmp = parse_errors;
     parse_errors = 0;
+    return tmp;
+}
+
+unsigned get_parse_warnings()
+{
+    unsigned tmp = parse_warnings;
+    parse_warnings = 0;
     return tmp;
 }
 
@@ -572,7 +580,6 @@ static void parse_file(SnortConfig* sc, Shell* sh)
     if ( !fname || !*fname )
         return;
 
-    LogMessage("Loading %s:\n", fname);
     push_parse_location(fname);
     sh->configure(sc);
     pop_parse_location();
@@ -1110,8 +1117,8 @@ void ParseError(const char *format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    if (file_name != NULL)
-        LogMessage("ERROR: %s(%d) %s\n", file_name, file_line, buf);
+    if (file_line )
+        LogMessage("ERROR: %s:%d %s\n", file_name, file_line, buf);
     else
         LogMessage("ERROR: %s\n", buf);
 
@@ -1133,13 +1140,12 @@ void ParseWarning(const char *format, ...)
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
-    if (file_name != NULL)
-        LogMessage("WARNING: %s(%d) %s\n", file_name, file_line, buf);
+    if ( file_line )
+        LogMessage("WARNING: %s:%d %s\n", file_name, file_line, buf);
     else
         LogMessage("WARNING: %s\n", buf);
 
-    if ( ScConfErrorOut() )
-        parse_errors++;
+    parse_warnings++;
 }
 
 void ParseMessage(const char *format, ...)

@@ -46,7 +46,7 @@ void Field::print(FILE *output, const char* name, bool int_vals) const {
         fprintf(output, "\n");
         return;
     }
-    int32_t print_length = (length <= 1000) ? length : 1000;    // Limit the amount of data printed
+    int32_t print_length = (length <= 1200) ? length : 1200;    // Limit the amount of data printed
     for (int k=0; k < print_length; k++) {
         if ((start[k] >= 0x20) && (start[k] <= 0x7E)) fprintf(output, "%c", (char)start[k]);
         else if (start[k] == 0xD) fprintf(output, "~");

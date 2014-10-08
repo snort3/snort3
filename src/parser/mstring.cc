@@ -113,6 +113,7 @@ int main()
  *      array.
  *
  ****************************************************************/
+// FIXIT-L eliminate mSplit(); create iterator service if needed
 char ** mSplit(const char *str, const char *sep_chars, const int max_toks,
                int *num_toks, const char meta_char)
 {

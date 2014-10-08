@@ -23,8 +23,9 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgTrailer class analyzes HTTP chunked message trailers.
+//  @brief      NHttpMsgChunk class analyzes HTTP chunked body.
 //
+
 
 #include <assert.h>
 #include <string.h>
@@ -33,69 +34,35 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_msg_trailer.h"
+#include "nhttp_msg_chunk.h"
 
 using namespace NHttpEnums;
 
-NHttpMsgTrailer::NHttpMsgTrailer(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-   SourceId source_id_, bool buf_owner) :
-   NHttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner)
+NHttpMsgChunk::NHttpMsgChunk(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+   SourceId source_id_, bool buf_owner) : NHttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner)
 {
-   transaction->set_trailer(this, source_id);
+   transaction->set_body(this);
 }
 
-void NHttpMsgTrailer::gen_events() {
-    NHttpMsgHeadShared::gen_events();
-}
+void NHttpMsgChunk::gen_events() {}
 
-void NHttpMsgTrailer::print_section(FILE *output) {
-    NHttpMsgSection::print_message_title(output, "trailer");
-    NHttpMsgHeadShared::print_headers(output);
+void NHttpMsgChunk::print_section(FILE *output) {
+    NHttpMsgSection::print_message_title(output, "chunk");
+    fprintf(output, "Cumulative octets %" PRIi64 "\n", body_octets);
+    data.print(output, "Data");
     NHttpMsgSection::print_message_wrapup(output);
 }
 
-
-void NHttpMsgTrailer::update_flow() {
+void NHttpMsgChunk::update_flow() {
     if (tcp_close) {
         session_data->type_expected[source_id] = SEC_CLOSED;
         session_data->half_reset(source_id);
     }
     else {
-        session_data->type_expected[source_id] = (source_id == SRC_CLIENT) ? SEC_REQUEST : SEC_STATUS;
-        session_data->half_reset(source_id);
+        // Zero-length chunk is not visible here. StreamSplitter updates expected_type to SEC_TRAILER when necessary.
+        session_data->body_octets[source_id] = body_octets;
     }
 }
-
-ProcessResult NHttpMsgTrailer::worth_detection() {
-    // Do not send empty trailers to detection
-    return (msg_text.length > 0) ? RES_INSPECT : RES_IGNORE;
-}
-
-// Legacy support function. Puts message fields into the buffers used by old Snort.
-void NHttpMsgTrailer::legacy_clients() {
-    ClearHttpBuffers();
-    legacy_request();
-    legacy_status();
-    legacy_header(true);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

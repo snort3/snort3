@@ -23,37 +23,60 @@
 //
 //  @author     Tom Peters <thopeter@cisco.com>
 //
-//  @brief      NHttpMsgStart class declaration
+//  @brief      NHttpTestManager class declaration
 //
 
-#ifndef NHTTP_MSG_START_H
-#define NHTTP_MSG_START_H
+#ifndef NHTTP_TEST_MANAGER_H
+#define NHTTP_TEST_MANAGER_H
 
-#include "nhttp_msg_section.h"
-#include "nhttp_field.h"
+#include <sys/types.h>
+#include <assert.h>
+#include <stdio.h>
 
 //-------------------------------------------------------------------------
-// NHttpMsgStart class
+// NHttpTestManager class
 //-------------------------------------------------------------------------
 
-class NHttpMsgStart: public NHttpMsgSection {
+class NHttpTestInput;
+
+class NHttpTestManager {
 public:
-    void analyze();
-    void gen_events();
-    NHttpEnums::ProcessResult worth_detection();
+    static bool use_test_input() { return test_input; };
+    static void activate_test_input();
+    static void activate_test_output() { test_output = true; };
+    static NHttpTestInput* get_test_input_source() { return test_input_source; };
+    static void update_test_number(int64_t new_test_number);
+    static bool use_test_output() { return test_output || test_input; };
+    static FILE* get_output_file() { return (test_out != nullptr) ? test_out : stdout; };
+    static int64_t get_test_number() { return test_number; };
+private:
+    NHttpTestManager() = delete;
+    // Test input read from file
 
-protected:
-    NHttpMsgStart(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-       NHttpEnums::SourceId source_id_, bool buf_owner) :
-       NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner) {};
-    virtual void parse_start_line() = 0;
-    void derive_version_id();
+    static bool test_input;
+    static NHttpTestInput* test_input_source;
 
-    Field start_line;
-    Field version;
+    // Printing results of message processing
+    static bool test_output;
+    static const char* test_output_prefix;
+    static FILE* test_out;
+    static int64_t test_number;
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

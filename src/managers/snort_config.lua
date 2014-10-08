@@ -52,17 +52,18 @@ end
 function snort_set(fqn, key, val)
     local name
     local idx = 0
+    local what = type(val)
         
     if ( not fqn ) then
         name = key
+
     elseif ( type(key) == 'number' ) then
         name = fqn
         idx = key
+
     else
         name = fqn .. '.' .. key
     end
-
-    local what = type(val)
 
     if ( what == 'boolean' ) then
         ffi.C.set_bool(name, val)

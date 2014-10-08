@@ -43,6 +43,7 @@
 #include "nhttp_msg_header.h"
 #include "nhttp_module.h"
 #include "nhttp_uri_norm.h"
+#include "nhttp_splitter.h"
 
 using namespace NHttpEnums;
 
@@ -180,7 +181,7 @@ const HeaderNormalizer NHttpMsgHeadShared::NORMALIZER_TRANSCODE {NORM_ENUM64, tr
 
 #if defined(__clang__)
 // designated initializers are not supported in C++11.  However,
-// but we're going to play compilation roullete and hopes this works.
+// but we're going to play compilation roulette and hopes this works.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc99-extensions"
 #endif
@@ -244,8 +245,6 @@ const HeaderNormalizer* const NHttpMsgHeadShared::header_norms[HEAD__MAXVALUE] =
 #pragma clang diagnostic pop
 #endif
 
-const int32_t NHttpMsgHeadShared::num_norms = HEAD__MAXVALUE-1;
-
 const RuleMap NHttpModule::nhttp_events[] =
 {
     { EVENT_ASCII,                           "ascii encoding" },
@@ -303,22 +302,29 @@ const RuleMap NHttpModule::nhttp_events[] =
     { 0, nullptr }
 };
 
+const int8_t NHttpEnums::as_hex[256] = {
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
 
+   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-
-
-
-
-
-
-
-
-
-
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  };
 
 

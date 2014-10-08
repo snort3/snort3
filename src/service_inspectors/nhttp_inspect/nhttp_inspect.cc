@@ -31,7 +31,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include <stdexcept>
 
 #include "snort.h"
 #include "stream/stream_api.h"
@@ -42,21 +41,13 @@
 
 using namespace NHttpEnums;
 
-NHttpInspect::NHttpInspect(bool test_input_, bool test_output_) : test_output(test_output_)
+NHttpInspect::NHttpInspect(bool test_input, bool test_output)
 {
-    NHttpTestInput::test_input = test_input_;
-    if (NHttpTestInput::test_input) {
-        NHttpTestInput::test_input_source = new NHttpTestInput(test_input_file);
+    if (test_input) {
+        NHttpTestManager::activate_test_input();
     }
-}
-
-NHttpInspect::~NHttpInspect ()
-{
-    if (NHttpTestInput::test_input) {
-        delete NHttpTestInput::test_input_source;
-        if (test_out) {
-            fclose(test_out);
-        }
+    if (test_output) {
+        NHttpTestManager::activate_test_output();
     }
 }
 
@@ -70,8 +61,7 @@ bool NHttpInspect::configure (SnortConfig *)
     return true;
 }
 
-bool NHttpInspect::get_buf(
-    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     switch ( ibt )
     {
@@ -111,7 +101,7 @@ void NHttpInspect::show(SnortConfig*)
     LogMessage("NHttpInspect\n");
 }
 
-void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id)
+ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id, bool buf_owner)
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(session_data);
@@ -119,41 +109,32 @@ void NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* cons
     NHttpMsgSection *msg_section = nullptr;
 
     switch (session_data->section_type[source_id]) {
-      case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id); break;
-      case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id); break;
-      case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id); break;
-      case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id); break;
-      case SEC_CHUNKHEAD: msg_section = new NHttpMsgChunkHead(data, dsize, session_data, source_id); break;
-      case SEC_CHUNKBODY: msg_section = new NHttpMsgChunkBody(data, dsize, session_data, source_id); break;
-      case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id); break;
-      case SEC_DISCARD: delete[] data; return;
-      default: assert(0); delete[] data; return;
+      case SEC_REQUEST: msg_section = new NHttpMsgRequest(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_STATUS: msg_section = new NHttpMsgStatus(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_HEADER: msg_section = new NHttpMsgHeader(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_BODY: msg_section = new NHttpMsgBody(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_CHUNK: msg_section = new NHttpMsgChunk(data, dsize, session_data, source_id, buf_owner); break;
+      case SEC_TRAILER: msg_section = new NHttpMsgTrailer(data, dsize, session_data, source_id, buf_owner); break;
+      default: assert(0); if (buf_owner) delete[] data; return RES_IGNORE;
     }
 
     msg_section->analyze();
     msg_section->update_flow();
     msg_section->gen_events();
-    msg_section->legacy_clients();
 
-    if (test_output) {
-        if (!NHttpTestInput::test_input) {
-            msg_section->print_section(stdout);
-        }
-        else {
-            if (NHttpTestInput::test_input_source->get_test_number() != file_test_number) {
-                if (test_out) fclose (test_out);
-                file_test_number = NHttpTestInput::test_input_source->get_test_number();
-                char file_name[100];
-                snprintf(file_name, sizeof(file_name), "%s%" PRIi64 ".txt", test_output_prefix, file_test_number);
-                if ((test_out = fopen(file_name, "w+")) == nullptr) throw std::runtime_error("Cannot open test output file");
-            }
-            msg_section->print_section(test_out);
-            printf("Finished processing section from test %" PRIi64 "\n", file_test_number);
+    ProcessResult return_value = msg_section->worth_detection();
+    if (return_value == RES_INSPECT) {
+        msg_section->legacy_clients();
+    }
+
+    if (NHttpTestManager::use_test_output()) {
+        msg_section->print_section(NHttpTestManager::get_output_file());
+        if (NHttpTestManager::use_test_input()) {
+             printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
         }
         fflush(nullptr);
     }
+
+    return return_value;
 }
-
-
-
 

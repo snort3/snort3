@@ -91,16 +91,15 @@ static void FTPDataProcess(Packet *p, FTP_DATA_SESSION *data_ssn)
 
 static int SnortFTPData(Packet *p)
 {
-    FTP_DATA_SESSION *data_ssn;
-
     if (!p->flow)
         return -1;
 
-    data_ssn = (FTP_DATA_SESSION *)
+    FtpDataFlowData* fd = (FtpDataFlowData*)
         p->flow->get_application_data(FtpFlowData::flow_id);
 
-    if (!PROTO_IS_FTP_DATA(data_ssn))
-        return -2;
+    FTP_DATA_SESSION* data_ssn = fd ? &fd->session : nullptr;
+
+    assert(PROTO_IS_FTP_DATA(data_ssn));
 
     /* Do this now before splitting the work for rebuilt and raw packets. */
     if ((p->packet_flags & PKT_PDU_TAIL) || (p->ptrs.tcph->th_flags & TH_FIN))

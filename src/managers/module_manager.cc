@@ -47,7 +47,7 @@ struct ModHook
 {
     Module* mod;
     const BaseApi* api;
-    luaL_reg* reg;
+    luaL_Reg* reg;
 
     ModHook(Module*, const BaseApi*);
     ~ModHook();
@@ -100,10 +100,10 @@ void ModHook::init()
         n++;
 
     // constructing reg here may seem like overkill
-    // ... why not just typedef Command to luaL_reg?
+    // ... why not just typedef Command to luaL_Reg?
     // because the help would not be supplied or it
     // would be out of date, out of sync, etc. QED
-    reg = new luaL_reg[++n];
+    reg = new luaL_Reg[++n];
     unsigned k = 0;
 
     while ( k < n )
@@ -322,7 +322,7 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
 {
     if ( !mod->set(fqn, val, s_config) )
     {
-        ErrorMessage("ERROR: %s is invalid\n", fqn);
+        ParseError("%s is invalid", fqn);
         ++s_errors;
     }
 
@@ -350,7 +350,13 @@ static bool set_value(const char* fqn, Value& v)
  
     if ( !p )
     {
-        ErrorMessage("ERROR can't find %s\n", fqn);
+        if ( key == mod->get_name() )
+            // handle things like x = { 1 }
+            // where x is a table not a list and 1 should be 
+            // considered a key not a value
+            ParseError("can't find %s.%s", fqn, v.get_as_string());
+        else
+            ParseError("can't find %s", fqn);
         ++s_errors;
         return false;
     }
@@ -363,11 +369,11 @@ static bool set_value(const char* fqn, Value& v)
     }
 
     if ( v.get_type() == Value::VT_STR )
-        ErrorMessage("ERROR invalid %s = '%s'\n", fqn, v.get_string());
+        ParseError("invalid %s = '%s'", fqn, v.get_string());
     else if ( v.get_real() == v.get_long() )
-        ErrorMessage("ERROR invalid %s = %ld\n", fqn, v.get_long());
+        ParseError("invalid %s = %ld", fqn, v.get_long());
     else
-        ErrorMessage("ERROR invalid %s = %g\n", fqn, v.get_real());
+        ParseError("invalid %s = %g", fqn, v.get_real());
 
     ++s_errors;
     return false;
@@ -423,12 +429,12 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
         if ( !p )
         {
-            ParseError("can't find %s\n", s);
+            ParseError("can't find %s", s);
             return false;
         }
         else if ((idx > 0) && (p->type == Parameter::PT_TABLE))
         {
-            ParseError("%s is a table. All elements must be named\n", s);
+            ParseError("%s is a table; all elements must be named", s);
             return false;
         }
     }
@@ -862,7 +868,7 @@ static void make_rule(ostream& os, const Module* m, const RuleMap* r)
 // (we don't want to suppress it because it could mean something is broken)
 void ModuleManager::load_rules(SnortConfig* sc)
 {
-    // FIXIT-M callers of ParseConfigString() should not have to push parse loc
+    s_modules.sort(comp_gids);
     push_parse_location("builtin");
 
     for ( auto p : s_modules )

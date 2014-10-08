@@ -33,6 +33,7 @@ int main_reload_hosts(lua_State* = nullptr);
 int main_process(lua_State* = nullptr);
 int main_pause(lua_State* = nullptr);
 int main_resume(lua_State* = nullptr);
+int main_detach(lua_State* = nullptr);
 int main_quit(lua_State* = nullptr);
 int main_help(lua_State* = nullptr);
 

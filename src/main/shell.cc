@@ -109,12 +109,6 @@ static void config_lua(
         load_overrides(L, s);
 
     run_config(L, "_G");
-
-    if ( int k = ModuleManager::get_errors() )
-    {
-        if ( snort_is_starting() )
-            FatalError("see prior %d errors\n", k);
-    }
 }
 
 //-------------------------------------------------------------------------
@@ -165,7 +159,7 @@ void Shell::configure(SnortConfig* sc)
     loaded = true;
 }
 
-void Shell::install(const char* name, const luaL_reg* reg)
+void Shell::install(const char* name, const luaL_Reg* reg)
 {
     if ( !strcmp(name, "snort") )
         luaL_register(lua, "_G", reg);
