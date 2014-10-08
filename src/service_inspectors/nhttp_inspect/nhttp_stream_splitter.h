@@ -40,7 +40,7 @@ public:
     NHttpStreamSplitter(bool is_client_to_server, NHttpInspect* my_inspector_) : StreamSplitter(is_client_to_server),
        my_inspector(my_inspector_) { };
     Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used, uint32_t* flush_offset);
-    const StreamBuffer* reassemble(Flow* flow, unsigned total, unsigned offset, const uint8_t* data, unsigned len,
+    const StreamBuffer* reassemble(Flow* flow, unsigned /* total*/, unsigned offset, const uint8_t* data, unsigned len,
        uint32_t flags, unsigned& copied);
     bool is_paf() { return true; };
     unsigned max() { return NHttpTestManager::use_test_input() ? 16384 : paf_max; };
@@ -49,7 +49,6 @@ private:
        NHttpEnums::SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length,
        uint32_t num_excess);
     void create_event(NHttpEnums::EventSid sid);
-    uint32_t size_buffer_needed(unsigned total, NHttpEnums::SectionType type, uint32_t possible_additional);
     NHttpInspect* const my_inspector;
     unsigned paf_max = 63780;
 };

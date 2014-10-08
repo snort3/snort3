@@ -76,21 +76,6 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     session_data->header_octets_visible[source_id] = 0;
 }
 
-// Convenience function. Size buffer required to reassemble the current section plus possible aggregation.
-uint32_t NHttpStreamSplitter::size_buffer_needed(unsigned total, NHttpEnums::SectionType type,
-   uint32_t possible_additional) {
-    switch (type) {
-      case SEC_CHUNK:
-        return 16384;
-      case SEC_REQUEST:
-      case SEC_STATUS:
-      case SEC_HEADER:
-        return total + possible_additional;
-      default:
-        return total;
-    }
-}
-
 StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t,
    uint32_t* flush_offset) {
 
@@ -202,8 +187,10 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
     }
 }
 
-const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned offset, const uint8_t* data,
-       unsigned len, uint32_t flags, unsigned& copied)
+// FIXIT-P total is not used because it is not reliably correct. Could be used to compute required buffer size
+// instead of always allocating the maximum
+const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* total */, unsigned offset,
+       const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
     static THREAD_LOCAL StreamBuffer nhttp_buf;
 
@@ -224,11 +211,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         }
         data = test_buffer;
         offset = 0;
-        total = len;
     }
-
-    assert(total <= 63780);
-    assert(offset+len <= total);
 
     // FIXIT-P stream should be enhanced to do discarding for us
     // For now flush-then-discard here is how scan() handles things we don't need to examine.
@@ -237,6 +220,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
         if (NHttpTestManager::use_test_output()) {
             fprintf(NHttpTestManager::get_output_file(), "%s %u octets\n\n",
                (session_data->section_type[source_id] == SEC_DISCARD) ? "Discarded" : "Aborted", len);
+            fflush(NHttpTestManager::get_output_file());
         }
         return nullptr;
     }
@@ -249,13 +233,11 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
     int32_t& buffer_length = !is_chunk ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
 
     if (buffer == nullptr) {
-        buffer = new uint8_t[size_buffer_needed(total, session_data->section_type[source_id],
-           session_data->unused_octets_visible[source_id])];
+        buffer = new uint8_t[63780];
     }
 
     uint32_t num_excess = session_data->num_excess[source_id];
-    unsigned num_to_copy = (len <= total - offset - num_excess) ? len : total - offset - num_excess;
-    memcpy(buffer + buffer_length + offset, data, num_to_copy);
+    memcpy(buffer + buffer_length + offset, data, len);
     if (flags & PKT_PDU_TAIL) {
         ProcessResult send_to_detection;
         if (!is_chunk) {
@@ -292,6 +274,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned total, 
             buffer_length = 0;
             if (NHttpTestManager::use_test_output()) {
                 fprintf(NHttpTestManager::get_output_file(), "Sent to detection %u octets\n\n", nhttp_buf.length);
+                fflush(NHttpTestManager::get_output_file());
             }
             return &nhttp_buf;
           case RES_IGNORE:
