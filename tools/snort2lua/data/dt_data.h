@@ -122,10 +122,10 @@ public:
     void add_comment(std::string);
     // Call when failed to convert a line.
     // stream == the stringstream object which failed to convert
-    void failed_conversion(std::istringstream& stream);
+    void failed_conversion(const std::istringstream& stream);
     // same as above. unknown_option is the specific option which
     // caused the failure.
-    void failed_conversion(std::istringstream& stream, std::string unkown_option);
+    void failed_conversion(const std::istringstream& stream, const std::string unkown_option);
 
 private:
 

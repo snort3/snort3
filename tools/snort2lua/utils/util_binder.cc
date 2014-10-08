@@ -23,7 +23,7 @@
 #include "data/dt_table_api.h"
 
 
-Binder::Binder() : printed(false) {}
+Binder::Binder() : printed(false), when_policy_id(-1) {}
 
 Binder::~Binder()
 {
@@ -39,7 +39,7 @@ void Binder::add_to_configuration()
 
     table_api.open_table("when");
 
-    if (!when_policy_id.empty())
+    if (when_policy_id >= 0)
         table_api.add_option("policy_id", when_policy_id);
 
     if (!when_service.empty())
@@ -89,8 +89,8 @@ void Binder::add_to_configuration()
 }
 
 
-void Binder::set_when_policy_id(std::string id)
-{ when_policy_id = std::string(id); }
+void Binder::set_when_policy_id(int id)
+{ when_policy_id = id; }
 
 void Binder::set_when_service(std::string service)
 { when_service = std::string(service); }

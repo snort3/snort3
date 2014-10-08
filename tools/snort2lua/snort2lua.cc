@@ -77,7 +77,7 @@ int main (int argc, char* argv[])
 
     if (!rule_api.empty())
     {
-        if (rule_file.empty() || !rule_file.compare(output_file))
+        if (!rule_file.compare(output_file))
         {
             std::string s = std::string("$default_rules");
             rule_file_specifed = false;

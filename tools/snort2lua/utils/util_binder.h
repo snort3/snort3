@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 
+
 // If the user never adds add_to_configuration,
 //  the destructor will call the method
 class Binder
@@ -38,7 +39,7 @@ public:
     void print_binding(bool should_print)
     { printed = !should_print; }
 
-    void set_when_policy_id(std::string id);
+    void set_when_policy_id(int id);
     void set_when_service(std::string service);
     void set_when_role(std::string role);
     void set_when_proto(std::string proto);
@@ -60,7 +61,7 @@ private:
     bool printed; // ensures that the binding is added once,
                   // by either the destructor or user
 
-    std::string when_policy_id;
+    int when_policy_id;
     std::string when_service;
     std::string when_role;
     std::string when_proto;
@@ -76,5 +77,6 @@ private:
     std::string use_action;
 };
 
+typedef void (Binder::*binder_func)(std::string);
 
 #endif

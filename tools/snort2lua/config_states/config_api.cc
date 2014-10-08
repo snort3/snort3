@@ -255,6 +255,7 @@ const std::vector<const ConvertMap*> config_api =
 
 #if 0
 
+FIXIT-L J  Add this configuration options when we start supporting them in Snort++
 UNSUPPORTED OPTIONS -- these will all be included at a later date.
 
 ./src/parser.h:#define CONFIG_OPT__POLICY                          "policy_id"

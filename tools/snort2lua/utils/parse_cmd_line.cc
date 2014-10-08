@@ -302,7 +302,8 @@ static ConfigFunc basic_opts[] =
         "output the new Snort++ lua configuration to <out_file>"},
 
     { "p", dont_parse_includes,
-        "if <conf> file contains any <include_file> (i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
+        "if <conf> file contains any <include_file> or <policy_file> "
+        "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
 
     { "q", print_quiet,
         "quiet mode. Only output valid confiration information"},
@@ -317,7 +318,11 @@ static ConfigFunc basic_opts[] =
         "when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>. Meaningles if '-p' provided"},
 
     { "conf-file", parse_config_file,
-        "A Snort <conf> file which will be converted. Multiple files allowed"},
+        "A Snort <conf> file which will be converted"},
+
+    { "dont-parse-includes", dont_parse_includes,
+        "if <conf> file contains any <include_file> or <policy_file> "
+        "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
 
     { "error-file", parse_error_file,
         "output all errors to <error_file>"},
@@ -333,9 +338,6 @@ static ConfigFunc basic_opts[] =
 
     { "output-file", parse_output_file,
         "output the new Snort++ lua configuration to <out_file>"},
-
-    { "parse-includes", dont_parse_includes,
-        "if <conf> file contains any <include_file> (i.e. 'include path/to/conf/other_conf'), parse those files"},
 
     { "print-all", print_all,
         "print all data, including errors, Snort - Snort++ configuration differences, and developer warnings."},

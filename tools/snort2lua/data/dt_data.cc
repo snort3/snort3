@@ -236,7 +236,7 @@ std::string LuaData::expand_vars(const std::string &string)
 bool LuaData::failed_conversions()
 { return !errors->empty(); }
 
-void LuaData::failed_conversion(std::istringstream& stream)
+void LuaData::failed_conversion(const std::istringstream& stream)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
@@ -248,8 +248,8 @@ void LuaData::failed_conversion(std::istringstream& stream)
     }
 }
 
-void LuaData::failed_conversion(std::istringstream& stream,
-                                std::string unkown_option)
+void LuaData::failed_conversion(const std::istringstream& stream,
+                                const std::string unkown_option)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
