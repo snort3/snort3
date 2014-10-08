@@ -7,6 +7,7 @@
 -- changed version to 2.10.0 and build to 123
 -- removed --enable-sourcefire and reformatted configure --help
 -- removed obsolete etc/ and its unicode.map and attribute_table.dtd
+-- josh's changes for snort2lua config binding by file
 
 123
 -- refactored documentation
