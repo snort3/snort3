@@ -2,6 +2,7 @@
 -- valgrind cleanup
 -- fixed incorrect casting of ftp, ftp-data, and telnet flow data
 -- fixed reload_config()
+-- tweak error for x = { 1 } where x is a table not a list
 
 123
 -- refactored documentation

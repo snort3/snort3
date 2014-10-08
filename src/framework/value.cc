@@ -154,3 +154,21 @@ bool Value::strtol(long& n) const
     return true;
 }
 
+const char* Value::get_as_string()
+{
+    switch ( type )
+    {
+    case VT_BOOL:
+        str = num ? "true" : "false";
+        break;
+    case VT_NUM:
+        ss = new stringstream;
+        *ss << num;
+        str = ss->str();
+        break;
+    default:
+        break;
+    }
+    return str.c_str();
+}
+

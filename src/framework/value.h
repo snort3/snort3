@@ -91,6 +91,8 @@ public:
     const char* get_string() const
     { return str.c_str(); };
 
+    const char* get_as_string();
+
     bool strtol(long&) const;
 
     bool operator==(const char* s) const
