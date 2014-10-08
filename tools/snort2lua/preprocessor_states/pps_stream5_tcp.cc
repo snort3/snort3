@@ -28,8 +28,6 @@
 #include "utils/util_binder.h"
 
 
-typedef void (Binder::*binder_func)(std::string);
-
 namespace preprocessors
 {
 
