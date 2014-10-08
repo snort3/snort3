@@ -104,10 +104,9 @@ int DisplayBanner(void)
     const char * zlib_ver;
 
     info = getenv("HOSTTYPE");
+
     if( !info )
-    {
-        info="from 296-9";  // last sync with head
-    }
+        info="from 2.9.6-9";  // last sync with head
 
     pcre_ver = pcre_version();
     zlib_ver = zlib_version;

@@ -4,6 +4,7 @@
 -- fixed reload_config()
 -- tweak error for x = { 1 } where x is a table not a list
 -- some make distcheck fixes (still broken)
+-- changed version to 2.10.0 and build to 123
 
 123
 -- refactored documentation
