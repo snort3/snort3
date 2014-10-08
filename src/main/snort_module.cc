@@ -374,6 +374,9 @@ static const Parameter s_params[] =
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
 
+    { "--warn-flowbits", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about flowbits that checked but not set and vice-versa" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -667,7 +670,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__SHELL;
 
     else if ( v.is("--show-plugins") )
-        sc->run_flags |= RUN_FLAG__SHOW_PLUGINS;
+        sc->logging_flags |= LOGGING_FLAG__SHOW_PLUGINS;
 
     else if ( v.is("--skip") )
         sc->pkt_skip = v.get_long();
@@ -690,6 +693,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #endif
     else if ( v.is("--version") )
         help_version(sc, v.get_string());
+
+    else if ( v.is("--warn-flowbits") )
+        sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
 
     else
         return false;

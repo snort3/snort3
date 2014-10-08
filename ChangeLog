@@ -9,6 +9,8 @@
 -- removed obsolete etc/ and its unicode.map and attribute_table.dtd
 -- josh's changes for snort2lua config binding by file
 -- fixed stream_icmp flow key init
+-- added --warn-flowbits
+-- tweaked flowbits counts start up output
 
 123
 -- refactored documentation

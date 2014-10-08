@@ -58,6 +58,7 @@ using namespace std;
 #include "parser.h"
 #include "snort_debug.h"
 #include "util.h"
+#include "utils/stats.h"
 #include "snort.h"
 #include "bitop_funcs.h"
 #include "sfghash.h"
@@ -1014,7 +1015,8 @@ static void FlowBitsVerify(void)
 {
     SFGHASH_NODE * n;
     FLOWBITS_OBJECT *fb;
-    int num_flowbits = 0;
+    unsigned num_flowbits = 0;
+    unsigned unchecked = 0, unset = 0;
 
     if (flowbits_hash == NULL)
         return;
@@ -1039,13 +1041,15 @@ static void FlowBitsVerify(void)
 
         if ((fb->set > 0) && (fb->isset == 0))
         {
-            ParseWarning("flowbits key '%s' is set but not checked.",
-                    (char*)n->key);
+            if ( snort_conf->logging_flags & LOGGING_FLAG__WARN_FLOWBITS )
+                ParseWarning("flowbits key '%s' is set but not checked.", (char*)n->key);
+            unchecked++;
         }
         else if ((fb->isset > 0) && (fb->set == 0))
         {
-            ParseWarning("flowbits key '%s' is checked but not ever set.",
-                    (char*)n->key);
+            if ( snort_conf->logging_flags & LOGGING_FLAG__WARN_FLOWBITS )
+                ParseWarning("flowbits key '%s' is checked but not ever set.", (char*)n->key);
+            unset++;
         }
         else if ((fb->set == 0) && (fb->isset == 0))
         {
@@ -1057,8 +1061,14 @@ static void FlowBitsVerify(void)
 
     flowbits_toggle ^= 1;
 
-    LogMessage("%d out of %d flowbits in use.\n",
-            num_flowbits, giFlowbitSize);
+    if ( !num_flowbits )
+        return;
+
+    LogLabel("flowbits");
+    LogCount("available", giFlowbitSize);
+    LogCount("used", num_flowbits);
+    LogCount("not checked", unchecked);
+    LogCount("not set", unset);
 }
 
 static void FlowItemFree(void *d)
