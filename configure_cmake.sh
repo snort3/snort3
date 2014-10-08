@@ -38,7 +38,6 @@ Optional Features:
     --enable-debug           Enable debugging options (bugreports and developers only)
     --enable-gdb             Enable gdb debugging information
     --enable-profile         Enable profiling options (developers only)
-    --enable-sourcefire      Enable Sourcefire specific build options, including --enable-perfprofiling and --enable-ppm
     --disable-corefiles      Prevent Snort from generating core files
     --enable-intel-soft-cpm  Enable Intel Soft CPM support
     --enable-unit-tests      Build unit tests
@@ -239,12 +238,6 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-profile)
             append_cache_entry ENABLE_PROFILE    BOOL   true
-            ;;
-        --disable-sourcefire)
-            append_cache_entry ENABLE_SOURCEFIRE    BOOL   false
-            ;;
-        --enable-sourcefire)
-            append_cache_entry ENABLE_SOURCEFIRE    BOOL   true
             ;;
         --disable-debug)
             append_cache_entry ENABLE_DEBUG    BOOL   false
