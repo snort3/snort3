@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include "main/snort_types.h"
+
 struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
@@ -169,9 +171,10 @@ public:  // FIXTHIS-H make impl private
 //-------------------------------------------------------------------------
 
 // FIXIT-L may be inlined at some point; on lockdown for now
-NetworkPolicy* get_network_policy();
-InspectionPolicy* get_inspection_policy();
-IpsPolicy* get_ips_policy();
+// FIXIT-L SO_PUBLIC requierd because ScInlineMode(), etc. uses the function
+SO_PUBLIC NetworkPolicy* get_network_policy();
+SO_PUBLIC InspectionPolicy* get_inspection_policy();
+SO_PUBLIC IpsPolicy* get_ips_policy();
 
 void set_network_policy(NetworkPolicy*);
 void set_inspection_policy(InspectionPolicy*);

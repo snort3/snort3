@@ -4,6 +4,7 @@ bin_PROGRAMS = snort2lua
 
 snort2lua_SOURCES = \
 conversion_state.h \
+conversion_defines.h \
 init_state.h \
 snort2lua.cc \
 init_state.cc
