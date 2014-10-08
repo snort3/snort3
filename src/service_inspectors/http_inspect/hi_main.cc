@@ -102,10 +102,8 @@ void *hi_htmltype_search_mpse = NULL;
 static uint32_t xtra_trueip_id;
 static uint32_t xtra_uri_id;
 static uint32_t xtra_hname_id;
-#ifndef SOURCEFIRE
 static uint32_t xtra_gzip_id;
 static uint32_t xtra_jsnorm_id;
-#endif
 
 THREAD_LOCAL HISearch hi_js_search[HI_LAST];
 THREAD_LOCAL HISearch hi_html_search[HTML_LAST];
@@ -159,11 +157,8 @@ void HttpInspectRegisterXtraDataFuncs()
     xtra_trueip_id = stream.reg_xtra_data_cb(GetHttpTrueIP);
     xtra_uri_id = stream.reg_xtra_data_cb(GetHttpUriData);
     xtra_hname_id = stream.reg_xtra_data_cb(GetHttpHostnameData);
-#ifndef SOURCEFIRE
     xtra_gzip_id = stream.reg_xtra_data_cb(GetHttpGzipData);
     xtra_jsnorm_id = stream.reg_xtra_data_cb(GetHttpJSNormData);
-#endif
-
 }
 
 static int PrintConfOpt(HTTPINSPECT_CONF_OPT *ConfOpt, const char *Option)
@@ -459,7 +454,6 @@ static inline void HttpLogFuncs(
         stream.set_extra_data(p->flow, p, xtra_hname_id);
     }
 
-#ifndef SOURCEFIRE
     if(hsd->log_flags & HTTP_LOG_JSNORM_DATA)
     {
         SetExtraData(p, xtra_jsnorm_id);
@@ -468,7 +462,6 @@ static inline void HttpLogFuncs(
     {
         SetExtraData(p, xtra_gzip_id);
     }
-#endif
 }
 
 static inline void setFileName(Packet *p)

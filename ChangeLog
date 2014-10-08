@@ -5,6 +5,7 @@
 -- tweak error for x = { 1 } where x is a table not a list
 -- some make distcheck fixes (still broken)
 -- changed version to 2.10.0 and build to 123
+-- removed --enable-sourcefire and reformatted configure --help
 
 123
 -- refactored documentation

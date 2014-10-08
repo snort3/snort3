@@ -227,7 +227,7 @@ fi
 AM_CONDITIONAL(LINUX, [test "x$linux" = "xyes"])
 
 AC_ARG_ENABLE(static-ips-actions,
-    [  --disable-static-ips-actions    do not include ips actions in binary ],
+    [  --disable-static-ips-actions        do not include ips actions in binary ],
        static_ips_actions="$enableval", static_ips_actions="yes")
 
 AM_CONDITIONAL(STATIC_IPS_ACTIONS, [test "x$static_ips_actions" = "xyes"])
@@ -237,7 +237,7 @@ if test "x$static_ips_actions" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-inspectors,
-    [  --disable-static-inspectors    do not include inspectors in binary ],
+    [  --disable-static-inspectors         do not include inspectors in binary ],
        static_inspectors="$enableval", static_inspectors="yes")
 
 AM_CONDITIONAL(STATIC_INSPECTORS, [test "x$static_inspectors" = "xyes"])
@@ -247,7 +247,7 @@ if test "x$static_inspectors" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-loggers,
-    [  --disable-static-loggers    do not include loggers in binary ],
+    [  --disable-static-loggers            do not include loggers in binary ],
        static_loggers="$enableval", static_loggers="yes")
 
 AM_CONDITIONAL(STATIC_LOGGERS, [test "x$static_loggers" = "xyes"])
@@ -257,7 +257,7 @@ if test "x$static_loggers" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-ips-options,
-    [  --disable-static-ips-options    do not include ips options in binary ],
+    [  --disable-static-ips-options        do not include ips options in binary ],
        static_ips_options="$enableval", static_ips_options="yes")
 
 AM_CONDITIONAL(STATIC_IPS_OPTIONS, [test "x$static_ips_options" = "xyes"])
@@ -267,7 +267,7 @@ if test "x$static_ips_options" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-search-engines,
-    [  --disable-static-search-engines    do not include search engines in binary ],
+    [  --disable-static-search-engines     do not include search engines in binary ],
        static_search_engines="$enableval", static_search_engines="yes")
 
 AM_CONDITIONAL(STATIC_SEARCH_ENGINES, [test "x$static_search_engines" = "xyes"])
@@ -277,7 +277,7 @@ if test "x$static_search_engines" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(static-codecs,
-    [  --disable-static-codecs    do not include codecs in binary ],
+    [  --disable-static-codecs             do not include codecs in binary ],
        static_codecs="$enableval", static_codecs="yes")
 
 AM_CONDITIONAL(STATIC_CODECS, [test "x$static_codecs" = "xyes"])
@@ -287,7 +287,7 @@ if test "x$static_codecs" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(valgrind,
-[  --enable-valgrind        Only use if you are testing with valgrind.],
+    [  --enable-valgrind         only use if you are testing with valgrind.],
        enable_valgrind="$enableval", enable_valgrind="no")
 
 if test "x$enable_valgrind" = "xyes"; then
@@ -295,7 +295,7 @@ if test "x$enable_valgrind" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(ppm,
-[  --enable-ppm            Enable packet/rule performance monitor],
+    [  --enable-ppm              enable packet/rule performance monitor],
        enable_ppm="$enableval", enable_ppm="no")
 
 if test "x$enable_ppm" = "xyes"; then
@@ -303,7 +303,7 @@ if test "x$enable_ppm" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(ppm-test,
-[  --enable-ppm-test        Enable packet/rule performance monitor for readback],
+    [  --enable-ppm-test         enable packet/rule performance monitor for readback],
        enable_ppm_test="$enableval", enable_ppm_test="no")
 
 if test "x$enable_ppm_test" = "xyes"; then
@@ -311,7 +311,7 @@ if test "x$enable_ppm_test" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(perfprofiling,
-[  --enable-perfprofiling  Enable preprocessor and rule performance profiling],
+    [  --enable-perfprofiling    enable module and rule performance profiling],
        enable_perfprofiling="$enableval", enable_perfprofiling="no")
 
 if test "x$enable_perfprofiling" = "xyes"; then
@@ -320,7 +320,7 @@ if test "x$enable_perfprofiling" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(linux-smp-stats,
-[  --enable-linux-smp-stats Enable statistics reporting through proc],
+    [  --enable-linux-smp-stats  enable statistics reporting through proc],
        enable_linux_smp_stats="$enableval", enable_linux_smp_stats="no")
 
 AM_CONDITIONAL(BUILD_PROCPIDSTATS, test "x$enable_linux_smp_stats" = "xyes")
@@ -330,7 +330,7 @@ if test "x$enable_linux_smp_stats" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(debug-msgs,
-[  --enable-debug-msgs      Enable debug printing options (bugreports and developers only)],
+    [  --enable-debug-msgs       enable debug printing options (bugreports and developers only)],
        enable_debug_msgs="$enableval", enable_debug_msgs="no")
 
 if test "x$enable_debug_msgs" = "xyes"; then
@@ -339,7 +339,7 @@ if test "x$enable_debug_msgs" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(debug,
-[  --enable-debug           Enable debugging options (bugreports and developers only)],
+    [  --enable-debug            enable debugging options (bugreports and developers only)],
        enable_debug="$enableval", enable_debug="no")
 
 if test "x$enable_debug" = "xyes"; then
@@ -352,7 +352,7 @@ else
 fi
 
 AC_ARG_ENABLE(gdb,
-[  --enable-gdb             Enable gdb debugging information],
+    [  --enable-gdb              enable gdb debugging information],
        enable_gdb="$enableval", enable_gdb="no")
 
 if test "x$enable_gdb" = "xyes"; then
@@ -360,7 +360,7 @@ if test "x$enable_gdb" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(profile,
-[  --enable-profile         Enable profiling options (developers only)],
+    [  --enable-profile          enable profiling options (developers only)],
        enable_profile="$enableval", enable_profile="no")
 
 if test "x$enable_profile" = "xyes"; then
@@ -370,19 +370,8 @@ if test "x$enable_profile" = "xyes"; then
     AC_DEFINE(PROFILE, [1], [enable profiling])
 fi
 
-AC_ARG_ENABLE(sourcefire,
-[  --enable-sourcefire      Enable Sourcefire specific build options, including --enable-perfprofiling and --enable-ppm],
-       enable_sourcefire="$enableval", enable_sourcefire="no")
-
-if test "x$enable_sourcefire" = "xyes"; then
-    AC_DEFINE(SOURCEFIRE, [1], [enable sourcefire tweaks])
-    AC_DEFINE(PPM_MGR, [1], [enable ppm])
-    AC_DEFINE(PERF_PROFILING, [1], [enable profiling])
-    CPPFLAGS="$CPPFLAGS -DPERF_PROFILING"
-fi
-
 AC_ARG_ENABLE(corefiles,
-[  --disable-corefiles      Prevent Snort from generating core files],
+    [  --disable-corefiles       prevent Snort from generating core files],
        enable_corefiles="$enableval", enable_corefiles="yes")
 
 if test "x$enable_corefiles" = "xno"; then
@@ -390,7 +379,7 @@ if test "x$enable_corefiles" = "xno"; then
 fi
 
 AC_ARG_ENABLE(intel_soft_cpm,
-[  --enable-intel-soft-cpm  Enable Intel Soft CPM support],
+    [  --enable-intel-soft-cpm   enable Intel Soft CPM support],
        enable_intel_soft_cpm="$enableval", enable_intel_soft_cpm="no")
 
 AM_CONDITIONAL(HAVE_INTEL_SOFT_CPM, test "x$enable_intel_soft_cpm" = "xyes")
@@ -400,7 +389,7 @@ if test "x$enable_intel_soft_cpm" = "xyes"; then
 fi
 
 AC_ARG_ENABLE(unit_tests,
-    [  --enable-unit-tests      Build unit tests],
+    [  --enable-unit-tests       build unit tests],
        enable_unit_tests="$enableval", enable_unit_tests="no")
 
 if test "x$enable_unit_tests" = "xyes"; then
@@ -410,7 +399,7 @@ fi
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
 
 AC_ARG_ENABLE(large-pcap,
-[  --enable-large-pcap      Enable support for pcaps larger than 2 GB],
+    [  --enable-large-pcap       enable support for pcaps larger than 2 GB],
       enable_large_pcap="$enableval", enable_large_pcap="no")
 
 if test "x$enable_large_pcap" = "xyes"; then
@@ -422,32 +411,32 @@ fi
 #--------------------------------------------------------------------------
 
 AC_ARG_WITH(pcap_includes,
-	[  --with-pcap-includes=DIR    libpcap include directory],
-	[with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
+    [  --with-pcap-includes=DIR        libpcap include directory],
+    [with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
 
 if test "x$with_libpcap_includes" != "xno"; then
    CPPFLAGS="${CPPFLAGS} -I${with_libpcap_includes}"
 fi
 
 AC_ARG_WITH(pcap_libraries,
-	[  --with-pcap-libraries=DIR   libpcap library directory],
-	[with_libpcap_libraries="$withval"],[with_libpcap_libraries="no"])
+    [  --with-pcap-libraries=DIR       libpcap library directory],
+    [with_libpcap_libraries="$withval"],[with_libpcap_libraries="no"])
 
 if test "x$with_libpcap_libraries" != "xno"; then
    LDFLAGS="${LDFLAGS} -L${with_libpcap_libraries}"
 fi
 
 AC_ARG_WITH(luajit_includes,
-	[  --with-luajit-includes=DIR    luajit include directory],
-	[with_luajit_includes="$withval"],[with_luajit_includes="no"])
+    [  --with-luajit-includes=DIR      luajit include directory],
+    [with_luajit_includes="$withval"],[with_luajit_includes="no"])
 
 if test "x$with_luajit_includes" != "xno"; then
     CPPFLAGS="${CPPFLAGS} -I${with_luajit_includes}"
 fi
 
 AC_ARG_WITH(luajit_libraries,
-	[  --with-luajit-libraries=DIR   luajit library directory],
-	[with_luajit_libraries="$withval"],[with_luajit_libraries="no"])
+    [  --with-luajit-libraries=DIR     luajit library directory],
+    [with_luajit_libraries="$withval"],[with_luajit_libraries="no"])
 
 if test "x$with_luajit_libraries" != "xno"; then
     LDFLAGS="${LDFLAGS} -L${with_luajit_libraries} -lluajit-5.1"
@@ -458,8 +447,8 @@ if test "x$with_luajit_libraries" != "xno"; then
 fi
 
 AC_ARG_WITH(pcre_includes,
-       [  --with-pcre-includes=DIR    libpcre include directory],
-       [with_libpcre_includes="$withval"],[with_libpcre_includes="no"])
+    [  --with-pcre-includes=DIR        libpcre include directory],
+    [with_libpcre_includes="$withval"],[with_libpcre_includes="no"])
 
 if test "x$with_libpcre_includes" != "xno"; then
     CPPFLAGS="${CPPFLAGS} -I${with_libpcre_includes}"
@@ -469,8 +458,8 @@ else
 fi
 
 AC_ARG_WITH(pcre_libraries,
-       [  --with-pcre-libraries=DIR   libpcre library directory],
-       [with_libpcre_libraries="$withval"],[with_libpcre_libraries="no"])
+    [  --with-pcre-libraries=DIR       libpcre library directory],
+    [with_libpcre_libraries="$withval"],[with_libpcre_libraries="no"])
 
 if test "x$with_libpcre_libraries" != "xno"; then
     LDFLAGS="${LDFLAGS}  -L${with_libpcre_libraries}"
@@ -479,8 +468,8 @@ else
 fi
 
 AC_ARG_WITH(openssl_includes,
-       [  --with-openssl-includes=DIR    openssl include directory],
-       [with_openssl_includes="$withval"],[with_openssl_includes="no"])
+    [  --with-openssl-includes=DIR     openssl include directory],
+    [with_openssl_includes="$withval"],[with_openssl_includes="no"])
 
 if test "x$with_openssl_includes" != "xno"; then
     CPPFLAGS="${CPPFLAGS} -I${with_openssl_includes}"
@@ -488,15 +477,15 @@ if test "x$with_openssl_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(openssl_libraries,
-       [  --with-openssl-libraries=DIR   openssl library directory],
-       [with_openssl_libraries="$withval"],[with_openssl_libraries="no"])
+    [  --with-openssl-libraries=DIR    openssl library directory],
+    [with_openssl_libraries="$withval"],[with_openssl_libraries="no"])
 
 if test "x$with_openssl_libraries" != "xno"; then
     LDFLAGS="${LDFLAGS}  -L${with_openssl_libraries}"
 fi
 
 AC_ARG_WITH(dnet_includes,
-    [  --with-dnet-includes=DIR       libdnet include directory],
+    [  --with-dnet-includes=DIR        libdnet include directory],
     [with_dnet_includes="$withval"],[with_dnet_includes="no"])
 
 if test "x$with_dnet_includes" != "xno"; then
@@ -506,7 +495,7 @@ else
 fi
 
 AC_ARG_WITH(dnet_libraries,
-    [  --with-dnet-libraries=DIR      libdnet library directory],
+    [  --with-dnet-libraries=DIR       libdnet library directory],
     [with_dnet_libraries="$withval"],[with_dnet_libraries="no"])
 
 if test "x$with_dnet_libraries" != "xno"; then
@@ -516,8 +505,8 @@ else
 fi
 
 AC_ARG_WITH(daq_includes,
-	[  --with-daq-includes=DIR        DAQ include directory],
-	[with_daq_includes="$withval"],[with_daq_includes="no"])
+    [  --with-daq-includes=DIR         DAQ include directory],
+    [with_daq_includes="$withval"],[with_daq_includes="no"])
 
 if test "x$with_daq_includes" != "xno"; then
    CPPFLAGS="${CPPFLAGS} -I${with_daq_includes}"
@@ -525,16 +514,16 @@ if test "x$with_daq_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(daq_libraries,
-	[  --with-daq-libraries=DIR       DAQ library directory],
-	[with_daq_libraries="$withval"],[with_daq_libraries="no"])
+    [  --with-daq-libraries=DIR        DAQ library directory],
+    [with_daq_libraries="$withval"],[with_daq_libraries="no"])
 
 if test "x$with_daq_libraries" != "xno"; then
    LDFLAGS="${LDFLAGS} -L${with_daq_libraries}"
 fi
 
 AC_ARG_WITH(intel_soft_cpm_includes,
-	[  --with-intel-soft-cpm-includes=DIR      Intel Soft CPM include directory],
-	[with_intel_soft_cpm_includes="$withval"],[with_intel_soft_cpm_includes="no"])
+    [  --with-intel-soft-cpm-includes=DIR      Intel Soft CPM include directory],
+    [with_intel_soft_cpm_includes="$withval"],[with_intel_soft_cpm_includes="no"])
 
 if test "x$with_intel_soft_cpm_includes" != "xno"; then
     enable_intel_soft_cpm="yes"
@@ -542,8 +531,8 @@ if test "x$with_intel_soft_cpm_includes" != "xno"; then
 fi
 
 AC_ARG_WITH(intel_soft_cpm_libraries,
-	[  --with-intel-soft-cpm-libraries=DIR     Intel Soft CPM library directory],
-	[with_intel_soft_cpm_libraries="$withval"],[with_intel_soft_cpm_libraries="no"])
+    [  --with-intel-soft-cpm-libraries=DIR     Intel Soft CPM library directory],
+    [with_intel_soft_cpm_libraries="$withval"],[with_intel_soft_cpm_libraries="no"])
 
 if test "x$with_intel_soft_cpm_libraries" != "xno"; then
     enable_intel_soft_cpm="yes"
@@ -719,7 +708,7 @@ fi
 #--------------------------------------------------------------------------
 
 AC_ARG_ENABLE(static_daq,
-[  --disable-static-daq     Link static DAQ modules.],
+    [  --disable-static-daq      link static DAQ modules.],
        enable_static_daq="$enableval", enable_static_daq="yes")
 
 if test "$DLLIB" != "no"; then
