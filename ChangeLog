@@ -1,3 +1,7 @@
+124
+-- valgrind cleanup
+-- fixed incorrect casting of ftp, ftp-data, and telnet flow data
+
 123
 -- refactored documentation
 -- changed max_ip6_options to max_ip6_extensions to avoid confusion

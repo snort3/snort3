@@ -83,7 +83,7 @@ typedef struct s_FTP_TELNET_SESSION
  * Stream Interface Module.  This structure gets sent through the
  * detection engine process (Normalization, Detection).
  */
-typedef struct s_TELNET_SESSION
+struct TELNET_SESSION
 {
     FTP_TELNET_SESSION ft_ssn;
 
@@ -95,7 +95,7 @@ typedef struct s_TELNET_SESSION
 
     int encr_state;
 
-} TELNET_SESSION;
+};
 
 class TelnetFlowData : public FlowData
 {
@@ -140,7 +140,7 @@ public:
  * gets sent through the detection engine process (Normalization,
  * Detection).
  */
-typedef struct s_FTP_SESSION
+struct FTP_SESSION
 {
     FTP_TELNET_SESSION ft_ssn;
 
@@ -175,7 +175,7 @@ typedef struct s_FTP_SESSION
     /* Command/data channel encryption */
     int encr_state;
 
-} FTP_SESSION;
+};
 
 void FTPFreesession(FTP_SESSION*);
 
@@ -202,7 +202,7 @@ enum {
     FTPP_XFER_ACTIVE  = 1
 };
 
-typedef struct s_FTP_DATA_SESSION
+struct FTP_DATA_SESSION
 {
     FTP_TELNET_SESSION ft_ssn;
     FlowKey ftp_key;
@@ -213,7 +213,7 @@ typedef struct s_FTP_DATA_SESSION
     unsigned char direction;
     unsigned char mode;
     unsigned char packet_flags;
-} FTP_DATA_SESSION;
+};
 
 class FtpDataFlowData : public FlowData
 {

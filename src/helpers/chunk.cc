@@ -21,10 +21,6 @@
 #include "chunk.h"
 
 #include <lua.hpp>
-extern "C"
-{
-    int lua_load(lua_State*, lua_Reader, void*, const char*);
-}
 
 #include "managers/ips_manager.h"
 #include "hash/sfhashfcn.h"
@@ -70,7 +66,7 @@ void init_chunk(
     Loader ldr(chunk);
 
     // first load the chunk
-    if ( lua_load(L, (lua_Reader)ldchunk, (void*)&ldr, name) )
+    if ( lua_load(L, ldchunk, &ldr, name) )
     {
         ParseError("%s luajit failed to load chunk %s", name, lua_tostring(L, -1));
         return;

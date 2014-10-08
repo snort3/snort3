@@ -298,6 +298,9 @@ static void SnortInit(int argc, char **argv)
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
 
+    InitProtoNames();
+    SFAT_Init();
+
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
@@ -307,9 +310,6 @@ static void SnortInit(int argc, char **argv)
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
     }
-
-    InitProtoNames();
-    SFAT_Init();
 
     FileAPIInit();
     register_profiles();

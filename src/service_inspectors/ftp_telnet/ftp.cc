@@ -176,8 +176,8 @@ static int snort_ftp(Packet *p)
 
     if (p->flow)
     {
-        ft_ssn = (FTP_TELNET_SESSION*)
-            p->flow->get_application_data(FtpFlowData::flow_id);
+        FtpFlowData* fd = (FtpFlowData*)p->flow->get_application_data(FtpFlowData::flow_id);
+        ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
 
         if (ft_ssn != NULL)
         {
@@ -208,6 +208,7 @@ static int snort_ftp(Packet *p)
             else
             {
                 /* XXX - Not FTP or Telnet */
+                assert(false);
                 p->flow->free_application_data(FtpFlowData::flow_id);
                 return 0;
             }
