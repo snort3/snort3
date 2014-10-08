@@ -169,6 +169,36 @@ inline void FlowKey::init6(
     	mplsLabel = 0;
 }
 
+void FlowKey::init_vlan(uint16_t vlan)
+{
+    if (!ScVlanAgnostic())
+        vlan_tag = vlan;
+    else
+        vlan_tag = 0;
+}
+
+void FlowKey::init_address_space(uint16_t addrSpaceId)
+{
+#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
+    if (!ScAddressSpaceAgnostic())
+        addressSpaceId = addrSpaceId;
+    else
+        addressSpaceId = 0;
+#else
+    addressSpaceId = 0;
+    UNUSED(addrSpaceId);
+#endif
+    addressSpaceIdPad1 = 0;
+}
+
+void FlowKey::init_mpls(uint32_t mplsId)
+{
+    if (ScMplsOverlappingIp())
+        mplsLabel = mplsId;
+    else
+    	mplsLabel = 0;
+}
+
 void FlowKey::init(
     const sfip_t *srcIP, uint16_t srcPort,
     const sfip_t *dstIP, uint16_t dstPort,
@@ -189,21 +219,8 @@ void FlowKey::init(
     protocol = proto;
     version = 0;
 
-    if (!ScVlanAgnostic())
-        vlan_tag = vlan;
-    else
-        vlan_tag = 0;
-
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    if (!ScAddressSpaceAgnostic())
-        addressSpaceId = addrSpaceId;
-    else
-        addressSpaceId = 0;
-#else
-    addressSpaceId = 0;
-    UNUSED(addrSpaceId);
-#endif
-    addressSpaceIdPad1 = 0;
+    init_vlan(vlan);
+    init_address_space(addrSpaceId);
 }
 
 void FlowKey::init(
@@ -229,21 +246,8 @@ void FlowKey::init(
         init6(srcIP, srcPort, dstIP, dstPort, proto, mplsId, false);
     }
 
-    if (!ScVlanAgnostic())
-        vlan_tag = vlan;
-    else
-        vlan_tag = 0;
-
-#ifdef HAVE_DAQ_ADDRESS_SPACE_ID
-    if (!ScAddressSpaceAgnostic())
-        addressSpaceId = addrSpaceId;
-    else
-        addressSpaceId = 0;
-#else
-    addressSpaceId = 0;
-    UNUSED(addrSpaceId);
-#endif
-    addressSpaceIdPad1 = 0;
+    init_vlan(vlan);
+    init_address_space(addrSpaceId);
 }
 
 //-------------------------------------------------------------------------
