@@ -244,6 +244,7 @@ bool Binding::parse_file(std::string input_file)
         out.open(input_file + ".lua");
 
 
+        out << "require(\"snort_config\")\n\n";
         data_api.print_data(out);
         rule_api.print_rules(out, false);
         table_api.print_tables(out);
