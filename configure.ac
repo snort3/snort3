@@ -851,7 +851,6 @@ src/time/Makefile \
 src/utils/Makefile \
 lua/Makefile \
 doc/Makefile \
-etc/Makefile \
 tools/Makefile \
 tools/u2boat/Makefile \
 tools/u2spewfoo/Makefile \

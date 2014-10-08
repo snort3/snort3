@@ -27,7 +27,6 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}") # c++11 flag
 # include this directory for the config.h file. created in sanityChecks.cmake
 include_directories(${PROJECT_BINARY_DIR})
 
-add_subdirectory (etc)
 add_subdirectory (src)
 add_subdirectory (tools)
 add_subdirectory (lua)
