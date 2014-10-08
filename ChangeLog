@@ -11,6 +11,7 @@
 -- fixed stream_icmp flow key init
 -- added --warn-flowbits
 -- tweaked flowbits counts start up output
+-- updates to snort.lua and snort_defaults.lua
 
 123
 -- refactored documentation
