@@ -25,6 +25,7 @@ config_one_string_option.cc \
 config_order.cc \
 config_paf_max.cc \
 config_ppm.cc \
+config_policy_id.cc \
 config_profile.cc \
 config_reference.cc \
 config_response.cc \
