@@ -10,6 +10,7 @@ gids.txt \
 help.txt \
 modules.txt \
 options.txt \
+signals.txt \
 version.txt
 
 unbuilt_sources = \
@@ -74,6 +75,9 @@ modules.txt: $(snort)
 
 options.txt: $(snort)
 	$(snort) --markup --help-options | sort > $@
+
+signals.txt: $(snort)
+	$(snort) --markup --help-signals > $@
 
 version.txt: $(snort)
 	$(snort) -V 2>&1 | grep -v Using > $@

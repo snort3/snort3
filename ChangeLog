@@ -13,6 +13,7 @@
 -- tweaked flowbits counts start up output
 -- updates to snort.lua and snort_defaults.lua
 -- fixed stream_icmp counts
+-- added markup for signal help and put in doc
 
 123
 -- refactored documentation

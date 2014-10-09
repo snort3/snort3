@@ -35,6 +35,7 @@ using namespace std;
 #include "main/thread.h"
 #include "snort.h"
 #include "utils/ring.h"
+#include "helpers/markup.h"
 
 #ifndef SIGNAL_SNORT_RELOAD
 #define SIGNAL_SNORT_RELOAD        SIGHUP
@@ -230,16 +231,27 @@ void init_signals(void)
     errno = 0;
 }
 
+static void help_signal(unsigned n, const char* name, const char* h)
+{
+    cout << Markup::item();
+
+    cout << Markup::emphasis_on();
+    cout << name;
+    cout << Markup::emphasis_off();
+
+    cout << "(" << n << "): " << h << endl;
+}
+
 void help_signals()
 {
-    cout << SIGTERM << "/term: shutdown normally" << endl;
-    cout << SIGINT  << "/int: shutdown normally" << endl;
-    cout << SIGQUIT << "/quit: shutdown as if started with --dirty-pig" << endl;
+    help_signal(SIGTERM, "term", "shutdown normally");
+    help_signal(SIGINT,  "int", "shutdown normally");
+    help_signal(SIGQUIT, "quit", "shutdown as if started with --dirty-pig");
 
-    cout << SIGNAL_SNORT_DUMP_STATS  << "/stats: dump stats to stdout" << endl;
-    cout << SIGNAL_SNORT_ROTATE_STATS  << "/rotate: rotate stats files" << endl;
-    cout << SIGNAL_SNORT_RELOAD  << "/reload: reload config file" << endl;
-    cout << SIGNAL_SNORT_READ_ATTR_TBL  << "/hosts: reload hosts file" << endl;
+    help_signal(SIGNAL_SNORT_DUMP_STATS,  "stats", "dump stats to stdout");
+    help_signal(SIGNAL_SNORT_ROTATE_STATS,  "rotate", "rotate stats files");
+    help_signal(SIGNAL_SNORT_RELOAD,  "reload", "reload config file");
+    help_signal(SIGNAL_SNORT_READ_ATTR_TBL,  "hosts", "reload hosts file");
 }
 
 //-------------------------------------------------------------------------
