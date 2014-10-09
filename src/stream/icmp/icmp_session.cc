@@ -195,6 +195,7 @@ static int ProcessIcmpUnreach(Packet *p)
 IcmpSession::IcmpSession(Flow* flow) : Session(flow)
 {
     setup(nullptr);
+    icmpStats.created--;
 }
 
 bool IcmpSession::setup(Packet*)
@@ -202,6 +203,7 @@ bool IcmpSession::setup(Packet*)
     echo_count = 0;
     ssn_time.tv_sec = 0;
     ssn_time.tv_usec = 0;
+    icmpStats.created++;
     return true;
 }
 

@@ -251,11 +251,14 @@ void InspectorManager::release_plugins ()
 {
     empty_trash();
 
+#if 0
+    // FIXIT-H multiple policies causes ref_counts > 0
     for ( auto* p : s_trash )
     {
         if ( !p->is_inactive() )
             printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
     }
+#endif
 
     for ( auto* p : s_handlers )
     {
