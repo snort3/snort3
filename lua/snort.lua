@@ -53,7 +53,7 @@ ppm = { }
 profile = { }
 perf_monitor = { }
 
-normalize = { }
+normalizer = { }
 
 arp_spoof = { }
 back_orifice = { }

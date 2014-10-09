@@ -36,6 +36,7 @@ using namespace std;
 #include "snort.h"
 #include "utils/ring.h"
 #include "helpers/markup.h"
+#include "parser/parser.h"
 
 #ifndef SIGNAL_SNORT_RELOAD
 #define SIGNAL_SNORT_RELOAD        SIGHUP
@@ -192,7 +193,7 @@ static int add_signal(int sig, sighandler_t signal_handler, int check_needed)
     }
     else if (check_needed && (SIG_IGN != pre_handler) && (SIG_DFL!= pre_handler))
     {
-        ErrorMessage("WARNING: Handler is already installed for signal %d.\n", sig);
+        ParseWarning("handler is already installed for signal %d.\n", sig);
     }
     return 1;
 }

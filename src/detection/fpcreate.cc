@@ -817,7 +817,8 @@ void fpSetMaxQueueEvents(FastPatternConfig *fp, unsigned int num_events)
 void fpSetMaxPatternLen(FastPatternConfig *fp, unsigned int max_len)
 {
     if (fp->max_pattern_len != 0)
-        LogMessage("WARNING: Maximum pattern length redefined.\n");
+        ParseWarning("maximum pattern length redefined from %d to %d.\n",
+            fp->max_pattern_len, max_len);
 
     fp->max_pattern_len = max_len;
 }

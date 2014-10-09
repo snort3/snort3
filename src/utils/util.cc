@@ -372,7 +372,7 @@ void SetUidGid(int user_id, int group_id)
     if ((group_id != -1) && (getgid() != (gid_t)group_id))
     {
         if ( !DAQ_Unprivileged() )
-            ParseError("WARNING: cannot set uid and gid - %s DAQ does not"
+            ParseError("cannot set uid and gid - %s DAQ does not"
                 " support unprivileged operation.\n", DAQ_GetType());
 
         else if (setgid(group_id) < 0)
@@ -385,7 +385,7 @@ void SetUidGid(int user_id, int group_id)
     if ((user_id != -1) && (getuid() != (uid_t)user_id))
     {
         if ( !DAQ_Unprivileged() )
-            ParseError("WARNING: cannot set uid and gid - %s DAQ does not"
+            ParseError("cannot set uid and gid - %s DAQ does not"
                 " support unprivileged operation.\n", DAQ_GetType());
 
         else if (setuid(user_id) < 0)

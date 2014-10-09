@@ -14,6 +14,8 @@
 -- updates to snort.lua and snort_defaults.lua
 -- fixed stream_icmp counts
 -- added markup for signal help and put in doc
+-- change snort.lua normalize to normalizer
+-- change parse time LogMessage("WARNING...") to ParseWarning()
 
 123
 -- refactored documentation

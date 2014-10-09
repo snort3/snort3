@@ -568,7 +568,7 @@ int Norm_SetConfig (NormalizerConfig* nc)
     {
         if ( !DAQ_CanInject() )
         {
-            LogMessage("WARNING: normalize_ip4: trim disabled since DAQ "
+            ParseWarning("normalize_ip4: trim disabled since DAQ "
                 "can't inject packets.\n");
             Norm_Disable(nc, NORM_IP4_TRIM);
         }
