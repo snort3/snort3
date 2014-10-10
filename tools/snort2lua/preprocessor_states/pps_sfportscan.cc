@@ -34,7 +34,7 @@ namespace {
 class PortScan : public ConversionState
 {
 public:
-    PortScan() : ConversionState() {};
+    PortScan(Converter& c) : ConversionState(c) {};
     virtual ~PortScan() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -192,9 +192,9 @@ bool PortScan::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new PortScan();
+    return new PortScan(c);
 }
 
 static const ConvertMap preprocessor_sfportscan = 

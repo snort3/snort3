@@ -35,7 +35,7 @@ namespace {
 class Output : public ConversionState
 {
 public:
-    Output() : ConversionState() {};
+    Output(Converter& c) : ConversionState(c) {};
     virtual ~Output() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -55,7 +55,7 @@ bool Output::convert(std::istringstream& data_stream)
         const ConvertMap* map = util::find_map(output::output_api, keyword);
         if (map)
         {
-            cv.set_state(map->ctor());
+            cv.set_state(map->ctor(cv));
             return true;
         }
     }
@@ -67,10 +67,8 @@ bool Output::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new Output();
-}
+static ConversionState* ctor(Converter& c)
+{ return new Output(c); }
 
 static const ConvertMap keyword_output = 
 {

@@ -36,7 +36,7 @@ namespace {
 class Metadata : public ConversionState
 {
 public:
-    Metadata() : ConversionState() {};
+    Metadata(Converter& c) : ConversionState(c) {};
     virtual ~Metadata() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -115,9 +115,9 @@ bool Metadata::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Metadata();
+    return new Metadata(c);
 }
 
 static const std::string metadata = "metadata";

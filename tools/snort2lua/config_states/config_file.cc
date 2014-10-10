@@ -35,7 +35,7 @@ namespace {
 class File : public ConversionState
 {
 public:
-    File() : ConversionState() {};
+    File(Converter& c) : ConversionState(c) {};
     virtual ~File() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -124,9 +124,9 @@ bool File::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new File();
+    return new File(c);
 }
 
 static const ConvertMap file_api =

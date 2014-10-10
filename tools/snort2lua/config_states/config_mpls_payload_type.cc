@@ -35,7 +35,7 @@ namespace {
 class MplsPayloadType : public ConversionState
 {
 public:
-    MplsPayloadType() : ConversionState() {};
+    MplsPayloadType(Converter& c) : ConversionState(c) {};
     virtual ~MplsPayloadType() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -82,9 +82,9 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new MplsPayloadType();
+    return new MplsPayloadType(c);
 }
 
 static const ConvertMap mpls_payload_type_api =

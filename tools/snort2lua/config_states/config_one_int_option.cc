@@ -41,10 +41,11 @@ namespace
 class ConfigIntOption : public ConversionState
 {
 public:
-    ConfigIntOption( const std::string* snort_option,
-                        const std::string* lua_table,
-                        const std::string* lua_option) :
-            ConversionState(),
+    ConfigIntOption(Converter& c,
+                    const std::string* snort_option,
+                    const std::string* lua_table,
+                    const std::string* lua_option) :
+            ConversionState(c),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -59,7 +60,7 @@ public:
             (lua_table == nullptr)||
             (lua_table->empty()))
         {
-            data_api.developer_error("Invalid Option!!  Missing either the Snort Option"
+            DataApi::developer_error("Invalid Option!!  Missing either the Snort Option"
                 " or the corresponding lua table!!");
             return false;
         }
@@ -94,9 +95,10 @@ private:
 template<const std::string *snort_option,
         const std::string *lua_table,
         const std::string *lua_option = nullptr>
-static ConversionState* config_int_ctor()
+static ConversionState* config_int_ctor(Converter& c)
 {
-    return new ConfigIntOption( snort_option,
+    return new ConfigIntOption( c,
+                                snort_option,
                                 lua_table,
                                 lua_option);
 }

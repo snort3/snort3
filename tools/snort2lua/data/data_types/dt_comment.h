@@ -30,7 +30,7 @@
 static const std::string start_comments =
     "\nCOMMENTS:\n"
     "    these line were commented "
-    "in the configuration file.";
+    "in the configuration file.\n\n";
 
 static const std::string start_errors =
     "\nERRORS:\n"
@@ -60,7 +60,7 @@ public:
     // insert this string before the first lexigraphically larger string.
     // will not add duplicates.
     void add_sorted_text(std::string new_text);
-    bool empty();
+    bool empty() const;
 
     // overloading operators
     friend std::ostream &operator<<( std::ostream&, const Comments &);

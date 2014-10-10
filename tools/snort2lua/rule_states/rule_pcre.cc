@@ -37,7 +37,7 @@ namespace {
 class Pcre : public ConversionState
 {
 public:
-    Pcre() : ConversionState() {};
+    Pcre(Converter& c) : ConversionState(c) {};
     virtual ~Pcre() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -121,9 +121,9 @@ bool Pcre::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Pcre();
+    return new Pcre(c);
 }
 
 

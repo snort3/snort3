@@ -36,7 +36,7 @@ namespace {
 class HttpEncode : public ConversionState
 {
 public:
-    HttpEncode() : ConversionState() {};
+    HttpEncode(Converter& c) : ConversionState(c) {};
     virtual ~HttpEncode() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -56,9 +56,9 @@ bool HttpEncode::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new HttpEncode();
+    return new HttpEncode(c);
 }
 
 static const std::string http_encode = "http_encode";

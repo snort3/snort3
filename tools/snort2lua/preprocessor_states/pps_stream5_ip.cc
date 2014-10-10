@@ -34,7 +34,7 @@ namespace {
 class StreamIp : public ConversionState
 {
 public:
-    StreamIp() : ConversionState() {};
+    StreamIp(Converter& c) : ConversionState(c) {};
     virtual ~StreamIp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -82,9 +82,9 @@ bool StreamIp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new StreamIp();
+    return new StreamIp(c);
 }
 
 static const ConvertMap preprocessor_stream_ip =

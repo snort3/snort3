@@ -35,7 +35,7 @@ namespace {
 class Suppress : public ConversionState
 {
 public:
-    Suppress() : ConversionState() {};
+    Suppress(Converter& c) : ConversionState(c) {};
     virtual ~Suppress() {};
     virtual bool convert(std::istringstream& data);
 
@@ -135,10 +135,8 @@ bool Suppress::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new Suppress();
-}
+static ConversionState* ctor(Converter& c)
+{ return new Suppress(c); }
 
 static const ConvertMap keyword_supress =
 {

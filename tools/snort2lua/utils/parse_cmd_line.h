@@ -42,4 +42,3 @@ const std::string get_rule_file();
 } // namespace parser
 
 #endif
-

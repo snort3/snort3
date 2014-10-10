@@ -34,7 +34,7 @@ namespace {
 class AlertFull : public ConversionState
 {
 public:
-    AlertFull() : ConversionState() {};
+    AlertFull(Converter& c) : ConversionState(c) {};
     virtual ~AlertFull() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -86,11 +86,11 @@ bool AlertFull::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    table_api.open_top_level_table("alert_full"); // in case there are no arguments
-    table_api.close_table();
-    return new AlertFull();
+    c.get_table_api().open_top_level_table("alert_full"); // in case there are no arguments
+    c.get_table_api().close_table();
+    return new AlertFull(c);
 }
 
 static const ConvertMap alert_full_api =

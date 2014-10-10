@@ -34,7 +34,7 @@ namespace {
 class AlertTest : public ConversionState
 {
 public:
-    AlertTest() : ConversionState() {};
+    AlertTest(Converter& c) : ConversionState(c) {};
     virtual ~AlertTest() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -98,11 +98,11 @@ bool AlertTest::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    table_api.open_top_level_table("alert_test"); // in case there are no arguments
-    table_api.close_table();
-    return new AlertTest();
+    c.get_table_api().open_top_level_table("alert_test"); // in case there are no arguments
+    c.get_table_api().close_table();
+    return new AlertTest(c);
 }
 
 static const ConvertMap alert_test_api =

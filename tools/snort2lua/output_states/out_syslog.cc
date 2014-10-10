@@ -36,7 +36,7 @@ namespace
 class AlertSyslog : public ConversionState
 {
 public:
-    AlertSyslog() : ConversionState() {};
+    AlertSyslog(Converter& c) : ConversionState(c) {};
     virtual ~AlertSyslog() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -240,11 +240,11 @@ bool AlertSyslog::convert(std::istringstream& data_stream)
 }
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    table_api.open_top_level_table("alert_syslog"); // in case there are no arguments
-    table_api.close_table();
-    return new AlertSyslog();
+    c.get_table_api().open_top_level_table("alert_syslog"); // in case there are no arguments
+    c.get_table_api().close_table();
+    return new AlertSyslog(c);
 }
 
 

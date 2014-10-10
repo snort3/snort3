@@ -34,7 +34,7 @@ namespace {
 class Alertfile : public ConversionState
 {
 public:
-    Alertfile() : ConversionState() {};
+    Alertfile(Converter& c) : ConversionState(c) {};
     virtual ~Alertfile() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -90,8 +90,8 @@ bool Alertfile::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
-{ return new Alertfile(); }
+static ConversionState* ctor(Converter& c)
+{ return new Alertfile(c); }
 
 
 static const ConvertMap alertfile_api =

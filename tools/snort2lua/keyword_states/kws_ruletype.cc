@@ -35,7 +35,7 @@ namespace {
 class RuleType : public ConversionState
 {
 public:
-    RuleType() : ConversionState() {};
+    RuleType(Converter& c) : ConversionState(c) {};
     virtual ~RuleType() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -68,10 +68,8 @@ bool RuleType::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new RuleType();
-}
+static ConversionState* ctor(Converter& c)
+{ return new RuleType(); }
 
 static const ConvertMap keyword_ruletype = 
 {

@@ -34,7 +34,7 @@ namespace {
 class Classification : public ConversionState
 {
  public:
-    Classification() : ConversionState() {}
+    Classification(Converter& c) : ConversionState(c) {}
     virtual ~Classification() {}
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -75,9 +75,9 @@ bool Classification::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Classification();
+    return new Classification(c);
 }
 
 static const ConvertMap classification_api =

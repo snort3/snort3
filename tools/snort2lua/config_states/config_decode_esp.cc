@@ -35,7 +35,7 @@ namespace {
 class DecodeEsp : public ConversionState
 {
 public:
-    DecodeEsp() : ConversionState() {};
+    DecodeEsp(Converter& c) : ConversionState(c) {};
     virtual ~DecodeEsp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -85,9 +85,9 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new DecodeEsp();
+    return new DecodeEsp(c);
 }
 
 static const ConvertMap decode_esp_api =

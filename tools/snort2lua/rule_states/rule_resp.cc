@@ -36,7 +36,7 @@ namespace {
 class Resp : public ConversionState
 {
 public:
-    Resp() : ConversionState() {};
+    Resp(Converter& c) : ConversionState(c) {};
     virtual ~Resp() {};
     virtual bool convert(std::istringstream& data);
 private:
@@ -189,8 +189,8 @@ bool Resp::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
-{ return new Resp(); }
+static ConversionState* ctor(Converter& c)
+{ return new Resp(c); }
 
 static const ConvertMap rule_resp =
 {

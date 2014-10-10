@@ -36,7 +36,7 @@ namespace {
 class Urilen : public ConversionState
 {
 public:
-    Urilen() : ConversionState() {};
+    Urilen(Converter& c) : ConversionState(c) {};
     virtual ~Urilen() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -90,9 +90,9 @@ bool Urilen::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Urilen();
+    return new Urilen(c);
 }
 
 static const std::string urilen = "urilen";

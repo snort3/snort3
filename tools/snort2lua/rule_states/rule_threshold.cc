@@ -36,7 +36,7 @@ namespace {
 class Threshold : public ConversionState
 {
 public:
-    Threshold() : ConversionState() {};
+    Threshold(Converter& c) : ConversionState(c) {};
     virtual ~Threshold() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -152,9 +152,9 @@ bool Threshold::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Threshold();
+    return new Threshold(c);
 }
 
 static const ConvertMap rule_threshold =

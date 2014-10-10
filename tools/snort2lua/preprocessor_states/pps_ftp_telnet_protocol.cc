@@ -39,8 +39,8 @@ namespace {
 class FtpServer : public ConversionState
 {
 public:
-    FtpServer();
-    virtual ~FtpServer() {};
+    FtpServer(Converter& c) : ConversionState(c) { }
+    virtual ~FtpServer() { }
     virtual bool convert(std::istringstream& data_stream);
 private:
     struct Command
@@ -72,9 +72,6 @@ private:
 
 int FtpServer::ftpsever_binding_id = 1;
 
-
-FtpServer::FtpServer() : ConversionState()
-{}
 
 std::vector<FtpServer::Command>::iterator FtpServer::get_command(
                             std::string cmd_name,
@@ -189,7 +186,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    Binder bind;
+    Binder bind(table_api);
     bind.set_use_type("ftp_server");
     bind.set_when_proto("tcp");
 
@@ -352,7 +349,7 @@ namespace
 class FtpClient : public ConversionState
 {
 public:
-    FtpClient() : ConversionState() {};
+    FtpClient(Converter& c) : ConversionState(c) {};
     virtual ~FtpClient() {};
     virtual bool convert(std::istringstream& data_stream);
 private:
@@ -367,7 +364,7 @@ bool FtpClient::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    Binder bind;
+    Binder bind(table_api);
     bind.set_use_type("ftp_client");
     bind.set_when_proto("tcp");
 
@@ -491,7 +488,7 @@ namespace
 class Telnet : public ConversionState
 {
 public:
-    Telnet() : ConversionState() {};
+    Telnet(Converter& c) : ConversionState(c) {};
     virtual ~Telnet() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -503,7 +500,7 @@ bool Telnet::convert(std::istringstream& data_stream)
     std::string keyword;
     int i_val;
     bool retval = true;
-    Binder bind;
+    Binder bind(table_api);
 
     bind.set_when_proto("tcp");
     bind.set_use_type("telnet");
@@ -561,7 +558,7 @@ namespace {
 class FtpTelnetProtocol : public ConversionState
 {
 public:
-    FtpTelnetProtocol() : ConversionState() {};
+    FtpTelnetProtocol(Converter& c) : ConversionState(c) {};
     virtual ~FtpTelnetProtocol() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -577,17 +574,17 @@ bool FtpTelnetProtocol::convert(std::istringstream& data_stream)
     {
         if(!protocol.compare("telnet"))
         {
-            cv.set_state(new Telnet());
+            cv.set_state(new Telnet(cv));
         }
         else if (!protocol.compare("ftp"))
         {
             if(data_stream >> protocol)
             {
                 if(!protocol.compare("client"))
-                    cv.set_state(new FtpClient());
+                    cv.set_state(new FtpClient(cv));
 
                 else if (!protocol.compare("server"))
-                    cv.set_state(new FtpServer());
+                    cv.set_state(new FtpServer(cv));
 
                 else
                     return false;
@@ -604,9 +601,9 @@ bool FtpTelnetProtocol::convert(std::istringstream& data_stream)
 
 /*******  PUBLIC API ************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new FtpTelnetProtocol();
+    return new FtpTelnetProtocol(c);
 }
 
 static const ConvertMap ftptelnet_protocol_preprocessor = 

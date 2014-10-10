@@ -34,7 +34,7 @@ namespace {
 class Response : public ConversionState
 {
 public:
-    Response() : ConversionState() {};
+    Response(Converter& c) : ConversionState(c) {};
     virtual ~Response() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -80,9 +80,9 @@ bool Response::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Response();
+    return new Response(c);
 }
 
 static const ConvertMap response_api =

@@ -34,7 +34,7 @@ namespace {
 class EventTrace : public ConversionState
 {
 public:
-    EventTrace() : ConversionState() {};
+    EventTrace(Converter& c) : ConversionState(c) {};
     virtual ~EventTrace() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -78,9 +78,9 @@ bool EventTrace::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new EventTrace();
+    return new EventTrace(c);
 }
 
 static const ConvertMap event_trace_api =

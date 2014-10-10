@@ -36,7 +36,7 @@ template<const std::string* table_name>
 class Profilers : public ConversionState
 {
 public:
-    Profilers() : ConversionState() {};
+    Profilers(Converter& c) : ConversionState(c) {};
     virtual ~Profilers() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -121,9 +121,9 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
 }
 
 template<const std::string* table_name>
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Profilers<table_name>();
+    return new Profilers<table_name>(c);
 }
 
 /**************************

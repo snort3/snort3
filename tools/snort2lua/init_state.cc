@@ -30,7 +30,7 @@
 #include "data/dt_data.h"
 
 
-InitState::InitState() : ConversionState() {}
+InitState::InitState(Converter& c) : ConversionState(c) {}
 
 bool InitState::convert(std::istringstream& data_stream)
 {
@@ -41,7 +41,7 @@ bool InitState::convert(std::istringstream& data_stream)
         const ConvertMap *map = util::find_map(keywords::keywords_api, keyword);
         if (map)
         {
-            cv.set_state(map->ctor());
+            cv.set_state(map->ctor(cv));
             return true;
         }
 

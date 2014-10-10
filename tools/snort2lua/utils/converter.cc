@@ -23,15 +23,17 @@
 #include "conversion_state.h"
 #include "data/data_types/dt_comment.h"
 #include "utils/s2l_util.h"
+#include "init_state.h"
 
-Converter cv;
+
+
+bool Converter::parse_includes = true;
+bool Converter::convert_rules_mult_files = true;
+bool Converter::convert_conf_mult_files = true;
+
 
 Converter::Converter()
     :   state(nullptr),
-        init_state_ctor(nullptr),
-        parse_includes(true),
-        convert_rules_mult_files(true),
-        convert_conf_mult_files(true),
         error(false)
 {
 }
@@ -40,20 +42,6 @@ Converter::~Converter()
 {
     if (state)
         delete state;
-}
-
-bool Converter::initialize(conv_new_f func)
-{
-    init_state_ctor = func;
-    state = init_state_ctor();
-
-    if (state == nullptr)
-    {
-        data_api.developer_error("Failed Converter initialization!");
-        return false;
-    }
-
-    return true;
 }
 
 void Converter::set_state(ConversionState* c)
@@ -67,7 +55,7 @@ void Converter::reset_state()
     if (state)
         delete state;
 
-    state = init_state_ctor();
+    state = new InitState(*this);
     data_api.reset_state();
     table_api.reset_state();
     rule_api.reset_state();
@@ -98,7 +86,7 @@ void Converter::parse_include_file(std::string input_file)
 
 
 
-    if (convert_file(input_file) < 0)
+    if (parse_file(input_file) < 0)
         error = true; // return a negative number to main snort2lua method
 
 
@@ -140,7 +128,7 @@ void Converter::parse_include_file(std::string input_file)
     }
 }
 
-int Converter::convert_file(std::string input_file)
+int Converter::parse_file(std::string input_file)
 {
     std::ifstream in;
     std::string orig_text;
@@ -202,4 +190,121 @@ int Converter::convert_file(std::string input_file)
 
     // this is set by parse_include_file
     return error ? -3 : 0;
+}
+
+bool Converter::initialize()
+{
+    state = new InitState(*this);
+
+    if (state == nullptr)
+    {
+        DataApi::developer_error("Failed Converter initialization!");
+        return false;
+    }
+
+    return true;
+}
+
+int Converter::convert(std::string input,
+                        std::string output_file,
+                        std::string rule_file,
+                        std::string error_file)
+{
+    int rc;
+    initialize();
+
+    rc = parse_file(input);
+
+    if (rc < 0)
+        return rc;
+
+
+    // keep track whether we're printing rules into a seperate file.
+    bool rule_file_specifed = false;
+
+
+    if (!rule_api.empty())
+    {
+        std::cout << "rule_file" << rule_file << std::endl;
+        std::cout << "out_file " << output_file << std::endl;
+        if (rule_file.empty() || !rule_file.compare(output_file))
+        {
+            std::string s = std::string("$default_rules");
+            rule_file_specifed = false;
+
+            table_api.open_top_level_table("ips");
+            table_api.add_option("rules", s);
+            table_api.close_table();
+        }
+        else
+        {
+            rule_file_specifed = true;
+
+            table_api.open_top_level_table("ips");
+            table_api.add_option("include", rule_file);
+            table_api.close_table();
+        }
+    }
+
+
+    // Snort++ requires a binder table to be instantiated,
+    // although not necessarily filled.  So, just add this table.
+    // If its already added, these lines won't have any effect
+    table_api.open_top_level_table("binder");
+    table_api.close_table();
+
+    // finally, lets print the converter to file
+    std::ofstream out;
+    out.open(output_file,  std::ifstream::out);
+
+    out << "require(\"snort_config\")  -- for loading\n\n";
+    data_api.print_data(out);
+
+
+    if (!rule_file_specifed)
+    {
+        rule_api.print_rules(out, rule_file_specifed);
+    }
+    else
+    {
+        std::ofstream rules;
+        rules.open(rule_file, std::ifstream::out);
+        rule_api.print_rules(rules, rule_file_specifed);
+        rules.close();
+    }
+
+
+    table_api.print_tables(out);
+    data_api.print_comments(out);
+
+
+
+    if ((failed_conversions()) && !DataApi::is_quiet_mode())
+    {
+        if (error_file.empty())
+        {
+            if (data_api.failed_conversions())
+                data_api.print_errors(out);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(out);
+        }
+        else
+        {
+            std::ofstream rejects;  // in this case, rejects are regular configuration options
+            rejects.open(error_file, std::ifstream::out);
+
+            if (data_api.failed_conversions())
+                data_api.print_errors(rejects);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(rejects);
+
+            rejects.close();
+        }
+    }
+
+
+    out.close();
+    return rc;
 }

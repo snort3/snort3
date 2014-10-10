@@ -26,13 +26,14 @@
 #include <string>
 #include <vector>
 
+class TableApi;
 
 // If the user never adds add_to_configuration,
 //  the destructor will call the method
 class Binder
 {
 public:
-    Binder();
+    Binder(TableApi&);
     ~Binder();
 
     void add_to_configuration();
@@ -58,6 +59,7 @@ public:
 
 
 private:
+    TableApi& table_api;
     bool printed; // ensures that the binding is added once,
                   // by either the destructor or user
 

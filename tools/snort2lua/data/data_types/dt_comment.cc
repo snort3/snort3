@@ -53,9 +53,7 @@ Comments::~Comments()
 
 void Comments::add_text(std::string text)
 {
-    // if this line is not an empty string
-    // OR the previous line was not an empty string
-    if (!text.empty() || !prev_empty)
+    if ( !(text.empty() && prev_empty) )
     {
         comment.push_back(std::string(text));
         prev_empty = text.empty();
@@ -79,7 +77,7 @@ void Comments::add_sorted_text(std::string new_text)
     comment.push_back(new_text);
 }
 
-bool Comments::empty()
+bool Comments::empty() const
 {
     return ((comment.size() == 0) ||
             (comment.size() == 1 && header));

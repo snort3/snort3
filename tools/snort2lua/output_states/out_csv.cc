@@ -34,7 +34,7 @@ namespace {
 class AlertCsv : public ConversionState
 {
 public:
-    AlertCsv() : ConversionState() {};
+    AlertCsv(Converter& c) : ConversionState(c) {};
     virtual ~AlertCsv() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -246,11 +246,11 @@ bool AlertCsv::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    table_api.open_top_level_table("alert_csv"); // in case there are no arguments
-    table_api.close_table();
-    return new AlertCsv();
+    c.get_table_api().open_top_level_table("alert_csv"); // in case there are no arguments
+    c.get_table_api().close_table();
+    return new AlertCsv(c);
 }
 
 static const ConvertMap alert_csv_api =

@@ -32,7 +32,7 @@ namespace {
 class Frag3Global : public ConversionState
 {
 public:
-    Frag3Global() : ConversionState() {};
+    Frag3Global(Converter& c) : ConversionState(c) {};
     virtual ~Frag3Global() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -90,9 +90,9 @@ bool Frag3Global::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Frag3Global();
+    return new Frag3Global(c);
 }
 
 static const ConvertMap preprocessor_frag3_global =

@@ -34,7 +34,7 @@
 
 static void print_line(std::string s)
 {
-    if (!data_api.is_quiet_mode())
+    if (!DataApi::is_quiet_mode())
         std::cout << s << std::endl;
 }
 
@@ -64,112 +64,15 @@ int main (int argc, char* argv[])
     }
 
     // MAIN CONVERSION FUNCTION!!
-    cv.initialize(&init_state_ctor);
-    if (cv.convert_file(conf_file) < 0)
+    Converter cv;
+    if (cv.convert(conf_file, output_file, rule_file, error_file) < 0)
     {
         print_line("Failed Conversion of file " + conf_file);
         fail = true;
     }
 
-    // keep track whether we're printing rules into a seperate file.
-    bool rule_file_specifed = false;
 
-
-    if (!rule_api.empty())
-    {
-        if (!rule_file.compare(output_file))
-        {
-            std::string s = std::string("$default_rules");
-            rule_file_specifed = false;
-
-            table_api.open_top_level_table("ips");
-            table_api.add_option("rules", s);
-            table_api.close_table();
-        }
-        else
-        {
-            rule_file_specifed = true;
-
-            table_api.open_top_level_table("ips");
-            table_api.add_option("include", rule_file);
-            table_api.close_table();
-        }
-    }
-
-
-    // Snort++ requires a binder table to be instantiated,
-    // although not necessarily filled.  So, just add this table.
-    // If its already added, these lines won't have any effect
-    table_api.open_top_level_table("binder");
-    table_api.close_table();
-
-    // finally, lets print the converter to file
-    std::ofstream out;
-    out.open(output_file,  std::ifstream::out);
-    out << "require(\"snort_config\")  -- for loading\n\n";
-
-    if (!rule_file_specifed)
-    {
-        data_api.print_data(out);
-        rule_api.print_rules(out, rule_file_specifed);
-        table_api.print_tables(out);
-        data_api.print_comments(out);
-
-
-        out << std::endl;
-
-        if ((data_api.failed_conversions() || rule_api.failed_conversions()) &&
-            !data_api.is_quiet_mode())
-        {
-            std::ofstream rejects;  // in this case, rejects are regular configuration options
-            rejects.open(error_file, std::ifstream::out);
-
-            if (data_api.failed_conversions())
-                data_api.print_errors(rejects);
-
-            if (rule_api.failed_conversions())
-                rule_api.print_rejects(rejects);
-
-            rejects << std::endl;
-            rejects.close();
-        }
-    }
-    else
-    {
-        std::ofstream rules;
-        rules.open(rule_file, std::ifstream::out);
-
-        data_api.print_data(out);
-        rule_api.print_rules(rules, rule_file_specifed);
-        table_api.print_tables(out);
-        data_api.print_comments(out);
-
-        // flush all data
-        out << std::endl;
-        rules << std::endl;
-        rules.close();
-
-        if ((data_api.failed_conversions() || rule_api.failed_conversions()) &&
-            !data_api.is_quiet_mode())
-        {
-            std::ofstream rejects;  // in this case, rejects are regular configuration options
-            rejects.open(error_file, std::ifstream::out);
-
-            if (data_api.failed_conversions())
-                data_api.print_errors(rejects);
-
-            if (rule_api.failed_conversions())
-                rule_api.print_rejects(rejects);
-
-            rejects << std::endl;
-            rejects.close();
-        }
-    }
-
-
-    out.close();
-
-    if (fail || data_api.failed_conversions() || rule_api.failed_conversions())
+    if (fail || cv.failed_conversions())
         return -2;
     return 0;
 }

@@ -36,7 +36,7 @@ namespace {
 class FileData : public ConversionState
 {
 public:
-    FileData() : ConversionState() {};
+    FileData(Converter& c) : ConversionState(c) {};
     virtual ~FileData() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -82,9 +82,9 @@ bool FileData::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* file_data_ctor()
+static ConversionState* file_data_ctor(Converter& c)
 {
-    return new FileData();
+    return new FileData(c);
 }
 
 static const ConvertMap rule_file_data =

@@ -35,8 +35,8 @@ namespace {
 class HttpInspect : public ConversionState
 {
 public:
-    HttpInspect();
-    virtual ~HttpInspect() {};
+    HttpInspect(Converter& c) : ConversionState(c) { }
+    virtual ~HttpInspect() {}
     virtual bool convert(std::istringstream& data);
 
 private:
@@ -44,10 +44,6 @@ private:
 };
 
 } // namespace
-
-
-HttpInspect::HttpInspect() : ConversionState()
-{}
 
 bool HttpInspect::convert(std::istringstream& data_stream)
 {
@@ -170,9 +166,9 @@ bool HttpInspect::add_decode_option(std::string opt_name,  std::istringstream& s
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new HttpInspect();
+    return new HttpInspect(c);
 }
 
 static const ConvertMap preprocessor_httpinspect = 

@@ -34,7 +34,7 @@ namespace {
 class Order : public ConversionState
 {
 public:
-    Order() : ConversionState() {};
+    Order(Converter& c) : ConversionState(c) {};
     virtual ~Order() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -64,9 +64,9 @@ bool Order::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Order();
+    return new Order(c);
 }
 
 static const ConvertMap order_api =

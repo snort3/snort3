@@ -36,7 +36,7 @@ namespace {
 class StreamTcp : public ConversionState
 {
 public:
-    StreamTcp();
+    StreamTcp(Converter&);
     virtual ~StreamTcp() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -57,7 +57,7 @@ private:
 
 } // namespace
 
-StreamTcp::StreamTcp() : ConversionState()
+StreamTcp::StreamTcp(Converter& c) : ConversionState(c)
 {
     bind_client = nullptr;
     bind_server = nullptr;
@@ -264,9 +264,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    Binder client;
-    Binder server;
-    Binder any;
+    Binder client(table_api);
+    Binder server(table_api);
+    Binder any(table_api);
 
     // by default, only print one binding
     client.print_binding(true);
@@ -515,9 +515,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new StreamTcp();
+    return new StreamTcp(c);
 }
 
 static const ConvertMap preprocessor_stream_tcp = 

@@ -35,7 +35,7 @@ namespace {
 class Include : public ConversionState
 {
 public:
-    Include() : ConversionState() {};
+    Include(Converter& c) : ConversionState(c) {};
     virtual ~Include() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -83,10 +83,8 @@ bool Include::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new Include();
-}
+static ConversionState* ctor(Converter& c)
+{ return new Include(c); }
 
 static const ConvertMap keyword_include = 
 {

@@ -38,7 +38,7 @@ Variable::Variable(std::string name)
 Variable::~Variable(){}
 
 
-std::string Variable::get_value(LuaData* ld)
+std::string Variable::get_value(DataApi* ld)
 {
     std::string variable = "";
     bool first_line = true;

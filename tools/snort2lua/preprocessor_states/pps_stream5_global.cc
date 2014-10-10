@@ -35,7 +35,7 @@ namespace {
 class StreamGlobal : public ConversionState
 {
 public:
-    StreamGlobal() : ConversionState() {};
+    StreamGlobal(Converter& c) : ConversionState(c) {};
     virtual ~StreamGlobal() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -211,9 +211,9 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new StreamGlobal();
+    return new StreamGlobal(c);
 }
 
 static const ConvertMap preprocessor_stream_global = 

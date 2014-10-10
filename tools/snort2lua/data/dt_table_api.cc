@@ -35,9 +35,6 @@
 
 
 
-TableApi table_api;
-
-
 
 TableApi::TableApi() :  curr_data_bad(false) {}
 
@@ -97,7 +94,7 @@ void TableApi::open_table()
     // if no open tables, create a top-level table
     if (open_tables.size() == 0)
     {
-        data_api.developer_error("A nameless table must be nested inside a table!!");
+        DataApi::developer_error("A nameless table must be nested inside a table!!");
     }
     else
     {
@@ -109,7 +106,7 @@ void TableApi::open_table()
 void TableApi::close_table()
 {
     if (open_tables.size() == 0)
-        data_api.developer_error("No open tables to close!!");
+        DataApi::developer_error("No open tables to close!!");
     else
         open_tables.pop();
 }
@@ -119,7 +116,7 @@ bool TableApi::add_option(const std::string option_name, const std::string val)
 {
     if(open_tables.size() == 0)
     {
-        data_api.developer_error("Must open table before adding an option!!: " +
+        DataApi::developer_error("Must open table before adding an option!!: " +
             option_name + " = " + val);
         return false;
     }
@@ -133,7 +130,7 @@ bool TableApi::add_option(const std::string option_name, const int val)
 {
     if(open_tables.size() == 0)
     {
-        data_api.developer_error("Must open table before adding an option!!: " +
+        DataApi::developer_error("Must open table before adding an option!!: " +
             option_name + " = " + std::to_string(val));
         return false;
     }
@@ -147,7 +144,7 @@ bool TableApi::add_option(const std::string option_name, const bool val)
 {
     if(open_tables.size() == 0)
     {
-        data_api.developer_error("Must open table before adding an option!!: " +
+        DataApi::developer_error("Must open table before adding an option!!: " +
             option_name + " = " + std::to_string(val));
         return false;
     }
@@ -166,7 +163,7 @@ bool TableApi::add_list(std::string list_name, std::string next_elem)
 {
     if(open_tables.size() == 0)
     {
-        data_api.developer_error("Must open table before adding an option!!: " +
+        DataApi::developer_error("Must open table before adding an option!!: " +
             list_name + " = " + next_elem);
         return false;
     }
@@ -180,7 +177,7 @@ bool TableApi::add_list(std::string list_name, std::string next_elem)
     }
     else
     {
-        data_api.developer_error("Must open table before adding an list!!: " +
+        DataApi::developer_error("Must open table before adding an list!!: " +
             list_name + " += " + next_elem);
         return false;
     }
@@ -190,10 +187,10 @@ bool TableApi::add_comment(std::string comment)
 {
     if (open_tables.size() == 0)
     {
-        data_api.developer_error("Must open table before adding comment !!: '" +
+        DataApi::developer_error("Must open table before adding comment !!: '" +
             comment + "'");
-        data_api.developer_error("comment added to as a general lua comment");
-        data_api.add_comment(comment);
+        DataApi::developer_error("comment added to as a general lua comment");
+//        data_api.add_comment(comment);
         return false;
     }
 
@@ -205,7 +202,7 @@ bool TableApi::option_exists(const std::string name)
 {
     if (open_tables.size() == 0)
     {
-        data_api.developer_error("Must open table before calling option_exists() !!");
+        DataApi::developer_error("Must open table before calling option_exists() !!");
         return false;
     }
 
@@ -219,7 +216,7 @@ bool TableApi::add_diff_option_comment(std::string orig_var, std::string new_var
 
     if (open_tables.size() == 0)
     {
-        data_api.developer_error("Must open table before adding an option!!: " +
+        DataApi::developer_error("Must open table before adding an option!!: " +
             orig_var + " = " + new_var);
         return false;
     }
@@ -235,7 +232,7 @@ bool TableApi::add_deleted_comment(std::string dep_var)
 
     if (open_tables.size() == 0)
     {
-        data_api.developer_error("Must open a table before adding "
+        DataApi::developer_error("Must open a table before adding "
             "deprecated comment!!: " + dep_var);
         return false;
     }
@@ -251,7 +248,7 @@ bool TableApi::add_unsupported_comment(std::string unsupported_var)
 
     if (open_tables.size() == 0)
     {
-        data_api.developer_error("Must open a tablebefore adding an "
+        DataApi::developer_error("Must open a tablebefore adding an "
             "'unsupported' comment");
         return false;
     }

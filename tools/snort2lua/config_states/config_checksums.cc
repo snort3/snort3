@@ -34,10 +34,11 @@ namespace {
 class ConfigChecksum : public ConversionState
 {
 public:
-    ConfigChecksum( const std::string* snort_option,
+    ConfigChecksum( Converter& c,
+                    const std::string* snort_option,
                     const std::string* lua_table,
                     const std::string* lua_option) :
-            ConversionState(),
+            ConversionState(c),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -82,9 +83,9 @@ private:
 template<const std::string *snort_option,
          const std::string *lua_name,
          const std::string *lua_option = nullptr>
-static ConversionState* config_checksum_ctor()
+static ConversionState* config_checksum_ctor(Converter& c)
 {
-    return new ConfigChecksum(snort_option, lua_name, lua_option);
+    return new ConfigChecksum(c, snort_option, lua_name, lua_option);
 }
 
 

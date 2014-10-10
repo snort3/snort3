@@ -32,8 +32,6 @@
 #include "data/data_types/dt_rule_suboption.h"
 
 
-RuleApi rule_api;
-
 RuleApi::RuleApi()
     :   curr_rule(nullptr),
         curr_data_bad(false)
@@ -57,7 +55,7 @@ void RuleApi::reset_state()
     curr_data_bad = false;
 }
 
-bool RuleApi::failed_conversions()
+bool RuleApi::failed_conversions() const
 { return !bad_rules->empty(); }
 
 void RuleApi::begin_rule()
@@ -140,7 +138,7 @@ bool RuleApi::add_rule_option_before_selected(std::string keyword,
 
     if (!curr_rule_opt)
     {
-        data_api.developer_error("Select an option before placing a "
+        DataApi::developer_error("Select an option before placing a "
                 "new option before selected option");
         return false;
     }
@@ -153,7 +151,7 @@ bool RuleApi::add_suboption(std::string keyword)
     if (curr_rule_opt)
         return curr_rule_opt->add_suboption(keyword);
 
-    data_api.developer_error("Select an option before adding a suboption!!");
+    DataApi::developer_error("Select an option before adding a suboption!!");
     return false;
 }
 
@@ -163,7 +161,7 @@ bool RuleApi::add_suboption(std::string keyword,
     if (curr_rule_opt)
         return curr_rule_opt->add_suboption(keyword, val);
 
-    data_api.developer_error("Select an option before adding a suboption!!");
+    DataApi::developer_error("Select an option before adding a suboption!!");
     return false;
 }
 
@@ -176,11 +174,11 @@ bool RuleApi::select_option(std::string opt_name)
         if (curr_rule_opt != nullptr)
             return true;
         else
-            data_api.developer_error("Option " + opt_name + "never created for following rule:");
+            DataApi::developer_error("Option " + opt_name + "never created for following rule:");
     }
     else
     {
-        data_api.developer_error("Must begin a rule before selecting an option!");
+        DataApi::developer_error("Must begin a rule before selecting an option!");
     }
 
     return false;
@@ -201,7 +199,7 @@ void RuleApi::add_comment_to_rule(std::string comment)
 
 std::ostream& operator<<( std::ostream &out, const RuleApi& data)
 {
-    if (data_api.is_default_mode())
+    if (DataApi::is_default_mode())
     {
         if (!data.bad_rules->empty())
             out << (*data.bad_rules) << "\n";
@@ -232,7 +230,7 @@ void RuleApi::print_rules(std::ostream& out, bool in_rule_file)
 
 void RuleApi::print_rejects(std::ostream& out)
 {
-    if (data_api.is_default_mode())
+    if (DataApi::is_default_mode())
     {
         if (!bad_rules->empty())
             out << (*bad_rules) << "\n\n";
