@@ -44,6 +44,7 @@ public:
     uint32_t get_num_flush() { return num_flush; };
     virtual uint32_t get_octets_seen() { return octets_seen; };
     virtual uint32_t get_num_excess() { return 0; };
+    virtual bool partial_ok() { return true; };
 
 protected:
     uint32_t octets_seen = 0;
@@ -78,14 +79,16 @@ private:
 class NHttpChunkSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length);
-    uint32_t get_num_excess() { return octets_seen; };
+    uint32_t get_num_excess() { return zero_chunk ? 1 : 0; };
     void conditional_reset();
+    bool partial_ok() { return false; };
 private:
     uint32_t expected_length = 0;
     bool length_started = false;
     uint32_t digits_seen = 0;
     bool semicolon = false;
     bool header_complete = false;
+    bool zero_chunk = false;
 };
 
 class NHttpTrailerSplitter : public NHttpSplitter {

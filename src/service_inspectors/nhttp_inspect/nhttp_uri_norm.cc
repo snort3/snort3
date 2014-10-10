@@ -85,6 +85,7 @@ bool UriNormalizer::no_path_check(const uint8_t* in_buf, int32_t in_length, uint
 
 bool UriNormalizer::path_check(const uint8_t* in_buf, int32_t in_length, uint64_t& infractions) {
     for (int32_t k = 0; k < in_length; k++) {
+        // FIXIT-P Periods are common and most don't need to be normalized. Need a better test.
         if (uri_char[in_buf[k]] == CHAR_NORMAL) continue;
         if ((in_buf[k] == '/') && ((k == 0) || (in_buf[k-1] != '/'))) continue;
         infractions |= INF_URINEEDNORM;

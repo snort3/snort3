@@ -54,7 +54,8 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
         break;
       case SEC_CHUNK:
         paf_max = 16384 - session_data->chunk_buffer_length[source_id];
-        if (num_octets == 0) {
+        if (num_excess == 1) {
+            // zero-length chunk
             session_data->type_expected[source_id] = SEC_TRAILER;
         }
         break;
@@ -142,9 +143,15 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
                 return StreamSplitter::ABORT;
             }
             if (tcp_close) {
-                prepare_flush(session_data, flush_offset, source_id, type, true, INF_TRUNCATED, length, length,
-                   splitter->get_num_excess());
-                return StreamSplitter::FLUSH;
+                if (splitter->partial_ok()) {
+                    prepare_flush(session_data, flush_offset, source_id, type, true, INF_TRUNCATED, length, length,
+                       splitter->get_num_excess());
+                    return StreamSplitter::FLUSH;
+                }
+                else {
+                    prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, true, 0, length, length, 0);
+                    return StreamSplitter::FLUSH;
+                }
             }
             // Incomplete headers wait patiently for more data
             return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
@@ -192,6 +199,8 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
 const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* total */, unsigned offset,
        const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
+    // FIXIT-H there should be a tcp_close parameter from stream. Pending that we should create our own, integrate it
+    // with the test tool, and use it for chunk buffer flushing and to update the session data.
     static THREAD_LOCAL StreamBuffer nhttp_buf;
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
@@ -213,8 +222,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
         offset = 0;
     }
 
-    // FIXIT-P stream should be enhanced to do discarding for us
-    // For now flush-then-discard here is how scan() handles things we don't need to examine.
+    // FIXIT-P stream should be enhanced to do discarding for us. For now flush-then-discard here is how scan() handles
+    // things we don't need to examine.
     if ((session_data->section_type[source_id] == SEC_DISCARD) ||
         (session_data->section_type[source_id] == SEC_ABORT)) {
         if (NHttpTestManager::use_test_output()) {
@@ -248,9 +257,10 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
         }
         else {
             // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
-            // all the chunks in the buffer go to the inspector together. Zero-length chunk flushes accumulated chunks.
-            int32_t total_chunk_len = chunk_buffer_length + offset + len;
-            if ((total_chunk_len < 16384) && (len != 0)) {
+            // all the chunks in the buffer go to the inspector together. Zero-length chunk (len == 1, num_excess == 1)
+            // flushes accumulated chunks.
+            int32_t total_chunk_len = chunk_buffer_length + offset + len - num_excess;
+            if ((total_chunk_len < 16384) && (num_excess == 0)) {
                 chunk_buffer_length = total_chunk_len;
                 return nullptr;
             }
