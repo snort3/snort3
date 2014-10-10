@@ -175,8 +175,7 @@ bool Binding::convert(std::istringstream& data_stream)
     } while (util::get_string(data_stream, val, ","));
 
 
-    // FIXIT-M J   This need to be refactored with converter.
-    //          Should NOT be doing all of this here.
+
     if (cv.should_convert_includes())
     {
         std::string full_name = data_api.expand_vars(file);
@@ -190,9 +189,11 @@ bool Binding::convert(std::istringstream& data_stream)
         if (util::file_exists(full_path))
         {
             Converter cv;
+            file = full_path + ".lua";
 
-            if (cv.convert(full_path, full_path + ".lua") < 0)
+            if (cv.convert(full_path, file) < 0)
                 rc = false;
+
         }
     }
 

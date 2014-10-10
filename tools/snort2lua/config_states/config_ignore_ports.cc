@@ -37,7 +37,7 @@ constexpr uint16_t MAX_PORTS = 0xFFFF; // == 65535
 class IgnorePorts : public ConversionState
 {
 public:
-    IgnorePorts() : ConversionState() {};
+    IgnorePorts(Converter& c) : ConversionState(c) {};
     virtual ~IgnorePorts() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -47,7 +47,7 @@ public:
 
 bool IgnorePorts::convert(std::istringstream& data_stream)
 {
-    Binder bind;
+    Binder bind(table_api);
     bool retval = true;
     std::string keyword;
     std::string port;
@@ -137,9 +137,9 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new IgnorePorts();
+    return new IgnorePorts(c);
 }
 
 static const ConvertMap config_ignore_ports =
