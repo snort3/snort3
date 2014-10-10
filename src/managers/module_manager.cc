@@ -169,6 +169,73 @@ static ModHook* get_hook(const char* s)
 // (type, fqn, default, brief help, range)
 //-------------------------------------------------------------------------
 
+enum DumpFormat { DF_STD, DF_TAB, DF_LUA };
+static DumpFormat dump_fmt = DF_STD;
+
+static void dump_field_std(const string& key, const Parameter* p)
+{
+    cout << Markup::item();
+    cout << Markup::sanitize(p->get_type());
+    cout << " " << Markup::emphasis(Markup::sanitize(key));
+
+    if ( p->deflt )
+        cout << " = " << Markup::sanitize((char*)p->deflt);
+
+    cout << ": " << p->help;
+
+    if ( p->range )
+        cout << " { " << Markup::sanitize((char*)p->range) << " }";
+
+    cout << endl;
+}
+
+static void dump_field_tab(const string& key, const Parameter* p)
+{
+    cout << Markup::item();
+    cout << p->get_type();
+    cout << "\t" << Markup::emphasis(Markup::sanitize(key));
+
+    if ( p->deflt )
+        cout << "\t" << Markup::sanitize((char*)p->deflt);
+    else
+        cout << "\t";
+
+    cout << "\t" << p->help;
+
+    if ( p->range )
+        cout << "\t" << Markup::sanitize((char*)p->range);
+    else
+        cout << "\t";
+
+    cout << endl;
+}
+
+static void dump_field_lua(const string& key, const Parameter* p, bool table = false)
+{
+    // implied values (rule keywords) and command line args
+    // don't really have defaults, so skip them
+    if ( key.find('~') != string::npos || 
+         key.find('-') != string::npos ||
+         key.find('*') != string::npos )
+        return;
+
+    if ( table || p->is_table() )
+        cout << key << " = { }";
+
+    else if ( p->is_quoted() )
+    {
+        const char* s = p->deflt ? p->deflt : " ";
+        cout << key << " = '" << s << "'";
+    }
+    else
+    {
+        const char* s = p->deflt ? p->deflt : "0";
+        cout << key << " = " << s;
+    }
+
+    cout << endl;
+}
+
 static void dump_table(string&, const char* pfx, const Parameter*, bool list = false);
 
 static void dump_field(string& key, const char* pfx, const Parameter* p, bool list = false)
@@ -176,7 +243,7 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     unsigned n = key.size();
 
     if ( list || !p->name )
-        key += "[]";
+        key += (dump_fmt == DF_LUA) ? "[1]" : "[]";
 
     if ( p->name )
     {
@@ -185,6 +252,11 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
         key += p->name;
     }
 
+    if ( pfx && strncmp(key.c_str(), pfx, strlen(pfx)) )
+    {
+        key.erase();
+        return;
+    }
     // we dump just one list entry
     if ( p->type == Parameter::PT_TABLE )
         dump_table(key, pfx, (Parameter*)p->range);
@@ -192,45 +264,32 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     else if ( p->type == Parameter::PT_LIST )
         dump_table(key, pfx, (Parameter*)p->range, true);
 
-    else if ( !pfx || !strncmp(key.c_str(), pfx, strlen(pfx)) )
+    else
     {
-#if 1
-        cout << Markup::item();
-        cout << Markup::sanitize(p->get_type());
-        cout << " " << Markup::emphasis(Markup::sanitize(key));
+        if ( dump_fmt == DF_LUA )
+            dump_field_lua(key, p);
 
-        if ( p->deflt )
-            cout << " = " << Markup::sanitize((char*)p->deflt);
+        else if ( dump_fmt == DF_TAB )
+            dump_field_tab(key, p);
 
-        cout << ": " << p->help;
-
-        if ( p->range )
-            cout << " { " << Markup::sanitize((char*)p->range) << " }";
-#else
-        cout << Markup::item();
-        cout << p->get_type();
-        cout << "\t" << Markup::emphasis(Markup::sanitize(key));
-
-        if ( p->deflt )
-            cout << "\t" << Markup::sanitize((char*)p->deflt);
         else
-            cout << "\t";
-
-        cout << "\t" << p->help;
-
-        if ( p->range )
-            cout << "\t" << Markup::sanitize((char*)p->range);
-        else
-            cout << "\t";
-
-#endif
-        cout << endl;
+            dump_field_std(key, p);
     }
     key.erase(n);
 }
 
 static void dump_table(string& key, const char* pfx, const Parameter* p, bool list)
 {
+    if ( dump_fmt == DF_LUA )
+    {
+        dump_field_lua(key, p, true);
+
+        if ( list )
+        {
+            string fqn = key + "[1]";
+            dump_field_lua(fqn, p, true);
+        }
+    }
     while ( p->name )
         dump_field(key, pfx, p++, list);
 }
@@ -699,8 +758,13 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         Module* m = p->mod;
         string s;
 
-        if ( exact && strcmp(m->get_name(), pfx) )
-            continue;
+        if ( pfx )
+        {
+            if ( exact && strcmp(m->get_name(), pfx) )
+                continue;
+            else if ( !exact && strncmp(m->get_name(), pfx, strlen(pfx)) )
+                continue;
+        }
 
         if ( m->is_list() )
         {
@@ -727,6 +791,12 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
     }
     if ( !c )
         cout << "no match" << endl;
+}
+
+void ModuleManager::dump_defaults(const char* pfx)
+{
+    dump_fmt = DF_LUA;
+    show_configs(pfx);
 }
 
 void ModuleManager::show_commands(const char* pfx)

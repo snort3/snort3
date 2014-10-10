@@ -151,7 +151,7 @@ void help_signals(SnortConfig*, const char*)
 enum HelpType {
     HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
     HT_BUF, HT_LST, HT_PLG, HT_DDR, HT_DBR,
-    HT_HMO, HT_HPL
+    HT_HMO, HT_HPL, HT_DFL
 };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -198,6 +198,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         break;
     case HT_HPL:
         PluginManager::show_plugins();
+        break;
+    case HT_DFL:
+        ModuleManager::dump_defaults(val);
         break;
     }
     ModuleManager::term();
@@ -259,6 +262,11 @@ void list_modules(SnortConfig* sc, const char* val)
 void list_plugins(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PLG);
+}
+
+void dump_defaults(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_DFL);
 }
 
 void dump_builtin_rules(SnortConfig* sc, const char* val)

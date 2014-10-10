@@ -45,6 +45,7 @@ void list_plugins(SnortConfig* sc, const char*);
 void list_interfaces(SnortConfig*, const char*);
 void list_daqs(SnortConfig* sc, const char*);
 
+void dump_defaults(SnortConfig* sc, const char*);
 void dump_builtin_rules(SnortConfig* sc, const char*);
 void dump_dynamic_rules(SnortConfig* sc, const char*);
 

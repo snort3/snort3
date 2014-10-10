@@ -22,6 +22,7 @@
 -- added SNORT_IGNORE env var to ignore unkonwn symbols
 -- commented out ppm, profile, and normalizer in snort.lua since these
    require special conditions to be enabled
+-- added --dump-defaults to get Lua formatted defaults
 
 123
 -- refactored documentation

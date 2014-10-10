@@ -47,7 +47,9 @@ public:
     static void show_gids(const char* = nullptr);
     static void show_pegs(const char* = nullptr);
     static void show_rules(const char* = nullptr);
+
     static void dump_rules(const char* = nullptr);
+    static void dump_defaults(const char* = nullptr);
 
     static void load_commands(SnortConfig*);
     static void load_rules(SnortConfig*);

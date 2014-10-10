@@ -229,6 +229,9 @@ static const Parameter s_params[] =
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets and release memory on shutdown" },
 
+    { "--dump-defaults", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module prefix>] output module defaults in Lua format" },
+
     { "--enable-inline-test", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable Inline-Test Mode Operation" },
 
@@ -562,6 +565,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--dirty-pig") )
         ConfigDirtyPig(sc, v.get_string());
+
+    else if ( v.is("--dump-defaults") )
+        dump_defaults(sc, v.get_string());
 
     else if ( v.is("--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
