@@ -657,12 +657,26 @@ void ModuleManager::reset_errors()
 unsigned ModuleManager::get_errors()
 { return s_errors; }
 
-void ModuleManager::list_modules()
+void ModuleManager::list_modules(const char* s)
 {
+    PlugType pt = s ? PluginManager::get_type(s) : PT_MAX;
     s_modules.sort(comp_mods);
+    unsigned c = 0;
 
     for ( auto* p : s_modules )
-        LogMessage("%s\n", p->mod->get_name());
+    {
+        if ( 
+            !s || !*s ||
+            (p->api && p->api->type == pt) ||
+            (!p->api && !strcmp(s, "basic"))
+        )
+        {
+            LogMessage("%s\n", p->mod->get_name());
+            c++;
+        }
+    }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_modules()
@@ -709,7 +723,7 @@ void ModuleManager::show_module(const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        cout << endl << Markup::head() << Markup::sanitize(name) << endl << endl;
+        cout << endl << Markup::head(3) << Markup::sanitize(name) << endl << endl;
 
         if ( const char* h = m->get_help() )
             cout << endl << "What: " << Markup::sanitize(h) << endl;

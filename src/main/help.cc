@@ -182,7 +182,7 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         InspectorManager::dump_buffers();
         break;
     case HT_LST:
-        ModuleManager::list_modules();
+        ModuleManager::list_modules(val);
         break;
     case HT_PLG:
         PluginManager::list_plugins();

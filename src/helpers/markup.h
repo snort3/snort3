@@ -28,7 +28,7 @@ class Markup
 public:
     static void enable(bool = true);
 
-    static const char* head();
+    static const char* head(unsigned level = 1);
     static const char* item();
 
     static const char* emphasis_on();

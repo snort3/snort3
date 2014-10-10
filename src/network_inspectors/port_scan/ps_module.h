@@ -29,10 +29,10 @@
 #include "main/thread.h"
 
 #define PS_NAME "port_scan"
-#define PS_HELP "port scan detection"
+#define PS_HELP "port scan inspector; also configure port_scan_global"
 
 #define PSG_NAME "port_scan_global"
-#define PSG_HELP "shared settings for port_scan inspectors"
+#define PSG_HELP "shared settings for port_scan inspectors for use with port_scan"
 
 extern THREAD_LOCAL SimpleStats spstats;
 extern THREAD_LOCAL ProfileStats psPerfStats;

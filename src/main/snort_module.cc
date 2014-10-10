@@ -277,8 +277,8 @@ static const Parameter s_params[] =
     { "--list-gids", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching generators" },
 
-    { "--list-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list all known modules" },
+    { "--list-modules", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module type>] list all known modules of given type" },
 
     { "--list-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all known plugins" },

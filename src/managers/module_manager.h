@@ -37,7 +37,7 @@ public:
     static Module* get_module(const char*);
     static const char* get_current_module();
 
-    static void list_modules();
+    static void list_modules(const char* = nullptr);
     static void dump_modules();
     static void show_modules();
 
