@@ -46,7 +46,11 @@ endif
 
 dist_doc_DATA += $(EXTRA_DIST)
 
-snort = $(top_srcdir)/src/snort
+snort = $(top_builddir)/src/snort
+
+$(unbuilt_sources): $(snort)
+	mkdir -p images
+	[ -a $(builddir)/$@ ] || cp $(srcdir)/$@ $(builddir)/$@
 
 builtin.txt: $(snort)
 	$(snort) --markup --list-builtin | sort -n -t : -k 1.4 -k 2 > $@
@@ -107,10 +111,13 @@ images.tgz: images/
         --exclude README \
         .
 
+
+delete_unbuilt = $(if $(and $(findstring $(builddir),$(srcdir)),$(findstring $(srcdir),$(builddir))), ,$(unbuilt_sources))
+
 clean-local:
 	rm -f $(BUILT_SOURCES)
+	rm -f $(delete_unbuilt)
 	rm -f *.tgz
 	rm -f snort_manual.{fo,xml,html,pdf}
 	rm -rf snort_manual.chunked/
 	rm -f *.css
-

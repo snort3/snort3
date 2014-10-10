@@ -29,9 +29,8 @@ set(LIST_SOURCES
 set(BUILT_SOURCES
     ${HELP_SOURCES}
     ${LIST_SOURCES}
-#   version.txt         Required special formatting. manually added below.
+#   version.txt         Requires special formatting. manually added below.
 #   config_changes.txt  If ruby executable found
-    CACHE INTERNAL "Snort++ manuals which can be built" FORCE
 )
 
 set (UNBUILT_SOURCES
