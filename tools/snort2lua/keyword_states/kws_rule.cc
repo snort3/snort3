@@ -38,7 +38,7 @@ namespace
 class RuleHeader : public ConversionState
 {
 public:
-    explicit RuleHeader() : ConversionState() {};
+    explicit RuleHeader(Converter& c) : ConversionState(c) {};
     virtual ~RuleHeader() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -79,19 +79,19 @@ bool RuleHeader::convert(std::istringstream& data_stream)
  ********************************/
 
 template<const std::string *name>
-static ConversionState* rule_ctor()
+static ConversionState* rule_ctor(Converter& c)
 {
-    rule_api.add_hdr_data(*name);
-    return new RuleHeader();
+    c.get_rule_api().add_hdr_data(*name);
+    return new RuleHeader(c);
 }
 
 template<const std::string *name>
-static ConversionState* dep_rule_ctor()
+static ConversionState* dep_rule_ctor(Converter& c)
 {
-    rule_api.add_hdr_data(*name);
-    rule_api.make_rule_a_comment();
-    rule_api.add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
-    return new RuleHeader();
+    c.get_rule_api().add_hdr_data(*name);
+    c.get_rule_api().make_rule_a_comment();
+    c.get_rule_api().add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
+    return new RuleHeader(c);
 }
 
 static const std::string alert = "alert";

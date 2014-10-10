@@ -34,7 +34,7 @@ namespace {
 class FtpTelnet : public ConversionState
 {
 public:
-    FtpTelnet() : ConversionState() {};
+    FtpTelnet(Converter& c) : ConversionState(c) {};
     virtual ~FtpTelnet() {};
     virtual bool convert(std::istringstream& data_stream);
 private:
@@ -129,9 +129,9 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new FtpTelnet();
+    return new FtpTelnet(c);
 }
 
 static const ConvertMap preprocessor_ftptelnet = 

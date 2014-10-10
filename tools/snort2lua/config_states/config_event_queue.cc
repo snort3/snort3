@@ -34,7 +34,7 @@ namespace {
 class EventQueue : public ConversionState
 {
 public:
-    EventQueue() : ConversionState() {};
+    EventQueue(Converter& c) : ConversionState(c) {};
     virtual ~EventQueue() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -99,9 +99,9 @@ bool EventQueue::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new EventQueue();
+    return new EventQueue(c);
 }
 
 static const ConvertMap event_queue_api =

@@ -35,7 +35,7 @@ namespace {
 class PerfMonitor : public ConversionState
 {
 public:
-    PerfMonitor() : ConversionState() {};
+    PerfMonitor(Converter& c) : ConversionState(c) {};
     virtual ~PerfMonitor() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -183,9 +183,9 @@ bool PerfMonitor::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new PerfMonitor();
+    return new PerfMonitor(c);
 }
 
 static const ConvertMap keyword_perfmonitor = 

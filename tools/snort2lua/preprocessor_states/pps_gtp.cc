@@ -34,7 +34,7 @@ namespace {
 class Gtp : public ConversionState
 {
 public:
-    Gtp() : ConversionState() {};
+    Gtp(Converter& c) : ConversionState(c) {};
     virtual ~Gtp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -85,9 +85,9 @@ bool Gtp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Gtp();
+    return new Gtp(c);
 }
 
 static const ConvertMap preprocessor_gtp =

@@ -34,7 +34,7 @@ namespace {
 class Ppm : public ConversionState
 {
 public:
-    Ppm() : ConversionState() {};
+    Ppm(Converter& c) : ConversionState(c) {};
     virtual ~Ppm() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -167,9 +167,9 @@ bool Ppm::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Ppm();
+    return new Ppm(c);
 }
 
 static const ConvertMap config_ppm_api =

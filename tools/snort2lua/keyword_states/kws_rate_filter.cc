@@ -35,7 +35,7 @@ namespace {
 class RateFilter : public ConversionState
 {
 public:
-    RateFilter() : ConversionState() {};
+    RateFilter(Converter& c) : ConversionState(c) {};
     virtual ~RateFilter() {};
     virtual bool convert(std::istringstream& data);
 
@@ -151,10 +151,8 @@ bool RateFilter::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new RateFilter();
-}
+static ConversionState* ctor(Converter& c)
+{ return new RateFilter(c); }
 
 static const ConvertMap keyword_rate_filter =
 {

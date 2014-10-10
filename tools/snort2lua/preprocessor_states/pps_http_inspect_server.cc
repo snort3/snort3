@@ -34,7 +34,7 @@ namespace {
 class HttpInspectServer : public ConversionState
 {
 public:
-    HttpInspectServer() : ConversionState() {};
+    HttpInspectServer(Converter& c) : ConversionState(c) {};
     virtual ~HttpInspectServer() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -58,7 +58,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    Binder bind;
+    Binder bind(table_api);
 
     bind.set_when_proto("tcp");
     bind.set_use_type("http_server");
@@ -341,22 +341,14 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     return retval;
 }
 
-#if 0
-// check in confg
-
-
-#* decompress_swf { deflate lzma } *
-#* decompress_pdf { deflate } *
-
-#endif
 
 /**************************
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new HttpInspectServer();
+    return new HttpInspectServer(c);
 }
 
 static const ConvertMap preprocessor_httpinsepct_server = 

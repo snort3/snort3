@@ -26,10 +26,10 @@
 namespace preprocessors
 {
 
-static ConversionState* bo_ctor()
+static ConversionState* bo_ctor(Converter& c)
 {
-    table_api.open_table("bo");
-    table_api.close_table();
+    c.get_table_api().open_table("bo");
+    c.get_table_api().close_table();
     return nullptr;
 }
 

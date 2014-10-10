@@ -41,7 +41,7 @@ template<const std::string* rule_name, bool has_suboptions>
 class UnchangedRuleOption : public ConversionState
 {
 public:
-    UnchangedRuleOption() : ConversionState() {};
+    UnchangedRuleOption(Converter& c) : ConversionState(c) {};
     virtual ~UnchangedRuleOption() {};
     
     virtual bool convert(std::istringstream& stream)
@@ -64,9 +64,9 @@ public:
 
 
 template<const std::string *rule_name,  bool has_suboptions = true>
-static ConversionState* unchanged_rule_ctor()
+static ConversionState* unchanged_rule_ctor(Converter& c)
 {
-    return new UnchangedRuleOption<rule_name, has_suboptions>();
+    return new UnchangedRuleOption<rule_name, has_suboptions>(c);
 }
 
 /****************************************

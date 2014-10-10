@@ -34,7 +34,7 @@ namespace {
 class Ipv6Frag : public ConversionState
 {
 public:
-    Ipv6Frag() : ConversionState() {};
+    Ipv6Frag(Converter& c) : ConversionState(c) {};
     virtual ~Ipv6Frag() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -47,7 +47,7 @@ private:
 void Ipv6Frag::add_deleted_option(std::string dlt_opt)
 {
     // see comment in Ipv6Frag::convert
-    if (!data_api.is_quiet_mode())
+    if (!DataApi::is_quiet_mode())
         table_api.add_deleted_comment("config ipv6_frag: " + dlt_opt);
 }
 
@@ -58,7 +58,7 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
 
     // I'm checking here because I do not want to create this
     // table in quiet mode
-    if (!data_api.is_quiet_mode())
+    if (!DataApi::is_quiet_mode())
         table_api.open_table("deleted_snort_config_options");
 
     while (util::get_string(data_stream, arg, ","))
@@ -105,9 +105,9 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Ipv6Frag();
+    return new Ipv6Frag(c);
 }
 
 static const ConvertMap ipv6_frag_api =

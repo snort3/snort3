@@ -191,11 +191,11 @@ std::ostream &operator<<( std::ostream& out, const Table &t)
         out << whitespace << t.name << " =" << std::endl;
     out << whitespace << '{' << std::endl;
 
-    if (!t.comments->empty() && !data_api.is_quiet_mode())
+    if (!t.comments->empty() && !DataApi::is_quiet_mode())
         out << (*t.comments) << std::endl;
 
     // if we only want differences, don't print data
-    if (!data_api.is_difference_mode())
+    if (!DataApi::is_difference_mode())
     {
         for (Option* o : t.options)
             out << (*o) << ",\n";

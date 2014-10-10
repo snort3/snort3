@@ -34,7 +34,7 @@ namespace {
 class LogTcpDump : public ConversionState
 {
 public:
-    LogTcpDump() : ConversionState() {};
+    LogTcpDump(Converter& c) : ConversionState(c) {};
     virtual ~LogTcpDump() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -86,11 +86,11 @@ bool LogTcpDump::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    table_api.open_top_level_table("log_tcpdump"); // in case there are no arguments
-    table_api.close_table();
-    return new LogTcpDump();
+    c.get_table_api().open_top_level_table("log_tcpdump"); // in case there are no arguments
+    c.get_table_api().close_table();
+    return new LogTcpDump(c);
 }
 
 static const ConvertMap log_tcpdump_api =

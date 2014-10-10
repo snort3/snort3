@@ -63,6 +63,7 @@ const std::string get_rule_file()
 { return rule_file.empty() ? get_out_file() : rule_file; }
 
 static void help_args(const char* pfx);
+static void help_usage();
 
 
 //-------------------------------------------------------------------------
@@ -251,22 +252,22 @@ static void parse_rule_file(const char* key, const char* val)
 }
 
 static void print_all(const char* /*key*/, const char* /*val*/)
-{ data_api.set_default_print(); }
+{ DataApi::set_default_print(); }
 
 static void print_quiet(const char* /*key*/, const char* /*val*/)
-{ data_api.set_quiet_print(); }
+{ DataApi::set_quiet_print(); }
 
 static void print_differences(const char* /*key*/, const char* /*val*/)
-{ data_api.set_difference_print(); }
+{ DataApi::set_difference_print(); }
 
 static void sing_rule_files(const char* /*key*/, const char* /*val*/)
-{ cv.create_mult_rule_files(false); }
+{ Converter::create_mult_rule_files(false); }
 
 static void sing_conf_files(const char* /*key*/, const char* /*val*/)
-{ cv.create_mult_conf_files(false); }
+{ Converter::create_mult_conf_files(false); }
 
 static void dont_parse_includes(const char* /*key*/, const char* /*val*/)
-{ cv.set_parse_includes(false); }
+{ Converter::set_parse_includes(false); }
 
 
 typedef void (*ParseConfigFunc)(const char*, const char* val);
@@ -354,10 +355,47 @@ static ConfigFunc basic_opts[] =
     { nullptr, nullptr, nullptr }
 };
 
+#if 0
+FIXIT-H J delete!!
+SnortConfig* parse_cmd_line(int argc, char* argv[])
+{
+    ArgList al(argc, argv);
+    const char* key, *val;
+    unsigned c = 0;
+
+    // get special options first
+    while ( al.get_arg(key, val) )
+    {
+        ::set(key, val, sc, false);
+        c++;
+    }
+
+    // now get the rest
+    al.reset();
+
+    while ( al.get_arg(key, val) )
+    {
+        ::set(key, val, sc, true);
+        c++;
+    }
+
+    if ( !c )
+        help_usage(sc, argv[0]);
+    else
+        check_flags(sc);
+
+    if ( int k = get_parse_errors() )
+        FatalError("see prior %d errors\n", k);
+
+    return sc;
+}
+#endif
+
 bool parse_cmd_line(int argc, char* argv[])
 {
     ArgList al(argc, argv);
     const char *key, *val;
+    bool found_opt = false;
 
     while ( al.get_arg(key, val) )
     {
@@ -374,9 +412,24 @@ bool parse_cmd_line(int argc, char* argv[])
         {
             p->parse_func(key, val);
         }
+
+        found_opt = true;
     }
 
+    if (!found_opt)
+        help_usage();
+
+
     return true;
+}
+
+static void help_usage()
+{
+    fprintf(stdout, "usage:\n");
+    fprintf(stdout, "    -?: list options\n");
+    fprintf(stdout, "    -V: output version\n");
+    fprintf(stdout, "    --help: help summary\n");
+    exit(1);
 }
 
 

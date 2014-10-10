@@ -36,10 +36,11 @@ namespace
 class ConfigStringOption : public ConversionState
 {
 public:
-    ConfigStringOption( const std::string* snort_option,
+    ConfigStringOption( Converter& c,
+                        const std::string* snort_option,
                         const std::string* lua_table,
                         const std::string* lua_option) :
-            ConversionState(),
+            ConversionState(c),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -95,9 +96,10 @@ private:
 template<const std::string *snort_option,
         const std::string *lua_table,
         const std::string *lua_option = nullptr>
-static ConversionState* config_string_ctor()
+static ConversionState* config_string_ctor(Converter& c)
 {
-    return new ConfigStringOption(  snort_option,
+    return new ConfigStringOption(  c,
+                                    snort_option,
                                     lua_table,
                                     lua_option);
 }

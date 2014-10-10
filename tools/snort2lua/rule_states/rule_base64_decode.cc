@@ -36,7 +36,7 @@ namespace {
 class Base64Decode : public ConversionState
 {
 public:
-    Base64Decode() : ConversionState() {};
+    Base64Decode(Converter& c) : ConversionState(c) {};
     virtual ~Base64Decode() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -91,9 +91,9 @@ bool Base64Decode::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& cv)
 {
-    return new Base64Decode();
+    return new Base64Decode(cv);
 }
 
 static const std::string base64_decode = "base64_decode";

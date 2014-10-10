@@ -33,7 +33,7 @@ namespace {
 class ArpSpoof : public ConversionState
 {
 public:
-    ArpSpoof() : ConversionState() {};
+    ArpSpoof(Converter& c) : ConversionState(c) {};
     virtual ~ArpSpoof() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -70,9 +70,9 @@ bool ArpSpoof::convert(std::istringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* arpspoof_ctor()
+static ConversionState* arpspoof_ctor(Converter& c)
 {
-    return new ArpSpoof();
+    return new ArpSpoof(c);
 }
 
 static const ConvertMap preprocessor_arpspoof = 
@@ -95,7 +95,7 @@ namespace {
 class ArpSpoofHost : public ConversionState
 {
 public:
-    ArpSpoofHost() : ConversionState() {};
+    ArpSpoofHost(Converter& c) : ConversionState(c) {};
     virtual ~ArpSpoofHost() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -131,9 +131,9 @@ bool ArpSpoofHost::convert(std::istringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* arpspoof_host_ctor()
+static ConversionState* arpspoof_host_ctor(Converter& c)
 {
-    return new ArpSpoofHost();
+    return new ArpSpoofHost(c);
 }
 
 static const ConvertMap preprocessor_arpspoof_host = 

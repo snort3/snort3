@@ -112,7 +112,7 @@ std::ostream &operator<<( std::ostream& out, const Rule &rule)
     bool first_line = true;
 
     // don't print comment and tag in quiet mode
-    if (!data_api.is_quiet_mode())
+    if (!DataApi::is_quiet_mode())
     {
         if (rule.is_bad_rule)
             out << "#FAILED TO CONVERT THE FOLLOWING RULE:" << "\n";

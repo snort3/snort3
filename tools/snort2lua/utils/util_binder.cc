@@ -23,7 +23,10 @@
 #include "data/dt_table_api.h"
 
 
-Binder::Binder() : printed(false), when_policy_id(-1) {}
+Binder::Binder(TableApi& t) :   table_api(t),
+                                printed(false),
+                                when_policy_id(-1)
+{ }
 
 Binder::~Binder()
 {

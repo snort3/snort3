@@ -34,7 +34,7 @@ namespace {
 class TunnelVerdicts : public ConversionState
 {
 public:
-    TunnelVerdicts() : ConversionState() {};
+    TunnelVerdicts(Converter& c) : ConversionState(c) {};
     virtual ~TunnelVerdicts() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -63,9 +63,9 @@ bool TunnelVerdicts::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new TunnelVerdicts();
+    return new TunnelVerdicts(c);
 }
 
 static const ConvertMap tunnel_verdicts_api =

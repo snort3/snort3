@@ -36,7 +36,7 @@ template<const std::string* output_name>
 class Unified2 : public ConversionState
 {
 public:
-    Unified2() : ConversionState() {};
+    Unified2(Converter& c) : ConversionState(c) {};
     virtual ~Unified2() {};
 
     virtual bool convert(std::istringstream& data_stream)
@@ -90,11 +90,11 @@ public:
 };
 
 template<const std::string* output_name>
-static ConversionState* unified2_ctor()
+static ConversionState* unified2_ctor(Converter& c)
 {
-    table_api.open_top_level_table("unified2"); // create table in case there are no arguments
-    table_api.close_table();
-    return new Unified2<output_name>();
+    c.get_table_api().open_top_level_table("unified2"); // create table in case there are no arguments
+    c.get_table_api().close_table();
+    return new Unified2<output_name>(c);
 }
 
 } // namespace

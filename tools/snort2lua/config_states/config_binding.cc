@@ -37,7 +37,7 @@ namespace {
 class Binding : public ConversionState
 {
 public:
-    Binding() : ConversionState() {};
+    Binding(Converter& c) : ConversionState(c) {};
     virtual ~Binding() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -45,9 +45,6 @@ private:
     void add_vlan(const std::string& vlan, Binder&);
     void add_policy_id(const std::string& id, Binder&);
     void add_net(const std::string& net, Binder&);
-
-    // FIXIT-M  Remove this functino after refactor
-    bool parse_file(std::string file_name);
 };
 
 } // namespace
@@ -156,7 +153,7 @@ bool Binding::convert(std::istringstream& data_stream)
     if (!util::get_string(data_stream, val, ","))
         return false;
 
-    Binder bind;
+    Binder bind(table_api);
     bool rc = true;
 
     do
@@ -192,7 +189,14 @@ bool Binding::convert(std::istringstream& data_stream)
 
         // if we still can't find this file, add it as a snort file
         if (util::file_exists(full_path))
+        {
+            Converter cv;
+
+            if (cv.convert(input_file, input_file + ".lua") < 0)
+                rc = false;
+
             parse_file(full_path);
+        }
     }
 
     // FIXIT-L  J  this file extension shoudl not be hardcoded
@@ -200,74 +204,13 @@ bool Binding::convert(std::istringstream& data_stream)
     return rc;
 }
 
-
-// FIXIT-M J  because the other refactor comments don't indicate how repetitive this code is
-bool Binding::parse_file(std::string input_file)
-{
-    std::vector<Variable*> vars;
-    std::vector<Table*> tables;
-    std::vector<Rule*> rules;
-    std::vector<Include*> includes;
-    Comments comment("This file is a binding!!", 0,
-                Comments::CommentType::MULTI_LINE);
-    Comments* comment_ptr = &comment;
-    bool rc = false;
-
-    data_api.swap_conf_data(vars, includes, comment_ptr);
-    table_api.swap_tables(tables);
-    rule_api.swap_rules(rules);
-
-
-
-    if (cv.convert_file(input_file) < 0)
-        rc = true; // return a negative number to main snort2lua method
-
-
-    if (!rule_api.empty())
-    {
-        table_api.open_top_level_table("ips");
-        table_api.add_option("rules", "$default_rules");
-        table_api.close_table();
-    }
-
-
-    // print configuration file
-    if (!table_api.empty() || data_api.empty() || !rule_api.empty())
-    {
-
-
-        table_api.open_top_level_table("binder");
-        table_api.close_table();
-
-
-        std::ofstream out;
-        out.open(input_file + ".lua");
-
-
-        out << "require(\"snort_config\")\n\n";
-        data_api.print_data(out);
-        rule_api.print_rules(out, false);
-        table_api.print_tables(out);
-        data_api.print_comments(out);
-        out << std::endl;
-        out.close();
-
-    }
-
-
-    data_api.swap_conf_data(vars, includes, comment_ptr);
-    table_api.swap_tables(tables);
-    rule_api.swap_rules(rules);
-    return rc;
-}
-
 /**************************
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Binding();
+    return new Binding(c);
 }
 
 static const ConvertMap binding_api =

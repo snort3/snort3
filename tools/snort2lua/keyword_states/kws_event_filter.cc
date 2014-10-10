@@ -34,7 +34,7 @@ namespace {
 class EventFilter : public ConversionState
 {
 public:
-    EventFilter() : ConversionState() {};
+    EventFilter(Converter& c) : ConversionState(c) {};
     virtual ~EventFilter() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -105,10 +105,8 @@ bool EventFilter::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new EventFilter();
-}
+static ConversionState* ctor(Converter& c)
+{ return new EventFilter(c); }
 
 static const ConvertMap event_filter_api =
 {

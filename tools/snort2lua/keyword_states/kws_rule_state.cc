@@ -34,7 +34,7 @@ namespace {
 class RuleState : public ConversionState
 {
 public:
-    RuleState() : ConversionState() {};
+    RuleState(Converter& c) : ConversionState(c) {};
     virtual ~RuleState() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -101,10 +101,8 @@ bool RuleState::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new RuleState();
-}
+static ConversionState* ctor(Converter& c)
+{ return new RuleState(c); }
 
 static const ConvertMap rule_state_api =
 {

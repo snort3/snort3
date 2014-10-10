@@ -34,7 +34,7 @@ namespace {
 class Frag3Engine : public ConversionState
 {
 public:
-    explicit Frag3Engine() : ConversionState() {};
+    explicit Frag3Engine(Converter& c) : ConversionState(c) {};
     virtual ~Frag3Engine() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -179,9 +179,9 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Frag3Engine();
+    return new Frag3Engine(c);
 }
 
 static const ConvertMap preprocessor_frag3_engine =

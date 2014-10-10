@@ -35,7 +35,7 @@ namespace {
 class RpcDecode : public ConversionState
 {
 public:
-    RpcDecode() : ConversionState() {};
+    RpcDecode(Converter& c) : ConversionState(c) {};
     virtual ~RpcDecode() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -49,7 +49,7 @@ bool RpcDecode::convert(std::istringstream& data_stream)
     std::string keyword;
 
     // adding the binder entry
-    Binder bind;
+    Binder bind(table_api);
     bind.set_when_proto("tcp");
     bind.set_use_type("rpc_decode");
     std::string port_list = std::string();
@@ -92,9 +92,9 @@ bool RpcDecode::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new RpcDecode();
+    return new RpcDecode(c);
 }
 
 static const ConvertMap preprocessor_rpc_decode =

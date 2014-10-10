@@ -35,7 +35,7 @@ namespace {
 class Var : public ConversionState
 {
 public:
-    Var() : ConversionState(){}
+    Var(Converter& c) : ConversionState(c){}
     virtual ~Var() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -87,10 +87,8 @@ bool Var::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new Var();
-}
+static ConversionState* ctor(Converter& c)
+{ return new Var(c); }
 
 static const ConvertMap keyword_portvar = 
 {

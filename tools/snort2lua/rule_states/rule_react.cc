@@ -36,7 +36,7 @@ namespace {
 class React : public ConversionState
 {
 public:
-    React() : ConversionState() {};
+    React(Converter& c) : ConversionState(c) {};
     virtual ~React() {};
     virtual bool convert(std::istringstream& data);
 };
@@ -147,8 +147,8 @@ bool React::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor()
-{ return new React(); }
+static ConversionState* ctor(Converter& c)
+{ return new React(c); }
 
 static const ConvertMap rule_react =
 {

@@ -32,12 +32,12 @@ namespace preprocessors
 
 
 template<const std::string *norm_option>
-static ConversionState* norm_sans_options_ctor()
+static ConversionState* norm_sans_options_ctor(Converter& c)
 {
-    table_api.open_table("normalize");
-    table_api.add_diff_option_comment("preprocessor normalize_" + *norm_option, *norm_option + " = <bool>");
-    table_api.add_option(*norm_option, true);
-    table_api.close_table();
+    c.get_table_api().open_table("normalize");
+    c.get_table_api().add_diff_option_comment("preprocessor normalize_" + *norm_option, *norm_option + " = <bool>");
+    c.get_table_api().add_option(*norm_option, true);
+    c.get_table_api().close_table();
     return nullptr;
 }
 
@@ -91,7 +91,7 @@ namespace {
 class Ip4Normalizer : public ConversionState
 {
 public:
-    Ip4Normalizer() : ConversionState() {};
+    Ip4Normalizer(Converter& c) : ConversionState(c) {};
     virtual ~Ip4Normalizer() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -138,9 +138,9 @@ bool Ip4Normalizer::convert(std::istringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* ip4_ctor()
+static ConversionState* ip4_ctor(Converter& c)
 {
-    return new Ip4Normalizer();
+    return new Ip4Normalizer(c);
 }
 
 static const ConvertMap preprocessor_norm_ip4 = 
@@ -160,7 +160,7 @@ namespace {
 class TcpNormalizer : public ConversionState
 {
 public:
-    TcpNormalizer() : ConversionState() {};
+    TcpNormalizer(Converter& c) : ConversionState(c) {};
     virtual ~TcpNormalizer() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -312,9 +312,9 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
 
 /*******  A P I ***********/
 
-static ConversionState* tcp_ctor()
+static ConversionState* tcp_ctor(Converter& c)
 {
-    return new TcpNormalizer();
+    return new TcpNormalizer(c);
 }
 
 static const ConvertMap preprocessor_norm_tcp = 

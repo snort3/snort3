@@ -34,7 +34,7 @@ namespace {
 class StreamUdp : public ConversionState
 {
 public:
-    StreamUdp() : ConversionState() {};
+    StreamUdp(Converter& c) : ConversionState(c) {};
     virtual ~StreamUdp() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -82,9 +82,9 @@ bool StreamUdp::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new StreamUdp();
+    return new StreamUdp(c);
 }
 
 static const ConvertMap preprocessor_stream_udp =

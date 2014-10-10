@@ -34,7 +34,7 @@ namespace {
 class PafMax : public ConversionState
 {
 public:
-    PafMax() : ConversionState() {};
+    PafMax(Converter& c) : ConversionState(c) {};
     virtual ~PafMax() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -51,12 +51,12 @@ bool PafMax::convert(std::istringstream& data_stream)
     if (data_stream >> val)
     {
         if (val < 1460)
-            retval = table_api.add_diff_option_comment("paf_max [0:63780]", "paf_max [1460:63780]");
+            table_api.add_diff_option_comment("paf_max [0:63780]", "max_pdu [1460:63780]");
         else
-            retval = table_api.add_option("paf_max", val);
+            retval = table_api.add_option("max_pdu", val);
     }
     else
-        retval = false;
+        data_api.failed_conversion(data_stream);
 
     table_api.close_table();
     return retval;
@@ -66,10 +66,8 @@ bool PafMax::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new PafMax();
-}
+static ConversionState* ctor(Converter& c)
+{ return new PafMax(c); }
 
 static const ConvertMap paf_max_api =
 {

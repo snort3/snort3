@@ -26,10 +26,10 @@
 namespace output
 {
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    table_api.open_table("alert_unixsock"); // in case there are no arguments
-    table_api.close_table();
+    c.get_table_api().open_table("alert_unixsock");
+    c.get_table_api().close_table();
     return nullptr;
 }
 

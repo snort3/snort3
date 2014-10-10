@@ -38,7 +38,7 @@ template<const std::string *snort_option,
 class Memcap : public ConversionState
 {
 public:
-    Memcap() : ConversionState() {};
+    Memcap(Converter& c) : ConversionState(c) {};
     virtual ~Memcap() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -70,9 +70,9 @@ bool Memcap<snort_option, lua_table, lua_option>::convert(std::istringstream& da
 template<const std::string *snort_option,
         const std::string* lua_table,
         const std::string* lua_option>
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Memcap<snort_option, lua_table, lua_option>();
+    return new Memcap<snort_option, lua_table, lua_option>(c);
 }
 
 

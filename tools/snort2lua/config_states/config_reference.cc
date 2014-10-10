@@ -34,7 +34,7 @@ namespace {
 class Reference : public ConversionState
 {
 public:
-    Reference() : ConversionState() {};
+    Reference(Converter& c) : ConversionState(c) {};
     virtual ~Reference() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -62,9 +62,9 @@ bool Reference::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new Reference();
+    return new Reference(c);
 }
 
 static const ConvertMap reference_api =

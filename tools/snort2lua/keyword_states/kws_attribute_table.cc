@@ -36,7 +36,7 @@ namespace {
 class AttributeTable : public ConversionState
 {
 public:
-    AttributeTable() : ConversionState() {};
+    AttributeTable(Converter& c) : ConversionState(c) {};
     virtual ~AttributeTable() {};
     virtual bool convert(std::istringstream& data);
 
@@ -474,10 +474,8 @@ bool AttributeTable::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new AttributeTable();
-}
+static ConversionState* ctor(Converter& c)
+{ return new AttributeTable(c); }
 
 static const ConvertMap attribute_table_api =
 {

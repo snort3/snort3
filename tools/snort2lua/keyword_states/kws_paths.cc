@@ -36,7 +36,7 @@ template<const std::string *snort_option>
 class Paths : public ConversionState
 {
 public:
-    Paths() : ConversionState() {};
+    Paths(Converter& c) : ConversionState(c) {};
 
     virtual ~Paths() {};
     virtual bool convert(std::istringstream& data_stream)
@@ -82,10 +82,8 @@ public:
 
 
 template<const std::string *snort_option>
-static ConversionState* paths_ctor()
-{
-    return new Paths<snort_option>();
-}
+static ConversionState* paths_ctor(Converter& c)
+{ return new Paths<snort_option>(c); }
 
 } // namespace
 
