@@ -377,6 +377,9 @@ static const Parameter s_params[] =
     { "--warn-flowbits", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warn about flowbits that checked but not set and vice-versa" },
 
+    { "--warn-unknown", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about unknown symbols in your config" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -696,6 +699,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--warn-flowbits") )
         sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
+
+    else if ( v.is("--warn-unknown") )
+        sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
 
     else
         return false;

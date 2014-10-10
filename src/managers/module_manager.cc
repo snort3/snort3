@@ -330,6 +330,35 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
     return true;
 }
 
+static bool ignored(const char* fqn)
+{
+    static const char* ignore = nullptr;
+
+    if ( !(snort_conf->logging_flags & LOGGING_FLAG__WARN_UNKNOWN) )
+        return true;
+
+    if ( !ignore )
+    {
+        ignore = getenv("SNORT_IGNORE");
+        if ( !ignore )
+            ignore = "";
+    }
+    const char* s = strstr(ignore, fqn);
+
+    if ( !s )
+        return false;
+
+    if ( s != ignore && s[-1] != ' ' )
+        return false;
+
+    s += strlen(fqn);
+
+    if ( *s && *s != ' ' )
+        return false;
+
+    return true;
+}
+
 static bool set_value(const char* fqn, Value& v)
 {
     string t = fqn;
@@ -342,7 +371,13 @@ static bool set_value(const char* fqn, Value& v)
     Module* mod = ModuleManager::get_module(key.c_str());
 
     if ( !mod )
-        return set_var(fqn, v);
+    {
+        bool found = set_var(fqn, v);
+
+        if ( !found && !ignored(fqn) )
+            ParseWarning("uknown symbol %s", fqn);
+        return found;
+    }
 
     // now we must traverse the mod params to get the leaf
     string s = fqn;

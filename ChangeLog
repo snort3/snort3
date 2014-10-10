@@ -16,6 +16,12 @@
 -- added markup for signal help and put in doc
 -- change snort.lua normalize to normalizer
 -- change parse time LogMessage("WARNING...") to ParseWarning()
+-- changed --enable-perfprofiling to --enable-perf-profiling
+-- changed --enable-profile to --enable-gprof-profiling
+-- added --warn-unknown to warn about unknown symbols
+-- added SNORT_IGNORE env var to ignore unkonwn symbols
+-- commented out ppm, profile, and normalizer in snort.lua since these
+   require special conditions to be enabled
 
 123
 -- refactored documentation
