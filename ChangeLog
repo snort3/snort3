@@ -26,6 +26,7 @@
 -- split doc for modules into separate sections by type
 -- reworked manual again to include terms and lists of modules and plugins
 -- added non-Lua error message
+-- updated .gitignore and sorted it
 
 123
 -- refactored documentation
