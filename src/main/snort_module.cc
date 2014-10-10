@@ -75,8 +75,8 @@ static const Command snort_cmds[] =
 
 static const Parameter s_params[] =
 {
-    { "-?", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list command line options (same as --help)" },
+    { "-?", Parameter::PT_STRING, "(optional)", nullptr,
+      "<option prefix> output matching command line option quick help (same as --help-options)" },
 
     { "-A", Parameter::PT_STRING, nullptr, nullptr, 
       "<mode> set alert mode: none, cmg, or alert_*" },
@@ -236,10 +236,7 @@ static const Parameter s_params[] =
       "enable Inline-Test Mode Operation" },
 
     { "--help", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list command line options (same as -?)" },
-
-    { "--help!", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "overview of help" },
+      "list command line options" },
 
     { "--help-commands", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching commands" },
@@ -257,7 +254,7 @@ static const Parameter s_params[] =
       "list all available plugins with brief help" },
 
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
-      "<option prefix> output matching command line option quick help" },
+      "<option prefix> output matching command line option quick help (same as -?)" },
 
     { "--help-signals", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump available control signals" },

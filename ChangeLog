@@ -27,6 +27,7 @@
 -- reworked manual again to include terms and lists of modules and plugins
 -- added non-Lua error message
 -- updated .gitignore and sorted it
+-- fixed --help, etc.
 
 123
 -- refactored documentation
