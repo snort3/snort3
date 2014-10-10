@@ -480,7 +480,6 @@ static void help_args(const char* pfx, const char* /*val*/)
                     break;
             }
 
-//            std::cout << p->help;
             std::cout << std::endl;
         }
         ++p;
