@@ -247,6 +247,7 @@ config file: type_id,  signature,  file_type_depth   104800,  file_signature_dep
 config policy_mode: tap
 event_filter gen_id 119,sig_id 404,type limit, track by_src, count 10,seconds 20
 rate_filter gen_id 119,sig_id 404, track by_src, count 10,seconds 20, timeout 50, new_action reject, apply_to [[2.3.4.5/24],!3.3.4.5/24]
+config paf_max: 54321
 config paf_max: 00
 config ignore_ports: tcp 21 6667:6671 1356
 config ignore_ports: udp 1:17 53

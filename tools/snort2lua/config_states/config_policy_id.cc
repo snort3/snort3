@@ -32,8 +32,8 @@ namespace {
 class PolicyId : public ConversionState
 {
 public:
-    PolicyId() : ConversionState() {};
-    virtual ~PolicyId() {};
+    PolicyId(Converter& c) : ConversionState(c) { }
+    virtual ~PolicyId() { }
     virtual bool convert(std::istringstream& data_stream);
 };
 
@@ -75,10 +75,8 @@ bool PolicyId::convert(std::istringstream& data_stream)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new PolicyId();
-}
+static ConversionState* ctor(Converter& c)
+{ return new PolicyId(c); }
 
 static const ConvertMap policy_id_api =
 {
