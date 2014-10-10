@@ -25,6 +25,7 @@
 -- added --dump-defaults to get Lua formatted defaults
 -- split doc for modules into separate sections by type
 -- reworked manual again to include terms and lists of modules and plugins
+-- added non-Lua error message
 
 123
 -- refactored documentation

@@ -73,7 +73,10 @@ static void load_overrides(lua_State* L, string& s)
 {
     if ( luaL_loadstring(L, s.c_str()) )
     {
-        FatalError("can't load overrides: %s\n", lua_tostring(L, -1));
+        const char* err = lua_tostring(L, -1);
+        if ( strstr(err, "near '#'") )
+            ParseError("this doesn't look like Lua.  Comments start with --, not #.");
+        FatalError("can't load overrides: %s\n", err);
         return;
     }
 

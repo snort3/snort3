@@ -56,5 +56,6 @@
 
 * *wizard*: inspector that applies protocol magic to determine which
   inspectors should be bound to traffic absent a port specific binding.
+  See hex and spell.
 
 
