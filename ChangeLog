@@ -28,6 +28,7 @@
 -- added non-Lua error message
 -- updated .gitignore and sorted it
 -- fixed --help, etc.
+-- added doc sections for snort2lua, new http, binder, and wizard
 
 123
 -- refactored documentation

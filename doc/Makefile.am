@@ -33,6 +33,7 @@ errors.txt \
 differences.txt \
 extending.txt \
 reference.txt \
+snort2lua.txt \
 style.txt \
 terms.txt \
 tips.txt \

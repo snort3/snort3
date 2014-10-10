@@ -18,10 +18,6 @@ include::overview.txt[]
 
 include::tips.txt[]
 
-== Snort++ vs Snort
-
-include::differences.txt[]
-
 == Basic Modules
 
 Internal modules which are plugins are termed "basic".  These include
@@ -81,6 +77,14 @@ have associated modules.
 All output of events and packets is done by Loggers.
 
 include::logger.txt[]
+
+== Snort++ vs Snort
+
+include::differences.txt[]
+
+== snort2lua
+
+include::snort2lua.txt[]
 
 == Reference
 
