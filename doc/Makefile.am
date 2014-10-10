@@ -8,7 +8,9 @@ commands.txt \
 config.txt \
 gids.txt \
 help.txt \
+modules.txt \
 options.txt \
+plugins.txt \
 signals.txt \
 version.txt \
 basic.txt \
@@ -30,9 +32,9 @@ config_changes.txt \
 errors.txt \
 differences.txt \
 extending.txt \
-plugins.txt \
 reference.txt \
 style.txt \
+terms.txt \
 tips.txt \
 images/snort.png
 
@@ -74,6 +76,12 @@ config.txt: $(snort)
 
 gids.txt: $(snort)
 	$(snort) --markup --list-gids | sort -n  -k 1.4 > $@
+
+modules.txt: $(snort)
+	$(snort) --markup --help-modules > $@
+
+plugins.txt: $(snort)
+	$(snort) --markup --help-plugins > $@
 
 help.txt: $(snort)
 	$(snort) --help > $@

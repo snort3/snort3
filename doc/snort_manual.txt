@@ -70,19 +70,11 @@ rules that should be evaluated.  There are currently no specific modules,
 although there are several search engine plugins.  Releated configuration
 is done with the basic detection module.
 
-////
-include::search_engine.txt[]
-////
-
 == SO Rule Modules
 
 SO rules are dynamic rules that require custom coding to perform detection
 not possible with the existing rule options.  These rules typically do not
 have associated modules.
-
-////
-include::so_rule.txt[]
-////
 
 == Logger Modules
 

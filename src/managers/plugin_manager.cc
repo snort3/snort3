@@ -388,7 +388,10 @@ void PluginManager::show_plugins()
     for ( it = plug_map.begin(); it != plug_map.end(); ++it )
     {
         Plugin& p = it->second;
-        cout << p.key << ": " << p.api->help << endl;
+
+        cout << Markup::item();
+        cout << Markup::emphasis(p.key);
+        cout << ": " << p.api->help << endl;
     }
 }
 

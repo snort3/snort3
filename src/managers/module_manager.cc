@@ -684,7 +684,15 @@ void ModuleManager::show_modules()
     s_modules.sort(comp_mods);
 
     for ( auto* p : s_modules )
-        LogMessage("%s: %s\n", p->mod->get_name(), p->mod->get_help());
+    {
+        const char* t = p->api ? PluginManager::get_type_name(p->api->type) : "basic";
+
+        cout << Markup::item();
+        cout << Markup::emphasis(p->mod->get_name());
+        cout << " (" << t;
+        cout << "): " << p->mod->get_help();
+        cout << endl;
+    }
 }
 
 void ModuleManager::dump_modules()
