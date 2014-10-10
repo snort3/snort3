@@ -192,10 +192,8 @@ bool Binding::convert(std::istringstream& data_stream)
         {
             Converter cv;
 
-            if (cv.convert(input_file, input_file + ".lua") < 0)
+            if (cv.convert(full_path, full_path + ".lua") < 0)
                 rc = false;
-
-            parse_file(full_path);
         }
     }
 
