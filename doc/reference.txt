@@ -6,6 +6,13 @@ include::options.txt[]
 
 include::config.txt[]
 
+=== Signals
+
+IMPORTANT: Signal numbers are for the system that generated this
+documentation and are not applicable elsewhere.
+
+include::signals.txt[]
+
 === Generators
 
 include::gids.txt[]

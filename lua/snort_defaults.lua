@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------
--- Snort++ defaults -- DO NOT EDIT
+-- Snort++ defaults
 --
 -- include in your snort.lua with a dofile statement
 -- after you set HOME_NET and EXTERNAL_NET
@@ -206,9 +206,35 @@ default_ftp_server =
 -- default wizard
 ---------------------------------------------------------------------------
 
-http_methods = { 'GET', 'POST', 'HEAD' } -- build from default_http_methods
-ftp_commands = { 'USER' } -- add others
-sip_methods = { 'INVITE', 'NOTIFY' } -- add others
+http_methods =  -- build from default_http_methods
+{
+    'GET', 'POST', 'PUT', 'SEARCH', 'MKCOL', 'COPY', 'MOVE', 'LOCK', 'UNLOCK',
+    'NOTIFY', 'POLL', 'BCOPY', 'BDELETE', 'BMOVE', 'LINK', 'UNLINK', 'OPTIONS',
+    'HEAD', 'DELETE', 'TRACE', 'TRACK', 'CONNECT', 'SOURCE', 'SUBSCRIBE',
+    'UNSUBSCRIBE', 'PROPFIND', 'PROPPATCH', 'BPROPFIND', 'BPROPPATCH',
+    'RPC_CONNECT', 'PROXY_SUCCESS', 'BITS_POST', 'CCM_POST', 'SMS_POST',
+    'RPC_IN_DATA', 'RPC_OUT_DATA', 'RPC_ECHO_DATA'
+}
+
+ftp_commands =  -- build from ftp_default_commands
+{
+    'ABOR', 'ACCT', 'ADAT', 'ALLO', 'APPE', 'AUTH', 'CCC', 'CDUP', 'CEL',
+    'CLNT', 'CMD', 'CONF', 'CWD', 'DELE', 'ENC', 'EPRT', 'EPSV', 'ESTA',
+    'ESTP', 'FEAT', 'HELP', 'LANG', 'LIST', 'LPRT', 'LPSV', 'MACB', 'MAIL',
+    'MDTM', 'MIC', 'MKD', 'MLSD', 'MLST', 'MODE', 'NLST', 'NOOP', 'OPTS',
+    'PASS', 'PASV', 'PBSZ', 'PORT', 'PROT', 'PWD', 'QUIT', 'REIN', 'REST',
+    'RETR', 'RMD', 'RNFR', 'RNTO', 'SDUP', 'SITE', 'SIZE', 'SMNT', 'STAT',
+    'STOR', 'STOU', 'STRU', 'SYST', 'TEST', 'TYPE', 'USER', 'XCUP', 'XCRC',
+    'XCWD', 'XMAS', 'XMD5', 'XMKD', 'XPWD', 'XRCP', 'XRMD', 'XRSQ', 'XSEM',
+    'XSEN', 'XSHA1', 'XSHA256'
+}
+
+sip_methods =
+{
+    'INVITE', 'CANCEL', 'ACK', 'BYE', 'REGISTER', 'OPTIONS', 'REFER', 'SUBSCRIBE',
+    'UPDATE', 'JOIN', 'INFO', 'MESSAGE', 'NOTIFY', 'PRACK'
+}
+
 isakmp_hex = { '?????????????????|01|', '?????????????????|10|' }
 
 telnet_commands =

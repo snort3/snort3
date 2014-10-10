@@ -1298,19 +1298,15 @@ void parse_rule_print()
     if ( !rule_count )
         return;
 
-    LogMessage("%s\n", LOG_DIV);
-    LogMessage("rule counts\n");
+    LogLabel("rule counts");
+    LogCount("total rules loaded", rule_count);
+    LogCount("text rules", detect_rule_count);
+    LogCount("builtin rules", builtin_rule_count);
+    LogCount("so rules", so_rule_count);
+    LogCount("option chains", otn_count);
+    LogCount("chain headers", head_count);
 
-    LogMessage("%25.25s: %-12u\n", "total rules loaded", rule_count);
-
-    LogMessage("%25.25s: %-12u\n", "text rules", detect_rule_count);
-    LogMessage("%25.25s: %-12u\n", "builtin rules", builtin_rule_count);
-    LogMessage("%25.25s: %-12u\n", "so rules", so_rule_count);
-    LogMessage("%25.25s: %-12u\n", "option chains", otn_count);
-    LogMessage("%25.25s: %-12u\n", "chain headers", head_count);
-
-    LogMessage("%s\n", LOG_DIV);
-    LogMessage("rule port counts\n");
+    LogLabel("rule port counts");
     LogMessage("%8s%8s%8s%8s%8s\n", " ", "tcp", "udp", "icmp", "ip");
 
     if ( tcpCnt.src || udpCnt.src || icmpCnt.src || ipCnt.src )

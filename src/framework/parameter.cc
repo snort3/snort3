@@ -41,6 +41,9 @@ static bool valid_int(Value& v, const char* r)
     if ( v.get_type() != Value::VT_NUM )
         return false;
 
+    if ( v.get_real() != v.get_long() )
+        return false;
+
     if ( !r )
         return true;
 

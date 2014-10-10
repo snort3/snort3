@@ -8,6 +8,14 @@
 -- removed --enable-sourcefire and reformatted configure --help
 -- removed obsolete etc/ and its unicode.map and attribute_table.dtd
 -- josh's changes for snort2lua config binding by file
+-- fixed stream_icmp flow key init
+-- added --warn-flowbits
+-- tweaked flowbits counts start up output
+-- updates to snort.lua and snort_defaults.lua
+-- fixed stream_icmp counts
+-- added markup for signal help and put in doc
+-- change snort.lua normalize to normalizer
+-- change parse time LogMessage("WARNING...") to ParseWarning()
 
 123
 -- refactored documentation

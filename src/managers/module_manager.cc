@@ -350,13 +350,11 @@ static bool set_value(const char* fqn, Value& v)
  
     if ( !p )
     {
-        if ( key == mod->get_name() )
-            // handle things like x = { 1 }
-            // where x is a table not a list and 1 should be 
-            // considered a key not a value
-            ParseError("can't find %s.%s", fqn, v.get_as_string());
-        else
-            ParseError("can't find %s", fqn);
+        // FIXIT-L handle things like x = { 1 }
+        // where x is a table not a list and 1 should be 
+        // considered a key not a value; ideally say
+        // can't find x.1 instead of just can't find x
+        ParseError("can't find %s", fqn);
         ++s_errors;
         return false;
     }

@@ -305,7 +305,7 @@ static void SnortInit(int argc, char **argv)
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
 
-    if ( snort_conf->run_flags & RUN_FLAG__SHOW_PLUGINS )
+    if ( snort_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
     {
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
