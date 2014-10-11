@@ -38,7 +38,17 @@ static const char* required = "require('snort_config'); ";
 //-------------------------------------------------------------------------
 
 // FIXIT-L lua_pcall()s should be done safely to prevent panics from 
-// aborting process.
+// aborting process.  looks like need to compile lua into snort or build
+// it specially to ensure exceptions are caught through Lua.
+
+string Shell::fatal;
+
+int Shell::panic(lua_State* L)
+{
+    fatal = lua_tostring(L, -1);
+    throw runtime_error(fatal);
+    return -1;
+}
 
 // FIXIT-L --shell --pause should stop before loading config so Lua state
 // can be examined and modified.
@@ -121,6 +131,7 @@ static void config_lua(
 Shell::Shell(const char* s)
 {
     lua = luaL_newstate();
+    lua_atpanic(lua, Shell::panic);
     luaL_openlibs(lua);
 
     if ( s )
@@ -172,10 +183,19 @@ void Shell::install(const char* name, const luaL_Reg* reg)
 
 void Shell::execute(const char* cmd, string& rsp)
 {
-    int err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
+    int err = 0;
     
-    if ( !err )
-        err = lua_pcall(lua, 0, 0, 0);
+    try
+    {
+        err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
+    
+        if ( !err )
+            err = lua_pcall(lua, 0, 0, 0);
+    }
+    catch (...)
+    {
+        rsp = fatal.c_str();
+    }
 
     if (err)
     {

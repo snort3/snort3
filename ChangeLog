@@ -1,3 +1,7 @@
+125
+-- discovered can't catch exceptions thrown from Lua to C++; need to
+   build liblua differently
+
 124
 -- valgrind cleanup
 -- fixed incorrect casting of ftp, ftp-data, and telnet flow data
