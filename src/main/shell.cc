@@ -37,9 +37,9 @@ static const char* required = "require('snort_config'); ";
 // helper functions
 //-------------------------------------------------------------------------
 
-// FIXIT-L lua_pcall()s should be done safely to prevent panics from 
-// aborting process.  looks like need to compile lua into snort or build
-// it specially to ensure exceptions are caught through Lua.
+// FIXIT-M Shell::panic() works on Linux but on OSX we can't throw from lua
+// to C++.  unprotected lua calls could be wrapped in a pcall to ensure lua
+// panics don't kill the process.  or we can not use lua for the shell.  :(
 
 string Shell::fatal;
 
