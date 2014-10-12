@@ -92,7 +92,7 @@ static int fpAddPortGroupPrmx(PORT_GROUP *pg, OptTreeNode *otn, int cflag);
 static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
         const char *pattern, int pattern_length);
 
-static const char *pm_type_strings[PM_TYPE__MAX] =
+static const char* const pm_type_strings[PM_TYPE__MAX] =
 {
     "Normal Content",
     "HTTP Uri content",

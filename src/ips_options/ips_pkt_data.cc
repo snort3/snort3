@@ -33,7 +33,7 @@
 #include "framework/module.h"
 #include "detection/detection_defines.h"
 
-static const char* s_name = "pkt_data";
+#define s_name "pkt_data"
 
 static THREAD_LOCAL ProfileStats pktDataPerfStats;
 
@@ -63,8 +63,8 @@ int PktDataOption::eval(Cursor& c, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
-static const char* s_help =
-    "rule option to set the detection cursor to the normalized packet data";
+#define s_help \
+    "rule option to set the detection cursor to the normalized packet data"
 
 class PktDataModule : public Module
 {

@@ -58,7 +58,7 @@
 #define R_ECE          0x40  /* ECN echo, RFC 3168 */
 #define R_CWR          0x80  /* Congestion Window Reduced, RFC 3168 */
 
-static const char* s_name = "flags";
+#define s_name "flags"
 
 static THREAD_LOCAL ProfileStats tcpFlagsPerfStats;
 
@@ -410,8 +410,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to test TCP control flags";
+#define s_help \
+    "rule option to test TCP control flags"
 
 class FlagsModule : public Module
 {

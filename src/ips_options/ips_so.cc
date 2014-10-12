@@ -34,7 +34,7 @@ using namespace std;
 #include "parser/parser.h"
 #include "time/profiler.h"
 
-static const char* s_name = "so";
+#define s_name "so"
 
 static THREAD_LOCAL ProfileStats soPerfStats;
 
@@ -117,8 +117,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to call custom eval function";
+#define s_help \
+    "rule option to call custom eval function"
 
 class SoModule : public Module
 {

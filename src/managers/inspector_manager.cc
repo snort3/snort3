@@ -40,8 +40,8 @@
 using namespace std;
 
 // FIXIT-L should be using IT_* instead or at least define once
-static const char* bind_id = "binder";
-static const char* wiz_id = "wizard";
+#define bind_id "binder"
+#define wiz_id "wizard"
 
 //-------------------------------------------------------------------------
 // list stuff

@@ -144,10 +144,10 @@
 #define BO_BUF_SIZE         8
 #define BO_BUF_ATTACK_SIZE  1024
 
-static const char* s_name = "back_orifice";
+#define s_name "back_orifice"
 
-static const char* s_help =
-    "back orifice detection";
+#define s_help \
+    "back orifice detection"
 
 /* global keyvalue for the BoRand() function */
 static THREAD_LOCAL long holdrand = 1L;

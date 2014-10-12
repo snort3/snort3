@@ -28,11 +28,11 @@
 //-------------------------------------------------------------------------
 
 // order of protos and scans must match PS_* flags
-static const char* protos =
-    "tcp | udp | icmp | ip | all";
+#define protos \
+    "tcp | udp | icmp | ip | all"
 
-static const char* scans =
-    "portscan | portsweep | decoy_portscan | distributed_portscan | all";
+#define scans \
+    "portscan | portsweep | decoy_portscan | distributed_portscan | all"
 
 static const Parameter ps_params[] =
 {

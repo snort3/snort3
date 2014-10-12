@@ -73,9 +73,9 @@ using namespace std;
 #define STREAM_TCP_NO_3WHS_STR \
     "TCP session without 3-way handshake"
 
-static const char* policies =
-    "first | last | bsd | linux | old-linux | windows | win-2003 | vista | "
-    "solaris | hpux | hpux10 | irix | macos";
+#define policies \
+    "first | last | bsd | linux | old-linux | windows | win-2003 | vista | " \
+    "solaris | hpux | hpux10 | irix | macos"
 
 static const Parameter stream_tcp_small_params[] =
 {

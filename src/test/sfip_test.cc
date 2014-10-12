@@ -45,7 +45,7 @@
 
 static int s_debug = 0;
 
-static const char* codes[] = {
+static const char* const codes[] = {
     "success",
     "failure",
     "lesser",

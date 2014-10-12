@@ -37,9 +37,9 @@
 // stream_reassemble
 //-------------------------------------------------------------------------
 
-static const char* s_name = "stream_reassemble";
-static const char* s_help =
-    "detection option for stream reassembly control";
+#define s_name "stream_reassemble"
+#define s_help \
+    "detection option for stream reassembly control"
 
 static THREAD_LOCAL ProfileStats streamReassembleRuleOptionPerfStats;
 

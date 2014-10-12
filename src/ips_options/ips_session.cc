@@ -71,7 +71,7 @@
 #include "framework/module.h"
 #include "sfip/sf_ip.h"
 
-static const char* s_name = "session";
+#define s_name "session"
 
 static THREAD_LOCAL ProfileStats sessionPerfStats;
 
@@ -327,8 +327,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check user data from TCP sessions";
+#define s_help \
+    "rule option to check user data from TCP sessions"
 
 class SsnModule : public Module
 {

@@ -122,7 +122,7 @@ using namespace std;
 
 static THREAD_LOCAL ProfileStats byteTestPerfStats;
 
-static const char* s_name = "byte_test";
+#define s_name "byte_test"
 
 #define CHECK_EQ            0
 #define CHECK_NEQ           1
@@ -482,8 +482,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to convert data to integer and compare";
+#define s_help \
+    "rule option to convert data to integer and compare"
 
 class ByteTestModule : public Module
 {

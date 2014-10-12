@@ -315,7 +315,7 @@ SFXHASH * DetectionTreeHashTableNew(void)
 }
 
 #ifdef DEBUG_OPTION_TREE
-static const char *option_type_str[] =
+static const char* const option_type_str[] =
 {
     "RULE_OPTION_TYPE_LEAF_NODE",
     "RULE_OPTION_TYPE_CONTENT",

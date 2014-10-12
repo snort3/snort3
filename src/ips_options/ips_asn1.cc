@@ -92,10 +92,10 @@
 
 static THREAD_LOCAL ProfileStats asn1PerfStats;
 
-static const char* s_name = "asn1";
+#define s_name "asn1"
 
-static const char* s_help =
-    "rule option for asn1 detection";
+#define s_help \
+    "rule option for asn1 detection"
 
 class Asn1Option : public IpsOption
 {

@@ -33,7 +33,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
-static const char* s_name = "raw_data";
+#define s_name "raw_data"
 
 static THREAD_LOCAL ProfileStats rawDataPerfStats;
 
@@ -63,8 +63,8 @@ int RawDataOption::eval(Cursor& c, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
-static const char* s_help =
-    "rule option to set the detection cursor to the raw packet data";
+#define s_help \
+    "rule option to set the detection cursor to the raw packet data"
 
 class RawDataModule : public Module
 {

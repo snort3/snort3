@@ -408,7 +408,7 @@ void s5TcpStreamReassembleRuleOptionCleanup(void *dataPtr);
 /*  G L O B A L S  **************************************************/
 
 /* enum for policy names */
-static const char *reassembly_policy_names[] = {
+static const char* const reassembly_policy_names[] = {
     "no policy",
     "FIRST",
     "LINUX",
@@ -427,7 +427,7 @@ static const char *reassembly_policy_names[] = {
 };
 
 #ifdef DEBUG_STREAM5
-static const char *state_names[] = {
+static const char* const state_names[] = {
     "NONE",
     "LISTEN",
     "SYN_RCVD",
@@ -442,7 +442,7 @@ static const char *state_names[] = {
     "CLOSED"
 };
 
-static const char* flush_policy_names[] =
+static const char* const flush_policy_names[] =
 {
     "ignore",
     "on-ack",
@@ -984,7 +984,7 @@ typedef enum {
 static PegCount gnormStats[PC_MAX];
 static THREAD_LOCAL PegCount normStats[PC_MAX];
 
-static const char* pegName[PC_MAX] = {
+static const char* const pegName[PC_MAX] = {
     "tcp::trim",
     "tcp::ecn_ssn",
     "tcp::ts_nop",
@@ -2661,12 +2661,12 @@ static void TraceSession (const Flow* lws)
     );
 }
 
-static const char* statext[] = {
+static const char* const statext[] = {
     "NON", "LST", "SYR", "SYS", "EST", "CLW",
     "LAK", "FW1", "CLG", "FW2", "TWT", "CLD"
 };
 
-static const char* flushxt[] = {
+static const char* const flushxt[] = {
     "NON", "FPR", "LOG", "RSP", "SLW",
 #if 0
     "CON",

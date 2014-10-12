@@ -33,7 +33,7 @@
 #include "framework/module.h"
 #include "framework/range.h"
 
-static const char* s_name = "tos";
+#define s_name "tos"
 
 static THREAD_LOCAL ProfileStats ipTosPerfStats;
 
@@ -113,8 +113,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check type of service field";
+#define s_help \
+    "rule option to check type of service field"
 
 class TosModule : public Module
 {

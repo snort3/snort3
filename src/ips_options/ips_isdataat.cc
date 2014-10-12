@@ -63,7 +63,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "isdataat";
+#define s_name "isdataat"
 
 static THREAD_LOCAL ProfileStats isDataAtPerfStats;
 
@@ -254,8 +254,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check for the presence of payload data";
+#define s_help \
+    "rule option to check for the presence of payload data"
 
 class IsDataAtModule : public Module
 {

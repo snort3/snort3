@@ -33,7 +33,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "gid";
+#define s_name "gid"
 
 //-------------------------------------------------------------------------
 // module
@@ -47,8 +47,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option specifying rule generator";
+#define s_help \
+    "rule option specifying rule generator"
 
 class GidModule : public Module
 {

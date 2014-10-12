@@ -46,7 +46,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "flow";
+#define s_name "flow"
 
 static THREAD_LOCAL ProfileStats flowCheckPerfStats;
 
@@ -369,8 +369,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check session properties";
+#define s_help \
+    "rule option to check session properties"
 
 class FlowModule : public Module
 {

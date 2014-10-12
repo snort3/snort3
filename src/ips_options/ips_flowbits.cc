@@ -74,7 +74,7 @@ using namespace std;
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "flowbits";
+#define s_name "flowbits"
 
 static THREAD_LOCAL ProfileStats flowBitsPerfStats;
 
@@ -1152,8 +1152,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to set and test arbitrary boolean flags";
+#define s_help \
+    "rule option to set and test arbitrary boolean flags"
 
 class FlowbitsModule : public Module
 {

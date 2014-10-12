@@ -32,7 +32,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "rem";
+#define s_name "rem"
 
 //-------------------------------------------------------------------------
 // module
@@ -46,8 +46,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to convey an arbitrary comment in the rule body";
+#define s_help \
+    "rule option to convey an arbitrary comment in the rule body"
 
 class RemModule : public Module
 {

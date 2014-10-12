@@ -96,7 +96,7 @@ struct UnixSock
 
 static THREAD_LOCAL UnixSock us;
 
-static const char* s_name = "alert_unixsock";
+#define s_name "alert_unixsock"
 
 //-------------------------------------------------------------------------
 // alert_unixsock module
@@ -109,8 +109,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "output event over unix socket";
+#define s_help \
+    "output event over unix socket"
 
 class UnixSockModule : public Module
 {

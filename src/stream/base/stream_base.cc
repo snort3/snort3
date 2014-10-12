@@ -70,7 +70,7 @@ struct BaseStats
 static BaseStats g_stats;
 static THREAD_LOCAL BaseStats t_stats;
 
-static const char* base_pegs[] =
+static const char* const base_pegs[] =
 {
     "tcp flows",
     "udp flows",

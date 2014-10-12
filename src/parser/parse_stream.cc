@@ -50,7 +50,7 @@ enum TokenType
 };
 
 #if 0
-static const char* toks[TT_MAX] =
+static const char* const toks[TT_MAX] =
 {
     "none", "punct", "string", "list", "literal"
 };

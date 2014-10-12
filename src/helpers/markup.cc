@@ -28,9 +28,10 @@ bool Markup::enabled = false;
 void Markup::enable(bool e)
 { enabled = e; }
 
+#define hn "========== "
+
 const char* Markup::head(unsigned level)
 { 
-    static const char* hn = "========== ";
     unsigned max = strlen(hn);
 
     if ( level >= max )
