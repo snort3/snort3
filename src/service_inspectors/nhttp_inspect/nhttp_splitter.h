@@ -41,9 +41,10 @@ public:
     virtual ~NHttpSplitter() = default;
     virtual NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) = 0;
     virtual NHttpEnums::ScanResult peek(const uint8_t*, uint32_t) { assert(0); return NHttpEnums::SCAN_NOTFOUND; };
-    uint32_t get_num_flush() { return num_flush; };
-    virtual uint32_t get_octets_seen() { return octets_seen; };
-    virtual uint32_t get_num_excess() { return 0; };
+    uint32_t get_num_flush() const { return num_flush; };
+    virtual uint32_t get_octets_seen() const { return octets_seen; };
+    virtual uint32_t get_num_excess() const { return 0; };
+    virtual bool partial_ok() const { return true; };
 
 protected:
     uint32_t octets_seen = 0;
@@ -57,7 +58,7 @@ protected:
 class NHttpStartSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length);
-    uint32_t get_num_excess() { return num_crlf; };
+    uint32_t get_num_excess() const { return num_crlf; };
 private:
     static const int MAX_LEADING_WHITESPACE = 20;
 };
@@ -67,8 +68,8 @@ public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length);
     NHttpEnums::ScanResult peek(const uint8_t* buffer, uint32_t length);
     void conditional_reset();
-    uint32_t get_octets_seen() { return octets_seen - peek_octets; };
-    uint32_t get_num_excess() { return num_crlf; };
+    uint32_t get_octets_seen() const { return octets_seen - peek_octets; };
+    uint32_t get_num_excess() const { return num_crlf; };
 private:
     uint32_t peek_octets = 0;
     unsigned first_lf = 0;
@@ -78,21 +79,23 @@ private:
 class NHttpChunkSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length);
-    uint32_t get_num_excess() { return octets_seen; };
+    uint32_t get_num_excess() const { return zero_chunk ? 1 : 0; };
     void conditional_reset();
+    bool partial_ok() const { return false; };
 private:
     uint32_t expected_length = 0;
     bool length_started = false;
     uint32_t digits_seen = 0;
     bool semicolon = false;
     bool header_complete = false;
+    bool zero_chunk = false;
 };
 
 class NHttpTrailerSplitter : public NHttpSplitter {
 public:
     NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length);
     void conditional_reset();
-    uint32_t get_num_excess() { return num_crlf; };
+    uint32_t get_num_excess() const { return num_crlf; };
 private:
     unsigned first_lf = 0;
 };

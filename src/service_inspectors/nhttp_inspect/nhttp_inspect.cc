@@ -129,10 +129,11 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
 
     if (NHttpTestManager::use_test_output()) {
         msg_section->print_section(NHttpTestManager::get_output_file());
+        fflush(NHttpTestManager::get_output_file());
         if (NHttpTestManager::use_test_input()) {
              printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
+             fflush(stdout);
         }
-        fflush(nullptr);
     }
 
     return return_value;

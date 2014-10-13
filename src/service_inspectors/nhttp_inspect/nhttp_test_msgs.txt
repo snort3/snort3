@@ -38,7 +38,8 @@
 #
 # This test tool does not implement the feature of being hardened against bad input. If you write a badly formatted or improper test case the
 # program may assert or crash. The responsibility is on the developer to get it right. Currently that is the best use of resources.
-
+#
+# Test input is currently designed for single-threaded operation only.
 
 # ***********************************************************************************************
 # Valid response start lines
@@ -758,6 +759,31 @@ chunk3-start
 date: Mon, 02 Oct 2000 20:25:00 GMT\r\n
 fakeheader: 1234\r\n
 \r\n
+
+
+@13005
+@break
+@request
+
+GET / HTTP/1.0\r\n
+\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Content-Type: text/plain; charset=iso-8859-1\r\n
+Transfer-Encoding: chunked\r\n
+\r\n
+
+0A\r\nABCDEFGHIJ\r\n
+
+0A\r\n1234567890\r\n
+
+0A\r\nabcdefghij\r\n
+
+0A\r\n9876543210\r\n
+
+0\r\n\r\n
 
 
 # ***********************************************************************************************

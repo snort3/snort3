@@ -83,80 +83,6 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
     return SCAN_NOTFOUND;
 }
 
-ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
-    conditional_reset();
-    if (header_complete) {
-        // Previously read the chunk header. Now just flush the length.
-        num_flush = expected_length;
-        complete = true;
-        return SCAN_FOUND;
-    }
-    for (uint32_t k = 0; k < length; k++) {
-        if (buffer[k] == '\n') {
-            if (octets_seen + k == num_crlf) {
-                // \r\n or \n leftover from previous chunk
-                complete = true;
-                num_flush = k+1;
-                return SCAN_DISCARD;
-            }
-            if (!length_started) {
-                // chunk header specifies no length
-                complete = true;
-                return SCAN_ABORT;
-            }
-            // flush completed chunk header
-            header_complete = true;
-            num_flush = k+1;
-            return SCAN_DISCARD;
-        }
-        if (num_crlf == 1) {
-            // CR not followed by LF
-            complete = true;
-            return SCAN_ABORT;
-        }
-        if (buffer[k] == '\r') {
-            num_crlf = 1;
-            continue;
-        }
-        if (buffer[k] == ';') {
-            semicolon = true;
-        }
-        if (semicolon) {
-            // we don't look at chunk header extensions
-            continue;
-        }
-        if (as_hex[buffer[k]] == -1) {
-            // illegal character present in chunk length
-            complete = true;
-            return SCAN_ABORT;
-        }
-        length_started = true;
-        if (digits_seen >= 8) {
-            // overflow protection: must fit into 32 bits
-            complete = true;
-            return SCAN_ABORT;
-        }
-        expected_length = expected_length * 16 + as_hex[buffer[k]];
-        if (expected_length > 0) {
-            // leading zeroes don't count
-            digits_seen++;
-        }
-    }
-    octets_seen += length;
-    return SCAN_NOTFOUND;
-}
-
-void NHttpChunkSplitter::conditional_reset() {
-    if (complete) {
-        expected_length = 0;
-        length_started = false;
-        digits_seen = 0;
-        semicolon = false;
-        header_complete = false;
-    }
-    NHttpSplitter::conditional_reset();
-}
-
 ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
     conditional_reset();
     if (peek_status == SCAN_FOUND) {
@@ -207,6 +133,92 @@ void NHttpHeaderSplitter::conditional_reset() {
         peek_octets = 0;
         peek_status = SCAN_NOTFOUND;
         first_lf = 0;
+    }
+    NHttpSplitter::conditional_reset();
+}
+
+ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
+    conditional_reset();
+    if (header_complete) {
+        // Previously read the chunk header. Now just flush the length.
+        num_flush = expected_length;
+        complete = true;
+        return SCAN_FOUND;
+    }
+    for (uint32_t k = 0; k < length; k++) {
+        if (buffer[k] == '\n') {
+            if (octets_seen + k == num_crlf) {
+                // \r\n or \n leftover from previous chunk
+                complete = true;
+                num_flush = k+1;
+                return SCAN_DISCARD;
+            }
+            if (!length_started) {
+                // chunk header specifies no length
+                // FIXIT-M need to find a way to flush partial chunk buffer
+                complete = true;
+                return SCAN_ABORT;
+            }
+            if (expected_length == 0) {
+                // Workaround because stream cannot handle zero-length flush. Instead of flushing the zero-length chunk
+                // to flush the partial chunk buffer in reassembly, we save the terminal \n from the chunk header for
+                // use as an end-of-chunks signal. FIXIT-M
+                expected_length = 1;
+                zero_chunk = true;
+                num_flush = k;
+            }
+            else {
+                num_flush = k+1;
+            }
+            // flush completed chunk header
+            header_complete = true;
+            return SCAN_DISCARD;
+        }
+        if (num_crlf == 1) {
+            // CR not followed by LF
+            complete = true;
+            return SCAN_ABORT;
+        }
+        if (buffer[k] == '\r') {
+            num_crlf = 1;
+            continue;
+        }
+        if (buffer[k] == ';') {
+            semicolon = true;
+        }
+        if (semicolon) {
+            // we don't look at chunk header extensions
+            continue;
+        }
+        if (as_hex[buffer[k]] == -1) {
+            // illegal character present in chunk length
+            complete = true;
+            return SCAN_ABORT;
+        }
+        length_started = true;
+        if (digits_seen >= 8) {
+            // overflow protection: must fit into 32 bits
+            complete = true;
+            return SCAN_ABORT;
+        }
+        expected_length = expected_length * 16 + as_hex[buffer[k]];
+        if (expected_length > 0) {
+            // leading zeroes don't count
+            digits_seen++;
+        }
+    }
+    octets_seen += length;
+    return SCAN_NOTFOUND;
+}
+
+void NHttpChunkSplitter::conditional_reset() {
+    if (complete) {
+        expected_length = 0;
+        length_started = false;
+        digits_seen = 0;
+        semicolon = false;
+        header_complete = false;
+        zero_chunk = false;
     }
     NHttpSplitter::conditional_reset();
 }
