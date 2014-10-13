@@ -138,7 +138,7 @@ static const RuleMap hi_global_rules[] =
 };
 
 static const char* hi_global_help =
-    "http inspector global configuration and client rules";
+    "http inspector global configuration and client rules for use with http_server";
 
 HttpInspectModule::HttpInspectModule() :
     Module(GLOBAL_KEYWORD, hi_global_help, hi_global_params)
@@ -421,7 +421,7 @@ static const RuleMap hi_server_rules[] =
 };
 
 static const char* hi_server_help = 
-    "http inspection and server rules";
+    "http inspection and server rules; also configure http_inpsect";
 
 HttpServerModule::HttpServerModule() :
     Module(SERVER_KEYWORD, hi_server_help, hi_server_params)

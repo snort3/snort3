@@ -19,6 +19,8 @@
 // markup.cc author Russ Combs <rucombs@cisco.com>
 
 #include "markup.h"
+#include <string.h>
+
 using namespace std;
 
 bool Markup::enabled = false;
@@ -26,8 +28,16 @@ bool Markup::enabled = false;
 void Markup::enable(bool e)
 { enabled = e; }
 
-const char* Markup::head()
-{ return enabled ? "=== " : ""; }
+const char* Markup::head(unsigned level)
+{ 
+    static const char* hn = "========== ";
+    unsigned max = strlen(hn);
+
+    if ( level >= max )
+        level = max - 1;
+
+    return enabled ? hn+max-level-1 : "";
+}
 
 const char* Markup::item()
 { return enabled ? "* " : ""; }

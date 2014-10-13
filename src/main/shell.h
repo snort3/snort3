@@ -22,6 +22,7 @@
 #define SHELL_H
 
 #include <string>
+struct lua_State;
 
 class Shell
 {
@@ -44,8 +45,12 @@ public:
     { return loaded; };
 
 private:
+    static int panic(lua_State*);
+    static std::string fatal;
+
+private:
     bool loaded;
-    struct lua_State* lua;
+    lua_State* lua;
     std::string file;
     std::string overrides;
 };

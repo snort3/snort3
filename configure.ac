@@ -310,13 +310,13 @@ if test "x$enable_ppm_test" = "xyes"; then
     AC_DEFINE(PPM_TEST, [1], [build ppm manager for readback])
 fi
 
-AC_ARG_ENABLE(perfprofiling,
-    [  --enable-perfprofiling    enable module and rule performance profiling],
-       enable_perfprofiling="$enableval", enable_perfprofiling="no")
+AC_ARG_ENABLE(perf-profiling,
+    [  --enable-perf-profiling    enable module and rule performance profiling],
+       enable_perf_profiling="$enableval", enable_perf_profiling="no")
 
-if test "x$enable_perfprofiling" = "xyes"; then
+if test "x$enable_perf_profiling" = "xyes"; then
     CPPFLAGS="$CPPFLAGS -DPERF_PROFILING"
-    AC_DEFINE(PERF_PROFILING, [1], [enable profiling])
+    AC_DEFINE(PERF_PROFILING, [1], [enable perf profiling])
 fi
 
 AC_ARG_ENABLE(linux-smp-stats,
@@ -359,15 +359,16 @@ if test "x$enable_gdb" = "xyes"; then
     CFLAGS="$CFLAGS -g -ggdb"
 fi
 
-AC_ARG_ENABLE(profile,
-    [  --enable-profile          enable profiling options (developers only)],
-       enable_profile="$enableval", enable_profile="no")
+AC_ARG_ENABLE(gprof-profile,
+    [  --enable-gprof-profile          enable gprof profiling output (developers only)],
+       enable_gprof_profile="$enableval", enable_gprof_profile="no")
 
-if test "x$enable_profile" = "xyes"; then
+# FIXIT-L need to check for g++ not gcc
+if test "x$enable_gprof_profile" = "xyes"; then
     if test -n "$GCC"; then
         CFLAGS="$CFLAGS -pg"
     fi
-    AC_DEFINE(PROFILE, [1], [enable profiling])
+    AC_DEFINE(PROFILE, [1], [enable gprof profiling])
 fi
 
 AC_ARG_ENABLE(corefiles,

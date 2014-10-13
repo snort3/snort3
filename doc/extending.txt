@@ -1,6 +1,70 @@
 === Plugins
 
-include::plugins.txt[]
+Snort++ uses a variety of plugins to accomplish much of its processing
+objectives, including:
+
+* Codec - to decode and encode packets
+* Inspector - like the prior preprocessors, for normalization, etc.
+* IpsOption - for detection in Snort++ rules
+* IpsAction - for custom actions
+* Logger - for handling events
+* Mpse - for fast pattern matching
+* So - for dynamic rules
+
+Plugins have an associated API defined for each type, all of which share a
+common 'header', called the BaseApi.  A dynamic library makes its plugins
+available by exporting the snort_plugins symbol, which is a null terminated
+array of BaseApi pointers.
+
+The BaseApi includes type, name, API version, plugin version, and function
+pointers for constructing and destructing a Module.  The specific API add
+various other data and functions for their given roles.
+
+The Module is pervasive in Snort++.  It is how everything, including
+plugins, are configured.  It also provides access to builtin rules.  And as
+the glue that binds functionality to Snort++, the capabilities of a Module
+are expected to grow to include statistics support, etc.
+
+Module configuration is handled by a list of Parameters.  Most parameters
+can be validated by the framework, which means for example that conversion
+from string to number is done in exactly one place.  Providing the builtin
+rules allows the documenation to include them automatically and also allows
+for autogenerating the rules at startup.
+
+If we are defining a new Inspector called, say, gadget, it might be
+configured in snort.lua like this:
+
+    gadget =
+    {
+        brain = true,
+        claw = 3
+    }
+
+When the gadget table is processed, Snort++ will look for a module called
+gadget.  If that Module has an associated API, it will be used to configure
+a new instance of the plugin.  In this case, a GadgetModule would be
+instantiated, brain and claw would be set, and the Module instance would be
+passed to the GadgetInspector constructor.
+
+Module has three key virtual methods:
+
+* *begin()* - called when Snort++ starts processing the associated Lua
+  table.  This is a good place to allocate any required data and set
+  defaults.
+* *set()* - called to set each parameter after validation.
+* *end()* - called when Snort++ finishes processing the associated Lua
+  table.  This is where additional integrity checks of related parameters
+  should be done.
+
+The configured Module is passed to the plugin constructor which pulls the
+configuration data from the Module.  For non-trivial configurations, the
+working paradigm is that Module hands a pointer to the configured data to
+the plugin instance which takes ownership.
+
+Note that there is at most one instance of a given Module, even if multiple
+plugin instances are created which use that Module.  (Multiple instances
+require Snort++ binding configuration.)
+
 
 === Coding Style
 

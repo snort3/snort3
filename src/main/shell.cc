@@ -37,8 +37,18 @@ static const char* required = "require('snort_config'); ";
 // helper functions
 //-------------------------------------------------------------------------
 
-// FIXIT-L lua_pcall()s should be done safely to prevent panics from 
-// aborting process.
+// FIXIT-M Shell::panic() works on Linux but on OSX we can't throw from lua
+// to C++.  unprotected lua calls could be wrapped in a pcall to ensure lua
+// panics don't kill the process.  or we can not use lua for the shell.  :(
+
+string Shell::fatal;
+
+int Shell::panic(lua_State* L)
+{
+    fatal = lua_tostring(L, -1);
+    throw runtime_error(fatal);
+    return -1;
+}
 
 // FIXIT-L --shell --pause should stop before loading config so Lua state
 // can be examined and modified.
@@ -73,7 +83,10 @@ static void load_overrides(lua_State* L, string& s)
 {
     if ( luaL_loadstring(L, s.c_str()) )
     {
-        FatalError("can't load overrides: %s\n", lua_tostring(L, -1));
+        const char* err = lua_tostring(L, -1);
+        if ( strstr(err, "near '#'") )
+            ParseError("this doesn't look like Lua.  Comments start with --, not #.");
+        FatalError("can't load overrides: %s\n", err);
         return;
     }
 
@@ -118,6 +131,7 @@ static void config_lua(
 Shell::Shell(const char* s)
 {
     lua = luaL_newstate();
+    lua_atpanic(lua, Shell::panic);
     luaL_openlibs(lua);
 
     if ( s )
@@ -169,10 +183,19 @@ void Shell::install(const char* name, const luaL_Reg* reg)
 
 void Shell::execute(const char* cmd, string& rsp)
 {
-    int err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
+    int err = 0;
     
-    if ( !err )
-        err = lua_pcall(lua, 0, 0, 0);
+    try
+    {
+        err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
+    
+        if ( !err )
+            err = lua_pcall(lua, 0, 0, 0);
+    }
+    catch (...)
+    {
+        rsp = fatal.c_str();
+    }
 
     if (err)
     {

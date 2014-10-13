@@ -29,7 +29,6 @@
 #include "main/snort_config.h"
 #include "main/snort.h"
 
-
 //-------------------------------------------------------------------------
 // ppm attributes
 //-------------------------------------------------------------------------
@@ -38,8 +37,7 @@
 
 static const char* s_name = "ppm";
 static const char* s_help =
-    "packet and rule latency monitoring and control";
-
+    "packet and rule latency monitoring and control (requires --enable-ppm)";
 
 static const Parameter s_params[] =
 {

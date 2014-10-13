@@ -10,8 +10,20 @@ gids.txt \
 help.txt \
 modules.txt \
 options.txt \
+plugins.txt \
 signals.txt \
-version.txt
+version.txt \
+basic.txt \
+codec.txt \
+data.txt \
+inspector.txt \
+ips_action.txt \
+ips_option.txt \
+logger.txt 
+
+# currently no modules for these
+#search_engine.txt
+#so_rule.txt
 
 unbuilt_sources = \
 snort_manual.txt \
@@ -20,9 +32,10 @@ config_changes.txt \
 errors.txt \
 differences.txt \
 extending.txt \
-plugins.txt \
 reference.txt \
+snort2lua.txt \
 style.txt \
+terms.txt \
 tips.txt \
 images/snort.png
 
@@ -65,13 +78,59 @@ config.txt: $(snort)
 gids.txt: $(snort)
 	$(snort) --markup --list-gids | sort -n  -k 1.4 > $@
 
+modules.txt: $(snort)
+	$(snort) --markup --help-modules > $@
+
+plugins.txt: $(snort)
+	$(snort) --markup --help-plugins > $@
+
 help.txt: $(snort)
 	$(snort) --help > $@
 
-modules.txt: $(snort)
-	for m in `$(snort) --list-modules` ; do \
+basic.txt: $(snort)
+	for m in `$(snort) --list-modules basic` ; do \
 		$(snort) --markup --help-module $$m ; \
 	done > $@
+
+codec.txt: $(snort)
+	for m in `$(snort) --list-modules codec` ; do \
+		$(snort) --markup --help-module $$m ; \
+	done > $@
+
+data.txt: $(snort)
+	for m in `$(snort) --list-modules data` ; do \
+		$(snort) --markup --help-module $$m ; \
+	done > $@
+
+inspector.txt: $(snort)
+	for m in `$(snort) --list-modules inspector` ; do \
+		$(snort) --markup --help-module $$m ; \
+	done > $@
+
+ips_action.txt: $(snort)
+	for m in `$(snort) --list-modules ips_action` ; do \
+		$(snort) --markup --help-module $$m ; \
+	done > $@
+
+ips_option.txt: $(snort)
+	for m in `$(snort) --list-modules ips_action` ; do \
+		$(snort) --markup --help-module $$m ; \
+	done > $@
+
+logger.txt: $(snort)
+	for m in `$(snort) --list-modules logger` ; do \
+		$(snort) --markup --help-module $$m ; \
+	done > $@
+
+#search_engine.txt: $(snort)
+#	for m in `$(snort) --list-modules search_engine` ; do \
+#		$(snort) --markup --help-module $$m ; \
+#	done > $@
+
+#so_rule.txt: $(snort)
+#	for m in `$(snort) --list-modules so_rule` ; do \
+#		$(snort) --markup --help-module $$m ; \
+#	done > $@
 
 options.txt: $(snort)
 	$(snort) --markup --help-options | sort > $@
