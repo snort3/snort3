@@ -3,8 +3,8 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 SUBDIRS = \
 src \
 lua \
-etc \
-tools
+tools \
+doc
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

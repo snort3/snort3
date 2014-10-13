@@ -112,12 +112,17 @@ void push_parse_location(const char* file, unsigned line)
 
     Location loc(file, line);
     files.push(loc);
+    LogMessage("Loading %s:\n", file);
 }
 
 void pop_parse_location()
 {
     if ( !files.empty() )
+    {
+        Location& loc = files.top();
+        LogMessage("Finished %s.\n", loc.file.c_str());
         files.pop();
+    }
 }
 
 void inc_parse_position()

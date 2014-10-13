@@ -29,10 +29,10 @@ using namespace std;
 #define FTP_SERVER "ftp_server"
 
 static const char* ftp_client_help =
-    "FTP client configuration module";
+    "FTP client configuration module for use with ftp_server";
 
 static const char* ftp_server_help =
-    "main FTP module";
+    "main FTP module; ftp_client should also be configured";
 
 //-------------------------------------------------------------------------
 // client stuff
@@ -58,7 +58,7 @@ static const Parameter ftp_client_params[] =
     { "bounce", Parameter::PT_BOOL, nullptr, "false",
       "check for bounces" },
 
-    { "bounce_to", Parameter::PT_TABLE, client_bounce_params, nullptr,
+    { "bounce_to", Parameter::PT_LIST, client_bounce_params, nullptr,
       "allow bounces to CIDRs / ports" },
 
     { "ignore_telnet_erase_cmds", Parameter::PT_BOOL, nullptr, "false",

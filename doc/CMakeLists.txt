@@ -14,16 +14,23 @@
 #                                                                            #
 ##############################################################################
 
-set(BUILT_SOURCES
-    builtin.txt
+set(HELP_SOURCES
     commands.txt
     config.txt
     options.txt
+)
+
+set(LIST_SOURCES
+    builtin.txt
     gids.txt
 #   modules.txt         Requires Special formatting. manually added below.
-#   version.txt         Required special formatting. manually added below.
+)
+
+set(BUILT_SOURCES
+    ${HELP_SOURCES}
+    ${LIST_SOURCES}
+#   version.txt         Requires special formatting. manually added below.
 #   config_changes.txt  If ruby executable found
-    CACHE INTERNAL "Snort++ manuals which can be built" FORCE
 )
 
 set (UNBUILT_SOURCES
@@ -74,13 +81,26 @@ if (MAKE_PDF_DOC OR MAKE_HTML_DOC)
 
     # first, build all of the documents in the binary tree
 
-    foreach (file ${BUILT_SOURCES})
+    foreach (file ${HELP_SOURCES})
         set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
         get_filename_component(file_name "${file}" NAME_WE)
 
         add_custom_command(
             OUTPUT ${output}
             COMMAND $<TARGET_FILE:snort> --markup --help-${file_name} | sort > ${output}
+            DEPENDS snort
+            COMMENT "Documents: building ${file}"
+        )
+        list(APPEND ALL_SOURCES ${output})
+    endforeach(file)
+
+    foreach (file ${LIST_SOURCES})
+        set (output "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+        get_filename_component(file_name "${file}" NAME_WE)
+
+        add_custom_command(
+            OUTPUT ${output}
+            COMMAND $<TARGET_FILE:snort> --markup --list-${file_name} | sort > ${output}
             DEPENDS snort
             COMMENT "Documents: building ${file}"
         )

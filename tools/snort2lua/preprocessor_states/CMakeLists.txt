@@ -1,8 +1,6 @@
 
 add_library(preprocessor_states
     pps_arpspoof.cc
-    pps_binder.h
-    pps_binder.cc
     pps_bo.cc
     pps_frag3_engine.cc
     pps_frag3_global.cc
@@ -24,6 +22,6 @@ add_library(preprocessor_states
 )
 
 target_link_libraries( preprocessor_states
-    util
+    snort2lua_utils
     conversion_data
 )

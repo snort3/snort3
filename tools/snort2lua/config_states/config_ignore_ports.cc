@@ -21,15 +21,19 @@
 
 #include <sstream>
 #include <vector>
+#include <string>
 
 #include "conversion_state.h"
 #include "utils/converter.h"
 #include "utils/s2l_util.h"
+#include "utils/util_binder.h"
 
 namespace config
 {
 
 namespace {
+
+constexpr uint16_t MAX_PORTS = 0xFFFF; // == 65535
 
 class IgnorePorts : public ConversionState
 {
@@ -39,70 +43,94 @@ public:
     virtual bool convert(std::istringstream& data_stream);
 };
 
+
 } // namespace
 
 bool IgnorePorts::convert(std::istringstream& data_stream)
 {
+    Binder bind;
     bool retval = true;
     std::string keyword;
     std::string port;
 
-    table_api.open_table("binder");
-    table_api.open_table(); // anonymouse table
+
+    std::streamoff pos = data_stream.tellg();
+    std::string port_string = data_stream.str();
+    port_string = port_string.substr(pos);
+    port_string = data_api.expand_vars(port_string);
+
 
     // if the keyword is not 'tcp' or 'udp', return false;
     if (!(data_stream >> keyword) ||
         (keyword.compare("udp") && keyword.compare("tcp")) )
+    {
+        data_api.failed_conversion(data_stream, keyword);
         return false;
+    }
 
-    table_api.open_table("when");
-    table_api.add_option("proto", keyword);
+    bind.set_when_proto(keyword);
 
     while (data_stream >> port)
     {
-        bool tmpval = true;
-        const std::size_t colon_pos = port.find(':');
-        if (colon_pos == std::string::npos)
+        try
         {
-            tmpval = table_api.add_list("ports", port);
-        }
+            const std::size_t colon_pos = port.find(':');
 
-        else if (colon_pos == 0)
-        {
-            int high = std::stoi(port.substr(1));
-            for (int i = 0; i <= high; i++)
+            if (!port.compare("any"))
             {
-                bool tmpval2 = table_api.add_list("ports", std::to_string(i));
+                // Possible Snort bug, but only port zero is ignrored
+                bind.add_when_port("0");
+            }
+            else if (colon_pos == std::string::npos)
+            {
+                bind.add_when_port(port);
+            }
+            else if (colon_pos == 0)
+            {
+                int high = std::stoi(port.substr(1));
 
-                if (tmpval && !tmpval2)
-                    tmpval = false;
+                if (high > MAX_PORTS)
+                    throw std::out_of_range("");
+
+                for (int i = 0; i <= high; i++)
+                    bind.add_when_port(std::to_string(i));
+            }
+
+            else if ((colon_pos+1)  == port.size())
+            {
+                int low = std::stoi(port.substr(0, colon_pos));
+
+                if (low > MAX_PORTS)
+                    throw std::out_of_range("");
+
+                for (int i = low; i <= MAX_PORTS; i++)
+                    bind.add_when_port(std::to_string(i));
+            }
+            else
+            {
+                int low = std::stoi(port.substr(0, colon_pos));
+                int high = std::stoi(port.substr(colon_pos + 1));
+
+                if (low > MAX_PORTS || high > MAX_PORTS || low > high)
+                    throw std::out_of_range("");
+
+                for (int i = low; i <= high; i++)
+                    bind.add_when_port(std::to_string(i));
             }
         }
-
-        else
-            {
-            int low = std::stoi(port.substr(0, colon_pos));
-            int high = std::stoi(port.substr(colon_pos + 1));
-
-            for (int i = low; i <= high; i++)
-            {
-                bool tmpval2 = table_api.add_list("ports", std::to_string(i));
-
-                if (tmpval && !tmpval2)
-                    tmpval = false;
-            }
-        }
-
-        if (retval && !tmpval)
+        catch(std::invalid_argument)
+        {
+            data_api.failed_conversion(data_stream, "can't convert " + port);
             retval = false;
+        }
+        catch(std::out_of_range)
+        {
+            data_api.failed_conversion(data_stream, "Port" + port + " must be <= 65535");
+            retval = false;
+        }
     }
 
-    table_api.close_table();
-    table_api.open_table("use");
-    table_api.add_option("action", "allow");
-    table_api.close_table(); // table = "use"
-    table_api.close_table(); // table = anonymous
-    table_api.close_table(); // table = "binder"
+    bind.set_use_action("allow");
     return retval;
 }
 

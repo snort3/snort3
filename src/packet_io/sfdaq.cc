@@ -42,6 +42,7 @@ extern "C" {
 #include "snort.h"
 #include "util.h"
 #include "utils/strvec.h"
+#include "parser/parser.h"
 
 #define PKT_SNAPLEN  1514
 
@@ -204,22 +205,21 @@ static int DAQ_ValidateInstance ()
         return 1;
 
     if ( !(caps & DAQ_CAPA_BLOCK) )
-        LogMessage("WARNING: inline mode configured but DAQ can't "
-            "block packets.\n");
+        ParseWarning("inline mode configured but DAQ can't block packets.\n");
 
 #if 0
     // this is checked in normalize.c and sp_respond.c
     // and warned/disabled only if it was configured
     if ( !(caps & DAQ_CAPA_REPLACE) )
     {
-        LogMessage("WARNING: normalizations/replacements disabled "
+        ParseWarning("normalizations/replacements disabled "
             " because DAQ can't replace packets.\n");
     }
 
     // this is checked in spp_stream5.c and active.c
     // and warned/disabled only if it was configured
     if ( !(caps & DAQ_CAPA_INJECT) )
-        LogMessage("WARNING: inline mode configured but DAQ can't "
+        ParseWarning("inline mode configured but DAQ can't "
             "inject packets.\n");
 #endif
 

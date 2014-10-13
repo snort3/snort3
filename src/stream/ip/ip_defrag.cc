@@ -1416,7 +1416,6 @@ void Defrag::process(Packet* p, FragTracker* ft)
          * the entire set of frags show up later. */
 
         ft->ttl = p->ptrs.ip_api.ttl(); /* store the first ttl we got */
-        ft->engine = nullptr;
     }
 
     // Update frag time when we get a frag associated with this tracker

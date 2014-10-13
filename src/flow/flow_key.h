@@ -51,6 +51,10 @@ struct FlowKey
         uint32_t id, uint8_t proto, uint16_t vlan,
         uint32_t mplsId, uint16_t addrSpaceId);
 
+    void init_mpls(uint32_t);
+    void init_vlan(uint16_t);
+    void init_address_space(uint16_t);
+
     // XXX If this data structure changes size, compare must be updated!
     static uint32_t hash(SFHASHFCN *p, unsigned char *d, int);
     static int compare(const void *s1, const void *s2, size_t);

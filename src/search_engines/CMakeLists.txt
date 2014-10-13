@@ -28,14 +28,14 @@ set (BNFA_SOURCES
 )
 
 
-if ( HAVE_INTEL_SOFT_CPM )
+if ( ENABLE_INTEL_SOFT_CPM )
     set(INTEL_SOURCES
         intel_cpm.cc 
         intel_soft_cpm.cc
         intel_soft_cpm.h
     )
 
-endif (HAVE_INTEL_SOFT_CPM)
+endif (ENABLE_INTEL_SOFT_CPM)
 
 set (PLUGIN_LIST
     ${ACSMX_SOURCES}

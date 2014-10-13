@@ -69,7 +69,8 @@ struct ProfileStats
 #define PROFILING_RULES ScProfileRules()
 #endif
 
-#define NODE_PROFILE_VARS uint64_t node_ticks_start, node_ticks_end, node_ticks_delta, node_deltas = 0
+#define NODE_PROFILE_VARS \
+    uint64_t node_ticks_start = 0, node_ticks_end, node_ticks_delta, node_deltas = 0
 
 #define NODE_PROFILE_START(node) \
     if (PROFILING_RULES) { \

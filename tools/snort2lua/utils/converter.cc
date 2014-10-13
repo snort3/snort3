@@ -19,7 +19,6 @@
  */
 // converter.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <iostream>
 #include "utils/converter.h"
 #include "conversion_state.h"
 #include "data/data_types/dt_comment.h"
@@ -74,6 +73,7 @@ void Converter::reset_state()
     rule_api.reset_state();
 }
 
+// FIXIT-M J  Fix this -- rule, table, and data should be associated with a Converter
 void Converter::parse_include_file(std::string input_file)
 {
     std::vector<Variable*> vars;
@@ -97,7 +97,7 @@ void Converter::parse_include_file(std::string input_file)
         rule_api.swap_rules(rules);
 
 
-    // MAIN CONVERSION!!
+
     if (convert_file(input_file) < 0)
         error = true; // return a negative number to main snort2lua method
 

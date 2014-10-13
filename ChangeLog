@@ -1,3 +1,39 @@
+125
+-- discovered can't catch exceptions thrown from Lua to C++; need to
+   build liblua differently
+
+124
+-- valgrind cleanup
+-- fixed incorrect casting of ftp, ftp-data, and telnet flow data
+-- fixed reload_config()
+-- tweak error for x = { 1 } where x is a table not a list
+-- some make distcheck fixes (still broken)
+-- changed version to 2.10.0 and build to 123
+-- removed --enable-sourcefire and reformatted configure --help
+-- removed obsolete etc/ and its unicode.map and attribute_table.dtd
+-- josh's changes for snort2lua config binding by file
+-- fixed stream_icmp flow key init
+-- added --warn-flowbits
+-- tweaked flowbits counts start up output
+-- updates to snort.lua and snort_defaults.lua
+-- fixed stream_icmp counts
+-- added markup for signal help and put in doc
+-- change snort.lua normalize to normalizer
+-- change parse time LogMessage("WARNING...") to ParseWarning()
+-- changed --enable-perfprofiling to --enable-perf-profiling
+-- changed --enable-profile to --enable-gprof-profiling
+-- added --warn-unknown to warn about unknown symbols
+-- added SNORT_IGNORE env var to ignore unkonwn symbols
+-- commented out ppm, profile, and normalizer in snort.lua since these
+   require special conditions to be enabled
+-- added --dump-defaults to get Lua formatted defaults
+-- split doc for modules into separate sections by type
+-- reworked manual again to include terms and lists of modules and plugins
+-- added non-Lua error message
+-- updated .gitignore and sorted it
+-- fixed --help, etc.
+-- added doc sections for snort2lua, new http, binder, and wizard
+
 123
 -- refactored documentation
 -- changed max_ip6_options to max_ip6_extensions to avoid confusion
@@ -15,6 +51,16 @@
 -- tweaked stats output - no section if all counts zero
 -- fixed pause/resume
 -- comment out assert that doesn't apply to alert_sf_socket
+-- split parse warning count out of error count
+-- added workaround and FIXIT-T for nhttp test
+-- added path to dynamically loaded plugins output with --list-plugins
+-- commented out mpse start up foo - needs reformatting
+-- added snort.detach() and fixed -j parsing
+-- various parsing changes for improved error handling
+-- fixed some Xcode analyzer issues
+-- pulled in cmake updates from Josh
+-- pulled in nhttp updates from Tom
+-- applied cmake inc dir order patch from Josh
 
 122
 -- pulled thread pinning from Josh

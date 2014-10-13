@@ -15,6 +15,6 @@ add_library(output_states
 )
 
 target_link_libraries( output_states
-    util
+    snort2lua_utils
     conversion_data
 )

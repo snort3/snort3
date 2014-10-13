@@ -81,7 +81,7 @@ int gmt2local(time_t);
 void ts_print(register const struct timeval *, char *);
 void strip(char *);
 void CheckLogDir(void);
-char *read_infile(char *);
+char *read_infile(const char* key, const char* fname);
 void CleanupProtoNames(void);
 void CreatePidFile(pid_t);
 void ClosePidFile(void);

@@ -63,6 +63,7 @@ static const Command snort_cmds[] =
     { "process", main_process, "process given pcap" },
     { "pause", main_pause, "suspend packet processing" },
     { "resume", main_resume, "continue packet processing" },
+    { "detach", main_detach, "exit shell w/o shutdown" },
     { "quit", main_quit, "shutdown and dump-stats" },
     { "help", main_help, "this output" },
     { nullptr, nullptr, nullptr }
@@ -74,8 +75,8 @@ static const Command snort_cmds[] =
 
 static const Parameter s_params[] =
 {
-    { "-?", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list command line options (same as --help)" },
+    { "-?", Parameter::PT_STRING, "(optional)", nullptr,
+      "<option prefix> output matching command line option quick help (same as --help-options)" },
 
     { "-A", Parameter::PT_STRING, nullptr, nullptr, 
       "<mode> set alert mode: none, cmg, or alert_*" },
@@ -228,14 +229,14 @@ static const Parameter s_params[] =
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets and release memory on shutdown" },
 
+    { "--dump-defaults", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module prefix>] output module defaults in Lua format" },
+
     { "--enable-inline-test", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable Inline-Test Mode Operation" },
 
     { "--help", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list command line options (same as -?)" },
-
-    { "--help!", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "overview of help" },
+      "list command line options" },
 
     { "--help-commands", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching commands" },
@@ -253,7 +254,7 @@ static const Parameter s_params[] =
       "list all available plugins with brief help" },
 
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
-      "<option prefix> output matching command line option quick help" },
+      "<option prefix> output matching command line option quick help (same as -?)" },
 
     { "--help-signals", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump available control signals" },
@@ -273,8 +274,8 @@ static const Parameter s_params[] =
     { "--list-gids", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching generators" },
 
-    { "--list-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list all known modules" },
+    { "--list-modules", Parameter::PT_STRING, "(optional)", nullptr,
+      "[<module type>] list all known modules of given type" },
 
     { "--list-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all known plugins" },
@@ -372,6 +373,12 @@ static const Parameter s_params[] =
 #endif
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
+
+    { "--warn-flowbits", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about flowbits that checked but not set and vice-versa" },
+
+    { "--warn-unknown", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "warn about unknown symbols in your config" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -556,6 +563,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--dirty-pig") )
         ConfigDirtyPig(sc, v.get_string());
 
+    else if ( v.is("--dump-defaults") )
+        dump_defaults(sc, v.get_string());
+
     else if ( v.is("--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
@@ -666,7 +676,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__SHELL;
 
     else if ( v.is("--show-plugins") )
-        sc->run_flags |= RUN_FLAG__SHOW_PLUGINS;
+        sc->logging_flags |= LOGGING_FLAG__SHOW_PLUGINS;
 
     else if ( v.is("--skip") )
         sc->pkt_skip = v.get_long();
@@ -689,6 +699,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #endif
     else if ( v.is("--version") )
         help_version(sc, v.get_string());
+
+    else if ( v.is("--warn-flowbits") )
+        sc->logging_flags |= LOGGING_FLAG__WARN_FLOWBITS;
+
+    else if ( v.is("--warn-unknown") )
+        sc->logging_flags |= LOGGING_FLAG__WARN_UNKNOWN;
 
     else
         return false;

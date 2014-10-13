@@ -58,7 +58,7 @@ LuaData::~LuaData()
 
 
 
-std::string LuaData::translate_variable(std::string var_name)
+std::string LuaData::translate_variable(const std::string& var_name)
 {
     for (auto v : vars)
         if (!var_name.compare(v->get_name()))
@@ -77,7 +77,7 @@ std::string LuaData::translate_variable(std::string var_name)
  * Given a Snort style string to expand, this funcion will return
  * the expanded string
  */
-std::string LuaData::expand_vars(std::string string)
+std::string LuaData::expand_vars(const std::string &string)
 {
     std::string estring;
     estring.resize(1024, '\0');
@@ -236,7 +236,7 @@ std::string LuaData::expand_vars(std::string string)
 bool LuaData::failed_conversions()
 { return !errors->empty(); }
 
-void LuaData::failed_conversion(std::istringstream& stream)
+void LuaData::failed_conversion(const std::istringstream& stream)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
@@ -248,8 +248,8 @@ void LuaData::failed_conversion(std::istringstream& stream)
     }
 }
 
-void LuaData::failed_conversion(std::istringstream& stream,
-                                std::string unkown_option)
+void LuaData::failed_conversion(const std::istringstream& stream,
+                                const std::string unkown_option)
 {
     // we only need to go through this once.
     if (!curr_data_bad)

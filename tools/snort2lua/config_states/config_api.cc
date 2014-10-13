@@ -111,6 +111,7 @@ extern const ConvertMap* pcre_match_limit_map;
 extern const ConvertMap* pcre_match_limit_recursion_map;
 extern const ConvertMap* pkt_count_map;
 extern const ConvertMap* ppm_map;
+extern const ConvertMap* policy_id_map;
 extern const ConvertMap* policy_mode_map;
 extern const ConvertMap* policy_version_map;
 extern const ConvertMap* profile_preprocs_map;
@@ -226,6 +227,7 @@ const std::vector<const ConvertMap*> config_api =
     pcre_match_limit_recursion_map,
     pkt_count_map,
     ppm_map,
+    policy_id_map,
     policy_mode_map,
     policy_version_map,
     profile_preprocs_map,
@@ -255,6 +257,7 @@ const std::vector<const ConvertMap*> config_api =
 
 #if 0
 
+FIXIT-L J  Add this configuration options when we start supporting them in Snort++
 UNSUPPORTED OPTIONS -- these will all be included at a later date.
 
 ./src/parser.h:#define CONFIG_OPT__POLICY                          "policy_id"

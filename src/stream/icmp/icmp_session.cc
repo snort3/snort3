@@ -93,10 +93,11 @@ static int ProcessIcmpUnreach(Packet *p)
     /* Get IP/TCP/UDP/ICMP session from original protocol/port info
      * embedded in the ICMP Unreach message.
      */
-    skey.protocol = p->get_ip_proto_next();
     src = iph.get_src();
     dst = iph.get_dst();
 
+    skey.protocol = p->get_ip_proto_next();
+    skey.version = src->is_ip4() ? 4 : 6;
 
     if (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)
     {
@@ -116,8 +117,6 @@ static int ProcessIcmpUnreach(Packet *p)
         sport = 0;
         dport = 0;
     }
-
-
 
     if (sfip_fast_lt6(src, dst))
     {
@@ -149,10 +148,14 @@ static int ProcessIcmpUnreach(Packet *p)
         skey.port_h = sport;
     }
 
-    if (p->proto_bits & PROTO_BIT__VLAN)
-        skey.vlan_tag = layer::get_vlan_layer(p)->vid();
-    else
-        skey.vlan_tag = 0;
+    uint16_t vlan = (p->proto_bits & PROTO_BIT__VLAN) ?
+        layer::get_vlan_layer(p)->vid() : 0;
+
+    // FIXIT-L see FlowKey::init*() - call those instead
+    // or do mpls differently for ip4 and ip6
+    skey.init_vlan(vlan);
+    skey.init_address_space(0);
+    skey.init_mpls(0);
 
     switch (p->type())
     {
@@ -192,6 +195,7 @@ static int ProcessIcmpUnreach(Packet *p)
 IcmpSession::IcmpSession(Flow* flow) : Session(flow)
 {
     setup(nullptr);
+    icmpStats.created--;
 }
 
 bool IcmpSession::setup(Packet*)
@@ -199,6 +203,7 @@ bool IcmpSession::setup(Packet*)
     echo_count = 0;
     ssn_time.tv_sec = 0;
     ssn_time.tv_usec = 0;
+    icmpStats.created++;
     return true;
 }
 

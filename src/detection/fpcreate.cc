@@ -51,6 +51,7 @@
 #include "ips_options/ips_ip_proto.h"
 #include "ips_options/ips_flow.h"
 #include "util.h"
+#include "utils/stats.h"
 #include "treenodes.h"
 #include "parser.h"
 #include "target_based/sftarget_reader.h"
@@ -816,7 +817,8 @@ void fpSetMaxQueueEvents(FastPatternConfig *fp, unsigned int num_events)
 void fpSetMaxPatternLen(FastPatternConfig *fp, unsigned int max_len)
 {
     if (fp->max_pattern_len != 0)
-        LogMessage("WARNING: Maximum pattern length redefined.\n");
+        ParseWarning("maximum pattern length redefined from %d to %d.\n",
+            fp->max_pattern_len, max_len);
 
     fp->max_pattern_len = max_len;
 }
@@ -2514,10 +2516,14 @@ int fpCreateFastPacketDetection(SnortConfig *sc)
         if (fpDetectGetDebugPrintRuleGroupBuildDetails(fp))
             LogMessage("Service Based Rule Maps Done....\n");
 
-        LogMessage("\n");
-        LogMessage("[ Port and Service Based Pattern Matching Memory ]\n" );
+        // FIXIT-L cleanup the mpse startup output
+        //LogMessage("\n");
+        //LogMessage("[ Port and Service Based Pattern Matching Memory ]\n" );
     }
 
+#if 0
+    // FIXIT-L update format of search engine startup foo
+    LogLabel("search engine");
     MpseManager::print_mpse_summary(fp->search_api);
 
     if ( fp->max_pattern_len )
@@ -2527,6 +2533,7 @@ int fpCreateFastPacketDetection(SnortConfig *sc)
     }
     if ( fp->num_patterns_trimmed )
         LogMessage("%25.25s: %-12u\n", "prefix trims", fp->num_patterns_trimmed);
+#endif
 
     MpseManager::setup_search_engine(fp->search_api, sc);
 

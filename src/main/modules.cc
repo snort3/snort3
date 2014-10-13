@@ -354,7 +354,7 @@ static const Parameter profile_params[] =
 };
 
 static const char* profile_help =
-    "configure profiling of rules and/or modules";
+    "configure profiling of rules and/or modules (requires --enable-perf-profiling)";
 
 class ProfileModule : public Module
 {

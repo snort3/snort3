@@ -16,6 +16,7 @@ add_library( config_states
     config_ipv6_frag.cc
     config_memcaps.cc
     config_mpls_payload_type.cc
+    config_policy_id.cc
     config_no_option.cc
     config_one_int_option.cc
     config_one_string_option.cc
@@ -28,4 +29,9 @@ add_library( config_states
     config_tunnel_verdicts.cc
     config_api.h
     config_api.cc
+)
+
+target_link_libraries( config_states
+    snort2lua_utils
+    conversion_data
 )

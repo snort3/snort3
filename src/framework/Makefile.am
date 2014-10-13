@@ -13,6 +13,7 @@ cursor.h \
 decode_data.h \
 logger.h \
 inspector.h \
+ips_action.h \
 ips_option.h \
 module.h \
 mpse.h \

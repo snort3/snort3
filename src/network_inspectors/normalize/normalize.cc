@@ -180,7 +180,7 @@ bool Normalizer::configure(SnortConfig*)
     // (not set until after normalizer runs)
     if ( get_ips_policy()->policy_mode != POLICY_MODE__INLINE )
     {
-        LogMessage("WARNING: normalizations disabled because not inline.\n");
+        ParseWarning("normalizations disabled because not inline.\n");
         disabled = true;
         return true;
     }

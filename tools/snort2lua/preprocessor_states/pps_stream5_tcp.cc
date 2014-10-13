@@ -25,10 +25,8 @@
 
 #include "conversion_state.h"
 #include "utils/s2l_util.h"
-#include "preprocessor_states/pps_binder.h"
+#include "utils/util_binder.h"
 
-
-typedef void (Binder::*binder_func)(std::string);
 
 namespace preprocessors
 {
@@ -355,8 +353,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("use_static_footprint_sizes"))
         {
-            table_api.add_diff_option_comment("footprint", "use_static_footprint_sizes");
-            tmpval = table_api.add_option("footprint", true);
+            table_api.add_diff_option_comment("use_static_footprint_sizes", "footprint");
+            table_api.add_comment("default footprint == 192");
+            tmpval = table_api.add_option("footprint", 192);
         }
 
         else if (!keyword.compare("timeout"))

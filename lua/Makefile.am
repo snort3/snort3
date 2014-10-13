@@ -4,6 +4,5 @@ EXTRA_DIST = \
 snort.lua \
 snort_defaults.lua \
 classification.lua \
-reference.lua \
-hosts.lua
+reference.lua
 

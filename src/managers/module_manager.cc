@@ -47,7 +47,7 @@ struct ModHook
 {
     Module* mod;
     const BaseApi* api;
-    luaL_reg* reg;
+    luaL_Reg* reg;
 
     ModHook(Module*, const BaseApi*);
     ~ModHook();
@@ -100,10 +100,10 @@ void ModHook::init()
         n++;
 
     // constructing reg here may seem like overkill
-    // ... why not just typedef Command to luaL_reg?
+    // ... why not just typedef Command to luaL_Reg?
     // because the help would not be supplied or it
     // would be out of date, out of sync, etc. QED
-    reg = new luaL_reg[++n];
+    reg = new luaL_Reg[++n];
     unsigned k = 0;
 
     while ( k < n )
@@ -169,6 +169,73 @@ static ModHook* get_hook(const char* s)
 // (type, fqn, default, brief help, range)
 //-------------------------------------------------------------------------
 
+enum DumpFormat { DF_STD, DF_TAB, DF_LUA };
+static DumpFormat dump_fmt = DF_STD;
+
+static void dump_field_std(const string& key, const Parameter* p)
+{
+    cout << Markup::item();
+    cout << Markup::sanitize(p->get_type());
+    cout << " " << Markup::emphasis(Markup::sanitize(key));
+
+    if ( p->deflt )
+        cout << " = " << Markup::sanitize((char*)p->deflt);
+
+    cout << ": " << p->help;
+
+    if ( p->range )
+        cout << " { " << Markup::sanitize((char*)p->range) << " }";
+
+    cout << endl;
+}
+
+static void dump_field_tab(const string& key, const Parameter* p)
+{
+    cout << Markup::item();
+    cout << p->get_type();
+    cout << "\t" << Markup::emphasis(Markup::sanitize(key));
+
+    if ( p->deflt )
+        cout << "\t" << Markup::sanitize((char*)p->deflt);
+    else
+        cout << "\t";
+
+    cout << "\t" << p->help;
+
+    if ( p->range )
+        cout << "\t" << Markup::sanitize((char*)p->range);
+    else
+        cout << "\t";
+
+    cout << endl;
+}
+
+static void dump_field_lua(const string& key, const Parameter* p, bool table = false)
+{
+    // implied values (rule keywords) and command line args
+    // don't really have defaults, so skip them
+    if ( key.find('~') != string::npos || 
+         key.find('-') != string::npos ||
+         key.find('*') != string::npos )
+        return;
+
+    if ( table || p->is_table() )
+        cout << key << " = { }";
+
+    else if ( p->is_quoted() )
+    {
+        const char* s = p->deflt ? p->deflt : " ";
+        cout << key << " = '" << s << "'";
+    }
+    else
+    {
+        const char* s = p->deflt ? p->deflt : "0";
+        cout << key << " = " << s;
+    }
+
+    cout << endl;
+}
+
 static void dump_table(string&, const char* pfx, const Parameter*, bool list = false);
 
 static void dump_field(string& key, const char* pfx, const Parameter* p, bool list = false)
@@ -176,7 +243,7 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     unsigned n = key.size();
 
     if ( list || !p->name )
-        key += "[]";
+        key += (dump_fmt == DF_LUA) ? "[1]" : "[]";
 
     if ( p->name )
     {
@@ -185,6 +252,11 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
         key += p->name;
     }
 
+    if ( pfx && strncmp(key.c_str(), pfx, strlen(pfx)) )
+    {
+        key.erase();
+        return;
+    }
     // we dump just one list entry
     if ( p->type == Parameter::PT_TABLE )
         dump_table(key, pfx, (Parameter*)p->range);
@@ -192,45 +264,32 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     else if ( p->type == Parameter::PT_LIST )
         dump_table(key, pfx, (Parameter*)p->range, true);
 
-    else if ( !pfx || !strncmp(key.c_str(), pfx, strlen(pfx)) )
+    else
     {
-#if 1
-        cout << Markup::item();
-        cout << Markup::sanitize(p->get_type());
-        cout << " " << Markup::emphasis(Markup::sanitize(key));
+        if ( dump_fmt == DF_LUA )
+            dump_field_lua(key, p);
 
-        if ( p->deflt )
-            cout << " = " << Markup::sanitize((char*)p->deflt);
+        else if ( dump_fmt == DF_TAB )
+            dump_field_tab(key, p);
 
-        cout << ": " << p->help;
-
-        if ( p->range )
-            cout << " { " << Markup::sanitize((char*)p->range) << " }";
-#else
-        cout << Markup::item();
-        cout << p->get_type();
-        cout << "\t" << Markup::emphasis(Markup::sanitize(key));
-
-        if ( p->deflt )
-            cout << "\t" << Markup::sanitize((char*)p->deflt);
         else
-            cout << "\t";
-
-        cout << "\t" << p->help;
-
-        if ( p->range )
-            cout << "\t" << Markup::sanitize((char*)p->range);
-        else
-            cout << "\t";
-
-#endif
-        cout << endl;
+            dump_field_std(key, p);
     }
     key.erase(n);
 }
 
 static void dump_table(string& key, const char* pfx, const Parameter* p, bool list)
 {
+    if ( dump_fmt == DF_LUA )
+    {
+        dump_field_lua(key, p, true);
+
+        if ( list )
+        {
+            string fqn = key + "[1]";
+            dump_field_lua(fqn, p, true);
+        }
+    }
     while ( p->name )
         dump_field(key, pfx, p++, list);
 }
@@ -322,11 +381,40 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
 {
     if ( !mod->set(fqn, val, s_config) )
     {
-        ErrorMessage("ERROR: %s is invalid\n", fqn);
+        ParseError("%s is invalid", fqn);
         ++s_errors;
     }
 
     trace("par", fqn, val);
+    return true;
+}
+
+static bool ignored(const char* fqn)
+{
+    static const char* ignore = nullptr;
+
+    if ( !(snort_conf->logging_flags & LOGGING_FLAG__WARN_UNKNOWN) )
+        return true;
+
+    if ( !ignore )
+    {
+        ignore = getenv("SNORT_IGNORE");
+        if ( !ignore )
+            ignore = "";
+    }
+    const char* s = strstr(ignore, fqn);
+
+    if ( !s )
+        return false;
+
+    if ( s != ignore && s[-1] != ' ' )
+        return false;
+
+    s += strlen(fqn);
+
+    if ( *s && *s != ' ' )
+        return false;
+
     return true;
 }
 
@@ -342,7 +430,13 @@ static bool set_value(const char* fqn, Value& v)
     Module* mod = ModuleManager::get_module(key.c_str());
 
     if ( !mod )
-        return set_var(fqn, v);
+    {
+        bool found = set_var(fqn, v);
+
+        if ( !found && !ignored(fqn) )
+            ParseWarning("uknown symbol %s", fqn);
+        return found;
+    }
 
     // now we must traverse the mod params to get the leaf
     string s = fqn;
@@ -350,7 +444,11 @@ static bool set_value(const char* fqn, Value& v)
  
     if ( !p )
     {
-        ErrorMessage("ERROR can't find %s\n", fqn);
+        // FIXIT-L handle things like x = { 1 }
+        // where x is a table not a list and 1 should be 
+        // considered a key not a value; ideally say
+        // can't find x.1 instead of just can't find x
+        ParseError("can't find %s", fqn);
         ++s_errors;
         return false;
     }
@@ -363,11 +461,11 @@ static bool set_value(const char* fqn, Value& v)
     }
 
     if ( v.get_type() == Value::VT_STR )
-        ErrorMessage("ERROR invalid %s = '%s'\n", fqn, v.get_string());
+        ParseError("invalid %s = '%s'", fqn, v.get_string());
     else if ( v.get_real() == v.get_long() )
-        ErrorMessage("ERROR invalid %s = %ld\n", fqn, v.get_long());
+        ParseError("invalid %s = %ld", fqn, v.get_long());
     else
-        ErrorMessage("ERROR invalid %s = %g\n", fqn, v.get_real());
+        ParseError("invalid %s = %g", fqn, v.get_real());
 
     ++s_errors;
     return false;
@@ -423,12 +521,12 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
         if ( !p )
         {
-            ParseError("can't find %s\n", s);
+            ParseError("can't find %s", s);
             return false;
         }
         else if ((idx > 0) && (p->type == Parameter::PT_TABLE))
         {
-            ParseError("%s is a table. All elements must be named\n", s);
+            ParseError("%s is a table; all elements must be named", s);
             return false;
         }
     }
@@ -559,12 +657,26 @@ void ModuleManager::reset_errors()
 unsigned ModuleManager::get_errors()
 { return s_errors; }
 
-void ModuleManager::list_modules()
+void ModuleManager::list_modules(const char* s)
 {
+    PlugType pt = s ? PluginManager::get_type(s) : PT_MAX;
     s_modules.sort(comp_mods);
+    unsigned c = 0;
 
     for ( auto* p : s_modules )
-        LogMessage("%s\n", p->mod->get_name());
+    {
+        if ( 
+            !s || !*s ||
+            (p->api && p->api->type == pt) ||
+            (!p->api && !strcmp(s, "basic"))
+        )
+        {
+            LogMessage("%s\n", p->mod->get_name());
+            c++;
+        }
+    }
+    if ( !c )
+        cout << "no match" << endl;
 }
 
 void ModuleManager::show_modules()
@@ -572,7 +684,15 @@ void ModuleManager::show_modules()
     s_modules.sort(comp_mods);
 
     for ( auto* p : s_modules )
-        LogMessage("%s: %s\n", p->mod->get_name(), p->mod->get_help());
+    {
+        const char* t = p->api ? PluginManager::get_type_name(p->api->type) : "basic";
+
+        cout << Markup::item();
+        cout << Markup::emphasis(p->mod->get_name());
+        cout << " (" << t;
+        cout << "): " << p->mod->get_help();
+        cout << endl;
+    }
 }
 
 void ModuleManager::dump_modules()
@@ -611,7 +731,7 @@ void ModuleManager::show_module(const char* name)
         if ( strcmp(m->get_name(), name) )
             continue;
 
-        cout << endl << Markup::head() << Markup::sanitize(name) << endl << endl;
+        cout << endl << Markup::head(3) << Markup::sanitize(name) << endl << endl;
 
         if ( const char* h = m->get_help() )
             cout << endl << "What: " << Markup::sanitize(h) << endl;
@@ -660,8 +780,13 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
         Module* m = p->mod;
         string s;
 
-        if ( exact && strcmp(m->get_name(), pfx) )
-            continue;
+        if ( pfx )
+        {
+            if ( exact && strcmp(m->get_name(), pfx) )
+                continue;
+            else if ( !exact && strncmp(m->get_name(), pfx, strlen(pfx)) )
+                continue;
+        }
 
         if ( m->is_list() )
         {
@@ -688,6 +813,12 @@ void ModuleManager::show_configs(const char* pfx, bool exact)
     }
     if ( !c )
         cout << "no match" << endl;
+}
+
+void ModuleManager::dump_defaults(const char* pfx)
+{
+    dump_fmt = DF_LUA;
+    show_configs(pfx);
 }
 
 void ModuleManager::show_commands(const char* pfx)
@@ -862,7 +993,7 @@ static void make_rule(ostream& os, const Module* m, const RuleMap* r)
 // (we don't want to suppress it because it could mean something is broken)
 void ModuleManager::load_rules(SnortConfig* sc)
 {
-    // FIXIT-M callers of ParseConfigString() should not have to push parse loc
+    s_modules.sort(comp_gids);
     push_parse_location("builtin");
 
     for ( auto p : s_modules )

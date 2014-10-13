@@ -300,8 +300,10 @@ int main_reload_config(lua_State*)
         request.respond("== reload failed\n");
         return 0;
     }
-    proc_stats.conf_reloads++;
     request.respond(".. swapping configuration\n");
+    snort_conf = sc;
+    proc_stats.conf_reloads++;
+
     swapper = new Swapper(old, sc);
 
     for ( unsigned idx = 0; idx < max_pigs; ++idx )
@@ -360,6 +362,13 @@ int main_resume(lua_State*)
     request.respond("== resuming\n");
     broadcast(AC_RESUME);
     paused = false;
+    return 0;
+}
+
+int main_detach(lua_State*)
+{
+    shell_enabled = false;
+    request.respond("== detaching\n");
     return 0;
 }
 
@@ -646,6 +655,15 @@ static bool set_mode()
         FatalError("see prior %d errors\n", k);
         return false;
     }
+    if ( ScConfErrorOut() )
+    {
+        if ( int k = get_parse_warnings() )
+        {
+            FatalError("see prior %d warnings\n", k);
+            return false;
+        }
+    }
+
     if ( ScTestMode() ||
         (!Trough_GetQCount() && !(snort_conf->run_flags & RUN_FLAG__SHELL)) )
     {

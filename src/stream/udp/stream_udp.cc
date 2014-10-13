@@ -27,7 +27,7 @@
 
 #include "stream_udp.h"
 #include "udp_module.h"
-#include "udp_session.h"
+#include "stream/udp/udp_session.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 

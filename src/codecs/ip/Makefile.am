@@ -45,7 +45,7 @@ libcd_auth_la_SOURCES = cd_auth.cc ip_util.h ip_util.cc
 ehlib_LTLIBRARIES += libcd_esp.la
 libcd_esp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 libcd_esp_la_LDFLAGS = -export-dynamic -shared
-libcd_esp_la_SOURCES = cd_esp.cc ip_uti.h ip_util.cc
+libcd_esp_la_SOURCES = cd_esp.cc ip_util.h ip_util.cc
 
 ehlib_LTLIBRARIES += libcd_gre.la
 libcd_gre_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

@@ -56,7 +56,7 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     if (!(data_stream >> keyword))
         return true;
 
-    retval = table_api.add_option("file", keyword);
+    table_api.add_deleted_comment("<filename> can no longer be specific");
 
 
     if (!(data_stream >> keyword))

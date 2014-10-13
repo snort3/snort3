@@ -104,10 +104,9 @@ int DisplayBanner(void)
     const char * zlib_ver;
 
     info = getenv("HOSTTYPE");
+
     if( !info )
-    {
-        info="from 296-9";  // last sync with head
-    }
+        info="from 2.9.6-9";  // last sync with head
 
     pcre_ver = pcre_version();
     zlib_ver = zlib_version;
@@ -373,7 +372,7 @@ void SetUidGid(int user_id, int group_id)
     if ((group_id != -1) && (getgid() != (gid_t)group_id))
     {
         if ( !DAQ_Unprivileged() )
-            ParseError("WARNING: cannot set uid and gid - %s DAQ does not"
+            ParseError("cannot set uid and gid - %s DAQ does not"
                 " support unprivileged operation.\n", DAQ_GetType());
 
         else if (setgid(group_id) < 0)
@@ -386,7 +385,7 @@ void SetUidGid(int user_id, int group_id)
     if ((user_id != -1) && (getuid() != (uid_t)user_id))
     {
         if ( !DAQ_Unprivileged() )
-            ParseError("WARNING: cannot set uid and gid - %s DAQ does not"
+            ParseError("cannot set uid and gid - %s DAQ does not"
                 " support unprivileged operation.\n", DAQ_GetType());
 
         else if (setuid(user_id) < 0)
@@ -487,7 +486,7 @@ void CleanupProtoNames(void)
 
 /****************************************************************************
  *
- * Function: read_infile(char *)
+ * Function: read_infile(const char* key, const char* file)
  *
  * Purpose: Reads the BPF filters in from a file.  Ripped from tcpdump.
  *
@@ -496,7 +495,7 @@ void CleanupProtoNames(void)
  * Returns: the processed BPF string
  *
  ****************************************************************************/
-char *read_infile(char *fname)
+char *read_infile(const char* key, const char* fname)
 {
     int fd, cc;
     char *cp, *cmt;
@@ -506,7 +505,7 @@ char *read_infile(char *fname)
 
     if(fd < 0)
     {
-        ParseError("can't open %s: %s\n", fname, get_error(errno));
+        ParseError("can't open %s = %s: %s\n", key, fname, get_error(errno));
         return nullptr;
     }
 

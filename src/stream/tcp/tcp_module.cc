@@ -85,7 +85,7 @@ static const Parameter stream_tcp_small_params[] =
     { "maximum_size", Parameter::PT_INT, "0:2048", "0",
       "limit number of small segments queued" },
 
-    { "ignore_ports", Parameter::PT_BIT_LIST, "65535", "2621",
+    { "ignore_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "limit number of small segments queued" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -140,7 +140,7 @@ static const Parameter s_params[] =
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
 
-    { "footprint", Parameter::PT_INT, "0:", "false",
+    { "footprint", Parameter::PT_INT, "0:", "0",
       "use zero for production, non-zero for testing at given size" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

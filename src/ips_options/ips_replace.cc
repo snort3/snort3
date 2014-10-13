@@ -68,7 +68,7 @@ static bool replace_ok()
     {
         if ( !warned )
         {
-            LogMessage("WARNING: payload replacements disabled because DAQ "
+            ParseWarning("payload replacements disabled because DAQ "
                 " can't replace packets.\n");
             warned = 1;
         }
@@ -252,7 +252,7 @@ static void mod_dtor(Module* m)
 static IpsOption* replace_ctor(Module* p, OptTreeNode* otn)
 {
     if ( !replace_ok() )
-        ParseError("Inline mode and DAQ with replace capabilities required "
+        ParseError("inline mode and DAQ with replace capabilities required "
             "to use rule option 'replace'.");
 
     ReplModule* m = (ReplModule*)p;
@@ -262,7 +262,7 @@ static IpsOption* replace_ctor(Module* p, OptTreeNode* otn)
         return opt;
 
     delete opt;
-    ParseError("At most one action per rule is allowed");
+    ParseError("at most one action per rule is allowed");
     return nullptr;
 }
 

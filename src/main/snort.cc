@@ -118,7 +118,7 @@ using namespace std;
 
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL Packet* s_packet; // runtime variable.
+static THREAD_LOCAL Packet* s_packet = nullptr; // runtime variable.
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 static SnortConfig* snort_cmd_line_conf = nullptr;
 
@@ -298,18 +298,18 @@ static void SnortInit(int argc, char **argv)
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
     LogMessage("--------------------------------------------------\n");
 
+    InitProtoNames();
+    SFAT_Init();
+
     ModuleManager::init();
     ScriptManager::load_scripts(snort_cmd_line_conf->script_path);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
 
-    if ( snort_conf->run_flags & RUN_FLAG__SHOW_PLUGINS )
+    if ( snort_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
     {
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
     }
-
-    InitProtoNames();
-    SFAT_Init();
 
     FileAPIInit();
     register_profiles();
@@ -333,9 +333,9 @@ static void SnortInit(int argc, char **argv)
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
-        FatalError("can't initialize inspectors\n");
+        ParseError("can't initialize inspectors");
 
-    if ( ScLogVerbose() )
+    else if ( ScLogVerbose() )
         InspectorManager::print_config(snort_conf);
 
     ParseRules(snort_conf);
@@ -368,7 +368,7 @@ static void SnortInit(int argc, char **argv)
     SFAT_Start();
 
 #ifdef PPM_MGR
-    PPM_PRINT_CFG(&snort_conf->ppm_cfg);
+    //PPM_PRINT_CFG(&snort_conf->ppm_cfg);
 #endif
 
     /* Finish up the pcap list and put in the queues */
@@ -377,7 +377,7 @@ static void SnortInit(int argc, char **argv)
     // FIXIT-L stuff like this that is also done in snort_config.cc::VerifyReload()
     // should be refactored
     if ((snort_conf->bpf_filter == NULL) && (snort_conf->bpf_file != NULL))
-        snort_conf->bpf_filter = read_infile(snort_conf->bpf_file);
+        snort_conf->bpf_filter = read_infile("packets.bpf_file", snort_conf->bpf_file);
 
     if (snort_conf->bpf_filter != NULL)
         LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter);
@@ -649,7 +649,7 @@ SnortConfig* get_reload_config()
     }
 
 #ifdef PPM_MGR
-    PPM_PRINT_CFG(&sc->ppm_cfg);
+    //PPM_PRINT_CFG(&sc->ppm_cfg);
 #endif
 
     return sc;
@@ -679,7 +679,7 @@ Packet* get_current_packet()
 // capture all if it is not clear which thread crashed
 void CapturePacket()
 {
-    if ( s_packet->pkth )
+    if ( s_packet && s_packet->pkth )
     {
         s_pkth = *(s_packet->pkth);
 
@@ -888,7 +888,7 @@ DAQ_Verdict packet_callback(
         flow_con->timeout_flows(4, pkthdr->ts.tv_sec);
     }
 
-    s_packet->pkth = NULL;  // no longer avail on segv
+    s_packet->pkth = nullptr;  // no longer avail on segv
 
     if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
         DAQ_BreakLoop(-1);

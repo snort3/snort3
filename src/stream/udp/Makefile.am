@@ -8,7 +8,7 @@ stream_udp.h \
 udp_module.cc \
 udp_module.h \
 udp_session.cc \
-udp_session.cc
+udp_session.h
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

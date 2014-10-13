@@ -108,8 +108,8 @@ config checksum_drop: none noip notcp noicmp noudp ip tcp udp icmp all
  config flowbits_size: 64
 
 # Configure ports to ignore 
- config ignore_ports: tcp 21 6667:6671 1356
- config ignore_ports: udp 1:17 53
+ config ignore_ports: tcp 21 any 6667:6671 1356 :14
+ config ignore_ports: udp 1:17 53 65530:
 
 # Configure default snaplen. Snort defaults to MTU of in use interface. For more information see README
 config snaplen: 1450
@@ -250,6 +250,10 @@ rate_filter gen_id 119,sig_id 404, track by_src, count 10,seconds 20, timeout 50
 config paf_max: 00
 config ignore_ports: tcp 21 6667:6671 1356
 config ignore_ports: udp 1:17 53
+
+config binding: @CMAKE_CURRENT_SOURCE_DIR@/binding_vlan.conf vlan 0-5,15,4090-4095
+config binding: @CMAKE_CURRENT_SOURCE_DIR@/binding_net.conf net  192.168.0.0/16,10.4.11.0/24
+config binding: @CMAKE_CURRENT_SOURCE_DIR@/binding_policy.conf policy_id 5,25,51,
 
 ###################################################
 # Step #3: Configure the base detection engine.  For more information, see  README.decode

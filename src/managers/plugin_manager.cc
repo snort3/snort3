@@ -110,6 +110,15 @@ static Symbol symbols[PT_MAX] =
 };
 #endif
 
+PlugType PluginManager::get_type(const char* s)
+{
+    for ( int i = 0; i < PT_MAX; i++ )
+        if ( !strcmp(s, symbols[i].name) )
+            return (PlugType)i;
+
+    return PT_MAX;
+}
+
 const char* PluginManager::get_type_name(PlugType pt)
 {
     if ( pt >= PT_MAX )
@@ -125,7 +134,9 @@ const char* PluginManager::get_current_plugin()
 
 struct Plugin
 {
+    string source;
     string key;
+
     const BaseApi* api;
     void* handle;
 
@@ -133,7 +144,7 @@ struct Plugin
     { clear(); };
 
     void clear()
-    { key.clear(); api = nullptr; handle = nullptr; };
+    { source.clear(); key.clear(); api = nullptr; handle = nullptr; };
 };
 
 typedef map<string, Plugin> PlugMap;
@@ -160,7 +171,7 @@ static void set_key(string& key, Symbol* sym, const char* name)
 }
 
 static bool register_plugin(
-    const BaseApi* api, void* handle = nullptr)
+    const BaseApi* api, void* handle, const char* file)
 {
     if ( api->type >= PT_MAX )
         return false;
@@ -189,6 +200,7 @@ static bool register_plugin(
     p.key = key;
     p.api = api;
     p.handle = handle;
+    p.source = file;
 
     if ( handle )
         ++ref_map[handle].count;
@@ -196,13 +208,14 @@ static bool register_plugin(
     return true;
 }
 
-static void load_list(const BaseApi** api, void* handle = nullptr)
+static void load_list(
+    const BaseApi** api, void* handle = nullptr, const char* file = "static")
 {
     bool keep = false;
 
     while ( *api )
     {
-        keep = register_plugin(*api, handle) || keep;
+        keep = register_plugin(*api, handle, file) || keep;
         ++api;
     }
     if ( handle && !keep )
@@ -229,7 +242,7 @@ static bool load_lib(const char* file)
         dlclose(handle);
         return false;
     }
-    load_list(api, handle);
+    load_list(api, handle, file);
     return true;
 }
 
@@ -347,6 +360,7 @@ void PluginManager::load_plugins(const char* paths)
     ::load_plugins(paths);
 
     // scripts
+    // FIXIT-L need path to script for --list-plugins
     load_list(ScriptManager::get_plugins());
 
     add_plugins();
@@ -362,6 +376,7 @@ void PluginManager::list_plugins()
         cout << Markup::item();
         cout << Markup::sanitize(p.key);
         cout << " v" << p.api->version;
+        cout << " " << p.source;
         cout << endl;
     }
 }
@@ -373,7 +388,10 @@ void PluginManager::show_plugins()
     for ( it = plug_map.begin(); it != plug_map.end(); ++it )
     {
         Plugin& p = it->second;
-        cout << p.key << ": " << p.api->help << endl;
+
+        cout << Markup::item();
+        cout << Markup::emphasis(p.key);
+        cout << ": " << p.api->help << endl;
     }
 }
 
@@ -469,7 +487,14 @@ void PluginManager::instantiate(
 void PluginManager::instantiate(
     const BaseApi* api, Module* mod, SnortConfig* sc, const char* name)
 {
-    assert(api->type == PT_INSPECTOR);
-    InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
+    if ( api->type == PT_INSPECTOR )
+        InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
+
+    else if ( api->type == PT_DATA )
+        // FIXIT-H instantiate PT_DATA with name
+        DataManager::instantiate((DataApi*)api, mod, sc/*, name*/);
+
+    else
+        assert(false);
 }
 

@@ -24,8 +24,8 @@ require('snort_config')  -- for loading
 -- Setup the network addresses you are protecting
 HOME_NET = 'any'
 
--- Set up the external network addresses. Leave as "any" in most
--- situations
+-- Set up the external network addresses.
+-- (leave as "any" in most situations)
 EXTERNAL_NET = 'any'
 
 dir = os.getenv('SNORT_LUA_PATH')
@@ -43,17 +43,31 @@ dofile(dir .. 'reference.lua')
 ---------------------------------------------------------------------------
 --
 -- mod = { } uses internal defaults
--- you can see them with --help-module mod
+-- you can see them with snort --help-module mod
 -- comment or delete to disable mod functionality
 --
 -- you can also use default_ftp_server and default_wizard
 ---------------------------------------------------------------------------
 
-ppm = { }
-profile = { }
-perf_monitor = { }
+-- uncomment ppm if you built with --enable-ppm
+--ppm = { }
 
-normalize = { }
+-- uncomment profile if you built with --enable-perfprofile
+--profile = { }
+
+-- uncomment normalizer if you are inline or not --pedantic
+--normalizer = { }
+
+-- experimental: only enable http_* or nhttp_inspect, not both
+--nhttp_inspect = { }
+
+stream = { }
+stream_ip = { }
+stream_icmp = { }
+stream_tcp = { }
+stream_udp = { }
+
+perf_monitor = { }
 
 arp_spoof = { }
 back_orifice = { }
@@ -64,27 +78,12 @@ port_scan = { }
 
 http_inspect = { }
 http_server = { }
---nhttp_inspect =
---{
---    test_input = false,
---    test_output = false
---}
 
 telnet = { }
 
 ftp_server = default_ftp_server
 ftp_client = { }
 ftp_data = { }
-
-stream = { }
-stream_ip = { }
-stream_icmp = { }
-stream_tcp = { }
-stream_udp = { }
-
-react = { }
-reject = { }
---rewrite = { }
 
 wizard = default_wizard
 
@@ -95,14 +94,22 @@ wizard = default_wizard
 local_rules =
 [[
 # snort-classic comments, includes, and rules with $VARIABLES
-alert tcp any any -> any 80 ( sid:1; http_method; content:"GET"; )
+
+alert tcp any any -> any [80 81] ( sid:1; msg:"test"; http_method; content:"GE", offset 0, depth 2; content:"T", distance 0, within 1; )
+
+#alert tcp any any -> any [80 81] ( sid:1; msg:"test"; http_method; find:"pat = 'GET'"; )
 ]]
 
 ips =
 {
-    --include = '../test.rules',
     --include = '../rules/active.rules',
-    rules = local_rules,
+    --rules = local_rules,
     --enable_builtin_rules = true
 }
+
+---------------------------------------------------------------------------
+-- set up any custom loggers
+---------------------------------------------------------------------------
+
+alert_test = { file = false }
 

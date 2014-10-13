@@ -39,6 +39,7 @@ using namespace std;
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
+#include "managers/script_manager.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
 #include "utils/util.h"
@@ -50,7 +51,7 @@ static const char* snort_help =
 "\n"
 "Snort has several options to get more help:\n"
 "\n"
-"-? list command line options\n"
+"-? list command line options (same as --help)\n"
 "--help this overview of help\n"
 "--help-commands [<module prefix>] output matching commands\n"
 "--help-config [<module prefix>] output matching config options\n"
@@ -62,9 +63,9 @@ static const char* snort_help =
 "--list-buffers output available inspection buffers\n"
 "--list-builtin [<module prefix>] output matching builtin rules\n"
 "--list-gids [<module prefix>] output matching generators\n"
-"--list-modules list all known modules\n"
+"--list-modules [<module type>] list all known modules\n"
 "--list-plugins list all known modules\n"
-"--markup output help in asciidoc compatible format\n"
+"--show-plugins list module and plugin versions\n"
 "\n"
 "--help* and --list* options preempt other processing so should be last on the\n"
 "command line since any following options are ignored.  To ensure options like\n"
@@ -100,7 +101,11 @@ void help_args(const char* pfx)
 
     while ( p->name )
     {
-        if ( p->help && (!n || !strncasecmp(p->name, pfx, n)) )
+        const char* name = p->name;
+        while ( *name == '-' )
+            name++;
+
+        if ( p->help && (!n || !strncasecmp(name, pfx, n)) )
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
@@ -150,12 +155,13 @@ void help_signals(SnortConfig*, const char*)
 enum HelpType {
     HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
     HT_BUF, HT_LST, HT_PLG, HT_DDR, HT_DBR,
-    HT_HMO, HT_HPL
+    HT_HMO, HT_HPL, HT_DFL
 };
 
 static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
     snort_conf = SnortConfNew();
+    ScriptManager::load_scripts(sc->script_path);
     PluginManager::load_plugins(sc->plugin_path);
     ModuleManager::init();
 
@@ -180,7 +186,7 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         InspectorManager::dump_buffers();
         break;
     case HT_LST:
-        ModuleManager::list_modules();
+        ModuleManager::list_modules(val);
         break;
     case HT_PLG:
         PluginManager::list_plugins();
@@ -196,6 +202,9 @@ static void show_help(SnortConfig* sc, const char* val, HelpType ht)
         break;
     case HT_HPL:
         PluginManager::show_plugins();
+        break;
+    case HT_DFL:
+        ModuleManager::dump_defaults(val);
         break;
     }
     ModuleManager::term();
@@ -257,6 +266,11 @@ void list_modules(SnortConfig* sc, const char* val)
 void list_plugins(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PLG);
+}
+
+void dump_defaults(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_DFL);
 }
 
 void dump_builtin_rules(SnortConfig* sc, const char* val)

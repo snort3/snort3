@@ -68,7 +68,7 @@ bool AlertTest::convert(std::istringstream& data_stream)
 
 
         if (!keyword.compare("stdout"))
-            tmpval = table_api.add_option("file", "stdout");
+            tmpval = table_api.add_deleted_comment("stdout");
 
         else if (!keyword.compare("session"))
             tmpval = table_api.add_option("session", true);
@@ -80,22 +80,7 @@ bool AlertTest::convert(std::istringstream& data_stream)
             tmpval = table_api.add_option("msg", true);
 
         else if (!keyword.compare("file"))
-        {
-            std::string file_name;
-
-            if (arg_stream >> file_name)
-            {
-                tmpval = table_api.add_option("file", file_name);
-            }
-            else
-            {
-#ifdef WIN32
-                tmpval = table_api.add_option("file", "alert.ids");
-#else
-                tmpval = table_api.add_option("file", "alert");
-#endif
-            }
-        }
+            table_api.add_deleted_comment("file");
 
         else
             tmpval = false;

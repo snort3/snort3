@@ -60,7 +60,7 @@ static const Parameter udp_params[] =
 
     // FIXIT-L use PT_BIT_LIST
     { "gtp_ports", Parameter::PT_STRING, nullptr,
-      "'2152 3386'", "set GTP ports" },
+      "2152 3386", "set GTP ports" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

@@ -88,7 +88,8 @@ void LogLabel(const char* s)
 
 void LogCount (const char* s, uint64_t c)
 {
-    LogMessage("%25.25s: " STDu64 "\n", s, c);
+    if ( c )
+        LogMessage("%25.25s: " STDu64 "\n", s, c);
 }
 
 void LogStat (const char* s, uint64_t n, uint64_t tot)
@@ -284,7 +285,9 @@ void DropStats()
         daq_stats.skipped = snort_conf->pkt_skip; 
 #endif
 
-        LogLabel("daq");
+        if ( pkts_recv )
+            LogLabel("daq");
+
         PegCount pcaps = Trough_GetFileCount();
         if ( pcaps )
             LogCount("pcaps", pcaps);

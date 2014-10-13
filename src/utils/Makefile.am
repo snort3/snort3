@@ -7,6 +7,7 @@ x_includedir = $(pkgincludedir)/utils
 x_include_HEADERS = \
 bitop.h \
 bitop_funcs.h \
+dnet_header.h \
 segment_mem.h \
 sflsq.h \
 sfmemcap.h \
