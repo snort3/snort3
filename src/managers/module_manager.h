@@ -37,7 +37,7 @@ public:
     static Module* get_module(const char*);
     static const char* get_current_module();
 
-    static void list_modules();
+    static void list_modules(const char* = nullptr);
     static void dump_modules();
     static void show_modules();
 
@@ -47,7 +47,9 @@ public:
     static void show_gids(const char* = nullptr);
     static void show_pegs(const char* = nullptr);
     static void show_rules(const char* = nullptr);
+
     static void dump_rules(const char* = nullptr);
+    static void dump_defaults(const char* = nullptr);
 
     static void load_commands(SnortConfig*);
     static void load_rules(SnortConfig*);

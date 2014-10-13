@@ -61,6 +61,12 @@ struct Parameter
     bool is_positional() const
     { return ( name && *name == '~' ); };
 
+    bool is_table() const
+    { return ( type == PT_TABLE || type == PT_LIST ); };
+
+    bool is_quoted() const
+    { return ( type > PT_PORT ); };
+
     static const Parameter* find(const Parameter*, const char*);
 };
 

@@ -123,3 +123,15 @@ Some things just need to be tweaked or prototyped quickly.  In addition to
 the Lua conf, which is a script that can contain functions to compute
 settings, etc., you can also script Loggers and IpsOptions.
 
+=== New Http Inspector
+
+*TBD*
+
+=== Binder
+
+*TBD*
+
+=== Wizard
+
+*TBD*
+

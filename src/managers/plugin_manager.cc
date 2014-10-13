@@ -110,6 +110,15 @@ static Symbol symbols[PT_MAX] =
 };
 #endif
 
+PlugType PluginManager::get_type(const char* s)
+{
+    for ( int i = 0; i < PT_MAX; i++ )
+        if ( !strcmp(s, symbols[i].name) )
+            return (PlugType)i;
+
+    return PT_MAX;
+}
+
 const char* PluginManager::get_type_name(PlugType pt)
 {
     if ( pt >= PT_MAX )
@@ -379,7 +388,10 @@ void PluginManager::show_plugins()
     for ( it = plug_map.begin(); it != plug_map.end(); ++it )
     {
         Plugin& p = it->second;
-        cout << p.key << ": " << p.api->help << endl;
+
+        cout << Markup::item();
+        cout << Markup::emphasis(p.key);
+        cout << ": " << p.api->help << endl;
     }
 }
 

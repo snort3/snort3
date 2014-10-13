@@ -51,8 +51,10 @@ public:
     static void dump_plugins();
     static void release_plugins();
 
-    static const BaseApi* get_api(PlugType, const char* name);
+    static PlugType get_type(const char*);
     static const char* get_type_name(PlugType);
+
+    static const BaseApi* get_api(PlugType, const char* name);
     static const char* get_current_plugin();
 
     static void instantiate(const BaseApi*, Module*, SnortConfig*);

@@ -49,11 +49,25 @@ dofile(dir .. 'reference.lua')
 -- you can also use default_ftp_server and default_wizard
 ---------------------------------------------------------------------------
 
-ppm = { }
-profile = { }
-perf_monitor = { }
+-- uncomment ppm if you built with --enable-ppm
+--ppm = { }
 
-normalizer = { }
+-- uncomment profile if you built with --enable-perfprofile
+--profile = { }
+
+-- uncomment normalizer if you are inline or not --pedantic
+--normalizer = { }
+
+-- experimental: only enable http_* or nhttp_inspect, not both
+--nhttp_inspect = { }
+
+stream = { }
+stream_ip = { }
+stream_icmp = { }
+stream_tcp = { }
+stream_udp = { }
+
+perf_monitor = { }
 
 arp_spoof = { }
 back_orifice = { }
@@ -64,23 +78,12 @@ port_scan = { }
 
 http_inspect = { }
 http_server = { }
---nhttp_inspect = { }
 
 telnet = { }
 
 ftp_server = default_ftp_server
 ftp_client = { }
 ftp_data = { }
-
-stream = { }
-stream_ip = { }
-stream_icmp = { }
-stream_tcp = { }
-stream_udp = { }
-
-react = { }
-reject = { }
---rewrite = { }
 
 wizard = default_wizard
 
@@ -99,7 +102,6 @@ alert tcp any any -> any [80 81] ( sid:1; msg:"test"; http_method; content:"GE",
 
 ips =
 {
-    --include = '../test.rules',
     --include = '../rules/active.rules',
     --rules = local_rules,
     --enable_builtin_rules = true
