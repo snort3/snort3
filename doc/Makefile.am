@@ -30,6 +30,7 @@ snort_manual.txt \
 overview.txt \
 config_changes.txt \
 errors.txt \
+enviro.txt \
 differences.txt \
 extending.txt \
 reference.txt \
@@ -113,7 +114,7 @@ ips_action.txt: $(snort)
 	done > $@
 
 ips_option.txt: $(snort)
-	for m in `$(snort) --list-modules ips_action` ; do \
+	for m in `$(snort) --list-modules ips_option` ; do \
 		$(snort) --markup --help-module $$m ; \
 	done > $@
 

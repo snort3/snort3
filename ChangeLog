@@ -5,6 +5,7 @@
    const s
 -- updated style guide - please read and follow or comment on it!
 -- silenced bogus -O2 warnings
+-- updated ChangeLog terms; added env vars
 
 124
 -- valgrind cleanup

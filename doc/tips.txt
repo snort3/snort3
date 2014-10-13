@@ -6,16 +6,16 @@ Required:
 
 * autotools or cmake to build from source.
 
-* daq from snort.org for packet IO.
+* daq from http://www.snort.org for packet IO.
 
-* luajit from luajit.org for configuration and scripting.
+* dnet from http://code.google.com/p/libdnet/ for network utility
+  functions.
+
+* luajit from http://luajit.org for configuration and scripting.
 
 * pcap from http://www.tcpdump.org for tcpdump logging.
 
 * pcre from http://www.pcre.org for regex pattern matching.
-
-* dnet from http://code.google.com/p/libdnet/ for network utility
-  functions.
 
 * zlib from http://www.zlib.net for decompression.
 
@@ -88,8 +88,12 @@ Optional:
   option.  You can even add rules to your config via the command line.
 
 * The Lua config is a 'live' script that is executed when loaded.  You can
-  add functions, grab environment variables, compute values, etc.  Symbols
-  unknown to Snort++ are silently ignored.
+  add functions, grab environment variables, compute values, etc.
+  
+* By default, symbols unknown to Snort++ are silently ignored.  You can
+  generate warnings for with --warn-unknown.  Adding --pedantic makes them
+  fatal.  To ignore such symbols, export them in the environment variable
+  SNORT_IGNORE.
 
 
 === Running
