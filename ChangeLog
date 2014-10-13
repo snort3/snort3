@@ -4,6 +4,7 @@
 -- changed most static const char* s to #define s or static const char*
    const s
 -- updated style guide - please read and follow or comment on it!
+-- silenced bogus -O2 warnings
 
 124
 -- valgrind cleanup
