@@ -224,8 +224,6 @@ int Converter::convert(std::string input,
 
     if (!rule_api.empty())
     {
-        std::cout << "rule_file" << rule_file << std::endl;
-        std::cout << "out_file " << output_file << std::endl;
         if (rule_file.empty() || !rule_file.compare(output_file))
         {
             std::string s = std::string("$default_rules");

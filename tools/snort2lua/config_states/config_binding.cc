@@ -189,16 +189,20 @@ bool Binding::convert(std::istringstream& data_stream)
         if (util::file_exists(full_path))
         {
             Converter cv;
+//            file = file + ".lua";  FIXIT-L  the file names should contain their original variables
             file = full_path + ".lua";
 
-            if (cv.convert(full_path, file) < 0)
+            if (cv.convert(full_path, full_path + ".lua") < 0)
                 rc = false;
 
         }
+        else
+        {
+            rc = false;
+        }
     }
 
-    // FIXIT-L  J  this file extension shoudl not be hardcoded
-    bind.set_use_file(file + ".lua");
+    bind.set_use_file(file);
     return rc;
 }
 

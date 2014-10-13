@@ -292,7 +292,9 @@ bool DataApi::add_include_file(std::string file_name)
 void DataApi::developer_error(std::string error_string)
 {
     dev_warnings++;
-    std::cout << "RUNTIME ERROR: " << error_string << std::endl;
+
+    if (!is_quiet_mode())
+        std::cout << "RUNTIME ERROR: " << error_string << std::endl;
 }
 
 void DataApi::add_comment(std::string c)

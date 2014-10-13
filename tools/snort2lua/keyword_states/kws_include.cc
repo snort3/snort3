@@ -64,17 +64,16 @@ bool Include::convert(std::istringstream& data_stream)
 
 
             // if we still can't find this file, add it as a snort file
-            if (!util::file_exists(full_file))
-                rule_api.add_hdr_data("include " + file);
-            else
+            if (util::file_exists(full_file))
+            {
                 cv.parse_include_file(full_file);
+                return true;
+            }
         }
-        else
-        {
-            rule_api.add_hdr_data("include " + file);
-        }
-        return true;
     }
+
+    rule_api.add_hdr_data("include " + file);
+    data_api.failed_conversion(data_stream, "file: " + file);
     return false;
 }
 

@@ -18,6 +18,7 @@ set(HELP_SOURCES
     commands.txt
     config.txt
     options.txt
+    plugins.txt
 )
 
 set(LIST_SOURCES
@@ -39,12 +40,14 @@ set (UNBUILT_SOURCES
     errors.txt
     differences.txt
     extending.txt
-    plugins.txt
     reference.txt
+    snort2lua.txt
     style.txt
     tips.txt
+    terms.txt
 #   config_changes.txt  If ruby executable is NOT found
 )
+
 
 if (MAKE_HTML_DOC)
     set(HTML_DOCS

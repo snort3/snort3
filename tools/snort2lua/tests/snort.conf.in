@@ -69,6 +69,9 @@ portvar GTP_PORTS [2123,2152,3386]
 #var 3DMZ_NETS [[10.1.1.1,10.1.1.2,10.2.0.0/16]]
 #var 3DMZ_PORTS 1035
 
+var TEST_PATH @CMAKE_CURRENT_BINARY_DIR@
+var SOURCE_PATH @CMAKE_CURRENT_LIST_DIR@
+
 # other variables, these should not be modified
 ipvar AIM_SERVERS [64.12.24.0/23,64.12.28.0/23,64.12.161.0/24,64.12.163.0/24,64.12.200.0/24,205.188.3.0/24,205.188.5.0/24,205.188.7.0/24,205.188.9.0/24,205.188.153.0/24,205.188.179.0/24,205.188.248.0/24]
 
@@ -252,7 +255,7 @@ config paf_max: 00
 config ignore_ports: tcp 21 6667:6671 1356
 config ignore_ports: udp 1:17 53
 
-config binding: @CMAKE_CURRENT_SOURCE_DIR@/binding_vlan.conf vlan 0-5,15,4090-4095
+config binding: $SOURCE_PATH/binding_vlan.conf vlan 0-5,15,4090-4095
 config binding: @CMAKE_CURRENT_SOURCE_DIR@/binding_net.conf net  192.168.0.0/16,10.4.11.0/24
 config binding: @CMAKE_CURRENT_SOURCE_DIR@/binding_policy.conf policy_id 5,25,51,
 
