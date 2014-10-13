@@ -91,12 +91,12 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
     int new_char;
     typedef enum { WAITING, COMMENT, COMMAND, SECTION, ESCAPE, HEXVAL } State;
     State state = WAITING;
-    bool ending;
-    int command_length;
+    bool ending = false;
+    int command_length = 0;
     const int max_command = 100;
     char command_value[max_command];
-    uint8_t hex_val;
-    int num_digits;
+    uint8_t hex_val = 0;
+    int num_digits = 0;
 
     while ((new_char = getc(test_data_file)) != EOF) {
         switch (state) {

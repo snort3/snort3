@@ -53,6 +53,8 @@ void NHttpMsgStatus::analyze() {
 }
 
 void NHttpMsgStatus::parse_start_line() {
+    // FIXIT-M need to be able to parse a truncated status line and extract version and status code.
+
     // Eventually we may need to cater to certain format errors, but for now exact match or treat as error.
     // HTTP/X.Y<SP>###<SP><text>
     if ((start_line.length < 13) || (start_line.start[8] != ' ') || (start_line.start[12] != ' ')) {

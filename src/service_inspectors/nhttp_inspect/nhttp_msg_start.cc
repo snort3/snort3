@@ -69,7 +69,8 @@ void NHttpMsgStart::derive_version_id() {
     else if ((version.start[5] == '2') && (version.start[7] == '0')) {
         version_id = VERS_2_0;
     }
-    else if ((version.start[5] >= '0') && (version.start[5] <= '9') && (version.start[7] >= '0') && (version.start[7] <= '9')) {
+    else if ((version.start[5] >= '0') && (version.start[5] <= '9') &&
+             (version.start[7] >= '0') && (version.start[7] <= '9')) {
         version_id = VERS__OTHER;
         infractions |= INF_UNKNOWNVERSION;
     }

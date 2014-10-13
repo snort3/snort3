@@ -43,14 +43,14 @@ public:
     const StreamBuffer* reassemble(Flow* flow, unsigned /* total*/, unsigned offset, const uint8_t* data, unsigned len,
        uint32_t flags, unsigned& copied);
     bool is_paf() { return true; };
-    unsigned max() { return NHttpTestManager::use_test_input() ? 16384 : paf_max; };
+    unsigned max() { return NHttpTestManager::use_test_input() ? NHttpEnums::DATABLOCKSIZE : paf_max; };
 private:
     void prepare_flush(NHttpFlowData* session_data, uint32_t* flush_offset, NHttpEnums::SourceId source_id,
        NHttpEnums::SectionType section_type, bool tcp_close, uint64_t infractions, uint32_t num_octets, uint32_t length,
        uint32_t num_excess);
     void create_event(NHttpEnums::EventSid sid);
     NHttpInspect* const my_inspector;
-    unsigned paf_max = 63780;
+    unsigned paf_max = NHttpEnums::MAXOCTETS;
 };
 
 #endif

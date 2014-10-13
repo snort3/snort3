@@ -50,17 +50,17 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     session_data->infractions[source_id] = infractions;
     switch (section_type) {
       case SEC_BODY:
-        paf_max = 16384;
+        paf_max = DATABLOCKSIZE;
         break;
       case SEC_CHUNK:
-        paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        paf_max = DATABLOCKSIZE - session_data->chunk_buffer_length[source_id];
         if (num_excess == 1) {
             // zero-length chunk
             session_data->type_expected[source_id] = SEC_TRAILER;
         }
         break;
       default:
-        paf_max = 63780;
+        paf_max = MAXOCTETS;
         break;
     }
     if (tcp_close) {
@@ -82,7 +82,7 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
 StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t,
    uint32_t* flush_offset) {
 
-    assert(length <= 63780);
+    assert(length <= MAXOCTETS);
 
     // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
     bool tcp_close = false;
@@ -134,11 +134,11 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           default: assert(0); break;
         }
 
-        const uint32_t max_length = 63780 - splitter->get_octets_seen();
+        const uint32_t max_length = MAXOCTETS - splitter->get_octets_seen();
         const ScanResult split_result = splitter->split(data, (length <= max_length) ? length : max_length);
         switch (split_result) {
           case SCAN_NOTFOUND:
-            if (splitter->get_octets_seen() == 63780) {
+            if (splitter->get_octets_seen() == MAXOCTETS) {
                 // FIXIT-H need to process this data (except chunk header) not just discard it.
                 prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0);
                 session_data->type_expected[source_id] = SEC_ABORT;
@@ -244,7 +244,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
     int32_t& buffer_length = !is_chunk ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
 
     if (buffer == nullptr) {
-        buffer = new uint8_t[63780];
+        buffer = new uint8_t[MAXOCTETS];
     }
 
     uint32_t num_excess = session_data->num_excess[source_id];
@@ -262,7 +262,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
             // all the chunks in the buffer go to the inspector together. Zero-length chunk (len == 1, num_excess == 1)
             // flushes accumulated chunks.
             int32_t total_chunk_len = chunk_buffer_length + offset + len - num_excess;
-            if ((total_chunk_len < 16384) && (num_excess == 0) && !tcp_close) {
+            if ((total_chunk_len < DATABLOCKSIZE) && (num_excess == 0) && !tcp_close) {
                 chunk_buffer_length = total_chunk_len;
                 return nullptr;
             }
@@ -273,7 +273,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
                 chunk_buffer_length = 0;
                 return nullptr;
             }
-            paf_max = 16384;
+            paf_max = DATABLOCKSIZE;
             send_to_detection = my_inspector->process(chunk_buffer, total_chunk_len, flow, source_id, true);
         }
 

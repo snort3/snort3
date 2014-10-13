@@ -35,8 +35,13 @@
 #include "snort.h"
 #include "stream/stream_api.h"
 #include "nhttp_enum.h"
-#include "nhttp_stream_splitter.h"
-#include "nhttp_api.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_status.h"
+#include "nhttp_msg_header.h"
+#include "nhttp_msg_body.h"
+#include "nhttp_msg_chunk.h"
+#include "nhttp_msg_trailer.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_inspect.h"
 
 using namespace NHttpEnums;
@@ -49,16 +54,6 @@ NHttpInspect::NHttpInspect(bool test_input, bool test_output)
     if (test_output) {
         NHttpTestManager::activate_test_output();
     }
-}
-
-bool NHttpInspect::enabled ()
-{
-    return true;
-}
-
-bool NHttpInspect::configure (SnortConfig *)
-{
-    return true;
 }
 
 bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
@@ -83,22 +78,13 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 {
     const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);
 
-    if ( !h )
+    if (!h) {
         return false;
+    }
 
     b.data = h->buf;
     b.len = h->length;
     return true;
-}
-
-int NHttpInspect::verify(SnortConfig*)
-{
-    return 0;
-}
-
-void NHttpInspect::show(SnortConfig*)
-{
-    LogMessage("NHttpInspect\n");
 }
 
 ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id, bool buf_owner)

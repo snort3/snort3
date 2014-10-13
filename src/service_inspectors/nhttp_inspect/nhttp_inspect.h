@@ -28,29 +28,21 @@
 //-------------------------------------------------------------------------
 
 #include "framework/inspector.h"
-#include "nhttp_msg_request.h"
-#include "nhttp_msg_status.h"
-#include "nhttp_msg_header.h"
-#include "nhttp_msg_body.h"
-#include "nhttp_msg_chunk.h"
-#include "nhttp_msg_trailer.h"
-#include "nhttp_test_manager.h"
 #include "nhttp_stream_splitter.h"
-#include "nhttp_test_input.h"
 
 class NHttpApi;
 
 class NHttpInspect : public Inspector {
 public:
-    NHttpInspect(bool test_input_, bool _test_output_);
+    NHttpInspect(bool test_input, bool test_output);
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
     bool get_buf(unsigned, Packet*, InspectionBuffer&);
-    bool configure(SnortConfig*);
-    int verify(SnortConfig*);
-    void show(SnortConfig*);
+    bool configure(SnortConfig*) { return true; };
+    int verify(SnortConfig*) { return 0; };
+    void show(SnortConfig*) { LogMessage("NHttpInspect\n"); };
     void eval(Packet*) { return; };
-    bool enabled();
+    bool enabled() { return true; };
     void tinit() {};
     void tterm() {};
     NHttpStreamSplitter* get_splitter(bool is_client_to_server) { return new

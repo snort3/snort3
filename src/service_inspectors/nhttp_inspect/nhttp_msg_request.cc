@@ -34,7 +34,6 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_header.h"
 
@@ -48,8 +47,11 @@ NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size,
 }
 
 void NHttpMsgRequest::parse_start_line() {
+    // FIXIT-M this needs to be redesigned to parse a truncated request line and extract the method and URI.
+    // The current implementation just gives up if the " HTTP/X.Y" isn't in its proper place at the end of the line.
+
     // There should be exactly two spaces. One following the method and one before "HTTP/".
-    // Additional spaces located within the URI are not allowed but we will tolerate it
+    // Additional spaces located within the URI are not allowed by RFC but we will tolerate it
     // <method><SP><URI><SP>HTTP/X.Y
     if (start_line.start[start_line.length-9] != ' ') {
         // space before "HTTP" missing or in wrong place

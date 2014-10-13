@@ -33,7 +33,8 @@
 
 namespace NHttpEnums {
 
-static const uint32_t MAXOCTETS = 63780;
+static const int MAXOCTETS = 63780;
+static const int DATABLOCKSIZE = 16384;
 
 static const uint32_t NHTTP_GID = 119;
 

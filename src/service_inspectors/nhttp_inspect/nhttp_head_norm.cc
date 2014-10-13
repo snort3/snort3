@@ -81,7 +81,7 @@ int32_t HeaderNormalizer::normalize(const HeaderId head_id, const int count, Scr
 
     int num_matches = 0;
     int32_t buffer_length = 0;
-    int curr_match;
+    int curr_match = -1;   // FIXIT-P initialization that serves no functional purpose to prevent compiler warning
     for (int k=0; k < num_headers; k++) {
         if (header_name_id[k] == head_id) {
             if (++num_matches == 1) curr_match = k;    // remembering location of the first matching header

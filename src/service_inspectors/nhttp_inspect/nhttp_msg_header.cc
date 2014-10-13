@@ -112,8 +112,8 @@ ProcessResult NHttpMsgHeader::worth_detection() {
     // size does exceed paf_max.
     if ((session_data->type_expected[source_id] == SEC_BODY) &&
         (session_data->data_length[source_id] <= session_data->unused_octets_visible[source_id]) &&
-        (session_data->data_length[source_id] <= 16384) &&
-        (session_data->section_buffer_length[source_id] + msg_text.length + session_data->data_length[source_id] <= 63780))
+        (session_data->data_length[source_id] <= DATABLOCKSIZE) &&
+        (session_data->section_buffer_length[source_id] + msg_text.length + session_data->data_length[source_id] <= MAXOCTETS))
     {
         return RES_AGGREGATE;
     }
