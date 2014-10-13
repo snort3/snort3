@@ -223,7 +223,8 @@ void NHttpTestInput::flush(uint32_t length) {
 }
 
 
-void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId source_id, const NHttpFlowData* session_data) {
+void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId source_id, const NHttpFlowData* session_data,
+   bool& tcp_close) {
     if (!flushed || (source_id != last_source_id)) {
         *buffer = nullptr;
         return;
@@ -232,6 +233,7 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId sou
 
     if (flush_octets <= end_offset) {
         // All the data we need comes from the file
+        tcp_close = tcp_closed && (flush_octets == end_offset);
         length = flush_octets;
         just_flushed = true;
         flushed = false;
@@ -240,6 +242,7 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId sou
         // We need to generate additional data to fill out the body or chunk section. We may come through here
         // multiple times as we generate all the maximum size body sections needed for a single flush.
         unsigned paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        tcp_close = false;
         length = (flush_octets <= paf_max) ? flush_octets : paf_max;
         for (uint32_t k = end_offset; k < length; k++) {
             msg_buf[k] = 'A' + k % 26;

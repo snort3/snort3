@@ -66,12 +66,14 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     if (tcp_close) {
         session_data->type_expected[source_id] = SEC_CLOSED;
     }
+
+    // when TCP connection closes do not flush octets that have not arrived yet
+    uint32_t flush_amount = (!tcp_close || (num_octets <= length)) ? num_octets : length;
     if (!NHttpTestManager::use_test_input()) {
-        // when TCP connection closes do not flush octets that have not arrived yet
-        *flush_offset = (!tcp_close || (num_octets <= length)) ? num_octets : length;
+        *flush_offset = flush_amount;
     }
     else {
-        NHttpTestManager::get_test_input_source()->flush((!tcp_close || (num_octets <= length)) ? num_octets : length);
+        NHttpTestManager::get_test_input_source()->flush(flush_amount);
     }
     session_data->unused_octets_visible[source_id] = (length >= num_octets) ? length - num_octets : 0;
     session_data->header_octets_visible[source_id] = 0;
@@ -132,15 +134,15 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
           default: assert(0); break;
         }
 
-        const uint32_t max_length = (length <= (63780 - splitter->get_octets_seen())) ? length :
-           (63780 - splitter->get_octets_seen());
-        const ScanResult split_result = splitter->split(data, max_length);
+        const uint32_t max_length = 63780 - splitter->get_octets_seen();
+        const ScanResult split_result = splitter->split(data, (length <= max_length) ? length : max_length);
         switch (split_result) {
           case SCAN_NOTFOUND:
             if (splitter->get_octets_seen() == 63780) {
-                prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, false, 0, 0, length, 0);
+                // FIXIT-H need to process this data (except chunk header) not just discard it.
+                prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0);
                 session_data->type_expected[source_id] = SEC_ABORT;
-                return StreamSplitter::ABORT;
+                return StreamSplitter::FLUSH;
             }
             if (tcp_close) {
                 if (splitter->partial_ok()) {
@@ -156,7 +158,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
             // Incomplete headers wait patiently for more data
             return NHttpTestManager::use_test_input() ? StreamSplitter::FLUSH : StreamSplitter::SEARCH;
           case SCAN_ABORT:
-            prepare_flush(session_data, flush_offset, source_id, SEC_ABORT, false, 0, length, length, 0);
+            prepare_flush(session_data, flush_offset, source_id, SEC_DISCARD, tcp_close, 0, length, length, 0);
             session_data->type_expected[source_id] = SEC_ABORT;
             return StreamSplitter::FLUSH;
           case SCAN_DISCARD: {
@@ -171,8 +173,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
                flush_octets, length, splitter->get_num_excess());
             if ((type == SEC_REQUEST) || (type == SEC_STATUS)) {
                 // Look ahead to see if entire header section is already here so we can aggregate it for detection.
-                const uint32_t peek_max_length = ((length - flush_octets <= 63780)) ? (length - flush_octets) : 63780;
-                if (session_data->header_splitter[source_id].peek(data + flush_octets, peek_max_length) == SCAN_FOUND) {
+                 if (session_data->header_splitter[source_id].peek(data + flush_octets, length - flush_octets) == SCAN_FOUND) {
                     session_data->header_octets_visible[source_id] = session_data->header_splitter[source_id].get_num_flush();
                 }
             }
@@ -199,8 +200,9 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
 const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* total */, unsigned offset,
        const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
-    // FIXIT-H there should be a tcp_close parameter from stream. Pending that we should create our own, integrate it
-    // with the test tool, and use it for chunk buffer flushing and to update the session data.
+    // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
+    bool tcp_close = false;
+
     static THREAD_LOCAL StreamBuffer nhttp_buf;
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
@@ -213,7 +215,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
             return nullptr;
         }
         uint8_t* test_buffer;
-        NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id, session_data);
+        NHttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id, session_data, tcp_close);
         if (test_buffer == nullptr) {
             // Source ID does not match test data or there is no more test data
             return nullptr;
@@ -222,13 +224,13 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
         offset = 0;
     }
 
+    session_data->tcp_close[source_id] = tcp_close || session_data->tcp_close[source_id];
+
     // FIXIT-P stream should be enhanced to do discarding for us. For now flush-then-discard here is how scan() handles
     // things we don't need to examine.
-    if ((session_data->section_type[source_id] == SEC_DISCARD) ||
-        (session_data->section_type[source_id] == SEC_ABORT)) {
+    if (session_data->section_type[source_id] == SEC_DISCARD) {
         if (NHttpTestManager::use_test_output()) {
-            fprintf(NHttpTestManager::get_output_file(), "%s %u octets\n\n",
-               (session_data->section_type[source_id] == SEC_DISCARD) ? "Discarded" : "Aborted", len);
+            fprintf(NHttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
             fflush(NHttpTestManager::get_output_file());
         }
         return nullptr;
@@ -260,7 +262,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
             // all the chunks in the buffer go to the inspector together. Zero-length chunk (len == 1, num_excess == 1)
             // flushes accumulated chunks.
             int32_t total_chunk_len = chunk_buffer_length + offset + len - num_excess;
-            if ((total_chunk_len < 16384) && (num_excess == 0)) {
+            if ((total_chunk_len < 16384) && (num_excess == 0) && !tcp_close) {
                 chunk_buffer_length = total_chunk_len;
                 return nullptr;
             }
