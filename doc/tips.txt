@@ -127,9 +127,12 @@ include::errors.txt[]
 
 === Gotchas
 
-* A table with a nil key will not caught, eg: 
+* A nil key in a table will not caught.  Neither will a nil value in a
+  table.  Neither of the following will cause errors, nor will they 
+  actually set http_server.post_depth:
 
-    stream_tcp = { show_rebuilt_packets }
+    http_server = { post_depth }
+    http_server = { post_depth = undefined_symbol }
 
 * Snort can't tell you the exact filename or line number of a semantic
   error but it will tell you the fully qualified name.

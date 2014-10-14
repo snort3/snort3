@@ -42,7 +42,7 @@
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_INT, "1:", nullptr,
-      "generator id" },
+      "relative severity level; 1 is highest priority" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
