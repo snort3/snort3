@@ -55,33 +55,34 @@ bool Urilen::convert(std::istringstream& data_stream)
     // we are therefore done with this rule.
     if (util::get_string(arg_stream, value, ","))
     {
-        retval = rule_api.add_rule_option("urilen", value);
-        rule_api.select_option("urilen");
+        retval = rule_api.add_rule_option("bufferlen", value);
+        rule_api.select_option("bufferlen");
 
         if (util::get_string(arg_stream, value, ","))
         {
             bool tmpval = true;
 
             if (!value.compare("raw"))
-                tmpval = rule_api.add_rule_option_before_selected("http_raw_uri");
+                 rule_api.add_rule_option_before_selected("http_raw_uri");
 
             else if (!value.compare("norm"))
-                tmpval = rule_api.add_rule_option_before_selected("http_uri");
+                 rule_api.add_rule_option_before_selected("http_uri");
 
             else
-                rule_api.bad_rule(data_stream, "invalid arguments: " + args);
-
-            if (retval && !tmpval)
-                retval = false;
+                rule_api.bad_rule(data_stream, "urilen:" + value + "," + args);
+        }
+        else
+        {
+            rule_api.add_rule_option_before_selected("http_uri");
         }
     }
     else
     {
-        rule_api.bad_rule(data_stream, "urilen: option required");
+        rule_api.bad_rule(data_stream, "urilen - option required");
     }
 
     rule_api.unselect_option();
-    return set_next_rule_state(data_stream) && retval;
+    return set_next_rule_state(data_stream);
 }
 
 /**************************
