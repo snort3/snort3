@@ -149,18 +149,19 @@ bool Tag::convert(std::istringstream& data_stream)
             rule_api.add_rule_option("tag", type);
             rule_api.select_option("tag");
 
+            if (packets > 0)
+                rule_api.add_suboption("packets", std::to_string(packets));
+
             if (seconds > 0)
                 rule_api.add_suboption("seconds", std::to_string(seconds));
 
             if (bytes > 0)
                 rule_api.add_suboption("bytes", std::to_string(bytes));
 
-            if (packets > 0)
-                rule_api.add_suboption("packets", std::to_string(packets));
+
+            rule_api.unselect_option();
         }
-
     }
-
 
 
     return set_next_rule_state(data_stream);

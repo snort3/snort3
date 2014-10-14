@@ -574,19 +574,6 @@ static const ConvertMap rule_base64_data =
 const ConvertMap* base64_data_map = &rule_base64_data;
 
 /************************************
- *********** ISDATAAT  **************
- ************************************/
-
-static const std::string isdataat = "isdataat";
-static const ConvertMap rule_isdataat =
-{
-    isdataat,
-    unchanged_rule_ctor<&isdataat>,
-};
-
-const ConvertMap* isdataat_map = &rule_isdataat;
-
-/************************************
  *************  ASN1  ***************
  ************************************/
 

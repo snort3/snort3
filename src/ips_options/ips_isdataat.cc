@@ -249,7 +249,7 @@ static const Parameter s_params[] =
       "num | !num" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "num | !num" },
+      "offset from cursor instead of start of buffer" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
