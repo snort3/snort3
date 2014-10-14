@@ -327,7 +327,8 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
     else
     {
         ins = InspectorManager::get_inspector(pb->use.name.c_str()); 
-        flow->set_gadget(ins);
+        if ( ins )
+            flow->set_gadget(ins);
     }
     return BA_INSPECT;
 }

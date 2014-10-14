@@ -8,6 +8,9 @@
 -- updated ChangeLog terms; added env vars
 -- latest from Tom
 -- minor doc updates
+-- converted fast pattern errors to warnings
+-- add check for null gadget in binder
+-- remove cruft from fast pattern config
 
 124
 -- valgrind cleanup

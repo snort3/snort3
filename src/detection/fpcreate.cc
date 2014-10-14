@@ -974,10 +974,10 @@ void set_fp_content(OptTreeNode *otn)
         if ( tmp->fp )
         {
             if ( pmd )
-                ParseError("only one fast_pattern content per rule allowed");
+                ParseWarning("only one fast_pattern content per rule allowed - ignored");
 
             else if ( !pmd_can_be_fp(tmp, curr_cat) )
-                ParseError("content ineligible for fast_pattern matcher");
+                ParseWarning("content ineligible for fast_pattern matcher - ignored");
 
             else
                 pmd = tmp;
