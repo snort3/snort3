@@ -92,7 +92,6 @@ struct FastPatternConfig
     bool trim;
     unsigned int max_queue_events;
     unsigned int bleedover_port_limit;
-    int configured;
     int portlists_flags;
     int split_any_any;
     int max_pattern_len;
