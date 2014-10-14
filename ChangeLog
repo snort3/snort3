@@ -1,6 +1,13 @@
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
    build liblua differently
+-- changed most static const char* s to #define s or static const char*
+   const s
+-- updated style guide - please read and follow or comment on it!
+-- silenced bogus -O2 warnings
+-- updated ChangeLog terms; added env vars
+-- latest from Tom
+-- minor doc updates
 
 124
 -- valgrind cleanup

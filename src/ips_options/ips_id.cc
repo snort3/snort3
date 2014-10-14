@@ -36,7 +36,7 @@
 #include "framework/module.h"
 #include "framework/range.h"
 
-static const char* s_name = "id";
+#define s_name "id"
 
 static THREAD_LOCAL ProfileStats ipIdPerfStats;
 
@@ -112,8 +112,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check the IP ID field";
+#define s_help \
+    "rule option to check the IP ID field"
 
 class IpIdModule : public Module
 {

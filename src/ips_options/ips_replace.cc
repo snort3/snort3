@@ -81,7 +81,7 @@ static bool replace_ok()
 // replace rule option
 //-------------------------------------------------------------------------
 
-static const char* s_name = "replace";
+#define s_name "replace"
 
 static THREAD_LOCAL ProfileStats replacePerfStats;
 
@@ -201,8 +201,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to overwrite payload data; use with rewrite action";
+#define s_help \
+    "rule option to overwrite payload data; use with rewrite action"
 
 class ReplModule : public Module
 {

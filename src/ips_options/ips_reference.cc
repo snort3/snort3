@@ -33,7 +33,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "reference";
+#define s_name "reference"
 
 //-------------------------------------------------------------------------
 // module
@@ -50,8 +50,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to indicate relevant attack indentification system";
+#define s_help \
+    "rule option to indicate relevant attack indentification system"
 
 class ReferenceModule : public Module
 {

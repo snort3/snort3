@@ -3,10 +3,15 @@
 
 * *binder*: inspector that maps configuration to traffic
 
+* *builtin rules*: codec and inspector rules for anomalies detected
+  internally.
+
 * *codec*: short for coder / decoder.  These plugins are used for basic
    protocol decoding, anomaly detection, and construction of active responses.
 
 * *data module*: an adjunct configuration plugin for use with certain inspectors.
+
+* *dynamic rules*: plugin rules loaded at runtime.  See SO rules.
 
 * *fast pattern*: the content in an IPS rule that must be found by the
   search engine in order for a rule to be evaluated.
@@ -53,6 +58,11 @@
 
 * *spell*: a type of protocol magic that the wizard uses to identify ASCII
   protocols.
+
+* *text rule*: a rule loaded from the configuration that has a header and
+  body.  The header specifies action, protocol, source and destination IP
+  addresses and ports, and direction.  The body specifies detection and
+  non-detection options.
 
 * *wizard*: inspector that applies protocol magic to determine which
   inspectors should be bound to traffic absent a port specific binding.

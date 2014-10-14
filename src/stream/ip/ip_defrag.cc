@@ -202,7 +202,7 @@ struct FragStats
 
 };
 
-static const char* peg_names[] =
+static const char* const peg_names[] =
 {
     "fragments",
     "reassembled",
@@ -231,7 +231,7 @@ static THREAD_LOCAL uint32_t pkt_snaplen = 0;
 static THREAD_LOCAL Packet** defrag_pkts;  // An array of Packet pointers
 
 /* enum for policy names */
-static const char *frag_policy_names[] =
+static const char* const frag_policy_names[] =
 {
     "no policy",
     "FIRST",

@@ -35,7 +35,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "tag";
+#define s_name "tag"
 
 //-------------------------------------------------------------------------
 // module
@@ -58,8 +58,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to log additional packets";
+#define s_help \
+    "rule option to log additional packets"
 
 class TagModule : public Module
 {

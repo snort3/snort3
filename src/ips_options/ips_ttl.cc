@@ -35,7 +35,7 @@
 #include "framework/module.h"
 #include "framework/range.h"
 
-static const char* s_name = "ttl";
+#define s_name "ttl"
 
 static THREAD_LOCAL ProfileStats ttlCheckPerfStats;
 
@@ -112,8 +112,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check time to live field";
+#define s_help \
+    "rule option to check time to live field"
 
 class TtlModule : public Module
 {

@@ -35,7 +35,7 @@ using namespace std;
 #include "framework/module.h"
 #include "parser/parse_conf.h"
 
-static const char* s_name = "metadata";
+#define s_name "metadata"
 
 //-------------------------------------------------------------------------
 // module
@@ -52,8 +52,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option for conveying arbitrary name, value data within the rule text";
+#define s_help \
+    "rule option for conveying arbitrary name, value data within the rule text"
 
 class MetadataModule : public Module
 {

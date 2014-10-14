@@ -41,7 +41,7 @@
 // keep just one copy of rule option + args
 
 using namespace std;
-static const char* script_ext = ".lua";
+#define script_ext ".lua"
 
 //-------------------------------------------------------------------------
 // lua api stuff

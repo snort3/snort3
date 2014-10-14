@@ -37,7 +37,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
-static const char* s_name = "file_data";
+#define s_name "file_data"
 
 static THREAD_LOCAL ProfileStats fileDataPerfStats;
 
@@ -86,8 +86,8 @@ int FileDataOption::eval(Cursor& c, Packet*)
 // module
 //-------------------------------------------------------------------------
 
-static const char* s_help =
-    "rule option to set detection cursor to file data";
+#define s_help \
+    "rule option to set detection cursor to file data"
 
 class FileDataModule : public Module
 {

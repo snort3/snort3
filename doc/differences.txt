@@ -84,7 +84,7 @@ Snort++ differs from Snort in the following ways:
 * deleted metadata: rule-flushing (with PDU flushing rule flushing can cause
   missed attacks, the opposite of its intent)
 * deleted unused rule_state.action
-* fastpattern:1 2;
+* fastpattern_offset, fast_pattern_length
 * no ; separated content suboptions
 * offset, depth, distance, and within must use a space separator not colon
   (eg. offset:5; becomes offset 5;)
@@ -101,6 +101,8 @@ Snort++ differs from Snort in the following ways:
 * urilen replaced with generic bufferlen which applies to current sticky
   buffer
 * added optional selector to http_header, eg http_header:User-Agent;
+* multiline rules w/o \n
+* #begin ... #end comments
 
 
 === Output

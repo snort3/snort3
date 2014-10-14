@@ -175,9 +175,10 @@ static bool valid_enum(Value& v, const char* r)
     return true;
 }
 
+#define delim " \t\n"
+
 static unsigned split(const string& txt, vector<string>& strs)
 {
-    static const char* delim = " \t\n";
     size_t last = txt.find_first_not_of(delim);
     size_t pos = txt.find_first_of(delim, last);
     strs.clear();
@@ -369,7 +370,7 @@ bool Parameter::validate(Value& v) const
     return false;
 }
 
-static const char* pt2str[Parameter::PT_MAX] =
+static const char* const pt2str[Parameter::PT_MAX] =
 {
     "table", "list",
     "bool", "int", "real", "port",

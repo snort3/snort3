@@ -68,9 +68,9 @@ using namespace std;
 #include "parser/parser.h"
 
 #if defined(LINUX)
-static const char* lib_ext = ".so";
+#define lib_ext ".so"
 #else
-static const char* lib_ext = ".dylib";
+#define lib_ext ".dylib"
 #endif
 
 struct Symbol

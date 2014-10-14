@@ -54,7 +54,7 @@
 
 #define MAX_PATTERN_SIZE 2048
 
-static const char* s_name = "content";
+#define s_name "content"
 
 static THREAD_LOCAL ProfileStats contentPerfStats;
 
@@ -711,8 +711,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "payload rule option for basic pattern matching";
+#define s_help \
+    "payload rule option for basic pattern matching"
 
 class ContentModule : public Module
 {

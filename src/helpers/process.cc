@@ -57,7 +57,7 @@ using namespace std;
 #define SIGNAL_SNORT_READ_ATTR_TBL SIGURG
 #endif
 
-const char* pig_sig_names[PIG_SIG_MAX] =
+static const char* const pig_sig_names[PIG_SIG_MAX] =
 {
     "none", "quit", "term", "int",
     "reload-config", "reload-attributes",

@@ -66,7 +66,7 @@ static THREAD_LOCAL SfSock context;
 using namespace std;
 typedef vector<RuleId> RuleVector;
 
-static const char* s_name = "alert_sfsocket";
+#define s_name "alert_sfsocket"
 
 //-------------------------------------------------------------------------
 // alert_sfsocket module
@@ -94,8 +94,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "output event over socket";
+#define s_help \
+    "output event over socket"
 
 class SfSocketModule : public Module
 {

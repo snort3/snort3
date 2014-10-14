@@ -98,7 +98,7 @@
 
 static THREAD_LOCAL ProfileStats byteJumpPerfStats;
 
-static const char* s_name = "byte_jump";
+#define s_name "byte_jump"
 using namespace std;
 
 typedef struct _ByteJumpData
@@ -351,8 +351,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to move the detection cursor";
+#define s_help \
+    "rule option to move the detection cursor"
 
 class ByteJumpModule : public Module
 {

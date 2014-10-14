@@ -55,10 +55,10 @@ static THREAD_LOCAL uint32_t base64_decode_size;
 
 static THREAD_LOCAL ProfileStats base64PerfStats;
 
-static const char* s_name = "base64_decode";
+#define s_name "base64_decode"
 
-static const char* s_help =
-    "rule option to decode base64 data - must be used with base64_data option";
+#define s_help \
+    "rule option to decode base64 data - must be used with base64_data option"
 
 //-------------------------------------------------------------------------
 // base64_decode
@@ -290,8 +290,8 @@ static const IpsApi base64_decode_api =
 // base64_data
 //-------------------------------------------------------------------------
 
-static const char* s_data_name = "base64_data";
-static const char* s_data_help = "set detection cursor to decoded Base64 data";
+#define s_data_name "base64_data"
+#define s_data_help "set detection cursor to decoded Base64 data"
 
 class Base64DataOption : public IpsOption
 {

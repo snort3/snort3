@@ -65,7 +65,7 @@
 
 static THREAD_LOCAL ProfileStats cvsPerfStats;
 
-static const char* s_name = "cvs";
+#define s_name "cvs"
 
 #define CVS_CONFIG_DELIMITERS  " \t\n"
 
@@ -437,8 +437,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "payload rule option for detecting specific attacks";
+#define s_help \
+    "payload rule option for detecting specific attacks"
 
 class CvsModule : public Module
 {

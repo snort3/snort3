@@ -45,7 +45,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "ipopts";
+#define s_name "ipopts"
 
 static THREAD_LOCAL ProfileStats ipOptionPerfStats;
 
@@ -213,8 +213,8 @@ static void ipopts_parse(const char* data, IpOptionData* ds_ptr)
 // module
 //-------------------------------------------------------------------------
 
-static const char* s_opts =
-    "rr|eol|nop|ts|sec|esec|lsrr|lsrre|ssrr|satid|any";
+#define s_opts \
+    "rr|eol|nop|ts|sec|esec|lsrr|lsrre|ssrr|satid|any"
 
 static const Parameter s_params[] =
 {
@@ -224,8 +224,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check for IP options";
+#define s_help \
+    "rule option to check for IP options"
 
 class IpOptModule : public Module
 {

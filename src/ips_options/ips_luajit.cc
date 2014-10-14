@@ -35,7 +35,7 @@
 
 static THREAD_LOCAL ProfileStats luaIpsPerfStats;
 
-static const char* opt_eval = "eval";
+#define opt_eval "eval"
 
 //-------------------------------------------------------------------------
 // ffi stuff
@@ -77,8 +77,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option for detecting with Lua scripts";
+#define s_help \
+    "rule option for detecting with Lua scripts"
 
 class LuaJitModule : public Module
 {

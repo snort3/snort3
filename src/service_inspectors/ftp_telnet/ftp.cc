@@ -55,11 +55,11 @@
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
-static const char* client_key = "ftp_client";
-static const char* server_key = "ftp_server";
+#define client_key "ftp_client"
+#define server_key "ftp_server"
 
-static const char* client_help = "FTP inspector client module";
-static const char* server_help = "FTP inspector server module";
+#define client_help "FTP inspector client module"
+#define server_help "FTP inspector server module"
 
 THREAD_LOCAL ProfileStats ftpPerfStats;
 THREAD_LOCAL SimpleStats ftstats;

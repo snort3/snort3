@@ -63,40 +63,40 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "react";
+#define s_name "react"
 
-static const char* s_help =
-    "send response to client and terminate session";
+#define s_help \
+    "send response to client and terminate session"
 
 static THREAD_LOCAL ProfileStats reactPerfStats;
 
-static const char* MSG_KEY = "<>";
-static const char* MSG_PERCENT = "%";
+#define MSG_KEY "<>"
+#define MSG_PERCENT "%"
 
-static const char* DEFAULT_HTTP =
-    "HTTP/1.1 403 Forbidden\r\n"
-    "Connection: close\r\n"
-    "Content-Type: text/html; charset=utf-8\r\n"
-    "Content-Length: %d\r\n"
-    "\r\n";
+#define DEFAULT_HTTP \
+    "HTTP/1.1 403 Forbidden\r\n" \
+    "Connection: close\r\n" \
+    "Content-Type: text/html; charset=utf-8\r\n" \
+    "Content-Length: %d\r\n" \
+    "\r\n"
 
-static const char* DEFAULT_HTML =
-    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\r\n"
-    "    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n"
-    "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n"
-    "<head>\r\n"
-    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n"
-    "<title>Access Denied</title>\r\n"
-    "</head>\r\n"
-    "<body>\r\n"
-    "<h1>Access Denied</h1>\r\n"
-    "<p>%s</p>\r\n"
-    "</body>\r\n"
-    "</html>\r\n";
+#define DEFAULT_HTML \
+    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\r\n" \
+    "    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n" \
+    "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n" \
+    "<head>\r\n" \
+    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n" \
+    "<title>Access Denied</title>\r\n" \
+    "</head>\r\n" \
+    "<body>\r\n" \
+    "<h1>Access Denied</h1>\r\n" \
+    "<p>%s</p>\r\n" \
+    "</body>\r\n" \
+    "</html>\r\n"
 
-static const char* DEFAULT_MSG =
-    "You are attempting to access a forbidden site.<br />"
-    "Consult your system administrator for details.";
+#define DEFAULT_MSG \
+    "You are attempting to access a forbidden site.<br />" \
+    "Consult your system administrator for details."
 
 struct ReactData
 {

@@ -41,10 +41,10 @@
 
 static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 
-static const char* s_name = "byte_extract";
+#define s_name "byte_extract"
 
-static const char* s_help =
-    "rule option to convert data to an integer variable";
+#define s_help \
+    "rule option to convert data to an integer variable"
 
 #define MAX_BYTES_TO_GRAB 4
 

@@ -35,9 +35,9 @@
 
 #ifdef PPM_MGR
 
-static const char* s_name = "ppm";
-static const char* s_help =
-    "packet and rule latency monitoring and control (requires --enable-ppm)";
+#define s_name "ppm"
+#define s_help \
+    "packet and rule latency monitoring and control (requires --enable-ppm)"
 
 static const Parameter s_params[] =
 {

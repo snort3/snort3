@@ -60,17 +60,17 @@ using namespace std;
 // module stuff
 //-------------------------------------------------------------------------
 
-static const char* csv_range =
-    "timestamp | gid | sid | rev | msg | proto | "
-    "src_addr | dst_addr | src_port | dst_port | "
-    "eth_src | eth_dst | eth_type | eth_len | "
-    "ttl | tos | id | ip_len | dgm_len | "
-    "icmp_type | icmp_code | icmp_id | icmp_seq"
-    "tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | "
-    "udp_len";
+#define csv_range \
+    "timestamp | gid | sid | rev | msg | proto | " \
+    "src_addr | dst_addr | src_port | dst_port | " \
+    "eth_src | eth_dst | eth_type | eth_len | " \
+    "ttl | tos | id | ip_len | dgm_len | " \
+    "icmp_type | icmp_code | icmp_id | icmp_seq" \
+    "tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | " \
+    "udp_len"
 
-static const char* csv_deflt =
-    "timestamp gid sid rev src_addr src_port dst_addr dst_port";
+#define csv_deflt \
+    "timestamp gid sid rev src_addr src_port dst_addr dst_port"
 
 static const Parameter s_params[] =
 {
@@ -90,8 +90,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "output event in csv format";
+#define s_help \
+    "output event in csv format"
 
 class CsvModule : public Module
 {

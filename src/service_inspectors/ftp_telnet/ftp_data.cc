@@ -52,10 +52,10 @@
 #include "detection/detection_util.h"
 #include "protocols/tcp.h"
 
-static const char* s_name = "ftp_data";
+#define s_name "ftp_data"
 
-static const char* s_help =
-    "FTP data channel handler";
+#define s_help \
+    "FTP data channel handler"
 
 static THREAD_LOCAL ProfileStats ftpdataPerfStats;
 static THREAD_LOCAL SimpleStats fdstats;
