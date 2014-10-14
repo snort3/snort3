@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // pps_http_inspect_server.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
@@ -34,7 +33,7 @@ namespace {
 class HttpInspectServer : public ConversionState
 {
 public:
-    HttpInspectServer() : ConversionState() {};
+    HttpInspectServer(Converter& c) : ConversionState(c) {};
     virtual ~HttpInspectServer() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -58,7 +57,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    Binder bind;
+    Binder bind(table_api);
 
     bind.set_when_proto("tcp");
     bind.set_use_type("http_server");
@@ -341,22 +340,14 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     return retval;
 }
 
-#if 0
-// check in confg
-
-
-#* decompress_swf { deflate lzma } *
-#* decompress_pdf { deflate } *
-
-#endif
 
 /**************************
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
+static ConversionState* ctor(Converter& c)
 {
-    return new HttpInspectServer();
+    return new HttpInspectServer(c);
 }
 
 static const ConvertMap preprocessor_httpinsepct_server = 

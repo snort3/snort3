@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // config_deleted.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
@@ -35,7 +34,7 @@ namespace {
 class Deleted : public ConversionState
 {
 public:
-    Deleted() : ConversionState() {};
+    Deleted(Converter& c) : ConversionState(c) {};
     virtual ~Deleted() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -50,17 +49,17 @@ bool Deleted::convert(std::istringstream& data_stream)
 }
 
 template<const std::string *snort_option>
-static ConversionState* deleted_ctor()
+static ConversionState* deleted_ctor(Converter& c)
 {
     // set here since not all deleted configs have options
-    if (!data_api.is_quiet_mode())
+    if (!DataApi::is_quiet_mode())
     {
-        table_api.open_table("deleted_snort_config_options");
-        table_api.add_deleted_comment("config " + *snort_option + "[:.*]");
-        table_api.close_table();
+        c.get_table_api().open_table("deleted_snort_config_options");
+        c.get_table_api().add_deleted_comment("config " + *snort_option + "[:.*]");
+        c.get_table_api().close_table();
     }
 
-    return new Deleted();
+    return new Deleted(c);
 }
 
 /*************************************************

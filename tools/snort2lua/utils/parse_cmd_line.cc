@@ -1,6 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2013-2013 Sourcefire, Inc.
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -26,17 +25,30 @@
 #include <iostream>
 #include <string>
 #include <string.h>
-#include <iostream>
+#include <iomanip>
 
 #include "utils/parse_cmd_line.h"
 #include "data/dt_data.h"
 #include "utils/converter.h"
+#include "utils/s2l_util.h"
 
 namespace parser
 {
 
+typedef void (*ParseConfigFunc)(const char*, const char* val);
+struct ConfigFunc
+{
+    const char *name;
+    ParseConfigFunc parse_func;
+    std::string type;
+    const char* help;
+};
+
+
+
+
 static const std::string out_default = "snort.lua";
-static const std::string error_default = "snort.lua";
+static const std::string error_default = "snort.rej";
 
 static std::string conf_file = std::string();
 static std::string conf_dir = std::string();
@@ -62,8 +74,8 @@ const std::string get_out_file()
 const std::string get_rule_file()
 { return rule_file.empty() ? get_out_file() : rule_file; }
 
-static void help_args(const char* pfx);
 
+static void help_args(const char* pfx, const char* /*val*/);
 
 //-------------------------------------------------------------------------
 // arg foo
@@ -163,12 +175,16 @@ bool ArgList::get_arg(const char*& key, const char*& val)
     return false;
 }
 
-static void help_usage(const char* /*key*/, const char* val)
+static void help_usage()
 {
-    fprintf(stdout, "USAGE: snort2lua [-options]\n");
-    help_args(val);
+    fprintf(stdout, "usage:\n");
+    fprintf(stdout, "    -?: list options\n");
+    fprintf(stdout, "    -V: output version\n");
+    fprintf(stdout, "    --help: help summary\n");
     exit(1);
 }
+static void help_usage(const char* key, const char* /*val*/)
+{ help_usage(); }
 
 /*
  * MOST OF THIS FUNCTION IS TAKEN FROM SNORT!!
@@ -251,113 +267,145 @@ static void parse_rule_file(const char* key, const char* val)
 }
 
 static void print_all(const char* /*key*/, const char* /*val*/)
-{ data_api.set_default_print(); }
+{ DataApi::set_default_print(); }
 
 static void print_quiet(const char* /*key*/, const char* /*val*/)
-{ data_api.set_quiet_print(); }
+{ DataApi::set_quiet_print(); }
 
 static void print_differences(const char* /*key*/, const char* /*val*/)
-{ data_api.set_difference_print(); }
+{ DataApi::set_difference_print(); }
 
 static void sing_rule_files(const char* /*key*/, const char* /*val*/)
-{ cv.create_mult_rule_files(false); }
+{ Converter::create_mult_rule_files(false); }
 
 static void sing_conf_files(const char* /*key*/, const char* /*val*/)
-{ cv.create_mult_conf_files(false); }
+{ Converter::create_mult_conf_files(false); }
 
 static void dont_parse_includes(const char* /*key*/, const char* /*val*/)
-{ cv.set_parse_includes(false); }
+{ Converter::set_parse_includes(false); }
 
-
-typedef void (*ParseConfigFunc)(const char*, const char* val);
-struct ConfigFunc
+static void print_version(const char* /*key*/, const char* /*val*/)
 {
-    const char *name;
-    ParseConfigFunc parse_func;
-    const char* help;
-};
+    fprintf(stdout, "Snort2Lua\t0.1.5");
+}
+
+
+
+static void help(const char* key, const char* val)
+{
+    fprintf(stdout, "Usage: [OPTIONS]... -c <snort_conf> ...\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "Converts the Snort configuration file specified by the -c or --conf-file\n");
+    fprintf(stdout, "options into a Snort++ configuration file\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "Options:\n");
+    help_args(key, val);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "Required option(s):\n");
+    fprintf(stdout, "\tA Snort configure file to converter. Set with either '-c' or '--conf-file'\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "Default values:\n");
+    fprintf(stdout, "<out_file>   =  %s\n", out_default.c_str() );
+    fprintf(stdout, "<rule_file>  =  <out_file>.  Rules will be written to the <out_file>\n");
+    fprintf(stdout, "<error_file> =  %s.  Only occurs when not in Quiet mode.\n", error_default.c_str());
+    fprintf(stdout, "\n");
+    exit(0);
+}
 
 
 static ConfigFunc basic_opts[] =
 {
-    { "?", help_usage,
+    { "?", help_args, "",
       "show usage" },
 
-    { "h", help_usage,
+    { "h", help, "",
         "this overview of snort2lua"},
 
-    { "a", print_all,
+    { "a", print_all, "",
         "print all data, including errors and Snort - Snort++ configuration differences."},
 
-    { "c", parse_config_file,
-        "The Snort <conf> file to convert"},
+    { "c", parse_config_file, "<snort_conf>",
+        "The Snort <snort_conf> file to convert"},
 
-    { "d", print_differences,
-        "print Snort - Snort++ configuration differences, and only those differences"},
+    { "d", print_differences, "",
+        "print the differences, and only the differences, between the Snort and Snort++ configurations"},
 
-    { "e", parse_error_file,
+    { "e", parse_error_file, "<error_file>",
         "output all errors to <error_file>"},
 
-    { "o", parse_output_file,
-        "output the new Snort++ lua configuration to <out_file>"},
-
-    { "p", dont_parse_includes,
-        "if <conf> file contains any <include_file> or <policy_file> "
+    { "i", dont_parse_includes, "",
+        "if <snort_conf> file contains any <include_file> or <policy_file> "
         "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
 
-    { "q", print_quiet,
-        "quiet mode. Only output valid confiration information"},
-
-    { "r", parse_rule_file,
-        "output any converted rule to <rule_file>"},
-
-    { "s", sing_rule_files,
-        "when parsing <include_file>, write <include_file>'s rules to <out_file>. Meaningles if '-p' provided"},
-
-    { "t", sing_conf_files,
-        "when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>. Meaningles if '-p' provided"},
-
-    { "conf-file", parse_config_file,
-        "A Snort <conf> file which will be converted"},
-
-    { "dont-parse-includes", dont_parse_includes,
-        "if <conf> file contains any <include_file> or <policy_file> "
-        "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
-
-    { "error-file", parse_error_file,
-        "output all errors to <error_file>"},
-
-    { "help", help_usage,
-        "this overview of snort2lua"},
-
-    { "single-conf-files", sing_conf_files,
-        "when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>. Use with '-p'"},
-
-    { "single-rule-files", sing_rule_files,
-        "when parsing <include_file>, write <include_file>'s rules to <out_file>.  Use with '-p'"},
-
-    { "output-file", parse_output_file,
+    { "o", parse_output_file, "<out_file>",
         "output the new Snort++ lua configuration to <out_file>"},
 
-    { "print-all", print_all,
-        "print all data, including errors, Snort - Snort++ configuration differences, and developer warnings."},
-
-    { "print-differences", print_differences,
-        "print Snort - Snort++ configuration differences, and only those differences"},
-
-    { "print-quiet", print_quiet,
+    { "q", print_quiet, "",
         "quiet mode. Only output valid confiration information"},
 
-    { "rule-file", parse_rule_file,
+    { "r", parse_rule_file, "<rule_file>",
         "output any converted rule to <rule_file>"},
 
-    { nullptr, nullptr, nullptr }
+    { "s", sing_rule_files, "",
+        "when parsing <include_file>, write <include_file>'s rules to <rule_file>. Meaningles if '-i' provided"},
+
+    { "t", sing_conf_files, "",
+        "when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>. Meaningles if '-i' provided"},
+
+    { "V", print_version, "",
+        "Print the current Snort2Lua version"},
+
+    { "conf-file", parse_config_file, "",
+        "Same as '-c'. A Snort <snort_conf> file which will be converted"},
+
+    { "dont-parse-includes", dont_parse_includes, "",
+        "Same as '-p'. if <snort_conf> file contains any <include_file> or <policy_file> "
+        "(i.e. 'include path/to/conf/other_conf'), do NOT parse those files"},
+
+    { "error-file", parse_error_file, "<error_file>",
+        "Same as '-e'. output all errors to <error_file>"},
+
+    { "help", help, "",
+        "Same as '-h'. this overview of snort2lua"},
+
+    { "single-conf-file", sing_conf_files, "",
+        "Same as '-t'. when parsing <include_file>, write <include_file>'s information, excluding rules, to <out_file>"},
+
+    { "single-rule-file", sing_rule_files, "",
+        "Same as '-s'. when parsing <include_file>, write <include_file>'s rules to <rule_file>."},
+
+    { "output-file", parse_output_file, "<out_file>",
+        "Same as '-o'. output the new Snort++ lua configuration to <out_file>"},
+
+    { "print-all", print_all, "",
+        "Same as '-a'. print all data, including errors, Snort - Snort++ configuration differences, and developer warnings."},
+
+    { "print-differences", print_differences, "",
+        "Same as '-d'. print the differences, and only the differences, between the Snort and Snort++ configurations"},
+
+    { "quiet", print_quiet, "",
+        "Same as '-q'. quiet mode. Only output valid confiration information"},
+
+    { "rule-file", parse_rule_file, "<rule_file>",
+        "Same as '-r'. output any converted rule to <rule_file>"},
+
+    { "version", print_version, "",
+        "Same as '-V'. Print the current Snort2Lua version"},
+
+    { nullptr, nullptr, "", nullptr, }
 };
+
 
 bool parse_cmd_line(int argc, char* argv[])
 {
     ArgList al(argc, argv);
     const char *key, *val;
+    bool found_opt = false;
 
     while ( al.get_arg(key, val) )
     {
@@ -374,24 +422,64 @@ bool parse_cmd_line(int argc, char* argv[])
         {
             p->parse_func(key, val);
         }
+
+        found_opt = true;
     }
+
+    if (!found_opt)
+        help_usage();
 
     return true;
 }
 
 
-static void help_args(const char* pfx)
+static void help_args(const char* pfx, const char* /*val*/)
 {
     ConfigFunc* p = basic_opts;
     unsigned n = pfx ? strlen(pfx) : 0;
+    const int name_field_len = 20;
+    const int data_field_len = 80 - name_field_len;
 
     while ( p->name )
     {
-        if ( p->help && (!n || !strncasecmp(p->name, pfx, n)) )
+        if ( p->help ) //&& (!n || !strncasecmp(p->name, pfx, n)) )
         {
-            const char* prefix = strlen(p->name) > 1 ? "--" : "-";
-            std::cout << prefix << p->name;
-            std::cout << " " << p->help;
+            bool two_dash = strlen(p->name) > 1;
+            std::string name = two_dash ? "--" : "-";
+            name += p->name;
+
+            if (!p->type.empty())
+            {
+                name += two_dash ? "=" : " ";
+                name += p->type;
+            }
+
+
+            std::cout << std::left << std::setw(name_field_len) << name;
+
+            if (name.size() > name_field_len)
+                std::cout << "\n" << std::left << std::setw(name_field_len) << " ";
+
+            std::string help = p->help;
+            bool first_line = true;
+
+            while(!help.empty())
+            {
+                std::size_t len = util::get_substr_length(help, data_field_len);
+
+                if (first_line)
+                    first_line = false;
+                else
+                    std::cout << "\n" << std::setw(name_field_len) << " ";
+
+                std::cout << std::left << help.substr(0, len);
+
+                if (len < help.size())
+                    help = help.substr(len + 1);
+                else
+                    break;
+            }
+
             std::cout << std::endl;
         }
         ++p;

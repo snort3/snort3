@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // converter.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef UTILS_CONVERTER_H
@@ -24,9 +23,9 @@
 
 #include <string>
 #include "conversion_defines.h"
-
-class Converter;
-extern Converter cv;
+#include "data/dt_data.h"
+#include "data/dt_table_api.h"
+#include "data/dt_rule_api.h"
 
 class Converter
 {
@@ -34,37 +33,68 @@ class Converter
 public:
     Converter();
     virtual ~Converter();
-    // initialize data class
-    bool initialize(conv_new_f init_state_func);
+
+
+    // tells this class whether to parse include files.
+    inline static void set_parse_includes(bool val)
+    { parse_includes = val; }
+    // tells this class whether to convert a file inline or pull all data into one file.
+    inline static void create_mult_rule_files(bool var)
+    { convert_rules_mult_files = var; }
+    // tells this class whether to convert a file inline or pull all data into one file.
+    inline static void create_mult_conf_files(bool var)
+    { convert_conf_mult_files = var; }
+
+
+    int convert(std::string input,
+                std::string output,
+                std::string rules = "", // defaults to output_file
+                std::string errors = ""); // defaults to output_file
+
+
     // set the next parsing state.
     void set_state(ConversionState* c);
-    // tells this class whether to parse include files.
-    inline void set_parse_includes(bool val) { parse_includes = val; }
-    // tells this class whether to convert a file inline or pull all data into one file.
-    inline void create_mult_rule_files(bool var) { convert_rules_mult_files = var; }
-    // tells this class whether to convert a file inline or pull all data into one file.
-    inline void create_mult_conf_files(bool var) { convert_conf_mult_files = var; }
     // reset the current parsing state
     void reset_state();
-    // convert the following file from a snort.conf into a lua.conf
-    int convert_file(std::string input_file);
     // parse an include file.  Use this function to ensure all set options are properly
     void parse_include_file(std::string file);
+
+    bool failed_conversions() const
+    { return data_api.failed_conversions() || rule_api.failed_conversions(); }
+
+
     // Should we parse an include file?
-    inline bool should_convert_includes() { return parse_includes; }
+    inline bool should_convert_includes() const
+    { return parse_includes; }
+
+    inline DataApi& get_data_api()
+    { return data_api; }
+
+    inline TableApi& get_table_api()
+    { return table_api; }
+
+    inline RuleApi& get_rule_api()
+    { return rule_api; }
+
 
 private:
+    static bool parse_includes;
+    static bool convert_rules_mult_files;
+    static bool convert_conf_mult_files;
+
+    DataApi data_api;
+    TableApi table_api;
+    RuleApi rule_api;
+
     // the current parsing state.
     ConversionState* state;
-    // the data which will be printed into the new lua file
-    // the init_state constructor
-    conv_new_f init_state_ctor;
-
-    bool parse_includes;
-    bool convert_rules_mult_files;
-    bool convert_conf_mult_files;
     bool error;
 
+
+    // convert the following file from a snort.conf into a lua.conf
+    int parse_file(std::string input_file);
+    // initialize data class
+    bool initialize();
 };
 
 

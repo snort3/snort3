@@ -39,9 +39,9 @@
 * creating new convesion states.  There are comments in
 * in all caps which show the seperate the sections.
 *
-* The first section of this file is really LuaData creation
+* The first section of this file is really DataApi creation
 * and initialization, and adding miscelaneous objects
-* to the LuaData data.  The second section is for creating
+* to the DataApi data.  The second section is for creating
 * tables and their options.  The third section is for
 * creating rules.
 */
@@ -49,7 +49,6 @@
 
 class Table;
 class TableApi;
-extern TableApi table_api;
 
 class TableApi
 {

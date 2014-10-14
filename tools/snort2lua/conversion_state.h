@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // conversion_state.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef CONVERSION_STATE_H
@@ -29,6 +28,8 @@
 #include <iostream>
 
 #include "data/dt_data.h"
+#include "data/dt_table_api.h"
+#include "data/dt_rule_api.h"
 
 // the following three files are for the function 'set_next_rule_state'
 #include "utils/s2l_util.h"
@@ -36,17 +37,28 @@
 #include "utils/converter.h"
 #include "conversion_defines.h"
 
+class DataApi;
+class RuleApi;
+class TableApi;
 
 class ConversionState
 {
 
 public:
-    ConversionState() {}
-
+    ConversionState(Converter& c) : cv(c),
+                                    data_api(c.get_data_api()),
+                                    table_api(c.get_table_api()),
+                                    rule_api(c.get_rule_api())
+    { }
     virtual ~ConversionState() {};
     virtual bool convert(std::istringstream& data)=0;
 
+
 protected:
+    Converter& cv;
+    DataApi& data_api;
+    TableApi& table_api;
+    RuleApi& rule_api;
 
 #if 0
     Forward declaration fo parsing methods. Since these are all inline,
@@ -259,7 +271,7 @@ protected:
             if (map)
             {
                 rule_api.unselect_option(); // reset option data...just in case.
-                cv.set_state(map->ctor());
+                cv.set_state(map->ctor(cv));
                 break;
             }
             else
@@ -275,14 +287,14 @@ protected:
             }
         }
 
-        // This is definitely a special case to always return true, I have
-        // already taken corrective action by signifyig this is a 'bad rule'.
-        // Additionally, I don't return false earlier becasue, when possible,
-        // I want to parse the entire rule. If I only return false when the
-        // last option was invalid, this would lead to an incosistant and
-        // unreliable return value.  Bottom line, I'm consistant by returning
-        // true and handling "bad" values and directly signifgying to Data
-        // classes this is a bad rule.
+        /*
+         * The reason this function always returns true is because if the
+         * function returned false, the main conversion loop would stop
+         * converting.  However, every part of the rule which can be
+         * converted, should be converted.  Therefore, this function
+         * takes its own invalid conversion action by calling bad_rule(),
+         * and then returns true.
+         */
         return true;
     }
 

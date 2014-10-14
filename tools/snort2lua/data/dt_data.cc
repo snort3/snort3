@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // dt_data.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "dt_data.h"
@@ -31,12 +30,10 @@
 #include "data/data_types/dt_rule.h"
 #include "data/data_types/dt_include.h"
 
-LuaData data_api;
+DataApi::PrintMode DataApi::mode = DataApi::PrintMode::DEFAULT;
+unsigned int DataApi::dev_warnings = 0;
 
-
-LuaData::LuaData()
-    :   mode(LuaData::PrintMode::QUIET),
-        curr_data_bad(false)
+DataApi::DataApi() : curr_data_bad(false)
 {
     comments = new Comments(start_comments, 0,
                     Comments::CommentType::MULTI_LINE);
@@ -44,7 +41,7 @@ LuaData::LuaData()
                     Comments::CommentType::MULTI_LINE);
 }
 
-LuaData::~LuaData()
+DataApi::~DataApi()
 {
     for (auto v : vars)
         delete v;
@@ -58,7 +55,7 @@ LuaData::~LuaData()
 
 
 
-std::string LuaData::translate_variable(const std::string& var_name)
+std::string DataApi::translate_variable(const std::string& var_name)
 {
     for (auto v : vars)
         if (!var_name.compare(v->get_name()))
@@ -77,7 +74,7 @@ std::string LuaData::translate_variable(const std::string& var_name)
  * Given a Snort style string to expand, this funcion will return
  * the expanded string
  */
-std::string LuaData::expand_vars(const std::string &string)
+std::string DataApi::expand_vars(const std::string &string)
 {
     std::string estring;
     estring.resize(1024, '\0');
@@ -233,10 +230,10 @@ std::string LuaData::expand_vars(const std::string &string)
     return estring;
 }
 
-bool LuaData::failed_conversions()
-{ return !errors->empty(); }
+bool DataApi::failed_conversions() const
+{ return !errors->empty() || dev_warnings > 0; }
 
-void LuaData::failed_conversion(const std::istringstream& stream)
+void DataApi::failed_conversion(const std::istringstream& stream)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
@@ -248,7 +245,7 @@ void LuaData::failed_conversion(const std::istringstream& stream)
     }
 }
 
-void LuaData::failed_conversion(const std::istringstream& stream,
+void DataApi::failed_conversion(const std::istringstream& stream,
                                 const std::string unkown_option)
 {
     // we only need to go through this once.
@@ -263,7 +260,7 @@ void LuaData::failed_conversion(const std::istringstream& stream,
 }
 
 
-bool LuaData::add_variable(std::string name, std::string value)
+bool DataApi::add_variable(std::string name, std::string value)
 {
     for (auto v : vars)
         if (!name.compare(v->get_name()))
@@ -275,12 +272,12 @@ bool LuaData::add_variable(std::string name, std::string value)
 }
 
 
-void LuaData::reset_state()
+void DataApi::reset_state()
 {
     curr_data_bad = false;
 }
 
-bool LuaData::add_include_file(std::string file_name)
+bool DataApi::add_include_file(std::string file_name)
 {
 
     Include* incl = new Include(file_name);
@@ -292,16 +289,19 @@ bool LuaData::add_include_file(std::string file_name)
     return true;
 }
 
-void LuaData::developer_error(std::string error_string)
+void DataApi::developer_error(std::string error_string)
 {
-    std::cout << "RUNTIME ERROR: " << error_string << std::endl;
+    dev_warnings++;
+
+    if (!is_quiet_mode())
+        std::cout << "RUNTIME ERROR: " << error_string << std::endl;
 }
 
-void LuaData::add_comment(std::string c)
+void DataApi::add_comment(std::string c)
 { comments->add_text(c); }
 
 
-void LuaData::print_errors(std::ostream& out)
+void DataApi::print_errors(std::ostream& out)
 {
     if (is_default_mode() &&
         !errors->empty())
@@ -310,7 +310,7 @@ void LuaData::print_errors(std::ostream& out)
     }
 }
 
-void LuaData::print_data(std::ostream& out)
+void DataApi::print_data(std::ostream& out)
 {
     for (Variable* v : vars)
         out << (*v) << "\n\n";
@@ -321,14 +321,14 @@ void LuaData::print_data(std::ostream& out)
 }
 
 
-void LuaData::print_comments(std::ostream& out)
+void DataApi::print_comments(std::ostream& out)
 {
     if (is_default_mode() &&
         !comments->empty())
         out << (*comments) << "\n";
 }
 
-void LuaData::swap_conf_data(std::vector<Variable*>& new_vars,
+void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,
                                 std::vector<Include*>& new_includes,
                                 Comments*& new_comments)
 {

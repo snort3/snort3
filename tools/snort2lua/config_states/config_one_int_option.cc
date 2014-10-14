@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // config_one_int_option.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
@@ -41,10 +40,11 @@ namespace
 class ConfigIntOption : public ConversionState
 {
 public:
-    ConfigIntOption( const std::string* snort_option,
-                        const std::string* lua_table,
-                        const std::string* lua_option) :
-            ConversionState(),
+    ConfigIntOption(Converter& c,
+                    const std::string* snort_option,
+                    const std::string* lua_table,
+                    const std::string* lua_option) :
+            ConversionState(c),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -59,7 +59,7 @@ public:
             (lua_table == nullptr)||
             (lua_table->empty()))
         {
-            data_api.developer_error("Invalid Option!!  Missing either the Snort Option"
+            DataApi::developer_error("Invalid Option!!  Missing either the Snort Option"
                 " or the corresponding lua table!!");
             return false;
         }
@@ -94,9 +94,10 @@ private:
 template<const std::string *snort_option,
         const std::string *lua_table,
         const std::string *lua_option = nullptr>
-static ConversionState* config_int_ctor()
+static ConversionState* config_int_ctor(Converter& c)
 {
-    return new ConfigIntOption( snort_option,
+    return new ConfigIntOption( c,
+                                snort_option,
                                 lua_table,
                                 lua_option);
 }

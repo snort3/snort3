@@ -96,10 +96,10 @@ CodecManager::CodecApiWrapper& CodecManager::get_api_wrapper(const CodecApi* cd_
 void CodecManager::add_plugin(const CodecApi* api)
 {
     if (!api->ctor)
-        FatalError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
+        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
                         api->base.name);
     if (!api->dtor)
-        FatalError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
+        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented\n",
                         api->base.name);
 
     CodecApiWrapper wrap;
@@ -154,7 +154,7 @@ void CodecManager::instantiate(CodecApiWrapper& wrap,
         const CodecApi* const cd_api = wrap.api;
 
         if (codec_id >= s_protocols.size())
-            FatalError("A maximum of 256 codecs can be registered\n");
+            ParseError("A maximum of 256 codecs can be registered\n");
 
         if (cd_api->pinit)
             cd_api->pinit();
@@ -227,7 +227,7 @@ void CodecManager::thread_init()
     }
 
     if(!grinder)
-        FatalError("PacketManager: Unable to find a Codec with data link type %d\n", daq_dlt);
+        ParseError("PacketManager: Unable to find a Codec with data link type %d\n", daq_dlt);
 
     if ( !ScReadMode() || ScPcapShow() )
         LogMessage("Decoding with %s\n", s_protocols[grinder]->get_name());
@@ -243,7 +243,7 @@ void CodecManager::thread_init()
     s_rand = rand_open();
 
     if ( !s_rand )
-        FatalError("PacketManager::init: rand_open() failed.\n");
+        ParseError("PacketManager::init: rand_open() failed.\n");
 
     rand_get(s_rand, s_id_pool.data(), s_id_pool.size());
 #endif

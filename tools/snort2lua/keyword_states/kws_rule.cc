@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // kws_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 
@@ -38,7 +37,7 @@ namespace
 class RuleHeader : public ConversionState
 {
 public:
-    explicit RuleHeader() : ConversionState() {};
+    explicit RuleHeader(Converter& c) : ConversionState(c) {};
     virtual ~RuleHeader() {};
     virtual bool convert(std::istringstream& data_stream);
 };
@@ -79,19 +78,19 @@ bool RuleHeader::convert(std::istringstream& data_stream)
  ********************************/
 
 template<const std::string *name>
-static ConversionState* rule_ctor()
+static ConversionState* rule_ctor(Converter& c)
 {
-    rule_api.add_hdr_data(*name);
-    return new RuleHeader();
+    c.get_rule_api().add_hdr_data(*name);
+    return new RuleHeader(c);
 }
 
 template<const std::string *name>
-static ConversionState* dep_rule_ctor()
+static ConversionState* dep_rule_ctor(Converter& c)
 {
-    rule_api.add_hdr_data(*name);
-    rule_api.make_rule_a_comment();
-    rule_api.add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
-    return new RuleHeader();
+    c.get_rule_api().add_hdr_data(*name);
+    c.get_rule_api().make_rule_a_comment();
+    c.get_rule_api().add_comment_to_rule("The '" + *name + "' ruletype is no longer supported");
+    return new RuleHeader(c);
 }
 
 static const std::string alert = "alert";

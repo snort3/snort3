@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // dt_rule_api.h author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifndef DATA_DT_RULE_API_H
@@ -38,9 +37,9 @@
  * creating new convesion states.  There are comments in
  * in all caps which show the seperate the sections.
  *
- * The first section of this file is really LuaData creation
+ * The first section of this file is really DataApi creation
  * and initialization, and adding miscelaneous objects
- * to the LuaData data.  The second section is for creating
+ * to the DataApi data.  The second section is for creating
  * tables and their options.  The third section is for
  * creating rules.
  */
@@ -49,8 +48,6 @@ class Rule;
 class RuleOption;
 class Comments;
 class RuleApi;
-extern RuleApi rule_api;
-
 
 
 class RuleApi
@@ -61,7 +58,7 @@ public:
     virtual ~RuleApi();
 
 
-    bool failed_conversions();
+    bool failed_conversions() const;
 
     inline bool empty()
     { return (rules.size() == 0); }

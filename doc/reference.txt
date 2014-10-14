@@ -41,7 +41,11 @@ include::config_changes.txt[]
 
 === Module Listing
 
+// FIXIT-L    Either Fix Snort++ output or begin
+//            really using these.
+:leveloffset: 1
 include::modules.txt[]
+:leveloffset: 0
 
 === Plugin Listing
 
