@@ -1,3 +1,23 @@
+#
+# Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License Version 2 as
+# published by the Free Software Foundation.  You may not use, modify or
+# distribute this program under any other version of the GNU General
+# Public License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# nhttp_test_msgs.txt author Tom Peters <thopeter@cisco.com>
+
 # Enter HTTP test message text as you want it to be presented to the StreamSplitter.
 #
 # The easiest way to format is to put a blank line between message sections so that each message section is its own "paragraph". Within a paragraph
@@ -30,7 +50,7 @@
 # Data is separated into segments for presentation to PAF whenever a paragraph ends (blank line).
 #
 # Whenever a segment contains insufficient data to make up a body or chunk, fill data will be generated to make up the difference based on the
-# Content-Length field or chunk header. Specifically flushing more data than in the current segment will trigger filling. The user should include at
+# Content-Length field or chunk header. Specifically, flushing more data than in the current segment will trigger filling. The user should include at
 # least one character of body/chunk data either as part of the previous header segment or at the beginning of a new segment following the headers.
 # All data bytes included in the file will be used followed by required fill data in the pattern ABC...XYZABC...
 #
