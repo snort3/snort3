@@ -11,6 +11,7 @@
 -- converted fast pattern errors to warnings
 -- add check for null gadget in binder
 -- remove cruft from fast pattern config
+-- updates from tom and josh
 
 124
 -- valgrind cleanup
