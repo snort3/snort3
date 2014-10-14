@@ -104,18 +104,23 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~") )
     {
-        if ( v == "session" )
-            tag->tag_type = TAG_SESSION;
-
-        else if ( v == "host_src" )
+        // FIXIT-M -- confusing
+        switch(v.get_long())
         {
+        case 0:
+            tag->tag_type = TAG_SESSION;
+            break;
+        case 1:
             tag->tag_type = TAG_HOST;
             tag->tag_direction = TAG_HOST_SRC;
-        }
-        else
-        {
+            break;
+        case 2:
             tag->tag_type = TAG_HOST;
             tag->tag_direction = TAG_HOST_DST;
+            break;
+        default:
+            return false;
+
         }
     }
     else if ( v.is("packets") )

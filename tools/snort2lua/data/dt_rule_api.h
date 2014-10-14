@@ -50,6 +50,9 @@ class Comments;
 class RuleApi;
 
 
+// Yes, I need to redo this API.
+
+// FIXIT-L J  add_rule_option means select_option().  CHANGE_IT!!
 class RuleApi
 {
 

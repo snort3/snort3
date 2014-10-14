@@ -468,19 +468,6 @@ static const ConvertMap rule_session =
 const ConvertMap* session_map = &rule_session;
 
 /************************************
- ***************  TAG  **************
- ************************************/
-
-static const std::string tag = "tag";
-static const ConvertMap rule_tag =
-{
-    tag,
-    unchanged_rule_ctor<&tag>,
-};
-
-const ConvertMap* tag_map = &rule_tag;
-
-/************************************
  ************* REPLACE  *************
  ************************************/
 
