@@ -16,7 +16,7 @@ include::overview.txt[]
 
 == Getting Started
 
-include::tips.txt[]
+include::start.txt[]
 
 == Basic Modules
 

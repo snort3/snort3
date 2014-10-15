@@ -2,6 +2,10 @@
 
 include::terms.txt[]
 
+=== Optional Features
+
+include::features.txt[]
+
 === Environment Variables
 
 include::enviro.txt[]

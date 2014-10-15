@@ -32,8 +32,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+
+#ifdef BUILD_SHELL
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 
 #include <string>
 #include <thread>
@@ -64,7 +67,7 @@ using namespace std;
 #include "test/unit_test.h"
 #endif
 
-#include "framework/so_rule.h"
+//#include "framework/so_rule.h"
 
 //-------------------------------------------------------------------------
 
@@ -74,7 +77,9 @@ static int exit_logged = 0;
 static bool paused = false;
 
 static bool pause_enabled = false;
+#ifdef BUILD_SHELL
 static bool shell_enabled = false;
+#endif
 
 const struct timespec main_sleep = { 0, 100000000 }; // 0.1 sec
 
@@ -82,6 +87,16 @@ static const char* prompt = "o\")~ ";
 
 const char* get_prompt()
 { return prompt; }
+
+static bool use_shell(SnortConfig* sc)
+{
+#ifdef BUILD_SHELL
+    return ( snort_conf->run_flags & RUN_FLAG__SHELL );
+#else
+    UNUSED(sc);
+    return false;
+#endif
+}
 
 //-------------------------------------------------------------------------
 // swap foo
@@ -264,13 +279,6 @@ static void broadcast(AnalyzerCommand ac)
         pigs[idx].execute(ac);
 }
 
-int main_dump_plugins(lua_State*)
-{
-    ModuleManager::dump_modules();
-    PluginManager::dump_plugins();
-    return 0;
-}
-
 int main_dump_stats(lua_State*)
 {
     DropStats();
@@ -365,12 +373,21 @@ int main_resume(lua_State*)
     return 0;
 }
 
+#ifdef BUILD_SHELL
 int main_detach(lua_State*)
 {
     shell_enabled = false;
     request.respond("== detaching\n");
     return 0;
 }
+
+int main_dump_plugins(lua_State*)
+{
+    ModuleManager::dump_modules();
+    PluginManager::dump_plugins();
+    return 0;
+}
+#endif
 
 int main_quit(lua_State*)
 {
@@ -463,6 +480,7 @@ static bool house_keeping()
 // socket foo
 //-------------------------------------------------------------------------
 
+#ifdef BUILD_SHELL
 // FIXIT-M make these non-blocking
 // FIXIT-M allow at least 2 remote controls
 // FIXIT-M bind to configured ip including INADDR_ANY
@@ -605,6 +623,7 @@ static bool service_users()
     }
     return false;
 }
+#endif
 
 static bool check_response()
 {
@@ -627,8 +646,10 @@ static bool check_response()
 
 static void service_check()
 {
+#ifdef BUILD_SHELL
     if ( service_users() )
         return;
+#endif
 
     if ( check_response() )
         return;
@@ -665,7 +686,7 @@ static bool set_mode()
     }
 
     if ( ScTestMode() ||
-        (!Trough_GetQCount() && !(snort_conf->run_flags & RUN_FLAG__SHELL)) )
+        (!Trough_GetQCount() && !use_shell(snort_conf)) )
     {
         LogMessage("\nSnort successfully validated the configuration.\n");
 
@@ -682,13 +703,15 @@ static bool set_mode()
     else
         LogMessage("Commencing packet processing\n");
 
-    if ( snort_conf->run_flags & RUN_FLAG__SHELL )
+#ifdef BUILD_SHELL
+    if ( use_shell(snort_conf) )
     {
         LogMessage("Entering command shell\n");
         shell_enabled = true;
         request.set(STDOUT_FILENO, "");
         request.show_prompt();
     }
+#endif
 
     return true;
 }
@@ -744,7 +767,9 @@ static void main_loop()
 
 static void snort_main()
 {
+#ifdef BUILD_SHELL
     socket_init();
+#endif
     TimeStart();
 
     max_pigs = get_instance_max();
@@ -765,7 +790,9 @@ static void snort_main()
     pigs = nullptr;
 
     TimeStop();
+#ifdef BUILD_SHELL
     socket_term();
+#endif
 }
 
 int main(int argc, char *argv[])

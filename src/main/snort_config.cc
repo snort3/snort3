@@ -471,8 +471,10 @@ SnortConfig* MergeSnortConfs(SnortConfig *cmd_line, SnortConfig *config_file)
     if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
         config_file->event_queue_config->process_all_events = 1;
 
+#ifdef BUILD_SHELL
     if ( cmd_line->remote_control )
         config_file->remote_control = cmd_line->remote_control;
+#endif
 
     // config file vars are stored differently
     // FIXIT-M should config_file and cmd_line use the same var list / table?

@@ -120,7 +120,9 @@ enum RunFlag
 
     RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x10000000,     /* --treat-drop-as-ignore */
     RUN_FLAG__PCAP_RELOAD         = 0x20000000,     /* --pcap-reload */
+#ifdef BUILD_SHELL
     RUN_FLAG__SHELL               = 0x40000000,     /* --shell */
+#endif
     RUN_FLAG__TEST                = 0x80000000      /* -T */
 
 };

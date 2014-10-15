@@ -12,6 +12,11 @@
 -- add check for null gadget in binder
 -- remove cruft from fast pattern config
 -- updates from tom and josh
+-- renamed doc/tips.txt to doc/start.txt for users getting started
+-- added doc/features.txt for configure features that must be explicitly
+   enabled
+-- added --enable-shell and BUILD_SHELL to opt in to --shell and -j
+   functionality
 
 124
 -- valgrind cleanup

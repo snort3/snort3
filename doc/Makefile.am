@@ -35,9 +35,9 @@ differences.txt \
 extending.txt \
 reference.txt \
 snort2lua.txt \
+start.txt \
 style.txt \
 terms.txt \
-tips.txt \
 images/snort.png
 
 all_sources = \

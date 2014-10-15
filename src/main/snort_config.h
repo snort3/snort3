@@ -278,7 +278,9 @@ struct SnortConfig
 
     struct VarNode* var_list;
 
+#ifdef BUILD_SHELL
     unsigned remote_control;
+#endif
 
     SnortState* state;
 

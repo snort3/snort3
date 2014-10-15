@@ -31,8 +31,13 @@ Optional:
 
 === Building
 
+* Optionally built feature are listed in the reference section.
+
 * You should build Snort++ with --prefix $install_dir where install_dir is
   something you can easily delete.
+
+* To build with autotools, the usual ./configure, make, make install from
+  the top level directory will suffice.
 
 * To build with cmake and make, first create a separate directory for the
   build and cd into that directory.  Then:
