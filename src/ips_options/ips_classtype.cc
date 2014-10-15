@@ -36,7 +36,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "classtype";
+#define s_name "classtype"
 
 //-------------------------------------------------------------------------
 // module
@@ -50,8 +50,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "general rule option for rule classification";
+#define s_help \
+    "general rule option for rule classification"
 
 class ClassTypeModule : public Module
 {

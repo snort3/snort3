@@ -120,7 +120,7 @@ static int LogAction(Packet* p, const OptTreeNode* otn)
     return 1;
 }
 
-static const char* rule_type[RULE_TYPE__MAX] =
+static const char* const rule_type[RULE_TYPE__MAX] =
 {
     "none", "alert", "drop", 
     "log", "pass", "sdrop"

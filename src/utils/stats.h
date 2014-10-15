@@ -74,9 +74,9 @@ void LogStat(const char*, uint64_t n, uint64_t tot);
 void LogStat(const char*, double);
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
-void show_stats(PegCount*, const char* names[], unsigned n,
+void show_stats(PegCount*, const char* const names[], unsigned n,
     const char* module_name = nullptr);
-void show_percent_stats(PegCount*, const char* names[], unsigned n,
+void show_percent_stats(PegCount*, const char* const names[], unsigned n,
     const char* module_name = nullptr);
 
 void sum_stats(SimpleStats* sums, SimpleStats* counts);

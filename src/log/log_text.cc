@@ -1461,7 +1461,7 @@ static void LogCharData(TextLog* log, char *data, int len)
 #define BYTES_PER_FRAME 16
 /* middle of packet:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F  A.C.E.G.I.K.M.O."*/
 /* at end of packet:"41 02 43 04 45 06 47 08                          A.C.E.G."*/
-static const char* pad3 = "                                                 ";
+#define pad3 "                                                 "
 
 void LogNetData (TextLog* log, const uint8_t* data, const int len, Packet *p)
 {

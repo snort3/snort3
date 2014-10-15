@@ -125,7 +125,7 @@ static inline RuleTreeNode * protocolRuleList(RuleListNode *rule, int protocol)
 
 static inline const char* getProtocolName (int protocol)
 {
-    static const char *protocolName[] = {"TCP", "UDP", "ICMP"};
+    static const char* const protocolName[] = {"TCP", "UDP", "ICMP"};
     switch (protocol)
     {
         case IPPROTO_TCP:

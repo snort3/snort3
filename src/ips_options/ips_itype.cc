@@ -36,7 +36,7 @@
 #include "framework/range.h"
 #include "protocols/icmp4.h"
 
-static const char* s_name = "itype";
+#define s_name "itype"
 
 static THREAD_LOCAL ProfileStats icmpTypePerfStats;
 
@@ -114,8 +114,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check ICMP type";
+#define s_help \
+    "rule option to check ICMP type"
 
 class ItypeModule : public Module
 {

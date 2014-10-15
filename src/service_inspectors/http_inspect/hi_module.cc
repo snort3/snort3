@@ -137,8 +137,8 @@ static const RuleMap hi_global_rules[] =
     { 0, nullptr }
 };
 
-static const char* hi_global_help =
-    "http inspector global configuration and client rules for use with http_server";
+#define hi_global_help \
+    "http inspector global configuration and client rules for use with http_server"
 
 HttpInspectModule::HttpInspectModule() :
     Module(GLOBAL_KEYWORD, hi_global_help, hi_global_params)
@@ -251,14 +251,14 @@ bool HttpInspectModule::end(const char* fqn, int, SnortConfig*)
 // http_server module
 //-------------------------------------------------------------------------
 
-static const char* profiles = "none | all | apache | iis | iis_40 | iis_50";
+#define profiles "none | all | apache | iis | iis_40 | iis_50"
 
-static const char* default_methods =
-    "GET POST PUT SEARCH MKCOL COPY MOVE LOCK UNLOCK NOTIFY POLL BCOPY "
-    "BDELETE BMOVE LINK UNLINK OPTIONS HEAD DELETE TRACE TRACK CONNECT "
-    "SOURCE SUBSCRIBE UNSUBSCRIBE PROPFIND PROPPATCH BPROPFIND BPROPPATCH "
-    "RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA "
-    "RPC_OUT_DATA RPC_ECHO_DATA";
+#define default_methods \
+    "GET POST PUT SEARCH MKCOL COPY MOVE LOCK UNLOCK NOTIFY POLL BCOPY " \
+    "BDELETE BMOVE LINK UNLINK OPTIONS HEAD DELETE TRACE TRACK CONNECT " \
+    "SOURCE SUBSCRIBE UNSUBSCRIBE PROPFIND PROPPATCH BPROPFIND BPROPPATCH " \
+    "RPC_CONNECT PROXY_SUCCESS BITS_POST CCM_POST SMS_POST RPC_IN_DATA " \
+    "RPC_OUT_DATA RPC_ECHO_DATA"
 
 // FIXIT-L refactor params to create a profile table so that user can define
 // different profiles (like above) and use those.  rename existing profile
@@ -420,8 +420,8 @@ static const RuleMap hi_server_rules[] =
     { 0, nullptr }
 };
 
-static const char* hi_server_help = 
-    "http inspection and server rules; also configure http_inpsect";
+#define hi_server_help  \
+    "http inspection and server rules; also configure http_inpsect"
 
 HttpServerModule::HttpServerModule() :
     Module(SERVER_KEYWORD, hi_server_help, hi_server_params)

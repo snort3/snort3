@@ -35,7 +35,7 @@
 #include "framework/range.h"
 #include "protocols/tcp.h"
 
-static const char* s_name = "seq";
+#define s_name "seq"
 
 static THREAD_LOCAL ProfileStats tcpSeqPerfStats;
 
@@ -111,8 +111,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check TCP sequence number";
+#define s_help \
+    "rule option to check TCP sequence number"
 
 class SeqModule : public Module
 {

@@ -53,8 +53,8 @@ static const RuleMap rpc_rules[] =
 // rpc module
 //-------------------------------------------------------------------------
 
-static const char* s_name = "rpc_decode";
-static const char* s_help = "RPC inspector";
+#define s_name "rpc_decode"
+#define s_help "RPC inspector"
 
 RpcDecodeModule::RpcDecodeModule() : Module(s_name, s_help, s_params)
 { }

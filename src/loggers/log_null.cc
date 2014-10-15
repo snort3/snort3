@@ -34,8 +34,8 @@
 #include "framework/module.h"
 #include "snort.h"
 
-static const char* s_name = "log_null";
-static const char* s_help = "support for null encapsulation";
+#define s_name "log_null"
+#define s_help "support for null encapsulation"
 
 //-------------------------------------------------------------------------
 // log_null module

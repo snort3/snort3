@@ -31,7 +31,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "sid";
+#define s_name "sid"
 
 //-------------------------------------------------------------------------
 // module
@@ -45,8 +45,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to indicate signature number";
+#define s_help \
+    "rule option to indicate signature number"
 
 class SidModule : public Module
 {

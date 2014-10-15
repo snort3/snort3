@@ -79,7 +79,7 @@
 #define FB_DF  0x4000
 #define FB_MF  0x2000
 
-static const char* s_name = "fragbits";
+#define s_name "fragbits"
 
 static THREAD_LOCAL ProfileStats fragBitsPerfStats;
 
@@ -308,8 +308,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to test IP frag flags";
+#define s_help \
+    "rule option to test IP frag flags"
 
 class FragBitsModule : public Module
 {

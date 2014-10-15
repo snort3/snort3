@@ -61,7 +61,7 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 
-static const char* s_name = "icmp_seq";
+#define s_name "icmp_seq"
 
 static THREAD_LOCAL ProfileStats icmpSeqPerfStats;
 
@@ -146,8 +146,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check ICMP sequence number";
+#define s_help \
+    "rule option to check ICMP sequence number"
 
 class IcmpSeqModule : public Module
 {

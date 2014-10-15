@@ -123,8 +123,8 @@ static THREAD_LOCAL const uint32_t flush_size = 28;
 static THREAD_LOCAL const uint32_t rpc_memcap = 1048510;
 static THREAD_LOCAL uint32_t rpc_memory = 0;
 
-static const char* mod_name = "rpc_decode";
-static const char* mod_help = "RPC inspector";
+#define mod_name "rpc_decode"
+#define mod_help "RPC inspector"
 
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 THREAD_LOCAL SimpleStats rdstats;

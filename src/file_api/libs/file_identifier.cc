@@ -543,8 +543,6 @@ char *test_find_file_type(void *conf)
 
     FileContext *context = (FileContext*)SnortAlloc(sizeof (*context));
 
-    static const char *file_type = "MSEXE";
-
     printf("Check string:");
 
     for (i = 0; i < strlen((char*)str); i++)
@@ -564,7 +562,7 @@ char *test_find_file_type(void *conf)
         printf("File type is: %s (%d)\n",file_info_from_ID(conf, type_id), type_id);
 
     free(context);
-    return ((char *)file_type);
+    return ((char *)"MSEXE");
 #else
     UNUSED(conf);
     return NULL;

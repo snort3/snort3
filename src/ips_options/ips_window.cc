@@ -35,7 +35,7 @@
 #include "framework/range.h"
 #include "protocols/tcp.h"
 
-static const char* s_name = "window";
+#define s_name "window"
 
 static THREAD_LOCAL ProfileStats tcpWinPerfStats;
 
@@ -111,8 +111,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check TCP window field";
+#define s_help \
+    "rule option to check TCP window field"
 
 class WindowModule : public Module
 {

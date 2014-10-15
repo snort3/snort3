@@ -43,7 +43,7 @@
 #include "framework/module.h"
 #include "framework/range.h"
 
-static const char* s_name = "dsize";
+#define s_name "dsize"
 
 static THREAD_LOCAL ProfileStats dsizePerfStats;
 
@@ -130,8 +130,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to test payload size";
+#define s_help \
+    "rule option to test payload size"
 
 class DsizeModule : public Module
 {

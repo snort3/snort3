@@ -46,7 +46,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "ip_proto";
+#define s_name "ip_proto"
 
 static THREAD_LOCAL ProfileStats ipProtoPerfStats;
 
@@ -294,8 +294,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check the IP protocol number";
+#define s_help \
+    "rule option to check the IP protocol number"
 
 class IpProtoModule : public Module
 {

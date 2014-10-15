@@ -85,8 +85,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "output event with full packet dump";
+#define s_help \
+    "output event with full packet dump"
 
 class FullModule : public Module
 {

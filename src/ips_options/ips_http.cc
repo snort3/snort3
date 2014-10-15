@@ -114,8 +114,8 @@ int HttpIpsOption::eval(Cursor& c, Packet* p)
 #undef IPS_OPT
 #define IPS_OPT "http_uri"
 
-static const char* uri_help =
-    "rule option to set the detection cursor to the normalized URI buffer";
+#define uri_help \
+    "rule option to set the detection cursor to the normalized URI buffer"
 
 static THREAD_LOCAL ProfileStats uri_ps;
 
@@ -158,8 +158,8 @@ static const IpsApi uri_api =
 #undef IPS_OPT
 #define IPS_OPT "http_client_body"
 
-static const char* cb_help =
-    "rule option to set the detection cursor to the request body";
+#define cb_help \
+    "rule option to set the detection cursor to the request body"
 
 static THREAD_LOCAL ProfileStats cb_ps;
 
@@ -202,8 +202,8 @@ static const IpsApi client_body_api =
 #undef IPS_OPT
 #define IPS_OPT "http_method"
 
-static const char* meth_help =
-    "rule option to set the detection cursor to the HTTP request method";
+#define meth_help \
+    "rule option to set the detection cursor to the HTTP request method"
 
 static THREAD_LOCAL ProfileStats meth_ps;
 
@@ -246,8 +246,8 @@ static const IpsApi method_api =
 #undef IPS_OPT
 #define IPS_OPT "http_cookie"
 
-static const char* cookie_help = 
-    "rule option to set the detection cursor to the HTTP cookie";
+#define cookie_help  \
+    "rule option to set the detection cursor to the HTTP cookie"
 
 static THREAD_LOCAL ProfileStats cookie_ps;
 
@@ -290,8 +290,8 @@ static const IpsApi cookie_api =
 #undef IPS_OPT
 #define IPS_OPT "http_stat_code"
 
-static const char* stat_code_help = 
-    "rule option to set the detection cursor to the HTTP status code";
+#define stat_code_help  \
+    "rule option to set the detection cursor to the HTTP status code"
 
 static THREAD_LOCAL ProfileStats stat_code_ps;
 
@@ -334,8 +334,8 @@ static const IpsApi stat_code_api =
 #undef IPS_OPT
 #define IPS_OPT "http_stat_msg"
 
-static const char* stat_msg_help = 
-    "rule option to set the detection cursor to the HTTP status message";
+#define stat_msg_help  \
+    "rule option to set the detection cursor to the HTTP status message"
 
 static THREAD_LOCAL ProfileStats stat_msg_ps;
 
@@ -378,8 +378,8 @@ static const IpsApi stat_msg_api =
 #undef IPS_OPT
 #define IPS_OPT "http_raw_uri"
 
-static const char* raw_uri_help = 
-    "rule option to set the detection cursor to the unnormalized URI";
+#define raw_uri_help  \
+    "rule option to set the detection cursor to the unnormalized URI"
 
 static THREAD_LOCAL ProfileStats raw_uri_ps;
 
@@ -422,8 +422,8 @@ static const IpsApi raw_uri_api =
 #undef IPS_OPT
 #define IPS_OPT "http_raw_header"
 
-static const char* raw_header_help = 
-    "rule option to set the detection cursor to the unnormalized headers";
+#define raw_header_help  \
+    "rule option to set the detection cursor to the unnormalized headers"
 
 static THREAD_LOCAL ProfileStats raw_header_ps;
 
@@ -466,8 +466,8 @@ static const IpsApi raw_header_api =
 #undef IPS_OPT
 #define IPS_OPT "http_raw_cookie"
 
-static const char* raw_cookie_help = 
-    "rule option to set the detection cursor to the unnormalized cookie";
+#define raw_cookie_help  \
+    "rule option to set the detection cursor to the unnormalized cookie"
 
 static THREAD_LOCAL ProfileStats raw_cookie_ps;
 

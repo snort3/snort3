@@ -1,31 +1,22 @@
-/****************************************************************************
- *
+/*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      NHttp Inspector class.
-//
-
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_inspect.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
 #include <string.h>
@@ -35,8 +26,13 @@
 #include "snort.h"
 #include "stream/stream_api.h"
 #include "nhttp_enum.h"
-#include "nhttp_stream_splitter.h"
-#include "nhttp_api.h"
+#include "nhttp_msg_request.h"
+#include "nhttp_msg_status.h"
+#include "nhttp_msg_header.h"
+#include "nhttp_msg_body.h"
+#include "nhttp_msg_chunk.h"
+#include "nhttp_msg_trailer.h"
+#include "nhttp_test_manager.h"
 #include "nhttp_inspect.h"
 
 using namespace NHttpEnums;
@@ -49,16 +45,6 @@ NHttpInspect::NHttpInspect(bool test_input, bool test_output)
     if (test_output) {
         NHttpTestManager::activate_test_output();
     }
-}
-
-bool NHttpInspect::enabled ()
-{
-    return true;
-}
-
-bool NHttpInspect::configure (SnortConfig *)
-{
-    return true;
 }
 
 bool NHttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
@@ -83,22 +69,13 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 {
     const HttpBuffer* h = GetHttpBuffer((HTTP_BUFFER)id);
 
-    if ( !h )
+    if (!h) {
         return false;
+    }
 
     b.data = h->buf;
     b.len = h->length;
     return true;
-}
-
-int NHttpInspect::verify(SnortConfig*)
-{
-    return 0;
-}
-
-void NHttpInspect::show(SnortConfig*)
-{
-    LogMessage("NHttpInspect\n");
 }
 
 ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id, bool buf_owner)
@@ -129,10 +106,11 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
 
     if (NHttpTestManager::use_test_output()) {
         msg_section->print_section(NHttpTestManager::get_output_file());
+        fflush(NHttpTestManager::get_output_file());
         if (NHttpTestManager::use_test_input()) {
              printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
+             fflush(stdout);
         }
-        fflush(nullptr);
     }
 
     return return_value;

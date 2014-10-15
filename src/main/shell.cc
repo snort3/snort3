@@ -31,7 +31,7 @@
 
 using namespace std;
 
-static const char* required = "require('snort_config'); ";
+#define required "require('snort_config'); "
 
 //-------------------------------------------------------------------------
 // helper functions

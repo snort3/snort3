@@ -96,8 +96,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "output event with brief text format";
+#define s_help \
+    "output event with brief text format"
 
 class FastModule : public Module
 {

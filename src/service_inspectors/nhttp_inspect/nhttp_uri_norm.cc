@@ -1,31 +1,22 @@
-/****************************************************************************
- *
+/*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      URI normalization class
-//
-
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_uri_norm.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
 #include <sys/types.h>
@@ -85,6 +76,7 @@ bool UriNormalizer::no_path_check(const uint8_t* in_buf, int32_t in_length, uint
 
 bool UriNormalizer::path_check(const uint8_t* in_buf, int32_t in_length, uint64_t& infractions) {
     for (int32_t k = 0; k < in_length; k++) {
+        // FIXIT-P Periods are common and most don't need to be normalized. Need a better test.
         if (uri_char[in_buf[k]] == CHAR_NORMAL) continue;
         if ((in_buf[k] == '/') && ((k == 0) || (in_buf[k-1] != '/'))) continue;
         infractions |= INF_URINEEDNORM;

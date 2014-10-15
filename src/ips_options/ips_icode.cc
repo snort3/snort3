@@ -40,7 +40,7 @@
 #include "framework/range.h"
 #include "protocols/icmp4.h"
 
-static const char* s_name = "icode";
+#define s_name "icode"
 
 static THREAD_LOCAL ProfileStats icmpCodePerfStats;
 
@@ -117,8 +117,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check ICMP code";
+#define s_help \
+    "rule option to check ICMP code"
 
 class IcodeModule : public Module
 {

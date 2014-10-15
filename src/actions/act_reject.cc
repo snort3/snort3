@@ -70,10 +70,10 @@
 #define REJ_RST_BOTH (REJ_RST_SRC|REJ_RST_DST)
 #define REJ_UNR_ALL  (REJ_UNR_NET|REJ_UNR_HOST|REJ_UNR_PORT)
 
-static const char* s_name = "reject";
+#define s_name "reject"
 
-static const char* s_help =
-    "terminate session with TCP reset or ICMP unreachable";
+#define s_help \
+    "terminate session with TCP reset or ICMP unreachable"
 
 static THREAD_LOCAL ProfileStats rejPerfStats;
 

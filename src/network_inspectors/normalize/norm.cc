@@ -62,7 +62,7 @@ typedef enum {
     PC_MAX
 } PegCounts;
 
-static const char* pegName[PC_MAX] = {
+static const char* const pegName[PC_MAX] = {
     "ip4.trim",
     "ip4.tos",
     "ip4.df",

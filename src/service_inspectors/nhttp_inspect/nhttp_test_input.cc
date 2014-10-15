@@ -1,31 +1,22 @@
-/****************************************************************************
- *
+/*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      Interface to file of test messages
-//
-
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_test_input.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
 #include <string.h>
@@ -39,8 +30,6 @@
 using namespace NHttpEnums;
 
 NHttpTestInput::NHttpTestInput(const char *file_name) {
-    if ( !NHttpTestManager::use_test_input() )  // FIXIT-T workaround
-        return;
     if ((test_data_file = fopen(file_name, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
 }
 
@@ -93,12 +82,12 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
     int new_char;
     typedef enum { WAITING, COMMENT, COMMAND, SECTION, ESCAPE, HEXVAL } State;
     State state = WAITING;
-    bool ending;
-    int command_length;
+    bool ending = false;
+    int command_length = 0;
     const int max_command = 100;
     char command_value[max_command];
-    uint8_t hex_val;
-    int num_digits;
+    uint8_t hex_val = 0;
+    int num_digits = 0;
 
     while ((new_char = getc(test_data_file)) != EOF) {
         switch (state) {
@@ -225,7 +214,8 @@ void NHttpTestInput::flush(uint32_t length) {
 }
 
 
-void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId source_id, const NHttpFlowData* session_data) {
+void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId source_id, const NHttpFlowData* session_data,
+   bool& tcp_close) {
     if (!flushed || (source_id != last_source_id)) {
         *buffer = nullptr;
         return;
@@ -234,6 +224,7 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId sou
 
     if (flush_octets <= end_offset) {
         // All the data we need comes from the file
+        tcp_close = tcp_closed && (flush_octets == end_offset);
         length = flush_octets;
         just_flushed = true;
         flushed = false;
@@ -242,6 +233,7 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId sou
         // We need to generate additional data to fill out the body or chunk section. We may come through here
         // multiple times as we generate all the maximum size body sections needed for a single flush.
         unsigned paf_max = 16384 - session_data->chunk_buffer_length[source_id];
+        tcp_close = false;
         length = (flush_octets <= paf_max) ? flush_octets : paf_max;
         for (uint32_t k = end_offset; k < length; k++) {
             msg_buf[k] = 'A' + k % 26;

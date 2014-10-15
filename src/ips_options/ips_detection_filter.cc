@@ -41,7 +41,7 @@
 #include "filters/detection_filter.h"
 #include "filters/sfthd.h"
 
-static const char* s_name = "detection_filter";
+#define s_name "detection_filter"
 
 //-------------------------------------------------------------------------
 // module
@@ -61,8 +61,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to require multiple hits before a rule generates an event";
+#define s_help \
+    "rule option to require multiple hits before a rule generates an event"
 
 class DetectionFilterModule : public Module
 {
