@@ -17,6 +17,7 @@
    enabled
 -- added --enable-shell and BUILD_SHELL to opt in to --shell and -j
    functionality
+-- latest snort2lua updates from Josh
 
 124
 -- valgrind cleanup
