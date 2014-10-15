@@ -176,7 +176,7 @@ bool Binding::convert(std::istringstream& data_stream)
 
 
 
-    if (cv.should_convert_includes())
+    if (cv.parse_include_file())
     {
         std::string full_name = data_api.expand_vars(file);
         std::string full_path = full_name;
@@ -185,14 +185,20 @@ bool Binding::convert(std::istringstream& data_stream)
             full_path = parser::get_conf_dir() + full_name;
 
 
-        // if we still can't find this file, add it as a snort file
         if (util::file_exists(full_path))
         {
-            Converter cv;
+            Converter bind_cv;
+
+            // This will ensure that the final ouput file contains
+            // lua syntax - even if their are only rules in the file
+            bind_cv.get_table_api().open_top_level_table("ips");
+            bind_cv.get_table_api().close_table();
+
+
 //            file = file + ".lua";  FIXIT-L  the file names should contain their original variables
             file = full_path + ".lua";
 
-            if (cv.convert(full_path, full_path + ".lua") < 0)
+            if (bind_cv.convert(full_path, file, file, full_path + ".rej") < 0)
                 rc = false;
 
         }
@@ -211,9 +217,7 @@ bool Binding::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{
-    return new Binding(c);
-}
+{ return new Binding(c); }
 
 static const ConvertMap binding_api =
 {

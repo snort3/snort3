@@ -38,18 +38,30 @@ public:
     // tells this class whether to parse include files.
     inline static void set_parse_includes(bool val)
     { parse_includes = val; }
+    inline static bool parse_include_file()
+    { return parse_includes; }
+
     // tells this class whether to convert a file inline or pull all data into one file.
     inline static void create_mult_rule_files(bool var)
     { convert_rules_mult_files = var; }
+    inline static bool include_create_rule()
+    { return convert_rules_mult_files; }
+
     // tells this class whether to convert a file inline or pull all data into one file.
     inline static void create_mult_conf_files(bool var)
     { convert_conf_mult_files = var; }
 
+    inline static bool include_create_lua()
+    { return convert_conf_mult_files; }
+
 
     int convert(std::string input,
                 std::string output,
-                std::string rules = "", // defaults to output_file
-                std::string errors = ""); // defaults to output_file
+                std::string rules, // defaults to output_file
+                std::string errors); // defaults to output_file
+
+    // parse a file without creating an entirely new Lua configuation
+    int parse_file(std::string input_file);
 
 
     // set the next parsing state.
@@ -57,15 +69,11 @@ public:
     // reset the current parsing state
     void reset_state();
     // parse an include file.  Use this function to ensure all set options are properly
-    void parse_include_file(std::string file);
+//    void parse_include_file(std::string file);
 
     bool failed_conversions() const
     { return data_api.failed_conversions() || rule_api.failed_conversions(); }
 
-
-    // Should we parse an include file?
-    inline bool should_convert_includes() const
-    { return parse_includes; }
 
     inline DataApi& get_data_api()
     { return data_api; }
@@ -91,8 +99,6 @@ private:
     bool error;
 
 
-    // convert the following file from a snort.conf into a lua.conf
-    int parse_file(std::string input_file);
     // initialize data class
     bool initialize();
 };

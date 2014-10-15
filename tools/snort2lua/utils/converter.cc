@@ -60,6 +60,7 @@ void Converter::reset_state()
     rule_api.reset_state();
 }
 
+#if 0
 // FIXIT-M J  Fix this -- rule, table, and data should be associated with a Converter
 void Converter::parse_include_file(std::string input_file)
 {
@@ -126,6 +127,7 @@ void Converter::parse_include_file(std::string input_file)
         rule_api.swap_rules(rules);
     }
 }
+#endif
 
 int Converter::parse_file(std::string input_file)
 {
@@ -175,6 +177,7 @@ int Converter::parse_file(std::string input_file)
             std::istringstream data_stream(orig_text);
             while(data_stream.peek() != EOF)
             {
+                //FIXIT-M J place this in a try catch
                 if ((state == nullptr) || !state->convert(data_stream))
                 {
                     data_api.failed_conversion(data_stream);
@@ -214,81 +217,26 @@ int Converter::convert(std::string input,
 
     rc = parse_file(input);
 
-    if (rc < 0)
-        return rc;
+    if (rule_file.empty())
+        rule_file = output_file;
+
+    if (error_file.empty())
+        error_file = output_file + ".rej";
 
 
-    // keep track whether we're printing rules into a seperate file.
-    bool rule_file_specifed = false;
-
-
-    if (!rule_api.empty())
-    {
-        if (rule_file.empty() || !rule_file.compare(output_file))
-        {
-            std::string s = std::string("$default_rules");
-            rule_file_specifed = false;
-
-            table_api.open_top_level_table("ips");
-            table_api.add_option("rules", s);
-            table_api.close_table();
-        }
-        else
-        {
-            rule_file_specifed = true;
-
-            table_api.open_top_level_table("ips");
-            table_api.add_option("include", rule_file);
-            table_api.close_table();
-        }
-    }
-
-
-    // finally, lets print the converter to file
-    std::ofstream out;
-
-    out.open(output_file,  std::ifstream::out);
-
-    out << "require(\"snort_config\")  -- for loading\n\n";
-    data_api.print_data(out);
-
-
-    if (!rule_file_specifed)
-    {
-        rule_api.print_rules(out, rule_file_specifed);
-    }
-    else
+    // If there were only rules in this file, do not print lua syntax
+    if (!rule_api.empty() && table_api.empty() && data_api.empty())
     {
         std::ofstream rules;
         rules.open(rule_file, std::ifstream::out);
-        rule_api.print_rules(rules, rule_file_specifed);
+        rule_api.print_rules(rules, true);
         rules.close();
-    }
 
-
-
-    table_api.print_tables(out);
-    data_api.print_comments(out);
-
-
-
-    if ((failed_conversions()) && !DataApi::is_quiet_mode())
-    {
-        if (error_file.empty())
-        {
-            if (data_api.failed_conversions())
-                data_api.print_errors(out);
-
-            if (rule_api.failed_conversions())
-                rule_api.print_rejects(out);
-        }
-        else
+        // FIXIT-M J  output error in appropriate rule comment
+        if (!DataApi::is_quiet_mode() && rule_api.failed_conversions())
         {
             std::ofstream rejects;  // in this case, rejects are regular configuration options
             rejects.open(error_file, std::ifstream::out);
-
-            if (data_api.failed_conversions())
-                data_api.print_errors(rejects);
 
             if (rule_api.failed_conversions())
                 rule_api.print_rejects(rejects);
@@ -296,8 +244,101 @@ int Converter::convert(std::string input,
             rejects.close();
         }
     }
+    else if (!rule_api.empty() || !table_api.empty() || !data_api.empty())
+    {
+        // finally, lets print the converter to file
+        std::ofstream out;
+        out.open(output_file,  std::ifstream::out);
+
+        out << "---------------------------------------------------------------------------\n";
+        out << "-- Snort++ prototype configuration\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "-- setup environment\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "-- given:\n";
+        out << "-- export DIR=/install/path\n";
+        out << "-- configure --prefix=$DIR\n";
+        out << "-- make install\n";
+        out << "--\n";
+        out << "-- then:\n";
+        out << "-- export LUA_PATH=$DIR/include/snort/lua/?.lua\\;\\;\n";
+        out << "-- export SNORT_LUA_PATH=$DIR/conf/\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "\n";
+        out << "\n";
+        out << "\n";
+        out << "require(\"snort_config\")\n\n";;
+        out << "dir = os.getenv('SNORT_LUA_PATH')\n";
+        out << "\n";
+        out << "if ( not dir ) then\n";
+        out << "    dir = ''\n";
+        out << "end\n";
+        out << "\n";
+        out << "dofile(dir .. 'snort_defaults.lua')\n";
+        out << "\n";
+        out << "\n";
+        data_api.print_data(out);
 
 
-    out.close();
+        if (!rule_api.empty())
+        {
+            if (rule_file.empty() || !rule_file.compare(output_file))
+            {
+                rule_api.print_rules(out, false);
+
+                std::string s = std::string("$default_rules");
+                table_api.open_top_level_table("ips");
+                table_api.add_option("rules", s);
+                table_api.close_table();
+            }
+            else
+            {
+                std::ofstream rules;
+                rules.open(rule_file, std::ifstream::out);
+                rule_api.print_rules(rules, true);
+                rules.close();
+
+                table_api.open_top_level_table("ips");
+                table_api.add_option("include", rule_file);
+                table_api.close_table();
+            }
+
+        }
+
+
+        table_api.print_tables(out);
+        data_api.print_comments(out);
+
+
+        if ((failed_conversions()) && !DataApi::is_quiet_mode())
+        {
+            if (error_file.empty())
+            {
+                if (data_api.failed_conversions())
+                    data_api.print_errors(out);
+
+                if (rule_api.failed_conversions())
+                    rule_api.print_rejects(out);
+            }
+            else
+            {
+                std::ofstream rejects;  // in this case, rejects are regular configuration options
+                rejects.open(error_file, std::ifstream::out);
+
+                if (data_api.failed_conversions())
+                    data_api.print_errors(rejects);
+
+                if (rule_api.failed_conversions())
+                    rule_api.print_rejects(rejects);
+
+                rejects.close();
+            }
+        }
+
+        out.close();
+    }
+
     return rc;
 }

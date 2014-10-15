@@ -31,6 +31,8 @@ namespace keywords
 
 namespace {
 
+static bool printed_error = false;
+
 class File : public ConversionState
 {
 public:
@@ -39,12 +41,9 @@ public:
     virtual bool convert(std::istringstream& data);
 
 private:
-    static bool printed_error;
 };
 
 } // namespace
-
-bool File::printed_error = false;
 
 bool File::convert(std::istringstream& data_stream)
 {
