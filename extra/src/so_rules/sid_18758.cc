@@ -32,9 +32,9 @@
 #include "detection/detection_defines.h"
 #include "sid_18758.h"
 
-static int eval(void*, Packet* p)
+static int eval(void*, Cursor&, Packet*)
 {
-    return p ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
+    return DETECTION_OPTION_MATCH;
 }
 
 static SoEvalFunc ctor(const char* /*so*/, void** pv)

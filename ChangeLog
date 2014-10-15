@@ -18,6 +18,7 @@
 -- added --enable-shell and BUILD_SHELL to opt in to --shell and -j
    functionality
 -- latest snort2lua updates from Josh
+-- added cursor to so:eval function to match IpsOption::eval()
 
 124
 -- valgrind cleanup
