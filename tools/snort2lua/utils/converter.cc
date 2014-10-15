@@ -244,14 +244,9 @@ int Converter::convert(std::string input,
     }
 
 
-    // Snort++ requires a binder table to be instantiated,
-    // although not necessarily filled.  So, just add this table.
-    // If its already added, these lines won't have any effect
-    table_api.open_top_level_table("binder");
-    table_api.close_table();
-
     // finally, lets print the converter to file
     std::ofstream out;
+
     out.open(output_file,  std::ifstream::out);
 
     out << "require(\"snort_config\")  -- for loading\n\n";
@@ -269,6 +264,7 @@ int Converter::convert(std::string input,
         rule_api.print_rules(rules, rule_file_specifed);
         rules.close();
     }
+
 
 
     table_api.print_tables(out);

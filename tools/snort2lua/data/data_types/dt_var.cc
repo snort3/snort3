@@ -55,7 +55,6 @@ std::string Variable::get_value(DataApi* ld)
             variable.append(std::string(ld->translate_variable(v->data)));
     }
 
-    std::cout << "VARIABLE: value == " << variable << "END" << std::endl;
     return variable;
 }
 

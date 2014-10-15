@@ -51,9 +51,8 @@ enum class UnreachResponse
     FWD,
 };
 
-/*
- *  PacketManager class
- */
+// FIXIT-M J  --  Roll the PacketManager and 'layer' namespace into
+//                  the Packet struct
 class SO_PUBLIC PacketManager
 {
 public:
