@@ -46,7 +46,6 @@ bool Urilen::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string value;
-    bool retval = true;
 
     args = util::get_rule_option_args(data_stream);
     std::istringstream arg_stream(args);
@@ -55,13 +54,11 @@ bool Urilen::convert(std::istringstream& data_stream)
     // we are therefore done with this rule.
     if (util::get_string(arg_stream, value, ","))
     {
-        retval = rule_api.add_rule_option("bufferlen", value);
+        rule_api.add_rule_option("bufferlen", value);
         rule_api.select_option("bufferlen");
 
         if (util::get_string(arg_stream, value, ","))
         {
-            bool tmpval = true;
-
             if (!value.compare("raw"))
                  rule_api.add_rule_option_before_selected("http_raw_uri");
 
