@@ -37,7 +37,7 @@ using namespace std;
 #include "framework/inspector.h"
 #include "framework/module.h"
 
-static const char* s_name = "http_header";
+#define s_name "http_header"
 
 static THREAD_LOCAL ProfileStats httpHeaderPerfStats;
 
@@ -53,8 +53,8 @@ static const Parameter s_params[] =
 // module
 //-------------------------------------------------------------------------
 
-static const char* s_help =
-    "rule option to set the detection cursor to the normalized header(s)";
+#define s_help \
+    "rule option to set the detection cursor to the normalized header(s)"
 
 class HttpHeaderModule : public Module
 {

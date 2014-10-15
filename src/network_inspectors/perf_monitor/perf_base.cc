@@ -1417,7 +1417,7 @@ static void LogBasePerfStats(SFBASE_STATS *sfBaseStats,  FILE * fh )
     fflush(fh);
 }
 
-static const char* iNames[PERF_COUNT_MAX] = {
+static const char* const iNames[PERF_COUNT_MAX] = {
     "ip4::trim",
     "ip4::tos",
     "ip4::df",

@@ -172,12 +172,12 @@ struct DAQVerdicts
 
 //-------------------------------------------------------------------------
 
-static const char* simple_names[] =
+static const char* const simple_names[] =
 {
     "packets"
 };
 
-static const char* daq_names[] =
+static const char* const daq_names[] =
 {
     "received",
     "analyzed",
@@ -190,7 +190,7 @@ static const char* daq_names[] =
 #endif
 };
 
-const char* verdict_names[] =
+const char* const verdict_names[] =
 {
     "allow",
     "block",
@@ -202,7 +202,7 @@ const char* verdict_names[] =
     "internal whitelist"
 };
 
-static const char* pc_names[] =
+static const char* const pc_names[] =
 {
     "analyzed",
     "fail open",
@@ -220,7 +220,7 @@ static const char* pc_names[] =
     "idle"
 };
 
-static const char* proc_names[] =
+static const char* const proc_names[] =
 {
     "local commands",
     "remote commands",
@@ -364,7 +364,7 @@ void sum_stats(
 }
 
 void show_stats(
-    PegCount* pegs, const char* names[], unsigned n, const char* module_name)
+    PegCount* pegs, const char* const names[], unsigned n, const char* module_name)
 {
     bool head = false;
 
@@ -387,7 +387,7 @@ void show_stats(
 }
 
 void show_percent_stats(
-    PegCount* pegs, const char* names[], unsigned n, const char* module_name)
+    PegCount* pegs, const char* const names[], unsigned n, const char* module_name)
 {
     bool head = false;
 

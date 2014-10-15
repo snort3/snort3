@@ -43,10 +43,10 @@
 #include "framework/range.h"
 #include "protocols/tcp.h"
 
-static const char* s_name = "ack";
+#define s_name "ack"
 
-static const char* s_help =
-    "rule option to match on TCP ack numbers";
+#define s_help \
+    "rule option to match on TCP ack numbers"
 
 static THREAD_LOCAL ProfileStats tcpAckPerfStats;
 

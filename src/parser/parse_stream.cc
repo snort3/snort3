@@ -50,7 +50,7 @@ enum TokenType
 };
 
 #if 0
-static const char* toks[TT_MAX] =
+static const char* const toks[TT_MAX] =
 {
     "none", "punct", "string", "list", "literal"
 };
@@ -60,7 +60,7 @@ static TokenType get_token(
     istream& is, string& s, const char* punct, bool esc)
 {
     static int prev = EOF;
-    int c, list, state = 0;
+    int c, list = 0, state = 0;
     s.clear();
     bool inc = true;
 

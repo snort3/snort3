@@ -43,7 +43,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "rpc";
+#define s_name "rpc"
 
 static THREAD_LOCAL ProfileStats rpcCheckPerfStats;
 
@@ -258,8 +258,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check SUNRPC CALL parameters";
+#define s_help \
+    "rule option to check SUNRPC CALL parameters"
 
 class RpcModule : public Module
 {

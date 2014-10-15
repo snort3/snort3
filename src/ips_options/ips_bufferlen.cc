@@ -39,10 +39,10 @@
 #include "framework/cursor.h"
 #include "framework/module.h"
 
-static const char* s_name = "bufferlen";
+#define s_name "bufferlen"
 
-static const char* s_help =
-    "rule option to check length of current buffer";
+#define s_help \
+    "rule option to check length of current buffer"
 
 static THREAD_LOCAL ProfileStats lenCheckPerfStats;
 

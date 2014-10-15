@@ -387,10 +387,10 @@ static const Parameter s_params[] =
 // module
 //-------------------------------------------------------------------------
 
-static const char* s_name = "snort";
+#define s_name "snort"
 
-static const char* s_help =
-    "command line configuration and shell commands";
+#define s_help \
+    "command line configuration and shell commands"
 
 class SnortModule : public Module
 {

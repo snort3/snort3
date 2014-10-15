@@ -2,6 +2,10 @@
 
 include::terms.txt[]
 
+=== Environment Variables
+
+include::enviro.txt[]
+
 === Command Line Options
 
 include::options.txt[]

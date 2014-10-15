@@ -13,7 +13,7 @@ goals for Snort++:
 * Use a shared configuration and attribute table
 * Use a simple, scriptable configuration
 * Make key components pluggable
-* Autogenerate low-level documentation
+* Autogenerate reference documentation
 * Autodetect services for portless configuration
 * Support sticky buffers in rules
 * Provide better cross platform support

@@ -1,31 +1,22 @@
-/****************************************************************************
- *
+/*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2003-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
-
-//
-//  @author     Tom Peters <thopeter@cisco.com>
-//
-//  @brief      NHttpMsgRequest class analyzes individual HTTP request line.
-//
-
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+// nhttp_msg_request.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
 #include <string.h>
@@ -34,7 +25,6 @@
 
 #include "snort.h"
 #include "nhttp_enum.h"
-#include "nhttp_normalizers.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_header.h"
 
@@ -48,8 +38,11 @@ NHttpMsgRequest::NHttpMsgRequest(const uint8_t *buffer, const uint16_t buf_size,
 }
 
 void NHttpMsgRequest::parse_start_line() {
+    // FIXIT-M this needs to be redesigned to parse a truncated request line and extract the method and URI.
+    // The current implementation just gives up if the " HTTP/X.Y" isn't in its proper place at the end of the line.
+
     // There should be exactly two spaces. One following the method and one before "HTTP/".
-    // Additional spaces located within the URI are not allowed but we will tolerate it
+    // Additional spaces located within the URI are not allowed by RFC but we will tolerate it
     // <method><SP><URI><SP>HTTP/X.Y
     if (start_line.start[start_line.length-9] != ' ') {
         // space before "HTTP" missing or in wrong place

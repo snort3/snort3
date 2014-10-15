@@ -184,8 +184,6 @@ static void help_usage()
     fprintf(stdout, "    --help: help summary\n");
     exit(0);
 }
-static void help_usage(const char* key, const char* /*val*/)
-{ help_usage(); }
 
 /*
  * MOST OF THIS FUNCTION IS TAKEN FROM SNORT!!
@@ -439,10 +437,9 @@ bool parse_cmd_line(int argc, char* argv[])
 }
 
 
-static void help_args(const char* pfx, const char* /*val*/)
+static void help_args(const char* /*pfx*/, const char* /*val*/)
 {
     ConfigFunc* p = basic_opts;
-    unsigned n = pfx ? strlen(pfx) : 0;
     const int name_field_len = 20;
     const int data_field_len = 80 - name_field_len;
 

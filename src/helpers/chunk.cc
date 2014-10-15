@@ -30,7 +30,7 @@
 
 using namespace std;
 
-static const char* opt_init = "init";
+#define opt_init "init"
 
 //-------------------------------------------------------------------------
 // lua stuff

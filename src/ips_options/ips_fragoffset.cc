@@ -39,7 +39,7 @@
 #include "framework/module.h"
 #include "framework/range.h"
 
-static const char* s_name = "fragoffset";
+#define s_name "fragoffset"
 
 static THREAD_LOCAL ProfileStats fragOffsetPerfStats;
 
@@ -120,8 +120,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to test IP frag offset";
+#define s_help \
+    "rule option to test IP frag offset"
 
 class FragOffsetModule : public Module
 {

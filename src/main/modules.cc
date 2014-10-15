@@ -82,8 +82,8 @@ static const Parameter detection_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* detection_help =
-    "configure general IPS rule processing parameters";
+#define detection_help \
+    "configure general IPS rule processing parameters"
 
 class DetectionModule : public Module
 {
@@ -138,8 +138,8 @@ static const Parameter event_queue_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* event_queue_help =
-    "configure event queue parameters";
+#define event_queue_help \
+    "configure event queue parameters"
 
 class EventQueueModule : public Module
 {
@@ -231,8 +231,8 @@ static const Parameter search_engine_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* search_engine_help =
-    "configure fast pattern matcher";
+#define search_engine_help \
+    "configure fast pattern matcher"
 
 class SearchEngineModule : public Module
 {
@@ -353,8 +353,8 @@ static const Parameter profile_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* profile_help =
-    "configure profiling of rules and/or modules (requires --enable-perf-profiling)";
+#define profile_help \
+    "configure profiling of rules and/or modules (requires --enable-perf-profiling)"
 
 class ProfileModule : public Module
 {
@@ -409,8 +409,8 @@ bool ProfileModule::set(const char* fqn, Value& v, SnortConfig* sc)
 // FIXIT-L signature.{h,cc} has type and name confused
 // the keys here make more sense
 
-static const char* classifications_help =
-    "define rule categories with priority";
+#define classifications_help \
+    "define rule categories with priority"
 
 static const Parameter classification_params[] =
 {
@@ -478,8 +478,8 @@ bool ClassificationsModule::set(const char*, Value& v, SnortConfig*)
 // reference module
 //-------------------------------------------------------------------------
 
-static const char* reference_help =
-    "define reference systems used in rules";
+#define reference_help \
+    "define reference systems used in rules"
 
 static const Parameter reference_params[] =
 {
@@ -577,8 +577,8 @@ static const Parameter alerts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* alerts_help =
-    "configure alerts";
+#define alerts_help \
+    "configure alerts"
 
 class AlertsModule : public Module
 {
@@ -684,8 +684,8 @@ static const Parameter output_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* output_help =
-    "configure general output parameters";
+#define output_help \
+    "configure general output parameters"
 
 class OutputModule : public Module
 {
@@ -783,8 +783,8 @@ static const Parameter active_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* active_help =
-    "configure responses";
+#define active_help \
+    "configure responses"
 
 class ActiveModule : public Module
 {
@@ -843,8 +843,8 @@ static const Parameter packets_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* packets_help =
-    "configure basic packet handling";
+#define packets_help \
+    "configure basic packet handling"
 
 class PacketsModule : public Module
 {
@@ -913,8 +913,8 @@ static const Parameter daq_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* daq_help =
-    "configure packet acquisition interface";
+#define daq_help \
+    "configure packet acquisition interface"
 
 class DaqModule : public Module
 {
@@ -1043,8 +1043,8 @@ static const Parameter network_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* network_help =
-    "configure basic network parameters";
+#define network_help \
+    "configure basic network parameters"
 
 class NetworkModule : public Module
 {
@@ -1114,8 +1114,8 @@ static const Parameter ips_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* ips_help =
-    "configure IPS rule processing";
+#define ips_help \
+    "configure IPS rule processing"
 
 class IpsModule : public Module
 {
@@ -1196,8 +1196,8 @@ static const Parameter process_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* process_help =
-    "configure basic process setup";
+#define process_help \
+    "configure basic process setup"
 
 class ProcessModule : public Module
 {
@@ -1335,8 +1335,8 @@ static const Parameter file_id_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* file_id_help =
-    "configure file identification";
+#define file_id_help \
+    "configure file identification"
 
 class FileIdModule : public Module
 {
@@ -1402,8 +1402,8 @@ static const Parameter suppress_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* suppress_help =
-    "configure event suppressions";
+#define suppress_help \
+    "configure event suppressions"
 
 class SuppressModule : public Module
 {
@@ -1484,8 +1484,8 @@ static const Parameter event_filter_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* event_filter_help =
-    "configure thresholding of events";
+#define event_filter_help \
+    "configure thresholding of events"
 
 class EventFilterModule : public Module
 {
@@ -1583,8 +1583,8 @@ static const Parameter rate_filter_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* rate_filter_help =
-    "configure rate filters (which change rule actions)";
+#define rate_filter_help \
+    "configure rate filters (which change rule actions)"
 
 class RateFilterModule : public Module
 {
@@ -1662,8 +1662,8 @@ static const Parameter rule_state_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* rule_state_help =
-    "enable/disable specific IPS rules";
+#define rule_state_help \
+    "enable/disable specific IPS rules"
 
 class RuleStateModule : public Module
 {
@@ -1713,12 +1713,12 @@ bool RuleStateModule::end(const char*, int idx, SnortConfig* sc)
 
 // FIXIT-L these are cloned from ip_module.cc and tcp_module.cc
 
-static const char* ip_policies =
-    "first | linux | bsd | bsd_right |last | windows | solaris";
+#define ip_policies \
+    "first | linux | bsd | bsd_right |last | windows | solaris"
 
-static const char* tcp_policies =
-    "first | last | bsd | linux | old-linux | windows | win-2003 | vista "
-    "solaris | hpux | hpux10 | irix | macos";
+#define tcp_policies \
+    "first | last | bsd | linux | old-linux | windows | win-2003 | vista " \
+    "solaris | hpux | hpux10 | irix | macos"
 
 static const Parameter service_params[] =
 {
@@ -1751,8 +1751,8 @@ static const Parameter hosts_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* hosts_help =
-    "configure hosts";
+#define hosts_help \
+    "configure hosts"
 
 class HostsModule : public Module
 {
@@ -1848,8 +1848,8 @@ static const Parameter xxx_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* xxx_help =
-    "configure ";
+#define xxx_help \
+    "configure "
 
 class XXXModule : public Module
 {

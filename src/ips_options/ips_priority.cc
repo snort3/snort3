@@ -33,7 +33,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "priority";
+#define s_name "priority"
 
 //-------------------------------------------------------------------------
 // module
@@ -42,13 +42,13 @@ static const char* s_name = "priority";
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_INT, "1:", nullptr,
-      "generator id" },
+      "relative severity level; 1 is highest priority" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option for prioritizing events";
+#define s_help \
+    "rule option for prioritizing events"
 
 class PriorityModule : public Module
 {

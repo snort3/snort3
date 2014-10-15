@@ -28,7 +28,7 @@ yet firm so feedback is welcome to get something we can live with.
   may prompt a change to the comments too.
 
 * Use FIXIT (not FIXTHIS or TODO or whatever) to mark things left for a
-  day or even in just a minute.  That way we can find them easily and won't
+  day or even just a minute.  That way we can find them easily and won't
   lose track of them.
 
 * Presently using FIXIT-X where X = P | H | M | L, indicating perf, high,
@@ -45,7 +45,6 @@ yet firm so feedback is welcome to get something we can live with.
 * Don't bang your messages (no !).  The user feels bad enough about the
   problem already w/o you shouting at him.
 
-
 ==== Types
 
 * Use logical types to make the code clearer and to help the compiler catch
@@ -54,10 +53,38 @@ yet firm so feedback is welcome to get something we can live with.
 
 * Use forward declarations (eg struct SnortConfig;) instead of void*.
 
-* Don't use extern data unless absolutely necessary and then put the extern in
-  an appropriate header.
+* Try not to use extern data unless absolutely necessary and then put the
+  extern in an appropriate header.
 
-* Use const liberally.
+* Use const liberally.  In most cases, const char* s = "foo" should be
+  const char* const s = "foo".  The former goes in the initialized data
+  section and the latter in read only data section.
+
+* But use const char s[] = "foo" instead of const char* s = "foo" when
+  possible.  The latter form allocates a pointer variable and the data
+  while the former allocates only the data.
+
+* Use static wherever possible to minimize public symbols and eliminate
+  unneeded relocations.
+
+==== Macros (aka defines)
+
+* In many cases, even in C++, use #define name "value" instead of a
+  const char* const name = "value" because it will eliminate a symbol from
+  the binary.
+  
+* Use inline functions instead of macros where possible (pretty much all
+  cases except where stringification is necessary).  Functions offer better
+  typing, avoid re-expansions, and a debugger can break there.
+
+* All macros except simple const values should be wrapped in () and all
+  args should be wrapped in () too to avoid surprises upon expansion.
+  Example:
+
+    #define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)
+
+* Multiline macros should be blocked (ie inside { }) to avoid if-else type
+  surprises.
 
 ==== Formatting
 
@@ -66,6 +93,9 @@ yet firm so feedback is welcome to get something we can live with.
 * If you need to indent many times, something could be rewritten or
   restructured to make it clearer.  Fewer indents is generally easier to
   write, easier to read, and overall better code.
+
+* Braces go on the line immediately following a new scope (function
+  signature, if, else, loop, switch, etc.
 
 * Use consistent spacing and linebreaks.  Always indent 4 spaces from the
   breaking line.  Keep lines less than 100 chars; it greatly helps
@@ -92,13 +122,23 @@ yet firm so feedback is welcome to get something we can live with.
         inline bool foo()
         { // ...
 
+* Put conidtional code on the line following the if so it is easy to break
+  on the conditional block:
+
+  No:
+      if ( test ) foo();
+
+  Yes:
+      if ( test )
+          foo();
+
 ==== Headers
 
 * Don't hesitate to create a new header if it is needed.  Don't lump
   unrelated stuff into a header because it is convenient.
 
 * Write header guards like this (leading underscores are reserved for
-  system stuff):
+  system stuff).  In my_header.h:
 
     #ifndef MY_HEADER_H
     #define MY_HEADER_H

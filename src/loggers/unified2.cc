@@ -1066,8 +1066,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "ouput event and packet in unified2 format file";
+#define s_help \
+    "ouput event and packet in unified2 format file"
 
 class U2Module : public Module
 {

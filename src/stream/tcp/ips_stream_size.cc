@@ -86,9 +86,9 @@ bool StreamSizeOptionData::compare(uint32_t size1, uint32_t size2)
 // stream_size
 //-------------------------------------------------------------------------
 
-static const char* s_name = "stream_size";
-static const char* s_help =
-    "detection option for stream size checking";
+#define s_name "stream_size"
+#define s_help \
+    "detection option for stream size checking"
 
 static THREAD_LOCAL ProfileStats streamSizePerfStats;
 

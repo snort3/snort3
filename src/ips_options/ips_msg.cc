@@ -35,7 +35,7 @@
 #include "framework/parameter.h"
 #include "framework/module.h"
 
-static const char* s_name = "msg";
+#define s_name "msg"
 
 //-------------------------------------------------------------------------
 // module
@@ -49,8 +49,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option summarizing rule purpose output with events";
+#define s_help \
+    "rule option summarizing rule purpose output with events"
 
 class MsgModule : public Module
 {

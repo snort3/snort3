@@ -92,7 +92,7 @@ static int fpAddPortGroupPrmx(PORT_GROUP *pg, OptTreeNode *otn, int cflag);
 static void PrintFastPatternInfo(OptTreeNode *otn, PatternMatchData *pmd,
         const char *pattern, int pattern_length);
 
-static const char *pm_type_strings[PM_TYPE__MAX] =
+static const char* const pm_type_strings[PM_TYPE__MAX] =
 {
     "Normal Content",
     "HTTP Uri content",
@@ -974,10 +974,10 @@ void set_fp_content(OptTreeNode *otn)
         if ( tmp->fp )
         {
             if ( pmd )
-                ParseError("only one fast_pattern content per rule allowed");
+                ParseWarning("only one fast_pattern content per rule allowed - ignored");
 
             else if ( !pmd_can_be_fp(tmp, curr_cat) )
-                ParseError("content ineligible for fast_pattern matcher");
+                ParseWarning("content ineligible for fast_pattern matcher - ignored");
 
             else
                 pmd = tmp;

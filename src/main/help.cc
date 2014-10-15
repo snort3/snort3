@@ -47,49 +47,49 @@ using namespace std;
 #include "framework/module.h"
 #include "framework/parameter.h"
 
-static const char* snort_help =
-"\n"
-"Snort has several options to get more help:\n"
-"\n"
-"-? list command line options (same as --help)\n"
-"--help this overview of help\n"
-"--help-commands [<module prefix>] output matching commands\n"
-"--help-config [<module prefix>] output matching config options\n"
-"--help-module <module> output description of given module\n"
-"--help-modules list all available modules with brief help\n"
-"--help-plugins list all available plugins with brief help\n"
-"--help-options [<option prefix>] output matching command line options\n"
-"--help-signals dump available control signals\n"
-"--list-buffers output available inspection buffers\n"
-"--list-builtin [<module prefix>] output matching builtin rules\n"
-"--list-gids [<module prefix>] output matching generators\n"
-"--list-modules [<module type>] list all known modules\n"
-"--list-plugins list all known modules\n"
-"--show-plugins list module and plugin versions\n"
-"\n"
-"--help* and --list* options preempt other processing so should be last on the\n"
-"command line since any following options are ignored.  To ensure options like\n"
-"--markup and --plugin-path take effect, place them ahead of the help or list\n"
-"options.\n"
-"\n"
-"Options that filter output based on a matching prefix, such as --help-config\n"
-"won't output anything if there is no match.  If no prefix is given, everything\n"
-"matches.\n"
-"\n"
-"Parameters are given with this format:\n"
-"\n"
-"    type name = default: help { range }\n"
-"\n"
-"++ For Lua configuration (not IPS rules), if the name ends with [] it is a\n"
-"   list item and can be repeated.\n"
-"++ For IPS rules only, names starting with ~ indicate positional parameters.\n"
-"   The name does not appear in the rule.\n"
-"++ IPS rules may also have a wild card parameter, which is indicated by a *.\n"
-"   Only used for metadata that Snort ignores.\n"
-"++ The snort module has command line options starting with a -.\n"
-"\n"
+#define snort_help \
+"\n" \
+"Snort has several options to get more help:\n" \
+"\n" \
+"-? list command line options (same as --help)\n" \
+"--help this overview of help\n" \
+"--help-commands [<module prefix>] output matching commands\n" \
+"--help-config [<module prefix>] output matching config options\n" \
+"--help-module <module> output description of given module\n" \
+"--help-modules list all available modules with brief help\n" \
+"--help-plugins list all available plugins with brief help\n" \
+"--help-options [<option prefix>] output matching command line options\n" \
+"--help-signals dump available control signals\n" \
+"--list-buffers output available inspection buffers\n" \
+"--list-builtin [<module prefix>] output matching builtin rules\n" \
+"--list-gids [<module prefix>] output matching generators\n" \
+"--list-modules [<module type>] list all known modules\n" \
+"--list-plugins list all known modules\n" \
+"--show-plugins list module and plugin versions\n" \
+"\n" \
+"--help* and --list* options preempt other processing so should be last on the\n" \
+"command line since any following options are ignored.  To ensure options like\n" \
+"--markup and --plugin-path take effect, place them ahead of the help or list\n" \
+"options.\n" \
+"\n" \
+"Options that filter output based on a matching prefix, such as --help-config\n" \
+"won't output anything if there is no match.  If no prefix is given, everything\n" \
+"matches.\n" \
+"\n" \
+"Parameters are given with this format:\n" \
+"\n" \
+"    type name = default: help { range }\n" \
+"\n" \
+"++ For Lua configuration (not IPS rules), if the name ends with [] it is a\n" \
+"   list item and can be repeated.\n" \
+"++ For IPS rules only, names starting with ~ indicate positional parameters.\n" \
+"   The name does not appear in the rule.\n" \
+"++ IPS rules may also have a wild card parameter, which is indicated by a *.\n" \
+"   Only used for metadata that Snort ignores.\n" \
+"++ The snort module has command line options starting with a -.\n" \
+"\n" \
 "Report bugs to bugs@snort.org.\n"
-;
+
 
 //-------------------------------------------------------------------------
 

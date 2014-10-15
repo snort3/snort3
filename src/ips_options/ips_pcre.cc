@@ -68,7 +68,7 @@
 #define SNORT_PCRE_ANCHORED         0x00040
 #define SNORT_OVERRIDE_MATCH_LIMIT  0x00080 // Override default limits on match & match recursion
 
-static const char* s_name = "pcre";
+#define s_name "pcre"
 
 /*
  * we need to specify the vector length for our pcre_exec call.  we only care
@@ -641,8 +641,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option for matching payload data with regex";
+#define s_help \
+    "rule option for matching payload data with regex"
 
 class PcreModule : public Module
 {

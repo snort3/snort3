@@ -61,7 +61,7 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 
-static const char* s_name = "icmp_id";
+#define s_name "icmp_id"
 
 static THREAD_LOCAL ProfileStats icmpIdPerfStats;
 
@@ -144,8 +144,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "rule option to check ICMP ID";
+#define s_help \
+    "rule option to check ICMP ID"
 
 class IcmpIdModule : public Module
 {

@@ -51,16 +51,16 @@
 
 using namespace std;
 
-static const char* s_name = "alert_syslog";
+#define s_name "alert_syslog"
 
 //-------------------------------------------------------------------------
 // translation stuff
 //-------------------------------------------------------------------------
 
-static const char* syslog_facilities =
-    "auth | authpriv | daemon | user | "
-    "local0 | local1 | local2 | local3 | "
-    "local4 | local5 | local6 | local7";
+#define syslog_facilities \
+    "auth | authpriv | daemon | user | " \
+    "local0 | local1 | local2 | local3 | " \
+    "local4 | local5 | local6 | local7"
 
 static int get_facility(unsigned fac)
 {
@@ -82,8 +82,8 @@ static int get_facility(unsigned fac)
     return 0;
 }
 
-static const char* syslog_levels = 
-    "emerg | alert | crit | err | warning | notice | info | debug";
+#define syslog_levels  \
+    "emerg | alert | crit | err | warning | notice | info | debug"
 
 static int get_level(unsigned lvl)
 {
@@ -101,8 +101,8 @@ static int get_level(unsigned lvl)
     return 0;
 }
 
-static const char* syslog_options =
-    "cons | ndelay | perror | pid";
+#define syslog_options \
+    "cons | ndelay | perror | pid"
 
 static int get_options(const char* s)
 {
@@ -141,8 +141,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "output event to syslog";
+#define s_help \
+    "output event to syslog"
 
 class SyslogModule : public Module
 {

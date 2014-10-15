@@ -315,7 +315,7 @@ SFXHASH * DetectionTreeHashTableNew(void)
 }
 
 #ifdef DEBUG_OPTION_TREE
-static const char *option_type_str[] =
+static const char* const option_type_str[] =
 {
     "RULE_OPTION_TYPE_LEAF_NODE",
     "RULE_OPTION_TYPE_CONTENT",
@@ -387,14 +387,18 @@ int detection_option_node_evaluate(
     int rval = DETECTION_OPTION_NO_MATCH;
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
-    PatternMatchData* content_data;
-    PcreData* pcre_data;
     char continue_loop = 1;
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
-    uint64_t cur_eval_pkt_count = (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
+    uint64_t cur_eval_pkt_count = 
+        (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
     NODE_PROFILE_VARS;
+
+    // FIXIT-P these are initialized only to silence -O2 warnings
+    // they are set before use below
+    PatternMatchData* content_data = nullptr;
+    PcreData* pcre_data = nullptr;
 
     if (!node || !eval_data || !eval_data->p || !eval_data->pomd)
         return 0;

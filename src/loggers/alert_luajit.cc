@@ -134,8 +134,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "output event from custom Lua script";
+#define s_help \
+    "output event from custom Lua script"
 
 class LuaLogModule : public Module
 {

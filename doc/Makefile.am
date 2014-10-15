@@ -114,7 +114,7 @@ ips_action.txt: $(snort)
 	done > $@
 
 ips_option.txt: $(snort)
-	for m in `$(snort) --list-modules ips_action` ; do \
+	for m in `$(snort) --list-modules ips_option` ; do \
 		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 

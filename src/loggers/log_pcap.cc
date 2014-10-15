@@ -101,8 +101,8 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const char* s_help =
-    "log packet in pcap format";
+#define s_help \
+    "log packet in pcap format"
 
 class TcpdumpModule : public Module
 {
