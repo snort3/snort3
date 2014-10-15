@@ -50,6 +50,9 @@ class Comments;
 class RuleApi;
 
 
+// Yes, I need to redo this API.
+
+// FIXIT-L J  add_rule_option means select_option().  CHANGE_IT!!
 class RuleApi
 {
 
@@ -89,6 +92,7 @@ public:
     bool add_rule_option(std::string keyword, std::string val);
     // add a rule option (keyword and suboption)
     bool add_rule_option_before_selected(std::string keyword, std::string val = std::string());
+    // FIXIT-L J  this function should definitely be removed
     // selects the rule option with the given name.  MUST BE CALLED BEFORE ADDING A SUBOPTION.
     bool select_option(std::string keyword);
     // clear the selected option.

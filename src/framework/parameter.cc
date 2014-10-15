@@ -163,6 +163,7 @@ static bool valid_enum(Value& v, const char* r)
     if ( !r )
         return false;
 
+    // FIXIT-H J  -  Ensure the enum is the full value
     const char* s = v.get_string();
     const char* t = strstr(r, s);
 

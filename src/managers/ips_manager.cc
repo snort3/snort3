@@ -121,6 +121,7 @@ static bool set_arg(
     Value v(opt);
     bool ok = true;
 
+
     if ( p->type == Parameter::PT_IMPLIED )
         v.set(true);
 
@@ -136,6 +137,7 @@ static bool set_arg(
     }
     else
         v.set(val);
+
 
     if ( ok && p->validate(v) )
     {

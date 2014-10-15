@@ -468,19 +468,6 @@ static const ConvertMap rule_session =
 const ConvertMap* session_map = &rule_session;
 
 /************************************
- ***************  TAG  **************
- ************************************/
-
-static const std::string tag = "tag";
-static const ConvertMap rule_tag =
-{
-    tag,
-    unchanged_rule_ctor<&tag>,
-};
-
-const ConvertMap* tag_map = &rule_tag;
-
-/************************************
  ************* REPLACE  *************
  ************************************/
 
@@ -585,19 +572,6 @@ static const ConvertMap rule_base64_data =
 };
 
 const ConvertMap* base64_data_map = &rule_base64_data;
-
-/************************************
- *********** ISDATAAT  **************
- ************************************/
-
-static const std::string isdataat = "isdataat";
-static const ConvertMap rule_isdataat =
-{
-    isdataat,
-    unchanged_rule_ctor<&isdataat>,
-};
-
-const ConvertMap* isdataat_map = &rule_isdataat;
 
 /************************************
  *************  ASN1  ***************

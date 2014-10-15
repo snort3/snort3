@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-// rule_urilen.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// rule_isdataat.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -32,17 +32,17 @@ namespace rules
 namespace {
 
 
-class Urilen : public ConversionState
+class IsDataAt : public ConversionState
 {
 public:
-    Urilen(Converter& c) : ConversionState(c) {};
-    virtual ~Urilen() {};
+    IsDataAt(Converter& c) : ConversionState(c) {};
+    virtual ~IsDataAt() {};
     virtual bool convert(std::istringstream& data);
 };
 
 } // namespace
 
-bool Urilen::convert(std::istringstream& data_stream)
+bool IsDataAt::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string value;
@@ -52,30 +52,26 @@ bool Urilen::convert(std::istringstream& data_stream)
 
     // if there are no arguments, the option had a colon before a semicolon.
     // we are therefore done with this rule.
-    if (util::get_string(arg_stream, value, ","))
+    if (args.empty() || !util::get_string(arg_stream, value, " ,"))
     {
-        rule_api.add_rule_option("bufferlen", value);
-        rule_api.select_option("bufferlen");
-
-        if (util::get_string(arg_stream, value, ","))
-        {
-            if (!value.compare("raw"))
-                 rule_api.add_rule_option_before_selected("http_raw_uri");
-
-            else if (!value.compare("norm"))
-                 rule_api.add_rule_option_before_selected("http_uri");
-
-            else
-                rule_api.bad_rule(data_stream, "urilen:" + value + "," + args);
-        }
-        else
-        {
-            rule_api.add_rule_option_before_selected("http_uri");
-        }
+        rule_api.bad_rule(data_stream, "isdataat requires an argument!");
     }
     else
     {
-        rule_api.bad_rule(data_stream, "urilen - option required");
+        rule_api.add_rule_option("isdataat", value);
+        rule_api.select_option("isdataat");
+
+        while(util::get_string(arg_stream, value, " ,"))
+        {
+            if (!value.compare("relative"))
+                rule_api.add_suboption("relative");
+
+            else if (!value.compare("rawbytes"))
+                rule_api.add_rule_option_before_selected("pkt_data");
+
+            else
+                rule_api.bad_rule(data_stream, value + " - unkown modifier!!");
+        }
     }
 
     rule_api.unselect_option();
@@ -87,18 +83,16 @@ bool Urilen::convert(std::istringstream& data_stream)
  **************************/
 
 
-static ConversionState* ctor(Converter& c)
-{
-    return new Urilen(c);
-}
+static ConversionState* ctor(Converter& cv)
+{ return new IsDataAt(cv); }
 
-static const std::string urilen = "urilen";
-static const ConvertMap rule_urilen =
+static const ConvertMap isdataat_api =
 {
-    "urilen",
+    "isdataat",
     ctor,
 };
 
-const ConvertMap* urilen_map = &rule_urilen;
+const ConvertMap* isdataat_map = &isdataat_api;
+
 
 } // namespace rules

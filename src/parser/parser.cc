@@ -1118,9 +1118,9 @@ void ParseError(const char *format, ...)
     get_parse_location(file_name, file_line);
 
     if (file_line )
-        LogMessage("ERROR: %s:%d %s\n", file_name, file_line, buf);
+        ErrorMessage("ERROR: %s:%d %s\n", file_name, file_line, buf);
     else
-        LogMessage("ERROR: %s\n", buf);
+        ErrorMessage("ERROR: %s\n", buf);
 
     parse_errors++;
 }
