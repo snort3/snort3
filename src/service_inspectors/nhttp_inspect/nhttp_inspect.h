@@ -26,6 +26,7 @@
 //-------------------------------------------------------------------------
 
 #include "framework/inspector.h"
+#include "snort.h"
 #include "nhttp_stream_splitter.h"
 
 class NHttpApi;
@@ -34,16 +35,14 @@ class NHttpInspect : public Inspector {
 public:
     NHttpInspect(bool test_input, bool test_output);
 
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
-    bool get_buf(unsigned, Packet*, InspectionBuffer&);
-    bool configure(SnortConfig*) { return true; };
-    int verify(SnortConfig*) { return 0; };
-    void show(SnortConfig*) { LogMessage("NHttpInspect\n"); };
-    void eval(Packet*) { return; };
-    bool enabled() { return true; };
-    void tinit() {};
-    void tterm() {};
-    NHttpStreamSplitter* get_splitter(bool is_client_to_server) { return new
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+    bool get_buf(unsigned, Packet*, InspectionBuffer&) override;
+    bool configure(SnortConfig*) override { return true; };
+    void show(SnortConfig*) override { LogMessage("NHttpInspect\n"); };
+    void eval(Packet*) override { return; };
+    void tinit() override {};
+    void tterm() override {};
+    NHttpStreamSplitter* get_splitter(bool is_client_to_server) override { return new
        NHttpStreamSplitter(is_client_to_server, this); };
 
 private:

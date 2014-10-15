@@ -34,7 +34,9 @@ NHttpFlowData::NHttpFlowData() : FlowData(nhttp_flow_id) { }
 
 NHttpFlowData::~NHttpFlowData() {
     for (int k=0; k <= 1; k++) {
-        delete[] section_buffer[k];
+        if (section_buffer_owned[k]) {
+            delete[] section_buffer[k];
+        }
         delete[] chunk_buffer[k];
         delete transaction[k];
     }
