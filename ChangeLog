@@ -22,6 +22,7 @@
 -- added --rule-to-hex and --rule-to-text to generate protected and
    unprotected so rules
 -- latest from tom
+-- fixed explicit stream_* bindings
 
 124
 -- valgrind cleanup

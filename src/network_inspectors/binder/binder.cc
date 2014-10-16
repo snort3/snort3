@@ -316,6 +316,12 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
         return pb->use.action;
     }
 
+    if ( !strncmp(pb->use.name.c_str(), "stream_", 7) )
+    {
+        set_session(flow, pb->use.name.c_str());
+        return BA_INSPECT;
+    }
+
     init_flow(flow);
     Inspector* ins;
 
