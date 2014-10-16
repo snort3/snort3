@@ -305,7 +305,7 @@ static void help(const char* key, const char* val)
     fprintf(stdout, "\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "Required option(s):\n");
-    fprintf(stdout, "\tA Snort configure file to converter. Set with either '-c' or '--conf-file'\n");
+    fprintf(stdout, "\tA Snort configuration file to convert. Set with either '-c' or '--conf-file'\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "Default values:\n");
