@@ -60,8 +60,7 @@ void Converter::reset_state()
     rule_api.reset_state();
 }
 
-#if 1
-// FIXIT-M J  Fix this -- rule, table, and data should be associated with a Converter
+
 int Converter::parse_include_file(std::string input_file)
 {
     std::vector<Variable*> vars;
@@ -98,7 +97,7 @@ int Converter::parse_include_file(std::string input_file)
         bool include_file = false;
 
         // print configuration file
-        if (!table_api.empty() || data_api.empty())
+        if (!table_api.empty() || !data_api.empty())
         {
             std::ofstream out;
             out.open(input_file + ".lua");
@@ -142,7 +141,6 @@ int Converter::parse_include_file(std::string input_file)
 
     return rc;
 }
-#endif
 
 int Converter::parse_file(std::string input_file)
 {

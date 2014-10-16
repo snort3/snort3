@@ -45,85 +45,6 @@ private:
 
 } // namespace
 
-#if 0
-bool Include::convert_file(std::string file, std::string input)
-{
-    std::vector<Variable*> vars;
-    std::vector<Table*> tables;
-    std::vector<Rule*> rules;
-    std::vector<::Include*> includes; //FIXIT-M J  namesapce data to fix this
-    Comments* comments;
-    bool error = false;
-
-    std::cout << "file == " << file << std::endl;
-    std::cout << "input == " << input << std::endl;
-    std::cout << "segfaul??" << tables.empty() << std::endl;
-
-    // TODO get rid of any variables in the name
-
-    if (cv.include_create_lua())
-    {
-        comments = new Comments(start_comments, 0,
-                    Comments::CommentType::MULTI_LINE);
-
-        table_api.reset_state();
-        data_api.reset_state();
-
-        data_api.swap_conf_data(vars, includes, comments);
-        table_api.swap_tables(tables);
-    }
-
-    if (cv.include_create_rule())
-        rule_api.swap_rules(rules);
-
-
-
-    if (cv.parse_file(input) < 0)
-        error = true; // return a negative number to main snort2lua method
-
-
-    if (cv.include_create_lua())
-    {
-        std::cout << "segfaul??" << table_api.empty() << std::endl;
-        std::cout << "segfaul -- data_api.empty??" << data_api.empty() << std::endl;
-        // print configuration file
-        if (!table_api.empty() || !data_api.empty())
-        {
-            std::ofstream out;
-            out.open(input + ".lua");
-            data_api.print_data(out);
-            table_api.print_tables(out);
-            data_api.print_comments(out);
-            out << std::endl;
-            out.close();
-
-            data_api.add_include_file(file + ".lua");
-        }
-
-        data_api.swap_conf_data(vars, includes, comments);
-        table_api.swap_tables(tables);
-        delete comments;
-    }
-
-
-    if (cv.include_create_rule())
-    {
-        if (!rule_api.empty())
-        {
-            std::ofstream out;
-            out.open(input + ".rules");
-            rule_api.print_rules(out, true); // true == output to rule file, NOT lua file
-            out.close();
-
-            rule_api.add_hdr_data("include " + file + ".rules");
-        }
-
-        rule_api.swap_rules(rules);
-    }
-
-    return error;
-}
-#endif
 
 bool Include::convert(std::istringstream& data_stream)
 {
@@ -136,8 +57,6 @@ bool Include::convert(std::istringstream& data_stream)
     if(!file.empty())
     {
         // if not parsing, assume its a regular rule file.
-
-
         if (cv.get_parse_includes())
         {
             std::string full_file = data_api.expand_vars(file);
@@ -148,11 +67,7 @@ bool Include::convert(std::istringstream& data_stream)
 
             // if we still can't find this file, add it as a snort file
             if (util::file_exists(full_file))
-            {
-//                return convert_file(file, full_file);
-                cv.parse_include_file(full_file);
-//                return true;
-            }
+                return !(cv.parse_include_file(full_file));
         }
     }
 

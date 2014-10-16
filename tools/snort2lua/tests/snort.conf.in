@@ -946,7 +946,7 @@ output alert_test: file,session,rebuilt,msg
 
 # metadata reference data.  do not modify these lines
 include @CMAKE_CURRENT_LIST_DIR@/classification.config
-include @CMAKE_CURRENT_LIST_DIR@/reference.config
+include $SOURCE_PATH/reference.config
 
 ###################################################
 # Step #7: Customize your rule set

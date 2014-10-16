@@ -57,9 +57,11 @@ bool File::convert(std::istringstream& data_stream)
     rule_api.make_rule_a_comment();
 
     if (!printed_error)
-        rule_api.add_comment_to_rule("WARNING: file keyword is currently unsupported");
-    else
+    {
         printed_error = true;
+        rule_api.add_comment_to_rule("WARNING: file keyword is currently unsupported");
+    }
+
     return true;
 }
 
