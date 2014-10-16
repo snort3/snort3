@@ -19,11 +19,8 @@
 // nhttp_inspect.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
-#include <string.h>
-#include <sys/types.h>
 #include <stdio.h>
 
-#include "snort.h"
 #include "stream/stream_api.h"
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
@@ -81,7 +78,7 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
 ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id, bool buf_owner)
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
-    assert(session_data);
+    assert(session_data != nullptr);
 
     NHttpMsgSection *msg_section = nullptr;
 
@@ -108,9 +105,12 @@ ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, F
         msg_section->print_section(NHttpTestManager::get_output_file());
         fflush(NHttpTestManager::get_output_file());
         if (NHttpTestManager::use_test_input()) {
-             printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
-             fflush(stdout);
+            printf("Finished processing section from test %" PRIi64 "\n", NHttpTestManager::get_test_number());
         }
+        else {
+            printf("Finished processing section from flow %p\n", (void*)session_data);
+        }
+        fflush(stdout);
     }
 
     return return_value;

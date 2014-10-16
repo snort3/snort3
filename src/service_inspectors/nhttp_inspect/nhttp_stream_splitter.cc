@@ -19,16 +19,13 @@
 // nhttp_stream_splitter.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
-#include <string.h>
 #include <sys/types.h>
-#include "snort.h"
-#include "protocols/packet.h"
 #include "nhttp_enum.h"
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 #include "nhttp_splitter.h"
-#include "nhttp_stream_splitter.h"
 #include "nhttp_inspect.h"
+#include "nhttp_stream_splitter.h"
 
 using namespace NHttpEnums;
 
@@ -71,6 +68,18 @@ void NHttpStreamSplitter::prepare_flush(NHttpFlowData* session_data, uint32_t* f
     session_data->header_octets_visible[source_id] = 0;
 }
 
+NHttpSplitter* NHttpStreamSplitter::choose_splitter(SectionType type, SourceId source_id,
+   const NHttpFlowData* session_data) const {
+    switch (type) {
+      case SEC_REQUEST:
+      case SEC_STATUS: return (NHttpSplitter*)&session_data->start_splitter[source_id];
+      case SEC_CHUNK: return (NHttpSplitter*)&session_data->chunk_splitter[source_id];
+      case SEC_HEADER: return (NHttpSplitter*)&session_data->header_splitter[source_id];
+      case SEC_TRAILER: return (NHttpSplitter*)&session_data->trailer_splitter[source_id];
+      default: assert(0); return nullptr;
+    }
+}
+
 StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* data, uint32_t length, uint32_t,
    uint32_t* flush_offset) {
 
@@ -79,13 +88,12 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
     // When the system begins providing TCP connection close information this won't always be false. FIXIT-H
     bool tcp_close = false;
 
-    // This is the session state information we share with HTTP Inspect and store with stream. A session is defined
+    // This is the session state information we share with NHttpInspect and store with stream. A session is defined
     // by a TCP connection. Since scan() is the first to see a new TCP connection the new flow data object is created
     // here.
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     if (session_data == nullptr) flow->set_application_data(session_data = new NHttpFlowData);
     assert(session_data != nullptr);
-
     SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
 
     if (NHttpTestManager::use_test_input()) {
@@ -106,6 +114,10 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         assert(session_data->type_expected[source_id] != SEC_ABORT);
         assert(session_data->type_expected[source_id] != SEC_CLOSED);
     }
+    else if (NHttpTestManager::use_test_output()) {
+        printf("Scan from flow %p direction %d\n", (void*)session_data, source_id);
+        fflush(stdout);
+    }
 
     SectionType type = session_data->type_expected[source_id];
 
@@ -116,16 +128,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
       case SEC_HEADER:
       case SEC_TRAILER:
       {
-        NHttpSplitter* splitter;
-        switch (type) {
-          case SEC_REQUEST:
-          case SEC_STATUS: splitter = (NHttpSplitter*)&session_data->start_splitter[source_id]; break;
-          case SEC_CHUNK: splitter = (NHttpSplitter*)&session_data->chunk_splitter[source_id]; break;
-          case SEC_HEADER: splitter = (NHttpSplitter*)&session_data->header_splitter[source_id]; break;
-          case SEC_TRAILER: splitter = (NHttpSplitter*)&session_data->trailer_splitter[source_id]; break;
-          default: assert(0); break;
-        }
-
+        NHttpSplitter* const splitter = choose_splitter(type, source_id, session_data);
         const uint32_t max_length = MAXOCTETS - splitter->get_octets_seen();
         const ScanResult split_result = splitter->split(data, (length <= max_length) ? length : max_length);
         switch (split_result) {
@@ -198,6 +201,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
     static THREAD_LOCAL StreamBuffer nhttp_buf;
 
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
+    assert(session_data != nullptr);
     SourceId source_id = to_server() ? SRC_CLIENT : SRC_SERVER;
     copied = len;
 
@@ -214,6 +218,10 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
         }
         data = test_buffer;
         offset = 0;
+    }
+    else if (NHttpTestManager::use_test_output()) {
+        printf("Reassemble from flow %p direction %d\n", (void*)session_data, source_id);
+        fflush(stdout);
     }
 
     session_data->tcp_close[source_id] = tcp_close || session_data->tcp_close[source_id];
@@ -234,9 +242,13 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
     int32_t& chunk_buffer_length = session_data->chunk_buffer_length[source_id];
     uint8_t*& buffer = !is_chunk ? session_data->section_buffer[source_id] : chunk_buffer;
     int32_t& buffer_length = !is_chunk ? session_data->section_buffer_length[source_id] : chunk_buffer_length;
+    bool& buffer_owned = !is_chunk ? session_data->section_buffer_owned[source_id] :
+       session_data->chunk_buffer_owned[source_id];
 
     if (buffer == nullptr) {
         buffer = new uint8_t[MAXOCTETS];
+        assert(buffer != nullptr);
+        buffer_owned = true;
     }
 
     uint32_t num_excess = session_data->num_excess[source_id];
@@ -287,6 +299,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
             return nullptr;
           case RES_AGGREGATE:
             buffer_length += offset + len - num_excess;
+            buffer_owned = false;
             return nullptr;
         }
     }

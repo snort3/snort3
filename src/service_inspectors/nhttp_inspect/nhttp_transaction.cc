@@ -70,6 +70,7 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
             }
         }
         session_data->transaction[SRC_CLIENT] = new NHttpTransaction;
+        assert(session_data->transaction[SRC_CLIENT] != nullptr);
     }
     // Status section: delete the current transaction and get a new one from the pipeline. If the pipeline is empty
     // check for a request-side transaction that just finished and take it. If there is no transaction available then
@@ -78,6 +79,7 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
         delete session_data->transaction[SRC_SERVER];
         if (session_data->pipeline_underflow) {
             session_data->transaction[SRC_SERVER] = new NHttpTransaction;
+            assert(session_data->transaction[SRC_SERVER] != nullptr);
         }
         else if ((session_data->transaction[SRC_SERVER] = session_data->take_from_pipeline()) == nullptr) {
             if ((session_data->transaction[SRC_CLIENT] != nullptr) &&
@@ -88,6 +90,7 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
             else {
                 session_data->pipeline_underflow = true;
                 session_data->transaction[SRC_SERVER] = new NHttpTransaction;
+                assert(session_data->transaction[SRC_SERVER] != nullptr);
             }
         }
     }
