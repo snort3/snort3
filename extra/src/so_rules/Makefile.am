@@ -12,7 +12,7 @@ sid_18758.h
 %.h : %.txt
 	snort --rule-to-text < $< > $@
 
-%.h : %.vrt
+%.h : %.pro
 	snort --rule-to-hex < $< > $@
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
