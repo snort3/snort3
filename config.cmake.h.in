@@ -106,6 +106,9 @@
 /* Set by user */
 #cmakedefine SIGNAL_SNORT_ROTATE_STATS @SIGNAL_SNORT_ROTATE_STATS@
 
+/* enable ha capable build */
+#cmakedefine BUILD_SHELL 1
+
 
 
 /* platforms */

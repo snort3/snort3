@@ -55,6 +55,8 @@ set (UNBUILT_SOURCES
     snort_manual.txt
     overview.txt
     errors.txt
+    enviro.txt
+    features.txt
     differences.txt
     extending.txt
     reference.txt

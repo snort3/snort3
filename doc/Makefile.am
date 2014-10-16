@@ -30,6 +30,8 @@ snort_manual.txt \
 overview.txt \
 config_changes.txt \
 errors.txt \
+enviro.txt \
+features.txt \
 differences.txt \
 extending.txt \
 reference.txt \
@@ -38,6 +40,8 @@ start.txt \
 style.txt \
 terms.txt \
 images/snort.png
+
+
 
 all_sources = \
 $(unbuilt_sources) \
