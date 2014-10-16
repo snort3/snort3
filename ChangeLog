@@ -26,6 +26,7 @@
 -- latest from josh - snort2lua changes
 -- added override to most derived virtual declarations
 -- update from josh
+-- adding sid_18758.h back to extra/src/so_rules/ so that makes work
 
 124
 -- valgrind cleanup
