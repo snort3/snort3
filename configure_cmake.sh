@@ -43,6 +43,8 @@ Optional Features:
     --enable-unit-tests      Build unit tests
     --enable-large-pcap      Enable support for pcaps larger than 2 GB
     --disable-static-daq     Link static DAQ modules.
+    --enable-shell           enable command line shell support
+
 
     Optional Packages:
     --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -268,6 +270,12 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-intel-soft-cpm)
             append_cache_entry ENABLE_INTEL_SOFT_CPM    BOOL   true
+            ;;
+        --enable-shell)
+            append_cache_entry ENABLE_SHELL    BOOL   true
+            ;;
+        --disable-shell)
+            append_cache_entry ENABLE_SHELL    BOOL   false
             ;;
         --disable-side-channel)
             append_cache_entry BUILD_SIDE_CHANNEL    BOOL   false

@@ -24,7 +24,7 @@ option (ENABLE_DEBUG_MSGS "Enable debug printing options (bugreports and develop
 option (ENABLE_DEBUG "Enable debugging options (bugreports and developers only)" ON)
 option (ENABLE_GDB "Enable gdb debugging information" ON)
 option (ENABLE_PROFILE "Enable profiling options (developers only)" OFF)
-option (ENABLE_SOURCEFIRE "Enable Sourcefire specific build options, encompasing ENABLE_PERFPROFILING and ENABLE_PPM" ON)
+option (ENABLE_SHELL "enable shell support" OFF)
 option (ENABLE_COREFILES "Prevent Snort from generating core files" ON)
 option (BUILD_HA "Enable high-availability state sharing" OFF)
 option (ENABLE_INTEL_SOFT_CPM "Enable Intel Soft CPM support" OFF)

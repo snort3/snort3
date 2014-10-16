@@ -64,7 +64,7 @@ public:
     bool failed_conversions() const;
 
     inline bool empty()
-    { return (rules.size() == 0); }
+    { return rules.empty(); }
 
     friend std::ostream &operator<<(std::ostream&, const RuleApi &);
     void print_rules(std::ostream&, bool in_rule_file);

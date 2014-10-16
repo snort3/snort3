@@ -92,7 +92,6 @@ std::string DataApi::expand_vars(const std::string &string)
 
     i = j = 0;
     l_string = string.size();
-    std::cout << "ExpandVars, Before: " << string << std::endl;
 
     while(i < l_string && j < std::string::npos)
     {
@@ -225,8 +224,6 @@ std::string DataApi::expand_vars(const std::string &string)
         estring.resize(j);
 
     estring[j] = '\0';
-    std::cout << "ExpandVars, After: " << estring << std::endl;
-
     return estring;
 }
 

@@ -76,6 +76,7 @@ const std::string get_rule_file()
 
 
 static void help_args(const char* pfx, const char* /*val*/);
+static void print_args(const char* pfx, const char* /*val*/);
 
 //-------------------------------------------------------------------------
 // arg foo
@@ -181,7 +182,7 @@ static void help_usage()
     fprintf(stdout, "    -?: list options\n");
     fprintf(stdout, "    -V: output version\n");
     fprintf(stdout, "    --help: help summary\n");
-    exit(1);
+    exit(0);
 }
 
 /*
@@ -315,10 +316,15 @@ static void help(const char* key, const char* val)
     exit(0);
 }
 
+static void print_args(const char* key, const char* val)
+{
+    help_args(key, val);
+    exit(0);
+}
 
 static ConfigFunc basic_opts[] =
 {
-    { "?", help_args, "",
+    { "?", print_args, "",
       "show usage" },
 
     { "h", help, "",

@@ -31,6 +31,7 @@ overview.txt \
 config_changes.txt \
 errors.txt \
 enviro.txt \
+features.txt \
 differences.txt \
 extending.txt \
 reference.txt \
@@ -39,6 +40,8 @@ start.txt \
 style.txt \
 terms.txt \
 images/snort.png
+
+
 
 all_sources = \
 $(unbuilt_sources) \
@@ -62,82 +65,83 @@ endif
 dist_doc_DATA += $(EXTRA_DIST)
 
 snort = $(top_builddir)/src/snort
+plugin_path = $(if $(shell echo $$PLUGIN_PATH), --plugin-path=$$PLUGIN_PATH )
 
 $(unbuilt_sources): $(snort)
 	mkdir -p images
 	[ -a $(builddir)/$@ ] || cp $(srcdir)/$@ $(builddir)/$@
 
 builtin.txt: $(snort)
-	$(snort) --markup --list-builtin | sort -n -t : -k 1.4 -k 2 > $@
+	$(snort) $(plugin_path) --markup --list-builtin | sort -n -t : -k 1.4 -k 2 > $@
 
 commands.txt: $(snort)
-	$(snort) --markup --help-commands | sort > $@
+	$(snort) $(plugin_path) --markup --help-commands | sort > $@
 
 config.txt: $(snort)
-	$(snort) --markup --help-config | sort -k 3 > $@
+	$(snort) $(plugin_path) --markup --help-config | sort -k 3 > $@
 
 gids.txt: $(snort)
-	$(snort) --markup --list-gids | sort -n  -k 1.4 > $@
+	$(snort) $(plugin_path) --markup --list-gids | sort -n  -k 1.4 > $@
 
 modules.txt: $(snort)
-	$(snort) --markup --help-modules > $@
+	$(snort) $(plugin_path) --markup --help-modules > $@
 
 plugins.txt: $(snort)
-	$(snort) --markup --help-plugins > $@
+	$(snort) $(plugin_path) --markup --help-plugins > $@
 
 help.txt: $(snort)
 	$(snort) --help > $@
 
 basic.txt: $(snort)
 	for m in `$(snort) --list-modules basic` ; do \
-		$(snort) --markup --help-module $$m ; \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 codec.txt: $(snort)
 	for m in `$(snort) --list-modules codec` ; do \
-		$(snort) --markup --help-module $$m ; \
+		$(snort) $(plugin_path)  --markup --help-module $$m ; \
 	done > $@
 
 data.txt: $(snort)
 	for m in `$(snort) --list-modules data` ; do \
-		$(snort) --markup --help-module $$m ; \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 inspector.txt: $(snort)
 	for m in `$(snort) --list-modules inspector` ; do \
-		$(snort) --markup --help-module $$m ; \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 ips_action.txt: $(snort)
 	for m in `$(snort) --list-modules ips_action` ; do \
-		$(snort) --markup --help-module $$m ; \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 ips_option.txt: $(snort)
 	for m in `$(snort) --list-modules ips_option` ; do \
-		$(snort) --markup --help-module $$m ; \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 logger.txt: $(snort)
 	for m in `$(snort) --list-modules logger` ; do \
-		$(snort) --markup --help-module $$m ; \
+		$(snort) $(plugin_path) --markup --help-module $$m ; \
 	done > $@
 
 #search_engine.txt: $(snort)
 #	for m in `$(snort) --list-modules search_engine` ; do \
-#		$(snort) --markup --help-module $$m ; \
+#		$(snort) $(plugin_path) --markup --help-module $$m ; \
 #	done > $@
 
 #so_rule.txt: $(snort)
 #	for m in `$(snort) --list-modules so_rule` ; do \
-#		$(snort) --markup --help-module $$m ; \
+#		$(snort) $(plugin_path) --markup --help-module $$m ; \
 #	done > $@
 
 options.txt: $(snort)
-	$(snort) --markup --help-options | sort > $@
+	$(snort) $(plugin_path) --markup --help-options | sort > $@
 
 signals.txt: $(snort)
-	$(snort) --markup --help-signals > $@
+	$(snort) $(plugin_path) --markup --help-signals > $@
 
 version.txt: $(snort)
 	$(snort) -V 2>&1 | grep -v Using > $@

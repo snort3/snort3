@@ -25,6 +25,7 @@
 #include "utils/converter.h"
 #include "utils/s2l_util.h"
 #include "utils/parse_cmd_line.h"
+#include "data/data_types/dt_comment.h"
 
 namespace keywords
 {
@@ -37,6 +38,9 @@ public:
     Include(Converter& c) : ConversionState(c) {};
     virtual ~Include() {};
     virtual bool convert(std::istringstream& data);
+
+private:
+    bool convert_file(std::string file, std::string full_file_name);
 };
 
 } // namespace
@@ -44,20 +48,15 @@ public:
 
 bool Include::convert(std::istringstream& data_stream)
 {
-    std::string file = std::string();
-    std::string tmp;
-
-    while (data_stream >> tmp)
-        file += tmp;
+    std::string file = util::get_remain_data(data_stream);
 
     if(!file.empty())
     {
         // if not parsing, assume its a regular rule file.
-
-
-        if (cv.should_convert_includes())
+        if (cv.get_parse_includes())
         {
             std::string full_file = data_api.expand_vars(file);
+            std::string tmp = full_file; // for the error message
 
             if (!util::file_exists(full_file))
                 full_file = parser::get_conf_dir() + full_file;
@@ -65,15 +64,22 @@ bool Include::convert(std::istringstream& data_stream)
 
             // if we still can't find this file, add it as a snort file
             if (util::file_exists(full_file))
-            {
-                cv.parse_include_file(full_file);
-                return true;
-            }
+                return !(cv.parse_include_file(full_file));
+
+
+            std::string error_string = "Can't find file " + file + ".  "
+                "  Searched locations: " + tmp + ",  " + full_file;
+
+            data_api.failed_conversion(data_stream, error_string);
         }
+    }
+    else
+    {
+        data_api.failed_conversion(data_stream, "include requires a"
+            "'filename' argument");
     }
 
     rule_api.add_hdr_data("include " + file);
-    data_api.failed_conversion(data_stream, "file: " + file);
     return false;
 }
 

@@ -96,7 +96,7 @@ public:
     bool failed_conversions() const;
     // is there any actual data to print?
     bool empty()
-    { return (vars.size() != 0 || includes.size() != 0);}
+    { return vars.empty() && includes.empty(); }
 
 
     // functions specifically usefull when parsing includes.

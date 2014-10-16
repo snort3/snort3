@@ -31,6 +31,8 @@ namespace keywords
 
 namespace {
 
+static bool printed_error = false;
+
 class File : public ConversionState
 {
 public:
@@ -39,12 +41,9 @@ public:
     virtual bool convert(std::istringstream& data);
 
 private:
-    static bool printed_error;
 };
 
 } // namespace
-
-bool File::printed_error = false;
 
 bool File::convert(std::istringstream& data_stream)
 {
@@ -58,9 +57,11 @@ bool File::convert(std::istringstream& data_stream)
     rule_api.make_rule_a_comment();
 
     if (!printed_error)
-        rule_api.add_comment_to_rule("WARNING: file keyword is currently unsupported");
-    else
+    {
         printed_error = true;
+        rule_api.add_comment_to_rule("WARNING: file keyword is currently unsupported");
+    }
+
     return true;
 }
 

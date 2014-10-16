@@ -61,8 +61,8 @@ void reset_state();
 friend std::ostream& operator<<( std::ostream &out, const TableApi& table);
 void print_tables( std::ostream &out);
 
-bool empty()
-{ return (tables.size() == 0); }
+inline bool empty()
+{ return tables.empty(); }
 
 
 /*

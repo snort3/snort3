@@ -275,4 +275,6 @@ void TableApi::print_tables( std::ostream &out)
 
 
 void TableApi::swap_tables(std::vector<Table*>& new_tables)
-{ tables.swap(new_tables); }
+{
+    tables.swap(new_tables);
+}
