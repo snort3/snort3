@@ -17,8 +17,8 @@ else (BUILD_EXTRA_PLUGINS)
         set(CMAKE_MACOSX_RPATH OFF)
     endif(APPLE)
 
+    find_package(DAQ REQUIRED)
     find_package(SNORT REQUIRED)
-
 
 
     if ((NOT SNORT_FOUND) AND (NOT SNORT_PKG_MODULE_FOUND))

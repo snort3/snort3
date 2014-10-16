@@ -5,6 +5,7 @@
 #  DAQ_FOUND, if false, do not try to link to Lua
 # 
 #  SNORT_FOUND - Found Snort
+#  SNORT_EXECUTABLE - The Snort++ executable
 #  SNORT_INCLUDE_DIR - Snort include directory
 #
 
@@ -12,18 +13,47 @@ set(ERROR_MESSAGE
     "
     Unable to find Snort!!! Either
     
-    1)  manually set the cmake variable SNORT_INCLUDE_DIR,
+    1)  Using ccmake, manually set the cmake variables
+        SNORT_INCLUDE_DIR and SNORT_EXECUTABLE.
 
-    2)  run cmake with the following argument
+    2)  run cmake with the following arguments
           -DSNORT_INCLUDE_DIR:PATH=/full/path/to/snort/include/dir
+          -DSNORT_EXECUTABLE:PATH=/full/path/to/snort/binary
 
-    3)  set the environment variable SNORT_DIR
+    3)  set the environment variable SNORT_DIR to the root
+        root installation directory.
 
-    4)  install pkg-config and add snort.pc to the PKG_CONFIG_PATH
+    4)  Find the file snort.cmake.  Manually set set the
+        variable SNORT_IMPORT_FILE using either ccmake or the
+        command line (-DSNORT_IMPORT_FILE=/full/path/to/snort.cmake)
+
+    5)  install pkg-config and add snort.pc to the PKG_CONFIG_PATH
             environment variable.
 
     "
 )
+
+
+# First, lets try to import the Snort
+find_file (SNORT_IMPORT_FILE
+    NAMES snort.cmake
+    HINTS ENV SNORT_DIR
+    PATH_SUFFIXES lib lib/snort snort
+)
+
+if (SNORT_IMPORT_FILE)
+    include (${SNORT_IMPORT_FILE})
+
+    if (NOT SNORT_EXECUTABLE)
+        get_target_property(tmp_exe snort LOCATION)
+        set(SNORT_EXECUTABLE "${tmp_exe}" CACHE FILEPATH "Snort executable")
+    endif()
+
+    if (NOT SNORT_INCLUDE_DIR)
+        get_target_property(tmp_exe snort  INTERFACE_INCLUDE_DIRECTORIES)
+        set(SNORT_INCLUDE_DIR "${tmp_exe}" CACHE FILEPATH "Snort executable")
+    endif()
+endif(SNORT_IMPORT_FILE)
 
 
 find_path (SNORT_INCLUDE_DIR
@@ -32,6 +62,15 @@ find_path (SNORT_INCLUDE_DIR
     PATH_SUFFIXES snort include/snort
 )
 
+find_program (SNORT_EXECUTABLE
+    NAMES snort
+    HINTS ENV SNORT_DIR
+    PATH_SUFFIXES bin   # necessary when SNORT_DIR is set
+)
+
+
+
+# If we still can't find Snort include directory, try pkg-config
 if (NOT SNORT_INCLUDE_DIR)
     find_package(PkgConfig QUIET)
 
@@ -44,16 +83,19 @@ if (NOT SNORT_INCLUDE_DIR)
     endif (PKG_CONFIG_FOUND)
 endif (NOT SNORT_INCLUDE_DIR)
 
+
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SNORT
-    REQUIRED_VARS SNORT_INCLUDE_DIR
+    REQUIRED_VARS SNORT_INCLUDE_DIR SNORT_EXECUTABLE
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
 
 
-
 mark_as_advanced(
     SNORT_INCLUDE_DIR
+    SNORT_EXECUTABLE
+    SNORT_IMPORT_FILE
 )
 
 
