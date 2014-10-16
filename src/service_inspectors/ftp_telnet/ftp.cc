@@ -372,10 +372,10 @@ public:
     FtpServer(FTP_SERVER_PROTO_CONF*);
     ~FtpServer();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
-    void eval(Packet*);
-    StreamSplitter* get_splitter(bool);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
+    StreamSplitter* get_splitter(bool) override;
 
 private:
     FTP_SERVER_PROTO_CONF* ftp_server;

@@ -195,15 +195,15 @@ public:
     BoModule() : Module(s_name, s_help)
     { };
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return bo_rules; };
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_BO; };
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
 };
 
 const char** BoModule::get_pegs() const
@@ -456,8 +456,8 @@ class BackOrifice : public Inspector {
 public:
     BackOrifice() { };
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 };
 
 void BackOrifice::show(SnortConfig*)

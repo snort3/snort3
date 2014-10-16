@@ -42,13 +42,13 @@ public:
     StreamTcp(StreamTcpConfig*);
     ~StreamTcp();
 
-    void show(SnortConfig*);
+    void show(SnortConfig*) override;
 
-    void tinit();
-    void tterm();
+    void tinit() override;
+    void tterm() override;
 
-    void eval(Packet*);
-    int exec(int, void*);
+    void eval(Packet*) override;
+    int exec(int, void*) override;
 
 public:
     StreamTcpConfig* config;

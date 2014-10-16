@@ -143,19 +143,19 @@ public:
     LuaLogModule(const char* name) : Module(name, s_help, s_params)
     { };
 
-    bool begin(const char*, int, SnortConfig*)
+    bool begin(const char*, int, SnortConfig*) override
     {
         args.clear();
         return true;
     };
 
-    bool set(const char*, Value& v, SnortConfig*)
+    bool set(const char*, Value& v, SnortConfig*) override
     {
         args = v.get_string();
         return true;
     };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &luaLogPerfStats; };
 
 public:
@@ -172,7 +172,7 @@ public:
     LuaJitLogger(const char* name, std::string& chunk, class LuaLogModule*);
     ~LuaJitLogger();
 
-    void alert(Packet*, const char*, Event*);
+    void alert(Packet*, const char*, Event*) override;
 
     static const struct LogApi* get_api();
 

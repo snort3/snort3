@@ -70,7 +70,7 @@ public:
     int add_pattern(
         SnortConfig* sc, void* P, int m,
         unsigned noCase, unsigned offset, unsigned depth,
-        unsigned negative, void* ID, int IID)
+        unsigned negative, void* ID, int IID) override
     {
         return IntelPmAddPattern(
             sc, obj, (unsigned char *)P, m,
@@ -78,20 +78,20 @@ public:
     };
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list)
+        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return IntelPmFinishGroup(sc, obj, build_tree, neg_list);
     };
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state )
+        void* data, int* current_state ) override
     {
         *current_state = 0;
         return IntelPmSearch((IntelPm *)p->obj, (unsigned char *)T, n, action, data);
     };
 
-    int get_pattern_count()
+    int get_pattern_count() override
     {
         return IntelGetPatternCount(obj);
     };

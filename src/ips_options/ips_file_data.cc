@@ -47,10 +47,10 @@ public:
     FileDataOption() : IpsOption(s_name) { };
     ~FileDataOption() { };
 
-    CursorActionType get_cursor_type() const
+    CursorActionType get_cursor_type() const override
     { return CAT_SET_FILE; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 };
 
 //-------------------------------------------------------------------------
@@ -94,7 +94,7 @@ class FileDataModule : public Module
 public:
     FileDataModule() : Module(s_name, s_help) { };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &fileDataPerfStats; };
 };
 

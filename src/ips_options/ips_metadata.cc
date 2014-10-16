@@ -61,8 +61,8 @@ public:
     MetadataModule() : Module(s_name, s_help, s_params)
     { snort_config = nullptr; };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
     SnortConfig* snort_config;
     vector<string> services;

@@ -58,8 +58,8 @@ public:
     StreamIcmp(StreamIcmpConfig*);
     ~StreamIcmp();
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     StreamIcmpConfig* config;

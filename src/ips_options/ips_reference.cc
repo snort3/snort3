@@ -57,8 +57,8 @@ class ReferenceModule : public Module
 {
 public:
     ReferenceModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
     std::string scheme;
     std::string id;

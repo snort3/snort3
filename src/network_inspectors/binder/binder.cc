@@ -170,11 +170,11 @@ public:
     Binder(vector<Binding*>&);
     ~Binder();
 
-    void show(SnortConfig*)
+    void show(SnortConfig*) override
     { LogMessage("Binder\n"); };
 
-    void eval(Packet*);
-    int exec(int, void*);
+    void eval(Packet*) override;
+    int exec(int, void*) override;
 
     void add(Binding* b)
     { bindings.push_back(b); };

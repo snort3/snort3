@@ -67,9 +67,9 @@ public:
     TagModule() : Module(s_name, s_help, s_params)
     { tag = nullptr; };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     TagData* get_data();
     TagData* tag;

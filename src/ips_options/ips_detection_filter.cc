@@ -68,8 +68,8 @@ class DetectionFilterModule : public Module
 {
 public:
     DetectionFilterModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
     THDX_STRUCT thdx;
     DetectionFilterConfig* dfc;

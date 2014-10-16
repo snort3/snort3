@@ -416,11 +416,11 @@ public:
     { };
 
 #ifdef BUILD_SHELL
-    const Command* get_commands() const
+    const Command* get_commands() const override
     { return snort_cmds; };
 #endif
 
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)

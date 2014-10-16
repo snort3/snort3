@@ -40,12 +40,12 @@ class PpmModule : public Module
 public:
     PpmModule();
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    const RuleMap* get_rules() const;
+    const RuleMap* get_rules() const override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_PPM; };
 };
 

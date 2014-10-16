@@ -56,7 +56,7 @@ class MsgModule : public Module
 {
 public:
     MsgModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
     std::string msg;
 };
 

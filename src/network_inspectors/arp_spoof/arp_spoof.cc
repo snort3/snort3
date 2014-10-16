@@ -151,8 +151,8 @@ public:
     ArpSpoof(ArpSpoofModule*);
     ~ArpSpoof();
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     ArpSpoofConfig* config;

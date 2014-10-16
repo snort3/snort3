@@ -310,7 +310,7 @@ void ParseConfigFile(SnortConfig *sc, const char *fname)
 
     if ( !fs )
     {
-        ParseError("unable to open rules file '%s': %s.\n",
+        ParseError("unable to open rules file '%s': %s",
             fname, get_error(errno));
         return;
     }

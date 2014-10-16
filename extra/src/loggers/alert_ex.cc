@@ -56,8 +56,9 @@ class ExModule : public Module
 {
 public:
     ExModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
 public:
     bool upper;
@@ -89,7 +90,7 @@ public:
     ExLogger(ExModule* m)
     { upper = m->upper; };
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 private:
     bool upper;

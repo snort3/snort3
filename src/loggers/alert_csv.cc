@@ -97,9 +97,10 @@ class CsvModule : public Module
 {
 public:
     CsvModule() : Module(S_NAME, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
     bool file;
@@ -154,10 +155,10 @@ public:
     CsvLogger(CsvModule*);
     ~CsvLogger();
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 public:
     string file;

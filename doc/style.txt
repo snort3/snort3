@@ -67,6 +67,15 @@ yet firm so feedback is welcome to get something we can live with.
 * Use static wherever possible to minimize public symbols and eliminate
   unneeded relocations.
 
+* Declare functions virtual only in the parent class introducing the
+  function (not in a derived class that is overriding the function).
+  This makes it clear which class introduces the function.
+
+* Declare functions as override if they are intended to override a
+  function.  This makes it possible to find derived implementations that
+  didn't get updated and therefore won't get called due a change in the
+  parent signature.
+
 ==== Macros (aka defines)
 
 * In many cases, even in C++, use #define name "value" instead of a

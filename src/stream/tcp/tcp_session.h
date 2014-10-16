@@ -195,15 +195,16 @@ public:
     TcpSession(Flow*);
     ~TcpSession();
 
-    bool setup (Packet*);
-    int process(Packet*);
-    void restart_paf(Packet*);
+    bool setup (Packet*) override;
+    int process(Packet*) override;
 
-    void update_direction(char dir, const sfip_t*, uint16_t port);
+    void update_direction(char dir, const sfip_t*, uint16_t port) override;
+
+    void clear() override;
+    void cleanup() override;
 
     void reset();
-    void clear();
-    void cleanup();
+    void restart_paf(Packet*);
 
 public:
     StreamTracker client;

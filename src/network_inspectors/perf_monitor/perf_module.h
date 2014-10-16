@@ -36,12 +36,12 @@ class PerfMonModule : public Module
 public:
     PerfMonModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
 
     void get_config(SFPERF&);
 

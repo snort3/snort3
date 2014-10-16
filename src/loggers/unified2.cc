@@ -1073,9 +1073,10 @@ class U2Module : public Module
 {
 public:
     U2Module() : Module(S_NAME, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
     unsigned limit;
@@ -1134,11 +1135,11 @@ public:
     U2Logger(U2Module*);
     ~U2Logger();
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
-    void log(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
+    void log(Packet*, const char* msg, Event*) override;
 
 private:
     Unified2Config config;
