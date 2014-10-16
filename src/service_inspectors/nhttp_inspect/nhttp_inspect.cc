@@ -75,7 +75,8 @@ bool NHttpInspect::get_buf(unsigned id, Packet*, InspectionBuffer& b)
     return true;
 }
 
-ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id, bool buf_owner)
+ProcessResult NHttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id,
+   bool buf_owner)
 {
     NHttpFlowData* session_data = (NHttpFlowData*)flow->get_application_data(NHttpFlowData::nhttp_flow_id);
     assert(session_data != nullptr);

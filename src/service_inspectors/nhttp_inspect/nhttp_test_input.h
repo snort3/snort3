@@ -21,6 +21,8 @@
 #ifndef NHTTP_TEST_INPUT_H
 #define NHTTP_TEST_INPUT_H
 
+#include <stdio.h>
+
 #include "nhttp_enum.h"
 #include "nhttp_flow_data.h"
 
@@ -36,13 +38,27 @@ public:
 private:
     FILE* test_data_file;
     uint8_t msg_buf[2 * NHttpEnums::MAXOCTETS];
+
+    // data has been flushed and must be sent by reassemble() before more data may be given to scan()
     bool flushed = false;
-    NHttpEnums::SourceId last_source_id = NHttpEnums::SRC_CLIENT;   // current direction of traffic flow. Toggled by commands in file.
-    bool just_flushed = true;   // all octets sent to inspection and must resume reading the file
-    bool tcp_closed = false;  // so we can keep presenting a TCP close to PAF until all the remaining octets are consumed and flushed
-    uint32_t flush_octets = 0;  // number of octets that have been flushed and must go to inspection
-    uint32_t previous_offset = 0;   // last character in the buffer shown to PAF but not flushed yet
-    uint32_t end_offset = 0;   // last read character in the buffer
+
+    // current direction of traffic flow. Toggled by commands in file.
+    NHttpEnums::SourceId last_source_id = NHttpEnums::SRC_CLIENT;
+
+    // reassemble just completed and all flushed octets forwarded, time to resume scan()
+    bool just_flushed = true;
+
+    // TCP connection directional close at end of current paragraph
+    bool tcp_closed = false;
+
+    // number of octets that have been flushed and must be sent by reassemble
+    uint32_t flush_octets = 0;
+
+    // last character in the buffer previously shown to PAF but not flushed yet
+    uint32_t previous_offset = 0;
+
+    // last read character in the buffer
+    uint32_t end_offset = 0;
 };
 
 #endif

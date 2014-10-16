@@ -177,7 +177,7 @@ StreamSplitter::Status NHttpStreamSplitter::scan (Flow* flow, const uint8_t* dat
         }
       }
       case SEC_BODY: {
-        prepare_flush(session_data, flush_offset, source_id, type,
+        prepare_flush(session_data, flush_offset, source_id, SEC_BODY,
            tcp_close && (length <= session_data->data_length[source_id]),
            0, session_data->data_length[source_id], length, 0);
         return StreamSplitter::FLUSH;
@@ -236,7 +236,7 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
         return nullptr;
     }
 
-    bool is_chunk = session_data->section_type[source_id] == SEC_CHUNK;
+    bool is_chunk = (session_data->section_type[source_id] == SEC_CHUNK);
 
     uint8_t*& chunk_buffer = session_data->chunk_buffer[source_id];
     int32_t& chunk_buffer_length = session_data->chunk_buffer_length[source_id];
@@ -258,8 +258,8 @@ const StreamBuffer* NHttpStreamSplitter::reassemble(Flow* flow, unsigned /* tota
         if (!is_chunk) {
             // start line/headers/body individual section processing with aggregation prior to being sent to detection
             // only the last section added to the buffer goes to the inspector
-            send_to_detection = my_inspector->process(buffer + buffer_length, offset + len - num_excess, flow, source_id,
-               buffer_length == 0);
+            send_to_detection = my_inspector->process(buffer + buffer_length, offset + len - num_excess, flow,
+               source_id, buffer_length == 0);
         }
         else {
             // small chunks are aggregated before processing and are kept here until the buffer is full (paf_max)
