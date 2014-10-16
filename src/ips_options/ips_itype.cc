@@ -109,7 +109,7 @@ int IcmpTypeOption::eval(Cursor&, Packet *p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if icmp type is min<>max | <max | >min" },
+      "check if icmp type is 'type | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

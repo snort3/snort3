@@ -139,7 +139,7 @@ int IcmpIdOption::eval(Cursor&, Packet *p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if icmp id is min<>max | <max | >min" },
+      "check if icmp id is 'id | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

@@ -108,7 +108,7 @@ int IpTosOption::eval(Cursor&, Packet *p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if packet payload size is 'size | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

@@ -110,7 +110,7 @@ int LenOption::eval(Cursor& c, Packet*)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "min<>max | <max | >min" },
+      "len | min<>max | <max | >min" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
