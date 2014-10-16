@@ -48,9 +48,9 @@ class NameModule : public DecodeModule
 public:
     NameModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    const RuleMap* get_rules() const;
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    const RuleMap* get_rules() const override;
 
 private:
     // any structs or options which will be used when constructing
@@ -115,16 +115,15 @@ public:
 
 
     // decode(...) must be implemented!!
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&);
+    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const) override;
+    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
+    virtual void get_data_link_type(std::vector<int>&) override;
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-
+                        EncState&, Buffer&) override;
+    virtual bool update(Packet*, Layer*, uint32_t* len) override;
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
 };
 
 // Create your own Hdr Struct for this layer!

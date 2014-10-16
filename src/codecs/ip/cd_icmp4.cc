@@ -80,7 +80,7 @@ class Icmp4Module : public DecodeModule
 public:
     Icmp4Module() : DecodeModule(CD_ICMP4_NAME, CD_ICMP4_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return icmp4_rules; }
 };
 
@@ -90,12 +90,12 @@ public:
     Icmp4Codec() : Codec(CD_ICMP4_NAME){};
     ~Icmp4Codec() {};
     
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    virtual bool update(Packet*, Layer*, uint32_t* len) override;
+    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const);
+                    const Packet* const) override;
 
 private:
     void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);

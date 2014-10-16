@@ -47,9 +47,9 @@ public:
     ~Ipv6RoutingCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);    
+    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 struct IP6Route

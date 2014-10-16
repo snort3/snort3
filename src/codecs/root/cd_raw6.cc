@@ -41,9 +41,8 @@ public:
     Raw6Codec() : Codec(CD_RAW6_NAME){};
     ~Raw6Codec() {};
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void get_data_link_type(std::vector<int>&);
-
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    virtual void get_data_link_type(std::vector<int>&) override;
 };
 
 

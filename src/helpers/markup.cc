@@ -66,9 +66,9 @@ const string& Markup::escape(const char* const c)
 //        This function should escape all of those characters
 const string& Markup::escape(const string& s)
 {
-#if 0
     static string m;
     m = s;
+#if 0
 
     const char* const asciidoc_chars = "*<>^'";
 
@@ -83,5 +83,5 @@ const string& Markup::escape(const string& s)
         }
     }
 #endif
-    return s;
+    return m;
 }

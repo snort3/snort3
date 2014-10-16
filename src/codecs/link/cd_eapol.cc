@@ -50,7 +50,7 @@ class EapolModule : public DecodeModule
 public:
     EapolModule() : DecodeModule(CD_EAPOL_NAME, CD_EAPOL_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return eapol_rules; }
 };
 
@@ -61,8 +61,8 @@ public:
     ~EapolCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 } // namespace

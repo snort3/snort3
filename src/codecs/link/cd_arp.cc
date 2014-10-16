@@ -44,7 +44,7 @@ class ArpModule : public DecodeModule
 public:
     ArpModule() : DecodeModule(CD_ARP_NAME, CD_ARP_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return arp_rules; }
 };
 
@@ -55,9 +55,9 @@ public:
     ArpCodec() : Codec(CD_ARP_NAME){};
     ~ArpCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*);
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
 };
 
 

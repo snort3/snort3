@@ -52,7 +52,7 @@ class GtpModule : public DecodeModule
 public:
     GtpModule() : DecodeModule(CD_GTP_NAME, CD_GTP_HELP) {};
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return gtp_rules; }
 };
 
@@ -69,11 +69,11 @@ public:
     GtpCodec() : Codec(CD_GTP_NAME){};
     ~GtpCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
     virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
+                        EncState&, Buffer&) override;
+    virtual bool update(Packet*, Layer*, uint32_t* len) override;
 };
 
 

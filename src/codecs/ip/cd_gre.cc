@@ -53,7 +53,7 @@ class GreModule : public DecodeModule
 public:
     GreModule() : DecodeModule(CD_GRE_NAME, CD_GRE_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return gre_rules; }
 };
 
@@ -63,10 +63,10 @@ public:
     GreCodec() : Codec(CD_GRE_NAME){};
     ~GreCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
      void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const);
+                    const Packet* const) override;
 };
 
 static const uint32_t GRE_HEADER_LEN = 4;

@@ -50,11 +50,11 @@ public:
     ~LlcCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
 
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+        const Packet* const) override;
+    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 

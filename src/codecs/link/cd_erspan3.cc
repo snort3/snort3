@@ -57,8 +57,8 @@ public:
     ~Erspan3Codec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 

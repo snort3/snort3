@@ -41,8 +41,8 @@ public:
     ~MobilityCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 } // namespace

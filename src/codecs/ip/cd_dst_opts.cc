@@ -45,9 +45,9 @@ public:
     ~Ipv6DSTOptsCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    virtual bool update(Packet*, Layer*, uint32_t* len) override;
 
 };
 

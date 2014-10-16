@@ -54,7 +54,7 @@ class VlanModule : public DecodeModule
 public:
     VlanModule() : DecodeModule(CD_VLAN_NAME, CD_VLAN_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return vlan_rules; }
 };
 
@@ -65,10 +65,10 @@ public:
     VlanCodec() : Codec(CD_VLAN_NAME){};
     ~VlanCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
     virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const);
+        const Packet* const) override;
 };
 
 

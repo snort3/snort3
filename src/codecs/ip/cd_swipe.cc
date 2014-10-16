@@ -39,8 +39,8 @@ public:
     SwipeCodec() : Codec(CD_SWIPE_NAME){};
     virtual ~SwipeCodec(){};
     
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
+    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 } // namespace
@@ -48,9 +48,7 @@ public:
 static const uint16_t SWIPE_PROT_ID = 53;
 
 void SwipeCodec::get_protocol_ids(std::vector<uint16_t> &proto_ids)
-{
-    proto_ids.push_back(SWIPE_PROT_ID);
-}
+{ proto_ids.push_back(SWIPE_PROT_ID); }
 
 
 bool SwipeCodec::decode(const RawData&, CodecData& codec, DecodeData&)
