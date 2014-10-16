@@ -344,6 +344,12 @@ static const Parameter s_params[] =
     { "--rule", Parameter::PT_STRING, nullptr, nullptr,
       "<rules> to be added to configuration; may be repeated" },
 
+    { "--rule-to-hex", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output so rule header to stdout for text rule on stdin" },
+
+    { "--rule-to-text", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output plain so rule header to stdout for text rule on stdin" },
+
     { "--run-prefix", Parameter::PT_STRING, nullptr, nullptr,
       "<pfx> prepend this to each output file" },
 
@@ -570,10 +576,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigDaqVar(sc, v.get_string());
 
     else if ( v.is("--dump-builtin-rules") )
-       dump_builtin_rules(sc, v.get_string());
+        dump_builtin_rules(sc, v.get_string());
 
     else if ( v.is("--dump-dynamic-rules") )
-       dump_dynamic_rules(sc, v.get_string());
+        dump_dynamic_rules(sc, v.get_string());
 
     else if ( v.is("--dirty-pig") )
         ConfigDirtyPig(sc, v.get_string());
@@ -680,6 +686,12 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--rule") )
         parser_append_rules(v.get_string());
+
+    else if ( v.is("--rule-to-hex") )
+        dump_rule_hex(sc, v.get_string());
+
+    else if ( v.is("--rule-to-text") )
+        dump_rule_text(sc, v.get_string());
 
     else if ( v.is("--run-prefix") )
         sc->run_prefix = SnortStrdup(v.get_string());

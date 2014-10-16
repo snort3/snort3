@@ -19,6 +19,8 @@
    functionality
 -- latest snort2lua updates from Josh
 -- added cursor to so:eval function to match IpsOption::eval()
+-- added --rule-to-hex and --rule-to-text to generate protected and
+   unprotected so rules
 
 124
 -- valgrind cleanup

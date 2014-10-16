@@ -283,6 +283,18 @@ void dump_dynamic_rules(SnortConfig* sc, const char* val)
     show_help(sc, val, HT_DDR);
 }
 
+void dump_rule_hex(SnortConfig*, const char* val)
+{
+    SoManager::rule_to_hex(val);
+    exit(0);
+}
+
+void dump_rule_text(SnortConfig*, const char* val)
+{
+    SoManager::rule_to_text(val);
+    exit(0);
+}
+
 void help_version(SnortConfig*, const char*)
 {
     DisplayBanner();
