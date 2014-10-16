@@ -154,8 +154,13 @@ static void strvrt(const string& text, string& data)
 
     data.assign((char*)d, len);
 
-    // FIXIT-H choose random byte for xor
-    uint8_t key = 0xA5;
+    // generate xor key
+    // FIXIT-L there is no hard core crypto requirement here
+    // but rand() is known to be weak, especially in the lower bits
+    // nonetheless this seems to work as good as the basic
+    // C++ 11 default generator and uniform distribution
+    uint8_t key = (uint8_t)(rand() >> 16);
+    if ( !key ) key = 0xA5;
 
     for ( unsigned i = 0; i < len; i++ )
         data[i] ^= key;
