@@ -115,15 +115,15 @@ public:
 
 
     // decode(...) must be implemented!!
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    virtual void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const) override;
-    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
-    virtual void get_data_link_type(std::vector<int>&) override;
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+    void log(TextLog*, const uint8_t* /*raw_pkt*/, const Packet* const) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_data_link_type(std::vector<int>&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    virtual bool update(Packet*, Layer*, uint32_t* len) override;
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
 };
 
 // Create your own Hdr Struct for this layer!

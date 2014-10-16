@@ -55,9 +55,9 @@ public:
     ArpCodec() : Codec(CD_ARP_NAME){};
     ~ArpCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
 };
 
 

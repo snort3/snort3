@@ -45,8 +45,8 @@ public:
     ~Ipv6NoNextCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 

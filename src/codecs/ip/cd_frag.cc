@@ -49,11 +49,11 @@ public:
     ~Ipv6FragCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const) override;
-    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
     
 };
 

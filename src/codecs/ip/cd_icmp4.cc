@@ -90,11 +90,11 @@ public:
     Icmp4Codec() : Codec(CD_ICMP4_NAME){};
     ~Icmp4Codec() {};
     
-    virtual void get_protocol_ids(std::vector<uint16_t>&) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual bool update(Packet*, Layer*, uint32_t* len) override;
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+    void get_protocol_ids(std::vector<uint16_t>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const) override;
 
 private:

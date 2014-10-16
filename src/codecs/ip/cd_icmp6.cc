@@ -78,11 +78,11 @@ public:
     ~Icmp6Codec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual bool update(Packet*, Layer*, uint32_t* len) override;
-    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const) override;
 };
 

@@ -36,7 +36,7 @@
 #include "log/text_log.h"
 
 #define CD_VLAN_NAME "vlan"
-#define CD_VLAN_HELP "support for virtual local area network"
+#define CD_VLAN_HELP "support for local area network"
 
 namespace
 {
@@ -65,9 +65,9 @@ public:
     VlanCodec() : Codec(CD_VLAN_NAME){};
     ~VlanCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
         const Packet* const) override;
 };
 

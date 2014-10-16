@@ -66,8 +66,8 @@ public:
     AuthCodec() : Codec(CD_AUTH_NAME){};
     ~AuthCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 /*  Valid for both IPv4 and IPv6 */

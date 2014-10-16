@@ -92,13 +92,13 @@ public:
     Ipv6Codec() : Codec(CD_IPV6_NAME){};
     ~Ipv6Codec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    virtual bool update(Packet*, Layer*, uint32_t* len) override;
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const)  override;
 };
 

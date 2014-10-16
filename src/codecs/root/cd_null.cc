@@ -44,8 +44,8 @@ public:
     NullCodec() : Codec(CD_NULL_NAME){};
     ~NullCodec() {};
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual void get_data_link_type(std::vector<int>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_data_link_type(std::vector<int>&) override;
 };
 
 

@@ -64,9 +64,9 @@ public:
     ~WlanCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual void get_data_link_type(std::vector<int>&) override;
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_data_link_type(std::vector<int>&) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
                     const Packet* const) override;
 };
 

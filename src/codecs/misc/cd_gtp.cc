@@ -69,11 +69,11 @@ public:
     GtpCodec() : Codec(CD_GTP_NAME){};
     ~GtpCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
                         EncState&, Buffer&) override;
-    virtual bool update(Packet*, Layer*, uint32_t* len) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
 };
 
 

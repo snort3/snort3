@@ -45,9 +45,9 @@ public:
     Ipv6HopOptsCodec() : Codec(CD_HOPOPTS_NAME) {};
     ~Ipv6HopOptsCodec() {};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
-    virtual bool update(Packet*, Layer*, uint32_t* len) override;
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
 };
 
 

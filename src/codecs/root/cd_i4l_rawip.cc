@@ -43,8 +43,8 @@ public:
     I4LRawIpCodec() : Codec(I4L_RAW_IP_NAME){};
     ~I4LRawIpCodec() {};
 
-    virtual void get_data_link_type(std::vector<int>&) override;
-    virtual bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_data_link_type(std::vector<int>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 
