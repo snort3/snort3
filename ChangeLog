@@ -23,6 +23,7 @@
    unprotected so rules
 -- latest from tom
 -- fixed explicit stream_* bindings
+-- latest from josh - snort2lua changes
 
 124
 -- valgrind cleanup
