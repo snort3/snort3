@@ -176,7 +176,7 @@ bool Binding::convert(std::istringstream& data_stream)
 
 
 
-    if (cv.parse_include_file())
+    if (cv.get_parse_includes())
     {
         std::string full_name = data_api.expand_vars(file);
         std::string full_path = full_name;

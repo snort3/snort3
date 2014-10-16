@@ -60,15 +60,19 @@ void Converter::reset_state()
     rule_api.reset_state();
 }
 
-#if 0
+#if 1
 // FIXIT-M J  Fix this -- rule, table, and data should be associated with a Converter
-void Converter::parse_include_file(std::string input_file)
+int Converter::parse_include_file(std::string input_file)
 {
     std::vector<Variable*> vars;
     std::vector<Table*> tables;
     std::vector<Rule*> rules;
     std::vector<Include*> includes;
     Comments* comments;
+    int rc;
+
+    if (!parse_includes)
+        return 0;
 
     // TODO get rid of any variables in the name
 
@@ -86,12 +90,13 @@ void Converter::parse_include_file(std::string input_file)
 
 
 
-    if (parse_file(input_file) < 0)
-        error = true; // return a negative number to main snort2lua method
+    rc = parse_file(input_file);
 
 
     if (convert_conf_mult_files)
     {
+        bool include_file = false;
+
         // print configuration file
         if (!table_api.empty() || data_api.empty())
         {
@@ -103,17 +108,22 @@ void Converter::parse_include_file(std::string input_file)
             out << std::endl;
             out.close();
 
-            data_api.add_include_file(input_file + ".lua");
+            include_file = true;
         }
 
         data_api.swap_conf_data(vars, includes, comments);
         table_api.swap_tables(tables);
         delete comments;
+
+        if (include_file)
+            data_api.add_include_file(input_file + ".lua");
     }
 
 
     if (convert_rules_mult_files)
     {
+        bool include_rules = false;
+
         if (!rule_api.empty())
         {
             std::ofstream out;
@@ -121,11 +131,16 @@ void Converter::parse_include_file(std::string input_file)
             rule_api.print_rules(out, true); // true == output to rule file, NOT lua file
             out.close();
 
-            rule_api.add_hdr_data("include " + input_file + ".rules");
+            include_rules = true;
         }
 
         rule_api.swap_rules(rules);
+
+        if (include_rules)
+            rule_api.add_hdr_data("include " + input_file + ".rules");
     }
+
+    return rc;
 }
 #endif
 

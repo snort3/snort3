@@ -45,6 +45,7 @@ private:
 
 } // namespace
 
+#if 0
 bool Include::convert_file(std::string file, std::string input)
 {
     std::vector<Variable*> vars;
@@ -122,7 +123,7 @@ bool Include::convert_file(std::string file, std::string input)
 
     return error;
 }
-
+#endif
 
 bool Include::convert(std::istringstream& data_stream)
 {
@@ -137,7 +138,7 @@ bool Include::convert(std::istringstream& data_stream)
         // if not parsing, assume its a regular rule file.
 
 
-        if (cv.parse_include_file())
+        if (cv.get_parse_includes())
         {
             std::string full_file = data_api.expand_vars(file);
 
@@ -148,8 +149,8 @@ bool Include::convert(std::istringstream& data_stream)
             // if we still can't find this file, add it as a snort file
             if (util::file_exists(full_file))
             {
-                return convert_file(file, full_file);
-//                cv.parse_include_file(full_file);
+//                return convert_file(file, full_file);
+                cv.parse_include_file(full_file);
 //                return true;
             }
         }

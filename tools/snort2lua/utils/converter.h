@@ -38,7 +38,8 @@ public:
     // tells this class whether to parse include files.
     inline static void set_parse_includes(bool val)
     { parse_includes = val; }
-    inline static bool parse_include_file()
+
+    inline static bool get_parse_includes()
     { return parse_includes; }
 
     // tells this class whether to convert a file inline or pull all data into one file.
@@ -61,7 +62,7 @@ public:
                 std::string errors); // defaults to output_file
 
     // parse a file without creating an entirely new Lua configuation
-    int parse_file(std::string input_file);
+    int parse_include_file(std::string input_file);
 
 
     // set the next parsing state.
@@ -69,7 +70,7 @@ public:
     // reset the current parsing state
     void reset_state();
     // parse an include file.  Use this function to ensure all set options are properly
-//    void parse_include_file(std::string file);
+    int parse_file(std::string file);
 
     bool failed_conversions() const
     { return data_api.failed_conversions() || rule_api.failed_conversions(); }
