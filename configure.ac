@@ -319,6 +319,14 @@ if test "x$enable_perf_profiling" = "xyes"; then
     AC_DEFINE(PERF_PROFILING, [1], [enable perf profiling])
 fi
 
+AC_ARG_ENABLE(shell,
+    [  --enable-shell              enable command line shell support],
+       enable_shell="$enableval", enable_shell="no")
+
+if test "x$enable_shell" = "xyes"; then
+    AC_DEFINE(BUILD_SHELL, [1], [enable shell support])
+fi
+
 AC_ARG_ENABLE(linux-smp-stats,
     [  --enable-linux-smp-stats  enable statistics reporting through proc],
        enable_linux_smp_stats="$enableval", enable_linux_smp_stats="no")
@@ -398,14 +406,6 @@ if test "x$enable_unit_tests" = "xyes"; then
 fi
 
 AM_CONDITIONAL(BUILD_UNIT_TESTS, test "x$enable_unit_tests" = "xyes")
-
-AC_ARG_ENABLE(large-pcap,
-    [  --enable-large-pcap       enable support for pcaps larger than 2 GB],
-      enable_large_pcap="$enableval", enable_large_pcap="no")
-
-if test "x$enable_large_pcap" = "xyes"; then
-    CPPFLAGS="${CPPFLAGS} -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64"
-fi
 
 #--------------------------------------------------------------------------
 # with foo

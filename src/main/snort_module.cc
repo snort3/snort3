@@ -53,6 +53,7 @@ using namespace std;
 // commands
 //-------------------------------------------------------------------------
 
+#ifdef BUILD_SHELL
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, "show available plugins" },
@@ -68,6 +69,7 @@ static const Command snort_cmds[] =
     { "help", main_help, "this output" },
     { nullptr, nullptr, nullptr }
 };
+#endif
 
 //-------------------------------------------------------------------------
 // parameters
@@ -117,8 +119,10 @@ static const Parameter s_params[] =
     { "-i", Parameter::PT_STRING, nullptr, nullptr, 
       "<iface>... list of interfaces" },
 
+#ifdef BUILD_SHELL
     { "-j", Parameter::PT_PORT, nullptr, nullptr,
       "<port> to listen for telnet connections" },
+#endif
 
     { "-K", Parameter::PT_SELECT, "none|text|pcap", "none", 
       "<mode> logging mode" },
@@ -340,14 +344,22 @@ static const Parameter s_params[] =
     { "--rule", Parameter::PT_STRING, nullptr, nullptr,
       "<rules> to be added to configuration; may be repeated" },
 
+    { "--rule-to-hex", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output so rule header to stdout for text rule on stdin" },
+
+    { "--rule-to-text", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "output plain so rule header to stdout for text rule on stdin" },
+
     { "--run-prefix", Parameter::PT_STRING, nullptr, nullptr,
       "<pfx> prepend this to each output file" },
 
     { "--script-path", Parameter::PT_STRING, nullptr, nullptr,
       "<path> where to find luajit scripts" },
 
+#ifdef BUILD_SHELL
     { "--shell", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable the interactive command line", },
+#endif
 
     { "--show-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list module and plugin versions", },
@@ -389,8 +401,13 @@ static const Parameter s_params[] =
 
 #define s_name "snort"
 
+#ifdef BUILD_SHELL
 #define s_help \
     "command line configuration and shell commands"
+#else
+#define s_help \
+    "command line configuration"
+#endif
 
 class SnortModule : public Module
 {
@@ -398,8 +415,10 @@ public:
     SnortModule() : Module(s_name, s_help, s_params)
     { };
 
+#ifdef BUILD_SHELL
     const Command* get_commands() const
     { return snort_cmds; };
+#endif
 
     bool set(const char*, Value&, SnortConfig*);
 };
@@ -451,8 +470,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("-i") )
         Trough_Multi(SOURCE_LIST, v.get_string());
 
+#ifdef BUILD_SHELL
     else if ( v.is("-j") )
         sc->remote_control = v.get_long();
+#endif
 
     else if ( v.is("-K") )
         config_log_mode(sc, v.get_string());
@@ -555,10 +576,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigDaqVar(sc, v.get_string());
 
     else if ( v.is("--dump-builtin-rules") )
-       dump_builtin_rules(sc, v.get_string());
+        dump_builtin_rules(sc, v.get_string());
 
     else if ( v.is("--dump-dynamic-rules") )
-       dump_dynamic_rules(sc, v.get_string());
+        dump_dynamic_rules(sc, v.get_string());
 
     else if ( v.is("--dirty-pig") )
         ConfigDirtyPig(sc, v.get_string());
@@ -666,14 +687,22 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--rule") )
         parser_append_rules(v.get_string());
 
+    else if ( v.is("--rule-to-hex") )
+        dump_rule_hex(sc, v.get_string());
+
+    else if ( v.is("--rule-to-text") )
+        dump_rule_text(sc, v.get_string());
+
     else if ( v.is("--run-prefix") )
         sc->run_prefix = SnortStrdup(v.get_string());
 
     else if ( v.is("--script-path") )
         ConfigScriptPath(sc, v.get_string());
 
+#ifdef BUILD_SHELL
     else if ( v.is("--shell") )
         sc->run_flags |= RUN_FLAG__SHELL;
+#endif
 
     else if ( v.is("--show-plugins") )
         sc->logging_flags |= LOGGING_FLAG__SHOW_PLUGINS;

@@ -44,7 +44,7 @@ public:
     virtual NHttpEnums::ProcessResult worth_detection() // What should we do with this section after processing?
        { return NHttpEnums::RES_INSPECT; };
 
-    NHttpEnums::MethodId get_method_id() { return method_id; };
+    NHttpEnums::MethodId get_method_id() const { return method_id; };
 
 protected:
     NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
@@ -81,22 +81,4 @@ private:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

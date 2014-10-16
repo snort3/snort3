@@ -59,8 +59,8 @@ set (UNBUILT_SOURCES
     extending.txt
     reference.txt
     snort2lua.txt
+    start.txt
     style.txt
-    tips.txt
     terms.txt
 #   config_changes.txt  If ruby executable is NOT found
 )

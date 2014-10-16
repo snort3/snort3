@@ -94,12 +94,12 @@ bool SoOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int SoOption::eval(Cursor&, Packet* p)
+int SoOption::eval(Cursor& c, Packet* p)
 {
     PROFILE_VARS;
     MODULE_PROFILE_START(soPerfStats);
 
-    int ret = func(data, p);
+    int ret = func(data, c, p);
 
     MODULE_PROFILE_END(soPerfStats);
     return ret;

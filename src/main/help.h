@@ -48,6 +48,8 @@ void list_daqs(SnortConfig* sc, const char*);
 void dump_defaults(SnortConfig* sc, const char*);
 void dump_builtin_rules(SnortConfig* sc, const char*);
 void dump_dynamic_rules(SnortConfig* sc, const char*);
+void dump_rule_hex(SnortConfig* sc, const char*);
+void dump_rule_text(SnortConfig* sc, const char*);
 
 #endif
 

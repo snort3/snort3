@@ -60,8 +60,10 @@ private:
     uint32_t header_octets_visible[2] = { 0, 0 };
     uint8_t *section_buffer[2] = { nullptr, nullptr };
     int32_t section_buffer_length[2] = { 0, 0 };
+    bool section_buffer_owned[2] = { true, true };
     uint8_t *chunk_buffer[2] = { nullptr, nullptr };
     int32_t chunk_buffer_length[2] = { 0, 0 };
+    bool chunk_buffer_owned[2] = { true, true }; // never actually false and not checked, just here to simplify code
     
     // StreamSplitter => Inspector (facts about the most recent message section)
     // 0 element refers to client request, 1 element refers to server response

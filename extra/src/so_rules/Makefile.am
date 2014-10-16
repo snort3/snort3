@@ -9,11 +9,11 @@ lib18758_la_SOURCES = sid_18758.cc sid_18758.h
 BUILT_SOURCES = \
 sid_18758.h
 
-%.gz : %.txt
-	gzip --best --no-name --stdout $< > $@
+%.h : %.txt
+	snort --rule-to-text < $< > $@
 
-%.h : %.gz
-	xxd -i $< > $@
+%.h : %.vrt
+	snort --rule-to-hex < $< > $@
 
 AM_CXXFLAGS = @AM_CXXFLAGS@
 

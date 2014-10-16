@@ -48,6 +48,8 @@ public:
     static SoEvalFunc get_so_eval(const char* soid, const char* so, void** data);
     static void delete_so_data(const char* soid, void*);
 
+    static void rule_to_hex(const char* file);
+    static void rule_to_text(const char* file);
     static void dump_rule_stubs(const char*);
 };
 
