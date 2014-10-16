@@ -45,13 +45,13 @@ public:
     PortScan(class PortScanModule*);
     ~PortScan();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
-    void tinit();
-    void tterm();
+    void tinit() override;
+    void tterm() override;
 
 private:
     void ps_parse(SnortConfig*, char *);

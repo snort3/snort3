@@ -49,15 +49,15 @@ class StreamModule : public Module
 public:
     StreamModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
-    ProfileStats* get_profile() const;
+    ProfileStats* get_profile() const override;
     const StreamConfig* get_data();
 
-    void sum_stats();
-    void show_stats();
-    void reset_stats();
+    void sum_stats() override;
+    void show_stats() override;
+    void reset_stats() override;
 
 private:
     FlowConfig* proto;

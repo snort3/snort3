@@ -112,9 +112,9 @@ class ReplaceModule : public Module
 {
 public:
     ReplaceModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
 };
@@ -141,7 +141,7 @@ class ReplaceAction : public IpsAction
 public:
     ReplaceAction(ReplaceModule*);
 
-    void exec(Packet*);
+    void exec(Packet*) override;
 };
 
 ReplaceAction::ReplaceAction(ReplaceModule*) : 

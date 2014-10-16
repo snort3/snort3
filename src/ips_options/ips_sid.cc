@@ -52,7 +52,7 @@ class SidModule : public Module
 {
 public:
     SidModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
     int sid;
 };
 

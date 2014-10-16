@@ -56,7 +56,7 @@ class TrCodecModule : public DecodeModule
 public:
     TrCodecModule() : DecodeModule(TR_NAME, TR_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return tkr_rules; }
 };
 
@@ -70,8 +70,8 @@ public:
     ~TrCodec() {};
 
 
-    virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    void get_data_link_type(std::vector<int>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 

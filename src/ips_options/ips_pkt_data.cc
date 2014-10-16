@@ -42,10 +42,10 @@ class PktDataOption : public IpsOption
 public:
     PktDataOption() : IpsOption(s_name) { };
 
-    CursorActionType get_cursor_type() const
+    CursorActionType get_cursor_type() const override
     { return CAT_SET_RAW; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 };
 
 int PktDataOption::eval(Cursor& c, Packet* p)
@@ -71,7 +71,7 @@ class PktDataModule : public Module
 public:
     PktDataModule() : Module(s_name, s_help) { };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &pktDataPerfStats; };
 };
 

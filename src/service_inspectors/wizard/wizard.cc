@@ -76,9 +76,9 @@ public:
     ~MagicSplitter();
 
     Status scan(Flow*, const uint8_t* data, uint32_t len,
-        uint32_t flags, uint32_t* fp);
+        uint32_t flags, uint32_t* fp) override;
 
-    bool is_paf() { return true; };
+    bool is_paf() override { return true; };
 
 private:
     Wizard* wizard;
@@ -90,12 +90,12 @@ public:
     Wizard(WizardModule*);
     ~Wizard();
 
-    void show(SnortConfig*)
+    void show(SnortConfig*) override
     { LogMessage("Wizard\n"); };
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
-    StreamSplitter* get_splitter(bool);
+    StreamSplitter* get_splitter(bool) override;
 
     void reset(Wand&, bool tcp, bool c2s);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);

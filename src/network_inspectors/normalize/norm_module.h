@@ -39,18 +39,18 @@ class NormalizeModule : public Module
 public:
     NormalizeModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    ProfileStats* get_profile() const;
+    ProfileStats* get_profile() const override;
 
     const NormalizerConfig* get_config()
     { return &config; };
 
-    void sum_stats();
-    void show_stats();
-    void reset_stats();
+    void sum_stats() override;
+    void show_stats() override;
+    void reset_stats() override;
 
 private:
     bool set_ip4(const char*, Value&, SnortConfig*);

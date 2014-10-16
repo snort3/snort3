@@ -148,9 +148,10 @@ class SyslogModule : public Module
 {
 public:
     SyslogModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
     int facility;
@@ -306,7 +307,7 @@ public:
     SyslogLogger(SyslogModule*);
     ~SyslogLogger();
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 private:
     int priority;

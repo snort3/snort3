@@ -75,9 +75,9 @@ class IpSession : public Session
 public:
     IpSession(Flow*);
 
-    bool setup (Packet*);
-    int process(Packet*);
-    void clear();
+    bool setup (Packet*) override;
+    int process(Packet*) override;
+    void clear() override;
 
 public:
     FragTracker tracker;

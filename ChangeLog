@@ -24,6 +24,7 @@
 -- latest from tom
 -- fixed explicit stream_* bindings
 -- latest from josh - snort2lua changes
+-- added override to most derived virtual declarations
 
 124
 -- valgrind cleanup

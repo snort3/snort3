@@ -61,7 +61,7 @@ public:
     int add_pattern(
         SnortConfig*, void* P, int m,
         unsigned noCase, unsigned offset, unsigned depth,
-        unsigned negative, void* ID, int IID)
+        unsigned negative, void* ID, int IID) override
     {
         return acsmAddPattern(
             obj, (unsigned char *)P, m,
@@ -69,7 +69,7 @@ public:
     };
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list)
+        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return acsmCompileWithSnortConf(
             sc, obj, build_tree, neg_list);
@@ -77,18 +77,18 @@ public:
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state )
+        void* data, int* current_state ) override
     {
         return acsmSearch(
             obj, (unsigned char *)T, n, action, data, current_state );
     };
 
-    int print_info()
+    int print_info() override
     {
         return acsmPrintDetailInfo(obj);
     };
 
-    int get_pattern_count()
+    int get_pattern_count() override
     {
         return acsmPatternCount(obj);
     };

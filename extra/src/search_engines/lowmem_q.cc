@@ -65,8 +65,9 @@ class LowmemQModule : public Module
 {
 public:
     LowmemQModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
 public:
     string var;
@@ -117,7 +118,7 @@ public:
     int add_pattern(
         SnortConfig*, void* P, int m,
         unsigned noCase, unsigned, unsigned,
-        unsigned negative, void* ID, int)
+        unsigned negative, void* ID, int) override
     {
         return KTrieAddPattern(
             obj, (unsigned char *)P, m,
@@ -125,20 +126,20 @@ public:
     };
 
     int prep_patterns(
-        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list)
+        SnortConfig* sc, mpse_build_f build_tree, mpse_negate_f neg_list) override
     {
         return KTrieCompileWithSnortConf(sc, obj, build_tree, neg_list);
     };
 
     int _search(
         const unsigned char* T, int n, mpse_action_f action,
-        void* data, int* current_state )
+        void* data, int* current_state ) override
     {
         *current_state = 0;
         return KTrieSearchQ(obj, (unsigned char *)T, n, action, data);
     };
 
-    int get_pattern_count()
+    int get_pattern_count() override
     {
         return KTriePatternCount(obj);
     };

@@ -209,7 +209,7 @@ public:
     FtpData() { };
     ~FtpData() { };
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 };
 
 class FtpDataModule : public Module
@@ -217,11 +217,11 @@ class FtpDataModule : public Module
 public:
     FtpDataModule() : Module(s_name, s_help) { };
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
 
-    bool set(const char*, Value&, SnortConfig*)
+    bool set(const char*, Value&, SnortConfig*) override
     { return false; };
 };
 

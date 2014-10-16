@@ -44,8 +44,8 @@ public:
     ~PimCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    void get_protocol_ids(std::vector<uint16_t>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 
 };
 

@@ -234,16 +234,16 @@ public:
     HttpInspect(HTTPINSPECT_CONF*);
     ~HttpInspect();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
 
-    StreamSplitter* get_splitter(bool c2s)
+    StreamSplitter* get_splitter(bool c2s) override
     { return new HttpSplitter(c2s); };
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&);
-    bool get_buf(unsigned, Packet*, InspectionBuffer&);
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+    bool get_buf(unsigned, Packet*, InspectionBuffer&) override;
 
 private:
     HTTPINSPECT_CONF* config;

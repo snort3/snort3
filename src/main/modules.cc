@@ -89,7 +89,7 @@ class DetectionModule : public Module
 {
 public:
     DetectionModule() : Module("detection", detection_help, detection_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
@@ -145,7 +145,7 @@ class EventQueueModule : public Module
 {
 public:
     EventQueueModule() : Module("event_queue", event_queue_help, event_queue_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
@@ -238,7 +238,7 @@ class SearchEngineModule : public Module
 {
 public:
     SearchEngineModule() : Module("search_engine", search_engine_help, search_engine_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
@@ -360,8 +360,8 @@ class ProfileModule : public Module
 {
 public:
     ProfileModule() : Module("profile", profile_help, profile_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 };
 
 bool ProfileModule::begin(const char* fqn, int, SnortConfig* sc)
@@ -432,9 +432,9 @@ public:
     ClassificationsModule() : 
         Module("classifications", classifications_help, classification_params, true) { };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     string name;
@@ -498,9 +498,9 @@ public:
     ReferencesModule() : 
         Module("references", reference_help, reference_params, true) { };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     string name;
@@ -584,7 +584,7 @@ class AlertsModule : public Module
 {
 public:
     AlertsModule() : Module("alerts", alerts_help, alerts_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
@@ -691,7 +691,7 @@ class OutputModule : public Module
 {
 public:
     OutputModule() : Module("output", output_help, output_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
@@ -790,7 +790,7 @@ class ActiveModule : public Module
 {
 public:
     ActiveModule() : Module("active", active_help, active_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
@@ -850,7 +850,7 @@ class PacketsModule : public Module
 {
 public:
     PacketsModule() : Module("packets", packets_help, packets_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
@@ -920,7 +920,7 @@ class DaqModule : public Module
 {
 public:
     DaqModule() : Module("daq", daq_help, daq_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool DaqModule::set(const char*, Value& v, SnortConfig* sc)
@@ -982,7 +982,7 @@ class AttributeTableModule : public Module
 public:
     AttributeTableModule() : 
         Module("attribute_table", attribute_table_help, attribute_table_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1050,7 +1050,7 @@ class NetworkModule : public Module
 {
 public:
     NetworkModule() : Module("network", network_help, network_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1121,7 +1121,7 @@ class IpsModule : public Module
 {
 public:
     IpsModule() : Module("ips", ips_help, ips_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool IpsModule::set(const char*, Value& v, SnortConfig*)
@@ -1203,9 +1203,9 @@ class ProcessModule : public Module
 {
 public:
     ProcessModule() : Module("process", process_help, process_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     std::string source;
@@ -1342,7 +1342,7 @@ class FileIdModule : public Module
 {
 public:
     FileIdModule() : Module("file_id", file_id_help, file_id_params) { };
-    bool set(const char*, Value&, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
 };
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1409,9 +1409,9 @@ class SuppressModule : public Module
 {
 public:
     SuppressModule() : Module("suppress", suppress_help, suppress_params, true) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     THDX_STRUCT thdx;
@@ -1492,9 +1492,9 @@ class EventFilterModule : public Module
 public:
     EventFilterModule() : 
         Module("event_filter", event_filter_help, event_filter_params, true) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     THDX_STRUCT thdx;
@@ -1590,9 +1590,9 @@ class RateFilterModule : public Module
 {
 public:
     RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     tSFRFConfigNode thdx;
@@ -1669,9 +1669,9 @@ class RuleStateModule : public Module
 {
 public:
     RuleStateModule() : Module("rule_state", rule_state_help, rule_state_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     RuleState state;
@@ -1761,9 +1761,9 @@ public:
     { app = nullptr; host = nullptr; };
     ~HostsModule() { assert(!host && !app); };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 private:
     ApplicationEntry* app;
@@ -1856,9 +1856,9 @@ class XXXModule : public Module
 public:
     XXXModule() : Module("xxx", xxx_help, xxx_params) { };
     const RuleMap* get_rules() { return xxx_rules; };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 };
 
 bool XXXModule::set(const char*, Value& v, SnortConfig* sc)

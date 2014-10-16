@@ -45,13 +45,14 @@ class StreamIcmpModule : public Module
 {
 public:
     StreamIcmpModule();
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    ProfileStats* get_profile() const;
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
+    ProfileStats* get_profile() const override;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+
     StreamIcmpConfig* get_data();
 
 private:

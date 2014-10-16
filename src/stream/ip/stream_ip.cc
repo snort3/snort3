@@ -59,13 +59,13 @@ public:
     StreamIp(StreamIpConfig*);
     ~StreamIp();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
 
-    void tinit();
-    void tterm();
+    void tinit() override;
+    void tterm() override;
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
 public:
     StreamIpConfig* config;
