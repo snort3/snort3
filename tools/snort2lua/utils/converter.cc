@@ -368,8 +368,8 @@ int Converter::convert(std::string input,
     if (failed_conversions())
     {
         std::size_t errors = data_api.num_errors() + rule_api.num_errors();
-        std::cout << "ERROR: " << errors << " errors occured during conversion\n";
-        std::cout << "ERROR: see " << error_file << " for details" << std::endl;
+        std::cerr << "ERROR: " << errors << " errors occured during conversion\n";
+        std::cerr << "ERROR: see " << error_file << " for details" << std::endl;
     }
 
     return rc;
