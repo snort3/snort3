@@ -114,7 +114,7 @@ enum RunFlag
     RUN_FLAG__PAUSE               = 0x00800000,     // --pause
 
     RUN_FLAG__NO_PCRE             = 0x01000000,
-    /* If stream5 is configured, the STATEFUL flag is set.  This is
+    /* If stream is configured, the STATEFUL flag is set.  This is
      * somewhat misnamed and is used to assure a session is established */
     RUN_FLAG__ASSURE_EST          = 0x02000000,
 

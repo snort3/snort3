@@ -133,7 +133,7 @@ int Norm_Packet (NormalizerConfig* c, Packet* p)
 // TCP options count and length are a notable exception.
 //
 // also note that checksums are not calculated here.  they are only
-// calculated once after all normalizations are done (here, stream5)
+// calculated once after all normalizations are done (here, stream)
 // and any replacements are made.
 //-----------------------------------------------------------------------
 

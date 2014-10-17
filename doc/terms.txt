@@ -49,7 +49,7 @@
 * *search engine*: a plugin that performs multipattern searching of packets
   and payload to find rules that should be evaluated.  There are currently
   no specific modules, although there are several search engine plugins.
-  Releated configuration is done with the basic detection module.  Aka fast
+  Related configuration is done with the basic detection module.  Aka fast
   pattern matcher.
 
 * *SO rule*: a IPS rule plugin that performs custom detection that can't

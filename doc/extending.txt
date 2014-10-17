@@ -28,7 +28,7 @@ are expected to grow to include statistics support, etc.
 Module configuration is handled by a list of Parameters.  Most parameters
 can be validated by the framework, which means for example that conversion
 from string to number is done in exactly one place.  Providing the builtin
-rules allows the documenation to include them automatically and also allows
+rules allows the documentation to include them automatically and also allows
 for autogenerating the rules at startup.
 
 If we are defining a new Inspector called, say, gadget, it might be

@@ -259,7 +259,7 @@ static const Parameter s_params[] =
       " use rule message in response page" },
 
     { "page", Parameter::PT_STRING, nullptr, nullptr,
-      "file containing HTTP reponse (headers and body)" },
+      "file containing HTTP response (headers and body)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

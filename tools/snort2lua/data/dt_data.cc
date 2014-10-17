@@ -249,7 +249,7 @@ void DataApi::failed_conversion(const std::istringstream& stream)
 }
 
 void DataApi::failed_conversion(const std::istringstream& stream,
-                                const std::string unkown_option)
+                                const std::string unknown_option)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
@@ -260,7 +260,7 @@ void DataApi::failed_conversion(const std::istringstream& stream,
         curr_data_bad = true;
         errors_count++;
     }
-    errors->add_text("^^^^ unknown_option=" + unkown_option);
+    errors->add_text("^^^^ unknown_option=" + unknown_option);
 }
 
 

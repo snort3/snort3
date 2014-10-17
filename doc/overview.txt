@@ -4,7 +4,7 @@ are looking to see what Snort++ has to offer.
 
 === Goals
 
-The Snort architecture has accommadated increasingly complex packet
+The Snort architecture has accommodated increasingly complex packet
 processing.  However a new design is needed to become more scalable for
 today's many-core CPUs and multi-CPU platforms.  Here are some of the basic
 goals for Snort++:
@@ -24,7 +24,7 @@ longer-term goals are:
 * Use a shared network map
 * Support pipelining of packet processing
 * Support hardware offload and data plane integration
-* Rewrite critical modules like TCP reassembly and HTTP inpsection
+* Rewrite critical modules like TCP reassembly and HTTP inspection
 * Support proxy mode
 * Facilitate component testing
 * Simplify memory management
@@ -40,7 +40,7 @@ Note that retaining backwards compatibility is not a goal.  While Snort\++
 leverages some of the Snort code base, a lot has changed.  The
 configuration of Snort++ is done with Lua, so your old conf won't work as
 is.  Rules are still text based but nonetheless incompatible.  However,
-snort2lua will help you convert your conf and rules to the new format.
+Snort2Lua will help you convert your conf and rules to the new format.
 
 The original Snort manual may be useful for some background information not
 yet documented for Snort++.  The configuration differences are given in
@@ -115,7 +115,7 @@ newer versions will replace older versions, even when built statically.
 The power of plugins is that they have a very focused purpose and can be
 created with relative ease.  For example, you can extend the rule language
 by writing your own IpsOption and it will plug in and function just like
-existing options.  The extra diectory has examples of each type of plugin.
+existing options.  The extra directory has examples of each type of plugin.
 
 === Scripts
 

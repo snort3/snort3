@@ -417,7 +417,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
                 table_api.add_option("policy", "vista");
 
             else if (!policy.compare("unknown"))
-                table_api.add_deleted_comment("policy unkown");
+                table_api.add_deleted_comment("policy unknown");
 
             else if (!policy.compare("noack"))
                 table_api.add_deleted_comment("policy noack");

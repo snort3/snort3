@@ -74,7 +74,7 @@ using namespace std;
 static const Parameter s_params[] =
 {
     { "file", Parameter::PT_BOOL, nullptr, "false",
-      "output to " F_NAME " instread of stdout" },
+      "output to " F_NAME " instead of stdout" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
       "set limit (0 is unlimited)" },

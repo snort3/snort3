@@ -41,7 +41,7 @@
 #include "sfip/sf_ip.h"
 
 #define CD_ICMP4_NAME "icmp4"
-#define CD_ICMP4_HELP "support for internet control message protocol v4"
+#define CD_ICMP4_HELP "support for Internet control message protocol v4"
 
 namespace{
 
@@ -70,7 +70,7 @@ static const RuleMap icmp4_rules[] =
     { DECODE_ICMP_DST_UNREACH_DST_HOST_PROHIBITED, "ICMP destination unreachable communication with destination host is administratively prohibited" },
     { DECODE_ICMP_DST_UNREACH_DST_NET_PROHIBITED, "ICMP destination unreachable communication with destination network is administratively prohibited" },
     { DECODE_ICMP_PATH_MTU_DOS, "ICMP path MTU denial of service attempt" },
-    { DECODE_ICMP_DOS_ATTEMPT, "BAD-TRAFFIC linux ICMP header DOS attempt" },
+    { DECODE_ICMP_DOS_ATTEMPT, "BAD-TRAFFIC Linux ICMP header DOS attempt" },
     { DECODE_ICMP4_HDR_TRUNC, "truncated ICMP4 header" },
     { 0, nullptr }
 };

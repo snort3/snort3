@@ -33,7 +33,7 @@
 
 
 #define CD_IGMP_NAME "igmp"
-#define CD_IGMP_HELP "support for internet group management protocol"
+#define CD_IGMP_HELP "support for Internet group management protocol"
 
 namespace
 {

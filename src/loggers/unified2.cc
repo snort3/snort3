@@ -151,7 +151,7 @@ static void AlertExtraData(Flow*, void *data, LogFunction *log_funcs, uint32_t m
 /*
  * Function: Unified2InitFile()
  *
- * Purpose: Initialize the unified2 ouput file
+ * Purpose: Initialize the unified2 output file
  *
  * Arguments: config => pointer to the plugin's reference data struct
  *
@@ -1067,7 +1067,7 @@ static const Parameter s_params[] =
 };
 
 #define s_help \
-    "ouput event and packet in unified2 format file"
+    "output event and packet in unified2 format file"
 
 class U2Module : public Module
 {

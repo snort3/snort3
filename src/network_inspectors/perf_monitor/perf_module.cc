@@ -60,7 +60,7 @@ static const Parameter s_params[] =
       "report on qualified vs non-qualified events" },
 
     { "file", Parameter::PT_BOOL, nullptr, "false",
-      "otuput base stats to " PERF_FILE " instead of stdout" },
+      "output base stats to " PERF_FILE " instead of stdout" },
 
     { "flow", Parameter::PT_BOOL, nullptr, "false",
       "enable traffic statistics" },

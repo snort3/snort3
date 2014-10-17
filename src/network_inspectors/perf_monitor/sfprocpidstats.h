@@ -23,7 +23,7 @@
 **
 **
 **  DESCRIPTION
-**    This file gets the correct CPU usage for SMP linux machines.
+**    This file gets the correct CPU usage for SMP Linux machines.
 **
 */
 #ifndef SFPROCPIDSTATS_H

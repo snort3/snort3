@@ -72,7 +72,7 @@ SO_PUBLIC const SnortBuffer* get_buffer()
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
-      "luajit arguments" },
+      "LuaJIT arguments" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

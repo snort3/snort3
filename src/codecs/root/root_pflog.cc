@@ -66,7 +66,7 @@ struct Pflog1Hdr
 #define PFLOG1_HDRLEN (sizeof(struct _Pflog1_hdr))
 
 /*
- * Note that on OpenBSD, af type is sa_family_t. On linux, that's an unsigned
+ * Note that on OpenBSD, af type is sa_family_t. On Linux, that's an unsigned
  * short, but on OpenBSD, that's a uint8_t, so we should explicitly use uint8_t
  * here.  - ronaldo
  */

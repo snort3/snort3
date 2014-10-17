@@ -185,7 +185,7 @@ void AttributeTable::parse_os()
                     " <FRAG_POLICY>**missing policy**</FRAG_POLICY>");
 
             else if (!policy.compare("unknown"))
-                    table_api.add_deleted_comment("<FRAG_POLICY>unkown</FRAG_POLICY>");
+                    table_api.add_deleted_comment("<FRAG_POLICY>unknown</FRAG_POLICY>");
 
             else if (!policy.compare("hpux"))
                 table_api.add_deleted_comment("<FRAG_POLICY>hpux</FRAG_POLICY>");
@@ -280,7 +280,7 @@ void AttributeTable::parse_os()
                 table_api.add_option("tcp_policy", "macos");
 
             else if (!policy.compare("unknown"))
-                table_api.add_deleted_comment("<STREAM_POLICY>unkown</STREAM_POLICY>");
+                table_api.add_deleted_comment("<STREAM_POLICY>unknown</STREAM_POLICY>");
 
             else if (!policy.compare("noack"))
                 table_api.add_deleted_comment("<STREAM_POLICY>noack</STREAM_POLICY>");

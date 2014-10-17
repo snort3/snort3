@@ -114,7 +114,7 @@ bool Tag::convert(std::istringstream& data_stream)
                     packets = opt_val;
 
                 else
-                    rule_api.bad_rule(data_stream, "tag:<type> " + value + " - unkown metric");
+                    rule_api.bad_rule(data_stream, "tag:<type> " + value + " - unknown metric");
             }
 
             cnt = !cnt;

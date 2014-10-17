@@ -223,7 +223,7 @@ int IcmpSession::process(Packet* p)
         break;
 
     default:
-        /* We only handle the above ICMP messages with stream5 */
+        /* We only handle the above ICMP messages with stream */
         status = 0;
         break;
     }

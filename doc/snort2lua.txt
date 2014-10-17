@@ -17,7 +17,7 @@ Those errors can occur for a multitude of reasons and are not necessarily
 bad.  For instance, Snort2Lua will only convert preprocessors that are
 currently supported. Therefore, any unsupported preprocessors or
 configuration options including DCERP, SIP, and SMTP, will cause an error
-in Snort2lua since Snort++ does not support those preprocessors.
+in Snort2Lua since Snort++ does not support those preprocessors.
 Additionally, any rule options associated with those preprocessors are also
 not supported.  Finally, Snort2Lua expects a valid Snort configuration.
 Therefore, if the configuration is invalid or has questionable syntax,
@@ -52,12 +52,12 @@ pull all of the Lua syntax from every ‘include’ file into the output file.
 
 There are currently three output modes: default, quiet, and differences.
 As expected, quiet mode produces a Snort\++ configuration.  All errors
-(aside from Fatal Snort2Lua erros), differences, and comments will ommited
+(aside from Fatal Snort2Lua errors), differences, and comments will omitted
 from the final output file.  Default mode will print everything. That mean
-you will be able to see exactly what changes have occured between Snort and
+you will be able to see exactly what changes have occurred between Snort and
 Snort\++ in addition to the new syntax, the original file's comments, and
-all errors that have occured.  Finally, differences mode will not actually
-ouput a valid Snort++ configuration.  Instead, you can see the exact
+all errors that have occurred.  Finally, differences mode will not actually
+output a valid Snort++ configuration.  Instead, you can see the exact
 options from the input configuration that have changed.
 
 // FIXIT-J L include Snort2Lua commands
