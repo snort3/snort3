@@ -43,9 +43,8 @@ public:
     LinuxSllCodec() : Codec(CD_LINUX_SLL_NAME){};
     ~LinuxSllCodec() {};
 
-
-    virtual void get_data_link_type(std::vector<int>&);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    void get_data_link_type(std::vector<int>&) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 } // namespace

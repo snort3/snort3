@@ -62,15 +62,15 @@ public:
     EthCodec() : Codec(CD_ETH_NAME){};
     ~EthCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&);
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet*const );
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    void get_protocol_ids(std::vector<uint16_t>&) override;
+    void get_data_link_type(std::vector<int>&) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet*const ) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
 };
 
 } // namespace

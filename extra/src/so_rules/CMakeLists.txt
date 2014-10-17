@@ -4,7 +4,7 @@ macro (create_txt_header txt_file hdr_file)
 
     add_custom_command( OUTPUT ${hdr_file}
         COMMAND
-            "${SNORT_EXECUTABLE}" --rule-to-text < "${CMAKE_CURRENT_SOURCE_DIR}/${txt_file}" > "${CMAKE_CURRENT_BINARY_DIR}/${hdr_file}"
+            "${SNORT_EXECUTABLE}" --rule-to-text < "${CMAKE_CURRENT_LIST_DIR}/${txt_file}" > "${CMAKE_CURRENT_BINARY_DIR}/${hdr_file}"
         DEPENDS "${txt_file}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "so_rules: Building ${hdr_file}"
@@ -18,7 +18,7 @@ macro (create_pro_header txt_file hdr_file)
 
     add_custom_command( OUTPUT ${hdr_file}
         COMMAND
-            "${SNORT_EXECUTABLE}" --rule-to-hex < "${CMAKE_CURRENT_SOURCE_DIR}/${txt_file}" > "${CMAKE_CURRENT_BINARY_DIR}/${hdr_file}"
+            "${SNORT_EXECUTABLE}" --rule-to-hex < "${CMAKE_CURRENT_LIST_DIR}/${txt_file}" > "${CMAKE_CURRENT_BINARY_DIR}/${hdr_file}"
         DEPENDS "${txt_file}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "so_rules: Building ${hdr_file}"

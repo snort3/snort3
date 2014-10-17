@@ -79,10 +79,10 @@ class MplsModule : public DecodeModule
 public:
     MplsModule() : DecodeModule(CD_MPLS_NAME, CD_MPLS_HELP, mpls_params) {};
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return mpls_rules; }
 
-    bool set(const char*, Value& v, SnortConfig* sc)
+    bool set(const char*, Value& v, SnortConfig* sc) override
     {
         if ( v.is("enable_mpls_multicast") )
         {
@@ -115,10 +115,10 @@ public:
     MplsCodec() : Codec(CD_MPLS_NAME){};
     ~MplsCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const) override;
 };
 
 

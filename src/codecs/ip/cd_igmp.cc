@@ -62,11 +62,8 @@ public:
     ~IgmpCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
-    virtual void get_data_link_type(std::vector<int>&){};
-    
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 

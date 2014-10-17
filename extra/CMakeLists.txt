@@ -1,5 +1,6 @@
 
 if (BUILD_EXTRA_PLUGINS)
+    set(SNORT_EXECUTABLE $<TARGET_FILE:snort> CACHE INTERNAL "Snort binary" FORCE)
     add_subdirectory(src)
 
 else (BUILD_EXTRA_PLUGINS)

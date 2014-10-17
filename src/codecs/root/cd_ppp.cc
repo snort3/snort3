@@ -43,8 +43,8 @@ public:
     ~PPPCodec() {}
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void get_data_link_type(std::vector<int>&);
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_data_link_type(std::vector<int>&) override;
 };
 
 } // namespace

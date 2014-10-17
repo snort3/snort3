@@ -44,7 +44,7 @@ class Erspan2Module : public DecodeModule
 public:
     Erspan2Module() : DecodeModule(CD_ERSPAN2_NAME, CD_ERSPAN2_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return erspan2_rules; }
 };
 
@@ -55,8 +55,8 @@ public:
     Erspan2Codec() : Codec(CD_ERSPAN2_NAME){};
     ~Erspan2Codec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
     
 };
 

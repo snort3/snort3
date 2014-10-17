@@ -72,7 +72,7 @@ class PPPoEModule : public DecodeModule
 public:
     PPPoEModule() : DecodeModule(CD_PPPOE_NAME, pppoe_help) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return pppoe_rules; }
 };
 
@@ -296,10 +296,10 @@ public:
     ~PPPoEDiscCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override;
 };
 
 
@@ -391,10 +391,10 @@ public:
     ~PPPoESessCodec() {};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override;
 };
 
 

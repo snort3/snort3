@@ -112,7 +112,7 @@ int IcodeOption::eval(Cursor&, Packet *p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if ICMP code is min<>max | <max | >min" },
+      "check if ICMP code is 'code | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
