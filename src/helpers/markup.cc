@@ -28,7 +28,7 @@ bool Markup::enabled = false;
 void Markup::enable(bool e)
 { enabled = e; }
 
-#define hn "========== "
+const char hn[] = "========== ";
 
 const char* Markup::head(unsigned level)
 { 

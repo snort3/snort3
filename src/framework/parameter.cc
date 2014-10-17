@@ -125,6 +125,24 @@ static bool valid_string(Value& v, const char* r)
     return len <= max;
 }
 
+static bool is_sep(char c)
+{ return !c || c == '|' || isspace(c); }
+
+static const char* find(const char* r, const char* s)
+{
+    const char* t = strstr(r, s);
+    unsigned n = strlen(s);
+
+    while ( t )
+    {
+        if ( (t == r || is_sep(t[-1])) && is_sep(t[n]) )
+            return t;
+
+        t = strstr(t+n, s);
+    }
+    return nullptr;
+}
+
 static bool valid_select(Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_STR )
@@ -134,7 +152,7 @@ static bool valid_select(Value& v, const char* r)
         return false;
 
     const char* s = v.get_string();
-    const char* t = strstr(r, s);
+    const char* t = find(r, s);
 
     if ( !t )
         return false;
@@ -163,9 +181,8 @@ static bool valid_enum(Value& v, const char* r)
     if ( !r )
         return false;
 
-    // FIXIT-H J  -  Ensure the enum is the full value
     const char* s = v.get_string();
-    const char* t = strstr(r, s);
+    const char* t = find(r, s);
 
     if ( !t )
         return false;
@@ -216,7 +233,7 @@ static bool valid_multi(Value& v, const char* r)
 
     for ( auto p : list )
     {
-        const char* t = strstr(r, p.c_str());
+        const char* t = find(r, p.c_str());
         if ( !t )
             return false;
 

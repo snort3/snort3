@@ -27,6 +27,8 @@
 -- added override to most derived virtual declarations
 -- update from josh
 -- adding sid_18758.h back to extra/src/so_rules/ so that makes work
+-- fixed enum, select, and multi validation
+-- fixed some bogus semantic warnings from xcode
 
 124
 -- valgrind cleanup
