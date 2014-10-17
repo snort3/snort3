@@ -200,6 +200,10 @@ Binder::~Binder()
         delete p;
 }
 
+// FIXIT-M need to revisit get_binding() and apply()
+// need to bind stream*, service inspectors, and plug data
+// also need to consider binding of ips rules / policy
+// so should split bindings into these categories
 void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
