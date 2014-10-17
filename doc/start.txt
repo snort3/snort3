@@ -139,6 +139,16 @@ include::errors.txt[]
     http_server = { post_depth }
     http_server = { post_depth = undefined_symbol }
 
+* It is not an error to set a value multiple times.  The actual value
+  applied may not be the last in the table either.  It is best to avoid
+  such cases.
+
+    http_server =
+    {
+        post_depth = 1234,
+        post_depth = 4321
+    }
+
 * Snort can't tell you the exact filename or line number of a semantic
   error but it will tell you the fully qualified name.
 

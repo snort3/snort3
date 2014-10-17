@@ -129,9 +129,22 @@ settings, etc., you can also script Loggers and IpsOptions.
 
 === Binder
 
-*TBD*
+The binder collects all the Snort classic preprocessor network and port settings
+and config binding settings into one table within each policy.  You can now
+bind by both VLANs and CIDRs instead of one or the other.  The 
+criteria are given by binder.when and include policy ID, interfaces, VLANs,
+networks, protocol, ports, role, and service.
+
+If service inspectors and wizard are configured but no binder is
+configured, a default binder is created that binds based on the wizard.
 
 === Wizard
 
-*TBD*
+The wizard examines the initial payload of TCP and UDP sessions and
+attempts to determine which service inspector if any should examine the
+traffic.  Use the wizard for portless configurations or to augment
+port-based configurations to catch otherwise unknown traffic, including
+command and control channels.  The wizard is still under development and
+should be considered experimental.  If you find you need to tweak the
+defaults please let us know.
 

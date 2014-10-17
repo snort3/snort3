@@ -30,6 +30,7 @@
 -- fixed enum, select, and multi validation
 -- fixed some bogus semantic warnings from xcode
 -- update from josh
+-- updated doc
 
 124
 -- valgrind cleanup
