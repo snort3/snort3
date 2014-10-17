@@ -66,7 +66,7 @@ public:
 private:
     static const StrCode scheme_list[];
 
-    Field uri;
+    const Field uri;
     const NHttpEnums::MethodId method_id;
 
     Field scheme;

@@ -24,6 +24,8 @@
 #include <stdio.h>
 
 #include "snort.h"
+#include "detection/detection_util.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_msg_status.h"
 #include "nhttp_msg_header.h"

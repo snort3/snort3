@@ -59,7 +59,7 @@ NHttpTransaction* NHttpTransaction::attach_my_transaction(NHttpFlowData* session
     // Request section: put the old transaction in the pipeline and replace it with a new transaction. If the pipeline
     // overflows or underflows we stop using it and just delete the old transaction.
     if (session_data->section_type[source_id] == SEC_REQUEST) {
-        // When pipelining is not occurring the response should already have taken this tranaction and left nullptr.
+        // When pipelining is not occurring the response should already have taken this transaction and left nullptr.
         if (session_data->transaction[SRC_CLIENT] != nullptr) {
             if ((session_data->pipeline_overflow) || (session_data->pipeline_underflow)) {
                 delete session_data->transaction[SRC_CLIENT];

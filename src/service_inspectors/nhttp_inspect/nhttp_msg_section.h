@@ -21,7 +21,6 @@
 #ifndef NHTTP_MSG_SECTION_H
 #define NHTTP_MSG_SECTION_H
 
-#include "detection/detection_util.h"
 #include "nhttp_scratch_pad.h"
 #include "nhttp_field.h"
 #include "nhttp_flow_data.h"
@@ -47,12 +46,12 @@ public:
     NHttpEnums::MethodId get_method_id() const { return method_id; };
 
 protected:
-    NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
+    NHttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, NHttpFlowData* session_data_,
        NHttpEnums::SourceId source_id_, bool buf_owner);
 
     // Convenience methods
-    void print_message_title(FILE *output, const char *title) const;
-    void print_message_wrapup(FILE *output) const;
+    void print_message_title(FILE* output, const char* title) const;
+    void print_message_wrapup(FILE* output) const;
     void create_event(NHttpEnums::EventSid sid);
     void legacy_request();
     void legacy_status();
@@ -67,9 +66,6 @@ protected:
     const bool tcp_close;
     ScratchPad scratch_pad;
 
-    // This is where all the derived values, extracted message parts, and normalized values are.
-    // These are all scalars, buffer pointers, and buffer sizes. The actual buffers are in message buffer (raw pieces)
-    // or the scratch_pad (normalized pieces).
     uint64_t infractions;
     uint64_t events_generated = 0;
     NHttpEnums::VersionId version_id;

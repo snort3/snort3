@@ -22,6 +22,8 @@
 #include <stdio.h>
 
 #include "stream/stream_api.h"
+#include "detection/detection_util.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_msg_request.h"
 #include "nhttp_msg_status.h"

@@ -18,11 +18,9 @@
 */
 // nhttp_module.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include "snort.h"
-#include "nhttp_enum.h"
 #include "nhttp_module.h"
 
 const Parameter NHttpModule::nhttp_params[] =
@@ -46,7 +44,6 @@ bool NHttpModule::set(const char*, Value &val, SnortConfig*) {
     else {
         return false;
     }
-
     return true;
 }
 

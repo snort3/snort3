@@ -32,8 +32,8 @@
 
 class NHttpMsgHeadShared: public NHttpMsgSection {
 public:
-    void analyze();
-    void gen_events();
+    void analyze() override;
+    void gen_events() override;
 
     int32_t get_num_headers() const { return num_headers; };
     const Field& get_headers() const { return msg_text; };
@@ -48,7 +48,7 @@ protected:
        NHttpEnums::SourceId source_id_, bool buf_owner) :
        NHttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner) {};
 
-    // Header normalization strategies. There should be one of these for every different way we can process
+    // Header normalization strategies. There should be one defined for every different way we can process
     // a header field value.
     static const HeaderNormalizer NORMALIZER_NIL;
     static const HeaderNormalizer NORMALIZER_BASIC;

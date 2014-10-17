@@ -33,12 +33,12 @@ void Field::print(FILE *output, const char* name, bool int_vals) const {
     if ((length == STAT_NOTPRESENT) || (length == STAT_NOTCOMPUTE) || (length == STAT_NOSOURCE)) {
         return;
     }
-    int out_count = fprintf(output, "%s, length = %d, ", name, length);
+    const int out_count = fprintf(output, "%s, length = %d, ", name, length);
     if (length <= 0) {
         fprintf(output, "\n");
         return;
     }
-    int32_t print_length = (length <= 1200) ? length : 1200;    // Limit the amount of data printed
+    const int32_t print_length = (length <= 1200) ? length : 1200;    // Limit the amount of data printed
     for (int k=0; k < print_length; k++) {
         if ((start[k] >= 0x20) && (start[k] <= 0x7E)) fprintf(output, "%c", (char)start[k]);
         else if (start[k] == 0xD) fprintf(output, "~");
@@ -52,26 +52,10 @@ void Field::print(FILE *output, const char* name, bool int_vals) const {
     if (int_vals && (print_length%8 == 0)) {
         fprintf(output, "\nInteger values =");
         for (int j=0; j < print_length; j+=8) {
+            // FIXIT-L rewrite to eliminate doubtful cast
             fprintf(output, " %" PRIu64 , *((const uint64_t*)(start+j)));
         }
     }
     fprintf(output, "\n");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
