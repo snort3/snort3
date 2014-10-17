@@ -38,7 +38,7 @@ public:
     Field(int32_t length_, const uint8_t* start_) : length(length_), start(start_) {};
     explicit Field(int32_t length_) : length(length_) { assert(length<=0); };
     Field() = default;
-    void print(FILE *output, const char* name, bool int_vals = false) const;
+    void print(FILE* output, const char* name, bool int_vals = false) const;
 };
 
 #endif

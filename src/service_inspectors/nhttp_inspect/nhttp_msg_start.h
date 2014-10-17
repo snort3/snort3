@@ -30,9 +30,9 @@
 
 class NHttpMsgStart: public NHttpMsgSection {
 public:
-    void analyze();
-    void gen_events();
-    NHttpEnums::ProcessResult worth_detection();
+    void analyze() override;
+    void gen_events() override;
+    NHttpEnums::ProcessResult worth_detection() override;
 
 protected:
     NHttpMsgStart(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,

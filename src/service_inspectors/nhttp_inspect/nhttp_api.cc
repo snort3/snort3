@@ -18,7 +18,6 @@
 */
 // nhttp_api.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -31,18 +30,13 @@
 const char* NHttpApi::nhttp_my_name = "nhttp_inspect";
 const char* NHttpApi::nhttp_help = "the new HTTP inspector!";
 
-void NHttpApi::nhttp_init()
-{
-    NHttpFlowData::init();
-}
-
 Inspector* NHttpApi::nhttp_ctor(Module* mod)
 {
-    const NHttpModule* nhttpMod = (NHttpModule*) mod;
-    return new NHttpInspect(nhttpMod->get_test_input(), nhttpMod->get_test_output());
+    const NHttpModule* const nhttp_mod = (NHttpModule*) mod;
+    return new NHttpInspect(nhttp_mod->get_test_input(), nhttp_mod->get_test_output());
 }
 
-static const char* buffers[] =
+static const char* legacy_buffers[] =
 {
     "http_client_body",
     "http_cookie",
@@ -70,7 +64,7 @@ const InspectApi NHttpApi::nhttp_api =
     },
     IT_SERVICE,
     (uint16_t)PktType::TCP,
-    buffers,
+    legacy_buffers,
     "http",
     NHttpApi::nhttp_init,
     NHttpApi::nhttp_term,

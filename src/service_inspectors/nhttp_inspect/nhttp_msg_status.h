@@ -32,17 +32,17 @@ class NHttpMsgStatus: public NHttpMsgStart {
 public:
     NHttpMsgStatus(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
        NHttpEnums::SourceId source_id_, bool buf_owner);
-    void analyze();
-    void print_section(FILE *output);
-    void gen_events();
-    void update_flow();
-    void legacy_clients();
+    void analyze() override;
+    void print_section(FILE *output) override;
+    void gen_events() override;
+    void update_flow() override;
+    void legacy_clients() override;
 
     const Field& get_status_code() { return status_code; };
     const Field& get_reason_phrase() { return reason_phrase; };
 
 private:
-    void parse_start_line();
+    void parse_start_line() override;
     void derive_status_code_num();
 
     Field status_code;

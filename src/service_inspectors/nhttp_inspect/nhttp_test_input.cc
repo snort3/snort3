@@ -19,17 +19,14 @@
 // nhttp_test_input.cc author Tom Peters <thopeter@cisco.com>
 
 #include <assert.h>
-#include <string.h>
-#include <stdio.h>
 #include <stdexcept>
-#include <stdint.h>
 
 #include "nhttp_test_manager.h"
 #include "nhttp_test_input.h"
 
 using namespace NHttpEnums;
 
-NHttpTestInput::NHttpTestInput(const char *file_name) {
+NHttpTestInput::NHttpTestInput(const char* file_name) {
     if ((test_data_file = fopen(file_name, "r")) == nullptr) throw std::runtime_error("Cannot open test input file");
 }
 
@@ -37,7 +34,7 @@ NHttpTestInput::~NHttpTestInput() {
     fclose(test_data_file);
 }
 
-// Read from the test data file and present to PAF.
+// Read from the test data file and present to StreamSplitter.
 // In the process we may need to skip comments, execute simple commands, and handle escape sequences.
 // The best way to understand this function is to read the comments at the top of the file of test cases.
 void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id, bool &tcp_close, bool &need_break) {
@@ -52,27 +49,27 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
     need_break = false;
 
     if (just_flushed) {
-        // PAF just flushed and it has all been sent to inspection. There may or may not be leftover data from the
-        // last segment that was not flushed.
+        // StreamSplitter just flushed and it has all been sent by reassemble. There may or may not be leftover data
+        // from the last paragraph that was not flushed.
         just_flushed = false;
         data = msg_buf;
         length = end_offset - flush_octets;  // this is the leftover data
         previous_offset = 0;
         end_offset = length;
         if (length > 0) {
-            // Must present unflushed leftovers to PAF again.
-            // If we don't take this opportunity to left justify our data in the buffer we may "walk" to the right until we run out of buffer space
+            // Must present unflushed leftovers to StreamSplitter again. If we don't take this opportunity to left
+            // justify our data in the buffer we may "walk" to the right until we run out of buffer space.
             memmove(msg_buf, msg_buf+flush_octets, length);
             tcp_close = tcp_closed;
             flush_octets = 0;
             return;
         }
-        // If we reach here then PAF has already flushed all the data we have read so far.
+        // If we reach here then StreamSplitter has already flushed all the data we have read so far.
         tcp_closed = false;
         flush_octets = 0;
     }
     else {
-        // The data we gave PAF last time was not flushed
+        // The data we gave StreamSplitter last time was not flushed
         length = 0;
         previous_offset = end_offset;
         data = msg_buf + previous_offset;
@@ -80,7 +77,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
 
     // Now we need to move forward by reading more data from the file
     int new_char;
-    typedef enum { WAITING, COMMENT, COMMAND, SECTION, ESCAPE, HEXVAL } State;
+    typedef enum { WAITING, COMMENT, COMMAND, PARAGRAPH, ESCAPE, HEXVAL } State;
     State state = WAITING;
     bool ending = false;
     int command_length = 0;
@@ -104,7 +101,7 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                 ending = false;
             }
             else if (new_char != '\n') {
-                state = SECTION;
+                state = PARAGRAPH;
                 ending = false;
                 data[length++] = (uint8_t) new_char;
             }
@@ -117,6 +114,8 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
           case COMMAND:
             if (new_char == '\n') {
                 state = WAITING;
+                // FIXIT-L should not change direction with unflushed data remaining from previous paragraph. At the
+                // minimum need to test for this and assert.
                 if ((command_length == strlen("request")) && !memcmp(command_value, "request", strlen("request"))) {
                     source_id = last_source_id = SRC_CLIENT;
                 }
@@ -158,14 +157,14 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
                 }
             }
             break;
-          case SECTION:
+          case PARAGRAPH:
             if (new_char == '\\') {
                 state = ESCAPE;
                 ending = false;
             }
             else if (new_char == '\n') {
                 if (ending) {
-                    // Found the blank line that ends the section.
+                    // Found the second consecutive blank line that ends the paragraph.
                     end_offset = previous_offset + length;
                     return;
                 }
@@ -178,15 +177,15 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
             break;
           case ESCAPE:
             switch (new_char) {
-              case 'n':  state = SECTION; data[length++] = '\n'; break;
-              case 'r':  state = SECTION; data[length++] = '\r'; break;
-              case 't':  state = SECTION; data[length++] = '\t'; break;
-              case '#':  state = SECTION; data[length++] = '#';  break;
-              case '@':  state = SECTION; data[length++] = '@';  break;
-              case '\\': state = SECTION; data[length++] = '\\'; break;
+              case 'n':  state = PARAGRAPH; data[length++] = '\n'; break;
+              case 'r':  state = PARAGRAPH; data[length++] = '\r'; break;
+              case 't':  state = PARAGRAPH; data[length++] = '\t'; break;
+              case '#':  state = PARAGRAPH; data[length++] = '#';  break;
+              case '@':  state = PARAGRAPH; data[length++] = '@';  break;
+              case '\\': state = PARAGRAPH; data[length++] = '\\'; break;
               case 'x':
               case 'X':  state = HEXVAL; hex_val = 0; num_digits = 0; break;
-              default:   assert(0); state = SECTION; break;
+              default:   assert(0); state = PARAGRAPH; break;
             }
             break;
           case HEXVAL:
@@ -196,12 +195,12 @@ void NHttpTestInput::scan(uint8_t*& data, uint32_t &length, SourceId &source_id,
             else assert(0);
             if (++num_digits == 2) {
                 data[length++] = hex_val;
-                state = SECTION;
+                state = PARAGRAPH;
             }
             break;
         }
         // Don't allow a buffer overrun.
-        if (previous_offset + length >= sizeof(msg_buf)) assert(0);
+        assert(previous_offset + length < sizeof(msg_buf));
     }
     // End-of-file. Return everything we have so far.
     end_offset = previous_offset + length;
@@ -213,8 +212,7 @@ void NHttpTestInput::flush(uint32_t length) {
     flushed = true;
 }
 
-
-void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId source_id, const NHttpFlowData* session_data,
+void NHttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id, const NHttpFlowData* session_data,
    bool& tcp_close) {
     if (!flushed || (source_id != last_source_id)) {
         *buffer = nullptr;
@@ -232,8 +230,8 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId sou
     else {
         // We need to generate additional data to fill out the body or chunk section. We may come through here
         // multiple times as we generate all the maximum size body sections needed for a single flush.
-        unsigned paf_max = 16384 - session_data->chunk_buffer_length[source_id];
         tcp_close = false;
+        const unsigned paf_max = DATABLOCKSIZE - session_data->chunk_buffer_length[source_id];
         length = (flush_octets <= paf_max) ? flush_octets : paf_max;
         for (uint32_t k = end_offset; k < length; k++) {
             msg_buf[k] = 'A' + k % 26;
@@ -246,7 +244,4 @@ void NHttpTestInput::reassemble(uint8_t **buffer, unsigned &length, SourceId sou
         }
     }
 }
-
-
-
 

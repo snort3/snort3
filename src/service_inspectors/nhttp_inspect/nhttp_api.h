@@ -36,7 +36,7 @@ private:
     static void nhttp_mod_dtor(Module* m) { delete m; };
     static const char* nhttp_my_name;
     static const char* nhttp_help;
-    static void nhttp_init();
+    static void nhttp_init() { NHttpFlowData::init(); };
     static void nhttp_term() {};
     static Inspector* nhttp_ctor(Module* mod);
     static void nhttp_dtor(Inspector* p) { delete p; };

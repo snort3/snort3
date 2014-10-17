@@ -24,6 +24,8 @@
 #include <stdio.h>
 
 #include "snort.h"
+#include "detection/detection_util.h"
+
 #include "nhttp_enum.h"
 #include "nhttp_transaction.h"
 #include "nhttp_msg_section.h"
@@ -34,7 +36,7 @@
 using namespace NHttpEnums;
 
 NHttpMsgSection::NHttpMsgSection(const uint8_t *buffer, const uint16_t buf_size, NHttpFlowData *session_data_,
-   SourceId source_id_, bool buf_owner) :
+     SourceId source_id_, bool buf_owner) :
    msg_text(buf_size, buffer),
    session_data(session_data_),
    source_id(source_id_),
@@ -66,13 +68,12 @@ void NHttpMsgSection::print_message_wrapup(FILE *output) const {
 }
 
 void NHttpMsgSection::create_event(EventSid sid) {
-    const uint32_t NHTTP_GID = 119;
     SnortEventqAdd(NHTTP_GID, (uint32_t)sid);
     events_generated |= (1 << (sid-1));
 }
 
 void NHttpMsgSection::legacy_request() {
-    NHttpMsgRequest* request = transaction->get_request();
+    NHttpMsgRequest* const request = transaction->get_request();
     if (request == nullptr) return;
     if (request->get_method().length > 0) {
         SetHttpBuffer(HTTP_BUFFER_METHOD, request->get_method().start, (unsigned)request->get_method().length);
@@ -86,7 +87,7 @@ void NHttpMsgSection::legacy_request() {
 }
 
 void NHttpMsgSection::legacy_status() {
-    NHttpMsgStatus* status = transaction->get_status();
+    NHttpMsgStatus* const status = transaction->get_status();
     if (status == nullptr) return;
     if (status->get_status_code().length > 0) {
         SetHttpBuffer(HTTP_BUFFER_STAT_CODE, status->get_status_code().start, (unsigned)status->get_status_code().length);
@@ -97,7 +98,7 @@ void NHttpMsgSection::legacy_status() {
 }
 
 void NHttpMsgSection::legacy_header(bool use_trailer) {
-    NHttpMsgHeadShared* header = use_trailer ?
+    NHttpMsgHeadShared* const header = use_trailer ?
       (NHttpMsgHeadShared*)transaction->get_trailer(source_id) :
       (NHttpMsgHeadShared*)transaction->get_header(source_id);
     if (header == nullptr) return;

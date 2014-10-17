@@ -22,6 +22,7 @@
 #define NHTTP_MODULE_H
 
 #include "framework/module.h"
+#include "nhttp_enum.h"
 
 #define NHTTP_HELP "new HTTP inspector"
 
@@ -29,11 +30,11 @@ class NHttpModule : public Module
 {
 public:
     NHttpModule() : Module("nhttp_inspect", NHTTP_HELP, nhttp_params) {};
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*) { return true; };
-    bool set(const char*, Value&, SnortConfig*);
-    unsigned get_gid() const { return NHttpEnums::NHTTP_GID; };
-    const RuleMap* get_rules() const { return nhttp_events; };
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override { return true; };
+    bool set(const char*, Value&, SnortConfig*) override;
+    unsigned get_gid() const override { return NHttpEnums::NHTTP_GID; };
+    const RuleMap* get_rules() const override { return nhttp_events; };
     bool get_test_input() const { return test_input; };
     bool get_test_output() const { return test_output; };
 

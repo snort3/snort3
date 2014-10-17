@@ -805,6 +805,25 @@ Transfer-Encoding: chunked\r\n
 
 0\r\n\r\n
 
+@13006
+@break
+@request
+
+GET /wall/fruitwall_file.txt HTTP/1.1
+
+\r\nHost: www.hektik.org\r\n\r\n
+
+@response
+
+HTTP/1.1 200 OK\r\n
+Date: Fri, 01 Aug 2003 21:22:16 GMT\r\n
+Server: Apache/1.3.27 (Unix) mod_ssl/2.8.12 OpenSSL/0.9.7-beta3 PHP/4.3.0\r\n
+Last-Modified: Fri, 01 Aug 2003 18:08:10 GMT\r\n
+ETag: "295682-9-3f2aac8a"\r\n
+Accept-Ranges: bytes\r\n
+Content-Length: 9\r\n
+Content-Type: text/plain\r\n\r\n
+596254978
 
 # ***********************************************************************************************
 # Alerts
