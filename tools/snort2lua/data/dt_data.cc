@@ -31,7 +31,8 @@
 #include "data/data_types/dt_include.h"
 
 DataApi::PrintMode DataApi::mode = DataApi::PrintMode::DEFAULT;
-unsigned int DataApi::dev_warnings = 0;
+std::size_t DataApi::dev_warnings = 0;
+std::size_t DataApi::errors_count = 0;
 
 DataApi::DataApi() : curr_data_bad(false)
 {
@@ -228,7 +229,11 @@ std::string DataApi::expand_vars(const std::string &string)
 }
 
 bool DataApi::failed_conversions() const
-{ return !errors->empty() || dev_warnings > 0; }
+{ return errors_count > 0; }
+
+std::size_t DataApi::num_errors() const
+{ return errors_count; }
+
 
 void DataApi::failed_conversion(const std::istringstream& stream)
 {
@@ -236,9 +241,10 @@ void DataApi::failed_conversion(const std::istringstream& stream)
     if (!curr_data_bad)
     {
         errors->add_text(std::string());
-        errors->add_text("Failed to entire convert the following line:");
+        errors->add_text("Failed to convert the following line:");
         errors->add_text(stream.str());
         curr_data_bad = true;
+        errors_count++;
     }
 }
 
@@ -249,9 +255,10 @@ void DataApi::failed_conversion(const std::istringstream& stream,
     if (!curr_data_bad)
     {
         errors->add_text(std::string());
-        errors->add_text("Failed to entire convert the following line:");
+        errors->add_text("Failed to convert the following line:");
         errors->add_text(stream.str());
         curr_data_bad = true;
+        errors_count++;
     }
     errors->add_text("^^^^ unknown_option=" + unkown_option);
 }

@@ -230,32 +230,44 @@ int Converter::convert(std::string input,
 
     rc = parse_file(input);
 
+    bool rule_file_specified = true;
     if (rule_file.empty())
+    {
         rule_file = output_file;
+        rule_file_specified = false;
+    }
 
     if (error_file.empty())
         error_file = output_file + ".rej";
 
 
-    // If there were only rules in this file, do not print lua syntax
-    if (!rule_api.empty() && table_api.empty() && data_api.empty())
+    // If there were only rules in this file, AND no rule file was specified,
+    //      do not print lua syntax in the output_file
+    if (!rule_api.empty() &&
+        table_api.empty() &&
+        data_api.empty() &&
+        !rule_file_specified)
     {
         std::ofstream rules;
         rules.open(rule_file, std::ifstream::out);
         rule_api.print_rules(rules, true);
-        rules.close();
 
-        // FIXIT-M J  output error in appropriate rule comment
         if (!DataApi::is_quiet_mode() && rule_api.failed_conversions())
         {
-            std::ofstream rejects;  // in this case, rejects are regular configuration options
-            rejects.open(error_file, std::ifstream::out);
-
-            if (rule_api.failed_conversions())
+            if (!error_file.compare(rule_file))
+            {
+                rule_api.print_rejects(rules);
+            }
+            else
+            {
+                std::ofstream rejects;  // in this case, rejects are regular configuration options
+                rejects.open(error_file, std::ifstream::out);
                 rule_api.print_rejects(rejects);
-
-            rejects.close();
+                rejects.close();
+            }
         }
+
+        rules.close();
     }
     else if (!rule_api.empty() || !table_api.empty() || !data_api.empty())
     {
@@ -327,7 +339,7 @@ int Converter::convert(std::string input,
 
         if ((failed_conversions()) && !DataApi::is_quiet_mode())
         {
-            if (error_file.empty())
+            if (!error_file.compare(output_file))
             {
                 if (data_api.failed_conversions())
                     data_api.print_errors(out);
@@ -351,6 +363,13 @@ int Converter::convert(std::string input,
         }
 
         out.close();
+    }
+
+    if (failed_conversions())
+    {
+        std::size_t errors = data_api.num_errors() + rule_api.num_errors();
+        std::cout << "ERROR: " << errors << " errors occured during conversion\n";
+        std::cout << "ERROR: see " << error_file << " for details" << std::endl;
     }
 
     return rc;

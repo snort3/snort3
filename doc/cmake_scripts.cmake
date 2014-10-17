@@ -3,9 +3,9 @@
 if (SNORT_EXECUTABLE AND OUT_FILE)
 
     # unsure why the extra level of indirection is needed, but it is
-    set (PLUG_PATH $ENV{PLUGIN_PATH})
+    set (PLUG_PATH $ENV{SNORT_PLUGIN_PATH})
     if (PLUG_PATH)
-        set (PLUGIN "--plugin-path=$ENV{PLUGIN_PATH}")
+        set (PLUGIN "--plugin-path=$ENV{SNORT_PLUGIN_PATH}")
     endif ()
 
 

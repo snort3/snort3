@@ -62,6 +62,7 @@ public:
 
 
     bool failed_conversions() const;
+    std::size_t num_errors() const;
 
     inline bool empty()
     { return rules.empty(); }
@@ -112,6 +113,7 @@ private:
     Rule* curr_rule;
     RuleOption* curr_rule_opt;
     bool curr_data_bad;
+    static std::size_t error_count;
 
 
     // Create a new rule object.

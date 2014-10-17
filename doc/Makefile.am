@@ -63,7 +63,7 @@ endif
 dist_doc_DATA += $(EXTRA_DIST)
 
 snort = $(top_builddir)/src/snort
-plugin_path = $(if $(shell echo $$PLUGIN_PATH), --plugin-path=$$PLUGIN_PATH )
+plugin_path = $(if $(shell echo $$SNORT_PLUGIN_PATH), --plugin-path=$$SNORT_PLUGIN_PATH )
 
 $(unbuilt_sources): $(snort)
 	mkdir -p images
