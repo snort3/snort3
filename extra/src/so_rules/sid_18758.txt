@@ -8,7 +8,7 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS
     rev:8;
     soid:3|18758;
 # everything above appears in stub
-# the following detection options are not in stub
+# the following detection options are not in protected stub
     flow:to_server,established;
     http_uri;
     content:".vbs", nocase;

@@ -69,8 +69,9 @@ class LogCodecModule : public Module
 {
 public:
     LogCodecModule() : Module(LOG_CODECS_NAME, LOG_CODECS_HELP, ex_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
 public:
     uint8_t flags;
@@ -114,9 +115,9 @@ class CodecLogger : public Logger {
 public:
     CodecLogger(LogCodecModule* m);
 
-    void open();
-    void close();
-    virtual void log(Packet*, const char*, Event*);
+    void open() override;
+    void close() override;
+    virtual void log(Packet*, const char*, Event*) override;
 
 public:
     std::string file;

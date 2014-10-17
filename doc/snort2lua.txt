@@ -1,3 +1,77 @@
 
-*TBD*
+
+Snort2Lua reads your classic Snort conf file(s) and generates Snort\++ Lua
+and rules files.  When running this program, the only mandatory option is
+to provide Snort2Lua with a Snort configuration file. The default output
+file file is snort.lua, the default error file will be snort.rej, and the
+default rule file is the output file (default is snort.lua).  When
+Snort2Lua finishes running, the resulting configuration file can be
+successfully run as the Snort++ configuration file.  The sole exception to
+this rule is when Snort2Lua cannot find an included file.  If that occurs,
+the file will still be included in the output file and you will need to
+manually adjust or comment the file name. Additionally, if the exit code is
+not zero, some of the information may not be successfully converted.  Check
+the error file for all of the conversion problems.
+
+Those errors can occur for a multitude of reasons and are not necessarily
+bad.  For instance, Snort2Lua will only convert preprocessors that are
+currently supported. Therefore, any unsupported preprocessors or
+configuration options including DCERP, SIP, and SMTP, will cause an error
+in Snort2lua since Snort++ does not support those preprocessors.
+Additionally, any rule options associated with those preprocessors are also
+not supported.  Finally, Snort2Lua expects a valid Snort configuration.
+Therefore, if the configuration is invalid or has questionable syntax,
+Snort2Lua may find those errors and fail to parse the configuration file.
+
+There are a also few peculiarities of Snort2Lua that may be confusing to a
+first time user. Specifically, aside from an initial configuration file
+(which is specified from the command line or as the file in ‘config
+binding’), every file that is included into Snort++ must be either a Lua
+file or a rule file; the file cannot contain both rules and Lua syntax.
+Therefore, when parsing a file specified with the ‘include’ command,
+Snort2Lua will output both a Lua file and a rule file.  Additionally, any
+line that is a comment in a configuration file will be added in to a
+comments section at the bottom of the main configuration file.  Finally,
+rules that contain unsupported options will be converted to the best of
+Snort2Lua’s capability and then printed as a comment in the rule file.
+
+
+=== Snort2Lua Command Line
+
+
+By default, Snort2Lua will attempt to parse every ‘include’ file and every
+‘binding’ file.  There is an option to change this functionality.
+
+When specifying a rule file with one of the command line options, Snort2Lua
+will output all rules in the main configuration file to that specified rule
+file.  This is especially useful when you are only interesting in
+converting rules since there is no Lua syntax in rule files.  There is also
+an option that tells Snort2Lua to output every rule for a given
+configuration into a single rule file.  Similarly, there is also an option
+pull all of the Lua syntax from every ‘include’ file into the output file.
+
+There are currently three output modes: default, quiet, and differences.
+As expected, quiet mode produces a Snort\++ configuration.  All errors
+(aside from Fatal Snort2Lua erros), differences, and comments will ommited
+from the final output file.  Default mode will print everything. That mean
+you will be able to see exactly what changes have occured between Snort and
+Snort\++ in addition to the new syntax, the original file's comments, and
+all errors that have occured.  Finally, differences mode will not actually
+ouput a valid Snort++ configuration.  Instead, you can see the exact
+options from the input configuration that have changed.
+
+// FIXIT-J L include Snort2Lua commands
+
+=== Known Problems:
+
+*  Any Snort ‘string’ which is dependent on a variable will no longer have
+that variable in the Lua string.
+
+*  Snort2Lua currently does not handle variables very well. This will be
+changed in a future release.
+
+*  When Snort2Lua parses a ‘binding’ configuration file, the rules and
+configuration will automatically be combined into the same file.  Also, the
+new files name will automatically become the old file’s name with a .lua
+extension.  There is currently no way to specify or change that files name.
 

@@ -64,10 +64,10 @@ public:
     ~WlanCodec() {};
 
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void get_data_link_type(std::vector<int>&);
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const);
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_data_link_type(std::vector<int>&) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) override;
 };
 
 #define MINIMAL_IEEE80211_HEADER_LEN    10    /* Ack frames and others */

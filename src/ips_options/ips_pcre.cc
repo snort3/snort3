@@ -449,13 +449,13 @@ public:
 
     ~PcreOption();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    bool is_relative()
+    bool is_relative() override
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
     PcreData* get_data()
     { return config; };
@@ -653,10 +653,10 @@ public:
     ~PcreModule()
     { delete data; };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &pcrePerfStats; };
 
     PcreData* get_data();

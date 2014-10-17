@@ -25,7 +25,6 @@ struct lua_State;
 
 const char* get_prompt();
 
-int main_dump_plugins(lua_State* = nullptr);
 int main_dump_stats(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);
 int main_reload_config(lua_State* = nullptr);
@@ -33,9 +32,13 @@ int main_reload_hosts(lua_State* = nullptr);
 int main_process(lua_State* = nullptr);
 int main_pause(lua_State* = nullptr);
 int main_resume(lua_State* = nullptr);
-int main_detach(lua_State* = nullptr);
 int main_quit(lua_State* = nullptr);
 int main_help(lua_State* = nullptr);
+
+#ifdef BUILD_SHELL
+int main_dump_plugins(lua_State* = nullptr);
+int main_detach(lua_State* = nullptr);
+#endif
 
 #endif
 

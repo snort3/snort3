@@ -31,8 +31,13 @@ Optional:
 
 === Building
 
+* Optionally built feature are listed in the reference section.
+
 * You should build Snort++ with --prefix $install_dir where install_dir is
   something you can easily delete.
+
+* To build with autotools, the usual ./configure, make, make install from
+  the top level directory will suffice.
 
 * To build with cmake and make, first create a separate directory for the
   build and cd into that directory.  Then:
@@ -133,6 +138,16 @@ include::errors.txt[]
 
     http_server = { post_depth }
     http_server = { post_depth = undefined_symbol }
+
+* It is not an error to set a value multiple times.  The actual value
+  applied may not be the last in the table either.  It is best to avoid
+  such cases.
+
+    http_server =
+    {
+        post_depth = 1234,
+        post_depth = 4321
+    }
 
 * Snort can't tell you the exact filename or line number of a semantic
   error but it will tell you the fully qualified name.

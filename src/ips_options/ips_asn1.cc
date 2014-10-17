@@ -103,13 +103,13 @@ public:
     Asn1Option(ASN1_CTXT& c) : IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    bool is_relative()
+    bool is_relative() override
     { return ( config.offset_type == REL_OFFSET ); };
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     ASN1_CTXT config;
@@ -222,10 +222,10 @@ class Asn1Module : public Module
 public:
     Asn1Module() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &asn1PerfStats; };
 
     ASN1_CTXT data;

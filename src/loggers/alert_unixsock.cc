@@ -116,7 +116,9 @@ class UnixSockModule : public Module
 {
 public:
     UnixSockModule() : Module(s_name, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*) { return false; };
+
+    bool set(const char*, Value&, SnortConfig*) override
+    { return false; };
 };
 
 //-------------------------------------------------------------------------
@@ -236,10 +238,10 @@ class UnixSockLogger : public Logger {
 public:
     UnixSockLogger() { };
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 };
 
 void UnixSockLogger::open()

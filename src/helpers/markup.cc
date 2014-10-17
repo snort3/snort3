@@ -28,7 +28,7 @@ bool Markup::enabled = false;
 void Markup::enable(bool e)
 { enabled = e; }
 
-#define hn "========== "
+const char hn[] = "========== ";
 
 const char* Markup::head(unsigned level)
 { 
@@ -59,16 +59,17 @@ const string& Markup::emphasis(const string& s)
     return m;
 }
 
-const string& Markup::sanitize(const char* const c)
-{ return sanitize(string(c)); }
+const string& Markup::escape(const char* const c)
+{ return escape(string(c)); }
 
-// FIXIT-L these escapes are emitted directly by asciidoc 8.6.9.
-const string& Markup::sanitize(const string& s)
+// TODO:  some asciidoc charachters need to be escaped.
+//        This function should escape all of those characters
+const string& Markup::escape(const string& s)
 {
     static string m;
     m = s;
+#if 0
 
-#if 0  // FIXIT-H sanitize breaks asciidoc 8.6.9 output
     const char* const asciidoc_chars = "*<>^'";
 
     if (enabled)

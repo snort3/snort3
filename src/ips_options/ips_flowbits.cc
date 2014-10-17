@@ -166,10 +166,10 @@ public:
 
     ~FlowBitsOption();
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
     bool is_set(uint8_t bits)
     { return (config->type & bits) != 0; };
@@ -1160,10 +1160,10 @@ class FlowbitsModule : public Module
 public:
     FlowbitsModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &flowBitsPerfStats; };
 
 public:

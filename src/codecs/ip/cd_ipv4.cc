@@ -99,14 +99,14 @@ public:
     Ipv4Codec() : Codec(CD_IPV4_NAME){};
     ~Ipv4Codec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const);
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
 
 };
 

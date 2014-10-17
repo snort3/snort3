@@ -159,9 +159,9 @@ class Normalizer : public Inspector
 public:
     Normalizer(NormalizeModule*);
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
-    void eval(Packet*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     NormalizerConfig config;

@@ -45,12 +45,12 @@ public:
     PortScanGlobalModule();
     ~PortScanGlobalModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
-    ProfileStats* get_profile() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
     PsCommon* get_data();
 
 private:
@@ -63,12 +63,12 @@ public:
     PortScanModule();
     ~PortScanModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
-    const RuleMap* get_rules() const;
+    const RuleMap* get_rules() const override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_PORT_SCAN; };
 
     PortscanConfig* get_data();

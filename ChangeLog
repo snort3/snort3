@@ -8,6 +8,29 @@
 -- updated ChangeLog terms; added env vars
 -- latest from Tom
 -- minor doc updates
+-- converted fast pattern errors to warnings
+-- add check for null gadget in binder
+-- remove cruft from fast pattern config
+-- updates from tom and josh
+-- renamed doc/tips.txt to doc/start.txt for users getting started
+-- added doc/features.txt for configure features that must be explicitly
+   enabled
+-- added --enable-shell and BUILD_SHELL to opt in to --shell and -j
+   functionality
+-- latest snort2lua updates from Josh
+-- added cursor to so:eval function to match IpsOption::eval()
+-- added --rule-to-hex and --rule-to-text to generate protected and
+   unprotected so rules
+-- latest from tom
+-- fixed explicit stream_* bindings
+-- latest from josh - snort2lua changes
+-- added override to most derived virtual declarations
+-- update from josh
+-- adding sid_18758.h back to extra/src/so_rules/ so that makes work
+-- fixed enum, select, and multi validation
+-- fixed some bogus semantic warnings from xcode
+-- update from josh
+-- updated doc
 
 124
 -- valgrind cleanup

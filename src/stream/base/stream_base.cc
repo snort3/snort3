@@ -134,12 +134,12 @@ class StreamBase : public Inspector
 public:
     StreamBase(const StreamConfig*);
 
-    void show(SnortConfig*);
+    void show(SnortConfig*) override;
 
-    void tinit();
-    void tterm();
+    void tinit() override;
+    void tterm() override;
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
 public:
     const StreamConfig* config;

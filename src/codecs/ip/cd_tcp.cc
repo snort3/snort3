@@ -81,7 +81,7 @@ class TcpModule : public DecodeModule
 public:
     TcpModule() : DecodeModule(CD_TCP_NAME, CD_TCP_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return tcp_rules; }
 };
 
@@ -92,16 +92,16 @@ public:
     {
 
     };
-    virtual ~TcpCodec(){};
+    ~TcpCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-                    const Packet* const);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+                    const Packet* const) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
 };
 
 static sfip_var_t *SynToMulticastDstIp = NULL;

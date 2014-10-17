@@ -219,7 +219,7 @@ public:
     DecodeModule(const char* s, const char* h, const Parameter* p, bool is_list = false)
     : Module(s, h, p, is_list) { };
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_DECODE; };
 };
 

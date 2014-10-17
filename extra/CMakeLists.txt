@@ -1,5 +1,6 @@
 
 if (BUILD_EXTRA_PLUGINS)
+    set(SNORT_EXECUTABLE $<TARGET_FILE:snort> CACHE INTERNAL "Snort binary" FORCE)
     add_subdirectory(src)
 
 else (BUILD_EXTRA_PLUGINS)
@@ -17,8 +18,8 @@ else (BUILD_EXTRA_PLUGINS)
         set(CMAKE_MACOSX_RPATH OFF)
     endif(APPLE)
 
+    find_package(DAQ REQUIRED)
     find_package(SNORT REQUIRED)
-
 
 
     if ((NOT SNORT_FOUND) AND (NOT SNORT_PKG_MODULE_FOUND))

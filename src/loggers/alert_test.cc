@@ -90,8 +90,8 @@ class TestModule : public Module
 public:
     TestModule() : Module(S_NAME, s_help, s_params) { };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
 
 public:
     unsigned flags;
@@ -137,10 +137,10 @@ class TestLogger : public Logger {
 public:
     TestLogger(TestModule*);
 
-    void open();
-    void close();
+    void open() override;
+    void close() override;
 
-    void alert(Packet*, const char* msg, Event*);
+    void alert(Packet*, const char* msg, Event*) override;
 
 private:
     unsigned flags;

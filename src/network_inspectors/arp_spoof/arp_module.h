@@ -61,20 +61,20 @@ public:
     ArpSpoofModule();
     ~ArpSpoofModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     ArpSpoofConfig* get_config();
 
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_ARP_SPOOF; };
 
-    const RuleMap* get_rules() const;
-    ProfileStats* get_profile() const;
+    const RuleMap* get_rules() const override;
+    ProfileStats* get_profile() const override;
 
 private:
     ArpSpoofConfig* config;

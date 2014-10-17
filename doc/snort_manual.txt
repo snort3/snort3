@@ -16,7 +16,7 @@ include::overview.txt[]
 
 == Getting Started
 
-include::tips.txt[]
+include::start.txt[]
 
 == Basic Modules
 
@@ -82,7 +82,7 @@ include::logger.txt[]
 
 include::differences.txt[]
 
-== snort2lua
+== Snort2Lua
 
 include::snort2lua.txt[]
 

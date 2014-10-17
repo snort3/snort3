@@ -66,7 +66,7 @@ class Icmp6Module : public DecodeModule
 public:
     Icmp6Module() : DecodeModule(CD_ICMP6_NAME, CD_ICMP6_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return icmp6_rules; }
 };
 
@@ -78,12 +78,12 @@ public:
     ~Icmp6Codec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet*, Packet*, Layer*);
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet*, Packet*, Layer*) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const) override;
 };
 
 

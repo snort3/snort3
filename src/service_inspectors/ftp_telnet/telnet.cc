@@ -232,9 +232,9 @@ public:
     Telnet(TELNET_PROTO_CONF*);
     ~Telnet();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
-    void eval(Packet*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     TELNET_PROTO_CONF* config;

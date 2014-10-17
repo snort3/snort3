@@ -108,9 +108,10 @@ class TcpdumpModule : public Module
 {
 public:
     TcpdumpModule() : Module(S_NAME, s_help, s_params) { };
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
 public:
     unsigned limit;
@@ -298,11 +299,11 @@ public:
     PcapLogger(TcpdumpModule*);
     ~PcapLogger();
 
-    void open();
-    void close();
-    void reset();
+    void open() override;
+    void close() override;
+    void reset() override;
 
-    void log(Packet*, const char* msg, Event*);
+    void log(Packet*, const char* msg, Event*) override;
 
 private:
     LtdConfig* config;

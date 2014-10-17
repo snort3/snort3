@@ -170,11 +170,11 @@ public:
     Binder(vector<Binding*>&);
     ~Binder();
 
-    void show(SnortConfig*)
+    void show(SnortConfig*) override
     { LogMessage("Binder\n"); };
 
-    void eval(Packet*);
-    int exec(int, void*);
+    void eval(Packet*) override;
+    int exec(int, void*) override;
 
     void add(Binding* b)
     { bindings.push_back(b); };
@@ -200,6 +200,10 @@ Binder::~Binder()
         delete p;
 }
 
+// FIXIT-M need to revisit get_binding() and apply()
+// need to bind stream*, service inspectors, and plug data
+// also need to consider binding of ips rules / policy
+// so should split bindings into these categories
 void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
@@ -316,6 +320,12 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
         return pb->use.action;
     }
 
+    if ( !strncmp(pb->use.name.c_str(), "stream_", 7) )
+    {
+        set_session(flow, pb->use.name.c_str());
+        return BA_INSPECT;
+    }
+
     init_flow(flow);
     Inspector* ins;
 
@@ -327,7 +337,8 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
     else
     {
         ins = InspectorManager::get_inspector(pb->use.name.c_str()); 
-        flow->set_gadget(ins);
+        if ( ins )
+            flow->set_gadget(ins);
     }
     return BA_INSPECT;
 }

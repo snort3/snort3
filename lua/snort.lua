@@ -61,7 +61,10 @@ dofile(dir .. 'reference.lua')
 -- experimental: only enable http_* or nhttp_inspect, not both
 --nhttp_inspect = { }
 
-stream = { }
+stream =
+{
+    icmp_cache = { memcap = 100000 }
+}
 stream_ip = { }
 stream_icmp = { }
 stream_tcp = { }

@@ -41,8 +41,8 @@ public:
     PppEncap() : Codec(CD_PPPENCAP_NAME){};
     ~PppEncap(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 const static uint16_t PPP_IP = 0x0021;       /* Internet Protocol */
@@ -55,9 +55,7 @@ const static uint16_t PPP_IPX = 0x002b;        /* Novell IPX Protocol */
 
 
 void PppEncap::get_protocol_ids(std::vector<uint16_t>& v)
-{
-    v.push_back(ETHERTYPE_PPP);
-}
+{ v.push_back(ETHERTYPE_PPP); }
 
 
 /*

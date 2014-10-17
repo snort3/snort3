@@ -1,37 +1,38 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // converter.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include "utils/converter.h"
 #include "conversion_state.h"
 #include "data/data_types/dt_comment.h"
 #include "utils/s2l_util.h"
+#include "init_state.h"
 
-Converter cv;
+
+
+bool Converter::parse_includes = true;
+bool Converter::convert_rules_mult_files = true;
+bool Converter::convert_conf_mult_files = true;
+
 
 Converter::Converter()
     :   state(nullptr),
-        init_state_ctor(nullptr),
-        parse_includes(true),
-        convert_rules_mult_files(true),
-        convert_conf_mult_files(true),
         error(false)
 {
 }
@@ -40,20 +41,6 @@ Converter::~Converter()
 {
     if (state)
         delete state;
-}
-
-bool Converter::initialize(conv_new_f func)
-{
-    init_state_ctor = func;
-    state = init_state_ctor();
-
-    if (state == nullptr)
-    {
-        data_api.developer_error("Failed Converter initialization!");
-        return false;
-    }
-
-    return true;
 }
 
 void Converter::set_state(ConversionState* c)
@@ -67,20 +54,24 @@ void Converter::reset_state()
     if (state)
         delete state;
 
-    state = init_state_ctor();
+    state = new InitState(*this);
     data_api.reset_state();
     table_api.reset_state();
     rule_api.reset_state();
 }
 
-// FIXIT-M J  Fix this -- rule, table, and data should be associated with a Converter
-void Converter::parse_include_file(std::string input_file)
+
+int Converter::parse_include_file(std::string input_file)
 {
     std::vector<Variable*> vars;
     std::vector<Table*> tables;
     std::vector<Rule*> rules;
     std::vector<Include*> includes;
     Comments* comments;
+    int rc;
+
+    if (!parse_includes)
+        return 0;
 
     // TODO get rid of any variables in the name
 
@@ -98,14 +89,15 @@ void Converter::parse_include_file(std::string input_file)
 
 
 
-    if (convert_file(input_file) < 0)
-        error = true; // return a negative number to main snort2lua method
+    rc = parse_file(input_file);
 
 
     if (convert_conf_mult_files)
     {
+        bool include_file = false;
+
         // print configuration file
-        if (!table_api.empty() || data_api.empty())
+        if (!table_api.empty() || !data_api.empty())
         {
             std::ofstream out;
             out.open(input_file + ".lua");
@@ -115,17 +107,22 @@ void Converter::parse_include_file(std::string input_file)
             out << std::endl;
             out.close();
 
-            data_api.add_include_file(input_file + ".lua");
+            include_file = true;
         }
 
         data_api.swap_conf_data(vars, includes, comments);
         table_api.swap_tables(tables);
         delete comments;
+
+        if (include_file)
+            data_api.add_include_file(input_file + ".lua");
     }
 
 
     if (convert_rules_mult_files)
     {
+        bool include_rules = false;
+
         if (!rule_api.empty())
         {
             std::ofstream out;
@@ -133,14 +130,19 @@ void Converter::parse_include_file(std::string input_file)
             rule_api.print_rules(out, true); // true == output to rule file, NOT lua file
             out.close();
 
-            rule_api.add_hdr_data("include " + input_file + ".rules");
+            include_rules = true;
         }
 
         rule_api.swap_rules(rules);
+
+        if (include_rules)
+            rule_api.add_hdr_data("include " + input_file + ".rules");
     }
+
+    return rc;
 }
 
-int Converter::convert_file(std::string input_file)
+int Converter::parse_file(std::string input_file)
 {
     std::ifstream in;
     std::string orig_text;
@@ -188,6 +190,7 @@ int Converter::convert_file(std::string input_file)
             std::istringstream data_stream(orig_text);
             while(data_stream.peek() != EOF)
             {
+                //FIXIT-M J place this in a try catch
                 if ((state == nullptr) || !state->convert(data_stream))
                 {
                     data_api.failed_conversion(data_stream);
@@ -202,4 +205,153 @@ int Converter::convert_file(std::string input_file)
 
     // this is set by parse_include_file
     return error ? -3 : 0;
+}
+
+bool Converter::initialize()
+{
+    state = new InitState(*this);
+
+    if (state == nullptr)
+    {
+        DataApi::developer_error("Failed Converter initialization!");
+        return false;
+    }
+
+    return true;
+}
+
+int Converter::convert(std::string input,
+                        std::string output_file,
+                        std::string rule_file,
+                        std::string error_file)
+{
+    int rc;
+    initialize();
+
+    rc = parse_file(input);
+
+    if (rule_file.empty())
+        rule_file = output_file;
+
+    if (error_file.empty())
+        error_file = output_file + ".rej";
+
+
+    // If there were only rules in this file, do not print lua syntax
+    if (!rule_api.empty() && table_api.empty() && data_api.empty())
+    {
+        std::ofstream rules;
+        rules.open(rule_file, std::ifstream::out);
+        rule_api.print_rules(rules, true);
+        rules.close();
+
+        // FIXIT-M J  output error in appropriate rule comment
+        if (!DataApi::is_quiet_mode() && rule_api.failed_conversions())
+        {
+            std::ofstream rejects;  // in this case, rejects are regular configuration options
+            rejects.open(error_file, std::ifstream::out);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(rejects);
+
+            rejects.close();
+        }
+    }
+    else if (!rule_api.empty() || !table_api.empty() || !data_api.empty())
+    {
+        // finally, lets print the converter to file
+        std::ofstream out;
+        out.open(output_file,  std::ifstream::out);
+
+        out << "---------------------------------------------------------------------------\n";
+        out << "-- Snort++ prototype configuration\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "-- setup environment\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "-- given:\n";
+        out << "-- export DIR=/install/path\n";
+        out << "-- configure --prefix=$DIR\n";
+        out << "-- make install\n";
+        out << "--\n";
+        out << "-- then:\n";
+        out << "-- export LUA_PATH=$DIR/include/snort/lua/?.lua\\;\\;\n";
+        out << "-- export SNORT_LUA_PATH=$DIR/conf/\n";
+        out << "---------------------------------------------------------------------------\n";
+        out << "\n";
+        out << "\n";
+        out << "\n";
+        out << "require(\"snort_config\")\n\n";;
+        out << "dir = os.getenv('SNORT_LUA_PATH')\n";
+        out << "\n";
+        out << "if ( not dir ) then\n";
+        out << "    dir = ''\n";
+        out << "end\n";
+        out << "\n";
+        out << "dofile(dir .. 'snort_defaults.lua')\n";
+        out << "\n";
+        out << "\n";
+        data_api.print_data(out);
+
+
+        if (!rule_api.empty())
+        {
+            if (rule_file.empty() || !rule_file.compare(output_file))
+            {
+                rule_api.print_rules(out, false);
+
+                std::string s = std::string("$default_rules");
+                table_api.open_top_level_table("ips");
+                table_api.add_option("rules", s);
+                table_api.close_table();
+            }
+            else
+            {
+                std::ofstream rules;
+                rules.open(rule_file, std::ifstream::out);
+                rule_api.print_rules(rules, true);
+                rules.close();
+
+                table_api.open_top_level_table("ips");
+                table_api.add_option("include", rule_file);
+                table_api.close_table();
+            }
+
+        }
+
+
+        table_api.print_tables(out);
+        data_api.print_comments(out);
+
+
+        if ((failed_conversions()) && !DataApi::is_quiet_mode())
+        {
+            if (error_file.empty())
+            {
+                if (data_api.failed_conversions())
+                    data_api.print_errors(out);
+
+                if (rule_api.failed_conversions())
+                    rule_api.print_rejects(out);
+            }
+            else
+            {
+                std::ofstream rejects;  // in this case, rejects are regular configuration options
+                rejects.open(error_file, std::ifstream::out);
+
+                if (data_api.failed_conversions())
+                    data_api.print_errors(rejects);
+
+                if (rule_api.failed_conversions())
+                    rule_api.print_rejects(rejects);
+
+                rejects.close();
+            }
+        }
+
+        out.close();
+    }
+
+    return rc;
 }

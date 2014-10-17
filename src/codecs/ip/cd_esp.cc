@@ -57,11 +57,11 @@ class EspModule : public DecodeModule
 public:
     EspModule() : DecodeModule(CD_ESP_NAME, CD_ESP_HELP, esp_params) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return esp_rules; }
 
 
-    bool set(const char*, Value& v, SnortConfig* sc)
+    bool set(const char*, Value& v, SnortConfig* sc) override
     {
         if ( v.is("decode_esp") )
             sc->enable_esp = v.get_bool();
@@ -80,8 +80,8 @@ public:
     ~EspCodec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
 
 

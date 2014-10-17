@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // config_binding.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
@@ -37,7 +36,7 @@ namespace {
 class Binding : public ConversionState
 {
 public:
-    Binding() : ConversionState() {};
+    Binding(Converter& c) : ConversionState(c) {};
     virtual ~Binding() {};
     virtual bool convert(std::istringstream& data_stream);
 
@@ -45,9 +44,6 @@ private:
     void add_vlan(const std::string& vlan, Binder&);
     void add_policy_id(const std::string& id, Binder&);
     void add_net(const std::string& net, Binder&);
-
-    // FIXIT-M  Remove this functino after refactor
-    bool parse_file(std::string file_name);
 };
 
 } // namespace
@@ -156,7 +152,7 @@ bool Binding::convert(std::istringstream& data_stream)
     if (!util::get_string(data_stream, val, ","))
         return false;
 
-    Binder bind;
+    Binder bind(table_api);
     bool rc = true;
 
     do
@@ -179,9 +175,8 @@ bool Binding::convert(std::istringstream& data_stream)
     } while (util::get_string(data_stream, val, ","));
 
 
-    // FIXIT-M J   This need to be refactored with converter.
-    //          Should NOT be doing all of this here.
-    if (cv.should_convert_includes())
+
+    if (cv.get_parse_includes())
     {
         std::string full_name = data_api.expand_vars(file);
         std::string full_path = full_name;
@@ -190,74 +185,30 @@ bool Binding::convert(std::istringstream& data_stream)
             full_path = parser::get_conf_dir() + full_name;
 
 
-        // if we still can't find this file, add it as a snort file
         if (util::file_exists(full_path))
-            parse_file(full_path);
+        {
+            Converter bind_cv;
+
+            // This will ensure that the final ouput file contains
+            // lua syntax - even if their are only rules in the file
+            bind_cv.get_table_api().open_top_level_table("ips");
+            bind_cv.get_table_api().close_table();
+
+
+//            file = file + ".lua";  FIXIT-L  the file names should contain their original variables
+            file = full_path + ".lua";
+
+            if (bind_cv.convert(full_path, file, file, full_path + ".rej") < 0)
+                rc = false;
+
+        }
+        else
+        {
+            rc = false;
+        }
     }
 
-    // FIXIT-L  J  this file extension shoudl not be hardcoded
-    bind.set_use_file(file + ".lua");
-    return rc;
-}
-
-
-// FIXIT-M J  because the other refactor comments don't indicate how repetitive this code is
-bool Binding::parse_file(std::string input_file)
-{
-    std::vector<Variable*> vars;
-    std::vector<Table*> tables;
-    std::vector<Rule*> rules;
-    std::vector<Include*> includes;
-    Comments comment("This file is a binding!!", 0,
-                Comments::CommentType::MULTI_LINE);
-    Comments* comment_ptr = &comment;
-    bool rc = false;
-
-    data_api.swap_conf_data(vars, includes, comment_ptr);
-    table_api.swap_tables(tables);
-    rule_api.swap_rules(rules);
-
-
-
-    if (cv.convert_file(input_file) < 0)
-        rc = true; // return a negative number to main snort2lua method
-
-
-    if (!rule_api.empty())
-    {
-        table_api.open_top_level_table("ips");
-        table_api.add_option("rules", "$default_rules");
-        table_api.close_table();
-    }
-
-
-    // print configuration file
-    if (!table_api.empty() || data_api.empty() || !rule_api.empty())
-    {
-
-
-        table_api.open_top_level_table("binder");
-        table_api.close_table();
-
-
-        std::ofstream out;
-        out.open(input_file + ".lua");
-
-
-        out << "require(\"snort_config\")\n\n";
-        data_api.print_data(out);
-        rule_api.print_rules(out, false);
-        table_api.print_tables(out);
-        data_api.print_comments(out);
-        out << std::endl;
-        out.close();
-
-    }
-
-
-    data_api.swap_conf_data(vars, includes, comment_ptr);
-    table_api.swap_tables(tables);
-    rule_api.swap_rules(rules);
+    bind.set_use_file(file);
     return rc;
 }
 
@@ -265,10 +216,8 @@ bool Binding::parse_file(std::string input_file)
  *******  A P I ***********
  **************************/
 
-static ConversionState* ctor()
-{
-    return new Binding();
-}
+static ConversionState* ctor(Converter& c)
+{ return new Binding(c); }
 
 static const ConvertMap binding_api =
 {

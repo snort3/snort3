@@ -57,10 +57,10 @@ public:
         IpsOption(s_name)
     { config = c; };
 
-    uint32_t hash() const;
-    bool operator==(const IpsOption&) const;
+    uint32_t hash() const override;
+    bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*);
+    int eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -117,7 +117,7 @@ int TcpAckOption::eval(Cursor&, Packet *p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is min<>max | <max | >min" },
+      "check if packet payload size is 'size | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -127,10 +127,10 @@ class AckModule : public Module
 public:
     AckModule() : Module(s_name, s_help, s_params) { };
 
-    bool begin(const char*, int, SnortConfig*);
-    bool set(const char*, Value&, SnortConfig*);
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &tcpAckPerfStats; };
 
     RangeCheck data;

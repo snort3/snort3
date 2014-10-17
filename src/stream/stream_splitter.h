@@ -98,9 +98,9 @@ public:
         uint32_t len,
         uint32_t flags,
         uint32_t* fp
-    );
-    void reset();
-    void update();
+    ) override;
+    void reset() override;
+    void update() override;
 
 private:
     uint16_t base;

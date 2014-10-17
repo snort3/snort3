@@ -1,22 +1,21 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
- * Copyright (C) 2002-2013 Sourcefire, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 2 as
- * published by the Free Software Foundation.  You may not use, modify or
- * distribute this program under any other version of the GNU General
- * Public License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License Version 2 as
+** published by the Free Software Foundation.  You may not use, modify or
+** distribute this program under any other version of the GNU General
+** Public License.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software
+** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 // config_checksums.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
@@ -34,10 +33,11 @@ namespace {
 class ConfigChecksum : public ConversionState
 {
 public:
-    ConfigChecksum( const std::string* snort_option,
+    ConfigChecksum( Converter& c,
+                    const std::string* snort_option,
                     const std::string* lua_table,
                     const std::string* lua_option) :
-            ConversionState(),
+            ConversionState(c),
             snort_option(snort_option),
             lua_table(lua_table),
             lua_option(lua_option)
@@ -82,9 +82,9 @@ private:
 template<const std::string *snort_option,
          const std::string *lua_name,
          const std::string *lua_option = nullptr>
-static ConversionState* config_checksum_ctor()
+static ConversionState* config_checksum_ctor(Converter& c)
 {
-    return new ConfigChecksum(snort_option, lua_name, lua_option);
+    return new ConfigChecksum(c, snort_option, lua_name, lua_option);
 }
 
 

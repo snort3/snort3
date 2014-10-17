@@ -1,7 +1,5 @@
 /*
 ** Copyright (C) 2014 Cisco and/or its affiliates. All rights reserved.
-** Copyright (C) 2002-2013 Sourcefire, Inc.
-** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License Version 2 as
@@ -32,9 +30,9 @@
 #include "detection/detection_defines.h"
 #include "sid_18758.h"
 
-static int eval(void*, Packet* p)
+static int eval(void*, Cursor&, Packet*)
 {
-    return p ? DETECTION_OPTION_MATCH : DETECTION_OPTION_NO_MATCH;
+    return DETECTION_OPTION_MATCH;
 }
 
 static SoEvalFunc ctor(const char* /*so*/, void** pv)
@@ -64,8 +62,8 @@ static const SoApi so_api =
         nullptr,
         nullptr
     },
-    sid_18758_gz,
-    sid_18758_gz_len,
+    (uint8_t*)rule_18758,
+    rule_18758_len,
     nullptr, // pinit
     nullptr, // pterm
     nullptr, // tinit

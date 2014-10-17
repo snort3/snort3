@@ -70,8 +70,8 @@ class DpxPH : public Inspector
 public:
     DpxPH();
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
 private:
     uint16_t port;
@@ -112,13 +112,13 @@ public:
     DpxModule() : Module(s_name, s_help)
     { };
 
-    const char** get_pegs() const
+    const char** get_pegs() const override
     { return simple_pegs; };
 
-    PegCount* get_counts() const
+    PegCount* get_counts() const override
     { return (PegCount*)&dpxstats; };
 
-    ProfileStats* get_profile() const
+    ProfileStats* get_profile() const override
     { return &dpxPerfStats; };
 };
 

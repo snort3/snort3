@@ -82,20 +82,20 @@ public:
     StreamTcpModule();
     ~StreamTcpModule();
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
-    const RuleMap* get_rules() const;
+    const RuleMap* get_rules() const override;
 
-    unsigned get_gid() const
+    unsigned get_gid() const override
     { return GID_STREAM_TCP; };
 
     StreamTcpConfig* get_data();
 
-    ProfileStats* get_profile(unsigned, const char*&, const char*&) const;
-    const char** get_pegs() const;
-    PegCount* get_counts() const;
+    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+    const char** get_pegs() const override;
+    PegCount* get_counts() const override;
 
 private:
     StreamTcpConfig* config;

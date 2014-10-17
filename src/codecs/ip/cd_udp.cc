@@ -84,10 +84,10 @@ class UdpModule : public DecodeModule
 public:
     UdpModule() : DecodeModule(CD_UDP_NAME, CD_UDP_HELP, udp_params) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return udp_rules; }
 
-    bool set(const char*, Value& v, SnortConfig* sc)
+    bool set(const char*, Value& v, SnortConfig* sc) override
     {
         if ( v.is("deep_teredo_inspection") )
         {
@@ -119,15 +119,15 @@ public:
     ~UdpCodec(){};
 
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v);
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
+    void get_protocol_ids(std::vector<uint16_t>& v) override;
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
 
-    virtual bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-                        EncState&, Buffer&);
-    virtual bool update(Packet*, Layer*, uint32_t* len);
-    virtual void format(EncodeFlags, const Packet* p, Packet* c, Layer*);
-    virtual void log(TextLog* const, const uint8_t* /*raw_pkt*/,
-        const Packet* const);
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
+                        EncState&, Buffer&) override;
+    bool update(Packet*, Layer*, uint32_t* len) override;
+    void format(EncodeFlags, const Packet* p, Packet* c, Layer*) override;
+    void log(TextLog* const, const uint8_t* /*raw_pkt*/,
+        const Packet* const) override;
     
 };
 

@@ -978,10 +978,10 @@ public:
     ~RpcSplitter() { };
 
     Status scan(Flow*, const uint8_t*, uint32_t,
-        uint32_t, uint32_t*)
+        uint32_t, uint32_t*) override
     { return SEARCH; };
 
-    unsigned max() { return MIN_CALL_BODY_SZ; };
+    unsigned max() override { return MIN_CALL_BODY_SZ; };
 };
 
 //-------------------------------------------------------------------------
@@ -992,10 +992,10 @@ class RpcDecode : public Inspector {
 public:
     RpcDecode(RpcDecodeModule*);
 
-    void show(SnortConfig*);
-    void eval(Packet*);
+    void show(SnortConfig*) override;
+    void eval(Packet*) override;
 
-    StreamSplitter* get_splitter(bool c2s)
+    StreamSplitter* get_splitter(bool c2s) override
     { return c2s ? new RpcSplitter(c2s) : nullptr; };
 
 private:

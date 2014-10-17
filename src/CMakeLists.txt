@@ -158,5 +158,12 @@ add_subdirectory(search_engines)
 
 
 install (TARGETS snort
+    EXPORT snortexe
     RUNTIME DESTINATION bin
+    INCLUDES DESTINATION "${INCLUDE_INSTALL_PATH}"
+)
+
+install (EXPORT snortexe
+    DESTINATION lib/snort
+    FILE snort.cmake
 )

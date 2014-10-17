@@ -207,14 +207,13 @@ public:
     PerfMonitor(PerfMonModule*);
     ~PerfMonitor();
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
+    bool configure(SnortConfig*) override;
+    void show(SnortConfig*) override;
 
-    void eval(Packet*);
+    void eval(Packet*) override;
 
-    void tinit();
-    void tterm();
-    void reset();
+    void tinit() override;
+    void tterm() override;
 
 private:
     SFPERF config;
@@ -341,11 +340,6 @@ void PerfMonitor::eval(Packet *p)
     ++pmstats.total_packets;
 
     MODULE_PROFILE_END(perfmonStats);
-}
-
-void PerfMonitor::reset()
-{
-    InitPerfStats(&config);
 }
 
 //-------------------------------------------------------------------------

@@ -112,10 +112,10 @@ void help_args(const char* pfx)
 
             //const char* prefix = strlen(p->name) > 1 ? "--" : "-";
             //cout << prefix << p->name;
-            cout << Markup::sanitize(p->name);
+            cout << Markup::escape(p->name);
             cout << Markup::emphasis_off();
 
-            cout << " " << Markup::sanitize(p->help);
+            cout << " " << Markup::escape(p->help);
             cout << endl;
         }
         ++p;
@@ -281,6 +281,18 @@ void dump_builtin_rules(SnortConfig* sc, const char* val)
 void dump_dynamic_rules(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DDR);
+}
+
+void dump_rule_hex(SnortConfig*, const char* val)
+{
+    SoManager::rule_to_hex(val);
+    exit(0);
+}
+
+void dump_rule_text(SnortConfig*, const char* val)
+{
+    SoManager::rule_to_text(val);
+    exit(0);
 }
 
 void help_version(SnortConfig*, const char*)

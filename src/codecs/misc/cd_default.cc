@@ -35,10 +35,10 @@ public:
     DefaultCodec() : Codec(CD_DEFAULT_NAME){};
     ~DefaultCodec(){};
 
-    virtual void get_protocol_ids(std::vector<uint16_t>& v)
+    void get_protocol_ids(std::vector<uint16_t>& v) override
     { v.push_back(FINISHED_DECODE); }
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&)
+    bool decode(const RawData&, CodecData&, DecodeData&) override
     { return false; };
 };
 

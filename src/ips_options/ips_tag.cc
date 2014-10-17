@@ -67,9 +67,9 @@ public:
     TagModule() : Module(s_name, s_help, s_params)
     { tag = nullptr; };
 
-    bool set(const char*, Value&, SnortConfig*);
-    bool begin(const char*, int, SnortConfig*);
-    bool end(const char*, int, SnortConfig*);
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     TagData* get_data();
     TagData* tag;
@@ -104,18 +104,23 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~") )
     {
-        if ( v == "session" )
-            tag->tag_type = TAG_SESSION;
-
-        else if ( v == "host_src" )
+        // FIXIT-M -- confusing
+        switch(v.get_long())
         {
+        case 0:
+            tag->tag_type = TAG_SESSION;
+            break;
+        case 1:
             tag->tag_type = TAG_HOST;
             tag->tag_direction = TAG_HOST_SRC;
-        }
-        else
-        {
+            break;
+        case 2:
             tag->tag_type = TAG_HOST;
             tag->tag_direction = TAG_HOST_DST;
+            break;
+        default:
+            return false;
+
         }
     }
     else if ( v.is("packets") )

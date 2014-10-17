@@ -59,8 +59,8 @@ public:
     PgmCodec() : Codec(CD_PGM_NAME){};
     ~PgmCodec() {};
 
-    virtual bool decode(const RawData&, CodecData&, DecodeData&);
-    virtual void get_protocol_ids(std::vector<uint16_t>&);
+    bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void get_protocol_ids(std::vector<uint16_t>&) override;
 };
 
 
