@@ -57,7 +57,6 @@ using namespace std;
 "--help-config [<module prefix>] output matching config options\n" \
 "--help-module <module> output description of given module\n" \
 "--help-modules list all available modules with brief help\n" \
-"--help-params explain parameter types and naming conventions\n" \
 "--help-plugins list all available plugins with brief help\n" \
 "--help-options [<option prefix>] output matching command line options\n" \
 "--help-signals dump available control signals\n" \
