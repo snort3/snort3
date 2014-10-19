@@ -254,11 +254,11 @@ static const Parameter s_params[] =
     { "--help-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all available modules with brief help" },
 
-    { "--help-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list all available plugins with brief help" },
-
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
       "<option prefix> output matching command line option quick help (same as -?)" },
+
+    { "--help-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list all available plugins with brief help" },
 
     { "--help-signals", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump available control signals" },
@@ -605,11 +605,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--help-modules") )
         help_modules(sc, v.get_string());
 
-    else if ( v.is("--help-plugins") )
-        help_plugins(sc, v.get_string());
-
     else if ( v.is("--help-options") )
         help_options(sc, v.get_string());
+
+    else if ( v.is("--help-plugins") )
+        help_plugins(sc, v.get_string());
 
     else if ( v.is("--help-signals") )
         help_signals(sc, v.get_string());

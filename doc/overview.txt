@@ -1,12 +1,6 @@
 Snort\++ is an updated version of the Snort IPS (intrusion prevention
 system).  This document assumes you have some familiarity with Snort and
-are looking to see what Snort++ has to offer.
-
-=== Goals
-
-The Snort architecture has accommodated increasingly complex packet
-processing.  However a new design is needed to become more scalable for
-today's many-core CPUs and multi-CPU platforms.  Here are some of the basic
+are looking to see what Snort\++ has to offer.  Here are some of the basic
 goals for Snort++:
 
 * Support multiple packet processing threads

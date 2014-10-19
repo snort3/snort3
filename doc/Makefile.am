@@ -27,13 +27,14 @@ logger.txt
 
 unbuilt_sources = \
 snort_manual.txt \
-overview.txt \
 config_changes.txt \
-errors.txt \
-enviro.txt \
-features.txt \
 differences.txt \
+enviro.txt \
+errors.txt \
 extending.txt \
+features.txt \
+overview.txt \
+params.txt \
 reference.txt \
 snort2lua.txt \
 start.txt \
@@ -92,7 +93,7 @@ help.txt: $(snort)
 
 basic.txt: $(snort)
 	for m in `$(snort) --list-modules basic` ; do \
-		$(snort) $(plugin_path) --markup --help-module $$m ; \
+		$(snort) --markup --help-module $$m ; \
 	done > $@
 
 codec.txt: $(snort)
@@ -136,10 +137,10 @@ logger.txt: $(snort)
 #	done > $@
 
 options.txt: $(snort)
-	$(snort) $(plugin_path) --markup --help-options | sort > $@
+	$(snort) --markup --help-options | sort > $@
 
 signals.txt: $(snort)
-	$(snort) $(plugin_path) --markup --help-signals > $@
+	$(snort) --markup --help-signals > $@
 
 version.txt: $(snort)
 	$(snort) -V 2>&1 | grep -v Using > $@

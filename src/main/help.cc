@@ -57,6 +57,7 @@ using namespace std;
 "--help-config [<module prefix>] output matching config options\n" \
 "--help-module <module> output description of given module\n" \
 "--help-modules list all available modules with brief help\n" \
+"--help-params explain parameter types and naming conventions\n" \
 "--help-plugins list all available plugins with brief help\n" \
 "--help-options [<option prefix>] output matching command line options\n" \
 "--help-signals dump available control signals\n" \
@@ -76,20 +77,7 @@ using namespace std;
 "won't output anything if there is no match.  If no prefix is given, everything\n" \
 "matches.\n" \
 "\n" \
-"Parameters are given with this format:\n" \
-"\n" \
-"    type name = default: help { range }\n" \
-"\n" \
-"++ For Lua configuration (not IPS rules), if the name ends with [] it is a\n" \
-"   list item and can be repeated.\n" \
-"++ For IPS rules only, names starting with ~ indicate positional parameters.\n" \
-"   The name does not appear in the rule.\n" \
-"++ IPS rules may also have a wild card parameter, which is indicated by a *.\n" \
-"   Only used for metadata that Snort ignores.\n" \
-"++ The snort module has command line options starting with a -.\n" \
-"\n" \
 "Report bugs to bugs@snort.org.\n"
-
 
 //-------------------------------------------------------------------------
 
@@ -110,8 +98,6 @@ void help_args(const char* pfx)
             cout << Markup::item();
             cout << Markup::emphasis_on();
 
-            //const char* prefix = strlen(p->name) > 1 ? "--" : "-";
-            //cout << prefix << p->name;
             cout << Markup::escape(p->name);
             cout << Markup::emphasis_off();
 
