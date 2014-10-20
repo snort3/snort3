@@ -157,10 +157,10 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
 
 static const Parameter s_params[] =
 {
-    { "*action", Parameter::PT_ENUM, "disable|enable", nullptr,
+    { "action", Parameter::PT_ENUM, "disable|enable", nullptr,
       "stop or start stream reassembly" },
 
-    { "*direction", Parameter::PT_ENUM, "client|server|both", nullptr,
+    { "direction", Parameter::PT_ENUM, "client|server|both", nullptr,
       "action applies to the given direction(s)" },
 
     { "noalert", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -197,10 +197,10 @@ bool ReassembleModule::begin(const char*, int, SnortConfig*)
 
 bool ReassembleModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*action") )
+    if ( v.is("action") )
         srod.enable = v.get_long();
 
-    else if ( v.is("*direction") )
+    else if ( v.is("direction") )
         srod.enable = v.get_long() + 1;
 
     else if ( v.is("noalert") )

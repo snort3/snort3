@@ -116,7 +116,6 @@ bool Tag::convert(std::istringstream& data_stream)
                 else
                     rule_api.bad_rule(data_stream, "tag:<type> " + value + " - unknown metric");
             }
-
             cnt = !cnt;
         }
 

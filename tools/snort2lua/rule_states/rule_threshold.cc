@@ -136,6 +136,9 @@ bool Threshold::convert(std::istringstream& data_stream)
         tmp_pos = data_stream.tellg();
     }
 
+    if (!found_gid)
+        table_api.add_option("gid", 1);
+
 
     table_api.close_table();
     table_api.close_table();
