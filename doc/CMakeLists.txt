@@ -59,6 +59,7 @@ set (UNBUILT_SOURCES
     features.txt
     differences.txt
     extending.txt
+    params.txt
     reference.txt
     snort2lua.txt
     start.txt
