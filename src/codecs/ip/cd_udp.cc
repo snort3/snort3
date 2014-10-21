@@ -50,6 +50,21 @@
 namespace
 {
 
+const char* pegs[]
+{
+    "Bad Checksum (ip4)",
+    "Bad Checksum (ip6)",
+    nullptr
+};
+
+struct Stats
+{
+    PegCount bad_ip4_cksum;
+    PegCount bad_ip6_cksum;
+};
+
+static THREAD_LOCAL Stats stats;
+
 static const Parameter udp_params[] =
 {
     { "deep_teredo_inspection", Parameter::PT_BOOL, nullptr, "false",
@@ -86,6 +101,12 @@ public:
 
     const RuleMap* get_rules() const override
     { return udp_rules; }
+
+    const char** get_pegs() const override
+    { return pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&stats; }
 
     bool set(const char*, Value& v, SnortConfig* sc) override
     {
@@ -208,8 +229,12 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     {
         /* look at the UDP checksum to make sure we've got a good packet */
         uint16_t csum;
+        PegCount* bad_cksum_cnt;
+
         if(snort.ip_api.is_ip4())
         {
+            bad_cksum_cnt = &(stats.bad_ip4_cksum);
+
             /* Don't do checksum calculation if
              * 1) Fragmented, OR
              * 2) UDP header chksum value is 0.
@@ -233,6 +258,8 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         else
         {
+            bad_cksum_cnt = &(stats.bad_ip6_cksum);
+
             /* Alert on checksum value 0 for ipv6 packets */
             if(!udph->uh_chk)
             {
@@ -267,6 +294,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             if (codec.codec_flags & CODEC_UNSURE_ENCAP)
                 return false;
 
+            (*bad_cksum_cnt)++;
             snort.decode_flags |= DECODE_ERR_CKSUM_UDP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad UDP Checksum\n"););
 
@@ -276,10 +304,6 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                     "Dropping bad packet (UDP checksum)\n"););
                 Active_DropPacket();
             }
-        }
-        else
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "UDP Checksum: OK\n"););
         }
     }
     const uint16_t src_port = udph->src_port();

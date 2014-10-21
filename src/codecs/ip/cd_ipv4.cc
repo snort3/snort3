@@ -52,6 +52,20 @@
 
 namespace{
 
+const char* pegs[]
+{
+    "Bad Checksum",
+    nullptr
+};
+
+struct Stats
+{
+    PegCount bad_cksum;
+};
+
+static THREAD_LOCAL Stats stats;
+
+
 static const RuleMap ipv4_rules[] =
 {
     { DECODE_NOT_IPV4_DGRAM, "Not IPv4 datagram" },
@@ -89,8 +103,14 @@ class Ipv4Module : public DecodeModule
 public:
     Ipv4Module() : DecodeModule(CD_IPV4_NAME, CD_IPV4_HELP) {}
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return ipv4_rules; }
+
+    const char** get_pegs() const override
+    { return pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&stats; }
 };
 
 class Ipv4Codec : public Codec
@@ -236,6 +256,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
         if(csum)
         {
+            stats.bad_cksum++;
             snort.decode_flags |= DECODE_ERR_CKSUM_IP;
 
             // TBD only set policy csum drop if policy inline

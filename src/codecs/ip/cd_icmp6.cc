@@ -45,6 +45,22 @@
 namespace
 {
 
+const char* pegs[]
+{
+    "Bad Checksum (ip4)",
+    "Bad Checksum (ip6)",
+    nullptr
+};
+
+struct Stats
+{
+    PegCount bad_ip4_cksum;
+    PegCount bad_ip6_cksum;
+};
+
+static THREAD_LOCAL Stats stats;
+
+
 static const RuleMap icmp6_rules[] =
 {
     { DECODE_ICMP6_HDR_TRUNC, "truncated ICMP6 header" },
@@ -68,6 +84,12 @@ public:
 
     const RuleMap* get_rules() const override
     { return icmp6_rules; }
+
+    const char** get_pegs() const override
+    { return pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&stats; }
 };
 
 
@@ -115,14 +137,17 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (ScIcmpChecksums())
     {
         uint16_t csum;
+        PegCount* bad_cksum_cnt;
 
         if(snort.ip_api.is_ip4())
         {
+            bad_cksum_cnt = &stats.bad_ip4_cksum;
             csum = checksum::cksum_add((uint16_t *)(icmp6h), raw.len);
         }
         /* IPv6 traffic */
         else
         {
+            bad_cksum_cnt = &stats.bad_ip6_cksum;
             checksum::Pseudoheader6 ph6;
             COPY4(ph6.sip, snort.ip_api.get_src()->ip32);
             COPY4(ph6.dip, snort.ip_api.get_dst()->ip32);
@@ -134,6 +159,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         if(csum)
         {
+            (*bad_cksum_cnt)++;
             snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: BAD\n"););
 
