@@ -1544,7 +1544,7 @@ int fpEvalPacket(Packet *p)
 
 void fpEvalIpProtoOnlyRules(Packet *p, uint8_t proto_id)
 {
-    if ((p != NULL) && p->ptrs.ip_api.is_valid())
+    if ((p != NULL) && p->has_ip())
     {
         SF_LIST *l = snort_conf->ip_proto_only_lists[proto_id];
         OptTreeNode *otn;

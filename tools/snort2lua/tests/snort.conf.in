@@ -1294,3 +1294,4 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"EXPLOIT-KIT Blackhole
 alert tcp any any -> any any ( sid:26816; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:disable,both,fastpath; )
 alert tcp any any -> any any ( sid:26817; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:enable,client,fastpath,noalert; )
 alert tcp any any -> any any ( sid:26818; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:enable,server,fastpath,noalert; )
+

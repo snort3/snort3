@@ -133,12 +133,12 @@ void AttributeTable::parse_service()
                 if (!elem.compare("ATTRIBUTE_VALUE"))
                 {
                     get_next_element(elem);
-                    table_api.add_option("proto", std::stoi(elem));
+                    table_api.add_option("port", std::stoi(elem));
                 }
                 else if (!elem.compare("ATTRIBUTE_ID"))
                 {
                     get_next_element(elem);
-                    table_api.add_option("proto", std::stoi(attr_map[elem]));
+                    table_api.add_option("port", std::stoi(attr_map[elem]));
                 }
             } // while("/IPPROTO")
         }

@@ -43,8 +43,6 @@ bool PolicyId::convert(std::istringstream& data_stream)
     bool rc = true;
     int policy_id;
 
-    table_api.open_table("alerts");
-
     if (data_stream >> policy_id)
     {
         table_api.open_table("ips");

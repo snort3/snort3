@@ -51,6 +51,8 @@ IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const Packet*
             return;
         }
     }
+
+    // Can occur if tcp_layer > max_layers.  No Options in such a case.
 }
 
 

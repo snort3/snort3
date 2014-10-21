@@ -117,7 +117,6 @@ struct TcpOption
             const TcpOption* opt = reinterpret_cast<const TcpOption*>(&tmp[tmp_len]);
             return *opt;
 
-        // ... and the legible code
 #       else
             if ( (uint8_t)code <= 1 )
                 return reinterpret_cast<const TcpOption&>(len);
