@@ -2208,6 +2208,7 @@ static inline int flush_to_seq(
 
         st->flags |= TF_MISSING_PREV_PKT;
         st->flags |= TF_PKT_MISSED;
+
         tcpStats.gaps++;
         st->seglist_base_seq = st->seglist_next->seq;
 
