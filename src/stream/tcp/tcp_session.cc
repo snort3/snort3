@@ -2755,7 +2755,8 @@ static void TraceTCP (
     if ( !cli->s_mgr.state && !srv->s_mgr.state )
         return;
 
-    if ( lws ) TraceSession(lws);
+    if ( lws )
+        TraceSession(lws);
 
     if ( lws && !event )
     {
@@ -5954,6 +5955,9 @@ static inline int CheckFlushPolicyOnData(
                 talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
                 listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
 
+                s5_paf_setup(&talker->paf_state);
+                s5_paf_setup(&listener->paf_state);
+
                 return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
             }
         }
@@ -6086,6 +6090,9 @@ int CheckFlushPolicyOnAck(
 
                 talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
                 listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
+
+                s5_paf_setup(&talker->paf_state);
+                s5_paf_setup(&listener->paf_state);
 
                 return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
             }
