@@ -6565,6 +6565,7 @@ char Stream5PacketsMissingTcp(Flow *lwssn, char dir)
 
 TcpSession::TcpSession(Flow* flow) : Session(flow)
 {
+    lws_init = tcp_init = false;
 }
 
 TcpSession::~TcpSession()
@@ -6575,14 +6576,15 @@ TcpSession::~TcpSession()
 
 void TcpSession::reset()
 {
-    if ( !tcp_init )
-        return;
-
-    TcpSessionClear(flow, (TcpSession*)flow->session, 2);
+    if ( tcp_init )
+        TcpSessionClear(flow, (TcpSession*)flow->session, 2);
 }
 
 bool TcpSession::setup (Packet*)
 {
+    // FIXIT-L this it should not be necessary to reset here
+    reset();
+
     lws_init = tcp_init = false;
     ecn = 0;
 
@@ -6609,8 +6611,9 @@ void TcpSession::cleanup()
 // which is now calling Session::clear()
 void TcpSession::clear()
 {
-    // this does NOT flush data
-    TcpSessionClear(flow, this, 1);
+    if ( tcp_init )
+        // this does NOT flush data
+        TcpSessionClear(flow, this, 1);
 }
 
 void TcpSession::update_direction(
