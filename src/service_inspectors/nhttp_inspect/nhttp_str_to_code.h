@@ -26,7 +26,7 @@ struct StrCode {
     const char *name;
 };
 
-int32_t str_to_code(const uint8_t *text, int32_t text_len, const StrCode table[]);
+int32_t str_to_code(const uint8_t *text, const int32_t text_len, const StrCode table[]);
 
 #endif
 

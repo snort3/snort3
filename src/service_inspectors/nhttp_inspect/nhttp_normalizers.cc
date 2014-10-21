@@ -18,7 +18,6 @@
 */
 // nhttp_normalizers.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 

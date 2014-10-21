@@ -74,8 +74,8 @@ NHttpSplitter* NHttpStreamSplitter::choose_splitter(SectionType type, SourceId s
       case SEC_REQUEST:
       case SEC_STATUS: return (NHttpSplitter*)&session_data->start_splitter[source_id];
       case SEC_CHUNK: return (NHttpSplitter*)&session_data->chunk_splitter[source_id];
-      case SEC_HEADER: return (NHttpSplitter*)&session_data->header_splitter[source_id];
-      case SEC_TRAILER: return (NHttpSplitter*)&session_data->trailer_splitter[source_id];
+      case SEC_HEADER:
+      case SEC_TRAILER: return (NHttpSplitter*)&session_data->header_splitter[source_id];
       default: assert(0); return nullptr;
     }
 }

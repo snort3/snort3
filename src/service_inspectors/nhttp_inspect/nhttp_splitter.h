@@ -83,14 +83,5 @@ private:
     bool zero_chunk = false;
 };
 
-class NHttpTrailerSplitter : public NHttpSplitter {
-public:
-    NHttpEnums::ScanResult split(const uint8_t* buffer, uint32_t length) override;
-    void conditional_reset() override;
-    uint32_t get_num_excess() const override { return num_crlf; };
-private:
-    unsigned first_lf = 0;
-};
-
 #endif
 
