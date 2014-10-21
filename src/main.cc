@@ -91,7 +91,7 @@ const char* get_prompt()
 static bool use_shell(SnortConfig* sc)
 {
 #ifdef BUILD_SHELL
-    return ( snort_conf->run_flags & RUN_FLAG__SHELL );
+    return ( sc->run_flags & RUN_FLAG__SHELL );
 #else
     UNUSED(sc);
     return false;

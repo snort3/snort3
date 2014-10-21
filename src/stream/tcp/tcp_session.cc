@@ -114,9 +114,9 @@ struct TcpStats
     PegCount sessions_on_data;
     PegCount trackers_created;
     PegCount trackers_released;
-    PegCount segs_created;
+    PegCount segs_queued;
     PegCount segs_released;
-    PegCount rebuilt_segs_used;
+    PegCount segs_used;
     PegCount rebuilt_packets;
     PegCount overlaps;
     PegCount gaps;
@@ -141,9 +141,9 @@ const char* tcp_pegs[] =
     "data trackers",
     "trackers created",
     "trackers released",
-    "segs created",
+    "segs queued",
     "segs released",
-    "rebuilt segments",
+    "segs used",
     "rebuilt packets",
     "overlaps",
     "gaps",
@@ -2145,7 +2145,7 @@ static inline int _flush_to_seq (
         }
         MODULE_PROFILE_TMPSTART(s5TcpFlushPerfStats);
 
-        st->seglist_base_seq = st->seglist_next->seq + flushed_bytes;
+        st->seglist_base_seq += flushed_bytes;
 
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
             "setting st->seglist_base_seq to 0x%X\n", st->seglist_base_seq););
@@ -2410,13 +2410,14 @@ void TcpSession::restart_paf(Packet* p)
         listener = &tcpssn->server;
     }
 
+    // FIXTHIS-H on data / on ack must be based on flush policy
     if ( p->dsize > 0 )
         CheckFlushPolicyOnData(this, talker, listener, p);
 
-    if ( p->ptrs.tcph->th_flags & TH_ACK )
+    if ( p->ptrs.tcph->is_ack() )
         CheckFlushPolicyOnAck(this, talker, listener, p);
-
 }
+
 int Stream5FlushTalker(Packet *p, Flow *lwssn)
 {
     StreamTracker *talker = NULL;
@@ -2503,8 +2504,6 @@ static void TcpSessionClear (Flow* lwssn, TcpSession* tcpssn, int freeApplicatio
     s5_paf_clear(&tcpssn->server.paf_state);
 
     // update light-weight state
-    lwssn->flow_state = 0;
-
     if ( freeApplicationData == 2 )
         lwssn->restart(true);
     else
@@ -2667,12 +2666,7 @@ static const char* const statext[] = {
 };
 
 static const char* const flushxt[] = {
-    "NON", "FPR", "LOG", "RSP", "SLW",
-#if 0
-    "CON",
-#endif
-    "IGN", "PRO",
-    "PRE", "PAF"
+    "IGN", "FPR", "PRE", "PRO", "PAF"
 };
 
 static void TraceSegments (const StreamTracker* a)
@@ -2718,9 +2712,11 @@ static void TraceState (
             RMT(a, s_mgr.transition_seq, b)
         );
     fprintf(stdout, "\n");
+    int paf = a->splitter->is_paf() ? 2 : 0;
+
     fprintf(stdout,
-        "         FP=%s SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
-        flushxt[a->flush_policy],
+        "         FP=%s:192  SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
+        flushxt[a->flush_policy+paf],
         a->seg_count, a->flush_count, a->seg_bytes_logical,
         a->seglist_base_seq - b->isn
     );
@@ -2756,9 +2752,12 @@ static void TraceTCP (
     }
     TraceEvent(p, tdb, txd, rxd);
 
+    if ( !cli->s_mgr.state && !srv->s_mgr.state )
+        return;
+
     if ( lws ) TraceSession(lws);
 
-    if ( !event )
+    if ( lws && !event )
     {
         if ( cli ) TraceState(cli, srv, cdir);
         if ( srv ) TraceState(srv, cli, sdir);
@@ -4244,6 +4243,22 @@ static inline void CopyMacAddr(
 static void NewTcpSession(
     Packet* p, Flow* lwssn, StreamTcpConfig* dstPolicy, TcpSession* tmp)
 {
+    Inspector* ins = lwssn->gadget;
+
+    if ( !ins )
+        ins = lwssn->clouseau;
+
+    if ( ins )
+    {
+        stream.set_splitter(lwssn, true, ins->get_splitter(true));
+        stream.set_splitter(lwssn, false, ins->get_splitter(false));
+    }
+    else
+    {
+        stream.set_splitter(lwssn, true, new AtomSplitter(true));
+        stream.set_splitter(lwssn, false, new AtomSplitter(false));
+    }
+
     {
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "adding TcpSession to lightweight session\n"););
@@ -4785,7 +4800,7 @@ static int ProcessTcp(
 
             /* Nothing left todo here */
         }
-        else if ( !require3Way && p->ptrs.tcph->is_syn_ack() )
+        else if ( p->ptrs.tcph->is_syn_ack() )
         {
             /* SYN-ACK from server */
             if ((lwssn->session_state == STREAM5_STATE_NONE) ||
@@ -4797,8 +4812,12 @@ static int ProcessTcp(
                 lwssn->s5_state.direction = FROM_SERVER;
             }
             lwssn->session_state |= STREAM5_STATE_SYN_ACK;
-            NewTcpSessionOnSynAck(p, lwssn, tdb, config);
-            new_ssn = 1;
+
+            if ( !require3Way || allow_midstream )
+            {
+                NewTcpSessionOnSynAck(p, lwssn, tdb, config);
+                new_ssn = 1;
+            }
             NormalTrackECN(tcpssn, (TCPHdr*)p->ptrs.tcph, require3Way);
         }
         else if (
@@ -4813,7 +4832,7 @@ static int ProcessTcp(
             NormalTrackECN(tcpssn, (TCPHdr*)p->ptrs.tcph, require3Way);
             Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
         }
-        else if ( allow_midstream && p->dsize )
+        else if ( p->dsize && (!require3Way || allow_midstream) )
         {
             /* create session on data, need to figure out direction, etc */
             /* Assume from client, can update later */
@@ -4821,6 +4840,7 @@ static int ProcessTcp(
                 lwssn->s5_state.direction = FROM_CLIENT;
             else
                 lwssn->s5_state.direction = FROM_SERVER;
+
             lwssn->session_state |= STREAM5_STATE_MIDSTREAM;
             lwssn->s5_state.session_flags |= SSNFLAG_MIDSTREAM;
 
@@ -4831,13 +4851,16 @@ static int ProcessTcp(
             if (lwssn->session_state & STREAM5_STATE_ESTABLISHED)
                 Stream5UpdatePerfBaseState(&sfBase, lwssn, TCP_STATE_ESTABLISHED);
         }
-        else
+        else if ( !p->dsize )
         {
+#if 0
+            // FIXIT-H delete this?
             if ( p->dsize || p->ptrs.tcph->is_syn_ack() )
             {
                 lwssn->session_state |= STREAM5_STATE_IGNORE;
                 tcpStats.sessions_ignored++;
             }
+#endif
             //else if ( !(lwssn->session_state & STREAM5_STATE_NO_PICKUP) )
             //    lwssn->session_state |= STREAM5_STATE_NO_PICKUP;
 
@@ -6080,7 +6103,7 @@ int CheckFlushPolicyOnAck(
 static void Stream5SeglistAddNode(StreamTracker *st, StreamSegment *prev,
         StreamSegment *ss)
 {
-    tcpStats.segs_created++;
+    tcpStats.segs_queued++;
 
     if(prev)
     {
@@ -6137,7 +6160,7 @@ static int Stream5SeglistDeleteNode (StreamTracker* st, StreamSegment* seg)
 
     if (seg->buffered)
     {
-        tcpStats.rebuilt_segs_used++;
+        tcpStats.segs_used++;
         st->flush_count--;
     }
 
@@ -6542,8 +6565,7 @@ char Stream5PacketsMissingTcp(Flow *lwssn, char dir)
 
 TcpSession::TcpSession(Flow* flow) : Session(flow)
 {
-    tcp_init = false;
-    reset();
+    lws_init = tcp_init = false;
 }
 
 TcpSession::~TcpSession()
@@ -6555,11 +6577,16 @@ TcpSession::~TcpSession()
 void TcpSession::reset()
 {
     if ( tcp_init )
-    {
-        // FIXIT-L need to refactor around flow_state for simplicity
         TcpSessionClear(flow, (TcpSession*)flow->session, 2);
-        return;
-    }
+}
+
+bool TcpSession::setup (Packet*)
+{
+    // FIXIT-L this it should not be necessary to reset here
+    reset();
+
+    lws_init = tcp_init = false;
+    ecn = 0;
 
     memset(&client, 0, sizeof(client));
     memset(&server, 0, sizeof(server));
@@ -6569,32 +6596,6 @@ void TcpSession::reset()
     ingress_group = egress_group = 0;
     daq_flags = address_space_id = 0;
 #endif
-
-    ecn = 0;
-
-    lws_init = tcp_init = false;
-}
-
-bool TcpSession::setup (Packet*)
-{
-    assert(flow->session == this);
-    reset();
-
-    Inspector* ins = flow->clouseau;
-
-    if ( !ins )
-        ins = flow->gadget;
-
-    if ( ins )
-    {
-        stream.set_splitter(flow, true, ins->get_splitter(true));
-        stream.set_splitter(flow, false, ins->get_splitter(false));
-    }
-    else
-    {
-        stream.set_splitter(flow, true, new AtomSplitter(true));
-        stream.set_splitter(flow, false, new AtomSplitter(false));
-    }
 
     tcpStats.sessions++;
     return true;
@@ -6610,8 +6611,9 @@ void TcpSession::cleanup()
 // which is now calling Session::clear()
 void TcpSession::clear()
 {
-    // this does NOT flush data
-    TcpSessionClear(flow, this, 1);
+    if ( tcp_init )
+        // this does NOT flush data
+        TcpSessionClear(flow, this, 1);
 }
 
 void TcpSession::update_direction(
@@ -6689,18 +6691,21 @@ int TcpSession::process(Packet *p)
     if ( !tcpssn->lws_init )
     {
         // FIXIT most of this now looks out of place or redundant
-        if ( p->ptrs.tcph->is_syn_only() )
+        if ( config->require_3whs() )
         {
-            /* SYN only */
-            flow->session_state = STREAM5_STATE_SYN;
-        }
-        else
-        {
-            // If we're within the "startup" window, try to handle
-            // this packet as midstream pickup -- allows for
-            // connections that already existed before snort started.
-            if ( !config->midstream_allowed(p) )
+            if ( p->ptrs.tcph->is_syn_only() )
             {
+                /* SYN only */
+                flow->session_state = STREAM5_STATE_SYN;
+            }
+            else
+            {
+                // If we're within the "startup" window, try to handle
+                // this packet as midstream pickup -- allows for
+                // connections that already existed before snort started.
+                if ( config->midstream_allowed(p) )
+                    goto midstream_pickup_allowed;
+
                  // Do nothing with this packet since we require a 3-way ;)
                 DEBUG_WRAP(
                     DebugMessage(DEBUG_STREAM_STATE, "Stream5: Requiring 3-way "
@@ -6709,6 +6714,25 @@ int TcpSession::process(Packet *p)
 
                 EventNo3whs();
                 MODULE_PROFILE_END(s5TcpPerfStats);
+#ifdef REG_TEST
+                S5TraceTCP(p, flow, &tdb, 1);
+#endif
+                return 0;
+            }
+        }
+        else
+        {
+midstream_pickup_allowed:
+            if ( 
+                !p->ptrs.tcph->is_syn_ack() &&
+                !p->dsize &&
+                !(Stream5PacketHasWscale(p) & TF_WSCALE) )
+            {
+                MODULE_PROFILE_END(s5TcpPerfStats);
+#ifdef REG_TEST
+                S5TraceTCP(p, flow, &tdb, 1);
+#endif
+                return 0;
             }
         }
         tcpssn->lws_init = true;

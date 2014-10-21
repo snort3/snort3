@@ -138,6 +138,7 @@ void Flow::restart(bool freeAppData)
 void Flow::clear(bool freeAppData)
 {
     restart(freeAppData);
+    flow_state = 0;
 
     if ( ssn_client )
     {

@@ -69,9 +69,6 @@ static void UdpSessionCleanup(Flow *lwssn)
         CloseStreamSession(&sfBase, SESSION_CLOSED_NORMALLY);
     }
 
-    lwssn->flow_state = 0;
-    lwssn->clear();
-
     udpStats.released++;
     RemoveUDPSession(&sfBase);
 }
@@ -79,13 +76,7 @@ static void UdpSessionCleanup(Flow *lwssn)
 static int ProcessUdp(
     Flow *lwssn, Packet *p, StreamUdpConfig*, SFXHASH_NODE*)
 {
-    if (lwssn->protocol != PktType::UDP)  // FIXIT-P checked by tcp, icmp, and ip too?
-    // FIXIT-L need to free lwssn and get a new one
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
-                    "Lightweight session not UDP on UDP packet\n"););
-        return 0;
-    }
+    assert(lwssn->protocol == PktType::UDP);
 
     if ( stream.blocked_session(lwssn, p) )
         return 0;
@@ -121,6 +112,9 @@ static int ProcessUdp(
         }
     }
 
+    if ( lwssn->clouseau )
+        lwssn->clouseau->eval(p);
+
     return 0;
 }
 
@@ -130,8 +124,6 @@ static int ProcessUdp(
 
 UdpSession::UdpSession(Flow* flow) : Session(flow)
 {
-    ssn_time.tv_sec = 0;
-    ssn_time.tv_usec = 0;
 }
 
 bool UdpSession::setup(Packet* p)
@@ -150,8 +142,10 @@ bool UdpSession::setup(Packet* p)
     AddUDPSession(&sfBase);
 
     if (perfmon_config && (perfmon_config->perf_flags & SFPERF_FLOWIP))
+    {
         UpdateFlowIPState(&sfFlow, &flow->client_ip,
             &flow->server_ip, SFS_STATE_UDP_CREATED);
+    }
 
     if ( flow_con->expected_flow(flow, p) )
         return false;
@@ -163,6 +157,7 @@ bool UdpSession::setup(Packet* p)
 void UdpSession::clear()
 {
     UdpSessionCleanup(flow);
+    flow->clear();
 }
 
 void UdpSession::update_direction(
@@ -211,6 +206,8 @@ int UdpSession::process(Packet *p)
     if ( stream.expired_session(flow, p) )
     {
         UdpSessionCleanup(flow);
+        flow->restart();
+        udpStats.created++;
         udpStats.timeouts++;
     }
     ProcessUdp(flow, p, pc, hash_node);

@@ -116,7 +116,6 @@ static inline void UpdateSession (Packet* p, Flow* lws)
 
 IpSession::IpSession(Flow* flow) : Session(flow)
 {
-    memset(&tracker, 0, sizeof(tracker));
 }
 
 void IpSession::clear()
@@ -129,6 +128,7 @@ bool IpSession::setup (Packet* p)
     DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
         "Stream IP session created!\n"););
 
+    memset(&tracker, 0, sizeof(tracker));
     ipStats.sessions++;
 
     sfip_copy(flow->client_ip, p->ptrs.ip_api.get_src());
