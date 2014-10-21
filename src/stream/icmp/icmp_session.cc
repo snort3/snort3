@@ -194,8 +194,6 @@ static int ProcessIcmpUnreach(Packet *p)
 
 IcmpSession::IcmpSession(Flow* flow) : Session(flow)
 {
-    setup(nullptr);
-    icmpStats.created--;
 }
 
 bool IcmpSession::setup(Packet*)

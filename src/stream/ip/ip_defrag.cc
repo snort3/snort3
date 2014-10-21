@@ -208,7 +208,7 @@ static const char* const peg_names[] =
     "reassembled",
     "discards",
     "memory faults",
-    "timeouts",
+    "frag timeouts",
     "overlaps",
     "anomalies",
     "alerts",

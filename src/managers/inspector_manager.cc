@@ -598,11 +598,6 @@ static inline void execute(
 void InspectorManager::bumble(Packet* p)
 {
     Flow* flow = p->flow;
-    flow->clouseau->eval(p);
-
-    if ( !flow->service )
-        return;
-
     Inspector* ins = get_binder();
 
     if ( ins )
@@ -630,15 +625,15 @@ void InspectorManager::execute (Packet* p)
     ::execute(p, fp->network.vec, fp->network.num);
     ::execute(p, fp->generic.vec, fp->generic.num);
 
+    Flow* flow = p->flow;
+
+    if ( flow && flow->clouseau && flow->service )
+        bumble(p);
+
     if ( p->dsize )
     {
-        Flow* flow = p->flow;
-
         if ( !flow )
             return;
-
-        if ( flow->clouseau && ((unsigned)p->type() & flow->clouseau->get_api()->proto_bits) )
-            bumble(p);
 
         // FIXIT-M need more than one service inspector?
         // (should be daisy chained since inspector1 will generate PDUs for
