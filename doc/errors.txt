@@ -39,7 +39,7 @@ _ERROR: rules(2) unknown rule keyword: find._
 
 * this was due to not including the --script-path.
 
-_WARNING: uknown symbol x_
+_WARNING: unknown symbol x_
 
 * if you any variables, you can squelch such warnings by setting them in
   an environment variable SNORT_IGNORE.  to ignore x, y, and z:

@@ -1,3 +1,10 @@
+126
+-- pulled latest from tom
+-- added paramaters to doc reference section
+-- flow state updates
+-- plug tcp session leak
+-- fix paf abort to resume with atom splitter
+
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
    build liblua differently

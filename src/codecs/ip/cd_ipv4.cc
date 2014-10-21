@@ -48,7 +48,7 @@
 #include "log/log_text.h"
 
 #define CD_IPV4_NAME "ipv4"
-#define CD_IPV4_HELP "support for internet protocol v4"
+#define CD_IPV4_HELP "support for Internet protocol v4"
 
 namespace{
 

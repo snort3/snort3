@@ -30,6 +30,7 @@
 #include "data/data_types/dt_rule_option.h"
 #include "data/data_types/dt_rule_suboption.h"
 
+std::size_t RuleApi::error_count = 0;
 
 RuleApi::RuleApi()
     :   curr_rule(nullptr),
@@ -55,7 +56,10 @@ void RuleApi::reset_state()
 }
 
 bool RuleApi::failed_conversions() const
-{ return !bad_rules->empty(); }
+{ return error_count > 0; }
+
+std::size_t RuleApi::num_errors() const
+{ return error_count; }
 
 void RuleApi::begin_rule()
 {
@@ -87,6 +91,7 @@ void RuleApi::bad_rule(std::istringstream& stream, std::string bad_option)
         bad_rules->add_text("Failed to convert rule: " + stream.str() + ")");
         curr_rule->bad_rule();
         curr_data_bad = true;
+        error_count++;
     }
     bad_rules->add_text("^^^^ unknown_option=" + bad_option);
 }

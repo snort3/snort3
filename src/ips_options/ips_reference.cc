@@ -51,7 +51,7 @@ static const Parameter s_params[] =
 };
 
 #define s_help \
-    "rule option to indicate relevant attack indentification system"
+    "rule option to indicate relevant attack identification system"
 
 class ReferenceModule : public Module
 {

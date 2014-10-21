@@ -194,8 +194,6 @@ static int ProcessIcmpUnreach(Packet *p)
 
 IcmpSession::IcmpSession(Flow* flow) : Session(flow)
 {
-    setup(nullptr);
-    icmpStats.created--;
 }
 
 bool IcmpSession::setup(Packet*)
@@ -223,7 +221,7 @@ int IcmpSession::process(Packet* p)
         break;
 
     default:
-        /* We only handle the above ICMP messages with stream5 */
+        /* We only handle the above ICMP messages with stream */
         status = 0;
         break;
     }

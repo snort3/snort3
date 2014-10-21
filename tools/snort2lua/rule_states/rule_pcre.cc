@@ -90,7 +90,7 @@ bool Pcre::convert(std::istringstream& data_stream)
                 break;
             default:
             {
-                std::string dlt_opt = "pcre: unkown option - '";
+                std::string dlt_opt = "pcre: unknown option - '";
                 dlt_opt.append(1, c);
                 dlt_opt += "'";
                 rule_api.add_comment_to_rule(dlt_opt);

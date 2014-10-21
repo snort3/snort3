@@ -153,7 +153,7 @@ int RateFilter_Test(
 
     if ( EventIsInternal(gid) )
     {
-        // at present stream5 connection events are the only internal
+        // at present stream connection events are the only internal
         // events and these require: src -> client, dst -> server.
         if ( p->packet_flags & PKT_FROM_SERVER )
         {

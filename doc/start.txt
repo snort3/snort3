@@ -4,14 +4,14 @@ The following pointers will help you get started:
 
 Required:
 
-* autotools or cmake to build from source.
+* autotools or Cmake to build from source.
 
 * daq from http://www.snort.org for packet IO.
 
 * dnet from http://code.google.com/p/libdnet/ for network utility
   functions.
 
-* luajit from http://luajit.org for configuration and scripting.
+* LuaJIT from http://luajit.org for configuration and scripting.
 
 * pcap from http://www.tcpdump.org for tcpdump logging.
 
@@ -39,14 +39,14 @@ Optional:
 * To build with autotools, the usual ./configure, make, make install from
   the top level directory will suffice.
 
-* To build with cmake and make, first create a separate directory for the
+* To build with Cmake and make, first create a separate directory for the
   build and cd into that directory.  Then:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    cmake /path/to/Snort++
+    Cmake /path/to/Snort++
 
-* An alternate method for building with cmake and make is to run the
+* An alternate method for building with Cmake and make is to run the
   configure_cmake.sh script.  It will automatically create and populate
   a new subdirectory named 'build'.
 
@@ -57,11 +57,11 @@ Optional:
 
     mkdir -p /path/to/my_build
     cd /path/to/my_build
-    cmake /path/to/Snort++ -G Xcode
+    Cmake /path/to/Snort++ -G Xcode
 
-* An alternate method for building with xcode is to run the
+* An alternate method for building with Xcode is to run the
   configure_cmake.sh script.  It will automatically create and populate
-  a new durectory named 'build'.
+  a new directory named 'build'.
 
     cd /path/to/Snort++
     ./configure_cmake --generator=Xcode --prefix=/home/rcombs/install
@@ -86,7 +86,7 @@ Optional:
 * 'Classic' rules and includes must be put in ips.include = 'filename'
   and/or ips.rules = 'string' or [[ multi line string ]].  
 
-* You can also use snort2lua to convert your Snort classic conf file into a
+* You can also use Snort2Lua to convert your Snort classic conf file into a
   Snort++ lua file.
 
 * You can override or add to your lua config with the --lua command line

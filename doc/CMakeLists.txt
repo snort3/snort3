@@ -3,7 +3,7 @@
 ##############################################################################
 #                                                                            #
 #  To build another .txt file, add the file to the BUILT_SOURCES variable.   #
-#  If the new file's name is new_file.txt, cmake will automatcially run the  #
+#  If the new file's name is new_file.txt, Cmake will automatcially run the  #
 #  command                                                                   #
 #                                                                            #
 #  >>  snort --help-file_name > file_name.txt                                #
@@ -59,6 +59,7 @@ set (UNBUILT_SOURCES
     features.txt
     differences.txt
     extending.txt
+    params.txt
     reference.txt
     snort2lua.txt
     start.txt
@@ -75,7 +76,7 @@ if (MAKE_HTML_DOC)
         images.tgz
     )
 endif()
-  
+
 if (MAKE_PDF_DOC)
     set(PDF_DOCS snort_manual.pdf)
 endif()
@@ -230,7 +231,7 @@ add_custom_command(OUTPUT snort_manual.pdf
         -f pdf 
         ${PDF_ARGUMENTS} 
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.txt 
-    DEPENDS  ${ALL_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.html
+    DEPENDS  ${ALL_SOURCES}
     COMMENT "Documents: building snort_manual.pdf"
 )
 
@@ -245,7 +246,7 @@ add_custom_command(OUTPUT snort_manual.tgz
         -E tar 
         zcf snort_manual.tgz
         ${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked
-    DEPENDS ${ALL_SOURCES}
+    DEPENDS ${ALL_SOURCES} snort_manual.html
     COMMENT "Documents: building snort_manual.tgz"
 )
 

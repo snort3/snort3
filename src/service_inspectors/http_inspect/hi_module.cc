@@ -300,7 +300,7 @@ static const Parameter hi_server_params[] =
       "allow extended ASCII codes in the request URI" },
 
     { "extended_response_inspection", Parameter::PT_BOOL, nullptr, "true",
-      "extract resonse headers" },
+      "extract response headers" },
 
     { "http_methods", Parameter::PT_STRING, nullptr, default_methods,
       "request methods allowed in addition to GET and POST" },
@@ -333,7 +333,7 @@ static const Parameter hi_server_params[] =
       "maximum allowed client request header field" },
 
     { "max_headers", Parameter::PT_INT, "0:1024", "0",
-      "maximum allowd client request headers" },
+      "maximum allowed client request headers" },
 
     { "max_spaces", Parameter::PT_INT, "0:65535", "200",
       "maximum allowed whitespaces when folding" },
@@ -421,7 +421,7 @@ static const RuleMap hi_server_rules[] =
 };
 
 #define hi_server_help  \
-    "http inspection and server rules; also configure http_inpsect"
+    "http inspection and server rules; also configure http_inspect"
 
 HttpServerModule::HttpServerModule() :
     Module(SERVER_KEYWORD, hi_server_help, hi_server_params)

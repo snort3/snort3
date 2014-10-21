@@ -65,7 +65,7 @@ Snort++ differs from Snort in the following ways:
 * perf_monitor configuration was simplified
 * portscan.detect_ack_scans deleted (exact same as include_midstream)
 * removed various run modes - now just one
-* frag3 default policy is linux not bsd
+* frag3 default policy is Linux not bsd
 * lowmem* search methods are now in snort_examples
 * deleted unused http_inspect stateful mode
 * deleted stateless inspection from ftp and telnet

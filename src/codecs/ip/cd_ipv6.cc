@@ -43,7 +43,7 @@
 #include "sfip/sf_ip.h"
 
 #define CD_IPV6_NAME "ipv6"
-#define CD_IPV6_HELP "support for internet protocol v6"
+#define CD_IPV6_HELP "support for Internet protocol v6"
 
 namespace
 {
@@ -65,7 +65,7 @@ static const RuleMap ipv6_rules[] =
     { DECODE_IPV6_ROUTE_AND_HOPBYHOP, "IPv6 header includes a routing extension header followed by a hop-by-hop header" },
     { DECODE_IPV6_TWO_ROUTE_HEADERS, "IPv6 header includes two routing extension headers" },
     { DECODE_IPV6_DSTOPTS_WITH_ROUTING, "IPv6 header has destination options followed by a routing header" },
-    { DECODE_IPV6_TUNNELED_IPV4_TRUNCATED, "IPV6 tunneled over IPv4, IPv6 header truncated, possible linux kernel attack" },
+    { DECODE_IPV6_TUNNELED_IPV4_TRUNCATED, "IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux kernel attack" },
     { DECODE_IPV6_BAD_OPT_LEN, "IPv6 header includes an option which is too big for the containing header" },
     { DECODE_IPV6_UNORDERED_EXTENSIONS, "IPv6 packet includes out-of-order extension headers" },
     { DECODE_IP6_ZERO_HOP_LIMIT, "IPV6 packet has zero hop limit" },

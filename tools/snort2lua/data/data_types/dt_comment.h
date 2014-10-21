@@ -60,6 +60,7 @@ public:
     // will not add duplicates.
     void add_sorted_text(std::string new_text);
     bool empty() const;
+    bool size() const;
 
     // overloading operators
     friend std::ostream &operator<<( std::ostream&, const Comments &);

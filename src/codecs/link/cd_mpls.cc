@@ -65,9 +65,9 @@ static const Parameter mpls_params[] =
 static const RuleMap mpls_rules[] =
 {
     { DECODE_BAD_MPLS, "bad MPLS frame" },
-    { DECODE_BAD_MPLS_LABEL0, "MPLS label 0 appears in nonbottom header" },
+    { DECODE_BAD_MPLS_LABEL0, "MPLS label 0 appears in non-bottom header" },
     { DECODE_BAD_MPLS_LABEL1, "MPLS label 1 appears in bottom header" },
-    { DECODE_BAD_MPLS_LABEL2, "MPLS label 2 appears in nonbottom header" },
+    { DECODE_BAD_MPLS_LABEL2, "MPLS label 2 appears in non-bottom header" },
     { DECODE_BAD_MPLS_LABEL3, "MPLS label 3 appears in header" },
     { DECODE_MPLS_RESERVED_LABEL, "MPLS label 4, 5,.. or 15 appears in header" },
     { DECODE_MPLS_LABEL_STACK, "too many MPLS headers" },

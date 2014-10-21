@@ -83,7 +83,7 @@ public:
         const DAQ_PktHdr_t*, uint32_t opaque);
     // orig is the wire pkt; clone was obtained with New()
 
-    // Send a TCP reponse.  TcpResponse params determined the type
+    // Send a TCP response.  TcpResponse params determined the type
     // of response. Len will be set to the response's length.
     // payload && payload_len are optional.
     static const uint8_t* encode_response(

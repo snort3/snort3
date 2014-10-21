@@ -81,6 +81,8 @@ bool Comments::empty() const
     return ((comment.size() == 0) ||
             (comment.size() == 1 && header));
 }
+bool Comments::size() const
+{ return header ? comment.size() - 1 : comment.size(); }
 
 std::ostream &operator<<( std::ostream& out, const Comments &c)
 {

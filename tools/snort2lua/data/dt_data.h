@@ -94,8 +94,9 @@ public:
 
     // have there been any failed conversion?
     bool failed_conversions() const;
+    std::size_t num_errors() const;
     // is there any actual data to print?
-    bool empty()
+    bool empty() const
     { return vars.empty() && includes.empty(); }
 
 
@@ -137,7 +138,8 @@ private:
 
     // actual configuration information
     static PrintMode mode;
-    static unsigned int dev_warnings;
+    static std::size_t dev_warnings;
+    static std::size_t errors_count;
 
     std::vector<Variable*> vars;
     std::vector<Include*> includes;

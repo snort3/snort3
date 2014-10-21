@@ -159,7 +159,7 @@ public:
     Shell* get_shell(unsigned i = 0)
     { return i < shells.size() ? shells[i] : nullptr; };
 
-public:  // FIXTHIS-H make impl private
+public:  // FIXIT-H make impl private
     std::vector<Shell*> shells;
     std::vector<InspectionPolicy*> inspection_policy;
     std::vector<IpsPolicy*> ips_policy;

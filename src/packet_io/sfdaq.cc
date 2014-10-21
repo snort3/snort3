@@ -216,7 +216,7 @@ static int DAQ_ValidateInstance ()
             " because DAQ can't replace packets.\n");
     }
 
-    // this is checked in spp_stream5.c and active.c
+    // this is checked in spp_stream.c and active.c
     // and warned/disabled only if it was configured
     if ( !(caps & DAQ_CAPA_INJECT) )
         ParseWarning("inline mode configured but DAQ can't "

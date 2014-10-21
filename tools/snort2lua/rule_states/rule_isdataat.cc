@@ -70,7 +70,7 @@ bool IsDataAt::convert(std::istringstream& data_stream)
                 rule_api.add_rule_option_before_selected("pkt_data");
 
             else
-                rule_api.bad_rule(data_stream, value + " - unkown modifier!!");
+                rule_api.bad_rule(data_stream, value + " - unknown modifier!!");
         }
     }
 

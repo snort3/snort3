@@ -63,7 +63,7 @@ include::ips_option.txt[]
 
 Search engines perform multipattern searching of packets and payload to find
 rules that should be evaluated.  There are currently no specific modules,
-although there are several search engine plugins.  Releated configuration
+although there are several search engine plugins.  Related configuration
 is done with the basic detection module.
 
 == SO Rule Modules

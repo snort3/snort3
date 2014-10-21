@@ -465,7 +465,7 @@ static inline int sfRotateFlowIPStatsFile(SFPERF *sfPerf)
 void sfPerformanceStats(SFPERF *sfPerf, Packet *p)
 {
     // Update stats first since other stats from various places like frag3 and
-    // stream5 have been added.
+    // stream have been added.
     UpdatePerfStats(sfPerf, p);
 
     if ((sfPerf->perf_flags & SFPERF_TIME_COUNT) && !PacketIsRebuilt(p))

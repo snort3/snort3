@@ -106,7 +106,7 @@ yet firm so feedback is welcome to get something we can live with.
 * Braces go on the line immediately following a new scope (function
   signature, if, else, loop, switch, etc.
 
-* Use consistent spacing and linebreaks.  Always indent 4 spaces from the
+* Use consistent spacing and line breaks.  Always indent 4 spaces from the
   breaking line.  Keep lines less than 100 chars; it greatly helps
   readability.
 
@@ -131,7 +131,7 @@ yet firm so feedback is welcome to get something we can live with.
         inline bool foo()
         { // ...
 
-* Put conidtional code on the line following the if so it is easy to break
+* Put conditional code on the line following the if so it is easy to break
   on the conditional block:
 
   No:
