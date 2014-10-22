@@ -40,7 +40,7 @@
 
 StreamIpConfig::StreamIpConfig()
 {
-    session_timeout = 30;
+    session_timeout = 60;
 }
 
 static void ip_show (StreamIpConfig* pc)

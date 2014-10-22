@@ -2326,7 +2326,7 @@ int Defrag::new_tracker(Packet *p, FragTracker* ft)
         ft->protocol = p->ptrs.ip_api.get_ip4h()->get_proto();
 
         const ip::IP4Hdr *ip4h = reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
-        frag_off = ntohs(ip4h->get_off());
+        frag_off = ntohs(ip4h->get_off()) & 0x1FFF;
     }
     else /* IPv6 */
     {
@@ -2666,10 +2666,7 @@ inline int Defrag::expire(Packet*, FragTracker *ft, FragEngine *fe)
     /*
      * Check the FragTracker that was passed in first
      */
-    if(CheckTimeout(
-                pkttime,
-                &(ft)->frag_time,
-                fe) == FRAG_TIMEOUT)
+    if(CheckTimeout(pkttime, &(ft)->frag_time, fe) == FRAG_TIMEOUT)
     {
         /*
          * Oops, we've timed out, whack the FragTracker
