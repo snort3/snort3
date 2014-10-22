@@ -931,7 +931,7 @@ output alert_unixsock:
 output alert_csv:
 output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv1.dlt
 output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv2.dlt default
-output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv3.dlt timestamp,sig_generator,sid_id,sig_rev,msg,proto,src,srcport,dst,dstport,ethsrc,ethdst,ethlen,tcpflags,tcpseq,tcpack,tcplen,tcpwindow,ttl,tos,id,dgmlen,iplen,icmptype,icmpcode,icmpid,icmpseq  63
+output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv3.dlt timestamp,sig_generator,sig_id,sig_rev,msg,proto,src,srcport,dst,dstport,ethsrc,ethdst,ethlen,tcpflags,tcpseq,tcpack,tcplen,tcpwindow,ttl,tos,id,dgmlen,iplen,icmptype,icmpcode,icmpid,icmpseq,ethtype,udplength  63
 output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv4.dlt default,icmptype,icmpcode,icmpid 64K
 output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv5.dlt default,icmptype,icmpcode,icmpid 65M
 output alert_csv: @CMAKE_CURRENT_BINARY_DIR@/alert_csv6.dlt default,icmptype,icmpcode,icmpid 66G
@@ -1289,4 +1289,9 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"INDICATOR-COMPROMISE 
 alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"MALWARE-OTHER NeoSploit Malvertising - URI Requested"; flow:to_server,established; urilen:>62; content:"GET /?"; fast_pattern:only; pcre:"/\/\?[0-9a-f]{60,66}[\;\d]*$/U"; metadata:policy balanced-ips drop, policy security-ips drop, service http; classtype:trojan-activity; sid:23058; rev:2;)
 alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"EXPLOIT-KIT Redkit exploit kit landing page"; flow:to_server,established; urilen:18<>21; content:".html?h="; fast_pattern:only; http_uri; pcre:"/\/[a-z]{4}\.html\?h\=\d{6,7}$/Ui"; metadata:policy balanced-ips drop, policy security-ips drop, service http; reference:cve,2012-0188; reference:cve,2012-0507; reference:cve,2012-1723; reference:cve,2012-4681; reference:cve,2013-0422; reference:cve,2013-2423; reference:url,blog.malwarebytes.org/intelligence/2013/04/redkit-exploit-kit-does-the-splits/; classtype:trojan-activity; sid:26345; rev:3;)
 alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"EXPLOIT-KIT Blackholev2 exploit kit Initial Gate from Linked-In Mailing Campaign"; flow:to_server,established; urilen:17,norm; content:"/linkendorse.html"; fast_pattern:only; http_uri; metadata:policy balanced-ips drop, policy security-ips drop, ruleset community, service http; classtype:trojan-activity; sid:26814; rev:1;)
-alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"EXPLOIT-KIT Blackholev2 exploit kit Initial Gate from Linked-In Mailing Campaign"; flow:to_server,established; urilen:17,raw; content:"/linkendorse.html"; fast_pattern:only; http_uri; metadata:policy balanced-ips drop, policy security-ips drop, ruleset community, service http; classtype:trojan-activity; sid:26814; rev:1;)
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"EXPLOIT-KIT Blackholev2 exploit kit Initial Gate from Linked-In Mailing Campaign"; flow:to_server,established; urilen:17,raw; content:"/linkendorse.html"; fast_pattern:only; http_uri; metadata:policy balanced-ips drop, policy security-ips drop, ruleset community, service http; classtype:trojan-activity; sid:26815; rev:1;)
+
+alert tcp any any -> any any ( sid:26816; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:disable,both,fastpath; )
+alert tcp any any -> any any ( sid:26817; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:enable,client,fastpath,noalert; )
+alert tcp any any -> any any ( sid:26818; msg:"tunnel"; flow:established; content:"250-localhost"; stream_reassemble:enable,server,fastpath,noalert; )
+

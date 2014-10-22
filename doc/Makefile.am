@@ -42,6 +42,7 @@ style.txt \
 terms.txt \
 images/snort.png
 
+
 all_sources = \
 $(unbuilt_sources) \
 $(BUILT_SOURCES)

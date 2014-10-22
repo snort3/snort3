@@ -65,7 +65,7 @@ using namespace std;
     "src_addr | dst_addr | src_port | dst_port | " \
     "eth_src | eth_dst | eth_type | eth_len | " \
     "ttl | tos | id | ip_len | dgm_len | " \
-    "icmp_type | icmp_code | icmp_id | icmp_seq" \
+    "icmp_type | icmp_code | icmp_id | icmp_seq | " \
     "tcp_flags | tcp_seq | tcp_ack | tcp_len | tcp_win | " \
     "udp_len"
 

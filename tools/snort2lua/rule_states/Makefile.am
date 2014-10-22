@@ -13,6 +13,7 @@ rule_metadata.cc \
 rule_pcre.cc \
 rule_react.cc \
 rule_resp.cc \
+rule_stream_reassemble.cc \
 rule_tag.cc \
 rule_threshold.cc \
 rule_unchanged.cc \

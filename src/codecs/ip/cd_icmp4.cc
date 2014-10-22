@@ -45,6 +45,21 @@
 
 namespace{
 
+
+const char* pegs[]
+{
+    "Bad Checksum",
+    nullptr
+};
+
+struct Stats
+{
+    PegCount bad_ip4_cksum;
+};
+
+static THREAD_LOCAL Stats stats;
+
+
 static const RuleMap icmp4_rules[] =
 {
     { DECODE_ICMP_DGRAM_LT_ICMPHDR, "ICMP header truncated" },
@@ -82,6 +97,12 @@ public:
 
     const RuleMap* get_rules() const override
     { return icmp4_rules; }
+
+    const char** get_pegs() const override
+    { return pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&stats; }
 };
 
 class Icmp4Codec : public Codec{
@@ -190,6 +211,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 
         if(csum)
         {
+            stats.bad_ip4_cksum++;
             snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE,"ICMP Checksum: BAD\n"););
 

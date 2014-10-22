@@ -196,7 +196,7 @@ struct RawData
     uint32_t len;
 };
 
-
+// FIXIT-M J  get rid of invaild bytes. Only needed for TCP options and IP options
 struct CodecData
 {
     /* This section will get reset before every decode() function call */

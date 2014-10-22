@@ -53,18 +53,14 @@ public:
         if (snort_option == nullptr || lua_table == nullptr)
             return false;
 
-
         table_api.open_table(*lua_table);
 
 
         if(lua_option == nullptr)
-        {
             lua_option = snort_option;
-        }
         else if (snort_option->compare(*lua_option))
-        {
             table_api.add_diff_option_comment(*snort_option, *lua_option);
-        }
+
 
         while (stream >> val)
             retval = table_api.add_list(*lua_option, val) && retval;

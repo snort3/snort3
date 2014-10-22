@@ -52,16 +52,16 @@ set(BUILT_SOURCES
 )
 
 set (UNBUILT_SOURCES
-    snort_manual.txt
-    overview.txt
+    differences.txt
     errors.txt
     enviro.txt
-    features.txt
-    differences.txt
     extending.txt
+    features.txt
+    overview.txt
     params.txt
     reference.txt
     snort2lua.txt
+    snort_manual.txt
     start.txt
     style.txt
     terms.txt

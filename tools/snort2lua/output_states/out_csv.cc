@@ -61,7 +61,6 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     if (!(data_stream >> keyword))
         return retval;
 
-
     // parsing the format list.
     std::istringstream format(keyword);
     while (std::getline(format, val, ','))
@@ -80,12 +79,6 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         else if (!val.compare("proto"))
             tmpval = table_api.add_list("csv", "proto");
 
-        else if (!val.compare("dst"))
-            tmpval = table_api.add_list("csv", "dst");
-
-        else if (!val.compare("src"))
-            tmpval = table_api.add_list("csv", "src");
-
         else if (!val.compare("ttl"))
             tmpval = table_api.add_list("csv", "ttl");
 
@@ -95,15 +88,30 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         else if (!val.compare("tos"))
             tmpval = table_api.add_list("csv", "tos");
 
+        else if (!val.compare("trheader"))
+            tmpval = table_api.add_deleted_comment("trheader");
+
+        else if (!val.compare("dst"))
+        {
+            table_api.add_diff_option_comment("dst", "dst_addr");
+            tmpval = table_api.add_list("csv", "dst_addr");
+        }
+
+        else if (!val.compare("src"))
+        {
+            table_api.add_diff_option_comment("src", "src_addr");
+            tmpval = table_api.add_list("csv", "src_addr");
+        }
+
         else if (!val.compare("sig_generator"))
         {
             table_api.add_diff_option_comment("sig_generator", "gid");
             tmpval = table_api.add_list("csv", "gid");
         }
 
-        else if (!val.compare("sid_id"))
+        else if (!val.compare("sig_id"))
         {
-            table_api.add_diff_option_comment("sid_id", "sid");
+            table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = table_api.add_list("csv", "sid");
         }
 
@@ -142,6 +150,13 @@ bool AlertCsv::convert(std::istringstream& data_stream)
             table_api.add_diff_option_comment("ethlen", "eth_len");
             tmpval = table_api.add_list("csv", "eth_len");
         }
+
+        else if (!val.compare("ethtype"))
+        {
+            table_api.add_diff_option_comment("ethtype", "eth_type");
+            tmpval = table_api.add_list("csv", "eth_type");
+        }
+
 
         else if (!val.compare("tcpflags"))
         {
@@ -207,6 +222,12 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("icmpseq", "icmp_seq");
             tmpval = table_api.add_list("csv", "icmp_seq");
+        }
+
+        else if (!val.compare("udplength"))
+        {
+            table_api.add_diff_option_comment("udplength", "udp_len");
+            tmpval = table_api.add_list("csv", "udp_len");
         }
 
         else

@@ -36,20 +36,22 @@
 #include "protocols/packet_manager.h"
 #include "detection/signature.h"
 #include "log/text_log.h"
+#include "utils/stats.h"
+
 
 
 static THREAD_LOCAL TextLog* test_file = nullptr;
-#define F_NAME "dump.txt"
+
+#define S_NAME "log_codecs"
+#define F_NAME S_NAME ".txt"
+#define LOG_CODECS_HELP "log protocols in packet by layer"
 
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
-#define LOG_CODECS_NAME "log_codecs"
-#define LOG_CODECS_HELP "log protocols in packet by layer"
 
 static const unsigned ALERT_FLAG_MSG = 0x01;
-static const unsigned ALERT_FLAG_FILE = 0x02;
 
 static const Parameter ex_params[] =
 {
@@ -68,12 +70,13 @@ namespace
 class LogCodecModule : public Module
 {
 public:
-    LogCodecModule() : Module(LOG_CODECS_NAME, LOG_CODECS_HELP, ex_params) { };
+    LogCodecModule() : Module(S_NAME, LOG_CODECS_HELP, ex_params) { };
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 
 public:
+    bool print_to_file;
     uint8_t flags;
 };
 
@@ -84,7 +87,7 @@ bool LogCodecModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("file") )
     {
         if ( v.get_bool() )
-            flags |= ALERT_FLAG_FILE;
+            print_to_file = true;
     }
     else if ( v.is("msg") )
     {
@@ -101,6 +104,7 @@ bool LogCodecModule::set(const char*, Value& v, SnortConfig*)
 bool LogCodecModule::begin(const char*, int, SnortConfig*)
 {
     flags = 0;
+    print_to_file = false;
     return true;
 }
 
@@ -129,11 +133,14 @@ public:
 
 CodecLogger::CodecLogger(LogCodecModule* m)
 {
+    file = m->print_to_file ? F_NAME : "stdout";
     flags = m->flags;
 }
 
 void CodecLogger::open()
-{ test_file = TextLog_Init(file.c_str()); }
+{
+    test_file = TextLog_Init(file.c_str());
+}
 
 void CodecLogger::close()
 { TextLog_Term(test_file); }
@@ -143,10 +150,11 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
 {
     std::string s = std::string(msg);
 
+    TextLog_Print(test_file, "pkt:" STDu64 "\t", pc.total_from_daq);
 
     if (e != NULL)
     {
-        TextLog_Print(test_file, "%lu\t%lu\t%lu\t",
+        TextLog_Print(test_file, "    gid:%lu    sid:%lu    rev:%lu\t",
                 (unsigned long) e->sig_info->generator,
                 (unsigned long) e->sig_info->id,
                 (unsigned long) e->sig_info->rev);
@@ -160,6 +168,7 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
 
     TextLog_NewLine(test_file);
     PacketManager::log_protocols(test_file, p);
+    TextLog_NewLine(test_file);
     TextLog_NewLine(test_file);
 }
 
@@ -183,7 +192,7 @@ static const LogApi log_codecs_api =
 {
     {
         PT_LOGGER,
-        LOG_CODECS_NAME,
+        S_NAME,
         LOG_CODECS_HELP,
         LOGAPI_PLUGIN_V0,
         0,

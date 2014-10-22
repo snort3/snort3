@@ -194,17 +194,6 @@ void PacketManager::decode(
                 CodecManager::s_protocols[mapped_prot]->get_name(),
                 codec_data.next_prot_id, pkt, codec_data.lyr_len););
 
-        // must be done here after decode and before push for case layer
-        // LAYER_MAX+1 is invalid or the default codec
-        if ( p->num_layers == CodecManager::max_layers )
-        {
-            SnortEventqAdd(GID_DECODE, DECODE_TOO_MANY_LAYERS);
-            p->data = raw.data;
-            p->dsize = (uint16_t)raw.len;
-            MODULE_PROFILE_END(decodePerfStats);
-            return /*false */;
-        }
-
 
         /*
          * We only want the layer immediately following SAVE_LAYER to have the
@@ -229,8 +218,15 @@ void PacketManager::decode(
             p->ip_proto_next = codec_data.next_prot_id;
         }
 
+        // If we have reached the MAX_LAYERS, we keep decoding
+        // but no longer keep track of the layers.
+        if ( p->num_layers == CodecManager::max_layers )
+            SnortEventqAdd(GID_DECODE, DECODE_TOO_MANY_LAYERS);
+        else
+            push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
+
+
         // internal statistics and record keeping
-        push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
         mapped_prot = CodecManager::s_proto_map[codec_data.next_prot_id];
         prev_prot_id = codec_data.next_prot_id;

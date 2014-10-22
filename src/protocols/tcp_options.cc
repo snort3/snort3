@@ -46,13 +46,15 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* con
     {
         if (p->layers[i].start == (const uint8_t*)tcp_header)
         {
-            // the Options do not necessarily include
-            // the entire header.  However, length has
-            // been validated during decode
+            // Can't use the tph_header->hlen() becuase the entire may
+            // be an EOF or invalid options. However, this layers length
+            // has been valid by the codecs.
             end_ptr = (hdr + p->layers[i].length);
             return;
         }
     }
+
+    // Can occur if tcp_layer > max_layers.  No Options in such a case.
 }
 
 

@@ -50,6 +50,22 @@ using namespace tcp;
 namespace
 {
 
+const char* pegs[]
+{
+    "Bad Checksum (ip4)",
+    "Bad Checksum (ip6)",
+    nullptr
+};
+
+struct Stats
+{
+    PegCount bad_ip4_cksum;
+    PegCount bad_ip6_cksum;
+};
+
+static THREAD_LOCAL Stats stats;
+
+
 static const RuleMap tcp_rules[] =
 {
     { DECODE_TCP_DGRAM_LT_TCPHDR, "TCP packet len is smaller than 20 bytes" },
@@ -83,6 +99,12 @@ public:
 
     const RuleMap* get_rules() const override
     { return tcp_rules; }
+
+    const char** get_pegs() const override
+    { return pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&stats; }
 };
 
 class TcpCodec : public Codec
@@ -155,8 +177,11 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (ScTcpChecksums())
     {
         uint16_t csum;
+        PegCount* bad_cksum_cnt;
+
         if(snort.ip_api.is_ip4())
         {
+            bad_cksum_cnt = &(stats.bad_ip4_cksum);
             checksum::Pseudoheader ph;
             const ip::IP4Hdr* ip4h = snort.ip_api.get_ip4h();
             ph.sip = ip4h->get_src();
@@ -175,6 +200,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* IPv6 traffic */
         else
         {
+            bad_cksum_cnt = &(stats.bad_ip4_cksum);
             checksum::Pseudoheader6 ph6;
             const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
             COPY4(ph6.sip, ip6h->get_src()->u6_addr32);
@@ -193,7 +219,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             if (codec.codec_flags & CODEC_UNSURE_ENCAP)
                 return false;
 
-
+            (*bad_cksum_cnt)++;
             snort.decode_flags |= DECODE_ERR_CKSUM_TCP;
             DEBUG_WRAP(DebugMessage(DEBUG_DECODE, "Bad TCP checksum\n",
                                     "0x%x versus 0x%x\n", csum,

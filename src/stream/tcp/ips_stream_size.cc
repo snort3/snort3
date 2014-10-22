@@ -220,13 +220,13 @@ int SizeOption::eval(Cursor&, Packet* pkt)
 
 static const Parameter s_params[] =
 {
-    { "*direction", Parameter::PT_ENUM, "either|client|server|both", nullptr,
+    { "direction", Parameter::PT_ENUM, "either|client|server|both", nullptr,
       "compare applies to the given direction(s)" },
 
-    { "*operator", Parameter::PT_ENUM, "= | != | < | > | <= | >=", nullptr,
+    { "operator", Parameter::PT_ENUM, "= | != | < | > | <= | >=", nullptr,
       "how to compare" },
 
-    { "*size", Parameter::PT_INT, nullptr, nullptr,
+    { "size", Parameter::PT_INT, nullptr, nullptr,
       "size for comparison" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

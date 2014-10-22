@@ -416,19 +416,6 @@ static const ConvertMap rule_sameip =
 const ConvertMap* sameip_map = &rule_sameip;
 
 /************************************
- ******  STREAM_RESSAMBLE  **********
- ************************************/
-
-static const std::string stream_reassemble = "stream_reassemble";
-static const ConvertMap rule_stream_reassemble =
-{
-    stream_reassemble,
-    unchanged_rule_ctor<&stream_reassemble>,
-};
-
-const ConvertMap* stream_reassemble_map = &rule_stream_reassemble;
-
-/************************************
  *********  STREAM_SIZE  ************
  ************************************/
 
