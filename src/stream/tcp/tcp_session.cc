@@ -2208,6 +2208,7 @@ static inline int flush_to_seq(
 
         st->flags |= TF_MISSING_PREV_PKT;
         st->flags |= TF_PKT_MISSED;
+
         tcpStats.gaps++;
         st->seglist_base_seq = st->seglist_next->seq;
 
@@ -2755,7 +2756,8 @@ static void TraceTCP (
     if ( !cli->s_mgr.state && !srv->s_mgr.state )
         return;
 
-    if ( lws ) TraceSession(lws);
+    if ( lws )
+        TraceSession(lws);
 
     if ( lws && !event )
     {
@@ -5954,6 +5956,9 @@ static inline int CheckFlushPolicyOnData(
                 talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
                 listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
 
+                s5_paf_setup(&talker->paf_state);
+                s5_paf_setup(&listener->paf_state);
+
                 return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
             }
         }
@@ -6086,6 +6091,9 @@ int CheckFlushPolicyOnAck(
 
                 talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
                 listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
+
+                s5_paf_setup(&talker->paf_state);
+                s5_paf_setup(&listener->paf_state);
 
                 return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
             }
