@@ -343,7 +343,7 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
     }
     else if ( pb->use.svc.size() )
     {
-        ins = InspectorManager::get_inspector(pb->use.svc.c_str()); 
+        ins = InspectorManager::get_inspector(pb->use.svc.c_str());
         if ( ins )
             flow->set_gadget(ins);
     }
