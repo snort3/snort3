@@ -6084,17 +6084,17 @@ int CheckFlushPolicyOnAck(
                 //if ( AutoDisable(talker, listener) )
                 //    return 0;
 
-                delete talker->splitter;
-                delete listener->splitter;
-
                 bool c2s = (p->packet_flags & PKT_FROM_CLIENT) != 0;
 
+                delete talker->splitter;
                 talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
+                talker->paf_state.paf = StreamSplitter::SEARCH;
+
+#if 1           // FIXIT-M abort both sides ?
+                delete listener->splitter;
                 listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
-
-                s5_paf_setup(&talker->paf_state);
-                s5_paf_setup(&listener->paf_state);
-
+                listener->paf_state.paf = StreamSplitter::SEARCH;
+#endif
                 return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
             }
         }
