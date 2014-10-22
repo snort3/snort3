@@ -18,10 +18,6 @@
 */
 // nhttp_flow_data.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include "snort.h"
 #include "nhttp_enum.h"
 #include "nhttp_flow_data.h"
 #include "nhttp_transaction.h"
