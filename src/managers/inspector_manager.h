@@ -52,7 +52,6 @@ public:
     static void free_inspector(Inspector*);
     static InspectSsnFunc get_session(const char* key);
 
-    // FIXIT-P cache get_inspector() returns or provide indexed lookup
     static Inspector* get_inspector(const char* key);
 
     static Inspector* get_binder();

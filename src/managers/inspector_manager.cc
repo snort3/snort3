@@ -317,8 +317,10 @@ static PHInstance* get_instance(
 
         else if ( !strcmp(p->pp_class.api.base.name, keyword) )
             return p;
-    }
 
+        else if ( p->pp_class.api.service && !strcmp(p->pp_class.api.service, keyword) )
+            return p;
+    }
     return nullptr;
 }
 
@@ -369,6 +371,7 @@ Inspector* InspectorManager::get_wizard()
     return pi->framework_policy->wizard;
 } 
 
+// FIXIT-P cache get_inspector() returns or provide indexed lookup
 Inspector* InspectorManager::get_inspector(const char* key)
 {
     InspectionPolicy* pi = get_inspection_policy();
