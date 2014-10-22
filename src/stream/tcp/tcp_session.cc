@@ -2208,6 +2208,7 @@ static inline int flush_to_seq(
 
         st->flags |= TF_MISSING_PREV_PKT;
         st->flags |= TF_PKT_MISSED;
+
         tcpStats.gaps++;
         st->seglist_base_seq = st->seglist_next->seq;
 
@@ -5878,6 +5879,22 @@ static inline uint32_t flush_pdu_ips (
     return 0;
 }
 
+static inline void fallback(
+    StreamTracker* a, StreamTracker* b)
+{
+    bool c2s = a->splitter->to_server();
+
+    delete a->splitter;
+    a->splitter = new AtomSplitter(c2s, a->config->paf_max);
+    a->paf_state.paf = StreamSplitter::SEARCH;
+
+#if 1  // FIXIT-M abort both sides ?
+    delete b->splitter;
+    b->splitter = new AtomSplitter(!c2s, b->config->paf_max);
+    b->paf_state.paf = StreamSplitter::SEARCH;
+#endif
+}
+
 static inline int CheckFlushPolicyOnData(
     TcpSession *tcpssn, StreamTracker *talker,
     StreamTracker *listener, Packet *p)
@@ -5947,17 +5964,7 @@ static inline int CheckFlushPolicyOnData(
                 //if ( AutoDisable(listener, talker) )
                 //    return 0;
 
-                delete talker->splitter;
-                delete listener->splitter;
-
-                bool c2s = (p->packet_flags & PKT_FROM_CLIENT) != 0;
-
-                talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
-                listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
-
-                s5_paf_setup(&talker->paf_state);
-                s5_paf_setup(&listener->paf_state);
-
+                fallback(listener, talker);
                 return CheckFlushPolicyOnData(tcpssn, talker, listener, p);
             }
         }
@@ -6083,17 +6090,7 @@ int CheckFlushPolicyOnAck(
                 //if ( AutoDisable(talker, listener) )
                 //    return 0;
 
-                delete talker->splitter;
-                delete listener->splitter;
-
-                bool c2s = (p->packet_flags & PKT_FROM_CLIENT) != 0;
-
-                talker->splitter = new AtomSplitter(c2s, talker->config->paf_max);
-                listener->splitter = new AtomSplitter(!c2s, listener->config->paf_max);
-
-                s5_paf_setup(&talker->paf_state);
-                s5_paf_setup(&listener->paf_state);
-
+                fallback(talker, listener);
                 return CheckFlushPolicyOnAck(tcpssn, talker, listener, p);
             }
         }

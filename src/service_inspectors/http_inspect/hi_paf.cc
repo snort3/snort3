@@ -701,8 +701,6 @@ static inline StreamSplitter::Status hi_exec (Hi5State* s, Action a, int c)
                 "%s: lnc=%u\n", __FUNCTION__, s->len);)
             if ( s->len )
                 return StreamSplitter::SKIP;
-            else
-                return StreamSplitter::FLUSH;
             s->flags &= ~HIF_NOF;
             s->msg = 3;
             break;

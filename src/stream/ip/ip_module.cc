@@ -71,7 +71,10 @@ using namespace std;
     ",iny fragment"
 
 FragEngine::FragEngine()
-{ memset(this, 0, sizeof(*this)); }
+{ 
+    memset(this, 0, sizeof(*this));
+    frag_timeout = 60;
+}
 
 //-------------------------------------------------------------------------
 // stream_ip module
