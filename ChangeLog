@@ -6,6 +6,7 @@
 -- fix paf abort to resume with atom splitter
 -- delete bogus code introduced into hi paf
 -- ip defrag fixes
+-- refactored splitter fallback
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
