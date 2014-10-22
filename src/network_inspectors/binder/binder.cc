@@ -211,9 +211,16 @@ void Binder::eval(Packet* p)
     flow->iface_out = p->pkth->egress_index;
 
     Binding* pb = get_binding(flow);
-    flow->flow_state = apply(flow, pb);
+    BindAction action = apply(flow, pb);
 
-    ++bstats.verdicts[flow->flow_state - 1];
+    switch ( action )
+    {
+    case BA_BLOCK: flow->set_state(Flow::BLOCK); break;
+    case BA_ALLOW: flow->set_state(Flow::ALLOW); break;
+    case BA_INSPECT: flow->set_state(Flow::INSPECT); break;
+    }
+
+    ++bstats.verdicts[action];
     ++bstats.packets;
 }
 

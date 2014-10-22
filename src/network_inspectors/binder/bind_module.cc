@@ -163,7 +163,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 
     // use
     else if ( v.is("action") )
-        work->use.action = (BindAction)(v.get_long() + 1);
+        work->use.action = (BindAction)(v.get_long());
 
     else if ( v.is("file") )
     {
