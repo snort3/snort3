@@ -31,7 +31,7 @@ Optional:
 
 === Building
 
-* Optionally built feature are listed in the reference section.
+* Optionally built features are listed in the reference section.
 
 * You should build Snort++ with --prefix $install_dir where install_dir is
   something you can easily delete.
@@ -100,10 +100,13 @@ Optional:
   fatal.  To ignore such symbols, export them in the environment variable
   SNORT_IGNORE.
 
+* You can also rename symbols that you want to disable.  For example,
+  changing normalizer to Xnormalizer will disable the normalizer.  This can
+  be easier than commenting in some cases.
 
 === Running
 
-* Use snort --help! for an overview of the help available.
+* Use snort --help for an overview of the help available.
 
 * Load plugins from the command line with --plugin-path /path/to/install/lib.
 

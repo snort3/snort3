@@ -10,6 +10,8 @@
 -- fix binder.use.service
 -- refactored flow state
 -- latest from tom and josh 10/22 15:27
+-- doc tweaks
+-- fixed flow reset ordering of operations
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
