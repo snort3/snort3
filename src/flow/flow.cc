@@ -135,10 +135,15 @@ void Flow::restart(bool freeAppData)
     expire_time = 0;
 }
 
+//static const char* fsxlt[] =
+//{
+//    "setup", "inspect", "allow", "block"
+//};
+
 void Flow::clear(bool freeAppData)
 {
     restart(freeAppData);
-    flow_state = 0;
+    set_state(SETUP);
 
     if ( ssn_client )
     {

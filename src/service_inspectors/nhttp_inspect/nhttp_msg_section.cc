@@ -18,7 +18,6 @@
 */
 // nhttp_msg_section.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>

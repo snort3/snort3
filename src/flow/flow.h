@@ -115,7 +115,7 @@ private:
     unsigned id;
 };
 
-struct FlowState
+struct LwState
 {
     uint32_t   session_flags;
 
@@ -126,16 +126,24 @@ struct FlowState
     char       ignore_direction; /* flag to ignore traffic on this session */
 };
 
-typedef enum {
+enum Stream_Event
+{
     SE_REXMIT,
     SE_EOF,
     SE_MAX
-} Stream_Event;
+};
 
 // this struct is organized by member size for compactness
 class Flow
 {
 public:
+    enum FlowState
+    {
+        SETUP,
+        INSPECT,
+        BLOCK,
+        ALLOW
+    };
     Flow();
     Flow(PktType);
     ~Flow();
@@ -170,6 +178,9 @@ public:
 
     bool was_blocked() const
     { return (s5_state.session_flags & SSNFLAG_BLOCK) != 0; };
+
+    void set_state(FlowState fs)
+    { flow_state = fs; };
 
     void set_client(Inspector* ins)
     {
@@ -224,8 +235,8 @@ public:  // FIXIT-M privatize if possible
 
     unsigned policy_id;
 
-    int flow_state;  // FIXIT-H wow - this is poorly encapsulated!  did i do that?  :(
-    FlowState s5_state;  // FIXIT-L rename this (s5 not appropriate)
+    FlowState flow_state;
+    LwState s5_state;  // FIXIT-L rename this (s5 not appropriate)
 
     // FIXIT-L can client and server ip and port be removed from flow?
     sfip_t client_ip; // FIXIT-L family and bits should be changed to uint16_t

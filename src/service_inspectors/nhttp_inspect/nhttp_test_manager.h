@@ -22,7 +22,6 @@
 #define NHTTP_TEST_MANAGER_H
 
 #include <sys/types.h>
-#include <assert.h>
 #include <stdio.h>
 
 //-------------------------------------------------------------------------

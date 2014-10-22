@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include "stream/stream_api.h"
+
 #include "nhttp_splitter.h"
 
 class NHttpTransaction;
@@ -55,7 +56,6 @@ private:
     NHttpStartSplitter start_splitter[2];
     NHttpHeaderSplitter header_splitter[2];
     NHttpChunkSplitter chunk_splitter[2];
-    NHttpTrailerSplitter trailer_splitter[2];
     uint32_t unused_octets_visible[2] = { 0, 0 };
     uint32_t header_octets_visible[2] = { 0, 0 };
     uint8_t *section_buffer[2] = { nullptr, nullptr };

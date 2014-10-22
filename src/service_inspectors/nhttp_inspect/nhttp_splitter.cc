@@ -42,7 +42,7 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
                     num_crlf++;
                     continue;
                 }
-                else {
+                else { // FIXIT-M there needs to be an event for this
                     complete = true;
                     return SCAN_ABORT;
                 }
@@ -61,7 +61,7 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
             complete = true;
             return SCAN_FOUND;
         }
-        if (num_crlf == 1) {
+        if (num_crlf == 1) { // FIXIT-M there needs to be an event for this
             // CR not followed by LF
             complete = true;
             return SCAN_ABORT;
@@ -77,10 +77,14 @@ ScanResult NHttpStartSplitter::split(const uint8_t* buffer, uint32_t length) {
 ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
     conditional_reset();
     if (peek_status == SCAN_FOUND) {
+        complete = true;
         return SCAN_FOUND;
     }
     buffer += peek_octets;
     length -= peek_octets;
+
+    // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n, nonleading \r\n\n, and
+    // nonleading \n\n. The separator itself becomes num_excess which is discarded during reassemble().
     for (uint32_t k = 0; k < length; k++) {
         if (buffer[k] == '\n') {
             num_crlf++;
@@ -113,22 +117,23 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
 }
 
 ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length) {
-    assert(octets_seen == 0);
     peek_status = split(buffer, length);
     peek_octets = length;
+    complete = false;
     return peek_status;
 }
 
 void NHttpHeaderSplitter::conditional_reset() {
     if (complete) {
         peek_octets = 0;
-        peek_status = SCAN_NOTFOUND;
         first_lf = 0;
+        peek_status = SCAN_NOTFOUND;
     }
     NHttpSplitter::conditional_reset();
 }
 
 ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
+    // FIXIT-M when things go wrong and we must abort we need to flush partial chunk buffer
     conditional_reset();
     if (header_complete) {
         // Previously read the chunk header. Now just flush the length.
@@ -146,7 +151,6 @@ ScanResult NHttpChunkSplitter::split(const uint8_t* buffer, uint32_t length) {
             }
             if (!length_started) {
                 // chunk header specifies no length
-                // FIXIT-M need to find a way to flush partial chunk buffer
                 complete = true;
                 return SCAN_ABORT;
             }
@@ -213,44 +217,4 @@ void NHttpChunkSplitter::conditional_reset() {
     }
     NHttpSplitter::conditional_reset();
 }
-
-ScanResult NHttpTrailerSplitter::split(const uint8_t* buffer, uint32_t length) {
-    conditional_reset();
-    for (uint32_t k = 0; k < length; k++) {
-        if (buffer[k] == '\n') {
-            num_crlf++;
-            if ((first_lf == 0) && (num_crlf < octets_seen + k + 1)) {
-                first_lf = num_crlf;
-            }
-            else {
-                num_flush = k + 1;
-                complete = true;
-                return SCAN_FOUND;
-            }
-        }
-        else if (buffer[k] == '\r') {
-            if (num_crlf == first_lf) {
-                num_crlf++;
-            }
-            else {
-                num_crlf = 1;
-                first_lf = 0;
-            }
-        }
-        else {
-            num_crlf = 0;
-            first_lf = 0;
-        }
-    }
-    octets_seen += length;
-    return SCAN_NOTFOUND;
-}
-
-void NHttpTrailerSplitter::conditional_reset() {
-    if (complete) {
-        first_lf = 0;
-    }
-    NHttpSplitter::conditional_reset();
-}
-
 

@@ -211,9 +211,16 @@ void Binder::eval(Packet* p)
     flow->iface_out = p->pkth->egress_index;
 
     Binding* pb = get_binding(flow);
-    flow->flow_state = apply(flow, pb);
+    BindAction action = apply(flow, pb);
 
-    ++bstats.verdicts[flow->flow_state - 1];
+    switch ( action )
+    {
+    case BA_BLOCK: flow->set_state(Flow::BLOCK); break;
+    case BA_ALLOW: flow->set_state(Flow::ALLOW); break;
+    case BA_INSPECT: flow->set_state(Flow::INSPECT); break;
+    }
+
+    ++bstats.verdicts[action];
     ++bstats.packets;
 }
 
@@ -329,16 +336,29 @@ BindAction Binder::apply(Flow* flow, Binding* pb)
     init_flow(flow);
     Inspector* ins;
 
-    if ( !pb->use.name.size() || pb->use.name == "wizard" )
+    if ( pb->use.name == "wizard" )
     {
         ins = InspectorManager::get_wizard();
-        flow->set_clouseau(ins);
+        if ( ins )
+            flow->set_clouseau(ins);
     }
-    else
+    else if ( pb->use.name.size() )
     {
         ins = InspectorManager::get_inspector(pb->use.name.c_str()); 
         if ( ins )
             flow->set_gadget(ins);
+    }
+    else if ( pb->use.svc.size() )
+    {
+        ins = InspectorManager::get_inspector(pb->use.svc.c_str());
+        if ( ins )
+            flow->set_gadget(ins);
+    }
+    else
+    {
+        ins = InspectorManager::get_wizard();
+        if ( ins )
+            flow->set_clouseau(ins);
     }
     return BA_INSPECT;
 }

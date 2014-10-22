@@ -7,6 +7,9 @@
 -- delete bogus code introduced into hi paf
 -- ip defrag fixes
 -- refactored splitter fallback
+-- fix binder.use.service
+-- refactored flow state
+-- latest from tom and josh 10/22 15:27
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to

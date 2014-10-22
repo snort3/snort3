@@ -37,7 +37,7 @@ enum BindRole
 
 enum BindAction
 {
-    BA_BLOCK = 1,
+    BA_BLOCK,
     BA_ALLOW,
     BA_INSPECT
 };

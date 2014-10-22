@@ -342,35 +342,34 @@ unsigned FlowControl::process(FlowCache* cache, Packet* p)
     {
         init_roles(p, flow);
         Inspector* b = InspectorManager::get_binder();
+
         if ( b )
             b->eval(p);
+
+        if ( !flow->ssn_client || !flow->session->setup(p) )
+            flow->set_state(Flow::ALLOW);
+
         ++news;
     }
 
     switch ( flow->flow_state )
     {
-    case 1: // block
-        stream.drop_packet(p);
-        flow->flow_state = 1;
+    case Flow::SETUP:
+        flow->set_state(Flow::ALLOW);
         break;
 
-    case 2: // allow
-        stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
-        break;
-
-    case 3: // setup
-        if ( !flow->ssn_client || !flow->session->setup(p) )
-        {
-            flow->flow_state = 2;
-            break;
-        }
-        flow->flow_state = 4;
-        // now process
-
-    case 4: // inspect
+    case Flow::INSPECT:
         assert(flow->ssn_client);
         assert(flow->ssn_server);
         flow->session->process(p);
+        break;
+
+    case Flow::ALLOW:
+        stream.stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
+        break;
+
+    case Flow::BLOCK:
+        stream.drop_packet(p);
         break;
     }
 

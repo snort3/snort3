@@ -229,7 +229,7 @@ void Stream::stop_inspection(
     /* TODO: Handle bytes/response parameters */
 
     DisableInspection(p);
-    flow->flow_state = 2;
+    flow->set_state(Flow::ALLOW);
 }
 
 void Stream::resume_inspection(Flow* flow, char dir)
@@ -297,7 +297,7 @@ void Stream::drop_packet(Packet *p)
     if (!flow)
         return;
 
-    flow->flow_state = 1;
+    flow->set_state(Flow::BLOCK);
     flow->session->clear();
 
     if (!(p->packet_flags & PKT_STATELESS))
