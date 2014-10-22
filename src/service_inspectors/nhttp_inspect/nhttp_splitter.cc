@@ -117,7 +117,6 @@ ScanResult NHttpHeaderSplitter::split(const uint8_t* buffer, uint32_t length) {
 }
 
 ScanResult NHttpHeaderSplitter::peek(const uint8_t* buffer, uint32_t length) {
-    assert(octets_seen == 0);
     peek_status = split(buffer, length);
     peek_octets = length;
     complete = false;
