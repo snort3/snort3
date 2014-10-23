@@ -1964,6 +1964,7 @@ static int FlushStream(
         {
             s5_pkt->data = sb->data;
             s5_pkt->dsize = sb->length;
+            assert(sb->length < 65536); // FIXIT-H should be < s5_pkt->max_dsize);
 
             // FIXIT-M flushbuf should be eliminated from this function
             // since we are actually using the stream splitter buffer
@@ -1989,9 +1990,6 @@ static int FlushStream(
         st->flush_count++;
         segs++;
 
-        if ( sb )
-            break;
-
         if ( flushbuf >= flushbuf_end )
             break;
 
@@ -2013,6 +2011,9 @@ static int FlushStream(
             break;
 
         st->seglist_next = ss->next;
+
+        if ( sb )
+            break;
     }
 
     STREAM5_DEBUG_WRAP(bytes_queued -= bytes_flushed;);
@@ -2098,6 +2099,10 @@ static inline int _flush_to_seq (
         STREAM5_DEBUG_WRAP(DebugMessage(DEBUG_STREAM_STATE,
                     "Attempting to flush %lu bytes\n", footprint););
 
+        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = st->seglist_next->tv.tv_sec;
+        ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = st->seglist_next->tv.tv_usec;
+        ((TCPHdr *)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
+
         /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
         const uint8_t* s5_pkt_end = s5_pkt->data + s5_pkt->max_dsize;
@@ -2111,16 +2116,12 @@ static inline int _flush_to_seq (
 
         else
         {
-            ((TCPHdr *)s5_pkt->ptrs.tcph)->th_seq = htonl(st->seglist_next->seq);
             s5_pkt->packet_flags |= (PKT_REBUILT_STREAM|PKT_STREAM_EST);
 
             if ((p->packet_flags & PKT_PDU_TAIL))
                 s5_pkt->packet_flags |= PKT_PDU_TAIL;
 
             PacketManager::encode_update(s5_pkt);
-
-            ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = st->seglist_next->tv.tv_sec;
-            ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = st->seglist_next->tv.tv_usec;
 
             sfBase.iStreamFlushes++;
             bytes_processed += s5_pkt->dsize;
