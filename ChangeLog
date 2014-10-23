@@ -12,6 +12,8 @@
 -- latest from tom and josh 10/22 15:27
 -- doc tweaks
 -- fixed flow reset ordering of operations
+-- changed stream to not generate rebuilt packets when the splitter doesn't
+   reassemble (ie nhttp internal sections)
 
 125
 -- discovered can't catch exceptions thrown from Lua to C++; need to
